@@ -121,9 +121,9 @@ There are multiple ways to disable linter for certain files and lines:
 
 - Write `/** @linter disable */` PHPDoc annotation in the start of a file and add this file to `-allow-disable` regex
 - Add files or directories into `-exclude` regex (e.g. `-exclude='vendor/|tests/'`)
-- (diff mode only) Enter `@linter disable` in a commit message to disable checks for this commit only.
+- Enter `@linter disable` in a commit message to disable checks for this commit only (diff mode only).
 
-### (experimental) Language server mode
+### Language server mode (experimental)
 
 If you want to launch noverify in language server mode, launch it in your IDE/editor extension like the following:
 
@@ -131,7 +131,7 @@ If you want to launch noverify in language server mode, launch it in your IDE/ed
 $ noverify -lang-server -cores=4 -cache-dir=/path/to/cache -stubs-dir=/path/to/phpstorm-stubs
 ```
 
-There is no official extension for VS Code that supports this mode, so you will need to take, for example, https://marketplace.visualstudio.com/items?itemName=felixfbecker.php-intellisense vs code extension and replace `extension.js` to one provided in this repo.
+There is no official extension for VS Code that supports this mode, so you will need to take, for example, https://marketplace.visualstudio.com/items?itemName=felixfbecker.php-intellisense VS Code extension and replace `extension.js` to the one provided in this repo.
 
 For example, execute the following after VS Code installation:
 
