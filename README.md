@@ -103,7 +103,7 @@ noverify\
     -git-ref=refs/heads/$ref\
     -git-work-tree=.\
     -stubs-dir=/path/to/phpstorm-stubs\
-    -cache-dir=$HOME/ssd/tmp/phplinter
+    -cache-dir=$HOME/tmp/cache/noverify
 ```
 
 Here is the short summary of options used here:
@@ -114,7 +114,7 @@ Here is the short summary of options used here:
  - `-git-work-tree` is an optional parameter that you can specify if you want to be able to analyze uncommited changes too
  - `-stubs-dir` is the path to phpstorm-stubs dir (https://github.com/JetBrains/phpstorm-stubs)
  - `-cache-dir` is an optional directory for cache (greatly increases indexing speed)
- 
+
 ### Disable some reports
 
 There are multiple ways to disable linter for certain files and lines:
