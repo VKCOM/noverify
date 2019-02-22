@@ -1,6 +1,6 @@
 ## NoVerify
 
-NoVerify is a linter PHP: it searches for potential problems in your code.
+NoVerify is a linter for PHP: it searches for potential problems in your code.
 It allows to write your own rules as well and it has no config: all reports
 it generates are potential errors that must be fixed, or some PHPDoc annotations
 must be written.
@@ -105,3 +105,46 @@ noverify\
     -stubs-dir=/path/to/phpstorm-stubs\
     -cache-dir=$HOME/ssd/tmp/phplinter
 ```
+
+Here is the short summary of options used here:
+ - `-git` specifies path to .git directory
+ - `-git-skip-fetch` is a flag to disable automatic fetch of `master:ORIGIN_MASTER` (it is already done in this hook)
+ - `-git-commit-from` and `-git-commit-to` specify range of commits to analyze
+ - `-git-ref` is name of pushed branch
+ - `-git-work-tree` is an optional parameter that you can specify if you want to be able to analyze uncommited changes too
+ - `-stubs-dir` is the path to phpstorm-stubs dir (https://github.com/JetBrains/phpstorm-stubs)
+ - `-cache-dir` is an optional directory for cache (greatly increases indexing speed)
+ 
+### Disable some reports
+
+There are multiple ways to disable linter for certain files and lines:
+
+- Write `/** @linter disable */` PHPDoc annotation in the start of a file and add this file to `-allow-disable` regex
+- Add files or directories into `-exclude` regex (e.g. `-exclude='vendor/|tests/'`)
+- (diff mode only) Enter `@linter disable` in a commit message to disable checks for this commit only.
+
+### (experimental) Language server mode
+
+If you want to launch noverify in language server mode, launch it in your IDE/editor extension like the following:
+
+```sh
+$ noverify -lang-server -cores=4 -cache-dir=/path/to/cache -stubs-dir=/path/to/phpstorm-stubs
+```
+
+There is no official extension for VS Code that supports this mode, so you will need to take, for example, https://marketplace.visualstudio.com/items?itemName=felixfbecker.php-intellisense vs code extension and replace `extension.js` to one provided in this repo.
+
+For example, execute the following after VS Code installation:
+
+```sh
+$ vim extension.js # replace /path/to/cache and /path/to/phpstorm-stubs to proper values
+$ cp extension.js ~/.vscode/extensions/felixfbecker.php-intellisense-*/out/extension.js
+```
+
+After you reload VS Code, you should get noverify started as a language server.
+
+Language server features:
+- Partial auto-complete for variable names, constants, functions, object properties and methods
+- All reports from noverify in lint mode
+- Go to definition for constants, functions, classes, methods
+- Find usages for constants, functions, methods
+- Show variable types on hover
