@@ -1,84 +1,84 @@
 <html>
-	<head>
-		<meta charset="utf-8">
-		<script>var require = { paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.15.6/min/vs' } };</script>
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.15.6/min/vs/editor/editor.main.css" />
-		<script src="wasm_exec.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.15.6/min/vs/loader.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.15.6/min/vs/editor/editor.main.nls.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.15.6/min/vs/editor/editor.main.js"></script>
-		<script>
-			var analyzeCallback;
-			const go = new Go();
+    <head>
+        <meta charset="utf-8">
+        <script>var require = { paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.15.6/min/vs' } };</script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.15.6/min/vs/editor/editor.main.css" />
+        <script src="wasm_exec.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.15.6/min/vs/loader.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.15.6/min/vs/editor/editor.main.nls.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.15.6/min/vs/editor/editor.main.js"></script>
+        <script>
+            var analyzeCallback;
+            const go = new Go();
 
-			function saveText() {
-				if (editor) {
-					localStorage.setItem('text', editor.getValue());
-				}
-			}
+            function saveText() {
+                if (editor) {
+                    localStorage.setItem('text', editor.getValue());
+                }
+            }
 
-			function showErrors(res) {
-				try {
-					var reports = JSON.parse(res);
-				} catch (e) {
-					console.log(res);
-					return;
-				}
+            function showErrors(res) {
+                try {
+                    var reports = JSON.parse(res);
+                } catch (e) {
+                    console.log(res);
+                    return;
+                }
 
-				if (!reports) {
-					reports = [];
-				}
+                if (!reports) {
+                    reports = [];
+                }
 
-				var severityMapping = {
-					1: monaco.MarkerSeverity.Error,
-					2: monaco.MarkerSeverity.Warning,
-					3: monaco.MarkerSeverity.Info,
-					4: monaco.MarkerSeverity.Hint,
-				}
+                var severityMapping = {
+                    1: monaco.MarkerSeverity.Error,
+                    2: monaco.MarkerSeverity.Warning,
+                    3: monaco.MarkerSeverity.Info,
+                    4: monaco.MarkerSeverity.Hint,
+                }
 
-				for (var i = 0; i < reports.length; i++) {
-					var r = reports[i];
-					r.startLineNumber = r.range.start.line + 1;
-					r.startColumn = r.range.start.character + 1;
-					r.endLineNumber = r.range.end.line + 1;
-					r.endColumn = r.range.start.character + 1;
-					r.severity = severityMapping[r.severity];
-				}
+                for (var i = 0; i < reports.length; i++) {
+                    var r = reports[i];
+                    r.startLineNumber = r.range.start.line + 1;
+                    r.startColumn = r.range.start.character + 1;
+                    r.endLineNumber = r.range.end.line + 1;
+                    r.endColumn = r.range.start.character + 1;
+                    r.severity = severityMapping[r.severity];
+                }
 
-				try {
-					monaco.editor.setModelMarkers(editor.getModel(), 'demo', reports);
-				} catch (e) {
-					console.log(e);
-				}
-			}
+                try {
+                    monaco.editor.setModelMarkers(editor.getModel(), 'demo', reports);
+                } catch (e) {
+                    console.log(e);
+                }
+            }
 
-			function analyze() {
-				saveText();
-				analyzeCallback();
-			}
+            function analyze() {
+                saveText();
+                analyzeCallback();
+            }
 
-			WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
-				go.run(result.instance);
-				analyze();
-				document.getElementById('loading').style.display = 'none';
-			});
-		</script>
-		<style type="text/css">
-		textarea {
-			height: 300px;
-			width: calc(100vw - 50px);
-			font-family:'Courier New', Courier, monospace;
-		}
-		</style>
-	</head>
-	<body onbeforeunload="saveText();">
-		<h3 id="loading">Loading, please wait...</h3>
-		<div id="editor">
+            WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+                go.run(result.instance);
+                analyze();
+                document.getElementById('loading').style.display = 'none';
+            });
+        </script>
+        <style type="text/css">
+        textarea {
+            height: 300px;
+            width: calc(100vw - 50px);
+            font-family:'Courier New', Courier, monospace;
+        }
+        </style>
+    </head>
+    <body onbeforeunload="saveText();">
+        <h3 id="loading">Loading, please wait...</h3>
+        <div id="editor">
 
-		</div>
+        </div>
 
-		<script>
-		"use strict";
+        <script>
+        "use strict";
         var el = document.getElementById('editor');
         el.style.height = 'calc(100vh - 100px)';
         el.style.width = 'calc(100vw - 100px)';
@@ -90,19 +90,19 @@
             require(['vs/editor/editor.main'], function () {
 
                 editor = monaco.editor.create(el, {
-					value: localStorage.getItem('text'),
+                    value: localStorage.getItem('text') || "<?php\necho \"Hello $undefined!\";\n",
                     language: "php"
                 });
 
-				editor.layout();
-				editor.onDidChangeModelContent(function (e) { analyze(); });
+                editor.layout();
+                editor.onDidChangeModelContent(function (e) { analyze(); });
             });
 
             // no point in keeping this around.
             window.removeEventListener("load", init);
         };
 
-		window.addEventListener("load", init);
-		</script>
-	</body>
+        window.addEventListener("load", init);
+        </script>
+    </body>
 </html>
