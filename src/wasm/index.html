@@ -54,7 +54,9 @@
 
             function analyze() {
                 saveText();
-                analyzeCallback();
+                if (editor) {
+                    analyzeCallback();
+                }
             }
 
             WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
@@ -96,6 +98,7 @@
 
                 editor.layout();
                 editor.onDidChangeModelContent(function (e) { analyze(); });
+                analyze();
             });
 
             // no point in keeping this around.
