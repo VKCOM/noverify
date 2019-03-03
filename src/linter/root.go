@@ -610,6 +610,11 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 		sc.SetInInstanceMethod(true)
 	}
 
+	var specifiedReturnType *meta.TypesMap
+	if typ, ok := d.parseTypeNode(meth.ReturnType); ok {
+		specifiedReturnType = typ
+	}
+
 	phpdocReturnType, phpDocParamTypes, phpDocError := d.parsePHPDoc(meth.PhpDocComment, meth.Params)
 
 	if phpDocError != "" {
@@ -625,7 +630,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	d.getClass().Methods[nm] = meta.FuncInfo{
 		Params:       params,
 		Pos:          d.getElementPos(meth),
-		Typ:          meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes).Immutable(),
+		Typ:          meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType).Immutable(),
 		MinParamsCnt: minParamsCnt,
 		ExitFlags:    exitFlags,
 	}
@@ -791,6 +796,24 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (returnTy
 	return returnType.Immutable(), types, phpDocError
 }
 
+// parse type info, e.g. "string" in "someFunc() : string { ... }"
+func (d *RootWalker) parseTypeNode(n node.Node) (typ *meta.TypesMap, ok bool) {
+	if n == nil {
+		return nil, false
+	}
+
+	switch t := n.(type) {
+	case *name.Name:
+		typ = meta.NewTypesMap(d.maybeAddNamespace(meta.NameToString(t)))
+	case *name.FullyQualified:
+		typ = meta.NewTypesMap(meta.FullyQualifiedToString(t))
+	case *node.Identifier:
+		typ = meta.NewTypesMap(t.Value)
+	}
+
+	return typ, typ != nil
+}
+
 func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap, sc *meta.Scope) (args []meta.FuncParam, minArgs int) {
 	args = make([]meta.FuncParam, 0, len(params))
 	for _, param := range params {
@@ -809,13 +832,8 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 		}
 
 		if p.VariableType != nil {
-			switch t := p.VariableType.(type) {
-			case *name.Name:
-				typ = meta.NewTypesMap(d.maybeAddNamespace(meta.NameToString(t)))
-			case *name.FullyQualified:
-				typ = meta.NewTypesMap(meta.FullyQualifiedToString(t))
-			case *node.Identifier:
-				typ = meta.NewTypesMap(t.Value)
+			if varTyp, ok := d.parseTypeNode(p.VariableType); ok {
+				typ = varTyp
 			}
 		} else if typ.IsEmpty() && p.DefaultValue != nil {
 			typ = solver.ExprTypeLocal(sc, d.st, p.DefaultValue)
@@ -845,6 +863,11 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 		d.Report(fun.FunctionName, LevelDoNotReject, "Too big function: more than %d lines", maxFunctionLines)
 	}
 
+	var specifiedReturnType *meta.TypesMap
+	if typ, ok := d.parseTypeNode(fun.ReturnType); ok {
+		specifiedReturnType = typ
+	}
+
 	phpdocReturnType, phpDocParamTypes, phpDocError := d.parsePHPDoc(fun.PhpDocComment, fun.Params)
 
 	if phpDocError != "" {
@@ -865,7 +888,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	d.meta.Functions[nm] = meta.FuncInfo{
 		Params:       params,
 		Pos:          d.getElementPos(fun),
-		Typ:          meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes).Immutable(),
+		Typ:          meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType).Immutable(),
 		MinParamsCnt: minParamsCnt,
 		ExitFlags:    exitFlags,
 	}
