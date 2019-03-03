@@ -176,3 +176,26 @@ func TestMagicMethods(t *testing.T) {
 		log.Printf("%s", r)
 	}
 }
+
+func TestGenerator(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	class Generator {
+		public function send();
+	}
+
+	function a($a): \Generator
+	{
+		yield $a;
+	}
+
+	a(42)->send(42);
+	`)
+
+	if len(reports) != 0 {
+		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
+	}
+
+	for _, r := range reports {
+		log.Printf("%s", r)
+	}
+}
