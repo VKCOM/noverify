@@ -698,24 +698,26 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 
 	var (
 		foundMethod bool
+		magic       bool
 		fn          meta.FuncInfo
 	)
 
 	exprType := solver.ExprType(b.sc, b.r.st, e.Variable)
 
 	exprType.Iterate(func(typ string) {
-		if foundMethod {
+		if foundMethod || magic {
 			return
 		}
 
 		fn, _, foundMethod = solver.FindMethod(typ, methodName)
+		magic = haveMagicMethod(typ, `__call`)
 	})
 
 	e.Variable.Walk(b)
 	e.Method.Walk(b)
 
-	if !foundMethod && !b.r.st.IsTrait {
-		b.r.Report(e.Method, LevelError, "Call to undefined method {%s}::%s()", exprType, methodName)
+	if !foundMethod && !magic && !b.r.st.IsTrait {
+		b.r.Report(e.Method, LevelError, "Call to undefined method {%s}->%s()", exprType, methodName)
 	}
 
 	b.handleCallArgs(e.Method, e.Arguments, fn)
@@ -748,7 +750,7 @@ func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
 	e.Class.Walk(b)
 	e.Call.Walk(b)
 
-	if !ok && !b.r.st.IsTrait {
+	if !ok && !haveMagicMethod(className, `__callStatic`) && !b.r.st.IsTrait {
 		b.r.Report(e.Call, LevelError, "Call to undefined method %s::%s()", className, methodName)
 	}
 
@@ -771,16 +773,18 @@ func (b *BlockWalker) handlePropertyFetch(e *expr.PropertyFetch) bool {
 	}
 
 	found := false
+	magic := false
 
 	typ := solver.ExprType(b.sc, b.r.st, e.Variable)
 	typ.Iterate(func(className string) {
-		if found {
+		if found || magic {
 			return
 		}
 		_, _, found = solver.FindProperty(className, id.Value)
+		magic = haveMagicMethod(className, `__get`)
 	})
 
-	if !found && !b.r.st.IsTrait {
+	if !found && !magic && !b.r.st.IsTrait {
 		b.r.Report(e.Property, LevelError, "Property {%s}->%s does not exist", typ, id.Value)
 	}
 
@@ -815,6 +819,11 @@ func (b *BlockWalker) handleStaticPropertyFetch(e *expr.StaticPropertyFetch) boo
 	}
 
 	return false
+}
+
+func haveMagicMethod(class string, methodName string) bool {
+	_, _, ok := solver.FindMethod(class, methodName)
+	return ok
 }
 
 func (b *BlockWalker) handleClassConstFetch(e *expr.ClassConstFetch) bool {

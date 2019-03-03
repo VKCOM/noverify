@@ -145,3 +145,34 @@ func TestTraitProperties(t *testing.T) {
 		log.Printf("%s", r)
 	}
 }
+
+func TestMagicMethods(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	class Magic
+	{
+		public function __get();
+		public function __set();
+		public function __call();
+	}
+
+	class MagicStatic {
+		public static function __callStatic();
+	}
+
+	function test() {
+		$m = new Magic;
+		echo $m->some_property;
+		$m->another_property = 3;
+		$m->call_something();
+		MagicStatic::callSomethingStatic();
+	}
+	`)
+
+	if len(reports) != 0 {
+		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
+	}
+
+	for _, r := range reports {
+		log.Printf("%s", r)
+	}
+}
