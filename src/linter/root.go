@@ -839,6 +839,12 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 			typ = solver.ExprTypeLocal(sc, d.st, p.DefaultValue)
 		}
 
+		if p.Variadic {
+			arrTyp := meta.NewEmptyTypesMap(typ.Len())
+			typ.Iterate(func(t string) { arrTyp = arrTyp.AppendString(meta.WrapArrayOf(t)) })
+			typ = arrTyp
+		}
+
 		sc.AddVar(v, typ, "param", true)
 
 		par := meta.FuncParam{

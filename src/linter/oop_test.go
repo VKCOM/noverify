@@ -89,3 +89,35 @@ func TestReturnTypes(t *testing.T) {
 		log.Printf("%s", r)
 	}
 }
+
+func TestVariadic(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	class TestClass
+	{
+		public function get(): string
+		{
+			return '.';
+		}
+	}
+
+	function a(TestClass ...$testClasses): string
+	{
+		$result = '';
+		foreach ($testClasses as $testClass) {
+			$result .= $testClass->get();
+		}
+
+		return $result;
+	}
+
+	echo a(new TestClass()), "\n";
+	`)
+
+	if len(reports) != 0 {
+		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
+	}
+
+	for _, r := range reports {
+		log.Printf("%s", r)
+	}
+}
