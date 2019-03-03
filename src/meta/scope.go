@@ -22,6 +22,7 @@ type scopeVar struct {
 type Scope struct {
 	vars             map[string]*scopeVar // variables declared in the scope
 	inInstanceMethod bool
+	inClosure        bool
 }
 
 // NewScope creates new empty scope
@@ -41,6 +42,10 @@ func (s *Scope) GobEncode() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = encoder.Encode(s.inClosure)
+	if err != nil {
+		return nil, err
+	}
 	return w.Bytes(), nil
 }
 
@@ -52,7 +57,11 @@ func (s *Scope) GobDecode(buf []byte) error {
 	if err != nil {
 		return err
 	}
-	return decoder.Decode(&s.inInstanceMethod)
+	err = decoder.Decode(&s.inInstanceMethod)
+	if err != nil {
+		return err
+	}
+	return decoder.Decode(&s.inClosure)
 }
 
 // GobEncode is a custom gob marshaller
@@ -86,10 +95,21 @@ func (s *Scope) IsInInstanceMethod() bool {
 	return s.inInstanceMethod
 }
 
+// IsInClosure returns whether or not this scope is inside a closure and thus $this can be late-bound.
+func (s *Scope) IsInClosure() bool {
+	return s.inClosure
+}
+
 // SetInInstanceMethod updates "inInstanceMethod" flag that indicated whether or not scope is located inside instance method
 // and that "$this" needs to be captured
 func (s *Scope) SetInInstanceMethod(v bool) {
 	s.inInstanceMethod = v
+}
+
+// SetInClosure updates "inClosure" flag that indicates whether or not we are inside a closure
+// and thus late $this binding is possible.
+func (s *Scope) SetInClosure(v bool) {
+	s.inClosure = v
 }
 
 func (s *Scope) Iterate(cb func(varName string, typ *TypesMap, alwaysDefined bool)) {
@@ -264,5 +284,6 @@ func (s *Scope) Clone() *Scope {
 		}
 	}
 	res.inInstanceMethod = s.inInstanceMethod
+	res.inClosure = s.inClosure
 	return res
 }

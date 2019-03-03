@@ -716,7 +716,7 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 	e.Variable.Walk(b)
 	e.Method.Walk(b)
 
-	if !foundMethod && !magic && !b.r.st.IsTrait {
+	if !foundMethod && !magic && !b.r.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
 		b.r.Report(e.Method, LevelError, "Call to undefined method {%s}->%s()", exprType, methodName)
 	}
 
@@ -760,6 +760,23 @@ func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
 	return false
 }
 
+func (b *BlockWalker) isThisInsideClosure(varNode node.Node) bool {
+	if !b.sc.IsInClosure() {
+		return false
+	}
+
+	variable, ok := varNode.(*expr.Variable)
+	if !ok {
+		return false
+	}
+
+	if varName, ok := variable.VarName.(*node.Identifier); ok && varName.Value == `this` {
+		return true
+	}
+
+	return false
+}
+
 func (b *BlockWalker) handlePropertyFetch(e *expr.PropertyFetch) bool {
 	e.Variable.Walk(b)
 
@@ -784,7 +801,7 @@ func (b *BlockWalker) handlePropertyFetch(e *expr.PropertyFetch) bool {
 		magic = haveMagicMethod(className, `__get`)
 	})
 
-	if !found && !magic && !b.r.st.IsTrait {
+	if !found && !magic && !b.r.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
 		b.r.Report(e.Property, LevelError, "Property {%s}->%s does not exist", typ, id.Value)
 	}
 
@@ -952,9 +969,12 @@ func (b *BlockWalker) handleFor(s *stmt.For) bool {
 
 func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType *meta.TypesMap) bool {
 	sc := meta.NewScope()
+	sc.SetInClosure(true)
 
 	if haveThis {
 		sc.AddVarName("this", thisType, "closure inside instance method", true)
+	} else {
+		sc.AddVarName("this", meta.NewTypesMap("possibly_late_bound"), "possibly late bound $this", true)
 	}
 
 	_, phpDocParamTypes, phpDocError := b.r.parsePHPDoc(fun.PhpDocComment, fun.Params)

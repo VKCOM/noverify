@@ -333,6 +333,8 @@ func ExprTypeLocal(sc *meta.Scope, cs *meta.ClassParseState, n node.Node) *meta.
 		return &meta.TypesMap{}
 	case *assign.Assign:
 		return ExprTypeLocal(sc, cs, n.Expression)
+	case *expr.Closure:
+		return meta.NewTypesMap(`\Closure`)
 	}
 
 	return &meta.TypesMap{}

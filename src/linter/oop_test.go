@@ -199,3 +199,40 @@ func TestGenerator(t *testing.T) {
 		log.Printf("%s", r)
 	}
 }
+
+func TestClosureLateBinding(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	class Example
+	{
+		public function method()
+		{
+			return 42;
+		}
+	}
+
+	class Closure {
+		public function call();
+	}
+
+	(function() {
+		$this->method();
+		$a->method();
+	})->call(new Example());
+	`)
+
+	if len(reports) != 2 {
+		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
+	}
+
+	if !hasReport(reports, "Undefined variable: a") {
+		t.Errorf("Must be a warning about undefined variable a")
+	}
+
+	if !hasReport(reports, "Call to undefined method {}->method()") {
+		t.Errorf("Must be an error about call to undefined method()")
+	}
+
+	for _, r := range reports {
+		log.Printf("%s", r)
+	}
+}
