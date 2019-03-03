@@ -714,7 +714,7 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 	e.Variable.Walk(b)
 	e.Method.Walk(b)
 
-	if !foundMethod {
+	if !foundMethod && !b.r.st.IsTrait {
 		b.r.Report(e.Method, LevelError, "Call to undefined method {%s}::%s()", exprType, methodName)
 	}
 
@@ -748,7 +748,7 @@ func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
 	e.Class.Walk(b)
 	e.Call.Walk(b)
 
-	if !ok {
+	if !ok && !b.r.st.IsTrait {
 		b.r.Report(e.Call, LevelError, "Call to undefined method %s::%s()", className, methodName)
 	}
 
@@ -780,7 +780,7 @@ func (b *BlockWalker) handlePropertyFetch(e *expr.PropertyFetch) bool {
 		_, _, found = solver.FindProperty(className, id.Value)
 	})
 
-	if !found {
+	if !found && !b.r.st.IsTrait {
 		b.r.Report(e.Property, LevelError, "Property {%s}->%s does not exist", typ, id.Value)
 	}
 
@@ -810,7 +810,7 @@ func (b *BlockWalker) handleStaticPropertyFetch(e *expr.StaticPropertyFetch) boo
 	}
 
 	_, _, ok = solver.FindProperty(className, "$"+varName.Value)
-	if !ok {
+	if !ok && !b.r.st.IsTrait {
 		b.r.Report(e.Property, LevelError, "Property does not exist")
 	}
 
@@ -840,7 +840,7 @@ func (b *BlockWalker) handleClassConstFetch(e *expr.ClassConstFetch) bool {
 
 	e.Class.Walk(b)
 
-	if !ok {
+	if !ok && !b.r.st.IsTrait {
 		b.r.Report(e.ConstantName, LevelError, "Class constant does not exist")
 	}
 

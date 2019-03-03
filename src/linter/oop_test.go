@@ -121,3 +121,27 @@ func TestVariadic(t *testing.T) {
 		log.Printf("%s", r)
 	}
 }
+
+func TestTraitProperties(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	declare(strict_types=1);
+
+	trait Example
+	{
+		private static $property = 'some';
+
+		protected function some(): string
+		{
+			return self::$property;
+		}
+	}
+	`)
+
+	if len(reports) != 0 {
+		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
+	}
+
+	for _, r := range reports {
+		log.Printf("%s", r)
+	}
+}
