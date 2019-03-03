@@ -3,6 +3,7 @@ package cmd
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	_ "net/http/pprof" // it is ok for actually main package
@@ -27,6 +28,8 @@ var (
 )
 
 var (
+	outputFp io.Writer = os.Stderr
+
 	gitRepo    string
 	isGitLocal bool
 
@@ -49,6 +52,8 @@ var (
 
 	fullAnalysisFiles string
 
+	output string
+
 	version bool
 )
 
@@ -70,6 +75,8 @@ func init() {
 	flag.StringVar(&allowDisable, "allow-disable", "", "Regexp for filenames where '@linter disable' is allowed")
 
 	flag.StringVar(&fullAnalysisFiles, "full-analysis-files", "", "Comma-separated list of files to do full analysis")
+
+	flag.StringVar(&output, "output", "", "Output reports to a specified file instead of stderr")
 
 	flag.BoolVar(&linter.Debug, "debug", false, "Enable debug output")
 	flag.IntVar(&linter.MaxFileSize, "max-sum-filesize", 20*1024*1024, "max total file size to be parsed concurrently in bytes (limits max memory consumption)")
@@ -122,6 +129,14 @@ func Main() {
 		langsrv.RegisterDebug()
 		langsrv.Start()
 		return
+	}
+
+	if output != "" {
+		var err error
+		outputFp, err = os.OpenFile(output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+		if err != nil {
+			log.Fatalf("Could not open output file: %s", err.Error())
+		}
 	}
 
 	log.Printf("Started")
@@ -346,7 +361,7 @@ func analyzeReports(diff []*linter.Report) (criticalReports int) {
 
 		if r.IsDisabledByUser() {
 			if !canBeDisabled(filename) {
-				fmt.Fprintf(os.Stderr, "You are not allowed to disable linter for file '%s'\n", filename)
+				fmt.Fprintf(outputFp, "You are not allowed to disable linter for file '%s'\n", filename)
 			} else {
 				continue
 			}
@@ -356,7 +371,7 @@ func analyzeReports(diff []*linter.Report) (criticalReports int) {
 			criticalReports++
 		}
 
-		fmt.Fprintf(os.Stderr, "%s\n", r)
+		fmt.Fprintf(outputFp, "%s\n", r)
 	}
 
 	return criticalReports

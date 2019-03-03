@@ -37,7 +37,9 @@ type fileMeta struct {
 func Parse(filename string, contents []byte, encoding string) error {
 	if CacheDir == "" {
 		_, w, err := ParseContents(filename, contents, encoding, nil)
-		updateMetaInfo(filename, &w.meta)
+		if w != nil {
+			updateMetaInfo(filename, &w.meta)
+		}
 		return err
 	}
 
