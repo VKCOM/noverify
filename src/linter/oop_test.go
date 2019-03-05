@@ -221,7 +221,7 @@ func TestClosureLateBinding(t *testing.T) {
 	`)
 
 	if len(reports) != 2 {
-		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
+		t.Errorf("Unexpected number of reports: expected 2, got %d", len(reports))
 	}
 
 	if !hasReport(reports, "Undefined variable: a") {
@@ -230,6 +230,60 @@ func TestClosureLateBinding(t *testing.T) {
 
 	if !hasReport(reports, "Call to undefined method {}->method()") {
 		t.Errorf("Must be an error about call to undefined method()")
+	}
+
+	for _, r := range reports {
+		log.Printf("%s", r)
+	}
+}
+
+func TestInterfaceInheritance(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	interface DateTimeInterface {
+		public function format($fmt);
+	}
+
+	interface OtherInterface {
+		public function useless();
+	}
+
+	interface TestInterface
+	{
+		const TEST = 1;
+
+		public function getCreatedAt(): \DateTimeInterface;
+	}
+
+	interface TestExInterface extends OtherInterface, TestInterface
+	{
+	}
+
+	function a(TestExInterface $testInterface): string
+	{
+		echo TestExInterface::TEST;
+		return $testInterface->getCreatedAt()->format('U');
+	}
+
+	function b(TestExInterface $testInterface) {
+		echo TestExInterface::TEST2;
+		return $testInterface->nonexistent()->format('U');
+	}
+	`)
+
+	if len(reports) != 3 {
+		t.Errorf("Unexpected number of reports: expected 3, got %d", len(reports))
+	}
+
+	if !hasReport(reports, `Call to undefined method {\TestExInterface}->nonexistent()`) {
+		t.Errorf("Must be an error about call to nonexistent")
+	}
+
+	if !hasReport(reports, "Call to undefined method {}->format()") {
+		t.Errorf("Must be an error about call to format of undefined")
+	}
+
+	if !hasReport(reports, "Class constant does not exist") {
+		t.Errorf("Must be an error about missing class constant TEST2")
 	}
 
 	for _, r := range reports {

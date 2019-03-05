@@ -37,6 +37,14 @@ func EnterNode(st *meta.ClassParseState, n walker.Walkable) {
 		st.IsTrait = false
 		st.CurrentClass = st.Namespace + `\` + n.InterfaceName.(*node.Identifier).Value
 		st.CurrentParentClass = ""
+		st.CurrentParentInterfaces = nil
+		for _, iface := range n.Extends {
+			ifaceName, ok := solver.GetClassName(st, iface)
+			if ok {
+				st.CurrentParentInterfaces = append(st.CurrentParentInterfaces, ifaceName)
+			}
+		}
+
 	case *stmt.Class:
 		st.IsTrait = false
 		id, ok := n.ClassName.(*node.Identifier)
@@ -45,6 +53,7 @@ func EnterNode(st *meta.ClassParseState, n walker.Walkable) {
 			st.CurrentClass = st.Namespace + `\` + id.Value
 		}
 		st.CurrentParentClass = ""
+		st.CurrentParentInterfaces = nil
 		if n.Extends != nil {
 			st.CurrentParentClass, _ = solver.GetClassName(st, n.Extends)
 		}
@@ -52,6 +61,7 @@ func EnterNode(st *meta.ClassParseState, n walker.Walkable) {
 		st.IsTrait = true
 		st.CurrentClass = st.Namespace + `\` + n.TraitName.(*node.Identifier).Value
 		st.CurrentParentClass = ""
+		st.CurrentParentInterfaces = nil
 	}
 }
 
@@ -98,5 +108,6 @@ func LeaveNode(st *meta.ClassParseState, n walker.Walkable) {
 		st.IsTrait = false
 		st.CurrentClass = ""
 		st.CurrentParentClass = ""
+		st.CurrentParentInterfaces = nil
 	}
 }

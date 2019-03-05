@@ -298,22 +298,24 @@ type ConstantInfo struct {
 }
 
 type ClassInfo struct {
-	Pos        ElementPosition
-	Parent     string
-	Traits     map[string]struct{}
-	Interfaces map[string]struct{}
-	Methods    FunctionsMap
-	Properties PropertiesMap // both instance and static properties are inside. Static properties have "$" prefix
-	Constants  ConstantsMap
+	Pos              ElementPosition
+	Parent           string
+	ParentInterfaces []string // interfaces allow multiple inheritance
+	Traits           map[string]struct{}
+	Interfaces       map[string]struct{}
+	Methods          FunctionsMap
+	Properties       PropertiesMap // both instance and static properties are inside. Static properties have "$" prefix
+	Constants        ConstantsMap
 }
 
 type ClassParseState struct {
-	IsTrait            bool
-	Namespace          string
-	FunctionUses       map[string]string
-	Uses               map[string]string
-	CurrentClass       string
-	CurrentParentClass string
+	IsTrait                 bool
+	Namespace               string
+	FunctionUses            map[string]string
+	Uses                    map[string]string
+	CurrentClass            string
+	CurrentParentClass      string
+	CurrentParentInterfaces []string // interfaces allow for multiple inheritance...
 }
 
 type TraitsMap map[string]ClassInfo

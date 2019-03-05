@@ -517,13 +517,14 @@ func (d *RootWalker) getClass() meta.ClassInfo {
 	cl, ok := m[d.st.CurrentClass]
 	if !ok {
 		cl = meta.ClassInfo{
-			Pos:        d.getElementPos(d.currentClassNode),
-			Parent:     d.st.CurrentParentClass,
-			Interfaces: make(map[string]struct{}),
-			Traits:     make(map[string]struct{}),
-			Methods:    make(meta.FunctionsMap),
-			Properties: make(meta.PropertiesMap),
-			Constants:  make(meta.ConstantsMap),
+			Pos:              d.getElementPos(d.currentClassNode),
+			Parent:           d.st.CurrentParentClass,
+			ParentInterfaces: d.st.CurrentParentInterfaces,
+			Interfaces:       make(map[string]struct{}),
+			Traits:           make(map[string]struct{}),
+			Methods:          make(meta.FunctionsMap),
+			Properties:       make(meta.PropertiesMap),
+			Constants:        make(meta.ConstantsMap),
 		}
 
 		m[d.st.CurrentClass] = cl

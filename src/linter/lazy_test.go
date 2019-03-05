@@ -14,7 +14,10 @@ import (
 var once sync.Once
 
 func testParse(t *testing.T, filename string, contents string) (rootNode node.Node, w *RootWalker) {
-	once.Do(func() { go MemoryLimiterThread() })
+	once.Do(func() {
+		MaxFileSize = 10000
+		go MemoryLimiterThread()
+	})
 
 	var err error
 	rootNode, w, err = ParseContents(filename, []byte(contents), "UTF-8", nil)

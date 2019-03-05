@@ -132,6 +132,14 @@ func findMethod(className string, methodName string, visitedMap map[string]struc
 			}
 		}
 
+		// interfaces support multiple inheritance and I use a separate property for that for now
+		for _, parentIfaceName := range class.ParentInterfaces {
+			res, implClassName, ok = findMethod(parentIfaceName, methodName, visitedMap)
+			if ok {
+				return res, implClassName, ok
+			}
+		}
+
 		if class.Parent == "" {
 			return res, "", false
 		}
@@ -184,28 +192,42 @@ func Implements(className string, interfaceName string) bool {
 // FindConstant searches for a costant in specified class and returns actual class that contains the constant.
 func FindConstant(className string, constName string) (res meta.ConstantInfo, implClassName string, ok bool) {
 	visitedClasses := make(map[string]struct{}, 8) // expecting to be not so many inheritance levels
+	return findConstant(className, constName, visitedClasses)
+}
 
+func findConstant(className string, constName string, visitedClasses map[string]struct{}) (res meta.ConstantInfo, implClassName string, ok bool) {
 	for {
 		// check for inheritance loops
 		if _, ok := visitedClasses[className]; ok {
 			return res, "", false
 		}
 
+		visitedClasses[className] = struct{}{}
+
 		class, ok := meta.Info.GetClass(className)
 		if !ok {
 			return res, "", false
 		}
 
-		visitedClasses[className] = struct{}{}
-
-		res, implClassName, ok = FindConstantInInterfaces(class, constName)
-		if ok {
-			return res, implClassName, ok
+		// inferfaces can have constants...
+		for ifaceName := range class.Interfaces {
+			res, implClassName, ok = findConstant(ifaceName, constName, visitedClasses)
+			if ok {
+				return res, implClassName, ok
+			}
 		}
 
 		res, ok = class.Constants[constName]
 		if ok {
 			return res, className, ok
+		}
+
+		// interfaces support multiple inheritance and I use a separate property for that for now
+		for _, parentIfaceName := range class.ParentInterfaces {
+			res, implClassName, ok = findConstant(parentIfaceName, constName, visitedClasses)
+			if ok {
+				return res, implClassName, ok
+			}
 		}
 
 		if class.Parent == "" {
@@ -214,24 +236,6 @@ func FindConstant(className string, constName string) (res meta.ConstantInfo, im
 
 		className = class.Parent
 	}
-}
-
-// FindConstantInInterfaces is used to search class constants in implemented interfaces first.
-func FindConstantInInterfaces(class meta.ClassInfo, constName string) (res meta.ConstantInfo, implClassName string, ok bool) {
-	for ifaceName := range class.Interfaces {
-		iface, ok := meta.Info.GetClass(ifaceName)
-		if !ok {
-			continue
-		}
-
-		// interfaces do not (yet?) support inheritance, so no need for loops or recursion here
-		res, ok = iface.Constants[constName]
-		if ok {
-			return res, ifaceName, ok
-		}
-	}
-
-	return res, "", false
 }
 
 func identityType(typ string) map[string]struct{} {
