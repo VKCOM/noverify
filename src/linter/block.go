@@ -682,6 +682,46 @@ func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
 	return false
 }
 
+// checks whether or not we can access to className::method/property/constant/etc from this context
+func (b *BlockWalker) canAccess(className string, accessLevel meta.AccessLevel) bool {
+	switch accessLevel {
+	case meta.Private:
+		return b.r.st.CurrentClass == className
+	case meta.Protected:
+		if b.r.st.CurrentClass == className {
+			return true
+		}
+
+		// TODO: perhaps shpuld extract this common logic with visited map somewhere
+		visited := make(map[string]struct{}, 8)
+		parent := b.r.st.CurrentParentClass
+		for parent != "" {
+			if _, ok := visited[parent]; ok {
+				return false
+			}
+
+			visited[parent] = struct{}{}
+
+			if parent == className {
+				return true
+			}
+
+			class, ok := meta.Info.GetClass(parent)
+			if !ok {
+				return false
+			}
+
+			parent = class.Parent
+		}
+
+		return false
+	case meta.Public:
+		return true
+	}
+
+	panic("Invalid access level")
+}
+
 func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 	if !meta.IsIndexingComplete() {
 		return true
@@ -700,6 +740,7 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 		foundMethod bool
 		magic       bool
 		fn          meta.FuncInfo
+		implClass   string
 	)
 
 	exprType := solver.ExprType(b.sc, b.r.st, e.Variable)
@@ -709,7 +750,7 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 			return
 		}
 
-		fn, _, foundMethod = solver.FindMethod(typ, methodName)
+		fn, implClass, foundMethod = solver.FindMethod(typ, methodName)
 		magic = haveMagicMethod(typ, `__call`)
 	})
 
@@ -718,6 +759,10 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 
 	if !foundMethod && !magic && !b.r.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
 		b.r.Report(e.Method, LevelError, "Call to undefined method {%s}->%s()", exprType, methodName)
+	}
+
+	if foundMethod && !b.canAccess(implClass, fn.AccessLevel) {
+		b.r.Report(e.Method, LevelError, "Cannot access %s method %s->%s()", fn.AccessLevel, implClass, methodName)
 	}
 
 	b.handleCallArgs(e.Method, e.Arguments, fn)
@@ -745,13 +790,17 @@ func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
 		return true
 	}
 
-	fn, _, ok := solver.FindMethod(className, methodName)
+	fn, implClass, ok := solver.FindMethod(className, methodName)
 
 	e.Class.Walk(b)
 	e.Call.Walk(b)
 
 	if !ok && !haveMagicMethod(className, `__callStatic`) && !b.r.st.IsTrait {
 		b.r.Report(e.Call, LevelError, "Call to undefined method %s::%s()", className, methodName)
+	}
+
+	if ok && !b.canAccess(implClass, fn.AccessLevel) {
+		b.r.Report(e.Call, LevelError, "Cannot access %s method %s::%s()", fn.AccessLevel, implClass, methodName)
 	}
 
 	b.handleCallArgs(e.Call, e.Arguments, fn)
@@ -791,18 +840,24 @@ func (b *BlockWalker) handlePropertyFetch(e *expr.PropertyFetch) bool {
 
 	found := false
 	magic := false
+	var implClass string
+	var info meta.PropertyInfo
 
 	typ := solver.ExprType(b.sc, b.r.st, e.Variable)
 	typ.Iterate(func(className string) {
 		if found || magic {
 			return
 		}
-		_, _, found = solver.FindProperty(className, id.Value)
+		info, implClass, found = solver.FindProperty(className, id.Value)
 		magic = haveMagicMethod(className, `__get`)
 	})
 
 	if !found && !magic && !b.r.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
 		b.r.Report(e.Property, LevelError, "Property {%s}->%s does not exist", typ, id.Value)
+	}
+
+	if found && !b.canAccess(implClass, info.AccessLevel) {
+		b.r.Report(e.Property, LevelError, "Cannot access %s property %s->%s", info.AccessLevel, implClass, id.Value)
 	}
 
 	return false
@@ -830,9 +885,13 @@ func (b *BlockWalker) handleStaticPropertyFetch(e *expr.StaticPropertyFetch) boo
 		return false
 	}
 
-	_, _, ok = solver.FindProperty(className, "$"+varName.Value)
+	info, implClass, ok := solver.FindProperty(className, "$"+varName.Value)
 	if !ok && !b.r.st.IsTrait {
-		b.r.Report(e.Property, LevelError, "Property does not exist")
+		b.r.Report(e.Property, LevelError, "Property %s::$%s does not exist", className, varName.Value)
+	}
+
+	if ok && !b.canAccess(implClass, info.AccessLevel) {
+		b.r.Report(e.Property, LevelError, "Cannot access %s property %s::$%s", info.AccessLevel, implClass, varName.Value)
 	}
 
 	return false
@@ -862,12 +921,16 @@ func (b *BlockWalker) handleClassConstFetch(e *expr.ClassConstFetch) bool {
 		return false
 	}
 
-	_, _, ok = solver.FindConstant(className, constName.Value)
+	info, implClass, ok := solver.FindConstant(className, constName.Value)
 
 	e.Class.Walk(b)
 
 	if !ok && !b.r.st.IsTrait {
-		b.r.Report(e.ConstantName, LevelError, "Class constant does not exist")
+		b.r.Report(e.ConstantName, LevelError, "Class constant %s::%s does not exist", className, constName.Value)
+	}
+
+	if ok && !b.canAccess(implClass, info.AccessLevel) {
+		b.r.Report(e.ConstantName, LevelError, "Cannot access %s constant %s::%s", info.AccessLevel, implClass, constName.Value)
 	}
 
 	return false

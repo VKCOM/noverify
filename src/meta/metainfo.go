@@ -268,6 +268,7 @@ type FuncInfo struct {
 	Params       []FuncParam
 	MinParamsCnt int
 	Typ          *TypesMap
+	AccessLevel  AccessLevel
 	ExitFlags    int // if function has exit/die/throw, then ExitFlags will be <> 0
 }
 
@@ -280,6 +281,27 @@ const (
 	OverrideElementType
 )
 
+type AccessLevel int
+
+const (
+	Public AccessLevel = iota
+	Protected
+	Private
+)
+
+func (l AccessLevel) String() string {
+	switch l {
+	case Public:
+		return "public"
+	case Protected:
+		return "protected"
+	case Private:
+		return "private"
+	}
+
+	panic("Invalid access level")
+}
+
 // FuncInfoOverride defines return type overrides based on their parameter types.
 // For example, \array_slice($arr) returns type of element (OverrideElementType) of the ArgNum=0
 type FuncInfoOverride struct {
@@ -288,13 +310,15 @@ type FuncInfoOverride struct {
 }
 
 type PropertyInfo struct {
-	Pos ElementPosition
-	Typ *TypesMap
+	Pos         ElementPosition
+	Typ         *TypesMap
+	AccessLevel AccessLevel
 }
 
 type ConstantInfo struct {
-	Pos ElementPosition
-	Typ *TypesMap
+	Pos         ElementPosition
+	Typ         *TypesMap
+	AccessLevel AccessLevel
 }
 
 type ClassInfo struct {

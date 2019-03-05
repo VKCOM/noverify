@@ -468,15 +468,15 @@ func (d *RootWalker) addScope(n node.Node, sc *meta.Scope) {
 }
 
 type methodModifiers struct {
-	abstract  bool
-	static    bool
-	public    bool
-	private   bool
-	protected bool
-	final     bool
+	abstract    bool
+	static      bool
+	accessLevel meta.AccessLevel
+	final       bool
 }
 
 func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodModifiers) {
+	res.accessLevel = meta.Public
+
 	for _, m := range meth.Modifiers {
 		switch v := m.(*node.Identifier).Value; v {
 		case "abstract":
@@ -484,11 +484,11 @@ func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodMod
 		case "static":
 			res.static = true
 		case "public":
-			res.public = true
+			res.accessLevel = meta.Public
 		case "private":
-			res.private = true
+			res.accessLevel = meta.Private
 		case "protected":
-			res.protected = true
+			res.accessLevel = meta.Protected
 		case "final":
 			res.final = true
 		default:
@@ -537,10 +537,16 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 	cl := d.getClass()
 
 	isStatic := false
+	accessLevel := meta.Public
 
 	for _, m := range pl.Modifiers {
 		switch m.(*node.Identifier).Value {
-		// TODO: use info such as "public", etc
+		case "public":
+			accessLevel = meta.Public
+		case "protected":
+			accessLevel = meta.Protected
+		case "private":
+			accessLevel = meta.Private
 		case "static":
 			isStatic = true
 		}
@@ -566,8 +572,9 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 
 		// TODO: handle duplicate property
 		cl.Properties[nm] = meta.PropertyInfo{
-			Pos: d.getElementPos(p),
-			Typ: typ.Immutable(),
+			Pos:         d.getElementPos(p),
+			Typ:         typ.Immutable(),
+			AccessLevel: accessLevel,
 		}
 	}
 
@@ -576,8 +583,19 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 
 func (d *RootWalker) enterClassConstList(s *stmt.ClassConstList) bool {
 	cl := d.getClass()
+	accessLevel := meta.Public
 
-	// TODO: use modifiers
+	for _, m := range s.Modifiers {
+		switch m.(*node.Identifier).Value {
+		case "public":
+			accessLevel = meta.Public
+		case "protected":
+			accessLevel = meta.Protected
+		case "private":
+			accessLevel = meta.Private
+		}
+	}
+
 	for _, cNode := range s.Consts {
 		c := cNode.(*stmt.Constant)
 
@@ -586,8 +604,9 @@ func (d *RootWalker) enterClassConstList(s *stmt.ClassConstList) bool {
 
 		// TODO: handle duplicate constant
 		cl.Constants[nm] = meta.ConstantInfo{
-			Pos: d.getElementPos(c),
-			Typ: typ.Immutable(),
+			Pos:         d.getElementPos(c),
+			Typ:         typ.Immutable(),
+			AccessLevel: accessLevel,
 		}
 	}
 
@@ -633,6 +652,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 		Pos:          d.getElementPos(meth),
 		Typ:          meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType).Immutable(),
 		MinParamsCnt: minParamsCnt,
+		AccessLevel:  modif.accessLevel,
 		ExitFlags:    exitFlags,
 	}
 

@@ -45,7 +45,7 @@ func TestInheritanceLoop(t *testing.T) {
 		t.Errorf("Unexpected number of reports: expected 1, got %d", len(reports))
 	}
 
-	if !hasReport(reports, "Class constant does not exist") {
+	if !hasReport(reports, "Class constant \\A::SOMETHING does not exist") {
 		t.Errorf("Class contant SOMETHING must be missing")
 	}
 
@@ -282,8 +282,99 @@ func TestInterfaceInheritance(t *testing.T) {
 		t.Errorf("Must be an error about call to format of undefined")
 	}
 
-	if !hasReport(reports, "Class constant does not exist") {
+	if !hasReport(reports, "Class constant \\TestExInterface::TEST2 does not exist") {
 		t.Errorf("Must be an error about missing class constant TEST2")
+	}
+
+	for _, r := range reports {
+		log.Printf("%s", r)
+	}
+}
+
+func TestProtected(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	class A {
+		private $priv;
+
+		protected $prop;
+		protected $prop2;
+		protected static $static_prop;
+		protected static $static_prop2;
+		protected const C = 1;
+		protected const C2 = 1;
+		protected static function staticMethod() { }
+		protected static function staticMethod2() { }
+		protected function method() { }
+		protected function methodFromClosure() { }
+		protected function method2() { }
+		protected function methodFromClosure2() { }
+	}
+
+	class B extends A {
+		private $privB;
+
+		public function okContext() {
+			echo $this->priv;
+			echo $this->privB;
+			echo $this->prop;
+			echo self::$static_prop;
+			echo self::C;
+			echo self::staticMethod();
+			echo $this->method();
+
+			(function() { echo $this->methodFromClosure(); })();
+		}
+	}
+
+	class D {
+
+	}
+
+	class C extends D {
+		public function wrongContext() {
+			$instance = new B;
+
+			echo $instance->prop2;
+			echo B::$static_prop2;
+			echo B::C2;
+			echo B::staticMethod2();
+			echo $instance->method2();
+
+			(function() use($instance) { echo $instance->methodFromClosure2(); })();
+		}
+	}
+	`)
+
+	if len(reports) != 7 {
+		t.Errorf("Unexpected number of reports: expected 5, got %d", len(reports))
+	}
+
+	if !hasReport(reports, `Cannot access private property \A->priv`) {
+		t.Errorf("Must be an error about access to private property")
+	}
+
+	if !hasReport(reports, `Cannot access protected property \A->prop2`) {
+		t.Errorf("Must be an error about access to property")
+	}
+
+	if !hasReport(reports, `Cannot access protected property \A::$static_prop2`) {
+		t.Errorf("Must be an error about access to static property")
+	}
+
+	if !hasReport(reports, `Cannot access protected constant \A::C2`) {
+		t.Errorf("Must be an error about access to constant")
+	}
+
+	if !hasReport(reports, `Cannot access protected method \A->method2()`) {
+		t.Errorf("Must be an error about call to method")
+	}
+
+	if !hasReport(reports, `Cannot access protected method \A->methodFromClosure2()`) {
+		t.Errorf("Must be an error about call to method from inside a closure")
+	}
+
+	if !hasReport(reports, `Cannot access protected method \A::staticMethod2()`) {
+		t.Errorf("Must be an error about call to static method")
 	}
 
 	for _, r := range reports {
