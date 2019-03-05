@@ -5,7 +5,9 @@ It allows to write your own rules as well and it has no config: all reports
 it generates are potential errors that must be fixed, or some PHPDoc annotations
 must be written.
 
-NoVerify aims to understand PHP code at least as well as PHPStorm does, which is
+This tool is written in Go (https://golang.org/) using PHP parser from z7zmey (https://github.com/z7zmey/php-parser).
+
+It aims to understand PHP code at least as well as PHPStorm does, which is
 not an easy task. Please open issues for any behaviour you find to be incorrect or
 suboptimal.
 
@@ -31,6 +33,7 @@ NoVerify by default has the following checks:
 - Case without "break;"
 - Syntax error
 - Unused variable
+- Incorrect access to private/protected elements
 
 ## Custom lints
 
