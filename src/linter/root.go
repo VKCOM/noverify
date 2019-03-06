@@ -647,13 +647,33 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	d.addScope(meth, sc)
 
 	// TODO: handle duplicate method
-	d.getClass().Methods[nm] = meta.FuncInfo{
+	class := d.getClass()
+	typ := meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType).Immutable()
+
+	class.Methods[nm] = meta.FuncInfo{
 		Params:       params,
 		Pos:          d.getElementPos(meth),
-		Typ:          meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType).Immutable(),
+		Typ:          typ,
 		MinParamsCnt: minParamsCnt,
 		AccessLevel:  modif.accessLevel,
 		ExitFlags:    exitFlags,
+	}
+
+	if meta.IsIndexingComplete() && solver.Implements(d.st.CurrentClass, `\IteratorAggregate`) {
+		implementsTraversable := false
+		typ.Iterate(func(typ string) {
+			if implementsTraversable {
+				return
+			}
+
+			if solver.Implements(typ, `\Traversable`) {
+				implementsTraversable = true
+			}
+		})
+
+		if !implementsTraversable {
+			d.Report(meth.MethodName, LevelError, "Objects returned by %s::getIterator() must be traversable or implement interface \\Iterator", d.st.CurrentClass)
+		}
 	}
 
 	return false

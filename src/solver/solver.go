@@ -170,6 +170,8 @@ func FindProperty(className string, propertyName string) (res meta.PropertyInfo,
 
 // Implements checks if className implements interfaceName
 func Implements(className string, interfaceName string) bool {
+	visited := make(map[string]struct{}, 8)
+
 	for {
 		class, ok := meta.Info.GetClass(className)
 		if !ok {
@@ -181,12 +183,44 @@ func Implements(className string, interfaceName string) bool {
 			return true
 		}
 
+		for iface := range class.Interfaces {
+			if interfaceExtends(iface, interfaceName, visited) {
+				return true
+			}
+		}
+
 		if class.Parent == "" {
 			return false
 		}
 
 		className = class.Parent
 	}
+}
+
+// interfaceExtends checks if interface orig extends interface parent
+func interfaceExtends(orig string, parent string, visited map[string]struct{}) bool {
+	if _, ok := visited[orig]; ok {
+		return false
+	}
+
+	visited[orig] = struct{}{}
+
+	class, ok := meta.Info.GetClass(orig)
+	if !ok {
+		return false
+	}
+
+	for _, iface := range class.ParentInterfaces {
+		if iface == parent {
+			return true
+		}
+
+		if interfaceExtends(iface, parent, visited) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // FindConstant searches for a costant in specified class and returns actual class that contains the constant.

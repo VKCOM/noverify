@@ -407,3 +407,45 @@ func TestInvoke(t *testing.T) {
 		log.Printf("%s", r)
 	}
 }
+
+func TestTraversable(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	interface Traversable {}
+	interface Iterator extends Traversable {}
+	interface IteratorAggregate extends Traversable {}
+	interface SeekableIterator extends Iterator, SeekableIterator {} // test for loop detection
+	class ArrayIterator implements SeekableIterator {}
+
+	class Example implements \IteratorAggregate
+	{
+	   public function getIterator()
+	   {
+		   return [1, 2, 3];
+	   }
+	}
+
+	class ExampleGood implements \IteratorAggregate
+	{
+		public function getIterator()
+		{
+			return new ArrayIterator([1, 2, 3]);
+		}
+	}
+
+	foreach (new Example() as $i) {
+	   echo $i;
+	}
+	`)
+
+	if len(reports) != 1 {
+		t.Errorf("Unexpected number of reports: expected 1, got %d", len(reports))
+	}
+
+	if !hasReport(reports, `Objects returned by \Example::getIterator() must be traversable or implement interface \Iterator`) {
+		t.Errorf("Must be an error about getIterator()")
+	}
+
+	for _, r := range reports {
+		log.Printf("%s", r)
+	}
+}
