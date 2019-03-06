@@ -418,14 +418,23 @@ func TestTraversable(t *testing.T) {
 
 	class Example implements \IteratorAggregate
 	{
-	   public function getIterator()
-	   {
-		   return [1, 2, 3];
-	   }
+		public function someFunc()
+		{
+			return 1;
+		}
+
+		public function getIterator()
+		{
+			return [1, 2, 3];
+		}
 	}
 
 	class ExampleGood implements \IteratorAggregate
 	{
+		public function someFunc() {
+			return 1;
+		}
+
 		public function getIterator()
 		{
 			return new ArrayIterator([1, 2, 3]);
