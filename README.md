@@ -34,6 +34,7 @@ NoVerify by default has the following checks:
 - Syntax error
 - Unused variable
 - Incorrect access to private/protected elements
+- Incorrect implementation of IteratorAggregate interface
 
 ## Custom lints
 
