@@ -662,7 +662,18 @@ func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
 		case *name.FullyQualified:
 			fn, defined = meta.Info.GetFunction(meta.FullyQualifiedToString(nm))
 		default:
-			canAnalyze = false
+			defined = false
+
+			solver.ExprType(b.sc, b.r.st, nm).Iterate(func(typ string) {
+				if defined {
+					return
+				}
+				fn, _, defined = solver.FindMethod(typ, `__invoke`)
+			})
+
+			if !defined {
+				canAnalyze = false
+			}
 		}
 
 		if !canAnalyze {

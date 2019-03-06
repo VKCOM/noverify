@@ -1,7 +1,6 @@
 package meta
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 
@@ -433,7 +432,7 @@ func NameNodeToString(n node.Node) string {
 	case *node.Identifier:
 		return n.Value
 	default:
-		panic(fmt.Errorf("Unexpected type: %T", n))
+		return "<expression>"
 	}
 }
 

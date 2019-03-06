@@ -381,3 +381,29 @@ func TestProtected(t *testing.T) {
 		log.Printf("%s", r)
 	}
 }
+
+func TestInvoke(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	class Example
+	{
+		public function __invoke($argument)
+		{
+			return 42;
+		}
+	}
+
+	(new Example())();
+	`)
+
+	if len(reports) != 1 {
+		t.Errorf("Unexpected number of reports: expected 1, got %d", len(reports))
+	}
+
+	if !hasReport(reports, `Too few arguments`) {
+		t.Errorf("Must be an error about too few arguments to expression")
+	}
+
+	for _, r := range reports {
+		log.Printf("%s", r)
+	}
+}
