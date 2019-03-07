@@ -2,6 +2,7 @@ package linter
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
@@ -11,6 +12,7 @@ import (
 	"github.com/z7zmey/php-parser/node"
 	"github.com/z7zmey/php-parser/node/expr"
 	"github.com/z7zmey/php-parser/node/expr/assign"
+	"github.com/z7zmey/php-parser/node/expr/binary"
 	"github.com/z7zmey/php-parser/node/name"
 	"github.com/z7zmey/php-parser/node/stmt"
 	"github.com/z7zmey/php-parser/walker"
@@ -55,7 +57,8 @@ type BlockWalker struct {
 	rootLevel            bool // analysing root-level code
 
 	// state
-	statements map[node.Node]struct{}
+	statements  map[node.Node]struct{}
+	customTypes []solver.CustomType
 
 	// shared state between all blocks
 	unusedVars   map[string][]node.Node
@@ -143,6 +146,11 @@ func (b *BlockWalker) copy() *BlockWalker {
 	for _, createFn := range b.r.customBlock {
 		bCopy.custom = append(bCopy.custom, createFn(bCopy))
 	}
+
+	for _, c := range b.customTypes {
+		bCopy.customTypes = append(bCopy.customTypes, c)
+	}
+
 	return bCopy
 }
 
@@ -215,7 +223,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		for _, vv := range s.Vars {
 			v := vv.(*stmt.StaticVar)
 			ev := v.Variable.(*expr.Variable)
-			b.addVar(ev, solver.ExprTypeLocal(b.sc, b.r.st, v.Expr), "static", true)
+			b.addVar(ev, solver.ExprTypeLocalCustom(b.sc, b.r.st, v.Expr, b.customTypes), "static", true)
 			b.addNonLocalVar(ev)
 			if v.Expr != nil {
 				v.Expr.Walk(b)
@@ -308,7 +316,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		}
 		res = b.enterClosure(s, isInstance, typ)
 	case *stmt.Return:
-		solver.ExprTypeLocal(b.sc, b.r.st, s.Expr).Iterate(func(t string) {
+		solver.ExprTypeLocalCustom(b.sc, b.r.st, s.Expr, b.customTypes).Iterate(func(t string) {
 			b.returnTypes = b.returnTypes.AppendString(t)
 		})
 	default:
@@ -664,7 +672,7 @@ func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
 		default:
 			defined = false
 
-			solver.ExprType(b.sc, b.r.st, nm).Iterate(func(typ string) {
+			solver.ExprTypeCustom(b.sc, b.r.st, nm, b.customTypes).Iterate(func(typ string) {
 				if defined {
 					return
 				}
@@ -754,7 +762,9 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 		implClass   string
 	)
 
-	exprType := solver.ExprType(b.sc, b.r.st, e.Variable)
+	log.Printf("Method call: %s, custom types: %+v", methodName, b.customTypes)
+
+	exprType := solver.ExprTypeCustom(b.sc, b.r.st, e.Variable, b.customTypes)
 
 	exprType.Iterate(func(typ string) {
 		if foundMethod || magic {
@@ -854,7 +864,7 @@ func (b *BlockWalker) handlePropertyFetch(e *expr.PropertyFetch) bool {
 	var implClass string
 	var info meta.PropertyInfo
 
-	typ := solver.ExprType(b.sc, b.r.st, e.Variable)
+	typ := solver.ExprTypeCustom(b.sc, b.r.st, e.Variable, b.customTypes)
 	typ.Iterate(func(className string) {
 		if found || magic {
 			return
@@ -988,7 +998,7 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 	// expression is always executed and is executed in base context
 	if s.Expr != nil {
 		s.Expr.Walk(b)
-		solver.ExprTypeLocal(b.sc, b.r.st, s.Expr).Iterate(func(typ string) {
+		solver.ExprTypeLocalCustom(b.sc, b.r.st, s.Expr, b.customTypes).Iterate(func(typ string) {
 			b.handleVariableNode(s.Variable, meta.NewTypesMap(meta.WrapElemOf(typ)), "foreach_value")
 		})
 	}
@@ -1148,12 +1158,36 @@ func (b *BlockWalker) propagateFlagsFromBranches(contexts []*BlockWalker, linksC
 	}
 }
 
+// andWalker walks through all expressions with && and does not enter deeper
+type andWalker struct {
+	issets      []*expr.Isset
+	instanceOfs []*expr.InstanceOf
+}
+
+func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
+	switch n := w.(type) {
+	case *binary.BooleanAnd:
+		return true
+	case *expr.Isset:
+		a.issets = append(a.issets, n)
+	case *expr.InstanceOf:
+		a.instanceOfs = append(a.instanceOfs, n)
+	}
+	return false
+}
+
+func (a *andWalker) GetChildrenVisitor(key string) walker.Visitor { return a }
+func (a *andWalker) LeaveNode(w walker.Walkable)                  {}
+
 func (b *BlockWalker) handleIf(s *stmt.If) bool {
 	// first condition is always executed, so run it in base context
 	if s.Cond != nil {
-		s.Cond.Walk(b)
+		a := &andWalker{}
 
-		if isset, ok := s.Cond.(*expr.Isset); ok {
+		s.Cond.Walk(b)
+		s.Cond.Walk(a)
+
+		for _, isset := range a.issets {
 			for _, v := range isset.Variables {
 				if v, ok := v.(*expr.Variable); ok {
 					if !b.sc.HaveVar(v) {
@@ -1164,11 +1198,17 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 			}
 		}
 
-		if instanceof, ok := s.Cond.(*expr.InstanceOf); ok {
-			if v, ok := instanceof.Expr.(*expr.Variable); ok {
-				if className, ok := solver.GetClassName(b.r.st, instanceof.Class); ok {
+		for _, instanceof := range a.instanceOfs {
+			if className, ok := solver.GetClassName(b.r.st, instanceof.Class); ok {
+				if v, ok := instanceof.Expr.(*expr.Variable); ok {
 					b.addVar(v, meta.NewTypesMap(className), "instanceof", false)
+				} else {
+					b.customTypes = append(b.customTypes, solver.CustomType{
+						Node: instanceof.Expr,
+						Typ:  meta.NewTypesMap(className),
+					})
 				}
+				// TODO: actually this needs to be present inside if body only
 			}
 		}
 	}
@@ -1481,7 +1521,7 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 		cls := b.r.getClass()
 
 		p := cls.Properties[propertyName.Value]
-		p.Typ = p.Typ.Append(solver.ExprTypeLocal(b.sc, b.r.st, a.Expression))
+		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.sc, b.r.st, a.Expression, b.customTypes))
 		cls.Properties[propertyName.Value] = p
 	case *expr.StaticPropertyFetch:
 		if b.r.st.CurrentClass == "" {
@@ -1506,7 +1546,7 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 		cls := b.r.getClass()
 
 		p := cls.Properties["$"+id.Value]
-		p.Typ = p.Typ.Append(solver.ExprTypeLocal(b.sc, b.r.st, a.Expression))
+		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.sc, b.r.st, a.Expression, b.customTypes))
 		cls.Properties["$"+id.Value] = p
 	default:
 		a.Variable.Walk(b)

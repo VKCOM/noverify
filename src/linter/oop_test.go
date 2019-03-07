@@ -458,3 +458,69 @@ func TestTraversable(t *testing.T) {
 		log.Printf("%s", r)
 	}
 }
+
+func TestInstanceOf(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	class Element {
+		public function get(): int {
+			return 0;
+		}
+
+		public function get2(): int {
+			return 0;
+		}
+	}
+
+	function doSomething($param) {}
+
+	class Test {
+		private $arr = [];
+
+		public function simple($obj) {
+			if ($obj instanceof Element) {
+				return $obj->get();
+			}
+		}
+
+		public function complexProp($key) {
+			if (isset($this->arr[$key]) && $this->arr[$key] instanceof Element) {
+				return $this->arr[$key]->get();
+			}
+		}
+
+		public function complexCall($key) {
+			if (doSomething($key) instanceof Element) {
+				return doSomething($key)->get();
+			}
+		}
+
+		public function invalidComplexCall($key) {
+			if (doSomething($key) instanceof Element) {
+				return doSomething($key . 'test')->get2();
+			}
+		}
+
+		public function invalid($obj) {
+			if ($obj instanceof Element) {
+				return $obj->callUndefinedMethod();
+			}
+		}
+	}
+	`)
+
+	if len(reports) != 2 {
+		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
+	}
+
+	if !hasReport(reports, `Call to undefined method {}->get2()`) {
+		t.Errorf("Must be an error in invalidComplexCall()")
+	}
+
+	if !hasReport(reports, `Call to undefined method {\Element}->callUndefinedMethod()`) {
+		t.Errorf("Must be an error in invalid()")
+	}
+
+	for _, r := range reports {
+		log.Printf("%s", r)
+	}
+}
