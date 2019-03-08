@@ -35,6 +35,7 @@ NoVerify by default has the following checks:
 - Unused variable
 - Incorrect access to private/protected elements
 - Incorrect implementation of IteratorAggregate interface
+- Incorrect array definition, e.g. duplicate keys
 
 ## Custom lints
 
