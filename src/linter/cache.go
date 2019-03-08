@@ -126,6 +126,13 @@ func createMetaCacheFile(filename, cacheFile string, m *fileMeta) error {
 	if err := wr.Flush(); err != nil {
 		return err
 	}
+	
+	// Windows clearly does not want to allow to rename unclosed files
+	if runtime.GOOS == "windows" {
+		fp.Close()
+		os.Remove(cacheFile)
+	}
+
 
 	if err := os.Rename(tmpPath, cacheFile); err != nil {
 		return err
