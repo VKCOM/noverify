@@ -433,3 +433,51 @@ func TestAllowAssignmentInForLoop(t *testing.T) {
 		log.Printf("%s", r)
 	}
 }
+
+func TestDuplicateArrayKey(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	function test() {
+	  return [
+		  'key1' => 'something',
+		  'key2' => 'other_thing',
+		  'key1' => 'third_thing', // duplicate
+	  ];
+	}
+	`)
+
+	if len(reports) != 1 {
+		t.Errorf("Unexpected number of reports: expected 1, got %d", len(reports))
+	}
+
+	if !hasReport(reports, "Duplicate array key 'key1'") {
+		t.Errorf("No error about duplicate array key 'key1'")
+	}
+
+	for _, r := range reports {
+		log.Printf("%s", r)
+	}
+}
+
+func TestMixedArrayKeys(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	function test() {
+	  return [
+		  'something',
+		  'key2' => 'other_thing',
+		  'key3' => 'third_thing',
+	  ];
+	}
+	`)
+
+	if len(reports) != 1 {
+		t.Errorf("Unexpected number of reports: expected 1, got %d", len(reports))
+	}
+
+	if !hasReport(reports, "Mixing implicit and explicit array keys") {
+		t.Errorf("No error about mixed keys")
+	}
+
+	for _, r := range reports {
+		log.Printf("%s", r)
+	}
+}

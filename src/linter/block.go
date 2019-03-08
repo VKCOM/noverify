@@ -2,7 +2,6 @@ package linter
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
@@ -14,6 +13,7 @@ import (
 	"github.com/z7zmey/php-parser/node/expr/assign"
 	"github.com/z7zmey/php-parser/node/expr/binary"
 	"github.com/z7zmey/php-parser/node/name"
+	"github.com/z7zmey/php-parser/node/scalar"
 	"github.com/z7zmey/php-parser/node/stmt"
 	"github.com/z7zmey/php-parser/walker"
 )
@@ -245,6 +245,10 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		res = b.handleAssign(s)
 	case *assign.Reference:
 		res = b.handleAssignReference(s)
+	case *expr.Array:
+		res = b.handleArrayItems(s, s.Items)
+	case *expr.ShortArray:
+		res = b.handleArrayItems(s, s.Items)
 	case *stmt.Foreach:
 		res = b.handleForeach(s)
 	case *stmt.For:
@@ -762,8 +766,6 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 		implClass   string
 	)
 
-	log.Printf("Method call: %s, custom types: %+v", methodName, b.customTypes)
-
 	exprType := solver.ExprTypeCustom(b.sc, b.r.st, e.Variable, b.customTypes)
 
 	exprType.Iterate(func(typ string) {
@@ -916,6 +918,55 @@ func (b *BlockWalker) handleStaticPropertyFetch(e *expr.StaticPropertyFetch) boo
 	}
 
 	return false
+}
+
+func (b *BlockWalker) handleArrayItems(arr node.Node, items []node.Node) bool {
+	haveKeys := false
+	haveImplicitKeys := false
+	keys := make(map[string]struct{}, len(items))
+
+	for _, itemNode := range items {
+		item, ok := itemNode.(*expr.ArrayItem)
+		if !ok {
+			// TODO: it is possible at all here?
+			continue
+		}
+
+		if item.Key == nil {
+			haveImplicitKeys = true
+			continue
+		}
+
+		haveKeys = true
+
+		var key string
+		var constKey bool
+
+		switch k := item.Key.(type) {
+		case *scalar.String:
+			key = strings.TrimFunc(k.Value, isQuote)
+			constKey = true
+		case *scalar.Lnumber:
+			key = k.Value
+			constKey = true
+		}
+
+		if !constKey {
+			continue
+		}
+
+		if _, ok := keys[key]; ok {
+			b.Report(item.Key, LevelWarning, "Duplicate array key '%s'", key)
+		}
+
+		keys[key] = struct{}{}
+	}
+
+	if haveImplicitKeys && haveKeys {
+		b.Report(arr, LevelWarning, "Mixing implicit and explicit array keys")
+	}
+
+	return true
 }
 
 func haveMagicMethod(class string, methodName string) bool {
