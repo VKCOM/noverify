@@ -188,9 +188,7 @@ func compileRegexes() {
 
 // Not the best name, and not the best function signature.
 // Refactor this function whenever you get the idea how to separate logic better.
-func gitRepoComputeReportsFromCommits() (oldReports, reports []*linter.Report, diffArgs []string, changes []git.Change, changeLog []git.Commit, ok bool) {
-	logArgs, diffArgs := prepareGitArgs()
-
+func gitRepoComputeReportsFromCommits(logArgs, diffArgs []string) (oldReports, reports []*linter.Report, changes []git.Change, changeLog []git.Commit, ok bool) {
 	start := time.Now()
 	changeLog, err := git.Log(gitRepo, logArgs)
 	if err != nil {
@@ -198,7 +196,7 @@ func gitRepoComputeReportsFromCommits() (oldReports, reports []*linter.Report, d
 	}
 
 	if shouldRun := analyzeGitAuthorsWhiteList(changeLog); !shouldRun {
-		return nil, nil, nil, nil, nil, false
+		return nil, nil, nil, nil, false
 	}
 
 	changes, err = git.Diff(gitRepo, "", diffArgs)
@@ -254,7 +252,7 @@ func gitRepoComputeReportsFromCommits() (oldReports, reports []*linter.Report, d
 		log.Printf("Parsed new file versions in %s", time.Since(start))
 	}
 
-	return oldReports, reports, diffArgs, changes, changeLog, true
+	return oldReports, reports, changes, changeLog, true
 }
 
 func gitRepoComputeReportsFromLocalChanges() (oldReports, reports []*linter.Report, changes []git.Change, ok bool) {
@@ -262,10 +260,8 @@ func gitRepoComputeReportsFromLocalChanges() (oldReports, reports []*linter.Repo
 		return nil, nil, nil, false
 	}
 
-	currentCommit := "HEAD"
-
-	// compute changes for working copy (staged + unstaged changes combined)
-	changes, err := git.Diff(gitRepo, gitWorkTree, []string{currentCommit})
+	// compute changes for working copy (staged + unstaged changes combined starting with the commit being pushed)
+	changes, err := git.Diff(gitRepo, gitWorkTree, []string{gitCommitFrom})
 	if err != nil {
 		log.Fatalf("Could not compute git diff: %s", err.Error())
 	}
@@ -274,16 +270,16 @@ func gitRepoComputeReportsFromLocalChanges() (oldReports, reports []*linter.Repo
 		return nil, nil, nil, false
 	}
 
-	log.Printf("You have changes in your work tree, showing only diff between current HEAD and work tree")
+	log.Printf("You have changes in your work tree, showing diff between %s and work tree", gitCommitFrom)
 
 	start := time.Now()
-	linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, currentCommit, nil))
+	linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitFrom, nil))
 	log.Printf("Indexing complete in %s", time.Since(start))
 
 	meta.SetIndexingComplete(true)
 
 	start = time.Now()
-	oldReports = linter.ParseFilenames(linter.ReadOldFilesFromGit(gitRepo, currentCommit, changes))
+	oldReports = linter.ParseFilenames(linter.ReadOldFilesFromGit(gitRepo, gitCommitFrom, changes))
 	log.Printf("Parsed old files versions for %s", time.Since(start))
 
 	start = time.Now()
@@ -308,9 +304,12 @@ func gitMain() {
 		ok                  bool
 	)
 
+	// prepareGitArgs also populates global variables like fromCommit
+	logArgs, diffArgs := prepareGitArgs()
+
 	oldReports, reports, changes, ok = gitRepoComputeReportsFromLocalChanges()
 	if !ok {
-		oldReports, reports, diffArgs, changes, changeLog, ok = gitRepoComputeReportsFromCommits()
+		oldReports, reports, changes, changeLog, ok = gitRepoComputeReportsFromCommits(logArgs, diffArgs)
 		if !ok {
 			return
 		}
@@ -416,9 +415,6 @@ func prepareGitArgs() (logArgs, diffArgs []string) {
 
 	logArgs = []string{gitCommitFrom + ".." + gitCommitTo}
 	diffArgs = []string{gitCommitFrom + ".." + gitCommitTo}
-
-	log.Printf("logArgs: %+v", logArgs)
-	log.Printf("diffArgs: %+v", diffArgs)
 
 	return logArgs, diffArgs
 }
