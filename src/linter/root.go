@@ -1045,11 +1045,12 @@ func (d *RootWalker) handleOverride(s *expr.FunctionCall) bool {
 	}
 
 	var overrideTyp meta.OverrideType
-	if meta.NameEquals(overrideNameNode, `type`) {
+	switch {
+	case meta.NameEquals(overrideNameNode, `type`):
 		overrideTyp = meta.OverrideArgType
-	} else if meta.NameEquals(overrideNameNode, `elementType`) {
+	case meta.NameEquals(overrideNameNode, `elementType`):
 		overrideTyp = meta.OverrideElementType
-	} else {
+	default:
 		return true
 	}
 

@@ -135,13 +135,14 @@ func (o *ObjectCatter) Walk(dir string, treeSHA1 string, filenameFilter func(fil
 	for pos < len(obj.Contents) {
 		typ := obj.Contents[pos]
 		pos++
-		if typ == fileTyp {
+		switch typ {
+		case fileTyp:
 			typeBuf = obj.Contents[pos : pos+fileLen]
 			pos += fileLen
-		} else if typ == dirTyp {
+		case dirTyp:
 			typeBuf = obj.Contents[pos : pos+dirLen]
 			pos += dirLen
-		} else {
+		default:
 			return fmt.Errorf("Unknown typ: %c", typ)
 		}
 		pos++ // space
