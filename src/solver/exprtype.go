@@ -89,11 +89,12 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ex
 
 func arrayType(items []node.Node) *meta.TypesMap {
 	if len(items) > 0 {
-		if isConstantStringArray(items) {
+		switch {
+		case isConstantStringArray(items):
 			return meta.NewTypesMap("string[]")
-		} else if isConstantIntArray(items) {
+		case isConstantIntArray(items):
 			return meta.NewTypesMap("int[]")
-		} else if isConstantFloatArray(items) {
+		case isConstantFloatArray(items):
 			return meta.NewTypesMap("double[]")
 		}
 	}

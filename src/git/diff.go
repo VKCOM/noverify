@@ -205,15 +205,17 @@ func parseDiff(rd *bufio.Reader) ([]Change, error) {
 
 	for {
 		ln, skip, err := readShortLine(rd)
-		if err == io.EOF {
+		switch {
+		case err == io.EOF:
 			break
-		} else if err != nil {
+		case err != nil:
 			return nil, err
-		} else if skip {
+		case skip:
 			continue
 		}
 
-		if bytes.HasPrefix(ln, diffOldPrefix) {
+		switch {
+		case bytes.HasPrefix(ln, diffOldPrefix):
 			if cur.OldName != "" {
 				res = append(res, cur)
 				cur.OldName = ""
@@ -224,9 +226,9 @@ func parseDiff(rd *bufio.Reader) ([]Change, error) {
 			}
 
 			cur.parseOld(ln)
-		} else if bytes.HasPrefix(ln, diffNewPrefix) {
+		case bytes.HasPrefix(ln, diffNewPrefix):
 			cur.parseNew(ln)
-		} else if bytes.HasPrefix(ln, patchHeaderPrefix2) && bytes.Contains(ln, patchHeaderSuffix2) {
+		case bytes.HasPrefix(ln, patchHeaderPrefix2) && bytes.Contains(ln, patchHeaderSuffix2):
 			trimmed := bytes.TrimPrefix(ln, patchHeaderPrefix2)
 			suffixIdx := bytes.Index(trimmed, patchHeaderSuffix2)
 			if suffixIdx < 0 {
@@ -235,7 +237,7 @@ func parseDiff(rd *bufio.Reader) ([]Change, error) {
 			if err := cur.parsePatchHeader(trimmed[0:suffixIdx]); err != nil {
 				return nil, err
 			}
-		} else if bytes.HasPrefix(ln, patchHeaderPrefix3) && bytes.Contains(ln, patchHeaderSuffix3) {
+		case bytes.HasPrefix(ln, patchHeaderPrefix3) && bytes.Contains(ln, patchHeaderSuffix3):
 			trimmed := bytes.TrimPrefix(ln, patchHeaderPrefix3)
 			suffixIdx := bytes.Index(trimmed, patchHeaderSuffix3)
 			if suffixIdx < 0 {
