@@ -246,7 +246,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *assign.Reference:
 		res = b.handleAssignReference(s)
 	case *expr.Array:
-		res = b.handleArrayItems(s, s.Items)
+		res = b.handleArray(s)
 	case *expr.ShortArray:
 		res = b.handleArrayItems(s, s.Items)
 	case *stmt.Foreach:
@@ -918,6 +918,11 @@ func (b *BlockWalker) handleStaticPropertyFetch(e *expr.StaticPropertyFetch) boo
 	}
 
 	return false
+}
+
+func (b *BlockWalker) handleArray(arr *expr.Array) bool {
+	b.r.Report(arr, LevelDoNotReject, "Use of old array syntax (use short form instead)")
+	return b.handleArrayItems(arr, arr.Items)
 }
 
 func (b *BlockWalker) handleArrayItems(arr node.Node, items []node.Node) bool {
