@@ -18,6 +18,21 @@ func hasReport(reports []*Report, substr string) bool {
 	return false
 }
 
+func TestArrayLiteral(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	function traditional_array_literal() {
+		return array(1, 2);
+	}`)
+
+	if len(reports) != 1 {
+		t.Errorf("Unexpected number of reports: expected 1, got %d", len(reports))
+	}
+
+	if !hasReport(reports, "Use of old array syntax") {
+		t.Errorf("No error about array() syntax")
+	}
+}
+
 func TestUnused(t *testing.T) {
 	reports := getReportsSimple(t, `<?php
 	function unused_test($arg1, $arg2) {
