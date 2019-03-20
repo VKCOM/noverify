@@ -82,6 +82,12 @@ ERROR   Class not found \Symfony\Component\Filesystem\Filesystem at vendor/symfo
 Command exit code will be 2 if there are reports found with non-MAYBE level.
 There are several severity levels for the reports: ERROR, WARNING, INFO, HINT, UNUSED, MAYBE, SYNTAX.
 
+If your project contains non-UTF8 files, you need to specify `-encoding` argument as well. For example, if most of your files are windows-1251 encoded:
+
+```sh
+$ noverify -encoding=windows-1251 -cache-dir=$HOME/tmp/cache/noverify /path/to/your/project/root
+```
+
 ### Analyze only git diff (e.g. in pre-push hook)
 
 It is possible to only show new reports in changed code when it has been changed using git. Only changed files will be checked in this mode unless `-git-full-diff` option is specified. Changes are compared to previous commit, excluding changes made to `master` branch that is fetched to ORIGIN_MASTER.
