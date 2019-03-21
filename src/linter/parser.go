@@ -118,7 +118,7 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 	}
 
 	for _, e := range parser.GetErrors() {
-		w.Report(nil, LevelError, "Syntax error: "+e.String())
+		w.Report(nil, LevelError, "syntax", "Syntax error: "+e.String())
 	}
 
 	atomic.AddInt64(&initWalkTime, int64(time.Since(start)))

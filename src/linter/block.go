@@ -112,8 +112,8 @@ func (b *BlockWalker) IsRootLevel() bool {
 }
 
 // Report registers a single report message about some found problem.
-func (b *BlockWalker) Report(n node.Node, level int, msg string, args ...interface{}) {
-	b.r.Report(n, level, msg, args...)
+func (b *BlockWalker) Report(n node.Node, level int, checkName, msg string, args ...interface{}) {
+	b.r.Report(n, level, checkName, msg, args...)
 }
 
 // ClassParseState returns class parse state (namespace, current class, etc)
@@ -189,7 +189,7 @@ func (b *BlockWalker) reportDeadCode(n node.Node) {
 	}
 
 	b.deadCodeReported = true
-	b.r.Report(n, LevelInformation, "deadCode: Unreachable code")
+	b.r.Report(n, LevelInformation, "deadCode", "Unreachable code")
 }
 
 func varToString(v *expr.Variable) string {
@@ -489,7 +489,7 @@ func (b *BlockWalker) handleEmpty(s *expr.Empty) bool {
 
 func (b *BlockWalker) handleTry(s *stmt.Try) bool {
 	if len(s.Catches) == 0 && s.Finally == nil {
-		b.r.Report(s, LevelError, "bareTry: At least one catch or finally block must be present")
+		b.r.Report(s, LevelError, "bareTry", "At least one catch or finally block must be present")
 	}
 
 	contexts := make([]*BlockWalker, 0, len(s.Catches)+1)
@@ -621,13 +621,13 @@ func (b *BlockWalker) checkArrayDimFetch(s *expr.ArrayDimFetch) {
 	})
 
 	if maybeHaveClasses && !haveArrayAccess {
-		b.r.Report(s.Variable, LevelDoNotReject, "arrayAccess: Array access to non-array type %s", typ)
+		b.r.Report(s.Variable, LevelDoNotReject, "arrayAccess", "Array access to non-array type %s", typ)
 	}
 }
 
 func (b *BlockWalker) handleCallArgs(n node.Node, args []node.Node, fn meta.FuncInfo) {
 	if len(args) < fn.MinParamsCnt {
-		b.r.Report(n, LevelWarning, "argCount: Too few arguments for %s", meta.NameNodeToString(n))
+		b.r.Report(n, LevelWarning, "argCount", "Too few arguments for %s", meta.NameNodeToString(n))
 	}
 
 	for i, arg := range args {
@@ -706,7 +706,7 @@ func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
 		}
 
 		if !defined {
-			b.r.Report(e.Function, LevelError, "undefined: Call to undefined function %s", meta.NameNodeToString(e.Function))
+			b.r.Report(e.Function, LevelError, "undefined", "Call to undefined function %s", meta.NameNodeToString(e.Function))
 		}
 	}
 
@@ -794,11 +794,11 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 	e.Method.Walk(b)
 
 	if !foundMethod && !magic && !b.r.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
-		b.r.Report(e.Method, LevelError, "undefined: Call to undefined method {%s}->%s()", exprType, methodName)
+		b.r.Report(e.Method, LevelError, "undefined", "Call to undefined method {%s}->%s()", exprType, methodName)
 	}
 
 	if foundMethod && !b.canAccess(implClass, fn.AccessLevel) {
-		b.r.Report(e.Method, LevelError, "accessLevel: Cannot access %s method %s->%s()", fn.AccessLevel, implClass, methodName)
+		b.r.Report(e.Method, LevelError, "accessLevel", "Cannot access %s method %s->%s()", fn.AccessLevel, implClass, methodName)
 	}
 
 	b.handleCallArgs(e.Method, e.Arguments, fn)
@@ -832,11 +832,11 @@ func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
 	e.Call.Walk(b)
 
 	if !ok && !haveMagicMethod(className, `__callStatic`) && !b.r.st.IsTrait {
-		b.r.Report(e.Call, LevelError, "undefined: Call to undefined method %s::%s()", className, methodName)
+		b.r.Report(e.Call, LevelError, "undefined", "Call to undefined method %s::%s()", className, methodName)
 	}
 
 	if ok && !b.canAccess(implClass, fn.AccessLevel) {
-		b.r.Report(e.Call, LevelError, "accessLevel: Cannot access %s method %s::%s()", fn.AccessLevel, implClass, methodName)
+		b.r.Report(e.Call, LevelError, "accessLevel", "Cannot access %s method %s::%s()", fn.AccessLevel, implClass, methodName)
 	}
 
 	b.handleCallArgs(e.Call, e.Arguments, fn)
@@ -889,11 +889,11 @@ func (b *BlockWalker) handlePropertyFetch(e *expr.PropertyFetch) bool {
 	})
 
 	if !found && !magic && !b.r.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
-		b.r.Report(e.Property, LevelError, "undefined: Property {%s}->%s does not exist", typ, id.Value)
+		b.r.Report(e.Property, LevelError, "undefined", "Property {%s}->%s does not exist", typ, id.Value)
 	}
 
 	if found && !b.canAccess(implClass, info.AccessLevel) {
-		b.r.Report(e.Property, LevelError, "accessLevel: Cannot access %s property %s->%s", info.AccessLevel, implClass, id.Value)
+		b.r.Report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s->%s", info.AccessLevel, implClass, id.Value)
 	}
 
 	return false
@@ -923,18 +923,18 @@ func (b *BlockWalker) handleStaticPropertyFetch(e *expr.StaticPropertyFetch) boo
 
 	info, implClass, ok := solver.FindProperty(className, "$"+varName.Value)
 	if !ok && !b.r.st.IsTrait {
-		b.r.Report(e.Property, LevelError, "undefined: Property %s::$%s does not exist", className, varName.Value)
+		b.r.Report(e.Property, LevelError, "undefined", "Property %s::$%s does not exist", className, varName.Value)
 	}
 
 	if ok && !b.canAccess(implClass, info.AccessLevel) {
-		b.r.Report(e.Property, LevelError, "accessLevel: Cannot access %s property %s::$%s", info.AccessLevel, implClass, varName.Value)
+		b.r.Report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s::$%s", info.AccessLevel, implClass, varName.Value)
 	}
 
 	return false
 }
 
 func (b *BlockWalker) handleArray(arr *expr.Array) bool {
-	b.r.Report(arr, LevelDoNotReject, "arraySyntax: Use of old array syntax (use short form instead)")
+	b.r.Report(arr, LevelDoNotReject, "arraySyntax", "Use of old array syntax (use short form instead)")
 	return b.handleArrayItems(arr, arr.Items)
 }
 
@@ -974,14 +974,14 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []node.Node) bool {
 		}
 
 		if _, ok := keys[key]; ok {
-			b.Report(item.Key, LevelWarning, "arrayKeys: Duplicate array key '%s'", key)
+			b.Report(item.Key, LevelWarning, "arrayKeys", "Duplicate array key '%s'", key)
 		}
 
 		keys[key] = struct{}{}
 	}
 
 	if haveImplicitKeys && haveKeys {
-		b.Report(arr, LevelWarning, "arrayKeys: Mixing implicit and explicit array keys")
+		b.Report(arr, LevelWarning, "arrayKeys", "Mixing implicit and explicit array keys")
 	}
 
 	return true
@@ -1016,11 +1016,11 @@ func (b *BlockWalker) handleClassConstFetch(e *expr.ClassConstFetch) bool {
 	e.Class.Walk(b)
 
 	if !ok && !b.r.st.IsTrait {
-		b.r.Report(e.ConstantName, LevelError, "undefined: Class constant %s::%s does not exist", className, constName.Value)
+		b.r.Report(e.ConstantName, LevelError, "undefined", "Class constant %s::%s does not exist", className, constName.Value)
 	}
 
 	if ok && !b.canAccess(implClass, info.AccessLevel) {
-		b.r.Report(e.ConstantName, LevelError, "accessLevel: Cannot access %s constant %s::%s", info.AccessLevel, implClass, constName.Value)
+		b.r.Report(e.ConstantName, LevelError, "accessLevel", "Cannot access %s constant %s::%s", info.AccessLevel, implClass, constName.Value)
 	}
 
 	return false
@@ -1034,7 +1034,7 @@ func (b *BlockWalker) handleConstFetch(e *expr.ConstFetch) bool {
 	_, _, defined := solver.GetConstant(b.r.st, e.Constant)
 
 	if !defined {
-		b.r.Report(e.Constant, LevelError, "undefined: Undefined constant %s", meta.NameNodeToString(e.Constant))
+		b.r.Report(e.Constant, LevelError, "undefined", "Undefined constant %s", meta.NameNodeToString(e.Constant))
 	}
 
 	return true
@@ -1052,7 +1052,7 @@ func (b *BlockWalker) handleNew(e *expr.New) bool {
 	}
 
 	if _, ok := meta.Info.GetClass(className); !ok {
-		b.r.Report(e.Class, LevelError, "undefined: Class not found %s", className)
+		b.r.Report(e.Class, LevelError, "undefined", "Class not found %s", className)
 	}
 
 	return true
@@ -1133,7 +1133,7 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType *m
 	_, phpDocParamTypes, phpDocError := b.r.parsePHPDoc(fun.PhpDocComment, fun.Params)
 
 	if phpDocError != "" {
-		b.r.Report(fun, LevelInformation, "phpdoc: PHPDoc is incorrect: %s", phpDocError)
+		b.r.Report(fun, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", phpDocError)
 	}
 
 	for _, useExpr := range fun.Uses {
@@ -1142,7 +1142,7 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType *m
 		varName := v.VarName.(*node.Identifier).Value
 
 		if !b.sc.HaveVar(v) && !u.ByRef {
-			b.r.Report(v, LevelWarning, "undefined: Undefined variable %s", varName)
+			b.r.Report(v, LevelWarning, "undefined", "Undefined variable %s", varName)
 		}
 
 		typ, ok := b.sc.GetVarNameType(varName)
@@ -1422,7 +1422,7 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 
 		// allow to omit "break;" in the final statement
 		if idx != len(s.Cases)-1 && bCopy.exitFlags == 0 {
-			b.r.Report(c, LevelInformation, "caseBreak: Case without break")
+			b.r.Report(c, LevelInformation, "caseBreak", "Case without break")
 		}
 
 		if (bCopy.exitFlags & (^breakFlags)) == 0 {
@@ -1646,7 +1646,7 @@ func (b *BlockWalker) flushUnused() {
 			}
 
 			visitedMap[n] = struct{}{}
-			b.r.Report(n, LevelUnused, `unused: Unused variable %s (use $_ to ignore this inspection)`, name)
+			b.r.Report(n, LevelUnused, "unused", `Unused variable %s (use $_ to ignore this inspection)`, name)
 		}
 	}
 }
