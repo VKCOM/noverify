@@ -42,11 +42,11 @@ func (b *block) BeforeEnterNode(w walker.Walkable) {
 		b.handleFunctionCall(n)
 	case *binary.Equal:
 		if isString(b.ctx, n.Left) || isString(b.ctx, n.Right) {
-			b.ctx.Report(n, linter.LevelWarning, "Strings must be compared using '===' operator")
+			b.ctx.Report(n, linter.LevelWarning, "strictCmp", "Strings must be compared using '===' operator")
 		}
 	case *binary.NotEqual:
 		if isString(b.ctx, n.Left) || isString(b.ctx, n.Right) {
-			b.ctx.Report(n, linter.LevelWarning, "Strings must be compared using '!==' operator")
+			b.ctx.Report(n, linter.LevelWarning, "strictCmp", "Strings must be compared using '!==' operator")
 		}
 	}
 }
@@ -77,7 +77,7 @@ func (b *block) handleInArrayCall(e *expr.FunctionCall) {
 		return
 	}
 
-	b.ctx.Report(e, linter.LevelWarning, "3rd argument of in_array must be true when comparing strings (strict comparison)")
+	b.ctx.Report(e, linter.LevelWarning, "strictCmp", "3rd argument of in_array must be true when comparing strings")
 }
 
 func (b *block) AfterEnterNode(w walker.Walkable)  {}

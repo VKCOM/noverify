@@ -128,6 +128,35 @@ There are multiple ways to disable linter for certain files and lines:
 - Add files or directories into `-exclude` regex (e.g. `-exclude='vendor/|tests/'` or `-exclude="vendor|tests"` for Windows)
 - Enter `@linter disable` in a commit message to disable checks for this commit only (diff mode only).
 
+There is also check-specific disabling mechanism. Every annotated warning can be disabled using
+`-exclude-checks` argument, which is a comma-separated list of checks to be disabled.
+
+Given this PHP file (`hello.php`):
+
+```php
+<?php
+$x = array($v, 2);
+```
+
+By default, NoVerify would report 2 issues:
+
+```sh
+$ noverify -stubs-dir /path/to/stubs hello.php
+MAYBE   arraySyntax: Use of old array syntax (use short form instead) at /home/quasilyte/CODE/php/hello.php:3
+$x = array($v, 2);
+     ^^^^^^^^^^^^
+ERROR   undefined: Undefined variable: v at /home/quasilyte/CODE/php/hello.php:3
+$x = array($v, 2);
+           ^^
+```
+
+The `arraySyntax` and `undefined` are so-called "check names" which you can use to disable associated reports.
+
+```sh
+$ noverify -exclude-checks arraySyntax,undefined -stubs-dir /path/to/stubs hello.php
+# No warnings
+```
+
 ### Language server mode (experimental)
 
 If you want to launch noverify in language server mode, launch it in your IDE/editor extension like the following:

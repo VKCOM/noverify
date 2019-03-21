@@ -75,7 +75,7 @@ func TestAssignmentAsExpression(t *testing.T) {
 
 	text := reports[0].String()
 
-	if !strings.Contains(text, "3rd argument of in_array must be true when comparing strings (strict comparison)") {
+	if !strings.Contains(text, "3rd argument of in_array must be true when comparing strings") {
 		t.Errorf("Wrong report text: expected '3rd argument of in_array must be true', got '%s'", text)
 	}
 

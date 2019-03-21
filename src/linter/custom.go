@@ -26,7 +26,7 @@ type RootChecker interface {
 
 // RootContext is the context for root checker to run on.
 type RootContext interface {
-	Report(n node.Node, level int, msg string, args ...interface{})
+	Report(n node.Node, level int, checkName, msg string, args ...interface{})
 	Scope() *meta.Scope                     // get variables declared at root level
 	ClassParseState() *meta.ClassParseState // get class parse state (namespace, class, etc)
 	State() map[string]interface{}          // state that can be modified and passed into block context
@@ -34,7 +34,7 @@ type RootContext interface {
 
 // BlockContext is the context for block checker.
 type BlockContext interface {
-	Report(n node.Node, level int, msg string, args ...interface{})
+	Report(n node.Node, level int, checkName, msg string, args ...interface{})
 	Scope() *meta.Scope                     // get variables declared in this block
 	ClassParseState() *meta.ClassParseState // get class parse state (namespace, class, etc)
 	RootState() map[string]interface{}      // state from root context
