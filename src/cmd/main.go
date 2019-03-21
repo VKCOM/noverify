@@ -44,8 +44,10 @@ var (
 	gitSkipFetch        bool
 	gitFullDiff         bool
 
-	reportsExclude      string
-	reportsExcludeRegex *regexp.Regexp
+	reportsExclude          string
+	reportsExcludeRegex     *regexp.Regexp
+	reportsExcludeChecks    string
+	reportsExcludeChecksSet map[string]bool
 
 	allowDisable      string
 	allowDisableRegex *regexp.Regexp
@@ -72,6 +74,7 @@ func init() {
 	flag.BoolVar(&gitFullDiff, "git-full-diff", false, "Compute full diff: analyze all files, not just changed ones")
 
 	flag.StringVar(&reportsExclude, "exclude", "", "Exclude regexp for filenames in reports list")
+	flag.StringVar(&reportsExcludeChecks, "exclude-checks", "", "Comma-separated list of check names to be excluded")
 	flag.StringVar(&allowDisable, "allow-disable", "", "Regexp for filenames where '@linter disable' is allowed")
 
 	flag.StringVar(&fullAnalysisFiles, "full-analysis-files", "", "Comma-separated list of files to do full analysis")
@@ -89,12 +92,16 @@ func init() {
 	flag.BoolVar(&version, "version", false, "Show version info and exit")
 }
 
-func isExcluded(filename string) bool {
+func isExcluded(r *linter.Report) bool {
+	if reportsExcludeChecksSet[r.CheckName()] {
+		return true
+	}
+
 	if reportsExcludeRegex == nil {
 		return false
 	}
 
-	return reportsExcludeRegex.MatchString(filename)
+	return reportsExcludeRegex.MatchString(r.GetFilename())
 }
 
 // canBeDisabled returns whether or not '@linter disable' can be used for the specified file
@@ -121,6 +128,7 @@ func Main() {
 	}
 
 	compileRegexes()
+	buildCheckMappings()
 
 	lintdebug.Register(func(msg string) { linter.DebugMessage("%s", msg) })
 	go linter.MemoryLimiterThread()
@@ -183,6 +191,14 @@ func compileRegexes() {
 		if err != nil {
 			log.Fatalf("Incorrect 'allow disable' regex: %s", err.Error())
 		}
+	}
+}
+
+func buildCheckMappings() {
+	reportsExcludeChecksSet = make(map[string]bool)
+	names := strings.Split(reportsExcludeChecks, ",")
+	for _, name := range names {
+		reportsExcludeChecksSet[strings.TrimSpace(name)] = true
 	}
 }
 
@@ -352,13 +368,12 @@ func analyzeGitAuthorsWhiteList(changeLog []git.Commit) (shouldRun bool) {
 
 func analyzeReports(diff []*linter.Report) (criticalReports int) {
 	for _, r := range diff {
-		filename := r.GetFilename()
-
-		if isExcluded(filename) {
+		if isExcluded(r) {
 			continue
 		}
 
 		if r.IsDisabledByUser() {
+			filename := r.GetFilename()
 			if !canBeDisabled(filename) {
 				fmt.Fprintf(outputFp, "You are not allowed to disable linter for file '%s'\n", filename)
 			} else {

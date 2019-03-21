@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -31,6 +32,13 @@ const (
 )
 
 // RootWalker is used to analyze root scope. Mostly defines, function and class definitions are analyzed.
+//
+// Current list of annotated checks:
+//	- complexity
+//	- modifiers
+//	- phpdoc
+//	- stdInterface
+//	- unused
 type RootWalker struct {
 	filename string
 	comments comment.Comments
@@ -71,6 +79,18 @@ type Report struct {
 	msg        string
 	filename   string
 	isDisabled bool // user-defined flag that file should not be linted
+}
+
+var checkNamePrefixRegex = regexp.MustCompile(`^(\w+):`)
+
+// CheckName returns report associated check name, if any.
+// For reports that have no explicit check name, returns an empty string.
+func (r *Report) CheckName() string {
+	m := checkNamePrefixRegex.FindStringSubmatch(r.msg)
+	if m != nil {
+		return m[1]
+	}
+	return ""
 }
 
 func (r *Report) String() string {
@@ -358,7 +378,7 @@ func (d *RootWalker) Report(n node.Node, level int, msg string, args ...interfac
 func (d *RootWalker) reportUndefinedVariable(s *expr.Variable, maybeHave bool) {
 	name, ok := s.VarName.(*node.Identifier)
 	if !ok {
-		d.Report(s, LevelInformation, "Variable variable used")
+		d.Report(s, LevelInformation, "undefined: Variable variable used")
 		return
 	}
 
@@ -367,9 +387,9 @@ func (d *RootWalker) reportUndefinedVariable(s *expr.Variable, maybeHave bool) {
 	}
 
 	if maybeHave {
-		d.Report(s, LevelInformation, "Variable might have not been defined: %s", name.Value)
+		d.Report(s, LevelInformation, "undefined: Variable might have not been defined: %s", name.Value)
 	} else {
-		d.Report(s, LevelError, "Undefined variable: %s", name.Value)
+		d.Report(s, LevelError, "undefined: Undefined variable: %s", name.Value)
 	}
 }
 
@@ -492,7 +512,7 @@ func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodMod
 		case "final":
 			res.final = true
 		default:
-			d.Report(m, LevelWarning, "Unrecognized method modifier: %s", v)
+			d.Report(m, LevelWarning, "modifiers: Unrecognized method modifier: %s", v)
 		}
 	}
 
@@ -559,6 +579,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 
 		typ, errText := d.parsePHPDocVar(p.PhpDocComment)
 		if errText != "" {
+			// TODO: annotate this report?
 			d.Report(p.Variable, LevelWarning, "%s", errText)
 		}
 
@@ -619,7 +640,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	pos := d.Positions[meth]
 
 	if funcSize := pos.EndLine - pos.StartLine; funcSize > maxFunctionLines {
-		d.Report(meth.MethodName, LevelDoNotReject, "Too big method: more than %d lines", maxFunctionLines)
+		d.Report(meth.MethodName, LevelDoNotReject, "complexity: Too big method: more than %d lines", maxFunctionLines)
 	}
 
 	modif := d.parseMethodModifiers(meth)
@@ -638,7 +659,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	phpdocReturnType, phpDocParamTypes, phpDocError := d.parsePHPDoc(meth.PhpDocComment, meth.Params)
 
 	if phpDocError != "" {
-		d.Report(meth.MethodName, LevelInformation, "PHPDoc is incorrect: %s", phpDocError)
+		d.Report(meth.MethodName, LevelInformation, "phpdoc: PHPDoc is incorrect: %s", phpDocError)
 	}
 
 	params, minParamsCnt := d.parseFuncArgs(meth.Params, phpDocParamTypes, sc)
@@ -672,7 +693,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 		})
 
 		if !implementsTraversable {
-			d.Report(meth.MethodName, LevelError, "Objects returned by %s::getIterator() must be traversable or implement interface \\Iterator", d.st.CurrentClass)
+			d.Report(meth.MethodName, LevelError, "stdInterface: Objects returned by %s::getIterator() must be traversable or implement interface \\Iterator", d.st.CurrentClass)
 		}
 	}
 
@@ -907,7 +928,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	pos := d.Positions[fun]
 
 	if funcSize := pos.EndLine - pos.StartLine; funcSize > maxFunctionLines {
-		d.Report(fun.FunctionName, LevelDoNotReject, "Too big function: more than %d lines", maxFunctionLines)
+		d.Report(fun.FunctionName, LevelDoNotReject, "complexity: Too big function: more than %d lines", maxFunctionLines)
 	}
 
 	var specifiedReturnType *meta.TypesMap
@@ -918,7 +939,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	phpdocReturnType, phpDocParamTypes, phpDocError := d.parsePHPDoc(fun.PhpDocComment, fun.Params)
 
 	if phpDocError != "" {
-		d.Report(fun.FunctionName, LevelInformation, "PHPDoc is incorrect: %s", phpDocError)
+		d.Report(fun.FunctionName, LevelInformation, "phpdoc: PHPDoc is incorrect: %s", phpDocError)
 	}
 
 	if d.meta.Functions == nil {
