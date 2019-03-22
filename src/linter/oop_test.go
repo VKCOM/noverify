@@ -6,7 +6,7 @@ import (
 )
 
 func TestInterfaceConstants(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	reports := getReportsSimpleFilename(t, "TestInterface.php", `<?php
 
 	interface TestInterface
 	{
@@ -41,6 +41,7 @@ func TestInheritanceLoop(t *testing.T) {
 	}
 	`)
 
+	reports = filterReports("undefined", reports)
 	if len(reports) != 1 {
 		t.Errorf("Unexpected number of reports: expected 1, got %d", len(reports))
 	}
@@ -55,7 +56,7 @@ func TestInheritanceLoop(t *testing.T) {
 }
 
 func TestReturnTypes(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	reports := getReportsSimpleFilename(t, "DateTimeInterface.php", `<?php
 	function rand() { return 4; }
 
 	interface DateTimeInterface {
@@ -91,7 +92,7 @@ func TestReturnTypes(t *testing.T) {
 }
 
 func TestVariadic(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	reports := getReportsSimpleFilename(t, "TestClass.php", `<?php
 	class TestClass
 	{
 		public function get(): string
@@ -123,7 +124,7 @@ func TestVariadic(t *testing.T) {
 }
 
 func TestTraitProperties(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	reports := getReportsSimpleFilename(t, "Example.php", `<?php
 	declare(strict_types=1);
 
 	trait Example
@@ -147,7 +148,7 @@ func TestTraitProperties(t *testing.T) {
 }
 
 func TestMagicMethods(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	reports := getReportsSimpleFilename(t, "Magic.php", `<?php
 	class Magic
 	{
 		public function __get();
@@ -178,7 +179,7 @@ func TestMagicMethods(t *testing.T) {
 }
 
 func TestGenerator(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	reports := getReportsSimpleFilename(t, "Generator.php", `<?php
 	class Generator {
 		public function send();
 	}
@@ -220,6 +221,7 @@ func TestClosureLateBinding(t *testing.T) {
 	})->call(new Example());
 	`)
 
+	reports = filterReports("undefined", reports)
 	if len(reports) != 2 {
 		t.Errorf("Unexpected number of reports: expected 2, got %d", len(reports))
 	}
@@ -270,6 +272,7 @@ func TestInterfaceInheritance(t *testing.T) {
 	}
 	`)
 
+	reports = filterReports("undefined", reports)
 	if len(reports) != 3 {
 		t.Errorf("Unexpected number of reports: expected 3, got %d", len(reports))
 	}
@@ -345,6 +348,7 @@ func TestProtected(t *testing.T) {
 	}
 	`)
 
+	reports = filterReports("accessLevel", reports)
 	if len(reports) != 7 {
 		t.Errorf("Unexpected number of reports: expected 5, got %d", len(reports))
 	}
@@ -395,6 +399,7 @@ func TestInvoke(t *testing.T) {
 	(new Example())();
 	`)
 
+	reports = filterReports("argCount", reports)
 	if len(reports) != 1 {
 		t.Errorf("Unexpected number of reports: expected 1, got %d", len(reports))
 	}
@@ -446,6 +451,7 @@ func TestTraversable(t *testing.T) {
 	}
 	`)
 
+	reports = filterReports("stdInterface", reports)
 	if len(reports) != 1 {
 		t.Errorf("Unexpected number of reports: expected 1, got %d", len(reports))
 	}
@@ -508,6 +514,7 @@ func TestInstanceOf(t *testing.T) {
 	}
 	`)
 
+	reports = filterReports("undefined", reports)
 	if len(reports) != 2 {
 		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
 	}

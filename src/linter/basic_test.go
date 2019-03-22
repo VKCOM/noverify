@@ -8,6 +8,31 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestNamespaceKey(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{``, ""},
+		{`foo`, "foo"},
+		{`foo\bar`, "foo/bar"},
+		{`\foo\bar`, "/foo/bar"},
+		{`Foo\Bar`, "foo/bar"},
+		{`Foo_Bar`, "foobar"},
+		{`Foo_Bar\Baz`, "foobar/baz"},
+	}
+
+	for _, test := range tests {
+		have := namespaceKey(test.input)
+		want := test.want
+		if have != want {
+			t.Errorf("results mismatch for %q:\nhave: %q\nwant: %q",
+				test.input, have, want)
+		}
+	}
+
+}
+
 func hasReport(reports []*Report, substr string) bool {
 	for _, r := range reports {
 		if strings.Contains(r.String(), substr) {
@@ -159,7 +184,7 @@ func TestFunctionNotOnlyExits(t *testing.T) {
 }
 
 func TestFunctionNotOnlyExits2(t *testing.T) {
-	reports := getReportsSimple(t, `<?php function rand() {
+	reports := getReportsSimpleFilename(t, "Something.php", `<?php function rand() {
 		return 4;
 	}
 
@@ -209,7 +234,7 @@ func TestFunctionJustReturns(t *testing.T) {
 }
 
 func TestFunctionThrowsExceptionsAndReturns(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	reports := getReportsSimpleFilename(t, "Exception.php", `<?php
 	class Exception {}
 
 	function handle($b) {
@@ -279,6 +304,7 @@ func TestArrayAccessForClass(t *testing.T) {
 		return $a['test'];
 	}`)
 
+	reports = filterReports("arrayAccess", reports)
 	if len(reports) != 1 {
 		t.Errorf("Unexpected number of reports: expected 1, got %d", len(reports))
 	}
@@ -296,7 +322,7 @@ func TestArrayAccessForClass(t *testing.T) {
 // If order is incorrect then there would be an error that we are referencing elements of a class
 // that does not implement ArrayAccess.
 func TestCorrectTypes(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	reports := getReportsSimpleFilename(t, "three.php", `<?php
 	class three {}
 	class five {}
 	function test() {
@@ -372,7 +398,7 @@ func TestFunctionReferenceParamsInAnonymousFunction(t *testing.T) {
 }
 
 func TestForeachByRefUnused(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	reports := getReportsSimpleFilename(t, "SomeClass.php", `<?php
 	class SomeClass {
 		public $a;
 	}
@@ -427,6 +453,58 @@ func TestCorrectArrayTypes(t *testing.T) {
 
 	if !fn.Typ.IsInt() {
 		t.Errorf("Wrong type: %s, excepted int", fn.Typ)
+	}
+}
+
+func TestBadNamespace(t *testing.T) {
+	// Baz.php is not under "Foo/Bar".
+	reports := getReportsSimpleFilename(t, "Baz.php", `<?php
+	namespace Foo\Bar;
+	class Baz {}`)
+
+	reports = filterReports("nameFilepath", reports)
+	if len(reports) != 1 {
+		t.Fatalf("Unexpected number of reports: expected 1, got %d", len(reports))
+	}
+
+	if !hasReport(reports, "namespace Foo\\Bar name doesn't match file system path") {
+		t.Errorf("No error about bad Foo\\Bar namespace")
+	}
+
+	for _, r := range reports {
+		log.Print(r)
+	}
+}
+
+func TestGoodNamespace(t *testing.T) {
+	reports := getReportsSimpleFilename(t, "Foo/Bar/Baz.php", `<?php
+	namespace Foo\Bar;
+	class Baz {}`)
+
+	reports = filterReports("nameFilepath", reports)
+	if len(reports) != 0 {
+		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
+	}
+
+	for _, r := range reports {
+		log.Print(r)
+	}
+}
+
+func TestBadFilename(t *testing.T) {
+	reports := getReportsSimple(t, `<?php class Foo {}`)
+
+	reports = filterReports("nameFilepath", reports)
+	if len(reports) != 1 {
+		t.Fatalf("Unexpected number of reports: expected 1, got %d", len(reports))
+	}
+
+	if !hasReport(reports, "Filename doesn't match any of the defined type name") {
+		t.Errorf("No error about bad filename")
+	}
+
+	for _, r := range reports {
+		log.Print(r)
 	}
 }
 

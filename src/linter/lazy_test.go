@@ -13,6 +13,16 @@ import (
 
 var once sync.Once
 
+func filterReports(name string, reports []*Report) []*Report {
+	out := reports[:0]
+	for _, r := range reports {
+		if r.CheckName() == name {
+			out = append(out, r)
+		}
+	}
+	return out
+}
+
 func testParse(t *testing.T, filename string, contents string) (rootNode node.Node, w *RootWalker) {
 	once.Do(func() {
 		MaxFileSize = 10000
@@ -33,12 +43,16 @@ func testParse(t *testing.T, filename string, contents string) (rootNode node.No
 	return rootNode, w
 }
 
-func getReportsSimple(t *testing.T, contents string) []*Report {
+func getReportsSimpleFilename(t *testing.T, filename, contents string) []*Report {
 	meta.ResetInfo()
-	testParse(t, `first.php`, contents)
+	testParse(t, filename, contents)
 	meta.SetIndexingComplete(true)
-	_, w := testParse(t, `first.php`, contents)
+	_, w := testParse(t, filename, contents)
 	return w.GetReports()
+}
+
+func getReportsSimple(t *testing.T, contents string) []*Report {
+	return getReportsSimpleFilename(t, `first.php`, contents)
 }
 
 func TestLazy(t *testing.T) {
@@ -195,6 +209,7 @@ func TestUse(t *testing.T) {
 		};
 	}`)
 
+	reports = filterReports("undefined", reports)
 	if len(reports) != 1 {
 		t.Errorf("Unexpected number of reports: expected 1, got %d", len(reports))
 	}

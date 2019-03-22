@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -35,6 +36,7 @@ const (
 // Current list of annotated checks:
 //	- complexity
 //	- modifiers
+//	- nameFilepath
 //	- phpdoc
 //	- stdInterface
 //	- syntax
@@ -42,6 +44,8 @@ const (
 type RootWalker struct {
 	filename string
 	comments comment.Comments
+
+	rootNode node.Node
 
 	lineRanges []git.LineRange
 
@@ -169,6 +173,7 @@ func (d *RootWalker) InitFromParser(contents []byte, parser *php7.Parser) {
 
 	d.Positions = parser.GetPositions()
 	d.comments = parser.GetComments()
+	d.rootNode = parser.GetRootNode()
 	d.LinesPositions = linesPositions
 	d.Lines = lines
 }
@@ -261,6 +266,8 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 		d.Scope().AddVar(v, solver.ExprTypeLocal(d.meta.Scope, d.st, n.Expression), "global variable", true)
 	case *stmt.Function:
 		res = d.enterFunction(n)
+	case *stmt.Namespace:
+		res = d.enterNamespace(n)
 	case *stmt.PropertyList:
 		res = d.enterPropertyList(n)
 	case *stmt.ClassConstList:
@@ -921,6 +928,22 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 	return args, minArgs
 }
 
+func (d *RootWalker) enterNamespace(ns *stmt.Namespace) bool {
+	name, ok := ns.NamespaceName.(*name.Name)
+	if !ok {
+		return true
+	}
+
+	nsName := meta.NameToString(name)
+	pathSuffix := namespaceKey(nsName)
+	path := namespaceKey(filepath.Dir(d.filename))
+	if !strings.HasSuffix(path, pathSuffix) {
+		d.Report(ns, LevelDoNotReject, "nameFilepath", "namespace %s name doesn't match file system path", nsName)
+	}
+
+	return true
+}
+
 func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	nm := d.st.Namespace + `\` + fun.FunctionName.(*node.Identifier).Value
 	pos := d.Positions[fun]
@@ -1111,6 +1134,40 @@ func (d *RootWalker) enterConstList(lst *stmt.ConstList) bool {
 	return false
 }
 
+func (d *RootWalker) leaveFile() {
+	d.checkFilename()
+}
+
+func (d *RootWalker) checkFilename() {
+	fileTypes := len(d.meta.Classes) + len(d.meta.Traits)
+	if fileTypes == 0 {
+		return
+	}
+
+	// If there are any types, at least one of them
+	// should match the fileBaseName.
+	badFilename := true
+	// We're checking "base" part of the class name with HasSuffix.
+	// Leading "\" ensures that we don't match only part of the base name.
+	// Note that "meta.Classes" includes interfaces as well.
+	fileBaseName := `\` + strings.TrimSuffix(filepath.Base(d.filename), filepath.Ext(d.filename))
+	for classFullname := range d.meta.Classes {
+		if strings.HasSuffix(classFullname, fileBaseName) {
+			badFilename = false
+		}
+	}
+	for traitFullname := range d.meta.Traits {
+		if strings.HasSuffix(traitFullname, fileBaseName) {
+			badFilename = false
+		}
+	}
+
+	if badFilename {
+		// TODO: which node to use to report file-level issues?
+		d.Report(nil, LevelDoNotReject, "nameFilepath", "Filename doesn't match any of the defined type name")
+	}
+}
+
 // GetChildrenVisitor is invoked at every node parameter that contains children nodes
 func (d *RootWalker) GetChildrenVisitor(key string) walker.Visitor {
 	return d
@@ -1134,4 +1191,16 @@ func (d *RootWalker) LeaveNode(n walker.Walkable) {
 	for _, c := range d.custom {
 		c.AfterLeaveNode(n)
 	}
+
+	if n == d.rootNode {
+		d.leaveFile()
+	}
+}
+
+// namespaceKey returns ns with several transformations applied.
+func namespaceKey(ns string) string {
+	key := strings.Replace(ns, "\\", "/", -1)
+	key = strings.Replace(key, "_", "", -1)
+	key = strings.ToLower(key)
+	return key
 }
