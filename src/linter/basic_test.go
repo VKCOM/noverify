@@ -503,6 +503,6 @@ func TestStringGlobalVarName(t *testing.T) {
 	testParse(t, `first.php`, `<?php
 	function f() {
 		global ${"x"};
-		global ${"${x}_${x}"};
+		global ${"${x}_{$x}"};
 	}`)
 }
