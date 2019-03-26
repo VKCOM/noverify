@@ -937,7 +937,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	phpdocReturnType, phpDocParamTypes, phpDocError := d.parsePHPDoc(fun.PhpDocComment, fun.Params)
 
 	if phpDocError != "" {
-		d.Report(fun.FunctionName, LevelInformation, "phpdoc: PHPDoc is incorrect: %s", phpDocError)
+		d.Report(fun.FunctionName, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", phpDocError)
 	}
 
 	if d.meta.Functions == nil {
