@@ -201,6 +201,9 @@ func varToString(v *expr.Variable) string {
 	case *expr.FunctionCall:
 		// TODO: support function calls here :)
 		return "WTF_FUNCTION_CALL"
+	case *scalar.String:
+		// Things like ${"x"}
+		return "${" + t.Value + "}"
 	default:
 		panic(fmt.Errorf("Unexpected variable VarName type: %T", t))
 	}
@@ -228,6 +231,14 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *stmt.Global:
 		for _, v := range s.Vars {
 			ev := v.(*expr.Variable)
+
+			// TODO: when varToString will handle Encapsed,
+			// remove this check. Encapsed is a string with potentially
+			// complex interpolation expressions.
+			if _, ok := ev.VarName.(*scalar.Encapsed); ok {
+				continue // Otherwise varToString would panic
+			}
+
 			b.addVar(ev, meta.NewTypesMap(meta.WrapGlobal(varToString(ev))), "global", true)
 			b.addNonLocalVar(ev)
 		}
