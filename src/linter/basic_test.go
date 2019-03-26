@@ -496,3 +496,13 @@ func TestMixedArrayKeys(t *testing.T) {
 		log.Printf("%s", r)
 	}
 }
+
+func TestStringGlobalVarName(t *testing.T) {
+	// Should not panic.
+
+	testParse(t, `first.php`, `<?php
+	function f() {
+		global ${"x"};
+		global ${"${x}_${x}"};
+	}`)
+}
