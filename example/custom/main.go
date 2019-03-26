@@ -19,15 +19,16 @@ import (
 
 func main() {
 	log.SetFlags(log.Flags() | log.Lmicroseconds)
-	linter.RegisterBlockChecker(func(ctx linter.BlockContext) linter.BlockChecker { return &block{ctx: ctx} })
+	linter.RegisterBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker { return &block{ctx: ctx} })
 	cmd.Main()
 }
 
 type block struct {
-	ctx linter.BlockContext
+	linter.BlockCheckerDefaults
+	ctx *linter.BlockContext
 }
 
-func isString(ctx linter.BlockContext, n node.Node) bool {
+func isString(ctx *linter.BlockContext, n node.Node) bool {
 	_, ok := n.(*scalar.String)
 	if ok {
 		return true
@@ -79,7 +80,3 @@ func (b *block) handleInArrayCall(e *expr.FunctionCall) {
 
 	b.ctx.Report(e, linter.LevelWarning, "strictCmp", "3rd argument of in_array must be true when comparing strings")
 }
-
-func (b *block) AfterEnterNode(w walker.Walkable)  {}
-func (b *block) BeforeLeaveNode(w walker.Walkable) {}
-func (b *block) AfterLeaveNode(w walker.Walkable)  {}

@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	linter.RegisterBlockChecker(func(ctx linter.BlockContext) linter.BlockChecker { return &block{ctx: ctx} })
+	linter.RegisterBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker { return &block{ctx: ctx} })
 	go linter.MemoryLimiterThread()
 }
 

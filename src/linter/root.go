@@ -177,7 +177,7 @@ func (d *RootWalker) InitFromParser(contents []byte, parser *php7.Parser) {
 func (d *RootWalker) InitCustom() {
 	d.custom = nil
 	for _, createFn := range customRootLinters {
-		d.custom = append(d.custom, createFn(d))
+		d.custom = append(d.custom, createFn(&RootContext{w: d}))
 	}
 
 	d.customBlock = customBlockLinters
@@ -421,7 +421,7 @@ func (d *RootWalker) handleComment(c comment.Comment) {
 func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node.Node, sc *meta.Scope) (returnTypes *meta.TypesMap, prematureExitFlags int) {
 	b := &BlockWalker{sc: sc, r: d, unusedVars: make(map[string][]node.Node), nonLocalVars: make(map[string]struct{})}
 	for _, createFn := range d.customBlock {
-		b.custom = append(b.custom, createFn(b))
+		b.custom = append(b.custom, createFn(&BlockContext{w: b}))
 	}
 
 	for _, useExpr := range uses {
