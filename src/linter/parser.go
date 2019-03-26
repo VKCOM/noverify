@@ -116,6 +116,9 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 	if meta.IsIndexingComplete() {
 		AnalyzeFileRootLevel(rootNode, w)
 	}
+	for _, c := range w.custom {
+		c.AfterLeaveFile()
+	}
 
 	for _, e := range parser.GetErrors() {
 		w.Report(nil, LevelError, "syntax", "Syntax error: "+e.String())
@@ -140,7 +143,7 @@ func AnalyzeFileRootLevel(rootNode node.Node, d *RootWalker) {
 	}
 
 	for _, createFn := range d.customBlock {
-		b.custom = append(b.custom, createFn(b))
+		b.custom = append(b.custom, createFn(&BlockContext{w: b}))
 	}
 
 	rootNode.Walk(b)

@@ -157,7 +157,7 @@ func (b *BlockWalker) copy() *BlockWalker {
 		ignoreFunctionBodies: b.ignoreFunctionBodies,
 	}
 	for _, createFn := range b.r.customBlock {
-		bCopy.custom = append(bCopy.custom, createFn(bCopy))
+		bCopy.custom = append(bCopy.custom, createFn(&BlockContext{w: bCopy}))
 	}
 
 	for _, c := range b.customTypes {

@@ -18,36 +18,117 @@ type BlockChecker interface {
 // RootChecker is a custom linter that should operator only at root level.
 // Block level analysis (function and method bodies and all if/else/for/etc blocks) must be performed in BlockChecker.
 type RootChecker interface {
+	AfterLeaveFile()
 	BeforeEnterNode(walker.Walkable)
 	AfterEnterNode(walker.Walkable)
 	BeforeLeaveNode(walker.Walkable)
 	AfterLeaveNode(walker.Walkable)
 }
 
+// BlockCheckerDefaults is a type for embedding into checkers to
+// get default (empty) BlockChecker implementations.
+//
+// You can "override" any required methods while ignoring the others.
+//
+// The benefit is higher backwards-compatibility.
+// If new methods are added to BlockChecker, you wouldn't need
+// to change your code right away (especially if you don't need a new hook).
+type BlockCheckerDefaults struct{}
+
+func (BlockCheckerDefaults) BeforeEnterNode(walker.Walkable) {}
+func (BlockCheckerDefaults) AfterEnterNode(walker.Walkable)  {}
+func (BlockCheckerDefaults) BeforeLeaveNode(walker.Walkable) {}
+func (BlockCheckerDefaults) AfterLeaveNode(walker.Walkable)  {}
+
+// RootCheckerDefaults is a type for embedding into checkers to
+// get default (empty) RootChecker implementations.
+//
+// You can "override" any required methods while ignoring the others.
+//
+// The benefit is higher backwards-compatibility.
+// If new methods are added to RootChecker, you wouldn't need
+// to change your code right away (especially if you don't need a new hook).
+type RootCheckerDefaults struct{}
+
+func (RootCheckerDefaults) AfterLeaveFile()                 {}
+func (RootCheckerDefaults) BeforeEnterNode(walker.Walkable) {}
+func (RootCheckerDefaults) AfterEnterNode(walker.Walkable)  {}
+func (RootCheckerDefaults) BeforeLeaveNode(walker.Walkable) {}
+func (RootCheckerDefaults) AfterLeaveNode(walker.Walkable)  {}
+
 // RootContext is the context for root checker to run on.
-type RootContext interface {
-	Report(n node.Node, level int, checkName, msg string, args ...interface{})
-	Scope() *meta.Scope                     // get variables declared at root level
-	ClassParseState() *meta.ClassParseState // get class parse state (namespace, class, etc)
-	State() map[string]interface{}          // state that can be modified and passed into block context
+type RootContext struct {
+	w *RootWalker
+}
+
+// Report records linter warning of specified level.
+// chechName is a key that identifies the "checker" (diagnostic name) that found
+// issue being reported.
+func (ctx *RootContext) Report(n node.Node, level int, checkName, msg string, args ...interface{}) {
+	ctx.w.Report(n, level, checkName, msg, args...)
+}
+
+// Scope returns variables declared at root level.
+func (ctx *RootContext) Scope() *meta.Scope {
+	return ctx.w.Scope()
+}
+
+// ClassParseState returns class parse state (namespace, class, etc).
+func (ctx *RootContext) ClassParseState() *meta.ClassParseState {
+	return ctx.w.ClassParseState()
+}
+
+// State returns state that can be modified and passed into block context
+func (ctx *RootContext) State() map[string]interface{} {
+	return ctx.w.State()
 }
 
 // BlockContext is the context for block checker.
-type BlockContext interface {
-	Report(n node.Node, level int, checkName, msg string, args ...interface{})
-	Scope() *meta.Scope                     // get variables declared in this block
-	ClassParseState() *meta.ClassParseState // get class parse state (namespace, class, etc)
-	RootState() map[string]interface{}      // state from root context
-	IsRootLevel() bool                      // are we analysing root-level code currently
-	IsStatement(n node.Node) bool           // whether or not specified node is a statement
-	PrematureExitFlags() int
+type BlockContext struct {
+	w *BlockWalker
+}
+
+// Report records linter warning of specified level.
+// chechName is a key that identifies the "checker" (diagnostic name) that found
+// issue being reported.
+func (ctx *BlockContext) Report(n node.Node, level int, checkName, msg string, args ...interface{}) {
+	ctx.w.Report(n, level, checkName, msg, args...)
+}
+
+// Scope returns variables declared in this block.
+func (ctx *BlockContext) Scope() *meta.Scope {
+	return ctx.w.Scope()
+}
+
+// ClassParseState returns class parse state (namespace, class, etc).
+func (ctx *BlockContext) ClassParseState() *meta.ClassParseState {
+	return ctx.w.ClassParseState()
+}
+
+// RootState returns state from root context.
+func (ctx *BlockContext) RootState() map[string]interface{} {
+	return ctx.w.RootState()
+}
+
+// IsRootLevel reports whether we are analysing root-level code currently.
+func (ctx *BlockContext) IsRootLevel() bool {
+	return ctx.w.IsRootLevel()
+}
+
+// IsStatement reports whether or not specified node is a statement.
+func (ctx *BlockContext) IsStatement(n node.Node) bool {
+	return ctx.w.IsStatement(n)
+}
+
+func (ctx *BlockContext) PrematureExitFlags() int {
+	return ctx.w.PrematureExitFlags()
 }
 
 // BlockCheckerCreateFunc is a factory function for BlockChecker
-type BlockCheckerCreateFunc func(BlockContext) BlockChecker
+type BlockCheckerCreateFunc func(*BlockContext) BlockChecker
 
 // RootCheckerCreateFunc is a factory function for RootChecker
-type RootCheckerCreateFunc func(RootContext) RootChecker
+type RootCheckerCreateFunc func(*RootContext) RootChecker
 
 const (
 	LevelError       = 1
