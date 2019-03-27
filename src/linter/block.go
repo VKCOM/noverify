@@ -310,12 +310,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *expr.Empty:
 		res = b.handleEmpty(s)
 	case *expr.Variable:
-		if !b.sc.HaveVar(s) {
-			b.r.reportUndefinedVariable(s, b.sc.MaybeHaveVar(s))
-			b.sc.AddVar(s, meta.NewTypesMap("undefined"), "undefined", true)
-		} else if id, ok := s.VarName.(*node.Identifier); ok {
-			delete(b.unusedVars, id.Value)
-		}
+		res = b.handleVariable(s)
 	case *expr.ArrayDimFetch:
 		b.checkArrayDimFetch(s)
 	case *stmt.Function:
@@ -1259,6 +1254,16 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 func (a *andWalker) GetChildrenVisitor(key string) walker.Visitor { return a }
 func (a *andWalker) LeaveNode(w walker.Walkable)                  {}
 
+func (b *BlockWalker) handleVariable(v *expr.Variable) bool {
+	if !b.sc.HaveVar(v) {
+		b.r.reportUndefinedVariable(v, b.sc.MaybeHaveVar(v))
+		b.sc.AddVar(v, meta.NewTypesMap("undefined"), "undefined", true)
+	} else if id, ok := v.VarName.(*node.Identifier); ok {
+		delete(b.unusedVars, id.Value)
+	}
+	return false
+}
+
 func (b *BlockWalker) handleIf(s *stmt.If) bool {
 	// first condition is always executed, so run it in base context
 	if s.Cond != nil {
@@ -1270,8 +1275,20 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 		for _, isset := range a.issets {
 			for _, v := range isset.Variables {
 				if v, ok := v.(*expr.Variable); ok {
-					if !b.sc.HaveVar(v) {
-						b.addVar(v, meta.NewTypesMap("isset_$"+v.VarName.(*node.Identifier).Value), "isset", true)
+					if b.sc.HaveVar(v) {
+						continue
+					}
+					switch vn := v.VarName.(type) {
+					case *node.Identifier:
+						b.addVar(v, meta.NewTypesMap("isset_$"+vn.Value), "isset", true)
+						defer b.sc.DelVar(v, "isset")
+					case *expr.Variable:
+						b.handleVariable(vn)
+						name, ok := vn.VarName.(*node.Identifier)
+						if !ok {
+							continue
+						}
+						b.addVar(v, meta.NewTypesMap("isset_$$"+name.Value), "isset", true)
 						defer b.sc.DelVar(v, "isset")
 					}
 				}

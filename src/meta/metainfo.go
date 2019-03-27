@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/z7zmey/php-parser/node"
+	"github.com/z7zmey/php-parser/node/expr"
 	"github.com/z7zmey/php-parser/node/name"
 )
 
@@ -431,6 +432,8 @@ func NameNodeToString(n node.Node) string {
 		return FullyQualifiedToString(n)
 	case *node.Identifier:
 		return n.Value
+	case *expr.Variable:
+		return "$" + NameNodeToString(n.VarName)
 	default:
 		return "<expression>"
 	}
