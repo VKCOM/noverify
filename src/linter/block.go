@@ -1270,9 +1270,23 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 		for _, isset := range a.issets {
 			for _, v := range isset.Variables {
 				if v, ok := v.(*expr.Variable); ok {
-					if !b.sc.HaveVar(v) {
-						b.addVar(v, meta.NewTypesMap("isset_$"+v.VarName.(*node.Identifier).Value), "isset", true)
+					if b.sc.HaveVar(v) {
+						continue
+					}
+					switch vn := v.VarName.(type) {
+					case *node.Identifier:
+						b.addVar(v, meta.NewTypesMap("isset_$"+vn.Value), "isset", true)
 						defer b.sc.DelVar(v, "isset")
+					case *expr.Variable:
+						name, ok := vn.VarName.(*node.Identifier)
+						if !ok {
+							continue
+						}
+						// Adds both $$x and $x to the defined set.
+						b.addVar(v, meta.NewTypesMap("isset_$$"+name.Value), "isset", true)
+						defer b.sc.DelVar(v, "isset")
+						b.addVar(vn, meta.NewTypesMap("isset_$"+name.Value), "isset", true)
+						defer b.sc.DelVar(vn, "isset")
 					}
 				}
 			}

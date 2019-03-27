@@ -33,6 +33,110 @@ func TestArrayLiteral(t *testing.T) {
 	}
 }
 
+func TestIssetVarVar4(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	function issetVarVar() {
+		if (isset($$$x)) {
+			$_ = $$$x;
+		}
+	}
+	`)
+
+	// This is more TODO/FIXME like test.
+	// Right now arbitrary-depth indirection is not handled.
+	// It's not obvious whether we should handle it, since
+	// variable-variable-variable code is a bad thing to write.
+	//
+	// But at least we should not go into panic on it.
+
+	if !hasReport(reports, "Unknown variable variable used") {
+		t.Errorf("No error about unkown $$$x")
+	}
+	if !hasReport(reports, "Undefined variable: x") {
+		t.Errorf("No error about undefined $x")
+	}
+
+	for _, r := range reports {
+		log.Printf("%s", r)
+	}
+}
+
+func TestIssetVarVar3(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	function issetVarVar() {
+		if (isset($$x)) {
+			$_ = $$y;
+		}
+	}
+	`)
+
+	if len(reports) != 3 {
+		t.Errorf("Unexpected number of reports: expected 3, got %d", len(reports))
+	}
+
+	if !hasReport(reports, "Unknown variable variable used") {
+		t.Errorf("No error about unkown $$y")
+	}
+	if !hasReport(reports, "Undefined variable: y") {
+		t.Errorf("No error about undefined $y")
+	}
+	if !hasReport(reports, "Unused variable x") {
+		t.Errorf("No error about unused $x")
+	}
+
+	for _, r := range reports {
+		log.Printf("%s", r)
+	}
+}
+
+func TestIssetVarVar2(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	function issetVarVar() {
+		if (isset($x)) {
+			$_ = $x;  // $x is defined
+			$_ = $$x; // But $$x is not
+		}
+	}
+	`)
+
+	if !hasReport(reports, "Unknown variable variable used") {
+		t.Errorf("No error about $$x")
+	}
+
+	for _, r := range reports {
+		log.Printf("%s", r)
+	}
+}
+
+func TestIssetVarVar1(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	function issetVarVar() {
+		if (isset($$x)) {
+			$_ = $x + 1;  // If $$x is isset, then $x is set as well
+			$_ = $$x + 1;
+			$_ = $y;      // Undefined
+		}
+		// After the block all vars are undefined again.
+		$_ = $x;
+	}
+	`)
+
+	if len(reports) != 2 {
+		t.Errorf("Unexpected number of reports: expected 2, got %d", len(reports))
+	}
+
+	if !hasReport(reports, "Undefined variable: y") {
+		t.Errorf("No error about undefined variable y")
+	}
+	if !hasReport(reports, "Undefined variable: x") {
+		t.Errorf("No error about undefined variable x")
+	}
+
+	for _, r := range reports {
+		log.Printf("%s", r)
+	}
+}
+
 func TestUnused(t *testing.T) {
 	reports := getReportsSimple(t, `<?php
 	function unused_test($arg1, $arg2) {

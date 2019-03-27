@@ -124,32 +124,32 @@ func (s *Scope) Len() int {
 
 // AddVar adds variable with specified types to scope
 func (s *Scope) AddVar(v *expr.Variable, typ *TypesMap, reason string, alwaysDefined bool) {
-	name, ok := v.VarName.(*node.Identifier)
+	name, ok := scopeVarName(v)
 	if !ok {
 		return
 	}
 
-	s.AddVarName(name.Value, typ, reason, alwaysDefined)
+	s.AddVarName(name, typ, reason, alwaysDefined)
 }
 
 // ReplaceVar replaces variable with specified types to scope
 func (s *Scope) ReplaceVar(v *expr.Variable, typ *TypesMap, reason string, alwaysDefined bool) {
-	name, ok := v.VarName.(*node.Identifier)
+	name, ok := scopeVarName(v)
 	if !ok {
 		return
 	}
 
-	s.ReplaceVarName(name.Value, typ, reason, alwaysDefined)
+	s.ReplaceVarName(name, typ, reason, alwaysDefined)
 }
 
 // DelVar deletes specified variable from scope
 func (s *Scope) DelVar(v *expr.Variable, reason string) {
-	name, ok := v.VarName.(*node.Identifier)
+	name, ok := scopeVarName(v)
 	if !ok {
 		return
 	}
 
-	s.DelVarName(name.Value, reason)
+	s.DelVarName(name, reason)
 }
 
 // DelVarName deletes variable from the scope by it's name
@@ -211,22 +211,22 @@ func (s *Scope) AddVarFromPHPDoc(name string, typ *TypesMap, reason string) {
 
 // HaveVar checks whether or not specified variable is present in the scope and that it is always defined
 func (s *Scope) HaveVar(v *expr.Variable) bool {
-	name, ok := v.VarName.(*node.Identifier)
+	name, ok := scopeVarName(v)
 	if !ok {
 		return false
 	}
 
-	return s.HaveVarName(name.Value)
+	return s.HaveVarName(name)
 }
 
 // MaybeHaveVar checks that variable is present in the scope (it may be not always defined)
 func (s *Scope) MaybeHaveVar(v *expr.Variable) bool {
-	name, ok := v.VarName.(*node.Identifier)
+	name, ok := scopeVarName(v)
 	if !ok {
 		return false
 	}
 
-	return s.MaybeHaveVarName(name.Value)
+	return s.MaybeHaveVarName(name)
 }
 
 // HaveVarName checks whether or not specified variable is present in the scope and that it is always defined
@@ -286,4 +286,19 @@ func (s *Scope) Clone() *Scope {
 	res.inInstanceMethod = s.inInstanceMethod
 	res.inClosure = s.inClosure
 	return res
+}
+
+func scopeVarName(v *expr.Variable) (string, bool) {
+	switch vn := v.VarName.(type) {
+	case *node.Identifier:
+		return vn.Value, true
+	case *expr.Variable:
+		name, ok := vn.VarName.(*node.Identifier)
+		if !ok {
+			return "", false // Don't go further than 1 level
+		}
+		return "$" + name.Value, true
+	default:
+		return "", false
+	}
 }
