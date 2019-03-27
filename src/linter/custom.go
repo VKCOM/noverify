@@ -83,6 +83,11 @@ func (ctx *RootContext) State() map[string]interface{} {
 	return ctx.w.State()
 }
 
+// Filename returns the full file name of the file being analyzed.
+func (ctx *RootContext) Filename() string {
+	return ctx.w.filename
+}
+
 // BlockContext is the context for block checker.
 type BlockContext struct {
 	w *BlockWalker
