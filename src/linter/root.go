@@ -377,7 +377,8 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 func (d *RootWalker) reportUndefinedVariable(s *expr.Variable, maybeHave bool) {
 	name, ok := s.VarName.(*node.Identifier)
 	if !ok {
-		d.Report(s, LevelInformation, "undefined", "Unknown variable variable used")
+		d.Report(s, LevelInformation, "undefined", "Unknown variable variable %s used",
+			meta.NameNodeToString(s))
 		return
 	}
 

@@ -36,8 +36,8 @@ func TestArrayLiteral(t *testing.T) {
 func TestIssetVarVar4(t *testing.T) {
 	reports := getReportsSimple(t, `<?php
 	function issetVarVar() {
-		if (isset($$$x)) {
-			$_ = $$$x;
+		if (isset($$$$x)) {
+			$_ = $$$$x; // Can't track this level of indirection
 		}
 	}
 	`)
@@ -49,11 +49,11 @@ func TestIssetVarVar4(t *testing.T) {
 	//
 	// But at least we should not go into panic on it.
 
-	if !hasReport(reports, "Unknown variable variable used") {
+	if !hasReport(reports, "Unknown variable variable $$$x used") {
 		t.Errorf("No error about unkown $$$x")
 	}
-	if !hasReport(reports, "Undefined variable: x") {
-		t.Errorf("No error about undefined $x")
+	if !hasReport(reports, "Unknown variable variable $$$$x used") {
+		t.Errorf("No error about undefined $$$$x")
 	}
 
 	for _, r := range reports {
@@ -62,6 +62,8 @@ func TestIssetVarVar4(t *testing.T) {
 }
 
 func TestIssetVarVar3(t *testing.T) {
+	// Test that irrelevant isset of variable-variable doesn't affect
+	// other variables. Also warn for undefined variable in $$x.
 	reports := getReportsSimple(t, `<?php
 	function issetVarVar() {
 		if (isset($$x)) {
@@ -70,18 +72,15 @@ func TestIssetVarVar3(t *testing.T) {
 	}
 	`)
 
-	if len(reports) != 3 {
-		t.Errorf("Unexpected number of reports: expected 3, got %d", len(reports))
+	if len(reports) != 2 {
+		t.Errorf("Unexpected number of reports: expected 2, got %d", len(reports))
 	}
 
-	if !hasReport(reports, "Unknown variable variable used") {
-		t.Errorf("No error about unkown $$y")
+	if !hasReport(reports, "Undefined variable: x") {
+		t.Errorf("No error about undefined $x")
 	}
-	if !hasReport(reports, "Undefined variable: y") {
-		t.Errorf("No error about undefined $y")
-	}
-	if !hasReport(reports, "Unused variable x") {
-		t.Errorf("No error about unused $x")
+	if !hasReport(reports, "Unknown variable variable $$y used") {
+		t.Errorf("No error about undefined $$y")
 	}
 
 	for _, r := range reports {
@@ -90,6 +89,7 @@ func TestIssetVarVar3(t *testing.T) {
 }
 
 func TestIssetVarVar2(t *testing.T) {
+	// Test that if $x is defined, it doesn't make $$x defined.
 	reports := getReportsSimple(t, `<?php
 	function issetVarVar() {
 		if (isset($x)) {
@@ -99,7 +99,7 @@ func TestIssetVarVar2(t *testing.T) {
 	}
 	`)
 
-	if !hasReport(reports, "Unknown variable variable used") {
+	if !hasReport(reports, "Unknown variable variable $$x used") {
 		t.Errorf("No error about $$x")
 	}
 
@@ -109,8 +109,10 @@ func TestIssetVarVar2(t *testing.T) {
 }
 
 func TestIssetVarVar1(t *testing.T) {
+	// Test that defined variable variable don't cause "undefined" warnings.
 	reports := getReportsSimple(t, `<?php
 	function issetVarVar() {
+		$x = 'key';
 		if (isset($$x)) {
 			$_ = $x + 1;  // If $$x is isset, then $x is set as well
 			$_ = $$x + 1;
@@ -121,15 +123,12 @@ func TestIssetVarVar1(t *testing.T) {
 	}
 	`)
 
-	if len(reports) != 2 {
-		t.Errorf("Unexpected number of reports: expected 2, got %d", len(reports))
+	if len(reports) != 1 {
+		t.Errorf("Unexpected number of reports: expected 1, got %d", len(reports))
 	}
 
 	if !hasReport(reports, "Undefined variable: y") {
 		t.Errorf("No error about undefined variable y")
-	}
-	if !hasReport(reports, "Undefined variable: x") {
-		t.Errorf("No error about undefined variable x")
 	}
 
 	for _, r := range reports {
