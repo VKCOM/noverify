@@ -409,7 +409,7 @@ func TestSwitchBreak(t *testing.T) {
 		t.Errorf("Unexpected number of reports: expected 1, got %d", len(reports))
 	}
 
-	if !hasReport(reports, "Case without break") {
+	if !hasReport(reports, "Add break or '// fallthrough' to the end of the case") {
 		t.Errorf("No error about case without break")
 	}
 

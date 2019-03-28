@@ -1454,7 +1454,7 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 			// allow the fallthrough if appropriate comment is present
 			nextCase := s.Cases[idx+1]
 			if !b.caseHasFallthroughComment(nextCase) {
-				b.r.Report(c, LevelInformation, "caseBreak", "Case without break")
+				b.r.Report(c, LevelInformation, "caseBreak", "Add break or '// fallthrough' to the end of the case")
 			}
 		}
 
