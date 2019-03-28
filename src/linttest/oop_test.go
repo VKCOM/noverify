@@ -1,13 +1,13 @@
-package linter
+package linttest_test
 
 import (
-	"log"
 	"testing"
+
+	"github.com/VKCOM/noverify/src/linttest"
 )
 
 func TestInterfaceConstants(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
-
+	linttest.SimpleNegativeTest(t, `<?php
 	interface TestInterface
 	{
 		const TEST = '1';
@@ -19,43 +19,24 @@ func TestInterfaceConstants(t *testing.T) {
 		{
 			return self::TEST;
 		}
-	}
-	`)
-
-	if len(reports) != 0 {
-		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
-	}
-
-	for _, r := range reports {
-		log.Printf("%s", r)
-	}
+	}`)
 }
 
 func TestInheritanceLoop(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
 	class A extends B { }
 	class B extends A { }
 
 	function test() {
 		return A::SOMETHING;
-	}
-	`)
-
-	if len(reports) != 1 {
-		t.Errorf("Unexpected number of reports: expected 1, got %d", len(reports))
-	}
-
-	if !hasReport(reports, "Class constant \\A::SOMETHING does not exist") {
-		t.Errorf("Class contant SOMETHING must be missing")
-	}
-
-	for _, r := range reports {
-		log.Printf("%s", r)
-	}
+	}`)
+	test.Expect = []string{"Class constant \\A::SOMETHING does not exist"}
+	test.RunAndMatch()
 }
 
 func TestReturnTypes(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	linttest.SimpleNegativeTest(t, `<?php
 	function rand() { return 4; }
 
 	interface DateTimeInterface {
@@ -78,20 +59,11 @@ func TestReturnTypes(t *testing.T) {
 		} else {
 			return test()->format('U');
 		}
-	}
-	`)
-
-	if len(reports) != 0 {
-		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
-	}
-
-	for _, r := range reports {
-		log.Printf("%s", r)
-	}
+	}`)
 }
 
 func TestVariadic(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	linttest.SimpleNegativeTest(t, `<?php
 	class TestClass
 	{
 		public function get(): string
@@ -112,18 +84,10 @@ func TestVariadic(t *testing.T) {
 
 	echo a(new TestClass()), "\n";
 	`)
-
-	if len(reports) != 0 {
-		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
-	}
-
-	for _, r := range reports {
-		log.Printf("%s", r)
-	}
 }
 
 func TestTraitProperties(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	linttest.SimpleNegativeTest(t, `<?php
 	declare(strict_types=1);
 
 	trait Example
@@ -134,20 +98,11 @@ func TestTraitProperties(t *testing.T) {
 		{
 			return self::$property;
 		}
-	}
-	`)
-
-	if len(reports) != 0 {
-		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
-	}
-
-	for _, r := range reports {
-		log.Printf("%s", r)
-	}
+	}`)
 }
 
 func TestMagicMethods(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	linttest.SimpleNegativeTest(t, `<?php
 	class Magic
 	{
 		public function __get();
@@ -165,20 +120,11 @@ func TestMagicMethods(t *testing.T) {
 		$m->another_property = 3;
 		$m->call_something();
 		MagicStatic::callSomethingStatic();
-	}
-	`)
-
-	if len(reports) != 0 {
-		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
-	}
-
-	for _, r := range reports {
-		log.Printf("%s", r)
-	}
+	}`)
 }
 
 func TestGenerator(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	linttest.SimpleNegativeTest(t, `<?php
 	class Generator {
 		public function send();
 	}
@@ -190,18 +136,11 @@ func TestGenerator(t *testing.T) {
 
 	a(42)->send(42);
 	`)
-
-	if len(reports) != 0 {
-		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
-	}
-
-	for _, r := range reports {
-		log.Printf("%s", r)
-	}
 }
 
 func TestClosureLateBinding(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
 	class Example
 	{
 		public function method()
@@ -219,26 +158,16 @@ func TestClosureLateBinding(t *testing.T) {
 		$a->method();
 	})->call(new Example());
 	`)
-
-	if len(reports) != 2 {
-		t.Errorf("Unexpected number of reports: expected 2, got %d", len(reports))
+	test.Expect = []string{
+		"Undefined variable: a",
+		"Call to undefined method {}->method()",
 	}
-
-	if !hasReport(reports, "Undefined variable: a") {
-		t.Errorf("Must be a warning about undefined variable a")
-	}
-
-	if !hasReport(reports, "Call to undefined method {}->method()") {
-		t.Errorf("Must be an error about call to undefined method()")
-	}
-
-	for _, r := range reports {
-		log.Printf("%s", r)
-	}
+	test.RunAndMatch()
 }
 
 func TestInterfaceInheritance(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
 	interface DateTimeInterface {
 		public function format($fmt);
 	}
@@ -267,32 +196,18 @@ func TestInterfaceInheritance(t *testing.T) {
 	function b(TestExInterface $testInterface) {
 		echo TestExInterface::TEST2;
 		return $testInterface->nonexistent()->format('U');
+	}`)
+	test.Expect = []string{
+		`Call to undefined method {\TestExInterface}->nonexistent()`,
+		"Call to undefined method {}->format()",
+		"Class constant \\TestExInterface::TEST2 does not exist",
 	}
-	`)
-
-	if len(reports) != 3 {
-		t.Errorf("Unexpected number of reports: expected 3, got %d", len(reports))
-	}
-
-	if !hasReport(reports, `Call to undefined method {\TestExInterface}->nonexistent()`) {
-		t.Errorf("Must be an error about call to nonexistent")
-	}
-
-	if !hasReport(reports, "Call to undefined method {}->format()") {
-		t.Errorf("Must be an error about call to format of undefined")
-	}
-
-	if !hasReport(reports, "Class constant \\TestExInterface::TEST2 does not exist") {
-		t.Errorf("Must be an error about missing class constant TEST2")
-	}
-
-	for _, r := range reports {
-		log.Printf("%s", r)
-	}
+	test.RunAndMatch()
 }
 
 func TestProtected(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
 	class A {
 		private $priv;
 
@@ -342,48 +257,22 @@ func TestProtected(t *testing.T) {
 
 			(function() use($instance) { echo $instance->methodFromClosure2(); })();
 		}
+	}`)
+	test.Expect = []string{
+		`Cannot access private property \A->priv`,
+		`Cannot access protected property \A->prop2`,
+		`Cannot access protected property \A::$static_prop2`,
+		`Cannot access protected constant \A::C2`,
+		`Cannot access protected method \A->method2()`,
+		`Cannot access protected method \A->methodFromClosure2()`,
+		`Cannot access protected method \A::staticMethod2()`,
 	}
-	`)
-
-	if len(reports) != 7 {
-		t.Errorf("Unexpected number of reports: expected 5, got %d", len(reports))
-	}
-
-	if !hasReport(reports, `Cannot access private property \A->priv`) {
-		t.Errorf("Must be an error about access to private property")
-	}
-
-	if !hasReport(reports, `Cannot access protected property \A->prop2`) {
-		t.Errorf("Must be an error about access to property")
-	}
-
-	if !hasReport(reports, `Cannot access protected property \A::$static_prop2`) {
-		t.Errorf("Must be an error about access to static property")
-	}
-
-	if !hasReport(reports, `Cannot access protected constant \A::C2`) {
-		t.Errorf("Must be an error about access to constant")
-	}
-
-	if !hasReport(reports, `Cannot access protected method \A->method2()`) {
-		t.Errorf("Must be an error about call to method")
-	}
-
-	if !hasReport(reports, `Cannot access protected method \A->methodFromClosure2()`) {
-		t.Errorf("Must be an error about call to method from inside a closure")
-	}
-
-	if !hasReport(reports, `Cannot access protected method \A::staticMethod2()`) {
-		t.Errorf("Must be an error about call to static method")
-	}
-
-	for _, r := range reports {
-		log.Printf("%s", r)
-	}
+	test.RunAndMatch()
 }
 
 func TestInvoke(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
 	class Example
 	{
 		public function __invoke($argument)
@@ -394,22 +283,13 @@ func TestInvoke(t *testing.T) {
 
 	(new Example())();
 	`)
-
-	if len(reports) != 1 {
-		t.Errorf("Unexpected number of reports: expected 1, got %d", len(reports))
-	}
-
-	if !hasReport(reports, `Too few arguments`) {
-		t.Errorf("Must be an error about too few arguments to expression")
-	}
-
-	for _, r := range reports {
-		log.Printf("%s", r)
-	}
+	test.Expect = []string{"Too few arguments"}
+	test.RunAndMatch()
 }
 
 func TestTraversable(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
 	interface Traversable {}
 	interface Iterator extends Traversable {}
 	interface IteratorAggregate extends Traversable {}
@@ -443,24 +323,16 @@ func TestTraversable(t *testing.T) {
 
 	foreach (new Example() as $i) {
 	   echo $i;
+	}`)
+	test.Expect = []string{
+		`Objects returned by \Example::getIterator() must be traversable or implement interface \Iterator`,
 	}
-	`)
-
-	if len(reports) != 1 {
-		t.Errorf("Unexpected number of reports: expected 1, got %d", len(reports))
-	}
-
-	if !hasReport(reports, `Objects returned by \Example::getIterator() must be traversable or implement interface \Iterator`) {
-		t.Errorf("Must be an error about getIterator()")
-	}
-
-	for _, r := range reports {
-		log.Printf("%s", r)
-	}
+	test.RunAndMatch()
 }
 
 func TestInstanceOf(t *testing.T) {
-	reports := getReportsSimple(t, `<?php
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
 	class Element {
 		public function get(): int {
 			return 0;
@@ -505,22 +377,10 @@ func TestInstanceOf(t *testing.T) {
 				return $obj->callUndefinedMethod();
 			}
 		}
+	}`)
+	test.Expect = []string{
+		`Call to undefined method {}->get2()`,
+		`Call to undefined method {\Element}->callUndefinedMethod()`,
 	}
-	`)
-
-	if len(reports) != 2 {
-		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
-	}
-
-	if !hasReport(reports, `Call to undefined method {}->get2()`) {
-		t.Errorf("Must be an error in invalidComplexCall()")
-	}
-
-	if !hasReport(reports, `Call to undefined method {\Element}->callUndefinedMethod()`) {
-		t.Errorf("Must be an error in invalid()")
-	}
-
-	for _, r := range reports {
-		log.Printf("%s", r)
-	}
+	test.RunAndMatch()
 }
