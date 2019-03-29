@@ -349,23 +349,68 @@ func TestFunctionThrowsExceptionsAndReturns(t *testing.T) {
 	}
 }
 
+func TestSwitchFallthrough(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	function withFallthrough($a) {
+		switch ($a) {
+		case 1:
+			echo "1\n";
+			// With prepended comment line.
+			// fallthrough
+		case 2:
+			echo "2\n";
+			// falls through and continue rolling
+		case 3:
+			echo "3\n";
+			/* fallthrough and blah-blah */
+		case 4:
+			echo "4\n";
+			/* falls through */
+		default:
+			echo "Other\n";
+		}
+	}
+	`)
+
+	if len(reports) != 0 {
+		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
+	}
+
+	for _, r := range reports {
+		log.Printf("%s", r)
+	}
+}
+
 func TestSwitchBreak(t *testing.T) {
 	reports := getReportsSimple(t, `<?php
-	function doSomething($a) {
+	function bad($a) {
+		switch ($a) {
+		case 1:
+			echo "One\n"; // Bad, no break.
+		default:
+			echo "Other\n";
+		}
+	}
+
+	function good($a) {
 		switch ($a) {
 		case 1:
 			echo "One\n";
 			break;
-		default:
+		case 2:
 			echo "Two";
-			break;
+			// No break, but still good, since it's the last case clause.
 		}
 
 		echo "Three";
 	}`)
 
-	if len(reports) != 0 {
-		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
+	if len(reports) != 1 {
+		t.Errorf("Unexpected number of reports: expected 1, got %d", len(reports))
+	}
+
+	if !hasReport(reports, "Add break or '// fallthrough' to the end of the case") {
+		t.Errorf("No error about case without break")
 	}
 
 	for _, r := range reports {

@@ -2,6 +2,7 @@ package linter
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
@@ -1450,7 +1451,11 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 
 		// allow to omit "break;" in the final statement
 		if idx != len(s.Cases)-1 && bCopy.exitFlags == 0 {
-			b.r.Report(c, LevelInformation, "caseBreak", "Case without break")
+			// allow the fallthrough if appropriate comment is present
+			nextCase := s.Cases[idx+1]
+			if !b.caseHasFallthroughComment(nextCase) {
+				b.r.Report(c, LevelInformation, "caseBreak", "Add break or '// fallthrough' to the end of the case")
+			}
 		}
 
 		if (bCopy.exitFlags & (^breakFlags)) == 0 {
@@ -1726,4 +1731,26 @@ func (b *BlockWalker) LeaveNode(w walker.Walkable) {
 	for _, c := range b.custom {
 		c.AfterLeaveNode(w)
 	}
+}
+
+var fallthroughMarkerRegex = func() *regexp.Regexp {
+	markers := []string{
+		"fallthrough",
+		"fall through",
+		"falls through",
+		"no break",
+	}
+
+	pattern := `(?:/\*|//)\s?(?:` + strings.Join(markers, `|`) + `)`
+	return regexp.MustCompile(pattern)
+}()
+
+func (b *BlockWalker) caseHasFallthroughComment(n node.Node) bool {
+	for _, comment := range b.r.comments[n] {
+		str := comment.String()
+		if fallthroughMarkerRegex.MatchString(str) {
+			return true
+		}
+	}
+	return false
 }
