@@ -44,6 +44,8 @@ var (
 	gitSkipFetch        bool
 	gitFullDiff         bool
 
+	phpExtensionsArg string
+
 	reportsExclude          string
 	reportsExcludeRegex     *regexp.Regexp
 	reportsExcludeChecks    string
@@ -76,6 +78,8 @@ func init() {
 	flag.StringVar(&reportsExclude, "exclude", "", "Exclude regexp for filenames in reports list")
 	flag.StringVar(&reportsExcludeChecks, "exclude-checks", "", "Comma-separated list of check names to be excluded")
 	flag.StringVar(&allowDisable, "allow-disable", "", "Regexp for filenames where '@linter disable' is allowed")
+
+	flag.StringVar(&phpExtensionsArg, "php-extensions", "php,inc,php5,phtml,inc", "List of PHP extensions to be recognized")
 
 	flag.StringVar(&fullAnalysisFiles, "full-analysis-files", "", "Comma-separated list of files to do full analysis")
 
@@ -126,6 +130,8 @@ func Main() {
 	if pprofHost != "" {
 		go http.ListenAndServe(pprofHost, nil)
 	}
+
+	linter.PHPExtensions = strings.Split(phpExtensionsArg, ",")
 
 	compileRegexes()
 	buildCheckMappings()
