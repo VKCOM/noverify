@@ -1047,7 +1047,7 @@ func (b *BlockWalker) handleConstFetch(e *expr.ConstFetch) bool {
 			// TODO(quasilyte): should probably issue not "undefined" warning
 			// here, but something else, like "constCase" or something.
 			// Since it *was* "undefined" before, leave it as is for now,
-			// only make error message user-friendly helpful.
+			// only make error message more user-friendly.
 			lcName := strings.ToLower(name)
 			b.r.Report(e.Constant, LevelError, "undefined", "Use %s instead of %s", lcName, name)
 		default:
