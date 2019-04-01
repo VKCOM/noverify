@@ -48,19 +48,6 @@ func FlagsToString(f int) string {
 }
 
 // BlockWalker is used to process function/method contents.
-//
-// Current list of annotated checks:
-//	- accessLevel
-//	- argCount
-//	- arrayAccess
-//	- arrayKeys
-//	- arraySyntax
-//	- bareTry
-//	- caseBreak
-//	- deadCode
-//	- phpdoc
-//	- undefined
-//	- unused
 type BlockWalker struct {
 	sc *meta.Scope
 	r  *RootWalker

@@ -31,14 +31,6 @@ const (
 )
 
 // RootWalker is used to analyze root scope. Mostly defines, function and class definitions are analyzed.
-//
-// Current list of annotated checks:
-//	- complexity
-//	- modifiers
-//	- phpdoc
-//	- stdInterface
-//	- syntax
-//	- unused
 type RootWalker struct {
 	filename string
 	comments comment.Comments

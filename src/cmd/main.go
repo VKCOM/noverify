@@ -50,7 +50,9 @@ var (
 	reportsExcludeRegex     *regexp.Regexp
 	reportsExcludeChecks    string
 	reportsExcludeChecksSet map[string]bool
+	reportsIncludeChecksSet map[string]bool
 
+	allowChecks       string
 	allowDisable      string
 	allowDisableRegex *regexp.Regexp
 
@@ -62,6 +64,13 @@ var (
 )
 
 func init() {
+	var enabledByDefault []string
+	for _, info := range linter.GetDeclaredChecks() {
+		if info.Default {
+			enabledByDefault = append(enabledByDefault, info.Name)
+		}
+	}
+
 	flag.StringVar(&pprofHost, "pprof", "", "HTTP pprof endpoint (e.g. localhost:8080)")
 
 	flag.StringVar(&gitRepo, "git", "", "Path to git repository to analyze")
@@ -78,6 +87,8 @@ func init() {
 	flag.StringVar(&reportsExclude, "exclude", "", "Exclude regexp for filenames in reports list")
 	flag.StringVar(&reportsExcludeChecks, "exclude-checks", "", "Comma-separated list of check names to be excluded")
 	flag.StringVar(&allowDisable, "allow-disable", "", "Regexp for filenames where '@linter disable' is allowed")
+	flag.StringVar(&allowChecks, "allow-checks", strings.Join(enabledByDefault, ","),
+		"Comma-separated list of check names to be enabled")
 
 	flag.StringVar(&phpExtensionsArg, "php-extensions", "php,inc,php5,phtml,inc", "List of PHP extensions to be recognized")
 
@@ -96,16 +107,21 @@ func init() {
 	flag.BoolVar(&version, "version", false, "Show version info and exit")
 }
 
-func isExcluded(r *linter.Report) bool {
+func isEnabled(r *linter.Report) bool {
+	if !reportsIncludeChecksSet[r.CheckName()] {
+		return false // Not enabled by -allow-checks
+	}
+
 	if reportsExcludeChecksSet[r.CheckName()] {
-		return true
+		return false // Disabled by -exclude-checks
 	}
 
 	if reportsExcludeRegex == nil {
-		return false
+		return true
 	}
 
-	return reportsExcludeRegex.MatchString(r.GetFilename())
+	// Disabled by a file comment.
+	return !reportsExcludeRegex.MatchString(r.GetFilename())
 }
 
 // canBeDisabled returns whether or not '@linter disable' can be used for the specified file
@@ -202,9 +218,12 @@ func compileRegexes() {
 
 func buildCheckMappings() {
 	reportsExcludeChecksSet = make(map[string]bool)
-	names := strings.Split(reportsExcludeChecks, ",")
-	for _, name := range names {
+	for _, name := range strings.Split(reportsExcludeChecks, ",") {
 		reportsExcludeChecksSet[strings.TrimSpace(name)] = true
+	}
+	reportsIncludeChecksSet = make(map[string]bool)
+	for _, name := range strings.Split(allowChecks, ",") {
+		reportsIncludeChecksSet[strings.TrimSpace(name)] = true
 	}
 }
 
@@ -374,7 +393,7 @@ func analyzeGitAuthorsWhiteList(changeLog []git.Commit) (shouldRun bool) {
 
 func analyzeReports(diff []*linter.Report) (criticalReports int) {
 	for _, r := range diff {
-		if isExcluded(r) {
+		if !isEnabled(r) {
 			continue
 		}
 

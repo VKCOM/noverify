@@ -20,6 +20,13 @@ import (
 func main() {
 	log.SetFlags(log.Flags() | log.Lmicroseconds)
 	linter.RegisterBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker { return &block{ctx: ctx} })
+
+	linter.DeclareCheck(linter.CheckInfo{
+		Name:    "strictCmp",
+		Default: true,
+		Comment: "Report not-strict-enough comparisons.",
+	})
+
 	cmd.Main()
 }
 
