@@ -18,6 +18,33 @@ func hasReport(reports []*Report, substr string) bool {
 	return false
 }
 
+func TestBuiltinConstant(t *testing.T) {
+	reports := getReportsSimple(t, `<?php
+	function f() {
+		$_ = NULL;
+		$_ = True;
+		$_ = FaLsE;
+	}`)
+
+	if len(reports) != 3 {
+		t.Errorf("Unexpected number of reports: expected 3, got %d", len(reports))
+	}
+
+	if !hasReport(reports, "Use null instead of NULL") {
+		t.Errorf("No error about null")
+	}
+	if !hasReport(reports, "Use true instead of True") {
+		t.Errorf("No error about true")
+	}
+	if !hasReport(reports, "Use false instead of FaLsE") {
+		t.Errorf("No error about false")
+	}
+
+	for _, r := range reports {
+		log.Printf("%s", r)
+	}
+}
+
 func TestArrayLiteral(t *testing.T) {
 	reports := getReportsSimple(t, `<?php
 	function traditional_array_literal() {
