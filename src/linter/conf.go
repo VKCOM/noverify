@@ -15,6 +15,7 @@ var (
 	MaxConcurrency  int
 	MaxFileSize     int
 	DefaultEncoding string
+	PHPExtensions   []string
 
 	// actually time.Duration
 	initParseTime int64
