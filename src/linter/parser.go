@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"regexp"
 	dbg "runtime/debug"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -30,6 +29,41 @@ type FileInfo struct {
 	Filename   string
 	Contents   []byte
 	LineRanges []git.LineRange
+}
+
+func isPHPExtension(filename string) bool {
+	fileExt := filepath.Ext(filename)
+	if fileExt == "" {
+		return false
+	}
+
+	fileExt = fileExt[1:] // cut "." in the beginning
+
+	for _, ext := range PHPExtensions {
+		if fileExt == ext {
+			return true
+		}
+	}
+
+	return false
+}
+
+func makePHPExtensionSuffixes() [][]byte {
+	res := make([][]byte, 0, len(PHPExtensions))
+	for _, ext := range PHPExtensions {
+		res = append(res, []byte("."+ext))
+	}
+	return res
+}
+
+func isPHPExtensionBytes(filename []byte, suffixes [][]byte) bool {
+	for _, suffix := range suffixes {
+		if bytes.HasSuffix(filename, suffix) {
+			return true
+		}
+	}
+
+	return false
 }
 
 type ReadCallback func(ch chan FileInfo)
@@ -189,7 +223,7 @@ func ReadFilenames(filenames []string, ignoreRegex *regexp.Regexp) ReadCallback 
 			}
 
 			err = filepath.Walk(filename, func(path string, info os.FileInfo, err error) error {
-				if !strings.HasSuffix(path, ".php") || info.IsDir() {
+				if info.IsDir() || !isPHPExtension(path) {
 					return nil
 				}
 
@@ -216,7 +250,7 @@ func ReadChangesFromWorkTree(dir string, changes []git.Change) ReadCallback {
 				continue
 			}
 
-			if !strings.HasSuffix(c.NewName, ".php") {
+			if !isPHPExtension(c.NewName) {
 				continue
 			}
 
@@ -247,7 +281,7 @@ func ReadFilesFromGit(repo, commitSHA1 string, ignoreRegex *regexp.Regexp) ReadC
 		log.Fatalf("Could not get tree sha1: %s", err.Error())
 	}
 
-	dotPHPBytes := []byte(".php")
+	suffixes := makePHPExtensionSuffixes()
 
 	return func(ch chan FileInfo) {
 		start := time.Now()
@@ -257,7 +291,7 @@ func ReadFilesFromGit(repo, commitSHA1 string, ignoreRegex *regexp.Regexp) ReadC
 			"",
 			tree,
 			func(filename []byte) bool {
-				return bytes.HasSuffix(filename, dotPHPBytes)
+				return isPHPExtensionBytes(filename, suffixes)
 			},
 			func(filename string, contents []byte) {
 				idx++
@@ -307,14 +341,14 @@ func ReadOldFilesFromGit(repo, commitSHA1 string, changes []git.Change) ReadCall
 		log.Fatalf("Could not get tree sha1: %s", err.Error())
 	}
 
-	dotPHPBytes := []byte(".php")
+	suffixes := makePHPExtensionSuffixes()
 
 	return func(ch chan FileInfo) {
 		err = catter.Walk(
 			"",
 			tree,
 			func(filename []byte) bool {
-				if !bytes.HasSuffix(filename, dotPHPBytes) {
+				if !isPHPExtensionBytes(filename, suffixes) {
 					return false
 				}
 
@@ -358,14 +392,14 @@ func ReadFilesFromGitWithChanges(repo, commitSHA1 string, changes []git.Change) 
 		log.Fatalf("Could not get tree sha1: %s", err.Error())
 	}
 
-	dotPHPBytes := []byte(".php")
+	suffixes := makePHPExtensionSuffixes()
 
 	return func(ch chan FileInfo) {
 		err = catter.Walk(
 			"",
 			tree,
 			func(filename []byte) bool {
-				if !bytes.HasSuffix(filename, dotPHPBytes) {
+				if !isPHPExtensionBytes(filename, suffixes) {
 					return false
 				}
 
