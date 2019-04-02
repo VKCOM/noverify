@@ -63,7 +63,7 @@ var (
 	version bool
 )
 
-func init() {
+func parseFlags() {
 	var enabledByDefault []string
 	for _, info := range linter.GetDeclaredChecks() {
 		if info.Default {
@@ -105,6 +105,8 @@ func init() {
 	flag.StringVar(&linter.CacheDir, "cache-dir", "", "Directory for linter cache (greatly improves indexing speed)")
 
 	flag.BoolVar(&version, "version", false, "Show version info and exit")
+
+	flag.Parse()
 }
 
 func isEnabled(r *linter.Report) bool {
@@ -136,7 +138,7 @@ func canBeDisabled(filename string) bool {
 // Main is the actual main function to be run. It is separate from linter so that you can insert your own hooks
 // before running main().
 func Main() {
-	flag.Parse()
+	parseFlags()
 
 	if version {
 		fmt.Printf("PHP Linter\nBuilt on %s\nOS %s\nCommit %s\n", BuildTime, BuildOSUname, BuildCommit)

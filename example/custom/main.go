@@ -17,8 +17,7 @@ import (
 	"github.com/z7zmey/php-parser/walker"
 )
 
-func main() {
-	log.SetFlags(log.Flags() | log.Lmicroseconds)
+func init() {
 	linter.RegisterBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker { return &block{ctx: ctx} })
 
 	linter.DeclareCheck(linter.CheckInfo{
@@ -26,6 +25,10 @@ func main() {
 		Default: true,
 		Comment: "Report not-strict-enough comparisons.",
 	})
+}
+
+func main() {
+	log.SetFlags(log.Flags() | log.Lmicroseconds)
 
 	cmd.Main()
 }
