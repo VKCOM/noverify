@@ -442,8 +442,17 @@ func (m *TypesMap) GobDecode(buf []byte) error {
 
 // Iterate applies cb to all contained types
 func (m *TypesMap) Iterate(cb func(typ string)) {
-	if m == nil {
+	if m == nil || len(m.m) == 0 {
 		return
+	}
+
+	// Fast path for maps of 1 element.
+	// No sorting is needed, no allocations are required.
+	if len(m.m) == 1 {
+		for k := range m.m {
+			cb(k)
+			return
+		}
 	}
 
 	// We need to sort types so that we always iterate classes using the same order.
