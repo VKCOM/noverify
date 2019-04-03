@@ -108,7 +108,7 @@ func init() {
 		{
 			Name:    "redundantCast",
 			Default: false,
-			Comment: `Report redundant type casts`,
+			Comment: `Report redundant type casts.`,
 		},
 	}
 
