@@ -13,6 +13,7 @@ import (
 	"github.com/z7zmey/php-parser/node/expr"
 	"github.com/z7zmey/php-parser/node/expr/assign"
 	"github.com/z7zmey/php-parser/node/expr/binary"
+	"github.com/z7zmey/php-parser/node/expr/cast"
 	"github.com/z7zmey/php-parser/node/name"
 	"github.com/z7zmey/php-parser/node/scalar"
 	"github.com/z7zmey/php-parser/node/stmt"
@@ -197,6 +198,22 @@ func varToString(v *expr.Variable) string {
 	}
 }
 
+func (b *BlockWalker) checkRedundantCast(e node.Node, dstType string) {
+	if !meta.IsIndexingComplete() {
+		return
+	}
+	typ := solver.ExprTypeLocal(b.sc, b.r.st, e)
+	if typ.Len() != 1 {
+		return
+	}
+	typ.Iterate(func(x string) {
+		if x == dstType {
+			b.r.Report(e, LevelDoNotReject, "redundantCast",
+				"expression already has %s type", dstType)
+		}
+	})
+}
+
 // EnterNode is called before walking to inner nodes.
 func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	res = true
@@ -216,6 +233,16 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	}
 
 	switch s := w.(type) {
+	case *cast.Double:
+		b.checkRedundantCast(s.Expr, "double")
+	case *cast.Int:
+		b.checkRedundantCast(s.Expr, "int")
+	case *cast.Bool:
+		b.checkRedundantCast(s.Expr, "bool")
+	case *cast.String:
+		b.checkRedundantCast(s.Expr, "string")
+	case *cast.Array:
+		b.checkRedundantCast(s.Expr, "array")
 	case *stmt.Global:
 		for _, v := range s.Vars {
 			ev := v.(*expr.Variable)

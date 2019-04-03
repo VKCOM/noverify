@@ -14,7 +14,7 @@ const (
 )
 
 func init() {
-	rootChecks := []CheckInfo{
+	allChecks := []CheckInfo{
 		{
 			Name:    "accessLevel",
 			Default: true,
@@ -104,9 +104,15 @@ func init() {
 			Default: true,
 			Comment: `Report potentially unused variabled.`,
 		},
+
+		{
+			Name:    "redundantCast",
+			Default: false,
+			Comment: `Report redundant type casts`,
+		},
 	}
 
-	for _, info := range rootChecks {
+	for _, info := range allChecks {
 		DeclareCheck(info)
 	}
 }
