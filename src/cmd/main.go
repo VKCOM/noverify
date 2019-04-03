@@ -65,9 +65,29 @@ var (
 
 func parseFlags() {
 	var enabledByDefault []string
-	for _, info := range linter.GetDeclaredChecks() {
+	declaredChecks := linter.GetDeclaredChecks()
+	for _, info := range declaredChecks {
 		if info.Default {
 			enabledByDefault = append(enabledByDefault, info.Name)
+		}
+	}
+
+	flag.Usage = func() {
+		out := flag.CommandLine.Output()
+		fmt.Fprintf(out, "Usage of noverify:\n")
+		fmt.Fprintf(out, "  $ noverify -stubs-dir=/path/to/phpstorm-stubs -cache-dir=/cache/dir /project/root\n")
+		fmt.Fprintln(out)
+		fmt.Fprintf(out, "Flags:\n")
+		flag.PrintDefaults()
+		fmt.Fprintln(out)
+		fmt.Fprintf(out, "Diagnostics (checks):\n")
+		for _, info := range declaredChecks {
+			extra := " (disabled by default)"
+			if info.Default {
+				extra = ""
+			}
+			fmt.Fprintf(out, "  %s%s\n", info.Name, extra)
+			fmt.Fprintf(out, "    \t%s\n", info.Comment)
 		}
 	}
 
