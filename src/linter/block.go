@@ -2,6 +2,7 @@ package linter
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
@@ -47,19 +48,6 @@ func FlagsToString(f int) string {
 }
 
 // BlockWalker is used to process function/method contents.
-//
-// Current list of annotated checks:
-//	- accessLevel
-//	- argCount
-//	- arrayAccess
-//	- arrayKeys
-//	- arraySyntax
-//	- bareTry
-//	- caseBreak
-//	- deadCode
-//	- phpdoc
-//	- undefined
-//	- unused
 type BlockWalker struct {
 	sc *meta.Scope
 	r  *RootWalker
@@ -1040,7 +1028,18 @@ func (b *BlockWalker) handleConstFetch(e *expr.ConstFetch) bool {
 	_, _, defined := solver.GetConstant(b.r.st, e.Constant)
 
 	if !defined {
-		b.r.Report(e.Constant, LevelError, "undefined", "Undefined constant %s", meta.NameNodeToString(e.Constant))
+		// If it's builtin constant, give a more precise report message.
+		switch name := meta.NameNodeToString(e.Constant); strings.ToLower(name) {
+		case "null", "true", "false":
+			// TODO(quasilyte): should probably issue not "undefined" warning
+			// here, but something else, like "constCase" or something.
+			// Since it *was* "undefined" before, leave it as is for now,
+			// only make error message more user-friendly.
+			lcName := strings.ToLower(name)
+			b.r.Report(e.Constant, LevelError, "undefined", "Use %s instead of %s", lcName, name)
+		default:
+			b.r.Report(e.Constant, LevelError, "undefined", "Undefined constant %s", name)
+		}
 	}
 
 	return true
@@ -1450,7 +1449,11 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 
 		// allow to omit "break;" in the final statement
 		if idx != len(s.Cases)-1 && bCopy.exitFlags == 0 {
-			b.r.Report(c, LevelInformation, "caseBreak", "Case without break")
+			// allow the fallthrough if appropriate comment is present
+			nextCase := s.Cases[idx+1]
+			if !b.caseHasFallthroughComment(nextCase) {
+				b.r.Report(c, LevelInformation, "caseBreak", "Add break or '// fallthrough' to the end of the case")
+			}
 		}
 
 		if (bCopy.exitFlags & (^breakFlags)) == 0 {
@@ -1726,4 +1729,26 @@ func (b *BlockWalker) LeaveNode(w walker.Walkable) {
 	for _, c := range b.custom {
 		c.AfterLeaveNode(w)
 	}
+}
+
+var fallthroughMarkerRegex = func() *regexp.Regexp {
+	markers := []string{
+		"fallthrough",
+		"fall through",
+		"falls through",
+		"no break",
+	}
+
+	pattern := `(?:/\*|//)\s?(?:` + strings.Join(markers, `|`) + `)`
+	return regexp.MustCompile(pattern)
+}()
+
+func (b *BlockWalker) caseHasFallthroughComment(n node.Node) bool {
+	for _, comment := range b.r.comments[n] {
+		str := comment.String()
+		if fallthroughMarkerRegex.MatchString(str) {
+			return true
+		}
+	}
+	return false
 }

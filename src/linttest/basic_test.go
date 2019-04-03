@@ -9,6 +9,22 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestBuiltinConstant(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	function f() {
+		$_ = NULL;
+		$_ = True;
+		$_ = FaLsE;
+	}`)
+	test.Expect = []string{
+		"Use null instead of NULL",
+		"Use true instead of True",
+		"Use false instead of FaLsE",
+	}
+	test.RunAndMatch()
+}
+
 func TestFunctionNotOnlyExits2(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	function rand() {
@@ -340,6 +356,29 @@ func TestFunctionJustReturns(t *testing.T) {
 	}`)
 }
 
+func TestSwitchFallthrough(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+	function withFallthrough($a) {
+		switch ($a) {
+		case 1:
+			echo "1\n";
+			// With prepended comment line.
+			// fallthrough
+		case 2:
+			echo "2\n";
+			// falls through and continue rolling
+		case 3:
+			echo "3\n";
+			/* fallthrough and blah-blah */
+		case 4:
+			echo "4\n";
+			/* falls through */
+		default:
+			echo "Other\n";
+		}
+	}`)
+}
+
 func TestFunctionThrowsExceptionsAndReturns(t *testing.T) {
 	reports := linttest.GetFileReports(t, `<?php
 	class Exception {}
@@ -379,19 +418,31 @@ func TestFunctionThrowsExceptionsAndReturns(t *testing.T) {
 }
 
 func TestSwitchBreak(t *testing.T) {
-	linttest.SimpleNegativeTest(t, `<?php
-	function doSomething($a) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	function bad($a) {
+		switch ($a) {
+		case 1:
+			echo "One\n"; // Bad, no break.
+		default:
+			echo "Other\n";
+		}
+	}
+
+	function good($a) {
 		switch ($a) {
 		case 1:
 			echo "One\n";
 			break;
-		default:
+		case 2:
 			echo "Two";
-			break;
+			// No break, but still good, since it's the last case clause.
 		}
 
 		echo "Three";
 	}`)
+	test.Expect = []string{`Add break or '// fallthrough' to the end of the case`}
+	test.RunAndMatch()
 }
 
 func TestCorrectArrayTypes(t *testing.T) {

@@ -13,6 +13,104 @@ const (
 	IgnoreLinterMessage = "@linter disable"
 )
 
+func init() {
+	rootChecks := []CheckInfo{
+		{
+			Name:    "accessLevel",
+			Default: true,
+			Comment: `Report erroneous member access.`,
+		},
+
+		{
+			Name:    "argCount",
+			Default: true,
+			Comment: `Report mismatching args count inside call expressions.`,
+		},
+
+		{
+			Name:    "arrayAccess",
+			Default: true,
+			Comment: `Report array access to non-array objects.`,
+		},
+
+		{
+			Name:    "arrayKeys",
+			Default: true,
+			Comment: `Report array keys related problems.`,
+		},
+
+		{
+			Name:    "arraySyntax",
+			Default: true,
+			Comment: `Report usages of old array() syntax.`,
+		},
+
+		{
+			Name:    "bareTry",
+			Default: true,
+			Comment: `Report try blocks without catch/finally.`,
+		},
+
+		{
+			Name:    "caseBreak",
+			Default: true,
+			Comment: `Report switch cases without break.`,
+		},
+
+		{
+			Name:    "complexity",
+			Default: true,
+			Comment: `Report funcs/methods that are too complex.`,
+		},
+
+		{
+			Name:    "deadCode",
+			Default: true,
+			Comment: `Report potentially unreachable code.`,
+		},
+
+		{
+			Name:    "modifiers",
+			Default: true,
+			Comment: `Report misused modifiers like 'abstract' and 'static'.`,
+		},
+
+		{
+			Name:    "phpdoc",
+			Default: true,
+			Comment: `Report malformed phpdoc comments.`,
+		},
+
+		{
+			Name:    "stdInterface",
+			Default: true,
+			Comment: `Report issues related to std PHP interfaces.`,
+		},
+
+		{
+			Name:    "syntax",
+			Default: true,
+			Comment: `Report syntax errors.`,
+		},
+
+		{
+			Name:    "undefined",
+			Default: true,
+			Comment: `Report usages of potentially undefined symbols.`,
+		},
+
+		{
+			Name:    "unused",
+			Default: true,
+			Comment: `Report potentially unused variabled.`,
+		},
+	}
+
+	for _, info := range rootChecks {
+		DeclareCheck(info)
+	}
+}
+
 // DiffReports returns only reports that are new.
 // Pass diffArgs=nil if we are called from diff in working copy.
 func DiffReports(gitRepo string, diffArgs []string, changesList []git.Change, changeLog []git.Commit, oldList, newList []*Report, maxConcurrency int) (res []*Report, err error) {

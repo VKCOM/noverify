@@ -157,6 +157,22 @@ $ noverify -exclude-checks arraySyntax,undefined -stubs-dir /path/to/stubs hello
 # No warnings
 ```
 
+### Using in CI / using explicit checks enable list
+
+For CI purposes it's usually more reliable to use an explicit list of checks to be executed,
+so updating a linter doesn't break your build only because new checks were added.
+
+The `-allow-checks` argument by default includes all stable checks, but you can override
+it by passing your own comma-separated list of check names instead:
+
+```sh
+# Run only 2 checks, undefined and deadCode.
+$ noverify -allow-checks undefined,deadCode -stubs-dir /path/to/stubs hello.php
+```
+
+You can use it in combination with `-exclude-checks`.
+Exclusion rules are applied after inclusion rules are applied.
+
 ### Language server mode (experimental)
 
 If you want to launch noverify in language server mode, launch it in your IDE/editor extension like the following:
@@ -165,6 +181,7 @@ If you want to launch noverify in language server mode, launch it in your IDE/ed
 $ noverify -lang-server -cores=4 -cache-dir=/path/to/cache -stubs-dir=/path/to/phpstorm-stubs
 ```
 
+## Visual Studio Code integration
 There is no official extension for VS Code that supports this mode, so you will need to take, for example, https://marketplace.visualstudio.com/items?itemName=felixfbecker.php-intellisense VS Code extension and replace `extension.js` to the one provided in this repo.
 
 For example, execute the following after VS Code installation:
@@ -175,6 +192,29 @@ $ cp extension.js ~/.vscode/extensions/felixfbecker.php-intellisense-*/out/exten
 ```
 
 After you reload VS Code, you should get noverify started as a language server.
+
+## Sublime Text intergration
+
+You can install https://github.com/tomv564/LSP using Package Control. Here is an example config for noverify (replaces phpls):
+
+```json
+{
+  "clients": {
+    "phpls": {
+      "command": ["/path/to/noverify", "-cache-dir=/path/to/cache", "-stubs-dir=/path/to/phpstorm-stubs", "-cores=4", "-lang-server"],
+      "scopes": ["source.php", "embedding.php"],
+      "syntaxes": ["Packages/PHP/PHP.sublime-syntax"],
+      "languageId": "php"
+    }
+  },
+  "log_stderr": true,
+  "only_show_lsp_completions": true
+}
+```
+
+You can then enable `phpls` for current project and enjoy all supported features.
+
+## Features
 
 Language server features:
 - Partial auto-complete for variable names, constants, functions, object properties and methods

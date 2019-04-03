@@ -1,11 +1,32 @@
 package linter
 
 import (
+	"fmt"
+	"sort"
+
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/vscode"
 	"github.com/z7zmey/php-parser/node"
 	"github.com/z7zmey/php-parser/walker"
 )
+
+// CheckInfo provides a single check (diagnostic) metadata.
+//
+// This structure may change with different revisions of noverify
+// and get new fields that may be used by the linter.
+type CheckInfo struct {
+	// Name is a diagnostic short name.
+	// If several words are needed, prefer camelCase.
+	Name string
+
+	// Default controls whether diagnostic is
+	// enabled by default or it should be included by allow-checks explicitly.
+	Default bool
+
+	// Comment is a short summary of what this diagnostic does.
+	// A single descriptive sentence is a perfect format for it.
+	Comment string
+}
 
 // BlockChecker is a custom linter that is called on block level
 type BlockChecker interface {
@@ -168,6 +189,7 @@ var severityNames = map[int]string{
 var (
 	customBlockLinters []BlockCheckerCreateFunc
 	customRootLinters  []RootCheckerCreateFunc
+	checksInfoRegistry = map[string]CheckInfo{}
 )
 
 // RegisterBlockChecker registers a custom block linter that will be used on block level.
@@ -178,4 +200,32 @@ func RegisterBlockChecker(c BlockCheckerCreateFunc) {
 // RegisterRootChecker registers a custom root linter that will be used on root level.
 func RegisterRootChecker(c RootCheckerCreateFunc) {
 	customRootLinters = append(customRootLinters, c)
+}
+
+// DeclareCheck declares a check described by an info.
+// It's a good practice to declare *all* provided checks.
+//
+// If check is not declared, for example, there is no way to
+// make it enabled by default.
+func DeclareCheck(info CheckInfo) {
+	if info.Name == "" {
+		panic("can't declare a check with an empty name")
+	}
+	if _, ok := checksInfoRegistry[info.Name]; ok {
+		panic(fmt.Sprintf("check %q already declared", info.Name))
+	}
+	checksInfoRegistry[info.Name] = info
+}
+
+// GetDeclaredChecks returns a list of all checks that were declared.
+// Slice is sorted by check names.
+func GetDeclaredChecks() []CheckInfo {
+	checks := make([]CheckInfo, 0, len(checksInfoRegistry))
+	for _, c := range checksInfoRegistry {
+		checks = append(checks, c)
+	}
+	sort.Slice(checks, func(i, j int) bool {
+		return checks[i].Name < checks[j].Name
+	})
+	return checks
 }
