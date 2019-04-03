@@ -102,7 +102,7 @@ func init() {
 		{
 			Name:    "unused",
 			Default: true,
-			Comment: `Report potentially unused variabled.`,
+			Comment: `Report potentially unused variables.`,
 		},
 
 		{
