@@ -417,6 +417,46 @@ func TestFunctionThrowsExceptionsAndReturns(t *testing.T) {
 	}
 }
 
+func TestRedundantCast(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	function bad($a) {
+		$int = 1;
+		$double = 1.0;
+		$string = '1';
+		$bool = ($a == 0);
+		$array = [1, 'a', 3.0]; // Mixed elems on purpose
+		$a = (int)$int;
+		$a = (double)$double;
+		$a = (string)$string;
+		$a = (bool)$bool;
+		$a = (array)$array;
+		$_ = $a;
+	}
+
+	function good($a) {
+		$int = 1;
+		$double = 1.0;
+		$string = '1';
+		$bool = ($a == 0);
+		$array = [1, 'a', 3.0];
+		$a = (int)$double;
+		$a = (double)$array;
+		$a = (string)$bool;
+		$a = (bool)$string;
+		$a = (array)$int;
+		$_ = $a;
+	}`)
+	test.Expect = []string{
+		`expression already has array type`,
+		`expression already has double type`,
+		`expression already has int type`,
+		`expression already has string type`,
+		`expression already has bool type`,
+	}
+	test.RunAndMatch()
+}
+
 func TestSwitchBreak(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
