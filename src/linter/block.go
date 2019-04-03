@@ -1041,7 +1041,18 @@ func (b *BlockWalker) handleConstFetch(e *expr.ConstFetch) bool {
 	_, _, defined := solver.GetConstant(b.r.st, e.Constant)
 
 	if !defined {
-		b.r.Report(e.Constant, LevelError, "undefined", "Undefined constant %s", meta.NameNodeToString(e.Constant))
+		// If it's builtin constant, give a more precise report message.
+		switch name := meta.NameNodeToString(e.Constant); strings.ToLower(name) {
+		case "null", "true", "false":
+			// TODO(quasilyte): should probably issue not "undefined" warning
+			// here, but something else, like "constCase" or something.
+			// Since it *was* "undefined" before, leave it as is for now,
+			// only make error message more user-friendly.
+			lcName := strings.ToLower(name)
+			b.r.Report(e.Constant, LevelError, "undefined", "Use %s instead of %s", lcName, name)
+		default:
+			b.r.Report(e.Constant, LevelError, "undefined", "Undefined constant %s", name)
+		}
 	}
 
 	return true
