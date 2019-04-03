@@ -157,6 +157,22 @@ $ noverify -exclude-checks arraySyntax,undefined -stubs-dir /path/to/stubs hello
 # No warnings
 ```
 
+### Using in CI / using explicit checks enable list
+
+For CI purposes it's usually more reliable to use an explicit list of checks to be executed,
+so updating a linter doesn't break your build only because new checks were added.
+
+The `-allow-checks` argument by default includes all stable checks, but you can override
+it by passing your own comma-separated list of check names instead:
+
+```sh
+# Run only 2 checks, undefined and deadCode.
+$ noverify -allow-checks undefined,deadCode -stubs-dir /path/to/stubs hello.php
+```
+
+You can use it in combination with `-exclude-checks`.
+Exclusion rules are applied after inclusion rules are applied.
+
 ### Language server mode (experimental)
 
 If you want to launch noverify in language server mode, launch it in your IDE/editor extension like the following:
