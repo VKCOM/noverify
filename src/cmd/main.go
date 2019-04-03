@@ -20,8 +20,8 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+// Build* заполняются при сборке go build -ldflags
 var (
-	// Build* заполняются при сборке go build -ldflags
 	BuildTime    string
 	BuildOSUname string
 	BuildCommit  string
@@ -122,9 +122,22 @@ func canBeDisabled(filename string) bool {
 func Main() {
 	flag.Parse()
 
+	status, err := mainNoExit()
+	if err != nil {
+		log.Fatal(err)
+	}
+	os.Exit(status)
+}
+
+// mainNoExit implements main, but instead of doing log.Fatal or os.Exit it
+// returns error or non-zero integer status code to be passed to os.Exit by the caller.
+// Note that if error is not nil, integer code will be discarded, so it can be 0.
+//
+// We don't want os.Exit to be inserted randomly to avoid defer cancellation.
+func mainNoExit() (int, error) {
 	if version {
 		fmt.Printf("PHP Linter\nBuilt on %s\nOS %s\nCommit %s\n", BuildTime, BuildOSUname, BuildCommit)
-		return
+		return 0, nil
 	}
 
 	if pprofHost != "" {
@@ -132,8 +145,10 @@ func Main() {
 	}
 
 	linter.PHPExtensions = strings.Split(phpExtensionsArg, ",")
+	if err := compileRegexes(); err != nil {
+		return 0, err
+	}
 
-	compileRegexes()
 	buildCheckMappings()
 
 	lintdebug.Register(func(msg string) { linter.DebugMessage("%s", msg) })
@@ -142,14 +157,14 @@ func Main() {
 	if linter.LangServer {
 		langsrv.RegisterDebug()
 		langsrv.Start()
-		return
+		return 0, nil
 	}
 
 	if output != "" {
 		var err error
 		outputFp, err = os.OpenFile(output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 		if err != nil {
-			log.Fatalf("Could not open output file: %s", err.Error())
+			return 0, fmt.Errorf("Could not open output file: %v", err)
 		}
 	}
 
@@ -157,8 +172,7 @@ func Main() {
 	linter.InitStubs()
 
 	if gitRepo != "" {
-		gitMain()
-		return
+		return gitMain()
 	}
 
 	linter.AnalysisFiles = flag.Args()
@@ -178,26 +192,29 @@ func Main() {
 
 	if criticalReports > 0 {
 		log.Printf("Found %d critical reports", criticalReports)
-		os.Exit(2)
+		return 2, nil
 	}
+	return 0, nil
 }
 
-func compileRegexes() {
+func compileRegexes() error {
 	var err error
 
 	if reportsExclude != "" {
 		reportsExcludeRegex, err = regexp.Compile(reportsExclude)
 		if err != nil {
-			log.Fatalf("Incorrect exclude regex: %s", err.Error())
+			return fmt.Errorf("Incorrect exclude regex: %v", err)
 		}
 	}
 
 	if allowDisable != "" {
 		allowDisableRegex, err = regexp.Compile(allowDisable)
 		if err != nil {
-			log.Fatalf("Incorrect 'allow disable' regex: %s", err.Error())
+			return fmt.Errorf("Incorrect 'allow disable' regex: %v", err)
 		}
 	}
+
+	return nil
 }
 
 func buildCheckMappings() {
@@ -211,10 +228,12 @@ func buildCheckMappings() {
 // Not the best name, and not the best function signature.
 // Refactor this function whenever you get the idea how to separate logic better.
 func gitRepoComputeReportsFromCommits(logArgs, diffArgs []string) (oldReports, reports []*linter.Report, changes []git.Change, changeLog []git.Commit, ok bool) {
+	// TODO(quasilyte): hard to replace fatalf with error return here. Use panicf for now.
+
 	start := time.Now()
 	changeLog, err := git.Log(gitRepo, logArgs)
 	if err != nil {
-		log.Fatalf("Could not get commits in range %+v: %s", logArgs, err.Error())
+		log.Panicf("Could not get commits in range %+v: %s", logArgs, err.Error())
 	}
 
 	if shouldRun := analyzeGitAuthorsWhiteList(changeLog); !shouldRun {
@@ -223,7 +242,7 @@ func gitRepoComputeReportsFromCommits(logArgs, diffArgs []string) (oldReports, r
 
 	changes, err = git.Diff(gitRepo, "", diffArgs)
 	if err != nil {
-		log.Fatalf("Could not compute git diff: %s", err.Error())
+		log.Panicf("Could not compute git diff: %s", err.Error())
 	}
 
 	if gitFullDiff {
@@ -278,6 +297,8 @@ func gitRepoComputeReportsFromCommits(logArgs, diffArgs []string) (oldReports, r
 }
 
 func gitRepoComputeReportsFromLocalChanges() (oldReports, reports []*linter.Report, changes []git.Change, ok bool) {
+	// TODO(quasilyte): hard to replace fatalf with error return here. Use panicf for now.
+
 	if gitWorkTree == "" {
 		return nil, nil, nil, false
 	}
@@ -285,7 +306,7 @@ func gitRepoComputeReportsFromLocalChanges() (oldReports, reports []*linter.Repo
 	// compute changes for working copy (staged + unstaged changes combined starting with the commit being pushed)
 	changes, err := git.Diff(gitRepo, gitWorkTree, []string{gitCommitFrom})
 	if err != nil {
-		log.Fatalf("Could not compute git diff: %s", err.Error())
+		log.Panicf("Could not compute git diff: %s", err.Error())
 	}
 
 	if len(changes) == 0 {
@@ -317,7 +338,7 @@ func gitRepoComputeReportsFromLocalChanges() (oldReports, reports []*linter.Repo
 	return oldReports, reports, changes, true
 }
 
-func gitMain() {
+func gitMain() (int, error) {
 	var (
 		oldReports, reports []*linter.Report
 		diffArgs            []string
@@ -327,20 +348,23 @@ func gitMain() {
 	)
 
 	// prepareGitArgs also populates global variables like fromCommit
-	logArgs, diffArgs := prepareGitArgs()
+	logArgs, diffArgs, err := prepareGitArgs()
+	if err != nil {
+		return 0, err
+	}
 
 	oldReports, reports, changes, ok = gitRepoComputeReportsFromLocalChanges()
 	if !ok {
 		oldReports, reports, changes, changeLog, ok = gitRepoComputeReportsFromCommits(logArgs, diffArgs)
 		if !ok {
-			return
+			return 0, nil
 		}
 	}
 
 	start := time.Now()
 	diff, err := linter.DiffReports(gitRepo, diffArgs, changes, changeLog, oldReports, reports, 8)
 	if err != nil {
-		log.Fatalf("Could not compute reports diff: %s", err.Error())
+		return 0, fmt.Errorf("Could not compute reports diff: %v", err)
 	}
 	log.Printf("Computed reports diff for %s", time.Since(start))
 
@@ -348,10 +372,10 @@ func gitMain() {
 
 	if criticalReports > 0 {
 		log.Printf("Found %d critical issues, please fix them.", criticalReports)
-		os.Exit(2)
-	} else {
-		log.Printf("No critical issues found. Your code is perfect.")
+		return 2, nil
 	}
+	log.Printf("No critical issues found. Your code is perfect.")
+	return 0, nil
 }
 
 func analyzeGitAuthorsWhiteList(changeLog []git.Commit) (shouldRun bool) {
@@ -397,11 +421,11 @@ func analyzeReports(diff []*linter.Report) (criticalReports int) {
 	return criticalReports
 }
 
-func prepareGitArgs() (logArgs, diffArgs []string) {
+func prepareGitArgs() (logArgs, diffArgs []string, err error) {
 	if gitPushArg != "" {
 		args := strings.Fields(gitPushArg)
 		if len(args) != 3 {
-			log.Fatalf("Unexpected format of push arguments, expected only 3 columns: %s", gitPushArg)
+			return nil, nil, fmt.Errorf("Unexpected format of push arguments, expected only 3 columns: %s", gitPushArg)
 		}
 		gitCommitFrom, gitCommitTo, gitRef = args[0], args[1], args[2]
 	}
@@ -414,19 +438,19 @@ func prepareGitArgs() (logArgs, diffArgs []string) {
 		start := time.Now()
 		log.Printf("Fetching origin master to ORIGIN_MASTER")
 		if err := git.Fetch(gitRepo, "master", "ORIGIN_MASTER"); err != nil {
-			log.Fatalf("Could not fetch ORIGIN_MASTER: %v", err.Error())
+			return nil, nil, fmt.Errorf("Could not fetch ORIGIN_MASTER: %v", err.Error())
 		}
 		log.Printf("Fetched for %s", time.Since(start))
 	}
 
 	fromAndMaster, err := git.MergeBase(gitRepo, "ORIGIN_MASTER", gitCommitFrom)
 	if err != nil {
-		log.Fatalf("Could not compute merge base between ORIGIN_MASTER and %s", gitCommitFrom)
+		return nil, nil, fmt.Errorf("Could not compute merge base between ORIGIN_MASTER and %s", gitCommitFrom)
 	}
 
 	toAndMaster, err := git.MergeBase(gitRepo, "ORIGIN_MASTER", gitCommitTo)
 	if err != nil {
-		log.Fatalf("Could not compute merge base between ORIGIN_MASTER and %s", gitCommitTo)
+		return nil, nil, fmt.Errorf("Could not compute merge base between ORIGIN_MASTER and %s", gitCommitTo)
 	}
 
 	// check if master was merged in between the commits
@@ -437,5 +461,5 @@ func prepareGitArgs() (logArgs, diffArgs []string) {
 	logArgs = []string{gitCommitFrom + ".." + gitCommitTo}
 	diffArgs = []string{gitCommitFrom + ".." + gitCommitTo}
 
-	return logArgs, diffArgs
+	return logArgs, diffArgs, nil
 }
