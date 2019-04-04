@@ -110,6 +110,12 @@ func init() {
 			Default: false,
 			Comment: `Report redundant type casts.`,
 		},
+
+		{
+			Name:    "callStatic",
+			Default: true,
+			Comment: `Report static calls of instance methods and vice versa.`,
+		},
 	}
 
 	for _, info := range allChecks {

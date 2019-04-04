@@ -269,6 +269,7 @@ type FuncInfo struct {
 	MinParamsCnt int
 	Typ          *TypesMap
 	AccessLevel  AccessLevel
+	Static       bool
 	ExitFlags    int // if function has exit/die/throw, then ExitFlags will be <> 0
 }
 

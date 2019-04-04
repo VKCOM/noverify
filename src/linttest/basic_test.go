@@ -9,6 +9,24 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestCallStatic(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	class T {
+		public static function sf($_) {}
+		public function f($_) {}
+	}
+	$v = new T();
+	$v->sf(1);
+	T::f(1);
+	`)
+	test.Expect = []string{
+		`Calling static method as instance method`,
+		`Calling instance method as static method`,
+	}
+	test.RunAndMatch()
+}
+
 func TestBuiltinConstant(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
