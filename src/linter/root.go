@@ -647,6 +647,9 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 		specifiedReturnType = typ
 	}
 
+	if meth.PhpDocComment == "" && modif.accessLevel == meta.Public {
+		d.Report(meth.MethodName, LevelDoNotReject, "phpdoc", "Missing PHPDoc for %q public method", nm)
+	}
 	phpdocReturnType, phpDocParamTypes, phpDocError := d.parsePHPDoc(meth.PhpDocComment, meth.Params)
 
 	for _, err := range phpDocError {

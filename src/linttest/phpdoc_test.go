@@ -4,6 +4,35 @@ import (
 	"testing"
 )
 
+func TestPHPDocPresence(t *testing.T) {
+	test := NewSuite(t)
+	test.AddFile(`<?php
+	trait TheTrait {
+		public function traitPub() {}
+	}
+	class TheClass {
+		/**
+		 * This function is a good example.
+		 * It's public and has a phpdoc comment.
+		 */
+		public function documentedPub() {}
+
+		// Not OK.
+		public function pub() {}
+
+		// OK.
+		private function priv() {}
+
+		// OK.
+		protected function prot() {}
+	}`)
+	test.Expect = []string{
+		`Missing PHPDoc for "pub" public method`,
+		`Missing PHPDoc for "traitPub" public method`,
+	}
+	test.RunAndMatch()
+}
+
 func TestPHPDocSyntax(t *testing.T) {
 	test := NewSuite(t)
 	test.AddFile(`<?php
