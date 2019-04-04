@@ -647,10 +647,13 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 		specifiedReturnType = typ
 	}
 
+	if meth.PhpDocComment == "" && modif.accessLevel == meta.Public {
+		d.Report(meth.MethodName, LevelDoNotReject, "phpdoc", "Missing PHPDoc for %q public method", nm)
+	}
 	phpdocReturnType, phpDocParamTypes, phpDocError := d.parsePHPDoc(meth.PhpDocComment, meth.Params)
 
-	if phpDocError != "" {
-		d.Report(meth.MethodName, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", phpDocError)
+	for _, err := range phpDocError {
+		d.Report(meth.MethodName, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", err)
 	}
 
 	params, minParamsCnt := d.parseFuncArgs(meth.Params, phpDocParamTypes, sc)
@@ -776,11 +779,37 @@ func (d *RootWalker) maybeAddNamespace(typStr string) string {
 	return strings.Join(classNames, "|")
 }
 
-func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (returnType *meta.TypesMap, types phpDocParamsMap, phpDocError string) {
+func (d *RootWalker) checkPHPDocType(typ string) string {
+	// TODO(quasilyte): might want to parse type and then check that none of
+	// the type parts match that.
+
+	// []T -> T[]
+	if strings.HasPrefix(typ, "[]") {
+		return fmt.Sprintf("%s type syntax: use [] after the type, e.g. T[]", typ)
+	}
+
+	// Check commonly mispelled types and other unfortunate cases.
+	switch typ {
+	case "double":
+		return "use float type instead of double"
+	case "long":
+		return "use int/integer type instead of long"
+	case "-":
+		// This happend when either of those formats is used:
+		// `* @param $name - description`
+		// `* @param - $name description`
+		// We don't want to make "-" slip as a type name.
+		return "expected a type, found '-'; if you want to express 'any' type, use 'mixed'"
+	}
+
+	return ""
+}
+
+func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (returnType *meta.TypesMap, types phpDocParamsMap, phpDocErrors []string) {
 	returnType = &meta.TypesMap{}
 
 	if doc == "" {
-		return returnType.Immutable(), types, phpDocError
+		return returnType.Immutable(), types, nil
 	}
 
 	types = make(phpDocParamsMap, len(actualParams))
@@ -791,7 +820,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (returnTy
 	for idx, ln := range lines {
 		ln = strings.TrimSpace(ln)
 		if len(ln) == 0 {
-			phpDocError = fmt.Sprintf("empty line %d", idx)
+			phpDocErrors = append(phpDocErrors, fmt.Sprintf("empty line %d", idx))
 			continue
 		}
 
@@ -802,7 +831,12 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (returnTy
 		if strings.Contains(ln, "@return") {
 			fields := strings.Fields(ln)
 			if len(fields) >= 2 && fields[0] == "@return" {
-				returnType = meta.NewTypesMap(d.maybeAddNamespace(fields[1]))
+				typ := fields[1]
+				if err := d.checkPHPDocType(typ); err != "" {
+					phpDocErrors = append(phpDocErrors, fmt.Sprintf("%s on line %d", err, idx))
+					continue
+				}
+				returnType = meta.NewTypesMap(d.maybeAddNamespace(typ))
 			}
 			continue
 		}
@@ -822,9 +856,18 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (returnTy
 		var variable string
 		if len(fields) >= 3 {
 			variable = fields[2]
+		} else {
+			// Either type of var name is missing.
+			if strings.HasPrefix(typ, "$") {
+				phpDocErrors = append(phpDocErrors, fmt.Sprintf("malformed @param tag (maybe type is missing?) on line %d", idx+1))
+			} else {
+				phpDocErrors = append(phpDocErrors, fmt.Sprintf("malformed @param tag (maybe var is missing?) on line %d", idx+1))
+			}
 		}
 
-		if strings.HasPrefix(typ, "$") && !strings.HasPrefix(variable, "$") {
+		if len(fields) >= 3 && strings.HasPrefix(typ, "$") && !strings.HasPrefix(variable, "$") {
+			// Phpstorm gives the same message.
+			phpDocErrors = append(phpDocErrors, fmt.Sprintf("non-canonical order of variable and type on line %d", idx+1))
 			variable, typ = typ, variable
 		}
 
@@ -832,21 +875,26 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (returnTy
 			if len(actualParams) > curParam {
 				variable = actualParams[curParam].(*node.Parameter).Variable.(*expr.Variable).VarName.(*node.Identifier).Value
 			} else {
-				phpDocError = fmt.Sprintf("too many @param tags on line %d", idx)
+				phpDocErrors = append(phpDocErrors, fmt.Sprintf("too many @param tags on line %d", idx+1))
 				continue
 			}
 		}
 
 		curParam++
 
-		variable = strings.TrimPrefix(variable, "$")
-		types[variable] = phpDocParamEl{
-			optional: optional,
-			typ:      meta.NewTypesMap(d.maybeAddNamespace(typ)),
+		var param phpDocParamEl
+		if err := d.checkPHPDocType(typ); err != "" {
+			phpDocErrors = append(phpDocErrors, fmt.Sprintf("%s on line %d", err, idx+1))
+		} else {
+			param.typ = meta.NewTypesMap(d.maybeAddNamespace(typ))
 		}
+		param.optional = optional
+
+		variable = strings.TrimPrefix(variable, "$")
+		types[variable] = param
 	}
 
-	return returnType.Immutable(), types, phpDocError
+	return returnType.Immutable(), types, phpDocErrors
 }
 
 // parse type info, e.g. "string" in "someFunc() : string { ... }"
@@ -929,8 +977,8 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 
 	phpdocReturnType, phpDocParamTypes, phpDocError := d.parsePHPDoc(fun.PhpDocComment, fun.Params)
 
-	if phpDocError != "" {
-		d.Report(fun.FunctionName, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", phpDocError)
+	for _, err := range phpDocError {
+		d.Report(fun.FunctionName, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", err)
 	}
 
 	if d.meta.Functions == nil {

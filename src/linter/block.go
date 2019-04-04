@@ -1164,8 +1164,8 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType *m
 
 	_, phpDocParamTypes, phpDocError := b.r.parsePHPDoc(fun.PhpDocComment, fun.Params)
 
-	if phpDocError != "" {
-		b.r.Report(fun, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", phpDocError)
+	for _, err := range phpDocError {
+		b.r.Report(fun, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", err)
 	}
 
 	for _, useExpr := range fun.Uses {
