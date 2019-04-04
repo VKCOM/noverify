@@ -839,11 +839,17 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (returnTy
 
 		curParam++
 
-		variable = strings.TrimPrefix(variable, "$")
-		types[variable] = phpDocParamEl{
-			optional: optional,
-			typ:      meta.NewTypesMap(d.maybeAddNamespace(typ)),
+		// People sometimes use "-" inside @param lines when there is no
+		// type, it looks like `@param $var - description`.
+		// Use empty type map for them instead of registering `\-` as a type.
+		var param phpDocParamEl
+		if typ != "-" {
+			param.typ = meta.NewTypesMap(d.maybeAddNamespace(typ))
 		}
+		param.optional = optional
+
+		variable = strings.TrimPrefix(variable, "$")
+		types[variable] = param
 	}
 
 	return returnType.Immutable(), types, phpDocError
