@@ -149,9 +149,7 @@ func (b *BlockWalker) copy() *BlockWalker {
 		bCopy.custom = append(bCopy.custom, createFn(&BlockContext{w: bCopy}))
 	}
 
-	for _, c := range b.customTypes {
-		bCopy.customTypes = append(bCopy.customTypes, c)
-	}
+	bCopy.customTypes = append(bCopy.customTypes, b.customTypes...)
 
 	return bCopy
 }
