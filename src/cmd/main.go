@@ -10,6 +10,7 @@ import (
 	"os"
 	"regexp"
 	"runtime"
+	"runtime/pprof"
 	"strings"
 	"time"
 
@@ -61,6 +62,9 @@ var (
 	output string
 
 	version bool
+
+	cpuProfile string
+	memProfile string
 )
 
 func parseFlags() {
@@ -126,6 +130,9 @@ func parseFlags() {
 
 	flag.BoolVar(&version, "version", false, "Show version info and exit")
 
+	flag.StringVar(&cpuProfile, "cpuprofile", "", "write cpu profile to `file`")
+	flag.StringVar(&memProfile, "memprofile", "", "write memory profile to `file`")
+
 	flag.Parse()
 }
 
@@ -180,6 +187,34 @@ func mainNoExit() (int, error) {
 
 	if pprofHost != "" {
 		go http.ListenAndServe(pprofHost, nil)
+	}
+
+	// Since this function is expected to be exit-free, it's OK
+	// to defer calls here to make required flushes/cleanup.
+	if cpuProfile != "" {
+		f, err := os.Create(cpuProfile)
+		if err != nil {
+			return 0, fmt.Errorf("Could not create CPU profile: %v", err)
+		}
+		defer f.Close()
+		if err := pprof.StartCPUProfile(f); err != nil {
+			return 0, fmt.Errorf("Could not start CPU profile: %v", err)
+		}
+		defer pprof.StopCPUProfile()
+	}
+	if memProfile != "" {
+		defer func() {
+			f, err := os.Create(memProfile)
+			if err != nil {
+				log.Printf("could not create memory profile: %v", err)
+				return
+			}
+			defer f.Close()
+			runtime.GC() // get up-to-date statistics
+			if err := pprof.WriteHeapProfile(f); err != nil {
+				log.Printf("could not write memory profile: %v", err)
+			}
+		}()
 	}
 
 	linter.PHPExtensions = strings.Split(phpExtensionsArg, ",")
