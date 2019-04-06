@@ -34,6 +34,7 @@ func TestFunctionNotOnlyExits2(t *testing.T) {
 	class RuntimeException {}
 
 	class Something {
+		/** may throw */
 		public static function doExit() {
 			if (rand()) {
 				throw new \RuntimeException("OMG");
@@ -508,4 +509,18 @@ func TestCorrectArrayTypes(t *testing.T) {
 	if !fn.Typ.IsInt() {
 		t.Errorf("Wrong type: %s, excepted int", fn.Typ)
 	}
+}
+
+func runFilterMatch(test *linttest.Suite, name string) {
+	test.Match(filterReports(name, test.RunLinter()))
+}
+
+func filterReports(name string, reports []*linter.Report) []*linter.Report {
+	var out []*linter.Report
+	for _, r := range reports {
+		if r.CheckName() == name {
+			out = append(out, r)
+		}
+	}
+	return out
 }
