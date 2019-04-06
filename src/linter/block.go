@@ -1467,10 +1467,14 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 		bCopy := b.copy()
 		contexts = append(contexts, bCopy)
 
-		for _, stmt := range list {
-			if stmt != nil {
-				bCopy.addStatement(stmt)
-				stmt.Walk(bCopy)
+		for _, s := range list {
+			if s != nil {
+				bCopy.addStatement(s)
+				s.Walk(bCopy)
+				s, ok := s.(*stmt.Continue)
+				if ok && s.Expr == nil {
+					b.r.Report(s, LevelError, "caseContinue", "'continue' inside switch is 'break'")
+				}
 			}
 		}
 

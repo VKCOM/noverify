@@ -9,6 +9,28 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestSwitchContinue(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	global $x;
+	switch ($x) {
+	case 10:
+		continue;
+	}
+
+	// OK, "continue 2" does the right thing.
+	// Phpstorm finds incorrect label "level" values,
+	// but it doesn't report 'continue' (without level) as being bad.
+	for ($i = 0; $i < 3; $i++) {
+		switch ($x) {
+		case 10:
+			continue 2;
+		}
+	}`)
+	test.Expect = []string{`'continue' inside switch is 'break'`}
+	test.RunAndMatch()
+}
+
 func TestBuiltinConstant(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
