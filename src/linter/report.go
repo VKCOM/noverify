@@ -34,9 +34,15 @@ func init() {
 		},
 
 		{
-			Name:    "arrayKeys",
+			Name:    "mixedArrayKeys",
 			Default: true,
-			Comment: `Report array keys related problems.`,
+			Comment: `Report array literals that have both implicit and explicit keys.`,
+		},
+
+		{
+			Name:    "dupArrayKeys",
+			Default: true,
+			Comment: `Report duplicated keys in array literals.`,
 		},
 
 		{
