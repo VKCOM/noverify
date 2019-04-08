@@ -995,14 +995,14 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []node.Node) bool {
 		}
 
 		if _, ok := keys[key]; ok {
-			b.Report(item.Key, LevelWarning, "arrayKeys", "Duplicate array key '%s'", key)
+			b.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", key)
 		}
 
 		keys[key] = struct{}{}
 	}
 
 	if haveImplicitKeys && haveKeys {
-		b.Report(arr, LevelWarning, "arrayKeys", "Mixing implicit and explicit array keys")
+		b.Report(arr, LevelWarning, "mixedArrayKeys", "Mixing implicit and explicit array keys")
 	}
 
 	return true
