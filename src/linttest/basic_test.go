@@ -9,6 +9,63 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestSwitchContinue1(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	global $x;
+	global $y;
+
+	switch ($x) {
+	case 10:
+		continue;
+	}
+
+	switch ($x) {
+	case 10:
+		if ($x == $y) {
+			continue;
+		}
+	}
+
+	for ($i = 0; $i < 10; $i++) {
+		switch ($i) {
+		case 5:
+			continue;
+		}
+	}`)
+	test.Expect = []string{
+		`'continue' inside switch is 'break'`,
+		`'continue' inside switch is 'break'`,
+		`'continue' inside switch is 'break'`,
+	}
+	test.RunAndMatch()
+}
+
+func TestSwitchContinue2(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	global $x;
+	switch ($x) {
+	case 10:
+		for ($i = 0; $i < 10; $i++) {
+			if ($i == $x) {
+				continue; // OK, bound to 'for'
+			}
+		}
+	}
+
+	// OK, "continue 2" does the right thing.
+	// Phpstorm finds incorrect label "level" values,
+	// but it doesn't report 'continue' (without level) as being bad.
+	for ($i = 0; $i < 3; $i++) {
+		switch ($x) {
+		case 10:
+			continue 2;
+		}
+	}`)
+	test.RunAndMatch()
+}
+
 func TestBuiltinConstant(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

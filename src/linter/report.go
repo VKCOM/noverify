@@ -116,6 +116,12 @@ func init() {
 			Default: false,
 			Comment: `Report redundant type casts.`,
 		},
+
+		{
+			Name:    "caseContinue",
+			Default: true,
+			Comment: `Report suspicious 'continue' usages inside switch cases.`,
+		},
 	}
 
 	for _, info := range allChecks {
