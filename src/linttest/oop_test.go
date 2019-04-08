@@ -15,6 +15,7 @@ func TestInterfaceConstants(t *testing.T) {
 
 	class TestClass implements TestInterface
 	{
+		/** get returns interface constant */
 		public function get()
 		{
 			return self::TEST;
@@ -66,6 +67,7 @@ func TestVariadic(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	class TestClass
 	{
+		/** get always returns "." */
 		public function get(): string
 		{
 			return '.';
@@ -126,6 +128,7 @@ func TestMagicMethods(t *testing.T) {
 func TestGenerator(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	class Generator {
+		/** send sends a message */
 		public function send();
 	}
 
@@ -162,7 +165,7 @@ func TestClosureLateBinding(t *testing.T) {
 		"Undefined variable: a",
 		"Call to undefined method {}->method()",
 	}
-	test.RunAndMatch()
+	runFilterMatch(test, "undefined")
 }
 
 func TestInterfaceInheritance(t *testing.T) {
@@ -202,7 +205,7 @@ func TestInterfaceInheritance(t *testing.T) {
 		"Call to undefined method {}->format()",
 		"Class constant \\TestExInterface::TEST2 does not exist",
 	}
-	test.RunAndMatch()
+	runFilterMatch(test, "undefined")
 }
 
 func TestProtected(t *testing.T) {
@@ -267,7 +270,7 @@ func TestProtected(t *testing.T) {
 		`Cannot access protected method \A->methodFromClosure2()`,
 		`Cannot access protected method \A::staticMethod2()`,
 	}
-	test.RunAndMatch()
+	runFilterMatch(test, "accessLevel")
 }
 
 func TestInvoke(t *testing.T) {
@@ -284,7 +287,7 @@ func TestInvoke(t *testing.T) {
 	(new Example())();
 	`)
 	test.Expect = []string{"Too few arguments"}
-	test.RunAndMatch()
+	runFilterMatch(test, "argCount")
 }
 
 func TestTraversable(t *testing.T) {
@@ -327,7 +330,7 @@ func TestTraversable(t *testing.T) {
 	test.Expect = []string{
 		`Objects returned by \Example::getIterator() must be traversable or implement interface \Iterator`,
 	}
-	test.RunAndMatch()
+	runFilterMatch(test, "stdInterface")
 }
 
 func TestInstanceOf(t *testing.T) {
@@ -382,5 +385,5 @@ func TestInstanceOf(t *testing.T) {
 		`Call to undefined method {}->get2()`,
 		`Call to undefined method {\Element}->callUndefinedMethod()`,
 	}
-	test.RunAndMatch()
+	runFilterMatch(test, "undefined")
 }

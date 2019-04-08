@@ -648,7 +648,11 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	}
 
 	if meth.PhpDocComment == "" && modif.accessLevel == meta.Public {
-		d.Report(meth.MethodName, LevelDoNotReject, "phpdoc", "Missing PHPDoc for %q public method", nm)
+		_, insideInterface := d.currentClassNode.(*stmt.Interface)
+		// Permit having "__call" and other magic method without comments.
+		if !insideInterface && !strings.HasPrefix(nm, "_") {
+			d.Report(meth.MethodName, LevelDoNotReject, "phpdoc", "Missing PHPDoc for %q public method", nm)
+		}
 	}
 	phpdocReturnType, phpDocParamTypes, phpDocError := d.parsePHPDoc(meth.PhpDocComment, meth.Params)
 
