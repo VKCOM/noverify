@@ -203,11 +203,12 @@ func parseDiff(rd *bufio.Reader) ([]Change, error) {
 
 	cur.Valid = true
 
+ParsingLoop:
 	for {
 		ln, skip, err := readShortLine(rd)
 		switch {
 		case err == io.EOF:
-			break
+			break ParsingLoop
 		case err != nil:
 			return nil, err
 		case skip:

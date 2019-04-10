@@ -34,9 +34,15 @@ func init() {
 		},
 
 		{
-			Name:    "arrayKeys",
+			Name:    "mixedArrayKeys",
 			Default: true,
-			Comment: `Report array keys related problems.`,
+			Comment: `Report array literals that have both implicit and explicit keys.`,
+		},
+
+		{
+			Name:    "dupArrayKeys",
+			Default: true,
+			Comment: `Report duplicated keys in array literals.`,
 		},
 
 		{
@@ -115,6 +121,12 @@ func init() {
 			Name:    "callStatic",
 			Default: true,
 			Comment: `Report static calls of instance methods and vice versa.`,
+		},
+
+		{
+			Name:    "caseContinue",
+			Default: true,
+			Comment: `Report suspicious 'continue' usages inside switch cases.`,
 		},
 	}
 

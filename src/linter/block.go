@@ -20,6 +20,21 @@ import (
 	"github.com/z7zmey/php-parser/walker"
 )
 
+// loopKind describes current looping statement context.
+type loopKind int
+
+const (
+	// loopNone is "there is no enclosing loop" context.
+	loopNone loopKind = iota
+
+	// loopFor is for all usual loops in PHP, like for/foreach loops.
+	loopFor
+
+	// loopSwitch is for switch statement, that is considered to
+	// be a looping construction in PHP.
+	loopSwitch
+)
+
 const (
 	// FlagReturn shows whether or not block has "return"
 	FlagReturn = 1 << iota
@@ -69,7 +84,7 @@ type BlockWalker struct {
 	// inferred return types if any
 	returnTypes *meta.TypesMap
 
-	isLoopBody bool
+	innermostLoop loopKind
 
 	// block flags
 	exitFlags         int // if block always breaks code flow then there will be exitFlags
@@ -140,7 +155,7 @@ func (b *BlockWalker) copy() *BlockWalker {
 	bCopy := &BlockWalker{
 		sc:                   b.sc.Clone(),
 		r:                    b.r,
-		isLoopBody:           b.isLoopBody,
+		innermostLoop:        b.innermostLoop,
 		unusedVars:           b.unusedVars,
 		nonLocalVars:         b.nonLocalVars,
 		ignoreFunctionBodies: b.ignoreFunctionBodies,
@@ -357,6 +372,8 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		solver.ExprTypeLocalCustom(b.sc, b.r.st, s.Expr, b.customTypes).Iterate(func(t string) {
 			b.returnTypes = b.returnTypes.AppendString(t)
 		})
+	case *stmt.Continue:
+		b.handleContinue(s)
 	default:
 		// b.d.debug(`  Statement: %T`, s)
 	}
@@ -368,6 +385,12 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	}
 
 	return res
+}
+
+func (b *BlockWalker) handleContinue(s *stmt.Continue) {
+	if s.Expr == nil && b.innermostLoop == loopSwitch {
+		b.r.Report(s, LevelError, "caseContinue", "'continue' inside switch is 'break'")
+	}
 }
 
 func (b *BlockWalker) addNonLocalVar(v *expr.Variable) {
@@ -395,7 +418,7 @@ func (b *BlockWalker) replaceVar(v *expr.Variable, typ *meta.TypesMap, reason st
 
 	// Writes to variables that are done in a loop should not count as unused variables
 	// because they can be read on the next iteration (ideally we should check for that too :))
-	if !b.isLoopBody {
+	if b.innermostLoop == loopNone {
 		b.unusedVars[name.Value] = append(b.unusedVars[name.Value], v)
 	}
 }
@@ -416,7 +439,7 @@ func (b *BlockWalker) addVar(v *expr.Variable, typ *meta.TypesMap, reason string
 
 	// Writes to variables that are done in a loop should not count as unused variables
 	// because they can be read on the next iteration (ideally we should check for that too :))
-	if !b.isLoopBody {
+	if b.innermostLoop == loopNone {
 		b.unusedVars[name.Value] = append(b.unusedVars[name.Value], v)
 	}
 }
@@ -1006,14 +1029,14 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []node.Node) bool {
 		}
 
 		if _, ok := keys[key]; ok {
-			b.Report(item.Key, LevelWarning, "arrayKeys", "Duplicate array key '%s'", key)
+			b.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", key)
 		}
 
 		keys[key] = struct{}{}
 	}
 
 	if haveImplicitKeys && haveKeys {
-		b.Report(arr, LevelWarning, "arrayKeys", "Mixing implicit and explicit array keys")
+		b.Report(arr, LevelWarning, "mixedArrayKeys", "Mixing implicit and explicit array keys")
 	}
 
 	return true
@@ -1118,7 +1141,7 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 	// foreach body can do 0 cycles so we need a separate context for that
 	if s.Stmt != nil {
 		bCopy := b.copy()
-		bCopy.isLoopBody = true
+		bCopy.innermostLoop = loopFor
 
 		if _, ok := s.Stmt.(*stmt.StmtList); !ok {
 			bCopy.addStatement(s.Stmt)
@@ -1152,7 +1175,7 @@ func (b *BlockWalker) handleFor(s *stmt.For) bool {
 	// for body can do 0 cycles so we need a separate context for that
 	if s.Stmt != nil {
 		bCopy := b.copy()
-		bCopy.isLoopBody = true
+		bCopy.innermostLoop = loopFor
 		s.Stmt.Walk(bCopy)
 		b.maybeAddAllVars(bCopy.sc, "while body")
 		if !bCopy.returnTypes.IsEmpty() {
@@ -1175,8 +1198,8 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType *m
 
 	_, phpDocParamTypes, phpDocError := b.r.parsePHPDoc(fun.PhpDocComment, fun.Params)
 
-	if phpDocError != "" {
-		b.r.Report(fun, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", phpDocError)
+	for _, err := range phpDocError {
+		b.r.Report(fun, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", err)
 	}
 
 	for _, useExpr := range fun.Uses {
@@ -1218,7 +1241,7 @@ func (b *BlockWalker) handleWhile(s *stmt.While) bool {
 	// while body can do 0 cycles so we need a separate context for that
 	if s.Stmt != nil {
 		bCopy := b.copy()
-		bCopy.isLoopBody = true
+		bCopy.innermostLoop = loopFor
 		s.Stmt.Walk(bCopy)
 		b.maybeAddAllVars(bCopy.sc, "while body")
 		if !bCopy.returnTypes.IsEmpty() {
@@ -1231,10 +1254,10 @@ func (b *BlockWalker) handleWhile(s *stmt.While) bool {
 
 func (b *BlockWalker) handleDo(s *stmt.Do) bool {
 	if s.Stmt != nil {
-		oldIsLoopBody := b.isLoopBody
-		b.isLoopBody = true
+		oldInnermostLoop := b.innermostLoop
+		b.innermostLoop = loopFor
 		s.Stmt.Walk(b)
-		b.isLoopBody = oldIsLoopBody
+		b.innermostLoop = oldInnermostLoop
 	}
 
 	if s.Cond != nil {
@@ -1476,12 +1499,13 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 		}
 
 		bCopy := b.copy()
+		bCopy.innermostLoop = loopSwitch
 		contexts = append(contexts, bCopy)
 
-		for _, stmt := range list {
-			if stmt != nil {
-				bCopy.addStatement(stmt)
-				stmt.Walk(bCopy)
+		for _, s := range list {
+			if s != nil {
+				bCopy.addStatement(s)
+				s.Walk(bCopy)
 			}
 		}
 
