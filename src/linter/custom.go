@@ -104,7 +104,7 @@ func (ctx *RootContext) State() map[string]interface{} {
 	return ctx.w.State()
 }
 
-// Filename returns the full file name of the file being analyzed.
+// Filename returns the file name of the file being analyzed.
 func (ctx *RootContext) Filename() string {
 	return ctx.w.filename
 }
@@ -148,6 +148,11 @@ func (ctx *BlockContext) IsStatement(n node.Node) bool {
 
 func (ctx *BlockContext) PrematureExitFlags() int {
 	return ctx.w.PrematureExitFlags()
+}
+
+// Filename returns the file name of the file being analyzed.
+func (ctx *BlockContext) Filename() string {
+	return ctx.w.r.filename
 }
 
 // BlockCheckerCreateFunc is a factory function for BlockChecker
