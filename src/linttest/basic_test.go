@@ -9,6 +9,38 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestUnusedInSwitch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	function f($a) {
+		switch ($a) {
+		case 0:
+			$x = 0; // Warning
+		}
+	}
+	function nested($a) {
+		for ($i = 0; $i < 3; $i++) {
+			switch ($a) {
+			case 0:
+				$j = 10; // Inside loop, no warning
+			}
+		}
+	}
+	function nested2($a) {
+		for ($i = 0; $i < 3; $i++) {
+			switch ($a + $a) {
+			case 0:
+				switch ($a) {
+				case 0:
+					$j = 10; // Inside loop, no warning
+				}
+			}
+		}
+	}`)
+	test.Expect = []string{`Unused variable x`}
+	runFilterMatch(test, "unused")
+}
+
 func TestSwitchContinue1(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

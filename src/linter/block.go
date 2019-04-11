@@ -85,6 +85,10 @@ type BlockWalker struct {
 	returnTypes *meta.TypesMap
 
 	innermostLoop loopKind
+	// insideLoop is true if any number of statements above there is enclosing loop.
+	// innermostLoop is not enough for this, since we can be inside switch while
+	// having for loop outside of that switch.
+	insideLoop bool
 
 	// block flags
 	exitFlags         int // if block always breaks code flow then there will be exitFlags
@@ -156,6 +160,7 @@ func (b *BlockWalker) copy() *BlockWalker {
 		sc:                   b.sc.Clone(),
 		r:                    b.r,
 		innermostLoop:        b.innermostLoop,
+		insideLoop:           b.insideLoop,
 		unusedVars:           b.unusedVars,
 		nonLocalVars:         b.nonLocalVars,
 		ignoreFunctionBodies: b.ignoreFunctionBodies,
@@ -416,7 +421,7 @@ func (b *BlockWalker) replaceVar(v *expr.Variable, typ *meta.TypesMap, reason st
 
 	// Writes to variables that are done in a loop should not count as unused variables
 	// because they can be read on the next iteration (ideally we should check for that too :))
-	if b.innermostLoop == loopNone {
+	if !b.insideLoop {
 		b.unusedVars[name.Value] = append(b.unusedVars[name.Value], v)
 	}
 }
@@ -437,7 +442,7 @@ func (b *BlockWalker) addVar(v *expr.Variable, typ *meta.TypesMap, reason string
 
 	// Writes to variables that are done in a loop should not count as unused variables
 	// because they can be read on the next iteration (ideally we should check for that too :))
-	if b.innermostLoop == loopNone {
+	if !b.insideLoop {
 		b.unusedVars[name.Value] = append(b.unusedVars[name.Value], v)
 	}
 }
@@ -1129,6 +1134,7 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 	if s.Stmt != nil {
 		bCopy := b.copy()
 		bCopy.innermostLoop = loopFor
+		bCopy.insideLoop = true
 
 		if _, ok := s.Stmt.(*stmt.StmtList); !ok {
 			bCopy.addStatement(s.Stmt)
@@ -1163,6 +1169,7 @@ func (b *BlockWalker) handleFor(s *stmt.For) bool {
 	if s.Stmt != nil {
 		bCopy := b.copy()
 		bCopy.innermostLoop = loopFor
+		bCopy.insideLoop = true
 		s.Stmt.Walk(bCopy)
 		b.maybeAddAllVars(bCopy.sc, "while body")
 		if !bCopy.returnTypes.IsEmpty() {
@@ -1229,6 +1236,7 @@ func (b *BlockWalker) handleWhile(s *stmt.While) bool {
 	if s.Stmt != nil {
 		bCopy := b.copy()
 		bCopy.innermostLoop = loopFor
+		bCopy.insideLoop = true
 		s.Stmt.Walk(bCopy)
 		b.maybeAddAllVars(bCopy.sc, "while body")
 		if !bCopy.returnTypes.IsEmpty() {
@@ -1242,9 +1250,12 @@ func (b *BlockWalker) handleWhile(s *stmt.While) bool {
 func (b *BlockWalker) handleDo(s *stmt.Do) bool {
 	if s.Stmt != nil {
 		oldInnermostLoop := b.innermostLoop
+		oldInsideLoop := b.insideLoop
 		b.innermostLoop = loopFor
+		b.insideLoop = true
 		s.Stmt.Walk(b)
 		b.innermostLoop = oldInnermostLoop
+		b.insideLoop = oldInsideLoop
 	}
 
 	if s.Cond != nil {
