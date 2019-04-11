@@ -1655,6 +1655,7 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 	case *expr.PropertyFetch:
 		varNode, ok := v.Variable.(*expr.Variable)
 		if !ok {
+			v.Variable.Walk(b)
 			break
 		}
 
