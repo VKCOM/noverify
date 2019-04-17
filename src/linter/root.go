@@ -68,10 +68,21 @@ type Report struct {
 	startChar  int
 	startLine  int
 	endChar    int
-	level      int
+	level      SeverityLevel
 	msg        string
 	filename   string
 	isDisabled bool // user-defined flag that file should not be linted
+}
+
+// Pad prefixes to the same length
+var severityLevelPrefixes = map[SeverityLevel]string{
+	LevelError:       "ERROR  ",
+	LevelWarning:     "WARNING",
+	LevelInformation: "INFO   ",
+	LevelHint:        "HINT   ",
+	LevelUnused:      "UNUSED ",
+	LevelDoNotReject: "MAYBE  ",
+	LevelSyntax:      "SYNTAX  ",
 }
 
 // CheckName returns report associated check name.
@@ -100,12 +111,19 @@ func (r *Report) String() string {
 	if r.checkName != "" {
 		msg = r.checkName + ": " + msg
 	}
-	return fmt.Sprintf("%s %s at %s:%d\n%s\n%s", severityNames[r.level], msg, r.filename, r.startLine, r.startLn, contextLn.String())
+
+	levelName := severityLevelPrefixes[r.level]
+	return fmt.Sprintf("%s %s at %s:%d\n%s\n%s", levelName, msg, r.filename, r.startLine, r.startLn, contextLn.String())
 }
 
 // IsCritical returns whether or not we need to reject whole commit when found this kind of report.
 func (r *Report) IsCritical() bool {
 	return r.level != LevelDoNotReject
+}
+
+// IsEnabledForLevel returns true when report has greater or equal level
+func (r *Report) IsEnabledForLevel(level SeverityLevel) bool {
+	return r.level <= level
 }
 
 // IsDisabledByUser returns whether or not user thinks that this file should not be checked
@@ -285,7 +303,7 @@ func (d *RootWalker) parseStartPos(pos *position.Position) (startLn []byte, star
 }
 
 // Report registers a single report message about some found problem.
-func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args ...interface{}) {
+func (d *RootWalker) Report(n node.Node, level SeverityLevel, checkName, msg string, args ...interface{}) {
 	if !meta.IsIndexingComplete() {
 		return
 	}

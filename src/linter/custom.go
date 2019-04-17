@@ -85,7 +85,7 @@ type RootContext struct {
 // Report records linter warning of specified level.
 // chechName is a key that identifies the "checker" (diagnostic name) that found
 // issue being reported.
-func (ctx *RootContext) Report(n node.Node, level int, checkName, msg string, args ...interface{}) {
+func (ctx *RootContext) Report(n node.Node, level SeverityLevel, checkName, msg string, args ...interface{}) {
 	ctx.w.Report(n, level, checkName, msg, args...)
 }
 
@@ -117,7 +117,7 @@ type BlockContext struct {
 // Report records linter warning of specified level.
 // chechName is a key that identifies the "checker" (diagnostic name) that found
 // issue being reported.
-func (ctx *BlockContext) Report(n node.Node, level int, checkName, msg string, args ...interface{}) {
+func (ctx *BlockContext) Report(n node.Node, level SeverityLevel, checkName, msg string, args ...interface{}) {
 	ctx.w.Report(n, level, checkName, msg, args...)
 }
 
@@ -156,17 +156,20 @@ type BlockCheckerCreateFunc func(*BlockContext) BlockChecker
 // RootCheckerCreateFunc is a factory function for RootChecker
 type RootCheckerCreateFunc func(*RootContext) RootChecker
 
+// SeverityLevel is a report severity level
+type SeverityLevel int
+
 const (
-	LevelError       = 1
-	LevelWarning     = 2
-	LevelInformation = 3
-	LevelHint        = 4
-	LevelUnused      = 5
-	LevelDoNotReject = 6 // do not treat this warning as a reason to reject if we get this kind of warning
-	LevelSyntax      = 7
+	LevelError       = SeverityLevel(1)
+	LevelWarning     = SeverityLevel(2)
+	LevelInformation = SeverityLevel(3)
+	LevelHint        = SeverityLevel(4)
+	LevelUnused      = SeverityLevel(5)
+	LevelDoNotReject = SeverityLevel(6) // do not treat this warning as a reason to reject if we get this kind of warning
+	LevelSyntax      = SeverityLevel(7)
 )
 
-var vscodeLevelMap = map[int]int{
+var vscodeLevelMap = map[SeverityLevel]int{
 	LevelError:       vscode.Error,
 	LevelWarning:     vscode.Warning,
 	LevelInformation: vscode.Information,
@@ -176,14 +179,14 @@ var vscodeLevelMap = map[int]int{
 	// LevelSyntax is intentionally not included here
 }
 
-var severityNames = map[int]string{
-	LevelError:       "ERROR  ",
-	LevelWarning:     "WARNING",
-	LevelInformation: "INFO   ",
-	LevelHint:        "HINT   ",
-	LevelUnused:      "UNUSED ",
-	LevelDoNotReject: "MAYBE  ",
-	LevelSyntax:      "SYNTAX ",
+var severityLevelNames = map[SeverityLevel]string{
+	LevelError:       "error",
+	LevelWarning:     "warning",
+	LevelInformation: "info",
+	LevelHint:        "hint",
+	LevelUnused:      "unused",
+	LevelDoNotReject: "maybe",
+	LevelSyntax:      "syntax",
 }
 
 var (
@@ -228,4 +231,24 @@ func GetDeclaredChecks() []CheckInfo {
 		return checks[i].Name < checks[j].Name
 	})
 	return checks
+}
+
+// ParseSeverityLevel parses severity level name
+func ParseSeverityLevel(name string) (SeverityLevel, error) {
+	for level, levelName := range severityLevelNames {
+		if levelName == name {
+			return level, nil
+		}
+	}
+
+	var availableNames []string
+	for _, name := range severityLevelNames {
+		availableNames = append(availableNames, name)
+	}
+	return LevelSyntax, fmt.Errorf("unknown severity level %s, available levels: %v", name, availableNames)
+}
+
+// GetSeverityLevelName returns severity level name
+func GetSeverityLevelName(level SeverityLevel) string {
+	return severityLevelNames[level]
 }

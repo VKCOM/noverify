@@ -120,7 +120,7 @@ func (b *BlockWalker) IsRootLevel() bool {
 }
 
 // Report registers a single report message about some found problem.
-func (b *BlockWalker) Report(n node.Node, level int, checkName, msg string, args ...interface{}) {
+func (b *BlockWalker) Report(n node.Node, level SeverityLevel, checkName, msg string, args ...interface{}) {
 	b.r.Report(n, level, checkName, msg, args...)
 }
 
