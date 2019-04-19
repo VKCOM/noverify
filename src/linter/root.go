@@ -794,10 +794,12 @@ func (d *RootWalker) checkPHPDocType(typ string) string {
 
 	// Check commonly mispelled types and other unfortunate cases.
 	switch typ {
-	case "double":
-		return "use float type instead of double"
-	case "long":
-		return "use int/integer type instead of long"
+	case "boolean":
+		return "use bool type instead of boolean"
+	case "double", "real":
+		return "use float type instead of " + typ
+	case "long", "integer":
+		return "use int type instead of " + typ
 	case "-":
 		// This happend when either of those formats is used:
 		// `* @param $name - description`

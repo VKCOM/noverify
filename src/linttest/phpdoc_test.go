@@ -63,19 +63,24 @@ func TestPHPDocType(t *testing.T) {
 	test := NewSuite(t)
 	test.AddFile(`<?php
 	/**
-	 * @param [][]string $x
-	 * @param double $y
+	 * @param [][]string $x1
+	 * @param double $x2
+	 * @param real $x3
+	 * @param integer $x4
+	 * @param boolean $x5
 	 * @return []int
 	 */
-	function f($x, $y) {
-		$_ = $x;
-		$_ = $y;
+	function f($x1, $x2, $x3, $x4, $x5) {
+		$_ = [$x1, $x2, $x3, $x4, $x5];
 		return [1];
 	}`)
 	test.Expect = []string{
 		`[]int type syntax: use [] after the type, e.g. T[]`,
 		`[][]string type syntax: use [] after the type, e.g. T[]`,
 		`use float type instead of double`,
+		`use float type instead of real`,
+		`use int type instead of integer`,
+		`use bool type instead of boolean`,
 	}
 	test.RunAndMatch()
 }
