@@ -377,6 +377,8 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		})
 	case *stmt.Continue:
 		b.handleContinue(s)
+	case *binary.LogicalOr:
+		res = b.handleLogicalOr(s)
 	default:
 		// b.d.debug(`  Statement: %T`, s)
 	}
@@ -388,6 +390,17 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	}
 
 	return res
+}
+
+func (b *BlockWalker) handleLogicalOr(or *binary.LogicalOr) bool {
+	or.Left.Walk(b)
+
+	// We're going to discard "or" RHS effects on the exit flags.
+	exitFlags := b.exitFlags
+	or.Right.Walk(b)
+	b.exitFlags = exitFlags
+
+	return false
 }
 
 func (b *BlockWalker) handleContinue(s *stmt.Continue) {
