@@ -252,7 +252,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 
 	switch s := w.(type) {
 	case *cast.Double:
-		b.checkRedundantCast(s.Expr, "double")
+		b.checkRedundantCast(s.Expr, "float")
 	case *cast.Int:
 		b.checkRedundantCast(s.Expr, "int")
 	case *cast.Bool:

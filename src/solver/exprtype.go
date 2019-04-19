@@ -19,7 +19,7 @@ func binaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right node
 	if ExprTypeLocalCustom(sc, cs, left, custom).IsInt() && ExprTypeLocalCustom(sc, cs, right, custom).IsInt() {
 		return meta.NewTypesMap("int")
 	}
-	return meta.NewTypesMap("double")
+	return meta.NewTypesMap("float")
 }
 
 // ExprType returns type of expression. Depending on whether or not is it "full mode",
@@ -95,7 +95,7 @@ func arrayType(items []node.Node) *meta.TypesMap {
 		case isConstantIntArray(items):
 			return meta.NewTypesMap("int[]")
 		case isConstantFloatArray(items):
-			return meta.NewTypesMap("double[]")
+			return meta.NewTypesMap("float[]")
 		}
 	}
 
@@ -309,7 +309,7 @@ func ExprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 	case *cast.Bool:
 		return meta.NewTypesMap("bool")
 	case *cast.Double:
-		return meta.NewTypesMap("double")
+		return meta.NewTypesMap("float")
 	case *cast.Int:
 		return meta.NewTypesMap("int")
 	case *cast.String:
@@ -344,7 +344,7 @@ func ExprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 	case *scalar.Heredoc:
 		return meta.NewTypesMap("string")
 	case *scalar.Dnumber:
-		return meta.NewTypesMap("double")
+		return meta.NewTypesMap("float")
 	case *expr.Ternary:
 		t := ExprTypeLocalCustom(sc, cs, n.IfTrue, custom)
 		f := ExprTypeLocalCustom(sc, cs, n.IfFalse, custom)
