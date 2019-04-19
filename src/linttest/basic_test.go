@@ -562,7 +562,7 @@ func TestRedundantCast(t *testing.T) {
 	}`)
 	test.Expect = []string{
 		`expression already has array type`,
-		`expression already has double type`,
+		`expression already has float type`,
 		`expression already has int type`,
 		`expression already has string type`,
 		`expression already has bool type`,
