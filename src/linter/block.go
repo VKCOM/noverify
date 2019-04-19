@@ -393,14 +393,13 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 }
 
 func (b *BlockWalker) handleLogicalOr(or *binary.LogicalOr) bool {
-	die, ok := or.Right.(*expr.Die)
-	if !ok {
-		return true // Continue normally
-	}
-
-	// Handle "or die" separately to avoid reporting code after it as unreachable.
-	die.Expr.Walk(b)
 	or.Left.Walk(b)
+
+	// We're going to discard "or" RHS effects on the exit flags.
+	exitFlags := b.exitFlags
+	or.Right.Walk(b)
+	b.exitFlags = exitFlags
+
 	return false
 }
 

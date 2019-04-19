@@ -30,6 +30,14 @@ $undef1 or die($undef2);
 	test.RunAndMatch()
 }
 
+func TestOrExit(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+global $ok;
+$ok or exit("");
+echo "quite reachable\n";
+`)
+}
+
 func TestUnusedInPropFetch(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
