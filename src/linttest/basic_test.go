@@ -9,6 +9,27 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestOrDie1(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+global $ok;
+$ok or die("not ok");
+echo "quite reachable\n";
+`)
+}
+
+func TestOrDie2(t *testing.T) {
+	// Check that we still check "or" LHS and RHS properly.
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$undef1 or die($undef2);
+`)
+	test.Expect = []string{
+		"Undefined variable: undef1",
+		"Undefined variable: undef2",
+	}
+	test.RunAndMatch()
+}
+
 func TestUnusedInPropFetch(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -436,6 +457,24 @@ func TestFunctionExit(t *testing.T) {
 		echo "Dead code";
 	}`)
 	test.Expect = []string{"Unreachable code"}
+	test.RunAndMatch()
+}
+
+func TestFunctionDie(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php function doDie() {
+		die("123");
+		echo "Also unreachable";
+	}
+
+	function doSomething() {
+		doDie();
+		echo "Dead code";
+	}`)
+	test.Expect = []string{
+		"Unreachable code",
+		"Unreachable code",
+	}
 	test.RunAndMatch()
 }
 

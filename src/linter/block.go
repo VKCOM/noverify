@@ -377,6 +377,8 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		})
 	case *stmt.Continue:
 		b.handleContinue(s)
+	case *binary.LogicalOr:
+		res = b.handleLogicalOr(s)
 	default:
 		// b.d.debug(`  Statement: %T`, s)
 	}
@@ -388,6 +390,18 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	}
 
 	return res
+}
+
+func (b *BlockWalker) handleLogicalOr(or *binary.LogicalOr) bool {
+	die, ok := or.Right.(*expr.Die)
+	if !ok {
+		return true // Continue normally
+	}
+
+	// Handle "or die" separately to avoid reporting code after it as unreachable.
+	die.Expr.Walk(b)
+	or.Left.Walk(b)
+	return false
 }
 
 func (b *BlockWalker) handleContinue(s *stmt.Continue) {
