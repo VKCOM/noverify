@@ -1132,8 +1132,8 @@ func (b *BlockWalker) handleNew(e *expr.New) bool {
 func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 	// TODO: add reference semantics to foreach analyze as well
 
-	b.handleVariableNode(s.Key, meta.NewTypesMap("foreach_key"), "foreach_key")
-	b.handleVariableNode(s.Variable, meta.NewTypesMap("foreach_value"), "foreach_value")
+	b.handleVariableNode(s.Key, nil, "foreach_key")
+	b.handleVariableNode(s.Variable, nil, "foreach_value")
 
 	// expression is always executed and is executed in base context
 	if s.Expr != nil {

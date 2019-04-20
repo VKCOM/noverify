@@ -9,6 +9,23 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestClosureCapture(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	class omg {
+		public $some_property;
+	}
+
+	function doSomething($a, omg $b) {
+		return function() use($b) {
+			echo $b->some_property;
+			echo $b->other_property;
+		};
+	}`)
+	test.Expect = []string{"other_property does not exist"}
+	test.RunAndMatch()
+}
+
 func TestOrDie1(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 global $ok;
