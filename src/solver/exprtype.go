@@ -88,6 +88,19 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ex
 }
 
 func arrayType(items []node.Node) *meta.TypesMap {
+	if len(items) == 0 {
+		// Used as a placeholder until more specific type is discovered.
+		//
+		// Should be resolved before used.
+		//
+		// We do this to simplify resolving `array|int[]` to `int[]`.
+		// If we know that an array is empty, then it's valid array
+		// for any mono-typed array, so we can just throw away "empty_array"
+		// in that case. If element type is unknown, "empty_array" is
+		// resolved into "array".
+		return meta.NewTypesMap("empty_array")
+	}
+
 	if len(items) > 0 {
 		switch {
 		case isConstantStringArray(items):

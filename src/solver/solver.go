@@ -294,5 +294,19 @@ func ResolveTypes(m *meta.TypesMap, visitedMap map[string]struct{}) map[string]s
 		}
 	})
 
+	if _, ok := res["empty_array"]; ok {
+		delete(res, "empty_array")
+		specialized := false
+		for tt := range res {
+			if strings.HasSuffix(tt, "[]") {
+				specialized = true
+				break
+			}
+		}
+		if !specialized {
+			res["array"] = struct{}{}
+		}
+	}
+
 	return res
 }

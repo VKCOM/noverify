@@ -57,18 +57,21 @@ $string = "123";
 
 func TestExprTypeArray(t *testing.T) {
 	tests := []exprTypeTest{
+		{`[]`, `array`}, // Should never be "empty_array" after resolving
+		{`[[]]`, `array`},
+
 		{`[1, 2]`, "int[]"},
 		{`[1.4, 3.5]`, "float[]"},
 		{`["1", "5"]`, "string[]"},
 
 		{`[$int, $int]`, "array"}, // TODO: could be int[]
 
-		{`[11][0]`, "int"},
+		{`$ints[0]`, "int"},
 		{`["11"][0]`, "string"},
 		{`[1.4][0]`, "float"},
 	}
 
-	local := `$int = 10`
+	local := `$int = 10; $ints = [1, 2];`
 	runExprTypeTest(t, &exprTypeTestContext{local: local}, tests)
 }
 
@@ -79,6 +82,7 @@ func TestExprTypeMulti(t *testing.T) {
 		{`$int_or_float`, "float|int"},
 		{`$cond ? 10 : "123"`, "int|string"},
 		{`$cond ? ($int_or_float ? 10 : 10.4) : (bool)1`, "int|float|bool"},
+		{`$bool_or_int`, `bool|int`},
 	}
 
 	global := `<?php
@@ -88,7 +92,10 @@ if ($cond) {
   $int_or_float = 10.5;
 }
 `
-	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
+	local := `
+/** @var bool|int $bool_or_int */
+$bool_or_int = 10;`
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
 }
 
 func TestExprTypeOps(t *testing.T) {
@@ -157,12 +164,117 @@ $magic = new Magic();`
 	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
 }
 
+func TestExprTypeFunction(t *testing.T) {
+	tests := []exprTypeTest{
+		{`get_ints()`, `int[]`},
+		{`get_floats()`, `float[]`},
+		{`get_array()`, `array`},
+		{`get_array_or_null()`, `array|null`},
+		{`get_null_or_array()`, `array|null`},
+	}
+
+	global := `<?php
+function define($name, $value) {}
+define('null', 0);
+
+class Foo {}
+
+function get_ints() {
+	$a = []; // "empty_array"
+	$a[0] = 1;
+	$a[1] = 2;
+	return $a; // Should be resolved to just int[]
+}
+
+/** @return float[] */
+function get_floats() { return []; }
+
+function get_array() { return []; }
+
+/** @return array */
+function get_array_or_null() { return null; }
+
+/** @return null */
+function get_null_or_array() { return []; }`
+	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
+}
+
+func TestExprTypeMethod(t *testing.T) {
+	tests := []exprTypeTest{
+		{`\NS\Test::instance()`, `\NS\Test`},
+		{`\NS\Test::instance2()`, `\NS\Test`},
+		{`$test->getInt()`, `int`},
+		{`$test->getInts()`, `int[]`},
+		{`$test->getThis()->getThis()->getInt()`, `int`},
+		{`new \NS\Test()`, `\NS\Test`},
+	}
+
+	global := `<?php
+namespace NS {
+	class Test {
+		public function getInt() { return 10; }
+		public function getInts() { return [1, 2]; }
+		public function getThis() { return $this; }
+
+		public static function instance() {
+			return self::$instances[0];
+		}
+
+		public static function instance2() {
+			foreach (self::$instances as $instance) {
+				return $instance;
+			}
+		}
+
+		/** @var Test[] */
+		public static $instances;
+	}
+}`
+	local := `$test = new \NS\Test();`
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
+func TestExprTypeOverride(t *testing.T) {
+	tests := []exprTypeTest{
+		{`array_shift($ints)`, "int"},
+		{`array_slice($ints, 0, 2)`, "int[]"},
+	}
+
+	stubs := `<?php
+/**
+ * @param array $array
+ * @param int $offset
+ * @param int $length [optional]
+ * @param bool $preserve_keys [optional]
+ * @return array the slice.
+ */
+function array_slice (array $array, $offset, $length = null, $preserve_keys = false) {}
+
+/**
+ * @param array $array
+ * @return mixed the shifted value, or &null; if array is
+ * empty or is not an array.
+ */
+function array_shift (array &$array) {}
+
+namespace PHPSTORM_META {
+	override(\array_slice(0), type(0));
+	override(\array_shift(0), elementType(0));
+}`
+	local := `$ints = [1, 2];`
+	runExprTypeTest(t, &exprTypeTestContext{stubs: stubs, local: local}, tests)
+}
+
 func runExprTypeTest(t *testing.T, ctx *exprTypeTestContext, tests []exprTypeTest) {
 	if ctx == nil {
 		ctx = &exprTypeTestContext{}
 	}
 
 	meta.ResetInfo()
+	if ctx.stubs != "" {
+		linttest.ParseTestFile(t, "stubs.php", ctx.stubs)
+		meta.Info.InitStubs()
+	}
 	var gw globalsWalker
 	if ctx.global != "" {
 		root, _ := linttest.ParseTestFile(t, "exprtype_global.php", "<?php\n"+ctx.global)
@@ -203,6 +315,7 @@ type exprTypeTest struct {
 type exprTypeTestContext struct {
 	global string
 	local  string
+	stubs  string
 }
 
 func exprTypeSources(ctx *exprTypeTestContext, tests []exprTypeTest, globals []string) string {
