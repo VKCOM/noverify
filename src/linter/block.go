@@ -1158,6 +1158,7 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 		if !bCopy.returnTypes.IsEmpty() {
 			b.returnTypes = b.returnTypes.Append(bCopy.returnTypes)
 		}
+		b.propagateFlags(bCopy)
 	}
 
 	return false
@@ -1188,6 +1189,7 @@ func (b *BlockWalker) handleFor(s *stmt.For) bool {
 		if !bCopy.returnTypes.IsEmpty() {
 			b.returnTypes = b.returnTypes.Append(bCopy.returnTypes)
 		}
+		b.propagateFlags(bCopy)
 	}
 
 	return false
@@ -1255,6 +1257,7 @@ func (b *BlockWalker) handleWhile(s *stmt.While) bool {
 		if !bCopy.returnTypes.IsEmpty() {
 			b.returnTypes = b.returnTypes.Append(bCopy.returnTypes)
 		}
+		b.propagateFlags(bCopy)
 	}
 
 	return false
@@ -1276,6 +1279,11 @@ func (b *BlockWalker) handleDo(s *stmt.Do) bool {
 	}
 
 	return false
+}
+
+// propagateFlags is like propagateFlagsFromBranches, but for a simple single block case.
+func (b *BlockWalker) propagateFlags(other *BlockWalker) {
+	b.containsExitFlags |= other.containsExitFlags
 }
 
 // Propagate premature exit flags from visited branches ("contexts").
@@ -1568,6 +1576,8 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 	defCounts := make(map[string]int, b.sc.Len())
 
 	for _, ctx := range contexts {
+		b.propagateFlags(ctx)
+
 		cleanFlags := ctx.exitFlags & (^breakFlags)
 		if cleanFlags != 0 {
 			b.returnTypes = b.returnTypes.Append(ctx.returnTypes)
