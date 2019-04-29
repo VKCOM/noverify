@@ -3,6 +3,7 @@ package main
 // This is an example of adding of custom rules
 
 import (
+	"flag"
 	"log"
 
 	"github.com/VKCOM/noverify/src/cmd"
@@ -27,10 +28,21 @@ func init() {
 	})
 }
 
+var customFlag = flag.String("custom-flag", "", "An example of the additional linter flag")
+
 func main() {
 	log.SetFlags(log.Flags() | log.Lmicroseconds)
 
-	cmd.Main()
+	// Config argument can be nil to use "all default" behavior.
+	cmd.Main(&cmd.MainConfig{
+		AfterFlagParse: useCustomFlags,
+	})
+}
+
+func useCustomFlags() {
+	if *customFlag != "" {
+		log.Println("custom flag value:", *customFlag)
+	}
 }
 
 type block struct {

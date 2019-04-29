@@ -67,7 +67,7 @@ var (
 	memProfile string
 )
 
-func parseFlags() {
+func bindFlags() {
 	var enabledByDefault []string
 	declaredChecks := linter.GetDeclaredChecks()
 	for _, info := range declaredChecks {
@@ -132,8 +132,6 @@ func parseFlags() {
 
 	flag.StringVar(&cpuProfile, "cpuprofile", "", "write cpu profile to `file`")
 	flag.StringVar(&memProfile, "memprofile", "", "write memory profile to `file`")
-
-	flag.Parse()
 }
 
 func isEnabled(r *linter.Report) bool {
@@ -164,8 +162,18 @@ func canBeDisabled(filename string) bool {
 
 // Main is the actual main function to be run. It is separate from linter so that you can insert your own hooks
 // before running main().
-func Main() {
-	parseFlags()
+//
+// Optionally, non-nil config can be passed to customize function behavior.
+func Main(cfg *MainConfig) {
+	if cfg == nil {
+		cfg = &MainConfig{}
+	}
+
+	bindFlags()
+	flag.Parse()
+	if cfg.AfterFlagParse != nil {
+		cfg.AfterFlagParse()
+	}
 
 	status, err := mainNoExit()
 	if err != nil {
