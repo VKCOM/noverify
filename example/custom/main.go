@@ -30,7 +30,15 @@ func init() {
 func main() {
 	log.SetFlags(log.Flags() | log.Lmicroseconds)
 
+	bindCustomFlags()
+	cmd.MainHooks.AfterFlagParse = func() {
+		// Can use custom flags here to complete custom checks initialization.
+	}
 	cmd.Main()
+}
+
+func bindCustomFlags() {
+	// Can bind custom flags here.
 }
 
 type block struct {

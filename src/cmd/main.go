@@ -166,6 +166,9 @@ func canBeDisabled(filename string) bool {
 // before running main().
 func Main() {
 	parseFlags()
+	if MainHooks.AfterFlagParse != nil {
+		MainHooks.AfterFlagParse()
+	}
 
 	status, err := mainNoExit()
 	if err != nil {

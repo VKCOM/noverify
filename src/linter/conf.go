@@ -16,6 +16,7 @@ var (
 	MaxFileSize     int
 	DefaultEncoding string
 	PHPExtensions   []string
+	WrapFileReader  = defaultWrapFileReader
 
 	// actually time.Duration
 	initParseTime int64

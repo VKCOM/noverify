@@ -1,7 +1,6 @@
 package linter
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -21,8 +20,6 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/z7zmey/php-parser/node"
 	"github.com/z7zmey/php-parser/php7"
-	"golang.org/x/text/encoding/charmap"
-	"golang.org/x/text/transform"
 )
 
 type FileInfo struct {
@@ -81,39 +78,16 @@ func ParseContents(filename string, contents []byte, encoding string, lineRanges
 
 	start := time.Now()
 
-	var rd io.Reader
-	var size int
-
-	if contents == nil {
-		fp, err := os.Open(filename)
-		if err != nil {
-			log.Fatalf("Could not open file %s: %s", filename, err.Error())
-		}
-
-		st, err := fp.Stat()
-		if err != nil {
-			log.Fatalf("Could not stat file %s: %s", filename, err.Error())
-		}
-
-		size = int(st.Size())
-		rd = fp
-
-		defer fp.Close()
-	} else {
-		rd = bytes.NewReader(contents)
-		size = len(contents)
+	rd, size, err := newFileReader(filename, contents)
+	if err != nil {
+		log.Panic(err)
 	}
+	rd = WrapFileReader(filename, rd)
+	defer rd.Close()
 
 	b := bytesBufPool.Get().(*bytes.Buffer)
 	b.Reset()
 	defer bytesBufPool.Put(b)
-
-	if encoding == "windows-1251" {
-		bufRd := bufPool.Get().(*bufio.Reader)
-		bufRd.Reset(rd)
-		rd = transform.NewReader(bufRd, charmap.Windows1251.NewDecoder())
-		defer bufPool.Put(bufRd)
-	}
 
 	waiter := BeforeParse(size, filename)
 	defer waiter.Finish()
@@ -181,10 +155,6 @@ func AnalyzeFileRootLevel(rootNode node.Node, d *RootWalker) {
 	}
 
 	rootNode.Walk(b)
-}
-
-var bufPool = sync.Pool{
-	New: func() interface{} { return bufio.NewReaderSize(nil, 256<<10) },
 }
 
 var bytesBufPool = sync.Pool{
@@ -493,4 +463,30 @@ func doParseFile(f FileInfo, needReports bool) (reports []*Report) {
 func InitStubs() {
 	ParseFilenames(ReadFilenames([]string{StubsDir}, nil))
 	meta.Info.InitStubs()
+}
+
+func defaultWrapFileReader(filename string, r io.ReadCloser) io.ReadCloser {
+	return r
+}
+
+func newFileReader(filename string, contents []byte) (r io.ReadCloser, size int, err error) {
+	if contents == nil {
+		fp, err := os.Open(filename)
+		if err != nil {
+			return nil, 0, fmt.Errorf("open file: %v", err)
+		}
+
+		st, err := fp.Stat()
+		if err != nil {
+			return nil, 0, fmt.Errorf("stat: %v", err)
+		}
+
+		r = fp
+		size = int(st.Size())
+	} else {
+		r = ioutil.NopCloser(bytes.NewReader(contents))
+		size = len(contents)
+	}
+
+	return r, size, nil
 }
