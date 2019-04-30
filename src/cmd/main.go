@@ -57,6 +57,8 @@ var (
 	allowDisable      string
 	allowDisableRegex *regexp.Regexp
 
+	unusedVarPattern string
+
 	fullAnalysisFiles string
 
 	output string
@@ -127,6 +129,9 @@ func bindFlags() {
 	flag.StringVar(&linter.DefaultEncoding, "encoding", "UTF-8", "Default encoding. Only UTF-8 and windows-1251 are supported")
 	flag.StringVar(&linter.StubsDir, "stubs-dir", "/path/to/phpstorm-stubs", "phpstorm-stubs directory")
 	flag.StringVar(&linter.CacheDir, "cache-dir", "", "Directory for linter cache (greatly improves indexing speed)")
+
+	flag.StringVar(&unusedVarPattern, "unused-var-regex", `^_$`,
+		"Variables that match such regexp are marked as discarded; not reported as unused, but should not be used as values")
 
 	flag.BoolVar(&version, "version", false, "Show version info and exit")
 
@@ -223,6 +228,10 @@ func mainNoExit() (int, error) {
 				log.Printf("could not write memory profile: %v", err)
 			}
 		}()
+	}
+
+	if err := setDiscardVarPredicate(); err != nil {
+		return 0, fmt.Errorf("compile unused-var-regex: %v", err)
 	}
 
 	linter.PHPExtensions = strings.Split(phpExtensionsArg, ",")
@@ -546,4 +555,28 @@ func prepareGitArgs() (logArgs, diffArgs []string, err error) {
 	diffArgs = []string{gitCommitFrom + ".." + gitCommitTo}
 
 	return logArgs, diffArgs, nil
+}
+
+func setDiscardVarPredicate() error {
+	switch unusedVarPattern {
+	case "^_$":
+		// Default pattern, only $_ is allowed.
+		// Don't change anything.
+	case "^_.*$":
+		// Leading underscore plus anything after it.
+		// Recognize as quite common pattern.
+		linter.IsDiscardVar = func(s string) bool {
+			return strings.HasPrefix(s, "_")
+		}
+	default:
+		re, err := regexp.Compile(unusedVarPattern)
+		if err != nil {
+			return err
+		}
+		linter.IsDiscardVar = func(s string) bool {
+			return re.MatchString(s)
+		}
+	}
+
+	return nil
 }

@@ -2,12 +2,33 @@ package linttest_test
 
 import (
 	"log"
+	"strings"
 	"testing"
 
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
 )
+
+func TestCustomUnusedVarRegex(t *testing.T) {
+	defer func(isDiscardVar func(string) bool) {
+		linter.IsDiscardVar = isDiscardVar
+	}(linter.IsDiscardVar)
+
+	linter.IsDiscardVar = func(s string) bool {
+		return strings.HasPrefix(s, "_")
+	}
+
+	linttest.SimpleNegativeTest(t, `<?php
+$_unused = 10;
+
+function f() {
+  $_unused2 = 20;
+  $_ = 30;
+  foreach ([1] as $_ => $_user) {}
+}
+`)
+}
 
 func TestClosureCapture(t *testing.T) {
 	test := linttest.NewSuite(t)

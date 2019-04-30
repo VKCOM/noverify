@@ -323,3 +323,7 @@ func reportListToMap(list []*Report) map[string][]*Report {
 
 	return res
 }
+
+func isUnderscore(s string) bool {
+	return s == "_"
+}
