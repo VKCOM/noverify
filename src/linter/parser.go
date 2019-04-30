@@ -1,7 +1,6 @@
 package linter
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -17,12 +16,11 @@ import (
 	"time"
 
 	"github.com/VKCOM/noverify/src/git"
+	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/z7zmey/php-parser/node"
 	"github.com/z7zmey/php-parser/php7"
-	"golang.org/x/text/encoding/charmap"
-	"golang.org/x/text/transform"
 )
 
 type FileInfo struct {
@@ -70,7 +68,7 @@ type ReadCallback func(ch chan FileInfo)
 
 // ParseContents parses specified contents (or file) and returns *RootWalker.
 // Function does not update global meta.
-func ParseContents(filename string, contents []byte, encoding string, lineRanges []git.LineRange) (rootNode node.Node, w *RootWalker, err error) {
+func ParseContents(filename string, contents []byte, lineRanges []git.LineRange) (rootNode node.Node, w *RootWalker, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			s := fmt.Sprintf("Panic while parsing %s: %s\n\nStack trace: %s", filename, r, dbg.Stack())
@@ -81,41 +79,22 @@ func ParseContents(filename string, contents []byte, encoding string, lineRanges
 
 	start := time.Now()
 
-	var rd io.Reader
-	var size int
-
+	var rd inputs.ReadCloseSizer
 	if contents == nil {
-		fp, err := os.Open(filename)
-		if err != nil {
-			log.Fatalf("Could not open file %s: %s", filename, err.Error())
-		}
-
-		st, err := fp.Stat()
-		if err != nil {
-			log.Fatalf("Could not stat file %s: %s", filename, err.Error())
-		}
-
-		size = int(st.Size())
-		rd = fp
-
-		defer fp.Close()
+		rd, err = SrcInput.NewReader(filename)
 	} else {
-		rd = bytes.NewReader(contents)
-		size = len(contents)
+		rd, err = SrcInput.NewBytesReader(filename, contents)
 	}
+	if err != nil {
+		log.Panicf("open source input: %v", err)
+	}
+	defer rd.Close()
 
 	b := bytesBufPool.Get().(*bytes.Buffer)
 	b.Reset()
 	defer bytesBufPool.Put(b)
 
-	if encoding == "windows-1251" {
-		bufRd := bufPool.Get().(*bufio.Reader)
-		bufRd.Reset(rd)
-		rd = transform.NewReader(bufRd, charmap.Windows1251.NewDecoder())
-		defer bufPool.Put(bufRd)
-	}
-
-	waiter := BeforeParse(size, filename)
+	waiter := BeforeParse(rd.Size(), filename)
 	defer waiter.Finish()
 
 	parser := php7.NewParser(io.TeeReader(rd, b), filename)
@@ -181,10 +160,6 @@ func AnalyzeFileRootLevel(rootNode node.Node, d *RootWalker) {
 	}
 
 	rootNode.Walk(b)
-}
-
-var bufPool = sync.Pool{
-	New: func() interface{} { return bufio.NewReaderSize(nil, 256<<10) },
 }
 
 var bytesBufPool = sync.Pool{
@@ -473,12 +448,12 @@ func doParseFile(f FileInfo, needReports bool) (reports []*Report) {
 
 	if needReports {
 		var w *RootWalker
-		_, w, err = ParseContents(f.Filename, f.Contents, DefaultEncoding, f.LineRanges)
+		_, w, err = ParseContents(f.Filename, f.Contents, f.LineRanges)
 		if err == nil {
 			reports = w.GetReports()
 		}
 	} else {
-		err = Parse(f.Filename, f.Contents, DefaultEncoding)
+		err = Parse(f.Filename, f.Contents)
 	}
 
 	if err != nil {

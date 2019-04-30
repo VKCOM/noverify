@@ -35,9 +35,9 @@ type fileMeta struct {
 }
 
 // Parse file and fill in the meta info. Can use cache.
-func Parse(filename string, contents []byte, encoding string) error {
+func Parse(filename string, contents []byte) error {
 	if CacheDir == "" {
-		_, w, err := ParseContents(filename, contents, encoding, nil)
+		_, w, err := ParseContents(filename, contents, nil)
 		if w != nil {
 			updateMetaInfo(filename, &w.meta)
 		}
@@ -76,7 +76,7 @@ func Parse(filename string, contents []byte, encoding string) error {
 	start := time.Now()
 	fp, err := os.Open(cacheFile)
 	if err != nil {
-		_, w, err := ParseContents(filename, contents, encoding, nil)
+		_, w, err := ParseContents(filename, contents, nil)
 		if err != nil {
 			return err
 		}
@@ -89,7 +89,7 @@ func Parse(filename string, contents []byte, encoding string) error {
 		// do not really care about why exactly reading from cache failed
 		os.Remove(cacheFile)
 
-		_, w, err := ParseContents(filename, contents, encoding, nil)
+		_, w, err := ParseContents(filename, contents, nil)
 		if err != nil {
 			return err
 		}
@@ -127,13 +127,12 @@ func createMetaCacheFile(filename, cacheFile string, m *fileMeta) error {
 	if err := wr.Flush(); err != nil {
 		return err
 	}
-	
+
 	// Windows clearly does not want to allow to rename unclosed files
 	if runtime.GOOS == "windows" {
 		fp.Close()
 		os.Remove(cacheFile)
 	}
-
 
 	if err := os.Rename(tmpPath, cacheFile); err != nil {
 		return err

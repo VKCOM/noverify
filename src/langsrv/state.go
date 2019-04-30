@@ -1,6 +1,7 @@
 package langsrv
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"strings"
@@ -13,8 +14,6 @@ import (
 	"github.com/VKCOM/noverify/src/vscode"
 	"github.com/z7zmey/php-parser/node"
 	"github.com/z7zmey/php-parser/position"
-	"golang.org/x/text/encoding/charmap"
-	"golang.org/x/text/transform"
 )
 
 type openedFile struct {
@@ -43,7 +42,7 @@ func openFile(filename, contents string) {
 	}
 
 	// just parse file, do not fully analyze it as indexing is not yet done
-	rootNode, _, err := linter.ParseContents(filename, []byte(contents), "UTF-8", nil)
+	rootNode, _, err := linter.ParseContents(filename, []byte(contents), nil)
 	if err != nil {
 		log.Printf("Could not parse %s: %s", filename, err.Error())
 		lintdebug.Send("Could not parse %s: %s", filename, err.Error())
@@ -71,7 +70,7 @@ func changeFileNonLocked(filename, contents string) {
 	// parse file, update index for it, and then generate diagnostics based on new index
 	meta.SetIndexingComplete(false)
 
-	rootNode, w, err := linter.ParseContents(filename, []byte(contents), "UTF-8", nil)
+	rootNode, w, err := linter.ParseContents(filename, []byte(contents), nil)
 	if err != nil {
 		log.Printf("Could not parse %s: %s", filename, err.Error())
 		lintdebug.Send("Could not parse %s: %s", filename, err.Error())
@@ -117,7 +116,7 @@ func concurrentParseChanges(changes []vscode.FileEvent) {
 		wg.Add(1)
 		go func() {
 			for filename := range filenamesCh {
-				err := linter.Parse(filename, nil, linter.DefaultEncoding)
+				err := linter.Parse(filename, nil)
 				if err != nil {
 					lintdebug.Send("Could not parse %s: %s", filename, err.Error())
 				}
@@ -126,21 +125,6 @@ func concurrentParseChanges(changes []vscode.FileEvent) {
 		}()
 	}
 	wg.Wait()
-}
-
-func convertEncodingIfNeeded(contents []byte) []byte {
-	// TODO: do something with charset handling :)
-	if linter.DefaultEncoding == "windows-1251" {
-		newContents, _, err := transform.Bytes(charmap.Windows1251.NewDecoder(), contents)
-		if err != nil {
-			lintdebug.Send("Could not convert encoding: %s", err.Error())
-			return contents
-		}
-
-		return newContents
-	}
-
-	return contents
 }
 
 func externalChanges(changes []vscode.FileEvent) {
@@ -178,17 +162,30 @@ func externalChanges(changes []vscode.FileEvent) {
 				break
 			}
 
-			contents, err := ioutil.ReadFile(filename)
+			contents, err := getFileContents(filename)
 			if err != nil {
 				lintdebug.Send("Could not read %s: %s", filename, err.Error())
 				break
 			}
 
-			changeFile(filename, string(convertEncodingIfNeeded(contents)))
+			changeFile(filename, string(contents))
 		}
 	}
 
 	lintdebug.Send("Finished processing %d external changes in %s", len(changes), time.Since(start))
+}
+
+// getFileContents reads specified file and returns UTF-8 encoded bytes.
+func getFileContents(filename string) ([]byte, error) {
+	r, err := linter.SrcInput.NewReader(filename)
+	if err != nil {
+		return nil, fmt.Errorf("open input: %v", err)
+	}
+	contents, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, fmt.Errorf("read input: %v", err)
+	}
+	return contents, nil
 }
 
 func flushReports(filename string, d *linter.RootWalker) {
