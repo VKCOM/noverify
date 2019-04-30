@@ -11,5 +11,5 @@ func main() {
 
 	// You can register your own rules here, see src/linter/custom.go
 
-	cmd.Main()
+	cmd.Main(nil)
 }

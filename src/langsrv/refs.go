@@ -2,7 +2,6 @@ package langsrv
 
 import (
 	"bytes"
-	"io/ioutil"
 	"sync"
 
 	"github.com/VKCOM/noverify/src/lintdebug"
@@ -175,17 +174,12 @@ func copyOpenMap() map[string]string {
 	return res
 }
 
-func readFile(openMapCopy map[string]string, filename string) (contents []byte, needCharsetConvertion bool, err error) {
+func readFile(openMapCopy map[string]string, filename string) (contents []byte, err error) {
 	if cont, ok := openMapCopy[filename]; ok {
-		return []byte(cont), false, nil
+		return []byte(cont), nil
 	}
 
-	contents, err = ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, false, err
-	}
-
-	return contents, true, nil
+	return getFileContents(filename)
 }
 
 // Very simple computation for now, it needs to be improved for refactoring purposes :)
@@ -228,12 +222,8 @@ func findReferences(substr string, parse parseFn) []vscode.Location {
 		wg.Add(1)
 		go func() {
 			for fi := range ch {
-				contents, needCharsetConvertion, err := readFile(openMapCopy, fi.Filename)
+				contents, err := readFile(openMapCopy, fi.Filename)
 				if err == nil && bytes.Contains(contents, substrBytes) {
-					if needCharsetConvertion {
-						contents = convertEncodingIfNeeded(contents)
-					}
-
 					func() {
 						waiter := linter.BeforeParse(len(contents), fi.Filename)
 						defer waiter.Finish()

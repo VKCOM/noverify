@@ -178,7 +178,7 @@ func parseTestFile(t *testing.T, f TestFile) (rootNode node.Node, w *linter.Root
 	once.Do(func() { go linter.MemoryLimiterThread() })
 
 	var err error
-	rootNode, w, err = linter.ParseContents(f.Name, f.Data, "UTF-8", nil)
+	rootNode, w, err = linter.ParseContents(f.Name, f.Data, nil)
 	if err != nil {
 		t.Fatalf("could not parse %s: %v", f.Name, err.Error())
 	}
