@@ -1746,7 +1746,7 @@ func (b *BlockWalker) flushUnused() {
 
 	visitedMap := make(map[node.Node]struct{})
 	for name, nodes := range b.unusedVars {
-		if name == "_" {
+		if IsDiscardVar(name) {
 			// blank identifier is a way to tell linter (and PHPStorm) that result is explicitly unused
 			continue
 		}

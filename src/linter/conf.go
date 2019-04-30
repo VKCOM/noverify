@@ -26,6 +26,8 @@ var (
 	DefaultEncoding string
 	PHPExtensions   []string
 
+	IsDiscardVar = isUnderscore
+
 	// actually time.Duration
 	initParseTime int64
 	initWalkTime  int64
