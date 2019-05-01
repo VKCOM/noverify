@@ -11,3 +11,8 @@ var superGlobals = map[string]struct{}{
 	"_SESSION": {},
 	"_ENV":     {},
 }
+
+func isSuperGlobal(name string) bool {
+	_, ok := superGlobals[name]
+	return ok
+}

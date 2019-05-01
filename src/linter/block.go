@@ -431,6 +431,9 @@ func (b *BlockWalker) replaceVar(v *expr.Variable, typ *meta.TypesMap, reason st
 		delete(b.unusedVars, name.Value)
 		return
 	}
+	if isSuperGlobal(name.Value) {
+		return
+	}
 
 	// Writes to variables that are done in a loop should not count as unused variables
 	// because they can be read on the next iteration (ideally we should check for that too :))
@@ -450,6 +453,9 @@ func (b *BlockWalker) addVar(v *expr.Variable, typ *meta.TypesMap, reason string
 	// Writes to non-local variables do count as usages
 	if _, ok := b.nonLocalVars[name.Value]; ok {
 		delete(b.unusedVars, name.Value)
+		return
+	}
+	if isSuperGlobal(name.Value) {
 		return
 	}
 
@@ -1334,12 +1340,23 @@ func (a *andWalker) GetChildrenVisitor(key string) walker.Visitor { return a }
 func (a *andWalker) LeaveNode(w walker.Walkable)                  {}
 
 func (b *BlockWalker) handleVariable(v *expr.Variable) bool {
-	if !b.sc.HaveVar(v) {
+	id, ok := v.VarName.(*node.Identifier)
+
+	switch {
+	case ok && isSuperGlobal(id.Value):
+		// Do nothing. Don't track super globals.
+	case !b.sc.HaveVar(v):
 		b.r.reportUndefinedVariable(v, b.sc.MaybeHaveVar(v))
 		b.sc.AddVar(v, meta.NewTypesMap("undefined"), "undefined", true)
-	} else if id, ok := v.VarName.(*node.Identifier); ok {
+	case ok:
+		if IsDiscardVar(id.Value) {
+			// TODO(quasilyte): increase the warning level later.
+			b.r.Report(id, LevelWarning, "discardVar",
+				"Used discard variable $%s value (rename variable if it's intended)", id.Value)
+		}
 		delete(b.unusedVars, id.Value)
 	}
+
 	return false
 }
 
@@ -1748,10 +1765,6 @@ func (b *BlockWalker) flushUnused() {
 	for name, nodes := range b.unusedVars {
 		if IsDiscardVar(name) {
 			// blank identifier is a way to tell linter (and PHPStorm) that result is explicitly unused
-			continue
-		}
-
-		if _, ok := superGlobals[name]; ok {
 			continue
 		}
 

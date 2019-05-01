@@ -122,6 +122,12 @@ func init() {
 			Default: true,
 			Comment: `Report suspicious 'continue' usages inside switch cases.`,
 		},
+
+		{
+			Name:    "discardVar",
+			Default: true,
+			Comment: `Report usages of discard variables like $_.`,
+		},
 	}
 
 	for _, info := range allChecks {

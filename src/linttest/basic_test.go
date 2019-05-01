@@ -10,6 +10,39 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestDiscardVarUsage(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function var_dump($v) {}
+
+function f() {
+  $_ = 1;
+
+  var_dump($_); // 1. Used as argument
+  $xs = [$_]; // 2. Used as array element
+  $xs = $_; // 3. Used in assignment RHS
+  if ($_) {} // 4. Used inside if condition
+  if (0 == $_) {} // 5. Used inside binary operator
+
+  $_ = $xs;
+}
+
+$_ = 1; // Global var
+var_dump($_); // 6. Also forbidden in global scope
+`)
+
+	test.Expect = []string{
+		`Used discard variable $_ value`,
+		`Used discard variable $_ value`,
+		`Used discard variable $_ value`,
+		`Used discard variable $_ value`,
+		`Used discard variable $_ value`,
+		`Used discard variable $_ value`,
+	}
+
+	test.RunAndMatch()
+}
+
 func TestCustomUnusedVarRegex(t *testing.T) {
 	defer func(isDiscardVar func(string) bool) {
 		linter.IsDiscardVar = isDiscardVar
@@ -20,14 +53,65 @@ func TestCustomUnusedVarRegex(t *testing.T) {
 	}
 
 	linttest.SimpleNegativeTest(t, `<?php
+class Foo {
+  public $_;
+  private $_foo;
+  public static $_bar;
+
+  private function f1() { return $this->_; }
+  protected function f2() { return $this->_foo; }
+  private function f3() { return self::$_bar; }
+  private function f4() { return __CLASS__; }
+}
+
+$_ = __FILE__;
+`)
+
+	linttest.SimpleNegativeTest(t, `<?php
 $_unused = 10;
 
 function f() {
   $_unused2 = 20;
   $_ = 30;
   foreach ([1] as $_ => $_user) {}
+
+  $_POST = ["foo" => 123];
+  $_ = $_POST["foo"];
+  $_ = $_ENV["GOPATH"];
 }
 `)
+
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function var_dump($v) {}
+
+$_global = 120;
+
+function f() {
+  global $_global;
+  $_a = 1;
+  $_FOO = 2;
+
+  var_dump($_a);
+  $xs = [$_global];
+  $xs = $_FOO;
+  if ($_POST) {} // No warning
+  if (0 == $_GET["a"]) {} // No warning
+
+  $_ = $xs;
+}
+
+var_dump($_global);
+`)
+
+	test.Expect = []string{
+		`Used discard variable $_a value`,
+		`Used discard variable $_global value`,
+		`Used discard variable $_FOO value`,
+		`Used discard variable $_global value`,
+	}
+
+	test.RunAndMatch()
 }
 
 func TestClosureCapture(t *testing.T) {
