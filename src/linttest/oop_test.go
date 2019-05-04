@@ -6,6 +6,37 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestInheritDoc(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+interface TestInterface {
+  /**
+   * @return self
+   */
+  public function getThis();
+
+  /**
+   * @param \TestInterface $x
+   */
+  public function acceptThis($x);
+}
+`)
+	test.AddFile(`<?php
+class Foo implements TestInterface {
+  /** @inheritdoc */
+  public function getThis() { return $this; }
+
+  /** @inheritdoc */
+  public function acceptThis($x) { return $x->getThis(); }
+}
+
+$foo = new Foo();
+$_ = $foo->getThis()->getThis();
+$foo->acceptThis($foo);
+`)
+	test.RunAndMatch()
+}
+
 func TestInterfaceConstants(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	interface TestInterface

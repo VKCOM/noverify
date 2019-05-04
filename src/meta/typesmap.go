@@ -64,9 +64,23 @@ const (
 	// Params: [Constant name <string>]
 	WConstant
 
+	// WBaseMethodParam<0-N> is a way to inherit base type method type of nth parameter.
+	// e.g. type of $x param of foo method from one of the implemented interfaces.
+	// Params: [Class name <string>] [Method name <string>]
+	//
+	// TODO(quasilyte): add <uint8> to encoding/wrapping and refactor them
+	// into WBaseMethodParam (w/o suffix).
+	WBaseMethodParam0
+	WBaseMethodParam1
+	WBaseMethodParam2
+
 	// WMax must always be last to indicate which byte is the maximum value of a type byte
 	WMax
 )
+
+// MaxMethodParamIndex is a limit for WBaseMethodParam.
+// TODO(quasilyte): remove as soon as <uint8> is ready.
+const MaxMethodParamIndex = 2
 
 // TypesMap holds a set of types and can be made immutable to prevent unexpected changes.
 type TypesMap struct {
@@ -157,6 +171,14 @@ func unwrap2(s string) (one, two string) {
 	two = s[pos+stringLenBytes:] // do not care about length of last param
 
 	return one, two
+}
+
+func WrapBaseMethodParam(index int, className, methodName string) string {
+	return wrap(WBaseMethodParam0+byte(index), className, methodName)
+}
+
+func UnwrapBaseMethodParam(s string) (className, methodName string) {
+	return unwrap2(s)
 }
 
 func WrapStaticMethodCall(className, methodName string) string {
@@ -365,6 +387,11 @@ func (m *TypesMap) Append(n *TypesMap) *TypesMap {
 	return &TypesMap{m: mm}
 }
 
+func formatMethodParam(index int, s string) string {
+	className, methodName := UnwrapBaseMethodParam(s)
+	return fmt.Sprintf("param(%s)::%s[%d]", className, methodName, index)
+}
+
 func formatType(s string) (res string) {
 	if len(s) == 0 || s[0] >= WMax {
 		return s
@@ -393,6 +420,12 @@ func formatType(s string) (res string) {
 	case WInstancePropertyFetch:
 		expr, propertyName := UnwrapInstancePropertyFetch(s)
 		return "(" + formatType(expr) + ")->" + propertyName
+	case WBaseMethodParam0:
+		return formatMethodParam(0, s)
+	case WBaseMethodParam1:
+		return formatMethodParam(1, s)
+	case WBaseMethodParam2:
+		return formatMethodParam(2, s)
 	case WStaticMethodCall:
 		className, methodName := UnwrapStaticMethodCall(s)
 		return className + "::" + methodName + "()"

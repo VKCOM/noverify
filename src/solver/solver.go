@@ -81,6 +81,12 @@ func ResolveType(typ string, visitedMap map[string]struct{}) map[string]struct{}
 				}
 			}
 		}
+	case meta.WBaseMethodParam0:
+		return solveBaseMethodParam(0, typ, visitedMap, res)
+	case meta.WBaseMethodParam1:
+		return solveBaseMethodParam(1, typ, visitedMap, res)
+	case meta.WBaseMethodParam2:
+		return solveBaseMethodParam(2, typ, visitedMap, res)
 	case meta.WStaticMethodCall:
 		className, methodName := meta.UnwrapStaticMethodCall(typ)
 		info, _, ok := FindMethod(className, methodName)
@@ -97,6 +103,28 @@ func ResolveType(typ string, visitedMap map[string]struct{}) map[string]struct{}
 		panic(fmt.Sprintf("Unexpected type: %d", typ[0]))
 	}
 
+	return res
+}
+
+func solveBaseMethodParam(index int, typ string, visitedMap, res map[string]struct{}) map[string]struct{} {
+	className, methodName := meta.UnwrapBaseMethodParam(typ)
+	class, ok := meta.Info.GetClass(className)
+	if ok {
+		// TODO(quasilyte): walk parent interfaces as well?
+		for ifaceName := range class.Interfaces {
+			iface, ok := meta.Info.GetClass(ifaceName)
+			if !ok {
+				continue
+			}
+			fn, ok := iface.Methods[methodName]
+			if !ok {
+				continue
+			}
+			if len(fn.Params) > index {
+				return ResolveTypes(fn.Params[index].Typ, visitedMap)
+			}
+		}
+	}
 	return res
 }
 
