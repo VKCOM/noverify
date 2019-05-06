@@ -1022,7 +1022,7 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []node.Node) bool {
 
 		switch k := item.Key.(type) {
 		case *scalar.String:
-			key = strings.TrimFunc(k.Value, isQuote)
+			key = unquote(k.Value)
 			constKey = true
 		case *scalar.Lnumber:
 			key = k.Value
