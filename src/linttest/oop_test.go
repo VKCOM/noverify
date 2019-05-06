@@ -6,6 +6,27 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestLateStaticBinding(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class Base {
+  /** @return static[] */
+  public function asArray() { return []; }
+}
+
+class Derived extends Base {
+  /**
+    * Will cause "undefined method" warning if called via instance that
+    * is returned by Base.asArray without late static binding support from NoVerify.
+    */
+  public function onlyInDerived() {}
+}
+
+$x = new Derived();
+$xs = $x->asArray();
+$_ = $xs[0]->onlyInDerived();
+`)
+}
+
 func TestInterfaceConstants(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	interface TestInterface
