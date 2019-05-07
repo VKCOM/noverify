@@ -6,6 +6,71 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestLateStaticBindingForeach(t *testing.T) {
+	// This test comes from https://youtrack.jetbrains.com/issue/WI-28728.
+	// Phpstorm currently reports `hello` call in `$item->getC()->hello()`
+	// as undefined. NoVerify manages to resolve it properly.
+
+	linttest.SimpleNegativeTest(t, `<?php
+class A
+{
+    /**
+     * @return static[]
+     */
+    public static function create()
+    {
+        return [new static()];
+    }
+}
+
+class B extends A
+{
+    /**
+     * @return C
+     */
+    public function getC()
+    {
+        return new C();
+    }
+}
+
+class C
+{
+    /** Hello does nothing */
+    public function hello()
+    {
+        return 'Hello world!';
+    }
+}
+
+$b = new B();
+foreach ($b->create() as $item) {
+    $item->getC()->hello();
+}
+`)
+}
+
+func TestLateStaticBinding(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class Base {
+  /** @return static[] */
+  public function asArray() { return []; }
+}
+
+class Derived extends Base {
+  /**
+    * Will cause "undefined method" warning if called via instance that
+    * is returned by Base.asArray without late static binding support from NoVerify.
+    */
+  public function onlyInDerived() {}
+}
+
+$x = new Derived();
+$xs = $x->asArray();
+$_ = $xs[0]->onlyInDerived();
+`)
+}
+
 func TestInterfaceConstants(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	interface TestInterface
