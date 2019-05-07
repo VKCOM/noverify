@@ -103,6 +103,14 @@ func (r *resolver) resolveType(class, typ string) map[string]struct{} {
 				for tt := range r.resolveTypes(class, info.Typ) {
 					res[tt] = struct{}{}
 				}
+			} else {
+				// If there is a __get method, it might have
+				// a @return annotation that will help to
+				// get appropriate type for dynamic property lookup.
+				get, _, ok := FindMethod(className, "__get")
+				if ok {
+					return r.resolveTypes(class, get.Typ)
+				}
 			}
 		}
 	case meta.WStaticMethodCall:

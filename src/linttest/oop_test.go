@@ -6,9 +6,29 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestMagicGetChaining(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class Magic {
+  /** @return Magic */
+  public function __get($key) {
+    return $this;
+  }
+
+  /** Method that does nothing */
+  public function method() {}
+}
+
+$m = new Magic();
+$m->method();
+$m->foo->method();
+$m->foo->bar->method();
+`)
+}
+
 func TestSimpleXMLElement(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 class SimpleXMLElement {
+  /** @return SimpleXMLElement */
   private function __get($name) {}
   /** @return static[] */
   public function xpath ($path) {}
@@ -24,6 +44,8 @@ function simpleElement($xml_str) {
   $iters = $el->xpath("/a");
   $_ = $iters[0]->foo;
   $_ = $el->foo;
+  $_ = $el->foo->bar;
+  $_ = $el->foo->bar->xpath("/a");
 }
 
 function simpleIterator($xml_str) {

@@ -20,6 +20,29 @@ import (
 // TODO(quasilyte): better handling of an `empty_array` type.
 // Now it's resolved to `array` for expressions that have multiple empty_array.
 
+func TestExprTypeMagicGet(t *testing.T) {
+	tests := []exprTypeTest{
+		{`(new Ints)->a`, `int`},
+		{`$ints->a`, `int`},
+		{`$ints->b`, `int`},
+		{`(new Chain)->chain`, `\Chain`},
+		{`$chain->chain`, `\Chain`},
+		{`$chain->chain->chain`, `\Chain`},
+	}
+
+	global := `<?php
+class Ints {
+  public function __get($k) { return 0; }
+}
+class Chain {
+  public function __get($k) { return $this; }
+}`
+	local := `
+$ints = new Ints();
+$chain = new Chain();`
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
 func TestExprTypeLateStaticBinding(t *testing.T) {
 	tests := []exprTypeTest{
 		{`getBase()`, `\Base`},
