@@ -49,6 +49,20 @@ func TestExprTypeLateStaticBinding(t *testing.T) {
 		{`$b->getStaticArrayArray()`, `\Base[][]`},
 		{`$b->getStaticArrayArray()[0][0]`, `\Base`},
 
+		{`$d->getStatic()`, `\Base|\Derived`},
+		{`$d->getStatic()->getStatic()`, `\Base|\Derived`},
+		{`$d->getStaticArray()`, `\Derived[]`},
+		{`$d->getStaticArray()[0]`, `\Derived`},
+		{`$d->getStaticArrayArray()`, `\Derived[][]`},
+		{`$d->getStaticArrayArray()[0][0]`, `\Derived`},
+
+		{`$dd->getStatic()`, `\Base|\DerivedDerived`},
+		{`$dd->getStatic()->getStatic()`, `\Base|\DerivedDerived`},
+		{`$dd->getStaticArray()`, `\DerivedDerived[]`},
+		{`$dd->getStaticArray()[0]`, `\DerivedDerived`},
+		{`$dd->getStaticArrayArray()`, `\DerivedDerived[][]`},
+		{`$dd->getStaticArrayArray()[0][0]`, `\DerivedDerived`},
+
 		{`$b->initAndReturnOther1()`, `\Base`},
 		{`$b->initAndReturnOther2()`, `\Base`},
 

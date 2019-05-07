@@ -31,10 +31,8 @@ func GetClassName(cs *meta.ClassParseState, classNode node.Node) (className stri
 		return "", false
 	}
 
-	if className == "self" {
+	if className == "self" || className == "static" || className == "$this" {
 		className = cs.CurrentClass
-	} else if className == "static" || className == "$this" {
-		className = "static"
 	} else if className == "parent" {
 		className = cs.CurrentParentClass
 	} else if alias, ok := cs.Uses[firstPart]; ok {

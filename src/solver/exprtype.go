@@ -363,6 +363,9 @@ func ExprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 		f := ExprTypeLocalCustom(sc, cs, n.IfFalse, custom)
 		return meta.NewEmptyTypesMap(t.Len() + f.Len()).Append(t).Append(f)
 	case *expr.New:
+		if meta.NameNodeToString(n.Class) == "static" {
+			return meta.NewTypesMap("static")
+		}
 		nm, ok := GetClassName(cs, n.Class)
 		if ok {
 			return meta.NewTypesMap(nm)
