@@ -6,6 +6,44 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestSimpleXMLElement(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class SimpleXMLElement {
+  private function __get($name) {}
+  /** @return static[] */
+  public function xpath ($path) {}
+}
+
+class SimpleXMLIterator extends SimpleXMLElement {
+  /** @return SimpleXMLIterator|null */
+  public function current () {}
+}
+
+function simpleElement($xml_str) {
+  $el = new SimpleXMLElement("<a></a>", 0);
+  $iters = $el->xpath("/a");
+  $_ = $iters[0]->foo;
+  $_ = $el->foo;
+}
+
+function simpleIterator($xml_str) {
+  $el = new SimpleXMLIterator("<a></a>", 0);
+  $iters = $el->xpath("/a");
+  $root = $iters[0];
+  $_ = $iters[0]->current();
+  $_ = $root->current();
+  $_ = $root->current()->foo;
+}
+
+function simpleIteratorReassign($xml_string) {
+  $el = new SimpleXMLIterator("<a></a>", 0);
+  $iter = $el->xpath("/a");
+  $iter = $iter[0];
+  $_ = $iter->current();
+}
+`)
+}
+
 func TestLateStaticBindingForeach(t *testing.T) {
 	// This test comes from https://youtrack.jetbrains.com/issue/WI-28728.
 	// Phpstorm currently reports `hello` call in `$item->getC()->hello()`
