@@ -6,6 +6,66 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestMagicGetChaining(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class Magic {
+  /** @return Magic */
+  public function __get($key) {
+    return $this;
+  }
+
+  /** Method that does nothing */
+  public function method() {}
+}
+
+$m = new Magic();
+$m->method();
+$m->foo->method();
+$m->foo->bar->method();
+`)
+}
+
+func TestSimpleXMLElement(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class SimpleXMLElement {
+  /** @return SimpleXMLElement */
+  private function __get($name) {}
+  /** @return static[] */
+  public function xpath ($path) {}
+}
+
+class SimpleXMLIterator extends SimpleXMLElement {
+  /** @return SimpleXMLIterator|null */
+  public function current () {}
+}
+
+function simpleElement($xml_str) {
+  $el = new SimpleXMLElement("<a></a>", 0);
+  $iters = $el->xpath("/a");
+  $_ = $iters[0]->foo;
+  $_ = $el->foo;
+  $_ = $el->foo->bar;
+  $_ = $el->foo->bar->xpath("/a");
+}
+
+function simpleIterator($xml_str) {
+  $el = new SimpleXMLIterator("<a></a>", 0);
+  $iters = $el->xpath("/a");
+  $root = $iters[0];
+  $_ = $iters[0]->current();
+  $_ = $root->current();
+  $_ = $root->current()->foo;
+}
+
+function simpleIteratorReassign($xml_string) {
+  $el = new SimpleXMLIterator("<a></a>", 0);
+  $iter = $el->xpath("/a");
+  $iter = $iter[0];
+  $_ = $iter->current();
+}
+`)
+}
+
 func TestLateStaticBindingForeach(t *testing.T) {
 	// This test comes from https://youtrack.jetbrains.com/issue/WI-28728.
 	// Phpstorm currently reports `hello` call in `$item->getC()->hello()`
