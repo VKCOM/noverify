@@ -12,9 +12,13 @@ import (
 
 const (
 	// Constants for lazy ("wrap") types:
-	// Here "<string>" means 4 bytes of length followed by string contents.
+	// Here "<string>" means 2 bytes of length followed by string contents.
 	// "<uint8>" means 1 byte field.
 	// <uint8> fields must go before <string> fields.
+	//
+	// Note: both string length and <uint8> are represented using hex encoding.
+	// One of the reasons is to avoid `|` inside type strings that were wrapped.
+	// See tests for more details.
 
 	// WStaticMethodCall type is "Wrap Static Method Call":
 	// E.g. Class::doSomething()
@@ -120,7 +124,7 @@ func NewTypesMapFromMap(m map[string]struct{}) *TypesMap {
 
 func slice(typ byte, byteFields []uint8, args ...string) []byte {
 	bufLen := 1 // hold type info
-	bufLen += len(byteFields)
+	bufLen += len(byteFields) * 2
 	for _, a := range args {
 		bufLen += stringLenBytes // string len
 		bufLen += len(a)
@@ -131,6 +135,7 @@ func slice(typ byte, byteFields []uint8, args ...string) []byte {
 }
 
 const stringLenBytes = 4
+const uint8fieldBytes = 2
 
 func wrap(typ byte, byteFields []uint8, args ...string) string {
 	var rawBuf [stringLenBytes / 2]byte
@@ -138,7 +143,9 @@ func wrap(typ byte, byteFields []uint8, args ...string) string {
 
 	buf := slice(typ, byteFields, args...)
 	for _, field := range byteFields {
-		buf = append(buf, field)
+		rawBuf[0] = field
+		hex.Encode(b[:], rawBuf[:1])
+		buf = append(buf, b[:uint8fieldBytes]...)
 	}
 	for _, s := range args {
 		binary.LittleEndian.PutUint16(rawBuf[:], uint16(len(s)))
@@ -175,7 +182,11 @@ func unwrap3(s string) (b1 uint8, one, two string) {
 	var b [stringLenBytes]byte
 	var rawBuf [stringLenBytes / 2]byte
 
-	pos := 2 // Skip type byte as well as first <uint8> field
+	pos := 1
+	copy(b[:], s[pos:pos+uint8fieldBytes])
+	hex.Decode(rawBuf[:], b[:uint8fieldBytes])
+	b1 = rawBuf[0]
+	pos += uint8fieldBytes
 	copy(b[:], s[pos:pos+stringLenBytes])
 	hex.Decode(rawBuf[:], b[:])
 	l = int(binary.LittleEndian.Uint16(rawBuf[:]))
@@ -184,7 +195,7 @@ func unwrap3(s string) (b1 uint8, one, two string) {
 	pos += l
 	two = s[pos+stringLenBytes:] // do not care about length of last param
 
-	return s[1], one, two
+	return b1, one, two
 }
 
 func WrapBaseMethodParam(paramIndex int, className, methodName string) string {

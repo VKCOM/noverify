@@ -1,6 +1,7 @@
 package meta
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -33,6 +34,14 @@ func TestTypeEncoding(t *testing.T) {
 			func(typ string) bool {
 				index, className, methodName := unwrap3(typ)
 				return index == '|' && className == `FooClass` && methodName == `barMethod`
+			},
+		},
+
+		{
+			WrapArrayOf(strings.Repeat(`a`, '|')),
+			strings.Repeat(`a`, '|') + `[]`,
+			func(typ string) bool {
+				return unwrap1(typ) == strings.Repeat(`a`, '|')
 			},
 		},
 	}
@@ -71,6 +80,17 @@ func TestTypeEncoding(t *testing.T) {
 		if m.String() != decoded.String() {
 			t.Errorf("decoded type string mismatched for %q:\nhave: %q\nwant: %q",
 				test.stringified, decoded.String(), m.String())
+		}
+
+		// TODO(quasilyte): do something so we don't need to care about
+		// encoded (wrapped) so much. For now, we need tests below to ensure
+		// that nothing blows up because some <uint8> or type byte look like '|'
+		// when printed as a string.
+		if len(strings.Split(test.wrapped, `|`)) != len(strings.Split(test.stringified, `|`)) {
+			t.Errorf("mismatched |-split parts count for %q:\nhave: %d\nwant: %d",
+				test.stringified,
+				len(strings.Split(test.wrapped, `|`)),
+				len(strings.Split(test.stringified, `|`)))
 		}
 	}
 }
