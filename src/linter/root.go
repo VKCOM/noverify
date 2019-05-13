@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 	"strings"
 
@@ -686,7 +687,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 				continue // Already has a type
 			}
 
-			if i > meta.MaxMethodParamIndex {
+			if i > math.MaxUint8 {
 				break // Current implementation limit reached
 			}
 

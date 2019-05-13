@@ -12,7 +12,9 @@ import (
 
 const (
 	// Constants for lazy ("wrap") types:
-	// Here "<string>" means 2 bytes of length followed by string contents.
+	// Here "<string>" means 4 bytes of length followed by string contents.
+	// "<uint8>" means 1 byte field.
+	// <uint8> fields must go before <string> fields.
 
 	// WStaticMethodCall type is "Wrap Static Method Call":
 	// E.g. Class::doSomething()
@@ -66,21 +68,12 @@ const (
 
 	// WBaseMethodParam<0-N> is a way to inherit base type method type of nth parameter.
 	// e.g. type of $x param of foo method from one of the implemented interfaces.
-	// Params: [Class name <string>] [Method name <string>]
-	//
-	// TODO(quasilyte): add <uint8> to encoding/wrapping and refactor them
-	// into WBaseMethodParam (w/o suffix).
-	WBaseMethodParam0
-	WBaseMethodParam1
-	WBaseMethodParam2
+	// Params: [Index <uint8>] [Class name <string>] [Method name <string>]
+	WBaseMethodParam
 
 	// WMax must always be last to indicate which byte is the maximum value of a type byte
 	WMax
 )
-
-// MaxMethodParamIndex is a limit for WBaseMethodParam.
-// TODO(quasilyte): remove as soon as <uint8> is ready.
-const MaxMethodParamIndex = 2
 
 // TypesMap holds a set of types and can be made immutable to prevent unexpected changes.
 type TypesMap struct {
@@ -125,8 +118,9 @@ func NewTypesMapFromMap(m map[string]struct{}) *TypesMap {
 	return &TypesMap{m: m}
 }
 
-func slice(typ byte, args ...string) []byte {
+func slice(typ byte, byteFields []uint8, args ...string) []byte {
 	bufLen := 1 // hold type info
+	bufLen += len(byteFields)
 	for _, a := range args {
 		bufLen += stringLenBytes // string len
 		bufLen += len(a)
@@ -138,11 +132,14 @@ func slice(typ byte, args ...string) []byte {
 
 const stringLenBytes = 4
 
-func wrap(typ byte, args ...string) string {
+func wrap(typ byte, byteFields []uint8, args ...string) string {
 	var rawBuf [stringLenBytes / 2]byte
 	var b [stringLenBytes]byte
 
-	buf := slice(typ, args...)
+	buf := slice(typ, byteFields, args...)
+	for _, field := range byteFields {
+		buf = append(buf, field)
+	}
 	for _, s := range args {
 		binary.LittleEndian.PutUint16(rawBuf[:], uint16(len(s)))
 		hex.Encode(b[:], rawBuf[:])
@@ -173,16 +170,33 @@ func unwrap2(s string) (one, two string) {
 	return one, two
 }
 
-func WrapBaseMethodParam(index int, className, methodName string) string {
-	return wrap(WBaseMethodParam0+byte(index), className, methodName)
+func unwrap3(s string) (b1 uint8, one, two string) {
+	var l int
+	var b [stringLenBytes]byte
+	var rawBuf [stringLenBytes / 2]byte
+
+	pos := 2 // Skip type byte as well as first <uint8> field
+	copy(b[:], s[pos:pos+stringLenBytes])
+	hex.Decode(rawBuf[:], b[:])
+	l = int(binary.LittleEndian.Uint16(rawBuf[:]))
+	pos += stringLenBytes
+	one = s[pos : pos+l]
+	pos += l
+	two = s[pos+stringLenBytes:] // do not care about length of last param
+
+	return s[1], one, two
 }
 
-func UnwrapBaseMethodParam(s string) (className, methodName string) {
-	return unwrap2(s)
+func WrapBaseMethodParam(paramIndex int, className, methodName string) string {
+	return wrap(WBaseMethodParam, []uint8{uint8(paramIndex)}, className, methodName)
+}
+
+func UnwrapBaseMethodParam(s string) (paramIndex uint8, className, methodName string) {
+	return unwrap3(s)
 }
 
 func WrapStaticMethodCall(className, methodName string) string {
-	return wrap(WStaticMethodCall, className, methodName)
+	return wrap(WStaticMethodCall, nil, className, methodName)
 }
 
 func UnwrapStaticMethodCall(s string) (className, methodName string) {
@@ -190,7 +204,7 @@ func UnwrapStaticMethodCall(s string) (className, methodName string) {
 }
 
 func WrapInstanceMethodCall(typ, methodName string) string {
-	return wrap(WInstanceMethodCall, typ, methodName)
+	return wrap(WInstanceMethodCall, nil, typ, methodName)
 }
 
 func UnwrapInstanceMethodCall(s string) (typ, methodName string) {
@@ -201,7 +215,7 @@ func WrapStaticPropertyFetch(className, propName string) string {
 	if !strings.HasPrefix(propName, "$") {
 		propName = "$" + propName
 	}
-	return wrap(WStaticPropertyFetch, className, propName)
+	return wrap(WStaticPropertyFetch, nil, className, propName)
 }
 
 func UnwrapStaticPropertyFetch(s string) (className, propName string) {
@@ -209,7 +223,7 @@ func UnwrapStaticPropertyFetch(s string) (className, propName string) {
 }
 
 func WrapInstancePropertyFetch(typ, propName string) string {
-	return wrap(WInstancePropertyFetch, typ, propName)
+	return wrap(WInstancePropertyFetch, nil, typ, propName)
 }
 
 func UnwrapInstancePropertyFetch(s string) (typ, propName string) {
@@ -217,7 +231,7 @@ func UnwrapInstancePropertyFetch(s string) (typ, propName string) {
 }
 
 func WrapFunctionCall(funcName string) string {
-	return wrap(WFunctionCall, funcName)
+	return wrap(WFunctionCall, nil, funcName)
 }
 
 func UnwrapFunctionCall(s string) (funcName string) {
@@ -225,7 +239,7 @@ func UnwrapFunctionCall(s string) (funcName string) {
 }
 
 func WrapArrayOf(typ string) string {
-	return wrap(WArrayOf, typ)
+	return wrap(WArrayOf, nil, typ)
 }
 
 func UnwrapArrayOf(s string) (typ string) {
@@ -238,7 +252,7 @@ func WrapElemOf(typ string) string {
 		return typ[1+stringLenBytes:]
 	}
 
-	return wrap(WElemOf, typ)
+	return wrap(WElemOf, nil, typ)
 }
 
 func UnwrapElemOf(s string) (typ string) {
@@ -246,7 +260,7 @@ func UnwrapElemOf(s string) (typ string) {
 }
 
 func WrapGlobal(varName string) string {
-	return wrap(WGlobal, varName)
+	return wrap(WGlobal, nil, varName)
 }
 
 func UnwrapGlobal(s string) (varName string) {
@@ -254,7 +268,7 @@ func UnwrapGlobal(s string) (varName string) {
 }
 
 func WrapConstant(constName string) string {
-	return wrap(WConstant, constName)
+	return wrap(WConstant, nil, constName)
 }
 
 func UnwrapConstant(s string) (constName string) {
@@ -387,11 +401,6 @@ func (m *TypesMap) Append(n *TypesMap) *TypesMap {
 	return &TypesMap{m: mm}
 }
 
-func formatMethodParam(index int, s string) string {
-	className, methodName := UnwrapBaseMethodParam(s)
-	return fmt.Sprintf("param(%s)::%s[%d]", className, methodName, index)
-}
-
 func formatType(s string) (res string) {
 	if len(s) == 0 || s[0] >= WMax {
 		return s
@@ -420,12 +429,9 @@ func formatType(s string) (res string) {
 	case WInstancePropertyFetch:
 		expr, propertyName := UnwrapInstancePropertyFetch(s)
 		return "(" + formatType(expr) + ")->" + propertyName
-	case WBaseMethodParam0:
-		return formatMethodParam(0, s)
-	case WBaseMethodParam1:
-		return formatMethodParam(1, s)
-	case WBaseMethodParam2:
-		return formatMethodParam(2, s)
+	case WBaseMethodParam:
+		index, className, methodName := unwrap3(s)
+		return fmt.Sprintf("param(%s)::%s[%d]", className, methodName, index)
 	case WStaticMethodCall:
 		className, methodName := UnwrapStaticMethodCall(s)
 		return className + "::" + methodName + "()"

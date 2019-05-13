@@ -81,12 +81,8 @@ func ResolveType(typ string, visitedMap map[string]struct{}) map[string]struct{}
 				}
 			}
 		}
-	case meta.WBaseMethodParam0:
-		return solveBaseMethodParam(0, typ, visitedMap, res)
-	case meta.WBaseMethodParam1:
-		return solveBaseMethodParam(1, typ, visitedMap, res)
-	case meta.WBaseMethodParam2:
-		return solveBaseMethodParam(2, typ, visitedMap, res)
+	case meta.WBaseMethodParam:
+		return solveBaseMethodParam(typ, visitedMap, res)
 	case meta.WStaticMethodCall:
 		className, methodName := meta.UnwrapStaticMethodCall(typ)
 		info, _, ok := FindMethod(className, methodName)
@@ -106,8 +102,8 @@ func ResolveType(typ string, visitedMap map[string]struct{}) map[string]struct{}
 	return res
 }
 
-func solveBaseMethodParam(index int, typ string, visitedMap, res map[string]struct{}) map[string]struct{} {
-	className, methodName := meta.UnwrapBaseMethodParam(typ)
+func solveBaseMethodParam(typ string, visitedMap, res map[string]struct{}) map[string]struct{} {
+	index, className, methodName := meta.UnwrapBaseMethodParam(typ)
 	class, ok := meta.Info.GetClass(className)
 	if ok {
 		// TODO(quasilyte): walk parent interfaces as well?
@@ -120,7 +116,7 @@ func solveBaseMethodParam(index int, typ string, visitedMap, res map[string]stru
 			if !ok {
 				continue
 			}
-			if len(fn.Params) > index {
+			if len(fn.Params) > int(index) {
 				return ResolveTypes(fn.Params[index].Typ, visitedMap)
 			}
 		}
