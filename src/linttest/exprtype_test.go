@@ -444,6 +444,37 @@ namespace NS {
 	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
 }
 
+func TestExprTypeInterface(t *testing.T) {
+	tests := []exprTypeTest{
+		{"$foo", `\Foo`},
+		{"$foo->getThis()", `\Foo`},
+		{"$foo->acceptThis($foo)", `\TestInterface`},
+		{"$foo->acceptThis($foo)->acceptThis($foo)", `\TestInterface`},
+	}
+
+	global := `<?php
+interface TestInterface {
+  /**
+   * @return self
+   */
+  public function getThis();
+
+  /**
+   * @param \TestInterface $x
+   * @return \TestInterface
+   */
+  public function acceptThis($x);
+}
+
+class Foo implements TestInterface {
+  public function getThis() { return $this; }
+
+  public function acceptThis($x) { return $x->getThis(); }
+}`
+	local := `$foo = new Foo();`
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
 func TestExprTypeOverride(t *testing.T) {
 	tests := []exprTypeTest{
 		{`array_shift($ints)`, "int"},

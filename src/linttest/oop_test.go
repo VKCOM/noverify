@@ -6,6 +6,51 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestInheritDoc(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+interface TestInterface {
+  /**
+   * @return self
+   */
+  public function getThis();
+
+  /**
+   * @param \TestInterface $x
+   */
+  public function acceptThis($x);
+
+  /**
+   * @param mixed $p1
+   * @param mixed $p2
+   * @param mixed $p3
+   * @param mixed $p4
+   * @param \TestInterface $x
+   */
+  public function acceptThis5($p1, $p2, $p3, $p4, $x);
+}
+`)
+	test.AddFile(`<?php
+class Foo implements TestInterface {
+  /** @inheritdoc */
+  public function getThis() { return $this; }
+
+  /** @inheritdoc */
+  public function acceptThis($x) { return $x->getThis(); }
+
+  /** Should work regardless of "inheritdoc" */
+  public function acceptThis5($p1, $p2, $p3, $p4, $x) {
+    return $x->getThis();
+  }
+}
+
+$foo = new Foo();
+$_ = $foo->getThis()->getThis();
+$foo->acceptThis($foo);
+`)
+	test.RunAndMatch()
+}
+
 func TestMagicGetChaining(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 class Magic {
