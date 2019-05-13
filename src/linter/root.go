@@ -791,6 +791,14 @@ func (d *RootWalker) maybeAddNamespace(typStr string) string {
 		switch className {
 		case "bool", "boolean", "true", "false", "double", "float", "string", "int", "array", "resource", "mixed", "null", "callable", "void", "object":
 			continue
+		case "$this":
+			// Handle `$this` as `static` alias in phpdoc context.
+			classNames[idx] = "static"
+			continue
+		case "static":
+			// Don't resolve `static` phpdoc type annotation too early
+			// to make it possible to handle late static binding.
+			continue
 		}
 
 		if className[0] == '\\' {

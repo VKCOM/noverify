@@ -320,6 +320,15 @@ func TestAllowAssignmentInForLoop(t *testing.T) {
 	`)
 }
 
+func TestDuplicateArrayKeyGood(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+$valid_quotes = [
+  '"' => 1,
+  "'" => 1,
+];
+`)
+}
+
 func TestDuplicateArrayKey(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
