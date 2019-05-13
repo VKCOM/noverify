@@ -17,6 +17,216 @@ import (
 // Tests in this file make it less likely that type solving will break
 // without being noticed.
 
+// TODO(quasilyte): better handling of an `empty_array` type.
+// Now it's resolved to `array` for expressions that have multiple empty_array.
+
+func TestExprTypeMagicGet(t *testing.T) {
+	tests := []exprTypeTest{
+		{`(new Ints)->a`, `int`},
+		{`$ints->a`, `int`},
+		{`$ints->b`, `int`},
+		{`(new Chain)->chain`, `\Chain`},
+		{`$chain->chain`, `\Chain`},
+		{`$chain->chain->chain`, `\Chain`},
+	}
+
+	global := `<?php
+class Ints {
+  public function __get($k) { return 0; }
+}
+class Chain {
+  public function __get($k) { return $this; }
+}`
+	local := `
+$ints = new Ints();
+$chain = new Chain();`
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
+func TestExprTypeLateStaticBinding(t *testing.T) {
+	tests := []exprTypeTest{
+		{`getBase()`, `\Base`},
+		{`getDerived()`, `\Base|\Derived`},
+		{`getBase2()`, `\Base`},
+		{`getDerived2()`, `\Base|\Derived`},
+		{`getBase2()->getStatic()->getStatic()`, `\Base`},
+		{`getDerived2()->getStatic()->getStatic()`, `\Base|\Derived`},
+		{`eitherDerived()`, `\Derived|\DerivedDerived`},
+		{`eitherDerived()->getStatic()`, `\Base|\Derived|\DerivedDerived`},
+
+		{`Base::staticNewStatic()`, `\Base`},
+		{`Base::staticNewStatic()->staticNewStatic()`, `\Base`},
+		{`Derived::staticNewStatic()`, `\Derived`},
+		{`Derived::staticNewStatic()->staticNewStatic()`, `\Derived`},
+		{`DerivedDerived::staticNewStatic()`, `\DerivedDerived`},
+		{`DerivedDerived::staticNewStatic()->staticNewStatic()`, `\DerivedDerived`},
+
+		{`$b->newStatic()`, `\Base`},
+		{`$d->newStatic()`, `\Derived`},
+		{`$dd->newStatic()`, `\DerivedDerived`},
+
+		{`$b->getStatic()`, `\Base`},
+		{`$b->getStatic()->getStatic()`, `\Base`},
+		{`$b->getStaticArray()`, `\Base[]`},
+		{`$b->getStaticArray()[0]`, `\Base`},
+		{`$b->getStaticArrayArray()`, `\Base[][]`},
+		{`$b->getStaticArrayArray()[0][0]`, `\Base`},
+
+		{`$d->getStatic()`, `\Base|\Derived`},
+		{`$d->getStatic()->getStatic()`, `\Base|\Derived`},
+		{`$d->getStaticArray()`, `\Derived[]`},
+		{`$d->getStaticArray()[0]`, `\Derived`},
+		{`$d->getStaticArrayArray()`, `\Derived[][]`},
+		{`$d->getStaticArrayArray()[0][0]`, `\Derived`},
+
+		{`$dd->getStatic()`, `\Base|\DerivedDerived`},
+		{`$dd->getStatic()->getStatic()`, `\Base|\DerivedDerived`},
+		{`$dd->getStaticArray()`, `\DerivedDerived[]`},
+		{`$dd->getStaticArray()[0]`, `\DerivedDerived`},
+		{`$dd->getStaticArrayArray()`, `\DerivedDerived[][]`},
+		{`$dd->getStaticArrayArray()[0][0]`, `\DerivedDerived`},
+
+		{`$b->initAndReturnOther1()`, `\Base`},
+		{`$b->initAndReturnOther2()`, `\Base`},
+
+		{`(new Base())->getStatic()`, `\Base`},
+		{`(new Derived())->getStatic()`, `\Base|\Derived`},
+
+		{`$d->derivedGetStatic()`, `\Derived`},
+		{`$d->derivedNewStatic()`, `\Derived`},
+		{`$dd->derivedGetStatic()`, `\Derived|\DerivedDerived`},
+		{`$dd->derivedNewStatic()`, `\DerivedDerived`},
+
+		{`$d->getStatic()`, `\Base|\Derived`},
+		{`$d->getStatic()->getStatic()`, `\Base|\Derived`},
+		{`$dd->getStatic()`, `\Base|\DerivedDerived`},
+		{`$dd->getStatic()->getStatic()`, `\Base|\DerivedDerived`},
+
+		{`$d->getStaticForOverride1()`, `null|\Derived`},
+		{`$d->getStaticForOverride2()`, `\Derived`},
+		{`$d->getStaticForOverride3()`, `\Derived`},
+		{`$dd->getStaticForOverride1()`, `null|\DerivedDerived`},
+		{`$dd->getStaticForOverride2()`, `\Derived`}, // Since $this works like `self`
+		{`$dd->getStaticForOverride3()`, `\Derived|\DerivedDerived`},
+
+		{`$dd->asParent()`, `\Derived|\DerivedDerived`},
+		{`$dd->asParent()->newStatic()`, `\Derived|\DerivedDerived`},
+		{`$dd->asParent()->asParent()`, `\Derived|\DerivedDerived`},
+
+		// Resolving of `$this` (which should be identical to `static`).
+		{`$b->getThis()`, `\Base`},
+		{`$d->getThis()`, `\Base|\Derived`},
+		{`$b->getThis()->getThis()`, `\Base`},
+		{`$d->getThis()->getThis()`, `\Base|\Derived`},
+
+		// TODO: resolve $this without @return hint into `static` as well?
+		{`$b->getThisNoHint()`, `\Base`},
+		{`$d->getThisNoHint()`, `\Base`},
+		{`$dd->getThisNoHint()`, `\Base`},
+	}
+
+	global := `
+class Base {
+  /** @return $this */
+  public function getThis() { return $this; }
+
+  public function getThisNoHint() { return $this; }
+
+  /** @return static */
+  public function getStatic() { return $this; }
+
+  /** @return static[] */
+  public function getStaticArray($x) { return []; }
+
+  /** @return static[][] */
+  public function getStaticArrayArray($x) { return []; }
+
+  /** Doesn't require return type hint */
+  public function newStatic() { return new static(); }
+
+  /** @return static */
+  public function getStaticForOverride1() { return $this; }
+
+  /** @return static */
+  public function getStaticForOverride2() { return $this; }
+
+  /** @return static */
+  public function getStaticForOverride3() { return $this; }
+
+  public static function staticNewStatic() { return new static(); }
+
+  public function initAndReturnOther1() {
+    $this->other1 = new static();
+    return $this->other1;
+  }
+
+  public function initAndReturnOther2() {
+    $other2 = new static();
+    return $other2;
+  }
+
+  /** @var static */
+  public $other1;
+}
+
+class Derived extends Base {
+  /** @return static */
+  public function derivedNewStatic() { return new static(); }
+
+  /** @return static */
+  public function derivedGetStatic() { return $this; }
+
+  /** @return static */
+  public function getStaticForOverride1() { return null; }
+
+  public function getStaticForOverride2() { return $this; }
+
+  /** @return $this */
+  public function getStaticForOverride3() { return $this; }
+}
+
+class DerivedDerived extends Derived {
+  /** @return Derived */
+  public function asParent() { return $this; }
+}
+
+function getBase() {
+  return (new Base())->getStatic();
+}
+
+function getDerived() {
+  return (new Derived())->getStatic();
+}
+
+function getBase2() {
+  $b = new Base();
+  $b2 = $b->getStatic();
+  return $b2;
+}
+
+function getDerived2() {
+  $d = new Derived();
+  $d2 = $d->getStatic();
+  return $d2;
+}
+
+function eitherDerived($cond) {
+  if ($cond) {
+    return new Derived();
+  }
+  return new DerivedDerived();
+}
+`
+
+	local := `
+$b = new Base();
+$d = new Derived();
+$dd = new DerivedDerived();
+`
+
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
 func TestExprTypeSimple(t *testing.T) {
 	tests := []exprTypeTest{
 		{`true`, "bool"},
@@ -231,6 +441,37 @@ namespace NS {
 	}
 }`
 	local := `$test = new \NS\Test();`
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
+func TestExprTypeInterface(t *testing.T) {
+	tests := []exprTypeTest{
+		{"$foo", `\Foo`},
+		{"$foo->getThis()", `\Foo`},
+		{"$foo->acceptThis($foo)", `\TestInterface`},
+		{"$foo->acceptThis($foo)->acceptThis($foo)", `\TestInterface`},
+	}
+
+	global := `<?php
+interface TestInterface {
+  /**
+   * @return self
+   */
+  public function getThis();
+
+  /**
+   * @param \TestInterface $x
+   * @return \TestInterface
+   */
+  public function acceptThis($x);
+}
+
+class Foo implements TestInterface {
+  public function getThis() { return $this; }
+
+  public function acceptThis($x) { return $x->getThis(); }
+}`
+	local := `$foo = new Foo();`
 	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
 }
 

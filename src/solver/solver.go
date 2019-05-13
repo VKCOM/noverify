@@ -9,7 +9,23 @@ import (
 )
 
 // ResolveType resolves function calls, method calls and global variables
-func ResolveType(typ string, visitedMap map[string]struct{}) map[string]struct{} {
+func ResolveType(typ string, visitedMap map[string]struct{}) (result map[string]struct{}) {
+	r := resolver{visited: visitedMap}
+	return r.resolveType("", typ)
+}
+
+func ResolveTypes(m *meta.TypesMap, visitedMap map[string]struct{}) map[string]struct{} {
+	r := resolver{visited: visitedMap}
+	return r.resolveTypes("", m)
+}
+
+type resolver struct {
+	visited map[string]struct{}
+}
+
+func (r *resolver) resolveType(class, typ string) map[string]struct{} {
+	visitedMap := r.visited
+
 	if _, ok := visitedMap[typ]; ok {
 		return nil
 	}
@@ -25,23 +41,27 @@ func ResolveType(typ string, visitedMap map[string]struct{}) map[string]struct{}
 	case meta.WGlobal:
 		varTyp, ok := meta.Info.GetVarNameType(meta.UnwrapGlobal(typ))
 		if ok {
-			for tt := range ResolveTypes(varTyp, visitedMap) {
+			for tt := range r.resolveTypes(class, varTyp) {
 				res[tt] = struct{}{}
 			}
 		}
 	case meta.WConstant:
 		ci, ok := meta.Info.GetConstant(meta.UnwrapConstant(typ))
 		if ok {
-			for tt := range ResolveTypes(ci.Typ, visitedMap) {
+			for tt := range r.resolveTypes(class, ci.Typ) {
 				res[tt] = struct{}{}
 			}
 		}
 	case meta.WArrayOf:
-		for tt := range ResolveType(meta.UnwrapArrayOf(typ), visitedMap) {
-			res[tt+"[]"] = struct{}{}
+		for tt := range r.resolveType(class, meta.UnwrapArrayOf(typ)) {
+			if tt == "static" {
+				res[class+"[]"] = struct{}{}
+			} else {
+				res[tt+"[]"] = struct{}{}
+			}
 		}
 	case meta.WElemOf:
-		for tt := range ResolveType(meta.UnwrapElemOf(typ), visitedMap) {
+		for tt := range r.resolveType(class, meta.UnwrapElemOf(typ)) {
 			if strings.HasSuffix(tt, "[]") {
 				res[strings.TrimSuffix(tt, "[]")] = struct{}{}
 			} else if tt == "mixed" {
@@ -57,44 +77,119 @@ func ResolveType(typ string, visitedMap map[string]struct{}) map[string]struct{}
 		}
 
 		if ok {
-			return ResolveTypes(fn.Typ, visitedMap)
+			return r.resolveTypes(class, fn.Typ)
 		}
 	case meta.WInstanceMethodCall:
 		expr, methodName := meta.UnwrapInstanceMethodCall(typ)
 
-		for className := range ResolveType(expr, visitedMap) {
+		for className := range r.resolveType(class, expr) {
 			info, _, ok := FindMethod(className, methodName)
 			if ok {
-				for tt := range ResolveTypes(info.Typ, visitedMap) {
-					res[tt] = struct{}{}
+				for tt := range r.resolveTypes(className, info.Typ) {
+					if tt == "static" {
+						res[className] = struct{}{}
+					} else {
+						res[tt] = struct{}{}
+					}
 				}
 			}
 		}
 	case meta.WInstancePropertyFetch:
 		expr, propertyName := meta.UnwrapInstancePropertyFetch(typ)
 
-		for className := range ResolveType(expr, visitedMap) {
+		for className := range r.resolveType(class, expr) {
 			info, _, ok := FindProperty(className, propertyName)
 			if ok {
-				for tt := range ResolveTypes(info.Typ, visitedMap) {
+				for tt := range r.resolveTypes(class, info.Typ) {
 					res[tt] = struct{}{}
+				}
+			} else {
+				// If there is a __get method, it might have
+				// a @return annotation that will help to
+				// get appropriate type for dynamic property lookup.
+				get, _, ok := FindMethod(className, "__get")
+				if ok {
+					return r.resolveTypes(class, get.Typ)
 				}
 			}
 		}
+	case meta.WBaseMethodParam:
+		return solveBaseMethodParam(typ, visitedMap, res)
 	case meta.WStaticMethodCall:
 		className, methodName := meta.UnwrapStaticMethodCall(typ)
 		info, _, ok := FindMethod(className, methodName)
 		if ok {
-			return ResolveTypes(info.Typ, visitedMap)
+			for tt := range r.resolveTypes(className, info.Typ) {
+				if tt == "static" {
+					res[className] = struct{}{}
+				} else {
+					res[tt] = struct{}{}
+				}
+			}
 		}
 	case meta.WStaticPropertyFetch:
 		className, propertyName := meta.UnwrapStaticPropertyFetch(typ)
 		info, _, ok := FindProperty(className, propertyName)
 		if ok {
-			return ResolveTypes(info.Typ, visitedMap)
+			return r.resolveTypes(class, info.Typ)
 		}
 	default:
 		panic(fmt.Sprintf("Unexpected type: %d", typ[0]))
+	}
+
+	return res
+}
+
+func solveBaseMethodParam(typ string, visitedMap, res map[string]struct{}) map[string]struct{} {
+	index, className, methodName := meta.UnwrapBaseMethodParam(typ)
+	class, ok := meta.Info.GetClass(className)
+	if ok {
+		// TODO(quasilyte): walk parent interfaces as well?
+		for ifaceName := range class.Interfaces {
+			iface, ok := meta.Info.GetClass(ifaceName)
+			if !ok {
+				continue
+			}
+			fn, ok := iface.Methods[methodName]
+			if !ok {
+				continue
+			}
+			if len(fn.Params) > int(index) {
+				return ResolveTypes(fn.Params[index].Typ, visitedMap)
+			}
+		}
+	}
+	return res
+}
+
+func (r *resolver) resolveTypes(class string, m *meta.TypesMap) map[string]struct{} {
+	res := make(map[string]struct{}, m.Len())
+
+	m.Iterate(func(t string) {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("Panic during parsing '%s'", meta.NewTypesMap(t))
+				panic(r)
+			}
+		}()
+
+		for tt := range r.resolveType(class, t) {
+			res[tt] = struct{}{}
+		}
+	})
+
+	if _, ok := res["empty_array"]; ok {
+		delete(res, "empty_array")
+		specialized := false
+		for tt := range res {
+			if strings.HasSuffix(tt, "[]") {
+				specialized = true
+				break
+			}
+		}
+		if !specialized {
+			res["array"] = struct{}{}
+		}
 	}
 
 	return res
@@ -275,38 +370,5 @@ func findConstant(className string, constName string, visitedClasses map[string]
 func identityType(typ string) map[string]struct{} {
 	res := make(map[string]struct{})
 	res[typ] = struct{}{}
-	return res
-}
-
-func ResolveTypes(m *meta.TypesMap, visitedMap map[string]struct{}) map[string]struct{} {
-	res := make(map[string]struct{}, m.Len())
-
-	m.Iterate(func(t string) {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Printf("Panic during parsing '%s'", meta.NewTypesMap(t))
-				panic(r)
-			}
-		}()
-
-		for tt := range ResolveType(t, visitedMap) {
-			res[tt] = struct{}{}
-		}
-	})
-
-	if _, ok := res["empty_array"]; ok {
-		delete(res, "empty_array")
-		specialized := false
-		for tt := range res {
-			if strings.HasSuffix(tt, "[]") {
-				specialized = true
-				break
-			}
-		}
-		if !specialized {
-			res["array"] = struct{}{}
-		}
-	}
-
 	return res
 }

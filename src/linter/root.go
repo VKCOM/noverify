@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 	"strings"
 
@@ -660,13 +661,48 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 		d.Report(meth.MethodName, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", err)
 	}
 
+	class := d.getClass()
 	params, minParamsCnt := d.parseFuncArgs(meth.Params, phpDocParamTypes, sc)
+
+	if len(class.Interfaces) != 0 {
+		// If we implement interfaces, methods that take a part in this
+		// can borrow types information from them.
+		// Programmers sometimes leave implementing methods without a
+		// comment or use @inheritdoc there.
+		//
+		// If method params are properly documented, it's possible to
+		// derive that information, but we need to know in which
+		// interface we can find that method.
+		//
+		// Since we don't have all interfaces during the indexing phase
+		// and shouldn't update meta after it, we defer type resolving by
+		// using BaseMethodParam here. We would have to lookup
+		// matching interface during the type resolving.
+
+		// Find params without type and annotate them with special
+		// type that will force solver to walk interface types that
+		// current class implements to have a chance of finding relevant type info.
+		for i, p := range params {
+			if !p.Typ.IsEmpty() {
+				continue // Already has a type
+			}
+
+			if i > math.MaxUint8 {
+				break // Current implementation limit reached
+			}
+
+			res := make(map[string]struct{})
+			res[meta.WrapBaseMethodParam(i, d.st.CurrentClass, nm)] = struct{}{}
+			params[i].Typ = meta.NewTypesMapFromMap(res)
+			sc.AddVarName(p.Name, params[i].Typ, "param", true)
+		}
+	}
+
 	actualReturnTypes, exitFlags := d.handleFuncStmts(params, nil, meth.Stmts, sc)
 
 	d.addScope(meth, sc)
 
 	// TODO: handle duplicate method
-	class := d.getClass()
 	typ := meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType).Immutable()
 
 	class.Methods[nm] = meta.FuncInfo{
@@ -754,6 +790,14 @@ func (d *RootWalker) maybeAddNamespace(typStr string) string {
 
 		switch className {
 		case "bool", "boolean", "true", "false", "double", "float", "string", "int", "array", "resource", "mixed", "null", "callable", "void", "object":
+			continue
+		case "$this":
+			// Handle `$this` as `static` alias in phpdoc context.
+			classNames[idx] = "static"
+			continue
+		case "static":
+			// Don't resolve `static` phpdoc type annotation too early
+			// to make it possible to handle late static binding.
 			continue
 		}
 

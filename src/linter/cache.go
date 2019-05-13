@@ -16,7 +16,7 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
-const cacheVersion = 24
+const cacheVersion = 25
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")

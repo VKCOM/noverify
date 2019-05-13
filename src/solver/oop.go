@@ -31,7 +31,7 @@ func GetClassName(cs *meta.ClassParseState, classNode node.Node) (className stri
 		return "", false
 	}
 
-	if className == "self" || className == "static" {
+	if className == "self" || className == "static" || className == "$this" {
 		className = cs.CurrentClass
 	} else if className == "parent" {
 		className = cs.CurrentParentClass
