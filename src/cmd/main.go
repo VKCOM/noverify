@@ -31,8 +31,7 @@ var (
 var (
 	outputFp io.Writer = os.Stderr
 
-	gitRepo    string
-	isGitLocal bool
+	gitRepo string
 
 	pprofHost string
 
@@ -100,7 +99,6 @@ func bindFlags() {
 	flag.StringVar(&pprofHost, "pprof", "", "HTTP pprof endpoint (e.g. localhost:8080)")
 
 	flag.StringVar(&gitRepo, "git", "", "Path to git repository to analyze")
-	flag.BoolVar(&isGitLocal, "git-local", false, "Analyze local changes in git (everything not yet pushed)")
 	flag.StringVar(&gitCommitFrom, "git-commit-from", "", "Analyze changes between commits <git-commit-from> and <git-commit-to>")
 	flag.StringVar(&gitCommitTo, "git-commit-to", "", "")
 	flag.StringVar(&gitRef, "git-ref", "", "Ref (e.g. branch) that is being pushed")
