@@ -1351,7 +1351,7 @@ func (b *BlockWalker) handleVariable(v *expr.Variable) bool {
 	case ok:
 		if IsDiscardVar(id.Value) {
 			// TODO(quasilyte): increase the warning level later.
-			b.r.Report(id, LevelWarning, "discardVar",
+			b.r.Report(id, LevelDoNotReject, "discardVar",
 				"Used discard variable $%s value (rename variable if it's intended)", id.Value)
 		}
 		delete(b.unusedVars, id.Value)
