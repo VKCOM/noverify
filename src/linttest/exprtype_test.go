@@ -20,6 +20,26 @@ import (
 // TODO(quasilyte): better handling of an `empty_array` type.
 // Now it's resolved to `array` for expressions that have multiple empty_array.
 
+func TestExprTypeMalformedPhpdoc(t *testing.T) {
+	tests := []exprTypeTest{
+		{`return_mixed(0)`, ``},
+		{`return_int(0)`, `int`},
+	}
+
+	global := `<?php
+/**
+ * @param $x
+ */
+function return_mixed($x) { return $x; }
+
+/**
+ * @param int
+ */
+function return_int($x) { return $x; }
+`
+	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
+}
+
 func TestExprTypeMagicGet(t *testing.T) {
 	tests := []exprTypeTest{
 		{`(new Ints)->a`, `int`},
@@ -541,6 +561,10 @@ func runExprTypeTest(t *testing.T, ctx *exprTypeTestContext, tests []exprTypeTes
 }
 
 func makeType(typ string) map[string]struct{} {
+	if typ == "" {
+		return map[string]struct{}{}
+	}
+
 	res := make(map[string]struct{})
 	for _, t := range strings.Split(typ, "|") {
 		res[t] = struct{}{}
