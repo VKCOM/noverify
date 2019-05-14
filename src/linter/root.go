@@ -909,7 +909,9 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (returnTy
 		} else {
 			// Either type of var name is missing.
 			if strings.HasPrefix(typ, "$") {
-				phpDocErrors = append(phpDocErrors, fmt.Sprintf("malformed @param tag (maybe type is missing?) on line %d", idx+1))
+				phpDocErrors = append(phpDocErrors, fmt.Sprintf("malformed @param %s tag (maybe type is missing?) on line %d",
+					fields[1], idx+1))
+				continue
 			} else {
 				phpDocErrors = append(phpDocErrors, fmt.Sprintf("malformed @param tag (maybe var is missing?) on line %d", idx+1))
 			}
