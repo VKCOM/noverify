@@ -294,6 +294,9 @@ func TestExprTypeArray(t *testing.T) {
 		{`[1.4, 3.5]`, "float[]"},
 		{`["1", "5"]`, "string[]"},
 
+		{`["k1" => 123, "k2" => 345]`, `int[]`},
+		{`[0 => "a", 1 => "b"]`, `string[]`},
+
 		{`[$int, $int]`, "array"}, // TODO: could be int[]
 
 		{`$ints[0]`, "int"},
