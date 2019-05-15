@@ -10,6 +10,18 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestAssignmentsInForLoop(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+function increment($i) { return $i + 1; }
+
+for ($i = 0; $i <= 10; $i = increment($i)) {}
+for ($i = increment(0); $i <= 10; $i = $i + 1) {}
+for ($i = 0; $i == 0; $i++) {}
+for ($i = 0; $i == 0; ++$i) {}
+for ($i = 0; $i == 0; $i = $i++) {}
+`)
+}
+
 func TestCustomUnusedVarRegex(t *testing.T) {
 	defer func(isDiscardVar func(string) bool) {
 		linter.IsDiscardVar = isDiscardVar
