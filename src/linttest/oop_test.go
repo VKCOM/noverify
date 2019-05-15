@@ -255,6 +255,7 @@ func TestVariadic(t *testing.T) {
 	}
 
 	echo a(new TestClass()), "\n";
+	echo a(); // OK to call with 0 arguments.
 	`)
 }
 
