@@ -1018,7 +1018,9 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []node.Node) bool {
 		}
 
 		if item.Key == nil {
-			haveImplicitKeys = true
+			if item.Val != nil {
+				haveImplicitKeys = true
+			}
 			continue
 		}
 
