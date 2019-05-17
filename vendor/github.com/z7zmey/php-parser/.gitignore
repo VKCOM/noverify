@@ -1,0 +1,9 @@
+.vscode
+php-parser
+**/*.test
+
+*example.php
+
+cpu.pprof
+mem.pprof
+trace.out
