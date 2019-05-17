@@ -624,3 +624,7 @@ func (gw *globalsWalker) EnterNode(w walker.Walkable) bool {
 
 func (gw *globalsWalker) GetChildrenVisitor(string) walker.Visitor { return gw }
 func (gw *globalsWalker) LeaveNode(walker.Walkable)                {}
+func (gw *globalsWalker) EnterChildNode(string, walker.Walkable)   {}
+func (gw *globalsWalker) LeaveChildNode(string, walker.Walkable)   {}
+func (gw *globalsWalker) EnterChildList(string, walker.Walkable)   {}
+func (gw *globalsWalker) LeaveChildList(string, walker.Walkable)   {}

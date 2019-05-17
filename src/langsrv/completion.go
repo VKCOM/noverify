@@ -4,15 +4,13 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/state"
 	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/position"
 	"github.com/z7zmey/php-parser/walker"
 )
 
 type completionWalker struct {
 	// params
-	position  int
-	positions position.Positions
-	scopes    map[node.Node]*meta.Scope
+	position int
+	scopes   map[node.Node]*meta.Scope
 
 	// output
 	foundScope *meta.Scope
@@ -40,7 +38,7 @@ func (d *completionWalker) LeaveNode(w walker.Walkable) {
 	state.LeaveNode(&d.st, w)
 
 	n := w.(node.Node)
-	pos := d.positions[n]
+	pos := n.GetPosition()
 
 	if pos == nil {
 		return
@@ -57,3 +55,8 @@ func (d *completionWalker) LeaveNode(w walker.Walkable) {
 
 	d.foundScope = sc
 }
+
+func (d *completionWalker) EnterChildNode(key string, w walker.Walkable) {}
+func (d *completionWalker) LeaveChildNode(key string, w walker.Walkable) {}
+func (d *completionWalker) EnterChildList(key string, w walker.Walkable) {}
+func (d *completionWalker) LeaveChildList(key string, w walker.Walkable) {}

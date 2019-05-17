@@ -11,16 +11,14 @@ import (
 	"github.com/z7zmey/php-parser/node"
 	"github.com/z7zmey/php-parser/node/expr"
 	"github.com/z7zmey/php-parser/node/name"
-	"github.com/z7zmey/php-parser/position"
 	"github.com/z7zmey/php-parser/walker"
 )
 
 type definitionWalker struct {
 	st meta.ClassParseState
 
-	position  int
-	positions position.Positions
-	scopes    map[node.Node]*meta.Scope
+	position int
+	scopes   map[node.Node]*meta.Scope
 
 	result      []vscode.Location
 	foundScopes []*meta.Scope
@@ -50,7 +48,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 
 	switch n := w.(type) {
 	case *expr.FunctionCall:
-		pos := d.positions[n.Function]
+		pos := n.Function.GetPosition()
 
 		if d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
@@ -84,7 +82,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 
 		lintdebug.Send("Found function %s: %s:%d", nameStr, fun.Pos.Filename, fun.Pos.Line)
 	case *expr.StaticCall:
-		pos := d.positions[n.Call]
+		pos := n.Call.GetPosition()
 
 		if d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
@@ -115,7 +113,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 			})
 		}
 	case *expr.MethodCall:
-		pos := d.positions[n.Method]
+		pos := n.Method.GetPosition()
 
 		if d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
@@ -155,7 +153,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 			})
 		})
 	case *expr.PropertyFetch:
-		pos := d.positions[n.Property]
+		pos := n.Property.GetPosition()
 
 		if d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
@@ -195,7 +193,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 			})
 		})
 	case *expr.ConstFetch:
-		pos := d.positions[n.Constant]
+		pos := n.Constant.GetPosition()
 
 		if d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
@@ -213,7 +211,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 			})
 		}
 	case *expr.ClassConstFetch:
-		if pos := d.positions[n.ConstantName]; d.position > pos.EndPos || d.position < pos.StartPos {
+		if pos := n.ConstantName.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
 
@@ -242,7 +240,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 		}
 
 	case *name.Name:
-		pos := d.positions[n]
+		pos := n.GetPosition()
 
 		if d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
@@ -267,7 +265,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 			},
 		})
 	case *name.FullyQualified:
-		pos := d.positions[n]
+		pos := n.GetPosition()
 		if d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
@@ -313,3 +311,8 @@ func (d *definitionWalker) LeaveNode(w walker.Walkable) {
 
 	state.LeaveNode(&d.st, n)
 }
+
+func (d *definitionWalker) EnterChildNode(key string, w walker.Walkable) {}
+func (d *definitionWalker) LeaveChildNode(key string, w walker.Walkable) {}
+func (d *definitionWalker) EnterChildList(key string, w walker.Walkable) {}
+func (d *definitionWalker) LeaveChildList(key string, w walker.Walkable) {}

@@ -63,11 +63,11 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ex
 	}
 
 	override, ok := meta.GetInternalFunctionOverrideInfo(nm)
-	if !ok || len(c.Arguments) <= override.ArgNum {
+	if !ok || len(c.ArgumentList.Arguments) <= override.ArgNum {
 		return fn.Typ, true
 	}
 
-	arg, ok := c.Arguments[override.ArgNum].(*node.Argument)
+	arg, ok := c.ArgumentList.Arguments[override.ArgNum].(*node.Argument)
 	if !ok {
 		return fn.Typ, true
 	}

@@ -12,7 +12,6 @@ import (
 	"github.com/z7zmey/php-parser/node/expr"
 	"github.com/z7zmey/php-parser/node/expr/assign"
 	"github.com/z7zmey/php-parser/php7"
-	"github.com/z7zmey/php-parser/position"
 	"github.com/z7zmey/php-parser/walker"
 )
 
@@ -24,9 +23,8 @@ func findFunctionReferences(funcName string) []vscode.Location {
 
 	return findReferences(substr, func(filename string, rootNode node.Node, contents []byte, parser *php7.Parser) []vscode.Location {
 		v := &funcCallVisitor{
-			funcName:  funcName,
-			positions: parser.GetPositions(),
-			filename:  filename,
+			funcName: funcName,
+			filename: filename,
 		}
 		rootNode.Walk(v)
 		return v.found
@@ -38,7 +36,6 @@ func findStaticMethodReferences(className string, methodName string) []vscode.Lo
 		v := &staticMethodCallVisitor{
 			className:  className,
 			methodName: methodName,
-			positions:  parser.GetPositions(),
 			filename:   filename,
 		}
 		rootNode.Walk(v)
@@ -50,7 +47,6 @@ func findConstantsReferences(constName string) []vscode.Location {
 	return findReferences(constName, func(filename string, rootNode node.Node, contents []byte, parser *php7.Parser) []vscode.Location {
 		v := &constVisitor{
 			constName: constName,
-			positions: parser.GetPositions(),
 			filename:  filename,
 		}
 		rootNode.Walk(v)
@@ -63,7 +59,6 @@ func findClassConstantsReferences(className string, constName string) []vscode.L
 		v := &classConstVisitor{
 			className: className,
 			constName: constName,
-			positions: parser.GetPositions(),
 			filename:  filename,
 		}
 		rootNode.Walk(v)
@@ -83,7 +78,6 @@ func findMethodReferences(className string, methodName string) []vscode.Location
 					className:  className,
 					methodName: methodName,
 					filename:   filename,
-					positions:  parser.GetPositions(),
 					addFound:   func(f vscode.Location) { found = append(found, f) },
 				}
 			},
@@ -110,7 +104,6 @@ func findPropertyReferences(className string, propName string) []vscode.Location
 					className: className,
 					propName:  propName,
 					filename:  filename,
-					positions: parser.GetPositions(),
 					addFound:  func(f vscode.Location) { found = append(found, f) },
 				}
 			},
@@ -126,10 +119,11 @@ func findPropertyReferences(className string, propName string) []vscode.Location
 }
 
 type funcCallVisitor struct {
-	st        meta.ClassParseState
-	funcName  string
-	positions position.Positions
-	filename  string
+	dummyWalker
+
+	st       meta.ClassParseState
+	funcName string
+	filename string
 
 	found []vscode.Location
 }
@@ -146,9 +140,7 @@ func (d *funcCallVisitor) EnterNode(w walker.Walkable) bool {
 	case *expr.FunctionCall:
 		_, nameStr, ok := getFunction(&d.st, n)
 		if ok && nameStr == d.funcName {
-			if pos, ok := d.positions[n]; ok {
-				d.found = append(d.found, refPosition(d.filename, pos))
-			}
+			d.found = append(d.found, refPosition(d.filename, n.GetPosition()))
 		}
 	}
 
@@ -166,10 +158,11 @@ func (d *funcCallVisitor) LeaveNode(w walker.Walkable) {
 }
 
 type staticMethodCallVisitor struct {
+	dummyWalker
+
 	// params
 	className  string
 	methodName string
-	positions  position.Positions
 	filename   string
 
 	// output
@@ -200,9 +193,7 @@ func (d *staticMethodCallVisitor) EnterNode(w walker.Walkable) bool {
 		_, realClassName, ok := solver.FindMethod(className, id.Value)
 
 		if ok && realClassName == d.className && id.Value == d.methodName {
-			if pos, ok := d.positions[n]; ok {
-				d.found = append(d.found, refPosition(d.filename, pos))
-			}
+			d.found = append(d.found, refPosition(d.filename, n.GetPosition()))
 		}
 	}
 
@@ -220,9 +211,10 @@ func (d *staticMethodCallVisitor) LeaveNode(w walker.Walkable) {
 }
 
 type constVisitor struct {
+	dummyWalker
+
 	// params
 	constName string
-	positions position.Positions
 	filename  string
 
 	// output
@@ -245,9 +237,7 @@ func (d *constVisitor) EnterNode(w walker.Walkable) bool {
 		constName, _, ok := solver.GetConstant(&d.st, n.Constant)
 
 		if ok && constName == d.constName {
-			if pos, ok := d.positions[n]; ok {
-				d.found = append(d.found, refPosition(d.filename, pos))
-			}
+			d.found = append(d.found, refPosition(d.filename, n.GetPosition()))
 		}
 	}
 
@@ -265,10 +255,11 @@ func (d *constVisitor) LeaveNode(w walker.Walkable) {
 }
 
 type classConstVisitor struct {
+	dummyWalker
+
 	// params
 	className string
 	constName string
-	positions position.Positions
 	filename  string
 
 	// output
@@ -305,9 +296,7 @@ func (d *classConstVisitor) EnterNode(w walker.Walkable) bool {
 		_, implClassName, ok := solver.FindConstant(className, constName.Value)
 
 		if ok && constName.Value == d.constName && implClassName == d.className {
-			if pos, ok := d.positions[n]; ok {
-				d.found = append(d.found, refPosition(d.filename, pos))
-			}
+			d.found = append(d.found, refPosition(d.filename, n.GetPosition()))
 		}
 	}
 
@@ -330,8 +319,7 @@ type blockMethodCallVisitor struct {
 	className  string
 	methodName string
 
-	filename  string
-	positions position.Positions
+	filename string
 
 	addFound func(f vscode.Location)
 }
@@ -357,9 +345,7 @@ func (d *blockMethodCallVisitor) BeforeEnterNode(w walker.Walkable) {
 			_, realClassName, ok := solver.FindMethod(typ, methodName)
 
 			if ok && realClassName == d.className {
-				if pos, ok := d.positions[n]; ok {
-					d.addFound(refPosition(d.filename, pos))
-				}
+				d.addFound(refPosition(d.filename, n.GetPosition()))
 			}
 		})
 	}
@@ -375,8 +361,7 @@ type blockPropertyVisitor struct {
 	className string
 	propName  string
 
-	filename  string
-	positions position.Positions
+	filename string
 
 	addFound func(f vscode.Location)
 }
@@ -408,9 +393,7 @@ func (d *blockPropertyVisitor) handlePropertyFetch(n *expr.PropertyFetch) {
 		_, realClassName, ok := solver.FindProperty(className, id.Value)
 
 		if ok && realClassName == d.className {
-			if pos, ok := d.positions[n]; ok {
-				d.addFound(refPosition(d.filename, pos))
-			}
+			d.addFound(refPosition(d.filename, n.GetPosition()))
 		}
 	})
 }
