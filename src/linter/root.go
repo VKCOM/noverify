@@ -980,7 +980,7 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 
 		typ := parTyp.typ
 
-		if p.DefaultValue == nil && !parTyp.optional {
+		if p.DefaultValue == nil && !parTyp.optional && !p.Variadic {
 			minArgs++
 		}
 
