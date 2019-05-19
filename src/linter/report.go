@@ -202,16 +202,6 @@ func blameIfNeeded(gitDir string, refspec []string, filename string) (git.BlameR
 	return git.Blame(gitDir, refspec, filename)
 }
 
-func fmtReports(list []*Report) []byte {
-	var reports []string
-
-	for _, r := range list {
-		reports = append(reports, r.String())
-	}
-
-	return []byte(strings.Join(reports, "\n") + "\n")
-}
-
 func diffReportsList(gitRepo string, ignoreCommits map[string]struct{}, diffArgs []string, filename string, c git.Change, oldList, newList []*Report) (res []*Report, err error) {
 	var blame git.BlameResult
 
