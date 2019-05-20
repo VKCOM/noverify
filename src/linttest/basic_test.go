@@ -1143,6 +1143,43 @@ func TestCorrectArrayTypes(t *testing.T) {
 	}
 }
 
+func TestCompactImpliesUsage(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+// Declaration from phpstorm-stubs
+function compact ($varname, $_ = null) {}
+
+function f() {
+	$x = 1; $y = 2;
+	// Equivalent to ['x' => $x, 'y' => $y]
+	return compact('x', 'y');
+}
+
+function g() {
+	$x = 1; $y = 2;
+	// Also equivalent to ['x' => $x, 'y' => $y]
+	return compact([[['x'], 'y']]);
+}
+	`)
+}
+
+func TestCompactWithUndefined(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+// Declaration from phpstorm-stubs
+function compact ($varname, $_ = null) {}
+
+function f() {
+	return compact('x', 'y');
+}
+	`)
+
+	test.Expect = []string{
+		"Undefined variable: x",
+		"Undefined variable: y",
+	}
+	runFilterMatch(test, "undefined")
+}
+
 func runFilterMatch(test *linttest.Suite, name string) {
 	test.Match(filterReports(name, test.RunLinter()))
 }

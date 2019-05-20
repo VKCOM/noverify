@@ -744,6 +744,7 @@ func (b *BlockWalker) handleCallArgs(n node.Node, args []node.Node, fn meta.Func
 
 func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
 	var fn meta.FuncInfo
+	var fqName string
 
 	if meta.IsIndexingComplete() {
 		defined := true
@@ -760,16 +761,20 @@ func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
 					// handle situations like 'use NS\Foo; Foo\Bar::doSomething();'
 					nameStr = alias + `\` + meta.NamePartsToString(nm.Parts[1:])
 				}
-				fn, defined = meta.Info.GetFunction(nameStr)
+				fqName = nameStr
+				fn, defined = meta.Info.GetFunction(fqName)
 			} else {
-				fn, defined = meta.Info.GetFunction(b.r.st.Namespace + `\` + nameStr)
+				fqName = b.r.st.Namespace + `\` + nameStr
+				fn, defined = meta.Info.GetFunction(fqName)
 				if !defined && b.r.st.Namespace != "" {
-					fn, defined = meta.Info.GetFunction(`\` + nameStr)
+					fqName = `\` + nameStr
+					fn, defined = meta.Info.GetFunction(fqName)
 				}
 			}
 
 		case *name.FullyQualified:
-			fn, defined = meta.Info.GetFunction(meta.FullyQualifiedToString(nm))
+			fqName = meta.FullyQualifiedToString(nm)
+			fn, defined = meta.Info.GetFunction(fqName)
 		default:
 			defined = false
 
@@ -806,10 +811,45 @@ func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
 
 	e.Function.Walk(b)
 
-	b.handleCallArgs(e.Function, e.ArgumentList.Arguments, fn)
+	if fqName == `\compact` {
+		b.handleCompactCallArgs(e.ArgumentList.Arguments)
+	} else {
+		b.handleCallArgs(e.Function, e.ArgumentList.Arguments, fn)
+	}
 	b.ctx.exitFlags |= fn.ExitFlags
 
 	return false
+}
+
+// handleCompactCallArgs treats strings anywhere in the argument list as uses
+// of the variables named by those strings, which is how compact() behaves.
+func (b *BlockWalker) handleCompactCallArgs(args []node.Node) {
+	// Recursively flatten the argument list and extract strings
+	var strs []*scalar.String
+	for len(args) > 0 {
+		var head node.Node
+		head, args = args[0], args[1:]
+		switch n := head.(type) {
+		case *node.Argument:
+			args = append(args, n.Expr)
+		case *expr.Array:
+			args = append(args, n.Items...)
+		case *expr.ShortArray:
+			args = append(args, n.Items...)
+		case *expr.ArrayItem:
+			args = append(args, n.Val)
+		case *scalar.String:
+			strs = append(strs, n)
+		}
+	}
+
+	for _, s := range strs {
+		id := node.NewIdentifier(unquote(s.Value))
+		id.SetPosition(s.GetPosition())
+		v := expr.NewVariable(id)
+		v.SetPosition(s.GetPosition())
+		b.handleVariable(v)
+	}
 }
 
 // checks whether or not we can access to className::method/property/constant/etc from this context
