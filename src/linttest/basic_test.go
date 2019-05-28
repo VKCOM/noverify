@@ -138,6 +138,14 @@ func TestUnusedInSwitch(t *testing.T) {
 				}
 			}
 		}
+	}
+	function insideCase($a, $b) {
+		$b2 = $b;
+		switch ($a) {
+		case $b2['key']:
+			return 10;
+		}
+		return 20;
 	}`)
 	test.Expect = []string{`Unused variable x`}
 	runFilterMatch(test, "unused")
