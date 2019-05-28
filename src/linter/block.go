@@ -1459,25 +1459,26 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 	return false
 }
 
-func (b *BlockWalker) getCaseStmts(c node.Node) (list []node.Node, isDefault bool) {
+func (b *BlockWalker) getCaseStmts(c node.Node) (cond node.Node, list []node.Node) {
 	switch c := c.(type) {
 	case *stmt.Case:
+		cond = c.Cond
 		list = c.Stmts
 	case *stmt.Default:
 		list = c.Stmts
-		if len(list) > 0 {
-			isDefault = true
-		}
 	default:
 		panic(fmt.Errorf("Unexpected type in switch statement: %T", c))
 	}
 
-	return list, isDefault
+	return cond, list
 }
 
 func (b *BlockWalker) iterateNextCases(cases []node.Node, startIdx int) {
 	for i := startIdx; i < len(cases); i++ {
-		list, _ := b.getCaseStmts(cases[i])
+		cond, list := b.getCaseStmts(cases[i])
+		if cond != nil {
+			cond.Walk(b)
+		}
 
 		for _, stmt := range list {
 			if stmt != nil {
@@ -1506,9 +1507,11 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 	for idx, c := range s.Cases {
 		var list []node.Node
 
-		list, isDefault := b.getCaseStmts(c)
-		if isDefault {
+		cond, list := b.getCaseStmts(c)
+		if cond == nil {
 			haveDefault = true
+		} else {
+			cond.Walk(b)
 		}
 
 		// allow empty case body without "break;"
