@@ -9,6 +9,7 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/solver"
+	"github.com/z7zmey/php-parser/node"
 	"github.com/z7zmey/php-parser/node/expr/assign"
 	"github.com/z7zmey/php-parser/node/stmt"
 	"github.com/z7zmey/php-parser/walker"
@@ -607,6 +608,8 @@ type globalsWalker struct {
 
 func (gw *globalsWalker) EnterNode(w walker.Walkable) bool {
 	switch n := w.(type) {
+	case *node.Root:
+		return true
 	case *stmt.StmtList:
 		return true
 	case *stmt.Expression:
