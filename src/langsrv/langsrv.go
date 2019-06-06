@@ -370,9 +370,8 @@ func handleTextDocumentDefinition(req *baseRequest) error {
 
 	if params.Position.Line < len(f.linesPositions) {
 		w := &definitionWalker{
-			position:  f.linesPositions[params.Position.Line] + params.Position.Character,
-			positions: f.positions,
-			scopes:    f.scopes,
+			position: f.linesPositions[params.Position.Line] + params.Position.Character,
+			scopes:   f.scopes,
 		}
 		f.rootNode.Walk(w)
 		if len(w.result) > 0 {
@@ -410,8 +409,7 @@ func handleTextDocumentReferences(req *baseRequest) error {
 
 	if params.Position.Line < len(f.linesPositions) {
 		w := &referencesWalker{
-			position:  f.linesPositions[params.Position.Line] + params.Position.Character,
-			positions: f.positions,
+			position: f.linesPositions[params.Position.Line] + params.Position.Character,
 		}
 		f.rootNode.Walk(w)
 		if len(w.result) > 0 {
@@ -485,9 +483,8 @@ func handleTextDocumentHover(req *baseRequest) error {
 	}
 
 	compl := &completionWalker{
-		position:  f.linesPositions[params.Position.Line] + params.Position.Character,
-		positions: f.positions,
-		scopes:    f.scopes,
+		position: f.linesPositions[params.Position.Line] + params.Position.Character,
+		scopes:   f.scopes,
 	}
 
 	f.rootNode.Walk(compl)
@@ -497,8 +494,7 @@ func handleTextDocumentHover(req *baseRequest) error {
 	}
 
 	hover := &hoverWalker{
-		position:  compl.position,
-		positions: compl.positions,
+		position: compl.position,
 	}
 
 	f.rootNode.Walk(hover)
@@ -643,9 +639,8 @@ func handleTextDocumentCompletion(req *baseRequest) error {
 	position = f.linesPositions[params.Position.Line] + params.Position.Character
 
 	compl := &completionWalker{
-		position:  position,
-		positions: f.positions,
-		scopes:    f.scopes,
+		position: position,
+		scopes:   f.scopes,
 	}
 
 	f.rootNode.Walk(compl)

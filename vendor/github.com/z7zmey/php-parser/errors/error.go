@@ -4,28 +4,27 @@ import (
 	"fmt"
 
 	"github.com/z7zmey/php-parser/position"
-	"github.com/z7zmey/php-parser/token"
 )
 
 // Error parsing error
 type Error struct {
 	Msg string
-	Pos position.Position
+	Pos *position.Position
 }
 
 // NewError creates and returns new Error
-func NewError(msg string, t token.Token) *Error {
+func NewError(msg string, p *position.Position) *Error {
 	return &Error{
 		Msg: msg,
-		Pos: position.Position{
-			StartLine: t.StartLine,
-			EndLine:   t.EndLine,
-			StartPos:  t.StartPos,
-			EndPos:    t.EndPos,
-		},
+		Pos: p,
 	}
 }
 
 func (e *Error) String() string {
-	return fmt.Sprintf("%s at line %d", e.Msg, e.Pos.StartLine)
+	atLine := ""
+	if e.Pos != nil {
+		atLine = fmt.Sprintf(" at line %d", e.Pos.StartLine)
+	}
+
+	return fmt.Sprintf("%s%s", e.Msg, atLine)
 }

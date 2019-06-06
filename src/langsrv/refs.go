@@ -22,9 +22,8 @@ import (
 type referencesWalker struct {
 	st meta.ClassParseState
 
-	position  int
-	positions position.Positions
-	scopes    map[node.Node]*meta.Scope
+	position int
+	scopes   map[node.Node]*meta.Scope
 
 	result      []vscode.Location
 	foundScopes []*meta.Scope
@@ -69,7 +68,7 @@ func (d *referencesWalker) EnterNode(w walker.Walkable) bool {
 
 	switch n := w.(type) {
 	case *expr.FunctionCall:
-		if pos := d.positions[n.Function]; d.position > pos.EndPos || d.position < pos.StartPos {
+		if pos := n.Function.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
 
@@ -78,7 +77,7 @@ func (d *referencesWalker) EnterNode(w walker.Walkable) bool {
 			d.result = findFunctionReferences(nameStr)
 		}
 	case *expr.StaticCall:
-		if pos := d.positions[n.Call]; d.position > pos.EndPos || d.position < pos.StartPos {
+		if pos := n.Call.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
 
@@ -98,13 +97,13 @@ func (d *referencesWalker) EnterNode(w walker.Walkable) bool {
 			d.result = findStaticMethodReferences(realClassName, id.Value)
 		}
 	case *stmt.Function:
-		if pos := d.positions[n.FunctionName]; d.position > pos.EndPos || d.position < pos.StartPos {
+		if pos := n.FunctionName.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
 
 		d.result = findFunctionReferences(d.st.Namespace + `\` + n.FunctionName.(*node.Identifier).Value)
 	case *stmt.ClassMethod:
-		if pos := d.positions[n.MethodName]; d.position > pos.EndPos || d.position < pos.StartPos {
+		if pos := n.MethodName.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
 
@@ -123,13 +122,13 @@ func (d *referencesWalker) EnterNode(w walker.Walkable) bool {
 			d.result = findMethodReferences(d.st.CurrentClass, n.MethodName.(*node.Identifier).Value)
 		}
 	case *stmt.Property:
-		if pos := d.positions[n]; d.position > pos.EndPos || d.position < pos.StartPos {
+		if pos := n.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
 
 		d.result = findPropertyReferences(d.st.CurrentClass, n.Variable.(*expr.Variable).VarName.(*node.Identifier).Value)
 	case *stmt.Constant:
-		if pos := d.positions[n.ConstantName]; d.position > pos.EndPos || d.position < pos.StartPos {
+		if pos := n.ConstantName.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
 
@@ -161,6 +160,11 @@ func (d *referencesWalker) LeaveNode(w walker.Walkable) {
 
 	state.LeaveNode(&d.st, n)
 }
+
+func (d *referencesWalker) EnterChildNode(key string, w walker.Walkable) {}
+func (d *referencesWalker) LeaveChildNode(key string, w walker.Walkable) {}
+func (d *referencesWalker) EnterChildList(key string, w walker.Walkable) {}
+func (d *referencesWalker) LeaveChildList(key string, w walker.Walkable) {}
 
 // copyOpenMap returns map[filename]contents
 func copyOpenMap() map[string]string {
