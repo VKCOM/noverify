@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -205,6 +206,7 @@ func buildCheckMappings() {
 }
 
 func analyzeReports(diff []*linter.Report) (criticalReports int) {
+	filtered := diff[:0]
 	for _, r := range diff {
 		if !isEnabled(r) {
 			continue
@@ -219,11 +221,27 @@ func analyzeReports(diff []*linter.Report) (criticalReports int) {
 			}
 		}
 
+		filtered = append(filtered, r)
+
 		if r.IsCritical() {
 			criticalReports++
 		}
+	}
 
-		fmt.Fprintf(outputFp, "%s\n", r)
+	if outputJSON {
+		type reportList struct {
+			Reports []*linter.Report
+		}
+		list := &reportList{Reports: filtered}
+		d := json.NewEncoder(outputFp)
+		if err := d.Encode(list); err != nil {
+			// Should never fail to marshal our own reports.
+			panic(fmt.Sprintf("report list marshaling failed: %v", err))
+		}
+	} else {
+		for _, r := range filtered {
+			fmt.Fprintf(outputFp, "%s\n", r.String())
+		}
 	}
 
 	return criticalReports
