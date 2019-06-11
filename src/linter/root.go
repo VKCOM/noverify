@@ -2,6 +2,7 @@ package linter
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math"
@@ -81,6 +82,34 @@ type Report struct {
 // CheckName returns report associated check name.
 func (r *Report) CheckName() string {
 	return r.checkName
+}
+
+// MarshalJSON is used to write report in its JSON representation.
+//
+// Used for -output-json option.
+func (r *Report) MarshalJSON() ([]byte, error) {
+	type jsonReport struct {
+		CheckName string `json:"check_name"`
+		Severity  string `json:"severity"`
+		Context   string `json:"context"`
+		Message   string `json:"message"`
+		Filename  string `json:"filename"`
+		Line      int    `json:"line"`
+		StartChar int    `json:"start_char"`
+		EndChar   int    `json:"end_char"`
+	}
+
+	b, err := json.Marshal(jsonReport{
+		CheckName: r.checkName,
+		Severity:  strings.TrimSpace(severityNames[r.level]),
+		Context:   r.startLn,
+		Message:   r.msg,
+		Filename:  r.filename,
+		Line:      r.startLine,
+		StartChar: r.startChar,
+		EndChar:   r.endChar,
+	})
+	return b, err
 }
 
 func (r *Report) String() string {
