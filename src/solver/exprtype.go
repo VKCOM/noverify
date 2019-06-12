@@ -1,7 +1,6 @@
 package solver
 
 import (
-	"fmt"
 	"log"
 	"reflect"
 	"strings"
