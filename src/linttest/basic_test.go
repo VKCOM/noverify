@@ -153,6 +153,39 @@ echo "quite reachable\n";
 `)
 }
 
+func TestUnusedInInstanceof(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class Foo {}
+
+function f1($cond) {
+  global $g;
+  $x = $g;
+  if ($x instanceof Foo) {
+    // Do nothing.
+  }
+  if ($cond) {
+    $_ = $x; // Use $x
+    if ($x instanceof Foo) {
+      // Should not warn about unused var.
+    }
+  }
+}
+
+function f2() {
+  global $v;
+  return $v instanceof Foo;
+}
+
+function f3() {
+  global $v;
+  if ($v instanceof Foo) {
+    return 1;
+  }
+  return 0;
+}
+`)
+}
+
 func TestUnusedInPropFetch(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
