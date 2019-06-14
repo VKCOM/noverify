@@ -206,7 +206,7 @@ func buildCheckMappings() {
 }
 
 func analyzeReports(diff []*linter.Report) (criticalReports int) {
-	filtered := diff[:0]
+	filtered := make([]*linter.Report, 0, len(diff))
 	for _, r := range diff {
 		if !isEnabled(r) {
 			continue
