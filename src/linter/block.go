@@ -1377,7 +1377,7 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 		for _, instanceof := range a.instanceOfs {
 			if className, ok := solver.GetClassName(b.r.st, instanceof.Class); ok {
 				if v, ok := instanceof.Expr.(*expr.Variable); ok {
-					b.addVar(v, meta.NewTypesMap(className), "instanceof", false)
+					b.sc.AddVar(v, meta.NewTypesMap(className), "instanceof", false)
 				} else {
 					b.customTypes = append(b.customTypes, solver.CustomType{
 						Node: instanceof.Expr,
