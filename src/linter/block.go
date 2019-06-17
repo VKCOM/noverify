@@ -1315,6 +1315,7 @@ func (b *BlockWalker) propagateFlagsFromBranches(contexts []*BlockWalker, linksC
 // andWalker walks through all expressions with && and does not enter deeper
 type andWalker struct {
 	issets      []*expr.Isset
+	nonEmpty    []*expr.Empty
 	instanceOfs []*expr.InstanceOf
 }
 
@@ -1326,6 +1327,11 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 		a.issets = append(a.issets, n)
 	case *expr.InstanceOf:
 		a.instanceOfs = append(a.instanceOfs, n)
+	case *expr.BooleanNot:
+		// !empty($x) implies that isset($x) would return true.
+		if empty, ok := n.Expr.(*expr.Empty); ok {
+			a.nonEmpty = append(a.nonEmpty, empty)
+		}
 	}
 	return false
 }
@@ -1350,6 +1356,25 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 
 		s.Cond.Walk(b)
 		s.Cond.Walk(a)
+
+		// TODO: consolidate with issets handling?
+		// Probably could collect *expr.Variable instead of
+		// isset and empty nodes and handle them in a single loop.
+		for _, empty := range a.nonEmpty {
+			v, ok := empty.Expr.(*expr.Variable)
+			if !ok {
+				continue
+			}
+			if b.sc.HaveVar(v) {
+				continue
+			}
+			vn, ok := v.VarName.(*node.Identifier)
+			if !ok {
+				continue
+			}
+			b.addVar(v, meta.NewTypesMap("isset_$"+vn.Value), "!empty", true)
+			defer b.sc.DelVar(v, "!empty")
+		}
 
 		for _, isset := range a.issets {
 			for _, v := range isset.Variables {

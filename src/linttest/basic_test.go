@@ -495,6 +495,45 @@ func TestArrayLiteral(t *testing.T) {
 	test.RunAndMatch()
 }
 
+func TestNonEmptyVar(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+	function non_empty_var() {
+		if (!empty($x)) {
+			return $x;
+		}
+		return 0;
+	}
+
+	function empty_arg() {
+		$_ = !empty($x) || empty($x);
+	}
+`)
+}
+
+func TestEmptyVar(t *testing.T) {
+	// Only !empty marks a variable in a same way as isset does.
+
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	function empty_var() {
+		if (empty($x1)) {
+			return $x1;
+		}
+		return 0;
+	}
+	function use_outside_if() {
+		if (!empty($x2)) {
+			$_ = $x2;
+		}
+		return $x2;
+	}`)
+	test.Expect = []string{
+		`Undefined variable: x1`,
+		`Undefined variable: x2`,
+	}
+	test.RunAndMatch()
+}
+
 func TestIssetVarVar4(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
