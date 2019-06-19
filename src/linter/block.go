@@ -111,7 +111,7 @@ func (b *BlockWalker) PrematureExitFlags() int {
 
 // RootState returns state that was stored in root context (if any) for use in custom hooks.
 func (b *BlockWalker) RootState() map[string]interface{} {
-	return b.r.customState
+	return b.r.State()
 }
 
 // IsRootLevel returns whether or not we currently analyze root level code.
