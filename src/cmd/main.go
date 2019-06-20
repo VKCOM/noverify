@@ -207,6 +207,7 @@ func buildCheckMappings() {
 
 func analyzeReports(diff []*linter.Report) (criticalReports int) {
 	filtered := make([]*linter.Report, 0, len(diff))
+	var linterErrors []string
 	for _, r := range diff {
 		if !isEnabled(r) {
 			continue
@@ -215,7 +216,7 @@ func analyzeReports(diff []*linter.Report) (criticalReports int) {
 		if r.IsDisabledByUser() {
 			filename := r.GetFilename()
 			if !canBeDisabled(filename) {
-				fmt.Fprintf(outputFp, "You are not allowed to disable linter for file '%s'\n", filename)
+				linterErrors = append(linterErrors, fmt.Sprintf("You are not allowed to disable linter for file '%s'", filename))
 			} else {
 				continue
 			}
@@ -231,14 +232,21 @@ func analyzeReports(diff []*linter.Report) (criticalReports int) {
 	if outputJSON {
 		type reportList struct {
 			Reports []*linter.Report
+			Errors  []string
 		}
-		list := &reportList{Reports: filtered}
+		list := &reportList{
+			Reports: filtered,
+			Errors:  linterErrors,
+		}
 		d := json.NewEncoder(outputFp)
 		if err := d.Encode(list); err != nil {
 			// Should never fail to marshal our own reports.
 			panic(fmt.Sprintf("report list marshaling failed: %v", err))
 		}
 	} else {
+		for _, err := range linterErrors {
+			fmt.Fprintf(outputFp, "%s\n", err)
+		}
 		for _, r := range filtered {
 			fmt.Fprintf(outputFp, "%s\n", r.String())
 		}
