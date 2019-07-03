@@ -1312,27 +1312,83 @@ func (b *BlockWalker) propagateFlagsFromBranches(contexts []*BlockWalker, linksC
 	}
 }
 
-// andWalker walks through all expressions with && and does not enter deeper
+// andWalker walks if conditions and adds isset/!empty/instanceof variables
+// to the associated block walker.
+//
+// All variables defined by andWalker should be removed after
+// if body is handled, this is why we collect varsToDelete.
 type andWalker struct {
-	issets      []*expr.Isset
-	nonEmpty    []*expr.Empty
-	instanceOfs []*expr.InstanceOf
+	b *BlockWalker
+
+	varsToDelete []*expr.Variable
 }
 
 func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 	switch n := w.(type) {
 	case *binary.BooleanAnd:
 		return true
+
 	case *expr.Isset:
-		a.issets = append(a.issets, n)
-	case *expr.InstanceOf:
-		a.instanceOfs = append(a.instanceOfs, n)
-	case *expr.BooleanNot:
-		// !empty($x) implies that isset($x) would return true.
-		if empty, ok := n.Expr.(*expr.Empty); ok {
-			a.nonEmpty = append(a.nonEmpty, empty)
+		for _, v := range n.Variables {
+			if v, ok := v.(*expr.Variable); ok {
+				if a.b.sc.HaveVar(v) {
+					continue
+				}
+				switch vn := v.VarName.(type) {
+				case *node.Identifier:
+					a.b.addVar(v, meta.NewTypesMap("isset_$"+vn.Value), "isset", true)
+					a.varsToDelete = append(a.varsToDelete, v)
+				case *expr.Variable:
+					a.b.handleVariable(vn)
+					name, ok := vn.VarName.(*node.Identifier)
+					if !ok {
+						continue
+					}
+					a.b.addVar(v, meta.NewTypesMap("isset_$$"+name.Value), "isset", true)
+					a.varsToDelete = append(a.varsToDelete, v)
+				}
+			}
 		}
+
+	case *expr.InstanceOf:
+		if className, ok := solver.GetClassName(a.b.r.st, n.Class); ok {
+			if v, ok := n.Expr.(*expr.Variable); ok {
+				a.b.sc.AddVar(v, meta.NewTypesMap(className), "instanceof", false)
+			} else {
+				a.b.customTypes = append(a.b.customTypes, solver.CustomType{
+					Node: n.Expr,
+					Typ:  meta.NewTypesMap(className),
+				})
+			}
+			// TODO: actually this needs to be present inside if body only
+		}
+
+	case *expr.BooleanNot:
+		// TODO: consolidate with issets handling?
+		// Probably could collect *expr.Variable instead of
+		// isset and empty nodes and handle them in a single loop.
+
+		// !empty($x) implies that isset($x) would return true.
+		empty, ok := n.Expr.(*expr.Empty)
+		if !ok {
+			break
+		}
+		v, ok := empty.Expr.(*expr.Variable)
+		if !ok {
+			break
+		}
+		if a.b.sc.HaveVar(v) {
+			break
+		}
+		vn, ok := v.VarName.(*node.Identifier)
+		if !ok {
+			break
+		}
+		a.b.addVar(v, meta.NewTypesMap("isset_$"+vn.Value), "!empty", true)
+		a.varsToDelete = append(a.varsToDelete, v)
 	}
+
+	w.Walk(a.b)
 	return false
 }
 
@@ -1352,66 +1408,15 @@ func (b *BlockWalker) handleVariable(v *expr.Variable) bool {
 func (b *BlockWalker) handleIf(s *stmt.If) bool {
 	// first condition is always executed, so run it in base context
 	if s.Cond != nil {
-		a := &andWalker{}
-
-		s.Cond.Walk(b)
+		a := &andWalker{b: b}
 		s.Cond.Walk(a)
 
-		// TODO: consolidate with issets handling?
-		// Probably could collect *expr.Variable instead of
-		// isset and empty nodes and handle them in a single loop.
-		for _, empty := range a.nonEmpty {
-			v, ok := empty.Expr.(*expr.Variable)
-			if !ok {
-				continue
+		// Remove all isset'ed variables after we're finished with this if statement.
+		defer func() {
+			for _, v := range a.varsToDelete {
+				b.sc.DelVar(v, "isset/!empty")
 			}
-			if b.sc.HaveVar(v) {
-				continue
-			}
-			vn, ok := v.VarName.(*node.Identifier)
-			if !ok {
-				continue
-			}
-			b.addVar(v, meta.NewTypesMap("isset_$"+vn.Value), "!empty", true)
-			defer b.sc.DelVar(v, "!empty")
-		}
-
-		for _, isset := range a.issets {
-			for _, v := range isset.Variables {
-				if v, ok := v.(*expr.Variable); ok {
-					if b.sc.HaveVar(v) {
-						continue
-					}
-					switch vn := v.VarName.(type) {
-					case *node.Identifier:
-						b.addVar(v, meta.NewTypesMap("isset_$"+vn.Value), "isset", true)
-						defer b.sc.DelVar(v, "isset")
-					case *expr.Variable:
-						b.handleVariable(vn)
-						name, ok := vn.VarName.(*node.Identifier)
-						if !ok {
-							continue
-						}
-						b.addVar(v, meta.NewTypesMap("isset_$$"+name.Value), "isset", true)
-						defer b.sc.DelVar(v, "isset")
-					}
-				}
-			}
-		}
-
-		for _, instanceof := range a.instanceOfs {
-			if className, ok := solver.GetClassName(b.r.st, instanceof.Class); ok {
-				if v, ok := instanceof.Expr.(*expr.Variable); ok {
-					b.sc.AddVar(v, meta.NewTypesMap(className), "instanceof", false)
-				} else {
-					b.customTypes = append(b.customTypes, solver.CustomType{
-						Node: instanceof.Expr,
-						Typ:  meta.NewTypesMap(className),
-					})
-				}
-				// TODO: actually this needs to be present inside if body only
-			}
-		}
+		}()
 	}
 
 	var contexts []*BlockWalker
