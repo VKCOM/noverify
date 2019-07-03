@@ -42,7 +42,7 @@ func gitRepoComputeReportsFromCommits(logArgs, diffArgs []string) (oldReports, r
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		oldReports = linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitFrom, reportsExcludeRegex))
+		oldReports = linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitFrom, linter.ExcludeRegex))
 		log.Printf("Parsed old commit for %s (%d reports)", time.Since(start), len(oldReports))
 
 		meta.ResetInfo()
@@ -55,7 +55,7 @@ func gitRepoComputeReportsFromCommits(logArgs, diffArgs []string) (oldReports, r
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		reports = linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitTo, reportsExcludeRegex))
+		reports = linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitTo, linter.ExcludeRegex))
 		log.Printf("Parsed new commit in %s (%d reports)", time.Since(start), len(reports))
 	} else {
 		start = time.Now()
