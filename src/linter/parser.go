@@ -146,8 +146,11 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 // This method is exposed for language server use, you usually
 // do not need to call it yourself.
 func AnalyzeFileRootLevel(rootNode node.Node, d *RootWalker) {
+	sc := meta.NewScope()
+	sc.AddVarName("argv", meta.NewTypesMap("string[]"), "predefined", true)
+	sc.AddVarName("argc", meta.NewTypesMap("int"), "predefined", true)
 	b := &BlockWalker{
-		sc:                   meta.NewScope(),
+		sc:                   sc,
 		r:                    d,
 		unusedVars:           make(map[string][]node.Node),
 		nonLocalVars:         make(map[string]struct{}),

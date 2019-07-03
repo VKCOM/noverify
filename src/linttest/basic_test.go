@@ -10,6 +10,53 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestArgvGlobal(t *testing.T) {
+	test := linttest.NewSuite(t)
+
+	test.AddFile(`<?php
+// OK - accessed from the global scope.
+$_ = $argv[0];
+$_ = $argc;
+
+function f_good() {
+  // OK - used "global" with argc and argv.
+  global $argv;
+  global $argc;
+  $_ = $argv[0];
+  $_ = $argc;
+}
+
+class Foo {
+  // Same as with functions.
+  public function method() {
+    global $argv;
+    global $argc;
+    $_ = $argv[1];
+    $_ = $argc;
+  }
+}`)
+	test.AddFile(`<?php
+function f_bad() {
+  // Not OK - need to use "global".
+  $_ = $argv[1];
+}
+
+class Foo {
+  // Same as with functions.
+  public function method() {
+    $_ = $argc;
+  }
+}
+`)
+
+	test.Expect = []string{
+		"Undefined variable: argv",
+		"Undefined variable: argc",
+	}
+
+	runFilterMatch(test, "undefined")
+}
+
 func TestAutogenSkip(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 // auto-generated file, DO NOT EDIT!
