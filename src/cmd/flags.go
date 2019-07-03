@@ -31,7 +31,6 @@ var (
 	phpExtensionsArg string
 
 	reportsExclude          string
-	reportsExcludeRegex     *regexp.Regexp
 	reportsExcludeChecks    string
 	reportsExcludeChecksSet map[string]bool
 	reportsIncludeChecksSet map[string]bool

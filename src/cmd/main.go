@@ -35,12 +35,12 @@ func isEnabled(r *linter.Report) bool {
 		return false // Disabled by -exclude-checks
 	}
 
-	if reportsExcludeRegex == nil {
+	if linter.ExcludeRegex == nil {
 		return true
 	}
 
 	// Disabled by a file comment.
-	return !reportsExcludeRegex.MatchString(r.GetFilename())
+	return !linter.ExcludeRegex.MatchString(r.GetFilename())
 }
 
 // canBeDisabled returns whether or not '@linter disable' can be used for the specified file
@@ -164,7 +164,7 @@ func mainNoExit() (int, error) {
 		filenames = strings.Split(fullAnalysisFiles, ",")
 	}
 
-	reports := linter.ParseFilenames(linter.ReadFilenames(filenames, reportsExcludeRegex))
+	reports := linter.ParseFilenames(linter.ReadFilenames(filenames, linter.ExcludeRegex))
 	criticalReports := analyzeReports(reports)
 
 	if criticalReports > 0 {
@@ -178,7 +178,7 @@ func compileRegexes() error {
 	var err error
 
 	if reportsExclude != "" {
-		reportsExcludeRegex, err = regexp.Compile(reportsExclude)
+		linter.ExcludeRegex, err = regexp.Compile(reportsExclude)
 		if err != nil {
 			return fmt.Errorf("Incorrect exclude regex: %v", err)
 		}
