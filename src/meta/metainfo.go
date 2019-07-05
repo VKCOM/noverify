@@ -263,6 +263,11 @@ type FuncParam struct {
 	Typ   *TypesMap
 }
 
+type PhpDocInfo struct {
+	Deprecated      bool
+	DeprecationNote string
+}
+
 type FuncInfo struct {
 	Pos          ElementPosition
 	Params       []FuncParam
@@ -270,6 +275,7 @@ type FuncInfo struct {
 	Typ          *TypesMap
 	AccessLevel  AccessLevel
 	ExitFlags    int // if function has exit/die/throw, then ExitFlags will be <> 0
+	Doc          PhpDocInfo
 }
 
 type OverrideType int

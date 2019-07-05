@@ -770,6 +770,16 @@ func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
 		}
 	}
 
+	if fn.Doc.Deprecated {
+		if fn.Doc.DeprecationNote != "" {
+			b.r.Report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s (%s)",
+				meta.NameNodeToString(e.Function), fn.Doc.DeprecationNote)
+		} else {
+			b.r.Report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s",
+				meta.NameNodeToString(e.Function))
+		}
+	}
+
 	e.Function.Walk(b)
 
 	b.handleCallArgs(e.Function, e.Arguments, fn)
@@ -855,6 +865,16 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 
 	if !foundMethod && !magic && !b.r.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
 		b.r.Report(e.Method, LevelError, "undefined", "Call to undefined method {%s}->%s()", exprType, methodName)
+	}
+
+	if fn.Doc.Deprecated {
+		if fn.Doc.DeprecationNote != "" {
+			b.r.Report(e.Method, LevelDoNotReject, "deprecated", "Call to deprecated method {%s}->%s() (%s)",
+				exprType, methodName, fn.Doc.DeprecationNote)
+		} else {
+			b.r.Report(e.Method, LevelDoNotReject, "deprecated", "Call to deprecated method {%s}->%s()",
+				exprType, methodName)
+		}
 	}
 
 	if foundMethod && !b.canAccess(implClass, fn.AccessLevel) {
@@ -1205,7 +1225,8 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType *m
 		sc.AddVarName("this", meta.NewTypesMap("possibly_late_bound"), "possibly late bound $this", true)
 	}
 
-	_, phpDocParamTypes, phpDocError := b.r.parsePHPDoc(fun.PhpDocComment, fun.Params)
+	phpdoc, phpDocError := b.r.parsePHPDoc(fun.PhpDocComment, fun.Params)
+	phpDocParamTypes := phpdoc.types
 
 	for _, err := range phpDocError {
 		b.r.Report(fun, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", err)

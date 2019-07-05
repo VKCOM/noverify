@@ -728,7 +728,9 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 			d.Report(meth.MethodName, LevelDoNotReject, "phpdoc", "Missing PHPDoc for %q public method", nm)
 		}
 	}
-	phpdocReturnType, phpDocParamTypes, phpDocError := d.parsePHPDoc(meth.PhpDocComment, meth.Params)
+	phpdoc, phpDocError := d.parsePHPDoc(meth.PhpDocComment, meth.Params)
+	phpdocReturnType := phpdoc.returnType
+	phpDocParamTypes := phpdoc.types
 
 	for _, err := range phpDocError {
 		d.Report(meth.MethodName, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", err)
@@ -785,6 +787,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 		MinParamsCnt: minParamsCnt,
 		AccessLevel:  modif.accessLevel,
 		ExitFlags:    exitFlags,
+		Doc:          phpdoc.info,
 	}
 
 	if nm == "getIterator" && meta.IsIndexingComplete() && solver.Implements(d.st.CurrentClass, `\IteratorAggregate`) {
@@ -928,14 +931,23 @@ func (d *RootWalker) checkPHPDocType(typ string) string {
 	return ""
 }
 
-func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (returnType *meta.TypesMap, types phpDocParamsMap, phpDocErrors []string) {
-	returnType = &meta.TypesMap{}
+type phpDocParseResult struct {
+	returnType *meta.TypesMap
+	types      phpDocParamsMap
+	info       meta.PhpDocInfo
+}
+
+func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (phpDocParseResult, []string) {
+	var result phpDocParseResult
+	var phpDocErrors []string
+
+	result.returnType = &meta.TypesMap{}
 
 	if doc == "" {
-		return returnType.Immutable(), types, nil
+		return result, nil
 	}
 
-	types = make(phpDocParamsMap, len(actualParams))
+	result.types = make(phpDocParamsMap, len(actualParams))
 
 	var curParam int
 
@@ -951,6 +963,12 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (returnTy
 		ln = strings.TrimPrefix(ln, "*")
 		ln = strings.TrimSuffix(ln, "*/")
 
+		if strings.Contains(ln, "@deprecated") {
+			parts := strings.Split(ln, "@deprecated")
+			result.info.Deprecated = true
+			result.info.DeprecationNote = strings.TrimSpace(parts[1])
+		}
+
 		if strings.Contains(ln, "@return") {
 			fields := strings.Fields(ln)
 			if len(fields) >= 2 && fields[0] == "@return" {
@@ -959,7 +977,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (returnTy
 					phpDocErrors = append(phpDocErrors, fmt.Sprintf("%s on line %d", err, idx))
 					continue
 				}
-				returnType = meta.NewTypesMap(d.maybeAddNamespace(typ))
+				result.returnType = meta.NewTypesMap(d.maybeAddNamespace(typ))
 			}
 			continue
 		}
@@ -1016,10 +1034,11 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (returnTy
 		param.optional = optional
 
 		variable = strings.TrimPrefix(variable, "$")
-		types[variable] = param
+		result.types[variable] = param
 	}
 
-	return returnType.Immutable(), types, phpDocErrors
+	result.returnType = result.returnType.Immutable()
+	return result, phpDocErrors
 }
 
 // parse type info, e.g. "string" in "someFunc() : string { ... }"
@@ -1100,7 +1119,9 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 		specifiedReturnType = typ
 	}
 
-	phpdocReturnType, phpDocParamTypes, phpDocError := d.parsePHPDoc(fun.PhpDocComment, fun.Params)
+	phpdoc, phpDocError := d.parsePHPDoc(fun.PhpDocComment, fun.Params)
+	phpdocReturnType := phpdoc.returnType
+	phpDocParamTypes := phpdoc.types
 
 	for _, err := range phpDocError {
 		d.Report(fun.FunctionName, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", err)
@@ -1123,6 +1144,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 		Typ:          meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType).Immutable(),
 		MinParamsCnt: minParamsCnt,
 		ExitFlags:    exitFlags,
+		Doc:          phpdoc.info,
 	}
 
 	return false
