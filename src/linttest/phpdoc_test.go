@@ -6,6 +6,58 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestDeprecatedMethod(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {
+  /**
+   * @deprecated use newMethod instead
+   */
+  public function legacyMethod1() {}
+
+  /**
+   * @deprecated
+   */
+  public function legacyMethod2() {}
+}
+
+(new Foo())->legacyMethod1();
+function f() {
+  (new Foo())->legacyMethod2();
+}
+`)
+	test.Expect = []string{
+		`Call to deprecated method {\Foo}->legacyMethod1() (use newMethod instead)`,
+		`Call to deprecated method {\Foo}->legacyMethod2()`,
+	}
+	test.RunAndMatch()
+}
+
+func TestDeprecatedFunction(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+/**
+ * @deprecated use new_function instead
+ */
+function legacy_function1() {}
+
+/**
+ * @deprecated
+ */
+function legacy_function2() {}
+
+legacy_function1();
+function f() {
+  legacy_function2();
+}
+`)
+	test.Expect = []string{
+		`Call to deprecated function legacy_function1 (use new_function instead)`,
+		`Call to deprecated function legacy_function2`,
+	}
+	test.RunAndMatch()
+}
+
 func TestBadPhpdocTypes(t *testing.T) {
 	// If there is an incorrect phpdoc annotation,
 	// don't use it as a type info.

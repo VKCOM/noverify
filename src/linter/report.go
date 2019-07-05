@@ -122,6 +122,12 @@ func init() {
 			Default: true,
 			Comment: `Report suspicious 'continue' usages inside switch cases.`,
 		},
+
+		{
+			Name:    "deprecated",
+			Default: false, // Experimental
+			Comment: `Report usages of deprecated symbols.`,
+		},
 	}
 
 	for _, info := range allChecks {
