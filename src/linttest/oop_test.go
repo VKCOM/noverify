@@ -6,6 +6,44 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestPhpdocProperty(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+/**
+ * @property int $int
+ * @property string $string - optional description.
+ */
+class WithProps {
+  /***/
+  public function getInt() {
+    return $this->int;
+  }
+  /***/
+  public function getString() {
+    return $this->string;
+  }
+}
+
+$_ = (new WithProps())->int;
+$_ = (new WithProps())->string;
+
+function f(WithProps $x) {
+  return $x->int + $x->int;
+}
+
+// Can't access them as static props/constants.
+$_ = WithProps::int;
+$_ = WithProps::$int;
+`)
+
+	test.Expect = []string{
+		`Class constant \WithProps::int does not exist`,
+		`Property \WithProps::$int does not exist`,
+	}
+
+	test.RunAndMatch()
+}
+
 func TestInheritDoc(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

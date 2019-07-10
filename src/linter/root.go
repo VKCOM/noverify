@@ -305,6 +305,17 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 				cl.Interfaces[interfaceName] = struct{}{}
 			}
 		}
+		phpdoc, errs := d.parsePHPDocClass(n.PhpDocComment)
+		for _, err := range errs {
+			d.Report(n.ClassName, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", err)
+		}
+		// If we ever need to distinguish @property-annotated and real properties,
+		// more work will be required here.
+		for name, p := range phpdoc.properties {
+			p.Pos = cl.Pos
+			cl.Properties[name] = p
+		}
+
 	case *stmt.Trait:
 		d.currentClassNode = n
 	case *stmt.TraitUse:
@@ -810,6 +821,70 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	return false
 }
 
+type classPhpDocParseResult struct {
+	properties meta.PropertiesMap
+}
+
+func (d *RootWalker) parsePHPDocClass(doc string) (classPhpDocParseResult, []string) {
+	var result classPhpDocParseResult
+	var phpDocErrors []string
+
+	if doc == "" {
+		return result, nil
+	}
+
+	result.properties = make(meta.PropertiesMap)
+
+	// TODO(quasilyte): reduce code duplication in various phpdoc parsing methods.
+
+	lines := strings.Split(doc, "\n")
+	for idx, ln := range lines {
+		ln = strings.TrimSpace(ln)
+		if len(ln) == 0 {
+			phpDocErrors = append(phpDocErrors, fmt.Sprintf("empty line %d", idx+1))
+			continue
+		}
+
+		ln = strings.TrimPrefix(ln, "/**")
+		ln = strings.TrimPrefix(ln, "*")
+		ln = strings.TrimSuffix(ln, "*/")
+
+		if !strings.Contains(ln, "@property") {
+			continue
+		}
+
+		// The syntax is:
+		//	@property [Type] [name] [<description>]
+		// Type and name are mandatory.
+
+		fields := strings.Fields(ln)
+		if len(fields) < 3 {
+			phpDocErrors = append(phpDocErrors, fmt.Sprintf("line %d: @property requires type and property name fields", idx+1))
+			continue
+		}
+
+		typ := fields[1]
+		name := fields[2]
+
+		if err := d.checkPHPDocType(typ); err != "" {
+			phpDocErrors = append(phpDocErrors, fmt.Sprintf("%s on line %d", err, idx+1))
+			continue
+		}
+
+		if !strings.HasPrefix(name, "$") {
+			phpDocErrors = append(phpDocErrors, fmt.Sprintf("@property field name must start with `$`"))
+			continue
+		}
+
+		result.properties[name[len("$"):]] = meta.PropertyInfo{
+			Typ:         meta.NewTypesMap(d.maybeAddNamespace(typ)),
+			AccessLevel: meta.Public,
+		}
+	}
+
+	return result, phpDocErrors
+}
+
 func (d *RootWalker) parsePHPDocVar(doc string) (m *meta.TypesMap, phpDocError string) {
 	if doc == "" {
 		return m, ""
@@ -967,6 +1042,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (phpDocPa
 			parts := strings.Split(ln, "@deprecated")
 			result.info.Deprecated = true
 			result.info.DeprecationNote = strings.TrimSpace(parts[1])
+			continue
 		}
 
 		if strings.Contains(ln, "@return") {
