@@ -486,7 +486,12 @@ func (d *RootWalker) handleComment(c comment.Comment) {
 }
 
 func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node.Node, sc *meta.Scope) (returnTypes *meta.TypesMap, prematureExitFlags int) {
-	b := &BlockWalker{sc: sc, r: d, unusedVars: make(map[string][]node.Node), nonLocalVars: make(map[string]struct{})}
+	b := &BlockWalker{
+		ctx:          &blockContext{sc: sc},
+		r:            d,
+		unusedVars:   make(map[string][]node.Node),
+		nonLocalVars: make(map[string]struct{}),
+	}
 	for _, createFn := range d.customBlock {
 		b.custom = append(b.custom, createFn(&BlockContext{w: b}))
 	}
@@ -524,13 +529,13 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 	// we can mark function as exiting abnormally if and only if
 	// it only exits with die; or throw; and does not exit
 	// using return; or any other control structure
-	cleanFlags := b.exitFlags & (FlagDie | FlagThrow)
+	cleanFlags := b.ctx.exitFlags & (FlagDie | FlagThrow)
 
-	if b.exitFlags == cleanFlags && (b.containsExitFlags&FlagReturn) == 0 {
+	if b.ctx.exitFlags == cleanFlags && (b.ctx.containsExitFlags&FlagReturn) == 0 {
 		prematureExitFlags = cleanFlags
 	}
 
-	return b.returnTypes, prematureExitFlags
+	return b.ctx.returnTypes, prematureExitFlags
 }
 
 func (d *RootWalker) getElementPos(n node.Node) meta.ElementPosition {
