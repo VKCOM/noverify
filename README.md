@@ -73,7 +73,7 @@ Cache dir is optional, but recommended. Next launch would be much faster with ca
 By default, "embedded" phpstorm-stubs are used.
 If there is some error during the NoVerify run, like "failed to load embedded stubs", try
 to provide explicit (non-empty) `-stubs-dir` argument. That argument expects a path to a cloned
-phpstorm-stubs repository. You can use either [upstream version](https://github.com/JetBrains/phpstorm-stubs) or [VKCOM fork](https://github.com/VKCOM/phpstorm-stubs) that contains
+phpstorm-stubs repository. You can use either the [upstream version](https://github.com/JetBrains/phpstorm-stubs) or [VKCOM fork](https://github.com/VKCOM/phpstorm-stubs) that contains
 several fixes that are important for static analysis.
 
 Running NoVerify with custom phpstorm-stubs can look like this:
