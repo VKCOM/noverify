@@ -111,7 +111,7 @@ func bindFlags() {
 	flag.IntVar(&linter.MaxConcurrency, "cores", runtime.NumCPU(), "max cores")
 	flag.BoolVar(&linter.LangServer, "lang-server", false, "Run language server for VS Code")
 	flag.StringVar(&linter.DefaultEncoding, "encoding", "UTF-8", "Default encoding. Only UTF-8 and windows-1251 are supported")
-	flag.StringVar(&linter.StubsDir, "stubs-dir", "/path/to/phpstorm-stubs", "phpstorm-stubs directory")
+	flag.StringVar(&linter.StubsDir, "stubs-dir", "", "phpstorm-stubs directory")
 	flag.StringVar(&linter.CacheDir, "cache-dir", "", "Directory for linter cache (greatly improves indexing speed)")
 
 	flag.StringVar(&unusedVarPattern, "unused-var-regex", `^_$`,
