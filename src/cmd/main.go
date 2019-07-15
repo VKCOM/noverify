@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"runtime/pprof"
 	"strings"
+	"sync/atomic"
 
 	"github.com/VKCOM/noverify/src/cmd/stubs"
 	"github.com/VKCOM/noverify/src/langsrv"
@@ -23,9 +24,7 @@ import (
 // Line below implies that we have `https://github.com/VKCOM/phpstorm-stubs.git` cloned
 // to the `./src/cmd/stubs/phpstorm-stubs`.
 //
-// Since there is no -include flag, we use -ignore to filter-out all non-php files.
-//
-//go:generate go-bindata -pkg stubs -nometadata -o ./stubs/phpstorm_stubs.go -ignore=.*\.(.|..|[^p][^h][^p]|.{4,})$ ./stubs/phpstorm-stubs/...
+//go:generate go-bindata -pkg stubs -nometadata -o ./stubs/phpstorm_stubs.go -ignore=\.idea -ignore=\.git ./stubs/phpstorm-stubs/...
 
 // Build* заполняются при сборке go build -ldflags
 var (
@@ -310,14 +309,14 @@ func loadEmbeddedStubs() error {
 		return fmt.Errorf("empty file list")
 	}
 
-	var errorsCount int
+	var errorsCount int64
 
 	readStubs := func(ch chan linter.FileInfo) {
 		for _, filename := range filenames {
 			data, err := stubs.Asset(filename)
 			if err != nil {
 				log.Printf("Failed to read embedded %q file: %v", filename, err)
-				errorsCount++
+				atomic.AddInt64(&errorsCount, 1)
 				continue
 			}
 			ch <- linter.FileInfo{
@@ -327,12 +326,12 @@ func loadEmbeddedStubs() error {
 		}
 	}
 
+	linter.ParseFilenames(readStubs)
+	meta.Info.InitStubs()
+
 	if errorsCount != 0 {
 		return fmt.Errorf("failed to load %d embedded files", errorsCount)
 	}
-
-	linter.ParseFilenames(readStubs)
-	meta.Info.InitStubs()
 
 	return nil
 }
