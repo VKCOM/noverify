@@ -12,6 +12,11 @@ import (
 // EnterNode must be called upon entering new node to update current state.
 func EnterNode(st *meta.ClassParseState, n walker.Walkable) {
 	switch n := n.(type) {
+	case *stmt.Function:
+		st.CurrentFunction = meta.NameNodeToString(n.FunctionName)
+	case *stmt.ClassMethod:
+		st.CurrentFunction = meta.NameNodeToString(n.MethodName)
+
 	case *stmt.Namespace:
 		// TODO: handle another namespace syntax:
 		// namespace NS { ... }
@@ -104,6 +109,9 @@ func handleUseFunction(st *meta.ClassParseState, n *stmt.Use) {
 // LeaveNode must be called upon leaving a node to update current state.
 func LeaveNode(st *meta.ClassParseState, n walker.Walkable) {
 	switch n.(type) {
+	case *stmt.ClassMethod, *stmt.Function:
+		st.CurrentFunction = ""
+
 	case *stmt.Class, *stmt.Interface, *stmt.Trait:
 		st.IsTrait = false
 		st.CurrentClass = ""

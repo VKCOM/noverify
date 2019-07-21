@@ -340,6 +340,13 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 		c.AfterEnterNode(w)
 	}
 
+	if !res {
+		// If we're not returning true from this method,
+		// LeaveNode will not be called for this node.
+		// But we still need to "leave" them if they
+		// were entered in the ClassParseState.
+		state.LeaveNode(d.st, w)
+	}
 	return res
 }
 
