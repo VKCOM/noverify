@@ -1,3 +1,4 @@
 phplinter.sh
 phplinter
 err.log
+src/cmd/stubs/phpstorm-stubs/

@@ -12,12 +12,19 @@ import (
 	"runtime"
 	"runtime/pprof"
 	"strings"
+	"sync/atomic"
 
+	"github.com/VKCOM/noverify/src/cmd/stubs"
 	"github.com/VKCOM/noverify/src/langsrv"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
 )
+
+// Line below implies that we have `https://github.com/VKCOM/phpstorm-stubs.git` cloned
+// to the `./src/cmd/stubs/phpstorm-stubs`.
+//
+//go:generate go-bindata -pkg stubs -nometadata -o ./stubs/phpstorm_stubs.go -ignore=\.idea -ignore=\.git ./stubs/phpstorm-stubs/...
 
 // Build* заполняются при сборке go build -ldflags
 var (
@@ -146,7 +153,10 @@ func mainNoExit() (int, error) {
 	}
 
 	log.Printf("Started")
-	linter.InitStubs()
+
+	if err := initStubs(); err != nil {
+		return 0, fmt.Errorf("Init stubs: %v", err)
+	}
 
 	if gitRepo != "" {
 		return gitMain()
@@ -274,6 +284,54 @@ func setDiscardVarPredicate() error {
 		linter.IsDiscardVar = func(s string) bool {
 			return re.MatchString(s)
 		}
+	}
+
+	return nil
+}
+
+func initStubs() error {
+	if linter.StubsDir != "" {
+		linter.InitStubs()
+		return nil
+	}
+
+	// Try to use embedded stubs (from stubs/phpstorm_stubs.go).
+	if err := loadEmbeddedStubs(); err != nil {
+		return fmt.Errorf("failed to load embedded stubs: %v", err)
+	}
+
+	return nil
+}
+
+func loadEmbeddedStubs() error {
+	filenames := stubs.AssetNames()
+	if len(filenames) == 0 {
+		return fmt.Errorf("empty file list")
+	}
+
+	var errorsCount int64
+
+	readStubs := func(ch chan linter.FileInfo) {
+		for _, filename := range filenames {
+			data, err := stubs.Asset(filename)
+			if err != nil {
+				log.Printf("Failed to read embedded %q file: %v", filename, err)
+				atomic.AddInt64(&errorsCount, 1)
+				continue
+			}
+			ch <- linter.FileInfo{
+				Filename: filename,
+				Contents: data,
+			}
+		}
+	}
+
+	linter.ParseFilenames(readStubs)
+	meta.Info.InitStubs()
+
+	// Using atomic here for consistency.
+	if atomic.LoadInt64(&errorsCount) != 0 {
+		return fmt.Errorf("failed to load %d embedded files", errorsCount)
 	}
 
 	return nil
