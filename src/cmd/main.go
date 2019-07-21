@@ -329,7 +329,8 @@ func loadEmbeddedStubs() error {
 	linter.ParseFilenames(readStubs)
 	meta.Info.InitStubs()
 
-	if errorsCount != 0 {
+	// Using atomic here for consistency.
+	if atomic.LoadInt64(&errorsCount) != 0 {
 		return fmt.Errorf("failed to load %d embedded files", errorsCount)
 	}
 
