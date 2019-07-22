@@ -590,7 +590,7 @@ func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodMod
 		case "final":
 			res.final = true
 		default:
-			d.Report(m, LevelWarning, "modifiers: Unrecognized method modifier: %s", v)
+			d.Report(m, LevelWarning, "modifiers", "Unrecognized method modifier: %s", v)
 		}
 	}
 
