@@ -10,6 +10,170 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestKeywordCase(t *testing.T) {
+	test := linttest.NewSuite(t)
+
+	test.AddFile(`<?php
+Namespace Foo;
+
+Include '.';
+Include_Once '.';
+Require '.';
+Require_Once '.';
+
+class TheBase {}
+
+CONST C1 = 1;
+ABSTRACT Final CLASS TheClass extendS TheBase {
+  Const C2 = 2;
+}
+
+whilE (0) { breaK; }
+
+$a = NeW TheClass();
+$b = CLONE $a;
+$b = Clone($a);
+
+FUNCTION f() {
+  GLOBAL $xx;
+  While (0) { BREAK; }
+  wHILE (0) { CONTINUE; }
+  SWITCH ($xx) {
+  Case 1: Break;
+  DEFAULT: return 0;
+  }
+
+  if (0) {
+  } ELSEIF (0) {
+  } ELSE {}
+
+  Do {
+  } While (0);
+  DO {} WHILE (0);
+
+  switch (0):
+  ENDswitch;
+
+  Goto label;
+  label:
+
+  YIELD 'yelling!';
+  yield FROM 'blah!';
+
+  FOR (;;) {}
+  FOREACH ([] AS $_) {}
+
+  for (;;):
+  EndFor;
+
+  if (0):
+  ENDIF;
+
+
+  TRY {
+  } CATCH (Exception $_) {
+  } FINALLY {
+  }
+
+  $_ = $xx InstanceOf TheClass;
+  $_ = Function () {};
+
+  Return(1);
+}
+
+TRAit TheTrait1 {
+  /***/
+  public function f() {}
+}
+trait TheTrait2 {
+  /***/
+  public function f() {}
+}
+
+Interface TheInterface {
+  public function f();
+}
+
+class UsingTrait IMPLEMENTs TheInterface {
+  Var $xdd;
+
+  USE TheTrait1, TheTrait2 {
+    TheTrait1::f Insteadof TheTrait2;
+  }
+}
+
+THrow new TheClass();
+
+function good() {
+  switch (0):
+  endswitch;
+
+  foreach ([] as /* aS */ $_) {}
+  foreach ([] as $_) {} // aS
+  foreach ([] as $_) /* aS */ {}
+
+  return(1);
+}
+`)
+
+	test.Expect = []string{
+		`Use abstract instead of ABSTRACT`,
+		`Use as instead of AS`,
+		`Use break instead of BREAK`,
+		`Use break instead of Break`,
+		`Use break instead of breaK`,
+		`Use case instead of Case`,
+		`Use catch instead of CATCH`,
+		`Use class instead of CLASS`,
+		`Use clone instead of CLONE`,
+		`Use clone instead of Clone`,
+		`Use const instead of CONST`,
+		`Use const instead of Const`,
+		`Use continue instead of CONTINUE`,
+		`Use default instead of DEFAULT`,
+		`Use do instead of DO`,
+		`Use do instead of Do`,
+		`Use else instead of ELSE`,
+		`Use elseif instead of ELSEIF`,
+		`Use endfor instead of EndFor`,
+		`Use endif instead of ENDIF`,
+		`Use endswitch instead of ENDswitch`,
+		`Use extends instead of extendS`,
+		`Use final instead of Final`,
+		`Use finally instead of FINALLY`,
+		`Use for instead of FOR`,
+		`Use foreach instead of FOREACH`,
+		`Use from instead of FROM`,
+		`Use function instead of FUNCTION`,
+		`Use function instead of Function`,
+		`Use global instead of GLOBAL`,
+		`Use goto instead of Goto`,
+		`Use implements instead of IMPLEMENTs`,
+		`Use include instead of Include`,
+		`Use include_once instead of Include_Once`,
+		`Use instanceof instead of InstanceOf`,
+		`Use insteadof instead of Insteadof`,
+		`Use interface instead of Interface`,
+		`Use namespace instead of Namespace`,
+		`Use new instead of NeW`,
+		`Use require instead of Require`,
+		`Use require_once instead of Require_Once`,
+		`Use return instead of Return`,
+		`Use throw instead of THrow`,
+		`Use trait instead of TRAit`,
+		`Use try instead of TRY`,
+		`Use use instead of USE`,
+		`Use while instead of WHILE`,
+		`Use while instead of While`,
+		`Use while instead of While`,
+		`Use while instead of wHILE`,
+		`Use while instead of whilE`,
+		`Use yield instead of YIELD`,
+	}
+
+	test.RunAndMatch()
+}
+
 func TestArgvGlobal(t *testing.T) {
 	test := linttest.NewSuite(t)
 

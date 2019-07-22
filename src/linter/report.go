@@ -4,6 +4,8 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/VKCOM/noverify/src/git"
 )
@@ -19,6 +21,12 @@ func init() {
 			Name:    "accessLevel",
 			Default: true,
 			Comment: `Report erroneous member access.`,
+		},
+
+		{
+			Name:    "keywordCase",
+			Default: true,
+			Comment: `Report keywords that are not in the lower case.`,
 		},
 
 		{
@@ -330,4 +338,49 @@ func unquote(s string) string {
 		return s[1 : len(s)-1]
 	}
 	return s
+}
+
+func tokenizeWords(s []byte, cb func(tok []byte)) {
+	// Modified bytes.FieldsFunc() function.
+	// Does not create a fields slice and handles
+	// word separator better than bytes.Field().
+	// Also tried to handle comments by skipping tokens inside them.
+
+	// Find the field start and end indices.
+	wasField := false
+	inComment := false
+	fromIndex := 0
+	var prevRune rune
+	for i := 0; i < len(s); {
+		size := 1
+		r := rune(s[i])
+		if r >= utf8.RuneSelf {
+			r, size = utf8.DecodeRune(s[i:])
+		}
+
+		switch {
+		case !inComment && prevRune == '/' && r == '/':
+			return
+		case !inComment && prevRune == '/' && r == '*':
+			inComment = true
+		case inComment && prevRune == '*' && r == '/':
+			inComment = false
+		case inComment:
+			// Skip comment contents.
+
+		case !(unicode.IsLetter(r) || r == '_'):
+			if wasField {
+				cb(s[fromIndex:i])
+				wasField = false
+			}
+		default:
+			if !wasField {
+				fromIndex = i
+				wasField = true
+			}
+		}
+
+		i += size
+		prevRune = r
+	}
 }

@@ -294,8 +294,11 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 	state.EnterNode(d.st, w)
 
 	switch n := w.(type) {
+	case *stmt.Namespace:
+		d.handleKeyword(n, "namespace")
 	case *stmt.Interface:
 		d.currentClassNode = n
+		d.handleKeyword(n, "interface")
 	case *stmt.Class:
 		d.currentClassNode = n
 		cl := d.getClass()
@@ -305,15 +308,25 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 				cl.Interfaces[interfaceName] = struct{}{}
 			}
 		}
+		d.handleKeyword(n, "class")
+		d.handleKeyword(n, "final")
+		d.handleKeyword(n, "abstract")
+		d.handleKeyword(n, "implements")
+		d.handleKeyword(n, "extends")
 	case *stmt.Trait:
 		d.currentClassNode = n
+		d.handleKeyword(n, "trait")
 	case *stmt.TraitUse:
+		d.handleKeyword(n, "use")
 		cl := d.getClass()
 		for _, tr := range n.Traits {
 			traitName, ok := solver.GetClassName(d.st, tr)
 			if ok {
 				cl.Traits[traitName] = struct{}{}
 			}
+		}
+		for _, a := range n.Adaptations {
+			d.handleKeyword(a, "insteadof")
 		}
 	case *assign.Assign:
 		v, ok := n.Variable.(*expr.Variable)
@@ -324,16 +337,27 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 		d.Scope().AddVar(v, solver.ExprTypeLocal(d.meta.Scope, d.st, n.Expression), "global variable", true)
 	case *stmt.Function:
 		res = d.enterFunction(n)
+		d.handleKeyword(n, "function")
 	case *stmt.PropertyList:
 		res = d.enterPropertyList(n)
 	case *stmt.ClassConstList:
 		res = d.enterClassConstList(n)
+		d.handleKeyword(n, "const")
 	case *stmt.ClassMethod:
 		res = d.enterClassMethod(n)
 	case *expr.FunctionCall:
 		res = d.enterFunctionCall(n)
 	case *stmt.ConstList:
 		res = d.enterConstList(n)
+
+	case *expr.Include:
+		d.handleKeyword(n, "include")
+	case *expr.IncludeOnce:
+		d.handleKeyword(n, "include_once")
+	case *expr.Require:
+		d.handleKeyword(n, "require")
+	case *expr.RequireOnce:
+		d.handleKeyword(n, "require_once")
 	}
 
 	for _, c := range d.custom {
@@ -1309,6 +1333,31 @@ func (d *RootWalker) enterConstList(lst *stmt.ConstList) bool {
 	}
 
 	return false
+}
+
+func (d *RootWalker) handleKeywordInLine(n node.Node, line []byte, kwd string) {
+	tokenizeWords(line, func(field []byte) {
+		if !bytes.EqualFold(field, []byte(kwd)) {
+			return
+		}
+
+		if !bytes.Equal(field, []byte(kwd)) {
+			d.Report(n, LevelWarning, "keywordCase", "Use %s instead of %s",
+				kwd, field)
+		}
+	})
+}
+
+func (d *RootWalker) handleKeyword(n node.Node, kwd string) {
+	pos := d.Positions[n]
+	line := d.Lines[pos.StartLine-1]
+	d.handleKeywordInLine(n, line, kwd)
+}
+
+func (d *RootWalker) handleEndingKeyword(n node.Node, kwd string) {
+	pos := d.Positions[n]
+	line := d.Lines[pos.EndLine-1]
+	d.handleKeywordInLine(n, line, kwd)
 }
 
 // GetChildrenVisitor is invoked at every node parameter that contains children nodes

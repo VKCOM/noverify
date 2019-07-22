@@ -230,7 +230,19 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		b.checkRedundantCast(s.Expr, "string")
 	case *cast.Array:
 		b.checkRedundantCast(s.Expr, "array")
+	case *stmt.Goto:
+		b.r.handleKeyword(n, "goto")
+	case *stmt.Throw:
+		b.r.handleKeyword(n, "throw")
+	case *expr.InstanceOf:
+		b.r.handleKeyword(n, "instanceof")
+	case *expr.Yield:
+		b.r.handleKeyword(n, "yield")
+	case *expr.YieldFrom:
+		b.r.handleKeyword(n, "yield")
+		b.r.handleKeyword(n, "from")
 	case *stmt.Global:
+		b.r.handleKeyword(n, "global")
 		for _, v := range s.Vars {
 			ev := v.(*expr.Variable)
 
@@ -277,16 +289,42 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		res = b.handleArrayItems(s, s.Items)
 	case *stmt.Foreach:
 		res = b.handleForeach(s)
+		b.r.handleKeyword(n, "foreach")
+		b.r.handleKeyword(n, "as")
+	case *stmt.AltForeach:
+		b.r.handleKeyword(n, "foreach")
+		b.r.handleKeyword(n, "as")
+		b.r.handleEndingKeyword(n, "endforeach")
+	case *stmt.AltFor:
+		b.r.handleKeyword(n, "for")
+		b.r.handleEndingKeyword(n, "endfor")
 	case *stmt.For:
 		res = b.handleFor(s)
+		b.r.handleKeyword(n, "for")
 	case *stmt.While:
 		res = b.handleWhile(s)
+		b.r.handleKeyword(n, "while")
+	case *expr.Clone:
+		b.r.handleKeyword(n, "clone")
 	case *stmt.Do:
 		res = b.handleDo(s)
+		b.r.handleKeyword(n, "do")
+		b.r.handleEndingKeyword(n, "while")
+	case *stmt.Else:
+		b.r.handleKeyword(n, "else")
+	case *stmt.ElseIf:
+		b.r.handleKeyword(n, "elseif")
 	case *stmt.If:
 		// TODO: handle constant if expressions
 		// TODO: maybe try to handle when variables are defined and used with the same condition
 		res = b.handleIf(s)
+		b.r.handleKeyword(n, "if")
+	case *stmt.AltIf:
+		b.r.handleKeyword(n, "if")
+		b.r.handleEndingKeyword(n, "endif")
+	case *stmt.AltSwitch:
+		b.r.handleKeyword(n, "switch")
+		b.r.handleEndingKeyword(s, "endswitch")
 	case *stmt.Switch:
 		res = b.handleSwitch(s)
 	case *expr.FunctionCall:
@@ -305,6 +343,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		res = b.handleConstFetch(s)
 	case *expr.New:
 		res = b.handleNew(s)
+		b.r.handleKeyword(n, "new")
 	case *stmt.Unset:
 		res = b.handleUnset(s)
 	case *expr.Isset:
@@ -340,14 +379,21 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 			typ, _ = b.ctx.sc.GetVarNameType("this")
 		}
 		res = b.enterClosure(s, isInstance, typ)
+		b.r.handleKeyword(n, "function")
 	case *stmt.Return:
 		solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, s.Expr, b.ctx.customTypes).Iterate(func(t string) {
 			b.ctx.returnTypes = b.ctx.returnTypes.AppendString(t)
 		})
+		b.r.handleKeyword(n, "return")
 	case *stmt.Continue:
 		b.handleContinue(s)
+		b.r.handleKeyword(n, "continue")
+	case *stmt.Break:
+		b.r.handleKeyword(n, "break")
 	case *binary.LogicalOr:
 		res = b.handleLogicalOr(s)
+	case *stmt.ConstList:
+		b.r.handleKeyword(s, "const")
 	default:
 		// b.d.debug(`  Statement: %T`, s)
 	}
@@ -539,11 +585,14 @@ func (b *BlockWalker) handleTry(s *stmt.Try) bool {
 		b.r.Report(s, LevelError, "bareTry", "At least one catch or finally block must be present")
 	}
 
+	b.r.handleKeyword(s, "try")
+
 	contexts := make([]*blockContext, 0, len(s.Catches)+1)
 
 	// Assume that no code in try{} block has executed because exceptions can be thrown from anywhere.
 	// So we handle catches and finally blocks first.
 	for _, c := range s.Catches {
+		b.r.handleKeyword(c, "catch")
 		ctx := b.withNewContext(func() {
 			b.r.addScope(c, b.ctx.sc)
 			cc := c.(*stmt.Catch)
@@ -556,6 +605,7 @@ func (b *BlockWalker) handleTry(s *stmt.Try) bool {
 	}
 
 	if s.Finally != nil {
+		b.r.handleKeyword(s.Finally, "finally")
 		b.withNewContext(func() {
 			contexts = append(contexts, b.ctx)
 			b.r.addScope(s.Finally, b.ctx.sc)
@@ -1555,8 +1605,10 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 		cond, list := b.getCaseStmts(c)
 		if cond == nil {
 			haveDefault = true
+			b.r.handleKeyword(c, "default")
 		} else {
 			cond.Walk(b)
+			b.r.handleKeyword(c, "case")
 		}
 
 		// allow empty case body without "break;"
