@@ -12,6 +12,8 @@ import (
 	"github.com/VKCOM/noverify/src/linter"
 )
 
+const allNonMaybe = "<all-non-maybe>"
+
 var (
 	outputFp io.Writer = os.Stderr
 
@@ -84,7 +86,7 @@ func bindFlags() {
 
 	flag.StringVar(&pprofHost, "pprof", "", "HTTP pprof endpoint (e.g. localhost:8080)")
 
-	flag.StringVar(&reportsCritical, "critical", "",
+	flag.StringVar(&reportsCritical, "critical", allNonMaybe,
 		"Comma-separated list of check names that are considered critical (all non-maybe checks by default)")
 
 	flag.StringVar(&gitRepo, "git", "", "Path to git repository to analyze")

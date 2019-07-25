@@ -222,7 +222,9 @@ func buildCheckMappings() {
 
 	reportsExcludeChecksSet = stringToSet(reportsExcludeChecks)
 	reportsIncludeChecksSet = stringToSet(allowChecks)
-	reportsCriticalSet = stringToSet(reportsCritical)
+	if reportsCritical != allNonMaybe {
+		reportsCriticalSet = stringToSet(reportsCritical)
+	}
 }
 
 func analyzeReports(diff []*linter.Report) (criticalReports int) {
