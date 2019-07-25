@@ -32,8 +32,10 @@ var (
 
 	reportsExclude          string
 	reportsExcludeChecks    string
+	reportsCritical         string
 	reportsExcludeChecksSet map[string]bool
 	reportsIncludeChecksSet map[string]bool
+	reportsCriticalSet      map[string]bool
 
 	allowChecks       string
 	allowDisable      string
@@ -81,6 +83,9 @@ func bindFlags() {
 	}
 
 	flag.StringVar(&pprofHost, "pprof", "", "HTTP pprof endpoint (e.g. localhost:8080)")
+
+	flag.StringVar(&reportsCritical, "critical", "",
+		"Comma-separated list of check names that are considered critical (all non-maybe checks by default)")
 
 	flag.StringVar(&gitRepo, "git", "", "Path to git repository to analyze")
 	flag.StringVar(&gitCommitFrom, "git-commit-from", "", "Analyze changes between commits <git-commit-from> and <git-commit-to>")
