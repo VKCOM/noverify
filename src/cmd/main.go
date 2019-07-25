@@ -270,7 +270,11 @@ func analyzeReports(diff []*linter.Report) (criticalReports int) {
 			fmt.Fprintf(outputFp, "%s\n", err)
 		}
 		for _, r := range filtered {
-			fmt.Fprintf(outputFp, "%s\n", r.String())
+			if isCritical(r) {
+				fmt.Fprintf(outputFp, "<critical> %s\n", r.String())
+			} else {
+				fmt.Fprintf(outputFp, "%s\n", r.String())
+			}
 		}
 	}
 
