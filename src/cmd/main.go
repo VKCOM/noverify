@@ -33,6 +33,13 @@ var (
 	BuildCommit  string
 )
 
+func isCritical(r *linter.Report) bool {
+	if len(reportsCriticalSet) != 0 {
+		return reportsCriticalSet[r.CheckName()]
+	}
+	return r.IsCritical()
+}
+
 func isEnabled(r *linter.Report) bool {
 	if !reportsIncludeChecksSet[r.CheckName()] {
 		return false // Not enabled by -allow-checks
@@ -205,13 +212,18 @@ func compileRegexes() error {
 }
 
 func buildCheckMappings() {
-	reportsExcludeChecksSet = make(map[string]bool)
-	for _, name := range strings.Split(reportsExcludeChecks, ",") {
-		reportsExcludeChecksSet[strings.TrimSpace(name)] = true
+	stringToSet := func(s string) map[string]bool {
+		set := make(map[string]bool)
+		for _, name := range strings.Split(s, ",") {
+			set[strings.TrimSpace(name)] = true
+		}
+		return set
 	}
-	reportsIncludeChecksSet = make(map[string]bool)
-	for _, name := range strings.Split(allowChecks, ",") {
-		reportsIncludeChecksSet[strings.TrimSpace(name)] = true
+
+	reportsExcludeChecksSet = stringToSet(reportsExcludeChecks)
+	reportsIncludeChecksSet = stringToSet(allowChecks)
+	if reportsCritical != allNonMaybe {
+		reportsCriticalSet = stringToSet(reportsCritical)
 	}
 }
 
@@ -234,7 +246,7 @@ func analyzeReports(diff []*linter.Report) (criticalReports int) {
 
 		filtered = append(filtered, r)
 
-		if r.IsCritical() {
+		if isCritical(r) {
 			criticalReports++
 		}
 	}
@@ -258,7 +270,11 @@ func analyzeReports(diff []*linter.Report) (criticalReports int) {
 			fmt.Fprintf(outputFp, "%s\n", err)
 		}
 		for _, r := range filtered {
-			fmt.Fprintf(outputFp, "%s\n", r.String())
+			if isCritical(r) {
+				fmt.Fprintf(outputFp, "<critical> %s\n", r.String())
+			} else {
+				fmt.Fprintf(outputFp, "%s\n", r.String())
+			}
 		}
 	}
 
