@@ -8,6 +8,16 @@ type CommentPart struct {
 	Params []string // {"something", "bla-bla-bla"} in example above
 }
 
+// ContainsParam reports whether comment part contains param of specified name.
+func (part *CommentPart) ContainsParam(name string) bool {
+	for _, p := range part.Params {
+		if p == name {
+			return true
+		}
+	}
+	return false
+}
+
 // IsPHPDoc checks if the string is a doc comment
 func IsPHPDoc(doc string) bool {
 	return strings.HasPrefix(doc, "/**")
@@ -20,7 +30,7 @@ func Parse(doc string) (res []CommentPart) {
 	}
 
 	lines := strings.Split(doc, "\n")
-	for idx, ln := range lines {
+	for i, ln := range lines {
 		ln = strings.TrimSpace(ln)
 		if len(ln) == 0 {
 			continue
@@ -41,7 +51,7 @@ func Parse(doc string) (res []CommentPart) {
 		}
 
 		res = append(res, CommentPart{
-			Line:   idx + 1,
+			Line:   i + 1,
 			Name:   strings.TrimPrefix(fields[0], "@"),
 			Params: fields[1:],
 		})

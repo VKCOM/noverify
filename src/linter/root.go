@@ -1003,67 +1003,49 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (phpDocPa
 
 	var curParam int
 
-	lines := strings.Split(doc, "\n")
-	for idx, ln := range lines {
-		ln = strings.TrimSpace(ln)
-		if len(ln) == 0 {
-			phpDocErrors = append(phpDocErrors, fmt.Sprintf("empty line %d", idx))
-			continue
-		}
-
-		ln = strings.TrimPrefix(ln, "/**")
-		ln = strings.TrimPrefix(ln, "*")
-		ln = strings.TrimSuffix(ln, "*/")
-
-		if strings.Contains(ln, "@deprecated") {
-			parts := strings.Split(ln, "@deprecated")
+	for _, part := range phpdoc.Parse(doc) {
+		if part.Name == "deprecated" {
 			result.info.Deprecated = true
-			result.info.DeprecationNote = strings.TrimSpace(parts[1])
+			// strings.Join here is unfortunate.
+			result.info.DeprecationNote = strings.Join(part.Params, " ")
 			continue
 		}
 
-		if strings.Contains(ln, "@return") {
-			fields := strings.Fields(ln)
-			if len(fields) >= 2 && fields[0] == "@return" {
-				typ := fields[1]
-				if err := d.checkPHPDocType(typ); err != "" {
-					phpDocErrors = append(phpDocErrors, fmt.Sprintf("%s on line %d", err, idx))
-					continue
-				}
-				result.returnType = meta.NewTypesMap(d.maybeAddNamespace(typ))
+		if part.Name == "return" && len(part.Params) >= 1 {
+			typ := part.Params[0]
+			if err := d.checkPHPDocType(typ); err != "" {
+				phpDocErrors = append(phpDocErrors, fmt.Sprintf("%s on line %d", err, part.Line))
+				continue
 			}
+			result.returnType = meta.NewTypesMap(d.maybeAddNamespace(typ))
 			continue
 		}
 
-		if !strings.Contains(ln, "@param") {
+		// Rest is for @param handling.
+
+		if part.Name != "param" || len(part.Params) < 1 {
 			continue
 		}
 
-		fields := strings.Fields(ln)
-
-		if len(fields) < 2 || fields[0] != "@param" {
-			continue
-		}
-
-		typ := fields[1]
-		optional := strings.Contains(ln, "[optional]")
+		typ := part.Params[0]
+		optional := part.ContainsParam("[optional]")
 		var variable string
-		if len(fields) >= 3 {
-			variable = fields[2]
+		if len(part.Params) >= 2 {
+			variable = part.Params[1]
 		} else {
 			// Either type of var name is missing.
 			if strings.HasPrefix(typ, "$") {
 				phpDocErrors = append(phpDocErrors, fmt.Sprintf("malformed @param %s tag (maybe type is missing?) on line %d",
-					fields[1], idx+1))
+					part.Params[0], part.Line))
 				continue
 			} else {
-				phpDocErrors = append(phpDocErrors, fmt.Sprintf("malformed @param tag (maybe var is missing?) on line %d", idx+1))
+				phpDocErrors = append(phpDocErrors, fmt.Sprintf("malformed @param tag (maybe var is missing?) on line %d", part.Line))
 			}
 		}
 
-		if len(fields) >= 3 && strings.HasPrefix(typ, "$") && !strings.HasPrefix(variable, "$") {
+		if len(part.Params) >= 2 && strings.HasPrefix(typ, "$") && !strings.HasPrefix(variable, "$") {
 			// Phpstorm gives the same message.
-			phpDocErrors = append(phpDocErrors, fmt.Sprintf("non-canonical order of variable and type on line %d", idx+1))
+			phpDocErrors = append(phpDocErrors, fmt.Sprintf("non-canonical order of variable and type on line %d", part.Line))
 			variable, typ = typ, variable
 		}
 
@@ -1071,7 +1053,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (phpDocPa
 			if len(actualParams) > curParam {
 				variable = actualParams[curParam].(*node.Parameter).Variable.(*expr.Variable).VarName.(*node.Identifier).Value
 			} else {
-				phpDocErrors = append(phpDocErrors, fmt.Sprintf("too many @param tags on line %d", idx+1))
+				phpDocErrors = append(phpDocErrors, fmt.Sprintf("too many @param tags on line %d", part.Line))
 				continue
 			}
 		}
@@ -1080,7 +1062,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (phpDocPa
 
 		var param phpDocParamEl
 		if err := d.checkPHPDocType(typ); err != "" {
-			phpDocErrors = append(phpDocErrors, fmt.Sprintf("%s on line %d", err, idx+1))
+			phpDocErrors = append(phpDocErrors, fmt.Sprintf("%s on line %d", err, part.Line))
 		} else {
 			param.typ = meta.NewTypesMap(d.maybeAddNamespace(typ))
 		}
