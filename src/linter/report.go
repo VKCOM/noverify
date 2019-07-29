@@ -82,9 +82,15 @@ func init() {
 		},
 
 		{
-			Name:    "phpdoc",
+			Name:    "phpdocLint",
 			Default: true,
 			Comment: `Report malformed phpdoc comments.`,
+		},
+
+		{
+			Name:    "phpdoc",
+			Default: true,
+			Comment: `Report missing phpdoc on public methods.`,
 		},
 
 		{
