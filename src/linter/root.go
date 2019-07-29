@@ -847,21 +847,8 @@ func (d *RootWalker) parsePHPDocClass(doc string) (classPhpDocParseResult, []str
 
 	result.properties = make(meta.PropertiesMap)
 
-	// TODO(quasilyte): reduce code duplication in various phpdoc parsing methods.
-
-	lines := strings.Split(doc, "\n")
-	for idx, ln := range lines {
-		ln = strings.TrimSpace(ln)
-		if len(ln) == 0 {
-			phpDocErrors = append(phpDocErrors, fmt.Sprintf("empty line %d", idx+1))
-			continue
-		}
-
-		ln = strings.TrimPrefix(ln, "/**")
-		ln = strings.TrimPrefix(ln, "*")
-		ln = strings.TrimSuffix(ln, "*/")
-
-		if !strings.Contains(ln, "@property") {
+	for _, part := range phpdoc.Parse(doc) {
+		if part.Name != "property" {
 			continue
 		}
 
@@ -869,17 +856,16 @@ func (d *RootWalker) parsePHPDocClass(doc string) (classPhpDocParseResult, []str
 		//	@property [Type] [name] [<description>]
 		// Type and name are mandatory.
 
-		fields := strings.Fields(ln)
-		if len(fields) < 3 {
-			phpDocErrors = append(phpDocErrors, fmt.Sprintf("line %d: @property requires type and property name fields", idx+1))
+		if len(part.Params) < 2 {
+			phpDocErrors = append(phpDocErrors, fmt.Sprintf("line %d: @property requires type and property name fields", part.Line))
 			continue
 		}
 
-		typ := fields[1]
-		name := fields[2]
+		typ := part.Params[0]
+		name := part.Params[1]
 
 		if err := d.checkPHPDocType(typ); err != "" {
-			phpDocErrors = append(phpDocErrors, fmt.Sprintf("%s on line %d", err, idx+1))
+			phpDocErrors = append(phpDocErrors, fmt.Sprintf("%s on line %d", err, part.Line))
 			continue
 		}
 
@@ -898,31 +884,10 @@ func (d *RootWalker) parsePHPDocClass(doc string) (classPhpDocParseResult, []str
 }
 
 func (d *RootWalker) parsePHPDocVar(doc string) (m *meta.TypesMap, phpDocError string) {
-	if doc == "" {
-		return m, ""
-	}
-
-	lines := strings.Split(doc, "\n")
-	for idx, ln := range lines {
-		ln = strings.TrimSpace(ln)
-		if len(ln) == 0 {
-			phpDocError = fmt.Sprintf("empty line %d", idx)
-			continue
+	for _, part := range phpdoc.Parse(doc) {
+		if part.Name == "var" && len(part.Params) >= 1 {
+			m = meta.NewTypesMap(d.maybeAddNamespace(part.Params[0]))
 		}
-
-		ln = strings.TrimPrefix(ln, "/**")
-		ln = strings.TrimPrefix(ln, "*")
-		ln = strings.TrimSuffix(ln, "*/")
-
-		if !strings.Contains(ln, "@var") {
-			continue
-		}
-
-		fields := strings.Fields(ln)
-		if len(fields) >= 2 && fields[0] == "@var" {
-			m = meta.NewTypesMap(d.maybeAddNamespace(fields[1]))
-		}
-		continue
 	}
 
 	return m, phpDocError

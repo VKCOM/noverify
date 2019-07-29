@@ -3,6 +3,7 @@ package phpdoc
 import "strings"
 
 type CommentPart struct {
+	Line   int      // Comment part location inside phpdoc comment
 	Name   string   // e.g. "param" for "* @param something bla-bla-bla"
 	Params []string // {"something", "bla-bla-bla"} in example above
 }
@@ -19,7 +20,7 @@ func Parse(doc string) (res []CommentPart) {
 	}
 
 	lines := strings.Split(doc, "\n")
-	for _, ln := range lines {
+	for idx, ln := range lines {
 		ln = strings.TrimSpace(ln)
 		if len(ln) == 0 {
 			continue
@@ -39,7 +40,11 @@ func Parse(doc string) (res []CommentPart) {
 			continue
 		}
 
-		res = append(res, CommentPart{Name: strings.TrimPrefix(fields[0], "@"), Params: fields[1:]})
+		res = append(res, CommentPart{
+			Line:   idx + 1,
+			Name:   strings.TrimPrefix(fields[0], "@"),
+			Params: fields[1:],
+		})
 	}
 
 	return res
