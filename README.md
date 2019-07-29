@@ -45,10 +45,9 @@ using === operator. See [example](/example) folder to see some examples of custo
 
 ## Installation
 
-In order to install NoVerify, you will need the following:
+In order to install NoVerify, you will need the Go toolchain (https://golang.org/).
 
-1. Go toolchain (https://golang.org/)
-2. PHPStorm stubs cloned somewhere (https://github.com/JetBrains/phpstorm-stubs)
+> Optionally, you could also get PHPStorm stubs (https://github.com/JetBrains/phpstorm-stubs).
 
 Once go is installed, you need to execute the following:
 
@@ -66,10 +65,22 @@ translates to `$HOME/go/bin/noverify`.
 In order to get reports for all files in repository, run the following:
 
 ```sh
-$ noverify -stubs-dir=/path/to/phpstorm-stubs -cache-dir=$HOME/tmp/cache/noverify /path/to/your/project/root
+$ noverify -cache-dir=$HOME/tmp/cache/noverify /path/to/your/project/root
 ```
 
-You need to specify path to cloned phpstorm-stubs dir (https://github.com/JetBrains/phpstorm-stubs) and directory for cache. Next launch would be much faster with cache if you specify some cache directory.
+Cache dir is optional, but recommended. Next launch would be much faster with cache if you specify some cache directory.
+
+By default, "embedded" phpstorm-stubs are used.
+If there is some error during the NoVerify run, like "failed to load embedded stubs", try
+to provide explicit (non-empty) `-stubs-dir` argument. That argument expects a path to a cloned
+phpstorm-stubs repository. You can use either the [upstream version](https://github.com/JetBrains/phpstorm-stubs) or [VKCOM fork](https://github.com/VKCOM/phpstorm-stubs) that contains
+several fixes that are important for static analysis.
+
+Running NoVerify with custom phpstorm-stubs can look like this:
+
+```sh
+$ noverify -stubs-dir=/path/to/phpstorm-stubs -cache-dir=$HOME/tmp/cache/noverify /path/to/your/project/root
+```
 
 The command will print you some progress messages and reports like that:
 
@@ -107,7 +118,6 @@ noverify\
     -git-commit-to=$ref\
     -git-ref=refs/heads/$ref\
     -git-work-tree=.\
-    -stubs-dir=/path/to/phpstorm-stubs\
     -cache-dir=$HOME/tmp/cache/noverify
 ```
 
@@ -117,7 +127,6 @@ Here is the short summary of options used here:
  - `-git-commit-from` and `-git-commit-to` specify range of commits to analyze
  - `-git-ref` is name of pushed branch
  - `-git-work-tree` is an optional parameter that you can specify if you want to be able to analyze uncommited changes too
- - `-stubs-dir` is the path to phpstorm-stubs dir (https://github.com/JetBrains/phpstorm-stubs)
  - `-cache-dir` is an optional directory for cache (greatly increases indexing speed)
 
 ### Disable some reports
@@ -141,7 +150,7 @@ $x = array($v, 2);
 By default, NoVerify would report 2 issues:
 
 ```sh
-$ noverify -stubs-dir /path/to/stubs hello.php
+$ noverify hello.php
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at /home/quasilyte/CODE/php/hello.php:3
 $x = array($v, 2);
      ^^^^^^^^^^^^
@@ -153,7 +162,7 @@ $x = array($v, 2);
 The `arraySyntax` and `undefined` are so-called "check names" which you can use to disable associated reports.
 
 ```sh
-$ noverify -exclude-checks arraySyntax,undefined -stubs-dir /path/to/stubs hello.php
+$ noverify -exclude-checks arraySyntax,undefined hello.php
 # No warnings
 ```
 
@@ -167,7 +176,7 @@ it by passing your own comma-separated list of check names instead:
 
 ```sh
 # Run only 2 checks, undefined and deadCode.
-$ noverify -allow-checks undefined,deadCode -stubs-dir /path/to/stubs hello.php
+$ noverify -allow-checks undefined,deadCode hello.php
 ```
 
 You can use it in combination with `-exclude-checks`.
@@ -178,7 +187,7 @@ Exclusion rules are applied after inclusion rules are applied.
 If you want to launch noverify in language server mode, launch it in your IDE/editor extension like the following:
 
 ```sh
-$ noverify -lang-server -cores=4 -cache-dir=/path/to/cache -stubs-dir=/path/to/phpstorm-stubs
+$ noverify -lang-server -cores=4 -cache-dir=/path/to/cache
 ```
 
 ## Visual Studio Code integration
@@ -201,7 +210,7 @@ You can install https://github.com/tomv564/LSP using Package Control. Here is an
 {
   "clients": {
     "phpls": {
-      "command": ["/path/to/noverify", "-cache-dir=/path/to/cache", "-stubs-dir=/path/to/phpstorm-stubs", "-cores=4", "-lang-server"],
+      "command": ["/path/to/noverify", "-cache-dir=/path/to/cache", "-cores=4", "-lang-server"],
       "scopes": ["source.php", "embedding.php"],
       "syntaxes": ["Packages/PHP/PHP.sublime-syntax"],
       "languageId": "php"

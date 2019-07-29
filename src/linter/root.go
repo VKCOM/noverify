@@ -351,6 +351,13 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 		c.AfterEnterNode(w)
 	}
 
+	if !res {
+		// If we're not returning true from this method,
+		// LeaveNode will not be called for this node.
+		// But we still need to "leave" them if they
+		// were entered in the ClassParseState.
+		state.LeaveNode(d.st, w)
+	}
 	return res
 }
 
@@ -497,7 +504,12 @@ func (d *RootWalker) handleComment(c comment.Comment) {
 }
 
 func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node.Node, sc *meta.Scope) (returnTypes *meta.TypesMap, prematureExitFlags int) {
-	b := &BlockWalker{sc: sc, r: d, unusedVars: make(map[string][]node.Node), nonLocalVars: make(map[string]struct{})}
+	b := &BlockWalker{
+		ctx:          &blockContext{sc: sc},
+		r:            d,
+		unusedVars:   make(map[string][]node.Node),
+		nonLocalVars: make(map[string]struct{}),
+	}
 	for _, createFn := range d.customBlock {
 		b.custom = append(b.custom, createFn(&BlockContext{w: b}))
 	}
@@ -535,13 +547,13 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 	// we can mark function as exiting abnormally if and only if
 	// it only exits with die; or throw; and does not exit
 	// using return; or any other control structure
-	cleanFlags := b.exitFlags & (FlagDie | FlagThrow)
+	cleanFlags := b.ctx.exitFlags & (FlagDie | FlagThrow)
 
-	if b.exitFlags == cleanFlags && (b.containsExitFlags&FlagReturn) == 0 {
+	if b.ctx.exitFlags == cleanFlags && (b.ctx.containsExitFlags&FlagReturn) == 0 {
 		prematureExitFlags = cleanFlags
 	}
 
-	return b.returnTypes, prematureExitFlags
+	return b.ctx.returnTypes, prematureExitFlags
 }
 
 func (d *RootWalker) getElementPos(n node.Node) meta.ElementPosition {
@@ -589,7 +601,7 @@ func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodMod
 		case "final":
 			res.final = true
 		default:
-			d.Report(m, LevelWarning, "modifiers: Unrecognized method modifier: %s", v)
+			d.Report(m, LevelWarning, "modifiers", "Unrecognized method modifier: %s", v)
 		}
 	}
 
@@ -656,7 +668,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 
 		typ, errText := d.parsePHPDocVar(p.PhpDocComment)
 		if errText != "" {
-			d.Report(p.Variable, LevelWarning, "phpdoc", errText)
+			d.Report(p.Variable, LevelWarning, "phpdocLint", errText)
 		}
 
 		if p.Expr != nil {
@@ -744,7 +756,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	phpDocParamTypes := phpdoc.types
 
 	for _, err := range phpDocError {
-		d.Report(meth.MethodName, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", err)
+		d.Report(meth.MethodName, LevelInformation, "phpdocLint", "PHPDoc is incorrect: %s", err)
 	}
 
 	class := d.getClass()
@@ -1200,7 +1212,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	phpDocParamTypes := phpdoc.types
 
 	for _, err := range phpDocError {
-		d.Report(fun.FunctionName, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", err)
+		d.Report(fun.FunctionName, LevelInformation, "phpdocLint", "PHPDoc is incorrect: %s", err)
 	}
 
 	if d.meta.Functions == nil {

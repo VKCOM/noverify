@@ -12,6 +12,8 @@ import (
 	"github.com/VKCOM/noverify/src/linter"
 )
 
+const allNonMaybe = "<all-non-maybe>"
+
 var (
 	outputFp io.Writer = os.Stderr
 
@@ -32,8 +34,10 @@ var (
 
 	reportsExclude          string
 	reportsExcludeChecks    string
+	reportsCritical         string
 	reportsExcludeChecksSet map[string]bool
 	reportsIncludeChecksSet map[string]bool
+	reportsCriticalSet      map[string]bool
 
 	allowChecks       string
 	allowDisable      string
@@ -82,6 +86,9 @@ func bindFlags() {
 
 	flag.StringVar(&pprofHost, "pprof", "", "HTTP pprof endpoint (e.g. localhost:8080)")
 
+	flag.StringVar(&reportsCritical, "critical", allNonMaybe,
+		"Comma-separated list of check names that are considered critical (all non-maybe checks by default)")
+
 	flag.StringVar(&gitRepo, "git", "", "Path to git repository to analyze")
 	flag.StringVar(&gitCommitFrom, "git-commit-from", "", "Analyze changes between commits <git-commit-from> and <git-commit-to>")
 	flag.StringVar(&gitCommitTo, "git-commit-to", "", "")
@@ -111,7 +118,7 @@ func bindFlags() {
 	flag.IntVar(&linter.MaxConcurrency, "cores", runtime.NumCPU(), "max cores")
 	flag.BoolVar(&linter.LangServer, "lang-server", false, "Run language server for VS Code")
 	flag.StringVar(&linter.DefaultEncoding, "encoding", "UTF-8", "Default encoding. Only UTF-8 and windows-1251 are supported")
-	flag.StringVar(&linter.StubsDir, "stubs-dir", "/path/to/phpstorm-stubs", "phpstorm-stubs directory")
+	flag.StringVar(&linter.StubsDir, "stubs-dir", "", "phpstorm-stubs directory")
 	flag.StringVar(&linter.CacheDir, "cache-dir", "", "Directory for linter cache (greatly improves indexing speed)")
 
 	flag.StringVar(&unusedVarPattern, "unused-var-regex", `^_$`,

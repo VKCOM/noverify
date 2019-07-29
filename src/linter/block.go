@@ -65,8 +65,9 @@ func FlagsToString(f int) string {
 
 // BlockWalker is used to process function/method contents.
 type BlockWalker struct {
-	sc *meta.Scope
-	r  *RootWalker
+	ctx *blockContext
+
+	r *RootWalker
 
 	custom []BlockChecker
 
@@ -74,39 +75,22 @@ type BlockWalker struct {
 	rootLevel            bool // analysing root-level code
 
 	// state
-	statements  map[node.Node]struct{}
-	customTypes []solver.CustomType
+	statements map[node.Node]struct{}
 
 	// shared state between all blocks
 	unusedVars   map[string][]node.Node
 	nonLocalVars map[string]struct{} // static, global and other vars that have complex control flow
-
-	// inferred return types if any
-	returnTypes *meta.TypesMap
-
-	innermostLoop loopKind
-	// insideLoop is true if any number of statements above there is enclosing loop.
-	// innermostLoop is not enough for this, since we can be inside switch while
-	// having for loop outside of that switch.
-	insideLoop bool
-
-	// block flags
-	exitFlags         int // if block always breaks code flow then there will be exitFlags
-	containsExitFlags int // if block sometimes breaks code flow then there will be containsExitFlags
-
-	// analyzer state
-	deadCodeReported bool
 }
 
 // Scope returns block-level variable scope if it exists.
 func (b *BlockWalker) Scope() *meta.Scope {
-	return b.sc
+	return b.ctx.sc
 }
 
 // PrematureExitFlags returns information about whether or not all code branches have exit/return/throw/etc.
 // You need to check what exactly you expect from a block to have (or not to have) by checking Flag* bits.
 func (b *BlockWalker) PrematureExitFlags() int {
-	return b.exitFlags
+	return b.ctx.exitFlags
 }
 
 // RootState returns state that was stored in root context (if any) for use in custom hooks.
@@ -155,27 +139,12 @@ func (b *BlockWalker) addStatement(n node.Node) {
 	b.statements[assignment] = struct{}{}
 }
 
-func (b *BlockWalker) copy() *BlockWalker {
-	bCopy := &BlockWalker{
-		sc:                   b.sc.Clone(),
-		r:                    b.r,
-		innermostLoop:        b.innermostLoop,
-		insideLoop:           b.insideLoop,
-		unusedVars:           b.unusedVars,
-		nonLocalVars:         b.nonLocalVars,
-		ignoreFunctionBodies: b.ignoreFunctionBodies,
-	}
-	for _, createFn := range b.r.customBlock {
-		bCopy.custom = append(bCopy.custom, createFn(&BlockContext{w: bCopy}))
-	}
-
-	bCopy.customTypes = append(bCopy.customTypes, b.customTypes...)
-
-	return bCopy
+func (b *BlockWalker) copyContext() *blockContext {
+	return copyBlockContext(b.ctx)
 }
 
 func (b *BlockWalker) reportDeadCode(n node.Node) {
-	if b.deadCodeReported {
+	if b.ctx.deadCodeReported {
 		return
 	}
 
@@ -195,7 +164,7 @@ func (b *BlockWalker) reportDeadCode(n node.Node) {
 		}
 	}
 
-	b.deadCodeReported = true
+	b.ctx.deadCodeReported = true
 	b.r.Report(n, LevelInformation, "deadCode", "Unreachable code")
 }
 
@@ -220,7 +189,7 @@ func (b *BlockWalker) checkRedundantCast(e node.Node, dstType string) {
 	if !meta.IsIndexingComplete() {
 		return
 	}
-	typ := solver.ExprTypeLocal(b.sc, b.r.st, e)
+	typ := solver.ExprTypeLocal(b.ctx.sc, b.r.st, e)
 	if typ.Len() != 1 {
 		return
 	}
@@ -242,7 +211,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 
 	n := w.(node.Node)
 
-	if b.exitFlags != 0 {
+	if b.ctx.exitFlags != 0 {
 		b.reportDeadCode(n)
 	}
 
@@ -280,7 +249,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		for _, vv := range s.Vars {
 			v := vv.(*stmt.StaticVar)
 			ev := v.Variable.(*expr.Variable)
-			b.addVar(ev, solver.ExprTypeLocalCustom(b.sc, b.r.st, v.Expr, b.customTypes), "static", true)
+			b.addVar(ev, solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, v.Expr, b.ctx.customTypes), "static", true)
 			b.addNonLocalVar(ev)
 			if v.Expr != nil {
 				v.Expr.Walk(b)
@@ -366,14 +335,14 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		}
 	case *expr.Closure:
 		var typ *meta.TypesMap
-		isInstance := b.sc.IsInInstanceMethod()
+		isInstance := b.ctx.sc.IsInInstanceMethod()
 		if isInstance {
-			typ, _ = b.sc.GetVarNameType("this")
+			typ, _ = b.ctx.sc.GetVarNameType("this")
 		}
 		res = b.enterClosure(s, isInstance, typ)
 	case *stmt.Return:
-		solver.ExprTypeLocalCustom(b.sc, b.r.st, s.Expr, b.customTypes).Iterate(func(t string) {
-			b.returnTypes = b.returnTypes.AppendString(t)
+		solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, s.Expr, b.ctx.customTypes).Iterate(func(t string) {
+			b.ctx.returnTypes = b.ctx.returnTypes.AppendString(t)
 		})
 	case *stmt.Continue:
 		b.handleContinue(s)
@@ -396,15 +365,15 @@ func (b *BlockWalker) handleLogicalOr(or *binary.LogicalOr) bool {
 	or.Left.Walk(b)
 
 	// We're going to discard "or" RHS effects on the exit flags.
-	exitFlags := b.exitFlags
+	exitFlags := b.ctx.exitFlags
 	or.Right.Walk(b)
-	b.exitFlags = exitFlags
+	b.ctx.exitFlags = exitFlags
 
 	return false
 }
 
 func (b *BlockWalker) handleContinue(s *stmt.Continue) {
-	if s.Expr == nil && b.innermostLoop == loopSwitch {
+	if s.Expr == nil && b.ctx.innermostLoop == loopSwitch {
 		b.r.Report(s, LevelError, "caseContinue", "'continue' inside switch is 'break'")
 	}
 }
@@ -420,7 +389,7 @@ func (b *BlockWalker) addNonLocalVar(v *expr.Variable) {
 
 // replaceVar must be used to track assignments to conrete var nodes if they are available
 func (b *BlockWalker) replaceVar(v *expr.Variable, typ *meta.TypesMap, reason string, alwaysDefined bool) {
-	b.sc.ReplaceVar(v, typ, reason, alwaysDefined)
+	b.ctx.sc.ReplaceVar(v, typ, reason, alwaysDefined)
 	name, ok := v.VarName.(*node.Identifier)
 	if !ok {
 		return
@@ -434,14 +403,14 @@ func (b *BlockWalker) replaceVar(v *expr.Variable, typ *meta.TypesMap, reason st
 
 	// Writes to variables that are done in a loop should not count as unused variables
 	// because they can be read on the next iteration (ideally we should check for that too :))
-	if !b.insideLoop {
+	if !b.ctx.insideLoop {
 		b.unusedVars[name.Value] = append(b.unusedVars[name.Value], v)
 	}
 }
 
 // addVar must be used to track assignments to conrete var nodes if they are available
 func (b *BlockWalker) addVar(v *expr.Variable, typ *meta.TypesMap, reason string, alwaysDefined bool) {
-	b.sc.AddVar(v, typ, reason, alwaysDefined)
+	b.ctx.sc.AddVar(v, typ, reason, alwaysDefined)
 	name, ok := v.VarName.(*node.Identifier)
 	if !ok {
 		return
@@ -455,7 +424,7 @@ func (b *BlockWalker) addVar(v *expr.Variable, typ *meta.TypesMap, reason string
 
 	// Writes to variables that are done in a loop should not count as unused variables
 	// because they can be read on the next iteration (ideally we should check for that too :))
-	if !b.insideLoop {
+	if !b.ctx.insideLoop {
 		b.unusedVars[name.Value] = append(b.unusedVars[name.Value], v)
 	}
 }
@@ -487,7 +456,7 @@ func (b *BlockWalker) parseComment(c comment.Comment) {
 		}
 
 		m := meta.NewTypesMap(b.r.maybeAddNamespace(typ))
-		b.sc.AddVarFromPHPDoc(strings.TrimPrefix(varName, "$"), m, "@var")
+		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(varName, "$"), m, "@var")
 	}
 }
 
@@ -498,7 +467,7 @@ func (b *BlockWalker) handleUnset(s *stmt.Unset) bool {
 			if id, ok := v.VarName.(*node.Identifier); ok {
 				delete(b.unusedVars, id.Value)
 			}
-			b.sc.DelVar(v, "unset")
+			b.ctx.sc.DelVar(v, "unset")
 		case *expr.ArrayDimFetch:
 			b.handleIssetDimFetch(v) // unset($a["something"]) does not unset $a itself, so no delVar here
 		default:
@@ -547,35 +516,55 @@ func (b *BlockWalker) handleEmpty(s *expr.Empty) bool {
 	return false
 }
 
+// withNewContext runs a given function inside a new context.
+// Upon function return, previous context is restored.
+//
+// While inside the callback (action), b.ctx is a new context.
+//
+// Returns the context that was assigned during callback execution (the new context),
+// so it can be examined at the call site.
+func (b *BlockWalker) withNewContext(action func()) *blockContext {
+	oldCtx := b.ctx
+	newCtx := copyBlockContext(b.ctx)
+
+	b.ctx = newCtx
+	action()
+	b.ctx = oldCtx
+
+	return newCtx
+}
+
 func (b *BlockWalker) handleTry(s *stmt.Try) bool {
 	if len(s.Catches) == 0 && s.Finally == nil {
 		b.r.Report(s, LevelError, "bareTry", "At least one catch or finally block must be present")
 	}
 
-	contexts := make([]*BlockWalker, 0, len(s.Catches)+1)
+	contexts := make([]*blockContext, 0, len(s.Catches)+1)
 
 	// Assume that no code in try{} block has executed because exceptions can be thrown from anywhere.
 	// So we handle catches and finally blocks first.
 	for _, c := range s.Catches {
-		bCopy := b.copy()
-		contexts = append(contexts, bCopy)
-		b.r.addScope(c, bCopy.sc)
-		cc := c.(*stmt.Catch)
-		for _, s := range cc.Stmts {
-			bCopy.addStatement(s)
-		}
-		bCopy.handleCatch(cc)
+		ctx := b.withNewContext(func() {
+			b.r.addScope(c, b.ctx.sc)
+			cc := c.(*stmt.Catch)
+			for _, s := range cc.Stmts {
+				b.addStatement(s)
+			}
+			b.handleCatch(cc)
+		})
+		contexts = append(contexts, ctx)
 	}
 
 	if s.Finally != nil {
-		bCopy := b.copy()
-		contexts = append(contexts, bCopy)
-		b.r.addScope(s.Finally, bCopy.sc)
-		cc := s.Finally.(*stmt.Finally)
-		for _, s := range cc.Stmts {
-			bCopy.addStatement(s)
-		}
-		s.Finally.Walk(bCopy)
+		b.withNewContext(func() {
+			contexts = append(contexts, b.ctx)
+			b.r.addScope(s.Finally, b.ctx.sc)
+			cc := s.Finally.(*stmt.Finally)
+			for _, s := range cc.Stmts {
+				b.addStatement(s)
+			}
+			s.Finally.Walk(b)
+		})
 	}
 
 	// whether or not all other catches and finallies exit ("return", "throw", etc)
@@ -589,26 +578,27 @@ func (b *BlockWalker) handleTry(s *stmt.Try) bool {
 			prematureExitFlags |= ctx.exitFlags
 		}
 
-		b.containsExitFlags |= ctx.containsExitFlags
+		b.ctx.containsExitFlags |= ctx.containsExitFlags
 	}
 
-	tryB := b.copy()
-	for _, s := range s.Stmts {
-		tryB.addStatement(s)
-		s.Walk(tryB)
-		b.r.addScope(s, tryB.sc)
-	}
-
-	tryB.sc.Iterate(func(varName string, typ *meta.TypesMap, alwaysDefined bool) {
-		b.sc.AddVarName(varName, typ, "try var", alwaysDefined && othersExit)
+	ctx := b.withNewContext(func() {
+		for _, s := range s.Stmts {
+			b.addStatement(s)
+			s.Walk(b)
+			b.r.addScope(s, b.ctx.sc)
+		}
 	})
 
-	if othersExit && tryB.exitFlags != 0 {
-		b.exitFlags |= prematureExitFlags
-		b.exitFlags |= tryB.exitFlags
+	ctx.sc.Iterate(func(varName string, typ *meta.TypesMap, alwaysDefined bool) {
+		b.ctx.sc.AddVarName(varName, typ, "try var", alwaysDefined && othersExit)
+	})
+
+	if othersExit && ctx.exitFlags != 0 {
+		b.ctx.exitFlags |= prematureExitFlags
+		b.ctx.exitFlags |= ctx.exitFlags
 	}
 
-	b.containsExitFlags |= tryB.containsExitFlags
+	b.ctx.containsExitFlags |= ctx.containsExitFlags
 
 	return false
 }
@@ -662,7 +652,7 @@ func (b *BlockWalker) checkArrayDimFetch(s *expr.ArrayDimFetch) {
 		return
 	}
 
-	typ := solver.ExprType(b.sc, b.r.st, s.Variable)
+	typ := solver.ExprType(b.ctx.sc, b.r.st, s.Variable)
 
 	var (
 		maybeHaveClasses bool
@@ -749,7 +739,7 @@ func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
 		default:
 			defined = false
 
-			solver.ExprTypeCustom(b.sc, b.r.st, nm, b.customTypes).Iterate(func(typ string) {
+			solver.ExprTypeCustom(b.ctx.sc, b.r.st, nm, b.ctx.customTypes).Iterate(func(typ string) {
 				if defined {
 					return
 				}
@@ -783,7 +773,7 @@ func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
 	e.Function.Walk(b)
 
 	b.handleCallArgs(e.Function, e.Arguments, fn)
-	b.exitFlags |= fn.ExitFlags
+	b.ctx.exitFlags |= fn.ExitFlags
 
 	return false
 }
@@ -849,7 +839,7 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 		implClass   string
 	)
 
-	exprType := solver.ExprTypeCustom(b.sc, b.r.st, e.Variable, b.customTypes)
+	exprType := solver.ExprTypeCustom(b.ctx.sc, b.r.st, e.Variable, b.ctx.customTypes)
 
 	exprType.Iterate(func(typ string) {
 		if foundMethod || magic {
@@ -882,7 +872,7 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 	}
 
 	b.handleCallArgs(e.Method, e.Arguments, fn)
-	b.exitFlags |= fn.ExitFlags
+	b.ctx.exitFlags |= fn.ExitFlags
 
 	return false
 }
@@ -920,13 +910,13 @@ func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
 	}
 
 	b.handleCallArgs(e.Call, e.Arguments, fn)
-	b.exitFlags |= fn.ExitFlags
+	b.ctx.exitFlags |= fn.ExitFlags
 
 	return false
 }
 
 func (b *BlockWalker) isThisInsideClosure(varNode node.Node) bool {
-	if !b.sc.IsInClosure() {
+	if !b.ctx.sc.IsInClosure() {
 		return false
 	}
 
@@ -959,7 +949,7 @@ func (b *BlockWalker) handlePropertyFetch(e *expr.PropertyFetch) bool {
 	var implClass string
 	var info meta.PropertyInfo
 
-	typ := solver.ExprTypeCustom(b.sc, b.r.st, e.Variable, b.customTypes)
+	typ := solver.ExprTypeCustom(b.ctx.sc, b.r.st, e.Variable, b.ctx.customTypes)
 	typ.Iterate(func(className string) {
 		if found || magic {
 			return
@@ -1158,27 +1148,28 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 	// expression is always executed and is executed in base context
 	if s.Expr != nil {
 		s.Expr.Walk(b)
-		solver.ExprTypeLocalCustom(b.sc, b.r.st, s.Expr, b.customTypes).Iterate(func(typ string) {
+		solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, s.Expr, b.ctx.customTypes).Iterate(func(typ string) {
 			b.handleVariableNode(s.Variable, meta.NewTypesMap(meta.WrapElemOf(typ)), "foreach_value")
 		})
 	}
 
 	// foreach body can do 0 cycles so we need a separate context for that
 	if s.Stmt != nil {
-		bCopy := b.copy()
-		bCopy.innermostLoop = loopFor
-		bCopy.insideLoop = true
+		ctx := b.withNewContext(func() {
+			b.ctx.innermostLoop = loopFor
+			b.ctx.insideLoop = true
+			if _, ok := s.Stmt.(*stmt.StmtList); !ok {
+				b.addStatement(s.Stmt)
+			}
+			s.Stmt.Walk(b)
+		})
 
-		if _, ok := s.Stmt.(*stmt.StmtList); !ok {
-			bCopy.addStatement(s.Stmt)
+		b.maybeAddAllVars(ctx.sc, "foreach body")
+		if !ctx.returnTypes.IsEmpty() {
+			b.ctx.returnTypes = b.ctx.returnTypes.Append(ctx.returnTypes)
 		}
 
-		s.Stmt.Walk(bCopy)
-		b.maybeAddAllVars(bCopy.sc, "foreach body")
-		if !bCopy.returnTypes.IsEmpty() {
-			b.returnTypes = b.returnTypes.Append(bCopy.returnTypes)
-		}
-		b.propagateFlags(bCopy)
+		b.propagateFlags(ctx)
 	}
 
 	return false
@@ -1201,15 +1192,17 @@ func (b *BlockWalker) handleFor(s *stmt.For) bool {
 
 	// for body can do 0 cycles so we need a separate context for that
 	if s.Stmt != nil {
-		bCopy := b.copy()
-		bCopy.innermostLoop = loopFor
-		bCopy.insideLoop = true
-		s.Stmt.Walk(bCopy)
-		b.maybeAddAllVars(bCopy.sc, "while body")
-		if !bCopy.returnTypes.IsEmpty() {
-			b.returnTypes = b.returnTypes.Append(bCopy.returnTypes)
+		ctx := b.withNewContext(func() {
+			b.ctx.innermostLoop = loopFor
+			b.ctx.insideLoop = true
+			s.Stmt.Walk(b)
+		})
+
+		b.maybeAddAllVars(ctx.sc, "while body")
+		if !ctx.returnTypes.IsEmpty() {
+			b.ctx.returnTypes = b.ctx.returnTypes.Append(ctx.returnTypes)
 		}
-		b.propagateFlags(bCopy)
+		b.propagateFlags(ctx)
 	}
 
 	return false
@@ -1229,7 +1222,7 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType *m
 	phpDocParamTypes := phpdoc.types
 
 	for _, err := range phpDocError {
-		b.r.Report(fun, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", err)
+		b.r.Report(fun, LevelInformation, "phpdocLint", "PHPDoc is incorrect: %s", err)
 	}
 
 	for _, useExpr := range fun.Uses {
@@ -1237,11 +1230,11 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType *m
 		v := u.Variable.(*expr.Variable)
 		varName := v.VarName.(*node.Identifier).Value
 
-		if !b.sc.HaveVar(v) && !u.ByRef {
+		if !b.ctx.sc.HaveVar(v) && !u.ByRef {
 			b.r.Report(v, LevelWarning, "undefined", "Undefined variable %s", varName)
 		}
 
-		typ, ok := b.sc.GetVarNameType(varName)
+		typ, ok := b.ctx.sc.GetVarNameType(varName)
 		if ok {
 			sc.AddVarName(varName, typ, "use", true)
 		}
@@ -1259,7 +1252,7 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType *m
 
 func (b *BlockWalker) maybeAddAllVars(sc *meta.Scope, reason string) {
 	sc.Iterate(func(varName string, typ *meta.TypesMap, alwaysDefined bool) {
-		b.sc.AddVarName(varName, typ, reason, false)
+		b.ctx.sc.AddVarName(varName, typ, reason, false)
 	})
 }
 
@@ -1270,15 +1263,16 @@ func (b *BlockWalker) handleWhile(s *stmt.While) bool {
 
 	// while body can do 0 cycles so we need a separate context for that
 	if s.Stmt != nil {
-		bCopy := b.copy()
-		bCopy.innermostLoop = loopFor
-		bCopy.insideLoop = true
-		s.Stmt.Walk(bCopy)
-		b.maybeAddAllVars(bCopy.sc, "while body")
-		if !bCopy.returnTypes.IsEmpty() {
-			b.returnTypes = b.returnTypes.Append(bCopy.returnTypes)
+		ctx := b.withNewContext(func() {
+			b.ctx.innermostLoop = loopFor
+			b.ctx.insideLoop = true
+			s.Stmt.Walk(b)
+		})
+		b.maybeAddAllVars(ctx.sc, "while body")
+		if !ctx.returnTypes.IsEmpty() {
+			b.ctx.returnTypes = b.ctx.returnTypes.Append(ctx.returnTypes)
 		}
-		b.propagateFlags(bCopy)
+		b.propagateFlags(ctx)
 	}
 
 	return false
@@ -1286,13 +1280,13 @@ func (b *BlockWalker) handleWhile(s *stmt.While) bool {
 
 func (b *BlockWalker) handleDo(s *stmt.Do) bool {
 	if s.Stmt != nil {
-		oldInnermostLoop := b.innermostLoop
-		oldInsideLoop := b.insideLoop
-		b.innermostLoop = loopFor
-		b.insideLoop = true
+		oldInnermostLoop := b.ctx.innermostLoop
+		oldInsideLoop := b.ctx.insideLoop
+		b.ctx.innermostLoop = loopFor
+		b.ctx.insideLoop = true
 		s.Stmt.Walk(b)
-		b.innermostLoop = oldInnermostLoop
-		b.insideLoop = oldInsideLoop
+		b.ctx.innermostLoop = oldInnermostLoop
+		b.ctx.insideLoop = oldInsideLoop
 	}
 
 	if s.Cond != nil {
@@ -1303,17 +1297,17 @@ func (b *BlockWalker) handleDo(s *stmt.Do) bool {
 }
 
 // propagateFlags is like propagateFlagsFromBranches, but for a simple single block case.
-func (b *BlockWalker) propagateFlags(other *BlockWalker) {
-	b.containsExitFlags |= other.containsExitFlags
+func (b *BlockWalker) propagateFlags(other *blockContext) {
+	b.ctx.containsExitFlags |= other.containsExitFlags
 }
 
 // Propagate premature exit flags from visited branches ("contexts").
-func (b *BlockWalker) propagateFlagsFromBranches(contexts []*BlockWalker, linksCount int) {
+func (b *BlockWalker) propagateFlagsFromBranches(contexts []*blockContext, linksCount int) {
 	allExit := false
 	prematureExitFlags := 0
 
 	for _, ctx := range contexts {
-		b.containsExitFlags |= ctx.containsExitFlags
+		b.ctx.containsExitFlags |= ctx.containsExitFlags
 	}
 
 	if len(contexts) > 0 && linksCount == 0 {
@@ -1329,31 +1323,87 @@ func (b *BlockWalker) propagateFlagsFromBranches(contexts []*BlockWalker, linksC
 	}
 
 	if allExit {
-		b.exitFlags |= prematureExitFlags
+		b.ctx.exitFlags |= prematureExitFlags
 	}
 }
 
-// andWalker walks through all expressions with && and does not enter deeper
+// andWalker walks if conditions and adds isset/!empty/instanceof variables
+// to the associated block walker.
+//
+// All variables defined by andWalker should be removed after
+// if body is handled, this is why we collect varsToDelete.
 type andWalker struct {
-	issets      []*expr.Isset
-	nonEmpty    []*expr.Empty
-	instanceOfs []*expr.InstanceOf
+	b *BlockWalker
+
+	varsToDelete []*expr.Variable
 }
 
 func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 	switch n := w.(type) {
 	case *binary.BooleanAnd:
 		return true
+
 	case *expr.Isset:
-		a.issets = append(a.issets, n)
-	case *expr.InstanceOf:
-		a.instanceOfs = append(a.instanceOfs, n)
-	case *expr.BooleanNot:
-		// !empty($x) implies that isset($x) would return true.
-		if empty, ok := n.Expr.(*expr.Empty); ok {
-			a.nonEmpty = append(a.nonEmpty, empty)
+		for _, v := range n.Variables {
+			if v, ok := v.(*expr.Variable); ok {
+				if a.b.ctx.sc.HaveVar(v) {
+					continue
+				}
+				switch vn := v.VarName.(type) {
+				case *node.Identifier:
+					a.b.addVar(v, meta.NewTypesMap("isset_$"+vn.Value), "isset", true)
+					a.varsToDelete = append(a.varsToDelete, v)
+				case *expr.Variable:
+					a.b.handleVariable(vn)
+					name, ok := vn.VarName.(*node.Identifier)
+					if !ok {
+						continue
+					}
+					a.b.addVar(v, meta.NewTypesMap("isset_$$"+name.Value), "isset", true)
+					a.varsToDelete = append(a.varsToDelete, v)
+				}
+			}
 		}
+
+	case *expr.InstanceOf:
+		if className, ok := solver.GetClassName(a.b.r.st, n.Class); ok {
+			if v, ok := n.Expr.(*expr.Variable); ok {
+				a.b.ctx.sc.AddVar(v, meta.NewTypesMap(className), "instanceof", false)
+			} else {
+				a.b.ctx.customTypes = append(a.b.ctx.customTypes, solver.CustomType{
+					Node: n.Expr,
+					Typ:  meta.NewTypesMap(className),
+				})
+			}
+			// TODO: actually this needs to be present inside if body only
+		}
+
+	case *expr.BooleanNot:
+		// TODO: consolidate with issets handling?
+		// Probably could collect *expr.Variable instead of
+		// isset and empty nodes and handle them in a single loop.
+
+		// !empty($x) implies that isset($x) would return true.
+		empty, ok := n.Expr.(*expr.Empty)
+		if !ok {
+			break
+		}
+		v, ok := empty.Expr.(*expr.Variable)
+		if !ok {
+			break
+		}
+		if a.b.ctx.sc.HaveVar(v) {
+			break
+		}
+		vn, ok := v.VarName.(*node.Identifier)
+		if !ok {
+			break
+		}
+		a.b.addVar(v, meta.NewTypesMap("isset_$"+vn.Value), "!empty", true)
+		a.varsToDelete = append(a.varsToDelete, v)
 	}
+
+	w.Walk(a.b)
 	return false
 }
 
@@ -1361,9 +1411,9 @@ func (a *andWalker) GetChildrenVisitor(key string) walker.Visitor { return a }
 func (a *andWalker) LeaveNode(w walker.Walkable)                  {}
 
 func (b *BlockWalker) handleVariable(v *expr.Variable) bool {
-	if !b.sc.HaveVar(v) {
-		b.r.reportUndefinedVariable(v, b.sc.MaybeHaveVar(v))
-		b.sc.AddVar(v, meta.NewTypesMap("undefined"), "undefined", true)
+	if !b.ctx.sc.HaveVar(v) {
+		b.r.reportUndefinedVariable(v, b.ctx.sc.MaybeHaveVar(v))
+		b.ctx.sc.AddVar(v, meta.NewTypesMap("undefined"), "undefined", true)
 	} else if id, ok := v.VarName.(*node.Identifier); ok {
 		delete(b.unusedVars, id.Value)
 	}
@@ -1373,88 +1423,37 @@ func (b *BlockWalker) handleVariable(v *expr.Variable) bool {
 func (b *BlockWalker) handleIf(s *stmt.If) bool {
 	// first condition is always executed, so run it in base context
 	if s.Cond != nil {
-		a := &andWalker{}
-
-		s.Cond.Walk(b)
+		a := &andWalker{b: b}
 		s.Cond.Walk(a)
 
-		// TODO: consolidate with issets handling?
-		// Probably could collect *expr.Variable instead of
-		// isset and empty nodes and handle them in a single loop.
-		for _, empty := range a.nonEmpty {
-			v, ok := empty.Expr.(*expr.Variable)
-			if !ok {
-				continue
+		// Remove all isset'ed variables after we're finished with this if statement.
+		defer func() {
+			for _, v := range a.varsToDelete {
+				b.ctx.sc.DelVar(v, "isset/!empty")
 			}
-			if b.sc.HaveVar(v) {
-				continue
-			}
-			vn, ok := v.VarName.(*node.Identifier)
-			if !ok {
-				continue
-			}
-			b.addVar(v, meta.NewTypesMap("isset_$"+vn.Value), "!empty", true)
-			defer b.sc.DelVar(v, "!empty")
-		}
-
-		for _, isset := range a.issets {
-			for _, v := range isset.Variables {
-				if v, ok := v.(*expr.Variable); ok {
-					if b.sc.HaveVar(v) {
-						continue
-					}
-					switch vn := v.VarName.(type) {
-					case *node.Identifier:
-						b.addVar(v, meta.NewTypesMap("isset_$"+vn.Value), "isset", true)
-						defer b.sc.DelVar(v, "isset")
-					case *expr.Variable:
-						b.handleVariable(vn)
-						name, ok := vn.VarName.(*node.Identifier)
-						if !ok {
-							continue
-						}
-						b.addVar(v, meta.NewTypesMap("isset_$$"+name.Value), "isset", true)
-						defer b.sc.DelVar(v, "isset")
-					}
-				}
-			}
-		}
-
-		for _, instanceof := range a.instanceOfs {
-			if className, ok := solver.GetClassName(b.r.st, instanceof.Class); ok {
-				if v, ok := instanceof.Expr.(*expr.Variable); ok {
-					b.sc.AddVar(v, meta.NewTypesMap(className), "instanceof", false)
-				} else {
-					b.customTypes = append(b.customTypes, solver.CustomType{
-						Node: instanceof.Expr,
-						Typ:  meta.NewTypesMap(className),
-					})
-				}
-				// TODO: actually this needs to be present inside if body only
-			}
-		}
+		}()
 	}
 
-	var contexts []*BlockWalker
+	var contexts []*blockContext
 
 	walk := func(n node.Node) (links int) {
-		bCopy := b.copy()
-		contexts = append(contexts, bCopy)
-
 		// handle if (...) smth(); else other_thing(); // without braces
 		if els, ok := n.(*stmt.Else); ok {
-			bCopy.addStatement(els.Stmt)
+			b.addStatement(els.Stmt)
 		} else if elsif, ok := n.(*stmt.ElseIf); ok {
-			bCopy.addStatement(elsif.Stmt)
+			b.addStatement(elsif.Stmt)
 		} else {
-			bCopy.addStatement(n)
+			b.addStatement(n)
 		}
 
-		n.Walk(bCopy)
+		ctx := b.withNewContext(func() {
+			n.Walk(b)
+			b.r.addScope(n, b.ctx.sc)
+		})
 
-		b.r.addScope(n, bCopy.sc)
+		contexts = append(contexts, ctx)
 
-		if bCopy.exitFlags != 0 {
+		if ctx.exitFlags != 0 {
 			return 0
 		}
 
@@ -1481,12 +1480,12 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 
 	b.propagateFlagsFromBranches(contexts, linksCount)
 
-	varTypes := make(map[string]*meta.TypesMap, b.sc.Len())
-	defCounts := make(map[string]int, b.sc.Len())
+	varTypes := make(map[string]*meta.TypesMap, b.ctx.sc.Len())
+	defCounts := make(map[string]int, b.ctx.sc.Len())
 
 	for _, ctx := range contexts {
 		if ctx.exitFlags != 0 {
-			b.returnTypes = b.returnTypes.Append(ctx.returnTypes)
+			b.ctx.returnTypes = b.ctx.returnTypes.Append(ctx.returnTypes)
 			continue
 		}
 
@@ -1499,7 +1498,7 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 	}
 
 	for nm, types := range varTypes {
-		b.sc.AddVarName(nm, types, "all branches", defCounts[nm] == linksCount)
+		b.ctx.sc.AddVarName(nm, types, "all branches", defCounts[nm] == linksCount)
 	}
 
 	return false
@@ -1530,7 +1529,7 @@ func (b *BlockWalker) iterateNextCases(cases []node.Node, startIdx int) {
 			if stmt != nil {
 				b.addStatement(stmt)
 				stmt.Walk(b)
-				if b.exitFlags != 0 {
+				if b.ctx.exitFlags != 0 {
 					return
 				}
 			}
@@ -1544,7 +1543,7 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 		s.Cond.Walk(b)
 	}
 
-	var contexts []*BlockWalker
+	var contexts []*blockContext
 
 	linksCount := 0
 	haveDefault := false
@@ -1566,19 +1565,19 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 			continue
 		}
 
-		bCopy := b.copy()
-		bCopy.innermostLoop = loopSwitch
-		contexts = append(contexts, bCopy)
-
-		for _, s := range list {
-			if s != nil {
-				bCopy.addStatement(s)
-				s.Walk(bCopy)
+		ctx := b.withNewContext(func() {
+			b.ctx.innermostLoop = loopSwitch
+			for _, s := range list {
+				if s != nil {
+					b.addStatement(s)
+					s.Walk(b)
+				}
 			}
-		}
+		})
+		contexts = append(contexts, ctx)
 
 		// allow to omit "break;" in the final statement
-		if idx != len(s.Cases)-1 && bCopy.exitFlags == 0 {
+		if idx != len(s.Cases)-1 && ctx.exitFlags == 0 {
 			// allow the fallthrough if appropriate comment is present
 			nextCase := s.Cases[idx+1]
 			if !b.caseHasFallthroughComment(nextCase) {
@@ -1586,11 +1585,11 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 			}
 		}
 
-		if (bCopy.exitFlags & (^breakFlags)) == 0 {
+		if (ctx.exitFlags & (^breakFlags)) == 0 {
 			linksCount++
 
-			if bCopy.exitFlags == 0 {
-				bCopy.iterateNextCases(s.Cases, idx+1)
+			if ctx.exitFlags == 0 {
+				b.iterateNextCases(s.Cases, idx+1)
 			}
 		}
 	}
@@ -1613,23 +1612,23 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 			} else {
 				prematureExitFlags |= cleanFlags
 			}
-			b.containsExitFlags |= ctx.containsExitFlags
+			b.ctx.containsExitFlags |= ctx.containsExitFlags
 		}
 	}
 
 	if allExit {
-		b.exitFlags |= prematureExitFlags
+		b.ctx.exitFlags |= prematureExitFlags
 	}
 
-	varTypes := make(map[string]*meta.TypesMap, b.sc.Len())
-	defCounts := make(map[string]int, b.sc.Len())
+	varTypes := make(map[string]*meta.TypesMap, b.ctx.sc.Len())
+	defCounts := make(map[string]int, b.ctx.sc.Len())
 
 	for _, ctx := range contexts {
 		b.propagateFlags(ctx)
 
 		cleanFlags := ctx.exitFlags & (^breakFlags)
 		if cleanFlags != 0 {
-			b.returnTypes = b.returnTypes.Append(ctx.returnTypes)
+			b.ctx.returnTypes = b.ctx.returnTypes.Append(ctx.returnTypes)
 			continue
 		}
 
@@ -1642,7 +1641,7 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 	}
 
 	for nm, types := range varTypes {
-		b.sc.AddVarName(nm, types, "all cases", defCounts[nm] == linksCount)
+		b.ctx.sc.AddVarName(nm, types, "all cases", defCounts[nm] == linksCount)
 	}
 
 	return false
@@ -1681,7 +1680,7 @@ func (b *BlockWalker) handleAssignReference(a *assign.Reference) bool {
 		a.Expression.Walk(b)
 		return false
 	case *expr.Variable:
-		b.addVar(v, solver.ExprTypeLocal(b.sc, b.r.st, a.Expression), "assign", true)
+		b.addVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.st, a.Expression), "assign", true)
 	case *expr.List:
 		for _, item := range v.Items {
 			arrayItem, ok := item.(*expr.ArrayItem)
@@ -1715,11 +1714,11 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 
 	switch v := a.Variable.(type) {
 	case *expr.ArrayDimFetch:
-		typ := solver.ExprTypeLocal(b.sc, b.r.st, a.Expression)
+		typ := solver.ExprTypeLocal(b.ctx.sc, b.r.st, a.Expression)
 		b.handleDimFetchLValue(v, "assign_array", typ)
 		return false
 	case *expr.Variable:
-		b.replaceVar(v, solver.ExprTypeLocal(b.sc, b.r.st, a.Expression), "assign", true)
+		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.st, a.Expression), "assign", true)
 	case *expr.List:
 		b.handleAssignList(v.Items)
 	case *expr.ShortList:
@@ -1754,7 +1753,7 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 		cls := b.r.getClass()
 
 		p := cls.Properties[propertyName.Value]
-		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.sc, b.r.st, a.Expression, b.customTypes))
+		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, a.Expression, b.ctx.customTypes))
 		cls.Properties[propertyName.Value] = p
 	case *expr.StaticPropertyFetch:
 		if b.r.st.CurrentClass == "" {
@@ -1779,7 +1778,7 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 		cls := b.r.getClass()
 
 		p := cls.Properties["$"+id.Value]
-		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.sc, b.r.st, a.Expression, b.customTypes))
+		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, a.Expression, b.ctx.customTypes))
 		cls.Properties["$"+id.Value] = p
 	default:
 		a.Variable.Walk(b)
@@ -1839,23 +1838,23 @@ func (b *BlockWalker) LeaveNode(w walker.Walkable) {
 		c.BeforeLeaveNode(w)
 	}
 
-	if b.exitFlags == 0 {
+	if b.ctx.exitFlags == 0 {
 		switch w.(type) {
 		case *stmt.Return:
-			b.exitFlags |= FlagReturn
-			b.containsExitFlags |= FlagReturn
+			b.ctx.exitFlags |= FlagReturn
+			b.ctx.containsExitFlags |= FlagReturn
 		case *expr.Die, *expr.Exit:
-			b.exitFlags |= FlagDie
-			b.containsExitFlags |= FlagDie
+			b.ctx.exitFlags |= FlagDie
+			b.ctx.containsExitFlags |= FlagDie
 		case *stmt.Throw:
-			b.exitFlags |= FlagThrow
-			b.containsExitFlags |= FlagThrow
+			b.ctx.exitFlags |= FlagThrow
+			b.ctx.containsExitFlags |= FlagThrow
 		case *stmt.Continue:
-			b.exitFlags |= FlagContinue
-			b.containsExitFlags |= FlagContinue
+			b.ctx.exitFlags |= FlagContinue
+			b.ctx.containsExitFlags |= FlagContinue
 		case *stmt.Break:
-			b.exitFlags |= FlagBreak
-			b.containsExitFlags |= FlagBreak
+			b.ctx.exitFlags |= FlagBreak
+			b.ctx.containsExitFlags |= FlagBreak
 		}
 	}
 

@@ -346,6 +346,7 @@ type ClassParseState struct {
 	CurrentClass            string
 	CurrentParentClass      string
 	CurrentParentInterfaces []string // interfaces allow for multiple inheritance...
+	CurrentFunction         string   // current method or function name
 }
 
 type TraitsMap map[string]ClassInfo
