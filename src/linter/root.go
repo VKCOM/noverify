@@ -657,7 +657,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 
 		typ, errText := d.parsePHPDocVar(p.PhpDocComment)
 		if errText != "" {
-			d.Report(p.Variable, LevelWarning, "phpdoc", errText)
+			d.Report(p.Variable, LevelWarning, "phpdocLint", errText)
 		}
 
 		if p.Expr != nil {
@@ -745,7 +745,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	phpDocParamTypes := phpdoc.types
 
 	for _, err := range phpDocError {
-		d.Report(meth.MethodName, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", err)
+		d.Report(meth.MethodName, LevelInformation, "phpdocLint", "PHPDoc is incorrect: %s", err)
 	}
 
 	class := d.getClass()
@@ -1136,7 +1136,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	phpDocParamTypes := phpdoc.types
 
 	for _, err := range phpDocError {
-		d.Report(fun.FunctionName, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", err)
+		d.Report(fun.FunctionName, LevelInformation, "phpdocLint", "PHPDoc is incorrect: %s", err)
 	}
 
 	if d.meta.Functions == nil {

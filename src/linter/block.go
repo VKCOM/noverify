@@ -1222,7 +1222,7 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType *m
 	phpDocParamTypes := phpdoc.types
 
 	for _, err := range phpDocError {
-		b.r.Report(fun, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", err)
+		b.r.Report(fun, LevelInformation, "phpdocLint", "PHPDoc is incorrect: %s", err)
 	}
 
 	for _, useExpr := range fun.Uses {
