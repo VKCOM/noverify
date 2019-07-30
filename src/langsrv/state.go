@@ -13,14 +13,12 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/vscode"
 	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/position"
 )
 
 type openedFile struct {
 	rootNode       node.Node
 	contents       string
 	scopes         map[node.Node]*meta.Scope
-	positions      position.Positions
 	lines          [][]byte
 	linesPositions []int
 }
@@ -88,7 +86,7 @@ func changeFileNonLocked(filename, contents string) {
 	linter.AnalyzeFileRootLevel(rootNode, newWalker)
 
 	openMapMutex.Lock()
-	f := openedFile{rootNode, contents, w.Scopes, w.Positions, w.Lines, w.LinesPositions}
+	f := openedFile{rootNode, contents, w.Scopes, w.Lines, w.LinesPositions}
 	openMap[filename] = f
 	openMapMutex.Unlock()
 
