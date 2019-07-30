@@ -21,6 +21,26 @@ import (
 // TODO(quasilyte): better handling of an `empty_array` type.
 // Now it's resolved to `array` for expressions that have multiple empty_array.
 
+func TestExprTypeAnnotatedProperty(t *testing.T) {
+	tests := []exprTypeTest{
+		{`$x->int`, `int`},
+		{`$x->getInt()`, `int`},
+	}
+
+	global := `<?php
+/**
+ * @property int $int optional description
+ */
+class Foo {
+  /***/
+  public function getInt() {
+    return $this->int;
+  }
+}`
+	local := `$x = new Foo();`
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
 func TestExprTypeMalformedPhpdoc(t *testing.T) {
 	tests := []exprTypeTest{
 		{`return_mixed(0)`, ``},

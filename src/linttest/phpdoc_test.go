@@ -141,6 +141,26 @@ func TestPHPDocSyntax(t *testing.T) {
 	test.RunAndMatch()
 }
 
+func TestPHPDocProperty(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+/**
+ * @property integer $int
+ * @property []t ts
+ * @property
+ * @property string
+ */
+class Foo {}
+`)
+	test.Expect = []string{
+		`PHPDoc is incorrect: use int type instead of integer on line 2`,
+		`PHPDoc is incorrect: []t type syntax: use [] after the type, e.g. T[] on line 3`,
+		`PHPDoc is incorrect: line 4: @property requires type and property name fields`,
+		`PHPDoc is incorrect: line 5: @property requires type and property name fields`,
+	}
+	test.RunAndMatch()
+}
+
 func TestPHPDocType(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
