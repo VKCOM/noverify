@@ -3,15 +3,18 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:2a4afef2ef0e4e4ab66b4f4f6a70bf6551ae8b727184771b5547e2b90245fe58"
   name = "github.com/cznic/golex"
   packages = ["lex"]
-  revision = "4ab7c5e190e49208c823ce8ec803aa39e6a4b31a"
+  pruneopts = "UT"
+  revision = "9c343928389cc59a56eb4494e0b781f1a9145ec0"
 
 [[projects]]
+  digest = "1:4a8c9a5d2c31dfef8dbf176745fb5868a6a3e0a894a4b2b469fd595b09899e99"
   name = "github.com/z7zmey/php-parser"
   packages = [
-    "comment",
     "errors",
+    "freefloating",
     "node",
     "node/expr",
     "node/expr/assign",
@@ -20,32 +23,34 @@
     "node/name",
     "node/scalar",
     "node/stmt",
+    "parser",
     "php7",
     "position",
     "printer",
     "scanner",
-    "token",
-    "walker"
+    "walker",
   ]
-  revision = "d67d45948ac16e5b455dd65963fc403299f38936"
-
-[[projects]]
-  name = "golang.org/x/text"
-  packages = [
-    "encoding",
-    "encoding/charmap",
-    "encoding/internal",
-    "encoding/internal/identifier",
-    "internal/gen",
-    "transform",
-    "unicode/cldr"
-  ]
-  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
-  version = "v0.3.0"
+  pruneopts = "UT"
+  revision = "d07e2343934faaac6be1e643d229b9924c13b710"
+  version = "v0.6.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f8a2104a268871151de086a98cb494387e4af939d9d58446af120e088df20606"
+  input-imports = [
+    "github.com/z7zmey/php-parser/freefloating",
+    "github.com/z7zmey/php-parser/node",
+    "github.com/z7zmey/php-parser/node/expr",
+    "github.com/z7zmey/php-parser/node/expr/assign",
+    "github.com/z7zmey/php-parser/node/expr/binary",
+    "github.com/z7zmey/php-parser/node/expr/cast",
+    "github.com/z7zmey/php-parser/node/name",
+    "github.com/z7zmey/php-parser/node/scalar",
+    "github.com/z7zmey/php-parser/node/stmt",
+    "github.com/z7zmey/php-parser/php7",
+    "github.com/z7zmey/php-parser/position",
+    "github.com/z7zmey/php-parser/printer",
+    "github.com/z7zmey/php-parser/walker",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

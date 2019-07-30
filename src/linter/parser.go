@@ -98,6 +98,7 @@ func ParseContents(filename string, contents []byte, lineRanges []git.LineRange)
 	defer waiter.Finish()
 
 	parser := php7.NewParser(io.TeeReader(rd, b), filename)
+	parser.WithFreeFloating()
 	parser.Parse()
 
 	atomic.AddInt64(&initParseTime, int64(time.Since(start)))

@@ -1,24 +1,43 @@
 package expr
 
 import (
+	"github.com/z7zmey/php-parser/freefloating"
 	"github.com/z7zmey/php-parser/node"
+	"github.com/z7zmey/php-parser/position"
 	"github.com/z7zmey/php-parser/walker"
 )
 
 // StaticCall node
 type StaticCall struct {
-	Class     node.Node
-	Call      node.Node
-	Arguments []node.Node
+	FreeFloating freefloating.Collection
+	Position     *position.Position
+	Class        node.Node
+	Call         node.Node
+	ArgumentList *node.ArgumentList
 }
 
 // NewStaticCall node constructor
-func NewStaticCall(Class node.Node, Call node.Node, Arguments []node.Node) *StaticCall {
+func NewStaticCall(Class node.Node, Call node.Node, ArgumentList *node.ArgumentList) *StaticCall {
 	return &StaticCall{
-		Class,
-		Call,
-		Arguments,
+		FreeFloating: nil,
+		Class:        Class,
+		Call:         Call,
+		ArgumentList: ArgumentList,
 	}
+}
+
+// SetPosition sets node position
+func (n *StaticCall) SetPosition(p *position.Position) {
+	n.Position = p
+}
+
+// GetPosition returns node positions
+func (n *StaticCall) GetPosition() *position.Position {
+	return n.Position
+}
+
+func (n *StaticCall) GetFreeFloating() *freefloating.Collection {
+	return &n.FreeFloating
 }
 
 // Attributes returns node attributes as map
@@ -34,22 +53,21 @@ func (n *StaticCall) Walk(v walker.Visitor) {
 	}
 
 	if n.Class != nil {
-		vv := v.GetChildrenVisitor("Class")
-		n.Class.Walk(vv)
+		v.EnterChildNode("Class", n)
+		n.Class.Walk(v)
+		v.LeaveChildNode("Class", n)
 	}
 
 	if n.Call != nil {
-		vv := v.GetChildrenVisitor("Call")
-		n.Call.Walk(vv)
+		v.EnterChildNode("Call", n)
+		n.Call.Walk(v)
+		v.LeaveChildNode("Call", n)
 	}
 
-	if n.Arguments != nil {
-		vv := v.GetChildrenVisitor("Arguments")
-		for _, nn := range n.Arguments {
-			if nn != nil {
-				nn.Walk(vv)
-			}
-		}
+	if n.ArgumentList != nil {
+		v.EnterChildNode("ArgumentList", n)
+		n.ArgumentList.Walk(v)
+		v.LeaveChildNode("ArgumentList", n)
 	}
 
 	v.LeaveNode(n)
