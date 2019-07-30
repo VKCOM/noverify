@@ -8,7 +8,7 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/solver"
-	"github.com/z7zmey/php-parser/comment"
+	"github.com/z7zmey/php-parser/freefloating"
 	"github.com/z7zmey/php-parser/node"
 	"github.com/z7zmey/php-parser/node/expr"
 	"github.com/z7zmey/php-parser/node/expr/assign"
@@ -82,6 +82,11 @@ type BlockWalker struct {
 	nonLocalVars map[string]struct{} // static, global and other vars that have complex control flow
 }
 
+func (b *BlockWalker) EnterChildNode(key string, w walker.Walkable) {}
+func (b *BlockWalker) LeaveChildNode(key string, w walker.Walkable) {}
+func (b *BlockWalker) EnterChildList(key string, w walker.Walkable) {}
+func (b *BlockWalker) LeaveChildList(key string, w walker.Walkable) {}
+
 // Scope returns block-level variable scope if it exists.
 func (b *BlockWalker) Scope() *meta.Scope {
 	return b.ctx.sc
@@ -149,7 +154,7 @@ func (b *BlockWalker) reportDeadCode(n node.Node) {
 	}
 
 	switch n.(type) {
-	case *stmt.Break, *stmt.Return, *expr.Die, *expr.Exit, *stmt.Throw:
+	case *stmt.Break, *stmt.Return, *expr.Exit, *stmt.Throw:
 		// Allow to break code flow more than once.
 		// This is useful in situation like this:
 		//
@@ -215,8 +220,12 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		b.reportDeadCode(n)
 	}
 
-	for _, c := range b.r.comments[n] {
-		b.parseComment(c)
+	if ffs := n.GetFreeFloating(); ffs != nil {
+		for _, cs := range *ffs {
+			for _, c := range cs {
+				b.parseComment(c)
+			}
+		}
 	}
 
 	switch s := w.(type) {
@@ -256,6 +265,10 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 			}
 		}
 		res = false
+	case *node.Root:
+		for _, st := range s.Stmts {
+			b.addStatement(st)
+		}
 	case *stmt.StmtList:
 		for _, st := range s.Stmts {
 			b.addStatement(st)
@@ -429,8 +442,11 @@ func (b *BlockWalker) addVar(v *expr.Variable, typ *meta.TypesMap, reason string
 	}
 }
 
-func (b *BlockWalker) parseComment(c comment.Comment) {
-	str := c.String()
+func (b *BlockWalker) parseComment(c freefloating.String) {
+	if c.StringType != freefloating.CommentType {
+		return
+	}
+	str := c.Value
 
 	if !phpdoc.IsPHPDoc(str) {
 		return
@@ -772,7 +788,7 @@ func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
 
 	e.Function.Walk(b)
 
-	b.handleCallArgs(e.Function, e.Arguments, fn)
+	b.handleCallArgs(e.Function, e.ArgumentList.Arguments, fn)
 	b.ctx.exitFlags |= fn.ExitFlags
 
 	return false
@@ -871,7 +887,7 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 		b.r.Report(e.Method, LevelError, "accessLevel", "Cannot access %s method %s->%s()", fn.AccessLevel, implClass, methodName)
 	}
 
-	b.handleCallArgs(e.Method, e.Arguments, fn)
+	b.handleCallArgs(e.Method, e.ArgumentList.Arguments, fn)
 	b.ctx.exitFlags |= fn.ExitFlags
 
 	return false
@@ -909,7 +925,7 @@ func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
 		b.r.Report(e.Call, LevelError, "accessLevel", "Cannot access %s method %s::%s()", fn.AccessLevel, implClass, methodName)
 	}
 
-	b.handleCallArgs(e.Call, e.Arguments, fn)
+	b.handleCallArgs(e.Call, e.ArgumentList.Arguments, fn)
 	b.ctx.exitFlags |= fn.ExitFlags
 
 	return false
@@ -1017,6 +1033,10 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []node.Node) bool {
 		item, ok := itemNode.(*expr.ArrayItem)
 		if !ok {
 			// TODO: it is possible at all here?
+			continue
+		}
+
+		if item.Val == nil {
 			continue
 		}
 
@@ -1225,12 +1245,24 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType *m
 		b.r.Report(fun, LevelInformation, "phpdocLint", "PHPDoc is incorrect: %s", err)
 	}
 
-	for _, useExpr := range fun.Uses {
-		u := useExpr.(*expr.ClosureUse)
-		v := u.Variable.(*expr.Variable)
+	var closureUses []node.Node
+	if fun.ClosureUse != nil {
+		closureUses = fun.ClosureUse.Uses
+	}
+	for _, useExpr := range closureUses {
+		var byRef bool
+		var v *expr.Variable
+		switch u := useExpr.(type) {
+		case *expr.Reference:
+			v = u.Variable.(*expr.Variable)
+			byRef = true
+		case *expr.Variable:
+			v = u
+		}
+
 		varName := v.VarName.(*node.Identifier).Value
 
-		if !b.ctx.sc.HaveVar(v) && !u.ByRef {
+		if !b.ctx.sc.HaveVar(v) && !byRef {
 			b.r.Report(v, LevelWarning, "undefined", "Undefined variable %s", varName)
 		}
 
@@ -1244,7 +1276,7 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType *m
 
 	params, _ := b.r.parseFuncArgs(fun.Params, phpDocParamTypes, sc)
 
-	b.r.handleFuncStmts(params, fun.Uses, fun.Stmts, sc)
+	b.r.handleFuncStmts(params, closureUses, fun.Stmts, sc)
 	b.r.addScope(fun, sc)
 
 	return false
@@ -1409,6 +1441,10 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 
 func (a *andWalker) GetChildrenVisitor(key string) walker.Visitor { return a }
 func (a *andWalker) LeaveNode(w walker.Walkable)                  {}
+func (a *andWalker) EnterChildNode(key string, w walker.Walkable) {}
+func (a *andWalker) LeaveChildNode(key string, w walker.Walkable) {}
+func (a *andWalker) EnterChildList(key string, w walker.Walkable) {}
+func (a *andWalker) LeaveChildList(key string, w walker.Walkable) {}
 
 func (b *BlockWalker) handleVariable(v *expr.Variable) bool {
 	if !b.ctx.sc.HaveVar(v) {
@@ -1549,7 +1585,7 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 	haveDefault := false
 	breakFlags := FlagBreak | FlagContinue
 
-	for idx, c := range s.Cases {
+	for idx, c := range s.CaseList.Cases {
 		var list []node.Node
 
 		cond, list := b.getCaseStmts(c)
@@ -1577,9 +1613,9 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 		contexts = append(contexts, ctx)
 
 		// allow to omit "break;" in the final statement
-		if idx != len(s.Cases)-1 && ctx.exitFlags == 0 {
+		if idx != len(s.CaseList.Cases)-1 && ctx.exitFlags == 0 {
 			// allow the fallthrough if appropriate comment is present
-			nextCase := s.Cases[idx+1]
+			nextCase := s.CaseList.Cases[idx+1]
 			if !b.caseHasFallthroughComment(nextCase) {
 				b.r.Report(c, LevelInformation, "caseBreak", "Add break or '// fallthrough' to the end of the case")
 			}
@@ -1589,7 +1625,7 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 			linksCount++
 
 			if ctx.exitFlags == 0 {
-				b.iterateNextCases(s.Cases, idx+1)
+				b.iterateNextCases(s.CaseList.Cases, idx+1)
 			}
 		}
 	}
@@ -1843,7 +1879,7 @@ func (b *BlockWalker) LeaveNode(w walker.Walkable) {
 		case *stmt.Return:
 			b.ctx.exitFlags |= FlagReturn
 			b.ctx.containsExitFlags |= FlagReturn
-		case *expr.Die, *expr.Exit:
+		case *expr.Exit:
 			b.ctx.exitFlags |= FlagDie
 			b.ctx.containsExitFlags |= FlagDie
 		case *stmt.Throw:
@@ -1876,10 +1912,17 @@ var fallthroughMarkerRegex = func() *regexp.Regexp {
 }()
 
 func (b *BlockWalker) caseHasFallthroughComment(n node.Node) bool {
-	for _, comment := range b.r.comments[n] {
-		str := comment.String()
-		if fallthroughMarkerRegex.MatchString(str) {
-			return true
+	ffs := n.GetFreeFloating()
+	if ffs == nil {
+		return false
+	}
+	for _, cs := range *ffs {
+		for _, c := range cs {
+			if c.StringType == freefloating.CommentType {
+				if fallthroughMarkerRegex.MatchString(c.Value) {
+					return true
+				}
+			}
 		}
 	}
 	return false

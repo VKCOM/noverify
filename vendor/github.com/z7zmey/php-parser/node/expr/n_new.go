@@ -1,22 +1,41 @@
 package expr
 
 import (
+	"github.com/z7zmey/php-parser/freefloating"
 	"github.com/z7zmey/php-parser/node"
+	"github.com/z7zmey/php-parser/position"
 	"github.com/z7zmey/php-parser/walker"
 )
 
 // New node
 type New struct {
-	Class     node.Node
-	Arguments []node.Node
+	FreeFloating freefloating.Collection
+	Position     *position.Position
+	Class        node.Node
+	ArgumentList *node.ArgumentList
 }
 
 // NewNew node constructor
-func NewNew(Class node.Node, Arguments []node.Node) *New {
+func NewNew(Class node.Node, ArgumentList *node.ArgumentList) *New {
 	return &New{
-		Class,
-		Arguments,
+		FreeFloating: nil,
+		Class:        Class,
+		ArgumentList: ArgumentList,
 	}
+}
+
+// SetPosition sets node position
+func (n *New) SetPosition(p *position.Position) {
+	n.Position = p
+}
+
+// GetPosition returns node positions
+func (n *New) GetPosition() *position.Position {
+	return n.Position
+}
+
+func (n *New) GetFreeFloating() *freefloating.Collection {
+	return &n.FreeFloating
 }
 
 // Attributes returns node attributes as map
@@ -32,17 +51,15 @@ func (n *New) Walk(v walker.Visitor) {
 	}
 
 	if n.Class != nil {
-		vv := v.GetChildrenVisitor("Class")
-		n.Class.Walk(vv)
+		v.EnterChildNode("Class", n)
+		n.Class.Walk(v)
+		v.LeaveChildNode("Class", n)
 	}
 
-	if n.Arguments != nil {
-		vv := v.GetChildrenVisitor("Arguments")
-		for _, nn := range n.Arguments {
-			if nn != nil {
-				nn.Walk(vv)
-			}
-		}
+	if n.ArgumentList != nil {
+		v.EnterChildNode("ArgumentList", n)
+		n.ArgumentList.Walk(v)
+		v.LeaveChildNode("ArgumentList", n)
 	}
 
 	v.LeaveNode(n)
