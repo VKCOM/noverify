@@ -5,15 +5,15 @@ import (
 	"github.com/VKCOM/noverify/src/state"
 	"github.com/z7zmey/php-parser/node"
 	"github.com/z7zmey/php-parser/node/expr"
-	"github.com/z7zmey/php-parser/position"
 	"github.com/z7zmey/php-parser/walker"
 )
 
 type hoverWalker struct {
-	position  int
-	positions position.Positions
-	n         node.Node
-	st        meta.ClassParseState
+	dummyWalker
+
+	position int
+	n        node.Node
+	st       meta.ClassParseState
 }
 
 // EnterNode is invoked at every node in hierarchy
@@ -44,7 +44,7 @@ func (d *hoverWalker) LeaveNode(w walker.Walkable) {
 	state.LeaveNode(&d.st, w)
 
 	if checkPos {
-		pos := d.positions[n]
+		pos := n.GetPosition()
 
 		if d.position > pos.EndPos || d.position < pos.StartPos {
 			return
