@@ -1,31 +1,46 @@
 package expr
 
 import (
+	"github.com/z7zmey/php-parser/freefloating"
 	"github.com/z7zmey/php-parser/node"
+	"github.com/z7zmey/php-parser/position"
 	"github.com/z7zmey/php-parser/walker"
 )
 
 // ArrayItem node
 type ArrayItem struct {
-	ByRef bool
-	Key   node.Node
-	Val   node.Node
+	FreeFloating freefloating.Collection
+	Position     *position.Position
+	Key          node.Node
+	Val          node.Node
 }
 
 // NewArrayItem node constructor
-func NewArrayItem(Key node.Node, Val node.Node, ByRef bool) *ArrayItem {
+func NewArrayItem(Key node.Node, Val node.Node) *ArrayItem {
 	return &ArrayItem{
-		ByRef,
-		Key,
-		Val,
+		FreeFloating: nil,
+		Key:          Key,
+		Val:          Val,
 	}
+}
+
+// SetPosition sets node position
+func (n *ArrayItem) SetPosition(p *position.Position) {
+	n.Position = p
+}
+
+// GetPosition returns node positions
+func (n *ArrayItem) GetPosition() *position.Position {
+	return n.Position
+}
+
+func (n *ArrayItem) GetFreeFloating() *freefloating.Collection {
+	return &n.FreeFloating
 }
 
 // Attributes returns node attributes as map
 func (n *ArrayItem) Attributes() map[string]interface{} {
-	return map[string]interface{}{
-		"ByRef": n.ByRef,
-	}
+	return nil
 }
 
 // Walk traverses nodes
@@ -36,13 +51,15 @@ func (n *ArrayItem) Walk(v walker.Visitor) {
 	}
 
 	if n.Key != nil {
-		vv := v.GetChildrenVisitor("Key")
-		n.Key.Walk(vv)
+		v.EnterChildNode("Key", n)
+		n.Key.Walk(v)
+		v.LeaveChildNode("Key", n)
 	}
 
 	if n.Val != nil {
-		vv := v.GetChildrenVisitor("Val")
-		n.Val.Walk(vv)
+		v.EnterChildNode("Val", n)
+		n.Val.Walk(v)
+		v.LeaveChildNode("Val", n)
 	}
 
 	v.LeaveNode(n)

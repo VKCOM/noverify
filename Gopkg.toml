@@ -27,7 +27,7 @@
 
 [[constraint]]
   name = "github.com/z7zmey/php-parser"
-  revision = "d67d45948ac16e5b455dd65963fc403299f38936"
+  version = "0.6.0"
 
 [[constraint]]
   name = "golang.org/x/text"

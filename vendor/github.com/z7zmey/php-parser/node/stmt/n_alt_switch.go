@@ -1,22 +1,41 @@
 package stmt
 
 import (
+	"github.com/z7zmey/php-parser/freefloating"
 	"github.com/z7zmey/php-parser/node"
+	"github.com/z7zmey/php-parser/position"
 	"github.com/z7zmey/php-parser/walker"
 )
 
 // AltSwitch node
 type AltSwitch struct {
-	Cond  node.Node
-	Cases []node.Node
+	FreeFloating freefloating.Collection
+	Position     *position.Position
+	Cond         node.Node
+	CaseList     *CaseList
 }
 
 // NewAltSwitch node constructor
-func NewAltSwitch(Cond node.Node, Cases []node.Node) *AltSwitch {
+func NewAltSwitch(Cond node.Node, CaseList *CaseList) *AltSwitch {
 	return &AltSwitch{
-		Cond,
-		Cases,
+		FreeFloating: nil,
+		Cond:         Cond,
+		CaseList:     CaseList,
 	}
+}
+
+// SetPosition sets node position
+func (n *AltSwitch) SetPosition(p *position.Position) {
+	n.Position = p
+}
+
+// GetPosition returns node positions
+func (n *AltSwitch) GetPosition() *position.Position {
+	return n.Position
+}
+
+func (n *AltSwitch) GetFreeFloating() *freefloating.Collection {
+	return &n.FreeFloating
 }
 
 // Attributes returns node attributes as map
@@ -32,17 +51,15 @@ func (n *AltSwitch) Walk(v walker.Visitor) {
 	}
 
 	if n.Cond != nil {
-		vv := v.GetChildrenVisitor("Cond")
-		n.Cond.Walk(vv)
+		v.EnterChildNode("Cond", n)
+		n.Cond.Walk(v)
+		v.LeaveChildNode("Cond", n)
 	}
 
-	if n.Cases != nil {
-		vv := v.GetChildrenVisitor("Cases")
-		for _, nn := range n.Cases {
-			if nn != nil {
-				nn.Walk(vv)
-			}
-		}
+	if n.CaseList != nil {
+		v.EnterChildNode("CaseList", n)
+		n.CaseList.Walk(v)
+		v.LeaveChildNode("CaseList", n)
 	}
 
 	v.LeaveNode(n)
