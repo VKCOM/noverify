@@ -1028,8 +1028,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (phpDocPa
 	for _, part := range phpdoc.Parse(doc) {
 		if part.Name == "deprecated" {
 			result.info.Deprecated = true
-			// strings.Join here is unfortunate.
-			result.info.DeprecationNote = strings.Join(part.Params, " ")
+			result.info.DeprecationNote = part.ParamsText
 			continue
 		}
 
