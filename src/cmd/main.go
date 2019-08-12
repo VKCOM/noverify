@@ -169,14 +169,14 @@ func mainNoExit() (int, error) {
 		return gitMain()
 	}
 
-	linter.AnalysisFiles = flag.Args()
+	linter.AnalysisFiles = filesToAnalyze()
 
-	log.Printf("Indexing %+v", flag.Args())
-	linter.ParseFilenames(linter.ReadFilenames(flag.Args(), nil))
+	log.Printf("Indexing %+v", filesToAnalyze())
+	linter.ParseFilenames(linter.ReadFilenames(filesToAnalyze(), nil))
 	meta.SetIndexingComplete(true)
 	log.Printf("Linting")
 
-	filenames := flag.Args()
+	filenames := filesToAnalyze()
 	if fullAnalysisFiles != "" {
 		filenames = strings.Split(fullAnalysisFiles, ",")
 	}

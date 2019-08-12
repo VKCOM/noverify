@@ -37,6 +37,7 @@ func gitRepoComputeReportsFromCommits(logArgs, diffArgs []string) (oldReports, r
 
 		start = time.Now()
 		linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitFrom, nil))
+		linter.ParseFilenames(linter.ReadFilenames(filesToAnalyze(), nil))
 		log.Printf("Indexed old commit in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
@@ -60,6 +61,7 @@ func gitRepoComputeReportsFromCommits(logArgs, diffArgs []string) (oldReports, r
 	} else {
 		start = time.Now()
 		linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitTo, nil))
+		linter.ParseFilenames(linter.ReadFilenames(filesToAnalyze(), nil))
 		log.Printf("Indexing complete in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
@@ -103,6 +105,7 @@ func gitRepoComputeReportsFromLocalChanges() (oldReports, reports []*linter.Repo
 
 	start := time.Now()
 	linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitFrom, nil))
+	linter.ParseFilenames(linter.ReadFilenames(filesToAnalyze(), nil))
 	log.Printf("Indexing complete in %s", time.Since(start))
 
 	meta.SetIndexingComplete(true)

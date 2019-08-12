@@ -56,6 +56,12 @@ var (
 	memProfile string
 )
 
+// filesToAnalyze returns a list of files specified as linter analysis targets.
+// Needed to avoid spreading flag.Args() everywhere.
+func filesToAnalyze() []string {
+	return flag.Args()
+}
+
 func bindFlags() {
 	var enabledByDefault []string
 	declaredChecks := linter.GetDeclaredChecks()
