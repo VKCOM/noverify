@@ -46,6 +46,7 @@ var (
 	unusedVarPattern string
 
 	fullAnalysisFiles string
+	indexOnlyFiles    string
 
 	output     string
 	outputJSON bool
@@ -108,6 +109,7 @@ func bindFlags() {
 	flag.StringVar(&phpExtensionsArg, "php-extensions", "php,inc,php5,phtml,inc", "List of PHP extensions to be recognized")
 
 	flag.StringVar(&fullAnalysisFiles, "full-analysis-files", "", "Comma-separated list of files to do full analysis")
+	flag.StringVar(&indexOnlyFiles, "index-only-files", "", "Comma-separated list of files to do indexing")
 
 	flag.StringVar(&output, "output", "", "Output reports to a specified file instead of stderr")
 	flag.BoolVar(&outputJSON, "output-json", false, "Format output as JSON")
