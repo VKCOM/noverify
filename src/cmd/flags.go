@@ -29,6 +29,7 @@ var (
 	gitWorkTree         string
 	gitSkipFetch        bool
 	gitFullDiff         bool
+	gitIncludeUntracked bool
 
 	phpExtensionsArg string
 
@@ -98,6 +99,7 @@ func bindFlags() {
 	flag.StringVar(&gitWorkTree, "git-work-tree", "", "Work tree. If specified, local changes will also be examined.")
 	flag.BoolVar(&gitSkipFetch, "git-skip-fetch", false, "Do not fetch ORIGIN_MASTER (use this option if you already fetch to ORIGIN_MASTER before that)")
 	flag.BoolVar(&gitFullDiff, "git-full-diff", false, "Compute full diff: analyze all files, not just changed ones")
+	flag.BoolVar(&gitIncludeUntracked, "git-include-untracked", true, "Include untracked (new, uncommited files) into analysis")
 
 	flag.StringVar(&reportsExclude, "exclude", "", "Exclude regexp for filenames in reports list")
 	flag.StringVar(&reportsExcludeChecks, "exclude-checks", "", "Comma-separated list of check names to be excluded")
