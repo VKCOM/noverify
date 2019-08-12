@@ -11,6 +11,14 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func parseIndexOnlyFiles() {
+	if indexOnlyFiles == "" {
+		return
+	}
+	filenames := strings.Split(indexOnlyFiles, ",")
+	linter.ParseFilenames(linter.ReadFilenames(filenames, nil))
+}
+
 // Not the best name, and not the best function signature.
 // Refactor this function whenever you get the idea how to separate logic better.
 func gitRepoComputeReportsFromCommits(logArgs, diffArgs []string) (oldReports, reports []*linter.Report, changes []git.Change, changeLog []git.Commit, ok bool) {
@@ -37,7 +45,7 @@ func gitRepoComputeReportsFromCommits(logArgs, diffArgs []string) (oldReports, r
 
 		start = time.Now()
 		linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitFrom, nil))
-		linter.ParseFilenames(linter.ReadFilenames(filesToAnalyze(), nil))
+		parseIndexOnlyFiles()
 		log.Printf("Indexed old commit in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
@@ -61,7 +69,7 @@ func gitRepoComputeReportsFromCommits(logArgs, diffArgs []string) (oldReports, r
 	} else {
 		start = time.Now()
 		linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitTo, nil))
-		linter.ParseFilenames(linter.ReadFilenames(filesToAnalyze(), nil))
+		parseIndexOnlyFiles()
 		log.Printf("Indexing complete in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
@@ -105,7 +113,7 @@ func gitRepoComputeReportsFromLocalChanges() (oldReports, reports []*linter.Repo
 
 	start := time.Now()
 	linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitFrom, nil))
-	linter.ParseFilenames(linter.ReadFilenames(filesToAnalyze(), nil))
+	parseIndexOnlyFiles()
 	log.Printf("Indexing complete in %s", time.Since(start))
 
 	meta.SetIndexingComplete(true)
