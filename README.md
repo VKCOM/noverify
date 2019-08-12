@@ -119,6 +119,7 @@ noverify\
     -git-ref=refs/heads/$ref\
     -git-work-tree=.\
     -cache-dir=$HOME/tmp/cache/noverify
+    -index-only-files='generated/a.php,generated/web'
 ```
 
 Here is the short summary of options used here:
@@ -128,6 +129,10 @@ Here is the short summary of options used here:
  - `-git-ref` is name of pushed branch
  - `-git-work-tree` is an optional parameter that you can specify if you want to be able to analyze uncommited changes too
  - `-cache-dir` is an optional directory for cache (greatly increases indexing speed)
+ - `-index-only-files` is index-only targets (see below)
+
+If you have files that are not a part of a git repository (i.e. they are ignored),
+you need to specify those files explicitly via `-index-only-files`.
 
 ### Disable some reports
 
