@@ -11,6 +11,19 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func gitParseUntracked() []*linter.Report {
+	if !gitIncludeUntracked {
+		return nil
+	}
+
+	filenames, err := git.UntrackedFiles(gitRepo)
+	if err != nil {
+		log.Fatalf("get untracked files: %v", err)
+	}
+
+	return linter.ParseFilenames(linter.ReadFilenames(filenames, nil))
+}
+
 func parseIndexOnlyFiles() {
 	if indexOnlyFiles == "" {
 		return
@@ -125,11 +138,13 @@ func gitRepoComputeReportsFromLocalChanges() (oldReports, reports []*linter.Repo
 	start = time.Now()
 	meta.SetIndexingComplete(false)
 	linter.ParseFilenames(linter.ReadChangesFromWorkTree(gitWorkTree, changes))
+	gitParseUntracked()
 	meta.SetIndexingComplete(true)
 	log.Printf("Indexed new files versions for %s", time.Since(start))
 
 	start = time.Now()
 	reports = linter.ParseFilenames(linter.ReadChangesFromWorkTree(gitWorkTree, changes))
+	reports = append(reports, gitParseUntracked()...)
 	log.Printf("Parsed new file versions in %s", time.Since(start))
 
 	return oldReports, reports, changes, true
