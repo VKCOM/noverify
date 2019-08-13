@@ -8,6 +8,7 @@ import (
 	"net/http"
 	_ "net/http/pprof" // it is ok for actually main package
 	"os"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"runtime/pprof"
@@ -77,6 +78,13 @@ func Main(cfg *MainConfig) {
 
 	bindFlags()
 	flag.Parse()
+	if gitRepo != "" {
+		gitDir, err := filepath.Abs(gitRepo + "/../")
+		if err != nil {
+			log.Fatalf("Find git dir: %v", err)
+		}
+		linter.GitDir = gitDir
+	}
 	if cfg.AfterFlagParse != nil {
 		cfg.AfterFlagParse()
 	}

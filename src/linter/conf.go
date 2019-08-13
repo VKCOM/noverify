@@ -20,6 +20,10 @@ var (
 	// TODO(quasilyte): avoid having it as a global variable?
 	SrcInput = inputs.NewDefaultSourceInput()
 
+	// GitDir is an absolute path to a directory that contains ".git".
+	// Empty string if NoVerify is executed in a non-git mode.
+	GitDir string
+
 	// settings
 	StubsDir        string
 	Debug           bool

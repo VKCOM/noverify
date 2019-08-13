@@ -288,7 +288,7 @@ func ReadFilesFromGit(repo, commitSHA1 string, ignoreRegex *regexp.Regexp) ReadC
 				}
 
 				ch <- FileInfo{
-					Filename: filename,
+					Filename: filepath.Join(GitDir, filename),
 					Contents: contents,
 				}
 			},
@@ -336,7 +336,7 @@ func ReadOldFilesFromGit(repo, commitSHA1 string, changes []git.Change) ReadCall
 			},
 			func(filename string, contents []byte) {
 				ch <- FileInfo{
-					Filename:   filename,
+					Filename:   filepath.Join(GitDir, filename),
 					Contents:   contents,
 					LineRanges: changedMap[filename],
 				}
@@ -387,7 +387,7 @@ func ReadFilesFromGitWithChanges(repo, commitSHA1 string, changes []git.Change) 
 			},
 			func(filename string, contents []byte) {
 				ch <- FileInfo{
-					Filename:   filename,
+					Filename:   filepath.Join(GitDir, filename),
 					Contents:   contents,
 					LineRanges: changedMap[filename],
 				}
