@@ -1855,8 +1855,13 @@ func (b *BlockWalker) handleVariableNode(n node.Node, typ *meta.TypesMap, what s
 		return
 	}
 
-	vv, ok := n.(*expr.Variable)
-	if !ok {
+	var vv *expr.Variable
+	switch n := n.(type) {
+	case *expr.Variable:
+		vv = n
+	case *expr.Reference:
+		vv = n.Variable.(*expr.Variable)
+	default:
 		return
 	}
 

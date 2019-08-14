@@ -453,6 +453,20 @@ func TestFunctionReferenceParamsInAnonymousFunction(t *testing.T) {
 	test.RunAndMatch()
 }
 
+func TestForeachByRef(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+$xs = [1, 2];
+foreach ($xs as &$x) {
+    if ($x) {
+        $_ = $x;
+    }
+}
+foreach ($xs as &$x) {
+    $_ = $x;
+}
+`)
+}
+
 func TestForeachByRefUnused(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	class SomeClass {
