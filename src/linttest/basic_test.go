@@ -453,6 +453,14 @@ func TestFunctionReferenceParamsInAnonymousFunction(t *testing.T) {
 	test.RunAndMatch()
 }
 
+func TestFunctionCallSplatArg(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+function doSomething($a, $b, $c) {}
+$x = [1, 2, 3];
+doSomething(...$x);
+	`)
+}
+
 func TestForeachByRef(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 $xs = [1, 2];
