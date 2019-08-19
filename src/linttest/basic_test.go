@@ -270,6 +270,46 @@ func TestUnusedInPropFetch(t *testing.T) {
 	runFilterMatch(test, "unused")
 }
 
+func TestUnusedInVarPropFetch(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class Foo {}
+function foo(Foo $x) {
+	$y = "propname";
+	return $x->$y;
+}
+	`)
+}
+
+func TestUnusedInVarPropAssign(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class Foo {}
+function foo(Foo $x) {
+	$y = "propname";
+	$x->$y = "propval";
+}
+	`)
+}
+
+func TestUnusedInStaticVarPropFetch(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class Foo {}
+function foo() {
+	$x = "propname";
+	return Foo::$$x;
+}
+	`)
+}
+
+func TestUnusedInStaticVarPropAssign(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class Foo {}
+function foo() {
+	$x = "propname";
+	Foo::$$x = "propval";
+}
+	`)
+}
+
 func TestUnusedInSwitch(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
