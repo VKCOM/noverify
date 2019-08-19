@@ -34,6 +34,12 @@ func init() {
 		},
 
 		{
+			Name:    "bitwiseOps",
+			Default: true,
+			Comment: `Report suspicious usage of bitwise operations.`,
+		},
+
+		{
 			Name:    "mixedArrayKeys",
 			Default: true,
 			Comment: `Report array literals that have both implicit and explicit keys.`,

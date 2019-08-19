@@ -229,6 +229,17 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	}
 
 	switch s := w.(type) {
+	case *binary.BitwiseAnd:
+		if b.isBool(s.Left) && b.isBool(s.Right) {
+			b.r.Report(s, LevelWarning, "bitwiseOps",
+				"Used & bitwise op over bool operands, perhaps && is intended?")
+		}
+	case *binary.BitwiseOr:
+		if b.isBool(s.Left) && b.isBool(s.Right) {
+			b.r.Report(s, LevelWarning, "bitwiseOps",
+				"Used | bitwise op over bool operands, perhaps || is intended?")
+		}
+
 	case *cast.Double:
 		b.checkRedundantCast(s.Expr, "float")
 	case *cast.Int:
@@ -1931,4 +1942,8 @@ func (b *BlockWalker) caseHasFallthroughComment(n node.Node) bool {
 		}
 	}
 	return false
+}
+
+func (b *BlockWalker) isBool(n node.Node) bool {
+	return solver.ExprType(b.r.Scope(), b.r.st, n).Is("bool")
 }
