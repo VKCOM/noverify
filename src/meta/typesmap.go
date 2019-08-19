@@ -335,6 +335,11 @@ func (m *TypesMap) IsInt() bool {
 
 // IsString checks if map only contains int type
 func (m *TypesMap) IsString() bool {
+	return m.Is("string")
+}
+
+// Is reports whether m contains exactly one specified type.
+func (m *TypesMap) Is(typ string) bool {
 	if m == nil {
 		return false
 	}
@@ -343,7 +348,7 @@ func (m *TypesMap) IsString() bool {
 		return false
 	}
 
-	_, ok := m.m["string"]
+	_, ok := m.m[typ]
 	return ok
 }
 
