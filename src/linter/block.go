@@ -704,7 +704,11 @@ func (b *BlockWalker) checkArrayDimFetch(s *expr.ArrayDimFetch) {
 
 func (b *BlockWalker) handleCallArgs(n node.Node, args []node.Node, fn meta.FuncInfo) {
 	if len(args) < fn.MinParamsCnt {
-		b.r.Report(n, LevelWarning, "argCount", "Too few arguments for %s", meta.NameNodeToString(n))
+		// If the last argument is ...$arg, then assume it is an array with
+		// sufficient values for the parameters
+		if len(args) == 0 || !args[len(args)-1].(*node.Argument).Variadic {
+			b.r.Report(n, LevelWarning, "argCount", "Too few arguments for %s", meta.NameNodeToString(n))
+		}
 	}
 
 	for i, arg := range args {
