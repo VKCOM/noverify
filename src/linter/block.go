@@ -965,6 +965,7 @@ func (b *BlockWalker) isThisInsideClosure(varNode node.Node) bool {
 
 func (b *BlockWalker) handlePropertyFetch(e *expr.PropertyFetch) bool {
 	e.Variable.Walk(b)
+	e.Property.Walk(b)
 
 	if !meta.IsIndexingComplete() {
 		return false
@@ -1014,6 +1015,7 @@ func (b *BlockWalker) handleStaticPropertyFetch(e *expr.StaticPropertyFetch) boo
 
 	varName, ok := varExpr.VarName.(*node.Identifier)
 	if !ok {
+		varExpr.VarName.Walk(b)
 		return false
 	}
 
@@ -1778,11 +1780,15 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 		varNode, ok := v.Variable.(*expr.Variable)
 		if !ok {
 			v.Variable.Walk(b)
+			v.Property.Walk(b)
 			break
 		}
 
+		v.Property.Walk(b)
+
 		id, ok := varNode.VarName.(*node.Identifier)
 		if !ok {
+			varNode.VarName.Walk(b)
 			break
 		}
 
@@ -1807,15 +1813,6 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, a.Expression, b.ctx.customTypes))
 		cls.Properties[propertyName.Value] = p
 	case *expr.StaticPropertyFetch:
-		if b.r.st.CurrentClass == "" {
-			break
-		}
-
-		className, ok := solver.GetClassName(b.r.st, v.Class)
-		if !ok || className != b.r.st.CurrentClass {
-			break
-		}
-
 		varNode, ok := v.Property.(*expr.Variable)
 		if !ok {
 			break
@@ -1823,6 +1820,16 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 
 		id, ok := varNode.VarName.(*node.Identifier)
 		if !ok {
+			varNode.VarName.Walk(b)
+			break
+		}
+
+		if b.r.st.CurrentClass == "" {
+			break
+		}
+
+		className, ok := solver.GetClassName(b.r.st, v.Class)
+		if !ok || className != b.r.st.CurrentClass {
 			break
 		}
 
