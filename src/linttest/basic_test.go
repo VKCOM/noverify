@@ -10,6 +10,22 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestMethodComplexity(t *testing.T) {
+	funcCode := strings.Repeat("$_ = 0;\n", 9999)
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php class C { private function f() {` + funcCode + `} }`)
+	test.Expect = []string{"Too big method: more than 150"}
+	test.RunAndMatch()
+}
+
+func TestFuncComplexity(t *testing.T) {
+	funcCode := strings.Repeat("$_ = 0;\n", 9999)
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php function f() {` + funcCode + `}`)
+	test.Expect = []string{"Too big function: more than 150"}
+	test.RunAndMatch()
+}
+
 func TestBitwiseOps(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
