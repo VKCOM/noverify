@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math"
 	"strconv"
 	"strings"
@@ -619,7 +618,7 @@ func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodMod
 		case "final":
 			res.final = true
 		default:
-			d.Report(m, LevelWarning, "modifiers", "Unrecognized method modifier: %s", v)
+			linterError(d.filename, "Unrecognized method modifier: %s", v)
 		}
 	}
 
@@ -956,7 +955,7 @@ func (d *RootWalker) maybeAddNamespace(typStr string) string {
 		}
 
 		if className[0] <= meta.WMax {
-			log.Printf("Bad type: '%s' in file %s", className, d.filename)
+			linterError(d.filename, "Bad type: '%s'", className)
 			classNames[idx] = ""
 			continue
 		}

@@ -1,6 +1,7 @@
 package linter
 
 import (
+	"log"
 	"sort"
 	"strings"
 	"sync"
@@ -79,12 +80,6 @@ func init() {
 			Name:    "deadCode",
 			Default: true,
 			Comment: `Report potentially unreachable code.`,
-		},
-
-		{
-			Name:    "modifiers",
-			Default: true,
-			Comment: `Report misused modifiers like 'abstract' and 'static'.`,
 		},
 
 		{
@@ -342,4 +337,8 @@ func unquote(s string) string {
 		return s[1 : len(s)-1]
 	}
 	return s
+}
+
+func linterError(filename, format string, args ...interface{}) {
+	log.Printf("error: "+filename+": "+format, args...)
 }
