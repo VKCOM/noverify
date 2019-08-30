@@ -457,7 +457,7 @@ func doParseFile(f FileInfo, needReports bool) (reports []*Report) {
 			reports = w.GetReports()
 		}
 	} else {
-		err = Parse(f.Filename, f.Contents)
+		err = IndexFile(f.Filename, f.Contents)
 	}
 
 	if err != nil {

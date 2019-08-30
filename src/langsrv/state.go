@@ -114,7 +114,7 @@ func concurrentParseChanges(changes []vscode.FileEvent) {
 		wg.Add(1)
 		go func() {
 			for filename := range filenamesCh {
-				err := linter.Parse(filename, nil)
+				err := linter.IndexFile(filename, nil)
 				if err != nil {
 					lintdebug.Send("Could not parse %s: %s", filename, err.Error())
 				}
