@@ -2,6 +2,7 @@ package linter
 
 import (
 	"fmt"
+	"io"
 	"sort"
 
 	"github.com/VKCOM/noverify/src/meta"
@@ -9,6 +10,33 @@ import (
 	"github.com/z7zmey/php-parser/node"
 	"github.com/z7zmey/php-parser/walker"
 )
+
+// MetaCacher is an interface for integrating checker-specific
+// indexing results into NoVerify cache.
+//
+// Usually, every vendor contains a global meta object that
+// can implement MetaCacher and be associated with a relevant root checker.
+type MetaCacher interface {
+	// Version returns a unique cache version identifier.
+	// When underlying cache structure is updated, version
+	// should return different value.
+	//
+	// Preferrably something unique, prefixed with a vendor
+	// name, like `mylints-1.0.0` or `extension-abc4`.
+	//
+	// Returned value is written before Encode() is called to
+	// the same writer. It's also read from the reader before
+	// Decode() is invoked.
+	Version() string
+
+	// Encode stores custom meta cache part data into provided writer.
+	// RootChecker is expected to carry the necessary indexing phase results.
+	Encode(io.Writer, RootChecker) error
+
+	// Decode loads custom meta cache part data from provided reader.
+	// Those results are used insted of running the associated indexer.
+	Decode(r io.Reader, filename string) error
+}
 
 // CheckInfo provides a single check (diagnostic) metadata.
 //
@@ -194,6 +222,7 @@ var severityNames = map[int]string{
 var (
 	customBlockLinters []BlockCheckerCreateFunc
 	customRootLinters  []RootCheckerCreateFunc
+	metaCachers        []MetaCacher
 	checksInfoRegistry = map[string]CheckInfo{}
 )
 
@@ -203,8 +232,30 @@ func RegisterBlockChecker(c BlockCheckerCreateFunc) {
 }
 
 // RegisterRootChecker registers a custom root linter that will be used on root level.
+//
+// Root checker indexing phase is expected to be stateless.
+// If indexing results need to be saved (and cached), use RegisterRootCheckerWithCacher.
 func RegisterRootChecker(c RootCheckerCreateFunc) {
+	RegisterRootCheckerWithCacher(nil, c)
+}
+
+// RegisterRootCheckerWithCacher registers a custom root linter that will be used on root level.
+// Specified cacher is used to save (and load) indexing phase results.
+func RegisterRootCheckerWithCacher(cacher MetaCacher, c RootCheckerCreateFunc) {
 	customRootLinters = append(customRootLinters, c)
+	if cacher != nil {
+		// Validate cacher version string.
+		ver := cacher.Version()
+		if len(ver) > 256 {
+			panic(fmt.Sprintf("register cacher %q: can't handle strings longer that 256 bytes", ver))
+		}
+		for _, cacher := range metaCachers {
+			if cacher.Version() == ver {
+				panic(fmt.Sprintf("register cacher %q: already registered", ver))
+			}
+		}
+	}
+	metaCachers = append(metaCachers, cacher)
 }
 
 // DeclareCheck declares a check described by an info.

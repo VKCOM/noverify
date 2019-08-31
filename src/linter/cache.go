@@ -34,8 +34,8 @@ type fileMeta struct {
 	FunctionOverrides meta.FunctionsOverrideMap
 }
 
-// Parse file and fill in the meta info. Can use cache.
-func Parse(filename string, contents []byte) error {
+// IndexFile parses the file and fills in the meta info. Can use cache.
+func IndexFile(filename string, contents []byte) error {
 	if CacheDir == "" {
 		_, w, err := ParseContents(filename, contents, nil)
 		if w != nil {
@@ -81,7 +81,7 @@ func Parse(filename string, contents []byte) error {
 			return err
 		}
 
-		return createMetaCacheFile(filename, cacheFile, &w.meta)
+		return createMetaCacheFile(filename, cacheFile, w)
 	}
 	defer fp.Close()
 
@@ -94,14 +94,15 @@ func Parse(filename string, contents []byte) error {
 			return err
 		}
 
-		return createMetaCacheFile(filename, cacheFile, &w.meta)
+		return createMetaCacheFile(filename, cacheFile, w)
 	}
 
 	atomic.AddInt64(&initCacheReadTime, int64(time.Since(start)))
 	return nil
 }
 
-func createMetaCacheFile(filename, cacheFile string, m *fileMeta) error {
+func createMetaCacheFile(filename, cacheFile string, root *RootWalker) error {
+	m := &root.meta
 	tmpPath := cacheFile + ".tmp"
 	os.MkdirAll(filepath.Dir(tmpPath), 0777)
 
@@ -119,11 +120,12 @@ func createMetaCacheFile(filename, cacheFile string, m *fileMeta) error {
 	}
 
 	enc := gob.NewEncoder(wr)
-
 	if err := enc.Encode(m); err != nil {
 		return err
 	}
-
+	if err := customCachersEncode(wr, root); err != nil {
+		return err
+	}
 	if err := wr.Flush(); err != nil {
 		return err
 	}
@@ -162,6 +164,9 @@ func restoreMetaFromCache(filename string, rd io.Reader) error {
 	if err := dec.Decode(&m); err != nil {
 		return err
 	}
+	if err := customCachersDecode(filename, bufrd); err != nil {
+		return err
+	}
 
 	updateMetaInfo(filename, &m)
 	return nil
@@ -187,4 +192,51 @@ func updateMetaInfo(filename string, m *fileMeta) {
 	if m.Scope != nil {
 		meta.Info.AddToGlobalScopeNonLocked(filename, m.Scope)
 	}
+}
+
+func customCachersEncode(wr *bufio.Writer, root *RootWalker) error {
+	for i, c := range root.custom {
+		cacher := metaCachers[i]
+		if cacher == nil {
+			continue
+		}
+		ver := cacher.Version()
+		if len(ver) > 256 {
+			return fmt.Errorf("cacher version %q is too long (%d bytes)", ver, len(ver))
+		}
+		if err := wr.WriteByte(byte(len(ver))); err != nil {
+			return fmt.Errorf("write cacher version %q len: %v", ver, err)
+		}
+		if _, err := wr.WriteString(ver); err != nil {
+			return fmt.Errorf("write cacher version %q: %v", ver, err)
+		}
+		cacher.Encode(wr, c)
+	}
+
+	return nil
+}
+
+func customCachersDecode(filename string, rw *bufio.Reader) error {
+	var versionBuf [256]byte
+
+	for _, cacher := range metaCachers {
+		versionLen, err := rw.ReadByte()
+		if err != nil {
+			return err
+		}
+
+		if _, err := rw.Read(versionBuf[:versionLen]); err != nil {
+			return err
+		}
+		ver := string(versionBuf[:versionLen])
+		if err := cacher.Decode(rw, filename); err != nil {
+			return fmt.Errorf("decode %q: %v", ver, err)
+		}
+
+		if ver != cacher.Version() {
+			return errWrongVersion
+		}
+	}
+
+	return nil
 }
