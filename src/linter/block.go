@@ -702,7 +702,18 @@ func (b *BlockWalker) checkArrayDimFetch(s *expr.ArrayDimFetch) {
 	}
 }
 
-func (b *BlockWalker) handleCallArgs(n node.Node, args []node.Node, fn meta.FuncInfo) {
+func (b *BlockWalker) handleArgsCount(n node.Node, args []node.Node, fn meta.FuncInfo) {
+	if n, ok := n.(*name.Name); ok {
+		// Make this matching more generalized when we find more such functions.
+		switch {
+		case meta.NameEquals(n, "mt_rand"):
+			if len(args) != 0 && len(args) != 2 {
+				b.r.Report(n, LevelWarning, "argCount", "mt_rand expects 0 or 2 args")
+			}
+			return
+		}
+	}
+
 	if len(args) < fn.MinParamsCnt {
 		// If the last argument is ...$arg, then assume it is an array with
 		// sufficient values for the parameters
@@ -710,6 +721,10 @@ func (b *BlockWalker) handleCallArgs(n node.Node, args []node.Node, fn meta.Func
 			b.r.Report(n, LevelWarning, "argCount", "Too few arguments for %s", meta.NameNodeToString(n))
 		}
 	}
+}
+
+func (b *BlockWalker) handleCallArgs(n node.Node, args []node.Node, fn meta.FuncInfo) {
+	b.handleArgsCount(n, args, fn)
 
 	for i, arg := range args {
 		if i >= len(fn.Params) {
