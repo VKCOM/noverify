@@ -10,6 +10,24 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestArgsCount(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f() {
+$_ = mt_rand();        // OK
+$_ = mt_rand(1);       // Not OK
+$_ = mt_rand(1, 2);    // OK
+$_ = mt_rand(1, 2, 3); // Not OK
+}
+
+function mt_rand($x = 0, $y = 0) {}`)
+	test.Expect = []string{
+		`mt_rand expects 0 or 2 args`,
+		`mt_rand expects 0 or 2 args`,
+	}
+	test.RunAndMatch()
+}
+
 func TestMethodComplexity(t *testing.T) {
 	funcCode := strings.Repeat("$_ = 0;\n", 9999)
 	test := linttest.NewSuite(t)
