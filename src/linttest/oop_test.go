@@ -556,6 +556,66 @@ func TestTraversable(t *testing.T) {
 	runFilterMatch(test, "stdInterface")
 }
 
+func TestInstanceOfElseif2(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function fn3($f3) {
+  if ($f3 instanceof File) {
+    return $f3->name();
+  } else if ($f3 instanceof Video) {
+    return $f3->filename();
+  }
+  return "";
+}
+
+function fn4($f4) {
+  if ($f4 instanceof File) {
+    return $f4->name();
+  } elseif ($f4 instanceof Video) {
+    return $f4->filename();
+  }
+  return "";
+}`)
+	test.Expect = []string{
+		`Call to undefined method {\File}->name()`,
+		`Call to undefined method {\File|\Video}->filename()`,
+		`Call to undefined method {\File}->name()`,
+		`Call to undefined method {\File|\Video}->filename()`,
+	}
+	test.RunAndMatch()
+}
+
+func TestInstanceOfElseif1(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class File {
+  /** @return string */
+  public function filename() { return ""; }
+}
+class Video {
+  /** @return string */
+  public function name() { return ""; }
+}
+
+function fn1($f1) {
+  if ($f1 instanceof File) {
+    return $f1->filename();
+  } elseif ($f1 instanceof Video) {
+    return $f1->name();
+  }
+  return "";
+}
+
+function fn2($f2) {
+  if ($f2 instanceof File) {
+    return $f2->filename();
+  } else if ($f2 instanceof Video) {
+    return $f2->name();
+  }
+  return "";
+}
+`)
+}
+
 func TestInstanceOf(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

@@ -755,6 +755,31 @@ func TestIssetVarVar1(t *testing.T) {
 	test.RunAndMatch()
 }
 
+func TestIssetElseif1(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f() {
+  if (isset($x)) {
+    echo $x;
+  } elseif (isset($y)) {
+    echo $y; // OK to use here.
+  }
+  echo $y; // But should be undefined here.
+}
+`)
+	test.Expect = []string{`Undefined variable: y`}
+	test.RunAndMatch()
+}
+
+func TestIssetElseif2(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+if (isset($x)) {
+  echo $x;
+} else if (isset($y)) {
+  echo $y;
+}`)
+}
+
 func TestIssetShortCircuit(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
