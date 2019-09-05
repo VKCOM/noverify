@@ -226,7 +226,7 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 		}
 		phpdoc, errs := d.parsePHPDocClass(n.PhpDocComment)
 		for _, err := range errs {
-			d.Report(n.ClassName, LevelInformation, "phpdoc", "PHPDoc is incorrect: %s", err)
+			d.Report(n.ClassName, LevelInformation, "phpdocLint", "PHPDoc is incorrect: %s", err)
 		}
 		// If we ever need to distinguish @property-annotated and real properties,
 		// more work will be required here.
