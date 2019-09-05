@@ -115,7 +115,7 @@ func createMetaCacheFile(filename, cacheFile string, root *RootWalker) error {
 	defer os.Remove(tmpPath)
 
 	wr := bufio.NewWriter(fp)
-	if err := wr.WriteByte(cacheVersion); err != nil {
+	if err := writeMetaCacheHeader(wr, root); err != nil {
 		return err
 	}
 
@@ -150,14 +150,8 @@ func restoreMetaFromCache(filename string, rd io.Reader) error {
 	var m fileMeta
 
 	bufrd := bufio.NewReader(rd)
-
-	ver, err := bufrd.ReadByte()
-	if err != nil {
+	if err := readMetaCacheHeader(bufrd); err != nil {
 		return err
-	}
-
-	if ver != cacheVersion {
-		return errWrongVersion
 	}
 
 	dec := gob.NewDecoder(bufrd)
@@ -194,8 +188,12 @@ func updateMetaInfo(filename string, m *fileMeta) {
 	}
 }
 
-func customCachersEncode(wr *bufio.Writer, root *RootWalker) error {
-	for i, c := range root.custom {
+func writeMetaCacheHeader(wr *bufio.Writer, root *RootWalker) error {
+	if err := wr.WriteByte(cacheVersion); err != nil {
+		return err
+	}
+
+	for i := range root.custom {
 		cacher := metaCachers[i]
 		if cacher == nil {
 			continue
@@ -210,31 +208,65 @@ func customCachersEncode(wr *bufio.Writer, root *RootWalker) error {
 		if _, err := wr.WriteString(ver); err != nil {
 			return fmt.Errorf("write cacher version %q: %v", ver, err)
 		}
-		cacher.Encode(wr, c)
 	}
 
 	return nil
 }
 
-func customCachersDecode(filename string, rw *bufio.Reader) error {
-	var versionBuf [256]byte
+func customCachersEncode(wr *bufio.Writer, root *RootWalker) error {
+	for i, c := range root.custom {
+		cacher := metaCachers[i]
+		if cacher == nil {
+			continue
+		}
+		if err := cacher.Encode(wr, c); err != nil {
+			return err
+		}
+	}
 
+	return nil
+}
+
+func readMetaCacheHeader(rd *bufio.Reader) error {
+	ver, err := rd.ReadByte()
+	if err != nil {
+		return err
+	}
+
+	if ver != cacheVersion {
+		return errWrongVersion
+	}
+
+	var versionBuf [256]byte
 	for _, cacher := range metaCachers {
-		versionLen, err := rw.ReadByte()
+		if cacher == nil {
+			continue
+		}
+
+		versionLen, err := rd.ReadByte()
 		if err != nil {
 			return err
 		}
-
-		if _, err := rw.Read(versionBuf[:versionLen]); err != nil {
+		if _, err := rd.Read(versionBuf[:versionLen]); err != nil {
 			return err
 		}
 		ver := string(versionBuf[:versionLen])
-		if err := cacher.Decode(rw, filename); err != nil {
-			return fmt.Errorf("decode %q: %v", ver, err)
-		}
 
 		if ver != cacher.Version() {
 			return errWrongVersion
+		}
+	}
+
+	return nil
+}
+
+func customCachersDecode(filename string, rd *bufio.Reader) error {
+	for _, cacher := range metaCachers {
+		if cacher == nil {
+			continue
+		}
+		if err := cacher.Decode(rd, filename); err != nil {
+			return err
 		}
 	}
 
