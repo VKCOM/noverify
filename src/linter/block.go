@@ -44,25 +44,6 @@ const (
 	FlagDie
 )
 
-// FlagsToString is designed for debugging flags.
-func FlagsToString(f int) string {
-	var res []string
-
-	if (f & FlagReturn) == FlagReturn {
-		res = append(res, "Return")
-	}
-
-	if (f & FlagDie) == FlagDie {
-		res = append(res, "Die")
-	}
-
-	if (f & FlagThrow) == FlagThrow {
-		res = append(res, "Throw")
-	}
-
-	return "Exit flags: " + strings.Join(res, ", ") + ", digits: " + fmt.Sprintf("%d", f)
-}
-
 // BlockWalker is used to process function/method contents.
 type BlockWalker struct {
 	ctx *blockContext
@@ -1107,11 +1088,6 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []node.Node) bool {
 	}
 
 	return true
-}
-
-func haveMagicMethod(class string, methodName string) bool {
-	_, _, ok := solver.FindMethod(class, methodName)
-	return ok
 }
 
 func (b *BlockWalker) handleClassConstFetch(e *expr.ClassConstFetch) bool {

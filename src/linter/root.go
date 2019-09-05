@@ -2,7 +2,6 @@ package linter
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"math"
 	"strconv"
@@ -23,7 +22,6 @@ import (
 	"github.com/z7zmey/php-parser/node/stmt"
 	"github.com/z7zmey/php-parser/php7"
 	"github.com/z7zmey/php-parser/position"
-	"github.com/z7zmey/php-parser/printer"
 	"github.com/z7zmey/php-parser/walker"
 )
 
@@ -67,91 +65,6 @@ func (d *RootWalker) EnterChildNode(key string, w walker.Walkable) {}
 func (d *RootWalker) LeaveChildNode(key string, w walker.Walkable) {}
 func (d *RootWalker) EnterChildList(key string, w walker.Walkable) {}
 func (d *RootWalker) LeaveChildList(key string, w walker.Walkable) {}
-
-// Report is a linter report message.
-type Report struct {
-	checkName  string
-	startLn    string
-	startChar  int
-	startLine  int
-	endChar    int
-	level      int
-	msg        string
-	filename   string
-	isDisabled bool // user-defined flag that file should not be linted
-}
-
-// CheckName returns report associated check name.
-func (r *Report) CheckName() string {
-	return r.checkName
-}
-
-// MarshalJSON is used to write report in its JSON representation.
-//
-// Used for -output-json option.
-func (r *Report) MarshalJSON() ([]byte, error) {
-	type jsonReport struct {
-		CheckName string `json:"check_name"`
-		Severity  string `json:"severity"`
-		Context   string `json:"context"`
-		Message   string `json:"message"`
-		Filename  string `json:"filename"`
-		Line      int    `json:"line"`
-		StartChar int    `json:"start_char"`
-		EndChar   int    `json:"end_char"`
-	}
-
-	b, err := json.Marshal(jsonReport{
-		CheckName: r.checkName,
-		Severity:  strings.TrimSpace(severityNames[r.level]),
-		Context:   r.startLn,
-		Message:   r.msg,
-		Filename:  r.filename,
-		Line:      r.startLine,
-		StartChar: r.startChar,
-		EndChar:   r.endChar,
-	})
-	return b, err
-}
-
-func (r *Report) String() string {
-	contextLn := strings.Builder{}
-	for i, ch := range string(r.startLn) {
-		if i == r.startChar {
-			break
-		}
-		if ch == '\t' {
-			contextLn.WriteRune(ch)
-		} else {
-			contextLn.WriteByte(' ')
-		}
-	}
-
-	if r.endChar > r.startChar {
-		contextLn.WriteString(strings.Repeat("^", r.endChar-r.startChar))
-	}
-
-	msg := r.msg
-	if r.checkName != "" {
-		msg = r.checkName + ": " + msg
-	}
-	return fmt.Sprintf("%s %s at %s:%d\n%s\n%s", severityNames[r.level], msg, r.filename, r.startLine, r.startLn, contextLn.String())
-}
-
-// IsCritical returns whether or not we need to reject whole commit when found this kind of report.
-func (r *Report) IsCritical() bool {
-	return r.level != LevelDoNotReject
-}
-
-// IsDisabledByUser returns whether or not user thinks that this file should not be checked
-func (r *Report) IsDisabledByUser() bool {
-	return r.isDisabled
-}
-
-// GetFilename returns report filename
-func (r *Report) GetFilename() string {
-	return r.filename
-}
 
 type phpDocParamEl struct {
 	optional bool
@@ -481,13 +394,6 @@ func (d *RootWalker) reportUndefinedVariable(s *expr.Variable, maybeHave bool) {
 	} else {
 		d.Report(s, LevelError, "undefined", "Undefined variable: %s", name.Value)
 	}
-}
-
-// FmtNode is used for debug purposes and returns string representation of a specified node.
-func FmtNode(n node.Node) string {
-	var b bytes.Buffer
-	printer.NewPrettyPrinter(&b, " ").Print(n)
-	return b.String()
 }
 
 func (d *RootWalker) handleComment(c freefloating.String) {
@@ -1203,10 +1109,6 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	}
 
 	return false
-}
-
-func isQuote(r rune) bool {
-	return r == '"' || r == '\''
 }
 
 func (d *RootWalker) enterFunctionCall(s *expr.FunctionCall) bool {
