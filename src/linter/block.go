@@ -1489,17 +1489,22 @@ func (b *BlockWalker) handleVariable(v *expr.Variable) bool {
 }
 
 func (b *BlockWalker) handleIf(s *stmt.If) bool {
+	var varsToDelete []*expr.Variable
+	// Remove all isset'ed variables after we're finished with this if statement.
+	defer func() {
+		for _, v := range varsToDelete {
+			b.ctx.sc.DelVar(v, "isset/!empty")
+		}
+	}()
+	walkCond := func(cond node.Node) {
+		a := &andWalker{b: b}
+		cond.Walk(a)
+		varsToDelete = append(varsToDelete, a.varsToDelete...)
+	}
+
 	// first condition is always executed, so run it in base context
 	if s.Cond != nil {
-		a := &andWalker{b: b}
-		s.Cond.Walk(a)
-
-		// Remove all isset'ed variables after we're finished with this if statement.
-		defer func() {
-			for _, v := range a.varsToDelete {
-				b.ctx.sc.DelVar(v, "isset/!empty")
-			}
-		}()
+		walkCond(s.Cond)
 	}
 
 	var contexts []*blockContext
@@ -1515,6 +1520,9 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 		}
 
 		ctx := b.withNewContext(func() {
+			if elsif, ok := n.(*stmt.ElseIf); ok {
+				walkCond(elsif.Cond)
+			}
 			n.Walk(b)
 			b.r.addScope(n, b.ctx.sc)
 		})
