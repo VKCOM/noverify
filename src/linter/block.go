@@ -1625,25 +1625,26 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 					s.Walk(b)
 				}
 			}
+
+			// allow to omit "break;" in the final statement
+			if idx != len(s.CaseList.Cases)-1 && b.ctx.exitFlags == 0 {
+				// allow the fallthrough if appropriate comment is present
+				nextCase := s.CaseList.Cases[idx+1]
+				if !b.caseHasFallthroughComment(nextCase) {
+					b.r.Report(c, LevelInformation, "caseBreak", "Add break or '// fallthrough' to the end of the case")
+				}
+			}
+
+			if (b.ctx.exitFlags & (^breakFlags)) == 0 {
+				linksCount++
+
+				if b.ctx.exitFlags == 0 {
+					b.iterateNextCases(s.CaseList.Cases, idx+1)
+				}
+			}
 		})
+
 		contexts = append(contexts, ctx)
-
-		// allow to omit "break;" in the final statement
-		if idx != len(s.CaseList.Cases)-1 && ctx.exitFlags == 0 {
-			// allow the fallthrough if appropriate comment is present
-			nextCase := s.CaseList.Cases[idx+1]
-			if !b.caseHasFallthroughComment(nextCase) {
-				b.r.Report(c, LevelInformation, "caseBreak", "Add break or '// fallthrough' to the end of the case")
-			}
-		}
-
-		if (ctx.exitFlags & (^breakFlags)) == 0 {
-			linksCount++
-
-			if ctx.exitFlags == 0 {
-				b.iterateNextCases(s.CaseList.Cases, idx+1)
-			}
-		}
 	}
 
 	if !haveDefault {

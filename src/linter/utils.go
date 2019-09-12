@@ -33,7 +33,11 @@ func FlagsToString(f int) string {
 		res = append(res, "Throw")
 	}
 
-	return "Exit flags: " + strings.Join(res, ", ") + ", digits: " + fmt.Sprintf("%d", f)
+	if (f & FlagBreak) == FlagBreak {
+		res = append(res, "Break")
+	}
+
+	return "Exit flags: [" + strings.Join(res, ", ") + "], digits: " + fmt.Sprintf("%d", f)
 }
 
 func haveMagicMethod(class string, methodName string) bool {
