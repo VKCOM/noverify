@@ -11,23 +11,23 @@ import (
 // When it leaves that block, previous context is restored.
 // The BlockWalker itself is not copied and, instead, re-used as is.
 type blockContext struct {
-	sc *meta.Scope
-
 	exitFlags         int // if block always breaks code flow then there will be exitFlags
 	containsExitFlags int // if block sometimes breaks code flow then there will be containsExitFlags
-
-	innermostLoop loopKind
-	// insideLoop is true if any number of statements above there is enclosing loop.
-	// innermostLoop is not enough for this, since we can be inside switch while
-	// having for loop outside of that switch.
-	insideLoop bool
 
 	// inferred return types if any
 	returnTypes *meta.TypesMap
 
-	customTypes []solver.CustomType
-
 	deadCodeReported bool
+
+	// Fields below should be copied during context cloning.
+
+	sc            *meta.Scope
+	innermostLoop loopKind
+	// insideLoop is true if any number of statements above there is enclosing loop.
+	// innermostLoop is not enough for this, since we can be inside switch while
+	// having for loop outside of that switch.
+	insideLoop  bool
+	customTypes []solver.CustomType
 }
 
 // copyBlockContext returns a copy of the context.
