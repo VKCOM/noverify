@@ -1171,7 +1171,17 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 	// TODO: add reference semantics to foreach analyze as well
 
 	b.handleVariableNode(s.Key, nil, "foreach_key")
-	b.handleVariableNode(s.Variable, nil, "foreach_value")
+	if list, ok := s.Variable.(*expr.List); ok {
+		for _, item := range list.Items {
+			v, ok := item.(*expr.ArrayItem).Val.(*expr.Variable)
+			if !ok {
+				continue
+			}
+			b.handleVariableNode(v, nil, "foreach_value")
+		}
+	} else {
+		b.handleVariableNode(s.Variable, nil, "foreach_value")
+	}
 
 	// expression is always executed and is executed in base context
 	if s.Expr != nil {

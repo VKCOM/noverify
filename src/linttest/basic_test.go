@@ -10,6 +10,19 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestForeachList(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+
+foreach ([[1, 2]] as list($x, $y)) {
+  $_ = [$x => $y];
+}
+
+foreach ([[1, 2, 3, 4]] as list($x, $y,,$z)) {
+  $_ = [$x => $y, 5 => $z];
+}
+`)
+}
+
 func TestArgsCount(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
