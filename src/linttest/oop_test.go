@@ -174,7 +174,7 @@ class A
     /**
      * @return static[]
      */
-    public static function create()
+    public function create()
     {
         return [new static()];
     }
