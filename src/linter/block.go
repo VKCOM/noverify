@@ -882,6 +882,12 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 
 	if !foundMethod && !magic && !b.r.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
 		b.r.Report(e.Method, LevelError, "undefined", "Call to undefined method {%s}->%s()", exprType, methodName)
+	} else {
+		// Method is defined.
+
+		if fn.Static && !magic {
+			b.r.Report(e.Method, LevelWarning, "callStatic", "Calling static method as instance method")
+		}
 	}
 
 	if fn.Doc.Deprecated {
@@ -928,8 +934,18 @@ func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
 	e.Class.Walk(b)
 	e.Call.Walk(b)
 
-	if !ok && !haveMagicMethod(className, `__callStatic`) && !b.r.st.IsTrait {
+	magic := haveMagicMethod(className, `__callStatic`)
+	if !ok && !magic && !b.r.st.IsTrait {
 		b.r.Report(e.Call, LevelError, "undefined", "Call to undefined method %s::%s()", className, methodName)
+	} else {
+		// Method is defined.
+
+		// parent::f() is permitted.
+		classNameNode, ok := e.Class.(*name.Name)
+		parentCall := ok && meta.NameToString(classNameNode) == "parent"
+		if !parentCall && !fn.Static && !magic {
+			b.r.Report(e.Call, LevelWarning, "callStatic", "Calling instance method as static method")
+		}
 	}
 
 	if ok && !b.canAccess(implClass, fn.AccessLevel) {

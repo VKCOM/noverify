@@ -16,7 +16,11 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
-const cacheVersion = 26
+// cacheVersions is a magic number that helps to distinguish incompatible caches.
+//
+// Version log:
+//     27 - added Static field to meta.FuncInfo
+const cacheVersion = 27
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")

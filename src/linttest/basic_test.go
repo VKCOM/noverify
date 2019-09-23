@@ -10,6 +10,37 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestCallStaticParent(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?ph
+	class Base { protected function f() { return 1; } }
+	class Derived extends Base {
+		private function g() {
+			return parent::f() + 1;
+		}
+	}
+`)
+	runFilterMatch(test, "callStatic")
+}
+
+func TestCallStatic(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	class T {
+		public static function sf($_) {}
+		public function f($_) {}
+	}
+	$v = new T();
+	$v->sf(1);
+	T::f(1);
+	`)
+	test.Expect = []string{
+		`Calling static method as instance method`,
+		`Calling instance method as static method`,
+	}
+	runFilterMatch(test, "callStatic")
+}
+
 func TestForeachList(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 

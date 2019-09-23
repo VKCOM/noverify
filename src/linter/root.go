@@ -736,6 +736,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 		Typ:          typ,
 		MinParamsCnt: minParamsCnt,
 		AccessLevel:  modif.accessLevel,
+		Static:       modif.static,
 		ExitFlags:    exitFlags,
 		Doc:          phpdoc.info,
 	}
