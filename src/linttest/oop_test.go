@@ -43,7 +43,10 @@ $_ = WithProps::$int;
 
 	test.RunAndMatch()
 }
+
 func TestBadModifiers(t *testing.T) {
+	t.Skip("Should be handled by other check, like keywordCase from #138")
+
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 class Foo {
@@ -119,6 +122,63 @@ $m = new Magic();
 $m->method();
 $m->foo->method();
 $m->foo->bar->method();
+`)
+}
+
+func TestIteratorForeach(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+interface Iterator extends Traversable {
+  public function current();
+  public function key();
+  public function next();
+  public function rewind();
+  public function valid();
+}
+
+class SimpleXMLIterator implements Iterator {
+  /** @return int */
+  public function blah($name) { return 0; }
+
+  /** @return SimpleXMLIterator */
+  public function current() {}
+  /** @return int */
+  public function key() {}
+  /** @return void */
+  public function next() {}
+  /** @return void */
+  public function rewind() {}
+  /** @return bool */
+  public function valid() {}
+}
+
+function testForeach($xml_str) {
+  $xml = new SimpleXMLIterator($xml_str);
+  foreach ($xml as $node) {
+    $_ = $node->blah('123');
+  }
+}
+`)
+}
+
+func TestSimpleXMLElementForeach(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class SimpleXMLElement implements Traversable, ArrayAccess {
+  /** @return SimpleXMLElement */
+  private function __get($name) {}
+
+  /** @return static[] */
+  public function xpath ($path) {}
+
+  /** @return SimpleXMLElement */
+  public function offsetGet($i) {}
+}
+
+function testForeach($xml_str) {
+  $xml = new SimpleXMLElement($xml_str);
+  foreach ($xml as $node) {
+    $_ = $node->xpath('blah');
+  }
+}
 `)
 }
 

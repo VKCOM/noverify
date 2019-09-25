@@ -21,6 +21,44 @@ import (
 // TODO(quasilyte): better handling of an `empty_array` type.
 // Now it's resolved to `array` for expressions that have multiple empty_array.
 
+func TestExprTypeArrayAccess(t *testing.T) {
+	tests := []exprTypeTest{
+		{`$ints[0]`, `int`},
+		{`getInts()[0]`, `int`},
+		{`$self[0]`, `\Self`},
+		{`$self[0][1]`, `\Self`},
+		{`$self[0][1]->offsetGet(2)`, `\Self`},
+	}
+
+	global := `<?php
+function getInts() { return new Ints(); }
+
+class Ints implements ArrayAccess {
+   /** @return bool */
+   public function offsetExists($offset) {}
+   /** @return int */
+   public function offsetGet($offset) {}
+   /** @return void */
+   public function offsetSet($offset, $value) {}
+   /** @return void */
+   public function offsetUnset($offset) {}
+}
+
+class Self implements ArrayAccess {
+   /** @return bool */
+   public function offsetExists($offset) {}
+   /** @return Self */
+   public function offsetGet($offset) {}
+   /** @return void */
+   public function offsetSet($offset, $value) {}
+   /** @return void */
+   public function offsetUnset($offset) {}
+}
+`
+	local := `$ints = new Ints(); $self = new Self();`
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
 func TestExprTypeAnnotatedProperty(t *testing.T) {
 	tests := []exprTypeTest{
 		{`$x->int`, `int`},
