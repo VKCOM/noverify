@@ -24,7 +24,7 @@ type resolver struct {
 }
 
 func (r *resolver) resolveType(class, typ string) map[string]struct{} {
-	res := r.resolveTypeNoSpecialization(class, typ)
+	res := r.resolveTypeNoLateStaticBinding(class, typ)
 
 	if _, ok := res["static"]; ok {
 		delete(res, "static")
@@ -34,7 +34,7 @@ func (r *resolver) resolveType(class, typ string) map[string]struct{} {
 	return res
 }
 
-func (r *resolver) resolveTypeNoSpecialization(class, typ string) map[string]struct{} {
+func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]struct{} {
 	visitedMap := r.visited
 
 	if _, ok := visitedMap[typ]; ok {
