@@ -24,6 +24,17 @@ type resolver struct {
 }
 
 func (r *resolver) resolveType(class, typ string) map[string]struct{} {
+	res := r.resolveTypeNoLateStaticBinding(class, typ)
+
+	if _, ok := res["static"]; ok {
+		delete(res, "static")
+		res[class] = struct{}{}
+	}
+
+	return res
+}
+
+func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]struct{} {
 	visitedMap := r.visited
 
 	if _, ok := visitedMap[typ]; ok {
@@ -54,18 +65,29 @@ func (r *resolver) resolveType(class, typ string) map[string]struct{} {
 		}
 	case meta.WArrayOf:
 		for tt := range r.resolveType(class, meta.UnwrapArrayOf(typ)) {
-			if tt == "static" {
-				res[class+"[]"] = struct{}{}
-			} else {
-				res[tt+"[]"] = struct{}{}
-			}
+			res[tt+"[]"] = struct{}{}
 		}
 	case meta.WElemOf:
 		for tt := range r.resolveType(class, meta.UnwrapElemOf(typ)) {
-			if strings.HasSuffix(tt, "[]") {
+			switch {
+			case strings.HasSuffix(tt, "[]"):
 				res[strings.TrimSuffix(tt, "[]")] = struct{}{}
-			} else if tt == "mixed" {
+			case tt == "mixed":
 				res["mixed"] = struct{}{}
+			case Implements(tt, `\ArrayAccess`):
+				offsetGet, _, ok := FindMethod(tt, "offsetGet")
+				if ok {
+					for tt := range r.resolveTypes(tt, offsetGet.Typ) {
+						res[tt] = struct{}{}
+					}
+				}
+			case Implements(tt, `\Traversable`):
+				current, _, ok := FindMethod(tt, "current")
+				if ok {
+					for tt := range r.resolveTypes(tt, current.Typ) {
+						res[tt] = struct{}{}
+					}
+				}
 			}
 		}
 	case meta.WFunctionCall:
@@ -86,11 +108,7 @@ func (r *resolver) resolveType(class, typ string) map[string]struct{} {
 			info, _, ok := FindMethod(className, methodName)
 			if ok {
 				for tt := range r.resolveTypes(className, info.Typ) {
-					if tt == "static" {
-						res[className] = struct{}{}
-					} else {
-						res[tt] = struct{}{}
-					}
+					res[tt] = struct{}{}
 				}
 			}
 		}
@@ -120,11 +138,7 @@ func (r *resolver) resolveType(class, typ string) map[string]struct{} {
 		info, _, ok := FindMethod(className, methodName)
 		if ok {
 			for tt := range r.resolveTypes(className, info.Typ) {
-				if tt == "static" {
-					res[className] = struct{}{}
-				} else {
-					res[tt] = struct{}{}
-				}
+				res[tt] = struct{}{}
 			}
 		}
 	case meta.WStaticPropertyFetch:
