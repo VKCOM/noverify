@@ -6,6 +6,40 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestConstructorArgCount(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+use A\B;
+
+class OneArg {
+  public function __construct($_) {}
+}
+
+class OneArgDerived extends OneArg {}
+
+function f() {
+  $_ = new OneArg();
+  $_ = new \A\B\TwoArgs();
+  $_ = new B\TwoArgs;
+  $_ = new OneArgDerived();
+}
+`)
+	test.AddFile(`<?php
+namespace A\B;
+
+class TwoArgs {
+  public function __construct($_, $_) {}
+}
+`)
+	test.Expect = []string{
+		`Too few arguments for \OneArg constructor`,
+		`Too few arguments for \A\B\TwoArgs constructor`,
+		`Too few arguments for \A\B\TwoArgs constructor`,
+		`Too few arguments for \OneArgDerived constructor`,
+	}
+	test.RunAndMatch()
+}
+
 func TestPhpdocProperty(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

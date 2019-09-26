@@ -683,6 +683,17 @@ func (b *BlockWalker) checkArrayDimFetch(s *expr.ArrayDimFetch) {
 	}
 }
 
+func (b *BlockWalker) enoughArgs(args []node.Node, fn meta.FuncInfo) bool {
+	if len(args) < fn.MinParamsCnt {
+		// If the last argument is ...$arg, then assume it is an array with
+		// sufficient values for the parameters
+		if len(args) == 0 || !args[len(args)-1].(*node.Argument).Variadic {
+			return false
+		}
+	}
+	return true
+}
+
 func (b *BlockWalker) handleArgsCount(n node.Node, args []node.Node, fn meta.FuncInfo) {
 	if n, ok := n.(*name.Name); ok {
 		// Make this matching more generalized when we find more such functions.
@@ -695,12 +706,8 @@ func (b *BlockWalker) handleArgsCount(n node.Node, args []node.Node, fn meta.Fun
 		}
 	}
 
-	if len(args) < fn.MinParamsCnt {
-		// If the last argument is ...$arg, then assume it is an array with
-		// sufficient values for the parameters
-		if len(args) == 0 || !args[len(args)-1].(*node.Argument).Variadic {
-			b.r.Report(n, LevelWarning, "argCount", "Too few arguments for %s", meta.NameNodeToString(n))
-		}
+	if !b.enoughArgs(args, fn) {
+		b.r.Report(n, LevelWarning, "argCount", "Too few arguments for %s", meta.NameNodeToString(n))
 	}
 }
 
@@ -1178,6 +1185,21 @@ func (b *BlockWalker) handleNew(e *expr.New) bool {
 
 	if _, ok := meta.Info.GetClass(className); !ok {
 		b.r.Report(e.Class, LevelError, "undefined", "Class not found %s", className)
+	}
+
+	// Check implicitly invoked constructor method arguments count.
+	ctor, _, ok := solver.FindMethod(className, "__construct")
+	if !ok {
+		return true
+	}
+	// If new expression is written without (), ArgumentList will be nil.
+	// It's equivalent of 0 arguments constructor call.
+	var args []node.Node
+	if e.ArgumentList != nil {
+		args = e.ArgumentList.Arguments
+	}
+	if ok && !b.enoughArgs(args, ctor) {
+		b.r.Report(e, LevelError, "argCount", "Too few arguments for %s constructor", className)
 	}
 
 	return true
