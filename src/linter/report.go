@@ -147,7 +147,7 @@ func init() {
 		{
 			Name:    "oldStyleConstructor",
 			Default: true,
-			Comment: `Report old style (PHP4) class constructors.`,
+			Comment: `Report old-style (PHP4) class constructors.`,
 		},
 	}
 
