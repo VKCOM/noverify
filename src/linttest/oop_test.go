@@ -11,37 +11,31 @@ func TestConstructorArgCount(t *testing.T) {
 	test.AddFile(`<?php
 use A\B;
 
-class OneArgConstruct {
+class OneArg {
   public function __construct($_) {}
 }
 
-class OneArg {
-  /** OneArg constructor */
-  public function OneArg($_) {}
-}
+class OneArgDerived extends OneArg {}
 
 function f() {
-  $_ = new OneArgConstruct();
   $_ = new OneArg();
-  $_ = new \OneArg;
   $_ = new \A\B\TwoArgs();
-  $_ = new B\TwoArgs();
+  $_ = new B\TwoArgs;
+  $_ = new OneArgDerived();
 }
 `)
 	test.AddFile(`<?php
 namespace A\B;
 
 class TwoArgs {
-  /** TwoArgs constructor */
-  public function TwoArgs($_, $_) {}
+  public function __construct($_, $_) {}
 }
 `)
 	test.Expect = []string{
-		`Too few arguments for \OneArgConstruct constructor`,
-		`Too few arguments for \OneArg constructor`,
 		`Too few arguments for \OneArg constructor`,
 		`Too few arguments for \A\B\TwoArgs constructor`,
 		`Too few arguments for \A\B\TwoArgs constructor`,
+		`Too few arguments for \OneArgDerived constructor`,
 	}
 	test.RunAndMatch()
 }

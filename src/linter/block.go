@@ -1183,20 +1183,14 @@ func (b *BlockWalker) handleNew(e *expr.New) bool {
 		return true
 	}
 
-	info, ok := meta.Info.GetClass(className)
-	if !ok {
+	if _, ok := meta.Info.GetClass(className); !ok {
 		b.r.Report(e.Class, LevelError, "undefined", "Class not found %s", className)
 	}
 
 	// Check implicitly invoked constructor method arguments count.
-	ctor, ok := info.Methods["__construct"]
+	ctor, _, ok := solver.FindMethod(className, "__construct")
 	if !ok {
-		// TODO(quasilyte): we might want to catch case-insensitivity issues.
-		// Class may be called "Foo", but "foo" method can be its constructor.
-
-		// If constructor method uses className name instead of __construct.
-		nameParts := strings.Split(className, `\`)
-		ctor, ok = info.Methods[nameParts[len(nameParts)-1]]
+		return true
 	}
 	// If new expression is written without (), ArgumentList will be nil.
 	// It's equivalent of 0 arguments constructor call.
