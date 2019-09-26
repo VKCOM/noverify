@@ -645,8 +645,20 @@ func (d *RootWalker) enterClassConstList(s *stmt.ClassConstList) bool {
 	return true
 }
 
+func (d *RootWalker) checkOldStyleConstructor(meth *stmt.ClassMethod, nm string) {
+	lastDelim := strings.IndexByte(d.st.CurrentClass, '\\')
+	if strings.EqualFold(d.st.CurrentClass[lastDelim+1:], nm) {
+		_, isClass := d.currentClassNode.(*stmt.Class)
+		if isClass {
+			d.Report(meth.MethodName, LevelDoNotReject, "oldStyleConstructor", "Old-style constructor usage, use __construct instead")
+		}
+	}
+}
+
 func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	nm := meth.MethodName.(*node.Identifier).Value
+
+	d.checkOldStyleConstructor(meth, nm)
 
 	pos := meth.GetPosition()
 
