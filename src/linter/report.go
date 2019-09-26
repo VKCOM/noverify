@@ -143,6 +143,12 @@ func init() {
 			Default: true,
 			Comment: `Report static calls of instance methods and vice versa.`,
 		},
+
+		{
+			Name:    "oldStyleConstructor",
+			Default: true,
+			Comment: `Report old style (PHP4) class constructors.`,
+		},
 	}
 
 	for _, info := range allChecks {

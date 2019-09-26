@@ -6,6 +6,32 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestOldStyleConstructor(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class T1 {
+  /** simple constructor */
+  public function T1() {}
+}
+
+class T2 {
+  /** constructor name is in lower case */
+  public function t2() {}
+}
+
+class t3 {
+  /** inverse of the T2 test case */
+  public function T3() {}
+}
+`)
+	test.Expect = []string{
+		`Old-style constructor usage, use __construct instead`,
+		`Old-style constructor usage, use __construct instead`,
+		`Old-style constructor usage, use __construct instead`,
+	}
+	test.RunAndMatch()
+}
+
 func TestConstructorArgCount(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
