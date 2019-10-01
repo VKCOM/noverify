@@ -7,8 +7,18 @@ import (
 
 func TestParseSimple(t *testing.T) {
 	expected := []CommentPart{
-		{Name: "param", Params: []string{"$param", "int", "Here", "goes", "the", "description"}},
-		{Name: "return", Params: []string{"int", "some", "result"}},
+		{
+			Line:       4,
+			Name:       "param",
+			Params:     []string{"$param", "int", "Here", "goes", "the", "description"},
+			ParamsText: "$param int  Here goes the description",
+		},
+		{
+			Line:       5,
+			Name:       "return",
+			Params:     []string{"int", "some", "result"},
+			ParamsText: "int   some    result",
+		},
 	}
 
 	actual := Parse(`/**
