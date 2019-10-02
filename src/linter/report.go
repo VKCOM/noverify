@@ -91,6 +91,12 @@ func init() {
 		},
 
 		{
+			Name:    "phpdocType",
+			Default: true,
+			Comment: `Report potential issues in phpdoc types.`,
+		},
+
+		{
 			Name:    "phpdoc",
 			Default: true,
 			Comment: `Report missing phpdoc on public methods.`,
