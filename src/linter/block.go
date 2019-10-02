@@ -1294,12 +1294,9 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType *m
 		sc.AddVarName("this", meta.NewTypesMap("possibly_late_bound"), "possibly late bound $this", true)
 	}
 
-	phpdoc, phpDocError := b.r.parsePHPDoc(fun.PhpDocComment, fun.Params)
-	phpDocParamTypes := phpdoc.types
-
-	for _, err := range phpDocError {
-		b.r.Report(fun, LevelInformation, "phpdocLint", "PHPDoc is incorrect: %s", err)
-	}
+	doc := b.r.parsePHPDoc(fun.PhpDocComment, fun.Params)
+	b.r.reportPhpdocErrors(fun, doc.errs)
+	phpDocParamTypes := doc.types
 
 	var closureUses []node.Node
 	if fun.ClosureUse != nil {

@@ -224,13 +224,11 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 				}
 			}
 		}
-		phpdoc, errs := d.parsePHPDocClass(n.PhpDocComment)
-		for _, err := range errs {
-			d.Report(n.ClassName, LevelInformation, "phpdocLint", "PHPDoc is incorrect: %s", err)
-		}
+		doc := d.parsePHPDocClass(n.PhpDocComment)
+		d.reportPhpdocErrors(n.ClassName, doc.errs)
 		// If we ever need to distinguish @property-annotated and real properties,
 		// more work will be required here.
-		for name, p := range phpdoc.properties {
+		for name, p := range doc.properties {
 			p.Pos = cl.Pos
 			cl.Properties[name] = p
 		}
@@ -686,13 +684,10 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 			d.Report(meth.MethodName, LevelDoNotReject, "phpdoc", "Missing PHPDoc for %q public method", nm)
 		}
 	}
-	phpdoc, phpDocError := d.parsePHPDoc(meth.PhpDocComment, meth.Params)
-	phpdocReturnType := phpdoc.returnType
-	phpDocParamTypes := phpdoc.types
-
-	for _, err := range phpDocError {
-		d.Report(meth.MethodName, LevelInformation, "phpdocLint", "PHPDoc is incorrect: %s", err)
-	}
+	doc := d.parsePHPDoc(meth.PhpDocComment, meth.Params)
+	d.reportPhpdocErrors(meth.MethodName, doc.errs)
+	phpdocReturnType := doc.returnType
+	phpDocParamTypes := doc.types
 
 	class := d.getClass()
 	params, minParamsCnt := d.parseFuncArgs(meth.Params, phpDocParamTypes, sc)
@@ -750,7 +745,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 		AccessLevel:  modif.accessLevel,
 		Static:       modif.static,
 		ExitFlags:    exitFlags,
-		Doc:          phpdoc.info,
+		Doc:          doc.info,
 	}
 
 	if nm == "getIterator" && meta.IsIndexingComplete() && solver.Implements(d.st.CurrentClass, `\IteratorAggregate`) {
@@ -773,16 +768,38 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	return false
 }
 
-type classPhpDocParseResult struct {
-	properties meta.PropertiesMap
+type phpdocErrors struct {
+	phpdocLint []string
+	phpdocType []string
 }
 
-func (d *RootWalker) parsePHPDocClass(doc string) (classPhpDocParseResult, []string) {
+func (e *phpdocErrors) pushLint(format string, args ...interface{}) {
+	e.phpdocLint = append(e.phpdocLint, fmt.Sprintf(format, args...))
+}
+
+func (e *phpdocErrors) pushType(format string, args ...interface{}) {
+	e.phpdocType = append(e.phpdocType, fmt.Sprintf(format, args...))
+}
+
+type classPhpDocParseResult struct {
+	properties meta.PropertiesMap
+	errs       phpdocErrors
+}
+
+func (d *RootWalker) reportPhpdocErrors(n node.Node, errs phpdocErrors) {
+	for _, err := range errs.phpdocLint {
+		d.Report(n, LevelInformation, "phpdocLint", "%s", err)
+	}
+	for _, err := range errs.phpdocType {
+		d.Report(n, LevelInformation, "phpdocType", "%s", err)
+	}
+}
+
+func (d *RootWalker) parsePHPDocClass(doc string) classPhpDocParseResult {
 	var result classPhpDocParseResult
-	var phpDocErrors []string
 
 	if doc == "" {
-		return result, nil
+		return result
 	}
 
 	result.properties = make(meta.PropertiesMap)
@@ -797,7 +814,7 @@ func (d *RootWalker) parsePHPDocClass(doc string) (classPhpDocParseResult, []str
 		// Type and name are mandatory.
 
 		if len(part.Params) < 2 {
-			phpDocErrors = append(phpDocErrors, fmt.Sprintf("line %d: @property requires type and property name fields", part.Line))
+			result.errs.pushLint("line %d: @property requires type and property name fields", part.Line)
 			continue
 		}
 
@@ -805,12 +822,12 @@ func (d *RootWalker) parsePHPDocClass(doc string) (classPhpDocParseResult, []str
 		name := part.Params[1]
 
 		if err := d.checkPHPDocType(typ); err != "" {
-			phpDocErrors = append(phpDocErrors, fmt.Sprintf("%s on line %d", err, part.Line))
+			result.errs.pushType("%s on line %d", err, part.Line)
 			continue
 		}
 
 		if !strings.HasPrefix(name, "$") {
-			phpDocErrors = append(phpDocErrors, fmt.Sprintf("@property field name must start with `$`"))
+			result.errs.pushLint("@property field name must start with `$`")
 			continue
 		}
 
@@ -820,7 +837,7 @@ func (d *RootWalker) parsePHPDocClass(doc string) (classPhpDocParseResult, []str
 		}
 	}
 
-	return result, phpDocErrors
+	return result
 }
 
 func (d *RootWalker) parsePHPDocVar(doc string) (m *meta.TypesMap, phpDocError string) {
@@ -927,16 +944,16 @@ type phpDocParseResult struct {
 	returnType *meta.TypesMap
 	types      phpDocParamsMap
 	info       meta.PhpDocInfo
+	errs       phpdocErrors
 }
 
-func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (phpDocParseResult, []string) {
+func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocParseResult {
 	var result phpDocParseResult
-	var phpDocErrors []string
 
 	result.returnType = &meta.TypesMap{}
 
 	if doc == "" {
-		return result, nil
+		return result
 	}
 
 	result.types = make(phpDocParamsMap, len(actualParams))
@@ -953,7 +970,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (phpDocPa
 		if part.Name == "return" && len(part.Params) >= 1 {
 			typ := part.Params[0]
 			if err := d.checkPHPDocType(typ); err != "" {
-				phpDocErrors = append(phpDocErrors, fmt.Sprintf("%s on line %d", err, part.Line))
+				result.errs.pushType("%s on line %d", err, part.Line)
 				continue
 			}
 			result.returnType = meta.NewTypesMap(d.maybeAddNamespace(typ))
@@ -974,17 +991,17 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (phpDocPa
 		} else {
 			// Either type of var name is missing.
 			if strings.HasPrefix(typ, "$") {
-				phpDocErrors = append(phpDocErrors, fmt.Sprintf("malformed @param %s tag (maybe type is missing?) on line %d",
-					part.Params[0], part.Line))
+				result.errs.pushLint("malformed @param %s tag (maybe type is missing?) on line %d",
+					part.Params[0], part.Line)
 				continue
 			} else {
-				phpDocErrors = append(phpDocErrors, fmt.Sprintf("malformed @param tag (maybe var is missing?) on line %d", part.Line))
+				result.errs.pushLint("malformed @param tag (maybe var is missing?) on line %d", part.Line)
 			}
 		}
 
 		if len(part.Params) >= 2 && strings.HasPrefix(typ, "$") && !strings.HasPrefix(variable, "$") {
 			// Phpstorm gives the same message.
-			phpDocErrors = append(phpDocErrors, fmt.Sprintf("non-canonical order of variable and type on line %d", part.Line))
+			result.errs.pushLint("non-canonical order of variable and type on line %d", part.Line)
 			variable, typ = typ, variable
 		}
 
@@ -992,7 +1009,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (phpDocPa
 			if len(actualParams) > curParam {
 				variable = actualParams[curParam].(*node.Parameter).Variable.(*expr.Variable).VarName.(*node.Identifier).Value
 			} else {
-				phpDocErrors = append(phpDocErrors, fmt.Sprintf("too many @param tags on line %d", part.Line))
+				result.errs.pushLint("too many @param tags on line %d", part.Line)
 				continue
 			}
 		}
@@ -1001,7 +1018,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (phpDocPa
 
 		var param phpDocParamEl
 		if err := d.checkPHPDocType(typ); err != "" {
-			phpDocErrors = append(phpDocErrors, fmt.Sprintf("%s on line %d", err, part.Line))
+			result.errs.pushType("%s on line %d", err, part.Line)
 		} else {
 			param.typ = meta.NewTypesMap(d.maybeAddNamespace(typ))
 		}
@@ -1012,7 +1029,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) (phpDocPa
 	}
 
 	result.returnType = result.returnType.Immutable()
-	return result, phpDocErrors
+	return result
 }
 
 // parse type info, e.g. "string" in "someFunc() : string { ... }"
@@ -1093,13 +1110,10 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 		specifiedReturnType = typ
 	}
 
-	phpdoc, phpDocError := d.parsePHPDoc(fun.PhpDocComment, fun.Params)
-	phpdocReturnType := phpdoc.returnType
-	phpDocParamTypes := phpdoc.types
-
-	for _, err := range phpDocError {
-		d.Report(fun.FunctionName, LevelInformation, "phpdocLint", "PHPDoc is incorrect: %s", err)
-	}
+	doc := d.parsePHPDoc(fun.PhpDocComment, fun.Params)
+	d.reportPhpdocErrors(fun.FunctionName, doc.errs)
+	phpdocReturnType := doc.returnType
+	phpDocParamTypes := doc.types
 
 	if d.meta.Functions == nil {
 		d.meta.Functions = make(meta.FunctionsMap)
@@ -1118,7 +1132,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 		Typ:          meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType).Immutable(),
 		MinParamsCnt: minParamsCnt,
 		ExitFlags:    exitFlags,
-		Doc:          phpdoc.info,
+		Doc:          doc.info,
 	}
 
 	return false
