@@ -210,7 +210,7 @@ func (r *Report) MarshalJSON() ([]byte, error) {
 
 func (r *Report) String() string {
 	contextLn := strings.Builder{}
-	for i, ch := range string(r.startLn) {
+	for i, ch := range r.startLn {
 		if i == r.startChar {
 			break
 		}
