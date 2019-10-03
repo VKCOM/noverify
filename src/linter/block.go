@@ -125,10 +125,6 @@ func (b *BlockWalker) addStatement(n node.Node) {
 	b.statements[assignment] = struct{}{}
 }
 
-func (b *BlockWalker) copyContext() *blockContext {
-	return copyBlockContext(b.ctx)
-}
-
 func (b *BlockWalker) reportDeadCode(n node.Node) {
 	if b.ctx.deadCodeReported {
 		return
