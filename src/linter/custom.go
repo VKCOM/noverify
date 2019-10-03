@@ -21,7 +21,7 @@ type MetaCacher interface {
 	// When underlying cache structure is updated, version
 	// should return different value.
 	//
-	// Preferrably something unique, prefixed with a vendor
+	// Preferably something unique, prefixed with a vendor
 	// name, like `mylints-1.0.0` or `extension-abc4`.
 	//
 	// Returned value is written before Encode() is called to

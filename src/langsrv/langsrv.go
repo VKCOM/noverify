@@ -336,7 +336,7 @@ func handleTextDocumentSymbol(req *baseRequest) error {
 	return nil
 }
 
-// very simple convertion
+// very simple conversion
 func posToLocation(pos meta.ElementPosition) vscode.Location {
 	return vscode.Location{
 		URI: "file://" + pos.Filename,

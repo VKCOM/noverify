@@ -921,7 +921,7 @@ func (d *RootWalker) checkPHPDocType(typ string) string {
 		return fmt.Sprintf("%s type syntax: use [] after the type, e.g. T[]", typ)
 	}
 
-	// Check commonly mispelled types and other unfortunate cases.
+	// Check commonly misspelled types and other unfortunate cases.
 	switch typ {
 	case "boolean":
 		return "use bool type instead of boolean"
@@ -930,7 +930,7 @@ func (d *RootWalker) checkPHPDocType(typ string) string {
 	case "long", "integer":
 		return "use int type instead of " + typ
 	case "-":
-		// This happend when either of those formats is used:
+		// This happened when either of those formats is used:
 		// `* @param $name - description`
 		// `* @param - $name description`
 		// We don't want to make "-" slip as a type name.
