@@ -97,7 +97,7 @@ func writeMessage(message interface{ IMessage() }) error {
 func handleMessage(buf []byte) error {
 	defer func() {
 		if r := recover(); r != nil {
-			lintdebug.Send("Panic ocurred: %s, trace: %s", r, dbg.Stack())
+			lintdebug.Send("Panic occurred: %s, trace: %s", r, dbg.Stack())
 		}
 	}()
 
