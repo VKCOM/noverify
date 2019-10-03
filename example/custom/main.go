@@ -87,11 +87,11 @@ func (b *block) handleFunctionCall(e *expr.FunctionCall) {
 }
 
 func (b *block) handleInArrayCall(e *expr.FunctionCall) {
-	if len(e.Arguments) != 2 {
+	if len(e.ArgumentList.Arguments) != 2 {
 		return
 	}
 
-	arg, ok := e.Arguments[0].(*node.Argument)
+	arg, ok := e.ArgumentList.Arguments[0].(*node.Argument)
 	if !ok {
 		return
 	}
