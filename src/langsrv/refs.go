@@ -185,7 +185,7 @@ func readFile(openMapCopy map[string]string, filename string) (contents []byte, 
 
 // Very simple computation for now, it needs to be improved for refactoring purposes :)
 func refPosition(filename string, pos *position.Position) vscode.Location {
-	endLine := int(pos.EndLine) - 1
+	endLine := pos.EndLine - 1
 	if pos.StartLine == pos.EndLine {
 		endLine++
 	}
@@ -193,7 +193,7 @@ func refPosition(filename string, pos *position.Position) vscode.Location {
 	return vscode.Location{
 		URI: "file://" + filename,
 		Range: vscode.Range{
-			Start: vscode.Position{Line: int(pos.StartLine) - 1},
+			Start: vscode.Position{Line: pos.StartLine - 1},
 			End:   vscode.Position{Line: endLine},
 		},
 	}
