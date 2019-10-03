@@ -431,21 +431,6 @@ func TestVariadic(t *testing.T) {
 	`)
 }
 
-func TestTraitProperties(t *testing.T) {
-	linttest.SimpleNegativeTest(t, `<?php
-	declare(strict_types=1);
-
-	trait Example
-	{
-		private static $property = 'some';
-
-		protected function some(): string
-		{
-			return self::$property;
-		}
-	}`)
-}
-
 func TestMagicMethods(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	class Magic

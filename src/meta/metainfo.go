@@ -447,6 +447,20 @@ func NameNodeToString(n node.Node) string {
 	}
 }
 
+// NameNodeEquals checks whether n node name value is identical to s.
+func NameNodeEquals(n node.Node, s string) bool {
+	switch n := n.(type) {
+	case *name.Name:
+		return NameEquals(n, s)
+	case *node.Identifier:
+		return n.Value == s
+	case *name.FullyQualified:
+		return FullyQualifiedToString(n) == s
+	default:
+		return false
+	}
+}
+
 func NameEquals(n *name.Name, s string) bool {
 	if len(n.Parts) != strings.Count(s, `\`)+1 {
 		return false

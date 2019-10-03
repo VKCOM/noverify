@@ -695,15 +695,12 @@ func (b *BlockWalker) enoughArgs(args []node.Node, fn meta.FuncInfo) bool {
 }
 
 func (b *BlockWalker) handleArgsCount(n node.Node, args []node.Node, fn meta.FuncInfo) {
-	if n, ok := n.(*name.Name); ok {
-		// Make this matching more generalized when we find more such functions.
-		switch {
-		case meta.NameEquals(n, "mt_rand"):
-			if len(args) != 0 && len(args) != 2 {
-				b.r.Report(n, LevelWarning, "argCount", "mt_rand expects 0 or 2 args")
-			}
-			return
+	switch {
+	case meta.NameNodeEquals(n, "mt_rand"):
+		if len(args) != 0 && len(args) != 2 {
+			b.r.Report(n, LevelWarning, "argCount", "mt_rand expects 0 or 2 args")
 		}
+		return
 	}
 
 	if !b.enoughArgs(args, fn) {
@@ -1215,6 +1212,17 @@ func (b *BlockWalker) handleConstFetch(e *expr.ConstFetch) bool {
 func (b *BlockWalker) handleNew(e *expr.New) bool {
 	if !meta.IsIndexingComplete() {
 		return true
+	}
+
+	if b.r.st.IsTrait {
+		switch {
+		case meta.NameNodeEquals(e.Class, "self"):
+			// Don't try to resolve "self" inside trait context.
+			return true
+		case meta.NameNodeEquals(e.Class, "static"):
+			// More or less identical to the "self" case.
+			return true
+		}
 	}
 
 	className, ok := solver.GetClassName(b.r.st, e.Class)
