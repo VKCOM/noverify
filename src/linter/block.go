@@ -211,15 +211,9 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 
 	switch s := w.(type) {
 	case *binary.BitwiseAnd:
-		if b.isBool(s.Left) && b.isBool(s.Right) {
-			b.r.Report(s, LevelWarning, "bitwiseOps",
-				"Used & bitwise op over bool operands, perhaps && is intended?")
-		}
+		b.handleBitwiseAnd(s)
 	case *binary.BitwiseOr:
-		if b.isBool(s.Left) && b.isBool(s.Right) {
-			b.r.Report(s, LevelWarning, "bitwiseOps",
-				"Used | bitwise op over bool operands, perhaps || is intended?")
-		}
+		b.handleBitwiseOr(s)
 
 	case *cast.Double:
 		b.checkRedundantCast(s.Expr, "float")
@@ -1845,6 +1839,23 @@ func (b *BlockWalker) handleAssignList(items []node.Node) {
 
 		b.handleVariableNode(arrayItem.Val, meta.NewTypesMap("unknown_from_list"), "assign")
 	}
+}
+
+func (b *BlockWalker) handleBitwiseAnd(s *binary.BitwiseAnd) {
+	if b.isBool(s.Left) && b.isBool(s.Right) {
+		b.ReportBitwiseOp(s, "&", "&&")
+	}
+}
+
+func (b *BlockWalker) handleBitwiseOr(s *binary.BitwiseOr) {
+	if b.isBool(s.Left) && b.isBool(s.Right) {
+		b.ReportBitwiseOp(s, "|", "||")
+	}
+}
+
+func (b *BlockWalker) ReportBitwiseOp(s node.Node, op string, rightOp string) {
+	b.r.Report(s, LevelWarning, "bitwiseOps",
+		"Used %s bitwise op over bool operands, perhaps %s is intended?", op, rightOp)
 }
 
 func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
