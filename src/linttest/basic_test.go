@@ -891,7 +891,7 @@ func TestUnused(t *testing.T) {
 }
 
 func TestAtVar(t *testing.T) {
-	// variables declared using @var should not be overriden
+	// variables declared using @var should not be overridden
 	_ = linttest.GetFileReports(t, `<?php
 	function test() {
 		/** @var string $a */
