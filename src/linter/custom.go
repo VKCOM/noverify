@@ -137,6 +137,14 @@ func (ctx *RootContext) Filename() string {
 	return ctx.w.filename
 }
 
+// FileContents returns analyzed file source code.
+// Caller should not modify the returned slice.
+//
+// Experimental API.
+func (ctx *RootContext) FileContents() []byte {
+	return ctx.w.fileContents
+}
+
 // BlockContext is the context for block checker.
 type BlockContext struct {
 	w *BlockWalker
