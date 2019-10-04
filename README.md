@@ -1,4 +1,4 @@
-## NoVerify
+## NoVerify [![Build Status](https://travis-ci.org/VKCOM/noverify.svg?branch=master)](https://travis-ci.org/VKCOM/noverify)
 
 NoVerify is a linter for PHP: it searches for potential problems in your code.
 It allows to write your own rules as well and it has no config: all reports
