@@ -98,6 +98,7 @@ func mainNoExit() (int, error) {
 		fmt.Printf("PHP Linter\nBuilt on %s\nOS %s\nCommit %s\n", BuildTime, BuildOSUname, BuildCommit)
 		return 0, nil
 	}
+	fmt.Printf("PHP Linter Built on:%s OS:%s Commit:%s\n", BuildTime, BuildOSUname, BuildCommit)
 
 	if pprofHost != "" {
 		go http.ListenAndServe(pprofHost, nil)
