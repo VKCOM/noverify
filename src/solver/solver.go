@@ -8,15 +8,18 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
-// ResolveType resolves function calls, method calls and global variables
-func ResolveType(typ string, visitedMap map[string]struct{}) (result map[string]struct{}) {
+// ResolveType resolves function calls, method calls and global variables.
+//   curStaticClass is current class name (if inside the class, otherwise "")
+func ResolveType(curStaticClass, typ string, visitedMap map[string]struct{}) (result map[string]struct{}) {
 	r := resolver{visited: visitedMap}
-	return r.resolveType("", typ)
+	return r.resolveType(curStaticClass, typ)
 }
 
-func ResolveTypes(m *meta.TypesMap, visitedMap map[string]struct{}) map[string]struct{} {
+// ResolveTypes resolves function calls, method calls and global variables.
+//   curStaticClass is current class name (if inside the class, otherwise "")
+func ResolveTypes(curStaticClass string, m *meta.TypesMap, visitedMap map[string]struct{}) map[string]struct{} {
 	r := resolver{visited: visitedMap}
-	return r.resolveTypes("", m)
+	return r.resolveTypes(curStaticClass, m)
 }
 
 type resolver struct {
@@ -132,7 +135,7 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 			}
 		}
 	case meta.WBaseMethodParam:
-		return solveBaseMethodParam(typ, visitedMap, res)
+		return solveBaseMethodParam(class, typ, visitedMap, res)
 	case meta.WStaticMethodCall:
 		className, methodName := meta.UnwrapStaticMethodCall(typ)
 		info, _, ok := FindMethod(className, methodName)
@@ -154,7 +157,7 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 	return res
 }
 
-func solveBaseMethodParam(typ string, visitedMap, res map[string]struct{}) map[string]struct{} {
+func solveBaseMethodParam(curStaticClass, typ string, visitedMap, res map[string]struct{}) map[string]struct{} {
 	index, className, methodName := meta.UnwrapBaseMethodParam(typ)
 	class, ok := meta.Info.GetClass(className)
 	if ok {
@@ -169,7 +172,7 @@ func solveBaseMethodParam(typ string, visitedMap, res map[string]struct{}) map[s
 				continue
 			}
 			if len(fn.Params) > int(index) {
-				return ResolveTypes(fn.Params[index].Typ, visitedMap)
+				return ResolveTypes(curStaticClass, fn.Params[index].Typ, visitedMap)
 			}
 		}
 	}
