@@ -431,7 +431,7 @@ func TestVariadic(t *testing.T) {
 	`)
 }
 
-func TestMagicMethods(t *testing.T) {
+func TestIssue8(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	class Magic
 	{
