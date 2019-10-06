@@ -6,7 +6,7 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
-func TestTraitProperties(t *testing.T) {
+func TestIssue6(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	declare(strict_types=1);
 
