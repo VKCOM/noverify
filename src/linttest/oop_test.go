@@ -348,7 +348,7 @@ $_ = $xs[0]->onlyInDerived();
 `)
 }
 
-func TestInterfaceConstants(t *testing.T) {
+func TestIssue1(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	interface TestInterface
 	{
