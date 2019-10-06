@@ -378,7 +378,7 @@ func TestInheritanceLoop(t *testing.T) {
 	test.RunAndMatch()
 }
 
-func TestReturnTypes(t *testing.T) {
+func TestIssue2(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	function rand() { return 4; }
 
