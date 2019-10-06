@@ -325,7 +325,7 @@ function f3() {
 `)
 }
 
-func TestUnusedInPropFetch(t *testing.T) {
+func TestIssue37(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 	class Foo {
