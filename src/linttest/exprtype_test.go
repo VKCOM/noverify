@@ -613,7 +613,7 @@ func runExprTypeTest(t *testing.T, ctx *exprTypeTestContext, tests []exprTypeTes
 			t.Errorf("missing f%d info", i)
 			continue
 		}
-		have := solver.ResolveTypes(fn.Typ, make(map[string]struct{}))
+		have := solver.ResolveTypes("", fn.Typ, make(map[string]struct{}))
 		want := makeType(test.expectedType)
 		if !reflect.DeepEqual(have, want) {
 			t.Errorf("type mismatch for %q:\nhave: %q\nwant: %q",
