@@ -57,7 +57,7 @@ trait SingletonStatic {
 `)
 }
 
-func TestTraitInstanceProperties(t *testing.T) {
+func TestIssue183(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
     trait Mixin {
