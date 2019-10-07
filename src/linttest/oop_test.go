@@ -392,7 +392,7 @@ func TestStaticResolutionInsideSameClass(t *testing.T) {
 	test.RunAndMatch()
 }
 
-func TestInterfaceConstants(t *testing.T) {
+func TestIssue1(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	interface TestInterface
 	{
