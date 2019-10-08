@@ -325,7 +325,7 @@ function f3() {
 `)
 }
 
-func TestUnusedInPropFetch(t *testing.T) {
+func TestIssue37(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 	class Foo {
@@ -1178,6 +1178,18 @@ function f() {
 		"Undefined variable: y",
 	}
 	runFilterMatch(test, "undefined")
+}
+
+func TestAssignByRef(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+	function a() {
+	  $a = 1;
+	  $b = &$a;
+	  $b = 2;
+	  return $a;
+	}
+
+	echo a();`)
 }
 
 func runFilterMatch(test *linttest.Suite, name string) {
