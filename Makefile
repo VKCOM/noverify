@@ -3,7 +3,7 @@ OS=`uname -n -m`
 AFTER_COMMIT=`git rev-parse HEAD`
 
 install:
-	go install -ldflags "-X 'github.com/VKCOM/noverify/src/cmd.BuildTime=$(NOW)' -X 'github.com/VKCOM/noverify/src/cmd.BuildOSUname=$(OS)' -X 'github.com/VKCOM/noverify/src/cmd.BuildCommit=$(AFTER_COMMIT)'" .
+	go install -ldflags "-X 'main.BuildTime=$(NOW)' -X 'main.BuildOSUname=$(OS)' -X 'main.BuildCommit=$(AFTER_COMMIT)'" .
 
 check:
 	@go vet $(go list ./src/... | grep -v vendor)

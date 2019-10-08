@@ -26,13 +26,6 @@ import (
 //
 //go:generate go-bindata -pkg stubs -nometadata -o ./stubs/phpstorm_stubs.go -ignore=\.idea -ignore=\.git ./stubs/phpstorm-stubs/...
 
-// Build* заполняются при сборке go build -ldflags
-var (
-	BuildTime    string
-	BuildOSUname string
-	BuildCommit  string
-)
-
 func isCritical(r *linter.Report) bool {
 	if len(reportsCriticalSet) != 0 {
 		return reportsCriticalSet[r.CheckName()]
@@ -76,7 +69,6 @@ func Main(cfg *MainConfig) {
 	}
 
 	bindFlags()
-	printVersion() // Print before parsing, so -help also prints our version
 	flag.Parse()
 	if cfg.AfterFlagParse != nil {
 		cfg.AfterFlagParse()
@@ -87,14 +79,6 @@ func Main(cfg *MainConfig) {
 		log.Fatal(err)
 	}
 	os.Exit(status)
-}
-
-func printVersion() {
-	if BuildCommit == "" {
-		log.Printf("PHP Linter built without version info (try using 'make install'?)")
-	} else {
-		log.Printf("PHP Linter built on: %s OS: %s Commit: %s\n", BuildTime, BuildOSUname, BuildCommit)
-	}
 }
 
 // mainNoExit implements main, but instead of doing log.Fatal or os.Exit it
