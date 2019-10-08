@@ -6,7 +6,7 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
-func TestDeadCodeDie(t *testing.T) {
+func TestIssue78_1(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 global $cond;
@@ -193,7 +193,7 @@ function trailing_exit_while($xs) {
 	test.RunAndMatch()
 }
 
-func TestDeadCodeNoReturn(t *testing.T) {
+func TestIssue78_2(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 global $cond;
@@ -368,7 +368,7 @@ function trailing_exit_while($xs) {
 	test.RunAndMatch()
 }
 
-func TestTrailingExit(t *testing.T) {
+func TestIssue78_3(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 $xs = [1, 2];
 trailing_exit_if($xs);
