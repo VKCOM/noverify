@@ -76,6 +76,7 @@ func Main(cfg *MainConfig) {
 	}
 
 	bindFlags()
+	printVersion() // Print before parsing, so -help also prints our version
 	flag.Parse()
 	if cfg.AfterFlagParse != nil {
 		cfg.AfterFlagParse()
@@ -88,6 +89,14 @@ func Main(cfg *MainConfig) {
 	os.Exit(status)
 }
 
+func printVersion() {
+	if BuildCommit == "" {
+		log.Printf("PHP Linter built without version info (try using 'make install'?)")
+	} else {
+		log.Printf("PHP Linter built on: %s OS: %s Commit: %s\n", BuildTime, BuildOSUname, BuildCommit)
+	}
+}
+
 // mainNoExit implements main, but instead of doing log.Fatal or os.Exit it
 // returns error or non-zero integer status code to be passed to os.Exit by the caller.
 // Note that if error is not nil, integer code will be discarded, so it can be 0.
@@ -95,10 +104,9 @@ func Main(cfg *MainConfig) {
 // We don't want os.Exit to be inserted randomly to avoid defer cancellation.
 func mainNoExit() (int, error) {
 	if version {
-		fmt.Printf("PHP Linter\nBuilt on %s\nOS %s\nCommit %s\n", BuildTime, BuildOSUname, BuildCommit)
+		// Version is already printed. Can exit here.
 		return 0, nil
 	}
-	fmt.Printf("PHP Linter Built on:%s OS:%s Commit:%s\n", BuildTime, BuildOSUname, BuildCommit)
 
 	if pprofHost != "" {
 		go http.ListenAndServe(pprofHost, nil)
