@@ -327,7 +327,7 @@ foreach ($b->create() as $item) {
 `)
 }
 
-func TestLateStaticBinding(t *testing.T) {
+func TestDerivedLateStaticBinding(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 class Base {
   /** @return static[] */
@@ -348,7 +348,51 @@ $_ = $xs[0]->onlyInDerived();
 `)
 }
 
-func TestInterfaceConstants(t *testing.T) {
+func TestStaticResolutionInsideSameClass(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	class NotA {
+		/** @return static */
+		public static function instance() {
+			return new static;
+		}
+	}
+
+	class A {
+		/** @return int */
+		public function b() {
+			$a = new static();
+			return $a->c();
+		}
+		protected function fakeB() {
+			$a = NotA::instance();
+			return $a->c();
+		}
+		protected function instance() {
+			return new static;
+		}
+		/** @return int */
+		public function c() {
+			return 1;
+		}
+	}
+
+	class B extends A {
+		protected function derived() {}
+		protected function test() {
+			$this->instance()->derived();
+			$this->instance()->nonDerived();
+		}
+	}`)
+
+	test.Expect = []string{
+		"Call to undefined method {\\NotA}->c()",
+		"Call to undefined method {\\B}->nonDerived()",
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue1(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	interface TestInterface
 	{
@@ -378,7 +422,7 @@ func TestInheritanceLoop(t *testing.T) {
 	test.RunAndMatch()
 }
 
-func TestReturnTypes(t *testing.T) {
+func TestIssue2(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	function rand() { return 4; }
 
@@ -405,7 +449,7 @@ func TestReturnTypes(t *testing.T) {
 	}`)
 }
 
-func TestVariadic(t *testing.T) {
+func TestIssue3(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	class TestClass
 	{
@@ -431,7 +475,7 @@ func TestVariadic(t *testing.T) {
 	`)
 }
 
-func TestMagicMethods(t *testing.T) {
+func TestIssue8(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	class Magic
 	{
@@ -453,7 +497,7 @@ func TestMagicMethods(t *testing.T) {
 	}`)
 }
 
-func TestGenerator(t *testing.T) {
+func TestIssue11(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	class Generator {
 		/** send sends a message */
