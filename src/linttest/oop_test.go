@@ -497,7 +497,7 @@ func TestIssue8(t *testing.T) {
 	}`)
 }
 
-func TestGenerator(t *testing.T) {
+func TestIssue11(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	class Generator {
 		/** send sends a message */
