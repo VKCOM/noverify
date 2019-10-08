@@ -50,6 +50,10 @@ func TestSolver(t *testing.T) {
 	meta.Info.AddFunctionsNonLocked("test", fm)
 	meta.Info.AddClassesNonLocked("test", cm)
 
+	if typ := resolve(meta.WrapFunctionCall(`\my_func`)); !typesEqual(typ, `array|bool|float`) {
+		t.Errorf("My func wrong type: %+v", typ)
+	}
+
 	if typ := resolve(meta.WrapGlobal(`MC`)); !typesEqual(typ, `Memcache`) {
 		t.Errorf("Global $MC wrong: %+v", typ)
 	}
