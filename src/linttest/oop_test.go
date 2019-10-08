@@ -540,7 +540,7 @@ func TestClosureLateBinding(t *testing.T) {
 	runFilterMatch(test, "undefined")
 }
 
-func TestInterfaceInheritance(t *testing.T) {
+func TestIssue16(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 	interface DateTimeInterface {
