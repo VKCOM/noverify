@@ -8,15 +8,18 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
-// ResolveType resolves function calls, method calls and global variables
-func ResolveType(typ string, visitedMap map[string]struct{}) (result map[string]struct{}) {
+// ResolveType resolves function calls, method calls and global variables.
+//   curStaticClass is current class name (if inside the class, otherwise "")
+func ResolveType(curStaticClass, typ string, visitedMap map[string]struct{}) (result map[string]struct{}) {
 	r := resolver{visited: visitedMap}
-	return r.resolveType("", typ)
+	return r.resolveType(curStaticClass, typ)
 }
 
-func ResolveTypes(m *meta.TypesMap, visitedMap map[string]struct{}) map[string]struct{} {
+// ResolveTypes resolves function calls, method calls and global variables.
+//   curStaticClass is current class name (if inside the class, otherwise "")
+func ResolveTypes(curStaticClass string, m *meta.TypesMap, visitedMap map[string]struct{}) map[string]struct{} {
 	r := resolver{visited: visitedMap}
-	return r.resolveTypes("", m)
+	return r.resolveTypes(curStaticClass, m)
 }
 
 type resolver struct {
@@ -132,7 +135,7 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 			}
 		}
 	case meta.WBaseMethodParam:
-		return solveBaseMethodParam(typ, visitedMap, res)
+		return solveBaseMethodParam(class, typ, visitedMap, res)
 	case meta.WStaticMethodCall:
 		className, methodName := meta.UnwrapStaticMethodCall(typ)
 		info, _, ok := FindMethod(className, methodName)
@@ -154,7 +157,7 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 	return res
 }
 
-func solveBaseMethodParam(typ string, visitedMap, res map[string]struct{}) map[string]struct{} {
+func solveBaseMethodParam(curStaticClass, typ string, visitedMap, res map[string]struct{}) map[string]struct{} {
 	index, className, methodName := meta.UnwrapBaseMethodParam(typ)
 	class, ok := meta.Info.GetClass(className)
 	if ok {
@@ -169,7 +172,7 @@ func solveBaseMethodParam(typ string, visitedMap, res map[string]struct{}) map[s
 				continue
 			}
 			if len(fn.Params) > int(index) {
-				return ResolveTypes(fn.Params[index].Typ, visitedMap)
+				return ResolveTypes(curStaticClass, fn.Params[index].Typ, visitedMap)
 			}
 		}
 	}
@@ -209,7 +212,7 @@ func (r *resolver) resolveTypes(class string, m *meta.TypesMap) map[string]struc
 	return res
 }
 
-// FindMethod searches for a method in specified class. meta.Info.RLock() must be held
+// FindMethod searches for a method in specified class
 func FindMethod(className string, methodName string) (res meta.FuncInfo, implClassName string, ok bool) {
 	return findMethod(className, methodName, make(map[string]struct{}))
 }
@@ -257,16 +260,36 @@ func findMethod(className string, methodName string, visitedMap map[string]struc
 	}
 }
 
+// FindProperty searches for a property in specified class (both static and instance properties)
 func FindProperty(className string, propertyName string) (res meta.PropertyInfo, implClassName string, ok bool) {
+	return findProperty(className, propertyName, make(map[string]struct{}))
+}
+
+func findProperty(className string, propertyName string, visitedMap map[string]struct{}) (res meta.PropertyInfo, implClassName string, ok bool) {
 	for {
+		if _, ok := visitedMap[className]; ok {
+			return res, "", false
+		}
+		visitedMap[className] = struct{}{}
+
 		class, ok := meta.Info.GetClass(className)
 		if !ok {
-			return res, "", false
+			class, ok = meta.Info.GetTrait(className)
+			if !ok {
+				return res, "", false
+			}
 		}
 
 		res, ok = class.Properties[propertyName]
 		if ok {
 			return res, className, ok
+		}
+
+		for trait := range class.Traits {
+			res, implClassName, ok = findProperty(trait, propertyName, visitedMap)
+			if ok {
+				return res, implClassName, ok
+			}
 		}
 
 		if class.Parent == "" {

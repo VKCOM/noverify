@@ -6,7 +6,7 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
-func TestTraitProperties(t *testing.T) {
+func TestIssue6(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	declare(strict_types=1);
 
@@ -55,4 +55,28 @@ trait SingletonStatic {
     }
 }
 `)
+}
+
+func TestIssue183(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+    trait Mixin {
+        public $x = 10;
+    }
+
+    class MyClass {
+        use Mixin;
+
+        /** @return int */
+        public function useX() { return $this->x; }
+        /** @return int */
+        public function useY() { return $this->y; }
+    }
+`)
+
+	test.Expect = []string{
+		`Property {\MyClass}->y does not exist`,
+	}
+
+	test.RunAndMatch()
 }
