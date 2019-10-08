@@ -47,8 +47,6 @@ using === operator. See [example](/example) folder to see some examples of custo
 
 In order to install NoVerify, you will need the Go toolchain (https://golang.org/).
 
-> Optionally, you could also get PHPStorm stubs (https://github.com/JetBrains/phpstorm-stubs).
-
 Once go is installed, you need to execute the following:
 
 ```sh
@@ -57,6 +55,15 @@ $ go get -u github.com/VKCOM/noverify
 
 Your noverify binary will be located at `$GOPATH/bin/noverify`, usually this
 translates to `$HOME/go/bin/noverify`.
+
+If you have patience, consider doing these steps to get a binary with version info:
+
+```bash
+cd src/github.com/VKCOM/noverify
+make install
+```
+
+> If you want to submit an issue (like linter false positive), it's very useful to include linter version info into its description.
 
 ## Usage
 
