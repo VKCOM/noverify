@@ -449,7 +449,7 @@ func TestIssue2(t *testing.T) {
 	}`)
 }
 
-func TestVariadic(t *testing.T) {
+func TestIssue3(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	class TestClass
 	{
