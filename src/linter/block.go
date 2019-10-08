@@ -48,6 +48,9 @@ const (
 type BlockWalker struct {
 	ctx *blockContext
 
+	// inferred return types if any
+	returnTypes *meta.TypesMap
+
 	r *RootWalker
 
 	custom []BlockChecker
@@ -57,6 +60,14 @@ type BlockWalker struct {
 
 	// state
 	statements map[node.Node]struct{}
+
+	// whether a function has a return without explit expression.
+	// Required to make a decision in void vs null type selection,
+	// since "return" is the same as "return null".
+	bareReturn bool
+	// whether a function has a return with explicit expression.
+	// When can't infer precise type, can use mixed.
+	returnsValue bool
 
 	// shared state between all blocks
 	unusedVars   map[string][]node.Node
@@ -336,9 +347,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		}
 		res = b.enterClosure(s, isInstance, typ)
 	case *stmt.Return:
-		solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, s.Expr, b.ctx.customTypes).Iterate(func(t string) {
-			b.ctx.returnTypes = b.ctx.returnTypes.AppendString(t)
-		})
+		b.handleReturn(s)
 	case *stmt.Continue:
 		b.handleContinue(s)
 	case *binary.LogicalOr:
@@ -354,6 +363,20 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	}
 
 	return res
+}
+
+func (b *BlockWalker) handleReturn(ret *stmt.Return) {
+	if ret.Expr == nil {
+		// Return without explicit return value.
+		b.bareReturn = true
+		return
+	}
+	b.returnsValue = true
+
+	typ := solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, ret.Expr, b.ctx.customTypes)
+	typ.Iterate(func(t string) {
+		b.returnTypes = b.returnTypes.AppendString(t)
+	})
 }
 
 func (b *BlockWalker) handleLogicalOr(or *binary.LogicalOr) bool {
@@ -1279,10 +1302,6 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 		})
 
 		b.maybeAddAllVars(ctx.sc, "foreach body")
-		if !ctx.returnTypes.IsEmpty() {
-			b.ctx.returnTypes = b.ctx.returnTypes.Append(ctx.returnTypes)
-		}
-
 		b.propagateFlags(ctx)
 	}
 
@@ -1313,9 +1332,6 @@ func (b *BlockWalker) handleFor(s *stmt.For) bool {
 		})
 
 		b.maybeAddAllVars(ctx.sc, "while body")
-		if !ctx.returnTypes.IsEmpty() {
-			b.ctx.returnTypes = b.ctx.returnTypes.Append(ctx.returnTypes)
-		}
 		b.propagateFlags(ctx)
 	}
 
@@ -1392,9 +1408,6 @@ func (b *BlockWalker) handleWhile(s *stmt.While) bool {
 			s.Stmt.Walk(b)
 		})
 		b.maybeAddAllVars(ctx.sc, "while body")
-		if !ctx.returnTypes.IsEmpty() {
-			b.ctx.returnTypes = b.ctx.returnTypes.Append(ctx.returnTypes)
-		}
 		b.propagateFlags(ctx)
 	}
 
@@ -1620,7 +1633,6 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 
 	for _, ctx := range contexts {
 		if ctx.exitFlags != 0 {
-			b.ctx.returnTypes = b.ctx.returnTypes.Append(ctx.returnTypes)
 			continue
 		}
 
@@ -1764,7 +1776,6 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 
 		cleanFlags := ctx.exitFlags & (^breakFlags)
 		if cleanFlags != 0 {
-			b.ctx.returnTypes = b.ctx.returnTypes.Append(ctx.returnTypes)
 			continue
 		}
 

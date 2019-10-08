@@ -21,6 +21,83 @@ import (
 // TODO(quasilyte): better handling of an `empty_array` type.
 // Now it's resolved to `array` for expressions that have multiple empty_array.
 
+func TestExprTypeFixes(t *testing.T) {
+	tests := []exprTypeTest{
+		{`alias_double()`, `float`},
+		{`alias_real()`, `float`},
+		{`alias_integer()`, `int`},
+		{`alias_long()`, `int`},
+		{`alias_boolean()`, `bool`},
+		{`untyped_array()`, `array`},
+		{`dash()`, `mixed`},
+		{`array1()`, `int[]`},
+		{`array2()`, `int[][]`},
+	}
+
+	global := `<?php
+/** @return real */
+function alias_real() {}
+
+/** @return double */
+function alias_double() {}
+
+/** @return integer */
+function alias_integer() {}
+
+/** @return long */
+function alias_long() {}
+
+/** @return boolean */
+function alias_boolean() {}
+
+/** @return [] */
+function untyped_array() {}
+
+/** @return - some result */
+function dash() {}
+
+/** @return []int */
+function array1() {}
+
+/** @return [][]int */
+function array2() {}
+`
+
+	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
+}
+
+func TestExprTypeVoid(t *testing.T) {
+	tests := []exprTypeTest{
+		{`void_func1()`, `void`},
+		{`void_func2()`, `void`},
+		{`void_func3()`, `void`},
+		{`$foo->voidMeth1()`, `void`},
+		{`$foo->voidMeth2()`, `void`},
+		{`$foo->voidMeth3()`, `void`},
+	}
+
+	global := `<?php
+function void_func1() {
+  echo 123;
+}
+
+function void_func2() { return; }
+
+/** @return void */
+function void_func3() {}
+
+class Foo {
+  public function voidMeth1() {}
+  public function voidMeth2() { return; }
+
+  /** @return void */
+  public function voidMeth3() {}
+}
+`
+	local := `$foo = new Foo();`
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
 func TestExprTypeArrayAccess(t *testing.T) {
 	tests := []exprTypeTest{
 		{`$ints[0]`, `int`},
@@ -81,7 +158,7 @@ class Foo {
 
 func TestExprTypeMalformedPhpdoc(t *testing.T) {
 	tests := []exprTypeTest{
-		{`return_mixed(0)`, ``},
+		{`return_mixed(0)`, `mixed`},
 		{`return_int(0)`, `int`},
 	}
 
@@ -328,6 +405,8 @@ func TestExprTypeSimple(t *testing.T) {
 		{`[]`, "array"},
 		{`[1, "a", 4.5]`, "array"},
 
+		{`1+5<<2`, `int`},
+
 		{`$int`, "int"},
 		{`$float`, "float"},
 		{`$string`, "string"},
@@ -463,6 +542,28 @@ func TestExprTypeFunction(t *testing.T) {
 		{`get_array()`, `array`},
 		{`get_array_or_null()`, `array|null`},
 		{`get_null_or_array()`, `array|null`},
+		{`try_catch1()`, `bool|int|string`},
+		{`try_finally1()`, `bool|int|string`},
+		{`ifelse1()`, `bool|int|string`},
+		{`ifelse2()`, `bool|int|string`},
+		{`ifelse3()`, `bool|int|string`},
+		{`switch1()`, `bool|int|string`},
+		{`switch2()`, `bool|int|string`},
+		{`switch3()`, `bool|string`},
+		{`throw1()`, `int`},
+		{`throw2()`, `bool|int`},
+		{`foreach1()`, `int|string`},
+		{`foreach2()`, `int|string`},
+		{`undefined_type1()`, `mixed`},
+		{`undefined_type2()`, `mixed`},
+		{`untyped_param()`, `mixed`},
+		{`bare_ret1()`, `int|null`},
+		{`bare_ret2()`, `int|null`},
+		{`recur1()`, `int|string`},
+		{`recur2()`, `int|string`},
+		{`recur3()`, `mixed`},
+		{`recur4()`, `mixed`},
+		{`recur5()`, `mixed`},
 	}
 
 	global := `<?php
@@ -471,11 +572,160 @@ define('null', 0);
 
 class Foo {}
 
+function recur1($cond) {
+  if ($cond) { return 0; }
+  return recur2($cond);
+}
+
+function recur2($cond) {
+  if ($cond) { return ""; }
+  return recur1($cond);
+}
+
+function recur3() { return recur4(); }
+function recur4() { return recur5(); }
+function recur5() { return recur3(); }
+
+function bare_ret1($cond) {
+  if ($cond) { return; }
+  return 10;
+}
+
+function bare_ret2($cond) {
+  if ($cond) { return 10; }
+  return;
+}
+
+function untyped_param($x) { return $x; }
+
+function undefined_type1() {
+  $x = unknown_func();
+  return $x;
+}
+
+function undefined_type2() {
+  return $x;
+}
+
+function foreach1($xs) {
+  foreach ($xs as $_) {
+    return 10;
+  }
+  return "";
+}
+
+function foreach2($xs, $cond) {
+  foreach ($xs as $_) {
+    if ($cond[0]) {
+      if ($cond[1]) {
+        return 10;
+      }
+    }
+  }
+  return "";
+}
+
+function throw1($cond) {
+  if ($cond) {
+    return 10;
+  }
+  throw new Exception();
+}
+
+function throw2($cond) {
+  if ($cond[0]) {
+    throw new Exception("");
+  } else if ($cond[1]) {
+    return 10;
+  } else if ($cond[2]) {
+    throw new Exception("");
+  } else if ($cond[3]) {
+    return false;
+  }
+  throw new Exception("");
+}
+
 function get_ints() {
 	$a = []; // "empty_array"
 	$a[0] = 1;
 	$a[1] = 2;
 	return $a; // Should be resolved to just int[]
+}
+
+function switch1($v) {
+  switch ($v) {
+  case 10:
+    return 10;
+  case 20:
+    return "";
+  default:
+    return false;
+  }
+}
+
+function switch2($v) {
+  switch ($v) {
+  case 10:
+    return 10;
+  case 20:
+    return "";
+  }
+  return false;
+}
+
+function switch3($v) {
+  switch ($v) {
+  default:
+    return "";
+  }
+  return false;
+}
+
+function ifelse1($cond) {
+  if ($cond) {
+    return 10;
+  } else if ($cond+1) {
+    return "";
+  } else {
+    return false;
+  }
+}
+
+function ifelse2($cond) {
+  if ($cond) {
+    return 10;
+  } elseif ($cond+1) {
+    return "";
+  } else {
+    return false;
+  }
+}
+
+function ifelse3($cond) {
+  if ($cond) {
+    return 10;
+  } elseif ($cond+1) {
+    return "";
+  }
+  return false;
+}
+
+function try_catch1() {
+  try {
+    return 10;
+  } catch (Exception $_) {
+    return "";
+  }
+  return false;
+}
+
+function try_finally1() {
+  try {
+    return 10;
+  } finally {
+    return "";
+  }
+  return false;
 }
 
 /** @return float[] */
@@ -522,7 +772,7 @@ namespace NS {
 		public static $instances;
 	}
 }`
-	local := `$test = new \NS\Test();`
+	local := `$test = new \NS\Test(); $derived = new Derived();`
 	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
 }
 
@@ -561,9 +811,18 @@ func TestExprTypeOverride(t *testing.T) {
 	tests := []exprTypeTest{
 		{`array_shift($ints)`, "int"},
 		{`array_slice($ints, 0, 2)`, "int[]"},
+		{`array_map(function($x) { return $x; }, $ints)`, `array`},
 	}
 
 	stubs := `<?php
+/**
+ * @param callable $callback
+ * @param array $arr1
+ * @param array $_ [optional]
+ * @return array an array containing all the elements of arr1
+ */
+function array_map($callback, array $arr1, array $_ = null) { }
+
 /**
  * @param array $array
  * @param int $offset

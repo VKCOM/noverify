@@ -861,7 +861,7 @@ $_ = $bad1;
 		`Undefined variable: bad1`, // At global scope
 		`Undefined variable: bad2`,
 		`Undefined variable: bad3`,
-		`Property {}->x does not exist`,
+		`Property {mixed}->x does not exist`,
 		`Variable might have not been defined: y1`,
 	}
 	test.RunAndMatch()
