@@ -253,7 +253,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 			return true
 		}
 
-		c, ok := meta.Info.GetClass(className)
+		c, ok := meta.Info.GetClassOrTrait(className)
 
 		if !ok {
 			return true
@@ -277,7 +277,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 			return true
 		}
 
-		c, ok := meta.Info.GetClass(className)
+		c, ok := meta.Info.GetClassOrTrait(className)
 
 		if !ok {
 			return true

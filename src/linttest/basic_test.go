@@ -1180,6 +1180,18 @@ function f() {
 	runFilterMatch(test, "undefined")
 }
 
+func TestAssignByRef(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+	function a() {
+	  $a = 1;
+	  $b = &$a;
+	  $b = 2;
+	  return $a;
+	}
+
+	echo a();`)
+}
+
 func runFilterMatch(test *linttest.Suite, name string) {
 	test.Match(filterReports(name, test.RunLinter()))
 }
