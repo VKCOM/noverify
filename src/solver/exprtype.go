@@ -47,7 +47,7 @@ func ExprTypeCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, custo
 			}
 		}()
 
-		for kk := range ResolveType(k, visitedMap) {
+		for kk := range ResolveType(cs.CurrentClass, k, visitedMap) {
 			newMap[kk] = struct{}{}
 		}
 	})

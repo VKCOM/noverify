@@ -1817,6 +1817,7 @@ func (b *BlockWalker) handleAssignReference(a *assign.Reference) bool {
 		return false
 	case *expr.Variable:
 		b.addVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.st, a.Expression), "assign", true)
+		b.addNonLocalVar(v)
 	case *expr.List:
 		for _, item := range v.Items {
 			arrayItem, ok := item.(*expr.ArrayItem)
