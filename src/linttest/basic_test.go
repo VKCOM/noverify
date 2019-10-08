@@ -824,7 +824,7 @@ if (isset($x)) {
 }`)
 }
 
-func TestIssetShortCircuit(t *testing.T) {
+func TestIssue128(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 class Value {
