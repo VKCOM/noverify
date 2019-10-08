@@ -478,7 +478,14 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 		prematureExitFlags = cleanFlags
 	}
 
-	return b.ctx.returnTypes, prematureExitFlags
+	switch {
+	case b.bareReturn && b.returnsValue:
+		b.returnTypes = b.returnTypes.AppendString("null")
+	case b.returnTypes.Len() == 0 && b.returnsValue:
+		b.returnTypes = meta.MixedType
+	}
+
+	return b.returnTypes, prematureExitFlags
 }
 
 func (d *RootWalker) getElementPos(n node.Node) meta.ElementPosition {
@@ -739,12 +746,14 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	d.addScope(meth, sc)
 
 	// TODO: handle duplicate method
-	typ := meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType).Immutable()
-
+	returnType := meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType)
+	if returnType.Len() == 0 {
+		returnType = meta.VoidType
+	}
 	class.Methods[nm] = meta.FuncInfo{
 		Params:       params,
 		Pos:          d.getElementPos(meth),
-		Typ:          typ,
+		Typ:          returnType.Immutable(),
 		MinParamsCnt: minParamsCnt,
 		AccessLevel:  modif.accessLevel,
 		Static:       modif.static,
@@ -754,7 +763,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 
 	if nm == "getIterator" && meta.IsIndexingComplete() && solver.Implements(d.st.CurrentClass, `\IteratorAggregate`) {
 		implementsTraversable := false
-		typ.Iterate(func(typ string) {
+		returnType.Iterate(func(typ string) {
 			if implementsTraversable {
 				return
 			}
@@ -822,10 +831,11 @@ func (d *RootWalker) parsePHPDocClass(doc string) classPhpDocParseResult {
 			continue
 		}
 
-		typ := part.Params[0]
+		// TODO(quasilyte): do same type/var reordering as in @param handling
+		// so we can fix wrong annotation and get types info from it.
+		typ, err := d.fixPHPDocType(part.Params[0])
 		name := part.Params[1]
-
-		if err := d.checkPHPDocType(typ); err != "" {
+		if err != "" {
 			result.errs.pushType("%s on line %d", err, part.Line)
 			continue
 		}
@@ -916,32 +926,9 @@ func (d *RootWalker) maybeAddNamespace(typStr string) string {
 	return strings.Join(classNames, "|")
 }
 
-func (d *RootWalker) checkPHPDocType(typ string) string {
-	// TODO(quasilyte): might want to parse type and then check that none of
-	// the type parts match that.
-
-	// []T -> T[]
-	if strings.HasPrefix(typ, "[]") {
-		return fmt.Sprintf("%s type syntax: use [] after the type, e.g. T[]", typ)
-	}
-
-	// Check commonly misspelled types and other unfortunate cases.
-	switch typ {
-	case "boolean":
-		return "use bool type instead of boolean"
-	case "double", "real":
-		return "use float type instead of " + typ
-	case "long", "integer":
-		return "use int type instead of " + typ
-	case "-":
-		// This happened when either of those formats is used:
-		// `* @param $name - description`
-		// `* @param - $name description`
-		// We don't want to make "-" slip as a type name.
-		return "expected a type, found '-'; if you want to express 'any' type, use 'mixed'"
-	}
-
-	return ""
+func (d *RootWalker) fixPHPDocType(typ string) (fixed, notice string) {
+	var fixer phpdocTypeFixer
+	return fixer.Fix(typ)
 }
 
 type phpDocParseResult struct {
@@ -972,10 +959,9 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 		}
 
 		if part.Name == "return" && len(part.Params) >= 1 {
-			typ := part.Params[0]
-			if err := d.checkPHPDocType(typ); err != "" {
+			typ, err := d.fixPHPDocType(part.Params[0])
+			if err != "" {
 				result.errs.pushType("%s on line %d", err, part.Line)
-				continue
 			}
 			result.returnType = meta.NewTypesMap(d.maybeAddNamespace(typ))
 			continue
@@ -993,7 +979,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 		if len(part.Params) >= 2 {
 			variable = part.Params[1]
 		} else {
-			// Either type of var name is missing.
+			// Either type or var name is missing.
 			if strings.HasPrefix(typ, "$") {
 				result.errs.pushLint("malformed @param %s tag (maybe type is missing?) on line %d",
 					part.Params[0], part.Line)
@@ -1021,7 +1007,8 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 		curParam++
 
 		var param phpDocParamEl
-		if err := d.checkPHPDocType(typ); err != "" {
+		typ, err := d.fixPHPDocType(typ)
+		if err != "" {
 			result.errs.pushType("%s on line %d", err, part.Line)
 		} else {
 			param.typ = meta.NewTypesMap(d.maybeAddNamespace(typ))
@@ -1130,10 +1117,14 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	actualReturnTypes, exitFlags := d.handleFuncStmts(params, nil, fun.Stmts, sc)
 	d.addScope(fun, sc)
 
+	returnType := meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType)
+	if returnType.Len() == 0 {
+		returnType = meta.VoidType
+	}
 	d.meta.Functions[nm] = meta.FuncInfo{
 		Params:       params,
 		Pos:          d.getElementPos(fun),
-		Typ:          meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType).Immutable(),
+		Typ:          returnType.Immutable(),
 		MinParamsCnt: minParamsCnt,
 		ExitFlags:    exitFlags,
 		Doc:          doc.info,

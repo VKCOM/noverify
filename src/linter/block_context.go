@@ -14,9 +14,6 @@ type blockContext struct {
 	exitFlags         int // if block always breaks code flow then there will be exitFlags
 	containsExitFlags int // if block sometimes breaks code flow then there will be containsExitFlags
 
-	// inferred return types if any
-	returnTypes *meta.TypesMap
-
 	deadCodeReported bool
 
 	// Fields below should be copied during context cloning.
