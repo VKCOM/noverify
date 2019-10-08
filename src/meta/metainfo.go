@@ -85,6 +85,15 @@ func (i *info) GetTrait(nm string) (res ClassInfo, ok bool) {
 	return res, ok
 }
 
+func (i *info) GetClassOrTrait(nm string) (res ClassInfo, ok bool) {
+	res, ok = i.allClasses[nm]
+	if ok {
+		return res, true
+	}
+	res, ok = i.allTraits[nm]
+	return res, ok
+}
+
 func (i *info) NumClasses() int {
 	return len(i.allClasses)
 }
