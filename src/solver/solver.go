@@ -8,9 +8,19 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+var sharedMixedType = map[string]struct{}{"mixed": {}}
+
+func mixedType() map[string]struct{} {
+	if len(sharedMixedType) != 1 {
+		// At least until we're 100% sure this is safe.
+		panic(fmt.Sprintf("mixed type map was modified: %v", sharedMixedType))
+	}
+	return sharedMixedType
+}
+
 // ResolveType resolves function calls, method calls and global variables.
 //   curStaticClass is current class name (if inside the class, otherwise "")
-func ResolveType(curStaticClass, typ string, visitedMap map[string]struct{}) (result map[string]struct{}) {
+func resolveType(curStaticClass, typ string, visitedMap map[string]struct{}) (result map[string]struct{}) {
 	r := resolver{visited: visitedMap}
 	return r.resolveType(curStaticClass, typ)
 }
@@ -194,6 +204,10 @@ func (r *resolver) resolveTypes(class string, m *meta.TypesMap) map[string]struc
 			res[tt] = struct{}{}
 		}
 	})
+
+	if len(res) == 0 {
+		return mixedType()
+	}
 
 	if _, ok := res["empty_array"]; ok {
 		delete(res, "empty_array")

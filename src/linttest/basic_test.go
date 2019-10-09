@@ -735,7 +735,7 @@ func TestEmptyVar(t *testing.T) {
 	test.RunAndMatch()
 }
 
-func TestIssetVarVar4(t *testing.T) {
+func TestIssue26_4(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 	function issetVarVar() {
@@ -750,7 +750,7 @@ func TestIssetVarVar4(t *testing.T) {
 	test.RunAndMatch()
 }
 
-func TestIssetVarVar3(t *testing.T) {
+func TestIssue26_3(t *testing.T) {
 	// Test that irrelevant isset of variable-variable doesn't affect
 	// other variables. Also warn for undefined variable in $$x.
 	test := linttest.NewSuite(t)
@@ -767,7 +767,7 @@ func TestIssetVarVar3(t *testing.T) {
 	test.RunAndMatch()
 }
 
-func TestIssetVarVar2(t *testing.T) {
+func TestIssue26_2(t *testing.T) {
 	// Test that if $x is defined, it doesn't make $$x defined.
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -781,7 +781,7 @@ func TestIssetVarVar2(t *testing.T) {
 	test.RunAndMatch()
 }
 
-func TestIssetVarVar1(t *testing.T) {
+func TestIssue26_1(t *testing.T) {
 	// Test that defined variable variable don't cause "undefined" warnings.
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -861,7 +861,7 @@ $_ = $bad1;
 		`Undefined variable: bad1`, // At global scope
 		`Undefined variable: bad2`,
 		`Undefined variable: bad3`,
-		`Property {}->x does not exist`,
+		`Property {mixed}->x does not exist`,
 		`Variable might have not been defined: y1`,
 	}
 	test.RunAndMatch()

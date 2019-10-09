@@ -10,6 +10,12 @@ import (
 	"strings"
 )
 
+// Preallocated and shared immutable type maps.
+var (
+	MixedType = NewTypesMap("mixed").Immutable()
+	VoidType  = NewTypesMap("void").Immutable()
+)
+
 const (
 	// Constants for lazy ("wrap") types:
 	// Here "<string>" means 2 bytes of length followed by string contents.

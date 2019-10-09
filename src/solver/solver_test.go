@@ -9,7 +9,7 @@ import (
 )
 
 func resolve(typ string) map[string]struct{} {
-	return ResolveType("", typ, make(map[string]struct{}))
+	return resolveType("", typ, make(map[string]struct{}))
 }
 
 func makeTyp(typ string) map[string]struct{} {
