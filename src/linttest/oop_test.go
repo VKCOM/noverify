@@ -535,7 +535,7 @@ func TestClosureLateBinding(t *testing.T) {
 	`)
 	test.Expect = []string{
 		"Undefined variable: a",
-		"Call to undefined method {}->method()",
+		"Call to undefined method {mixed}->method()",
 	}
 	runFilterMatch(test, "undefined")
 }
@@ -574,7 +574,7 @@ func TestIssue16(t *testing.T) {
 	}`)
 	test.Expect = []string{
 		`Call to undefined method {\TestExInterface}->nonexistent()`,
-		"Call to undefined method {}->format()",
+		"Call to undefined method {mixed}->format()",
 		"Class constant \\TestExInterface::TEST2 does not exist",
 	}
 	runFilterMatch(test, "undefined")
@@ -814,7 +814,7 @@ func TestInstanceOf(t *testing.T) {
 		}
 	}`)
 	test.Expect = []string{
-		`Call to undefined method {}->get2()`,
+		`Call to undefined method {void}->get2()`,
 		`Call to undefined method {\Element}->callUndefinedMethod()`,
 	}
 	runFilterMatch(test, "undefined")

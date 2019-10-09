@@ -26,13 +26,6 @@ import (
 //
 //go:generate go-bindata -pkg stubs -nometadata -o ./stubs/phpstorm_stubs.go -ignore=\.idea -ignore=\.git ./stubs/phpstorm-stubs/...
 
-// Build* заполняются при сборке go build -ldflags
-var (
-	BuildTime    string
-	BuildOSUname string
-	BuildCommit  string
-)
-
 func isCritical(r *linter.Report) bool {
 	if len(reportsCriticalSet) != 0 {
 		return reportsCriticalSet[r.CheckName()]
@@ -95,10 +88,9 @@ func Main(cfg *MainConfig) {
 // We don't want os.Exit to be inserted randomly to avoid defer cancellation.
 func mainNoExit() (int, error) {
 	if version {
-		fmt.Printf("PHP Linter\nBuilt on %s\nOS %s\nCommit %s\n", BuildTime, BuildOSUname, BuildCommit)
+		// Version is already printed. Can exit here.
 		return 0, nil
 	}
-	fmt.Printf("PHP Linter Built on:%s OS:%s Commit:%s\n", BuildTime, BuildOSUname, BuildCommit)
 
 	if pprofHost != "" {
 		go http.ListenAndServe(pprofHost, nil)

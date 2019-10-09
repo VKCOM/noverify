@@ -47,11 +47,14 @@ func ExprTypeCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, custo
 			}
 		}()
 
-		for kk := range ResolveType(cs.CurrentClass, k, visitedMap) {
+		for kk := range resolveType(cs.CurrentClass, k, visitedMap) {
 			newMap[kk] = struct{}{}
 		}
 	})
 
+	if len(newMap) == 0 {
+		return meta.MixedType
+	}
 	return meta.NewTypesMapFromMap(newMap)
 }
 
@@ -170,8 +173,7 @@ func ExprTypeLocal(sc *meta.Scope, cs *meta.ClassParseState, n node.Node) *meta.
 	return ExprTypeLocalCustom(sc, cs, n, nil)
 }
 
-// ExprTypeLocalCustom is ExprTypeLocal that allows to specify custom types
-func ExprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, custom []CustomType) *meta.TypesMap {
+func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, custom []CustomType) *meta.TypesMap {
 	if n == nil || sc == nil {
 		return &meta.TypesMap{}
 	}
@@ -322,7 +324,7 @@ func ExprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 		return meta.NewTypesMap("bool")
 	case *cast.Double:
 		return meta.NewTypesMap("float")
-	case *cast.Int:
+	case *cast.Int, *binary.ShiftLeft, *binary.ShiftRight:
 		return meta.NewTypesMap("int")
 	case *cast.String:
 		return meta.NewTypesMap("string")
@@ -377,4 +379,13 @@ func ExprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 	}
 
 	return &meta.TypesMap{}
+}
+
+// ExprTypeLocalCustom is ExprTypeLocal that allows to specify custom types
+func ExprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, custom []CustomType) *meta.TypesMap {
+	res := exprTypeLocalCustom(sc, cs, n, custom)
+	if res.Len() == 0 {
+		return meta.MixedType
+	}
+	return res
 }
