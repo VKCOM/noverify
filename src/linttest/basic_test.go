@@ -12,7 +12,7 @@ import (
 
 func TestCallStaticParent(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.AddFile(`<?ph
+	test.AddFile(`<?php
 	class Base { protected function f() { return 1; } }
 	class Derived extends Base {
 		private function g() {
