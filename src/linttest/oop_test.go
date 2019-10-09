@@ -392,23 +392,6 @@ func TestStaticResolutionInsideSameClass(t *testing.T) {
 	test.RunAndMatch()
 }
 
-func TestIssue1(t *testing.T) {
-	linttest.SimpleNegativeTest(t, `<?php
-	interface TestInterface
-	{
-		const TEST = '1';
-	}
-
-	class TestClass implements TestInterface
-	{
-		/** get returns interface constant */
-		public function get()
-		{
-			return self::TEST;
-		}
-	}`)
-}
-
 func TestInheritanceLoop(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -420,97 +403,6 @@ func TestInheritanceLoop(t *testing.T) {
 	}`)
 	test.Expect = []string{"Class constant \\A::SOMETHING does not exist"}
 	test.RunAndMatch()
-}
-
-func TestIssue2(t *testing.T) {
-	linttest.SimpleNegativeTest(t, `<?php
-	function rand() { return 4; }
-
-	interface DateTimeInterface {
-		public function format($fmt);
-	}
-
-	interface TestClassInterface
-	{
-		public function getCreatedAt(): \DateTimeInterface;
-	}
-
-	function test(): \DateTimeInterface {
-		return 0; // this should return error as well :)
-	}
-
-	function a(TestClassInterface $testClass): string
-	{
-		if (rand()) {
-			return $testClass->getCreatedAt()->format('U');
-		} else {
-			return test()->format('U');
-		}
-	}`)
-}
-
-func TestIssue3(t *testing.T) {
-	linttest.SimpleNegativeTest(t, `<?php
-	class TestClass
-	{
-		/** get always returns "." */
-		public function get(): string
-		{
-			return '.';
-		}
-	}
-
-	function a(TestClass ...$testClasses): string
-	{
-		$result = '';
-		foreach ($testClasses as $testClass) {
-			$result .= $testClass->get();
-		}
-
-		return $result;
-	}
-
-	echo a(new TestClass()), "\n";
-	echo a(); // OK to call with 0 arguments.
-	`)
-}
-
-func TestIssue8(t *testing.T) {
-	linttest.SimpleNegativeTest(t, `<?php
-	class Magic
-	{
-		public function __get();
-		public function __set();
-		public function __call();
-	}
-
-	class MagicStatic {
-		public static function __callStatic();
-	}
-
-	function test() {
-		$m = new Magic;
-		echo $m->some_property;
-		$m->another_property = 3;
-		$m->call_something();
-		MagicStatic::callSomethingStatic();
-	}`)
-}
-
-func TestIssue11(t *testing.T) {
-	linttest.SimpleNegativeTest(t, `<?php
-	class Generator {
-		/** send sends a message */
-		public function send();
-	}
-
-	function a($a): \Generator
-	{
-		yield $a;
-	}
-
-	a(42)->send(42);
-	`)
 }
 
 func TestClosureLateBinding(t *testing.T) {
@@ -536,46 +428,6 @@ func TestClosureLateBinding(t *testing.T) {
 	test.Expect = []string{
 		"Undefined variable: a",
 		"Call to undefined method {mixed}->method()",
-	}
-	runFilterMatch(test, "undefined")
-}
-
-func TestIssue16(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-	interface DateTimeInterface {
-		public function format($fmt);
-	}
-
-	interface OtherInterface {
-		public function useless();
-	}
-
-	interface TestInterface
-	{
-		const TEST = 1;
-
-		public function getCreatedAt(): \DateTimeInterface;
-	}
-
-	interface TestExInterface extends OtherInterface, TestInterface
-	{
-	}
-
-	function a(TestExInterface $testInterface): string
-	{
-		echo TestExInterface::TEST;
-		return $testInterface->getCreatedAt()->format('U');
-	}
-
-	function b(TestExInterface $testInterface) {
-		echo TestExInterface::TEST2;
-		return $testInterface->nonexistent()->format('U');
-	}`)
-	test.Expect = []string{
-		`Call to undefined method {\TestExInterface}->nonexistent()`,
-		"Call to undefined method {mixed}->format()",
-		"Class constant \\TestExInterface::TEST2 does not exist",
 	}
 	runFilterMatch(test, "undefined")
 }
