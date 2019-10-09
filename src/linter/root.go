@@ -1012,6 +1012,11 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 			result.errs.pushType("%s on line %d", err, part.Line)
 		} else {
 			param.typ = meta.NewTypesMap(d.maybeAddNamespace(typ))
+			param.typ.Iterate(func(t string) {
+				if t == "void" {
+					result.errs.pushType("void is not a valid type for input parameter")
+				}
+			})
 		}
 		param.optional = optional
 
