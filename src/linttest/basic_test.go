@@ -325,29 +325,6 @@ function f3() {
 `)
 }
 
-func TestIssue37(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-	class Foo {
-		public $a;
-		public $b;
-	}
-
-	/**
-	 * @param Foo[] $arr
-	 */
-	function f($arr) {
-		$ads_ids = array_keys($arr);
-		foreach ($ads_ids as $num => $ad_id) {
-			if ($num + 1 < count($ads_ids)) {
-				$second_ad_id = $ads_ids[$num + 1];
-				$arr[$ad_id]->a = $arr[$second_ad_id]->b;
-			}
-		}
-	}`)
-	runFilterMatch(test, "unused")
-}
-
 func TestUnusedInVarPropFetch(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 class Foo {}
@@ -735,70 +712,6 @@ func TestEmptyVar(t *testing.T) {
 	test.RunAndMatch()
 }
 
-func TestIssue26_4(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-	function issetVarVar() {
-		if (isset($$$$x)) {
-			$_ = $$$$x; // Can't track this level of indirection
-		}
-	}`)
-	test.Expect = []string{
-		"Unknown variable variable $$$x used",
-		"Unknown variable variable $$$$x used",
-	}
-	test.RunAndMatch()
-}
-
-func TestIssue26_3(t *testing.T) {
-	// Test that irrelevant isset of variable-variable doesn't affect
-	// other variables. Also warn for undefined variable in $$x.
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-	function issetVarVar() {
-		if (isset($$x)) {
-			$_ = $$y;
-		}
-	}`)
-	test.Expect = []string{
-		"Undefined variable: x",
-		"Unknown variable variable $$y used",
-	}
-	test.RunAndMatch()
-}
-
-func TestIssue26_2(t *testing.T) {
-	// Test that if $x is defined, it doesn't make $$x defined.
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-	function issetVarVar() {
-		if (isset($x)) {
-			$_ = $x;  // $x is defined
-			$_ = $$x; // But $$x is not
-		}
-	}`)
-	test.Expect = []string{"Unknown variable variable $$x used"}
-	test.RunAndMatch()
-}
-
-func TestIssue26_1(t *testing.T) {
-	// Test that defined variable variable don't cause "undefined" warnings.
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-	function issetVarVar() {
-		$x = 'key';
-		if (isset($$x)) {
-			$_ = $x + 1;  // If $$x is isset, then $x is set as well
-			$_ = $$x + 1;
-			$_ = $y;      // Undefined
-		}
-		// After the block all vars are undefined again.
-		$_ = $x;
-	}`)
-	test.Expect = []string{"Undefined variable: y"}
-	test.RunAndMatch()
-}
-
 func TestIssetElseif1(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -822,49 +735,6 @@ if (isset($x)) {
 } else if (isset($y)) {
   echo $y;
 }`)
-}
-
-func TestIssue128(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-class Value {
-  public $x;
-}
-
-function count($arr) { return 0; }
-
-function good($v) {
-  if (isset($good) && count($good) == 1) {}
-
-  if ($v instanceof Value && $v->x) {}
-  if (isset($y) && $y instanceof Value && $y->x) {}
-}
-
-function bad1($v) {
-  if (isset($bad0) && $bad0) {}
-  $_ = $bad0; // Used outside of if body
-
-  if (count($bad1) == 1 && isset($bad1)) {}
-  if (isset($good) && count($bad2) == 1 && isset($bad2)) {}
-  if (isset($bad3) || count($bad3) == 1) {}
-
-  if ($v->x && $v instanceof Value) {}
-
-  if ($y1 instanceof Value && isset($y1) && $y1->x) {}
-}
-
-$_ = $bad1;
-`)
-	test.Expect = []string{
-		`Undefined variable: bad0`,
-		`Undefined variable: bad1`, // At local scope
-		`Undefined variable: bad1`, // At global scope
-		`Undefined variable: bad2`,
-		`Undefined variable: bad3`,
-		`Property {mixed}->x does not exist`,
-		`Variable might have not been defined: y1`,
-	}
-	test.RunAndMatch()
 }
 
 func TestUnused(t *testing.T) {
