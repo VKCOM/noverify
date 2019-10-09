@@ -21,7 +21,7 @@ func TestIssue6(t *testing.T) {
 	}`)
 }
 
-func TestTraitSelf(t *testing.T) {
+func TestIssue182(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 define('null', 0);
 
