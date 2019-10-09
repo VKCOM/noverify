@@ -23,6 +23,22 @@ func TestCallStaticParent(t *testing.T) {
 	runFilterMatch(test, "callStatic")
 }
 
+func TestVoidParam(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	/**
+	* @param void $x
+	* @param int $y
+	* @return void
+	*/
+	function f($x, $y) {}
+`)
+	test.Expect = []string{
+		`void is not a valid type for input parameter`,
+	}
+	test.RunAndMatch()
+}
+
 func TestCallStatic(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
