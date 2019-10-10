@@ -1125,11 +1125,13 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []node.Node) bool {
 		if item.Val == nil {
 			continue
 		}
+		item.Val.Walk(b)
 
 		if item.Key == nil {
 			haveImplicitKeys = true
 			continue
 		}
+		item.Key.Walk(b)
 
 		haveKeys = true
 
@@ -1160,7 +1162,7 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []node.Node) bool {
 		b.Report(arr, LevelWarning, "mixedArrayKeys", "Mixing implicit and explicit array keys")
 	}
 
-	return true
+	return false
 }
 
 func (b *BlockWalker) handleClassConstFetch(e *expr.ClassConstFetch) bool {
@@ -1223,6 +1225,11 @@ func (b *BlockWalker) handleConstFetch(e *expr.ConstFetch) bool {
 }
 
 func (b *BlockWalker) handleNew(e *expr.New) bool {
+	// Can't handle `new class() ...` yet.
+	if _, ok := e.Class.(*stmt.Class); ok {
+		return false
+	}
+
 	if !meta.IsIndexingComplete() {
 		return true
 	}
