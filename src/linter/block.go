@@ -366,10 +366,8 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		// b.d.debug(`  Statement: %T`, s)
 	}
 
-	if res {
-		for _, c := range b.custom {
-			c.AfterEnterNode(w)
-		}
+	for _, c := range b.custom {
+		c.AfterEnterNode(w)
 	}
 
 	return res
