@@ -20,7 +20,8 @@ import (
 //
 // Version log:
 //     27 - added Static field to meta.FuncInfo
-const cacheVersion = 27
+//     28 - array type parsed as mixed[]
+const cacheVersion = 28
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")
