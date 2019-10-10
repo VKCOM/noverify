@@ -34,8 +34,10 @@ func (f *phpdocTypeFixer) fix(typ string) string {
 		f.noticef("use int type instead of " + typ)
 		return "int"
 	case "[]":
-		f.noticef("[] is not a valid type, array implied")
-		return "array"
+		f.noticef("[] is not a valid type, mixed[] implied")
+		return "mixed[]"
+	case "array":
+		return "mixed[]"
 	case "-":
 		// This happens when either of these formats is used:
 		// `* @param $name - description`

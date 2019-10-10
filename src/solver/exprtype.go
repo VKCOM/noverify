@@ -95,11 +95,11 @@ func arrayType(items []node.Node) *meta.TypesMap {
 		//
 		// Should be resolved before used.
 		//
-		// We do this to simplify resolving `array|int[]` to `int[]`.
+		// We do this to simplify resolving `mixed[]|int[]` to `int[]`.
 		// If we know that an array is empty, then it's valid array
 		// for any mono-typed array, so we can just throw away "empty_array"
 		// in that case. If element type is unknown, "empty_array" is
-		// resolved into "array".
+		// resolved into "mixed[]".
 		return meta.NewTypesMap("empty_array")
 	}
 
@@ -114,7 +114,7 @@ func arrayType(items []node.Node) *meta.TypesMap {
 		}
 	}
 
-	return meta.NewTypesMap("array")
+	return meta.NewTypesMap("mixed[]")
 }
 
 func isConstantStringArray(items []node.Node) bool {
@@ -319,7 +319,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 	case *binary.Mod:
 		return binaryMathOpType(sc, cs, n.Left, n.Right, custom)
 	case *cast.Array:
-		return meta.NewTypesMap("array")
+		return meta.NewTypesMap("mixed[]")
 	case *cast.Bool:
 		return meta.NewTypesMap("bool")
 	case *cast.Double:
