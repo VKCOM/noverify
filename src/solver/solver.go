@@ -219,7 +219,7 @@ func (r *resolver) resolveTypes(class string, m *meta.TypesMap) map[string]struc
 			}
 		}
 		if !specialized {
-			res["array"] = struct{}{}
+			res["mixed[]"] = struct{}{}
 		}
 	}
 

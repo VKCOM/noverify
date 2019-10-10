@@ -178,6 +178,16 @@ func varToString(v *expr.Variable) string {
 	}
 }
 
+func (b *BlockWalker) checkRedundantCastArray(e node.Node) {
+	if !meta.IsIndexingComplete() {
+		return
+	}
+	typ := solver.ExprTypeLocal(b.ctx.sc, b.r.st, e)
+	if typ.Len() == 1 && typ.String() == "mixed[]" {
+		b.r.Report(e, LevelDoNotReject, "redundantCast", "expression already has array type")
+	}
+}
+
 func (b *BlockWalker) checkRedundantCast(e node.Node, dstType string) {
 	if !meta.IsIndexingComplete() {
 		return
@@ -231,7 +241,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *cast.String:
 		b.checkRedundantCast(s.Expr, "string")
 	case *cast.Array:
-		b.checkRedundantCast(s.Expr, "array")
+		b.checkRedundantCastArray(s.Expr)
 	case *stmt.Global:
 		for _, v := range s.Vars {
 			ev := v.(*expr.Variable)
@@ -742,7 +752,7 @@ func (b *BlockWalker) handleCallArgs(n node.Node, args []node.Node, fn meta.Func
 			a.Walk(b)
 		case *expr.ArrayDimFetch:
 			if ref {
-				b.handleDimFetchLValue(a, "call_with_ref", meta.NewTypesMap("array"))
+				b.handleDimFetchLValue(a, "call_with_ref", meta.MixedType)
 				break
 			}
 			a.Walk(b)
@@ -1815,7 +1825,7 @@ func (b *BlockWalker) handleDimFetchLValue(e *expr.ArrayDimFetch, reason string,
 		})
 		b.addVar(v, arrTyp, reason, true)
 	case *expr.ArrayDimFetch:
-		b.handleDimFetchLValue(v, reason, meta.NewTypesMap("array"))
+		b.handleDimFetchLValue(v, reason, meta.MixedType)
 	default:
 		// probably not assignable?
 		v.Walk(b)
@@ -1830,7 +1840,7 @@ func (b *BlockWalker) handleDimFetchLValue(e *expr.ArrayDimFetch, reason string,
 func (b *BlockWalker) handleAssignReference(a *assign.Reference) bool {
 	switch v := a.Variable.(type) {
 	case *expr.ArrayDimFetch:
-		b.handleDimFetchLValue(v, "assign_array", meta.NewTypesMap("array"))
+		b.handleDimFetchLValue(v, "assign_array", meta.MixedType)
 		a.Expression.Walk(b)
 		return false
 	case *expr.Variable:

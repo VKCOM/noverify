@@ -19,7 +19,38 @@ import (
 // without being noticed.
 
 // TODO(quasilyte): better handling of an `empty_array` type.
-// Now it's resolved to `array` for expressions that have multiple empty_array.
+// Now it's resolved to `mixed[]` for expressions that have multiple empty_array.
+
+func TestExprTypeRef(t *testing.T) {
+	tests := []exprTypeTest{
+		{`$v =& $ints[0]`, `mixed`},
+		{`assign_ref_dim_fetch1()`, `mixed[]`},
+		{`assign_ref_dim_fetch2()`, `mixed[]`},
+		{`assign_ref_dim_fetch3()`, `mixed[]`},
+	}
+	global := `<?php
+$ints = [1, 2];
+
+function assign_ref_dim_fetch1() {
+  global $ints;
+  $x[] =& $ints;
+  return $x;
+}
+
+function assign_ref_dim_fetch2() {
+  global $ints;
+  $x[] =& $ints[0];
+  return $x;
+}
+
+function assign_ref_dim_fetch3() {
+  global $ints;
+  $x[0][] =& $ints[0];
+  return $x;
+}
+`
+	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
+}
 
 func TestExprTypeFixes(t *testing.T) {
 	tests := []exprTypeTest{
@@ -28,7 +59,7 @@ func TestExprTypeFixes(t *testing.T) {
 		{`alias_integer()`, `int`},
 		{`alias_long()`, `int`},
 		{`alias_boolean()`, `bool`},
-		{`untyped_array()`, `array`},
+		{`untyped_array()`, `mixed[]`},
 		{`dash()`, `mixed`},
 		{`array1()`, `int[]`},
 		{`array2()`, `int[][]`},
@@ -281,7 +312,7 @@ func TestExprTypeLateStaticBinding(t *testing.T) {
 		{`$dd->getThisNoHint()`, `\Base`},
 	}
 
-	global := `
+	global := `<?php
 class Base {
   /** @return $this */
   public function getThis() { return $this; }
@@ -402,8 +433,8 @@ func TestExprTypeSimple(t *testing.T) {
 		{`""`, "string"},
 		{`(string)1`, "string"},
 
-		{`[]`, "array"},
-		{`[1, "a", 4.5]`, "array"},
+		{`[]`, "mixed[]"},
+		{`[1, "a", 4.5]`, "mixed[]"},
 
 		{`1+5<<2`, `int`},
 
@@ -425,8 +456,8 @@ $string = "123";
 
 func TestExprTypeArray(t *testing.T) {
 	tests := []exprTypeTest{
-		{`[]`, `array`}, // Should never be "empty_array" after resolving
-		{`[[]]`, `array`},
+		{`[]`, `mixed[]`}, // Should never be "empty_array" after resolving
+		{`[[]]`, `mixed[]`},
 
 		{`[1, 2]`, "int[]"},
 		{`[1.4, 3.5]`, "float[]"},
@@ -435,7 +466,7 @@ func TestExprTypeArray(t *testing.T) {
 		{`["k1" => 123, "k2" => 345]`, `int[]`},
 		{`[0 => "a", 1 => "b"]`, `string[]`},
 
-		{`[$int, $int]`, "array"}, // TODO: could be int[]
+		{`[$int, $int]`, "mixed[]"}, // TODO: could be int[]
 
 		{`$ints[0]`, "int"},
 		{`["11"][0]`, "string"},
@@ -454,9 +485,14 @@ func TestExprTypeMulti(t *testing.T) {
 		{`$cond ? 10 : "123"`, "int|string"},
 		{`$cond ? ($int_or_float ? 10 : 10.4) : (bool)1`, "int|float|bool"},
 		{`$bool_or_int`, `bool|int`},
+		{`$cond ? 10 : get_mixed(1)`, `int|mixed`},
+		{`$cond ? get_mixed(1) : 10`, `int|mixed`},
 	}
 
 	global := `<?php
+/** @return mixed */
+function get_mixed($x) { return $x; }
+
 $cond = "true";
 $int_or_float = 10;
 if ($cond) {
@@ -484,7 +520,7 @@ func TestExprTypeOps(t *testing.T) {
 		{`$int || 1`, "bool"},
 	}
 
-	global := `
+	global := `<?php
 $global_int = 10;
 $global_float = 20.5;`
 	local := `
@@ -507,7 +543,7 @@ func TestExprTypeProperty(t *testing.T) {
 		// {`$magic->int`, ""},
 	}
 
-	global := `
+	global := `<?php
 class Gopher {
   /** @var string */
   public static $name = "unnamed";
@@ -539,9 +575,9 @@ func TestExprTypeFunction(t *testing.T) {
 	tests := []exprTypeTest{
 		{`get_ints()`, `int[]`},
 		{`get_floats()`, `float[]`},
-		{`get_array()`, `array`},
-		{`get_array_or_null()`, `array|null`},
-		{`get_null_or_array()`, `array|null`},
+		{`get_array()`, `mixed[]`},
+		{`get_array_or_null()`, `mixed[]|null`},
+		{`get_null_or_array()`, `mixed[]|null`},
 		{`try_catch1()`, `bool|int|string`},
 		{`try_finally1()`, `bool|int|string`},
 		{`ifelse1()`, `bool|int|string`},
@@ -564,6 +600,12 @@ func TestExprTypeFunction(t *testing.T) {
 		{`recur3()`, `mixed`},
 		{`recur4()`, `mixed`},
 		{`recur5()`, `mixed`},
+		{`mixed_array()`, `mixed[]`},
+		{`mixed_or_ints1()`, `mixed[]|int[]`},
+		{`mixed_or_ints2()`, `mixed[]|int[]`},
+		{`mixed_array()[1]`, `mixed`},
+		{`mixed_or_ints1()[1]`, `mixed|int`},
+		{`mixed_or_ints2()[1]`, `mixed|int`},
 	}
 
 	global := `<?php
@@ -571,6 +613,25 @@ function define($name, $value) {}
 define('null', 0);
 
 class Foo {}
+
+function mixed_array($x) {
+  return [$x, 1, 2];
+}
+
+function mixed_or_ints1($x) {
+  if ($x) {
+    return mixed_array($x);
+  }
+  return [0, 0];
+}
+
+function mixed_or_ints2($x) {
+  $a = array(0, 0);
+  if ($x) {
+    $a = mixed_array($x);
+  }
+  return $a;
+}
 
 function recur1($cond) {
   if ($cond) { return 0; }
@@ -811,7 +872,7 @@ func TestExprTypeOverride(t *testing.T) {
 	tests := []exprTypeTest{
 		{`array_shift($ints)`, "int"},
 		{`array_slice($ints, 0, 2)`, "int[]"},
-		{`array_map(function($x) { return $x; }, $ints)`, `array`},
+		{`array_map(function($x) { return $x; }, $ints)`, `mixed[]`},
 	}
 
 	stubs := `<?php
@@ -859,12 +920,17 @@ func runExprTypeTest(t *testing.T, ctx *exprTypeTestContext, tests []exprTypeTes
 	}
 	var gw globalsWalker
 	if ctx.global != "" {
-		root, _ := linttest.ParseTestFile(t, "exprtype_global.php", "<?php\n"+ctx.global)
+		if !strings.HasPrefix(ctx.global, "<?php") {
+			t.Error("missing <?php tag in global PHP code snippet")
+			return
+		}
+		root, _ := linttest.ParseTestFile(t, "exprtype_global.php", ctx.global)
 		root.Walk(&gw)
 	}
 	sources := exprTypeSources(ctx, tests, gw.globals)
 	linttest.ParseTestFile(t, "exprtype.php", sources)
 	meta.SetIndexingComplete(true)
+	linttest.ParseTestFile(t, "exprtype.php", sources)
 
 	for i, test := range tests {
 		fn, ok := meta.Info.GetFunction(fmt.Sprintf("\\f%d", i))
