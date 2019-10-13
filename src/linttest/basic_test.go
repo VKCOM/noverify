@@ -276,7 +276,7 @@ $_ = mt_rand(1, 2);    // OK
 $_ = mt_rand(1, 2, 3); // Not OK
 }
 
-function mt_rand($x = 0, $y = 0) {}`)
+function mt_rand($x = 0, $y = 0) { return 1; }`)
 	test.Expect = []string{
 		`mt_rand expects 0 or 2 args`,
 		`mt_rand expects 0 or 2 args`,
