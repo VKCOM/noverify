@@ -847,7 +847,7 @@ func (d *RootWalker) parsePHPDocClass(doc string) classPhpDocParseResult {
 		}
 
 		if len(part.Params) >= 2 && strings.HasPrefix(typ, "$") && !strings.HasPrefix(name, "$") {
-			result.errs.pushLint("non-canonical order of variable and type on line %d", part.Line)
+			result.errs.pushLint("non-canonical order of name and type on line %d", part.Line)
 			name, typ = typ, name
 		}
 
