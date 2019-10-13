@@ -74,6 +74,21 @@ func (m TypesMap) Len() int {
 	return len(m.m)
 }
 
+// IsInt checks if map contains only int type
+func (m TypesMap) IsInt() bool {
+	return m.Is("int")
+}
+
+// IsString checks if map contains only string type
+func (m TypesMap) IsString() bool {
+	return m.Is("string")
+}
+
+// IsVoid checks if map only contains void type
+func (m TypesMap) IsVoid() bool {
+	return m.Is("void")
+}
+
 // Is reports whether m contains exactly one specified type.
 func (m TypesMap) Is(typ string) bool {
 	if m.Len() != 1 {

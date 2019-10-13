@@ -204,6 +204,21 @@ func TestCallStaticParent(t *testing.T) {
 	runFilterMatch(test, "callStatic")
 }
 
+func TestVoidResultUsage(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	/**
+	* @return void
+	*/
+	function f() {}
+	$_ = f();
+`)
+	test.Expect = []string{
+		`void function result used`,
+	}
+	test.RunAndMatch()
+}
+
 func TestVoidParam(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

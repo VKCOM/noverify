@@ -173,7 +173,6 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		b.handleBitwiseAnd(s)
 	case *binary.BitwiseOr:
 		b.handleBitwiseOr(s)
-
 	case *cast.Double:
 		b.checkRedundantCast(s.Expr, "float")
 	case *cast.Int:
@@ -2025,4 +2024,8 @@ func (b *BlockWalker) caseHasFallthroughComment(n node.Node) bool {
 
 func (b *BlockWalker) isBool(n node.Node) bool {
 	return solver.ExprType(b.r.scope(), b.r.st, n).Is("bool")
+}
+
+func (b *BlockWalker) isVoid(n node.Node) bool {
+	return solver.ExprType(b.r.Scope(), b.r.st, n).IsVoid()
 }
