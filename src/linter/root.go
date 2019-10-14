@@ -831,10 +831,27 @@ func (d *RootWalker) parsePHPDocClass(doc string) classPhpDocParseResult {
 			continue
 		}
 
-		// TODO(quasilyte): do same type/var reordering as in @param handling
-		// so we can fix wrong annotation and get types info from it.
-		typ, err := d.fixPHPDocType(part.Params[0])
-		name := part.Params[1]
+		typ := part.Params[0]
+		var name string
+		if len(part.Params) >= 2 {
+			name = part.Params[1]
+		} else {
+			// Either type or var name is missing.
+			if strings.HasPrefix(typ, "$") {
+				result.errs.pushLint("malformed @property %s tag (maybe type is missing?) on line %d",
+					part.Params[0], part.Line)
+				continue
+			} else {
+				result.errs.pushLint("malformed @property tag (maybe field name is missing?) on line %d", part.Line)
+			}
+		}
+
+		if len(part.Params) >= 2 && strings.HasPrefix(typ, "$") && !strings.HasPrefix(name, "$") {
+			result.errs.pushLint("non-canonical order of name and type on line %d", part.Line)
+			name, typ = typ, name
+		}
+
+		typ, err := d.fixPHPDocType(typ)
 		if err != "" {
 			result.errs.pushType("%s on line %d", err, part.Line)
 			continue
