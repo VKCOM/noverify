@@ -204,7 +204,7 @@ func TestCallStaticParent(t *testing.T) {
 	runFilterMatch(test, "callStatic")
 }
 
-func TestVoidResultUsage(t *testing.T) {
+func TestVoidResultUsedInAssignment(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 	/**
@@ -214,6 +214,57 @@ func TestVoidResultUsage(t *testing.T) {
 	$_ = f();
 `)
 	test.Expect = []string{
+		`void function result used`,
+	}
+	test.RunAndMatch()
+}
+
+func TestVoidResultUsedInBinary(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	/**
+	* @return void
+	*/
+	function f() {}
+
+	f() & 1;
+	f() | 1;
+	f() ^ 1;
+	//f() && true; // skipped due to "undefined: Use true instead of true" report
+	//f() || true;
+	//f() xor true;
+	f() + 1;
+	f() - 1;
+	f() * 1;
+	f() / 1;
+	f() % 2;
+	f() ** 2;
+	f() == 1;
+	f() != 1;
+	f() === 1;
+	f() !== 1;
+	f() < 1;
+	f() <= 1;
+	f() > 1;
+	f() >= 1;
+`)
+	test.Expect = []string{
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
 		`void function result used`,
 	}
 	test.RunAndMatch()
