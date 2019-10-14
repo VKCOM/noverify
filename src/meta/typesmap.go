@@ -320,26 +320,12 @@ func (m *TypesMap) Len() int {
 	return len(m.m)
 }
 
-// IsInt checks if map only contains int type
+// IsInt checks if map contains only int type
 func (m *TypesMap) IsInt() bool {
-	if m == nil {
-		return false
-	}
-
-	if len(m.m) != 1 {
-		return false
-	}
-
-	_, ok := m.m["int"]
-	if ok {
-		return true
-	}
-
-	_, ok = m.m["integer"]
-	return ok
+	return m.Is("int") || m.Is("integer")
 }
 
-// IsString checks if map only contains int type
+// IsString checks if map contains only string type
 func (m *TypesMap) IsString() bool {
 	return m.Is("string")
 }
