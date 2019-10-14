@@ -69,6 +69,11 @@ func (m TypesMap) IsEmpty() bool {
 	return len(m.m) == 0
 }
 
+// Equals check if two typesmaps are the same
+func (m *TypesMap) Equals(m2 *TypesMap) bool {
+	return m.String() == m2.String()
+}
+
 // Len returns number of different types in map
 func (m TypesMap) Len() int {
 	return len(m.m)
@@ -96,6 +101,20 @@ func (m TypesMap) IsArray() bool {
 		}
 	}
 	return false
+}
+
+// IsArrayOf checks if map contains only array of given type
+func (m *TypesMap) IsArrayOf(typ string) bool {
+	if m == nil {
+		return false
+	}
+
+	if len(m.m) != 1 {
+		return false
+	}
+
+	_, ok := m.m[WrapArrayOf(typ)]
+	return ok
 }
 
 // Is reports whether m contains exactly one specified type.

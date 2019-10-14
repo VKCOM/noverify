@@ -1244,8 +1244,11 @@ func TestArrayUnion(t *testing.T) {
 	function testInt() {
 		return 1 + 1;
 	}
-	function testArr() {
+	function testIntArr() {
 		return [1] + [2];
+	}
+	function testMixedArr() {
+		return [1] + ['foo'];
 	}
 	`)
 	test.RunLinter()
@@ -1264,18 +1267,32 @@ func TestArrayUnion(t *testing.T) {
 		t.Errorf("Wrong type: %s, expected int", fnInt.Typ)
 	}
 
-	fnArr, ok := meta.Info.GetFunction(`\testArr`)
+	fnIntArr, ok := meta.Info.GetFunction(`\testIntArr`)
 	if !ok {
-		t.Errorf("Could not find function testArr")
+		t.Errorf("Could not find function testIntArr")
 		t.Fail()
 	}
 
-	if l := fnArr.Typ.Len(); l != 1 {
+	if l := fnIntArr.Typ.Len(); l != 1 {
 		t.Errorf("Unexpected number of types: %d, excepted 1", l)
 	}
 
-	if !fnArr.Typ.IsArray() {
-		t.Errorf("Wrong type: %s, expected array", fnArr.Typ)
+	if !fnIntArr.Typ.IsArrayOf("int") {
+		t.Errorf("Wrong type: %s, expected int[]", fnIntArr.Typ)
+	}
+
+	fnMixedArr, ok := meta.Info.GetFunction(`\testMixedArr`)
+	if !ok {
+		t.Errorf("Could not find function testMixedArr")
+		t.Fail()
+	}
+
+	if l := fnMixedArr.Typ.Len(); l != 1 {
+		t.Errorf("Unexpected number of types: %d, excepted 1", l)
+	}
+
+	if !fnMixedArr.Typ.IsArrayOf("mixed") {
+		t.Errorf("Wrong type: %s, expected mixed[]", fnMixedArr.Typ)
 	}
 }
 

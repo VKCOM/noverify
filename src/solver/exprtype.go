@@ -32,7 +32,12 @@ func binaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right node
 // binaryPlusOpType is a special case as "plus" is also used for array union operation
 func binaryPlusOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right node.Node, custom []CustomType) meta.TypesMap {
 	// TODO: PHP will raise fatal error if one operand is array and other is not, so we may check it too
-	if ExprTypeLocalCustom(sc, cs, left, custom).IsArray() && ExprTypeLocalCustom(sc, cs, right, custom).IsArray() {
+	leftType := ExprTypeLocalCustom(sc, cs, left, custom)
+	rightType := ExprTypeLocalCustom(sc, cs, right, custom)
+	if leftType.IsArray() && rightType.IsArray() {
+		if leftType.Equals(rightType) {
+			return leftType
+		}
 		return meta.NewTypesMap("mixed[]")
 	}
 	return binaryMathOpType(sc, cs, left, right, custom)
