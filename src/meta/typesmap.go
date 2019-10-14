@@ -91,7 +91,7 @@ func (m TypesMap) IsArray() bool {
 	}
 
 	for typ := range m.m {
-		if typ[0] == WArrayOf {
+		if len(typ) > 0 && typ[0] == WArrayOf {
 			return true
 		}
 	}
