@@ -74,6 +74,30 @@ func (m TypesMap) Len() int {
 	return len(m.m)
 }
 
+// IsInt checks if map contains only int type
+func (m *TypesMap) IsInt() bool {
+	return m.Is("int")
+}
+
+// IsString checks if map contains only string type
+func (m *TypesMap) IsString() bool {
+	return m.Is("string")
+}
+
+// IsArray checks if map contains only array of any type
+func (m TypesMap) IsArray() bool {
+	if len(m.m) != 1 {
+		return false
+	}
+
+	for typ := range m.m {
+		if typ[0] == WArrayOf {
+			return true
+		}
+	}
+	return false
+}
+
 // Is reports whether m contains exactly one specified type.
 func (m TypesMap) Is(typ string) bool {
 	if m.Len() != 1 {

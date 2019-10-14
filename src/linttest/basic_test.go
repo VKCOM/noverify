@@ -1233,8 +1233,49 @@ func TestCorrectArrayTypes(t *testing.T) {
 		t.Errorf("Unexpected number of types: %d, excepted 1", l)
 	}
 
-	if !fn.Typ.Is("int") {
-		t.Errorf("Wrong type: %s, excepted int", fn.Typ)
+	if !fn.Typ.IsInt() {
+		t.Errorf("Wrong type: %s, expected int", fn.Typ)
+	}
+}
+
+func TestArrayUnion(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	function testInt() {
+		return 1 + 1;
+	}
+	function testArr() {
+		return [1] + [2];
+	}
+	`)
+	test.RunLinter()
+
+	fnInt, ok := meta.Info.GetFunction(`\testInt`)
+	if !ok {
+		t.Errorf("Could not find function testInt")
+		t.Fail()
+	}
+
+	if l := fnInt.Typ.Len(); l != 1 {
+		t.Errorf("Unexpected number of types: %d, excepted 1", l)
+	}
+
+	if !fnInt.Typ.IsInt() {
+		t.Errorf("Wrong type: %s, expected int", fnInt.Typ)
+	}
+
+	fnArr, ok := meta.Info.GetFunction(`\testArr`)
+	if !ok {
+		t.Errorf("Could not find function testArr")
+		t.Fail()
+	}
+
+	if l := fnArr.Typ.Len(); l != 1 {
+		t.Errorf("Unexpected number of types: %d, excepted 1", l)
+	}
+
+	if !fnArr.Typ.IsArray() {
+		t.Errorf("Wrong type: %s, expected array", fnArr.Typ)
 	}
 }
 
