@@ -14,6 +14,13 @@ import (
 	"github.com/z7zmey/php-parser/node/scalar"
 )
 
+func unaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, x node.Node, custom []CustomType) *meta.TypesMap {
+	if ExprTypeLocalCustom(sc, cs, x, custom).IsInt() {
+		return meta.NewTypesMap("int")
+	}
+	return meta.NewTypesMap("float")
+}
+
 func binaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right node.Node, custom []CustomType) *meta.TypesMap {
 	if ExprTypeLocalCustom(sc, cs, left, custom).IsInt() && ExprTypeLocalCustom(sc, cs, right, custom).IsInt() {
 		return meta.NewTypesMap("int")
@@ -308,6 +315,10 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 		*binary.Smaller, *binary.SmallerOrEqual,
 		*expr.Empty, *expr.Isset:
 		return meta.NewTypesMap("bool")
+	case *expr.UnaryMinus:
+		return unaryMathOpType(sc, cs, n.Expr, custom)
+	case *expr.UnaryPlus:
+		return unaryMathOpType(sc, cs, n.Expr, custom)
 	case *binary.Mul:
 		return binaryMathOpType(sc, cs, n.Left, n.Right, custom)
 	case *binary.Div:
