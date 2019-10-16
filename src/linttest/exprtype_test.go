@@ -438,6 +438,11 @@ func TestExprTypeSimple(t *testing.T) {
 
 		{`1+5<<2`, `int`},
 
+		{`-1`, `int`},
+		{`-1.4`, `float`},
+		{`+1`, `int`},
+		{`+1.4`, `float`},
+
 		{`$int`, "int"},
 		{`$float`, "float"},
 		{`$string`, "string"},
