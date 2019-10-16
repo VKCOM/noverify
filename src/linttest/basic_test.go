@@ -88,6 +88,16 @@ function mt_rand($x = 0, $y = 0) {}`)
 	test.RunAndMatch()
 }
 
+func TestArgsArraysSyntax(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f($a = array()) {}`)
+	test.Expect = []string{
+		`Use of old array syntax (use short form instead)`,
+	}
+	test.RunAndMatch()
+}
+
 func TestMethodComplexity(t *testing.T) {
 	funcCode := strings.Repeat("$_ = 0;\n", 9999)
 	test := linttest.NewSuite(t)
