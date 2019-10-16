@@ -71,7 +71,7 @@ func (m TypesMap) IsEmpty() bool {
 
 // Equals check if two typesmaps are the same
 func (m *TypesMap) Equals(m2 *TypesMap) bool {
-	if m2 == nil {
+	if m.m == nil || m2 == nil || m2.m == nil {
 		return false
 	}
 	if len(m.m) != len(m2.m) {
