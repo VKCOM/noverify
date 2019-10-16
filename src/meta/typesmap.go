@@ -71,7 +71,19 @@ func (m TypesMap) IsEmpty() bool {
 
 // Equals check if two typesmaps are the same
 func (m *TypesMap) Equals(m2 *TypesMap) bool {
-	return m.String() == m2.String()
+	if m2 == nil {
+		return false
+	}
+	if len(m.m) != len(m2.m) {
+		return false
+	}
+	for k := range m.m {
+		_, ok := m2.m[k]
+		if !ok {
+			return false
+		}
+	}
+	return true
 }
 
 // Len returns number of different types in map
