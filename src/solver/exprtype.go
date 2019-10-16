@@ -35,10 +35,7 @@ func binaryPlusOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right node
 	leftType := ExprTypeLocalCustom(sc, cs, left, custom)
 	rightType := ExprTypeLocalCustom(sc, cs, right, custom)
 	if leftType.IsArray() && rightType.IsArray() {
-		if leftType.Equals(rightType) {
-			return leftType
-		}
-		return meta.NewTypesMap("mixed[]")
+		return meta.MergeTypeMaps(leftType, rightType)
 	}
 	return binaryMathOpType(sc, cs, left, right, custom)
 }

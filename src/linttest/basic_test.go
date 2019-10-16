@@ -1287,12 +1287,13 @@ func TestArrayUnion(t *testing.T) {
 		t.Fail()
 	}
 
-	if l := fnMixedArr.Typ.Len(); l != 1 {
-		t.Errorf("Unexpected number of types: %d, excepted 1", l)
+	if l := fnMixedArr.Typ.Len(); l != 2 {
+		t.Errorf("Unexpected number of types: %d, excepted 2", l)
 	}
 
-	if !fnMixedArr.Typ.IsArrayOf("mixed") {
-		t.Errorf("Wrong type: %s, expected mixed[]", fnMixedArr.Typ)
+	if !fnMixedArr.Typ.Equals(meta.NewTypesMap("int[]|string[]")) {
+		// NOTE: this is how code works right now. It currently treat a[]|b[] as (a|b)[]
+		t.Errorf("Wrong type: %s, expected int[]|string[]", fnMixedArr.Typ)
 	}
 }
 
