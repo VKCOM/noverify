@@ -332,11 +332,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *expr.ArrayDimFetch:
 		b.checkArrayDimFetch(s)
 	case *stmt.Function:
-		if b.ignoreFunctionBodies {
-			res = false
-		} else {
-			res = b.r.enterFunction(s)
-		}
+		res = b.handleFunction(s)
 	case *stmt.Class:
 		if b.ignoreFunctionBodies {
 			res = false
@@ -371,6 +367,25 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	}
 
 	return res
+}
+
+func (b *BlockWalker) handleFunction(fun *stmt.Function) bool {
+	if b.ignoreFunctionBodies {
+		// Walk function params when running block walker for root level analysis.
+		// See AnalyzeFileRootLevel().
+		// TODO(quasilyte): DefaultValue can only contains constant expressions.
+		// Could run special check over them to detect the potential fatal errors.
+		for _, param := range fun.Params {
+			p := param.(*node.Parameter)
+			if p.DefaultValue != nil {
+				p.DefaultValue.Walk(b)
+			}
+		}
+
+		return false
+	}
+
+	return b.r.enterFunction(fun)
 }
 
 func (b *BlockWalker) handleReturn(ret *stmt.Return) {
