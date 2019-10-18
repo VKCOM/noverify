@@ -8,6 +8,7 @@ import (
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/z7zmey/php-parser/node"
 	"github.com/z7zmey/php-parser/printer"
+	"github.com/z7zmey/php-parser/walker"
 )
 
 // FmtNode is used for debug purposes and returns string representation of a specified node.
@@ -47,4 +48,31 @@ func haveMagicMethod(class string, methodName string) bool {
 
 func isQuote(r rune) bool {
 	return r == '"' || r == '\''
+}
+
+// walkNode is a convenience wrapper for EnterNode-only traversals.
+// It gives a way to traverse a node without defining a new kind of walker.
+//
+// enterNode function is called in place where EnterNode method would be called.
+// If n is nil, no traversal is performed.
+func walkNode(n node.Node, enterNode func(walker.Walkable) bool) {
+	if n == nil {
+		return
+	}
+	v := nodeVisitor{enterNode: enterNode}
+	n.Walk(v)
+}
+
+type nodeVisitor struct {
+	enterNode func(walker.Walkable) bool
+}
+
+func (v nodeVisitor) EnterChildNode(key string, w walker.Walkable) {}
+func (v nodeVisitor) LeaveChildNode(key string, w walker.Walkable) {}
+func (v nodeVisitor) EnterChildList(key string, w walker.Walkable) {}
+func (v nodeVisitor) LeaveChildList(key string, w walker.Walkable) {}
+func (v nodeVisitor) LeaveNode(w walker.Walkable)                  {}
+
+func (v nodeVisitor) EnterNode(w walker.Walkable) bool {
+	return v.enterNode(w)
 }

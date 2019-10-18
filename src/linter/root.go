@@ -1063,29 +1063,6 @@ func (d *RootWalker) parseTypeNode(n node.Node) (typ *meta.TypesMap, ok bool) {
 	return typ, typ != nil
 }
 
-// checkFuncArgs checks syntax of argument list in function definition, and reports found errors
-// so far checks only default values for valid array syntax
-func (d *RootWalker) checkFuncArgs(params []node.Node) {
-	for _, param := range params {
-		p := param.(*node.Parameter)
-		if p.DefaultValue != nil {
-			switch s := p.DefaultValue.(type) {
-			case *expr.Array:
-				b := &BlockWalker{
-					r: d,
-				}
-				b.handleArray(s)
-			case *expr.ShortArray:
-				b := &BlockWalker{
-					r: d,
-				}
-				b.handleArrayItems(s, s.Items)
-			default:
-			}
-		}
-	}
-}
-
 func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap, sc *meta.Scope) (args []meta.FuncParam, minArgs int) {
 	args = make([]meta.FuncParam, 0, len(params))
 	for _, param := range params {
@@ -1151,8 +1128,6 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	phpdocReturnType := doc.returnType
 	phpDocParamTypes := doc.types
 
-	d.checkFuncArgs(fun.Params)
-
 	if d.meta.Functions == nil {
 		d.meta.Functions = make(meta.FunctionsMap)
 	}
@@ -1168,6 +1143,11 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	if returnType.Len() == 0 {
 		returnType = meta.VoidType
 	}
+
+	for _, param := range fun.Params {
+		d.checkFuncParam(param.(*node.Parameter))
+	}
+
 	d.meta.Functions[nm] = meta.FuncInfo{
 		Params:       params,
 		Pos:          d.getElementPos(fun),
@@ -1178,6 +1158,17 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	}
 
 	return false
+}
+
+func (d *RootWalker) checkFuncParam(p *node.Parameter) {
+	// TODO(quasilyte): DefaultValue can only contain constant expressions.
+	// Could run special check over them to detect the potential fatal errors.
+	walkNode(p.DefaultValue, func(w walker.Walkable) bool {
+		if n, ok := w.(*expr.Array); ok {
+			d.Report(n, LevelDoNotReject, "arraySyntax", "Use of old array syntax (use short form instead)")
+		}
+		return true
+	})
 }
 
 func (d *RootWalker) enterFunctionCall(s *expr.FunctionCall) bool {
