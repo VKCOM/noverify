@@ -371,17 +371,6 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 
 func (b *BlockWalker) handleFunction(fun *stmt.Function) bool {
 	if b.ignoreFunctionBodies {
-		// Walk function params when running block walker for root level analysis.
-		// See AnalyzeFileRootLevel().
-		// TODO(quasilyte): DefaultValue can only contains constant expressions.
-		// Could run special check over them to detect the potential fatal errors.
-		for _, param := range fun.Params {
-			p := param.(*node.Parameter)
-			if p.DefaultValue != nil {
-				p.DefaultValue.Walk(b)
-			}
-		}
-
 		return false
 	}
 

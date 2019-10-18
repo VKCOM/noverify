@@ -1143,6 +1143,11 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	if returnType.Len() == 0 {
 		returnType = meta.VoidType
 	}
+
+	for _, param := range fun.Params {
+		d.checkFuncParam(param.(*node.Parameter))
+	}
+
 	d.meta.Functions[nm] = meta.FuncInfo{
 		Params:       params,
 		Pos:          d.getElementPos(fun),
@@ -1153,6 +1158,17 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	}
 
 	return false
+}
+
+func (d *RootWalker) checkFuncParam(p *node.Parameter) {
+	// TODO(quasilyte): DefaultValue can only contain constant expressions.
+	// Could run special check over them to detect the potential fatal errors.
+	walkNode(p.DefaultValue, func(w walker.Walkable) bool {
+		if n, ok := w.(*expr.Array); ok {
+			d.Report(n, LevelDoNotReject, "arraySyntax", "Use of old array syntax (use short form instead)")
+		}
+		return true
+	})
 }
 
 func (d *RootWalker) enterFunctionCall(s *expr.FunctionCall) bool {
