@@ -358,6 +358,23 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		b.handleContinue(s)
 	case *binary.LogicalOr:
 		res = b.handleLogicalOr(s)
+
+	case *stmt.AltForeach:
+		s2 := stmt.Foreach(*s)
+		res = b.handleForeach(&s2)
+	case *stmt.AltIf:
+		s2 := stmt.If(*s)
+		res = b.handleIf(&s2)
+	case *stmt.AltWhile:
+		s2 := stmt.While(*s)
+		res = b.handleWhile(&s2)
+	case *stmt.AltFor:
+		s2 := stmt.For(*s)
+		res = b.handleFor(&s2)
+	case *stmt.AltSwitch:
+		s2 := stmt.Switch(*s)
+		res = b.handleSwitch(&s2)
+
 	default:
 		// b.d.debug(`  Statement: %T`, s)
 	}
@@ -1602,16 +1619,24 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 
 	walk := func(n node.Node) (links int) {
 		// handle if (...) smth(); else other_thing(); // without braces
-		if els, ok := n.(*stmt.Else); ok {
+		switch els := n.(type) {
+		case *stmt.Else:
 			b.addStatement(els.Stmt)
-		} else if elsif, ok := n.(*stmt.ElseIf); ok {
-			b.addStatement(elsif.Stmt)
-		} else {
+		case *stmt.AltElse:
+			b.addStatement(els.Stmt)
+		case *stmt.ElseIf:
+			b.addStatement(els.Stmt)
+		case *stmt.AltElseIf:
+			b.addStatement(els.Stmt)
+		default:
 			b.addStatement(n)
 		}
 
 		ctx := b.withNewContext(func() {
-			if elsif, ok := n.(*stmt.ElseIf); ok {
+			switch elsif := n.(type) {
+			case *stmt.ElseIf:
+				walkCond(elsif.Cond)
+			case *stmt.AltElseIf:
 				walkCond(elsif.Cond)
 			}
 			n.Walk(b)
