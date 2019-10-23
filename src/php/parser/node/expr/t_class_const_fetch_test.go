@@ -6,15 +6,12 @@ import (
 
 	"gotest.tools/assert"
 
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
-	"github.com/VKCOM/noverify/src/php/parser/position"
-
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-
 	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
+	"github.com/VKCOM/noverify/src/php/parser/node/name"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
-	"github.com/VKCOM/noverify/src/php/parser/php5"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
+	"github.com/VKCOM/noverify/src/php/parser/position"
 )
 
 func TestClassConstFetch(t *testing.T) {
@@ -79,11 +76,6 @@ func TestClassConstFetch(t *testing.T) {
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
-
-	php5parser := php5.NewParser(bytes.NewBufferString(src), "test.php")
-	php5parser.Parse()
-	actual = php5parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
 }
 
 func TestStaticClassConstFetch(t *testing.T) {
@@ -137,10 +129,5 @@ func TestStaticClassConstFetch(t *testing.T) {
 	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
-
-	php5parser := php5.NewParser(bytes.NewBufferString(src), "test.php")
-	php5parser.Parse()
-	actual = php5parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
 }

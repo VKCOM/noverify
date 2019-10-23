@@ -11,7 +11,6 @@ import (
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
-	"github.com/VKCOM/noverify/src/php/parser/php5"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 )
 
@@ -81,11 +80,6 @@ func TestSimpleClassMethod(t *testing.T) {
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
-
-	php5parser := php5.NewParser(bytes.NewBufferString(src), "test.php")
-	php5parser.Parse()
-	actual = php5parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
 }
 
 func TestPrivateProtectedClassMethod(t *testing.T) {
@@ -135,7 +129,7 @@ func TestPrivateProtectedClassMethod(t *testing.T) {
 							},
 							Value: "bar",
 						},
-						Modifiers: []node.Node{
+						Modifiers: []*node.Identifier{
 							&node.Identifier{
 								Position: &position.Position{
 									StartLine: 1,
@@ -183,7 +177,7 @@ func TestPrivateProtectedClassMethod(t *testing.T) {
 							},
 							Value: "baz",
 						},
-						Modifiers: []node.Node{
+						Modifiers: []*node.Identifier{
 							&node.Identifier{
 								Position: &position.Position{
 									StartLine: 1,
@@ -212,99 +206,6 @@ func TestPrivateProtectedClassMethod(t *testing.T) {
 	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
-
-	php5parser := php5.NewParser(bytes.NewBufferString(src), "test.php")
-	php5parser.Parse()
-	actual = php5parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
-}
-
-func TestPhp5ClassMethod(t *testing.T) {
-	src := `<? class foo{ public static function &bar() {} }`
-
-	expected := &node.Root{
-		Position: &position.Position{
-			StartLine: 1,
-			EndLine:   1,
-			StartPos:  4,
-			EndPos:    48,
-		},
-		Stmts: []node.Node{
-			&stmt.Class{
-				Position: &position.Position{
-					StartLine: 1,
-					EndLine:   1,
-					StartPos:  4,
-					EndPos:    48,
-				},
-				PhpDocComment: "",
-				ClassName: &node.Identifier{
-					Position: &position.Position{
-						StartLine: 1,
-						EndLine:   1,
-						StartPos:  10,
-						EndPos:    12,
-					},
-					Value: "foo",
-				},
-				Stmts: []node.Node{
-					&stmt.ClassMethod{
-						Position: &position.Position{
-							StartLine: 1,
-							EndLine:   1,
-							StartPos:  15,
-							EndPos:    46,
-						},
-						ReturnsRef:    true,
-						PhpDocComment: "",
-						MethodName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  39,
-								EndPos:    41,
-							},
-							Value: "bar",
-						},
-						Modifiers: []node.Node{
-							&node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  15,
-									EndPos:    20,
-								},
-								Value: "public",
-							},
-							&node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  22,
-									EndPos:    27,
-								},
-								Value: "static",
-							},
-						},
-						Stmt: &stmt.StmtList{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  45,
-								EndPos:    46,
-							},
-							Stmts: []node.Node{},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	php5parser := php5.NewParser(bytes.NewBufferString(src), "test.php")
-	php5parser.Parse()
-	actual := php5parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
 }
 
@@ -355,7 +256,7 @@ func TestPhp7ClassMethod(t *testing.T) {
 							},
 							Value: "bar",
 						},
-						Modifiers: []node.Node{
+						Modifiers: []*node.Identifier{
 							&node.Identifier{
 								Position: &position.Position{
 									StartLine: 1,
@@ -473,7 +374,7 @@ func TestAbstractClassMethod(t *testing.T) {
 							},
 							Value: "bar",
 						},
-						Modifiers: []node.Node{
+						Modifiers: []*node.Identifier{
 							&node.Identifier{
 								Position: &position.Position{
 									StartLine: 1,
@@ -510,11 +411,6 @@ func TestAbstractClassMethod(t *testing.T) {
 	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
-
-	php5parser := php5.NewParser(bytes.NewBufferString(src), "test.php")
-	php5parser.Parse()
-	actual = php5parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
 }
 
@@ -576,7 +472,7 @@ func TestPhp7AbstractClassMethod(t *testing.T) {
 							},
 							Value: "bar",
 						},
-						Modifiers: []node.Node{
+						Modifiers: []*node.Identifier{
 							&node.Identifier{
 								Position: &position.Position{
 									StartLine: 1,

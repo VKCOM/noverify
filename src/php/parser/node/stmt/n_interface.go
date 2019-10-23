@@ -18,11 +18,11 @@ type Interface struct {
 }
 
 // NewInterface node constructor
-func NewInterface(InterfaceName node.Node, Extends *InterfaceExtends, Stmts []node.Node, PhpDocComment string) *Interface {
+func NewInterface(InterfaceName *node.Identifier, Extends *InterfaceExtends, Stmts []node.Node, PhpDocComment string) *Interface {
 	return &Interface{
 		FreeFloating:  nil,
 		PhpDocComment: PhpDocComment,
-		InterfaceName: InterfaceName.(*node.Identifier),
+		InterfaceName: InterfaceName,
 		Extends:       Extends,
 		Stmts:         Stmts,
 	}

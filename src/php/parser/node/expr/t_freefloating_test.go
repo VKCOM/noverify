@@ -122,12 +122,6 @@ var nodes = []node.Node{
 	&expr.ShellExec{
 		FreeFloating: expected,
 	},
-	&expr.ShortArray{
-		FreeFloating: expected,
-	},
-	&expr.ShortList{
-		FreeFloating: expected,
-	},
 	&expr.StaticCall{
 		FreeFloating: expected,
 	},

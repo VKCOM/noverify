@@ -21,11 +21,11 @@ type Class struct {
 }
 
 // NewClass node constructor
-func NewClass(ClassName node.Node, Modifiers []node.Node, ArgumentList *node.ArgumentList, Extends *ClassExtends, Implements *ClassImplements, Stmts []node.Node, PhpDocComment string) *Class {
+func NewClass(ClassName *node.Identifier, Modifiers []node.Node, ArgumentList *node.ArgumentList, Extends *ClassExtends, Implements *ClassImplements, Stmts []node.Node, PhpDocComment string) *Class {
 	return &Class{
 		FreeFloating:  nil,
 		PhpDocComment: PhpDocComment,
-		ClassName:     ClassName.(*node.Identifier),
+		ClassName:     ClassName,
 		Modifiers:     Modifiers,
 		ArgumentList:  ArgumentList,
 		Extends:       Extends,

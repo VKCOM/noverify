@@ -6,14 +6,12 @@ import (
 
 	"gotest.tools/assert"
 
+	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
-	"github.com/VKCOM/noverify/src/php/parser/position"
-
-	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
-	"github.com/VKCOM/noverify/src/php/parser/php5"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
+	"github.com/VKCOM/noverify/src/php/parser/position"
 )
 
 func TestProperty(t *testing.T) {
@@ -52,7 +50,7 @@ func TestProperty(t *testing.T) {
 							StartPos:  15,
 							EndPos:    21,
 						},
-						Modifiers: []node.Node{
+						Modifiers: []*node.Identifier{
 							&node.Identifier{
 								Position: &position.Position{
 									StartLine: 1,
@@ -101,11 +99,6 @@ func TestProperty(t *testing.T) {
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
-
-	php5parser := php5.NewParser(bytes.NewBufferString(src), "test.php")
-	php5parser.Parse()
-	actual = php5parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
 }
 
 func TestProperties(t *testing.T) {
@@ -144,7 +137,7 @@ func TestProperties(t *testing.T) {
 							StartPos:  15,
 							EndPos:    39,
 						},
-						Modifiers: []node.Node{
+						Modifiers: []*node.Identifier{
 							&node.Identifier{
 								Position: &position.Position{
 									StartLine: 1,
@@ -237,11 +230,6 @@ func TestProperties(t *testing.T) {
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
-
-	php5parser := php5.NewParser(bytes.NewBufferString(src), "test.php")
-	php5parser.Parse()
-	actual = php5parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
 }
 
 func TestProperties2(t *testing.T) {
@@ -280,7 +268,7 @@ func TestProperties2(t *testing.T) {
 							StartPos:  15,
 							EndPos:    39,
 						},
-						Modifiers: []node.Node{
+						Modifiers: []*node.Identifier{
 							&node.Identifier{
 								Position: &position.Position{
 									StartLine: 1,
@@ -372,10 +360,5 @@ func TestProperties2(t *testing.T) {
 	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
-
-	php5parser := php5.NewParser(bytes.NewBufferString(src), "test.php")
-	php5parser.Parse()
-	actual = php5parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
 }

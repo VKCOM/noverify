@@ -9,7 +9,6 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
-	"github.com/VKCOM/noverify/src/php/parser/php5"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/php/parser/position"
 )
@@ -28,7 +27,8 @@ func TestAltIf(t *testing.T) {
 			EndPos:    23,
 		},
 		Stmts: []node.Node{
-			&stmt.AltIf{
+			&stmt.If{
+				AltSyntax: true,
 				Position: &position.Position{
 					StartLine: 2,
 					EndLine:   3,
@@ -69,11 +69,6 @@ func TestAltIf(t *testing.T) {
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
-
-	php5parser := php5.NewParser(bytes.NewBufferString(src), "test.php")
-	php5parser.Parse()
-	actual = php5parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
 }
 
 func TestAltElseIf(t *testing.T) {
@@ -91,7 +86,8 @@ func TestAltElseIf(t *testing.T) {
 			EndPos:    38,
 		},
 		Stmts: []node.Node{
-			&stmt.AltIf{
+			&stmt.If{
+				AltSyntax: true,
 				Position: &position.Position{
 					StartLine: 2,
 					EndLine:   4,
@@ -125,7 +121,8 @@ func TestAltElseIf(t *testing.T) {
 					Stmts: []node.Node{},
 				},
 				ElseIf: []node.Node{
-					&stmt.AltElseIf{
+					&stmt.ElseIf{
+						AltSyntax: true,
 						Position: &position.Position{
 							StartLine: 3,
 							EndLine:   -1,
@@ -168,11 +165,6 @@ func TestAltElseIf(t *testing.T) {
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
-
-	php5parser := php5.NewParser(bytes.NewBufferString(src), "test.php")
-	php5parser.Parse()
-	actual = php5parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
 }
 
 func TestAltElse(t *testing.T) {
@@ -190,7 +182,8 @@ func TestAltElse(t *testing.T) {
 			EndPos:    31,
 		},
 		Stmts: []node.Node{
-			&stmt.AltIf{
+			&stmt.If{
+				AltSyntax: true,
 				Position: &position.Position{
 					StartLine: 2,
 					EndLine:   4,
@@ -223,7 +216,8 @@ func TestAltElse(t *testing.T) {
 					},
 					Stmts: []node.Node{},
 				},
-				Else: &stmt.AltElse{
+				Else: &stmt.Else{
+					AltSyntax: true,
 					Position: &position.Position{
 						StartLine: 3,
 						EndLine:   -1,
@@ -248,11 +242,6 @@ func TestAltElse(t *testing.T) {
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
-
-	php5parser := php5.NewParser(bytes.NewBufferString(src), "test.php")
-	php5parser.Parse()
-	actual = php5parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
 }
 
 func TestAltElseElseIf(t *testing.T) {
@@ -272,7 +261,8 @@ func TestAltElseElseIf(t *testing.T) {
 			EndPos:    61,
 		},
 		Stmts: []node.Node{
-			&stmt.AltIf{
+			&stmt.If{
+				AltSyntax: true,
 				Position: &position.Position{
 					StartLine: 2,
 					EndLine:   6,
@@ -306,7 +296,8 @@ func TestAltElseElseIf(t *testing.T) {
 					Stmts: []node.Node{},
 				},
 				ElseIf: []node.Node{
-					&stmt.AltElseIf{
+					&stmt.ElseIf{
+						AltSyntax: true,
 						Position: &position.Position{
 							StartLine: 3,
 							EndLine:   -1,
@@ -340,7 +331,8 @@ func TestAltElseElseIf(t *testing.T) {
 							Stmts: []node.Node{},
 						},
 					},
-					&stmt.AltElseIf{
+					&stmt.ElseIf{
+						AltSyntax: true,
 						Position: &position.Position{
 							StartLine: 4,
 							EndLine:   -1,
@@ -375,7 +367,8 @@ func TestAltElseElseIf(t *testing.T) {
 						},
 					},
 				},
-				Else: &stmt.AltElse{
+				Else: &stmt.Else{
+					AltSyntax: true,
 					Position: &position.Position{
 						StartLine: 5,
 						EndLine:   -1,
@@ -399,10 +392,5 @@ func TestAltElseElseIf(t *testing.T) {
 	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
-
-	php5parser := php5.NewParser(bytes.NewBufferString(src), "test.php")
-	php5parser.Parse()
-	actual = php5parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
 }

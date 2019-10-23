@@ -31,11 +31,7 @@ func TestPrinterPrintFile(t *testing.T) {
 			},
 			&stmt.Class{
 				Modifiers: []node.Node{&node.Identifier{Value: "abstract"}},
-				ClassName: &name.Name{
-					Parts: []node.Node{
-						&name.NamePart{Value: "Bar"},
-					},
-				},
+				ClassName: &node.Identifier{Value: "Bar"},
 				Extends: &stmt.ClassExtends{
 					ClassName: &name.Name{
 						Parts: []node.Node{
@@ -45,7 +41,7 @@ func TestPrinterPrintFile(t *testing.T) {
 				},
 				Stmts: []node.Node{
 					&stmt.ClassMethod{
-						Modifiers:  []node.Node{&node.Identifier{Value: "public"}},
+						Modifiers:  []*node.Identifier{&node.Identifier{Value: "public"}},
 						MethodName: &node.Identifier{Value: "greet"},
 						Stmt: &stmt.StmtList{
 							Stmts: []node.Node{
@@ -1535,7 +1531,7 @@ func TestPrinterPrintExprArray(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.Array{
-		Items: []node.Node{
+		Items: []*expr.ArrayItem{
 			&expr.ArrayItem{
 				Key: &scalar.String{Value: "'Hello'"},
 				Val: &expr.Variable{
@@ -1932,7 +1928,7 @@ func TestPrinterPrintList(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.List{
-		Items: []node.Node{
+		Items: []*expr.ArrayItem{
 			&expr.ArrayItem{
 				Val: &expr.Variable{
 					VarName: &node.Identifier{Value: "a"},
@@ -1940,7 +1936,7 @@ func TestPrinterPrintList(t *testing.T) {
 			},
 			&expr.ArrayItem{
 				Val: &expr.List{
-					Items: []node.Node{
+					Items: []*expr.ArrayItem{
 						&expr.ArrayItem{
 							Val: &expr.Variable{
 								VarName: &node.Identifier{Value: "b"},
@@ -2219,8 +2215,9 @@ func TestPrinterPrintExprShortArray(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := printer.NewPrinter(o)
-	p.Print(&expr.ShortArray{
-		Items: []node.Node{
+	p.Print(&expr.Array{
+		ShortSyntax: true,
+		Items: []*expr.ArrayItem{
 			&expr.ArrayItem{
 				Key: &scalar.String{Value: "'Hello'"},
 				Val: &expr.Variable{
@@ -2253,8 +2250,9 @@ func TestPrinterPrintShortList(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := printer.NewPrinter(o)
-	p.Print(&expr.ShortList{
-		Items: []node.Node{
+	p.Print(&expr.List{
+		ShortSyntax: true,
+		Items: []*expr.ArrayItem{
 			&expr.ArrayItem{
 				Val: &expr.Variable{
 					VarName: &node.Identifier{Value: "a"},
@@ -2262,7 +2260,7 @@ func TestPrinterPrintShortList(t *testing.T) {
 			},
 			&expr.ArrayItem{
 				Val: &expr.List{
-					Items: []node.Node{
+					Items: []*expr.ArrayItem{
 						&expr.ArrayItem{
 							Val: &expr.Variable{
 								VarName: &node.Identifier{Value: "b"},
@@ -2499,7 +2497,8 @@ func TestPrinterPrintAltElseIf(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := printer.NewPrinter(o)
-	p.Print(&stmt.AltElseIf{
+	p.Print(&stmt.ElseIf{
+		AltSyntax: true,
 		Cond: &expr.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
@@ -2524,7 +2523,8 @@ func TestPrinterPrintAltElseIfEmpty(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := printer.NewPrinter(o)
-	p.Print(&stmt.AltElseIf{
+	p.Print(&stmt.ElseIf{
+		AltSyntax: true,
 		Cond: &expr.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
@@ -2543,7 +2543,8 @@ func TestPrinterPrintAltElse(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := printer.NewPrinter(o)
-	p.Print(&stmt.AltElse{
+	p.Print(&stmt.Else{
+		AltSyntax: true,
 		Stmt: &stmt.StmtList{
 			Stmts: []node.Node{
 				&stmt.Expression{Expr: &expr.Variable{
@@ -2565,8 +2566,9 @@ func TestPrinterPrintAltElseEmpty(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := printer.NewPrinter(o)
-	p.Print(&stmt.AltElse{
-		Stmt: &stmt.StmtList{},
+	p.Print(&stmt.Else{
+		AltSyntax: true,
+		Stmt:      &stmt.StmtList{},
 	})
 
 	expected := `else:`
@@ -2581,7 +2583,8 @@ func TestPrinterPrintAltFor(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := printer.NewPrinter(o)
-	p.Print(&stmt.AltFor{
+	p.Print(&stmt.For{
+		AltSyntax: true,
 		Init: []node.Node{
 			&expr.Variable{
 				VarName: &node.Identifier{Value: "a"},
@@ -2618,7 +2621,8 @@ func TestPrinterPrintAltForeach(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := printer.NewPrinter(o)
-	p.Print(&stmt.AltForeach{
+	p.Print(&stmt.Foreach{
+		AltSyntax: true,
 		Expr: &expr.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
@@ -2649,7 +2653,8 @@ func TestPrinterPrintAltIf(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := printer.NewPrinter(o)
-	p.Print(&stmt.AltIf{
+	p.Print(&stmt.If{
+		AltSyntax: true,
 		Cond: &expr.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
@@ -2661,7 +2666,8 @@ func TestPrinterPrintAltIf(t *testing.T) {
 			},
 		},
 		ElseIf: []node.Node{
-			&stmt.AltElseIf{
+			&stmt.ElseIf{
+				AltSyntax: true,
 				Cond: &expr.Variable{
 					VarName: &node.Identifier{Value: "b"},
 				},
@@ -2673,14 +2679,16 @@ func TestPrinterPrintAltIf(t *testing.T) {
 					},
 				},
 			},
-			&stmt.AltElseIf{
+			&stmt.ElseIf{
+				AltSyntax: true,
 				Cond: &expr.Variable{
 					VarName: &node.Identifier{Value: "c"},
 				},
 				Stmt: &stmt.StmtList{},
 			},
 		},
-		Else: &stmt.AltElse{
+		Else: &stmt.Else{
+			AltSyntax: true,
 			Stmt: &stmt.StmtList{
 				Stmts: []node.Node{
 					&stmt.Expression{Expr: &expr.Variable{
@@ -2703,7 +2711,8 @@ func TestPrinterPrintStmtAltSwitch(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := printer.NewPrinter(o)
-	p.Print(&stmt.AltSwitch{
+	p.Print(&stmt.Switch{
+		AltSyntax: true,
 		Cond: &expr.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
@@ -2741,7 +2750,8 @@ func TestPrinterPrintAltWhile(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := printer.NewPrinter(o)
-	p.Print(&stmt.AltWhile{
+	p.Print(&stmt.While{
+		AltSyntax: true,
 		Cond: &expr.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
@@ -2854,7 +2864,7 @@ func TestPrinterPrintStmtClassMethod(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.ClassMethod{
-		Modifiers:  []node.Node{&node.Identifier{Value: "public"}},
+		Modifiers:  []*node.Identifier{&node.Identifier{Value: "public"}},
 		ReturnsRef: true,
 		MethodName: &node.Identifier{Value: "foo"},
 		Params: []node.Node{
@@ -2898,7 +2908,7 @@ func TestPrinterPrintStmtAbstractClassMethod(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.ClassMethod{
-		Modifiers: []node.Node{
+		Modifiers: []*node.Identifier{
 			&node.Identifier{Value: "public"},
 			&node.Identifier{Value: "static"},
 		},
@@ -2952,7 +2962,7 @@ func TestPrinterPrintStmtClass(t *testing.T) {
 		},
 		Stmts: []node.Node{
 			&stmt.ClassConstList{
-				Modifiers: []node.Node{
+				Modifiers: []*node.Identifier{
 					&node.Identifier{Value: "public"},
 					&node.Identifier{Value: "static"},
 				},
@@ -3005,7 +3015,7 @@ func TestPrinterPrintStmtAnonymousClass(t *testing.T) {
 		},
 		Stmts: []node.Node{
 			&stmt.ClassConstList{
-				Modifiers: []node.Node{&node.Identifier{Value: "public"}},
+				Modifiers: []*node.Identifier{&node.Identifier{Value: "public"}},
 				Consts: []node.Node{
 					&stmt.Constant{
 						ConstantName: &node.Identifier{Value: "FOO"},
@@ -3029,7 +3039,7 @@ func TestPrinterPrintStmtClassConstList(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.ClassConstList{
-		Modifiers: []node.Node{&node.Identifier{Value: "public"}},
+		Modifiers: []*node.Identifier{&node.Identifier{Value: "public"}},
 		Consts: []node.Node{
 			&stmt.Constant{
 				ConstantName: &node.Identifier{Value: "FOO"},
@@ -3766,7 +3776,7 @@ func TestPrinterPrintInterface(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.Interface{
-		InterfaceName: &name.Name{Parts: []node.Node{&name.NamePart{Value: "Foo"}}},
+		InterfaceName: &node.Identifier{Value: "Foo"},
 		Extends: &stmt.InterfaceExtends{
 			InterfaceNames: []node.Node{
 				&name.Name{Parts: []node.Node{&name.NamePart{Value: "Bar"}}},
@@ -3775,7 +3785,7 @@ func TestPrinterPrintInterface(t *testing.T) {
 		},
 		Stmts: []node.Node{
 			&stmt.ClassMethod{
-				Modifiers:  []node.Node{&node.Identifier{Value: "public"}},
+				Modifiers:  []*node.Identifier{&node.Identifier{Value: "public"}},
 				MethodName: &node.Identifier{Value: "foo"},
 				Params:     []node.Node{},
 				Stmt: &stmt.StmtList{
@@ -3869,7 +3879,7 @@ func TestPrinterPrintPropertyList(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.PropertyList{
-		Modifiers: []node.Node{
+		Modifiers: []*node.Identifier{
 			&node.Identifier{Value: "public"},
 			&node.Identifier{Value: "static"},
 		},
@@ -4254,10 +4264,10 @@ func TestPrinterPrintTrait(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.Trait{
-		TraitName: &name.Name{Parts: []node.Node{&name.NamePart{Value: "Foo"}}},
+		TraitName: &node.Identifier{Value: "Foo"},
 		Stmts: []node.Node{
 			&stmt.ClassMethod{
-				Modifiers:  []node.Node{&node.Identifier{Value: "public"}},
+				Modifiers:  []*node.Identifier{&node.Identifier{Value: "public"}},
 				MethodName: &node.Identifier{Value: "foo"},
 				Params:     []node.Node{},
 				Stmt: &stmt.StmtList{

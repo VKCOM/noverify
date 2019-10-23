@@ -10,7 +10,6 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
-	"github.com/VKCOM/noverify/src/php/parser/php5"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/php/parser/position"
 )
@@ -33,14 +32,15 @@ func TestShortArray(t *testing.T) {
 					StartPos:  4,
 					EndPos:    6,
 				},
-				Expr: &expr.ShortArray{
+				Expr: &expr.Array{
+					ShortSyntax: true,
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
 						StartPos:  4,
 						EndPos:    5,
 					},
-					Items: []node.Node{},
+					Items: []*expr.ArrayItem{},
 				},
 			},
 		},
@@ -49,11 +49,6 @@ func TestShortArray(t *testing.T) {
 	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
-
-	php5parser := php5.NewParser(bytes.NewBufferString(src), "test.php")
-	php5parser.Parse()
-	actual = php5parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
 }
 
@@ -75,14 +70,15 @@ func TestShortArrayItem(t *testing.T) {
 					StartPos:  4,
 					EndPos:    7,
 				},
-				Expr: &expr.ShortArray{
+				Expr: &expr.Array{
+					ShortSyntax: true,
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
 						StartPos:  4,
 						EndPos:    6,
 					},
-					Items: []node.Node{
+					Items: []*expr.ArrayItem{
 						&expr.ArrayItem{
 							Position: &position.Position{
 								StartLine: 1,
@@ -110,11 +106,6 @@ func TestShortArrayItem(t *testing.T) {
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
-
-	php5parser := php5.NewParser(bytes.NewBufferString(src), "test.php")
-	php5parser.Parse()
-	actual = php5parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
 }
 
 func TestShortArrayItems(t *testing.T) {
@@ -135,14 +126,15 @@ func TestShortArrayItems(t *testing.T) {
 					StartPos:  4,
 					EndPos:    16,
 				},
-				Expr: &expr.ShortArray{
+				Expr: &expr.Array{
+					ShortSyntax: true,
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
 						StartPos:  4,
 						EndPos:    15,
 					},
-					Items: []node.Node{
+					Items: []*expr.ArrayItem{
 						&expr.ArrayItem{
 							Position: &position.Position{
 								StartLine: 1,
@@ -212,10 +204,5 @@ func TestShortArrayItems(t *testing.T) {
 	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
-
-	php5parser := php5.NewParser(bytes.NewBufferString(src), "test.php")
-	php5parser.Parse()
-	actual = php5parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
 }

@@ -11,7 +11,6 @@ import (
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
-	"github.com/VKCOM/noverify/src/php/parser/php5"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 )
 
@@ -51,7 +50,7 @@ func TestClassConstList(t *testing.T) {
 							StartPos:  15,
 							EndPos:    44,
 						},
-						Modifiers: []node.Node{
+						Modifiers: []*node.Identifier{
 							&node.Identifier{
 								Position: &position.Position{
 									StartLine: 1,
@@ -231,10 +230,5 @@ func TestClassConstListWithoutModifiers(t *testing.T) {
 	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
-
-	php5parser := php5.NewParser(bytes.NewBufferString(src), "test.php")
-	php5parser.Parse()
-	actual = php5parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
 }

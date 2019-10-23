@@ -39,14 +39,15 @@ func TestShortList(t *testing.T) {
 						StartPos:  4,
 						EndPos:    12,
 					},
-					Variable: &expr.ShortList{
+					Variable: &expr.List{
+						ShortSyntax: true,
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    7,
 						},
-						Items: []node.Node{
+						Items: []*expr.ArrayItem{
 							&expr.ArrayItem{
 								Position: &position.Position{
 									StartLine: 1,
@@ -127,14 +128,15 @@ func TestShortListArrayIndex(t *testing.T) {
 						StartPos:  4,
 						EndPos:    14,
 					},
-					Variable: &expr.ShortList{
+					Variable: &expr.List{
+						ShortSyntax: true,
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    9,
 						},
-						Items: []node.Node{
+						Items: []*expr.ArrayItem{
 							&expr.ArrayItem{
 								Position: &position.Position{
 									StartLine: 1,
@@ -223,14 +225,15 @@ func TestShortListList(t *testing.T) {
 						StartPos:  4,
 						EndPos:    18,
 					},
-					Variable: &expr.ShortList{
+					Variable: &expr.List{
+						ShortSyntax: true,
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    13,
 						},
-						Items: []node.Node{
+						Items: []*expr.ArrayItem{
 							&expr.ArrayItem{
 								Position: &position.Position{
 									StartLine: 1,
@@ -245,7 +248,7 @@ func TestShortListList(t *testing.T) {
 										StartPos:  5,
 										EndPos:    12,
 									},
-									Items: []node.Node{
+									Items: []*expr.ArrayItem{
 										&expr.ArrayItem{
 											Position: &position.Position{
 												StartLine: 1,

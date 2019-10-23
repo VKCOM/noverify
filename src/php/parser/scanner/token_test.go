@@ -5,16 +5,19 @@ import (
 	"testing"
 
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
+	"github.com/VKCOM/noverify/src/php/parser/position"
 	"github.com/VKCOM/noverify/src/php/parser/scanner"
 )
 
 func TestToken(t *testing.T) {
 	tkn := &scanner.Token{
-		Value:     `foo`,
-		StartLine: 1,
-		EndLine:   1,
-		StartPos:  0,
-		EndPos:    3,
+		Value: `foo`,
+		Position: position.Position{
+			StartLine: 1,
+			EndLine:   1,
+			StartPos:  0,
+			EndPos:    3,
+		},
 	}
 
 	c := []freefloating.String{

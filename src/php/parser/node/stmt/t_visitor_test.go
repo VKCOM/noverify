@@ -20,31 +20,6 @@ var nodesToTest = []struct {
 	expectedAttributes  map[string]interface{}
 }{
 	{
-		&stmt.AltIf{
-			Cond:   &stmt.Expression{},
-			Stmt:   &stmt.StmtList{},
-			ElseIf: []node.Node{&stmt.ElseIf{}},
-			Else:   &stmt.Else{},
-		},
-		[]string{"Cond", "Stmt", "ElseIf", "Else"},
-		nil,
-	},
-	{
-		&stmt.AltElse{
-			Stmt: &stmt.StmtList{},
-		},
-		[]string{"Stmt"},
-		nil,
-	},
-	{
-		&stmt.AltElseIf{
-			Cond: &stmt.Expression{},
-			Stmt: &stmt.StmtList{},
-		},
-		[]string{"Cond", "Stmt"},
-		nil,
-	},
-	{
 		&stmt.Break{
 			Expr: &stmt.Expression{},
 		},
@@ -70,10 +45,9 @@ var nodesToTest = []struct {
 	},
 	{
 		&stmt.ClassConstList{
-			Modifiers: []node.Node{&stmt.Expression{}},
-			Consts:    []node.Node{&stmt.Expression{}},
+			Consts: []node.Node{&stmt.Expression{}},
 		},
-		[]string{"Modifiers", "Consts"},
+		[]string{"Consts"},
 		nil,
 	},
 	{
@@ -81,12 +55,11 @@ var nodesToTest = []struct {
 			ReturnsRef:    true,
 			PhpDocComment: "/** */",
 			MethodName:    &node.Identifier{},
-			Modifiers:     []node.Node{&stmt.Expression{}},
 			Params:        []node.Node{&stmt.Expression{}},
 			ReturnType:    &node.Identifier{},
 			Stmt:          &stmt.StmtList{},
 		},
-		[]string{"MethodName", "Modifiers", "Params", "ReturnType", "Stmt"},
+		[]string{"MethodName", "Params", "ReturnType", "Stmt"},
 		map[string]interface{}{"ReturnsRef": true, "PhpDocComment": "/** */"},
 	},
 	{
@@ -213,27 +186,7 @@ var nodesToTest = []struct {
 		nil,
 	},
 	{
-		&stmt.AltFor{
-			Init: []node.Node{&stmt.Expression{}},
-			Cond: []node.Node{&stmt.Expression{}},
-			Loop: []node.Node{&stmt.Expression{}},
-			Stmt: &stmt.StmtList{},
-		},
-		[]string{"Init", "Cond", "Loop", "Stmt"},
-		nil,
-	},
-	{
 		&stmt.Foreach{
-			Expr:     &stmt.Expression{},
-			Key:      &expr.Variable{},
-			Variable: &expr.Variable{},
-			Stmt:     &stmt.StmtList{},
-		},
-		[]string{"Expr", "Key", "Variable", "Stmt"},
-		nil,
-	},
-	{
-		&stmt.AltForeach{
 			Expr:     &stmt.Expression{},
 			Key:      &expr.Variable{},
 			Variable: &expr.Variable{},
@@ -321,10 +274,9 @@ var nodesToTest = []struct {
 	},
 	{
 		&stmt.PropertyList{
-			Modifiers:  []node.Node{&stmt.Expression{}},
 			Properties: []node.Node{&stmt.Expression{}},
 		},
-		[]string{"Modifiers", "Properties"},
+		[]string{"Properties"},
 		nil,
 	},
 	{
@@ -360,14 +312,6 @@ var nodesToTest = []struct {
 	},
 	{
 		&stmt.Switch{
-			Cond:     &expr.Variable{},
-			CaseList: &stmt.CaseList{},
-		},
-		[]string{"Cond", "CaseList"},
-		nil,
-	},
-	{
-		&stmt.AltSwitch{
 			Cond:     &expr.Variable{},
 			CaseList: &stmt.CaseList{},
 		},
@@ -458,14 +402,6 @@ var nodesToTest = []struct {
 	},
 	{
 		&stmt.While{
-			Cond: &expr.Variable{},
-			Stmt: &stmt.StmtList{},
-		},
-		[]string{"Cond", "Stmt"},
-		nil,
-	},
-	{
-		&stmt.AltWhile{
 			Cond: &expr.Variable{},
 			Stmt: &stmt.StmtList{},
 		},

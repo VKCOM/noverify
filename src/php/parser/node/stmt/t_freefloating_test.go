@@ -26,27 +26,6 @@ var expected freefloating.Collection = freefloating.Collection{
 }
 
 var nodes = []node.Node{
-	&stmt.AltElseIf{
-		FreeFloating: expected,
-	},
-	&stmt.AltElse{
-		FreeFloating: expected,
-	},
-	&stmt.AltFor{
-		FreeFloating: expected,
-	},
-	&stmt.AltForeach{
-		FreeFloating: expected,
-	},
-	&stmt.AltIf{
-		FreeFloating: expected,
-	},
-	&stmt.AltSwitch{
-		FreeFloating: expected,
-	},
-	&stmt.AltWhile{
-		FreeFloating: expected,
-	},
 	&stmt.Break{
 		FreeFloating: expected,
 	},

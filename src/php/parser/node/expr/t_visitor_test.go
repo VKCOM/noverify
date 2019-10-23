@@ -39,7 +39,7 @@ var nodesToTest = []struct {
 	},
 	{
 		&expr.Array{
-			Items: []node.Node{
+			Items: []*expr.ArrayItem{
 				&expr.ArrayItem{},
 			},
 		},
@@ -174,7 +174,7 @@ var nodesToTest = []struct {
 	},
 	{
 		&expr.List{
-			Items: []node.Node{
+			Items: []*expr.ArrayItem{
 				&expr.ArrayItem{},
 			},
 		},
@@ -269,24 +269,6 @@ var nodesToTest = []struct {
 			},
 		},
 		[]string{"Parts"},
-		nil,
-	},
-	{
-		&expr.ShortArray{
-			Items: []node.Node{
-				&expr.ArrayItem{},
-			},
-		},
-		[]string{"Items"},
-		nil,
-	},
-	{
-		&expr.ShortList{
-			Items: []node.Node{
-				&expr.ArrayItem{},
-			},
-		},
-		[]string{"Items"},
 		nil,
 	},
 	{

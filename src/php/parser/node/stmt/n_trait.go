@@ -17,11 +17,11 @@ type Trait struct {
 }
 
 // NewTrait node constructor
-func NewTrait(TraitName node.Node, Stmts []node.Node, PhpDocComment string) *Trait {
+func NewTrait(TraitName *node.Identifier, Stmts []node.Node, PhpDocComment string) *Trait {
 	return &Trait{
 		FreeFloating:  nil,
 		PhpDocComment: PhpDocComment,
-		TraitName:     TraitName.(*node.Identifier),
+		TraitName:     TraitName,
 		Stmts:         Stmts,
 	}
 }
