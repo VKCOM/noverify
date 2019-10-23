@@ -76,7 +76,7 @@ func (nsr *NamespaceResolver) EnterNode(w walker.Walkable) bool {
 		}
 
 		if n.ClassName != nil {
-			nsr.AddNamespacedName(n, n.ClassName.(*node.Identifier).Value)
+			nsr.AddNamespacedName(n, n.ClassName.Value)
 		}
 
 	case *stmt.Interface:
@@ -86,10 +86,10 @@ func (nsr *NamespaceResolver) EnterNode(w walker.Walkable) bool {
 			}
 		}
 
-		nsr.AddNamespacedName(n, n.InterfaceName.(*node.Identifier).Value)
+		nsr.AddNamespacedName(n, n.InterfaceName.Value)
 
 	case *stmt.Trait:
-		nsr.AddNamespacedName(n, n.TraitName.(*node.Identifier).Value)
+		nsr.AddNamespacedName(n, n.TraitName.Value)
 
 	case *stmt.Function:
 		nsr.AddNamespacedName(n, n.FunctionName.(*node.Identifier).Value)
@@ -212,7 +212,7 @@ func (nsr *NamespaceResolver) AddAlias(useType string, nn node.Node, prefix []no
 	switch use := nn.(type) {
 	case *stmt.Use:
 		if use.UseType != nil {
-			useType = use.UseType.(*node.Identifier).Value
+			useType = use.UseType.Value
 		}
 
 		useNameParts := use.Use.(*name.Name).Parts
@@ -220,7 +220,7 @@ func (nsr *NamespaceResolver) AddAlias(useType string, nn node.Node, prefix []no
 		if use.Alias == nil {
 			alias = useNameParts[len(useNameParts)-1].(*name.NamePart).Value
 		} else {
-			alias = use.Alias.(*node.Identifier).Value
+			alias = use.Alias.Value
 		}
 
 		nsr.Namespace.AddAlias(useType, concatNameParts(prefix, useNameParts), alias)

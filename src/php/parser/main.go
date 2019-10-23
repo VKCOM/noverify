@@ -12,17 +12,15 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/pkg/profile"
-	"github.com/yookoala/realpath"
 	"github.com/VKCOM/noverify/src/php/parser/parser"
-	"github.com/VKCOM/noverify/src/php/parser/php5"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/php/parser/printer"
 	"github.com/VKCOM/noverify/src/php/parser/visitor"
+	"github.com/pkg/profile"
+	"github.com/yookoala/realpath"
 )
 
 var wg sync.WaitGroup
-var usePhp5 *bool
 var dumpType string
 var profiler string
 var withFreeFloating *bool
@@ -35,7 +33,6 @@ type file struct {
 }
 
 func main() {
-	usePhp5 = flag.Bool("php5", false, "parse as PHP5")
 	withFreeFloating = flag.Bool("ff", false, "parse and show free floating strings")
 	showResolvedNs = flag.Bool("r", false, "resolve names")
 	printBack = flag.Bool("pb", false, "print AST back into the parsed file")
@@ -104,12 +101,7 @@ func parserWorker(fileCh <-chan *file, result chan<- parser.Parser) {
 
 		src := bytes.NewReader(f.content)
 
-		if *usePhp5 {
-			parserWorker = php5.NewParser(src, f.path)
-		} else {
-			parserWorker = php7.NewParser(src, f.path)
-		}
-
+		parserWorker = php7.NewParser(src, f.path)
 		if *withFreeFloating {
 			parserWorker.WithFreeFloating()
 		}

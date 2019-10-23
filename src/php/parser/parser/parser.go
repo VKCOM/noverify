@@ -9,7 +9,7 @@ import (
 type Parser interface {
 	Parse() int
 	GetPath() string
-	GetRootNode() node.Node
+	GetRootNode() *node.Root
 	GetErrors() []*errors.Error
 	WithFreeFloating()
 }
