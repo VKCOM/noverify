@@ -2,11 +2,11 @@ package state
 
 import (
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/name"
+	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
+	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/solver"
-	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/node/name"
-	"github.com/z7zmey/php-parser/node/stmt"
-	"github.com/z7zmey/php-parser/walker"
 )
 
 // EnterNode must be called upon entering new node to update current state.
@@ -40,7 +40,7 @@ func EnterNode(st *meta.ClassParseState, n walker.Walkable) {
 		}
 	case *stmt.Interface:
 		st.IsTrait = false
-		st.CurrentClass = st.Namespace + `\` + n.InterfaceName.(*node.Identifier).Value
+		st.CurrentClass = st.Namespace + `\` + n.InterfaceName.Value
 		st.CurrentParentClass = ""
 		st.CurrentParentInterfaces = nil
 		if n.Extends != nil {
@@ -53,12 +53,10 @@ func EnterNode(st *meta.ClassParseState, n walker.Walkable) {
 		}
 
 	case *stmt.Class:
-		st.IsTrait = false
-		id, ok := n.ClassName.(*node.Identifier)
 		// TODO: handle anonymous classes (they can be nested as well)
-		if ok {
-			st.CurrentClass = st.Namespace + `\` + id.Value
-		}
+		st.IsTrait = false
+		id := n.ClassName
+		st.CurrentClass = st.Namespace + `\` + id.Value
 		st.CurrentParentClass = ""
 		st.CurrentParentInterfaces = nil
 		if n.Extends != nil {
@@ -66,7 +64,7 @@ func EnterNode(st *meta.ClassParseState, n walker.Walkable) {
 		}
 	case *stmt.Trait:
 		st.IsTrait = true
-		st.CurrentClass = st.Namespace + `\` + n.TraitName.(*node.Identifier).Value
+		st.CurrentClass = st.Namespace + `\` + n.TraitName.Value
 		st.CurrentParentClass = ""
 		st.CurrentParentInterfaces = nil
 	}
@@ -82,7 +80,7 @@ func handleUseClass(st *meta.ClassParseState, n *stmt.Use) {
 	var alias string
 
 	if n.Alias != nil {
-		alias = n.Alias.(*node.Identifier).Value
+		alias = n.Alias.Value
 	} else {
 		alias = parts[len(parts)-1].(*name.NamePart).Value
 	}
@@ -100,7 +98,7 @@ func handleUseFunction(st *meta.ClassParseState, n *stmt.Use) {
 	var alias string
 
 	if n.Alias != nil {
-		alias = n.Alias.(*node.Identifier).Value
+		alias = n.Alias.Value
 	} else {
 		alias = parts[len(parts)-1].(*name.NamePart).Value
 	}

@@ -9,20 +9,20 @@ import (
 
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/parser/freefloating"
+	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
+	"github.com/VKCOM/noverify/src/php/parser/node/name"
+	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
+	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
+	"github.com/VKCOM/noverify/src/php/parser/php7"
+	"github.com/VKCOM/noverify/src/php/parser/position"
+	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/state"
 	"github.com/VKCOM/noverify/src/vscode"
-	"github.com/z7zmey/php-parser/freefloating"
-	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/node/expr"
-	"github.com/z7zmey/php-parser/node/expr/assign"
-	"github.com/z7zmey/php-parser/node/name"
-	"github.com/z7zmey/php-parser/node/scalar"
-	"github.com/z7zmey/php-parser/node/stmt"
-	"github.com/z7zmey/php-parser/php7"
-	"github.com/z7zmey/php-parser/position"
-	"github.com/z7zmey/php-parser/walker"
 )
 
 const (
@@ -519,7 +519,7 @@ func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodMod
 	res.accessLevel = meta.Public
 
 	for _, m := range meth.Modifiers {
-		switch v := m.(*node.Identifier).Value; v {
+		switch m.Value {
 		case "abstract":
 			res.abstract = true
 		case "static":
@@ -533,7 +533,7 @@ func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodMod
 		case "final":
 			res.final = true
 		default:
-			linterError(d.filename, "Unrecognized method modifier: %s", v)
+			linterError(d.filename, "Unrecognized method modifier: %s", m.Value)
 		}
 	}
 
@@ -581,7 +581,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 	accessLevel := meta.Public
 
 	for _, m := range pl.Modifiers {
-		switch m.(*node.Identifier).Value {
+		switch m.Value {
 		case "public":
 			accessLevel = meta.Public
 		case "protected":
@@ -627,7 +627,7 @@ func (d *RootWalker) enterClassConstList(s *stmt.ClassConstList) bool {
 	accessLevel := meta.Public
 
 	for _, m := range s.Modifiers {
-		switch m.(*node.Identifier).Value {
+		switch m.Value {
 		case "public":
 			accessLevel = meta.Public
 		case "protected":

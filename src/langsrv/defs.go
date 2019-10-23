@@ -5,13 +5,13 @@ import (
 
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
+	"github.com/VKCOM/noverify/src/php/parser/node/name"
+	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/state"
 	"github.com/VKCOM/noverify/src/vscode"
-	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/node/expr"
-	"github.com/z7zmey/php-parser/node/name"
-	"github.com/z7zmey/php-parser/walker"
 )
 
 type definitionWalker struct {
@@ -217,10 +217,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 			return true
 		}
 
-		constName, ok := n.ConstantName.(*node.Identifier)
-		if !ok {
-			return false
-		}
+		constName := n.ConstantName
 
 		if constName.Value == `class` || constName.Value == `CLASS` {
 			return false

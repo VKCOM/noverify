@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/solver"
-	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/printer"
-	"github.com/z7zmey/php-parser/walker"
+	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/printer"
+	"github.com/VKCOM/noverify/src/php/parser/walker"
 )
 
 // FmtNode is used for debug purposes and returns string representation of a specified node.

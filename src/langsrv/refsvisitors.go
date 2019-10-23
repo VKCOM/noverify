@@ -5,14 +5,14 @@ import (
 
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
+	"github.com/VKCOM/noverify/src/php/parser/php7"
+	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/state"
 	"github.com/VKCOM/noverify/src/vscode"
-	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/node/expr"
-	"github.com/z7zmey/php-parser/node/expr/assign"
-	"github.com/z7zmey/php-parser/php7"
-	"github.com/z7zmey/php-parser/walker"
 )
 
 func findFunctionReferences(funcName string) []vscode.Location {
@@ -285,11 +285,7 @@ func (d *classConstVisitor) EnterNode(w walker.Walkable) bool {
 
 	switch n := w.(type) {
 	case *expr.ClassConstFetch:
-		constName, ok := n.ConstantName.(*node.Identifier)
-		if !ok {
-			return true
-		}
-
+		constName := n.ConstantName
 		if constName.Value == `class` || constName.Value == `CLASS` {
 			return true
 		}

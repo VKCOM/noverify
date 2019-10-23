@@ -7,8 +7,8 @@ import (
 
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/vscode"
-	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/walker"
+	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/walker"
 )
 
 // MetaCacher is an interface for integrating checker-specific

@@ -5,13 +5,13 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/node/expr"
-	"github.com/z7zmey/php-parser/node/expr/assign"
-	"github.com/z7zmey/php-parser/node/expr/binary"
-	"github.com/z7zmey/php-parser/node/expr/cast"
-	"github.com/z7zmey/php-parser/node/name"
-	"github.com/z7zmey/php-parser/node/scalar"
+	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr/binary"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr/cast"
+	"github.com/VKCOM/noverify/src/php/parser/node/name"
+	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 )
 
 func unaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, x node.Node, custom []CustomType) *meta.TypesMap {
@@ -96,7 +96,7 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ex
 	return nil, false
 }
 
-func arrayType(items []node.Node) *meta.TypesMap {
+func arrayType(items []*expr.ArrayItem) *meta.TypesMap {
 	if len(items) == 0 {
 		// Used as a placeholder until more specific type is discovered.
 		//
@@ -124,13 +124,8 @@ func arrayType(items []node.Node) *meta.TypesMap {
 	return meta.NewTypesMap("mixed[]")
 }
 
-func isConstantStringArray(items []node.Node) bool {
-	for _, n := range items {
-		item, ok := n.(*expr.ArrayItem)
-		if !ok {
-			return false
-		}
-
+func isConstantStringArray(items []*expr.ArrayItem) bool {
+	for _, item := range items {
 		if _, ok := item.Val.(*scalar.String); !ok {
 			return false
 		}
@@ -139,13 +134,8 @@ func isConstantStringArray(items []node.Node) bool {
 	return true
 }
 
-func isConstantIntArray(items []node.Node) bool {
-	for _, n := range items {
-		item, ok := n.(*expr.ArrayItem)
-		if !ok {
-			return false
-		}
-
+func isConstantIntArray(items []*expr.ArrayItem) bool {
+	for _, item := range items {
 		if _, ok := item.Val.(*scalar.Lnumber); !ok {
 			return false
 		}
@@ -154,13 +144,8 @@ func isConstantIntArray(items []node.Node) bool {
 	return true
 }
 
-func isConstantFloatArray(items []node.Node) bool {
-	for _, n := range items {
-		item, ok := n.(*expr.ArrayItem)
-		if !ok {
-			return false
-		}
-
+func isConstantFloatArray(items []*expr.ArrayItem) bool {
+	for _, item := range items {
 		if _, ok := item.Val.(*scalar.Dnumber); !ok {
 			return false
 		}
@@ -306,8 +291,6 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 	case *binary.Concat:
 		return meta.NewTypesMap("string")
 	case *expr.Array:
-		return arrayType(n.Items)
-	case *expr.ShortArray:
 		return arrayType(n.Items)
 	case *expr.BooleanNot, *binary.BooleanAnd, *binary.BooleanOr,
 		*binary.Equal, *binary.NotEqual, *binary.Identical, *binary.NotIdentical,

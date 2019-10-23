@@ -3,9 +3,9 @@ package solver
 import (
 	"reflect"
 
-	"github.com/z7zmey/php-parser/freefloating"
-	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/position"
+	"github.com/VKCOM/noverify/src/php/parser/freefloating"
+	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/position"
 )
 
 // Like reflect.DeepEqual but knows how to compare node.Node by ignoring

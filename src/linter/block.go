@@ -6,18 +6,18 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/parser/freefloating"
+	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr/binary"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr/cast"
+	"github.com/VKCOM/noverify/src/php/parser/node/name"
+	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
+	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
+	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/solver"
-	"github.com/z7zmey/php-parser/freefloating"
-	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/node/expr"
-	"github.com/z7zmey/php-parser/node/expr/assign"
-	"github.com/z7zmey/php-parser/node/expr/binary"
-	"github.com/z7zmey/php-parser/node/expr/cast"
-	"github.com/z7zmey/php-parser/node/name"
-	"github.com/z7zmey/php-parser/node/scalar"
-	"github.com/z7zmey/php-parser/node/stmt"
-	"github.com/z7zmey/php-parser/walker"
 )
 
 // loopKind describes current looping statement context.
@@ -289,8 +289,6 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		res = b.handleAssignReference(s)
 	case *expr.Array:
 		res = b.handleArray(s)
-	case *expr.ShortArray:
-		res = b.handleArrayItems(s, s.Items)
 	case *stmt.Foreach:
 		res = b.handleForeach(s)
 	case *stmt.For:
@@ -358,8 +356,6 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		b.handleContinue(s)
 	case *binary.LogicalOr:
 		res = b.handleLogicalOr(s)
-	default:
-		// b.d.debug(`  Statement: %T`, s)
 	}
 
 	for _, c := range b.custom {
@@ -855,9 +851,9 @@ func (b *BlockWalker) handleCompactCallArgs(args []node.Node) {
 		case *node.Argument:
 			args = append(args, n.Expr)
 		case *expr.Array:
-			args = append(args, n.Items...)
-		case *expr.ShortArray:
-			args = append(args, n.Items...)
+			for _, item := range n.Items {
+				args = append(args, item)
+			}
 		case *expr.ArrayItem:
 			args = append(args, n.Val)
 		case *scalar.String:
@@ -1118,22 +1114,18 @@ func (b *BlockWalker) handleStaticPropertyFetch(e *expr.StaticPropertyFetch) boo
 }
 
 func (b *BlockWalker) handleArray(arr *expr.Array) bool {
-	b.r.Report(arr, LevelDoNotReject, "arraySyntax", "Use of old array syntax (use short form instead)")
+	if !arr.ShortSyntax {
+		b.r.Report(arr, LevelDoNotReject, "arraySyntax", "Use of old array syntax (use short form instead)")
+	}
 	return b.handleArrayItems(arr, arr.Items)
 }
 
-func (b *BlockWalker) handleArrayItems(arr node.Node, items []node.Node) bool {
+func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) bool {
 	haveKeys := false
 	haveImplicitKeys := false
 	keys := make(map[string]struct{}, len(items))
 
-	for _, itemNode := range items {
-		item, ok := itemNode.(*expr.ArrayItem)
-		if !ok {
-			// TODO: it is possible at all here?
-			continue
-		}
-
+	for _, item := range items {
 		if item.Val == nil {
 			continue
 		}
@@ -1182,11 +1174,7 @@ func (b *BlockWalker) handleClassConstFetch(e *expr.ClassConstFetch) bool {
 		return true
 	}
 
-	constName, ok := e.ConstantName.(*node.Identifier)
-	if !ok {
-		return false
-	}
-
+	constName := e.ConstantName
 	if constName.Value == `class` || constName.Value == `CLASS` {
 		return false
 	}
@@ -1291,7 +1279,7 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 	b.handleVariableNode(s.Key, nil, "foreach_key")
 	if list, ok := s.Variable.(*expr.List); ok {
 		for _, item := range list.Items {
-			v, ok := item.(*expr.ArrayItem).Val.(*expr.Variable)
+			v, ok := item.Val.(*expr.Variable)
 			if !ok {
 				continue
 			}
@@ -1850,12 +1838,7 @@ func (b *BlockWalker) handleAssignReference(a *assign.Reference) bool {
 		b.addNonLocalVar(v)
 	case *expr.List:
 		for _, item := range v.Items {
-			arrayItem, ok := item.(*expr.ArrayItem)
-			if !ok {
-				continue
-			}
-
-			b.handleVariableNode(arrayItem.Val, meta.NewTypesMap("unknown_from_list"), "assign")
+			b.handleVariableNode(item.Val, meta.NewTypesMap("unknown_from_list"), "assign")
 		}
 	default:
 		a.Variable.Walk(b)
@@ -1865,14 +1848,9 @@ func (b *BlockWalker) handleAssignReference(a *assign.Reference) bool {
 	return false
 }
 
-func (b *BlockWalker) handleAssignList(items []node.Node) {
+func (b *BlockWalker) handleAssignList(items []*expr.ArrayItem) {
 	for _, item := range items {
-		arrayItem, ok := item.(*expr.ArrayItem)
-		if !ok {
-			continue
-		}
-
-		b.handleVariableNode(arrayItem.Val, meta.NewTypesMap("unknown_from_list"), "assign")
+		b.handleVariableNode(item.Val, meta.NewTypesMap("unknown_from_list"), "assign")
 	}
 }
 
@@ -1904,8 +1882,6 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 	case *expr.Variable:
 		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.st, a.Expression), "assign", true)
 	case *expr.List:
-		b.handleAssignList(v.Items)
-	case *expr.ShortList:
 		b.handleAssignList(v.Items)
 	case *expr.PropertyFetch:
 		varNode, ok := v.Variable.(*expr.Variable)
