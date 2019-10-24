@@ -103,7 +103,7 @@ func (d *referencesWalker) EnterNode(w walker.Walkable) bool {
 			return true
 		}
 
-		d.result = findFunctionReferences(d.st.Namespace + `\` + n.FunctionName.(*node.Identifier).Value)
+		d.result = findFunctionReferences(d.st.Namespace + `\` + n.FunctionName.Value)
 	case *stmt.ClassMethod:
 		if pos := n.MethodName.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true

@@ -13,7 +13,7 @@ import (
 func EnterNode(st *meta.ClassParseState, n walker.Walkable) {
 	switch n := n.(type) {
 	case *stmt.Function:
-		st.CurrentFunction = n.FunctionName.(*node.Identifier).Value
+		st.CurrentFunction = n.FunctionName.Value
 	case *stmt.ClassMethod:
 		st.CurrentFunction = n.MethodName.(*node.Identifier).Value
 

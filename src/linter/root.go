@@ -1111,7 +1111,7 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 }
 
 func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
-	nm := d.st.Namespace + `\` + fun.FunctionName.(*node.Identifier).Value
+	nm := d.st.Namespace + `\` + fun.FunctionName.Value
 	pos := fun.GetPosition()
 
 	if funcSize := pos.EndLine - pos.StartLine; funcSize > maxFunctionLines {

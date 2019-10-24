@@ -3,6 +3,7 @@ package stmt
 import (
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/position"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 )
@@ -12,12 +13,12 @@ type Catch struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Types        []node.Node
-	Variable     node.Node
+	Variable     *expr.Variable
 	Stmts        []node.Node
 }
 
 // NewCatch node constructor
-func NewCatch(Types []node.Node, Variable node.Node, Stmts []node.Node) *Catch {
+func NewCatch(Types []node.Node, Variable *expr.Variable, Stmts []node.Node) *Catch {
 	return &Catch{
 		FreeFloating: nil,
 		Types:        Types,

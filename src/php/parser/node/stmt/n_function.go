@@ -13,14 +13,14 @@ type Function struct {
 	Position      *position.Position
 	ReturnsRef    bool
 	PhpDocComment string
-	FunctionName  node.Node
+	FunctionName  *node.Identifier
 	Params        []node.Node
 	ReturnType    node.Node
 	Stmts         []node.Node
 }
 
 // NewFunction node constructor
-func NewFunction(FunctionName node.Node, ReturnsRef bool, Params []node.Node, ReturnType node.Node, Stmts []node.Node, PhpDocComment string) *Function {
+func NewFunction(FunctionName *node.Identifier, ReturnsRef bool, Params []node.Node, ReturnType node.Node, Stmts []node.Node, PhpDocComment string) *Function {
 	return &Function{
 		FreeFloating:  nil,
 		ReturnsRef:    ReturnsRef,

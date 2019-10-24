@@ -92,7 +92,7 @@ func (nsr *NamespaceResolver) EnterNode(w walker.Walkable) bool {
 		nsr.AddNamespacedName(n, n.TraitName.Value)
 
 	case *stmt.Function:
-		nsr.AddNamespacedName(n, n.FunctionName.(*node.Identifier).Value)
+		nsr.AddNamespacedName(n, n.FunctionName.Value)
 
 		for _, parameter := range n.Params {
 			nsr.ResolveType(parameter.(*node.Parameter).VariableType)
