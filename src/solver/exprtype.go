@@ -213,7 +213,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 
 		return meta.NewTypesMap(meta.WrapStaticMethodCall(nm, id.Value))
 	case *expr.StaticPropertyFetch:
-		v, ok := n.Property.(*expr.Variable)
+		v, ok := n.Property.(*node.Variable)
 		if !ok {
 			return &meta.TypesMap{}
 		}
@@ -229,7 +229,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 		}
 
 		return meta.NewTypesMap(meta.WrapStaticPropertyFetch(nm, "$"+id.Value))
-	case *expr.Variable:
+	case *node.Variable:
 		id, ok := n.VarName.(*node.Identifier)
 		if ok {
 			typ, _ := sc.GetVarNameType(id.Value)

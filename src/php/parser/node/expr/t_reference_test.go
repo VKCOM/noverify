@@ -32,7 +32,7 @@ func TestForeachWithRef(t *testing.T) {
 					StartPos:  4,
 					EndPos:    31,
 				},
-				Expr: &expr.Variable{
+				Expr: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -49,7 +49,7 @@ func TestForeachWithRef(t *testing.T) {
 						Value: "a",
 					},
 				},
-				Key: &expr.Variable{
+				Key: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -73,7 +73,7 @@ func TestForeachWithRef(t *testing.T) {
 						StartPos:  25,
 						EndPos:    27,
 					},
-					Variable: &expr.Variable{
+					Variable: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,

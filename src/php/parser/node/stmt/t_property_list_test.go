@@ -7,7 +7,6 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
@@ -70,7 +69,7 @@ func TestProperty(t *testing.T) {
 									EndPos:    20,
 								},
 								PhpDocComment: "",
-								Variable: &expr.Variable{
+								Variable: &node.Variable{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
@@ -166,7 +165,7 @@ func TestProperties(t *testing.T) {
 									EndPos:    30,
 								},
 								PhpDocComment: "",
-								Variable: &expr.Variable{
+								Variable: &node.Variable{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
@@ -192,7 +191,7 @@ func TestProperties(t *testing.T) {
 									EndPos:    38,
 								},
 								PhpDocComment: "",
-								Variable: &expr.Variable{
+								Variable: &node.Variable{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
@@ -297,7 +296,7 @@ func TestProperties2(t *testing.T) {
 									EndPos:    34,
 								},
 								PhpDocComment: "",
-								Variable: &expr.Variable{
+								Variable: &node.Variable{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
@@ -332,7 +331,7 @@ func TestProperties2(t *testing.T) {
 									EndPos:    38,
 								},
 								PhpDocComment: "",
-								Variable: &expr.Variable{
+								Variable: &node.Variable{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,

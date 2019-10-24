@@ -45,7 +45,7 @@ func TestFor(t *testing.T) {
 							StartPos:  8,
 							EndPos:    13,
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -81,7 +81,7 @@ func TestFor(t *testing.T) {
 							StartPos:  16,
 							EndPos:    22,
 						},
-						Left: &expr.Variable{
+						Left: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -117,7 +117,7 @@ func TestFor(t *testing.T) {
 							StartPos:  25,
 							EndPos:    28,
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -142,7 +142,7 @@ func TestFor(t *testing.T) {
 							StartPos:  31,
 							EndPos:    34,
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -207,7 +207,7 @@ func TestAltFor(t *testing.T) {
 							StartPos:  10,
 							EndPos:    16,
 						},
-						Left: &expr.Variable{
+						Left: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -243,7 +243,7 @@ func TestAltFor(t *testing.T) {
 							StartPos:  19,
 							EndPos:    22,
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,

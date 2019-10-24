@@ -39,7 +39,7 @@ func TestIsset(t *testing.T) {
 						EndPos:    12,
 					},
 					Variables: []node.Node{
-						&expr.Variable{
+						&node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -94,7 +94,7 @@ func TestIssetVariables(t *testing.T) {
 						EndPos:    16,
 					},
 					Variables: []node.Node{
-						&expr.Variable{
+						&node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -111,7 +111,7 @@ func TestIssetVariables(t *testing.T) {
 								Value: "a",
 							},
 						},
-						&expr.Variable{
+						&node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,

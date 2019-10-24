@@ -6,7 +6,6 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/cast"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 )
@@ -18,49 +17,49 @@ var nodesToTest = []struct {
 }{
 	{
 		&cast.Array{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
 	},
 	{
 		&cast.Bool{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
 	},
 	{
 		&cast.Double{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
 	},
 	{
 		&cast.Int{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
 	},
 	{
 		&cast.Object{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
 	},
 	{
 		&cast.String{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
 	},
 	{
 		&cast.Unset{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,

@@ -248,7 +248,7 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 			}
 		}
 	case *assign.Assign:
-		v, ok := n.Variable.(*expr.Variable)
+		v, ok := n.Variable.(*node.Variable)
 		if !ok {
 			break
 		}
@@ -379,7 +379,7 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 	}
 }
 
-func (d *RootWalker) reportUndefinedVariable(s *expr.Variable, maybeHave bool) {
+func (d *RootWalker) reportUndefinedVariable(s *node.Variable, maybeHave bool) {
 	name, ok := s.VarName.(*node.Identifier)
 	if !ok {
 		d.Report(s, LevelInformation, "undefined", "Unknown variable variable %s used",
@@ -434,12 +434,12 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 
 	for _, useExpr := range uses {
 		var byRef bool
-		var v *expr.Variable
+		var v *node.Variable
 		switch u := useExpr.(type) {
 		case *expr.Reference:
-			v = u.Variable.(*expr.Variable)
+			v = u.Variable.(*node.Variable)
 			byRef = true
-		case *expr.Variable:
+		case *node.Variable:
 			v = u
 		}
 		varName := v.VarName.(*node.Identifier).Value
@@ -596,7 +596,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 	for _, pNode := range pl.Properties {
 		p := pNode.(*stmt.Property)
 
-		nm := p.Variable.(*expr.Variable).VarName.(*node.Identifier).Value
+		nm := p.Variable.(*node.Variable).VarName.(*node.Identifier).Value
 
 		typ, errText := d.parsePHPDocVar(p.PhpDocComment)
 		if errText != "" {
@@ -1014,7 +1014,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 
 		if !strings.HasPrefix(variable, "$") {
 			if len(actualParams) > curParam {
-				variable = actualParams[curParam].(*node.Parameter).Variable.(*expr.Variable).VarName.(*node.Identifier).Value
+				variable = actualParams[curParam].(*node.Parameter).Variable.(*node.Variable).VarName.(*node.Identifier).Value
 			} else {
 				result.errs.pushLint("too many @param tags on line %d", part.Line)
 				continue
@@ -1067,7 +1067,7 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 	args = make([]meta.FuncParam, 0, len(params))
 	for _, param := range params {
 		p := param.(*node.Parameter)
-		v := p.Variable.(*expr.Variable)
+		v := p.Variable.(*node.Variable)
 		parTyp := parTypes[v.VarName.(*node.Identifier).Value]
 
 		if !parTyp.typ.IsEmpty() {

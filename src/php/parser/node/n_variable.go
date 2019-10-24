@@ -1,8 +1,7 @@
-package expr
+package node
 
 import (
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
-	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/position"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 )
@@ -11,11 +10,11 @@ import (
 type Variable struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	VarName      node.Node
+	VarName      Node
 }
 
 // NewVariable node constructor
-func NewVariable(VarName node.Node) *Variable {
+func NewVariable(VarName Node) *Variable {
 	return &Variable{
 		FreeFloating: nil,
 		VarName:      VarName,
@@ -42,7 +41,7 @@ func (n *Variable) Attributes() map[string]interface{} {
 }
 
 // SetVarName reset var name
-func (n *Variable) SetVarName(VarName node.Node) {
+func (n *Variable) SetVarName(VarName Node) {
 	n.VarName = VarName
 }
 

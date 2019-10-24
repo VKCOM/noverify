@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/binary"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"gotest.tools/assert"
@@ -17,216 +16,216 @@ var nodesToTest = []struct {
 }{
 	{
 		&binary.BitwiseAnd{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.BitwiseOr{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.BitwiseXor{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.BooleanAnd{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.BooleanOr{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.Coalesce{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.Concat{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.Div{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.Equal{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.GreaterOrEqual{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.Greater{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.Identical{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.LogicalAnd{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.LogicalOr{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.LogicalXor{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.Minus{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.Mod{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.Mul{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.NotEqual{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.NotIdentical{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.Plus{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.Pow{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.ShiftLeft{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.ShiftRight{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.SmallerOrEqual{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.Smaller{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,
 	},
 	{
 		&binary.Spaceship{
-			Left:  &expr.Variable{},
-			Right: &expr.Variable{},
+			Left:  &node.Variable{},
+			Right: &node.Variable{},
 		},
 		[]string{"Left", "Right"},
 		nil,

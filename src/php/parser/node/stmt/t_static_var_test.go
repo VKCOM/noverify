@@ -7,7 +7,6 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
@@ -40,7 +39,7 @@ func TestStaticVar(t *testing.T) {
 							StartPos:  11,
 							EndPos:    12,
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -95,7 +94,7 @@ func TestStaticVars(t *testing.T) {
 							StartPos:  11,
 							EndPos:    12,
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -120,7 +119,7 @@ func TestStaticVars(t *testing.T) {
 							StartPos:  15,
 							EndPos:    20,
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -184,7 +183,7 @@ func TestStaticVars2(t *testing.T) {
 							StartPos:  11,
 							EndPos:    16,
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -218,7 +217,7 @@ func TestStaticVars2(t *testing.T) {
 							StartPos:  19,
 							EndPos:    20,
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,

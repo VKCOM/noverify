@@ -7,7 +7,6 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/binary"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
@@ -39,7 +38,7 @@ func TestBitwiseAnd(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -56,7 +55,7 @@ func TestBitwiseAnd(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -109,7 +108,7 @@ func TestBitwiseOr(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -126,7 +125,7 @@ func TestBitwiseOr(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -179,7 +178,7 @@ func TestBitwiseXor(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -196,7 +195,7 @@ func TestBitwiseXor(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -249,7 +248,7 @@ func TestBooleanAnd(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -266,7 +265,7 @@ func TestBooleanAnd(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -319,7 +318,7 @@ func TestBooleanOr(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -336,7 +335,7 @@ func TestBooleanOr(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -389,7 +388,7 @@ func TestCoalesce(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -406,7 +405,7 @@ func TestCoalesce(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -459,7 +458,7 @@ func TestConcat(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -476,7 +475,7 @@ func TestConcat(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -529,7 +528,7 @@ func TestDiv(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -546,7 +545,7 @@ func TestDiv(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -599,7 +598,7 @@ func TestEqual(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -616,7 +615,7 @@ func TestEqual(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -669,7 +668,7 @@ func TestGreaterOrEqual(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -686,7 +685,7 @@ func TestGreaterOrEqual(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -739,7 +738,7 @@ func TestGreater(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -756,7 +755,7 @@ func TestGreater(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -809,7 +808,7 @@ func TestIdentical(t *testing.T) {
 						StartPos:  4,
 						EndPos:    12,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -826,7 +825,7 @@ func TestIdentical(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -879,7 +878,7 @@ func TestLogicalAnd(t *testing.T) {
 						StartPos:  4,
 						EndPos:    12,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -896,7 +895,7 @@ func TestLogicalAnd(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -949,7 +948,7 @@ func TestLogicalOr(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -966,7 +965,7 @@ func TestLogicalOr(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1019,7 +1018,7 @@ func TestLogicalXor(t *testing.T) {
 						StartPos:  4,
 						EndPos:    12,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1036,7 +1035,7 @@ func TestLogicalXor(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1089,7 +1088,7 @@ func TestMinus(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1106,7 +1105,7 @@ func TestMinus(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1159,7 +1158,7 @@ func TestMod(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1176,7 +1175,7 @@ func TestMod(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1229,7 +1228,7 @@ func TestMul(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1246,7 +1245,7 @@ func TestMul(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1299,7 +1298,7 @@ func TestNotEqual(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1316,7 +1315,7 @@ func TestNotEqual(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1369,7 +1368,7 @@ func TestNotIdentical(t *testing.T) {
 						StartPos:  4,
 						EndPos:    12,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1386,7 +1385,7 @@ func TestNotIdentical(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1439,7 +1438,7 @@ func TestPlus(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1456,7 +1455,7 @@ func TestPlus(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1509,7 +1508,7 @@ func TestPow(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1526,7 +1525,7 @@ func TestPow(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1579,7 +1578,7 @@ func TestShiftLeft(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1596,7 +1595,7 @@ func TestShiftLeft(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1649,7 +1648,7 @@ func TestShiftRight(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1666,7 +1665,7 @@ func TestShiftRight(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1719,7 +1718,7 @@ func TestSmallerOrEqual(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1736,7 +1735,7 @@ func TestSmallerOrEqual(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1789,7 +1788,7 @@ func TestSmaller(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1806,7 +1805,7 @@ func TestSmaller(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1859,7 +1858,7 @@ func TestSpaceship(t *testing.T) {
 						StartPos:  4,
 						EndPos:    12,
 					},
-					Left: &expr.Variable{
+					Left: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -1876,7 +1875,7 @@ func TestSpaceship(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Right: &expr.Variable{
+					Right: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,

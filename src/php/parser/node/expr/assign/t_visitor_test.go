@@ -6,7 +6,6 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 )
@@ -18,112 +17,112 @@ var nodesToTest = []struct {
 }{
 	{
 		&assign.Reference{
-			Variable:   &expr.Variable{},
-			Expression: &expr.Variable{},
+			Variable:   &node.Variable{},
+			Expression: &node.Variable{},
 		},
 		[]string{"Variable", "Expression"},
 		nil,
 	},
 	{
 		&assign.Assign{
-			Variable:   &expr.Variable{},
-			Expression: &expr.Variable{},
+			Variable:   &node.Variable{},
+			Expression: &node.Variable{},
 		},
 		[]string{"Variable", "Expression"},
 		nil,
 	},
 	{
 		&assign.BitwiseAnd{
-			Variable:   &expr.Variable{},
-			Expression: &expr.Variable{},
+			Variable:   &node.Variable{},
+			Expression: &node.Variable{},
 		},
 		[]string{"Variable", "Expression"},
 		nil,
 	},
 	{
 		&assign.BitwiseOr{
-			Variable:   &expr.Variable{},
-			Expression: &expr.Variable{},
+			Variable:   &node.Variable{},
+			Expression: &node.Variable{},
 		},
 		[]string{"Variable", "Expression"},
 		nil,
 	},
 	{
 		&assign.BitwiseXor{
-			Variable:   &expr.Variable{},
-			Expression: &expr.Variable{},
+			Variable:   &node.Variable{},
+			Expression: &node.Variable{},
 		},
 		[]string{"Variable", "Expression"},
 		nil,
 	},
 	{
 		&assign.Concat{
-			Variable:   &expr.Variable{},
-			Expression: &expr.Variable{},
+			Variable:   &node.Variable{},
+			Expression: &node.Variable{},
 		},
 		[]string{"Variable", "Expression"},
 		nil,
 	},
 	{
 		&assign.Div{
-			Variable:   &expr.Variable{},
-			Expression: &expr.Variable{},
+			Variable:   &node.Variable{},
+			Expression: &node.Variable{},
 		},
 		[]string{"Variable", "Expression"},
 		nil,
 	},
 	{
 		&assign.Minus{
-			Variable:   &expr.Variable{},
-			Expression: &expr.Variable{},
+			Variable:   &node.Variable{},
+			Expression: &node.Variable{},
 		},
 		[]string{"Variable", "Expression"},
 		nil,
 	},
 	{
 		&assign.Mod{
-			Variable:   &expr.Variable{},
-			Expression: &expr.Variable{},
+			Variable:   &node.Variable{},
+			Expression: &node.Variable{},
 		},
 		[]string{"Variable", "Expression"},
 		nil,
 	},
 	{
 		&assign.Mul{
-			Variable:   &expr.Variable{},
-			Expression: &expr.Variable{},
+			Variable:   &node.Variable{},
+			Expression: &node.Variable{},
 		},
 		[]string{"Variable", "Expression"},
 		nil,
 	},
 	{
 		&assign.Plus{
-			Variable:   &expr.Variable{},
-			Expression: &expr.Variable{},
+			Variable:   &node.Variable{},
+			Expression: &node.Variable{},
 		},
 		[]string{"Variable", "Expression"},
 		nil,
 	},
 	{
 		&assign.Pow{
-			Variable:   &expr.Variable{},
-			Expression: &expr.Variable{},
+			Variable:   &node.Variable{},
+			Expression: &node.Variable{},
 		},
 		[]string{"Variable", "Expression"},
 		nil,
 	},
 	{
 		&assign.ShiftLeft{
-			Variable:   &expr.Variable{},
-			Expression: &expr.Variable{},
+			Variable:   &node.Variable{},
+			Expression: &node.Variable{},
 		},
 		[]string{"Variable", "Expression"},
 		nil,
 	},
 	{
 		&assign.ShiftRight{
-			Variable:   &expr.Variable{},
-			Expression: &expr.Variable{},
+			Variable:   &node.Variable{},
+			Expression: &node.Variable{},
 		},
 		[]string{"Variable", "Expression"},
 		nil,

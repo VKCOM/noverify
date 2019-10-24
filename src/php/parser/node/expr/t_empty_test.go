@@ -38,7 +38,7 @@ func TestEmpty(t *testing.T) {
 						StartPos:  4,
 						EndPos:    12,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,

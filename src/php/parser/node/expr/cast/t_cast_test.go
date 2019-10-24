@@ -7,7 +7,6 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/cast"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
@@ -39,7 +38,7 @@ func TestArray(t *testing.T) {
 						StartPos:  4,
 						EndPos:    12,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -92,7 +91,7 @@ func TestBool(t *testing.T) {
 						StartPos:  4,
 						EndPos:    14,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -145,7 +144,7 @@ func TestBoolShort(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -198,7 +197,7 @@ func TestDouble(t *testing.T) {
 						StartPos:  4,
 						EndPos:    13,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -251,7 +250,7 @@ func TestCastFloat(t *testing.T) {
 						StartPos:  4,
 						EndPos:    12,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -304,7 +303,7 @@ func TestInt(t *testing.T) {
 						StartPos:  4,
 						EndPos:    14,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -357,7 +356,7 @@ func TestIntShort(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -410,7 +409,7 @@ func TestObject(t *testing.T) {
 						StartPos:  4,
 						EndPos:    13,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -463,7 +462,7 @@ func TestString(t *testing.T) {
 						StartPos:  4,
 						EndPos:    13,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -516,7 +515,7 @@ func TestBinaryString(t *testing.T) {
 						StartPos:  4,
 						EndPos:    13,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -569,7 +568,7 @@ func TestUnset(t *testing.T) {
 						StartPos:  4,
 						EndPos:    12,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,

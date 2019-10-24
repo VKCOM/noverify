@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/name"
 )
 
@@ -449,7 +448,7 @@ func NameNodeToString(n node.Node) string {
 		return FullyQualifiedToString(n)
 	case *node.Identifier:
 		return n.Value
-	case *expr.Variable:
+	case *node.Variable:
 		return "$" + NameNodeToString(n.VarName)
 	default:
 		return "<expression>"

@@ -49,7 +49,7 @@ func TestShellExec(t *testing.T) {
 							},
 							Value: "cmd ",
 						},
-						&expr.Variable{
+						&node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,

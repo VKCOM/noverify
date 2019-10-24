@@ -7,7 +7,6 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/php/parser/position"
@@ -31,7 +30,7 @@ func TestVariable(t *testing.T) {
 					StartPos:  4,
 					EndPos:    6,
 				},
-				Expr: &expr.Variable{
+				Expr: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -76,14 +75,14 @@ func TestVariableVariable(t *testing.T) {
 					StartPos:  4,
 					EndPos:    7,
 				},
-				Expr: &expr.Variable{
+				Expr: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
 						StartPos:  4,
 						EndPos:    6,
 					},
-					VarName: &expr.Variable{
+					VarName: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,

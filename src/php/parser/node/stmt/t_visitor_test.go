@@ -7,7 +7,6 @@ import (
 
 	"github.com/VKCOM/noverify/src/php/parser/node/name"
 
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
@@ -37,7 +36,7 @@ var nodesToTest = []struct {
 	{
 		&stmt.Catch{
 			Types:    []node.Node{&stmt.Expression{}},
-			Variable: &expr.Variable{},
+			Variable: &node.Variable{},
 			Stmts:    []node.Node{&stmt.Expression{}},
 		},
 		[]string{"Types", "Variable", "Stmts"},
@@ -116,7 +115,7 @@ var nodesToTest = []struct {
 	{
 		&stmt.Do{
 			Stmt: &stmt.StmtList{},
-			Cond: &expr.Variable{},
+			Cond: &node.Variable{},
 		},
 		[]string{"Stmt", "Cond"},
 		nil,
@@ -124,7 +123,7 @@ var nodesToTest = []struct {
 	{
 		&stmt.Do{
 			Stmt: &stmt.StmtList{},
-			Cond: &expr.Variable{},
+			Cond: &node.Variable{},
 		},
 		[]string{"Stmt", "Cond"},
 		nil,
@@ -188,8 +187,8 @@ var nodesToTest = []struct {
 	{
 		&stmt.Foreach{
 			Expr:     &stmt.Expression{},
-			Key:      &expr.Variable{},
-			Variable: &expr.Variable{},
+			Key:      &node.Variable{},
+			Variable: &node.Variable{},
 			Stmt:     &stmt.StmtList{},
 		},
 		[]string{"Expr", "Key", "Variable", "Stmt"},
@@ -282,7 +281,7 @@ var nodesToTest = []struct {
 	{
 		&stmt.Property{
 			PhpDocComment: "/** */",
-			Variable:      &expr.Variable{},
+			Variable:      &node.Variable{},
 			Expr:          &stmt.Expression{},
 		},
 		[]string{"Variable", "Expr"},
@@ -297,7 +296,7 @@ var nodesToTest = []struct {
 	},
 	{
 		&stmt.StaticVar{
-			Variable: &expr.Variable{},
+			Variable: &node.Variable{},
 			Expr:     &stmt.Expression{},
 		},
 		[]string{"Variable", "Expr"},
@@ -312,7 +311,7 @@ var nodesToTest = []struct {
 	},
 	{
 		&stmt.Switch{
-			Cond:     &expr.Variable{},
+			Cond:     &node.Variable{},
 			CaseList: &stmt.CaseList{},
 		},
 		[]string{"Cond", "CaseList"},
@@ -402,7 +401,7 @@ var nodesToTest = []struct {
 	},
 	{
 		&stmt.While{
-			Cond: &expr.Variable{},
+			Cond: &node.Variable{},
 			Stmt: &stmt.StmtList{},
 		},
 		[]string{"Cond", "Stmt"},

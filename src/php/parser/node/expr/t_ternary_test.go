@@ -38,7 +38,7 @@ func TestTernary(t *testing.T) {
 						StartPos:  4,
 						EndPos:    15,
 					},
-					Condition: &expr.Variable{
+					Condition: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -55,7 +55,7 @@ func TestTernary(t *testing.T) {
 							Value: "a",
 						},
 					},
-					IfTrue: &expr.Variable{
+					IfTrue: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -72,7 +72,7 @@ func TestTernary(t *testing.T) {
 							Value: "b",
 						},
 					},
-					IfFalse: &expr.Variable{
+					IfFalse: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -125,7 +125,7 @@ func TestTernarySimple(t *testing.T) {
 						StartPos:  4,
 						EndPos:    12,
 					},
-					Condition: &expr.Variable{
+					Condition: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -142,7 +142,7 @@ func TestTernarySimple(t *testing.T) {
 							Value: "a",
 						},
 					},
-					IfFalse: &expr.Variable{
+					IfFalse: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -195,7 +195,7 @@ func TestTernaryNestedTrue(t *testing.T) {
 						StartPos:  4,
 						EndPos:    25,
 					},
-					Condition: &expr.Variable{
+					Condition: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -219,7 +219,7 @@ func TestTernaryNestedTrue(t *testing.T) {
 							StartPos:  9,
 							EndPos:    20,
 						},
-						Condition: &expr.Variable{
+						Condition: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -236,7 +236,7 @@ func TestTernaryNestedTrue(t *testing.T) {
 								Value: "b",
 							},
 						},
-						IfTrue: &expr.Variable{
+						IfTrue: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -253,7 +253,7 @@ func TestTernaryNestedTrue(t *testing.T) {
 								Value: "c",
 							},
 						},
-						IfFalse: &expr.Variable{
+						IfFalse: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -271,7 +271,7 @@ func TestTernaryNestedTrue(t *testing.T) {
 							},
 						},
 					},
-					IfFalse: &expr.Variable{
+					IfFalse: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -331,7 +331,7 @@ func TestTernaryNestedCond(t *testing.T) {
 							StartPos:  4,
 							EndPos:    15,
 						},
-						Condition: &expr.Variable{
+						Condition: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -348,7 +348,7 @@ func TestTernaryNestedCond(t *testing.T) {
 								Value: "a",
 							},
 						},
-						IfTrue: &expr.Variable{
+						IfTrue: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -365,7 +365,7 @@ func TestTernaryNestedCond(t *testing.T) {
 								Value: "b",
 							},
 						},
-						IfFalse: &expr.Variable{
+						IfFalse: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -383,7 +383,7 @@ func TestTernaryNestedCond(t *testing.T) {
 							},
 						},
 					},
-					IfTrue: &expr.Variable{
+					IfTrue: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -400,7 +400,7 @@ func TestTernaryNestedCond(t *testing.T) {
 							Value: "d",
 						},
 					},
-					IfFalse: &expr.Variable{
+					IfFalse: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,

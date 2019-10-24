@@ -6,7 +6,6 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
@@ -23,12 +22,12 @@ var nodesToTest = []struct {
 		map[string]interface{}{"Value": "foo"},
 	},
 	{
-		&node.Nullable{Expr: &expr.Variable{}},
+		&node.Nullable{Expr: &node.Variable{}},
 		[]string{"Expr"},
 		nil,
 	},
 	{
-		&node.Argument{Variadic: true, Expr: &expr.Variable{}},
+		&node.Argument{Variadic: true, Expr: &node.Variable{}},
 		[]string{"Expr"},
 		map[string]interface{}{"IsReference": false, "Variadic": true},
 	},
@@ -37,7 +36,7 @@ var nodesToTest = []struct {
 			ByRef:        false,
 			Variadic:     true,
 			VariableType: &node.Identifier{Value: "foo"},
-			Variable:     &expr.Variable{},
+			Variable:     &node.Variable{},
 			DefaultValue: &scalar.Lnumber{Value: "0"},
 		},
 		[]string{"VariableType", "Variable", "DefaultValue"},

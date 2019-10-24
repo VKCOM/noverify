@@ -7,7 +7,6 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
@@ -53,7 +52,7 @@ LBL;
 							},
 							Value: "test ",
 						},
-						&expr.Variable{
+						&node.Variable{
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
@@ -121,7 +120,7 @@ LBL;
 							},
 							Value: "test ",
 						},
-						&expr.Variable{
+						&node.Variable{
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,

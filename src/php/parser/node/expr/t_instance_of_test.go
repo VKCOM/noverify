@@ -39,7 +39,7 @@ func TestInstanceOf(t *testing.T) {
 						StartPos:  4,
 						EndPos:    20,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -111,7 +111,7 @@ func TestInstanceOfRelative(t *testing.T) {
 						StartPos:  4,
 						EndPos:    30,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -183,7 +183,7 @@ func TestInstanceOfFullyQualified(t *testing.T) {
 						StartPos:  4,
 						EndPos:    21,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,

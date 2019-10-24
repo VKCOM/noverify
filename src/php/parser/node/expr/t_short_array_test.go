@@ -175,7 +175,7 @@ func TestShortArrayItems(t *testing.T) {
 									StartPos:  11,
 									EndPos:    13,
 								},
-								Variable: &expr.Variable{
+								Variable: &node.Variable{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,

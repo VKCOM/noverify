@@ -74,7 +74,7 @@ func TestPrinterPrintFileInlineHtml(t *testing.T) {
 		Stmts: []node.Node{
 			&stmt.InlineHtml{Value: "<div>HTML</div>"},
 			&stmt.Expression{
-				Expr: &expr.Variable{
+				Expr: &node.Variable{
 					FreeFloating: freefloating.Collection{
 						freefloating.Start: []freefloating.String{
 							{
@@ -90,7 +90,7 @@ func TestPrinterPrintFileInlineHtml(t *testing.T) {
 			},
 			&stmt.InlineHtml{Value: "<div>HTML</div>"},
 			&stmt.Expression{
-				Expr: &expr.Variable{
+				Expr: &node.Variable{
 					FreeFloating: freefloating.Collection{
 						freefloating.Start: []freefloating.String{
 							{
@@ -148,7 +148,7 @@ func TestPrinterPrintParameter(t *testing.T) {
 				},
 			},
 		},
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 		DefaultValue: &scalar.String{
@@ -179,7 +179,7 @@ func TestPrinterPrintNullable(t *testing.T) {
 					},
 				},
 			},
-			Variable: &expr.Variable{
+			Variable: &node.Variable{
 				VarName: &node.Identifier{
 					Value: "var",
 				},
@@ -205,7 +205,7 @@ func TestPrinterPrintArgument(t *testing.T) {
 	p.Print(&node.Argument{
 		IsReference: false,
 		Variadic:    true,
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{
 				Value: "var",
 			},
@@ -226,7 +226,7 @@ func TestPrinterPrintArgumentByRef(t *testing.T) {
 	p.Print(&node.Argument{
 		IsReference: true,
 		Variadic:    false,
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{
 				Value: "var",
 			},
@@ -401,7 +401,7 @@ func TestPrinterPrintScalarEncapsed(t *testing.T) {
 	p.Print(&scalar.Encapsed{
 		Parts: []node.Node{
 			&scalar.EncapsedStringPart{Value: "hello "},
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "var"},
 			},
 			&scalar.EncapsedStringPart{Value: " world"},
@@ -424,7 +424,7 @@ func TestPrinterPrintScalarHeredoc(t *testing.T) {
 		Label: "LBL",
 		Parts: []node.Node{
 			&scalar.EncapsedStringPart{Value: "hello "},
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "var"},
 			},
 			&scalar.EncapsedStringPart{Value: " world"},
@@ -482,10 +482,10 @@ func TestPrinterPrintAssign(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&assign.Assign{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Expression: &expr.Variable{
+		Expression: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -503,10 +503,10 @@ func TestPrinterPrintReference(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&assign.Reference{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Expression: &expr.Variable{
+		Expression: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -524,10 +524,10 @@ func TestPrinterPrintAssignBitwiseAnd(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&assign.BitwiseAnd{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Expression: &expr.Variable{
+		Expression: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -545,10 +545,10 @@ func TestPrinterPrintAssignBitwiseOr(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&assign.BitwiseOr{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Expression: &expr.Variable{
+		Expression: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -566,10 +566,10 @@ func TestPrinterPrintAssignBitwiseXor(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&assign.BitwiseXor{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Expression: &expr.Variable{
+		Expression: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -587,10 +587,10 @@ func TestPrinterPrintAssignConcat(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&assign.Concat{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Expression: &expr.Variable{
+		Expression: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -608,10 +608,10 @@ func TestPrinterPrintAssignDiv(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&assign.Div{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Expression: &expr.Variable{
+		Expression: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -629,10 +629,10 @@ func TestPrinterPrintAssignMinus(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&assign.Minus{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Expression: &expr.Variable{
+		Expression: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -650,10 +650,10 @@ func TestPrinterPrintAssignMod(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&assign.Mod{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Expression: &expr.Variable{
+		Expression: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -671,10 +671,10 @@ func TestPrinterPrintAssignMul(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&assign.Mul{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Expression: &expr.Variable{
+		Expression: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -692,10 +692,10 @@ func TestPrinterPrintAssignPlus(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&assign.Plus{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Expression: &expr.Variable{
+		Expression: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -713,10 +713,10 @@ func TestPrinterPrintAssignPow(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&assign.Pow{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Expression: &expr.Variable{
+		Expression: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -734,10 +734,10 @@ func TestPrinterPrintAssignShiftLeft(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&assign.ShiftLeft{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Expression: &expr.Variable{
+		Expression: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -755,10 +755,10 @@ func TestPrinterPrintAssignShiftRight(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&assign.ShiftRight{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Expression: &expr.Variable{
+		Expression: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -778,10 +778,10 @@ func TestPrinterPrintBinaryBitwiseAnd(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.BitwiseAnd{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -799,10 +799,10 @@ func TestPrinterPrintBinaryBitwiseOr(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.BitwiseOr{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -820,10 +820,10 @@ func TestPrinterPrintBinaryBitwiseXor(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.BitwiseXor{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -841,10 +841,10 @@ func TestPrinterPrintBinaryBooleanAnd(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.BooleanAnd{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -862,10 +862,10 @@ func TestPrinterPrintBinaryBooleanOr(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.BooleanOr{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -883,10 +883,10 @@ func TestPrinterPrintBinaryCoalesce(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.Coalesce{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -904,10 +904,10 @@ func TestPrinterPrintBinaryConcat(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.Concat{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -925,10 +925,10 @@ func TestPrinterPrintBinaryDiv(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.Div{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -946,10 +946,10 @@ func TestPrinterPrintBinaryEqual(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.Equal{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -967,10 +967,10 @@ func TestPrinterPrintBinaryGreaterOrEqual(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.GreaterOrEqual{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -988,10 +988,10 @@ func TestPrinterPrintBinaryGreater(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.Greater{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -1009,10 +1009,10 @@ func TestPrinterPrintBinaryIdentical(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.Identical{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -1030,10 +1030,10 @@ func TestPrinterPrintBinaryLogicalAnd(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.LogicalAnd{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -1051,10 +1051,10 @@ func TestPrinterPrintBinaryLogicalOr(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.LogicalOr{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -1072,10 +1072,10 @@ func TestPrinterPrintBinaryLogicalXor(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.LogicalXor{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -1093,10 +1093,10 @@ func TestPrinterPrintBinaryMinus(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.Minus{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -1114,10 +1114,10 @@ func TestPrinterPrintBinaryMod(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.Mod{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -1135,10 +1135,10 @@ func TestPrinterPrintBinaryMul(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.Mul{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -1156,10 +1156,10 @@ func TestPrinterPrintBinaryNotEqual(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.NotEqual{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -1177,10 +1177,10 @@ func TestPrinterPrintBinaryNotIdentical(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.NotIdentical{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -1198,10 +1198,10 @@ func TestPrinterPrintBinaryPlus(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.Plus{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -1219,10 +1219,10 @@ func TestPrinterPrintBinaryPow(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.Pow{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -1240,10 +1240,10 @@ func TestPrinterPrintBinaryShiftLeft(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.ShiftLeft{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -1261,10 +1261,10 @@ func TestPrinterPrintBinaryShiftRight(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.ShiftRight{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -1282,10 +1282,10 @@ func TestPrinterPrintBinarySmallerOrEqual(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.SmallerOrEqual{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -1303,10 +1303,10 @@ func TestPrinterPrintBinarySmaller(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.Smaller{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -1324,10 +1324,10 @@ func TestPrinterPrintBinarySpaceship(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&binary.Spaceship{
-		Left: &expr.Variable{
+		Left: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Right: &expr.Variable{
+		Right: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -1347,7 +1347,7 @@ func TestPrinterPrintArray(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&cast.Array{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -1365,7 +1365,7 @@ func TestPrinterPrintBool(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&cast.Bool{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -1383,7 +1383,7 @@ func TestPrinterPrintDouble(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&cast.Double{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -1401,7 +1401,7 @@ func TestPrinterPrintInt(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&cast.Int{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -1419,7 +1419,7 @@ func TestPrinterPrintObject(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&cast.Object{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -1437,7 +1437,7 @@ func TestPrinterPrintString(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&cast.String{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -1455,7 +1455,7 @@ func TestPrinterPrintUnset(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&cast.Unset{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -1475,7 +1475,7 @@ func TestPrinterPrintExprArrayDimFetch(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.ArrayDimFetch{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 		Dim: &scalar.Lnumber{Value: "1"},
@@ -1495,7 +1495,7 @@ func TestPrinterPrintExprArrayItemWithKey(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&expr.ArrayItem{
 		Key: &scalar.String{Value: "'Hello'"},
-		Val: &expr.Variable{
+		Val: &node.Variable{
 			VarName: &node.Identifier{Value: "world"},
 		},
 	})
@@ -1513,7 +1513,7 @@ func TestPrinterPrintExprArrayItem(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.ArrayItem{
-		Val: &expr.Reference{Variable: &expr.Variable{
+		Val: &expr.Reference{Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "world"},
 		}},
 	})
@@ -1534,18 +1534,18 @@ func TestPrinterPrintExprArray(t *testing.T) {
 		Items: []*expr.ArrayItem{
 			&expr.ArrayItem{
 				Key: &scalar.String{Value: "'Hello'"},
-				Val: &expr.Variable{
+				Val: &node.Variable{
 					VarName: &node.Identifier{Value: "world"},
 				},
 			},
 			&expr.ArrayItem{
 				Key: &scalar.Lnumber{Value: "2"},
-				Val: &expr.Reference{Variable: &expr.Variable{
+				Val: &expr.Reference{Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "var"},
 				}},
 			},
 			&expr.ArrayItem{
-				Val: &expr.Variable{
+				Val: &node.Variable{
 					VarName: &node.Identifier{Value: "var"},
 				},
 			},
@@ -1565,7 +1565,7 @@ func TestPrinterPrintExprBitwiseNot(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.BitwiseNot{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -1583,7 +1583,7 @@ func TestPrinterPrintExprBooleanNot(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.BooleanNot{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -1601,7 +1601,7 @@ func TestPrinterPrintExprClassConstFetch(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.ClassConstFetch{
-		Class: &expr.Variable{
+		Class: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 		ConstantName: &node.Identifier{
@@ -1622,7 +1622,7 @@ func TestPrinterPrintExprClone(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.Clone{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -1641,10 +1641,10 @@ func TestPrinterPrintExprClosureUse(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&expr.ClosureUse{
 		Uses: []node.Node{
-			&expr.Reference{Variable: &expr.Variable{
+			&expr.Reference{Variable: &node.Variable{
 				VarName: &node.Identifier{Value: "foo"},
 			}},
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "bar"},
 			},
 		},
@@ -1669,17 +1669,17 @@ func TestPrinterPrintExprClosure(t *testing.T) {
 			&node.Parameter{
 				ByRef:    true,
 				Variadic: false,
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "var"},
 				},
 			},
 		},
 		ClosureUse: &expr.ClosureUse{
 			Uses: []node.Node{
-				&expr.Reference{Variable: &expr.Variable{
+				&expr.Reference{Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "a"},
 				}},
-				&expr.Variable{
+				&node.Variable{
 					VarName: &node.Identifier{Value: "b"},
 				},
 			},
@@ -1688,7 +1688,7 @@ func TestPrinterPrintExprClosure(t *testing.T) {
 			Parts: []node.Node{&name.NamePart{Value: "Foo"}},
 		},
 		Stmts: []node.Node{
-			&stmt.Expression{Expr: &expr.Variable{
+			&stmt.Expression{Expr: &node.Variable{
 				VarName: &node.Identifier{Value: "a"},
 			}},
 		},
@@ -1723,7 +1723,7 @@ func TestPrinterPrintEmpty(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.Empty{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -1741,7 +1741,7 @@ func TestPrinterPrettyPrinterrorSuppress(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.ErrorSuppress{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -1759,7 +1759,7 @@ func TestPrinterPrintEval(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.Eval{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -1778,7 +1778,7 @@ func TestPrinterPrintExit(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&expr.Exit{
 		Die: false,
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -1797,7 +1797,7 @@ func TestPrinterPrintDie(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&expr.Exit{
 		Die: true,
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -1815,25 +1815,25 @@ func TestPrinterPrintFunctionCall(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.FunctionCall{
-		Function: &expr.Variable{
+		Function: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 		ArgumentList: &node.ArgumentList{
 			Arguments: []node.Node{
 				&node.Argument{
 					IsReference: true,
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						VarName: &node.Identifier{Value: "a"},
 					},
 				},
 				&node.Argument{
 					Variadic: true,
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						VarName: &node.Identifier{Value: "b"},
 					},
 				},
 				&node.Argument{
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						VarName: &node.Identifier{Value: "c"},
 					},
 				},
@@ -1886,7 +1886,7 @@ func TestPrinterPrintInstanceOf(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.InstanceOf{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 		Class: &name.Name{Parts: []node.Node{&name.NamePart{Value: "Foo"}}},
@@ -1906,10 +1906,10 @@ func TestPrinterPrintIsset(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&expr.Isset{
 		Variables: []node.Node{
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "a"},
 			},
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "b"},
 			},
 		},
@@ -1930,7 +1930,7 @@ func TestPrinterPrintList(t *testing.T) {
 	p.Print(&expr.List{
 		Items: []*expr.ArrayItem{
 			&expr.ArrayItem{
-				Val: &expr.Variable{
+				Val: &node.Variable{
 					VarName: &node.Identifier{Value: "a"},
 				},
 			},
@@ -1938,12 +1938,12 @@ func TestPrinterPrintList(t *testing.T) {
 				Val: &expr.List{
 					Items: []*expr.ArrayItem{
 						&expr.ArrayItem{
-							Val: &expr.Variable{
+							Val: &node.Variable{
 								VarName: &node.Identifier{Value: "b"},
 							},
 						},
 						&expr.ArrayItem{
-							Val: &expr.Variable{
+							Val: &node.Variable{
 								VarName: &node.Identifier{Value: "c"},
 							},
 						},
@@ -1966,19 +1966,19 @@ func TestPrinterPrintMethodCall(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.MethodCall{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "foo"},
 		},
 		Method: &node.Identifier{Value: "bar"},
 		ArgumentList: &node.ArgumentList{
 			Arguments: []node.Node{
 				&node.Argument{
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						VarName: &node.Identifier{Value: "a"},
 					},
 				},
 				&node.Argument{
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						VarName: &node.Identifier{Value: "b"},
 					},
 				},
@@ -2009,12 +2009,12 @@ func TestPrinterPrintNew(t *testing.T) {
 		ArgumentList: &node.ArgumentList{
 			Arguments: []node.Node{
 				&node.Argument{
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						VarName: &node.Identifier{Value: "a"},
 					},
 				},
 				&node.Argument{
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						VarName: &node.Identifier{Value: "b"},
 					},
 				},
@@ -2035,7 +2035,7 @@ func TestPrinterPrintPostDec(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.PostDec{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -2053,7 +2053,7 @@ func TestPrinterPrintPostInc(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.PostInc{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -2071,7 +2071,7 @@ func TestPrinterPrintPreDec(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.PreDec{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -2089,7 +2089,7 @@ func TestPrinterPrintPreInc(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.PreInc{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -2107,7 +2107,7 @@ func TestPrinterPrintPrint(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.Print{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -2125,7 +2125,7 @@ func TestPrinterPrintPropertyFetch(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.PropertyFetch{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "foo"},
 		},
 		Property: &node.Identifier{Value: "bar"},
@@ -2144,7 +2144,7 @@ func TestPrinterPrintExprReference(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.Reference{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "foo"},
 		},
 	})
@@ -2196,7 +2196,7 @@ func TestPrinterPrintShellExec(t *testing.T) {
 	p.Print(&expr.ShellExec{
 		Parts: []node.Node{
 			&scalar.EncapsedStringPart{Value: "hello "},
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "world"},
 			},
 			&scalar.EncapsedStringPart{Value: "!"},
@@ -2220,18 +2220,18 @@ func TestPrinterPrintExprShortArray(t *testing.T) {
 		Items: []*expr.ArrayItem{
 			&expr.ArrayItem{
 				Key: &scalar.String{Value: "'Hello'"},
-				Val: &expr.Variable{
+				Val: &node.Variable{
 					VarName: &node.Identifier{Value: "world"},
 				},
 			},
 			&expr.ArrayItem{
 				Key: &scalar.Lnumber{Value: "2"},
-				Val: &expr.Reference{Variable: &expr.Variable{
+				Val: &expr.Reference{Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "var"},
 				}},
 			},
 			&expr.ArrayItem{
-				Val: &expr.Variable{
+				Val: &node.Variable{
 					VarName: &node.Identifier{Value: "var"},
 				},
 			},
@@ -2254,7 +2254,7 @@ func TestPrinterPrintShortList(t *testing.T) {
 		ShortSyntax: true,
 		Items: []*expr.ArrayItem{
 			&expr.ArrayItem{
-				Val: &expr.Variable{
+				Val: &node.Variable{
 					VarName: &node.Identifier{Value: "a"},
 				},
 			},
@@ -2262,12 +2262,12 @@ func TestPrinterPrintShortList(t *testing.T) {
 				Val: &expr.List{
 					Items: []*expr.ArrayItem{
 						&expr.ArrayItem{
-							Val: &expr.Variable{
+							Val: &node.Variable{
 								VarName: &node.Identifier{Value: "b"},
 							},
 						},
 						&expr.ArrayItem{
-							Val: &expr.Variable{
+							Val: &node.Variable{
 								VarName: &node.Identifier{Value: "c"},
 							},
 						},
@@ -2295,12 +2295,12 @@ func TestPrinterPrintStaticCall(t *testing.T) {
 		ArgumentList: &node.ArgumentList{
 			Arguments: []node.Node{
 				&node.Argument{
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						VarName: &node.Identifier{Value: "a"},
 					},
 				},
 				&node.Argument{
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						VarName: &node.Identifier{Value: "b"},
 					},
 				},
@@ -2322,7 +2322,7 @@ func TestPrinterPrintStaticPropertyFetch(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&expr.StaticPropertyFetch{
 		Class: &node.Identifier{Value: "Foo"},
-		Property: &expr.Variable{
+		Property: &node.Variable{
 			VarName: &node.Identifier{Value: "bar"},
 		},
 	})
@@ -2340,10 +2340,10 @@ func TestPrinterPrintTernary(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.Ternary{
-		Condition: &expr.Variable{
+		Condition: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		IfFalse: &expr.Variable{
+		IfFalse: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
 	})
@@ -2361,13 +2361,13 @@ func TestPrinterPrintTernaryFull(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.Ternary{
-		Condition: &expr.Variable{
+		Condition: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		IfTrue: &expr.Variable{
+		IfTrue: &node.Variable{
 			VarName: &node.Identifier{Value: "b"},
 		},
-		IfFalse: &expr.Variable{
+		IfFalse: &node.Variable{
 			VarName: &node.Identifier{Value: "c"},
 		},
 	})
@@ -2385,7 +2385,7 @@ func TestPrinterPrintUnaryMinus(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.UnaryMinus{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -2403,7 +2403,7 @@ func TestPrinterPrintUnaryPlus(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.UnaryPlus{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -2420,8 +2420,8 @@ func TestPrinterPrintVariable(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := printer.NewPrinter(o)
-	p.Print(&expr.Variable{
-		VarName: &expr.Variable{
+	p.Print(&node.Variable{
+		VarName: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -2439,7 +2439,7 @@ func TestPrinterPrintYieldFrom(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.YieldFrom{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -2457,7 +2457,7 @@ func TestPrinterPrintYield(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.Yield{
-		Value: &expr.Variable{
+		Value: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -2475,10 +2475,10 @@ func TestPrinterPrintYieldFull(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&expr.Yield{
-		Key: &expr.Variable{
+		Key: &node.Variable{
 			VarName: &node.Identifier{Value: "k"},
 		},
-		Value: &expr.Variable{
+		Value: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -2499,12 +2499,12 @@ func TestPrinterPrintAltElseIf(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.ElseIf{
 		AltSyntax: true,
-		Cond: &expr.Variable{
+		Cond: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
 		Stmt: &stmt.StmtList{
 			Stmts: []node.Node{
-				&stmt.Expression{Expr: &expr.Variable{
+				&stmt.Expression{Expr: &node.Variable{
 					VarName: &node.Identifier{Value: "b"},
 				}},
 			},
@@ -2525,7 +2525,7 @@ func TestPrinterPrintAltElseIfEmpty(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.ElseIf{
 		AltSyntax: true,
-		Cond: &expr.Variable{
+		Cond: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
 		Stmt: &stmt.StmtList{},
@@ -2547,7 +2547,7 @@ func TestPrinterPrintAltElse(t *testing.T) {
 		AltSyntax: true,
 		Stmt: &stmt.StmtList{
 			Stmts: []node.Node{
-				&stmt.Expression{Expr: &expr.Variable{
+				&stmt.Expression{Expr: &node.Variable{
 					VarName: &node.Identifier{Value: "b"},
 				}},
 			},
@@ -2586,23 +2586,23 @@ func TestPrinterPrintAltFor(t *testing.T) {
 	p.Print(&stmt.For{
 		AltSyntax: true,
 		Init: []node.Node{
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "a"},
 			},
 		},
 		Cond: []node.Node{
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "b"},
 			},
 		},
 		Loop: []node.Node{
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "c"},
 			},
 		},
 		Stmt: &stmt.StmtList{
 			Stmts: []node.Node{
-				&stmt.Expression{Expr: &expr.Variable{
+				&stmt.Expression{Expr: &node.Variable{
 					VarName: &node.Identifier{Value: "d"},
 				}},
 			},
@@ -2623,18 +2623,18 @@ func TestPrinterPrintAltForeach(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.Foreach{
 		AltSyntax: true,
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
-		Key: &expr.Variable{
+		Key: &node.Variable{
 			VarName: &node.Identifier{Value: "key"},
 		},
-		Variable: &expr.Reference{Variable: &expr.Variable{
+		Variable: &expr.Reference{Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "val"},
 		}},
 		Stmt: &stmt.StmtList{
 			Stmts: []node.Node{
-				&stmt.Expression{Expr: &expr.Variable{
+				&stmt.Expression{Expr: &node.Variable{
 					VarName: &node.Identifier{Value: "d"},
 				}},
 			},
@@ -2655,12 +2655,12 @@ func TestPrinterPrintAltIf(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.If{
 		AltSyntax: true,
-		Cond: &expr.Variable{
+		Cond: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
 		Stmt: &stmt.StmtList{
 			Stmts: []node.Node{
-				&stmt.Expression{Expr: &expr.Variable{
+				&stmt.Expression{Expr: &node.Variable{
 					VarName: &node.Identifier{Value: "d"},
 				}},
 			},
@@ -2668,12 +2668,12 @@ func TestPrinterPrintAltIf(t *testing.T) {
 		ElseIf: []node.Node{
 			&stmt.ElseIf{
 				AltSyntax: true,
-				Cond: &expr.Variable{
+				Cond: &node.Variable{
 					VarName: &node.Identifier{Value: "b"},
 				},
 				Stmt: &stmt.StmtList{
 					Stmts: []node.Node{
-						&stmt.Expression{Expr: &expr.Variable{
+						&stmt.Expression{Expr: &node.Variable{
 							VarName: &node.Identifier{Value: "b"},
 						}},
 					},
@@ -2681,7 +2681,7 @@ func TestPrinterPrintAltIf(t *testing.T) {
 			},
 			&stmt.ElseIf{
 				AltSyntax: true,
-				Cond: &expr.Variable{
+				Cond: &node.Variable{
 					VarName: &node.Identifier{Value: "c"},
 				},
 				Stmt: &stmt.StmtList{},
@@ -2691,7 +2691,7 @@ func TestPrinterPrintAltIf(t *testing.T) {
 			AltSyntax: true,
 			Stmt: &stmt.StmtList{
 				Stmts: []node.Node{
-					&stmt.Expression{Expr: &expr.Variable{
+					&stmt.Expression{Expr: &node.Variable{
 						VarName: &node.Identifier{Value: "b"},
 					}},
 				},
@@ -2713,7 +2713,7 @@ func TestPrinterPrintStmtAltSwitch(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.Switch{
 		AltSyntax: true,
-		Cond: &expr.Variable{
+		Cond: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 		CaseList: &stmt.CaseList{
@@ -2721,7 +2721,7 @@ func TestPrinterPrintStmtAltSwitch(t *testing.T) {
 				&stmt.Case{
 					Cond: &scalar.String{Value: "'a'"},
 					Stmts: []node.Node{
-						&stmt.Expression{Expr: &expr.Variable{
+						&stmt.Expression{Expr: &node.Variable{
 							VarName: &node.Identifier{Value: "a"},
 						}},
 					},
@@ -2729,7 +2729,7 @@ func TestPrinterPrintStmtAltSwitch(t *testing.T) {
 				&stmt.Case{
 					Cond: &scalar.String{Value: "'b'"},
 					Stmts: []node.Node{
-						&stmt.Expression{Expr: &expr.Variable{
+						&stmt.Expression{Expr: &node.Variable{
 							VarName: &node.Identifier{Value: "b"},
 						}},
 					},
@@ -2752,12 +2752,12 @@ func TestPrinterPrintAltWhile(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.While{
 		AltSyntax: true,
-		Cond: &expr.Variable{
+		Cond: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
 		Stmt: &stmt.StmtList{
 			Stmts: []node.Node{
-				&stmt.Expression{Expr: &expr.Variable{
+				&stmt.Expression{Expr: &node.Variable{
 					VarName: &node.Identifier{Value: "b"},
 				}},
 			},
@@ -2795,11 +2795,11 @@ func TestPrinterPrintStmtCase(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.Case{
-		Cond: &expr.Variable{
+		Cond: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
 		Stmts: []node.Node{
-			&stmt.Expression{Expr: &expr.Variable{
+			&stmt.Expression{Expr: &node.Variable{
 				VarName: &node.Identifier{Value: "a"},
 			}},
 		},
@@ -2818,7 +2818,7 @@ func TestPrinterPrintStmtCaseEmpty(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.Case{
-		Cond: &expr.Variable{
+		Cond: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
 		Stmts: []node.Node{},
@@ -2841,11 +2841,11 @@ func TestPrinterPrintStmtCatch(t *testing.T) {
 			&name.Name{Parts: []node.Node{&name.NamePart{Value: "Exception"}}},
 			&name.FullyQualified{Parts: []node.Node{&name.NamePart{Value: "RuntimeException"}}},
 		},
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "e"},
 		},
 		Stmts: []node.Node{
-			&stmt.Expression{Expr: &expr.Variable{
+			&stmt.Expression{Expr: &node.Variable{
 				VarName: &node.Identifier{Value: "a"},
 			}},
 		},
@@ -2871,14 +2871,14 @@ func TestPrinterPrintStmtClassMethod(t *testing.T) {
 			&node.Parameter{
 				ByRef:        true,
 				VariableType: &node.Nullable{Expr: &name.Name{Parts: []node.Node{&name.NamePart{Value: "int"}}}},
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "a"},
 				},
 				DefaultValue: &expr.ConstFetch{Constant: &name.Name{Parts: []node.Node{&name.NamePart{Value: "null"}}}},
 			},
 			&node.Parameter{
 				Variadic: true,
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "b"},
 				},
 			},
@@ -2888,7 +2888,7 @@ func TestPrinterPrintStmtClassMethod(t *testing.T) {
 		},
 		Stmt: &stmt.StmtList{
 			Stmts: []node.Node{
-				&stmt.Expression{Expr: &expr.Variable{
+				&stmt.Expression{Expr: &node.Variable{
 					VarName: &node.Identifier{Value: "a"},
 				}},
 			},
@@ -2918,14 +2918,14 @@ func TestPrinterPrintStmtAbstractClassMethod(t *testing.T) {
 			&node.Parameter{
 				ByRef:        true,
 				VariableType: &node.Nullable{Expr: &name.Name{Parts: []node.Node{&name.NamePart{Value: "int"}}}},
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "a"},
 				},
 				DefaultValue: &expr.ConstFetch{Constant: &name.Name{Parts: []node.Node{&name.NamePart{Value: "null"}}}},
 			},
 			&node.Parameter{
 				Variadic: true,
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "b"},
 				},
 			},
@@ -2993,12 +2993,12 @@ func TestPrinterPrintStmtAnonymousClass(t *testing.T) {
 		ArgumentList: &node.ArgumentList{
 			Arguments: []node.Node{
 				&node.Argument{
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						VarName: &node.Identifier{Value: "a"},
 					},
 				},
 				&node.Argument{
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						VarName: &node.Identifier{Value: "b"},
 					},
 				},
@@ -3196,7 +3196,7 @@ func TestPrinterPrintStmtDefalut(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.Default{
 		Stmts: []node.Node{
-			&stmt.Expression{Expr: &expr.Variable{
+			&stmt.Expression{Expr: &node.Variable{
 				VarName: &node.Identifier{Value: "a"},
 			}},
 		},
@@ -3233,7 +3233,7 @@ func TestPrinterPrintStmtDo_Expression(t *testing.T) {
 	p.Print(&stmt.Do{
 		Cond: &scalar.Lnumber{Value: "1"},
 		Stmt: &stmt.Expression{
-			Expr: &expr.Variable{
+			Expr: &node.Variable{
 				VarName: &node.Identifier{Value: "a"},
 			},
 		},
@@ -3255,7 +3255,7 @@ func TestPrinterPrintStmtDo_StmtList(t *testing.T) {
 		Cond: &scalar.Lnumber{Value: "1"},
 		Stmt: &stmt.StmtList{
 			Stmts: []node.Node{
-				&stmt.Expression{Expr: &expr.Variable{
+				&stmt.Expression{Expr: &node.Variable{
 					VarName: &node.Identifier{Value: "a"},
 				}},
 			},
@@ -3278,10 +3278,10 @@ func TestPrinterPrintStmtEchoHtmlState(t *testing.T) {
 		Stmts: []node.Node{
 			&stmt.Echo{
 				Exprs: []node.Node{
-					&expr.Variable{
+					&node.Variable{
 						VarName: &node.Identifier{Value: "a"},
 					},
-					&expr.Variable{
+					&node.Variable{
 						VarName: &node.Identifier{Value: "b"},
 					},
 				},
@@ -3303,10 +3303,10 @@ func TestPrinterPrintStmtEchoPhpState(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.Echo{
 		Exprs: []node.Node{
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "a"},
 			},
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "b"},
 			},
 		},
@@ -3325,7 +3325,7 @@ func TestPrinterPrintStmtElseIfStmts(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.ElseIf{
-		Cond: &expr.Variable{
+		Cond: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
 		Stmt: &stmt.StmtList{
@@ -3348,7 +3348,7 @@ func TestPrinterPrintStmtElseIfExpr(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.ElseIf{
-		Cond: &expr.Variable{
+		Cond: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
 		Stmt: &stmt.Expression{Expr: &scalar.String{Value: "'bar'"}},
@@ -3367,7 +3367,7 @@ func TestPrinterPrintStmtElseIfNop(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.ElseIf{
-		Cond: &expr.Variable{
+		Cond: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
 		Stmt: &stmt.Nop{},
@@ -3438,7 +3438,7 @@ func TestPrinterPrintExpression(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.Expression{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
 	})
@@ -3475,26 +3475,26 @@ func TestPrinterPrintStmtFor(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.For{
 		Init: []node.Node{
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "a"},
 			},
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "b"},
 			},
 		},
 		Cond: []node.Node{
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "c"},
 			},
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "d"},
 			},
 		},
 		Loop: []node.Node{
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "e"},
 			},
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "f"},
 			},
 		},
@@ -3518,13 +3518,13 @@ func TestPrinterPrintStmtForeach(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.Foreach{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
-		Key: &expr.Variable{
+		Key: &node.Variable{
 			VarName: &node.Identifier{Value: "k"},
 		},
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "v"},
 		},
 		Stmt: &stmt.StmtList{
@@ -3553,7 +3553,7 @@ func TestPrinterPrintStmtFunction(t *testing.T) {
 			&node.Parameter{
 				ByRef:    true,
 				Variadic: false,
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "var"},
 				},
 			},
@@ -3580,10 +3580,10 @@ func TestPrinterPrintStmtGlobal(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.Global{
 		Vars: []node.Node{
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "a"},
 			},
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "b"},
 			},
 		},
@@ -3658,23 +3658,23 @@ func TestPrinterPrintIfExpression(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.If{
-		Cond: &expr.Variable{
+		Cond: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
 		Stmt: &stmt.Expression{
-			Expr: &expr.Variable{
+			Expr: &node.Variable{
 				VarName: &node.Identifier{Value: "b"},
 			},
 		},
 		ElseIf: []node.Node{
 			&stmt.ElseIf{
-				Cond: &expr.Variable{
+				Cond: &node.Variable{
 					VarName: &node.Identifier{Value: "c"},
 				},
 				Stmt: &stmt.StmtList{
 					Stmts: []node.Node{
 						&stmt.Expression{
-							Expr: &expr.Variable{
+							Expr: &node.Variable{
 								VarName: &node.Identifier{Value: "d"},
 							},
 						},
@@ -3682,7 +3682,7 @@ func TestPrinterPrintIfExpression(t *testing.T) {
 				},
 			},
 			&stmt.ElseIf{
-				Cond: &expr.Variable{
+				Cond: &node.Variable{
 					VarName: &node.Identifier{Value: "e"},
 				},
 				Stmt: &stmt.Nop{},
@@ -3690,7 +3690,7 @@ func TestPrinterPrintIfExpression(t *testing.T) {
 		},
 		Else: &stmt.Else{
 			Stmt: &stmt.Expression{
-				Expr: &expr.Variable{
+				Expr: &node.Variable{
 					VarName: &node.Identifier{Value: "f"},
 				},
 			},
@@ -3710,13 +3710,13 @@ func TestPrinterPrintIfStmtList(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.If{
-		Cond: &expr.Variable{
+		Cond: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
 		Stmt: &stmt.StmtList{
 			Stmts: []node.Node{
 				&stmt.Expression{
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						VarName: &node.Identifier{Value: "b"},
 					},
 				},
@@ -3737,7 +3737,7 @@ func TestPrinterPrintIfNop(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.If{
-		Cond: &expr.Variable{
+		Cond: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
 		Stmt: &stmt.Nop{},
@@ -3790,7 +3790,7 @@ func TestPrinterPrintInterface(t *testing.T) {
 				Params:     []node.Node{},
 				Stmt: &stmt.StmtList{
 					Stmts: []node.Node{
-						&stmt.Expression{Expr: &expr.Variable{
+						&stmt.Expression{Expr: &node.Variable{
 							VarName: &node.Identifier{Value: "a"},
 						}},
 					},
@@ -3846,7 +3846,7 @@ func TestPrinterPrintNamespaceWithStmts(t *testing.T) {
 	p.Print(&stmt.Namespace{
 		NamespaceName: &name.Name{Parts: []node.Node{&name.NamePart{Value: "Foo"}}},
 		Stmts: []node.Node{
-			&stmt.Expression{Expr: &expr.Variable{
+			&stmt.Expression{Expr: &node.Variable{
 				VarName: &node.Identifier{Value: "a"},
 			}},
 		},
@@ -3885,13 +3885,13 @@ func TestPrinterPrintPropertyList(t *testing.T) {
 		},
 		Properties: []node.Node{
 			&stmt.Property{
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "a"},
 				},
 				Expr: &scalar.String{Value: "'a'"},
 			},
 			&stmt.Property{
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "b"},
 				},
 			},
@@ -3911,7 +3911,7 @@ func TestPrinterPrintProperty(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.Property{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			FreeFloating: freefloating.Collection{
 				freefloating.Start: []freefloating.String{
 					{
@@ -3954,7 +3954,7 @@ func TestPrinterPrintStaticVar(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.StaticVar{
-		Variable: &expr.Variable{
+		Variable: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
 		Expr: &scalar.Lnumber{Value: "1"},
@@ -3975,12 +3975,12 @@ func TestPrinterPrintStatic(t *testing.T) {
 	p.Print(&stmt.Static{
 		Vars: []node.Node{
 			&stmt.StaticVar{
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "a"},
 				},
 			},
 			&stmt.StaticVar{
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "b"},
 				},
 			},
@@ -4001,10 +4001,10 @@ func TestPrinterPrintStmtList(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.StmtList{
 		Stmts: []node.Node{
-			&stmt.Expression{Expr: &expr.Variable{
+			&stmt.Expression{Expr: &node.Variable{
 				VarName: &node.Identifier{Value: "a"},
 			}},
-			&stmt.Expression{Expr: &expr.Variable{
+			&stmt.Expression{Expr: &node.Variable{
 				VarName: &node.Identifier{Value: "b"},
 			}},
 		},
@@ -4024,17 +4024,17 @@ func TestPrinterPrintStmtListNested(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.StmtList{
 		Stmts: []node.Node{
-			&stmt.Expression{Expr: &expr.Variable{
+			&stmt.Expression{Expr: &node.Variable{
 				VarName: &node.Identifier{Value: "a"},
 			}},
 			&stmt.StmtList{
 				Stmts: []node.Node{
-					&stmt.Expression{Expr: &expr.Variable{
+					&stmt.Expression{Expr: &node.Variable{
 						VarName: &node.Identifier{Value: "b"},
 					}},
 					&stmt.StmtList{
 						Stmts: []node.Node{
-							&stmt.Expression{Expr: &expr.Variable{
+							&stmt.Expression{Expr: &node.Variable{
 								VarName: &node.Identifier{Value: "c"},
 							}},
 						},
@@ -4057,7 +4057,7 @@ func TestPrinterPrintStmtSwitch(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.Switch{
-		Cond: &expr.Variable{
+		Cond: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 		CaseList: &stmt.CaseList{
@@ -4065,7 +4065,7 @@ func TestPrinterPrintStmtSwitch(t *testing.T) {
 				&stmt.Case{
 					Cond: &scalar.String{Value: "'a'"},
 					Stmts: []node.Node{
-						&stmt.Expression{Expr: &expr.Variable{
+						&stmt.Expression{Expr: &node.Variable{
 							VarName: &node.Identifier{Value: "a"},
 						}},
 					},
@@ -4073,7 +4073,7 @@ func TestPrinterPrintStmtSwitch(t *testing.T) {
 				&stmt.Case{
 					Cond: &scalar.String{Value: "'b'"},
 					Stmts: []node.Node{
-						&stmt.Expression{Expr: &expr.Variable{
+						&stmt.Expression{Expr: &node.Variable{
 							VarName: &node.Identifier{Value: "b"},
 						}},
 					},
@@ -4095,7 +4095,7 @@ func TestPrinterPrintStmtThrow(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.Throw{
-		Expr: &expr.Variable{
+		Expr: &node.Variable{
 			VarName: &node.Identifier{Value: "var"},
 		},
 	})
@@ -4272,7 +4272,7 @@ func TestPrinterPrintTrait(t *testing.T) {
 				Params:     []node.Node{},
 				Stmt: &stmt.StmtList{
 					Stmts: []node.Node{
-						&stmt.Expression{Expr: &expr.Variable{
+						&stmt.Expression{Expr: &node.Variable{
 							VarName: &node.Identifier{Value: "a"},
 						}},
 					},
@@ -4295,7 +4295,7 @@ func TestPrinterPrintStmtTry(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.Try{
 		Stmts: []node.Node{
-			&stmt.Expression{Expr: &expr.Variable{
+			&stmt.Expression{Expr: &node.Variable{
 				VarName: &node.Identifier{Value: "a"},
 			}},
 		},
@@ -4305,11 +4305,11 @@ func TestPrinterPrintStmtTry(t *testing.T) {
 					&name.Name{Parts: []node.Node{&name.NamePart{Value: "Exception"}}},
 					&name.FullyQualified{Parts: []node.Node{&name.NamePart{Value: "RuntimeException"}}},
 				},
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "e"},
 				},
 				Stmts: []node.Node{
-					&stmt.Expression{Expr: &expr.Variable{
+					&stmt.Expression{Expr: &node.Variable{
 						VarName: &node.Identifier{Value: "b"},
 					}},
 				},
@@ -4336,10 +4336,10 @@ func TestPrinterPrintStmtUnset(t *testing.T) {
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.Unset{
 		Vars: []node.Node{
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "a"},
 			},
-			&expr.Variable{
+			&node.Variable{
 				VarName: &node.Identifier{Value: "b"},
 			},
 		},
@@ -4401,12 +4401,12 @@ func TestPrinterPrintWhileStmtList(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.While{
-		Cond: &expr.Variable{
+		Cond: &node.Variable{
 			VarName: &node.Identifier{Value: "a"},
 		},
 		Stmt: &stmt.StmtList{
 			Stmts: []node.Node{
-				&stmt.Expression{Expr: &expr.Variable{
+				&stmt.Expression{Expr: &node.Variable{
 					VarName: &node.Identifier{Value: "a"},
 				}},
 			},

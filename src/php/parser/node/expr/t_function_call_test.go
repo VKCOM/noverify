@@ -252,7 +252,7 @@ func TestFunctionCallVar(t *testing.T) {
 						StartPos:  4,
 						EndPos:    17,
 					},
-					Function: &expr.Variable{
+					Function: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -293,7 +293,7 @@ func TestFunctionCallVar(t *testing.T) {
 										StartPos:  9,
 										EndPos:    16,
 									},
-									Value: &expr.Variable{
+									Value: &node.Variable{
 										Position: &position.Position{
 											StartLine: 1,
 											EndLine:   1,
@@ -393,7 +393,7 @@ func TestFunctionCallExprArg(t *testing.T) {
 										StartPos:  9,
 										EndPos:    14,
 									},
-									Left: &expr.Variable{
+									Left: &node.Variable{
 										Position: &position.Position{
 											StartLine: 1,
 											EndLine:   1,

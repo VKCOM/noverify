@@ -6,7 +6,6 @@ import (
 
 	"gotest.tools/assert"
 
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/name"
 	"github.com/VKCOM/noverify/src/php/parser/position"
 
@@ -97,7 +96,7 @@ func TestTryCatch(t *testing.T) {
 								},
 							},
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
@@ -196,7 +195,7 @@ func TestPhp7TryCatch(t *testing.T) {
 								},
 							},
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
@@ -276,7 +275,7 @@ func TestTryCatchCatch(t *testing.T) {
 								},
 							},
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
@@ -323,7 +322,7 @@ func TestTryCatchCatch(t *testing.T) {
 								},
 							},
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
@@ -403,7 +402,7 @@ func TestTryCatchFinally(t *testing.T) {
 								},
 							},
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
@@ -490,7 +489,7 @@ func TestTryCatchCatchCatch(t *testing.T) {
 								},
 							},
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -537,7 +536,7 @@ func TestTryCatchCatchCatch(t *testing.T) {
 								},
 							},
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -584,7 +583,7 @@ func TestTryCatchCatchCatch(t *testing.T) {
 								},
 							},
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,

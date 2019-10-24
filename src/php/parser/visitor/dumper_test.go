@@ -105,7 +105,7 @@ func ExampleDumper() {
 	// |                           "Position": Pos{Line: 5-5 Pos: 75-78}
 	// |                           "Value": "Type"
 	// |                   "Variable":
-	// |                     [*expr.Variable]
+	// |                     [*node.Variable]
 	// |                       "Position": Pos{Line: 5-5 Pos: 80-83}
 	// |                       "freefloating":
 	// |                         "Dollar": "$"
@@ -141,7 +141,7 @@ func ExampleDumper() {
 	// |                         "Start": "// some comment\n"
 	// |                         "Start": "\t\t\t\t\t"
 	// |                       "Expr":
-	// |                         [*expr.Variable]
+	// |                         [*node.Variable]
 	// |                           "Position": Pos{Line: 8-8 Pos: 125-128}
 	// |                           "freefloating":
 	// |                             "Dollar": "$"

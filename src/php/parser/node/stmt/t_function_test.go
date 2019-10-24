@@ -11,7 +11,6 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/position"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 )
@@ -153,7 +152,7 @@ func TestFunctionReturnVar(t *testing.T) {
 							},
 							Value: "array",
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -189,7 +188,7 @@ func TestFunctionReturnVar(t *testing.T) {
 							},
 							Value: "callable",
 						},
-						Variable: &expr.Variable{
+						Variable: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -216,7 +215,7 @@ func TestFunctionReturnVar(t *testing.T) {
 							StartPos:  41,
 							EndPos:    50,
 						},
-						Expr: &expr.Variable{
+						Expr: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,

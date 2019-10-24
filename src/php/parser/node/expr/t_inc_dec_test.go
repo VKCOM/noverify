@@ -38,7 +38,7 @@ func TestPostDec(t *testing.T) {
 						StartPos:  4,
 						EndPos:    7,
 					},
-					Variable: &expr.Variable{
+					Variable: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -91,7 +91,7 @@ func TestPostInc(t *testing.T) {
 						StartPos:  4,
 						EndPos:    7,
 					},
-					Variable: &expr.Variable{
+					Variable: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -144,7 +144,7 @@ func TestPreDec(t *testing.T) {
 						StartPos:  4,
 						EndPos:    7,
 					},
-					Variable: &expr.Variable{
+					Variable: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -197,7 +197,7 @@ func TestPreInc(t *testing.T) {
 						StartPos:  4,
 						EndPos:    7,
 					},
-					Variable: &expr.Variable{
+					Variable: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,

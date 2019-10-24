@@ -7,7 +7,6 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/php/parser/position"
@@ -35,7 +34,7 @@ func TestAltIf(t *testing.T) {
 					StartPos:  6,
 					EndPos:    23,
 				},
-				Cond: &expr.Variable{
+				Cond: &node.Variable{
 					Position: &position.Position{
 						StartLine: 2,
 						EndLine:   2,
@@ -94,7 +93,7 @@ func TestAltElseIf(t *testing.T) {
 					StartPos:  6,
 					EndPos:    38,
 				},
-				Cond: &expr.Variable{
+				Cond: &node.Variable{
 					Position: &position.Position{
 						StartLine: 2,
 						EndLine:   2,
@@ -129,7 +128,7 @@ func TestAltElseIf(t *testing.T) {
 							StartPos:  18,
 							EndPos:    -1,
 						},
-						Cond: &expr.Variable{
+						Cond: &node.Variable{
 							Position: &position.Position{
 								StartLine: 3,
 								EndLine:   3,
@@ -190,7 +189,7 @@ func TestAltElse(t *testing.T) {
 					StartPos:  6,
 					EndPos:    31,
 				},
-				Cond: &expr.Variable{
+				Cond: &node.Variable{
 					Position: &position.Position{
 						StartLine: 2,
 						EndLine:   2,
@@ -269,7 +268,7 @@ func TestAltElseElseIf(t *testing.T) {
 					StartPos:  6,
 					EndPos:    61,
 				},
-				Cond: &expr.Variable{
+				Cond: &node.Variable{
 					Position: &position.Position{
 						StartLine: 2,
 						EndLine:   2,
@@ -304,7 +303,7 @@ func TestAltElseElseIf(t *testing.T) {
 							StartPos:  18,
 							EndPos:    -1,
 						},
-						Cond: &expr.Variable{
+						Cond: &node.Variable{
 							Position: &position.Position{
 								StartLine: 3,
 								EndLine:   3,
@@ -339,7 +338,7 @@ func TestAltElseElseIf(t *testing.T) {
 							StartPos:  33,
 							EndPos:    -1,
 						},
-						Cond: &expr.Variable{
+						Cond: &node.Variable{
 							Position: &position.Position{
 								StartLine: 4,
 								EndLine:   4,

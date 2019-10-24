@@ -33,7 +33,7 @@ func TestGlobal(t *testing.T) {
 					EndPos:    13,
 				},
 				Vars: []node.Node{
-					&expr.Variable{
+					&node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -80,7 +80,7 @@ func TestGlobalVars(t *testing.T) {
 					EndPos:    32,
 				},
 				Vars: []node.Node{
-					&expr.Variable{
+					&node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -97,7 +97,7 @@ func TestGlobalVars(t *testing.T) {
 							Value: "a",
 						},
 					},
-					&expr.Variable{
+					&node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -114,14 +114,14 @@ func TestGlobalVars(t *testing.T) {
 							Value: "b",
 						},
 					},
-					&expr.Variable{
+					&node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  19,
 							EndPos:    21,
 						},
-						VarName: &expr.Variable{
+						VarName: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -139,7 +139,7 @@ func TestGlobalVars(t *testing.T) {
 							},
 						},
 					},
-					&expr.Variable{
+					&node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,

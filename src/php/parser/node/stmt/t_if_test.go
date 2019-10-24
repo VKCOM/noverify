@@ -6,7 +6,6 @@ import (
 
 	"gotest.tools/assert"
 
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/position"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
@@ -32,7 +31,7 @@ func TestIf(t *testing.T) {
 					StartPos:  4,
 					EndPos:    13,
 				},
-				Cond: &expr.Variable{
+				Cond: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -86,7 +85,7 @@ func TestElseIf(t *testing.T) {
 					StartPos:  4,
 					EndPos:    28,
 				},
-				Cond: &expr.Variable{
+				Cond: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -120,7 +119,7 @@ func TestElseIf(t *testing.T) {
 							StartPos:  15,
 							EndPos:    28,
 						},
-						Cond: &expr.Variable{
+						Cond: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -176,7 +175,7 @@ func TestElse(t *testing.T) {
 					StartPos:  4,
 					EndPos:    21,
 				},
-				Cond: &expr.Variable{
+				Cond: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -247,7 +246,7 @@ func TestElseElseIf(t *testing.T) {
 					StartPos:  4,
 					EndPos:    51,
 				},
-				Cond: &expr.Variable{
+				Cond: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -281,7 +280,7 @@ func TestElseElseIf(t *testing.T) {
 							StartPos:  15,
 							EndPos:    28,
 						},
-						Cond: &expr.Variable{
+						Cond: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -315,7 +314,7 @@ func TestElseElseIf(t *testing.T) {
 							StartPos:  30,
 							EndPos:    43,
 						},
-						Cond: &expr.Variable{
+						Cond: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -388,7 +387,7 @@ func TestElseIfElseIfElse(t *testing.T) {
 					StartPos:  4,
 					EndPos:    52,
 				},
-				Cond: &expr.Variable{
+				Cond: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -422,7 +421,7 @@ func TestElseIfElseIfElse(t *testing.T) {
 							StartPos:  15,
 							EndPos:    28,
 						},
-						Cond: &expr.Variable{
+						Cond: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -464,7 +463,7 @@ func TestElseIfElseIfElse(t *testing.T) {
 							StartPos:  35,
 							EndPos:    52,
 						},
-						Cond: &expr.Variable{
+						Cond: &node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,

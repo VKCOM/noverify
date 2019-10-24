@@ -7,7 +7,6 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/php/parser/position"
@@ -32,7 +31,7 @@ func TestUnset(t *testing.T) {
 					EndPos:    13,
 				},
 				Vars: []node.Node{
-					&expr.Variable{
+					&node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -79,7 +78,7 @@ func TestUnsetVars(t *testing.T) {
 					EndPos:    17,
 				},
 				Vars: []node.Node{
-					&expr.Variable{
+					&node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -96,7 +95,7 @@ func TestUnsetVars(t *testing.T) {
 							Value: "a",
 						},
 					},
-					&expr.Variable{
+					&node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -143,7 +142,7 @@ func TestUnsetTrailingComma(t *testing.T) {
 					EndPos:    18,
 				},
 				Vars: []node.Node{
-					&expr.Variable{
+					&node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -160,7 +159,7 @@ func TestUnsetTrailingComma(t *testing.T) {
 							Value: "a",
 						},
 					},
-					&expr.Variable{
+					&node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,

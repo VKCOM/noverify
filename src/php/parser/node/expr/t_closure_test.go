@@ -92,7 +92,7 @@ func TestClosureUse(t *testing.T) {
 							},
 							Variadic: false,
 							ByRef:    false,
-							Variable: &expr.Variable{
+							Variable: &node.Variable{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -119,7 +119,7 @@ func TestClosureUse(t *testing.T) {
 							},
 							ByRef:    false,
 							Variadic: false,
-							Variable: &expr.Variable{
+							Variable: &node.Variable{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -146,7 +146,7 @@ func TestClosureUse(t *testing.T) {
 							EndPos:    33,
 						},
 						Uses: []node.Node{
-							&expr.Variable{
+							&node.Variable{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -170,7 +170,7 @@ func TestClosureUse(t *testing.T) {
 									StartPos:  30,
 									EndPos:    32,
 								},
-								Variable: &expr.Variable{
+								Variable: &node.Variable{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
@@ -240,7 +240,7 @@ func TestClosureUse2(t *testing.T) {
 							},
 							ByRef:    false,
 							Variadic: false,
-							Variable: &expr.Variable{
+							Variable: &node.Variable{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -267,7 +267,7 @@ func TestClosureUse2(t *testing.T) {
 							},
 							ByRef:    false,
 							Variadic: false,
-							Variable: &expr.Variable{
+							Variable: &node.Variable{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -301,7 +301,7 @@ func TestClosureUse2(t *testing.T) {
 									StartPos:  26,
 									EndPos:    28,
 								},
-								Variable: &expr.Variable{
+								Variable: &node.Variable{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
@@ -319,7 +319,7 @@ func TestClosureUse2(t *testing.T) {
 									},
 								},
 							},
-							&expr.Variable{
+							&node.Variable{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,

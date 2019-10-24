@@ -324,7 +324,7 @@ func ExampleGoDumper() {
 	// 											},
 	// 										},
 	// 									},
-	// 									Variable: &expr.Variable{
+	// 									Variable: &node.Variable{
 	// 										Position: &position.Position{
 	// 											StartLine: 5,
 	// 											EndLine: 5,
@@ -485,7 +485,7 @@ func ExampleGoDumper() {
 	// 												},
 	// 											},
 	// 										},
-	// 										Expr: &expr.Variable{
+	// 										Expr: &node.Variable{
 	// 											Position: &position.Position{
 	// 												StartLine: 8,
 	// 												EndLine: 8,

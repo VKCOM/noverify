@@ -3698,7 +3698,7 @@ yydefault:
 //line php7/php7.y:1350
 		{
 			identifier := node.NewIdentifier(strings.TrimLeftFunc(yyDollar[5].token.Value, isDollar))
-			variable := expr.NewVariable(identifier)
+			variable := node.NewVariable(identifier)
 			catch := stmt.NewCatch(yyDollar[4].list, variable, yyDollar[8].list)
 			yyVAL.list = append(yyDollar[1].list, catch)
 
@@ -4528,7 +4528,7 @@ yydefault:
 //line php7/php7.y:2148
 		{
 			identifier := node.NewIdentifier(strings.TrimLeftFunc(yyDollar[4].token.Value, isDollar))
-			variable := expr.NewVariable(identifier)
+			variable := node.NewVariable(identifier)
 			yyVAL.node = node.NewParameter(yyDollar[1].node, variable, nil, yyDollar[2].token != nil, yyDollar[3].token != nil)
 
 			// save position
@@ -4578,7 +4578,7 @@ yydefault:
 //line php7/php7.y:2193
 		{
 			identifier := node.NewIdentifier(strings.TrimLeftFunc(yyDollar[4].token.Value, isDollar))
-			variable := expr.NewVariable(identifier)
+			variable := node.NewVariable(identifier)
 			yyVAL.node = node.NewParameter(yyDollar[1].node, variable, yyDollar[6].node, yyDollar[2].token != nil, yyDollar[3].token != nil)
 
 			// save position
@@ -4849,7 +4849,7 @@ yydefault:
 //line php7/php7.y:2452
 		{
 			identifier := node.NewIdentifier(strings.TrimLeftFunc(yyDollar[1].token.Value, isDollar))
-			variable := expr.NewVariable(identifier)
+			variable := node.NewVariable(identifier)
 			yyVAL.node = stmt.NewStaticVar(variable, nil)
 
 			// save position
@@ -4868,7 +4868,7 @@ yydefault:
 //line php7/php7.y:2469
 		{
 			identifier := node.NewIdentifier(strings.TrimLeftFunc(yyDollar[1].token.Value, isDollar))
-			variable := expr.NewVariable(identifier)
+			variable := node.NewVariable(identifier)
 			yyVAL.node = stmt.NewStaticVar(variable, yyDollar[3].node)
 
 			// save position
@@ -5411,7 +5411,7 @@ yydefault:
 //line php7/php7.y:2983
 		{
 			identifier := node.NewIdentifier(strings.TrimLeftFunc(yyDollar[1].token.Value, isDollar))
-			variable := expr.NewVariable(identifier)
+			variable := node.NewVariable(identifier)
 			yyVAL.node = stmt.NewProperty(variable, nil, yyDollar[2].str)
 
 			// save position
@@ -5430,7 +5430,7 @@ yydefault:
 //line php7/php7.y:3000
 		{
 			identifier := node.NewIdentifier(strings.TrimLeftFunc(yyDollar[1].token.Value, isDollar))
-			variable := expr.NewVariable(identifier)
+			variable := node.NewVariable(identifier)
 			yyVAL.node = stmt.NewProperty(variable, yyDollar[3].node, yyDollar[4].str)
 
 			// save position
@@ -6854,7 +6854,7 @@ yydefault:
 //line php7/php7.y:4267
 		{
 			identifier := node.NewIdentifier(strings.TrimLeftFunc(yyDollar[1].token.Value, isDollar))
-			yyVAL.node = expr.NewVariable(identifier)
+			yyVAL.node = node.NewVariable(identifier)
 
 			// save position
 			identifier.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition(yyDollar[1].token))
@@ -6871,7 +6871,7 @@ yydefault:
 //line php7/php7.y:4282
 		{
 			identifier := node.NewIdentifier(strings.TrimLeftFunc(yyDollar[2].token.Value, isDollar))
-			variable := expr.NewVariable(identifier)
+			variable := node.NewVariable(identifier)
 			yyVAL.node = expr.NewReference(variable)
 
 			// save position
@@ -7571,7 +7571,7 @@ yydefault:
 //line php7/php7.y:4917
 		{
 			name := node.NewIdentifier(strings.TrimLeftFunc(yyDollar[1].token.Value, isDollar))
-			yyVAL.node = expr.NewVariable(name)
+			yyVAL.node = node.NewVariable(name)
 
 			// save position
 			name.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition(yyDollar[1].token))
@@ -7587,7 +7587,7 @@ yydefault:
 		yyDollar = yyS[yypt-4 : yypt+1]
 //line php7/php7.y:4932
 		{
-			yyVAL.node = expr.NewVariable(yyDollar[3].node)
+			yyVAL.node = node.NewVariable(yyDollar[3].node)
 
 			// save position
 			yyVAL.node.SetPosition(yylex.(*Parser).positionBuilder.NewTokensPosition(yyDollar[1].token, yyDollar[4].token))
@@ -7604,7 +7604,7 @@ yydefault:
 		yyDollar = yyS[yypt-2 : yypt+1]
 //line php7/php7.y:4947
 		{
-			yyVAL.node = expr.NewVariable(yyDollar[2].node)
+			yyVAL.node = node.NewVariable(yyDollar[2].node)
 
 			// save position
 			yyVAL.node.SetPosition(yylex.(*Parser).positionBuilder.NewTokenNodePosition(yyDollar[1].token, yyDollar[2].node))
@@ -8007,7 +8007,7 @@ yydefault:
 //line php7/php7.y:5319
 		{
 			name := node.NewIdentifier(strings.TrimLeftFunc(yyDollar[1].token.Value, isDollar))
-			yyVAL.node = expr.NewVariable(name)
+			yyVAL.node = node.NewVariable(name)
 
 			// save position
 			name.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition(yyDollar[1].token))
@@ -8024,7 +8024,7 @@ yydefault:
 //line php7/php7.y:5334
 		{
 			identifier := node.NewIdentifier(strings.TrimLeftFunc(yyDollar[1].token.Value, isDollar))
-			variable := expr.NewVariable(identifier)
+			variable := node.NewVariable(identifier)
 			yyVAL.node = expr.NewArrayDimFetch(variable, yyDollar[3].node)
 
 			// save position
@@ -8044,7 +8044,7 @@ yydefault:
 //line php7/php7.y:5352
 		{
 			identifier := node.NewIdentifier(strings.TrimLeftFunc(yyDollar[1].token.Value, isDollar))
-			variable := expr.NewVariable(identifier)
+			variable := node.NewVariable(identifier)
 			fetch := node.NewIdentifier(yyDollar[3].token.Value)
 			yyVAL.node = expr.NewPropertyFetch(variable, fetch)
 
@@ -8065,7 +8065,7 @@ yydefault:
 		yyDollar = yyS[yypt-3 : yypt+1]
 //line php7/php7.y:5372
 		{
-			variable := expr.NewVariable(yyDollar[2].node)
+			variable := node.NewVariable(yyDollar[2].node)
 
 			yyVAL.node = variable
 
@@ -8083,7 +8083,7 @@ yydefault:
 //line php7/php7.y:5387
 		{
 			name := node.NewIdentifier(yyDollar[2].token.Value)
-			variable := expr.NewVariable(name)
+			variable := node.NewVariable(name)
 
 			yyVAL.node = variable
 
@@ -8102,7 +8102,7 @@ yydefault:
 //line php7/php7.y:5404
 		{
 			identifier := node.NewIdentifier(yyDollar[2].token.Value)
-			variable := expr.NewVariable(identifier)
+			variable := node.NewVariable(identifier)
 			yyVAL.node = expr.NewArrayDimFetch(variable, yyDollar[4].node)
 
 			// save position
@@ -8196,7 +8196,7 @@ yydefault:
 //line php7/php7.y:5491
 		{
 			identifier := node.NewIdentifier(strings.TrimLeftFunc(yyDollar[1].token.Value, isDollar))
-			yyVAL.node = expr.NewVariable(identifier)
+			yyVAL.node = node.NewVariable(identifier)
 
 			// save position
 			identifier.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition(yyDollar[1].token))

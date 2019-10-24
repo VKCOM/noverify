@@ -274,7 +274,7 @@ func TestStaticCallVar(t *testing.T) {
 							},
 						},
 					},
-					Call: &expr.Variable{
+					Call: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -335,7 +335,7 @@ func TestStaticCallVarVar(t *testing.T) {
 						StartPos:  4,
 						EndPos:    15,
 					},
-					Class: &expr.Variable{
+					Class: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -352,7 +352,7 @@ func TestStaticCallVarVar(t *testing.T) {
 							Value: "foo",
 						},
 					},
-					Call: &expr.Variable{
+					Call: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,

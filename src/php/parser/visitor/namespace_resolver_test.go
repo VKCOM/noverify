@@ -148,7 +148,7 @@ func TestResolveInstanceOf(t *testing.T) {
 				},
 			},
 			&expr.InstanceOf{
-				Expr:  &expr.Variable{VarName: &node.Identifier{Value: "foo"}},
+				Expr:  &node.Variable{VarName: &node.Identifier{Value: "foo"}},
 				Class: nameBC,
 			},
 		},
@@ -192,7 +192,7 @@ func TestResolveInstanceCatch(t *testing.T) {
 							nameBC,
 							nameF,
 						},
-						Variable: &expr.Variable{VarName: &node.Identifier{Value: "foo"}},
+						Variable: &node.Variable{VarName: &node.Identifier{Value: "foo"}},
 						Stmts:    []node.Node{},
 					},
 				},
@@ -499,7 +499,7 @@ func TestResolveFunctionName(t *testing.T) {
 				ByRef:        false,
 				Variadic:     false,
 				VariableType: nameAB,
-				Variable:     &expr.Variable{VarName: &node.Identifier{Value: "foo"}},
+				Variable:     &node.Variable{VarName: &node.Identifier{Value: "foo"}},
 			},
 		},
 		ReturnType: &node.Nullable{Expr: nameBC},
@@ -537,7 +537,7 @@ func TestResolveMethodName(t *testing.T) {
 				ByRef:        false,
 				Variadic:     false,
 				VariableType: nameAB,
-				Variable:     &expr.Variable{VarName: &node.Identifier{Value: "foo"}},
+				Variable:     &node.Variable{VarName: &node.Identifier{Value: "foo"}},
 			},
 		},
 		ReturnType: &node.Nullable{Expr: nameBC},
@@ -570,7 +570,7 @@ func TestResolveClosureName(t *testing.T) {
 				ByRef:        false,
 				Variadic:     false,
 				VariableType: nameAB,
-				Variable:     &expr.Variable{VarName: &node.Identifier{Value: "foo"}},
+				Variable:     &node.Variable{VarName: &node.Identifier{Value: "foo"}},
 			},
 		},
 		ReturnType: &node.Nullable{Expr: nameBC},
@@ -709,7 +709,7 @@ func TestResolveStaticCallDinamicClassName(t *testing.T) {
 	ast := &stmt.StmtList{
 		Stmts: []node.Node{
 			&expr.StaticCall{
-				Class:        &expr.Variable{VarName: &node.Identifier{Value: "foo"}},
+				Class:        &node.Variable{VarName: &node.Identifier{Value: "foo"}},
 				Call:         &node.Identifier{Value: "foo"},
 				ArgumentList: &node.ArgumentList{},
 			},
@@ -829,43 +829,43 @@ func TestDoNotResolveReservedNames(t *testing.T) {
 		Params: []node.Node{
 			&node.Parameter{
 				VariableType: nameInt,
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "Int"},
 				},
 			},
 			&node.Parameter{
 				VariableType: nameFloat,
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "Float"},
 				},
 			},
 			&node.Parameter{
 				VariableType: nameBool,
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "Bool"},
 				},
 			},
 			&node.Parameter{
 				VariableType: nameString,
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "String"},
 				},
 			},
 			&node.Parameter{
 				VariableType: nameVoid,
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "Void"},
 				},
 			},
 			&node.Parameter{
 				VariableType: nameIterable,
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "Iterable"},
 				},
 			},
 			&node.Parameter{
 				VariableType: nameObject,
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					VarName: &node.Identifier{Value: "Object"},
 				},
 			},

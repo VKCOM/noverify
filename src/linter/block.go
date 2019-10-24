@@ -161,11 +161,11 @@ func (b *BlockWalker) reportDeadCode(n node.Node) {
 	b.r.Report(n, LevelInformation, "deadCode", "Unreachable code")
 }
 
-func varToString(v *expr.Variable) string {
+func varToString(v *node.Variable) string {
 	switch t := v.VarName.(type) {
 	case *node.Identifier:
 		return t.Value
-	case *expr.Variable:
+	case *node.Variable:
 		return "$" + varToString(t)
 	case *expr.FunctionCall:
 		// TODO: support function calls here :)
@@ -244,7 +244,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		b.checkRedundantCastArray(s.Expr)
 	case *stmt.Global:
 		for _, v := range s.Vars {
-			ev := v.(*expr.Variable)
+			ev := v.(*node.Variable)
 
 			// TODO: when varToString will handle Encapsed,
 			// remove this check. Encapsed is a string with potentially
@@ -260,7 +260,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *stmt.Static:
 		for _, vv := range s.Vars {
 			v := vv.(*stmt.StaticVar)
-			ev := v.Variable.(*expr.Variable)
+			ev := v.Variable.(*node.Variable)
 			b.addVar(ev, solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, v.Expr, b.ctx.customTypes), "static", true)
 			b.addNonLocalVar(ev)
 			if v.Expr != nil {
@@ -325,7 +325,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		res = b.handleIsset(s)
 	case *expr.Empty:
 		res = b.handleEmpty(s)
-	case *expr.Variable:
+	case *node.Variable:
 		res = b.handleVariable(s)
 	case *expr.ArrayDimFetch:
 		b.checkArrayDimFetch(s)
@@ -404,7 +404,7 @@ func (b *BlockWalker) handleContinue(s *stmt.Continue) {
 	}
 }
 
-func (b *BlockWalker) addNonLocalVar(v *expr.Variable) {
+func (b *BlockWalker) addNonLocalVar(v *node.Variable) {
 	name, ok := v.VarName.(*node.Identifier)
 	if !ok {
 		return
@@ -414,7 +414,7 @@ func (b *BlockWalker) addNonLocalVar(v *expr.Variable) {
 }
 
 // replaceVar must be used to track assignments to conrete var nodes if they are available
-func (b *BlockWalker) replaceVar(v *expr.Variable, typ *meta.TypesMap, reason string, alwaysDefined bool) {
+func (b *BlockWalker) replaceVar(v *node.Variable, typ *meta.TypesMap, reason string, alwaysDefined bool) {
 	b.ctx.sc.ReplaceVar(v, typ, reason, alwaysDefined)
 	name, ok := v.VarName.(*node.Identifier)
 	if !ok {
@@ -435,7 +435,7 @@ func (b *BlockWalker) replaceVar(v *expr.Variable, typ *meta.TypesMap, reason st
 }
 
 // addVar must be used to track assignments to conrete var nodes if they are available
-func (b *BlockWalker) addVar(v *expr.Variable, typ *meta.TypesMap, reason string, alwaysDefined bool) {
+func (b *BlockWalker) addVar(v *node.Variable, typ *meta.TypesMap, reason string, alwaysDefined bool) {
 	b.ctx.sc.AddVar(v, typ, reason, alwaysDefined)
 	name, ok := v.VarName.(*node.Identifier)
 	if !ok {
@@ -492,7 +492,7 @@ func (b *BlockWalker) parseComment(c freefloating.String) {
 func (b *BlockWalker) handleUnset(s *stmt.Unset) bool {
 	for _, v := range s.Vars {
 		switch v := v.(type) {
-		case *expr.Variable:
+		case *node.Variable:
 			if id, ok := v.VarName.(*node.Identifier); ok {
 				delete(b.unusedVars, id.Value)
 			}
@@ -512,7 +512,7 @@ func (b *BlockWalker) handleUnset(s *stmt.Unset) bool {
 func (b *BlockWalker) handleIsset(s *expr.Isset) bool {
 	for _, v := range s.Variables {
 		switch v := v.(type) {
-		case *expr.Variable:
+		case *node.Variable:
 			if id, ok := v.VarName.(*node.Identifier); ok {
 				delete(b.unusedVars, id.Value)
 			}
@@ -530,7 +530,7 @@ func (b *BlockWalker) handleIsset(s *expr.Isset) bool {
 
 func (b *BlockWalker) handleEmpty(s *expr.Empty) bool {
 	switch v := s.Expr.(type) {
-	case *expr.Variable:
+	case *node.Variable:
 		if id, ok := v.VarName.(*node.Identifier); ok {
 			delete(b.unusedVars, id.Value)
 		}
@@ -659,7 +659,7 @@ func (b *BlockWalker) handleIssetDimFetch(e *expr.ArrayDimFetch) {
 	b.checkArrayDimFetch(e)
 
 	switch v := e.Variable.(type) {
-	case *expr.Variable:
+	case *node.Variable:
 		if id, ok := v.VarName.(*node.Identifier); ok {
 			delete(b.unusedVars, id.Value)
 		}
@@ -741,7 +741,7 @@ func (b *BlockWalker) handleCallArgs(n node.Node, args []node.Node, fn meta.Func
 		ref := fn.Params[i].IsRef
 
 		switch a := arg.(*node.Argument).Expr.(type) {
-		case *expr.Variable:
+		case *node.Variable:
 			if ref {
 				b.addNonLocalVar(a)
 				b.addVar(a, fn.Params[i].Typ, "call_with_ref", true /* TODO: variable may actually not be set by ref */)
@@ -864,7 +864,7 @@ func (b *BlockWalker) handleCompactCallArgs(args []node.Node) {
 	for _, s := range strs {
 		id := node.NewIdentifier(unquote(s.Value))
 		id.SetPosition(s.GetPosition())
-		v := expr.NewVariable(id)
+		v := node.NewVariable(id)
 		v.SetPosition(s.GetPosition())
 		b.handleVariable(v)
 	}
@@ -1028,7 +1028,7 @@ func (b *BlockWalker) isThisInsideClosure(varNode node.Node) bool {
 		return false
 	}
 
-	variable, ok := varNode.(*expr.Variable)
+	variable, ok := varNode.(*node.Variable)
 	if !ok {
 		return false
 	}
@@ -1085,7 +1085,7 @@ func (b *BlockWalker) handleStaticPropertyFetch(e *expr.StaticPropertyFetch) boo
 		return false
 	}
 
-	varExpr, ok := e.Property.(*expr.Variable)
+	varExpr, ok := e.Property.(*node.Variable)
 	if !ok {
 		return false
 	}
@@ -1279,7 +1279,7 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 	b.handleVariableNode(s.Key, nil, "foreach_key")
 	if list, ok := s.Variable.(*expr.List); ok {
 		for _, item := range list.Items {
-			v, ok := item.Val.(*expr.Variable)
+			v, ok := item.Val.(*node.Variable)
 			if !ok {
 				continue
 			}
@@ -1365,12 +1365,12 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType *m
 	}
 	for _, useExpr := range closureUses {
 		var byRef bool
-		var v *expr.Variable
+		var v *node.Variable
 		switch u := useExpr.(type) {
 		case *expr.Reference:
-			v = u.Variable.(*expr.Variable)
+			v = u.Variable.(*node.Variable)
 			byRef = true
-		case *expr.Variable:
+		case *node.Variable:
 			v = u
 		}
 
@@ -1478,7 +1478,7 @@ func (b *BlockWalker) propagateFlagsFromBranches(contexts []*blockContext, links
 type andWalker struct {
 	b *BlockWalker
 
-	varsToDelete []*expr.Variable
+	varsToDelete []*node.Variable
 }
 
 func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
@@ -1488,7 +1488,7 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 
 	case *expr.Isset:
 		for _, v := range n.Variables {
-			if v, ok := v.(*expr.Variable); ok {
+			if v, ok := v.(*node.Variable); ok {
 				if a.b.ctx.sc.HaveVar(v) {
 					continue
 				}
@@ -1496,7 +1496,7 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 				case *node.Identifier:
 					a.b.addVar(v, meta.NewTypesMap("isset_$"+vn.Value), "isset", true)
 					a.varsToDelete = append(a.varsToDelete, v)
-				case *expr.Variable:
+				case *node.Variable:
 					a.b.handleVariable(vn)
 					name, ok := vn.VarName.(*node.Identifier)
 					if !ok {
@@ -1510,7 +1510,7 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 
 	case *expr.InstanceOf:
 		if className, ok := solver.GetClassName(a.b.r.st, n.Class); ok {
-			if v, ok := n.Expr.(*expr.Variable); ok {
+			if v, ok := n.Expr.(*node.Variable); ok {
 				a.b.ctx.sc.AddVar(v, meta.NewTypesMap(className), "instanceof", false)
 			} else {
 				a.b.ctx.customTypes = append(a.b.ctx.customTypes, solver.CustomType{
@@ -1531,7 +1531,7 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 		if !ok {
 			break
 		}
-		v, ok := empty.Expr.(*expr.Variable)
+		v, ok := empty.Expr.(*node.Variable)
 		if !ok {
 			break
 		}
@@ -1557,7 +1557,7 @@ func (a *andWalker) LeaveChildNode(key string, w walker.Walkable) {}
 func (a *andWalker) EnterChildList(key string, w walker.Walkable) {}
 func (a *andWalker) LeaveChildList(key string, w walker.Walkable) {}
 
-func (b *BlockWalker) handleVariable(v *expr.Variable) bool {
+func (b *BlockWalker) handleVariable(v *node.Variable) bool {
 	if !b.ctx.sc.HaveVar(v) {
 		b.r.reportUndefinedVariable(v, b.ctx.sc.MaybeHaveVar(v))
 		b.ctx.sc.AddVar(v, meta.NewTypesMap("undefined"), "undefined", true)
@@ -1568,7 +1568,7 @@ func (b *BlockWalker) handleVariable(v *expr.Variable) bool {
 }
 
 func (b *BlockWalker) handleIf(s *stmt.If) bool {
-	var varsToDelete []*expr.Variable
+	var varsToDelete []*node.Variable
 	// Remove all isset'ed variables after we're finished with this if statement.
 	defer func() {
 		for _, v := range varsToDelete {
@@ -1808,7 +1808,7 @@ func (b *BlockWalker) handleDimFetchLValue(e *expr.ArrayDimFetch, reason string,
 	b.checkArrayDimFetch(e)
 
 	switch v := e.Variable.(type) {
-	case *expr.Variable:
+	case *node.Variable:
 		arrTyp := meta.NewEmptyTypesMap(typ.Len())
 		typ.Iterate(func(t string) {
 			arrTyp = arrTyp.AppendString(meta.WrapArrayOf(t))
@@ -1833,7 +1833,7 @@ func (b *BlockWalker) handleAssignReference(a *assign.Reference) bool {
 		b.handleDimFetchLValue(v, "assign_array", meta.MixedType)
 		a.Expression.Walk(b)
 		return false
-	case *expr.Variable:
+	case *node.Variable:
 		b.addVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.st, a.Expression), "assign", true)
 		b.addNonLocalVar(v)
 	case *expr.List:
@@ -1879,12 +1879,12 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 		typ := solver.ExprTypeLocal(b.ctx.sc, b.r.st, a.Expression)
 		b.handleDimFetchLValue(v, "assign_array", typ)
 		return false
-	case *expr.Variable:
+	case *node.Variable:
 		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.st, a.Expression), "assign", true)
 	case *expr.List:
 		b.handleAssignList(v.Items)
 	case *expr.PropertyFetch:
-		varNode, ok := v.Variable.(*expr.Variable)
+		varNode, ok := v.Variable.(*node.Variable)
 		if !ok {
 			v.Variable.Walk(b)
 			v.Property.Walk(b)
@@ -1920,7 +1920,7 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, a.Expression, b.ctx.customTypes))
 		cls.Properties[propertyName.Value] = p
 	case *expr.StaticPropertyFetch:
-		varNode, ok := v.Property.(*expr.Variable)
+		varNode, ok := v.Property.(*node.Variable)
 		if !ok {
 			break
 		}
@@ -1984,12 +1984,12 @@ func (b *BlockWalker) handleVariableNode(n node.Node, typ *meta.TypesMap, what s
 		return
 	}
 
-	var vv *expr.Variable
+	var vv *node.Variable
 	switch n := n.(type) {
-	case *expr.Variable:
+	case *node.Variable:
 		vv = n
 	case *expr.Reference:
-		vv = n.Variable.(*expr.Variable)
+		vv = n.Variable.(*node.Variable)
 	default:
 		return
 	}

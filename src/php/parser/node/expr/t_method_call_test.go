@@ -38,7 +38,7 @@ func TestMethodCall(t *testing.T) {
 						StartPos:  4,
 						EndPos:    12,
 					},
-					Variable: &expr.Variable{
+					Variable: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,

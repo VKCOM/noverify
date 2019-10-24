@@ -75,7 +75,7 @@ func TestYieldVal(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Value: &expr.Variable{
+					Value: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -128,7 +128,7 @@ func TestYieldKeyVal(t *testing.T) {
 						StartPos:  4,
 						EndPos:    17,
 					},
-					Key: &expr.Variable{
+					Key: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -145,7 +145,7 @@ func TestYieldKeyVal(t *testing.T) {
 							Value: "a",
 						},
 					},
-					Value: &expr.Variable{
+					Value: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -243,7 +243,7 @@ func TestYieldKeyExpr(t *testing.T) {
 						StartPos:  4,
 						EndPos:    16,
 					},
-					Key: &expr.Variable{
+					Key: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -305,7 +305,7 @@ func TestYieldFrom(t *testing.T) {
 						StartPos:  4,
 						EndPos:    16,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,

@@ -49,7 +49,7 @@ func TestSimpleVar(t *testing.T) {
 							},
 							Value: "test ",
 						},
-						&expr.Variable{
+						&node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -113,7 +113,7 @@ func TestSimpleVarOneChar(t *testing.T) {
 							},
 							Value: "test ",
 						},
-						&expr.Variable{
+						&node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -177,7 +177,7 @@ func TestSimpleVarEndsEcapsed(t *testing.T) {
 							},
 							Value: "test ",
 						},
-						&expr.Variable{
+						&node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -250,7 +250,7 @@ func TestStringVarCurveOpen(t *testing.T) {
 							},
 							Value: "=",
 						},
-						&expr.Variable{
+						&node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -267,7 +267,7 @@ func TestStringVarCurveOpen(t *testing.T) {
 								Value: "a",
 							},
 						},
-						&expr.Variable{
+						&node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -338,7 +338,7 @@ func TestSimpleVarPropertyFetch(t *testing.T) {
 								StartPos:  10,
 								EndPos:    18,
 							},
-							Variable: &expr.Variable{
+							Variable: &node.Variable{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -421,7 +421,7 @@ func TestDollarOpenCurlyBraces(t *testing.T) {
 							},
 							Value: "test ",
 						},
-						&expr.Variable{
+						&node.Variable{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -492,7 +492,7 @@ func TestDollarOpenCurlyBracesDimNumber(t *testing.T) {
 								StartPos:  10,
 								EndPos:    18,
 							},
-							Variable: &expr.Variable{
+							Variable: &node.Variable{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -573,7 +573,7 @@ func TestCurlyOpenMethodCall(t *testing.T) {
 								StartPos:  11,
 								EndPos:    21,
 							},
-							Variable: &expr.Variable{
+							Variable: &node.Variable{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,

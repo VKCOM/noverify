@@ -38,7 +38,7 @@ func TestInclude(t *testing.T) {
 						StartPos:  4,
 						EndPos:    13,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -91,7 +91,7 @@ func TestIncludeOnce(t *testing.T) {
 						StartPos:  4,
 						EndPos:    18,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -144,7 +144,7 @@ func TestRequire(t *testing.T) {
 						StartPos:  4,
 						EndPos:    13,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -197,7 +197,7 @@ func TestRequireOnce(t *testing.T) {
 						StartPos:  4,
 						EndPos:    18,
 					},
-					Expr: &expr.Variable{
+					Expr: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,

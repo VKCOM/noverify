@@ -6,7 +6,6 @@ import (
 
 	"gotest.tools/assert"
 
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/position"
 
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
@@ -35,7 +34,7 @@ func TestSimpleEcho(t *testing.T) {
 					EndPos:    14,
 				},
 				Exprs: []node.Node{
-					&expr.Variable{
+					&node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -91,7 +90,7 @@ func TestEcho(t *testing.T) {
 					EndPos:    12,
 				},
 				Exprs: []node.Node{
-					&expr.Variable{
+					&node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,

@@ -23,7 +23,7 @@ var nodesToTest = []struct {
 }{
 	{
 		&expr.ArrayDimFetch{
-			Variable: &expr.Variable{},
+			Variable: &node.Variable{},
 			Dim:      &scalar.Lnumber{Value: "1"},
 		},
 		[]string{"Variable", "Dim"},
@@ -48,21 +48,21 @@ var nodesToTest = []struct {
 	},
 	{
 		&expr.BitwiseNot{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
 	},
 	{
 		&expr.BooleanNot{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
 	},
 	{
 		&expr.ClassConstFetch{
-			Class:        &expr.Variable{},
+			Class:        &node.Variable{},
 			ConstantName: &node.Identifier{Value: "foo"},
 		},
 		[]string{"Class", "ConstantName"},
@@ -70,7 +70,7 @@ var nodesToTest = []struct {
 	},
 	{
 		&expr.Clone{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
@@ -78,7 +78,7 @@ var nodesToTest = []struct {
 	{
 		&expr.ClosureUse{
 			Uses: []node.Node{
-				&expr.Variable{},
+				&node.Variable{},
 			},
 		},
 		[]string{"Uses"},
@@ -106,21 +106,21 @@ var nodesToTest = []struct {
 	},
 	{
 		&expr.Empty{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
 	},
 	{
 		&expr.ErrorSuppress{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
 	},
 	{
 		&expr.Eval{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
@@ -128,14 +128,14 @@ var nodesToTest = []struct {
 	{
 		&expr.Exit{
 			Die:  true,
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		map[string]interface{}{"Die": true},
 	},
 	{
 		&expr.FunctionCall{
-			Function:     &expr.Variable{},
+			Function:     &node.Variable{},
 			ArgumentList: &node.ArgumentList{},
 		},
 		[]string{"Function", "ArgumentList"},
@@ -143,21 +143,21 @@ var nodesToTest = []struct {
 	},
 	{
 		&expr.IncludeOnce{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
 	},
 	{
 		&expr.Include{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
 	},
 	{
 		&expr.InstanceOf{
-			Expr:  &expr.Variable{},
+			Expr:  &node.Variable{},
 			Class: &name.Name{},
 		},
 		[]string{"Expr", "Class"},
@@ -166,7 +166,7 @@ var nodesToTest = []struct {
 	{
 		&expr.Isset{
 			Variables: []node.Node{
-				&expr.Variable{},
+				&node.Variable{},
 			},
 		},
 		[]string{"Variables"},
@@ -183,7 +183,7 @@ var nodesToTest = []struct {
 	},
 	{
 		&expr.MethodCall{
-			Variable:     &expr.Variable{},
+			Variable:     &node.Variable{},
 			Method:       &node.Identifier{Value: "foo"},
 			ArgumentList: &node.ArgumentList{},
 		},
@@ -200,42 +200,42 @@ var nodesToTest = []struct {
 	},
 	{
 		&expr.PostDec{
-			Variable: &expr.Variable{},
+			Variable: &node.Variable{},
 		},
 		[]string{"Variable"},
 		nil,
 	},
 	{
 		&expr.PostInc{
-			Variable: &expr.Variable{},
+			Variable: &node.Variable{},
 		},
 		[]string{"Variable"},
 		nil,
 	},
 	{
 		&expr.PreDec{
-			Variable: &expr.Variable{},
+			Variable: &node.Variable{},
 		},
 		[]string{"Variable"},
 		nil,
 	},
 	{
 		&expr.PreInc{
-			Variable: &expr.Variable{},
+			Variable: &node.Variable{},
 		},
 		[]string{"Variable"},
 		nil,
 	},
 	{
 		&expr.Print{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
 	},
 	{
 		&expr.PropertyFetch{
-			Variable: &expr.Variable{},
+			Variable: &node.Variable{},
 			Property: &node.Identifier{Value: "foo"},
 		},
 		[]string{"Variable", "Property"},
@@ -243,21 +243,21 @@ var nodesToTest = []struct {
 	},
 	{
 		&expr.Reference{
-			Variable: &expr.Variable{},
+			Variable: &node.Variable{},
 		},
 		[]string{"Variable"},
 		nil,
 	},
 	{
 		&expr.RequireOnce{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
 	},
 	{
 		&expr.Require{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
@@ -290,43 +290,43 @@ var nodesToTest = []struct {
 	},
 	{
 		&expr.Ternary{
-			Condition: &expr.Variable{},
-			IfTrue:    &expr.Variable{},
-			IfFalse:   &expr.Variable{},
+			Condition: &node.Variable{},
+			IfTrue:    &node.Variable{},
+			IfFalse:   &node.Variable{},
 		},
 		[]string{"Condition", "IfTrue", "IfFalse"},
 		nil,
 	},
 	{
 		&expr.UnaryMinus{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
 	},
 	{
 		&expr.UnaryPlus{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
 	},
 	{
-		&expr.Variable{VarName: &node.Identifier{Value: "a"}},
+		&node.Variable{VarName: &node.Identifier{Value: "a"}},
 		[]string{"VarName"},
 		nil,
 	},
 	{
 		&expr.YieldFrom{
-			Expr: &expr.Variable{},
+			Expr: &node.Variable{},
 		},
 		[]string{"Expr"},
 		nil,
 	},
 	{
 		&expr.Yield{
-			Key:   &expr.Variable{},
-			Value: &expr.Variable{},
+			Key:   &node.Variable{},
+			Value: &node.Variable{},
 		},
 		[]string{"Key", "Value"},
 		nil,

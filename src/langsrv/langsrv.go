@@ -510,7 +510,7 @@ func handleTextDocumentHover(req *baseRequest) error {
 
 func getHoverForNode(n node.Node, sc *meta.Scope, cs *meta.ClassParseState) string {
 	switch n := n.(type) {
-	case *expr.Variable:
+	case *node.Variable:
 		return getHoverForVariable(n, sc, cs)
 	case *expr.FunctionCall:
 		return getHoverForFunctionCall(n, sc, cs)
@@ -523,7 +523,7 @@ func getHoverForNode(n node.Node, sc *meta.Scope, cs *meta.ClassParseState) stri
 	return ""
 }
 
-func getHoverForVariable(n *expr.Variable, sc *meta.Scope, cs *meta.ClassParseState) string {
+func getHoverForVariable(n *node.Variable, sc *meta.Scope, cs *meta.ClassParseState) string {
 	id, ok := n.VarName.(*node.Identifier)
 	if !ok {
 		return ""

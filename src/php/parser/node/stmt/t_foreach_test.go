@@ -32,7 +32,7 @@ func TestForeach(t *testing.T) {
 					StartPos:  4,
 					EndPos:    24,
 				},
-				Expr: &expr.Variable{
+				Expr: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -49,7 +49,7 @@ func TestForeach(t *testing.T) {
 						Value: "a",
 					},
 				},
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -113,7 +113,7 @@ func TestForeachExpr(t *testing.T) {
 					},
 					Items: []*expr.ArrayItem{},
 				},
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -168,7 +168,7 @@ func TestAltForeach(t *testing.T) {
 					StartPos:  4,
 					EndPos:    35,
 				},
-				Expr: &expr.Variable{
+				Expr: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -185,7 +185,7 @@ func TestAltForeach(t *testing.T) {
 						Value: "a",
 					},
 				},
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -239,7 +239,7 @@ func TestForeachWithKey(t *testing.T) {
 					StartPos:  4,
 					EndPos:    30,
 				},
-				Expr: &expr.Variable{
+				Expr: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -256,7 +256,7 @@ func TestForeachWithKey(t *testing.T) {
 						Value: "a",
 					},
 				},
-				Key: &expr.Variable{
+				Key: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -273,7 +273,7 @@ func TestForeachWithKey(t *testing.T) {
 						Value: "k",
 					},
 				},
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -337,7 +337,7 @@ func TestForeachExprWithKey(t *testing.T) {
 					},
 					Items: []*expr.ArrayItem{},
 				},
-				Key: &expr.Variable{
+				Key: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -354,7 +354,7 @@ func TestForeachExprWithKey(t *testing.T) {
 						Value: "k",
 					},
 				},
-				Variable: &expr.Variable{
+				Variable: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -408,7 +408,7 @@ func TestForeachWithRef(t *testing.T) {
 					StartPos:  4,
 					EndPos:    31,
 				},
-				Expr: &expr.Variable{
+				Expr: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -425,7 +425,7 @@ func TestForeachWithRef(t *testing.T) {
 						Value: "a",
 					},
 				},
-				Key: &expr.Variable{
+				Key: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -449,7 +449,7 @@ func TestForeachWithRef(t *testing.T) {
 						StartPos:  25,
 						EndPos:    27,
 					},
-					Variable: &expr.Variable{
+					Variable: &node.Variable{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
@@ -504,7 +504,7 @@ func TestForeachWithList(t *testing.T) {
 					StartPos:  4,
 					EndPos:    36,
 				},
-				Expr: &expr.Variable{
+				Expr: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -521,7 +521,7 @@ func TestForeachWithList(t *testing.T) {
 						Value: "a",
 					},
 				},
-				Key: &expr.Variable{
+				Key: &node.Variable{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
@@ -553,7 +553,7 @@ func TestForeachWithList(t *testing.T) {
 								StartPos:  30,
 								EndPos:    31,
 							},
-							Val: &expr.Variable{
+							Val: &node.Variable{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,

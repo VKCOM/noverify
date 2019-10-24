@@ -315,7 +315,7 @@ func (p *Printer) printNode(n node.Node) {
 		p.printExprUnaryMinus(n)
 	case *expr.UnaryPlus:
 		p.printExprUnaryPlus(n)
-	case *expr.Variable:
+	case *node.Variable:
 		p.printExprVariable(n)
 	case *expr.YieldFrom:
 		p.printExprYieldFrom(n)
@@ -590,7 +590,7 @@ func (p *Printer) printScalarEncapsed(n node.Node) {
 			} else {
 				p.Print(part)
 			}
-		case *expr.Variable:
+		case *node.Variable:
 			s := (*part.GetFreeFloating())[freefloating.Start]
 			if len(s) > 0 && s[0].Value == "${" {
 				p.printExprVariableWithoutLeadingDollar(part)
@@ -623,7 +623,7 @@ func (p *Printer) printScalarHeredoc(n node.Node) {
 			} else {
 				p.Print(part)
 			}
-		case *expr.Variable:
+		case *node.Variable:
 			s := (*part.GetFreeFloating())[freefloating.Start]
 			if len(s) > 0 && s[0].Value == "${" {
 				p.printExprVariableWithoutLeadingDollar(part)
@@ -1795,7 +1795,7 @@ func (p *Printer) printExprUnaryPlus(n node.Node) {
 }
 
 func (p *Printer) printExprVariable(n node.Node) {
-	nn := n.(*expr.Variable)
+	nn := n.(*node.Variable)
 	p.printFreeFloating(nn, freefloating.Start)
 
 	p.printFreeFloating(nn, freefloating.Dollar)
@@ -1809,7 +1809,7 @@ func (p *Printer) printExprVariable(n node.Node) {
 }
 
 func (p *Printer) printExprVariableWithoutLeadingDollar(n node.Node) {
-	nn := n.(*expr.Variable)
+	nn := n.(*node.Variable)
 	p.printFreeFloating(nn, freefloating.Start)
 
 	p.Print(nn.VarName)

@@ -308,7 +308,7 @@ func (p *PrettyPrinter) printNode(n node.Node) {
 		p.printExprUnaryMinus(n)
 	case *expr.UnaryPlus:
 		p.printExprUnaryPlus(n)
-	case *expr.Variable:
+	case *node.Variable:
 		p.printExprVariable(n)
 	case *expr.YieldFrom:
 		p.printExprYieldFrom(n)
@@ -1317,7 +1317,7 @@ func (p *PrettyPrinter) printExprUnaryPlus(n node.Node) {
 }
 
 func (p *PrettyPrinter) printExprVariable(n node.Node) {
-	nn := n.(*expr.Variable)
+	nn := n.(*node.Variable)
 	io.WriteString(p.w, "$")
 	p.Print(nn.VarName)
 }
