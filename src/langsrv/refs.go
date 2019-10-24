@@ -118,25 +118,25 @@ func (d *referencesWalker) EnterNode(w walker.Walkable) bool {
 		}
 
 		if isStatic {
-			d.result = findStaticMethodReferences(d.st.CurrentClass, n.MethodName.(*node.Identifier).Value)
+			d.result = findStaticMethodReferences(d.st.CurrentClass, n.MethodName.Value)
 		} else {
-			d.result = findMethodReferences(d.st.CurrentClass, n.MethodName.(*node.Identifier).Value)
+			d.result = findMethodReferences(d.st.CurrentClass, n.MethodName.Value)
 		}
 	case *stmt.Property:
 		if pos := n.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
 
-		d.result = findPropertyReferences(d.st.CurrentClass, n.Variable.(*node.Variable).VarName.(*node.Identifier).Value)
+		d.result = findPropertyReferences(d.st.CurrentClass, n.Variable.VarName.(*node.Identifier).Value)
 	case *stmt.Constant:
 		if pos := n.ConstantName.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
 
 		if d.st.CurrentClass == "" {
-			d.result = findConstantsReferences(d.st.Namespace + `\` + n.ConstantName.(*node.Identifier).Value)
+			d.result = findConstantsReferences(d.st.Namespace + `\` + n.ConstantName.Value)
 		} else {
-			d.result = findClassConstantsReferences(d.st.CurrentClass, n.ConstantName.(*node.Identifier).Value)
+			d.result = findClassConstantsReferences(d.st.CurrentClass, n.ConstantName.Value)
 		}
 	}
 

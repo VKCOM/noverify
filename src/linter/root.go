@@ -596,7 +596,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 	for _, pNode := range pl.Properties {
 		p := pNode.(*stmt.Property)
 
-		nm := p.Variable.(*node.Variable).VarName.(*node.Identifier).Value
+		nm := p.Variable.VarName.(*node.Identifier).Value
 
 		typ, errText := d.parsePHPDocVar(p.PhpDocComment)
 		if errText != "" {
@@ -640,7 +640,7 @@ func (d *RootWalker) enterClassConstList(s *stmt.ClassConstList) bool {
 	for _, cNode := range s.Consts {
 		c := cNode.(*stmt.Constant)
 
-		nm := c.ConstantName.(*node.Identifier).Value
+		nm := c.ConstantName.Value
 		typ := solver.ExprTypeLocal(d.meta.Scope, d.st, c.Expr)
 
 		// TODO: handle duplicate constant
@@ -665,7 +665,7 @@ func (d *RootWalker) checkOldStyleConstructor(meth *stmt.ClassMethod, nm string)
 }
 
 func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
-	nm := meth.MethodName.(*node.Identifier).Value
+	nm := meth.MethodName.Value
 
 	d.checkOldStyleConstructor(meth, nm)
 
@@ -1014,7 +1014,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 
 		if !strings.HasPrefix(variable, "$") {
 			if len(actualParams) > curParam {
-				variable = actualParams[curParam].(*node.Parameter).Variable.(*node.Variable).VarName.(*node.Identifier).Value
+				variable = actualParams[curParam].(*node.Parameter).Variable.VarName.(*node.Identifier).Value
 			} else {
 				result.errs.pushLint("too many @param tags on line %d", part.Line)
 				continue
@@ -1067,7 +1067,7 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 	args = make([]meta.FuncParam, 0, len(params))
 	for _, param := range params {
 		p := param.(*node.Parameter)
-		v := p.Variable.(*node.Variable)
+		v := p.Variable
 		parTyp := parTypes[v.VarName.(*node.Identifier).Value]
 
 		if !parTyp.typ.IsEmpty() {
@@ -1300,11 +1300,7 @@ func (d *RootWalker) enterConstList(lst *stmt.ConstList) bool {
 	for _, sNode := range lst.Consts {
 		s := sNode.(*stmt.Constant)
 
-		id, ok := s.ConstantName.(*node.Identifier)
-		if !ok {
-			continue
-		}
-
+		id := s.ConstantName
 		nm := d.st.Namespace + `\` + id.Value
 
 		d.meta.Constants[nm] = meta.ConstantInfo{

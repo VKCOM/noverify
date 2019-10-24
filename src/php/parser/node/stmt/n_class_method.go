@@ -13,7 +13,7 @@ type ClassMethod struct {
 	Position      *position.Position
 	ReturnsRef    bool
 	PhpDocComment string
-	MethodName    node.Node
+	MethodName    *node.Identifier
 	Modifiers     []*node.Identifier
 	Params        []node.Node
 	ReturnType    node.Node
@@ -21,7 +21,7 @@ type ClassMethod struct {
 }
 
 // NewClassMethod node constructor
-func NewClassMethod(MethodName node.Node, Modifiers []*node.Identifier, ReturnsRef bool, Params []node.Node, ReturnType node.Node, Stmt node.Node, PhpDocComment string) *ClassMethod {
+func NewClassMethod(MethodName *node.Identifier, Modifiers []*node.Identifier, ReturnsRef bool, Params []node.Node, ReturnType node.Node, Stmt node.Node, PhpDocComment string) *ClassMethod {
 	return &ClassMethod{
 		FreeFloating:  nil,
 		ReturnsRef:    ReturnsRef,

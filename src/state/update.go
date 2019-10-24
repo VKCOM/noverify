@@ -15,7 +15,7 @@ func EnterNode(st *meta.ClassParseState, n walker.Walkable) {
 	case *stmt.Function:
 		st.CurrentFunction = n.FunctionName.Value
 	case *stmt.ClassMethod:
-		st.CurrentFunction = n.MethodName.(*node.Identifier).Value
+		st.CurrentFunction = n.MethodName.Value
 
 	case *stmt.Namespace:
 		// TODO: handle another namespace syntax:

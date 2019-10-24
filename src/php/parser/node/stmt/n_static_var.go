@@ -11,12 +11,12 @@ import (
 type StaticVar struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	Variable     node.Node
+	Variable     *node.Variable
 	Expr         node.Node
 }
 
 // NewStaticVar node constructor
-func NewStaticVar(Variable node.Node, Expr node.Node) *StaticVar {
+func NewStaticVar(Variable *node.Variable, Expr node.Node) *StaticVar {
 	return &StaticVar{
 		FreeFloating: nil,
 		Variable:     Variable,

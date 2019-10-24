@@ -12,12 +12,12 @@ type Constant struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
 	PhpDocComment string
-	ConstantName  node.Node
+	ConstantName  *node.Identifier
 	Expr          node.Node
 }
 
 // NewConstant node constructor
-func NewConstant(ConstantName node.Node, Expr node.Node, PhpDocComment string) *Constant {
+func NewConstant(ConstantName *node.Identifier, Expr node.Node, PhpDocComment string) *Constant {
 	return &Constant{
 		FreeFloating:  nil,
 		PhpDocComment: PhpDocComment,

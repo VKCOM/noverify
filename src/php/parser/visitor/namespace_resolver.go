@@ -122,7 +122,7 @@ func (nsr *NamespaceResolver) EnterNode(w walker.Walkable) bool {
 
 	case *stmt.ConstList:
 		for _, constant := range n.Consts {
-			nsr.AddNamespacedName(constant, constant.(*stmt.Constant).ConstantName.(*node.Identifier).Value)
+			nsr.AddNamespacedName(constant, constant.(*stmt.Constant).ConstantName.Value)
 		}
 
 	case *expr.StaticCall:

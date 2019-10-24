@@ -12,11 +12,11 @@ type TraitMethodRef struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Trait        node.Node
-	Method       node.Node
+	Method       *node.Identifier
 }
 
 // NewTraitMethodRef node constructor
-func NewTraitMethodRef(Trait node.Node, Method node.Node) *TraitMethodRef {
+func NewTraitMethodRef(Trait node.Node, Method *node.Identifier) *TraitMethodRef {
 	return &TraitMethodRef{
 		FreeFloating: nil,
 		Trait:        Trait,

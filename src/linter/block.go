@@ -260,7 +260,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *stmt.Static:
 		for _, vv := range s.Vars {
 			v := vv.(*stmt.StaticVar)
-			ev := v.Variable.(*node.Variable)
+			ev := v.Variable
 			b.addVar(ev, solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, v.Expr, b.ctx.customTypes), "static", true)
 			b.addNonLocalVar(ev)
 			if v.Expr != nil {

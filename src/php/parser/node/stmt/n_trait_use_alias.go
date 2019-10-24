@@ -13,11 +13,11 @@ type TraitUseAlias struct {
 	Position     *position.Position
 	Ref          node.Node
 	Modifier     node.Node
-	Alias        node.Node
+	Alias        *node.Identifier
 }
 
 // NewTraitUseAlias node constructor
-func NewTraitUseAlias(Ref node.Node, Modifier node.Node, Alias node.Node) *TraitUseAlias {
+func NewTraitUseAlias(Ref node.Node, Modifier node.Node, Alias *node.Identifier) *TraitUseAlias {
 	return &TraitUseAlias{
 		FreeFloating: nil,
 		Ref:          Ref,

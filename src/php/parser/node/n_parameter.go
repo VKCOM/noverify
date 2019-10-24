@@ -13,18 +13,18 @@ type Parameter struct {
 	ByRef        bool
 	Variadic     bool
 	VariableType Node
-	Variable     Node
+	Variable     *Variable
 	DefaultValue Node
 }
 
 // NewParameter node constructor
-func NewParameter(VariableType Node, Variable Node, DefaultValue Node, ByRef bool, Variadic bool) *Parameter {
+func NewParameter(VariableType Node, variable *Variable, DefaultValue Node, ByRef bool, Variadic bool) *Parameter {
 	return &Parameter{
 		FreeFloating: nil,
 		ByRef:        ByRef,
 		Variadic:     Variadic,
 		VariableType: VariableType,
-		Variable:     Variable,
+		Variable:     variable,
 		DefaultValue: DefaultValue,
 	}
 }

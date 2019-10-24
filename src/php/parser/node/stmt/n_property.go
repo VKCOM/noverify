@@ -12,12 +12,12 @@ type Property struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
 	PhpDocComment string
-	Variable      node.Node
+	Variable      *node.Variable
 	Expr          node.Node
 }
 
 // NewProperty node constructor
-func NewProperty(Variable node.Node, Expr node.Node, PhpDocComment string) *Property {
+func NewProperty(Variable *node.Variable, Expr node.Node, PhpDocComment string) *Property {
 	return &Property{
 		FreeFloating:  nil,
 		PhpDocComment: PhpDocComment,
