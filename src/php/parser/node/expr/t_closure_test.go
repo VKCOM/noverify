@@ -92,22 +92,14 @@ func TestClosureUse(t *testing.T) {
 							},
 							Variadic: false,
 							ByRef:    false,
-							Variable: &node.Variable{
+							Variable: &node.SimpleVar{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
 									StartPos:  13,
 									EndPos:    14,
 								},
-								VarName: &node.Identifier{
-									Position: &position.Position{
-										StartLine: 1,
-										EndLine:   1,
-										StartPos:  13,
-										EndPos:    14,
-									},
-									Value: "a",
-								},
+								Name: "a",
 							},
 						},
 						&node.Parameter{
@@ -119,22 +111,14 @@ func TestClosureUse(t *testing.T) {
 							},
 							ByRef:    false,
 							Variadic: false,
-							Variable: &node.Variable{
+							Variable: &node.SimpleVar{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
 									StartPos:  17,
 									EndPos:    18,
 								},
-								VarName: &node.Identifier{
-									Position: &position.Position{
-										StartLine: 1,
-										EndLine:   1,
-										StartPos:  17,
-										EndPos:    18,
-									},
-									Value: "b",
-								},
+								Name: "b",
 							},
 						},
 					},
@@ -240,22 +224,14 @@ func TestClosureUse2(t *testing.T) {
 							},
 							ByRef:    false,
 							Variadic: false,
-							Variable: &node.Variable{
+							Variable: &node.SimpleVar{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
 									StartPos:  13,
 									EndPos:    14,
 								},
-								VarName: &node.Identifier{
-									Position: &position.Position{
-										StartLine: 1,
-										EndLine:   1,
-										StartPos:  13,
-										EndPos:    14,
-									},
-									Value: "a",
-								},
+								Name: "a",
 							},
 						},
 						&node.Parameter{
@@ -267,22 +243,14 @@ func TestClosureUse2(t *testing.T) {
 							},
 							ByRef:    false,
 							Variadic: false,
-							Variable: &node.Variable{
+							Variable: &node.SimpleVar{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
 									StartPos:  17,
 									EndPos:    18,
 								},
-								VarName: &node.Identifier{
-									Position: &position.Position{
-										StartLine: 1,
-										EndLine:   1,
-										StartPos:  17,
-										EndPos:    18,
-									},
-									Value: "b",
-								},
+								Name: "b",
 							},
 						},
 					},

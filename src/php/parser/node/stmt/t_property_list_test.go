@@ -69,22 +69,14 @@ func TestProperty(t *testing.T) {
 									EndPos:    20,
 								},
 								PhpDocComment: "",
-								Variable: &node.Variable{
+								Variable: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
 										StartPos:  19,
 										EndPos:    20,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 1,
-											EndLine:   1,
-											StartPos:  19,
-											EndPos:    20,
-										},
-										Value: "a",
-									},
+									Name: "a",
 								},
 							},
 						},
@@ -165,22 +157,14 @@ func TestProperties(t *testing.T) {
 									EndPos:    30,
 								},
 								PhpDocComment: "",
-								Variable: &node.Variable{
+								Variable: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
 										StartPos:  29,
 										EndPos:    30,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 1,
-											EndLine:   1,
-											StartPos:  29,
-											EndPos:    30,
-										},
-										Value: "a",
-									},
+									Name: "a",
 								},
 							},
 							&stmt.Property{
@@ -191,22 +175,14 @@ func TestProperties(t *testing.T) {
 									EndPos:    38,
 								},
 								PhpDocComment: "",
-								Variable: &node.Variable{
+								Variable: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
 										StartPos:  33,
 										EndPos:    34,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 1,
-											EndLine:   1,
-											StartPos:  33,
-											EndPos:    34,
-										},
-										Value: "b",
-									},
+									Name: "b",
 								},
 								Expr: &scalar.Lnumber{
 									Position: &position.Position{
@@ -296,22 +272,14 @@ func TestProperties2(t *testing.T) {
 									EndPos:    34,
 								},
 								PhpDocComment: "",
-								Variable: &node.Variable{
+								Variable: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
 										StartPos:  29,
 										EndPos:    30,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 1,
-											EndLine:   1,
-											StartPos:  29,
-											EndPos:    30,
-										},
-										Value: "a",
-									},
+									Name: "a",
 								},
 								Expr: &scalar.Lnumber{
 									Position: &position.Position{
@@ -331,22 +299,14 @@ func TestProperties2(t *testing.T) {
 									EndPos:    38,
 								},
 								PhpDocComment: "",
-								Variable: &node.Variable{
+								Variable: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
 										StartPos:  37,
 										EndPos:    38,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 1,
-											EndLine:   1,
-											StartPos:  37,
-											EndPos:    38,
-										},
-										Value: "b",
-									},
+									Name: "b",
 								},
 							},
 						},

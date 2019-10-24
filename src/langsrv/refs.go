@@ -127,7 +127,7 @@ func (d *referencesWalker) EnterNode(w walker.Walkable) bool {
 			return true
 		}
 
-		d.result = findPropertyReferences(d.st.CurrentClass, n.Variable.VarName.(*node.Identifier).Value)
+		d.result = findPropertyReferences(d.st.CurrentClass, n.Variable.Name)
 	case *stmt.Constant:
 		if pos := n.ConstantName.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true

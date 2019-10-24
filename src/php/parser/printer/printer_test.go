@@ -148,8 +148,8 @@ func TestPrinterPrintParameter(t *testing.T) {
 				},
 			},
 		},
-		Variable: &node.Variable{
-			VarName: &node.Identifier{Value: "var"},
+		Variable: &node.SimpleVar{
+			Name: "var",
 		},
 		DefaultValue: &scalar.String{
 			Value: "'default'",
@@ -179,10 +179,8 @@ func TestPrinterPrintNullable(t *testing.T) {
 					},
 				},
 			},
-			Variable: &node.Variable{
-				VarName: &node.Identifier{
-					Value: "var",
-				},
+			Variable: &node.SimpleVar{
+				Name: "var",
 			},
 			DefaultValue: &scalar.String{
 				Value: "'default'",
@@ -1669,8 +1667,8 @@ func TestPrinterPrintExprClosure(t *testing.T) {
 			&node.Parameter{
 				ByRef:    true,
 				Variadic: false,
-				Variable: &node.Variable{
-					VarName: &node.Identifier{Value: "var"},
+				Variable: &node.SimpleVar{
+					Name: "var",
 				},
 			},
 		},
@@ -2841,8 +2839,8 @@ func TestPrinterPrintStmtCatch(t *testing.T) {
 			&name.Name{Parts: []node.Node{&name.NamePart{Value: "Exception"}}},
 			&name.FullyQualified{Parts: []node.Node{&name.NamePart{Value: "RuntimeException"}}},
 		},
-		Variable: &node.Variable{
-			VarName: &node.Identifier{Value: "e"},
+		Variable: &node.SimpleVar{
+			Name: "e",
 		},
 		Stmts: []node.Node{
 			&stmt.Expression{Expr: &node.Variable{
@@ -2871,15 +2869,15 @@ func TestPrinterPrintStmtClassMethod(t *testing.T) {
 			&node.Parameter{
 				ByRef:        true,
 				VariableType: &node.Nullable{Expr: &name.Name{Parts: []node.Node{&name.NamePart{Value: "int"}}}},
-				Variable: &node.Variable{
-					VarName: &node.Identifier{Value: "a"},
+				Variable: &node.SimpleVar{
+					Name: "a",
 				},
 				DefaultValue: &expr.ConstFetch{Constant: &name.Name{Parts: []node.Node{&name.NamePart{Value: "null"}}}},
 			},
 			&node.Parameter{
 				Variadic: true,
-				Variable: &node.Variable{
-					VarName: &node.Identifier{Value: "b"},
+				Variable: &node.SimpleVar{
+					Name: "b",
 				},
 			},
 		},
@@ -2918,15 +2916,15 @@ func TestPrinterPrintStmtAbstractClassMethod(t *testing.T) {
 			&node.Parameter{
 				ByRef:        true,
 				VariableType: &node.Nullable{Expr: &name.Name{Parts: []node.Node{&name.NamePart{Value: "int"}}}},
-				Variable: &node.Variable{
-					VarName: &node.Identifier{Value: "a"},
+				Variable: &node.SimpleVar{
+					Name: "a",
 				},
 				DefaultValue: &expr.ConstFetch{Constant: &name.Name{Parts: []node.Node{&name.NamePart{Value: "null"}}}},
 			},
 			&node.Parameter{
 				Variadic: true,
-				Variable: &node.Variable{
-					VarName: &node.Identifier{Value: "b"},
+				Variable: &node.SimpleVar{
+					Name: "b",
 				},
 			},
 		},
@@ -3553,8 +3551,8 @@ func TestPrinterPrintStmtFunction(t *testing.T) {
 			&node.Parameter{
 				ByRef:    true,
 				Variadic: false,
-				Variable: &node.Variable{
-					VarName: &node.Identifier{Value: "var"},
+				Variable: &node.SimpleVar{
+					Name: "var",
 				},
 			},
 		},
@@ -3885,14 +3883,14 @@ func TestPrinterPrintPropertyList(t *testing.T) {
 		},
 		Properties: []node.Node{
 			&stmt.Property{
-				Variable: &node.Variable{
-					VarName: &node.Identifier{Value: "a"},
+				Variable: &node.SimpleVar{
+					Name: "a",
 				},
 				Expr: &scalar.String{Value: "'a'"},
 			},
 			&stmt.Property{
-				Variable: &node.Variable{
-					VarName: &node.Identifier{Value: "b"},
+				Variable: &node.SimpleVar{
+					Name: "b",
 				},
 			},
 		},
@@ -3911,7 +3909,7 @@ func TestPrinterPrintProperty(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.Property{
-		Variable: &node.Variable{
+		Variable: &node.SimpleVar{
 			FreeFloating: freefloating.Collection{
 				freefloating.Start: []freefloating.String{
 					{
@@ -3920,7 +3918,7 @@ func TestPrinterPrintProperty(t *testing.T) {
 					},
 				},
 			},
-			VarName: &node.Identifier{Value: "a"},
+			Name: "a",
 		},
 		Expr: &scalar.Lnumber{Value: "1"},
 	})
@@ -3954,8 +3952,8 @@ func TestPrinterPrintStaticVar(t *testing.T) {
 
 	p := printer.NewPrinter(o)
 	p.Print(&stmt.StaticVar{
-		Variable: &node.Variable{
-			VarName: &node.Identifier{Value: "a"},
+		Variable: &node.SimpleVar{
+			Name: "a",
 		},
 		Expr: &scalar.Lnumber{Value: "1"},
 	})
@@ -3975,13 +3973,13 @@ func TestPrinterPrintStatic(t *testing.T) {
 	p.Print(&stmt.Static{
 		Vars: []node.Node{
 			&stmt.StaticVar{
-				Variable: &node.Variable{
-					VarName: &node.Identifier{Value: "a"},
+				Variable: &node.SimpleVar{
+					Name: "a",
 				},
 			},
 			&stmt.StaticVar{
-				Variable: &node.Variable{
-					VarName: &node.Identifier{Value: "b"},
+				Variable: &node.SimpleVar{
+					Name: "b",
 				},
 			},
 		},
@@ -4305,8 +4303,8 @@ func TestPrinterPrintStmtTry(t *testing.T) {
 					&name.Name{Parts: []node.Node{&name.NamePart{Value: "Exception"}}},
 					&name.FullyQualified{Parts: []node.Node{&name.NamePart{Value: "RuntimeException"}}},
 				},
-				Variable: &node.Variable{
-					VarName: &node.Identifier{Value: "e"},
+				Variable: &node.SimpleVar{
+					Name: "e",
 				},
 				Stmts: []node.Node{
 					&stmt.Expression{Expr: &node.Variable{

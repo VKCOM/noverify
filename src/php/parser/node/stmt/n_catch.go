@@ -12,12 +12,12 @@ type Catch struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Types        []node.Node
-	Variable     *node.Variable
+	Variable     *node.SimpleVar
 	Stmts        []node.Node
 }
 
 // NewCatch node constructor
-func NewCatch(Types []node.Node, Variable *node.Variable, Stmts []node.Node) *Catch {
+func NewCatch(Types []node.Node, Variable *node.SimpleVar, Stmts []node.Node) *Catch {
 	return &Catch{
 		FreeFloating: nil,
 		Types:        Types,

@@ -152,22 +152,14 @@ func TestFunctionReturnVar(t *testing.T) {
 							},
 							Value: "array",
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  23,
 								EndPos:    24,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  23,
-									EndPos:    24,
-								},
-								Value: "a",
-							},
+							Name: "a",
 						},
 					},
 					&node.Parameter{
@@ -188,22 +180,14 @@ func TestFunctionReturnVar(t *testing.T) {
 							},
 							Value: "callable",
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  36,
 								EndPos:    37,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  36,
-									EndPos:    37,
-								},
-								Value: "b",
-							},
+							Name: "b",
 						},
 					},
 				},

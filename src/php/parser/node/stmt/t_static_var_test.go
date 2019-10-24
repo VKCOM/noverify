@@ -39,22 +39,14 @@ func TestStaticVar(t *testing.T) {
 							StartPos:  11,
 							EndPos:    12,
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  11,
 								EndPos:    12,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  11,
-									EndPos:    12,
-								},
-								Value: "a",
-							},
+							Name: "a",
 						},
 					},
 				},
@@ -94,22 +86,14 @@ func TestStaticVars(t *testing.T) {
 							StartPos:  11,
 							EndPos:    12,
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  11,
 								EndPos:    12,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  11,
-									EndPos:    12,
-								},
-								Value: "a",
-							},
+							Name: "a",
 						},
 					},
 					&stmt.StaticVar{
@@ -119,22 +103,14 @@ func TestStaticVars(t *testing.T) {
 							StartPos:  15,
 							EndPos:    20,
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  15,
 								EndPos:    16,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  15,
-									EndPos:    16,
-								},
-								Value: "b",
-							},
+							Name: "b",
 						},
 						Expr: &scalar.Lnumber{
 							Position: &position.Position{
@@ -183,22 +159,14 @@ func TestStaticVars2(t *testing.T) {
 							StartPos:  11,
 							EndPos:    16,
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  11,
 								EndPos:    12,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  11,
-									EndPos:    12,
-								},
-								Value: "a",
-							},
+							Name: "a",
 						},
 						Expr: &scalar.Lnumber{
 							Position: &position.Position{
@@ -217,22 +185,14 @@ func TestStaticVars2(t *testing.T) {
 							StartPos:  19,
 							EndPos:    20,
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  19,
 								EndPos:    20,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  19,
-									EndPos:    20,
-								},
-								Value: "b",
-							},
+							Name: "b",
 						},
 					},
 				},

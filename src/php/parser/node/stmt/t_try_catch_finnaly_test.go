@@ -96,22 +96,14 @@ func TestTryCatch(t *testing.T) {
 								},
 							},
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
 								StartPos:  31,
 								EndPos:    32,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 2,
-									EndLine:   2,
-									StartPos:  31,
-									EndPos:    32,
-								},
-								Value: "e",
-							},
+							Name: "e",
 						},
 						Stmts: []node.Node{},
 					},
@@ -195,22 +187,14 @@ func TestPhp7TryCatch(t *testing.T) {
 								},
 							},
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
 								StartPos:  48,
 								EndPos:    49,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 2,
-									EndLine:   2,
-									StartPos:  48,
-									EndPos:    49,
-								},
-								Value: "e",
-							},
+							Name: "e",
 						},
 						Stmts: []node.Node{},
 					},
@@ -275,22 +259,14 @@ func TestTryCatchCatch(t *testing.T) {
 								},
 							},
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
 								StartPos:  31,
 								EndPos:    32,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 2,
-									EndLine:   2,
-									StartPos:  31,
-									EndPos:    32,
-								},
-								Value: "e",
-							},
+							Name: "e",
 						},
 						Stmts: []node.Node{},
 					},
@@ -322,22 +298,14 @@ func TestTryCatchCatch(t *testing.T) {
 								},
 							},
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
 								StartPos:  62,
 								EndPos:    63,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 2,
-									EndLine:   2,
-									StartPos:  62,
-									EndPos:    63,
-								},
-								Value: "e",
-							},
+							Name: "e",
 						},
 						Stmts: []node.Node{},
 					},
@@ -402,22 +370,14 @@ func TestTryCatchFinally(t *testing.T) {
 								},
 							},
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
 								StartPos:  31,
 								EndPos:    32,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 2,
-									EndLine:   2,
-									StartPos:  31,
-									EndPos:    32,
-								},
-								Value: "e",
-							},
+							Name: "e",
 						},
 						Stmts: []node.Node{},
 					},
@@ -489,22 +449,14 @@ func TestTryCatchCatchCatch(t *testing.T) {
 								},
 							},
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  28,
 								EndPos:    29,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  28,
-									EndPos:    29,
-								},
-								Value: "e",
-							},
+							Name: "e",
 						},
 						Stmts: []node.Node{},
 					},
@@ -536,22 +488,14 @@ func TestTryCatchCatchCatch(t *testing.T) {
 								},
 							},
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  60,
 								EndPos:    61,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  60,
-									EndPos:    61,
-								},
-								Value: "e",
-							},
+							Name: "e",
 						},
 						Stmts: []node.Node{},
 					},
@@ -583,22 +527,14 @@ func TestTryCatchCatchCatch(t *testing.T) {
 								},
 							},
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  102,
 								EndPos:    103,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  102,
-									EndPos:    103,
-								},
-								Value: "e",
-							},
+							Name: "e",
 						},
 						Stmts: []node.Node{},
 					},

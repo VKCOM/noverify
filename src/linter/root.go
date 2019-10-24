@@ -596,7 +596,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 	for _, pNode := range pl.Properties {
 		p := pNode.(*stmt.Property)
 
-		nm := p.Variable.VarName.(*node.Identifier).Value
+		nm := p.Variable.Name
 
 		typ, errText := d.parsePHPDocVar(p.PhpDocComment)
 		if errText != "" {
@@ -1014,7 +1014,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 
 		if !strings.HasPrefix(variable, "$") {
 			if len(actualParams) > curParam {
-				variable = actualParams[curParam].(*node.Parameter).Variable.VarName.(*node.Identifier).Value
+				variable = actualParams[curParam].(*node.Parameter).Variable.Name
 			} else {
 				result.errs.pushLint("too many @param tags on line %d", part.Line)
 				continue
@@ -1068,10 +1068,10 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 	for _, param := range params {
 		p := param.(*node.Parameter)
 		v := p.Variable
-		parTyp := parTypes[v.VarName.(*node.Identifier).Value]
+		parTyp := parTypes[v.Name]
 
 		if !parTyp.typ.IsEmpty() {
-			sc.AddVar(v, parTyp.typ, "param", true)
+			sc.AddVarName(v.Name, parTyp.typ, "param", true)
 		}
 
 		typ := parTyp.typ
@@ -1094,17 +1094,14 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 			typ = arrTyp
 		}
 
-		sc.AddVar(v, typ, "param", true)
+		sc.AddVarName(v.Name, typ, "param", true)
 
 		par := meta.FuncParam{
 			Typ:   typ.Immutable(),
 			IsRef: p.ByRef,
 		}
 
-		if id, ok := v.VarName.(*node.Identifier); ok {
-			par.Name = id.Value
-		}
-
+		par.Name = v.Name
 		args = append(args, par)
 	}
 	return args, minArgs

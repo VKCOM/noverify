@@ -36,7 +36,7 @@ var nodesToTest = []struct {
 			ByRef:        false,
 			Variadic:     true,
 			VariableType: &node.Identifier{Value: "foo"},
-			Variable:     &node.Variable{},
+			Variable:     &node.SimpleVar{},
 			DefaultValue: &scalar.Lnumber{Value: "0"},
 		},
 		[]string{"VariableType", "Variable", "DefaultValue"},

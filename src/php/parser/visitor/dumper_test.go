@@ -105,14 +105,11 @@ func ExampleDumper() {
 	// |                           "Position": Pos{Line: 5-5 Pos: 75-78}
 	// |                           "Value": "Type"
 	// |                   "Variable":
-	// |                     [*node.Variable]
+	// |                     [*node.SimpleVar]
 	// |                       "Position": Pos{Line: 5-5 Pos: 80-83}
 	// |                       "freefloating":
 	// |                         "Dollar": "$"
-	// |                       "VarName":
-	// |                         [*node.Identifier]
-	// |                           "Position": Pos{Line: 5-5 Pos: 80-83}
-	// |                           "Value": "var"
+	// |                       "Name": "var"
 	// |                   "DefaultValue":
 	// |                     [*expr.ConstFetch]
 	// |                       "Position": Pos{Line: 5-5 Pos: 87-90}

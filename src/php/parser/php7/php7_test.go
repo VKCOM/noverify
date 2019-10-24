@@ -1465,22 +1465,14 @@ func TestPhp7(t *testing.T) {
 								},
 							},
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 18,
 								EndLine:   18,
 								StartPos:  324,
 								EndPos:    327,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 18,
-									EndLine:   18,
-									StartPos:  324,
-									EndPos:    327,
-								},
-								Value: "bar",
-							},
+							Name: "bar",
 						},
 						DefaultValue: &expr.ConstFetch{
 							Position: &position.Position{
@@ -1538,22 +1530,14 @@ func TestPhp7(t *testing.T) {
 								},
 							},
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 18,
 								EndLine:   18,
 								StartPos:  343,
 								EndPos:    346,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 18,
-									EndLine:   18,
-									StartPos:  343,
-									EndPos:    346,
-								},
-								Value: "baz",
-							},
+							Name: "baz",
 						},
 					},
 				},
@@ -1643,22 +1627,14 @@ func TestPhp7(t *testing.T) {
 										},
 									},
 								},
-								Variable: &node.Variable{
+								Variable: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 19,
 										EndLine:   19,
 										StartPos:  390,
 										EndPos:    393,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 19,
-											EndLine:   19,
-											StartPos:  390,
-											EndPos:    393,
-										},
-										Value: "bar",
-									},
+									Name: "bar",
 								},
 								DefaultValue: &expr.ConstFetch{
 									Position: &position.Position{
@@ -1716,22 +1692,14 @@ func TestPhp7(t *testing.T) {
 										},
 									},
 								},
-								Variable: &node.Variable{
+								Variable: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 19,
 										EndLine:   19,
 										StartPos:  409,
 										EndPos:    412,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 19,
-											EndLine:   19,
-											StartPos:  409,
-											EndPos:    412,
-										},
-										Value: "baz",
-									},
+									Name: "baz",
 								},
 							},
 						},
@@ -1801,22 +1769,14 @@ func TestPhp7(t *testing.T) {
 									},
 								},
 							},
-							Variable: &node.Variable{
+							Variable: &node.SimpleVar{
 								Position: &position.Position{
 									StartLine: 20,
 									EndLine:   20,
 									StartPos:  435,
 									EndPos:    438,
 								},
-								VarName: &node.Identifier{
-									Position: &position.Position{
-										StartLine: 20,
-										EndLine:   20,
-										StartPos:  435,
-										EndPos:    438,
-									},
-									Value: "bar",
-								},
+								Name: "bar",
 							},
 							DefaultValue: &expr.ConstFetch{
 								Position: &position.Position{
@@ -1874,22 +1834,14 @@ func TestPhp7(t *testing.T) {
 									},
 								},
 							},
-							Variable: &node.Variable{
+							Variable: &node.SimpleVar{
 								Position: &position.Position{
 									StartLine: 20,
 									EndLine:   20,
 									StartPos:  454,
 									EndPos:    457,
 								},
-								VarName: &node.Identifier{
-									Position: &position.Position{
-										StartLine: 20,
-										EndLine:   20,
-										StartPos:  454,
-										EndPos:    457,
-									},
-									Value: "baz",
-								},
+								Name: "baz",
 							},
 						},
 					},
@@ -1950,22 +1902,14 @@ func TestPhp7(t *testing.T) {
 									},
 								},
 							},
-							Variable: &node.Variable{
+							Variable: &node.SimpleVar{
 								Position: &position.Position{
 									StartLine: 21,
 									EndLine:   21,
 									StartPos:  487,
 									EndPos:    490,
 								},
-								VarName: &node.Identifier{
-									Position: &position.Position{
-										StartLine: 21,
-										EndLine:   21,
-										StartPos:  487,
-										EndPos:    490,
-									},
-									Value: "bar",
-								},
+								Name: "bar",
 							},
 							DefaultValue: &expr.ConstFetch{
 								Position: &position.Position{
@@ -2023,22 +1967,14 @@ func TestPhp7(t *testing.T) {
 									},
 								},
 							},
-							Variable: &node.Variable{
+							Variable: &node.SimpleVar{
 								Position: &position.Position{
 									StartLine: 21,
 									EndLine:   21,
 									StartPos:  506,
 									EndPos:    509,
 								},
-								VarName: &node.Identifier{
-									Position: &position.Position{
-										StartLine: 21,
-										EndLine:   21,
-										StartPos:  506,
-										EndPos:    509,
-									},
-									Value: "baz",
-								},
+								Name: "baz",
 							},
 						},
 					},
@@ -6157,22 +6093,14 @@ func TestPhp7(t *testing.T) {
 									EndPos:    2796,
 								},
 								PhpDocComment: "",
-								Variable: &node.Variable{
+								Variable: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 118,
 										EndLine:   118,
 										StartPos:  2795,
 										EndPos:    2796,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 118,
-											EndLine:   118,
-											StartPos:  2795,
-											EndPos:    2796,
-										},
-										Value: "a",
-									},
+									Name: "a",
 								},
 							},
 						},
@@ -6233,22 +6161,14 @@ func TestPhp7(t *testing.T) {
 									EndPos:    2828,
 								},
 								PhpDocComment: "",
-								Variable: &node.Variable{
+								Variable: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 119,
 										EndLine:   119,
 										StartPos:  2827,
 										EndPos:    2828,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 119,
-											EndLine:   119,
-											StartPos:  2827,
-											EndPos:    2828,
-										},
-										Value: "a",
-									},
+									Name: "a",
 								},
 							},
 							&stmt.Property{
@@ -6259,22 +6179,14 @@ func TestPhp7(t *testing.T) {
 									EndPos:    2836,
 								},
 								PhpDocComment: "",
-								Variable: &node.Variable{
+								Variable: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 119,
 										EndLine:   119,
 										StartPos:  2831,
 										EndPos:    2832,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 119,
-											EndLine:   119,
-											StartPos:  2831,
-											EndPos:    2832,
-										},
-										Value: "b",
-									},
+									Name: "b",
 								},
 								Expr: &scalar.Lnumber{
 									Position: &position.Position{
@@ -6305,22 +6217,14 @@ func TestPhp7(t *testing.T) {
 							StartPos:  2849,
 							EndPos:    2850,
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 120,
 								EndLine:   120,
 								StartPos:  2849,
 								EndPos:    2850,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 120,
-									EndLine:   120,
-									StartPos:  2849,
-									EndPos:    2850,
-								},
-								Value: "a",
-							},
+							Name: "a",
 						},
 					},
 					&stmt.StaticVar{
@@ -6330,22 +6234,14 @@ func TestPhp7(t *testing.T) {
 							StartPos:  2853,
 							EndPos:    2858,
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 120,
 								EndLine:   120,
 								StartPos:  2853,
 								EndPos:    2854,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 120,
-									EndLine:   120,
-									StartPos:  2853,
-									EndPos:    2854,
-								},
-								Value: "b",
-							},
+							Name: "b",
 						},
 						Expr: &scalar.Lnumber{
 							Position: &position.Position{
@@ -7442,22 +7338,14 @@ func TestPhp7(t *testing.T) {
 								},
 							},
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 154,
 								EndLine:   154,
 								StartPos:  3444,
 								EndPos:    3445,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 154,
-									EndLine:   154,
-									StartPos:  3444,
-									EndPos:    3445,
-								},
-								Value: "e",
-							},
+							Name: "e",
 						},
 						Stmts: []node.Node{},
 					},
@@ -7519,22 +7407,14 @@ func TestPhp7(t *testing.T) {
 								},
 							},
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 155,
 								EndLine:   155,
 								StartPos:  3494,
 								EndPos:    3495,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 155,
-									EndLine:   155,
-									StartPos:  3494,
-									EndPos:    3495,
-								},
-								Value: "e",
-							},
+							Name: "e",
 						},
 						Stmts: []node.Node{},
 					},
@@ -7577,22 +7457,14 @@ func TestPhp7(t *testing.T) {
 								},
 							},
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 156,
 								EndLine:   156,
 								StartPos:  3527,
 								EndPos:    3528,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 156,
-									EndLine:   156,
-									StartPos:  3527,
-									EndPos:    3528,
-								},
-								Value: "e",
-							},
+							Name: "e",
 						},
 						Stmts: []node.Node{},
 					},
@@ -7624,22 +7496,14 @@ func TestPhp7(t *testing.T) {
 								},
 							},
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 156,
 								EndLine:   156,
 								StartPos:  3558,
 								EndPos:    3559,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 156,
-									EndLine:   156,
-									StartPos:  3558,
-									EndPos:    3559,
-								},
-								Value: "e",
-							},
+							Name: "e",
 						},
 						Stmts: []node.Node{},
 					},
@@ -7682,22 +7546,14 @@ func TestPhp7(t *testing.T) {
 								},
 							},
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 157,
 								EndLine:   157,
 								StartPos:  3591,
 								EndPos:    3592,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 157,
-									EndLine:   157,
-									StartPos:  3591,
-									EndPos:    3592,
-								},
-								Value: "e",
-							},
+							Name: "e",
 						},
 						Stmts: []node.Node{},
 					},
@@ -9297,22 +9153,14 @@ func TestPhp7(t *testing.T) {
 							},
 							ByRef:    false,
 							Variadic: false,
-							Variable: &node.Variable{
+							Variable: &node.SimpleVar{
 								Position: &position.Position{
 									StartLine: 190,
 									EndLine:   190,
 									StartPos:  4145,
 									EndPos:    4146,
 								},
-								VarName: &node.Identifier{
-									Position: &position.Position{
-										StartLine: 190,
-										EndLine:   190,
-										StartPos:  4145,
-										EndPos:    4146,
-									},
-									Value: "a",
-								},
+								Name: "a",
 							},
 						},
 						&node.Parameter{
@@ -9324,22 +9172,14 @@ func TestPhp7(t *testing.T) {
 							},
 							ByRef:    false,
 							Variadic: false,
-							Variable: &node.Variable{
+							Variable: &node.SimpleVar{
 								Position: &position.Position{
 									StartLine: 190,
 									EndLine:   190,
 									StartPos:  4149,
 									EndPos:    4150,
 								},
-								VarName: &node.Identifier{
-									Position: &position.Position{
-										StartLine: 190,
-										EndLine:   190,
-										StartPos:  4149,
-										EndPos:    4150,
-									},
-									Value: "b",
-								},
+								Name: "b",
 							},
 						},
 					},
@@ -14860,22 +14700,14 @@ func TestPhp7(t *testing.T) {
 						},
 						ByRef:    true,
 						Variadic: false,
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 320,
 								EndLine:   320,
 								StartPos:  5793,
 								EndPos:    5794,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 320,
-									EndLine:   320,
-									StartPos:  5793,
-									EndPos:    5794,
-								},
-								Value: "a",
-							},
+							Name: "a",
 						},
 					},
 					&node.Parameter{
@@ -14887,22 +14719,14 @@ func TestPhp7(t *testing.T) {
 						},
 						Variadic: true,
 						ByRef:    false,
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 320,
 								EndLine:   320,
 								StartPos:  5800,
 								EndPos:    5801,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 320,
-									EndLine:   320,
-									StartPos:  5800,
-									EndPos:    5801,
-								},
-								Value: "b",
-							},
+							Name: "b",
 						},
 					},
 				},
@@ -15022,22 +14846,14 @@ func TestPhp7(t *testing.T) {
 						},
 						ByRef:    true,
 						Variadic: false,
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 328,
 								EndLine:   328,
 								StartPos:  5926,
 								EndPos:    5927,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 328,
-									EndLine:   328,
-									StartPos:  5926,
-									EndPos:    5927,
-								},
-								Value: "a",
-							},
+							Name: "a",
 						},
 						DefaultValue: &scalar.Lnumber{
 							Position: &position.Position{
@@ -15058,22 +14874,14 @@ func TestPhp7(t *testing.T) {
 						},
 						ByRef:    false,
 						Variadic: true,
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 328,
 								EndLine:   328,
 								StartPos:  5937,
 								EndPos:    5938,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 328,
-									EndLine:   328,
-									StartPos:  5937,
-									EndPos:    5938,
-								},
-								Value: "b",
-							},
+							Name: "b",
 						},
 						DefaultValue: &scalar.Lnumber{
 							Position: &position.Position{
@@ -15094,22 +14902,14 @@ func TestPhp7(t *testing.T) {
 						},
 						Variadic: false,
 						ByRef:    false,
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 328,
 								EndLine:   328,
 								StartPos:  5945,
 								EndPos:    5946,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 328,
-									EndLine:   328,
-									StartPos:  5945,
-									EndPos:    5946,
-								},
-								Value: "c",
-							},
+							Name: "c",
 						},
 						DefaultValue: &scalar.Lnumber{
 							Position: &position.Position{
@@ -15161,22 +14961,14 @@ func TestPhp7(t *testing.T) {
 							},
 							Value: "array",
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 329,
 								EndLine:   329,
 								StartPos:  5977,
 								EndPos:    5978,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 329,
-									EndLine:   329,
-									StartPos:  5977,
-									EndPos:    5978,
-								},
-								Value: "a",
-							},
+							Name: "a",
 						},
 					},
 					&node.Parameter{
@@ -15197,22 +14989,14 @@ func TestPhp7(t *testing.T) {
 							},
 							Value: "callable",
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 329,
 								EndLine:   329,
 								StartPos:  5990,
 								EndPos:    5991,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 329,
-									EndLine:   329,
-									StartPos:  5990,
-									EndPos:    5991,
-								},
-								Value: "b",
-							},
+							Name: "b",
 						},
 					},
 				},

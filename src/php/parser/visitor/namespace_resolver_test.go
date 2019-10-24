@@ -192,7 +192,7 @@ func TestResolveInstanceCatch(t *testing.T) {
 							nameBC,
 							nameF,
 						},
-						Variable: &node.Variable{VarName: &node.Identifier{Value: "foo"}},
+						Variable: &node.SimpleVar{Name: "foo"},
 						Stmts:    []node.Node{},
 					},
 				},
@@ -499,7 +499,7 @@ func TestResolveFunctionName(t *testing.T) {
 				ByRef:        false,
 				Variadic:     false,
 				VariableType: nameAB,
-				Variable:     &node.Variable{VarName: &node.Identifier{Value: "foo"}},
+				Variable:     &node.SimpleVar{Name: "foo"},
 			},
 		},
 		ReturnType: &node.Nullable{Expr: nameBC},
@@ -537,7 +537,7 @@ func TestResolveMethodName(t *testing.T) {
 				ByRef:        false,
 				Variadic:     false,
 				VariableType: nameAB,
-				Variable:     &node.Variable{VarName: &node.Identifier{Value: "foo"}},
+				Variable:     &node.SimpleVar{Name: "foo"},
 			},
 		},
 		ReturnType: &node.Nullable{Expr: nameBC},
@@ -570,7 +570,7 @@ func TestResolveClosureName(t *testing.T) {
 				ByRef:        false,
 				Variadic:     false,
 				VariableType: nameAB,
-				Variable:     &node.Variable{VarName: &node.Identifier{Value: "foo"}},
+				Variable:     &node.SimpleVar{Name: "foo"},
 			},
 		},
 		ReturnType: &node.Nullable{Expr: nameBC},
@@ -829,44 +829,44 @@ func TestDoNotResolveReservedNames(t *testing.T) {
 		Params: []node.Node{
 			&node.Parameter{
 				VariableType: nameInt,
-				Variable: &node.Variable{
-					VarName: &node.Identifier{Value: "Int"},
+				Variable: &node.SimpleVar{
+					Name: "Int",
 				},
 			},
 			&node.Parameter{
 				VariableType: nameFloat,
-				Variable: &node.Variable{
-					VarName: &node.Identifier{Value: "Float"},
+				Variable: &node.SimpleVar{
+					Name: "Float",
 				},
 			},
 			&node.Parameter{
 				VariableType: nameBool,
-				Variable: &node.Variable{
-					VarName: &node.Identifier{Value: "Bool"},
+				Variable: &node.SimpleVar{
+					Name: "Bool",
 				},
 			},
 			&node.Parameter{
 				VariableType: nameString,
-				Variable: &node.Variable{
-					VarName: &node.Identifier{Value: "String"},
+				Variable: &node.SimpleVar{
+					Name: "String",
 				},
 			},
 			&node.Parameter{
 				VariableType: nameVoid,
-				Variable: &node.Variable{
-					VarName: &node.Identifier{Value: "Void"},
+				Variable: &node.SimpleVar{
+					Name: "Void",
 				},
 			},
 			&node.Parameter{
 				VariableType: nameIterable,
-				Variable: &node.Variable{
-					VarName: &node.Identifier{Value: "Iterable"},
+				Variable: &node.SimpleVar{
+					Name: "Iterable",
 				},
 			},
 			&node.Parameter{
 				VariableType: nameObject,
-				Variable: &node.Variable{
-					VarName: &node.Identifier{Value: "Object"},
+				Variable: &node.SimpleVar{
+					Name: "Object",
 				},
 			},
 		},

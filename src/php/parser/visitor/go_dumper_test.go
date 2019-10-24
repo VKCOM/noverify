@@ -324,7 +324,7 @@ func ExampleGoDumper() {
 	// 											},
 	// 										},
 	// 									},
-	// 									Variable: &node.Variable{
+	// 									Variable: &node.SimpleVar{
 	// 										Position: &position.Position{
 	// 											StartLine: 5,
 	// 											EndLine: 5,
@@ -345,15 +345,7 @@ func ExampleGoDumper() {
 	// 												},
 	// 											},
 	// 										},
-	// 										VarName: &node.Identifier{
-	// 											Position: &position.Position{
-	// 												StartLine: 5,
-	// 												EndLine: 5,
-	// 												StartPos: 79,
-	// 												EndPos: 82,
-	// 											},
-	// 											Value: "var",
-	// 										},
+	// 										Name: "var",
 	// 									},
 	// 									DefaultValue: &expr.ConstFetch{
 	// 										Position: &position.Position{

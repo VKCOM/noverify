@@ -6,7 +6,8 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 )
 
-// Variable node
+// Variable node.
+// TODO: rename to Var.
 type Variable struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position

@@ -84,7 +84,7 @@ func (p *PrettyPrinter) printIndent() {
 }
 
 func (p *PrettyPrinter) printNode(n node.Node) {
-	switch n.(type) {
+	switch n := n.(type) {
 
 	// node
 
@@ -310,6 +310,8 @@ func (p *PrettyPrinter) printNode(n node.Node) {
 		p.printExprUnaryPlus(n)
 	case *node.Variable:
 		p.printExprVariable(n)
+	case *node.SimpleVar:
+		p.printExprSimpleVar(n)
 	case *expr.YieldFrom:
 		p.printExprYieldFrom(n)
 	case *expr.Yield:
@@ -1314,6 +1316,10 @@ func (p *PrettyPrinter) printExprUnaryPlus(n node.Node) {
 
 	io.WriteString(p.w, "+")
 	p.Print(nn.Expr)
+}
+
+func (p *PrettyPrinter) printExprSimpleVar(nn *node.SimpleVar) {
+	io.WriteString(p.w, "$"+nn.Name)
 }
 
 func (p *PrettyPrinter) printExprVariable(n node.Node) {

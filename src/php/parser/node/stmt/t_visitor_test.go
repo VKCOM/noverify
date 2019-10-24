@@ -36,7 +36,7 @@ var nodesToTest = []struct {
 	{
 		&stmt.Catch{
 			Types:    []node.Node{&stmt.Expression{}},
-			Variable: &node.Variable{},
+			Variable: &node.SimpleVar{},
 			Stmts:    []node.Node{&stmt.Expression{}},
 		},
 		[]string{"Types", "Variable", "Stmts"},
@@ -281,7 +281,7 @@ var nodesToTest = []struct {
 	{
 		&stmt.Property{
 			PhpDocComment: "/** */",
-			Variable:      &node.Variable{},
+			Variable:      &node.SimpleVar{},
 			Expr:          &stmt.Expression{},
 		},
 		[]string{"Variable", "Expr"},
@@ -296,7 +296,7 @@ var nodesToTest = []struct {
 	},
 	{
 		&stmt.StaticVar{
-			Variable: &node.Variable{},
+			Variable: &node.SimpleVar{},
 			Expr:     &stmt.Expression{},
 		},
 		[]string{"Variable", "Expr"},

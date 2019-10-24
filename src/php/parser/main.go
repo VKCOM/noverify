@@ -36,7 +36,7 @@ func main() {
 	withFreeFloating = flag.Bool("ff", false, "parse and show free floating strings")
 	showResolvedNs = flag.Bool("r", false, "resolve names")
 	printBack = flag.Bool("pb", false, "print AST back into the parsed file")
-	flag.StringVar(&dumpType, "d", "", "dump format: [custom, go, json, pretty_json]")
+	flag.StringVar(&dumpType, "d", "", "dump format: [custom, go, pretty_json]")
 	flag.StringVar(&profiler, "prof", "", "start profiler: [cpu, mem, trace]")
 
 	flag.Parse()
@@ -152,12 +152,6 @@ func printerWorker(result <-chan parser.Parser) {
 			dumper := &visitor.Dumper{
 				Writer:     os.Stdout,
 				Indent:     "| ",
-				NsResolver: nsResolver,
-			}
-			parserWorker.GetRootNode().Walk(dumper)
-		case "json":
-			dumper := &visitor.JsonDumper{
-				Writer:     os.Stdout,
 				NsResolver: nsResolver,
 			}
 			parserWorker.GetRootNode().Walk(dumper)

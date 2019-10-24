@@ -1348,13 +1348,11 @@ catch_list:
             }
     |   catch_list T_CATCH '(' catch_name_list T_VARIABLE ')' '{' inner_statement_list '}'
             {
-                identifier := node.NewIdentifier(strings.TrimLeftFunc($5.Value, isDollar))
-                variable := expr.NewVariable(identifier)
+                variable := node.NewSimpleVar(strings.TrimLeftFunc($5.Value, isDollar))
                 catch := stmt.NewCatch($4, variable, $8)
                 $$ = append($1, catch)
 
                 // save position
-                identifier.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($5))
                 variable.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($5))
                 catch.SetPosition(yylex.(*Parser).positionBuilder.NewTokensPosition($2, $9))
 
@@ -2146,12 +2144,10 @@ non_empty_parameter_list:
 parameter:
         optional_type is_reference is_variadic T_VARIABLE
             {
-                identifier := node.NewIdentifier(strings.TrimLeftFunc($4.Value, isDollar))
-                variable := expr.NewVariable(identifier)
+                variable := node.NewSimpleVar(strings.TrimLeftFunc($4.Value, isDollar))
                 $$ = node.NewParameter($1, variable, nil, $2 != nil, $3 != nil)
 
                 // save position
-                identifier.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($4))
                 variable.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($4))
                 if $1 != nil {
                     $$.SetPosition(yylex.(*Parser).positionBuilder.NewNodeTokenPosition($1, $4))
@@ -2191,12 +2187,10 @@ parameter:
             }
     |   optional_type is_reference is_variadic T_VARIABLE '=' expr
             {
-                identifier := node.NewIdentifier(strings.TrimLeftFunc($4.Value, isDollar))
-                variable := expr.NewVariable(identifier)
+                variable := node.NewSimpleVar(strings.TrimLeftFunc($4.Value, isDollar))
                 $$ = node.NewParameter($1, variable, $6, $2 != nil, $3 != nil)
 
                 // save position
-                identifier.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($4))
                 variable.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($4))
                 if $1 != nil {
                     $$.SetPosition(yylex.(*Parser).positionBuilder.NewNodesPosition($1, $6))
@@ -2450,12 +2444,10 @@ static_var_list:
 static_var:
         T_VARIABLE
             {
-                identifier := node.NewIdentifier(strings.TrimLeftFunc($1.Value, isDollar))
-                variable := expr.NewVariable(identifier)
+                variable := node.NewSimpleVar(strings.TrimLeftFunc($1.Value, isDollar))
                 $$ = stmt.NewStaticVar(variable, nil)
 
                 // save position
-                identifier.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($1))
                 variable.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($1))
                 $$.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($1))
 
@@ -2467,12 +2459,10 @@ static_var:
             }
     |   T_VARIABLE '=' expr
             {
-                identifier := node.NewIdentifier(strings.TrimLeftFunc($1.Value, isDollar))
-                variable := expr.NewVariable(identifier)
+                variable := node.NewSimpleVar(strings.TrimLeftFunc($1.Value, isDollar))
                 $$ = stmt.NewStaticVar(variable, $3)
 
                 // save position
-                identifier.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($1))
                 variable.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($1))
                 $$.SetPosition(yylex.(*Parser).positionBuilder.NewTokenNodePosition($1, $3))
 
@@ -2981,12 +2971,10 @@ property_list:
 property:
         T_VARIABLE backup_doc_comment
             {
-                identifier := node.NewIdentifier(strings.TrimLeftFunc($1.Value, isDollar))
-                variable := expr.NewVariable(identifier)
+                variable := node.NewSimpleVar(strings.TrimLeftFunc($1.Value, isDollar))
                 $$ = stmt.NewProperty(variable, nil, $2)
 
                 // save position
-                identifier.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($1))
                 variable.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($1))
                 $$.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($1))
 
@@ -2998,12 +2986,10 @@ property:
             }
     |   T_VARIABLE '=' expr backup_doc_comment
             {
-                identifier := node.NewIdentifier(strings.TrimLeftFunc($1.Value, isDollar))
-                variable := expr.NewVariable(identifier)
+                variable := node.NewSimpleVar(strings.TrimLeftFunc($1.Value, isDollar))
                 $$ = stmt.NewProperty(variable, $3, $4)
 
                 // save position
-                identifier.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($1))
                 variable.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($1))
                 $$.SetPosition(yylex.(*Parser).positionBuilder.NewTokenNodePosition($1, $3))
 
@@ -4266,7 +4252,7 @@ lexical_var:
     T_VARIABLE
             {
                 identifier := node.NewIdentifier(strings.TrimLeftFunc($1.Value, isDollar))
-                $$ = expr.NewVariable(identifier)
+                $$ = node.NewVariable(identifier)
 
                 // save position
                 identifier.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($1))
@@ -4281,7 +4267,7 @@ lexical_var:
     |   '&' T_VARIABLE
             {
                 identifier := node.NewIdentifier(strings.TrimLeftFunc($2.Value, isDollar))
-                variable := expr.NewVariable(identifier)
+                variable := node.NewVariable(identifier)
                 $$ = expr.NewReference(variable)
 
                 // save position
@@ -4916,7 +4902,7 @@ simple_variable:
         T_VARIABLE
             {
                 name := node.NewIdentifier(strings.TrimLeftFunc($1.Value, isDollar))
-                $$ = expr.NewVariable(name)
+                $$ = node.NewVariable(name)
 
                 // save position
                 name.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($1))
@@ -4930,7 +4916,7 @@ simple_variable:
             }
     |   '$' '{' expr '}'
             {
-                $$ = expr.NewVariable($3)
+                $$ = node.NewVariable($3)
 
                 // save position
                 $$.SetPosition(yylex.(*Parser).positionBuilder.NewTokensPosition($1, $4))
@@ -4945,7 +4931,7 @@ simple_variable:
             }
     |   '$' simple_variable
             {
-                $$ = expr.NewVariable($2)
+                $$ = node.NewVariable($2)
 
                 // save position
                 $$.SetPosition(yylex.(*Parser).positionBuilder.NewTokenNodePosition($1, $2))
@@ -5318,7 +5304,7 @@ encaps_var:
         T_VARIABLE
             {
                 name := node.NewIdentifier(strings.TrimLeftFunc($1.Value, isDollar))
-                $$ = expr.NewVariable(name)
+                $$ = node.NewVariable(name)
 
                 // save position
                 name.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($1))
@@ -5333,7 +5319,7 @@ encaps_var:
     |   T_VARIABLE '[' encaps_var_offset ']'
             {
                 identifier := node.NewIdentifier(strings.TrimLeftFunc($1.Value, isDollar))
-                variable := expr.NewVariable(identifier)
+                variable := node.NewVariable(identifier)
                 $$ = expr.NewArrayDimFetch(variable, $3)
 
                 // save position
@@ -5351,7 +5337,7 @@ encaps_var:
     |   T_VARIABLE T_OBJECT_OPERATOR T_STRING
             {
                 identifier := node.NewIdentifier(strings.TrimLeftFunc($1.Value, isDollar))
-                variable := expr.NewVariable(identifier)
+                variable := node.NewVariable(identifier)
                 fetch := node.NewIdentifier($3.Value)
                 $$ = expr.NewPropertyFetch(variable, fetch)
 
@@ -5370,7 +5356,7 @@ encaps_var:
             }
     |   T_DOLLAR_OPEN_CURLY_BRACES expr '}'
             {
-                variable := expr.NewVariable($2)
+                variable := node.NewVariable($2)
 
                 $$ = variable
 
@@ -5386,7 +5372,7 @@ encaps_var:
     |   T_DOLLAR_OPEN_CURLY_BRACES T_STRING_VARNAME '}'
             {
                 name := node.NewIdentifier($2.Value)
-                variable := expr.NewVariable(name)
+                variable := node.NewVariable(name)
 
                 $$ = variable
 
@@ -5403,7 +5389,7 @@ encaps_var:
     |   T_DOLLAR_OPEN_CURLY_BRACES T_STRING_VARNAME '[' expr ']' '}'
             {
                 identifier := node.NewIdentifier($2.Value)
-                variable := expr.NewVariable(identifier)
+                variable := node.NewVariable(identifier)
                 $$ = expr.NewArrayDimFetch(variable, $4)
 
                 // save position
@@ -5490,7 +5476,7 @@ encaps_var_offset:
     |   T_VARIABLE
             {
                 identifier := node.NewIdentifier(strings.TrimLeftFunc($1.Value, isDollar))
-                $$ = expr.NewVariable(identifier)
+                $$ = node.NewVariable(identifier)
 
                 // save position
                 identifier.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($1))

@@ -261,8 +261,8 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		for _, vv := range s.Vars {
 			v := vv.(*stmt.StaticVar)
 			ev := v.Variable
-			b.addVar(ev, solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, v.Expr, b.ctx.customTypes), "static", true)
-			b.addNonLocalVar(ev)
+			b.addVarName(v, ev.Name, solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, v.Expr, b.ctx.customTypes), "static", true)
+			b.addNonLocalVarName(ev.Name)
 			if v.Expr != nil {
 				v.Expr.Walk(b)
 			}
@@ -404,13 +404,16 @@ func (b *BlockWalker) handleContinue(s *stmt.Continue) {
 	}
 }
 
+func (b *BlockWalker) addNonLocalVarName(nm string) {
+	b.nonLocalVars[nm] = struct{}{}
+}
+
 func (b *BlockWalker) addNonLocalVar(v *node.Variable) {
 	name, ok := v.VarName.(*node.Identifier)
 	if !ok {
 		return
 	}
-
-	b.nonLocalVars[name.Value] = struct{}{}
+	b.addNonLocalVarName(name.Value)
 }
 
 // replaceVar must be used to track assignments to conrete var nodes if they are available
@@ -434,6 +437,25 @@ func (b *BlockWalker) replaceVar(v *node.Variable, typ *meta.TypesMap, reason st
 	}
 }
 
+func (b *BlockWalker) trackVarName(n node.Node, nm string) {
+	// Writes to non-local variables do count as usages
+	if _, ok := b.nonLocalVars[nm]; ok {
+		delete(b.unusedVars, nm)
+		return
+	}
+
+	// Writes to variables that are done in a loop should not count as unused variables
+	// because they can be read on the next iteration (ideally we should check for that too :))
+	if !b.ctx.insideLoop {
+		b.unusedVars[nm] = append(b.unusedVars[nm], n)
+	}
+}
+
+func (b *BlockWalker) addVarName(n node.Node, nm string, typ *meta.TypesMap, reason string, alwaysDefined bool) {
+	b.ctx.sc.AddVarName(nm, typ, reason, alwaysDefined)
+	b.trackVarName(n, nm)
+}
+
 // addVar must be used to track assignments to conrete var nodes if they are available
 func (b *BlockWalker) addVar(v *node.Variable, typ *meta.TypesMap, reason string, alwaysDefined bool) {
 	b.ctx.sc.AddVar(v, typ, reason, alwaysDefined)
@@ -441,18 +463,7 @@ func (b *BlockWalker) addVar(v *node.Variable, typ *meta.TypesMap, reason string
 	if !ok {
 		return
 	}
-
-	// Writes to non-local variables do count as usages
-	if _, ok := b.nonLocalVars[name.Value]; ok {
-		delete(b.unusedVars, name.Value)
-		return
-	}
-
-	// Writes to variables that are done in a loop should not count as unused variables
-	// because they can be read on the next iteration (ideally we should check for that too :))
-	if !b.ctx.insideLoop {
-		b.unusedVars[name.Value] = append(b.unusedVars[name.Value], v)
-	}
+	b.trackVarName(v, name.Value)
 }
 
 func (b *BlockWalker) parseComment(c freefloating.String) {

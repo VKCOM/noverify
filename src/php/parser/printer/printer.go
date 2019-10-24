@@ -91,7 +91,7 @@ func (p *Printer) printFreeFloating(n node.Node, pos freefloating.Position) {
 }
 
 func (p *Printer) printNode(n node.Node) {
-	switch n.(type) {
+	switch n := n.(type) {
 
 	// node
 
@@ -317,6 +317,8 @@ func (p *Printer) printNode(n node.Node) {
 		p.printExprUnaryPlus(n)
 	case *node.Variable:
 		p.printExprVariable(n)
+	case *node.SimpleVar:
+		p.printExprSimpleVar(n)
 	case *expr.YieldFrom:
 		p.printExprYieldFrom(n)
 	case *expr.Yield:
@@ -1790,6 +1792,19 @@ func (p *Printer) printExprUnaryPlus(n node.Node) {
 
 	io.WriteString(p.w, "+")
 	p.Print(nn.Expr)
+
+	p.printFreeFloating(nn, freefloating.End)
+}
+
+func (p *Printer) printExprSimpleVar(nn *node.SimpleVar) {
+	p.printFreeFloating(nn, freefloating.Start)
+
+	p.printFreeFloating(nn, freefloating.Dollar)
+	if nn.GetFreeFloating().IsEmpty() {
+		io.WriteString(p.w, "$")
+	}
+
+	io.WriteString(p.w, nn.Name)
 
 	p.printFreeFloating(nn, freefloating.End)
 }
