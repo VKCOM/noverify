@@ -26,12 +26,20 @@
 
 
 [[constraint]]
-  name = "github.com/z7zmey/php-parser"
-  version = "0.6.0"
+  branch = "master"
+  name = "github.com/cznic/golex"
 
 [[constraint]]
-  name = "golang.org/x/text"
-  version = "0.3.0"
+  name = "github.com/pkg/profile"
+  version = "1.3.0"
+
+[[constraint]]
+  name = "github.com/yookoala/realpath"
+  version = "1.0.0"
+
+[[constraint]]
+  name = "gotest.tools"
+  version = "2.3.0"
 
 [prune]
   go-tests = true

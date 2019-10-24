@@ -2,10 +2,10 @@ package langsrv
 
 import (
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
+	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/state"
-	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/node/expr"
-	"github.com/z7zmey/php-parser/walker"
 )
 
 type hoverWalker struct {
@@ -37,7 +37,7 @@ func (d *hoverWalker) LeaveNode(w walker.Walkable) {
 
 	n := w.(node.Node)
 	switch n.(type) {
-	case *expr.Variable, *expr.MethodCall, *expr.FunctionCall, *expr.StaticCall:
+	case *node.Variable, *expr.MethodCall, *expr.FunctionCall, *expr.StaticCall:
 		checkPos = true
 	}
 

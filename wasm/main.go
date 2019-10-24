@@ -6,8 +6,8 @@ import (
 
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/vscode"
-	"github.com/z7zmey/php-parser/node"
 )
 
 func parse(filename string, contents string) (rootNode node.Node, w *linter.RootWalker, err error) {

@@ -9,20 +9,20 @@ import (
 
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/parser/freefloating"
+	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
+	"github.com/VKCOM/noverify/src/php/parser/node/name"
+	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
+	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
+	"github.com/VKCOM/noverify/src/php/parser/php7"
+	"github.com/VKCOM/noverify/src/php/parser/position"
+	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/state"
 	"github.com/VKCOM/noverify/src/vscode"
-	"github.com/z7zmey/php-parser/freefloating"
-	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/node/expr"
-	"github.com/z7zmey/php-parser/node/expr/assign"
-	"github.com/z7zmey/php-parser/node/name"
-	"github.com/z7zmey/php-parser/node/scalar"
-	"github.com/z7zmey/php-parser/node/stmt"
-	"github.com/z7zmey/php-parser/php7"
-	"github.com/z7zmey/php-parser/position"
-	"github.com/z7zmey/php-parser/walker"
 )
 
 const (
@@ -248,7 +248,7 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 			}
 		}
 	case *assign.Assign:
-		v, ok := n.Variable.(*expr.Variable)
+		v, ok := n.Variable.(*node.Variable)
 		if !ok {
 			break
 		}
@@ -379,7 +379,7 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 	}
 }
 
-func (d *RootWalker) reportUndefinedVariable(s *expr.Variable, maybeHave bool) {
+func (d *RootWalker) reportUndefinedVariable(s *node.Variable, maybeHave bool) {
 	name, ok := s.VarName.(*node.Identifier)
 	if !ok {
 		d.Report(s, LevelInformation, "undefined", "Unknown variable variable %s used",
@@ -434,12 +434,12 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 
 	for _, useExpr := range uses {
 		var byRef bool
-		var v *expr.Variable
+		var v *node.Variable
 		switch u := useExpr.(type) {
 		case *expr.Reference:
-			v = u.Variable.(*expr.Variable)
+			v = u.Variable.(*node.Variable)
 			byRef = true
-		case *expr.Variable:
+		case *node.Variable:
 			v = u
 		}
 		varName := v.VarName.(*node.Identifier).Value
@@ -519,7 +519,7 @@ func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodMod
 	res.accessLevel = meta.Public
 
 	for _, m := range meth.Modifiers {
-		switch v := m.(*node.Identifier).Value; v {
+		switch m.Value {
 		case "abstract":
 			res.abstract = true
 		case "static":
@@ -533,7 +533,7 @@ func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodMod
 		case "final":
 			res.final = true
 		default:
-			linterError(d.filename, "Unrecognized method modifier: %s", v)
+			linterError(d.filename, "Unrecognized method modifier: %s", m.Value)
 		}
 	}
 
@@ -581,7 +581,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 	accessLevel := meta.Public
 
 	for _, m := range pl.Modifiers {
-		switch m.(*node.Identifier).Value {
+		switch m.Value {
 		case "public":
 			accessLevel = meta.Public
 		case "protected":
@@ -596,7 +596,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 	for _, pNode := range pl.Properties {
 		p := pNode.(*stmt.Property)
 
-		nm := p.Variable.(*expr.Variable).VarName.(*node.Identifier).Value
+		nm := p.Variable.Name
 
 		typ, errText := d.parsePHPDocVar(p.PhpDocComment)
 		if errText != "" {
@@ -627,7 +627,7 @@ func (d *RootWalker) enterClassConstList(s *stmt.ClassConstList) bool {
 	accessLevel := meta.Public
 
 	for _, m := range s.Modifiers {
-		switch m.(*node.Identifier).Value {
+		switch m.Value {
 		case "public":
 			accessLevel = meta.Public
 		case "protected":
@@ -640,7 +640,7 @@ func (d *RootWalker) enterClassConstList(s *stmt.ClassConstList) bool {
 	for _, cNode := range s.Consts {
 		c := cNode.(*stmt.Constant)
 
-		nm := c.ConstantName.(*node.Identifier).Value
+		nm := c.ConstantName.Value
 		typ := solver.ExprTypeLocal(d.meta.Scope, d.st, c.Expr)
 
 		// TODO: handle duplicate constant
@@ -665,7 +665,7 @@ func (d *RootWalker) checkOldStyleConstructor(meth *stmt.ClassMethod, nm string)
 }
 
 func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
-	nm := meth.MethodName.(*node.Identifier).Value
+	nm := meth.MethodName.Value
 
 	d.checkOldStyleConstructor(meth, nm)
 
@@ -1014,7 +1014,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 
 		if !strings.HasPrefix(variable, "$") {
 			if len(actualParams) > curParam {
-				variable = actualParams[curParam].(*node.Parameter).Variable.(*expr.Variable).VarName.(*node.Identifier).Value
+				variable = actualParams[curParam].(*node.Parameter).Variable.Name
 			} else {
 				result.errs.pushLint("too many @param tags on line %d", part.Line)
 				continue
@@ -1067,11 +1067,11 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 	args = make([]meta.FuncParam, 0, len(params))
 	for _, param := range params {
 		p := param.(*node.Parameter)
-		v := p.Variable.(*expr.Variable)
-		parTyp := parTypes[v.VarName.(*node.Identifier).Value]
+		v := p.Variable
+		parTyp := parTypes[v.Name]
 
 		if !parTyp.typ.IsEmpty() {
-			sc.AddVar(v, parTyp.typ, "param", true)
+			sc.AddVarName(v.Name, parTyp.typ, "param", true)
 		}
 
 		typ := parTyp.typ
@@ -1094,24 +1094,21 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 			typ = arrTyp
 		}
 
-		sc.AddVar(v, typ, "param", true)
+		sc.AddVarName(v.Name, typ, "param", true)
 
 		par := meta.FuncParam{
 			Typ:   typ.Immutable(),
 			IsRef: p.ByRef,
 		}
 
-		if id, ok := v.VarName.(*node.Identifier); ok {
-			par.Name = id.Value
-		}
-
+		par.Name = v.Name
 		args = append(args, par)
 	}
 	return args, minArgs
 }
 
 func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
-	nm := d.st.Namespace + `\` + fun.FunctionName.(*node.Identifier).Value
+	nm := d.st.Namespace + `\` + fun.FunctionName.Value
 	pos := fun.GetPosition()
 
 	if funcSize := pos.EndLine - pos.StartLine; funcSize > maxFunctionLines {
@@ -1300,11 +1297,7 @@ func (d *RootWalker) enterConstList(lst *stmt.ConstList) bool {
 	for _, sNode := range lst.Consts {
 		s := sNode.(*stmt.Constant)
 
-		id, ok := s.ConstantName.(*node.Identifier)
-		if !ok {
-			continue
-		}
-
+		id := s.ConstantName
 		nm := d.st.Namespace + `\` + id.Value
 
 		d.meta.Constants[nm] = meta.ConstantInfo{

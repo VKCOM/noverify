@@ -7,16 +7,16 @@ import (
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
+	"github.com/VKCOM/noverify/src/php/parser/node/name"
+	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
+	"github.com/VKCOM/noverify/src/php/parser/php7"
+	"github.com/VKCOM/noverify/src/php/parser/position"
+	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/state"
 	"github.com/VKCOM/noverify/src/vscode"
-	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/node/expr"
-	"github.com/z7zmey/php-parser/node/name"
-	"github.com/z7zmey/php-parser/node/stmt"
-	"github.com/z7zmey/php-parser/php7"
-	"github.com/z7zmey/php-parser/position"
-	"github.com/z7zmey/php-parser/walker"
 )
 
 type referencesWalker struct {
@@ -103,7 +103,7 @@ func (d *referencesWalker) EnterNode(w walker.Walkable) bool {
 			return true
 		}
 
-		d.result = findFunctionReferences(d.st.Namespace + `\` + n.FunctionName.(*node.Identifier).Value)
+		d.result = findFunctionReferences(d.st.Namespace + `\` + n.FunctionName.Value)
 	case *stmt.ClassMethod:
 		if pos := n.MethodName.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
@@ -112,32 +112,31 @@ func (d *referencesWalker) EnterNode(w walker.Walkable) bool {
 		isStatic := false
 
 		for _, m := range n.Modifiers {
-			switch v := m.(*node.Identifier).Value; v {
-			case "static":
+			if m.Value == "static" {
 				isStatic = true
 			}
 		}
 
 		if isStatic {
-			d.result = findStaticMethodReferences(d.st.CurrentClass, n.MethodName.(*node.Identifier).Value)
+			d.result = findStaticMethodReferences(d.st.CurrentClass, n.MethodName.Value)
 		} else {
-			d.result = findMethodReferences(d.st.CurrentClass, n.MethodName.(*node.Identifier).Value)
+			d.result = findMethodReferences(d.st.CurrentClass, n.MethodName.Value)
 		}
 	case *stmt.Property:
 		if pos := n.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
 
-		d.result = findPropertyReferences(d.st.CurrentClass, n.Variable.(*expr.Variable).VarName.(*node.Identifier).Value)
+		d.result = findPropertyReferences(d.st.CurrentClass, n.Variable.Name)
 	case *stmt.Constant:
 		if pos := n.ConstantName.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
 
 		if d.st.CurrentClass == "" {
-			d.result = findConstantsReferences(d.st.Namespace + `\` + n.ConstantName.(*node.Identifier).Value)
+			d.result = findConstantsReferences(d.st.Namespace + `\` + n.ConstantName.Value)
 		} else {
-			d.result = findClassConstantsReferences(d.st.CurrentClass, n.ConstantName.(*node.Identifier).Value)
+			d.result = findClassConstantsReferences(d.st.CurrentClass, n.ConstantName.Value)
 		}
 	}
 

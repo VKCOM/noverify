@@ -17,13 +17,13 @@ import (
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
+	"github.com/VKCOM/noverify/src/php/parser/node/name"
+	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
+	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/vscode"
-	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/node/expr"
-	"github.com/z7zmey/php-parser/node/name"
-	"github.com/z7zmey/php-parser/node/stmt"
-	"github.com/z7zmey/php-parser/php7"
 )
 
 const maxLength = 16 << 20
@@ -510,7 +510,7 @@ func handleTextDocumentHover(req *baseRequest) error {
 
 func getHoverForNode(n node.Node, sc *meta.Scope, cs *meta.ClassParseState) string {
 	switch n := n.(type) {
-	case *expr.Variable:
+	case *node.Variable:
 		return getHoverForVariable(n, sc, cs)
 	case *expr.FunctionCall:
 		return getHoverForFunctionCall(n, sc, cs)
@@ -523,7 +523,7 @@ func getHoverForNode(n node.Node, sc *meta.Scope, cs *meta.ClassParseState) stri
 	return ""
 }
 
-func getHoverForVariable(n *expr.Variable, sc *meta.Scope, cs *meta.ClassParseState) string {
+func getHoverForVariable(n *node.Variable, sc *meta.Scope, cs *meta.ClassParseState) string {
 	id, ok := n.VarName.(*node.Identifier)
 	if !ok {
 		return ""
@@ -824,12 +824,12 @@ func getMethodCompletionItems(st *meta.ClassParseState, str string, sc *meta.Sco
 		return nil
 	}
 
-	stmtLst, ok := tempNode.(*stmt.StmtList)
-	if !ok || len(stmtLst.Stmts) == 0 {
+	stmtLst := tempNode.Stmts
+	if len(stmtLst) == 0 {
 		return nil
 	}
 
-	s, ok := stmtLst.Stmts[0].(*stmt.Expression)
+	s, ok := stmtLst[0].(*stmt.Expression)
 	if !ok {
 		return nil
 	}

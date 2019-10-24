@@ -9,10 +9,10 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/solver"
-	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/node/expr/assign"
-	"github.com/z7zmey/php-parser/node/stmt"
-	"github.com/z7zmey/php-parser/walker"
+	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
+	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
+	"github.com/VKCOM/noverify/src/php/parser/walker"
 )
 
 // Tests in this file make it less likely that type solving will break

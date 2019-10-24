@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/node/expr"
+	"github.com/VKCOM/noverify/src/php/parser/node"
 )
 
 var debugScope = false
@@ -123,7 +122,7 @@ func (s *Scope) Len() int {
 }
 
 // AddVar adds variable with specified types to scope
-func (s *Scope) AddVar(v *expr.Variable, typ *TypesMap, reason string, alwaysDefined bool) {
+func (s *Scope) AddVar(v *node.Variable, typ *TypesMap, reason string, alwaysDefined bool) {
 	name, ok := scopeVarName(v)
 	if !ok {
 		return
@@ -133,7 +132,7 @@ func (s *Scope) AddVar(v *expr.Variable, typ *TypesMap, reason string, alwaysDef
 }
 
 // ReplaceVar replaces variable with specified types to scope
-func (s *Scope) ReplaceVar(v *expr.Variable, typ *TypesMap, reason string, alwaysDefined bool) {
+func (s *Scope) ReplaceVar(v *node.Variable, typ *TypesMap, reason string, alwaysDefined bool) {
 	name, ok := scopeVarName(v)
 	if !ok {
 		return
@@ -143,7 +142,7 @@ func (s *Scope) ReplaceVar(v *expr.Variable, typ *TypesMap, reason string, alway
 }
 
 // DelVar deletes specified variable from scope
-func (s *Scope) DelVar(v *expr.Variable, reason string) {
+func (s *Scope) DelVar(v *node.Variable, reason string) {
 	name, ok := scopeVarName(v)
 	if !ok {
 		return
@@ -210,7 +209,7 @@ func (s *Scope) AddVarFromPHPDoc(name string, typ *TypesMap, reason string) {
 }
 
 // HaveVar checks whether or not specified variable is present in the scope and that it is always defined
-func (s *Scope) HaveVar(v *expr.Variable) bool {
+func (s *Scope) HaveVar(v *node.Variable) bool {
 	name, ok := scopeVarName(v)
 	if !ok {
 		return false
@@ -220,7 +219,7 @@ func (s *Scope) HaveVar(v *expr.Variable) bool {
 }
 
 // MaybeHaveVar checks that variable is present in the scope (it may be not always defined)
-func (s *Scope) MaybeHaveVar(v *expr.Variable) bool {
+func (s *Scope) MaybeHaveVar(v *node.Variable) bool {
 	name, ok := scopeVarName(v)
 	if !ok {
 		return false
@@ -288,11 +287,11 @@ func (s *Scope) Clone() *Scope {
 	return res
 }
 
-func scopeVarName(v *expr.Variable) (string, bool) {
+func scopeVarName(v *node.Variable) (string, bool) {
 	switch vn := v.VarName.(type) {
 	case *node.Identifier:
 		return vn.Value, true
-	case *expr.Variable:
+	case *node.Variable:
 		name, ok := vn.VarName.(*node.Identifier)
 		if !ok {
 			return "", false // Don't go further than 1 level

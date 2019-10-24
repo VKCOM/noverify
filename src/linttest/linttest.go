@@ -9,7 +9,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/z7zmey/php-parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node"
 )
 
 // SimpleNegativeTest runs linter over a single file out of given content

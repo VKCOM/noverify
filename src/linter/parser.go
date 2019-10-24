@@ -19,8 +19,8 @@ import (
 	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/php7"
+	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/php7"
 )
 
 type FileInfo struct {

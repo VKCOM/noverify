@@ -9,13 +9,13 @@ import (
 	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr/binary"
+	"github.com/VKCOM/noverify/src/php/parser/node/name"
+	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
+	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/solver"
-	"github.com/z7zmey/php-parser/node"
-	"github.com/z7zmey/php-parser/node/expr"
-	"github.com/z7zmey/php-parser/node/expr/binary"
-	"github.com/z7zmey/php-parser/node/name"
-	"github.com/z7zmey/php-parser/node/scalar"
-	"github.com/z7zmey/php-parser/walker"
 )
 
 func init() {
