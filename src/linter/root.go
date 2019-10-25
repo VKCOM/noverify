@@ -762,15 +762,8 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	}
 
 	if nm == "getIterator" && meta.IsIndexingComplete() && solver.Implements(d.st.CurrentClass, `\IteratorAggregate`) {
-		implementsTraversable := false
-		returnType.Iterate(func(typ string) {
-			if implementsTraversable {
-				return
-			}
-
-			if solver.Implements(typ, `\Traversable`) {
-				implementsTraversable = true
-			}
+		implementsTraversable := returnType.Find(func(typ string) bool {
+			return solver.Implements(typ, `\Traversable`)
 		})
 
 		if !implementsTraversable {

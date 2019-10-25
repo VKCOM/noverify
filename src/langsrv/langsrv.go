@@ -565,13 +565,9 @@ func getHoverForMethodCall(n *expr.MethodCall, sc *meta.Scope, cs *meta.ClassPar
 	types := safeExprType(sc, cs, n.Variable)
 
 	var fun meta.FuncInfo
-	ok = false
-
-	types.Iterate(func(t string) {
-		if ok {
-			return
-		}
+	types.Find(func(t string) bool {
 		fun, _, ok = solver.FindMethod(t, id.Value)
+		return ok
 	})
 
 	return linter.FlagsToString(fun.ExitFlags)

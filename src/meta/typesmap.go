@@ -202,6 +202,21 @@ func (m TypesMap) GobDecode(buf []byte) error {
 	return decoder.Decode(&m.m)
 }
 
+// Find applies a predicate function to every contained type.
+// If callback returns true for any of them, this is a result of Find call.
+// False is returned if none of the contained types made pred function return true.
+//
+// Can only be used in a case where type traversal order does not matter.
+func (m TypesMap) Find(pred func(typ string) bool) bool {
+	for typ := range m.m {
+		if pred(typ) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Iterate applies cb to all contained types
 func (m TypesMap) Iterate(cb func(typ string)) {
 	if m.Len() == 0 {
