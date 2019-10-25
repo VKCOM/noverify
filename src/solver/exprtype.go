@@ -14,14 +14,14 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 )
 
-func unaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, x node.Node, custom []CustomType) *meta.TypesMap {
+func unaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, x node.Node, custom []CustomType) meta.TypesMap {
 	if ExprTypeLocalCustom(sc, cs, x, custom).IsInt() {
 		return meta.NewTypesMap("int")
 	}
 	return meta.NewTypesMap("float")
 }
 
-func binaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right node.Node, custom []CustomType) *meta.TypesMap {
+func binaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right node.Node, custom []CustomType) meta.TypesMap {
 	if ExprTypeLocalCustom(sc, cs, left, custom).IsInt() && ExprTypeLocalCustom(sc, cs, right, custom).IsInt() {
 		return meta.NewTypesMap("int")
 	}
@@ -30,12 +30,12 @@ func binaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right node
 
 // ExprType returns type of expression. Depending on whether or not is it "full mode",
 // it will also recursively resolve all nested types
-func ExprType(sc *meta.Scope, cs *meta.ClassParseState, n node.Node) *meta.TypesMap {
+func ExprType(sc *meta.Scope, cs *meta.ClassParseState, n node.Node) meta.TypesMap {
 	return ExprTypeCustom(sc, cs, n, nil)
 }
 
 // ExprTypeCustom is ExprType that allows to specify custom types overrides
-func ExprTypeCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, custom []CustomType) *meta.TypesMap {
+func ExprTypeCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, custom []CustomType) meta.TypesMap {
 	m := ExprTypeLocalCustom(sc, cs, n, custom)
 
 	if !meta.IsIndexingComplete() {
@@ -65,10 +65,10 @@ func ExprTypeCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, custo
 	return meta.NewTypesMapFromMap(newMap)
 }
 
-func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *expr.FunctionCall, custom []CustomType) (typ *meta.TypesMap, ok bool) {
+func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *expr.FunctionCall, custom []CustomType) (typ meta.TypesMap, ok bool) {
 	fn, ok := meta.GetInternalFunctionInfo(nm)
 	if !ok || fn.Typ.IsEmpty() {
-		return nil, false
+		return meta.TypesMap{}, false
 	}
 
 	override, ok := meta.GetInternalFunctionOverrideInfo(nm)
@@ -93,10 +93,10 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ex
 	}
 
 	log.Printf("Internal error: unexpected override type %d for function %s", override.OverrideType, nm)
-	return nil, false
+	return meta.TypesMap{}, false
 }
 
-func arrayType(items []*expr.ArrayItem) *meta.TypesMap {
+func arrayType(items []*expr.ArrayItem) meta.TypesMap {
 	if len(items) == 0 {
 		// Used as a placeholder until more specific type is discovered.
 		//
@@ -157,17 +157,17 @@ func isConstantFloatArray(items []*expr.ArrayItem) bool {
 // CustomType specifies a mapping between some AST structure and concrete type (e.g. for <expr> instanceof <something>)
 type CustomType struct {
 	Node node.Node
-	Typ  *meta.TypesMap
+	Typ  meta.TypesMap
 }
 
 // ExprTypeLocal is basic expression type that does not resolve cross-file function calls and such
-func ExprTypeLocal(sc *meta.Scope, cs *meta.ClassParseState, n node.Node) *meta.TypesMap {
+func ExprTypeLocal(sc *meta.Scope, cs *meta.ClassParseState, n node.Node) meta.TypesMap {
 	return ExprTypeLocalCustom(sc, cs, n, nil)
 }
 
-func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, custom []CustomType) *meta.TypesMap {
+func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, custom []CustomType) meta.TypesMap {
 	if n == nil || sc == nil {
-		return &meta.TypesMap{}
+		return meta.TypesMap{}
 	}
 
 	for _, c := range custom {
@@ -190,7 +190,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 				}
 				return meta.NewTypesMap(meta.WrapFunctionCall(funcName))
 			}
-			return &meta.TypesMap{}
+			return meta.TypesMap{}
 		}
 
 		funcName := meta.NameToString(nm)
@@ -203,29 +203,29 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 	case *expr.StaticCall:
 		id, ok := n.Call.(*node.Identifier)
 		if !ok {
-			return &meta.TypesMap{}
+			return meta.TypesMap{}
 		}
 
 		nm, ok := GetClassName(cs, n.Class)
 		if !ok {
-			return &meta.TypesMap{}
+			return meta.TypesMap{}
 		}
 
 		return meta.NewTypesMap(meta.WrapStaticMethodCall(nm, id.Value))
 	case *expr.StaticPropertyFetch:
 		v, ok := n.Property.(*node.Variable)
 		if !ok {
-			return &meta.TypesMap{}
+			return meta.TypesMap{}
 		}
 
 		id, ok := v.VarName.(*node.Identifier)
 		if !ok {
-			return &meta.TypesMap{}
+			return meta.TypesMap{}
 		}
 
 		nm, ok := GetClassName(cs, n.Class)
 		if !ok {
-			return &meta.TypesMap{}
+			return meta.TypesMap{}
 		}
 
 		return meta.NewTypesMap(meta.WrapStaticPropertyFetch(nm, "$"+id.Value))
@@ -240,12 +240,12 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 		// Do not support $obj->$method()
 		id, ok := n.Method.(*node.Identifier)
 		if !ok {
-			return &meta.TypesMap{}
+			return meta.TypesMap{}
 		}
 
 		m := ExprTypeLocalCustom(sc, cs, n.Variable, custom)
 		if m.IsEmpty() {
-			return &meta.TypesMap{}
+			return meta.TypesMap{}
 		}
 
 		res := make(map[string]struct{}, m.Len())
@@ -260,12 +260,12 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 		// Do not support $obj->$some_prop
 		id, ok := n.Property.(*node.Identifier)
 		if !ok {
-			return &meta.TypesMap{}
+			return meta.TypesMap{}
 		}
 
 		m := ExprTypeLocalCustom(sc, cs, n.Variable, custom)
 		if m.IsEmpty() {
-			return &meta.TypesMap{}
+			return meta.TypesMap{}
 		}
 
 		res := make(map[string]struct{}, m.Len())
@@ -278,7 +278,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 	case *expr.ArrayDimFetch:
 		m := ExprTypeLocalCustom(sc, cs, n.Variable, custom)
 		if m.IsEmpty() {
-			return &meta.TypesMap{}
+			return meta.TypesMap{}
 		}
 
 		res := make(map[string]struct{}, m.Len())
@@ -325,7 +325,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 	case *expr.ConstFetch:
 		nm, ok := n.Constant.(*name.Name)
 		if !ok {
-			return &meta.TypesMap{}
+			return meta.TypesMap{}
 		}
 
 		// TODO: handle namespaces
@@ -365,18 +365,18 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 		if ok {
 			return meta.NewTypesMap(nm)
 		}
-		return &meta.TypesMap{}
+		return meta.TypesMap{}
 	case *assign.Assign:
 		return ExprTypeLocalCustom(sc, cs, n.Expression, custom)
 	case *expr.Closure:
 		return meta.NewTypesMap(`\Closure`)
 	}
 
-	return &meta.TypesMap{}
+	return meta.TypesMap{}
 }
 
 // ExprTypeLocalCustom is ExprTypeLocal that allows to specify custom types
-func ExprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, custom []CustomType) *meta.TypesMap {
+func ExprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, custom []CustomType) meta.TypesMap {
 	res := exprTypeLocalCustom(sc, cs, n, custom)
 	if res.Len() == 0 {
 		return meta.MixedType

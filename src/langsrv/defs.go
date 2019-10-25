@@ -26,7 +26,7 @@ type definitionWalker struct {
 	foundScopes []*meta.Scope
 }
 
-func safeExprType(sc *meta.Scope, cs *meta.ClassParseState, n node.Node) (res *meta.TypesMap) {
+func safeExprType(sc *meta.Scope, cs *meta.ClassParseState, n node.Node) (res meta.TypesMap) {
 	defer func() {
 		if r := recover(); r != nil {
 			res = meta.NewTypesMap(fmt.Sprintf("Panic: %s", fmt.Sprint(r)))

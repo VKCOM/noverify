@@ -260,7 +260,7 @@ func (i *info) AddConstantsNonLocked(filename string, m ConstantsMap) {
 }
 
 func (i *info) AddToGlobalScopeNonLocked(filename string, sc *Scope) {
-	sc.Iterate(func(nm string, typ *TypesMap, alwaysDefined bool) {
+	sc.Iterate(func(nm string, typ TypesMap, alwaysDefined bool) {
 		i.AddVarName(nm, typ, "global", alwaysDefined)
 	})
 }
@@ -268,7 +268,7 @@ func (i *info) AddToGlobalScopeNonLocked(filename string, sc *Scope) {
 type FuncParam struct {
 	IsRef bool
 	Name  string
-	Typ   *TypesMap
+	Typ   TypesMap
 }
 
 type PhpDocInfo struct {
@@ -280,7 +280,7 @@ type FuncInfo struct {
 	Pos          ElementPosition
 	Params       []FuncParam
 	MinParamsCnt int
-	Typ          *TypesMap
+	Typ          TypesMap
 	AccessLevel  AccessLevel
 	Static       bool
 	ExitFlags    int // if function has exit/die/throw, then ExitFlags will be <> 0
@@ -326,13 +326,13 @@ type FuncInfoOverride struct {
 
 type PropertyInfo struct {
 	Pos         ElementPosition
-	Typ         *TypesMap
+	Typ         TypesMap
 	AccessLevel AccessLevel
 }
 
 type ConstantInfo struct {
 	Pos         ElementPosition
-	Typ         *TypesMap
+	Typ         TypesMap
 	AccessLevel AccessLevel
 }
 

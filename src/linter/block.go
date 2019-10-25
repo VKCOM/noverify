@@ -49,7 +49,7 @@ type BlockWalker struct {
 	ctx *blockContext
 
 	// inferred return types if any
-	returnTypes *meta.TypesMap
+	returnTypes meta.TypesMap
 
 	r *RootWalker
 
@@ -344,7 +344,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 			res = false
 		}
 	case *expr.Closure:
-		var typ *meta.TypesMap
+		var typ meta.TypesMap
 		isInstance := b.ctx.sc.IsInInstanceMethod()
 		if isInstance {
 			typ, _ = b.ctx.sc.GetVarNameType("this")
@@ -417,7 +417,7 @@ func (b *BlockWalker) addNonLocalVar(v *node.Variable) {
 }
 
 // replaceVar must be used to track assignments to conrete var nodes if they are available
-func (b *BlockWalker) replaceVar(v *node.Variable, typ *meta.TypesMap, reason string, alwaysDefined bool) {
+func (b *BlockWalker) replaceVar(v *node.Variable, typ meta.TypesMap, reason string, alwaysDefined bool) {
 	b.ctx.sc.ReplaceVar(v, typ, reason, alwaysDefined)
 	name, ok := v.VarName.(*node.Identifier)
 	if !ok {
@@ -451,13 +451,13 @@ func (b *BlockWalker) trackVarName(n node.Node, nm string) {
 	}
 }
 
-func (b *BlockWalker) addVarName(n node.Node, nm string, typ *meta.TypesMap, reason string, alwaysDefined bool) {
+func (b *BlockWalker) addVarName(n node.Node, nm string, typ meta.TypesMap, reason string, alwaysDefined bool) {
 	b.ctx.sc.AddVarName(nm, typ, reason, alwaysDefined)
 	b.trackVarName(n, nm)
 }
 
 // addVar must be used to track assignments to conrete var nodes if they are available
-func (b *BlockWalker) addVar(v *node.Variable, typ *meta.TypesMap, reason string, alwaysDefined bool) {
+func (b *BlockWalker) addVar(v *node.Variable, typ meta.TypesMap, reason string, alwaysDefined bool) {
 	b.ctx.sc.AddVar(v, typ, reason, alwaysDefined)
 	name, ok := v.VarName.(*node.Identifier)
 	if !ok {
@@ -629,7 +629,7 @@ func (b *BlockWalker) handleTry(s *stmt.Try) bool {
 		}
 	})
 
-	ctx.sc.Iterate(func(varName string, typ *meta.TypesMap, alwaysDefined bool) {
+	ctx.sc.Iterate(func(varName string, typ meta.TypesMap, alwaysDefined bool) {
 		b.ctx.sc.AddVarName(varName, typ, "try var", alwaysDefined && othersExit)
 	})
 
@@ -1287,17 +1287,17 @@ func (b *BlockWalker) handleNew(e *expr.New) bool {
 func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 	// TODO: add reference semantics to foreach analyze as well
 
-	b.handleVariableNode(s.Key, nil, "foreach_key")
+	b.handleVariableNode(s.Key, meta.TypesMap{}, "foreach_key")
 	if list, ok := s.Variable.(*expr.List); ok {
 		for _, item := range list.Items {
 			v, ok := item.Val.(*node.Variable)
 			if !ok {
 				continue
 			}
-			b.handleVariableNode(v, nil, "foreach_value")
+			b.handleVariableNode(v, meta.TypesMap{}, "foreach_value")
 		}
 	} else {
-		b.handleVariableNode(s.Variable, nil, "foreach_value")
+		b.handleVariableNode(s.Variable, meta.TypesMap{}, "foreach_value")
 	}
 
 	// expression is always executed and is executed in base context
@@ -1356,7 +1356,7 @@ func (b *BlockWalker) handleFor(s *stmt.For) bool {
 	return false
 }
 
-func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType *meta.TypesMap) bool {
+func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType meta.TypesMap) bool {
 	sc := meta.NewScope()
 	sc.SetInClosure(true)
 
@@ -1408,7 +1408,7 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType *m
 }
 
 func (b *BlockWalker) maybeAddAllVars(sc *meta.Scope, reason string) {
-	sc.Iterate(func(varName string, typ *meta.TypesMap, alwaysDefined bool) {
+	sc.Iterate(func(varName string, typ meta.TypesMap, alwaysDefined bool) {
 		b.ctx.sc.AddVarName(varName, typ, reason, false)
 	})
 }
@@ -1646,7 +1646,7 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 
 	b.propagateFlagsFromBranches(contexts, linksCount)
 
-	varTypes := make(map[string]*meta.TypesMap, b.ctx.sc.Len())
+	varTypes := make(map[string]meta.TypesMap, b.ctx.sc.Len())
 	defCounts := make(map[string]int, b.ctx.sc.Len())
 
 	for _, ctx := range contexts {
@@ -1654,7 +1654,7 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 			continue
 		}
 
-		ctx.sc.Iterate(func(nm string, typ *meta.TypesMap, alwaysDefined bool) {
+		ctx.sc.Iterate(func(nm string, typ meta.TypesMap, alwaysDefined bool) {
 			varTypes[nm] = varTypes[nm].Append(typ)
 			if alwaysDefined {
 				defCounts[nm]++
@@ -1786,7 +1786,7 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 		b.ctx.exitFlags |= prematureExitFlags
 	}
 
-	varTypes := make(map[string]*meta.TypesMap, b.ctx.sc.Len())
+	varTypes := make(map[string]meta.TypesMap, b.ctx.sc.Len())
 	defCounts := make(map[string]int, b.ctx.sc.Len())
 
 	for _, ctx := range contexts {
@@ -1797,7 +1797,7 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 			continue
 		}
 
-		ctx.sc.Iterate(func(nm string, typ *meta.TypesMap, alwaysDefined bool) {
+		ctx.sc.Iterate(func(nm string, typ meta.TypesMap, alwaysDefined bool) {
 			varTypes[nm] = varTypes[nm].Append(typ)
 			if alwaysDefined {
 				defCounts[nm]++
@@ -1815,7 +1815,7 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 // if $a was previously undefined,
 // handle case when doing assignment like '$a[] = 4;'
 // or call to function that accepts like exec("command", $a)
-func (b *BlockWalker) handleDimFetchLValue(e *expr.ArrayDimFetch, reason string, typ *meta.TypesMap) {
+func (b *BlockWalker) handleDimFetchLValue(e *expr.ArrayDimFetch, reason string, typ meta.TypesMap) {
 	b.checkArrayDimFetch(e)
 
 	switch v := e.Variable.(type) {
@@ -1990,7 +1990,7 @@ func (b *BlockWalker) flushUnused() {
 	}
 }
 
-func (b *BlockWalker) handleVariableNode(n node.Node, typ *meta.TypesMap, what string) {
+func (b *BlockWalker) handleVariableNode(n node.Node, typ meta.TypesMap, what string) {
 	if n == nil {
 		return
 	}

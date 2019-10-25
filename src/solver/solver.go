@@ -27,7 +27,7 @@ func resolveType(curStaticClass, typ string, visitedMap map[string]struct{}) (re
 
 // ResolveTypes resolves function calls, method calls and global variables.
 //   curStaticClass is current class name (if inside the class, otherwise "")
-func ResolveTypes(curStaticClass string, m *meta.TypesMap, visitedMap map[string]struct{}) map[string]struct{} {
+func ResolveTypes(curStaticClass string, m meta.TypesMap, visitedMap map[string]struct{}) map[string]struct{} {
 	r := resolver{visited: visitedMap}
 	return r.resolveTypes(curStaticClass, m)
 }
@@ -189,7 +189,7 @@ func solveBaseMethodParam(curStaticClass, typ string, visitedMap, res map[string
 	return res
 }
 
-func (r *resolver) resolveTypes(class string, m *meta.TypesMap) map[string]struct{} {
+func (r *resolver) resolveTypes(class string, m meta.TypesMap) map[string]struct{} {
 	res := make(map[string]struct{}, m.Len())
 
 	m.Iterate(func(t string) {
