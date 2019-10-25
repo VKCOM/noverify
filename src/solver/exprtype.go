@@ -15,14 +15,14 @@ import (
 )
 
 func unaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, x node.Node, custom []CustomType) meta.TypesMap {
-	if ExprTypeLocalCustom(sc, cs, x, custom).IsInt() {
+	if ExprTypeLocalCustom(sc, cs, x, custom).Is("int") {
 		return meta.NewTypesMap("int")
 	}
 	return meta.NewTypesMap("float")
 }
 
 func binaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right node.Node, custom []CustomType) meta.TypesMap {
-	if ExprTypeLocalCustom(sc, cs, left, custom).IsInt() && ExprTypeLocalCustom(sc, cs, right, custom).IsInt() {
+	if ExprTypeLocalCustom(sc, cs, left, custom).Is("int") && ExprTypeLocalCustom(sc, cs, right, custom).Is("int") {
 		return meta.NewTypesMap("int")
 	}
 	return meta.NewTypesMap("float")
