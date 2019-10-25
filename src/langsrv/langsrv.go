@@ -424,7 +424,7 @@ func handleTextDocumentReferences(req *baseRequest) error {
 	})
 }
 
-func resolveTypesSafe(curStaticClass string, m *meta.TypesMap, visitedMap map[string]struct{}) (res map[string]struct{}) {
+func resolveTypesSafe(curStaticClass string, m meta.TypesMap, visitedMap map[string]struct{}) (res map[string]struct{}) {
 	defer func() {
 		if r := recover(); r != nil {
 			res = make(map[string]struct{})
@@ -671,7 +671,7 @@ func handleTextDocumentCompletion(req *baseRequest) error {
 		if strings.HasSuffix(chStr, "->") {
 			result = append(result, getMethodCompletionItems(&compl.st, chStr, compl.foundScope)...)
 		} else {
-			compl.foundScope.Iterate(func(varName string, typ *meta.TypesMap, alwaysDefined bool) {
+			compl.foundScope.Iterate(func(varName string, typ meta.TypesMap, alwaysDefined bool) {
 				result = append(result, vscode.CompletionItem{
 					Kind:  vscode.CompletionKindVariable,
 					Label: "$" + varName,

@@ -92,12 +92,12 @@ type TypesMap struct {
 }
 
 // NewEmptyTypesMap creates new type map that has no types in it
-func NewEmptyTypesMap(cap int) *TypesMap {
-	return &TypesMap{m: make(map[string]struct{}, cap)}
+func NewEmptyTypesMap(cap int) TypesMap {
+	return TypesMap{m: make(map[string]struct{}, cap)}
 }
 
 // NewTypesMap returns new TypesMap that is initialized with the provided types (separated by "|" symbol)
-func NewTypesMap(str string) *TypesMap {
+func NewTypesMap(str string) TypesMap {
 	m := make(map[string]struct{}, strings.Count(str, "|")+1)
 	for _, s := range strings.Split(str, "|") {
 		for strings.HasSuffix(s, "[]") {
@@ -105,11 +105,11 @@ func NewTypesMap(str string) *TypesMap {
 		}
 		m[s] = struct{}{}
 	}
-	return &TypesMap{m: m}
+	return TypesMap{m: m}
 }
 
 // MergeTypeMaps creates a new types map from union of specified type maps
-func MergeTypeMaps(maps ...*TypesMap) *TypesMap {
+func MergeTypeMaps(maps ...TypesMap) TypesMap {
 	totalLen := 0
 	for _, m := range maps {
 		totalLen += m.Len()
@@ -124,8 +124,8 @@ func MergeTypeMaps(maps ...*TypesMap) *TypesMap {
 }
 
 // NewTypesMapFromMap creates TypesMap from provided map[string]struct{}
-func NewTypesMapFromMap(m map[string]struct{}) *TypesMap {
-	return &TypesMap{m: m}
+func NewTypesMapFromMap(m map[string]struct{}) TypesMap {
+	return TypesMap{m: m}
 }
 
 func slice(typ byte, byteFields []uint8, args ...string) []byte {
@@ -293,50 +293,36 @@ func UnwrapConstant(s string) (constName string) {
 }
 
 // Immutable returns immutable copy of TypesMap
-func (m *TypesMap) Immutable() *TypesMap {
-	if m == nil {
-		return &TypesMap{immutable: true}
+func (m TypesMap) Immutable() TypesMap {
+	return TypesMap{
+		immutable: true,
+		m:         m.m,
 	}
-
-	m.immutable = true
-	return m
 }
 
 // IsEmpty checks if map has no types at all
-func (m *TypesMap) IsEmpty() bool {
-	if m == nil {
-		return true
-	}
-
+func (m TypesMap) IsEmpty() bool {
 	return len(m.m) == 0
 }
 
 // Len returns number of different types in map
-func (m *TypesMap) Len() int {
-	if m == nil {
-		return 0
-	}
-
+func (m TypesMap) Len() int {
 	return len(m.m)
 }
 
 // IsInt checks if map contains only int type
-func (m *TypesMap) IsInt() bool {
+func (m TypesMap) IsInt() bool {
 	return m.Is("int") || m.Is("integer")
 }
 
 // IsString checks if map contains only string type
-func (m *TypesMap) IsString() bool {
+func (m TypesMap) IsString() bool {
 	return m.Is("string")
 }
 
 // Is reports whether m contains exactly one specified type.
-func (m *TypesMap) Is(typ string) bool {
-	if m == nil {
-		return false
-	}
-
-	if len(m.m) != 1 {
+func (m TypesMap) Is(typ string) bool {
+	if m.Len() != 1 {
 		return false
 	}
 
@@ -345,11 +331,7 @@ func (m *TypesMap) Is(typ string) bool {
 }
 
 // AppendString adds provided types to current map and returns new one (immutable maps are always copied)
-func (m *TypesMap) AppendString(str string) *TypesMap {
-	if m == nil {
-		m = &TypesMap{}
-	}
-
+func (m TypesMap) AppendString(str string) TypesMap {
 	if !m.immutable {
 		if m.m == nil {
 			m.m = make(map[string]struct{}, strings.Count(str, "|")+1)
@@ -371,16 +353,27 @@ func (m *TypesMap) AppendString(str string) *TypesMap {
 		mm[s] = struct{}{}
 	}
 
-	return &TypesMap{m: mm}
+	return TypesMap{m: mm}
+}
+
+func (m TypesMap) clone() TypesMap {
+	if m.Len() == 0 || m.immutable {
+		return m
+	}
+
+	mm := make(map[string]struct{}, m.Len())
+	for typ := range m.m {
+		mm[typ] = struct{}{}
+	}
+	return TypesMap{m: mm}
 }
 
 // Append adds provided types to current map and returns new one (immutable maps are always copied)
-func (m *TypesMap) Append(n *TypesMap) *TypesMap {
-	if m == nil {
-		m = &TypesMap{}
+func (m TypesMap) Append(n TypesMap) TypesMap {
+	if m.Len() == 0 {
+		return n
 	}
-
-	if n == nil {
+	if n.Len() == 0 {
 		return m
 	}
 
@@ -406,7 +399,7 @@ func (m *TypesMap) Append(n *TypesMap) *TypesMap {
 		mm[k] = v
 	}
 
-	return &TypesMap{m: mm}
+	return TypesMap{m: mm}
 }
 
 func formatType(s string) (res string) {
@@ -462,7 +455,7 @@ func (m TypesMap) String() string {
 }
 
 // GobEncode is a custom gob marshaller
-func (m *TypesMap) GobEncode() ([]byte, error) {
+func (m TypesMap) GobEncode() ([]byte, error) {
 	w := new(bytes.Buffer)
 	encoder := gob.NewEncoder(w)
 	err := encoder.Encode(m.immutable)
@@ -477,7 +470,7 @@ func (m *TypesMap) GobEncode() ([]byte, error) {
 }
 
 // GobDecode is custom gob unmarshaller
-func (m *TypesMap) GobDecode(buf []byte) error {
+func (m TypesMap) GobDecode(buf []byte) error {
 	r := bytes.NewBuffer(buf)
 	decoder := gob.NewDecoder(r)
 	err := decoder.Decode(&m.immutable)
@@ -488,11 +481,7 @@ func (m *TypesMap) GobDecode(buf []byte) error {
 }
 
 // Iterate applies cb to all contained types
-func (m *TypesMap) Iterate(cb func(typ string)) {
-	if m == nil {
-		return
-	}
-
+func (m TypesMap) Iterate(cb func(typ string)) {
 	// We need to sort types so that we always iterate classes using the same order.
 	keys := make([]string, 0, len(m.m))
 	for k := range m.m {

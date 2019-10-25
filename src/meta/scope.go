@@ -12,7 +12,7 @@ import (
 var debugScope = false
 
 type scopeVar struct {
-	typesMap      *TypesMap
+	typesMap      TypesMap
 	alwaysDefined bool
 	noReplace     bool // do not replace variable upon assignment (used for phpdoc @var declaration)
 }
@@ -111,7 +111,7 @@ func (s *Scope) SetInClosure(v bool) {
 	s.inClosure = v
 }
 
-func (s *Scope) Iterate(cb func(varName string, typ *TypesMap, alwaysDefined bool)) {
+func (s *Scope) Iterate(cb func(varName string, typ TypesMap, alwaysDefined bool)) {
 	for varName, v := range s.vars {
 		cb(varName, v.typesMap, v.alwaysDefined)
 	}
@@ -122,7 +122,7 @@ func (s *Scope) Len() int {
 }
 
 // AddVar adds variable with specified types to scope
-func (s *Scope) AddVar(v *node.Variable, typ *TypesMap, reason string, alwaysDefined bool) {
+func (s *Scope) AddVar(v *node.Variable, typ TypesMap, reason string, alwaysDefined bool) {
 	name, ok := scopeVarName(v)
 	if !ok {
 		return
@@ -132,7 +132,7 @@ func (s *Scope) AddVar(v *node.Variable, typ *TypesMap, reason string, alwaysDef
 }
 
 // ReplaceVar replaces variable with specified types to scope
-func (s *Scope) ReplaceVar(v *node.Variable, typ *TypesMap, reason string, alwaysDefined bool) {
+func (s *Scope) ReplaceVar(v *node.Variable, typ TypesMap, reason string, alwaysDefined bool) {
 	name, ok := scopeVarName(v)
 	if !ok {
 		return
@@ -160,7 +160,7 @@ func (s *Scope) DelVarName(name, reason string) {
 }
 
 // ReplaceVarName replaces variable with specified types to the scope
-func (s *Scope) ReplaceVarName(name string, typ *TypesMap, reason string, alwaysDefined bool) {
+func (s *Scope) ReplaceVarName(name string, typ TypesMap, reason string, alwaysDefined bool) {
 	oldVar, ok := s.vars[name]
 	if ok && oldVar.noReplace {
 		oldVar.typesMap = oldVar.typesMap.Append(typ)
@@ -174,7 +174,7 @@ func (s *Scope) ReplaceVarName(name string, typ *TypesMap, reason string, always
 }
 
 // AddVarName adds variable with specified types to the scope
-func (s *Scope) addVarName(name string, typ *TypesMap, reason string, alwaysDefined, noReplace bool) {
+func (s *Scope) addVarName(name string, typ TypesMap, reason string, alwaysDefined, noReplace bool) {
 	v, ok := s.vars[name]
 
 	if !ok {
@@ -199,12 +199,12 @@ func (s *Scope) addVarName(name string, typ *TypesMap, reason string, alwaysDefi
 }
 
 // AddVarName adds variable with specified types to the scope
-func (s *Scope) AddVarName(name string, typ *TypesMap, reason string, alwaysDefined bool) {
+func (s *Scope) AddVarName(name string, typ TypesMap, reason string, alwaysDefined bool) {
 	s.addVarName(name, typ, reason, alwaysDefined, false)
 }
 
 // AddVarFromPHPDoc adds variable with specified types to the scope
-func (s *Scope) AddVarFromPHPDoc(name string, typ *TypesMap, reason string) {
+func (s *Scope) AddVarFromPHPDoc(name string, typ TypesMap, reason string) {
 	s.addVarName(name, typ, reason, true, true)
 }
 
@@ -238,10 +238,10 @@ func (s *Scope) HaveVarName(name string) bool {
 }
 
 // GetVarNameType returns type map for variable if it exists
-func (s *Scope) GetVarNameType(name string) (m *TypesMap, ok bool) {
+func (s *Scope) GetVarNameType(name string) (m TypesMap, ok bool) {
 	res, ok := s.vars[name]
 	if !ok {
-		return &TypesMap{}, false
+		return TypesMap{}, false
 	}
 	return res.typesMap, ok
 }
@@ -271,14 +271,8 @@ func (s *Scope) Clone() *Scope {
 
 	res := &Scope{vars: make(map[string]*scopeVar, len(s.vars))}
 	for k, v := range s.vars {
-		m := make(map[string]struct{}, v.typesMap.Len())
-		if v.typesMap != nil {
-			for kk, vv := range v.typesMap.m {
-				m[kk] = vv
-			}
-		}
 		res.vars[k] = &scopeVar{
-			typesMap:      &TypesMap{m: m},
+			typesMap:      v.typesMap.clone(),
 			alwaysDefined: v.alwaysDefined,
 		}
 	}

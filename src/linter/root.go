@@ -70,7 +70,7 @@ func (d *RootWalker) LeaveChildList(key string, w walker.Walkable) {}
 
 type phpDocParamEl struct {
 	optional bool
-	typ      *meta.TypesMap
+	typ      meta.TypesMap
 }
 
 type phpDocParamsMap map[string]phpDocParamEl
@@ -421,7 +421,7 @@ func (d *RootWalker) handleComment(c freefloating.String) {
 	}
 }
 
-func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node.Node, sc *meta.Scope) (returnTypes *meta.TypesMap, prematureExitFlags int) {
+func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node.Node, sc *meta.Scope) (returnTypes meta.TypesMap, prematureExitFlags int) {
 	b := &BlockWalker{
 		ctx:          &blockContext{sc: sc},
 		r:            d,
@@ -481,7 +481,7 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 	switch {
 	case b.bareReturn && b.returnsValue:
 		b.returnTypes = b.returnTypes.AppendString("null")
-	case b.returnTypes.Len() == 0 && b.returnsValue:
+	case b.returnTypes.IsEmpty() && b.returnsValue:
 		b.returnTypes = meta.MixedType
 	}
 
@@ -683,7 +683,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 		sc.SetInInstanceMethod(true)
 	}
 
-	var specifiedReturnType *meta.TypesMap
+	var specifiedReturnType meta.TypesMap
 	if typ, ok := d.parseTypeNode(meth.ReturnType); ok {
 		specifiedReturnType = typ
 	}
@@ -747,7 +747,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 
 	// TODO: handle duplicate method
 	returnType := meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType)
-	if returnType.Len() == 0 {
+	if returnType.IsEmpty() {
 		returnType = meta.VoidType
 	}
 	class.Methods[nm] = meta.FuncInfo{
@@ -871,7 +871,7 @@ func (d *RootWalker) parsePHPDocClass(doc string) classPhpDocParseResult {
 	return result
 }
 
-func (d *RootWalker) parsePHPDocVar(doc string) (m *meta.TypesMap, phpDocError string) {
+func (d *RootWalker) parsePHPDocVar(doc string) (m meta.TypesMap, phpDocError string) {
 	for _, part := range phpdoc.Parse(doc) {
 		if part.Name == "var" && len(part.Params) >= 1 {
 			m = meta.NewTypesMap(d.maybeAddNamespace(part.Params[0]))
@@ -949,7 +949,7 @@ func (d *RootWalker) fixPHPDocType(typ string) (fixed, notice string) {
 }
 
 type phpDocParseResult struct {
-	returnType *meta.TypesMap
+	returnType meta.TypesMap
 	types      phpDocParamsMap
 	info       meta.PhpDocInfo
 	errs       phpdocErrors
@@ -957,8 +957,6 @@ type phpDocParseResult struct {
 
 func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocParseResult {
 	var result phpDocParseResult
-
-	result.returnType = &meta.TypesMap{}
 
 	if doc == "" {
 		return result
@@ -1046,9 +1044,9 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 }
 
 // parse type info, e.g. "string" in "someFunc() : string { ... }"
-func (d *RootWalker) parseTypeNode(n node.Node) (typ *meta.TypesMap, ok bool) {
+func (d *RootWalker) parseTypeNode(n node.Node) (typ meta.TypesMap, ok bool) {
 	if n == nil {
-		return nil, false
+		return meta.TypesMap{}, false
 	}
 
 	switch t := n.(type) {
@@ -1060,7 +1058,7 @@ func (d *RootWalker) parseTypeNode(n node.Node) (typ *meta.TypesMap, ok bool) {
 		typ = meta.NewTypesMap(t.Value)
 	}
 
-	return typ, typ != nil
+	return typ, !typ.IsEmpty()
 }
 
 func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap, sc *meta.Scope) (args []meta.FuncParam, minArgs int) {
@@ -1115,7 +1113,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 		d.Report(fun.FunctionName, LevelDoNotReject, "complexity", "Too big function: more than %d lines", maxFunctionLines)
 	}
 
-	var specifiedReturnType *meta.TypesMap
+	var specifiedReturnType meta.TypesMap
 	if typ, ok := d.parseTypeNode(fun.ReturnType); ok {
 		specifiedReturnType = typ
 	}
@@ -1137,7 +1135,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	d.addScope(fun, sc)
 
 	returnType := meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType)
-	if returnType.Len() == 0 {
+	if returnType.IsEmpty() {
 		returnType = meta.VoidType
 	}
 
