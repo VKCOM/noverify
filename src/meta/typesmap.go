@@ -482,6 +482,10 @@ func (m TypesMap) GobDecode(buf []byte) error {
 
 // Iterate applies cb to all contained types
 func (m TypesMap) Iterate(cb func(typ string)) {
+	if m.Len() == 0 {
+		return
+	}
+
 	// We need to sort types so that we always iterate classes using the same order.
 	keys := make([]string, 0, len(m.m))
 	for k := range m.m {
