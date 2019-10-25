@@ -944,13 +944,10 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 
 	exprType := solver.ExprTypeCustom(b.ctx.sc, b.r.st, e.Variable, b.ctx.customTypes)
 
-	exprType.Iterate(func(typ string) {
-		if foundMethod || magic {
-			return
-		}
-
+	exprType.Find(func(typ string) bool {
 		fn, implClass, foundMethod = solver.FindMethod(typ, methodName)
 		magic = haveMagicMethod(typ, `__call`)
+		return foundMethod || magic
 	})
 
 	e.Variable.Walk(b)
@@ -1070,12 +1067,10 @@ func (b *BlockWalker) handlePropertyFetch(e *expr.PropertyFetch) bool {
 	var info meta.PropertyInfo
 
 	typ := solver.ExprTypeCustom(b.ctx.sc, b.r.st, e.Variable, b.ctx.customTypes)
-	typ.Iterate(func(className string) {
-		if found || magic {
-			return
-		}
+	typ.Find(func(className string) bool {
 		info, implClass, found = solver.FindProperty(className, id.Value)
 		magic = haveMagicMethod(className, `__get`)
+		return found || magic
 	})
 
 	if !found && !magic && !b.r.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
