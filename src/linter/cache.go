@@ -106,8 +106,21 @@ func IndexFile(filename string, contents []byte) error {
 	return nil
 }
 
+func writeMetaCache(w *bufio.Writer, root *RootWalker) error {
+	if err := writeMetaCacheHeader(w, root); err != nil {
+		return err
+	}
+	enc := gob.NewEncoder(w)
+	if err := enc.Encode(&root.meta); err != nil {
+		return err
+	}
+	if err := customCachersEncode(w, root); err != nil {
+		return err
+	}
+	return nil
+}
+
 func createMetaCacheFile(filename, cacheFile string, root *RootWalker) error {
-	m := &root.meta
 	tmpPath := cacheFile + ".tmp"
 	os.MkdirAll(filepath.Dir(tmpPath), 0777)
 
@@ -120,15 +133,7 @@ func createMetaCacheFile(filename, cacheFile string, root *RootWalker) error {
 	defer os.Remove(tmpPath)
 
 	wr := bufio.NewWriter(fp)
-	if err := writeMetaCacheHeader(wr, root); err != nil {
-		return err
-	}
-
-	enc := gob.NewEncoder(wr)
-	if err := enc.Encode(m); err != nil {
-		return err
-	}
-	if err := customCachersEncode(wr, root); err != nil {
+	if err := writeMetaCache(wr, root); err != nil {
 		return err
 	}
 	if err := wr.Flush(); err != nil {
@@ -147,7 +152,7 @@ func createMetaCacheFile(filename, cacheFile string, root *RootWalker) error {
 
 	// if using cache, this is the only proper place to update meta info:
 	// after all cache meta info was successfully written to disk
-	updateMetaInfo(filename, m)
+	updateMetaInfo(filename, &root.meta)
 	return nil
 }
 
