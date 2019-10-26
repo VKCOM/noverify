@@ -1055,6 +1055,10 @@ func (d *RootWalker) parseTypeNode(n node.Node) (typ meta.TypesMap, ok bool) {
 }
 
 func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap, sc *meta.Scope) (args []meta.FuncParam, minArgs int) {
+	if len(params) == 0 {
+		return nil, 0
+	}
+
 	args = make([]meta.FuncParam, 0, len(params))
 	for _, param := range params {
 		p := param.(*node.Parameter)
