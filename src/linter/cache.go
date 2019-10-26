@@ -156,19 +156,25 @@ func createMetaCacheFile(filename, cacheFile string, root *RootWalker) error {
 	return nil
 }
 
-func restoreMetaFromCache(filename string, rd io.Reader) error {
-	var m fileMeta
-
-	bufrd := bufio.NewReader(rd)
+func readMetaCache(r io.Reader, filename string, dst *fileMeta) error {
+	bufrd := bufio.NewReader(r)
 	if err := readMetaCacheHeader(bufrd); err != nil {
 		return err
 	}
 
 	dec := gob.NewDecoder(bufrd)
-	if err := dec.Decode(&m); err != nil {
+	if err := dec.Decode(dst); err != nil {
 		return err
 	}
 	if err := customCachersDecode(filename, bufrd); err != nil {
+		return err
+	}
+	return nil
+}
+
+func restoreMetaFromCache(filename string, rd io.Reader) error {
+	var m fileMeta
+	if err := readMetaCache(rd, filename, &m); err != nil {
 		return err
 	}
 

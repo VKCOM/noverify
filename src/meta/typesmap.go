@@ -182,7 +182,7 @@ func (m TypesMap) GobEncode() ([]byte, error) {
 }
 
 // GobDecode is custom gob unmarshaller
-func (m TypesMap) GobDecode(buf []byte) error {
+func (m *TypesMap) GobDecode(buf []byte) error {
 	r := bytes.NewBuffer(buf)
 	decoder := gob.NewDecoder(r)
 	err := decoder.Decode(&m.immutable)

@@ -9,13 +9,17 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/VKCOM/noverify/src/meta"
+	"github.com/google/go-cmp/cmp"
+	"gotest.tools/assert"
 )
 
 func TestCache(t *testing.T) {
 	go MemoryLimiterThread()
 
-	// If this test is failing, you haven't broken anything, but meta
-	// cache probably needs to be invalidated.
+	// If this test is failing, you haven't broken anything (unless the decoding is failing),
+	// but meta cache probably needs to be invalidated.
 	//
 	// What to do in order to fix it:
 	//	1. Bump cacheVersion inside "cache.go" (please document what changed)
@@ -23,9 +27,16 @@ func TestCache(t *testing.T) {
 	//	3. Copy "have" output to "want" variables in this test.
 
 	code := `<?php
+const GLOBAL_CONST = 1;
 
 interface Arrayable {
   public function toArray();
+}
+
+final class Consts {
+  const C1 = GLOBAL_CONST;
+  const C2 = 'a';
+  const C3 = ['a'];
 }
 
 class Point implements Arrayable {
@@ -88,7 +99,7 @@ main();
 		//
 		// If cache encoding changes, there is a very high chance that
 		// encoded data lengh will change as well.
-		wantLen := 2300
+		wantLen := 2740
 		haveLen := buf.Len()
 		if haveLen != wantLen {
 			t.Errorf("cache len mismatch:\nhave: %d\nwant: %d", haveLen, wantLen)
@@ -97,10 +108,23 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "29d9a27c79a90bafc417d9a17cef431a808974dc2ce7edda2dc4ec4f5677d746becb0ab15c94f164974586cbf39082db6695ad5a06487b7764d7e56455cab7af"
+		wantStrings := "96c3b3c94f4c9830ab91ce432ad9fb22e1d719e054807f4854d87c6781157a7bb1e1b219aaa04f17d994ffa924163d1f1156f5d729d0fe9f681500549a3c6b7b"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)
+		}
+
+		// 3. Check meta decoding.
+		//
+		// If it fails, encoding and/or decoding is broken.
+		encodedMeta := &root.meta
+		decodedMeta := &fileMeta{}
+		if err := readMetaCache(bytes.NewReader(buf.Bytes()), "", decodedMeta); err != nil {
+			t.Errorf("decoding failed: %v", err)
+		} else {
+			assert.DeepEqual(t,
+				encodedMeta, decodedMeta,
+				cmp.AllowUnexported(meta.TypesMap{}))
 		}
 
 		if t.Failed() {
