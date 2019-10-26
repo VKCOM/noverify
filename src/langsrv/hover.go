@@ -9,8 +9,6 @@ import (
 )
 
 type hoverWalker struct {
-	dummyWalker
-
 	position int
 	n        node.Node
 	st       meta.ClassParseState
@@ -20,11 +18,6 @@ type hoverWalker struct {
 func (d *hoverWalker) EnterNode(w walker.Walkable) bool {
 	state.EnterNode(&d.st, w)
 	return true
-}
-
-// GetChildrenVisitor is invoked at every node parameter that contains children nodes
-func (d *hoverWalker) GetChildrenVisitor(key string) walker.Visitor {
-	return d
 }
 
 // LeaveNode is invoked after node process

@@ -1556,12 +1556,7 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 	return false
 }
 
-func (a *andWalker) GetChildrenVisitor(key string) walker.Visitor { return a }
-func (a *andWalker) LeaveNode(w walker.Walkable)                  {}
-func (a *andWalker) EnterChildNode(key string, w walker.Walkable) {}
-func (a *andWalker) LeaveChildNode(key string, w walker.Walkable) {}
-func (a *andWalker) EnterChildList(key string, w walker.Walkable) {}
-func (a *andWalker) LeaveChildList(key string, w walker.Walkable) {}
+func (a *andWalker) LeaveNode(w walker.Walkable) {}
 
 func (b *BlockWalker) handleVariable(v *node.Variable) bool {
 	if !b.ctx.sc.HaveVar(v) {
@@ -2001,11 +1996,6 @@ func (b *BlockWalker) handleVariableNode(n node.Node, typ meta.TypesMap, what st
 	}
 
 	b.addVar(vv, typ, what, true)
-}
-
-// GetChildrenVisitor is useless :)
-func (b *BlockWalker) GetChildrenVisitor(key string) walker.Visitor {
-	return b
 }
 
 // LeaveNode is called after all children have been visited.

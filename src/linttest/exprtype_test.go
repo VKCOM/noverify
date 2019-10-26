@@ -8,11 +8,11 @@ import (
 
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
+	"github.com/VKCOM/noverify/src/solver"
 )
 
 // Tests in this file make it less likely that type solving will break
@@ -1013,9 +1013,4 @@ func (gw *globalsWalker) EnterNode(w walker.Walkable) bool {
 	}
 }
 
-func (gw *globalsWalker) GetChildrenVisitor(string) walker.Visitor     { return gw }
-func (gw *globalsWalker) LeaveNode(walker.Walkable)                    {}
-func (gw *globalsWalker) EnterChildNode(key string, w walker.Walkable) {}
-func (gw *globalsWalker) LeaveChildNode(key string, w walker.Walkable) {}
-func (gw *globalsWalker) EnterChildList(key string, w walker.Walkable) {}
-func (gw *globalsWalker) LeaveChildList(key string, w walker.Walkable) {}
+func (gw *globalsWalker) LeaveNode(walker.Walkable) {}

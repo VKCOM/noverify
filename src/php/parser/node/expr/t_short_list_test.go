@@ -48,7 +48,7 @@ func TestShortList(t *testing.T) {
 							EndPos:    7,
 						},
 						Items: []*expr.ArrayItem{
-							&expr.ArrayItem{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -137,7 +137,7 @@ func TestShortListArrayIndex(t *testing.T) {
 							EndPos:    9,
 						},
 						Items: []*expr.ArrayItem{
-							&expr.ArrayItem{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -234,7 +234,7 @@ func TestShortListList(t *testing.T) {
 							EndPos:    13,
 						},
 						Items: []*expr.ArrayItem{
-							&expr.ArrayItem{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -249,7 +249,7 @@ func TestShortListList(t *testing.T) {
 										EndPos:    12,
 									},
 									Items: []*expr.ArrayItem{
-										&expr.ArrayItem{
+										{
 											Position: &position.Position{
 												StartLine: 1,
 												EndLine:   1,

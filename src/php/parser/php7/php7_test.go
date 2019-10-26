@@ -1580,7 +1580,7 @@ func TestPhp7(t *testing.T) {
 							Value: "foo",
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 19,
 									EndLine:   19,
@@ -3454,7 +3454,7 @@ func TestPhp7(t *testing.T) {
 							EndPos:    1460,
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 70,
 									EndLine:   70,
@@ -3692,7 +3692,7 @@ func TestPhp7(t *testing.T) {
 							Value: "bar",
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 73,
 									EndLine:   73,
@@ -3701,7 +3701,7 @@ func TestPhp7(t *testing.T) {
 								},
 								Value: "public",
 							},
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 73,
 									EndLine:   73,
@@ -3760,7 +3760,7 @@ func TestPhp7(t *testing.T) {
 							Value: "bar",
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 74,
 									EndLine:   74,
@@ -3769,7 +3769,7 @@ func TestPhp7(t *testing.T) {
 								},
 								Value: "public",
 							},
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 74,
 									EndLine:   74,
@@ -5100,7 +5100,7 @@ func TestPhp7(t *testing.T) {
 						EndPos:    2281,
 					},
 					Items: []*expr.ArrayItem{
-						&expr.ArrayItem{
+						{
 							Position: &position.Position{
 								StartLine: 97,
 								EndLine:   97,
@@ -5187,7 +5187,7 @@ func TestPhp7(t *testing.T) {
 						EndPos:    2313,
 					},
 					Items: []*expr.ArrayItem{
-						&expr.ArrayItem{
+						{
 							Position: &position.Position{
 								StartLine: 98,
 								EndLine:   98,
@@ -6074,7 +6074,7 @@ func TestPhp7(t *testing.T) {
 							EndPos:    2797,
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 118,
 									EndLine:   118,
@@ -6133,7 +6133,7 @@ func TestPhp7(t *testing.T) {
 							EndPos:    2837,
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 119,
 									EndLine:   119,
@@ -6142,7 +6142,7 @@ func TestPhp7(t *testing.T) {
 								},
 								Value: "public",
 							},
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 119,
 									EndLine:   119,
@@ -8790,7 +8790,7 @@ func TestPhp7(t *testing.T) {
 						EndPos:    4029,
 					},
 					Items: []*expr.ArrayItem{
-						&expr.ArrayItem{
+						{
 							Position: &position.Position{
 								StartLine: 180,
 								EndLine:   180,
@@ -8825,7 +8825,7 @@ func TestPhp7(t *testing.T) {
 						EndPos:    4050,
 					},
 					Items: []*expr.ArrayItem{
-						&expr.ArrayItem{
+						{
 							Position: &position.Position{
 								StartLine: 181,
 								EndLine:   181,
@@ -8851,7 +8851,7 @@ func TestPhp7(t *testing.T) {
 								Value: "1",
 							},
 						},
-						&expr.ArrayItem{
+						{
 							Position: &position.Position{
 								StartLine: 181,
 								EndLine:   181,
@@ -8884,7 +8884,7 @@ func TestPhp7(t *testing.T) {
 								},
 							},
 						},
-						&expr.ArrayItem{},
+						{},
 					},
 				},
 			},
@@ -10247,7 +10247,7 @@ func TestPhp7(t *testing.T) {
 							EndPos:    4547,
 						},
 						Items: []*expr.ArrayItem{
-							&expr.ArrayItem{
+							{
 								Position: &position.Position{
 									StartLine: 223,
 									EndLine:   223,
@@ -10315,7 +10315,7 @@ func TestPhp7(t *testing.T) {
 							EndPos:    4566,
 						},
 						Items: []*expr.ArrayItem{
-							&expr.ArrayItem{
+							{
 								Position: &position.Position{
 									StartLine: 224,
 									EndLine:   224,
@@ -10391,7 +10391,7 @@ func TestPhp7(t *testing.T) {
 							EndPos:    4589,
 						},
 						Items: []*expr.ArrayItem{
-							&expr.ArrayItem{
+							{
 								Position: &position.Position{
 									StartLine: 225,
 									EndLine:   225,
@@ -10406,7 +10406,7 @@ func TestPhp7(t *testing.T) {
 										EndPos:    4588,
 									},
 									Items: []*expr.ArrayItem{
-										&expr.ArrayItem{
+										{
 											Position: &position.Position{
 												StartLine: 225,
 												EndLine:   225,
@@ -10921,7 +10921,7 @@ func TestPhp7(t *testing.T) {
 						EndPos:    4750,
 					},
 					Items: []*expr.ArrayItem{
-						&expr.ArrayItem{
+						{
 							Position: &position.Position{
 								StartLine: 238,
 								EndLine:   238,
@@ -10957,7 +10957,7 @@ func TestPhp7(t *testing.T) {
 						EndPos:    4766,
 					},
 					Items: []*expr.ArrayItem{
-						&expr.ArrayItem{
+						{
 							Position: &position.Position{
 								StartLine: 239,
 								EndLine:   239,
@@ -10983,7 +10983,7 @@ func TestPhp7(t *testing.T) {
 								Value: "1",
 							},
 						},
-						&expr.ArrayItem{
+						{
 							Position: &position.Position{
 								StartLine: 239,
 								EndLine:   239,
@@ -11016,7 +11016,7 @@ func TestPhp7(t *testing.T) {
 								},
 							},
 						},
-						&expr.ArrayItem{},
+						{},
 					},
 				},
 			},
@@ -11043,7 +11043,7 @@ func TestPhp7(t *testing.T) {
 							EndPos:    4775,
 						},
 						Items: []*expr.ArrayItem{
-							&expr.ArrayItem{
+							{
 								Position: &position.Position{
 									StartLine: 241,
 									EndLine:   241,
@@ -11112,7 +11112,7 @@ func TestPhp7(t *testing.T) {
 							EndPos:    4790,
 						},
 						Items: []*expr.ArrayItem{
-							&expr.ArrayItem{
+							{
 								Position: &position.Position{
 									StartLine: 242,
 									EndLine:   242,
@@ -11189,7 +11189,7 @@ func TestPhp7(t *testing.T) {
 							EndPos:    4809,
 						},
 						Items: []*expr.ArrayItem{
-							&expr.ArrayItem{
+							{
 								Position: &position.Position{
 									StartLine: 243,
 									EndLine:   243,
@@ -11204,7 +11204,7 @@ func TestPhp7(t *testing.T) {
 										EndPos:    4808,
 									},
 									Items: []*expr.ArrayItem{
-										&expr.ArrayItem{
+										{
 											Position: &position.Position{
 												StartLine: 243,
 												EndLine:   243,
@@ -14598,7 +14598,7 @@ func TestPhp7(t *testing.T) {
 							Value: "class",
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 317,
 									EndLine:   317,
@@ -15059,7 +15059,7 @@ func TestPhp7(t *testing.T) {
 							Value: "bar",
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 330,
 									EndLine:   330,
@@ -15068,7 +15068,7 @@ func TestPhp7(t *testing.T) {
 								},
 								Value: "abstract",
 							},
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 330,
 									EndLine:   330,
@@ -15077,7 +15077,7 @@ func TestPhp7(t *testing.T) {
 								},
 								Value: "protected",
 							},
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 330,
 									EndLine:   330,
@@ -15115,7 +15115,7 @@ func TestPhp7(t *testing.T) {
 							Value: "baz",
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 330,
 									EndLine:   330,
@@ -15124,7 +15124,7 @@ func TestPhp7(t *testing.T) {
 								},
 								Value: "final",
 							},
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 330,
 									EndLine:   330,
@@ -15279,7 +15279,7 @@ func TestPhp7(t *testing.T) {
 								EndPos:    6143,
 							},
 							Items: []*expr.ArrayItem{
-								&expr.ArrayItem{
+								{
 									Position: &position.Position{
 										StartLine: 334,
 										EndLine:   334,
@@ -15457,7 +15457,7 @@ func TestPhp7(t *testing.T) {
 								EndPos:    6178,
 							},
 							Items: []*expr.ArrayItem{
-								&expr.ArrayItem{
+								{
 									Position: &position.Position{
 										StartLine: 337,
 										EndLine:   337,
@@ -15825,7 +15825,7 @@ func TestPhp7(t *testing.T) {
 						EndPos:    6296,
 					},
 					Items: []*expr.ArrayItem{
-						&expr.ArrayItem{
+						{
 							Position: &position.Position{
 								StartLine: 346,
 								EndLine:   346,
@@ -15867,7 +15867,7 @@ func TestPhp7(t *testing.T) {
 								},
 							},
 						},
-						&expr.ArrayItem{
+						{
 							Position: &position.Position{
 								StartLine: 346,
 								EndLine:   346,
@@ -15891,7 +15891,7 @@ func TestPhp7(t *testing.T) {
 									EndPos:    6295,
 								},
 								Items: []*expr.ArrayItem{
-									&expr.ArrayItem{
+									{
 										Position: &position.Position{
 											StartLine: 346,
 											EndLine:   346,

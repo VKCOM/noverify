@@ -42,13 +42,6 @@ func (n *Interface) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *Interface) Attributes() map[string]interface{} {
-	return map[string]interface{}{
-		"PhpDocComment": n.PhpDocComment,
-	}
-}
-
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *Interface) Walk(v walker.Visitor) {
@@ -57,25 +50,19 @@ func (n *Interface) Walk(v walker.Visitor) {
 	}
 
 	if n.InterfaceName != nil {
-		v.EnterChildNode("InterfaceName", n)
 		n.InterfaceName.Walk(v)
-		v.LeaveChildNode("InterfaceName", n)
 	}
 
 	if n.Extends != nil {
-		v.EnterChildNode("Extends", n)
 		n.Extends.Walk(v)
-		v.LeaveChildNode("Extends", n)
 	}
 
 	if n.Stmts != nil {
-		v.EnterChildList("Stmts", n)
 		for _, nn := range n.Stmts {
 			if nn != nil {
 				nn.Walk(v)
 			}
 		}
-		v.LeaveChildList("Stmts", n)
 	}
 
 	v.LeaveNode(n)

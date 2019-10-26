@@ -38,11 +38,6 @@ func (n *TraitUsePrecedence) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *TraitUsePrecedence) Attributes() map[string]interface{} {
-	return nil
-}
-
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *TraitUsePrecedence) Walk(v walker.Visitor) {
@@ -51,19 +46,15 @@ func (n *TraitUsePrecedence) Walk(v walker.Visitor) {
 	}
 
 	if n.Ref != nil {
-		v.EnterChildNode("Ref", n)
 		n.Ref.Walk(v)
-		v.LeaveChildNode("Ref", n)
 	}
 
 	if n.Insteadof != nil {
-		v.EnterChildList("Insteadof", n)
 		for _, nn := range n.Insteadof {
 			if nn != nil {
 				nn.Walk(v)
 			}
 		}
-		v.LeaveChildList("Insteadof", n)
 	}
 
 	v.LeaveNode(n)

@@ -6,9 +6,9 @@ import (
 	"sort"
 
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/vscode"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
+	"github.com/VKCOM/noverify/src/vscode"
 )
 
 // MetaCacher is an interface for integrating checker-specific

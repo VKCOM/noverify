@@ -63,11 +63,6 @@ type RootWalker struct {
 	Diagnostics []vscode.Diagnostic
 }
 
-func (d *RootWalker) EnterChildNode(key string, w walker.Walkable) {}
-func (d *RootWalker) LeaveChildNode(key string, w walker.Walkable) {}
-func (d *RootWalker) EnterChildList(key string, w walker.Walkable) {}
-func (d *RootWalker) LeaveChildList(key string, w walker.Walkable) {}
-
 type phpDocParamEl struct {
 	optional bool
 	typ      meta.TypesMap
@@ -1302,11 +1297,6 @@ func (d *RootWalker) enterConstList(lst *stmt.ConstList) bool {
 	}
 
 	return false
-}
-
-// GetChildrenVisitor is invoked at every node parameter that contains children nodes
-func (d *RootWalker) GetChildrenVisitor(key string) walker.Visitor {
-	return d
 }
 
 // LeaveNode is invoked after node process

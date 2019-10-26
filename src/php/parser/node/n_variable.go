@@ -36,11 +36,6 @@ func (n *Variable) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *Variable) Attributes() map[string]interface{} {
-	return nil
-}
-
 // SetVarName reset var name
 func (n *Variable) SetVarName(VarName Node) {
 	n.VarName = VarName
@@ -54,9 +49,7 @@ func (n *Variable) Walk(v walker.Visitor) {
 	}
 
 	if n.VarName != nil {
-		v.EnterChildNode("VarName", n)
 		n.VarName.Walk(v)
-		v.LeaveChildNode("VarName", n)
 	}
 
 	v.LeaveNode(n)

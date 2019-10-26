@@ -40,13 +40,6 @@ func (n *Trait) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *Trait) Attributes() map[string]interface{} {
-	return map[string]interface{}{
-		"PhpDocComment": n.PhpDocComment,
-	}
-}
-
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *Trait) Walk(v walker.Visitor) {
@@ -55,19 +48,15 @@ func (n *Trait) Walk(v walker.Visitor) {
 	}
 
 	if n.TraitName != nil {
-		v.EnterChildNode("TraitName", n)
 		n.TraitName.Walk(v)
-		v.LeaveChildNode("TraitName", n)
 	}
 
 	if n.Stmts != nil {
-		v.EnterChildList("Stmts", n)
 		for _, nn := range n.Stmts {
 			if nn != nil {
 				nn.Walk(v)
 			}
 		}
-		v.LeaveChildList("Stmts", n)
 	}
 
 	v.LeaveNode(n)

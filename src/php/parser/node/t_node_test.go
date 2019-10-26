@@ -981,7 +981,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 							Value: "foo",
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 3,
 									EndLine:   3,

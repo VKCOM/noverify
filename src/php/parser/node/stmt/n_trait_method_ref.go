@@ -38,11 +38,6 @@ func (n *TraitMethodRef) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *TraitMethodRef) Attributes() map[string]interface{} {
-	return nil
-}
-
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *TraitMethodRef) Walk(v walker.Visitor) {
@@ -51,15 +46,11 @@ func (n *TraitMethodRef) Walk(v walker.Visitor) {
 	}
 
 	if n.Trait != nil {
-		v.EnterChildNode("Trait", n)
 		n.Trait.Walk(v)
-		v.LeaveChildNode("Trait", n)
 	}
 
 	if n.Method != nil {
-		v.EnterChildNode("Method", n)
 		n.Method.Walk(v)
-		v.LeaveChildNode("Method", n)
 	}
 
 	v.LeaveNode(n)

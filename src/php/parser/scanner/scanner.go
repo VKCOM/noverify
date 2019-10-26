@@ -10,8 +10,8 @@ package scanner
 
 import (
 	"fmt"
-	"github.com/cznic/golex/lex"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
+	"github.com/cznic/golex/lex"
 )
 
 const (

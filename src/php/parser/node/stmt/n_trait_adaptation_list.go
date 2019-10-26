@@ -36,11 +36,6 @@ func (n *TraitAdaptationList) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *TraitAdaptationList) Attributes() map[string]interface{} {
-	return nil
-}
-
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *TraitAdaptationList) Walk(v walker.Visitor) {
@@ -49,13 +44,11 @@ func (n *TraitAdaptationList) Walk(v walker.Visitor) {
 	}
 
 	if n.Adaptations != nil {
-		v.EnterChildList("Adaptations", n)
 		for _, nn := range n.Adaptations {
 			if nn != nil {
 				nn.Walk(v)
 			}
 		}
-		v.LeaveChildList("Adaptations", n)
 	}
 
 	v.LeaveNode(n)

@@ -51,7 +51,7 @@ func TestClassConstList(t *testing.T) {
 							EndPos:    44,
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,

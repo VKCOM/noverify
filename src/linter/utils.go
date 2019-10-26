@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/printer"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
+	"github.com/VKCOM/noverify/src/solver"
 )
 
 // FmtNode is used for debug purposes and returns string representation of a specified node.

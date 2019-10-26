@@ -35,13 +35,6 @@ func (n *Dnumber) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *Dnumber) Attributes() map[string]interface{} {
-	return map[string]interface{}{
-		"Value": n.Value,
-	}
-}
-
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *Dnumber) Walk(v walker.Visitor) {

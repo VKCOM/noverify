@@ -79,7 +79,7 @@ func TestShortArrayItem(t *testing.T) {
 						EndPos:    6,
 					},
 					Items: []*expr.ArrayItem{
-						&expr.ArrayItem{
+						{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -135,7 +135,7 @@ func TestShortArrayItems(t *testing.T) {
 						EndPos:    15,
 					},
 					Items: []*expr.ArrayItem{
-						&expr.ArrayItem{
+						{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -161,7 +161,7 @@ func TestShortArrayItems(t *testing.T) {
 								Value: "1",
 							},
 						},
-						&expr.ArrayItem{
+						{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
@@ -194,7 +194,7 @@ func TestShortArrayItems(t *testing.T) {
 								},
 							},
 						},
-						&expr.ArrayItem{},
+						{},
 					},
 				},
 			},

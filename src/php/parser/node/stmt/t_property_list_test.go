@@ -50,7 +50,7 @@ func TestProperty(t *testing.T) {
 							EndPos:    21,
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -129,7 +129,7 @@ func TestProperties(t *testing.T) {
 							EndPos:    39,
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -138,7 +138,7 @@ func TestProperties(t *testing.T) {
 								},
 								Value: "public",
 							},
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -244,7 +244,7 @@ func TestProperties2(t *testing.T) {
 							EndPos:    39,
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -253,7 +253,7 @@ func TestProperties2(t *testing.T) {
 								},
 								Value: "public",
 							},
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,

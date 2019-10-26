@@ -36,11 +36,6 @@ func (n *PreInc) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *PreInc) Attributes() map[string]interface{} {
-	return nil
-}
-
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *PreInc) Walk(v walker.Visitor) {
@@ -49,9 +44,7 @@ func (n *PreInc) Walk(v walker.Visitor) {
 	}
 
 	if n.Variable != nil {
-		v.EnterChildNode("Variable", n)
 		n.Variable.Walk(v)
-		v.LeaveChildNode("Variable", n)
 	}
 
 	v.LeaveNode(n)

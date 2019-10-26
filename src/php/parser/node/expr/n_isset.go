@@ -36,11 +36,6 @@ func (n *Isset) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *Isset) Attributes() map[string]interface{} {
-	return nil
-}
-
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *Isset) Walk(v walker.Visitor) {
@@ -49,13 +44,11 @@ func (n *Isset) Walk(v walker.Visitor) {
 	}
 
 	if n.Variables != nil {
-		v.EnterChildList("Variables", n)
 		for _, nn := range n.Variables {
 			if nn != nil {
 				nn.Walk(v)
 			}
 		}
-		v.LeaveChildList("Variables", n)
 	}
 
 	v.LeaveNode(n)

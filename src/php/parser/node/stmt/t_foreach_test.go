@@ -546,7 +546,7 @@ func TestForeachWithList(t *testing.T) {
 						EndPos:    32,
 					},
 					Items: []*expr.ArrayItem{
-						&expr.ArrayItem{
+						{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,

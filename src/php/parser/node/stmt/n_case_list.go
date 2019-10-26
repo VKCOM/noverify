@@ -36,11 +36,6 @@ func (n *CaseList) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *CaseList) Attributes() map[string]interface{} {
-	return nil
-}
-
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *CaseList) Walk(v walker.Visitor) {
@@ -49,13 +44,11 @@ func (n *CaseList) Walk(v walker.Visitor) {
 	}
 
 	if n.Cases != nil {
-		v.EnterChildList("Cases", n)
 		for _, nn := range n.Cases {
 			if nn != nil {
 				nn.Walk(v)
 			}
 		}
-		v.LeaveChildList("Cases", n)
 	}
 
 	v.LeaveNode(n)

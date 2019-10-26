@@ -35,13 +35,6 @@ func (n *MagicConstant) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *MagicConstant) Attributes() map[string]interface{} {
-	return map[string]interface{}{
-		"Value": n.Value,
-	}
-}
-
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *MagicConstant) Walk(v walker.Visitor) {

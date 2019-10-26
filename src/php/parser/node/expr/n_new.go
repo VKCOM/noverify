@@ -38,11 +38,6 @@ func (n *New) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *New) Attributes() map[string]interface{} {
-	return nil
-}
-
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *New) Walk(v walker.Visitor) {
@@ -51,15 +46,11 @@ func (n *New) Walk(v walker.Visitor) {
 	}
 
 	if n.Class != nil {
-		v.EnterChildNode("Class", n)
 		n.Class.Walk(v)
-		v.LeaveChildNode("Class", n)
 	}
 
 	if n.ArgumentList != nil {
-		v.EnterChildNode("ArgumentList", n)
 		n.ArgumentList.Walk(v)
-		v.LeaveChildNode("ArgumentList", n)
 	}
 
 	v.LeaveNode(n)

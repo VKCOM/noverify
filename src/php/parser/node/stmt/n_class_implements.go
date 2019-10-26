@@ -36,11 +36,6 @@ func (n *ClassImplements) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *ClassImplements) Attributes() map[string]interface{} {
-	return nil
-}
-
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *ClassImplements) Walk(v walker.Visitor) {
@@ -49,13 +44,11 @@ func (n *ClassImplements) Walk(v walker.Visitor) {
 	}
 
 	if n.InterfaceNames != nil {
-		v.EnterChildList("InterfaceNames", n)
 		for _, nn := range n.InterfaceNames {
 			if nn != nil {
 				nn.Walk(v)
 			}
 		}
-		v.LeaveChildList("InterfaceNames", n)
 	}
 
 	v.LeaveNode(n)

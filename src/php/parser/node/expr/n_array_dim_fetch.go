@@ -38,11 +38,6 @@ func (n *ArrayDimFetch) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *ArrayDimFetch) Attributes() map[string]interface{} {
-	return nil
-}
-
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *ArrayDimFetch) Walk(v walker.Visitor) {
@@ -51,15 +46,11 @@ func (n *ArrayDimFetch) Walk(v walker.Visitor) {
 	}
 
 	if n.Variable != nil {
-		v.EnterChildNode("Variable", n)
 		n.Variable.Walk(v)
-		v.LeaveChildNode("Variable", n)
 	}
 
 	if n.Dim != nil {
-		v.EnterChildNode("Dim", n)
 		n.Dim.Walk(v)
-		v.LeaveChildNode("Dim", n)
 	}
 
 	v.LeaveNode(n)
