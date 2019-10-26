@@ -15,8 +15,6 @@ import (
 )
 
 type definitionWalker struct {
-	dummyWalker
-
 	st meta.ClassParseState
 
 	position int
@@ -290,11 +288,6 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 	}
 
 	return true
-}
-
-// GetChildrenVisitor is invoked at every node parameter that contains children nodes
-func (d *definitionWalker) GetChildrenVisitor(key string) walker.Visitor {
-	return d
 }
 
 // LeaveNode is invoked after node process

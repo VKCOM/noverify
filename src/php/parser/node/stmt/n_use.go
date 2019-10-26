@@ -39,11 +39,6 @@ func (n *Use) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *Use) Attributes() map[string]interface{} {
-	return nil
-}
-
 // SetUseType set use type and returns node
 func (n *Use) SetUseType(UseType *node.Identifier) node.Node {
 	n.UseType = UseType
@@ -58,21 +53,15 @@ func (n *Use) Walk(v walker.Visitor) {
 	}
 
 	if n.UseType != nil {
-		v.EnterChildNode("UseType", n)
 		n.UseType.Walk(v)
-		v.LeaveChildNode("UseType", n)
 	}
 
 	if n.Use != nil {
-		v.EnterChildNode("Use", n)
 		n.Use.Walk(v)
-		v.LeaveChildNode("Use", n)
 	}
 
 	if n.Alias != nil {
-		v.EnterChildNode("Alias", n)
 		n.Alias.Walk(v)
-		v.LeaveChildNode("Alias", n)
 	}
 
 	v.LeaveNode(n)

@@ -36,11 +36,6 @@ func (n *ConstFetch) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *ConstFetch) Attributes() map[string]interface{} {
-	return nil
-}
-
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *ConstFetch) Walk(v walker.Visitor) {
@@ -49,9 +44,7 @@ func (n *ConstFetch) Walk(v walker.Visitor) {
 	}
 
 	if n.Constant != nil {
-		v.EnterChildNode("Constant", n)
 		n.Constant.Walk(v)
-		v.LeaveChildNode("Constant", n)
 	}
 
 	v.LeaveNode(n)

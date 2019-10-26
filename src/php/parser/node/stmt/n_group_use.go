@@ -40,11 +40,6 @@ func (n *GroupUse) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *GroupUse) Attributes() map[string]interface{} {
-	return nil
-}
-
 // SetUseType set use type and returns node
 func (n *GroupUse) SetUseType(UseType node.Node) node.Node {
 	n.UseType = UseType
@@ -59,25 +54,19 @@ func (n *GroupUse) Walk(v walker.Visitor) {
 	}
 
 	if n.UseType != nil {
-		v.EnterChildNode("UseType", n)
 		n.UseType.Walk(v)
-		v.LeaveChildNode("UseType", n)
 	}
 
 	if n.Prefix != nil {
-		v.EnterChildNode("Prefix", n)
 		n.Prefix.Walk(v)
-		v.LeaveChildNode("Prefix", n)
 	}
 
 	if n.UseList != nil {
-		v.EnterChildList("UseList", n)
 		for _, nn := range n.UseList {
 			if nn != nil {
 				nn.Walk(v)
 			}
 		}
-		v.LeaveChildList("UseList", n)
 	}
 
 	v.LeaveNode(n)

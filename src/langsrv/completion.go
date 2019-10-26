@@ -2,14 +2,12 @@ package langsrv
 
 import (
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/state"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
+	"github.com/VKCOM/noverify/src/state"
 )
 
 type completionWalker struct {
-	dummyWalker
-
 	// params
 	position int
 	scopes   map[node.Node]*meta.Scope
@@ -24,11 +22,6 @@ func (d *completionWalker) EnterNode(w walker.Walkable) bool {
 	state.EnterNode(&d.st, w)
 
 	return d.foundScope == nil
-}
-
-// GetChildrenVisitor is invoked at every node parameter that contains children nodes
-func (d *completionWalker) GetChildrenVisitor(key string) walker.Visitor {
-	return d
 }
 
 // LeaveNode is invoked after node process

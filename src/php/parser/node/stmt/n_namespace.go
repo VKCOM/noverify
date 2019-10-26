@@ -38,11 +38,6 @@ func (n *Namespace) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *Namespace) Attributes() map[string]interface{} {
-	return nil
-}
-
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *Namespace) Walk(v walker.Visitor) {
@@ -51,19 +46,15 @@ func (n *Namespace) Walk(v walker.Visitor) {
 	}
 
 	if n.NamespaceName != nil {
-		v.EnterChildNode("NamespaceName", n)
 		n.NamespaceName.Walk(v)
-		v.LeaveChildNode("NamespaceName", n)
 	}
 
 	if n.Stmts != nil {
-		v.EnterChildList("Stmts", n)
 		for _, nn := range n.Stmts {
 			if nn != nil {
 				nn.Walk(v)
 			}
 		}
-		v.LeaveChildList("Stmts", n)
 	}
 
 	v.LeaveNode(n)

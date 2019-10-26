@@ -43,11 +43,6 @@ func (n *If) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *If) Attributes() map[string]interface{} {
-	return nil
-}
-
 // AddElseIf add ElseIf node and returns AltIf node
 func (n *If) AddElseIf(ElseIf node.Node) node.Node {
 	if n.ElseIf == nil {
@@ -74,31 +69,23 @@ func (n *If) Walk(v walker.Visitor) {
 	}
 
 	if n.Cond != nil {
-		v.EnterChildNode("Cond", n)
 		n.Cond.Walk(v)
-		v.LeaveChildNode("Cond", n)
 	}
 
 	if n.Stmt != nil {
-		v.EnterChildNode("Stmt", n)
 		n.Stmt.Walk(v)
-		v.LeaveChildNode("Stmt", n)
 	}
 
 	if n.ElseIf != nil {
-		v.EnterChildList("ElseIf", n)
 		for _, nn := range n.ElseIf {
 			if nn != nil {
 				nn.Walk(v)
 			}
 		}
-		v.LeaveChildList("ElseIf", n)
 	}
 
 	if n.Else != nil {
-		v.EnterChildNode("Else", n)
 		n.Else.Walk(v)
-		v.LeaveChildNode("Else", n)
 	}
 
 	v.LeaveNode(n)

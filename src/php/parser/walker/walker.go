@@ -12,10 +12,4 @@ type Walkable interface {
 type Visitor interface {
 	EnterNode(w Walkable) bool
 	LeaveNode(w Walkable)
-
-	EnterChildNode(key string, w Walkable)
-	LeaveChildNode(key string, w Walkable)
-
-	EnterChildList(key string, w Walkable)
-	LeaveChildList(key string, w Walkable)
 }

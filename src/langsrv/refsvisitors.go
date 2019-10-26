@@ -119,8 +119,6 @@ func findPropertyReferences(className string, propName string) []vscode.Location
 }
 
 type funcCallVisitor struct {
-	dummyWalker
-
 	st       meta.ClassParseState
 	funcName string
 	filename string
@@ -149,19 +147,12 @@ func (d *funcCallVisitor) EnterNode(w walker.Walkable) bool {
 	return true
 }
 
-// GetChildrenVisitor is invoked at every node parameter that contains children nodes
-func (d *funcCallVisitor) GetChildrenVisitor(key string) walker.Visitor {
-	return d
-}
-
 // LeaveNode is invoked after node process
 func (d *funcCallVisitor) LeaveNode(w walker.Walkable) {
 	state.LeaveNode(&d.st, w)
 }
 
 type staticMethodCallVisitor struct {
-	dummyWalker
-
 	// params
 	className  string
 	methodName string
@@ -204,19 +195,12 @@ func (d *staticMethodCallVisitor) EnterNode(w walker.Walkable) bool {
 	return true
 }
 
-// GetChildrenVisitor is invoked at every node parameter that contains children nodes
-func (d *staticMethodCallVisitor) GetChildrenVisitor(key string) walker.Visitor {
-	return d
-}
-
 // LeaveNode is invoked after node process
 func (d *staticMethodCallVisitor) LeaveNode(w walker.Walkable) {
 	state.LeaveNode(&d.st, w)
 }
 
 type constVisitor struct {
-	dummyWalker
-
 	// params
 	constName string
 	filename  string
@@ -250,19 +234,12 @@ func (d *constVisitor) EnterNode(w walker.Walkable) bool {
 	return true
 }
 
-// GetChildrenVisitor is invoked at every node parameter that contains children nodes
-func (d *constVisitor) GetChildrenVisitor(key string) walker.Visitor {
-	return d
-}
-
 // LeaveNode is invoked after node process
 func (d *constVisitor) LeaveNode(w walker.Walkable) {
 	state.LeaveNode(&d.st, w)
 }
 
 type classConstVisitor struct {
-	dummyWalker
-
 	// params
 	className string
 	constName string
@@ -305,11 +282,6 @@ func (d *classConstVisitor) EnterNode(w walker.Walkable) bool {
 	}
 
 	return true
-}
-
-// GetChildrenVisitor is invoked at every node parameter that contains children nodes
-func (d *classConstVisitor) GetChildrenVisitor(key string) walker.Visitor {
-	return d
 }
 
 // LeaveNode is invoked after node process
@@ -362,8 +334,6 @@ func (d *blockMethodCallVisitor) BeforeLeaveNode(w walker.Walkable) {}
 func (d *blockMethodCallVisitor) AfterLeaveNode(w walker.Walkable)  {}
 
 type blockPropertyVisitor struct {
-	dummyWalker
-
 	ctx *linter.BlockContext
 
 	className string

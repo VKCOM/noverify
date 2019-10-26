@@ -109,7 +109,7 @@ func TestList(t *testing.T) {
 							EndPos:    11,
 						},
 						Items: []*expr.ArrayItem{
-							&expr.ArrayItem{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -197,7 +197,7 @@ func TestListArrayIndex(t *testing.T) {
 							EndPos:    13,
 						},
 						Items: []*expr.ArrayItem{
-							&expr.ArrayItem{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -293,7 +293,7 @@ func TestListList(t *testing.T) {
 							EndPos:    17,
 						},
 						Items: []*expr.ArrayItem{
-							&expr.ArrayItem{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -308,7 +308,7 @@ func TestListList(t *testing.T) {
 										EndPos:    16,
 									},
 									Items: []*expr.ArrayItem{
-										&expr.ArrayItem{
+										{
 											Position: &position.Position{
 												StartLine: 1,
 												EndLine:   1,
@@ -399,8 +399,8 @@ func TestListEmptyItem(t *testing.T) {
 							EndPos:    13,
 						},
 						Items: []*expr.ArrayItem{
-							&expr.ArrayItem{},
-							&expr.ArrayItem{
+							{},
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -488,9 +488,9 @@ func TestListEmptyItems(t *testing.T) {
 							EndPos:    17,
 						},
 						Items: []*expr.ArrayItem{
-							&expr.ArrayItem{},
-							&expr.ArrayItem{},
-							&expr.ArrayItem{
+							{},
+							{},
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -515,7 +515,7 @@ func TestListEmptyItems(t *testing.T) {
 									},
 								},
 							},
-							&expr.ArrayItem{},
+							{},
 						},
 					},
 					Expression: &node.Variable{

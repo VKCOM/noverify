@@ -48,13 +48,6 @@ func (n *Class) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *Class) Attributes() map[string]interface{} {
-	return map[string]interface{}{
-		"PhpDocComment": n.PhpDocComment,
-	}
-}
-
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *Class) Walk(v walker.Visitor) {
@@ -63,47 +56,35 @@ func (n *Class) Walk(v walker.Visitor) {
 	}
 
 	if n.ClassName != nil {
-		v.EnterChildNode("ClassName", n)
 		n.ClassName.Walk(v)
-		v.LeaveChildNode("ClassName", n)
 	}
 
 	if n.Modifiers != nil {
-		v.EnterChildList("Modifiers", n)
 		for _, nn := range n.Modifiers {
 			if nn != nil {
 				nn.Walk(v)
 			}
 		}
-		v.LeaveChildList("Modifiers", n)
 	}
 
 	if n.ArgumentList != nil {
-		v.EnterChildNode("ArgumentList", n)
 		n.ArgumentList.Walk(v)
-		v.LeaveChildNode("ArgumentList", n)
 	}
 
 	if n.Extends != nil {
-		v.EnterChildNode("Extends", n)
 		n.Extends.Walk(v)
-		v.LeaveChildNode("Extends", n)
 	}
 
 	if n.Implements != nil {
-		v.EnterChildNode("Implements", n)
 		n.Implements.Walk(v)
-		v.LeaveChildNode("Implements", n)
 	}
 
 	if n.Stmts != nil {
-		v.EnterChildList("Stmts", n)
 		for _, nn := range n.Stmts {
 			if nn != nil {
 				nn.Walk(v)
 			}
 		}
-		v.LeaveChildList("Stmts", n)
 	}
 
 	v.LeaveNode(n)

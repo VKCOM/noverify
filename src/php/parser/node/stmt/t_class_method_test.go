@@ -130,7 +130,7 @@ func TestPrivateProtectedClassMethod(t *testing.T) {
 							Value: "bar",
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -139,7 +139,7 @@ func TestPrivateProtectedClassMethod(t *testing.T) {
 								},
 								Value: "final",
 							},
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -178,7 +178,7 @@ func TestPrivateProtectedClassMethod(t *testing.T) {
 							Value: "baz",
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -257,7 +257,7 @@ func TestPhp7ClassMethod(t *testing.T) {
 							Value: "bar",
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -266,7 +266,7 @@ func TestPhp7ClassMethod(t *testing.T) {
 								},
 								Value: "public",
 							},
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -375,7 +375,7 @@ func TestAbstractClassMethod(t *testing.T) {
 							Value: "bar",
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -384,7 +384,7 @@ func TestAbstractClassMethod(t *testing.T) {
 								},
 								Value: "abstract",
 							},
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
@@ -473,7 +473,7 @@ func TestPhp7AbstractClassMethod(t *testing.T) {
 							Value: "bar",
 						},
 						Modifiers: []*node.Identifier{
-							&node.Identifier{
+							{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,

@@ -38,13 +38,6 @@ func (n *Heredoc) GetFreeFloating() *freefloating.Collection {
 	return &n.FreeFloating
 }
 
-// Attributes returns node attributes as map
-func (n *Heredoc) Attributes() map[string]interface{} {
-	return map[string]interface{}{
-		"Label": n.Label,
-	}
-}
-
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *Heredoc) Walk(v walker.Visitor) {
@@ -53,13 +46,11 @@ func (n *Heredoc) Walk(v walker.Visitor) {
 	}
 
 	if n.Parts != nil {
-		v.EnterChildList("Parts", n)
 		for _, nn := range n.Parts {
 			if nn != nil {
 				nn.Walk(v)
 			}
 		}
-		v.LeaveChildList("Parts", n)
 	}
 
 	v.LeaveNode(n)
