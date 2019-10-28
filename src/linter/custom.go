@@ -119,17 +119,17 @@ func (ctx *RootContext) Report(n node.Node, level int, checkName, msg string, ar
 
 // Scope returns variables declared at root level.
 func (ctx *RootContext) Scope() *meta.Scope {
-	return ctx.w.Scope()
+	return ctx.w.scope()
 }
 
 // ClassParseState returns class parse state (namespace, class, etc).
 func (ctx *RootContext) ClassParseState() *meta.ClassParseState {
-	return ctx.w.ClassParseState()
+	return ctx.w.st
 }
 
 // State returns state that can be modified and passed into block context
 func (ctx *RootContext) State() map[string]interface{} {
-	return ctx.w.State()
+	return ctx.w.state()
 }
 
 // Filename returns the file name of the file being analyzed.
@@ -154,36 +154,37 @@ type BlockContext struct {
 // chechName is a key that identifies the "checker" (diagnostic name) that found
 // issue being reported.
 func (ctx *BlockContext) Report(n node.Node, level int, checkName, msg string, args ...interface{}) {
-	ctx.w.Report(n, level, checkName, msg, args...)
+	ctx.w.r.Report(n, level, checkName, msg, args...)
 }
 
 // Scope returns variables declared in this block.
 func (ctx *BlockContext) Scope() *meta.Scope {
-	return ctx.w.Scope()
+	return ctx.w.r.scope()
 }
 
 // ClassParseState returns class parse state (namespace, class, etc).
 func (ctx *BlockContext) ClassParseState() *meta.ClassParseState {
-	return ctx.w.ClassParseState()
+	return ctx.w.r.st
 }
 
 // RootState returns state from root context.
 func (ctx *BlockContext) RootState() map[string]interface{} {
-	return ctx.w.RootState()
+	return ctx.w.r.state()
 }
 
 // IsRootLevel reports whether we are analysing root-level code currently.
 func (ctx *BlockContext) IsRootLevel() bool {
-	return ctx.w.IsRootLevel()
+	return ctx.w.rootLevel
 }
 
 // IsStatement reports whether or not specified node is a statement.
 func (ctx *BlockContext) IsStatement(n node.Node) bool {
-	return ctx.w.IsStatement(n)
+	_, ok := ctx.w.statements[n]
+	return ok
 }
 
 func (ctx *BlockContext) PrematureExitFlags() int {
-	return ctx.w.PrematureExitFlags()
+	return ctx.w.ctx.exitFlags
 }
 
 // Filename returns the file name of the file being analyzed.

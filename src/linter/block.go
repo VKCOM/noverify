@@ -74,43 +74,6 @@ type BlockWalker struct {
 	nonLocalVars map[string]struct{} // static, global and other vars that have complex control flow
 }
 
-// Scope returns block-level variable scope if it exists.
-func (b *BlockWalker) Scope() *meta.Scope {
-	return b.ctx.sc
-}
-
-// PrematureExitFlags returns information about whether or not all code branches have exit/return/throw/etc.
-// You need to check what exactly you expect from a block to have (or not to have) by checking Flag* bits.
-func (b *BlockWalker) PrematureExitFlags() int {
-	return b.ctx.exitFlags
-}
-
-// RootState returns state that was stored in root context (if any) for use in custom hooks.
-func (b *BlockWalker) RootState() map[string]interface{} {
-	return b.r.State()
-}
-
-// IsRootLevel returns whether or not we currently analyze root level code.
-func (b *BlockWalker) IsRootLevel() bool {
-	return b.rootLevel
-}
-
-// Report registers a single report message about some found problem.
-func (b *BlockWalker) Report(n node.Node, level int, checkName, msg string, args ...interface{}) {
-	b.r.Report(n, level, checkName, msg, args...)
-}
-
-// ClassParseState returns class parse state (namespace, current class, etc)
-func (b *BlockWalker) ClassParseState() *meta.ClassParseState {
-	return b.r.st
-}
-
-// IsStatement checks whether or not the specified node is a top-level or a block-level statement.
-func (b *BlockWalker) IsStatement(n node.Node) bool {
-	_, ok := b.statements[n]
-	return ok
-}
-
 func (b *BlockWalker) addStatement(n node.Node) {
 	if b.statements == nil {
 		b.statements = make(map[node.Node]struct{})
@@ -1123,14 +1086,14 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 		}
 
 		if _, ok := keys[key]; ok {
-			b.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", key)
+			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", key)
 		}
 
 		keys[key] = struct{}{}
 	}
 
 	if haveImplicitKeys && haveKeys {
-		b.Report(arr, LevelWarning, "mixedArrayKeys", "Mixing implicit and explicit array keys")
+		b.r.Report(arr, LevelWarning, "mixedArrayKeys", "Mixing implicit and explicit array keys")
 	}
 
 	return false
@@ -2005,5 +1968,5 @@ func (b *BlockWalker) caseHasFallthroughComment(n node.Node) bool {
 }
 
 func (b *BlockWalker) isBool(n node.Node) bool {
-	return solver.ExprType(b.r.Scope(), b.r.st, n).Is("bool")
+	return solver.ExprType(b.r.scope(), b.r.st, n).Is("bool")
 }
