@@ -416,36 +416,36 @@ $dd = new DerivedDerived();
 
 func TestExprTypeSimple(t *testing.T) {
 	tests := []exprTypeTest{
-		// {`true`, "bool"},
-		// {`false`, "bool"},
-		// {`(bool)1`, "bool"},
-		// {`(boolean)1`, "bool"},
+		{`true`, "bool"},
+		{`false`, "bool"},
+		{`(bool)1`, "bool"},
+		{`(boolean)1`, "bool"},
 
-		// {`1`, "int"},
-		// {`(int)1.5`, "int"},
-		// {`(integer)1.5`, "int"},
+		{`1`, "int"},
+		{`(int)1.5`, "int"},
+		{`(integer)1.5`, "int"},
 
-		// {`1.21`, "float"},
-		// {`(float)1`, "float"},
-		// {`(real)1`, "float"},
-		// {`(double)1`, "float"},
+		{`1.21`, "float"},
+		{`(float)1`, "float"},
+		{`(real)1`, "float"},
+		{`(double)1`, "float"},
 
-		// {`""`, "string"},
-		// {`(string)1`, "string"},
+		{`""`, "string"},
+		{`(string)1`, "string"},
 
-		// {`[]`, "mixed[]"},
-		// {`[1, "a", 4.5]`, "mixed[]"},
+		{`[]`, "mixed[]"},
+		{`[1, "a", 4.5]`, "mixed[]"},
 
-		// {`1+5<<2`, `int`},
+		{`1+5<<2`, `int`},
 
-		// {`-1`, `int`},
-		// {`-1.4`, `float`},
-		// {`+1`, `int`},
-		// {`+1.4`, `float`},
+		{`-1`, `int`},
+		{`-1.4`, `float`},
+		{`+1`, `int`},
+		{`+1.4`, `float`},
 
 		{`$int`, "int"},
-		// {`$float`, "float"},
-		// {`$string`, "string"},
+		{`$float`, "float"},
+		{`$string`, "string"},
 	}
 
 	global := `<?php
