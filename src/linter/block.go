@@ -1022,11 +1022,8 @@ func (b *BlockWalker) handleStaticPropertyFetch(e *expr.StaticPropertyFetch) boo
 
 	sv, ok := e.Property.(*node.SimpleVar)
 	if !ok {
-		if vv, ok := e.Property.(*node.Var); ok {
-			vv.Expr.Walk(b)
-		} else {
-			e.Property.Walk(b)
-		}
+		vv := e.Property.(*node.Var)
+		vv.Expr.Walk(b)
 		return false
 	}
 
@@ -1841,11 +1838,8 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 	case *expr.StaticPropertyFetch:
 		sv, ok := v.Property.(*node.SimpleVar)
 		if !ok {
-			if vv, ok := v.Property.(*node.Var); ok {
-				vv.Expr.Walk(b)
-			} else {
-				v.Property.Walk(b)
-			}
+			vv := v.Property.(*node.Var)
+			vv.Expr.Walk(b)
 			break
 		}
 
