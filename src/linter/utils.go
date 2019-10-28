@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
+	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/printer"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/solver"
@@ -67,12 +69,25 @@ type nodeVisitor struct {
 	enterNode func(walker.Walkable) bool
 }
 
-func (v nodeVisitor) EnterChildNode(key string, w walker.Walkable) {}
-func (v nodeVisitor) LeaveChildNode(key string, w walker.Walkable) {}
-func (v nodeVisitor) EnterChildList(key string, w walker.Walkable) {}
-func (v nodeVisitor) LeaveChildList(key string, w walker.Walkable) {}
-func (v nodeVisitor) LeaveNode(w walker.Walkable)                  {}
+func (v nodeVisitor) LeaveNode(w walker.Walkable) {}
 
 func (v nodeVisitor) EnterNode(w walker.Walkable) bool {
 	return v.enterNode(w)
+}
+
+func varToString(v node.Node) string {
+	switch t := v.(type) {
+	case *node.SimpleVar:
+		return t.Name
+	case *node.Var:
+		return "$" + varToString(t.Expr)
+	case *expr.FunctionCall:
+		// TODO: support function calls here :)
+		return ""
+	case *scalar.String:
+		// Things like ${"x"}
+		return "${" + t.Value + "}"
+	default:
+		return ""
+	}
 }

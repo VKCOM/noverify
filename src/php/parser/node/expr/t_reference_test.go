@@ -32,39 +32,23 @@ func TestForeachWithRef(t *testing.T) {
 					StartPos:  4,
 					EndPos:    31,
 				},
-				Expr: &node.Variable{
+				Expr: &node.SimpleVar{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
 						StartPos:  13,
 						EndPos:    14,
 					},
-					VarName: &node.Identifier{
-						Position: &position.Position{
-							StartLine: 1,
-							EndLine:   1,
-							StartPos:  13,
-							EndPos:    14,
-						},
-						Value: "a",
-					},
+					Name: "a",
 				},
-				Key: &node.Variable{
+				Key: &node.SimpleVar{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
 						StartPos:  19,
 						EndPos:    20,
 					},
-					VarName: &node.Identifier{
-						Position: &position.Position{
-							StartLine: 1,
-							EndLine:   1,
-							StartPos:  19,
-							EndPos:    20,
-						},
-						Value: "k",
-					},
+					Name: "k",
 				},
 				Variable: &expr.Reference{
 					Position: &position.Position{
@@ -73,22 +57,14 @@ func TestForeachWithRef(t *testing.T) {
 						StartPos:  25,
 						EndPos:    27,
 					},
-					Variable: &node.Variable{
+					Variable: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  26,
 							EndPos:    27,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  26,
-								EndPos:    27,
-							},
-							Value: "v",
-						},
+						Name: "v",
 					},
 				},
 				Stmt: &stmt.StmtList{

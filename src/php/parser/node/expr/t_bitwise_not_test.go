@@ -38,22 +38,14 @@ func TestBitwiseNot(t *testing.T) {
 						StartPos:  4,
 						EndPos:    6,
 					},
-					Expr: &node.Variable{
+					Expr: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  5,
 							EndPos:    6,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  5,
-								EndPos:    6,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
 				},
 			},

@@ -45,22 +45,14 @@ func TestFor(t *testing.T) {
 							StartPos:  8,
 							EndPos:    13,
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  8,
 								EndPos:    9,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  8,
-									EndPos:    9,
-								},
-								Value: "i",
-							},
+							Name: "i",
 						},
 						Expression: &scalar.Lnumber{
 							Position: &position.Position{
@@ -81,22 +73,14 @@ func TestFor(t *testing.T) {
 							StartPos:  16,
 							EndPos:    22,
 						},
-						Left: &node.Variable{
+						Left: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  16,
 								EndPos:    17,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  16,
-									EndPos:    17,
-								},
-								Value: "i",
-							},
+							Name: "i",
 						},
 						Right: &scalar.Lnumber{
 							Position: &position.Position{
@@ -117,22 +101,14 @@ func TestFor(t *testing.T) {
 							StartPos:  25,
 							EndPos:    28,
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  25,
 								EndPos:    26,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  25,
-									EndPos:    26,
-								},
-								Value: "i",
-							},
+							Name: "i",
 						},
 					},
 					&expr.PostInc{
@@ -142,22 +118,14 @@ func TestFor(t *testing.T) {
 							StartPos:  31,
 							EndPos:    34,
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  31,
 								EndPos:    32,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  31,
-									EndPos:    32,
-								},
-								Value: "i",
-							},
+							Name: "i",
 						},
 					},
 				},
@@ -207,22 +175,14 @@ func TestAltFor(t *testing.T) {
 							StartPos:  10,
 							EndPos:    16,
 						},
-						Left: &node.Variable{
+						Left: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  10,
 								EndPos:    11,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  10,
-									EndPos:    11,
-								},
-								Value: "i",
-							},
+							Name: "i",
 						},
 						Right: &scalar.Lnumber{
 							Position: &position.Position{
@@ -243,22 +203,14 @@ func TestAltFor(t *testing.T) {
 							StartPos:  19,
 							EndPos:    22,
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  19,
 								EndPos:    20,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  19,
-									EndPos:    20,
-								},
-								Value: "i",
-							},
+							Name: "i",
 						},
 					},
 				},

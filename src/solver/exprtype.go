@@ -213,12 +213,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 
 		return meta.NewTypesMap(meta.WrapStaticMethodCall(nm, id.Value))
 	case *expr.StaticPropertyFetch:
-		v, ok := n.Property.(*node.Variable)
-		if !ok {
-			return meta.TypesMap{}
-		}
-
-		id, ok := v.VarName.(*node.Identifier)
+		v, ok := n.Property.(*node.SimpleVar)
 		if !ok {
 			return meta.TypesMap{}
 		}
@@ -228,13 +223,10 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 			return meta.TypesMap{}
 		}
 
-		return meta.NewTypesMap(meta.WrapStaticPropertyFetch(nm, "$"+id.Value))
-	case *node.Variable:
-		id, ok := n.VarName.(*node.Identifier)
-		if ok {
-			typ, _ := sc.GetVarNameType(id.Value)
-			return typ
-		}
+		return meta.NewTypesMap(meta.WrapStaticPropertyFetch(nm, "$"+v.Name))
+	case *node.SimpleVar:
+		typ, _ := sc.GetVarNameType(n.Name)
+		return typ
 	case *expr.MethodCall:
 		// Support only $obj->callSomething().
 		// Do not support $obj->$method()

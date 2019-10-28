@@ -52,22 +52,14 @@ LBL;
 							},
 							Value: "test ",
 						},
-						&node.Variable{
+						&node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
 								StartPos:  16,
 								EndPos:    19,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 2,
-									EndLine:   2,
-									StartPos:  16,
-									EndPos:    19,
-								},
-								Value: "var",
-							},
+							Name: "var",
 						},
 					},
 				},
@@ -120,22 +112,14 @@ LBL;
 							},
 							Value: "test ",
 						},
-						&node.Variable{
+						&node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
 								StartPos:  18,
 								EndPos:    21,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 2,
-									EndLine:   2,
-									StartPos:  18,
-									EndPos:    21,
-								},
-								Value: "var",
-							},
+							Name: "var",
 						},
 					},
 				},

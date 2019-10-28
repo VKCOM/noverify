@@ -39,22 +39,14 @@ func TestArrayDimFetch(t *testing.T) {
 						StartPos:  4,
 						EndPos:    8,
 					},
-					Variable: &node.Variable{
+					Variable: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
 					Dim: &scalar.Lnumber{
 						Position: &position.Position{
@@ -108,22 +100,14 @@ func TestArrayDimFetchNested(t *testing.T) {
 							StartPos:  4,
 							EndPos:    8,
 						},
-						Variable: &node.Variable{
+						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  4,
 								EndPos:    5,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  4,
-									EndPos:    5,
-								},
-								Value: "a",
-							},
+							Name: "a",
 						},
 						Dim: &scalar.Lnumber{
 							Position: &position.Position{

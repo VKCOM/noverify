@@ -38,56 +38,32 @@ func TestTernary(t *testing.T) {
 						StartPos:  4,
 						EndPos:    15,
 					},
-					Condition: &node.Variable{
+					Condition: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					IfTrue: &node.Variable{
+					IfTrue: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  9,
 							EndPos:    10,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  9,
-								EndPos:    10,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
-					IfFalse: &node.Variable{
+					IfFalse: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  14,
 							EndPos:    15,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  14,
-								EndPos:    15,
-							},
-							Value: "c",
-						},
+						Name: "c",
 					},
 				},
 			},
@@ -125,39 +101,23 @@ func TestTernarySimple(t *testing.T) {
 						StartPos:  4,
 						EndPos:    12,
 					},
-					Condition: &node.Variable{
+					Condition: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					IfFalse: &node.Variable{
+					IfFalse: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  11,
 							EndPos:    12,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  11,
-								EndPos:    12,
-							},
-							Value: "c",
-						},
+						Name: "c",
 					},
 				},
 			},
@@ -195,22 +155,14 @@ func TestTernaryNestedTrue(t *testing.T) {
 						StartPos:  4,
 						EndPos:    25,
 					},
-					Condition: &node.Variable{
+					Condition: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
 					IfTrue: &expr.Ternary{
 						Position: &position.Position{
@@ -219,74 +171,42 @@ func TestTernaryNestedTrue(t *testing.T) {
 							StartPos:  9,
 							EndPos:    20,
 						},
-						Condition: &node.Variable{
+						Condition: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  9,
 								EndPos:    10,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  9,
-									EndPos:    10,
-								},
-								Value: "b",
-							},
+							Name: "b",
 						},
-						IfTrue: &node.Variable{
+						IfTrue: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  14,
 								EndPos:    15,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  14,
-									EndPos:    15,
-								},
-								Value: "c",
-							},
+							Name: "c",
 						},
-						IfFalse: &node.Variable{
+						IfFalse: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  19,
 								EndPos:    20,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  19,
-									EndPos:    20,
-								},
-								Value: "d",
-							},
+							Name: "d",
 						},
 					},
-					IfFalse: &node.Variable{
+					IfFalse: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  24,
 							EndPos:    25,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  24,
-								EndPos:    25,
-							},
-							Value: "e",
-						},
+						Name: "e",
 					},
 				},
 			},
@@ -331,91 +251,51 @@ func TestTernaryNestedCond(t *testing.T) {
 							StartPos:  4,
 							EndPos:    15,
 						},
-						Condition: &node.Variable{
+						Condition: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  4,
 								EndPos:    5,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  4,
-									EndPos:    5,
-								},
-								Value: "a",
-							},
+							Name: "a",
 						},
-						IfTrue: &node.Variable{
+						IfTrue: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  9,
 								EndPos:    10,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  9,
-									EndPos:    10,
-								},
-								Value: "b",
-							},
+							Name: "b",
 						},
-						IfFalse: &node.Variable{
+						IfFalse: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  14,
 								EndPos:    15,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  14,
-									EndPos:    15,
-								},
-								Value: "c",
-							},
+							Name: "c",
 						},
 					},
-					IfTrue: &node.Variable{
+					IfTrue: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  19,
 							EndPos:    20,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  19,
-								EndPos:    20,
-							},
-							Value: "d",
-						},
+						Name: "d",
 					},
-					IfFalse: &node.Variable{
+					IfFalse: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  24,
 							EndPos:    25,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  24,
-								EndPos:    25,
-							},
-							Value: "e",
-						},
+						Name: "e",
 					},
 				},
 			},

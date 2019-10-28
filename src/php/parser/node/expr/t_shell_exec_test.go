@@ -49,22 +49,14 @@ func TestShellExec(t *testing.T) {
 							},
 							Value: "cmd ",
 						},
-						&node.Variable{
+						&node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  9,
 								EndPos:    10,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  9,
-									EndPos:    10,
-								},
-								Value: "a",
-							},
+							Name: "a",
 						},
 					},
 				},

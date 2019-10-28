@@ -30,7 +30,7 @@ func (d *hoverWalker) LeaveNode(w walker.Walkable) {
 
 	n := w.(node.Node)
 	switch n.(type) {
-	case *node.Variable, *expr.MethodCall, *expr.FunctionCall, *expr.StaticCall:
+	case *node.SimpleVar, *expr.MethodCall, *expr.FunctionCall, *expr.StaticCall:
 		checkPos = true
 	}
 

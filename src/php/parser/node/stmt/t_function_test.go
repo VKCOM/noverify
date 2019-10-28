@@ -199,22 +199,14 @@ func TestFunctionReturnVar(t *testing.T) {
 							StartPos:  41,
 							EndPos:    50,
 						},
-						Expr: &node.Variable{
+						Expr: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  48,
 								EndPos:    49,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  48,
-									EndPos:    49,
-								},
-								Value: "a",
-							},
+							Name: "a",
 						},
 					},
 				},

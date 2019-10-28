@@ -137,7 +137,7 @@ var nodes = []node.Node{
 	&expr.UnaryPlus{
 		FreeFloating: expected,
 	},
-	&node.Variable{
+	&node.SimpleVar{
 		FreeFloating: expected,
 	},
 	&expr.YieldFrom{

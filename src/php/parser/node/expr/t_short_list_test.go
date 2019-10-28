@@ -55,42 +55,26 @@ func TestShortList(t *testing.T) {
 									StartPos:  5,
 									EndPos:    6,
 								},
-								Val: &node.Variable{
+								Val: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
 										StartPos:  5,
 										EndPos:    6,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 1,
-											EndLine:   1,
-											StartPos:  5,
-											EndPos:    6,
-										},
-										Value: "a",
-									},
+									Name: "a",
 								},
 							},
 						},
 					},
-					Expression: &node.Variable{
+					Expression: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  11,
 							EndPos:    12,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  11,
-								EndPos:    12,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -151,43 +135,27 @@ func TestShortListArrayIndex(t *testing.T) {
 										StartPos:  5,
 										EndPos:    8,
 									},
-									Variable: &node.Variable{
+									Variable: &node.SimpleVar{
 										Position: &position.Position{
 											StartLine: 1,
 											EndLine:   1,
 											StartPos:  5,
 											EndPos:    6,
 										},
-										VarName: &node.Identifier{
-											Position: &position.Position{
-												StartLine: 1,
-												EndLine:   1,
-												StartPos:  5,
-												EndPos:    6,
-											},
-											Value: "a",
-										},
+										Name: "a",
 									},
 								},
 							},
 						},
 					},
-					Expression: &node.Variable{
+					Expression: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  13,
 							EndPos:    14,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  13,
-								EndPos:    14,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -256,22 +224,14 @@ func TestShortListList(t *testing.T) {
 												StartPos:  10,
 												EndPos:    11,
 											},
-											Val: &node.Variable{
+											Val: &node.SimpleVar{
 												Position: &position.Position{
 													StartLine: 1,
 													EndLine:   1,
 													StartPos:  10,
 													EndPos:    11,
 												},
-												VarName: &node.Identifier{
-													Position: &position.Position{
-														StartLine: 1,
-														EndLine:   1,
-														StartPos:  10,
-														EndPos:    11,
-													},
-													Value: "a",
-												},
+												Name: "a",
 											},
 										},
 									},
@@ -279,22 +239,14 @@ func TestShortListList(t *testing.T) {
 							},
 						},
 					},
-					Expression: &node.Variable{
+					Expression: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  17,
 							EndPos:    18,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  17,
-								EndPos:    18,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},

@@ -58,22 +58,14 @@ func TestStaticPropertyFetch(t *testing.T) {
 							},
 						},
 					},
-					Property: &node.Variable{
+					Property: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  9,
 							EndPos:    12,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  9,
-								EndPos:    12,
-							},
-							Value: "bar",
-						},
+						Name: "bar",
 					},
 				},
 			},
@@ -130,22 +122,14 @@ func TestStaticPropertyFetchRelative(t *testing.T) {
 							},
 						},
 					},
-					Property: &node.Variable{
+					Property: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  19,
 							EndPos:    22,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  19,
-								EndPos:    22,
-							},
-							Value: "bar",
-						},
+						Name: "bar",
 					},
 				},
 			},
@@ -202,22 +186,14 @@ func TestStaticPropertyFetchFullyQualified(t *testing.T) {
 							},
 						},
 					},
-					Property: &node.Variable{
+					Property: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    13,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    13,
-							},
-							Value: "bar",
-						},
+						Name: "bar",
 					},
 				},
 			},

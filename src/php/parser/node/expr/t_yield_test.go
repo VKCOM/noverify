@@ -75,22 +75,14 @@ func TestYieldVal(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Value: &node.Variable{
+					Value: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    11,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    11,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
 				},
 			},
@@ -128,39 +120,23 @@ func TestYieldKeyVal(t *testing.T) {
 						StartPos:  4,
 						EndPos:    17,
 					},
-					Key: &node.Variable{
+					Key: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    11,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    11,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Value: &node.Variable{
+					Value: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  16,
 							EndPos:    17,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  16,
-								EndPos:    17,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -243,22 +219,14 @@ func TestYieldKeyExpr(t *testing.T) {
 						StartPos:  4,
 						EndPos:    16,
 					},
-					Key: &node.Variable{
+					Key: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    11,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    11,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
 					Value: &scalar.Lnumber{
 						Position: &position.Position{
@@ -305,22 +273,14 @@ func TestYieldFrom(t *testing.T) {
 						StartPos:  4,
 						EndPos:    16,
 					},
-					Expr: &node.Variable{
+					Expr: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  15,
 							EndPos:    16,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  15,
-								EndPos:    16,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
 				},
 			},
