@@ -159,7 +159,7 @@ func (ctx *BlockContext) Report(n node.Node, level int, checkName, msg string, a
 
 // Scope returns variables declared in this block.
 func (ctx *BlockContext) Scope() *meta.Scope {
-	return ctx.w.r.scope()
+	return ctx.w.ctx.sc
 }
 
 // ClassParseState returns class parse state (namespace, class, etc).
