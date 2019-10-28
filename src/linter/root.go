@@ -161,16 +161,16 @@ func (d *RootWalker) UpdateMetaInfo() {
 	updateMetaInfo(d.filename, &d.meta)
 }
 
-// Scope returns root-level variable scope if applicable.
-func (d *RootWalker) Scope() *meta.Scope {
+// scope returns root-level variable scope if applicable.
+func (d *RootWalker) scope() *meta.Scope {
 	if d.meta.Scope == nil {
 		d.meta.Scope = meta.NewScope()
 	}
 	return d.meta.Scope
 }
 
-// State allows for custom hooks to store state between entering root context and block context.
-func (d *RootWalker) State() map[string]interface{} {
+// state allows for custom hooks to store state between entering root context and block context.
+func (d *RootWalker) state() map[string]interface{} {
 	if d.customState == nil {
 		d.customState = make(map[string]interface{})
 	}
@@ -180,11 +180,6 @@ func (d *RootWalker) State() map[string]interface{} {
 // GetReports returns collected reports for this file.
 func (d *RootWalker) GetReports() []*Report {
 	return d.reports
-}
-
-// ClassParseState returns class parse state (namespace, current class, etc)
-func (d *RootWalker) ClassParseState() *meta.ClassParseState {
-	return d.st
 }
 
 // EnterNode is invoked at every node in hierarchy
@@ -248,7 +243,7 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 			break
 		}
 
-		d.Scope().AddVar(v, solver.ExprTypeLocal(d.meta.Scope, d.st, n.Expression), "global variable", true)
+		d.scope().AddVar(v, solver.ExprTypeLocal(d.meta.Scope, d.st, n.Expression), "global variable", true)
 	case *stmt.Function:
 		res = d.enterFunction(n)
 	case *stmt.PropertyList:
