@@ -33,22 +33,14 @@ func TestGlobal(t *testing.T) {
 					EndPos:    13,
 				},
 				Vars: []node.Node{
-					&node.Variable{
+					&node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  11,
 							EndPos:    12,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  11,
-								EndPos:    12,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
 				},
 			},
@@ -80,73 +72,49 @@ func TestGlobalVars(t *testing.T) {
 					EndPos:    32,
 				},
 				Vars: []node.Node{
-					&node.Variable{
+					&node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  11,
 							EndPos:    12,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  11,
-								EndPos:    12,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					&node.Variable{
+					&node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  15,
 							EndPos:    16,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  15,
-								EndPos:    16,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
-					&node.Variable{
+					&node.Var{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  19,
 							EndPos:    21,
 						},
-						VarName: &node.Variable{
+						Expr: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  20,
 								EndPos:    21,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  20,
-									EndPos:    21,
-								},
-								Value: "c",
-							},
+							Name: "c",
 						},
 					},
-					&node.Variable{
+					&node.Var{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  24,
 							EndPos:    31,
 						},
-						VarName: &expr.FunctionCall{
+						Expr: &expr.FunctionCall{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,

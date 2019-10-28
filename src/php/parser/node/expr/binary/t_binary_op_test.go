@@ -38,39 +38,23 @@ func TestBitwiseAnd(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  9,
 							EndPos:    10,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  9,
-								EndPos:    10,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -108,39 +92,23 @@ func TestBitwiseOr(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  9,
 							EndPos:    10,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  9,
-								EndPos:    10,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -178,39 +146,23 @@ func TestBitwiseXor(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  9,
 							EndPos:    10,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  9,
-								EndPos:    10,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -248,39 +200,23 @@ func TestBooleanAnd(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    11,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    11,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -318,39 +254,23 @@ func TestBooleanOr(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    11,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    11,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -388,39 +308,23 @@ func TestCoalesce(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    11,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    11,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -458,39 +362,23 @@ func TestConcat(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  9,
 							EndPos:    10,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  9,
-								EndPos:    10,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -528,39 +416,23 @@ func TestDiv(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  9,
 							EndPos:    10,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  9,
-								EndPos:    10,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -598,39 +470,23 @@ func TestEqual(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    11,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    11,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -668,39 +524,23 @@ func TestGreaterOrEqual(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    11,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    11,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -738,39 +578,23 @@ func TestGreater(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  9,
 							EndPos:    10,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  9,
-								EndPos:    10,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -808,39 +632,23 @@ func TestIdentical(t *testing.T) {
 						StartPos:  4,
 						EndPos:    12,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  11,
 							EndPos:    12,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  11,
-								EndPos:    12,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -878,39 +686,23 @@ func TestLogicalAnd(t *testing.T) {
 						StartPos:  4,
 						EndPos:    12,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  11,
 							EndPos:    12,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  11,
-								EndPos:    12,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -948,39 +740,23 @@ func TestLogicalOr(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    11,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    11,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -1018,39 +794,23 @@ func TestLogicalXor(t *testing.T) {
 						StartPos:  4,
 						EndPos:    12,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  11,
 							EndPos:    12,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  11,
-								EndPos:    12,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -1088,39 +848,23 @@ func TestMinus(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  9,
 							EndPos:    10,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  9,
-								EndPos:    10,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -1158,39 +902,23 @@ func TestMod(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  9,
 							EndPos:    10,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  9,
-								EndPos:    10,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -1228,39 +956,23 @@ func TestMul(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  9,
 							EndPos:    10,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  9,
-								EndPos:    10,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -1298,39 +1010,23 @@ func TestNotEqual(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    11,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    11,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -1368,39 +1064,23 @@ func TestNotIdentical(t *testing.T) {
 						StartPos:  4,
 						EndPos:    12,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  11,
 							EndPos:    12,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  11,
-								EndPos:    12,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -1438,39 +1118,23 @@ func TestPlus(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  9,
 							EndPos:    10,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  9,
-								EndPos:    10,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -1508,39 +1172,23 @@ func TestPow(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    11,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    11,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -1578,39 +1226,23 @@ func TestShiftLeft(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    11,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    11,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -1648,39 +1280,23 @@ func TestShiftRight(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    11,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    11,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -1718,39 +1334,23 @@ func TestSmallerOrEqual(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    11,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    11,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -1788,39 +1388,23 @@ func TestSmaller(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  9,
 							EndPos:    10,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  9,
-								EndPos:    10,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -1858,39 +1442,23 @@ func TestSpaceship(t *testing.T) {
 						StartPos:  4,
 						EndPos:    12,
 					},
-					Left: &node.Variable{
+					Left: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					Right: &node.Variable{
+					Right: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  11,
 							EndPos:    12,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  11,
-								EndPos:    12,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},

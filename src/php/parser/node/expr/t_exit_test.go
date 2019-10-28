@@ -113,22 +113,14 @@ func TestExitExpr(t *testing.T) {
 						StartPos:  4,
 						EndPos:    11,
 					},
-					Expr: &node.Variable{
+					Expr: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  9,
 							EndPos:    10,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  9,
-								EndPos:    10,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
 				},
 			},
@@ -241,22 +233,14 @@ func TestDieExpr(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Expr: &node.Variable{
+					Expr: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  8,
 							EndPos:    9,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  8,
-								EndPos:    9,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
 				},
 			},

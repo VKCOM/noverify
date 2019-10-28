@@ -38,22 +38,14 @@ func TestPostDec(t *testing.T) {
 						StartPos:  4,
 						EndPos:    7,
 					},
-					Variable: &node.Variable{
+					Variable: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
 				},
 			},
@@ -91,22 +83,14 @@ func TestPostInc(t *testing.T) {
 						StartPos:  4,
 						EndPos:    7,
 					},
-					Variable: &node.Variable{
+					Variable: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
 				},
 			},
@@ -144,22 +128,14 @@ func TestPreDec(t *testing.T) {
 						StartPos:  4,
 						EndPos:    7,
 					},
-					Variable: &node.Variable{
+					Variable: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  6,
 							EndPos:    7,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  6,
-								EndPos:    7,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
 				},
 			},
@@ -197,22 +173,14 @@ func TestPreInc(t *testing.T) {
 						StartPos:  4,
 						EndPos:    7,
 					},
-					Variable: &node.Variable{
+					Variable: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  6,
 							EndPos:    7,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  6,
-								EndPos:    7,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
 				},
 			},

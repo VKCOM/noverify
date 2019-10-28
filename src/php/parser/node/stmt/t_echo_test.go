@@ -34,22 +34,14 @@ func TestSimpleEcho(t *testing.T) {
 					EndPos:    14,
 				},
 				Exprs: []node.Node{
-					&node.Variable{
+					&node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  9,
 							EndPos:    10,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  9,
-								EndPos:    10,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
 					&scalar.Lnumber{
 						Position: &position.Position{
@@ -90,22 +82,14 @@ func TestEcho(t *testing.T) {
 					EndPos:    12,
 				},
 				Exprs: []node.Node{
-					&node.Variable{
+					&node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  9,
 							EndPos:    10,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  9,
-								EndPos:    10,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
 				},
 			},

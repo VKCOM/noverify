@@ -448,8 +448,10 @@ func NameNodeToString(n node.Node) string {
 		return FullyQualifiedToString(n)
 	case *node.Identifier:
 		return n.Value
-	case *node.Variable:
-		return "$" + NameNodeToString(n.VarName)
+	case *node.SimpleVar:
+		return "$" + n.Name
+	case *node.Var:
+		return "$" + NameNodeToString(n.Expr)
 	default:
 		return "<expression>"
 	}

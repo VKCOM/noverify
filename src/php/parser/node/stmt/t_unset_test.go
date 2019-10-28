@@ -31,22 +31,14 @@ func TestUnset(t *testing.T) {
 					EndPos:    13,
 				},
 				Vars: []node.Node{
-					&node.Variable{
+					&node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    11,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    11,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
 				},
 			},
@@ -78,39 +70,23 @@ func TestUnsetVars(t *testing.T) {
 					EndPos:    17,
 				},
 				Vars: []node.Node{
-					&node.Variable{
+					&node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    11,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    11,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					&node.Variable{
+					&node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  14,
 							EndPos:    15,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  14,
-								EndPos:    15,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -142,39 +118,23 @@ func TestUnsetTrailingComma(t *testing.T) {
 					EndPos:    18,
 				},
 				Vars: []node.Node{
-					&node.Variable{
+					&node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    11,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    11,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
-					&node.Variable{
+					&node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  14,
 							EndPos:    15,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  14,
-								EndPos:    15,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},

@@ -39,22 +39,14 @@ func TestIsset(t *testing.T) {
 						EndPos:    12,
 					},
 					Variables: []node.Node{
-						&node.Variable{
+						&node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  10,
 								EndPos:    11,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  10,
-									EndPos:    11,
-								},
-								Value: "a",
-							},
+							Name: "a",
 						},
 					},
 				},
@@ -94,39 +86,23 @@ func TestIssetVariables(t *testing.T) {
 						EndPos:    16,
 					},
 					Variables: []node.Node{
-						&node.Variable{
+						&node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  10,
 								EndPos:    11,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  10,
-									EndPos:    11,
-								},
-								Value: "a",
-							},
+							Name: "a",
 						},
-						&node.Variable{
+						&node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  14,
 								EndPos:    15,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  14,
-									EndPos:    15,
-								},
-								Value: "b",
-							},
+							Name: "b",
 						},
 					},
 				},

@@ -49,22 +49,14 @@ func TestSimpleVar(t *testing.T) {
 							},
 							Value: "test ",
 						},
-						&node.Variable{
+						&node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  10,
 								EndPos:    13,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  10,
-									EndPos:    13,
-								},
-								Value: "var",
-							},
+							Name: "var",
 						},
 					},
 				},
@@ -113,22 +105,14 @@ func TestSimpleVarOneChar(t *testing.T) {
 							},
 							Value: "test ",
 						},
-						&node.Variable{
+						&node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  10,
 								EndPos:    11,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  10,
-									EndPos:    11,
-								},
-								Value: "a",
-							},
+							Name: "a",
 						},
 					},
 				},
@@ -177,22 +161,14 @@ func TestSimpleVarEndsEcapsed(t *testing.T) {
 							},
 							Value: "test ",
 						},
-						&node.Variable{
+						&node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  10,
 								EndPos:    13,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  10,
-									EndPos:    13,
-								},
-								Value: "var",
-							},
+							Name: "var",
 						},
 						&scalar.EncapsedStringPart{
 							Position: &position.Position{
@@ -250,39 +226,23 @@ func TestStringVarCurveOpen(t *testing.T) {
 							},
 							Value: "=",
 						},
-						&node.Variable{
+						&node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  6,
 								EndPos:    7,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  6,
-									EndPos:    7,
-								},
-								Value: "a",
-							},
+							Name: "a",
 						},
-						&node.Variable{
+						&node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  9,
 								EndPos:    10,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  9,
-									EndPos:    10,
-								},
-								Value: "b",
-							},
+							Name: "b",
 						},
 					},
 				},
@@ -338,22 +298,14 @@ func TestSimpleVarPropertyFetch(t *testing.T) {
 								StartPos:  10,
 								EndPos:    18,
 							},
-							Variable: &node.Variable{
+							Variable: &node.SimpleVar{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
 									StartPos:  10,
 									EndPos:    13,
 								},
-								VarName: &node.Identifier{
-									Position: &position.Position{
-										StartLine: 1,
-										EndLine:   1,
-										StartPos:  10,
-										EndPos:    13,
-									},
-									Value: "foo",
-								},
+								Name: "foo",
 							},
 							Property: &node.Identifier{
 								Position: &position.Position{
@@ -421,22 +373,14 @@ func TestDollarOpenCurlyBraces(t *testing.T) {
 							},
 							Value: "test ",
 						},
-						&node.Variable{
+						&node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  10,
 								EndPos:    15,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  12,
-									EndPos:    14,
-								},
-								Value: "foo",
-							},
+							Name: "foo",
 						},
 					},
 				},
@@ -492,22 +436,14 @@ func TestDollarOpenCurlyBracesDimNumber(t *testing.T) {
 								StartPos:  10,
 								EndPos:    18,
 							},
-							Variable: &node.Variable{
+							Variable: &node.SimpleVar{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
 									StartPos:  12,
 									EndPos:    14,
 								},
-								VarName: &node.Identifier{
-									Position: &position.Position{
-										StartLine: 1,
-										EndLine:   1,
-										StartPos:  12,
-										EndPos:    14,
-									},
-									Value: "foo",
-								},
+								Name: "foo",
 							},
 							Dim: &scalar.Lnumber{
 								Position: &position.Position{
@@ -573,22 +509,14 @@ func TestCurlyOpenMethodCall(t *testing.T) {
 								StartPos:  11,
 								EndPos:    21,
 							},
-							Variable: &node.Variable{
+							Variable: &node.SimpleVar{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
 									StartPos:  11,
 									EndPos:    14,
 								},
-								VarName: &node.Identifier{
-									Position: &position.Position{
-										StartLine: 1,
-										EndLine:   1,
-										StartPos:  11,
-										EndPos:    14,
-									},
-									Value: "foo",
-								},
+								Name: "foo",
 							},
 							Method: &node.Identifier{
 								Position: &position.Position{

@@ -48,22 +48,14 @@ func TestEmptyList(t *testing.T) {
 						},
 						Items: []*expr.ArrayItem{},
 					},
-					Expression: &node.Variable{
+					Expression: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  13,
 							EndPos:    14,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  13,
-								EndPos:    14,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -116,42 +108,26 @@ func TestList(t *testing.T) {
 									StartPos:  9,
 									EndPos:    10,
 								},
-								Val: &node.Variable{
+								Val: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
 										StartPos:  9,
 										EndPos:    10,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 1,
-											EndLine:   1,
-											StartPos:  9,
-											EndPos:    10,
-										},
-										Value: "a",
-									},
+									Name: "a",
 								},
 							},
 						},
 					},
-					Expression: &node.Variable{
+					Expression: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  15,
 							EndPos:    16,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  15,
-								EndPos:    16,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -211,43 +187,27 @@ func TestListArrayIndex(t *testing.T) {
 										StartPos:  9,
 										EndPos:    12,
 									},
-									Variable: &node.Variable{
+									Variable: &node.SimpleVar{
 										Position: &position.Position{
 											StartLine: 1,
 											EndLine:   1,
 											StartPos:  9,
 											EndPos:    10,
 										},
-										VarName: &node.Identifier{
-											Position: &position.Position{
-												StartLine: 1,
-												EndLine:   1,
-												StartPos:  9,
-												EndPos:    10,
-											},
-											Value: "a",
-										},
+										Name: "a",
 									},
 								},
 							},
 						},
 					},
-					Expression: &node.Variable{
+					Expression: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  17,
 							EndPos:    18,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  17,
-								EndPos:    18,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -315,22 +275,14 @@ func TestListList(t *testing.T) {
 												StartPos:  14,
 												EndPos:    15,
 											},
-											Val: &node.Variable{
+											Val: &node.SimpleVar{
 												Position: &position.Position{
 													StartLine: 1,
 													EndLine:   1,
 													StartPos:  14,
 													EndPos:    15,
 												},
-												VarName: &node.Identifier{
-													Position: &position.Position{
-														StartLine: 1,
-														EndLine:   1,
-														StartPos:  14,
-														EndPos:    15,
-													},
-													Value: "a",
-												},
+												Name: "a",
 											},
 										},
 									},
@@ -338,22 +290,14 @@ func TestListList(t *testing.T) {
 							},
 						},
 					},
-					Expression: &node.Variable{
+					Expression: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  21,
 							EndPos:    22,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  21,
-								EndPos:    22,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -407,42 +351,26 @@ func TestListEmptyItem(t *testing.T) {
 									StartPos:  11,
 									EndPos:    12,
 								},
-								Val: &node.Variable{
+								Val: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
 										StartPos:  11,
 										EndPos:    12,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 1,
-											EndLine:   1,
-											StartPos:  11,
-											EndPos:    12,
-										},
-										Value: "a",
-									},
+									Name: "a",
 								},
 							},
 						},
 					},
-					Expression: &node.Variable{
+					Expression: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  17,
 							EndPos:    18,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  17,
-								EndPos:    18,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},
@@ -497,43 +425,27 @@ func TestListEmptyItems(t *testing.T) {
 									StartPos:  13,
 									EndPos:    14,
 								},
-								Val: &node.Variable{
+								Val: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
 										StartPos:  13,
 										EndPos:    14,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 1,
-											EndLine:   1,
-											StartPos:  13,
-											EndPos:    14,
-										},
-										Value: "a",
-									},
+									Name: "a",
 								},
 							},
 							{},
 						},
 					},
-					Expression: &node.Variable{
+					Expression: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  21,
 							EndPos:    22,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  21,
-								EndPos:    22,
-							},
-							Value: "b",
-						},
+						Name: "b",
 					},
 				},
 			},

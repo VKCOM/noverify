@@ -34,22 +34,14 @@ func TestAltIf(t *testing.T) {
 					StartPos:  6,
 					EndPos:    23,
 				},
-				Cond: &node.Variable{
+				Cond: &node.SimpleVar{
 					Position: &position.Position{
 						StartLine: 2,
 						EndLine:   2,
 						StartPos:  10,
 						EndPos:    11,
 					},
-					VarName: &node.Identifier{
-						Position: &position.Position{
-							StartLine: 2,
-							EndLine:   2,
-							StartPos:  10,
-							EndPos:    11,
-						},
-						Value: "a",
-					},
+					Name: "a",
 				},
 				Stmt: &stmt.StmtList{
 					Position: &position.Position{
@@ -93,22 +85,14 @@ func TestAltElseIf(t *testing.T) {
 					StartPos:  6,
 					EndPos:    38,
 				},
-				Cond: &node.Variable{
+				Cond: &node.SimpleVar{
 					Position: &position.Position{
 						StartLine: 2,
 						EndLine:   2,
 						StartPos:  10,
 						EndPos:    11,
 					},
-					VarName: &node.Identifier{
-						Position: &position.Position{
-							StartLine: 2,
-							EndLine:   2,
-							StartPos:  10,
-							EndPos:    11,
-						},
-						Value: "a",
-					},
+					Name: "a",
 				},
 				Stmt: &stmt.StmtList{
 					Position: &position.Position{
@@ -128,22 +112,14 @@ func TestAltElseIf(t *testing.T) {
 							StartPos:  18,
 							EndPos:    -1,
 						},
-						Cond: &node.Variable{
+						Cond: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 3,
 								EndLine:   3,
 								StartPos:  26,
 								EndPos:    27,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 3,
-									EndLine:   3,
-									StartPos:  26,
-									EndPos:    27,
-								},
-								Value: "b",
-							},
+							Name: "b",
 						},
 						Stmt: &stmt.StmtList{
 							Position: &position.Position{
@@ -189,22 +165,14 @@ func TestAltElse(t *testing.T) {
 					StartPos:  6,
 					EndPos:    31,
 				},
-				Cond: &node.Variable{
+				Cond: &node.SimpleVar{
 					Position: &position.Position{
 						StartLine: 2,
 						EndLine:   2,
 						StartPos:  10,
 						EndPos:    11,
 					},
-					VarName: &node.Identifier{
-						Position: &position.Position{
-							StartLine: 2,
-							EndLine:   2,
-							StartPos:  10,
-							EndPos:    11,
-						},
-						Value: "a",
-					},
+					Name: "a",
 				},
 				Stmt: &stmt.StmtList{
 					Position: &position.Position{
@@ -268,22 +236,14 @@ func TestAltElseElseIf(t *testing.T) {
 					StartPos:  6,
 					EndPos:    61,
 				},
-				Cond: &node.Variable{
+				Cond: &node.SimpleVar{
 					Position: &position.Position{
 						StartLine: 2,
 						EndLine:   2,
 						StartPos:  10,
 						EndPos:    11,
 					},
-					VarName: &node.Identifier{
-						Position: &position.Position{
-							StartLine: 2,
-							EndLine:   2,
-							StartPos:  10,
-							EndPos:    11,
-						},
-						Value: "a",
-					},
+					Name: "a",
 				},
 				Stmt: &stmt.StmtList{
 					Position: &position.Position{
@@ -303,22 +263,14 @@ func TestAltElseElseIf(t *testing.T) {
 							StartPos:  18,
 							EndPos:    -1,
 						},
-						Cond: &node.Variable{
+						Cond: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 3,
 								EndLine:   3,
 								StartPos:  26,
 								EndPos:    27,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 3,
-									EndLine:   3,
-									StartPos:  26,
-									EndPos:    27,
-								},
-								Value: "b",
-							},
+							Name: "b",
 						},
 						Stmt: &stmt.StmtList{
 							Position: &position.Position{
@@ -338,22 +290,14 @@ func TestAltElseElseIf(t *testing.T) {
 							StartPos:  33,
 							EndPos:    -1,
 						},
-						Cond: &node.Variable{
+						Cond: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 4,
 								EndLine:   4,
 								StartPos:  41,
 								EndPos:    42,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 4,
-									EndLine:   4,
-									StartPos:  41,
-									EndPos:    42,
-								},
-								Value: "c",
-							},
+							Name: "c",
 						},
 						Stmt: &stmt.StmtList{
 							Position: &position.Position{

@@ -34,22 +34,14 @@ func TestIdentifier(t *testing.T) {
 					StartPos:  4,
 					EndPos:    8,
 				},
-				Expr: &node.Variable{
+				Expr: &node.SimpleVar{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
 						StartPos:  4,
 						EndPos:    7,
 					},
-					VarName: &node.Identifier{
-						Position: &position.Position{
-							StartLine: 1,
-							EndLine:   1,
-							StartPos:  4,
-							EndPos:    7,
-						},
-						Value: "foo",
-					},
+					Name: "foo",
 				},
 			},
 		},
@@ -131,22 +123,14 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								},
 								Variadic:    false,
 								IsReference: false,
-								Expr: &node.Variable{
+								Expr: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 2,
 										EndLine:   2,
 										StartPos:  11,
 										EndPos:    12,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 2,
-											EndLine:   2,
-											StartPos:  11,
-											EndPos:    12,
-										},
-										Value: "a",
-									},
+									Name: "a",
 								},
 							},
 							&node.Argument{
@@ -158,22 +142,14 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								},
 								Variadic:    true,
 								IsReference: false,
-								Expr: &node.Variable{
+								Expr: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 2,
 										EndLine:   2,
 										StartPos:  18,
 										EndPos:    19,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 2,
-											EndLine:   2,
-											StartPos:  18,
-											EndPos:    19,
-										},
-										Value: "b",
-									},
+									Name: "b",
 								},
 							},
 						},
@@ -194,22 +170,14 @@ func TestPhp7ArgumentNode(t *testing.T) {
 						StartPos:  25,
 						EndPos:    39,
 					},
-					Function: &node.Variable{
+					Function: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 3,
 							EndLine:   3,
 							StartPos:  25,
 							EndPos:    28,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 3,
-								EndLine:   3,
-								StartPos:  25,
-								EndPos:    28,
-							},
-							Value: "foo",
-						},
+						Name: "foo",
 					},
 					ArgumentList: &node.ArgumentList{
 						Position: &position.Position{
@@ -228,22 +196,14 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								},
 								Variadic:    false,
 								IsReference: false,
-								Expr: &node.Variable{
+								Expr: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 3,
 										EndLine:   3,
 										StartPos:  30,
 										EndPos:    31,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 3,
-											EndLine:   3,
-											StartPos:  30,
-											EndPos:    31,
-										},
-										Value: "a",
-									},
+									Name: "a",
 								},
 							},
 							&node.Argument{
@@ -255,22 +215,14 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								},
 								Variadic:    true,
 								IsReference: false,
-								Expr: &node.Variable{
+								Expr: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 3,
 										EndLine:   3,
 										StartPos:  37,
 										EndPos:    38,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 3,
-											EndLine:   3,
-											StartPos:  37,
-											EndPos:    38,
-										},
-										Value: "b",
-									},
+									Name: "b",
 								},
 							},
 						},
@@ -291,22 +243,14 @@ func TestPhp7ArgumentNode(t *testing.T) {
 						StartPos:  44,
 						EndPos:    63,
 					},
-					Variable: &node.Variable{
+					Variable: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 4,
 							EndLine:   4,
 							StartPos:  44,
 							EndPos:    47,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 4,
-								EndLine:   4,
-								StartPos:  44,
-								EndPos:    47,
-							},
-							Value: "foo",
-						},
+						Name: "foo",
 					},
 					Method: &node.Identifier{
 						Position: &position.Position{
@@ -334,22 +278,14 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								},
 								IsReference: false,
 								Variadic:    false,
-								Expr: &node.Variable{
+								Expr: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 4,
 										EndLine:   4,
 										StartPos:  54,
 										EndPos:    55,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 4,
-											EndLine:   4,
-											StartPos:  54,
-											EndPos:    55,
-										},
-										Value: "a",
-									},
+									Name: "a",
 								},
 							},
 							&node.Argument{
@@ -361,22 +297,14 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								},
 								Variadic:    true,
 								IsReference: false,
-								Expr: &node.Variable{
+								Expr: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 4,
 										EndLine:   4,
 										StartPos:  61,
 										EndPos:    62,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 4,
-											EndLine:   4,
-											StartPos:  61,
-											EndPos:    62,
-										},
-										Value: "b",
-									},
+									Name: "b",
 								},
 							},
 						},
@@ -442,22 +370,14 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								},
 								Variadic:    false,
 								IsReference: false,
-								Expr: &node.Variable{
+								Expr: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 5,
 										EndLine:   5,
 										StartPos:  77,
 										EndPos:    78,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 5,
-											EndLine:   5,
-											StartPos:  77,
-											EndPos:    78,
-										},
-										Value: "a",
-									},
+									Name: "a",
 								},
 							},
 							&node.Argument{
@@ -469,22 +389,14 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								},
 								Variadic:    true,
 								IsReference: false,
-								Expr: &node.Variable{
+								Expr: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 5,
 										EndLine:   5,
 										StartPos:  84,
 										EndPos:    85,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 5,
-											EndLine:   5,
-											StartPos:  84,
-											EndPos:    85,
-										},
-										Value: "b",
-									},
+									Name: "b",
 								},
 							},
 						},
@@ -505,22 +417,14 @@ func TestPhp7ArgumentNode(t *testing.T) {
 						StartPos:  91,
 						EndPos:    110,
 					},
-					Class: &node.Variable{
+					Class: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 6,
 							EndLine:   6,
 							StartPos:  91,
 							EndPos:    94,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 6,
-								EndLine:   6,
-								StartPos:  91,
-								EndPos:    94,
-							},
-							Value: "foo",
-						},
+						Name: "foo",
 					},
 					Call: &node.Identifier{
 						Position: &position.Position{
@@ -548,22 +452,14 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								},
 								Variadic:    false,
 								IsReference: false,
-								Expr: &node.Variable{
+								Expr: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 6,
 										EndLine:   6,
 										StartPos:  101,
 										EndPos:    102,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 6,
-											EndLine:   6,
-											StartPos:  101,
-											EndPos:    102,
-										},
-										Value: "a",
-									},
+									Name: "a",
 								},
 							},
 							&node.Argument{
@@ -575,22 +471,14 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								},
 								Variadic:    true,
 								IsReference: false,
-								Expr: &node.Variable{
+								Expr: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 6,
 										EndLine:   6,
 										StartPos:  108,
 										EndPos:    109,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 6,
-											EndLine:   6,
-											StartPos:  108,
-											EndPos:    109,
-										},
-										Value: "b",
-									},
+									Name: "b",
 								},
 							},
 						},
@@ -647,22 +535,14 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								},
 								Variadic:    false,
 								IsReference: false,
-								Expr: &node.Variable{
+								Expr: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 7,
 										EndLine:   7,
 										StartPos:  123,
 										EndPos:    124,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 7,
-											EndLine:   7,
-											StartPos:  123,
-											EndPos:    124,
-										},
-										Value: "a",
-									},
+									Name: "a",
 								},
 							},
 							&node.Argument{
@@ -674,22 +554,14 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								},
 								Variadic:    true,
 								IsReference: false,
-								Expr: &node.Variable{
+								Expr: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 7,
 										EndLine:   7,
 										StartPos:  130,
 										EndPos:    131,
 									},
-									VarName: &node.Identifier{
-										Position: &position.Position{
-											StartLine: 7,
-											EndLine:   7,
-											StartPos:  130,
-											EndPos:    131,
-										},
-										Value: "b",
-									},
+									Name: "b",
 								},
 							},
 						},
@@ -735,22 +607,14 @@ func TestPhp7ArgumentNode(t *testing.T) {
 									},
 									Variadic:    false,
 									IsReference: false,
-									Expr: &node.Variable{
+									Expr: &node.SimpleVar{
 										Position: &position.Position{
 											StartLine: 9,
 											EndLine:   9,
 											StartPos:  173,
 											EndPos:    174,
 										},
-										VarName: &node.Identifier{
-											Position: &position.Position{
-												StartLine: 9,
-												EndLine:   9,
-												StartPos:  173,
-												EndPos:    174,
-											},
-											Value: "a",
-										},
+										Name: "a",
 									},
 								},
 								&node.Argument{
@@ -762,22 +626,14 @@ func TestPhp7ArgumentNode(t *testing.T) {
 									},
 									Variadic:    true,
 									IsReference: false,
-									Expr: &node.Variable{
+									Expr: &node.SimpleVar{
 										Position: &position.Position{
 											StartLine: 9,
 											EndLine:   9,
 											StartPos:  180,
 											EndPos:    181,
 										},
-										VarName: &node.Identifier{
-											Position: &position.Position{
-												StartLine: 9,
-												EndLine:   9,
-												StartPos:  180,
-												EndPos:    181,
-											},
-											Value: "b",
-										},
+										Name: "b",
 									},
 								},
 							},

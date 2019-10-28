@@ -31,22 +31,14 @@ func TestIf(t *testing.T) {
 					StartPos:  4,
 					EndPos:    13,
 				},
-				Cond: &node.Variable{
+				Cond: &node.SimpleVar{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
 						StartPos:  8,
 						EndPos:    9,
 					},
-					VarName: &node.Identifier{
-						Position: &position.Position{
-							StartLine: 1,
-							EndLine:   1,
-							StartPos:  8,
-							EndPos:    9,
-						},
-						Value: "a",
-					},
+					Name: "a",
 				},
 				Stmt: &stmt.StmtList{
 					Position: &position.Position{
@@ -85,22 +77,14 @@ func TestElseIf(t *testing.T) {
 					StartPos:  4,
 					EndPos:    28,
 				},
-				Cond: &node.Variable{
+				Cond: &node.SimpleVar{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
 						StartPos:  8,
 						EndPos:    9,
 					},
-					VarName: &node.Identifier{
-						Position: &position.Position{
-							StartLine: 1,
-							EndLine:   1,
-							StartPos:  8,
-							EndPos:    9,
-						},
-						Value: "a",
-					},
+					Name: "a",
 				},
 				Stmt: &stmt.StmtList{
 					Position: &position.Position{
@@ -119,22 +103,14 @@ func TestElseIf(t *testing.T) {
 							StartPos:  15,
 							EndPos:    28,
 						},
-						Cond: &node.Variable{
+						Cond: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  23,
 								EndPos:    24,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  23,
-									EndPos:    24,
-								},
-								Value: "b",
-							},
+							Name: "b",
 						},
 						Stmt: &stmt.StmtList{
 							Position: &position.Position{
@@ -175,22 +151,14 @@ func TestElse(t *testing.T) {
 					StartPos:  4,
 					EndPos:    21,
 				},
-				Cond: &node.Variable{
+				Cond: &node.SimpleVar{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
 						StartPos:  8,
 						EndPos:    9,
 					},
-					VarName: &node.Identifier{
-						Position: &position.Position{
-							StartLine: 1,
-							EndLine:   1,
-							StartPos:  8,
-							EndPos:    9,
-						},
-						Value: "a",
-					},
+					Name: "a",
 				},
 				Stmt: &stmt.StmtList{
 					Position: &position.Position{
@@ -246,22 +214,14 @@ func TestElseElseIf(t *testing.T) {
 					StartPos:  4,
 					EndPos:    51,
 				},
-				Cond: &node.Variable{
+				Cond: &node.SimpleVar{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
 						StartPos:  8,
 						EndPos:    9,
 					},
-					VarName: &node.Identifier{
-						Position: &position.Position{
-							StartLine: 1,
-							EndLine:   1,
-							StartPos:  8,
-							EndPos:    9,
-						},
-						Value: "a",
-					},
+					Name: "a",
 				},
 				Stmt: &stmt.StmtList{
 					Position: &position.Position{
@@ -280,22 +240,14 @@ func TestElseElseIf(t *testing.T) {
 							StartPos:  15,
 							EndPos:    28,
 						},
-						Cond: &node.Variable{
+						Cond: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  23,
 								EndPos:    24,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  23,
-									EndPos:    24,
-								},
-								Value: "b",
-							},
+							Name: "b",
 						},
 						Stmt: &stmt.StmtList{
 							Position: &position.Position{
@@ -314,22 +266,14 @@ func TestElseElseIf(t *testing.T) {
 							StartPos:  30,
 							EndPos:    43,
 						},
-						Cond: &node.Variable{
+						Cond: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  38,
 								EndPos:    39,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  38,
-									EndPos:    39,
-								},
-								Value: "c",
-							},
+							Name: "c",
 						},
 						Stmt: &stmt.StmtList{
 							Position: &position.Position{
@@ -387,22 +331,14 @@ func TestElseIfElseIfElse(t *testing.T) {
 					StartPos:  4,
 					EndPos:    52,
 				},
-				Cond: &node.Variable{
+				Cond: &node.SimpleVar{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
 						StartPos:  8,
 						EndPos:    9,
 					},
-					VarName: &node.Identifier{
-						Position: &position.Position{
-							StartLine: 1,
-							EndLine:   1,
-							StartPos:  8,
-							EndPos:    9,
-						},
-						Value: "a",
-					},
+					Name: "a",
 				},
 				Stmt: &stmt.StmtList{
 					Position: &position.Position{
@@ -421,22 +357,14 @@ func TestElseIfElseIfElse(t *testing.T) {
 							StartPos:  15,
 							EndPos:    28,
 						},
-						Cond: &node.Variable{
+						Cond: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  23,
 								EndPos:    24,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  23,
-									EndPos:    24,
-								},
-								Value: "b",
-							},
+							Name: "b",
 						},
 						Stmt: &stmt.StmtList{
 							Position: &position.Position{
@@ -463,22 +391,14 @@ func TestElseIfElseIfElse(t *testing.T) {
 							StartPos:  35,
 							EndPos:    52,
 						},
-						Cond: &node.Variable{
+						Cond: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
 								StartPos:  39,
 								EndPos:    40,
 							},
-							VarName: &node.Identifier{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  39,
-									EndPos:    40,
-								},
-								Value: "c",
-							},
+							Name: "c",
 						},
 						Stmt: &stmt.StmtList{
 							Position: &position.Position{

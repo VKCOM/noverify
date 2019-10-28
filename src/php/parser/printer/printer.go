@@ -315,8 +315,8 @@ func (p *Printer) printNode(n node.Node) {
 		p.printExprUnaryMinus(n)
 	case *expr.UnaryPlus:
 		p.printExprUnaryPlus(n)
-	case *node.Variable:
-		p.printExprVariable(n)
+	case *node.Var:
+		p.printExprVar(n)
 	case *node.SimpleVar:
 		p.printExprSimpleVar(n)
 	case *expr.YieldFrom:
@@ -592,10 +592,10 @@ func (p *Printer) printScalarEncapsed(n node.Node) {
 			} else {
 				p.Print(part)
 			}
-		case *node.Variable:
+		case *node.Var:
 			s := (*part.GetFreeFloating())[freefloating.Start]
 			if len(s) > 0 && s[0].Value == "${" {
-				p.printExprVariableWithoutLeadingDollar(part)
+				p.printExprVarWithoutLeadingDollar(part)
 			} else {
 				p.Print(part)
 			}
@@ -625,10 +625,10 @@ func (p *Printer) printScalarHeredoc(n node.Node) {
 			} else {
 				p.Print(part)
 			}
-		case *node.Variable:
+		case *node.Var:
 			s := (*part.GetFreeFloating())[freefloating.Start]
 			if len(s) > 0 && s[0].Value == "${" {
-				p.printExprVariableWithoutLeadingDollar(part)
+				p.printExprVarWithoutLeadingDollar(part)
 			} else {
 				p.Print(part)
 			}
@@ -1270,7 +1270,7 @@ func (p *Printer) printExprArrayDimFetch(n node.Node) {
 func (p *Printer) printExprArrayDimFetchWithoutLeadingDollar(n node.Node) {
 	nn := n.(*expr.ArrayDimFetch)
 	p.printFreeFloating(nn, freefloating.Start)
-	p.printExprVariableWithoutLeadingDollar(nn.Variable)
+	p.printExprVarWithoutLeadingDollar(nn.Variable)
 	p.printFreeFloating(nn, freefloating.Var)
 	if nn.GetFreeFloating().IsEmpty() {
 		io.WriteString(p.w, "[")
@@ -1809,8 +1809,8 @@ func (p *Printer) printExprSimpleVar(nn *node.SimpleVar) {
 	p.printFreeFloating(nn, freefloating.End)
 }
 
-func (p *Printer) printExprVariable(n node.Node) {
-	nn := n.(*node.Variable)
+func (p *Printer) printExprVar(n node.Node) {
+	nn := n.(*node.Var)
 	p.printFreeFloating(nn, freefloating.Start)
 
 	p.printFreeFloating(nn, freefloating.Dollar)
@@ -1818,18 +1818,22 @@ func (p *Printer) printExprVariable(n node.Node) {
 		io.WriteString(p.w, "$")
 	}
 
-	p.Print(nn.VarName)
+	p.Print(nn.Expr)
 
 	p.printFreeFloating(nn, freefloating.End)
 }
 
-func (p *Printer) printExprVariableWithoutLeadingDollar(n node.Node) {
-	nn := n.(*node.Variable)
-	p.printFreeFloating(nn, freefloating.Start)
+func (p *Printer) printExprVarWithoutLeadingDollar(n node.Node) {
+	p.printFreeFloating(n, freefloating.Start)
 
-	p.Print(nn.VarName)
+	switch n := n.(type) {
+	case *node.Var:
+		p.Print(n.Expr)
+	case *node.SimpleVar:
+		io.WriteString(p.w, n.Name)
+	}
 
-	p.printFreeFloating(nn, freefloating.End)
+	p.printFreeFloating(n, freefloating.End)
 }
 
 func (p *Printer) printExprYieldFrom(n node.Node) {

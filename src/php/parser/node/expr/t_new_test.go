@@ -245,22 +245,14 @@ func TestNewAnonymous(t *testing.T) {
 									},
 									Variadic:    false,
 									IsReference: false,
-									Expr: &node.Variable{
+									Expr: &node.SimpleVar{
 										Position: &position.Position{
 											StartLine: 1,
 											EndLine:   1,
 											StartPos:  15,
 											EndPos:    16,
 										},
-										VarName: &node.Identifier{
-											Position: &position.Position{
-												StartLine: 1,
-												EndLine:   1,
-												StartPos:  15,
-												EndPos:    16,
-											},
-											Value: "a",
-										},
+										Name: "a",
 									},
 								},
 								&node.Argument{
@@ -272,22 +264,14 @@ func TestNewAnonymous(t *testing.T) {
 									},
 									IsReference: false,
 									Variadic:    true,
-									Expr: &node.Variable{
+									Expr: &node.SimpleVar{
 										Position: &position.Position{
 											StartLine: 1,
 											EndLine:   1,
 											StartPos:  22,
 											EndPos:    23,
 										},
-										VarName: &node.Identifier{
-											Position: &position.Position{
-												StartLine: 1,
-												EndLine:   1,
-												StartPos:  22,
-												EndPos:    23,
-											},
-											Value: "b",
-										},
+										Name: "b",
 									},
 								},
 							},

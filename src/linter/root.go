@@ -243,7 +243,7 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 			}
 		}
 	case *assign.Assign:
-		v, ok := n.Variable.(*node.Variable)
+		v, ok := n.Variable.(*node.SimpleVar)
 		if !ok {
 			break
 		}
@@ -374,22 +374,22 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 	}
 }
 
-func (d *RootWalker) reportUndefinedVariable(s *node.Variable, maybeHave bool) {
-	name, ok := s.VarName.(*node.Identifier)
+func (d *RootWalker) reportUndefinedVariable(v node.Node, maybeHave bool) {
+	sv, ok := v.(*node.SimpleVar)
 	if !ok {
-		d.Report(s, LevelInformation, "undefined", "Unknown variable variable %s used",
-			meta.NameNodeToString(s))
+		d.Report(v, LevelInformation, "undefined", "Unknown variable variable %s used",
+			meta.NameNodeToString(v))
 		return
 	}
 
-	if _, ok := superGlobals[name.Value]; ok {
+	if _, ok := superGlobals[sv.Name]; ok {
 		return
 	}
 
 	if maybeHave {
-		d.Report(s, LevelInformation, "undefined", "Variable might have not been defined: %s", name.Value)
+		d.Report(sv, LevelInformation, "undefined", "Variable might have not been defined: %s", sv.Name)
 	} else {
-		d.Report(s, LevelError, "undefined", "Undefined variable: %s", name.Value)
+		d.Report(sv, LevelError, "undefined", "Undefined variable: %s", sv.Name)
 	}
 }
 
@@ -429,17 +429,16 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 
 	for _, useExpr := range uses {
 		var byRef bool
-		var v *node.Variable
+		var v *node.SimpleVar
 		switch u := useExpr.(type) {
 		case *expr.Reference:
-			v = u.Variable.(*node.Variable)
+			v = u.Variable.(*node.SimpleVar)
 			byRef = true
-		case *node.Variable:
+		case *node.SimpleVar:
 			v = u
 		}
-		varName := v.VarName.(*node.Identifier).Value
 
-		typ, ok := sc.GetVarNameType(varName)
+		typ, ok := sc.GetVarNameType(v.Name)
 		if !ok {
 			typ = meta.NewTypesMap("TODO_use_var")
 		}
@@ -447,9 +446,9 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 		sc.AddVar(v, typ, "use", true)
 
 		if !byRef {
-			b.unusedVars[varName] = append(b.unusedVars[varName], v)
+			b.unusedVars[v.Name] = append(b.unusedVars[v.Name], v)
 		} else {
-			b.nonLocalVars[varName] = struct{}{}
+			b.nonLocalVars[v.Name] = struct{}{}
 		}
 	}
 

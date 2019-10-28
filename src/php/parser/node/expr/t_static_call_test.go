@@ -274,22 +274,14 @@ func TestStaticCallVar(t *testing.T) {
 							},
 						},
 					},
-					Call: &node.Variable{
+					Call: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  9,
 							EndPos:    12,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  9,
-								EndPos:    12,
-							},
-							Value: "bar",
-						},
+						Name: "bar",
 					},
 					ArgumentList: &node.ArgumentList{
 						Position: &position.Position{
@@ -335,39 +327,23 @@ func TestStaticCallVarVar(t *testing.T) {
 						StartPos:  4,
 						EndPos:    15,
 					},
-					Class: &node.Variable{
+					Class: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    7,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    7,
-							},
-							Value: "foo",
-						},
+						Name: "foo",
 					},
-					Call: &node.Variable{
+					Call: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  10,
 							EndPos:    13,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  10,
-								EndPos:    13,
-							},
-							Value: "bar",
-						},
+						Name: "bar",
 					},
 					ArgumentList: &node.ArgumentList{
 						Position: &position.Position{

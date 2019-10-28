@@ -38,22 +38,14 @@ func TestPropertyFetch(t *testing.T) {
 						StartPos:  4,
 						EndPos:    10,
 					},
-					Variable: &node.Variable{
+					Variable: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    5,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    5,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
 					Property: &node.Identifier{
 						Position: &position.Position{

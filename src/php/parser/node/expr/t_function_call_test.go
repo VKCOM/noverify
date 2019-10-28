@@ -252,22 +252,14 @@ func TestFunctionCallVar(t *testing.T) {
 						StartPos:  4,
 						EndPos:    17,
 					},
-					Function: &node.Variable{
+					Function: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  4,
 							EndPos:    7,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  4,
-								EndPos:    7,
-							},
-							Value: "foo",
-						},
+						Name: "foo",
 					},
 					ArgumentList: &node.ArgumentList{
 						Position: &position.Position{
@@ -293,22 +285,14 @@ func TestFunctionCallVar(t *testing.T) {
 										StartPos:  9,
 										EndPos:    16,
 									},
-									Value: &node.Variable{
+									Value: &node.SimpleVar{
 										Position: &position.Position{
 											StartLine: 1,
 											EndLine:   1,
 											StartPos:  15,
 											EndPos:    16,
 										},
-										VarName: &node.Identifier{
-											Position: &position.Position{
-												StartLine: 1,
-												EndLine:   1,
-												StartPos:  15,
-												EndPos:    16,
-											},
-											Value: "a",
-										},
+										Name: "a",
 									},
 								},
 							},
@@ -393,22 +377,14 @@ func TestFunctionCallExprArg(t *testing.T) {
 										StartPos:  9,
 										EndPos:    14,
 									},
-									Left: &node.Variable{
+									Left: &node.SimpleVar{
 										Position: &position.Position{
 											StartLine: 1,
 											EndLine:   1,
 											StartPos:  9,
 											EndPos:    12,
 										},
-										VarName: &node.Identifier{
-											Position: &position.Position{
-												StartLine: 1,
-												EndLine:   1,
-												StartPos:  9,
-												EndPos:    12,
-											},
-											Value: "foo",
-										},
+										Name: "foo",
 									},
 									Right: &scalar.Lnumber{
 										Position: &position.Position{

@@ -30,22 +30,14 @@ func TestVariable(t *testing.T) {
 					StartPos:  4,
 					EndPos:    6,
 				},
-				Expr: &node.Variable{
+				Expr: &node.SimpleVar{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
 						StartPos:  4,
 						EndPos:    5,
 					},
-					VarName: &node.Identifier{
-						Position: &position.Position{
-							StartLine: 1,
-							EndLine:   1,
-							StartPos:  4,
-							EndPos:    5,
-						},
-						Value: "a",
-					},
+					Name: "a",
 				},
 			},
 		},
@@ -75,29 +67,21 @@ func TestVariableVariable(t *testing.T) {
 					StartPos:  4,
 					EndPos:    7,
 				},
-				Expr: &node.Variable{
+				Expr: &node.Var{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
 						StartPos:  4,
 						EndPos:    6,
 					},
-					VarName: &node.Variable{
+					Expr: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
 							StartPos:  5,
 							EndPos:    6,
 						},
-						VarName: &node.Identifier{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  5,
-								EndPos:    6,
-							},
-							Value: "a",
-						},
+						Name: "a",
 					},
 				},
 			},

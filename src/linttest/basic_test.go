@@ -372,23 +372,29 @@ function foo(Foo $x) {
 }
 
 func TestUnusedInStaticVarPropFetch(t *testing.T) {
-	linttest.SimpleNegativeTest(t, `<?php
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
 class Foo {}
 function foo() {
 	$x = "propname";
 	return Foo::$$x;
 }
 	`)
+	test.Expect = []string{`Unknown variable variable $$x used`}
+	test.RunAndMatch()
 }
 
 func TestUnusedInStaticVarPropAssign(t *testing.T) {
-	linttest.SimpleNegativeTest(t, `<?php
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
 class Foo {}
 function foo() {
 	$x = "propname";
 	Foo::$$x = "propval";
 }
 	`)
+	test.Expect = []string{`Unknown variable variable $$x used`}
+	test.RunAndMatch()
 }
 
 func TestUnusedInSwitch(t *testing.T) {
