@@ -371,6 +371,22 @@ function foo(Foo $x) {
 	`)
 }
 
+func TestStaticPropFetch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {}
+function foo() {
+	$x = "propname";
+	return Foo::$$y; // $y is undefined, but $x is defined
+}
+`)
+	test.Expect = []string{
+		`Unused variable x`,
+		`Undefined variable: y`,
+	}
+	test.RunAndMatch()
+}
+
 func TestUnusedInStaticVarPropFetch(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 class Foo {}
