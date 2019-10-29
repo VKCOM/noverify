@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	_ "net/http/pprof" // it is ok for actually main package
@@ -19,6 +21,7 @@ import (
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/rules"
 )
 
 // Line below implies that we have `https://github.com/VKCOM/phpstorm-stubs.git` cloned
@@ -158,6 +161,10 @@ func mainNoExit() (int, error) {
 		return 0, fmt.Errorf("Init stubs: %v", err)
 	}
 
+	if err := initRules(); err != nil {
+		return 0, fmt.Errorf("Init rules: %v", err)
+	}
+
 	if gitRepo != "" {
 		return gitMain()
 	}
@@ -292,6 +299,44 @@ func setDiscardVarPredicate() error {
 		}
 		linter.IsDiscardVar = func(s string) bool {
 			return re.MatchString(s)
+		}
+	}
+
+	return nil
+}
+
+func initRules() error {
+	if rulesList == "" {
+		return nil
+	}
+
+	appendRules := func(dst, src *rules.ScopedSet) {
+		for i, list := range src.RulesByKind {
+			dst.RulesByKind[i] = append(dst.RulesByKind[i], list...)
+		}
+	}
+
+	p := rules.NewParser()
+	linter.Rules = rules.NewSet()
+	for _, filename := range strings.Split(rulesList, ",") {
+		data, err := ioutil.ReadFile(filename)
+		if err != nil {
+			return err
+		}
+		rset, err := p.Parse(filename, bytes.NewReader(data))
+		if err != nil {
+			return err
+		}
+
+		appendRules(linter.Rules.Any, rset.Any)
+		appendRules(linter.Rules.Root, rset.Root)
+		appendRules(linter.Rules.Local, rset.Local)
+
+		for _, name := range rset.AlwaysAllowed {
+			reportsIncludeChecksSet[name] = true
+		}
+		for _, name := range rset.AlwaysCritical {
+			reportsCriticalSet[name] = true
 		}
 	}
 

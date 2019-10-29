@@ -20,6 +20,8 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/position"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
+	"github.com/VKCOM/noverify/src/phpgrep"
+	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/state"
 	"github.com/VKCOM/noverify/src/vscode"
@@ -41,6 +43,10 @@ type RootWalker struct {
 	custom      []RootChecker
 	customBlock []BlockCheckerCreateFunc
 	customState map[string]interface{}
+
+	rootRset  *rules.ScopedSet
+	localRset *rules.ScopedSet
+	anyRset   *rules.ScopedSet
 
 	// internal state
 	meta fileMeta
@@ -260,6 +266,12 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 
 	for _, c := range d.custom {
 		c.AfterEnterNode(w)
+	}
+
+	if meta.IsIndexingComplete() && d.rootRset != nil {
+		n := w.(node.Node)
+		kind := rules.CategorizeNode(n)
+		d.runRules(n, d.scope(), d.rootRset.RulesByKind[kind])
 	}
 
 	if !res {
@@ -1311,4 +1323,70 @@ func (d *RootWalker) LeaveNode(n walker.Walkable) {
 	for _, c := range d.custom {
 		c.AfterLeaveNode(n)
 	}
+}
+
+func (d *RootWalker) runRules(n node.Node, sc *meta.Scope, rlist []rules.Rule) {
+	for i := range rlist {
+		rule := &rlist[i]
+		if loc := d.matchRule(n, sc, rule); loc != nil {
+			d.Report(loc, rule.Level, rule.Name, rule.Message)
+		}
+	}
+}
+
+func (d *RootWalker) matchRule(n node.Node, sc *meta.Scope, rule *rules.Rule) node.Node {
+	var location node.Node
+
+	rule.Matcher.Find(n, func(m *phpgrep.MatchData) bool {
+		if location != nil {
+			return false
+		}
+
+		matched := false
+		if len(rule.Filters) == 0 {
+			matched = true
+		} else {
+			for _, filterSet := range rule.Filters {
+				if d.checkFilterSet(m, sc, filterSet) {
+					matched = true
+					break
+				}
+			}
+		}
+
+		// If location is explicitly set, use named match set.
+		// Otherwise peek the root target node.
+		switch {
+		case matched && rule.Location != "":
+			location = m.Named[rule.Location]
+		case matched:
+			location = n
+		}
+
+		return !matched // Do not continue if we found a match
+	})
+
+	return location
+}
+
+func (d *RootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filterSet map[string]rules.Filter) bool {
+	for name, filter := range filterSet {
+		nn := m.Named[name]
+
+		if len(filter.Types) != 0 {
+			typ := solver.ExprType(sc, d.st, nn)
+			matched := false
+			for _, wantType := range filter.Types {
+				if typeIsCompatible(typ, wantType) {
+					matched = true
+					break
+				}
+			}
+			if !matched {
+				return false
+			}
+		}
+	}
+
+	return true
 }

@@ -4,6 +4,7 @@ import (
 	"regexp"
 
 	"github.com/VKCOM/noverify/src/inputs"
+	"github.com/VKCOM/noverify/src/rules"
 )
 
 var (
@@ -19,6 +20,9 @@ var (
 	//
 	// TODO(quasilyte): avoid having it as a global variable?
 	SrcInput = inputs.NewDefaultSourceInput()
+
+	// Rules is a set of dynamically loaded linter diagnostics.
+	Rules = &rules.Set{}
 
 	// settings
 	StubsDir        string

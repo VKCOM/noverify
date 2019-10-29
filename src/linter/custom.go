@@ -5,6 +5,7 @@ import (
 	"io"
 	"sort"
 
+	"github.com/VKCOM/noverify/src/linter/lintapi"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
@@ -199,13 +200,13 @@ type BlockCheckerCreateFunc func(*BlockContext) BlockChecker
 type RootCheckerCreateFunc func(*RootContext) RootChecker
 
 const (
-	LevelError       = 1
-	LevelWarning     = 2
-	LevelInformation = 3
-	LevelHint        = 4
-	LevelUnused      = 5
-	LevelDoNotReject = 6 // do not treat this warning as a reason to reject if we get this kind of warning
-	LevelSyntax      = 7
+	LevelError       = lintapi.LevelError
+	LevelWarning     = lintapi.LevelWarning
+	LevelInformation = lintapi.LevelInformation
+	LevelHint        = lintapi.LevelHint
+	LevelUnused      = lintapi.LevelUnused
+	LevelDoNotReject = lintapi.LevelMaybe
+	LevelSyntax      = lintapi.LevelSyntax
 )
 
 var vscodeLevelMap = map[int]int{
