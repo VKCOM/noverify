@@ -22,12 +22,30 @@ $x && $x;
  * @scope any
  */
 explode("", ${"*"});
+
+/**
+ * @warning 3rd argument of in_array must be true when comparing strings
+ * @type string $needle
+ */
+in_array($needle, $_);
+
+/**
+ * @warning strings must be compared using '===' operator
+ * @type string $x
+ * @or
+ * @type string $y
+ */
+$x == $y;
 `
 
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 function stripos($haystack, $needle, $offset = 0) { return 0; }
 function explode($delimeter, $s, $limit = 0) { return []; }
+function in_array($needle, $haystack, $strict = false) { return true; }
+function define($name, $value) {}
+
+define('true', 1 == 1);
 
 function f($x, $y) {
   $_ = stripos("needle", $x); // Bad
@@ -37,6 +55,18 @@ function f($x, $y) {
   $_ = $x && $x; // Bad
   $_ = 1 && $x;  // Good
   $_ = $x && $y; // Good
+
+  $str = 'x';
+  $int = 1;
+  $_ = in_array('x', $x);    // Bad
+  $_ = in_array($str, $x);   // Bad
+  $_ = in_array('x', $x, 1); // Good
+  $_ = in_array($int, $x);   // Good
+
+  $_ = $str == '1';  // Bad
+  $_ = '1' == $str;  // Bad
+  $_ = $str == $x;   // Bad
+  $_ = $str === '1'; // Good
 }
 
 $s = "123";
@@ -47,6 +77,11 @@ $_ = explode("", $s);
 		`duplicated sub-expressions inside boolean expression`,
 		`suspicious order of stripos function arguments`,
 		`don't call explode with empty delimiter`,
+		`3rd argument of in_array must be true when comparing strings`,
+		`3rd argument of in_array must be true when comparing strings`,
+		`strings must be compared using '===' operator`,
+		`strings must be compared using '===' operator`,
+		`strings must be compared using '===' operator`,
 	}
 	runRulesTest(t, test, rfile)
 }
