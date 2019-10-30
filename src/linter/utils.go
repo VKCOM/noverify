@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
@@ -90,4 +91,25 @@ func varToString(v node.Node) string {
 	default:
 		return ""
 	}
+}
+
+func typeIsCompatible(actual meta.TypesMap, want string) bool {
+	if actual.Len() != 1 {
+		return false
+	}
+
+	return actual.Find(func(typ string) bool {
+		if typ == want {
+			return true
+		}
+
+		switch want {
+		case "mixed[]", "array":
+			if strings.HasSuffix(typ, "[]") {
+				return true
+			}
+		}
+
+		return false
+	})
 }

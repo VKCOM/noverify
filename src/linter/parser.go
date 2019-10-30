@@ -121,6 +121,13 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 		filename:   filename,
 		lineRanges: lineRanges,
 		st:         &meta.ClassParseState{},
+
+		// We need to clone rules since phpgrep matchers
+		// contain mutable state that we don't want to share
+		// between goroutines.
+		anyRset:   Rules.Any.Clone(),
+		rootRset:  Rules.Root.Clone(),
+		localRset: Rules.Local.Clone(),
 	}
 
 	w.InitFromParser(contents, parser)

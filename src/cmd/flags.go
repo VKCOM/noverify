@@ -36,9 +36,9 @@ var (
 	reportsExclude          string
 	reportsExcludeChecks    string
 	reportsCritical         string
-	reportsExcludeChecksSet map[string]bool
-	reportsIncludeChecksSet map[string]bool
-	reportsCriticalSet      map[string]bool
+	reportsExcludeChecksSet = map[string]bool{}
+	reportsIncludeChecksSet = map[string]bool{}
+	reportsCriticalSet      = map[string]bool{}
 
 	allowChecks       string
 	allowDisable      string
@@ -48,6 +48,8 @@ var (
 
 	fullAnalysisFiles string
 	indexOnlyFiles    string
+
+	rulesList string
 
 	output     string
 	outputJSON bool
@@ -90,6 +92,9 @@ func bindFlags() {
 
 	flag.StringVar(&reportsCritical, "critical", allNonMaybe,
 		"Comma-separated list of check names that are considered critical (all non-maybe checks by default)")
+
+	flag.StringVar(&rulesList, "rules", "",
+		"Comma-separated list of rules files")
 
 	flag.StringVar(&gitRepo, "git", "", "Path to git repository to analyze")
 	flag.StringVar(&gitCommitFrom, "git-commit-from", "", "Analyze changes between commits <git-commit-from> and <git-commit-to>")

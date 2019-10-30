@@ -17,6 +17,7 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
+	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/solver"
 )
 
@@ -298,6 +299,17 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 
 	for _, c := range b.custom {
 		c.AfterEnterNode(w)
+	}
+
+	if meta.IsIndexingComplete() && b.r.anyRset != nil {
+		// Note: no need to check localRset for nil.
+		kind := rules.CategorizeNode(n)
+		if kind != rules.KindNone {
+			b.r.runRules(n, b.ctx.sc, b.r.anyRset.RulesByKind[kind])
+			if !b.rootLevel {
+				b.r.runRules(n, b.ctx.sc, b.r.localRset.RulesByKind[kind])
+			}
+		}
 	}
 
 	return res
