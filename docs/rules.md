@@ -73,7 +73,7 @@ The second rule wants you to use `$strict=true` when using [in_array](https://ww
 
 The only mandatory attribute is rule **category** that combines severity level and report message text.
 
-There are 4 categories right now: `error`, `warning`, `info` and `maybe`.
+There are 4 categories right now: `error`, `warning`, `info` and `maybe`.<br>
 `error` and `warning` makes a rules **critical**, so linter will exit with non-zero status if it matches.
 
 All other available attributes are matching **constraints**. Constraints that can be repeated can be called **filters**.
@@ -126,7 +126,9 @@ When we say "unrepeatable", it means that you can't have several `@scope` attrib
 if you use `@or`. It would be shared between all filter sets.
 
 With NoVerify builtin inspections, every issue report is prefixed with a check name, like `unused` or `undefined`.
+
 If a rule has `@name <string>` attribute, that is as a rule report tag.
+
 Otherwise, a rule is called **anonymous** and instead of some dull placeholder, you'll get a
 `filename:line` marker, where `filename` is a rule file that defines that rule and `line` is a
 line that contains the pattern being matched. It's useful not only during the rule debugging but
@@ -158,7 +160,7 @@ This rule, for example, finds all for loops that call `count` on every iteration
 for ($i = 0; $i < count($a); $i++) $_;
 ```
 
-> We don't encourage anyone to rewrite these kinds of loops! It's just an example.
+> We don't encourage anyone to rewrite these kinds of loops. It's just an example.
 
 Here are possible reports for that rule:
 
