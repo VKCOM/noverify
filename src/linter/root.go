@@ -249,7 +249,7 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 			break
 		}
 
-		d.scope().AddVar(v, solver.ExprTypeLocal(d.meta.Scope, d.st, n.Expression), "global variable", true)
+		d.scope().AddVar(v, solver.ExprTypeLocal(d.scope(), d.st, n.Expression), "global variable", true)
 	case *stmt.Function:
 		res = d.enterFunction(n)
 	case *stmt.PropertyList:
@@ -605,7 +605,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 		}
 
 		if p.Expr != nil {
-			typ = typ.Append(solver.ExprTypeLocal(d.meta.Scope, d.st, p.Expr))
+			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.st, p.Expr))
 		}
 
 		if isStatic {
@@ -642,7 +642,7 @@ func (d *RootWalker) enterClassConstList(s *stmt.ClassConstList) bool {
 		c := cNode.(*stmt.Constant)
 
 		nm := c.ConstantName.Value
-		typ := solver.ExprTypeLocal(d.meta.Scope, d.st, c.Expr)
+		typ := solver.ExprTypeLocal(d.scope(), d.st, c.Expr)
 
 		// TODO: handle duplicate constant
 		cl.Constants[nm] = meta.ConstantInfo{
@@ -1200,7 +1200,7 @@ func (d *RootWalker) enterFunctionCall(s *expr.FunctionCall) bool {
 
 	d.meta.Constants[`\`+strings.TrimFunc(str.Value, isQuote)] = meta.ConstantInfo{
 		Pos: d.getElementPos(s),
-		Typ: solver.ExprTypeLocal(d.meta.Scope, d.st, valueArg.Expr),
+		Typ: solver.ExprTypeLocal(d.scope(), d.st, valueArg.Expr),
 	}
 	return true
 }
@@ -1298,7 +1298,7 @@ func (d *RootWalker) enterConstList(lst *stmt.ConstList) bool {
 
 		d.meta.Constants[nm] = meta.ConstantInfo{
 			Pos: d.getElementPos(s),
-			Typ: solver.ExprTypeLocal(d.meta.Scope, d.st, s.Expr),
+			Typ: solver.ExprTypeLocal(d.scope(), d.st, s.Expr),
 		}
 	}
 

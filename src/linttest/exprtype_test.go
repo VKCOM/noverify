@@ -541,19 +541,18 @@ func TestExprTypeProperty(t *testing.T) {
 		{`$point->x`, "float"},
 		{`$point->y`, "float"},
 
-		// TODO:
-		//
-		// {`Gopher::$name`, "string"},
-		// {`Gopher::POWER`, "int"},
-		// {`$magic->int`, ""},
+		{`Gopher::$name`, "string"},
+		{`Gopher::POWER`, "int"},
+		{`$magic->int`, "int"},
 	}
 
 	global := `<?php
+
 class Gopher {
   /** @var string */
   public static $name = "unnamed";
 
-  constant POWER = 9001; // It's over 9000
+  const POWER = 9001; // It's over 9000
 }
 
 /**
