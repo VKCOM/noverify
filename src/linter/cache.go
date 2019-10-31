@@ -21,7 +21,8 @@ import (
 // Version log:
 //     27 - added Static field to meta.FuncInfo
 //     28 - array type parsed as mixed[]
-const cacheVersion = 28
+//     29 - updated type inference for ClassConstFetch
+const cacheVersion = 29
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")
