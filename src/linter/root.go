@@ -1157,7 +1157,7 @@ func (d *RootWalker) checkFuncParam(p *node.Parameter) {
 	// TODO(quasilyte): DefaultValue can only contain constant expressions.
 	// Could run special check over them to detect the potential fatal errors.
 	walkNode(p.DefaultValue, func(w walker.Walkable) bool {
-		if n, ok := w.(*expr.Array); ok {
+		if n, ok := w.(*expr.Array); ok && !n.ShortSyntax {
 			d.Report(n, LevelDoNotReject, "arraySyntax", "Use of old array syntax (use short form instead)")
 		}
 		return true
