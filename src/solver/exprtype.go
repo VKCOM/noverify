@@ -319,10 +319,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 		if !ok {
 			return meta.TypesMap{}
 		}
-		res, _, ok := FindConstant(className, n.ConstantName.Value)
-		if ok {
-			return res.Typ
-		}
+		return meta.NewTypesMap(meta.WrapClassConstFetch(className, n.ConstantName.Value))
 	case *expr.ConstFetch:
 		nm, ok := n.Constant.(*name.Name)
 		if !ok {
