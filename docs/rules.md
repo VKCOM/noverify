@@ -239,3 +239,8 @@ TODO.
  */
 (string)$x;
 ```
+
+### Development notes
+
+Dynamic rules features that are being developed and discussed:
+* [Multi-pattern rules syntax](https://github.com/VKCOM/noverify/issues/276)
