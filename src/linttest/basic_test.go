@@ -91,7 +91,9 @@ function mt_rand($x = 0, $y = 0) {}`)
 func TestArgsArraysSyntax(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-function f($a = array()) {}`)
+function bad($a = array()) {}
+function good($a = []) {}
+`)
 	test.Expect = []string{
 		`Use of old array syntax (use short form instead)`,
 	}
