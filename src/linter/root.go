@@ -208,6 +208,11 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 		}
 	}
 
+	if class, ok := w.(*stmt.Class); ok && class.ClassName == nil {
+		// TODO: remove when #62 and anon class support in general is ready.
+		return false // Don't walk nor enter anon classes
+	}
+
 	state.EnterNode(d.st, w)
 
 	switch n := w.(type) {

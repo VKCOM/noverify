@@ -108,16 +108,16 @@ func ParseContents(filename string, contents []byte, lineRanges []git.LineRange)
 	return analyzeFile(filename, bufCopy, parser, lineRanges)
 }
 
-func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRanges []git.LineRange) (rootNode node.Node, w *RootWalker, err error) {
+func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRanges []git.LineRange) (*node.Root, *RootWalker, error) {
 	start := time.Now()
-	rootNode = parser.GetRootNode()
+	rootNode := parser.GetRootNode()
 
 	if rootNode == nil {
 		lintdebug.Send("Could not parse %s at all due to errors", filename)
 		return nil, nil, errors.New("Empty root node")
 	}
 
-	w = &RootWalker{
+	w := &RootWalker{
 		filename:   filename,
 		lineRanges: lineRanges,
 		st:         &meta.ClassParseState{},

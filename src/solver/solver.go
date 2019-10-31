@@ -160,6 +160,12 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 		if ok {
 			return r.resolveTypes(class, info.Typ)
 		}
+	case meta.WClassConstFetch:
+		className, constName := meta.UnwrapClassConstFetch(typ)
+		info, _, ok := FindConstant(className, constName)
+		if ok {
+			return r.resolveTypes(class, info.Typ)
+		}
 	default:
 		panic(fmt.Sprintf("Unexpected type: %d", typ[0]))
 	}

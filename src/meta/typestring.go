@@ -33,6 +33,11 @@ const (
 	// Params: [Class name <string>] [Property name with $ <string>]
 	WStaticPropertyFetch
 
+	// WClassConstFetch is a const fetch from a class.
+	// E.g. Test::CONSTANT
+	// Params: [Class name <string>] [Constant name <string>]
+	WClassConstFetch
+
 	// WInstancePropertyFetch is a property fetch from some instance.
 	// You need to provide expression type, see example for WInstanceMethodCall.
 	// E.g. $var->something
@@ -176,6 +181,14 @@ func UnwrapInstanceMethodCall(s string) (typ, methodName string) {
 	return unwrap2(s)
 }
 
+func WrapClassConstFetch(className, constName string) string {
+	return wrap(WClassConstFetch, nil, className, constName)
+}
+
+func UnwrapClassConstFetch(s string) (className, constName string) {
+	return unwrap2(s)
+}
+
 func WrapStaticPropertyFetch(className, propName string) string {
 	if !strings.HasPrefix(propName, "$") {
 		propName = "$" + propName
@@ -277,6 +290,9 @@ func formatType(s string) (res string) {
 	case WStaticPropertyFetch:
 		className, propertyName := UnwrapStaticPropertyFetch(s)
 		return className + "::" + propertyName
+	case WClassConstFetch:
+		className, constName := UnwrapClassConstFetch(s)
+		return className + "::" + constName
 	}
 
 	return "unknown(" + s + ")"
