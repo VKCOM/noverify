@@ -11,6 +11,20 @@ import (
 
 func TestAnyRules(t *testing.T) {
 	rfile := `<?php
+/**
+ * @warning don't compare arrays with numeric types
+ * @type array $x
+ * @type int|float $y
+ * @or
+ * @type int|float $x
+ * @type array $y
+ */
+$x > $y;
+$x < $y;
+$x >= $y;
+$x <= $y;
+$x == $y;
+
 /** @warning suspicious order of stripos function arguments */
 stripos(${"str"}, ${"*"});
 
@@ -47,6 +61,19 @@ function define($name, $value) {}
 
 define('true', 1 == 1);
 
+function combinedPatterns(array $arr) {
+  $_ = $arr > 10;
+  $_ = 10 > $arr;
+  $_ = $arr < 10;
+  $_ = 10 < $arr;
+  $_ = $arr >= 10;
+  $_ = 10 >= $arr;
+  $_ = $arr <= 10;
+  $_ = 10 <= $arr;
+  $_ = $arr == 10;
+  $_ = 10 == $arr;
+}
+
 function f($x, $y) {
   $_ = stripos("needle", $x); // Bad
   $_ = stripos($x, "needle"); // Good
@@ -82,6 +109,16 @@ $_ = explode("", $s);
 		`strings must be compared using '===' operator`,
 		`strings must be compared using '===' operator`,
 		`strings must be compared using '===' operator`,
+		`don't compare arrays with numeric types`,
+		`don't compare arrays with numeric types`,
+		`don't compare arrays with numeric types`,
+		`don't compare arrays with numeric types`,
+		`don't compare arrays with numeric types`,
+		`don't compare arrays with numeric types`,
+		`don't compare arrays with numeric types`,
+		`don't compare arrays with numeric types`,
+		`don't compare arrays with numeric types`,
+		`don't compare arrays with numeric types`,
 	}
 	runRulesTest(t, test, rfile)
 }

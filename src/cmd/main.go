@@ -332,7 +332,7 @@ func initRules() error {
 		appendRules(linter.Rules.Root, rset.Root)
 		appendRules(linter.Rules.Local, rset.Local)
 
-		for _, name := range rset.AlwaysAllowed {
+		for _, name := range rset.ToAllow {
 			reportsIncludeChecksSet[name] = true
 		}
 		for _, name := range rset.AlwaysCritical {

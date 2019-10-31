@@ -33,10 +33,11 @@ func (e *parseError) Error() string {
 
 // parser parses rules file into a RuleSet.
 type parser struct {
-	filename string
-	sources  []byte
-	res      *Set
-	compiler phpgrep.Compiler
+	filename   string
+	sources    []byte
+	res        *Set
+	parentRule Rule // Used when phpdoc is shared between patterns
+	compiler   phpgrep.Compiler
 }
 
 // Parse reads PHP code that represents a rule file from r and creates a RuleSet based on it.
@@ -72,36 +73,17 @@ func (p *parser) parse(filename string, r io.Reader) (*Set, error) {
 	return p.res, nil
 }
 
-func (p *parser) parseRule(st node.Node) error {
-	comment := ""
-	for _, ff := range (*st.GetFreeFloating())[freefloating.Start] {
-		if ff.StringType != freefloating.CommentType {
-			continue
-		}
-		if strings.HasPrefix(ff.Value, "/**") && magicComment.MatchString(ff.Value) {
-			comment = ff.Value
-			break
-		}
-	}
-	if comment == "" {
-		return nil
-	}
-
-	var rule Rule
-	rule.Name = fmt.Sprintf("%s:%d", filepath.Base(p.filename), st.GetPosition().StartLine)
-	critical := false
-	unnamed := true
+func (p *parser) readRule(dst *Rule, st node.Node, source string) error {
+	rule := dst
 
 	var filterSet map[string]Filter
-	dst := p.res.Any // Use "any" set by default
 
-	for _, part := range phpdoc.Parse(comment) {
+	for _, part := range phpdoc.Parse(source) {
 		switch part.Name {
 		case "name":
 			if len(part.Params) != 1 {
 				return p.errorf(st, "@name expects exactly 1 param, got %d", len(part.Params))
 			}
-			unnamed = false
 			rule.Name = part.Params[0]
 
 		case "location":
@@ -119,15 +101,8 @@ func (p *parser) parseRule(st node.Node) error {
 				return p.errorf(st, "@scope expects exactly 1 params, got %d", len(part.Params))
 			}
 			switch part.Params[0] {
-			case "any":
-				dst = p.res.Any
-				rule.scope = "any"
-			case "root":
-				dst = p.res.Root
-				rule.scope = "root"
-			case "local":
-				dst = p.res.Local
-				rule.scope = "block"
+			case "any", "root", "local":
+				rule.scope = part.Params[0]
 			default:
 				return p.errorf(st, "unknown @scope: %s", part.Params[0])
 			}
@@ -135,11 +110,9 @@ func (p *parser) parseRule(st node.Node) error {
 		case "error":
 			rule.Level = lintapi.LevelError
 			rule.Message = part.ParamsText
-			critical = true
 		case "warning":
 			rule.Level = lintapi.LevelWarning
 			rule.Message = part.ParamsText
-			critical = true
 		case "info":
 			rule.Level = lintapi.LevelInformation
 			rule.Message = part.ParamsText
@@ -175,15 +148,51 @@ func (p *parser) parseRule(st node.Node) error {
 		}
 	}
 
-	if unnamed {
-		p.res.AlwaysAllowed = append(p.res.AlwaysAllowed, rule.Name)
-	}
-	if critical && unnamed {
-		p.res.AlwaysCritical = append(p.res.AlwaysCritical, rule.Name)
-	}
-
 	if filterSet != nil {
 		rule.Filters = append(rule.Filters, filterSet)
+	}
+
+	return nil
+}
+
+func (p *parser) parseRule(st node.Node) error {
+	comment := ""
+	for _, ff := range (*st.GetFreeFloating())[freefloating.Start] {
+		if ff.StringType != freefloating.CommentType {
+			continue
+		}
+		if strings.HasPrefix(ff.Value, "/**") && magicComment.MatchString(ff.Value) {
+			comment = ff.Value
+			break
+		}
+	}
+
+	var rule Rule
+	if comment == "" {
+		// Inherit rule props from the parent rule.
+		rule = p.parentRule
+	} else {
+		if err := p.readRule(&rule, st, comment); err != nil {
+			return err
+		}
+		p.parentRule = rule
+	}
+
+	dst := p.res.Any // Use "any" set by default
+	switch rule.scope {
+	case "root":
+		dst = p.res.Root
+	case "local":
+		dst = p.res.Local
+	}
+
+	if rule.Name == "" {
+		rule.Name = fmt.Sprintf("%s:%d", filepath.Base(p.filename), st.GetPosition().StartLine)
+	}
+	p.res.ToAllow = append(p.res.ToAllow, rule.Name)
+
+	if rule.Level == lintapi.LevelError || rule.Level == lintapi.LevelWarning {
+		p.res.AlwaysCritical = append(p.res.AlwaysCritical, rule.Name)
 	}
 
 	pos := st.GetPosition()

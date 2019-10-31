@@ -32,7 +32,7 @@ type Set struct {
 	Root  *ScopedSet // Only outside of functions
 	Local *ScopedSet // Only inside functions
 
-	AlwaysAllowed  []string // All unnamed rules
+	ToAllow        []string // All rule names
 	AlwaysCritical []string // Unnamed rules of warning or error level
 }
 
