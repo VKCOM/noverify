@@ -99,7 +99,7 @@ main();
 		//
 		// If cache encoding changes, there is a very high chance that
 		// encoded data lengh will change as well.
-		wantLen := 2740
+		wantLen := 2799
 		haveLen := buf.Len()
 		if haveLen != wantLen {
 			t.Errorf("cache len mismatch:\nhave: %d\nwant: %d", haveLen, wantLen)
@@ -108,7 +108,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "96c3b3c94f4c9830ab91ce432ad9fb22e1d719e054807f4854d87c6781157a7bb1e1b219aaa04f17d994ffa924163d1f1156f5d729d0fe9f681500549a3c6b7b"
+		wantStrings := "81f1a7850db7d602d4d968cfdd1280b3c9afe9069e2a96bcb021a8f4f3801d550d2a7c9d18f9644078a976534c1c3bd4722ba91637a32527fb289250ec5f6823"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)
@@ -122,9 +122,12 @@ main();
 		if err := readMetaCache(bytes.NewReader(buf.Bytes()), "", decodedMeta); err != nil {
 			t.Errorf("decoding failed: %v", err)
 		} else {
+			// TODO: due to lots of important unexported fields,
+			// we can't reliably check 2 meta files via assert.
 			assert.DeepEqual(t,
 				encodedMeta, decodedMeta,
-				cmp.AllowUnexported(meta.TypesMap{}))
+				cmp.AllowUnexported(meta.TypesMap{}),
+				cmp.AllowUnexported(meta.Scope{}))
 		}
 
 		if t.Failed() {
