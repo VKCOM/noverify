@@ -36,6 +36,12 @@ in_array($needle, $_);
  * @type string $y
  */
 $x == $y;
+
+/**
+ * @maybe did you meant to compare an object with null?
+ * @type object $x
+ */
+$x === false;
 `
 
 	test := linttest.NewSuite(t)
@@ -46,6 +52,28 @@ function in_array($needle, $haystack, $strict = false) { return true; }
 function define($name, $value) {}
 
 define('true', 1 == 1);
+define('false', 1 == 0);
+
+/**
+ * @param Foo[] $arr
+ */
+function objectCompare(object $o1, Foo $o2, $x, $arr) {
+  $o3 = $o1;
+  $_ = $o1 === false;
+  $_ = $o2 === false;
+  $_ = $o3 === false;
+
+  $o4 = $o1;
+  if ($x) {
+    $o4 = false;
+  }
+  $_ = $o4 === false;
+
+  $int = 10;
+  $_ = $int === false;
+  $_ = $x === false;
+  $_ = $arr === false;
+}
 
 function f($x, $y) {
   $_ = stripos("needle", $x); // Bad
@@ -82,6 +110,9 @@ $_ = explode("", $s);
 		`strings must be compared using '===' operator`,
 		`strings must be compared using '===' operator`,
 		`strings must be compared using '===' operator`,
+		`did you meant to compare an object with null?`,
+		`did you meant to compare an object with null?`,
+		`did you meant to compare an object with null?`,
 	}
 	runRulesTest(t, test, rfile)
 }
