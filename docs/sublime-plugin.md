@@ -1,0 +1,20 @@
+# Using NoVerify as language server for Sublime Text
+
+You can install https://github.com/tomv564/LSP using Package Control. Here is an example config for NoVerify (replaces phpls):
+
+```json
+{
+  "clients": {
+    "phpls": {
+      "command": ["/path/to/noverify", "-cache-dir=/path/to/cache", "-cores=4", "-lang-server"],
+      "scopes": ["source.php", "embedding.php"],
+      "syntaxes": ["Packages/PHP/PHP.sublime-syntax"],
+      "languageId": "php"
+    }
+  },
+  "log_stderr": true,
+  "only_show_lsp_completions": true
+}
+```
+
+You can then enable `phpls` for current project and enjoy all supported features.
