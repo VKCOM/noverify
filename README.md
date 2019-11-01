@@ -4,7 +4,7 @@ NoVerify is a PHP linter: it finds possible bugs and style violations in your co
 
 * NoVerify has no config: any reported issue in your PHPDoc or PHP code must be fixed.
 * NoVerify aims to understand PHP code at least as well as PHPStorm does. If it behaves incorrectly or suboptimally, please [report issue](https://github.com/VKCOM/noverify/issues/new).
-* This tool is written in Go (https://golang.org/) using PHP parser from z7zmey (https://github.com/z7zmey/php-parser).
+* This tool is written in [Go](https://golang.org/) and uses [z7zmey/php-parser](https://github.com/z7zmey/php-parser).
 
 ## Features
 
@@ -49,3 +49,7 @@ Using noverify as PHP [language server](https://langserver.org):
 - [Using NoVerify as language server for VSCode](docs/vscode-plugin.md)
 - [Using NoVerify as language server for Sublime Text](docs/sublime-plugin.md)
 - [Writing new IDE/editor plugin](docs/writing-new-ide-plugin.md)
+
+## Contribute
+
+Just find [good first issue](https://github.com/VKCOM/noverify/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22), fix it and make pull request.
