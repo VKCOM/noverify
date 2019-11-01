@@ -105,9 +105,12 @@ func typeIsCompatible(actual meta.TypesMap, want string) bool {
 
 		switch want {
 		case "mixed[]", "array":
-			if strings.HasSuffix(typ, "[]") {
-				return true
-			}
+			return strings.HasSuffix(typ, "[]")
+		case "object":
+			// For object we accept any kind of object instance.
+			// https://wiki.php.net/rfc/object-typehint
+			return !strings.HasSuffix(typ, "[]") &&
+				strings.HasPrefix(typ, `\`)
 		}
 
 		return false
