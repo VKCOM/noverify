@@ -52,5 +52,5 @@ Using noverify as linter:
 
 Using noverify as PHP [language server](https://langserver.org):
 - [Using NoVerify as language server for VSCode](docs/vscode-plugin.md)
-- [Using NoVerify as language server for Sublime Text](docs/sublime-plugin)
+- [Using NoVerify as language server for Sublime Text](docs/sublime-plugin.md)
 - [Writing new IDE/editor plugin](docs/writing-new-ide-plugin.md)
