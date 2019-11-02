@@ -3451,7 +3451,7 @@ func TestPhp7(t *testing.T) {
 					},
 					Value: "foo",
 				},
-				Modifiers: []node.Node{
+				Modifiers: []*node.Identifier{
 					&node.Identifier{
 						Position: &position.Position{
 							StartLine: 75,
@@ -3481,7 +3481,7 @@ func TestPhp7(t *testing.T) {
 					},
 					Value: "foo",
 				},
-				Modifiers: []node.Node{
+				Modifiers: []*node.Identifier{
 					&node.Identifier{
 						Position: &position.Position{
 							StartLine: 76,
@@ -3538,7 +3538,7 @@ func TestPhp7(t *testing.T) {
 					},
 					Value: "foo",
 				},
-				Modifiers: []node.Node{
+				Modifiers: []*node.Identifier{
 					&node.Identifier{
 						Position: &position.Position{
 							StartLine: 77,
@@ -3597,7 +3597,7 @@ func TestPhp7(t *testing.T) {
 					},
 					Value: "foo",
 				},
-				Modifiers: []node.Node{
+				Modifiers: []*node.Identifier{
 					&node.Identifier{
 						Position: &position.Position{
 							StartLine: 78,
@@ -12987,7 +12987,7 @@ func TestPhp7(t *testing.T) {
 					},
 					Value: "foo",
 				},
-				Modifiers: []node.Node{
+				Modifiers: []*node.Identifier{
 					&node.Identifier{
 						Position: &position.Position{
 							StartLine: 330,

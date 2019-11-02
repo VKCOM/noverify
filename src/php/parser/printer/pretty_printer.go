@@ -1430,7 +1430,7 @@ func (p *PrettyPrinter) printStmtClass(n node.Node) {
 	nn := n.(*stmt.Class)
 
 	if nn.Modifiers != nil {
-		p.joinPrint(" ", nn.Modifiers)
+		p.joinPrintIdents(" ", nn.Modifiers)
 		io.WriteString(p.w, " ")
 	}
 	io.WriteString(p.w, "class")

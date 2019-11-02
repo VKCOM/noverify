@@ -195,22 +195,3 @@ func (b *PositionBuilder) NewNodeListNodePosition(list []node.Node, n node.Node)
 		EndPos:    b.getNodeEndPos(n).endPos,
 	}
 }
-
-// NewOptionalListTokensPosition returns new Position
-func (b *PositionBuilder) NewOptionalListTokensPosition(list []node.Node, t *scanner.Token, endToken *scanner.Token) *position.Position {
-	if list == nil {
-		return &position.Position{
-			StartLine: t.StartLine,
-			EndLine:   endToken.EndLine,
-			StartPos:  t.StartPos,
-			EndPos:    endToken.EndPos,
-		}
-	}
-
-	return &position.Position{
-		StartLine: b.getListStartPos(list).startLine,
-		EndLine:   endToken.EndLine,
-		StartPos:  b.getListStartPos(list).startPos,
-		EndPos:    endToken.EndPos,
-	}
-}

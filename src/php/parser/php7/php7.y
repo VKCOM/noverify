@@ -282,7 +282,7 @@ import (
 
 
 %type <arrayItems> array_pair_list non_empty_array_pair_list
-%type <identList> method_modifiers non_empty_member_modifiers variable_modifiers
+%type <identList> method_modifiers non_empty_member_modifiers variable_modifiers class_modifiers
 %type <list> encaps_list backticks_expr namespace_name catch_name_list catch_list class_const_list
 %type <list> const_list echo_expr_list for_exprs non_empty_for_exprs global_var_list
 %type <list> unprefixed_use_declarations inline_use_declarations property_list static_var_list
@@ -290,7 +290,7 @@ import (
 %type <list> use_declarations lexical_var_list isset_variables
 %type <list> non_empty_argument_list top_statement_list
 %type <list> inner_statement_list parameter_list non_empty_parameter_list class_statement_list
-%type <list> name_list class_modifiers
+%type <list> name_list
 
 %type <str> backup_doc_comment
 
@@ -1502,7 +1502,11 @@ class_declaration_statement:
 
                 // save position
                 name.SetPosition(yylex.(*Parser).positionBuilder.NewTokenPosition($3))
-                $$.SetPosition(yylex.(*Parser).positionBuilder.NewOptionalListTokensPosition($1, $2, $9))
+                if $1 == nil {
+                    $$.SetPosition(yylex.(*Parser).positionBuilder.NewTokensPosition($2, $9))
+                } else {
+                    $$.SetPosition(yylex.(*Parser).positionBuilder.NewPosPos(identListStartPos($1), &$9.Position))
+                }
 
                 // save comments
                 yylex.(*Parser).MoveFreeFloating($1[0], $$)
@@ -1535,13 +1539,13 @@ class_declaration_statement:
 class_modifiers:
         class_modifier
             {
-                $$ = []node.Node{$1}
+                $$ = []*node.Identifier{$1.(*node.Identifier)}
 
                 yylex.(*Parser).returnTokenToPool(yyDollar, &yyVAL)
             }
     |   class_modifiers class_modifier
             {
-                $$ = append($1, $2)
+                $$ = append($1, $2.(*node.Identifier))
 
                 yylex.(*Parser).returnTokenToPool(yyDollar, &yyVAL)
             }

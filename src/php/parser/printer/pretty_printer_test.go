@@ -29,7 +29,7 @@ func TestPrintFile(t *testing.T) {
 				},
 			},
 			&stmt.Class{
-				Modifiers: []node.Node{&node.Identifier{Value: "abstract"}},
+				Modifiers: []*node.Identifier{&node.Identifier{Value: "abstract"}},
 				ClassName: &node.Identifier{Value: "Bar"},
 				Extends: &stmt.ClassExtends{
 					ClassName: &name.Name{
@@ -2530,7 +2530,7 @@ func TestPrintStmtClass(t *testing.T) {
 	p.Print(&stmt.Namespace{
 		Stmts: []node.Node{
 			&stmt.Class{
-				Modifiers: []node.Node{&node.Identifier{Value: "abstract"}},
+				Modifiers: []*node.Identifier{&node.Identifier{Value: "abstract"}},
 				ClassName: &node.Identifier{Value: "Foo"},
 				Extends: &stmt.ClassExtends{
 					ClassName: &name.Name{Parts: []node.Node{&name.NamePart{Value: "Bar"}}},
@@ -2576,7 +2576,7 @@ func TestPrintStmtAnonymousClass(t *testing.T) {
 	p.Print(&stmt.Namespace{
 		Stmts: []node.Node{
 			&stmt.Class{
-				Modifiers: []node.Node{&node.Identifier{Value: "abstract"}},
+				Modifiers: []*node.Identifier{&node.Identifier{Value: "abstract"}},
 				ArgumentList: &node.ArgumentList{
 					Arguments: []node.Node{
 						&node.Argument{

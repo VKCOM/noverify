@@ -344,7 +344,7 @@ func TestAbstractClassMethod(t *testing.T) {
 					},
 					Value: "Foo",
 				},
-				Modifiers: []node.Node{
+				Modifiers: []*node.Identifier{
 					&node.Identifier{
 						Position: &position.Position{
 							StartLine: 1,
@@ -442,7 +442,7 @@ func TestPhp7AbstractClassMethod(t *testing.T) {
 					},
 					Value: "Foo",
 				},
-				Modifiers: []node.Node{
+				Modifiers: []*node.Identifier{
 					&node.Identifier{
 						Position: &position.Position{
 							StartLine: 1,
