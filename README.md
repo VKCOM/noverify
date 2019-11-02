@@ -32,20 +32,18 @@ NoVerify by default has the following checks:
 - Incorrect implementation of IteratorAggregate interface
 - Incorrect array definition, e.g. duplicate keys
 
-## Custom lints
-
-You can write your own checks that can use type information from NoVerify
-and check for complex things, e.g. enforcing that strings are compared only
-using === operator. See [example](/example) folder to see some examples of custom checks. 
-
 ## User Guide
 
 - [How to install NoVerify](docs/install.md)
 
-Using noverify as linter:
+Using NoVerify as linter:
 - [Using NoVerify as linter / static analyser](docs/linter-usage.md)
 
-Using noverify as PHP [language server](https://langserver.org):
+Extending NoVerify:
+- [Writing own rules quickly with PHP](docs/dynamic-rules.md)
+- [Writing new checks in Go](docs/writing-checks-in-go.md)
+
+Using NoVerify as PHP [language server](https://langserver.org):
 - [Using NoVerify as language server for VSCode](docs/vscode-plugin.md)
 - [Using NoVerify as language server for Sublime Text](docs/sublime-plugin.md)
 - [Writing new IDE/editor plugin](docs/writing-new-ide-plugin.md)
