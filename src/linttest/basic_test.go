@@ -10,6 +10,146 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestKeywordCase(t *testing.T) {
+	test := linttest.NewSuite(t)
+
+	// TODO:
+	// - "as" in foreach; no clear way to get the pos range
+	// - "class"; because of modifiers
+	// - "function" for methods; because of modifiers
+	// - "const" inside classes; because of modifiers
+	// - "instanceof"; located in between 2 operands
+	// - "while" in do
+	// - "endif" and other "end*" tokens
+	// - "insteadof" from trait adaptations
+	// - "from" from yield-from
+
+	test.AddFile(`<?php
+Namespace Foo;
+Include '.';
+Include_Once '.';
+Require '.';
+Require_Once '.';
+class TheBase {}
+CONST  C1 = 1;
+ABSTRACT Final class TheClass  extendS  TheBase {
+  Const C2 = 2;
+}
+FOREACH ([] as $_) {}
+whilE (0) { breaK; }
+$a = NeW TheClass();
+$b = CLONE  $a;
+$b = Clone($a);
+FUNCTION f() {
+  GLOBAL $xx;
+  While (0) { BREAK; }
+  wHILE (0) { CONTINUE; }
+  SWITCH ($xx) {
+  Case 1: Break;
+  DEFAULT: return 0;
+  }
+  if (0) {
+  } ELSEIF (0) {
+  } ELSE {}
+  Do {
+  } While (0);
+  DO {} WHILE (0);
+  switch (0):
+  ENDswitch;
+  Goto label;
+  label:
+  YIELD 'yelling!';
+  yielD FROM 'blah!';
+  FOR (;;) {}
+  for (;;):
+  EndFor;
+  if (0):
+  ENDIF;
+  TRY {
+  } CATCH (Exception $_) {
+  } FINALLY {
+  }
+  $_ = $xx InstanceOf TheClass;
+  $_ = Function () {};
+  Return(1);
+}
+TRAit TheTrait1 {
+  /***/
+  public function f() {}
+}
+trait TheTrait2 {
+  /***/
+  public function f() {}
+}
+Interface TheInterface {
+  PubliC function f();
+}
+class UsingTrait IMPLEMENTs TheInterface {
+  Var $xdd;
+  USE TheTrait1, TheTrait2 {
+    TheTrait1::f Insteadof TheTrait2;
+  }
+}
+THrow new TheClass();
+function good() {
+  switch (0):
+  endswitch;
+  foreach ([] as /* aS */ $_) {}
+  foreach ([] as $_) {} // aS
+  foreach ([] as $_) /* aS */ {}
+  return(1);
+}
+`)
+
+	test.Expect = []string{
+		`Use abstract instead of ABSTRACT`,
+		`Use var instead of Var`,
+		`Use break instead of BREAK`,
+		`Use break instead of Break`,
+		`Use break instead of breaK`,
+		`Use case instead of Case`,
+		`Use catch instead of CATCH`,
+		`Use clone instead of CLONE`,
+		`Use clone instead of Clone`,
+		`Use const instead of CONST`,
+		`Use continue instead of CONTINUE`,
+		`Use default instead of DEFAULT`,
+		`Use do instead of DO`,
+		`Use do instead of Do`,
+		`Use else instead of ELSE`,
+		`Use elseif instead of ELSEIF`,
+		`Use extends instead of extendS`,
+		`Use final instead of Final`,
+		`Use finally instead of FINALLY`,
+		`Use for instead of FOR`,
+		`Use foreach instead of FOREACH`,
+		`Use function instead of FUNCTION`,
+		`Use global instead of GLOBAL`,
+		`Use goto instead of Goto`,
+		`Use implements instead of IMPLEMENTs`,
+		`Use include instead of Include`,
+		`Use include_once instead of Include_Once`,
+		`Use interface instead of Interface`,
+		`Use namespace instead of Namespace`,
+		`Use new instead of NeW`,
+		`Use require instead of Require`,
+		`Use require_once instead of Require_Once`,
+		`Use return instead of Return`,
+		`Use throw instead of THrow`,
+		`Use trait instead of TRAit`,
+		`Use try instead of TRY`,
+		`Use use instead of USE`,
+		`Use while instead of While`,
+		`Use while instead of wHILE`,
+		`Use while instead of whilE`,
+		`Use yield instead of YIELD`,
+		`Use yield instead of yielD`,
+		`Use public instead of PubliC`,
+	}
+
+	test.RunAndMatch()
+}
+
 func TestCallStaticParent(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

@@ -218,10 +218,12 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 	switch n := w.(type) {
 	case *stmt.Interface:
 		d.currentClassNode = n
+		d.checkKeywordCase(n, "interface")
 	case *stmt.Class:
 		d.currentClassNode = n
 		cl := d.getClass()
 		if n.Implements != nil {
+			d.checkKeywordCase(n.Implements, "implements")
 			for _, tr := range n.Implements.InterfaceNames {
 				interfaceName, ok := solver.GetClassName(d.st, tr)
 				if ok {
@@ -237,10 +239,18 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 			p.Pos = cl.Pos
 			cl.Properties[name] = p
 		}
+		for _, m := range n.Modifiers {
+			d.lowerCaseModifier(m)
+		}
+		if n.Extends != nil {
+			d.checkKeywordCase(n.Extends, "extends")
+		}
 
 	case *stmt.Trait:
 		d.currentClassNode = n
+		d.checkKeywordCase(n, "trait")
 	case *stmt.TraitUse:
+		d.checkKeywordCase(n, "use")
 		cl := d.getClass()
 		for _, tr := range n.Traits {
 			traitName, ok := solver.GetClassName(d.st, tr)
@@ -257,6 +267,7 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 		d.scope().AddVar(v, solver.ExprTypeLocal(d.scope(), d.st, n.Expression), "global variable", true)
 	case *stmt.Function:
 		res = d.enterFunction(n)
+		d.checkKeywordCase(n, "function")
 	case *stmt.PropertyList:
 		res = d.enterPropertyList(n)
 	case *stmt.ClassConstList:
@@ -267,6 +278,9 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 		res = d.enterFunctionCall(n)
 	case *stmt.ConstList:
 		res = d.enterConstList(n)
+
+	case *stmt.Namespace:
+		d.checkKeywordCase(n, "namespace")
 	}
 
 	for _, c := range d.custom {
@@ -525,7 +539,7 @@ func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodMod
 	res.accessLevel = meta.Public
 
 	for _, m := range meth.Modifiers {
-		switch m.Value {
+		switch d.lowerCaseModifier(m) {
 		case "abstract":
 			res.abstract = true
 		case "static":
@@ -580,6 +594,15 @@ func (d *RootWalker) getClass() meta.ClassInfo {
 	return cl
 }
 
+func (d *RootWalker) lowerCaseModifier(m *node.Identifier) string {
+	lcase := strings.ToLower(m.Value)
+	if lcase != m.Value {
+		d.Report(m, LevelWarning, "keywordCase", "Use %s instead of %s",
+			lcase, m.Value)
+	}
+	return lcase
+}
+
 func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 	cl := d.getClass()
 
@@ -587,7 +610,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 	accessLevel := meta.Public
 
 	for _, m := range pl.Modifiers {
-		switch m.Value {
+		switch d.lowerCaseModifier(m) {
 		case "public":
 			accessLevel = meta.Public
 		case "protected":
@@ -633,7 +656,7 @@ func (d *RootWalker) enterClassConstList(s *stmt.ClassConstList) bool {
 	accessLevel := meta.Public
 
 	for _, m := range s.Modifiers {
-		switch m.Value {
+		switch d.lowerCaseModifier(m) {
 		case "public":
 			accessLevel = meta.Public
 		case "protected":
@@ -1394,4 +1417,20 @@ func (d *RootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filter
 	}
 
 	return true
+}
+
+func (d *RootWalker) checkKeywordCase(n node.Node, keyword string) {
+	// Only works for nodes that have a keyword of interest
+	// as the leftmost token.
+
+	pos := n.GetPosition()
+	from := pos.StartPos - 1
+	to := from + len(keyword)
+
+	wantKwd := keyword
+	haveKwd := d.fileContents[from:to]
+	if wantKwd != string(haveKwd) {
+		d.Report(n, LevelWarning, "keywordCase", "Use %s instead of %s",
+			wantKwd, haveKwd)
+	}
 }
