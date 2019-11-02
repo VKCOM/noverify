@@ -1,6 +1,8 @@
 package phpdoc
 
-import "strings"
+import (
+	"strings"
+)
 
 type CommentPart struct {
 	Line       int      // Comment part location inside phpdoc comment
@@ -21,7 +23,9 @@ func (part *CommentPart) ContainsParam(name string) bool {
 
 // IsPHPDoc checks if the string is a doc comment
 func IsPHPDoc(doc string) bool {
-	return strings.HasPrefix(doc, "/**")
+	// See #289.
+	return strings.HasPrefix(doc, "/* @var ") ||
+		strings.HasPrefix(doc, "/**")
 }
 
 // Parse returns parsed doc comment with interesting parts (ones that start "* @")
@@ -30,14 +34,21 @@ func Parse(doc string) (res []CommentPart) {
 		return nil
 	}
 
-	lines := strings.Split(doc, "\n")
+	var lines []string
+	if strings.HasPrefix(doc, "/* @var ") && strings.Count(doc, "\n") == 0 {
+		lines = []string{doc}
+	} else {
+		lines = strings.Split(doc, "\n")
+	}
+
 	for i, ln := range lines {
 		ln = strings.TrimSpace(ln)
 		if len(ln) == 0 {
 			continue
 		}
 
-		ln = strings.TrimPrefix(ln, "/**")
+		// A combination of /* and * trimming works for both /** and /* comments.
+		ln = strings.TrimPrefix(ln, "/*")
 		ln = strings.TrimPrefix(ln, "*")
 		ln = strings.TrimSuffix(ln, "*/")
 		ln = strings.TrimSpace(ln)
