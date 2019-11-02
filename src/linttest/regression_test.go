@@ -6,6 +6,18 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestIssue289(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class Foo { public $value = 11; }
+
+$xs = [0, new Foo()];
+
+/* @var Foo $foo */
+$foo = $xs[1];
+$_ = $foo->value;
+`)
+}
+
 func TestIssue1(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	interface TestInterface
