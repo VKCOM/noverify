@@ -13,7 +13,7 @@ type Class struct {
 	Position      *position.Position
 	PhpDocComment string
 	ClassName     *node.Identifier
-	Modifiers     []node.Node
+	Modifiers     []*node.Identifier
 	ArgumentList  *node.ArgumentList
 	Extends       *ClassExtends
 	Implements    *ClassImplements
@@ -21,7 +21,7 @@ type Class struct {
 }
 
 // NewClass node constructor
-func NewClass(ClassName *node.Identifier, Modifiers []node.Node, ArgumentList *node.ArgumentList, Extends *ClassExtends, Implements *ClassImplements, Stmts []node.Node, PhpDocComment string) *Class {
+func NewClass(ClassName *node.Identifier, Modifiers []*node.Identifier, ArgumentList *node.ArgumentList, Extends *ClassExtends, Implements *ClassImplements, Stmts []node.Node, PhpDocComment string) *Class {
 	return &Class{
 		FreeFloating:  nil,
 		PhpDocComment: PhpDocComment,

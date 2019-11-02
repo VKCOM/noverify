@@ -82,7 +82,7 @@ func TestAbstractClass(t *testing.T) {
 					},
 					Value: "foo",
 				},
-				Modifiers: []node.Node{
+				Modifiers: []*node.Identifier{
 					&node.Identifier{
 						Position: &position.Position{
 							StartLine: 1,
@@ -132,7 +132,7 @@ func TestClassExtends(t *testing.T) {
 					},
 					Value: "foo",
 				},
-				Modifiers: []node.Node{
+				Modifiers: []*node.Identifier{
 					&node.Identifier{
 						Position: &position.Position{
 							StartLine: 1,
@@ -209,7 +209,7 @@ func TestClassImplement(t *testing.T) {
 					},
 					Value: "foo",
 				},
-				Modifiers: []node.Node{
+				Modifiers: []*node.Identifier{
 					&node.Identifier{
 						Position: &position.Position{
 							StartLine: 1,
@@ -288,7 +288,7 @@ func TestClassImplements(t *testing.T) {
 					},
 					Value: "foo",
 				},
-				Modifiers: []node.Node{
+				Modifiers: []*node.Identifier{
 					&node.Identifier{
 						Position: &position.Position{
 							StartLine: 1,
