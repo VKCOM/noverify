@@ -185,6 +185,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *cast.Array:
 		b.checkRedundantCastArray(s.Expr)
 	case *stmt.Global:
+		b.r.checkKeywordCase(s, "global")
 		for _, v := range s.Vars {
 			nm := varToString(v)
 			if nm == "" {
@@ -228,12 +229,20 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		res = b.handleArray(s)
 	case *stmt.Foreach:
 		res = b.handleForeach(s)
+		b.r.checkKeywordCase(s, "foreach")
 	case *stmt.For:
 		res = b.handleFor(s)
+		b.r.checkKeywordCase(s, "for")
 	case *stmt.While:
 		res = b.handleWhile(s)
+		b.r.checkKeywordCase(s, "while")
 	case *stmt.Do:
 		res = b.handleDo(s)
+		b.r.checkKeywordCase(s, "do")
+	case *stmt.Else:
+		b.r.checkKeywordCase(s, "else")
+	case *stmt.ElseIf:
+		b.r.checkKeywordCase(s, "elseif")
 	case *stmt.If:
 		// TODO: handle constant if expressions
 		// TODO: maybe try to handle when variables are defined and used with the same condition
@@ -256,6 +265,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		res = b.handleConstFetch(s)
 	case *expr.New:
 		res = b.handleNew(s)
+		b.r.checkKeywordCase(s, "new")
 	case *stmt.Unset:
 		res = b.handleUnset(s)
 	case *expr.Isset:
@@ -291,10 +301,35 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		res = b.enterClosure(s, isInstance, typ)
 	case *stmt.Return:
 		b.handleReturn(s)
+		b.r.checkKeywordCase(s, "return")
+	case *stmt.Break:
+		b.r.checkKeywordCase(s, "break")
 	case *stmt.Continue:
 		b.handleContinue(s)
+		b.r.checkKeywordCase(s, "continue")
 	case *binary.LogicalOr:
 		res = b.handleLogicalOr(s)
+
+	case *expr.Clone:
+		b.r.checkKeywordCase(s, "clone")
+	case *stmt.ConstList:
+		b.r.checkKeywordCase(s, "const")
+	case *stmt.Goto:
+		b.r.checkKeywordCase(s, "goto")
+	case *stmt.Throw:
+		b.r.checkKeywordCase(s, "throw")
+	case *expr.Yield:
+		b.r.checkKeywordCase(s, "yield")
+	case *expr.YieldFrom:
+		b.r.checkKeywordCase(s, "yield")
+	case *expr.Include:
+		b.r.checkKeywordCase(n, "include")
+	case *expr.IncludeOnce:
+		b.r.checkKeywordCase(n, "include_once")
+	case *expr.Require:
+		b.r.checkKeywordCase(n, "require")
+	case *expr.RequireOnce:
+		b.r.checkKeywordCase(n, "require_once")
 	}
 
 	for _, c := range b.custom {
@@ -529,11 +564,14 @@ func (b *BlockWalker) handleTry(s *stmt.Try) bool {
 		b.r.Report(s, LevelError, "bareTry", "At least one catch or finally block must be present")
 	}
 
+	b.r.checkKeywordCase(s, "try")
+
 	contexts := make([]*blockContext, 0, len(s.Catches)+1)
 
 	// Assume that no code in try{} block has executed because exceptions can be thrown from anywhere.
 	// So we handle catches and finally blocks first.
 	for _, c := range s.Catches {
+		b.r.checkKeywordCase(c, "catch")
 		ctx := b.withNewContext(func() {
 			b.r.addScope(c, b.ctx.sc)
 			cc := c.(*stmt.Catch)
@@ -546,6 +584,7 @@ func (b *BlockWalker) handleTry(s *stmt.Try) bool {
 	}
 
 	if s.Finally != nil {
+		b.r.checkKeywordCase(s.Finally, "finally")
 		b.withNewContext(func() {
 			contexts = append(contexts, b.ctx)
 			b.r.addScope(s.Finally, b.ctx.sc)
@@ -1645,8 +1684,10 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 		cond, list := b.getCaseStmts(c)
 		if cond == nil {
 			haveDefault = true
+			b.r.checkKeywordCase(c, "default")
 		} else {
 			cond.Walk(b)
+			b.r.checkKeywordCase(c, "case")
 		}
 
 		// allow empty case body without "break;"
