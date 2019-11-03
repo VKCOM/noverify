@@ -19,6 +19,12 @@ const (
 func init() {
 	allChecks := []CheckInfo{
 		{
+			Name:    "keywordCase",
+			Default: true,
+			Comment: `Report keywords that are not in the lower case.`,
+		},
+
+		{
 			Name:    "accessLevel",
 			Default: true,
 			Comment: `Report erroneous member access.`,
