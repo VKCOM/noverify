@@ -11,7 +11,6 @@ type metaNode struct {
 }
 
 func (metaNode) Walk(v walker.Visitor)                     {}
-func (metaNode) Attributes() map[string]interface{}        { return nil }
 func (metaNode) SetPosition(p *position.Position)          {}
 func (metaNode) GetPosition() *position.Position           { return nil }
 func (metaNode) GetFreeFloating() *freefloating.Collection { return nil }
