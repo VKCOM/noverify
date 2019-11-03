@@ -2,6 +2,7 @@ package phpgrep
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -533,34 +534,46 @@ func TestMatchNegative(t *testing.T) {
 func BenchmarkFind(b *testing.B) {
 	var c Compiler
 
-	runBench := func(name string, pattern string) {
+	runBench := func(name, pattern string, input []byte) {
 		b.Run(name, func(b *testing.B) {
 			matcher := mustCompile(b, &c, pattern)
+			root, _, err := parsePHP7(input)
+			if err != nil {
+				b.Fatal(err)
+			}
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				findInText(&matcher.m, benchmarkInput, func(m *MatchData) bool { return true })
+				matcher.m.matchAST(root)
 			}
 		})
+	}
+
+	// f(), f($x), ..., f($x{i})
+	lotsOfCalls := []byte("<?php\n")
+	for i := 0; i < 50; i++ {
+		call := "f(" + strings.Repeat("$x,", i) + ");\n"
+		lotsOfCalls = append(lotsOfCalls, []byte(call)...)
 	}
 
 	benchmarks := []struct {
 		name    string
 		pattern string
+		input   []byte
 	}{
 		// Benchmarking list matching.
-		{"positive/call_", `$_($_)`},
-		{"positive/call_*", `$_($_, ${"*"})`},
-		{"positive/call*_", `$_(${"*"}, $_)`},
-		{"positive/call*_*", `$_(${"*"}, $_, ${"*"})`},
+		{"positive/call_", `$_($_)`, lotsOfCalls},
+		{"positive/call_*", `$_($_, ${"*"})`, lotsOfCalls},
+		{"positive/call*_", `$_(${"*"}, $_)`, lotsOfCalls},
+		{"positive/call*_*", `$_(${"*"}, $_, ${"*"})`, lotsOfCalls},
 
 		// Benchmarking named variables.
-		{"positive/with-1-named", `$x`},
-		{"positive/with-5-named", `$x1 + $x2 + $x3 + $x4 + $x5`},
-		{"negative/with-0-named", `1 + 7 - 103`},
+		{"positive/with-1-named", `$x`, benchmarkInput},
+		{"positive/with-5-named", `$x1 + $x2 + $x3 + $x4 + $x5`, benchmarkInput},
+		{"negative/with-0-named", `1 + 7 - 103`, benchmarkInput},
 	}
 
 	for _, bench := range benchmarks {
-		runBench(bench.name, bench.pattern)
+		runBench(bench.name, bench.pattern, bench.input)
 	}
 }
 
