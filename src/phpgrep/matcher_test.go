@@ -561,10 +561,11 @@ func BenchmarkFind(b *testing.B) {
 		input   []byte
 	}{
 		// Benchmarking list matching.
-		{"positive/call_", `$_($_)`, lotsOfCalls},
+		{"positive/call*", `$_(${"*"})`, lotsOfCalls},
 		{"positive/call_*", `$_($_, ${"*"})`, lotsOfCalls},
 		{"positive/call*_", `$_(${"*"}, $_)`, lotsOfCalls},
 		{"positive/call*_*", `$_(${"*"}, $_, ${"*"})`, lotsOfCalls},
+		{"negative/call_", `$_($_)`, lotsOfCalls},
 
 		// Benchmarking named variables.
 		{"positive/with-1-named", `$x`, benchmarkInput},
