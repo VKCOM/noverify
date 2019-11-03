@@ -1,6 +1,7 @@
 package phpgrep
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -87,14 +88,15 @@ func TestFind(t *testing.T) {
 
 func runMatchTest(t *testing.T, want bool, tests []*matcherTest) {
 	var c Compiler
-	for _, test := range tests {
-		matcher := mustCompile(t, &c, test.pattern)
-
-		have := matchInText(&matcher.m, []byte(test.input))
-		if have != want {
-			t.Errorf("match results mismatch:\npattern: %q\ninput: %q\nhave: %v\nwant: %v",
-				test.pattern, test.input, have, want)
-		}
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("%d_%v", i, want), func(t *testing.T) {
+			matcher := mustCompile(t, &c, test.pattern)
+			have := matchInText(&matcher.m, []byte(test.input))
+			if have != want {
+				t.Errorf("match results mismatch:\npattern: %q\ninput: %q\nhave: %v\nwant: %v",
+					test.pattern, test.input, have, want)
+			}
+		})
 	}
 }
 
@@ -529,7 +531,40 @@ func TestMatchNegative(t *testing.T) {
 }
 
 func BenchmarkFind(b *testing.B) {
-	input := []byte(`<?php
+	var c Compiler
+
+	runBench := func(name string, pattern string) {
+		b.Run(name, func(b *testing.B) {
+			matcher := mustCompile(b, &c, pattern)
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				findInText(&matcher.m, benchmarkInput, func(m *MatchData) bool { return true })
+			}
+		})
+	}
+
+	benchmarks := []struct {
+		name    string
+		pattern string
+	}{
+		// Benchmarking list matching.
+		{"positive/call_", `$_($_)`},
+		{"positive/call_*", `$_($_, ${"*"})`},
+		{"positive/call*_", `$_(${"*"}, $_)`},
+		{"positive/call*_*", `$_(${"*"}, $_, ${"*"})`},
+
+		// Benchmarking named variables.
+		{"positive/with-1-named", `$x`},
+		{"positive/with-5-named", `$x1 + $x2 + $x3 + $x4 + $x5`},
+		{"negative/with-0-named", `1 + 7 - 103`},
+	}
+
+	for _, bench := range benchmarks {
+		runBench(bench.name, bench.pattern)
+	}
+}
+
+var benchmarkInput = []byte(`<?php
 
 use N\{ClassName,
   AnotherClassName,
@@ -650,31 +685,3 @@ function f() {}
 $_ = f(1 + 2 + 3 + 4 + 5);
 $_ = f(f() + f() + f() + f() + f());
 `)
-
-	var c Compiler
-
-	b.Run("positive/with-1-named", func(b *testing.B) {
-		matcher := mustCompile(b, &c, `$x`)
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			findInText(&matcher.m, input, func(m *MatchData) bool { return true })
-		}
-	})
-
-	b.Run("positive/with-5-named", func(b *testing.B) {
-		matcher := mustCompile(b, &c, `$x1 + $x2 + $x3 + $x4 + $x5`)
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			findInText(&matcher.m, input, func(m *MatchData) bool { return true })
-		}
-	})
-
-	b.Run("negative/with-0-named", func(b *testing.B) {
-		matcher := mustCompile(b, &c, `1 + 7 - 103`)
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			findInText(&matcher.m, input, func(m *MatchData) bool { return true })
-		}
-	})
-
-}
