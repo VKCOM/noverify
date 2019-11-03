@@ -1207,20 +1207,14 @@ func (d *RootWalker) enterFunctionCall(s *expr.FunctionCall) bool {
 		return true
 	}
 
-	arg, ok := s.ArgumentList.Arguments[0].(*node.Argument)
-	if !ok {
-		return true
-	}
+	arg := s.ArgumentList.Arguments[0].(*node.Argument)
 
 	str, ok := arg.Expr.(*scalar.String)
 	if !ok {
 		return true
 	}
 
-	valueArg, ok := s.ArgumentList.Arguments[1].(*node.Argument)
-	if !ok {
-		return true
-	}
+	valueArg := s.ArgumentList.Arguments[1].(*node.Argument)
 
 	if d.meta.Constants == nil {
 		d.meta.Constants = make(meta.ConstantsMap)
@@ -1240,15 +1234,8 @@ func (d *RootWalker) handleOverride(s *expr.FunctionCall) bool {
 		return true
 	}
 
-	arg0, ok := s.ArgumentList.Arguments[0].(*node.Argument)
-	if !ok {
-		return true
-	}
-
-	arg1, ok := s.ArgumentList.Arguments[1].(*node.Argument)
-	if !ok {
-		return true
-	}
+	arg0 := s.ArgumentList.Arguments[0].(*node.Argument)
+	arg1 := s.ArgumentList.Arguments[1].(*node.Argument)
 
 	fc0, ok := arg0.Expr.(*expr.FunctionCall)
 	if !ok {
@@ -1274,10 +1261,7 @@ func (d *RootWalker) handleOverride(s *expr.FunctionCall) bool {
 		return true
 	}
 
-	fc1Arg0, ok := fc1.ArgumentList.Arguments[0].(*node.Argument)
-	if !ok {
-		return true
-	}
+	fc1Arg0 := fc1.ArgumentList.Arguments[0].(*node.Argument)
 
 	argNumNode, ok := fc1Arg0.Expr.(*scalar.Lnumber)
 	if !ok {
