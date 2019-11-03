@@ -49,7 +49,7 @@ func (n *GroupUse) SetUseType(UseType node.Node) node.Node {
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *GroupUse) Walk(v walker.Visitor) {
-	if v.EnterNode(n) == false {
+	if !v.EnterNode(n) {
 		return
 	}
 

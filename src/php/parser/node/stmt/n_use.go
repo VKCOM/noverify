@@ -48,7 +48,7 @@ func (n *Use) SetUseType(UseType *node.Identifier) node.Node {
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *Use) Walk(v walker.Visitor) {
-	if v.EnterNode(n) == false {
+	if !v.EnterNode(n) {
 		return
 	}
 

@@ -64,7 +64,7 @@ func (n *If) SetElse(Else node.Node) node.Node {
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *If) Walk(v walker.Visitor) {
-	if v.EnterNode(n) == false {
+	if !v.EnterNode(n) {
 		return
 	}
 
