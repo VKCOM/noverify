@@ -41,7 +41,7 @@ func (n *LogicalAnd) GetFreeFloating() *freefloating.Collection {
 // Walk traverses nodes
 // Walk is invoked recursively until v.EnterNode returns true
 func (n *LogicalAnd) Walk(v walker.Visitor) {
-	if v.EnterNode(n) == false {
+	if !v.EnterNode(n) {
 		return
 	}
 

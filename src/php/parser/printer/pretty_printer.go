@@ -1509,7 +1509,6 @@ func (p *PrettyPrinter) printStmtDeclare(n node.Node) {
 	switch s := nn.Stmt.(type) {
 	case *stmt.Nop:
 		p.Print(s)
-		break
 	case *stmt.StmtList:
 		io.WriteString(p.w, " ")
 		p.Print(s)
@@ -1582,7 +1581,6 @@ func (p *PrettyPrinter) printStmtElseif(n node.Node) {
 		switch s := nn.Stmt.(type) {
 		case *stmt.Nop:
 			p.Print(s)
-			break
 		case *stmt.StmtList:
 			io.WriteString(p.w, " ")
 			p.Print(s)
@@ -1612,7 +1610,6 @@ func (p *PrettyPrinter) printStmtElse(n node.Node) {
 		switch s := nn.Stmt.(type) {
 		case *stmt.Nop:
 			p.Print(s)
-			break
 		case *stmt.StmtList:
 			io.WriteString(p.w, " ")
 			p.Print(s)
@@ -1669,7 +1666,6 @@ func (p *PrettyPrinter) printStmtFor(n node.Node) {
 		switch s := nn.Stmt.(type) {
 		case *stmt.Nop:
 			p.Print(s)
-			break
 		case *stmt.StmtList:
 			io.WriteString(p.w, " ")
 			p.Print(s)
@@ -1711,7 +1707,6 @@ func (p *PrettyPrinter) printStmtForeach(n node.Node) {
 		switch s := nn.Stmt.(type) {
 		case *stmt.Nop:
 			p.Print(s)
-			break
 		case *stmt.StmtList:
 			io.WriteString(p.w, " ")
 			p.Print(s)
@@ -1820,7 +1815,6 @@ func (p *PrettyPrinter) printStmtIf(n node.Node) {
 		switch s := nn.Stmt.(type) {
 		case *stmt.Nop:
 			p.Print(s)
-			break
 		case *stmt.StmtList:
 			io.WriteString(p.w, " ")
 			p.Print(s)
@@ -2152,7 +2146,6 @@ func (p *PrettyPrinter) printStmtWhile(n node.Node) {
 		switch s := nn.Stmt.(type) {
 		case *stmt.Nop:
 			p.Print(s)
-			break
 		case *stmt.StmtList:
 			io.WriteString(p.w, " ")
 			p.Print(s)

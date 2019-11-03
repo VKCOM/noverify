@@ -169,7 +169,7 @@ func (l *Lexer) tokenString(chars []lex.Char) string {
 		l.tokenBytesBuf.WriteRune(c.Rune)
 	}
 
-	return string(l.tokenBytesBuf.Bytes())
+	return l.tokenBytesBuf.String()
 }
 
 // free-floating
