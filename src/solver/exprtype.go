@@ -76,11 +76,7 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ex
 		return fn.Typ, true
 	}
 
-	arg, ok := c.ArgumentList.Arguments[override.ArgNum].(*node.Argument)
-	if !ok {
-		return fn.Typ, true
-	}
-
+	arg := c.ArgumentList.Arguments[override.ArgNum].(*node.Argument)
 	typ = ExprTypeLocalCustom(sc, cs, arg.Expr, custom)
 	if override.OverrideType == meta.OverrideArgType {
 		return typ, true

@@ -91,11 +91,7 @@ func (b *block) handleInArrayCall(e *expr.FunctionCall) {
 		return
 	}
 
-	arg, ok := e.ArgumentList.Arguments[0].(*node.Argument)
-	if !ok {
-		return
-	}
-
+	arg := e.ArgumentList.Arguments[0].(*node.Argument)
 	if !isString(b.ctx, arg.Expr) {
 		return
 	}
