@@ -158,7 +158,11 @@ func (s *Suite) RunLinter() []*linter.Report {
 		}
 
 		_, w := parseTestFile(s.t, f)
-		reports = append(reports, w.GetReports()...)
+		for _, r := range w.GetReports() {
+			if !r.IsDisabledByUser() {
+				reports = append(reports, r)
+			}
+		}
 	}
 
 	return reports
