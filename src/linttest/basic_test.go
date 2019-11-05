@@ -10,6 +10,13 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestLinterDisable(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+/** @linter disable */
+$_ = array(1);
+`)
+}
+
 func TestKeywordCase(t *testing.T) {
 	test := linttest.NewSuite(t)
 
