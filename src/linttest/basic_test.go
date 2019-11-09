@@ -10,6 +10,19 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestBareTry(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+try {
+  echo 123;
+}
+`)
+	test.Expect = []string{
+		`At least one catch or finally block must be present`,
+	}
+	test.RunAndMatch()
+}
+
 func TestLinterDisable(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 /** @linter disable */
