@@ -297,9 +297,7 @@ func setDiscardVarPredicate() error {
 		if err != nil {
 			return err
 		}
-		linter.IsDiscardVar = func(s string) bool {
-			return re.MatchString(s)
-		}
+		linter.IsDiscardVar = re.MatchString
 	}
 
 	return nil

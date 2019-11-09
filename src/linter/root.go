@@ -850,9 +850,9 @@ func (d *RootWalker) parsePHPDocClass(doc string) classPhpDocParseResult {
 		}
 
 		typ := part.Params[0]
-		var name string
+		var nm string
 		if len(part.Params) >= 2 {
-			name = part.Params[1]
+			nm = part.Params[1]
 		} else {
 			// Either type or var name is missing.
 			if strings.HasPrefix(typ, "$") {
@@ -864,9 +864,9 @@ func (d *RootWalker) parsePHPDocClass(doc string) classPhpDocParseResult {
 			}
 		}
 
-		if len(part.Params) >= 2 && strings.HasPrefix(typ, "$") && !strings.HasPrefix(name, "$") {
+		if len(part.Params) >= 2 && strings.HasPrefix(typ, "$") && !strings.HasPrefix(nm, "$") {
 			result.errs.pushLint("non-canonical order of name and type on line %d", part.Line)
-			name, typ = typ, name
+			nm, typ = typ, nm
 		}
 
 		typ, err := d.fixPHPDocType(typ)
@@ -875,12 +875,12 @@ func (d *RootWalker) parsePHPDocClass(doc string) classPhpDocParseResult {
 			continue
 		}
 
-		if !strings.HasPrefix(name, "$") {
+		if !strings.HasPrefix(nm, "$") {
 			result.errs.pushLint("@property field name must start with `$`")
 			continue
 		}
 
-		result.properties[name[len("$"):]] = meta.PropertyInfo{
+		result.properties[nm[len("$"):]] = meta.PropertyInfo{
 			Typ:         meta.NewTypesMap(d.maybeAddNamespace(typ)),
 			AccessLevel: meta.Public,
 		}

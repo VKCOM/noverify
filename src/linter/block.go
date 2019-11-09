@@ -82,12 +82,12 @@ func (b *BlockWalker) addStatement(n node.Node) {
 	b.statements[n] = struct{}{}
 
 	// A hack for assignment-used-as-expression checks to work
-	expr, ok := n.(*stmt.Expression)
+	e, ok := n.(*stmt.Expression)
 	if !ok {
 		return
 	}
 
-	assignment, ok := expr.Expr.(*assign.Assign)
+	assignment, ok := e.Expr.(*assign.Assign)
 	if !ok {
 		return
 	}
@@ -1190,16 +1190,16 @@ func (b *BlockWalker) handleConstFetch(e *expr.ConstFetch) bool {
 
 	if !defined {
 		// If it's builtin constant, give a more precise report message.
-		switch name := meta.NameNodeToString(e.Constant); strings.ToLower(name) {
+		switch nm := meta.NameNodeToString(e.Constant); strings.ToLower(nm) {
 		case "null", "true", "false":
 			// TODO(quasilyte): should probably issue not "undefined" warning
 			// here, but something else, like "constCase" or something.
 			// Since it *was* "undefined" before, leave it as is for now,
 			// only make error message more user-friendly.
-			lcName := strings.ToLower(name)
-			b.r.Report(e.Constant, LevelError, "undefined", "Use %s instead of %s", lcName, name)
+			lcName := strings.ToLower(nm)
+			b.r.Report(e.Constant, LevelError, "undefined", "Use %s instead of %s", lcName, nm)
 		default:
-			b.r.Report(e.Constant, LevelError, "undefined", "Undefined constant %s", name)
+			b.r.Report(e.Constant, LevelError, "undefined", "Undefined constant %s", nm)
 		}
 	}
 

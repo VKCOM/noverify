@@ -5,7 +5,6 @@ import (
 	"bufio"
 	"bytes"
 	"go/token"
-	t "go/token"
 	"io"
 	"unicode"
 
@@ -81,7 +80,7 @@ func NewLexer(src io.Reader, fName string) *Lexer {
 		TokenPool:     &TokenPool{},
 	}
 
-	file := t.NewFileSet().AddFile(fName, -1, 1<<31-3)
+	file := token.NewFileSet().AddFile(fName, -1, 1<<31-3)
 	lx, err := lex.New(file, bufio.NewReader(src), lex.RuneClass(Rune2Class), lex.ErrorFunc(lexer.lexErrorFunc))
 	if err != nil {
 		panic(err)
@@ -126,12 +125,12 @@ func (l *Lexer) pushState(state int) {
 }
 
 func (l *Lexer) popState() {
-	len := len(l.StateStack)
-	if len <= 1 {
+	length := len(l.StateStack)
+	if length <= 1 {
 		return
 	}
 
-	l.StateStack = l.StateStack[:len-1]
+	l.StateStack = l.StateStack[:length-1]
 }
 
 func (l *Lexer) Begin(state int) {
@@ -148,18 +147,16 @@ func (l *Lexer) createToken(chars []lex.Char) *Token {
 	firstChar := chars[0]
 	lastChar := chars[len(chars)-1]
 
-	token := l.TokenPool.Get()
-	token.FreeFloating = l.FreeFloating
-	token.Value = l.tokenString(chars)
+	tok := l.TokenPool.Get()
+	tok.FreeFloating = l.FreeFloating
+	tok.Value = l.tokenString(chars)
 
-	// fmt.Println(l.tokenString(chars))
+	tok.StartLine = l.File.Line(firstChar.Pos())
+	tok.EndLine = l.File.Line(lastChar.Pos())
+	tok.StartPos = int(firstChar.Pos())
+	tok.EndPos = int(lastChar.Pos())
 
-	token.StartLine = l.File.Line(firstChar.Pos())
-	token.EndLine = l.File.Line(lastChar.Pos())
-	token.StartPos = int(firstChar.Pos())
-	token.EndPos = int(lastChar.Pos())
-
-	return token
+	return tok
 }
 
 func (l *Lexer) tokenString(chars []lex.Char) string {
