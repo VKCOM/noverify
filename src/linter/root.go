@@ -627,11 +627,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 
 		nm := p.Variable.Name
 
-		typ, errText := d.parsePHPDocVar(p.PhpDocComment)
-		if errText != "" {
-			d.Report(p.Variable, LevelWarning, "phpdocLint", errText)
-		}
-
+		typ := d.parsePHPDocVar(p.PhpDocComment)
 		if p.Expr != nil {
 			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.st, p.Expr))
 		}
@@ -893,14 +889,14 @@ func (d *RootWalker) parsePHPDocClass(doc string) classPhpDocParseResult {
 	return result
 }
 
-func (d *RootWalker) parsePHPDocVar(doc string) (m meta.TypesMap, phpDocError string) {
+func (d *RootWalker) parsePHPDocVar(doc string) (m meta.TypesMap) {
 	for _, part := range phpdoc.Parse(doc) {
 		if part.Name == "var" && len(part.Params) >= 1 {
 			m = meta.NewTypesMap(d.maybeAddNamespace(part.Params[0]))
 		}
 	}
 
-	return m, phpDocError
+	return m
 }
 
 func (d *RootWalker) maybeAddNamespace(typStr string) string {
