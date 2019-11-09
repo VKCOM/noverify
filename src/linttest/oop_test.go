@@ -104,23 +104,6 @@ $_ = WithProps::$int;
 	test.RunAndMatch()
 }
 
-func TestBadModifiers(t *testing.T) {
-	t.Skip("Should be handled by other check, like keywordCase from #138")
-
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-class Foo {
-  /***/
-  PUBLIC Static function f() {}
-}
-`)
-	test.Expect = []string{
-		`Unrecognized method modifier: PUBLIC`,
-		`Unrecognized method modifier: Static`,
-	}
-	test.RunAndMatch()
-}
-
 func TestInheritDoc(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
