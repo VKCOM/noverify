@@ -7,7 +7,7 @@ import (
 )
 
 func matchInText(m *matcher, code []byte) bool {
-	root, code, err := parsePHP7(code)
+	root, _, err := parsePHP7(code)
 	if err != nil {
 		return false
 	}

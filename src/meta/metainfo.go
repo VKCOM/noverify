@@ -481,7 +481,6 @@ func NameEquals(n *name.Name, s string) bool {
 	for i, part := range n.Parts {
 		p, ok := part.(*name.NamePart)
 		if !ok {
-			// d.debug("Unrecognized name part: %T", p)
 			return false
 		}
 
