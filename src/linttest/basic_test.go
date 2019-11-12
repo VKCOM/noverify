@@ -818,7 +818,7 @@ func TestForeachByRefUnused(t *testing.T) {
 	/**
 	 * @param SomeClass[] $some_arr
 	 */
-	function doSometing() {
+	function doSometing($some_arr) {
 		$some_arr = [];
 
 		foreach ($some_arr as $var) {
