@@ -10,6 +10,27 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestForeachEmpty(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$xs = [];
+foreach ($xs as $k => $v) {
+  $_ = [$k, $v];
+}
+$_ = [$k, $v]; // Bad
+foreach ($xs as $x) {
+  $_ = [$x];
+}
+$_ = [$x]; // Bad
+`)
+	test.Expect = []string{
+		`Variable might have not been defined: k`,
+		`Variable might have not been defined: v`,
+		`Variable might have not been defined: x`,
+	}
+	test.RunAndMatch()
+}
+
 func TestBareTry(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
