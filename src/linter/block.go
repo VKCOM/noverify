@@ -1258,26 +1258,27 @@ func (b *BlockWalker) handleNew(e *expr.New) bool {
 func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 	// TODO: add reference semantics to foreach analyze as well
 
-	b.handleVariableNode(s.Key, meta.TypesMap{}, "foreach_key")
-	if list, ok := s.Variable.(*expr.List); ok {
-		for _, item := range list.Items {
-			b.handleVariableNode(item.Val, meta.TypesMap{}, "foreach_value")
-		}
-	} else {
-		b.handleVariableNode(s.Variable, meta.TypesMap{}, "foreach_value")
-	}
-
 	// expression is always executed and is executed in base context
 	if s.Expr != nil {
 		s.Expr.Walk(b)
-		solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, s.Expr, b.ctx.customTypes).Iterate(func(typ string) {
-			b.handleVariableNode(s.Variable, meta.NewTypesMap(meta.WrapElemOf(typ)), "foreach_value")
-		})
 	}
 
 	// foreach body can do 0 cycles so we need a separate context for that
 	if s.Stmt != nil {
 		ctx := b.withNewContext(func() {
+			solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, s.Expr, b.ctx.customTypes).Iterate(func(typ string) {
+				b.handleVariableNode(s.Variable, meta.NewTypesMap(meta.WrapElemOf(typ)), "foreach_value")
+			})
+
+			b.handleVariableNode(s.Key, meta.TypesMap{}, "foreach_key")
+			if list, ok := s.Variable.(*expr.List); ok {
+				for _, item := range list.Items {
+					b.handleVariableNode(item.Val, meta.TypesMap{}, "foreach_value")
+				}
+			} else {
+				b.handleVariableNode(s.Variable, meta.TypesMap{}, "foreach_value")
+			}
+
 			b.ctx.innermostLoop = loopFor
 			b.ctx.insideLoop = true
 			if _, ok := s.Stmt.(*stmt.StmtList); !ok {
