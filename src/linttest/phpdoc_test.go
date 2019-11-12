@@ -6,6 +6,28 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestBadParamName(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+/**
+ * @param B1 $v2
+ * @param B2 $v3
+ */
+function f($v1, $v2) {
+}
+
+class Bear {
+  /** @param int $y */
+  private function migrate($x) {}
+}
+`)
+	test.Expect = []string{
+		`@param for non-existing argument $v3`,
+		`@param for non-existing argument $y`,
+	}
+	test.RunAndMatch()
+}
+
 func TestDeprecatedMethod(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
