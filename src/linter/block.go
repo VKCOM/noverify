@@ -2,6 +2,7 @@ package linter
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -44,6 +45,121 @@ const (
 	FlagThrow
 	FlagDie
 )
+
+// Sadly, the callbacks are not easily obtainable
+// through reflection without the bound receiver.
+var blockWalkerCallbacks = mustMakeBlockWalkerMap([]interface{}{
+	(*BlockWalker).handleCastDouble,
+	(*BlockWalker).handleCastInt,
+	(*BlockWalker).handleCastBool,
+	(*BlockWalker).handleCastString,
+	(*BlockWalker).handleCastArray,
+	(*BlockWalker).handleStmtGlobal,
+	(*BlockWalker).handleStmtStatic,
+	(*BlockWalker).handleNodeRoot,
+	(*BlockWalker).handleStmtList,
+	(*BlockWalker).handleStmtElse,
+	(*BlockWalker).handleStmtElseIf,
+	(*BlockWalker).handleNodeVar,
+	(*BlockWalker).handleNodeSimpleVar,
+	(*BlockWalker).handleFunction,
+	(*BlockWalker).handleClass,
+	(*BlockWalker).handleInterface,
+	(*BlockWalker).handleTrait,
+	(*BlockWalker).handleExprClosure,
+	(*BlockWalker).handleStmtBreak,
+	(*BlockWalker).handleExprClone,
+	(*BlockWalker).handleStmtConstList,
+	(*BlockWalker).handleStmtGoto,
+	(*BlockWalker).handleStmtThrow,
+	(*BlockWalker).handleExprYield,
+	(*BlockWalker).handleExprYieldFrom,
+	(*BlockWalker).handleExprInclude,
+	(*BlockWalker).handleExprIncludeOnce,
+	(*BlockWalker).handleExprRequire,
+	(*BlockWalker).handleExprRequireOnce,
+	(*BlockWalker).handleReturn,
+	(*BlockWalker).handleLogicalOr,
+	(*BlockWalker).handleContinue,
+	(*BlockWalker).handleUnset,
+	(*BlockWalker).handleIsset,
+	(*BlockWalker).handleEmpty,
+	(*BlockWalker).handleTry,
+	(*BlockWalker).handleArrayDimFetch,
+	(*BlockWalker).handleFunctionCall,
+	(*BlockWalker).handleMethodCall,
+	(*BlockWalker).handleStaticCall,
+	(*BlockWalker).handlePropertyFetch,
+	(*BlockWalker).handleStaticPropertyFetch,
+	(*BlockWalker).handleArray,
+	(*BlockWalker).handleClassConstFetch,
+	(*BlockWalker).handleConstFetch,
+	(*BlockWalker).handleNew,
+	(*BlockWalker).handleForeach,
+	(*BlockWalker).handleFor,
+	(*BlockWalker).handleWhile,
+	(*BlockWalker).handleDo,
+	(*BlockWalker).handleVariable,
+	(*BlockWalker).handleIf,
+	(*BlockWalker).handleSwitch,
+	(*BlockWalker).handleAssignReference,
+	(*BlockWalker).handleBitwiseAnd,
+	(*BlockWalker).handleBitwiseOr,
+	(*BlockWalker).handleAssign,
+})
+
+func checkBlockWalkerCallback(c interface{}) error {
+	bwt := reflect.TypeOf(&BlockWalker{})
+	boolt := reflect.TypeOf(true)
+
+	rv := reflect.ValueOf(c)
+	rt := rv.Type()
+
+	if rv.Kind() != reflect.Func {
+		return fmt.Errorf("Not a function passed in blockWalkerCallbacks: %T, %v", c, c)
+	}
+
+	if rt.NumIn() != 2 {
+		return fmt.Errorf("Expected function to accept two arguments in blockWalkerCallbacks (got %d) for %T, %v", rt.NumIn(), c, c)
+	}
+
+	if rt.In(0) != bwt {
+		return fmt.Errorf("First argument expected to be of type *BlockWalker in blockWalkerCallbacks (got %s) for %T, %v", rt.In(0), c, c)
+	}
+
+	if rt.NumOut() != 1 {
+		return fmt.Errorf("Expected function to return one value in blockWalkerCallbacks (got %d) for %T, %v", rt.NumOut(), c, c)
+	}
+
+	if rt.Out(0) != boolt {
+		return fmt.Errorf("Expected function to return bool in blockWalkerCallbacks (got %d) for %T, %v", rt.Out(0), c, c)
+	}
+
+	return nil
+}
+
+func mustMakeBlockWalkerMap(cbs []interface{}) map[reflect.Type]reflect.Value {
+	res := make(map[reflect.Type]reflect.Value)
+
+	for _, c := range cbs {
+		rv := reflect.ValueOf(c)
+		rt := rv.Type()
+
+		if err := checkBlockWalkerCallback(c); err != nil {
+			panic(err)
+		}
+
+		key := rt.In(1)
+
+		if _, ok := res[key]; ok {
+			panic(fmt.Errorf("Duplicate handler in blockWalkerCallbacks for type %s", key))
+		}
+
+		res[rt.In(1)] = rv
+	}
+
+	return res
+}
 
 // BlockWalker is used to process function/method contents.
 type BlockWalker struct {
@@ -130,6 +246,31 @@ func (b *BlockWalker) checkRedundantCastArray(e node.Node) {
 	}
 }
 
+func (b *BlockWalker) handleCastDouble(s *cast.Double) bool {
+	b.checkRedundantCast(s.Expr, "float")
+	return true
+}
+
+func (b *BlockWalker) handleCastInt(s *cast.Int) bool {
+	b.checkRedundantCast(s.Expr, "int")
+	return true
+}
+
+func (b *BlockWalker) handleCastBool(s *cast.Bool) bool {
+	b.checkRedundantCast(s.Expr, "bool")
+	return true
+}
+
+func (b *BlockWalker) handleCastString(s *cast.String) bool {
+	b.checkRedundantCast(s.Expr, "string")
+	return true
+}
+
+func (b *BlockWalker) handleCastArray(s *cast.Array) bool {
+	b.checkRedundantCastArray(s.Expr)
+	return true
+}
+
 func (b *BlockWalker) checkRedundantCast(e node.Node, dstType string) {
 	if !meta.IsIndexingComplete() {
 		return
@@ -168,168 +309,11 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		}
 	}
 
-	switch s := w.(type) {
-	case *binary.BitwiseAnd:
-		b.handleBitwiseAnd(s)
-	case *binary.BitwiseOr:
-		b.handleBitwiseOr(s)
-
-	case *cast.Double:
-		b.checkRedundantCast(s.Expr, "float")
-	case *cast.Int:
-		b.checkRedundantCast(s.Expr, "int")
-	case *cast.Bool:
-		b.checkRedundantCast(s.Expr, "bool")
-	case *cast.String:
-		b.checkRedundantCast(s.Expr, "string")
-	case *cast.Array:
-		b.checkRedundantCastArray(s.Expr)
-	case *stmt.Global:
-		b.r.checkKeywordCase(s, "global")
-		for _, v := range s.Vars {
-			nm := varToString(v)
-			if nm == "" {
-				continue
-			}
-			b.addVar(v, meta.NewTypesMap(meta.WrapGlobal(nm)), "global", true)
-			b.addNonLocalVar(v)
-		}
-		res = false
-	case *stmt.Static:
-		for _, vv := range s.Vars {
-			v := vv.(*stmt.StaticVar)
-			ev := v.Variable
-			b.addVarName(v, ev.Name, solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, v.Expr, b.ctx.customTypes), "static", true)
-			b.addNonLocalVarName(ev.Name)
-			if v.Expr != nil {
-				v.Expr.Walk(b)
-			}
-		}
-		res = false
-	case *node.Root:
-		for _, st := range s.Stmts {
-			b.addStatement(st)
-		}
-	case *stmt.StmtList:
-		for _, st := range s.Stmts {
-			b.addStatement(st)
-		}
-	// TODO: analyze control flow in try blocks separately and account for the fact that some functions or operations can
-	// throw exceptions
-	case *stmt.Try:
-		res = b.handleTry(s)
-	case *assign.Assign:
-		// TODO: only accept first assignment, not all of them
-		// e.g. if there is a condition like ($a = 10) || ($b = 5)
-		// we must only accept $a = 10 as condition that is always executed
-		res = b.handleAssign(s)
-	case *assign.Reference:
-		res = b.handleAssignReference(s)
-	case *expr.Array:
-		res = b.handleArray(s)
-	case *stmt.Foreach:
-		res = b.handleForeach(s)
-		b.r.checkKeywordCase(s, "foreach")
-	case *stmt.For:
-		res = b.handleFor(s)
-		b.r.checkKeywordCase(s, "for")
-	case *stmt.While:
-		res = b.handleWhile(s)
-		b.r.checkKeywordCase(s, "while")
-	case *stmt.Do:
-		res = b.handleDo(s)
-		b.r.checkKeywordCase(s, "do")
-	case *stmt.Else:
-		b.r.checkKeywordCase(s, "else")
-	case *stmt.ElseIf:
-		b.r.checkKeywordCase(s, "elseif")
-	case *stmt.If:
-		// TODO: handle constant if expressions
-		// TODO: maybe try to handle when variables are defined and used with the same condition
-		res = b.handleIf(s)
-	case *stmt.Switch:
-		res = b.handleSwitch(s)
-	case *expr.FunctionCall:
-		res = b.handleFunctionCall(s)
-	case *expr.MethodCall:
-		res = b.handleMethodCall(s)
-	case *expr.StaticCall:
-		res = b.handleStaticCall(s)
-	case *expr.PropertyFetch:
-		res = b.handlePropertyFetch(s)
-	case *expr.StaticPropertyFetch:
-		res = b.handleStaticPropertyFetch(s)
-	case *expr.ClassConstFetch:
-		res = b.handleClassConstFetch(s)
-	case *expr.ConstFetch:
-		res = b.handleConstFetch(s)
-	case *expr.New:
-		res = b.handleNew(s)
-		b.r.checkKeywordCase(s, "new")
-	case *stmt.Unset:
-		res = b.handleUnset(s)
-	case *expr.Isset:
-		res = b.handleIsset(s)
-	case *expr.Empty:
-		res = b.handleEmpty(s)
-	case *node.Var:
-		res = b.handleVariable(s)
-	case *node.SimpleVar:
-		res = b.handleVariable(s)
-	case *expr.ArrayDimFetch:
-		b.checkArrayDimFetch(s)
-	case *stmt.Function:
-		res = b.handleFunction(s)
-	case *stmt.Class:
-		if b.ignoreFunctionBodies {
+	if cb, ok := blockWalkerCallbacks[reflect.TypeOf(w)]; ok {
+		out := cb.Call([]reflect.Value{reflect.ValueOf(b), reflect.ValueOf(w)})
+		if !out[0].Bool() {
 			res = false
 		}
-	case *stmt.Interface:
-		if b.ignoreFunctionBodies {
-			res = false
-		}
-	case *stmt.Trait:
-		if b.ignoreFunctionBodies {
-			res = false
-		}
-	case *expr.Closure:
-		var typ meta.TypesMap
-		isInstance := b.ctx.sc.IsInInstanceMethod()
-		if isInstance {
-			typ, _ = b.ctx.sc.GetVarNameType("this")
-		}
-		res = b.enterClosure(s, isInstance, typ)
-	case *stmt.Return:
-		b.handleReturn(s)
-		b.r.checkKeywordCase(s, "return")
-	case *stmt.Break:
-		b.r.checkKeywordCase(s, "break")
-	case *stmt.Continue:
-		b.handleContinue(s)
-		b.r.checkKeywordCase(s, "continue")
-	case *binary.LogicalOr:
-		res = b.handleLogicalOr(s)
-
-	case *expr.Clone:
-		b.r.checkKeywordCase(s, "clone")
-	case *stmt.ConstList:
-		b.r.checkKeywordCase(s, "const")
-	case *stmt.Goto:
-		b.r.checkKeywordCase(s, "goto")
-	case *stmt.Throw:
-		b.r.checkKeywordCase(s, "throw")
-	case *expr.Yield:
-		b.r.checkKeywordCase(s, "yield")
-	case *expr.YieldFrom:
-		b.r.checkKeywordCase(s, "yield")
-	case *expr.Include:
-		b.r.checkKeywordCase(n, "include")
-	case *expr.IncludeOnce:
-		b.r.checkKeywordCase(n, "include_once")
-	case *expr.Require:
-		b.r.checkKeywordCase(n, "require")
-	case *expr.RequireOnce:
-		b.r.checkKeywordCase(n, "require_once")
 	}
 
 	for _, c := range b.custom {
@@ -350,6 +334,65 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	return res
 }
 
+func (b *BlockWalker) handleStmtGlobal(s *stmt.Global) bool {
+	b.r.checkKeywordCase(s, "global")
+	for _, v := range s.Vars {
+		nm := varToString(v)
+		if nm == "" {
+			continue
+		}
+		b.addVar(v, meta.NewTypesMap(meta.WrapGlobal(nm)), "global", true)
+		b.addNonLocalVar(v)
+	}
+	return false
+}
+
+func (b *BlockWalker) handleStmtStatic(s *stmt.Static) bool {
+	for _, vv := range s.Vars {
+		v := vv.(*stmt.StaticVar)
+		ev := v.Variable
+		b.addVarName(v, ev.Name, solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, v.Expr, b.ctx.customTypes), "static", true)
+		b.addNonLocalVarName(ev.Name)
+		if v.Expr != nil {
+			v.Expr.Walk(b)
+		}
+	}
+	return false
+}
+
+func (b *BlockWalker) handleNodeRoot(s *node.Root) bool {
+	for _, st := range s.Stmts {
+		b.addStatement(st)
+	}
+
+	return true
+}
+
+func (b *BlockWalker) handleStmtList(s *stmt.StmtList) bool {
+	for _, st := range s.Stmts {
+		b.addStatement(st)
+	}
+	return true
+}
+
+func (b *BlockWalker) handleStmtElse(s *stmt.Else) bool {
+	b.r.checkKeywordCase(s, "else")
+	return true
+}
+
+func (b *BlockWalker) handleStmtElseIf(s *stmt.ElseIf) bool {
+	b.r.checkKeywordCase(s, "elseif")
+	return true
+}
+
+func (b *BlockWalker) handleNodeVar(s *node.Var) bool {
+	return b.handleVariable(s)
+}
+
+func (b *BlockWalker) handleNodeSimpleVar(s *node.SimpleVar) bool {
+	return b.handleVariable(s)
+}
+
 func (b *BlockWalker) handleFunction(fun *stmt.Function) bool {
 	if b.ignoreFunctionBodies {
 		return false
@@ -358,11 +401,89 @@ func (b *BlockWalker) handleFunction(fun *stmt.Function) bool {
 	return b.r.enterFunction(fun)
 }
 
-func (b *BlockWalker) handleReturn(ret *stmt.Return) {
+func (b *BlockWalker) handleClass(s *stmt.Class) bool {
+	return !b.ignoreFunctionBodies
+}
+
+func (b *BlockWalker) handleInterface(s *stmt.Interface) bool {
+	return !b.ignoreFunctionBodies
+}
+
+func (b *BlockWalker) handleTrait(s *stmt.Trait) bool {
+	return !b.ignoreFunctionBodies
+}
+
+func (b *BlockWalker) handleExprClosure(s *expr.Closure) bool {
+	var typ meta.TypesMap
+	isInstance := b.ctx.sc.IsInInstanceMethod()
+	if isInstance {
+		typ, _ = b.ctx.sc.GetVarNameType("this")
+	}
+	return b.enterClosure(s, isInstance, typ)
+}
+
+func (b *BlockWalker) handleStmtBreak(s *stmt.Break) bool {
+	b.r.checkKeywordCase(s, "break")
+	return true
+}
+
+func (b *BlockWalker) handleExprClone(s *expr.Clone) bool {
+	b.r.checkKeywordCase(s, "clone")
+	return true
+}
+
+func (b *BlockWalker) handleStmtConstList(s *stmt.ConstList) bool {
+	b.r.checkKeywordCase(s, "const")
+	return true
+}
+
+func (b *BlockWalker) handleStmtGoto(s *stmt.Goto) bool {
+	b.r.checkKeywordCase(s, "goto")
+	return true
+}
+
+func (b *BlockWalker) handleStmtThrow(s *stmt.Throw) bool {
+	b.r.checkKeywordCase(s, "throw")
+	return true
+}
+
+func (b *BlockWalker) handleExprYield(s *expr.Yield) bool {
+	b.r.checkKeywordCase(s, "yield")
+	return true
+}
+
+func (b *BlockWalker) handleExprYieldFrom(s *expr.YieldFrom) bool {
+	b.r.checkKeywordCase(s, "yield")
+	return true
+}
+
+func (b *BlockWalker) handleExprInclude(s *expr.Include) bool {
+	b.r.checkKeywordCase(s, "include")
+	return true
+}
+
+func (b *BlockWalker) handleExprIncludeOnce(s *expr.IncludeOnce) bool {
+	b.r.checkKeywordCase(s, "include_once")
+	return true
+}
+
+func (b *BlockWalker) handleExprRequire(s *expr.Require) bool {
+	b.r.checkKeywordCase(s, "require")
+	return true
+}
+
+func (b *BlockWalker) handleExprRequireOnce(s *expr.RequireOnce) bool {
+	b.r.checkKeywordCase(s, "require_once")
+	return true
+}
+
+func (b *BlockWalker) handleReturn(ret *stmt.Return) bool {
+	b.r.checkKeywordCase(ret, "return")
+
 	if ret.Expr == nil {
 		// Return without explicit return value.
 		b.bareReturn = true
-		return
+		return true
 	}
 	b.returnsValue = true
 
@@ -370,6 +491,8 @@ func (b *BlockWalker) handleReturn(ret *stmt.Return) {
 	typ.Iterate(func(t string) {
 		b.returnTypes = b.returnTypes.AppendString(t)
 	})
+
+	return true
 }
 
 func (b *BlockWalker) handleLogicalOr(or *binary.LogicalOr) bool {
@@ -383,10 +506,14 @@ func (b *BlockWalker) handleLogicalOr(or *binary.LogicalOr) bool {
 	return false
 }
 
-func (b *BlockWalker) handleContinue(s *stmt.Continue) {
+func (b *BlockWalker) handleContinue(s *stmt.Continue) bool {
+	b.r.checkKeywordCase(s, "continue")
+
 	if s.Expr == nil && b.ctx.innermostLoop == loopSwitch {
 		b.r.Report(s, LevelError, "caseContinue", "'continue' inside switch is 'break'")
 	}
+
+	return true
 }
 
 func (b *BlockWalker) addNonLocalVarName(nm string) {
@@ -656,7 +783,7 @@ func (b *BlockWalker) handleCatch(s *stmt.Catch) bool {
 
 // We still need to analyze expressions in isset()/unset()/empty() statements
 func (b *BlockWalker) handleIssetDimFetch(e *expr.ArrayDimFetch) {
-	b.checkArrayDimFetch(e)
+	b.handleArrayDimFetch(e)
 
 	switch v := e.Variable.(type) {
 	case *node.SimpleVar:
@@ -674,9 +801,9 @@ func (b *BlockWalker) handleIssetDimFetch(e *expr.ArrayDimFetch) {
 	}
 }
 
-func (b *BlockWalker) checkArrayDimFetch(s *expr.ArrayDimFetch) {
+func (b *BlockWalker) handleArrayDimFetch(s *expr.ArrayDimFetch) bool {
 	if !meta.IsIndexingComplete() {
-		return
+		return true
 	}
 
 	typ := solver.ExprType(b.ctx.sc, b.r.st, s.Variable)
@@ -700,6 +827,8 @@ func (b *BlockWalker) checkArrayDimFetch(s *expr.ArrayDimFetch) {
 	if maybeHaveClasses && !haveArrayAccess {
 		b.r.Report(s.Variable, LevelDoNotReject, "arrayAccess", "Array access to non-array type %s", typ)
 	}
+
+	return true
 }
 
 func (b *BlockWalker) enoughArgs(args []node.Node, fn meta.FuncInfo) bool {
@@ -1207,6 +1336,8 @@ func (b *BlockWalker) handleConstFetch(e *expr.ConstFetch) bool {
 }
 
 func (b *BlockWalker) handleNew(e *expr.New) bool {
+	b.r.checkKeywordCase(e, "new")
+
 	// Can't handle `new class() ...` yet.
 	if _, ok := e.Class.(*stmt.Class); ok {
 		return false
@@ -1257,6 +1388,7 @@ func (b *BlockWalker) handleNew(e *expr.New) bool {
 
 func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 	// TODO: add reference semantics to foreach analyze as well
+	b.r.checkKeywordCase(s, "foreach")
 
 	// expression is always executed and is executed in base context
 	if s.Expr != nil {
@@ -1295,6 +1427,8 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 }
 
 func (b *BlockWalker) handleFor(s *stmt.For) bool {
+	b.r.checkKeywordCase(s, "for")
+
 	for _, v := range s.Init {
 		b.addStatement(v)
 		v.Walk(b)
@@ -1380,6 +1514,8 @@ func (b *BlockWalker) maybeAddAllVars(sc *meta.Scope, reason string) {
 }
 
 func (b *BlockWalker) handleWhile(s *stmt.While) bool {
+	b.r.checkKeywordCase(s, "while")
+
 	if s.Cond != nil {
 		s.Cond.Walk(b)
 	}
@@ -1399,6 +1535,8 @@ func (b *BlockWalker) handleWhile(s *stmt.While) bool {
 }
 
 func (b *BlockWalker) handleDo(s *stmt.Do) bool {
+	b.r.checkKeywordCase(s, "do")
+
 	if s.Stmt != nil {
 		oldInnermostLoop := b.ctx.innermostLoop
 		oldInsideLoop := b.ctx.insideLoop
@@ -1783,7 +1921,7 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 // handle case when doing assignment like '$a[] = 4;'
 // or call to function that accepts like exec("command", $a)
 func (b *BlockWalker) handleDimFetchLValue(e *expr.ArrayDimFetch, reason string, typ meta.TypesMap) {
-	b.checkArrayDimFetch(e)
+	b.handleArrayDimFetch(e)
 
 	switch v := e.Variable.(type) {
 	case *node.Var, *node.SimpleVar:
@@ -1832,16 +1970,20 @@ func (b *BlockWalker) handleAssignList(items []*expr.ArrayItem) {
 	}
 }
 
-func (b *BlockWalker) handleBitwiseAnd(s *binary.BitwiseAnd) {
+func (b *BlockWalker) handleBitwiseAnd(s *binary.BitwiseAnd) bool {
 	if b.isBool(s.Left) && b.isBool(s.Right) {
 		b.ReportBitwiseOp(s, "&", "&&")
 	}
+
+	return true
 }
 
-func (b *BlockWalker) handleBitwiseOr(s *binary.BitwiseOr) {
+func (b *BlockWalker) handleBitwiseOr(s *binary.BitwiseOr) bool {
 	if b.isBool(s.Left) && b.isBool(s.Right) {
 		b.ReportBitwiseOp(s, "|", "||")
 	}
+
+	return true
 }
 
 func (b *BlockWalker) ReportBitwiseOp(s node.Node, op string, rightOp string) {
