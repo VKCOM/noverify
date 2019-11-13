@@ -980,6 +980,12 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 		return result
 	}
 
+	actualParamNames := make(map[string]struct{}, len(actualParams))
+	for _, p := range actualParams {
+		p := p.(*node.Parameter)
+		actualParamNames[p.Variable.Name] = struct{}{}
+	}
+
 	result.types = make(phpDocParamsMap, len(actualParams))
 
 	var curParam int
@@ -1035,6 +1041,11 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 				result.errs.pushLint("too many @param tags on line %d", part.Line)
 				continue
 			}
+		}
+
+		if _, ok := actualParamNames[strings.TrimPrefix(variable, "$")]; !ok {
+			result.errs.pushLint("@param for non-existing argument %s", variable)
+			continue
 		}
 
 		curParam++
