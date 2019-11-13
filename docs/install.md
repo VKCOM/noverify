@@ -14,7 +14,7 @@ Alternatively, you can build `noverify` with version info:
 
 ```sh
 mkdir -p $GOPATH/github.com/VKCOM
-git clone github.com/VKCOM/noverify $GOPATH/github.com/VKCOM
+git clone https://github.com/VKCOM/noverify.git $GOPATH/github.com/VKCOM
 
 cd $GOPATH/src/github.com/VKCOM/noverify
 make install
