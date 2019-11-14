@@ -191,9 +191,21 @@ func TestExprTypeMalformedPhpdoc(t *testing.T) {
 	tests := []exprTypeTest{
 		{`return_mixed(0)`, `mixed`},
 		{`return_int(0)`, `int`},
+		{`return_int2(0)`, `int`},
+		{`return_int3(0)`, `int`},
 	}
 
 	global := `<?php
+/**
+ * @param int &$x
+ */
+function return_int2(&$x) { return $x; }
+
+/**
+ * @param int &$x
+ */
+function return_int3($x) { return $x; }
+
 /**
  * @param $x
  */
