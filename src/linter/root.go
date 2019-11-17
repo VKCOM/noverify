@@ -1388,22 +1388,21 @@ func (d *RootWalker) matchRule(n node.Node, sc *meta.Scope, rule *rules.Rule) no
 	return location
 }
 
+func (d *RootWalker) checkTypeFilter(typeExpr phpdoc.TypeExpr, sc *meta.Scope, nn node.Node) bool {
+	if typeExpr == nil {
+		return true
+	}
+
+	typ := solver.ExprType(sc, d.st, nn)
+	return typeIsCompatible(typ, typeExpr)
+}
+
 func (d *RootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filterSet map[string]rules.Filter) bool {
 	for name, filter := range filterSet {
 		nn := m.Named[name]
 
-		if len(filter.Types) != 0 {
-			typ := solver.ExprType(sc, d.st, nn)
-			matched := false
-			for _, wantType := range filter.Types {
-				if typeIsCompatible(typ, wantType) {
-					matched = true
-					break
-				}
-			}
-			if !matched {
-				return false
-			}
+		if !d.checkTypeFilter(filter.Type, sc, nn) {
+			return false
 		}
 	}
 

@@ -11,6 +11,20 @@ import (
 
 func TestAnyRules(t *testing.T) {
 	rfile := `<?php
+/**
+ * @warning increment of a non-numeric type
+ * @type !(int|float) $x
+ */
+$x++;
+
+/**
+ * @warning suspicious arguments passed to array_key_exists
+ * @type array $key
+ * @or
+ * @type !array $arr
+ */
+array_key_exists($key, $arr);
+
 /** @warning suspicious order of stripos function arguments */
 stripos(${"str"}, ${"*"});
 
@@ -50,6 +64,7 @@ function stripos($haystack, $needle, $offset = 0) { return 0; }
 function explode($delimeter, $s, $limit = 0) { return []; }
 function in_array($needle, $haystack, $strict = false) { return true; }
 function define($name, $value) {}
+function array_key_exists($needle, $haystack) { return false; }
 
 define('true', 1 == 1);
 define('false', 1 == 0);
@@ -99,6 +114,27 @@ function f($x, $y) {
 
 $s = "123";
 $_ = explode("", $s);
+
+$_ = array_key_exists('123', [1]);   // Good
+$_ = array_key_exists('123', []);    // Good
+$_ = array_key_exists([1], '123');   // Bad: both args have bad type
+$_ = array_key_exists([1], [1]);     // Bad: $key has bad type
+$_ = array_key_exists([], [1]);      // Bad: $key has bad type (empty_array)
+$_ = array_key_exists('123', '123'); // Bad: $arr has bad type
+
+$i = 123;
+$f = 1.53;
+$a = [1];
+
+$i++; // Good
+$f++; // Good
+$s++; // Bad
+$a++; // Bad
+
+$i--; // Good
+$f--; // Good
+$s--; // Bad
+$a--; // Bad
 `)
 
 	test.Expect = []string{
@@ -113,6 +149,12 @@ $_ = explode("", $s);
 		`did you meant to compare an object with null?`,
 		`did you meant to compare an object with null?`,
 		`did you meant to compare an object with null?`,
+		`suspicious arguments passed to array_key_exists`,
+		`suspicious arguments passed to array_key_exists`,
+		`suspicious arguments passed to array_key_exists`,
+		`suspicious arguments passed to array_key_exists`,
+		`increment of a non-numeric type`,
+		`increment of a non-numeric type`,
 	}
 	runRulesTest(t, test, rfile)
 }

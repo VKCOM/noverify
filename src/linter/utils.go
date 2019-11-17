@@ -11,6 +11,7 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/printer"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
+	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/solver"
 )
 
@@ -93,26 +94,75 @@ func varToString(v node.Node) string {
 	}
 }
 
-func typeIsCompatible(actual meta.TypesMap, want string) bool {
-	if actual.Len() != 1 {
-		return false
+func typeIsCompatible(actual meta.TypesMap, want phpdoc.TypeExpr) bool {
+	// TODO: compare without converting a TypesMap into TypeExpr?
+	// Or maybe store TypeExpr inside a TypesMap instead of strings?
+	have := typesMapToTypeExpr(actual)
+	return typeExprIsCompatible(want, have)
+}
+
+var (
+	typeEmpty = &phpdoc.NamedType{}
+	typeArray = &phpdoc.ArrayType{Elem: &phpdoc.NamedType{Name: "mixed"}}
+)
+
+func typesMapToTypeExpr(m meta.TypesMap) phpdoc.TypeExpr {
+	// TODO: when ExprType stops returning
+	// "empty_array" type, remove the extra check.
+	if m.Is("empty_array") {
+		return typeArray
 	}
 
-	return actual.Find(func(typ string) bool {
-		if typ == want {
-			return true
-		}
+	var p phpdoc.TypeParser
+	typeExpr, err := p.ParseType(m.String())
+	if err != nil {
+		return typeEmpty
+	}
+	return typeExpr
+}
 
-		switch want {
-		case "mixed[]", "array":
-			return strings.HasSuffix(typ, "[]")
+// typeExprIsCompatible reports whether val type is compatible with dst type.
+func typeExprIsCompatible(dst, val phpdoc.TypeExpr) bool {
+	// TODO: allow implementations to be compatible with interfaces.
+	// TODO: allow derived classes to be compatible with base classes.
+
+	switch x := dst.(type) {
+	case *phpdoc.NamedType:
+		switch x.Name {
 		case "object":
 			// For object we accept any kind of object instance.
 			// https://wiki.php.net/rfc/object-typehint
-			return !strings.HasSuffix(typ, "[]") &&
-				strings.HasPrefix(typ, `\`)
+			y, ok := val.(*phpdoc.NamedType)
+			return ok && (y.Name == "object" || strings.HasPrefix(y.Name, `\`))
+		case "array":
+			_, ok := val.(*phpdoc.ArrayType)
+			return ok
 		}
+		y, ok := val.(*phpdoc.NamedType)
+		return ok && x.Name == y.Name
 
+	case *phpdoc.NotType:
+		return !typeExprIsCompatible(x.Expr, val)
+
+	case *phpdoc.NullableType:
+		y, ok := val.(*phpdoc.NullableType)
+		return ok && typeExprIsCompatible(x.Expr, y.Expr)
+
+	case *phpdoc.ArrayType:
+		y, ok := val.(*phpdoc.ArrayType)
+		return ok && typeExprIsCompatible(x.Elem, y.Elem)
+
+	case *phpdoc.UnionType:
+		if y, ok := val.(*phpdoc.UnionType); ok {
+			return typeExprIsCompatible(x.X, y.X) && typeExprIsCompatible(x.Y, y.Y)
+		}
+		return typeExprIsCompatible(x.X, val) || typeExprIsCompatible(x.Y, val)
+
+	case *phpdoc.InterType:
+		// TODO: make it work as intended. (See #310)
 		return false
-	})
+
+	default:
+		return false
+	}
 }
