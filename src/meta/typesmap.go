@@ -70,10 +70,7 @@ func (m TypesMap) IsEmpty() bool {
 }
 
 // Equals check if two typesmaps are the same
-func (m *TypesMap) Equals(m2 *TypesMap) bool {
-	if m.m == nil || m2 == nil || m2.m == nil {
-		return false
-	}
+func (m TypesMap) Equals(m2 TypesMap) bool {
 	if len(m.m) != len(m2.m) {
 		return false
 	}
@@ -92,12 +89,12 @@ func (m TypesMap) Len() int {
 }
 
 // IsInt checks if map contains only int type
-func (m *TypesMap) IsInt() bool {
+func (m TypesMap) IsInt() bool {
 	return m.Is("int")
 }
 
 // IsString checks if map contains only string type
-func (m *TypesMap) IsString() bool {
+func (m TypesMap) IsString() bool {
 	return m.Is("string")
 }
 
@@ -116,11 +113,7 @@ func (m TypesMap) IsArray() bool {
 }
 
 // IsArrayOf checks if map contains only array of given type
-func (m *TypesMap) IsArrayOf(typ string) bool {
-	if m == nil {
-		return false
-	}
-
+func (m TypesMap) IsArrayOf(typ string) bool {
 	if len(m.m) != 1 {
 		return false
 	}

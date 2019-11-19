@@ -15,7 +15,7 @@ import (
 )
 
 func unaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, x node.Node, custom []CustomType) meta.TypesMap {
-	if ExprTypeLocalCustom(sc, cs, x, custom).Is("int") {
+	if ExprTypeLocalCustom(sc, cs, x, custom).IsInt() {
 		return meta.NewTypesMap("int")
 	}
 	return meta.NewTypesMap("float")
@@ -23,7 +23,7 @@ func unaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, x node.Node, cust
 
 // binaryMathOpType is used for binary arithmetic operations
 func binaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right node.Node, custom []CustomType) meta.TypesMap {
-	if ExprTypeLocalCustom(sc, cs, left, custom).Is("int") && ExprTypeLocalCustom(sc, cs, right, custom).Is("int") {
+	if ExprTypeLocalCustom(sc, cs, left, custom).IsInt() && ExprTypeLocalCustom(sc, cs, right, custom).IsInt() {
 		return meta.NewTypesMap("int")
 	}
 	return meta.NewTypesMap("float")
