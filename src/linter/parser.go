@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	dbg "runtime/debug"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
+	"github.com/VKCOM/noverify/src/rules"
 )
 
 type FileInfo struct {
@@ -108,6 +110,27 @@ func ParseContents(filename string, contents []byte, lineRanges []git.LineRange)
 	return analyzeFile(filename, bufCopy, parser, lineRanges)
 }
 
+func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedSet {
+	if ruleSet == nil {
+		return nil
+	}
+
+	var clone rules.ScopedSet
+	for i, list := range &ruleSet.RulesByKind {
+		res := make([]rules.Rule, 0, len(list))
+		for _, rule := range list {
+			if !strings.Contains(filename, rule.Path) {
+				continue
+			}
+			ruleClone := rule
+			ruleClone.Matcher = rule.Matcher.Clone()
+			res = append(res, ruleClone)
+		}
+		clone.RulesByKind[i] = res
+	}
+	return &clone
+}
+
 func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRanges []git.LineRange) (*node.Root, *RootWalker, error) {
 	start := time.Now()
 	rootNode := parser.GetRootNode()
@@ -125,9 +148,9 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 		// We need to clone rules since phpgrep matchers
 		// contain mutable state that we don't want to share
 		// between goroutines.
-		anyRset:   Rules.Any.Clone(),
-		rootRset:  Rules.Root.Clone(),
-		localRset: Rules.Local.Clone(),
+		anyRset:   cloneRulesForFile(filename, Rules.Any),
+		rootRset:  cloneRulesForFile(filename, Rules.Root),
+		localRset: cloneRulesForFile(filename, Rules.Local),
 	}
 
 	w.InitFromParser(contents, parser)

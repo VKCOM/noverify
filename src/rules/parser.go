@@ -151,6 +151,14 @@ func (p *parser) parseRule(st node.Node) error {
 		case "or":
 			rule.Filters = append(rule.Filters, filterSet)
 			filterSet = nil
+		case "path":
+			if len(part.Params) != 1 {
+				return p.errorf(st, "@path expects exactly 1 param, got %d", len(part.Params))
+			}
+			if rule.Path != "" {
+				return p.errorf(st, "duplicate @path constraint")
+			}
+			rule.Path = part.Params[0]
 		case "type":
 			if len(part.Params) != 2 {
 				return p.errorf(st, "@type expects exactly 2 params, got %d", len(part.Params))

@@ -9,6 +9,30 @@ import (
 	"github.com/VKCOM/noverify/src/rules"
 )
 
+func TestRulePathFilter(t *testing.T) {
+	rfile := `<?php
+/**
+ * @warning don't eval from variable
+ * @path my/site/ads_
+ */
+eval(${"var"});
+`
+	test := linttest.NewSuite(t)
+	code := `<?php
+          $hello = 'echo 123;';
+          eval($hello);
+          eval('echo 456;');
+        `
+	addNamedFile(test, "/home/john/my/site/foo.php", code)
+	addNamedFile(test, "/home/john/my/site/ads_foo.php", code)
+	addNamedFile(test, "/home/jogh/my/site/ads_bar.php", code)
+	test.Expect = []string{
+		`don't eval from variable`,
+		`don't eval from variable`,
+	}
+	runRulesTest(t, test, rfile)
+}
+
 func TestAnyRules(t *testing.T) {
 	rfile := `<?php
 /**

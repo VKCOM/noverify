@@ -6,15 +6,6 @@ import (
 	"github.com/VKCOM/noverify/src/linter/lintapi"
 )
 
-func cloneRuleList(rules []Rule) []Rule {
-	res := make([]Rule, len(rules))
-	for i, rule := range rules {
-		res[i] = rule
-		res[i].Matcher = rule.Matcher.Clone()
-	}
-	return res
-}
-
 func formatRule(r *Rule) string {
 	var buf strings.Builder
 

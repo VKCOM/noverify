@@ -43,18 +43,6 @@ type ScopedSet struct {
 	RulesByKind [_KindCount][]Rule
 }
 
-// Clone returns a deep copy of a scoped set.
-func (set *ScopedSet) Clone() *ScopedSet {
-	if set == nil {
-		return nil
-	}
-	var clone ScopedSet
-	for i, list := range &set.RulesByKind {
-		clone.RulesByKind[i] = cloneRuleList(list)
-	}
-	return &clone
-}
-
 // Rule is a dynamically-loaded linter rule.
 //
 // A rule is called unnamed if no @name attribute is given.
@@ -77,6 +65,10 @@ type Rule struct {
 	// Location is a phpgrep variable name that should be used as a warning location.
 	// Empty string selects the root node.
 	Location string
+
+	// Path is a filter-like rule switcher.
+	// A rule is only applied to a file that contains a Path as a substring in its name.
+	Path string
 
 	// Filters is a list of OR-connected filter sets.
 	// Every filter set is a mapping of phpgrep variable to a filter.
