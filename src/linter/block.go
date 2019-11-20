@@ -358,9 +358,6 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *stmt.Continue:
 		b.handleContinue(s)
 		b.r.checkKeywordCase(s, "continue")
-	case *binary.LogicalOr:
-		res = b.handleLogicalOr(s)
-
 	case *expr.Clone:
 		b.r.checkKeywordCase(s, "clone")
 	case *stmt.ConstList:
@@ -1909,6 +1906,7 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 		b.handleDimFetchLValue(v, "assign_array", typ)
 		return false
 	case *node.Var, *node.SimpleVar:
+		b.checkVoidType(a.Expression)
 		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.st, a.Expression), "assign", true)
 	case *expr.List:
 		b.handleAssignList(v.Items)
