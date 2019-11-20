@@ -33,10 +33,11 @@ func (e *parseError) Error() string {
 
 // parser parses rules file into a RuleSet.
 type parser struct {
-	filename string
-	sources  []byte
-	res      *Set
-	compiler phpgrep.Compiler
+	filename   string
+	sources    []byte
+	res        *Set
+	compiler   phpgrep.Compiler
+	typeParser phpdoc.TypeParser
 }
 
 // Parse reads PHP code that represents a rule file from r and creates a RuleSet based on it.
@@ -106,11 +107,11 @@ func (p *parser) parseRule(st node.Node) error {
 
 		case "location":
 			if len(part.Params) != 1 {
-				return p.errorf(st, "@type expects exactly 1 params, got %d", len(part.Params))
+				return p.errorf(st, "@location expects exactly 1 params, got %d", len(part.Params))
 			}
 			name := part.Params[0]
 			if !strings.HasPrefix(name, "$") {
-				return p.errorf(st, "@type 2nd param must be a phpgrep variable")
+				return p.errorf(st, "@location 2nd param must be a phpgrep variable")
 			}
 			rule.Location = strings.TrimPrefix(name, "$")
 
@@ -164,10 +165,14 @@ func (p *parser) parseRule(st node.Node) error {
 				filterSet = map[string]Filter{}
 			}
 			filter := filterSet[name]
-			if filter.Types != nil {
+			if filter.Type != nil {
 				return p.errorf(st, "$%s: duplicate type constraint", name)
 			}
-			filter.Types = strings.Split(typ, "|")
+			typeExpr, err := p.typeParser.ParseType(typ)
+			if err != nil {
+				return p.errorf(st, "$%s: parseType(%s): %v", name, typ, err)
+			}
+			filter.Type = typeExpr
 			filterSet[name] = filter
 
 		default:

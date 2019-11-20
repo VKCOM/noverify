@@ -158,7 +158,13 @@ func (m TypesMap) Append(n TypesMap) TypesMap {
 
 // String returns string representation of a map
 func (m TypesMap) String() string {
-	var types []string
+	if len(m.m) == 1 {
+		for k := range m.m {
+			return k
+		}
+	}
+
+	types := make([]string, 0, len(m.m))
 	for k := range m.m {
 		types = append(types, formatType(k))
 	}

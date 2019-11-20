@@ -3,6 +3,7 @@ package rules
 import (
 	"io"
 
+	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/phpgrep"
 )
 
@@ -91,5 +92,5 @@ func (r *Rule) String() string {
 
 // Filter describes constraints that should be applied to a given phpgrep variable.
 type Filter struct {
-	Types []string
+	Type phpdoc.TypeExpr
 }
