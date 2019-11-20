@@ -191,9 +191,13 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		b.checkBinaryVoidType(s.Left, s.Right)
 	case *binary.LogicalAnd:
 		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.BooleanAnd:
+		b.checkBinaryVoidType(s.Left, s.Right)
 	case *binary.LogicalOr:
 		b.checkBinaryVoidType(s.Left, s.Right)
 		res = b.handleLogicalOr(s)
+	case *binary.BooleanOr:
+		b.checkBinaryVoidType(s.Left, s.Right)
 	case *binary.LogicalXor:
 		b.checkBinaryVoidType(s.Left, s.Right)
 	case *binary.Plus:

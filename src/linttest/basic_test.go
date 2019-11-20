@@ -222,6 +222,10 @@ func TestVoidResultUsedInAssignment(t *testing.T) {
 func TestVoidResultUsedInBinary(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+	function define($_, $_) {}
+	define('false', 1 == 0);
+	define('true', 1 == 1);
+
 	/**
 	* @return void
 	*/
@@ -230,9 +234,9 @@ func TestVoidResultUsedInBinary(t *testing.T) {
 	f() & 1;
 	f() | 1;
 	f() ^ 1;
-	//f() && true; // skipped due to "undefined: Use true instead of true" report
-	//f() || true;
-	//f() xor true;
+	f() && true;
+	f() || true;
+	f() xor true;
 	f() + 1;
 	f() - 1;
 	f() * 1;
@@ -249,6 +253,9 @@ func TestVoidResultUsedInBinary(t *testing.T) {
 	f() >= 1;
 `)
 	test.Expect = []string{
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
 		`void function result used`,
 		`void function result used`,
 		`void function result used`,
