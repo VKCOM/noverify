@@ -355,12 +355,7 @@ func initStubs() error {
 	return nil
 }
 
-func loadEmbeddedStubs() error {
-	filenames := stubs.AssetNames()
-	if len(filenames) == 0 {
-		return fmt.Errorf("empty file list")
-	}
-
+func LoadEmbeddedStubs(filenames []string) error {
 	var errorsCount int64
 
 	readStubs := func(ch chan linter.FileInfo) {
@@ -387,4 +382,12 @@ func loadEmbeddedStubs() error {
 	}
 
 	return nil
+}
+
+func loadEmbeddedStubs() error {
+	filenames := stubs.AssetNames()
+	if len(filenames) == 0 {
+		return fmt.Errorf("empty file list")
+	}
+	return LoadEmbeddedStubs(filenames)
 }
