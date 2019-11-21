@@ -36,6 +36,14 @@ eval(${"var"});
 func TestAnyRules(t *testing.T) {
 	rfile := `<?php
 /**
+ * @warning implode() first arg must be a string and second should be an array
+ * @type !string $glue
+ * @or
+ * @type !array $pieces
+ */
+implode($glue, $pieces);
+
+/**
  * @warning increment of a non-numeric type
  * @type !(int|float) $x
  */
@@ -89,6 +97,7 @@ function explode($delimeter, $s, $limit = 0) { return []; }
 function in_array($needle, $haystack, $strict = false) { return true; }
 function define($name, $value) {}
 function array_key_exists($needle, $haystack) { return false; }
+function implode($glue, $pieces) { return ''; }
 
 define('true', 1 == 1);
 define('false', 1 == 0);
@@ -159,6 +168,15 @@ $i--; // Good
 $f--; // Good
 $s--; // Bad
 $a--; // Bad
+
+implode("", []); // GOOD
+implode($s, $a); // GOOD
+implode($s, []); // GOOD
+implode("", $a); // GOOD
+implode($a, $s); // BAD:x array, string
+implode($a, $a); // BAD: array, array
+implode($s, $s); // BAD: string, string
+implode($s, $i); // BAD: string, int
 `)
 
 	test.Expect = []string{
@@ -179,6 +197,10 @@ $a--; // Bad
 		`suspicious arguments passed to array_key_exists`,
 		`increment of a non-numeric type`,
 		`increment of a non-numeric type`,
+		`implode() first arg must be a string and second should be an array`,
+		`implode() first arg must be a string and second should be an array`,
+		`implode() first arg must be a string and second should be an array`,
+		`implode() first arg must be a string and second should be an array`,
 	}
 	runRulesTest(t, test, rfile)
 }
