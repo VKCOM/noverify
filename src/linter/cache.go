@@ -23,7 +23,8 @@ import (
 //     28 - array type parsed as mixed[]
 //     29 - updated type inference for ClassConstFetch
 //     30 - resolve ClassConstFetch to a wrapped type string
-const cacheVersion = 30
+//     31 - fixed plus operator type inference for arrays
+const cacheVersion = 31
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")

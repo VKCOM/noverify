@@ -15,17 +15,29 @@ import (
 )
 
 func unaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, x node.Node, custom []CustomType) meta.TypesMap {
-	if ExprTypeLocalCustom(sc, cs, x, custom).Is("int") {
+	if ExprTypeLocalCustom(sc, cs, x, custom).IsInt() {
 		return meta.NewTypesMap("int")
 	}
 	return meta.NewTypesMap("float")
 }
 
+// binaryMathOpType is used for binary arithmetic operations
 func binaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right node.Node, custom []CustomType) meta.TypesMap {
-	if ExprTypeLocalCustom(sc, cs, left, custom).Is("int") && ExprTypeLocalCustom(sc, cs, right, custom).Is("int") {
+	if ExprTypeLocalCustom(sc, cs, left, custom).IsInt() && ExprTypeLocalCustom(sc, cs, right, custom).IsInt() {
 		return meta.NewTypesMap("int")
 	}
 	return meta.NewTypesMap("float")
+}
+
+// binaryPlusOpType is a special case as "plus" is also used for array union operation
+func binaryPlusOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right node.Node, custom []CustomType) meta.TypesMap {
+	// TODO: PHP will raise fatal error if one operand is array and other is not, so we may check it too
+	leftType := ExprTypeLocalCustom(sc, cs, left, custom)
+	rightType := ExprTypeLocalCustom(sc, cs, right, custom)
+	if leftType.IsArray() && rightType.IsArray() {
+		return meta.MergeTypeMaps(leftType, rightType)
+	}
+	return binaryMathOpType(sc, cs, left, right, custom)
 }
 
 // ExprType returns type of expression. Depending on whether or not is it "full mode",
@@ -295,7 +307,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 	case *binary.Div:
 		return binaryMathOpType(sc, cs, n.Left, n.Right, custom)
 	case *binary.Plus:
-		return binaryMathOpType(sc, cs, n.Left, n.Right, custom)
+		return binaryPlusOpType(sc, cs, n.Left, n.Right, custom)
 	case *binary.Minus:
 		return binaryMathOpType(sc, cs, n.Left, n.Right, custom)
 	case *binary.Mod:
