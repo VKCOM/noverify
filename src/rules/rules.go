@@ -3,6 +3,7 @@ package rules
 import (
 	"io"
 
+	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/phpgrep"
 )
 
@@ -42,18 +43,6 @@ type ScopedSet struct {
 	RulesByKind [_KindCount][]Rule
 }
 
-// Clone returns a deep copy of a scoped set.
-func (set *ScopedSet) Clone() *ScopedSet {
-	if set == nil {
-		return nil
-	}
-	var clone ScopedSet
-	for i, list := range &set.RulesByKind {
-		clone.RulesByKind[i] = cloneRuleList(list)
-	}
-	return &clone
-}
-
 // Rule is a dynamically-loaded linter rule.
 //
 // A rule is called unnamed if no @name attribute is given.
@@ -77,6 +66,10 @@ type Rule struct {
 	// Empty string selects the root node.
 	Location string
 
+	// Path is a filter-like rule switcher.
+	// A rule is only applied to a file that contains a Path as a substring in its name.
+	Path string
+
 	// Filters is a list of OR-connected filter sets.
 	// Every filter set is a mapping of phpgrep variable to a filter.
 	Filters []map[string]Filter
@@ -91,5 +84,5 @@ func (r *Rule) String() string {
 
 // Filter describes constraints that should be applied to a given phpgrep variable.
 type Filter struct {
-	Types []string
+	Type phpdoc.TypeExpr
 }
