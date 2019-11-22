@@ -1306,8 +1306,67 @@ func TestCorrectArrayTypes(t *testing.T) {
 		t.Errorf("Unexpected number of types: %d, excepted 1", l)
 	}
 
-	if !fn.Typ.Is("int") {
-		t.Errorf("Wrong type: %s, excepted int", fn.Typ)
+	if !fn.Typ.IsInt() {
+		t.Errorf("Wrong type: %s, expected int", fn.Typ)
+	}
+}
+
+func TestArrayUnion(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	function testInt() {
+		return 1 + 1;
+	}
+	function testIntArr() {
+		return [1] + [2];
+	}
+	function testMixedArr() {
+		return [1] + ['foo'];
+	}
+	`)
+	test.RunLinter()
+
+	fnInt, ok := meta.Info.GetFunction(`\testInt`)
+	if !ok {
+		t.Errorf("Could not find function testInt")
+		t.Fail()
+	}
+
+	if l := fnInt.Typ.Len(); l != 1 {
+		t.Errorf("Unexpected number of types: %d, excepted 1", l)
+	}
+
+	if !fnInt.Typ.IsInt() {
+		t.Errorf("Wrong type: %s, expected int", fnInt.Typ)
+	}
+
+	fnIntArr, ok := meta.Info.GetFunction(`\testIntArr`)
+	if !ok {
+		t.Errorf("Could not find function testIntArr")
+		t.Fail()
+	}
+
+	if l := fnIntArr.Typ.Len(); l != 1 {
+		t.Errorf("Unexpected number of types: %d, excepted 1", l)
+	}
+
+	if !fnIntArr.Typ.IsArrayOf("int") {
+		t.Errorf("Wrong type: %s, expected int[]", fnIntArr.Typ)
+	}
+
+	fnMixedArr, ok := meta.Info.GetFunction(`\testMixedArr`)
+	if !ok {
+		t.Errorf("Could not find function testMixedArr")
+		t.Fail()
+	}
+
+	if l := fnMixedArr.Typ.Len(); l != 2 {
+		t.Errorf("Unexpected number of types: %d, excepted 2", l)
+	}
+
+	if !fnMixedArr.Typ.Equals(meta.NewTypesMap("int[]|string[]")) {
+		// NOTE: this is how code works right now. It currently treat a[]|b[] as (a|b)[]
+		t.Errorf("Wrong type: %s, expected int[]|string[]", fnMixedArr.Typ)
 	}
 }
 
