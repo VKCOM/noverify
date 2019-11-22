@@ -2,6 +2,7 @@ package linter
 
 import (
 	"regexp"
+	"runtime"
 
 	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/rules"
@@ -27,7 +28,7 @@ var (
 	// settings
 	StubsDir        string
 	Debug           bool
-	MaxConcurrency  int
+	MaxConcurrency  = runtime.NumCPU()
 	MaxFileSize     int
 	DefaultEncoding string
 	PHPExtensions   []string

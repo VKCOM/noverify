@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/node"
@@ -50,6 +51,8 @@ type Suite struct {
 
 	Files  []TestFile
 	Expect []string
+
+	LoadStubs []string
 }
 
 // NewSuite returns a new linter test suite for t.
@@ -142,6 +145,11 @@ func (s *Suite) Match(reports []*linter.Report) {
 func (s *Suite) RunLinter() []*linter.Report {
 	meta.ResetInfo()
 
+	if len(s.LoadStubs) != 0 {
+		if err := cmd.LoadEmbeddedStubs(s.LoadStubs); err != nil {
+			s.t.Fatalf("load stubs: %v", err)
+		}
+	}
 	for _, f := range s.Files {
 		parseTestFile(s.t, f)
 	}
@@ -176,11 +184,12 @@ func ParseTestFile(t *testing.T, filename, content string) (rootNode node.Node, 
 	})
 }
 
-var once sync.Once
+func init() {
+	var once sync.Once
+	once.Do(func() { go linter.MemoryLimiterThread() })
+}
 
 func parseTestFile(t *testing.T, f TestFile) (rootNode node.Node, w *linter.RootWalker) {
-	once.Do(func() { go linter.MemoryLimiterThread() })
-
 	var err error
 	rootNode, w, err = linter.ParseContents(f.Name, f.Data, nil)
 	if err != nil {
