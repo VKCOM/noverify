@@ -1,0 +1,12 @@
+UNUSED  unused: Unused variable li (use $_ to ignore this inspection) at testdata/parsedown/parsedown.php:733
+            foreach ($Block['element']['elements'] as &$li)
+                                                       ^^^
+INFO    undefined: Variable might have not been defined: text at testdata/parsedown/parsedown.php:1755
+                    $markup .= self::escape($text, true);
+                                            ^^^^^
+INFO    undefined: Variable might have not been defined: text at testdata/parsedown/parsedown.php:1759
+                    $markup .= $text;
+                               ^^^^^
+UNUSED  unused: Unused variable val (use $_ to ignore this inspection) at testdata/parsedown/parsedown.php:1882
+            foreach ($Element['attributes'] as $att => $val)
+                                                       ^^^^
