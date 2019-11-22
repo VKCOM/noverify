@@ -22,6 +22,10 @@ func formatRule(r *Rule) string {
 		buf.WriteString(" * @maybe " + r.Message + "\n")
 	}
 
+	if r.Path != "" {
+		buf.WriteString(" * @path " + r.Path + "\n")
+	}
+
 	if r.Location != "" {
 		buf.WriteString(" * @location $" + r.Location + "\n")
 	}
