@@ -14,6 +14,7 @@ func TestGolden(t *testing.T) {
 	coreFiles := []string{
 		`stubs/phpstorm-stubs/Core/Core.php`,
 		`stubs/phpstorm-stubs/Core/Core_d.php`,
+		`stubs/phpstorm-stubs/Core/Core_c.php`,
 		`stubs/phpstorm-stubs/gd/gd.php`,
 		`stubs/phpstorm-stubs/pcre/pcre.php`,
 		`stubs/phpstorm-stubs/standard/standard_defines.php`,
@@ -41,24 +42,33 @@ func TestGolden(t *testing.T) {
 				`stubs/phpstorm-stubs/gd/gd.php`,
 			},
 		},
+
 		{
 			name: "ctype",
 			deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 			},
 		},
+
 		{
 			name: "idn",
 			deps: []string{
 				`stubs/phpstorm-stubs/mbstring/mbstring.php`,
 			},
 		},
+
 		{
 			name:    "parsedown",
 			disable: []string{`phpdoc`, `arraySyntax`},
 			deps: []string{
 				`stubs/phpstorm-stubs/mbstring/mbstring.php`,
 			},
+		},
+
+		{
+			name:    "underscore",
+			disable: []string{`phpdoc`},
+			deps:    []string{},
 		},
 	}
 
@@ -103,8 +113,8 @@ func TestGolden(t *testing.T) {
 
 			haveLines := parts
 			wantLines := strings.Split(string(want), "\n")
-			if diff := cmp.Diff(haveLines, wantLines); diff != "" {
-				t.Errorf("results mismatch (+ new lines) (- deleted lines): %s", diff)
+			if diff := cmp.Diff(wantLines, haveLines); diff != "" {
+				t.Errorf("results mismatch (+ have) (- want): %s", diff)
 				t.Logf("have:\n%s", strings.Join(haveLines, "\n"))
 				t.Logf("want:\n%s", want)
 			}
