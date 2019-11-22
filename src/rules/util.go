@@ -1,20 +1,10 @@
 package rules
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/linter/lintapi"
 )
-
-func cloneRuleList(rules []Rule) []Rule {
-	res := make([]Rule, len(rules))
-	for i, rule := range rules {
-		res[i] = rule
-		res[i].Matcher = rule.Matcher.Clone()
-	}
-	return res
-}
 
 func formatRule(r *Rule) string {
 	var buf strings.Builder
@@ -42,8 +32,10 @@ func formatRule(r *Rule) string {
 
 	for i, filters := range r.Filters {
 		for name, filter := range filters {
-			if len(filter.Types) != 0 {
-				fmt.Fprintf(&buf, " * @type %s $%s\n", strings.Join(filter.Types, "|"), name)
+			if filter.Type != nil {
+				buf.WriteString(" * @type ")
+				buf.WriteString(filter.Type.String())
+				buf.WriteString(" $" + name + "\n")
 			}
 		}
 		if i != len(r.Filters)-1 {

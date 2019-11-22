@@ -1352,6 +1352,13 @@ func TestAssignByRef(t *testing.T) {
 	echo a();`)
 }
 
+func addNamedFile(test *linttest.Suite, name, code string) {
+	test.Files = append(test.Files, linttest.TestFile{
+		Name: name,
+		Data: []byte(code),
+	})
+}
+
 func runFilterMatch(test *linttest.Suite, name string) {
 	test.Match(filterReports(name, test.RunLinter()))
 }
