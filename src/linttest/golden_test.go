@@ -70,6 +70,17 @@ func TestGolden(t *testing.T) {
 			disable: []string{`phpdoc`},
 			deps:    []string{},
 		},
+
+		{
+			name:    "phprocksyd",
+			disable: []string{`phpdoc`},
+			deps: []string{
+				`stubs/phpstorm-stubs/standard/basic.php`,
+				`stubs/phpstorm-stubs/pcntl/pcntl.php`,
+				`stubs/phpstorm-stubs/json/json.php`,
+				`stubs/phpstorm-stubs/posix/posix.php`,
+			},
+		},
 	}
 
 	for _, target := range targets {
