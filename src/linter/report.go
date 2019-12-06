@@ -19,6 +19,12 @@ const (
 func init() {
 	allChecks := []CheckInfo{
 		{
+			Name:    "discardExpr",
+			Default: true,
+			Comment: `Report expressions that are evaluated but not used.`,
+		},
+
+		{
 			Name:    "keywordCase",
 			Default: true,
 			Comment: `Report keywords that are not in the lower case.`,

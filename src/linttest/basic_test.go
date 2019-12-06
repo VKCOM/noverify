@@ -10,6 +10,49 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestDiscardExpr(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class C {}
+
+function count($xs) {}
+
+$xs = [];
+
+count($xs); // Unused count()
+
+function f() {
+  1; // Unused literal
+}
+
+[1, 2]; // Unused array literal
+new C(); // Unused new expression
+
+1 + 4; // Unused binary expr
+count($xs) * 2; // Unused binary expr
+
+$xs /*::array<int>*/;
+
+class Foo {
+  private static $x;
+
+  private function f() {
+    self::$x /*::int*/;
+    return self::$x;
+  }
+}
+`)
+	test.Expect = []string{
+		`expression evaluated but not used`,
+		`expression evaluated but not used`,
+		`expression evaluated but not used`,
+		`expression evaluated but not used`,
+		`expression evaluated but not used`,
+		`expression evaluated but not used`,
+	}
+	test.RunAndMatch()
+}
+
 func TestForeachEmpty(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
