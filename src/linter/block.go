@@ -169,6 +169,9 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	}
 
 	switch s := w.(type) {
+	case *stmt.Expression:
+		b.handleStmtExpression(s)
+
 	case *binary.BitwiseAnd:
 		b.handleBitwiseAnd(s)
 	case *binary.BitwiseOr:
@@ -1849,6 +1852,36 @@ func (b *BlockWalker) ReportBitwiseOp(s node.Node, op string, rightOp string) {
 		"Used %s bitwise op over bool operands, perhaps %s is intended?", op, rightOp)
 }
 
+func (b *BlockWalker) handleStmtExpression(s *stmt.Expression) {
+	if !meta.IsIndexingComplete() {
+		return
+	}
+
+	report := false
+
+	switch s.Expr.(type) {
+	case *expr.Array, *expr.New:
+		// Report these even if they are not pure.
+		report = true
+	default:
+		report = b.sideEffectFree(s.Expr)
+	}
+
+	if report {
+		ff := s.GetFreeFloating()
+		if ff != nil {
+			for _, tok := range (*ff)[freefloating.Expr] {
+				if tok.StringType == freefloating.CommentType {
+					return
+				}
+			}
+		}
+
+		b.r.Report(s.Expr, LevelWarning, "discardExpr", "expression evaluated but not used")
+	}
+
+}
+
 func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 	a.Expression.Walk(b)
 
@@ -2026,3 +2059,74 @@ func (b *BlockWalker) caseHasFallthroughComment(n node.Node) bool {
 func (b *BlockWalker) isBool(n node.Node) bool {
 	return solver.ExprType(b.r.scope(), b.r.st, n).Is("bool")
 }
+
+func (d *BlockWalker) sideEffectFree(n node.Node) bool {
+	f := sideEffectsFinder{}
+	n.Walk(&f)
+	return !f.sideEffects
+}
+
+type sideEffectsFinder struct {
+	sideEffects bool
+}
+
+func (f *sideEffectsFinder) EnterNode(w walker.Walkable) bool {
+	if f.sideEffects {
+		return false
+	}
+
+	// We can get false positives for overloaded operations.
+	// For example, array index can be an offsetGet() call,
+	// which might not be pure.
+
+	switch n := w.(type) {
+	case *expr.FunctionCall:
+		// TODO(quasilyte): mark user-defined funcs as pure
+		// and use that info here to handle them.
+		if fn, ok := n.Function.(*name.Name); ok {
+			switch meta.NameToString(fn) {
+			case "count", "strlen":
+				// Consider to be pure.
+				return true
+			}
+		}
+		f.sideEffects = true
+
+	case *expr.MethodCall,
+		*expr.StaticCall,
+		*expr.Print,
+		*stmt.Echo,
+		*expr.Exit,
+		*assign.Assign,
+		*assign.Reference,
+		*assign.BitwiseAnd,
+		*assign.BitwiseOr,
+		*assign.BitwiseXor,
+		*assign.Concat,
+		*assign.Div,
+		*assign.Minus,
+		*assign.Mod,
+		*assign.Mul,
+		*assign.Plus,
+		*assign.Pow,
+		*assign.ShiftLeft,
+		*assign.ShiftRight,
+		*expr.Yield,
+		*expr.YieldFrom,
+		*expr.Eval,
+		*expr.PreInc,
+		*expr.PostInc,
+		*expr.PreDec,
+		*expr.PostDec,
+		*expr.Require,
+		*expr.RequireOnce,
+		*expr.Include,
+		*expr.IncludeOnce:
+		f.sideEffects = true
+		return false
+	}
+
+	return true
+}
+
+func (f *sideEffectsFinder) LeaveNode(w walker.Walkable) {}
