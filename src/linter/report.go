@@ -25,6 +25,12 @@ func init() {
 		},
 
 		{
+			Name:    "voidResultUsed",
+			Default: true,
+			Comment: `Report usages of the void-type expressions`,
+		},
+
+		{
 			Name:    "keywordCase",
 			Default: true,
 			Comment: `Report keywords that are not in the lower case.`,
