@@ -15,7 +15,7 @@ func TestDiscardExpr(t *testing.T) {
 	test.AddFile(`<?php
 class C {}
 
-function count($xs) {}
+function count($xs) { return 0; }
 
 $xs = [];
 
