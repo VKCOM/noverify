@@ -146,6 +146,18 @@ func (b *BlockWalker) checkRedundantCast(e node.Node, dstType string) {
 	})
 }
 
+// checkVoidType reports if node has void type
+func (b *BlockWalker) checkVoidType(n node.Node) {
+	if b.isVoid(n) {
+		b.r.Report(n, LevelDoNotReject, "voidResultUsed", "void function result used")
+	}
+}
+
+func (b *BlockWalker) checkBinaryVoidType(left, right node.Node) {
+	b.checkVoidType(left)
+	b.checkVoidType(right)
+}
+
 // EnterNode is called before walking to inner nodes.
 func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	res = true
@@ -173,10 +185,53 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		b.handleStmtExpression(s)
 
 	case *binary.BitwiseAnd:
+		b.checkBinaryVoidType(s.Left, s.Right)
 		b.handleBitwiseAnd(s)
 	case *binary.BitwiseOr:
+		b.checkBinaryVoidType(s.Left, s.Right)
 		b.handleBitwiseOr(s)
-
+	case *binary.BitwiseXor:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.LogicalAnd:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.BooleanAnd:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.LogicalOr:
+		b.checkBinaryVoidType(s.Left, s.Right)
+		res = b.handleLogicalOr(s)
+	case *binary.BooleanOr:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.LogicalXor:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.Plus:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.Minus:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.Mul:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.Div:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.Mod:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.Pow:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.Equal:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.NotEqual:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.Identical:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.NotIdentical:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.Smaller:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.SmallerOrEqual:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.Greater:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	case *binary.GreaterOrEqual:
+		b.checkBinaryVoidType(s.Left, s.Right)
+	// end of binary functions
 	case *cast.Double:
 		b.checkRedundantCast(s.Expr, "float")
 	case *cast.Int:
@@ -310,9 +365,6 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *stmt.Continue:
 		b.handleContinue(s)
 		b.r.checkKeywordCase(s, "continue")
-	case *binary.LogicalOr:
-		res = b.handleLogicalOr(s)
-
 	case *expr.Clone:
 		b.r.checkKeywordCase(s, "clone")
 	case *stmt.ConstList:
@@ -1891,6 +1943,7 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 		b.handleDimFetchLValue(v, "assign_array", typ)
 		return false
 	case *node.Var, *node.SimpleVar:
+		b.checkVoidType(a.Expression)
 		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.st, a.Expression), "assign", true)
 	case *expr.List:
 		b.handleAssignList(v.Items)
@@ -2058,6 +2111,10 @@ func (b *BlockWalker) caseHasFallthroughComment(n node.Node) bool {
 
 func (b *BlockWalker) isBool(n node.Node) bool {
 	return solver.ExprType(b.r.scope(), b.r.st, n).Is("bool")
+}
+
+func (b *BlockWalker) isVoid(n node.Node) bool {
+	return solver.ExprType(b.r.scope(), b.r.st, n).IsVoid()
 }
 
 func (d *BlockWalker) sideEffectFree(n node.Node) bool {

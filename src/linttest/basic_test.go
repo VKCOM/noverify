@@ -15,7 +15,7 @@ func TestDiscardExpr(t *testing.T) {
 	test.AddFile(`<?php
 class C {}
 
-function count($xs) {}
+function count($xs) { return 0; }
 
 $xs = [];
 
@@ -247,6 +247,79 @@ func TestCallStaticParent(t *testing.T) {
 	runFilterMatch(test, "callStatic")
 }
 
+func TestVoidResultUsedInAssignment(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	/**
+	* @return void
+	*/
+	function f() {}
+	$_ = f();
+`)
+	test.Expect = []string{
+		`void function result used`,
+	}
+	test.RunAndMatch()
+}
+
+func TestVoidResultUsedInBinary(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	function define($_, $_) {}
+	define('false', 1 == 0);
+	define('true', 1 == 1);
+
+	/**
+	* @return void
+	*/
+	function f() {}
+
+	f() & 1;
+	f() | 1;
+	f() ^ 1;
+	f() && true;
+	f() || true;
+	f() xor true;
+	f() + 1;
+	f() - 1;
+	f() * 1;
+	f() / 1;
+	f() % 2;
+	f() ** 2;
+	f() == 1;
+	f() != 1;
+	f() === 1;
+	f() !== 1;
+	f() < 1;
+	f() <= 1;
+	f() > 1;
+	f() >= 1;
+`)
+	test.Expect = []string{
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+		`void function result used`,
+	}
+	test.RunAndMatch()
+}
+
 func TestVoidParam(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -304,7 +377,7 @@ $_ = mt_rand(1, 2);    // OK
 $_ = mt_rand(1, 2, 3); // Not OK
 }
 
-function mt_rand($x = 0, $y = 0) {}`)
+function mt_rand($x = 0, $y = 0) { return 1; }`)
 	test.Expect = []string{
 		`mt_rand expects 0 or 2 args`,
 		`mt_rand expects 0 or 2 args`,
