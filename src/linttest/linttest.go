@@ -132,11 +132,11 @@ func (s *Suite) Match(reports []*linter.Report) {
 
 	// Only print all reports if test failed.
 	if t.Failed() {
-		t.Logf(">>> issues reported:")
+		t.Log(">>> issues reported:")
 		for _, r := range reports {
-			t.Logf(r.String())
+			t.Log(r.String())
 		}
-		t.Logf("<<<")
+		t.Log("<<<")
 	}
 }
 
