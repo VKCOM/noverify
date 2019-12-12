@@ -691,6 +691,7 @@ func (d *RootWalker) checkOldStyleConstructor(meth *stmt.ClassMethod, nm string)
 
 func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	nm := meth.MethodName.Value
+	_, insideInterface := d.currentClassNode.(*stmt.Interface)
 
 	d.checkOldStyleConstructor(meth, nm)
 
@@ -714,7 +715,6 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	}
 
 	if meth.PhpDocComment == "" && modif.accessLevel == meta.Public {
-		_, insideInterface := d.currentClassNode.(*stmt.Interface)
 		// Permit having "__call" and other magic method without comments.
 		if !insideInterface && !strings.HasPrefix(nm, "_") {
 			d.Report(meth.MethodName, LevelDoNotReject, "phpdoc", "Missing PHPDoc for %q public method", nm)
@@ -775,13 +775,20 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	if returnType.IsEmpty() {
 		returnType = meta.VoidType
 	}
+	var funcFlags meta.FuncFlags
+	if modif.static {
+		funcFlags |= meta.FuncStatic
+	}
+	if !insideInterface && !modif.abstract && sideEffectFreeFunc(d.scope(), d.st, nil, stmts) {
+		funcFlags |= meta.FuncPure
+	}
 	class.Methods[nm] = meta.FuncInfo{
 		Params:       params,
 		Pos:          d.getElementPos(meth),
 		Typ:          returnType.Immutable(),
 		MinParamsCnt: minParamsCnt,
 		AccessLevel:  modif.accessLevel,
-		Static:       modif.static,
+		Flags:        funcFlags,
 		ExitFlags:    exitFlags,
 		Doc:          doc.info,
 	}
@@ -1176,11 +1183,16 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 		d.checkFuncParam(param.(*node.Parameter))
 	}
 
+	var funcFlags meta.FuncFlags
+	if sideEffectFreeFunc(d.scope(), d.st, nil, fun.Stmts) {
+		funcFlags |= meta.FuncPure
+	}
 	d.meta.Functions[nm] = meta.FuncInfo{
 		Params:       params,
 		Pos:          d.getElementPos(fun),
 		Typ:          returnType.Immutable(),
 		MinParamsCnt: minParamsCnt,
+		Flags:        funcFlags,
 		ExitFlags:    exitFlags,
 		Doc:          doc.info,
 	}

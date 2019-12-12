@@ -8,6 +8,7 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
+	"github.com/VKCOM/noverify/src/php/parser/node/name"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/printer"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
@@ -165,4 +166,63 @@ func typeExprIsCompatible(dst, val phpdoc.TypeExpr) bool {
 	default:
 		return false
 	}
+}
+
+type funcCallInfo struct {
+	canAnalyze bool
+	defined    bool
+	fqName     string
+	info       meta.FuncInfo
+}
+
+// TODO: bundle type solving params somehow.
+// We usually need ClassParseState+Scope+[]CustomType.
+func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, call *expr.FunctionCall) funcCallInfo {
+	var res funcCallInfo
+	res.canAnalyze = true
+	if !meta.IsIndexingComplete() {
+		return res
+	}
+
+	switch nm := call.Function.(type) {
+	case *name.Name:
+		nameStr := meta.NameToString(nm)
+		firstPart := nm.Parts[0].(*name.NamePart).Value
+		if alias, ok := st.FunctionUses[firstPart]; ok {
+			if len(nm.Parts) == 1 {
+				nameStr = alias
+			} else {
+				// handle situations like 'use NS\Foo; Foo\Bar::doSomething();'
+				nameStr = alias + `\` + meta.NamePartsToString(nm.Parts[1:])
+			}
+			res.fqName = nameStr
+			res.info, res.defined = meta.Info.GetFunction(res.fqName)
+		} else {
+			res.fqName = st.Namespace + `\` + nameStr
+			res.info, res.defined = meta.Info.GetFunction(res.fqName)
+			if !res.defined && st.Namespace != "" {
+				res.fqName = `\` + nameStr
+				res.info, res.defined = meta.Info.GetFunction(res.fqName)
+			}
+		}
+
+	case *name.FullyQualified:
+		res.fqName = meta.FullyQualifiedToString(nm)
+		res.info, res.defined = meta.Info.GetFunction(res.fqName)
+	default:
+		res.defined = false
+
+		solver.ExprTypeCustom(sc, st, nm, customTypes).Iterate(func(typ string) {
+			if res.defined {
+				return
+			}
+			res.info, _, res.defined = solver.FindMethod(typ, `__invoke`)
+		})
+
+		if !res.defined {
+			res.canAnalyze = false
+		}
+	}
+
+	return res
 }

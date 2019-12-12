@@ -10,49 +10,6 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
-func TestDiscardExpr(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-class C {}
-
-function count($xs) { return 0; }
-
-$xs = [];
-
-count($xs); // Unused count()
-
-function f() {
-  1; // Unused literal
-}
-
-[1, 2]; // Unused array literal
-new C(); // Unused new expression
-
-1 + 4; // Unused binary expr
-count($xs) * 2; // Unused binary expr
-
-$xs /*::array<int>*/;
-
-class Foo {
-  private static $x;
-
-  private function f() {
-    self::$x /*::int*/;
-    return self::$x;
-  }
-}
-`)
-	test.Expect = []string{
-		`expression evaluated but not used`,
-		`expression evaluated but not used`,
-		`expression evaluated but not used`,
-		`expression evaluated but not used`,
-		`expression evaluated but not used`,
-		`expression evaluated but not used`,
-	}
-	test.RunAndMatch()
-}
-
 func TestForeachEmpty(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -270,30 +227,31 @@ func TestVoidResultUsedInBinary(t *testing.T) {
 	define('true', 1 == 1);
 
 	/**
-	* @return void
-	*/
+	 * @return void
+	 */
 	function f() {}
 
-	f() & 1;
-	f() | 1;
-	f() ^ 1;
-	f() && true;
-	f() || true;
-	f() xor true;
-	f() + 1;
-	f() - 1;
-	f() * 1;
-	f() / 1;
-	f() % 2;
-	f() ** 2;
-	f() == 1;
-	f() != 1;
-	f() === 1;
-	f() !== 1;
-	f() < 1;
-	f() <= 1;
-	f() > 1;
-	f() >= 1;
+	$_ = f() % 2;
+	$_ = f() & 1;
+	$_ = f() | 1;
+	$_ = f() ^ 1;
+	$_ = f() && true;
+	$_ = f() || true;
+	$_ = (f() xor true);
+	$_ = f() + 1;
+	$_ = f() - 1;
+	$_ = f() * 1;
+	$_ = f() / 1;
+	$_ = f() % 2;
+	$_ = f() ** 2;
+	$_ = f() == 1;
+	$_ = f() != 1;
+	$_ = f() === 1;
+	$_ = f() !== 1;
+	$_ = f() < 1;
+	$_ = f() <= 1;
+	$_ = f() > 1;
+	$_ = f() >= 1;
 `)
 	test.Expect = []string{
 		`void function result used`,
@@ -315,7 +273,13 @@ func TestVoidResultUsedInBinary(t *testing.T) {
 		`void function result used`,
 		`void function result used`,
 		`void function result used`,
+
+		// $x = void() xor $y;
+		//      ^^^^^^ 1st void warning
+		// ^^^^^^^^^^^ 2nd void warning
+		// TODO: do we want to reduce these 2 warnings into a single warning?
 		`void function result used`,
+		`void function result used`, // 1 extra warning is tolerated for now...
 	}
 	test.RunAndMatch()
 }
@@ -1195,7 +1159,7 @@ func TestFunctionJustReturns(t *testing.T) {
 	}
 
 	function doSomething() {
-		justReturn();
+		$_ = justReturn();
 		echo "Just normal code";
 	}`)
 }

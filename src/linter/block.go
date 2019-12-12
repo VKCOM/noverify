@@ -814,66 +814,22 @@ func (b *BlockWalker) handleCallArgs(n node.Node, args []node.Node, fn meta.Func
 }
 
 func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
-	var fn meta.FuncInfo
-	var fqName string
+	call := resolveFunctionCall(b.ctx.sc, b.r.st, b.ctx.customTypes, e)
 
 	if meta.IsIndexingComplete() {
-		defined := true
-		canAnalyze := true
-
-		switch nm := e.Function.(type) {
-		case *name.Name:
-			nameStr := meta.NameToString(nm)
-			firstPart := nm.Parts[0].(*name.NamePart).Value
-			if alias, ok := b.r.st.FunctionUses[firstPart]; ok {
-				if len(nm.Parts) == 1 {
-					nameStr = alias
-				} else {
-					// handle situations like 'use NS\Foo; Foo\Bar::doSomething();'
-					nameStr = alias + `\` + meta.NamePartsToString(nm.Parts[1:])
-				}
-				fqName = nameStr
-				fn, defined = meta.Info.GetFunction(fqName)
-			} else {
-				fqName = b.r.st.Namespace + `\` + nameStr
-				fn, defined = meta.Info.GetFunction(fqName)
-				if !defined && b.r.st.Namespace != "" {
-					fqName = `\` + nameStr
-					fn, defined = meta.Info.GetFunction(fqName)
-				}
-			}
-
-		case *name.FullyQualified:
-			fqName = meta.FullyQualifiedToString(nm)
-			fn, defined = meta.Info.GetFunction(fqName)
-		default:
-			defined = false
-
-			solver.ExprTypeCustom(b.ctx.sc, b.r.st, nm, b.ctx.customTypes).Iterate(func(typ string) {
-				if defined {
-					return
-				}
-				fn, _, defined = solver.FindMethod(typ, `__invoke`)
-			})
-
-			if !defined {
-				canAnalyze = false
-			}
-		}
-
-		if !canAnalyze {
+		if !call.canAnalyze {
 			return true
 		}
 
-		if !defined {
+		if !call.defined {
 			b.r.Report(e.Function, LevelError, "undefined", "Call to undefined function %s", meta.NameNodeToString(e.Function))
 		}
 	}
 
-	if fn.Doc.Deprecated {
-		if fn.Doc.DeprecationNote != "" {
+	if call.info.Doc.Deprecated {
+		if call.info.Doc.DeprecationNote != "" {
 			b.r.Report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s (%s)",
-				meta.NameNodeToString(e.Function), fn.Doc.DeprecationNote)
+				meta.NameNodeToString(e.Function), call.info.Doc.DeprecationNote)
 		} else {
 			b.r.Report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s",
 				meta.NameNodeToString(e.Function))
@@ -882,12 +838,12 @@ func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
 
 	e.Function.Walk(b)
 
-	if fqName == `\compact` {
+	if call.fqName == `\compact` {
 		b.handleCompactCallArgs(e.ArgumentList.Arguments)
 	} else {
-		b.handleCallArgs(e.Function, e.ArgumentList.Arguments, fn)
+		b.handleCallArgs(e.Function, e.ArgumentList.Arguments, call.info)
 	}
-	b.ctx.exitFlags |= fn.ExitFlags
+	b.ctx.exitFlags |= call.info.ExitFlags
 
 	return false
 }
@@ -998,7 +954,7 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 	} else {
 		// Method is defined.
 
-		if fn.Static && !magic {
+		if fn.IsStatic() && !magic {
 			b.r.Report(e.Method, LevelWarning, "callStatic", "Calling static method as instance method")
 		}
 	}
@@ -1056,7 +1012,7 @@ func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
 		// parent::f() is permitted.
 		classNameNode, ok := e.Class.(*name.Name)
 		parentCall := ok && meta.NameToString(classNameNode) == "parent"
-		if !parentCall && !fn.Static && !magic {
+		if !parentCall && !fn.IsStatic() && !magic {
 			b.r.Report(e.Call, LevelWarning, "callStatic", "Calling instance method as static method")
 		}
 	}
@@ -1916,7 +1872,10 @@ func (b *BlockWalker) handleStmtExpression(s *stmt.Expression) {
 		// Report these even if they are not pure.
 		report = true
 	default:
-		report = b.sideEffectFree(s.Expr)
+		typ := solver.ExprTypeCustom(b.ctx.sc, b.r.st, s.Expr, b.ctx.customTypes)
+		if !typ.Is("void") {
+			report = sideEffectFree(b.ctx.sc, b.r.st, b.ctx.customTypes, s.Expr)
+		}
 	}
 
 	if report {
@@ -2114,76 +2073,5 @@ func (b *BlockWalker) isBool(n node.Node) bool {
 }
 
 func (b *BlockWalker) isVoid(n node.Node) bool {
-	return solver.ExprType(b.r.scope(), b.r.st, n).IsVoid()
+	return solver.ExprType(b.r.scope(), b.r.st, n).Is("void")
 }
-
-func (d *BlockWalker) sideEffectFree(n node.Node) bool {
-	f := sideEffectsFinder{}
-	n.Walk(&f)
-	return !f.sideEffects
-}
-
-type sideEffectsFinder struct {
-	sideEffects bool
-}
-
-func (f *sideEffectsFinder) EnterNode(w walker.Walkable) bool {
-	if f.sideEffects {
-		return false
-	}
-
-	// We can get false positives for overloaded operations.
-	// For example, array index can be an offsetGet() call,
-	// which might not be pure.
-
-	switch n := w.(type) {
-	case *expr.FunctionCall:
-		// TODO(quasilyte): mark user-defined funcs as pure
-		// and use that info here to handle them.
-		if fn, ok := n.Function.(*name.Name); ok {
-			switch meta.NameToString(fn) {
-			case "count", "strlen":
-				// Consider to be pure.
-				return true
-			}
-		}
-		f.sideEffects = true
-
-	case *expr.MethodCall,
-		*expr.StaticCall,
-		*expr.Print,
-		*stmt.Echo,
-		*expr.Exit,
-		*assign.Assign,
-		*assign.Reference,
-		*assign.BitwiseAnd,
-		*assign.BitwiseOr,
-		*assign.BitwiseXor,
-		*assign.Concat,
-		*assign.Div,
-		*assign.Minus,
-		*assign.Mod,
-		*assign.Mul,
-		*assign.Plus,
-		*assign.Pow,
-		*assign.ShiftLeft,
-		*assign.ShiftRight,
-		*expr.Yield,
-		*expr.YieldFrom,
-		*expr.Eval,
-		*expr.PreInc,
-		*expr.PostInc,
-		*expr.PreDec,
-		*expr.PostDec,
-		*expr.Require,
-		*expr.RequireOnce,
-		*expr.Include,
-		*expr.IncludeOnce:
-		f.sideEffects = true
-		return false
-	}
-
-	return true
-}
-
-func (f *sideEffectsFinder) LeaveNode(w walker.Walkable) {}

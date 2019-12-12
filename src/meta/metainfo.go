@@ -276,16 +276,26 @@ type PhpDocInfo struct {
 	DeprecationNote string
 }
 
+type FuncFlags uint8
+
+const (
+	FuncStatic FuncFlags = 1 << iota
+	FuncPure
+)
+
 type FuncInfo struct {
 	Pos          ElementPosition
 	Params       []FuncParam
 	MinParamsCnt int
 	Typ          TypesMap
 	AccessLevel  AccessLevel
-	Static       bool
+	Flags        FuncFlags
 	ExitFlags    int // if function has exit/die/throw, then ExitFlags will be <> 0
 	Doc          PhpDocInfo
 }
+
+func (info *FuncInfo) IsStatic() bool { return info.Flags&FuncStatic != 0 }
+func (info *FuncInfo) IsPure() bool   { return info.Flags&FuncPure != 0 }
 
 type OverrideType int
 
@@ -371,6 +381,11 @@ type ElementPosition struct {
 	EndLine   int32
 	Character int32
 	Length    int32 // body length
+}
+
+func IsInternalClass(className string) bool {
+	_, ok := internalClasses[className]
+	return ok
 }
 
 func GetInternalFunctionInfo(fn string) (info FuncInfo, ok bool) {

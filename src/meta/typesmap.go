@@ -98,11 +98,6 @@ func (m TypesMap) IsString() bool {
 	return m.Is("string")
 }
 
-// IsVoid checks if map only contains void type
-func (m TypesMap) IsVoid() bool {
-	return m.Is("void")
-}
-
 // IsArray checks if map contains only array of any type
 func (m TypesMap) IsArray() bool {
 	if len(m.m) != 1 {

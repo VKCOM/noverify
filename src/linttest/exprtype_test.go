@@ -458,6 +458,8 @@ func TestExprTypeSimple(t *testing.T) {
 		{`$int`, "int"},
 		{`$float`, "float"},
 		{`$string`, "string"},
+
+		{`define('foo', 0 == 0)`, `void`},
 	}
 
 	global := `<?php

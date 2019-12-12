@@ -169,14 +169,14 @@ $f--; // Good
 $s--; // Bad
 $a--; // Bad
 
-implode("", []); // GOOD
-implode($s, $a); // GOOD
-implode($s, []); // GOOD
-implode("", $a); // GOOD
-implode($a, $s); // BAD:x array, string
-implode($a, $a); // BAD: array, array
-implode($s, $s); // BAD: string, string
-implode($s, $i); // BAD: string, int
+$_ = implode("", []); // GOOD
+$_ = implode($s, $a); // GOOD
+$_ = implode($s, []); // GOOD
+$_ = implode("", $a); // GOOD
+$_ = implode($a, $s); // BAD:x array, string
+$_ = implode($a, $a); // BAD: array, array
+$_ = implode($s, $s); // BAD: string, string
+$_ = implode($s, $i); // BAD: string, int
 `)
 
 	test.Expect = []string{

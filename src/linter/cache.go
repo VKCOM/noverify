@@ -24,7 +24,8 @@ import (
 //     29 - updated type inference for ClassConstFetch
 //     30 - resolve ClassConstFetch to a wrapped type string
 //     31 - fixed plus operator type inference for arrays
-const cacheVersion = 31
+//     32 - replaced Static:bool with Flags:uint8 in meta.FuncInfo
+const cacheVersion = 32
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")
