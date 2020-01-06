@@ -173,6 +173,18 @@ func init() {
 			Default: true,
 			Comment: `Report old-style (PHP4) class constructors.`,
 		},
+
+		{
+			Name:    "misspellName",
+			Default: true,
+			Comment: `Report commonly misspelled words in symbol names.`,
+		},
+
+		{
+			Name:    "misspellComment",
+			Default: true,
+			Comment: `Report commonly misspelled words in comments.`,
+		},
 	}
 
 	for _, info := range allChecks {

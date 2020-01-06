@@ -22,6 +22,7 @@ import (
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/rules"
+	"github.com/client9/misspell"
 )
 
 // Line below implies that we have `https://github.com/VKCOM/phpstorm-stubs.git` cloned
@@ -84,6 +85,27 @@ func Main(cfg *MainConfig) {
 	os.Exit(status)
 }
 
+func loadMisspellDicts(dicts []string) error {
+	linter.TypoFixer = &misspell.Replacer{}
+
+	for _, d := range dicts {
+		d = strings.TrimSpace(d)
+		switch {
+		case d == "Eng":
+			linter.TypoFixer.AddRuleList(misspell.DictMain)
+		case d == "Eng/US":
+			linter.TypoFixer.AddRuleList(misspell.DictAmerican)
+		case d == "Eng/UK" || d == "Eng/GB":
+			linter.TypoFixer.AddRuleList(misspell.DictBritish)
+		default:
+			return fmt.Errorf("unsupported %s misspell-list entry", d)
+		}
+	}
+
+	linter.TypoFixer.Compile()
+	return nil
+}
+
 // mainNoExit implements main, but instead of doing log.Fatal or os.Exit it
 // returns error or non-zero integer status code to be passed to os.Exit by the caller.
 // Note that if error is not nil, integer code will be discarded, so it can be 0.
@@ -134,6 +156,13 @@ func mainNoExit() (int, error) {
 	linter.PHPExtensions = strings.Split(phpExtensionsArg, ",")
 	if err := compileRegexes(); err != nil {
 		return 0, err
+	}
+
+	if misspellList != "" {
+		err := loadMisspellDicts(strings.Split(misspellList, ","))
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	buildCheckMappings()
