@@ -30,14 +30,6 @@
   name = "github.com/cznic/golex"
 
 [[constraint]]
-  name = "github.com/pkg/profile"
-  version = "1.3.0"
-
-[[constraint]]
-  name = "github.com/yookoala/realpath"
-  version = "1.0.0"
-
-[[constraint]]
   name = "gotest.tools"
   version = "2.3.0"
 

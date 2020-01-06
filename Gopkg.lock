@@ -31,22 +31,6 @@
   version = "v0.8.1"
 
 [[projects]]
-  digest = "1:447ab23604df9681aabfc6e48dbded59cb933b6eb4224e64d9d037318534b1bd"
-  name = "github.com/pkg/profile"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "f6fe06335df110bcf1ed6d4e852b760bfc15beee"
-  version = "v1.3.0"
-
-[[projects]]
-  digest = "1:d9fe1f86ae3cc0842ef73addb881c82067ca760bf002f7adde9a8c8e6ea54627"
-  name = "github.com/yookoala/realpath"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "d19ef9c409d9817c1e685775e53d361b03eabbc8"
-  version = "v1.0.0"
-
-[[projects]]
   digest = "1:a5cc901b8e54c4b73a62f97dc7c8f6c46e347c148a7a38e09b2e942c2587ba03"
   name = "gotest.tools"
   packages = [
@@ -65,8 +49,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/cznic/golex/lex",
-    "github.com/pkg/profile",
-    "github.com/yookoala/realpath",
+    "github.com/google/go-cmp/cmp",
     "gotest.tools/assert",
   ]
   solver-name = "gps-cdcl"
