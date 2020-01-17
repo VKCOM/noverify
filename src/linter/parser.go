@@ -23,6 +23,7 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/rules"
+	"github.com/karrick/godirwalk"
 )
 
 type FileInfo struct {
@@ -231,17 +232,20 @@ func ReadFilenames(filenames []string, ignoreRegex *regexp.Regexp) ReadCallback 
 				continue
 			}
 
-			err = filepath.Walk(filename, func(path string, info os.FileInfo, err error) error {
-				if info.IsDir() || !isPHPExtension(path) {
-					return nil
-				}
+			err = godirwalk.Walk(filename, &godirwalk.Options{
+				Callback: func(path string, de *godirwalk.Dirent) error {
+					if de.IsDir() || !isPHPExtension(path) {
+						return nil
+					}
 
-				if ignoreRegex != nil && ignoreRegex.MatchString(path) {
-					return nil
-				}
+					if ignoreRegex != nil && ignoreRegex.MatchString(path) {
+						return nil
+					}
 
-				ch <- FileInfo{Filename: path}
-				return nil
+					ch <- FileInfo{Filename: path}
+					return nil
+				},
+				Unsorted: true,
 			})
 
 			if err != nil {
@@ -446,7 +450,7 @@ func ParseFilenames(readFileNamesFunc ReadCallback) []*Report {
 
 	lintdebug.Send("Parsing using %d cores", MaxConcurrency)
 
-	filenamesCh := make(chan FileInfo)
+	filenamesCh := make(chan FileInfo, 512)
 
 	go func() {
 		readFileNamesFunc(filenamesCh)

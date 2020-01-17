@@ -23,6 +23,14 @@
   version = "v0.2.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:72e1eed7c38f527d4dc17a06f132099e349be199b251fc0ee4d1c775784ceac9"
+  name = "github.com/karrick/godirwalk"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "db731a15f69aa6595484ae8a08dc6d783183eb25"
+
+[[projects]]
   digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
   name = "github.com/pkg/errors"
   packages = ["."]
@@ -50,6 +58,7 @@
   input-imports = [
     "github.com/cznic/golex/lex",
     "github.com/google/go-cmp/cmp",
+    "github.com/karrick/godirwalk",
     "gotest.tools/assert",
   ]
   solver-name = "gps-cdcl"
