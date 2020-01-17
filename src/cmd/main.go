@@ -15,7 +15,6 @@ import (
 	"runtime/pprof"
 	"strings"
 	"sync/atomic"
-	"time"
 
 	"github.com/VKCOM/noverify/src/cmd/stubs"
 	"github.com/VKCOM/noverify/src/langsrv"
@@ -135,11 +134,6 @@ func mainNoExit() (int, error) {
 	linter.PHPExtensions = strings.Split(phpExtensionsArg, ",")
 	if err := compileRegexes(); err != nil {
 		return 0, err
-	}
-
-	var err error
-	if linter.DebugParseDuration, err = time.ParseDuration(debugParseDuration); err != nil {
-		return 0, fmt.Errorf("parsing debug-parse-duration: %v", err)
 	}
 
 	buildCheckMappings()
