@@ -232,27 +232,87 @@ func ReadFilenames(filenames []string, ignoreRegex *regexp.Regexp) ReadCallback 
 				continue
 			}
 
-			err = godirwalk.Walk(filename, &godirwalk.Options{
-				Callback: func(path string, de *godirwalk.Dirent) error {
-					if de.IsDir() || !isPHPExtension(path) {
-						return nil
-					}
-
-					if ignoreRegex != nil && ignoreRegex.MatchString(path) {
-						return nil
-					}
-
-					ch <- FileInfo{Filename: path}
-					return nil
-				},
-				Unsorted: true,
-			})
-
-			if err != nil {
-				log.Fatalf("Could not walk filepath %s", filename)
-			}
+			limitCh := make(chan struct{}, MaxConcurrency)
+			readFilenamesConcurrently(filename, ch, ignoreRegex, limitCh)
 		}
 	}
+}
+
+// readFilenamesConcurrently scans specified dir concurrently and sends all php filenames that don't match ignoreRegex
+// to the ch channel.
+// limitCh is used as a semaphore to limit directory read concurrency.
+// Symlinks are ignored as in the usual Walk().
+// The function log.Fatal's in case of any errors.
+func readFilenamesConcurrently(dir string, ch chan FileInfo, ignoreRegex *regexp.Regexp, limitCh chan struct{}) {
+	var subdirs []string
+
+	limitCh <- struct{}{}
+	sc, err := godirwalk.NewScanner(dir)
+
+	if err != nil {
+		log.Fatalf("Could not open directory %q: %v", dir, err)
+	}
+
+	for sc.Scan() {
+		de, err := sc.Dirent()
+		if err != nil {
+			log.Fatalf("Error while reading directory %q: %v", dir, err)
+		}
+
+		isDir := de.IsDir()
+		isSymlink := de.IsSymlink()
+
+		// on some systems both IsSymlink() and IsDir() can be set in which case we don't need to call Stat()
+		if isSymlink && !isDir {
+			st, err := os.Stat(filepath.Join(dir, de.Name()))
+			if err != nil {
+				log.Printf("Error while reading directory %q: %v", dir, err)
+				continue
+			}
+			isDir = st.IsDir()
+		}
+
+		// we don't want to walk symlinks to directories to avoid cycles
+		if isDir {
+			if !isSymlink {
+				// avoid opening too many directories at once
+				subdirs = append(subdirs, filepath.Join(dir, de.Name()))
+			}
+			continue
+		}
+
+		name := de.Name()
+		if !isPHPExtension(name) {
+			continue
+		}
+
+		path := filepath.Join(dir, name)
+		if ignoreRegex != nil && ignoreRegex.MatchString(path) {
+			continue
+		}
+
+		ch <- FileInfo{Filename: path}
+	}
+
+	if err := sc.Err(); err != nil {
+		log.Fatalf("Error while iterating directory %q: %v", dir, err)
+	}
+
+	<-limitCh
+
+	if len(subdirs) == 0 {
+		return
+	}
+
+	var wg sync.WaitGroup
+	for _, sd := range subdirs {
+		wg.Add(1)
+		go func(sd string) {
+			readFilenamesConcurrently(sd, ch, ignoreRegex, limitCh)
+			wg.Done()
+		}(sd)
+	}
+	wg.Wait()
 }
 
 // ReadChangesFromWorkTree returns callback that reads files from workTree dir that are changed

@@ -113,7 +113,7 @@ func bindFlags() {
 	flag.StringVar(&allowChecks, "allow-checks", strings.Join(enabledByDefault, ","),
 		"Comma-separated list of check names to be enabled")
 
-	flag.StringVar(&phpExtensionsArg, "php-extensions", "php,inc,php5,phtml,inc", "List of PHP extensions to be recognized")
+	flag.StringVar(&phpExtensionsArg, "php-extensions", "php,inc,php5,phtml", "List of PHP extensions to be recognized")
 
 	flag.StringVar(&fullAnalysisFiles, "full-analysis-files", "", "Comma-separated list of files to do full analysis")
 	flag.StringVar(&indexOnlyFiles, "index-only-files", "", "Comma-separated list of files to do indexing")
