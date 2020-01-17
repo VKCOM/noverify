@@ -544,6 +544,15 @@ func ParseFilenames(readFileNamesFunc ReadCallback) []*Report {
 func doParseFile(f FileInfo, needReports bool) (reports []*Report) {
 	var err error
 
+	if DebugParseDuration > 0 {
+		start := time.Now()
+		defer func() {
+			if dur := time.Since(start); dur > DebugParseDuration {
+				log.Printf("Parsing of %s took %s", f.Filename, dur)
+			}
+		}()
+	}
+
 	if needReports {
 		var w *RootWalker
 		_, w, err = ParseContents(f.Filename, f.Contents, f.LineRanges)
