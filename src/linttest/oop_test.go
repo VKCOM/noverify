@@ -654,3 +654,34 @@ func TestInstanceOf(t *testing.T) {
 	}
 	runFilterMatch(test, "undefined")
 }
+
+
+func TestNullableTypes(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A {
+	/** @var ?B */
+	public $b;
+}
+
+class B {
+	public $c;
+}
+
+function test() {
+	return (new A)->b->c;
+}
+
+function test2(?A $instance) {
+	return $instance->b;
+}
+
+function test3(?A $instance) {
+	return $instance->c;
+}
+`)
+	test.Expect = []string{
+		`Property {\A|null}->c does not exist`,
+	}
+	test.RunAndMatch()
+}
