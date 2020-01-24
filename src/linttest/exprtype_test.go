@@ -63,6 +63,10 @@ func TestExprTypeFixes(t *testing.T) {
 		{`dash()`, `mixed`},
 		{`array1()`, `int[]`},
 		{`array2()`, `int[][]`},
+		{`array_int()`, `int[]`},
+		{`array_int_string()`, `string[]`}, // key type is currently ignored
+		{`array_int_stdclass()`, `\stdclass[]`}, // key type is currently ignored
+		{`array_return_string()`, `string`},
 	}
 
 	global := `<?php
@@ -92,6 +96,18 @@ function array1() {}
 
 /** @return [][]int */
 function array2() {}
+
+/** @return array<int> */
+function array_int() {}
+
+/** @return array<int, string> */
+function array_int_string() {}
+
+/** @return array<int, stdclass> */
+function array_int_stdclass() {}
+
+/** @param array<int,string> $a */
+function array_return_string($a) { return $a[0]; }
 `
 
 	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
