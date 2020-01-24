@@ -535,7 +535,7 @@ func (b *BlockWalker) parseComment(c freefloating.String) {
 			continue
 		}
 
-		m := meta.NewTypesMap(b.r.maybeAddNamespace(typ))
+		m := meta.NewTypesMap(b.r.normalizeType(typ))
 		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(varName, "$"), m, "@var")
 	}
 }

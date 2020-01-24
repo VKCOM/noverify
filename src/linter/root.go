@@ -888,7 +888,7 @@ func (d *RootWalker) parsePHPDocClass(doc string) classPhpDocParseResult {
 		}
 
 		result.properties[nm[len("$"):]] = meta.PropertyInfo{
-			Typ:         meta.NewTypesMap(d.maybeAddNamespace(typ)),
+			Typ:         meta.NewTypesMap(d.normalizeType(typ)),
 			AccessLevel: meta.Public,
 		}
 	}
@@ -899,14 +899,16 @@ func (d *RootWalker) parsePHPDocClass(doc string) classPhpDocParseResult {
 func (d *RootWalker) parsePHPDocVar(doc string) (m meta.TypesMap) {
 	for _, part := range phpdoc.Parse(doc) {
 		if part.Name == "var" && len(part.Params) >= 1 {
-			m = meta.NewTypesMap(d.maybeAddNamespace(part.Params[0]))
+			m = meta.NewTypesMap(d.normalizeType(part.Params[0]))
 		}
 	}
 
 	return m
 }
 
-func (d *RootWalker) maybeAddNamespace(typStr string) string {
+// normalizeType adds namespaces to a type defined by the PHPDoc type string as well as
+// converts notations like "array<int,string>" to <meta.WARRAY2, "int", "string">
+func (d *RootWalker) normalizeType(typStr string) string {
 	if typStr == "" {
 		return ""
 	}
@@ -952,6 +954,12 @@ func (d *RootWalker) maybeAddNamespace(typStr string) string {
 			continue
 		}
 
+		// special types, e.g. "array<k,v>"
+		if strings.ContainsAny(className, "<>") {
+			classNames[idx] = d.parseAngleBracketedType(className)
+			continue
+		}
+
 		fullClassName, ok := solver.GetClassName(d.st, meta.StringToName(className))
 		if !ok {
 			classNames[idx] = ""
@@ -966,6 +974,50 @@ func (d *RootWalker) maybeAddNamespace(typStr string) string {
 	}
 
 	return strings.Join(classNames, "|")
+}
+
+// parseAngleBracketedType converts types like "array<k1,array<k2,v2>>" (no spaces) to an internal representation.
+func (d *RootWalker) parseAngleBracketedType(t string) string {
+	if len(t) == 0 {
+		return "[error_empty_type]"
+	}
+
+	idx := strings.IndexByte(t, '<')
+	if idx == -1 {
+		return t
+	}
+	if idx == 0 {
+		return "[error_empty_container_name]"
+	}
+	if t[len(t)-1] != '>' {
+		return "[unbalanced_angled_bracket]"
+	}
+
+	// e.g. container: "array", rest: "k1,array<k2,v2>"
+	container, rest := t[0:idx], t[idx+1:len(t)-1]
+
+	switch container {
+	case "array":
+		commaIdx := strings.IndexByte(rest, ',')
+		if commaIdx == -1 {
+			return meta.WrapArrayOf(d.normalizeType(rest))
+		}
+
+		ktype, vtype := rest[0:commaIdx], rest[commaIdx+1:]
+		if ktype == "" {
+			return "[empty_array_key_type]"
+		}
+		if vtype == "" {
+			return "[empty_array_value_type]"
+		}
+
+		return meta.WrapArray2(ktype, d.normalizeType(vtype))
+	case "list", "non-empty-list":
+		return meta.WrapArrayOf(d.normalizeType(rest))
+	}
+
+	// unknown container type, just ignoring
+	return ""
 }
 
 func (d *RootWalker) fixPHPDocType(typ string) (fixed, notice string) {
@@ -1009,7 +1061,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 			if err != "" {
 				result.errs.pushType("%s on line %d", err, part.Line)
 			}
-			result.returnType = meta.NewTypesMap(d.maybeAddNamespace(typ))
+			result.returnType = meta.NewTypesMap(d.normalizeType(typ))
 			continue
 		}
 
@@ -1062,7 +1114,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 		if err != "" {
 			result.errs.pushType("%s on line %d", err, part.Line)
 		} else {
-			param.typ = meta.NewTypesMap(d.maybeAddNamespace(typ))
+			param.typ = meta.NewTypesMap(d.normalizeType(typ))
 			param.typ.Iterate(func(t string) {
 				if t == "void" {
 					result.errs.pushType("void is not a valid type for input parameter")
@@ -1087,7 +1139,7 @@ func (d *RootWalker) parseTypeNode(n node.Node) (typ meta.TypesMap, ok bool) {
 
 	switch t := n.(type) {
 	case *name.Name:
-		typ = meta.NewTypesMap(d.maybeAddNamespace(meta.NameToString(t)))
+		typ = meta.NewTypesMap(d.normalizeType(meta.NameToString(t)))
 	case *name.FullyQualified:
 		typ = meta.NewTypesMap(meta.FullyQualifiedToString(t))
 	case *node.Identifier:

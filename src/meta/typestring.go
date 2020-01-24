@@ -224,6 +224,11 @@ func UnwrapArrayOf(s string) (typ string) {
 	return unwrap1(s)
 }
 
+func WrapArray2(ktyp, vtyp string) string {
+	// TODO: actually support types of keys
+	return WrapArrayOf(vtyp)
+}
+
 func WrapElemOf(typ string) string {
 	// ElemOf(ArrayOf(typ)) == typ
 	if len(typ) >= 1+stringLenBytes && typ[0] == WArrayOf {

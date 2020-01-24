@@ -63,6 +63,8 @@ func Parse(doc string) (res []CommentPart) {
 			text = strings.TrimSpace(ln[nameEndPos:])
 		}
 
+		ln = shrinkAngleBracketsTypes(ln)
+
 		fields := strings.Fields(ln)
 		if len(fields) == 0 {
 			continue
@@ -77,4 +79,31 @@ func Parse(doc string) (res []CommentPart) {
 	}
 
 	return res
+}
+
+// shrinkAngleBracketsTypes removes spaces in types like "array<int, string>" to simplify parsing.
+func shrinkAngleBracketsTypes(t string) string {
+	depth := 0
+	res := make([]byte, 0, len(t))
+
+	for _, b := range []byte(t) {
+		switch b {
+		case '<':
+			depth++
+			res = append(res, b)
+		case '>':
+			if depth > 0 {
+				depth--
+			}
+			res = append(res, b)
+		case ' ', '\t':
+			if depth == 0 {
+				res = append(res, b)
+			}
+		default:
+			res = append(res, b)
+		}
+	}
+
+	return string(res)
 }
