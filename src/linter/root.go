@@ -913,6 +913,7 @@ func (d *RootWalker) normalizeType(typStr string) string {
 		return ""
 	}
 
+	nullable := false
 	classNames := strings.Split(typStr, `|`)
 	for idx, className := range classNames {
 		// ignore things like \tuple(*)
@@ -929,6 +930,11 @@ func (d *RootWalker) normalizeType(typStr string) string {
 
 		if len(className) == 0 {
 			continue
+		}
+
+		if className[0] == '?' && len(className) > 1 {
+			nullable = true
+			className = className[1:]
 		}
 
 		switch className {
@@ -971,6 +977,10 @@ func (d *RootWalker) normalizeType(typStr string) string {
 		}
 
 		classNames[idx] = fullClassName
+	}
+
+	if nullable {
+		classNames = append(classNames, "null")
 	}
 
 	return strings.Join(classNames, "|")
@@ -1137,6 +1147,13 @@ func (d *RootWalker) parseTypeNode(n node.Node) (typ meta.TypesMap, ok bool) {
 		return meta.TypesMap{}, false
 	}
 
+	nullable := false
+
+	if nn, ok := n.(*node.Nullable); ok {
+		n = nn.Expr
+		nullable = true
+	}
+
 	switch t := n.(type) {
 	case *name.Name:
 		typ = meta.NewTypesMap(d.normalizeType(meta.NameToString(t)))
@@ -1144,6 +1161,10 @@ func (d *RootWalker) parseTypeNode(n node.Node) (typ meta.TypesMap, ok bool) {
 		typ = meta.NewTypesMap(meta.FullyQualifiedToString(t))
 	case *node.Identifier:
 		typ = meta.NewTypesMap(t.Value)
+	}
+
+	if nullable {
+		typ = typ.AppendString("null")
 	}
 
 	return typ, !typ.IsEmpty()
