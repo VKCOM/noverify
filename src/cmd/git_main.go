@@ -230,19 +230,22 @@ func prepareGitArgs() (logArgs, diffArgs []string, err error) {
 		log.Printf("Fetched for %s", time.Since(start))
 	}
 
-	fromAndMaster, err := git.MergeBase(gitRepo, "ORIGIN_MASTER", gitCommitFrom)
-	if err != nil {
-		return nil, nil, fmt.Errorf("Could not compute merge base between ORIGIN_MASTER and %s", gitCommitFrom)
-	}
+	if !gitDisableCompensateMaster {
 
-	toAndMaster, err := git.MergeBase(gitRepo, "ORIGIN_MASTER", gitCommitTo)
-	if err != nil {
-		return nil, nil, fmt.Errorf("Could not compute merge base between ORIGIN_MASTER and %s", gitCommitTo)
-	}
+		fromAndMaster, err := git.MergeBase(gitRepo, "ORIGIN_MASTER", gitCommitFrom)
+		if err != nil {
+			return nil, nil, fmt.Errorf("Could not compute merge base between ORIGIN_MASTER and %s", gitCommitFrom)
+		}
 
-	// check if master was merged in between the commits
-	if fromAndMaster != toAndMaster {
-		gitCommitFrom = toAndMaster
+		toAndMaster, err := git.MergeBase(gitRepo, "ORIGIN_MASTER", gitCommitTo)
+		if err != nil {
+			return nil, nil, fmt.Errorf("Could not compute merge base between ORIGIN_MASTER and %s", gitCommitTo)
+		}
+
+		// check if master was merged in between the commits
+		if fromAndMaster != toAndMaster {
+			gitCommitFrom = toAndMaster
+		}
 	}
 
 	logArgs = []string{gitCommitFrom + ".." + gitCommitTo}
