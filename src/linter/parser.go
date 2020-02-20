@@ -217,9 +217,22 @@ func ReadFilenames(filenames []string, ignoreRegex *regexp.Regexp) ReadCallback 
 				filename = absFilename
 			}
 
-			st, err := os.Stat(filename)
+			// If we use stat here, it will return file info of an entry
+			// pointed by a symlink (if filename is a link).
+			// lstat is required for a symlink test below to succeed.
+			// If we ever want to permit top-level (CLI args) symlinks,
+			// caller should resolve them to a files that are pointed by them.
+			st, err := os.Lstat(filename)
 			if err != nil {
 				log.Fatalf("Could not stat file %s: %s", filename, err.Error())
+				continue
+			}
+			if st.Mode()&os.ModeSymlink != 0 {
+				// filepath.Walk does not follow symlinks, but it does
+				// accept it as a root argument without an error.
+				// godirwalk.Walk can traverse symlinks with FollowSymbolicLinks=true,
+				// but we don't use it. It will give an error if root is
+				// a symlink, so we avoid calling Walk() on them.
 				continue
 			}
 
@@ -249,7 +262,7 @@ func ReadFilenames(filenames []string, ignoreRegex *regexp.Regexp) ReadCallback 
 			})
 
 			if err != nil {
-				log.Fatalf("Could not walk filepath %s", filename)
+				log.Fatalf("Could not walk filepath %s (%v)", filename, err)
 			}
 		}
 	}
