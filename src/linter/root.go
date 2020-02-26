@@ -239,6 +239,10 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 			p.Pos = cl.Pos
 			cl.Properties[name] = p
 		}
+		for methodName, m := range doc.methods {
+			m.Pos = cl.Pos
+			cl.Methods[methodName] = m
+		}
 		for _, m := range n.Modifiers {
 			d.lowerCaseModifier(m)
 		}
@@ -821,6 +825,7 @@ func (e *phpdocErrors) pushType(format string, args ...interface{}) {
 
 type classPhpDocParseResult struct {
 	properties meta.PropertiesMap
+	methods    meta.FunctionsMap
 	errs       phpdocErrors
 }
 
@@ -833,6 +838,96 @@ func (d *RootWalker) reportPhpdocErrors(n node.Node, errs phpdocErrors) {
 	}
 }
 
+func (d *RootWalker) parsePHPDocClassMethod(result *classPhpDocParseResult, part phpdoc.CommentPart) {
+	// The syntax is:
+	//	@method [[static] return type] [name]([[type] [parameter]<, ...>]) [<description>]
+	// Return type and method name are mandatory.
+
+	params := part.Params
+
+	static := len(params) > 0 && params[0] == "static"
+	if static {
+		params = params[1:]
+	}
+
+	if len(params) < 2 {
+		result.errs.pushLint("line %d: @method requires return type and method name fields", part.Line)
+		return
+	}
+
+	typ, err := d.fixPHPDocType(params[0])
+	if err != "" {
+		result.errs.pushType("%s on line %d", err, part.Line)
+		return
+	}
+
+	var methodName string
+	nameEnd := strings.IndexByte(params[1], '(')
+	if nameEnd != -1 {
+		methodName = params[1][:nameEnd]
+	} else {
+		methodName = params[1] // Could be a method name without `()`.
+		result.errs.pushLint("line %d: @method '(' is not found near the method name", part.Line)
+	}
+
+	var funcFlags meta.FuncFlags
+	if static {
+		funcFlags |= meta.FuncStatic
+	}
+	result.methods[methodName] = meta.FuncInfo{
+		Typ:          meta.NewTypesMap(d.normalizeType(typ)),
+		Flags:        funcFlags,
+		MinParamsCnt: 0, // TODO: parse signature and assign a proper value
+		AccessLevel:  meta.Public,
+	}
+}
+
+func (d *RootWalker) parsePHPDocClassProperty(result *classPhpDocParseResult, part phpdoc.CommentPart) {
+	// The syntax is:
+	//	@property [Type] [name] [<description>]
+	// Type and name are mandatory.
+
+	if len(part.Params) < 2 {
+		result.errs.pushLint("line %d: @property requires type and property name fields", part.Line)
+		return
+	}
+
+	typ := part.Params[0]
+	var nm string
+	if len(part.Params) >= 2 {
+		nm = part.Params[1]
+	} else {
+		// Either type or var name is missing.
+		if strings.HasPrefix(typ, "$") {
+			result.errs.pushLint("malformed @property %s tag (maybe type is missing?) on line %d",
+				part.Params[0], part.Line)
+			return
+		}
+		result.errs.pushLint("malformed @property tag (maybe field name is missing?) on line %d", part.Line)
+	}
+
+	if len(part.Params) >= 2 && strings.HasPrefix(typ, "$") && !strings.HasPrefix(nm, "$") {
+		result.errs.pushLint("non-canonical order of name and type on line %d", part.Line)
+		nm, typ = typ, nm
+	}
+
+	typ, err := d.fixPHPDocType(typ)
+	if err != "" {
+		result.errs.pushType("%s on line %d", err, part.Line)
+		return
+	}
+
+	if !strings.HasPrefix(nm, "$") {
+		result.errs.pushLint("@property field name must start with `$`")
+		return
+	}
+
+	result.properties[nm[len("$"):]] = meta.PropertyInfo{
+		Typ:         meta.NewTypesMap(d.normalizeType(typ)),
+		AccessLevel: meta.Public,
+	}
+}
+
 func (d *RootWalker) parsePHPDocClass(doc string) classPhpDocParseResult {
 	var result classPhpDocParseResult
 
@@ -840,56 +935,18 @@ func (d *RootWalker) parsePHPDocClass(doc string) classPhpDocParseResult {
 		return result
 	}
 
+	// TODO: allocate maps lazily.
+	// Class may not have any @property or @method annotations.
+	// In that case we can handle avoid map allocations.
 	result.properties = make(meta.PropertiesMap)
+	result.methods = make(meta.FunctionsMap)
 
 	for _, part := range phpdoc.Parse(doc) {
-		if part.Name != "property" {
-			continue
-		}
-
-		// The syntax is:
-		//	@property [Type] [name] [<description>]
-		// Type and name are mandatory.
-
-		if len(part.Params) < 2 {
-			result.errs.pushLint("line %d: @property requires type and property name fields", part.Line)
-			continue
-		}
-
-		typ := part.Params[0]
-		var nm string
-		if len(part.Params) >= 2 {
-			nm = part.Params[1]
-		} else {
-			// Either type or var name is missing.
-			if strings.HasPrefix(typ, "$") {
-				result.errs.pushLint("malformed @property %s tag (maybe type is missing?) on line %d",
-					part.Params[0], part.Line)
-				continue
-			} else {
-				result.errs.pushLint("malformed @property tag (maybe field name is missing?) on line %d", part.Line)
-			}
-		}
-
-		if len(part.Params) >= 2 && strings.HasPrefix(typ, "$") && !strings.HasPrefix(nm, "$") {
-			result.errs.pushLint("non-canonical order of name and type on line %d", part.Line)
-			nm, typ = typ, nm
-		}
-
-		typ, err := d.fixPHPDocType(typ)
-		if err != "" {
-			result.errs.pushType("%s on line %d", err, part.Line)
-			continue
-		}
-
-		if !strings.HasPrefix(nm, "$") {
-			result.errs.pushLint("@property field name must start with `$`")
-			continue
-		}
-
-		result.properties[nm[len("$"):]] = meta.PropertyInfo{
-			Typ:         meta.NewTypesMap(d.normalizeType(typ)),
-			AccessLevel: meta.Public,
+		switch part.Name {
+		case "property":
+			d.parsePHPDocClassProperty(&result, part)
+		case "method":
+			d.parsePHPDocClassMethod(&result, part)
 		}
 	}
 

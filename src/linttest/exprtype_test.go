@@ -21,6 +21,66 @@ import (
 // TODO(quasilyte): better handling of an `empty_array` type.
 // Now it's resolved to `mixed[]` for expressions that have multiple empty_array.
 
+func TestExprTypeMagicCall(t *testing.T) {
+	tests := []exprTypeTest{
+		{`$m->magic()`, `\Magic`},
+		{`$m->magic()->f2()`, `\Magic`},
+		{`$m->f2()->magic()`, `\Magic`},
+		{`(new Magic())->magic()`, `\Magic`},
+		{`$m->notMagic()`, `int`},
+		{`$m->magic()->notMagic()`, `int`},
+		{`$m->m1()->m2()->notMagic()`, `int`},
+
+		{`$m2->unknown()`, `mixed`},
+		{`$m2->magicInt()`, `int`},
+		{`$m2->magicString()`, `string`},
+		{`$m2->add(1, 2)`, `int`},
+		{`Magic2::getInstance()->magicInt()`, `int`},
+		{`Magic2::unknown()`, `mixed`},
+
+		// @method annotations should take precedence over
+		// generic __call return type info.
+		{`$m3->magicInt()`, `int`},
+		{`$m3->unknown()`, `\Magic3`},
+		{`$m3->magic()->magicInt()`, `int`},
+
+		{`StaticMagic::magicInt()`, `int`},
+		{`StaticMagic::newMagic()`, `\Magic`},
+		{`StaticMagic::magic()->magic()`, `\Magic`},
+	}
+
+	global := `<?php
+class Magic {
+  public function __call() { return $this; }
+  public function notMagic() { return 10; }
+}
+
+/**
+ * @method int magicInt()
+ * @method string magicString()
+ * @method int add(int $x, int $y)
+ * @method static Magic2 getInstance()
+ */
+class Magic2 {}
+
+/**
+ * @method int magicInt
+ */
+class Magic3 {
+  public function __call() { return $this; }
+}
+
+/**
+ * @method static int magicInt()
+ */
+class StaticMagic {
+  public function __callStatic() { return new Magic(); }
+}
+`
+	local := `$m = new Magic(); $m2 = new Magic2(); $m3 = new Magic3();`
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
 func TestExprTypeRef(t *testing.T) {
 	tests := []exprTypeTest{
 		{`$v =& $ints[0]`, `mixed`},
@@ -64,7 +124,7 @@ func TestExprTypeFixes(t *testing.T) {
 		{`array1()`, `int[]`},
 		{`array2()`, `int[][]`},
 		{`array_int()`, `int[]`},
-		{`array_int_string()`, `string[]`}, // key type is currently ignored
+		{`array_int_string()`, `string[]`},      // key type is currently ignored
 		{`array_int_stdclass()`, `\stdclass[]`}, // key type is currently ignored
 		{`array_return_string()`, `string`},
 	}
