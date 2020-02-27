@@ -36,7 +36,7 @@ type resolver struct {
 	visited map[string]struct{}
 }
 
-func (r *resolver) collectMethodCallTypes(out, possibleTypes map[string]struct{}, methodName string) {
+func (r *resolver) collectMethodCallTypes(out, possibleTypes map[string]struct{}, methodName string) map[string]struct{} {
 	for className := range possibleTypes {
 		info, _, ok := FindMethod(className, methodName)
 		if ok {
@@ -45,6 +45,7 @@ func (r *resolver) collectMethodCallTypes(out, possibleTypes map[string]struct{}
 			}
 		}
 	}
+	return out
 }
 
 func (r *resolver) resolveType(class, typ string) map[string]struct{} {
@@ -129,9 +130,9 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 		expr, methodName := meta.UnwrapInstanceMethodCall(typ)
 
 		instanceTypes := r.resolveType(class, expr)
-		r.collectMethodCallTypes(res, instanceTypes, methodName)
+		res = r.collectMethodCallTypes(res, instanceTypes, methodName)
 		if len(res) == 0 {
-			r.collectMethodCallTypes(res, instanceTypes, "__call")
+			res = r.collectMethodCallTypes(res, instanceTypes, "__call")
 		}
 
 	case meta.WInstancePropertyFetch:

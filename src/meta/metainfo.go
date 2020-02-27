@@ -362,6 +362,7 @@ type ClassParseState struct {
 	Namespace               string
 	FunctionUses            map[string]string
 	Uses                    map[string]string
+	CurrentFile             string
 	CurrentClass            string
 	CurrentParentClass      string
 	CurrentParentInterfaces []string // interfaces allow for multiple inheritance...

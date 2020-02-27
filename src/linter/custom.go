@@ -135,7 +135,7 @@ func (ctx *RootContext) State() map[string]interface{} {
 
 // Filename returns the file name of the file being analyzed.
 func (ctx *RootContext) Filename() string {
-	return ctx.w.filename
+	return ctx.w.st.CurrentFile
 }
 
 // FileContents returns analyzed file source code.
@@ -190,7 +190,7 @@ func (ctx *BlockContext) PrematureExitFlags() int {
 
 // Filename returns the file name of the file being analyzed.
 func (ctx *BlockContext) Filename() string {
-	return ctx.w.r.filename
+	return ctx.w.r.st.CurrentFile
 }
 
 // BlockCheckerCreateFunc is a factory function for BlockChecker

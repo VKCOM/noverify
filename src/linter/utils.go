@@ -226,3 +226,83 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 
 	return res
 }
+
+// normalizeType adds namespaces to a type defined by the PHPDoc type string as well as
+// converts notations like "array<int,string>" to <meta.WARRAY2, "int", "string">
+func normalizeType(st *meta.ClassParseState, typStr string) string {
+	if typStr == "" {
+		return ""
+	}
+
+	nullable := false
+	classNames := strings.Split(typStr, `|`)
+	for idx, className := range classNames {
+		// ignore things like \tuple(*)
+		if braceIdx := strings.IndexByte(className, '('); braceIdx >= 0 {
+			className = className[0:braceIdx]
+		}
+
+		// 0 for "bool", 1 for "bool[]", 2 for "bool[][]" and so on
+		arrayDim := 0
+		for strings.HasSuffix(className, "[]") {
+			arrayDim++
+			className = strings.TrimSuffix(className, "[]")
+		}
+
+		if len(className) == 0 {
+			continue
+		}
+
+		if className[0] == '?' && len(className) > 1 {
+			nullable = true
+			className = className[1:]
+		}
+
+		switch className {
+		case "bool", "boolean", "true", "false", "double", "float", "string", "int", "array", "resource", "mixed", "null", "callable", "void", "object":
+			continue
+		case "$this":
+			// Handle `$this` as `static` alias in phpdoc context.
+			classNames[idx] = "static"
+			continue
+		case "static":
+			// Don't resolve `static` phpdoc type annotation too early
+			// to make it possible to handle late static binding.
+			continue
+		}
+
+		if className[0] == '\\' {
+			continue
+		}
+
+		if className[0] <= meta.WMax {
+			linterError(st.CurrentFile, "Bad type: '%s'", className)
+			classNames[idx] = ""
+			continue
+		}
+
+		// special types, e.g. "array<k,v>"
+		if strings.ContainsAny(className, "<>") {
+			classNames[idx] = parseAngleBracketedType(st, className)
+			continue
+		}
+
+		fullClassName, ok := solver.GetClassName(st, meta.StringToName(className))
+		if !ok {
+			classNames[idx] = ""
+			continue
+		}
+
+		if arrayDim > 0 {
+			fullClassName += strings.Repeat("[]", arrayDim)
+		}
+
+		classNames[idx] = fullClassName
+	}
+
+	if nullable {
+		classNames = append(classNames, "null")
+	}
+
+	return strings.Join(classNames, "|")
+}
