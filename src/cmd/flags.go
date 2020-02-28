@@ -45,6 +45,8 @@ var (
 	allowDisable      string
 	allowDisableRegex *regexp.Regexp
 
+	misspellList string
+
 	unusedVarPattern string
 
 	fullAnalysisFiles string
@@ -114,6 +116,8 @@ func bindFlags() {
 	flag.StringVar(&allowDisable, "allow-disable", "", "Regexp for filenames where '@linter disable' is allowed")
 	flag.StringVar(&allowChecks, "allow-checks", strings.Join(enabledByDefault, ","),
 		"Comma-separated list of check names to be enabled")
+	flag.StringVar(&misspellList, "misspell-list", "Eng",
+		"Comma-separated list of misspelling dicts; predefined sets are Eng, Eng/US and Eng/UK")
 
 	flag.StringVar(&phpExtensionsArg, "php-extensions", "php,inc,php5,phtml,inc", "List of PHP extensions to be recognized")
 

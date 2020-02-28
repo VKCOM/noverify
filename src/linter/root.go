@@ -215,6 +215,10 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *stmt.Interface:
 		d.currentClassNode = n
 		d.checkKeywordCase(n, "interface")
+		d.checkCommentMisspellings(n.InterfaceName, n.PhpDocComment)
+		if !strings.HasSuffix(n.InterfaceName.Value, "able") {
+			d.checkIdentMisspellings(n.InterfaceName)
+		}
 	case *stmt.Class:
 		d.currentClassNode = n
 		cl := d.getClass()
@@ -227,6 +231,8 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 				}
 			}
 		}
+		d.checkCommentMisspellings(n.ClassName, n.PhpDocComment)
+		d.checkIdentMisspellings(n.ClassName)
 		doc := parseClassPHPDoc(d.st, n.PhpDocComment)
 		d.reportPhpdocErrors(n.ClassName, doc.errs)
 		// If we ever need to distinguish @property-annotated and real properties,
@@ -249,6 +255,8 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *stmt.Trait:
 		d.currentClassNode = n
 		d.checkKeywordCase(n, "trait")
+		d.checkCommentMisspellings(n.TraitName, n.PhpDocComment)
+		d.checkIdentMisspellings(n.TraitName)
 	case *stmt.TraitUse:
 		d.checkKeywordCase(n, "use")
 		cl := d.getClass()
@@ -627,6 +635,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 
 		nm := p.Variable.Name
 
+		d.checkCommentMisspellings(p, p.PhpDocComment)
 		typ := d.parsePHPDocVar(p.PhpDocComment)
 		if p.Expr != nil {
 			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.st, p.Expr))
@@ -666,6 +675,7 @@ func (d *RootWalker) enterClassConstList(s *stmt.ClassConstList) bool {
 		c := cNode.(*stmt.Constant)
 
 		nm := c.ConstantName.Value
+		d.checkCommentMisspellings(c, c.PhpDocComment)
 		typ := solver.ExprTypeLocal(d.scope(), d.st, c.Expr)
 
 		// TODO: handle duplicate constant
@@ -719,6 +729,11 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 		if !insideInterface && !strings.HasPrefix(nm, "_") {
 			d.Report(meth.MethodName, LevelDoNotReject, "phpdoc", "Missing PHPDoc for %q public method", nm)
 		}
+	}
+	d.checkCommentMisspellings(meth.MethodName, meth.PhpDocComment)
+	d.checkIdentMisspellings(meth.MethodName)
+	for _, p := range meth.Params {
+		d.checkVarnameMisspellings(p, p.(*node.Parameter).Variable.Name)
 	}
 	doc := d.parsePHPDoc(meth.PhpDocComment, meth.Params)
 	d.reportPhpdocErrors(meth.MethodName, doc.errs)
@@ -1088,6 +1103,45 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 	return args, minArgs
 }
 
+func (d *RootWalker) checkCommentMisspellings(n node.Node, s string) {
+	d.checkMisspellings(n, s, "misspellComment", func(s string) bool {
+		// Try to avoid checking for symbol names and references.
+		return isCapitalized(s)
+	})
+}
+
+func (d *RootWalker) checkVarnameMisspellings(n node.Node, s string) {
+	d.checkMisspellings(n, s, "misspellName", func(string) bool {
+		return false
+	})
+}
+
+func (d *RootWalker) checkIdentMisspellings(n *node.Identifier) {
+	d.checkMisspellings(n, n.Value, "misspellName", func(s string) bool {
+		// Before PHP got context-sensitive lexer, it was common to use
+		// method names like "includ" to avoid parsing errors.
+		// We can't suggest a fix that leads to a parsing error.
+		// To avoid false positives, skip PHP keywords.
+		return phpKeywords[s]
+	})
+}
+
+func (d *RootWalker) checkMisspellings(n node.Node, s string, label string, skip func(string) bool) {
+	if !meta.IsIndexingComplete() {
+		return
+	}
+	if TypoFixer == nil {
+		return
+	}
+	_, changes := TypoFixer.Replace(s)
+	for _, c := range changes {
+		if skip(c.Corrected) || skip(c.Original) {
+			continue
+		}
+		d.Report(n, LevelDoNotReject, label, `"%s" is a misspelling of "%s"`, c.Original, c.Corrected)
+	}
+}
+
 func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	nm := d.st.Namespace + `\` + fun.FunctionName.Value
 	pos := fun.GetPosition()
@@ -1101,6 +1155,11 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 		specifiedReturnType = typ
 	}
 
+	d.checkCommentMisspellings(fun.FunctionName, fun.PhpDocComment)
+	d.checkIdentMisspellings(fun.FunctionName)
+	for _, p := range fun.Params {
+		d.checkVarnameMisspellings(p, p.(*node.Parameter).Variable.Name)
+	}
 	doc := d.parsePHPDoc(fun.PhpDocComment, fun.Params)
 	d.reportPhpdocErrors(fun.FunctionName, doc.errs)
 	phpdocReturnType := doc.returnType

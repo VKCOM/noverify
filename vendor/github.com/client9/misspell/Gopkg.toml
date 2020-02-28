@@ -26,21 +26,9 @@
 
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/cznic/golex"
-
-[[constraint]]
-  name = "gotest.tools"
-  version = "2.3.0"
+  name = "github.com/gobwas/glob"
+  version = "0.2.3"
 
 [prune]
   go-tests = true
   unused-packages = true
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/karrick/godirwalk"
-
-[[constraint]]
-  name = "github.com/client9/misspell"
-  version = "0.3.4"

@@ -7,6 +7,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/rules"
+	"github.com/client9/misspell"
 )
 
 var (
@@ -14,6 +15,11 @@ var (
 	LangServer bool
 
 	CacheDir string
+
+	// TypoFixer is a rule set for English typos correction.
+	// If nil, no misspell checking is performed.
+	// See github.com/client9/misspell for details.
+	TypoFixer *misspell.Replacer
 
 	// AnalysisFiles is a list of files that are being analyzed (in non-git mode)
 	AnalysisFiles []string
