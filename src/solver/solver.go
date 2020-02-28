@@ -36,6 +36,18 @@ type resolver struct {
 	visited map[string]struct{}
 }
 
+func (r *resolver) collectMethodCallTypes(out, possibleTypes map[string]struct{}, methodName string) map[string]struct{} {
+	for className := range possibleTypes {
+		info, _, ok := FindMethod(className, methodName)
+		if ok {
+			for tt := range r.resolveTypes(className, info.Typ) {
+				out[tt] = struct{}{}
+			}
+		}
+	}
+	return out
+}
+
 func (r *resolver) resolveType(class, typ string) map[string]struct{} {
 	res := r.resolveTypeNoLateStaticBinding(class, typ)
 
@@ -117,14 +129,12 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 	case meta.WInstanceMethodCall:
 		expr, methodName := meta.UnwrapInstanceMethodCall(typ)
 
-		for className := range r.resolveType(class, expr) {
-			info, _, ok := FindMethod(className, methodName)
-			if ok {
-				for tt := range r.resolveTypes(className, info.Typ) {
-					res[tt] = struct{}{}
-				}
-			}
+		instanceTypes := r.resolveType(class, expr)
+		res = r.collectMethodCallTypes(res, instanceTypes, methodName)
+		if len(res) == 0 {
+			res = r.collectMethodCallTypes(res, instanceTypes, "__call")
 		}
+
 	case meta.WInstancePropertyFetch:
 		expr, propertyName := meta.UnwrapInstancePropertyFetch(typ)
 
@@ -150,10 +160,13 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 		className, methodName := meta.UnwrapStaticMethodCall(typ)
 		info, _, ok := FindMethod(className, methodName)
 		if ok {
-			for tt := range r.resolveTypes(className, info.Typ) {
-				res[tt] = struct{}{}
-			}
+			return r.resolveTypes(className, info.Typ)
 		}
+		info, _, ok = FindMethod(className, "__callStatic")
+		if ok {
+			return r.resolveTypes(className, info.Typ)
+		}
+
 	case meta.WStaticPropertyFetch:
 		className, propertyName := meta.UnwrapStaticPropertyFetch(typ)
 		info, _, ok := FindProperty(className, propertyName)

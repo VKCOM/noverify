@@ -178,6 +178,7 @@ class Foo {}
 	test.Expect = []string{
 		`use int type instead of integer on line 2`,
 		`[]t type syntax: use [] after the type, e.g. T[] on line 3`,
+		`@property ts field name must start with '$' on line 3`,
 		`non-canonical order of name and type on line 6`,
 		`line 4: @property requires type and property name fields`,
 		`line 5: @property requires type and property name fields`,
