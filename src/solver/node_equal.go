@@ -8,9 +8,9 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/position"
 )
 
-// Like reflect.DeepEqual but knows how to compare node.Node by ignoring
+// NodeAwareDeepEqual is a reflect.DeepEqual but knows how to compare node.Node by ignoring
 // freefloating text and positions
-func nodeAwareDeepEqual(a, b interface{}) bool {
+func NodeAwareDeepEqual(a, b interface{}) bool {
 	if a == nil || b == nil {
 		return a == b
 	}
@@ -57,7 +57,7 @@ func nodeDeepEqual(a, b node.Node) bool {
 			continue
 		}
 
-		if !nodeAwareDeepEqual(f1.Interface(), f2.Interface()) {
+		if !NodeAwareDeepEqual(f1.Interface(), f2.Interface()) {
 			return false
 		}
 	}
@@ -72,7 +72,7 @@ func nodeSliceDeepEqual(a, b []node.Node) bool {
 	}
 
 	for i, n := range a {
-		if !nodeAwareDeepEqual(n, b[i]) {
+		if !NodeAwareDeepEqual(n, b[i]) {
 			return false
 		}
 	}

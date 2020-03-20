@@ -950,7 +950,11 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 	e.Method.Walk(b)
 
 	if !foundMethod && !magic && !b.r.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
-		b.r.Report(e.Method, LevelError, "undefined", "Call to undefined method {%s}->%s()", exprType, methodName)
+		// The method is undefined but we permit calling it if `method_exists`
+		// was called prior to that call.
+		if !b.ctx.customMethodExists(e.Variable, methodName) {
+			b.r.Report(e.Method, LevelError, "undefined", "Call to undefined method {%s}->%s()", exprType, methodName)
+		}
 	} else {
 		// Method is defined.
 
@@ -1471,6 +1475,18 @@ type andWalker struct {
 
 func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 	switch n := w.(type) {
+	case *expr.FunctionCall:
+		args := n.ArgumentList.Arguments
+		nm, ok := n.Function.(*name.Name)
+		if ok && meta.NameEquals(nm, `method_exists`) && len(args) == 2 {
+			obj := args[0].(*node.Argument).Expr
+			methodName := args[1].(*node.Argument).Expr
+			lit, ok := methodName.(*scalar.String)
+			if ok {
+				a.b.ctx.addCustomMethod(obj, unquote(lit.Value))
+			}
+		}
+
 	case *binary.BooleanAnd:
 		return true
 
@@ -1556,11 +1572,13 @@ func (b *BlockWalker) handleVariable(v node.Node) bool {
 
 func (b *BlockWalker) handleIf(s *stmt.If) bool {
 	var varsToDelete []node.Node
+	customMethods := len(b.ctx.customMethods)
 	// Remove all isset'ed variables after we're finished with this if statement.
 	defer func() {
 		for _, v := range varsToDelete {
 			b.ctx.sc.DelVar(v, "isset/!empty")
 		}
+		b.ctx.customMethods = b.ctx.customMethods[:customMethods]
 	}()
 	walkCond := func(cond node.Node) {
 		a := &andWalker{b: b}
