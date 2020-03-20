@@ -2,8 +2,14 @@ package linter
 
 import (
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/solver"
 )
+
+type customMethod struct {
+	obj  node.Node
+	name string
+}
 
 // blockContext is a state that is used to hold inner blocks info.
 //
@@ -25,6 +31,24 @@ type blockContext struct {
 	// having for loop outside of that switch.
 	insideLoop  bool
 	customTypes []solver.CustomType
+
+	customMethods []customMethod
+}
+
+func (ctx *blockContext) addCustomMethod(obj node.Node, methodName string) {
+	ctx.customMethods = append(ctx.customMethods, customMethod{
+		obj:  obj,
+		name: methodName,
+	})
+}
+
+func (ctx *blockContext) customMethodExists(obj node.Node, methodName string) bool {
+	for _, m := range ctx.customMethods {
+		if m.name == methodName && solver.NodeAwareDeepEqual(m.obj, obj) {
+			return true
+		}
+	}
+	return false
 }
 
 // copyBlockContext returns a copy of the context.
@@ -34,6 +58,7 @@ func copyBlockContext(ctx *blockContext) *blockContext {
 	return &blockContext{
 		sc:            ctx.sc.Clone(),
 		customTypes:   append([]solver.CustomType{}, ctx.customTypes...),
+		customMethods: append([]customMethod{}, ctx.customMethods...),
 		innermostLoop: ctx.innermostLoop,
 		insideLoop:    ctx.insideLoop,
 	}

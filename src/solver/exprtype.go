@@ -179,7 +179,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 	}
 
 	for _, c := range custom {
-		if nodeAwareDeepEqual(c.Node, n) {
+		if NodeAwareDeepEqual(c.Node, n) {
 			return c.Typ
 		}
 	}
