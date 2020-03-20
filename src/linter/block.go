@@ -1844,6 +1844,7 @@ func (b *BlockWalker) handleAssignReference(a *assign.Reference) bool {
 		b.addVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.st, a.Expression), "assign", true)
 		b.addNonLocalVar(v)
 	case *expr.List:
+		// TODO: figure out whether this case is reachable.
 		for _, item := range v.Items {
 			b.handleVariableNode(item.Val, meta.NewTypesMap("unknown_from_list"), "assign")
 		}

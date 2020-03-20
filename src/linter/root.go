@@ -873,6 +873,10 @@ func (d *RootWalker) normalizeType(typStr string) string {
 
 		switch className {
 		case "bool", "boolean", "true", "false", "double", "float", "string", "int", "array", "resource", "mixed", "null", "callable", "void", "object":
+			// Can't assign className here because it also erases [] for arrays.
+			if classNames[idx][0] == '?' {
+				classNames[idx] = classNames[idx][1:]
+			}
 			continue
 		case "$this":
 			// Handle `$this` as `static` alias in phpdoc context.

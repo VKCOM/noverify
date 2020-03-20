@@ -655,7 +655,6 @@ func TestInstanceOf(t *testing.T) {
 	runFilterMatch(test, "undefined")
 }
 
-
 func TestNullableTypes(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
