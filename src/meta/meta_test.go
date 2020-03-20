@@ -20,6 +20,9 @@ func TestNameEquals(t *testing.T) {
 		{`foo \ bar`, `foo\bar`, true},
 		{`a\b\c\d`, `a\b\c\d`, true},
 
+		{`a\b`, `a\bb`, false},
+		{`a b`, `a\b`, false},
+		{`a b\`, `a\b`, false},
 		{`first`, ``, false},
 		{`first\second`, `first`, false},
 		{`first`, `first\second`, false},
