@@ -492,16 +492,14 @@ func NameEquals(n *name.Name, s string) bool {
 		return false
 	}
 
-	sParts := strings.Split(s, `\`)
-
+	rest := s
 	for i, part := range n.Parts {
-		p, ok := part.(*name.NamePart)
-		if !ok {
+		part := part.(*name.NamePart)
+		if !strings.HasPrefix(rest, part.Value) {
 			return false
 		}
-
-		if p.Value != sParts[i] {
-			return false
+		if i != len(n.Parts)-1 {
+			rest = rest[len(part.Value)+len(`\`):]
 		}
 	}
 
