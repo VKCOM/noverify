@@ -803,6 +803,78 @@ $_ = $bad1;
 	test.RunAndMatch()
 }
 
+func TestIssue363_1(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function testNotEmpty($c) {
+  if (!empty($v1)) {
+    echo $v1; // OK
+  } else {
+    echo $v1; // Bad: else branch of !empty
+    echo $c; // Should not warn on defined vars
+  }
+  echo $v1; // Bad: using variable outside of !empty body
+}
+
+function testNotEmpty($c) {
+  if (isset($v2)) {
+    echo $v2; // OK
+  } else {
+    echo $v2; // Bad: else branch of isset
+    echo $c; // Should not warn on defined vars
+  }
+  echo $v2; // Bad: using variable outside of isset body
+}
+`)
+	test.Expect = []string{
+		`Undefined variable: v1`,
+		`Undefined variable: v1`,
+		`Undefined variable: v2`,
+		`Undefined variable: v2`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue363_2(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class C {
+  /***/
+  public function example() {}
+}
+class C2 extends C {
+  /***/
+  public function example2() {}
+}
+
+function testInstanceof($c) {
+  if ($c instanceof C) {
+  } else {
+    $c->example(); // Bad: inside else branch it's known *not* to be C
+  }
+
+  if ($c instanceof C) {
+    $c->example(); // OK
+    $c->example2(); // Not OK
+  } else if ($c instanceof C2) {
+    $c->example(); // OK
+    $c->example2(); // OK
+  } else {
+    $c->example2();
+  }
+
+  $c->example(); // Bad: using $c outside of if statements
+}
+`)
+	test.Expect = []string{
+		`Call to undefined method {mixed}->example()`,
+		`Call to undefined method {\C}->example2()`,
+		`Call to undefined method {mixed}->example2()`,
+		`Call to undefined method {mixed}->example()`,
+	}
+	test.RunAndMatch()
+}
+
 func TestIssue170(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 
@@ -992,6 +1064,54 @@ function alt_switch($v) {
 	test.Expect = []string{
 		`Variable might have not been defined: x1`,
 		`Add break or '// fallthrough' to the end of the case`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue369(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f1($cond) {
+    if ($cond) {
+        echo $x1; // 1
+    }
+    echo $x1; // 2
+}
+
+function f2($cond) {
+    // Undefined var is reported only once per block.
+    echo $x2; // 3
+    echo $x2;
+}
+`)
+	test.Expect = []string{
+		`Undefined variable: x1`,
+		`Undefined variable: x1`,
+		`Undefined variable: x2`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue370(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Fooo1 { public $a; }
+class Fooo2 { public $b; }
+
+global $globf;
+
+if ($globf instanceof Fooo1) {
+    echo $globf->a;
+} elseif ($globf instanceof Fooo2) {
+    echo $globf->a; // Bad: $globf is not Fooo1
+    echo $globf->b;
+} else {
+    echo $globf->a; // Bad: $globf type is unknown
+}
+`)
+	test.Expect = []string{
+		`Property {\Fooo2}->a does not exist`,
+		`Property {mixed}->a does not exist`,
 	}
 	test.RunAndMatch()
 }

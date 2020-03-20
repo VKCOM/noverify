@@ -10,6 +10,69 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestIfCondAssign(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+function f1($v) {
+  if ($x = $v) {}
+  echo $x;
+}
+function f2($v) {
+  if ($x = $v) {
+    exit(0);
+  }
+  echo $x;
+}
+`)
+}
+
+func TestElseIf1CondAssign(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f1($v) {
+  if ($v) {
+  } elseif ($x = 10) {}
+  echo $x;
+}
+function f2($v) {
+  if ($v) {
+  } elseif ($x = 10) {
+    exit(0);
+  }
+  echo $x;
+}
+`)
+	// It could be more precise to report 2 "might have not been defined",
+	// but at least we report both usages. Can be improved in future.
+	test.Expect = []string{
+		`Undefined variable: x`,
+		`Variable might have not been defined: x`,
+	}
+	test.RunAndMatch()
+}
+
+func TestElseIf2CondAssign(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f1($v) {
+  if ($v) {
+  } else if ($x = 10) {}
+  echo $x;
+}
+function f2($v) {
+  if ($v) {
+  } else if ($x = 10) {
+    exit(0);
+  }
+  echo $x;
+}
+`)
+	test.Expect = []string{
+		`Variable might have not been defined: x`,
+		`Variable might have not been defined: x`,
+	}
+	test.RunAndMatch()
+}
+
 func TestForeachEmpty(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

@@ -15,6 +15,12 @@ type scopeVar struct {
 	typesMap      TypesMap
 	alwaysDefined bool
 	noReplace     bool // do not replace variable upon assignment (used for phpdoc @var declaration)
+
+	// whether a variable is implicitly defined (by isset or instanceof).
+	// Implicit vars are not tracked and they are not required to be "used".
+	// They're also more scoped than normal variables and rarely outlive
+	// the block context in which they were introduced.
+	implicit bool
 }
 
 // Scope contains variables with their types in the respective scope
@@ -117,6 +123,14 @@ func (s *Scope) Iterate(cb func(varName string, typ TypesMap, alwaysDefined bool
 	}
 }
 
+func (s *Scope) IterateExplicit(cb func(varName string, typ TypesMap, alwaysDefined bool)) {
+	for varName, v := range s.vars {
+		if !v.implicit {
+			cb(varName, v.typesMap, v.alwaysDefined)
+		}
+	}
+}
+
 func (s *Scope) Len() int {
 	return len(s.vars)
 }
@@ -128,6 +142,16 @@ func (s *Scope) AddVar(v node.Node, typ TypesMap, reason string, alwaysDefined b
 		return
 	}
 	s.AddVarName(name, typ, reason, alwaysDefined)
+}
+
+// AddImplicitVar adds implicit variable with specified types to scope
+func (s *Scope) AddImplicitVar(varNode node.Node, typ TypesMap, reason string, alwaysDefined bool) {
+	name, ok := scopeVarName(varNode)
+	if !ok {
+		return
+	}
+	v := s.addVarName(name, typ, reason, alwaysDefined)
+	v.implicit = true
 }
 
 // ReplaceVar replaces variable with specified types to scope
@@ -173,38 +197,36 @@ func (s *Scope) ReplaceVarName(name string, typ TypesMap, reason string, alwaysD
 }
 
 // AddVarName adds variable with specified types to the scope
-func (s *Scope) addVarName(name string, typ TypesMap, reason string, alwaysDefined, noReplace bool) {
+func (s *Scope) addVarName(name string, typ TypesMap, reason string, alwaysDefined bool) *scopeVar {
 	v, ok := s.vars[name]
 
 	if !ok {
-		s.vars[name] = &scopeVar{
+		v := &scopeVar{
 			typesMap:      typ,
 			alwaysDefined: alwaysDefined,
-			noReplace:     noReplace,
 		}
-		return
+		s.vars[name] = v
+		return v
 	}
 
 	if !v.alwaysDefined && alwaysDefined {
 		v.alwaysDefined = true
 	}
 
-	if !v.noReplace && noReplace {
-		v.noReplace = true
-	}
-
 	v.typesMap = v.typesMap.Append(typ)
 	s.vars[name] = v
+	return v
 }
 
 // AddVarName adds variable with specified types to the scope
 func (s *Scope) AddVarName(name string, typ TypesMap, reason string, alwaysDefined bool) {
-	s.addVarName(name, typ, reason, alwaysDefined, false)
+	s.addVarName(name, typ, reason, alwaysDefined)
 }
 
 // AddVarFromPHPDoc adds variable with specified types to the scope
 func (s *Scope) AddVarFromPHPDoc(name string, typ TypesMap, reason string) {
-	s.addVarName(name, typ, reason, true, true)
+	v := s.addVarName(name, typ, reason, true)
+	v.noReplace = true
 }
 
 // HaveVar checks whether or not specified variable is present in the scope and that it is always defined

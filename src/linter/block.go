@@ -1462,15 +1462,10 @@ func (b *BlockWalker) propagateFlagsFromBranches(contexts []*blockContext, links
 	}
 }
 
-// andWalker walks if conditions and adds isset/!empty/instanceof variables
+// andWalker walks if conditions and adds isset/!empty/instanceof implicit variables
 // to the associated block walker.
-//
-// All variables defined by andWalker should be removed after
-// if body is handled, this is why we collect varsToDelete.
 type andWalker struct {
 	b *BlockWalker
-
-	varsToDelete []node.Node
 }
 
 func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
@@ -1498,16 +1493,14 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 
 			switch v := v.(type) {
 			case *node.SimpleVar:
-				a.b.addVar(v, meta.NewTypesMap("isset_$"+v.Name), "isset", true)
-				a.varsToDelete = append(a.varsToDelete, v)
+				a.b.ctx.sc.AddImplicitVar(v, meta.NewTypesMap("isset_$"+v.Name), "isset", true)
 			case *node.Var:
 				a.b.handleVariable(v.Expr)
 				vv, ok := v.Expr.(*node.SimpleVar)
 				if !ok {
 					continue
 				}
-				a.b.addVar(v, meta.NewTypesMap("isset_$$"+vv.Name), "isset", true)
-				a.varsToDelete = append(a.varsToDelete, v)
+				a.b.ctx.sc.AddImplicitVar(v, meta.NewTypesMap("isset_$$"+vv.Name), "isset", true)
 			}
 		}
 
@@ -1515,14 +1508,13 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 		if className, ok := solver.GetClassName(a.b.r.st, n.Class); ok {
 			switch v := n.Expr.(type) {
 			case *node.Var, *node.SimpleVar:
-				a.b.ctx.sc.AddVar(v, meta.NewTypesMap(className), "instanceof", false)
+				a.b.ctx.sc.AddImplicitVar(v, meta.NewTypesMap(className), "instanceof", false)
 			default:
 				a.b.ctx.customTypes = append(a.b.ctx.customTypes, solver.CustomType{
 					Node: n.Expr,
 					Typ:  meta.NewTypesMap(className),
 				})
 			}
-			// TODO: actually this needs to be present inside if body only
 		}
 
 	case *expr.BooleanNot:
@@ -1542,8 +1534,7 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 		if a.b.ctx.sc.HaveVar(v) {
 			break
 		}
-		a.b.addVar(v, meta.NewTypesMap("isset_$"+v.Name), "!empty", true)
-		a.varsToDelete = append(a.varsToDelete, v)
+		a.b.ctx.sc.AddImplicitVar(v, meta.NewTypesMap("isset_$"+v.Name), "!empty", true)
 	}
 
 	w.Walk(a.b)
@@ -1564,36 +1555,19 @@ func (b *BlockWalker) handleVariable(v node.Node) bool {
 
 	if !b.ctx.sc.HaveVar(v) {
 		b.r.reportUndefinedVariable(v, b.ctx.sc.MaybeHaveVar(v))
-		b.ctx.sc.AddVar(v, meta.NewTypesMap("undefined"), "undefined", true)
+		b.ctx.sc.AddImplicitVar(v, meta.NewTypesMap("undefined"), "undefined", true)
 	}
 
 	return false
 }
 
 func (b *BlockWalker) handleIf(s *stmt.If) bool {
-	var varsToDelete []node.Node
-	customMethods := len(b.ctx.customMethods)
-	// Remove all isset'ed variables after we're finished with this if statement.
-	defer func() {
-		for _, v := range varsToDelete {
-			b.ctx.sc.DelVar(v, "isset/!empty")
-		}
-		b.ctx.customMethods = b.ctx.customMethods[:customMethods]
-	}()
-	walkCond := func(cond node.Node) {
-		a := &andWalker{b: b}
-		cond.Walk(a)
-		varsToDelete = append(varsToDelete, a.varsToDelete...)
-	}
-
-	// first condition is always executed, so run it in base context
-	if s.Cond != nil {
-		walkCond(s.Cond)
-	}
+	// TODO: revisit this method when "else if" and "elseif" are
+	// parsed as a signle type (365).
 
 	var contexts []*blockContext
 
-	walk := func(n node.Node) (links int) {
+	walk := func(cond, n node.Node) (links int) {
 		// handle if (...) smth(); else other_thing(); // without braces
 		if els, ok := n.(*stmt.Else); ok {
 			b.addStatement(els.Stmt)
@@ -1604,11 +1578,16 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 		}
 
 		ctx := b.withNewContext(func() {
-			if elsif, ok := n.(*stmt.ElseIf); ok {
-				walkCond(elsif.Cond)
+			customMethods := len(b.ctx.customMethods)
+			a := &andWalker{b: b}
+			if cond != nil {
+				cond.Walk(a)
 			}
 			n.Walk(b)
 			b.r.addScope(n, b.ctx.sc)
+			if cond != nil {
+				b.ctx.customMethods = b.ctx.customMethods[:customMethods]
+			}
 		})
 
 		contexts = append(contexts, ctx)
@@ -1623,17 +1602,22 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 	linksCount := 0
 
 	if s.Stmt != nil {
-		linksCount += walk(s.Stmt)
+		// We evaluate s.Cond inside a new context to avoid
+		// redundant variables propagating into the else branches.
+		// We will grab all variables from after we finish with
+		// all if statement branches (see assignWalker usage below).
+		linksCount += walk(s.Cond, s.Stmt)
 	} else {
 		linksCount++
 	}
 
 	for _, n := range s.ElseIf {
-		linksCount += walk(n)
+		n := n.(*stmt.ElseIf)
+		linksCount += walk(n.Cond, n)
 	}
 
 	if s.Else != nil {
-		linksCount += walk(s.Else)
+		linksCount += walk(nil, s.Else)
 	} else {
 		linksCount++
 	}
@@ -1648,7 +1632,7 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 			continue
 		}
 
-		ctx.sc.Iterate(func(nm string, typ meta.TypesMap, alwaysDefined bool) {
+		ctx.sc.IterateExplicit(func(nm string, typ meta.TypesMap, alwaysDefined bool) {
 			varTypes[nm] = varTypes[nm].Append(typ)
 			if alwaysDefined {
 				defCounts[nm]++
@@ -1659,6 +1643,10 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 	for nm, types := range varTypes {
 		b.ctx.sc.AddVarName(nm, types, "all branches", defCounts[nm] == linksCount)
 	}
+
+	// Collect all variable definitions from the if condition into the current context.
+	aw := assignWalker{b: b}
+	s.Cond.Walk(&aw)
 
 	return false
 }

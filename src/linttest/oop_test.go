@@ -562,9 +562,9 @@ function fn4($f4) {
 }`)
 	test.Expect = []string{
 		`Call to undefined method {\File}->name()`,
-		`Call to undefined method {\File|\Video}->filename()`,
+		`Call to undefined method {\Video}->filename()`,
 		`Call to undefined method {\File}->name()`,
-		`Call to undefined method {\File|\Video}->filename()`,
+		`Call to undefined method {\Video}->filename()`,
 	}
 	test.RunAndMatch()
 }
@@ -654,7 +654,6 @@ func TestInstanceOf(t *testing.T) {
 	}
 	runFilterMatch(test, "undefined")
 }
-
 
 func TestNullableTypes(t *testing.T) {
 	test := linttest.NewSuite(t)
