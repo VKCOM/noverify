@@ -1432,6 +1432,15 @@ func TestAssignByRef(t *testing.T) {
 	echo a();`)
 }
 
+func TestUndefinedConst(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+echo UNDEFINED_CONST;
+`)
+	test.Expect = []string{`Undefined constant UNDEFINED_CONST`}
+	test.RunAndMatch()
+}
+
 func addNamedFile(test *linttest.Suite, name, code string) {
 	test.Files = append(test.Files, linttest.TestFile{
 		Name: name,

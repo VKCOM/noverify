@@ -318,6 +318,65 @@ $chain = new Chain();`
 	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
 }
 
+func TestExprTypeNullable(t *testing.T) {
+	tests := []exprTypeTest{
+		{`$int`, `int|null`},
+		{`$foo`, `int|string|null`},
+		{`$a->b`, `\B|null`},
+		{`nullable_int(1)`, `int|null`},
+		{`nullable_string(0)`, `string|null`},
+		{`nullable_array(0)`, `int[]|null`},
+	}
+
+	global := `<?php
+class A {
+	/** @var ?B */
+	public $b;
+}
+class B {
+	public $c;
+}
+
+/**
+ * @return ?int
+ */
+function nullable_int($cond) {
+  if ($cond) {
+    return 4;
+  }
+  return null;
+}
+
+
+/**
+ * @return ?int[]
+ */
+function nullable_array($cond) {
+  if ($cond) {
+    return [1];
+  }
+  return null;
+}
+
+function nullable_string($cond) : ?string {
+  if ($cond) {
+    return '123';
+  }
+  return null;
+}
+`
+	local := `
+/** @var ?int $int */
+$int = null;
+
+/** @var ?int|?string $foo */
+$foo = null;
+
+$a = new A();
+`
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
 func TestExprTypeLateStaticBinding(t *testing.T) {
 	tests := []exprTypeTest{
 		{`getBase()`, `\Base`},
