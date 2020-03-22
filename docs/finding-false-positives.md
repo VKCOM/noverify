@@ -157,3 +157,8 @@ Send a pull request and celebrate your awesomeness.
 
 Your change can introduce new bugs that you may overlook during the development, this is why
 it's important to run all tests as opposed to running only your new tests.
+
+Here are some examples of PRs that fixed false positives:
+* 59f5c8b9b55c03ddd936480f402ee0556b7b442a fixes #362
+* fe953e76461d2bf97c957ee88206832526c56c2b fixes #183
+* 9271f20d8a094b4bdb38a95f388571fcd1d33f54 fixes #182
