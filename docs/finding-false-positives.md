@@ -5,13 +5,13 @@ This document describes how to find and fix [false-positives](https://en.wikiped
 
 ## Getting prepared
 
-First of all, you need to install NoVerify locally, preferrably by [building it from the source code](/docs/install.md).
+First of all, you need to install NoVerify locally, preferably by [building it from the source code](/docs/install.md).
 
 Then you find a **target for the analysis**, a [PHP project](https://github.com/search?q=stars%3A%3E100+size%3A%3E1000+size%3A%3C10000+pushed%3A%3E2020-01-01+language%3APHP&type=Repositories&ref=advsearch&l=PHP&l=).
 
 For example, we can choose [github.com/Seldaek/monolog](https://github.com/Seldaek/monolog) repository.
 
-## Finding the **false positive**
+## Finding the **false-positive**
 
 ```bash
 # 1. Clone monolog repository locally.
@@ -25,8 +25,8 @@ noverify ./src/Monolog
 ````
 
 After the 3rd step, you'll get a list of various warnings (sometimes called "reports").
-Some of them are good, other - not so much.
-We're looking for the reports that look like a mistake on NoVerify part.
+Some of them are good, others - not so much.
+We're looking for reports that look like a mistake on NoVerify part.
 
 For example, look at these two reports:
 
@@ -52,17 +52,17 @@ When you **use** a trait, you can access its private and protected members, so N
 The main parts are:
 * Code that reproduces the problem (prefer minimal reproducers, the smaller and simpler - the better).
 * The incorrect linter report (in this case "cannot access protected/private method").
-* The expected behavior (in case of **false positive** it's "no reports").
+* The expected behavior (in case of **false-positive** it's "no reports").
 
 ## Fixing the false positive
 
 After relevant issue is created, you can submit a code that fixes a problem.
 
-It's suggested to start from reproducing an issue inside a testing context.
+It's suggested to start by reproducing an issue inside a testing context.
 
 [src/linttest/regression_test.go](/src/linttest/regression_test.go) file contains a lot of test examples.
 
-If related issue already contains a reproducer (as it should), it's easy to add a first test case.
+If a related issue already contains a reproducer (as it should), it's easy to add a first test case.
 Following the [issue-209](https://github.com/VKCOM/noverify/issues/209) example, it could look like this:
 
 ```go
@@ -124,7 +124,7 @@ Now you need to change NoVerify in a way that makes that test succeed.
 **90%** of times you want to modify the [src/linter](/src/linter) package.
 
 It's a good idea to start from grepping the NoVerify source code for the report message text
-to quickly find a responsible code part (the one you probably need to change or at least understant).
+to quickly find a responsible code part (the one you probably need to change or at least understand).
 
 Luckily, NoVerify checks are organized in named groups that are used as a report message prefix.
 See that "accessLevel" prefix? It's the check group name.
@@ -143,17 +143,17 @@ src/linttest/oop_test.go:480:	runFilterMatch(test, "accessLevel")
 > Note that you need to enter the NoVerify directory before running `grep`.
 
 We've found several locations inside `src/linter/block.go` that report that problem.
-They are the good starting point for the investigation.
+They are a good starting point for the investigation.
 
-Suppose you think that issue is fixed. Re-run all tests:
+Suppose you think that the issue is fixed. Re-run all tests:
 
 ```
 go test github.com/VKCOM/noverify/src/linttest
 ok  	github.com/VKCOM/noverify/src/linttest	1.244s
 ```
 
-If you see this `ok` message, all test are passed and you're golden.
+If you see this `ok` message, all tests are passed and you're golden.
 Send a pull request and celebrate your awesomeness.
 
 Your change can introduce new bugs that you may overlook during the development, this is why
-it's important to run all tests as opposet to running only your new tests.
+it's important to run all tests as opposed to running only your new tests.
