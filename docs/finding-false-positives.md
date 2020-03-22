@@ -159,6 +159,6 @@ Your change can introduce new bugs that you may overlook during the development,
 it's important to run all tests as opposed to running only your new tests.
 
 Here are some examples of PRs that fixed false positives:
-* 59f5c8b9b55c03ddd936480f402ee0556b7b442a fixes #362
-* fe953e76461d2bf97c957ee88206832526c56c2b fixes #183
-* 9271f20d8a094b4bdb38a95f388571fcd1d33f54 fixes #182
+* [`59f5c8b9b55c03ddd936480f402ee0556b7b442a`](https://github.com/VKCOM/noverify/commit/59f5c8b9b55c03ddd936480f402ee0556b7b442a) fixes [#362](https://github.com/VKCOM/noverify/issues/362)
+* [`fe953e76461d2bf97c957ee88206832526c56c2b`](https://github.com/VKCOM/noverify/commit/59f5c8b9b55c03ddd936480f402ee0556b7b442a) fixes [#183](https://github.com/VKCOM/noverify/issues/183)
+* [`9271f20d8a094b4bdb38a95f388571fcd1d33f54`](https://github.com/VKCOM/noverify/commit/9271f20d8a094b4bdb38a95f388571fcd1d33f54) fixes [#182](https://github.com/VKCOM/noverify/issues/182)
