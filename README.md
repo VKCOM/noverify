@@ -1,5 +1,7 @@
 ## NoVerify [![Build Status](https://travis-ci.org/VKCOM/noverify.svg?branch=master)](https://travis-ci.org/VKCOM/noverify)
 
+![](/docs/noverify_small.png)
+
 NoVerify is a PHP linter: it finds possible bugs and style violations in your code.
 
 * NoVerify has no config: any reported issue in your PHPDoc or PHP code must be fixed.
