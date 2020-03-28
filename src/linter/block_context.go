@@ -32,7 +32,21 @@ type blockContext struct {
 	insideLoop  bool
 	customTypes []solver.CustomType
 
-	customMethods []customMethod
+	customMethods   []customMethod
+	customFunctions []string
+}
+
+func (ctx *blockContext) addCustomFunction(functionName string) {
+	ctx.customFunctions = append(ctx.customFunctions, functionName)
+}
+
+func (ctx *blockContext) customFunctionExists(nm node.Node) bool {
+	for _, functionName := range ctx.customFunctions {
+		if meta.NameNodeEquals(nm, functionName) {
+			return true
+		}
+	}
+	return false
 }
 
 func (ctx *blockContext) addCustomMethod(obj node.Node, methodName string) {
@@ -56,10 +70,11 @@ func (ctx *blockContext) customMethodExists(obj node.Node, methodName string) bo
 // The copy does not inherit some properties, like deadCodeReported.
 func copyBlockContext(ctx *blockContext) *blockContext {
 	return &blockContext{
-		sc:            ctx.sc.Clone(),
-		customTypes:   append([]solver.CustomType{}, ctx.customTypes...),
-		customMethods: append([]customMethod{}, ctx.customMethods...),
-		innermostLoop: ctx.innermostLoop,
-		insideLoop:    ctx.insideLoop,
+		sc:              ctx.sc.Clone(),
+		customTypes:     append([]solver.CustomType{}, ctx.customTypes...),
+		customMethods:   append([]customMethod{}, ctx.customMethods...),
+		customFunctions: append([]string{}, ctx.customFunctions...),
+		innermostLoop:   ctx.innermostLoop,
+		insideLoop:      ctx.insideLoop,
 	}
 }
