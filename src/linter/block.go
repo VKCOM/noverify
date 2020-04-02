@@ -821,7 +821,7 @@ func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
 			return true
 		}
 
-		if !call.defined {
+		if !call.defined && !b.ctx.customFunctionExists(e.Function) {
 			b.r.Report(e.Function, LevelError, "undefined", "Call to undefined function %s", meta.NameNodeToString(e.Function))
 		}
 	}
@@ -1478,12 +1478,22 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *expr.FunctionCall:
 		args := n.ArgumentList.Arguments
 		nm, ok := n.Function.(*name.Name)
-		if ok && meta.NameEquals(nm, `method_exists`) && len(args) == 2 {
+		if !ok {
+			break
+		}
+		switch {
+		case len(args) == 2 && meta.NameEquals(nm, `method_exists`):
 			obj := args[0].(*node.Argument).Expr
 			methodName := args[1].(*node.Argument).Expr
 			lit, ok := methodName.(*scalar.String)
 			if ok {
 				a.b.ctx.addCustomMethod(obj, unquote(lit.Value))
+			}
+		case len(args) == 1 && meta.NameEquals(nm, `function_exists`):
+			functionName := args[0].(*node.Argument).Expr
+			lit, ok := functionName.(*scalar.String)
+			if ok {
+				a.b.ctx.addCustomFunction(unquote(lit.Value))
 			}
 		}
 
@@ -1573,12 +1583,14 @@ func (b *BlockWalker) handleVariable(v node.Node) bool {
 func (b *BlockWalker) handleIf(s *stmt.If) bool {
 	var varsToDelete []node.Node
 	customMethods := len(b.ctx.customMethods)
+	customFunctions := len(b.ctx.customFunctions)
 	// Remove all isset'ed variables after we're finished with this if statement.
 	defer func() {
 		for _, v := range varsToDelete {
 			b.ctx.sc.DelVar(v, "isset/!empty")
 		}
 		b.ctx.customMethods = b.ctx.customMethods[:customMethods]
+		b.ctx.customFunctions = b.ctx.customFunctions[:customFunctions]
 	}()
 	walkCond := func(cond node.Node) {
 		a := &andWalker{b: b}
