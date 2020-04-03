@@ -47,6 +47,14 @@
   version = "v0.8.1"
 
 [[projects]]
+  branch = "master"
+  digest = "1:b680a51cf3d34be48fd34701ccdd71d2f4ae4670fecb47dbe77f1c5bddadf231"
+  name = "github.com/quasilyte/regex"
+  packages = ["syntax"]
+  pruneopts = "UT"
+  revision = "f6e043421647709ad19fd90a91ec242b11f5ea4b"
+
+[[projects]]
   digest = "1:a5cc901b8e54c4b73a62f97dc7c8f6c46e347c148a7a38e09b2e942c2587ba03"
   name = "gotest.tools"
   packages = [
@@ -68,6 +76,7 @@
     "github.com/cznic/golex/lex",
     "github.com/google/go-cmp/cmp",
     "github.com/karrick/godirwalk",
+    "github.com/quasilyte/regex/syntax",
     "gotest.tools/assert",
   ]
   solver-name = "gps-cdcl"

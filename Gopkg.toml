@@ -44,3 +44,7 @@
 [[constraint]]
   name = "github.com/client9/misspell"
   version = "0.3.4"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/quasilyte/regex"
