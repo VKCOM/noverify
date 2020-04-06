@@ -838,6 +838,19 @@ func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
 
 	e.Function.Walk(b)
 
+	switch call.fqName {
+	case `\preg_match`, `\preg_match_all`, `\preg_replace`, `\preg_split`:
+		s, ok := e.ArgumentList.Arguments[0].(*node.Argument).Expr.(*scalar.String)
+		if !ok {
+			break
+		}
+		simplified := b.r.reSimplifier.simplifyRegexp(s)
+		if simplified != "" {
+			b.r.Report(e.ArgumentList.Arguments[0], LevelDoNotReject, "regexpSimplify", "May re-write %s as '%s'",
+				s.Value, simplified)
+		}
+	}
+
 	if call.fqName == `\compact` {
 		b.handleCompactCallArgs(e.ArgumentList.Arguments)
 	} else {

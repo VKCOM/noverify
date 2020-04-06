@@ -46,6 +46,8 @@ type RootWalker struct {
 	localRset *rules.ScopedSet
 	anyRset   *rules.ScopedSet
 
+	reSimplifier *regexpSimplifier
+
 	// internal state
 	meta fileMeta
 

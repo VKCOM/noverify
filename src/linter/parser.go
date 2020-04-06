@@ -24,6 +24,7 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/karrick/godirwalk"
+	"github.com/quasilyte/regex/syntax"
 )
 
 type FileInfo struct {
@@ -151,6 +152,13 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 		anyRset:   cloneRulesForFile(filename, Rules.Any),
 		rootRset:  cloneRulesForFile(filename, Rules.Root),
 		localRset: cloneRulesForFile(filename, Rules.Local),
+
+		reSimplifier: &regexpSimplifier{
+			parser: syntax.NewParser(&syntax.ParserOptions{
+				NoLiterals: true,
+			}),
+			out: &strings.Builder{},
+		},
 	}
 
 	w.InitFromParser(contents, parser)

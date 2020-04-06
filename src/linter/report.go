@@ -151,6 +151,12 @@ func init() {
 		},
 
 		{
+			Name:    "regexpSimplify",
+			Default: true,
+			Comment: `Report regular expressions that can be simplified.`,
+		},
+
+		{
 			Name:    "caseContinue",
 			Default: true,
 			Comment: `Report suspicious 'continue' usages inside switch cases.`,
