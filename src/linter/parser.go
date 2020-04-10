@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -83,6 +82,9 @@ func ParseContents(filename string, contents []byte, lineRanges []git.LineRange)
 
 	start := time.Now()
 
+	// TODO: Ragel lexer can handle non-UTF8 input.
+	// We can simplify code below and read from files directly.
+
 	var rd inputs.ReadCloseSizer
 	if contents == nil {
 		rd, err = SrcInput.NewReader(filename)
@@ -98,18 +100,19 @@ func ParseContents(filename string, contents []byte, lineRanges []git.LineRange)
 	b.Reset()
 	defer bytesBufPool.Put(b)
 
-	waiter := BeforeParse(rd.Size(), filename)
+	b.ReadFrom(rd)
+	contents = append(make([]byte, 0, b.Len()), b.Bytes()...)
+
+	waiter := BeforeParse(len(contents), filename)
 	defer waiter.Finish()
 
-	parser := php7.NewParser(io.TeeReader(rd, b), filename)
+	parser := php7.NewParser(contents)
 	parser.WithFreeFloating()
 	parser.Parse()
 
 	atomic.AddInt64(&initParseTime, int64(time.Since(start)))
 
-	bufCopy := append(make([]byte, 0, b.Len()), b.Bytes()...)
-
-	return analyzeFile(filename, bufCopy, parser, lineRanges)
+	return analyzeFile(filename, contents, parser, lineRanges)
 }
 
 func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedSet {

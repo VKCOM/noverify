@@ -1,7 +1,6 @@
 package stmt_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -21,7 +20,7 @@ func TestInterface(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    19,
 		},
 		Stmts: []node.Node{
@@ -29,7 +28,7 @@ func TestInterface(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    19,
 				},
 				PhpDocComment: "",
@@ -37,7 +36,7 @@ func TestInterface(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  14,
+						StartPos:  13,
 						EndPos:    16,
 					},
 					Value: "Foo",
@@ -47,7 +46,7 @@ func TestInterface(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -60,7 +59,7 @@ func TestInterfaceExtend(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    31,
 		},
 		Stmts: []node.Node{
@@ -68,7 +67,7 @@ func TestInterfaceExtend(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    31,
 				},
 				PhpDocComment: "",
@@ -76,7 +75,7 @@ func TestInterfaceExtend(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  14,
+						StartPos:  13,
 						EndPos:    16,
 					},
 					Value: "Foo",
@@ -85,7 +84,7 @@ func TestInterfaceExtend(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  18,
+						StartPos:  17,
 						EndPos:    28,
 					},
 					InterfaceNames: []node.Node{
@@ -93,7 +92,7 @@ func TestInterfaceExtend(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  26,
+								StartPos:  25,
 								EndPos:    28,
 							},
 							Parts: []node.Node{
@@ -101,7 +100,7 @@ func TestInterfaceExtend(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  26,
+										StartPos:  25,
 										EndPos:    28,
 									},
 									Value: "Bar",
@@ -115,7 +114,7 @@ func TestInterfaceExtend(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -128,7 +127,7 @@ func TestInterfaceExtends(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    36,
 		},
 		Stmts: []node.Node{
@@ -136,7 +135,7 @@ func TestInterfaceExtends(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    36,
 				},
 				PhpDocComment: "",
@@ -144,7 +143,7 @@ func TestInterfaceExtends(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  14,
+						StartPos:  13,
 						EndPos:    16,
 					},
 					Value: "Foo",
@@ -153,7 +152,7 @@ func TestInterfaceExtends(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  18,
+						StartPos:  17,
 						EndPos:    33,
 					},
 					InterfaceNames: []node.Node{
@@ -161,7 +160,7 @@ func TestInterfaceExtends(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  26,
+								StartPos:  25,
 								EndPos:    28,
 							},
 							Parts: []node.Node{
@@ -169,7 +168,7 @@ func TestInterfaceExtends(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  26,
+										StartPos:  25,
 										EndPos:    28,
 									},
 									Value: "Bar",
@@ -180,7 +179,7 @@ func TestInterfaceExtends(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  31,
+								StartPos:  30,
 								EndPos:    33,
 							},
 							Parts: []node.Node{
@@ -188,7 +187,7 @@ func TestInterfaceExtends(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  31,
+										StartPos:  30,
 										EndPos:    33,
 									},
 									Value: "Baz",
@@ -202,7 +201,7 @@ func TestInterfaceExtends(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

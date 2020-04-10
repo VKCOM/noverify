@@ -21,7 +21,7 @@ func getNodePos(n node.Node) *position.Position {
 		// See #24.
 		return nil
 	}
-	if pos.EndPos < 0 || pos.StartPos-1 < 0 {
+	if pos.EndPos < 0 || pos.StartPos < 0 {
 		// FIXME: investigate why we sometimes get out-of-range pos ranges.
 		// We also get negative EndPos for some nodes, which is awkward.
 		// See #24.
@@ -180,7 +180,7 @@ func parsePHP7expr(code []byte) (node.Node, []byte, error) {
 }
 
 func parsePHP7root(code []byte) (node.Node, error) {
-	p := php7.NewParser(bytes.NewReader(code), "string-input.php")
+	p := php7.NewParser(code)
 	p.Parse()
 	if len(p.GetErrors()) != 0 {
 		return nil, errors.New(p.GetErrors()[0].String())

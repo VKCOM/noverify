@@ -1,7 +1,6 @@
 package expr_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -21,7 +20,7 @@ func TestConstFetch(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    7,
 		},
 		Stmts: []node.Node{
@@ -29,21 +28,21 @@ func TestConstFetch(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    7,
 				},
 				Expr: &expr.ConstFetch{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    6,
 					},
 					Constant: &name.Name{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  4,
+							StartPos:  3,
 							EndPos:    6,
 						},
 						Parts: []node.Node{
@@ -51,7 +50,7 @@ func TestConstFetch(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  4,
+									StartPos:  3,
 									EndPos:    6,
 								},
 								Value: "foo",
@@ -63,7 +62,7 @@ func TestConstFetch(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -76,7 +75,7 @@ func TestConstFetchRelative(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    17,
 		},
 		Stmts: []node.Node{
@@ -84,21 +83,21 @@ func TestConstFetchRelative(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    17,
 				},
 				Expr: &expr.ConstFetch{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    16,
 					},
 					Constant: &name.Relative{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  4,
+							StartPos:  3,
 							EndPos:    16,
 						},
 						Parts: []node.Node{
@@ -106,7 +105,7 @@ func TestConstFetchRelative(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  14,
+									StartPos:  13,
 									EndPos:    16,
 								},
 								Value: "foo",
@@ -118,7 +117,7 @@ func TestConstFetchRelative(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -131,7 +130,7 @@ func TestConstFetchFullyQualified(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    8,
 		},
 		Stmts: []node.Node{
@@ -139,21 +138,21 @@ func TestConstFetchFullyQualified(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    8,
 				},
 				Expr: &expr.ConstFetch{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    7,
 					},
 					Constant: &name.FullyQualified{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  4,
+							StartPos:  3,
 							EndPos:    7,
 						},
 						Parts: []node.Node{
@@ -161,7 +160,7 @@ func TestConstFetchFullyQualified(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  5,
+									StartPos:  4,
 									EndPos:    7,
 								},
 								Value: "foo",
@@ -173,7 +172,7 @@ func TestConstFetchFullyQualified(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

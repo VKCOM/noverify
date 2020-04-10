@@ -318,7 +318,7 @@ func (d *RootWalker) parseStartPos(pos *position.Position) (startLn []byte, star
 		startLn = d.Lines[pos.StartLine-1]
 		p := d.LinesPositions[pos.StartLine-1]
 		if pos.StartPos > p {
-			startChar = pos.StartPos - p - 1
+			startChar = pos.StartPos - p
 		}
 	}
 
@@ -1434,7 +1434,7 @@ func (d *RootWalker) checkKeywordCase(n node.Node, keyword string) {
 	// as the leftmost token.
 
 	pos := n.GetPosition()
-	from := pos.StartPos - 1
+	from := pos.StartPos
 	to := from + len(keyword)
 
 	wantKwd := keyword

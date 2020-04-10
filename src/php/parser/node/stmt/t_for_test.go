@@ -1,7 +1,6 @@
 package stmt_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -26,7 +25,7 @@ func TestFor(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    38,
 		},
 		Stmts: []node.Node{
@@ -34,7 +33,7 @@ func TestFor(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    38,
 				},
 				Init: []node.Node{
@@ -42,14 +41,14 @@ func TestFor(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  8,
+							StartPos:  7,
 							EndPos:    13,
 						},
 						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  8,
+								StartPos:  7,
 								EndPos:    9,
 							},
 							Name: "i",
@@ -58,7 +57,7 @@ func TestFor(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  13,
+								StartPos:  12,
 								EndPos:    13,
 							},
 							Value: "0",
@@ -70,14 +69,14 @@ func TestFor(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  16,
+							StartPos:  15,
 							EndPos:    22,
 						},
 						Left: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  16,
+								StartPos:  15,
 								EndPos:    17,
 							},
 							Name: "i",
@@ -86,7 +85,7 @@ func TestFor(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  21,
+								StartPos:  20,
 								EndPos:    22,
 							},
 							Value: "10",
@@ -98,14 +97,14 @@ func TestFor(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  25,
+							StartPos:  24,
 							EndPos:    28,
 						},
 						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  25,
+								StartPos:  24,
 								EndPos:    26,
 							},
 							Name: "i",
@@ -115,14 +114,14 @@ func TestFor(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  31,
+							StartPos:  30,
 							EndPos:    34,
 						},
 						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  31,
+								StartPos:  30,
 								EndPos:    32,
 							},
 							Name: "i",
@@ -133,7 +132,7 @@ func TestFor(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  37,
+						StartPos:  36,
 						EndPos:    38,
 					},
 					Stmts: []node.Node{},
@@ -142,7 +141,7 @@ func TestFor(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -155,7 +154,7 @@ func TestAltFor(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    33,
 		},
 		Stmts: []node.Node{
@@ -164,7 +163,7 @@ func TestAltFor(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    33,
 				},
 				Cond: []node.Node{
@@ -172,14 +171,14 @@ func TestAltFor(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  10,
+							StartPos:  9,
 							EndPos:    16,
 						},
 						Left: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  10,
+								StartPos:  9,
 								EndPos:    11,
 							},
 							Name: "i",
@@ -188,7 +187,7 @@ func TestAltFor(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  15,
+								StartPos:  14,
 								EndPos:    16,
 							},
 							Value: "10",
@@ -200,14 +199,14 @@ func TestAltFor(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  19,
+							StartPos:  18,
 							EndPos:    22,
 						},
 						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  19,
+								StartPos:  18,
 								EndPos:    20,
 							},
 							Name: "i",
@@ -227,7 +226,7 @@ func TestAltFor(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

@@ -42,7 +42,7 @@ func TestFind(t *testing.T) {
 		var haveMatches []string
 		findInText(&matcher.m, []byte(code), func(m *MatchData) bool {
 			pos := m.Node.GetPosition()
-			posFrom := pos.StartPos - 1
+			posFrom := pos.StartPos
 			posTo := pos.EndPos
 			haveMatches = append(haveMatches, string(code[posFrom:posTo]))
 			return true

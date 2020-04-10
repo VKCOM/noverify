@@ -1,7 +1,6 @@
 package expr_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -21,7 +20,7 @@ func TestShortArray(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    6,
 		},
 		Stmts: []node.Node{
@@ -29,7 +28,7 @@ func TestShortArray(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    6,
 				},
 				Expr: &expr.Array{
@@ -37,7 +36,7 @@ func TestShortArray(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    5,
 					},
 					Items: []*expr.ArrayItem{},
@@ -46,7 +45,7 @@ func TestShortArray(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -59,7 +58,7 @@ func TestShortArrayItem(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    7,
 		},
 		Stmts: []node.Node{
@@ -67,7 +66,7 @@ func TestShortArrayItem(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    7,
 				},
 				Expr: &expr.Array{
@@ -75,7 +74,7 @@ func TestShortArrayItem(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    6,
 					},
 					Items: []*expr.ArrayItem{
@@ -83,14 +82,14 @@ func TestShortArrayItem(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  5,
+								StartPos:  4,
 								EndPos:    5,
 							},
 							Val: &scalar.Lnumber{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  5,
+									StartPos:  4,
 									EndPos:    5,
 								},
 								Value: "1",
@@ -102,7 +101,7 @@ func TestShortArrayItem(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -115,7 +114,7 @@ func TestShortArrayItems(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    16,
 		},
 		Stmts: []node.Node{
@@ -123,7 +122,7 @@ func TestShortArrayItems(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    16,
 				},
 				Expr: &expr.Array{
@@ -131,7 +130,7 @@ func TestShortArrayItems(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    15,
 					},
 					Items: []*expr.ArrayItem{
@@ -139,14 +138,14 @@ func TestShortArrayItems(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  5,
+								StartPos:  4,
 								EndPos:    8,
 							},
 							Key: &scalar.Lnumber{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  5,
+									StartPos:  4,
 									EndPos:    5,
 								},
 								Value: "1",
@@ -155,7 +154,7 @@ func TestShortArrayItems(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  8,
+									StartPos:  7,
 									EndPos:    8,
 								},
 								Value: "1",
@@ -165,21 +164,21 @@ func TestShortArrayItems(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  11,
+								StartPos:  10,
 								EndPos:    13,
 							},
 							Val: &expr.Reference{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  11,
+									StartPos:  10,
 									EndPos:    13,
 								},
 								Variable: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  12,
+										StartPos:  11,
 										EndPos:    13,
 									},
 									Name: "b",
@@ -193,7 +192,7 @@ func TestShortArrayItems(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

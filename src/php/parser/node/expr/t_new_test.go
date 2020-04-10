@@ -1,7 +1,6 @@
 package expr_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -21,7 +20,7 @@ func TestNew(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    11,
 		},
 		Stmts: []node.Node{
@@ -29,21 +28,21 @@ func TestNew(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    11,
 				},
 				Expr: &expr.New{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    10,
 					},
 					Class: &name.Name{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  8,
+							StartPos:  7,
 							EndPos:    10,
 						},
 						Parts: []node.Node{
@@ -51,7 +50,7 @@ func TestNew(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  8,
+									StartPos:  7,
 									EndPos:    10,
 								},
 								Value: "Foo",
@@ -63,7 +62,7 @@ func TestNew(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -76,7 +75,7 @@ func TestNewRelative(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    23,
 		},
 		Stmts: []node.Node{
@@ -84,21 +83,21 @@ func TestNewRelative(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    23,
 				},
 				Expr: &expr.New{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    22,
 					},
 					Class: &name.Relative{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  8,
+							StartPos:  7,
 							EndPos:    20,
 						},
 						Parts: []node.Node{
@@ -106,7 +105,7 @@ func TestNewRelative(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  18,
+									StartPos:  17,
 									EndPos:    20,
 								},
 								Value: "Foo",
@@ -117,7 +116,7 @@ func TestNewRelative(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  21,
+							StartPos:  20,
 							EndPos:    22,
 						},
 					},
@@ -126,7 +125,7 @@ func TestNewRelative(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -139,7 +138,7 @@ func TestNewFullyQualified(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    14,
 		},
 		Stmts: []node.Node{
@@ -147,21 +146,21 @@ func TestNewFullyQualified(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    14,
 				},
 				Expr: &expr.New{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    13,
 					},
 					Class: &name.FullyQualified{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  8,
+							StartPos:  7,
 							EndPos:    11,
 						},
 						Parts: []node.Node{
@@ -169,7 +168,7 @@ func TestNewFullyQualified(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  9,
+									StartPos:  8,
 									EndPos:    11,
 								},
 								Value: "Foo",
@@ -180,7 +179,7 @@ func TestNewFullyQualified(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  12,
+							StartPos:  11,
 							EndPos:    13,
 						},
 					},
@@ -189,7 +188,7 @@ func TestNewFullyQualified(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -202,7 +201,7 @@ func TestNewAnonymous(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    28,
 		},
 		Stmts: []node.Node{
@@ -210,21 +209,21 @@ func TestNewAnonymous(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    28,
 				},
 				Expr: &expr.New{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    27,
 					},
 					Class: &stmt.Class{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  8,
+							StartPos:  7,
 							EndPos:    27,
 						},
 						PhpDocComment: "",
@@ -232,7 +231,7 @@ func TestNewAnonymous(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  14,
+								StartPos:  13,
 								EndPos:    24,
 							},
 							Arguments: []node.Node{
@@ -240,7 +239,7 @@ func TestNewAnonymous(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  15,
+										StartPos:  14,
 										EndPos:    16,
 									},
 									Variadic:    false,
@@ -249,7 +248,7 @@ func TestNewAnonymous(t *testing.T) {
 										Position: &position.Position{
 											StartLine: 1,
 											EndLine:   1,
-											StartPos:  15,
+											StartPos:  14,
 											EndPos:    16,
 										},
 										Name: "a",
@@ -259,7 +258,7 @@ func TestNewAnonymous(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  19,
+										StartPos:  18,
 										EndPos:    23,
 									},
 									IsReference: false,
@@ -268,7 +267,7 @@ func TestNewAnonymous(t *testing.T) {
 										Position: &position.Position{
 											StartLine: 1,
 											EndLine:   1,
-											StartPos:  22,
+											StartPos:  21,
 											EndPos:    23,
 										},
 										Name: "b",
@@ -283,7 +282,7 @@ func TestNewAnonymous(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

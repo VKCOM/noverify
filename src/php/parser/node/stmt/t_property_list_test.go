@@ -1,7 +1,6 @@
 package stmt_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -20,7 +19,7 @@ func TestProperty(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    22,
 		},
 		Stmts: []node.Node{
@@ -28,7 +27,7 @@ func TestProperty(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    22,
 				},
 				PhpDocComment: "",
@@ -36,7 +35,7 @@ func TestProperty(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  10,
+						StartPos:  9,
 						EndPos:    12,
 					},
 					Value: "foo",
@@ -46,7 +45,7 @@ func TestProperty(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  15,
+							StartPos:  14,
 							EndPos:    21,
 						},
 						Modifiers: []*node.Identifier{
@@ -54,7 +53,7 @@ func TestProperty(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  15,
+									StartPos:  14,
 									EndPos:    17,
 								},
 								Value: "var",
@@ -65,7 +64,7 @@ func TestProperty(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  19,
+									StartPos:  18,
 									EndPos:    20,
 								},
 								PhpDocComment: "",
@@ -73,7 +72,7 @@ func TestProperty(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  19,
+										StartPos:  18,
 										EndPos:    20,
 									},
 									Name: "a",
@@ -86,7 +85,7 @@ func TestProperty(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -99,7 +98,7 @@ func TestProperties(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    40,
 		},
 		Stmts: []node.Node{
@@ -107,7 +106,7 @@ func TestProperties(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    40,
 				},
 				PhpDocComment: "",
@@ -115,7 +114,7 @@ func TestProperties(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  10,
+						StartPos:  9,
 						EndPos:    12,
 					},
 					Value: "foo",
@@ -125,7 +124,7 @@ func TestProperties(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  15,
+							StartPos:  14,
 							EndPos:    39,
 						},
 						Modifiers: []*node.Identifier{
@@ -133,7 +132,7 @@ func TestProperties(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  15,
+									StartPos:  14,
 									EndPos:    20,
 								},
 								Value: "public",
@@ -142,7 +141,7 @@ func TestProperties(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  22,
+									StartPos:  21,
 									EndPos:    27,
 								},
 								Value: "static",
@@ -153,7 +152,7 @@ func TestProperties(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  29,
+									StartPos:  28,
 									EndPos:    30,
 								},
 								PhpDocComment: "",
@@ -161,7 +160,7 @@ func TestProperties(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  29,
+										StartPos:  28,
 										EndPos:    30,
 									},
 									Name: "a",
@@ -171,7 +170,7 @@ func TestProperties(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  33,
+									StartPos:  32,
 									EndPos:    38,
 								},
 								PhpDocComment: "",
@@ -179,7 +178,7 @@ func TestProperties(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  33,
+										StartPos:  32,
 										EndPos:    34,
 									},
 									Name: "b",
@@ -188,7 +187,7 @@ func TestProperties(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  38,
+										StartPos:  37,
 										EndPos:    38,
 									},
 									Value: "1",
@@ -201,7 +200,7 @@ func TestProperties(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -214,7 +213,7 @@ func TestProperties2(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    40,
 		},
 		Stmts: []node.Node{
@@ -222,7 +221,7 @@ func TestProperties2(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    40,
 				},
 				PhpDocComment: "",
@@ -230,7 +229,7 @@ func TestProperties2(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  10,
+						StartPos:  9,
 						EndPos:    12,
 					},
 					Value: "foo",
@@ -240,7 +239,7 @@ func TestProperties2(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  15,
+							StartPos:  14,
 							EndPos:    39,
 						},
 						Modifiers: []*node.Identifier{
@@ -248,7 +247,7 @@ func TestProperties2(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  15,
+									StartPos:  14,
 									EndPos:    20,
 								},
 								Value: "public",
@@ -257,7 +256,7 @@ func TestProperties2(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  22,
+									StartPos:  21,
 									EndPos:    27,
 								},
 								Value: "static",
@@ -268,7 +267,7 @@ func TestProperties2(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  29,
+									StartPos:  28,
 									EndPos:    34,
 								},
 								PhpDocComment: "",
@@ -276,7 +275,7 @@ func TestProperties2(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  29,
+										StartPos:  28,
 										EndPos:    30,
 									},
 									Name: "a",
@@ -285,7 +284,7 @@ func TestProperties2(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  34,
+										StartPos:  33,
 										EndPos:    34,
 									},
 									Value: "1",
@@ -295,7 +294,7 @@ func TestProperties2(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  37,
+									StartPos:  36,
 									EndPos:    38,
 								},
 								PhpDocComment: "",
@@ -303,7 +302,7 @@ func TestProperties2(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  37,
+										StartPos:  36,
 										EndPos:    38,
 									},
 									Name: "b",
@@ -316,7 +315,7 @@ func TestProperties2(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

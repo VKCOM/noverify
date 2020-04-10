@@ -1,7 +1,6 @@
 package stmt_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -23,7 +22,7 @@ func TestTry(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 2,
 			EndLine:   -1,
-			StartPos:  7,
+			StartPos:  6,
 			EndPos:    -1,
 		},
 		Stmts: []node.Node{
@@ -31,7 +30,7 @@ func TestTry(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 2,
 					EndLine:   -1,
-					StartPos:  7,
+					StartPos:  6,
 					EndPos:    -1,
 				},
 				Stmts:   []node.Node{},
@@ -40,7 +39,7 @@ func TestTry(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -55,7 +54,7 @@ func TestTryCatch(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 2,
 			EndLine:   2,
-			StartPos:  7,
+			StartPos:  6,
 			EndPos:    36,
 		},
 		Stmts: []node.Node{
@@ -63,7 +62,7 @@ func TestTryCatch(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 2,
 					EndLine:   2,
-					StartPos:  7,
+					StartPos:  6,
 					EndPos:    36,
 				},
 				Stmts: []node.Node{},
@@ -72,7 +71,7 @@ func TestTryCatch(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 2,
 							EndLine:   2,
-							StartPos:  14,
+							StartPos:  13,
 							EndPos:    36,
 						},
 						Types: []node.Node{
@@ -80,7 +79,7 @@ func TestTryCatch(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 2,
 									EndLine:   2,
-									StartPos:  21,
+									StartPos:  20,
 									EndPos:    29,
 								},
 								Parts: []node.Node{
@@ -88,7 +87,7 @@ func TestTryCatch(t *testing.T) {
 										Position: &position.Position{
 											StartLine: 2,
 											EndLine:   2,
-											StartPos:  21,
+											StartPos:  20,
 											EndPos:    29,
 										},
 										Value: "Exception",
@@ -100,7 +99,7 @@ func TestTryCatch(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
-								StartPos:  31,
+								StartPos:  30,
 								EndPos:    32,
 							},
 							Name: "e",
@@ -112,7 +111,7 @@ func TestTryCatch(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -127,7 +126,7 @@ func TestPhp7TryCatch(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 2,
 			EndLine:   2,
-			StartPos:  7,
+			StartPos:  6,
 			EndPos:    53,
 		},
 		Stmts: []node.Node{
@@ -135,7 +134,7 @@ func TestPhp7TryCatch(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 2,
 					EndLine:   2,
-					StartPos:  7,
+					StartPos:  6,
 					EndPos:    53,
 				},
 				Stmts: []node.Node{},
@@ -144,7 +143,7 @@ func TestPhp7TryCatch(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 2,
 							EndLine:   2,
-							StartPos:  14,
+							StartPos:  13,
 							EndPos:    53,
 						},
 						Types: []node.Node{
@@ -152,7 +151,7 @@ func TestPhp7TryCatch(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 2,
 									EndLine:   2,
-									StartPos:  21,
+									StartPos:  20,
 									EndPos:    29,
 								},
 								Parts: []node.Node{
@@ -160,7 +159,7 @@ func TestPhp7TryCatch(t *testing.T) {
 										Position: &position.Position{
 											StartLine: 2,
 											EndLine:   2,
-											StartPos:  21,
+											StartPos:  20,
 											EndPos:    29,
 										},
 										Value: "Exception",
@@ -171,7 +170,7 @@ func TestPhp7TryCatch(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 2,
 									EndLine:   2,
-									StartPos:  31,
+									StartPos:  30,
 									EndPos:    46,
 								},
 								Parts: []node.Node{
@@ -179,7 +178,7 @@ func TestPhp7TryCatch(t *testing.T) {
 										Position: &position.Position{
 											StartLine: 2,
 											EndLine:   2,
-											StartPos:  31,
+											StartPos:  30,
 											EndPos:    46,
 										},
 										Value: "RuntimeException",
@@ -191,7 +190,7 @@ func TestPhp7TryCatch(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
-								StartPos:  48,
+								StartPos:  47,
 								EndPos:    49,
 							},
 							Name: "e",
@@ -203,7 +202,7 @@ func TestPhp7TryCatch(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -218,7 +217,7 @@ func TestTryCatchCatch(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 2,
 			EndLine:   2,
-			StartPos:  7,
+			StartPos:  6,
 			EndPos:    67,
 		},
 		Stmts: []node.Node{
@@ -226,7 +225,7 @@ func TestTryCatchCatch(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 2,
 					EndLine:   2,
-					StartPos:  7,
+					StartPos:  6,
 					EndPos:    67,
 				},
 				Stmts: []node.Node{},
@@ -235,7 +234,7 @@ func TestTryCatchCatch(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 2,
 							EndLine:   2,
-							StartPos:  14,
+							StartPos:  13,
 							EndPos:    36,
 						},
 						Types: []node.Node{
@@ -243,7 +242,7 @@ func TestTryCatchCatch(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 2,
 									EndLine:   2,
-									StartPos:  21,
+									StartPos:  20,
 									EndPos:    29,
 								},
 								Parts: []node.Node{
@@ -251,7 +250,7 @@ func TestTryCatchCatch(t *testing.T) {
 										Position: &position.Position{
 											StartLine: 2,
 											EndLine:   2,
-											StartPos:  21,
+											StartPos:  20,
 											EndPos:    29,
 										},
 										Value: "Exception",
@@ -263,7 +262,7 @@ func TestTryCatchCatch(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
-								StartPos:  31,
+								StartPos:  30,
 								EndPos:    32,
 							},
 							Name: "e",
@@ -274,7 +273,7 @@ func TestTryCatchCatch(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 2,
 							EndLine:   2,
-							StartPos:  38,
+							StartPos:  37,
 							EndPos:    67,
 						},
 						Types: []node.Node{
@@ -282,7 +281,7 @@ func TestTryCatchCatch(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 2,
 									EndLine:   2,
-									StartPos:  45,
+									StartPos:  44,
 									EndPos:    60,
 								},
 								Parts: []node.Node{
@@ -290,7 +289,7 @@ func TestTryCatchCatch(t *testing.T) {
 										Position: &position.Position{
 											StartLine: 2,
 											EndLine:   2,
-											StartPos:  45,
+											StartPos:  44,
 											EndPos:    60,
 										},
 										Value: "RuntimeException",
@@ -302,7 +301,7 @@ func TestTryCatchCatch(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
-								StartPos:  62,
+								StartPos:  61,
 								EndPos:    63,
 							},
 							Name: "e",
@@ -314,7 +313,7 @@ func TestTryCatchCatch(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -329,7 +328,7 @@ func TestTryCatchFinally(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 2,
 			EndLine:   2,
-			StartPos:  7,
+			StartPos:  6,
 			EndPos:    47,
 		},
 		Stmts: []node.Node{
@@ -337,7 +336,7 @@ func TestTryCatchFinally(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 2,
 					EndLine:   2,
-					StartPos:  7,
+					StartPos:  6,
 					EndPos:    47,
 				},
 				Stmts: []node.Node{},
@@ -346,7 +345,7 @@ func TestTryCatchFinally(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 2,
 							EndLine:   2,
-							StartPos:  14,
+							StartPos:  13,
 							EndPos:    36,
 						},
 						Types: []node.Node{
@@ -354,7 +353,7 @@ func TestTryCatchFinally(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 2,
 									EndLine:   2,
-									StartPos:  21,
+									StartPos:  20,
 									EndPos:    29,
 								},
 								Parts: []node.Node{
@@ -362,7 +361,7 @@ func TestTryCatchFinally(t *testing.T) {
 										Position: &position.Position{
 											StartLine: 2,
 											EndLine:   2,
-											StartPos:  21,
+											StartPos:  20,
 											EndPos:    29,
 										},
 										Value: "Exception",
@@ -374,7 +373,7 @@ func TestTryCatchFinally(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
-								StartPos:  31,
+								StartPos:  30,
 								EndPos:    32,
 							},
 							Name: "e",
@@ -386,7 +385,7 @@ func TestTryCatchFinally(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 2,
 						EndLine:   2,
-						StartPos:  38,
+						StartPos:  37,
 						EndPos:    47,
 					},
 					Stmts: []node.Node{},
@@ -395,7 +394,7 @@ func TestTryCatchFinally(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -408,7 +407,7 @@ func TestTryCatchCatchCatch(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    107,
 		},
 		Stmts: []node.Node{
@@ -416,7 +415,7 @@ func TestTryCatchCatchCatch(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    107,
 				},
 				Stmts: []node.Node{},
@@ -425,7 +424,7 @@ func TestTryCatchCatchCatch(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  11,
+							StartPos:  10,
 							EndPos:    33,
 						},
 						Types: []node.Node{
@@ -433,7 +432,7 @@ func TestTryCatchCatchCatch(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  18,
+									StartPos:  17,
 									EndPos:    26,
 								},
 								Parts: []node.Node{
@@ -441,7 +440,7 @@ func TestTryCatchCatchCatch(t *testing.T) {
 										Position: &position.Position{
 											StartLine: 1,
 											EndLine:   1,
-											StartPos:  18,
+											StartPos:  17,
 											EndPos:    26,
 										},
 										Value: "Exception",
@@ -453,7 +452,7 @@ func TestTryCatchCatchCatch(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  28,
+								StartPos:  27,
 								EndPos:    29,
 							},
 							Name: "e",
@@ -464,7 +463,7 @@ func TestTryCatchCatchCatch(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  35,
+							StartPos:  34,
 							EndPos:    65,
 						},
 						Types: []node.Node{
@@ -472,7 +471,7 @@ func TestTryCatchCatchCatch(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  42,
+									StartPos:  41,
 									EndPos:    58,
 								},
 								Parts: []node.Node{
@@ -480,7 +479,7 @@ func TestTryCatchCatchCatch(t *testing.T) {
 										Position: &position.Position{
 											StartLine: 1,
 											EndLine:   1,
-											StartPos:  43,
+											StartPos:  42,
 											EndPos:    58,
 										},
 										Value: "RuntimeException",
@@ -492,7 +491,7 @@ func TestTryCatchCatchCatch(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  60,
+								StartPos:  59,
 								EndPos:    61,
 							},
 							Name: "e",
@@ -503,7 +502,7 @@ func TestTryCatchCatchCatch(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  67,
+							StartPos:  66,
 							EndPos:    107,
 						},
 						Types: []node.Node{
@@ -511,7 +510,7 @@ func TestTryCatchCatchCatch(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  74,
+									StartPos:  73,
 									EndPos:    100,
 								},
 								Parts: []node.Node{
@@ -519,7 +518,7 @@ func TestTryCatchCatchCatch(t *testing.T) {
 										Position: &position.Position{
 											StartLine: 1,
 											EndLine:   1,
-											StartPos:  84,
+											StartPos:  83,
 											EndPos:    100,
 										},
 										Value: "AdditionException",
@@ -531,7 +530,7 @@ func TestTryCatchCatchCatch(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  102,
+								StartPos:  101,
 								EndPos:    103,
 							},
 							Name: "e",
@@ -543,7 +542,7 @@ func TestTryCatchCatchCatch(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

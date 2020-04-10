@@ -1,7 +1,6 @@
 package scalar_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -23,7 +22,7 @@ LBL;
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   3,
-			StartPos:  7,
+			StartPos:  3,
 			EndPos:    24,
 		},
 		Stmts: []node.Node{
@@ -31,23 +30,23 @@ LBL;
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   3,
-					StartPos:  7,
+					StartPos:  3,
 					EndPos:    24,
 				},
 				Expr: &scalar.Heredoc{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   3,
-						StartPos:  7,
+						StartPos:  3,
 						EndPos:    23,
 					},
-					Label: "LBL",
+					Label: "<<<LBL\n",
 					Parts: []node.Node{
 						&scalar.EncapsedStringPart{
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
-								StartPos:  11,
+								StartPos:  10,
 								EndPos:    15,
 							},
 							Value: "test ",
@@ -56,10 +55,19 @@ LBL;
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
-								StartPos:  16,
+								StartPos:  15,
 								EndPos:    19,
 							},
 							Name: "var",
+						},
+						&scalar.EncapsedStringPart{
+							Position: &position.Position{
+								StartLine: 2,
+								EndLine:   2,
+								StartPos:  19,
+								EndPos:    20,
+							},
+							Value: "\n",
 						},
 					},
 				},
@@ -67,7 +75,7 @@ LBL;
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -83,7 +91,7 @@ LBL;
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   3,
-			StartPos:  7,
+			StartPos:  3,
 			EndPos:    26,
 		},
 		Stmts: []node.Node{
@@ -91,23 +99,23 @@ LBL;
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   3,
-					StartPos:  7,
+					StartPos:  3,
 					EndPos:    26,
 				},
 				Expr: &scalar.Heredoc{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   3,
-						StartPos:  7,
+						StartPos:  3,
 						EndPos:    25,
 					},
-					Label: "\"LBL\"",
+					Label: "<<<\"LBL\"\n",
 					Parts: []node.Node{
 						&scalar.EncapsedStringPart{
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
-								StartPos:  13,
+								StartPos:  12,
 								EndPos:    17,
 							},
 							Value: "test ",
@@ -116,10 +124,19 @@ LBL;
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
-								StartPos:  18,
+								StartPos:  17,
 								EndPos:    21,
 							},
 							Name: "var",
+						},
+						&scalar.EncapsedStringPart{
+							Position: &position.Position{
+								StartLine: 2,
+								EndLine:   2,
+								StartPos:  21,
+								EndPos:    22,
+							},
+							Value: "\n",
 						},
 					},
 				},
@@ -127,7 +144,7 @@ LBL;
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -143,7 +160,7 @@ LBL;
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   3,
-			StartPos:  7,
+			StartPos:  3,
 			EndPos:    26,
 		},
 		Stmts: []node.Node{
@@ -151,26 +168,26 @@ LBL;
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   3,
-					StartPos:  7,
+					StartPos:  3,
 					EndPos:    26,
 				},
 				Expr: &scalar.Heredoc{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   3,
-						StartPos:  7,
+						StartPos:  3,
 						EndPos:    25,
 					},
-					Label: "'LBL'",
+					Label: "<<<'LBL'\n",
 					Parts: []node.Node{
 						&scalar.EncapsedStringPart{
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
-								StartPos:  13,
-								EndPos:    21,
+								StartPos:  12,
+								EndPos:    22,
 							},
-							Value: "test $var",
+							Value: "test $var\n",
 						},
 					},
 				},
@@ -178,7 +195,7 @@ LBL;
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -193,7 +210,7 @@ CAD;
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   2,
-			StartPos:  7,
+			StartPos:  3,
 			EndPos:    14,
 		},
 		Stmts: []node.Node{
@@ -201,23 +218,23 @@ CAD;
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   2,
-					StartPos:  7,
+					StartPos:  3,
 					EndPos:    14,
 				},
 				Expr: &scalar.Heredoc{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   2,
-						StartPos:  7,
+						StartPos:  3,
 						EndPos:    13,
 					},
-					Label: "CAD",
+					Label: "<<<CAD\n",
 				},
 			},
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -233,7 +250,7 @@ CAD;
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   3,
-			StartPos:  7,
+			StartPos:  3,
 			EndPos:    21,
 		},
 		Stmts: []node.Node{
@@ -241,26 +258,26 @@ CAD;
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   3,
-					StartPos:  7,
+					StartPos:  3,
 					EndPos:    21,
 				},
 				Expr: &scalar.Heredoc{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   3,
-						StartPos:  7,
+						StartPos:  3,
 						EndPos:    20,
 					},
-					Label: "CAD",
+					Label: "<<<CAD\n",
 					Parts: []node.Node{
 						&scalar.EncapsedStringPart{
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
-								StartPos:  11,
-								EndPos:    16,
+								StartPos:  10,
+								EndPos:    17,
 							},
-							Value: "\thello",
+							Value: "\thello\n",
 						},
 					},
 				},
@@ -268,7 +285,7 @@ CAD;
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
