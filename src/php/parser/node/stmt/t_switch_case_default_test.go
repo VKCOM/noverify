@@ -1,7 +1,6 @@
 package stmt_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -27,7 +26,7 @@ func TestAltSwitch(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 2,
 			EndLine:   6,
-			StartPos:  7,
+			StartPos:  6,
 			EndPos:    65,
 		},
 		Stmts: []node.Node{
@@ -36,14 +35,112 @@ func TestAltSwitch(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 2,
 					EndLine:   6,
-					StartPos:  7,
+					StartPos:  6,
 					EndPos:    65,
 				},
 				Cond: &scalar.Lnumber{
 					Position: &position.Position{
 						StartLine: 2,
 						EndLine:   2,
-						StartPos:  15,
+						StartPos:  14,
+						EndPos:    15,
+					},
+					Value: "1",
+				},
+				CaseList: &stmt.CaseList{
+					Position: &position.Position{
+						StartLine: 3,
+						EndLine:   -1,
+						StartPos:  22,
+						EndPos:    -1,
+					},
+					Cases: []node.Node{
+						&stmt.Case{
+							Position: &position.Position{
+								StartLine: 3,
+								EndLine:   -1,
+								StartPos:  22,
+								EndPos:    -1,
+							},
+							Cond: &scalar.Lnumber{
+								Position: &position.Position{
+									StartLine: 3,
+									EndLine:   3,
+									StartPos:  27,
+									EndPos:    28,
+								},
+								Value: "1",
+							},
+							Stmts: []node.Node{},
+						},
+						&stmt.Default{
+							Position: &position.Position{
+								StartLine: 4,
+								EndLine:   -1,
+								StartPos:  33,
+								EndPos:    -1,
+							},
+							Stmts: []node.Node{},
+						},
+						&stmt.Case{
+							Position: &position.Position{
+								StartLine: 5,
+								EndLine:   -1,
+								StartPos:  45,
+								EndPos:    -1,
+							},
+							Cond: &scalar.Lnumber{
+								Position: &position.Position{
+									StartLine: 5,
+									EndLine:   5,
+									StartPos:  50,
+									EndPos:    51,
+								},
+								Value: "2",
+							},
+							Stmts: []node.Node{},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	php7parser := php7.NewParser([]byte(src))
+	php7parser.Parse()
+	actual := php7parser.GetRootNode()
+	assert.DeepEqual(t, expected, actual)
+}
+
+func TestAltSwitchSemicolon(t *testing.T) {
+	src := `<? 
+		switch (1) :;
+			case 1;
+			case 2;
+		endswitch;
+	`
+
+	expected := &node.Root{
+		Position: &position.Position{
+			StartLine: 2,
+			EndLine:   5,
+			StartPos:  6,
+			EndPos:    54,
+		},
+		Stmts: []node.Node{
+			&stmt.Switch{
+				AltSyntax: true,
+				Position: &position.Position{
+					StartLine: 2,
+					EndLine:   5,
+					StartPos:  6,
+					EndPos:    54,
+				},
+				Cond: &scalar.Lnumber{
+					Position: &position.Position{
+						StartLine: 2,
+						EndLine:   2,
+						StartPos:  14,
 						EndPos:    15,
 					},
 					Value: "1",
@@ -68,104 +165,6 @@ func TestAltSwitch(t *testing.T) {
 									StartLine: 3,
 									EndLine:   3,
 									StartPos:  28,
-									EndPos:    28,
-								},
-								Value: "1",
-							},
-							Stmts: []node.Node{},
-						},
-						&stmt.Default{
-							Position: &position.Position{
-								StartLine: 4,
-								EndLine:   -1,
-								StartPos:  34,
-								EndPos:    -1,
-							},
-							Stmts: []node.Node{},
-						},
-						&stmt.Case{
-							Position: &position.Position{
-								StartLine: 5,
-								EndLine:   -1,
-								StartPos:  46,
-								EndPos:    -1,
-							},
-							Cond: &scalar.Lnumber{
-								Position: &position.Position{
-									StartLine: 5,
-									EndLine:   5,
-									StartPos:  51,
-									EndPos:    51,
-								},
-								Value: "2",
-							},
-							Stmts: []node.Node{},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
-	php7parser.Parse()
-	actual := php7parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
-}
-
-func TestAltSwitchSemicolon(t *testing.T) {
-	src := `<? 
-		switch (1) :;
-			case 1;
-			case 2;
-		endswitch;
-	`
-
-	expected := &node.Root{
-		Position: &position.Position{
-			StartLine: 2,
-			EndLine:   5,
-			StartPos:  7,
-			EndPos:    54,
-		},
-		Stmts: []node.Node{
-			&stmt.Switch{
-				AltSyntax: true,
-				Position: &position.Position{
-					StartLine: 2,
-					EndLine:   5,
-					StartPos:  7,
-					EndPos:    54,
-				},
-				Cond: &scalar.Lnumber{
-					Position: &position.Position{
-						StartLine: 2,
-						EndLine:   2,
-						StartPos:  15,
-						EndPos:    15,
-					},
-					Value: "1",
-				},
-				CaseList: &stmt.CaseList{
-					Position: &position.Position{
-						StartLine: 3,
-						EndLine:   -1,
-						StartPos:  24,
-						EndPos:    -1,
-					},
-					Cases: []node.Node{
-						&stmt.Case{
-							Position: &position.Position{
-								StartLine: 3,
-								EndLine:   -1,
-								StartPos:  24,
-								EndPos:    -1,
-							},
-							Cond: &scalar.Lnumber{
-								Position: &position.Position{
-									StartLine: 3,
-									EndLine:   3,
-									StartPos:  29,
 									EndPos:    29,
 								},
 								Value: "1",
@@ -176,14 +175,14 @@ func TestAltSwitchSemicolon(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 4,
 								EndLine:   -1,
-								StartPos:  35,
+								StartPos:  34,
 								EndPos:    -1,
 							},
 							Cond: &scalar.Lnumber{
 								Position: &position.Position{
 									StartLine: 4,
 									EndLine:   4,
-									StartPos:  40,
+									StartPos:  39,
 									EndPos:    40,
 								},
 								Value: "2",
@@ -196,7 +195,7 @@ func TestAltSwitchSemicolon(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -214,7 +213,7 @@ func TestSwitch(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 2,
 			EndLine:   5,
-			StartPos:  7,
+			StartPos:  6,
 			EndPos:    58,
 		},
 		Stmts: []node.Node{
@@ -222,14 +221,14 @@ func TestSwitch(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 2,
 					EndLine:   5,
-					StartPos:  7,
+					StartPos:  6,
 					EndPos:    58,
 				},
 				Cond: &scalar.Lnumber{
 					Position: &position.Position{
 						StartLine: 2,
 						EndLine:   2,
-						StartPos:  15,
+						StartPos:  14,
 						EndPos:    15,
 					},
 					Value: "1",
@@ -238,7 +237,7 @@ func TestSwitch(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 2,
 						EndLine:   5,
-						StartPos:  18,
+						StartPos:  17,
 						EndPos:    58,
 					},
 					Cases: []node.Node{
@@ -246,14 +245,14 @@ func TestSwitch(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 3,
 								EndLine:   3,
-								StartPos:  23,
+								StartPos:  22,
 								EndPos:    36,
 							},
 							Cond: &scalar.Lnumber{
 								Position: &position.Position{
 									StartLine: 3,
 									EndLine:   3,
-									StartPos:  28,
+									StartPos:  27,
 									EndPos:    28,
 								},
 								Value: "1",
@@ -263,7 +262,7 @@ func TestSwitch(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 3,
 										EndLine:   3,
-										StartPos:  31,
+										StartPos:  30,
 										EndPos:    36,
 									},
 								},
@@ -273,14 +272,14 @@ func TestSwitch(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 4,
 								EndLine:   4,
-								StartPos:  41,
+								StartPos:  40,
 								EndPos:    54,
 							},
 							Cond: &scalar.Lnumber{
 								Position: &position.Position{
 									StartLine: 4,
 									EndLine:   4,
-									StartPos:  46,
+									StartPos:  45,
 									EndPos:    46,
 								},
 								Value: "2",
@@ -290,7 +289,7 @@ func TestSwitch(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 4,
 										EndLine:   4,
-										StartPos:  49,
+										StartPos:  48,
 										EndPos:    54,
 									},
 								},
@@ -302,7 +301,7 @@ func TestSwitch(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -320,7 +319,7 @@ func TestSwitchSemicolon(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 2,
 			EndLine:   5,
-			StartPos:  7,
+			StartPos:  6,
 			EndPos:    59,
 		},
 		Stmts: []node.Node{
@@ -328,14 +327,14 @@ func TestSwitchSemicolon(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 2,
 					EndLine:   5,
-					StartPos:  7,
+					StartPos:  6,
 					EndPos:    59,
 				},
 				Cond: &scalar.Lnumber{
 					Position: &position.Position{
 						StartLine: 2,
 						EndLine:   2,
-						StartPos:  15,
+						StartPos:  14,
 						EndPos:    15,
 					},
 					Value: "1",
@@ -344,7 +343,7 @@ func TestSwitchSemicolon(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 2,
 						EndLine:   5,
-						StartPos:  18,
+						StartPos:  17,
 						EndPos:    59,
 					},
 					Cases: []node.Node{
@@ -352,14 +351,14 @@ func TestSwitchSemicolon(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 3,
 								EndLine:   3,
-								StartPos:  24,
+								StartPos:  23,
 								EndPos:    37,
 							},
 							Cond: &scalar.Lnumber{
 								Position: &position.Position{
 									StartLine: 3,
 									EndLine:   3,
-									StartPos:  29,
+									StartPos:  28,
 									EndPos:    29,
 								},
 								Value: "1",
@@ -369,7 +368,7 @@ func TestSwitchSemicolon(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 3,
 										EndLine:   3,
-										StartPos:  32,
+										StartPos:  31,
 										EndPos:    37,
 									},
 								},
@@ -379,14 +378,14 @@ func TestSwitchSemicolon(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 4,
 								EndLine:   4,
-								StartPos:  42,
+								StartPos:  41,
 								EndPos:    55,
 							},
 							Cond: &scalar.Lnumber{
 								Position: &position.Position{
 									StartLine: 4,
 									EndLine:   4,
-									StartPos:  47,
+									StartPos:  46,
 									EndPos:    47,
 								},
 								Value: "2",
@@ -396,7 +395,7 @@ func TestSwitchSemicolon(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 4,
 										EndLine:   4,
-										StartPos:  50,
+										StartPos:  49,
 										EndPos:    55,
 									},
 								},
@@ -408,7 +407,7 @@ func TestSwitchSemicolon(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

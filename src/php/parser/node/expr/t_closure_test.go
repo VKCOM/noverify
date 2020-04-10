@@ -1,7 +1,6 @@
 package expr_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -21,7 +20,7 @@ func TestClosure(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    16,
 		},
 		Stmts: []node.Node{
@@ -29,14 +28,14 @@ func TestClosure(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    16,
 				},
 				Expr: &expr.Closure{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    15,
 					},
 					ReturnsRef:    false,
@@ -48,7 +47,7 @@ func TestClosure(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -61,7 +60,7 @@ func TestClosureUse(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    37,
 		},
 		Stmts: []node.Node{
@@ -69,14 +68,14 @@ func TestClosureUse(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    37,
 				},
 				Expr: &expr.Closure{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    36,
 					},
 					ReturnsRef:    false,
@@ -87,7 +86,7 @@ func TestClosureUse(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  13,
+								StartPos:  12,
 								EndPos:    14,
 							},
 							Variadic: false,
@@ -96,7 +95,7 @@ func TestClosureUse(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  13,
+									StartPos:  12,
 									EndPos:    14,
 								},
 								Name: "a",
@@ -106,7 +105,7 @@ func TestClosureUse(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  17,
+								StartPos:  16,
 								EndPos:    18,
 							},
 							ByRef:    false,
@@ -115,7 +114,7 @@ func TestClosureUse(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  17,
+									StartPos:  16,
 									EndPos:    18,
 								},
 								Name: "b",
@@ -126,7 +125,7 @@ func TestClosureUse(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  21,
+							StartPos:  20,
 							EndPos:    33,
 						},
 						Uses: []node.Node{
@@ -134,7 +133,7 @@ func TestClosureUse(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  26,
+									StartPos:  25,
 									EndPos:    27,
 								},
 								Name: "c",
@@ -143,14 +142,14 @@ func TestClosureUse(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  30,
+									StartPos:  29,
 									EndPos:    32,
 								},
 								Variable: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  31,
+										StartPos:  30,
 										EndPos:    32,
 									},
 									Name: "d",
@@ -164,7 +163,7 @@ func TestClosureUse(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -177,7 +176,7 @@ func TestClosureUse2(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    37,
 		},
 		Stmts: []node.Node{
@@ -185,14 +184,14 @@ func TestClosureUse2(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    37,
 				},
 				Expr: &expr.Closure{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    36,
 					},
 					ReturnsRef:    false,
@@ -203,7 +202,7 @@ func TestClosureUse2(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  13,
+								StartPos:  12,
 								EndPos:    14,
 							},
 							ByRef:    false,
@@ -212,7 +211,7 @@ func TestClosureUse2(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  13,
+									StartPos:  12,
 									EndPos:    14,
 								},
 								Name: "a",
@@ -222,7 +221,7 @@ func TestClosureUse2(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  17,
+								StartPos:  16,
 								EndPos:    18,
 							},
 							ByRef:    false,
@@ -231,7 +230,7 @@ func TestClosureUse2(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  17,
+									StartPos:  16,
 									EndPos:    18,
 								},
 								Name: "b",
@@ -242,7 +241,7 @@ func TestClosureUse2(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  21,
+							StartPos:  20,
 							EndPos:    33,
 						},
 						Uses: []node.Node{
@@ -250,14 +249,14 @@ func TestClosureUse2(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  26,
+									StartPos:  25,
 									EndPos:    28,
 								},
 								Variable: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  27,
+										StartPos:  26,
 										EndPos:    28,
 									},
 									Name: "c",
@@ -267,7 +266,7 @@ func TestClosureUse2(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  31,
+									StartPos:  30,
 									EndPos:    32,
 								},
 								Name: "d",
@@ -280,7 +279,7 @@ func TestClosureUse2(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -293,7 +292,7 @@ func TestClosureReturnType(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    23,
 		},
 		Stmts: []node.Node{
@@ -301,14 +300,14 @@ func TestClosureReturnType(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    23,
 				},
 				Expr: &expr.Closure{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    22,
 					},
 					PhpDocComment: "",
@@ -318,7 +317,7 @@ func TestClosureReturnType(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  16,
+							StartPos:  15,
 							EndPos:    19,
 						},
 						Parts: []node.Node{
@@ -326,7 +325,7 @@ func TestClosureReturnType(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  16,
+									StartPos:  15,
 									EndPos:    19,
 								},
 								Value: "void",
@@ -339,7 +338,7 @@ func TestClosureReturnType(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

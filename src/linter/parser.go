@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/VKCOM/noverify/src/git"
-	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/node"
@@ -83,33 +82,60 @@ func ParseContents(filename string, contents []byte, lineRanges []git.LineRange)
 
 	start := time.Now()
 
-	var rd inputs.ReadCloseSizer
 	if contents == nil {
-		rd, err = SrcInput.NewReader(filename)
+		// b := bytesBufPool.Get().(*bytes.Buffer)
+		// b.Reset()
+		// defer bytesBufPool.Put(b)
+		// fp, err := os.Open(filename)
+		// if err != nil {
+		// 	// TODO: return error instead?
+		// 	log.Panicf("read source input %s: %v", filename, err)
+		// }
+		// defer fp.Close()
+		// b.ReadFrom(fp)
+		// contents = append(make([]byte, 0, b.Len()), b.Bytes()...)
+
+		b := bytesBufPool.Get().(*bytes.Buffer)
+		b.Reset()
+		defer bytesBufPool.Put(b)
+		r, err := SrcInput.NewReader(filename)
+		if err != nil {
+			// TODO: return error instead?
+			log.Panicf("read source input %s: %v", filename, err)
+		}
+		defer r.Close()
+		io.Copy(b, r)
+		contents = append(make([]byte, 0, b.Len()), b.Bytes()...)
 	} else {
-		rd, err = SrcInput.NewBytesReader(filename, contents)
+		// TODO:
+		//rd, err = SrcInput.NewBytesReader(filename, contents)
 	}
-	if err != nil {
-		log.Panicf("open source input: %v", err)
-	}
-	defer rd.Close()
 
-	b := bytesBufPool.Get().(*bytes.Buffer)
-	b.Reset()
-	defer bytesBufPool.Put(b)
+	// var rd inputs.ReadCloseSizer
+	// if contents == nil {
+	// 	rd, err = SrcInput.NewReader(filename)
+	// } else {
+	// 	rd, err = SrcInput.NewBytesReader(filename, contents)
+	// }
+	// if err != nil {
+	// 	log.Panicf("open source input: %v", err)
+	// }
+	// defer rd.Close()
 
-	waiter := BeforeParse(rd.Size(), filename)
+	// b := bytesBufPool.Get().(*bytes.Buffer)
+	// b.Reset()
+	// defer bytesBufPool.Put(b)
+
+	waiter := BeforeParse(len(contents), filename)
 	defer waiter.Finish()
 
-	parser := php7.NewParser(io.TeeReader(rd, b), filename)
+	parser := php7.NewParser(contents)
 	parser.WithFreeFloating()
 	parser.Parse()
 
 	atomic.AddInt64(&initParseTime, int64(time.Since(start)))
 
-	bufCopy := append(make([]byte, 0, b.Len()), b.Bytes()...)
-
-	return analyzeFile(filename, bufCopy, parser, lineRanges)
+	return analyzeFile(filename, contents, parser, lineRanges)
 }
 
 func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedSet {

@@ -1,7 +1,6 @@
 package stmt_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -21,7 +20,7 @@ func TestDo(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    18,
 		},
 		Stmts: []node.Node{
@@ -29,14 +28,14 @@ func TestDo(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    18,
 				},
 				Stmt: &stmt.StmtList{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  7,
+						StartPos:  6,
 						EndPos:    8,
 					},
 					Stmts: []node.Node{},
@@ -45,7 +44,7 @@ func TestDo(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  16,
+						StartPos:  15,
 						EndPos:    16,
 					},
 					Value: "1",
@@ -54,7 +53,7 @@ func TestDo(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

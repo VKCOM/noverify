@@ -29,7 +29,7 @@ func TestPrintFile(t *testing.T) {
 				},
 			},
 			&stmt.Class{
-				Modifiers: []*node.Identifier{&node.Identifier{Value: "abstract"}},
+				Modifiers: []*node.Identifier{{Value: "abstract"}},
 				ClassName: &node.Identifier{Value: "Bar"},
 				Extends: &stmt.ClassExtends{
 					ClassName: &name.Name{
@@ -83,7 +83,7 @@ func TestPrintFileInlineHtml(t *testing.T) {
 			&stmt.InlineHtml{Value: "<div>HTML</div>"},
 			&stmt.Expression{
 				Expr: &scalar.Heredoc{
-					Label: "\"LBL\"",
+					Label: "<<<\"LBL\"\n",
 					Parts: []node.Node{
 						&scalar.EncapsedStringPart{Value: "hello world\n"},
 					},
@@ -352,7 +352,7 @@ func TestPrintScalarHeredoc(t *testing.T) {
 
 	p := printer.NewPrettyPrinter(o, "    ")
 	p.Print(&scalar.Heredoc{
-		Label: "LBL",
+		Label: "<<<LBL\n",
 		Parts: []node.Node{
 			&scalar.EncapsedStringPart{Value: "hello "},
 			&node.SimpleVar{Name: "var"},
@@ -375,7 +375,7 @@ func TestPrintScalarNowdoc(t *testing.T) {
 
 	p := printer.NewPrettyPrinter(o, "    ")
 	p.Print(&scalar.Heredoc{
-		Label: "'LBL'",
+		Label: "<<<'LBL'\n",
 		Parts: []node.Node{
 			&scalar.EncapsedStringPart{Value: "hello world\n"},
 		},
@@ -2530,7 +2530,7 @@ func TestPrintStmtClass(t *testing.T) {
 	p.Print(&stmt.Namespace{
 		Stmts: []node.Node{
 			&stmt.Class{
-				Modifiers: []*node.Identifier{&node.Identifier{Value: "abstract"}},
+				Modifiers: []*node.Identifier{{Value: "abstract"}},
 				ClassName: &node.Identifier{Value: "Foo"},
 				Extends: &stmt.ClassExtends{
 					ClassName: &name.Name{Parts: []node.Node{&name.NamePart{Value: "Bar"}}},
@@ -2576,7 +2576,7 @@ func TestPrintStmtAnonymousClass(t *testing.T) {
 	p.Print(&stmt.Namespace{
 		Stmts: []node.Node{
 			&stmt.Class{
-				Modifiers: []*node.Identifier{&node.Identifier{Value: "abstract"}},
+				Modifiers: []*node.Identifier{{Value: "abstract"}},
 				ArgumentList: &node.ArgumentList{
 					Arguments: []node.Node{
 						&node.Argument{

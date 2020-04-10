@@ -1,194 +1,225 @@
-// Package scanner transforms an input string into a stream of PHP tokens.
 package scanner
 
 import (
-	"bufio"
 	"bytes"
-	"go/token"
-	"io"
-	"unicode"
+	"strings"
 
 	"github.com/VKCOM/noverify/src/php/parser/errors"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parser/position"
-
-	"github.com/cznic/golex/lex"
 )
 
-// Allocate Character classes anywhere in [0x80, 0xFF].
-const (
-	classUnicodeLeter = iota + 0x80
-	classUnicodeDigit
-	classUnicodeGraphic
-	classOther
-)
+type Scanner interface {
+	Lex(lval Lval) int
+	ReturnTokenToPool(t *Token)
+	GetPhpDocComment() string
+	SetPhpDocComment(string)
+	GetErrors() []*errors.Error
+	GetWithFreeFloating() bool
+	SetWithFreeFloating(bool)
+	AddError(e *errors.Error)
+	SetErrors(e []*errors.Error)
+}
 
 // Lval parsers yySymType must implement this interface
 type Lval interface {
 	Token(tkn *Token)
 }
 
-// Lexer php lexer
 type Lexer struct {
-	*lex.Lexer
-	StateStack       []int
-	PhpDocComment    string
-	FreeFloating     []freefloating.String
-	heredocLabel     string
-	tokenBytesBuf    *bytes.Buffer
+	data         []byte
+	p, pe, cs    int
+	ts, te, act  int
+	stack        []int
+	top          int
+	heredocLabel []byte
+
 	TokenPool        *TokenPool
+	FreeFloating     []freefloating.String
 	WithFreeFloating bool
+	PhpDocComment    string
 	lastToken        *Token
 	Errors           []*errors.Error
+	NewLines         NewLines
 }
 
-// Rune2Class returns the rune integer id
-func Rune2Class(r rune) int {
-	if r >= 0 && r < 0x80 { // Keep ASCII as it is.
-		return int(r)
-	}
-	if unicode.IsLetter(r) {
-		return classUnicodeLeter
-	}
-	if unicode.IsDigit(r) {
-		return classUnicodeDigit
-	}
-	if unicode.IsGraphic(r) {
-		return classUnicodeGraphic
-	}
-	if r == lex.RuneEOF {
-		return int(r)
-	}
-	return classOther
+func (l *Lexer) ReturnTokenToPool(t *Token) {
+	l.TokenPool.Put(t)
 }
 
-func (l *Lexer) lexErrorFunc(p token.Pos, msg string) {
-	pos := position.NewPosition(
-		l.File.Line(p),
-		l.File.Line(p),
-		int(p),
-		int(p),
-	)
-	l.Errors = append(l.Errors, errors.NewError(msg, pos))
+func (l *Lexer) GetPhpDocComment() string {
+	return l.PhpDocComment
 }
 
-// NewLexer the Lexer constructor
-func NewLexer(src io.Reader, fName string) *Lexer {
-	lexer := &Lexer{
-		StateStack:    []int{0},
-		tokenBytesBuf: &bytes.Buffer{},
-		TokenPool:     &TokenPool{},
-	}
-
-	file := token.NewFileSet().AddFile(fName, -1, 1<<31-3)
-	lx, err := lex.New(file, bufio.NewReader(src), lex.RuneClass(Rune2Class), lex.ErrorFunc(lexer.lexErrorFunc))
-	if err != nil {
-		panic(err)
-	}
-	lexer.Lexer = lx
-	return lexer
+func (l *Lexer) SetPhpDocComment(s string) {
+	l.PhpDocComment = s
 }
 
-func (l *Lexer) Error(msg string) {
-	chars := l.Token()
-	firstChar := chars[0]
-	lastChar := chars[len(chars)-1]
-
-	pos := position.NewPosition(
-		l.File.Line(firstChar.Pos()),
-		l.File.Line(lastChar.Pos()),
-		int(firstChar.Pos()),
-		int(lastChar.Pos()),
-	)
-
-	l.Errors = append(l.Errors, errors.NewError(msg, pos))
+func (l *Lexer) GetErrors() []*errors.Error {
+	return l.Errors
 }
 
-func (l *Lexer) ungetChars(n int) []lex.Char {
-	l.Unget(l.Lookahead())
-
-	chars := l.Token()
-
-	for i := 1; i <= n; i++ {
-		char := chars[len(chars)-i]
-		l.Unget(char)
-	}
-
-	buf := l.Token()
-	buf = buf[:len(buf)-n]
-
-	return buf
+func (l *Lexer) GetWithFreeFloating() bool {
+	return l.WithFreeFloating
 }
 
-func (l *Lexer) pushState(state int) {
-	l.StateStack = append(l.StateStack, state)
+func (l *Lexer) SetWithFreeFloating(b bool) {
+	l.WithFreeFloating = b
 }
 
-func (l *Lexer) popState() {
-	length := len(l.StateStack)
-	if length <= 1 {
+func (l *Lexer) AddError(e *errors.Error) {
+	l.Errors = append(l.Errors, e)
+}
+
+func (l *Lexer) SetErrors(e []*errors.Error) {
+	l.Errors = e
+}
+
+func (lex *Lexer) setTokenPosition(token *Token) {
+	token.StartLine = lex.NewLines.GetLine(lex.ts)
+	token.EndLine = lex.NewLines.GetLine(lex.te - 1)
+	token.StartPos = lex.ts
+	token.EndPos = lex.te
+}
+
+func (lex *Lexer) addFreeFloating(t freefloating.StringType, ps, pe int) {
+	if !lex.WithFreeFloating {
 		return
 	}
 
-	l.StateStack = l.StateStack[:length-1]
-}
-
-func (l *Lexer) Begin(state int) {
-	len := len(l.StateStack)
-	l.StateStack = l.StateStack[:len-1]
-	l.StateStack = append(l.StateStack, state)
-}
-
-func (l *Lexer) getCurrentState() int {
-	return l.StateStack[len(l.StateStack)-1]
-}
-
-func (l *Lexer) createToken(chars []lex.Char) *Token {
-	firstChar := chars[0]
-	lastChar := chars[len(chars)-1]
-
-	tok := l.TokenPool.Get()
-	tok.FreeFloating = l.FreeFloating
-	tok.Value = l.tokenString(chars)
-
-	tok.StartLine = l.File.Line(firstChar.Pos())
-	tok.EndLine = l.File.Line(lastChar.Pos())
-	tok.StartPos = int(firstChar.Pos())
-	tok.EndPos = int(lastChar.Pos())
-
-	return tok
-}
-
-func (l *Lexer) tokenString(chars []lex.Char) string {
-	l.tokenBytesBuf.Reset()
-
-	for _, c := range chars {
-		l.tokenBytesBuf.WriteRune(c.Rune)
-	}
-
-	return l.tokenBytesBuf.String()
-}
-
-// free-floating
-
-func (l *Lexer) addFreeFloating(t freefloating.StringType, chars []lex.Char) {
-	if !l.WithFreeFloating {
-		return
-	}
-
-	firstChar := chars[0]
-	lastChar := chars[len(chars)-1]
-
 	pos := position.NewPosition(
-		l.File.Line(firstChar.Pos()),
-		l.File.Line(lastChar.Pos()),
-		int(firstChar.Pos()),
-		int(lastChar.Pos()),
+		lex.NewLines.GetLine(lex.ts),
+		lex.NewLines.GetLine(lex.te-1),
+		lex.ts,
+		lex.te,
 	)
 
-	l.FreeFloating = append(l.FreeFloating, freefloating.String{
+	lex.FreeFloating = append(lex.FreeFloating, freefloating.String{
 		StringType: t,
-		Value:      l.tokenString(chars),
+		Value:      string(lex.data[ps:pe]),
 		Position:   pos,
 	})
+}
+
+func (lex *Lexer) isNotStringVar() bool {
+	p := lex.p
+	if lex.data[p-1] == '\\' && lex.data[p-2] != '\\' {
+		return true
+	}
+
+	if len(lex.data) < p+1 {
+		return true
+	}
+
+	if lex.data[p] == '$' && (lex.data[p+1] == '{' || isValidVarNameStart(lex.data[p+1])) {
+		return false
+	}
+
+	if lex.data[p] == '{' && lex.data[p+1] == '$' {
+		return false
+	}
+
+	return true
+}
+
+func (lex *Lexer) isNotStringEnd(s byte) bool {
+	p := lex.p
+	if lex.data[p-1] == '\\' && lex.data[p-2] != '\\' {
+		return true
+	}
+
+	return !(lex.data[p] == s)
+}
+
+func (lex *Lexer) isHeredocEnd(p int) bool {
+	if lex.data[p-1] != '\r' && lex.data[p-1] != '\n' {
+		return false
+	}
+
+	l := len(lex.heredocLabel)
+	if len(lex.data) < p+l {
+		return false
+	}
+
+	if len(lex.data) > p+l && lex.data[p+l] != ';' && lex.data[p+l] != '\r' && lex.data[p+l] != '\n' {
+		return false
+	}
+
+	if len(lex.data) > p+l+1 && lex.data[p+l] == ';' && lex.data[p+l+1] != '\r' && lex.data[p+l+1] != '\n' {
+		return false
+	}
+
+	return bytes.Equal(lex.heredocLabel, lex.data[p:p+l])
+}
+
+func (lex *Lexer) isNotHeredocEnd(p int) bool {
+	return !lex.isHeredocEnd(p)
+}
+
+func (lex *Lexer) growCallStack() {
+	if lex.top == len(lex.stack) {
+		lex.stack = append(lex.stack, 0)
+	}
+}
+
+func (lex *Lexer) isNotPhpCloseToken() bool {
+	if lex.p+1 == len(lex.data) {
+		return true
+	}
+
+	return lex.data[lex.p] != '?' || lex.data[lex.p+1] != '>'
+}
+
+func (lex *Lexer) isNotNewLine() bool {
+	if lex.data[lex.p] == '\n' && lex.data[lex.p-1] == '\r' {
+		return true
+	}
+
+	return lex.data[lex.p-1] != '\n' && lex.data[lex.p-1] != '\r'
+}
+
+func (lex *Lexer) call(state int, fnext int) {
+	lex.growCallStack()
+
+	lex.stack[lex.top] = state
+	lex.top++
+
+	lex.p++
+	lex.cs = fnext
+}
+
+func (lex *Lexer) ret(n int) {
+	lex.top = lex.top - n
+	if lex.top < 0 {
+		lex.top = 0
+	}
+	lex.cs = lex.stack[lex.top]
+	lex.p++
+}
+
+func (lex *Lexer) ungetStr(s string) {
+	tokenStr := string(lex.data[lex.ts:lex.te])
+	if strings.HasSuffix(tokenStr, s) {
+		lex.ungetCnt(len(s))
+	}
+}
+
+func (lex *Lexer) ungetCnt(n int) {
+	lex.p = lex.p - n
+	lex.te = lex.te - n
+}
+
+func (lex *Lexer) Error(msg string) {
+	pos := position.NewPosition(
+		lex.NewLines.GetLine(lex.ts),
+		lex.NewLines.GetLine(lex.te-1),
+		lex.ts,
+		lex.te,
+	)
+
+	lex.Errors = append(lex.Errors, errors.NewError(msg, pos))
+}
+
+func isValidVarNameStart(r byte) bool {
+	return r >= 'A' && r <= 'Z' || r == '_' || r >= 'a' && r <= 'z' || r >= '\u007f' && r <= 'ÿ'
 }
