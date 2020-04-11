@@ -307,6 +307,8 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		res = b.handleIf(s)
 	case *stmt.Switch:
 		res = b.handleSwitch(s)
+	case *expr.Ternary:
+		res = b.handleTernary(s)
 	case *expr.FunctionCall:
 		res = b.handleFunctionCall(s)
 	case *expr.MethodCall:
@@ -1594,6 +1596,22 @@ func (b *BlockWalker) handleVariable(v node.Node) bool {
 		b.ctx.sc.AddVar(v, meta.NewTypesMap("undefined"), "undefined", true)
 	}
 
+	return false
+}
+
+func (b *BlockWalker) handleTernary(e *expr.Ternary) bool {
+	if e.IfTrue == nil {
+		return true // Skip `$x ?: $y` expressions
+	}
+
+	b.withNewContext(func() {
+		// No need to delete vars here as we run andWalker
+		// only inside a new context.
+		a := &andWalker{b: b}
+		e.Condition.Walk(a)
+		e.IfTrue.Walk(b)
+	})
+	e.IfFalse.Walk(b)
 	return false
 }
 
