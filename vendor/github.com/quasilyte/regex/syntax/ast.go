@@ -110,9 +110,9 @@ func formatExprSyntax(re *Regexp, e Expr) string {
 	case OpAtomicGroup:
 		return fmt.Sprintf("(atomic %s)", formatExprSyntax(re, e.Args[0]))
 	case OpGroupWithFlags:
-		return fmt.Sprintf("(group %s %s)", formatExprSyntax(re, e.Args[0]), e.Args[1].Value)
+		return fmt.Sprintf("(group %s ?%s)", formatExprSyntax(re, e.Args[0]), e.Args[1].Value)
 	case OpFlagOnlyGroup:
-		return fmt.Sprintf("(flags %s)", formatExprSyntax(re, e.Args[0]))
+		return fmt.Sprintf("(flags ?%s)", formatExprSyntax(re, e.Args[0]))
 	case OpPositiveLookahead:
 		return fmt.Sprintf("(?= %s)", formatExprSyntax(re, e.Args[0]))
 	case OpNegativeLookahead:

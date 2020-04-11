@@ -995,3 +995,88 @@ function alt_switch($v) {
 	}
 	test.RunAndMatch()
 }
+
+func TestIssue387(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+function f1(&$a) {
+    $a1[0] = 1;
+}
+
+// TODO: report that $result is unchanged even if we tried to
+// modify its arguments through references? See #388
+function f2($result) {
+    foreach ($result as &$file) {
+        $file['filesystem'] = 'ntfs';
+    }
+
+    // Should be reported by #388.
+    $arr = [];
+    $arr['x'] = 10;
+}
+`)
+}
+
+func TestIssue390(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$cond = 1;
+if ($cond && isset($a1[0])) {
+  $_ = $a1;
+}
+if ($cond && isset($a2[0][1])) {
+  $_ = $a2;
+}
+if (isset($a3[0]) && $cond) {
+  $_ = $a3;
+}
+if (isset($a4[0][1]) && $cond) {
+  $_ = $a4;
+}
+
+if (isset($a5[0]->x)) {
+  $_ = $a5;
+}
+`)
+	test.Expect = []string{
+		`Property {mixed}->x does not exist`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue288(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Box {
+  public $item1;
+  public $item2;
+}
+
+$_ = isset($a) ? $a[0] : 0;
+$_ = isset($b) && isset($a) ? $a[0] + $b : 0;
+$_ = isset($a[0]) ? $a[0] : 0;
+$_ = isset($a[0]) ? $a : [0];
+
+$_ = isset($b1) ? 0 : $b1;
+$_ = isset($b2[0]) ? 0 : $b2;
+$_ = isset($b3[0]) ? 0 : $b3;
+
+
+function f($x, $y) {
+  $_ = $x instanceof Box ? $x->item1 : 0;
+  $_ = $y instanceof Box ? 0 : $y->item2;
+}
+
+$x = new Box();
+$_ = $badvar ? 0 : 1;
+$_ = isset($x) && isset($y) ? $x : 0;
+$_ = $x instanceof Box ? 0 : 1;
+`)
+	test.Expect = []string{
+		`Undefined variable: badvar`,
+		`Undefined variable: b1`,
+		`Undefined variable: b2`,
+		`Undefined variable: b3`,
+		`undefined: Property {mixed}->item2 does not exist`,
+	}
+	test.RunAndMatch()
+}

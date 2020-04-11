@@ -307,6 +307,8 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		res = b.handleIf(s)
 	case *stmt.Switch:
 		res = b.handleSwitch(s)
+	case *expr.Ternary:
+		res = b.handleTernary(s)
 	case *expr.FunctionCall:
 		res = b.handleFunctionCall(s)
 	case *expr.MethodCall:
@@ -1515,11 +1517,15 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 
 	case *expr.Isset:
 		for _, v := range n.Variables {
-			if a.b.ctx.sc.HaveVar(v) {
+			varNode := findVarNode(v)
+			if varNode == nil {
+				continue
+			}
+			if a.b.ctx.sc.HaveVar(varNode) {
 				continue
 			}
 
-			switch v := v.(type) {
+			switch v := varNode.(type) {
 			case *node.SimpleVar:
 				a.b.addVar(v, meta.NewTypesMap("isset_$"+v.Name), "isset", true)
 				a.varsToDelete = append(a.varsToDelete, v)
@@ -1590,6 +1596,22 @@ func (b *BlockWalker) handleVariable(v node.Node) bool {
 		b.ctx.sc.AddVar(v, meta.NewTypesMap("undefined"), "undefined", true)
 	}
 
+	return false
+}
+
+func (b *BlockWalker) handleTernary(e *expr.Ternary) bool {
+	if e.IfTrue == nil {
+		return true // Skip `$x ?: $y` expressions
+	}
+
+	b.withNewContext(func() {
+		// No need to delete vars here as we run andWalker
+		// only inside a new context.
+		a := &andWalker{b: b}
+		e.Condition.Walk(a)
+		e.IfTrue.Walk(b)
+	})
+	e.IfFalse.Walk(b)
 	return false
 }
 
@@ -1846,6 +1868,7 @@ func (b *BlockWalker) handleDimFetchLValue(e *expr.ArrayDimFetch, reason string,
 			arrTyp = arrTyp.AppendString(meta.WrapArrayOf(t))
 		})
 		b.addVar(v, arrTyp, reason, true)
+		b.handleVariable(v)
 	case *expr.ArrayDimFetch:
 		b.handleDimFetchLValue(v, reason, meta.MixedType)
 	default:
