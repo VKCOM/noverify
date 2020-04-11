@@ -277,6 +277,16 @@ func findMethod(className string, methodName string, visitedMap map[string]struc
 			}
 		}
 
+		// For the purposes of finding a method info, we do use interfaces
+		// method sets. If looked up method is found there, we return
+		// an empty string to clarify that the method has no actual implementation.
+		for ifaceName := range class.Interfaces {
+			res, _, ok := findMethod(ifaceName, methodName, visitedMap)
+			if ok {
+				return res, "", ok
+			}
+		}
+
 		// interfaces support multiple inheritance and I use a separate property for that for now
 		for _, parentIfaceName := range class.ParentInterfaces {
 			res, implClassName, ok = findMethod(parentIfaceName, methodName, visitedMap)

@@ -960,6 +960,10 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 		magic = haveMagicMethod(typ, `__call`)
 		return foundMethod || magic
 	})
+	// We permit abstract classes to call unimplemented interface methods.
+	if !isAbstractClass(b.r.currentClassNode) && implClass == "" {
+		foundMethod = false
+	}
 
 	e.Variable.Walk(b)
 	e.Method.Walk(b)
