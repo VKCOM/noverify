@@ -40,11 +40,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:19117fa2f48301785d438b96eba9079ab6a9f19ccd9d633d9c97df9a0d32db74"
+  digest = "1:ffcc3e815eeb6beec4afaff6c66e5c13848671ec4da220353457aa24803e5517"
   name = "github.com/quasilyte/regex"
   packages = ["syntax"]
   pruneopts = "UT"
-  revision = "fc66bae20aa1902d57959d1a02bc6d9c5cda12dd"
+  revision = "497963207d1f63c29da8a8b4fb25e80c236e00be"
 
 [[projects]]
   digest = "1:a5cc901b8e54c4b73a62f97dc7c8f6c46e347c148a7a38e09b2e942c2587ba03"
