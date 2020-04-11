@@ -842,14 +842,26 @@ func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
 
 	switch call.fqName {
 	case `\preg_match`, `\preg_match_all`, `\preg_replace`, `\preg_split`:
-		s, ok := e.ArgumentList.Arguments[0].(*node.Argument).Expr.(*scalar.String)
+		argNode := e.ArgumentList.Arguments[0]
+		s, ok := argNode.(*node.Argument).Expr.(*scalar.String)
 		if !ok {
 			break
 		}
-		simplified := b.r.reSimplifier.simplifyRegexp(s)
+		pat, ok := newRegexpPattern(s)
+		if !ok {
+			break
+		}
+		simplified := b.r.reSimplifier.simplifyRegexp(pat)
 		if simplified != "" {
-			b.r.Report(e.ArgumentList.Arguments[0], LevelDoNotReject, "regexpSimplify", "May re-write %s as '%s'",
+			b.r.Report(argNode, LevelDoNotReject, "regexpSimplify", "May re-write %s as '%s'",
 				s.Value, simplified)
+		}
+		issues, err := b.r.reVet.CheckRegexp(pat)
+		if err != nil {
+			b.r.Report(argNode, LevelError, "regexpSyntax", "parse error: %v", err)
+		}
+		for _, issue := range issues {
+			b.r.Report(argNode, LevelWarning, "regexpVet", "%s", issue)
 		}
 	}
 
@@ -957,17 +969,6 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 
 	exprType.Find(func(typ string) bool {
 		fn, implClass, foundMethod = solver.FindMethod(typ, methodName)
-		// If we found the method and implClass is an empty string
-		// then this is an interface method. We permit calling that
-		// method if it's called through an object that type
-		// is abstract class.
-		if foundMethod && implClass == "" {
-			cls, ok := meta.Info.GetClass(typ)
-			if !ok || !cls.IsAbstract() {
-				foundMethod = false
-			}
-		}
-
 		magic = haveMagicMethod(typ, `__call`)
 		return foundMethod || magic
 	})

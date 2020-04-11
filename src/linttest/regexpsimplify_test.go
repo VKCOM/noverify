@@ -145,7 +145,7 @@ function f($s) {
 	test.RunAndMatch()
 }
 
-func TestRESimplifyNone(t *testing.T) {
+func TestRENegativeTests(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
 	test.AddFile(`<?php
@@ -156,6 +156,7 @@ function f($s) {
 }
 
 function _1($s) {
+  preg_match('~[а-яё]~', $s);
   preg_match('/\s*\{weight=(\d+)\}\s*/', $s);
   preg_match('/\{inherits=(\d+)\}/', $s);
   preg_match('/[<>]+/', $s);
@@ -207,7 +208,6 @@ function _2($s) {
 }
 
 function _3($s) {
-  preg_match('/(?m)^([\s\t]*)([\*\-\+]|\d\.)\s+/', $s);
   preg_match('/\n={2,}/', $s);
   preg_match('/~~/', $s);
   preg_match('/[aeiou][^aeiou]/', $s);
@@ -295,7 +295,6 @@ function _5($s) {
   preg_match('/@(?i:article){.*/', $s);
   preg_match('/\blimit \?(?:, ?\?| offset \?)?/', $s);
   preg_match('/^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,4}$/', $s);
-  preg_match('~^(www.|https://|http://)*[A-Za-z0-9._%+\-]+\.[com|org|edu|net]{3}$~', $s);
   preg_match('/^4\d{12}(\d{3})?$/', $s);
   preg_match('/^(5[1-5]\d{4}|677189)\d{10}$/', $s);
   preg_match('/^(6011|65\d{2}|64[4-9]\d)\d{12}|(62\d{14})$/', $s);
@@ -325,7 +324,6 @@ function _6($s) {
   preg_match('/(-\s+(\d+)(?:\d|$))/', $s);
   preg_match('~ edge/(\d+)\.(\d+)~', $s);
   preg_match('/^.+@.+\..+$/', $s);
-  preg_match('/^[\w\d]{3,30}$/', $s);
   preg_match('/^\$bgm\s+(\[.*\])$/', $s);
   preg_match('/^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/', $s);
   preg_match('/;[^=;{}]+;/', $s);

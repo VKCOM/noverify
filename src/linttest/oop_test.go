@@ -685,25 +685,6 @@ function test3(?A $instance) {
 	test.RunAndMatch()
 }
 
-func TestCallUnimplemented(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-interface FooInterface {
-  public function foo();
-}
-
-class Fooer implements FooInterface {
-  private function bar() {
-    return $this->foo();
-  }
-}
-`)
-	test.Expect = []string{
-		`Call to undefined method {\Fooer}->foo()`,
-	}
-	test.RunAndMatch()
-}
-
 func TestAbstractClassMethodCall(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 interface FooInterface {
