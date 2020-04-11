@@ -1,7 +1,6 @@
 package scalar_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -20,7 +19,7 @@ func TestLNumber(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    23,
 		},
 		Stmts: []node.Node{
@@ -28,14 +27,14 @@ func TestLNumber(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    23,
 				},
 				Expr: &scalar.Lnumber{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    22,
 					},
 					Value: "1234567890123456789",
@@ -44,7 +43,7 @@ func TestLNumber(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -57,7 +56,7 @@ func TestDNumber(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    24,
 		},
 		Stmts: []node.Node{
@@ -65,14 +64,14 @@ func TestDNumber(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    24,
 				},
 				Expr: &scalar.Dnumber{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    23,
 					},
 					Value: "12345678901234567890",
@@ -81,7 +80,7 @@ func TestDNumber(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -94,7 +93,7 @@ func TestFloat(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    6,
 		},
 		Stmts: []node.Node{
@@ -102,14 +101,14 @@ func TestFloat(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    6,
 				},
 				Expr: &scalar.Dnumber{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    5,
 					},
 					Value: "0.",
@@ -118,7 +117,7 @@ func TestFloat(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -131,7 +130,7 @@ func TestBinaryLNumber(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    70,
 		},
 		Stmts: []node.Node{
@@ -139,14 +138,14 @@ func TestBinaryLNumber(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    70,
 				},
 				Expr: &scalar.Lnumber{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    69,
 					},
 					Value: "0b0111111111111111111111111111111111111111111111111111111111111111",
@@ -155,7 +154,7 @@ func TestBinaryLNumber(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -168,7 +167,7 @@ func TestBinaryDNumber(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    70,
 		},
 		Stmts: []node.Node{
@@ -176,14 +175,14 @@ func TestBinaryDNumber(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    70,
 				},
 				Expr: &scalar.Dnumber{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    69,
 					},
 					Value: "0b1111111111111111111111111111111111111111111111111111111111111111",
@@ -192,7 +191,7 @@ func TestBinaryDNumber(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -205,7 +204,7 @@ func TestHLNumber(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    24,
 		},
 		Stmts: []node.Node{
@@ -213,14 +212,14 @@ func TestHLNumber(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    24,
 				},
 				Expr: &scalar.Lnumber{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    23,
 					},
 					Value: "0x007111111111111111",
@@ -229,7 +228,7 @@ func TestHLNumber(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -242,7 +241,7 @@ func TestHDNumber(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    22,
 		},
 		Stmts: []node.Node{
@@ -250,14 +249,14 @@ func TestHDNumber(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    22,
 				},
 				Expr: &scalar.Dnumber{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    21,
 					},
 					Value: "0x8111111111111111",
@@ -266,7 +265,7 @@ func TestHDNumber(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

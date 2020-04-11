@@ -1,7 +1,6 @@
 package stmt_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -20,7 +19,7 @@ func TestStaticVar(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    13,
 		},
 		Stmts: []node.Node{
@@ -28,7 +27,7 @@ func TestStaticVar(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    13,
 				},
 				Vars: []node.Node{
@@ -36,14 +35,14 @@ func TestStaticVar(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  11,
+							StartPos:  10,
 							EndPos:    12,
 						},
 						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  11,
+								StartPos:  10,
 								EndPos:    12,
 							},
 							Name: "a",
@@ -54,7 +53,7 @@ func TestStaticVar(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -67,7 +66,7 @@ func TestStaticVars(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    21,
 		},
 		Stmts: []node.Node{
@@ -75,7 +74,7 @@ func TestStaticVars(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    21,
 				},
 				Vars: []node.Node{
@@ -83,14 +82,14 @@ func TestStaticVars(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  11,
+							StartPos:  10,
 							EndPos:    12,
 						},
 						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  11,
+								StartPos:  10,
 								EndPos:    12,
 							},
 							Name: "a",
@@ -100,14 +99,14 @@ func TestStaticVars(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  15,
+							StartPos:  14,
 							EndPos:    20,
 						},
 						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  15,
+								StartPos:  14,
 								EndPos:    16,
 							},
 							Name: "b",
@@ -116,7 +115,7 @@ func TestStaticVars(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  20,
+								StartPos:  19,
 								EndPos:    20,
 							},
 							Value: "1",
@@ -127,7 +126,7 @@ func TestStaticVars(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -140,7 +139,7 @@ func TestStaticVars2(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    21,
 		},
 		Stmts: []node.Node{
@@ -148,7 +147,7 @@ func TestStaticVars2(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    21,
 				},
 				Vars: []node.Node{
@@ -156,14 +155,14 @@ func TestStaticVars2(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  11,
+							StartPos:  10,
 							EndPos:    16,
 						},
 						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  11,
+								StartPos:  10,
 								EndPos:    12,
 							},
 							Name: "a",
@@ -172,7 +171,7 @@ func TestStaticVars2(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  16,
+								StartPos:  15,
 								EndPos:    16,
 							},
 							Value: "1",
@@ -182,14 +181,14 @@ func TestStaticVars2(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  19,
+							StartPos:  18,
 							EndPos:    20,
 						},
 						Variable: &node.SimpleVar{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  19,
+								StartPos:  18,
 								EndPos:    20,
 							},
 							Name: "b",
@@ -200,7 +199,7 @@ func TestStaticVars2(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

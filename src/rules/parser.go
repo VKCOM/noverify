@@ -1,7 +1,6 @@
 package rules
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -52,7 +51,7 @@ func (p *parser) parse(filename string, r io.Reader) (*Set, error) {
 	if err != nil {
 		return res, err
 	}
-	q := php7.NewParser(bytes.NewReader(sources), filename)
+	q := php7.NewParser(sources)
 	q.WithFreeFloating()
 	q.Parse()
 	if errs := q.GetErrors(); len(errs) != 0 {

@@ -804,7 +804,7 @@ func getInstanceProperties(className string) (res []string) {
 
 func getMethodCompletionItems(st *meta.ClassParseState, str string, sc *meta.Scope) (result []vscode.CompletionItem) {
 	strTemp := "<?php " + strings.TrimSuffix(str, "->") + ";"
-	parser := php7.NewParser(strings.NewReader(strTemp), "temp")
+	parser := php7.NewParser([]byte(strTemp))
 	parser.Parse()
 
 	tempNode := parser.GetRootNode()

@@ -1,7 +1,6 @@
 package stmt_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -21,7 +20,7 @@ func TestDeclare(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    20,
 		},
 		Stmts: []node.Node{
@@ -29,7 +28,7 @@ func TestDeclare(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    20,
 				},
 				Consts: []node.Node{
@@ -37,7 +36,7 @@ func TestDeclare(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  12,
+							StartPos:  11,
 							EndPos:    18,
 						},
 						PhpDocComment: "",
@@ -45,7 +44,7 @@ func TestDeclare(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  12,
+								StartPos:  11,
 								EndPos:    16,
 							},
 							Value: "ticks",
@@ -54,7 +53,7 @@ func TestDeclare(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  18,
+								StartPos:  17,
 								EndPos:    18,
 							},
 							Value: "1",
@@ -65,7 +64,7 @@ func TestDeclare(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  20,
+						StartPos:  19,
 						EndPos:    20,
 					},
 				},
@@ -73,7 +72,7 @@ func TestDeclare(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -86,7 +85,7 @@ func TestDeclareStmts(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    38,
 		},
 		Stmts: []node.Node{
@@ -94,7 +93,7 @@ func TestDeclareStmts(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    38,
 				},
 				Consts: []node.Node{
@@ -102,7 +101,7 @@ func TestDeclareStmts(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  12,
+							StartPos:  11,
 							EndPos:    18,
 						},
 						PhpDocComment: "",
@@ -110,7 +109,7 @@ func TestDeclareStmts(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  12,
+								StartPos:  11,
 								EndPos:    16,
 							},
 							Value: "ticks",
@@ -119,7 +118,7 @@ func TestDeclareStmts(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  18,
+								StartPos:  17,
 								EndPos:    18,
 							},
 							Value: "1",
@@ -129,7 +128,7 @@ func TestDeclareStmts(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  21,
+							StartPos:  20,
 							EndPos:    34,
 						},
 						PhpDocComment: "",
@@ -137,7 +136,7 @@ func TestDeclareStmts(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  21,
+								StartPos:  20,
 								EndPos:    32,
 							},
 							Value: "strict_types",
@@ -146,7 +145,7 @@ func TestDeclareStmts(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  34,
+								StartPos:  33,
 								EndPos:    34,
 							},
 							Value: "1",
@@ -157,7 +156,7 @@ func TestDeclareStmts(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  37,
+						StartPos:  36,
 						EndPos:    38,
 					},
 					Stmts: []node.Node{},
@@ -166,7 +165,7 @@ func TestDeclareStmts(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -179,7 +178,7 @@ func TestAltDeclare(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    32,
 		},
 		Stmts: []node.Node{
@@ -187,7 +186,7 @@ func TestAltDeclare(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    32,
 				},
 				Consts: []node.Node{
@@ -195,7 +194,7 @@ func TestAltDeclare(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  12,
+							StartPos:  11,
 							EndPos:    18,
 						},
 						PhpDocComment: "",
@@ -203,7 +202,7 @@ func TestAltDeclare(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  12,
+								StartPos:  11,
 								EndPos:    16,
 							},
 							Value: "ticks",
@@ -212,7 +211,7 @@ func TestAltDeclare(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  18,
+								StartPos:  17,
 								EndPos:    18,
 							},
 							Value: "1",
@@ -233,7 +232,7 @@ func TestAltDeclare(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

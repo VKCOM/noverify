@@ -1,7 +1,6 @@
 package expr_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -20,7 +19,7 @@ func TestUnaryMinus(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    7,
 		},
 		Stmts: []node.Node{
@@ -28,21 +27,21 @@ func TestUnaryMinus(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    7,
 				},
 				Expr: &expr.UnaryMinus{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    6,
 					},
 					Expr: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  5,
+							StartPos:  4,
 							EndPos:    6,
 						},
 						Name: "a",
@@ -52,7 +51,7 @@ func TestUnaryMinus(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -65,7 +64,7 @@ func TestUnaryPlus(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    7,
 		},
 		Stmts: []node.Node{
@@ -73,21 +72,21 @@ func TestUnaryPlus(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    7,
 				},
 				Expr: &expr.UnaryPlus{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    6,
 					},
 					Expr: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  5,
+							StartPos:  4,
 							EndPos:    6,
 						},
 						Name: "a",
@@ -97,7 +96,7 @@ func TestUnaryPlus(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

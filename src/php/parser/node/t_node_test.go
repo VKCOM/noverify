@@ -1,7 +1,6 @@
 package node_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -23,7 +22,7 @@ func TestIdentifier(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    8,
 		},
 		Stmts: []node.Node{
@@ -31,14 +30,14 @@ func TestIdentifier(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    8,
 				},
 				Expr: &node.SimpleVar{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    7,
 					},
 					Name: "foo",
@@ -47,7 +46,7 @@ func TestIdentifier(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -69,7 +68,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 2,
 			EndLine:   9,
-			StartPos:  7,
+			StartPos:  6,
 			EndPos:    186,
 		},
 		Stmts: []node.Node{
@@ -77,21 +76,21 @@ func TestPhp7ArgumentNode(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 2,
 					EndLine:   2,
-					StartPos:  7,
+					StartPos:  6,
 					EndPos:    21,
 				},
 				Expr: &expr.FunctionCall{
 					Position: &position.Position{
 						StartLine: 2,
 						EndLine:   2,
-						StartPos:  7,
+						StartPos:  6,
 						EndPos:    20,
 					},
 					Function: &name.Name{
 						Position: &position.Position{
 							StartLine: 2,
 							EndLine:   2,
-							StartPos:  7,
+							StartPos:  6,
 							EndPos:    9,
 						},
 						Parts: []node.Node{
@@ -99,7 +98,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 2,
 									EndLine:   2,
-									StartPos:  7,
+									StartPos:  6,
 									EndPos:    9,
 								},
 								Value: "foo",
@@ -110,7 +109,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 2,
 							EndLine:   2,
-							StartPos:  10,
+							StartPos:  9,
 							EndPos:    20,
 						},
 						Arguments: []node.Node{
@@ -118,7 +117,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 2,
 									EndLine:   2,
-									StartPos:  11,
+									StartPos:  10,
 									EndPos:    12,
 								},
 								Variadic:    false,
@@ -127,7 +126,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 2,
 										EndLine:   2,
-										StartPos:  11,
+										StartPos:  10,
 										EndPos:    12,
 									},
 									Name: "a",
@@ -137,7 +136,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 2,
 									EndLine:   2,
-									StartPos:  15,
+									StartPos:  14,
 									EndPos:    19,
 								},
 								Variadic:    true,
@@ -146,7 +145,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 2,
 										EndLine:   2,
-										StartPos:  18,
+										StartPos:  17,
 										EndPos:    19,
 									},
 									Name: "b",
@@ -160,21 +159,21 @@ func TestPhp7ArgumentNode(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 3,
 					EndLine:   3,
-					StartPos:  25,
+					StartPos:  24,
 					EndPos:    40,
 				},
 				Expr: &expr.FunctionCall{
 					Position: &position.Position{
 						StartLine: 3,
 						EndLine:   3,
-						StartPos:  25,
+						StartPos:  24,
 						EndPos:    39,
 					},
 					Function: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 3,
 							EndLine:   3,
-							StartPos:  25,
+							StartPos:  24,
 							EndPos:    28,
 						},
 						Name: "foo",
@@ -183,7 +182,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 3,
 							EndLine:   3,
-							StartPos:  29,
+							StartPos:  28,
 							EndPos:    39,
 						},
 						Arguments: []node.Node{
@@ -191,7 +190,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 3,
 									EndLine:   3,
-									StartPos:  30,
+									StartPos:  29,
 									EndPos:    31,
 								},
 								Variadic:    false,
@@ -200,7 +199,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 3,
 										EndLine:   3,
-										StartPos:  30,
+										StartPos:  29,
 										EndPos:    31,
 									},
 									Name: "a",
@@ -210,7 +209,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 3,
 									EndLine:   3,
-									StartPos:  34,
+									StartPos:  33,
 									EndPos:    38,
 								},
 								Variadic:    true,
@@ -219,7 +218,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 3,
 										EndLine:   3,
-										StartPos:  37,
+										StartPos:  36,
 										EndPos:    38,
 									},
 									Name: "b",
@@ -233,21 +232,21 @@ func TestPhp7ArgumentNode(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 4,
 					EndLine:   4,
-					StartPos:  44,
+					StartPos:  43,
 					EndPos:    64,
 				},
 				Expr: &expr.MethodCall{
 					Position: &position.Position{
 						StartLine: 4,
 						EndLine:   4,
-						StartPos:  44,
+						StartPos:  43,
 						EndPos:    63,
 					},
 					Variable: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 4,
 							EndLine:   4,
-							StartPos:  44,
+							StartPos:  43,
 							EndPos:    47,
 						},
 						Name: "foo",
@@ -256,7 +255,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 4,
 							EndLine:   4,
-							StartPos:  50,
+							StartPos:  49,
 							EndPos:    52,
 						},
 						Value: "bar",
@@ -265,7 +264,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 4,
 							EndLine:   4,
-							StartPos:  53,
+							StartPos:  52,
 							EndPos:    63,
 						},
 						Arguments: []node.Node{
@@ -273,7 +272,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 4,
 									EndLine:   4,
-									StartPos:  54,
+									StartPos:  53,
 									EndPos:    55,
 								},
 								IsReference: false,
@@ -282,7 +281,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 4,
 										EndLine:   4,
-										StartPos:  54,
+										StartPos:  53,
 										EndPos:    55,
 									},
 									Name: "a",
@@ -292,7 +291,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 4,
 									EndLine:   4,
-									StartPos:  58,
+									StartPos:  57,
 									EndPos:    62,
 								},
 								Variadic:    true,
@@ -301,7 +300,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 4,
 										EndLine:   4,
-										StartPos:  61,
+										StartPos:  60,
 										EndPos:    62,
 									},
 									Name: "b",
@@ -315,21 +314,21 @@ func TestPhp7ArgumentNode(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 5,
 					EndLine:   5,
-					StartPos:  68,
+					StartPos:  67,
 					EndPos:    87,
 				},
 				Expr: &expr.StaticCall{
 					Position: &position.Position{
 						StartLine: 5,
 						EndLine:   5,
-						StartPos:  68,
+						StartPos:  67,
 						EndPos:    86,
 					},
 					Class: &name.Name{
 						Position: &position.Position{
 							StartLine: 5,
 							EndLine:   5,
-							StartPos:  68,
+							StartPos:  67,
 							EndPos:    70,
 						},
 						Parts: []node.Node{
@@ -337,7 +336,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 5,
 									EndLine:   5,
-									StartPos:  68,
+									StartPos:  67,
 									EndPos:    70,
 								},
 								Value: "foo",
@@ -348,7 +347,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 5,
 							EndLine:   5,
-							StartPos:  73,
+							StartPos:  72,
 							EndPos:    75,
 						},
 						Value: "bar",
@@ -357,7 +356,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 5,
 							EndLine:   5,
-							StartPos:  76,
+							StartPos:  75,
 							EndPos:    86,
 						},
 						Arguments: []node.Node{
@@ -365,7 +364,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 5,
 									EndLine:   5,
-									StartPos:  77,
+									StartPos:  76,
 									EndPos:    78,
 								},
 								Variadic:    false,
@@ -374,7 +373,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 5,
 										EndLine:   5,
-										StartPos:  77,
+										StartPos:  76,
 										EndPos:    78,
 									},
 									Name: "a",
@@ -384,7 +383,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 5,
 									EndLine:   5,
-									StartPos:  81,
+									StartPos:  80,
 									EndPos:    85,
 								},
 								Variadic:    true,
@@ -393,7 +392,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 5,
 										EndLine:   5,
-										StartPos:  84,
+										StartPos:  83,
 										EndPos:    85,
 									},
 									Name: "b",
@@ -407,21 +406,21 @@ func TestPhp7ArgumentNode(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 6,
 					EndLine:   6,
-					StartPos:  91,
+					StartPos:  90,
 					EndPos:    111,
 				},
 				Expr: &expr.StaticCall{
 					Position: &position.Position{
 						StartLine: 6,
 						EndLine:   6,
-						StartPos:  91,
+						StartPos:  90,
 						EndPos:    110,
 					},
 					Class: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 6,
 							EndLine:   6,
-							StartPos:  91,
+							StartPos:  90,
 							EndPos:    94,
 						},
 						Name: "foo",
@@ -430,7 +429,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 6,
 							EndLine:   6,
-							StartPos:  97,
+							StartPos:  96,
 							EndPos:    99,
 						},
 						Value: "bar",
@@ -439,7 +438,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 6,
 							EndLine:   6,
-							StartPos:  100,
+							StartPos:  99,
 							EndPos:    110,
 						},
 						Arguments: []node.Node{
@@ -447,7 +446,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 6,
 									EndLine:   6,
-									StartPos:  101,
+									StartPos:  100,
 									EndPos:    102,
 								},
 								Variadic:    false,
@@ -456,7 +455,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 6,
 										EndLine:   6,
-										StartPos:  101,
+										StartPos:  100,
 										EndPos:    102,
 									},
 									Name: "a",
@@ -466,7 +465,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 6,
 									EndLine:   6,
-									StartPos:  105,
+									StartPos:  104,
 									EndPos:    109,
 								},
 								Variadic:    true,
@@ -475,7 +474,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 6,
 										EndLine:   6,
-										StartPos:  108,
+										StartPos:  107,
 										EndPos:    109,
 									},
 									Name: "b",
@@ -489,21 +488,21 @@ func TestPhp7ArgumentNode(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 7,
 					EndLine:   7,
-					StartPos:  115,
+					StartPos:  114,
 					EndPos:    133,
 				},
 				Expr: &expr.New{
 					Position: &position.Position{
 						StartLine: 7,
 						EndLine:   7,
-						StartPos:  115,
+						StartPos:  114,
 						EndPos:    132,
 					},
 					Class: &name.Name{
 						Position: &position.Position{
 							StartLine: 7,
 							EndLine:   7,
-							StartPos:  119,
+							StartPos:  118,
 							EndPos:    121,
 						},
 						Parts: []node.Node{
@@ -511,7 +510,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 7,
 									EndLine:   7,
-									StartPos:  119,
+									StartPos:  118,
 									EndPos:    121,
 								},
 								Value: "foo",
@@ -522,7 +521,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 7,
 							EndLine:   7,
-							StartPos:  122,
+							StartPos:  121,
 							EndPos:    132,
 						},
 						Arguments: []node.Node{
@@ -530,7 +529,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 7,
 									EndLine:   7,
-									StartPos:  123,
+									StartPos:  122,
 									EndPos:    124,
 								},
 								Variadic:    false,
@@ -539,7 +538,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 7,
 										EndLine:   7,
-										StartPos:  123,
+										StartPos:  122,
 										EndPos:    124,
 									},
 									Name: "a",
@@ -549,7 +548,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 7,
 									EndLine:   7,
-									StartPos:  127,
+									StartPos:  126,
 									EndPos:    131,
 								},
 								Variadic:    true,
@@ -558,7 +557,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 7,
 										EndLine:   7,
-										StartPos:  130,
+										StartPos:  129,
 										EndPos:    131,
 									},
 									Name: "b",
@@ -572,21 +571,21 @@ func TestPhp7ArgumentNode(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 9,
 					EndLine:   9,
-					StartPos:  162,
+					StartPos:  161,
 					EndPos:    186,
 				},
 				Expr: &expr.New{
 					Position: &position.Position{
 						StartLine: 9,
 						EndLine:   9,
-						StartPos:  162,
+						StartPos:  161,
 						EndPos:    185,
 					},
 					Class: &stmt.Class{
 						Position: &position.Position{
 							StartLine: 9,
 							EndLine:   9,
-							StartPos:  166,
+							StartPos:  165,
 							EndPos:    185,
 						},
 						PhpDocComment: "/** anonymous class */",
@@ -594,7 +593,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 9,
 								EndLine:   9,
-								StartPos:  172,
+								StartPos:  171,
 								EndPos:    182,
 							},
 							Arguments: []node.Node{
@@ -602,7 +601,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 9,
 										EndLine:   9,
-										StartPos:  173,
+										StartPos:  172,
 										EndPos:    174,
 									},
 									Variadic:    false,
@@ -611,7 +610,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 										Position: &position.Position{
 											StartLine: 9,
 											EndLine:   9,
-											StartPos:  173,
+											StartPos:  172,
 											EndPos:    174,
 										},
 										Name: "a",
@@ -621,7 +620,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 9,
 										EndLine:   9,
-										StartPos:  177,
+										StartPos:  176,
 										EndPos:    181,
 									},
 									Variadic:    true,
@@ -630,7 +629,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 										Position: &position.Position{
 											StartLine: 9,
 											EndLine:   9,
-											StartPos:  180,
+											StartPos:  179,
 											EndPos:    181,
 										},
 										Name: "b",
@@ -645,7 +644,7 @@ func TestPhp7ArgumentNode(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -663,7 +662,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 2,
 			EndLine:   5,
-			StartPos:  7,
+			StartPos:  6,
 			EndPos:    215,
 		},
 		Stmts: []node.Node{
@@ -671,7 +670,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 2,
 					EndLine:   2,
-					StartPos:  7,
+					StartPos:  6,
 					EndPos:    51,
 				},
 				ReturnsRef:    false,
@@ -680,7 +679,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 2,
 						EndLine:   2,
-						StartPos:  16,
+						StartPos:  15,
 						EndPos:    18,
 					},
 					Value: "foo",
@@ -690,7 +689,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 2,
 							EndLine:   2,
-							StartPos:  20,
+							StartPos:  19,
 							EndPos:    33,
 						},
 						ByRef:    false,
@@ -699,14 +698,14 @@ func TestPhp7ParameterNode(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
-								StartPos:  20,
+								StartPos:  19,
 								EndPos:    23,
 							},
 							Expr: &name.Name{
 								Position: &position.Position{
 									StartLine: 2,
 									EndLine:   2,
-									StartPos:  21,
+									StartPos:  20,
 									EndPos:    23,
 								},
 								Parts: []node.Node{
@@ -714,7 +713,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 										Position: &position.Position{
 											StartLine: 2,
 											EndLine:   2,
-											StartPos:  21,
+											StartPos:  20,
 											EndPos:    23,
 										},
 										Value: "bar",
@@ -726,7 +725,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
-								StartPos:  25,
+								StartPos:  24,
 								EndPos:    28,
 							},
 							Name: "bar",
@@ -735,14 +734,14 @@ func TestPhp7ParameterNode(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
-								StartPos:  30,
+								StartPos:  29,
 								EndPos:    33,
 							},
 							Constant: &name.Name{
 								Position: &position.Position{
 									StartLine: 2,
 									EndLine:   2,
-									StartPos:  30,
+									StartPos:  29,
 									EndPos:    33,
 								},
 								Parts: []node.Node{
@@ -750,7 +749,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 										Position: &position.Position{
 											StartLine: 2,
 											EndLine:   2,
-											StartPos:  30,
+											StartPos:  29,
 											EndPos:    33,
 										},
 										Value: "null",
@@ -763,7 +762,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 2,
 							EndLine:   2,
-							StartPos:  36,
+							StartPos:  35,
 							EndPos:    47,
 						},
 						ByRef:    true,
@@ -772,7 +771,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
-								StartPos:  36,
+								StartPos:  35,
 								EndPos:    38,
 							},
 							Parts: []node.Node{
@@ -780,7 +779,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 2,
 										EndLine:   2,
-										StartPos:  36,
+										StartPos:  35,
 										EndPos:    38,
 									},
 									Value: "baz",
@@ -791,7 +790,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 2,
 								EndLine:   2,
-								StartPos:  44,
+								StartPos:  43,
 								EndPos:    47,
 							},
 							Name: "baz",
@@ -804,7 +803,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 3,
 					EndLine:   3,
-					StartPos:  55,
+					StartPos:  54,
 					EndPos:    118,
 				},
 				PhpDocComment: "",
@@ -812,7 +811,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 3,
 						EndLine:   3,
-						StartPos:  61,
+						StartPos:  60,
 						EndPos:    63,
 					},
 					Value: "foo",
@@ -822,7 +821,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 3,
 							EndLine:   3,
-							StartPos:  66,
+							StartPos:  65,
 							EndPos:    117,
 						},
 						PhpDocComment: "",
@@ -831,7 +830,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 3,
 								EndLine:   3,
-								StartPos:  82,
+								StartPos:  81,
 								EndPos:    84,
 							},
 							Value: "foo",
@@ -841,7 +840,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 3,
 									EndLine:   3,
-									StartPos:  66,
+									StartPos:  65,
 									EndPos:    71,
 								},
 								Value: "public",
@@ -852,7 +851,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 3,
 									EndLine:   3,
-									StartPos:  86,
+									StartPos:  85,
 									EndPos:    99,
 								},
 								ByRef:    false,
@@ -861,14 +860,14 @@ func TestPhp7ParameterNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 3,
 										EndLine:   3,
-										StartPos:  86,
+										StartPos:  85,
 										EndPos:    89,
 									},
 									Expr: &name.Name{
 										Position: &position.Position{
 											StartLine: 3,
 											EndLine:   3,
-											StartPos:  87,
+											StartPos:  86,
 											EndPos:    89,
 										},
 										Parts: []node.Node{
@@ -876,7 +875,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 												Position: &position.Position{
 													StartLine: 3,
 													EndLine:   3,
-													StartPos:  87,
+													StartPos:  86,
 													EndPos:    89,
 												},
 												Value: "bar",
@@ -888,7 +887,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 3,
 										EndLine:   3,
-										StartPos:  91,
+										StartPos:  90,
 										EndPos:    94,
 									},
 									Name: "bar",
@@ -897,14 +896,14 @@ func TestPhp7ParameterNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 3,
 										EndLine:   3,
-										StartPos:  96,
+										StartPos:  95,
 										EndPos:    99,
 									},
 									Constant: &name.Name{
 										Position: &position.Position{
 											StartLine: 3,
 											EndLine:   3,
-											StartPos:  96,
+											StartPos:  95,
 											EndPos:    99,
 										},
 										Parts: []node.Node{
@@ -912,7 +911,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 												Position: &position.Position{
 													StartLine: 3,
 													EndLine:   3,
-													StartPos:  96,
+													StartPos:  95,
 													EndPos:    99,
 												},
 												Value: "null",
@@ -925,7 +924,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 3,
 									EndLine:   3,
-									StartPos:  102,
+									StartPos:  101,
 									EndPos:    113,
 								},
 								ByRef:    true,
@@ -934,7 +933,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 3,
 										EndLine:   3,
-										StartPos:  102,
+										StartPos:  101,
 										EndPos:    104,
 									},
 									Parts: []node.Node{
@@ -942,7 +941,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 											Position: &position.Position{
 												StartLine: 3,
 												EndLine:   3,
-												StartPos:  102,
+												StartPos:  101,
 												EndPos:    104,
 											},
 											Value: "baz",
@@ -953,7 +952,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 3,
 										EndLine:   3,
-										StartPos:  110,
+										StartPos:  109,
 										EndPos:    113,
 									},
 									Name: "baz",
@@ -964,7 +963,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 3,
 								EndLine:   3,
-								StartPos:  116,
+								StartPos:  115,
 								EndPos:    117,
 							},
 							Stmts: []node.Node{},
@@ -976,14 +975,14 @@ func TestPhp7ParameterNode(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 4,
 					EndLine:   4,
-					StartPos:  122,
+					StartPos:  121,
 					EndPos:    163,
 				},
 				Expr: &expr.Closure{
 					Position: &position.Position{
 						StartLine: 4,
 						EndLine:   4,
-						StartPos:  122,
+						StartPos:  121,
 						EndPos:    162,
 					},
 					ReturnsRef:    false,
@@ -994,7 +993,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 4,
 								EndLine:   4,
-								StartPos:  131,
+								StartPos:  130,
 								EndPos:    144,
 							},
 							ByRef:    false,
@@ -1003,14 +1002,14 @@ func TestPhp7ParameterNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 4,
 									EndLine:   4,
-									StartPos:  131,
+									StartPos:  130,
 									EndPos:    134,
 								},
 								Expr: &name.Name{
 									Position: &position.Position{
 										StartLine: 4,
 										EndLine:   4,
-										StartPos:  132,
+										StartPos:  131,
 										EndPos:    134,
 									},
 									Parts: []node.Node{
@@ -1018,7 +1017,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 											Position: &position.Position{
 												StartLine: 4,
 												EndLine:   4,
-												StartPos:  132,
+												StartPos:  131,
 												EndPos:    134,
 											},
 											Value: "bar",
@@ -1030,7 +1029,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 4,
 									EndLine:   4,
-									StartPos:  136,
+									StartPos:  135,
 									EndPos:    139,
 								},
 								Name: "bar",
@@ -1039,14 +1038,14 @@ func TestPhp7ParameterNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 4,
 									EndLine:   4,
-									StartPos:  141,
+									StartPos:  140,
 									EndPos:    144,
 								},
 								Constant: &name.Name{
 									Position: &position.Position{
 										StartLine: 4,
 										EndLine:   4,
-										StartPos:  141,
+										StartPos:  140,
 										EndPos:    144,
 									},
 									Parts: []node.Node{
@@ -1054,7 +1053,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 											Position: &position.Position{
 												StartLine: 4,
 												EndLine:   4,
-												StartPos:  141,
+												StartPos:  140,
 												EndPos:    144,
 											},
 											Value: "null",
@@ -1067,7 +1066,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 4,
 								EndLine:   4,
-								StartPos:  147,
+								StartPos:  146,
 								EndPos:    158,
 							},
 							Variadic: true,
@@ -1076,7 +1075,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 4,
 									EndLine:   4,
-									StartPos:  147,
+									StartPos:  146,
 									EndPos:    149,
 								},
 								Parts: []node.Node{
@@ -1084,7 +1083,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 										Position: &position.Position{
 											StartLine: 4,
 											EndLine:   4,
-											StartPos:  147,
+											StartPos:  146,
 											EndPos:    149,
 										},
 										Value: "baz",
@@ -1095,7 +1094,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 4,
 									EndLine:   4,
-									StartPos:  155,
+									StartPos:  154,
 									EndPos:    158,
 								},
 								Name: "baz",
@@ -1109,14 +1108,14 @@ func TestPhp7ParameterNode(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 5,
 					EndLine:   5,
-					StartPos:  167,
+					StartPos:  166,
 					EndPos:    215,
 				},
 				Expr: &expr.Closure{
 					Position: &position.Position{
 						StartLine: 5,
 						EndLine:   5,
-						StartPos:  167,
+						StartPos:  166,
 						EndPos:    214,
 					},
 					Static:        true,
@@ -1127,7 +1126,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 5,
 								EndLine:   5,
-								StartPos:  183,
+								StartPos:  182,
 								EndPos:    196,
 							},
 							ByRef:    false,
@@ -1136,14 +1135,14 @@ func TestPhp7ParameterNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 5,
 									EndLine:   5,
-									StartPos:  183,
+									StartPos:  182,
 									EndPos:    186,
 								},
 								Expr: &name.Name{
 									Position: &position.Position{
 										StartLine: 5,
 										EndLine:   5,
-										StartPos:  184,
+										StartPos:  183,
 										EndPos:    186,
 									},
 									Parts: []node.Node{
@@ -1151,7 +1150,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 											Position: &position.Position{
 												StartLine: 5,
 												EndLine:   5,
-												StartPos:  184,
+												StartPos:  183,
 												EndPos:    186,
 											},
 											Value: "bar",
@@ -1163,7 +1162,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 5,
 									EndLine:   5,
-									StartPos:  188,
+									StartPos:  187,
 									EndPos:    191,
 								},
 								Name: "bar",
@@ -1172,14 +1171,14 @@ func TestPhp7ParameterNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 5,
 									EndLine:   5,
-									StartPos:  193,
+									StartPos:  192,
 									EndPos:    196,
 								},
 								Constant: &name.Name{
 									Position: &position.Position{
 										StartLine: 5,
 										EndLine:   5,
-										StartPos:  193,
+										StartPos:  192,
 										EndPos:    196,
 									},
 									Parts: []node.Node{
@@ -1187,7 +1186,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 											Position: &position.Position{
 												StartLine: 5,
 												EndLine:   5,
-												StartPos:  193,
+												StartPos:  192,
 												EndPos:    196,
 											},
 											Value: "null",
@@ -1200,7 +1199,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 5,
 								EndLine:   5,
-								StartPos:  199,
+								StartPos:  198,
 								EndPos:    210,
 							},
 							Variadic: true,
@@ -1209,7 +1208,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 5,
 									EndLine:   5,
-									StartPos:  199,
+									StartPos:  198,
 									EndPos:    201,
 								},
 								Parts: []node.Node{
@@ -1217,7 +1216,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 										Position: &position.Position{
 											StartLine: 5,
 											EndLine:   5,
-											StartPos:  199,
+											StartPos:  198,
 											EndPos:    201,
 										},
 										Value: "baz",
@@ -1228,7 +1227,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 5,
 									EndLine:   5,
-									StartPos:  207,
+									StartPos:  206,
 									EndPos:    210,
 								},
 								Name: "baz",
@@ -1241,7 +1240,7 @@ func TestPhp7ParameterNode(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -1260,7 +1259,7 @@ func TestCommentEndFile(t *testing.T) {
 		Stmts: []node.Node{},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

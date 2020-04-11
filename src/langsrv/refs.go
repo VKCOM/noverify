@@ -221,7 +221,7 @@ func findReferences(substr string, parse parseFn) []vscode.Location {
 						waiter := linter.BeforeParse(len(contents), fi.Filename)
 						defer waiter.Finish()
 
-						parser := php7.NewParser(bytes.NewReader(contents), fi.Filename)
+						parser := php7.NewParser(contents)
 						parser.Parse()
 
 						rootNode := parser.GetRootNode()

@@ -68,6 +68,7 @@ import (
 %token <token> T_CONTINUE
 %token <token> T_GOTO
 %token <token> T_FUNCTION
+%token <token> T_FN
 %token <token> T_CONST
 %token <token> T_RETURN
 %token <token> T_TRY
@@ -159,6 +160,7 @@ import (
 %token <token> T_XOR_EQUAL
 %token <token> T_SL_EQUAL
 %token <token> T_SR_EQUAL
+%token <token> T_COALESCE_EQUAL
 %token <token> T_BOOLEAN_OR
 %token <token> T_BOOLEAN_AND
 %token <token> T_POW
@@ -306,11 +308,9 @@ start:
                 // save position
                 yylex.(*Parser).rootNode.SetPosition(yylex.(*Parser).positionBuilder.NewNodeListPosition($1))
 
+                yylex.(*Parser).setFreeFloating(yylex.(*Parser).rootNode, freefloating.End, yylex.(*Parser).currentToken.FreeFloating)
+
                 yylex.(*Parser).returnTokenToPool(yyDollar, &yyVAL)
-                
-                if yylex.(*Parser).currentToken.Value == "\xff" {
-                    yylex.(*Parser).setFreeFloating(yylex.(*Parser).rootNode, freefloating.End, yylex.(*Parser).currentToken.FreeFloating)
-                }
             }
 ;
 
@@ -488,8 +488,6 @@ top_statement:
                 yylex.(*Parser).setFreeFloating($$, freefloating.SemiColon, yylex.(*Parser).GetFreeFloatingToken($4))
 
                 yylex.(*Parser).returnTokenToPool(yyDollar, &yyVAL)
-
-                yylex.(*Parser).Begin(scanner.HALT_COMPILER)
             }
     |   T_NAMESPACE namespace_name ';'
             {
@@ -4193,8 +4191,8 @@ expr_without_variable:
 backup_doc_comment:
         /* empty */
             {
-                $$ = yylex.(*Parser).PhpDocComment
-                yylex.(*Parser).PhpDocComment = ""
+                $$ = yylex.(*Parser).Lexer.GetPhpDocComment()
+                yylex.(*Parser).Lexer.SetPhpDocComment("")
 
                 yylex.(*Parser).returnTokenToPool(yyDollar, &yyVAL)
             }

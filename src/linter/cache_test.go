@@ -108,7 +108,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "ded0f69ce9bbe287f3bc00199198587cf00efc031f5d38d1ef456dd3af19fde16d52682644d293a752e35697acbabcfc191218fd271eff34a0f76911cd255221"
+		wantStrings := "06bf4317fb79349921eea580fd2402c6bb5886ac7640ebaa55b699ac7f04463c700f781895488bb2bba7d15849439a6eba2605b8f518f64981e332285bec9626"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)

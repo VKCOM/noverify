@@ -1,7 +1,6 @@
 package expr_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -19,7 +18,7 @@ func TestVariable(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    6,
 		},
 		Stmts: []node.Node{
@@ -27,14 +26,14 @@ func TestVariable(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    6,
 				},
 				Expr: &node.SimpleVar{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    5,
 					},
 					Name: "a",
@@ -43,7 +42,7 @@ func TestVariable(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -56,7 +55,7 @@ func TestVariableVariable(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    7,
 		},
 		Stmts: []node.Node{
@@ -64,21 +63,21 @@ func TestVariableVariable(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    7,
 				},
 				Expr: &node.Var{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    6,
 					},
 					Expr: &node.SimpleVar{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  5,
+							StartPos:  4,
 							EndPos:    6,
 						},
 						Name: "a",
@@ -88,7 +87,7 @@ func TestVariableVariable(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

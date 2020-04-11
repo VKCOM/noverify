@@ -1,7 +1,6 @@
 package expr_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -21,7 +20,7 @@ func TestShellExec(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    12,
 		},
 		Stmts: []node.Node{
@@ -29,14 +28,14 @@ func TestShellExec(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    12,
 				},
 				Expr: &expr.ShellExec{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    11,
 					},
 					Parts: []node.Node{
@@ -44,7 +43,7 @@ func TestShellExec(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  5,
+								StartPos:  4,
 								EndPos:    8,
 							},
 							Value: "cmd ",
@@ -53,7 +52,7 @@ func TestShellExec(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  9,
+								StartPos:  8,
 								EndPos:    10,
 							},
 							Name: "a",
@@ -64,7 +63,7 @@ func TestShellExec(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

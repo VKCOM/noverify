@@ -1,7 +1,6 @@
 package php7
 
 import (
-	"io"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/php/parser/errors"
@@ -18,24 +17,16 @@ func (lval *yySymType) Token(t *scanner.Token) {
 
 // Parser structure
 type Parser struct {
-	*scanner.Lexer
-	path            string
+	Lexer           scanner.Scanner
 	currentToken    *scanner.Token
 	positionBuilder *parser.PositionBuilder
 	rootNode        *node.Root
 }
 
 // NewParser creates and returns new Parser
-func NewParser(src io.Reader, path string) *Parser {
-	lexer := scanner.NewLexer(src, path)
-
-	return &Parser{
-		lexer,
-		path,
-		nil,
-		nil,
-		nil,
-	}
+func NewParser(src []byte) *Parser {
+	lexer := scanner.NewLexer(src)
+	return &Parser{Lexer: lexer}
 }
 
 // Lex proxy to lexer Lex
@@ -53,28 +44,23 @@ func (l *Parser) Error(msg string) {
 		EndPos:    l.currentToken.EndPos,
 	}
 
-	l.Lexer.Errors = append(l.Lexer.Errors, errors.NewError(msg, pos))
+	l.Lexer.AddError(errors.NewError(msg, pos))
 }
 
 func (l *Parser) WithFreeFloating() {
-	l.Lexer.WithFreeFloating = true
+	l.Lexer.SetWithFreeFloating(true)
 }
 
 // Parse the php7 Parser entrypoint
 func (l *Parser) Parse() int {
 	// init
-	l.Lexer.Errors = nil
+	l.Lexer.SetErrors(nil)
 	l.rootNode = nil
 	l.positionBuilder = &parser.PositionBuilder{}
 
 	// parse
 
 	return yyParse(l)
-}
-
-// GetPath return path to file
-func (l *Parser) GetPath() string {
-	return l.path
 }
 
 // GetRootNode returns root node
@@ -84,7 +70,7 @@ func (l *Parser) GetRootNode() *node.Root {
 
 // GetErrors returns errors list
 func (l *Parser) GetErrors() []*errors.Error {
-	return l.Lexer.Errors
+	return l.Lexer.GetErrors()
 }
 
 // helpers
@@ -105,7 +91,7 @@ func isDollar(r rune) bool {
 }
 
 func (l *Parser) MoveFreeFloating(src node.Node, dst node.Node) {
-	if !l.Lexer.WithFreeFloating {
+	if !l.Lexer.GetWithFreeFloating() {
 		return
 	}
 
@@ -118,7 +104,7 @@ func (l *Parser) MoveFreeFloating(src node.Node, dst node.Node) {
 }
 
 func (l *Parser) setFreeFloating(dst node.Node, p freefloating.Position, strings []freefloating.String) {
-	if !l.Lexer.WithFreeFloating {
+	if !l.Lexer.GetWithFreeFloating() {
 		return
 	}
 
@@ -135,7 +121,7 @@ func (l *Parser) setFreeFloating(dst node.Node, p freefloating.Position, strings
 }
 
 func (l *Parser) GetFreeFloatingToken(t *scanner.Token) []freefloating.String {
-	if !l.Lexer.WithFreeFloating {
+	if !l.Lexer.GetWithFreeFloating() {
 		return []freefloating.String{}
 	}
 
@@ -143,7 +129,7 @@ func (l *Parser) GetFreeFloatingToken(t *scanner.Token) []freefloating.String {
 }
 
 func (l *Parser) addDollarToken(v node.Node) {
-	if !l.Lexer.WithFreeFloating {
+	if !l.Lexer.GetWithFreeFloating() {
 		return
 	}
 
@@ -162,7 +148,7 @@ func (l *Parser) addDollarToken(v node.Node) {
 }
 
 func (l *Parser) splitSemiColonAndPhpCloseTag(htmlNode node.Node, prevNode node.Node) {
-	if !l.Lexer.WithFreeFloating {
+	if !l.Lexer.GetWithFreeFloating() {
 		return
 	}
 
@@ -225,7 +211,7 @@ func (l *Parser) splitSemiColonAndPhpCloseTag(htmlNode node.Node, prevNode node.
 func (p *Parser) returnTokenToPool(yyDollar []yySymType, yyVAL *yySymType) {
 	for i := 1; i < len(yyDollar); i++ {
 		if yyDollar[i].token != nil {
-			p.TokenPool.Put(yyDollar[i].token)
+			p.Lexer.ReturnTokenToPool(yyDollar[i].token)
 		}
 		yyDollar[i].token = nil
 	}

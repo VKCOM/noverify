@@ -1,7 +1,6 @@
 package scalar_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -21,7 +20,7 @@ func TestSimpleVar(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    15,
 		},
 		Stmts: []node.Node{
@@ -29,14 +28,14 @@ func TestSimpleVar(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    15,
 				},
 				Expr: &scalar.Encapsed{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    14,
 					},
 					Parts: []node.Node{
@@ -44,7 +43,7 @@ func TestSimpleVar(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  5,
+								StartPos:  4,
 								EndPos:    9,
 							},
 							Value: "test ",
@@ -53,7 +52,7 @@ func TestSimpleVar(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  10,
+								StartPos:  9,
 								EndPos:    13,
 							},
 							Name: "var",
@@ -64,7 +63,7 @@ func TestSimpleVar(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -77,7 +76,7 @@ func TestSimpleVarOneChar(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    13,
 		},
 		Stmts: []node.Node{
@@ -85,14 +84,14 @@ func TestSimpleVarOneChar(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    13,
 				},
 				Expr: &scalar.Encapsed{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    12,
 					},
 					Parts: []node.Node{
@@ -100,7 +99,7 @@ func TestSimpleVarOneChar(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  5,
+								StartPos:  4,
 								EndPos:    9,
 							},
 							Value: "test ",
@@ -109,7 +108,7 @@ func TestSimpleVarOneChar(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  10,
+								StartPos:  9,
 								EndPos:    11,
 							},
 							Name: "a",
@@ -120,7 +119,7 @@ func TestSimpleVarOneChar(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -133,7 +132,7 @@ func TestSimpleVarEndsEcapsed(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    17,
 		},
 		Stmts: []node.Node{
@@ -141,14 +140,14 @@ func TestSimpleVarEndsEcapsed(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    17,
 				},
 				Expr: &scalar.Encapsed{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    16,
 					},
 					Parts: []node.Node{
@@ -156,7 +155,7 @@ func TestSimpleVarEndsEcapsed(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  5,
+								StartPos:  4,
 								EndPos:    9,
 							},
 							Value: "test ",
@@ -165,7 +164,7 @@ func TestSimpleVarEndsEcapsed(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  10,
+								StartPos:  9,
 								EndPos:    13,
 							},
 							Name: "var",
@@ -174,7 +173,7 @@ func TestSimpleVarEndsEcapsed(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  14,
+								StartPos:  13,
 								EndPos:    15,
 							},
 							Value: "\\\"",
@@ -185,7 +184,7 @@ func TestSimpleVarEndsEcapsed(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -198,7 +197,7 @@ func TestStringVarCurveOpen(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    13,
 		},
 		Stmts: []node.Node{
@@ -206,14 +205,14 @@ func TestStringVarCurveOpen(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    13,
 				},
 				Expr: &scalar.Encapsed{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    12,
 					},
 					Parts: []node.Node{
@@ -221,7 +220,7 @@ func TestStringVarCurveOpen(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  5,
+								StartPos:  4,
 								EndPos:    5,
 							},
 							Value: "=",
@@ -230,7 +229,7 @@ func TestStringVarCurveOpen(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  6,
+								StartPos:  5,
 								EndPos:    7,
 							},
 							Name: "a",
@@ -239,7 +238,7 @@ func TestStringVarCurveOpen(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  9,
+								StartPos:  8,
 								EndPos:    10,
 							},
 							Name: "b",
@@ -250,7 +249,7 @@ func TestStringVarCurveOpen(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -263,7 +262,7 @@ func TestSimpleVarPropertyFetch(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    22,
 		},
 		Stmts: []node.Node{
@@ -271,14 +270,14 @@ func TestSimpleVarPropertyFetch(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    22,
 				},
 				Expr: &scalar.Encapsed{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    21,
 					},
 					Parts: []node.Node{
@@ -286,7 +285,7 @@ func TestSimpleVarPropertyFetch(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  5,
+								StartPos:  4,
 								EndPos:    9,
 							},
 							Value: "test ",
@@ -295,14 +294,14 @@ func TestSimpleVarPropertyFetch(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  10,
+								StartPos:  9,
 								EndPos:    18,
 							},
 							Variable: &node.SimpleVar{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  10,
+									StartPos:  9,
 									EndPos:    13,
 								},
 								Name: "foo",
@@ -311,7 +310,7 @@ func TestSimpleVarPropertyFetch(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  16,
+									StartPos:  15,
 									EndPos:    18,
 								},
 								Value: "bar",
@@ -321,7 +320,7 @@ func TestSimpleVarPropertyFetch(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  19,
+								StartPos:  18,
 								EndPos:    20,
 							},
 							Value: "()",
@@ -332,7 +331,7 @@ func TestSimpleVarPropertyFetch(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -345,7 +344,7 @@ func TestDollarOpenCurlyBraces(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    17,
 		},
 		Stmts: []node.Node{
@@ -353,14 +352,14 @@ func TestDollarOpenCurlyBraces(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    17,
 				},
 				Expr: &scalar.Encapsed{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    16,
 					},
 					Parts: []node.Node{
@@ -368,7 +367,7 @@ func TestDollarOpenCurlyBraces(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  5,
+								StartPos:  4,
 								EndPos:    9,
 							},
 							Value: "test ",
@@ -377,7 +376,7 @@ func TestDollarOpenCurlyBraces(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  10,
+								StartPos:  9,
 								EndPos:    15,
 							},
 							Name: "foo",
@@ -388,7 +387,7 @@ func TestDollarOpenCurlyBraces(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -401,7 +400,7 @@ func TestDollarOpenCurlyBracesDimNumber(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    20,
 		},
 		Stmts: []node.Node{
@@ -409,14 +408,14 @@ func TestDollarOpenCurlyBracesDimNumber(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    20,
 				},
 				Expr: &scalar.Encapsed{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    19,
 					},
 					Parts: []node.Node{
@@ -424,7 +423,7 @@ func TestDollarOpenCurlyBracesDimNumber(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  5,
+								StartPos:  4,
 								EndPos:    9,
 							},
 							Value: "test ",
@@ -433,14 +432,14 @@ func TestDollarOpenCurlyBracesDimNumber(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  10,
+								StartPos:  9,
 								EndPos:    18,
 							},
 							Variable: &node.SimpleVar{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  12,
+									StartPos:  11,
 									EndPos:    14,
 								},
 								Name: "foo",
@@ -449,7 +448,7 @@ func TestDollarOpenCurlyBracesDimNumber(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  16,
+									StartPos:  15,
 									EndPos:    16,
 								},
 								Value: "0",
@@ -461,7 +460,7 @@ func TestDollarOpenCurlyBracesDimNumber(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -474,7 +473,7 @@ func TestCurlyOpenMethodCall(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    24,
 		},
 		Stmts: []node.Node{
@@ -482,14 +481,14 @@ func TestCurlyOpenMethodCall(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    24,
 				},
 				Expr: &scalar.Encapsed{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    23,
 					},
 					Parts: []node.Node{
@@ -497,7 +496,7 @@ func TestCurlyOpenMethodCall(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  5,
+								StartPos:  4,
 								EndPos:    9,
 							},
 							Value: "test ",
@@ -506,14 +505,14 @@ func TestCurlyOpenMethodCall(t *testing.T) {
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  11,
+								StartPos:  10,
 								EndPos:    21,
 							},
 							Variable: &node.SimpleVar{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  11,
+									StartPos:  10,
 									EndPos:    14,
 								},
 								Name: "foo",
@@ -522,7 +521,7 @@ func TestCurlyOpenMethodCall(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  17,
+									StartPos:  16,
 									EndPos:    19,
 								},
 								Value: "bar",
@@ -531,7 +530,7 @@ func TestCurlyOpenMethodCall(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  20,
+									StartPos:  19,
 									EndPos:    21,
 								},
 							},
@@ -542,7 +541,64 @@ func TestCurlyOpenMethodCall(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
+	php7parser.Parse()
+	actual := php7parser.GetRootNode()
+	assert.DeepEqual(t, expected, actual)
+}
+
+func TestEncapsedMultiline(t *testing.T) {
+	src := `<? "test
+	$var";`
+
+	expected := &node.Root{
+		Position: &position.Position{
+			StartLine: 1,
+			EndLine:   2,
+			StartPos:  3,
+			EndPos:    16,
+		},
+		Stmts: []node.Node{
+			&stmt.Expression{
+				Position: &position.Position{
+					StartLine: 1,
+					EndLine:   2,
+					StartPos:  3,
+					EndPos:    16,
+				},
+				Expr: &scalar.Encapsed{
+					Position: &position.Position{
+						StartLine: 1,
+						EndLine:   2,
+						StartPos:  3,
+						EndPos:    15,
+					},
+					Parts: []node.Node{
+						&scalar.EncapsedStringPart{
+							Position: &position.Position{
+								StartLine: 1,
+								EndLine:   2,
+								StartPos:  4,
+								EndPos:    10,
+							},
+							Value: "test\n\t",
+						},
+						&node.SimpleVar{
+							Position: &position.Position{
+								StartLine: 2,
+								EndLine:   2,
+								StartPos:  10,
+								EndPos:    14,
+							},
+							Name: "var",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

@@ -1,7 +1,6 @@
 package expr_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -21,7 +20,7 @@ func TestShortList(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    13,
 		},
 		Stmts: []node.Node{
@@ -29,14 +28,14 @@ func TestShortList(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    13,
 				},
 				Expr: &assign.Assign{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    12,
 					},
 					Variable: &expr.List{
@@ -44,7 +43,7 @@ func TestShortList(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  4,
+							StartPos:  3,
 							EndPos:    7,
 						},
 						Items: []*expr.ArrayItem{
@@ -52,14 +51,14 @@ func TestShortList(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  5,
+									StartPos:  4,
 									EndPos:    6,
 								},
 								Val: &node.SimpleVar{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  5,
+										StartPos:  4,
 										EndPos:    6,
 									},
 									Name: "a",
@@ -71,7 +70,7 @@ func TestShortList(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  11,
+							StartPos:  10,
 							EndPos:    12,
 						},
 						Name: "b",
@@ -81,7 +80,7 @@ func TestShortList(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -94,7 +93,7 @@ func TestShortListArrayIndex(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    15,
 		},
 		Stmts: []node.Node{
@@ -102,14 +101,14 @@ func TestShortListArrayIndex(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    15,
 				},
 				Expr: &assign.Assign{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    14,
 					},
 					Variable: &expr.List{
@@ -117,7 +116,7 @@ func TestShortListArrayIndex(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  4,
+							StartPos:  3,
 							EndPos:    9,
 						},
 						Items: []*expr.ArrayItem{
@@ -125,21 +124,21 @@ func TestShortListArrayIndex(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  5,
+									StartPos:  4,
 									EndPos:    8,
 								},
 								Val: &expr.ArrayDimFetch{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  5,
+										StartPos:  4,
 										EndPos:    8,
 									},
 									Variable: &node.SimpleVar{
 										Position: &position.Position{
 											StartLine: 1,
 											EndLine:   1,
-											StartPos:  5,
+											StartPos:  4,
 											EndPos:    6,
 										},
 										Name: "a",
@@ -152,7 +151,7 @@ func TestShortListArrayIndex(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  13,
+							StartPos:  12,
 							EndPos:    14,
 						},
 						Name: "b",
@@ -162,7 +161,7 @@ func TestShortListArrayIndex(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -175,7 +174,7 @@ func TestShortListList(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    19,
 		},
 		Stmts: []node.Node{
@@ -183,14 +182,14 @@ func TestShortListList(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    19,
 				},
 				Expr: &assign.Assign{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    18,
 					},
 					Variable: &expr.List{
@@ -198,7 +197,7 @@ func TestShortListList(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  4,
+							StartPos:  3,
 							EndPos:    13,
 						},
 						Items: []*expr.ArrayItem{
@@ -206,14 +205,14 @@ func TestShortListList(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  5,
+									StartPos:  4,
 									EndPos:    12,
 								},
 								Val: &expr.List{
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  5,
+										StartPos:  4,
 										EndPos:    12,
 									},
 									Items: []*expr.ArrayItem{
@@ -221,14 +220,14 @@ func TestShortListList(t *testing.T) {
 											Position: &position.Position{
 												StartLine: 1,
 												EndLine:   1,
-												StartPos:  10,
+												StartPos:  9,
 												EndPos:    11,
 											},
 											Val: &node.SimpleVar{
 												Position: &position.Position{
 													StartLine: 1,
 													EndLine:   1,
-													StartPos:  10,
+													StartPos:  9,
 													EndPos:    11,
 												},
 												Name: "a",
@@ -243,7 +242,7 @@ func TestShortListList(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  17,
+							StartPos:  16,
 							EndPos:    18,
 						},
 						Name: "b",
@@ -253,7 +252,7 @@ func TestShortListList(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

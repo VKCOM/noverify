@@ -1,7 +1,6 @@
 package stmt_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -21,7 +20,7 @@ func TestClassConstList(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    46,
 		},
 		Stmts: []node.Node{
@@ -29,7 +28,7 @@ func TestClassConstList(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    46,
 				},
 				PhpDocComment: "",
@@ -37,7 +36,7 @@ func TestClassConstList(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  10,
+						StartPos:  9,
 						EndPos:    12,
 					},
 					Value: "foo",
@@ -47,7 +46,7 @@ func TestClassConstList(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  15,
+							StartPos:  14,
 							EndPos:    44,
 						},
 						Modifiers: []*node.Identifier{
@@ -55,7 +54,7 @@ func TestClassConstList(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  15,
+									StartPos:  14,
 									EndPos:    20,
 								},
 								Value: "public",
@@ -66,7 +65,7 @@ func TestClassConstList(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  28,
+									StartPos:  27,
 									EndPos:    34,
 								},
 								PhpDocComment: "",
@@ -74,7 +73,7 @@ func TestClassConstList(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  28,
+										StartPos:  27,
 										EndPos:    30,
 									},
 									Value: "FOO",
@@ -83,7 +82,7 @@ func TestClassConstList(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  34,
+										StartPos:  33,
 										EndPos:    34,
 									},
 									Value: "1",
@@ -93,7 +92,7 @@ func TestClassConstList(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  37,
+									StartPos:  36,
 									EndPos:    43,
 								},
 								PhpDocComment: "",
@@ -101,7 +100,7 @@ func TestClassConstList(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  37,
+										StartPos:  36,
 										EndPos:    39,
 									},
 									Value: "BAR",
@@ -110,7 +109,7 @@ func TestClassConstList(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  43,
+										StartPos:  42,
 										EndPos:    43,
 									},
 									Value: "2",
@@ -123,7 +122,7 @@ func TestClassConstList(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -136,7 +135,7 @@ func TestClassConstListWithoutModifiers(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    39,
 		},
 		Stmts: []node.Node{
@@ -144,7 +143,7 @@ func TestClassConstListWithoutModifiers(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    39,
 				},
 				PhpDocComment: "",
@@ -152,7 +151,7 @@ func TestClassConstListWithoutModifiers(t *testing.T) {
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  10,
+						StartPos:  9,
 						EndPos:    12,
 					},
 					Value: "foo",
@@ -162,7 +161,7 @@ func TestClassConstListWithoutModifiers(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  15,
+							StartPos:  14,
 							EndPos:    37,
 						},
 						Consts: []node.Node{
@@ -170,7 +169,7 @@ func TestClassConstListWithoutModifiers(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  21,
+									StartPos:  20,
 									EndPos:    27,
 								},
 								PhpDocComment: "",
@@ -178,7 +177,7 @@ func TestClassConstListWithoutModifiers(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  21,
+										StartPos:  20,
 										EndPos:    23,
 									},
 									Value: "FOO",
@@ -187,7 +186,7 @@ func TestClassConstListWithoutModifiers(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  27,
+										StartPos:  26,
 										EndPos:    27,
 									},
 									Value: "1",
@@ -197,7 +196,7 @@ func TestClassConstListWithoutModifiers(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  30,
+									StartPos:  29,
 									EndPos:    36,
 								},
 								PhpDocComment: "",
@@ -205,7 +204,7 @@ func TestClassConstListWithoutModifiers(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  30,
+										StartPos:  29,
 										EndPos:    32,
 									},
 									Value: "BAR",
@@ -214,7 +213,7 @@ func TestClassConstListWithoutModifiers(t *testing.T) {
 									Position: &position.Position{
 										StartLine: 1,
 										EndLine:   1,
-										StartPos:  36,
+										StartPos:  35,
 										EndPos:    36,
 									},
 									Value: "2",
@@ -227,7 +226,7 @@ func TestClassConstListWithoutModifiers(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)

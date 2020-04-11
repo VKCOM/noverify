@@ -1,7 +1,6 @@
 package expr_test
 
 import (
-	"bytes"
 	"testing"
 
 	"gotest.tools/assert"
@@ -21,7 +20,7 @@ func TestClassConstFetch(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    12,
 		},
 		Stmts: []node.Node{
@@ -29,21 +28,21 @@ func TestClassConstFetch(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    12,
 				},
 				Expr: &expr.ClassConstFetch{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    11,
 					},
 					Class: &name.Name{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  4,
+							StartPos:  3,
 							EndPos:    6,
 						},
 						Parts: []node.Node{
@@ -51,7 +50,7 @@ func TestClassConstFetch(t *testing.T) {
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  4,
+									StartPos:  3,
 									EndPos:    6,
 								},
 								Value: "Foo",
@@ -62,7 +61,7 @@ func TestClassConstFetch(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  9,
+							StartPos:  8,
 							EndPos:    11,
 						},
 						Value: "Bar",
@@ -72,7 +71,7 @@ func TestClassConstFetch(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
@@ -85,7 +84,7 @@ func TestStaticClassConstFetch(t *testing.T) {
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
-			StartPos:  4,
+			StartPos:  3,
 			EndPos:    15,
 		},
 		Stmts: []node.Node{
@@ -93,21 +92,21 @@ func TestStaticClassConstFetch(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
-					StartPos:  4,
+					StartPos:  3,
 					EndPos:    15,
 				},
 				Expr: &expr.ClassConstFetch{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  4,
+						StartPos:  3,
 						EndPos:    14,
 					},
 					Class: &node.Identifier{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  4,
+							StartPos:  3,
 							EndPos:    9,
 						},
 						Value: "static",
@@ -116,7 +115,7 @@ func TestStaticClassConstFetch(t *testing.T) {
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  12,
+							StartPos:  11,
 							EndPos:    14,
 						},
 						Value: "bar",
@@ -126,7 +125,7 @@ func TestStaticClassConstFetch(t *testing.T) {
 		},
 	}
 
-	php7parser := php7.NewParser(bytes.NewBufferString(src), "test.php")
+	php7parser := php7.NewParser([]byte(src))
 	php7parser.Parse()
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
