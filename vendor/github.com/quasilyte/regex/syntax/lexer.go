@@ -2,6 +2,7 @@ package syntax
 
 import (
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -110,7 +111,7 @@ func (l *lexer) Peek() token {
 func (l *lexer) scan() {
 	for l.pos < len(l.input) {
 		ch := l.input[l.pos]
-		if ch >= 128 {
+		if ch > unicode.MaxASCII {
 			_, size := utf8.DecodeRuneInString(l.input[l.pos:])
 			l.pushTok(tokChar, size)
 			l.maybeInsertConcat()
@@ -189,7 +190,7 @@ func (l *lexer) scanCharClass() {
 
 	for l.pos < len(l.input) {
 		ch := l.input[l.pos]
-		if ch >= 128 {
+		if ch > unicode.MaxASCII {
 			_, size := utf8.DecodeRuneInString(l.input[l.pos:])
 			l.pushTok(tokChar, size)
 			continue
@@ -275,13 +276,19 @@ func (l *lexer) scanEscape(insideCharClass bool) {
 		l.pushTok(tokQ, size)
 
 	default:
+		ch := l.byteAt(l.pos + 1)
+		if ch > unicode.MaxASCII {
+			_, size := utf8.DecodeRuneInString(l.input[l.pos+1:])
+			l.pushTok(tokEscapeChar, len(`\`)+size)
+			return
+		}
 		kind := tokEscapeChar
 		if insideCharClass {
-			if charClassMetachar[l.byteAt(l.pos+1)] {
+			if charClassMetachar[ch] {
 				kind = tokEscapeMeta
 			}
 		} else {
-			if reMetachar[l.byteAt(l.pos+1)] {
+			if reMetachar[ch] {
 				kind = tokEscapeMeta
 			}
 		}
