@@ -12,7 +12,6 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/name"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
-	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/printer"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
@@ -329,19 +328,6 @@ func findVarNode(n node.Node) node.Node {
 	default:
 		return nil
 	}
-}
-
-func isAbstractClass(n node.Node) bool {
-	cls, ok := n.(*stmt.Class)
-	if !ok {
-		return false
-	}
-	for _, m := range cls.Modifiers {
-		if strings.EqualFold("abstract", m.Value) {
-			return true
-		}
-	}
-	return false
 }
 
 // List taken from https://wiki.php.net/rfc/context_sensitive_lexer

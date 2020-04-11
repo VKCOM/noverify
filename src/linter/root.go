@@ -233,6 +233,20 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 				}
 			}
 		}
+		var classFlags meta.ClassFlags
+		for _, m := range n.Modifiers {
+			// Might add other flags here like "final" when we need it.
+			if strings.EqualFold("abstract", m.Value) {
+				classFlags |= meta.ClassAbstract
+			}
+		}
+		if classFlags != 0 {
+			// Since cl is not a pointer and it's illegal to update
+			// individual fields through map, we update cl and
+			// then assign it back to the map.
+			cl.Flags = classFlags
+			d.meta.Classes[d.st.CurrentClass] = cl
+		}
 		d.checkCommentMisspellings(n.ClassName, n.PhpDocComment)
 		d.checkIdentMisspellings(n.ClassName)
 		doc := parseClassPHPDoc(d.st, n.PhpDocComment)

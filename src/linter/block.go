@@ -957,13 +957,20 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 
 	exprType.Find(func(typ string) bool {
 		fn, implClass, foundMethod = solver.FindMethod(typ, methodName)
+		// If we found the method and implClass is an empty string
+		// then this is an interface method. We permit calling that
+		// method if it's called through an object that type
+		// is abstract class.
+		if foundMethod && implClass == "" {
+			cls, ok := meta.Info.GetClass(typ)
+			if !ok || !cls.IsAbstract() {
+				foundMethod = false
+			}
+		}
+
 		magic = haveMagicMethod(typ, `__call`)
 		return foundMethod || magic
 	})
-	// We permit abstract classes to call unimplemented interface methods.
-	if !isAbstractClass(b.r.currentClassNode) && implClass == "" {
-		foundMethod = false
-	}
 
 	e.Variable.Walk(b)
 	e.Method.Walk(b)

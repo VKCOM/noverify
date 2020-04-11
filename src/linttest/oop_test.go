@@ -748,5 +748,9 @@ class BarImpl extends AbstractBar2 {
     return 10;
   }
 }
+
+function f(AbstractBarBase $x) {
+  return $x->foo();
+}
 `)
 }
