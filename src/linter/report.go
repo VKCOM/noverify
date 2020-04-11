@@ -157,6 +157,18 @@ func init() {
 		},
 
 		{
+			Name:    "regexpVet",
+			Default: true,
+			Comment: `Report suspicious regexp patterns.`,
+		},
+
+		{
+			Name:    "regexpSyntax",
+			Default: true,
+			Comment: `Report regexp syntax errors.`,
+		},
+
+		{
 			Name:    "caseContinue",
 			Default: true,
 			Comment: `Report suspicious 'continue' usages inside switch cases.`,

@@ -156,6 +156,11 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 		rootRset:  cloneRulesForFile(filename, Rules.Root),
 		localRset: cloneRulesForFile(filename, Rules.Local),
 
+		reVet: &regexpVet{
+			parser: syntax.NewParser(&syntax.ParserOptions{
+				NoLiterals: false,
+			}),
+		},
 		reSimplifier: &regexpSimplifier{
 			parser: syntax.NewParser(&syntax.ParserOptions{
 				NoLiterals: true,

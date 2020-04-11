@@ -440,10 +440,12 @@ func (p *Parser) newPCRE(source string) (*RegexpPCRE, error) {
 		}
 	}
 
-	j := strings.LastIndexByte(source, endDelim)
+	const delimLen = 1
+	j := strings.LastIndexByte(source[delimLen:], endDelim)
 	if j == -1 {
 		return nil, fmt.Errorf("can't find '%c' ending delimiter", endDelim)
 	}
+	j += delimLen
 
 	pcre := &RegexpPCRE{
 		Pattern:   source[1:j],
