@@ -1515,11 +1515,15 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 
 	case *expr.Isset:
 		for _, v := range n.Variables {
-			if a.b.ctx.sc.HaveVar(v) {
+			varNode := findVarNode(v)
+			if varNode == nil {
+				continue
+			}
+			if a.b.ctx.sc.HaveVar(varNode) {
 				continue
 			}
 
-			switch v := v.(type) {
+			switch v := varNode.(type) {
 			case *node.SimpleVar:
 				a.b.addVar(v, meta.NewTypesMap("isset_$"+v.Name), "isset", true)
 				a.varsToDelete = append(a.varsToDelete, v)

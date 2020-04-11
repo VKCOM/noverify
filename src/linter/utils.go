@@ -315,6 +315,21 @@ func isCapitalized(s string) bool {
 	return unicode.IsUpper(ch)
 }
 
+// findVarNode returns expression variable node root.
+// If expression doesn't start from a variable, returns nil.
+func findVarNode(n node.Node) node.Node {
+	switch n := n.(type) {
+	case *node.Var, *node.SimpleVar:
+		return n
+	case *expr.PropertyFetch:
+		return findVarNode(n.Variable)
+	case *expr.ArrayDimFetch:
+		return findVarNode(n.Variable)
+	default:
+		return nil
+	}
+}
+
 // List taken from https://wiki.php.net/rfc/context_sensitive_lexer
 var phpKeywords = map[string]bool{
 	"callable":     true,
