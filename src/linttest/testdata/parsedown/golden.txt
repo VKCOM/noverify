@@ -1,6 +1,3 @@
-UNUSED  unused: Unused variable li (use $_ to ignore this inspection) at testdata/parsedown/parsedown.php:733
-            foreach ($Block['element']['elements'] as &$li)
-                                                       ^^^
 MAYBE   regexpSimplify: May re-write '/^>[ ]?+(.*+)/' as '/^> ?+(.*+)/' at testdata/parsedown/parsedown.php:750
         if (preg_match('/^>[ ]?+(.*+)/', $Line['text'], $matches))
                        ^^^^^^^^^^^^^^^^

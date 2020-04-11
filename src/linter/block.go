@@ -1846,6 +1846,7 @@ func (b *BlockWalker) handleDimFetchLValue(e *expr.ArrayDimFetch, reason string,
 			arrTyp = arrTyp.AppendString(meta.WrapArrayOf(t))
 		})
 		b.addVar(v, arrTyp, reason, true)
+		b.handleVariable(v)
 	case *expr.ArrayDimFetch:
 		b.handleDimFetchLValue(v, reason, meta.MixedType)
 	default:
