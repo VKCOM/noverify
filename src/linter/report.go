@@ -151,6 +151,12 @@ func init() {
 		},
 
 		{
+			Name:    "newAbstract",
+			Default: true,
+			Comment: `Report abstract classes usages in new expressions.`,
+		},
+
+		{
 			Name:    "regexpSimplify",
 			Default: true,
 			Comment: `Report regular expressions that can be simplified.`,

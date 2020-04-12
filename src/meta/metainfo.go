@@ -346,8 +346,15 @@ type ConstantInfo struct {
 	AccessLevel AccessLevel
 }
 
+type ClassFlags uint8
+
+const (
+	ClassAbstract ClassFlags = 1 << iota
+)
+
 type ClassInfo struct {
 	Pos              ElementPosition
+	Flags            ClassFlags
 	Parent           string
 	ParentInterfaces []string // interfaces allow multiple inheritance
 	Traits           map[string]struct{}
@@ -356,6 +363,8 @@ type ClassInfo struct {
 	Properties       PropertiesMap // both instance and static properties are inside. Static properties have "$" prefix
 	Constants        ConstantsMap
 }
+
+func (info *ClassInfo) IsAbstract() bool { return info.Flags&ClassAbstract != 0 }
 
 type ClassParseState struct {
 	IsTrait                 bool

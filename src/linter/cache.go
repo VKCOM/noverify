@@ -27,7 +27,8 @@ import (
 //     32 - replaced Static:bool with Flags:uint8 in meta.FuncInfo
 //     33 - support parsing of array<k,v> and list<type>
 //     34 - support parsing of ?ClassName as "ClassName|null"
-const cacheVersion = 34
+//     35 - added Flags:uint8 to meta.ClassInfo
+const cacheVersion = 35
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")
