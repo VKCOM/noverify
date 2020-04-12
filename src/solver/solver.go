@@ -277,6 +277,13 @@ func findMethod(className string, methodName string, visitedMap map[string]struc
 			}
 		}
 
+		for ifaceName := range class.Interfaces {
+			res, implClassName, ok := findMethod(ifaceName, methodName, visitedMap)
+			if ok {
+				return res, implClassName, ok
+			}
+		}
+
 		// interfaces support multiple inheritance and I use a separate property for that for now
 		for _, parentIfaceName := range class.ParentInterfaces {
 			res, implClassName, ok = findMethod(parentIfaceName, methodName, visitedMap)
