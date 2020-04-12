@@ -1423,3 +1423,35 @@ func TestIgnoreControllCharactersAtStringVarOffset(t *testing.T) {
 	actual = lv.Tkn.Value
 	assert.DeepEqual(t, expected, actual)
 }
+
+func TestHereDocTokens73(t *testing.T) {
+	src := `<?php
+	<<<"CAT"
+		text
+	CAT, $b`
+
+	expected := []string{
+
+		T_START_HEREDOC.String(),
+		T_ENCAPSED_AND_WHITESPACE.String(),
+		T_END_HEREDOC.String(),
+		TokenID(int(',')).String(),
+		T_VARIABLE.String(),
+	}
+
+	lexer := NewLexer([]byte(src))
+	lexer.WithFreeFloating = true
+	lv := &lval{}
+	actual := []string{}
+
+	for {
+		token := lexer.Lex(lv)
+		if token == 0 {
+			break
+		}
+
+		actual = append(actual, TokenID(token).String())
+	}
+
+	assert.DeepEqual(t, expected, actual)
+}
