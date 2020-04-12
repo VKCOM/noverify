@@ -6,6 +6,29 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestNewAbstract(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+abstract class AC {
+  private static function foo() {
+    return new self(); // Same as AC
+  }
+
+  /** @return static */
+  public static function bar() {
+    return new static(); // OK: late static binding
+  }
+}
+
+$x = new AC();
+`)
+	test.Expect = []string{
+		`Cannot instantiate abstract class`,
+		`Cannot instantiate abstract class`,
+	}
+	test.RunAndMatch()
+}
+
 func TestOldStyleConstructor(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -683,4 +706,55 @@ function test3(?A $instance) {
 		`Property {\A|null}->c does not exist`,
 	}
 	test.RunAndMatch()
+}
+
+func TestAbstractClassMethodCall(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+interface FooInterface {
+  public function foo();
+}
+
+abstract class AbstractBarBase implements FooInterface {
+  protected function callIface() {
+    $this->foo(); // OK: abstract class can call unimplemented iface methods
+  }
+
+  abstract protected function bar() : int;
+
+  private function callBar() {
+    return $this->bar(); // OK: can call to own abstract methods
+  }
+}
+
+abstract class AbstractBar extends AbstractBarBase {
+  protected function callIface2() {
+    $this->foo(); // OK: as with AbstractBarBase which we extend
+  }
+  protected function callBar() {
+    return $this->bar(); // OK: can call base class abstract methods
+  }
+}
+
+abstract class AbstractBar2 extends AbstractBar {
+  /** Implements FooInterface */
+  public function foo() {}
+}
+
+class BarImpl extends AbstractBar2 {
+  protected function callIface3() {
+    $this->foo(); // OK: calling interface method implemented in a base class
+  }
+  protected function callBar2() {
+    return $this->bar(); // OK: calling own method that implements abstract method
+  }
+
+  protected function bar() : int {
+    return 10;
+  }
+}
+
+function f(AbstractBarBase $x) {
+  return $x->foo();
+}
+`)
 }

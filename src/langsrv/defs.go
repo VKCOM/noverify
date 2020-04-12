@@ -102,13 +102,13 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 			return true
 		}
 
-		fun, _, ok := solver.FindMethod(className, id.Value)
+		m, ok := solver.FindMethod(className, id.Value)
 		if ok {
 			d.result = append(d.result, vscode.Location{
-				URI: "file://" + fun.Pos.Filename,
+				URI: "file://" + m.Info.Pos.Filename,
 				Range: vscode.Range{
-					Start: vscode.Position{Line: int(fun.Pos.Line) - 1},
-					End:   vscode.Position{Line: int(fun.Pos.Line) - 1},
+					Start: vscode.Position{Line: int(m.Info.Pos.Line) - 1},
+					End:   vscode.Position{Line: int(m.Info.Pos.Line) - 1},
 				},
 			})
 		}
@@ -138,17 +138,17 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 		types := safeExprType(foundScope, &d.st, n.Variable)
 
 		types.Iterate(func(t string) {
-			fun, _, ok := solver.FindMethod(t, id.Value)
+			m, ok := solver.FindMethod(t, id.Value)
 			if !ok {
 				lintdebug.Send("Could not find method for %s::%s", t, id.Value)
 				return
 			}
 
 			d.result = append(d.result, vscode.Location{
-				URI: "file://" + fun.Pos.Filename,
+				URI: "file://" + m.Info.Pos.Filename,
 				Range: vscode.Range{
-					Start: vscode.Position{Line: int(fun.Pos.Line) - 1},
-					End:   vscode.Position{Line: int(fun.Pos.Line) - 1},
+					Start: vscode.Position{Line: int(m.Info.Pos.Line) - 1},
+					End:   vscode.Position{Line: int(m.Info.Pos.Line) - 1},
 				},
 			})
 		})
@@ -178,17 +178,17 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 		types := safeExprType(foundScope, &d.st, n.Variable)
 
 		types.Iterate(func(t string) {
-			prop, _, ok := solver.FindProperty(t, id.Value)
+			p, ok := solver.FindProperty(t, id.Value)
 			if !ok {
 				lintdebug.Send("Could not find property for %s->%s", t, id.Value)
 				return
 			}
 
 			d.result = append(d.result, vscode.Location{
-				URI: "file://" + prop.Pos.Filename,
+				URI: "file://" + p.Info.Pos.Filename,
 				Range: vscode.Range{
-					Start: vscode.Position{Line: int(prop.Pos.Line) - 1},
-					End:   vscode.Position{Line: int(prop.Pos.Line) - 1},
+					Start: vscode.Position{Line: int(p.Info.Pos.Line) - 1},
+					End:   vscode.Position{Line: int(p.Info.Pos.Line) - 1},
 				},
 			})
 		})

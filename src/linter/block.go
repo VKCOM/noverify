@@ -962,13 +962,16 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 		foundMethod bool
 		magic       bool
 		fn          meta.FuncInfo
-		implClass   string
+		className   string
 	)
 
 	exprType := solver.ExprTypeCustom(b.ctx.sc, b.r.st, e.Variable, b.ctx.customTypes)
 
 	exprType.Find(func(typ string) bool {
-		fn, implClass, foundMethod = solver.FindMethod(typ, methodName)
+		m, ok := solver.FindMethod(typ, methodName)
+		fn = m.Info
+		foundMethod = ok
+		className = m.ClassName
 		magic = haveMagicMethod(typ, `__call`)
 		return foundMethod || magic
 	})
@@ -1000,8 +1003,8 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 		}
 	}
 
-	if foundMethod && !b.canAccess(implClass, fn.AccessLevel) {
-		b.r.Report(e.Method, LevelError, "accessLevel", "Cannot access %s method %s->%s()", fn.AccessLevel, implClass, methodName)
+	if foundMethod && !b.canAccess(className, fn.AccessLevel) {
+		b.r.Report(e.Method, LevelError, "accessLevel", "Cannot access %s method %s->%s()", fn.AccessLevel, className, methodName)
 	}
 
 	b.handleCallArgs(e.Method, e.ArgumentList.Arguments, fn)
@@ -1029,7 +1032,8 @@ func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
 		return true
 	}
 
-	fn, implClass, ok := solver.FindMethod(className, methodName)
+	m, ok := solver.FindMethod(className, methodName)
+	fn := m.Info
 
 	e.Class.Walk(b)
 	e.Call.Walk(b)
@@ -1048,8 +1052,8 @@ func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
 		}
 	}
 
-	if ok && !b.canAccess(implClass, fn.AccessLevel) {
-		b.r.Report(e.Call, LevelError, "accessLevel", "Cannot access %s method %s::%s()", fn.AccessLevel, implClass, methodName)
+	if ok && !b.canAccess(m.ClassName, fn.AccessLevel) {
+		b.r.Report(e.Call, LevelError, "accessLevel", "Cannot access %s method %s::%s()", fn.AccessLevel, m.ClassName, methodName)
 	}
 
 	b.handleCallArgs(e.Call, e.ArgumentList.Arguments, fn)
@@ -1085,13 +1089,16 @@ func (b *BlockWalker) handlePropertyFetch(e *expr.PropertyFetch) bool {
 
 	found := false
 	magic := false
-	var implClass string
+	var className string
 	var info meta.PropertyInfo
 
 	typ := solver.ExprTypeCustom(b.ctx.sc, b.r.st, e.Variable, b.ctx.customTypes)
-	typ.Find(func(className string) bool {
-		info, implClass, found = solver.FindProperty(className, id.Value)
-		magic = haveMagicMethod(className, `__get`)
+	typ.Find(func(typ string) bool {
+		p, ok := solver.FindProperty(typ, id.Value)
+		info = p.Info
+		className = p.ClassName
+		found = ok
+		magic = haveMagicMethod(typ, `__get`)
 		return found || magic
 	})
 
@@ -1099,8 +1106,8 @@ func (b *BlockWalker) handlePropertyFetch(e *expr.PropertyFetch) bool {
 		b.r.Report(e.Property, LevelError, "undefined", "Property {%s}->%s does not exist", typ, id.Value)
 	}
 
-	if found && !b.canAccess(implClass, info.AccessLevel) {
-		b.r.Report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s->%s", info.AccessLevel, implClass, id.Value)
+	if found && !b.canAccess(className, info.AccessLevel) {
+		b.r.Report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s->%s", info.AccessLevel, className, id.Value)
 	}
 
 	return false
@@ -1125,13 +1132,13 @@ func (b *BlockWalker) handleStaticPropertyFetch(e *expr.StaticPropertyFetch) boo
 		return false
 	}
 
-	info, implClass, ok := solver.FindProperty(className, "$"+sv.Name)
+	p, ok := solver.FindProperty(className, "$"+sv.Name)
 	if !ok && !b.r.st.IsTrait {
 		b.r.Report(e.Property, LevelError, "undefined", "Property %s::$%s does not exist", className, sv.Name)
 	}
 
-	if ok && !b.canAccess(implClass, info.AccessLevel) {
-		b.r.Report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s::$%s", info.AccessLevel, implClass, sv.Name)
+	if ok && !b.canAccess(p.ClassName, p.Info.AccessLevel) {
+		b.r.Report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s::$%s", p.Info.AccessLevel, p.ClassName, sv.Name)
 	}
 
 	return false
@@ -1275,15 +1282,23 @@ func (b *BlockWalker) handleNew(e *expr.New) bool {
 		return true
 	}
 
-	if _, ok := meta.Info.GetClass(className); !ok {
+	class, ok := meta.Info.GetClass(className)
+	if !ok {
 		b.r.Report(e.Class, LevelError, "undefined", "Class not found %s", className)
+	}
+	// It's illegal to instantiate abstract class, but `static` can
+	// resolve to something else due to the late static binding,
+	// so it's the only exception to that rule.
+	if class.IsAbstract() && !meta.NameNodeEquals(e.Class, "static") {
+		b.r.Report(e.Class, LevelError, "newAbstract", "Cannot instantiate abstract class")
 	}
 
 	// Check implicitly invoked constructor method arguments count.
-	ctor, _, ok := solver.FindMethod(className, "__construct")
+	m, ok := solver.FindMethod(className, "__construct")
 	if !ok {
 		return true
 	}
+	ctor := m.Info
 	// If new expression is written without (), ArgumentList will be nil.
 	// It's equivalent of 0 arguments constructor call.
 	var args []node.Node

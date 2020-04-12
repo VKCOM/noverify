@@ -49,7 +49,7 @@ func FlagsToString(f int) string {
 }
 
 func haveMagicMethod(class string, methodName string) bool {
-	_, _, ok := solver.FindMethod(class, methodName)
+	_, ok := solver.FindMethod(class, methodName)
 	return ok
 }
 
@@ -218,7 +218,9 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 			if res.defined {
 				return
 			}
-			res.info, _, res.defined = solver.FindMethod(typ, `__invoke`)
+			m, ok := solver.FindMethod(typ, `__invoke`)
+			res.info = m.Info
+			res.defined = ok
 		})
 
 		if !res.defined {
