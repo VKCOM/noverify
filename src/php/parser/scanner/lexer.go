@@ -136,20 +136,30 @@ func (lex *Lexer) isHeredocEnd(p int) bool {
 		return false
 	}
 
+	for lex.data[p] == ' ' || lex.data[p] == '\t' {
+		p++
+	}
+
 	l := len(lex.heredocLabel)
 	if len(lex.data) < p+l {
 		return false
 	}
 
-	if len(lex.data) > p+l && lex.data[p+l] != ';' && lex.data[p+l] != '\r' && lex.data[p+l] != '\n' {
+	if len(lex.data) > p+l && isValidVarName(lex.data[p+l]) {
 		return false
 	}
 
-	if len(lex.data) > p+l+1 && lex.data[p+l] == ';' && lex.data[p+l+1] != '\r' && lex.data[p+l+1] != '\n' {
-		return false
+	a := string(lex.heredocLabel)
+	b := string(lex.data[p : p+l])
+
+	_, _ = a, b
+
+	if bytes.Equal(lex.heredocLabel, lex.data[p:p+l]) {
+		lex.p = p
+		return true
 	}
 
-	return bytes.Equal(lex.heredocLabel, lex.data[p:p+l])
+	return false
 }
 
 func (lex *Lexer) isNotHeredocEnd(p int) bool {
@@ -221,5 +231,9 @@ func (lex *Lexer) Error(msg string) {
 }
 
 func isValidVarNameStart(r byte) bool {
-	return r >= 'A' && r <= 'Z' || r == '_' || r >= 'a' && r <= 'z' || r >= '\u007f' && r <= 'ÿ'
+	return (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') || r == '_' || (r >= 0x80 && r <= 0xff)
+}
+
+func isValidVarName(r byte) bool {
+	return (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '_' || (r >= 0x80 && r <= 0xff)
 }
