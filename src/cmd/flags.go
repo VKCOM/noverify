@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
@@ -16,6 +17,8 @@ const allNonMaybe = "<all-non-maybe>"
 
 var (
 	outputFp io.Writer = os.Stderr
+
+	disableCache bool
 
 	gitRepo string
 
@@ -70,6 +73,13 @@ func bindFlags() {
 		if info.Default {
 			enabledByDefault = append(enabledByDefault, info.Name)
 		}
+	}
+
+	defaultCacheDir, err := os.UserCacheDir()
+	if err != nil {
+		defaultCacheDir = ""
+	} else {
+		defaultCacheDir = filepath.Join(defaultCacheDir, "noverify-cache")
 	}
 
 	flag.Usage = func() {
@@ -135,7 +145,8 @@ func bindFlags() {
 	flag.BoolVar(&linter.LangServer, "lang-server", false, "Run language server for VS Code")
 	flag.StringVar(&linter.DefaultEncoding, "encoding", "UTF-8", "Default encoding. Only UTF-8 and windows-1251 are supported")
 	flag.StringVar(&linter.StubsDir, "stubs-dir", "", "phpstorm-stubs directory")
-	flag.StringVar(&linter.CacheDir, "cache-dir", "", "Directory for linter cache (greatly improves indexing speed)")
+	flag.StringVar(&linter.CacheDir, "cache-dir", defaultCacheDir, "Directory for linter cache (greatly improves indexing speed)")
+	flag.BoolVar(&disableCache, "disable-cache", false, "If set, cache is not used and cache-dir is ignored")
 
 	flag.StringVar(&unusedVarPattern, "unused-var-regex", `^_$`,
 		"Variables that match such regexp are marked as discarded; not reported as unused, but should not be used as values")

@@ -74,6 +74,9 @@ func Main(cfg *MainConfig) {
 
 	bindFlags()
 	flag.Parse()
+	if disableCache {
+		linter.CacheDir = ""
+	}
 	if cfg.AfterFlagParse != nil {
 		cfg.AfterFlagParse()
 	}
