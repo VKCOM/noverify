@@ -6,6 +6,29 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestNewAbstract(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+abstract class AC {
+  private static function foo() {
+    return new self(); // Same as AC
+  }
+
+  /** @return static */
+  public static function bar() {
+    return new static(); // OK: late static binding
+  }
+}
+
+$x = new AC();
+`)
+	test.Expect = []string{
+		`Cannot instantiate abstract class`,
+		`Cannot instantiate abstract class`,
+	}
+	test.RunAndMatch()
+}
+
 func TestOldStyleConstructor(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

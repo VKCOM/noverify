@@ -1275,8 +1275,15 @@ func (b *BlockWalker) handleNew(e *expr.New) bool {
 		return true
 	}
 
-	if _, ok := meta.Info.GetClass(className); !ok {
+	class, ok := meta.Info.GetClass(className)
+	if !ok {
 		b.r.Report(e.Class, LevelError, "undefined", "Class not found %s", className)
+	}
+	// It's illegal to instantiate abstract class, but `static` can
+	// resolve to something else due to the late static binding,
+	// so it's the only exception to that rule.
+	if class.IsAbstract() && !meta.NameNodeEquals(e.Class, "static") {
+		b.r.Report(e.Class, LevelError, "newAbstract", "Cannot instantiate abstract class")
 	}
 
 	// Check implicitly invoked constructor method arguments count.

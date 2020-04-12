@@ -76,9 +76,10 @@ CONST  C1 = 1;
 ABSTRACT Final class TheClass  extendS  TheBase {
   Const C2 = 2;
 }
+class NonAbstract {}
 FOREACH ([] as $_) {}
 whilE (0) { breaK; }
-$a = NeW TheClass();
+$a = NeW NonAbstract();
 $b = CLONE  $a;
 $b = Clone($a);
 FUNCTION f() {
@@ -131,7 +132,7 @@ class UsingTrait IMPLEMENTs TheInterface {
     TheTrait1::f Insteadof TheTrait2;
   }
 }
-THrow new TheClass();
+THrow new NonAbstract();
 function good() {
   switch (0):
   endswitch;
