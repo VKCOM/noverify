@@ -16,7 +16,7 @@ INFO    phpdocLint: malformed @param $stream_id tag (maybe type is missing?) on 
 INFO    phpdocLint: malformed @param $req tag (maybe type is missing?) on line 3 at testdata/phprocksyd/Phprocksyd.php:392
     private function requestCheck($stream_id, $req)
                      ^^^^^^^^^^^^
-UNUSED  unused: Unused variable status (use $_ to ignore this inspection) at testdata/phprocksyd/Phprocksyd.php:394
+INFO    unused: Variable status is unused (use $_ to ignore this inspection) at testdata/phprocksyd/Phprocksyd.php:394
         $status = null;
         ^^^^^^^
 INFO    phpdocLint: malformed @param $stream_id tag (maybe type is missing?) on line 2 at testdata/phprocksyd/Phprocksyd.php:424
