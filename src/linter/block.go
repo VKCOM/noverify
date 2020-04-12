@@ -2064,7 +2064,7 @@ func (b *BlockWalker) flushUnused() {
 			}
 
 			visitedMap[n] = struct{}{}
-			b.r.Report(n, LevelUnused, "unused", `Unused variable %s (use $_ to ignore this inspection)`, name)
+			b.r.Report(n, LevelUnused, "unused", `Variable %s is unused (use $_ to ignore this inspection)`, name)
 		}
 	}
 }

@@ -397,6 +397,10 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 			d.Diagnostics = append(d.Diagnostics, diag)
 		}
 	} else {
+		// Replace Unused with Info (Notice) in non-LSP mode.
+		if level == LevelUnused {
+			level = LevelInformation
+		}
 		d.reports = append(d.reports, &Report{
 			checkName:  checkName,
 			startLn:    string(startLn),

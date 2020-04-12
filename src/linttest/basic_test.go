@@ -644,7 +644,7 @@ function foo() {
 }
 `)
 	test.Expect = []string{
-		`Unused variable x`,
+		`Variable x is unused`,
 		`Undefined variable: y`,
 	}
 	test.RunAndMatch()
@@ -706,7 +706,7 @@ func TestUnusedInSwitch(t *testing.T) {
 		}
 		return 20;
 	}`)
-	test.Expect = []string{`Unused variable x`}
+	test.Expect = []string{`Variable x is unused`}
 	runFilterMatch(test, "unused")
 }
 
@@ -1058,9 +1058,9 @@ func TestUnused(t *testing.T) {
 		}
 	}`)
 	test.Expect = []string{
-		"Unused variable g ",
-		"Unused variable a ",
-		"Unused variable v ",
+		"Variable g is unused",
+		"Variable a is unused",
+		"Variable v is unused",
 	}
 	test.RunAndMatch()
 }

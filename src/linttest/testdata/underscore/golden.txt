@@ -31,7 +31,7 @@ MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdat
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/underscore/underscore.php:363
     $calculated = array();
                   ^^^^^^^
-UNUSED  unused: Unused variable is_sorted (use $_ to ignore this inspection) at testdata/underscore/underscore.php:356
+INFO    unused: Variable is_sorted is unused (use $_ to ignore this inspection) at testdata/underscore/underscore.php:356
     list($collection, $is_sorted, $iterator) = self::_wrapArgs(func_get_args(), 3);
                       ^^^^^^^^^^
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/underscore/underscore.php:448
@@ -79,7 +79,7 @@ MAYBE   arrayAccess: Array access to non-array type \__|mixed at testdata/unders
 MAYBE   arrayAccess: Array access to non-array type \__|empty_array[]|mixed at testdata/underscore/underscore.php:483
         $return_arrays[$k][$a] = array_key_exists($k, $array) ? $array[$k] : null;
         ^^^^^^^^^^^^^^
-UNUSED  unused: Unused variable v (use $_ to ignore this inspection) at testdata/underscore/underscore.php:479
+INFO    unused: Variable v is unused (use $_ to ignore this inspection) at testdata/underscore/underscore.php:479
     foreach($return_arrays as $k=>$v) {
                                   ^^
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/underscore/underscore.php:497
@@ -91,7 +91,7 @@ MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdat
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/underscore/underscore.php:529
     $results = array();
                ^^^^^^^
-UNUSED  unused: Unused variable v (use $_ to ignore this inspection) at testdata/underscore/underscore.php:534
+INFO    unused: Variable v is unused (use $_ to ignore this inspection) at testdata/underscore/underscore.php:534
     foreach($results as $k=>$v) {
                             ^^
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/underscore/underscore.php:545
@@ -100,10 +100,10 @@ MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdat
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/underscore/underscore.php:549
       if(!array_key_exists($key, $result)) $result[$key] = array();
                                                            ^^^^^^^
-UNUSED  unused: Unused variable __ (use $_ to ignore this inspection) at testdata/underscore/underscore.php:561
+INFO    unused: Variable __ is unused (use $_ to ignore this inspection) at testdata/underscore/underscore.php:561
     $__ = new self;
     ^^^
-UNUSED  unused: Unused variable args (use $_ to ignore this inspection) at testdata/underscore/underscore.php:615
+INFO    unused: Variable args is unused (use $_ to ignore this inspection) at testdata/underscore/underscore.php:615
     $args = self::_wrapArgs(func_get_args(), 1);
     ^^^^^
 ERROR   undefined: Property {\__|null|unknown_from_list}->isEqual does not exist at testdata/underscore/underscore.php:723
@@ -160,6 +160,6 @@ MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdat
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/underscore/underscore.php:1102
     $filled_args = array();
                    ^^^^^^^
-UNUSED  unused: Unused variable k (use $_ to ignore this inspection) at testdata/underscore/underscore.php:1107
+INFO    unused: Variable k is unused (use $_ to ignore this inspection) at testdata/underscore/underscore.php:1107
       foreach($caller_args as $k=>$v) {
                               ^^

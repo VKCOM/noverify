@@ -7,7 +7,7 @@ MAYBE   phpdoc: Missing PHPDoc for "render_image" public method at testdata/qrco
 INFO    deadCode: Unreachable code at testdata/qrcode/qrcode.php:155
     return null;
            ^^^^
-UNUSED  unused: Unused variable mode (use $_ to ignore this inspection) at testdata/qrcode/qrcode.php:177
+INFO    unused: Variable mode is unused (use $_ to ignore this inspection) at testdata/qrcode/qrcode.php:177
     list($mode, $vers, $ec, $data) = $this->qr_encode_data($data, $ecl);
          ^^^^^
 INFO    undefined: Variable might have not been defined: code at testdata/qrcode/qrcode.php:221
