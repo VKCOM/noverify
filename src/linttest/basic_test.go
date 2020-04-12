@@ -1294,6 +1294,51 @@ func TestSwitchBreak(t *testing.T) {
 	test.RunAndMatch()
 }
 
+func TestNameCase(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class FooBar {
+  public function method_a() {}
+}
+
+class Baz extends foobar {}
+
+$foo = new Foobar();
+$foo->Method_a();
+
+function func_a() {}
+
+func_A();
+`)
+	test.Expect = []string{
+		`\Foobar should be spelled \FooBar`,
+		`\foobar should be spelled \FooBar`,
+		`Method_a should be spelled method_a`,
+		`\func_A should be spelled \func_a`,
+	}
+	runFilterMatch(test, `nameCase`)
+}
+
+func TestClassNotFound(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$_ = new Foo();
+
+class Derived extends Base {}
+
+class Impl implements Iface1, Iface2 {}
+
+interface Iface extends IfaceBase {}
+`)
+	test.Expect = []string{
+		`Type \Base not found`,
+		`Type \Iface1 not found`,
+		`Type \Iface2 not found`,
+		`Type \Foo not found`,
+	}
+	test.RunAndMatch()
+}
+
 func TestCorrectArrayTypes(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -1449,14 +1494,19 @@ func addNamedFile(test *linttest.Suite, name, code string) {
 	})
 }
 
-func runFilterMatch(test *linttest.Suite, name string) {
-	test.Match(filterReports(name, test.RunLinter()))
+func runFilterMatch(test *linttest.Suite, names ...string) {
+	test.Match(filterReports(names, test.RunLinter()))
 }
 
-func filterReports(name string, reports []*linter.Report) []*linter.Report {
+func filterReports(names []string, reports []*linter.Report) []*linter.Report {
+	set := make(map[string]struct{})
+	for _, name := range names {
+		set[name] = struct{}{}
+	}
+
 	var out []*linter.Report
 	for _, r := range reports {
-		if r.CheckName() == name {
+		if _, ok := set[r.CheckName()]; ok {
 			out = append(out, r)
 		}
 	}

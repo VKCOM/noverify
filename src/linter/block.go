@@ -826,6 +826,7 @@ func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
 		if !call.defined && !b.ctx.customFunctionExists(e.Function) {
 			b.r.Report(e.Function, LevelError, "undefined", "Call to undefined function %s", meta.NameNodeToString(e.Function))
 		}
+		b.r.checkNameCase(e.Function, call.fqName, call.info.Name)
 	}
 
 	if call.info.Doc.Deprecated {
@@ -985,10 +986,10 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 		if !b.ctx.customMethodExists(e.Variable, methodName) {
 			b.r.Report(e.Method, LevelError, "undefined", "Call to undefined method {%s}->%s()", exprType, methodName)
 		}
-	} else {
+	} else if !magic {
 		// Method is defined.
-
-		if fn.IsStatic() && !magic {
+		b.r.checkNameCase(e.Method, methodName, fn.Name)
+		if fn.IsStatic() {
 			b.r.Report(e.Method, LevelWarning, "callStatic", "Calling static method as instance method")
 		}
 	}
@@ -1284,8 +1285,11 @@ func (b *BlockWalker) handleNew(e *expr.New) bool {
 
 	class, ok := meta.Info.GetClass(className)
 	if !ok {
-		b.r.Report(e.Class, LevelError, "undefined", "Class not found %s", className)
+		b.r.reportUndefinedType(e.Class, className)
+	} else {
+		b.r.checkNameCase(e.Class, className, class.Name)
 	}
+
 	// It's illegal to instantiate abstract class, but `static` can
 	// resolve to something else due to the late static binding,
 	// so it's the only exception to that rule.

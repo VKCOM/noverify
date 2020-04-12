@@ -277,16 +277,16 @@ func handleTextDocumentSymbol(req *baseRequest) error {
 			filename := strings.TrimPrefix(uri, "file://")
 			res := meta.Info.GetMetaForFile(filename)
 
-			for className, classInfo := range res.Classes {
+			for _, classInfo := range res.Classes.H {
 				result = append(result, vscode.SymbolInformation{
-					Name:     baseSymbolName(className),
+					Name:     baseSymbolName(classInfo.Name),
 					Kind:     vscode.CompletionKindClass,
 					Location: posToLocation(classInfo.Pos),
 				})
 
-				for methodName, info := range classInfo.Methods {
+				for _, info := range classInfo.Methods.H {
 					result = append(result, vscode.SymbolInformation{
-						Name:     methodName,
+						Name:     info.Name,
 						Kind:     vscode.CompletionKindMethod,
 						Location: posToLocation(info.Pos),
 					})
@@ -309,9 +309,9 @@ func handleTextDocumentSymbol(req *baseRequest) error {
 				}
 			}
 
-			for funcName, info := range res.Functions {
+			for _, info := range res.Functions.H {
 				result = append(result, vscode.SymbolInformation{
-					Name:     baseSymbolName(funcName),
+					Name:     baseSymbolName(info.Name),
 					Kind:     vscode.CompletionKindFunction,
 					Location: posToLocation(info.Pos),
 				})
@@ -771,8 +771,8 @@ func getMethods(className string) (res []string) {
 			return res
 		}
 
-		for m := range class.Methods {
-			res = append(res, m)
+		for _, info := range class.Methods.H {
+			res = append(res, info.Name)
 		}
 
 		className = class.Parent

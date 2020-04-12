@@ -65,15 +65,15 @@ func TestParseClassPHPDoc(t *testing.T) {
 
 		switch {
 		case test.method != "":
-			if len(result.methods) != 1 {
-				t.Errorf("parse(`%s`): expected 1 methods, found %d", test.line, len(result.methods))
+			if result.methods.Len() != 1 {
+				t.Errorf("parse(`%s`): expected 1 methods, found %d", test.line, result.methods.Len())
 				continue
 			}
-			m, ok := result.methods[test.method]
+			m, ok := result.methods.Get(test.method)
 			if !ok {
 				foundInstead := ""
-				for name := range result.methods {
-					foundInstead = name
+				for _, info := range result.methods.H {
+					foundInstead = info.Name
 					break
 				}
 				t.Errorf("parse(`%s`): expected %s method, found %s", test.line, test.method, foundInstead)
