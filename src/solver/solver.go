@@ -38,9 +38,9 @@ type resolver struct {
 
 func (r *resolver) collectMethodCallTypes(out, possibleTypes map[string]struct{}, methodName string) map[string]struct{} {
 	for className := range possibleTypes {
-		info, _, ok := FindMethod(className, methodName)
+		m, ok := FindMethod(className, methodName)
 		if ok {
-			for tt := range r.resolveTypes(className, info.Typ) {
+			for tt := range r.resolveTypes(className, m.Info.Typ) {
 				out[tt] = struct{}{}
 			}
 		}
@@ -100,16 +100,16 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 			case tt == "mixed":
 				res["mixed"] = struct{}{}
 			case Implements(tt, `\ArrayAccess`):
-				offsetGet, _, ok := FindMethod(tt, "offsetGet")
+				m, ok := FindMethod(tt, "offsetGet")
 				if ok {
-					for tt := range r.resolveTypes(tt, offsetGet.Typ) {
+					for tt := range r.resolveTypes(tt, m.Info.Typ) {
 						res[tt] = struct{}{}
 					}
 				}
 			case Implements(tt, `\Traversable`):
-				current, _, ok := FindMethod(tt, "current")
+				m, ok := FindMethod(tt, "current")
 				if ok {
-					for tt := range r.resolveTypes(tt, current.Typ) {
+					for tt := range r.resolveTypes(tt, m.Info.Typ) {
 						res[tt] = struct{}{}
 					}
 				}
@@ -139,18 +139,18 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 		expr, propertyName := meta.UnwrapInstancePropertyFetch(typ)
 
 		for className := range r.resolveType(class, expr) {
-			info, _, ok := FindProperty(className, propertyName)
+			p, ok := FindProperty(className, propertyName)
 			if ok {
-				for tt := range r.resolveTypes(class, info.Typ) {
+				for tt := range r.resolveTypes(class, p.Info.Typ) {
 					res[tt] = struct{}{}
 				}
 			} else {
 				// If there is a __get method, it might have
 				// a @return annotation that will help to
 				// get appropriate type for dynamic property lookup.
-				get, _, ok := FindMethod(className, "__get")
+				m, ok := FindMethod(className, "__get")
 				if ok {
-					return r.resolveTypes(class, get.Typ)
+					return r.resolveTypes(class, m.Info.Typ)
 				}
 			}
 		}
@@ -158,20 +158,20 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 		return solveBaseMethodParam(class, typ, visitedMap, res)
 	case meta.WStaticMethodCall:
 		className, methodName := meta.UnwrapStaticMethodCall(typ)
-		info, _, ok := FindMethod(className, methodName)
+		m, ok := FindMethod(className, methodName)
 		if ok {
-			return r.resolveTypes(className, info.Typ)
+			return r.resolveTypes(className, m.Info.Typ)
 		}
-		info, _, ok = FindMethod(className, "__callStatic")
+		m, ok = FindMethod(className, "__callStatic")
 		if ok {
-			return r.resolveTypes(className, info.Typ)
+			return r.resolveTypes(className, m.Info.Typ)
 		}
 
 	case meta.WStaticPropertyFetch:
 		className, propertyName := meta.UnwrapStaticPropertyFetch(typ)
-		info, _, ok := FindProperty(className, propertyName)
+		p, ok := FindProperty(className, propertyName)
 		if ok {
-			return r.resolveTypes(class, info.Typ)
+			return r.resolveTypes(class, p.Info.Typ)
 		}
 	case meta.WClassConstFetch:
 		className, constName := meta.UnwrapClassConstFetch(typ)
@@ -245,15 +245,29 @@ func (r *resolver) resolveTypes(class string, m meta.TypesMap) map[string]struct
 	return res
 }
 
+type FindMethodResult struct {
+	Info      meta.FuncInfo
+	ClassName string
+	TraitName string
+}
+
+func (m FindMethodResult) ImplName() string {
+	if m.TraitName != "" {
+		return m.TraitName
+	}
+	return m.ClassName
+}
+
 // FindMethod searches for a method in specified class
-func FindMethod(className string, methodName string) (res meta.FuncInfo, implClassName string, ok bool) {
+func FindMethod(className string, methodName string) (FindMethodResult, bool) {
 	return findMethod(className, methodName, make(map[string]struct{}))
 }
 
-func findMethod(className string, methodName string, visitedMap map[string]struct{}) (res meta.FuncInfo, implClassName string, ok bool) {
+func findMethod(className string, methodName string, visitedMap map[string]struct{}) (FindMethodResult, bool) {
+	var result FindMethodResult
 	for {
 		if _, ok := visitedMap[className]; ok {
-			return res, "", false
+			return result, false
 		}
 		visitedMap[className] = struct{}{}
 
@@ -261,79 +275,100 @@ func findMethod(className string, methodName string, visitedMap map[string]struc
 		if !ok {
 			class, ok = meta.Info.GetTrait(className)
 			if !ok {
-				return res, "", false
+				return result, false
 			}
 		}
 
-		res, ok = class.Methods[methodName]
+		info, ok := class.Methods[methodName]
 		if ok {
-			return res, className, ok
+			result.Info = info
+			result.ClassName = className
+			return result, true
 		}
 
 		for trait := range class.Traits {
-			res, _, ok = findMethod(trait, methodName, visitedMap)
+			m, ok := findMethod(trait, methodName, visitedMap)
 			if ok {
-				return res, className, ok
+				result.Info = m.Info
+				result.ClassName = className
+				result.TraitName = trait
+				return result, true
 			}
 		}
 
 		for ifaceName := range class.Interfaces {
-			res, implClassName, ok := findMethod(ifaceName, methodName, visitedMap)
+			m, ok := findMethod(ifaceName, methodName, visitedMap)
 			if ok {
-				return res, implClassName, ok
+				return m, true
 			}
 		}
 
 		// interfaces support multiple inheritance and I use a separate property for that for now
 		for _, parentIfaceName := range class.ParentInterfaces {
-			res, implClassName, ok = findMethod(parentIfaceName, methodName, visitedMap)
+			m, ok := findMethod(parentIfaceName, methodName, visitedMap)
 			if ok {
-				return res, implClassName, ok
+				return m, true
 			}
 		}
 
 		if class.Parent == "" {
-			return res, "", false
+			return result, false
 		}
 
 		className = class.Parent
 	}
 }
 
+type FindPropertyResult struct {
+	Info      meta.PropertyInfo
+	ClassName string
+	TraitName string
+}
+
+func (p FindPropertyResult) ImplName() string {
+	if p.TraitName != "" {
+		return p.TraitName
+	}
+	return p.ClassName
+}
+
 // FindProperty searches for a property in specified class (both static and instance properties)
-func FindProperty(className string, propertyName string) (res meta.PropertyInfo, implClassName string, ok bool) {
+func FindProperty(className string, propertyName string) (FindPropertyResult, bool) {
 	return findProperty(className, propertyName, make(map[string]struct{}))
 }
 
-func findProperty(className string, propertyName string, visitedMap map[string]struct{}) (res meta.PropertyInfo, implClassName string, ok bool) {
+func findProperty(className string, propertyName string, visitedMap map[string]struct{}) (FindPropertyResult, bool) {
+	var result FindPropertyResult
 	for {
 		if _, ok := visitedMap[className]; ok {
-			return res, "", false
+			return result, false
 		}
 		visitedMap[className] = struct{}{}
 
-		class, ok := meta.Info.GetClass(className)
+		class, ok := getClassOrTrait(className)
 		if !ok {
-			class, ok = meta.Info.GetTrait(className)
-			if !ok {
-				return res, "", false
-			}
+			return result, false
 		}
 
-		res, ok = class.Properties[propertyName]
+		info, ok := class.Properties[propertyName]
 		if ok {
-			return res, className, ok
+			result.Info = info
+			result.ClassName = className
+			return result, true
 		}
 
 		for trait := range class.Traits {
-			res, _, ok = findProperty(trait, propertyName, visitedMap)
+			p, ok := findProperty(trait, propertyName, visitedMap)
 			if ok {
-				return res, className, ok
+				result.Info = p.Info
+				result.ClassName = className
+				result.TraitName = trait
+				return result, true
 			}
 		}
 
 		if class.Parent == "" {
-			return res, "", false
+			return result, false
 		}
 
 		className = class.Parent
@@ -448,4 +483,16 @@ func identityType(typ string) map[string]struct{} {
 	res := make(map[string]struct{})
 	res[typ] = struct{}{}
 	return res
+}
+
+func getClassOrTrait(typeName string) (meta.ClassInfo, bool) {
+	class, ok := meta.Info.GetClass(typeName)
+	if ok {
+		return class, true
+	}
+	trait, ok := meta.Info.GetTrait(typeName)
+	if ok {
+		return trait, true
+	}
+	return class, false
 }

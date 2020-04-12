@@ -559,7 +559,7 @@ func getHoverForMethodCall(n *expr.MethodCall, sc *meta.Scope, cs *meta.ClassPar
 
 	var fun meta.FuncInfo
 	types.Find(func(t string) bool {
-		fun, _, ok = solver.FindMethod(t, id.Value)
+		_, ok := solver.FindMethod(t, id.Value)
 		return ok
 	})
 
@@ -577,12 +577,12 @@ func getHoverForStaticCall(n *expr.StaticCall, sc *meta.Scope, cs *meta.ClassPar
 		return ""
 	}
 
-	fun, _, ok := solver.FindMethod(className, id.Value)
+	m, ok := solver.FindMethod(className, id.Value)
 	if !ok {
 		return ""
 	}
 
-	return linter.FlagsToString(fun.ExitFlags)
+	return linter.FlagsToString(m.Info.ExitFlags)
 }
 
 func handleTextDocumentCompletion(req *baseRequest) error {

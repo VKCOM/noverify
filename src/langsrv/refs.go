@@ -92,8 +92,9 @@ func (d *referencesWalker) EnterNode(w walker.Walkable) bool {
 			return true
 		}
 
-		_, realClassName, ok := solver.FindMethod(className, id.Value)
+		m, ok := solver.FindMethod(className, id.Value)
 		if ok {
+			realClassName := m.ImplName()
 			d.result = findStaticMethodReferences(realClassName, id.Value)
 		}
 	case *stmt.Function:
