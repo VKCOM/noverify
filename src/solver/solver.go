@@ -271,9 +271,9 @@ func findMethod(className string, methodName string, visitedMap map[string]struc
 		}
 
 		for trait := range class.Traits {
-			res, implClassName, ok = findMethod(trait, methodName, visitedMap)
+			res, _, ok = findMethod(trait, methodName, visitedMap)
 			if ok {
-				return res, implClassName, ok
+				return res, className, ok
 			}
 		}
 
@@ -319,9 +319,9 @@ func findProperty(className string, propertyName string, visitedMap map[string]s
 		}
 
 		for trait := range class.Traits {
-			res, implClassName, ok = findProperty(trait, propertyName, visitedMap)
+			res, _, ok = findProperty(trait, propertyName, visitedMap)
 			if ok {
-				return res, implClassName, ok
+				return res, className, ok
 			}
 		}
 
