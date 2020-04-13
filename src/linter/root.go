@@ -1214,7 +1214,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	if sideEffectFreeFunc(d.scope(), d.st, nil, fun.Stmts) {
 		funcFlags |= meta.FuncPure
 	}
-	d.meta.Functions[nm] = meta.FuncInfo{
+	meta.AddFunctionToMap(d.meta.Functions, nm, meta.FuncInfo{
 		Params:       params,
 		Pos:          d.getElementPos(fun),
 		Typ:          returnType.Immutable(),
@@ -1222,7 +1222,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 		Flags:        funcFlags,
 		ExitFlags:    exitFlags,
 		Doc:          doc.info,
-	}
+	})
 
 	return false
 }

@@ -236,10 +236,7 @@ func (i *info) AddFunctionsNonLocked(filename string, m FunctionsMap) {
 	i.perFileFunctions[filename] = m
 
 	for k, v := range m {
-		prevFn, ok := i.allFunctions[k]
-		if !ok || v.Pos.Length > prevFn.Pos.Length {
-			i.allFunctions[k] = v
-		}
+		AddFunctionToMap(i.allFunctions, k, v)
 	}
 }
 
@@ -517,4 +514,34 @@ func NameEquals(n *name.Name, s string) bool {
 	}
 
 	return true
+}
+
+// AddFunctionToMap adds v to m[name].
+//
+// If m[name] already exists, bigger function wins.
+// Also sets a function MinParamsCnt to a min of the two.
+func AddFunctionToMap(m FunctionsMap, name string, v FuncInfo) {
+	prevFn, ok := m[name]
+
+	// Short path for functions that were not defined befor (normal case).
+	if !ok {
+		m[name] = v
+		return
+	}
+
+	// Choose min(v.MinParamsCnt, prevFn.MinParamsCnt).
+	// See #409.
+	minParamsCnt := prevFn.MinParamsCnt
+	if v.MinParamsCnt < minParamsCnt {
+		minParamsCnt = v.MinParamsCnt
+	}
+
+	// Choose longer func.
+	longerFn := prevFn
+	if v.Pos.Length > prevFn.Pos.Length {
+		longerFn = v
+	}
+
+	v.MinParamsCnt = minParamsCnt
+	m[name] = longerFn
 }
