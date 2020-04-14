@@ -247,7 +247,7 @@ function _4($s) {
   preg_match('/^\s*http\s*{/', $s);
   preg_match('/(?i)windows nt/', $s);
   preg_match('/(?i)windows phone/', $s);
-  preg_match('~^.* ENGINE=.*$/\)~', $s);
+  preg_match('~^.* ENGINE=.*/\)~', $s);
   preg_match('/[a-zA-Z0-9]+@[a-zA-Z-0-9.]+\.[a-zA-Z0-9]+/', $s);
   preg_match('/he|ll|o+/', $s);
   preg_match('/^(\S*) (\S*) (\d*) (\S*) IP(\d) (\S*)/', $s);
