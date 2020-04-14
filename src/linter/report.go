@@ -127,6 +127,12 @@ func init() {
 		},
 
 		{
+			Name:    "unimplemented",
+			Default: true,
+			Comment: `Report classes that don't implement their contract.`,
+		},
+
+		{
 			Name:    "syntax",
 			Default: true,
 			Comment: `Report syntax errors.`,

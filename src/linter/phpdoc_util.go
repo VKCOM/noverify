@@ -104,7 +104,7 @@ func parseClassPHPDoc(st *meta.ClassParseState, doc string) classPhpDocParseResu
 	// Class may not have any @property or @method annotations.
 	// In that case we can handle avoid map allocations.
 	result.properties = make(meta.PropertiesMap)
-	result.methods = make(meta.FunctionsMap)
+	result.methods = meta.NewFunctionsMap()
 
 	for _, part := range phpdoc.Parse(doc) {
 		switch part.Name {
@@ -153,12 +153,13 @@ func parseClassPHPDocMethod(st *meta.ClassParseState, result *classPhpDocParseRe
 	if static {
 		funcFlags |= meta.FuncStatic
 	}
-	result.methods[methodName] = meta.FuncInfo{
+	result.methods.Set(methodName, meta.FuncInfo{
 		Typ:          meta.NewTypesMap(normalizeType(st, typ)),
+		Name:         methodName,
 		Flags:        funcFlags,
 		MinParamsCnt: 0, // TODO: parse signature and assign a proper value
 		AccessLevel:  meta.Public,
-	}
+	})
 }
 
 func parseClassPHPDocProperty(st *meta.ClassParseState, result *classPhpDocParseResult, part phpdoc.CommentPart) {

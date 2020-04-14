@@ -129,7 +129,6 @@ func (f *sideEffectsFinder) EnterNode(w walker.Walkable) bool {
 
 	switch n := w.(type) {
 	case *expr.FunctionCall:
-		// fmt.Printf("node=%T %s\n", w, FmtNode(w.(node.Node)))
 		if f.functionCallIsPure(n) {
 			return true
 		}

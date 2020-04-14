@@ -28,9 +28,9 @@ func ResetInfo() {
 	Info = info{
 		Scope:                 NewScope(),
 		allFiles:              make(map[string]bool),
-		allTraits:             make(TraitsMap),
-		allClasses:            make(ClassesMap),
-		allFunctions:          make(FunctionsMap),
+		allTraits:             NewClassesMap(),
+		allClasses:            NewClassesMap(),
+		allFunctions:          NewFunctionsMap(),
 		allConstants:          make(ConstantsMap),
 		allFunctionsOverrides: make(FunctionsOverrideMap),
 		perFileTraits:         make(map[string]ClassesMap),
@@ -46,7 +46,7 @@ type info struct {
 	sync.Mutex
 	*Scope
 	allFiles              map[string]bool
-	allTraits             TraitsMap
+	allTraits             ClassesMap
 	allClasses            ClassesMap
 	allFunctions          FunctionsMap
 	allConstants          ConstantsMap
@@ -75,30 +75,28 @@ func (i *info) NumConstants() int {
 }
 
 func (i *info) GetClass(nm string) (res ClassInfo, ok bool) {
-	res, ok = i.allClasses[nm]
-	return res, ok
+	return i.allClasses.Get(nm)
 }
 
 func (i *info) GetTrait(nm string) (res ClassInfo, ok bool) {
-	res, ok = i.allTraits[nm]
-	return res, ok
+	return i.allTraits.Get(nm)
 }
 
 func (i *info) GetClassOrTrait(nm string) (res ClassInfo, ok bool) {
-	res, ok = i.allClasses[nm]
+	res, ok = i.allClasses.Get(nm)
 	if ok {
 		return res, true
 	}
-	res, ok = i.allTraits[nm]
+	res, ok = i.allTraits.Get(nm)
 	return res, ok
 }
 
 func (i *info) NumClasses() int {
-	return len(i.allClasses)
+	return i.allClasses.Len()
 }
 
 func (i *info) GetFunction(nm string) (res FuncInfo, ok bool) {
-	res, ok = i.allFunctions[nm]
+	res, ok = i.allFunctions.Get(nm)
 	return res, ok
 }
 
@@ -108,7 +106,7 @@ func (i *info) GetFunctionOverride(nm string) (res FuncInfoOverride, ok bool) {
 }
 
 func (i *info) NumFunctions() int {
-	return len(i.allFunctions)
+	return i.allFunctions.Len()
 }
 
 func (i *info) NumFilesWithFunctions() int {
@@ -116,9 +114,9 @@ func (i *info) NumFilesWithFunctions() int {
 }
 
 func (i *info) FindFunctions(substr string) (res []string) {
-	for f := range i.allFunctions {
-		if strings.HasPrefix(f, substr) {
-			res = append(res, f)
+	for _, fn := range i.allFunctions.H {
+		if strings.HasPrefix(fn.Name, substr) {
+			res = append(res, fn.Name)
 		}
 	}
 	return res
@@ -137,14 +135,22 @@ func (i *info) InitStubs() {
 	i.Lock()
 	defer i.Unlock()
 
-	internalFunctions = make(FunctionsMap)
-	for k, v := range i.allFunctions {
-		internalFunctions[k] = v
+	{
+		internalFunctions = NewFunctionsMap()
+		h := make(map[lowercaseString]FuncInfo, len(i.allFunctions.H))
+		for k, v := range i.allFunctions.H {
+			h[k] = v
+		}
+		internalFunctions.H = h
 	}
 
-	internalClasses = make(ClassesMap)
-	for k, v := range i.allClasses {
-		internalClasses[k] = v
+	{
+		internalClasses = NewClassesMap()
+		h := make(map[lowercaseString]ClassInfo, len(i.allClasses.H))
+		for k, v := range i.allClasses.H {
+			h[k] = v
+		}
+		internalClasses.H = h
 	}
 
 	internalFunctionOverrides = make(FunctionsOverrideMap)
@@ -186,26 +192,29 @@ func (i *info) DeleteMetaForFileNonLocked(filename string) {
 	delete(i.allFiles, filename)
 	delete(i.perFileClasses, filename)
 
-	for f := range oldClasses {
-		delete(i.allClasses, f)
+	for f := range oldClasses.H {
+		delete(i.allClasses.H, f)
 	}
 
 	oldTraits := i.perFileTraits[filename]
 	delete(i.perFileTraits, filename)
 
-	for f := range oldTraits {
-		delete(i.allTraits, f)
+	for f := range oldTraits.H {
+		delete(i.allTraits.H, f)
 	}
 
 	oldFunctions := i.perFileFunctions[filename]
 	delete(i.perFileFunctions, filename)
 
-	for f, oldFn := range oldFunctions {
-		fn, ok := i.allFunctions[f]
-		if !ok || oldFn.Pos.Length != fn.Pos.Length {
-			continue
+	{
+		allFuncs := i.allFunctions.H
+		for f, oldFn := range oldFunctions.H {
+			fn, ok := allFuncs[f]
+			if !ok || oldFn.Pos.Length != fn.Pos.Length {
+				continue
+			}
+			delete(allFuncs, f)
 		}
-		delete(i.allFunctions, f)
 	}
 
 	oldConstants := i.perFileConstants[filename]
@@ -218,27 +227,28 @@ func (i *info) DeleteMetaForFileNonLocked(filename string) {
 
 func (i *info) AddClassesNonLocked(filename string, m ClassesMap) {
 	i.perFileClasses[filename] = m
-	for k, v := range m {
+	for k, v := range m.H {
 		// TODO: resolve duplicate class conflicts
-		i.allClasses[k] = v
+		i.allClasses.H[k] = v
 	}
 }
 
 func (i *info) AddTraitsNonLocked(filename string, m ClassesMap) {
 	i.perFileTraits[filename] = m
-	for k, v := range m {
+	for k, v := range m.H {
 		// TODO: resolve duplicate trait conflicts
-		i.allTraits[k] = v
+		i.allTraits.H[k] = v
 	}
 }
 
 func (i *info) AddFunctionsNonLocked(filename string, m FunctionsMap) {
 	i.perFileFunctions[filename] = m
 
-	for k, v := range m {
-		prevFn, ok := i.allFunctions[k]
+	allFuncs := i.allFunctions.H
+	for k, v := range m.H {
+		prevFn, ok := allFuncs[k]
 		if !ok || v.Pos.Length > prevFn.Pos.Length {
-			i.allFunctions[k] = v
+			allFuncs[k] = v
 		}
 	}
 }
@@ -281,10 +291,13 @@ type FuncFlags uint8
 const (
 	FuncStatic FuncFlags = 1 << iota
 	FuncPure
+	FuncAbstract
+	FuncFinal
 )
 
 type FuncInfo struct {
 	Pos          ElementPosition
+	Name         string
 	Params       []FuncParam
 	MinParamsCnt int
 	Typ          TypesMap
@@ -294,8 +307,9 @@ type FuncInfo struct {
 	Doc          PhpDocInfo
 }
 
-func (info *FuncInfo) IsStatic() bool { return info.Flags&FuncStatic != 0 }
-func (info *FuncInfo) IsPure() bool   { return info.Flags&FuncPure != 0 }
+func (info *FuncInfo) IsStatic() bool   { return info.Flags&FuncStatic != 0 }
+func (info *FuncInfo) IsAbstract() bool { return info.Flags&FuncAbstract != 0 }
+func (info *FuncInfo) IsPure() bool     { return info.Flags&FuncPure != 0 }
 
 type OverrideType int
 
@@ -350,10 +364,12 @@ type ClassFlags uint8
 
 const (
 	ClassAbstract ClassFlags = 1 << iota
+	ClassFinal
 )
 
 type ClassInfo struct {
 	Pos              ElementPosition
+	Name             string
 	Flags            ClassFlags
 	Parent           string
 	ParentInterfaces []string // interfaces allow multiple inheritance
@@ -378,9 +394,6 @@ type ClassParseState struct {
 	CurrentFunction         string   // current method or function name
 }
 
-type TraitsMap map[string]ClassInfo
-type ClassesMap map[string]ClassInfo
-type FunctionsMap map[string]FuncInfo
 type FunctionsOverrideMap map[string]FuncInfoOverride
 type PropertiesMap map[string]PropertyInfo
 type ConstantsMap map[string]ConstantInfo
@@ -394,13 +407,12 @@ type ElementPosition struct {
 }
 
 func IsInternalClass(className string) bool {
-	_, ok := internalClasses[className]
+	_, ok := internalClasses.Get(className)
 	return ok
 }
 
 func GetInternalFunctionInfo(fn string) (info FuncInfo, ok bool) {
-	info, ok = internalFunctions[fn]
-	return info, ok
+	return internalFunctions.Get(fn)
 }
 
 func GetInternalFunctionOverrideInfo(fn string) (info FuncInfoOverride, ok bool) {

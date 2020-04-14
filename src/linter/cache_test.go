@@ -39,6 +39,10 @@ final class Consts {
   const C3 = ['a'];
 }
 
+abstract class AbstractClass {
+  abstract public function f1();
+}
+
 class Point implements Arrayable {
   public $x = 0.0;
   public $y = 0.0;
@@ -99,7 +103,7 @@ main();
 		//
 		// If cache encoding changes, there is a very high chance that
 		// encoded data lengh will change as well.
-		wantLen := 2815
+		wantLen := 3233
 		haveLen := buf.Len()
 		if haveLen != wantLen {
 			t.Errorf("cache len mismatch:\nhave: %d\nwant: %d", haveLen, wantLen)
@@ -108,7 +112,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "97356a3906ec935c43b2a23a7ad70d62442ef7cdf9f53666b7a66d54828db601756443fd13ae7d382abb42b4bce021ee832b51d1e97ff63565fb0beca2597527"
+		wantStrings := "97c6dd187bfedb2f337fb82aaa75f5b3b706162f08c839d194c6914bf5abcc0cfafd347ee46563694e5285d0139364cb5e827d4e3530f9bbaf273f136d848c39"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)

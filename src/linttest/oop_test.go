@@ -228,6 +228,15 @@ function testForeach($xml_str) {
 
 func TestSimpleXMLElementForeach(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+interface Traversable {}
+
+interface ArrayAccess {
+  public function offsetExists($offset);
+  public function offsetGet($offset);
+  public function offsetSet($offset, $value);
+  public function offsetUnset($offset);
+}
+
 class SimpleXMLElement implements Traversable, ArrayAccess {
   /** @return SimpleXMLElement */
   private function __get($name) {}
@@ -237,6 +246,13 @@ class SimpleXMLElement implements Traversable, ArrayAccess {
 
   /** @return SimpleXMLElement */
   public function offsetGet($i) {}
+
+  /** @inheritdoc */
+  public function offsetExists($offset) {}
+  /** @inheritdoc */
+  public function offsetSet($offset, $value) {}
+  /** @inheritdoc */
+  public function offsetUnset($offset) {}
 }
 
 function testForeach($xml_str) {
@@ -757,4 +773,223 @@ function f(AbstractBarBase $x) {
   return $x->foo();
 }
 `)
+}
+
+func TestUnimplemented(t *testing.T) {
+	test := linttest.NewSuite(t)
+
+	test.AddFile(`<?php
+namespace T1;
+
+interface AB {
+  public function a() {}
+  public function b() {}
+}
+
+
+// Doesn't implement b(), but it's OK for abstract classes.
+abstract class ImplementsA implements AB {
+  public function a() {}
+  abstract protected function fromAbstract();
+}
+
+class ImplementsAB extends ImplementsA {
+  public function b() {}
+  protected function fromAbstract() {}
+}
+
+class Bad extends ImplementsA implements AB {}
+`)
+
+	test.AddFile(`<?php
+namespace T2;
+
+// T2 differs from T1 by a fact that ImplementsAB and Bad do not
+// specify "implements AB" directly.
+
+interface AB {
+  public function a() {}
+  public function b() {}
+}
+
+// Doesn't implement b(), but it's OK for abstract classes.
+abstract class ImplementsA implements AB {
+  public function a() {}
+  abstract protected function fromAbstract();
+}
+
+class ImplementsAB extends ImplementsA {
+  public function b() {}
+  protected function fromAbstract() {}
+}
+
+class Bad extends ImplementsA implements AB {}
+`)
+
+	test.AddFile(`<?php
+namespace T3;
+
+// Test interface inheritance and traits.
+
+interface IfaceA { public function a(); }
+interface IfaceB { public function b(); }
+interface IfaceAB extends IfaceA, IfaceB {}
+
+trait TraitA { public function a() {} }
+trait TraitB { public function b() {} }
+trait TraitAB { use TraitA; use TraitB; }
+
+class Bad1 implements IfaceA, IfaceB {}
+class Bad2 implements IfaceAB {}
+
+class Good1 implements IfaceAB {
+  use TraitA;
+  use TraitB;
+}
+
+class Good2 implements IfaceAB {
+  use TraitAB;
+}
+
+class AlmostGood implements \t1\AB {
+  use TraitAB;
+}
+
+class Good3 extends Good2 {}
+class Good4 extends Good3 implements IfaceAB {}
+`)
+
+	test.AddFile(`<?php
+namespace T4;
+
+// Test that abstract class inheritance chain is checked.
+
+abstract class AbstractA {
+  abstract protected function a();
+}
+abstract class AbstractAB extends AbstractA {
+  abstract protected function b();
+}
+
+class Bad extends AbstractAB {}
+`)
+
+	test.AddFile(`<?php
+namespace T5;
+
+// Test that case-mismatching names still implement an interface.
+
+interface IfaceFoo {
+  public function foo();
+}
+
+abstract class AbstractFoo {
+  abstract public function Foo();
+}
+
+class BadCase1 implements IfaceFoo {
+  public function Foo() {}
+}
+
+class BadCase2 extends AbstractFoo {
+  public function foo() {}
+}
+`)
+
+	test.AddFile(`<?php
+namespace T6;
+
+// Case that addresses a case found in Yii2.
+// Level1 trait defines abstract method.
+// Level2 (parent) class implements that abstract method.
+
+trait TraitAbstractA {
+  abstract protected function a();
+}
+
+class BaseClass implements UnknownIface {
+  protected function a();
+}
+
+class C extends BaseClass {
+  use TraitAbstractA;
+}
+
+class Bad {
+  use TraitAbstractA;
+}
+`)
+
+	test.AddFile(`<?php
+namespace T7;
+
+// Like T6, but also with interface involved.
+// Note that BaseClass is not declared as implementing IfaceA.
+
+interface IfaceA {
+  public function a();
+}
+
+trait TraitAbstractA {
+  abstract public function a();
+}
+
+class BaseClass extends UnknownClass {
+  public function a() {}
+}
+
+class C1 extends BaseClass implements Ifacea {
+  use TraitAbstractA;
+}
+
+// Same as C1, but without a trait.
+class C2 extends BaseClass implements IfaceA {}
+`)
+
+	test.AddFile(`<?php
+namespace T8;
+
+// Like abstract classes, trait can leave a contract unimplemented.
+
+trait AbstractTraitA {
+  abstract public function a();
+}
+trait AbstractTraitB {
+  abstract public function b();
+}
+
+trait AbstractTraitAB {
+  use AbstracttraitA;
+  use AbstractTraitB;
+  use UnknownTrait;
+}
+`)
+
+	test.Expect = []string{
+		`Type \T7\UnknownClass not found`,
+		`Type \T8\UnknownTrait not found`,
+		`Type \T6\UnknownIface not found`,
+
+		`\t1\AB should be spelled \T1\AB`,
+		`\T5\BadCase1::Foo should be spelled as \T5\IfaceFoo::foo`,
+		`\T5\BadCase2::foo should be spelled as \T5\AbstractFoo::Foo`,
+		`\T7\Ifacea should be spelled \T7\IfaceA`,
+
+		`Class \T1\Bad must implement \T1\AB::b method`,
+		`Class \T1\Bad must implement \T1\ImplementsA::fromAbstract`,
+
+		`Class \T2\Bad must implement \T2\AB::b method`,
+		`Class \T2\Bad must implement \T2\ImplementsA::fromAbstract method`,
+
+		`Class \T3\Bad1 must implement \T3\IfaceA::a method`,
+		`Class \T3\Bad1 must implement \T3\IfaceB::b method`,
+		`Class \T3\Bad2 must implement \T3\IfaceA::a method`,
+		`Class \T3\Bad2 must implement \T3\IfaceB::b method`,
+
+		`Class \T4\Bad must implement \T4\AbstractAB::b method`,
+		`Class \T4\Bad must implement \T4\AbstractA::a method`,
+
+		`Class \T6\Bad must implement \T6\TraitAbstractA::a method`,
+	}
+	runFilterMatch(test, `unimplemented`, `nameCase`, `undefined`)
 }

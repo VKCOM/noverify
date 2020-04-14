@@ -225,20 +225,13 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *stmt.Class:
 		d.currentClassNode = n
 		cl := d.getClass()
-		if n.Implements != nil {
-			d.checkKeywordCase(n.Implements, "implements")
-			for _, tr := range n.Implements.InterfaceNames {
-				interfaceName, ok := solver.GetClassName(d.st, tr)
-				if ok {
-					cl.Interfaces[interfaceName] = struct{}{}
-				}
-			}
-		}
 		var classFlags meta.ClassFlags
 		for _, m := range n.Modifiers {
-			// Might add other flags here like "final" when we need it.
-			if strings.EqualFold("abstract", m.Value) {
+			switch {
+			case strings.EqualFold("abstract", m.Value):
 				classFlags |= meta.ClassAbstract
+			case strings.EqualFold("final", m.Value):
+				classFlags |= meta.ClassFinal
 			}
 		}
 		if classFlags != 0 {
@@ -246,7 +239,17 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 			// individual fields through map, we update cl and
 			// then assign it back to the map.
 			cl.Flags = classFlags
-			d.meta.Classes[d.st.CurrentClass] = cl
+			d.meta.Classes.Set(d.st.CurrentClass, cl)
+		}
+		if n.Implements != nil {
+			d.checkKeywordCase(n.Implements, "implements")
+			for _, tr := range n.Implements.InterfaceNames {
+				interfaceName, ok := solver.GetClassName(d.st, tr)
+				if ok {
+					cl.Interfaces[interfaceName] = struct{}{}
+					d.checkIfaceImplemented(tr, interfaceName)
+				}
+			}
 		}
 		d.checkCommentMisspellings(n.ClassName, n.PhpDocComment)
 		d.checkIdentMisspellings(n.ClassName)
@@ -258,15 +261,19 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 			p.Pos = cl.Pos
 			cl.Properties[name] = p
 		}
-		for methodName, m := range doc.methods {
+		for name, m := range doc.methods.H {
 			m.Pos = cl.Pos
-			cl.Methods[methodName] = m
+			cl.Methods.H[name] = m
 		}
 		for _, m := range n.Modifiers {
 			d.lowerCaseModifier(m)
 		}
 		if n.Extends != nil {
 			d.checkKeywordCase(n.Extends, "extends")
+			className, ok := solver.GetClassName(d.st, n.Extends.ClassName)
+			if ok {
+				d.checkClassImplemented(n.Extends.ClassName, className)
+			}
 		}
 
 	case *stmt.Trait:
@@ -281,6 +288,7 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 			traitName, ok := solver.GetClassName(d.st, tr)
 			if ok {
 				cl.Traits[traitName] = struct{}{}
+				d.checkTraitImplemented(tr, traitName)
 			}
 		}
 	case *assign.Assign:
@@ -593,31 +601,32 @@ func (d *RootWalker) getClass() meta.ClassInfo {
 	var m meta.ClassesMap
 
 	if d.st.IsTrait {
-		if d.meta.Traits == nil {
-			d.meta.Traits = make(meta.ClassesMap)
+		if d.meta.Traits.H == nil {
+			d.meta.Traits = meta.NewClassesMap()
 		}
 		m = d.meta.Traits
 	} else {
-		if d.meta.Classes == nil {
-			d.meta.Classes = make(meta.ClassesMap)
+		if d.meta.Classes.H == nil {
+			d.meta.Classes = meta.NewClassesMap()
 		}
 		m = d.meta.Classes
 	}
 
-	cl, ok := m[d.st.CurrentClass]
+	cl, ok := m.Get(d.st.CurrentClass)
 	if !ok {
 		cl = meta.ClassInfo{
 			Pos:              d.getElementPos(d.currentClassNode),
+			Name:             d.st.CurrentClass,
 			Parent:           d.st.CurrentParentClass,
 			ParentInterfaces: d.st.CurrentParentInterfaces,
 			Interfaces:       make(map[string]struct{}),
 			Traits:           make(map[string]struct{}),
-			Methods:          make(meta.FunctionsMap),
+			Methods:          meta.NewFunctionsMap(),
 			Properties:       make(meta.PropertiesMap),
 			Constants:        make(meta.ConstantsMap),
 		}
 
-		m[d.st.CurrentClass] = cl
+		m.Set(d.st.CurrentClass, cl)
 	}
 
 	return cl
@@ -815,11 +824,18 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	if modif.static {
 		funcFlags |= meta.FuncStatic
 	}
+	if modif.abstract {
+		funcFlags |= meta.FuncAbstract
+	}
+	if modif.final {
+		funcFlags |= meta.FuncFinal
+	}
 	if !insideInterface && !modif.abstract && sideEffectFreeFunc(d.scope(), d.st, nil, stmts) {
 		funcFlags |= meta.FuncPure
 	}
-	class.Methods[nm] = meta.FuncInfo{
+	class.Methods.Set(nm, meta.FuncInfo{
 		Params:       params,
+		Name:         nm,
 		Pos:          d.getElementPos(meth),
 		Typ:          returnType.Immutable(),
 		MinParamsCnt: minParamsCnt,
@@ -827,7 +843,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 		Flags:        funcFlags,
 		ExitFlags:    exitFlags,
 		Doc:          doc.info,
-	}
+	})
 
 	if nm == "getIterator" && meta.IsIndexingComplete() && solver.Implements(d.st.CurrentClass, `\IteratorAggregate`) {
 		implementsTraversable := returnType.Find(func(typ string) bool {
@@ -1190,8 +1206,8 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	phpdocReturnType := doc.returnType
 	phpDocParamTypes := doc.types
 
-	if d.meta.Functions == nil {
-		d.meta.Functions = make(meta.FunctionsMap)
+	if d.meta.Functions.H == nil {
+		d.meta.Functions = meta.NewFunctionsMap()
 	}
 
 	sc := meta.NewScope()
@@ -1214,15 +1230,16 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	if sideEffectFreeFunc(d.scope(), d.st, nil, fun.Stmts) {
 		funcFlags |= meta.FuncPure
 	}
-	d.meta.Functions[nm] = meta.FuncInfo{
+	d.meta.Functions.Set(nm, meta.FuncInfo{
 		Params:       params,
+		Name:         nm,
 		Pos:          d.getElementPos(fun),
 		Typ:          returnType.Immutable(),
 		MinParamsCnt: minParamsCnt,
 		Flags:        funcFlags,
 		ExitFlags:    exitFlags,
 		Doc:          doc.info,
-	}
+	})
 
 	return false
 }
@@ -1446,6 +1463,90 @@ func (d *RootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filter
 	}
 
 	return true
+}
+
+func (d *RootWalker) checkTraitImplemented(n node.Node, nameUsed string) {
+	if !meta.IsIndexingComplete() {
+		return
+	}
+	trait, ok := meta.Info.GetTrait(nameUsed)
+	if !ok {
+		d.reportUndefinedType(n, nameUsed)
+		return
+	}
+	d.checkImplemented(n, nameUsed, trait)
+}
+
+func (d *RootWalker) checkClassImplemented(n node.Node, nameUsed string) {
+	if !meta.IsIndexingComplete() {
+		return
+	}
+	class, ok := meta.Info.GetClass(nameUsed)
+	if !ok {
+		d.reportUndefinedType(n, nameUsed)
+		return
+	}
+	d.checkImplemented(n, nameUsed, class)
+}
+
+func (d *RootWalker) checkIfaceImplemented(n node.Node, nameUsed string) {
+	d.checkClassImplemented(n, nameUsed)
+}
+
+func (d *RootWalker) checkImplemented(n node.Node, nameUsed string, otherClass meta.ClassInfo) {
+	cl := d.getClass()
+	if d.st.IsTrait || cl.IsAbstract() {
+		return
+	}
+	d.checkNameCase(n, nameUsed, otherClass.Name)
+	visited := make(map[string]struct{}, 4)
+	d.checkImplementedStep(n, nameUsed, otherClass, visited)
+}
+
+func (d *RootWalker) checkImplementedStep(n node.Node, className string, otherClass meta.ClassInfo, visited map[string]struct{}) {
+	// TODO: check that method signatures are compatible?
+	if _, ok := visited[className]; ok {
+		return
+	}
+	visited[className] = struct{}{}
+	for _, ifaceMethod := range otherClass.Methods.H {
+		m, ok := solver.FindMethod(d.st.CurrentClass, ifaceMethod.Name)
+		if !ok || !m.Implemented {
+			d.Report(n, LevelError, "unimplemented", "Class %s must implement %s::%s method",
+				d.st.CurrentClass, className, ifaceMethod.Name)
+			continue
+		}
+		if m.Info.Name != ifaceMethod.Name {
+			d.Report(n, LevelDoNotReject, "nameCase", "%s::%s should be spelled as %s::%s",
+				d.st.CurrentClass, m.Info.Name, className, ifaceMethod.Name)
+		}
+	}
+	for _, ifaceName := range otherClass.ParentInterfaces {
+		iface, ok := meta.Info.GetClass(ifaceName)
+		if ok {
+			d.checkImplementedStep(n, ifaceName, iface, visited)
+		}
+	}
+	if otherClass.Parent != "" {
+		class, ok := meta.Info.GetClass(otherClass.Parent)
+		if ok {
+			d.checkImplementedStep(n, otherClass.Parent, class, visited)
+		}
+	}
+}
+
+func (d *RootWalker) reportUndefinedType(n node.Node, name string) {
+	d.Report(n, LevelError, "undefined", "Type %s not found", name)
+}
+
+func (d *RootWalker) checkNameCase(n node.Node, nameUsed, nameExpected string) {
+	if nameUsed == "" || nameExpected == "" {
+		return
+	}
+	if nameUsed != nameExpected {
+		d.Report(n, LevelInformation, "nameCase", "%s should be spelled %s",
+			nameUsed, nameExpected)
+	}
 }
 
 func (d *RootWalker) checkKeywordCase(n node.Node, keyword string) {

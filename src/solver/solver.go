@@ -196,7 +196,7 @@ func solveBaseMethodParam(curStaticClass, typ string, visitedMap, res map[string
 			if !ok {
 				continue
 			}
-			fn, ok := iface.Methods[methodName]
+			fn, ok := iface.Methods.Get(methodName)
 			if !ok {
 				continue
 			}
@@ -246,9 +246,10 @@ func (r *resolver) resolveTypes(class string, m meta.TypesMap) map[string]struct
 }
 
 type FindMethodResult struct {
-	Info      meta.FuncInfo
-	ClassName string
-	TraitName string
+	Info        meta.FuncInfo
+	ClassName   string
+	TraitName   string
+	Implemented bool
 }
 
 func (m FindMethodResult) ImplName() string {
@@ -260,63 +261,106 @@ func (m FindMethodResult) ImplName() string {
 
 // FindMethod searches for a method in specified class
 func FindMethod(className string, methodName string) (FindMethodResult, bool) {
+	// We do 2 lookup attemps.
+	//
+	// The first round ignores interfaces inside hierarchy tree.
+	// The second round processes leftovers, interfaces.
+	//
+	// This way, we will return concrete implementation even if
+	// it's deeper inside a type tree.
+	//
+	// Suppose we do FindMethod("C", "a") for this type tree:
+	//	interface A { function a(); }
+	//	class Base1 { function a(); }
+	//	class Base2 extends Base1 {}
+	//	class C extends Base2 implements A {}
+	//
+	// If we would process interfaces right away, a() would be returned
+	// from the A interface, but we want to get Base1.
+
 	return findMethod(className, methodName, make(map[string]struct{}))
+}
+
+func peekImplemented(a, b FindMethodResult) FindMethodResult {
+	if a.Implemented {
+		return a
+	}
+	return b
 }
 
 func findMethod(className string, methodName string, visitedMap map[string]struct{}) (FindMethodResult, bool) {
 	var result FindMethodResult
+	found := false
+
 	for {
 		if _, ok := visitedMap[className]; ok {
-			return result, false
+			break
 		}
 		visitedMap[className] = struct{}{}
 
-		class, ok := meta.Info.GetClass(className)
+		class, ok := getClassOrTrait(className)
 		if !ok {
-			class, ok = meta.Info.GetTrait(className)
-			if !ok {
-				return result, false
-			}
+			break
 		}
 
-		info, ok := class.Methods[methodName]
+		info, ok := class.Methods.Get(methodName)
 		if ok {
-			result.Info = info
-			result.ClassName = className
-			return result, true
+			found = true
+			result = peekImplemented(result, FindMethodResult{
+				Info:        info,
+				ClassName:   className,
+				Implemented: !info.IsAbstract(),
+			})
+			if result.Implemented {
+				return result, true
+			}
 		}
 
 		for trait := range class.Traits {
 			m, ok := findMethod(trait, methodName, visitedMap)
 			if ok {
-				result.Info = m.Info
-				result.ClassName = className
-				result.TraitName = trait
-				return result, true
+				found = true
+				result = peekImplemented(result, FindMethodResult{
+					Info:        m.Info,
+					ClassName:   className,
+					TraitName:   trait,
+					Implemented: !m.Info.IsAbstract(),
+				})
+				if result.Implemented {
+					return result, true
+				}
+			}
+		}
+
+		// interfaces support multiple inheritance and I use a separate property for that for now.
+		// This loop is executed *only* when we're searching a method with interface
+		// as a root, so we don't need to check whether a method is implemented.
+		for _, parentIfaceName := range class.ParentInterfaces {
+			m, ok := findMethod(parentIfaceName, methodName, visitedMap)
+			if ok {
+				m.Implemented = false
+				return m, true
 			}
 		}
 
 		for ifaceName := range class.Interfaces {
 			m, ok := findMethod(ifaceName, methodName, visitedMap)
 			if ok {
-				return m, true
-			}
-		}
-
-		// interfaces support multiple inheritance and I use a separate property for that for now
-		for _, parentIfaceName := range class.ParentInterfaces {
-			m, ok := findMethod(parentIfaceName, methodName, visitedMap)
-			if ok {
-				return m, true
+				found = true
+				m.Implemented = false
+				result = peekImplemented(result, m)
+				break // No point in searching other interfaces
 			}
 		}
 
 		if class.Parent == "" {
-			return result, false
+			break
 		}
 
 		className = class.Parent
 	}
+
+	return result, found
 }
 
 type FindPropertyResult struct {
@@ -376,6 +420,8 @@ func findProperty(className string, propertyName string, visitedMap map[string]s
 }
 
 // Implements checks if className implements interfaceName
+//
+// Does not perform the actual method set comparison.
 func Implements(className string, interfaceName string) bool {
 	visited := make(map[string]struct{}, 8)
 

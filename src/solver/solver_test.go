@@ -30,21 +30,20 @@ func TestSolver(t *testing.T) {
 	sc := meta.NewScope()
 	sc.AddVarName("MC", tm("Memcache"), "global", true)
 
-	fm := meta.FunctionsMap{
-		`\array_map`: {Typ: tm(`array|bool|` + meta.WrapFunctionCall(`\my_func`))},
-		`\my_func`:   {Typ: tm(meta.WrapFunctionCall(`\array_map`) + `|float`)},
-	}
+	fm := meta.NewFunctionsMap()
+	fm.Set(`\array_map`, meta.FuncInfo{Typ: tm(`array|bool|` + meta.WrapFunctionCall(`\my_func`))})
+	fm.Set(`\my_func`, meta.FuncInfo{Typ: tm(meta.WrapFunctionCall(`\array_map`) + `|float`)})
 
-	cm := meta.ClassesMap{
-		`\Test`: {
-			Methods: meta.FunctionsMap{
-				`do_something`: {Typ: tm(`string`)},
-			},
-			Properties: meta.PropertiesMap{
-				`$instance`: {Typ: tm(`\Test`)},
-			},
+	cmfm := meta.NewFunctionsMap()
+	cmfm.Set(`do_something`, meta.FuncInfo{Typ: tm(`string`)})
+
+	cm := meta.NewClassesMap()
+	cm.Set(`\Test`, meta.ClassInfo{
+		Methods: cmfm,
+		Properties: meta.PropertiesMap{
+			`$instance`: {Typ: tm(`\Test`)},
 		},
-	}
+	})
 
 	meta.Info.AddToGlobalScopeNonLocked("test", sc)
 	meta.Info.AddFunctionsNonLocked("test", fm)

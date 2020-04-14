@@ -28,7 +28,12 @@ import (
 //     33 - support parsing of array<k,v> and list<type>
 //     34 - support parsing of ?ClassName as "ClassName|null"
 //     35 - added Flags:uint8 to meta.ClassInfo
-const cacheVersion = 35
+//     36 - added FuncAbstract bit to FuncFlags
+//          added FuncFinal bit to FuncFlags
+//          added ClassFinal bit to ClassFlags
+//          FuncInfo now stores original function name
+//          ClassInfo now stores original class name
+const cacheVersion = 36
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")
