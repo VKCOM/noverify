@@ -87,13 +87,38 @@ function redundantFlags($s) {
 	preg_match('~(?ims:(?i:foo))(?im:bar)~', $s);
 	preg_match('~(?i)(?ims:flags1)(?m:flags2)~', $s);
 	preg_match('~((?m)(?m:a|b(?s:foo))(?i)x)~', $s);
+
+	preg_match('~(?i)foo~i');
+}
+
+function redundantFlagClear($s) {
+	preg_match('/(?-i)x/', $s);
+	preg_match('/(?i:foo)(?-i)bar/', $s);
+	preg_match('/(?i:(?m:fo(?-i)o))(?-mi)bar/', $s);
+	preg_match('/(?i-ii)/', $s);
+	preg_match('/(?:(?i)foo)(?-i)/', $s);
+	preg_match('/((?i)(?-i))(?-i)/', $s);
+	preg_match('/(?:(?i)(?-i))(?-i)/', $s);
+	preg_match('/(?m-s)(?:tags)/(\S+)$/', $s);
 }
 
 function suspiciousAltAnchor($s) {
 	preg_match('~^foo|bar|baz~', $s);
 	preg_match('~(?:^a|bc)c~', $s);
 	preg_match('~foo|bar|baz$~', $s);
-	preg_match('~(?:a|bc$)c~', $s);
+	preg_match('~c(?:a|bc$)~', $s);
+}
+
+function danglingCaret() {
+	preg_match('~a^~', $s);
+	preg_match('~a^b~', $s);
+	preg_match('~^^foo~', $s);
+	preg_match('~foo?|bar^~', $s);
+	preg_match('~(?i:a)^foo~', $s);
+	preg_match('~(?i)^(?:foo|bar|^baz)~', $s);
+	preg_match('~(?i)^(?m)foobar^baz~', $s);
+	preg_match('~(?i:foo|((?:f|b|(foo|^bar)^)))~', $s);
+	preg_match('~(?i)(?m)\n^foo|bar|baz~', $s);
 }
 `)
 	test.Expect = []string{
@@ -135,11 +160,32 @@ function suspiciousAltAnchor($s) {
 		`redundant flag i in (?i:foo)`,
 		`redundant flag i in (?ims:flags1)`,
 		`redundant flag m in (?m:a|b(?s:foo))`,
+		`redundant flag i in (?i)`,
+
+		`clearing unset flag i in (?-i)`,
+		`clearing unset flag i in (?-i)`,
+		`clearing unset flag m in (?-mi)`,
+		`clearing unset flag i in (?-mi)`,
+		`clearing unset flag i in (?i-ii)`,
+		`clearing unset flag i in (?-i)`,
+		`clearing unset flag i in (?-i)`,
+		`clearing unset flag i in (?-i)`,
+		`clearing unset flag s in (?m-s)`,
 
 		`^ applied only to 'foo' in ^foo|bar|baz`,
 		`^ applied only to 'a' in ^a|bc`,
 		`$ applied only to 'baz' in foo|bar|baz$`,
 		`$ applied only to 'bc' in a|bc$`,
+
+		`dangling or redundant ^, maybe \^ is intended?`,
+		`dangling or redundant ^, maybe \^ is intended?`,
+		`dangling or redundant ^, maybe \^ is intended?`,
+		`dangling or redundant ^, maybe \^ is intended?`,
+		`dangling or redundant ^, maybe \^ is intended?`,
+		`dangling or redundant ^, maybe \^ is intended?`,
+		`dangling or redundant ^, maybe \^ is intended?`,
+		`dangling or redundant ^, maybe \^ is intended?`,
+		`dangling or redundant ^, maybe \^ is intended?`,
 	}
 	runFilterMatch(test, `regexpVet`)
 }
@@ -190,4 +236,42 @@ function f($s) {
 		`'/' intersects with '\/' in [/\/]`,
 	}
 	runFilterMatch(test, `regexpVet`)
+}
+
+func TestREVet_4(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
+	test.AddFile(`<?php
+function goodFlags($s) {
+	preg_match('~(?:(?i)foo)(?i)bar~', $s);
+	preg_match('~(?m)(?i)(?-m)(?-i)(?m)(?i)~', $s);
+	preg_match('~(?ms:(?i:foo))(?im:bar)~', $s);
+	preg_match('~(?i)(?ms:flags1)(?m:flags2)~', $s);
+	preg_match('~((?m)(?i:a|b(?s:foo))(?i)x)~', $s);
+	preg_match('~(?i)yy(?-i)x~', $s);
+	preg_match('~(?i-i)~', $s);
+	preg_match('~(?i:foo)(?i)bar~', $s);
+	preg_match('~(?i:(?m:fo(?-i)o))(?mi)x(?-mi)bar~', $s);
+	preg_match('~(?i-i)(?i)~', $s);
+	preg_match('~(?:(?i)foo)(?i)x(?-i)~', $s);
+
+	preg_match('~(?-i)foo~i', $s);
+}
+
+function goodAnchors($s) {
+	preg_match('~^~', $s);
+	preg_match('~^foo~', $s);
+	preg_match('~^foo?|bar~', $s);
+	preg_match('~^foo|^bar~', $s);
+	preg_match('~(^a|^b)~', $s);
+	preg_match('~(?i)^foo~', $s);
+	preg_match('~(?i)((?m)a|^foo)b~', $s);
+	preg_match('~(?i)(?m)\bfoo|bar|^baz~', $s);
+	preg_match('~(?i)^(?m)foo|bar|baz~', $s);
+	preg_match('~(?i:foo|((?:f|^b|(foo|^bar))))~', $s);
+	preg_match('~(?i)^(?m)foo|bar|^baz~', $s);
+	preg_match('~(?i)(?:)(^| )\S+~', $s);
+}
+`)
+	test.RunAndMatch()
 }
