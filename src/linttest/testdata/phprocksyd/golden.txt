@@ -1,4 +1,4 @@
-MAYBE   deprecated: Call to deprecated function dl (5.3.0 since 5.3.0) at testdata/phprocksyd/Phprocksyd.php:73
+MAYBE   deprecated: Call to deprecated function dl (5.3) at testdata/phprocksyd/Phprocksyd.php:73
             if (!extension_loaded($ext) && !dl($ext . '.so')) {
                                             ^^
 ERROR   undefined: Use null instead of NULL at testdata/phprocksyd/Phprocksyd.php:321
