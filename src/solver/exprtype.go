@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
@@ -179,7 +180,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 	}
 
 	for _, c := range custom {
-		if NodeAwareDeepEqual(c.Node, n) {
+		if astutil.NodeEqual(c.Node, n) {
 			return c.Typ
 		}
 	}

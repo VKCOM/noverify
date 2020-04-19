@@ -2,6 +2,7 @@ package linter
 
 import (
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/solver"
 )
@@ -58,7 +59,7 @@ func (ctx *blockContext) addCustomMethod(obj node.Node, methodName string) {
 
 func (ctx *blockContext) customMethodExists(obj node.Node, methodName string) bool {
 	for _, m := range ctx.customMethods {
-		if m.name == methodName && solver.NodeAwareDeepEqual(m.obj, obj) {
+		if m.name == methodName && astutil.NodeEqual(m.obj, obj) {
 			return true
 		}
 	}
