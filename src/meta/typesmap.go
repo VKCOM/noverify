@@ -246,6 +246,18 @@ func (m *TypesMap) GobDecode(buf []byte) error {
 	return decoder.Decode(&m.m)
 }
 
+func (m TypesMap) Contains(typ string) bool {
+	if m.Len() == 0 {
+		return false
+	}
+	for typ2 := range m.m {
+		if typ2 == typ {
+			return true
+		}
+	}
+	return false
+}
+
 // Find applies a predicate function to every contained type.
 // If callback returns true for any of them, this is a result of Find call.
 // False is returned if none of the contained types made pred function return true.

@@ -250,7 +250,7 @@ func TestVoidResultUsedInBinary(t *testing.T) {
 	test.AddFile(`<?php
 	function define($_, $_) {}
 	define('false', 1 == 0);
-	define('true', 1 == 1);
+	define('true', 1 != 0);
 
 	/**
 	 * @return void
