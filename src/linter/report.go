@@ -73,6 +73,12 @@ func init() {
 		},
 
 		{
+			Name:    "dupCond",
+			Default: true,
+			Comment: `Report duplicated conditions in switch and if/else statements.`,
+		},
+
+		{
 			Name:    "arraySyntax",
 			Default: true,
 			Comment: `Report usages of old array() syntax.`,

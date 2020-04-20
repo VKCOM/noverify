@@ -1786,6 +1786,20 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 	haveDefault := false
 	breakFlags := FlagBreak | FlagContinue
 
+	b.r.nodeSet.Reset()
+	for i, c := range s.CaseList.Cases {
+		c, ok := c.(*stmt.Case)
+		if !ok {
+			continue
+		}
+		if !sideEffectFree(b.ctx.sc, b.r.st, b.ctx.customTypes, c.Cond) {
+			continue
+		}
+		if !b.r.nodeSet.Add(c.Cond) {
+			b.r.Report(c.Cond, LevelWarning, "dupCond", "duplicated switch case #%d", i+1)
+		}
+	}
+
 	for idx, c := range s.CaseList.Cases {
 		var list []node.Node
 
