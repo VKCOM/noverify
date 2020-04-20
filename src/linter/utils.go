@@ -1,7 +1,6 @@
 package linter
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 	"unicode"
@@ -12,18 +11,10 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/name"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
-	"github.com/VKCOM/noverify/src/php/parser/printer"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/solver"
 )
-
-// FmtNode is used for debug purposes and returns string representation of a specified node.
-func FmtNode(n node.Node) string {
-	var b bytes.Buffer
-	printer.NewPrettyPrinter(&b, " ").Print(n)
-	return b.String()
-}
 
 // FlagsToString is designed for debugging flags.
 func FlagsToString(f int) string {

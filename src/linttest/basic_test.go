@@ -91,7 +91,7 @@ FUNCTION f() {
   DEFAULT: return 0;
   }
   if (0) {
-  } ELSEIF (0) {
+  } ELSEIF (1) {
   } ELSE {}
   Do {
   } While (0);

@@ -9,6 +9,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
@@ -45,6 +46,9 @@ type RootWalker struct {
 	rootRset  *rules.ScopedSet
 	localRset *rules.ScopedSet
 	anyRset   *rules.ScopedSet
+
+	// nodeSet is a reusable node set for both root and block walkers.
+	nodeSet astutil.NodeSet
 
 	reSimplifier *regexpSimplifier
 	reVet        *regexpVet
