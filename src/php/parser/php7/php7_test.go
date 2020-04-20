@@ -5107,19 +5107,12 @@ func TestPhp7(t *testing.T) {
 							Stmts: []node.Node{},
 						},
 					},
-				},
-				Else: &stmt.Else{
-					Position: &position.Position{
-						StartLine: 110,
-						EndLine:   110,
-						StartPos:  2596,
-						EndPos:    2619,
-					},
-					Stmt: &stmt.If{
+					&stmt.ElseIf{
+						Merged: true,
 						Position: &position.Position{
 							StartLine: 110,
 							EndLine:   110,
-							StartPos:  2601,
+							StartPos:  2596,
 							EndPos:    2619,
 						},
 						Cond: &node.SimpleVar{
@@ -5140,23 +5133,23 @@ func TestPhp7(t *testing.T) {
 							},
 							Stmts: []node.Node{},
 						},
-						Else: &stmt.Else{
-							Position: &position.Position{
-								StartLine: 110,
-								EndLine:   110,
-								StartPos:  2612,
-								EndPos:    2619,
-							},
-							Stmt: &stmt.StmtList{
-								Position: &position.Position{
-									StartLine: 110,
-									EndLine:   110,
-									StartPos:  2617,
-									EndPos:    2619,
-								},
-								Stmts: []node.Node{},
-							},
+					},
+				},
+				Else: &stmt.Else{
+					Position: &position.Position{
+						StartLine: 110,
+						EndLine:   110,
+						StartPos:  2612,
+						EndPos:    2619,
+					},
+					Stmt: &stmt.StmtList{
+						Position: &position.Position{
+							StartLine: 110,
+							EndLine:   110,
+							StartPos:  2617,
+							EndPos:    2619,
 						},
+						Stmts: []node.Node{},
 					},
 				},
 			},

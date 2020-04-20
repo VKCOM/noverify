@@ -1165,8 +1165,8 @@ func TestParseAndPrintIfElseIfElse(t *testing.T) {
 	elseif ( 2 ) {
 		;
 	}
-	else if ( 3 ) $a;
-	else { }`
+	/*a1*/ else /*b1*/ if /*c1*/ ( 3 ) $a;
+	/*a2*/ else /*b2*/ { }`
 
 	actual := print(parse(src))
 

@@ -2259,8 +2259,15 @@ func (p *Printer) printStmtElseif(n node.Node) {
 	nn := n.(*stmt.ElseIf)
 	p.printFreeFloating(nn, freefloating.Start)
 
-	io.WriteString(p.w, "elseif")
-	p.printFreeFloating(nn, freefloating.ElseIf)
+	if nn.Merged {
+		io.WriteString(p.w, "else")
+		p.printFreeFloating(nn, freefloating.Else)
+		io.WriteString(p.w, "if")
+		p.printFreeFloating(nn, freefloating.If)
+	} else {
+		io.WriteString(p.w, "elseif")
+		p.printFreeFloating(nn, freefloating.ElseIf)
+	}
 	io.WriteString(p.w, "(")
 	p.Print(nn.Cond)
 	p.printFreeFloating(nn, freefloating.Expr)

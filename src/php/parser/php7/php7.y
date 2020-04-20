@@ -2017,15 +2017,39 @@ if_stmt:
             }
     |   if_stmt_without_else T_ELSE statement
             {
-                _else := stmt.NewElse($3)
-                $$ = $1.(*stmt.If).SetElse(_else)
+                var n node.Node
+                if _if, ok := $3.(*stmt.If); ok {
+                  left := $1.(*stmt.If)
+
+                  n = &stmt.ElseIf{
+                    FreeFloating: _if.FreeFloating,
+                    Position: _if.Position,
+                    Cond: _if.Cond,
+                    Stmt: _if.Stmt,
+                    AltSyntax: _if.AltSyntax,
+                    Merged: true,
+                  }
+                  yylex.(*Parser).setFreeFloating(n, freefloating.Else, (*n.GetFreeFloating())[freefloating.Start])
+                  left.ElseIf = append(left.ElseIf, n)
+                  if len(_if.ElseIf) != 0 {
+                    left.ElseIf = append(left.ElseIf, _if.ElseIf...)
+                  }
+                  if _if.Else != nil {
+                    left.Else = _if.Else
+                  }
+
+                  $$ = left
+                } else {
+                  n = stmt.NewElse($3)
+                  $$ = $1.(*stmt.If).SetElse(n)
+                }
 
                 // save position
-                _else.SetPosition(yylex.(*Parser).positionBuilder.NewTokenNodePosition($2, $3))
+                n.SetPosition(yylex.(*Parser).positionBuilder.NewTokenNodePosition($2, $3))
                 $$.SetPosition(yylex.(*Parser).positionBuilder.NewNodesPosition($1, $3))
 
                 // save comments
-                yylex.(*Parser).setFreeFloating(_else, freefloating.Start, $2.FreeFloating)
+                yylex.(*Parser).setFreeFloating(n, freefloating.Start, $2.FreeFloating)
 
                 yylex.(*Parser).returnTokenToPool(yyDollar, &yyVAL)
             }

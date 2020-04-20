@@ -6,7 +6,7 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
-func TestDupIfCond(t *testing.T) {
+func TestDupIfCond1(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 const C1 = 1;
@@ -24,16 +24,54 @@ function impurefunc($x) {
 }
 
 function f($cond) {
-  if ($cond + 1) {
-  } elseif ($cond + 1) {
+  if (C1 == $cond) {
+  } else if (C1 == $cond) {
   }
 
   if ($cond) {
   } elseif ($cond) {
   } else {}
+
+  if ($cond+1) {
+    if ($cond+4) {
+    } elseif ($cond+2) {
+      if ($cond+3) {}
+    }
+  } elseif ($cond+1) {
+  }
+
+  if ($cond+1) {
+  } else if ($cond+2) {
+    if ($cond+1) {
+    } else if ($cond+2) {
+    } elseif ($cond+3) {
+    } else if ($cond+4) {
+    } elseif ($cond+2) {
+    }
+  }
 }
 `)
+	test.Expect = []string{
+		`duplicated condition in if-else chain`,
+		`duplicated condition in if-else chain`,
+		`duplicated condition in if-else chain`,
+		`duplicated condition in if-else chain`,
+	}
 	test.RunAndMatch()
+}
+
+func TestDupIfCond2(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+function f($cond) {
+  if ($cond+1) {
+    if ($cond+1) {
+    } elseif ($cond+2) {
+      if ($cond+3) {}
+    }
+  } elseif ($cond+2) {
+  }
+}
+`)
 }
 
 func TestDupCaseCond(t *testing.T) {

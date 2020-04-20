@@ -1553,12 +1553,8 @@ func (d *RootWalker) checkNameCase(n node.Node, nameUsed, nameExpected string) {
 	}
 }
 
-func (d *RootWalker) checkKeywordCase(n node.Node, keyword string) {
-	// Only works for nodes that have a keyword of interest
-	// as the leftmost token.
-
-	pos := n.GetPosition()
-	from := pos.StartPos
+func (d *RootWalker) checkKeywordCasePos(n node.Node, begin int, keyword string) {
+	from := begin
 	to := from + len(keyword)
 
 	wantKwd := keyword
@@ -1567,4 +1563,10 @@ func (d *RootWalker) checkKeywordCase(n node.Node, keyword string) {
 		d.Report(n, LevelWarning, "keywordCase", "Use %s instead of %s",
 			wantKwd, haveKwd)
 	}
+}
+
+func (d *RootWalker) checkKeywordCase(n node.Node, keyword string) {
+	// Only works for nodes that have a keyword of interest
+	// as the leftmost token.
+	d.checkKeywordCasePos(n, n.GetPosition().StartPos, keyword)
 }

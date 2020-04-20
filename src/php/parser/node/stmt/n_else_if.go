@@ -14,6 +14,7 @@ type ElseIf struct {
 	Cond         node.Node
 	Stmt         node.Node
 	AltSyntax    bool // Whether alternative colon-style syntax is used
+	Merged       bool // Whether it's a result of "else if" merging
 }
 
 // NewElseIf node constructor

@@ -13,7 +13,7 @@ type If struct {
 	Position     *position.Position
 	Cond         node.Node
 	Stmt         node.Node
-	ElseIf       []node.Node
+	ElseIf       []node.Node // Always []*ElseIf
 	Else         node.Node
 	AltSyntax    bool // Whether alternative colon-style syntax is used
 }
@@ -45,12 +45,7 @@ func (n *If) GetFreeFloating() *freefloating.Collection {
 
 // AddElseIf add ElseIf node and returns AltIf node
 func (n *If) AddElseIf(ElseIf node.Node) node.Node {
-	if n.ElseIf == nil {
-		n.ElseIf = make([]node.Node, 0)
-	}
-
 	n.ElseIf = append(n.ElseIf, ElseIf)
-
 	return n
 }
 
