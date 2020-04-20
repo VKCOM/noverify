@@ -294,6 +294,14 @@ func runRulesTest(t *testing.T, test *linttest.Suite, rfile string) {
 	}
 	oldRules := linter.Rules
 	linter.Rules = rset
-	test.RunAndMatch()
+
+	var filtered []*linter.Report
+	for _, r := range test.RunLinter() {
+		if strings.HasPrefix(r.CheckName(), "<test>") {
+			filtered = append(filtered, r)
+		}
+	}
+	test.Match(filtered)
+
 	linter.Rules = oldRules
 }

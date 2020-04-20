@@ -9,6 +9,7 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr/binary"
 	"github.com/VKCOM/noverify/src/php/parser/node/name"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
@@ -320,6 +321,60 @@ func findVarNode(n node.Node) node.Node {
 		return findVarNode(n.Variable)
 	default:
 		return nil
+	}
+}
+
+func binaryOpString(n node.Node) string {
+	switch n.(type) {
+	case *binary.BitwiseAnd:
+		return "&"
+	case *binary.BitwiseOr:
+		return "|"
+	case *binary.BitwiseXor:
+		return "^"
+	case *binary.LogicalAnd:
+		return "and"
+	case *binary.BooleanAnd:
+		return "&&"
+	case *binary.LogicalOr:
+		return "or"
+	case *binary.BooleanOr:
+		return "||"
+	case *binary.LogicalXor:
+		return "xor"
+	case *binary.Plus:
+		return "+"
+	case *binary.Minus:
+		return "-"
+	case *binary.Mul:
+		return "*"
+	case *binary.Div:
+		return "/"
+	case *binary.Mod:
+		return "%"
+	case *binary.Pow:
+		return "**"
+	case *binary.Equal:
+		return "=="
+	case *binary.NotEqual:
+		return "!="
+	case *binary.Identical:
+		return "==="
+	case *binary.NotIdentical:
+		return "!=="
+	case *binary.Smaller:
+		return "<"
+	case *binary.SmallerOrEqual:
+		return "<="
+	case *binary.Greater:
+		return ">"
+	case *binary.GreaterOrEqual:
+		return ">="
+	case *binary.Spaceship:
+		return "<=>"
+
+	default:
+		return ""
 	}
 }
 

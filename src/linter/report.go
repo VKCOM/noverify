@@ -79,6 +79,18 @@ func init() {
 		},
 
 		{
+			Name:    "dupBranchBody",
+			Default: true,
+			Comment: `Report suspicious conditional branches that execute the same action.`,
+		},
+
+		{
+			Name:    "dupSubExpr",
+			Default: true,
+			Comment: `Report suspicious duplicated operands in expressions.`,
+		},
+
+		{
 			Name:    "arraySyntax",
 			Default: true,
 			Comment: `Report usages of old array() syntax.`,

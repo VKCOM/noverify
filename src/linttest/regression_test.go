@@ -909,7 +909,7 @@ func TestIssue183(t *testing.T) {
 
 func TestIssue362_1(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-function method_exists($object, $method_name) { return 1 == 1; }
+function method_exists($object, $method_name) { return 1 != 0; }
 
 class Foo {
   public $value;
@@ -943,7 +943,7 @@ if (method_exists($x, 'x1')) {
 func TestIssue362_2(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-function method_exists($object, $method_name) { return 1 == 1; }
+function method_exists($object, $method_name) { return 1 != 0; }
 
 class Foo {}
 

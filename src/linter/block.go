@@ -159,6 +159,26 @@ func (b *BlockWalker) checkBinaryVoidType(left, right node.Node) {
 	b.checkVoidType(right)
 }
 
+func (b *BlockWalker) checkBinaryDupArgsNoFloat(n, left, right node.Node) {
+	if b.exprType(left).Contains("float") || b.exprType(right).Contains("float") {
+		return
+	}
+	b.checkBinaryDupArgs(n, left, right)
+}
+
+func (b *BlockWalker) checkBinaryDupArgs(n, left, right node.Node) {
+	// Check for `$x <op> $y` where `<op>` is not a correct way to
+	// handle identical operands.
+	if !b.sideEffectFree(left) || !b.sideEffectFree(right) {
+		return
+	}
+	b.r.nodeSet.Reset()
+	b.r.nodeSet.Add(left)
+	if !b.r.nodeSet.Add(right) {
+		b.r.Report(n, LevelWarning, "dupSubExpr", "duplicated operands in %s expression", binaryOpString(n))
+	}
+}
+
 // EnterNode is called before walking to inner nodes.
 func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	res = true
@@ -187,52 +207,76 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 
 	case *binary.BitwiseAnd:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgs(s, s.Left, s.Right)
 		b.handleBitwiseAnd(s)
 	case *binary.BitwiseOr:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgs(s, s.Left, s.Right)
 		b.handleBitwiseOr(s)
 	case *binary.BitwiseXor:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgs(s, s.Left, s.Right)
 	case *binary.LogicalAnd:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgs(s, s.Left, s.Right)
 	case *binary.BooleanAnd:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgs(s, s.Left, s.Right)
 	case *binary.LogicalOr:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgs(s, s.Left, s.Right)
 		res = b.handleLogicalOr(s)
 	case *binary.BooleanOr:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgs(s, s.Left, s.Right)
 	case *binary.LogicalXor:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgs(s, s.Left, s.Right)
 	case *binary.Plus:
 		b.checkBinaryVoidType(s.Left, s.Right)
 	case *binary.Minus:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgsNoFloat(s, s.Left, s.Right)
 	case *binary.Mul:
 		b.checkBinaryVoidType(s.Left, s.Right)
 	case *binary.Div:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgsNoFloat(s, s.Left, s.Right)
 	case *binary.Mod:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgs(s, s.Left, s.Right)
 	case *binary.Pow:
 		b.checkBinaryVoidType(s.Left, s.Right)
 	case *binary.Equal:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgsNoFloat(s, s.Left, s.Right)
 	case *binary.NotEqual:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgsNoFloat(s, s.Left, s.Right)
 	case *binary.Identical:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgsNoFloat(s, s.Left, s.Right)
 	case *binary.NotIdentical:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgsNoFloat(s, s.Left, s.Right)
 	case *binary.Smaller:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgs(s, s.Left, s.Right)
 	case *binary.SmallerOrEqual:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgsNoFloat(s, s.Left, s.Right)
 	case *binary.Greater:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgs(s, s.Left, s.Right)
 	case *binary.GreaterOrEqual:
 		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgsNoFloat(s, s.Left, s.Right)
+	case *binary.Spaceship:
+		b.checkBinaryVoidType(s.Left, s.Right)
+		b.checkBinaryDupArgsNoFloat(s, s.Left, s.Right)
+
 	// end of binary functions
+
 	case *cast.Double:
 		b.checkRedundantCast(s.Expr, "float")
 	case *cast.Int:
@@ -975,7 +1019,7 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 		className   string
 	)
 
-	exprType := solver.ExprTypeCustom(b.ctx.sc, b.r.st, e.Variable, b.ctx.customTypes)
+	exprType := b.exprType(e.Variable)
 
 	exprType.Find(func(typ string) bool {
 		m, ok := solver.FindMethod(typ, methodName)
@@ -1102,7 +1146,7 @@ func (b *BlockWalker) handlePropertyFetch(e *expr.PropertyFetch) bool {
 	var className string
 	var info meta.PropertyInfo
 
-	typ := solver.ExprTypeCustom(b.ctx.sc, b.r.st, e.Variable, b.ctx.customTypes)
+	typ := b.exprType(e.Variable)
 	typ.Find(func(typ string) bool {
 		p, ok := solver.FindProperty(typ, id.Value)
 		info = p.Info
@@ -1644,6 +1688,13 @@ func (b *BlockWalker) handleTernary(e *expr.Ternary) bool {
 		return true // Skip `$x ?: $y` expressions
 	}
 
+	// Check for `$cond ? $x : $x` which makes no sense.
+	b.r.nodeSet.Reset()
+	b.r.nodeSet.Add(e.IfTrue)
+	if !b.r.nodeSet.Add(e.IfFalse) {
+		b.r.Report(e, LevelWarning, "dupBranchBody", "then/else operands are identical")
+	}
+
 	b.withNewContext(func() {
 		// No need to delete vars here as we run andWalker
 		// only inside a new context.
@@ -1656,6 +1707,22 @@ func (b *BlockWalker) handleTernary(e *expr.Ternary) bool {
 }
 
 func (b *BlockWalker) handleIf(s *stmt.If) bool {
+	nodeSet := astutil.NewNodeSet()
+
+	// Check for `if ($cond) { $x } else { $x }`.
+	// Leave more complex if chains to avoid false positives
+	// until we get more examples of valid and invalid cases of
+	// duplicated branches.
+	if len(s.ElseIf) == 0 && s.Else != nil {
+		x := s.Stmt
+		y := s.Else.(*stmt.Else).Stmt
+		nodeSet.Add(x)
+		if !nodeSet.Add(y) {
+			b.r.Report(s, LevelWarning, "dupBranchBody", "duplicated if/else actions")
+		}
+		nodeSet.Reset()
+	}
+
 	var varsToDelete []node.Node
 	customMethods := len(b.ctx.customMethods)
 	customFunctions := len(b.ctx.customFunctions)
@@ -1667,11 +1734,10 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 		b.ctx.customMethods = b.ctx.customMethods[:customMethods]
 		b.ctx.customFunctions = b.ctx.customFunctions[:customFunctions]
 	}()
-	condSet := astutil.NewNodeSet()
 	walkCond := func(cond node.Node) {
 		a := &andWalker{b: b}
 		cond.Walk(a)
-		if sideEffectFree(b.ctx.sc, b.r.st, b.ctx.customTypes, cond) && !condSet.Add(cond) {
+		if b.sideEffectFree(cond) && !nodeSet.Add(cond) {
 			b.r.Report(cond, LevelWarning, "dupCond", "duplicated condition in if-else chain")
 		}
 		varsToDelete = append(varsToDelete, a.varsToDelete...)
@@ -1805,7 +1871,7 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 		if !ok {
 			continue
 		}
-		if !sideEffectFree(b.ctx.sc, b.r.st, b.ctx.customTypes, c.Cond) {
+		if !b.sideEffectFree(c.Cond) {
 			continue
 		}
 		if !b.r.nodeSet.Add(c.Cond) {
@@ -1997,9 +2063,9 @@ func (b *BlockWalker) handleStmtExpression(s *stmt.Expression) {
 		// Report these even if they are not pure.
 		report = true
 	default:
-		typ := solver.ExprTypeCustom(b.ctx.sc, b.r.st, s.Expr, b.ctx.customTypes)
+		typ := b.exprType(s.Expr)
 		if !typ.Is("void") {
-			report = sideEffectFree(b.ctx.sc, b.r.st, b.ctx.customTypes, s.Expr)
+			report = b.sideEffectFree(s.Expr)
 		}
 	}
 
@@ -2193,10 +2259,18 @@ func (b *BlockWalker) caseHasFallthroughComment(n node.Node) bool {
 	return false
 }
 
+func (b *BlockWalker) sideEffectFree(n node.Node) bool {
+	return sideEffectFree(b.ctx.sc, b.r.st, b.ctx.customTypes, n)
+}
+
 func (b *BlockWalker) isBool(n node.Node) bool {
-	return solver.ExprType(b.r.scope(), b.r.st, n).Is("bool")
+	return b.exprType(n).Is("bool")
 }
 
 func (b *BlockWalker) isVoid(n node.Node) bool {
-	return solver.ExprType(b.r.scope(), b.r.st, n).Is("void")
+	return b.exprType(n).Is("void")
+}
+
+func (b *BlockWalker) exprType(n node.Node) meta.TypesMap {
+	return solver.ExprTypeCustom(b.ctx.sc, b.r.st, n, b.ctx.customTypes)
 }

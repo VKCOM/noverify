@@ -6,6 +6,194 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestDupSubExpr1(t *testing.T) {
+	// Operations below are not checked by dupSubExpr.
+	linttest.SimpleNegativeTest(t, `<?php
+function f($x) {
+  $_ = [
+    $x + $x,
+    $x * $x,
+    $x ** $x,
+  ];
+}
+`)
+}
+
+func TestDupSubExpr2(t *testing.T) {
+	// All expression below give warnings for mixed-typed values.
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f($x) {
+  $_ = [
+    $x & $x, // 1
+    $x | $x, // 2
+    $x ^ $x, // 3
+    $x and $x, // 4
+    $x && $x, // 5
+    $x or $x, // 6
+    $x || $x, // 7
+    $x xor $x, // 8
+    $x - $x, // 9
+    $x / $x, // 10
+    $x % $x, // 11
+    $x == $x, // 12
+    $x === $x, // 13
+    $x != $x, // 14
+    $x !== $x, // 15
+    $x < $x, // 16
+    $x <= $x, // 17
+    $x > $x, // 18
+    $x >= $x, // 19
+    $x <=> $x, // 20
+  ];
+}
+`)
+	test.Expect = []string{
+		`duplicated operands in & expression`,
+		`duplicated operands in | expression`,
+		`duplicated operands in ^ expression`,
+		`duplicated operands in and expression`,
+		`duplicated operands in && expression`,
+		`duplicated operands in or expression`,
+		`duplicated operands in || expression`,
+		`duplicated operands in xor expression`,
+		`duplicated operands in - expression`,
+		`duplicated operands in / expression`,
+		`duplicated operands in % expression`,
+		`duplicated operands in == expression`,
+		`duplicated operands in === expression`,
+		`duplicated operands in != expression`,
+		`duplicated operands in !== expression`,
+		`duplicated operands in < expression`,
+		`duplicated operands in <= expression`,
+		`duplicated operands in > expression`,
+		`duplicated operands in >= expression`,
+		`duplicated operands in <=> expression`,
+	}
+	test.RunAndMatch()
+}
+
+func TestDupSubExpr3(t *testing.T) {
+	// Duplicated expression is float-typed.
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f() {
+  $x = 1.5;
+  $_ = [
+    $x & $x,
+    $x | $x,
+    $x ^ $x,
+    $x and $x,
+    $x && $x,
+    $x or $x,
+    $x || $x,
+    $x xor $x,
+    $x - $x,
+    $x / $x,
+    $x % $x,
+    $x == $x,
+    $x === $x,
+    $x != $x,
+    $x !== $x,
+    $x < $x,
+    $x <= $x,
+    $x > $x,
+    $x >= $x,
+    $x <=> $x,
+  ];
+}
+`)
+	test.Expect = []string{
+		`duplicated operands in & expression`,
+		`duplicated operands in | expression`,
+		`duplicated operands in ^ expression`,
+		`duplicated operands in and expression`,
+		`duplicated operands in && expression`,
+		`duplicated operands in or expression`,
+		`duplicated operands in || expression`,
+		`duplicated operands in xor expression`,
+		`duplicated operands in % expression`,
+		`duplicated operands in < expression`,
+		`duplicated operands in > expression`,
+	}
+	test.RunAndMatch()
+}
+
+func TestDupTernaryOperands(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f($cond) {
+  return $cond ? 1 : 1;
+}
+
+function f2($cond) {
+  if ($cond ? f(10) : f(10)) {
+    return 20;
+  }
+}
+`)
+	test.Expect = []string{
+		`then/else operands are identical`,
+		`then/else operands are identical`,
+	}
+	test.RunAndMatch()
+}
+
+func TestDupIfElseBody(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f($cond) {
+  if ($cond) {
+    return 0;
+  } else {
+    return 0;
+  }
+}
+
+// Nested in another if, multiple actions under both branches.
+function f2($cond) {
+  if ($cond) {
+    if ($cond+1) {
+      echo f(1);
+      echo f(2);
+    } else {
+      echo f(1);
+      echo f(2);
+    }
+  }
+}
+
+// Should also work for branches without {}.
+function f3($cond) {
+  if ($cond)
+    echo 1;
+  else
+    echo 1;
+}
+
+
+// Test alt syntax.
+function f2($cond) {
+  if ($cond) {
+    if ($cond+1):
+      echo f(1);
+      echo f(2);
+    else:
+      echo f(1);
+      echo f(2);
+    endif;
+  }
+}
+`)
+	test.Expect = []string{
+		`duplicated if/else actions`,
+		`duplicated if/else actions`,
+		`duplicated if/else actions`,
+		`duplicated if/else actions`,
+	}
+	test.RunAndMatch()
+}
+
 func TestDupIfCond1(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
