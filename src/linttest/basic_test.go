@@ -51,6 +51,31 @@ $_ = array(1);
 `)
 }
 
+func TestKeywordCaseElseif(t *testing.T) {
+	test := linttest.NewSuite(t)
+
+	test.AddFile(`<?php
+function f($cond) {
+  if ($cond+0) {
+  } Else  If ($cond+1) {
+  } elsE/**/IF ($cond+2) {
+  } elseiF ($cond+3) {
+  } else /*a*/ /*b*/  iF ($cond+4) {
+  } ElsE {}
+}
+`)
+	test.Expect = []string{
+		`Use if instead of If`,
+		`Use if instead of IF`,
+		`Use if instead of iF`,
+		`Use else instead of Else`,
+		`Use else instead of elsE`,
+		`Use elseif instead of elseiF`,
+		`Use else instead of ElsE`,
+	}
+	test.RunAndMatch()
+}
+
 func TestKeywordCase(t *testing.T) {
 	test := linttest.NewSuite(t)
 

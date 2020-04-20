@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
@@ -300,7 +301,15 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *stmt.Else:
 		b.r.checkKeywordCase(s, "else")
 	case *stmt.ElseIf:
-		b.r.checkKeywordCase(s, "elseif")
+		if s.Merged {
+			b.r.checkKeywordCase(s, "else")
+			if ff := (*s.GetFreeFloating())[freefloating.Else]; len(ff) != 0 {
+				rightmostPos := ff[len(ff)-1].Position
+				b.r.checkKeywordCasePos(s, rightmostPos.EndPos, "if")
+			}
+		} else {
+			b.r.checkKeywordCase(s, "elseif")
+		}
 	case *stmt.If:
 		// TODO: handle constant if expressions
 		// TODO: maybe try to handle when variables are defined and used with the same condition
@@ -1658,9 +1667,13 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 		b.ctx.customMethods = b.ctx.customMethods[:customMethods]
 		b.ctx.customFunctions = b.ctx.customFunctions[:customFunctions]
 	}()
+	condSet := astutil.NewNodeSet()
 	walkCond := func(cond node.Node) {
 		a := &andWalker{b: b}
 		cond.Walk(a)
+		if sideEffectFree(b.ctx.sc, b.r.st, b.ctx.customTypes, cond) && !condSet.Add(cond) {
+			b.r.Report(cond, LevelWarning, "dupCond", "duplicated condition in if-else chain")
+		}
 		varsToDelete = append(varsToDelete, a.varsToDelete...)
 	}
 

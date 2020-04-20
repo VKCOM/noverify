@@ -49,7 +49,7 @@ const nodeSetListMax = 5
 // NodeSet is a set of unique AST nodes.
 //
 // It's possible to avoid allocations in most cases if node set is
-// reused with Reset(). If this is not possible, use newNodeSet()
+// reused with Reset(). If this is not possible, use NewNodeSet()
 // to create a set that can do fewer allocations than a zero value set.
 //
 // NodeSet is not thread-safe, but since Root/Block walkers always operate
@@ -59,11 +59,11 @@ type NodeSet struct {
 	m    map[string]struct{}
 }
 
-// newNodeSet returns a node set with preallocated storage.
+// NewNodeSet returns a node set with preallocated storage.
 //
 // Intended to be used in places where reusing root node set is
 // tricky or impossible (function is reentrant).
-func newNodeSet() NodeSet {
+func NewNodeSet() NodeSet {
 	return NodeSet{list: make([]node.Node, 0, nodeSetListMax)}
 }
 
