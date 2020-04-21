@@ -1384,7 +1384,7 @@ func TestCorrectArrayTypes(t *testing.T) {
 		t.Errorf("Unexpected number of types: %d, excepted 1", l)
 	}
 
-	if !fn.Typ.IsInt() {
+	if !fn.Typ.Is("int") {
 		t.Errorf("Wrong type: %s, expected int", fn.Typ)
 	}
 }
@@ -1414,7 +1414,7 @@ func TestArrayUnion(t *testing.T) {
 		t.Errorf("Unexpected number of types: %d, excepted 1", l)
 	}
 
-	if !fnInt.Typ.IsInt() {
+	if !fnInt.Typ.Is("int") {
 		t.Errorf("Wrong type: %s, expected int", fnInt.Typ)
 	}
 
