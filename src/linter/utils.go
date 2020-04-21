@@ -255,7 +255,7 @@ func normalizeType(st *meta.ClassParseState, typStr string) string {
 		}
 
 		switch className {
-		case "bool", "boolean", "true", "false", "double", "float", "string", "int", "array", "resource", "mixed", "null", "callable", "void", "object":
+		case "bool", "true", "false", "float", "string", "int", "array", "resource", "mixed", "null", "callable", "void", "object":
 			// Can't assign className here because it also erases [] for arrays.
 			if classNames[idx][0] == '?' {
 				classNames[idx] = classNames[idx][1:]

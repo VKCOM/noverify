@@ -65,6 +65,11 @@ func (f *phpdocTypeFixer) fix(typ string) string {
 		return f.fix(typ)
 	}
 
+	if strings.HasSuffix(typ, "[]") && typ != "[]" {
+		typ = f.fix(strings.TrimSuffix(typ, "[]"))
+		return typ + "[]"
+	}
+
 	return typ
 }
 

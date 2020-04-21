@@ -670,7 +670,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 		nm := p.Variable.Name
 
 		d.checkCommentMisspellings(p, p.PhpDocComment)
-		typ := d.parsePHPDocVar(p.PhpDocComment)
+		typ := d.parsePHPDocVar(p, p.PhpDocComment)
 		if p.Expr != nil {
 			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.st, p.Expr))
 		}
@@ -871,10 +871,14 @@ func (d *RootWalker) reportPhpdocErrors(n node.Node, errs phpdocErrors) {
 	}
 }
 
-func (d *RootWalker) parsePHPDocVar(doc string) (m meta.TypesMap) {
+func (d *RootWalker) parsePHPDocVar(n node.Node, doc string) (m meta.TypesMap) {
 	for _, part := range phpdoc.Parse(doc) {
 		if part.Name == "var" && len(part.Params) >= 1 {
-			m = meta.NewTypesMap(normalizeType(d.st, part.Params[0]))
+			typ, notice := fixPHPDocType(part.Params[0])
+			if notice != "" {
+				d.Report(n, LevelInformation, "phpdocType", "%s", notice)
+			}
+			m = meta.NewTypesMap(normalizeType(d.st, typ))
 		}
 	}
 
@@ -1002,11 +1006,22 @@ func (d *RootWalker) parseTypeNode(n node.Node) (typ meta.TypesMap, ok bool) {
 
 	switch t := n.(type) {
 	case *name.Name:
-		typ = meta.NewTypesMap(normalizeType(d.st, meta.NameToString(t)))
+		// TODO: switch over nm and give warnings
+		// for names like "integer" and "double".
+		nm := meta.NameToString(t)
+		typ = meta.NewTypesMap(normalizeType(d.st, nm))
 	case *name.FullyQualified:
 		typ = meta.NewTypesMap(meta.FullyQualifiedToString(t))
 	case *node.Identifier:
-		typ = meta.NewTypesMap(t.Value)
+		// It looks like we only get keyword-like types in this
+		// switch case. Only "array" requires normalization.
+		var typeString string
+		if t.Value == "array" {
+			typeString = "mixed[]"
+		} else {
+			typeString = t.Value
+		}
+		typ = meta.NewTypesMap(typeString)
 	}
 
 	if nullable {
