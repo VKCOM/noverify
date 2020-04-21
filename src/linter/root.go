@@ -881,90 +881,6 @@ func (d *RootWalker) parsePHPDocVar(doc string) (m meta.TypesMap) {
 	return m
 }
 
-// normalizeType adds namespaces to a type defined by the PHPDoc type string as well as
-// converts notations like "array<int,string>" to <meta.WARRAY2, "int", "string">
-func (d *RootWalker) normalizeType(typStr string) string {
-	if typStr == "" {
-		return ""
-	}
-
-	nullable := false
-	classNames := strings.Split(typStr, `|`)
-	for idx, className := range classNames {
-		// ignore things like \tuple(*)
-		if braceIdx := strings.IndexByte(className, '('); braceIdx >= 0 {
-			className = className[0:braceIdx]
-		}
-
-		// 0 for "bool", 1 for "bool[]", 2 for "bool[][]" and so on
-		arrayDim := 0
-		for strings.HasSuffix(className, "[]") {
-			arrayDim++
-			className = strings.TrimSuffix(className, "[]")
-		}
-
-		if len(className) == 0 {
-			continue
-		}
-
-		if className[0] == '?' && len(className) > 1 {
-			nullable = true
-			className = className[1:]
-		}
-
-		switch className {
-		case "bool", "boolean", "true", "false", "double", "float", "string", "int", "array", "resource", "mixed", "null", "callable", "void", "object":
-			// Can't assign className here because it also erases [] for arrays.
-			if classNames[idx][0] == '?' {
-				classNames[idx] = classNames[idx][1:]
-			}
-			continue
-		case "$this":
-			// Handle `$this` as `static` alias in phpdoc context.
-			classNames[idx] = "static"
-			continue
-		case "static":
-			// Don't resolve `static` phpdoc type annotation too early
-			// to make it possible to handle late static binding.
-			continue
-		}
-
-		if className[0] == '\\' {
-			continue
-		}
-
-		if className[0] <= meta.WMax {
-			linterError(d.st.CurrentFile, "Bad type: '%s'", className)
-			classNames[idx] = ""
-			continue
-		}
-
-		// special types, e.g. "array<k,v>"
-		if strings.ContainsAny(className, "<>") {
-			classNames[idx] = parseAngleBracketedType(d.st, className)
-			continue
-		}
-
-		fullClassName, ok := solver.GetClassName(d.st, meta.StringToName(className))
-		if !ok {
-			classNames[idx] = ""
-			continue
-		}
-
-		if arrayDim > 0 {
-			fullClassName += strings.Repeat("[]", arrayDim)
-		}
-
-		classNames[idx] = fullClassName
-	}
-
-	if nullable {
-		classNames = append(classNames, "null")
-	}
-
-	return strings.Join(classNames, "|")
-}
-
 type phpDocParseResult struct {
 	returnType meta.TypesMap
 	types      phpDocParamsMap
@@ -1001,7 +917,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 			if err != "" {
 				result.errs.pushType("%s on line %d", err, part.Line)
 			}
-			result.returnType = meta.NewTypesMap(d.normalizeType(typ))
+			result.returnType = meta.NewTypesMap(normalizeType(d.st, typ))
 			continue
 		}
 
@@ -1054,7 +970,7 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 		if err != "" {
 			result.errs.pushType("%s on line %d", err, part.Line)
 		} else {
-			param.typ = meta.NewTypesMap(d.normalizeType(typ))
+			param.typ = meta.NewTypesMap(normalizeType(d.st, typ))
 			param.typ.Iterate(func(t string) {
 				if t == "void" {
 					result.errs.pushType("void is not a valid type for input parameter")
@@ -1086,7 +1002,7 @@ func (d *RootWalker) parseTypeNode(n node.Node) (typ meta.TypesMap, ok bool) {
 
 	switch t := n.(type) {
 	case *name.Name:
-		typ = meta.NewTypesMap(d.normalizeType(meta.NameToString(t)))
+		typ = meta.NewTypesMap(normalizeType(d.st, meta.NameToString(t)))
 	case *name.FullyQualified:
 		typ = meta.NewTypesMap(meta.FullyQualifiedToString(t))
 	case *node.Identifier:
