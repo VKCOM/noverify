@@ -88,17 +88,9 @@ func (m TypesMap) Len() int {
 	return len(m.m)
 }
 
-// IsInt checks if map contains only int type
-func (m TypesMap) IsInt() bool {
-	return m.Is("int")
-}
-
-// IsString checks if map contains only string type
-func (m TypesMap) IsString() bool {
-	return m.Is("string")
-}
-
 // IsArray checks if map contains only array of any type
+//
+// Warning: use only for *lazy* types!
 func (m TypesMap) IsArray() bool {
 	if len(m.m) != 1 {
 		return false
@@ -113,6 +105,8 @@ func (m TypesMap) IsArray() bool {
 }
 
 // IsArrayOf checks if map contains only array of given type
+//
+// Warning: use only for *lazy* types!
 func (m TypesMap) IsArrayOf(typ string) bool {
 	if len(m.m) != 1 {
 		return false
@@ -123,6 +117,8 @@ func (m TypesMap) IsArrayOf(typ string) bool {
 }
 
 // Is reports whether m contains exactly one specified type.
+//
+// Warning: typ must be a proper *lazy* or *solved* type.
 func (m TypesMap) Is(typ string) bool {
 	if m.Len() != 1 {
 		return false

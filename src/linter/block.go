@@ -126,7 +126,7 @@ func (b *BlockWalker) checkRedundantCastArray(e node.Node) {
 		return
 	}
 	typ := solver.ExprType(b.ctx.sc, b.r.st, e)
-	if typ.Len() == 1 && typ.String() == "mixed[]" {
+	if typ.Len() == 1 && typ.Is("mixed[]") {
 		b.r.Report(e, LevelDoNotReject, "redundantCast", "expression already has array type")
 	}
 }
