@@ -590,6 +590,8 @@ func (b *BlockWalker) parseComment(c freefloating.String) {
 			continue
 		}
 
+		// TODO: report phpdocLint notice.
+		typ, _ = fixPHPDocType(typ)
 		m := meta.NewTypesMap(normalizeType(b.r.st, typ))
 		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(varName, "$"), m, "@var")
 	}

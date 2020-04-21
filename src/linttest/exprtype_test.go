@@ -127,9 +127,31 @@ func TestExprTypeFixes(t *testing.T) {
 		{`array_int_string()`, `string[]`},      // key type is currently ignored
 		{`array_int_stdclass()`, `\stdclass[]`}, // key type is currently ignored
 		{`array_return_string()`, `string`},
+		{`alias_real_arr1()`, `float[]`},
+		{`alias_real_arr2()`, `float[][]`},
+		{`array_array()`, `mixed[][]`},
+
+		// TODO: we need to run type normalization on union types as well.
+		// {`union_integer_array()`, `int|mixed[]`},
+		// {`union_boolean_ints()`, `bool|int[]`},
 	}
 
 	global := `<?php
+/** @return array[] */
+function array_array() {}
+
+/** @return integer|array */
+function union_integer_array() {}
+
+/** @return boolean|[]int */
+function union_boolean_ints() {}
+
+/** @return []real */
+function alias_real_arr1() {}
+
+/** @return [][]real */
+function alias_real_arr2() {}
+
 /** @return real */
 function alias_real() {}
 
@@ -315,6 +337,39 @@ class Chain {
 	local := `
 $ints = new Ints();
 $chain = new Chain();`
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
+func TestExprTypeHint(t *testing.T) {
+	tests := []exprTypeTest{
+		{`array_hint()`, `mixed[]`},
+		{`callable_hint()`, `callable`},
+
+		{`integer_hint()`, `\integer`},
+		{`boolean_hint()`, `\boolean`},
+		{`real_hint()`, `\real`},
+		{`double_hint()`, `\double`},
+		{`integer_hint2()`, `\integer`},
+		{`boolean_hint2()`, `\boolean`},
+		{`real_hint2()`, `\real`},
+		{`double_hint2()`, `\double`},
+	}
+
+	global := `<?php
+function array_hint(array $x) { return $x; }
+function callable_hint(callable $x) { return $x; }
+
+function integer_hint(integer $x) { return $x; }
+function boolean_hint(boolean $x) { return $x; }
+function real_hint(real $x) { return $x; }
+function double_hint(double $x) { return $x; }
+
+function integer_hint2() : integer {}
+function boolean_hint2() : boolean {}
+function real_hint2() : real {}
+function double_hint2() : double {}
+`
+	local := ``
 	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
 }
 
@@ -595,6 +650,7 @@ func TestExprTypeSimple(t *testing.T) {
 		{`$string`, "string"},
 
 		{`define('foo', 0 == 0)`, `void`},
+		{`empty_array()`, `mixed[]`},
 	}
 
 	global := `<?php
@@ -604,6 +660,8 @@ define('false', (bool)0);
 $int = 10;
 $float = 20.5;
 $string = "123";
+
+function empty_array() { $x = []; return $x; }
 `
 	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
 }
@@ -712,7 +770,7 @@ class Magic {
 }
 
 class Point {
-  /** @var float */
+  /** @var double */
   public $x;
   /** @var float */
   public $y;
