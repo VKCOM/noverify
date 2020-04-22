@@ -1,129 +1,400 @@
 package phpdoc
 
-import (
-	"errors"
-	"fmt"
-	"strings"
-	"unicode"
+type ExprShape uint8
+
+type ExprKind uint8
+
+type Type struct {
+	Source string
+	Expr   TypeExpr
+}
+
+func (t Type) Clone() Type {
+	return Type{Source: t.Source, Expr: t.Expr.Clone()}
+}
+
+func (typ Type) String() string { return typ.Source }
+
+type TypeExpr struct {
+	Kind  ExprKind
+	Shape ExprShape
+	Begin uint16
+	End   uint16
+	Value string
+	Args  []TypeExpr
+}
+
+func (e TypeExpr) Clone() TypeExpr {
+	cloned := e
+	cloned.Args = make([]TypeExpr, len(e.Args))
+	for i, a := range e.Args {
+		cloned.Args[i] = a.Clone()
+	}
+	return cloned
+}
+
+//go:generate stringer -type=ExprKind -trimprefix=Expr
+const (
+	// ExprInvalid represents "failed to parse" type expression.
+	ExprInvalid ExprKind = iota
+
+	// ExprUnknown is a garbage-prefixed type expression.
+	// Examples: `-int` `@@\Foo[]`
+	// Args[0] - a valid expression that follows invalid prefix
+	ExprUnknown
+
+	// ExprName is a type that is identified by its name.
+	// Examples: `int` `\Foo\Bar` `$this`
+	ExprName
+
+	// ExprKeyword is a special name-like type node.
+	// Examples: `*` `...`
+	ExprSpecialName
+
+	// ExprInt is a digit-only type expression.
+	// Examples: `0` `10`
+	ExprInt
+
+	// ExprKeyVal is `key:val` type.
+	// Examples: `name: string` `id:int`
+	// Args[0]: key expression (left)
+	// Args[1]: val expression (right)
+	ExprKeyVal
+
+	// ExprArray is `elem[]` or `[]elem` type.
+	// Examples: `int[]` `(int|float)[]` `int[`
+	// Args[0] - array element type
+	// ShapeArrayPrefix: `[]T`
+	//
+	// Note: may miss second `]`.
+	ExprArray
+
+	// ExprParen is `(expr)` type.
+	// Examples: `(int)` `(\Foo\Bar[])` `(int`
+	// Args[0] - enclosed type
+	//
+	// Note: may miss closing `)`.
+	ExprParen
+
+	// ExprNullable is `?expr` type.
+	// Examples: `?int` `?\Foo`
+	// Args[0] - nullable element type
+	ExprNullable
+
+	// ExprOptional is `expr?` type.
+	// Examples: `k?: int`
+	// Args[0] - optional element type
+	ExprOptional
+
+	// ExprNot is `!expr` type.
+	// Examples: `!int` `!(int|float)`
+	// Args[0] - negated element type
+	//
+	// Note: only valid for phpgrep type filters.
+	ExprNot
+
+	// ExprUnion is `x|y` type.
+	// Examples: `T1|T2` `int|float[]|false`
+	// Args - type variants
+	ExprUnion
+
+	// ExprInter is `x&y` type.
+	// Examples: `T1&T2` `I1&I2&I3`
+	ExprInter
+
+	// ExprGeneric is a parametrized `expr<T,...>` type.
+	// Examples: `\Collection<T>` `Either<int[], false>` `Bad<int`
+	// Args[0] - parametrized type
+	// Args[1:] - type parameters
+	// ShapeGenericParen: `T(X,Y)`
+	// ShapeGenericBrace: `T{X,Y}`
+	//
+	// Note: may miss closing `>`.
+	ExprGeneric
 )
 
-// TODO: use this parser inside linter as well after it's polished?
-//
-// TODO: consider using the grammar from https://github.com/phpstan/phpdoc-parser
-//       if we ever want to understand array literal types, generics, callable with params.
+const (
+	ShapeDefault ExprShape = iota
+	ShapeArrayPrefix
+	ShapeGenericParen
+	ShapeGenericBrace
+)
 
-// TypeParser handles phpdoc type expressions parsing.
-//
-// See https://github.com/php-fig/fig-standards/blob/master/proposed/phpdoc.md#abnf
+var prefixPrecedenceTab = [256]byte{
+	'?': 4,
+	'[': 4,
+	'!': 4,
+}
+
+var infixPrecedenceTab = [256]byte{
+	':': 1,
+	'|': 2,
+	'&': 3,
+	'[': 4,
+	'<': 4,
+	'(': 4,
+	'{': 4,
+	'?': 4,
+}
+
 type TypeParser struct {
-	s string
+	input       string
+	pos         uint
+	skipUnknown bool
+
+	exprPool  []TypeExpr
+	allocated uint
 }
 
-// ParseType parses a phpdoc type out of a sting s.
-func (p *TypeParser) ParseType(s string) (result TypeExpr, err error) {
-	defer func() {
-		r := recover()
-		if err2, ok := r.(error); ok {
-			err = err2
-			return
-		}
-		if r != nil {
-			panic(r)
-		}
-	}()
-
-	p.s = strings.TrimSpace(s)
-	return p.parseType(), nil
+func NewTypeParser() *TypeParser {
+	return &TypeParser{
+		exprPool: make([]TypeExpr, 32),
+	}
 }
 
-func (p *TypeParser) parseType() TypeExpr {
-	if len(p.s) == 0 {
-		panic(errors.New("unexpected end of input, expected type expr"))
-	}
+func (p *TypeParser) Parse(s string) Type {
+	p.reset(s)
+	typ := Type{Source: s, Expr: *p.parseExpr(0)}
+	p.setValues(&typ.Expr)
+	return typ
+}
 
-	left := p.parseOperand()
-	for p.tryConsume("[") {
-		if p.tryConsume("]") {
-			left = &ArrayType{Elem: left}
-		} else {
-			panic(errors.New("missing closing `]`"))
-		}
+func (p *TypeParser) reset(input string) {
+	p.input = input
+	p.pos = 0
+	p.allocated = 0
+	p.skipUnknown = false
+}
+
+func (p *TypeParser) setValues(e *TypeExpr) {
+	for i := range e.Args {
+		p.setValues(&e.Args[i])
 	}
+	e.Value = p.input[e.Begin:e.End]
+}
+
+func (p *TypeParser) parseExpr(precedence byte) *TypeExpr {
+	p.skipWhitespace()
+
+	var left *TypeExpr
+	begin := uint16(p.pos)
+	ch := p.nextByte()
+
 	switch {
-	case p.tryConsume("&"):
-		return &InterType{X: left, Y: p.parseType()}
-	case p.tryConsume("|"):
-		return &UnionType{X: left, Y: p.parseType()}
+	case ch == '$' || ch == '\\' || p.isFirstIdentChar(ch):
+		for p.isNameChar(p.peek()) {
+			p.pos++
+		}
+		left = p.newExpr(ExprName, begin, uint16(p.pos))
+	case p.isDigit(ch):
+		for p.isDigit(p.peek()) {
+			p.pos++
+		}
+		left = p.newExpr(ExprInt, begin, uint16(p.pos))
+	case ch == '[':
+		p.skipWhitespace()
+		if p.peek() == ']' {
+			p.pos++
+		}
+		elem := p.parseExpr(prefixPrecedenceTab['['])
+		left = p.newExprShape(ExprArray, ShapeArrayPrefix, begin, uint16(p.pos), elem)
+	case ch == '(':
+		expr := p.parseExpr(0)
+		if p.peek() == ')' {
+			p.pos++
+		}
+		left = p.newExpr(ExprParen, begin, uint16(p.pos), expr)
+	case ch == '?':
+		elem := p.parseExpr(prefixPrecedenceTab['?'])
+		left = p.newExpr(ExprNullable, begin, uint16(p.pos), elem)
+	case ch == '!':
+		elem := p.parseExpr(prefixPrecedenceTab['!'])
+		left = p.newExpr(ExprNot, begin, uint16(p.pos), elem)
+	case ch == '*':
+		left = p.newExpr(ExprSpecialName, begin, uint16(p.pos))
+	case ch == '.' && p.peekAt(p.pos+0) == '.' && p.peekAt(p.pos+1) == '.':
+		p.pos += uint(len(".."))
+		left = p.newExpr(ExprSpecialName, begin, uint16(p.pos))
+	default:
+		// Try to handle invalid expressions somehow and continue
+		// the parsing of valid expressions.
+		if p.skipUnknown {
+			return nil
+		}
+		p.skipUnknown = true
+		for p.peek() != 0 {
+			// Stop if we found infix or postfix token and emit invalid expr.
+			// Stop if we found something that looks like a terminating token.
+			ch := p.peek()
+			if infixPrecedenceTab[ch] != 0 || ch == ')' || ch == '>' || ch == ']' {
+				left = p.newExpr(ExprInvalid, begin, uint16(p.pos))
+				break
+			}
+			pos := p.pos
+			// Stop if we found a valid expression.
+			x := p.parseExpr(0)
+			if x != nil {
+				left = p.newExpr(ExprUnknown, begin, uint16(p.pos), x)
+				break
+			}
+			// Try again from the next byte pos.
+			p.pos = pos + 1
+		}
+		p.skipUnknown = false
+		// Found nothing, emit invalid expr.
+		if left == nil {
+			left = p.newExpr(ExprInvalid, begin, uint16(p.pos))
+		}
 	}
+
+	p.skipWhitespace()
+
+	for precedence < infixPrecedenceTab[p.peek()] {
+		ch := p.nextByte()
+		switch ch {
+		case '?':
+			left = p.newExpr(ExprOptional, begin, uint16(p.pos), left)
+		case ':':
+			right := p.parseExpr(infixPrecedenceTab[':'])
+			left = p.newExpr(ExprKeyVal, begin, uint16(p.pos), left, right)
+		case '[':
+			p.skipWhitespace()
+			if p.peek() == ']' {
+				p.pos++
+			}
+			left = p.newExpr(ExprArray, begin, uint16(p.pos), left)
+		case '|':
+			var right *TypeExpr
+			switch p.peek() {
+			case 0, ')':
+				right = p.newExpr(ExprInvalid, uint16(p.pos), uint16(p.pos))
+			default:
+				right = p.parseExpr(infixPrecedenceTab['|'])
+			}
+			if left.Kind == ExprUnion {
+				left.Args = append(left.Args, *right)
+				left.End = right.End
+			} else {
+				left = p.newExpr(ExprUnion, begin, right.End, left, right)
+			}
+		case '&':
+			var right *TypeExpr
+			switch p.peek() {
+			case 0, ')':
+				right = p.newExpr(ExprInvalid, uint16(p.pos), uint16(p.pos))
+			default:
+				right = p.parseExpr(infixPrecedenceTab['&'])
+			}
+			if left.Kind == ExprInter {
+				left.Args = append(left.Args, *right)
+				left.End = right.End
+			} else {
+				left = p.newExpr(ExprInter, begin, right.End, left, right)
+			}
+		case '<', '(', '{':
+			endCh := byte('>')
+			shape := ShapeDefault
+			switch ch {
+			case '(':
+				endCh = ')'
+				shape = ShapeGenericParen
+			case '{':
+				endCh = '}'
+				shape = ShapeGenericBrace
+			}
+			left = p.newExprShape(ExprGeneric, shape, begin, left.End, left)
+			for {
+				p.skipWhitespace()
+				ch := p.peek()
+				if ch == 0 {
+					break
+				}
+				if ch == endCh {
+					p.pos++
+					break
+				}
+				x := p.parseExpr(0)
+				left.Args = append(left.Args, *x)
+				p.skipWhitespace()
+				if p.peek() == ',' {
+					p.pos++
+				}
+			}
+			left.End = uint16(p.pos)
+		}
+	}
+
 	return left
 }
 
-func (p *TypeParser) parseOperand() TypeExpr {
-	switch {
-	case isClassNameChar(p.s[0], true):
-		i := 1
-		for i < len(p.s) && isClassNameChar(p.s[i], false) {
-			i++
-		}
-		typ := &NamedType{Name: p.s[:i]}
-		p.consume(i)
-		return typ
+func (p *TypeParser) newExprShape(kind ExprKind, shape ExprShape, begin, end uint16, args ...*TypeExpr) *TypeExpr {
+	e := p.newExpr(kind, begin, end, args...)
+	e.Shape = shape
+	return e
+}
 
-	case p.tryConsume("("):
-		typ := p.parseType()
-		if p.tryConsume(")") {
-			return typ
-		}
-		panic(errors.New("missing closing `)`"))
-
-	case p.tryConsume("!"):
-		return &NotType{Expr: p.parseOperand()}
-
-	case p.tryConsume("?"):
-		return &NullableType{Expr: p.parseOperand()}
-
-	case p.tryConsume("$this"): // The only permitted $-prefixed type
-		return &NamedType{Name: "$this"}
-
-	default:
-		if len(p.s) == 0 {
-			panic(errors.New("unexpected end of input, expected type operand"))
-		}
-		panic(fmt.Errorf("unexpected `%c` in type operand", p.s[0]))
+func (p *TypeParser) newExpr(kind ExprKind, begin, end uint16, args ...*TypeExpr) *TypeExpr {
+	e := p.allocExpr()
+	*e = TypeExpr{
+		Kind:  kind,
+		Begin: begin,
+		End:   end,
+		Args:  e.Args[:0],
 	}
-}
-
-func (p *TypeParser) skipSpace() {
-	p.s = strings.TrimLeftFunc(p.s, unicode.IsSpace)
-}
-
-func (p *TypeParser) tryConsume(s string) bool {
-	p.skipSpace()
-	if strings.HasPrefix(p.s, s) {
-		p.consume(len(s))
-		return true
+	for _, arg := range args {
+		e.Args = append(e.Args, *arg)
 	}
-	return false
+	return e
 }
 
-func (p *TypeParser) consume(n int) {
-	p.s = p.s[n:]
+func (p *TypeParser) allocExpr() *TypeExpr {
+	i := p.allocated
+	if i < uint(len(p.exprPool)) {
+		p.allocated++
+		return &p.exprPool[i]
+	}
+	return &TypeExpr{}
 }
 
-func isClassNameChar(ch byte, first bool) bool {
-	// ^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$
-	switch {
-	case ch == '\\':
-		return true
-	case ch == '_':
-		return true
-	case ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z':
-		return true
-	case ch >= '0' && ch <= '9':
-		return !first
-	case ch >= 0x80 && ch <= 0xff:
-		return true
-	default:
-		return false
+func (p *TypeParser) isDigit(ch byte) bool {
+	return ch >= '0' && ch <= '9'
+}
+
+func (p *TypeParser) isNameChar(ch byte) bool {
+	// [\\a-zA-Z_\x7f-\xff0-9]
+	return ch == '\\' || p.isFirstIdentChar(ch) || p.isDigit(ch)
+}
+
+func (p *TypeParser) isFirstIdentChar(ch byte) bool {
+	// [a-zA-Z_\x7f-\xff]
+	return (ch >= 'a' && ch <= 'z') ||
+		(ch >= 'A' && ch <= 'Z') ||
+		ch == '_' ||
+		(ch >= 0x7f && ch <= 0xff)
+}
+
+func (p *TypeParser) nextByte() byte {
+	if p.pos < uint(len(p.input)) {
+		i := p.pos
+		p.pos++
+		return p.input[i]
+	}
+	return 0
+}
+
+func (p *TypeParser) peekAt(pos uint) byte {
+	if pos < uint(len(p.input)) {
+		return p.input[pos]
+	}
+	return 0
+}
+
+func (p *TypeParser) peek() byte {
+	return p.peekAt(p.pos)
+}
+
+func (p *TypeParser) skipWhitespace() {
+	for p.peek() == ' ' {
+		p.pos++
 	}
 }

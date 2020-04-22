@@ -89,71 +89,60 @@ func varToString(v node.Node) string {
 	}
 }
 
-func typeIsCompatible(actual meta.TypesMap, want phpdoc.TypeExpr) bool {
-	// TODO: compare without converting a TypesMap into TypeExpr?
-	// Or maybe store TypeExpr inside a TypesMap instead of strings?
-	have := typesMapToTypeExpr(actual)
-	return typeExprIsCompatible(want, have)
-}
-
-var (
-	typeEmpty = &phpdoc.NamedType{}
-	typeArray = &phpdoc.ArrayType{Elem: &phpdoc.NamedType{Name: "mixed"}}
-)
-
-func typesMapToTypeExpr(m meta.TypesMap) phpdoc.TypeExpr {
+func typesMapToTypeExpr(p *phpdoc.TypeParser, m meta.TypesMap) phpdoc.Type {
 	// TODO: when ExprType stops returning
 	// "empty_array" type, remove the extra check.
+	var typeString string
 	if m.Is("empty_array") {
-		return typeArray
+		typeString = "mixed[]"
+	} else {
+		typeString = m.String()
 	}
 
-	var p phpdoc.TypeParser
-	typeExpr, err := p.ParseType(m.String())
-	if err != nil {
-		return typeEmpty
-	}
-	return typeExpr
+	return p.Parse(typeString)
 }
 
-// typeExprIsCompatible reports whether val type is compatible with dst type.
-func typeExprIsCompatible(dst, val phpdoc.TypeExpr) bool {
+// typesIsCompatible reports whether val type is compatible with dst type.
+func typeIsCompatible(dst, val phpdoc.TypeExpr) bool {
 	// TODO: allow implementations to be compatible with interfaces.
 	// TODO: allow derived classes to be compatible with base classes.
 
-	switch x := dst.(type) {
-	case *phpdoc.NamedType:
-		switch x.Name {
+	for val.Kind == phpdoc.ExprParen {
+		val = val.Args[0]
+	}
+
+	switch dst.Kind {
+	case phpdoc.ExprParen:
+		return typeIsCompatible(dst.Args[0], val)
+
+	case phpdoc.ExprName:
+		switch dst.Value {
 		case "object":
 			// For object we accept any kind of object instance.
 			// https://wiki.php.net/rfc/object-typehint
-			y, ok := val.(*phpdoc.NamedType)
-			return ok && (y.Name == "object" || strings.HasPrefix(y.Name, `\`))
+			return val.Kind == dst.Kind && (val.Value == "object" || strings.HasPrefix(val.Value, `\`))
 		case "array":
-			_, ok := val.(*phpdoc.ArrayType)
-			return ok
+			return val.Kind == phpdoc.ExprArray
 		}
-		y, ok := val.(*phpdoc.NamedType)
-		return ok && x.Name == y.Name
+		return val.Kind == dst.Kind && dst.Value == val.Value
 
-	case *phpdoc.NotType:
-		return !typeExprIsCompatible(x.Expr, val)
+	case phpdoc.ExprNot:
+		return !typeIsCompatible(dst.Args[0], val)
 
-	case *phpdoc.NullableType:
-		y, ok := val.(*phpdoc.NullableType)
-		return ok && typeExprIsCompatible(x.Expr, y.Expr)
+	case phpdoc.ExprNullable:
+		return val.Kind == dst.Kind && typeIsCompatible(dst.Args[0], val.Args[0])
 
-	case *phpdoc.ArrayType:
-		y, ok := val.(*phpdoc.ArrayType)
-		return ok && typeExprIsCompatible(x.Elem, y.Elem)
+	case phpdoc.ExprArray:
+		return val.Kind == dst.Kind && typeIsCompatible(dst.Args[0], val.Args[0])
 
-	case *phpdoc.UnionType:
-		if y, ok := val.(*phpdoc.UnionType); ok {
-			return typeExprIsCompatible(x.X, y.X) && typeExprIsCompatible(x.Y, y.Y)
+	case phpdoc.ExprUnion:
+		if val.Kind == dst.Kind {
+			return typeIsCompatible(dst.Args[0], val.Args[0]) &&
+				typeIsCompatible(dst.Args[1], val.Args[1])
 		}
-		return typeExprIsCompatible(x.X, val) || typeExprIsCompatible(x.Y, val)
+		return typeIsCompatible(dst.Args[0], val) || typeIsCompatible(dst.Args[1], val)
 
-	case *phpdoc.InterType:
+	case phpdoc.ExprInter:
 		// TODO: make it work as intended. (See #310)
 		return false
 
@@ -221,90 +210,6 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 	}
 
 	return res
-}
-
-// normalizeType adds namespaces to a type defined by the PHPDoc type string as well as
-// converts notations like "array<int,string>" to <meta.WARRAY2, "int", "string">
-func normalizeType(st *meta.ClassParseState, typStr string) string {
-	if typStr == "" {
-		return ""
-	}
-
-	nullable := false
-	classNames := strings.Split(typStr, `|`)
-	for idx, className := range classNames {
-		// ignore things like \tuple(*)
-		if braceIdx := strings.IndexByte(className, '('); braceIdx >= 0 {
-			className = className[0:braceIdx]
-		}
-
-		// 0 for "bool", 1 for "bool[]", 2 for "bool[][]" and so on
-		arrayDim := 0
-		for strings.HasSuffix(className, "[]") {
-			arrayDim++
-			className = strings.TrimSuffix(className, "[]")
-		}
-
-		if len(className) == 0 {
-			continue
-		}
-
-		if className[0] == '?' && len(className) > 1 {
-			nullable = true
-			className = className[1:]
-		}
-
-		switch className {
-		case "bool", "true", "false", "float", "string", "int", "array", "resource", "mixed", "null", "callable", "void", "object":
-			// Can't assign className here because it also erases [] for arrays.
-			if classNames[idx][0] == '?' {
-				classNames[idx] = classNames[idx][1:]
-			}
-			continue
-		case "$this":
-			// Handle `$this` as `static` alias in phpdoc context.
-			classNames[idx] = "static"
-			continue
-		case "static":
-			// Don't resolve `static` phpdoc type annotation too early
-			// to make it possible to handle late static binding.
-			continue
-		}
-
-		if className[0] == '\\' {
-			continue
-		}
-
-		if className[0] <= meta.WMax {
-			linterError(st.CurrentFile, "Bad type: '%s'", className)
-			classNames[idx] = ""
-			continue
-		}
-
-		// special types, e.g. "array<k,v>"
-		if strings.ContainsAny(className, "<>") {
-			classNames[idx] = parseAngleBracketedType(st, className)
-			continue
-		}
-
-		fullClassName, ok := solver.GetClassName(st, meta.StringToName(className))
-		if !ok {
-			classNames[idx] = ""
-			continue
-		}
-
-		if arrayDim > 0 {
-			fullClassName += strings.Repeat("[]", arrayDim)
-		}
-
-		classNames[idx] = fullClassName
-	}
-
-	if nullable {
-		classNames = append(classNames, "null")
-	}
-
-	return strings.Join(classNames, "|")
 }
 
 // isCapitalized reports whether s starts with an upper case letter.

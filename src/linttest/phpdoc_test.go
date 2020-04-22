@@ -196,7 +196,7 @@ class Foo {}
 `)
 	test.Expect = []string{
 		`use int type instead of integer on line 2`,
-		`[]t type syntax: use [] after the type, e.g. T[] on line 3`,
+		`[]t: array syntax is T[], not []T`,
 		`@property ts field name must start with '$' on line 3`,
 		`non-canonical order of name and type on line 6`,
 		`line 4: @property requires type and property name fields`,
@@ -222,8 +222,8 @@ func TestPHPDocType(t *testing.T) {
 		return [1];
 	}`)
 	test.Expect = []string{
-		`[]int type syntax: use [] after the type, e.g. T[]`,
-		`[][]string type syntax: use [] after the type, e.g. T[]`,
+		`[]int: array syntax is T[], not []T on line 7`,
+		`[][]string: array syntax is T[], not []T on line 2`,
 		`use float type instead of double`,
 		`use float type instead of real`,
 		`use int type instead of integer`,

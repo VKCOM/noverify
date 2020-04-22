@@ -21,6 +21,26 @@ import (
 // TODO(quasilyte): better handling of an `empty_array` type.
 // Now it's resolved to `mixed[]` for expressions that have multiple empty_array.
 
+func TestExprTypeDebug(t *testing.T) {
+	tests := []exprTypeTest{
+		{`$d->getThis()`, `\Base|\Derived`},
+	}
+	global := `<?php
+class Base {
+  /** @return $this */
+  public function getThis() { return $this; }
+}
+
+class Derived extends Base {
+}
+`
+	local := `
+$b = new Base();
+$d = new Derived();
+`
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
 func TestExprTypeMagicCall(t *testing.T) {
 	tests := []exprTypeTest{
 		{`$m->magic()`, `\Magic`},
@@ -112,6 +132,42 @@ function assign_ref_dim_fetch3() {
 	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
 }
 
+func TestExprTypeGenerics(t *testing.T) {
+	// For now, we erase most types info from the generics.
+
+	tests := []exprTypeTest{
+		{`generic_a1()`, `\A`},
+		{`generic_a2()`, `\A`},
+		{`generic_a3()`, `\A[]`},
+		{`generic_a_or_b()`, `\A|\B`},
+		{`alt_generic_intfloat()`, `\Either|bool`},
+		{`generic_shape()`, `\shape|bool`},
+	}
+
+	global := `<?php
+/** @return A<> */
+function generic_a1() {}
+
+/** @return A<X> */
+function generic_a2() {}
+
+/** @return A<X, Y>[] */
+function generic_a3() {}
+
+/** @return A<X, Y>|B<Z> */
+function generic_a_or_b() {}
+
+/** @return Either(int,float)|bool */
+function alt_generic_intfloat() {}
+
+/** @return shape{a:int,b:float}|bool */
+function generic_shape() {}
+`
+
+	local := ``
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
 func TestExprTypeFixes(t *testing.T) {
 	tests := []exprTypeTest{
 		{`alias_double()`, `float`},
@@ -193,6 +249,45 @@ function array_return_string($a) { return $a[0]; }
 `
 
 	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
+}
+
+func TestExprTypeArrayOfComplexType(t *testing.T) {
+	// `(A|B)[]` is not the same as `A[]|B[]`, but it's the
+	// best we can get so far.
+	//
+	// For nullable types, it's also not very precise.
+	// `?int[]` is a nullable array, as it should be,
+	// but `(?int)[]` should be interpreted differently.
+	// Since we don't have real nullable types support yet,
+	// we treat it identically.
+
+	tests := []exprTypeTest{
+		{`intfloat()`, `int[]|float[]`},
+		{`intfloatnull()`, `int[]|float[]|null[]`},
+		{`nullable_int_array()`, `int[]|null`},
+		{`array_of_nullable_ints()`, `int[]|null`},
+		{`array3d()`, `\Foo[][][]`},
+	}
+
+	global := `<?php
+/** @return (int|float)[] */
+function intfloat() {}
+
+/** @return (int|float|null)[] */
+function intfloatnull() {}
+
+/** @return ?int[] */
+function nullable_int_array() {}
+
+/** @return (?int)[] */
+function array_of_nullable_ints() {}
+
+/** @return Foo[][][] */
+function array3d() {}
+`
+
+	local := ``
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
 }
 
 func TestExprTypeVoid(t *testing.T) {
@@ -662,6 +757,45 @@ $float = 20.5;
 $string = "123";
 
 function empty_array() { $x = []; return $x; }
+`
+	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
+}
+
+func TestExprTypeKeyword(t *testing.T) {
+	tests := []exprTypeTest{
+		{`f_resource()`, `resource`},
+		{`f_true()`, `true`},
+		{`f_false()`, `false`},
+		{`f_iterable()`, `iterable`},
+		{`f_resource2()`, `resource[]`},
+		{`f_true2()`, `true[]`},
+		{`f_false2()`, `false[]`},
+		{`f_iterable2()`, `iterable[]`},
+	}
+	global := `<?php
+/** @return resource */
+function f_resource() {}
+
+/** @return true */
+function f_true() {}
+
+/** @return false */
+function f_false() {}
+
+/** @return iterable */
+function f_iterable() {}
+
+/** @return (resource[]) */
+function f_resource2() {}
+
+/** @return (true[]) */
+function f_true2() {}
+
+/** @return (false[]) */
+function f_false2() {}
+
+/** @return (iterable[]) */
+function f_iterable2() {}
 `
 	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
 }

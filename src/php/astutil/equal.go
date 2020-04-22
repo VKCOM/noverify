@@ -1456,6 +1456,9 @@ func NodeEqual(x, y node.Node) bool {
 		if x.AltSyntax != y.AltSyntax {
 			return false
 		}
+		if x.Merged != y.Merged {
+			return false
+		}
 		return true
 	case *stmt.Expression:
 		y, ok := y.(*stmt.Expression)

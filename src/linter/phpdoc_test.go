@@ -59,9 +59,10 @@ func TestParseClassPHPDoc(t *testing.T) {
 	}
 
 	st := &meta.ClassParseState{}
+	ctx := newRootContext(st)
 	for _, test := range tests {
 		doc := fmt.Sprintf(`/** %s */`, test.line)
-		result := parseClassPHPDoc(st, doc)
+		result := parseClassPHPDoc(&ctx, doc)
 
 		switch {
 		case test.method != "":
@@ -115,6 +116,7 @@ func TestTypeFilter(t *testing.T) {
 
 	matchingTests := []testCase{
 		{`array`, `mixed[]`},
+		{`array`, `int[]`},
 		{`array`, `\Foo[]`},
 
 		{`object`, `object`},
@@ -127,6 +129,10 @@ func TestTypeFilter(t *testing.T) {
 		{`!array`, `string`},
 
 		{`int[]`, `int[]`},
+
+		{`int`, `(int)`},
+		{`(int)`, `int`},
+		{`(int)`, `((int))`},
 
 		{`int|float`, `int`},
 		{`int|float`, `float`},
@@ -183,20 +189,12 @@ func TestTypeFilter(t *testing.T) {
 	}
 
 	runTests := func(want bool, tests []testCase) {
-		var p phpdoc.TypeParser
+		p := phpdoc.NewTypeParser()
 		for _, test := range tests {
-			val, err := p.ParseType(test.val)
-			if err != nil {
-				t.Errorf("parse type `%s`: %v", test.val, err)
-				continue
-			}
-			dst, err := p.ParseType(test.dst)
-			if err != nil {
-				t.Errorf("parse type `%s`: %v", test.dst, err)
-				continue
-			}
+			val := p.Parse(test.val).Clone()
+			dst := p.Parse(test.dst).Clone()
 
-			have := typeExprIsCompatible(dst, val)
+			have := typeIsCompatible(dst.Expr, val.Expr)
 			if have != want {
 				t.Errorf("incorrect result: compatible(%s, %s) => %v",
 					test.dst, test.val, have)
@@ -206,4 +204,16 @@ func TestTypeFilter(t *testing.T) {
 
 	runTests(true, matchingTests)
 	runTests(false, nonMatchingTests)
+}
+
+func BenchmarkParseTypes(b *testing.B) {
+	st := &meta.ClassParseState{}
+	ctx := newRootContext(st)
+	typeString := `?x|array<int>|T[]`
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		typ := ctx.phpdocTypeParser.Parse(typeString)
+		types, _ := typesFromPHPDoc(typ)
+		_ = newTypesMap(&ctx, types)
+	}
 }
