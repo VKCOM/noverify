@@ -580,9 +580,9 @@ func (b *BlockWalker) parseComment(c freefloating.String) {
 			continue
 		}
 
-		varName, typ := p.Params[0], p.Params[1]
-		if !strings.HasPrefix(varName, "$") && strings.HasPrefix(typ, "$") {
-			varName, typ = typ, varName
+		varName, typeString := p.Params[0], p.Params[1]
+		if !strings.HasPrefix(varName, "$") && strings.HasPrefix(typeString, "$") {
+			varName, typeString = typeString, varName
 		}
 
 		if !strings.HasPrefix(varName, "$") {
@@ -591,8 +591,8 @@ func (b *BlockWalker) parseComment(c freefloating.String) {
 		}
 
 		// TODO: report phpdocLint notice.
-		typ, _ = fixPHPDocType(typ)
-		m := meta.NewTypesMap(normalizeType(b.r.st, typ))
+		types, _ := typesFromPHPDoc(b.r.ctx.phpdocTypeParser.Parse(typeString))
+		m := newTypesMap(&b.r.ctx, types)
 		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(varName, "$"), m, "@var")
 	}
 }

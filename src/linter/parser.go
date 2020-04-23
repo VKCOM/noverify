@@ -145,9 +145,11 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 		return nil, nil, errors.New("Empty root node")
 	}
 
+	st := &meta.ClassParseState{CurrentFile: filename}
 	w := &RootWalker{
 		lineRanges: lineRanges,
-		st:         &meta.ClassParseState{CurrentFile: filename},
+		st:         st,
+		ctx:        newRootContext(st),
 
 		// We need to clone rules since phpgrep matchers
 		// contain mutable state that we don't want to share

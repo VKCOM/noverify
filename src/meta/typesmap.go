@@ -13,6 +13,11 @@ var (
 	VoidType  = NewTypesMap("void").Immutable()
 )
 
+type Type struct {
+	Elem string
+	Dims int
+}
+
 // TypesMap holds a set of types and can be made immutable to prevent unexpected changes.
 type TypesMap struct {
 	immutable bool
@@ -22,6 +27,18 @@ type TypesMap struct {
 // NewEmptyTypesMap creates new type map that has no types in it
 func NewEmptyTypesMap(cap int) TypesMap {
 	return TypesMap{m: make(map[string]struct{}, cap)}
+}
+
+func NewTypesMapFromTypes(types []Type) TypesMap {
+	m := make(map[string]struct{}, len(types))
+	for _, typ := range types {
+		s := typ.Elem
+		for i := 0; i < typ.Dims; i++ {
+			s = WrapArrayOf(s)
+		}
+		m[s] = struct{}{}
+	}
+	return TypesMap{m: m}
 }
 
 // NewTypesMap returns new TypesMap that is initialized with the provided types (separated by "|" symbol)
