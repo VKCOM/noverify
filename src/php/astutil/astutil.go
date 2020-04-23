@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
 	"github.com/VKCOM/noverify/src/php/parser/printer"
 )
 
@@ -19,6 +20,28 @@ func NodeSliceEqual(xs, ys []node.Node) bool {
 		}
 	}
 	return true
+}
+
+func IsAssign(n node.Node) bool {
+	switch n.(type) {
+	case *assign.Assign,
+		*assign.Concat,
+		*assign.Plus,
+		*assign.Reference,
+		*assign.Div,
+		*assign.Pow,
+		*assign.BitwiseAnd,
+		*assign.BitwiseOr,
+		*assign.BitwiseXor,
+		*assign.ShiftLeft,
+		*assign.ShiftRight,
+		*assign.Minus,
+		*assign.Mod,
+		*assign.Mul:
+		return true
+	default:
+		return false
+	}
 }
 
 // FmtNode is used for debug purposes and returns string representation of a specified node.

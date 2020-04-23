@@ -2060,7 +2060,14 @@ func (b *BlockWalker) handleStmtExpression(s *stmt.Expression) {
 
 	report := false
 
+	// All branches except default try to filter-out common
+	// cases to reduce the number of type solving performed.
+	if astutil.IsAssign(s.Expr) {
+		return
+	}
 	switch s.Expr.(type) {
+	case *expr.Require, *expr.RequireOnce, *expr.Include, *expr.IncludeOnce, *expr.Exit:
+		// Skip.
 	case *expr.Array, *expr.New:
 		// Report these even if they are not pure.
 		report = true
