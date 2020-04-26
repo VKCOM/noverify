@@ -72,7 +72,7 @@ const (
 	// Params: [Constant name <string>]
 	WConstant
 
-	// WBaseMethodParam<0-N> is a way to inherit base type method type of nth parameter.
+	// WBaseMethodParam is a way to inherit base type method type of nth parameter.
 	// e.g. type of $x param of foo method from one of the implemented interfaces.
 	// Params: [Index <uint8>] [Class name <string>] [Method name <string>]
 	WBaseMethodParam
