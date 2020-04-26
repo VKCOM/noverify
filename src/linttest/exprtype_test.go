@@ -22,21 +22,75 @@ import (
 // Now it's resolved to `mixed[]` for expressions that have multiple empty_array.
 
 func TestExprTypeDebug(t *testing.T) {
-	tests := []exprTypeTest{
-		{`$d->getThis()`, `\Base|\Derived`},
-	}
-	global := `<?php
-class Base {
-  /** @return $this */
-  public function getThis() { return $this; }
+	tests := []exprTypeTest{}
+
+	global := `<?php`
+	local := ``
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
 }
 
-class Derived extends Base {
-}
+func TestExprTypeShape(t *testing.T) {
+	tests := []exprTypeTest{
+		{`shape_self0()`, `\shape$exprtype_global.php$0$`},
+		{`shape_self1()`, `\shape$exprtype_global.php$1$`},
+		{`shape_index()`, `int`},
+
+		{`$s0`, `\shape$exprtype_global.php$0$`},
+		{`$s0['x']`, `int`},
+		{`$s0['y']`, `float`},
+
+		{`$s2['nested']['s']`, `string`},
+		{`$s2['i']`, `int`},
+		{`$s3['nested']['i']`, `int[]`},
+		{`$s3['nested']['i'][10]`, `int`},
+		{`$s3['f']`, `float`},
+
+		{`$si[0]`, `mixed`},
+		{`$si[10]`, `int`},
+		{`$si[42]`, `string`},
+
+		// Shapes are represented as classes and their key-type
+		// info are recorded in properties map. We have a special
+		// ClassShape flag to suppress field type resolving for shapes.
+		{`$s2->i`, `mixed`},
+		{`$s0->x`, `mixed`},
+
+		// Optional keys are resolved identically.
+		{`$opt['x']`, `\Foo\Bar`},
+	}
+
+	global := `<?php
+/** @param $s shape(x:int,y:float) */
+function shape_self0($s) { return $s; }
+
+/** @param $s shape(key:string) */
+function shape_self1($s) { return $s; }
+
+/** @param $s shape(nested:shape(s:string),i:integer) */
+function shape_self2($s) { return $s; }
+
+/** @param $s shape(f:double,nested:shape(i:long[])) */
+function shape_self3($s) { return $s; }
+
+/** @param shape(x?:\Foo\Bar) */
+function optional_shape($s) { return $s; }
+
+/** @param $s shape(foo:int) */
+function shape_index($s) { return $s['foo']; }
+
+/** @param $s shape(10:int,42:string) */
+function shape_intkey($s) { return $s; }
+
+
+/** @return shape(*) */
+function shape(array $a) { return $a; }
 `
 	local := `
-$b = new Base();
-$d = new Derived();
+$s0 = shape_self0(shape(['x' => 1, 'y' => 1.5]));
+$s2 = shape_self2(shape([]));
+$s3 = shape_self3(shape([]));
+$si = shape_intkey(shape([]));
+$opt = optional_shape(shape([]));
 `
 	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
 }
@@ -141,7 +195,6 @@ func TestExprTypeGenerics(t *testing.T) {
 		{`generic_a3()`, `\A[]`},
 		{`generic_a_or_b()`, `\A|\B`},
 		{`alt_generic_intfloat()`, `\Either|bool`},
-		{`generic_shape()`, `\shape|bool`},
 	}
 
 	global := `<?php
@@ -159,9 +212,6 @@ function generic_a_or_b() {}
 
 /** @return Either(int,float)|bool */
 function alt_generic_intfloat() {}
-
-/** @return shape{a:int,b:float}|bool */
-function generic_shape() {}
 `
 
 	local := ``

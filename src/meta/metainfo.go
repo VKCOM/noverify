@@ -365,6 +365,7 @@ type ClassFlags uint8
 const (
 	ClassAbstract ClassFlags = 1 << iota
 	ClassFinal
+	ClassShape
 )
 
 type ClassInfo struct {
@@ -381,6 +382,7 @@ type ClassInfo struct {
 }
 
 func (info *ClassInfo) IsAbstract() bool { return info.Flags&ClassAbstract != 0 }
+func (info *ClassInfo) IsShape() bool    { return info.Flags&ClassShape != 0 }
 
 type ClassParseState struct {
 	IsTrait                 bool

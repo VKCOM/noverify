@@ -212,8 +212,8 @@ func BenchmarkParseTypes(b *testing.B) {
 	typeString := `?x|array<int>|T[]`
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		typ := ctx.phpdocTypeParser.Parse(typeString)
-		types, _ := typesFromPHPDoc(typ)
+		parsedType := ctx.phpdocTypeParser.Parse(typeString)
+		types, _ := typesFromPHPDoc(&ctx, parsedType)
 		_ = newTypesMap(&ctx, types)
 	}
 }

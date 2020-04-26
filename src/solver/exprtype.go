@@ -285,7 +285,15 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 		res := make(map[string]struct{}, m.Len())
 
 		m.Iterate(func(className string) {
-			res[meta.WrapElemOf(className)] = struct{}{}
+			switch dim := n.Dim.(type) {
+			case *scalar.String:
+				key := dim.Value[len(`"`) : len(dim.Value)-len(`"`)]
+				res[meta.WrapElemOfKey(className, key)] = struct{}{}
+			case *scalar.Lnumber:
+				res[meta.WrapElemOfKey(className, dim.Value)] = struct{}{}
+			default:
+				res[meta.WrapElemOf(className)] = struct{}{}
+			}
 		})
 
 		return meta.NewTypesMapFromMap(res)

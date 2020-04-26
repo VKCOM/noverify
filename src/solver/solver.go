@@ -92,28 +92,18 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 		for tt := range r.resolveType(class, meta.UnwrapArrayOf(typ)) {
 			res[tt+"[]"] = struct{}{}
 		}
+	case meta.WElemOfKey:
+		arrayType, key := meta.UnwrapElemOfKey(typ)
+		for tt := range r.resolveType(class, arrayType) {
+			if strings.HasPrefix(tt, `\shape$`) {
+				res = r.solveElemOfShape(class, tt, key, res)
+			} else {
+				res = r.solveElemOf(tt, res)
+			}
+		}
 	case meta.WElemOf:
 		for tt := range r.resolveType(class, meta.UnwrapElemOf(typ)) {
-			switch {
-			case strings.HasSuffix(tt, "[]"):
-				res[strings.TrimSuffix(tt, "[]")] = struct{}{}
-			case tt == "mixed":
-				res["mixed"] = struct{}{}
-			case Implements(tt, `\ArrayAccess`):
-				m, ok := FindMethod(tt, "offsetGet")
-				if ok {
-					for tt := range r.resolveTypes(tt, m.Info.Typ) {
-						res[tt] = struct{}{}
-					}
-				}
-			case Implements(tt, `\Traversable`):
-				m, ok := FindMethod(tt, "current")
-				if ok {
-					for tt := range r.resolveTypes(tt, m.Info.Typ) {
-						res[tt] = struct{}{}
-					}
-				}
-			}
+			res = r.solveElemOf(tt, res)
 		}
 	case meta.WFunctionCall:
 		nm := meta.UnwrapFunctionCall(typ)
@@ -202,6 +192,44 @@ func solveBaseMethodParam(curStaticClass, typ string, visitedMap, res map[string
 			}
 			if len(fn.Params) > int(index) {
 				return ResolveTypes(curStaticClass, fn.Params[index].Typ, visitedMap)
+			}
+		}
+	}
+	return res
+}
+
+func (r *resolver) solveElemOfShape(class, shapeName, key string, res map[string]struct{}) map[string]struct{} {
+	shape, ok := meta.Info.GetClass(shapeName)
+	if !ok {
+		return res
+	}
+	p, ok := shape.Properties[key]
+	if ok {
+		for tt := range r.resolveTypes(class, p.Typ) {
+			res[tt] = struct{}{}
+		}
+	}
+	return res
+}
+
+func (r *resolver) solveElemOf(tt string, res map[string]struct{}) map[string]struct{} {
+	switch {
+	case strings.HasSuffix(tt, "[]"):
+		res[strings.TrimSuffix(tt, "[]")] = struct{}{}
+	case tt == "mixed":
+		res["mixed"] = struct{}{}
+	case Implements(tt, `\ArrayAccess`):
+		m, ok := FindMethod(tt, "offsetGet")
+		if ok {
+			for tt := range r.resolveTypes(tt, m.Info.Typ) {
+				res[tt] = struct{}{}
+			}
+		}
+	case Implements(tt, `\Traversable`):
+		m, ok := FindMethod(tt, "current")
+		if ok {
+			for tt := range r.resolveTypes(tt, m.Info.Typ) {
+				res[tt] = struct{}{}
 			}
 		}
 	}
@@ -390,7 +418,7 @@ func findProperty(className string, propertyName string, visitedMap map[string]s
 		visitedMap[className] = struct{}{}
 
 		class, ok := getClassOrTrait(className)
-		if !ok {
+		if !ok || class.IsShape() {
 			return result, false
 		}
 

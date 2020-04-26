@@ -125,7 +125,7 @@ func (b *BlockWalker) checkRedundantCastArray(e node.Node) {
 	if !meta.IsIndexingComplete() {
 		return
 	}
-	typ := solver.ExprType(b.ctx.sc, b.r.st, e)
+	typ := solver.ExprType(b.ctx.sc, b.r.ctx.st, e)
 	if typ.Len() == 1 && typ.Is("mixed[]") {
 		b.r.Report(e, LevelDoNotReject, "redundantCast", "expression already has array type")
 	}
@@ -135,7 +135,7 @@ func (b *BlockWalker) checkRedundantCast(e node.Node, dstType string) {
 	if !meta.IsIndexingComplete() {
 		return
 	}
-	typ := solver.ExprType(b.ctx.sc, b.r.st, e)
+	typ := solver.ExprType(b.ctx.sc, b.r.ctx.st, e)
 	if typ.Len() != 1 {
 		return
 	}
@@ -302,7 +302,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		for _, vv := range s.Vars {
 			v := vv.(*stmt.StaticVar)
 			ev := v.Variable
-			b.addVarName(v, ev.Name, solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, v.Expr, b.ctx.customTypes), "static", true)
+			b.addVarName(v, ev.Name, solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, v.Expr, b.ctx.customTypes), "static", true)
 			b.addNonLocalVarName(ev.Name)
 			if v.Expr != nil {
 				v.Expr.Walk(b)
@@ -476,7 +476,7 @@ func (b *BlockWalker) handleReturn(ret *stmt.Return) {
 	}
 	b.returnsValue = true
 
-	typ := solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, ret.Expr, b.ctx.customTypes)
+	typ := solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, ret.Expr, b.ctx.customTypes)
 	typ.Iterate(func(t string) {
 		b.returnTypes = b.returnTypes.AppendString(t)
 	})
@@ -591,7 +591,7 @@ func (b *BlockWalker) parseComment(c freefloating.String) {
 		}
 
 		// TODO: report phpdocLint notice.
-		types, _ := typesFromPHPDoc(b.r.ctx.phpdocTypeParser.Parse(typeString))
+		types, _ := b.r.typesFromPHPDoc(typeString)
 		m := newTypesMap(&b.r.ctx, types)
 		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(varName, "$"), m, "@var")
 	}
@@ -747,7 +747,7 @@ func (b *BlockWalker) handleTry(s *stmt.Try) bool {
 func (b *BlockWalker) handleCatch(s *stmt.Catch) bool {
 	m := meta.NewEmptyTypesMap(len(s.Types))
 	for _, t := range s.Types {
-		typ, ok := solver.GetClassName(b.r.st, t)
+		typ, ok := solver.GetClassName(b.r.ctx.st, t)
 		if !ok {
 			continue
 		}
@@ -791,7 +791,7 @@ func (b *BlockWalker) checkArrayDimFetch(s *expr.ArrayDimFetch) {
 		return
 	}
 
-	typ := solver.ExprType(b.ctx.sc, b.r.st, s.Variable)
+	typ := solver.ExprType(b.ctx.sc, b.r.ctx.st, s.Variable)
 
 	var (
 		maybeHaveClasses bool
@@ -801,6 +801,10 @@ func (b *BlockWalker) checkArrayDimFetch(s *expr.ArrayDimFetch) {
 	typ.Iterate(func(t string) {
 		// FullyQualified class name will have "\" in the beginning
 		if len(t) > 0 && t[0] == '\\' && !strings.HasSuffix(t, "[]") {
+			if strings.HasPrefix(t, `\shape$`) {
+				return
+			}
+
 			maybeHaveClasses = true
 
 			if !haveArrayAccess && solver.Implements(t, `\ArrayAccess`) {
@@ -871,7 +875,7 @@ func (b *BlockWalker) handleCallArgs(n node.Node, args []node.Node, fn meta.Func
 }
 
 func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
-	call := resolveFunctionCall(b.ctx.sc, b.r.st, b.ctx.customTypes, e)
+	call := resolveFunctionCall(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, e)
 
 	if meta.IsIndexingComplete() {
 		if !call.canAnalyze {
@@ -964,15 +968,15 @@ func (b *BlockWalker) handleCompactCallArgs(args []node.Node) {
 func (b *BlockWalker) canAccess(className string, accessLevel meta.AccessLevel) bool {
 	switch accessLevel {
 	case meta.Private:
-		return b.r.st.CurrentClass == className
+		return b.r.ctx.st.CurrentClass == className
 	case meta.Protected:
-		if b.r.st.CurrentClass == className {
+		if b.r.ctx.st.CurrentClass == className {
 			return true
 		}
 
 		// TODO: perhaps shpuld extract this common logic with visited map somewhere
 		visited := make(map[string]struct{}, 8)
-		parent := b.r.st.CurrentParentClass
+		parent := b.r.ctx.st.CurrentParentClass
 		for parent != "" {
 			if _, ok := visited[parent]; ok {
 				return false
@@ -1035,7 +1039,7 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 	e.Variable.Walk(b)
 	e.Method.Walk(b)
 
-	if !foundMethod && !magic && !b.r.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
+	if !foundMethod && !magic && !b.r.ctx.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
 		// The method is undefined but we permit calling it if `method_exists`
 		// was called prior to that call.
 		if !b.ctx.customMethodExists(e.Variable, methodName) {
@@ -1083,7 +1087,7 @@ func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
 		return true
 	}
 
-	className, ok := solver.GetClassName(b.r.st, e.Class)
+	className, ok := solver.GetClassName(b.r.ctx.st, e.Class)
 	if !ok {
 		return true
 	}
@@ -1095,7 +1099,7 @@ func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
 	e.Call.Walk(b)
 
 	magic := haveMagicMethod(className, `__callStatic`)
-	if !ok && !magic && !b.r.st.IsTrait {
+	if !ok && !magic && !b.r.ctx.st.IsTrait {
 		b.r.Report(e.Call, LevelError, "undefined", "Call to undefined method %s::%s()", className, methodName)
 	} else {
 		// Method is defined.
@@ -1158,7 +1162,7 @@ func (b *BlockWalker) handlePropertyFetch(e *expr.PropertyFetch) bool {
 		return found || magic
 	})
 
-	if !found && !magic && !b.r.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
+	if !found && !magic && !b.r.ctx.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
 		b.r.Report(e.Property, LevelError, "undefined", "Property {%s}->%s does not exist", typ, id.Value)
 	}
 
@@ -1183,13 +1187,13 @@ func (b *BlockWalker) handleStaticPropertyFetch(e *expr.StaticPropertyFetch) boo
 		return false
 	}
 
-	className, ok := solver.GetClassName(b.r.st, e.Class)
+	className, ok := solver.GetClassName(b.r.ctx.st, e.Class)
 	if !ok {
 		return false
 	}
 
 	p, ok := solver.FindProperty(className, "$"+sv.Name)
-	if !ok && !b.r.st.IsTrait {
+	if !ok && !b.r.ctx.st.IsTrait {
 		b.r.Report(e.Property, LevelError, "undefined", "Property %s::$%s does not exist", className, sv.Name)
 	}
 
@@ -1266,7 +1270,7 @@ func (b *BlockWalker) handleClassConstFetch(e *expr.ClassConstFetch) bool {
 		return false
 	}
 
-	className, ok := solver.GetClassName(b.r.st, e.Class)
+	className, ok := solver.GetClassName(b.r.ctx.st, e.Class)
 	if !ok {
 		return false
 	}
@@ -1275,7 +1279,7 @@ func (b *BlockWalker) handleClassConstFetch(e *expr.ClassConstFetch) bool {
 
 	e.Class.Walk(b)
 
-	if !ok && !b.r.st.IsTrait {
+	if !ok && !b.r.ctx.st.IsTrait {
 		b.r.Report(e.ConstantName, LevelError, "undefined", "Class constant %s::%s does not exist", className, constName.Value)
 	}
 
@@ -1291,7 +1295,7 @@ func (b *BlockWalker) handleConstFetch(e *expr.ConstFetch) bool {
 		return true
 	}
 
-	_, _, defined := solver.GetConstant(b.r.st, e.Constant)
+	_, _, defined := solver.GetConstant(b.r.ctx.st, e.Constant)
 
 	if !defined {
 		// If it's builtin constant, give a more precise report message.
@@ -1321,7 +1325,7 @@ func (b *BlockWalker) handleNew(e *expr.New) bool {
 		return true
 	}
 
-	if b.r.st.IsTrait {
+	if b.r.ctx.st.IsTrait {
 		switch {
 		case meta.NameNodeEquals(e.Class, "self"):
 			// Don't try to resolve "self" inside trait context.
@@ -1332,7 +1336,7 @@ func (b *BlockWalker) handleNew(e *expr.New) bool {
 		}
 	}
 
-	className, ok := solver.GetClassName(b.r.st, e.Class)
+	className, ok := solver.GetClassName(b.r.ctx.st, e.Class)
 	if !ok {
 		// perhaps something like 'new $class', cannot check this.
 		return true
@@ -1382,7 +1386,7 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 	// foreach body can do 0 cycles so we need a separate context for that
 	if s.Stmt != nil {
 		ctx := b.withNewContext(func() {
-			solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, s.Expr, b.ctx.customTypes).Iterate(func(typ string) {
+			solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, s.Expr, b.ctx.customTypes).Iterate(func(typ string) {
 				b.handleVariableNode(s.Variable, meta.NewTypesMap(meta.WrapElemOf(typ)), "foreach_value")
 			})
 
@@ -1627,7 +1631,7 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 		}
 
 	case *expr.InstanceOf:
-		if className, ok := solver.GetClassName(a.b.r.st, n.Class); ok {
+		if className, ok := solver.GetClassName(a.b.r.ctx.st, n.Class); ok {
 			switch v := n.Expr.(type) {
 			case *node.Var, *node.SimpleVar:
 				a.b.ctx.sc.AddVar(v, meta.NewTypesMap(className), "instanceof", false)
@@ -2015,7 +2019,7 @@ func (b *BlockWalker) handleAssignReference(a *assign.Reference) bool {
 		a.Expression.Walk(b)
 		return false
 	case *node.Var, *node.SimpleVar:
-		b.addVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.st, a.Expression), "assign", true)
+		b.addVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", true)
 		b.addNonLocalVar(v)
 	case *expr.List:
 		// TODO: figure out whether this case is reachable.
@@ -2098,12 +2102,12 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 
 	switch v := a.Variable.(type) {
 	case *expr.ArrayDimFetch:
-		typ := solver.ExprTypeLocal(b.ctx.sc, b.r.st, a.Expression)
+		typ := solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression)
 		b.handleDimFetchLValue(v, "assign_array", typ)
 		return false
 	case *node.Var, *node.SimpleVar:
 		b.checkVoidType(a.Expression)
-		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.st, a.Expression), "assign", true)
+		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", true)
 	case *expr.List:
 		b.handleAssignList(v.Items)
 	case *expr.PropertyFetch:
@@ -2120,7 +2124,7 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 			break
 		}
 
-		if b.r.st.CurrentClass == "" {
+		if b.r.ctx.st.CurrentClass == "" {
 			break
 		}
 
@@ -2132,7 +2136,7 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 		cls := b.r.getClass()
 
 		p := cls.Properties[propertyName.Value]
-		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, a.Expression, b.ctx.customTypes))
+		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, a.Expression, b.ctx.customTypes))
 		cls.Properties[propertyName.Value] = p
 	case *expr.StaticPropertyFetch:
 		sv, ok := v.Property.(*node.SimpleVar)
@@ -2142,19 +2146,19 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 			break
 		}
 
-		if b.r.st.CurrentClass == "" {
+		if b.r.ctx.st.CurrentClass == "" {
 			break
 		}
 
-		className, ok := solver.GetClassName(b.r.st, v.Class)
-		if !ok || className != b.r.st.CurrentClass {
+		className, ok := solver.GetClassName(b.r.ctx.st, v.Class)
+		if !ok || className != b.r.ctx.st.CurrentClass {
 			break
 		}
 
 		cls := b.r.getClass()
 
 		p := cls.Properties["$"+sv.Name]
-		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.st, a.Expression, b.ctx.customTypes))
+		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, a.Expression, b.ctx.customTypes))
 		cls.Properties["$"+sv.Name] = p
 	default:
 		a.Variable.Walk(b)
@@ -2269,7 +2273,7 @@ func (b *BlockWalker) caseHasFallthroughComment(n node.Node) bool {
 }
 
 func (b *BlockWalker) sideEffectFree(n node.Node) bool {
-	return sideEffectFree(b.ctx.sc, b.r.st, b.ctx.customTypes, n)
+	return sideEffectFree(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, n)
 }
 
 func (b *BlockWalker) isBool(n node.Node) bool {
@@ -2281,5 +2285,5 @@ func (b *BlockWalker) isVoid(n node.Node) bool {
 }
 
 func (b *BlockWalker) exprType(n node.Node) meta.TypesMap {
-	return solver.ExprTypeCustom(b.ctx.sc, b.r.st, n, b.ctx.customTypes)
+	return solver.ExprTypeCustom(b.ctx.sc, b.r.ctx.st, n, b.ctx.customTypes)
 }

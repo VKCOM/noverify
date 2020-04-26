@@ -69,7 +69,7 @@ func parseClassPHPDocMethod(ctx *rootContext, result *classPhpDocParseResult, pa
 		return
 	}
 
-	types, warning := typesFromPHPDoc(ctx.phpdocTypeParser.Parse(params[0]))
+	types, warning := typesFromPHPDoc(ctx, ctx.phpdocTypeParser.Parse(params[0]))
 	if warning != "" {
 		result.errs.pushType("%s on line %d", warning, part.Line)
 	}
@@ -125,7 +125,7 @@ func parseClassPHPDocProperty(ctx *rootContext, result *classPhpDocParseResult, 
 		nm, typeString = typeString, nm
 	}
 
-	types, warning := typesFromPHPDoc(ctx.phpdocTypeParser.Parse(typeString))
+	types, warning := typesFromPHPDoc(ctx, ctx.phpdocTypeParser.Parse(typeString))
 	if warning != "" {
 		result.errs.pushType("%s on line %d", warning, part.Line)
 	}
