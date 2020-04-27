@@ -3,7 +3,7 @@ package name_test
 import (
 	"testing"
 
-	"gotest.tools/assert"
+	"github.com/VKCOM/noverify/src/linttest/assert"
 
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/name"

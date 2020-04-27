@@ -5,7 +5,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parser/position"
-	"gotest.tools/assert"
+	"github.com/VKCOM/noverify/src/linttest/assert"
 )
 
 type lval struct {

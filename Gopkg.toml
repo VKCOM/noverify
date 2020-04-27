@@ -26,12 +26,8 @@
 
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/cznic/golex"
-
-[[constraint]]
-  name = "gotest.tools"
-  version = "2.3.0"
+  name = "github.com/google/go-cmp"
+  version = "0.4.0"
 
 [prune]
   go-tests = true
