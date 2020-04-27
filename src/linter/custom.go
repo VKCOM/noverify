@@ -125,7 +125,7 @@ func (ctx *RootContext) Scope() *meta.Scope {
 
 // ClassParseState returns class parse state (namespace, class, etc).
 func (ctx *RootContext) ClassParseState() *meta.ClassParseState {
-	return ctx.w.st
+	return ctx.w.ctx.st
 }
 
 // State returns state that can be modified and passed into block context
@@ -135,7 +135,7 @@ func (ctx *RootContext) State() map[string]interface{} {
 
 // Filename returns the file name of the file being analyzed.
 func (ctx *RootContext) Filename() string {
-	return ctx.w.st.CurrentFile
+	return ctx.w.ctx.st.CurrentFile
 }
 
 // FileContents returns analyzed file source code.
@@ -165,7 +165,7 @@ func (ctx *BlockContext) Scope() *meta.Scope {
 
 // ClassParseState returns class parse state (namespace, class, etc).
 func (ctx *BlockContext) ClassParseState() *meta.ClassParseState {
-	return ctx.w.r.st
+	return ctx.w.r.ctx.st
 }
 
 // RootState returns state from root context.
@@ -190,7 +190,7 @@ func (ctx *BlockContext) PrematureExitFlags() int {
 
 // Filename returns the file name of the file being analyzed.
 func (ctx *BlockContext) Filename() string {
-	return ctx.w.r.st.CurrentFile
+	return ctx.w.r.ctx.st.CurrentFile
 }
 
 // BlockCheckerCreateFunc is a factory function for BlockChecker

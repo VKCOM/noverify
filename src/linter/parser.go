@@ -148,7 +148,6 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 	st := &meta.ClassParseState{CurrentFile: filename}
 	w := &RootWalker{
 		lineRanges: lineRanges,
-		st:         st,
 		ctx:        newRootContext(st),
 
 		// We need to clone rules since phpgrep matchers
@@ -178,9 +177,7 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 	if meta.IsIndexingComplete() {
 		AnalyzeFileRootLevel(rootNode, w)
 	}
-	for _, c := range w.custom {
-		c.AfterLeaveFile()
-	}
+	w.afterLeaveFile()
 
 	for _, e := range parser.GetErrors() {
 		w.Report(nil, LevelError, "syntax", "Syntax error: "+e.String())

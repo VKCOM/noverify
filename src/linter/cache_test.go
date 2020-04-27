@@ -78,6 +78,11 @@ function main() {
   var_dump(to_array($p3));
 }
 
+/** @param shape(a:integer,b:shape(c:real)) */
+function as_shape($x) {
+  return $x;
+}
+
 main();
 `
 
@@ -103,7 +108,7 @@ main();
 		//
 		// If cache encoding changes, there is a very high chance that
 		// encoded data lengh will change as well.
-		wantLen := 3233
+		wantLen := 3808
 		haveLen := buf.Len()
 		if haveLen != wantLen {
 			t.Errorf("cache len mismatch:\nhave: %d\nwant: %d", haveLen, wantLen)
@@ -112,7 +117,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "97c6dd187bfedb2f337fb82aaa75f5b3b706162f08c839d194c6914bf5abcc0cfafd347ee46563694e5285d0139364cb5e827d4e3530f9bbaf273f136d848c39"
+		wantStrings := "b752a530950d476bc523e58746fe52e13bd5277630c61f9cd3c88737dd1bff461083460dc4c157fc15cd56b9fc59711c943b7691cb1baec766cd4f8143447b0d"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)

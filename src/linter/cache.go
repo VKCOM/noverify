@@ -33,6 +33,7 @@ import (
 //          added ClassFinal bit to ClassFlags
 //          FuncInfo now stores original function name
 //          ClassInfo now stores original class name
+//     37 - added ClassShape bit to ClassFlags
 const cacheVersion = 36
 
 var (

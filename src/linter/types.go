@@ -10,22 +10,35 @@ import (
 	"github.com/VKCOM/noverify/src/solver"
 )
 
+// TODO: reflect source line in shape names.
+
 type warningString string
+
+type shapeTypeProp struct {
+	key   string
+	types []meta.Type
+}
+
+type shapeTypeInfo struct {
+	name  string
+	props []shapeTypeProp
+}
 
 // typesFromPHPDoc extracts types out of the PHPDoc type string.
 //
 // No normalization is performed, but some PHPDoc-specific types
 // are simplified to be compatible with our type system.
-func typesFromPHPDoc(typ phpdoc.Type) ([]meta.Type, warningString) {
-	var conv phpdocTypeConverter
-	results := conv.mapType(typ.Expr)
+func typesFromPHPDoc(ctx *rootContext, typ phpdoc.Type) ([]meta.Type, warningString) {
+	conv := phpdocTypeConverter{ctx: ctx}
+	types := conv.mapType(typ.Expr)
 	if conv.nullable {
-		results = append(results, meta.Type{Elem: "null"})
+		types = append(types, meta.Type{Elem: "null"})
 	}
-	return results, conv.warning
+	return types, conv.warning
 }
 
 type phpdocTypeConverter struct {
+	ctx      *rootContext
 	warning  warningString
 	nullable bool
 }
@@ -49,14 +62,20 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []meta.Type {
 
 	case phpdoc.ExprGeneric:
 		typ := e.Args[0]
+		params := e.Args[1:]
 		if typ.Value == "array" {
-			params := e.Args[1:]
+			if e.Shape == phpdoc.ShapeGenericBrace {
+				return conv.mapShapeType(params)
+			}
 			switch len(params) {
 			case 1:
 				return conv.mapArrayType(params[0])
 			case 2:
 				return conv.mapArrayType(params[1])
 			}
+		}
+		if typ.Value == "shape" {
+			return conv.mapShapeType(params)
 		}
 		return conv.mapType(typ)
 
@@ -90,6 +109,44 @@ func (conv *phpdocTypeConverter) mapArrayType(elem phpdoc.TypeExpr) []meta.Type 
 		types[i].Dims++
 	}
 	return types
+}
+
+func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []meta.Type {
+	props := make([]shapeTypeProp, 0, len(params))
+	for i, p := range params {
+		if p.Value == "*" || p.Value == "..." {
+			continue
+		}
+		if p.Kind != phpdoc.ExprKeyVal {
+			conv.warn(fmt.Sprintf("shape param #%d: want key:type, found %s", i+1, p.Value))
+			continue
+		}
+		key := p.Args[0]
+		typeExpr := p.Args[1]
+		if key.Kind == phpdoc.ExprOptional {
+			key = key.Args[0]
+		}
+		switch key.Kind {
+		case phpdoc.ExprName, phpdoc.ExprInt:
+			// OK.
+		default:
+			conv.warn(fmt.Sprintf("invalid shape key: %s", key.Value))
+			continue
+		}
+		types := conv.mapType(typeExpr)
+		props = append(props, shapeTypeProp{
+			key:   key.Value,
+			types: types,
+		})
+	}
+
+	shape := shapeTypeInfo{
+		name:  conv.ctx.generateShapeName(),
+		props: props,
+	}
+	conv.ctx.shapes = append(conv.ctx.shapes, shape)
+
+	return []meta.Type{{Elem: shape.name}}
 }
 
 func (conv *phpdocTypeConverter) warn(msg string) {
