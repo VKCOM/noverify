@@ -7,6 +7,6 @@ install:
 
 check:
 	@go vet $(go list ./src/... | grep -v vendor)
-	@go test -v ./src/...
+	@go test -race -v ./src/...
 
 .PHONY: check
