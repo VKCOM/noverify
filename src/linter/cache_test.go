@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/VKCOM/noverify/src/linttest/assert"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/google/go-cmp/cmp"
-	"gotest.tools/assert"
 )
 
 func TestCache(t *testing.T) {
