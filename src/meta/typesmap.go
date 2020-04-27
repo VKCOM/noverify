@@ -13,6 +13,11 @@ var (
 	VoidType  = NewTypesMap("void").Immutable()
 )
 
+type Type struct {
+	Elem string
+	Dims int
+}
+
 // TypesMap holds a set of types and can be made immutable to prevent unexpected changes.
 type TypesMap struct {
 	immutable bool
@@ -22,6 +27,18 @@ type TypesMap struct {
 // NewEmptyTypesMap creates new type map that has no types in it
 func NewEmptyTypesMap(cap int) TypesMap {
 	return TypesMap{m: make(map[string]struct{}, cap)}
+}
+
+func NewTypesMapFromTypes(types []Type) TypesMap {
+	m := make(map[string]struct{}, len(types))
+	for _, typ := range types {
+		s := typ.Elem
+		for i := 0; i < typ.Dims; i++ {
+			s = WrapArrayOf(s)
+		}
+		m[s] = struct{}{}
+	}
+	return TypesMap{m: m}
 }
 
 // NewTypesMap returns new TypesMap that is initialized with the provided types (separated by "|" symbol)
@@ -88,17 +105,9 @@ func (m TypesMap) Len() int {
 	return len(m.m)
 }
 
-// IsInt checks if map contains only int type
-func (m TypesMap) IsInt() bool {
-	return m.Is("int")
-}
-
-// IsString checks if map contains only string type
-func (m TypesMap) IsString() bool {
-	return m.Is("string")
-}
-
 // IsArray checks if map contains only array of any type
+//
+// Warning: use only for *lazy* types!
 func (m TypesMap) IsArray() bool {
 	if len(m.m) != 1 {
 		return false
@@ -113,6 +122,8 @@ func (m TypesMap) IsArray() bool {
 }
 
 // IsArrayOf checks if map contains only array of given type
+//
+// Warning: use only for *lazy* types!
 func (m TypesMap) IsArrayOf(typ string) bool {
 	if len(m.m) != 1 {
 		return false
@@ -123,6 +134,8 @@ func (m TypesMap) IsArrayOf(typ string) bool {
 }
 
 // Is reports whether m contains exactly one specified type.
+//
+// Warning: typ must be a proper *lazy* or *solved* type.
 func (m TypesMap) Is(typ string) bool {
 	if m.Len() != 1 {
 		return false
@@ -244,6 +257,18 @@ func (m *TypesMap) GobDecode(buf []byte) error {
 		return err
 	}
 	return decoder.Decode(&m.m)
+}
+
+func (m TypesMap) Contains(typ string) bool {
+	if m.Len() == 0 {
+		return false
+	}
+	for typ2 := range m.m {
+		if typ2 == typ {
+			return true
+		}
+	}
+	return false
 }
 
 // Find applies a predicate function to every contained type.

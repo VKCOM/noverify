@@ -277,16 +277,16 @@ func handleTextDocumentSymbol(req *baseRequest) error {
 			filename := strings.TrimPrefix(uri, "file://")
 			res := meta.Info.GetMetaForFile(filename)
 
-			for className, classInfo := range res.Classes {
+			for _, classInfo := range res.Classes.H {
 				result = append(result, vscode.SymbolInformation{
-					Name:     baseSymbolName(className),
+					Name:     baseSymbolName(classInfo.Name),
 					Kind:     vscode.CompletionKindClass,
 					Location: posToLocation(classInfo.Pos),
 				})
 
-				for methodName, info := range classInfo.Methods {
+				for _, info := range classInfo.Methods.H {
 					result = append(result, vscode.SymbolInformation{
-						Name:     methodName,
+						Name:     info.Name,
 						Kind:     vscode.CompletionKindMethod,
 						Location: posToLocation(info.Pos),
 					})
@@ -309,9 +309,9 @@ func handleTextDocumentSymbol(req *baseRequest) error {
 				}
 			}
 
-			for funcName, info := range res.Functions {
+			for _, info := range res.Functions.H {
 				result = append(result, vscode.SymbolInformation{
-					Name:     baseSymbolName(funcName),
+					Name:     baseSymbolName(info.Name),
 					Kind:     vscode.CompletionKindFunction,
 					Location: posToLocation(info.Pos),
 				})
@@ -559,7 +559,7 @@ func getHoverForMethodCall(n *expr.MethodCall, sc *meta.Scope, cs *meta.ClassPar
 
 	var fun meta.FuncInfo
 	types.Find(func(t string) bool {
-		fun, _, ok = solver.FindMethod(t, id.Value)
+		_, ok := solver.FindMethod(t, id.Value)
 		return ok
 	})
 
@@ -577,12 +577,12 @@ func getHoverForStaticCall(n *expr.StaticCall, sc *meta.Scope, cs *meta.ClassPar
 		return ""
 	}
 
-	fun, _, ok := solver.FindMethod(className, id.Value)
+	m, ok := solver.FindMethod(className, id.Value)
 	if !ok {
 		return ""
 	}
 
-	return linter.FlagsToString(fun.ExitFlags)
+	return linter.FlagsToString(m.Info.ExitFlags)
 }
 
 func handleTextDocumentCompletion(req *baseRequest) error {
@@ -771,8 +771,8 @@ func getMethods(className string) (res []string) {
 			return res
 		}
 
-		for m := range class.Methods {
-			res = append(res, m)
+		for _, info := range class.Methods.H {
+			res = append(res, info.Name)
 		}
 
 		className = class.Parent

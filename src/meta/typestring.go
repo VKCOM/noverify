@@ -62,6 +62,11 @@ const (
 	// Params: [Expression type <string>]
 	WElemOf
 
+	// WElemOfKey is extended for of WElemOf where we also save the key that
+	// was used during the indexing.
+	// Params: [Expression type <string>] [Key <string>]
+	WElemOfKey
+
 	// WGlobal means global variable.
 	// E.g. global $Something;
 	// Params: [Global variable name <string>]
@@ -72,7 +77,7 @@ const (
 	// Params: [Constant name <string>]
 	WConstant
 
-	// WBaseMethodParam<0-N> is a way to inherit base type method type of nth parameter.
+	// WBaseMethodParam is a way to inherit base type method type of nth parameter.
 	// e.g. type of $x param of foo method from one of the implemented interfaces.
 	// Params: [Index <uint8>] [Class name <string>] [Method name <string>]
 	WBaseMethodParam
@@ -240,6 +245,17 @@ func WrapElemOf(typ string) string {
 
 func UnwrapElemOf(s string) (typ string) {
 	return unwrap1(s)
+}
+
+func WrapElemOfKey(typ, key string) string {
+	if len(typ) >= 1+stringLenBytes && typ[0] == WArrayOf {
+		return typ[1+stringLenBytes:]
+	}
+	return wrap(WElemOfKey, nil, typ, key)
+}
+
+func UnwrapElemOfKey(s string) (typ, key string) {
+	return unwrap2(s)
 }
 
 func WrapGlobal(varName string) string {

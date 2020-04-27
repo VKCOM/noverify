@@ -38,9 +38,9 @@ type resolver struct {
 
 func (r *resolver) collectMethodCallTypes(out, possibleTypes map[string]struct{}, methodName string) map[string]struct{} {
 	for className := range possibleTypes {
-		info, _, ok := FindMethod(className, methodName)
+		m, ok := FindMethod(className, methodName)
 		if ok {
-			for tt := range r.resolveTypes(className, info.Typ) {
+			for tt := range r.resolveTypes(className, m.Info.Typ) {
 				out[tt] = struct{}{}
 			}
 		}
@@ -92,28 +92,18 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 		for tt := range r.resolveType(class, meta.UnwrapArrayOf(typ)) {
 			res[tt+"[]"] = struct{}{}
 		}
+	case meta.WElemOfKey:
+		arrayType, key := meta.UnwrapElemOfKey(typ)
+		for tt := range r.resolveType(class, arrayType) {
+			if strings.HasPrefix(tt, `\shape$`) {
+				res = r.solveElemOfShape(class, tt, key, res)
+			} else {
+				res = r.solveElemOf(tt, res)
+			}
+		}
 	case meta.WElemOf:
 		for tt := range r.resolveType(class, meta.UnwrapElemOf(typ)) {
-			switch {
-			case strings.HasSuffix(tt, "[]"):
-				res[strings.TrimSuffix(tt, "[]")] = struct{}{}
-			case tt == "mixed":
-				res["mixed"] = struct{}{}
-			case Implements(tt, `\ArrayAccess`):
-				offsetGet, _, ok := FindMethod(tt, "offsetGet")
-				if ok {
-					for tt := range r.resolveTypes(tt, offsetGet.Typ) {
-						res[tt] = struct{}{}
-					}
-				}
-			case Implements(tt, `\Traversable`):
-				current, _, ok := FindMethod(tt, "current")
-				if ok {
-					for tt := range r.resolveTypes(tt, current.Typ) {
-						res[tt] = struct{}{}
-					}
-				}
-			}
+			res = r.solveElemOf(tt, res)
 		}
 	case meta.WFunctionCall:
 		nm := meta.UnwrapFunctionCall(typ)
@@ -139,18 +129,18 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 		expr, propertyName := meta.UnwrapInstancePropertyFetch(typ)
 
 		for className := range r.resolveType(class, expr) {
-			info, _, ok := FindProperty(className, propertyName)
+			p, ok := FindProperty(className, propertyName)
 			if ok {
-				for tt := range r.resolveTypes(class, info.Typ) {
+				for tt := range r.resolveTypes(class, p.Info.Typ) {
 					res[tt] = struct{}{}
 				}
 			} else {
 				// If there is a __get method, it might have
 				// a @return annotation that will help to
 				// get appropriate type for dynamic property lookup.
-				get, _, ok := FindMethod(className, "__get")
+				m, ok := FindMethod(className, "__get")
 				if ok {
-					return r.resolveTypes(class, get.Typ)
+					return r.resolveTypes(class, m.Info.Typ)
 				}
 			}
 		}
@@ -158,20 +148,20 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 		return solveBaseMethodParam(class, typ, visitedMap, res)
 	case meta.WStaticMethodCall:
 		className, methodName := meta.UnwrapStaticMethodCall(typ)
-		info, _, ok := FindMethod(className, methodName)
+		m, ok := FindMethod(className, methodName)
 		if ok {
-			return r.resolveTypes(className, info.Typ)
+			return r.resolveTypes(className, m.Info.Typ)
 		}
-		info, _, ok = FindMethod(className, "__callStatic")
+		m, ok = FindMethod(className, "__callStatic")
 		if ok {
-			return r.resolveTypes(className, info.Typ)
+			return r.resolveTypes(className, m.Info.Typ)
 		}
 
 	case meta.WStaticPropertyFetch:
 		className, propertyName := meta.UnwrapStaticPropertyFetch(typ)
-		info, _, ok := FindProperty(className, propertyName)
+		p, ok := FindProperty(className, propertyName)
 		if ok {
-			return r.resolveTypes(class, info.Typ)
+			return r.resolveTypes(class, p.Info.Typ)
 		}
 	case meta.WClassConstFetch:
 		className, constName := meta.UnwrapClassConstFetch(typ)
@@ -196,12 +186,50 @@ func solveBaseMethodParam(curStaticClass, typ string, visitedMap, res map[string
 			if !ok {
 				continue
 			}
-			fn, ok := iface.Methods[methodName]
+			fn, ok := iface.Methods.Get(methodName)
 			if !ok {
 				continue
 			}
 			if len(fn.Params) > int(index) {
 				return ResolveTypes(curStaticClass, fn.Params[index].Typ, visitedMap)
+			}
+		}
+	}
+	return res
+}
+
+func (r *resolver) solveElemOfShape(class, shapeName, key string, res map[string]struct{}) map[string]struct{} {
+	shape, ok := meta.Info.GetClass(shapeName)
+	if !ok {
+		return res
+	}
+	p, ok := shape.Properties[key]
+	if ok {
+		for tt := range r.resolveTypes(class, p.Typ) {
+			res[tt] = struct{}{}
+		}
+	}
+	return res
+}
+
+func (r *resolver) solveElemOf(tt string, res map[string]struct{}) map[string]struct{} {
+	switch {
+	case strings.HasSuffix(tt, "[]"):
+		res[strings.TrimSuffix(tt, "[]")] = struct{}{}
+	case tt == "mixed":
+		res["mixed"] = struct{}{}
+	case Implements(tt, `\ArrayAccess`):
+		m, ok := FindMethod(tt, "offsetGet")
+		if ok {
+			for tt := range r.resolveTypes(tt, m.Info.Typ) {
+				res[tt] = struct{}{}
+			}
+		}
+	case Implements(tt, `\Traversable`):
+		m, ok := FindMethod(tt, "current")
+		if ok {
+			for tt := range r.resolveTypes(tt, m.Info.Typ) {
+				res[tt] = struct{}{}
 			}
 		}
 	}
@@ -245,88 +273,174 @@ func (r *resolver) resolveTypes(class string, m meta.TypesMap) map[string]struct
 	return res
 }
 
+type FindMethodResult struct {
+	Info        meta.FuncInfo
+	ClassName   string
+	TraitName   string
+	Implemented bool
+}
+
+func (m FindMethodResult) ImplName() string {
+	if m.TraitName != "" {
+		return m.TraitName
+	}
+	return m.ClassName
+}
+
 // FindMethod searches for a method in specified class
-func FindMethod(className string, methodName string) (res meta.FuncInfo, implClassName string, ok bool) {
+func FindMethod(className string, methodName string) (FindMethodResult, bool) {
+	// We do 2 lookup attemps.
+	//
+	// The first round ignores interfaces inside hierarchy tree.
+	// The second round processes leftovers, interfaces.
+	//
+	// This way, we will return concrete implementation even if
+	// it's deeper inside a type tree.
+	//
+	// Suppose we do FindMethod("C", "a") for this type tree:
+	//	interface A { function a(); }
+	//	class Base1 { function a(); }
+	//	class Base2 extends Base1 {}
+	//	class C extends Base2 implements A {}
+	//
+	// If we would process interfaces right away, a() would be returned
+	// from the A interface, but we want to get Base1.
+
 	return findMethod(className, methodName, make(map[string]struct{}))
 }
 
-func findMethod(className string, methodName string, visitedMap map[string]struct{}) (res meta.FuncInfo, implClassName string, ok bool) {
+func peekImplemented(a, b FindMethodResult) FindMethodResult {
+	if a.Implemented {
+		return a
+	}
+	return b
+}
+
+func findMethod(className string, methodName string, visitedMap map[string]struct{}) (FindMethodResult, bool) {
+	var result FindMethodResult
+	found := false
+
 	for {
 		if _, ok := visitedMap[className]; ok {
-			return res, "", false
+			break
 		}
 		visitedMap[className] = struct{}{}
 
-		class, ok := meta.Info.GetClass(className)
+		class, ok := getClassOrTrait(className)
 		if !ok {
-			class, ok = meta.Info.GetTrait(className)
-			if !ok {
-				return res, "", false
-			}
+			break
 		}
 
-		res, ok = class.Methods[methodName]
+		info, ok := class.Methods.Get(methodName)
 		if ok {
-			return res, className, ok
+			found = true
+			result = peekImplemented(result, FindMethodResult{
+				Info:        info,
+				ClassName:   className,
+				Implemented: !info.IsAbstract(),
+			})
+			if result.Implemented {
+				return result, true
+			}
 		}
 
 		for trait := range class.Traits {
-			res, implClassName, ok = findMethod(trait, methodName, visitedMap)
+			m, ok := findMethod(trait, methodName, visitedMap)
 			if ok {
-				return res, implClassName, ok
+				found = true
+				result = peekImplemented(result, FindMethodResult{
+					Info:        m.Info,
+					ClassName:   className,
+					TraitName:   trait,
+					Implemented: !m.Info.IsAbstract(),
+				})
+				if result.Implemented {
+					return result, true
+				}
 			}
 		}
 
-		// interfaces support multiple inheritance and I use a separate property for that for now
+		// interfaces support multiple inheritance and I use a separate property for that for now.
+		// This loop is executed *only* when we're searching a method with interface
+		// as a root, so we don't need to check whether a method is implemented.
 		for _, parentIfaceName := range class.ParentInterfaces {
-			res, implClassName, ok = findMethod(parentIfaceName, methodName, visitedMap)
+			m, ok := findMethod(parentIfaceName, methodName, visitedMap)
 			if ok {
-				return res, implClassName, ok
+				m.Implemented = false
+				return m, true
+			}
+		}
+
+		for ifaceName := range class.Interfaces {
+			m, ok := findMethod(ifaceName, methodName, visitedMap)
+			if ok {
+				found = true
+				m.Implemented = false
+				result = peekImplemented(result, m)
+				break // No point in searching other interfaces
 			}
 		}
 
 		if class.Parent == "" {
-			return res, "", false
+			break
 		}
 
 		className = class.Parent
 	}
+
+	return result, found
+}
+
+type FindPropertyResult struct {
+	Info      meta.PropertyInfo
+	ClassName string
+	TraitName string
+}
+
+func (p FindPropertyResult) ImplName() string {
+	if p.TraitName != "" {
+		return p.TraitName
+	}
+	return p.ClassName
 }
 
 // FindProperty searches for a property in specified class (both static and instance properties)
-func FindProperty(className string, propertyName string) (res meta.PropertyInfo, implClassName string, ok bool) {
+func FindProperty(className string, propertyName string) (FindPropertyResult, bool) {
 	return findProperty(className, propertyName, make(map[string]struct{}))
 }
 
-func findProperty(className string, propertyName string, visitedMap map[string]struct{}) (res meta.PropertyInfo, implClassName string, ok bool) {
+func findProperty(className string, propertyName string, visitedMap map[string]struct{}) (FindPropertyResult, bool) {
+	var result FindPropertyResult
 	for {
 		if _, ok := visitedMap[className]; ok {
-			return res, "", false
+			return result, false
 		}
 		visitedMap[className] = struct{}{}
 
-		class, ok := meta.Info.GetClass(className)
-		if !ok {
-			class, ok = meta.Info.GetTrait(className)
-			if !ok {
-				return res, "", false
-			}
+		class, ok := getClassOrTrait(className)
+		if !ok || class.IsShape() {
+			return result, false
 		}
 
-		res, ok = class.Properties[propertyName]
+		info, ok := class.Properties[propertyName]
 		if ok {
-			return res, className, ok
+			result.Info = info
+			result.ClassName = className
+			return result, true
 		}
 
 		for trait := range class.Traits {
-			res, implClassName, ok = findProperty(trait, propertyName, visitedMap)
+			p, ok := findProperty(trait, propertyName, visitedMap)
 			if ok {
-				return res, implClassName, ok
+				result.Info = p.Info
+				result.ClassName = className
+				result.TraitName = trait
+				return result, true
 			}
 		}
 
 		if class.Parent == "" {
-			return res, "", false
+			return result, false
 		}
 
 		className = class.Parent
@@ -334,6 +448,8 @@ func findProperty(className string, propertyName string, visitedMap map[string]s
 }
 
 // Implements checks if className implements interfaceName
+//
+// Does not perform the actual method set comparison.
 func Implements(className string, interfaceName string) bool {
 	visited := make(map[string]struct{}, 8)
 
@@ -441,4 +557,16 @@ func identityType(typ string) map[string]struct{} {
 	res := make(map[string]struct{})
 	res[typ] = struct{}{}
 	return res
+}
+
+func getClassOrTrait(typeName string) (meta.ClassInfo, bool) {
+	class, ok := meta.Info.GetClass(typeName)
+	if ok {
+		return class, true
+	}
+	trait, ok := meta.Info.GetTrait(typeName)
+	if ok {
+		return trait, true
+	}
+	return class, false
 }

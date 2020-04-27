@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
@@ -15,7 +16,7 @@ import (
 )
 
 func unaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, x node.Node, custom []CustomType) meta.TypesMap {
-	if ExprTypeLocalCustom(sc, cs, x, custom).IsInt() {
+	if ExprTypeLocalCustom(sc, cs, x, custom).Is("int") {
 		return meta.NewTypesMap("int")
 	}
 	return meta.NewTypesMap("float")
@@ -23,7 +24,7 @@ func unaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, x node.Node, cust
 
 // binaryMathOpType is used for binary arithmetic operations
 func binaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right node.Node, custom []CustomType) meta.TypesMap {
-	if ExprTypeLocalCustom(sc, cs, left, custom).IsInt() && ExprTypeLocalCustom(sc, cs, right, custom).IsInt() {
+	if ExprTypeLocalCustom(sc, cs, left, custom).Is("int") && ExprTypeLocalCustom(sc, cs, right, custom).Is("int") {
 		return meta.NewTypesMap("int")
 	}
 	return meta.NewTypesMap("float")
@@ -179,7 +180,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 	}
 
 	for _, c := range custom {
-		if NodeAwareDeepEqual(c.Node, n) {
+		if astutil.NodeEqual(c.Node, n) {
 			return c.Typ
 		}
 	}
@@ -284,7 +285,15 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 		res := make(map[string]struct{}, m.Len())
 
 		m.Iterate(func(className string) {
-			res[meta.WrapElemOf(className)] = struct{}{}
+			switch dim := n.Dim.(type) {
+			case *scalar.String:
+				key := dim.Value[len(`"`) : len(dim.Value)-len(`"`)]
+				res[meta.WrapElemOfKey(className, key)] = struct{}{}
+			case *scalar.Lnumber:
+				res[meta.WrapElemOfKey(className, dim.Value)] = struct{}{}
+			default:
+				res[meta.WrapElemOf(className)] = struct{}{}
+			}
 		})
 
 		return meta.NewTypesMapFromMap(res)

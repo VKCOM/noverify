@@ -21,6 +21,80 @@ import (
 // TODO(quasilyte): better handling of an `empty_array` type.
 // Now it's resolved to `mixed[]` for expressions that have multiple empty_array.
 
+func TestExprTypeDebug(t *testing.T) {
+	tests := []exprTypeTest{}
+
+	global := `<?php`
+	local := ``
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
+func TestExprTypeShape(t *testing.T) {
+	tests := []exprTypeTest{
+		{`shape_self0()`, `\shape$exprtype_global.php$0$`},
+		{`shape_self1()`, `\shape$exprtype_global.php$1$`},
+		{`shape_index()`, `int`},
+
+		{`$s0`, `\shape$exprtype_global.php$0$`},
+		{`$s0['x']`, `int`},
+		{`$s0['y']`, `float`},
+
+		{`$s2['nested']['s']`, `string`},
+		{`$s2['i']`, `int`},
+		{`$s3['nested']['i']`, `int[]`},
+		{`$s3['nested']['i'][10]`, `int`},
+		{`$s3['f']`, `float`},
+
+		{`$si[0]`, `mixed`},
+		{`$si[10]`, `int`},
+		{`$si[42]`, `string`},
+
+		// Shapes are represented as classes and their key-type
+		// info are recorded in properties map. We have a special
+		// ClassShape flag to suppress field type resolving for shapes.
+		{`$s2->i`, `mixed`},
+		{`$s0->x`, `mixed`},
+
+		// Optional keys are resolved identically.
+		{`$opt['x']`, `\Foo\Bar`},
+	}
+
+	global := `<?php
+/** @param $s shape(x:int,y:float) */
+function shape_self0($s) { return $s; }
+
+/** @param $s shape(key:string) */
+function shape_self1($s) { return $s; }
+
+/** @param $s shape(nested:shape(s:string),i:integer) */
+function shape_self2($s) { return $s; }
+
+/** @param $s shape(f:double,nested:shape(i:long[])) */
+function shape_self3($s) { return $s; }
+
+/** @param shape(x?:\Foo\Bar) */
+function optional_shape($s) { return $s; }
+
+/** @param $s shape(foo:int) */
+function shape_index($s) { return $s['foo']; }
+
+/** @param $s shape(10:int,42:string) */
+function shape_intkey($s) { return $s; }
+
+
+/** @return shape(*) */
+function shape(array $a) { return $a; }
+`
+	local := `
+$s0 = shape_self0(shape(['x' => 1, 'y' => 1.5]));
+$s2 = shape_self2(shape([]));
+$s3 = shape_self3(shape([]));
+$si = shape_intkey(shape([]));
+$opt = optional_shape(shape([]));
+`
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
 func TestExprTypeMagicCall(t *testing.T) {
 	tests := []exprTypeTest{
 		{`$m->magic()`, `\Magic`},
@@ -112,6 +186,38 @@ function assign_ref_dim_fetch3() {
 	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
 }
 
+func TestExprTypeGenerics(t *testing.T) {
+	// For now, we erase most types info from the generics.
+
+	tests := []exprTypeTest{
+		{`generic_a1()`, `\A`},
+		{`generic_a2()`, `\A`},
+		{`generic_a3()`, `\A[]`},
+		{`generic_a_or_b()`, `\A|\B`},
+		{`alt_generic_intfloat()`, `\Either|bool`},
+	}
+
+	global := `<?php
+/** @return A<> */
+function generic_a1() {}
+
+/** @return A<X> */
+function generic_a2() {}
+
+/** @return A<X, Y>[] */
+function generic_a3() {}
+
+/** @return A<X, Y>|B<Z> */
+function generic_a_or_b() {}
+
+/** @return Either(int,float)|bool */
+function alt_generic_intfloat() {}
+`
+
+	local := ``
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
 func TestExprTypeFixes(t *testing.T) {
 	tests := []exprTypeTest{
 		{`alias_double()`, `float`},
@@ -127,9 +233,31 @@ func TestExprTypeFixes(t *testing.T) {
 		{`array_int_string()`, `string[]`},      // key type is currently ignored
 		{`array_int_stdclass()`, `\stdclass[]`}, // key type is currently ignored
 		{`array_return_string()`, `string`},
+		{`alias_real_arr1()`, `float[]`},
+		{`alias_real_arr2()`, `float[][]`},
+		{`array_array()`, `mixed[][]`},
+
+		// TODO: we need to run type normalization on union types as well.
+		// {`union_integer_array()`, `int|mixed[]`},
+		// {`union_boolean_ints()`, `bool|int[]`},
 	}
 
 	global := `<?php
+/** @return array[] */
+function array_array() {}
+
+/** @return integer|array */
+function union_integer_array() {}
+
+/** @return boolean|[]int */
+function union_boolean_ints() {}
+
+/** @return []real */
+function alias_real_arr1() {}
+
+/** @return [][]real */
+function alias_real_arr2() {}
+
 /** @return real */
 function alias_real() {}
 
@@ -171,6 +299,45 @@ function array_return_string($a) { return $a[0]; }
 `
 
 	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
+}
+
+func TestExprTypeArrayOfComplexType(t *testing.T) {
+	// `(A|B)[]` is not the same as `A[]|B[]`, but it's the
+	// best we can get so far.
+	//
+	// For nullable types, it's also not very precise.
+	// `?int[]` is a nullable array, as it should be,
+	// but `(?int)[]` should be interpreted differently.
+	// Since we don't have real nullable types support yet,
+	// we treat it identically.
+
+	tests := []exprTypeTest{
+		{`intfloat()`, `int[]|float[]`},
+		{`intfloatnull()`, `int[]|float[]|null[]`},
+		{`nullable_int_array()`, `int[]|null`},
+		{`array_of_nullable_ints()`, `int[]|null`},
+		{`array3d()`, `\Foo[][][]`},
+	}
+
+	global := `<?php
+/** @return (int|float)[] */
+function intfloat() {}
+
+/** @return (int|float|null)[] */
+function intfloatnull() {}
+
+/** @return ?int[] */
+function nullable_int_array() {}
+
+/** @return (?int)[] */
+function array_of_nullable_ints() {}
+
+/** @return Foo[][][] */
+function array3d() {}
+`
+
+	local := ``
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
 }
 
 func TestExprTypeVoid(t *testing.T) {
@@ -315,6 +482,39 @@ class Chain {
 	local := `
 $ints = new Ints();
 $chain = new Chain();`
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
+func TestExprTypeHint(t *testing.T) {
+	tests := []exprTypeTest{
+		{`array_hint()`, `mixed[]`},
+		{`callable_hint()`, `callable`},
+
+		{`integer_hint()`, `\integer`},
+		{`boolean_hint()`, `\boolean`},
+		{`real_hint()`, `\real`},
+		{`double_hint()`, `\double`},
+		{`integer_hint2()`, `\integer`},
+		{`boolean_hint2()`, `\boolean`},
+		{`real_hint2()`, `\real`},
+		{`double_hint2()`, `\double`},
+	}
+
+	global := `<?php
+function array_hint(array $x) { return $x; }
+function callable_hint(callable $x) { return $x; }
+
+function integer_hint(integer $x) { return $x; }
+function boolean_hint(boolean $x) { return $x; }
+function real_hint(real $x) { return $x; }
+function double_hint(double $x) { return $x; }
+
+function integer_hint2() : integer {}
+function boolean_hint2() : boolean {}
+function real_hint2() : real {}
+function double_hint2() : double {}
+`
+	local := ``
 	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
 }
 
@@ -595,6 +795,7 @@ func TestExprTypeSimple(t *testing.T) {
 		{`$string`, "string"},
 
 		{`define('foo', 0 == 0)`, `void`},
+		{`empty_array()`, `mixed[]`},
 	}
 
 	global := `<?php
@@ -604,6 +805,47 @@ define('false', (bool)0);
 $int = 10;
 $float = 20.5;
 $string = "123";
+
+function empty_array() { $x = []; return $x; }
+`
+	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
+}
+
+func TestExprTypeKeyword(t *testing.T) {
+	tests := []exprTypeTest{
+		{`f_resource()`, `resource`},
+		{`f_true()`, `true`},
+		{`f_false()`, `false`},
+		{`f_iterable()`, `iterable`},
+		{`f_resource2()`, `resource[]`},
+		{`f_true2()`, `true[]`},
+		{`f_false2()`, `false[]`},
+		{`f_iterable2()`, `iterable[]`},
+	}
+	global := `<?php
+/** @return resource */
+function f_resource() {}
+
+/** @return true */
+function f_true() {}
+
+/** @return false */
+function f_false() {}
+
+/** @return iterable */
+function f_iterable() {}
+
+/** @return (resource[]) */
+function f_resource2() {}
+
+/** @return (true[]) */
+function f_true2() {}
+
+/** @return (false[]) */
+function f_false2() {}
+
+/** @return (iterable[]) */
+function f_iterable2() {}
 `
 	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
 }
@@ -712,7 +954,7 @@ class Magic {
 }
 
 class Point {
-  /** @var float */
+  /** @var double */
   public $x;
   /** @var float */
   public $y;

@@ -145,9 +145,10 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 		return nil, nil, errors.New("Empty root node")
 	}
 
+	st := &meta.ClassParseState{CurrentFile: filename}
 	w := &RootWalker{
 		lineRanges: lineRanges,
-		st:         &meta.ClassParseState{CurrentFile: filename},
+		ctx:        newRootContext(st),
 
 		// We need to clone rules since phpgrep matchers
 		// contain mutable state that we don't want to share
@@ -156,6 +157,11 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 		rootRset:  cloneRulesForFile(filename, Rules.Root),
 		localRset: cloneRulesForFile(filename, Rules.Local),
 
+		reVet: &regexpVet{
+			parser: syntax.NewParser(&syntax.ParserOptions{
+				NoLiterals: false,
+			}),
+		},
 		reSimplifier: &regexpSimplifier{
 			parser: syntax.NewParser(&syntax.ParserOptions{
 				NoLiterals: true,
@@ -171,9 +177,7 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 	if meta.IsIndexingComplete() {
 		AnalyzeFileRootLevel(rootNode, w)
 	}
-	for _, c := range w.custom {
-		c.AfterLeaveFile()
-	}
+	w.afterLeaveFile()
 
 	for _, e := range parser.GetErrors() {
 		w.Report(nil, LevelError, "syntax", "Syntax error: "+e.String())

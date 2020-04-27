@@ -14,7 +14,7 @@ func NewParser() *Parser {
 }
 
 func (*Parser) Parse(filename string, r io.Reader) (*Set, error) {
-	var p parser
+	p := parser{typeParser: phpdoc.NewTypeParser()}
 	return p.parse(filename, r)
 }
 
@@ -84,5 +84,5 @@ func (r *Rule) String() string {
 
 // Filter describes constraints that should be applied to a given phpgrep variable.
 type Filter struct {
-	Type phpdoc.TypeExpr
+	Type *phpdoc.Type
 }

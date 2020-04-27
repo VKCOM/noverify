@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/quasilyte/regex/syntax"
 )
 
@@ -22,42 +21,12 @@ type regexpSimplifier struct {
 	escapedDelims int
 }
 
-func (c *regexpSimplifier) simplifyRegexp(lit *scalar.String) string {
-	// We need to interpret the string literal so we see it in a same
-	// was as regexp engine (PCRE) would.
-	//
-	// The '/\\\\/' pattern matches a single '\' literally:
-	// - First we interpret 2 \\ pairs as two '\' characters.
-	// - Then regexp engine sees two '\' and interprets them as a '\' escape.
-	//
-	// The '/\d/' works differently, since single quotes don't interptet
-	// that escape sequence, so what you see is what you get.
-	// The unfortunate consequence is that '/\\d/' is also correct.
-	//
-	// We probably want to suggest using `\d` instead of `\\d`.
-	// Right now it happens as a side effect of regexp re-write process.
-	// If pattern score is 0, no \d->\\d will be suggested.
-	var pat string
-	switch lit.Value[0] {
-	case '\'':
-		// Single quotes only interpret \' and \\ sequences.
-		pat = unquote(lit.Value)
-		pat = strings.ReplaceAll(pat, `\\`, `\`)
-		pat = strings.ReplaceAll(pat, `\'`, `'`)
-	case '"':
-		// TODO: interpret the double-quoted literals?
-		// Note that it would also be harder to reconstruct
-		// the literal syntax for the simplified string.
-		return ""
-	default:
-		return "" // Unreachable?
-	}
-
+func (c *regexpSimplifier) simplifyRegexp(pat regexpPattern) string {
 	// Only do up to 2 passes for now.
 	// We can increase this threshold later if there
 	// will be any simplifications that are enabled by it.
 	const maxPasses = 2
-	simplified := pat
+	simplified := pat.value
 	for pass := 0; pass < maxPasses; pass++ {
 		candidate := c.simplify(pass, simplified)
 		if candidate == "" {
@@ -66,7 +35,7 @@ func (c *regexpSimplifier) simplifyRegexp(lit *scalar.String) string {
 		simplified = candidate
 	}
 
-	if simplified == pat {
+	if simplified == pat.value {
 		return ""
 	}
 	return simplified

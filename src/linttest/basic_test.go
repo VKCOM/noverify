@@ -51,6 +51,31 @@ $_ = array(1);
 `)
 }
 
+func TestKeywordCaseElseif(t *testing.T) {
+	test := linttest.NewSuite(t)
+
+	test.AddFile(`<?php
+function f($cond) {
+  if ($cond+0) {
+  } Else  If ($cond+1) {
+  } elsE/**/IF ($cond+2) {
+  } elseiF ($cond+3) {
+  } else /*a*/ /*b*/  iF ($cond+4) {
+  } ElsE {}
+}
+`)
+	test.Expect = []string{
+		`Use if instead of If`,
+		`Use if instead of IF`,
+		`Use if instead of iF`,
+		`Use else instead of Else`,
+		`Use else instead of elsE`,
+		`Use elseif instead of elseiF`,
+		`Use else instead of ElsE`,
+	}
+	test.RunAndMatch()
+}
+
 func TestKeywordCase(t *testing.T) {
 	test := linttest.NewSuite(t)
 
@@ -76,9 +101,10 @@ CONST  C1 = 1;
 ABSTRACT Final class TheClass  extendS  TheBase {
   Const C2 = 2;
 }
+class NonAbstract {}
 FOREACH ([] as $_) {}
 whilE (0) { breaK; }
-$a = NeW TheClass();
+$a = NeW NonAbstract();
 $b = CLONE  $a;
 $b = Clone($a);
 FUNCTION f() {
@@ -90,7 +116,7 @@ FUNCTION f() {
   DEFAULT: return 0;
   }
   if (0) {
-  } ELSEIF (0) {
+  } ELSEIF (1) {
   } ELSE {}
   Do {
   } While (0);
@@ -131,7 +157,7 @@ class UsingTrait IMPLEMENTs TheInterface {
     TheTrait1::f Insteadof TheTrait2;
   }
 }
-THrow new TheClass();
+THrow new NonAbstract();
 function good() {
   switch (0):
   endswitch;
@@ -224,7 +250,7 @@ func TestVoidResultUsedInBinary(t *testing.T) {
 	test.AddFile(`<?php
 	function define($_, $_) {}
 	define('false', 1 == 0);
-	define('true', 1 == 1);
+	define('true', 1 != 0);
 
 	/**
 	 * @return void
@@ -644,7 +670,7 @@ function foo() {
 }
 `)
 	test.Expect = []string{
-		`Unused variable x`,
+		`Variable x is unused`,
 		`Undefined variable: y`,
 	}
 	test.RunAndMatch()
@@ -706,7 +732,7 @@ func TestUnusedInSwitch(t *testing.T) {
 		}
 		return 20;
 	}`)
-	test.Expect = []string{`Unused variable x`}
+	test.Expect = []string{`Variable x is unused`}
 	runFilterMatch(test, "unused")
 }
 
@@ -1058,9 +1084,9 @@ func TestUnused(t *testing.T) {
 		}
 	}`)
 	test.Expect = []string{
-		"Unused variable g ",
-		"Unused variable a ",
-		"Unused variable v ",
+		"Variable g is unused",
+		"Variable a is unused",
+		"Variable v is unused",
 	}
 	test.RunAndMatch()
 }
@@ -1293,6 +1319,51 @@ func TestSwitchBreak(t *testing.T) {
 	test.RunAndMatch()
 }
 
+func TestNameCase(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class FooBar {
+  public function method_a() {}
+}
+
+class Baz extends foobar {}
+
+$foo = new Foobar();
+$foo->Method_a();
+
+function func_a() {}
+
+func_A();
+`)
+	test.Expect = []string{
+		`\Foobar should be spelled \FooBar`,
+		`\foobar should be spelled \FooBar`,
+		`Method_a should be spelled method_a`,
+		`\func_A should be spelled \func_a`,
+	}
+	runFilterMatch(test, `nameCase`)
+}
+
+func TestClassNotFound(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$_ = new Foo();
+
+class Derived extends Base {}
+
+class Impl implements Iface1, Iface2 {}
+
+interface Iface extends IfaceBase {}
+`)
+	test.Expect = []string{
+		`Type \Base not found`,
+		`Type \Iface1 not found`,
+		`Type \Iface2 not found`,
+		`Type \Foo not found`,
+	}
+	test.RunAndMatch()
+}
+
 func TestCorrectArrayTypes(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -1313,7 +1384,7 @@ func TestCorrectArrayTypes(t *testing.T) {
 		t.Errorf("Unexpected number of types: %d, excepted 1", l)
 	}
 
-	if !fn.Typ.IsInt() {
+	if !fn.Typ.Is("int") {
 		t.Errorf("Wrong type: %s, expected int", fn.Typ)
 	}
 }
@@ -1343,7 +1414,7 @@ func TestArrayUnion(t *testing.T) {
 		t.Errorf("Unexpected number of types: %d, excepted 1", l)
 	}
 
-	if !fnInt.Typ.IsInt() {
+	if !fnInt.Typ.Is("int") {
 		t.Errorf("Wrong type: %s, expected int", fnInt.Typ)
 	}
 
@@ -1448,14 +1519,19 @@ func addNamedFile(test *linttest.Suite, name, code string) {
 	})
 }
 
-func runFilterMatch(test *linttest.Suite, name string) {
-	test.Match(filterReports(name, test.RunLinter()))
+func runFilterMatch(test *linttest.Suite, names ...string) {
+	test.Match(filterReports(names, test.RunLinter()))
 }
 
-func filterReports(name string, reports []*linter.Report) []*linter.Report {
+func filterReports(names []string, reports []*linter.Report) []*linter.Report {
+	set := make(map[string]struct{})
+	for _, name := range names {
+		set[name] = struct{}{}
+	}
+
 	var out []*linter.Report
 	for _, r := range reports {
-		if r.CheckName() == name {
+		if _, ok := set[r.CheckName()]; ok {
 			out = append(out, r)
 		}
 	}

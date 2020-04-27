@@ -73,6 +73,24 @@ func init() {
 		},
 
 		{
+			Name:    "dupCond",
+			Default: true,
+			Comment: `Report duplicated conditions in switch and if/else statements.`,
+		},
+
+		{
+			Name:    "dupBranchBody",
+			Default: true,
+			Comment: `Report suspicious conditional branches that execute the same action.`,
+		},
+
+		{
+			Name:    "dupSubExpr",
+			Default: true,
+			Comment: `Report suspicious duplicated operands in expressions.`,
+		},
+
+		{
 			Name:    "arraySyntax",
 			Default: true,
 			Comment: `Report usages of old array() syntax.`,
@@ -127,6 +145,12 @@ func init() {
 		},
 
 		{
+			Name:    "unimplemented",
+			Default: true,
+			Comment: `Report classes that don't implement their contract.`,
+		},
+
+		{
 			Name:    "syntax",
 			Default: true,
 			Comment: `Report syntax errors.`,
@@ -151,9 +175,27 @@ func init() {
 		},
 
 		{
+			Name:    "newAbstract",
+			Default: true,
+			Comment: `Report abstract classes usages in new expressions.`,
+		},
+
+		{
 			Name:    "regexpSimplify",
 			Default: true,
 			Comment: `Report regular expressions that can be simplified.`,
+		},
+
+		{
+			Name:    "regexpVet",
+			Default: true,
+			Comment: `Report suspicious regexp patterns.`,
+		},
+
+		{
+			Name:    "regexpSyntax",
+			Default: true,
+			Comment: `Report regexp syntax errors.`,
 		},
 
 		{

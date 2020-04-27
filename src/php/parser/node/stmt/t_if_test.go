@@ -3,7 +3,7 @@ package stmt_test
 import (
 	"testing"
 
-	"gotest.tools/assert"
+	"github.com/VKCOM/noverify/src/linttest/assert"
 
 	"github.com/VKCOM/noverify/src/php/parser/position"
 
@@ -375,19 +375,12 @@ func TestElseIfElseIfElse(t *testing.T) {
 							Stmts: []node.Node{},
 						},
 					},
-				},
-				Else: &stmt.Else{
-					Position: &position.Position{
-						StartLine: 1,
-						EndLine:   1,
-						StartPos:  29,
-						EndPos:    52,
-					},
-					Stmt: &stmt.If{
+					&stmt.ElseIf{
+						Merged: true,
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  34,
+							StartPos:  29,
 							EndPos:    52,
 						},
 						Cond: &node.SimpleVar{
@@ -408,23 +401,23 @@ func TestElseIfElseIfElse(t *testing.T) {
 							},
 							Stmts: []node.Node{},
 						},
-						Else: &stmt.Else{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  45,
-								EndPos:    52,
-							},
-							Stmt: &stmt.StmtList{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  50,
-									EndPos:    52,
-								},
-								Stmts: []node.Node{},
-							},
+					},
+				},
+				Else: &stmt.Else{
+					Position: &position.Position{
+						StartLine: 1,
+						EndLine:   1,
+						StartPos:  45,
+						EndPos:    52,
+					},
+					Stmt: &stmt.StmtList{
+						Position: &position.Position{
+							StartLine: 1,
+							EndLine:   1,
+							StartPos:  50,
+							EndPos:    52,
 						},
+						Stmts: []node.Node{},
 					},
 				},
 			},

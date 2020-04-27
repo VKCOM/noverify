@@ -183,7 +183,8 @@ func (d *staticMethodCallVisitor) EnterNode(w walker.Walkable) bool {
 		if !ok {
 			return true
 		}
-		_, realClassName, ok := solver.FindMethod(className, id.Value)
+		m, ok := solver.FindMethod(className, id.Value)
+		realClassName := m.ImplName()
 
 		if ok && realClassName == d.className && id.Value == d.methodName {
 			if pos := n.GetPosition(); pos != nil {
@@ -318,7 +319,8 @@ func (d *blockMethodCallVisitor) BeforeEnterNode(w walker.Walkable) {
 		exprType := solver.ExprType(d.ctx.Scope(), d.ctx.ClassParseState(), n.Variable)
 
 		exprType.Iterate(func(typ string) {
-			_, realClassName, ok := solver.FindMethod(typ, methodName)
+			m, ok := solver.FindMethod(typ, methodName)
+			realClassName := m.ImplName()
 
 			if ok && realClassName == d.className {
 				if pos := n.GetPosition(); pos != nil {
@@ -368,7 +370,8 @@ func (d *blockPropertyVisitor) handlePropertyFetch(n *expr.PropertyFetch) {
 
 	exprType := solver.ExprType(d.ctx.Scope(), d.ctx.ClassParseState(), n.Variable)
 	exprType.Iterate(func(className string) {
-		_, realClassName, ok := solver.FindProperty(className, id.Value)
+		p, ok := solver.FindProperty(className, id.Value)
+		realClassName := p.ImplName()
 
 		if ok && realClassName == d.className {
 			if pos := n.GetPosition(); pos != nil {

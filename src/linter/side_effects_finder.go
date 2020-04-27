@@ -93,8 +93,8 @@ func (f *sideEffectsFinder) staticCallIsPure(n *expr.StaticCall) bool {
 	if !ok {
 		return false
 	}
-	info, _, ok := solver.FindMethod(className, methodName.Value)
-	return ok && info.IsPure() && info.ExitFlags == 0
+	m, ok := solver.FindMethod(className, methodName.Value)
+	return ok && m.Info.IsPure() && m.Info.ExitFlags == 0
 }
 
 func (f *sideEffectsFinder) methodCallIsPure(n *expr.MethodCall) bool {
@@ -110,11 +110,11 @@ func (f *sideEffectsFinder) methodCallIsPure(n *expr.MethodCall) bool {
 		return false
 	}
 	return typ.Find(func(typ string) bool {
-		info, impl, ok := solver.FindMethod(typ, methodName.Value)
-		if meta.IsInternalClass(impl) {
+		m, ok := solver.FindMethod(typ, methodName.Value)
+		if meta.IsInternalClass(m.ClassName) {
 			return false
 		}
-		return ok && info.IsPure() && info.ExitFlags == 0
+		return ok && m.Info.IsPure() && m.Info.ExitFlags == 0
 	})
 }
 
@@ -129,7 +129,6 @@ func (f *sideEffectsFinder) EnterNode(w walker.Walkable) bool {
 
 	switch n := w.(type) {
 	case *expr.FunctionCall:
-		// fmt.Printf("node=%T %s\n", w, FmtNode(w.(node.Node)))
 		if f.functionCallIsPure(n) {
 			return true
 		}

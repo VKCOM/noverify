@@ -36,7 +36,7 @@ type parser struct {
 	sources    []byte
 	res        *Set
 	compiler   phpgrep.Compiler
-	typeParser phpdoc.TypeParser
+	typeParser *phpdoc.TypeParser
 }
 
 // Parse reads PHP code that represents a rule file from r and creates a RuleSet based on it.
@@ -162,7 +162,7 @@ func (p *parser) parseRule(st node.Node) error {
 			if len(part.Params) != 2 {
 				return p.errorf(st, "@type expects exactly 2 params, got %d", len(part.Params))
 			}
-			typ := part.Params[0]
+			typeString := part.Params[0]
 			name := part.Params[1]
 			if !strings.HasPrefix(name, "$") {
 				return p.errorf(st, "@type 2nd param must be a phpgrep variable")
@@ -175,11 +175,13 @@ func (p *parser) parseRule(st node.Node) error {
 			if filter.Type != nil {
 				return p.errorf(st, "$%s: duplicate type constraint", name)
 			}
-			typeExpr, err := p.typeParser.ParseType(typ)
-			if err != nil {
-				return p.errorf(st, "$%s: parseType(%s): %v", name, typ, err)
+			typ := p.typeParser.Parse(typeString).Clone()
+			switch typ.Expr.Kind {
+			case phpdoc.ExprInvalid, phpdoc.ExprUnknown:
+				return p.errorf(st, "$%s: parseType(%s): bad type expression", name, typ)
 			}
-			filter.Type = typeExpr
+			filter.Type = new(phpdoc.Type)
+			*filter.Type = typ
 			filterSet[name] = filter
 
 		default:

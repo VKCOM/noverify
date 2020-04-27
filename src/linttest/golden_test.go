@@ -2,6 +2,7 @@ package linttest_test
 
 import (
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -81,11 +82,27 @@ func TestGolden(t *testing.T) {
 				`stubs/phpstorm-stubs/posix/posix.php`,
 			},
 		},
+
+		{
+			name:    "flysystem",
+			disable: []string{`redundantCast`},
+			deps: []string{
+				`stubs/phpstorm-stubs/SPL/SPL.php`,
+				`stubs/phpstorm-stubs/SPL/SPL_c1.php`,
+				`stubs/phpstorm-stubs/SPL/SPL_f.php`,
+				`stubs/phpstorm-stubs/hash/hash.php`,
+				`stubs/phpstorm-stubs/mbstring/mbstring.php`,
+				`stubs/phpstorm-stubs/date/date.php`,
+				`stubs/phpstorm-stubs/date/date_c.php`,
+				`stubs/phpstorm-stubs/ftp/ftp.php`,
+				`stubs/phpstorm-stubs/fileinfo/fileinfo.php`,
+			},
+		},
 	}
 
 	for _, target := range targets {
 		t.Run(target.name, func(t *testing.T) {
-			phpFiles, err := filepath.Glob("testdata/" + target.name + "/*.php")
+			phpFiles, err := findPHPFiles(filepath.Join("testdata", target.name))
 			if err != nil {
 				t.Fatalf("list files: %v", err)
 			}
@@ -131,4 +148,19 @@ func TestGolden(t *testing.T) {
 			}
 		})
 	}
+}
+
+func findPHPFiles(root string) ([]string, error) {
+	var files []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() || !strings.HasSuffix(path, ".php") {
+			return nil
+		}
+		files = append(files, path)
+		return nil
+	})
+	return files, err
 }

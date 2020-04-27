@@ -10,9 +10,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/VKCOM/noverify/src/linttest/assert"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/google/go-cmp/cmp"
-	"gotest.tools/assert"
 )
 
 func TestCache(t *testing.T) {
@@ -37,6 +37,10 @@ final class Consts {
   const C1 = GLOBAL_CONST;
   const C2 = 'a';
   const C3 = ['a'];
+}
+
+abstract class AbstractClass {
+  abstract public function f1();
 }
 
 class Point implements Arrayable {
@@ -74,6 +78,11 @@ function main() {
   var_dump(to_array($p3));
 }
 
+/** @param shape(a:integer,b:shape(c:real)) */
+function as_shape($x) {
+  return $x;
+}
+
 main();
 `
 
@@ -99,7 +108,7 @@ main();
 		//
 		// If cache encoding changes, there is a very high chance that
 		// encoded data lengh will change as well.
-		wantLen := 2804
+		wantLen := 3808
 		haveLen := buf.Len()
 		if haveLen != wantLen {
 			t.Errorf("cache len mismatch:\nhave: %d\nwant: %d", haveLen, wantLen)
@@ -108,7 +117,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "06bf4317fb79349921eea580fd2402c6bb5886ac7640ebaa55b699ac7f04463c700f781895488bb2bba7d15849439a6eba2605b8f518f64981e332285bec9626"
+		wantStrings := "b752a530950d476bc523e58746fe52e13bd5277630c61f9cd3c88737dd1bff461083460dc4c157fc15cd56b9fc59711c943b7691cb1baec766cd4f8143447b0d"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)

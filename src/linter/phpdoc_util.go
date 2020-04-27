@@ -8,72 +8,6 @@ import (
 	"github.com/VKCOM/noverify/src/phpdoc"
 )
 
-func fixPHPDocType(typ string) (fixed, notice string) {
-	var fixer phpdocTypeFixer
-	return fixer.Fix(typ)
-}
-
-type phpdocTypeFixer struct {
-	notice string
-}
-
-// Fix tries to return a corrected version of typ.
-// If typ was already correct, it returned unchanged.
-// Returns first correction notice in addition to the fixed type.
-func (f *phpdocTypeFixer) Fix(typ string) (fixed, notice string) {
-	f.notice = ""
-	fixedTyp := f.fix(typ)
-	return fixedTyp, f.notice
-}
-
-func (f *phpdocTypeFixer) fix(typ string) string {
-	// Check commonly misspelled types and other unfortunate cases.
-	switch typ {
-	case "callback":
-		f.noticef("use callable type instead of callback")
-		return "callable"
-	case "boolean":
-		f.noticef("use bool type instead of boolean")
-		return "bool"
-	case "double", "real":
-		f.noticef("use float type instead of " + typ)
-		return "float"
-	case "long", "integer":
-		f.noticef("use int type instead of " + typ)
-		return "int"
-	case "[]":
-		f.noticef("[] is not a valid type, mixed[] implied")
-		return "mixed[]"
-	case "array":
-		return "mixed[]"
-	case "-":
-		// This happens when either of these formats is used:
-		// `* @param $name - description`
-		// `* @param - $name description`
-		// We don't want to make "-" slip as a type name.
-		f.noticef("expected a type, found '-'; if you want to express 'any' type, use 'mixed'")
-		return "mixed"
-	case "":
-		return "mixed"
-	}
-
-	// Fix []T -> T[]
-	if strings.HasPrefix(typ, "[]") && typ != "[]" {
-		f.noticef("%s type syntax: use [] after the type, e.g. T[]", typ)
-		typ = strings.TrimPrefix(typ, "[]")
-		typ += "[]"
-		return f.fix(typ)
-	}
-
-	return typ
-}
-
-func (f *phpdocTypeFixer) noticef(format string, args ...interface{}) {
-	if f.notice == "" {
-		f.notice = fmt.Sprintf(format, args...)
-	}
-}
-
 type phpdocErrors struct {
 	phpdocLint []string
 	phpdocType []string
@@ -93,7 +27,7 @@ type classPhpDocParseResult struct {
 	errs       phpdocErrors
 }
 
-func parseClassPHPDoc(st *meta.ClassParseState, doc string) classPhpDocParseResult {
+func parseClassPHPDoc(ctx *rootContext, doc string) classPhpDocParseResult {
 	var result classPhpDocParseResult
 
 	if doc == "" {
@@ -104,21 +38,21 @@ func parseClassPHPDoc(st *meta.ClassParseState, doc string) classPhpDocParseResu
 	// Class may not have any @property or @method annotations.
 	// In that case we can handle avoid map allocations.
 	result.properties = make(meta.PropertiesMap)
-	result.methods = make(meta.FunctionsMap)
+	result.methods = meta.NewFunctionsMap()
 
 	for _, part := range phpdoc.Parse(doc) {
 		switch part.Name {
 		case "property":
-			parseClassPHPDocProperty(st, &result, part)
+			parseClassPHPDocProperty(ctx, &result, part)
 		case "method":
-			parseClassPHPDocMethod(st, &result, part)
+			parseClassPHPDocMethod(ctx, &result, part)
 		}
 	}
 
 	return result
 }
 
-func parseClassPHPDocMethod(st *meta.ClassParseState, result *classPhpDocParseResult, part phpdoc.CommentPart) {
+func parseClassPHPDocMethod(ctx *rootContext, result *classPhpDocParseResult, part phpdoc.CommentPart) {
 	// The syntax is:
 	//	@method [[static] return type] [name]([[type] [parameter]<, ...>]) [<description>]
 	// Return type and method name are mandatory.
@@ -135,9 +69,9 @@ func parseClassPHPDocMethod(st *meta.ClassParseState, result *classPhpDocParseRe
 		return
 	}
 
-	typ, err := fixPHPDocType(params[0])
-	if err != "" {
-		result.errs.pushType("%s on line %d", err, part.Line)
+	types, warning := typesFromPHPDoc(ctx, ctx.phpdocTypeParser.Parse(params[0]))
+	if warning != "" {
+		result.errs.pushType("%s on line %d", warning, part.Line)
 	}
 
 	var methodName string
@@ -153,15 +87,16 @@ func parseClassPHPDocMethod(st *meta.ClassParseState, result *classPhpDocParseRe
 	if static {
 		funcFlags |= meta.FuncStatic
 	}
-	result.methods[methodName] = meta.FuncInfo{
-		Typ:          meta.NewTypesMap(normalizeType(st, typ)),
+	result.methods.Set(methodName, meta.FuncInfo{
+		Typ:          newTypesMap(ctx, types),
+		Name:         methodName,
 		Flags:        funcFlags,
 		MinParamsCnt: 0, // TODO: parse signature and assign a proper value
 		AccessLevel:  meta.Public,
-	}
+	})
 }
 
-func parseClassPHPDocProperty(st *meta.ClassParseState, result *classPhpDocParseResult, part phpdoc.CommentPart) {
+func parseClassPHPDocProperty(ctx *rootContext, result *classPhpDocParseResult, part phpdoc.CommentPart) {
 	// The syntax is:
 	//	@property [Type] [name] [<description>]
 	// Type and name are mandatory.
@@ -171,13 +106,13 @@ func parseClassPHPDocProperty(st *meta.ClassParseState, result *classPhpDocParse
 		return
 	}
 
-	typ := part.Params[0]
+	typeString := part.Params[0]
 	var nm string
 	if len(part.Params) >= 2 {
 		nm = part.Params[1]
 	} else {
 		// Either type or var name is missing.
-		if strings.HasPrefix(typ, "$") {
+		if strings.HasPrefix(typeString, "$") {
 			result.errs.pushLint("malformed @property %s tag (maybe type is missing?) on line %d",
 				part.Params[0], part.Line)
 			return
@@ -185,14 +120,14 @@ func parseClassPHPDocProperty(st *meta.ClassParseState, result *classPhpDocParse
 		result.errs.pushLint("malformed @property tag (maybe field name is missing?) on line %d", part.Line)
 	}
 
-	if len(part.Params) >= 2 && strings.HasPrefix(typ, "$") && !strings.HasPrefix(nm, "$") {
+	if len(part.Params) >= 2 && strings.HasPrefix(typeString, "$") && !strings.HasPrefix(nm, "$") {
 		result.errs.pushLint("non-canonical order of name and type on line %d", part.Line)
-		nm, typ = typ, nm
+		nm, typeString = typeString, nm
 	}
 
-	typ, err := fixPHPDocType(typ)
-	if err != "" {
-		result.errs.pushType("%s on line %d", err, part.Line)
+	types, warning := typesFromPHPDoc(ctx, ctx.phpdocTypeParser.Parse(typeString))
+	if warning != "" {
+		result.errs.pushType("%s on line %d", warning, part.Line)
 	}
 
 	if !strings.HasPrefix(nm, "$") {
@@ -201,51 +136,7 @@ func parseClassPHPDocProperty(st *meta.ClassParseState, result *classPhpDocParse
 	}
 
 	result.properties[nm[len("$"):]] = meta.PropertyInfo{
-		Typ:         meta.NewTypesMap(normalizeType(st, typ)),
+		Typ:         newTypesMap(ctx, types),
 		AccessLevel: meta.Public,
 	}
-}
-
-// parseAngleBracketedType converts types like "array<k1,array<k2,v2>>" (no spaces) to an internal representation.
-func parseAngleBracketedType(st *meta.ClassParseState, t string) string {
-	if len(t) == 0 {
-		return "[error_empty_type]"
-	}
-
-	idx := strings.IndexByte(t, '<')
-	if idx == -1 {
-		return t
-	}
-	if idx == 0 {
-		return "[error_empty_container_name]"
-	}
-	if t[len(t)-1] != '>' {
-		return "[unbalanced_angled_bracket]"
-	}
-
-	// e.g. container: "array", rest: "k1,array<k2,v2>"
-	container, rest := t[0:idx], t[idx+1:len(t)-1]
-
-	switch container {
-	case "array":
-		commaIdx := strings.IndexByte(rest, ',')
-		if commaIdx == -1 {
-			return meta.WrapArrayOf(normalizeType(st, rest))
-		}
-
-		ktype, vtype := rest[0:commaIdx], rest[commaIdx+1:]
-		if ktype == "" {
-			return "[empty_array_key_type]"
-		}
-		if vtype == "" {
-			return "[empty_array_value_type]"
-		}
-
-		return meta.WrapArray2(ktype, normalizeType(st, vtype))
-	case "list", "non-empty-list":
-		return meta.WrapArrayOf(normalizeType(st, rest))
-	}
-
-	// unknown container type, just ignoring
-	return ""
 }
