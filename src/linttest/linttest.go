@@ -47,7 +47,7 @@ type TestFile struct {
 //
 // Use NewSuite to create usable instance.
 type Suite struct {
-	t *testing.T
+	t testing.TB
 
 	Files  []TestFile
 	Expect []string
@@ -56,7 +56,7 @@ type Suite struct {
 }
 
 // NewSuite returns a new linter test suite for t.
-func NewSuite(t *testing.T) *Suite {
+func NewSuite(t testing.TB) *Suite {
 	return &Suite{t: t}
 }
 
@@ -189,7 +189,7 @@ func init() {
 	once.Do(func() { go linter.MemoryLimiterThread() })
 }
 
-func parseTestFile(t *testing.T, f TestFile) (rootNode node.Node, w *linter.RootWalker) {
+func parseTestFile(t testing.TB, f TestFile) (rootNode node.Node, w *linter.RootWalker) {
 	var err error
 	rootNode, w, err = linter.ParseContents(f.Name, f.Data, nil)
 	if err != nil {
