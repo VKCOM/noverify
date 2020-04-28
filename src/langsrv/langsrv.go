@@ -660,7 +660,7 @@ func handleTextDocumentCompletion(req *baseRequest) error {
 		if strings.HasSuffix(chStr, "->") {
 			result = append(result, getMethodCompletionItems(&compl.st, chStr, compl.foundScope)...)
 		} else {
-			compl.foundScope.Iterate(func(varName string, typ meta.TypesMap, alwaysDefined bool) {
+			compl.foundScope.Iterate(func(varName string, typ meta.TypesMap, flags meta.VarFlags) {
 				result = append(result, vscode.CompletionItem{
 					Kind:  vscode.CompletionKindVariable,
 					Label: "$" + varName,

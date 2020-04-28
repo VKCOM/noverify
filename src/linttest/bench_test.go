@@ -60,7 +60,7 @@ class Foo {
 	st := &meta.ClassParseState{}
 	sc := meta.NewScope()
 
-	sc.AddVarName("foo", meta.NewTypesMap(`\Foo|int|null`), "test", true)
+	sc.AddVarName("foo", meta.NewTypesMap(`\Foo|int|null`), "test", meta.VarAlwaysDefined)
 
 	b.Run("simplevar", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {

@@ -28,7 +28,7 @@ func TestSolver(t *testing.T) {
 	tm := meta.NewTypesMap
 
 	sc := meta.NewScope()
-	sc.AddVarName("MC", tm("Memcache"), "global", true)
+	sc.AddVarName("MC", tm("Memcache"), "global", meta.VarAlwaysDefined)
 
 	fm := meta.NewFunctionsMap()
 	fm.Set(`\array_map`, meta.FuncInfo{Typ: tm(`array|bool|` + meta.WrapFunctionCall(`\my_func`))})
