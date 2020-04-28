@@ -1,0 +1,3 @@
+INFO    phpdocType: use bool type instead of boolean on line 17 at testdata/inflector/lib/Doctrine/Common/Inflector/Inflector.php:149
+    public static function rules(string $type, iterable $rules, bool $reset = false) : void
+                           ^^^^^

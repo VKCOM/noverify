@@ -98,6 +98,15 @@ func TestGolden(t *testing.T) {
 				`stubs/phpstorm-stubs/fileinfo/fileinfo.php`,
 			},
 		},
+
+		{
+			name:    "inflector",
+			disable: []string{"phpdoc"},
+			deps: []string{
+				`stubs/phpstorm-stubs/SPL/SPL.php`,
+				`stubs/phpstorm-stubs/mbstring/mbstring.php`,
+			},
+		},
 	}
 
 	for _, target := range targets {
