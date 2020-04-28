@@ -5,13 +5,13 @@ import (
 	"bytes"
 	"crypto/sha512"
 	"encoding/hex"
+	"reflect"
 	"regexp"
 	"sort"
 	"strings"
 	"testing"
 
 	"github.com/VKCOM/noverify/src/linttest/assert"
-	"github.com/VKCOM/noverify/src/meta"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -28,6 +28,9 @@ func TestCache(t *testing.T) {
 
 	code := `<?php
 const GLOBAL_CONST = 1;
+
+$globalIntVar = 10;
+$globalStringVar = 'string';
 
 interface Arrayable {
   public function toArray();
@@ -108,7 +111,7 @@ main();
 		//
 		// If cache encoding changes, there is a very high chance that
 		// encoded data lengh will change as well.
-		wantLen := 3808
+		wantLen := 4031
 		haveLen := buf.Len()
 		if haveLen != wantLen {
 			t.Errorf("cache len mismatch:\nhave: %d\nwant: %d", haveLen, wantLen)
@@ -117,7 +120,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "b752a530950d476bc523e58746fe52e13bd5277630c61f9cd3c88737dd1bff461083460dc4c157fc15cd56b9fc59711c943b7691cb1baec766cd4f8143447b0d"
+		wantStrings := "0cf356617cd2000854fcb3e8aab4ff06ea8f775a61562f043716ead6083074d1140f4b57d2ce05037ea24117273252a03184ea7f0de788759a6921a8869c8b76"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)
@@ -135,8 +138,7 @@ main();
 			// we can't reliably check 2 meta files via assert.
 			assert.DeepEqual(t,
 				encodedMeta, decodedMeta,
-				cmp.AllowUnexported(meta.TypesMap{}),
-				cmp.AllowUnexported(meta.Scope{}))
+				cmp.Exporter(func(reflect.Type) bool { return true }))
 		}
 
 		if t.Failed() {
