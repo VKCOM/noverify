@@ -1,0 +1,12 @@
+INFO    phpdocLint: @param for non-existing argument $package at testdata/options-resolver/OptionsResolver.php:428
+    public function setDeprecated(string $option/*, string $package, string $version, $message = 'The option "%name%" is deprecated.' */): self
+                    ^^^^^^^^^^^^^
+INFO    phpdocLint: @param for non-existing argument $version at testdata/options-resolver/OptionsResolver.php:428
+    public function setDeprecated(string $option/*, string $package, string $version, $message = 'The option "%name%" is deprecated.' */): self
+                    ^^^^^^^^^^^^^
+INFO    phpdocLint: @param for non-existing argument $message at testdata/options-resolver/OptionsResolver.php:428
+    public function setDeprecated(string $option/*, string $package, string $version, $message = 'The option "%name%" is deprecated.' */): self
+                    ^^^^^^^^^^^^^
+MAYBE   complexity: Too big method: more than 150 lines at testdata/options-resolver/OptionsResolver.php:917
+    public function offsetGet($option, bool $triggerDeprecation = true)
+                    ^^^^^^^^^

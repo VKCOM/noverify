@@ -107,6 +107,15 @@ func TestGolden(t *testing.T) {
 				`stubs/phpstorm-stubs/mbstring/mbstring.php`,
 			},
 		},
+
+		{
+			name:    "options-resolver",
+			disable: []string{"phpdoc"},
+			deps: []string{
+				`stubs/phpstorm-stubs/SPL/SPL.php`,
+				`stubs/phpstorm-stubs/Reflection/Reflection.php`,
+			},
+		},
 	}
 
 	for _, target := range targets {
