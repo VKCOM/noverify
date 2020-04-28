@@ -116,6 +116,18 @@ func TestGolden(t *testing.T) {
 				`stubs/phpstorm-stubs/Reflection/Reflection.php`,
 			},
 		},
+
+		{
+			name:    "twitter-api-php",
+			disable: []string{"phpdoc", "arraySyntax"},
+			deps: []string{
+				`stubs/phpstorm-stubs/SPL/SPL.php`,
+				`stubs/phpstorm-stubs/date/date.php`,
+				`stubs/phpstorm-stubs/hash/hash.php`,
+				`stubs/phpstorm-stubs/curl/curl.php`,
+				`stubs/phpstorm-stubs/curl/curl_d.php`,
+			},
+		},
 	}
 
 	for _, target := range targets {
