@@ -1,0 +1,9 @@
+INFO    unused: Variable key is unused (use $_ to ignore this inspection) at testdata/twitter-api-php/TwitterAPIExchange.php:122
+        foreach ($array as $key => &$value)
+                           ^^^^
+INFO    phpdocType: use bool type instead of boolean on line 4 at testdata/twitter-api-php/TwitterAPIExchange.php:274
+    public function performRequest($return = true, $curlOptions = array())
+                    ^^^^^^^^^^^^^^
+INFO    phpdocType: use int type instead of integer on line 4 at testdata/twitter-api-php/TwitterAPIExchange.php:406
+    public function getHttpStatusCode()
+                    ^^^^^^^^^^^^^^^^^
