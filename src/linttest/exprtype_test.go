@@ -796,9 +796,14 @@ func TestExprTypeSimple(t *testing.T) {
 
 		{`define('foo', 0 == 0)`, `void`},
 		{`empty_array()`, `mixed[]`},
+
+		{`new Foo()`, `\Foo`},
+		{`clone (new Foo())`, `\Foo`},
 	}
 
 	global := `<?php
+class Foo {}
+
 function define($name, $value) {}
 define('true', (bool)1);
 define('false', (bool)0);
