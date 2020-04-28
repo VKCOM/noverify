@@ -294,7 +294,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 			if nm == "" {
 				continue
 			}
-			b.addVar(v, meta.NewTypesMap(meta.WrapGlobal(nm)), "global", true)
+			b.addVar(v, meta.NewTypesMap(meta.WrapGlobal(nm)), "global", meta.VarAlwaysDefined)
 			b.addNonLocalVar(v)
 		}
 		res = false
@@ -302,7 +302,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		for _, vv := range s.Vars {
 			v := vv.(*stmt.StaticVar)
 			ev := v.Variable
-			b.addVarName(v, ev.Name, solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, v.Expr, b.ctx.customTypes), "static", true)
+			b.addVarName(v, ev.Name, solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, v.Expr, b.ctx.customTypes), "static", meta.VarAlwaysDefined)
 			b.addNonLocalVarName(ev.Name)
 			if v.Expr != nil {
 				v.Expr.Walk(b)
@@ -512,8 +512,8 @@ func (b *BlockWalker) addNonLocalVar(v node.Node) {
 }
 
 // replaceVar must be used to track assignments to conrete var nodes if they are available
-func (b *BlockWalker) replaceVar(v node.Node, typ meta.TypesMap, reason string, alwaysDefined bool) {
-	b.ctx.sc.ReplaceVar(v, typ, reason, alwaysDefined)
+func (b *BlockWalker) replaceVar(v node.Node, typ meta.TypesMap, reason string, flags meta.VarFlags) {
+	b.ctx.sc.ReplaceVar(v, typ, reason, flags)
 	sv, ok := v.(*node.SimpleVar)
 	if !ok {
 		return
@@ -546,14 +546,14 @@ func (b *BlockWalker) trackVarName(n node.Node, nm string) {
 	}
 }
 
-func (b *BlockWalker) addVarName(n node.Node, nm string, typ meta.TypesMap, reason string, alwaysDefined bool) {
-	b.ctx.sc.AddVarName(nm, typ, reason, alwaysDefined)
+func (b *BlockWalker) addVarName(n node.Node, nm string, typ meta.TypesMap, reason string, flags meta.VarFlags) {
+	b.ctx.sc.AddVarName(nm, typ, reason, flags)
 	b.trackVarName(n, nm)
 }
 
 // addVar must be used to track assignments to conrete var nodes if they are available
-func (b *BlockWalker) addVar(v node.Node, typ meta.TypesMap, reason string, alwaysDefined bool) {
-	b.ctx.sc.AddVar(v, typ, reason, alwaysDefined)
+func (b *BlockWalker) addVar(v node.Node, typ meta.TypesMap, reason string, flags meta.VarFlags) {
+	b.ctx.sc.AddVar(v, typ, reason, flags)
 	sv, ok := v.(*node.SimpleVar)
 	if !ok {
 		return
@@ -730,8 +730,11 @@ func (b *BlockWalker) handleTry(s *stmt.Try) bool {
 		}
 	})
 
-	ctx.sc.Iterate(func(varName string, typ meta.TypesMap, alwaysDefined bool) {
-		b.ctx.sc.AddVarName(varName, typ, "try var", alwaysDefined && othersExit)
+	ctx.sc.Iterate(func(varName string, typ meta.TypesMap, flags meta.VarFlags) {
+		if !othersExit {
+			flags &^= meta.VarAlwaysDefined
+		}
+		b.ctx.sc.AddVarName(varName, typ, "try var", flags)
 	})
 
 	if othersExit && ctx.exitFlags != 0 {
@@ -858,7 +861,8 @@ func (b *BlockWalker) handleCallArgs(n node.Node, args []node.Node, fn meta.Func
 		case *node.Var, *node.SimpleVar:
 			if ref {
 				b.addNonLocalVar(a)
-				b.addVar(a, fn.Params[i].Typ, "call_with_ref", true /* TODO: variable may actually not be set by ref */)
+				// TODO: variable may actually not be set by ref
+				b.addVar(a, fn.Params[i].Typ, "call_with_ref", meta.VarAlwaysDefined)
 				break
 			}
 			a.Walk(b)
@@ -1449,9 +1453,9 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType me
 	sc.SetInClosure(true)
 
 	if haveThis {
-		sc.AddVarName("this", thisType, "closure inside instance method", true)
+		sc.AddVarName("this", thisType, "closure inside instance method", meta.VarAlwaysDefined)
 	} else {
-		sc.AddVarName("this", meta.NewTypesMap("possibly_late_bound"), "possibly late bound $this", true)
+		sc.AddVarName("this", meta.NewTypesMap("possibly_late_bound"), "possibly late bound $this", meta.VarAlwaysDefined)
 	}
 
 	doc := b.r.parsePHPDoc(fun.PhpDocComment, fun.Params)
@@ -1479,7 +1483,7 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType me
 
 		typ, ok := b.ctx.sc.GetVarNameType(v.Name)
 		if ok {
-			sc.AddVarName(v.Name, typ, "use", true)
+			sc.AddVarName(v.Name, typ, "use", meta.VarAlwaysDefined)
 		}
 
 		delete(b.unusedVars, v.Name)
@@ -1494,8 +1498,9 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType me
 }
 
 func (b *BlockWalker) maybeAddAllVars(sc *meta.Scope, reason string) {
-	sc.Iterate(func(varName string, typ meta.TypesMap, alwaysDefined bool) {
-		b.ctx.sc.AddVarName(varName, typ, reason, false)
+	sc.Iterate(func(varName string, typ meta.TypesMap, flags meta.VarFlags) {
+		flags &^= meta.VarAlwaysDefined
+		b.ctx.sc.AddVarName(varName, typ, reason, flags)
 	})
 }
 
@@ -1617,7 +1622,7 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 
 			switch v := varNode.(type) {
 			case *node.SimpleVar:
-				a.b.addVar(v, meta.NewTypesMap("isset_$"+v.Name), "isset", true)
+				a.b.addVar(v, meta.NewTypesMap("isset_$"+v.Name), "isset", meta.VarAlwaysDefined)
 				a.varsToDelete = append(a.varsToDelete, v)
 			case *node.Var:
 				a.b.handleVariable(v.Expr)
@@ -1625,7 +1630,7 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 				if !ok {
 					continue
 				}
-				a.b.addVar(v, meta.NewTypesMap("isset_$$"+vv.Name), "isset", true)
+				a.b.addVar(v, meta.NewTypesMap("isset_$$"+vv.Name), "isset", meta.VarAlwaysDefined)
 				a.varsToDelete = append(a.varsToDelete, v)
 			}
 		}
@@ -1634,7 +1639,7 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 		if className, ok := solver.GetClassName(a.b.r.ctx.st, n.Class); ok {
 			switch v := n.Expr.(type) {
 			case *node.Var, *node.SimpleVar:
-				a.b.ctx.sc.AddVar(v, meta.NewTypesMap(className), "instanceof", false)
+				a.b.ctx.sc.AddVar(v, meta.NewTypesMap(className), "instanceof", 0)
 			default:
 				a.b.ctx.customTypes = append(a.b.ctx.customTypes, solver.CustomType{
 					Node: n.Expr,
@@ -1661,7 +1666,7 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 		if a.b.ctx.sc.HaveVar(v) {
 			break
 		}
-		a.b.addVar(v, meta.NewTypesMap("isset_$"+v.Name), "!empty", true)
+		a.b.addVar(v, meta.NewTypesMap("isset_$"+v.Name), "!empty", meta.VarAlwaysDefined)
 		a.varsToDelete = append(a.varsToDelete, v)
 	}
 
@@ -1683,7 +1688,7 @@ func (b *BlockWalker) handleVariable(v node.Node) bool {
 
 	if !b.ctx.sc.HaveVar(v) {
 		b.r.reportUndefinedVariable(v, b.ctx.sc.MaybeHaveVar(v))
-		b.ctx.sc.AddVar(v, meta.NewTypesMap("undefined"), "undefined", true)
+		b.ctx.sc.AddVar(v, meta.NewTypesMap("undefined"), "undefined", meta.VarAlwaysDefined)
 	}
 
 	return false
@@ -1811,16 +1816,18 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 			continue
 		}
 
-		ctx.sc.Iterate(func(nm string, typ meta.TypesMap, alwaysDefined bool) {
+		ctx.sc.Iterate(func(nm string, typ meta.TypesMap, flags meta.VarFlags) {
 			varTypes[nm] = varTypes[nm].Append(typ)
-			if alwaysDefined {
+			if flags.IsAlwaysDefined() {
 				defCounts[nm]++
 			}
 		})
 	}
 
 	for nm, types := range varTypes {
-		b.ctx.sc.AddVarName(nm, types, "all branches", defCounts[nm] == linksCount)
+		var flags meta.VarFlags
+		flags.SetAlwaysDefined(defCounts[nm] == linksCount)
+		b.ctx.sc.AddVarName(nm, types, "all branches", flags)
 	}
 
 	return false
@@ -1970,16 +1977,18 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 			continue
 		}
 
-		ctx.sc.Iterate(func(nm string, typ meta.TypesMap, alwaysDefined bool) {
+		ctx.sc.Iterate(func(nm string, typ meta.TypesMap, flags meta.VarFlags) {
 			varTypes[nm] = varTypes[nm].Append(typ)
-			if alwaysDefined {
+			if flags.IsAlwaysDefined() {
 				defCounts[nm]++
 			}
 		})
 	}
 
 	for nm, types := range varTypes {
-		b.ctx.sc.AddVarName(nm, types, "all cases", defCounts[nm] == linksCount)
+		var flags meta.VarFlags
+		flags.SetAlwaysDefined(defCounts[nm] == linksCount)
+		b.ctx.sc.AddVarName(nm, types, "all cases", flags)
 	}
 
 	return false
@@ -1997,7 +2006,7 @@ func (b *BlockWalker) handleDimFetchLValue(e *expr.ArrayDimFetch, reason string,
 		typ.Iterate(func(t string) {
 			arrTyp = arrTyp.AppendString(meta.WrapArrayOf(t))
 		})
-		b.addVar(v, arrTyp, reason, true)
+		b.addVar(v, arrTyp, reason, meta.VarAlwaysDefined)
 		b.handleVariable(v)
 	case *expr.ArrayDimFetch:
 		b.handleDimFetchLValue(v, reason, meta.MixedType)
@@ -2019,7 +2028,7 @@ func (b *BlockWalker) handleAssignReference(a *assign.Reference) bool {
 		a.Expression.Walk(b)
 		return false
 	case *node.Var, *node.SimpleVar:
-		b.addVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", true)
+		b.addVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
 		b.addNonLocalVar(v)
 	case *expr.List:
 		// TODO: figure out whether this case is reachable.
@@ -2107,7 +2116,7 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 		return false
 	case *node.Var, *node.SimpleVar:
 		b.checkVoidType(a.Expression)
-		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", true)
+		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
 	case *expr.List:
 		b.handleAssignList(v.Items)
 	case *expr.PropertyFetch:
@@ -2209,7 +2218,7 @@ func (b *BlockWalker) handleVariableNode(n node.Node, typ meta.TypesMap, what st
 		return
 	}
 
-	b.addVar(vv, typ, what, true)
+	b.addVar(vv, typ, what, meta.VarAlwaysDefined)
 }
 
 // LeaveNode is called after all children have been visited.

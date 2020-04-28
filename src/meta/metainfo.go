@@ -270,8 +270,8 @@ func (i *info) AddConstantsNonLocked(filename string, m ConstantsMap) {
 }
 
 func (i *info) AddToGlobalScopeNonLocked(filename string, sc *Scope) {
-	sc.Iterate(func(nm string, typ TypesMap, alwaysDefined bool) {
-		i.AddVarName(nm, typ, "global", alwaysDefined)
+	sc.Iterate(func(nm string, typ TypesMap, flags VarFlags) {
+		i.AddVarName(nm, typ, "global", flags)
 	})
 }
 

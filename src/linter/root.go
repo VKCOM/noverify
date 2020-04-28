@@ -304,7 +304,7 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 			break
 		}
 
-		d.scope().AddVar(v, solver.ExprTypeLocal(d.scope(), d.ctx.st, n.Expression), "global variable", true)
+		d.scope().AddVar(v, solver.ExprTypeLocal(d.scope(), d.ctx.st, n.Expression), "global variable", meta.VarAlwaysDefined)
 	case *stmt.Function:
 		res = d.enterFunction(n)
 		d.checkKeywordCase(n, "function")
@@ -513,7 +513,7 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 			typ = meta.NewTypesMap("TODO_use_var")
 		}
 
-		sc.AddVar(v, typ, "use", true)
+		sc.AddVar(v, typ, "use", meta.VarAlwaysDefined)
 
 		if !byRef {
 			b.unusedVars[v.Name] = append(b.unusedVars[v.Name], v)
@@ -752,7 +752,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 
 	sc := meta.NewScope()
 	if !modif.static {
-		sc.AddVarName("this", meta.NewTypesMap(d.ctx.st.CurrentClass).Immutable(), "instance method", true)
+		sc.AddVarName("this", meta.NewTypesMap(d.ctx.st.CurrentClass).Immutable(), "instance method", meta.VarAlwaysDefined)
 		sc.SetInInstanceMethod(true)
 	}
 
@@ -810,7 +810,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 			res := make(map[string]struct{})
 			res[meta.WrapBaseMethodParam(i, d.ctx.st.CurrentClass, nm)] = struct{}{}
 			params[i].Typ = meta.NewTypesMapFromMap(res)
-			sc.AddVarName(p.Name, params[i].Typ, "param", true)
+			sc.AddVarName(p.Name, params[i].Typ, "param", meta.VarAlwaysDefined)
 		}
 	}
 
@@ -1016,7 +1016,7 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 		parTyp := parTypes[v.Name]
 
 		if !parTyp.typ.IsEmpty() {
-			sc.AddVarName(v.Name, parTyp.typ, "param", true)
+			sc.AddVarName(v.Name, parTyp.typ, "param", meta.VarAlwaysDefined)
 		}
 
 		typ := parTyp.typ
@@ -1039,7 +1039,7 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 			typ = arrTyp
 		}
 
-		sc.AddVarName(v.Name, typ, "param", true)
+		sc.AddVarName(v.Name, typ, "param", meta.VarAlwaysDefined)
 
 		par := meta.FuncParam{
 			Typ:   typ.Immutable(),
