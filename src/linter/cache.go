@@ -34,7 +34,8 @@ import (
 //          FuncInfo now stores original function name
 //          ClassInfo now stores original class name
 //     37 - added ClassShape bit to ClassFlags
-const cacheVersion = 36
+//          changed meta.scopeVar bool fields representation
+const cacheVersion = 37
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")
