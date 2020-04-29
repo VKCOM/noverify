@@ -287,6 +287,16 @@ func (r *Report) MarshalJSON() ([]byte, error) {
 }
 
 func (r *Report) String() string {
+	msg := r.msg
+	if r.checkName != "" {
+		msg = r.checkName + ": " + msg
+	}
+
+	// No context line for security-level warnings.
+	if r.level == LevelSecurity {
+		return fmt.Sprintf("%s %s at %s:%d", severityNames[r.level], msg, r.filename, r.startLine)
+	}
+
 	contextLn := strings.Builder{}
 	for i, ch := range r.startLn {
 		if i == r.startChar {
@@ -301,11 +311,6 @@ func (r *Report) String() string {
 
 	if r.endChar > r.startChar {
 		contextLn.WriteString(strings.Repeat("^", r.endChar-r.startChar))
-	}
-
-	msg := r.msg
-	if r.checkName != "" {
-		msg = r.checkName + ": " + msg
 	}
 	return fmt.Sprintf("%s %s at %s:%d\n%s\n%s", severityNames[r.level], msg, r.filename, r.startLine, r.startLn, contextLn.String())
 }
