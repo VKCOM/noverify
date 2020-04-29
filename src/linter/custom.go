@@ -207,6 +207,7 @@ const (
 	LevelUnused      = lintapi.LevelUnused
 	LevelDoNotReject = lintapi.LevelMaybe
 	LevelSyntax      = lintapi.LevelSyntax
+	LevelSecurity    = lintapi.LevelSecurity // Like warning, but reported without a context line
 )
 
 var vscodeLevelMap = map[int]int{
@@ -216,6 +217,7 @@ var vscodeLevelMap = map[int]int{
 	LevelHint:        vscode.Hint,
 	LevelUnused:      vscode.Information,
 	LevelDoNotReject: vscode.Warning,
+	LevelSecurity:    vscode.Warning,
 	// LevelSyntax is intentionally not included here
 }
 
@@ -227,6 +229,7 @@ var severityNames = map[int]string{
 	LevelUnused:      "UNUSED ",
 	LevelDoNotReject: "MAYBE  ",
 	LevelSyntax:      "SYNTAX ",
+	LevelSecurity:    "WARNING",
 }
 
 var (
