@@ -286,6 +286,64 @@ $name = "NoVerify"; // No warning
 	runRulesTest(t, test, rfile)
 }
 
+func TestRulesIfCond(t *testing.T) {
+	rfile := `<?php
+/**
+ * @warning used string-typed value inside if condition
+ * @type string $x
+ */
+if (${"x:var"}) $_;
+`
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function concat($x, $y) { return $x . $y; }
+
+function good1(string $x) {
+  if ($x == '') {}
+  if ($x == '');
+}
+
+function good2(string $x) {
+  if ($x === '') {}
+  if ($x === '');
+}
+
+/** @param float $y */
+function good3(int $x, $y) {
+  if ($x) {}
+  if ($y) {}
+  if ($x);
+  if ($y);
+}
+
+function good4(array $xs) {
+  global $a;
+  if ($xs['a']) {}
+  if ($xs) {}
+  if ($a[10]) {}
+}
+
+/** @param string[] $a */
+function ignored(string $x, string $y, $a) {
+  if ($x || $y) {}
+  if ($x . $y) {}
+  if ($a[0]) {}
+  if ($x .= '123') {}
+  if (concat('a', 'b')) {}
+}
+
+function bad(string $x) {
+  if ($x) {} // Bad 1
+  if ($x);   // Bad 2
+}
+`)
+	test.Expect = []string{
+		`used string-typed value inside if condition`,
+		`used string-typed value inside if condition`,
+	}
+	runRulesTest(t, test, rfile)
+}
+
 func runRulesTest(t *testing.T, test *linttest.Suite, rfile string) {
 	rparser := rules.NewParser()
 	rset, err := rparser.Parse("<test>", strings.NewReader(rfile))
