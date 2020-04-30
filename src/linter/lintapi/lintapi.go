@@ -17,4 +17,5 @@ const (
 	LevelUnused      = 5
 	LevelMaybe       = 6 // do not treat this warning as a reason to reject if we get this kind of warning
 	LevelSyntax      = 7
+	LevelSecurity    = 8
 )
