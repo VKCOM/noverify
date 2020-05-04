@@ -15,6 +15,13 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 )
 
+func bitwiseOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right node.Node, custom []CustomType) meta.TypesMap {
+	if ExprTypeLocalCustom(sc, cs, left, custom).Is("string") && ExprTypeLocalCustom(sc, cs, right, custom).Is("string") {
+		return meta.NewTypesMap("string")
+	}
+	return meta.NewTypesMap("int")
+}
+
 func unaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, x node.Node, custom []CustomType) meta.TypesMap {
 	if ExprTypeLocalCustom(sc, cs, x, custom).Is("int") {
 		return meta.NewTypesMap("int")
@@ -297,6 +304,17 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 		})
 
 		return meta.NewTypesMapFromMap(res)
+	case *expr.BitwiseNot:
+		if ExprTypeLocalCustom(sc, cs, n.Expr, custom).Is("string") {
+			return meta.NewTypesMap("string")
+		}
+		return meta.NewTypesMap("int")
+	case *binary.BitwiseAnd:
+		return bitwiseOpType(sc, cs, n.Left, n.Right, custom)
+	case *binary.BitwiseOr:
+		return bitwiseOpType(sc, cs, n.Left, n.Right, custom)
+	case *binary.BitwiseXor:
+		return bitwiseOpType(sc, cs, n.Left, n.Right, custom)
 	case *binary.Concat:
 		return meta.NewTypesMap("string")
 	case *expr.Array:

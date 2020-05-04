@@ -790,6 +790,21 @@ func TestExprTypeSimple(t *testing.T) {
 		{`+1`, `int`},
 		{`+1.4`, `float`},
 
+		{`~$int`, `int`},
+		{`~'dsds'`, `string`},
+
+		{`$int & $int`, `int`},
+		{`$float & $int`, `int`},
+		{`$int & $float`, `int`},
+		{`4.5 & 1.4`, `int`},
+		{`"abc" & "foo"`, `string`},
+		{`$int | $int`, `int`},
+		{`4.5 | 1.4`, `int`},
+		{`"abc" | "foo"`, `string`},
+		{`$int ^ $int`, `int`},
+		{`4.5 ^ 1.4`, `int`},
+		{`"abc" ^ "foo"`, `string`},
+
 		{`$int`, "int"},
 		{`$float`, "float"},
 		{`$string`, "string"},
