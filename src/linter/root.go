@@ -62,6 +62,9 @@ type RootWalker struct {
 
 	disabledFlag bool // user-defined flag that file should not be linted
 
+	// strictTypes is true if file contains `declare(strict_types=1)`.
+	strictTypes bool
+
 	reports []*Report
 
 	fileContents []byte
@@ -222,6 +225,20 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 	state.EnterNode(d.ctx.st, w)
 
 	switch n := w.(type) {
+	case *stmt.Declare:
+		for _, c := range n.Consts {
+			c, ok := c.(*stmt.Constant)
+			if !ok {
+				continue
+			}
+			if c.ConstantName.Value == "strict_types" {
+				v, ok := c.Expr.(*scalar.Lnumber)
+				if ok && v.Value == "1" {
+					d.strictTypes = true
+				}
+			}
+		}
+
 	case *stmt.Interface:
 		d.currentClassNode = n
 		d.checkKeywordCase(n, "interface")
