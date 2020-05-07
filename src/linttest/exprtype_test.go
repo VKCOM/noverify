@@ -430,6 +430,37 @@ class Foo {
 	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
 }
 
+func TestExprTypeScopeNoreplace(t *testing.T) {
+	// These tests cover special NoReplace flag of the meta.ScopeVar.
+
+	tests := []exprTypeTest{
+		{`phpdoc_param($v)`, `int`},
+		{`phpdoc_localvar()`, `int|string`},
+		{`localvar()`, `int`},
+	}
+	global := `<?php
+/** @param string $v */
+function phpdoc_param($v) {
+  $v = 10;
+  return $v;
+}
+
+function phpdoc_localvar() {
+  /** @var string $x */
+  $x = '123';
+  $x = 10;
+  return $x;
+}
+
+function localvar() {
+  $x = '123';
+  $x = 10;
+  return $x;
+}
+`
+	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
+}
+
 func TestExprTypeMalformedPhpdoc(t *testing.T) {
 	tests := []exprTypeTest{
 		{`return_mixed(0)`, `mixed`},
