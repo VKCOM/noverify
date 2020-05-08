@@ -11,6 +11,11 @@ import (
 var (
 	MixedType = NewTypesMap("mixed").Immutable()
 	VoidType  = NewTypesMap("void").Immutable()
+
+	PreciseIntType    = NewPreciseTypesMap("int").Immutable()
+	PreciseFloatType  = NewPreciseTypesMap("float").Immutable()
+	PreciseBoolType   = NewPreciseTypesMap("bool").Immutable()
+	PreciseStringType = NewPreciseTypesMap("string").Immutable()
 )
 
 type Type struct {
@@ -18,10 +23,52 @@ type Type struct {
 	Dims int
 }
 
+type mapFlags uint8
+
+const (
+	mapImmutable mapFlags = 1 << iota
+	mapPrecise
+)
+
 // TypesMap holds a set of types and can be made immutable to prevent unexpected changes.
 type TypesMap struct {
-	immutable bool
-	m         map[string]struct{}
+	flags mapFlags
+	m     map[string]struct{}
+}
+
+// IsPrecise reports whether the type set represented by the map is precise
+// enough to perform typecheck-like analysis.
+//
+// Type precision determined by a type information source.
+// For example, Int literal has a precise type of `int`, while having
+// a phpdoc that promises some variable to have type `T` is not precise enough.
+//
+// Adding an imprecise type to a types map makes the entire type map imprecise.
+//
+// Important invariant: a precise map contains no lazy types.
+func (m TypesMap) IsPrecise() bool { return m.flags&mapPrecise != 0 }
+
+func (m TypesMap) isImmutable() bool { return m.flags&mapImmutable != 0 }
+
+// IsResolved reports whether all types inside types map are resolved.
+//
+// Users should not depend on the "false" result meaning.
+// If "true" is returned, TypesMap is guaranteed to be free of lazy types.
+func (m TypesMap) IsResolved() bool {
+	if m.IsPrecise() {
+		// Using the invariant that precise types are resolved.
+		return true
+	}
+
+	// TODO: could do a `s[0] >= meta.WMax` check over map keys
+	// to check if it contains any lazy types.
+	// It can be safe to start with maps of size 1.
+	//
+	// Looping over maps of arbitrary size can take more CPU time
+	// than we would like to spend.
+	// Note that most maps have a size that is less than 4, but
+	// some of them can have 100+ elements.
+	return false
 }
 
 // NewEmptyTypesMap creates new type map that has no types in it
@@ -53,6 +100,12 @@ func NewTypesMap(str string) TypesMap {
 	return TypesMap{m: m}
 }
 
+func NewPreciseTypesMap(str string) TypesMap {
+	m := NewTypesMap(str)
+	m.flags |= mapPrecise
+	return m
+}
+
 // MergeTypeMaps creates a new types map from union of specified type maps
 func MergeTypeMaps(maps ...TypesMap) TypesMap {
 	totalLen := 0
@@ -76,8 +129,8 @@ func NewTypesMapFromMap(m map[string]struct{}) TypesMap {
 // Immutable returns immutable copy of TypesMap
 func (m TypesMap) Immutable() TypesMap {
 	return TypesMap{
-		immutable: true,
-		m:         m.m,
+		flags: m.flags | mapImmutable,
+		m:     m.m,
 	}
 }
 
@@ -147,7 +200,7 @@ func (m TypesMap) Is(typ string) bool {
 
 // AppendString adds provided types to current map and returns new one (immutable maps are always copied)
 func (m TypesMap) AppendString(str string) TypesMap {
-	if !m.immutable {
+	if !m.isImmutable() {
 		if m.m == nil {
 			m.m = make(map[string]struct{}, strings.Count(str, "|")+1)
 		}
@@ -155,6 +208,10 @@ func (m TypesMap) AppendString(str string) TypesMap {
 		for _, s := range strings.Split(str, "|") {
 			m.m[s] = struct{}{}
 		}
+
+		// Since we have no idea where str is coming from,
+		// mark map as imprecise.
+		m.flags &^= mapPrecise
 
 		return m
 	}
@@ -168,11 +225,12 @@ func (m TypesMap) AppendString(str string) TypesMap {
 		mm[s] = struct{}{}
 	}
 
+	// The returned map is mutable and imprecise.
 	return TypesMap{m: mm}
 }
 
 func (m TypesMap) clone() TypesMap {
-	if m.Len() == 0 || m.immutable {
+	if m.Len() == 0 || m.isImmutable() {
 		return m
 	}
 
@@ -192,7 +250,7 @@ func (m TypesMap) Append(n TypesMap) TypesMap {
 		return m
 	}
 
-	if !m.immutable {
+	if !m.isImmutable() {
 		if m.m == nil {
 			if n.m == nil {
 				return m
@@ -214,7 +272,14 @@ func (m TypesMap) Append(n TypesMap) TypesMap {
 		mm[k] = v
 	}
 
-	return TypesMap{m: mm}
+	// Previously, returned map was always mutable, so we ignore mapImmutable flag.
+	// If both maps are precise, we preserve that property.
+	var flags mapFlags
+	if m.IsPrecise() && n.IsPrecise() {
+		flags |= mapPrecise
+	}
+
+	return TypesMap{m: mm, flags: flags}
 }
 
 // String returns string representation of a map
@@ -237,7 +302,7 @@ func (m TypesMap) String() string {
 func (m TypesMap) GobEncode() ([]byte, error) {
 	w := new(bytes.Buffer)
 	encoder := gob.NewEncoder(w)
-	err := encoder.Encode(m.immutable)
+	err := encoder.Encode(m.flags)
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +317,7 @@ func (m TypesMap) GobEncode() ([]byte, error) {
 func (m *TypesMap) GobDecode(buf []byte) error {
 	r := bytes.NewBuffer(buf)
 	decoder := gob.NewDecoder(r)
-	err := decoder.Decode(&m.immutable)
+	err := decoder.Decode(&m.flags)
 	if err != nil {
 		return err
 	}

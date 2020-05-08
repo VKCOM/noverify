@@ -35,7 +35,9 @@ import (
 //          ClassInfo now stores original class name
 //     37 - added ClassShape bit to ClassFlags
 //          changed meta.scopeVar bool fields representation
-const cacheVersion = 37
+//     38 - replaced TypesMap.immutable:bool with flags:uint8.
+//          added mapPrecise flag to mark precise type maps.
+const cacheVersion = 38
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")

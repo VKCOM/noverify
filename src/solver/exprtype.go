@@ -61,6 +61,9 @@ func ExprTypeCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, custo
 	if !meta.IsIndexingComplete() {
 		return m
 	}
+	if m.IsResolved() {
+		return m
+	}
 
 	newMap := make(map[string]struct{}, m.Len())
 	visitedMap := make(map[string]struct{})
@@ -316,7 +319,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 	case *binary.BitwiseXor:
 		return bitwiseOpType(sc, cs, n.Left, n.Right, custom)
 	case *binary.Concat:
-		return meta.NewTypesMap("string")
+		return meta.PreciseStringType
 	case *expr.Array:
 		return arrayType(n.Items)
 	case *expr.BooleanNot, *binary.BooleanAnd, *binary.BooleanOr,
@@ -324,7 +327,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 		*binary.Greater, *binary.GreaterOrEqual,
 		*binary.Smaller, *binary.SmallerOrEqual,
 		*expr.Empty, *expr.Isset:
-		return meta.NewTypesMap("bool")
+		return meta.PreciseBoolType
 	case *expr.UnaryMinus:
 		return unaryMathOpType(sc, cs, n.Expr, custom)
 	case *expr.UnaryPlus:
@@ -342,13 +345,13 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 	case *cast.Array:
 		return meta.NewTypesMap("mixed[]")
 	case *cast.Bool:
-		return meta.NewTypesMap("bool")
+		return meta.PreciseBoolType
 	case *cast.Double:
-		return meta.NewTypesMap("float")
+		return meta.PreciseFloatType
 	case *cast.Int, *binary.ShiftLeft, *binary.ShiftRight:
-		return meta.NewTypesMap("int")
+		return meta.PreciseIntType
 	case *cast.String:
-		return meta.NewTypesMap("string")
+		return meta.PreciseStringType
 	case *expr.ClassConstFetch:
 		className, ok := GetClassName(cs, n.Class)
 		if !ok {
@@ -367,7 +370,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 			constName := p[0].(*name.NamePart).Value
 
 			if constName == "false" || constName == "true" {
-				return meta.NewTypesMap("bool")
+				return meta.PreciseBoolType
 			}
 
 			if constName == "null" {
@@ -376,16 +379,12 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 
 			return meta.NewTypesMap(meta.WrapConstant(constName))
 		}
-	case *scalar.String:
-		return meta.NewTypesMap("string")
-	case *scalar.Encapsed:
-		return meta.NewTypesMap("string")
+	case *scalar.String, *scalar.Encapsed, *scalar.Heredoc:
+		return meta.PreciseStringType
 	case *scalar.Lnumber:
-		return meta.NewTypesMap("int")
-	case *scalar.Heredoc:
-		return meta.NewTypesMap("string")
+		return meta.PreciseIntType
 	case *scalar.Dnumber:
-		return meta.NewTypesMap("float")
+		return meta.PreciseFloatType
 	case *expr.Ternary:
 		t := ExprTypeLocalCustom(sc, cs, n.IfTrue, custom)
 		f := ExprTypeLocalCustom(sc, cs, n.IfFalse, custom)
@@ -396,7 +395,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 		}
 		nm, ok := GetClassName(cs, n.Class)
 		if ok {
-			return meta.NewTypesMap(nm)
+			return meta.NewPreciseTypesMap(nm)
 		}
 		return meta.TypesMap{}
 	case *assign.Assign:

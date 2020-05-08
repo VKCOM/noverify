@@ -477,9 +477,7 @@ func (b *BlockWalker) handleReturn(ret *stmt.Return) {
 	b.returnsValue = true
 
 	typ := solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, ret.Expr, b.ctx.customTypes)
-	typ.Iterate(func(t string) {
-		b.returnTypes = b.returnTypes.AppendString(t)
-	})
+	b.returnTypes = b.returnTypes.Append(typ)
 }
 
 func (b *BlockWalker) handleLogicalOr(or *binary.LogicalOr) bool {
