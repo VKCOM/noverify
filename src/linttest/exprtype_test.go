@@ -2,7 +2,6 @@ package linttest_test
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/solver"
+	"github.com/google/go-cmp/cmp"
 )
 
 // Tests in this file make it less likely that type solving will break
@@ -21,11 +21,26 @@ import (
 // TODO(quasilyte): better handling of an `empty_array` type.
 // Now it's resolved to `mixed[]` for expressions that have multiple empty_array.
 
-func TestExprTypeDebug(t *testing.T) {
-	tests := []exprTypeTest{}
+func TestExprTypePrecise(t *testing.T) {
+	tests := []exprTypeTest{
+		// TODO(quasilyte): preserve type precision when resolving
+		// wrapped (lazy) type expressions.
+		{`precise_int()`, `int`},
 
-	global := `<?php`
-	local := ``
+		// Cases below should never become precise.
+		{`$foo->default_int`, `int`},
+	}
+
+	global := `<?php
+class Foo {
+  // Default value should not be considered to be precise
+  // enough, since anything can be assigned later.
+  public $default_int = 10;
+}
+
+function precise_int() { return 10; }
+`
+	local := `$foo = new Foo();`
 	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
 }
 
@@ -794,27 +809,27 @@ $dd = new DerivedDerived();
 
 func TestExprTypeSimple(t *testing.T) {
 	tests := []exprTypeTest{
-		{`true`, "bool"},
-		{`false`, "bool"},
-		{`(bool)1`, "bool"},
-		{`(boolean)1`, "bool"},
+		{`true`, "precise bool"},
+		{`false`, "precise bool"},
+		{`(bool)1`, "precise bool"},
+		{`(boolean)1`, "precise bool"},
 
-		{`1`, "int"},
-		{`(int)1.5`, "int"},
-		{`(integer)1.5`, "int"},
+		{`1`, "precise int"},
+		{`(int)1.5`, "precise int"},
+		{`(integer)1.5`, "precise int"},
 
-		{`1.21`, "float"},
-		{`(float)1`, "float"},
-		{`(real)1`, "float"},
-		{`(double)1`, "float"},
+		{`1.21`, "precise float"},
+		{`(float)1`, "precise float"},
+		{`(real)1`, "precise float"},
+		{`(double)1`, "precise float"},
 
-		{`""`, "string"},
-		{`(string)1`, "string"},
+		{`""`, "precise string"},
+		{`(string)1`, "precise string"},
 
 		{`[]`, "mixed[]"},
 		{`[1, "a", 4.5]`, "mixed[]"},
 
-		{`1+5<<2`, `int`},
+		{`1+5<<2`, `precise int`},
 
 		{`-1`, `int`},
 		{`-1.4`, `float`},
@@ -843,8 +858,10 @@ func TestExprTypeSimple(t *testing.T) {
 		{`define('foo', 0 == 0)`, `void`},
 		{`empty_array()`, `mixed[]`},
 
-		{`new Foo()`, `\Foo`},
-		{`clone (new Foo())`, `\Foo`},
+		{`new Foo()`, `precise \Foo`},
+		{`clone (new Foo())`, `precise \Foo`},
+
+		{`1 > 4`, `precise bool`},
 	}
 
 	global := `<?php
@@ -926,11 +943,11 @@ func TestExprTypeArray(t *testing.T) {
 
 func TestExprTypeMulti(t *testing.T) {
 	tests := []exprTypeTest{
-		{`$cond ? 1 : 2`, "int"},
+		{`$cond ? 1 : 2`, "precise int"},
 		{`$int_or_float`, "int|float"},
 		{`$int_or_float`, "float|int"},
-		{`$cond ? 10 : "123"`, "int|string"},
-		{`$cond ? ($int_or_float ? 10 : 10.4) : (bool)1`, "int|float|bool"},
+		{`$cond ? 10 : "123"`, "precise int|string"},
+		{`$cond ? ($int_or_float ? 10 : 10.4) : (bool)1`, "precise int|float|bool"},
 		{`$bool_or_int`, `bool|int`},
 		{`$cond ? 10 : get_mixed(1)`, `int|mixed`},
 		{`$cond ? get_mixed(1) : 10`, `int|mixed`},
@@ -961,10 +978,10 @@ func TestExprTypeOps(t *testing.T) {
 		{`$global_int + 1`, "float"},
 		{`1 + $float`, "float"},
 
-		{`$int . $float`, "string"},
+		{`$int . $float`, "precise string"},
 
-		{`$int && $float`, "bool"},
-		{`$int || 1`, "bool"},
+		{`$int && $float`, "precise bool"},
+		{`$int || 1`, "precise bool"},
 	}
 
 	global := `<?php
@@ -1255,7 +1272,7 @@ func TestExprTypeMethod(t *testing.T) {
 		{`$test->getInt()`, `int`},
 		{`$test->getInts()`, `int[]`},
 		{`$test->getThis()->getThis()->getInt()`, `int`},
-		{`new \NS\Test()`, `\NS\Test`},
+		{`new \NS\Test()`, `precise \NS\Test`},
 	}
 
 	global := `<?php
@@ -1285,7 +1302,7 @@ namespace NS {
 
 func TestExprTypeInterface(t *testing.T) {
 	tests := []exprTypeTest{
-		{"$foo", `\Foo`},
+		{"$foo", `precise \Foo`},
 		{"$foo->getThis()", `\Foo`},
 		{"$foo->acceptThis($foo)", `\TestInterface`},
 		{"$foo->acceptThis($foo)->acceptThis($foo)", `\TestInterface`},
@@ -1384,25 +1401,38 @@ func runExprTypeTest(t *testing.T, ctx *exprTypeTestContext, tests []exprTypeTes
 			t.Errorf("missing f%d info", i)
 			continue
 		}
-		have := solver.ResolveTypes("", fn.Typ, make(map[string]struct{}))
+		have := testTypesMap{
+			Types:   solver.ResolveTypes("", fn.Typ, make(map[string]struct{})),
+			Precise: fn.Typ.IsPrecise(),
+		}
 		want := makeType(test.expectedType)
-		if !reflect.DeepEqual(have, want) {
-			t.Errorf("type mismatch for %q:\nhave: %q\nwant: %q",
-				test.expr, have, want)
+		if diff := cmp.Diff(have, want); diff != "" {
+			t.Errorf("type mismatch for %q (-have +want):\n%s",
+				test.expr, diff)
 		}
 	}
 }
 
-func makeType(typ string) map[string]struct{} {
+type testTypesMap struct {
+	Precise bool
+	Types   map[string]struct{}
+}
+
+func makeType(typ string) testTypesMap {
 	if typ == "" {
-		return map[string]struct{}{}
+		return testTypesMap{Types: map[string]struct{}{}}
+	}
+
+	precise := strings.HasPrefix(typ, "precise ")
+	if precise {
+		typ = strings.TrimPrefix(typ, "precise ")
 	}
 
 	res := make(map[string]struct{})
 	for _, t := range strings.Split(typ, "|") {
 		res[t] = struct{}{}
 	}
-	return res
+	return testTypesMap{Precise: precise, Types: res}
 }
 
 type exprTypeTest struct {
