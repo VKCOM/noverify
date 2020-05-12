@@ -403,6 +403,98 @@ func TestFuncComplexity(t *testing.T) {
 	test.RunAndMatch()
 }
 
+func TestPrecedenceBadLHS(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function lhs($x, $mask) {
+  $_ = 0 == $mask & $x;
+  $_ = 0 != $mask & $x;
+  $_ = 0 === $mask & $x;
+  $_ = 0 !== $mask & $x;
+
+  $_ = 0 == $mask | $x;
+  $_ = 0 != $mask | $x;
+  $_ = 0 === $mask | $x;
+  $_ = 0 !== $mask | $x;
+}
+`)
+	test.Expect = []string{
+		`== has higher precedence than &`,
+		`!= has higher precedence than &`,
+		`=== has higher precedence than &`,
+		`!== has higher precedence than &`,
+		`== has higher precedence than |`,
+		`!= has higher precedence than |`,
+		`=== has higher precedence than |`,
+		`!== has higher precedence than |`,
+	}
+	test.RunAndMatch()
+}
+
+func TestPrecedenceBadRHS(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function rhs($x, $mask) {
+  $_ = $x & $mask == 0;
+  $_ = $x & $mask != 0;
+  $_ = $x & $mask === 0;
+  $_ = $x & $mask !== 0;
+
+  $_ = $x | $mask == 0;
+  $_ = $x | $mask != 0;
+  $_ = $x | $mask === 0;
+  $_ = $x | $mask !== 0;
+}
+`)
+	test.Expect = []string{
+		`== has higher precedence than &`,
+		`!= has higher precedence than &`,
+		`=== has higher precedence than &`,
+		`!== has higher precedence than &`,
+		`== has higher precedence than |`,
+		`!= has higher precedence than |`,
+		`=== has higher precedence than |`,
+		`!== has higher precedence than |`,
+	}
+	test.RunAndMatch()
+}
+
+func TestPrecedenceGood(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+function foo() { return 10; }
+
+function rhs($x, $mask) {
+  $_ = ($x & $mask) == 0;
+  $_ = ($x & $mask) != 0;
+  $_ = ($x & $mask) === 0;
+  $_ = ($x & $mask) !== 0;
+
+  $_ = ($x | $mask) == 0;
+  $_ = ($x | $mask) != 0;
+  $_ = ($x | $mask) === 0;
+  $_ = ($x | $mask) !== 0;
+
+  $_ = 0x02 | (($x & $mask) != 0);
+  $_ = 0x02 & (foo() !== 0);
+}
+
+function lhs($x, $mask) {
+  $_ = 0 == ($mask & $x);
+  $_ = 0 != ($mask & $x);
+  $_ = 0 === ($mask & $x);
+  $_ = 0 !== ($mask & $x);
+
+  $_ = 0 == ($mask | $x);
+  $_ = 0 != ($mask | $x);
+  $_ = 0 === ($mask | $x);
+  $_ = 0 !== ($mask | $x);
+
+  $_ = (($x & $mask) != 0) | 0x02;
+  $_ = (foo() !== 0) & 0x02;
+}
+`)
+}
+
 func TestBitwiseOps(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

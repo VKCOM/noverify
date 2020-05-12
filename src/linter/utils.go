@@ -7,6 +7,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/binary"
@@ -285,6 +286,22 @@ func binaryOpString(n node.Node) string {
 	default:
 		return ""
 	}
+}
+
+func findFreeFloatingToken(n node.Node, pos freefloating.Position, s string) bool {
+	ff := n.GetFreeFloating()
+	if ff == nil {
+		return false
+	}
+	for _, tok := range (*ff)[pos] {
+		if tok.StringType != freefloating.TokenType {
+			continue
+		}
+		if tok.Value == s {
+			return true
+		}
+	}
+	return false
 }
 
 // List taken from https://wiki.php.net/rfc/context_sensitive_lexer
