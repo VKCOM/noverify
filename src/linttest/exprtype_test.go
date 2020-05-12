@@ -26,9 +26,20 @@ func TestExprTypePrecise(t *testing.T) {
 		// TODO(quasilyte): preserve type precision when resolving
 		// wrapped (lazy) type expressions.
 		{`precise_int()`, `int`},
+		{`return_precise_int_var()`, `int`},
+
+		// Cases that are debatable, but right now result in imprecise types.
+		{`repeated_info1(true)`, `bool`},
+		{`repeated_info2(false)`, `bool`},
+
+		// Type hints are not considered to be a precise type source for now.
+		// Even with strict_mode.
+		{`typehint_int(10)`, `int`},
 
 		// Cases below should never become precise.
 		{`$foo->default_int`, `int`},
+		{`default_bool_param(10)`, `bool`},
+		{`mixed_info1()`, `bool|int`},
 	}
 
 	global := `<?php
@@ -38,7 +49,27 @@ class Foo {
   public $default_int = 10;
 }
 
+function return_precise_int_var() {
+  $local = 10;
+  return $local;
+}
+
 function precise_int() { return 10; }
+
+function typehint_int(int $i) { return $i; }
+
+/** @param bool $b */
+function repeated_info1($b) : bool { return $b; }
+
+/** @return bool */
+function repeated_info2() { return false; }
+
+function default_bool_param($v = false) { return $v; }
+
+/** @param bool|int $v */
+function mixed_info1(int $v) {
+  return $v;
+}
 `
 	local := `$foo = new Foo();`
 	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
