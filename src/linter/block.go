@@ -172,9 +172,7 @@ func (b *BlockWalker) checkBinaryDupArgs(n, left, right node.Node) {
 	if !b.sideEffectFree(left) || !b.sideEffectFree(right) {
 		return
 	}
-	b.r.nodeSet.Reset()
-	b.r.nodeSet.Add(left)
-	if !b.r.nodeSet.Add(right) {
+	if astutil.NodeEqual(left, right) {
 		b.r.Report(n, LevelWarning, "dupSubExpr", "duplicated operands in %s expression", binaryOpString(n))
 	}
 }
@@ -1698,9 +1696,7 @@ func (b *BlockWalker) handleTernary(e *expr.Ternary) bool {
 	}
 
 	// Check for `$cond ? $x : $x` which makes no sense.
-	b.r.nodeSet.Reset()
-	b.r.nodeSet.Add(e.IfTrue)
-	if !b.r.nodeSet.Add(e.IfFalse) {
+	if astutil.NodeEqual(e.IfTrue, e.IfFalse) {
 		b.r.Report(e, LevelWarning, "dupBranchBody", "then/else operands are identical")
 	}
 
@@ -1716,8 +1712,6 @@ func (b *BlockWalker) handleTernary(e *expr.Ternary) bool {
 }
 
 func (b *BlockWalker) handleIf(s *stmt.If) bool {
-	nodeSet := astutil.NewNodeSet()
-
 	// Check for `if ($cond) { $x } else { $x }`.
 	// Leave more complex if chains to avoid false positives
 	// until we get more examples of valid and invalid cases of
@@ -1725,11 +1719,9 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 	if len(s.ElseIf) == 0 && s.Else != nil {
 		x := s.Stmt
 		y := s.Else.(*stmt.Else).Stmt
-		nodeSet.Add(x)
-		if !nodeSet.Add(y) {
+		if astutil.NodeEqual(x, y) {
 			b.r.Report(s, LevelWarning, "dupBranchBody", "duplicated if/else actions")
 		}
-		nodeSet.Reset()
 	}
 
 	var varsToDelete []node.Node
@@ -1743,6 +1735,7 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 		b.ctx.customMethods = b.ctx.customMethods[:customMethods]
 		b.ctx.customFunctions = b.ctx.customFunctions[:customFunctions]
 	}()
+	nodeSet := astutil.NewNodeSet()
 	walkCond := func(cond node.Node) {
 		a := &andWalker{b: b}
 		cond.Walk(a)
