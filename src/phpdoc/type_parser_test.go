@@ -29,6 +29,7 @@ func TestParser(t *testing.T) {
 		// Parens.
 		{`(x)`, `Paren="(x)"{Name="x"}`},
 		{`((x))`, `Paren="((x))"{Paren="(x)"{Name="x"}}`},
+		{`()`, `Paren="()"{Invalid=""}`},
 
 		// Unclosed parens.
 		{`(x`, `Paren="(x"{Name="x"}`},
@@ -114,9 +115,9 @@ func TestParser(t *testing.T) {
 		{`x [ ][  ]`, `Array="x [ ][  ]"{Array="x [ ]"{Name="x"}}`},
 
 		// If no postfix/infix token is found, the parser stops.
-		// Maybe we need to consume rest of the input as "Unknown"?
 		{`x?y`, `Optional="x?"{Name="x"}`},
 		{`x[]y`, `Array="x[]"{Name="x"}`},
+		{`() $x`, `Paren="()"{Invalid=""}`},
 
 		// Unknown expressions.
 		{`-foo`, `Unknown="-foo"{Name="foo"}`},
