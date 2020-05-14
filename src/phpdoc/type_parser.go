@@ -199,6 +199,12 @@ func (p *TypeParser) parseExpr(precedence byte) *TypeExpr {
 		elem := p.parseExpr(prefixPrecedenceTab['['])
 		left = p.newExprShape(ExprArray, ShapeArrayPrefix, begin, uint16(p.pos), elem)
 	case ch == '(':
+		if p.peek() == ')' {
+			p.pos++
+			expr := p.newExpr(ExprInvalid, begin+1, begin+1)
+			left = p.newExpr(ExprParen, begin, uint16(p.pos), expr)
+			break
+		}
 		expr := p.parseExpr(0)
 		if p.peek() == ')' {
 			p.pos++
