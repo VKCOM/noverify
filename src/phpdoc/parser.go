@@ -4,22 +4,42 @@ import (
 	"strings"
 )
 
-type CommentPart struct {
-	Line       int      // Comment part location inside phpdoc comment
-	Name       string   // e.g. "param" for "* @param something bla-bla-bla"
+type CommentPart interface {
+	Line() int
+	Name() string
+}
+
+type RawCommentPart struct {
+	line       int      // Comment part location inside phpdoc comment
+	name       string   // e.g. "param" for "* @param something bla-bla-bla"
 	Params     []string // {"something", "bla-bla-bla"} in example above
 	ParamsText string   // "something bla-bla-bla" in example above
 }
 
-// ContainsParam reports whether comment part contains param of specified name.
-func (part *CommentPart) ContainsParam(name string) bool {
-	for _, p := range part.Params {
-		if p == name {
-			return true
-		}
-	}
-	return false
+func (c *RawCommentPart) Line() int    { return c.line }
+func (c *RawCommentPart) Name() string { return c.name }
+
+type TypeCommentPart struct {
+	line int
+	name string
+	Type Type
+	Rest string
 }
+
+func (c *TypeCommentPart) Line() int    { return c.line }
+func (c *TypeCommentPart) Name() string { return c.name }
+
+type TypeVarCommentPart struct {
+	line       int
+	name       string
+	VarIsFirst bool
+	Var        string
+	Type       Type
+	Rest       string
+}
+
+func (c *TypeVarCommentPart) Line() int    { return c.line }
+func (c *TypeVarCommentPart) Name() string { return c.name }
 
 // IsPHPDoc checks if the string is a doc comment
 func IsPHPDoc(doc string) bool {
@@ -29,7 +49,7 @@ func IsPHPDoc(doc string) bool {
 }
 
 // Parse returns parsed doc comment with interesting parts (ones that start "* @")
-func Parse(doc string) (res []CommentPart) {
+func Parse(parser *TypeParser, doc string) (res []CommentPart) {
 	if !IsPHPDoc(doc) {
 		return nil
 	}
@@ -58,52 +78,83 @@ func Parse(doc string) (res []CommentPart) {
 		}
 
 		var text string
+		var name string
 		nameEndPos := strings.Index(ln, " ")
 		if nameEndPos != -1 {
 			text = strings.TrimSpace(ln[nameEndPos:])
+			name = ln[:nameEndPos]
+		} else {
+			name = ln
+		}
+		name = strings.TrimPrefix(name, "@")
+
+		line := i + 1
+		var part CommentPart
+		switch name {
+		case "param", "var", "property":
+			part = parseTypeVarComment(parser, line, name, text)
+		case "return":
+			part = parseTypeComment(parser, line, name, text)
+		default:
+			part = parseRawComment(line, name, text)
 		}
 
-		ln = shrinkAngleBracketsTypes(ln)
-
-		fields := strings.Fields(ln)
-		if len(fields) == 0 {
-			continue
-		}
-
-		res = append(res, CommentPart{
-			Line:       i + 1,
-			Name:       strings.TrimPrefix(fields[0], "@"),
-			Params:     fields[1:],
-			ParamsText: text,
-		})
+		res = append(res, part)
 	}
 
 	return res
 }
 
-// shrinkAngleBracketsTypes removes spaces in types like "array<int, string>" to simplify parsing.
-func shrinkAngleBracketsTypes(t string) string {
-	depth := 0
-	res := make([]byte, 0, len(t))
+func parseRawComment(line int, name, text string) *RawCommentPart {
+	fields := strings.Fields(text)
+	return &RawCommentPart{
+		line:       line,
+		name:       name,
+		Params:     fields,
+		ParamsText: text,
+	}
+}
 
-	for _, b := range []byte(t) {
-		switch b {
-		case '<':
-			depth++
-			res = append(res, b)
-		case '>':
-			if depth > 0 {
-				depth--
-			}
-			res = append(res, b)
-		case ' ', '\t':
-			if depth == 0 {
-				res = append(res, b)
-			}
-		default:
-			res = append(res, b)
-		}
+func parseTypeComment(parser *TypeParser, line int, name, text string) *TypeCommentPart {
+	typ, rest := nextTypeField(parser, text)
+	return &TypeCommentPart{
+		line: line,
+		name: name,
+		Type: typ,
+		Rest: rest,
+	}
+}
+
+func parseTypeVarComment(parser *TypeParser, line int, name, text string) *TypeVarCommentPart {
+	result := TypeVarCommentPart{line: line, name: name}
+
+	result.VarIsFirst = strings.HasPrefix(text, "$")
+	if result.VarIsFirst {
+		variable, rest := nextField(text)
+		result.Var = variable
+		typ, rest := nextTypeField(parser, rest)
+		result.Type = typ
+		result.Rest = rest
+	} else {
+		typ, rest := nextTypeField(parser, text)
+		result.Type = typ
+		variable, rest := nextField(rest)
+		result.Var = variable
+		result.Rest = rest
 	}
 
-	return string(res)
+	return &result
+}
+
+func nextField(s string) (field, rest string) {
+	delim := strings.IndexByte(s, ' ')
+	if delim == -1 {
+		return s, ""
+	}
+	return s[:delim], strings.TrimLeft(s[delim:], " ")
+}
+
+func nextTypeField(parser *TypeParser, s string) (field Type, rest string) {
+	typ := parser.Parse(s)
+	return typ, strings.TrimLeft(s[typ.Expr.End:], " ")
 }

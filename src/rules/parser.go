@@ -95,8 +95,9 @@ func (p *parser) parseRule(st node.Node) error {
 	var filterSet map[string]Filter
 	dst := p.res.Any // Use "any" set by default
 
-	for _, part := range phpdoc.Parse(comment) {
-		switch part.Name {
+	for _, part := range phpdoc.Parse(p.typeParser, comment) {
+		part := part.(*phpdoc.RawCommentPart)
+		switch part.Name() {
 		case "name":
 			if len(part.Params) != 1 {
 				return p.errorf(st, "@name expects exactly 1 param, got %d", len(part.Params))
@@ -185,7 +186,7 @@ func (p *parser) parseRule(st node.Node) error {
 			filterSet[name] = filter
 
 		default:
-			return p.errorf(st, "unknown attribute @%s on line %d", part.Name, part.Line)
+			return p.errorf(st, "unknown attribute @%s on line %d", part.Name(), part.Line())
 		}
 	}
 

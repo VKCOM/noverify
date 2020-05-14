@@ -11,6 +11,8 @@ func TestParser(t *testing.T) {
 		input string
 		want  string
 	}{
+		{``, `Invalid=""`},
+
 		// Names.
 		{`a`, `Name="a"`},
 		{`\`, `Name="\"`},

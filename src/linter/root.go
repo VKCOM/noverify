@@ -490,12 +490,12 @@ func (d *RootWalker) handleComment(c freefloating.String) {
 		return
 	}
 
-	for _, ln := range phpdoc.Parse(str) {
-		if ln.Name != "linter" {
+	for _, ln := range phpdoc.Parse(d.ctx.phpdocTypeParser, str) {
+		if ln.Name() != "linter" {
 			continue
 		}
 
-		for _, p := range ln.Params {
+		for _, p := range ln.(*phpdoc.RawCommentPart).Params {
 			if p == "disable" {
 				d.disabledFlag = true
 			}
@@ -892,11 +892,12 @@ func (d *RootWalker) reportPhpdocErrors(n node.Node, errs phpdocErrors) {
 }
 
 func (d *RootWalker) parsePHPDocVar(n node.Node, doc string) (m meta.TypesMap) {
-	for _, part := range phpdoc.Parse(doc) {
-		if part.Name == "var" && len(part.Params) >= 1 {
-			types, warning := d.typesFromPHPDoc(part.Params[0])
+	for _, part := range phpdoc.Parse(d.ctx.phpdocTypeParser, doc) {
+		part, ok := part.(*phpdoc.TypeVarCommentPart)
+		if ok && part.Name() == "var" {
+			types, warning := typesFromPHPDoc(&d.ctx, part.Type)
 			if warning != "" {
-				d.Report(n, LevelInformation, "phpdocType", "%s on line %d", warning, part.Line)
+				d.Report(n, LevelInformation, "phpdocType", "%s on line %d", warning, part.Line())
 			}
 			m = newTypesMap(&d.ctx, types)
 		}
@@ -929,17 +930,19 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 
 	var curParam int
 
-	for _, part := range phpdoc.Parse(doc) {
-		if part.Name == "deprecated" {
+	for _, part := range phpdoc.Parse(d.ctx.phpdocTypeParser, doc) {
+		if part.Name() == "deprecated" {
+			part := part.(*phpdoc.RawCommentPart)
 			result.info.Deprecated = true
 			result.info.DeprecationNote = part.ParamsText
 			continue
 		}
 
-		if part.Name == "return" && len(part.Params) >= 1 {
-			types, warning := d.typesFromPHPDoc(part.Params[0])
+		if part.Name() == "return" {
+			part := part.(*phpdoc.TypeCommentPart)
+			types, warning := typesFromPHPDoc(&d.ctx, part.Type)
 			if warning != "" {
-				result.errs.pushType("%s on line %d", warning, part.Line)
+				result.errs.pushType("%s on line %d", warning, part.Line())
 			}
 			result.returnType = newTypesMap(&d.ctx, types)
 			continue
@@ -947,41 +950,32 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 
 		// Rest is for @param handling.
 
-		if part.Name != "param" || len(part.Params) < 1 {
+		if part.Name() != "param" {
 			continue
 		}
 
-		typeString := part.Params[0]
-		optional := part.ContainsParam("[optional]")
-		var variable string
-		if len(part.Params) >= 2 {
-			variable = part.Params[1]
-		} else {
-			// Either type or var name is missing.
-			if strings.HasPrefix(typeString, "$") {
-				result.errs.pushLint("malformed @param %s tag (maybe type is missing?) on line %d",
-					part.Params[0], part.Line)
-				continue
-			} else {
-				result.errs.pushLint("malformed @param tag (maybe var is missing?) on line %d", part.Line)
-			}
+		part := part.(*phpdoc.TypeVarCommentPart)
+		optional := strings.Contains(part.Rest, "[optional]")
+		switch {
+		case part.Var == "":
+			result.errs.pushLint("malformed @param tag (maybe var is missing?) on line %d", part.Line())
+		case part.Type.IsEmpty():
+			result.errs.pushLint("malformed @param %s tag (maybe type is missing?) on line %d",
+				part.Var, part.Line())
+			continue
 		}
 
-		if len(part.Params) >= 2 && strings.HasPrefix(typeString, "$") && !strings.HasPrefix(variable, "$") {
+		if part.VarIsFirst {
 			// Phpstorm gives the same message.
-			result.errs.pushLint("non-canonical order of variable and type on line %d", part.Line)
-			variable, typeString = typeString, variable
+			result.errs.pushLint("non-canonical order of variable and type on line %d", part.Line())
 		}
 
+		variable := part.Var
 		if !strings.HasPrefix(variable, "$") {
 			if len(actualParams) > curParam {
 				variable = actualParams[curParam].(*node.Parameter).Variable.Name
-			} else {
-				result.errs.pushLint("too many @param tags on line %d", part.Line)
-				continue
 			}
 		}
-
 		if _, ok := actualParamNames[strings.TrimPrefix(variable, "$")]; !ok {
 			result.errs.pushLint("@param for non-existing argument %s", variable)
 			continue
@@ -990,9 +984,9 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 		curParam++
 
 		var param phpDocParamEl
-		types, warning := d.typesFromPHPDoc(typeString)
+		types, warning := typesFromPHPDoc(&d.ctx, part.Type)
 		if warning != "" {
-			result.errs.pushType("%s on line %d", warning, part.Line)
+			result.errs.pushType("%s on line %d", warning, part.Line())
 		}
 		param.typ = newTypesMap(&d.ctx, types)
 		param.typ.Iterate(func(t string) {
@@ -1521,9 +1515,4 @@ func (d *RootWalker) afterLeaveFile() {
 			d.meta.Classes.Set(shape.name, cl)
 		}
 	}
-}
-
-func (d *RootWalker) typesFromPHPDoc(typeString string) ([]meta.Type, warningString) {
-	parsedType := d.ctx.phpdocTypeParser.Parse(typeString)
-	return typesFromPHPDoc(&d.ctx, parsedType)
 }

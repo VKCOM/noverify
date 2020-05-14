@@ -3,73 +3,88 @@ package phpdoc
 import (
 	"reflect"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestParseSimple(t *testing.T) {
+	p := NewTypeParser()
 	want := []CommentPart{
-		{
-			Line:       4,
-			Name:       "param",
-			Params:     []string{"$param", "int", "Here", "goes", "the", "description"},
-			ParamsText: "$param int  Here goes the description",
+		&TypeVarCommentPart{
+			line:       4,
+			name:       "param",
+			VarIsFirst: true,
+			Type:       p.Parse(`int  Here goes the description`),
+			Var:        "$param",
+			Rest:       "Here goes the description",
 		},
-		{
-			Line:       5,
-			Name:       "param",
-			Params:     []string{"array<int,string>", "$arr", "Array", "of", "int", "to", "string"},
-			ParamsText: "array<int, string> $arr  Array of int to string",
+		&TypeVarCommentPart{
+			line: 5,
+			name: "param",
+			Var:  "$arr",
+			Type: p.Parse(`array<int, string> $arr  Array of int to string`),
+			Rest: "Array of int to string",
 		},
-		{
-			Line:       6,
-			Name:       "param",
-			Params:     []string{"array<int,array<string,stdclass>>", "$arr_nested", "Array", "of", "nested", "arrays"},
-			ParamsText: "array<int, array<string, stdclass> > $arr_nested  Array of nested arrays",
+		&TypeVarCommentPart{
+			line: 6,
+			name: "param",
+			Var:  "$arr_nested",
+			Type: p.Parse(`array<int, array<string, stdclass> > $arr_nested  Array of nested arrays`),
+			Rest: `Array of nested arrays`,
 		},
-		{
-			Line:       7,
-			Name:       "param",
-			Params:     []string{"$arr_nested", "array<int,array<string,stdclass>>", "Array", "of", "nested", "arrays"},
-			ParamsText: "$arr_nested array<int, array<string, stdclass> >  Array of nested arrays",
+		&TypeVarCommentPart{
+			line:       7,
+			name:       "param",
+			VarIsFirst: true,
+			Type:       p.Parse(`array<int, array<string, stdclass> >  Array of nested arrays`),
+			Var:        "$arr_nested",
+			Rest:       "Array of nested arrays",
 		},
-		{
-			Line:       8,
-			Name:       "var",
-			Params:     []string{"int"},
-			ParamsText: "int",
+		&TypeVarCommentPart{
+			line: 8,
+			name: "var",
+			Var:  "",
+			Type: p.Parse(`int`),
 		},
-		{
-			Line:       9,
-			Name:       "var",
-			Params:     []string{"array<int>"},
-			ParamsText: "array<int>",
+		&TypeVarCommentPart{
+			line: 9,
+			name: "var",
+			Var:  "$foo1",
+			Type: p.Parse(`array<int> $foo1  var comment`),
+			Rest: "var comment",
 		},
-		{
-			Line:       10,
-			Name:       "var",
-			Params:     []string{"array<int,string>"},
-			ParamsText: "array<int,string>",
+		&TypeVarCommentPart{
+			line:       10,
+			name:       "var",
+			VarIsFirst: true,
+			Var:        "$foo2",
+			Type:       p.Parse(`array<int,string>`),
 		},
-		{
-			Line:       11,
-			Name:       "var",
-			Params:     []string{"array<int,string>"},
-			ParamsText: "array< int, string >",
+		&TypeVarCommentPart{
+			line: 11,
+			name: "var",
+			Type: p.Parse(`array< int, string >`),
 		},
-		{
-			Line:   12,
-			Name:   "var",
-			Params: []string{"array<int,array<string,stdclass>>"},
-			ParamsText: "array<int, array<string, stdclass>	>",
+		&TypeVarCommentPart{
+			line: 12,
+			name: "var",
+			Type: p.Parse("array<int, array<string, stdclass>	>"),
 		},
-		{
-			Line:       13,
-			Name:       "return",
-			Params:     []string{"int", "some", "result"},
-			ParamsText: "int   some    result",
+		&TypeCommentPart{
+			line: 13,
+			name: "return",
+			Type: p.Parse(`int   some    result`),
+			Rest: `some    result`,
+		},
+		&RawCommentPart{
+			line:       14,
+			name:       "unknown",
+			Params:     []string{"a", "b", "c"},
+			ParamsText: `a b c`,
 		},
 	}
 
-	got := Parse(`/**
+	got := Parse(p, `/**
 	 * Some description
 	 *
 	 * @param   $param int  Here goes the description
@@ -77,11 +92,12 @@ func TestParseSimple(t *testing.T) {
 	 * @param  array<int, array<string, stdclass> > $arr_nested  Array of nested arrays
 	 * @param  $arr_nested array<int, array<string, stdclass> >  Array of nested arrays
 	 * @var int
-	 * @var array<int>
-	 * @var array<int,string>
+	 * @var  array<int> $foo1  var comment
+	 * @var $foo2  array<int,string>
 	 * @var array< int, string >
 	 * @var array<int, array<string, stdclass>	>
 	 * @return int   some    result
+	 * @unknown a b c
 	*/`)
 
 	if len(got) != len(want) {
@@ -91,8 +107,8 @@ func TestParseSimple(t *testing.T) {
 	for i, g := range got {
 		w := want[i]
 
-		if !reflect.DeepEqual(g, w) {
-			t.Errorf("%d: got %#v, want %#v", i, g, w)
+		if diff := cmp.Diff(g, w, cmp.Exporter(func(reflect.Type) bool { return true })); diff != "" {
+			t.Errorf("%d: (-have +want):\n%s", i, diff)
 		}
 	}
 }
