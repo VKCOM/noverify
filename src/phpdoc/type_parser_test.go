@@ -81,7 +81,9 @@ func TestParser(t *testing.T) {
 		{`tuple(int|float,bool)`, `GenericParen="tuple(int|float,bool)"{Name="tuple" Union="int|float"{Name="int" Name="float"} Name="bool"}`},
 
 		// Alternative generic syntax 2.
-		{`tuple {int, int}`, `GenericBrace="tuple {int, int}"{Name="tuple" Name="int" Name="int"}`},
+		{`tuple{int, int}`, `GenericBrace="tuple{int, int}"{Name="tuple" Name="int" Name="int"}`},
+		{`array{a: int, b: float}`, `GenericBrace="array{a: int, b: float}"{Name="array" KeyVal="a: int"{Name="a" Name="int"} KeyVal="b: float"{Name="b" Name="float"}}`},
+		{`array{a : int}`, `GenericBrace="array{a : int}"{Name="array" KeyVal="a : int"{Name="a" Name="int"}}`},
 
 		// KeyVal types.
 		{`name:int`, `KeyVal="name:int"{Name="name" Name="int"}`},
@@ -106,13 +108,11 @@ func TestParser(t *testing.T) {
 		{`shape(i:int, ...)`, `GenericParen="shape(i:int, ...)"{Name="shape" KeyVal="i:int"{Name="i" Name="int"} SpecialName="..."}`},
 
 		// Some whitespace should be tolerated.
-		{`x| y`, `Union="x| y"{Name="x" Name="y"}`},
-		{`x |y`, `Union="x |y"{Name="x" Name="y"}`},
-		{`[] int`, `PrefixArray="[] int"{Name="int"}`},
 		{`(x | y)`, `Paren="(x | y)"{Union="x | y"{Name="x" Name="y"}}`},
+		{`( x| y)`, `Paren="( x| y)"{Union="x| y"{Name="x" Name="y"}}`},
 		{` ( (string))`, `Paren="( (string))"{Paren="(string)"{Name="string"}}`},
 		{` ((string ) ) `, `Paren="((string ) )"{Paren="(string )"{Name="string"}}`},
-		{`x [ ][  ]`, `Array="x [ ][  ]"{Array="x [ ]"{Name="x"}}`},
+		{`( [] int)`, `Paren="( [] int)"{PrefixArray="[] int"{Name="int"}}`},
 
 		// If no postfix/infix token is found, the parser stops.
 		{`x?y`, `Optional="x?"{Name="x"}`},
@@ -121,7 +121,13 @@ func TestParser(t *testing.T) {
 		{`@ @`, `Invalid="@"`},
 		{`@ @ | x`, `Invalid="@"`},
 		{`@ @| x`, `Invalid="@"`},
-		{`x| @ @`, `Union="x| @"{Name="x" Invalid="@"}`},
+		{`x| @ @`, `Union="x| "{Name="x" Invalid=" "}`},
+		{`x &$x`, `Name="x"`},
+		{`x [ ][  ]`, `Name="x"`},
+		{`tuple {int, int}`, `Name="tuple"`},
+		{`x |y`, `Name="x"`},
+		{`x| y`, `Union="x| "{Name="x" Invalid=" "}`},
+		{`[] int`, `PrefixArray="[] "{Invalid=" "}`},
 
 		// Unknown expressions.
 		{`-foo`, `Unknown="-foo"{Name="foo"}`},

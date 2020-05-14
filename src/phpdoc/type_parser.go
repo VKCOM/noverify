@@ -141,6 +141,7 @@ type TypeParser struct {
 	input       string
 	pos         uint
 	skipUnknown bool
+	insideGroup bool
 
 	exprPool  []TypeExpr
 	allocated uint
@@ -154,6 +155,7 @@ func NewTypeParser() *TypeParser {
 
 func (p *TypeParser) Parse(s string) Type {
 	p.reset(s)
+	p.skipWhitespace()
 	typ := Type{Source: s, Expr: *p.parseExpr(0)}
 	p.setValues(&typ.Expr)
 	return typ
@@ -173,8 +175,18 @@ func (p *TypeParser) setValues(e *TypeExpr) {
 	e.Value = p.input[e.Begin:e.End]
 }
 
+func (p *TypeParser) parseExprInsideGroup() *TypeExpr {
+	insideGroup := p.insideGroup
+	p.insideGroup = true
+	expr := p.parseExpr(0)
+	p.insideGroup = insideGroup
+	return expr
+}
+
 func (p *TypeParser) parseExpr(precedence byte) *TypeExpr {
-	p.skipWhitespace()
+	if p.insideGroup {
+		p.skipWhitespace()
+	}
 
 	var left *TypeExpr
 	begin := uint16(p.pos)
@@ -192,7 +204,6 @@ func (p *TypeParser) parseExpr(precedence byte) *TypeExpr {
 		}
 		left = p.newExpr(ExprInt, begin, uint16(p.pos))
 	case ch == '[':
-		p.skipWhitespace()
 		if p.peek() == ']' {
 			p.pos++
 		}
@@ -205,7 +216,7 @@ func (p *TypeParser) parseExpr(precedence byte) *TypeExpr {
 			left = p.newExpr(ExprParen, begin, uint16(p.pos), expr)
 			break
 		}
-		expr := p.parseExpr(0)
+		expr := p.parseExprInsideGroup()
 		if p.peek() == ')' {
 			p.pos++
 		}
@@ -221,6 +232,8 @@ func (p *TypeParser) parseExpr(precedence byte) *TypeExpr {
 	case ch == '.' && p.peekAt(p.pos+0) == '.' && p.peekAt(p.pos+1) == '.':
 		p.pos += uint(len(".."))
 		left = p.newExpr(ExprSpecialName, begin, uint16(p.pos))
+	case ch == ' ':
+		left = p.newExpr(ExprInvalid, begin, uint16(p.pos))
 	default:
 		// Try to handle invalid expressions somehow and continue
 		// the parsing of valid expressions.
@@ -253,7 +266,9 @@ func (p *TypeParser) parseExpr(precedence byte) *TypeExpr {
 		}
 	}
 
-	p.skipWhitespace()
+	if p.insideGroup {
+		p.skipWhitespace()
+	}
 
 	for precedence < infixPrecedenceTab[p.peek()] {
 		ch := p.nextByte()
@@ -264,7 +279,6 @@ func (p *TypeParser) parseExpr(precedence byte) *TypeExpr {
 			right := p.parseExpr(infixPrecedenceTab[':'])
 			left = p.newExpr(ExprKeyVal, begin, uint16(p.pos), left, right)
 		case '[':
-			p.skipWhitespace()
 			if p.peek() == ']' {
 				p.pos++
 			}
@@ -319,7 +333,7 @@ func (p *TypeParser) parseExpr(precedence byte) *TypeExpr {
 					p.pos++
 					break
 				}
-				x := p.parseExpr(0)
+				x := p.parseExprInsideGroup()
 				left.Args = append(left.Args, *x)
 				p.skipWhitespace()
 				if p.peek() == ',' {
