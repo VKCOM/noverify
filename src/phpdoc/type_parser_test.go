@@ -118,6 +118,10 @@ func TestParser(t *testing.T) {
 		{`x?y`, `Optional="x?"{Name="x"}`},
 		{`x[]y`, `Array="x[]"{Name="x"}`},
 		{`() $x`, `Paren="()"{Invalid=""}`},
+		{`@ @`, `Invalid="@"`},
+		{`@ @ | x`, `Invalid="@"`},
+		{`@ @| x`, `Invalid="@"`},
+		{`x| @ @`, `Union="x| @"{Name="x" Invalid="@"}`},
 
 		// Unknown expressions.
 		{`-foo`, `Unknown="-foo"{Name="foo"}`},
@@ -128,10 +132,6 @@ func TestParser(t *testing.T) {
 		{`@`, `Invalid="@"`},
 		{`@#%`, `Invalid="@#%"`},
 		{`x|@`, `Union="x|@"{Name="x" Invalid="@"}`},
-		{`@ @`, `Invalid="@ @"`},
-		{`@ @ | x`, `Union="@ @ | x"{Invalid="@ @ " Name="x"}`},
-		{`@ @| x`, `Union="@ @| x"{Invalid="@ @" Name="x"}`},
-		{`x| @ @`, `Union="x| @ @"{Name="x" Invalid="@ @"}`},
 		{`x|@@`, `Union="x|@@"{Name="x" Invalid="@@"}`},
 		{`A<|b`, `Generic="A<|b"{Name="A" Unknown="|b"{Name="b"}}`},
 		{`A<,>`, `Generic="A<,>"{Name="A" Invalid=","}`},

@@ -232,7 +232,7 @@ func (p *TypeParser) parseExpr(precedence byte) *TypeExpr {
 			// Stop if we found infix or postfix token and emit invalid expr.
 			// Stop if we found something that looks like a terminating token.
 			ch := p.peek()
-			if infixPrecedenceTab[ch] != 0 || ch == ')' || ch == '>' || ch == ']' {
+			if infixPrecedenceTab[ch] != 0 || ch == ')' || ch == '>' || ch == ']' || ch == ' ' {
 				left = p.newExpr(ExprInvalid, begin, uint16(p.pos))
 				break
 			}
