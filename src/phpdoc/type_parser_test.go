@@ -11,6 +11,8 @@ func TestParser(t *testing.T) {
 		input string
 		want  string
 	}{
+		{``, `Invalid=""`},
+
 		// Names.
 		{`a`, `Name="a"`},
 		{`\`, `Name="\"`},
@@ -29,6 +31,7 @@ func TestParser(t *testing.T) {
 		// Parens.
 		{`(x)`, `Paren="(x)"{Name="x"}`},
 		{`((x))`, `Paren="((x))"{Paren="(x)"{Name="x"}}`},
+		{`()`, `Paren="()"{Invalid=""}`},
 
 		// Unclosed parens.
 		{`(x`, `Paren="(x"{Name="x"}`},
@@ -80,7 +83,9 @@ func TestParser(t *testing.T) {
 		{`tuple(int|float,bool)`, `GenericParen="tuple(int|float,bool)"{Name="tuple" Union="int|float"{Name="int" Name="float"} Name="bool"}`},
 
 		// Alternative generic syntax 2.
-		{`tuple {int, int}`, `GenericBrace="tuple {int, int}"{Name="tuple" Name="int" Name="int"}`},
+		{`tuple{int, int}`, `GenericBrace="tuple{int, int}"{Name="tuple" Name="int" Name="int"}`},
+		{`array{a: int, b: float}`, `GenericBrace="array{a: int, b: float}"{Name="array" KeyVal="a: int"{Name="a" Name="int"} KeyVal="b: float"{Name="b" Name="float"}}`},
+		{`array{a : int}`, `GenericBrace="array{a : int}"{Name="array" KeyVal="a : int"{Name="a" Name="int"}}`},
 
 		// KeyVal types.
 		{`name:int`, `KeyVal="name:int"{Name="name" Name="int"}`},
@@ -105,18 +110,26 @@ func TestParser(t *testing.T) {
 		{`shape(i:int, ...)`, `GenericParen="shape(i:int, ...)"{Name="shape" KeyVal="i:int"{Name="i" Name="int"} SpecialName="..."}`},
 
 		// Some whitespace should be tolerated.
-		{`x| y`, `Union="x| y"{Name="x" Name="y"}`},
-		{`x |y`, `Union="x |y"{Name="x" Name="y"}`},
-		{`[] int`, `PrefixArray="[] int"{Name="int"}`},
 		{`(x | y)`, `Paren="(x | y)"{Union="x | y"{Name="x" Name="y"}}`},
+		{`( x| y)`, `Paren="( x| y)"{Union="x| y"{Name="x" Name="y"}}`},
 		{` ( (string))`, `Paren="( (string))"{Paren="(string)"{Name="string"}}`},
 		{` ((string ) ) `, `Paren="((string ) )"{Paren="(string )"{Name="string"}}`},
-		{`x [ ][  ]`, `Array="x [ ][  ]"{Array="x [ ]"{Name="x"}}`},
+		{`( [] int)`, `Paren="( [] int)"{PrefixArray="[] int"{Name="int"}}`},
 
 		// If no postfix/infix token is found, the parser stops.
-		// Maybe we need to consume rest of the input as "Unknown"?
 		{`x?y`, `Optional="x?"{Name="x"}`},
 		{`x[]y`, `Array="x[]"{Name="x"}`},
+		{`() $x`, `Paren="()"{Invalid=""}`},
+		{`@ @`, `Invalid="@"`},
+		{`@ @ | x`, `Invalid="@"`},
+		{`@ @| x`, `Invalid="@"`},
+		{`x| @ @`, `Union="x| "{Name="x" Invalid=" "}`},
+		{`x &$x`, `Name="x"`},
+		{`x [ ][  ]`, `Name="x"`},
+		{`tuple {int, int}`, `Name="tuple"`},
+		{`x |y`, `Name="x"`},
+		{`x| y`, `Union="x| "{Name="x" Invalid=" "}`},
+		{`[] int`, `PrefixArray="[] "{Invalid=" "}`},
 
 		// Unknown expressions.
 		{`-foo`, `Unknown="-foo"{Name="foo"}`},
@@ -127,10 +140,6 @@ func TestParser(t *testing.T) {
 		{`@`, `Invalid="@"`},
 		{`@#%`, `Invalid="@#%"`},
 		{`x|@`, `Union="x|@"{Name="x" Invalid="@"}`},
-		{`@ @`, `Invalid="@ @"`},
-		{`@ @ | x`, `Union="@ @ | x"{Invalid="@ @ " Name="x"}`},
-		{`@ @| x`, `Union="@ @| x"{Invalid="@ @" Name="x"}`},
-		{`x| @ @`, `Union="x| @ @"{Name="x" Invalid="@ @"}`},
 		{`x|@@`, `Union="x|@@"{Name="x" Invalid="@@"}`},
 		{`A<|b`, `Generic="A<|b"{Name="A" Unknown="|b"{Name="b"}}`},
 		{`A<,>`, `Generic="A<,>"{Name="A" Invalid=","}`},

@@ -75,6 +75,69 @@ function mixed_info1(int $v) {
 	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
 }
 
+func TestExprTypeWithSpaces(t *testing.T) {
+	tests := []exprTypeTest{
+		{`shape_param1($v)`, `int`},
+		{`shape_param2($v)`, `float`},
+		{`array_param3($v)`, `int`},
+		{`array_param4($v)`, `float`},
+
+		{`$var1['y']`, `int[]`},
+		{`$var2['z']`, `float[]`},
+
+		{`shape_return1()['x']`, `string`},
+
+		{`$foo->prop1`, `int[]`},
+		{`$foo->prop2`, `string[]`},
+		{`$foo->prop3`, `float[]`},
+		{`$foo->magicprop1['k1']`, `\Foo`},
+		{`$foo->magicprop1['k2']`, `string`},
+	}
+
+	global := `<?php
+/**
+ * @property $magicprop1 shape( k1: \Foo , k2 : string )
+ */
+class Foo {
+  /** @var array<string, int> */
+  public $prop1;
+
+  /** @var $prop2 array< string, string> */
+  public $prop2;
+
+  /** @var array< string , float > $prop3 */
+  public $prop3;
+}
+
+/** @param shape(a: int, b:float) $x */
+function shape_param1($x) { return $x['a']; }
+
+/** @param shape(a: int, b:float) $x */
+function shape_param2($x) { return $x['b']; }
+
+/** @param $x array{a: int, b: float} */
+function array_param3($x) { return $x['a']; }
+
+/** @param $x array{a : int, b:float} */
+function array_param4($x) { return $x['b']; }
+
+/** @return shape( x : string ) */
+function shape_return1() {}
+`
+
+	local := `
+/** @var shape< y : int[] > $var1 */
+$var1;
+
+/** @var $var2 shape< z : float[] > */
+$var2;
+
+$foo = new Foo();
+`
+
+	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
 func TestExprTypeShape(t *testing.T) {
 	tests := []exprTypeTest{
 		{`shape_self0()`, `\shape$exprtype_global.php$0$`},
