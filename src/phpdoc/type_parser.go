@@ -9,11 +9,13 @@ type Type struct {
 	Expr   TypeExpr
 }
 
-func (t Type) Clone() Type {
-	return Type{Source: t.Source, Expr: t.Expr.Clone()}
+func (typ Type) Clone() Type {
+	return Type{Source: typ.Source, Expr: typ.Expr.Clone()}
 }
 
 func (typ Type) String() string { return typ.Source }
+
+func (typ Type) IsEmpty() bool { return typ.Expr.Value == "" }
 
 type TypeExpr struct {
 	Kind  ExprKind

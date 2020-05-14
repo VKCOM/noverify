@@ -567,29 +567,16 @@ func (b *BlockWalker) parseComment(c freefloating.String) {
 		return
 	}
 
-	for _, p := range phpdoc.Parse(str) {
-		if p.Name != "var" {
-			continue
-		}
-
-		if len(p.Params) < 2 {
-			continue
-		}
-
-		varName, typeString := p.Params[0], p.Params[1]
-		if !strings.HasPrefix(varName, "$") && strings.HasPrefix(typeString, "$") {
-			varName, typeString = typeString, varName
-		}
-
-		if !strings.HasPrefix(varName, "$") {
-			// TODO: report something about bad @var syntax
+	for _, p := range phpdoc.Parse(b.r.ctx.phpdocTypeParser, str) {
+		p, ok := p.(*phpdoc.TypeVarCommentPart)
+		if !ok || p.Name() != "var" {
 			continue
 		}
 
 		// TODO: report phpdocLint notice.
-		types, _ := b.r.typesFromPHPDoc(typeString)
+		types, _ := typesFromPHPDoc(&b.r.ctx, p.Type)
 		m := newTypesMap(&b.r.ctx, types)
-		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(varName, "$"), m, "@var")
+		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(p.Var, "$"), m, "@var")
 	}
 }
 

@@ -40,19 +40,19 @@ func parseClassPHPDoc(ctx *rootContext, doc string) classPhpDocParseResult {
 	result.properties = make(meta.PropertiesMap)
 	result.methods = meta.NewFunctionsMap()
 
-	for _, part := range phpdoc.Parse(doc) {
-		switch part.Name {
+	for _, part := range phpdoc.Parse(ctx.phpdocTypeParser, doc) {
+		switch part.Name() {
 		case "property":
-			parseClassPHPDocProperty(ctx, &result, part)
+			parseClassPHPDocProperty(ctx, &result, part.(*phpdoc.TypeVarCommentPart))
 		case "method":
-			parseClassPHPDocMethod(ctx, &result, part)
+			parseClassPHPDocMethod(ctx, &result, part.(*phpdoc.RawCommentPart))
 		}
 	}
 
 	return result
 }
 
-func parseClassPHPDocMethod(ctx *rootContext, result *classPhpDocParseResult, part phpdoc.CommentPart) {
+func parseClassPHPDocMethod(ctx *rootContext, result *classPhpDocParseResult, part *phpdoc.RawCommentPart) {
 	// The syntax is:
 	//	@method [[static] return type] [name]([[type] [parameter]<, ...>]) [<description>]
 	// Return type and method name are mandatory.
@@ -65,13 +65,13 @@ func parseClassPHPDocMethod(ctx *rootContext, result *classPhpDocParseResult, pa
 	}
 
 	if len(params) < 2 {
-		result.errs.pushLint("line %d: @method requires return type and method name fields", part.Line)
+		result.errs.pushLint("line %d: @method requires return type and method name fields", part.Line())
 		return
 	}
 
 	types, warning := typesFromPHPDoc(ctx, ctx.phpdocTypeParser.Parse(params[0]))
 	if warning != "" {
-		result.errs.pushType("%s on line %d", warning, part.Line)
+		result.errs.pushType("%s on line %d", warning, part.Line())
 	}
 
 	var methodName string
@@ -80,7 +80,7 @@ func parseClassPHPDocMethod(ctx *rootContext, result *classPhpDocParseResult, pa
 		methodName = params[1][:nameEnd]
 	} else {
 		methodName = params[1] // Could be a method name without `()`.
-		result.errs.pushLint("line %d: @method '(' is not found near the method name", part.Line)
+		result.errs.pushLint("line %d: @method '(' is not found near the method name", part.Line())
 	}
 
 	var funcFlags meta.FuncFlags
@@ -96,46 +96,31 @@ func parseClassPHPDocMethod(ctx *rootContext, result *classPhpDocParseResult, pa
 	})
 }
 
-func parseClassPHPDocProperty(ctx *rootContext, result *classPhpDocParseResult, part phpdoc.CommentPart) {
+func parseClassPHPDocProperty(ctx *rootContext, result *classPhpDocParseResult, part *phpdoc.TypeVarCommentPart) {
 	// The syntax is:
 	//	@property [Type] [name] [<description>]
 	// Type and name are mandatory.
 
-	if len(part.Params) < 2 {
-		result.errs.pushLint("line %d: @property requires type and property name fields", part.Line)
+	if part.Type.IsEmpty() || part.Var == "" {
+		result.errs.pushLint("line %d: @property requires type and property name fields", part.Line())
 		return
 	}
 
-	typeString := part.Params[0]
-	var nm string
-	if len(part.Params) >= 2 {
-		nm = part.Params[1]
-	} else {
-		// Either type or var name is missing.
-		if strings.HasPrefix(typeString, "$") {
-			result.errs.pushLint("malformed @property %s tag (maybe type is missing?) on line %d",
-				part.Params[0], part.Line)
-			return
-		}
-		result.errs.pushLint("malformed @property tag (maybe field name is missing?) on line %d", part.Line)
+	if part.VarIsFirst {
+		result.errs.pushLint("non-canonical order of name and type on line %d", part.Line())
 	}
 
-	if len(part.Params) >= 2 && strings.HasPrefix(typeString, "$") && !strings.HasPrefix(nm, "$") {
-		result.errs.pushLint("non-canonical order of name and type on line %d", part.Line)
-		nm, typeString = typeString, nm
-	}
-
-	types, warning := typesFromPHPDoc(ctx, ctx.phpdocTypeParser.Parse(typeString))
+	types, warning := typesFromPHPDoc(ctx, part.Type)
 	if warning != "" {
-		result.errs.pushType("%s on line %d", warning, part.Line)
+		result.errs.pushType("%s on line %d", warning, part.Line())
 	}
 
-	if !strings.HasPrefix(nm, "$") {
-		result.errs.pushLint("@property %s field name must start with '$' on line %d", nm, part.Line)
+	if !strings.HasPrefix(part.Var, "$") {
+		result.errs.pushLint("@property %s field name must start with '$' on line %d", part.Var, part.Line())
 		return
 	}
 
-	result.properties[nm[len("$"):]] = meta.PropertyInfo{
+	result.properties[part.Var[len("$"):]] = meta.PropertyInfo{
 		Typ:         newTypesMap(ctx, types),
 		AccessLevel: meta.Public,
 	}
