@@ -204,13 +204,9 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		b.handleStmtExpression(s)
 
 	case *binary.BitwiseAnd:
-		b.checkBinaryVoidType(s.Left, s.Right)
-		b.checkBinaryDupArgs(s, s.Left, s.Right)
-		b.handleBitwiseAnd(s)
+		b.handleBitwiseOp(s, s.Left, s.Right)
 	case *binary.BitwiseOr:
-		b.checkBinaryVoidType(s.Left, s.Right)
-		b.checkBinaryDupArgs(s, s.Left, s.Right)
-		b.handleBitwiseOr(s)
+		b.handleBitwiseOp(s, s.Left, s.Right)
 	case *binary.BitwiseXor:
 		b.checkBinaryVoidType(s.Left, s.Right)
 		b.checkBinaryDupArgs(s, s.Left, s.Right)
@@ -2027,21 +2023,52 @@ func (b *BlockWalker) handleAssignList(items []*expr.ArrayItem) {
 	}
 }
 
-func (b *BlockWalker) handleBitwiseAnd(s *binary.BitwiseAnd) {
-	if b.isBool(s.Left) && b.isBool(s.Right) {
-		b.ReportBitwiseOp(s, "&", "&&")
-	}
-}
+func (b *BlockWalker) handleBitwiseOp(n, left, right node.Node) {
+	// Note: we report `$x & $mask != $y` as a precedence issue even
+	// if it can be caught with `typecheckOp` that checks both operand
+	// types (bool is not a good operand for bitwise operation).
+	//
+	// Reporting `invalid types, expected number found bool` is
+	// not that helpful, because the root of the problem is precedence.
+	// Invalid types are a result of that.
 
-func (b *BlockWalker) handleBitwiseOr(s *binary.BitwiseOr) {
-	if b.isBool(s.Left) && b.isBool(s.Right) {
-		b.ReportBitwiseOp(s, "|", "||")
+	tok := "|"
+	if _, ok := n.(*binary.BitwiseAnd); ok {
+		tok = "&"
 	}
-}
 
-func (b *BlockWalker) ReportBitwiseOp(s node.Node, op string, rightOp string) {
-	b.r.Report(s, LevelWarning, "bitwiseOps",
-		"Used %s bitwise op over bool operands, perhaps %s is intended?", op, rightOp)
+	hasParens := func(n node.Node) bool {
+		return findFreeFloatingToken(n, freefloating.Start, "(") ||
+			findFreeFloatingToken(n, freefloating.End, ")")
+	}
+	checkArg := func(n, arg node.Node, tok string) {
+		cmpTok := ""
+		switch arg.(type) {
+		case *binary.Equal:
+			cmpTok = "=="
+		case *binary.NotEqual:
+			cmpTok = "!="
+		case *binary.Identical:
+			cmpTok = "==="
+		case *binary.NotIdentical:
+			cmpTok = "!=="
+		}
+		if cmpTok != "" && !hasParens(arg) {
+			b.r.Report(n, LevelWarning, "precedence", "%s has higher precedence than %s", cmpTok, tok)
+		}
+	}
+
+	b.checkBinaryDupArgs(n, left, right)
+	b.checkBinaryVoidType(left, right)
+
+	if b.exprType(left).Is("bool") && b.exprType(right).Is("bool") {
+		b.r.Report(n, LevelWarning, "bitwiseOps",
+			"Used %s bitwise op over bool operands, perhaps %s is intended?", tok, tok+tok)
+		return
+	}
+	checkArg(n, left, tok)
+	checkArg(n, right, tok)
+
 }
 
 func (b *BlockWalker) handleStmtExpression(s *stmt.Expression) {
@@ -2261,10 +2288,6 @@ func (b *BlockWalker) caseHasFallthroughComment(n node.Node) bool {
 
 func (b *BlockWalker) sideEffectFree(n node.Node) bool {
 	return sideEffectFree(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, n)
-}
-
-func (b *BlockWalker) isBool(n node.Node) bool {
-	return b.exprType(n).Is("bool")
 }
 
 func (b *BlockWalker) isVoid(n node.Node) bool {

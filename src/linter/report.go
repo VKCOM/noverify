@@ -25,6 +25,12 @@ func init() {
 		},
 
 		{
+			Name:    "precedence",
+			Default: true,
+			Comment: `Report potential operation precedence issues.`,
+		},
+
+		{
 			Name:    "voidResultUsed",
 			Default: true,
 			Comment: `Report usages of the void-type expressions`,
