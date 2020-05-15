@@ -145,6 +145,12 @@ func init() {
 		},
 
 		{
+			Name:    "phpdocRef",
+			Default: true,
+			Comment: `Report invalid symbol references inside phpdoc.`,
+		},
+
+		{
 			Name:    "phpdoc",
 			Default: true,
 			Comment: `Report missing phpdoc on public methods.`,

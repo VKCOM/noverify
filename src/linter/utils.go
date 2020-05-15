@@ -234,6 +234,25 @@ func findVarNode(n node.Node) node.Node {
 	}
 }
 
+func classHasProp(className, propName string) bool {
+	var nameWithDollar string
+	var nameWithoutDollar string
+	if strings.HasPrefix(propName, "$") {
+		nameWithDollar = propName
+		nameWithoutDollar = strings.TrimPrefix(propName, "$")
+	} else {
+		nameWithDollar = "$" + propName
+		nameWithoutDollar = propName
+	}
+
+	// Static props stored with leading "$".
+	if _, ok := solver.FindProperty(className, nameWithDollar); ok {
+		return true
+	}
+	_, ok := solver.FindProperty(className, nameWithoutDollar)
+	return ok
+}
+
 func binaryOpString(n node.Node) string {
 	switch n.(type) {
 	case *binary.BitwiseAnd:

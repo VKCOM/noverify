@@ -27,31 +27,6 @@ type classPhpDocParseResult struct {
 	errs       phpdocErrors
 }
 
-func parseClassPHPDoc(ctx *rootContext, doc string) classPhpDocParseResult {
-	var result classPhpDocParseResult
-
-	if doc == "" {
-		return result
-	}
-
-	// TODO: allocate maps lazily.
-	// Class may not have any @property or @method annotations.
-	// In that case we can handle avoid map allocations.
-	result.properties = make(meta.PropertiesMap)
-	result.methods = meta.NewFunctionsMap()
-
-	for _, part := range phpdoc.Parse(ctx.phpdocTypeParser, doc) {
-		switch part.Name() {
-		case "property":
-			parseClassPHPDocProperty(ctx, &result, part.(*phpdoc.TypeVarCommentPart))
-		case "method":
-			parseClassPHPDocMethod(ctx, &result, part.(*phpdoc.RawCommentPart))
-		}
-	}
-
-	return result
-}
-
 func parseClassPHPDocMethod(ctx *rootContext, result *classPhpDocParseResult, part *phpdoc.RawCommentPart) {
 	// The syntax is:
 	//	@method [[static] return type] [name]([[type] [parameter]<, ...>]) [<description>]
