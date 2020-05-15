@@ -55,6 +55,12 @@ func init() {
 		},
 
 		{
+			Name:    "redundantGlobal",
+			Default: true,
+			Comment: `Report global statement over superglobal variables (which is redundant).`,
+		},
+
+		{
 			Name:    "arrayAccess",
 			Default: true,
 			Comment: `Report array access to non-array objects.`,

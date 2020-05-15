@@ -288,6 +288,9 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 			if nm == "" {
 				continue
 			}
+			if _, ok := superGlobals[nm]; ok {
+				b.r.Report(v, LevelWarning, "redundantGlobal", "%s is superglobal", nm)
+			}
 			b.addVar(v, meta.NewTypesMap(meta.WrapGlobal(nm)), "global", meta.VarAlwaysDefined)
 			b.addNonLocalVar(v)
 		}
