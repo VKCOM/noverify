@@ -10,6 +10,33 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestRedundantGlobal(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$foo = 0;
+
+function f1() {
+  global $GLOBALS;
+  global $_GET;
+  global $foo; // OK
+  return $foo;
+}
+
+function f2() {
+  global $_POST, $foo, $_ENV;
+  return $foo;
+}
+`)
+	// A full warning message is `redundantGlobal: $varname is superglobal`.
+	test.Expect = []string{
+		`GLOBALS is superglobal`,
+		`_GET is superglobal`,
+		`_POST is superglobal`,
+		`_ENV is superglobal`,
+	}
+	test.RunAndMatch()
+}
+
 func TestForeachEmpty(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
