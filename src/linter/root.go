@@ -277,7 +277,7 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 		}
 		d.checkCommentMisspellings(n.ClassName, n.PhpDocComment)
 		d.checkIdentMisspellings(n.ClassName)
-		doc := parseClassPHPDoc(&d.ctx, n.PhpDocComment)
+		doc := d.parseClassPHPDoc(n.ClassName, n.PhpDocComment)
 		d.reportPhpdocErrors(n.ClassName, doc.errs)
 		// If we ever need to distinguish @property-annotated and real properties,
 		// more work will be required here.
@@ -789,7 +789,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	for _, p := range meth.Params {
 		d.checkVarnameMisspellings(p, p.(*node.Parameter).Variable.Name)
 	}
-	doc := d.parsePHPDoc(meth.PhpDocComment, meth.Params)
+	doc := d.parsePHPDoc(meth.MethodName, meth.PhpDocComment, meth.Params)
 	d.reportPhpdocErrors(meth.MethodName, doc.errs)
 	phpdocReturnType := doc.returnType
 	phpDocParamTypes := doc.types
@@ -893,6 +893,7 @@ func (d *RootWalker) reportPhpdocErrors(n node.Node, errs phpdocErrors) {
 
 func (d *RootWalker) parsePHPDocVar(n node.Node, doc string) (m meta.TypesMap) {
 	for _, part := range phpdoc.Parse(d.ctx.phpdocTypeParser, doc) {
+		d.checkPHPDocRef(n, part)
 		part, ok := part.(*phpdoc.TypeVarCommentPart)
 		if ok && part.Name() == "var" {
 			types, warning := typesFromPHPDoc(&d.ctx, part.Type)
@@ -913,7 +914,149 @@ type phpDocParseResult struct {
 	errs       phpdocErrors
 }
 
-func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocParseResult {
+func (d *RootWalker) isValidPHPDocRef(n node.Node, ref string) bool {
+	// Skip:
+	// - URLs
+	// - Things that can be a filename (e.g. "foo.php")
+	// - Wildcards (e.g. "self::FOO*")
+	// - Issue references (e.g. "#1393" "BACK-103")
+	if strings.Contains(ref, "http:") || strings.Contains(ref, "https:") {
+		return true // OK: URL?
+	}
+	if strings.ContainsAny(ref, ".*-#") {
+		return true
+	}
+
+	// expandName tries to convert s symbol into fully qualified form.
+	//
+	// We can't use solver/meta helpers since we deal with raw strings
+	// instead of nodes/names.
+	// TODO: make it easier to re-use that code in both cases.
+	expandName := func(s string) string {
+		if strings.HasPrefix(s, `\`) {
+			return s
+		}
+		switch s {
+		case "self", "static":
+			return d.ctx.st.CurrentClass
+		}
+		parts := strings.Split(s, `\`)
+		firstPart := parts[0]
+		if alias, ok := d.ctx.st.Uses[firstPart]; ok {
+			if len(parts) == 1 {
+				return alias
+			}
+			return alias + `\` + s
+		}
+		return d.ctx.st.Namespace + `\` + s
+	}
+
+	isValidGlobalVar := func(ref string) bool {
+		// Since we don't have an exhaustive list of globals,
+		// we can't tell for sure whether a variable ref is correct.
+		return true
+	}
+
+	isValidClassSymbol := func(ref string) bool {
+		parts := strings.Split(ref, "::")
+		if len(parts) != 2 {
+			return false
+		}
+		typeName, symbolName := expandName(parts[0]), parts[1]
+		if symbolName == "class" {
+			_, ok := meta.Info.GetClass(typeName)
+			return ok
+		}
+		if strings.HasPrefix(symbolName, "$") {
+			return classHasProp(typeName, symbolName)
+		}
+		if _, ok := solver.FindMethod(typeName, symbolName); ok {
+			return true
+		}
+		if _, _, ok := solver.FindConstant(typeName, symbolName); ok {
+			return true
+		}
+		return false
+	}
+
+	isValidSymbol := func(ref string) bool {
+		if !strings.HasPrefix(ref, `\`) {
+			if d.currentClassNode != nil {
+				if _, ok := solver.FindMethod(d.ctx.st.CurrentClass, ref); ok {
+					return true // OK: class method reference
+				}
+				if classHasProp(d.ctx.st.CurrentClass, ref) {
+					return true // OK: class prop reference
+				}
+			}
+
+			// Functions and constants fall back in global namespace resolving.
+			// See https://www.php.net/manual/en/language.namespaces.fallback.php
+			globalRef := `\` + ref
+			if _, ok := meta.Info.GetFunction(globalRef); ok {
+				return true // OK: function reference
+			}
+			if _, ok := meta.Info.GetConstant(globalRef); ok {
+				return true // OK: const reference
+			}
+		}
+		fqnRef := expandName(ref)
+		if _, ok := meta.Info.GetFunction(fqnRef); ok {
+			return true // OK: FQN function reference
+		}
+		if _, ok := meta.Info.GetClass(fqnRef); ok {
+			return true // OK: FQN class reference
+		}
+		if _, ok := meta.Info.GetConstant(fqnRef); ok {
+			return true // OK: FQN const reference
+		}
+		return false
+	}
+
+	switch {
+	case strings.Contains(ref, "::"):
+		return isValidClassSymbol(ref)
+	case strings.HasPrefix(ref, "$"):
+		return isValidGlobalVar(ref)
+	default:
+		return isValidSymbol(ref)
+	}
+}
+
+func (d *RootWalker) checkPHPDocRef(n node.Node, part phpdoc.CommentPart) {
+	if !meta.IsIndexingComplete() {
+		return
+	}
+
+	if part.Name() != "see" {
+		return
+	}
+
+	params := part.(*phpdoc.RawCommentPart).Params
+	if len(params) == 0 {
+		return
+	}
+
+	// @see supports a comma-separated list of refs.
+	var refs []string
+	for _, p := range params {
+		refs = append(refs, strings.TrimSuffix(p, ","))
+		if !strings.HasSuffix(p, ",") {
+			break
+		}
+	}
+
+	for _, ref := range refs {
+		// Sometimes people write references like `foo()` `foo...` `foo@`.
+		ref = strings.TrimRight(ref, "().;@")
+		if !d.isValidPHPDocRef(n, ref) {
+			d.Report(n, LevelWarning, "phpdocRef", "line %d: @see tag refers to unknown symbol %s",
+				part.Line(), ref)
+		}
+	}
+}
+
+func (d *RootWalker) parsePHPDoc(n node.Node, doc string, actualParams []node.Node) phpDocParseResult {
 	var result phpDocParseResult
 
 	if doc == "" {
@@ -931,6 +1074,8 @@ func (d *RootWalker) parsePHPDoc(doc string, actualParams []node.Node) phpDocPar
 	var curParam int
 
 	for _, part := range phpdoc.Parse(d.ctx.phpdocTypeParser, doc) {
+		d.checkPHPDocRef(n, part)
+
 		if part.Name() == "deprecated" {
 			part := part.(*phpdoc.RawCommentPart)
 			result.info.Deprecated = true
@@ -1120,7 +1265,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	for _, p := range fun.Params {
 		d.checkVarnameMisspellings(p, p.(*node.Parameter).Variable.Name)
 	}
-	doc := d.parsePHPDoc(fun.PhpDocComment, fun.Params)
+	doc := d.parsePHPDoc(fun.FunctionName, fun.PhpDocComment, fun.Params)
 	d.reportPhpdocErrors(fun.FunctionName, doc.errs)
 	phpdocReturnType := doc.returnType
 	phpDocParamTypes := doc.types
@@ -1488,6 +1633,32 @@ func (d *RootWalker) checkKeywordCase(n node.Node, keyword string) {
 	// Only works for nodes that have a keyword of interest
 	// as the leftmost token.
 	d.checkKeywordCasePos(n, n.GetPosition().StartPos, keyword)
+}
+
+func (d *RootWalker) parseClassPHPDoc(n node.Node, doc string) classPhpDocParseResult {
+	var result classPhpDocParseResult
+
+	if doc == "" {
+		return result
+	}
+
+	// TODO: allocate maps lazily.
+	// Class may not have any @property or @method annotations.
+	// In that case we can handle avoid map allocations.
+	result.properties = make(meta.PropertiesMap)
+	result.methods = meta.NewFunctionsMap()
+
+	for _, part := range phpdoc.Parse(d.ctx.phpdocTypeParser, doc) {
+		d.checkPHPDocRef(n, part)
+		switch part.Name() {
+		case "property":
+			parseClassPHPDocProperty(&d.ctx, &result, part.(*phpdoc.TypeVarCommentPart))
+		case "method":
+			parseClassPHPDocMethod(&d.ctx, &result, part.(*phpdoc.RawCommentPart))
+		}
+	}
+
+	return result
 }
 
 func (d *RootWalker) afterLeaveFile() {

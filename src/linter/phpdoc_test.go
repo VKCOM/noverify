@@ -59,10 +59,10 @@ func TestParseClassPHPDoc(t *testing.T) {
 	}
 
 	st := &meta.ClassParseState{}
-	ctx := newRootContext(st)
+	walker := RootWalker{ctx: newRootContext(st)}
 	for _, test := range tests {
 		doc := fmt.Sprintf(`/** %s */`, test.line)
-		result := parseClassPHPDoc(&ctx, doc)
+		result := walker.parseClassPHPDoc(nil, doc)
 
 		switch {
 		case test.method != "":

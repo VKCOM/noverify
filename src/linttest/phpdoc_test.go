@@ -6,6 +6,140 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestPHPDocRefs(t *testing.T) {
+	test := linttest.NewSuite(t)
+
+	test.AddFile(`<?php
+namespace A;
+
+/**
+ * @see B\ABClass OK - relative class ref
+ * @see B\ABClass;
+ * @see BACK-134
+ * @see #4393
+ */
+function f() {
+}
+
+interface Iface {
+  public function iface_method();
+}
+`)
+	test.AddFile(`<?php
+namespace A\B;
+
+class ABclass {
+  public $prop = 1;
+
+  /**
+   * @see $prop OK - refs class prop
+   * @see prop OK - "$" is optional
+   * @see \A\Iface::iface_method()
+   */
+  public static $static_prop = 2;
+}
+
+class HolyHandGrenade {
+  public function hallelujah() {}
+}
+
+/**
+ * @see abfunc1(), abfunc2() OK - two refs
+ */
+function abfunc1() {}
+
+/**
+ * @see abfunc1 OK - ref to a local symbol
+ * @see \A\B\abfunc1 OK - FQN ref
+ * @see abfunc1() OK - ref with parens
+ * @see f1... OK - global func ref with junk
+ * @see CONST1 OK - global const ref
+ * @see CONST2 OK - global const ref
+ * @see \CONST1 OK - FQN const ref
+ * @see CONST1@ OK - global const ref with junk
+ * @see \Foo::method1() OK - class method ref
+ * @see HolyHandGrenade::hallelujah OK - class method ref
+ * @see \Foo::FOOCONST OK - class const ref
+ */
+function abfunc2() {}
+`)
+
+	test.AddFile(`<?php
+use A\B\HolyHandGrenade;
+
+const CONST1 = 1;
+define('CONST2', 2);
+
+function f1() {}
+
+class Foo {
+  const FOOCONST = 'foo';
+
+  /**
+   * @see http://google.com - OK, URL
+   * @see method2 OK - refs current class method
+   * @see self::method2 OK - refs current class method
+   * @see f1 OK - global (current namespace) function refer
+   * @see \A\B\abfunc1 OK - global function ref
+   * @see \A\B\ABclass OK - FQN class ref
+   * @see HolyHandGrenade OK - class imported with "use"
+   * @see HolyHandGrenade::hallelujah OK - imported class method
+   * @see \A\B\ABclass::$prop OK - prop ref
+   * @see \A\B\ABclass::$static_prop OK - static prop ref
+   */
+  public function method1() {
+  }
+
+  /**
+   * @see foo.php
+   * @see foo.js:10
+   * @see self::* consts in this class
+   * @see self::FOO* consts in this class
+   * @see CONST1.
+   * @see self::class
+   * @see
+   */
+  public function method2() {}
+}
+
+class Bar {
+}
+`)
+
+	test.AddFile(`<?php
+namespace Bad
+
+/**
+ * @see HolyHandGrenade::hallelujah... BAD - HolyHandGrenade is in other namespace
+ */
+function f() {}
+
+/**
+ * @see CONST43@ BAD - CONST43 is undefined
+ */
+class BadClass {
+  /**
+   * @see \NonExisting::class BAD - non-existing class
+   */
+  public function m() {}
+
+  /**
+   * @see invalid1, invalid2 BAD - non-existing symbol
+   */
+  private $prop = 10;
+}
+`)
+
+	test.Expect = []string{
+		`line 2: @see tag refers to unknown symbol \NonExisting::class`,
+		`line 2: @see tag refers to unknown symbol HolyHandGrenade::hallelujah`,
+		`line 2: @see tag refers to unknown symbol CONST43`,
+		`line 2: @see tag refers to unknown symbol invalid1`,
+		`line 2: @see tag refers to unknown symbol invalid2`,
+	}
+	runFilterMatch(test, "phpdocRef")
+}
+
 func TestBadParamName(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
