@@ -103,6 +103,12 @@ class T {
   public $bad2; // Bad: invalid shape element.
 }
 
+function f() {
+  /** @var shape(int) $a */
+  global $a;
+  $_ = $a;
+}
+
 $t = new T();
 echo $t->bad1['x']->bad1;
 echo $t->bad2['x']->bad2;
@@ -119,6 +125,7 @@ echo $t->good6['y']->value;
 		`shape param #1: want key:type, found x`,
 		`Property {mixed}->bad1 does not exist`,
 		`Property {mixed}->bad2 does not exist`,
+		`shape param #1: want key:type, found int on line 1`,
 	}
 	test.RunAndMatch()
 }
