@@ -226,7 +226,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	if ffs := n.GetFreeFloating(); ffs != nil {
 		for _, cs := range *ffs {
 			for _, c := range cs {
-				b.parseComment(c)
+				b.parseComment(n, c)
 			}
 		}
 	}
@@ -590,7 +590,7 @@ func (b *BlockWalker) addVar(v node.Node, typ meta.TypesMap, reason string, flag
 	b.trackVarName(v, sv.Name)
 }
 
-func (b *BlockWalker) parseComment(c freefloating.String) {
+func (b *BlockWalker) parseComment(n node.Node, c freefloating.String) {
 	if c.StringType != freefloating.CommentType {
 		return
 	}
@@ -606,8 +606,10 @@ func (b *BlockWalker) parseComment(c freefloating.String) {
 			continue
 		}
 
-		// TODO: report phpdocLint notice.
-		types, _ := typesFromPHPDoc(&b.r.ctx, p.Type)
+		types, warning := typesFromPHPDoc(&b.r.ctx, p.Type)
+		if warning != "" {
+			b.r.Report(n, LevelInformation, "phpdocType", "%s on line %d", warning, p.Line())
+		}
 		m := newTypesMap(&b.r.ctx, types)
 		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(p.Var, "$"), m, "@var")
 	}
