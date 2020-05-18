@@ -154,6 +154,38 @@ func (b *BlockWalker) checkVoidType(n node.Node) {
 	}
 }
 
+func (b *BlockWalker) checkStrictCmp(n node.Node, left, right node.Node) {
+	needsStrictCmp := func(n node.Node) bool {
+		c, ok := n.(*expr.ConstFetch)
+		if !ok {
+			return false
+		}
+		nm, ok := c.Constant.(*name.Name)
+		if !ok {
+			return false
+		}
+		return meta.NameEquals(nm, "true") ||
+			meta.NameEquals(nm, "false") ||
+			meta.NameEquals(nm, "null")
+	}
+
+	var badNode node.Node
+	switch {
+	case needsStrictCmp(left):
+		badNode = left
+	case needsStrictCmp(right):
+		badNode = right
+	}
+	if badNode != nil {
+		suggest := "==="
+		if _, ok := n.(*binary.NotEqual); ok {
+			suggest = "!=="
+		}
+		b.r.Report(n, LevelWarning, "strictCmp", "non-strict comparison with %s (use %s)",
+			astutil.FmtNode(badNode), suggest)
+	}
+}
+
 func (b *BlockWalker) checkBinaryVoidType(left, right node.Node) {
 	b.checkVoidType(left)
 	b.checkVoidType(right)
@@ -242,9 +274,11 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *binary.Pow:
 		b.checkBinaryVoidType(s.Left, s.Right)
 	case *binary.Equal:
+		b.checkStrictCmp(s, s.Left, s.Right)
 		b.checkBinaryVoidType(s.Left, s.Right)
 		b.checkBinaryDupArgsNoFloat(s, s.Left, s.Right)
 	case *binary.NotEqual:
+		b.checkStrictCmp(s, s.Left, s.Right)
 		b.checkBinaryVoidType(s.Left, s.Right)
 		b.checkBinaryDupArgsNoFloat(s, s.Left, s.Right)
 	case *binary.Identical:
