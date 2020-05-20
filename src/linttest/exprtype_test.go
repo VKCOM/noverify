@@ -166,6 +166,12 @@ func TestExprTypeShape(t *testing.T) {
 
 		// Optional keys are resolved identically.
 		{`$opt['x']`, `\Foo\Bar`},
+
+		{`$t0[0]`, `int`},
+		{`$t0['1']`, `float`},
+		{`$t1[0]`, `string`},
+		{`$t1[1]['b']`, `bool`},
+		{`$t1[1]['t'][1]`, `float`},
 	}
 
 	global := `<?php
@@ -193,6 +199,13 @@ function shape_intkey($s) { return $s; }
 
 /** @return shape(*) */
 function shape(array $a) { return $a; }
+
+
+/** @param $t tuple(int, float) */
+function tuple_self0($t) { return $t; }
+
+/** @param $t tuple(string, shape(b:bool, t:tuple(int, float))) */
+function tuple_self1($t) { return $t; }
 `
 	local := `
 $s0 = shape_self0(shape(['x' => 1, 'y' => 1.5]));
@@ -200,6 +213,8 @@ $s2 = shape_self2(shape([]));
 $s3 = shape_self3(shape([]));
 $si = shape_intkey(shape([]));
 $opt = optional_shape(shape([]));
+$t0 = tuple_self0(tuple([]));
+$t1 = tuple_self1(tuple([]));
 `
 	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
 }

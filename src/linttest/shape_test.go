@@ -144,3 +144,43 @@ $s1 = new_shape1();
 echo $s1['list']->next->next;
 `)
 }
+
+func TestTuple(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Box { public $value; }
+
+class T {
+  /** @var tuple(int) */
+  public $good1;
+
+  /** @var tuple(Box, ...) */
+  public $good2;
+
+  /** @var tuple(int, tuple(Box)) */
+  public $good3;
+
+  /** @var tuple(x:Box) */
+  public $bad1; // Bad: invalid tuple element.
+
+  /** @var tuple(bool, x[]) */
+  public $bad2; // Bad: invalid tuple element.
+
+  /** @var tuple(0, int) */
+  public $bad3; // Bad: invalid tuple element.
+}
+
+$t = new T();
+echo $t->bad1['x']->value;
+
+echo $t->good2[0]->value;
+echo $t->good3[1][0]->value;
+`)
+	test.Expect = []string{
+		`tuple param #1: want type, found x:Box`,
+		`tuple param #2: want type, found x[]`,
+		`tuple param #1: want type, found 0`,
+		`Property {mixed}->value does not exist`,
+	}
+	test.RunAndMatch()
+}
