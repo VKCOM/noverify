@@ -159,21 +159,17 @@ func (conv *phpdocTypeConverter) mapTupleType(params []phpdoc.TypeExpr) []meta.T
 		if p.Value == "*" || p.Value == "..." {
 			continue
 		}
-		if p.Kind != phpdoc.ExprName && p.Kind != phpdoc.ExprGeneric {
-			conv.warn(fmt.Sprintf("tuple param #%d: want type, found %s", i+1, p.Value))
-			continue
-		}
 
-		args := []phpdoc.TypeExpr{
-			phpdoc.TypeExpr{
-				Kind:  phpdoc.ExprInt,
-				Value: fmt.Sprint(i),
-			}, p}
+		key := phpdoc.TypeExpr{
+			Kind:  phpdoc.ExprInt,
+			Value: fmt.Sprint(i),
+		}
+		typ := p
+		args := []phpdoc.TypeExpr{key, typ}
 
 		typeExpr := phpdoc.TypeExpr{
-			Kind:  phpdoc.ExprKeyVal,
-			Value: fmt.Sprintf("%d:%s", i, p.Value),
-			Args:  args,
+			Kind: phpdoc.ExprKeyVal,
+			Args: args,
 		}
 		types = append(types, typeExpr)
 	}
