@@ -1,0 +1,12 @@
+MAYBE   ternarySimplify: can simplify to (bool)$cond at testdata/embeddedrules/file.php:6
+    sink($x ? true : false);
+         ^^^^^^^^^^^^^^^^^
+MAYBE   ternarySimplify: can simplify to $cond at testdata/embeddedrules/file.php:9
+    sink($x > $y ? true : false);
+         ^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   ternarySimplify: use ?: shorthand for $a?$a:$b case at testdata/embeddedrules/file.php:12
+    sink($x ? $x : $y);
+         ^^^^^^^^^^^^
+MAYBE   ternarySimplify: could use ?? (null coalesce operator) at testdata/embeddedrules/file.php:15
+    sink(isset($x[1]) ? $x[1] : $y);
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
