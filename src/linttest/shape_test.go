@@ -144,3 +144,24 @@ $s1 = new_shape1();
 echo $s1['list']->next->next;
 `)
 }
+
+func TestTuple(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class Box { public $value; }
+
+class T {
+  /** @var tuple(int) */
+  public $good1;
+
+  /** @var tuple(Box, ...) */
+  public $good2;
+
+  /** @var tuple(int, tuple(Box)) */
+  public $good3;
+}
+
+$t = new T();
+echo $t->good2[0]->value;
+echo $t->good3[1][0]->value;
+`)
+}

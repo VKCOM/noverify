@@ -77,6 +77,10 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []meta.Type {
 		if typ.Value == "shape" {
 			return conv.mapShapeType(params)
 		}
+		if typ.Value == "tuple" {
+			return conv.mapTupleType(params)
+		}
+
 		return conv.mapType(typ)
 
 	case phpdoc.ExprNullable:
@@ -147,6 +151,30 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []meta.T
 	conv.ctx.shapes = append(conv.ctx.shapes, shape)
 
 	return []meta.Type{{Elem: shape.name}}
+}
+
+func (conv *phpdocTypeConverter) mapTupleType(params []phpdoc.TypeExpr) []meta.Type {
+	types := make([]phpdoc.TypeExpr, 0, len(params))
+	for i, p := range params {
+		if p.Value == "*" || p.Value == "..." {
+			continue
+		}
+
+		key := phpdoc.TypeExpr{
+			Kind:  phpdoc.ExprInt,
+			Value: fmt.Sprint(i),
+		}
+		typ := p
+		args := []phpdoc.TypeExpr{key, typ}
+
+		typeExpr := phpdoc.TypeExpr{
+			Kind: phpdoc.ExprKeyVal,
+			Args: args,
+		}
+		types = append(types, typeExpr)
+	}
+
+	return conv.mapShapeType(types)
 }
 
 func (conv *phpdocTypeConverter) warn(msg string) {
