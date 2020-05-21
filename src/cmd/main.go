@@ -16,6 +16,7 @@ import (
 	"strings"
 	"sync/atomic"
 
+	"github.com/VKCOM/noverify/src/cmd/embeddedrules"
 	"github.com/VKCOM/noverify/src/cmd/stubs"
 	"github.com/VKCOM/noverify/src/langsrv"
 	"github.com/VKCOM/noverify/src/lintdebug"
@@ -30,6 +31,8 @@ import (
 //
 //go:generate go-bindata -pkg stubs -nometadata -o ./stubs/phpstorm_stubs.go -ignore=\.idea -ignore=\.git ./stubs/phpstorm-stubs/...
 
+//go:generate go-bindata -pkg embeddedrules -nometadata -o ./embeddedrules/rules.go ./embeddedrules/rules.php
+
 func isCritical(r *linter.Report) bool {
 	if len(reportsCriticalSet) != 0 {
 		return reportsCriticalSet[r.CheckName()]
@@ -37,13 +40,21 @@ func isCritical(r *linter.Report) bool {
 	return r.IsCritical()
 }
 
-func isEnabled(r *linter.Report) bool {
-	if !reportsIncludeChecksSet[r.CheckName()] {
+func isEnabledByFlags(checkName string) bool {
+	if !reportsIncludeChecksSet[checkName] {
 		return false // Not enabled by -allow-checks
 	}
 
-	if reportsExcludeChecksSet[r.CheckName()] {
+	if reportsExcludeChecksSet[checkName] {
 		return false // Disabled by -exclude-checks
+	}
+
+	return true
+}
+
+func isEnabled(r *linter.Report) bool {
+	if !isEnabledByFlags(r.CheckName()) {
+		return false
 	}
 
 	if linter.ExcludeRegex == nil {
@@ -335,38 +346,69 @@ func setDiscardVarPredicate() error {
 	return nil
 }
 
-func initRules() error {
-	if rulesList == "" {
-		return nil
-	}
-
+func loadRulesFile(p *rules.Parser, filter func(r rules.Rule) bool, filename string, data []byte) error {
 	appendRules := func(dst, src *rules.ScopedSet) {
 		for i, list := range src.RulesByKind {
-			dst.RulesByKind[i] = append(dst.RulesByKind[i], list...)
+			for _, r := range list {
+				if !filter(r) {
+					break
+				}
+				dst.RulesByKind[i] = append(dst.RulesByKind[i], r)
+			}
 		}
 	}
 
-	p := rules.NewParser()
+	rset, err := p.Parse(filename, bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
+
+	for _, name := range rset.AlwaysAllowed {
+		reportsIncludeChecksSet[name] = true
+	}
+	for _, name := range rset.AlwaysCritical {
+		reportsCriticalSet[name] = true
+	}
+
+	appendRules(linter.Rules.Any, rset.Any)
+	appendRules(linter.Rules.Root, rset.Root)
+	appendRules(linter.Rules.Local, rset.Local)
+
+	return nil
+}
+
+func InitEmbeddedRules(p *rules.Parser, filter func(r rules.Rule) bool) error {
+	for _, filename := range embeddedrules.AssetNames() {
+		data, err := embeddedrules.Asset(filename)
+		if err != nil {
+			return err
+		}
+		if err := loadRulesFile(p, filter, filename, data); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func initRules() error {
+	ruleFilter := func(r rules.Rule) bool {
+		return isEnabledByFlags(r.Name)
+	}
+
 	linter.Rules = rules.NewSet()
-	for _, filename := range strings.Split(rulesList, ",") {
-		data, err := ioutil.ReadFile(filename)
-		if err != nil {
-			return err
-		}
-		rset, err := p.Parse(filename, bytes.NewReader(data))
-		if err != nil {
-			return err
-		}
+	p := rules.NewParser()
 
-		appendRules(linter.Rules.Any, rset.Any)
-		appendRules(linter.Rules.Root, rset.Root)
-		appendRules(linter.Rules.Local, rset.Local)
+	if err := InitEmbeddedRules(p, ruleFilter); err != nil {
+		return err
+	}
 
-		for _, name := range rset.AlwaysAllowed {
-			reportsIncludeChecksSet[name] = true
-		}
-		for _, name := range rset.AlwaysCritical {
-			reportsCriticalSet[name] = true
+	if rulesList != "" {
+		for _, filename := range strings.Split(rulesList, ",") {
+			data, err := ioutil.ReadFile(filename)
+			if err != nil {
+				return err
+			}
+			loadRulesFile(p, ruleFilter, filename, data)
 		}
 	}
 

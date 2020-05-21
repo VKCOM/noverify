@@ -4,6 +4,12 @@ MAYBE   phpdoc: Missing PHPDoc for "output_image" public method at testdata/qrco
 MAYBE   phpdoc: Missing PHPDoc for "render_image" public method at testdata/qrcode/qrcode.php:53
   public function render_image() {
                   ^^^^^^^^^^^^
+MAYBE   ternarySimplify: could use ?? (null coalesce operator) at testdata/qrcode/qrcode.php:59
+    $bgcolor = (isset($this->options['bc']) ? $this->options['bc'] : 'FFFFFF');
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   ternarySimplify: could use ?? (null coalesce operator) at testdata/qrcode/qrcode.php:63
+    $fgcolor = (isset($this->options['fc']) ? $this->options['fc'] : '000000');
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 INFO    deadCode: Unreachable code at testdata/qrcode/qrcode.php:155
     return null;
            ^^^^

@@ -1,17 +1,32 @@
 package linttest_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/VKCOM/noverify/src/cmd"
+	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
+	"github.com/VKCOM/noverify/src/rules"
 	"github.com/google/go-cmp/cmp"
 )
 
 func TestGolden(t *testing.T) {
+	defer func(rset *rules.Set) {
+		linter.Rules = rset
+	}(linter.Rules)
+
+	enableAllRules := func(_ rules.Rule) bool { return true }
+	p := rules.NewParser()
+	linter.Rules = rules.NewSet()
+	if err := cmd.InitEmbeddedRules(p, enableAllRules); err != nil {
+		t.Fatalf("init embedded rules: %v", err)
+	}
+
 	coreFiles := []string{
 		`stubs/phpstorm-stubs/Core/Core.php`,
 		`stubs/phpstorm-stubs/Core/Core_d.php`,
@@ -36,6 +51,10 @@ func TestGolden(t *testing.T) {
 		deps    []string
 		disable []string
 	}{
+		{
+			name: "embeddedrules",
+		},
+
 		{
 			name: "qrcode",
 			deps: []string{
@@ -173,8 +192,10 @@ func TestGolden(t *testing.T) {
 			wantLines := strings.Split(string(want), "\n")
 			if diff := cmp.Diff(wantLines, haveLines); diff != "" {
 				t.Errorf("results mismatch (+ have) (- want): %s", diff)
-				t.Logf("have:\n%s", strings.Join(haveLines, "\n"))
-				t.Logf("want:\n%s", want)
+				// Use fmt.Printf() instead of t.Logf() to make the output
+				// more copy/paste friendly.
+				fmt.Printf("have:\n%s", strings.Join(haveLines, "\n"))
+				fmt.Printf("want:\n%s", want)
 			}
 		})
 	}

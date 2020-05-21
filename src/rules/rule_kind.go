@@ -23,6 +23,7 @@ const (
 	KindFunctionCall
 	KindStaticCall
 	KindArray
+	KindTernary
 
 	KindValueFetch
 	KindCmp     // All binary comparison ops
@@ -142,9 +143,11 @@ func CategorizeNode(n node.Node) RuleKind {
 	case *binary.LogicalOr,
 		*binary.LogicalAnd,
 		*binary.BooleanOr,
-		*binary.BooleanAnd,
-		*expr.Ternary:
+		*binary.BooleanAnd:
 		return KindCondOp
+
+	case *expr.Ternary:
+		return KindTernary
 
 	case *stmt.Do,
 		*stmt.For,
