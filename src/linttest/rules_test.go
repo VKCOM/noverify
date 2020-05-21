@@ -36,6 +36,12 @@ eval(${"var"});
 func TestAnyRules(t *testing.T) {
 	rfile := `<?php
 /**
+ * @warning string value used in if condition
+ * @type string $cond
+ */
+if ($cond) $_;
+
+/**
  * @warning implode() first arg must be a string and second should be an array
  * @type !string $glue
  * @or
@@ -101,6 +107,13 @@ function implode($glue, $pieces) { return ''; }
 
 define('true', 1 == 1);
 define('false', 1 == 0);
+
+function stringCond(string $s) {
+  if ($s !== '') { // Good
+    if ($s) { // Bad
+    }
+  }
+}
 
 /**
  * @param Foo[] $arr
@@ -180,6 +193,7 @@ $_ = implode($s, $i); // BAD: string, int
 `)
 
 	test.Expect = []string{
+		`string value used in if condition`,
 		`duplicated sub-expressions inside boolean expression`,
 		`suspicious order of stripos function arguments`,
 		`don't call explode with empty delimiter`,

@@ -28,13 +28,17 @@ func (m *Matcher) Clone() *Matcher {
 	return &Matcher{m: m.m}
 }
 
-// Match reports whether given PHP code matches the bound pattern.
-//
-// For malformed inputs (like code with syntax errors), returns false.
-func (m *Matcher) Match(root node.Node) bool {
-	return m.m.matchAST(root)
-}
-
+// Find executed a callback for every match inside root.
+// If callback returns false, currently matched node children are not visited.
 func (m *Matcher) Find(root node.Node, callback func(*MatchData) bool) {
 	m.m.findAST(root, callback)
+}
+
+// Match attempts to match n without recursing into it.
+//
+// Returned match data should only be examined if the
+// second return value is true.
+func (m *Matcher) Match(n node.Node) (MatchData, bool) {
+	found := m.m.match(n)
+	return m.m.data, found
 }

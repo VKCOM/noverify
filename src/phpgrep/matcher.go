@@ -25,18 +25,22 @@ type matcher struct {
 	data MatchData
 }
 
-func (m *matcher) matchAST(root node.Node) bool {
-	matched := false
-	m.findAST(root, func(*MatchData) bool {
-		matched = true
-		return false // Stop at the first match
-	})
-	return matched
+func (m *matcher) match(n node.Node) bool {
+	m.named = map[string]node.Node{}
+	if !m.eqNode(m.root, n) {
+		return false
+	}
+	pos := getNodePos(n)
+	if pos == nil {
+		return false
+	}
+	m.data.Node = n
+	m.data.Named = m.named
+	return true
 }
 
 func (m *matcher) findAST(root node.Node, callback func(*MatchData) bool) {
 	m.handler = callback
-
 	root.Walk(m)
 }
 
@@ -741,8 +745,12 @@ func (m *matcher) eqVar(x *node.Var, y node.Node) bool {
 			return false
 		}
 	case anyVar:
-		_, ok := y.(*node.SimpleVar)
-		return ok && m.matchNamed(vn.name, y)
+		switch y.(type) {
+		case *node.SimpleVar, *node.Var:
+			return m.matchNamed(vn.name, y)
+		default:
+			return false
+		}
 	case anyInt:
 		_, ok := y.(*scalar.Lnumber)
 		return ok && m.matchNamed(vn.name, y)
@@ -770,24 +778,9 @@ func (m *matcher) eqVar(x *node.Var, y node.Node) bool {
 }
 
 func (m *matcher) EnterNode(w walker.Walkable) bool {
-	n, ok := w.(node.Node)
-	if !ok {
-		return true
-	}
-
-	m.named = map[string]node.Node{}
-
-	if ok && m.eqNode(m.root, n) {
-		pos := getNodePos(n)
-		if pos == nil {
-			return true
-		}
-		m.data.Node = n
-		m.data.Named = m.named
-
+	if m.match(w.(node.Node)) {
 		return m.handler(&m.data)
 	}
-
 	return true
 }
 
