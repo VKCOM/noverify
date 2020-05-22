@@ -1,4 +1,4 @@
-MAYBE   ternarySimplify: could use ?? (null coalesce operator) at testdata/parsedown/parsedown.php:674
+MAYBE   ternarySimplify: could rewrite as `$matches[1] ?? ''` at testdata/parsedown/parsedown.php:674
             $text = isset($matches[1]) ? $matches[1] : '';
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   regexpSimplify: May re-write '/^>[ ]?+(.*+)/' as '/^> ?+(.*+)/' at testdata/parsedown/parsedown.php:750
@@ -10,7 +10,7 @@ MAYBE   regexpSimplify: May re-write '/^>[ ]?+(.*+)/' as '/^> ?+(.*+)/' at testd
 MAYBE   regexpSimplify: May re-write '/^\[(.+?)\]:[ ]*+<?(\S+?)>?(?:[ ]+["\'(](.+)["\')])?[ ]*+$/' as '/^\[(.+?)\]: *+<?(\S+?)>?(?: +["'(](.+)["')])? *+$/' at testdata/parsedown/parsedown.php:875
             and preg_match('/^\[(.+?)\]:[ ]*+<?(\S+?)>?(?:[ ]+["\'(](.+)["\')])?[ ]*+$/', $Line['text'], $matches)
                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could use ?? (null coalesce operator) at testdata/parsedown/parsedown.php:881
+MAYBE   ternarySimplify: could rewrite as `$matches[3] ?? null` at testdata/parsedown/parsedown.php:881
                 'title' => isset($matches[3]) ? $matches[3] : null,
                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   regexpSimplify: May re-write '/[ ]*+\n/' as '/ *+\n/' at testdata/parsedown/parsedown.php:1265
@@ -31,7 +31,7 @@ INFO    undefined: Variable might have not been defined: text at testdata/parsed
 INFO    undefined: Variable might have not been defined: text at testdata/parsedown/parsedown.php:1759
                     $markup .= $text;
                                ^^^^^
-MAYBE   ternarySimplify: could use ?? (null coalesce operator) at testdata/parsedown/parsedown.php:1786
+MAYBE   ternarySimplify: could rewrite as `$Element['autobreak'] ?? isset($Element['name'])` at testdata/parsedown/parsedown.php:1786
             $autoBreakNext = (isset($Element['autobreak'])
                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 INFO    unused: Variable val is unused (use $_ to ignore this inspection) at testdata/parsedown/parsedown.php:1882
