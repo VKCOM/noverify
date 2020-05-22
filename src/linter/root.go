@@ -1467,16 +1467,56 @@ func (d *RootWalker) LeaveNode(n walker.Walkable) {
 func (d *RootWalker) runRules(n node.Node, sc *meta.Scope, rlist []rules.Rule) {
 	for i := range rlist {
 		rule := &rlist[i]
-		if loc := d.matchRule(n, sc, rule); loc != nil {
-			d.Report(loc, rule.Level, rule.Name, rule.Message)
-		}
+		d.runRule(n, sc, rule)
 	}
 }
 
-func (d *RootWalker) matchRule(n node.Node, sc *meta.Scope, rule *rules.Rule) node.Node {
+func (d *RootWalker) sourceNodeString(n node.Node) string {
+	pos := n.GetPosition()
+	from := pos.StartPos
+	to := pos.EndPos
+	src := d.fileContents
+	// Taking a node from the source code preserves the original formatting
+	// and is more efficient than printing it.
+	if (from >= 0 && int(from) < len(src)) && (to >= 0 && int(to) < len(src)) {
+		return string(src[from:to])
+	}
+	// If we can't take node out of the source text, print it.
+	return astutil.FmtNode(n)
+}
+
+func (d *RootWalker) renderRuleMessage(msg string, n node.Node, named map[string]node.Node) string {
+	// "$$" stands for the entire matched node, like $0 in regexp.
+	if strings.Contains(msg, "$$") {
+		msg = strings.ReplaceAll(msg, "$$", d.sourceNodeString(n))
+	}
+
+	if len(named) == 0 {
+		return msg // No variables to interpolate, we're done
+	}
+	for name, n := range named {
+		key := "$" + name
+		if !strings.Contains(msg, key) {
+			continue
+		}
+		nodeString := d.sourceNodeString(n)
+		// Don't interpolate strings that are too long
+		// or contain a newline.
+		var replacement string
+		if len(nodeString) > 60 || strings.Contains(nodeString, "\n") {
+			replacement = key
+		} else {
+			replacement = nodeString
+		}
+		msg = strings.ReplaceAll(msg, key, replacement)
+	}
+	return msg
+}
+
+func (d *RootWalker) runRule(n node.Node, sc *meta.Scope, rule *rules.Rule) {
 	m, ok := rule.Matcher.Match(n)
 	if !ok {
-		return nil
+		return
 	}
 
 	matched := false
@@ -1500,7 +1540,13 @@ func (d *RootWalker) matchRule(n node.Node, sc *meta.Scope, rule *rules.Rule) no
 	case matched:
 		location = n
 	}
-	return location
+
+	if location == nil {
+		return
+	}
+
+	message := d.renderRuleMessage(rule.Message, n, m.Named)
+	d.Report(location, rule.Level, rule.Name, message)
 }
 
 func (d *RootWalker) checkTypeFilter(wantType *phpdoc.Type, sc *meta.Scope, nn node.Node) bool {
