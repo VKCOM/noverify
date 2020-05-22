@@ -1,7 +1,9 @@
 package phpgrep
 
 import (
+	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
@@ -23,6 +25,10 @@ type matcher struct {
 	literalMatch bool
 
 	data MatchData
+
+	// Used only when -tracing build tag is specified.
+	tracingBuf   *bytes.Buffer
+	tracingDepth int
 }
 
 func (m *matcher) match(n node.Node) bool {
@@ -185,6 +191,15 @@ func (m *matcher) eqEncapsedStringPart(x, y node.Node) bool {
 }
 
 func (m *matcher) eqNode(x, y node.Node) bool {
+	if tracingEnabled && m.tracingBuf != nil {
+		pad := strings.Repeat(" • ", m.tracingDepth)
+		fmt.Fprintf(m.tracingBuf, "%seqNode x=%T y=%T\n", pad, x, y)
+		m.tracingDepth++
+		defer func() {
+			m.tracingDepth--
+		}()
+	}
+
 	if x == y {
 		return true
 	}

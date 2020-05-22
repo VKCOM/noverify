@@ -5,26 +5,27 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 )
 
-func matchInText(m *matcher, code []byte) bool {
-	root, _, err := parsePHP7(code)
+func mustParse(t *testing.T, code []byte) node.Node {
+	n, _, err := parsePHP7(code)
 	if err != nil {
-		return false
+		t.Errorf("parse `%s`: %v", code, err)
 	}
-	if x, ok := root.(*stmt.Expression); ok {
-		root = x.Expr
+	if n, ok := n.(*stmt.Expression); ok {
+		return n.Expr
 	}
-	return m.match(root)
+	return n
 }
 
-func findInText(m *matcher, code []byte, callback func(*MatchData) bool) {
-	root, _, err := parsePHP7(code)
-	if err != nil {
-		return
-	}
-	m.findAST(root, callback)
+func matchInText(t *testing.T, m *matcher, code []byte) bool {
+	return m.match(mustParse(t, code))
+}
+
+func findInText(t *testing.T, m *matcher, code []byte, callback func(*MatchData) bool) {
+	m.findAST(mustParse(t, code), callback)
 }
 
 type matcherTest struct {
@@ -45,7 +46,7 @@ func TestFind(t *testing.T) {
 		var c Compiler
 		matcher := mustCompile(t, &c, pattern)
 		var haveMatches []string
-		findInText(&matcher.m, []byte(code), func(m *MatchData) bool {
+		findInText(t, &matcher.m, []byte(code), func(m *MatchData) bool {
 			pos := m.Node.GetPosition()
 			posFrom := pos.StartPos
 			posTo := pos.EndPos
@@ -97,7 +98,7 @@ func runMatchTest(t *testing.T, want bool, tests []*matcherTest) {
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%d_%v", i, want), func(t *testing.T) {
 			matcher := mustCompile(t, &c, test.pattern)
-			have := matchInText(&matcher.m, []byte(test.input))
+			have := matchInText(t, &matcher.m, []byte(test.input))
 			if have != want {
 				t.Errorf("match results mismatch:\npattern: %q\ninput: %q\nhave: %v\nwant: %v",
 					test.pattern, test.input, have, want)
@@ -437,7 +438,6 @@ func TestMatchNegative(t *testing.T) {
 
 		{`while ($_); {${'*'};}`, `while ($cond) {$blah;}`},
 		{`for ($_; $_; $_) {${"*"};}`, `for (;;) {}`},
-		{`for ($_; $_; $_) {${"*"};}`, `for ($i = 0; $i < 10; $i++) { echo $; }`},
 
 		{`if ($c) $_; else if ($c) $_;`, `if ($c1) {} else if ($c2) {}`},
 		{`if ($c) $_; elseif ($c) $_;`, `if ($c1) {} elseif ($c2) {}`},
@@ -460,7 +460,7 @@ func TestMatchNegative(t *testing.T) {
 		{`${"expr"}`, `{}`},
 		{`${"expr"}`, `{{}}`},
 
-		{`$_ == $_ ? $_ : $_ == $_ ? $_ : $_`, `$a == 1 ? ('one' : $a == 2 ? ('two' : 'other'))`},
+		{`$_ == $_ ? $_ : $_ == $_ ? $_ : $_`, `$a == 1 ? 'one' : ($a == 2 ? 'two' : 'other')`},
 		{`$x ? $x : $y`, `1 ?: 2`},
 		{`$x ? $y : $z`, `1 ?: 2`},
 
@@ -501,14 +501,14 @@ func TestMatchNegative(t *testing.T) {
 
 		{`function() { return $x; }`, `function() {}`},
 		{`function($x) {}`, `function() {}`},
-		{`function($x) use($v) {}`, `function($arg1) use() {}`},
+		{`function($x) use($v) {}`, `function($arg1) use($a, $b) {}`},
 		{`function() { ${"*"}; return 1; }`, `function() {}`},
 		{`function() { ${"*"}; return 1; }`, `function($x) { return 1; }`},
 		{`function() { ${"*"}; return 1; }`, `static function() { f(); f(); return 1; }`},
 
 		{`!($x instanceof $y)`, `1`},
 		{`$x instanceof T1`, `$v instanceof T2`},
-		{`$x instanceof T`, `$x instance of $y`},
+		{`$x instanceof T`, `$x instanceof $y`},
 
 		{`static $x = 10`, `static $vvv = 11`},
 		{`global $x, $y`, `global $a`},
