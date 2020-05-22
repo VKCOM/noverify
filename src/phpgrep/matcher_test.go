@@ -2,17 +2,16 @@ package phpgrep
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 )
 
-func mustParse(t *testing.T, code []byte) node.Node {
+func mustParse(t testing.TB, code []byte) node.Node {
 	n, _, err := parsePHP7(code)
 	if err != nil {
-		t.Errorf("parse `%s`: %v", code, err)
+		t.Fatalf("parse `%s`: %v", code, err)
 	}
 	if n, ok := n.(*stmt.Expression); ok {
 		return n.Expr
@@ -486,10 +485,7 @@ func BenchmarkFind(b *testing.B) {
 	runBench := func(name, pattern string, input []byte) {
 		b.Run(name, func(b *testing.B) {
 			matcher := mustCompile(b, &c, pattern)
-			root, _, err := parsePHP7(input)
-			if err != nil {
-				b.Fatal(err)
-			}
+			root := mustParse(b, input)
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				matcher.m.match(root)
@@ -497,154 +493,29 @@ func BenchmarkFind(b *testing.B) {
 		})
 	}
 
-	// f(), f($x), ..., f($x{i})
-	lotsOfCalls := []byte("<?php\n")
-	for i := 0; i < 50; i++ {
-		call := "f(" + strings.Repeat("$x,", i) + ");\n"
-		lotsOfCalls = append(lotsOfCalls, []byte(call)...)
-	}
+	const (
+		functionCall = `f(1, 2, 'abc', $x, [FOO => BAR])`
+	)
 
 	benchmarks := []struct {
 		name    string
 		pattern string
-		input   []byte
+		input   string
 	}{
-		// Benchmarking list matching.
-		{"positive/call*", `$_(${"*"})`, lotsOfCalls},
-		{"positive/call_*", `$_($_, ${"*"})`, lotsOfCalls},
-		{"positive/call*_", `$_(${"*"}, $_)`, lotsOfCalls},
-		{"positive/call*_*", `$_(${"*"}, $_, ${"*"})`, lotsOfCalls},
-		{"negative/call_", `$_($_)`, lotsOfCalls},
+		{"negative/const-tail", `[${"*"}, 1, 1]`, `[0,0,0,0,0,0,0,0,0]`},
 
-		// Benchmarking named variables.
-		{"positive/with-1-named", `$x`, benchmarkInput},
-		{"positive/with-5-named", `$x1 + $x2 + $x3 + $x4 + $x5`, benchmarkInput},
-		{"negative/with-0-named", `1 + 7 - 103`, benchmarkInput},
+		{"positive/call*", `$_(${"*"})`, functionCall},
+		{"positive/call_*", `$_($_, ${"*"})`, functionCall},
+		{"positive/call*_", `$_(${"*"}, $_)`, functionCall},
+		{"positive/call*_*", `$_(${"*"}, $_, ${"*"})`, functionCall},
+		{"negative/call_", `$_($_)`, functionCall},
+
+		{"positive/with-1-named", `$x + 1 * $x`, `$a[0] + 1 * $a[0]`},
+		{"negative/with-1-named", `$x + 1 * $x`, `$a[0] + 1 * $a[1]`},
+		{"positive/with-5-named", `$x1 + $x2 + $x3 + $x4 + $x5`, `1 + 2 + 3 + 4 + 5`},
 	}
 
 	for _, bench := range benchmarks {
-		runBench(bench.name, bench.pattern, bench.input)
+		runBench(bench.name, bench.pattern, []byte(bench.input))
 	}
 }
-
-var benchmarkInput = []byte(`<?php
-
-use N\{ClassName,
-  AnotherClassName,
-  OneMoreClassName};
-
-namespace A {
-  function foo() {
-    return 0;
-  }
-
-  function bar($x,
-    $y, int $z = 1) {
-    $x = 0;
-// $x = 1
-    do {
-      $y += 1;
-    } while ($y < 10);
-    if (true)
-      $x = 10;
-    elseif ($y < 10)
-      $x = 5;
-    elseif (true)
-      $x = 5;
-    for ($i = 0; $i < 10; $i++)
-      $yy = $x > 2 ? 1 : 2;
-    while (true)
-      $x = 0;
-    do {
-      $x += 1;
-    } while (true);
-    foreach (["a" => 0, "b" => 1,
-              "c" => 2] as $e1) {
-      echo $e1;
-    }
-    $count = 10;
-    $x     = ["x", "y",
-      [1 => "abc",
-       2 => "def", 3 => "ghi"]];
-    $zz    = [0.1, 0.2,
-      0.3, 0.4];
-    $x     = [
-      0   => "zero",
-      123 => "one two three",
-      25  => "two five",
-    ];
-    bar(0, bar(1,
-      "b"));
-  }
-
-  abstract class Foo extends FooBaseClass implements Bar1, Bar2, Bar3 {
-
-    var $numbers = ["one", "two", "three", "four", "five", "six"];
-    var $v = 0;
-    public $path = "root";
-
-    const FIRST  = 'first';
-    const SECOND = 0;
-    const Z      = -1;
-
-    function bar($v,
-      $w = "a") {
-      $y      = $w;
-      $result = foo("arg1",
-        "arg2",
-        10);
-      switch ($v) {
-        case 0:
-          return 1;
-        case 1:
-          echo '1';
-          break;
-        case 2:
-          break;
-        default:
-          $result = 10;
-      }
-      return $result;
-    }
-
-    public static function fOne($argA, $argB, $argC, $argD, $argE, $argF, $argG, $argH) {
-      $x = $argA + $argB + $argC + $argD + $argE + $argF + $argG + $argH;
-      list($field1, $field2, $field3, $filed4, $field5, $field6) = explode(",", $x);
-      fTwo($argA, $argB, $argC, fThree($argD, $argE, $argF, $argG, $argH));
-      $z      = $argA == "Some string" ? "yes" : "no";
-      $colors = ["red", "green", "blue", "black", "white", "gray"];
-      $count  = count($colors);
-      for ($i = 0; $i < $count; $i++) {
-        $colorString = $colors[$i];
-      }
-    }
-
-    function fTwo($strA, $strB, $strC, $strD) {
-      if ($strA == "one" || $strB == "two" || $strC == "three") {
-        return $strA + $strB + $strC;
-      }
-      $x = $foo->one("a", "b")->two("c", "d", "e")->three("fg")->four();
-      $y = a()->b()->c();
-      return $strD;
-    }
-
-    function fThree($strA, $strB, $strC, $strD, $strE) {
-      try {
-      } catch (Exception $e) {
-        foo();
-      } finally {
-        // do something
-      }
-      return $strA + $strB + $strC + $strD + $strE;
-    }
-
-    protected abstract function fFour();
-
-  }
-}
-
-function f() {}
-
-$_ = f(1 + 2 + 3 + 4 + 5);
-$_ = f(f() + f() + f() + f() + f());
-`)
