@@ -127,9 +127,7 @@ func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedS
 			if !strings.Contains(filename, rule.Path) {
 				continue
 			}
-			ruleClone := rule
-			ruleClone.Matcher = rule.Matcher.Clone()
-			res = append(res, ruleClone)
+			res = append(res, rule)
 		}
 		clone.RulesByKind[i] = res
 	}
@@ -150,9 +148,8 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 		lineRanges: lineRanges,
 		ctx:        newRootContext(st),
 
-		// We need to clone rules since phpgrep matchers
-		// contain mutable state that we don't want to share
-		// between goroutines.
+		// We clone rules sets to remove all rules that
+		// should not be applied to this file because of the @path.
 		anyRset:   cloneRulesForFile(filename, Rules.Any),
 		rootRset:  cloneRulesForFile(filename, Rules.Root),
 		localRset: cloneRulesForFile(filename, Rules.Local),
