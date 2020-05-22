@@ -28,6 +28,7 @@ $cond ? true : false;
 /**
  * @name ternarySimplify
  * @maybe use ?: shorthand for $a?$a:$b case
+ * @pure $x
  */
 $x ? $x : $y;
 

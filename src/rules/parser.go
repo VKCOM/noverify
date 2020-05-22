@@ -184,6 +184,21 @@ func (p *parser) parseRule(st node.Node) error {
 			filter.Type = new(phpdoc.Type)
 			*filter.Type = typ
 			filterSet[name] = filter
+		case "pure":
+			if len(part.Params) != 1 {
+				return p.errorf(st, "@pure expects exactly 1 param, got %d", len(part.Params))
+			}
+			name := part.Params[0]
+			if !strings.HasPrefix(name, "$") {
+				return p.errorf(st, "@pure param must be a phpgrep variable")
+			}
+			name = strings.TrimPrefix(name, "$")
+			if filterSet == nil {
+				filterSet = map[string]Filter{}
+			}
+			filter := filterSet[name]
+			filter.Pure = true
+			filterSet[name] = filter
 
 		default:
 			return p.errorf(st, "unknown attribute @%s on line %d", part.Name(), part.Line())

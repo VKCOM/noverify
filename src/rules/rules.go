@@ -85,4 +85,5 @@ func (r *Rule) String() string {
 // Filter describes constraints that should be applied to a given phpgrep variable.
 type Filter struct {
 	Type *phpdoc.Type
+	Pure bool
 }
