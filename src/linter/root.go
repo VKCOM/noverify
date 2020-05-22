@@ -1517,10 +1517,15 @@ func (d *RootWalker) checkTypeFilter(wantType *phpdoc.Type, sc *meta.Scope, nn n
 }
 
 func (d *RootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filterSet map[string]rules.Filter) bool {
+	// TODO: pass custom types here, so both @type and @pure predicates can use it.
+
 	for name, filter := range filterSet {
 		nn := m.Named[name]
 
 		if !d.checkTypeFilter(filter.Type, sc, nn) {
+			return false
+		}
+		if filter.Pure && !sideEffectFree(d.scope(), d.ctx.st, nil, nn) {
 			return false
 		}
 	}

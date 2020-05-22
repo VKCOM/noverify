@@ -153,6 +153,7 @@ func (f *sideEffectsFinder) EnterNode(w walker.Walkable) bool {
 		*stmt.Echo,
 		*stmt.Unset,
 		*stmt.Throw,
+		*stmt.Global,
 		*expr.Exit,
 		*assign.Assign,
 		*assign.Reference,

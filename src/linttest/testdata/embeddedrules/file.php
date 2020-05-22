@@ -14,4 +14,6 @@ function ternarySimplify($x, $y) {
 
     sink(isset($x[1]) ? $x[1] : $y);
     sink($x[1] ?? $y);
+
+    sink(random() ? random() : $y);
 }
