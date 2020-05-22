@@ -24,10 +24,6 @@ func matchInText(t *testing.T, m *matcher, code []byte) bool {
 	return m.match(mustParse(t, code))
 }
 
-func findInText(t *testing.T, m *matcher, code []byte, callback func(*MatchData) bool) {
-	m.findAST(mustParse(t, code), callback)
-}
-
 type matcherTest struct {
 	pattern string
 	input   string
@@ -39,58 +35,6 @@ func mustCompile(t testing.TB, c *Compiler, code string) *Matcher {
 		t.Fatalf("pattern compilation error:\ntext: %q\nerr: %v", code, err)
 	}
 	return matcher
-}
-
-func TestFind(t *testing.T) {
-	runFindTest := func(t *testing.T, pattern, code string, wantMatches []string) {
-		var c Compiler
-		matcher := mustCompile(t, &c, pattern)
-		var haveMatches []string
-		findInText(t, &matcher.m, []byte(code), func(m *MatchData) bool {
-			pos := m.Node.GetPosition()
-			posFrom := pos.StartPos
-			posTo := pos.EndPos
-			haveMatches = append(haveMatches, string(code[posFrom:posTo]))
-			return true
-		})
-		if len(haveMatches) != len(wantMatches) {
-			t.Errorf("matches count mismatch:\nhave: %d\nwant: %d",
-				len(haveMatches), len(wantMatches))
-			t.Log("have:")
-			for _, have := range haveMatches {
-				t.Log(have)
-			}
-			t.Log("want:")
-			for _, want := range wantMatches {
-				t.Log(want)
-			}
-			return
-		}
-		for i, have := range haveMatches {
-			want := wantMatches[i]
-			if have != want {
-				t.Errorf("match mismatch:\nhave: %q\nwant: %q", have, want)
-			}
-		}
-	}
-
-	runFindTest(t, `$x+1`, `<?php $x+1;`, []string{`$x+1`})
-
-	runFindTest(t, `$x = $x`, `<?php
-            $x = $x; $z1 = 10; $y = $y; $z2 = 20; $x = $y;
-        `, []string{
-		`$x = $x`,
-		`$y = $y`,
-	})
-
-	// TODO: uncomment when parentheses are handled correctly.
-	// runFindTest(t, `($x)`, `<?php
-	//     $x + $y; ($x1 + $y1); (($x2 + $y2));
-	// `, []string{
-	// 	`($x1 + $y1)`,
-	// 	`(($x2 + $y2))`,
-	// 	`($x2 + $y2)`,
-	// })
 }
 
 func runMatchTest(t *testing.T, want bool, tests []*matcherTest) {

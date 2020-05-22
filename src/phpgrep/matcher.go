@@ -13,14 +13,13 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node/name"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
 )
 
 type matcher struct {
+	// root is a compiled pattern node.
 	root node.Node
 
-	handler func(*MatchData) bool
-	named   map[string]node.Node
+	named map[string]node.Node
 
 	literalMatch bool
 
@@ -43,11 +42,6 @@ func (m *matcher) match(n node.Node) bool {
 	m.data.Node = n
 	m.data.Named = m.named
 	return true
-}
-
-func (m *matcher) findAST(root node.Node, callback func(*MatchData) bool) {
-	m.handler = callback
-	root.Walk(m)
 }
 
 func (m *matcher) eqNameParts(xs, ys []node.Node) bool {
@@ -791,12 +785,3 @@ func (m *matcher) eqVar(x *node.Var, y node.Node) bool {
 	}
 	return false
 }
-
-func (m *matcher) EnterNode(w walker.Walkable) bool {
-	if m.match(w.(node.Node)) {
-		return m.handler(&m.data)
-	}
-	return true
-}
-
-func (m *matcher) LeaveNode(w walker.Walkable) {}

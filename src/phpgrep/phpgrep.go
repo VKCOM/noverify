@@ -28,12 +28,6 @@ func (m *Matcher) Clone() *Matcher {
 	return &Matcher{m: m.m}
 }
 
-// Find executed a callback for every match inside root.
-// If callback returns false, currently matched node children are not visited.
-func (m *Matcher) Find(root node.Node, callback func(*MatchData) bool) {
-	m.m.findAST(root, callback)
-}
-
 // Match attempts to match n without recursing into it.
 //
 // Returned match data should only be examined if the
