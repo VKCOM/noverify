@@ -1474,37 +1474,32 @@ func (d *RootWalker) runRules(n node.Node, sc *meta.Scope, rlist []rules.Rule) {
 }
 
 func (d *RootWalker) matchRule(n node.Node, sc *meta.Scope, rule *rules.Rule) node.Node {
-	var location node.Node
+	m, ok := rule.Matcher.Match(n)
+	if !ok {
+		return nil
+	}
 
-	rule.Matcher.Find(n, func(m *phpgrep.MatchData) bool {
-		if location != nil {
-			return false
-		}
-
-		matched := false
-		if len(rule.Filters) == 0 {
-			matched = true
-		} else {
-			for _, filterSet := range rule.Filters {
-				if d.checkFilterSet(m, sc, filterSet) {
-					matched = true
-					break
-				}
+	matched := false
+	if len(rule.Filters) == 0 {
+		matched = true
+	} else {
+		for _, filterSet := range rule.Filters {
+			if d.checkFilterSet(&m, sc, filterSet) {
+				matched = true
+				break
 			}
 		}
+	}
 
-		// If location is explicitly set, use named match set.
-		// Otherwise peek the root target node.
-		switch {
-		case matched && rule.Location != "":
-			location = m.Named[rule.Location]
-		case matched:
-			location = n
-		}
-
-		return !matched // Do not continue if we found a match
-	})
-
+	// If location is explicitly set, use named match set.
+	// Otherwise peek the root target node.
+	var location node.Node
+	switch {
+	case matched && rule.Location != "":
+		location = m.Named[rule.Location]
+	case matched:
+		location = n
+	}
 	return location
 }
 

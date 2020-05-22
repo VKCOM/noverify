@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 )
 
 func matchInText(m *matcher, code []byte) bool {
@@ -11,7 +13,10 @@ func matchInText(m *matcher, code []byte) bool {
 	if err != nil {
 		return false
 	}
-	return m.matchAST(root)
+	if x, ok := root.(*stmt.Expression); ok {
+		root = x.Expr
+	}
+	return m.match(root)
 }
 
 func findInText(m *matcher, code []byte, callback func(*MatchData) bool) {
@@ -543,7 +548,7 @@ func BenchmarkFind(b *testing.B) {
 			}
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				matcher.m.matchAST(root)
+				matcher.m.match(root)
 			}
 		})
 	}
