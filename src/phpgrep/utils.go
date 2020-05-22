@@ -14,6 +14,15 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/position"
 )
 
+func findNamed(capture []CapturedNode, name string) (node.Node, bool) {
+	for _, c := range capture {
+		if c.Name == name {
+			return c.Node, true
+		}
+	}
+	return nil, false
+}
+
 func getNodePos(n node.Node) *position.Position {
 	pos := n.GetPosition()
 	if pos == nil {

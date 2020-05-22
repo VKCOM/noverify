@@ -13,8 +13,6 @@ func TestTracing(t *testing.T) {
 		t.Skip("tracingEnabled is false; run tests with `-tags tracing`")
 	}
 
-	var c Compiler
-
 	tests := []struct {
 		pattern string
 		input   string
@@ -228,9 +226,9 @@ func TestTracing(t *testing.T) {
 
 	for _, test := range tests {
 		var buf bytes.Buffer
-		matcher := mustCompile(t, &c, test.pattern)
+		matcher := mustCompile(t, test.pattern)
 		matcher.m.tracingBuf = &buf
-		matcher.Match(mustParse(t, []byte(test.input)))
+		matcher.Match(mustParse(t, test.input))
 		trace := strings.Split(buf.String(), "\n")
 		trace = trace[:len(trace)-1] // Drop ""
 		if diff := cmp.Diff(trace, test.trace); diff != "" {

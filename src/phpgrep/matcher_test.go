@@ -2,14 +2,16 @@ package phpgrep
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 
+	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 )
 
-func mustParse(t testing.TB, code []byte) node.Node {
-	n, _, err := parsePHP7(code)
+func mustParse(t testing.TB, code string) node.Node {
+	n, _, err := parsePHP7([]byte(code))
 	if err != nil {
 		t.Fatalf("parse `%s`: %v", code, err)
 	}
@@ -19,8 +21,9 @@ func mustParse(t testing.TB, code []byte) node.Node {
 	return n
 }
 
-func matchInText(t *testing.T, m *matcher, code []byte) bool {
-	return m.match(mustParse(t, code))
+func matchInText(t *testing.T, m *Matcher, code string) bool {
+	_, ok := m.Match(mustParse(t, code))
+	return ok
 }
 
 type matcherTest struct {
@@ -28,7 +31,8 @@ type matcherTest struct {
 	input   string
 }
 
-func mustCompile(t testing.TB, c *Compiler, code string) *Matcher {
+func mustCompile(t testing.TB, code string) *Matcher {
+	var c Compiler
 	matcher, err := c.Compile([]byte(code))
 	if err != nil {
 		t.Fatalf("pattern compilation error:\ntext: %q\nerr: %v", code, err)
@@ -37,11 +41,10 @@ func mustCompile(t testing.TB, c *Compiler, code string) *Matcher {
 }
 
 func runMatchTest(t *testing.T, want bool, tests []*matcherTest) {
-	var c Compiler
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%d_%v", i, want), func(t *testing.T) {
-			matcher := mustCompile(t, &c, test.pattern)
-			have := matchInText(t, &matcher.m, []byte(test.input))
+			matcher := mustCompile(t, test.pattern)
+			have := matchInText(t, matcher, test.input)
 			if have != want {
 				t.Errorf("match results mismatch:\npattern: %q\ninput: %q\nhave: %v\nwant: %v",
 					test.pattern, test.input, have, want)
@@ -54,6 +57,59 @@ func TestMatchDebug(t *testing.T) {
 	runMatchTest(t, true, []*matcherTest{
 		{`if ($c) $_; else if ($c) {1;};`, `if ($c1) {1; 2;} else if ($c1) {1;}`},
 	})
+}
+
+func TestMatchCapture(t *testing.T) {
+	checkCapture := func(m *MatchData, name, want string) {
+		n, ok := m.CapturedByName(name)
+		if !ok {
+			t.Errorf("%s not captured", name)
+			return
+		}
+		have := astutil.FmtNode(n)
+		if have != want {
+			t.Errorf("%s mismatched: have %s, want %s", name, have, want)
+		}
+	}
+
+	matcher := mustCompile(t, `$x = $x[$y]`)
+	for i := 0; i < 5; i++ {
+		result, ok := matcher.Match(mustParse(t, `$a[0] = $a[0][1]`))
+		if !ok {
+			t.Fatalf("pattern not matched")
+		}
+		checkCapture(&result, "x", "$a[0]")
+		checkCapture(&result, "y", "1")
+	}
+}
+
+func TestMatchConcurrent(t *testing.T) {
+	matcher := mustCompile(t, `f($x, ${"*"}, $x)`)
+
+	nodes := []node.Node{
+		mustParse(t, `1`),
+		mustParse(t, `f(1, 2, 3, 4, 3, 2, 1)`),
+		mustParse(t, `[0 => f(1, 2), 2 => f(1, 1)]`),
+		mustParse(t, `if ($x) { f(); f([1], 2, [1]); }`),
+		mustParse(t, `for (;;) { { f($x[0], $x[0], $x[0], $x[0]); } }`),
+	}
+
+	const (
+		numGoroutines = 100
+		numRepeats    = 200
+	)
+	var wg sync.WaitGroup
+	wg.Add(numGoroutines)
+	for i := 0; i < numGoroutines; i++ {
+		go func() {
+			for i := 0; i < numRepeats; i++ {
+				for _, n := range nodes {
+					matcher.Match(n)
+				}
+			}
+			wg.Done()
+		}()
+	}
 }
 
 func TestMatch(t *testing.T) {
@@ -479,16 +535,14 @@ func TestMatchNegative(t *testing.T) {
 	})
 }
 
-func BenchmarkFind(b *testing.B) {
-	var c Compiler
-
-	runBench := func(name, pattern string, input []byte) {
+func BenchmarkMatch(b *testing.B) {
+	runBench := func(name, pattern string, input string) {
 		b.Run(name, func(b *testing.B) {
-			matcher := mustCompile(b, &c, pattern)
+			matcher := mustCompile(b, pattern)
 			root := mustParse(b, input)
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				matcher.m.match(root)
+				matcher.Match(root)
 			}
 		})
 	}
@@ -502,6 +556,9 @@ func BenchmarkFind(b *testing.B) {
 		pattern string
 		input   string
 	}{
+		{"positive/call_parent_ctor", `parent::__construct(${"*"})`, `parent::__construct(1, 2)`},
+		{"negative/call_parent_ctor", `parent::__construct(${"*"})`, `foo([$x => $y])`},
+
 		{"negative/const-tail", `[${"*"}, 1, 1]`, `[0,0,0,0,0,0,0,0,0]`},
 
 		{"positive/call*", `$_(${"*"})`, functionCall},
@@ -516,6 +573,6 @@ func BenchmarkFind(b *testing.B) {
 	}
 
 	for _, bench := range benchmarks {
-		runBench(bench.name, bench.pattern, []byte(bench.input))
+		runBench(bench.name, bench.pattern, bench.input)
 	}
 }

@@ -1485,21 +1485,21 @@ func (d *RootWalker) sourceNodeString(n node.Node) string {
 	return astutil.FmtNode(n)
 }
 
-func (d *RootWalker) renderRuleMessage(msg string, n node.Node, named map[string]node.Node) string {
+func (d *RootWalker) renderRuleMessage(msg string, n node.Node, m phpgrep.MatchData) string {
 	// "$$" stands for the entire matched node, like $0 in regexp.
 	if strings.Contains(msg, "$$") {
 		msg = strings.ReplaceAll(msg, "$$", d.sourceNodeString(n))
 	}
 
-	if len(named) == 0 {
+	if len(m.Capture) == 0 {
 		return msg // No variables to interpolate, we're done
 	}
-	for name, n := range named {
-		key := "$" + name
+	for _, c := range m.Capture {
+		key := "$" + c.Name
 		if !strings.Contains(msg, key) {
 			continue
 		}
-		nodeString := d.sourceNodeString(n)
+		nodeString := d.sourceNodeString(c.Node)
 		// Don't interpolate strings that are too long
 		// or contain a newline.
 		var replacement string
@@ -1536,7 +1536,8 @@ func (d *RootWalker) runRule(n node.Node, sc *meta.Scope, rule *rules.Rule) {
 	var location node.Node
 	switch {
 	case matched && rule.Location != "":
-		location = m.Named[rule.Location]
+		named, _ := m.CapturedByName(rule.Location)
+		location = named
 	case matched:
 		location = n
 	}
@@ -1545,7 +1546,7 @@ func (d *RootWalker) runRule(n node.Node, sc *meta.Scope, rule *rules.Rule) {
 		return
 	}
 
-	message := d.renderRuleMessage(rule.Message, n, m.Named)
+	message := d.renderRuleMessage(rule.Message, n, m)
 	d.Report(location, rule.Level, rule.Name, message)
 }
 
@@ -1566,7 +1567,10 @@ func (d *RootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filter
 	// TODO: pass custom types here, so both @type and @pure predicates can use it.
 
 	for name, filter := range filterSet {
-		nn := m.Named[name]
+		nn, ok := m.CapturedByName(name)
+		if !ok {
+			continue
+		}
 
 		if !d.checkTypeFilter(filter.Type, sc, nn) {
 			return false

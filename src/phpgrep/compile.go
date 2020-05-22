@@ -10,7 +10,8 @@ import (
 )
 
 type compiler struct {
-	src []byte
+	src  []byte
+	vars map[string]struct{}
 }
 
 func compile(opts *Compiler, pattern []byte) (*Matcher, error) {
@@ -23,15 +24,28 @@ func compile(opts *Compiler, pattern []byte) (*Matcher, error) {
 		root = st.Expr
 	}
 
-	c := compiler{src: src}
+	c := compiler{
+		src:  src,
+		vars: make(map[string]struct{}),
+	}
 	root.Walk(&c)
 
-	m := &Matcher{m: matcher{root: root}}
+	m := &Matcher{
+		m: matcher{
+			root:    root,
+			numVars: len(c.vars),
+		},
+	}
 
 	return m, nil
 }
 
 func (c *compiler) EnterNode(w walker.Walkable) bool {
+	if v, ok := w.(*node.SimpleVar); ok {
+		c.vars[v.Name] = struct{}{}
+		return true
+	}
+
 	v, ok := w.(*node.Var)
 	if !ok {
 		return true
@@ -54,6 +68,7 @@ func (c *compiler) EnterNode(w walker.Walkable) bool {
 		// Named matcher.
 		name = value[:colon]
 		class = value[colon+len(":"):]
+		c.vars[name] = struct{}{}
 	}
 
 	switch class {
