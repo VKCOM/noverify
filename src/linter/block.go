@@ -71,6 +71,11 @@ type BlockWalker struct {
 	// When can't infer precise type, can use mixed.
 	returnsValue bool
 
+	// callsParentConstructor is set to true when parent::__construct() call
+	// is found. This is needed for a root walker to report constructors
+	// that do not call parent constructors.
+	callsParentConstructor bool
+
 	// shared state between all blocks
 	unusedVars   map[string][]node.Node
 	nonLocalVars map[string]struct{} // static, global and other vars that have complex control flow
@@ -1109,6 +1114,12 @@ func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
 		return true
 	}
 
+	classNameNode, ok := e.Class.(*name.Name)
+	parentCall := ok && meta.NameEquals(classNameNode, "parent")
+	if parentCall && methodName == "__construct" {
+		b.callsParentConstructor = true
+	}
+
 	className, ok := solver.GetClassName(b.r.ctx.st, e.Class)
 	if !ok {
 		return true
@@ -1127,8 +1138,6 @@ func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
 		// Method is defined.
 
 		// parent::f() is permitted.
-		classNameNode, ok := e.Class.(*name.Name)
-		parentCall := ok && meta.NameToString(classNameNode) == "parent"
 		if !parentCall && !fn.IsStatic() && !magic {
 			b.r.Report(e.Call, LevelWarning, "callStatic", "Calling instance method as static method")
 		}

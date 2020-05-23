@@ -6,6 +6,74 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestParentConstructorCall(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Leaf {
+  public function __construct() {}
+}
+
+class WithDefaultCtor {}
+
+// OK: WithDefaultCtor doesn't have its own constructor.
+class Foo extends WithDefaultCtor {
+  public function __construct() {}
+}
+
+// OK: Bar does not define its own constructor.
+class Bar extends Foo {}
+
+class WithTwoParams {
+  public function __construct($x, $y) {}
+}
+
+class WithAbstract {
+  abstract public function __construct() {}
+}
+`)
+	test.AddFile(`<?php
+class Good1 extends Foo {
+  public function __construct() {
+    parent::__construct();
+  }
+}
+
+class Good2 extends WithTwoParams {
+  public function __construct() {
+    echo 123;
+    {
+      parent::__construct(1, 2);
+    }
+  }
+}
+
+class Good3 extends WithAbstract {
+  public function __construct() {}
+}
+`)
+	test.AddFile(`<?php
+class Bad1 extends Foo {
+  public function __construct() {
+    echo 123;
+  }
+}
+
+class Bad2 extends WithTwoParams {
+  public function __construct() {
+    echo 123;
+    {
+      return;
+    }
+  }
+}
+`)
+	test.Expect = []string{
+		`Missing parent::__construct()`,
+		`Missing parent::__construct()`,
+	}
+	test.RunAndMatch()
+}
+
 func TestNewAbstract(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

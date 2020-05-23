@@ -235,6 +235,12 @@ func init() {
 		},
 
 		{
+			Name:    "parentConstructor",
+			Default: true,
+			Comment: `Report missing parent::__construct calls in class constructors.`,
+		},
+
+		{
 			Name:    "oldStyleConstructor",
 			Default: true,
 			Comment: `Report old-style (PHP4) class constructors.`,
