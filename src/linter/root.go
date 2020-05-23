@@ -503,7 +503,13 @@ func (d *RootWalker) handleComment(c freefloating.String) {
 	}
 }
 
-func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node.Node, sc *meta.Scope) (returnTypes meta.TypesMap, prematureExitFlags int) {
+type handleFuncResult struct {
+	returnTypes            meta.TypesMap
+	prematureExitFlags     int
+	callsParentConstructor bool
+}
+
+func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node.Node, sc *meta.Scope) handleFuncResult {
 	b := &BlockWalker{
 		ctx:          &blockContext{sc: sc},
 		r:            d,
@@ -555,6 +561,7 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 	// using return; or any other control structure
 	cleanFlags := b.ctx.exitFlags & (FlagDie | FlagThrow)
 
+	var prematureExitFlags int
 	if b.ctx.exitFlags == cleanFlags && (b.ctx.containsExitFlags&FlagReturn) == 0 {
 		prematureExitFlags = cleanFlags
 	}
@@ -566,7 +573,30 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 		b.returnTypes = meta.MixedType
 	}
 
-	return b.returnTypes, prematureExitFlags
+	return handleFuncResult{
+		returnTypes:            b.returnTypes,
+		prematureExitFlags:     prematureExitFlags,
+		callsParentConstructor: b.callsParentConstructor,
+	}
+}
+
+func (d *RootWalker) checkParentConstructorCall(n node.Node, parentConstructorCalled bool) {
+	if !meta.IsIndexingComplete() {
+		return
+	}
+
+	class, ok := d.currentClassNode.(*stmt.Class)
+	if !ok || class.Extends == nil {
+		return
+	}
+	m, ok := solver.FindMethod(d.ctx.st.CurrentParentClass, `__construct`)
+	if !ok || m.Info.AccessLevel == meta.Private || m.Info.IsAbstract() {
+		return
+	}
+
+	if !parentConstructorCalled {
+		d.Report(n, LevelWarning, "parentConstructor", "Missing parent::__construct() call")
+	}
 }
 
 func (d *RootWalker) getElementPos(n node.Node) meta.ElementPosition {
@@ -835,7 +865,12 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	if stmtList, ok := meth.Stmt.(*stmt.StmtList); ok {
 		stmts = stmtList.Stmts
 	}
-	actualReturnTypes, exitFlags := d.handleFuncStmts(params, nil, stmts, sc)
+	funcInfo := d.handleFuncStmts(params, nil, stmts, sc)
+	actualReturnTypes := funcInfo.returnTypes
+	exitFlags := funcInfo.prematureExitFlags
+	if nm == `__construct` {
+		d.checkParentConstructorCall(meth.MethodName, funcInfo.callsParentConstructor)
+	}
 
 	d.addScope(meth, sc)
 
@@ -1278,7 +1313,9 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 
 	params, minParamsCnt := d.parseFuncArgs(fun.Params, phpDocParamTypes, sc)
 
-	actualReturnTypes, exitFlags := d.handleFuncStmts(params, nil, fun.Stmts, sc)
+	funcInfo := d.handleFuncStmts(params, nil, fun.Stmts, sc)
+	actualReturnTypes := funcInfo.returnTypes
+	exitFlags := funcInfo.prematureExitFlags
 	d.addScope(fun, sc)
 
 	returnType := meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType)
