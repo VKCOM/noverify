@@ -37,9 +37,58 @@ type sideEffectsFinder struct {
 var pureBuiltins = func() map[string]struct{} {
 	list := []string{
 		`\count`,
-		`\strlen`,
-		`\implode`,
+		`\sizeof`,
+
+		// Array functions.
+		`\array_key_exists`,
+		`\array_keys`,
+		`\array_merge`,
+		`\array_slice`,
+		`\array_values`,
 		`\explode`,
+		`\implode`,
+		`\in_array`,
+
+		// String functions.
+		`\str_replace`,
+		`\strlen`,
+		`\strpos`,
+		`\strtolower`,
+		`\strtoupper`,
+		`\substr`,
+		`\trim`,
+
+		// Simple math functions.
+		`\abs`,
+		`\floor`,
+		`\max`,
+		`\min`,
+
+		// All type converting functions are pure.
+		`\boolval`,
+		`\doubleval`,
+		`\floatval`,
+		`\intval`,
+		`\strval`,
+
+		// All type predicates are pure.
+		`\is_array`,
+		`\is_bool`,
+		`\is_callable`,
+		`\is_countable`,
+		`\is_double`,
+		`\is_float`,
+		`\is_int`,
+		`\is_integer`,
+		`\is_iterable`,
+		`\is_long`,
+		`\is_null`,
+		`\is_numeric`,
+		`\is_object`,
+		`\is_real`,
+		`\is_resource`,
+		`\is_scalar`,
+		`\is_string`,
 	}
 
 	set := make(map[string]struct{}, len(list))
