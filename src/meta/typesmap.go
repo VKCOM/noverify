@@ -48,6 +48,10 @@ type TypesMap struct {
 // Important invariant: a precise map contains no lazy types.
 func (m TypesMap) IsPrecise() bool { return m.flags&mapPrecise != 0 }
 
+func (m *TypesMap) MarkAsImprecise() {
+	m.flags &^= mapPrecise
+}
+
 func (m TypesMap) isImmutable() bool { return m.flags&mapImmutable != 0 }
 
 // IsResolved reports whether all types inside types map are resolved.
@@ -211,7 +215,7 @@ func (m TypesMap) AppendString(str string) TypesMap {
 
 		// Since we have no idea where str is coming from,
 		// mark map as imprecise.
-		m.flags &^= mapPrecise
+		m.MarkAsImprecise()
 
 		return m
 	}
