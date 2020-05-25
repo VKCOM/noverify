@@ -9,6 +9,7 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
+	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/vscode"
 )
 
@@ -109,6 +110,11 @@ func (RootCheckerDefaults) AfterLeaveNode(walker.Walkable)  {}
 // RootContext is the context for root checker to run on.
 type RootContext struct {
 	w *RootWalker
+}
+
+// ParsePHPDoc returns parsed phpdoc comment parts.
+func (ctx *RootContext) ParsePHPDoc(doc string) []phpdoc.CommentPart {
+	return phpdoc.Parse(ctx.w.ctx.phpdocTypeParser, doc)
 }
 
 // Report records linter warning of specified level.
