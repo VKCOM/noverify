@@ -280,14 +280,14 @@ func handleTextDocumentSymbol(req *baseRequest) error {
 			for _, classInfo := range res.Classes.H {
 				result = append(result, vscode.SymbolInformation{
 					Name:     baseSymbolName(classInfo.Name),
-					Kind:     vscode.CompletionKindClass,
+					Kind:     vscode.SymbolKindClass,
 					Location: posToLocation(classInfo.Pos),
 				})
 
 				for _, info := range classInfo.Methods.H {
 					result = append(result, vscode.SymbolInformation{
 						Name:     info.Name,
-						Kind:     vscode.CompletionKindMethod,
+						Kind:     vscode.SymbolKindMethod,
 						Location: posToLocation(info.Pos),
 					})
 				}
@@ -295,7 +295,7 @@ func handleTextDocumentSymbol(req *baseRequest) error {
 				for propName, info := range classInfo.Properties {
 					result = append(result, vscode.SymbolInformation{
 						Name:     propName,
-						Kind:     vscode.CompletionKindProperty,
+						Kind:     vscode.SymbolKindProperty,
 						Location: posToLocation(info.Pos),
 					})
 				}
@@ -303,7 +303,7 @@ func handleTextDocumentSymbol(req *baseRequest) error {
 				for constName, info := range classInfo.Constants {
 					result = append(result, vscode.SymbolInformation{
 						Name:     constName,
-						Kind:     vscode.CompletionKindEnum,
+						Kind:     vscode.SymbolKindEnum,
 						Location: posToLocation(info.Pos),
 					})
 				}
@@ -312,7 +312,7 @@ func handleTextDocumentSymbol(req *baseRequest) error {
 			for _, info := range res.Functions.H {
 				result = append(result, vscode.SymbolInformation{
 					Name:     baseSymbolName(info.Name),
-					Kind:     vscode.CompletionKindFunction,
+					Kind:     vscode.SymbolKindFunction,
 					Location: posToLocation(info.Pos),
 				})
 			}
@@ -320,7 +320,7 @@ func handleTextDocumentSymbol(req *baseRequest) error {
 			for constName, info := range res.Constants {
 				result = append(result, vscode.SymbolInformation{
 					Name:     baseSymbolName(constName),
-					Kind:     vscode.CompletionKindEnum,
+					Kind:     vscode.SymbolKindEnum,
 					Location: posToLocation(info.Pos),
 				})
 			}
