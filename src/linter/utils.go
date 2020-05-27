@@ -91,15 +91,7 @@ func varToString(v node.Node) string {
 }
 
 func typesMapToTypeExpr(p *phpdoc.TypeParser, m meta.TypesMap) phpdoc.Type {
-	// TODO: when ExprType stops returning
-	// "empty_array" type, remove the extra check.
-	var typeString string
-	if m.Is("empty_array") {
-		typeString = "mixed[]"
-	} else {
-		typeString = m.String()
-	}
-
+	typeString := m.String()
 	return p.Parse(typeString)
 }
 

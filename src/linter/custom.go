@@ -157,6 +157,11 @@ type BlockContext struct {
 	w *BlockWalker
 }
 
+// ExprType resolves the type of e expression node.
+func (ctx *BlockContext) ExprType(e node.Node) meta.TypesMap {
+	return ctx.w.exprType(e)
+}
+
 // Report records linter warning of specified level.
 // chechName is a key that identifies the "checker" (diagnostic name) that found
 // issue being reported.
