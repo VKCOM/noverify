@@ -294,6 +294,9 @@ func formatType(s string) (res string) {
 		return formatType(UnwrapArrayOf(s)) + "[]"
 	case WElemOf:
 		return "elem(" + formatType(UnwrapElemOf(s)) + ")"
+	case WElemOfKey:
+		typ, key := UnwrapElemOfKey(s)
+		return fmt.Sprintf("elem(%s)[%s]", formatType(typ), key)
 	case WFunctionCall:
 		return UnwrapFunctionCall(s) + "()"
 	case WInstanceMethodCall:
