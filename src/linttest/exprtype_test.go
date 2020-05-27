@@ -1,52 +1,60 @@
 package linttest_test
 
 import (
-	"fmt"
 	"strings"
+	"sync"
 	"testing"
 
+	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
-	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
+	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
-	"github.com/VKCOM/noverify/src/solver"
 	"github.com/google/go-cmp/cmp"
 )
 
 // Tests in this file make it less likely that type solving will break
 // without being noticed.
+//
+// To add a new type expr test:
+// 1. Create a new test function.
+// 2. For every expression that needs a type assertion use exprtype().
+//
+// exprtype signature is:
+//   function exprtype(mixed $expr, string $expectedType)
+// Where $expr is an arbitrary expression and $expectedType is a
+// constant string that describes the expected type.
+// Use "precise " type prefix in $expectedType if IsPrecise() is
+// expected to be set.
+//
+// How it works:
+// 1. Code being tested is indexed and then walked by exprTypeCollector.
+// 2. exprTypeCollector handles exprtype() calls inside the code.
+// 3. Resolved types are saved into exprTypeResult global map.
+// 4. After that exprTypeWalker is executed to verify the results.
 
-// TODO(quasilyte): better handling of an `empty_array` type.
-// Now it's resolved to `mixed[]` for expressions that have multiple empty_array.
+var (
+	exprTypeResultMu sync.Mutex
+	exprTypeResult   map[node.Node]meta.TypesMap
+)
+
+func init() {
+	linter.RegisterBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker {
+		return &exprTypeCollector{ctx: ctx}
+	})
+}
 
 func TestExprTypePrecise(t *testing.T) {
-	tests := []exprTypeTest{
-		// TODO(quasilyte): preserve type precision when resolving
-		// wrapped (lazy) type expressions.
-		{`precise_int()`, `int`},
-		{`return_precise_int_var()`, `int`},
-
-		// Cases that are debatable, but right now result in imprecise types.
-		{`repeated_info1(true)`, `bool`},
-		{`repeated_info2(false)`, `bool`},
-
-		// Type hints are not considered to be a precise type source for now.
-		// Even with strict_mode.
-		{`typehint_int(10)`, `int`},
-
-		// Cases below should never become precise.
-		{`$foo->default_int`, `int`},
-		{`default_bool_param(10)`, `bool`},
-		{`mixed_info1()`, `bool|int`},
-	}
-
-	global := `<?php
+	code := `<?php
 class Foo {
   // Default value should not be considered to be precise
   // enough, since anything can be assigned later.
   public $default_int = 10;
+
+  const STRCONST = 'abc';
 }
 
 function return_precise_int_var() {
@@ -70,31 +78,35 @@ function default_bool_param($v = false) { return $v; }
 function mixed_info1(int $v) {
   return $v;
 }
+
+function test() {
+  $foo = new Foo();
+
+  // TODO(quasilyte): preserve type precision when resolving
+  // wrapped (lazy) type expressions.
+  exprtype(precise_int(), 'int');
+  exprtype(return_precise_int_var(), 'int');
+  exprtype(Foo::STRCONST, 'string');
+
+  // Cases that are debatable, but right now result in imprecise types.
+  exprtype(repeated_info1(true), 'bool');
+  exprtype(repeated_info2(false), 'bool');
+
+  // Type hints are not considered to be a precise type source for now.
+  // Even with strict_mode.
+  exprtype(typehint_int(10), 'int');
+
+  // Cases below should never become precise.
+  exprtype($foo->default_int, 'int');
+  exprtype(default_bool_param(10), 'bool');
+  exprtype(mixed_info1(), 'bool|int');
+}
 `
-	local := `$foo = new Foo();`
-	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeWithSpaces(t *testing.T) {
-	tests := []exprTypeTest{
-		{`shape_param1($v)`, `int`},
-		{`shape_param2($v)`, `float`},
-		{`array_param3($v)`, `int`},
-		{`array_param4($v)`, `float`},
-
-		{`$var1['y']`, `int[]`},
-		{`$var2['z']`, `float[]`},
-
-		{`shape_return1()['x']`, `string`},
-
-		{`$foo->prop1`, `int[]`},
-		{`$foo->prop2`, `string[]`},
-		{`$foo->prop3`, `float[]`},
-		{`$foo->magicprop1['k1']`, `\Foo`},
-		{`$foo->magicprop1['k2']`, `string`},
-	}
-
-	global := `<?php
+	code := `<?php
 /**
  * @property $magicprop1 shape( k1: \Foo , k2 : string )
  */
@@ -123,58 +135,38 @@ function array_param4($x) { return $x['b']; }
 
 /** @return shape( x : string ) */
 function shape_return1() {}
+
+function test() {
+  /** @var shape< y : int[] > $var1 */
+  $var1;
+
+  /** @var $var2 shape< z : float[] > */
+  $var2;
+
+  $foo = new Foo();
+
+  exprtype(shape_param1($v), 'int');
+  exprtype(shape_param2($v), 'float');
+  exprtype(array_param3($v), 'int');
+  exprtype(array_param4($v), 'float');
+
+  exprtype($var1['y'], 'int[]');
+  exprtype($var2['z'], 'float[]');
+
+  exprtype(shape_return1()['x'], 'string');
+
+  exprtype($foo->prop1, 'int[]');
+  exprtype($foo->prop2, 'string[]');
+  exprtype($foo->prop3, 'float[]');
+  exprtype($foo->magicprop1['k1'], '\Foo');
+  exprtype($foo->magicprop1['k2'], 'string');
+}
 `
-
-	local := `
-/** @var shape< y : int[] > $var1 */
-$var1;
-
-/** @var $var2 shape< z : float[] > */
-$var2;
-
-$foo = new Foo();
-`
-
-	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeShape(t *testing.T) {
-	tests := []exprTypeTest{
-		{`shape_self0()`, `\shape$exprtype_global.php$0$`},
-		{`shape_self1()`, `\shape$exprtype_global.php$1$`},
-		{`shape_index()`, `int`},
-
-		{`$s0`, `\shape$exprtype_global.php$0$`},
-		{`$s0['x']`, `int`},
-		{`$s0['y']`, `float`},
-
-		{`$s2['nested']['s']`, `string`},
-		{`$s2['i']`, `int`},
-		{`$s3['nested']['i']`, `int[]`},
-		{`$s3['nested']['i'][10]`, `int`},
-		{`$s3['f']`, `float`},
-
-		{`$si[0]`, `mixed`},
-		{`$si[10]`, `int`},
-		{`$si[42]`, `string`},
-
-		// Shapes are represented as classes and their key-type
-		// info are recorded in properties map. We have a special
-		// ClassShape flag to suppress field type resolving for shapes.
-		{`$s2->i`, `mixed`},
-		{`$s0->x`, `mixed`},
-
-		// Optional keys are resolved identically.
-		{`$opt['x']`, `\Foo\Bar`},
-
-		{`$t0[0]`, `int`},
-		{`$t0['1']`, `float`},
-		{`$t1[0]`, `string`},
-		{`$t1[1]['b']`, `bool`},
-		{`$t1[1]['t'][1]`, `float`},
-	}
-
-	global := `<?php
+	code := `<?php
 /** @param $s shape(x:int,y:float) */
 function shape_self0($s) { return $s; }
 
@@ -206,48 +198,55 @@ function tuple_self0($t) { return $t; }
 
 /** @param $t tuple(string, shape(b:bool, t:tuple(int, float))) */
 function tuple_self1($t) { return $t; }
+
+function test() {
+  $s0 = shape_self0(shape(['x' => 1, 'y' => 1.5]));
+  $s2 = shape_self2(shape([]));
+  $s3 = shape_self3(shape([]));
+  $si = shape_intkey(shape([]));
+  $opt = optional_shape(shape([]));
+  $t0 = tuple_self0(tuple([]));
+  $t1 = tuple_self1(tuple([]));
+
+  exprtype(shape_self0(), '\shape$exprtype.php$0$');
+  exprtype(shape_self1(), '\shape$exprtype.php$1$');
+  exprtype(shape_index(), 'int');
+
+  exprtype($s0, '\shape$exprtype.php$0$');
+  exprtype($s0['x'], 'int');
+  exprtype($s0['y'], 'float');
+
+  exprtype($s2['nested']['s'], 'string');
+  exprtype($s2['i'], 'int');
+  exprtype($s3['nested']['i'], 'int[]');
+  exprtype($s3['nested']['i'][10], 'int');
+  exprtype($s3['f'], 'float');
+
+  exprtype($si[0], 'mixed');
+  exprtype($si[10], 'int');
+  exprtype($si[42], 'string');
+
+  // Shapes are represented as classes and their key-type
+  // info are recorded in properties map. We have a special
+  // ClassShape flag to suppress field type resolving for shapes.
+  exprtype($s2->i, 'mixed');
+  exprtype($s0->x, 'mixed');
+
+  // Optional keys are resolved identically.
+  exprtype($opt['x'], '\Foo\Bar');
+
+  exprtype($t0[0], 'int');
+  exprtype($t0['1'], 'float');
+  exprtype($t1[0], 'string');
+  exprtype($t1[1]['b'], 'bool');
+  exprtype($t1[1]['t'][1], 'float');
+}
 `
-	local := `
-$s0 = shape_self0(shape(['x' => 1, 'y' => 1.5]));
-$s2 = shape_self2(shape([]));
-$s3 = shape_self3(shape([]));
-$si = shape_intkey(shape([]));
-$opt = optional_shape(shape([]));
-$t0 = tuple_self0(tuple([]));
-$t1 = tuple_self1(tuple([]));
-`
-	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeMagicCall(t *testing.T) {
-	tests := []exprTypeTest{
-		{`$m->magic()`, `\Magic`},
-		{`$m->magic()->f2()`, `\Magic`},
-		{`$m->f2()->magic()`, `\Magic`},
-		{`(new Magic())->magic()`, `\Magic`},
-		{`$m->notMagic()`, `int`},
-		{`$m->magic()->notMagic()`, `int`},
-		{`$m->m1()->m2()->notMagic()`, `int`},
-
-		{`$m2->unknown()`, `mixed`},
-		{`$m2->magicInt()`, `int`},
-		{`$m2->magicString()`, `string`},
-		{`$m2->add(1, 2)`, `int`},
-		{`Magic2::getInstance()->magicInt()`, `int`},
-		{`Magic2::unknown()`, `mixed`},
-
-		// @method annotations should take precedence over
-		// generic __call return type info.
-		{`$m3->magicInt()`, `int`},
-		{`$m3->unknown()`, `\Magic3`},
-		{`$m3->magic()->magicInt()`, `int`},
-
-		{`StaticMagic::magicInt()`, `int`},
-		{`StaticMagic::newMagic()`, `\Magic`},
-		{`StaticMagic::magic()->magic()`, `\Magic`},
-	}
-
-	global := `<?php
+	code := `<?php
 class Magic {
   public function __call() { return $this; }
   public function notMagic() { return 10; }
@@ -274,19 +273,43 @@ class Magic3 {
 class StaticMagic {
   public function __callStatic() { return new Magic(); }
 }
+
+function test() {
+  $m = new Magic();
+  $m2 = new Magic2();
+  $m3 = new Magic3();
+
+  exprtype($m->magic(), '\Magic');
+  exprtype($m->magic()->f2(), '\Magic');
+  exprtype($m->f2()->magic(), '\Magic');
+  exprtype((new Magic())->magic(), '\Magic');
+  exprtype($m->notMagic(), 'int');
+  exprtype($m->magic()->notMagic(), 'int');
+  exprtype($m->m1()->m2()->notMagic(), 'int');
+
+  exprtype($m2->unknown(), 'mixed');
+  exprtype($m2->magicInt(), 'int');
+  exprtype($m2->magicString(), 'string');
+  exprtype($m2->add(1, 2), 'int');
+  exprtype(Magic2::getInstance()->magicInt(), 'int');
+  exprtype(Magic2::unknown(), 'mixed');
+
+  // @method annotations should take precedence over
+  // generic __call return type info.
+  exprtype($m3->magicInt(), 'int');
+  exprtype($m3->unknown(), '\Magic3');
+  exprtype($m3->magic()->magicInt(), 'int');
+
+  exprtype(StaticMagic::magicInt(), 'int');
+  exprtype(StaticMagic::newMagic(), '\Magic');
+  exprtype(StaticMagic::magic()->magic(), '\Magic');
+}
 `
-	local := `$m = new Magic(); $m2 = new Magic2(); $m3 = new Magic3();`
-	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeRef(t *testing.T) {
-	tests := []exprTypeTest{
-		{`$v =& $ints[0]`, `mixed`},
-		{`assign_ref_dim_fetch1()`, `mixed[]`},
-		{`assign_ref_dim_fetch2()`, `mixed[]`},
-		{`assign_ref_dim_fetch3()`, `mixed[]`},
-	}
-	global := `<?php
+	code := `<?php
 $ints = [1, 2];
 
 function assign_ref_dim_fetch1() {
@@ -306,22 +329,19 @@ function assign_ref_dim_fetch3() {
   $x[0][] =& $ints[0];
   return $x;
 }
+
+exprtype($v =& $ints[0], 'mixed');
+exprtype(assign_ref_dim_fetch1(), 'mixed[]');
+exprtype(assign_ref_dim_fetch2(), 'mixed[]');
+exprtype(assign_ref_dim_fetch3(), 'mixed[]');
 `
-	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeGenerics(t *testing.T) {
 	// For now, we erase most types info from the generics.
 
-	tests := []exprTypeTest{
-		{`generic_a1()`, `\A`},
-		{`generic_a2()`, `\A`},
-		{`generic_a3()`, `\A[]`},
-		{`generic_a_or_b()`, `\A|\B`},
-		{`alt_generic_intfloat()`, `\Either|bool`},
-	}
-
-	global := `<?php
+	code := `<?php
 /** @return A<> */
 function generic_a1() {}
 
@@ -336,37 +356,22 @@ function generic_a_or_b() {}
 
 /** @return Either(int,float)|bool */
 function alt_generic_intfloat() {}
-`
 
-	local := ``
-	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+exprtype(generic_a1(), '\A');
+exprtype(generic_a2(), '\A');
+exprtype(generic_a3(), '\A[]');
+exprtype(generic_a_or_b(), '\A|\B');
+exprtype(alt_generic_intfloat(), '\Either|bool');
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeFixes(t *testing.T) {
-	tests := []exprTypeTest{
-		{`alias_double()`, `float`},
-		{`alias_real()`, `float`},
-		{`alias_integer()`, `int`},
-		{`alias_long()`, `int`},
-		{`alias_boolean()`, `bool`},
-		{`untyped_array()`, `mixed[]`},
-		{`dash()`, `mixed`},
-		{`array1()`, `int[]`},
-		{`array2()`, `int[][]`},
-		{`array_int()`, `int[]`},
-		{`array_int_string()`, `string[]`},      // key type is currently ignored
-		{`array_int_stdclass()`, `\stdclass[]`}, // key type is currently ignored
-		{`array_return_string()`, `string`},
-		{`alias_real_arr1()`, `float[]`},
-		{`alias_real_arr2()`, `float[][]`},
-		{`array_array()`, `mixed[][]`},
+	// TODO: we need to run type normalization on union types as well.
+	// {`union_integer_array()`, `int|mixed[]`},
+	// {`union_boolean_ints()`, `bool|int[]`},
 
-		// TODO: we need to run type normalization on union types as well.
-		// {`union_integer_array()`, `int|mixed[]`},
-		// {`union_boolean_ints()`, `bool|int[]`},
-	}
-
-	global := `<?php
+	code := `<?php
 /** @return array[] */
 function array_array() {}
 
@@ -420,9 +425,26 @@ function array_int_stdclass() {}
 
 /** @param array<int,string> $a */
 function array_return_string($a) { return $a[0]; }
+
+exprtype(alias_double(), 'float');
+exprtype(alias_real(), 'float');
+exprtype(alias_integer(), 'int');
+exprtype(alias_long(), 'int');
+exprtype(alias_boolean(), 'bool');
+exprtype(untyped_array(), 'mixed[]');
+exprtype(dash(), 'mixed');
+exprtype(array1(), 'int[]');
+exprtype(array2(), 'int[][]');
+exprtype(array_int(), 'int[]');
+exprtype(array_int_string(), 'string[]');      // key type is currently ignored
+exprtype(array_int_stdclass(), '\stdclass[]'); // key type is currently ignored
+exprtype(array_return_string(), 'string');
+exprtype(alias_real_arr1(), 'float[]');
+exprtype(alias_real_arr2(), 'float[][]');
+exprtype(array_array(), 'mixed[][]');
 `
 
-	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeArrayOfComplexType(t *testing.T) {
@@ -435,15 +457,7 @@ func TestExprTypeArrayOfComplexType(t *testing.T) {
 	// Since we don't have real nullable types support yet,
 	// we treat it identically.
 
-	tests := []exprTypeTest{
-		{`intfloat()`, `int[]|float[]`},
-		{`intfloatnull()`, `int[]|float[]|null[]`},
-		{`nullable_int_array()`, `int[]|null`},
-		{`array_of_nullable_ints()`, `int[]|null`},
-		{`array3d()`, `\Foo[][][]`},
-	}
-
-	global := `<?php
+	code := `<?php
 /** @return (int|float)[] */
 function intfloat() {}
 
@@ -458,23 +472,18 @@ function array_of_nullable_ints() {}
 
 /** @return Foo[][][] */
 function array3d() {}
-`
 
-	local := ``
-	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+exprtype(intfloat(), 'float[]|int[]');
+exprtype(intfloatnull(), 'float[]|int[]|null[]');
+exprtype(nullable_int_array(), 'int[]|null');
+exprtype(array_of_nullable_ints(), 'int[]|null');
+exprtype(array3d(), '\Foo[][][]');
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeVoid(t *testing.T) {
-	tests := []exprTypeTest{
-		{`void_func1()`, `void`},
-		{`void_func2()`, `void`},
-		{`void_func3()`, `void`},
-		{`$foo->voidMeth1()`, `void`},
-		{`$foo->voidMeth2()`, `void`},
-		{`$foo->voidMeth3()`, `void`},
-	}
-
-	global := `<?php
+	code := `<?php
 function void_func1() {
   echo 123;
 }
@@ -491,21 +500,23 @@ class Foo {
   /** @return void */
   public function voidMeth3() {}
 }
+
+function test() {
+  $foo = new Foo();
+
+  exprtype(void_func1(), 'void');
+  exprtype(void_func2(), 'void');
+  exprtype(void_func3(), 'void');
+  exprtype($foo->voidMeth1(), 'void');
+  exprtype($foo->voidMeth2(), 'void');
+  exprtype($foo->voidMeth3(), 'void');
+}
 `
-	local := `$foo = new Foo();`
-	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeArrayAccess(t *testing.T) {
-	tests := []exprTypeTest{
-		{`$ints[0]`, `int`},
-		{`getInts()[0]`, `int`},
-		{`$self[0]`, `\Self`},
-		{`$self[0][1]`, `\Self`},
-		{`$self[0][1]->offsetGet(2)`, `\Self`},
-	}
-
-	global := `<?php
+	code := `<?php
 function getInts() { return new Ints(); }
 
 class Ints implements ArrayAccess {
@@ -529,18 +540,22 @@ class Self implements ArrayAccess {
    /** @return void */
    public function offsetUnset($offset) {}
 }
+
+function test() {
+  $ints = new Ints(); $self = new Self();
+
+  exprtype($ints[0], 'int');
+  exprtype(getInts()[0], 'int');
+  exprtype($self[0], '\Self');
+  exprtype($self[0][1], '\Self');
+  exprtype($self[0][1]->offsetGet(2), '\Self');
+}
 `
-	local := `$ints = new Ints(); $self = new Self();`
-	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeAnnotatedProperty(t *testing.T) {
-	tests := []exprTypeTest{
-		{`$x->int`, `int`},
-		{`$x->getInt()`, `int`},
-	}
-
-	global := `<?php
+	code := `<?php
 /**
  * @property int $int optional description
  */
@@ -549,20 +564,21 @@ class Foo {
   public function getInt() {
     return $this->int;
   }
-}`
-	local := `$x = new Foo();`
-	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
+function test() {
+  $x = new Foo();
+  exprtype($x->int, 'int');
+  exprtype($x->getInt(), 'int');
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeScopeNoreplace(t *testing.T) {
 	// These tests cover special NoReplace flag of the meta.ScopeVar.
 
-	tests := []exprTypeTest{
-		{`phpdoc_param($v)`, `int`},
-		{`phpdoc_localvar()`, `int|string`},
-		{`localvar()`, `int`},
-	}
-	global := `<?php
+	code := `<?php
 /** @param string $v */
 function phpdoc_param($v) {
   $v = 10;
@@ -581,19 +597,16 @@ function localvar() {
   $x = 10;
   return $x;
 }
+
+exprtype(phpdoc_param($v), 'int');
+exprtype(phpdoc_localvar(), 'int|string');
+exprtype(localvar(), 'int');
 `
-	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeMalformedPhpdoc(t *testing.T) {
-	tests := []exprTypeTest{
-		{`return_mixed(0)`, `mixed`},
-		{`return_int(0)`, `int`},
-		{`return_int2(0)`, `int`},
-		{`return_int3(0)`, `int`},
-	}
-
-	global := `<?php
+	code := `<?php
 /**
  * @param int &$x
  */
@@ -613,49 +626,41 @@ function return_mixed($x) { return $x; }
  * @param int
  */
 function return_int($x) { return $x; }
+
+exprtype(return_mixed(0), 'mixed');
+exprtype(return_int(0), 'int');
+exprtype(return_int2(0), 'int');
+exprtype(return_int3(0), 'int');
 `
-	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeMagicGet(t *testing.T) {
-	tests := []exprTypeTest{
-		{`(new Ints)->a`, `int`},
-		{`$ints->a`, `int`},
-		{`$ints->b`, `int`},
-		{`(new Chain)->chain`, `\Chain`},
-		{`$chain->chain`, `\Chain`},
-		{`$chain->chain->chain`, `\Chain`},
-	}
-
-	global := `<?php
+	code := `
 class Ints {
   public function __get($k) { return 0; }
 }
 class Chain {
   public function __get($k) { return $this; }
-}`
-	local := `
-$ints = new Ints();
-$chain = new Chain();`
-	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
+function test() {
+  $ints = new Ints();
+  $chain = new Chain();
+
+  exprtype((new Ints)->a, 'int');
+  exprtype($ints->a, 'int');
+  exprtype($ints->b, 'int');
+  exprtype((new Chain)->chain, '\Chain');
+  exprtype($chain->chain, '\Chain');
+  exprtype($chain->chain->chain, '\Chain');
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeHint(t *testing.T) {
-	tests := []exprTypeTest{
-		{`array_hint()`, `mixed[]`},
-		{`callable_hint()`, `callable`},
-
-		{`integer_hint()`, `\integer`},
-		{`boolean_hint()`, `\boolean`},
-		{`real_hint()`, `\real`},
-		{`double_hint()`, `\double`},
-		{`integer_hint2()`, `\integer`},
-		{`boolean_hint2()`, `\boolean`},
-		{`real_hint2()`, `\real`},
-		{`double_hint2()`, `\double`},
-	}
-
-	global := `<?php
+	code := `
 function array_hint(array $x) { return $x; }
 function callable_hint(callable $x) { return $x; }
 
@@ -668,28 +673,30 @@ function integer_hint2() : integer {}
 function boolean_hint2() : boolean {}
 function real_hint2() : real {}
 function double_hint2() : double {}
+
+exprtype(array_hint(), 'mixed[]');
+exprtype(callable_hint(), 'callable');
+
+exprtype(integer_hint(), '\integer');
+exprtype(boolean_hint(), '\boolean');
+exprtype(real_hint(), '\real');
+exprtype(double_hint(), '\double');
+exprtype(integer_hint2(), '\integer');
+exprtype(boolean_hint2(), '\boolean');
+exprtype(real_hint2(), '\real');
+exprtype(double_hint2(), '\double');
 `
-	local := ``
-	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeNullable(t *testing.T) {
-	tests := []exprTypeTest{
-		{`$int`, `int|null`},
-		{`$foo`, `int|string|null`},
-		{`$a->b`, `\B|null`},
-		{`nullable_int(1)`, `int|null`},
-		{`nullable_string(0)`, `string|null`},
-		{`nullable_array(0)`, `int[]|null`},
-	}
-
-	global := `<?php
+	code := `
 class A {
-	/** @var ?B */
-	public $b;
+  /** @var ?B */
+  public $b;
 }
 class B {
-	public $c;
+  public $c;
 }
 
 /**
@@ -719,102 +726,29 @@ function nullable_string($cond) : ?string {
   }
   return null;
 }
-`
-	local := `
-/** @var ?int $int */
-$int = null;
 
-/** @var ?int|?string $foo */
-$foo = null;
+function test() {
+  /** @var ?int $int */
+  $int = null;
 
-$a = new A();
+  /** @var ?int|?string $foo */
+  $foo = null;
+
+  $a = new A();
+
+  exprtype($int, 'int|null');
+  exprtype($foo, 'int|string|null');
+  exprtype($a->b, '\B|null');
+  exprtype(nullable_int(1), 'int|null');
+  exprtype(nullable_string(0), 'string|null');
+  exprtype(nullable_array(0), 'int[]|null');
+}
 `
-	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeLateStaticBinding(t *testing.T) {
-	tests := []exprTypeTest{
-		{`getBase()`, `\Base`},
-		{`getDerived()`, `\Base|\Derived`},
-		{`getBase2()`, `\Base`},
-		{`getDerived2()`, `\Base|\Derived`},
-		{`getBase2()->getStatic()->getStatic()`, `\Base`},
-		{`getDerived2()->getStatic()->getStatic()`, `\Base|\Derived`},
-		{`eitherDerived()`, `\Derived|\DerivedDerived`},
-		{`eitherDerived()->getStatic()`, `\Base|\Derived|\DerivedDerived`},
-
-		{`Base::staticNewStatic()`, `\Base`},
-		{`Base::staticNewStatic()->staticNewStatic()`, `\Base`},
-		{`Derived::staticNewStatic()`, `\Derived`},
-		{`Derived::staticNewStatic()->staticNewStatic()`, `\Derived`},
-		{`DerivedDerived::staticNewStatic()`, `\DerivedDerived`},
-		{`DerivedDerived::staticNewStatic()->staticNewStatic()`, `\DerivedDerived`},
-
-		{`$b->newStatic()`, `\Base`},
-		{`$d->newStatic()`, `\Derived`},
-		{`$dd->newStatic()`, `\DerivedDerived`},
-
-		{`$b->getStatic()`, `\Base`},
-		{`$b->getStatic()->getStatic()`, `\Base`},
-		{`$b->getStaticArray()`, `\Base[]`},
-		{`$b->getStaticArray()[0]`, `\Base`},
-		{`$b->getStaticArrayArray()`, `\Base[][]`},
-		{`$b->getStaticArrayArray()[0][0]`, `\Base`},
-
-		{`$d->getStatic()`, `\Base|\Derived`},
-		{`$d->getStatic()->getStatic()`, `\Base|\Derived`},
-		{`$d->getStaticArray()`, `\Derived[]`},
-		{`$d->getStaticArray()[0]`, `\Derived`},
-		{`$d->getStaticArrayArray()`, `\Derived[][]`},
-		{`$d->getStaticArrayArray()[0][0]`, `\Derived`},
-
-		{`$dd->getStatic()`, `\Base|\DerivedDerived`},
-		{`$dd->getStatic()->getStatic()`, `\Base|\DerivedDerived`},
-		{`$dd->getStaticArray()`, `\DerivedDerived[]`},
-		{`$dd->getStaticArray()[0]`, `\DerivedDerived`},
-		{`$dd->getStaticArrayArray()`, `\DerivedDerived[][]`},
-		{`$dd->getStaticArrayArray()[0][0]`, `\DerivedDerived`},
-
-		{`$b->initAndReturnOther1()`, `\Base`},
-		{`$b->initAndReturnOther2()`, `\Base`},
-
-		{`(new Base())->getStatic()`, `\Base`},
-		{`(new Derived())->getStatic()`, `\Base|\Derived`},
-
-		{`$d->derivedGetStatic()`, `\Derived`},
-		{`$d->derivedNewStatic()`, `\Derived`},
-		{`$dd->derivedGetStatic()`, `\Derived|\DerivedDerived`},
-		{`$dd->derivedNewStatic()`, `\DerivedDerived`},
-
-		{`$d->getStatic()`, `\Base|\Derived`},
-		{`$d->getStatic()->getStatic()`, `\Base|\Derived`},
-		{`$dd->getStatic()`, `\Base|\DerivedDerived`},
-		{`$dd->getStatic()->getStatic()`, `\Base|\DerivedDerived`},
-
-		{`$d->getStaticForOverride1()`, `null|\Derived`},
-		{`$d->getStaticForOverride2()`, `\Derived`},
-		{`$d->getStaticForOverride3()`, `\Derived`},
-		{`$dd->getStaticForOverride1()`, `null|\DerivedDerived`},
-		{`$dd->getStaticForOverride2()`, `\Derived`}, // Since $this works like `self`
-		{`$dd->getStaticForOverride3()`, `\Derived|\DerivedDerived`},
-
-		{`$dd->asParent()`, `\Derived|\DerivedDerived`},
-		{`$dd->asParent()->newStatic()`, `\Derived|\DerivedDerived`},
-		{`$dd->asParent()->asParent()`, `\Derived|\DerivedDerived`},
-
-		// Resolving of `$this` (which should be identical to `static`).
-		{`$b->getThis()`, `\Base`},
-		{`$d->getThis()`, `\Base|\Derived`},
-		{`$b->getThis()->getThis()`, `\Base`},
-		{`$d->getThis()->getThis()`, `\Base|\Derived`},
-
-		// TODO: resolve $this without @return hint into `static` as well?
-		{`$b->getThisNoHint()`, `\Base`},
-		{`$d->getThisNoHint()`, `\Base`},
-		{`$dd->getThisNoHint()`, `\Base`},
-	}
-
-	global := `<?php
+	code := `
 class Base {
   /** @return $this */
   public function getThis() { return $this; }
@@ -905,75 +839,98 @@ function eitherDerived($cond) {
   }
   return new DerivedDerived();
 }
+
+function test() {
+  $b = new Base();
+  $d = new Derived();
+  $dd = new DerivedDerived();
+
+  exprtype(getBase(), '\Base');
+  exprtype(getDerived(), '\Base|\Derived');
+  exprtype(getBase2(), '\Base');
+  exprtype(getDerived2(), '\Base|\Derived');
+  exprtype(getBase2()->getStatic()->getStatic(), '\Base');
+  exprtype(getDerived2()->getStatic()->getStatic(), '\Base|\Derived');
+  exprtype(eitherDerived(), '\Derived|\DerivedDerived');
+  exprtype(eitherDerived()->getStatic(), '\Base|\Derived|\DerivedDerived');
+
+  exprtype(Base::staticNewStatic(), '\Base');
+  exprtype(Base::staticNewStatic()->staticNewStatic(), '\Base');
+  exprtype(Derived::staticNewStatic(), '\Derived');
+  exprtype(Derived::staticNewStatic()->staticNewStatic(), '\Derived');
+  exprtype(DerivedDerived::staticNewStatic(), '\DerivedDerived');
+  exprtype(DerivedDerived::staticNewStatic()->staticNewStatic(), '\DerivedDerived');
+
+  exprtype($b->newStatic(), '\Base');
+  exprtype($d->newStatic(), '\Derived');
+  exprtype($dd->newStatic(), '\DerivedDerived');
+
+  exprtype($b->getStatic(), '\Base');
+  exprtype($b->getStatic()->getStatic(), '\Base');
+  exprtype($b->getStaticArray(), '\Base[]');
+  exprtype($b->getStaticArray()[0], '\Base');
+  exprtype($b->getStaticArrayArray(), '\Base[][]');
+  exprtype($b->getStaticArrayArray()[0][0], '\Base');
+
+  exprtype($d->getStatic(), '\Base|\Derived');
+  exprtype($d->getStatic()->getStatic(), '\Base|\Derived');
+  exprtype($d->getStaticArray(), '\Derived[]');
+  exprtype($d->getStaticArray()[0], '\Derived');
+  exprtype($d->getStaticArrayArray(), '\Derived[][]');
+  exprtype($d->getStaticArrayArray()[0][0], '\Derived');
+
+  exprtype($dd->getStatic(), '\Base|\DerivedDerived');
+  exprtype($dd->getStatic()->getStatic(), '\Base|\DerivedDerived');
+  exprtype($dd->getStaticArray(), '\DerivedDerived[]');
+  exprtype($dd->getStaticArray()[0], '\DerivedDerived');
+  exprtype($dd->getStaticArrayArray(), '\DerivedDerived[][]');
+  exprtype($dd->getStaticArrayArray()[0][0], '\DerivedDerived');
+
+  exprtype($b->initAndReturnOther1(), '\Base');
+  exprtype($b->initAndReturnOther2(), '\Base');
+
+  exprtype((new Base())->getStatic(), '\Base');
+  exprtype((new Derived())->getStatic(), '\Base|\Derived');
+
+  exprtype($d->derivedGetStatic(), '\Derived');
+  exprtype($d->derivedNewStatic(), '\Derived');
+  exprtype($dd->derivedGetStatic(), '\Derived|\DerivedDerived');
+  exprtype($dd->derivedNewStatic(), '\DerivedDerived');
+
+  exprtype($d->getStatic(), '\Base|\Derived');
+  exprtype($d->getStatic()->getStatic(), '\Base|\Derived');
+  exprtype($dd->getStatic(), '\Base|\DerivedDerived');
+  exprtype($dd->getStatic()->getStatic(), '\Base|\DerivedDerived');
+
+  exprtype($d->getStaticForOverride1(), 'null|\Derived');
+  exprtype($d->getStaticForOverride2(), '\Derived');
+  exprtype($d->getStaticForOverride3(), '\Derived');
+  exprtype($dd->getStaticForOverride1(), 'null|\DerivedDerived');
+  exprtype($dd->getStaticForOverride2(), '\Derived'); // Since $this works like 'self'
+  exprtype($dd->getStaticForOverride3(), '\Derived|\DerivedDerived');
+
+  exprtype($dd->asParent(), '\Derived|\DerivedDerived');
+  exprtype($dd->asParent()->newStatic(), '\Derived|\DerivedDerived');
+  exprtype($dd->asParent()->asParent(), '\Derived|\DerivedDerived');
+
+  // Resolving of '$this' (which should be identical to 'static').
+  exprtype($b->getThis(), '\Base');
+  exprtype($d->getThis(), '\Base|\Derived');
+  exprtype($b->getThis()->getThis(), '\Base');
+  exprtype($d->getThis()->getThis(), '\Base|\Derived');
+
+  // TODO: resolve $this without @return hint into 'static' as well?
+  exprtype($b->getThisNoHint(), '\Base');
+  exprtype($d->getThisNoHint(), '\Base');
+  exprtype($dd->getThisNoHint(), '\Base');
+}
 `
 
-	local := `
-$b = new Base();
-$d = new Derived();
-$dd = new DerivedDerived();
-`
-
-	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeSimple(t *testing.T) {
-	tests := []exprTypeTest{
-		{`true`, "precise bool"},
-		{`false`, "precise bool"},
-		{`(bool)1`, "precise bool"},
-		{`(boolean)1`, "precise bool"},
-
-		{`1`, "precise int"},
-		{`(int)1.5`, "precise int"},
-		{`(integer)1.5`, "precise int"},
-
-		{`1.21`, "precise float"},
-		{`(float)1`, "precise float"},
-		{`(real)1`, "precise float"},
-		{`(double)1`, "precise float"},
-
-		{`""`, "precise string"},
-		{`(string)1`, "precise string"},
-
-		{`[]`, "mixed[]"},
-		{`[1, "a", 4.5]`, "mixed[]"},
-
-		{`1+5<<2`, `precise int`},
-
-		{`-1`, `int`},
-		{`-1.4`, `float`},
-		{`+1`, `int`},
-		{`+1.4`, `float`},
-
-		{`~$int`, `int`},
-		{`~'dsds'`, `string`},
-
-		{`$int & $int`, `int`},
-		{`$float & $int`, `int`},
-		{`$int & $float`, `int`},
-		{`4.5 & 1.4`, `int`},
-		{`"abc" & "foo"`, `string`},
-		{`$int | $int`, `int`},
-		{`4.5 | 1.4`, `int`},
-		{`"abc" | "foo"`, `string`},
-		{`$int ^ $int`, `int`},
-		{`4.5 ^ 1.4`, `int`},
-		{`"abc" ^ "foo"`, `string`},
-
-		{`$int`, "int"},
-		{`$float`, "float"},
-		{`$string`, "string"},
-
-		{`define('foo', 0 == 0)`, `void`},
-		{`empty_array()`, `mixed[]`},
-
-		{`new Foo()`, `precise \Foo`},
-		{`clone (new Foo())`, `precise \Foo`},
-
-		{`1 > 4`, `precise bool`},
-	}
-
-	global := `<?php
+	code := `<?php
 class Foo {}
 
 function define($name, $value) {}
@@ -984,85 +941,133 @@ $float = 20.5;
 $string = "123";
 
 function empty_array() { $x = []; return $x; }
+
+function test() {
+  global $int;
+  global $float;
+  global $string;
+
+  exprtype(true, 'precise bool');
+  exprtype(false, 'precise bool');
+  exprtype((bool)1, 'precise bool');
+  exprtype((boolean)1, 'precise bool');
+
+  exprtype(1, 'precise int');
+  exprtype((int)1.5, 'precise int');
+  exprtype((integer)1.5, 'precise int');
+
+  exprtype(1.21, 'precise float');
+  exprtype((float)1, 'precise float');
+  exprtype((real)1, 'precise float');
+  exprtype((double)1, 'precise float');
+
+  exprtype("", 'precise string');
+  exprtype((string)1, 'precise string');
+
+  exprtype([], 'mixed[]');
+  exprtype([1, 'a', 4.5], 'mixed[]');
+
+  exprtype(1+5<<2, 'precise int');
+
+  exprtype(-1, 'int');
+  exprtype(-1.4, 'float');
+  exprtype(+1, 'int');
+  exprtype(+1.4, 'float');
+
+  exprtype(~$int, 'int');
+  exprtype(~'dsds', 'string');
+
+  exprtype($int & $int, 'int');
+
+  exprtype($float & $int, 'int');
+  exprtype($int & $float, 'int');
+  exprtype(4.5 & 1.4, 'int');
+  exprtype("abc" & "foo", 'string');
+  exprtype($int | $int, 'int');
+  exprtype(4.5 | 1.4, 'int');
+  exprtype("abc" | "foo", 'string');
+  exprtype($int ^ $int, 'int');
+  exprtype(4.5 ^ 1.4, 'int');
+  exprtype("abc" ^ "foo", 'string');
+
+  exprtype($int, 'int');
+  exprtype($float, 'float');
+  exprtype($string, 'string');
+
+  exprtype(define('foo', 0 == 0), 'void');
+  exprtype(empty_array(), 'mixed[]');
+
+  exprtype(new Foo(), 'precise \Foo');
+  exprtype(clone (new Foo()), 'precise \Foo');
+
+  exprtype(1 > 4, 'precise bool');
+}
 `
-	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeKeyword(t *testing.T) {
-	tests := []exprTypeTest{
-		{`f_resource()`, `resource`},
-		{`f_true()`, `true`},
-		{`f_false()`, `false`},
-		{`f_iterable()`, `iterable`},
-		{`f_resource2()`, `resource[]`},
-		{`f_true2()`, `true[]`},
-		{`f_false2()`, `false[]`},
-		{`f_iterable2()`, `iterable[]`},
-	}
-	global := `<?php
+	code := `<?php
 /** @return resource */
 function f_resource() {}
+exprtype(f_resource(), 'resource');
 
 /** @return true */
 function f_true() {}
+exprtype(f_true(), 'true');
 
 /** @return false */
 function f_false() {}
+exprtype(f_false(), 'false');
 
 /** @return iterable */
 function f_iterable() {}
+exprtype(f_iterable(), 'iterable');
 
 /** @return (resource[]) */
 function f_resource2() {}
+exprtype(f_resource2(), 'resource[]');
 
 /** @return (true[]) */
 function f_true2() {}
+exprtype(f_true2(), 'true[]');
 
 /** @return (false[]) */
 function f_false2() {}
+exprtype(f_false2(), 'false[]');
 
 /** @return (iterable[]) */
 function f_iterable2() {}
+exprtype(f_iterable2(), 'iterable[]');
 `
-	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeArray(t *testing.T) {
-	tests := []exprTypeTest{
-		{`[]`, `mixed[]`}, // Should never be "empty_array" after resolving
-		{`[[]]`, `mixed[]`},
+	code := `
+function test() {
+  $int = 10;
+  $ints = [1, 2];
 
-		{`[1, 2]`, "int[]"},
-		{`[1.4, 3.5]`, "float[]"},
-		{`["1", "5"]`, "string[]"},
+  exprtype([], 'mixed[]'); // Should never be "empty_array" after resolving
+  exprtype([[]], 'mixed[]');
+  exprtype([1, 2], 'int[]');
+  exprtype([1.4, 3.5], 'float[]');
+  exprtype(["1", "5"], 'string[]');
+  exprtype(["k1" => 123, "k2" => 345], 'int[]');
+  exprtype([0 => "a", 1 => "b"], 'string[]');
 
-		{`["k1" => 123, "k2" => 345]`, `int[]`},
-		{`[0 => "a", 1 => "b"]`, `string[]`},
-
-		{`[$int, $int]`, "mixed[]"}, // TODO: could be int[]
-
-		{`$ints[0]`, "int"},
-		{`["11"][0]`, "string"},
-		{`[1.4][0]`, "float"},
-	}
-
-	local := `$int = 10; $ints = [1, 2];`
-	runExprTypeTest(t, &exprTypeTestContext{local: local}, tests)
+  exprtype([$int, $int], 'mixed[]'); // TODO: could be int[]
+  exprtype($ints[0], 'int');
+  exprtype(["11"][0], 'string');
+  exprtype([1.4][0], 'float');
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeMulti(t *testing.T) {
-	tests := []exprTypeTest{
-		{`$cond ? 1 : 2`, "precise int"},
-		{`$int_or_float`, "int|float"},
-		{`$int_or_float`, "float|int"},
-		{`$cond ? 10 : "123"`, "precise int|string"},
-		{`$cond ? ($int_or_float ? 10 : 10.4) : (bool)1`, "precise int|float|bool"},
-		{`$bool_or_int`, `bool|int`},
-		{`$cond ? 10 : get_mixed(1)`, `int|mixed`},
-		{`$cond ? get_mixed(1) : 10`, `int|mixed`},
-	}
-
-	global := `<?php
+	code := `
 /** @return mixed */
 function get_mixed($x) { return $x; }
 
@@ -1071,50 +1076,55 @@ $int_or_float = 10;
 if ($cond) {
   $int_or_float = 10.5;
 }
+
+function test() {
+  global $int_or_float;
+  global $cond;
+
+  /** @var bool|int $bool_or_int */
+  $bool_or_int = 10;
+
+  exprtype($cond ? 1 : 2, 'precise int');
+  exprtype($int_or_float, 'int|float');
+  exprtype($cond ? 10 : '123', 'precise int|string');
+  exprtype($cond ? ($int_or_float ? 10 : 10.4) : (bool)1, 'precise int|float|bool');
+  exprtype($bool_or_int, 'bool|int');
+  exprtype($cond ? 10 : get_mixed(1), 'int|mixed');
+  exprtype($cond ? get_mixed(1) : 10, 'int|mixed');
+}
 `
-	local := `
-/** @var bool|int $bool_or_int */
-$bool_or_int = 10;`
-	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeOps(t *testing.T) {
-	tests := []exprTypeTest{
-		{`1 + $int`, "int"},
-		{`$int + 1`, "int"},
-		{`1 + (int)$float`, "int"},
-		{`1 + $global_int`, "float"},
-		{`$global_int + 1`, "float"},
-		{`1 + $float`, "float"},
-
-		{`$int . $float`, "precise string"},
-
-		{`$int && $float`, "precise bool"},
-		{`$int || 1`, "precise bool"},
-	}
-
-	global := `<?php
+	code := `<?php
 $global_int = 10;
-$global_float = 20.5;`
-	local := `
-$int = 10;
-$float = 20.5;
-$string = "123";
-$bool = (bool)1;`
-	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+$global_float = 20.5;
+
+function test() {
+  global $global_int;
+  global $global_float;
+
+  $int = 10;
+  $float = 20.5;
+  $string = "123";
+  $bool = (bool)1;
+
+  exprtype(1 + $int, 'int');
+  exprtype($int + 1, 'int');
+  exprtype(1 + (int)$float, 'int');
+  exprtype(1 + $global_int, 'float'); // TODO: should be int?
+  exprtype(1 + $float, 'float');
+  exprtype($int . $float, 'precise string');
+  exprtype($int && $float, 'precise bool');
+  exprtype($int || 1, 'precise bool');
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeProperty(t *testing.T) {
-	tests := []exprTypeTest{
-		{`$point->x`, "float"},
-		{`$point->y`, "float"},
-
-		{`Gopher::$name`, "string"},
-		{`Gopher::POWER`, "int"},
-		{`$magic->int`, "int"},
-	}
-
-	global := `<?php
+	code := `<?php
 
 class Gopher {
   /** @var string */
@@ -1136,51 +1146,23 @@ class Point {
   /** @var float */
   public $y;
 }
+
+function test() {
+  $point = new Point();
+  $magic = new Magic();
+
+  exprtype($point->x, 'float');
+  exprtype($point->y, 'float');
+  exprtype(Gopher::$name, 'string');
+  exprtype(Gopher::POWER, 'int');
+  exprtype($magic->int, 'int');
+}
 `
-	local := `
-$point = new Point();
-$magic = new Magic();`
-	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeFunction(t *testing.T) {
-	tests := []exprTypeTest{
-		{`get_ints()`, `int[]`},
-		{`get_floats()`, `float[]`},
-		{`get_array()`, `mixed[]`},
-		{`get_array_or_null()`, `mixed[]|null`},
-		{`get_null_or_array()`, `mixed[]|null`},
-		{`try_catch1()`, `bool|int|string`},
-		{`try_finally1()`, `bool|int|string`},
-		{`ifelse1()`, `bool|int|string`},
-		{`ifelse2()`, `bool|int|string`},
-		{`ifelse3()`, `bool|int|string`},
-		{`switch1()`, `bool|int|string`},
-		{`switch2()`, `bool|int|string`},
-		{`switch3()`, `bool|string`},
-		{`throw1()`, `int`},
-		{`throw2()`, `bool|int`},
-		{`foreach1()`, `int|string`},
-		{`foreach2()`, `int|string`},
-		{`undefined_type1()`, `mixed`},
-		{`undefined_type2()`, `mixed`},
-		{`untyped_param()`, `mixed`},
-		{`bare_ret1()`, `int|null`},
-		{`bare_ret2()`, `int|null`},
-		{`recur1()`, `int|string`},
-		{`recur2()`, `int|string`},
-		{`recur3()`, `mixed`},
-		{`recur4()`, `mixed`},
-		{`recur5()`, `mixed`},
-		{`mixed_array()`, `mixed[]`},
-		{`mixed_or_ints1()`, `mixed[]|int[]`},
-		{`mixed_or_ints2()`, `mixed[]|int[]`},
-		{`mixed_array()[1]`, `mixed`},
-		{`mixed_or_ints1()[1]`, `mixed|int`},
-		{`mixed_or_ints2()[1]`, `mixed|int`},
-	}
-
-	global := `<?php
+	code := `<?php
 function define($name, $value) {}
 define('null', 0);
 
@@ -1189,6 +1171,8 @@ class Foo {}
 function mixed_array($x) {
   return [$x, 1, 2];
 }
+exprtype(mixed_array(0), 'mixed[]');
+exprtype(mixed_array(0)[1], 'mixed');
 
 function mixed_or_ints1($x) {
   if ($x) {
@@ -1196,6 +1180,8 @@ function mixed_or_ints1($x) {
   }
   return [0, 0];
 }
+exprtype(mixed_or_ints1(0), 'int[]|mixed[]');
+exprtype(mixed_or_ints1(0)[1], 'int|mixed');
 
 function mixed_or_ints2($x) {
   $a = array(0, 0);
@@ -1204,41 +1190,54 @@ function mixed_or_ints2($x) {
   }
   return $a;
 }
+exprtype(mixed_or_ints2(0), 'int[]|mixed[]');
+exprtype(mixed_or_ints2(0)[1], 'int|mixed');
 
 function recur1($cond) {
   if ($cond) { return 0; }
   return recur2($cond);
 }
+exprtype(recur1(true), 'int|string');
 
 function recur2($cond) {
   if ($cond) { return ""; }
   return recur1($cond);
 }
+exprtype(recur2(true), 'int|string');
 
 function recur3() { return recur4(); }
 function recur4() { return recur5(); }
 function recur5() { return recur3(); }
 
+exprtype(recur3(), 'mixed');
+exprtype(recur4(), 'mixed');
+exprtype(recur5(), 'mixed');
+
 function bare_ret1($cond) {
   if ($cond) { return; }
   return 10;
 }
+exprtype(bare_ret1(false), 'int|null');
 
 function bare_ret2($cond) {
   if ($cond) { return 10; }
   return;
 }
+exprtype(bare_ret2(false), 'int|null');
 
 function untyped_param($x) { return $x; }
+exprtype(untyped_param(0), 'mixed');
 
 function undefined_type1() {
   $x = unknown_func();
   return $x;
 }
+exprtype(undefined_type1(), 'mixed');
 
 function undefined_type2() {
   return $x;
 }
+exprtype(undefined_type2(), 'mixed');
 
 function foreach1($xs) {
   foreach ($xs as $_) {
@@ -1246,6 +1245,7 @@ function foreach1($xs) {
   }
   return "";
 }
+exprtype(foreach1([]), 'int|string');
 
 function foreach2($xs, $cond) {
   foreach ($xs as $_) {
@@ -1257,6 +1257,7 @@ function foreach2($xs, $cond) {
   }
   return "";
 }
+exprtype(foreach2([]), 'int|string');
 
 function throw1($cond) {
   if ($cond) {
@@ -1264,6 +1265,7 @@ function throw1($cond) {
   }
   throw new Exception();
 }
+exprtype(throw1(true), 'int');
 
 function throw2($cond) {
   if ($cond[0]) {
@@ -1277,13 +1279,15 @@ function throw2($cond) {
   }
   throw new Exception("");
 }
+exprtype(throw2(true), 'bool|int');
 
 function get_ints() {
-	$a = []; // "empty_array"
-	$a[0] = 1;
-	$a[1] = 2;
-	return $a; // Should be resolved to just int[]
+  $a = []; // "empty_array"
+  $a[0] = 1;
+  $a[1] = 2;
+  return $a; // Should be resolved to just int[]
 }
+exprtype(get_ints(), 'int[]');
 
 function switch1($v) {
   switch ($v) {
@@ -1295,6 +1299,7 @@ function switch1($v) {
     return false;
   }
 }
+exprtype(switch1(true), 'bool|int|string');
 
 function switch2($v) {
   switch ($v) {
@@ -1305,6 +1310,7 @@ function switch2($v) {
   }
   return false;
 }
+exprtype(switch2(true), 'bool|int|string');
 
 function switch3($v) {
   switch ($v) {
@@ -1313,6 +1319,7 @@ function switch3($v) {
   }
   return false;
 }
+exprtype(switch3(true), 'bool|string');
 
 function ifelse1($cond) {
   if ($cond) {
@@ -1323,6 +1330,7 @@ function ifelse1($cond) {
     return false;
   }
 }
+exprtype(ifelse1(true), 'bool|int|string');
 
 function ifelse2($cond) {
   if ($cond) {
@@ -1333,6 +1341,7 @@ function ifelse2($cond) {
     return false;
   }
 }
+exprtype(ifelse2(true), 'bool|int|string');
 
 function ifelse3($cond) {
   if ($cond) {
@@ -1342,6 +1351,7 @@ function ifelse3($cond) {
   }
   return false;
 }
+exprtype(ifelse3(true), 'bool|int|string');
 
 function try_catch1() {
   try {
@@ -1351,6 +1361,7 @@ function try_catch1() {
   }
   return false;
 }
+exprtype(try_catch1(), 'bool|int|string');
 
 function try_finally1() {
   try {
@@ -1360,64 +1371,68 @@ function try_finally1() {
   }
   return false;
 }
+exprtype(try_finally1(), 'bool|int|string');
 
 /** @return float[] */
 function get_floats() { return []; }
+exprtype(get_floats(), 'float[]');
 
 function get_array() { return []; }
+exprtype(get_array(), 'mixed[]');
 
 /** @return array */
 function get_array_or_null() { return null; }
+exprtype(get_array_or_null(), 'mixed[]|null');
 
 /** @return null */
-function get_null_or_array() { return []; }`
-	runExprTypeTest(t, &exprTypeTestContext{global: global}, tests)
+function get_null_or_array() { return []; }
+exprtype(get_null_or_array(), 'mixed[]|null');
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeMethod(t *testing.T) {
-	tests := []exprTypeTest{
-		{`\NS\Test::instance()`, `\NS\Test`},
-		{`\NS\Test::instance2()`, `\NS\Test`},
-		{`$test->getInt()`, `int`},
-		{`$test->getInts()`, `int[]`},
-		{`$test->getThis()->getThis()->getInt()`, `int`},
-		{`new \NS\Test()`, `precise \NS\Test`},
-	}
-
-	global := `<?php
+	code := `<?php
 namespace NS {
-	class Test {
-		public function getInt() { return 10; }
-		public function getInts() { return [1, 2]; }
-		public function getThis() { return $this; }
+  class Test {
+    public function getInt() { return 10; }
+    public function getInts() { return [1, 2]; }
+    public function getThis() { return $this; }
 
-		public static function instance() {
-			return self::$instances[0];
-		}
+    public static function instance() {
+      return self::$instances[0];
+    }
 
-		public static function instance2() {
-			foreach (self::$instances as $instance) {
-				return $instance;
-			}
-		}
+    public static function instance2() {
+      foreach (self::$instances as $instance) {
+        return $instance;
+      }
+    }
 
-		/** @var Test[] */
-		public static $instances;
-	}
-}`
-	local := `$test = new \NS\Test(); $derived = new Derived();`
-	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+    /** @var Test[] */
+    public static $instances;
+  }
+}
+
+namespace {
+  function f() {
+    $test = new \NS\Test();
+    $derived = new Derived();
+
+    exprtype(\NS\Test::instance(), '\NS\Test');
+    exprtype(\NS\Test::instance2(), '\NS\Test');
+    exprtype($test->getInt(), 'int');
+    exprtype($test->getInts(), 'int[]');
+    exprtype($test->getThis()->getThis()->getInt(), 'int');
+    exprtype(new \NS\Test(), 'precise \NS\Test');
+  }
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeInterface(t *testing.T) {
-	tests := []exprTypeTest{
-		{"$foo", `precise \Foo`},
-		{"$foo->getThis()", `\Foo`},
-		{"$foo->acceptThis($foo)", `\TestInterface`},
-		{"$foo->acceptThis($foo)->acceptThis($foo)", `\TestInterface`},
-	}
-
-	global := `<?php
+	code := `<?php
 interface TestInterface {
   /**
    * @return self
@@ -1435,18 +1450,22 @@ class Foo implements TestInterface {
   public function getThis() { return $this; }
 
   public function acceptThis($x) { return $x->getThis(); }
-}`
-	local := `$foo = new Foo();`
-	runExprTypeTest(t, &exprTypeTestContext{global: global, local: local}, tests)
+}
+
+exprtype(new Foo(), 'precise \Foo');
+
+function f() {
+  $foo = new Foo();
+  exprtype($foo, 'precise \Foo');
+  exprtype($foo->getThis(), '\Foo');
+  exprtype($foo->acceptThis($foo), '\TestInterface');
+  exprtype($foo->acceptThis($foo)->acceptThis($foo), '\TestInterface');
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func TestExprTypeOverride(t *testing.T) {
-	tests := []exprTypeTest{
-		{`array_shift($ints)`, "int"},
-		{`array_slice($ints, 0, 2)`, "int[]"},
-		{`array_map(function($x) { return $x; }, $ints)`, `mixed[]`},
-	}
-
 	stubs := `<?php
 /**
  * @param callable $callback
@@ -1476,60 +1495,57 @@ namespace PHPSTORM_META {
 	override(\array_slice(0), type(0));
 	override(\array_shift(0), elementType(0));
 }`
-	local := `$ints = [1, 2];`
-	runExprTypeTest(t, &exprTypeTestContext{stubs: stubs, local: local}, tests)
+	code := `<?php
+$ints = [1, 2, 3];
+exprtype($ints, 'int[]');
+
+function returns_array_shift() {
+  global $ints;
+  return array_shift($ints);
+}
+exprtype(returns_array_shift(), 'int');
+exprtype(array_shift($ints), 'int|mixed');
+
+function returns_array_slice() {
+  global $ints;
+  return array_slice($ints, 0, 2);
+}
+exprtype(returns_array_slice(), 'int[]');
+
+exprtype(array_map(function($x) { return $x; }, $ints), 'mixed[]');
+`
+	runExprTypeTest(t, &exprTypeTestParams{stubs: stubs, code: code})
 }
 
-func runExprTypeTest(t *testing.T, ctx *exprTypeTestContext, tests []exprTypeTest) {
-	if ctx == nil {
-		ctx = &exprTypeTestContext{}
-	}
-
+func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
-	if ctx.stubs != "" {
-		linttest.ParseTestFile(t, "stubs.php", ctx.stubs)
+	if params.stubs != "" {
+		linttest.ParseTestFile(t, "stubs.php", params.stubs)
 		meta.Info.InitStubs()
 	}
-	var gw globalsWalker
-	if ctx.global != "" {
-		if !strings.HasPrefix(ctx.global, "<?php") {
-			t.Error("missing <?php tag in global PHP code snippet")
-			return
-		}
-		root, _ := linttest.ParseTestFile(t, "exprtype_global.php", ctx.global)
-		root.Walk(&gw)
-	}
-	sources := exprTypeSources(ctx, tests, gw.globals)
-	linttest.ParseTestFile(t, "exprtype.php", sources)
-	meta.SetIndexingComplete(true)
-	linttest.ParseTestFile(t, "exprtype.php", sources)
+	linttest.ParseTestFile(t, "exprtype.php", params.code)
 
-	for i, test := range tests {
-		fn, ok := meta.Info.GetFunction(fmt.Sprintf("\\f%d", i))
-		if !ok {
-			t.Errorf("missing f%d info", i)
-			continue
-		}
-		have := testTypesMap{
-			Types:   solver.ResolveTypes("", fn.Typ, make(map[string]struct{})),
-			Precise: fn.Typ.IsPrecise(),
-		}
-		want := makeType(test.expectedType)
-		if diff := cmp.Diff(have, want); diff != "" {
-			t.Errorf("type mismatch for %q (-have +want):\n%s",
-				test.expr, diff)
-		}
-	}
+	meta.SetIndexingComplete(true)
+
+	// Reset results map and run expr type collector.
+	exprTypeResult = map[node.Node]meta.TypesMap{}
+	root, _ := linttest.ParseTestFile(t, "exprtype.php", params.code)
+
+	// Check that collected types are identical to the expected types.
+	// We need the second walker to pass *testing.T parameter to
+	// the walker that does the comparison.
+	walker := exprTypeWalker{t: t}
+	root.Walk(&walker)
 }
 
 type testTypesMap struct {
 	Precise bool
-	Types   map[string]struct{}
+	Types   string
 }
 
 func makeType(typ string) testTypesMap {
 	if typ == "" {
-		return testTypesMap{Types: map[string]struct{}{}}
+		return testTypesMap{}
 	}
 
 	precise := strings.HasPrefix(typ, "precise ")
@@ -1537,60 +1553,63 @@ func makeType(typ string) testTypesMap {
 		typ = strings.TrimPrefix(typ, "precise ")
 	}
 
-	res := make(map[string]struct{})
-	for _, t := range strings.Split(typ, "|") {
-		res[t] = struct{}{}
-	}
-	return testTypesMap{Precise: precise, Types: res}
+	return testTypesMap{Precise: precise, Types: typ}
 }
 
-type exprTypeTest struct {
-	expr         string
-	expectedType string
+type exprTypeTestParams struct {
+	code  string
+	stubs string
 }
 
-type exprTypeTestContext struct {
-	global string
-	local  string
-	stubs  string
+type exprTypeWalker struct {
+	t *testing.T
 }
 
-func exprTypeSources(ctx *exprTypeTestContext, tests []exprTypeTest, globals []string) string {
-	var buf strings.Builder
-	buf.WriteString("<?php\n")
-	for i, test := range tests {
-		fmt.Fprintf(&buf, "function f%d() {\n", i)
-		for _, g := range globals {
-			fmt.Fprintf(&buf, "  global %s;\n", g)
+func (w *exprTypeWalker) LeaveNode(n walker.Walkable) {}
+
+func (w *exprTypeWalker) EnterNode(n walker.Walkable) bool {
+	call, ok := n.(*expr.FunctionCall)
+	if ok && meta.NameNodeEquals(call.Function, `exprtype`) {
+		checkedExpr := call.ArgumentList.Arguments[0].(*node.Argument).Expr
+		expectedType := call.ArgumentList.Arguments[1].(*node.Argument).Expr.(*scalar.String).Value
+		actualType, ok := exprTypeResult[checkedExpr]
+		if !ok {
+			w.t.Fatalf("no type found for %s expression", astutil.FmtNode(checkedExpr))
 		}
-		buf.WriteString(ctx.local + "\n")
-		fmt.Fprintf(&buf, "  return %s;\n}\n", test.expr)
-	}
-	buf.WriteString("\n")
-	return buf.String()
-}
-
-type globalsWalker struct {
-	globals []string
-}
-
-func (gw *globalsWalker) EnterNode(w walker.Walkable) bool {
-	switch n := w.(type) {
-	case *node.Root:
-		return true
-	case *stmt.StmtList:
-		return true
-	case *stmt.Expression:
-		return true
-	case *assign.Assign:
-		name := meta.NameNodeToString(n.Variable)
-		if strings.HasPrefix(name, "$") {
-			gw.globals = append(gw.globals, name)
+		want := makeType(expectedType[len(`"`) : len(expectedType)-len(`"`)])
+		have := testTypesMap{
+			Types:   actualType.String(),
+			Precise: actualType.IsPrecise(),
+		}
+		if diff := cmp.Diff(have, want); diff != "" {
+			line := checkedExpr.GetPosition().StartLine
+			w.t.Errorf("line %d: type mismatch for %s (-have +want):\n%s",
+				line, astutil.FmtNode(checkedExpr), diff)
 		}
 		return false
-	default:
-		return false
 	}
+
+	return true
 }
 
-func (gw *globalsWalker) LeaveNode(walker.Walkable) {}
+type exprTypeCollector struct {
+	ctx *linter.BlockContext
+	linter.BlockCheckerDefaults
+}
+
+func (c *exprTypeCollector) AfterEnterNode(n walker.Walkable) {
+	if !meta.IsIndexingComplete() {
+		return
+	}
+
+	call, ok := n.(*expr.FunctionCall)
+	if !ok || !meta.NameNodeEquals(call.Function, `exprtype`) {
+		return
+	}
+	checkedExpr := call.ArgumentList.Arguments[0].(*node.Argument).Expr
+	typ := c.ctx.ExprType(checkedExpr)
+
+	exprTypeResultMu.Lock()
+	exprTypeResult[checkedExpr] = typ
+	exprTypeResultMu.Unlock()
+}

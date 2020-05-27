@@ -65,27 +65,9 @@ func ExprTypeCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, custo
 		return m
 	}
 
-	newMap := make(map[string]struct{}, m.Len())
 	visitedMap := make(map[string]struct{})
-
-	m.Iterate(func(k string) {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Printf("Panic during parsing '%s'", meta.NewTypesMap(k))
-				log.Printf("Scope: %s", sc)
-				panic(r)
-			}
-		}()
-
-		for kk := range resolveType(cs.CurrentClass, k, visitedMap) {
-			newMap[kk] = struct{}{}
-		}
-	})
-
-	if len(newMap) == 0 {
-		return meta.MixedType
-	}
-	return meta.NewTypesMapFromMap(newMap)
+	resolvedTypes := ResolveTypes(cs.CurrentClass, m, visitedMap)
+	return meta.NewTypesMapFromMap(resolvedTypes)
 }
 
 func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *expr.FunctionCall, custom []CustomType) (typ meta.TypesMap, ok bool) {
