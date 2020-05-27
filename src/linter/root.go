@@ -1222,6 +1222,12 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 			}
 		} else if typ.IsEmpty() && p.DefaultValue != nil {
 			typ = solver.ExprTypeLocal(sc, d.ctx.st, p.DefaultValue)
+			// For the type resolver default value can look like a
+			// precise source of information (e.g. "false" is a precise bool),
+			// but it's not assigned unconditionally.
+			// If explicit argument is provided, that parameter can have
+			// almost any type possible.
+			typ.MarkAsImprecise()
 		}
 
 		if p.Variadic {

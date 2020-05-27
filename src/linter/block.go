@@ -338,7 +338,11 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		for _, vv := range s.Vars {
 			v := vv.(*stmt.StaticVar)
 			ev := v.Variable
-			b.addVarName(v, ev.Name, solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, v.Expr, b.ctx.customTypes), "static", meta.VarAlwaysDefined)
+			typ := solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, v.Expr, b.ctx.customTypes)
+			// Static vars can be assigned below and preserve the type of
+			// the previously assigned value.
+			typ.MarkAsImprecise()
+			b.addVarName(v, ev.Name, typ, "static", meta.VarAlwaysDefined)
 			b.addNonLocalVarName(ev.Name)
 			if v.Expr != nil {
 				v.Expr.Walk(b)
