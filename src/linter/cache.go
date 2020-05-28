@@ -86,9 +86,11 @@ func IndexFile(filename string, contents []byte) error {
 
 	cacheFilenamePart := filename
 
+	volumeName := filepath.VolumeName(filename)
+
 	// windows user supplied full path to directory to be analyzed,
 	// but windows paths does not support ":" in the middle
-	if len(filename) > 2 && filename[0] >= 'A' && filename[0] <= 'Z' && filename[1] == ':' {
+	if len(volumeName) == 2 && volumeName[1] == ':' {
 		cacheFilenamePart = filename[0:1] + "_" + filename[2:]
 	}
 
