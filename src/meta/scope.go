@@ -288,7 +288,7 @@ func (s *Scope) Clone() *Scope {
 	res := &Scope{vars: make(map[string]*scopeVar, len(s.vars))}
 	for k, v := range s.vars {
 		res.vars[k] = &scopeVar{
-			typesMap: v.typesMap.clone(),
+			typesMap: v.typesMap.Clone(),
 			flags:    v.flags,
 		}
 	}
