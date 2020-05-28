@@ -47,6 +47,46 @@ func init() {
 	})
 }
 
+func TestExprTypePrecise2(t *testing.T) {
+	code := `<?php
+function test1($data) {
+  $s = '123';
+  exprtype($s, 'precise string');
+
+  if ($data['key1']) {
+    $s = 3.5;
+    exprtype($s, 'precise float');
+  } else {
+    $s = 123;
+    exprtype($s, 'precise int');
+  }
+  exprtype($s, 'precise float|int|string');
+
+  if ($data['key2']) {
+    $s = $data['x'];
+    exprtype($s, 'mixed');
+  }
+  exprtype($s, 'float|int|mixed|string');
+}
+
+function test2($data, int $i) {
+  $s = '123';
+
+  if ($data) {
+    exprtype($s, 'precise string');
+  }
+
+  if ($data) {
+    $s = \UnknownClass::UNKNOWN_CONST;
+  } else {
+    $s = 12;
+  }
+  exprtype($s, 'int|string');
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestExprTypePrecise(t *testing.T) {
 	code := `<?php
 class Foo {
@@ -1607,7 +1647,11 @@ func (c *exprTypeCollector) AfterEnterNode(n walker.Walkable) {
 		return
 	}
 	checkedExpr := call.ArgumentList.Arguments[0].(*node.Argument).Expr
-	typ := c.ctx.ExprType(checkedExpr)
+
+	// We need to clone a types map because if it belongs to a var
+	// or some other symbol those type can be volatile we'll get
+	// unexpected results.
+	typ := c.ctx.ExprType(checkedExpr).Clone()
 
 	exprTypeResultMu.Lock()
 	exprTypeResult[checkedExpr] = typ

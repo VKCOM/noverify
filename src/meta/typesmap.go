@@ -130,7 +130,7 @@ func NewTypesMapFromMap(m map[string]struct{}) TypesMap {
 	return TypesMap{m: m}
 }
 
-// Immutable returns immutable copy of TypesMap
+// Immutable returns immutable view of TypesMap
 func (m TypesMap) Immutable() TypesMap {
 	return TypesMap{
 		flags: m.flags | mapImmutable,
@@ -233,7 +233,7 @@ func (m TypesMap) AppendString(str string) TypesMap {
 	return TypesMap{m: mm}
 }
 
-func (m TypesMap) clone() TypesMap {
+func (m TypesMap) Clone() TypesMap {
 	if m.Len() == 0 || m.isImmutable() {
 		return m
 	}
@@ -242,7 +242,7 @@ func (m TypesMap) clone() TypesMap {
 	for typ := range m.m {
 		mm[typ] = struct{}{}
 	}
-	return TypesMap{m: mm}
+	return TypesMap{m: mm, flags: m.flags}
 }
 
 // Append adds provided types to current map and returns new one (immutable maps are always copied)
@@ -262,6 +262,7 @@ func (m TypesMap) Append(n TypesMap) TypesMap {
 			m.m = make(map[string]struct{}, n.Len())
 		}
 
+		m.MarkAsImprecise()
 		for k, v := range n.m {
 			m.m[k] = v
 		}
