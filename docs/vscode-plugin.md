@@ -1,12 +1,21 @@
 # Using NoVerify as language server for VSCode
 
-There is no official extension for VS Code that supports this mode, so you will need to take, for example, https://marketplace.visualstudio.com/items?itemName=felixfbecker.php-intellisense VS Code extension and replace `extension.js` to the one provided in this repo.
+[![Version](https://vsmarketplacebadge.apphb.com/version-short/EdgardMessias.php-noverify.svg)](https://marketplace.visualstudio.com/items?itemName=EdgardMessias.php-noverify)
+[![Installs](https://vsmarketplacebadge.apphb.com/installs-short/EdgardMessias.php-noverify.svg)](https://marketplace.visualstudio.com/items?itemName=EdgardMessias.php-noverify)
+[![Ratings](https://vsmarketplacebadge.apphb.com/rating-short/EdgardMessias.php-noverify.svg)](https://marketplace.visualstudio.com/items?itemName=EdgardMessias.php-noverify)
 
-For example, execute the following after VS Code installation:
+You can install https://marketplace.visualstudio.com/items?itemName=EdgardMessias.php-noverify using VS Code Marktplace.
 
-```sh
-$ vim extension.js # replace /path/to/cache and /path/to/phpstorm-stubs to proper values
-$ cp extension.js ~/.vscode/extensions/felixfbecker.php-intellisense-*/out/extension.js
+For example, you can configure the following after VS Code installation:
+
+```json
+{
+  "php-noverify.noverifyPath": "<noverify binary path>",
+  "php-noverify.noverifyExtraArgs": [
+    "-cores=4",
+    "-cache-dir=/path/to/cache"
+  ]
+}
 ```
 
 After you reload VS Code, you should get NoVerify started as a language server.
