@@ -1,5 +1,7 @@
 package vscode
 
+import "go.lsp.dev/uri"
+
 // https://github.com/Microsoft/language-server-protocol/blob/master/versions/protocol-2-x.md
 
 type Position struct {
@@ -15,8 +17,8 @@ type Position struct {
 }
 
 type Location struct {
-	URI   string `json:"uri"`
-	Range Range  `json:"range"`
+	URI   uri.URI `json:"uri"`
+	Range Range   `json:"range"`
 }
 
 type Range struct {
@@ -86,7 +88,7 @@ type PublishDiagnosticsParams struct {
 	/**
 	 * The URI for which diagnostic information is reported.
 	 */
-	URI string `json:"uri"`
+	URI uri.URI `json:"uri"`
 
 	/**
 	 * An array of diagnostic information items.

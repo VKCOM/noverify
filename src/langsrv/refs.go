@@ -17,6 +17,7 @@ import (
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/state"
 	"github.com/VKCOM/noverify/src/vscode"
+	"go.lsp.dev/uri"
 )
 
 type referencesWalker struct {
@@ -184,7 +185,7 @@ func refPosition(filename string, pos *position.Position) vscode.Location {
 	}
 
 	return vscode.Location{
-		URI: "file://" + filename,
+		URI: uri.File(filename),
 		Range: vscode.Range{
 			Start: vscode.Position{Line: pos.StartLine - 1},
 			End:   vscode.Position{Line: endLine},
