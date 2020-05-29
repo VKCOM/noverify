@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"strings"
 	"sync"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/vscode"
+	"go.lsp.dev/uri"
 )
 
 type openedFile struct {
@@ -102,7 +102,7 @@ func concurrentParseChanges(changes []vscode.FileEvent) {
 		for _, ev := range changes {
 			switch ev.Type {
 			case vscode.Created, vscode.Changed:
-				filenamesCh <- strings.TrimPrefix(ev.URI, "file://")
+				filenamesCh <- ev.URI.Filename()
 			}
 		}
 		close(filenamesCh)
@@ -137,7 +137,7 @@ func externalChanges(changes []vscode.FileEvent) {
 	for _, ev := range changes {
 		switch ev.Type {
 		case vscode.Deleted:
-			meta.Info.DeleteMetaForFileNonLocked(strings.TrimPrefix(ev.URI, "file://"))
+			meta.Info.DeleteMetaForFileNonLocked(ev.URI.Filename())
 		}
 	}
 	meta.Info.Unlock()
@@ -149,7 +149,7 @@ func externalChanges(changes []vscode.FileEvent) {
 
 	// update currently opened files if needed
 	for _, ev := range changes {
-		filename := strings.TrimPrefix(ev.URI, "file://")
+		filename := ev.URI.Filename()
 		switch ev.Type {
 		case vscode.Created, vscode.Changed:
 			openMapMutex.Lock()
@@ -196,7 +196,7 @@ func flushReports(filename string, d *linter.RootWalker) {
 		JSONRPC: "2.0",
 		Method:  "textDocument/publishDiagnostics",
 		Params: &vscode.PublishDiagnosticsParams{
-			URI:         "file://" + filename,
+			URI:         uri.File(filename),
 			Diagnostics: diag,
 		},
 	})

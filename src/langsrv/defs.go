@@ -12,6 +12,7 @@ import (
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/state"
 	"github.com/VKCOM/noverify/src/vscode"
+	"go.lsp.dev/uri"
 )
 
 type definitionWalker struct {
@@ -72,7 +73,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 
 		if ok {
 			d.result = append(d.result, vscode.Location{
-				URI: "file://" + fun.Pos.Filename,
+				URI: uri.File(fun.Pos.Filename),
 				Range: vscode.Range{
 					Start: vscode.Position{Line: int(fun.Pos.Line) - 1},
 					End:   vscode.Position{Line: int(fun.Pos.Line) - 1},
@@ -105,7 +106,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 		m, ok := solver.FindMethod(className, id.Value)
 		if ok {
 			d.result = append(d.result, vscode.Location{
-				URI: "file://" + m.Info.Pos.Filename,
+				URI: uri.File(m.Info.Pos.Filename),
 				Range: vscode.Range{
 					Start: vscode.Position{Line: int(m.Info.Pos.Line) - 1},
 					End:   vscode.Position{Line: int(m.Info.Pos.Line) - 1},
@@ -145,7 +146,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 			}
 
 			d.result = append(d.result, vscode.Location{
-				URI: "file://" + m.Info.Pos.Filename,
+				URI: uri.File(m.Info.Pos.Filename),
 				Range: vscode.Range{
 					Start: vscode.Position{Line: int(m.Info.Pos.Line) - 1},
 					End:   vscode.Position{Line: int(m.Info.Pos.Line) - 1},
@@ -185,7 +186,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 			}
 
 			d.result = append(d.result, vscode.Location{
-				URI: "file://" + p.Info.Pos.Filename,
+				URI: uri.File(p.Info.Pos.Filename),
 				Range: vscode.Range{
 					Start: vscode.Position{Line: int(p.Info.Pos.Line) - 1},
 					End:   vscode.Position{Line: int(p.Info.Pos.Line) - 1},
@@ -203,7 +204,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 
 		if ok {
 			d.result = append(d.result, vscode.Location{
-				URI: "file://" + c.Pos.Filename,
+				URI: uri.File(c.Pos.Filename),
 				Range: vscode.Range{
 					Start: vscode.Position{Line: int(c.Pos.Line) - 1},
 					End:   vscode.Position{Line: int(c.Pos.Line) - 1},
@@ -228,7 +229,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 
 		if c, _, ok := solver.FindConstant(className, constName.Value); ok {
 			d.result = append(d.result, vscode.Location{
-				URI: "file://" + c.Pos.Filename,
+				URI: uri.File(c.Pos.Filename),
 				Range: vscode.Range{
 					Start: vscode.Position{Line: int(c.Pos.Line) - 1},
 					End:   vscode.Position{Line: int(c.Pos.Line) - 1},
@@ -255,7 +256,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 		}
 
 		d.result = append(d.result, vscode.Location{
-			URI: "file://" + c.Pos.Filename,
+			URI: uri.File(c.Pos.Filename),
 			Range: vscode.Range{
 				Start: vscode.Position{Line: int(c.Pos.Line) - 1},
 				End:   vscode.Position{Line: int(c.Pos.Line) - 1},
@@ -278,8 +279,10 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 			return true
 		}
 
+		lintdebug.Send("name:%s , uri:%s", c.Pos.Filename, uri.File(c.Pos.Filename))
+
 		d.result = append(d.result, vscode.Location{
-			URI: "file://" + c.Pos.Filename,
+			URI: uri.File(c.Pos.Filename),
 			Range: vscode.Range{
 				Start: vscode.Position{Line: int(c.Pos.Line) - 1},
 				End:   vscode.Position{Line: int(c.Pos.Line) - 1},

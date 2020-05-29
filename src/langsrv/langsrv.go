@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/url"
 	"os"
 	dbg "runtime/debug"
 	"sort"
@@ -24,6 +25,7 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/vscode"
+	"go.lsp.dev/uri"
 )
 
 const maxLength = 16 << 20
@@ -94,6 +96,19 @@ func writeMessage(message interface{ IMessage() }) error {
 	return err
 }
 
+func isFileScheme(documentURI uri.URI) bool {
+	u, err := url.ParseRequestURI(string(documentURI))
+	if err != nil {
+		return false
+	}
+
+	if u.Scheme != uri.FileScheme {
+		return false
+	}
+
+	return true
+}
+
 func handleMessage(buf []byte) error {
 	defer func() {
 		if r := recover(); r != nil {
@@ -149,10 +164,10 @@ func handleInitialize(req *baseRequest) error {
 		return err
 	}
 
-	lintdebug.Send("Root dir: %s", params.RootPath)
+	lintdebug.Send("Root dir: %s", params.RootURI.Filename())
 
 	go func() {
-		linter.AnalysisFiles = []string{params.RootPath}
+		linter.AnalysisFiles = []string{params.RootURI.Filename()}
 
 		linter.ParseFilenames(linter.ReadFilenames(linter.AnalysisFiles, linter.ExcludeRegex))
 
@@ -210,8 +225,8 @@ func handleTextDocumentDidOpen(req *baseRequest) error {
 	uri := params.TextDocument.URI
 	lintdebug.Send("Open text document %s", uri)
 
-	if strings.HasPrefix(uri, "file://") {
-		openFile(strings.TrimPrefix(uri, "file://"), params.TextDocument.Text)
+	if isFileScheme(uri) {
+		openFile(uri.Filename(), params.TextDocument.Text)
 	}
 
 	return nil
@@ -226,8 +241,8 @@ func handleTextDocumentDidClose(req *baseRequest) error {
 	uri := params.TextDocument.URI
 	lintdebug.Send("Close text document %s", uri)
 
-	if strings.HasPrefix(uri, "file://") {
-		closeFile(strings.TrimPrefix(uri, "file://"))
+	if isFileScheme(uri) {
+		closeFile(uri.Filename())
 	}
 
 	return nil
@@ -246,8 +261,8 @@ func handleTextDocumentDidChange(req *baseRequest) error {
 
 	uri := params.TextDocument.URI
 
-	if strings.HasPrefix(uri, "file://") {
-		changeFile(strings.TrimPrefix(uri, "file://"), params.ContentChanges[0].Text)
+	if isFileScheme(uri) {
+		changeFile(uri.Filename(), params.ContentChanges[0].Text)
 	}
 
 	return nil
@@ -273,8 +288,8 @@ func handleTextDocumentSymbol(req *baseRequest) error {
 
 		var result []vscode.SymbolInformation
 
-		if strings.HasPrefix(uri, "file://") {
-			filename := strings.TrimPrefix(uri, "file://")
+		if isFileScheme(uri) {
+			filename := uri.Filename()
 			res := meta.Info.GetMetaForFile(filename)
 
 			for _, classInfo := range res.Classes.H {
@@ -339,7 +354,7 @@ func handleTextDocumentSymbol(req *baseRequest) error {
 // very simple conversion
 func posToLocation(pos meta.ElementPosition) vscode.Location {
 	return vscode.Location{
-		URI: "file://" + pos.Filename,
+		URI: uri.File(pos.Filename),
 		Range: vscode.Range{
 			Start: vscode.Position{Line: int(pos.Line) - 1},
 			End:   vscode.Position{Line: int(pos.EndLine) - 1},
@@ -356,7 +371,7 @@ func handleTextDocumentDefinition(req *baseRequest) error {
 		return err
 	}
 
-	filename := strings.TrimPrefix(params.TextDocument.URI, "file://")
+	filename := params.TextDocument.URI.Filename()
 	openMapMutex.Lock()
 	f, ok := openMap[filename]
 	openMapMutex.Unlock()
@@ -395,7 +410,7 @@ func handleTextDocumentReferences(req *baseRequest) error {
 		return err
 	}
 
-	filename := strings.TrimPrefix(params.TextDocument.URI, "file://")
+	filename := params.TextDocument.URI.Filename()
 	openMapMutex.Lock()
 	f, ok := openMap[filename]
 	openMapMutex.Unlock()
@@ -458,7 +473,7 @@ func handleTextDocumentHover(req *baseRequest) error {
 		return err
 	}
 
-	filename := strings.TrimPrefix(params.TextDocument.URI, "file://")
+	filename := params.TextDocument.URI.Filename()
 	openMapMutex.Lock()
 	f, ok := openMap[filename]
 	openMapMutex.Unlock()
@@ -597,7 +612,7 @@ func handleTextDocumentCompletion(req *baseRequest) error {
 		return err
 	}
 
-	filename := strings.TrimPrefix(params.TextDocument.URI, "file://")
+	filename := params.TextDocument.URI.Filename()
 	openMapMutex.Lock()
 	f, ok := openMap[filename]
 	openMapMutex.Unlock()

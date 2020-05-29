@@ -44,3 +44,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/quasilyte/regex"
+
+[[constraint]]
+  name = "go.lsp.dev/uri"
+  version = "0.3.0"

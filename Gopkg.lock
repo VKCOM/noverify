@@ -39,6 +39,14 @@
   pruneopts = "UT"
   revision = "497963207d1f63c29da8a8b4fb25e80c236e00be"
 
+[[projects]]
+  digest = "1:bb975c43f97f8bc987779a89d52d194ba5817034cb480c15d93bc74ecba7bcb5"
+  name = "go.lsp.dev/uri"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "63eaac75cc850f596be19073ff6d4ec198603779"
+  version = "v0.3.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
@@ -47,6 +55,7 @@
     "github.com/google/go-cmp/cmp",
     "github.com/karrick/godirwalk",
     "github.com/quasilyte/regex/syntax",
+    "go.lsp.dev/uri",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

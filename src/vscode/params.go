@@ -1,5 +1,7 @@
 package vscode
 
+import "go.lsp.dev/uri"
+
 type Capability struct {
 	DynamicRegistration bool `json:"dynamicRegistration"`
 	WillSave            bool `json:"willSave"`
@@ -40,17 +42,17 @@ type CapabilitiesSections struct {
 
 type TextDocumentDidOpenParams struct {
 	TextDocument struct {
-		URI        string `json:"uri"`
-		LanguageID string `json:"languageId"`
-		Version    int    `json:"version"`
-		Text       string `json:"text"`
+		URI        uri.URI `json:"uri"`
+		LanguageID string  `json:"languageId"`
+		Version    int     `json:"version"`
+		Text       string  `json:"text"`
 	} `json:"textDocument"`
 }
 
 type InitializeParams struct {
 	ProcessID    int                  `json:"processId"`
 	RootPath     string               `json:"rootPath"`
-	RootURI      string               `json:"rootUri"`
+	RootURI      uri.URI              `json:"rootUri"`
 	Capabilities CapabilitiesSections `json:"capabilities"`
 	Trace        string               `json:"trace"`
 }
@@ -61,22 +63,22 @@ type ContentChange struct {
 
 type TextDocumentDidChangeParams struct {
 	TextDocument struct {
-		URI     string `json:"uri"`
-		Version int    `json:"version"`
+		URI     uri.URI `json:"uri"`
+		Version int     `json:"version"`
 	} `json:"textDocument"`
 	ContentChanges []ContentChange `json:"contentChanges"`
 }
 
 type DefinitionParams struct {
 	TextDocument struct {
-		URI string `json:"uri"`
+		URI uri.URI `json:"uri"`
 	} `json:"textDocument"`
 	Position Position `json:"position"`
 }
 
 type ReferencesParams struct {
 	TextDocument struct {
-		URI string `json:"uri"`
+		URI uri.URI `json:"uri"`
 	} `json:"textDocument"`
 	Position Position `json:"position"`
 	Context  struct {
@@ -91,8 +93,8 @@ const (
 )
 
 type FileEvent struct {
-	URI  string `json:"uri"`
-	Type int    `json:"type"`
+	URI  uri.URI `json:"uri"`
+	Type int     `json:"type"`
 }
 
 type DidChangeWatchedFilesParams struct {
