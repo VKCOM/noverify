@@ -6,6 +6,41 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node/name"
 )
 
+// GetFuncName resolves func name for the specified func node.
+//
+// It doesn't handle dynamic function calls where funcNode is
+// a variable or some other kind of non-name expression.
+//
+// The main purpose of this function is to expand a function name to a FQN.
+func GetFuncName(cs *meta.ClassParseState, funcNode node.Node) (funcName string, ok bool) {
+	switch nm := funcNode.(type) {
+	case *name.Name:
+		nameStr := meta.NameToString(nm)
+		firstPart := nm.Parts[0].(*name.NamePart).Value
+		if alias, ok := cs.FunctionUses[firstPart]; ok {
+			if len(nm.Parts) == 1 {
+				nameStr = alias
+			} else {
+				// handle situations like 'use NS\Foo; Foo\Bar::doSomething();'
+				nameStr = alias + `\` + meta.NamePartsToString(nm.Parts[1:])
+			}
+			return nameStr, true
+		}
+		fqName := cs.Namespace + `\` + nameStr
+		_, ok := meta.Info.GetFunction(fqName)
+		if ok {
+			return fqName, true
+		}
+		return `\` + nameStr, true
+
+	case *name.FullyQualified:
+		return meta.FullyQualifiedToString(nm), true
+
+	default:
+		return "", false
+	}
+}
+
 // GetClassName resolves class name for specified class node (as used in static calls, property fetch, etc)
 func GetClassName(cs *meta.ClassParseState, classNode node.Node) (className string, ok bool) {
 	if nm, ok := classNode.(*name.FullyQualified); ok {

@@ -11,7 +11,6 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/binary"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
@@ -160,35 +159,12 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 		return res
 	}
 
-	switch nm := call.Function.(type) {
-	case *name.Name:
-		nameStr := meta.NameToString(nm)
-		firstPart := nm.Parts[0].(*name.NamePart).Value
-		if alias, ok := st.FunctionUses[firstPart]; ok {
-			if len(nm.Parts) == 1 {
-				nameStr = alias
-			} else {
-				// handle situations like 'use NS\Foo; Foo\Bar::doSomething();'
-				nameStr = alias + `\` + meta.NamePartsToString(nm.Parts[1:])
-			}
-			res.fqName = nameStr
-			res.info, res.defined = meta.Info.GetFunction(res.fqName)
-		} else {
-			res.fqName = st.Namespace + `\` + nameStr
-			res.info, res.defined = meta.Info.GetFunction(res.fqName)
-			if !res.defined && st.Namespace != "" {
-				res.fqName = `\` + nameStr
-				res.info, res.defined = meta.Info.GetFunction(res.fqName)
-			}
-		}
-
-	case *name.FullyQualified:
-		res.fqName = meta.FullyQualifiedToString(nm)
-		res.info, res.defined = meta.Info.GetFunction(res.fqName)
-	default:
-		res.defined = false
-
-		solver.ExprTypeCustom(sc, st, nm, customTypes).Iterate(func(typ string) {
+	fqName, ok := solver.GetFuncName(st, call.Function)
+	if ok {
+		res.fqName = fqName
+		res.info, res.defined = meta.Info.GetFunction(fqName)
+	} else {
+		solver.ExprTypeCustom(sc, st, call.Function, customTypes).Iterate(func(typ string) {
 			if res.defined {
 				return
 			}
@@ -196,7 +172,6 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 			res.info = m.Info
 			res.defined = ok
 		})
-
 		if !res.defined {
 			res.canAnalyze = false
 		}
