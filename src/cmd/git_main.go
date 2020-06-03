@@ -54,7 +54,9 @@ func gitRepoComputeReportsFromCommits(logArgs, diffArgs []string) (oldReports, r
 
 	if gitFullDiff {
 		meta.ResetInfo()
-		linter.InitStubs()
+		if err := loadEmbeddedStubs(); err != nil {
+			log.Panicf("Load embedded stubs: %v", err)
+		}
 
 		start = time.Now()
 		linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitFrom, nil))
@@ -68,7 +70,9 @@ func gitRepoComputeReportsFromCommits(logArgs, diffArgs []string) (oldReports, r
 		log.Printf("Parsed old commit for %s (%d reports)", time.Since(start), len(oldReports))
 
 		meta.ResetInfo()
-		linter.InitStubs()
+		if err := loadEmbeddedStubs(); err != nil {
+			log.Panicf("Load embedded stubs: %v", err)
+		}
 
 		start = time.Now()
 		linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitTo, nil))

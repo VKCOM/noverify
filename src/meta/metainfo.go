@@ -14,6 +14,7 @@ var (
 	internalClasses           ClassesMap
 
 	indexingComplete bool
+	loadingStubs     bool
 
 	// Info contains global meta information for all classes, functions, etc.
 	Info info
@@ -430,6 +431,18 @@ func OnIndexingComplete(cb func()) {
 	} else {
 		onCompleteCallbacks = append(onCompleteCallbacks, cb)
 	}
+}
+
+// SetLoadingStubs changes IsLoadingStubs() return value.
+//
+// Should be only called from linter.InitStubs() function.
+func SetLoadingStubs(loading bool) {
+	loadingStubs = loading
+}
+
+// IsLoadingStubs reports whether we're parsing stub files right now.
+func IsLoadingStubs() bool {
+	return loadingStubs
 }
 
 func SetIndexingComplete(complete bool) {
