@@ -897,7 +897,7 @@ func Start() {
 	rd := bufio.NewReader(os.Stdin)
 	connWr = os.Stdout
 
-	linter.InitStubs()
+	linter.InitStubsFromDir(linter.StubsDir)
 
 	for {
 		ln, err := rd.ReadString('\n')

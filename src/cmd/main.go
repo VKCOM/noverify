@@ -74,11 +74,16 @@ func canBeDisabled(filename string) bool {
 	return allowDisableRegex.MatchString(filename)
 }
 
-// Main is the actual main function to be run. It is separate from linter so that you can insert your own hooks
-// before running main().
+// Run executes linter main function.
+//
+// It is separate from linter so that you can insert your own hooks
+// before running Run().
+//
+// It returns a status code to be used for os.Exit() and
+// initialization error (if any).
 //
 // Optionally, non-nil config can be passed to customize function behavior.
-func Main(cfg *MainConfig) {
+func Run(cfg *MainConfig) (int, error) {
 	if cfg == nil {
 		cfg = &MainConfig{}
 	}
@@ -92,7 +97,12 @@ func Main(cfg *MainConfig) {
 		cfg.AfterFlagParse()
 	}
 
-	status, err := mainNoExit()
+	return mainNoExit()
+}
+
+// Main is like Run(), but it calls os.Exit() and does not return.
+func Main(cfg *MainConfig) {
+	status, err := Run(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -417,7 +427,7 @@ func initRules() error {
 
 func initStubs() error {
 	if linter.StubsDir != "" {
-		linter.InitStubs()
+		linter.InitStubsFromDir(linter.StubsDir)
 		return nil
 	}
 
@@ -447,8 +457,7 @@ func LoadEmbeddedStubs(filenames []string) error {
 		}
 	}
 
-	linter.ParseFilenames(readStubs)
-	meta.Info.InitStubs()
+	linter.InitStubs(readStubs)
 
 	// Using atomic here for consistency.
 	if atomic.LoadInt64(&errorsCount) != 0 {

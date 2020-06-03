@@ -535,8 +535,14 @@ func doParseFile(f FileInfo, needReports bool) (reports []*Report) {
 	return reports
 }
 
-// InitStubs parses directory with PHPStorm stubs which has all internal PHP classes and functions declared.
-func InitStubs() {
-	ParseFilenames(ReadFilenames([]string{StubsDir}, nil))
+func InitStubs(readFileNamesFunc ReadCallback) {
+	meta.SetLoadingStubs(true)
+	ParseFilenames(readFileNamesFunc)
 	meta.Info.InitStubs()
+	meta.SetLoadingStubs(false)
+}
+
+// InitStubsFromDir parses directory with PHPStorm stubs which has all internal PHP classes and functions declared.
+func InitStubsFromDir(dir string) {
+	InitStubs(ReadFilenames([]string{dir}, nil))
 }
