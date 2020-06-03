@@ -427,7 +427,7 @@ func initRules() error {
 
 func initStubs() error {
 	if linter.StubsDir != "" {
-		linter.InitStubs()
+		linter.InitStubsFromDir(linter.StubsDir)
 		return nil
 	}
 
@@ -457,8 +457,7 @@ func LoadEmbeddedStubs(filenames []string) error {
 		}
 	}
 
-	linter.ParseFilenames(readStubs)
-	meta.Info.InitStubs()
+	linter.InitStubs(readStubs)
 
 	// Using atomic here for consistency.
 	if atomic.LoadInt64(&errorsCount) != 0 {

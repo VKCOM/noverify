@@ -1560,8 +1560,12 @@ exprtype(array_map(function($x) { return $x; }, $ints), 'mixed[]');
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {
-		linttest.ParseTestFile(t, "stubs.php", params.stubs)
-		meta.Info.InitStubs()
+		linter.InitStubs(func(ch chan linter.FileInfo) {
+			ch <- linter.FileInfo{
+				Filename: "stubs.php",
+				Contents: []byte(params.stubs),
+			}
+		})
 	}
 	linttest.ParseTestFile(t, "exprtype.php", params.code)
 
