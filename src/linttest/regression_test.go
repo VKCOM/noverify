@@ -1254,6 +1254,9 @@ $example1 = [
   1 => 1,
   2 => 2,
   1 => 3,
+  0b1 => 4,
+  01 => 5,
+  0x1 => 6
 ];
 
 // Doubles
@@ -1286,6 +1289,9 @@ $example6 = [
 `)
 	test.Expect = []string{
 		`Duplicate array key 'one'`,
+		`Duplicate array key '1'`,
+		`Duplicate array key '1'`,
+		`Duplicate array key '1'`,
 		`Duplicate array key '1'`,
 		`Duplicate array key '1.0'`,
 		`Duplicate array key '\C1'`,

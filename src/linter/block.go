@@ -3,6 +3,7 @@ package linter
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
@@ -1273,8 +1274,10 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 			key = unquote(k.Value)
 			constKey = true
 		case *scalar.Lnumber:
-			key = k.Value
-			constKey = true
+			if converted, err := strconv.ParseInt(k.Value, 0, 64); err == nil {
+				key = strconv.FormatInt(converted, 10)
+				constKey = true
+			}
 		case *scalar.Dnumber:
 			key = k.Value
 			constKey = true
