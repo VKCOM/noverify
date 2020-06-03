@@ -1242,6 +1242,17 @@ class T {
 const C1 = 1;
 const C2 = 2;
 
+function id($x) {
+  return $x;
+}
+
+$var = 1;
+function notPure() {
+  global $var;
+  $var = $var + 1;
+  return $var;
+}
+
 // Strings
 $example5 = [
   "one" => 1,
@@ -1286,6 +1297,37 @@ $example6 = [
   new T() => 1,
   new T() => 2,
 ];
+
+// Side effects free functions
+$example7 = [
+  id(1) => 1,
+  id(3) => 2,
+  id(1) => 3,
+];
+
+$s = "42";
+// More of them
+$example8 = [
+  'a' . $s => 1,
+  'b' . $s => 2,
+  'a' . $s => 3,
+];
+
+// Not side effect free functions
+$example8 = [
+  notPure() => 1,
+  id(1)     => 2,
+  notPure() => 3,
+  // another level of pureness check
+  id(notPure()) => 4,
+  id(notPure()) => 5,
+];
+
+$example9 = [
+  $example5["one"] => 1,
+  $example5["two"] => 2,
+  $example5["one"] => 3,
+];
 `)
 	test.Expect = []string{
 		`Duplicate array key 'one'`,
@@ -1296,6 +1338,9 @@ $example6 = [
 		`Duplicate array key '1.0'`,
 		`Duplicate array key '\C1'`,
 		`Duplicate array key '\T::C2'`,
+		`Duplicate array key 'id(1)'`,
+		`Duplicate array key ''a' . $s'`,
+		`Duplicate array key '$example5["one"]'`,
 	}
 	test.RunAndMatch()
 }
