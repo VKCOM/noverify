@@ -155,6 +155,6 @@ func nextField(s string) (field, rest string) {
 }
 
 func nextTypeField(parser *TypeParser, s string) (field Type, rest string) {
-	typ := parser.Parse(s)
+	typ := parser.Parse(s).Clone()
 	return typ, strings.TrimLeft(s[typ.Expr.End:], " ")
 }
