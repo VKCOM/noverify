@@ -13,7 +13,7 @@ func TestShapePropertyFetch(t *testing.T) {
 	test := linttest.NewSuite(t)
 	addNamedFile(test, "a/b/test.php", `<?php
 /**
- * @param shape(x:int,y:float) $s
+ * @param \shape(x:int,y:float) $s
  */
 function f($s) {
   $_ = $s->x;
@@ -150,13 +150,13 @@ func TestTuple(t *testing.T) {
 class Box { public $value; }
 
 class T {
-  /** @var tuple(int) */
+  /** @var \tuple(int) */
   public $good1;
 
   /** @var tuple(Box, ...) */
   public $good2;
 
-  /** @var tuple(int, tuple(Box)) */
+  /** @var tuple(int, \tuple(Box)) */
   public $good3;
 }
 
