@@ -154,7 +154,7 @@ func gitRepoComputeReportsFromLocalChanges() (oldReports, reports []*linter.Repo
 	return oldReports, reports, changes, true
 }
 
-func gitMain() (int, error) {
+func gitMain(cfg *MainConfig) (int, error) {
 	var (
 		oldReports, reports []*linter.Report
 		diffArgs            []string
@@ -184,7 +184,7 @@ func gitMain() (int, error) {
 	}
 	log.Printf("Computed reports diff for %s", time.Since(start))
 
-	criticalReports := analyzeReports(diff)
+	criticalReports := analyzeReports(cfg, diff)
 
 	if criticalReports > 0 {
 		log.Printf("Found %d critical issues, please fix them.", criticalReports)
