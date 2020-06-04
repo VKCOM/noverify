@@ -74,10 +74,10 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []meta.Type {
 				return conv.mapArrayType(params[1])
 			}
 		}
-		if typ.Value == "shape" {
+		if typ.Value == "shape" || typ.Value == `\shape` {
 			return conv.mapShapeType(params)
 		}
-		if typ.Value == "tuple" {
+		if typ.Value == "tuple" || typ.Value == `\tuple` {
 			return conv.mapTupleType(params)
 		}
 
