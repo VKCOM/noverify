@@ -1230,3 +1230,16 @@ Base::staticProtMethod();
 	}
 	test.RunAndMatch()
 }
+
+func TestIssue497(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+/**
+ * @param shape(a:int) $x
+ * @return T<int>
+ */
+function f($x) {
+  $v = $x['a'];
+  return [$v];
+}
+`)
+}
