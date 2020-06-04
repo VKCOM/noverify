@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 
@@ -180,7 +181,11 @@ func TestGolden(t *testing.T) {
 			}
 
 			var parts []string
-			for _, r := range test.RunLinter() {
+			reports := test.RunLinter()
+			sort.SliceStable(reports, func(i, j int) bool {
+				return reports[i].GetFilename() < reports[j].GetFilename()
+			})
+			for _, r := range reports {
 				if disable[r.CheckName()] {
 					continue
 				}
