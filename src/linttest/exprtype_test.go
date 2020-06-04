@@ -47,6 +47,21 @@ func init() {
 	})
 }
 
+func TestExprTypeIssue497(t *testing.T) {
+	code := `<?php
+/**
+ * @param shape(a:int) $x
+ *
+ * @return T<int>
+ */
+function f($x) {
+  exprtype($x, '\shape$exprtype.php$0$');
+  return [$v];
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestExprTypePrecise2(t *testing.T) {
 	code := `<?php
 function test1($data) {
