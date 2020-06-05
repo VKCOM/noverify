@@ -1,9 +1,8 @@
 package linttest_test
 
 import (
-	"testing"
-
 	"github.com/VKCOM/noverify/src/linttest"
+	"testing"
 )
 
 func TestIssue327(t *testing.T) {
@@ -1230,3 +1229,681 @@ Base::staticProtMethod();
 	}
 	test.RunAndMatch()
 }
+
+func TestIssue325_KeyTypeNumber(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$array = [
+    1.1 => 1,
+    1.1 => 2,           //duplicate
+    1.3e3 => 3,
+    13E2 => 4,          //13E2 = 1.3e3 duplicate
+    1 => 5,
+    "1" => 6,           //duplicate
+
+    1234 => 7,
+    02322 => 8,         // 02322 = 1234 duplicate
+    0x4D2 => 9,         // 0x4D2 = 1234 duplicate
+    0b10011010010 => 10,// 0b10011010010 = 1234 duplicate
+    1_234 => 11,        // 1_234 = 1234 duplicate
+];
+`)
+
+	test.Expect = []string{
+		`Duplicate array key 1.1`,
+		`Duplicate array key 13E2`,
+		`Duplicate array key "1"`,
+		`Duplicate array key 02322`,
+		`Duplicate array key 0x4D2`,
+		`Duplicate array key 0b10011010010`,
+		`Duplicate array key 1_234`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_KeyTypeConstFetch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+const C1 = 1;
+const C2 = 2;
+$C1 = 10;
+
+$array = [
+    C1 => 1,
+    C1 => 2,  //duplicate
+    C2 => 3,
+    $C1 => 4,
+];
+`)
+	test.Expect = []string{
+		`Duplicate array key C1`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_KeyTypeSimpleVar(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+
+$var1 = 3.3;
+$var2 = 2;
+const var1 = 100;
+
+$exampleVar = [
+
+    $var1 => 1,
+    $var1 => 2, //duplicate
+    $var2 => 3,
+    "var1" => 4,
+    var1 => 5,
+];
+`)
+	test.Expect = []string{
+		`Duplicate array key $var1`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_KeyTypePropertyFetch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A
+{
+    public $var1 = 10;
+    public $var2 = 20;
+}
+
+class B
+{
+
+    public $fieldClassA;
+
+    public function __construct()
+    {
+        $this->fieldClassA = new A();
+    }
+}
+
+class T
+{
+    public $fieldClassA;
+    public $fieldClassB;
+
+    public function __construct()
+    {
+        $this->fieldClassA = new A();
+        $this->fieldClassB = new B();
+    }
+}
+$classA = new A();
+$classT = new T();
+
+$array1 = [
+    $classA->var1 => 1,
+    $classA->var2 => 2,
+    $classA->var1 => 3, //duplicate
+];
+
+$array2 = [
+    $classT->fieldClassA->var1 => 1,
+    $classT->fieldClassA -> var1 => 2, //duplicate
+    $classT->fieldClassA->var2 => 3,
+];
+
+`)
+	test.Expect = []string{
+		`Duplicate array key $classA->var1`,
+		`Duplicate array key $classT->fieldClassA->var1`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_KeyTypeStaticPropertyFetch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A
+{
+    public static $propertyA = "stringA";
+    public static $propertyB = "stringB";
+}
+$array = [
+    A::$propertyA => 1,
+    A:: $propertyA => 2, //duplicate A::$propertyA
+    A::$propertyB => 3, 
+];
+`)
+	test.Expect = []string{
+		`Duplicate array key A::$propertyA`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_KeyTypeClassConstFetch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A
+{
+    const C1 = 1;
+    const C2 = 2;
+
+}
+
+class B
+{
+
+    public $inClassA;
+
+    public function __construct()
+    {
+        $this->inClassA = new A();
+    }
+}
+
+class T
+{
+    const C1 = 1;
+    const C2 = 2;
+
+    public $inClassA;
+    public $inClassB;
+
+    public $nameOfClass = "A";
+
+    public function __construct()
+    {
+        $this->inClassA = new A();
+        $this->inClassB = new B();
+    }
+}
+
+$exampleConstantsOfClass = [
+    T :: C1 => 1,
+    T::C1 => 2, //duplicate
+    T::C2 => 3,
+];
+
+$classT = new T();
+
+$array = [
+    $classT->inClassB->inClassA::C1 => 1,
+    $classT->inClassB->inClassA::C1 => 2, //duplicate
+    $classT->inClassB->inClassA::C2 => 3,
+];
+
+$array = [
+    $classT->inClassA::C1 => 1,
+    $classT->inClassA:: C1 => 2, //duplicate
+    $classT->inClassA::C2 => 3,
+];
+
+$array = [
+    $classT->nameOfClass::C1 => 1,
+    $classT->nameOfClass::C1 => 2,//duplicate
+    $classT->nameOfClass::C2 => 3,
+];
+
+$nameOfClassT = "T";
+$array = [
+    $nameOfClassT::C1 => 1,
+    $nameOfClassT::C1 => 2, //duplicate
+    $nameOfClassT::C2 => 3,
+];
+
+`)
+
+	test.Expect = []string{
+		`Duplicate array key T::C1`,
+		`Duplicate array key $classT->inClassB->inClassA::C1`,
+		`Duplicate array key $classT->inClassA::C1`,
+		`Duplicate array key $classT->nameOfClass::C1`,
+		`Duplicate array key $nameOfClassT::C1`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_KeyTypeArrayDimFetch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class T
+{
+    const constArray = [1, 2, 3];
+    public $varArray = [1, 2, 3];
+}
+
+$classT = new T();
+
+$k = [1, 2, 3, 4];
+
+$array = [
+    $k[0] => 1,
+    $k[0] => 2, //duplicate
+    $k[1] => 3,
+];
+
+$array = [
+    $classT->varArray[0] => 1,
+    $classT->varArray[ 0    ] => 2, //duplicate
+    $classT->varArray[1] => 3,
+];
+
+$array = [
+    T::constArray[0] => 1,
+    T::constArray[0] => 2, //duplicate
+    T::constArray[1] => 3,
+];
+`)
+
+	test.Expect = []string{
+		`Duplicate array key $k[0]`,
+		`Duplicate array key $classT->varArray[0]`,
+		`Duplicate array key T::constArray[0]`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_KeyNamespaces(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class T
+{
+    public $var = "string";
+    public const CONST = "const";
+}
+
+$classT = new T();
+$str = "HELLO";
+
+$example1 = [
+    'a' . $str . "world" => 1,
+    "a".$str.'world' => 2,      //duplicate
+    "a" . 1 => 3,
+    'a' . 1 => 4,               //duplicate
+    "b" . $str => 6,
+];
+
+$example2 = [
+    'a' . "world" => 1,
+    'a' . 'world' => 2,         //duplicate
+    'b' . "world" => 3,
+];
+
+$example3 = [
+    'a' . $classT->var => 1,
+    "a" . $classT->var => 2,    //duplicate
+    T::CONST . 'T::CONST' => 3,
+    T::CONST . "T::CONST" => 4, //duplicate
+];
+`)
+	test.Expect = []string{
+		`Duplicate array key "a" . $str . 'world'`,
+		`Duplicate array key 'a' . 1`,
+		`Duplicate array key 'a' . 'world'`,
+		`Duplicate array key "a" . $classT->var`,
+		`Duplicate array key T::CONST . "T::CONST"`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_KeyTypeFunctionCall(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function returnNumber()
+{
+    return 111;
+}
+
+function sum($A, $B, $C, $D)
+{
+    return $A + $B + $C + $D;
+}
+
+$array = [
+    sum(...[1 => [[1]], 2 => 2, 3 => 3]) => 1,
+    sum(...[1 => [[1]], 2 => 2, 3 => 3, ]) => 2, //duplicate key sum(...[1 => [[1]], 2 => 2, 3 => 3,])
+    sum(...[1 => 1, 1 => 2, 2 => 3]) => 3,      //duplicate key 1
+    sum(...[1, 2, 3]) => 4,
+    sum(sum(...[1, 2]), returnNumber(), sum(...[
+        returnNumber() => 1,
+        returnNumber() => 2]), 0) => 5,      //duplicate key returnNumber()
+];
+`)
+	test.Expect = []string{
+		`Duplicate array key sum(...[1 => [[1]], 2 => 2, 3 => 3, ])`,
+		`Duplicate array key 1`,
+		`Duplicate array key returnNumber()`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_KeyTypeMethodCall(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A
+{
+    /**
+     * @return string
+     */
+    public function getString()
+    {
+        return "string";
+    }
+
+    /**
+     * @return string
+     */
+    public static function getStringStatic()
+    {
+        return "string";
+    }
+}
+
+class B
+{
+    public $inClassA;
+    public function __construct()
+    {
+        $this->inClassA = new A();
+    }
+}
+
+class T
+{
+    public $inClassA;
+    public $inClassB;
+
+    public function __construct()
+    {
+        $this->inClassA = new A();
+        $this->inClassB = new B();
+    }
+
+    /**
+     * @return string
+     */
+    public function getString()
+    {
+        return "string";
+    }
+}
+
+$classT = new T();
+
+$array = [
+    $classT->getString() => 1,
+    $classT->getString() => 2, //duplicate
+    $classT    ->   inClassB->     inClassA    ->    getString() => 3,
+    $classT->inClassB->inClassA->getString() => 4, //duplicate
+];
+`)
+	test.Expect = []string{
+		`Duplicate array key $classT->getString()`,
+		`Duplicate array key $classT->inClassB->inClassA->getString()`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_KeyTypeStaticCall(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+
+class A
+{
+    /**
+     * @return string
+     */
+    public function getString()
+    {
+        return "string";
+    }
+
+    /**
+     * @return string
+     */
+    public static function getStringStatic()
+    {
+        return "string";
+    }
+}
+
+class B
+{
+    public $inClassA;
+    public function __construct()
+    {
+        $this->inClassA = new A();
+    }
+}
+
+class T
+{
+    public $inClassA;
+    public $inClassB;
+
+    public function __construct()
+    {
+        $this->inClassA = new A();
+        $this->inClassB = new B();
+    }
+
+    /**
+     * @return string
+     */
+    public function getString()
+    {
+        return "string";
+    }
+}
+
+$array = [
+    A::getStringStatic() => 1,
+    A::getStringStatic() => 2, //duplicate A::getStringStatic
+
+//    $classT->inClassB->inClassA::getStringStatic() => 5, //non-pure key
+//    $classT->inClassB->inClassA::getStringStatic() => 6, //non-pure key
+];
+`)
+	test.Expect = []string{
+		`Duplicate array key A::getStringStatic`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_KeyTypeTernary(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+
+$k = [1, 2, 3, 4];
+
+$array = [
+    $k[0] ? "ifTrue" : "ifFalse" => 1,
+    $k[0] ? "ifTrue" : "ifFalse" => 2,
+
+    $k[1] . $k[0] ? $k[3] : $k[$k[2] . '1'] => "tern1",
+    $k[1].$k[0] ? $k[3] : $k[$k[2] . '1'] => "tern2",
+];
+`)
+	test.Expect = []string{
+		`Duplicate array key $k[0] ? "ifTrue" : "ifFalse"`,
+		`Duplicate array key $k[1] . $k[0] ? $k[3] : $k[$k[2] . '1']`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_KeyTypeConcat(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+
+class T
+{
+    public $var = "string";
+    public const CONST = "const";
+}
+
+$classT = new T();
+$str = "HELLO";
+
+$example1 = [
+    'a' . $str . "world" => 1,
+    "a".$str.'world' => 2,      //duplicate
+    "a" . 1 => 3,
+    'a' . 1 => 4,               //duplicate
+    "b" . $str => 6,
+];
+
+$example2 = [
+    'a' . "world" => 1,
+    'a' . 'world' => 2,         //duplicate
+    'b' . "world" => 3,
+];
+
+$example3 = [
+    'a' . $classT->var => 1,
+    "a" . $classT->var => 2,    //duplicate
+    T::CONST . 'T::CONST' => 3,
+    T::CONST . "T::CONST" => 4, //duplicate
+];
+`)
+	test.Expect = []string{
+		`Duplicate array key "a" . $str . 'world'`,
+		`Duplicate array key 'a' . 1`,
+		`Duplicate array key 'a' . 'world'`,
+		`Duplicate array key "a" . $classT->var`,
+		`Duplicate array key T::CONST . "T::CONST"`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_KeyTypeIsset(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$var1 = 1;
+$var2 = 2;
+
+$array = [
+    isset    (       $var1    ) => 1,
+    isset($var1) => 2, //duplicate
+    isset($var2) => 3,
+
+    isset($var1, $var2) => 2,
+    isset($var1,         $var2) => 2, //duplicate
+];
+`)
+	test.Expect = []string{
+		`Duplicate array key isset($var1)`,
+		`Duplicate array key isset($var1, $var2)`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_KeyTypeInstanceOf(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A{}
+class B{}
+$class = new A();
+
+$array = [
+    $class             instanceof A => 1,
+    $class instanceof A => 2, //duplicate
+    $class instanceof B => 3,
+];
+`)
+	test.Expect = []string{
+		`Duplicate array key $class instanceof A`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_ScaryKey(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A
+{
+    const C1 = 1;
+}
+
+class T
+{
+    public $inClassA;
+    public $var = 1;
+    public $str = "string";
+    public $nameOfClassA = "A";
+
+    public function __construct()
+    {
+        $this->inClassA = new A();
+    }
+
+    /**
+     * @return int
+     */
+    public static function staticFunc($first, $second): int
+    {
+        return $first + $second;
+    }
+}
+
+
+
+$classT = new T();
+$k = [1, 2, 3, 4];
+$str = "string";
+
+$arrayMix = [
+    //first key
+    $str                              .               $classT->str .                             $k[$classT->var] . $k[$k[$k[$classT->nameOfClassA::C1]]] . T::staticFunc(...[1 => 1, 2 => 2]) => 1,
+    //second key
+    $str.$classT->str.$k[$classT->var].$k[$k[$k[$classT->nameOfClassA::C1]]].T::staticFunc( ...[1 => 1,    2 => 2, ]) => 2, // Duplicates the first key
+];
+`)
+	test.Expect = []string{
+		`Duplicate array key $str . $classT->str . $k[$classT->var] . $k[$k[$k[$classT->nameOfClassA::C1]]] . T::staticFunc(...[1 => 1, 2 => 2, ])`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue324(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class T
+{
+    const C = 1;
+
+    const C1 = self::UNDEFCONST;              // undefined class constant
+    const C2 = self::C ? "var" : "var";       // then/else operands are identical
+
+    public $var1 = self::UNDEFCONST;          // undefined class constant
+    public $var2 = self::C ? "var1" : "var1"; // then/else operands are identical
+
+    public $publicArray = [
+        'key1' => 'something',
+        'key2' => 'other_thing',
+        'key1' => 'third_thing', // duplicate key 'key1'
+    ];
+
+    const constArray = [
+        'key1' => 'something',
+        'key2' => 'other_thing',
+        'key1' => 'third_thing', // duplicate key 'key1'
+    ];
+
+    public static $staticArray = [
+        'key1' => 'something',
+        'key2' => 'other_thing',
+        'key1' => 'third_thing', // duplicate key 'key1'
+    ];
+}
+`)
+
+	test.Expect = []string{
+		`Class constant \T::UNDEFCONST does not exist`,
+		`then/else operands are identical`,
+		`Class constant \T::UNDEFCONST does not exist`,
+		`then/else operands are identical`,
+		`Duplicate array key 'key1'`,
+		`Duplicate array key 'key1'`,
+		`Duplicate array key 'key1'`,
+	}
+	test.RunAndMatch()
+}
+
