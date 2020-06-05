@@ -79,6 +79,12 @@ func init() {
 		},
 
 		{
+			Name:    "illegalArrayKeys",
+			Default: true,
+			Comment: `Report illegal keys in array literals.`,
+		},
+
+		{
 			Name:    "dupArrayKeys",
 			Default: true,
 			Comment: `Report duplicated keys in array literals.`,
