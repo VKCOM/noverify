@@ -224,6 +224,15 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 
 	state.EnterNode(d.ctx.st, w)
 
+	sc := meta.NewScope()
+	sc.SetInClosure(false)
+	b := &BlockWalker{
+		ctx:          &blockContext{sc: sc},
+		r:            d,
+		unusedVars:   make(map[string][]node.Node),
+		nonLocalVars: make(map[string]struct{}),
+	}
+
 	switch n := w.(type) {
 	case *stmt.Declare:
 		for _, c := range n.Consts {
@@ -326,16 +335,46 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 		res = d.enterFunction(n)
 		d.checkKeywordCase(n, "function")
 	case *stmt.PropertyList:
+		//check every property
+		for _, curProperty := range n.Properties {
+			if property, err := curProperty.(*stmt.Property); err {
+				switch exprProperty := property.Expr.(type) {
+				case *expr.Array:
+					if exprProperty.ShortSyntax {
+						b.handleArray(exprProperty)
+					}
+				case *expr.ClassConstFetch:
+					b.handleClassConstFetch(exprProperty)
+				case *expr.Ternary:
+					b.handleTernary(exprProperty)
+				}
+			}
+		}
 		res = d.enterPropertyList(n)
 	case *stmt.ClassConstList:
+		//check every constant
+		for _, curProperty := range n.Consts {
+			if property, err := curProperty.(*stmt.Constant); err {
+				switch exprProperty := property.Expr.(type) {
+				case *expr.ClassConstFetch:
+					b.handleClassConstFetch(exprProperty)
+				case *expr.Array:
+					b.handleArray(exprProperty)
+				case *expr.Ternary:
+					b.handleTernary(exprProperty)
+				case *expr.ConstFetch:
+					b.handleConstFetch(exprProperty)
+				}
+			}
+		}
 		res = d.enterClassConstList(n)
 	case *stmt.ClassMethod:
+		// This place may be associated with issue #324
 		res = d.enterClassMethod(n)
 	case *expr.FunctionCall:
 		res = d.enterFunctionCall(n)
 	case *stmt.ConstList:
 		res = d.enterConstList(n)
-
 	case *stmt.Namespace:
 		d.checkKeywordCase(n, "namespace")
 	}
