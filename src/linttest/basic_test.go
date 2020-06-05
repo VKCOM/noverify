@@ -1127,6 +1127,28 @@ func TestDuplicateArrayKey(t *testing.T) {
 	test.RunAndMatch()
 }
 
+func TestIllegalArrayKeys(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A{}
+$arr = [
+    new A() => 1,
+    function () {
+
+} => 2,
+    [1, 2, 3] => 3,
+];
+`)
+	test.Expect = []string{
+		`Illegal array key new A()`,
+		`Illegal array key function () {
+
+}`,
+		`Illegal array key [1, 2, 3]`,
+	}
+	test.RunAndMatch()
+}
+
 func TestMixedArrayKeys(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
