@@ -56,7 +56,7 @@ func isString(ctx *linter.BlockContext, n node.Node) bool {
 		return true
 	}
 
-	return solver.ExprType(ctx.Scope(), ctx.ClassParseState(), n).IsString()
+	return solver.ExprType(ctx.Scope(), ctx.ClassParseState(), n).Is("string")
 }
 
 func (b *block) BeforeEnterNode(w walker.Walkable) {
