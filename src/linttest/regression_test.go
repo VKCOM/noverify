@@ -1275,6 +1275,9 @@ $example2 = [
   1.0 => 2,
   2.0 => 3,
   1.0 => 1,
+  1000 => 1,
+  1_000 => 2,
+  1e+3 => 3,
 ];
 
 // Constants
@@ -1335,7 +1338,9 @@ $example9 = [
 		`Duplicate array key '1'`,
 		`Duplicate array key '1'`,
 		`Duplicate array key '1'`,
-		`Duplicate array key '1.0'`,
+		`Duplicate array key '1'`,
+		`Duplicate array key '1000'`,
+		`Duplicate array key '1000'`,
 		`Duplicate array key '\C1'`,
 		`Duplicate array key '\T::C2'`,
 		`Duplicate array key 'id(1)'`,

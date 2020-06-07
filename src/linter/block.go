@@ -1,7 +1,6 @@
 package linter
 
 import (
-	"bytes"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -18,7 +17,6 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node/name"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
-	"github.com/VKCOM/noverify/src/php/parser/printer"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/rules"
@@ -1281,7 +1279,10 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 				constKey = true
 			}
 		case *scalar.Dnumber:
-			key = k.Value
+			if converted, err := strconv.ParseFloat(k.Value, 64); err == nil {
+				key = strconv.FormatFloat(converted, 'f', -1, 64)
+				constKey = true
+			}
 			constKey = true
 		case *expr.ConstFetch:
 			if constName, _, ok := solver.GetConstant(b.r.ctx.st, k.Constant); ok {
@@ -1294,18 +1295,12 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 				key = className + "::" + constName
 				constKey = true
 			}
-		case *expr.New:
-			// ignore explicitly, not this check
+		case *expr.New, *expr.Closure, *expr.Array:
+			// ignore explicitly, not this check but still
 			break
 		default:
 			if b.sideEffectFree(k) {
-				// Using printer as common view
-				// It doesn't check duplicate in args of functions, such as int in different base
-				// But still is kind of a check, tests pass :)
-				buf := new(bytes.Buffer)
-				p := printer.NewPrinter(buf)
-				p.Print(k)
-				key = buf.String()
+				key = astutil.FmtNode(k)
 				constKey = true
 			}
 		}
