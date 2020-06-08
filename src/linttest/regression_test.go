@@ -1243,3 +1243,144 @@ function f($x) {
 }
 `)
 }
+
+func TestIssue325(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class T {
+    const C1 = "m";
+    const C2 = "q";
+    const C3 = "q";
+}
+
+// anon function as key
+$example1 = [
+    function () {} => 4,
+    function () {} => 4
+];
+
+// double to int conversion
+$example2 = [
+    8.7 => "37",
+    8 => "43"
+];
+
+// different double formats
+$example3 = [
+    1.1e3 => "37",
+    11e2 => "43"
+];
+
+// int and string
+$example4 = [
+    "9" => "37",
+    9 => "43" // duplicate
+];
+
+// different int formats
+$example5 = [
+	01 => "32",
+	0b1 => "33",
+    0x1 => "34",
+    1 => "35"
+];
+
+// array as key
+$example6 = [
+    [] => "37",
+    [] => "43"
+];
+
+// class constructors
+$example7 = [
+    new T() => 1,
+    new T() => 2,
+];
+
+// equal const and var name
+$t = 2;
+const t = "1";
+$example8 = [
+    $t => 1,
+    t => 2
+];
+
+// equal var name and string
+$example9 = [
+    "t" => 1,
+    t => 2
+];
+
+// same constants
+$example10= [
+    t => "37",
+    t => "43" // duplicate
+];
+
+// class constants
+$example11 = [
+    T::C1 => 1,
+    T::C2 => 2,
+    T::C1 => 3 // duplicate
+];
+
+// array element
+$k = [1,2,3];
+$example12 = [
+    $k[0] => 1,
+    $k[1] => 2,
+    $k[0] => 3 // duplicate
+];
+
+// operators
+$s = 'q';
+$example13 = [
+    'a' . $s => 1,
+    'b' . $s => 2,
+    'a' . $s => 3 // duplicate
+];
+
+// commas in the end of array
+$example14 = [
+  [1,2,3][0] => 5,
+  [1,2,3,][0] => 5 // duplicate
+];
+
+// different string wrappers in operators
+$example15 = [
+    'Hello' . "world" => 1,
+    "Hello" . 'world' => 2,  // duplicate
+];
+
+// Heredoc
+$example16 = [
+    <<<EOT
+a
+b
+EOT => 5,
+    <<<'EOTT'
+a
+b
+EOTT => 6 // duplicate
+];
+`)
+	test.Expect = []string{
+		`Duplicate array key '8'`,
+		`Duplicate array key '11e2'`,
+		`Duplicate array key '9'`,
+		`Duplicate array key '0b1'`,
+		`Duplicate array key '0x1'`,
+		`Duplicate array key '1'`,
+		`Duplicate array key 't'`,
+		`Duplicate array key 'T::C1'`,
+		`Duplicate array key '$k[0]'`,
+		`Duplicate array key ''a' . $s'`,
+		`Duplicate array key '[1, 2, 3, ][0]'`,
+		`Duplicate array key '"Hello" . 'world'`,
+		`Duplicate array key '<<<'EOTT'
+a
+b
+EOTT'`,
+	}
+	test.RunAndMatch()
+}
