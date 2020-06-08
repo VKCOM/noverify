@@ -3,6 +3,7 @@ package linter
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
@@ -1246,6 +1247,49 @@ func (b *BlockWalker) handleArray(arr *expr.Array) bool {
 	return b.handleArrayItems(arr, arr.Items)
 }
 
+// this function get the string view of a key in a way that it will be interpreted by PHP
+func (b *BlockWalker) getKeyValue(keyNode node.Node) string {
+	switch k := keyNode.(type) {
+	case *scalar.Dnumber:
+		if s, err := strconv.ParseFloat(k.Value, 64); err == nil {
+			return strconv.FormatInt(int64(s), 10)
+		}
+		return k.Value
+	case *scalar.Lnumber:
+		if d, err := strconv.ParseInt(k.Value, 0, 64); err == nil {
+			return strconv.FormatInt(d, 10)
+		}
+		return k.Value
+	case *scalar.String:
+		return unquote(k.Value)
+	case *scalar.Heredoc:
+		return b.getKeyValue(k.Parts[0])
+	case *expr.ConstFetch:
+		if constName, _, ok := solver.GetConstant(b.r.ctx.st, k.Constant); ok {
+			// constName can start with '\'
+			switch constName {
+			case "\\null":
+				constName = ""
+			case "\\true":
+				constName = "1"
+			case "\\false":
+				constName = "0"
+			}
+			return constName
+		}
+	case *expr.ArrayDimFetch:
+		return b.getKeyValue(k.Variable) + "[" + b.getKeyValue(k.Dim) + "]"
+	default:
+		str := astutil.FmtNode(k)
+		str = strings.ReplaceAll(str, ", ]", "]") // array last comma fix
+		str = strings.ReplaceAll(str, ", )", ")") // array last comma fix
+		str = strings.ReplaceAll(str, `'`, `"`)   // strings to common look
+		str = strings.ReplaceAll(str, "`", `"`)   // strings to common look
+		return str
+	}
+	return ""
+}
+
 func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) bool {
 	haveKeys := false
 	haveImplicitKeys := false
@@ -1266,23 +1310,30 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 		haveKeys = true
 
 		var key string
-		var constKey bool
+		var reportKeyStr string
 
-		switch k := item.Key.(type) {
-		case *scalar.String:
-			key = unquote(k.Value)
-			constKey = true
-		case *scalar.Lnumber:
-			key = k.Value
-			constKey = true
+		switch item.Key.(type) {
+		// as it has to be handled as another error
+		case *expr.New, *expr.Array, *expr.Closure:
+			continue
 		}
 
-		if !constKey {
+		if b.sideEffectFree(item.Key) {
+			key = b.getKeyValue(item.Key)
+
+			// as we want to delete double `'` or `"` around single string
+			switch k := item.Key.(type) {
+			case *scalar.String:
+				reportKeyStr = unquote(k.Value)
+			default:
+				reportKeyStr = astutil.FmtNode(k)
+			}
+		} else {
 			continue
 		}
 
 		if _, ok := keys[key]; ok {
-			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", key)
+			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", reportKeyStr)
 		}
 
 		keys[key] = struct{}{}
