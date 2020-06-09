@@ -1288,6 +1288,10 @@ class T
         2,
         3,
     ];
+
+	public function __construct($array = array(1, 2, 3))
+    {}
+
 }
 `)
 
@@ -1301,6 +1305,7 @@ class T
 		`Duplicate array key 'key1'`,
 		`Use of old array syntax (use short form instead)`,
 		`Mixing implicit and explicit array keys`,
+		`Use of old array syntax (use short form instead)`,
 	}
 	test.RunAndMatch()
 }
