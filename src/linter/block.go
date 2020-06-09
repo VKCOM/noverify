@@ -1,6 +1,7 @@
 package linter
 
 import (
+	"bytes"
 	"fmt"
 	"regexp"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node/name"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
+	"github.com/VKCOM/noverify/src/php/parser/printer"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/rules"
@@ -1249,43 +1251,49 @@ func (b *BlockWalker) handleArray(arr *expr.Array) bool {
 func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) bool {
 	haveKeys := false
 	haveImplicitKeys := false
-	keys := make(map[string]struct{}, len(items))
+
+	keyNodes := make(map[node.Node]struct{}, len(items))
 
 	for _, item := range items {
 		if item.Val == nil {
 			continue
 		}
+
 		item.Val.Walk(b)
 
 		if item.Key == nil {
 			haveImplicitKeys = true
 			continue
 		}
+
 		item.Key.Walk(b)
 
 		haveKeys = true
+		currentKeyNode := item.Key
 
-		var key string
-		var constKey bool
+		for keyNode := range keyNodes {
 
-		switch k := item.Key.(type) {
-		case *scalar.String:
-			key = unquote(k.Value)
-			constKey = true
-		case *scalar.Lnumber:
-			key = k.Value
-			constKey = true
+			// If there are any side effects, then skip
+			if !b.sideEffectFree(keyNode) || !b.sideEffectFree(currentKeyNode) {
+				continue
+			}
+
+			// Compare the subtrees for every two elements, if the trees are
+			// completely identical, then they are duplicated
+			if compareSubTreeForArrayItemsKey(keyNode, currentKeyNode) {
+
+				// Receive representation of a subtree for the report
+				buffer := new(bytes.Buffer)
+				p := printer.NewPrinter(buffer)
+				p.Print(item.Key)
+				subTreeRepresentation := buffer.String()
+
+				b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", subTreeRepresentation)
+			}
 		}
 
-		if !constKey {
-			continue
-		}
-
-		if _, ok := keys[key]; ok {
-			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", key)
-		}
-
-		keys[key] = struct{}{}
+		// Store the nodes describing the elements of the array
+		keyNodes[item.Key] = struct{}{}
 	}
 
 	if haveImplicitKeys && haveKeys {

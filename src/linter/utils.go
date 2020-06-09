@@ -2,6 +2,9 @@ package linter
 
 import (
 	"fmt"
+	"math"
+	"reflect"
+	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -11,6 +14,7 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/binary"
+	"github.com/VKCOM/noverify/src/php/parser/node/name"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
@@ -356,4 +360,130 @@ var phpKeywords = map[string]bool{
 	"die":          true,
 	"self":         true,
 	"parent":       true,
+}
+
+// This function returns true if two subtrees are identical
+// This function is very primitive, as it works with a small number of possible nodes
+func compareSubTreeForArrayItemsKey(firstSubTreeNode node.Node, secondSubTreeNode node.Node) bool {
+
+	// If the node types do not match, then immediately return a false
+	if reflect.TypeOf(firstSubTreeNode) != reflect.TypeOf(secondSubTreeNode) {
+		return false
+	}
+
+	switch reflect.TypeOf(firstSubTreeNode).String() {
+	case "*binary.Plus": // 8 + 4
+		firstNode := firstSubTreeNode.(*binary.Plus)
+		secondNode := secondSubTreeNode.(*binary.Plus)
+
+		// Compare the left and right subtrees
+		return compareSubTreeForArrayItemsKey(firstNode.Left, secondNode.Left) &&
+			compareSubTreeForArrayItemsKey(firstNode.Right, secondNode.Right) ||
+			// And compare them the other way around.
+			compareSubTreeForArrayItemsKey(firstNode.Left, secondNode.Right) &&
+				compareSubTreeForArrayItemsKey(firstNode.Right, secondNode.Left)
+
+	case "*binary.Minus": // 8 - 9
+		firstNode := firstSubTreeNode.(*binary.Minus)
+		secondNode := secondSubTreeNode.(*binary.Minus)
+
+		// Compare the left and right subtrees
+		return compareSubTreeForArrayItemsKey(firstNode.Left, secondNode.Left) &&
+			compareSubTreeForArrayItemsKey(firstNode.Right, secondNode.Right)
+
+	case "*binary.Mul": // 8 * 9
+		firstNode := firstSubTreeNode.(*binary.Mul)
+		secondNode := secondSubTreeNode.(*binary.Mul)
+
+		// Compare the left and right subtrees
+		return compareSubTreeForArrayItemsKey(firstNode.Left, secondNode.Left) &&
+			compareSubTreeForArrayItemsKey(firstNode.Right, secondNode.Right) ||
+			// And compare them the other way around.
+			compareSubTreeForArrayItemsKey(firstNode.Left, secondNode.Right) &&
+				compareSubTreeForArrayItemsKey(firstNode.Right, secondNode.Left)
+
+	case "*binary.Div": // 8 / 7
+		firstNode := firstSubTreeNode.(*binary.Div)
+		secondNode := secondSubTreeNode.(*binary.Div)
+
+		// Compare the left and right subtrees
+		return compareSubTreeForArrayItemsKey(firstNode.Left, secondNode.Left) &&
+			compareSubTreeForArrayItemsKey(firstNode.Right, secondNode.Right)
+
+	case "*binary.Concat": // "some" . $a
+		firstNode := firstSubTreeNode.(*binary.Concat)
+		secondNode := secondSubTreeNode.(*binary.Concat)
+
+		// Compare the left and right subtrees
+		return compareSubTreeForArrayItemsKey(firstNode.Left, secondNode.Left) &&
+			compareSubTreeForArrayItemsKey(firstNode.Right, secondNode.Right) ||
+			// And compare them the other way around.
+			compareSubTreeForArrayItemsKey(firstNode.Left, secondNode.Right) &&
+				compareSubTreeForArrayItemsKey(firstNode.Right, secondNode.Left)
+
+	case "*scalar.String": // Strings
+		firstNode := firstSubTreeNode.(*scalar.String)
+		secondNode := secondSubTreeNode.(*scalar.String)
+
+		// Compare values
+		return firstNode.Value == secondNode.Value
+
+	case "*scalar.Lnumber": // Integer numbers
+		firstNode := firstSubTreeNode.(*scalar.Lnumber)
+		secondNode := secondSubTreeNode.(*scalar.Lnumber)
+
+		// Compare values
+		return firstNode.Value == secondNode.Value
+
+	case "*scalar.Dnumber": // Real numbers
+		firstNode := firstSubTreeNode.(*scalar.Dnumber)
+		secondNode := secondSubTreeNode.(*scalar.Dnumber)
+
+		// Note: PHP rounds down real numbers in keys, therefore,
+		// keys 14.6 and 14.5 will be one key equal to 14.
+
+		// Therefore, for starters, convert the string value to real
+		floatValue1, _ := strconv.ParseFloat(firstNode.Value, 64)
+		floatValue2, _ := strconv.ParseFloat(secondNode.Value, 64)
+
+		// And compare the values that were rounded down.
+		return math.Floor(floatValue1) == math.Floor(floatValue2)
+
+	case "*expr.ConstFetch": // Constants
+		firstNode := firstSubTreeNode.(*expr.ConstFetch)
+		secondNode := secondSubTreeNode.(*expr.ConstFetch)
+
+		firstConstantNode := firstNode.Constant.(*name.Name)
+		secondConstantNode := secondNode.Constant.(*name.Name)
+
+		return meta.NameToString(firstConstantNode) == meta.NameToString(secondConstantNode)
+
+	case "*expr.ClassConstFetch": // Class constants
+		firstNode := firstSubTreeNode.(*expr.ClassConstFetch)
+		secondNode := secondSubTreeNode.(*expr.ClassConstFetch)
+
+		return firstNode.ConstantName.Value == secondNode.ConstantName.Value
+
+	case "*node.SimpleVar": // Variables
+		firstNode := firstSubTreeNode.(*node.SimpleVar)
+		secondNode := secondSubTreeNode.(*node.SimpleVar)
+
+		return firstNode.Name == secondNode.Name
+
+	case "*expr.ArrayDimFetch": // Access to array
+		firstNode := firstSubTreeNode.(*expr.ArrayDimFetch)
+		secondNode := secondSubTreeNode.(*expr.ArrayDimFetch)
+
+		firstSimpleVarNode := firstNode.Variable.(*node.SimpleVar)
+		secondSimpleVarNode := secondNode.Variable.(*node.SimpleVar)
+
+		// If the variable names do not match, then immediately return false
+		if firstSimpleVarNode.Name != secondSimpleVarNode.Name {
+			return false
+		}
+
+		return compareSubTreeForArrayItemsKey(firstNode.Dim, secondNode.Dim)
+	}
+
+	return false
 }
