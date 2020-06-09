@@ -1231,15 +1231,64 @@ Base::staticProtMethod();
 	test.RunAndMatch()
 }
 
-func TestIssue497(t *testing.T) {
-	linttest.SimpleNegativeTest(t, `<?php
-/**
- * @param shape(a:int) $x
- * @return T<int>
- */
-function f($x) {
-  $v = $x['a'];
-  return [$v];
+func TestIssue324(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class T
+{
+    const C = 1;
+
+    const C1 = self::UNDEFCONST;              // undefined class constant
+    const C2 = self::C ? "var" : "var";       // then/else operands are identical
+
+    public $var1 = self::UNDEFCONST;          // undefined class constant
+    public $var2 = self::C ? "var1" : "var1"; // then/else operands are identical
+
+    public $publicArray = [
+        'key1' => 'something',
+        'key2' => 'other_thing',
+        'key1' => 'third_thing', // duplicate key 'key1'
+    ];
+
+    const constArray = [
+        'key1' => 'something',
+        'key2' => 'other_thing',
+        'key1' => 'third_thing', // duplicate key 'key1'
+    ];
+
+    public static $staticArray = [
+        'key1' => 'something',
+        'key2' => 'other_thing',
+        'key1' => 'third_thing', // duplicate key 'key1'
+    ];
+
+    /**
+     * @return int
+     */
+    public function foo($array = array(1, 2, 3)): int
+    {
+        return $array[0];
+    }
+
+    public $mixArrayKeys = [
+        1 => 1,
+        2,
+        3,
+    ];
 }
 `)
+
+	test.Expect = []string{
+		`Class constant \T::UNDEFCONST does not exist`,
+		`then/else operands are identical`,
+		`Class constant \T::UNDEFCONST does not exist`,
+		`then/else operands are identical`,
+		`Duplicate array key 'key1'`,
+		`Duplicate array key 'key1'`,
+		`Duplicate array key 'key1'`,
+		`Use of old array syntax (use short form instead)`,
+		`Mixing implicit and explicit array keys`,
+	}
+	test.RunAndMatch()
 }
+
