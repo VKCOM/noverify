@@ -1243,3 +1243,128 @@ function f($x) {
 }
 `)
 }
+
+func TestIssue325(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+
+const C1 = 1;
+const C2 = 2;
+
+class T
+{
+    const C1 = "1";
+    const C2 = "1";
+}
+
+// 1. Constants
+$example1 = [
+  C1 => 1,
+  C2 => 2,
+  C1 => 3, // Duplicate key C1
+];
+
+$example2 = [
+  T::C1 => 1,
+  T::C2 => 2,
+  T::C1 => 3, // Duplicate key T::C1
+];
+
+// 2. Real number
+// Note: PHP rounds down real numbers in keys, therefore,
+// keys 14.6 and 14.5 will be one key equal to 14.
+$example3 = [
+  14.5 => 1,
+  14.6 => 2, // Duplicate key 14
+];
+
+
+// 3. Access to array elements
+$numbers = [10, 5, 3];
+
+$example4 = [
+  $numbers[1] => 1,
+  $numbers[1] => 2, // Duplicate key $numbers[1]
+];
+
+
+/*
+Expressions consisting of:
+1. Rows
+2. Integers
+3. Real numbers
+4. Constants
+5. Class constants
+6. Variables
+7. Access to array elements
+8. Addition operations
+9. Subtraction operations
+10. Multiplication operations
+11. Division operations
+12. Concatenation
+
+Note: Duplicates are only caught if the expressions are exactly the same.
+An exception is the expression with two operands, so $a + $b will be equal to $b + $a.
+*/
+
+$someIntegerValue = 10;
+
+$example5 = [
+  $someIntegerValue + 15 => 1,
+  $someIntegerValue + 15 => 2, // Duplicate key $someIntegerValue + 15
+];
+
+$example6 = [
+  $someIntegerValue + 15 => 1,
+  15 + $someIntegerValue => 2, // Duplicate key 15 + $someIntegerValue
+];
+
+
+$someStringValue = "hello";
+
+$example6 = [
+  $someStringValue . " world" . "!" => 1,
+  $someStringValue . " world" . "!" => 2, // Duplicate key $someStringValue . " world" . "!"
+];
+
+$example7 = [
+  $numbers[1 + 5 + $someIntegerValue] => 1,
+  $numbers[1 + 5 + $someIntegerValue] => 2, // Duplicate key $numbers[1 + 5 + $someIntegerValue]
+];
+
+$example7 = [
+  $numbers[1 + 5 + $someIntegerValue] => 1,
+  $numbers[1 + 5 + $someIntegerValue] => 2, // Duplicate key $numbers[1 + 5 + $someIntegerValue]
+];
+
+$example8 = [
+  $someIntegerValue - 15 => 1,
+  $someIntegerValue - 15 => 2, // Duplicate key $someIntegerValue - 15
+];
+
+$example9 = [
+  $someIntegerValue * 15 => 1,
+  15 * $someIntegerValue => 2, // Duplicate key 15 * $someIntegerValue
+];
+
+$example10 = [
+  $someIntegerValue / 15 => 1,
+  $someIntegerValue / 15 => 2, // Duplicate key $someIntegerValue / 15
+];
+`)
+	test.Expect = []string{
+		`Duplicate array key 'C1'`,
+		`Duplicate array key 'T::C1'`,
+		`Duplicate array key '14.6'`,
+		`Duplicate array key '$numbers[1]'`,
+		`Duplicate array key '$someIntegerValue + 15'`,
+		`Duplicate array key '15 + $someIntegerValue'`,
+		`Duplicate array key '$someStringValue . " world" . "!"'`,
+		`Duplicate array key '$numbers[1 + 5 + $someIntegerValue]'`,
+		`Duplicate array key '$numbers[1 + 5 + $someIntegerValue]'`,
+		`Duplicate array key '$someIntegerValue - 15'`,
+		`Duplicate array key '15 * $someIntegerValue'`,
+		`Duplicate array key '$someIntegerValue / 15'`,
+	}
+	test.RunAndMatch()
+}
