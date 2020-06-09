@@ -726,16 +726,9 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 	for _, pNode := range pl.Properties {
 		p := pNode.(*stmt.Property)
 
-		switch exprProperty := p.Expr.(type) {
-		case *expr.Array:
-			if exprProperty.ShortSyntax {
-				b.handleArray(exprProperty)
-			}
-		case *expr.ClassConstFetch:
-			b.handleClassConstFetch(exprProperty)
-		case *expr.Ternary:
-			b.handleTernary(exprProperty)
-		}
+		b.addVar(p.Variable, meta.MixedType, "property", meta.VarAlwaysDefined)
+		b.addStatement(p)
+		p.Walk(b)
 
 		nm := p.Variable.Name
 
@@ -848,7 +841,6 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	}
 	d.checkCommentMisspellings(meth.MethodName, meth.PhpDocComment)
 	d.checkIdentMisspellings(meth.MethodName)
-
 	for _, p := range meth.Params {
 		d.checkFuncParam(p.(*node.Parameter))
 		d.checkVarnameMisspellings(p, p.(*node.Parameter).Variable.Name)
