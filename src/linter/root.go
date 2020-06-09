@@ -696,6 +696,15 @@ func (d *RootWalker) lowerCaseModifier(m *node.Identifier) string {
 }
 
 func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
+	sc := meta.NewScope()
+	sc.SetInClosure(false)
+	b := &BlockWalker{
+		ctx:          &blockContext{sc: sc},
+		r:            d,
+		unusedVars:   make(map[string][]node.Node),
+		nonLocalVars: make(map[string]struct{}),
+	}
+
 	cl := d.getClass()
 
 	isStatic := false
@@ -716,6 +725,17 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 
 	for _, pNode := range pl.Properties {
 		p := pNode.(*stmt.Property)
+
+		switch exprProperty := p.Expr.(type) {
+		case *expr.Array:
+			if exprProperty.ShortSyntax {
+				b.handleArray(exprProperty)
+			}
+		case *expr.ClassConstFetch:
+			b.handleClassConstFetch(exprProperty)
+		case *expr.Ternary:
+			b.handleTernary(exprProperty)
+		}
 
 		nm := p.Variable.Name
 
@@ -741,6 +761,15 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 }
 
 func (d *RootWalker) enterClassConstList(s *stmt.ClassConstList) bool {
+	sc := meta.NewScope()
+	sc.SetInClosure(false)
+	b := &BlockWalker{
+		ctx:          &blockContext{sc: sc},
+		r:            d,
+		unusedVars:   make(map[string][]node.Node),
+		nonLocalVars: make(map[string]struct{}),
+	}
+
 	cl := d.getClass()
 	accessLevel := meta.Public
 
@@ -756,6 +785,9 @@ func (d *RootWalker) enterClassConstList(s *stmt.ClassConstList) bool {
 	}
 
 	for _, cNode := range s.Consts {
+		b.addStatement(cNode)
+		cNode.Walk(b)
+
 		c := cNode.(*stmt.Constant)
 
 		nm := c.ConstantName.Value
@@ -816,7 +848,9 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	}
 	d.checkCommentMisspellings(meth.MethodName, meth.PhpDocComment)
 	d.checkIdentMisspellings(meth.MethodName)
+
 	for _, p := range meth.Params {
+		d.checkFuncParam(p.(*node.Parameter))
 		d.checkVarnameMisspellings(p, p.(*node.Parameter).Variable.Name)
 	}
 	doc := d.parsePHPDoc(meth.MethodName, meth.PhpDocComment, meth.Params)
