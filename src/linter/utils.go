@@ -10,11 +10,11 @@ import (
 	"unicode/utf8"
 
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/binary"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
@@ -362,82 +362,53 @@ var phpKeywords = map[string]bool{
 	"parent":       true,
 }
 
-// This function returns true if two subtrees are identical
-// This function is very primitive, as it works with a small number of possible nodes
-func compareSubTreeForArrayItemsKey(firstSubTreeNode node.Node, secondSubTreeNode node.Node) bool {
+// This function returns true if the two subtrees are identical,
+// given some of the features of type conversion in array keys
+// Also, for some binary operators, there is a comparison with the inversion of operands
+func arrayKeySubTreeEqual(x node.Node, y node.Node) bool {
 
 	// If the node types do not match, then immediately return a false
-	if reflect.TypeOf(firstSubTreeNode) != reflect.TypeOf(secondSubTreeNode) {
+	if reflect.TypeOf(x) != reflect.TypeOf(y) {
 		return false
 	}
 
-	switch reflect.TypeOf(firstSubTreeNode).String() {
-	case "*binary.Plus": // 8 + 4
-		firstNode := firstSubTreeNode.(*binary.Plus)
-		secondNode := secondSubTreeNode.(*binary.Plus)
+	switch x.(type) {
+	case *binary.Plus: // 8 + 4
+		firstNode := x.(*binary.Plus)
+		secondNode := y.(*binary.Plus)
 
 		// Compare the left and right subtrees
-		return compareSubTreeForArrayItemsKey(firstNode.Left, secondNode.Left) &&
-			compareSubTreeForArrayItemsKey(firstNode.Right, secondNode.Right) ||
+		return arrayKeySubTreeEqual(firstNode.Left, secondNode.Left) &&
+			arrayKeySubTreeEqual(firstNode.Right, secondNode.Right) ||
 			// And compare them the other way around.
-			compareSubTreeForArrayItemsKey(firstNode.Left, secondNode.Right) &&
-				compareSubTreeForArrayItemsKey(firstNode.Right, secondNode.Left)
+			arrayKeySubTreeEqual(firstNode.Left, secondNode.Right) &&
+				arrayKeySubTreeEqual(firstNode.Right, secondNode.Left)
 
-	case "*binary.Minus": // 8 - 9
-		firstNode := firstSubTreeNode.(*binary.Minus)
-		secondNode := secondSubTreeNode.(*binary.Minus)
-
-		// Compare the left and right subtrees
-		return compareSubTreeForArrayItemsKey(firstNode.Left, secondNode.Left) &&
-			compareSubTreeForArrayItemsKey(firstNode.Right, secondNode.Right)
-
-	case "*binary.Mul": // 8 * 9
-		firstNode := firstSubTreeNode.(*binary.Mul)
-		secondNode := secondSubTreeNode.(*binary.Mul)
+	case *binary.Mul: // 8 * 9
+		firstNode := x.(*binary.Mul)
+		secondNode := y.(*binary.Mul)
 
 		// Compare the left and right subtrees
-		return compareSubTreeForArrayItemsKey(firstNode.Left, secondNode.Left) &&
-			compareSubTreeForArrayItemsKey(firstNode.Right, secondNode.Right) ||
+		return arrayKeySubTreeEqual(firstNode.Left, secondNode.Left) &&
+			arrayKeySubTreeEqual(firstNode.Right, secondNode.Right) ||
 			// And compare them the other way around.
-			compareSubTreeForArrayItemsKey(firstNode.Left, secondNode.Right) &&
-				compareSubTreeForArrayItemsKey(firstNode.Right, secondNode.Left)
+			arrayKeySubTreeEqual(firstNode.Left, secondNode.Right) &&
+				arrayKeySubTreeEqual(firstNode.Right, secondNode.Left)
 
-	case "*binary.Div": // 8 / 7
-		firstNode := firstSubTreeNode.(*binary.Div)
-		secondNode := secondSubTreeNode.(*binary.Div)
-
-		// Compare the left and right subtrees
-		return compareSubTreeForArrayItemsKey(firstNode.Left, secondNode.Left) &&
-			compareSubTreeForArrayItemsKey(firstNode.Right, secondNode.Right)
-
-	case "*binary.Concat": // "some" . $a
-		firstNode := firstSubTreeNode.(*binary.Concat)
-		secondNode := secondSubTreeNode.(*binary.Concat)
+	case *binary.Concat: // "some" . $a
+		firstNode := x.(*binary.Concat)
+		secondNode := y.(*binary.Concat)
 
 		// Compare the left and right subtrees
-		return compareSubTreeForArrayItemsKey(firstNode.Left, secondNode.Left) &&
-			compareSubTreeForArrayItemsKey(firstNode.Right, secondNode.Right) ||
+		return arrayKeySubTreeEqual(firstNode.Left, secondNode.Left) &&
+			arrayKeySubTreeEqual(firstNode.Right, secondNode.Right) ||
 			// And compare them the other way around.
-			compareSubTreeForArrayItemsKey(firstNode.Left, secondNode.Right) &&
-				compareSubTreeForArrayItemsKey(firstNode.Right, secondNode.Left)
+			arrayKeySubTreeEqual(firstNode.Left, secondNode.Right) &&
+				arrayKeySubTreeEqual(firstNode.Right, secondNode.Left)
 
-	case "*scalar.String": // Strings
-		firstNode := firstSubTreeNode.(*scalar.String)
-		secondNode := secondSubTreeNode.(*scalar.String)
-
-		// Compare values
-		return firstNode.Value == secondNode.Value
-
-	case "*scalar.Lnumber": // Integer numbers
-		firstNode := firstSubTreeNode.(*scalar.Lnumber)
-		secondNode := secondSubTreeNode.(*scalar.Lnumber)
-
-		// Compare values
-		return firstNode.Value == secondNode.Value
-
-	case "*scalar.Dnumber": // Real numbers
-		firstNode := firstSubTreeNode.(*scalar.Dnumber)
-		secondNode := secondSubTreeNode.(*scalar.Dnumber)
+	case *scalar.Dnumber: // Real numbers
+		firstNode := x.(*scalar.Dnumber)
+		secondNode := y.(*scalar.Dnumber)
 
 		// Note: PHP rounds down real numbers in keys, therefore,
 		// keys 14.6 and 14.5 will be one key equal to 14.
@@ -449,30 +420,9 @@ func compareSubTreeForArrayItemsKey(firstSubTreeNode node.Node, secondSubTreeNod
 		// And compare the values that were rounded down.
 		return math.Floor(floatValue1) == math.Floor(floatValue2)
 
-	case "*expr.ConstFetch": // Constants
-		firstNode := firstSubTreeNode.(*expr.ConstFetch)
-		secondNode := secondSubTreeNode.(*expr.ConstFetch)
-
-		firstConstantNode := firstNode.Constant.(*name.Name)
-		secondConstantNode := secondNode.Constant.(*name.Name)
-
-		return meta.NameToString(firstConstantNode) == meta.NameToString(secondConstantNode)
-
-	case "*expr.ClassConstFetch": // Class constants
-		firstNode := firstSubTreeNode.(*expr.ClassConstFetch)
-		secondNode := secondSubTreeNode.(*expr.ClassConstFetch)
-
-		return firstNode.ConstantName.Value == secondNode.ConstantName.Value
-
-	case "*node.SimpleVar": // Variables
-		firstNode := firstSubTreeNode.(*node.SimpleVar)
-		secondNode := secondSubTreeNode.(*node.SimpleVar)
-
-		return firstNode.Name == secondNode.Name
-
-	case "*expr.ArrayDimFetch": // Access to array
-		firstNode := firstSubTreeNode.(*expr.ArrayDimFetch)
-		secondNode := secondSubTreeNode.(*expr.ArrayDimFetch)
+	case *expr.ArrayDimFetch: // Access to array
+		firstNode := x.(*expr.ArrayDimFetch)
+		secondNode := y.(*expr.ArrayDimFetch)
 
 		firstSimpleVarNode := firstNode.Variable.(*node.SimpleVar)
 		secondSimpleVarNode := secondNode.Variable.(*node.SimpleVar)
@@ -482,8 +432,18 @@ func compareSubTreeForArrayItemsKey(firstSubTreeNode node.Node, secondSubTreeNod
 			return false
 		}
 
-		return compareSubTreeForArrayItemsKey(firstNode.Dim, secondNode.Dim)
-	}
+		return arrayKeySubTreeEqual(firstNode.Dim, secondNode.Dim)
 
-	return false
+	default:
+
+		// The astutil.NodeEqual function is used to compare subtrees.
+		// However, some subtrees cannot be compared using this function,
+		// since, for example, real numbers for verification, must first be rounded.
+		// Also for basic arithmetic operations, I would like the comparison
+		// to find duplicates, even if the operands are reversed.
+		// That is why special cases are described above, and the rest
+		// is handled by the astutil.NodeEqual function.
+
+		return astutil.NodeEqual(x, y)
+	}
 }

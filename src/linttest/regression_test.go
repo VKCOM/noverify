@@ -1289,20 +1289,6 @@ $example4 = [
 
 
 /*
-Expressions consisting of:
-1. Rows
-2. Integers
-3. Real numbers
-4. Constants
-5. Class constants
-6. Variables
-7. Access to array elements
-8. Addition operations
-9. Subtraction operations
-10. Multiplication operations
-11. Division operations
-12. Concatenation
-
 Note: Duplicates are only caught if the expressions are exactly the same.
 An exception is the expression with two operands, so $a + $b will be equal to $b + $a.
 */
@@ -1351,6 +1337,63 @@ $example10 = [
   $someIntegerValue / 15 => 1,
   $someIntegerValue / 15 => 2, // Duplicate key $someIntegerValue / 15
 ];
+
+
+// other
+function foo() {
+    return "hello";
+}
+
+$example11 = [
+    foo() => 1,
+    foo() => 2, // Duplicate key foo()
+];
+
+
+$example12 = [
+    foo() . "world" => 1,
+    foo() . "world" => 2, // Duplicate key foo() . "world"
+];
+
+
+class Foo {
+    /**
+     * @return string
+     */
+	static function f() {
+		return "f";
+	}
+ 	/**
+     * @return string
+     */
+	function b() {
+		return "b";
+	}
+}
+
+$fo = new Foo();
+
+$strArr = [ "1", "2" ];
+
+$example13 = [
+    foo() . $fo->b() . Foo::f() . $strArr[1] => 1,
+    foo() . $fo->b() . Foo::f() . $strArr[1] => 2, // Duplicate key foo() . $fo->b() . Foo::f() . $strArr[1]
+];
+
+$example14 = [
+    foo() . $fo->b() => 1,
+    $fo->b() . foo() => 2, // Duplicate key $fo->b() . foo()
+];
+ 
+$example15 = [
+    12 || 56 => 1,
+    12 || 56 => 2, // Duplicate key 12 || 56
+
+    foo() + "str" => 1,
+    "str" + foo() => 2  // Duplicate key foo() + "str"
+];
+
+
 `)
 	test.Expect = []string{
 		`Duplicate array key 'C1'`,
@@ -1365,6 +1408,12 @@ $example10 = [
 		`Duplicate array key '$someIntegerValue - 15'`,
 		`Duplicate array key '15 * $someIntegerValue'`,
 		`Duplicate array key '$someIntegerValue / 15'`,
+		`Duplicate array key 'foo()'`,
+		`Duplicate array key 'foo() . "world"'`,
+		`Duplicate array key 'foo() . $fo->b() . Foo::f() . $strArr[1]'`,
+		`Duplicate array key '$fo->b() . foo()'`,
+		`Duplicate array key '12 || 56`,
+		`Duplicate array key '"str" + foo()'`,
 	}
 	test.RunAndMatch()
 }

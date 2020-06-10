@@ -1,7 +1,6 @@
 package linter
 
 import (
-	"bytes"
 	"fmt"
 	"regexp"
 	"strings"
@@ -17,7 +16,6 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node/name"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
-	"github.com/VKCOM/noverify/src/php/parser/printer"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/rules"
@@ -1280,13 +1278,9 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 
 			// Compare the subtrees for every two elements, if the trees are
 			// completely identical, then they are duplicated
-			if compareSubTreeForArrayItemsKey(keyNode, currentKeyNode) {
-
+			if arrayKeySubTreeEqual(keyNode, currentKeyNode) {
 				// Receive representation of a subtree for the report
-				buffer := new(bytes.Buffer)
-				p := printer.NewPrinter(buffer)
-				p.Print(item.Key)
-				subTreeRepresentation := buffer.String()
+				subTreeRepresentation := astutil.FmtNode(item.Key)
 
 				b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", subTreeRepresentation)
 			}
