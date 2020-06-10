@@ -1275,6 +1275,25 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 		case *scalar.Lnumber:
 			key = k.Value
 			constKey = true
+		case *scalar.Dnumber:
+			key = k.Value
+			constKey = true
+		case *expr.ConstFetch:
+			if constName, _, ok := solver.GetConstant(b.r.ctx.st, k.Constant); ok {
+				key = constName
+				constKey = true
+			}
+		case *expr.ClassConstFetch:
+			constName := k.ConstantName.Value
+			if className, ok := solver.GetClassName(b.r.ctx.st, k.Class); ok {
+				key = className + "::" + constName
+				constKey = true
+			}
+		default:
+			if nodeView, ok := getArrayKeyRepresentation(k); ok && b.sideEffectFree(k) {
+				key = nodeView
+				constKey = true
+			}
 		}
 
 		if !constKey {

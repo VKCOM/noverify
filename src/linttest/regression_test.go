@@ -1243,3 +1243,163 @@ function f($x) {
 }
 `)
 }
+
+func TestIssue325_Main(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+// Large numbers
+$example1 = [
+  12345678901234567890 => 1,
+  123456789012345678900 => 2,
+  12345678901234567890 => 1,
+];
+
+const C1 = 1;
+const C2 = 2;
+
+// Constants (using namespace)
+$example2 = [
+  C1 => 1, 
+  C2 => 2, 
+  \C1 => 3,
+];
+
+class T{
+  const C1 = 1;
+  const C2 = 2;
+}
+
+// Class constants
+$example3 = [
+  T::C1 => 1, 
+  T::C2 => 2, 
+  T::C1 => 3,
+];
+
+$k = [[1, 1], [2, 2], [3, 3]];
+
+// Array elements
+$example4 = [
+  $k[0][0] => 1,
+  $k[1][1] => 2,
+  $k[0][0] => 3,
+];
+
+$s = "bcd";
+
+// Concatenation
+$example5 = [
+  'a' . $s => 1,
+  'b' . $s => 2,
+  'a' . $s => 3,
+];
+
+function f ($x) {
+  return $x;
+}
+
+// Side-effect-free function call
+$example6 = [
+  f(1) => 1,
+  f(2) => 2,
+  f(1) => 3,
+];
+
+// New: must be skipped
+$example7 = [
+  new T() => 1,
+  new T() => 2,
+];
+
+// Array: must be skipped
+$example8 = [
+  [1, 2] => 1,
+  [1, 2] => 2,
+];
+`)
+	test.Expect = []string{
+		`dupArrayKeys: Duplicate array key '12345678901234567890'`,
+		`dupArrayKeys: Duplicate array key '\C1'`,
+		`dupArrayKeys: Duplicate array key '\T::C1'`,
+		`dupArrayKeys: Duplicate array key '$k[0][0]'`,
+		`dupArrayKeys: Duplicate array key ''a' . $s'`,
+		`dupArrayKeys: Duplicate array key 'f(1)'`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_Extra(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+// Binary operations
+$example1 = [
+  1 + 1 => 1,
+  1 + 2 => 2,
+  1 + 1 => 3,
+];
+$example2 = [
+  1 & 2 => 1,
+  0 & 1 => 2,
+  1 & 2 => 3,
+];
+$example3 = [
+  1 == 2 => 1,
+  2 == 1 => 2,
+  1 == 2 => 3,
+];
+
+$a = 0;
+
+// Unary operations
+$example4 = [
+  !$a => 1,
+  $a => 2,
+  !$a => 3,
+];
+$example5 = [
+  -1 => 1,
+  -2 => 2,
+  -1 => 3,
+];
+
+class T{}
+$b = new T();
+
+// Built-in bool functions
+$example6 = [
+  isset($a) => 1,
+  isset($a) => 2,
+];
+$example7 = [
+  $a instanceof T => 1,
+  $b instanceof T => 2,
+  $a instanceof T => 3,
+];
+
+// Heredoc
+$example8 = [
+  <<<EOT
+1
+EOT => 1,
+  <<<EOT
+2
+EOT => 2,
+  <<<EOT
+1
+EOT => 3,
+];
+`)
+	test.Expect = []string{
+		`dupArrayKeys: Duplicate array key '1 + 1'`,
+		`dupArrayKeys: Duplicate array key '1 & 2'`,
+		`dupArrayKeys: Duplicate array key '1 == 2'`,
+		`dupArrayKeys: Duplicate array key '!$a'`,
+		`dupArrayKeys: Duplicate array key '-1'`,
+		`dupArrayKeys: Duplicate array key 'isset($a)'`,
+		`dupArrayKeys: Duplicate array key '$a instanceof T'`,
+		`dupArrayKeys: Duplicate array key '<<<EOT
+1
+EOT'`,
+	}
+	test.RunAndMatch()
+}

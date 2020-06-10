@@ -2,6 +2,8 @@ package linter
 
 import (
 	"fmt"
+	"github.com/VKCOM/noverify/src/php/parser/node/name"
+	"github.com/VKCOM/noverify/src/php/parser/printer"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -287,6 +289,49 @@ func findFreeFloatingToken(n node.Node, pos freefloating.Position, s string) boo
 			return true
 		}
 	}
+	return false
+}
+
+// Returns Node string representation if it's legal for array key.
+// Illegal keys have to be processed with individual warning.
+func getArrayKeyRepresentation(n node.Node) (view string, ok bool) {
+	b := strings.Builder{}
+	p := printer.NewPrinter(&b)
+
+	ok = isLegalKey(n)
+	p.Print(n)
+
+	return b.String(), ok
+}
+
+// Checks if Node type is legal for array key.
+func isLegalKey(n node.Node) (ok bool){
+	switch n.(type){
+	case *binary.BitwiseAnd, *binary.BitwiseOr, *binary.BitwiseXor,
+		*binary.BooleanAnd, *binary.BooleanOr, *binary.Coalesce,
+		*binary.Concat, *binary.Div, *binary.Equal, *binary.Greater,
+		*binary.GreaterOrEqual, *binary.Identical, *binary.LogicalAnd,
+		*binary.LogicalOr, *binary.LogicalXor, *binary.Minus, *binary.Mod,
+		*binary.Mul, *binary.NotEqual, *binary.NotIdentical, *binary.Plus,
+		*binary.Pow, *binary.ShiftLeft, *binary.ShiftRight,
+		*binary.SmallerOrEqual, *binary.Smaller, *binary.Spaceship,
+
+		*expr.ArrayDimFetch, *expr.ArrayItem, *expr.BitwiseNot,
+		*expr.BooleanNot, *expr.ClassConstFetch, *expr.ConstFetch,
+		*expr.Empty, *expr.FunctionCall, *expr.InstanceOf, *expr.Isset,
+		*expr.MethodCall, *expr.PostDec, *expr.PostInc, *expr.PreDec,
+		*expr.PreInc, *expr.PropertyFetch, *expr.StaticCall,
+		*expr.StaticPropertyFetch, *expr.Ternary, *expr.UnaryMinus, *expr.UnaryPlus,
+
+		*node.Var, *node.SimpleVar, *node.Identifier,
+
+		*name.Name, *name.NamePart, *name.FullyQualified, *name.Relative,
+
+		*scalar.Lnumber, *scalar.Dnumber, *scalar.String, *scalar.Heredoc:
+
+		return true
+	}
+
 	return false
 }
 
