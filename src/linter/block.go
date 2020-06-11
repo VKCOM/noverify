@@ -1278,7 +1278,7 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 
 			// Compare the subtrees for every two elements, if the trees are
 			// completely identical, then they are duplicated
-			if arrayKeySubTreeEqual(keyNode, currentKeyNode) {
+			if b.arrayKeySubTreeEqual(keyNode, currentKeyNode) {
 				// Receive representation of a subtree for the report
 				subTreeRepresentation := astutil.FmtNode(item.Key)
 

@@ -2,19 +2,19 @@ package linter
 
 import (
 	"fmt"
+	"hash/fnv"
 	"math"
-	"reflect"
 	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/binary"
+	"github.com/VKCOM/noverify/src/php/parser/node/name"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
@@ -362,88 +362,232 @@ var phpKeywords = map[string]bool{
 	"parent":       true,
 }
 
-// This function returns true if the two subtrees are identical,
-// given some of the features of type conversion in array keys
-// Also, for some binary operators, there is a comparison with the inversion of operands
-func arrayKeySubTreeEqual(x node.Node, y node.Node) bool {
+func hash(s string) uint32 {
+	h := fnv.New32a()
+	_, _ = h.Write([]byte(s))
+	return h.Sum32()
+}
 
-	// If the node types do not match, then immediately return a false
-	if reflect.TypeOf(x) != reflect.TypeOf(y) {
-		return false
-	}
-
+func (b *BlockWalker) getHashForExpressionNode(x node.Node) int64 {
 	switch x.(type) {
-	case *binary.Plus: // 8 + 4
-		firstNode := x.(*binary.Plus)
-		secondNode := y.(*binary.Plus)
-
-		// Compare the left and right subtrees
-		return arrayKeySubTreeEqual(firstNode.Left, secondNode.Left) &&
-			arrayKeySubTreeEqual(firstNode.Right, secondNode.Right) ||
-			// And compare them the other way around.
-			arrayKeySubTreeEqual(firstNode.Left, secondNode.Right) &&
-				arrayKeySubTreeEqual(firstNode.Right, secondNode.Left)
-
-	case *binary.Mul: // 8 * 9
-		firstNode := x.(*binary.Mul)
-		secondNode := y.(*binary.Mul)
-
-		// Compare the left and right subtrees
-		return arrayKeySubTreeEqual(firstNode.Left, secondNode.Left) &&
-			arrayKeySubTreeEqual(firstNode.Right, secondNode.Right) ||
-			// And compare them the other way around.
-			arrayKeySubTreeEqual(firstNode.Left, secondNode.Right) &&
-				arrayKeySubTreeEqual(firstNode.Right, secondNode.Left)
-
-	case *binary.Concat: // "some" . $a
-		firstNode := x.(*binary.Concat)
-		secondNode := y.(*binary.Concat)
-
-		// Compare the left and right subtrees
-		return arrayKeySubTreeEqual(firstNode.Left, secondNode.Left) &&
-			arrayKeySubTreeEqual(firstNode.Right, secondNode.Right) ||
-			// And compare them the other way around.
-			arrayKeySubTreeEqual(firstNode.Left, secondNode.Right) &&
-				arrayKeySubTreeEqual(firstNode.Right, secondNode.Left)
-
-	case *scalar.Dnumber: // Real numbers
-		firstNode := x.(*scalar.Dnumber)
-		secondNode := y.(*scalar.Dnumber)
-
-		// Note: PHP rounds down real numbers in keys, therefore,
-		// keys 14.6 and 14.5 will be one key equal to 14.
-
-		// Therefore, for starters, convert the string value to real
-		floatValue1, _ := strconv.ParseFloat(firstNode.Value, 64)
-		floatValue2, _ := strconv.ParseFloat(secondNode.Value, 64)
-
-		// And compare the values that were rounded down.
-		return math.Floor(floatValue1) == math.Floor(floatValue2)
-
-	case *expr.ArrayDimFetch: // Access to array
-		firstNode := x.(*expr.ArrayDimFetch)
-		secondNode := y.(*expr.ArrayDimFetch)
-
-		firstSimpleVarNode := firstNode.Variable.(*node.SimpleVar)
-		secondSimpleVarNode := secondNode.Variable.(*node.SimpleVar)
-
-		// If the variable names do not match, then immediately return false
-		if firstSimpleVarNode.Name != secondSimpleVarNode.Name {
-			return false
+	case *binary.BitwiseAnd:
+		y, ok := x.(*binary.BitwiseAnd)
+		if !ok {
+			return -1
 		}
 
-		return arrayKeySubTreeEqual(firstNode.Dim, secondNode.Dim)
+		return b.getHashForExpressionNode(y.Left) & b.getHashForExpressionNode(y.Right)
+
+	case *binary.BitwiseOr:
+		y, ok := x.(*binary.BitwiseOr)
+		if !ok {
+			return -1
+		}
+
+		return b.getHashForExpressionNode(y.Left) | b.getHashForExpressionNode(y.Right)
+
+	case *binary.BitwiseXor:
+		y, ok := x.(*binary.BitwiseXor)
+		if !ok {
+			return -1
+		}
+
+		return b.getHashForExpressionNode(y.Left) ^ b.getHashForExpressionNode(y.Right)
+
+	case *binary.Concat:
+		y, ok := x.(*binary.Concat)
+		if !ok {
+			return -1
+		}
+
+		return int64(hash(fmt.Sprint(b.getHashForExpressionNode(y.Left)) + fmt.Sprint(b.getHashForExpressionNode(y.Right))))
+
+	case *binary.Div:
+		y, ok := x.(*binary.Div)
+		if !ok {
+			return -1
+		}
+
+		return b.getHashForExpressionNode(y.Left) / b.getHashForExpressionNode(y.Right)
+
+	case *binary.Minus:
+		y, ok := x.(*binary.Minus)
+		if !ok {
+			return -1
+		}
+
+		return b.getHashForExpressionNode(y.Left) - b.getHashForExpressionNode(y.Right)
+
+	case *binary.Mod:
+		y, ok := x.(*binary.Mod)
+		if !ok {
+			return -1
+		}
+
+		return b.getHashForExpressionNode(y.Left) % b.getHashForExpressionNode(y.Right)
+
+	case *binary.Mul:
+		y, ok := x.(*binary.Mul)
+		if !ok {
+			return -1
+		}
+
+		return b.getHashForExpressionNode(y.Left) * b.getHashForExpressionNode(y.Right)
+
+	case *binary.Plus:
+		y, ok := x.(*binary.Plus)
+		if !ok {
+			return -1
+		}
+
+		return b.getHashForExpressionNode(y.Left) + b.getHashForExpressionNode(y.Right)
+
+	case *expr.ArrayDimFetch:
+		y, ok := x.(*expr.ArrayDimFetch)
+		if !ok {
+			return -1
+		}
+
+		variableName := y.Variable.(*node.SimpleVar).Name
+		indexHash := b.getHashForExpressionNode(y.Dim)
+		indexHashString := fmt.Sprint(indexHash)
+
+		return int64(hash("$" + variableName + "[" + indexHashString + "]"))
+
+	case *expr.ClassConstFetch:
+		y, ok := x.(*expr.ClassConstFetch)
+		if !ok {
+			return -1
+		}
+
+		className := meta.NameToString(y.Class.(*name.Name))
+		constName := y.ConstantName.Value
+
+		return int64(hash(className + "::" + constName))
+
+	case *expr.ConstFetch:
+		y, ok := x.(*expr.ConstFetch)
+		if !ok {
+			return -1
+		}
+
+		constName := meta.NameToString(y.Constant.(*name.Name))
+
+		return int64(hash("ConstFetch" + constName))
+
+	case *expr.FunctionCall:
+		y, ok := x.(*expr.FunctionCall)
+		if !ok {
+			return -1
+		}
+
+		functionName, ok1 := solver.GetFuncName(b.r.ctx.st, y.Function)
+
+		if !ok1 {
+			return -1
+		}
+
+		return int64(hash(functionName))
+
+	case *expr.MethodCall:
+		y, ok := x.(*expr.MethodCall)
+		if !ok {
+			return -1
+		}
+
+		variableName := y.Variable.(*node.SimpleVar).Name
+		functionName, ok1 := solver.GetFuncName(b.r.ctx.st, y.Method)
+
+		if !ok1 {
+			return -1
+		}
+
+		return int64(hash(variableName + "." + functionName))
+
+	case *expr.StaticCall:
+		y, ok := x.(*expr.StaticCall)
+		if !ok {
+			return -1
+		}
+
+		className := meta.NameToString(y.Class.(*name.Name))
+		functionName := y.Call.(*node.Identifier).Value
+
+		return int64(hash(className + "::" + functionName))
+
+	case *expr.StaticPropertyFetch:
+		y, ok := x.(*expr.StaticPropertyFetch)
+		if !ok {
+			return -1
+		}
+
+		className := meta.NameToString(y.Class.(*name.Name))
+		propertyName := y.Property.(*node.SimpleVar).Name
+
+		return int64(hash(className + "::$" + propertyName))
+
+	case *expr.UnaryMinus:
+		y, ok := x.(*expr.UnaryMinus)
+		if !ok {
+			return -1
+		}
+
+		return b.getHashForExpressionNode(y.Expr) * -1
+
+	case *expr.UnaryPlus:
+		y, ok := x.(*expr.UnaryPlus)
+		if !ok {
+			return -1
+		}
+
+		return b.getHashForExpressionNode(y.Expr)
+
+	case *node.SimpleVar:
+		y, ok := x.(*node.SimpleVar)
+		if !ok {
+			return -1
+		}
+
+		return int64(hash("$" + y.Name))
+
+	case *scalar.Dnumber:
+		y, ok := x.(*scalar.Dnumber)
+		if !ok {
+			return -1
+		}
+
+		floatValue, _ := strconv.ParseFloat(y.Value, 64)
+		floorValue := math.Floor(floatValue)
+
+		return int64(floorValue)
+
+	case *scalar.Lnumber:
+		y, ok := x.(*scalar.Lnumber)
+		if !ok {
+			return -1
+		}
+
+		intValue, _ := strconv.ParseInt(y.Value, 10, 64)
+
+		return intValue
+
+	case *scalar.String:
+		y, ok := x.(*scalar.String)
+		if !ok {
+			return -1
+		}
+
+		return int64(hash(y.Value))
 
 	default:
-
-		// The astutil.NodeEqual function is used to compare subtrees.
-		// However, some subtrees cannot be compared using this function,
-		// since, for example, real numbers for verification, must first be rounded.
-		// Also for basic arithmetic operations, I would like the comparison
-		// to find duplicates, even if the operands are reversed.
-		// That is why special cases are described above, and the rest
-		// is handled by the astutil.NodeEqual function.
-
-		return astutil.NodeEqual(x, y)
+		return -1
 	}
+}
+
+func (b *BlockWalker) computeSubTreeExpressionHash(x node.Node) int64 {
+	return b.getHashForExpressionNode(x)
+}
+
+func (b *BlockWalker) arrayKeySubTreeEqual(x node.Node, y node.Node) bool {
+	return b.computeSubTreeExpressionHash(x) == b.computeSubTreeExpressionHash(y)
 }

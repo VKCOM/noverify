@@ -1248,172 +1248,171 @@ func TestIssue325(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 
-const C1 = 1;
-const C2 = 2;
+const B1 = 10;
+const B2 = 100;
 
-class T
-{
-    const C1 = "1";
-    const C2 = "1";
+class Boo {
+	const B1 = 10;
+	const B2 = 100;
+
+	/**
+	* @return int
+	*/
+	public function someFunction() {
+		return 100;
+	}
+
+	/**
+	* @return int
+	*/
+	static function f() {
+		return 5;
+	}
 }
 
-// 1. Constants
+// concat
+$example0 = [
+    "Hello " . "World" => 1,
+    "Hello " . "World" => 2 // Duplicate key "Hello " . "World"
+];
+
+// binary + and -
 $example1 = [
-  C1 => 1,
-  C2 => 2,
-  C1 => 3, // Duplicate key C1
+    10 + 5 - 3 => 1,
+    5 - 3 + 10 => 2 // Duplicate key 5 - 3 + 10
 ];
 
+// binary * and / and %
 $example2 = [
-  T::C1 => 1,
-  T::C2 => 2,
-  T::C1 => 3, // Duplicate key T::C1
+    10 * 20 / 4  => 1,
+    50 => 2, // Duplicate key 50
+    20 => 3,
+    420 % 400 => 2 // Duplicate key 420 % 400
 ];
 
-// 2. Real number
-// Note: PHP rounds down real numbers in keys, therefore,
-// keys 14.6 and 14.5 will be one key equal to 14.
+// simple var
+$someValue = 2;
 $example3 = [
-  14.5 => 1,
-  14.6 => 2, // Duplicate key 14
+    $someValue - 3 + 5 => 1,
+    2 + $someValue => 2 // Duplicate key 2 + $someValue
 ];
 
+// bitwise AND
+$example4 = [
+  0b1111 & 0b0010 => 1,
+  0b0010 => 2, // Duplicate key 0b0010
+];
 
-// 3. Access to array elements
+// bitwise OR
+$example5 = [
+  0b1001 | 0b0010 => 1,
+  0b1011 | 0b0000 => 2, // Duplicate key 0b1011 | 0b0000
+];
+
+// unary minus
+$someValue = 2;
+$example6 = [
+  -$someValue => 1,
+  -1 * $someValue => 2, // Duplicate key  -1 * $someValue
+];
+
+// function call
+function foo()
+{
+    return 5;
+}
+
+$example7 = [
+  foo() | 0b1011 => 1,
+  foo() | 0b1011 | 0b0000 => 2, // Duplicate key  foo() | 0b1011 | 0b0000
+];
+
+// array access
 $numbers = [10, 5, 3];
 
-$example4 = [
-  $numbers[1] => 1,
-  $numbers[1] => 2, // Duplicate key $numbers[1]
-];
-
-
-/*
-Note: Duplicates are only caught if the expressions are exactly the same.
-An exception is the expression with two operands, so $a + $b will be equal to $b + $a.
-*/
-
-$someIntegerValue = 10;
-
-$example5 = [
-  $someIntegerValue + 15 => 1,
-  $someIntegerValue + 15 => 2, // Duplicate key $someIntegerValue + 15
-];
-
-$example6 = [
-  $someIntegerValue + 15 => 1,
-  15 + $someIntegerValue => 2, // Duplicate key 15 + $someIntegerValue
-];
-
-
-$someStringValue = "hello";
-
-$example6 = [
-  $someStringValue . " world" . "!" => 1,
-  $someStringValue . " world" . "!" => 2, // Duplicate key $someStringValue . " world" . "!"
-];
-
-$example7 = [
-  $numbers[1 + 5 + $someIntegerValue] => 1,
-  $numbers[1 + 5 + $someIntegerValue] => 2, // Duplicate key $numbers[1 + 5 + $someIntegerValue]
-];
-
-$example7 = [
-  $numbers[1 + 5 + $someIntegerValue] => 1,
-  $numbers[1 + 5 + $someIntegerValue] => 2, // Duplicate key $numbers[1 + 5 + $someIntegerValue]
-];
-
 $example8 = [
-  $someIntegerValue - 15 => 1,
-  $someIntegerValue - 15 => 2, // Duplicate key $someIntegerValue - 15
+  $numbers[0b1001 | 0b0010] => 1,
+  $numbers[0b1011 | 0b0000] => 2, // Duplicate key $numbers[0b1011 | 0b0000]
 ];
 
+// class const fetch
 $example9 = [
-  $someIntegerValue * 15 => 1,
-  15 * $someIntegerValue => 2, // Duplicate key 15 * $someIntegerValue
+  Boo::B1 * 10 => 1,
+  Boo::B1 * 5 * 2 => 2, // Duplicate key Boo::B1 * 5 * 2
 ];
 
+// const fetch
 $example10 = [
-  $someIntegerValue / 15 => 1,
-  $someIntegerValue / 15 => 2, // Duplicate key $someIntegerValue / 15
+  B1 * 10 => 1,
+  B1 * 5 * 2 => 2, // Duplicate key B1 * 5 * 2
 ];
 
+// method call
 
-// other
-function foo() {
-    return "hello";
-}
+$booo = new Boo();
 
 $example11 = [
-    foo() => 1,
-    foo() => 2, // Duplicate key foo()
+  -$booo->someFunction() + 10 => 1,
+  10 - $booo->someFunction() => 2, // Duplicate key 10 - $booo->someFunction()
 ];
 
 
+// static call
 $example12 = [
-    foo() . "world" => 1,
-    foo() . "world" => 2, // Duplicate key foo() . "world"
+ 10 / 5 + Boo::f() => 1,
+  2 + Boo::f() => 2, // Duplicate key 2 + Boo::f()
 ];
 
 
-class Foo {
-    /**
-     * @return string
-     */
-	static function f() {
-		return "f";
-	}
- 	/**
-     * @return string
-     */
-	function b() {
-		return "b";
-	}
+// static property fetch
+class BooMore {
+    static $value = 10;
 }
 
-$fo = new Foo();
-
-$strArr = [ "1", "2" ];
-
 $example13 = [
-    foo() . $fo->b() . Foo::f() . $strArr[1] => 1,
-    foo() . $fo->b() . Foo::f() . $strArr[1] => 2, // Duplicate key foo() . $fo->b() . Foo::f() . $strArr[1]
+  BooMore::$value => 1,
+  BooMore::$value => 2, // Duplicate key BooMore::$value
 ];
 
+// real number
+// Note: PHP rounds down real numbers in keys, therefore,
+// keys 14.6 and 14.5 will be one key equal to 14.
 $example14 = [
-    foo() . $fo->b() => 1,
-    $fo->b() . foo() => 2, // Duplicate key $fo->b() . foo()
+  14.5 => 1,
+  14.6 => 2, // Duplicate key 14.6
 ];
- 
+
+
 $example15 = [
-    12 || 56 => 1,
-    12 || 56 => 2, // Duplicate key 12 || 56
-
-    foo() + "str" => 1,
-    "str" + foo() => 2  // Duplicate key foo() + "str"
+  B1 => 1,
+  Boo::B1 => 2, // All ok
 ];
 
+$someVariable = 5;
+
+$example16 = [
+  $someVariable => 1,
+  "someVariable" => 2, // All ok
+];
 
 `)
 	test.Expect = []string{
-		`Duplicate array key 'C1'`,
-		`Duplicate array key 'T::C1'`,
-		`Duplicate array key '14.6'`,
-		`Duplicate array key '$numbers[1]'`,
-		`Duplicate array key '$someIntegerValue + 15'`,
-		`Duplicate array key '15 + $someIntegerValue'`,
-		`Duplicate array key '$someStringValue . " world" . "!"'`,
-		`Duplicate array key '$numbers[1 + 5 + $someIntegerValue]'`,
-		`Duplicate array key '$numbers[1 + 5 + $someIntegerValue]'`,
-		`Duplicate array key '$someIntegerValue - 15'`,
-		`Duplicate array key '15 * $someIntegerValue'`,
-		`Duplicate array key '$someIntegerValue / 15'`,
-		`Duplicate array key 'foo()'`,
-		`Duplicate array key 'foo() . "world"'`,
-		`Duplicate array key 'foo() . $fo->b() . Foo::f() . $strArr[1]'`,
-		`Duplicate array key '$fo->b() . foo()'`,
-		`Duplicate array key '12 || 56`,
-		`Duplicate array key '"str" + foo()'`,
+		`Duplicate array key '"Hello " . "World"'`,
+		`Duplicate array key '5 - 3 + 10'`,
+		`Duplicate array key '50'`,
+		`Duplicate array key '420 % 400'`,
+		`Duplicate array key '2 + $someValue'`,
+		`Duplicate array key '0b0010'`,
+		`Duplicate array key '0b1011 | 0b0000'`,
+		`Duplicate array key '-1 * $someValue'`,
+		`Duplicate array key 'foo() | 0b1011 | 0b0000'`,
+		`Duplicate array key '$numbers[0b1011 | 0b0000]'`,
+		`Duplicate array key 'Boo::B1 * 5 * 2'`,
+		`Duplicate array key 'B1 * 5 * 2'`,
+		`Duplicate array key '10 - $booo->someFunction()'`,
+		`Duplicate array key '2 + Boo::f()'`,
+		`Duplicate array key 'BooMore::$value`,
+		`Duplicate array key '14.6`,
 	}
 	test.RunAndMatch()
 }
