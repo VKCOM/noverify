@@ -1359,7 +1359,7 @@ $example11 = [
 
 // static call
 $example12 = [
- 10 / 5 + Boo::f() => 1,
+  10 / 5 + Boo::f() => 1,
   2 + Boo::f() => 2, // Duplicate key 2 + Boo::f()
 ];
 
@@ -1374,7 +1374,7 @@ $example13 = [
   BooMore::$value => 2, // Duplicate key BooMore::$value
 ];
 
-// real number
+// double number
 // Note: PHP rounds down real numbers in keys, therefore,
 // keys 14.6 and 14.5 will be one key equal to 14.
 $example14 = [
@@ -1402,22 +1402,22 @@ $exampleOk1 = [
 `)
 	test.Expect = []string{
 		`Duplicate array key '"Hello " . "World"'`,
-		`Duplicate array key '5 - 3 + 10'`,
-		`Duplicate array key '50'`,
-		`Duplicate array key '420 % 400'`,
-		`Duplicate array key '2 + $someValue'`,
-		`Duplicate array key '0b0010'`,
-		`Duplicate array key '0b1011 | 0b0000'`,
-		`Duplicate array key '-1 * $someValue'`,
-		`Duplicate array key 'foo() | 0b1011 | 0b0000'`,
-		`Duplicate array key '$numbers[0b1011 | 0b0000]'`,
-		`Duplicate array key 'Boo::B1 * 5 * 2'`,
-		`Duplicate array key 'B1 * 5 * 2'`,
-		`Duplicate array key '10 - $booo->someFunction()'`,
-		`Duplicate array key '2 + Boo::f()'`,
+		`Duplicate array key '5 - 3 + 10' and '10 + 5 - 3'`,
+		`Duplicate array key '50' and '10 * 20 / 4'`,
+		`Duplicate array key '420 % 400' and '20'`,
+		`Duplicate array key '2 + $someValue' and '$someValue - 3 + 5'`,
+		`Duplicate array key '0b0010' and '0b1111 & 0b0010'`,
+		`Duplicate array key '0b1011 | 0b0000' and '0b1001 | 0b0010'`,
+		`Duplicate array key '-1 * $someValue' and '-$someValue'`,
+		`Duplicate array key 'foo() | 0b1011 | 0b0000' and 'foo() | 0b1011'`,
+		`Duplicate array key '$numbers[0b1011 | 0b0000]' and '$numbers[0b1001 | 0b0010]'`,
+		`Duplicate array key 'Boo::B1 * 5 * 2' and 'Boo::B1 * 10'`,
+		`Duplicate array key 'B1 * 5 * 2' and 'B1 * 10'`,
+		`Duplicate array key '10 - $booo->someFunction()' and '-$booo->someFunction() + 10'`,
+		`Duplicate array key '2 + Boo::f()' and '10 / 5 + Boo::f()'`,
 		`Duplicate array key 'BooMore::$value'`,
-		`Duplicate array key '14.6'`,
-		`Duplicate array key ''Hello''`,
+		`Duplicate array key '14.6' and '14.5'`,
+		`Duplicate array key ''Hello'' and '"Hello"'`,
 	}
 	test.RunAndMatch()
 }

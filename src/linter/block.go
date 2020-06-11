@@ -1280,9 +1280,14 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 			// completely identical, then they are duplicated
 			if b.arrayKeySubTreeEqual(keyNode, currentKeyNode) {
 				// Receive representation of a subtree for the report
-				subTreeRepresentation := astutil.FmtNode(item.Key)
+				firstTreeRepresentation := astutil.FmtNode(item.Key)
+				secondTreeRepresentation := astutil.FmtNode(keyNode)
 
-				b.r.Report(keyNode, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", subTreeRepresentation)
+				if firstTreeRepresentation == secondTreeRepresentation {
+					b.r.Report(keyNode, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", firstTreeRepresentation)
+				} else {
+					b.r.Report(keyNode, LevelWarning, "dupArrayKeys", "Duplicate array key '%s' and '%s'", firstTreeRepresentation, secondTreeRepresentation)
+				}
 			}
 		}
 
