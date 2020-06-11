@@ -1252,22 +1252,22 @@ const B1 = 10;
 const B2 = 100;
 
 class Boo {
-	const B1 = 10;
-	const B2 = 100;
-
-	/**
-	* @return int
-	*/
-	public function someFunction() {
-		return 100;
-	}
-
-	/**
-	* @return int
-	*/
-	static function f() {
-		return 5;
-	}
+    const B1 = 10;
+    const B2 = 100;
+    
+    /**
+    * @return int
+    */
+    public function someFunction() {
+        return 100;
+    }
+    
+    /**
+    * @return int
+    */
+    static function f() {
+        return 5;
+    }
 }
 
 // concat
@@ -1382,15 +1382,19 @@ $example14 = [
   14.6 => 2, // Duplicate key 14.6
 ];
 
-
 $example15 = [
+  "Hello" => 1,
+  'Hello' => 2, // Duplicate key 'Hello'
+];
+
+$exampleOk0 = [
   B1 => 1,
   Boo::B1 => 2, // All ok
 ];
 
 $someVariable = 5;
 
-$example16 = [
+$exampleOk1 = [
   $someVariable => 1,
   "someVariable" => 2, // All ok
 ];
@@ -1411,8 +1415,9 @@ $example16 = [
 		`Duplicate array key 'B1 * 5 * 2'`,
 		`Duplicate array key '10 - $booo->someFunction()'`,
 		`Duplicate array key '2 + Boo::f()'`,
-		`Duplicate array key 'BooMore::$value`,
-		`Duplicate array key '14.6`,
+		`Duplicate array key 'BooMore::$value'`,
+		`Duplicate array key '14.6'`,
+		`Duplicate array key ''Hello''`,
 	}
 	test.RunAndMatch()
 }

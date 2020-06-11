@@ -1282,7 +1282,7 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 				// Receive representation of a subtree for the report
 				subTreeRepresentation := astutil.FmtNode(item.Key)
 
-				b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", subTreeRepresentation)
+				b.r.Report(keyNode, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", subTreeRepresentation)
 			}
 		}
 

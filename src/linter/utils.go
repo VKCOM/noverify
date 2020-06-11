@@ -577,7 +577,7 @@ func (b *BlockWalker) getHashForExpressionNode(x node.Node) int64 {
 			return -1
 		}
 
-		return int64(hash(y.Value))
+		return int64(hash("'" + unquote(y.Value) + "'"))
 
 	default:
 		return -1
