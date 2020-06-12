@@ -1309,9 +1309,15 @@ $example5 = [
   0b1011 | 0b0000 => 2, // Duplicate key 0b1011 | 0b0000
 ];
 
+// bitwise XOR
+$example6 = [
+  0b1001 ^ 0b1010 => 1,
+  0b1111 ^ 0b1100 => 2, // Duplicate key 0b1111 ^ 0b1100
+];
+
 // unary minus
 $someValue = 2;
-$example6 = [
+$example7 = [
   -$someValue => 1,
   -1 * $someValue => 2, // Duplicate key  -1 * $someValue
 ];
@@ -1322,7 +1328,7 @@ function foo()
     return 5;
 }
 
-$example7 = [
+$example8 = [
   foo() | 0b1011 => 1,
   foo() | 0b1011 | 0b0000 => 2, // Duplicate key  foo() | 0b1011 | 0b0000
 ];
@@ -1330,19 +1336,19 @@ $example7 = [
 // array access
 $numbers = [10, 5, 3];
 
-$example8 = [
+$example9 = [
   $numbers[0b1001 | 0b0010] => 1,
   $numbers[0b1011 | 0b0000] => 2, // Duplicate key $numbers[0b1011 | 0b0000]
 ];
 
 // class const fetch
-$example9 = [
+$example10 = [
   Boo::B1 * 10 => 1,
   Boo::B1 * 5 * 2 => 2, // Duplicate key Boo::B1 * 5 * 2
 ];
 
 // const fetch
-$example10 = [
+$example11 = [
   B1 * 10 => 1,
   B1 * 5 * 2 => 2, // Duplicate key B1 * 5 * 2
 ];
@@ -1351,14 +1357,14 @@ $example10 = [
 
 $booo = new Boo();
 
-$example11 = [
+$example12 = [
   -$booo->someFunction() + 10 => 1,
   10 - $booo->someFunction() => 2, // Duplicate key 10 - $booo->someFunction()
 ];
 
 
 // static call
-$example12 = [
+$example13 = [
   10 / 5 + Boo::f() => 1,
   2 + Boo::f() => 2, // Duplicate key 2 + Boo::f()
 ];
@@ -1369,7 +1375,7 @@ class BooMore {
     static $value = 10;
 }
 
-$example13 = [
+$example14 = [
   BooMore::$value => 1,
   BooMore::$value => 2, // Duplicate key BooMore::$value
 ];
@@ -1377,15 +1383,22 @@ $example13 = [
 // double number
 // Note: PHP rounds down real numbers in keys, therefore,
 // keys 14.6 and 14.5 will be one key equal to 14.
-$example14 = [
+$example15 = [
   14.5 => 1,
   14.6 => 2, // Duplicate key 14.6
 ];
 
-$example15 = [
+$example16 = [
   "Hello" => 1,
   'Hello' => 2, // Duplicate key 'Hello'
 ];
+
+$example17 = [
+  +10 => 1,
+  10 => 2, // Duplicate key '10'
+];
+
+
 
 $exampleOk0 = [
   B1 => 1,
@@ -1399,6 +1412,19 @@ $exampleOk1 = [
   "someVariable" => 2, // All ok
 ];
 
+
+function noSideFree($value) {
+  global $someVariable;
+  $someVariable += $value;
+  return $someVariable;
+}
+
+$exampleOk2 = [
+  noSideFree(5) => 1,
+  noSideFree(5) => 2, // All ok
+];
+
+
 `)
 	test.Expect = []string{
 		`Duplicate array key '"Hello " . "World"'`,
@@ -1408,6 +1434,7 @@ $exampleOk1 = [
 		`Duplicate array key '2 + $someValue' and '$someValue - 3 + 5'`,
 		`Duplicate array key '0b0010' and '0b1111 & 0b0010'`,
 		`Duplicate array key '0b1011 | 0b0000' and '0b1001 | 0b0010'`,
+		`Duplicate array key '0b1111 ^ 0b1100' and '0b1001 ^ 0b1010'`,
 		`Duplicate array key '-1 * $someValue' and '-$someValue'`,
 		`Duplicate array key 'foo() | 0b1011 | 0b0000' and 'foo() | 0b1011'`,
 		`Duplicate array key '$numbers[0b1011 | 0b0000]' and '$numbers[0b1001 | 0b0010]'`,
@@ -1418,6 +1445,7 @@ $exampleOk1 = [
 		`Duplicate array key 'BooMore::$value'`,
 		`Duplicate array key '14.6' and '14.5'`,
 		`Duplicate array key ''Hello'' and '"Hello"'`,
+		`Duplicate array key '10' and '+10'`,
 	}
 	test.RunAndMatch()
 }

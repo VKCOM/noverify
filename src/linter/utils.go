@@ -371,82 +371,52 @@ func hash(s string) uint32 {
 func (b *BlockWalker) getHashForExpressionNode(x node.Node) int64 {
 	switch x.(type) {
 	case *binary.BitwiseAnd:
-		y, ok := x.(*binary.BitwiseAnd)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*binary.BitwiseAnd)
 
 		return b.getHashForExpressionNode(y.Left) & b.getHashForExpressionNode(y.Right)
 
 	case *binary.BitwiseOr:
-		y, ok := x.(*binary.BitwiseOr)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*binary.BitwiseOr)
 
 		return b.getHashForExpressionNode(y.Left) | b.getHashForExpressionNode(y.Right)
 
 	case *binary.BitwiseXor:
-		y, ok := x.(*binary.BitwiseXor)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*binary.BitwiseXor)
 
 		return b.getHashForExpressionNode(y.Left) ^ b.getHashForExpressionNode(y.Right)
 
 	case *binary.Concat:
-		y, ok := x.(*binary.Concat)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*binary.Concat)
 
 		return int64(hash(fmt.Sprint(b.getHashForExpressionNode(y.Left)) + fmt.Sprint(b.getHashForExpressionNode(y.Right))))
 
 	case *binary.Div:
-		y, ok := x.(*binary.Div)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*binary.Div)
 
 		return b.getHashForExpressionNode(y.Left) / b.getHashForExpressionNode(y.Right)
 
 	case *binary.Minus:
-		y, ok := x.(*binary.Minus)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*binary.Minus)
 
 		return b.getHashForExpressionNode(y.Left) - b.getHashForExpressionNode(y.Right)
 
 	case *binary.Mod:
-		y, ok := x.(*binary.Mod)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*binary.Mod)
 
 		return b.getHashForExpressionNode(y.Left) % b.getHashForExpressionNode(y.Right)
 
 	case *binary.Mul:
-		y, ok := x.(*binary.Mul)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*binary.Mul)
 
 		return b.getHashForExpressionNode(y.Left) * b.getHashForExpressionNode(y.Right)
 
 	case *binary.Plus:
-		y, ok := x.(*binary.Plus)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*binary.Plus)
 
 		return b.getHashForExpressionNode(y.Left) + b.getHashForExpressionNode(y.Right)
 
 	case *expr.ArrayDimFetch:
-		y, ok := x.(*expr.ArrayDimFetch)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*expr.ArrayDimFetch)
 
 		variableName := y.Variable.(*node.SimpleVar).Name
 		indexHash := b.getHashForExpressionNode(y.Dim)
@@ -455,10 +425,7 @@ func (b *BlockWalker) getHashForExpressionNode(x node.Node) int64 {
 		return int64(hash("$" + variableName + "[" + indexHashString + "]"))
 
 	case *expr.ClassConstFetch:
-		y, ok := x.(*expr.ClassConstFetch)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*expr.ClassConstFetch)
 
 		className := meta.NameToString(y.Class.(*name.Name))
 		constName := y.ConstantName.Value
@@ -466,49 +433,29 @@ func (b *BlockWalker) getHashForExpressionNode(x node.Node) int64 {
 		return int64(hash(className + "::" + constName))
 
 	case *expr.ConstFetch:
-		y, ok := x.(*expr.ConstFetch)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*expr.ConstFetch)
 
 		constName := meta.NameToString(y.Constant.(*name.Name))
 
 		return int64(hash("ConstFetch" + constName))
 
 	case *expr.FunctionCall:
-		y, ok := x.(*expr.FunctionCall)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*expr.FunctionCall)
 
-		functionName, ok1 := solver.GetFuncName(b.r.ctx.st, y.Function)
-
-		if !ok1 {
-			return -1
-		}
+		functionName, _ := solver.GetFuncName(b.r.ctx.st, y.Function)
 
 		return int64(hash(functionName))
 
 	case *expr.MethodCall:
-		y, ok := x.(*expr.MethodCall)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*expr.MethodCall)
 
 		variableName := y.Variable.(*node.SimpleVar).Name
-		functionName, ok1 := solver.GetFuncName(b.r.ctx.st, y.Method)
-
-		if !ok1 {
-			return -1
-		}
+		functionName := y.Method.(*node.Identifier).Value
 
 		return int64(hash(variableName + "." + functionName))
 
 	case *expr.StaticCall:
-		y, ok := x.(*expr.StaticCall)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*expr.StaticCall)
 
 		className := meta.NameToString(y.Class.(*name.Name))
 		functionName := y.Call.(*node.Identifier).Value
@@ -516,10 +463,7 @@ func (b *BlockWalker) getHashForExpressionNode(x node.Node) int64 {
 		return int64(hash(className + "::" + functionName))
 
 	case *expr.StaticPropertyFetch:
-		y, ok := x.(*expr.StaticPropertyFetch)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*expr.StaticPropertyFetch)
 
 		className := meta.NameToString(y.Class.(*name.Name))
 		propertyName := y.Property.(*node.SimpleVar).Name
@@ -527,34 +471,22 @@ func (b *BlockWalker) getHashForExpressionNode(x node.Node) int64 {
 		return int64(hash(className + "::$" + propertyName))
 
 	case *expr.UnaryMinus:
-		y, ok := x.(*expr.UnaryMinus)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*expr.UnaryMinus)
 
 		return b.getHashForExpressionNode(y.Expr) * -1
 
 	case *expr.UnaryPlus:
-		y, ok := x.(*expr.UnaryPlus)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*expr.UnaryPlus)
 
 		return b.getHashForExpressionNode(y.Expr)
 
 	case *node.SimpleVar:
-		y, ok := x.(*node.SimpleVar)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*node.SimpleVar)
 
 		return int64(hash("$" + y.Name))
 
 	case *scalar.Dnumber:
-		y, ok := x.(*scalar.Dnumber)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*scalar.Dnumber)
 
 		floatValue, _ := strconv.ParseFloat(y.Value, 64)
 		floorValue := math.Floor(floatValue)
@@ -562,20 +494,14 @@ func (b *BlockWalker) getHashForExpressionNode(x node.Node) int64 {
 		return int64(floorValue)
 
 	case *scalar.Lnumber:
-		y, ok := x.(*scalar.Lnumber)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*scalar.Lnumber)
 
 		intValue, _ := strconv.ParseInt(y.Value, 10, 64)
 
 		return intValue
 
 	case *scalar.String:
-		y, ok := x.(*scalar.String)
-		if !ok {
-			return -1
-		}
+		y, _ := x.(*scalar.String)
 
 		return int64(hash("'" + unquote(y.Value) + "'"))
 
