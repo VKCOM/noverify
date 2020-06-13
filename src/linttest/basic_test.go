@@ -1123,7 +1123,7 @@ func TestDuplicateArrayKey(t *testing.T) {
 		  'key1' => 'third_thing', // duplicate
 	  ];
 	}`)
-	test.Expect = []string{"Duplicate array key 'key1'"}
+	test.Expect = []string{"Duplicate array key ''key1''"}
 	test.RunAndMatch()
 }
 

@@ -1320,14 +1320,7 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 
 		if b.sideEffectFree(item.Key) {
 			key = b.getKeyValue(item.Key)
-
-			// as we want to delete double `'` or `"` around single string
-			switch k := item.Key.(type) {
-			case *scalar.String:
-				reportKeyStr = unquote(k.Value)
-			default:
-				reportKeyStr = astutil.FmtNode(k)
-			}
+			reportKeyStr = astutil.FmtNode(item.Key)
 		} else {
 			continue
 		}
