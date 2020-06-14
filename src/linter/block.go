@@ -3,6 +3,7 @@ package linter
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
@@ -1249,43 +1250,39 @@ func (b *BlockWalker) handleArray(arr *expr.Array) bool {
 func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) bool {
 	haveKeys := false
 	haveImplicitKeys := false
-	keys := make(map[string]struct{}, len(items))
-
+	keys := astutil.NewNodeSet()
+	numericKeys := make(map[int]struct{})
 	for _, item := range items {
 		if item.Val == nil {
 			continue
 		}
 		item.Val.Walk(b)
 
-		if item.Key == nil {
+		key := item.Key
+		if key == nil {
 			haveImplicitKeys = true
 			continue
 		}
-		item.Key.Walk(b)
-
+		key.Walk(b)
 		haveKeys = true
-
-		var key string
-		var constKey bool
-
-		switch k := item.Key.(type) {
-		case *scalar.String:
-			key = unquote(k.Value)
-			constKey = true
-		case *scalar.Lnumber:
-			key = k.Value
-			constKey = true
-		}
-
-		if !constKey {
+		if !b.sideEffectFree(key) {
 			continue
 		}
-
-		if _, ok := keys[key]; ok {
-			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", key)
+		var keyIsUnique bool
+		switch key.(type) {
+		case *scalar.Lnumber:
+			num, _ := strconv.ParseInt(key.(*scalar.Lnumber).Value, 0, 0)
+			keyIsUnique = checkNumericKeyAndUpdateKeys(int(num), numericKeys)
+		case *scalar.Dnumber:
+			num, _ := strconv.ParseFloat(key.(*scalar.Dnumber).Value, 0)
+			keyIsUnique = checkNumericKeyAndUpdateKeys(int(num), numericKeys)
+		default:
+			keyIsUnique = keys.Add(key)
 		}
 
-		keys[key] = struct{}{}
+		if !keyIsUnique {
+			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", astutil.FmtNode(key))
+		}
 	}
 
 	if haveImplicitKeys && haveKeys {

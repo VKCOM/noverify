@@ -290,6 +290,14 @@ func findFreeFloatingToken(n node.Node, pos freefloating.Position, s string) boo
 	return false
 }
 
+func checkNumericKeyAndUpdateKeys(num int, numericKeys map[int]struct{}) bool {
+	_, exist := numericKeys[num]
+	if !exist {
+		numericKeys[num] = struct{}{}
+	}
+	return !exist
+}
+
 // List taken from https://wiki.php.net/rfc/context_sensitive_lexer
 var phpKeywords = map[string]bool{
 	"callable":     true,

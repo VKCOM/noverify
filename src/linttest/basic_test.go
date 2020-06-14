@@ -1113,7 +1113,7 @@ $valid_quotes = [
 `)
 }
 
-func TestDuplicateArrayKey(t *testing.T) {
+func TestDuplicateArrayKeyLiteral(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 	function test() {
@@ -1123,7 +1123,120 @@ func TestDuplicateArrayKey(t *testing.T) {
 		  'key1' => 'third_thing', // duplicate
 	  ];
 	}`)
-	test.Expect = []string{"Duplicate array key 'key1'"}
+	test.Expect = []string{
+		"Duplicate array key ''key1''",
+	}
+	test.RunAndMatch()
+}
+
+func TestDuplicateArrayKeysAreArrayElements(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	function test() {
+		$array = [4, 5, 6];
+		return [
+			$array[0] => 1,
+  			$array[1] => 2,
+  			$array[0] => 3,	//duplicate
+		];
+	}`)
+	test.Expect = []string{
+		"Duplicate array key '$array[0]'",
+	}
+	test.RunAndMatch()
+}
+
+func TestDuplicateArrayKeyWithoutSideEffects(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php	
+	function test() {
+		$s = 's';
+		return [
+			'a' . $s => 1,
+			'b' . $s => 2,
+			'a' . $s => 3, //duplicate
+		];
+	}`)
+	test.Expect = []string{
+		"Duplicate array key ''a' . $s'",
+	}
+	test.RunAndMatch()
+}
+
+func TestDuplicateArrayKeyClassConstants(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	class MyClass
+	{
+		const CONSTANT = 'constant string';
+	}
+
+	function test() {
+		return [
+			MyClass::CONSTANT => 1,
+			MyClass::CONSTANT => 2, //duplicate
+		];
+	}`)
+	test.Expect = []string{
+		"Duplicate array key 'MyClass::CONSTANT'",
+	}
+	test.RunAndMatch()
+}
+
+func TestDuplicateArrayKeyWithSideEffect(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	function sideEffect(){
+		print (17);
+	}
+	function test() {	
+		return [
+			sideEffect() => 1,
+			sideEffect() => 2,
+			sideEffect() => 3,	
+		];
+	}`)
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
+func TestDifferentNumberFormatDuplicateArraKeys(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	function test() {	
+		return [
+			1 => 1,
+			2 => 2,
+			3 => 3,
+			0b1 => 4, // duplicate for 1
+			0x2 => 5, // duplicate for 2
+			3.0 => 6, // duplicate for 3
+			4 => 7
+		];
+	}`)
+	test.Expect = []string{
+		"Duplicate array key '0b1'",
+		"Duplicate array key '0x2'",
+		"Duplicate array key '3.0'",
+	}
+	test.RunAndMatch()
+}
+
+func TestDifferentFloatingNumberFormatDuplicateArraKeys(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	function test() {	
+		return [
+			10.0 => 1,
+			1e1 => 2, // duplicate for 10.0
+			2.0 => 3,
+			2.1 => 4, //duplicate for 2.0 because of rounding
+		];
+	}`)
+	test.Expect = []string{
+		"Duplicate array key '1e1'",
+		"Duplicate array key '2.1'",
+	}
 	test.RunAndMatch()
 }
 
