@@ -3,7 +3,6 @@ package linter
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
@@ -1250,7 +1249,7 @@ func (b *BlockWalker) handleArray(arr *expr.Array) bool {
 func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) bool {
 	haveKeys := false
 	haveImplicitKeys := false
-	keys := make(map[string]struct{}, len(items))
+	keys := astutil.NewNodeSet()
 
 	for _, item := range items {
 		if item.Val == nil {
@@ -1266,54 +1265,20 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 
 		haveKeys = true
 
-		var key string
-		var constKey bool
-
-		switch k := item.Key.(type) {
-		case *scalar.String:
-			key = unquote(k.Value)
-			constKey = true
-		case *scalar.Lnumber:
-			if converted, err := strconv.ParseInt(k.Value, 0, 64); err == nil {
-				key = strconv.FormatInt(converted, 10)
-				constKey = true
-			}
-		case *scalar.Dnumber:
-			if converted, err := strconv.ParseFloat(k.Value, 64); err == nil {
-				key = strconv.FormatFloat(converted, 'f', -1, 64)
-				constKey = true
-			}
-			constKey = true
-		case *expr.ConstFetch:
-			if constName, _, ok := solver.GetConstant(b.r.ctx.st, k.Constant); ok {
-				key = constName
-				constKey = true
-			}
-		case *expr.ClassConstFetch:
-			constName := k.ConstantName.Value
-			if className, ok := solver.GetClassName(b.r.ctx.st, k.Class); ok {
-				key = className + "::" + constName
-				constKey = true
-			}
-		case *expr.New, *expr.Closure, *expr.Array:
-			// ignore explicitly, not this check but still
-			break
-		default:
-			if b.sideEffectFree(k) {
-				key = astutil.FmtNode(k)
-				constKey = true
-			}
-		}
-
-		if !constKey {
+		if !(astutil.ValidArrayKey(item.Key) && b.sideEffectFree(item.Key)) {
 			continue
 		}
 
-		if _, ok := keys[key]; ok {
+		if !keys.Add(item.Key) {
+			var key string
+			switch k := item.Key.(type) {
+			case *scalar.String:
+				key = unquote(k.Value)
+			default:
+				key = astutil.FmtNode(item.Key)
+			}
 			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", key)
 		}
-
-		keys[key] = struct{}{}
 	}
 
 	if haveImplicitKeys && haveKeys {
