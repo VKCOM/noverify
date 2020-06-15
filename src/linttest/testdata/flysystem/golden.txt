@@ -52,12 +52,6 @@ MAYBE   phpdoc: Missing PHPDoc for "retrieveSafely" public method at testdata/fl
 MAYBE   phpdoc: Missing PHPDoc for "forFileInfo" public method at testdata/flysystem/src/UnreadableFileException.php:9
     public static function forFileInfo(SplFileInfo $fileInfo)
                            ^^^^^^^^^^^
-INFO    unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Util/MimeType.php:208
-        } catch (ErrorException $e) {
-                                ^^
-MAYBE   ternarySimplify: could rewrite as `static::$extensionToMimeTypeMap[$extension] ?? 'text/plain'` at testdata/flysystem/src/Util/MimeType.php:222
-        return isset(static::$extensionToMimeTypeMap[$extension])
-               ^^^^^^^^^^^
 MAYBE   phpdoc: Missing PHPDoc for "isSeekableStream" public method at testdata/flysystem/src/Util.php:258
     public static function isSeekableStream($resource)
                            ^^^^^^^^^^^^^^^^
@@ -67,3 +61,9 @@ MAYBE   regexpSimplify: May re-write '#^[a-zA-Z]{1}:[^\\\/]#' as '#^[a-zA-Z]:[^\
 MAYBE   regexpSimplify: May re-write '#^[a-zA-Z]{1}:$#' as '#^[a-zA-Z]:$#' at testdata/flysystem/src/Util.php:346
         if (preg_match('#^[a-zA-Z]{1}:$#', $basename)) {
                        ^^^^^^^^^^^^^^^^^^
+INFO    unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Util/MimeType.php:208
+        } catch (ErrorException $e) {
+                                ^^
+MAYBE   ternarySimplify: could rewrite as `static::$extensionToMimeTypeMap[$extension] ?? 'text/plain'` at testdata/flysystem/src/Util/MimeType.php:222
+        return isset(static::$extensionToMimeTypeMap[$extension])
+               ^^^^^^^^^^^

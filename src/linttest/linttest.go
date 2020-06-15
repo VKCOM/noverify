@@ -3,15 +3,34 @@ package linttest
 
 import (
 	"fmt"
+	"log"
+	"math/rand"
+	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 )
+
+func init() {
+	var testSeed = time.Now().UnixNano()
+	if seedString := os.Getenv("TEST_SEED"); seedString != "" {
+		v, err := strconv.ParseInt(seedString, 10, 64)
+		if err != nil {
+			panic(fmt.Sprintf("$TEST_SEED: parse int: %v", err))
+		}
+		testSeed = v
+	}
+
+	rand.Seed(testSeed)
+	log.Printf("TEST_SEED: %d", testSeed)
+}
 
 // SimpleNegativeTest runs linter over a single file out of given content
 // and expects there to be no warnings.
@@ -150,12 +169,15 @@ func (s *Suite) RunLinter() []*linter.Report {
 			s.t.Fatalf("load stubs: %v", err)
 		}
 	}
+
+	shuffleFiles(s.Files)
 	for _, f := range s.Files {
 		parseTestFile(s.t, f)
 	}
 
 	meta.SetIndexingComplete(true)
 
+	shuffleFiles(s.Files)
 	var reports []*linter.Report
 	for _, f := range s.Files {
 		if f.Nolint {
@@ -187,6 +209,12 @@ func ParseTestFile(t *testing.T, filename, content string) (rootNode node.Node, 
 func init() {
 	var once sync.Once
 	once.Do(func() { go linter.MemoryLimiterThread() })
+}
+
+func shuffleFiles(files []TestFile) {
+	rand.Shuffle(len(files), func(i, j int) {
+		files[i], files[j] = files[j], files[i]
+	})
 }
 
 func parseTestFile(t testing.TB, f TestFile) (rootNode node.Node, w *linter.RootWalker) {

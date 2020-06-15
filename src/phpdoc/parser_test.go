@@ -9,12 +9,15 @@ import (
 
 func TestParseSimple(t *testing.T) {
 	p := NewTypeParser()
+	parseType := func(s string) Type {
+		return p.Parse(s).Clone()
+	}
 	want := []CommentPart{
 		&TypeVarCommentPart{
 			line:       4,
 			name:       "param",
 			VarIsFirst: true,
-			Type:       p.Parse(`int  Here goes the description`),
+			Type:       parseType(`int  Here goes the description`),
 			Var:        "$param",
 			Rest:       "Here goes the description",
 		},
@@ -22,21 +25,21 @@ func TestParseSimple(t *testing.T) {
 			line: 5,
 			name: "param",
 			Var:  "$arr",
-			Type: p.Parse(`array<int, string> $arr  Array of int to string`),
+			Type: parseType(`array<int, string> $arr  Array of int to string`),
 			Rest: "Array of int to string",
 		},
 		&TypeVarCommentPart{
 			line: 6,
 			name: "param",
 			Var:  "$arr_nested",
-			Type: p.Parse(`array<int, array<string, stdclass> > $arr_nested  Array of nested arrays`),
+			Type: parseType(`array<int, array<string, stdclass> > $arr_nested  Array of nested arrays`),
 			Rest: `Array of nested arrays`,
 		},
 		&TypeVarCommentPart{
 			line:       7,
 			name:       "param",
 			VarIsFirst: true,
-			Type:       p.Parse(`array<int, array<string, stdclass> >  Array of nested arrays`),
+			Type:       parseType(`array<int, array<string, stdclass> >  Array of nested arrays`),
 			Var:        "$arr_nested",
 			Rest:       "Array of nested arrays",
 		},
@@ -44,13 +47,13 @@ func TestParseSimple(t *testing.T) {
 			line: 8,
 			name: "var",
 			Var:  "",
-			Type: p.Parse(`int`),
+			Type: parseType(`int`),
 		},
 		&TypeVarCommentPart{
 			line: 9,
 			name: "var",
 			Var:  "$foo1",
-			Type: p.Parse(`array<int> $foo1  var comment`),
+			Type: parseType(`array<int> $foo1  var comment`),
 			Rest: "var comment",
 		},
 		&TypeVarCommentPart{
@@ -58,22 +61,22 @@ func TestParseSimple(t *testing.T) {
 			name:       "var",
 			VarIsFirst: true,
 			Var:        "$foo2",
-			Type:       p.Parse(`array<int,string>`),
+			Type:       parseType(`array<int,string>`),
 		},
 		&TypeVarCommentPart{
 			line: 11,
 			name: "var",
-			Type: p.Parse(`array< int, string >`),
+			Type: parseType(`array< int, string >`),
 		},
 		&TypeVarCommentPart{
 			line: 12,
 			name: "var",
-			Type: p.Parse("array<int, array<string, stdclass>	>"),
+			Type: parseType("array<int, array<string, stdclass>	>"),
 		},
 		&TypeCommentPart{
 			line: 13,
 			name: "return",
-			Type: p.Parse(`int   some    result`),
+			Type: parseType(`int   some    result`),
 			Rest: `some    result`,
 		},
 		&RawCommentPart{
