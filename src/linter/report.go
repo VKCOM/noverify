@@ -257,6 +257,18 @@ func init() {
 			Default: true,
 			Comment: `Report commonly misspelled words in comments.`,
 		},
+
+		{
+			Name:    "nonPublicInterfaceMethod",
+			Default: true,
+			Comment: `Report illegal non-public access level for methods in interfaces.`,
+		},
+
+		{
+			Name:    "nonPublicInterfaceConstant",
+			Default: true,
+			Comment: `Report illegal non-public access level for constants in interfaces.`,
+		},
 	}
 
 	for _, info := range allChecks {
