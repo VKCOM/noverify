@@ -1265,9 +1265,6 @@ $example1 = [
   1 => 1,
   2 => 2,
   1 => 3,
-  0b1 => 4,
-  01 => 5,
-  0x1 => 6
 ];
 
 // Doubles
@@ -1275,9 +1272,6 @@ $example2 = [
   1.0 => 2,
   2.0 => 3,
   1.0 => 1,
-  1000 => 1,
-  1_000 => 2,
-  1e+3 => 3,
 ];
 
 // Constants
@@ -1335,14 +1329,9 @@ $example9 = [
 	test.Expect = []string{
 		`Duplicate array key 'one'`,
 		`Duplicate array key '1'`,
-		`Duplicate array key '1'`,
-		`Duplicate array key '1'`,
-		`Duplicate array key '1'`,
-		`Duplicate array key '1'`,
-		`Duplicate array key '1000'`,
-		`Duplicate array key '1000'`,
-		`Duplicate array key '\C1'`,
-		`Duplicate array key '\T::C2'`,
+		`Duplicate array key '1.0'`,
+		`Duplicate array key 'C1'`,
+		`Duplicate array key 'T::C2'`,
 		`Duplicate array key 'id(1)'`,
 		`Duplicate array key ''a' . $s'`,
 		`Duplicate array key '$example5["one"]'`,
