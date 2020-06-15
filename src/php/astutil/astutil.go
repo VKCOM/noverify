@@ -2,6 +2,7 @@ package astutil
 
 import (
 	"bytes"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
