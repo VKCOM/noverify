@@ -259,15 +259,9 @@ func init() {
 		},
 
 		{
-			Name:    "nonPublicInterfaceMethod",
+			Name:    "nonPublicInterfaceMember",
 			Default: true,
-			Comment: `Report illegal non-public access level for methods in interfaces.`,
-		},
-
-		{
-			Name:    "nonPublicInterfaceConstant",
-			Default: true,
-			Comment: `Report illegal non-public access level for constants in interfaces.`,
+			Comment: `Report illegal non-public access level in interfaces.`,
 		},
 	}
 

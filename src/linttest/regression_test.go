@@ -1243,31 +1243,3 @@ function f($x) {
 }
 `)
 }
-
-func TestIssue406(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-
-interface A {
-  private const b = 100, c1 = 1000; // constant list
-  private const c = 100; // lone constant
-
-  public function f(); // ok
-
-  private function b(); // Non-public method 'b' in the interface 'A'
-}
-
-interface B {
-  protected function f(); // Non-public method 'f' in the interface 'A'
-}
-
-`)
-	test.Expect = []string{
-		`Non-public constant 'b' in the interface 'A'`,
-		`Non-public constant 'c1' in the interface 'A'`,
-		`Non-public constant 'c' in the interface 'A'`,
-		`Non-public method 'b' in the interface 'A'`,
-		`Non-public method 'f' in the interface 'B'`,
-	}
-	test.RunAndMatch()
-}

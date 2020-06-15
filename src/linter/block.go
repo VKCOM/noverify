@@ -503,26 +503,24 @@ func (b *BlockWalker) handleInterface(int *stmt.Interface) bool {
 		switch x := st.(type) {
 		case *stmt.ClassMethod:
 			for _, modifier := range x.Modifiers {
-				if strings.ToLower(modifier.Value) != "public" {
-					interfaceName := int.InterfaceName.Value
+				if strings.EqualFold(modifier.Value, "private") || strings.EqualFold(modifier.Value, "protected") {
 					methodName := x.MethodName.Value
-					b.r.Report(x, LevelWarning, "nonPublicInterfaceMethod", "Non-public method '%s' in the interface '%s'", methodName, interfaceName)
+					b.r.Report(x, LevelWarning, "nonPublicInterfaceMember", "'%s' can't be %s", methodName, modifier.Value)
 				}
 			}
 		case *stmt.ClassConstList:
 			for _, modifier := range x.Modifiers {
-				if strings.ToLower(modifier.Value) != "public" {
-					interfaceName := int.InterfaceName.Value
+				if strings.EqualFold(modifier.Value, "private") || strings.EqualFold(modifier.Value, "protected") {
 					for _, constant := range x.Consts {
 						constantName := constant.(*stmt.Constant).ConstantName.Value
-						b.r.Report(x, LevelWarning, "nonPublicInterfaceMethod", "Non-public constant '%s' in the interface '%s'", constantName, interfaceName)
+						b.r.Report(x, LevelWarning, "nonPublicInterfaceMember", "'%s' can't be %s", constantName, modifier.Value)
 					}
 				}
 			}
 		}
 	}
 
-	return false
+	return !b.ignoreFunctionBodies
 }
 
 func (b *BlockWalker) handleFunction(fun *stmt.Function) bool {
