@@ -1266,23 +1266,34 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 		haveKeys = true
 
 		var key string
+		var warningKey string
 		var constKey bool
 
 		switch k := item.Key.(type) {
 		case *scalar.String:
 			key = unquote(k.Value)
+			warningKey = k.Value
 			constKey = true
 		case *scalar.Lnumber:
-			key = k.Value
+			key = numStringToDecimal(k.Value)
+			warningKey = k.Value
+			constKey = true
+		case *scalar.Dnumber:
+			key = numStringToDecimal(k.Value)
+			warningKey = k.Value
+			constKey = true
+		default:
+			key = astutil.FmtNode(item.Key)
+			warningKey = key
 			constKey = true
 		}
 
-		if !constKey {
+		if !constKey || !b.sideEffectFree(item.Key) {
 			continue
 		}
 
 		if _, ok := keys[key]; ok {
-			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", key)
+			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", warningKey)
 		}
 
 		keys[key] = struct{}{}
