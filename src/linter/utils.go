@@ -2,6 +2,7 @@ package linter
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -356,4 +357,45 @@ var phpKeywords = map[string]bool{
 	"die":          true,
 	"self":         true,
 	"parent":       true,
+}
+
+func intStringToDecimal(str string) (int64, error) {
+	if len(str) == 1 {
+		return strconv.ParseInt(str, 10, 64)
+	}
+
+	switch str[1] {
+	case 'b':
+		return strconv.ParseInt(str[2:], 2, 64)
+	case 'x':
+		return strconv.ParseInt(str[2:], 16, 64)
+	}
+
+	if str[0] == '0' {
+		return strconv.ParseInt(str, 8, 64)
+	}
+
+	return strconv.ParseInt(str, 10, 64)
+}
+
+func numStringToDecimal(str string) string {
+	var sign bool = str[0] == '-'
+	var value int64
+
+	if sign {
+		str = str[1:]
+	}
+	str = strings.ReplaceAll(str, "_", "")
+
+	if strings.ContainsRune(str, '.') {
+		floatValue, _ := strconv.ParseFloat(str, 64)
+		value = int64(floatValue)
+	} else {
+		value, _ = intStringToDecimal(str)
+	}
+
+	if sign {
+		value *= -1
+	}
+	return strconv.FormatInt(value, 10)
 }
