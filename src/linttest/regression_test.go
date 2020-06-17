@@ -1243,3 +1243,145 @@ function f($x) {
 }
 `)
 }
+
+func TestDupArrayKeys(t *testing.T) {
+	test := linttest.NewSuite(t)
+
+	test.AddFile(`
+  <?php 
+  $s = '123';
+  $C1 = 1;
+  $C2 = 2;
+
+  class T {
+    const C1 = 1;
+    const C2 = 2;
+  }
+
+  function getX($x) {
+    return $x;
+  }
+
+  $someVar = 10;
+  function getFluidVar() {
+    global $someVar;
+    $someVar += 10;
+    return $someVar;
+  }
+
+  $k = [11, 22];
+
+  // 1. Constants
+  $constants_1 = [
+    $C1 => 1, 
+    $C2 => 2, 
+    $C1 => 3, // Duplicate key C1
+  ];
+
+  $constants_2 = [
+    T::C1 => 1, 
+    T::C2 => 2, 
+    T::C1 => 3, // Duplicate key T1::C1
+  ];
+
+  // 2. Nums
+  $nums = [
+    73 => 1, 
+    2 => 2, 
+    73 => 3, // Duplicate key 73
+    73.0 => 4, // Duplicate key 73.0
+    0b1001001 => 5, // Duplicate key 0b1001001
+    0x49 => 6, // Duplicate key 0x49
+    7_3 => 7, // Duplicate key 7_3
+    0111 => 8, // Duplicate key 0111
+    "73" => 9, // Duplicate key 73
+    0.73e2 => 10, // Duplicate key 0.73e2
+  ];
+
+  // 3. Strings
+  $strings_1 = [
+    "first" => 1,
+    "second" => 2,
+    "first" => 3, // Duplicate key first
+  ];
+
+  // Heredocs
+  $strings_2 = [
+  <<<EOT
+1
+EOT => 1,
+  <<<EOT
+2
+EOT => 2,
+  <<<EOT
+1
+EOT => 3,
+]; // Duplicate key 
+  
+  // 4. Expressions
+  $expressions_1 = [
+    $k[0] => 1,
+    $k[1] => 2,
+    $k[0] => 3, // Duplicate key $k[0]
+  ];
+
+  // Const pure function
+  $expressions_2 = [
+    getX(1) => 1,
+    getX(2) => 2,
+    getX(1) => 3, // Duplicate key getX(1)
+  ];
+
+  // It's ok
+  $expressions_3 = [
+    getFluidVar() => 1,
+    getFluidVar() => 2,
+    getFluidVar() => 3,
+  ];
+
+  // Built-in functions
+  $expressions_4 = [
+    isset($k) => 1,
+    isset($k) => 2, // Duplicate key isset($k)
+  ];
+
+  // Built-in operators
+  $expressions_5 = [
+    $k instanceof T => 1,
+    $k instanceof T => 2, // Duplicate key $k instanceof T
+  ];
+  
+  // Concat
+  $expressions_6 = [
+    'a' . $s => 1,
+    'b' . $s => 2,
+    'a' . $s => 3, // Duplicate key 'a'.$s
+  ];
+  ?>
+
+  `)
+
+	test.Expect = []string{
+		`Duplicate key C1`,
+		`Duplicate key T1::C1`,
+		`Duplicate key 73`,
+		`Duplicate key 73.0`,
+		`Duplicate key 0b1001001`,
+		`Duplicate key 0x49`,
+		`Duplicate key 7_3`,
+		`Duplicate key 0111`,
+		`Duplicate key 73`,
+		`Duplicate key 0.73e2`,
+		`Duplicate key first`,
+		`Duplicate array key '<<<EOT
+1
+EOT'`,
+		`Duplicate key $k[0]`,
+		`Duplicate key getX(1)`,
+		`Duplicate key isset($k)`,
+		`Duplicate key $k instanceof T`,
+		`Duplicate key 'a'.$s`,
+	}
+
+	test.RunAndMatch()
+}
