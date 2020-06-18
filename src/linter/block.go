@@ -3,6 +3,7 @@ package linter
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
@@ -362,6 +363,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *stmt.Try:
 		res = b.handleTry(s)
 	case *assign.Assign:
+		//fmt.Println(s.Position)
 		// TODO: only accept first assignment, not all of them
 		// e.g. if there is a condition like ($a = 10) || ($b = 5)
 		// we must only accept $a = 10 as condition that is always executed
@@ -1247,6 +1249,7 @@ func (b *BlockWalker) handleArray(arr *expr.Array) bool {
 }
 
 func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) bool {
+
 	haveKeys := false
 	haveImplicitKeys := false
 	keys := make(map[string]struct{}, len(items))
@@ -1265,27 +1268,35 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 
 		haveKeys = true
 
-		var key string
-		var constKey bool
-
-		switch k := item.Key.(type) {
-		case *scalar.String:
-			key = unquote(k.Value)
-			constKey = true
-		case *scalar.Lnumber:
-			key = k.Value
-			constKey = true
-		}
-
-		if !constKey {
+		//continue if key is non-pure
+		if !b.sideEffectFree(item.Key) {
 			continue
 		}
 
-		if _, ok := keys[key]; ok {
-			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", key)
+		var keyIdentifier string
+		var keyForReport string
+		var needAddNewKey = true
+
+		// Get string representation of the key
+		keyForReport = astutil.FmtNode(item.Key)
+		// Get the key identifier
+		keyIdentifier = b.getNodeIdentifier(item.Key)
+
+		switch item.Key.(type) {
+		case *expr.New, *expr.Array, *expr.Closure:
+			// In this place need to add a warning about an illegal key
+			needAddNewKey = false
 		}
 
-		keys[key] = struct{}{}
+		if !needAddNewKey {
+			continue
+		}
+
+		if _, ok := keys[keyIdentifier]; ok {
+			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key %s", keyForReport)
+		}
+
+		keys[keyIdentifier] = struct{}{}
 	}
 
 	if haveImplicitKeys && haveKeys {
@@ -1293,6 +1304,104 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 	}
 
 	return false
+}
+
+// This method returns the identifier of the array key.
+//
+// 1) All scalar.Strings in keys are converted to strings with single quotes.
+//    <?php
+//    $var = 1;
+//    $string = "$var"; - is not a scalar.String
+// 2) All scalar.Lnumber in keys are converted to decimal number system
+// 3) All scalar.Dnumber in keys are converted to numbers with 15 digits after the decimal point
+// 4) The comma at the end of the key-value list is deleted
+//    for example [1, 2, 3, ] converted to [1, 2, 3]
+
+func (b *BlockWalker) getNodeIdentifier(tempNode node.Node) string {
+	var nodeIdentifier string
+
+	switch k := tempNode.(type) {
+	case *scalar.String:
+		return "'" + unquote(k.Value) + "'"
+	case *scalar.Lnumber:
+		if d, err := strconv.ParseInt(k.Value, 0, 64); err == nil {
+			return "'" + strconv.FormatInt(d, 10) + "'"
+		}
+	case *scalar.Dnumber:
+		if d, err := strconv.ParseFloat(k.Value, 64); err == nil {
+			fmt.Println("'" + strconv.FormatFloat(d, 'f', 15, 64) + "'")
+			return "'" + strconv.FormatFloat(d, 'f', 15, 64) + "'"
+		}
+
+	case *binary.Concat:
+		return b.getNodeIdentifier(k.Left) + " . " + b.getNodeIdentifier(k.Right)
+	case *node.Argument:
+		if k.IsReference {
+			nodeIdentifier += "&"
+		}
+		if k.Variadic {
+			nodeIdentifier += "..."
+		}
+		nodeIdentifier += b.getNodeIdentifier(k.Expr)
+		return nodeIdentifier
+	case *node.ArgumentList:
+		for i, arg := range k.Arguments {
+			nodeIdentifier += b.getNodeIdentifier(arg)
+			if i != len(k.Arguments)-1 {
+				nodeIdentifier += ", "
+			}
+		}
+		return nodeIdentifier
+	case *expr.Array:
+		var nodeIdentifier = "["
+		for i, item := range k.Items {
+			nodeIdentifier += b.getNodeIdentifier(item)
+			if i != len(k.Items)-1 {
+				if k.Items[i+1].Key == nil && k.Items[i+1].Val == nil {
+					continue
+				}
+				nodeIdentifier += ", "
+			}
+		}
+		nodeIdentifier += "]"
+		return nodeIdentifier
+	case *expr.ArrayItem:
+		if k.Key != nil {
+			nodeIdentifier += b.getNodeIdentifier(k.Key) + " => "
+		}
+		if k.Val != nil {
+			nodeIdentifier += b.getNodeIdentifier(k.Val)
+		}
+		return nodeIdentifier
+	case *expr.ArrayDimFetch:
+		return astutil.FmtNode(k.Variable) +
+			"[" +
+			b.getNodeIdentifier(k.Dim) + "]"
+	case *expr.Ternary:
+		return b.getNodeIdentifier(k.Condition) +
+			" ? " + b.getNodeIdentifier(k.IfTrue) +
+			" : " + b.getNodeIdentifier(k.IfFalse)
+	case *expr.FunctionCall:
+		return astutil.FmtNode(k.Function) +
+			"(" +
+			b.getNodeIdentifier(k.ArgumentList) + ")"
+	case *expr.MethodCall:
+		return astutil.FmtNode(k.Variable) +
+			"->" +
+			astutil.FmtNode(k.Method) +
+			"(" +
+			b.getNodeIdentifier(k.ArgumentList) +
+			")"
+	case *expr.StaticCall:
+		return astutil.FmtNode(k.Class) +
+			"::" +
+			astutil.FmtNode(k.Call) +
+			"(" +
+			b.getNodeIdentifier(k.ArgumentList) +
+			")"
+	}
+
+	return astutil.FmtNode(tempNode)
 }
 
 func (b *BlockWalker) handleClassConstFetch(e *expr.ClassConstFetch) bool {
@@ -2082,7 +2191,7 @@ func (b *BlockWalker) handleBitwiseOp(n, left, right node.Node) {
 	//
 	// Reporting `invalid types, expected number found bool` is
 	// not that helpful, because the root of the problem is precedence.
-	// Invalid types are a result of that.
+	// Invalid types are a  result of that.
 
 	tok := "|"
 	if _, ok := n.(*binary.BitwiseAnd); ok {
