@@ -8,8 +8,6 @@ import (
 
 func TestIssue325_1(t *testing.T) {
 	// Tests for basic literal array key types (int, string)
-	// TODO(qypec): add tests for different numeral system for `int` (necessary???)
-	// TODO(qypec): some other kinds of strings? (heredoc, nowdoc)
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 	$example1 = [
@@ -40,7 +38,6 @@ func TestIssue325_1(t *testing.T) {
 
 func TestIssue325_2(t *testing.T) {
 	// Tests for cast literal array key types (float)
-	// TODO(qypec): add tests for different numeral system for `float` (necessary???)
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 	$example1 = [
@@ -111,25 +108,6 @@ func TestIssue325_3(t *testing.T) {
 	}
 	test.RunAndMatch()
 }
-
-// func TestIssue325_4(t *testing.T) {
-// 	// Test for expressions duplicate keys
-// 	test := linttest.NewSuite(t)
-// 	test.AddFile(`<?php
-// 	$k = [
-//     	'key1',
-//     	'key2',
-//     ];
-
-// 	$example3 = [
-// 		$k[0] => 1,
-// 		$k[1] => 2,
-// 		$k[0] => 3, // Duplicate key $k[0]
-// 	];
-// 	`)
-// 	test.Expect = []string{"Duplicate array key $k[0]"}
-// 	test.RunAndMatch()
-// }
 
 func TestIssue327(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php

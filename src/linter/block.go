@@ -1273,10 +1273,9 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 		case *scalar.Lnumber:
 			key = k.Value
 		case *scalar.Dnumber:
-			key = k.Value // (WIP) What is considered a duplicate? (1.234 or round_down(1.234))
+			key = k.Value
 		case *node.SimpleVar:
 			key = "$" + k.Name
-		// case *node.Var:
 		case *expr.ConstFetch:
 			var defined bool
 			if key, _, defined = solver.GetConstant(b.r.ctx.st, k.Constant); !defined {
@@ -1289,13 +1288,8 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 				continue
 			}
 			key = className + "::" + k.ConstantName.Value
-		// default:  // expressions
-		// 	if !b.sideEffectFree(k) {
-		// 		continue
-		// 	}
 		}
 
-		// (WIP) How about putting this condition before the "switch-case"?
 		if !nodeSet.Add(item.Key) {
 			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", key)
 		}
