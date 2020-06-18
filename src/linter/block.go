@@ -3,6 +3,7 @@ package linter
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
@@ -1249,7 +1250,7 @@ func (b *BlockWalker) handleArray(arr *expr.Array) bool {
 func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) bool {
 	haveKeys := false
 	haveImplicitKeys := false
-	nodeSet := astutil.NewNodeSet()
+	keys := make(map[string]struct{}, len(items))
 
 	for _, item := range items {
 		if item.Val == nil {
@@ -1271,15 +1272,12 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 		case *scalar.String:
 			key = unquote(k.Value)
 		case *scalar.Lnumber:
-			key = k.Value
-		case *scalar.Dnumber:
-			key = k.Value
-		case *node.SimpleVar:
-			key = "$" + k.Name
+			if decimal, err := strconv.ParseInt(k.Value, 0, 64); err == nil {
+				key = strconv.FormatInt(decimal, 10)
+			}
 		case *expr.ConstFetch:
 			var defined bool
 			if key, _, defined = solver.GetConstant(b.r.ctx.st, k.Constant); !defined {
-				// The responsibility for reporting an undefined constant lies with the `handleConstFetch` method
 				continue
 			}
 		case *expr.ClassConstFetch:
@@ -1288,11 +1286,21 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 				continue
 			}
 			key = className + "::" + k.ConstantName.Value
+		// illegal key types
+		case *expr.New, *expr.FunctionCall:
+			continue
+		default:
+			if !b.sideEffectFree(item.Key) {
+				continue
+			}
+			key = astutil.FmtNode(k)
 		}
 
-		if !nodeSet.Add(item.Key) {
+		if _, ok := keys[key]; ok {
 			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", key)
 		}
+
+		keys[key] = struct{}{}
 	}
 
 	if haveImplicitKeys && haveKeys {
