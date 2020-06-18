@@ -363,7 +363,6 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *stmt.Try:
 		res = b.handleTry(s)
 	case *assign.Assign:
-		//fmt.Println(s.Position)
 		// TODO: only accept first assignment, not all of them
 		// e.g. if there is a condition like ($a = 10) || ($b = 5)
 		// we must only accept $a = 10 as condition that is always executed
