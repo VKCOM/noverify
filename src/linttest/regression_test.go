@@ -6,6 +6,131 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestIssue325_1(t *testing.T) {
+	// Tests for basic literal array key types (int, string)
+	// TODO(qypec): add tests for different numeral system for `int` (necessary???)
+	// TODO(qypec): some other kinds of strings? (heredoc, nowdoc)
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	$example1 = [
+		10 => 1, 
+		20 => 2, 
+		10 => 3, // Duplicate key '10'
+	];
+
+	$example2 = [
+      	'single_quotes_key1' => 1, 
+      	'single_quotes_key2' => 2, 
+      	'single_quotes_key1' => 3, // Duplicate key 'single_quotes_key1'
+	];
+
+	$example3 = [
+      	"double_quotes_key1" => 1, 
+      	"double_quotes_key2" => 2, 
+      	"double_quotes_key1" => 3, // Duplicate key 'double_quotes_key1'
+	];
+	`)
+	test.Expect = []string{
+		`Duplicate array key '10'`,
+		`Duplicate array key 'single_quotes_key1'`,
+		`Duplicate array key 'double_quotes_key1'`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_2(t *testing.T) {
+	// Tests for cast literal array key types (float)
+	// TODO(qypec): add tests for different numeral system for `float` (necessary???)
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	$example1 = [
+      	1.234 => 1, 
+      	2.345 => 2, 
+      	1.234 => 3, // Duplicate key 1.234
+	];
+
+	$example2 = [
+      	3.456 => 1, 
+      	4.567 => 2, 
+		3.456 => 3, // Duplicate key 3.456
+		4.567 => 4, // Duplicate key 4.567
+	];
+
+	$example3 = [
+      	5.678 => 1, 
+      	6.789 => 2, 
+		5.678 => 3, // Duplicate key 5.678
+		5.678 => 4, // Duplicate key 5.678  
+	];
+	`)
+	test.Expect = []string{
+		`Duplicate array key '1.234'`,
+		`Duplicate array key '3.456'`,
+		`Duplicate array key '4.567'`,
+		`Duplicate array key '5.678'`,
+		`Duplicate array key '5.678'`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_3(t *testing.T) {
+	// Tests for basic non-literal array key types (const, class::const, simpleVar)
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	const C1 = 'key1';
+    const C2 = 'key2';
+	$example1 = [
+      	C1 => 1,
+      	C2 => 2,
+      	C1 => 3, // Duplicate key C1
+	];
+
+	class T {
+		public const C1 = 'class_key_1';
+		public const C2 = 'class_key_2';
+	}
+	$example2 = [
+		T::C1 => 1,
+		T::C2 => 2,
+		T::C1 => 3, // Duplicate key T1::C1
+		C1 => 4,
+	];
+
+	$var1 = "var_key_1";
+	$var2 = "var_key_2";
+	$example3 = [
+		$var1 => 1,
+		$var2 => 2,
+		$var1 => 3, // Duplicate key $var1
+	];
+	`)
+	test.Expect = []string{
+		`Duplicate array key '\C1'`,
+		`Duplicate array key '\T::C1'`,
+		`Duplicate array key '$var1'`,
+	}
+	test.RunAndMatch()
+}
+
+// func TestIssue325_4(t *testing.T) {
+// 	// Test for expressions duplicate keys
+// 	test := linttest.NewSuite(t)
+// 	test.AddFile(`<?php
+// 	$k = [
+//     	'key1',
+//     	'key2',
+//     ];
+
+// 	$example3 = [
+// 		$k[0] => 1,
+// 		$k[1] => 2,
+// 		$k[0] => 3, // Duplicate key $k[0]
+// 	];
+// 	`)
+// 	test.Expect = []string{"Duplicate array key $k[0]"}
+// 	test.RunAndMatch()
+// }
+
 func TestIssue327(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 function sink(...$args) {}

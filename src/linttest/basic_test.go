@@ -1113,7 +1113,7 @@ $valid_quotes = [
 `)
 }
 
-func TestDuplicateArrayKey(t *testing.T) {
+func TestDuplicateLiteralArrayKey(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 	function test() {
@@ -1124,6 +1124,23 @@ func TestDuplicateArrayKey(t *testing.T) {
 	  ];
 	}`)
 	test.Expect = []string{"Duplicate array key 'key1'"}
+	test.RunAndMatch()
+}
+
+func TestDuplicateNonLiteralArrayKey(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	function test() {
+	  $key1 = 'key1';
+	  $key2 = 'key2';
+
+	  return [
+		   $key1 => 'something',
+           $key2 => 'other_thing',
+           $key1 => 'third_thing', // duplicate
+	  ];
+	}`)
+	test.Expect = []string{"Duplicate array key '$key1'"}
 	test.RunAndMatch()
 }
 
