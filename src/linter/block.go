@@ -1265,38 +1265,33 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 
 		haveKeys = true
 
-		var key string
-		var warningKey string
-		var constKey bool
-
-		switch k := item.Key.(type) {
-		case *scalar.String:
-			key = unquote(k.Value)
-			warningKey = k.Value
-			constKey = true
-		case *scalar.Lnumber:
-			key = numStringToDecimal(k.Value)
-			warningKey = k.Value
-			constKey = true
-		case *scalar.Dnumber:
-			key = numStringToDecimal(k.Value)
-			warningKey = k.Value
-			constKey = true
-		default:
-			key = astutil.FmtNode(item.Key)
-			warningKey = key
-			constKey = true
-		}
-
-		if !constKey || !b.sideEffectFree(item.Key) {
+		if !isValidArrayKey(item.Key) || !b.sideEffectFree(item.Key) {
 			continue
 		}
 
-		if _, ok := keys[key]; ok {
-			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", warningKey)
+		var keyString string
+		var warningKeyString string
+
+		switch k := item.Key.(type) {
+		case *scalar.String:
+			keyString = unquote(k.Value)
+			warningKeyString = k.Value
+		case *scalar.Lnumber:
+			keyString = numStringToDecimal(k.Value)
+			warningKeyString = k.Value
+		case *scalar.Dnumber:
+			keyString = numStringToDecimal(k.Value)
+			warningKeyString = k.Value
+		default:
+			keyString = astutil.FmtNode(item.Key)
+			warningKeyString = keyString
 		}
 
-		keys[key] = struct{}{}
+		if _, ok := keys[keyString]; ok {
+			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", warningKeyString)
+		}
+
+		keys[keyString] = struct{}{}
 	}
 
 	if haveImplicitKeys && haveKeys {

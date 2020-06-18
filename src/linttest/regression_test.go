@@ -1271,6 +1271,17 @@ func TestDupArrayKeys(t *testing.T) {
 
   $k = [11, 22];
 
+  // 0. Tests to skip
+  $skips_1 = [
+    new T() => 1,
+    new T() => 2,
+  ];
+
+  $skips_2 = [
+    [1, 2] => 1,
+    [1, 2] => 2,
+  ];
+
   // 1. Constants
   $constants_1 = [
     $C1 => 1, 

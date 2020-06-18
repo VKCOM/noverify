@@ -399,3 +399,12 @@ func numStringToDecimal(str string) string {
 	}
 	return strconv.FormatInt(value, 10)
 }
+
+func isValidArrayKey(key node.Node) bool {
+	switch key.(type) {
+	case *expr.Array, *expr.New:
+		return false
+	}
+
+	return true
+}
