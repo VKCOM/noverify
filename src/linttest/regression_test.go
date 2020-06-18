@@ -1244,34 +1244,13 @@ function f($x) {
 `)
 }
 
-func TestDupArrayKeys(t *testing.T) {
+func TestDupArrayKeys_ToSkip(t *testing.T) {
 	test := linttest.NewSuite(t)
 
 	test.AddFile(`
-  <?php 
-  $s = '123';
-  $C1 = 1;
-  $C2 = 2;
+  <?php
+  class T {}
 
-  class T {
-    const C1 = 1;
-    const C2 = 2;
-  }
-
-  function getX($x) {
-    return $x;
-  }
-
-  $someVar = 10;
-  function getFluidVar() {
-    global $someVar;
-    $someVar += 10;
-    return $someVar;
-  }
-
-  $k = [11, 22];
-
-  // 0. Tests to skip
   $skips_1 = [
     new T() => 1,
     new T() => 2,
@@ -1281,8 +1260,23 @@ func TestDupArrayKeys(t *testing.T) {
     [1, 2] => 1,
     [1, 2] => 2,
   ];
+  ?>
+  `)
+}
 
-  // 1. Constants
+func TestDupArrayKeys_Consts(t *testing.T) {
+	test := linttest.NewSuite(t)
+
+	test.AddFile(`
+  <?php
+  $C1 = 1;
+  $C2 = 2;
+
+  class T {
+    const C1 = 1;
+    const C2 = 2;
+  }
+
   $constants_1 = [
     $C1 => 1, 
     $C2 => 2, 
@@ -1294,8 +1288,22 @@ func TestDupArrayKeys(t *testing.T) {
     T::C2 => 2, 
     T::C1 => 3, // Duplicate key T1::C1
   ];
+  ?>
+  `)
 
-  // 2. Nums
+	test.Expect = []string{
+		`Duplicate key C1`,
+		`Duplicate key T1::C1`,
+	}
+
+	test.RunAndMatch()
+}
+
+func TestDupArrayKeys_Nums(t *testing.T) {
+	test := linttest.NewSuite(t)
+
+	test.AddFile(`
+  <?php
   $nums = [
     73 => 1, 
     2 => 2, 
@@ -1308,8 +1316,28 @@ func TestDupArrayKeys(t *testing.T) {
     "73" => 9, // Duplicate key 73
     0.73e2 => 10, // Duplicate key 0.73e2
   ];
+  ?>
+  `)
 
-  // 3. Strings
+	test.Expect = []string{
+		`Duplicate key 73`,
+		`Duplicate key 73.0`,
+		`Duplicate key 0b1001001`,
+		`Duplicate key 0x49`,
+		`Duplicate key 7_3`,
+		`Duplicate key 0111`,
+		`Duplicate key 73`,
+		`Duplicate key 0.73e2`,
+	}
+
+	test.RunAndMatch()
+}
+
+func TestDupArrayKeys_Strings(t *testing.T) {
+	test := linttest.NewSuite(t)
+
+	test.AddFile(`
+  <?php
   $strings_1 = [
     "first" => 1,
     "second" => 2,
@@ -1328,8 +1356,41 @@ EOT => 2,
 1
 EOT => 3,
 ]; // Duplicate key 
-  
-  // 4. Expressions
+  ?>
+  `)
+
+	test.Expect = []string{
+		`Duplicate key first`,
+		`Duplicate array key '<<<EOT
+1
+EOT'`,
+	}
+
+	test.RunAndMatch()
+}
+
+func TestDupArrayKeys_Expressions(t *testing.T) {
+	test := linttest.NewSuite(t)
+
+	test.AddFile(`
+  <?php
+  $s = '123';
+
+  function getX($x) {
+    return $x;
+  }
+
+  $someVar = 10;
+  function getFluidVar() {
+    global $someVar;
+    $someVar += 10;
+    return $someVar;
+  }
+
+  $k = [11, 22];
+
+  class T {}
+
   $expressions_1 = [
     $k[0] => 1,
     $k[1] => 2,
@@ -1369,24 +1430,9 @@ EOT => 3,
     'a' . $s => 3, // Duplicate key 'a'.$s
   ];
   ?>
-
   `)
 
 	test.Expect = []string{
-		`Duplicate key C1`,
-		`Duplicate key T1::C1`,
-		`Duplicate key 73`,
-		`Duplicate key 73.0`,
-		`Duplicate key 0b1001001`,
-		`Duplicate key 0x49`,
-		`Duplicate key 7_3`,
-		`Duplicate key 0111`,
-		`Duplicate key 73`,
-		`Duplicate key 0.73e2`,
-		`Duplicate key first`,
-		`Duplicate array key '<<<EOT
-1
-EOT'`,
 		`Duplicate key $k[0]`,
 		`Duplicate key getX(1)`,
 		`Duplicate key isset($k)`,
