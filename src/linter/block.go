@@ -1249,7 +1249,7 @@ func (b *BlockWalker) handleArray(arr *expr.Array) bool {
 func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) bool {
 	haveKeys := false
 	haveImplicitKeys := false
-	keys := make(map[string]struct{}, len(items))
+	nodeSet := astutil.NewNodeSet()
 
 	for _, item := range items {
 		if item.Val == nil {
@@ -1266,26 +1266,39 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 		haveKeys = true
 
 		var key string
-		var constKey bool
 
 		switch k := item.Key.(type) {
 		case *scalar.String:
 			key = unquote(k.Value)
-			constKey = true
 		case *scalar.Lnumber:
 			key = k.Value
-			constKey = true
+		case *scalar.Dnumber:
+			key = k.Value // (WIP) What is considered a duplicate? (1.234 or round_down(1.234))
+		case *node.SimpleVar:
+			key = "$" + k.Name
+		// case *node.Var:
+		case *expr.ConstFetch:
+			var defined bool
+			if key, _, defined = solver.GetConstant(b.r.ctx.st, k.Constant); !defined {
+				// The responsibility for reporting an undefined constant lies with the `handleConstFetch` method
+				continue
+			}
+		case *expr.ClassConstFetch:
+			className, ok := solver.GetClassName(b.r.ctx.st, k.Class)
+			if !ok {
+				continue
+			}
+			key = className + "::" + k.ConstantName.Value
+		// default:  // expressions
+		// 	if !b.sideEffectFree(k) {
+		// 		continue
+		// 	}
 		}
 
-		if !constKey {
-			continue
-		}
-
-		if _, ok := keys[key]; ok {
+		// (WIP) How about putting this condition before the "switch-case"?
+		if !nodeSet.Add(item.Key) {
 			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", key)
 		}
-
-		keys[key] = struct{}{}
 	}
 
 	if haveImplicitKeys && haveKeys {
