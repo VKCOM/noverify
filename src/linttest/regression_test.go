@@ -1259,6 +1259,13 @@ func TestDupArrayKeys_ToSkip(t *testing.T) {
   $skips_2 = [
     [1, 2] => 1,
     [1, 2] => 2,
+    [1, 2,] => 3,
+    [1, 2,] => 4,
+  ];
+
+  $skips_3 = [
+    function() {} => 1,
+    function() {} => 2,
   ];
   ?>
   `)
@@ -1271,6 +1278,8 @@ func TestDupArrayKeys_Consts(t *testing.T) {
   <?php
   $C1 = 1;
   $C2 = 2;
+  const c1 = 1;
+  const c2 = 2;
 
   class T {
     const C1 = 1;
@@ -1288,12 +1297,19 @@ func TestDupArrayKeys_Consts(t *testing.T) {
     T::C2 => 2, 
     T::C1 => 3, // Duplicate key T1::C1
   ];
+
+  $constants_3 = [
+    c1 => 1,
+    c2 => 2,
+    c1 => 3, // Duplicate key c1
+  ];
   ?>
   `)
 
 	test.Expect = []string{
 		`Duplicate key C1`,
 		`Duplicate key T1::C1`,
+		`Duplicate key c1`,
 	}
 
 	test.RunAndMatch()
@@ -1338,10 +1354,15 @@ func TestDupArrayKeys_Strings(t *testing.T) {
 
 	test.AddFile(`
   <?php
+  $first = "a";
+  const first = "b";
+
   $strings_1 = [
     "first" => 1,
     "second" => 2,
     "first" => 3, // Duplicate key first
+    $first => 4,
+    first => 5,
   ];
 
   // Heredocs
