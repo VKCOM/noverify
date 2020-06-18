@@ -17,12 +17,20 @@ func TestIssue325_1(t *testing.T) {
 	];
 
 	$example2 = [
+		6464 => 1,
+		014500 => 2, // Duplicate key '6464'
+		0x1940 => 3, // Duplicate key '6464'
+		0b1100101000000 => 4, // Duplicate key '6464'
+		6_464 => 5, // Duplicate key '6464'
+	];
+
+	$example3 = [
       	'single_quotes_key1' => 1, 
       	'single_quotes_key2' => 2, 
       	'single_quotes_key1' => 3, // Duplicate key 'single_quotes_key1'
 	];
 
-	$example3 = [
+	$example4 = [
       	"double_quotes_key1" => 1, 
       	"double_quotes_key2" => 2, 
       	"double_quotes_key1" => 3, // Duplicate key 'double_quotes_key1'
@@ -30,6 +38,10 @@ func TestIssue325_1(t *testing.T) {
 	`)
 	test.Expect = []string{
 		`Duplicate array key '10'`,
+		`Duplicate array key '6464'`,
+		`Duplicate array key '6464'`,
+		`Duplicate array key '6464'`,
+		`Duplicate array key '6464'`,
 		`Duplicate array key 'single_quotes_key1'`,
 		`Duplicate array key 'double_quotes_key1'`,
 	}
@@ -107,6 +119,52 @@ func TestIssue325_3(t *testing.T) {
 		`Duplicate array key '$var1'`,
 	}
 	test.RunAndMatch()
+}
+
+func TestIssue325_4(t *testing.T) {
+	// Test for expressions duplicate keys
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	$k = ['key1', 'key2'];
+	$example1 = [
+		$k[0] => 1,
+		$k[1] => 2,
+		$k[0] => 3, // Duplicate key $k[0]
+	];
+
+
+	$s = "hello";
+	$example2 = [
+		'a' . $s => 1,
+		'b' . $s => 2,
+		'a' . $s => 3, // Duplicate key 'a'.$s
+	];
+	`)
+	test.Expect = []string{
+		"Duplicate array key '$k[0]'",
+		"Duplicate array key ''a' . $s'",
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_5(t *testing.T) {
+	// Test for illegal key types (new, function_call)
+	linttest.SimpleNegativeTest(t, `<?php
+	class T {}
+	$example1 = [
+		new T() => 1,
+		new T() => 2,
+	];
+
+
+	function test_func() {
+		return 1;
+	}
+	$example2 = [
+		test_func() => 1,
+		test_func() => 2,
+	  ];
+	`)
 }
 
 func TestIssue327(t *testing.T) {
