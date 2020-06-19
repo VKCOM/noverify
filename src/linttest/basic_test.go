@@ -1209,14 +1209,14 @@ $example9 = [
 ];
 `)
 	test.Expect = []string{
-		`Duplicate array key 'one'`,
-		`Duplicate array key '1'`,
-		`Duplicate array key '1.0'`,
-		`Duplicate array key 'C1'`,
-		`Duplicate array key 'T::C2'`,
-		`Duplicate array key 'id(1)'`,
-		`Duplicate array key ''a' . $s'`,
-		`Duplicate array key '$example5["one"]'`,
+		`Duplicate array key one`,
+		`Duplicate array key 1`,
+		`Duplicate array key 1.0`,
+		`Duplicate array key C1`,
+		`Duplicate array key T::C2`,
+		`Duplicate array key id(1)`,
+		`Duplicate array key 'a' . $s`,
+		`Duplicate array key $example5["one"]`,
 	}
 	test.RunAndMatch()
 }

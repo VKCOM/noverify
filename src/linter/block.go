@@ -1277,7 +1277,7 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 			default:
 				key = astutil.FmtNode(item.Key)
 			}
-			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", key)
+			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key %s", key)
 		}
 	}
 
