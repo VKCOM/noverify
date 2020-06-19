@@ -1273,7 +1273,7 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 	haveKeys := false
 	haveImplicitKeys := false
 
-	keyNodes := make(map[node.Node]struct{}, len(items))
+	keys := make(map[int64]string, len(items))
 
 	for _, item := range items {
 		if item.Val == nil {
@@ -1288,34 +1288,32 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 		}
 
 		item.Key.Walk(b)
-
 		haveKeys = true
-		currentKeyNode := item.Key
 
-		for keyNode := range keyNodes {
-
-			// If there are any side effects, then skip
-			if !b.sideEffectFree(keyNode) || !b.sideEffectFree(currentKeyNode) {
-				continue
-			}
-
-			// Compare the subtrees for every two elements, if the trees are
-			// completely identical, then they are duplicated
-			if b.arrayKeySubTreeEqual(keyNode, currentKeyNode) {
-				// Receive representation of a subtree for the report
-				firstTreeRepresentation := astutil.FmtNode(item.Key)
-				secondTreeRepresentation := astutil.FmtNode(keyNode)
-
-				if firstTreeRepresentation == secondTreeRepresentation {
-					b.r.Report(keyNode, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", firstTreeRepresentation)
-				} else {
-					b.r.Report(keyNode, LevelWarning, "dupArrayKeys", "Duplicate array key '%s' and '%s'", firstTreeRepresentation, secondTreeRepresentation)
-				}
-			}
+		if !b.sideEffectFree(item.Key) {
+			continue
 		}
 
-		// Store the nodes describing the elements of the array
-		keyNodes[item.Key] = struct{}{}
+		keyHash, ok := b.getHashForExpressionNode(item.Key)
+
+		if !ok {
+			continue
+		}
+
+		keyValue, contains := keys[keyHash]
+
+		if contains {
+			first := astutil.FmtNode(item.Key)
+			second := keyValue
+
+			if first == second {
+				b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", first)
+			} else {
+				b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s' and '%s'", first, second)
+			}
+		} else {
+			keys[keyHash] = astutil.FmtNode(item.Key)
+		}
 	}
 
 	if haveImplicitKeys && haveKeys {

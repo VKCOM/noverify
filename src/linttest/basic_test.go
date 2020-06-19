@@ -1113,6 +1113,9 @@ class Boo {
     const B1 = 10;
     const B2 = 100;
     
+	public $value = 100;
+	public $value1 = 100;
+
     /**
     * @return int
     */
@@ -1157,6 +1160,13 @@ $exampleOk2 = [
   withSideEffects(5) => 2, // All ok
 ];
 
+$booo = new Boo();
+
+$exampleOk3 = [
+    $booo->value => 1,
+    $booo->value1 => 2,  // All ok
+];
+
 `)
 }
 
@@ -1171,6 +1181,8 @@ class Boo {
     const B1 = 10;
     const B2 = 100;
     
+	public $value = 100;
+
     /**
     * @return int
     */
@@ -1269,18 +1281,25 @@ $example11 = [
   B1 * 5 * 2 => 2, // Duplicate key B1 * 5 * 2 and B1 * 10 => 1,
 ];
 
-// method call
+
 
 $booo = new Boo();
 
+// propery fetch
 $example12 = [
+    $booo->value => 1,
+    $booo->value => 2,  // Duplicate key $booo->value
+];
+
+// method call
+$example13 = [
   -$booo->someFunction() + 10 => 1,
   10 - $booo->someFunction() => 2, // Duplicate key 10 - $booo->someFunction() and -$booo->someFunction() + 10
 ];
 
 
 // static call
-$example13 = [
+$example14 = [
   10 / 5 + Boo::f() => 1,
   2 + Boo::f() => 2, // Duplicate key 2 + Boo::f() and 10 / 5 + Boo::f()
 ];
@@ -1291,7 +1310,7 @@ class BooMore {
     static $value = 10;
 }
 
-$example14 = [
+$example15 = [
   BooMore::$value => 1,
   BooMore::$value => 2, // Duplicate key BooMore::$value
 ];
@@ -1299,17 +1318,17 @@ $example14 = [
 // double number
 // Note: PHP rounds down real numbers in keys, therefore,
 // keys 14.6 and 14.5 will be one key equal to 14
-$example15 = [
+$example16 = [
   14.5 => 1,
   14.6 => 2, // Duplicate key 14.6 and 14.5
 ];
 
-$example16 = [
+$example17 = [
   "Hello" => 1,
   'Hello' => 2, // Duplicate key Hello
 ];
 
-$example17 = [
+$example18 = [
   +10 => 1,
   10 => 2, // Duplicate key 10 and +10
 ];
@@ -1329,6 +1348,7 @@ $example17 = [
 		`Duplicate array key '$numbers[0b1011 | 0b0000]' and '$numbers[0b1001 | 0b0010]'`,
 		`Duplicate array key 'Boo::B1 * 5 * 2' and 'Boo::B1 * 10'`,
 		`Duplicate array key 'B1 * 5 * 2' and 'B1 * 10'`,
+		`Duplicate array key '$booo->value'`,
 		`Duplicate array key '10 - $booo->someFunction()' and '-$booo->someFunction() + 10'`,
 		`Duplicate array key '2 + Boo::f()' and '10 / 5 + Boo::f()'`,
 		`Duplicate array key 'BooMore::$value'`,

@@ -368,152 +368,147 @@ func hash(s string) uint32 {
 	return h.Sum32()
 }
 
-func (b *BlockWalker) getHashForExpressionNode(x node.Node) int64 {
+func (b *BlockWalker) getHashForExpressionNode(x node.Node) (int64, bool) {
 	switch x.(type) {
 	case *binary.BitwiseAnd:
-		y, _ := x.(*binary.BitwiseAnd)
-
-		return b.getHashForExpressionNode(y.Left) & b.getHashForExpressionNode(y.Right)
+		y := x.(*binary.BitwiseAnd)
+		hashLeft, okLeft := b.getHashForExpressionNode(y.Left)
+		hashRight, okRight := b.getHashForExpressionNode(y.Right)
+		return hashLeft & hashRight, okLeft && okRight
 
 	case *binary.BitwiseOr:
-		y, _ := x.(*binary.BitwiseOr)
-
-		return b.getHashForExpressionNode(y.Left) | b.getHashForExpressionNode(y.Right)
+		y := x.(*binary.BitwiseOr)
+		hashLeft, okLeft := b.getHashForExpressionNode(y.Left)
+		hashRight, okRight := b.getHashForExpressionNode(y.Right)
+		return hashLeft | hashRight, okLeft && okRight
 
 	case *binary.BitwiseXor:
-		y, _ := x.(*binary.BitwiseXor)
-
-		return b.getHashForExpressionNode(y.Left) ^ b.getHashForExpressionNode(y.Right)
-
-	case *binary.Concat:
-		y, _ := x.(*binary.Concat)
-
-		return int64(hash(fmt.Sprint(b.getHashForExpressionNode(y.Left)) + fmt.Sprint(b.getHashForExpressionNode(y.Right))))
-
-	case *binary.Div:
-		y, _ := x.(*binary.Div)
-
-		return b.getHashForExpressionNode(y.Left) / b.getHashForExpressionNode(y.Right)
-
-	case *binary.Minus:
-		y, _ := x.(*binary.Minus)
-
-		return b.getHashForExpressionNode(y.Left) - b.getHashForExpressionNode(y.Right)
-
-	case *binary.Mod:
-		y, _ := x.(*binary.Mod)
-
-		return b.getHashForExpressionNode(y.Left) % b.getHashForExpressionNode(y.Right)
-
-	case *binary.Mul:
-		y, _ := x.(*binary.Mul)
-
-		return b.getHashForExpressionNode(y.Left) * b.getHashForExpressionNode(y.Right)
+		y := x.(*binary.BitwiseXor)
+		hashLeft, okLeft := b.getHashForExpressionNode(y.Left)
+		hashRight, okRight := b.getHashForExpressionNode(y.Right)
+		return hashLeft ^ hashRight, okLeft && okRight
 
 	case *binary.Plus:
-		y, _ := x.(*binary.Plus)
+		y := x.(*binary.Plus)
+		hashLeft, okLeft := b.getHashForExpressionNode(y.Left)
+		hashRight, okRight := b.getHashForExpressionNode(y.Right)
+		return hashLeft + hashRight, okLeft && okRight
 
-		return b.getHashForExpressionNode(y.Left) + b.getHashForExpressionNode(y.Right)
+	case *binary.Minus:
+		y := x.(*binary.Minus)
+		hashLeft, okLeft := b.getHashForExpressionNode(y.Left)
+		hashRight, okRight := b.getHashForExpressionNode(y.Right)
+		return hashLeft - hashRight, okLeft && okRight
+
+	case *binary.Mul:
+		y := x.(*binary.Mul)
+		hashLeft, okLeft := b.getHashForExpressionNode(y.Left)
+		hashRight, okRight := b.getHashForExpressionNode(y.Right)
+		return hashLeft * hashRight, okLeft && okRight
+
+	case *binary.Div:
+		y := x.(*binary.Div)
+		hashLeft, okLeft := b.getHashForExpressionNode(y.Left)
+		hashRight, okRight := b.getHashForExpressionNode(y.Right)
+		return hashLeft / hashRight, okLeft && okRight
+
+	case *binary.Mod:
+		y := x.(*binary.Mod)
+		hashLeft, okLeft := b.getHashForExpressionNode(y.Left)
+		hashRight, okRight := b.getHashForExpressionNode(y.Right)
+		return hashLeft % hashRight, okLeft && okRight
+
+	case *expr.UnaryPlus:
+		y := x.(*expr.UnaryPlus)
+		return b.getHashForExpressionNode(y.Expr)
+
+	case *expr.UnaryMinus:
+		y := x.(*expr.UnaryMinus)
+		hash, ok := b.getHashForExpressionNode(y.Expr)
+		return hash * -1, ok
+
+	case *binary.Concat:
+		y := x.(*binary.Concat)
+		hashLeft, okLeft := b.getHashForExpressionNode(y.Left)
+		hashRight, okRight := b.getHashForExpressionNode(y.Right)
+		return int64(hash(fmt.Sprint(hashLeft) + fmt.Sprint(hashRight))), okLeft && okRight
 
 	case *expr.ArrayDimFetch:
 		y, _ := x.(*expr.ArrayDimFetch)
-
 		variableName := y.Variable.(*node.SimpleVar).Name
-		indexHash := b.getHashForExpressionNode(y.Dim)
+		indexHash, ok := b.getHashForExpressionNode(y.Dim)
 		indexHashString := fmt.Sprint(indexHash)
-
-		return int64(hash("$" + variableName + "[" + indexHashString + "]"))
+		return int64(hash("$" + variableName + "[" + indexHashString + "]")), ok
 
 	case *expr.ClassConstFetch:
-		y, _ := x.(*expr.ClassConstFetch)
-
+		y := x.(*expr.ClassConstFetch)
 		className := meta.NameToString(y.Class.(*name.Name))
 		constName := y.ConstantName.Value
-
-		return int64(hash(className + "::" + constName))
+		return int64(hash(className + "::" + constName)), true
 
 	case *expr.ConstFetch:
-		y, _ := x.(*expr.ConstFetch)
-
+		y := x.(*expr.ConstFetch)
 		constName := meta.NameToString(y.Constant.(*name.Name))
-
-		return int64(hash("ConstFetch" + constName))
+		return int64(hash("ConstFetch" + constName)), true
 
 	case *expr.FunctionCall:
-		y, _ := x.(*expr.FunctionCall)
-
-		functionName, _ := solver.GetFuncName(b.r.ctx.st, y.Function)
-
-		return int64(hash(functionName))
+		y := x.(*expr.FunctionCall)
+		functionName, ok := solver.GetFuncName(b.r.ctx.st, y.Function)
+		if !ok {
+			return 0, false
+		}
+		return int64(hash(functionName)), true
 
 	case *expr.MethodCall:
-		y, _ := x.(*expr.MethodCall)
-
+		y := x.(*expr.MethodCall)
 		variableName := y.Variable.(*node.SimpleVar).Name
 		functionName := y.Method.(*node.Identifier).Value
+		return int64(hash("$" + variableName + "." + functionName)), true
 
-		return int64(hash(variableName + "." + functionName))
+	case *expr.PropertyFetch:
+		y := x.(*expr.PropertyFetch)
+		variableName := y.Variable.(*node.SimpleVar).Name
+		propertyName := y.Property.(*node.Identifier).Value
+		return int64(hash("$" + variableName + "->" + propertyName)), true
 
 	case *expr.StaticCall:
-		y, _ := x.(*expr.StaticCall)
-
+		y := x.(*expr.StaticCall)
 		className := meta.NameToString(y.Class.(*name.Name))
 		functionName := y.Call.(*node.Identifier).Value
-
-		return int64(hash(className + "::" + functionName))
+		return int64(hash(className + "::" + functionName)), true
 
 	case *expr.StaticPropertyFetch:
-		y, _ := x.(*expr.StaticPropertyFetch)
-
+		y := x.(*expr.StaticPropertyFetch)
 		className := meta.NameToString(y.Class.(*name.Name))
 		propertyName := y.Property.(*node.SimpleVar).Name
-
-		return int64(hash(className + "::$" + propertyName))
-
-	case *expr.UnaryMinus:
-		y, _ := x.(*expr.UnaryMinus)
-
-		return b.getHashForExpressionNode(y.Expr) * -1
-
-	case *expr.UnaryPlus:
-		y, _ := x.(*expr.UnaryPlus)
-
-		return b.getHashForExpressionNode(y.Expr)
+		return int64(hash(className + "::$" + propertyName)), true
 
 	case *node.SimpleVar:
-		y, _ := x.(*node.SimpleVar)
-
-		return int64(hash("$" + y.Name))
+		y := x.(*node.SimpleVar)
+		return int64(hash("$" + y.Name)), true
 
 	case *scalar.Dnumber:
-		y, _ := x.(*scalar.Dnumber)
-
-		floatValue, _ := strconv.ParseFloat(y.Value, 64)
-		floorValue := math.Floor(floatValue)
-
-		return int64(floorValue)
+		y := x.(*scalar.Dnumber)
+		val, err := strconv.ParseFloat(y.Value, 64)
+		if err != nil {
+			return 0, false
+		}
+		val = math.Floor(val)
+		return int64(val), true
 
 	case *scalar.Lnumber:
-		y, _ := x.(*scalar.Lnumber)
-
-		intValue, _ := strconv.ParseInt(y.Value, 10, 64)
-
-		return intValue
+		y := x.(*scalar.Lnumber)
+		value, err := strconv.ParseInt(y.Value, 0, 64)
+		if err != nil {
+			return 0, false
+		}
+		return value, true
 
 	case *scalar.String:
-		y, _ := x.(*scalar.String)
-
-		return int64(hash("'" + unquote(y.Value) + "'"))
+		y := x.(*scalar.String)
+		return int64(hash("'" + unquote(y.Value) + "'")), true
 
 	default:
-		return -1
+		return 0, false
 	}
-}
-
-func (b *BlockWalker) computeSubTreeExpressionHash(x node.Node) int64 {
-	return b.getHashForExpressionNode(x)
-}
-
-func (b *BlockWalker) arrayKeySubTreeEqual(x node.Node, y node.Node) bool {
-	return b.computeSubTreeExpressionHash(x) == b.computeSubTreeExpressionHash(y)
 }
