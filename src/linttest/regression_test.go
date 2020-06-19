@@ -1450,6 +1450,16 @@ func TestDupArrayKeys_Expressions(t *testing.T) {
     'b' . $s => 2,
     'a' . $s => 3, // Duplicate key 'a'.$s
   ];
+
+  $a = 1;
+  $b = 2;
+  $expressions_7 = [
+    $a => 1,
+    $a + 1 => 2,
+    $a + 1 => 3, // Duplicate key $a + 1
+    $a + $b => 4,
+    $a + $b => 5, // Duplicate key $a + $b
+  ];
   ?>
   `)
 
@@ -1459,6 +1469,8 @@ func TestDupArrayKeys_Expressions(t *testing.T) {
 		`Duplicate array key 'isset($k)'`,
 		`Duplicate array key '$k instanceof T'`,
 		`Duplicate array key ''a' . $s'`,
+		`Duplicate array key '$a + 1'`,
+		`Duplicate array key '$a + $b'`,
 	}
 
 	test.RunAndMatch()
