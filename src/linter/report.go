@@ -257,6 +257,12 @@ func init() {
 			Default: true,
 			Comment: `Report commonly misspelled words in comments.`,
 		},
+
+		{
+			Name:    "nonPublicInterfaceMember",
+			Default: true,
+			Comment: `Report illegal non-public access level in interfaces.`,
+		},
 	}
 
 	for _, info := range allChecks {
