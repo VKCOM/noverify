@@ -1282,6 +1282,13 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 		case *scalar.Dnumber:
 			keyString = numStringToDecimal(k.Value)
 			warningKeyString = k.Value
+		case *expr.ConstFetch:
+			if name, _, defined := solver.GetConstant(b.r.ctx.st, k.Constant); !defined {
+				continue
+			} else {
+				keyString = name
+				warningKeyString = astutil.FmtNode(k.Constant)
+			}
 		default:
 			keyString = astutil.FmtNode(item.Key)
 			warningKeyString = keyString
