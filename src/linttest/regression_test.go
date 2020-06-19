@@ -1307,9 +1307,9 @@ func TestDupArrayKeys_Consts(t *testing.T) {
   `)
 
 	test.Expect = []string{
-		`Duplicate key C1`,
-		`Duplicate key T1::C1`,
-		`Duplicate key c1`,
+		`Duplicate array key '$C1'`,
+		`Duplicate array key 'T::C1'`,
+		`Duplicate array key 'c1'`,
 	}
 
 	test.RunAndMatch()
@@ -1336,14 +1336,14 @@ func TestDupArrayKeys_Nums(t *testing.T) {
   `)
 
 	test.Expect = []string{
-		`Duplicate key 73`,
-		`Duplicate key 73.0`,
-		`Duplicate key 0b1001001`,
-		`Duplicate key 0x49`,
-		`Duplicate key 7_3`,
-		`Duplicate key 0111`,
-		`Duplicate key 73`,
-		`Duplicate key 0.73e2`,
+		`Duplicate array key '73'`,
+		`Duplicate array key '73.0'`,
+		`Duplicate array key '0b1001001'`,
+		`Duplicate array key '0x49'`,
+		`Duplicate array key '7_3'`,
+		`Duplicate array key '0111'`,
+		`Duplicate array key '"73"'`,
+		`Duplicate array key '0.73e2'`,
 	}
 
 	test.RunAndMatch()
@@ -1381,7 +1381,7 @@ EOT => 3,
   `)
 
 	test.Expect = []string{
-		`Duplicate key first`,
+		`Duplicate array key '"first"'`,
 		`Duplicate array key '<<<EOT
 1
 EOT'`,
@@ -1454,11 +1454,11 @@ func TestDupArrayKeys_Expressions(t *testing.T) {
   `)
 
 	test.Expect = []string{
-		`Duplicate key $k[0]`,
-		`Duplicate key getX(1)`,
-		`Duplicate key isset($k)`,
-		`Duplicate key $k instanceof T`,
-		`Duplicate key 'a'.$s`,
+		`Duplicate array key '$k[0]'`,
+		`Duplicate array key 'getX(1)'`,
+		`Duplicate array key 'isset($k)'`,
+		`Duplicate array key '$k instanceof T'`,
+		`Duplicate array key ''a' . $s'`,
 	}
 
 	test.RunAndMatch()
