@@ -1114,16 +1114,110 @@ $valid_quotes = [
 }
 
 func TestDuplicateArrayKey(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-	function test() {
-	  return [
-		  'key1' => 'something',
-		  'key2' => 'other_thing',
-		  'key1' => 'third_thing', // duplicate
-	  ];
-	}`)
-	test.Expect = []string{"Duplicate array key 'key1'"}
+		test := linttest.NewSuite(t)
+		test.AddFile(`<?php
+class T {
+	public const C1 = 3;
+	public const C2 = 4;
+}
+
+const C1 = 1;
+const C2 = 2;
+
+function id($x) {
+  return $x;
+}
+
+$var = 1;
+function notPure() {
+  global $var;
+  $var = $var + 1;
+  return $var;
+}
+
+// Strings
+$example5 = [
+  "one" => 1,
+  "two" => 2,
+  "one" => 3,
+];
+
+// Integers in different base
+$example1 = [
+  1 => 1,
+  2 => 2,
+  1 => 3,
+];
+
+// Doubles
+$example2 = [
+  1.0 => 2,
+  2.0 => 3,
+  1.0 => 1,
+];
+
+// Constants
+$example3 = [
+  C1 => 1,
+  C2 => 2,
+  C1 => 3, // Duplicate key C1
+];
+
+// Class constants
+$example4 = [
+  T::C1 => 1,
+  T::C2 => 2,
+  T::C2 => 3, // Duplicate key T1::C1
+];
+
+// Should be another warning, I'll skip it explicitly
+// But this is still debatable
+$example6 = [
+  new T() => 1,
+  new T() => 2,
+];
+
+// Side effects free functions
+$example7 = [
+  id(1) => 1,
+  id(3) => 2,
+  id(1) => 3,
+];
+
+$s = "42";
+// More of them
+$example8 = [
+  'a' . $s => 1,
+  'b' . $s => 2,
+  'a' . $s => 3,
+];
+
+// Not side effect free functions
+$example8 = [
+  notPure() => 1,
+  id(1)     => 2,
+  notPure() => 3,
+  // another level of pureness check
+  id(notPure()) => 4,
+  id(notPure()) => 5,
+];
+
+$example9 = [
+  $example5["one"] => 1,
+  $example5["two"] => 2,
+  $example5["one"] => 3,
+];
+`)
+	test.Expect = []string{
+		`Duplicate array key 'one'`,
+		`Duplicate array key '1'`,
+		`Duplicate array key '1.0'`,
+		`Duplicate array key 'C1'`,
+		`Duplicate array key 'T::C2'`,
+		`Duplicate array key 'id(1)'`,
+		`Duplicate array key ''a' . $s'`,
+		`Duplicate array key '$example5["one"]'`,
+	}
 	test.RunAndMatch()
 }
 
