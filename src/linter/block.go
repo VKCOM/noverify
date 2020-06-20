@@ -1346,7 +1346,7 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 				key = strings.TrimLeft(constName, "\\")
 				constKey = true
 			} else if n, ok := k.Constant.(*name.Name); ok {
-				n := meta.NameToString(n)
+				n := strings.ToLower(meta.NameToString(n))
 				keyName = n
 				if n == "true" {
 					key = "1"
@@ -1359,15 +1359,13 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 		case *expr.ClassConstFetch:
 			constName := k.ConstantName
 			if constName.Value == `class` || constName.Value == `CLASS` {
-				return false
+				continue
 			}
-
 			className, ok := solver.GetClassName(b.r.ctx.st, k.Class)
 			if !ok {
 				continue
 			}
-			className = strings.TrimLeft(className, "\\")
-			key = className + "::" + constName.Value
+			key = strings.TrimLeft(className, "\\") + "::" + constName.Value
 			constKey = true
 		case *expr.ArrayDimFetch:
 			if v, ok := k.Variable.(*node.SimpleVar); ok {
@@ -1377,7 +1375,7 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 				}
 			}
 		case *node.SimpleVar:
-			key = fmt.Sprintf("$%s", k.Name)
+			key = "$" + k.Name
 			constKey = true
 		}
 
