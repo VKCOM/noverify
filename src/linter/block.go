@@ -1275,7 +1275,7 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 		switch k := item.Key.(type) {
 		case *scalar.String:
 			keyString = unquote(k.Value)
-			warningKeyString = k.Value
+			warningKeyString = keyString
 		case *scalar.Lnumber:
 			keyString = numStringToDecimal(k.Value)
 			warningKeyString = k.Value

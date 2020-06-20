@@ -1342,7 +1342,7 @@ func TestDupArrayKeys_Nums(t *testing.T) {
 		`Duplicate array key '0x49'`,
 		`Duplicate array key '7_3'`,
 		`Duplicate array key '0111'`,
-		`Duplicate array key '"73"'`,
+		`Duplicate array key '73'`,
 		`Duplicate array key '0.73e2'`,
 	}
 
@@ -1381,7 +1381,7 @@ EOT => 3,
   `)
 
 	test.Expect = []string{
-		`Duplicate array key '"first"'`,
+		`Duplicate array key 'first'`,
 		`Duplicate array key '<<<EOT
 1
 EOT'`,
