@@ -3,6 +3,7 @@ package linter
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
@@ -1289,14 +1290,94 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 		haveKeys = true
 
 		var key string
+		var keyName string
 		var constKey bool
 
 		switch k := item.Key.(type) {
 		case *scalar.String:
-			key = unquote(k.Value)
+			// try to parse to int (if string does not start with '0' or '+')
+			keyName = unquote(k.Value)
+			if len(keyName) > 0 && keyName[0] != '0' && keyName[0] != '+' {
+				if _, err := strconv.Atoi(keyName); err == nil {
+					key = keyName
+					constKey = true
+					break
+				}
+			}
+			key = k.Value
 			constKey = true
+		case *expr.UnaryMinus:
+			if t, ok := k.Expr.(*scalar.Lnumber); ok {
+				key = "-" + t.Value
+				constKey = true
+			} else if t, ok := k.Expr.(*scalar.Dnumber); ok {
+				tokens := strings.Split(t.Value, ".")
+				if len(tokens) > 0 {
+					key = "-" + tokens[0]
+					keyName = "-" + t.Value
+					constKey = true
+				}
+			}
+		case *expr.UnaryPlus:
+			if t, ok := k.Expr.(*scalar.Lnumber); ok {
+				key = t.Value
+				constKey = true
+			} else if t, ok := k.Expr.(*scalar.Dnumber); ok {
+				tokens := strings.Split(t.Value, ".")
+				if len(tokens) > 0 {
+					key = tokens[0]
+					keyName = t.Value
+					constKey = true
+				}
+			}
 		case *scalar.Lnumber:
 			key = k.Value
+			constKey = true
+		case *scalar.Dnumber:
+			tokens := strings.Split(k.Value, ".")
+			if len(tokens) > 0 {
+				key = tokens[0]
+				keyName = k.Value
+				constKey = true
+			}
+		case *expr.ConstFetch:
+			constName, _, defined := solver.GetConstant(b.r.ctx.st, k.Constant)
+			if defined {
+				key = strings.TrimLeft(constName, "\\")
+				constKey = true
+			} else if n, ok := k.Constant.(*name.Name); ok {
+				n := meta.NameToString(n)
+				keyName = n
+				if n == "true" {
+					key = "1"
+					constKey = true
+				} else if n == "false" {
+					key = "0"
+					constKey = true
+				}
+			}
+		case *expr.ClassConstFetch:
+			constName := k.ConstantName
+			if constName.Value == `class` || constName.Value == `CLASS` {
+				return false
+			}
+
+			className, ok := solver.GetClassName(b.r.ctx.st, k.Class)
+			if !ok {
+				continue
+			}
+			className = strings.TrimLeft(className, "\\")
+			key = className + "::" + constName.Value
+			constKey = true
+		case *expr.ArrayDimFetch:
+			if v, ok := k.Variable.(*node.SimpleVar); ok {
+				if d, ok := k.Dim.(*scalar.Lnumber); ok {
+					key = fmt.Sprintf("$%s[%s]", v.Name, d.Value)
+					constKey = true
+				}
+			}
+		case *node.SimpleVar:
+			key = fmt.Sprintf("$%s", k.Name)
 			constKey = true
 		}
 
@@ -1305,7 +1386,10 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 		}
 
 		if _, ok := keys[key]; ok {
-			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", key)
+			if keyName == "" {
+				keyName = key
+			}
+			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", keyName)
 		}
 
 		keys[key] = struct{}{}

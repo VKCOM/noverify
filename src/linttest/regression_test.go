@@ -1243,3 +1243,146 @@ function f($x) {
 }
 `)
 }
+
+func TestIssue325_LNumbers(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	$test = [
+		0 => 1,
+		1 => 2, // ok
+		2 => 1,
+		2 => 2, // duplicate
+		3 => 1,
+		'3' => 2, // duplicate
+		4 => 1,
+		'+4' => 2, // ok
+		+5 => 1,
+		'+5' => 2, // ok
+		+6 => 1,
+		'6' => 2, // duplicate
+		-7 => 1,
+		'-7' => 2, // duplicate
+		8 => 1,
+		'08' => 2, // ok
+	];?>`)
+	test.Expect = []string{
+		"Duplicate array key '2'",
+		"Duplicate array key '3'",
+		"Duplicate array key '6'",
+		"Duplicate array key '-7'",
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_DNumbers(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	$test = [
+		0.5 => 1,
+		1.5 => 2, // ok
+		2.5 => 1,
+		2.3 => 2, // duplicate
+		3.3 => 1,
+		'3.2' => 2, // ok
+		4.5 => 1,
+		'+4' => 2, // ok
+		+5.5 => 1,
+		'+5' => 2, // ok
+		+6.5 => 1,
+		'6' => 2, // duplicate
+		-7.5 => 1,
+		'-7' => 2, // duplicate
+	];?>`)
+	test.Expect = []string{
+		"Duplicate array key '2.3'",
+		"Duplicate array key '6'",
+		"Duplicate array key '-7'",
+	}
+	test.RunAndMatch()
+}
+
+// Test throws errors like 'ERROR undefined: Use true instead of true at _file0.php:4'
+/*func TestIssue325_Booleans(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	$test1 = [
+		1 => 1,
+		true => 2, // duplicate
+	];
+	$test2 = [
+		1 => 1,
+		false => 2, // ok
+	];
+	$test3 = [
+		0 => 1,
+		true => 2, // ok
+	];
+	$test4 = [
+		0 => 1,
+		false => 2, // duplicate
+	];
+	$test5 = [
+		true => 1,
+		'true' => 2, // ok
+	];
+	$test6 = [
+		false => 1,
+		'false' => 2, // ok
+	];?>`)
+	test.Expect = []string{
+		"Duplicate array key 'true'",
+		"Duplicate array key 'false'",
+	}
+	test.RunAndMatch()
+}*/
+
+func TestIssue325_Constants(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	class T {
+		const C1 = "key1";
+	}
+	const C2 = "key2";
+	$test = [
+		T::C1 => 1,
+		T::C1 => 2, // duplicate
+		C2 => 1,
+		C2 => 2, // duplicate
+	];?>`)
+	test.Expect = []string{
+		"Duplicate array key 'T::C1'",
+		"Duplicate array key 'C2'",
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_ArrayDimFetch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	$arr = [1, 2, 3];
+	$test = [
+		$arr[0] => 1,
+		$arr[1] => 2, 
+		$arr[0]=> 3,// duplicate
+	];?>`)
+	test.Expect = []string{
+		"Duplicate array key '$arr[0]'",
+	}
+	test.RunAndMatch()
+}
+
+func TestIssue325_SimpleVars(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	$simpleVarA = "keyA";
+	$simpleVarB = "keyB";
+	$test = [
+		$simpleVarA => 1,
+		$simpleVarB => 2, 
+		$simpleVarA => 3,// duplicate
+	];?>`)
+	test.Expect = []string{
+		"Duplicate array key '$simpleVarA'",
+	}
+	test.RunAndMatch()
+}
