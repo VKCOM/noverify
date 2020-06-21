@@ -1356,11 +1356,17 @@ func TestIssue325_Constants(t *testing.T) {
 		const C1 = "key1";
 	}
 	const C2 = "key2";
+	const C3 = "key3";
 	$test = [
 		T::C1 => 1,
 		T::C1 => 2, // duplicate
+		"T::C1" => 3, // ok
+		"\T::C1" => 4, // ok
 		C2 => 1,
 		C2 => 2, // duplicate
+		C3 => 1,
+		'C3' => 2, // ok
+		'\C3' => 3, // ok
 	];?>`)
 	test.Expect = []string{
 		"Duplicate array key 'T::C1'",
@@ -1376,7 +1382,8 @@ func TestIssue325_ArrayDimFetch(t *testing.T) {
 	$test = [
 		$arr[0] => 1,
 		$arr[1] => 2, 
-		$arr[0]=> 3,// duplicate
+		$arr[0] => 3,// duplicate
+		'$arr[0]' => 4, // ok
 	];?>`)
 	test.Expect = []string{
 		"Duplicate array key '$arr[0]'",
