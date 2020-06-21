@@ -1243,3 +1243,95 @@ function f($x) {
 }
 `)
 }
+
+func TestIssue325(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+// 1. Constants
+
+const C1 = 1;
+const C2 = 2;
+
+$example1 = [
+  C1 => 1, 
+  C2 => 2, 
+  C1 => 3, // Duplicate key C1
+];
+
+class T {
+  const C1 = 1;
+  const C2 = 2;
+}
+
+$example2 = [
+  T::C1 => 1, 
+  T::C2 => 2, 
+  T::C1 => 3, // Duplicate key T1::C1
+];
+
+// 2. Expressions
+
+$k = [1, 2, 3];
+
+$example3 = [
+  $k[0] => 1,
+  $k[1] => 2,
+  $k[0] => 3, // Duplicate key $k[0]
+];
+
+// 3. Optional: anything that satisfies sideEffectFree()
+
+$s = 0;
+
+$example4 = [
+  'a' . $s => 1,
+  'b' . $s => 2,
+  'a' . $s => 3, // Duplicate key 'a'.$s
+];
+
+//4. Additional
+
+function foo($x) {
+  return $x;
+}
+
+$example5 = [
+  foo(1) => 1,
+  foo(1) => 2,
+];
+
+$example6 = [
+  10 => 1,
+  0b1010 => 2,
+];
+
+$example7 = [
+  11 => 1,
+  0xB => 2,
+];
+
+$example8 = [
+  9 => 1,
+  011 => 2,
+];
+
+$example9 = [
+  1.0 => 1,
+  2.0 => 2,
+  1.0 => 1,
+];
+
+`)
+	test.Expect = []string{
+		`dupArrayKeys: Duplicate array key '\C1'`,
+		`dupArrayKeys: Duplicate array key '\T::C1'`,
+		`dupArrayKeys: Duplicate array key '$k[0]'`,
+		`dupArrayKeys: Duplicate array key ''a' . $s'`,
+		`dupArrayKeys: Duplicate array key 'foo(1)'`,
+		`dupArrayKeys: Duplicate array key '10'`,
+		`dupArrayKeys: Duplicate array key '11'`,
+		`dupArrayKeys: Duplicate array key '9'`,
+		`dupArrayKeys: Duplicate array key '1.0'`,
+	}
+	test.RunAndMatch()
+}

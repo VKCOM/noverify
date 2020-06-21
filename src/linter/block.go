@@ -3,6 +3,7 @@ package linter
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
@@ -1296,8 +1297,29 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 			key = unquote(k.Value)
 			constKey = true
 		case *scalar.Lnumber:
+			if converted, err := strconv.ParseInt(k.Value, 0, 64); err == nil {
+				key = strconv.FormatInt(converted, 10)
+				constKey = true
+			}
+		case *scalar.Dnumber:
 			key = k.Value
 			constKey = true
+		case *expr.ConstFetch:
+			if constName, _, ok := solver.GetConstant(b.r.ctx.st, k.Constant); ok {
+				key = constName
+				constKey = true
+			}
+		case *expr.ClassConstFetch:
+			constName := k.ConstantName.Value
+			if className, ok := solver.GetClassName(b.r.ctx.st, k.Class); ok {
+				key = className + "::" + constName
+				constKey = true
+			}
+		default:
+			if b.sideEffectFree(k) {
+				key = astutil.FmtNode(k)
+				constKey = true
+			}
 		}
 
 		if !constKey {
