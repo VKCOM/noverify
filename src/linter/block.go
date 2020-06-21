@@ -1296,9 +1296,9 @@ func heredocPartsRepresentation(vs []node.Node) string {
 func (b *BlockWalker) stringRepresentation(key node.Node) (string, string) {
 	switch k := key.(type) {
 	case *scalar.String:
-		return "string", unquote(k.Value)
+		return "string", "\"" + unquote(k.Value) + "\""
 	case *scalar.Heredoc:
-		return "heredoc", heredocPartsRepresentation(k.Parts)
+		return "heredoc", "\"" + heredocPartsRepresentation(k.Parts) + "\""
 	case *scalar.Lnumber:
 		return "integer", unifyNumber(k.Value, func(s string) (interface{}, error) {
 			return strconv.ParseInt(s, 0, 64)
