@@ -1294,74 +1294,7 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 
 		haveKeys = true
 
-		var key string
-
-		switch k := item.Key.(type) {
-		case *scalar.String:
-			// try to parse to int (if string does not start with '0' or '+')
-			key = unquote(k.Value)
-			if len(key) > 0 && key[0] != '0' && key[0] != '+' {
-				if _, err := strconv.Atoi(key); err == nil {
-					break
-				}
-			}
-			key = quote(key)
-		case *expr.UnaryMinus:
-			if t, ok := k.Expr.(*scalar.Lnumber); ok {
-				key = "-" + t.Value
-			} else if t, ok := k.Expr.(*scalar.Dnumber); ok {
-				tokens := strings.Split(t.Value, ".")
-				if len(tokens) > 0 {
-					key = "-" + tokens[0]
-				}
-			}
-		case *expr.UnaryPlus:
-			if t, ok := k.Expr.(*scalar.Lnumber); ok {
-				key = t.Value
-			} else if t, ok := k.Expr.(*scalar.Dnumber); ok {
-				tokens := strings.Split(t.Value, ".")
-				if len(tokens) > 0 {
-					key = tokens[0]
-				}
-			}
-		case *scalar.Lnumber:
-			key = k.Value
-		case *scalar.Dnumber:
-			tokens := strings.Split(k.Value, ".")
-			if len(tokens) > 0 {
-				key = tokens[0]
-			}
-		case *expr.ConstFetch:
-			constName, _, defined := solver.GetConstant(b.r.ctx.st, k.Constant)
-			if defined {
-				key = strings.TrimLeft(constName, "\\")
-			} else if n, ok := k.Constant.(*name.Name); ok {
-				n := strings.ToLower(meta.NameToString(n))
-				if n == "true" {
-					key = "1"
-				} else if n == "false" {
-					key = "0"
-				}
-			}
-		case *expr.ClassConstFetch:
-			constName := k.ConstantName
-			if constName.Value == `class` || constName.Value == `CLASS` {
-				continue
-			}
-			className, ok := solver.GetClassName(b.r.ctx.st, k.Class)
-			if !ok {
-				continue
-			}
-			key = strings.TrimLeft(className, "\\") + "::" + constName.Value
-		case *expr.ArrayDimFetch:
-			if v, ok := k.Variable.(*node.SimpleVar); ok {
-				if d, ok := k.Dim.(*scalar.Lnumber); ok {
-					key = fmt.Sprintf("$%s[%s]", v.Name, d.Value)
-				}
-			}
-		case *node.SimpleVar:
-			key = "$" + k.Name
-		}
+		key := b.handleArrayItem(item)
 
 		if key == "" {
 			continue
@@ -1370,7 +1303,8 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 		if _, ok := keys[key]; ok {
 			sb.Reset()
 			p.Print(item.Key)
-			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", unquote(sb.String()))
+			msg := fmt.Sprintf("Duplicate array key '%s'", unquote(sb.String()))
+			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", msg)
 		}
 
 		keys[key] = struct{}{}
@@ -1381,6 +1315,76 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 	}
 
 	return false
+}
+
+func (b *BlockWalker) handleArrayItem(item *expr.ArrayItem) (key string) {
+	switch k := item.Key.(type) {
+	case *scalar.String:
+		// try to parse to int (if string does not start with '0' or '+')
+		key = unquote(k.Value)
+		if len(key) > 0 && key[0] != '0' && key[0] != '+' {
+			if _, err := strconv.Atoi(key); err == nil {
+				break
+			}
+		}
+		key = quote(key)
+	case *expr.UnaryMinus:
+		if t, ok := k.Expr.(*scalar.Lnumber); ok {
+			key = "-" + t.Value
+		} else if t, ok := k.Expr.(*scalar.Dnumber); ok {
+			tokens := strings.Split(t.Value, ".")
+			if len(tokens) > 0 {
+				key = "-" + tokens[0]
+			}
+		}
+	case *expr.UnaryPlus:
+		if t, ok := k.Expr.(*scalar.Lnumber); ok {
+			key = t.Value
+		} else if t, ok := k.Expr.(*scalar.Dnumber); ok {
+			tokens := strings.Split(t.Value, ".")
+			if len(tokens) > 0 {
+				key = tokens[0]
+			}
+		}
+	case *scalar.Lnumber:
+		key = k.Value
+	case *scalar.Dnumber:
+		tokens := strings.Split(k.Value, ".")
+		if len(tokens) > 0 {
+			key = tokens[0]
+		}
+	case *expr.ConstFetch:
+		constName, _, defined := solver.GetConstant(b.r.ctx.st, k.Constant)
+		if defined {
+			key = strings.TrimLeft(constName, "\\")
+		} else if n, ok := k.Constant.(*name.Name); ok {
+			n := strings.ToLower(meta.NameToString(n))
+			if n == "true" {
+				key = "1"
+			} else if n == "false" {
+				key = "0"
+			}
+		}
+	case *expr.ClassConstFetch:
+		constName := k.ConstantName
+		if constName.Value == `class` || constName.Value == `CLASS` {
+			return
+		}
+		className, ok := solver.GetClassName(b.r.ctx.st, k.Class)
+		if !ok {
+			return
+		}
+		key = strings.TrimLeft(className, "\\") + "::" + constName.Value
+	case *expr.ArrayDimFetch:
+		if v, ok := k.Variable.(*node.SimpleVar); ok {
+			if d, ok := k.Dim.(*scalar.Lnumber); ok {
+				key = fmt.Sprintf("$%s[%s]", v.Name, d.Value)
+			}
+		}
+	case *node.SimpleVar:
+		key = "$" + k.Name
+	}
+	return
 }
 
 func (b *BlockWalker) handleClassConstFetch(e *expr.ClassConstFetch) bool {
