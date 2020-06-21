@@ -1304,7 +1304,7 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 					break
 				}
 			}
-			key = k.Value
+			key = fmt.Sprintf("\"%s\"", keyName)
 			constKey = true
 		case *expr.UnaryMinus:
 			if t, ok := k.Expr.(*scalar.Lnumber); ok {

@@ -1301,6 +1301,19 @@ func TestIssue325_DNumbers(t *testing.T) {
 	test.RunAndMatch()
 }
 
+func TestIssue325_Strings(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	$test1 = [
+		'key' => 1,
+		"key" => 2, // duplicate
+	];?>`)
+	test.Expect = []string{
+		"Duplicate array key 'key'",
+	}
+	test.RunAndMatch()
+}
+
 // Test throws errors like 'ERROR undefined: Use true instead of true at _file0.php:4'
 /*func TestIssue325_Booleans(t *testing.T) {
 	test := linttest.NewSuite(t)
