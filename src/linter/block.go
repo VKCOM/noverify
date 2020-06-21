@@ -2,7 +2,9 @@ package linter
 
 import (
 	"fmt"
+	"github.com/VKCOM/noverify/src/php/parser/position"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
@@ -1269,17 +1271,68 @@ func (b *BlockWalker) handleArray(arr *expr.Array) bool {
 	return b.handleArrayItems(arr, arr.Items)
 }
 
+func unifyNumber(str string, parser func(string) (interface{}, error)) string {
+	if parsed, err := parser(str); err == nil {
+		return fmt.Sprint(parsed)
+	}
+	return str
+}
+
+func heredocPartsRepresentation(vs []node.Node) string {
+	var str strings.Builder
+	for _, v := range vs {
+		switch k := v.(type) {
+		case *scalar.EncapsedStringPart:
+			str.WriteString(k.Value)
+		case *name.NamePart:
+			str.WriteString(k.Value)
+		}
+	}
+
+	res := str.String()
+	return res[:len(res)-1] //removing empty line
+}
+
+func (b *BlockWalker) stringRepresentation(key node.Node) (string, string) {
+	switch k := key.(type) {
+	case *scalar.String:
+		return "string", unquote(k.Value)
+	case *scalar.Heredoc:
+		return "heredoc", heredocPartsRepresentation(k.Parts)
+	case *scalar.Lnumber:
+		return "integer", unifyNumber(k.Value, func(s string) (interface{}, error) {
+			return strconv.ParseInt(s, 0, 64)
+		})
+	case *scalar.Dnumber:
+		return "floating", unifyNumber(k.Value, func(s string) (interface{}, error) {
+			return strconv.ParseFloat(s, 64)
+		})
+	case *expr.ClassConstFetch:
+		if classname, valid := solver.GetClassName(b.r.ctx.st, k.Class); valid {
+			return "class constant", (classname + "::" + k.ConstantName.Value)[1:] //removing '\'
+		}
+	case *expr.ConstFetch:
+		if constant, _, valid := solver.GetConstant(b.r.ctx.st, k.Constant); valid {
+			return "constant", constant[1:] //removing '\'
+		}
+	default:
+		if b.sideEffectFree(key) {
+			return "pure evaluation result", astutil.FmtNode(k)
+		}
+	}
+	return "", ""
+}
+
 func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) bool {
 	haveKeys := false
 	haveImplicitKeys := false
-	keys := make(map[string]struct{}, len(items))
+	keys := make(map[string]position.Position, len(items))
 
 	for _, item := range items {
 		if item.Val == nil {
 			continue
 		}
 		item.Val.Walk(b)
-
 		if item.Key == nil {
 			haveImplicitKeys = true
 			continue
@@ -1288,27 +1341,18 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 
 		haveKeys = true
 
-		var key string
-		var constKey bool
-
-		switch k := item.Key.(type) {
-		case *scalar.String:
-			key = unquote(k.Value)
-			constKey = true
-		case *scalar.Lnumber:
-			key = k.Value
-			constKey = true
+		switch item.Key.(type) {
+		case *expr.Array, *expr.New, *expr.Closure:
+			continue //illegal type for keys
 		}
+		if description, representation := b.stringRepresentation(item.Key); description != "" {
+			if prev, ok := keys[representation]; ok {
+				b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key (%s) '%s' at line %d (previously defined at line %d)", description, representation, item.Key.GetPosition().StartLine, prev.StartLine)
+			} else {
+				keys[representation] = *item.Key.GetPosition()
+			}
+		} // else we can not check
 
-		if !constKey {
-			continue
-		}
-
-		if _, ok := keys[key]; ok {
-			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", key)
-		}
-
-		keys[key] = struct{}{}
 	}
 
 	if haveImplicitKeys && haveKeys {

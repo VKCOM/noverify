@@ -1243,3 +1243,195 @@ function f($x) {
 }
 `)
 }
+
+func TestIssue325(t *testing.T) {
+	//duplicateString(t)=TestDuplicateArrayKey
+	duplicateNumbers(t)
+	duplicateConstants(t)
+	duplicateClassConstants(t)
+	duplicateHeredoc(t)
+	duplicatePure(t)
+	duplicateArrays(t)
+	duplicateIllegalType(t)
+}
+
+func duplicateNumbers(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	function test() {
+	  return [
+		  0 => 'first_thing',
+		  00 => 'second_thing', // duplicate
+		  0x0 => 'third_thing', // duplicate
+		  0.0 => 'fourth_thing', // duplicate
+          0.1 => 'fifth_string',
+          0.1 => 'sixth_string', //duplicate
+          1e-1 => 'seventh_string', //duplicate
+	  ];
+	}
+`)
+	test.Expect = []string{
+		"Duplicate array key (integer) '0' at line 5 (previously defined at line 4)",
+		"Duplicate array key (integer) '0' at line 6 (previously defined at line 4)",
+		"Duplicate array key (floating) '0' at line 7 (previously defined at line 4)",
+		"Duplicate array key (floating) '0.1' at line 9 (previously defined at line 8)",
+		"Duplicate array key (floating) '0.1' at line 10 (previously defined at line 8)",
+	}
+	test.RunAndMatch()
+}
+
+func duplicateConstants(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+    const C1 = 0;
+    const C2 = 0;
+	function test() {
+	  return [
+		  C1 => 'first_thing',
+		  C2 => 'second_thing',
+		  C1 => 'third_thing', // duplicate
+		  C1 => 'fourth_thing', // duplicate
+		  \C1 => 'fifth_thing', // duplicate
+	  ];
+	}
+`)
+	test.Expect = []string{
+		"Duplicate array key (constant) 'C1' at line 8 (previously defined at line 6)",
+		"Duplicate array key (constant) 'C1' at line 9 (previously defined at line 6)",
+		"Duplicate array key (constant) 'C1' at line 10 (previously defined at line 6)",
+	}
+	test.RunAndMatch()
+}
+
+func duplicateClassConstants(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+    class C {
+        const C1 = 0;
+        const C2 = 0;
+    }
+
+    class C1 {
+        const C1 = 0;
+        const C2 = 0;
+    }
+    
+	function test() {
+	  return [
+		  C::C1 => 'first_thing',
+		  C::C2 => 'second_thing',
+		  C::C1 => 'third_thing', // duplicate
+		  C::C1 => 'fourth_thing', // duplicate
+		  \C::C1 => 'fifth_thing', // duplicate
+		  C1::C1 => 'sixth_thing',
+	  ];
+	}
+`)
+	test.Expect = []string{
+		"Duplicate array key (class constant) 'C::C1' at line 16 (previously defined at line 14)",
+		"Duplicate array key (class constant) 'C::C1' at line 17 (previously defined at line 14)",
+		"Duplicate array key (class constant) 'C::C1' at line 18 (previously defined at line 14)",
+	}
+	test.RunAndMatch()
+}
+
+func duplicateHeredoc(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	function test() {
+	  return [
+		  <<<'EOL'
+1
+EOL => 'first_thing',
+		  <<<'EOL'
+2
+EOL => 'second_thing',
+          <<<'EOL'
+1
+EOL => 'third_thing',
+          <<<EOL
+1
+EOL => 'fourth_thing',
+          <<<EOR
+1
+EOR => 'fifth_thing',
+          '1' => 'sixth_thing',
+	  ];
+	}
+`)
+	test.Expect = []string{
+		"Duplicate array key (heredoc) '1' at line 10 (previously defined at line 4)",
+		"Duplicate array key (heredoc) '1' at line 13 (previously defined at line 4)",
+		"Duplicate array key (heredoc) '1' at line 16 (previously defined at line 4)",
+		"Duplicate array key (string) '1' at line 19 (previously defined at line 4)",
+	}
+	test.RunAndMatch()
+}
+
+func duplicatePure(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+    function clear() {
+        return 1 + 1;
+    }
+    $i = 0;
+    function sideEffect() {
+        global $i;
+        $i += 2;
+        return $i;
+    }
+    
+	function test() {
+	  return [
+		  clear() => 'first_thing',
+		  clear() => 'second_thing',
+		  sideEffect() => 'third_thing',
+		  sideEffect() => 'fourth_thing',
+          1 * 1 => 'fifth_thing',
+          1* 1 => 'sixth_thing',
+	  ];
+	}
+`)
+	test.Expect = []string{
+		"Duplicate array key (pure evaluation result) 'clear()' at line 15 (previously defined at line 14)",
+		"Duplicate array key (pure evaluation result) '1 * 1' at line 19 (previously defined at line 18)",
+	}
+	test.RunAndMatch()
+}
+
+func duplicateIllegalType(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+    class C {}
+	function test() {
+	  return [
+		  new C() => 'first_thing',
+		  new C() => 'second_thing',
+		  [] => 'third_thing',
+		  [] => 'fourth_thing',
+		  function() { return 2; } => 'fifth_thing',
+		  function() { return 2; } => 'sixth_thing',
+	  ];
+	}
+`)
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
+func duplicateArrays(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	  const arr = [1, 2, 3];
+      function test() {
+	  return [
+		  arr[0] => 'first_thing',
+		  arr[1] => 'second_thing',
+		  arr[0] => 'third_thing',
+	  ];
+	}
+`)
+	test.Expect = []string{
+		"Duplicate array key (pure evaluation result) 'arr[0]' at line 7 (previously defined at line 5)",
+	}
+	test.RunAndMatch()
+}
