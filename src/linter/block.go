@@ -1332,26 +1332,23 @@ func (b *BlockWalker) handleArrayItem(item *expr.ArrayItem) (key string) {
 		if t, ok := k.Expr.(*scalar.Lnumber); ok {
 			key = "-" + t.Value
 		} else if t, ok := k.Expr.(*scalar.Dnumber); ok {
-			tokens := strings.Split(t.Value, ".")
-			if len(tokens) > 0 {
-				key = "-" + tokens[0]
+			if val, err := strconv.ParseFloat(t.Value, 64); err == nil {
+				key = fmt.Sprintf("-%d", int(val))
 			}
 		}
 	case *expr.UnaryPlus:
 		if t, ok := k.Expr.(*scalar.Lnumber); ok {
 			key = t.Value
 		} else if t, ok := k.Expr.(*scalar.Dnumber); ok {
-			tokens := strings.Split(t.Value, ".")
-			if len(tokens) > 0 {
-				key = tokens[0]
+			if val, err := strconv.ParseFloat(t.Value, 64); err == nil {
+				key = fmt.Sprint(int(val))
 			}
 		}
 	case *scalar.Lnumber:
 		key = k.Value
 	case *scalar.Dnumber:
-		tokens := strings.Split(k.Value, ".")
-		if len(tokens) > 0 {
-			key = tokens[0]
+		if val, err := strconv.ParseFloat(k.Value, 64); err == nil {
+			key = fmt.Sprint(int(val))
 		}
 	case *expr.ConstFetch:
 		constName, _, defined := solver.GetConstant(b.r.ctx.st, k.Constant)
