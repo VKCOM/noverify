@@ -1253,6 +1253,7 @@ func TestIssue325(t *testing.T) {
 	duplicatePure(t)
 	duplicateArrays(t)
 	duplicateIllegalType(t)
+	duplicateTypeConversations(t)
 }
 
 func duplicateNumbers(t *testing.T) {
@@ -1267,6 +1268,7 @@ func duplicateNumbers(t *testing.T) {
           0.1 => 'fifth_string',
           0.1 => 'sixth_string', //duplicate
           1e-1 => 'seventh_string', //duplicate
+          '0' => 'eighth_string'
 	  ];
 	}
 `)
@@ -1360,10 +1362,10 @@ EOR => 'fifth_thing',
 	}
 `)
 	test.Expect = []string{
-		"Duplicate array key (heredoc) '1' at line 10 (previously defined at line 4)",
-		"Duplicate array key (heredoc) '1' at line 13 (previously defined at line 4)",
-		"Duplicate array key (heredoc) '1' at line 16 (previously defined at line 4)",
-		"Duplicate array key (string) '1' at line 19 (previously defined at line 4)",
+		"Duplicate array key (heredoc) '\"1\"' at line 10 (previously defined at line 4)",
+		"Duplicate array key (heredoc) '\"1\"' at line 13 (previously defined at line 4)",
+		"Duplicate array key (heredoc) '\"1\"' at line 16 (previously defined at line 4)",
+		"Duplicate array key (string) '\"1\"' at line 19 (previously defined at line 4)",
 	}
 	test.RunAndMatch()
 }
@@ -1432,6 +1434,21 @@ func duplicateArrays(t *testing.T) {
 `)
 	test.Expect = []string{
 		"Duplicate array key (pure evaluation result) 'arr[0]' at line 7 (previously defined at line 5)",
+	}
+	test.RunAndMatch()
+}
+
+func duplicateTypeConversations(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+    $arr = [0 => 0,
+            0.0 => 1,
+            '0' => 2,
+            "0" => 3];
+`)
+	test.Expect = []string{
+		"Duplicate array key (floating) '0' at line 3 (previously defined at line 2)",
+		"Duplicate array key (string) '\"0\"' at line 5 (previously defined at line 4)",
 	}
 	test.RunAndMatch()
 }
