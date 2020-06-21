@@ -1293,34 +1293,34 @@ func heredocPartsRepresentation(vs []node.Node) string {
 	return res[:len(res)-1] //removing empty line
 }
 
-func (b *BlockWalker) stringRepresentation(key node.Node) (string, string) {
+func (b *BlockWalker) stringRepresentation(key node.Node) (isQuoted bool, description string, stringRepresentation string) {
 	switch k := key.(type) {
 	case *scalar.String:
-		return "string", "\"" + unquote(k.Value) + "\""
+		return true, "string", "\"" + unquote(k.Value) + "\""
 	case *scalar.Heredoc:
-		return "heredoc", "\"" + heredocPartsRepresentation(k.Parts) + "\""
+		return true, "heredoc", "\"" + heredocPartsRepresentation(k.Parts) + "\""
 	case *scalar.Lnumber:
-		return "integer", unifyNumber(k.Value, func(s string) (interface{}, error) {
+		return false, "integer", unifyNumber(k.Value, func(s string) (interface{}, error) {
 			return strconv.ParseInt(s, 0, 64)
 		})
 	case *scalar.Dnumber:
-		return "floating", unifyNumber(k.Value, func(s string) (interface{}, error) {
+		return false, "floating", unifyNumber(k.Value, func(s string) (interface{}, error) {
 			return strconv.ParseFloat(s, 64)
 		})
 	case *expr.ClassConstFetch:
 		if classname, valid := solver.GetClassName(b.r.ctx.st, k.Class); valid {
-			return "class constant", (classname + "::" + k.ConstantName.Value)[1:] //removing '\'
+			return false, "class constant", (classname + "::" + k.ConstantName.Value)[1:] //removing '\'
 		}
 	case *expr.ConstFetch:
 		if constant, _, valid := solver.GetConstant(b.r.ctx.st, k.Constant); valid {
-			return "constant", constant[1:] //removing '\'
+			return false, "constant", constant[1:] //removing '\'
 		}
 	default:
 		if b.sideEffectFree(key) {
-			return "pure evaluation result", astutil.FmtNode(k)
+			return false, "pure evaluation result", astutil.FmtNode(k)
 		}
 	}
-	return "", ""
+	return false, "", ""
 }
 
 func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) bool {
@@ -1345,9 +1345,13 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 		case *expr.Array, *expr.New, *expr.Closure:
 			continue //illegal type for keys
 		}
-		if description, representation := b.stringRepresentation(item.Key); description != "" {
+		if quoted, description, representation := b.stringRepresentation(item.Key); description != "" {
 			if prev, ok := keys[representation]; ok {
-				b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key (%s) '%s' at line %d (previously defined at line %d)", description, representation, item.Key.GetPosition().StartLine, prev.StartLine)
+				toShow := representation
+				if !quoted {
+					toShow = "'" + toShow + "'"
+				}
+				b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key (%s) %s at line %d (previously defined at line %d)", description, toShow, item.Key.GetPosition().StartLine, prev.StartLine)
 			} else {
 				keys[representation] = *item.Key.GetPosition()
 			}

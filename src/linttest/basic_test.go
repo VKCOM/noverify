@@ -1132,7 +1132,7 @@ func TestDuplicateArrayKey(t *testing.T) {
 	  ];
 	}`)
 	test.Expect = []string{
-		"Duplicate array key (string) '\"key1\"' at line 6 (previously defined at line 4)",
+		"Duplicate array key (string) \"key1\" at line 6 (previously defined at line 4)",
 		"Duplicate array key (integer) '0' at line 14 (previously defined at line 12)",
 	}
 	test.RunAndMatch()
