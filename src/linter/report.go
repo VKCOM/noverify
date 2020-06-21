@@ -560,6 +560,11 @@ func unquote(s string) string {
 	return s
 }
 
+// quote returns string surrounded with double quotes
+func quote(s string) string {
+	return "\"" + s + "\""
+}
+
 func linterError(filename, format string, args ...interface{}) {
 	log.Printf("error: "+filename+": "+format, args...)
 }

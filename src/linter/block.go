@@ -1,7 +1,9 @@
 package linter
 
 import (
+	"bytes"
 	"fmt"
+	"github.com/VKCOM/noverify/src/php/parser/printer"
 	"regexp"
 	"strconv"
 	"strings"
@@ -1275,6 +1277,9 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 	haveImplicitKeys := false
 	keys := make(map[string]struct{}, len(items))
 
+	sb := new(bytes.Buffer)
+	p := printer.NewPrinter(sb)
+
 	for _, item := range items {
 		if item.Val == nil {
 			continue
@@ -1290,22 +1295,19 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 		haveKeys = true
 
 		var key string
-		var keyName string
 		var constKey bool
 
 		switch k := item.Key.(type) {
 		case *scalar.String:
 			// try to parse to int (if string does not start with '0' or '+')
-			keyName = unquote(k.Value)
-			if len(keyName) > 0 && keyName[0] != '0' && keyName[0] != '+' {
-				if _, err := strconv.Atoi(keyName); err == nil {
-					key = keyName
-					constKey = true
+			constKey = true
+			key = unquote(k.Value)
+			if len(key) > 0 && key[0] != '0' && key[0] != '+' {
+				if _, err := strconv.Atoi(key); err == nil {
 					break
 				}
 			}
-			key = fmt.Sprintf("\"%s\"", keyName)
-			constKey = true
+			key = quote(key)
 		case *expr.UnaryMinus:
 			if t, ok := k.Expr.(*scalar.Lnumber); ok {
 				key = "-" + t.Value
@@ -1314,7 +1316,6 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 				tokens := strings.Split(t.Value, ".")
 				if len(tokens) > 0 {
 					key = "-" + tokens[0]
-					keyName = "-" + t.Value
 					constKey = true
 				}
 			}
@@ -1326,7 +1327,6 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 				tokens := strings.Split(t.Value, ".")
 				if len(tokens) > 0 {
 					key = tokens[0]
-					keyName = t.Value
 					constKey = true
 				}
 			}
@@ -1337,7 +1337,6 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 			tokens := strings.Split(k.Value, ".")
 			if len(tokens) > 0 {
 				key = tokens[0]
-				keyName = k.Value
 				constKey = true
 			}
 		case *expr.ConstFetch:
@@ -1347,7 +1346,6 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 				constKey = true
 			} else if n, ok := k.Constant.(*name.Name); ok {
 				n := strings.ToLower(meta.NameToString(n))
-				keyName = n
 				if n == "true" {
 					key = "1"
 					constKey = true
@@ -1384,10 +1382,9 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 		}
 
 		if _, ok := keys[key]; ok {
-			if keyName == "" {
-				keyName = key
-			}
-			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", keyName)
+			sb.Reset()
+			p.Print(item.Key)
+			b.r.Report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", unquote(sb.String()))
 		}
 
 		keys[key] = struct{}{}
