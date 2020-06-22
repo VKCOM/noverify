@@ -438,9 +438,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 			res = false
 		}
 	case *stmt.Interface:
-		if b.ignoreFunctionBodies {
-			res = false
-		}
+		res = b.handleInterface(s)
 	case *stmt.Trait:
 		if b.ignoreFunctionBodies {
 			res = false
@@ -498,6 +496,31 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	}
 
 	return res
+}
+
+func (b *BlockWalker) handleInterface(int *stmt.Interface) bool {
+	for _, st := range int.Stmts {
+		switch x := st.(type) {
+		case *stmt.ClassMethod:
+			for _, modifier := range x.Modifiers {
+				if strings.EqualFold(modifier.Value, "private") || strings.EqualFold(modifier.Value, "protected") {
+					methodName := x.MethodName.Value
+					b.r.Report(x, LevelWarning, "nonPublicInterfaceMember", "'%s' can't be %s", methodName, modifier.Value)
+				}
+			}
+		case *stmt.ClassConstList:
+			for _, modifier := range x.Modifiers {
+				if strings.EqualFold(modifier.Value, "private") || strings.EqualFold(modifier.Value, "protected") {
+					for _, constant := range x.Consts {
+						constantName := constant.(*stmt.Constant).ConstantName.Value
+						b.r.Report(x, LevelWarning, "nonPublicInterfaceMember", "'%s' can't be %s", constantName, modifier.Value)
+					}
+				}
+			}
+		}
+	}
+
+	return !b.ignoreFunctionBodies
 }
 
 func (b *BlockWalker) handleFunction(fun *stmt.Function) bool {
