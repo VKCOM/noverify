@@ -1061,3 +1061,82 @@ trait AbstractTraitAB {
 	}
 	runFilterMatch(test, `unimplemented`, `nameCase`, `undefined`)
 }
+
+func TestClassComponentsRedefinitionGood(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+	
+/**
+ * @property int $d Just property
+ * @method static void foo() Just method
+ * @method void boo() Just method
+ */
+class B {
+
+public $d;
+
+/**
+ * Some method foo()
+ */
+public static function foo() {}
+
+/**
+ * Some method boo()
+ */
+public function boo() {}
+}
+`)
+}
+
+func TestClassComponentsRedefinition(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+
+/**
+ * @property int $d Just property
+ * @method static void foo() Just method
+ * @method void boo() Just method
+ */
+class B {
+
+public const b = 100;
+private const b = 100;
+protected const b = 100; // Constant B::b cannot be redefine
+
+public $d;
+public static $d = 100;
+protected static $d = 100; // Property B::$d cannot be redeclare
+
+/**
+ * Some method foo()
+ */
+public static function foo() {}
+/**
+ * Some method foo()
+ */
+private function foo() {}
+/**
+ * Some method foo()
+ */
+protected function foo() {} // Method B::foo cannot be redeclare
+
+/**
+ * Some method boo()
+ */
+public function boo() {}
+/**
+ * Some method boo()
+ */
+protected function boo() {} // Method B::boo cannot be redeclare
+}
+`)
+	test.Expect = []string{
+		`Constant B::b cannot be redefine`,
+		`Constant B::b cannot be redefine`,
+		`Property B::$d cannot be redeclare`,
+		`Property B::$d cannot be redeclare`,
+		`Method B::foo cannot be redeclare`,
+		`Method B::foo cannot be redeclare`,
+		`Method B::boo cannot be redeclare`,
+	}
+	test.RunAndMatch()
+}

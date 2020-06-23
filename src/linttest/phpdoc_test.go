@@ -305,7 +305,7 @@ class Foo {
   public $x;
 
   /** @var real */
-  public $x;
+  public $y;
 }
 `)
 	test.Expect = []string{

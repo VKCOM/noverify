@@ -68,6 +68,7 @@ func parseClassPHPDocMethod(ctx *rootContext, result *classPhpDocParseResult, pa
 		Flags:        funcFlags,
 		MinParamsCnt: 0, // TODO: parse signature and assign a proper value
 		AccessLevel:  meta.Public,
+		FromDoc:      true,
 	})
 }
 
@@ -98,5 +99,6 @@ func parseClassPHPDocProperty(ctx *rootContext, result *classPhpDocParseResult, 
 	result.properties[part.Var[len("$"):]] = meta.PropertyInfo{
 		Typ:         newTypesMap(ctx, types),
 		AccessLevel: meta.Public,
+		FromDoc:     true,
 	}
 }

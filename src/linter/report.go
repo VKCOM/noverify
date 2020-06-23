@@ -257,6 +257,24 @@ func init() {
 			Default: true,
 			Comment: `Report commonly misspelled words in comments.`,
 		},
+
+		{
+			Name:    "classConstantRedefinition",
+			Default: true,
+			Comment: `Report redefinition of class constant.`,
+		},
+
+		{
+			Name:    "classPropertyRedeclaration",
+			Default: true,
+			Comment: `Report redeclaration of class property.`,
+		},
+
+		{
+			Name:    "classMethodRedeclaration",
+			Default: true,
+			Comment: `Report redeclaration of class method`,
+		},
 	}
 
 	for _, info := range allChecks {
