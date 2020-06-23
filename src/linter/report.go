@@ -263,6 +263,24 @@ func init() {
 			Default: true,
 			Comment: `Report illegal non-public access level in interfaces.`,
 		},
+
+		{
+			Name:    "classConstantRedefinition",
+			Default: true,
+			Comment: `Report redefinition of class constant.`,
+		},
+
+		{
+			Name:    "classPropertyRedeclaration",
+			Default: true,
+			Comment: `Report redeclaration of class property.`,
+		},
+
+		{
+			Name:    "classMethodRedeclaration",
+			Default: true,
+			Comment: `Report redeclaration of class method`,
+		},
 	}
 
 	for _, info := range allChecks {

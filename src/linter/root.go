@@ -725,15 +725,34 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, p.Expr))
 		}
 
+		propFromDoc := false
+		contains := false
+
+		if prop, ok := cl.Properties[nm]; ok {
+			contains = true
+			propFromDoc = prop.FromDoc
+		} else {
+			if prop, ok := cl.Properties["$"+nm]; ok {
+				contains = true
+				propFromDoc = prop.FromDoc
+			}
+		}
+
+		if contains && !propFromDoc {
+			className := strings.TrimPrefix(cl.Name, "\\")
+			d.Report(pNode, LevelError, "classPropertyRedeclaration", "Property %s::$%s cannot be redeclare", className, nm)
+			continue
+		}
+
 		if isStatic {
 			nm = "$" + nm
 		}
 
-		// TODO: handle duplicate property
 		cl.Properties[nm] = meta.PropertyInfo{
 			Pos:         d.getElementPos(p),
 			Typ:         typ.Immutable(),
 			AccessLevel: accessLevel,
+			FromDoc:     false,
 		}
 	}
 
@@ -762,7 +781,11 @@ func (d *RootWalker) enterClassConstList(s *stmt.ClassConstList) bool {
 		d.checkCommentMisspellings(c, c.PhpDocComment)
 		typ := solver.ExprTypeLocal(d.scope(), d.ctx.st, c.Expr)
 
-		// TODO: handle duplicate constant
+		if _, ok := cl.Constants[nm]; ok {
+			className := strings.TrimPrefix(cl.Name, "\\")
+			d.Report(cNode, LevelError, "classConstantRedefinition", "Constant %s::%s cannot be redefine", className, nm)
+		}
+
 		cl.Constants[nm] = meta.ConstantInfo{
 			Pos:         d.getElementPos(c),
 			Typ:         typ.Immutable(),
@@ -874,7 +897,11 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 
 	d.addScope(meth, sc)
 
-	// TODO: handle duplicate method
+	if method, ok := class.Methods.Get(nm); ok && !method.FromDoc {
+		className := strings.TrimPrefix(class.Name, "\\")
+		d.Report(meth, LevelError, "classMethodRedeclaration", "Method %s::%s cannot be redeclare", className, nm)
+	}
+
 	returnType := meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType)
 	if returnType.IsEmpty() {
 		returnType = meta.VoidType
@@ -1766,6 +1793,7 @@ func (d *RootWalker) afterLeaveFile() {
 				props[p.key] = meta.PropertyInfo{
 					Typ:         newTypesMap(&d.ctx, p.types),
 					AccessLevel: meta.Public,
+					FromDoc:     false,
 				}
 			}
 			cl := meta.ClassInfo{

@@ -306,6 +306,7 @@ type FuncInfo struct {
 	Flags        FuncFlags
 	ExitFlags    int // if function has exit/die/throw, then ExitFlags will be <> 0
 	Doc          PhpDocInfo
+	FromDoc      bool
 }
 
 func (info *FuncInfo) IsStatic() bool   { return info.Flags&FuncStatic != 0 }
@@ -353,6 +354,7 @@ type PropertyInfo struct {
 	Pos         ElementPosition
 	Typ         TypesMap
 	AccessLevel AccessLevel
+	FromDoc     bool
 }
 
 type ConstantInfo struct {
