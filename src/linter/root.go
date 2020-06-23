@@ -725,20 +725,23 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, p.Expr))
 		}
 
+		isHandle := false
 		propFromDoc := false
 		contains := false
 
 		if prop, ok := cl.Properties[nm]; ok {
 			contains = true
 			propFromDoc = prop.FromDoc
+			isHandle = prop.IsVerified
 		} else {
 			if prop, ok := cl.Properties["$"+nm]; ok {
 				contains = true
 				propFromDoc = prop.FromDoc
+				isHandle = prop.IsVerified
 			}
 		}
 
-		if contains && !propFromDoc {
+		if contains && !propFromDoc && isHandle {
 			className := strings.TrimPrefix(cl.Name, "\\")
 			d.Report(pNode, LevelError, "classPropertyRedeclaration", "Property %s::$%s cannot be redeclare", className, nm)
 			continue
@@ -753,6 +756,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 			Typ:         typ.Immutable(),
 			AccessLevel: accessLevel,
 			FromDoc:     false,
+			IsVerified:  true,
 		}
 	}
 

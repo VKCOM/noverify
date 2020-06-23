@@ -355,6 +355,7 @@ type PropertyInfo struct {
 	Typ         TypesMap
 	AccessLevel AccessLevel
 	FromDoc     bool
+	IsVerified  bool
 }
 
 type ConstantInfo struct {
