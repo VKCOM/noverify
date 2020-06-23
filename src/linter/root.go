@@ -725,25 +725,22 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, p.Expr))
 		}
 
-		isHandle := false
-		propFromDoc := false
+		fromDecl := false
 		contains := false
 
 		if prop, ok := cl.Properties[nm]; ok {
 			contains = true
-			propFromDoc = prop.FromDoc
-			isHandle = prop.IsVerified
+			fromDecl = prop.FromDecl
 		} else {
 			if prop, ok := cl.Properties["$"+nm]; ok {
 				contains = true
-				propFromDoc = prop.FromDoc
-				isHandle = prop.IsVerified
+				fromDecl = prop.FromDecl
 			}
 		}
 
-		if contains && !propFromDoc && isHandle {
+		if contains && fromDecl {
 			className := strings.TrimPrefix(cl.Name, "\\")
-			d.Report(pNode, LevelError, "classPropertyRedeclaration", "Property %s::$%s cannot be redeclare", className, nm)
+			d.Report(pNode, LevelError, "classComponentRedeclaration", "Property %s::$%s cannot be redeclared", className, nm)
 			continue
 		}
 
@@ -756,7 +753,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 			Typ:         typ.Immutable(),
 			AccessLevel: accessLevel,
 			FromDoc:     false,
-			IsVerified:  true,
+			FromDecl:    true,
 		}
 	}
 
@@ -787,7 +784,7 @@ func (d *RootWalker) enterClassConstList(s *stmt.ClassConstList) bool {
 
 		if _, ok := cl.Constants[nm]; ok {
 			className := strings.TrimPrefix(cl.Name, "\\")
-			d.Report(cNode, LevelError, "classConstantRedefinition", "Constant %s::%s cannot be redefine", className, nm)
+			d.Report(cNode, LevelError, "classComponentRedeclaration", "Constant %s::%s cannot be redefined", className, nm)
 		}
 
 		cl.Constants[nm] = meta.ConstantInfo{
@@ -903,7 +900,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 
 	if method, ok := class.Methods.Get(nm); ok && !method.FromDoc {
 		className := strings.TrimPrefix(class.Name, "\\")
-		d.Report(meth, LevelError, "classMethodRedeclaration", "Method %s::%s cannot be redeclare", className, nm)
+		d.Report(meth, LevelError, "classComponentRedeclaration", "Method %s::%s cannot be redeclared", className, nm)
 	}
 
 	returnType := meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType)
@@ -933,6 +930,8 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 		Flags:        funcFlags,
 		ExitFlags:    exitFlags,
 		Doc:          doc.info,
+		FromDoc:      false,
+		FromDecl:     true,
 	})
 
 	if nm == "getIterator" && meta.IsIndexingComplete() && solver.Implements(d.ctx.st.CurrentClass, `\IteratorAggregate`) {
@@ -1797,7 +1796,7 @@ func (d *RootWalker) afterLeaveFile() {
 				props[p.key] = meta.PropertyInfo{
 					Typ:         newTypesMap(&d.ctx, p.types),
 					AccessLevel: meta.Public,
-					FromDoc:     false,
+					FromDecl:    false,
 				}
 			}
 			cl := meta.ClassInfo{

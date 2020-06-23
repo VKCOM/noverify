@@ -1132,13 +1132,13 @@ protected function boo() {} // Method B::boo cannot be redeclare
 }
 `)
 	test.Expect = []string{
-		`Constant B::b cannot be redefine`,
-		`Constant B::b cannot be redefine`,
-		`Property B::$d cannot be redeclare`,
-		`Property B::$d cannot be redeclare`,
-		`Method B::foo cannot be redeclare`,
-		`Method B::foo cannot be redeclare`,
-		`Method B::boo cannot be redeclare`,
+		`Constant B::b cannot be redefined`,
+		`Constant B::b cannot be redefined`,
+		`Property B::$d cannot be redeclared`,
+		`Property B::$d cannot be redeclared`,
+		`Method B::foo cannot be redeclared`,
+		`Method B::foo cannot be redeclared`,
+		`Method B::boo cannot be redeclared`,
 	}
 	test.RunAndMatch()
 }

@@ -265,21 +265,9 @@ func init() {
 		},
 
 		{
-			Name:    "classConstantRedefinition",
+			Name:    "classComponentRedeclaration",
 			Default: true,
-			Comment: `Report redefinition of class constant.`,
-		},
-
-		{
-			Name:    "classPropertyRedeclaration",
-			Default: true,
-			Comment: `Report redeclaration of class property.`,
-		},
-
-		{
-			Name:    "classMethodRedeclaration",
-			Default: true,
-			Comment: `Report redeclaration of class method`,
+			Comment: `Report redeclaration of class component`,
 		},
 	}
 
