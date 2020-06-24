@@ -1142,11 +1142,14 @@ $example5 = [
   "one" => 3,
 ];
 
+$i = 3;
 // Integers in different base
 $example1 = [
   1 => 1,
   2 => 2,
   1 => 3,
+  $i => 4,
+  $i => 5,
 ];
 
 // Doubles
@@ -1170,11 +1173,14 @@ $example4 = [
   T::C2 => 3, // Duplicate key T1::C1
 ];
 
+$obj = new T();
 // Should be another warning, I'll skip it explicitly
 // But this is still debatable
 $example6 = [
   new T() => 1,
   new T() => 2,
+  $obj => 3,
+  $obj => 4,
 ];
 
 // Side effects free functions
@@ -1207,10 +1213,17 @@ $example9 = [
   $example5["two"] => 2,
   $example5["one"] => 3,
 ];
+
+$a = [1, 2, 3];
+$example10 = [
+  $a => 1,
+  $a => 2,
+];
 `)
 	test.Expect = []string{
 		`Duplicate array key one`,
 		`Duplicate array key 1`,
+		`Duplicate array key $i`,
 		`Duplicate array key 1.0`,
 		`Duplicate array key C1`,
 		`Duplicate array key T::C2`,

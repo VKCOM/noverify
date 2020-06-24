@@ -1294,9 +1294,6 @@ func (b *BlockWalker) ValidArrayKey(n node.Node) bool {
 		return false
 	case *expr.ConstFetch, *expr.ClassConstFetch:
 		typ := b.exprType(n)
-		if !typ.IsPrecise() {
-			return false
-		}
 		result := false
 		// all variants must be arrays to be invalid (else false positive can occur)
 		typ.Iterate(func(typ string) {
@@ -1311,9 +1308,6 @@ func (b *BlockWalker) ValidArrayKey(n node.Node) bool {
 		*expr.Ternary, *expr.Clone, *assign.Assign,
 		*expr.ArrayDimFetch:
 		typ := b.exprType(n)
-		if !typ.IsPrecise() {
-			return false
-		}
 		result := false
 		typ.Iterate(func(typ string) {
 			if !(strings.HasSuffix(typ, "[]") || (len(typ) > 0 && typ[0] == '\\')) {
