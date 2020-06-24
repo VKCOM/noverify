@@ -11,12 +11,12 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
-func gitParseUntracked() []*linter.Report {
-	if !gitIncludeUntracked {
+func gitParseUntracked(l *linterRunner) []*linter.Report {
+	if !l.args.gitIncludeUntracked {
 		return nil
 	}
 
-	filenames, err := git.UntrackedFiles(gitRepo)
+	filenames, err := git.UntrackedFiles(l.args.gitRepo)
 	if err != nil {
 		log.Fatalf("get untracked files: %v", err)
 	}
@@ -24,49 +24,49 @@ func gitParseUntracked() []*linter.Report {
 	return linter.ParseFilenames(linter.ReadFilenames(filenames, nil))
 }
 
-func parseIndexOnlyFiles() {
-	if indexOnlyFiles == "" {
+func parseIndexOnlyFiles(l *linterRunner) {
+	if l.args.indexOnlyFiles == "" {
 		return
 	}
-	filenames := strings.Split(indexOnlyFiles, ",")
+	filenames := strings.Split(l.args.indexOnlyFiles, ",")
 	linter.ParseFilenames(linter.ReadFilenames(filenames, nil))
 }
 
 // Not the best name, and not the best function signature.
 // Refactor this function whenever you get the idea how to separate logic better.
-func gitRepoComputeReportsFromCommits(logArgs, diffArgs []string) (oldReports, reports []*linter.Report, changes []git.Change, changeLog []git.Commit, ok bool) {
+func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []string) (oldReports, reports []*linter.Report, changes []git.Change, changeLog []git.Commit, ok bool) {
 	// TODO(quasilyte): hard to replace fatalf with error return here. Use panicf for now.
 
 	start := time.Now()
-	changeLog, err := git.Log(gitRepo, logArgs)
+	changeLog, err := git.Log(l.args.gitRepo, logArgs)
 	if err != nil {
 		log.Panicf("Could not get commits in range %+v: %s", logArgs, err.Error())
 	}
 
-	if shouldRun := analyzeGitAuthorsWhiteList(changeLog); !shouldRun {
+	if shouldRun := analyzeGitAuthorsWhiteList(l, changeLog); !shouldRun {
 		return nil, nil, nil, nil, false
 	}
 
-	changes, err = git.Diff(gitRepo, "", diffArgs)
+	changes, err = git.Diff(l.args.gitRepo, "", diffArgs)
 	if err != nil {
 		log.Panicf("Could not compute git diff: %s", err.Error())
 	}
 
-	if gitFullDiff {
+	if l.args.gitFullDiff {
 		meta.ResetInfo()
 		if err := loadEmbeddedStubs(); err != nil {
 			log.Panicf("Load embedded stubs: %v", err)
 		}
 
 		start = time.Now()
-		linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitFrom, nil))
-		parseIndexOnlyFiles()
+		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.gitCommitFrom, nil))
+		parseIndexOnlyFiles(l)
 		log.Printf("Indexed old commit in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		oldReports = linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitFrom, linter.ExcludeRegex))
+		oldReports = linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.gitCommitFrom, linter.ExcludeRegex))
 		log.Printf("Parsed old commit for %s (%d reports)", time.Since(start), len(oldReports))
 
 		meta.ResetInfo()
@@ -75,49 +75,49 @@ func gitRepoComputeReportsFromCommits(logArgs, diffArgs []string) (oldReports, r
 		}
 
 		start = time.Now()
-		linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitTo, nil))
+		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.gitCommitTo, nil))
 		log.Printf("Indexed new commit in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		reports = linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitTo, linter.ExcludeRegex))
+		reports = linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.gitCommitTo, linter.ExcludeRegex))
 		log.Printf("Parsed new commit in %s (%d reports)", time.Since(start), len(reports))
 	} else {
 		start = time.Now()
-		linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitTo, nil))
-		parseIndexOnlyFiles()
+		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.gitCommitTo, nil))
+		parseIndexOnlyFiles(l)
 		log.Printf("Indexing complete in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		oldReports = linter.ParseFilenames(linter.ReadOldFilesFromGit(gitRepo, gitCommitFrom, changes))
+		oldReports = linter.ParseFilenames(linter.ReadOldFilesFromGit(l.args.gitRepo, l.args.gitCommitFrom, changes))
 		log.Printf("Parsed old files versions for %s", time.Since(start))
 
 		start = time.Now()
 		meta.SetIndexingComplete(false)
-		linter.ParseFilenames(linter.ReadFilesFromGitWithChanges(gitRepo, gitCommitTo, changes))
+		linter.ParseFilenames(linter.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.gitCommitTo, changes))
 		meta.SetIndexingComplete(true)
 		log.Printf("Indexed files versions for %s", time.Since(start))
 
 		start = time.Now()
-		reports = linter.ParseFilenames(linter.ReadFilesFromGitWithChanges(gitRepo, gitCommitTo, changes))
+		reports = linter.ParseFilenames(linter.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.gitCommitTo, changes))
 		log.Printf("Parsed new file versions in %s", time.Since(start))
 	}
 
 	return oldReports, reports, changes, changeLog, true
 }
 
-func gitRepoComputeReportsFromLocalChanges() (oldReports, reports []*linter.Report, changes []git.Change, ok bool) {
+func gitRepoComputeReportsFromLocalChanges(l *linterRunner) (oldReports, reports []*linter.Report, changes []git.Change, ok bool) {
 	// TODO(quasilyte): hard to replace fatalf with error return here. Use panicf for now.
 
-	if gitWorkTree == "" {
+	if l.args.gitWorkTree == "" {
 		return nil, nil, nil, false
 	}
 
 	// compute changes for working copy (staged + unstaged changes combined starting with the commit being pushed)
-	changes, err := git.Diff(gitRepo, gitWorkTree, []string{gitCommitFrom})
+	changes, err := git.Diff(l.args.gitRepo, l.args.gitWorkTree, []string{l.args.gitCommitFrom})
 	if err != nil {
 		log.Panicf("Could not compute git diff: %s", err.Error())
 	}
@@ -126,35 +126,35 @@ func gitRepoComputeReportsFromLocalChanges() (oldReports, reports []*linter.Repo
 		return nil, nil, nil, false
 	}
 
-	log.Printf("You have changes in your work tree, showing diff between %s and work tree", gitCommitFrom)
+	log.Printf("You have changes in your work tree, showing diff between %s and work tree", l.args.gitCommitFrom)
 
 	start := time.Now()
-	linter.ParseFilenames(linter.ReadFilesFromGit(gitRepo, gitCommitFrom, nil))
-	parseIndexOnlyFiles()
+	linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.gitCommitFrom, nil))
+	parseIndexOnlyFiles(l)
 	log.Printf("Indexing complete in %s", time.Since(start))
 
 	meta.SetIndexingComplete(true)
 
 	start = time.Now()
-	oldReports = linter.ParseFilenames(linter.ReadOldFilesFromGit(gitRepo, gitCommitFrom, changes))
+	oldReports = linter.ParseFilenames(linter.ReadOldFilesFromGit(l.args.gitRepo, l.args.gitCommitFrom, changes))
 	log.Printf("Parsed old files versions for %s", time.Since(start))
 
 	start = time.Now()
 	meta.SetIndexingComplete(false)
-	linter.ParseFilenames(linter.ReadChangesFromWorkTree(gitWorkTree, changes))
-	gitParseUntracked()
+	linter.ParseFilenames(linter.ReadChangesFromWorkTree(l.args.gitWorkTree, changes))
+	gitParseUntracked(l)
 	meta.SetIndexingComplete(true)
 	log.Printf("Indexed new files versions for %s", time.Since(start))
 
 	start = time.Now()
-	reports = linter.ParseFilenames(linter.ReadChangesFromWorkTree(gitWorkTree, changes))
-	reports = append(reports, gitParseUntracked()...)
+	reports = linter.ParseFilenames(linter.ReadChangesFromWorkTree(l.args.gitWorkTree, changes))
+	reports = append(reports, gitParseUntracked(l)...)
 	log.Printf("Parsed new file versions in %s", time.Since(start))
 
 	return oldReports, reports, changes, true
 }
 
-func gitMain(cfg *MainConfig) (int, error) {
+func gitMain(l *linterRunner, cfg *MainConfig) (int, error) {
 	var (
 		oldReports, reports []*linter.Report
 		diffArgs            []string
@@ -164,27 +164,27 @@ func gitMain(cfg *MainConfig) (int, error) {
 	)
 
 	// prepareGitArgs also populates global variables like fromCommit
-	logArgs, diffArgs, err := prepareGitArgs()
+	logArgs, diffArgs, err := prepareGitArgs(l)
 	if err != nil {
 		return 0, err
 	}
 
-	oldReports, reports, changes, ok = gitRepoComputeReportsFromLocalChanges()
+	oldReports, reports, changes, ok = gitRepoComputeReportsFromLocalChanges(l)
 	if !ok {
-		oldReports, reports, changes, changeLog, ok = gitRepoComputeReportsFromCommits(logArgs, diffArgs)
+		oldReports, reports, changes, changeLog, ok = gitRepoComputeReportsFromCommits(l, logArgs, diffArgs)
 		if !ok {
 			return 0, nil
 		}
 	}
 
 	start := time.Now()
-	diff, err := linter.DiffReports(gitRepo, diffArgs, changes, changeLog, oldReports, reports, 8)
+	diff, err := linter.DiffReports(l.args.gitRepo, diffArgs, changes, changeLog, oldReports, reports, 8)
 	if err != nil {
 		return 0, fmt.Errorf("Could not compute reports diff: %v", err)
 	}
 	log.Printf("Computed reports diff for %s", time.Since(start))
 
-	criticalReports := analyzeReports(cfg, diff)
+	criticalReports := analyzeReports(l, cfg, diff)
 
 	if criticalReports > 0 {
 		log.Printf("Found %d critical issues, please fix them.", criticalReports)
@@ -194,10 +194,10 @@ func gitMain(cfg *MainConfig) (int, error) {
 	return 0, nil
 }
 
-func analyzeGitAuthorsWhiteList(changeLog []git.Commit) (shouldRun bool) {
-	if gitAuthorsWhitelist != "" {
+func analyzeGitAuthorsWhiteList(l *linterRunner, changeLog []git.Commit) (shouldRun bool) {
+	if l.args.gitAuthorsWhitelist != "" {
 		whiteList := make(map[string]bool)
-		for _, name := range strings.Split(gitAuthorsWhitelist, ",") {
+		for _, name := range strings.Split(l.args.gitAuthorsWhitelist, ",") {
 			whiteList[name] = true
 		}
 
@@ -212,48 +212,50 @@ func analyzeGitAuthorsWhiteList(changeLog []git.Commit) (shouldRun bool) {
 	return true
 }
 
-func prepareGitArgs() (logArgs, diffArgs []string, err error) {
-	if gitPushArg != "" {
-		args := strings.Fields(gitPushArg)
+func prepareGitArgs(l *linterRunner) (logArgs, diffArgs []string, err error) {
+	l.gitRef = l.args.gitRef
+	l.gitCommitFrom = l.args.gitCommitFrom
+	l.gitCommitTo = l.args.gitCommitTo
+	if l.args.gitPushArg != "" {
+		args := strings.Fields(l.args.gitPushArg)
 		if len(args) != 3 {
-			return nil, nil, fmt.Errorf("Unexpected format of push arguments, expected only 3 columns: %s", gitPushArg)
+			return nil, nil, fmt.Errorf("Unexpected format of push arguments, expected only 3 columns: %s", l.args.gitPushArg)
 		}
-		gitCommitFrom, gitCommitTo, gitRef = args[0], args[1], args[2]
+		l.gitCommitFrom, l.gitCommitTo, l.gitRef = args[0], args[1], args[2]
 	}
 
-	if gitCommitFrom == git.Zero {
-		gitCommitFrom = "master"
+	if l.args.gitCommitFrom == git.Zero {
+		l.args.gitCommitFrom = "master"
 	}
 
-	if !gitSkipFetch {
+	if !l.args.gitSkipFetch {
 		start := time.Now()
 		log.Printf("Fetching origin master to ORIGIN_MASTER")
-		if err := git.Fetch(gitRepo, "master", "ORIGIN_MASTER"); err != nil {
+		if err := git.Fetch(l.args.gitRepo, "master", "ORIGIN_MASTER"); err != nil {
 			return nil, nil, fmt.Errorf("Could not fetch ORIGIN_MASTER: %v", err.Error())
 		}
 		log.Printf("Fetched for %s", time.Since(start))
 	}
 
-	if !gitDisableCompensateMaster {
-
-		fromAndMaster, err := git.MergeBase(gitRepo, "ORIGIN_MASTER", gitCommitFrom)
+	if !l.args.gitDisableCompensateMaster {
+		fromAndMaster, err := git.MergeBase(l.args.gitRepo, "ORIGIN_MASTER", l.args.gitCommitFrom)
 		if err != nil {
-			return nil, nil, fmt.Errorf("Could not compute merge base between ORIGIN_MASTER and %s", gitCommitFrom)
+			return nil, nil, fmt.Errorf("Could not compute merge base between ORIGIN_MASTER and %s", l.args.gitCommitFrom)
 		}
 
-		toAndMaster, err := git.MergeBase(gitRepo, "ORIGIN_MASTER", gitCommitTo)
+		toAndMaster, err := git.MergeBase(l.args.gitRepo, "ORIGIN_MASTER", l.args.gitCommitTo)
 		if err != nil {
-			return nil, nil, fmt.Errorf("Could not compute merge base between ORIGIN_MASTER and %s", gitCommitTo)
+			return nil, nil, fmt.Errorf("Could not compute merge base between ORIGIN_MASTER and %s", l.args.gitCommitTo)
 		}
 
 		// check if master was merged in between the commits
 		if fromAndMaster != toAndMaster {
-			gitCommitFrom = toAndMaster
+			l.gitCommitFrom = toAndMaster
 		}
 	}
 
-	logArgs = []string{gitCommitFrom + ".." + gitCommitTo}
-	diffArgs = []string{gitCommitFrom + ".." + gitCommitTo}
+	logArgs = []string{l.gitCommitFrom + ".." + l.gitCommitTo}
+	diffArgs = []string{l.gitCommitFrom + ".." + l.gitCommitTo}
 
 	return logArgs, diffArgs, nil
 }
