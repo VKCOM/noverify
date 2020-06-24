@@ -3,10 +3,8 @@ package cmd
 import (
 	"flag"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 
@@ -15,42 +13,13 @@ import (
 
 const allNonMaybe = "<all-non-maybe>"
 
-var (
-	outputFp io.Writer = os.Stderr
-
-	disableCache bool
-
-	gitRepo string
+type cmdlineArguments struct {
+	version bool
 
 	pprofHost string
 
-	gitCommitFrom              string
-	gitCommitTo                string
-	gitRef                     string
-	gitPushArg                 string
-	gitAuthorsWhitelist        string
-	gitWorkTree                string
-	gitSkipFetch               bool
-	gitDisableCompensateMaster bool
-	gitFullDiff                bool
-	gitIncludeUntracked        bool
-
-	phpExtensionsArg string
-
-	reportsExclude          string
-	reportsExcludeChecks    string
-	reportsCritical         string
-	reportsExcludeChecksSet = map[string]bool{}
-	reportsIncludeChecksSet = map[string]bool{}
-	reportsCriticalSet      = map[string]bool{}
-
-	allowChecks       string
-	allowDisable      string
-	allowDisableRegex *regexp.Regexp
-
-	misspellList string
-
-	unusedVarPattern string
+	cpuProfile string
+	memProfile string
 
 	fullAnalysisFiles string
 	indexOnlyFiles    string
@@ -60,13 +29,35 @@ var (
 	output     string
 	outputJSON bool
 
-	version bool
+	misspellList string
 
-	cpuProfile string
-	memProfile string
-)
+	unusedVarPattern string
 
-func bindFlags() {
+	allowChecks  string
+	allowDisable string
+
+	reportsExclude       string
+	reportsExcludeChecks string
+	reportsCritical      string
+
+	phpExtensionsArg string
+
+	gitPushArg                 string
+	gitAuthorsWhitelist        string
+	gitWorkTree                string
+	gitSkipFetch               bool
+	gitDisableCompensateMaster bool
+	gitFullDiff                bool
+	gitIncludeUntracked        bool
+	gitRepo                    string
+	gitRef                     string
+	gitCommitFrom              string
+	gitCommitTo                string
+
+	disableCache bool
+}
+
+func bindFlags(args *cmdlineArguments) {
 	var enabledByDefault []string
 	declaredChecks := linter.GetDeclaredChecks()
 	for _, info := range declaredChecks {
@@ -101,41 +92,41 @@ func bindFlags() {
 		}
 	}
 
-	flag.StringVar(&pprofHost, "pprof", "", "HTTP pprof endpoint (e.g. localhost:8080)")
+	flag.StringVar(&args.pprofHost, "pprof", "", "HTTP pprof endpoint (e.g. localhost:8080)")
 
-	flag.StringVar(&reportsCritical, "critical", allNonMaybe,
+	flag.StringVar(&args.reportsCritical, "critical", allNonMaybe,
 		"Comma-separated list of check names that are considered critical (all non-maybe checks by default)")
 
-	flag.StringVar(&rulesList, "rules", "",
+	flag.StringVar(&args.rulesList, "rules", "",
 		"Comma-separated list of rules files")
 
-	flag.StringVar(&gitRepo, "git", "", "Path to git repository to analyze")
-	flag.StringVar(&gitCommitFrom, "git-commit-from", "", "Analyze changes between commits <git-commit-from> and <git-commit-to>")
-	flag.StringVar(&gitCommitTo, "git-commit-to", "", "")
-	flag.StringVar(&gitRef, "git-ref", "", "Ref (e.g. branch) that is being pushed")
-	flag.StringVar(&gitPushArg, "git-push-arg", "", "In {pre,post}-receive hooks a whole line from stdin can be passed")
-	flag.StringVar(&gitAuthorsWhitelist, "git-author-whitelist", "", "Whitelist (comma-separated) for commit authors, if needed")
-	flag.StringVar(&gitWorkTree, "git-work-tree", "", "Work tree. If specified, local changes will also be examined.")
-	flag.BoolVar(&gitSkipFetch, "git-skip-fetch", false, "Do not fetch ORIGIN_MASTER (use this option if you already fetch to ORIGIN_MASTER before that)")
-	flag.BoolVar(&gitDisableCompensateMaster, "git-disable-compensate-master", false, "Do not try to compensate for changes in ORIGIN_MASTER after branch point")
-	flag.BoolVar(&gitFullDiff, "git-full-diff", false, "Compute full diff: analyze all files, not just changed ones")
-	flag.BoolVar(&gitIncludeUntracked, "git-include-untracked", true, "Include untracked (new, uncommitted files) into analysis")
+	flag.StringVar(&args.gitRepo, "git", "", "Path to git repository to analyze")
+	flag.StringVar(&args.gitCommitFrom, "git-commit-from", "", "Analyze changes between commits <git-commit-from> and <git-commit-to>")
+	flag.StringVar(&args.gitCommitTo, "git-commit-to", "", "")
+	flag.StringVar(&args.gitRef, "git-ref", "", "Ref (e.g. branch) that is being pushed")
+	flag.StringVar(&args.gitPushArg, "git-push-arg", "", "In {pre,post}-receive hooks a whole line from stdin can be passed")
+	flag.StringVar(&args.gitAuthorsWhitelist, "git-author-whitelist", "", "Whitelist (comma-separated) for commit authors, if needed")
+	flag.StringVar(&args.gitWorkTree, "git-work-tree", "", "Work tree. If specified, local changes will also be examined.")
+	flag.BoolVar(&args.gitSkipFetch, "git-skip-fetch", false, "Do not fetch ORIGIN_MASTER (use this option if you already fetch to ORIGIN_MASTER before that)")
+	flag.BoolVar(&args.gitDisableCompensateMaster, "git-disable-compensate-master", false, "Do not try to compensate for changes in ORIGIN_MASTER after branch point")
+	flag.BoolVar(&args.gitFullDiff, "git-full-diff", false, "Compute full diff: analyze all files, not just changed ones")
+	flag.BoolVar(&args.gitIncludeUntracked, "git-include-untracked", true, "Include untracked (new, uncommitted files) into analysis")
 
-	flag.StringVar(&reportsExclude, "exclude", "", "Exclude regexp for filenames in reports list")
-	flag.StringVar(&reportsExcludeChecks, "exclude-checks", "", "Comma-separated list of check names to be excluded")
-	flag.StringVar(&allowDisable, "allow-disable", "", "Regexp for filenames where '@linter disable' is allowed")
-	flag.StringVar(&allowChecks, "allow-checks", strings.Join(enabledByDefault, ","),
+	flag.StringVar(&args.reportsExclude, "exclude", "", "Exclude regexp for filenames in reports list")
+	flag.StringVar(&args.reportsExcludeChecks, "exclude-checks", "", "Comma-separated list of check names to be excluded")
+	flag.StringVar(&args.allowDisable, "allow-disable", "", "Regexp for filenames where '@linter disable' is allowed")
+	flag.StringVar(&args.allowChecks, "allow-checks", strings.Join(enabledByDefault, ","),
 		"Comma-separated list of check names to be enabled")
-	flag.StringVar(&misspellList, "misspell-list", "Eng",
+	flag.StringVar(&args.misspellList, "misspell-list", "Eng",
 		"Comma-separated list of misspelling dicts; predefined sets are Eng, Eng/US and Eng/UK")
 
-	flag.StringVar(&phpExtensionsArg, "php-extensions", "php,inc,php5,phtml,inc", "List of PHP extensions to be recognized")
+	flag.StringVar(&args.phpExtensionsArg, "php-extensions", "php,inc,php5,phtml,inc", "List of PHP extensions to be recognized")
 
-	flag.StringVar(&fullAnalysisFiles, "full-analysis-files", "", "Comma-separated list of files to do full analysis")
-	flag.StringVar(&indexOnlyFiles, "index-only-files", "", "Comma-separated list of files to do indexing")
+	flag.StringVar(&args.fullAnalysisFiles, "full-analysis-files", "", "Comma-separated list of files to do full analysis")
+	flag.StringVar(&args.indexOnlyFiles, "index-only-files", "", "Comma-separated list of files to do indexing")
 
-	flag.StringVar(&output, "output", "", "Output reports to a specified file instead of stderr")
-	flag.BoolVar(&outputJSON, "output-json", false, "Format output as JSON")
+	flag.StringVar(&args.output, "output", "", "Output reports to a specified file instead of stderr")
+	flag.BoolVar(&args.outputJSON, "output-json", false, "Format output as JSON")
 
 	flag.BoolVar(&linter.CheckAutoGenerated, `check-auto-generated`, false, "whether to lint auto-generated PHP file")
 	flag.BoolVar(&linter.Debug, "debug", false, "Enable debug output")
@@ -146,13 +137,13 @@ func bindFlags() {
 	flag.StringVar(&linter.DefaultEncoding, "encoding", "UTF-8", "Default encoding. Only UTF-8 and windows-1251 are supported")
 	flag.StringVar(&linter.StubsDir, "stubs-dir", "", "phpstorm-stubs directory")
 	flag.StringVar(&linter.CacheDir, "cache-dir", defaultCacheDir, "Directory for linter cache (greatly improves indexing speed)")
-	flag.BoolVar(&disableCache, "disable-cache", false, "If set, cache is not used and cache-dir is ignored")
+	flag.BoolVar(&args.disableCache, "disable-cache", false, "If set, cache is not used and cache-dir is ignored")
 
-	flag.StringVar(&unusedVarPattern, "unused-var-regex", `^_$`,
+	flag.StringVar(&args.unusedVarPattern, "unused-var-regex", `^_$`,
 		"Variables that match such regexp are marked as discarded; not reported as unused, but should not be used as values")
 
-	flag.BoolVar(&version, "version", false, "Show version info and exit")
+	flag.BoolVar(&args.version, "version", false, "Show version info and exit")
 
-	flag.StringVar(&cpuProfile, "cpuprofile", "", "write cpu profile to `file`")
-	flag.StringVar(&memProfile, "memprofile", "", "write memory profile to `file`")
+	flag.StringVar(&args.cpuProfile, "cpuprofile", "", "write cpu profile to `file`")
+	flag.StringVar(&args.memProfile, "memprofile", "", "write memory profile to `file`")
 }
