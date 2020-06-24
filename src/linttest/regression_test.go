@@ -1230,4 +1230,3 @@ Base::staticProtMethod();
 	}
 	test.RunAndMatch()
 }
-

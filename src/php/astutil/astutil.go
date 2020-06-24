@@ -4,7 +4,6 @@ import (
 	"bytes"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
 	"github.com/VKCOM/noverify/src/php/parser/printer"
 )
@@ -50,12 +49,4 @@ func FmtNode(n node.Node) string {
 	var b bytes.Buffer
 	printer.NewPrettyPrinter(&b, " ").Print(n)
 	return b.String()
-}
-
-func ValidArrayKey(n node.Node) bool {
-	switch n.(type) {
-	case *expr.New, *expr.Closure, *expr.Array:
-		return false
-	}
-	return true
 }

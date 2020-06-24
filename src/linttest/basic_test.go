@@ -1114,8 +1114,8 @@ $valid_quotes = [
 }
 
 func TestDuplicateArrayKey(t *testing.T) {
-		test := linttest.NewSuite(t)
-		test.AddFile(`<?php
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
 class T {
 	public const C1 = 3;
 	public const C2 = 4;

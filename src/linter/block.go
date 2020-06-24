@@ -1265,7 +1265,7 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 
 		haveKeys = true
 
-		if !(astutil.ValidArrayKey(item.Key) && b.sideEffectFree(item.Key)) {
+		if !(b.ValidArrayKey(item.Key) && b.sideEffectFree(item.Key)) {
 			continue
 		}
 
@@ -1286,6 +1286,43 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 	}
 
 	return false
+}
+
+func (b *BlockWalker) ValidArrayKey(n node.Node) bool {
+	switch n.(type) {
+	case *expr.New, *expr.Closure, *expr.Array, *cast.Array:
+		return false
+	case *expr.ConstFetch, *expr.ClassConstFetch:
+		typ := b.exprType(n)
+		if !typ.IsPrecise() {
+			return false
+		}
+		result := false
+		// all variants must be arrays to be invalid (else false positive can occur)
+		typ.Iterate(func(typ string) {
+			if !strings.HasSuffix(typ, "[]") {
+				result = true
+			}
+		})
+		return result
+	case *stmt.StaticVar, *node.Var, *node.SimpleVar,
+		*expr.PropertyFetch, *expr.StaticPropertyFetch,
+		*expr.FunctionCall, *expr.StaticCall, *expr.MethodCall,
+		*expr.Ternary, *expr.Clone, *assign.Assign,
+		*expr.ArrayDimFetch:
+		typ := b.exprType(n)
+		if !typ.IsPrecise() {
+			return false
+		}
+		result := false
+		typ.Iterate(func(typ string) {
+			if !(strings.HasSuffix(typ, "[]") || (len(typ) > 0 && typ[0] == '\\')) {
+				result = true
+			}
+		})
+		return result
+	}
+	return true
 }
 
 func (b *BlockWalker) handleClassConstFetch(e *expr.ClassConstFetch) bool {
