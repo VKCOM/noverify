@@ -1219,6 +1219,28 @@ $example10 = [
   $a => 1,
   $a => 2,
 ];
+
+// can be not an array
+if (42) {
+  $imprec = 1;
+} else {
+  $imprec = [1, 2, 3];
+}
+$example11 = [
+  $imprec => 1,
+  $imprec => 2,
+];
+
+// can only be array
+if (42) {
+  $imprec1 = [1, 2, 3];
+} else {
+  $imprec1 = [4, 5, 6];
+}
+$example12 = [
+  $imprec1 => 1,
+  $imprec1 => 2,
+];
 `)
 	test.Expect = []string{
 		`Duplicate array key one`,
@@ -1230,6 +1252,7 @@ $example10 = [
 		`Duplicate array key id(1)`,
 		`Duplicate array key 'a' . $s`,
 		`Duplicate array key $example5["one"]`,
+		`Duplicate array key $imprec`,
 	}
 	test.RunAndMatch()
 }
