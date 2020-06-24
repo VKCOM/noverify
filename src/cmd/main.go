@@ -5,12 +5,10 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	_ "net/http/pprof" // it is ok for actually main package
 	"os"
-	"regexp"
 	"runtime"
 	"runtime/pprof"
 	"strings"
@@ -23,7 +21,6 @@ import (
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/rules"
-	"github.com/client9/misspell"
 )
 
 // Line below implies that we have `https://github.com/VKCOM/phpstorm-stubs.git` cloned
@@ -33,27 +30,15 @@ import (
 
 //go:generate go-bindata -pkg embeddedrules -nometadata -o ./embeddedrules/rules.go ./embeddedrules/rules.php
 
-func isCritical(r *linter.Report) bool {
-	if len(reportsCriticalSet) != 0 {
-		return reportsCriticalSet[r.CheckName()]
+func isCritical(l *linterRunner, r *linter.Report) bool {
+	if len(l.reportsCriticalSet) != 0 {
+		return l.reportsCriticalSet[r.CheckName()]
 	}
 	return r.IsCritical()
 }
 
-func isEnabledByFlags(checkName string) bool {
-	if !reportsIncludeChecksSet[checkName] {
-		return false // Not enabled by -allow-checks
-	}
-
-	if reportsExcludeChecksSet[checkName] {
-		return false // Disabled by -exclude-checks
-	}
-
-	return true
-}
-
-func isEnabled(r *linter.Report) bool {
-	if !isEnabledByFlags(r.CheckName()) {
+func isEnabled(l *linterRunner, r *linter.Report) bool {
+	if !l.IsEnabledByFlags(r.CheckName()) {
 		return false
 	}
 
@@ -66,12 +51,12 @@ func isEnabled(r *linter.Report) bool {
 }
 
 // canBeDisabled returns whether or not '@linter disable' can be used for the specified file
-func canBeDisabled(filename string) bool {
-	if allowDisableRegex == nil {
+func canBeDisabled(l *linterRunner, filename string) bool {
+	if l.allowDisableRegex == nil {
 		return false
 	}
 
-	return allowDisableRegex.MatchString(filename)
+	return l.allowDisableRegex.MatchString(filename)
 }
 
 // Run executes linter main function.
@@ -88,16 +73,17 @@ func Run(cfg *MainConfig) (int, error) {
 		cfg = &MainConfig{}
 	}
 
-	bindFlags()
+	var args cmdlineArguments
+	bindFlags(&args)
 	flag.Parse()
-	if disableCache {
+	if args.disableCache {
 		linter.CacheDir = ""
 	}
 	if cfg.AfterFlagParse != nil {
 		cfg.AfterFlagParse()
 	}
 
-	return mainNoExit(cfg)
+	return mainNoExit(&args, cfg)
 }
 
 // Main is like Run(), but it calls os.Exit() and does not return.
@@ -109,46 +95,25 @@ func Main(cfg *MainConfig) {
 	os.Exit(status)
 }
 
-func loadMisspellDicts(dicts []string) error {
-	linter.TypoFixer = &misspell.Replacer{}
-
-	for _, d := range dicts {
-		d = strings.TrimSpace(d)
-		switch {
-		case d == "Eng":
-			linter.TypoFixer.AddRuleList(misspell.DictMain)
-		case d == "Eng/US":
-			linter.TypoFixer.AddRuleList(misspell.DictAmerican)
-		case d == "Eng/UK" || d == "Eng/GB":
-			linter.TypoFixer.AddRuleList(misspell.DictBritish)
-		default:
-			return fmt.Errorf("unsupported %s misspell-list entry", d)
-		}
-	}
-
-	linter.TypoFixer.Compile()
-	return nil
-}
-
 // mainNoExit implements main, but instead of doing log.Fatal or os.Exit it
 // returns error or non-zero integer status code to be passed to os.Exit by the caller.
 // Note that if error is not nil, integer code will be discarded, so it can be 0.
 //
 // We don't want os.Exit to be inserted randomly to avoid defer cancellation.
-func mainNoExit(cfg *MainConfig) (int, error) {
-	if version {
+func mainNoExit(args *cmdlineArguments, cfg *MainConfig) (int, error) {
+	if args.version {
 		// Version is already printed. Can exit here.
 		return 0, nil
 	}
 
-	if pprofHost != "" {
-		go http.ListenAndServe(pprofHost, nil)
+	if args.pprofHost != "" {
+		go http.ListenAndServe(args.pprofHost, nil)
 	}
 
 	// Since this function is expected to be exit-free, it's OK
 	// to defer calls here to make required flushes/cleanup.
-	if cpuProfile != "" {
-		f, err := os.Create(cpuProfile)
+	if args.cpuProfile != "" {
+		f, err := os.Create(args.cpuProfile)
 		if err != nil {
 			return 0, fmt.Errorf("Could not create CPU profile: %v", err)
 		}
@@ -158,9 +123,9 @@ func mainNoExit(cfg *MainConfig) (int, error) {
 		}
 		defer pprof.StopCPUProfile()
 	}
-	if memProfile != "" {
+	if args.memProfile != "" {
 		defer func() {
-			f, err := os.Create(memProfile)
+			f, err := os.Create(args.memProfile)
 			if err != nil {
 				log.Printf("could not create memory profile: %v", err)
 				return
@@ -173,23 +138,12 @@ func mainNoExit(cfg *MainConfig) (int, error) {
 		}()
 	}
 
-	if err := setDiscardVarPredicate(); err != nil {
-		return 0, fmt.Errorf("compile unused-var-regex: %v", err)
-	}
+	linter.PHPExtensions = strings.Split(args.phpExtensionsArg, ",")
 
-	linter.PHPExtensions = strings.Split(phpExtensionsArg, ",")
-	if err := compileRegexes(); err != nil {
-		return 0, err
+	var l linterRunner
+	if err := l.Init(args); err != nil {
+		return 1, fmt.Errorf("init: %v", err)
 	}
-
-	if misspellList != "" {
-		err := loadMisspellDicts(strings.Split(misspellList, ","))
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	buildCheckMappings()
 
 	lintdebug.Register(func(msg string) { linter.DebugMessage("%s", msg) })
 	go linter.MemoryLimiterThread()
@@ -200,26 +154,14 @@ func mainNoExit(cfg *MainConfig) (int, error) {
 		return 0, nil
 	}
 
-	if output != "" {
-		var err error
-		outputFp, err = os.OpenFile(output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
-		if err != nil {
-			return 0, fmt.Errorf("Could not open output file: %v", err)
-		}
-	}
-
 	log.Printf("Started")
 
 	if err := initStubs(); err != nil {
 		return 0, fmt.Errorf("Init stubs: %v", err)
 	}
 
-	if err := initRules(); err != nil {
-		return 0, fmt.Errorf("Init rules: %v", err)
-	}
-
-	if gitRepo != "" {
-		return gitMain(cfg)
+	if args.gitRepo != "" {
+		return gitMain(&l, cfg)
 	}
 
 	linter.AnalysisFiles = flag.Args()
@@ -230,12 +172,12 @@ func mainNoExit(cfg *MainConfig) (int, error) {
 	log.Printf("Linting")
 
 	filenames := flag.Args()
-	if fullAnalysisFiles != "" {
-		filenames = strings.Split(fullAnalysisFiles, ",")
+	if args.fullAnalysisFiles != "" {
+		filenames = strings.Split(args.fullAnalysisFiles, ",")
 	}
 
 	reports := linter.ParseFilenames(linter.ReadFilenames(filenames, linter.ExcludeRegex))
-	criticalReports := analyzeReports(cfg, reports)
+	criticalReports := analyzeReports(&l, cfg, reports)
 
 	if criticalReports > 0 {
 		log.Printf("Found %d critical reports", criticalReports)
@@ -244,56 +186,20 @@ func mainNoExit(cfg *MainConfig) (int, error) {
 	return 0, nil
 }
 
-func compileRegexes() error {
-	var err error
-
-	if reportsExclude != "" {
-		linter.ExcludeRegex, err = regexp.Compile(reportsExclude)
-		if err != nil {
-			return fmt.Errorf("Incorrect exclude regex: %v", err)
-		}
-	}
-
-	if allowDisable != "" {
-		allowDisableRegex, err = regexp.Compile(allowDisable)
-		if err != nil {
-			return fmt.Errorf("Incorrect 'allow disable' regex: %v", err)
-		}
-	}
-
-	return nil
-}
-
-func buildCheckMappings() {
-	stringToSet := func(s string) map[string]bool {
-		set := make(map[string]bool)
-		for _, name := range strings.Split(s, ",") {
-			set[strings.TrimSpace(name)] = true
-		}
-		return set
-	}
-
-	reportsExcludeChecksSet = stringToSet(reportsExcludeChecks)
-	reportsIncludeChecksSet = stringToSet(allowChecks)
-	if reportsCritical != allNonMaybe {
-		reportsCriticalSet = stringToSet(reportsCritical)
-	}
-}
-
-func analyzeReports(cfg *MainConfig, diff []*linter.Report) (criticalReports int) {
+func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (criticalReports int) {
 	filtered := make([]*linter.Report, 0, len(diff))
 	var linterErrors []string
 	for _, r := range diff {
 		if cfg.BeforeReport != nil && !cfg.BeforeReport(r) {
 			continue
 		}
-		if !isEnabled(r) {
+		if !isEnabled(l, r) {
 			continue
 		}
 
 		if r.IsDisabledByUser() {
 			filename := r.GetFilename()
-			if !canBeDisabled(filename) {
+			if !canBeDisabled(l, filename) {
 				linterErrors = append(linterErrors, fmt.Sprintf("You are not allowed to disable linter for file '%s'", filename))
 			} else {
 				continue
@@ -302,12 +208,12 @@ func analyzeReports(cfg *MainConfig, diff []*linter.Report) (criticalReports int
 
 		filtered = append(filtered, r)
 
-		if isCritical(r) {
+		if isCritical(l, r) {
 			criticalReports++
 		}
 	}
 
-	if outputJSON {
+	if l.args.outputJSON {
 		type reportList struct {
 			Reports []*linter.Report
 			Errors  []string
@@ -316,20 +222,20 @@ func analyzeReports(cfg *MainConfig, diff []*linter.Report) (criticalReports int
 			Reports: filtered,
 			Errors:  linterErrors,
 		}
-		d := json.NewEncoder(outputFp)
+		d := json.NewEncoder(l.outputFp)
 		if err := d.Encode(list); err != nil {
 			// Should never fail to marshal our own reports.
 			panic(fmt.Sprintf("report list marshaling failed: %v", err))
 		}
 	} else {
 		for _, err := range linterErrors {
-			fmt.Fprintf(outputFp, "%s\n", err)
+			fmt.Fprintf(l.outputFp, "%s\n", err)
 		}
 		for _, r := range filtered {
-			if isCritical(r) {
-				fmt.Fprintf(outputFp, "<critical> %s\n", r.String())
+			if isCritical(l, r) {
+				fmt.Fprintf(l.outputFp, "<critical> %s\n", r.String())
 			} else {
-				fmt.Fprintf(outputFp, "%s\n", r.String())
+				fmt.Fprintf(l.outputFp, "%s\n", r.String())
 			}
 		}
 	}
@@ -337,29 +243,7 @@ func analyzeReports(cfg *MainConfig, diff []*linter.Report) (criticalReports int
 	return criticalReports
 }
 
-func setDiscardVarPredicate() error {
-	switch unusedVarPattern {
-	case "^_$":
-		// Default pattern, only $_ is allowed.
-		// Don't change anything.
-	case "^_.*$":
-		// Leading underscore plus anything after it.
-		// Recognize as quite common pattern.
-		linter.IsDiscardVar = func(s string) bool {
-			return strings.HasPrefix(s, "_")
-		}
-	default:
-		re, err := regexp.Compile(unusedVarPattern)
-		if err != nil {
-			return err
-		}
-		linter.IsDiscardVar = re.MatchString
-	}
-
-	return nil
-}
-
-func loadRulesFile(p *rules.Parser, filter func(r rules.Rule) bool, filename string, data []byte) error {
+func loadRulesFile(p *rules.Parser, filter func(r rules.Rule) bool, filename string, data []byte) (*rules.Set, error) {
 	appendRules := func(dst, src *rules.ScopedSet) {
 		for i, list := range src.RulesByKind {
 			for _, r := range list {
@@ -373,59 +257,30 @@ func loadRulesFile(p *rules.Parser, filter func(r rules.Rule) bool, filename str
 
 	rset, err := p.Parse(filename, bytes.NewReader(data))
 	if err != nil {
-		return err
-	}
-
-	for _, name := range rset.AlwaysAllowed {
-		reportsIncludeChecksSet[name] = true
-	}
-	for _, name := range rset.AlwaysCritical {
-		reportsCriticalSet[name] = true
+		return nil, err
 	}
 
 	appendRules(linter.Rules.Any, rset.Any)
 	appendRules(linter.Rules.Root, rset.Root)
 	appendRules(linter.Rules.Local, rset.Local)
 
-	return nil
+	return rset, nil
 }
 
-func InitEmbeddedRules(p *rules.Parser, filter func(r rules.Rule) bool) error {
+func InitEmbeddedRules(p *rules.Parser, filter func(r rules.Rule) bool) ([]*rules.Set, error) {
+	var ruleSets []*rules.Set
 	for _, filename := range embeddedrules.AssetNames() {
 		data, err := embeddedrules.Asset(filename)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		if err := loadRulesFile(p, filter, filename, data); err != nil {
-			return err
+		rset, err := loadRulesFile(p, filter, filename, data)
+		if err != nil {
+			return nil, err
 		}
+		ruleSets = append(ruleSets, rset)
 	}
-	return nil
-}
-
-func initRules() error {
-	ruleFilter := func(r rules.Rule) bool {
-		return isEnabledByFlags(r.Name)
-	}
-
-	linter.Rules = rules.NewSet()
-	p := rules.NewParser()
-
-	if err := InitEmbeddedRules(p, ruleFilter); err != nil {
-		return err
-	}
-
-	if rulesList != "" {
-		for _, filename := range strings.Split(rulesList, ",") {
-			data, err := ioutil.ReadFile(filename)
-			if err != nil {
-				return err
-			}
-			loadRulesFile(p, ruleFilter, filename, data)
-		}
-	}
-
-	return nil
+	return ruleSets, nil
 }
 
 func initStubs() error {
