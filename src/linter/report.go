@@ -310,6 +310,9 @@ func (r *Report) MarshalJSON() ([]byte, error) {
 	return b, err
 }
 
+// Message returns report message.
+func (r *Report) Message() string { return r.msg }
+
 func (r *Report) String() string {
 	msg := r.msg
 	if r.checkName != "" {

@@ -97,7 +97,7 @@ func Run(cfg *MainConfig) (int, error) {
 		cfg.AfterFlagParse()
 	}
 
-	return mainNoExit()
+	return mainNoExit(cfg)
 }
 
 // Main is like Run(), but it calls os.Exit() and does not return.
@@ -135,7 +135,7 @@ func loadMisspellDicts(dicts []string) error {
 // Note that if error is not nil, integer code will be discarded, so it can be 0.
 //
 // We don't want os.Exit to be inserted randomly to avoid defer cancellation.
-func mainNoExit() (int, error) {
+func mainNoExit(cfg *MainConfig) (int, error) {
 	if version {
 		// Version is already printed. Can exit here.
 		return 0, nil
@@ -219,7 +219,7 @@ func mainNoExit() (int, error) {
 	}
 
 	if gitRepo != "" {
-		return gitMain()
+		return gitMain(cfg)
 	}
 
 	linter.AnalysisFiles = flag.Args()
@@ -235,7 +235,7 @@ func mainNoExit() (int, error) {
 	}
 
 	reports := linter.ParseFilenames(linter.ReadFilenames(filenames, linter.ExcludeRegex))
-	criticalReports := analyzeReports(reports)
+	criticalReports := analyzeReports(cfg, reports)
 
 	if criticalReports > 0 {
 		log.Printf("Found %d critical reports", criticalReports)
@@ -280,10 +280,13 @@ func buildCheckMappings() {
 	}
 }
 
-func analyzeReports(diff []*linter.Report) (criticalReports int) {
+func analyzeReports(cfg *MainConfig, diff []*linter.Report) (criticalReports int) {
 	filtered := make([]*linter.Report, 0, len(diff))
 	var linterErrors []string
 	for _, r := range diff {
+		if cfg.BeforeReport != nil && !cfg.BeforeReport(r) {
+			continue
+		}
 		if !isEnabled(r) {
 			continue
 		}
