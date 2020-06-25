@@ -24,7 +24,7 @@ func TestGolden(t *testing.T) {
 	enableAllRules := func(_ rules.Rule) bool { return true }
 	p := rules.NewParser()
 	linter.Rules = rules.NewSet()
-	if err := cmd.InitEmbeddedRules(p, enableAllRules); err != nil {
+	if _, err := cmd.InitEmbeddedRules(p, enableAllRules); err != nil {
 		t.Fatalf("init embedded rules: %v", err)
 	}
 
