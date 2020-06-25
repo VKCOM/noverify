@@ -8,11 +8,13 @@ import (
 	"net/http"
 	_ "net/http/pprof" // it is ok for actually main package
 	"os"
+	"path/filepath"
 	"runtime"
 	"runtime/pprof"
 	"strings"
 	"sync/atomic"
 
+	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/cmd/stubs"
 	"github.com/VKCOM/noverify/src/langsrv"
 	"github.com/VKCOM/noverify/src/lintdebug"
@@ -180,6 +182,12 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 	}
 
 	reports := linter.ParseFilenames(linter.ReadFilenames(filenames, linter.ExcludeRegex))
+	if args.outputBaseline {
+		if err := createBaseline(&l, cfg, reports); err != nil {
+			return 1, fmt.Errorf("write baseline: %v", err)
+		}
+		return 0, nil
+	}
 	criticalReports := analyzeReports(&l, cfg, reports)
 
 	if criticalReports > 0 {
@@ -187,6 +195,38 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 		return 2, nil
 	}
 	return 0, nil
+}
+
+func createBaseline(l *linterRunner, cfg *MainConfig, reports []*linter.Report) error {
+	var stats baseline.Stats
+	stats.CountPerCheck = make(map[string]int)
+
+	files := make(map[string]baseline.FileProfile)
+	for _, r := range reports {
+		if cfg.BeforeReport != nil && !cfg.BeforeReport(r) {
+			continue
+		}
+		if !isEnabled(l, r) {
+			continue
+		}
+
+		stats.CountTotal++
+		stats.CountPerCheck[r.CheckName()]++
+		filename := filepath.Base(r.GetFilename())
+		f, ok := files[filename]
+		if !ok {
+			f.Filename = filename
+			f.Reports = make(map[uint64]baseline.Report)
+		}
+		info := f.Reports[r.Hash()]
+		info.Count++
+		info.Hash = r.Hash()
+		f.Reports[r.Hash()] = info
+		files[filename] = f
+	}
+
+	profile := &baseline.Profile{Files: files}
+	return baseline.WriteProfile(l.outputFp, profile, &stats)
 }
 
 func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (criticalReports int) {
