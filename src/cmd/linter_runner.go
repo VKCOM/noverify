@@ -64,11 +64,11 @@ func (l *linterRunner) Init(args *cmdlineArguments) error {
 		}
 	}
 
+	l.initCheckMappings()
+
 	if err := l.initRules(); err != nil {
 		return fmt.Errorf("init rules: %v", err)
 	}
-
-	l.initCheckMappings()
 
 	return nil
 }
