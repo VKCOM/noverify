@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/linter/lintapi"
+	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
@@ -37,6 +38,10 @@ type parser struct {
 	res        *Set
 	compiler   phpgrep.Compiler
 	typeParser *phpdoc.TypeParser
+	names      map[string]struct{}
+
+	namespace string
+	funcName  string
 }
 
 // Parse reads PHP code that represents a rule file from r and creates a RuleSet based on it.
@@ -63,16 +68,45 @@ func (p *parser) parse(filename string, r io.Reader) (*Set, error) {
 	p.filename = filename
 	p.sources = sources
 	p.res = res
+	p.names = make(map[string]struct{})
 	for _, st := range root.Stmts {
 		if err := p.parseRule(st); err != nil {
 			return p.res, err
 		}
 	}
 
+	res.Names = make([]string, 0, len(p.names))
+	for name := range p.names {
+		res.Names = append(res.Names, name)
+	}
+	sort.Strings(res.Names)
+
 	return p.res, nil
 }
 
 func (p *parser) parseRule(st node.Node) error {
+	switch st := st.(type) {
+	case *stmt.Function:
+		p.funcName = st.FunctionName.Value
+		for _, st := range st.Stmts {
+			if err := p.parseRule(st); err != nil {
+				return p.errorf(st, "%s: %v", p.funcName, err)
+			}
+		}
+		p.funcName = ""
+		return nil
+
+	case *stmt.Namespace:
+		if len(st.Stmts) != 0 {
+			return p.errorf(st, "namespace with body is not supported")
+		}
+		p.namespace = meta.NameNodeToString(st.NamespaceName)
+		if strings.Contains(p.namespace, `\`) {
+			return p.errorf(st, "multi-part namespace names are not supported")
+		}
+		return nil
+	}
+
 	comment := ""
 	for _, ff := range (*st.GetFreeFloating())[freefloating.Start] {
 		if ff.StringType != freefloating.CommentType {
@@ -88,9 +122,10 @@ func (p *parser) parseRule(st node.Node) error {
 	}
 
 	var rule Rule
-	rule.Name = fmt.Sprintf("%s:%d", filepath.Base(p.filename), st.GetPosition().StartLine)
-	critical := false
-	unnamed := true
+
+	if p.funcName != "" {
+		rule.Name = p.funcName
+	}
 
 	var filterSet map[string]Filter
 	dst := p.res.Any // Use "any" set by default
@@ -102,7 +137,9 @@ func (p *parser) parseRule(st node.Node) error {
 			if len(part.Params) != 1 {
 				return p.errorf(st, "@name expects exactly 1 param, got %d", len(part.Params))
 			}
-			unnamed = false
+			if p.funcName != "" {
+				return p.errorf(st, "@name is not allowed inside a function")
+			}
 			rule.Name = part.Params[0]
 
 		case "location":
@@ -136,11 +173,9 @@ func (p *parser) parseRule(st node.Node) error {
 		case "error":
 			rule.Level = lintapi.LevelError
 			rule.Message = part.ParamsText
-			critical = true
 		case "warning":
 			rule.Level = lintapi.LevelWarning
 			rule.Message = part.ParamsText
-			critical = true
 		case "info":
 			rule.Level = lintapi.LevelInformation
 			rule.Message = part.ParamsText
@@ -205,12 +240,13 @@ func (p *parser) parseRule(st node.Node) error {
 		}
 	}
 
-	if unnamed {
-		p.res.AlwaysAllowed = append(p.res.AlwaysAllowed, rule.Name)
+	if rule.Name == "" {
+		return p.errorf(st, "missing @name attribute")
 	}
-	if critical && unnamed {
-		p.res.AlwaysCritical = append(p.res.AlwaysCritical, rule.Name)
+	if p.namespace != "" {
+		rule.Name = p.namespace + "/" + rule.Name
 	}
+	p.names[rule.Name] = struct{}{}
 
 	if filterSet != nil {
 		rule.Filters = append(rule.Filters, filterSet)

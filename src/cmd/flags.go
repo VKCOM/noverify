@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/rules"
 )
 
 const allNonMaybe = "<all-non-maybe>"
@@ -57,12 +58,17 @@ type cmdlineArguments struct {
 	disableCache bool
 }
 
-func bindFlags(args *cmdlineArguments) {
+func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 	var enabledByDefault []string
 	declaredChecks := linter.GetDeclaredChecks()
 	for _, info := range declaredChecks {
 		if info.Default {
 			enabledByDefault = append(enabledByDefault, info.Name)
+		}
+	}
+	for _, rset := range ruleSets {
+		for _, name := range rset.Names {
+			enabledByDefault = append(enabledByDefault, name)
 		}
 	}
 
