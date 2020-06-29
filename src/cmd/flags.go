@@ -51,7 +51,7 @@ type cmdlineArguments struct {
 	gitFullDiff                bool
 	gitIncludeUntracked        bool
 	gitRepo                    string
-	gitRef                     string
+	gitRef                     string // TODO: remove? It looks unused
 	gitCommitFrom              string
 	gitCommitTo                string
 

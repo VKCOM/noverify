@@ -213,19 +213,18 @@ func analyzeGitAuthorsWhiteList(l *linterRunner, changeLog []git.Commit) (should
 }
 
 func prepareGitArgs(l *linterRunner) (logArgs, diffArgs []string, err error) {
-	l.gitRef = l.args.gitRef
-	l.gitCommitFrom = l.args.gitCommitFrom
-	l.gitCommitTo = l.args.gitCommitTo
+	gitCommitFrom := l.args.gitCommitFrom
+	gitCommitTo := l.args.gitCommitTo
 	if l.args.gitPushArg != "" {
 		args := strings.Fields(l.args.gitPushArg)
 		if len(args) != 3 {
 			return nil, nil, fmt.Errorf("Unexpected format of push arguments, expected only 3 columns: %s", l.args.gitPushArg)
 		}
-		l.gitCommitFrom, l.gitCommitTo, l.gitRef = args[0], args[1], args[2]
+		// args[2] is a git ref (branch name), but its unused.
+		gitCommitFrom, gitCommitTo = args[0], args[1]
 	}
-
 	if l.args.gitCommitFrom == git.Zero {
-		l.args.gitCommitFrom = "master"
+		gitCommitFrom = "master"
 	}
 
 	if !l.args.gitSkipFetch {
@@ -250,12 +249,12 @@ func prepareGitArgs(l *linterRunner) (logArgs, diffArgs []string, err error) {
 
 		// check if master was merged in between the commits
 		if fromAndMaster != toAndMaster {
-			l.gitCommitFrom = toAndMaster
+			gitCommitFrom = toAndMaster
 		}
 	}
 
-	logArgs = []string{l.gitCommitFrom + ".." + l.gitCommitTo}
-	diffArgs = []string{l.gitCommitFrom + ".." + l.gitCommitTo}
+	logArgs = []string{gitCommitFrom + ".." + gitCommitTo}
+	diffArgs = []string{gitCommitFrom + ".." + gitCommitTo}
 
 	return logArgs, diffArgs, nil
 }
