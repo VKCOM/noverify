@@ -47,6 +47,100 @@ func init() {
 	})
 }
 
+func TestExprTypeTraitSelfStatic1(t *testing.T) {
+	// Tests for WStaticMethodCall.
+	code := `<?php
+trait NewSelf {
+  public static function instance() { return new self(); }
+}
+
+class FooSelf { use NewSelf; }
+class BarSelf extends FooSelf {}
+class BazSelf extends BarSelf { use NewSelf; }
+
+exprtype(FooSelf::instance(), '\FooSelf');
+exprtype(BarSelf::instance(), '\FooSelf');
+exprtype(BazSelf::instance(), '\BazSelf');
+
+trait NewStatic {
+  public static function instance() { return new static(); }
+}
+
+class FooStatic { use NewStatic; }
+class BarStatic extends FooStatic {}
+class BazStatic extends BarStatic { use NewStatic; }
+
+exprtype(FooStatic::instance(), '\FooStatic');
+exprtype(BarStatic::instance(), '\BarStatic');
+exprtype(BazStatic::instance(), '\BazStatic');
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestExprTypeTraitSelfStatic2(t *testing.T) {
+	// Tests for WStaticPropertyFetch.
+	code := `<?php
+trait NewSelf {
+  /** @var self */
+  public static $v = null;
+}
+
+class FooSelf {
+  use NewSelf;
+  private static function f() {
+    exprtype(self::$v, '\FooSelf|null');
+  }
+}
+
+class BarSelf extends FooSelf {
+  private static function f() {
+    exprtype(self::$v, '\FooSelf|null');
+  }
+}
+
+class BazSelf {
+  use NewSelf;
+  private static function f() {
+    exprtype(self::$v, '\BazSelf|null');
+  }
+}
+
+exprtype(FooSelf::$v, '\FooSelf|null');
+exprtype(BarSelf::$v, '\FooSelf|null');
+exprtype(BazSelf::$v, '\BazSelf|null');
+
+trait NewStatic {
+  /** @var static */
+  public static $v = null;
+}
+
+class FooStatic {
+  use NewStatic;
+  private static function f() {
+    exprtype(self::$v, '\FooStatic|null');
+  }
+}
+
+class BarStatic extends FooStatic {
+  private static function f() {
+    exprtype(self::$v, '\BarStatic|null');
+  }
+}
+
+class BazStatic {
+  use NewStatic;
+  private static function f() {
+    exprtype(self::$v, '\BazStatic|null');
+  }
+}
+
+exprtype(FooStatic::$v, '\FooStatic|null');
+exprtype(BarStatic::$v, '\BarStatic|null');
+exprtype(BazStatic::$v, '\BazStatic|null');
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestExprTypeIssue497(t *testing.T) {
 	code := `<?php
 /**
