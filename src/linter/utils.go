@@ -372,51 +372,107 @@ func (b *BlockWalker) getHashForExpressionNode(x node.Node) (int64, bool) {
 	switch x.(type) {
 	case *binary.BitwiseAnd:
 		y := x.(*binary.BitwiseAnd)
-		hashLeft, okLeft := b.getHashForExpressionNode(y.Left)
-		hashRight, okRight := b.getHashForExpressionNode(y.Right)
-		return hashLeft & hashRight, okLeft && okRight
+		hashLeft, ok := b.getHashForExpressionNode(y.Left)
+		if !ok {
+			return 0, false
+		}
+
+		hashRight, ok := b.getHashForExpressionNode(y.Right)
+		if !ok {
+			return 0, false
+		}
+		return hashLeft & hashRight, true
 
 	case *binary.BitwiseOr:
 		y := x.(*binary.BitwiseOr)
-		hashLeft, okLeft := b.getHashForExpressionNode(y.Left)
-		hashRight, okRight := b.getHashForExpressionNode(y.Right)
-		return hashLeft | hashRight, okLeft && okRight
+		hashLeft, ok := b.getHashForExpressionNode(y.Left)
+		if !ok {
+			return 0, false
+		}
+
+		hashRight, ok := b.getHashForExpressionNode(y.Right)
+		if !ok {
+			return 0, false
+		}
+		return hashLeft | hashRight, true
 
 	case *binary.BitwiseXor:
 		y := x.(*binary.BitwiseXor)
-		hashLeft, okLeft := b.getHashForExpressionNode(y.Left)
-		hashRight, okRight := b.getHashForExpressionNode(y.Right)
-		return hashLeft ^ hashRight, okLeft && okRight
+		hashLeft, ok := b.getHashForExpressionNode(y.Left)
+		if !ok {
+			return 0, false
+		}
+
+		hashRight, ok := b.getHashForExpressionNode(y.Right)
+		if !ok {
+			return 0, false
+		}
+		return hashLeft ^ hashRight, true
 
 	case *binary.Plus:
 		y := x.(*binary.Plus)
-		hashLeft, okLeft := b.getHashForExpressionNode(y.Left)
-		hashRight, okRight := b.getHashForExpressionNode(y.Right)
-		return hashLeft + hashRight, okLeft && okRight
+		hashLeft, ok := b.getHashForExpressionNode(y.Left)
+		if !ok {
+			return 0, false
+		}
+
+		hashRight, ok := b.getHashForExpressionNode(y.Right)
+		if !ok {
+			return 0, false
+		}
+		return hashLeft + hashRight, true
 
 	case *binary.Minus:
 		y := x.(*binary.Minus)
-		hashLeft, okLeft := b.getHashForExpressionNode(y.Left)
-		hashRight, okRight := b.getHashForExpressionNode(y.Right)
-		return hashLeft - hashRight, okLeft && okRight
+		hashLeft, ok := b.getHashForExpressionNode(y.Left)
+		if !ok {
+			return 0, false
+		}
+
+		hashRight, ok := b.getHashForExpressionNode(y.Right)
+		if !ok {
+			return 0, false
+		}
+		return hashLeft - hashRight, true
 
 	case *binary.Mul:
 		y := x.(*binary.Mul)
-		hashLeft, okLeft := b.getHashForExpressionNode(y.Left)
-		hashRight, okRight := b.getHashForExpressionNode(y.Right)
-		return hashLeft * hashRight, okLeft && okRight
+		hashLeft, ok := b.getHashForExpressionNode(y.Left)
+		if !ok {
+			return 0, false
+		}
+
+		hashRight, ok := b.getHashForExpressionNode(y.Right)
+		if !ok {
+			return 0, false
+		}
+		return hashLeft * hashRight, true
 
 	case *binary.Div:
 		y := x.(*binary.Div)
-		hashLeft, okLeft := b.getHashForExpressionNode(y.Left)
-		hashRight, okRight := b.getHashForExpressionNode(y.Right)
-		return hashLeft / hashRight, okLeft && okRight
+		hashLeft, ok := b.getHashForExpressionNode(y.Left)
+		if !ok {
+			return 0, false
+		}
+
+		hashRight, ok := b.getHashForExpressionNode(y.Right)
+		if !ok {
+			return 0, false
+		}
+		return hashLeft / hashRight, true
 
 	case *binary.Mod:
 		y := x.(*binary.Mod)
-		hashLeft, okLeft := b.getHashForExpressionNode(y.Left)
-		hashRight, okRight := b.getHashForExpressionNode(y.Right)
-		return hashLeft % hashRight, okLeft && okRight
+		hashLeft, ok := b.getHashForExpressionNode(y.Left)
+		if !ok {
+			return 0, false
+		}
+
+		hashRight, ok := b.getHashForExpressionNode(y.Right)
+		if !ok {
+			return 0, false
+		}
+		return hashLeft % hashRight, true
 
 	case *expr.UnaryPlus:
 		y := x.(*expr.UnaryPlus)
@@ -429,14 +485,24 @@ func (b *BlockWalker) getHashForExpressionNode(x node.Node) (int64, bool) {
 
 	case *binary.Concat:
 		y := x.(*binary.Concat)
-		hashLeft, okLeft := b.getHashForExpressionNode(y.Left)
-		hashRight, okRight := b.getHashForExpressionNode(y.Right)
-		return int64(hash(fmt.Sprint(hashLeft) + fmt.Sprint(hashRight))), okLeft && okRight
+		hashLeft, ok := b.getHashForExpressionNode(y.Left)
+		if !ok {
+			return 0, false
+		}
+
+		hashRight, ok := b.getHashForExpressionNode(y.Right)
+		if !ok {
+			return 0, false
+		}
+		return int64(hash(fmt.Sprint(hashLeft) + fmt.Sprint(hashRight))), true
 
 	case *expr.ArrayDimFetch:
 		y, _ := x.(*expr.ArrayDimFetch)
 		variableName := y.Variable.(*node.SimpleVar).Name
 		indexHash, ok := b.getHashForExpressionNode(y.Dim)
+		if !ok {
+			return 0, false
+		}
 		indexHashString := fmt.Sprint(indexHash)
 		return int64(hash("$" + variableName + "[" + indexHashString + "]")), ok
 
