@@ -380,6 +380,8 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 			return meta.NewPreciseTypesMap(nm)
 		}
 		return meta.TypesMap{}
+	case *expr.Paren:
+		return ExprTypeLocalCustom(sc, cs, n.Expr, custom)
 	case *assign.Assign:
 		return ExprTypeLocalCustom(sc, cs, n.Expression, custom)
 	case *expr.Clone:

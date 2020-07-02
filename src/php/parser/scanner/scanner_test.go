@@ -3,9 +3,9 @@ package scanner
 import (
 	"testing"
 
+	"github.com/VKCOM/noverify/src/linttest/assert"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parser/position"
-	"github.com/VKCOM/noverify/src/linttest/assert"
 )
 
 type lval struct {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/php/parser/position"
 
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
@@ -63,14 +64,14 @@ func TestSimpleEcho(t *testing.T) {
 }
 
 func TestEcho(t *testing.T) {
-	src := `<? echo($a);`
+	src := `<? echo  ( $a ) ;`
 
 	expected := &node.Root{
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
 			StartPos:  3,
-			EndPos:    12,
+			EndPos:    17,
 		},
 		Stmts: []node.Node{
 			&stmt.Echo{
@@ -78,17 +79,25 @@ func TestEcho(t *testing.T) {
 					StartLine: 1,
 					EndLine:   1,
 					StartPos:  3,
-					EndPos:    12,
+					EndPos:    17,
 				},
 				Exprs: []node.Node{
-					&node.SimpleVar{
+					&expr.Paren{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  8,
-							EndPos:    10,
+							StartPos:  9,
+							EndPos:    15,
 						},
-						Name: "a",
+						Expr: &node.SimpleVar{
+							Position: &position.Position{
+								StartLine: 1,
+								EndLine:   1,
+								StartPos:  11,
+								EndPos:    13,
+							},
+							Name: "a",
+						},
 					},
 				},
 			},

@@ -4,11 +4,23 @@ import (
 	"bytes"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
 	"github.com/VKCOM/noverify/src/php/parser/printer"
 )
 
 //go:generate go run ./gen_equal.go
+
+// Unparen returns n with all parenthesis removed.
+func Unparen(e node.Node) node.Node {
+	for {
+		p, ok := e.(*expr.Paren)
+		if !ok {
+			return e
+		}
+		e = p.Expr
+	}
+}
 
 func NodeSliceEqual(xs, ys []node.Node) bool {
 	if len(xs) != len(ys) {

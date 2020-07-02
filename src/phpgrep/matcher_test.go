@@ -376,11 +376,13 @@ func TestMatch(t *testing.T) {
 		{`${"func"}`, `function($x) {}`},
 		{`${"func"}`, `function() { return 1; }`},
 
-		{`1`, `(1)`},
+		{`1`, `1`},
 		{`(1)`, `(1)`},
 		{`((1))`, `((1))`},
 		{`f(1)`, `f(1)`},
 		{`f((1))`, `f((1))`},
+		{`($foo)()`, `($foo)()`},
+		{`($foo)->x`, `($foo)->x`},
 	})
 }
 
@@ -528,10 +530,13 @@ func TestMatchNegative(t *testing.T) {
 		{`${"func"}`, `$x`},
 		{`${"func"}`, `f()`},
 
-		// TODO: uncomment when parentheses are handled correctly.
-		// {`(1)`, `1`},
-		// {`((1))`, `(1)`},
-		// {`f((1))`, `f(1)`},
+		{`(1)`, `1`},
+		{`((1))`, `(1)`},
+		{`f((1))`, `f(1)`},
+		{`($foo)()`, `$foo()`},
+		{`($foo)->x`, `$foo->x`},
+		{`(($foo))()`, `($foo)()`},
+		{`(($foo))->x`, `($foo)->x`},
 	})
 }
 

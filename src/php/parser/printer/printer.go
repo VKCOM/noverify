@@ -241,6 +241,8 @@ func (p *Printer) printNode(n node.Node) {
 
 	// expr
 
+	case *expr.Paren:
+		p.printExprParen(n)
 	case *expr.ArrayDimFetch:
 		p.printExprArrayDimFetch(n)
 	case *expr.ArrayItem:
@@ -1247,6 +1249,14 @@ func (p *Printer) printUnset(n node.Node) {
 }
 
 // expr
+
+func (p *Printer) printExprParen(nn *expr.Paren) {
+	p.printFreeFloating(nn, freefloating.Start)
+	io.WriteString(p.w, "(")
+	p.Print(nn.Expr)
+	p.printFreeFloating(nn, freefloating.End)
+	io.WriteString(p.w, ")")
+}
 
 func (p *Printer) printExprArrayDimFetch(n node.Node) {
 	nn := n.(*expr.ArrayDimFetch)
