@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
@@ -22,10 +21,6 @@ type linterRunner struct {
 	reportsIncludeChecksSet map[string]bool
 	reportsCriticalSet      map[string]bool
 
-	gitRef        string
-	gitCommitFrom string
-	gitCommitTo   string
-
 	allowDisableRegex *regexp.Regexp
 }
 
@@ -41,7 +36,7 @@ func (l *linterRunner) IsEnabledByFlags(checkName string) bool {
 	return true
 }
 
-func (l *linterRunner) Init(args *cmdlineArguments) error {
+func (l *linterRunner) Init(ruleSets []*rules.Set, args *cmdlineArguments) error {
 	l.args = args
 
 	l.outputFp = os.Stderr
@@ -65,10 +60,7 @@ func (l *linterRunner) Init(args *cmdlineArguments) error {
 	}
 
 	l.initCheckMappings()
-
-	if err := l.initRules(); err != nil {
-		return fmt.Errorf("init rules: %v", err)
-	}
+	l.initRules(ruleSets)
 
 	return nil
 }
@@ -148,44 +140,15 @@ func (l *linterRunner) initCheckMappings() {
 	}
 }
 
-func (l *linterRunner) initRules() error {
+func (l *linterRunner) initRules(ruleSets []*rules.Set) error {
 	ruleFilter := func(r rules.Rule) bool {
 		return l.IsEnabledByFlags(r.Name)
 	}
 
 	linter.Rules = rules.NewSet()
-	p := rules.NewParser()
-
-	ruleSets, err := InitEmbeddedRules(p, ruleFilter)
-	if err != nil {
-		return err
-	}
 	for _, rset := range ruleSets {
-		l.updateCheckSets(rset)
-	}
-
-	if l.args.rulesList != "" {
-		for _, filename := range strings.Split(l.args.rulesList, ",") {
-			data, err := ioutil.ReadFile(filename)
-			if err != nil {
-				return err
-			}
-			rset, err := loadRulesFile(p, ruleFilter, filename, data)
-			if err != nil {
-				return err
-			}
-			l.updateCheckSets(rset)
-		}
+		appendRuleSet(rset, ruleFilter)
 	}
 
 	return nil
-}
-
-func (l *linterRunner) updateCheckSets(rset *rules.Set) {
-	for _, name := range rset.AlwaysAllowed {
-		l.reportsIncludeChecksSet[name] = true
-	}
-	for _, name := range rset.AlwaysCritical {
-		l.reportsCriticalSet[name] = true
-	}
 }

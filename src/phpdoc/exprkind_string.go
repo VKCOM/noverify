@@ -22,11 +22,12 @@ func _() {
 	_ = x[ExprUnion-11]
 	_ = x[ExprInter-12]
 	_ = x[ExprGeneric-13]
+	_ = x[ExprTypedCallable-14]
 }
 
-const _ExprKind_name = "InvalidUnknownNameSpecialNameIntKeyValArrayParenNullableOptionalNotUnionInterGeneric"
+const _ExprKind_name = "InvalidUnknownNameSpecialNameIntKeyValArrayParenNullableOptionalNotUnionInterGenericTypedCallable"
 
-var _ExprKind_index = [...]uint8{0, 7, 14, 18, 29, 32, 38, 43, 48, 56, 64, 67, 72, 77, 84}
+var _ExprKind_index = [...]uint8{0, 7, 14, 18, 29, 32, 38, 43, 48, 56, 64, 67, 72, 77, 84, 97}
 
 func (i ExprKind) String() string {
 	if i >= ExprKind(len(_ExprKind_index)-1) {

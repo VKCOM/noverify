@@ -39,7 +39,7 @@ func main() {
 	})
 }
 
-func useCustomFlags() {
+func useCustomFlags(env cmd.InitEnvironment) {
 	if *customFlag != "" {
 		log.Println("custom flag value:", *customFlag)
 	}

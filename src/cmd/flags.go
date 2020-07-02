@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/rules"
 )
 
 const allNonMaybe = "<all-non-maybe>"
@@ -50,19 +51,30 @@ type cmdlineArguments struct {
 	gitFullDiff                bool
 	gitIncludeUntracked        bool
 	gitRepo                    string
-	gitRef                     string
-	gitCommitFrom              string
-	gitCommitTo                string
+	gitRef                     string // TODO: remove? It looks unused
+
+	// These two flags are mutated in prepareGitArgs.
+	// This is bad, but it's easier for now than to fix this
+	// without introducing other issues.
+	mutable struct {
+		gitCommitFrom string
+		gitCommitTo   string
+	}
 
 	disableCache bool
 }
 
-func bindFlags(args *cmdlineArguments) {
+func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 	var enabledByDefault []string
 	declaredChecks := linter.GetDeclaredChecks()
 	for _, info := range declaredChecks {
 		if info.Default {
 			enabledByDefault = append(enabledByDefault, info.Name)
+		}
+	}
+	for _, rset := range ruleSets {
+		for _, name := range rset.Names {
+			enabledByDefault = append(enabledByDefault, name)
 		}
 	}
 
@@ -101,8 +113,8 @@ func bindFlags(args *cmdlineArguments) {
 		"Comma-separated list of rules files")
 
 	flag.StringVar(&args.gitRepo, "git", "", "Path to git repository to analyze")
-	flag.StringVar(&args.gitCommitFrom, "git-commit-from", "", "Analyze changes between commits <git-commit-from> and <git-commit-to>")
-	flag.StringVar(&args.gitCommitTo, "git-commit-to", "", "")
+	flag.StringVar(&args.mutable.gitCommitFrom, "git-commit-from", "", "Analyze changes between commits <git-commit-from> and <git-commit-to>")
+	flag.StringVar(&args.mutable.gitCommitTo, "git-commit-to", "", "")
 	flag.StringVar(&args.gitRef, "git-ref", "", "Ref (e.g. branch) that is being pushed")
 	flag.StringVar(&args.gitPushArg, "git-push-arg", "", "In {pre,post}-receive hooks a whole line from stdin can be passed")
 	flag.StringVar(&args.gitAuthorsWhitelist, "git-author-whitelist", "", "Whitelist (comma-separated) for commit authors, if needed")

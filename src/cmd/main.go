@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -14,7 +13,6 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"github.com/VKCOM/noverify/src/cmd/embeddedrules"
 	"github.com/VKCOM/noverify/src/cmd/stubs"
 	"github.com/VKCOM/noverify/src/langsrv"
 	"github.com/VKCOM/noverify/src/lintdebug"
@@ -73,17 +71,24 @@ func Run(cfg *MainConfig) (int, error) {
 		cfg = &MainConfig{}
 	}
 
+	ruleSets, err := parseRules()
+	if err != nil {
+		return 1, fmt.Errorf("preload rules: %v", err)
+	}
+
 	var args cmdlineArguments
-	bindFlags(&args)
+	bindFlags(ruleSets, &args)
 	flag.Parse()
 	if args.disableCache {
 		linter.CacheDir = ""
 	}
 	if cfg.AfterFlagParse != nil {
-		cfg.AfterFlagParse()
+		cfg.AfterFlagParse(InitEnvironment{
+			RuleSets: ruleSets,
+		})
 	}
 
-	return mainNoExit(&args, cfg)
+	return mainNoExit(ruleSets, &args, cfg)
 }
 
 // Main is like Run(), but it calls os.Exit() and does not return.
@@ -100,7 +105,7 @@ func Main(cfg *MainConfig) {
 // Note that if error is not nil, integer code will be discarded, so it can be 0.
 //
 // We don't want os.Exit to be inserted randomly to avoid defer cancellation.
-func mainNoExit(args *cmdlineArguments, cfg *MainConfig) (int, error) {
+func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) (int, error) {
 	if args.version {
 		// Version is already printed. Can exit here.
 		return 0, nil
@@ -141,7 +146,7 @@ func mainNoExit(args *cmdlineArguments, cfg *MainConfig) (int, error) {
 	linter.PHPExtensions = strings.Split(args.phpExtensionsArg, ",")
 
 	var l linterRunner
-	if err := l.Init(args); err != nil {
+	if err := l.Init(ruleSets, args); err != nil {
 		return 1, fmt.Errorf("init: %v", err)
 	}
 
@@ -241,46 +246,6 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 	}
 
 	return criticalReports
-}
-
-func loadRulesFile(p *rules.Parser, filter func(r rules.Rule) bool, filename string, data []byte) (*rules.Set, error) {
-	appendRules := func(dst, src *rules.ScopedSet) {
-		for i, list := range src.RulesByKind {
-			for _, r := range list {
-				if !filter(r) {
-					break
-				}
-				dst.RulesByKind[i] = append(dst.RulesByKind[i], r)
-			}
-		}
-	}
-
-	rset, err := p.Parse(filename, bytes.NewReader(data))
-	if err != nil {
-		return nil, err
-	}
-
-	appendRules(linter.Rules.Any, rset.Any)
-	appendRules(linter.Rules.Root, rset.Root)
-	appendRules(linter.Rules.Local, rset.Local)
-
-	return rset, nil
-}
-
-func InitEmbeddedRules(p *rules.Parser, filter func(r rules.Rule) bool) ([]*rules.Set, error) {
-	var ruleSets []*rules.Set
-	for _, filename := range embeddedrules.AssetNames() {
-		data, err := embeddedrules.Asset(filename)
-		if err != nil {
-			return nil, err
-		}
-		rset, err := loadRulesFile(p, filter, filename, data)
-		if err != nil {
-			return nil, err
-		}
-		ruleSets = append(ruleSets, rset)
-	}
-	return ruleSets, nil
 }
 
 func initStubs() error {

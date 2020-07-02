@@ -29,12 +29,12 @@ func NewSet() *Set {
 
 // Set is a result of rule file parsing.
 type Set struct {
-	Any   *ScopedSet // Anywhere
-	Root  *ScopedSet // Only outside of functions
-	Local *ScopedSet // Only inside functions
+	Any     *ScopedSet // Anywhere
+	Root    *ScopedSet // Only outside of functions
+	Local   *ScopedSet // Only inside functions
+	Builtin bool       // Whether this is a NoVerify builtin rule set
 
-	AlwaysAllowed  []string // All unnamed rules
-	AlwaysCritical []string // Unnamed rules of warning or error level
+	Names []string // All rule names
 }
 
 // ScopedSet is a categorized rules collection.

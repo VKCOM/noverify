@@ -10,3 +10,6 @@ MAYBE   ternarySimplify: could rewrite as `$x ?: $y` at testdata/embeddedrules/f
 MAYBE   ternarySimplify: could rewrite as `$x[1] ?? $y` at testdata/embeddedrules/file.php:15
     sink(isset($x[1]) ? $x[1] : $y);
          ^^^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   ternarySimplify: could rewrite as `(bool)($flags & SOME_MASK)` at testdata/embeddedrules/file.php:27
+    sink(($flags & SOME_MASK) ? true : false);
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

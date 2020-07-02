@@ -832,6 +832,15 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
+	case *expr.Paren:
+		y, ok := y.(*expr.Paren)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
 	case *expr.PostDec:
 		y, ok := y.(*expr.PostDec)
 		if !ok || x == nil || y == nil {
