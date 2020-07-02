@@ -79,6 +79,7 @@ func parseEmbeddedRules(p *rules.Parser) ([]*rules.Set, error) {
 		if err != nil {
 			return nil, err
 		}
+		rset.Builtin = true
 		ruleSets = append(ruleSets, rset)
 	}
 	return ruleSets, nil

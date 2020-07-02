@@ -29,9 +29,10 @@ func NewSet() *Set {
 
 // Set is a result of rule file parsing.
 type Set struct {
-	Any   *ScopedSet // Anywhere
-	Root  *ScopedSet // Only outside of functions
-	Local *ScopedSet // Only inside functions
+	Any     *ScopedSet // Anywhere
+	Root    *ScopedSet // Only outside of functions
+	Local   *ScopedSet // Only inside functions
+	Builtin bool       // Whether this is a NoVerify builtin rule set
 
 	Names []string // All rule names
 }
