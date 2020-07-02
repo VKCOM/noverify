@@ -59,8 +59,8 @@ const (
 
 	// ExprKeyVal is `key:val` type.
 	// Examples: `name: string` `id:int`
-	// Args[0]: key expression (left)
-	// Args[1]: val expression (right)
+	// Args[0] - key expression (left)
+	// Args[1] - val expression (right)
 	ExprKeyVal
 
 	// ExprArray is `elem[]` or `[]elem` type.
@@ -113,6 +113,12 @@ const (
 	//
 	// Note: may miss closing `>`.
 	ExprGeneric
+
+	// ExprTypedCallable is a parametrized `callable(A,...):B` type.
+	// Examples: `callable():void` `callable(int, int) : float`
+	// Args[0] - return type
+	// Args[1:] - argument types
+	ExprTypedCallable
 )
 
 const (
@@ -133,9 +139,9 @@ var infixPrecedenceTab = [256]byte{
 	'|': 2,
 	'&': 3,
 	'[': 4,
-	'<': 4,
-	'(': 4,
-	'{': 4,
+	'<': 5,
+	'(': 5,
+	'{': 5,
 	'?': 4,
 }
 
@@ -170,11 +176,15 @@ func (p *TypeParser) reset(input string) {
 	p.skipUnknown = false
 }
 
+func (p *TypeParser) exprValue(e *TypeExpr) string {
+	return p.input[e.Begin:e.End]
+}
+
 func (p *TypeParser) setValues(e *TypeExpr) {
 	for i := range e.Args {
 		p.setValues(&e.Args[i])
 	}
-	e.Value = p.input[e.Begin:e.End]
+	e.Value = p.exprValue(e)
 }
 
 func (p *TypeParser) parseExprInsideGroup() *TypeExpr {
@@ -340,6 +350,21 @@ func (p *TypeParser) parseExpr(precedence byte) *TypeExpr {
 				p.skipWhitespace()
 				if p.peek() == ',' {
 					p.pos++
+				}
+			}
+			// For `callable(...)` case we want to see whether we can peek ':'.
+			// If we can, parse it as a typed callable.
+			if shape == ShapeGenericParen && p.exprValue(&left.Args[0]) == "callable" {
+				pos := p.pos
+				p.skipWhitespace()
+				if p.peek() == ':' {
+					p.pos++
+					returnType := p.parseExprInsideGroup()
+					left.Args[0] = *returnType
+					left.Kind = ExprTypedCallable
+					left.Shape = ShapeDefault
+				} else {
+					p.pos = pos // Unread whitespace
 				}
 			}
 			left.End = uint16(p.pos)
