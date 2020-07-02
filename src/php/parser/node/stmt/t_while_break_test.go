@@ -5,6 +5,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/linttest/assert"
 
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/position"
 
@@ -175,14 +176,22 @@ func TestBreak(t *testing.T) {
 								StartPos:  15,
 								EndPos:    24,
 							},
-							Expr: &scalar.Lnumber{
+							Expr: &expr.Paren{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  21,
-									EndPos:    22,
+									StartPos:  20,
+									EndPos:    23,
 								},
-								Value: "3",
+								Expr: &scalar.Lnumber{
+									Position: &position.Position{
+										StartLine: 1,
+										EndLine:   1,
+										StartPos:  21,
+										EndPos:    22,
+									},
+									Value: "3",
+								},
 							},
 						},
 					},

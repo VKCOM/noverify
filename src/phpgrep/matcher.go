@@ -214,6 +214,10 @@ func (m *matcher) eqNode(state *matcherState, x, y node.Node) bool {
 		y, ok := y.(*stmt.Expression)
 		return ok && m.eqNode(state, x.Expr, y.Expr)
 
+	case *expr.Paren:
+		y, ok := y.(*expr.Paren)
+		return ok && m.eqNode(state, x.Expr, y.Expr)
+
 	case *stmt.StmtList:
 		y, ok := y.(*stmt.StmtList)
 		return ok && m.eqNodeSlice(state, x.Stmts, y.Stmts)

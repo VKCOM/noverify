@@ -1,61 +1,58 @@
-package stmt_test
+package expr_test
 
 import (
 	"testing"
 
 	"github.com/VKCOM/noverify/src/linttest/assert"
-
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
-	"github.com/VKCOM/noverify/src/php/parser/position"
-
 	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
+	"github.com/VKCOM/noverify/src/php/parser/node/name"
+	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
+	"github.com/VKCOM/noverify/src/php/parser/position"
 )
 
-func TestContinueEmpty(t *testing.T) {
-	src := `<? while (1) { continue; }`
+func TestParen(t *testing.T) {
+	src := `<? ((1));`
 
 	expected := &node.Root{
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
 			StartPos:  3,
-			EndPos:    26,
+			EndPos:    9,
 		},
 		Stmts: []node.Node{
-			&stmt.While{
+			&stmt.Expression{
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
 					StartPos:  3,
-					EndPos:    26,
+					EndPos:    9,
 				},
-				Cond: &scalar.Lnumber{
+				Expr: &expr.Paren{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  10,
-						EndPos:    11,
+						StartPos:  3,
+						EndPos:    8,
 					},
-					Value: "1",
-				},
-				Stmt: &stmt.StmtList{
-					Position: &position.Position{
-						StartLine: 1,
-						EndLine:   1,
-						StartPos:  13,
-						EndPos:    26,
-					},
-					Stmts: []node.Node{
-						&stmt.Continue{
+					Expr: &expr.Paren{
+						Position: &position.Position{
+							StartLine: 1,
+							EndLine:   1,
+							StartPos:  4,
+							EndPos:    7,
+						},
+						Expr: &scalar.Lnumber{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  15,
-								EndPos:    24,
+								StartPos:  5,
+								EndPos:    6,
 							},
+							Value: "1",
 						},
 					},
 				},
@@ -69,129 +66,134 @@ func TestContinueEmpty(t *testing.T) {
 	assert.DeepEqual(t, expected, actual)
 }
 
-func TestContinueLight(t *testing.T) {
-	src := `<? while (1) { continue 2; }`
+func TestParenDereferencable(t *testing.T) {
+	src := `<? (new T)->foo;`
 
 	expected := &node.Root{
 		Position: &position.Position{
 			StartLine: 1,
 			EndLine:   1,
 			StartPos:  3,
-			EndPos:    28,
+			EndPos:    16,
 		},
 		Stmts: []node.Node{
-			&stmt.While{
+			&stmt.Expression{
 				Position: &position.Position{
 					StartLine: 1,
 					EndLine:   1,
 					StartPos:  3,
-					EndPos:    28,
+					EndPos:    16,
 				},
-				Cond: &scalar.Lnumber{
+				Expr: &expr.PropertyFetch{
 					Position: &position.Position{
 						StartLine: 1,
 						EndLine:   1,
-						StartPos:  10,
-						EndPos:    11,
+						StartPos:  3,
+						EndPos:    15,
 					},
-					Value: "1",
-				},
-				Stmt: &stmt.StmtList{
-					Position: &position.Position{
-						StartLine: 1,
-						EndLine:   1,
-						StartPos:  13,
-						EndPos:    28,
-					},
-					Stmts: []node.Node{
-						&stmt.Continue{
-							Position: &position.Position{
-								StartLine: 1,
-								EndLine:   1,
-								StartPos:  15,
-								EndPos:    26,
-							},
-							Expr: &scalar.Lnumber{
-								Position: &position.Position{
-									StartLine: 1,
-									EndLine:   1,
-									StartPos:  24,
-									EndPos:    25,
-								},
-								Value: "2",
-							},
+					Variable: &expr.Paren{
+						Position: &position.Position{
+							StartLine: 1,
+							EndLine:   1,
+							StartPos:  3,
+							EndPos:    10,
 						},
-					},
-				},
-			},
-		},
-	}
-
-	php7parser := php7.NewParser([]byte(src))
-	php7parser.Parse()
-	actual := php7parser.GetRootNode()
-	assert.DeepEqual(t, expected, actual)
-}
-
-func TestContinue(t *testing.T) {
-	src := `<? while (1) { continue(3); }`
-
-	expected := &node.Root{
-		Position: &position.Position{
-			StartLine: 1,
-			EndLine:   1,
-			StartPos:  3,
-			EndPos:    29,
-		},
-		Stmts: []node.Node{
-			&stmt.While{
-				Position: &position.Position{
-					StartLine: 1,
-					EndLine:   1,
-					StartPos:  3,
-					EndPos:    29,
-				},
-				Cond: &scalar.Lnumber{
-					Position: &position.Position{
-						StartLine: 1,
-						EndLine:   1,
-						StartPos:  10,
-						EndPos:    11,
-					},
-					Value: "1",
-				},
-				Stmt: &stmt.StmtList{
-					Position: &position.Position{
-						StartLine: 1,
-						EndLine:   1,
-						StartPos:  13,
-						EndPos:    29,
-					},
-					Stmts: []node.Node{
-						&stmt.Continue{
+						Expr: &expr.New{
 							Position: &position.Position{
 								StartLine: 1,
 								EndLine:   1,
-								StartPos:  15,
-								EndPos:    27,
+								StartPos:  4,
+								EndPos:    9,
 							},
-							Expr: &expr.Paren{
+							Class: &name.Name{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  23,
-									EndPos:    26,
+									StartPos:  8,
+									EndPos:    9,
 								},
-								Expr: &scalar.Lnumber{
-									Position: &position.Position{
-										StartLine: 1,
-										EndLine:   1,
-										StartPos:  24,
-										EndPos:    25,
+								Parts: []node.Node{
+									&name.NamePart{
+										Position: &position.Position{
+											StartLine: 1,
+											EndLine:   1,
+											StartPos:  8,
+											EndPos:    9,
+										},
+										Value: "T",
 									},
-									Value: "3",
 								},
 							},
+						},
+					},
+					Property: &node.Identifier{
+						Position: &position.Position{
+							StartLine: 1,
+							EndLine:   1,
+							StartPos:  12,
+							EndPos:    15,
+						},
+						Value: "foo",
+					},
+				},
+			},
+		},
+	}
+
+	php7parser := php7.NewParser([]byte(src))
+	php7parser.Parse()
+	actual := php7parser.GetRootNode()
+	assert.DeepEqual(t, expected, actual)
+}
+
+func TestParenCallable(t *testing.T) {
+	src := `<? ($foo)();`
+
+	expected := &node.Root{
+		Position: &position.Position{
+			StartLine: 1,
+			EndLine:   1,
+			StartPos:  3,
+			EndPos:    12,
+		},
+		Stmts: []node.Node{
+			&stmt.Expression{
+				Position: &position.Position{
+					StartLine: 1,
+					EndLine:   1,
+					StartPos:  3,
+					EndPos:    12,
+				},
+				Expr: &expr.FunctionCall{
+					Position: &position.Position{
+						StartLine: 1,
+						EndLine:   1,
+						StartPos:  3,
+						EndPos:    11,
+					},
+					Function: &expr.Paren{
+						Position: &position.Position{
+							StartLine: 1,
+							EndLine:   1,
+							StartPos:  3,
+							EndPos:    9,
+						},
+						Expr: &node.SimpleVar{
+							Position: &position.Position{
+								StartLine: 1,
+								EndLine:   1,
+								StartPos:  4,
+								EndPos:    8,
+							},
+							Name: "foo",
+						},
+					},
+					ArgumentList: &node.ArgumentList{
+						Position: &position.Position{
+							StartLine: 1,
+							EndLine:   1,
+							StartPos:  9,
+							EndPos:    11,
 						},
 					},
 				},

@@ -3038,14 +3038,22 @@ func TestPhp7(t *testing.T) {
 								StartPos:  1397,
 								EndPos:    1406,
 							},
-							Expr: &scalar.Lnumber{
+							Expr: &expr.Paren{
 								Position: &position.Position{
 									StartLine: 69,
 									EndLine:   69,
-									StartPos:  1403,
-									EndPos:    1404,
+									StartPos:  1402,
+									EndPos:    1405,
 								},
-								Value: "3",
+								Expr: &scalar.Lnumber{
+									Position: &position.Position{
+										StartLine: 69,
+										EndLine:   69,
+										StartPos:  1403,
+										EndPos:    1404,
+									},
+									Value: "3",
+								},
 							},
 						},
 					},
@@ -3940,14 +3948,22 @@ func TestPhp7(t *testing.T) {
 								StartPos:  1920,
 								EndPos:    1932,
 							},
-							Expr: &scalar.Lnumber{
+							Expr: &expr.Paren{
 								Position: &position.Position{
 									StartLine: 84,
 									EndLine:   84,
-									StartPos:  1929,
-									EndPos:    1930,
+									StartPos:  1928,
+									EndPos:    1931,
 								},
-								Value: "3",
+								Expr: &scalar.Lnumber{
+									Position: &position.Position{
+										StartLine: 84,
+										EndLine:   84,
+										StartPos:  1929,
+										EndPos:    1930,
+									},
+									Value: "3",
+								},
 							},
 						},
 					},
@@ -4153,14 +4169,22 @@ func TestPhp7(t *testing.T) {
 					EndPos:    2052,
 				},
 				Exprs: []node.Node{
-					&node.SimpleVar{
+					&expr.Paren{
 						Position: &position.Position{
 							StartLine: 90,
 							EndLine:   90,
-							StartPos:  2048,
-							EndPos:    2050,
+							StartPos:  2047,
+							EndPos:    2051,
 						},
-						Name: "a",
+						Expr: &node.SimpleVar{
+							Position: &position.Position{
+								StartLine: 90,
+								EndLine:   90,
+								StartPos:  2048,
+								EndPos:    2050,
+							},
+							Name: "a",
+						},
 					},
 				},
 			},
@@ -8300,16 +8324,24 @@ func TestPhp7(t *testing.T) {
 						StartLine: 187,
 						EndLine:   187,
 						StartPos:  4094,
-						EndPos:    4102,
+						EndPos:    4103,
 					},
-					Expr: &node.SimpleVar{
+					Expr: &expr.Paren{
 						Position: &position.Position{
 							StartLine: 187,
 							EndLine:   187,
-							StartPos:  4100,
-							EndPos:    4102,
+							StartPos:  4099,
+							EndPos:    4103,
 						},
-						Name: "a",
+						Expr: &node.SimpleVar{
+							Position: &position.Position{
+								StartLine: 187,
+								EndLine:   187,
+								StartPos:  4100,
+								EndPos:    4102,
+							},
+							Name: "a",
+						},
 					},
 				},
 			},
@@ -9728,16 +9760,24 @@ func TestPhp7(t *testing.T) {
 						StartLine: 232,
 						EndLine:   232,
 						StartPos:  4690,
-						EndPos:    4698,
+						EndPos:    4699,
 					},
-					Expr: &node.SimpleVar{
+					Expr: &expr.Paren{
 						Position: &position.Position{
 							StartLine: 232,
 							EndLine:   232,
-							StartPos:  4696,
-							EndPos:    4698,
+							StartPos:  4695,
+							EndPos:    4699,
 						},
-						Name: "a",
+						Expr: &node.SimpleVar{
+							Position: &position.Position{
+								StartLine: 232,
+								EndLine:   232,
+								StartPos:  4696,
+								EndPos:    4698,
+							},
+							Name: "a",
+						},
 					},
 				},
 			},
@@ -13102,39 +13142,47 @@ func TestPhp7(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 332,
 					EndLine:   332,
-					StartPos:  6105,
+					StartPos:  6104,
 					EndPos:    6119,
 				},
 				Expr: &expr.PropertyFetch{
 					Position: &position.Position{
 						StartLine: 332,
 						EndLine:   332,
-						StartPos:  6105,
+						StartPos:  6104,
 						EndPos:    6118,
 					},
-					Variable: &expr.New{
+					Variable: &expr.Paren{
 						Position: &position.Position{
 							StartLine: 332,
 							EndLine:   332,
-							StartPos:  6105,
-							EndPos:    6112,
+							StartPos:  6104,
+							EndPos:    6113,
 						},
-						Class: &name.Name{
+						Expr: &expr.New{
 							Position: &position.Position{
 								StartLine: 332,
 								EndLine:   332,
-								StartPos:  6109,
+								StartPos:  6105,
 								EndPos:    6112,
 							},
-							Parts: []node.Node{
-								&name.NamePart{
-									Position: &position.Position{
-										StartLine: 332,
-										EndLine:   332,
-										StartPos:  6109,
-										EndPos:    6112,
+							Class: &name.Name{
+								Position: &position.Position{
+									StartLine: 332,
+									EndLine:   332,
+									StartPos:  6109,
+									EndPos:    6112,
+								},
+								Parts: []node.Node{
+									&name.NamePart{
+										Position: &position.Position{
+											StartLine: 332,
+											EndLine:   332,
+											StartPos:  6109,
+											EndPos:    6112,
+										},
+										Value: "Foo",
 									},
-									Value: "Foo",
 								},
 							},
 						},
@@ -13154,39 +13202,47 @@ func TestPhp7(t *testing.T) {
 				Position: &position.Position{
 					StartLine: 333,
 					EndLine:   333,
-					StartPos:  6123,
+					StartPos:  6122,
 					EndPos:    6134,
 				},
 				Expr: &expr.FunctionCall{
 					Position: &position.Position{
 						StartLine: 333,
 						EndLine:   333,
-						StartPos:  6123,
+						StartPos:  6122,
 						EndPos:    6133,
 					},
-					Function: &expr.New{
+					Function: &expr.Paren{
 						Position: &position.Position{
 							StartLine: 333,
 							EndLine:   333,
-							StartPos:  6123,
-							EndPos:    6130,
+							StartPos:  6122,
+							EndPos:    6131,
 						},
-						Class: &name.Name{
+						Expr: &expr.New{
 							Position: &position.Position{
 								StartLine: 333,
 								EndLine:   333,
-								StartPos:  6127,
+								StartPos:  6123,
 								EndPos:    6130,
 							},
-							Parts: []node.Node{
-								&name.NamePart{
-									Position: &position.Position{
-										StartLine: 333,
-										EndLine:   333,
-										StartPos:  6127,
-										EndPos:    6130,
+							Class: &name.Name{
+								Position: &position.Position{
+									StartLine: 333,
+									EndLine:   333,
+									StartPos:  6127,
+									EndPos:    6130,
+								},
+								Parts: []node.Node{
+									&name.NamePart{
+										Position: &position.Position{
+											StartLine: 333,
+											EndLine:   333,
+											StartPos:  6127,
+											EndPos:    6130,
+										},
+										Value: "Foo",
 									},
-									Value: "Foo",
 								},
 							},
 						},
