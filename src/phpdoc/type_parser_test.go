@@ -75,6 +75,7 @@ func TestParser(t *testing.T) {
 		{`array<int>`, `Generic="array<int>"{Name="array" Name="int"}`},
 		{`array<int,string>`, `Generic="array<int,string>"{Name="array" Name="int" Name="string"}`},
 		{`array<int, array<string, stdclass> >`, `Generic="array<int, array<string, stdclass> >"{Name="array" Name="int" Generic="array<string, stdclass>"{Name="array" Name="string" Name="stdclass"}}`},
+		{`?A<B>`, `Nullable="?A<B>"{Generic="A<B>"{Name="A" Name="B"}}`},
 
 		// Alternative generic syntax 1.
 		{`tuple(*)`, `GenericParen="tuple(*)"{Name="tuple" SpecialName="*"}`},
@@ -87,11 +88,26 @@ func TestParser(t *testing.T) {
 		{`array{a: int, b: float}`, `GenericBrace="array{a: int, b: float}"{Name="array" KeyVal="a: int"{Name="a" Name="int"} KeyVal="b: float"{Name="b" Name="float"}}`},
 		{`array{a : int}`, `GenericBrace="array{a : int}"{Name="array" KeyVal="a : int"{Name="a" Name="int"}}`},
 
+		// Typed callable (see #537).
+		// TODO: add variadic params support.
+		{`callable() : void`, `TypedCallable="callable() : void"{Name="void"}`},
+		{`callable(A):B`, `TypedCallable="callable(A):B"{Name="B" Name="A"}`},
+		{`(callable (A, B) : C)`, `Paren="(callable (A, B) : C)"{TypedCallable="callable (A, B) : C"{Name="C" Name="A" Name="B"}}`},
+		{`?callable() : int`, `Nullable="?callable() : int"{TypedCallable="callable() : int"{Name="int"}}`},
+		{`callable(A) : callable(B) : int`, `TypedCallable="callable(A) : callable(B) : int"{TypedCallable="callable(B) : int"{Name="int" Name="B"} Name="A"}`},
+
+		// The typed callable without return type is parsed as generic type.
+		// Only () shape is recognized.
+		{`callable(A, B)`, `GenericParen="callable(A, B)"{Name="callable" Name="A" Name="B"}`},
+		{`callable()`, `GenericParen="callable()"{Name="callable"}`},
+		{`callable<A>:B`, `KeyVal="callable<A>:B"{Generic="callable<A>"{Name="callable" Name="A"} Name="B"}`},
+
 		// KeyVal types.
 		{`name:int`, `KeyVal="name:int"{Name="name" Name="int"}`},
 		{`array{foo: int}`, `GenericBrace="array{foo: int}"{Name="array" KeyVal="foo: int"{Name="foo" Name="int"}}`},
 		{`array{0: int}`, `GenericBrace="array{0: int}"{Name="array" KeyVal="0: int"{Int="0" Name="int"}}`},
 		{`shape{s?: string}`, `GenericBrace="shape{s?: string}"{Name="shape" KeyVal="s?: string"{Optional="s?"{Name="s"} Name="string"}}`},
+		{`foo(A):B`, `KeyVal="foo(A):B"{GenericParen="foo(A)"{Name="foo" Name="A"} Name="B"}`},
 
 		// Intersection types has higher priority that union types.
 		{`x&y|z`, `Union="x&y|z"{Inter="x&y"{Name="x" Name="y"} Name="z"}`},

@@ -22,10 +22,6 @@ type linterRunner struct {
 	reportsIncludeChecksSet map[string]bool
 	reportsCriticalSet      map[string]bool
 
-	gitRef        string
-	gitCommitFrom string
-	gitCommitTo   string
-
 	allowDisableRegex *regexp.Regexp
 }
 

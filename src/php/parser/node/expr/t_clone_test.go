@@ -35,16 +35,24 @@ func TestCloneBrackets(t *testing.T) {
 						StartLine: 1,
 						EndLine:   1,
 						StartPos:  3,
-						EndPos:    11,
+						EndPos:    12,
 					},
-					Expr: &node.SimpleVar{
+					Expr: &expr.Paren{
 						Position: &position.Position{
 							StartLine: 1,
 							EndLine:   1,
-							StartPos:  9,
-							EndPos:    11,
+							StartPos:  8,
+							EndPos:    12,
 						},
-						Name: "a",
+						Expr: &node.SimpleVar{
+							Position: &position.Position{
+								StartLine: 1,
+								EndLine:   1,
+								StartPos:  9,
+								EndPos:    11,
+							},
+							Name: "a",
+						},
 					},
 				},
 			},

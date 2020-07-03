@@ -234,6 +234,8 @@ func (p *PrettyPrinter) printNode(n node.Node) {
 
 		// expr
 
+	case *expr.Paren:
+		p.printExprParen(n)
 	case *expr.ArrayDimFetch:
 		p.printExprArrayDimFetch(n)
 	case *expr.ArrayItem:
@@ -964,6 +966,12 @@ func (p *PrettyPrinter) printUnset(n node.Node) {
 }
 
 // expr
+
+func (p *PrettyPrinter) printExprParen(n *expr.Paren) {
+	io.WriteString(p.w, "(")
+	p.Print(n.Expr)
+	io.WriteString(p.w, ")")
+}
 
 func (p *PrettyPrinter) printExprArrayDimFetch(n node.Node) {
 	nn := n.(*expr.ArrayDimFetch)

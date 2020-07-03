@@ -59,14 +59,14 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 		}
 
 		start = time.Now()
-		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.gitCommitFrom, nil))
+		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil))
 		parseIndexOnlyFiles(l)
 		log.Printf("Indexed old commit in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		oldReports = linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.gitCommitFrom, linter.ExcludeRegex))
+		oldReports = linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, linter.ExcludeRegex))
 		log.Printf("Parsed old commit for %s (%d reports)", time.Since(start), len(oldReports))
 
 		meta.ResetInfo()
@@ -75,34 +75,34 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 		}
 
 		start = time.Now()
-		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.gitCommitTo, nil))
+		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil))
 		log.Printf("Indexed new commit in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		reports = linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.gitCommitTo, linter.ExcludeRegex))
+		reports = linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, linter.ExcludeRegex))
 		log.Printf("Parsed new commit in %s (%d reports)", time.Since(start), len(reports))
 	} else {
 		start = time.Now()
-		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.gitCommitTo, nil))
+		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil))
 		parseIndexOnlyFiles(l)
 		log.Printf("Indexing complete in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		oldReports = linter.ParseFilenames(linter.ReadOldFilesFromGit(l.args.gitRepo, l.args.gitCommitFrom, changes))
+		oldReports = linter.ParseFilenames(linter.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes))
 		log.Printf("Parsed old files versions for %s", time.Since(start))
 
 		start = time.Now()
 		meta.SetIndexingComplete(false)
-		linter.ParseFilenames(linter.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.gitCommitTo, changes))
+		linter.ParseFilenames(linter.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes))
 		meta.SetIndexingComplete(true)
 		log.Printf("Indexed files versions for %s", time.Since(start))
 
 		start = time.Now()
-		reports = linter.ParseFilenames(linter.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.gitCommitTo, changes))
+		reports = linter.ParseFilenames(linter.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes))
 		log.Printf("Parsed new file versions in %s", time.Since(start))
 	}
 
@@ -117,7 +117,7 @@ func gitRepoComputeReportsFromLocalChanges(l *linterRunner) (oldReports, reports
 	}
 
 	// compute changes for working copy (staged + unstaged changes combined starting with the commit being pushed)
-	changes, err := git.Diff(l.args.gitRepo, l.args.gitWorkTree, []string{l.args.gitCommitFrom})
+	changes, err := git.Diff(l.args.gitRepo, l.args.gitWorkTree, []string{l.args.mutable.gitCommitFrom})
 	if err != nil {
 		log.Panicf("Could not compute git diff: %s", err.Error())
 	}
@@ -126,17 +126,17 @@ func gitRepoComputeReportsFromLocalChanges(l *linterRunner) (oldReports, reports
 		return nil, nil, nil, false
 	}
 
-	log.Printf("You have changes in your work tree, showing diff between %s and work tree", l.args.gitCommitFrom)
+	log.Printf("You have changes in your work tree, showing diff between %s and work tree", l.args.mutable.gitCommitFrom)
 
 	start := time.Now()
-	linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.gitCommitFrom, nil))
+	linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil))
 	parseIndexOnlyFiles(l)
 	log.Printf("Indexing complete in %s", time.Since(start))
 
 	meta.SetIndexingComplete(true)
 
 	start = time.Now()
-	oldReports = linter.ParseFilenames(linter.ReadOldFilesFromGit(l.args.gitRepo, l.args.gitCommitFrom, changes))
+	oldReports = linter.ParseFilenames(linter.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes))
 	log.Printf("Parsed old files versions for %s", time.Since(start))
 
 	start = time.Now()
@@ -213,19 +213,16 @@ func analyzeGitAuthorsWhiteList(l *linterRunner, changeLog []git.Commit) (should
 }
 
 func prepareGitArgs(l *linterRunner) (logArgs, diffArgs []string, err error) {
-	l.gitRef = l.args.gitRef
-	l.gitCommitFrom = l.args.gitCommitFrom
-	l.gitCommitTo = l.args.gitCommitTo
 	if l.args.gitPushArg != "" {
 		args := strings.Fields(l.args.gitPushArg)
 		if len(args) != 3 {
 			return nil, nil, fmt.Errorf("Unexpected format of push arguments, expected only 3 columns: %s", l.args.gitPushArg)
 		}
-		l.gitCommitFrom, l.gitCommitTo, l.gitRef = args[0], args[1], args[2]
+		// args[2] is a git ref (branch name), but its unused.
+		l.args.mutable.gitCommitFrom, l.args.mutable.gitCommitTo = args[0], args[1]
 	}
-
-	if l.args.gitCommitFrom == git.Zero {
-		l.args.gitCommitFrom = "master"
+	if l.args.mutable.gitCommitFrom == git.Zero {
+		l.args.mutable.gitCommitFrom = "master"
 	}
 
 	if !l.args.gitSkipFetch {
@@ -238,24 +235,24 @@ func prepareGitArgs(l *linterRunner) (logArgs, diffArgs []string, err error) {
 	}
 
 	if !l.args.gitDisableCompensateMaster {
-		fromAndMaster, err := git.MergeBase(l.args.gitRepo, "ORIGIN_MASTER", l.args.gitCommitFrom)
+		fromAndMaster, err := git.MergeBase(l.args.gitRepo, "ORIGIN_MASTER", l.args.mutable.gitCommitFrom)
 		if err != nil {
-			return nil, nil, fmt.Errorf("Could not compute merge base between ORIGIN_MASTER and %s", l.args.gitCommitFrom)
+			return nil, nil, fmt.Errorf("Could not compute merge base between ORIGIN_MASTER and %s", l.args.mutable.gitCommitFrom)
 		}
 
-		toAndMaster, err := git.MergeBase(l.args.gitRepo, "ORIGIN_MASTER", l.args.gitCommitTo)
+		toAndMaster, err := git.MergeBase(l.args.gitRepo, "ORIGIN_MASTER", l.args.mutable.gitCommitTo)
 		if err != nil {
-			return nil, nil, fmt.Errorf("Could not compute merge base between ORIGIN_MASTER and %s", l.args.gitCommitTo)
+			return nil, nil, fmt.Errorf("Could not compute merge base between ORIGIN_MASTER and %s", l.args.mutable.gitCommitTo)
 		}
 
 		// check if master was merged in between the commits
 		if fromAndMaster != toAndMaster {
-			l.gitCommitFrom = toAndMaster
+			l.args.mutable.gitCommitFrom = toAndMaster
 		}
 	}
 
-	logArgs = []string{l.gitCommitFrom + ".." + l.gitCommitTo}
-	diffArgs = []string{l.gitCommitFrom + ".." + l.gitCommitTo}
+	logArgs = []string{l.args.mutable.gitCommitFrom + ".." + l.args.mutable.gitCommitTo}
+	diffArgs = []string{l.args.mutable.gitCommitFrom + ".." + l.args.mutable.gitCommitTo}
 
 	return logArgs, diffArgs, nil
 }

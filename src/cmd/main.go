@@ -85,7 +85,9 @@ func Run(cfg *MainConfig) (int, error) {
 		linter.CacheDir = ""
 	}
 	if cfg.AfterFlagParse != nil {
-		cfg.AfterFlagParse()
+		cfg.AfterFlagParse(InitEnvironment{
+			RuleSets: ruleSets,
+		})
 	}
 
 	return mainNoExit(ruleSets, &args, cfg)
