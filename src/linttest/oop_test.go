@@ -163,6 +163,7 @@ func TestPhpdocProperty(t *testing.T) {
 /**
  * @property int $int
  * @property string $string - optional description.
+ * @property-read string $name Name of the class
  */
 class WithProps {
   /***/
@@ -180,6 +181,13 @@ $_ = (new WithProps())->string;
 
 function f(WithProps $x) {
   return $x->int + $x->int;
+}
+
+/**
+ * @param WithProps|null $y
+ */
+function f2($y = null) {
+  echo $y->name;
 }
 
 // Can't access them as static props/constants.

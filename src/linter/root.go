@@ -1821,7 +1821,7 @@ func (d *RootWalker) parseClassPHPDoc(n node.Node, doc string) classPhpDocParseR
 	for _, part := range phpdoc.Parse(d.ctx.phpdocTypeParser, doc) {
 		d.checkPHPDocRef(n, part)
 		switch part.Name() {
-		case "property":
+		case "property", "property-read", "property-write":
 			parseClassPHPDocProperty(&d.ctx, &result, part.(*phpdoc.TypeVarCommentPart))
 		case "method":
 			parseClassPHPDocMethod(&d.ctx, &result, part.(*phpdoc.RawCommentPart))
