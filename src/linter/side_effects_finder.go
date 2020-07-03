@@ -99,12 +99,22 @@ var pureBuiltins = func() map[string]struct{} {
 }()
 
 func (f *sideEffectsFinder) functionCallIsPure(n *expr.FunctionCall) bool {
-	// Allow referencing builtin funcs even before indexing is completed.
-	nm, ok := n.Function.(*name.Name)
+	// We allow referencing builtin funcs even before indexing is completed.
+
 	var funcName string
-	if ok && len(nm.Parts) == 1 {
+	switch nm := n.Function.(type) {
+	case *name.Name:
+		if len(nm.Parts) == 1 {
+			funcName = `\` + meta.NameToString(nm)
+		}
+	case *name.FullyQualified:
+		if len(nm.Parts) == 1 {
+			funcName = meta.FullyQualifiedToString(nm)
+		}
+	}
+
+	if funcName != "" {
 		// Might be a builtin.
-		funcName = `\` + meta.NameToString(nm)
 		if _, ok := pureBuiltins[funcName]; ok {
 			return true
 		}
