@@ -55,13 +55,17 @@ A single rules file can look like this:
  * @noinspection ALL
  */
 
-/** @warning use 'count' instead of 'sizeof' */
+/**
+ * @name funcAlias
+ * @warning use 'count' instead of 'sizeof' */
+ */
 sizeof($_);
 
 /**
  * It should also be noted that you can document
  * your rules within the same comment.
  *
+ * @name strictCmp
  * @warning 3rd argument of in_array must be true when comparing strings
  * @type string $needle
  */
@@ -89,6 +93,7 @@ Here is an example of `@or` usage:
 
 ```php
 /**
+ * @name strictCmp
  * @warning strings must be compared using '===' operator
  * @type string $x
  * @or
@@ -102,17 +107,20 @@ That constraint makes a rule match only when either of `==` operands have a `str
 As an example of unrepeatable constraints, there is a `@scope` attribute:
 
 ```php
-/**
- * @maybe prefer require_once over require
- * @scope root
- */
-require($_);
+// Using function group to avoid repeated @name attribute.
+function requireOnce() {
+  /**
+   * @maybe prefer require_once over require
+   * @scope root
+   */
+  require($_);
 
-/**
- * @maybe prefer include_once over include
- * @scope root
- */
-include($_);
+  /**
+   * @maybe prefer include_once over include
+   * @scope root
+   */
+  include($_);
+}
 ```
 
 It assigns a scope constraint that controls in what context that rule should be applied.
@@ -125,22 +133,13 @@ There are currently 3 kinds of scope:
 When we say "unrepeatable", it means that you can't have several `@scope` attributes even
 if you use `@or`. It would be shared between all filter sets.
 
-With NoVerify builtin inspections, every issue report is prefixed with a check name, like `unused` or `undefined`.
+With NoVerify builtin inspections, every issue report is prefixed with a diagnostic name, like `unused` or `undefined`.
 
-If a rule has `@name <string>` attribute, that is as a rule report tag.
+There are two ways to give a name for your rule:
+1. An explicit `@name <string>` attribute.
+2. Put your rule inside a function that is named after the desired diagnostic name.
 
-Otherwise, a rule is called **anonymous** and instead of some dull placeholder, you'll get a
-`filename:line` marker, where `filename` is a rule file that defines that rule and `line` is a
-line that contains the pattern being matched. It's useful not only during the rule debugging but
-also for tracking the rule definition location (especially useful with multiple rule files).
-
-Here is an example of how anonumous report can look like:
-
-```
-WARNING rules.php:28: strings must be compared using '===' at www/super_file.php:123
-if (substr($w, 0, 3) == 'www') {
-    ^^^^^^^^^^^^^^^^^^^^^^^^^
-```
+The second option is preferred, especially if you find yourself adding several rules with the same `@name`.
 
 To disable a rule, just comment it out:
 
@@ -155,6 +154,7 @@ This rule, for example, finds all for loops that call `count` on every iteration
 
 ```php
 /**
+ * @name countCallCond
  * @info count is called on every loop iteration
  */
 for ($i = 0; $i < count($a); $i++) $_;
@@ -195,6 +195,8 @@ for ($i = 0; $i < count($matches[2]); $i++) {
                         ^^^^^^^^^^^
 ```
 
+If a rules file contains a `namespace` statement, all rule names will be prefixed with that namespace name. It's useful if you have several rules files and want to avoid accidental diagnostic name collisions.
+
 ### Working with types
 
 TODO.
@@ -203,6 +205,7 @@ TODO.
 
 | Syntax | Description |
 | ------------- | ------------- |
+| `@name name` | Set diagnostic name (only outside of the function group). |
 | `@error message...` | Set severity=error and report text to `message`. |
 | `@warning message...` | Set severity=warning and report text to `message`. |
 | `@info message...` | Set severity=info and report text to `message`. |
@@ -219,28 +222,28 @@ TODO.
 ### More examples
 
 ```php
-/**
- * @info excessive int cast: expression is already int-typed
- * @location $x
- * @type int $x
- */
-(int)$x;
+namespace custom;
+
+function redundantCast() {
+  /**
+   * @info excessive int cast: expression is already int-typed
+   * @location $x
+   * @type int $x
+   */
+  (int)$x;
+
+  /**
+   * @info excessive string cast: expression is already string-typed
+   * @location $x
+   * @type string $x
+   */
+  (string)$x;
+}
 
 /**
- * @info excessive string cast: expression is already string-typed
- * @location $x
- * @type string $x
- */
-(string)$x;
-
-/**
+ * @name illegalCast
  * @warning array to string conversion
  * @type array $x
  */
 (string)$x;
 ```
-
-### Development notes
-
-Dynamic rules features that are being developed and discussed:
-* [Multi-pattern rules syntax](https://github.com/VKCOM/noverify/issues/276)
