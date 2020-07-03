@@ -134,6 +134,10 @@ func TestGolden(t *testing.T) {
 			deps: []string{
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
 				`stubs/phpstorm-stubs/Reflection/Reflection.php`,
+				`stubs/phpstorm-stubs/Reflection/ReflectionClass.php`,
+				`stubs/phpstorm-stubs/Reflection/ReflectionFunctionAbstract.php`,
+				`stubs/phpstorm-stubs/Reflection/ReflectionFunction.php`,
+				`stubs/phpstorm-stubs/Reflection/ReflectionParameter.php`,
 			},
 		},
 
