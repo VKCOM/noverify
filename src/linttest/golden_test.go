@@ -57,6 +57,20 @@ func TestGolden(t *testing.T) {
 		},
 
 		{
+			name: "mustache",
+			disable: []string{
+				`arraySyntax`,
+				`redundantCast`,
+			},
+			deps: []string{
+				`stubs/phpstorm-stubs/SPL/SPL.php`,
+				`stubs/phpstorm-stubs/SPL/SPL_f.php`,
+				`stubs/phpstorm-stubs/json/json.php`,
+				`stubs/phpstorm-stubs/mbstring/mbstring.php`,
+			},
+		},
+
+		{
 			name: "math",
 			deps: []string{
 				`stubs/phpstorm-stubs/gmp/gmp.php`,
