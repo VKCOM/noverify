@@ -19,7 +19,7 @@ NoVerify is a PHP linter: it finds possible bugs and style violations in your co
 NoVerify by default has the following checks:
 
 - Unreachable code
-- Array access to non-array type (beta)
+- Array access to non-array type 
 - Too few arguments when calling a function/method
 - Call to undefined function/method
 - Fetching of undefined constant/class property
