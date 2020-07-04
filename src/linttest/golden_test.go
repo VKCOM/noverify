@@ -57,6 +57,16 @@ func TestGolden(t *testing.T) {
 		},
 
 		{
+			name: "math",
+			deps: []string{
+				`stubs/phpstorm-stubs/gmp/gmp.php`,
+				`stubs/phpstorm-stubs/SPL/SPL.php`,
+				`stubs/phpstorm-stubs/bcmath/bcmath.php`,
+				`stubs/phpstorm-stubs/json/json.php`,
+			},
+		},
+
+		{
 			name: "qrcode",
 			deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
