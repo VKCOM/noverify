@@ -466,6 +466,13 @@ func findProperty(className string, propertyName string, visitedMap map[string]s
 // Does not perform the actual method set comparison.
 func Implements(className string, interfaceName string) bool {
 	visited := make(map[string]struct{}, 8)
+	return implements(className, interfaceName, visited)
+}
+
+func implements(className string, interfaceName string, visited map[string]struct{}) bool {
+	if className == interfaceName {
+		return true
+	}
 
 	for {
 		class, ok := meta.Info.GetClass(className)
@@ -480,6 +487,12 @@ func Implements(className string, interfaceName string) bool {
 
 		for iface := range class.Interfaces {
 			if interfaceExtends(iface, interfaceName, visited) {
+				return true
+			}
+		}
+
+		for _, iface := range class.ParentInterfaces {
+			if implements(iface, interfaceName, visited) {
 				return true
 			}
 		}
