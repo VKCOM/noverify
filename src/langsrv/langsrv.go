@@ -439,7 +439,7 @@ func handleTextDocumentReferences(req *baseRequest) error {
 	})
 }
 
-func resolveTypesSafe(curStaticClass string, m meta.TypesMap, visitedMap map[string]struct{}) (res map[string]struct{}) {
+func resolveTypesSafe(curStaticClass string, m meta.TypesMap, visitedMap solver.ResolverMap) (res map[string]struct{}) {
 	defer func() {
 		if r := recover(); r != nil {
 			res = make(map[string]struct{})
@@ -540,7 +540,7 @@ func getHoverForNode(n node.Node, sc *meta.Scope, cs *meta.ClassParseState) stri
 
 func getHoverForVariable(v *node.SimpleVar, sc *meta.Scope, cs *meta.ClassParseState) string {
 	typ, _ := sc.GetVarNameType(v.Name)
-	newM := meta.NewTypesMapFromMap(resolveTypesSafe(cs.CurrentClass, typ, make(map[string]struct{})))
+	newM := meta.NewTypesMapFromMap(resolveTypesSafe(cs.CurrentClass, typ, make(solver.ResolverMap)))
 	return newM.String() + " $" + v.Name
 }
 

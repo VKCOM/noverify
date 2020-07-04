@@ -47,6 +47,92 @@ func init() {
 	})
 }
 
+func TestExprTypeRecursiveType1(t *testing.T) {
+	code := `<?php
+class Feed {
+  /** @var FeedItem[] */
+  public $items;
+}
+
+class FeedItem {
+  /**
+   * @var FeedItem[]
+   */
+  public $stories;
+
+  public $title = '';
+}
+
+exprtype((new FeedItem())->stories, '\FeedItem[]');
+exprtype((new Feed())->items[0], '\FeedItem');
+
+$feed = new Feed();
+exprtype($feed->items[0]->stories, '\FeedItem[]');
+
+function test(Feed $feed) {
+  exprtype($feed->items, '\FeedItem[]');
+
+  foreach ($feed->items as $item) {
+    exprtype($item, '\FeedItem');
+    exprtype($item->stories, '\FeedItem[]');
+
+    foreach ($item->stories as $story) {
+      exprtype($story, '\FeedItem');
+      $_ = $story->title;
+    }
+  }
+}
+`
+
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestExprTypeRecursiveType2(t *testing.T) {
+	code := `<?php
+class MyList {
+  /** @var MyList */
+  public $tail;
+
+  /** @return MyList */
+  public function getTail() { return $this->tail; }
+}
+
+/** @return MyList[][] */
+function newList() { return [[new MyList()]]; }
+
+$l = new MyList();
+
+exprtype($l->tail, '\MyList');
+exprtype($l->tail->tail, '\MyList');
+exprtype($l->tail->tail->tail, '\MyList');
+
+exprtype($l->getTail(), '\MyList');
+exprtype($l->getTail()->getTail(), '\MyList');
+exprtype($l->getTail()->getTail()->getTail(), '\MyList');
+
+exprtype((newList())[0][0]->getTail(), '\MyList');
+exprtype((newList())[0][0]->getTail()->getTail(), '\MyList');
+exprtype((newList())[0][0]->getTail()->getTail()->getTail(), '\MyList');
+
+class A {
+  /** @var B */
+  public $b;
+}
+class B {
+  /** @var A */
+  public $a;
+}
+
+$loop = new A();
+exprtype($loop->b, '\B');
+exprtype($loop->b->a, '\A');
+exprtype($loop->b->a->b, '\B');
+exprtype($loop->b->a->b->a, '\A');
+`
+
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestExprTypeTraitSelfStatic1(t *testing.T) {
 	// Tests for WStaticMethodCall.
 	code := `<?php
