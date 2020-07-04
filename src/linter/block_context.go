@@ -52,12 +52,13 @@ func (ctx *blockContext) customFunctionExists(nm node.Node) bool {
 
 func (ctx *blockContext) addCustomMethod(obj node.Node, methodName string) {
 	ctx.customMethods = append(ctx.customMethods, customMethod{
-		obj:  obj,
+		obj:  astutil.Unparen(obj),
 		name: methodName,
 	})
 }
 
 func (ctx *blockContext) customMethodExists(obj node.Node, methodName string) bool {
+	obj = astutil.Unparen(obj)
 	for _, m := range ctx.customMethods {
 		if m.name == methodName && astutil.NodeEqual(m.obj, obj) {
 			return true

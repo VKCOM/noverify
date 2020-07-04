@@ -286,7 +286,12 @@ type Report struct {
 	level      int
 	msg        string
 	filename   string
+	hash       uint64
 	isDisabled bool // user-defined flag that file should not be linted
+}
+
+func (r *Report) Hash() uint64 {
+	return r.hash
 }
 
 // CheckName returns report associated check name.

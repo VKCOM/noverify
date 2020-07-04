@@ -150,10 +150,17 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 		className, methodName := meta.UnwrapStaticMethodCall(typ)
 		m, ok := FindMethod(className, methodName)
 		if ok {
-			return r.resolveTypes(className, m.Info.Typ)
+			res = r.resolveTypes(className, m.Info.Typ)
+			if m.TraitName != "" {
+				res = replaceTraitName(res, m.TraitName, m.ClassName)
+			}
+			return res
 		}
 		m, ok = FindMethod(className, "__callStatic")
 		if ok {
+			// Should probably run replaceTraitName here on the result
+			// as well, but I don't have a good __callStatic trait method
+			// example, so I hesitate.
 			return r.resolveTypes(className, m.Info.Typ)
 		}
 
@@ -161,7 +168,11 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 		className, propertyName := meta.UnwrapStaticPropertyFetch(typ)
 		p, ok := FindProperty(className, propertyName)
 		if ok {
-			return r.resolveTypes(class, p.Info.Typ)
+			res = r.resolveTypes(className, p.Info.Typ)
+			if p.TraitName != "" {
+				res = replaceTraitName(res, p.TraitName, p.ClassName)
+			}
+			return res
 		}
 	case meta.WClassConstFetch:
 		className, constName := meta.UnwrapClassConstFetch(typ)
@@ -569,4 +580,15 @@ func getClassOrTrait(typeName string) (meta.ClassInfo, bool) {
 		return trait, true
 	}
 	return class, false
+}
+
+// replaceTraitName replaces traitName with className inside res.
+func replaceTraitName(res map[string]struct{}, traitName, className string) map[string]struct{} {
+	_, ok := res[traitName]
+	if !ok {
+		return res
+	}
+	delete(res, traitName)
+	res[className] = struct{}{}
+	return res
 }

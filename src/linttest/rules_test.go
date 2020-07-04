@@ -12,6 +12,7 @@ import (
 func TestRulePathFilter(t *testing.T) {
 	rfile := `<?php
 /**
+ * @name varEval
  * @warning don't eval from variable
  * @path my/site/ads_
  */
@@ -36,52 +37,64 @@ eval(${"var"});
 func TestAnyRules(t *testing.T) {
 	rfile := `<?php
 /**
+ * @name badCond
  * @warning string value used in if condition
  * @type string $cond
  */
 if ($cond) $_;
 
 /**
- * @warning implode() first arg must be a string and second should be an array
- * @type !string $glue
- * @or
- * @type !array $pieces
- */
-implode($glue, $pieces);
-
-/**
+ * @name typecheckOp
  * @warning increment of a non-numeric type
  * @type !(int|float) $x
  */
 $x++;
 
+function argsOrder() {
+  /**
+   * @warning implode() first arg must be a string and second should be an array
+   * @type !string $glue
+   * @or
+   * @type !array $pieces
+   */
+  implode($glue, $pieces);
+
+  /**
+   * @warning suspicious arguments passed to array_key_exists
+   * @type array $key
+   * @or
+   * @type !array $arr
+   */
+  array_key_exists($key, $arr);
+
+  /**
+   * @warning suspicious order of stripos function arguments
+   */
+  stripos(${"str"}, ${"*"});
+}
+
 /**
- * @warning suspicious arguments passed to array_key_exists
- * @type array $key
- * @or
- * @type !array $arr
+ * @name dupAndArgs
+ * @warning duplicated sub-expressions inside boolean expression
  */
-array_key_exists($key, $arr);
-
-/** @warning suspicious order of stripos function arguments */
-stripos(${"str"}, ${"*"});
-
-/** @warning duplicated sub-expressions inside boolean expression */
 $x && $x;
 
 /**
+ * @name badCall
  * @warning don't call explode with empty delimiter
  * @scope any
  */
 explode("", ${"*"});
 
 /**
+ * @name strictCmp
  * @warning 3rd argument of in_array must be true when comparing strings
  * @type string $needle
  */
 in_array($needle, $_);
 
 /**
+ * @name strictCmp
  * @warning strings must be compared using '===' operator
  * @type string $x
  * @or
@@ -90,6 +103,7 @@ in_array($needle, $_);
 $x == $y;
 
 /**
+ * @name falseCmp
  * @maybe did you meant to compare an object with null?
  * @type object $x
  */
@@ -222,6 +236,7 @@ $_ = implode($s, $i); // BAD: string, int
 func TestLocalRules(t *testing.T) {
 	rfile := `<?php
 /**
+ * @name emptyIf
  * @warning suspicious empty body of the if statement
  * @scope local
  */
@@ -246,24 +261,28 @@ function f() {
 func TestRootRules(t *testing.T) {
 	rfile := `<?php
 /**
+ * @name selfAssign
  * @warning self-assignment
  * @scope root
  */
 $x = $x;
 
 /**
+ * @name requireOnce
  * @maybe use require_once instead of require
  * @scope root
  */
 require($_);
 
 /**
+ * @name dupSubExpr
  * @warning duplicated then/else parts in ternary expression
  * @scope root
  */
 $_ ? $x : $x;
 
 /**
+ * @name noverifyString
  * @info the linter is spelled NoVerify
  */
 "noverify";
@@ -303,6 +322,7 @@ $name = "NoVerify"; // No warning
 func TestRulesIfCond(t *testing.T) {
 	rfile := `<?php
 /**
+ * @name ifCond
  * @warning used string-typed value inside if condition
  * @type string $x
  */
@@ -408,9 +428,14 @@ func runRulesTest(t *testing.T, test *linttest.Suite, rfile string) {
 	oldRules := linter.Rules
 	linter.Rules = rset
 
+	ruleNamesSet := make(map[string]struct{}, len(rset.Names))
+	for _, name := range rset.Names {
+		ruleNamesSet[name] = struct{}{}
+	}
+
 	var filtered []*linter.Report
 	for _, r := range test.RunLinter() {
-		if strings.HasPrefix(r.CheckName(), "<test>") {
+		if _, ok := ruleNamesSet[r.CheckName()]; ok {
 			filtered = append(filtered, r)
 		}
 	}

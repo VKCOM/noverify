@@ -17,3 +17,12 @@ function ternarySimplify($x, $y) {
 
     sink(random() ? random() : $y);
 }
+
+define('SOME_MASK', 0x0f);
+
+/**
+ * @param int $flags
+ */
+function ternarySimplify_issue540($flags) {
+    sink(($flags & SOME_MASK) ? true : false);
+}

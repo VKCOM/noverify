@@ -85,6 +85,13 @@ func TestParseSimple(t *testing.T) {
 			Params:     []string{"a", "b", "c"},
 			ParamsText: `a b c`,
 		},
+		&TypeVarCommentPart{
+			line:       15,
+			name:       "property-read",
+			VarIsFirst: false,
+			Type:       parseType(`int $readonly`),
+			Var:        "$readonly",
+		},
 	}
 
 	got := Parse(p, `/**
@@ -101,6 +108,7 @@ func TestParseSimple(t *testing.T) {
 	 * @var array<int, array<string, stdclass>	>
 	 * @return int   some    result
 	 * @unknown a b c
+	 * @property-read int $readonly
 	*/`)
 
 	if len(got) != len(want) {

@@ -2,7 +2,9 @@ package linter
 
 import (
 	"fmt"
+	"path/filepath"
 
+	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
 )
@@ -15,13 +17,22 @@ type rootContext struct {
 
 	// shapes is a list of generated shape types for the current file.
 	shapes []shapeTypeInfo
+
+	baseline     baseline.FileProfile
+	hashCounters map[uint64]int // Allocated lazily
 }
 
 func newRootContext(st *meta.ClassParseState) rootContext {
+	var p baseline.FileProfile
+	if BaselineProfile != nil {
+		filename := filepath.Base(st.CurrentFile)
+		p = BaselineProfile.Files[filename]
+	}
 	return rootContext{
 		typeNormalizer:   typeNormalizer{st: st},
 		phpdocTypeParser: phpdoc.NewTypeParser(),
 		st:               st,
+		baseline:         p,
 	}
 }
 

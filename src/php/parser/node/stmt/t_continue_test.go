@@ -5,6 +5,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/linttest/assert"
 
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/position"
 
@@ -174,14 +175,22 @@ func TestContinue(t *testing.T) {
 								StartPos:  15,
 								EndPos:    27,
 							},
-							Expr: &scalar.Lnumber{
+							Expr: &expr.Paren{
 								Position: &position.Position{
 									StartLine: 1,
 									EndLine:   1,
-									StartPos:  24,
-									EndPos:    25,
+									StartPos:  23,
+									EndPos:    26,
 								},
-								Value: "3",
+								Expr: &scalar.Lnumber{
+									Position: &position.Position{
+										StartLine: 1,
+										EndLine:   1,
+										StartPos:  24,
+										EndPos:    25,
+									},
+									Value: "3",
+								},
 							},
 						},
 					},

@@ -91,7 +91,7 @@ func Parse(parser *TypeParser, doc string) (res []CommentPart) {
 		line := i + 1
 		var part CommentPart
 		switch name {
-		case "param", "var", "property":
+		case "param", "var", "property", "property-read", "property-write":
 			part = parseTypeVarComment(parser, line, name, text)
 		case "return":
 			part = parseTypeComment(parser, line, name, text)

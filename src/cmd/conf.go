@@ -2,7 +2,14 @@ package cmd
 
 import (
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/rules"
 )
+
+// InitEnvironment passes the state that may be required to finish
+// custom linters initialization.
+type InitEnvironment struct {
+	RuleSets []*rules.Set
+}
 
 // MainConfig describes optional main function config.
 // All zero field values have some defined behavior.
@@ -11,7 +18,7 @@ type MainConfig struct {
 	// Can be used to examine flags that were bound prior to the Main() call.
 	//
 	// If nil, behaves as a no-op function.
-	AfterFlagParse func()
+	AfterFlagParse func(InitEnvironment)
 
 	// BeforeReport acts as both an on-report action and a filter.
 	//
