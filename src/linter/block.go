@@ -2,6 +2,7 @@ package linter
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"strings"
 
@@ -1073,6 +1074,7 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 	}
 
 	var (
+		matchDist   = int(math.MaxInt32)
 		foundMethod bool
 		magic       bool
 		fn          meta.FuncInfo
@@ -1082,12 +1084,18 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 	exprType := b.exprType(e.Variable)
 
 	exprType.Find(func(typ string) bool {
-		m, ok := solver.FindMethod(typ, methodName)
-		fn = m.Info
-		foundMethod = ok
-		className = m.ClassName
-		magic = haveMagicMethod(typ, `__call`)
-		return foundMethod || magic
+		m, isMagic, ok := b.findMethod(typ, methodName)
+		if !ok {
+			return false
+		}
+		foundMethod = true
+		if dist := b.classDistance(typ); dist < matchDist {
+			matchDist = dist
+			fn = m.Info
+			className = m.ClassName
+			magic = isMagic
+		}
+		return matchDist == 0 // Stop if found inside the current class
 	})
 
 	e.Variable.Walk(b)
@@ -1117,11 +1125,13 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 		}
 	}
 
-	if foundMethod && !b.canAccess(className, fn.AccessLevel) {
+	if foundMethod && !magic && !b.canAccess(className, fn.AccessLevel) {
 		b.r.Report(e.Method, LevelError, "accessLevel", "Cannot access %s method %s->%s()", fn.AccessLevel, className, methodName)
 	}
 
-	b.handleCallArgs(e.Method, e.ArgumentList.Arguments, fn)
+	if !magic {
+		b.handleCallArgs(e.Method, e.ArgumentList.Arguments, fn)
+	}
 	b.ctx.exitFlags |= fn.ExitFlags
 
 	return false
@@ -1207,28 +1217,82 @@ func (b *BlockWalker) handlePropertyFetch(e *expr.PropertyFetch) bool {
 
 	found := false
 	magic := false
+	matchDist := int(math.MaxInt32)
 	var className string
 	var info meta.PropertyInfo
 
 	typ := b.exprType(e.Variable)
 	typ.Find(func(typ string) bool {
-		p, ok := solver.FindProperty(typ, id.Value)
-		info = p.Info
-		className = p.ClassName
-		found = ok
-		magic = haveMagicMethod(typ, `__get`)
-		return found || magic
+		p, isMagic, ok := b.findProperty(typ, id.Value)
+		if !ok {
+			return false
+		}
+		found = true
+		if dist := b.classDistance(typ); dist < matchDist {
+			matchDist = dist
+			info = p.Info
+			className = p.ClassName
+			magic = isMagic
+		}
+		return matchDist == 0 // Stop if found inside the current class
 	})
 
 	if !found && !magic && !b.r.ctx.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
 		b.r.Report(e.Property, LevelError, "undefined", "Property {%s}->%s does not exist", typ, id.Value)
 	}
 
-	if found && !b.canAccess(className, info.AccessLevel) {
+	if found && !magic && !b.canAccess(className, info.AccessLevel) {
 		b.r.Report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s->%s", info.AccessLevel, className, id.Value)
 	}
 
 	return false
+}
+
+func (b *BlockWalker) findProperty(className, propName string) (res solver.FindPropertyResult, magic, ok bool) {
+	p, ok := solver.FindProperty(className, propName)
+	if ok {
+		return p, false, true
+	}
+	m, ok := solver.FindMethod(className, `__get`)
+	if ok {
+		// Construct a dummy property from the magic method.
+		p.ClassName = m.ClassName
+		p.TraitName = m.TraitName
+		p.Info = meta.PropertyInfo{
+			Pos:         m.Info.Pos,
+			Typ:         m.Info.Typ,
+			AccessLevel: m.Info.AccessLevel,
+		}
+		return p, true, true
+	}
+	return p, false, false
+}
+
+func (b *BlockWalker) findMethod(className, methodName string) (res solver.FindMethodResult, magic, ok bool) {
+	m, ok := solver.FindMethod(className, methodName)
+	if ok {
+		return m, false, true
+	}
+	m, ok = solver.FindMethod(className, `__call`)
+	if ok {
+		return m, true, true
+	}
+	return m, false, false
+}
+
+func (b *BlockWalker) classDistance(class string) int {
+	st := b.r.ctx.st
+	if class == st.CurrentClass {
+		return 0
+	}
+	if class == st.CurrentParentClass {
+		return 1
+	}
+	// TODO: traverse the class hierarchy?
+	// It looks like a quite rare corner case, so lets
+	// not introduce another map allocating loop per
+	// every property/method lookup.
+	return 2
 }
 
 func (b *BlockWalker) handleStaticPropertyFetch(e *expr.StaticPropertyFetch) bool {
