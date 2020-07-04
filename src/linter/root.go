@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"math"
+	"path/filepath"
 	"strconv"
 	"strings"
 
+	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/astutil"
@@ -447,6 +449,17 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 		if level == LevelUnused {
 			level = LevelInformation
 		}
+		msg := fmt.Sprintf(msg, args...)
+		hash := d.reportHash(&pos, startLn, checkName, msg)
+		if count := d.ctx.baseline.Count(hash); count >= 1 {
+			if d.ctx.hashCounters == nil {
+				d.ctx.hashCounters = make(map[uint64]int)
+			}
+			d.ctx.hashCounters[hash]++
+			if d.ctx.hashCounters[hash] <= count {
+				return
+			}
+		}
 		d.reports = append(d.reports, &Report{
 			checkName:  checkName,
 			startLn:    string(startLn),
@@ -455,10 +468,74 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 			endChar:    endChar,
 			level:      level,
 			filename:   d.ctx.st.CurrentFile,
-			msg:        fmt.Sprintf(msg, args...),
+			msg:        msg,
+			hash:       hash,
 			isDisabled: d.disabledFlag,
 		})
 	}
+}
+
+// reportHash computes the report signature hash for the baseline.
+func (d *RootWalker) reportHash(pos *position.Position, startLine []byte, checkName, msg string) uint64 {
+	// Since we store class::method scope, renaming a class would cause baseline
+	// invalidation for the entire class. But this is not an issue, since in
+	// a modern PHP class name always should map to a filename.
+	// If we renamed a class, we probably renamed the file as well, so
+	// the baseline would be invalidated anyway.
+	//
+	// We still get all the benefits by using method prefix: it's common
+	// for different classes to have methods with similar name. We don't
+	// want such methods to be considered as a single "scope".
+	scope := "file"
+	switch {
+	case d.ctx.st.CurrentClass != "" && d.ctx.st.CurrentFunction != "":
+		scope = d.ctx.st.CurrentClass + "::" + d.ctx.st.CurrentFunction
+	case d.ctx.st.CurrentFunction != "":
+		scope = d.ctx.st.CurrentFunction
+	}
+
+	var prevLine []byte
+	var nextLine []byte
+	// Adjacent lines are only included when using non-conservative baseline.
+	if !ConservativeBaseline {
+		// Lines are 1-based, indexes are 0-based.
+		// If this function is called, we expect that lines[index] exists.
+		index := pos.StartLine - 1
+		if index >= 1 {
+			prevLine = d.Lines[index-1]
+		}
+		if len(d.Lines) > index+1 {
+			nextLine = d.Lines[index+1]
+		}
+	}
+
+	// Observation: using a base file name instead of its full name does not
+	// introduce any "bad collisions", because we have a "scope" part
+	// that cuts the risk by a big margin.
+	//
+	// One benefit is that it makes the baseline contents more position-independent.
+	// We don't need to know a source root folder to truncate it.
+	//
+	// Moves like Foo/Bar/User.php -> Common/User.php do not invalidate the
+	// suppress base. This is not an obvious win, but it may be a good
+	// compromise to solve a use case where a class file is being moved.
+	// For classes, filename is unlikely to be changed during this file move operation.
+	//
+	// It can't handle file duplication when Foo/Bar/User.php is *copied* to a new location.
+	// It may be useful to give warnings to both *old* and *new* copies of the duplicated
+	// code since some bugs should be fixed in both places.
+	// We'll see how it goes.
+	filename := filepath.Base(d.ctx.st.CurrentFile)
+
+	return baseline.ReportHash(baseline.HashFields{
+		Filename:  filename,
+		PrevLine:  prevLine,
+		StartLine: startLine,
+		NextLine:  nextLine,
+		CheckName: checkName,
+		Message:   msg,
+		Scope:     scope,
+	})
 }
 
 func (d *RootWalker) reportUndefinedVariable(v node.Node, maybeHave bool) {
@@ -1744,7 +1821,7 @@ func (d *RootWalker) parseClassPHPDoc(n node.Node, doc string) classPhpDocParseR
 	for _, part := range phpdoc.Parse(d.ctx.phpdocTypeParser, doc) {
 		d.checkPHPDocRef(n, part)
 		switch part.Name() {
-		case "property":
+		case "property", "property-read", "property-write":
 			parseClassPHPDocProperty(&d.ctx, &result, part.(*phpdoc.TypeVarCommentPart))
 		case "method":
 			parseClassPHPDocMethod(&d.ctx, &result, part.(*phpdoc.RawCommentPart))

@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/client9/misspell"
@@ -13,6 +14,11 @@ import (
 var (
 	// LangServer represents whether or not we run in a language server mode.
 	LangServer bool
+
+	// BaselineProfile is a suppression database for warnings.
+	// Nil profile is an empty suppression profile.
+	BaselineProfile      *baseline.Profile
+	ConservativeBaseline bool
 
 	CacheDir string
 

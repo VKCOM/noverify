@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/client9/misspell"
@@ -60,8 +61,31 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, args *cmdlineArguments) error
 	}
 
 	l.initCheckMappings()
-	l.initRules(ruleSets)
+	if err := l.initRules(ruleSets); err != nil {
+		return fmt.Errorf("rules: %v", err)
+	}
+	if err := l.initBaseline(); err != nil {
+		return fmt.Errorf("baseline: %v", err)
+	}
 
+	return nil
+}
+
+func (l *linterRunner) initBaseline() error {
+	linter.ConservativeBaseline = l.args.conservativeBaseline
+	if l.args.baseline == "" {
+		return nil
+	}
+
+	f, err := os.Open(l.args.baseline)
+	if err != nil {
+		return err
+	}
+	profile, err := baseline.ReadProfile(f)
+	if err != nil {
+		return err
+	}
+	linter.BaselineProfile = profile
 	return nil
 }
 
