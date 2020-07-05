@@ -7,6 +7,7 @@ import (
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
+	"github.com/VKCOM/noverify/src/quickfix"
 )
 
 type rootContext struct {
@@ -20,6 +21,8 @@ type rootContext struct {
 
 	baseline     baseline.FileProfile
 	hashCounters map[uint64]int // Allocated lazily
+
+	fixes []quickfix.TextEdit
 }
 
 func newRootContext(st *meta.ClassParseState) rootContext {

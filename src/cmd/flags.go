@@ -22,6 +22,8 @@ type cmdlineArguments struct {
 	cpuProfile string
 	memProfile string
 
+	fix bool
+
 	fullAnalysisFiles string
 	indexOnlyFiles    string
 
@@ -120,6 +122,9 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 
 	flag.StringVar(&args.rulesList, "rules", "",
 		"Comma-separated list of rules files")
+
+	flag.BoolVar(&args.fix, "fix", false,
+		"Apply a quickfix where possible (updates source files)")
 
 	flag.StringVar(&args.gitRepo, "git", "", "Path to git repository to analyze")
 	flag.StringVar(&args.mutable.gitCommitFrom, "git-commit-from", "", "Analyze changes between commits <git-commit-from> and <git-commit-to>")
