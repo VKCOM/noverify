@@ -20,6 +20,8 @@ var (
 	BaselineProfile      *baseline.Profile
 	ConservativeBaseline bool
 
+	ApplyQuickFixes bool
+
 	CacheDir string
 
 	// TypoFixer is a rule set for English typos correction.

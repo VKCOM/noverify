@@ -24,6 +24,7 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/phpgrep"
+	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/state"
@@ -1668,6 +1669,17 @@ func (d *RootWalker) runRule(n node.Node, sc *meta.Scope, rule *rules.Rule) {
 
 	message := d.renderRuleMessage(rule.Message, n, m)
 	d.Report(location, rule.Level, rule.Name, message)
+
+	if ApplyQuickFixes && rule.Fix != "" {
+		// As rule sets contain only enabled rules,
+		// we should be OK without any filtering here.
+		pos := n.GetPosition()
+		d.ctx.fixes = append(d.ctx.fixes, quickfix.TextEdit{
+			StartPos:    pos.StartPos,
+			EndPos:      pos.EndPos,
+			Replacement: d.renderRuleMessage(rule.Fix, n, m),
+		})
+	}
 }
 
 func (d *RootWalker) checkTypeFilter(wantType *phpdoc.Type, sc *meta.Scope, nn node.Node) bool {

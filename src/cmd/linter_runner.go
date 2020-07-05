@@ -49,6 +49,8 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, args *cmdlineArguments) error
 		l.outputFp = outputFp
 	}
 
+	linter.ApplyQuickFixes = l.args.fix
+
 	if err := l.compileRegexes(); err != nil {
 		return err
 	}
