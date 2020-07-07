@@ -50,16 +50,20 @@ func TestWriteReadBaseline(t *testing.T) {
 			Reports:  makeReports(filename, testFieldsList),
 		}
 	}
-	makeProfile := func(files ...FileProfile) *Profile {
+	makeProfile := func(linterVersion string, files ...FileProfile) *Profile {
 		m := make(map[string]FileProfile, len(files))
 		for _, f := range files {
 			m[f.Filename] = f
 		}
-		return &Profile{Files: m}
+		return &Profile{
+			LinterVersion: linterVersion,
+			Files:         m,
+		}
 	}
 
 	const expectedOutput = `{
-	"Version": 1,
+	"LinterVersion": "3cfde307d8fbb5acd13d3c346b442172c4433dcb",
+	"Version": 2,
 	"Stats": {
 		"CountTotal": 0,
 		"CountPerCheck": null
@@ -143,7 +147,7 @@ func TestWriteReadBaseline(t *testing.T) {
 		},
 	})
 
-	x := makeProfile(f1, f2)
+	x := makeProfile("3cfde307d8fbb5acd13d3c346b442172c4433dcb", f1, f2)
 
 	// Run test more than once to verify that the output is stable.
 	for i := 0; i < 10; i++ {
@@ -180,12 +184,12 @@ func TestWriteReadBaseline(t *testing.T) {
 		}
 		files[i] = makeFileProfile(fmt.Sprintf("file%d.php", i), fieldsList)
 	}
-	bigProfile := makeProfile(files...)
+	bigProfile := makeProfile("3cfde307d8fbb5acd13d3c346b442172c4433dcb", files...)
 	var buf bytes.Buffer
 	if err := WriteProfile(&buf, bigProfile, &Stats{}); err != nil {
 		t.Fatalf("encoding big profile: %v", err)
 	}
-	expectedSize := 15535
+	expectedSize := 15597
 	if expectedSize != buf.Len() {
 		t.Fatalf("big profile size differs:\nhave: %d\nwant: %d", buf.Len(), expectedSize)
 	}

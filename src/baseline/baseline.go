@@ -18,10 +18,13 @@ import (
 //
 // Versions log:
 // 1 - initial version.
-const profileVersion = 1
+// 2 - added Profile.LinterVersion field.
+const profileVersion = 2
 
 // Profile is a project-wide suppression profile (baseline file).
 type Profile struct {
+	LinterVersion string
+
 	Files map[string]FileProfile
 }
 
@@ -107,7 +110,11 @@ func ReadProfile(r io.Reader) (*Profile, error) {
 		}
 	}
 
-	return &Profile{Files: files}, nil
+	result := &Profile{
+		LinterVersion: p.LinterVersion,
+		Files:         files,
+	}
+	return result, nil
 }
 
 // WriteProfile writes a given suppression profile to w.
@@ -161,9 +168,10 @@ func WriteProfile(w io.Writer, p *Profile, stats *Stats) error {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "\t")
 	return enc.Encode(jsonProfile{
-		Version: profileVersion,
-		Stats:   stats,
-		Files:   files,
+		LinterVersion: p.LinterVersion,
+		Version:       profileVersion,
+		Stats:         stats,
+		Files:         files,
 	})
 }
 
@@ -207,9 +215,10 @@ func ReportHash(fields HashFields) uint64 {
 // jsonProfile is a Profile representation that is used for JSON encoding/decoding.
 // Using slices instead of maps guarantees the stable output as well as makes it more compact.
 type jsonProfile struct {
-	Version int
-	Stats   *Stats
-	Files   []jsonFileProfile
+	LinterVersion string
+	Version       int
+	Stats         *Stats
+	Files         []jsonFileProfile
 }
 
 // jsonFileProfile is a FileProfile representation that is used for JSON encoding/decoding.
