@@ -24,4 +24,6 @@ type MainConfig struct {
 	//
 	// If false is returned, the given report will not be reported.
 	BeforeReport func(*linter.Report) bool
+
+	LinterVersion string
 }

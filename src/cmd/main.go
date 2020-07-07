@@ -227,7 +227,10 @@ func createBaseline(l *linterRunner, cfg *MainConfig, reports []*linter.Report) 
 		files[filename] = f
 	}
 
-	profile := &baseline.Profile{Files: files}
+	profile := &baseline.Profile{
+		LinterVersion: cfg.LinterVersion,
+		Files:         files,
+	}
 	return baseline.WriteProfile(l.outputFp, profile, &stats)
 }
 
