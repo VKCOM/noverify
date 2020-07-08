@@ -159,7 +159,7 @@ func TestWriteReadBaseline(t *testing.T) {
 			t.Fatalf("iter=%d printed output differs:\n%s", i, diff)
 		}
 
-		y, err := ReadProfile(&buf)
+		y, _, err := ReadProfile(&buf)
 		if err != nil {
 			t.Fatalf("iter=%d error while reading encoded profile: %v", i, err)
 		}

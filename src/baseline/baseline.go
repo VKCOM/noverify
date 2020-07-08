@@ -66,15 +66,15 @@ type Report struct {
 }
 
 // ReadProfile reads a suppression profile from a provided reader.
-func ReadProfile(r io.Reader) (*Profile, error) {
+func ReadProfile(r io.Reader) (*Profile, *Stats, error) {
 	var p jsonProfile
 	dec := json.NewDecoder(r)
 	if err := dec.Decode(&p); err != nil {
-		return nil, fmt.Errorf("can't decode baseline file: %v (version mismatch?)", err)
+		return nil, nil, fmt.Errorf("can't decode baseline file: %v (version mismatch?)", err)
 	}
 
 	if p.Version != profileVersion {
-		return nil, fmt.Errorf("version mismatch: want %d, have %d", p.Version, profileVersion)
+		return nil, nil, fmt.Errorf("version mismatch: want %d, have %d", p.Version, profileVersion)
 	}
 
 	files := make(map[string]FileProfile, len(p.Files))
@@ -90,7 +90,7 @@ func ReadProfile(r io.Reader) (*Profile, error) {
 					hashPart = parts[0]
 					r.Count, err = strconv.Atoi(parts[1])
 					if err != nil {
-						return nil, fmt.Errorf("%s: parse hash count: %v", f.Filename, err)
+						return nil, nil, fmt.Errorf("%s: parse hash count: %v", f.Filename, err)
 					}
 				} else {
 					r.Count = 1
@@ -98,7 +98,7 @@ func ReadProfile(r io.Reader) (*Profile, error) {
 				}
 				r.Hash, err = strconv.ParseUint(hashPart, 36, 64)
 				if err != nil {
-					return nil, fmt.Errorf("%s: parse hash: %v", f.Filename, err)
+					return nil, nil, fmt.Errorf("%s: parse hash: %v", f.Filename, err)
 				}
 				reports[r.Hash] = r
 			}
@@ -114,7 +114,7 @@ func ReadProfile(r io.Reader) (*Profile, error) {
 		LinterVersion: p.LinterVersion,
 		Files:         files,
 	}
-	return result, nil
+	return result, p.Stats, nil
 }
 
 // WriteProfile writes a given suppression profile to w.
