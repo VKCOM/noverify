@@ -83,7 +83,8 @@ func (l *linterRunner) initBaseline() error {
 	if err != nil {
 		return err
 	}
-	profile, err := baseline.ReadProfile(f)
+	defer f.Close()
+	profile, _, err := baseline.ReadProfile(f)
 	if err != nil {
 		return err
 	}
