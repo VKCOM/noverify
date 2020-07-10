@@ -175,6 +175,7 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 
 	log.Printf("Indexing %+v", flag.Args())
 	linter.ParseFilenames(linter.ReadFilenames(flag.Args(), nil))
+	parseIndexOnlyFiles(&l)
 	meta.SetIndexingComplete(true)
 	log.Printf("Linting")
 
