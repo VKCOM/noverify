@@ -161,7 +161,7 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 	flag.IntVar(&linter.MaxFileSize, "max-sum-filesize", 20*1024*1024, "max total file size to be parsed concurrently in bytes (limits max memory consumption)")
 	flag.IntVar(&linter.MaxConcurrency, "cores", runtime.NumCPU(), "max cores")
 	flag.BoolVar(&linter.LangServer, "lang-server", false, "Run language server for VS Code")
-	flag.StringVar(&linter.DefaultEncoding, "encoding", "UTF-8", "Default encoding. Only UTF-8 and windows-1251 are supported")
+
 	flag.StringVar(&linter.StubsDir, "stubs-dir", "", "phpstorm-stubs directory")
 	flag.StringVar(&linter.CacheDir, "cache-dir", defaultCacheDir, "Directory for linter cache (greatly improves indexing speed)")
 	flag.BoolVar(&args.disableCache, "disable-cache", false, "If set, cache is not used and cache-dir is ignored")
@@ -173,4 +173,7 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 
 	flag.StringVar(&args.cpuProfile, "cpuprofile", "", "write cpu profile to `file`")
 	flag.StringVar(&args.memProfile, "memprofile", "", "write memory profile to `file`")
+
+	var encodingUnused string
+	flag.StringVar(&encodingUnused, "encoding", "", "deprecated and unused")
 }

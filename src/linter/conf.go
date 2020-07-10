@@ -41,12 +41,11 @@ var (
 	Rules = &rules.Set{}
 
 	// settings
-	StubsDir        string
-	Debug           bool
-	MaxConcurrency  = runtime.NumCPU()
-	MaxFileSize     int
-	DefaultEncoding string
-	PHPExtensions   []string
+	StubsDir       string
+	Debug          bool
+	MaxConcurrency = runtime.NumCPU()
+	MaxFileSize    int
+	PHPExtensions  []string
 
 	// DebugParseDuration specifies the minimum parse duration for it to be printed to debug output.
 	DebugParseDuration time.Duration
