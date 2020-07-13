@@ -350,7 +350,11 @@ func (r *Report) String() string {
 	if r.endChar > r.startChar {
 		contextLn.WriteString(strings.Repeat("^", r.endChar-r.startChar))
 	}
-	return fmt.Sprintf("%s %s at %s:%d\n%s\n%s", severityNames[r.level], msg, r.filename, r.startLine, r.startLn, contextLn.String())
+
+	// To make output stable between platforms, see #572
+	filename := strings.ReplaceAll(r.filename, "\\", "/")
+
+	return fmt.Sprintf("%s %s at %s:%d\n%s\n%s", severityNames[r.level], msg, filename, r.startLine, r.startLn, contextLn.String())
 }
 
 // IsCritical returns whether or not we need to reject whole commit when found this kind of report.
