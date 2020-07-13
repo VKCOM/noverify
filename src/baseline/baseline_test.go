@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -57,13 +58,15 @@ func TestWriteReadBaseline(t *testing.T) {
 		}
 		return &Profile{
 			LinterVersion: linterVersion,
+			CreatedAt:     time.Date(2020, 7, 13, 20, 58, 30, 0, time.UTC).Unix(),
 			Files:         m,
 		}
 	}
 
 	const expectedOutput = `{
 	"LinterVersion": "3cfde307d8fbb5acd13d3c346b442172c4433dcb",
-	"Version": 2,
+	"CreatedAt": 1594673910,
+	"Version": 3,
 	"Stats": {
 		"CountTotal": 0,
 		"CountPerCheck": null
@@ -189,7 +192,7 @@ func TestWriteReadBaseline(t *testing.T) {
 	if err := WriteProfile(&buf, bigProfile, &Stats{}); err != nil {
 		t.Fatalf("encoding big profile: %v", err)
 	}
-	expectedSize := 15597
+	expectedSize := 15623
 	if expectedSize != buf.Len() {
 		t.Fatalf("big profile size differs:\nhave: %d\nwant: %d", buf.Len(), expectedSize)
 	}

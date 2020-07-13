@@ -13,6 +13,7 @@ import (
 	"runtime/pprof"
 	"strings"
 	"sync/atomic"
+	"time"
 
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/cmd/stubs"
@@ -230,6 +231,7 @@ func createBaseline(l *linterRunner, cfg *MainConfig, reports []*linter.Report) 
 
 	profile := &baseline.Profile{
 		LinterVersion: cfg.LinterVersion,
+		CreatedAt:     time.Now().Unix(),
 		Files:         files,
 	}
 	return baseline.WriteProfile(l.outputFp, profile, &stats)
