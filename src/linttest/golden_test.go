@@ -217,12 +217,13 @@ func TestGolden(t *testing.T) {
 				if disable[r.CheckName()] {
 					continue
 				}
-				parts = append(parts, strings.Split(r.String(), "\n")...)
+				parts = append(parts, strings.Split(strings.ReplaceAll(r.String(), "\r", ""), "\n")...)
 			}
 			parts = append(parts, "") // Trailing EOL
 
 			haveLines := parts
-			wantLines := strings.Split(string(want), "\n")
+			wantString := string(want)
+			wantLines := strings.Split(strings.ReplaceAll(wantString, "\r", ""), "\n")
 			if diff := cmp.Diff(wantLines, haveLines); diff != "" {
 				t.Errorf("results mismatch (+ have) (- want): %s", diff)
 				// Use fmt.Printf() instead of t.Logf() to make the output
