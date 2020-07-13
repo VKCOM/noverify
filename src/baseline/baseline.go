@@ -19,11 +19,16 @@ import (
 // Versions log:
 // 1 - initial version.
 // 2 - added Profile.LinterVersion field.
-const profileVersion = 2
+// 3 - added Profile.CreatedAt field.
+const profileVersion = 3
 
 // Profile is a project-wide suppression profile (baseline file).
 type Profile struct {
 	LinterVersion string
+
+	// CreatedAt is a Unix time that represents the moment at which
+	// this profile was generated.
+	CreatedAt int64
 
 	Files map[string]FileProfile
 }
@@ -112,6 +117,7 @@ func ReadProfile(r io.Reader) (*Profile, *Stats, error) {
 
 	result := &Profile{
 		LinterVersion: p.LinterVersion,
+		CreatedAt:     p.CreatedAt,
 		Files:         files,
 	}
 	return result, p.Stats, nil
@@ -169,6 +175,7 @@ func WriteProfile(w io.Writer, p *Profile, stats *Stats) error {
 	enc.SetIndent("", "\t")
 	return enc.Encode(jsonProfile{
 		LinterVersion: p.LinterVersion,
+		CreatedAt:     p.CreatedAt,
 		Version:       profileVersion,
 		Stats:         stats,
 		Files:         files,
@@ -216,6 +223,7 @@ func ReportHash(fields HashFields) uint64 {
 // Using slices instead of maps guarantees the stable output as well as makes it more compact.
 type jsonProfile struct {
 	LinterVersion string
+	CreatedAt     int64
 	Version       int
 	Stats         *Stats
 	Files         []jsonFileProfile
