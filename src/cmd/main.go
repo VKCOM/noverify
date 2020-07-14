@@ -240,6 +240,9 @@ func createBaseline(l *linterRunner, cfg *MainConfig, reports []*linter.Report) 
 func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (criticalReports int) {
 	filtered := make([]*linter.Report, 0, len(diff))
 	var linterErrors []string
+
+	handeledFiles := map[string]bool{}
+
 	for _, r := range diff {
 		if cfg.BeforeReport != nil && !cfg.BeforeReport(r) {
 			continue
@@ -251,7 +254,12 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 		if r.IsDisabledByUser() {
 			filename := r.GetFilename()
 			if !canBeDisabled(l, filename) {
-				linterErrors = append(linterErrors, fmt.Sprintf("You are not allowed to disable linter for file '%s'", filename))
+
+				if !handeledFiles[filename] {
+					linterErrors = append(linterErrors, fmt.Sprintf("You are not allowed to disable linter for file '%s'", filename))
+					handeledFiles[filename] = true
+				}
+
 			} else {
 				continue
 			}
