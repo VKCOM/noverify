@@ -1752,7 +1752,7 @@ exprtype(array_map(function($x) { return $x; }, $ints), 'mixed[]');
 	runExprTypeTest(t, &exprTypeTestParams{stubs: stubs, code: code})
 }
 
-func TestPostfixPrefixIncDecInterface(t *testing.T) {
+func TestPostfixPrefixIncDec(t *testing.T) {
 	code := `<?php
 
 $a = 100;
@@ -1772,6 +1772,18 @@ exprtype(--$a, "float");
 
 
 $a = "100";
+
+exprtype($a++, "float");
+exprtype($a--, "float");
+exprtype(++$a, "float");
+exprtype(--$a, "float");
+
+
+if ($a == 100) {
+	$a = 56.5
+} else {
+	$a = 56
+}
 
 exprtype($a++, "float");
 exprtype($a--, "float");
