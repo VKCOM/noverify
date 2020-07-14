@@ -241,7 +241,7 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 	filtered := make([]*linter.Report, 0, len(diff))
 	var linterErrors []string
 
-	handeledFiles := map[string]bool{}
+	handledFiles := map[string]bool{}
 
 	for _, r := range diff {
 		if cfg.BeforeReport != nil && !cfg.BeforeReport(r) {
@@ -254,12 +254,10 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 		if r.IsDisabledByUser() {
 			filename := r.GetFilename()
 			if !canBeDisabled(l, filename) {
-
-				if !handeledFiles[filename] {
+				if !handledFiles[filename] {
 					linterErrors = append(linterErrors, fmt.Sprintf("You are not allowed to disable linter for file '%s'", filename))
-					handeledFiles[filename] = true
+					handledFiles[filename] = true
 				}
-
 			} else {
 				continue
 			}
