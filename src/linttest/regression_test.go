@@ -1243,3 +1243,176 @@ function f($x) {
 }
 `)
 }
+
+func TestIssue547(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.LoadStubs = []string{`stubs/phpstorm-stubs/standard/standard_3.php`}
+	test.AddFile(`<?php
+putenv("A=1");
+\putenv("B=2");
+`)
+	test.RunAndMatch()
+}
+
+func TestIssue548_1(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class A {
+  private $value;
+  private function method() {}
+}
+
+class B {
+  private $value;
+  private function method() {}
+}
+
+class C extends B {
+  private $value;
+  private function method() {}
+
+  /**
+   * @param A|B|C $x
+   */
+  private function foo($x) {
+    if ($x instanceof C) {
+      echo $x->value;
+      echo $x->method();
+    }
+  }
+}`)
+}
+
+func TestIssue548_2(t *testing.T) {
+	// Like TestIssue548, but with different names and types order.
+	linttest.SimpleNegativeTest(t, `<?php
+class C {
+  private $value;
+  private function method() {}
+}
+
+class B {
+  private $value;
+  private function method() {}
+}
+
+class A extends B {
+  private $value;
+  private function method() {}
+
+  /**
+   * @param A|B|C $x
+   */
+  private function foo($x) {
+    if ($x instanceof A) {
+      echo $x->value;
+      echo $x->method();
+    }
+  }
+}`)
+}
+
+func TestIssue548_Magic(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class A {
+  public function __call($method, $args) {}
+  public function __get($prop) {}
+}
+
+class B extends A {
+  /**
+   * @param A|B $x
+   */
+  private function foo($x) {
+    if ($x instanceof B) {
+      echo $x->value;
+      echo $x->method();
+    }
+  }
+}`)
+}
+
+func TestIssue548_Trait1(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class A {
+  private $value;
+  private function method() {}
+}
+
+trait T {
+  private $value;
+  private function method() {}
+}
+
+class B {
+  use T;
+
+  /**
+   * @param A|B $x
+   */
+  private function foo($x) {
+    if ($x instanceof B) {
+      echo $x->value;
+      echo $x->method();
+    }
+  }
+}`)
+}
+
+func TestIssue548_Trait2(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class B {
+  private $value;
+  private function method() {}
+}
+
+trait T {
+  private $value;
+  private function method() {}
+}
+
+class A {
+  use T;
+
+  /**
+   * @param A|B $x
+   */
+  private function foo($x) {
+    if ($x instanceof A) {
+      echo $x->value;
+      echo $x->method();
+    }
+  }
+}`)
+}
+
+func TestIssue556(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.LoadStubs = []string{`stubs/phpstorm-stubs/Core/Core_c.php`}
+	test.AddFile(`<?php
+/**
+ * @param \ArrayAccess|array $v
+ */
+function f1($v) {
+  return $v[10];
+}
+
+interface MyArrayAccess extends ArrayAccess {}
+
+/**
+ * @param MyArrayAccess|array $v
+ */
+function f2($v) {
+  return $v[10];
+}
+
+interface MyArrayAccess2 extends MyArrayAccess {}
+
+/**
+ * @param MyArrayAccess2 $v
+ */
+function f3($v) {
+  return $v[10];
+}
+`)
+	test.RunAndMatch()
+}

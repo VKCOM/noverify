@@ -228,17 +228,25 @@ func (i *info) DeleteMetaForFileNonLocked(filename string) {
 
 func (i *info) AddClassesNonLocked(filename string, m ClassesMap) {
 	i.perFileClasses[filename] = m
+
+	allClasses := i.allClasses.H
 	for k, v := range m.H {
-		// TODO: resolve duplicate class conflicts
-		i.allClasses.H[k] = v
+		prevClass, ok := allClasses[k]
+		if !ok || v.Pos.Length > prevClass.Pos.Length {
+			allClasses[k] = v
+		}
 	}
 }
 
 func (i *info) AddTraitsNonLocked(filename string, m ClassesMap) {
 	i.perFileTraits[filename] = m
+
+	allTraits := i.allTraits.H
 	for k, v := range m.H {
-		// TODO: resolve duplicate trait conflicts
-		i.allTraits.H[k] = v
+		prevTrait, ok := allTraits[k]
+		if !ok || v.Pos.Length > prevTrait.Pos.Length {
+			allTraits[k] = v
+		}
 	}
 }
 
@@ -266,6 +274,10 @@ func (i *info) AddConstantsNonLocked(filename string, m ConstantsMap) {
 	i.perFileConstants[filename] = m
 
 	for k, v := range m {
+		// This may cause a name conflict if we have several
+		// constants with the same name inside the project.
+		// When we'll store a list of symbols for the every name,
+		// it won't be a problem anymore.
 		i.allConstants[k] = v
 	}
 }

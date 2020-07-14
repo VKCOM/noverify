@@ -65,7 +65,7 @@ func ExprTypeCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, custo
 		return m
 	}
 
-	visitedMap := make(map[string]struct{})
+	visitedMap := make(ResolverMap)
 	resolvedTypes := ResolveTypes(cs.CurrentClass, m, visitedMap)
 	return meta.NewTypesMapFromMap(resolvedTypes)
 }

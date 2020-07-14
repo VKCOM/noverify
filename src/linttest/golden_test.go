@@ -57,6 +57,30 @@ func TestGolden(t *testing.T) {
 		},
 
 		{
+			name: "mustache",
+			disable: []string{
+				`arraySyntax`,
+				`redundantCast`,
+			},
+			deps: []string{
+				`stubs/phpstorm-stubs/SPL/SPL.php`,
+				`stubs/phpstorm-stubs/SPL/SPL_f.php`,
+				`stubs/phpstorm-stubs/json/json.php`,
+				`stubs/phpstorm-stubs/mbstring/mbstring.php`,
+			},
+		},
+
+		{
+			name: "math",
+			deps: []string{
+				`stubs/phpstorm-stubs/gmp/gmp.php`,
+				`stubs/phpstorm-stubs/SPL/SPL.php`,
+				`stubs/phpstorm-stubs/bcmath/bcmath.php`,
+				`stubs/phpstorm-stubs/json/json.php`,
+			},
+		},
+
+		{
 			name: "qrcode",
 			deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
@@ -193,12 +217,13 @@ func TestGolden(t *testing.T) {
 				if disable[r.CheckName()] {
 					continue
 				}
-				parts = append(parts, strings.Split(r.String(), "\n")...)
+				parts = append(parts, strings.Split(strings.ReplaceAll(r.String(), "\r", ""), "\n")...)
 			}
 			parts = append(parts, "") // Trailing EOL
 
 			haveLines := parts
-			wantLines := strings.Split(string(want), "\n")
+			wantString := string(want)
+			wantLines := strings.Split(strings.ReplaceAll(wantString, "\r", ""), "\n")
 			if diff := cmp.Diff(wantLines, haveLines); diff != "" {
 				t.Errorf("results mismatch (+ have) (- want): %s", diff)
 				// Use fmt.Printf() instead of t.Logf() to make the output

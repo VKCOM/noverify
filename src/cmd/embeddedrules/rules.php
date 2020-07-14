@@ -20,10 +20,14 @@ function ternarySimplify() {
 
   /**
    * @maybe could rewrite as `$x ?: $y`
+   * @fix $x ?: $y
    * @pure $x
    */
   $x ? $x : $y;
 
-  /** @maybe could rewrite as `$x ?? $y` */
+  /**
+   * @maybe could rewrite as `$x ?? $y`
+   * @fix $x ?? $y
+   */
   isset($x) ? $x : $y;
 }

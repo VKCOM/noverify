@@ -21,6 +21,7 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
+	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/karrick/godirwalk"
 	"github.com/quasilyte/regex/syntax"
@@ -175,6 +176,12 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 		AnalyzeFileRootLevel(rootNode, w)
 	}
 	w.afterLeaveFile()
+
+	if len(w.ctx.fixes) != 0 {
+		if err := quickfix.Apply(filename, contents, w.ctx.fixes); err != nil {
+			linterError(filename, "apply quickfix: %v", err)
+		}
+	}
 
 	for _, e := range parser.GetErrors() {
 		w.Report(nil, LevelError, "syntax", "Syntax error: "+e.String())

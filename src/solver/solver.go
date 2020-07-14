@@ -20,20 +20,22 @@ func mixedType() map[string]struct{} {
 
 // ResolveType resolves function calls, method calls and global variables.
 //   curStaticClass is current class name (if inside the class, otherwise "")
-func resolveType(curStaticClass, typ string, visitedMap map[string]struct{}) (result map[string]struct{}) {
+func resolveType(curStaticClass, typ string, visitedMap ResolverMap) (result map[string]struct{}) {
 	r := resolver{visited: visitedMap}
 	return r.resolveType(curStaticClass, typ)
 }
 
 // ResolveTypes resolves function calls, method calls and global variables.
 //   curStaticClass is current class name (if inside the class, otherwise "")
-func ResolveTypes(curStaticClass string, m meta.TypesMap, visitedMap map[string]struct{}) map[string]struct{} {
+func ResolveTypes(curStaticClass string, m meta.TypesMap, visitedMap ResolverMap) map[string]struct{} {
 	r := resolver{visited: visitedMap}
 	return r.resolveTypes(curStaticClass, m)
 }
 
+type ResolverMap map[string]map[string]struct{}
+
 type resolver struct {
-	visited map[string]struct{}
+	visited ResolverMap
 }
 
 func (r *resolver) collectMethodCallTypes(out, possibleTypes map[string]struct{}, methodName string) map[string]struct{} {
@@ -50,6 +52,7 @@ func (r *resolver) collectMethodCallTypes(out, possibleTypes map[string]struct{}
 
 func (r *resolver) resolveType(class, typ string) map[string]struct{} {
 	res := r.resolveTypeNoLateStaticBinding(class, typ)
+	r.visited[typ] = res
 
 	if _, ok := res["static"]; ok {
 		delete(res, "static")
@@ -62,8 +65,8 @@ func (r *resolver) resolveType(class, typ string) map[string]struct{} {
 func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]struct{} {
 	visitedMap := r.visited
 
-	if _, ok := visitedMap[typ]; ok {
-		return nil
+	if result, ok := visitedMap[typ]; ok {
+		return result
 	}
 
 	if len(typ) == 0 || typ[0] >= meta.WMax {
@@ -71,7 +74,7 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 	}
 
 	res := make(map[string]struct{})
-	visitedMap[typ] = struct{}{}
+	visitedMap[typ] = nil // Nil guards against unbound recursion
 
 	switch typ[0] {
 	case meta.WGlobal:
@@ -187,7 +190,7 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 	return res
 }
 
-func solveBaseMethodParam(curStaticClass, typ string, visitedMap, res map[string]struct{}) map[string]struct{} {
+func solveBaseMethodParam(curStaticClass, typ string, visitedMap ResolverMap, res map[string]struct{}) map[string]struct{} {
 	index, className, methodName := meta.UnwrapBaseMethodParam(typ)
 	class, ok := meta.Info.GetClass(className)
 	if ok {
@@ -463,6 +466,13 @@ func findProperty(className string, propertyName string, visitedMap map[string]s
 // Does not perform the actual method set comparison.
 func Implements(className string, interfaceName string) bool {
 	visited := make(map[string]struct{}, 8)
+	return implements(className, interfaceName, visited)
+}
+
+func implements(className string, interfaceName string, visited map[string]struct{}) bool {
+	if className == interfaceName {
+		return true
+	}
 
 	for {
 		class, ok := meta.Info.GetClass(className)
@@ -477,6 +487,12 @@ func Implements(className string, interfaceName string) bool {
 
 		for iface := range class.Interfaces {
 			if interfaceExtends(iface, interfaceName, visited) {
+				return true
+			}
+		}
+
+		for _, iface := range class.ParentInterfaces {
+			if implements(iface, interfaceName, visited) {
 				return true
 			}
 		}
