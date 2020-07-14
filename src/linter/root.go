@@ -64,8 +64,10 @@ type RootWalker struct {
 
 	currentClassNode node.Node
 
-	allowDisabledRegexp          *regexp.Regexp // user-defined flag that files suitable for this regular expression should not be linted
-	allowDisabledErrorAlreadyHad bool           // flag indicating whether the report "You are not allowed to disable linter" has already been added
+	allowDisabledRegexp        *regexp.Regexp // user-defined flag that files suitable for this regular expression should not be linted
+	allowDisabledRegexpWasUsed bool           // additional flag indicating that the file name has already been checked by regular expression
+	linterDisabled             bool           // flag indicating whether linter is disabled. Flag is set to true only if the file
+	// name matches the pattern and @linter disable was encountered
 
 	// strictTypes is true if file contains `declare(strict_types=1)`.
 	strictTypes bool
@@ -583,15 +585,14 @@ func (d *RootWalker) handleComment(c freefloating.String, n node.Node) {
 		}
 
 		for _, p := range ln.(*phpdoc.RawCommentPart).Params {
-			allowDisabled := false
 
-			if d.allowDisabledRegexp != nil {
-				allowDisabled = d.allowDisabledRegexp.MatchString(d.ctx.st.CurrentFile)
+			if d.allowDisabledRegexp != nil && !d.allowDisabledRegexpWasUsed {
+				d.linterDisabled = d.allowDisabledRegexp.MatchString(d.ctx.st.CurrentFile)
+				d.allowDisabledRegexpWasUsed = true
 			}
 
-			if p == "disable" && !d.allowDisabledErrorAlreadyHad && !allowDisabled {
+			if p == "disable" && !d.linterDisabled {
 				d.Report(nil, LevelInformation, "linterError", "You are not allowed to disable linter")
-				d.allowDisabledErrorAlreadyHad = true
 			}
 		}
 	}

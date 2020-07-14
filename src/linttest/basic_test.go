@@ -144,7 +144,10 @@ $_ = array(1);
 	test.Expect = []string{
 		`You are not allowed to disable linter`,
 		`Use of old array syntax (use short form instead)`,
+		`You are not allowed to disable linter`,
 		`Duplicate array key '1'`,
+		`You are not allowed to disable linter`,
+		`You are not allowed to disable linter`,
 		`Use of old array syntax (use short form instead)`,
 	}
 	test.RunAndMatch()
