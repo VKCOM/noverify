@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -63,8 +64,8 @@ type RootWalker struct {
 
 	currentClassNode node.Node
 
-	isDisabled   bool            // user-defined flag that file should not be linted
-	handledFiles map[string]bool // files for which the report "not allowed to disable linter" has already been added
+	allowDisabledRegexp          *regexp.Regexp // user-defined flag that files suitable for this regular expression should not be linted
+	allowDisabledErrorAlreadyHad bool           // flag indicating whether the report "You are not allowed to disable linter" has already been added
 
 	// strictTypes is true if file contains `declare(strict_types=1)`.
 	strictTypes bool
@@ -462,6 +463,13 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 				return
 			}
 		}
+
+		allowDisabled := false
+
+		if d.allowDisabledRegexp != nil {
+			allowDisabled = d.allowDisabledRegexp.MatchString(d.ctx.st.CurrentFile)
+		}
+
 		d.reports = append(d.reports, &Report{
 			checkName:  checkName,
 			startLn:    string(startLn),
@@ -472,7 +480,7 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 			filename:   d.ctx.st.CurrentFile,
 			msg:        msg,
 			hash:       hash,
-			isDisabled: d.isDisabled,
+			isDisabled: allowDisabled,
 		})
 	}
 }
@@ -569,19 +577,21 @@ func (d *RootWalker) handleComment(c freefloating.String, n node.Node) {
 		return
 	}
 
-	if d.handledFiles == nil {
-		d.handledFiles = make(map[string]bool)
-	}
-
 	for _, ln := range phpdoc.Parse(d.ctx.phpdocTypeParser, str) {
 		if ln.Name() != "linter" {
 			continue
 		}
 
 		for _, p := range ln.(*phpdoc.RawCommentPart).Params {
-			if p == "disable" && !d.isDisabled && !d.handledFiles[d.ctx.st.CurrentFile] {
-				d.Report(n, LevelSecurity, "linterError", "You are not allowed to disable linter")
-				d.handledFiles[d.ctx.st.CurrentFile] = true
+			allowDisabled := false
+
+			if d.allowDisabledRegexp != nil {
+				allowDisabled = d.allowDisabledRegexp.MatchString(d.ctx.st.CurrentFile)
+			}
+
+			if p == "disable" && !d.allowDisabledErrorAlreadyHad && !allowDisabled {
+				d.Report(nil, LevelInformation, "linterError", "You are not allowed to disable linter")
+				d.allowDisabledErrorAlreadyHad = true
 			}
 		}
 	}

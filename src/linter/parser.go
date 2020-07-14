@@ -114,12 +114,7 @@ func ParseContents(filename string, contents []byte, lineRanges []git.LineRange,
 
 	atomic.AddInt64(&initParseTime, int64(time.Since(start)))
 
-	allowed := false
-	if allowDisabled != nil {
-		allowed = allowDisabled.MatchString(filename)
-	}
-
-	return analyzeFile(filename, contents, parser, lineRanges, allowed)
+	return analyzeFile(filename, contents, parser, lineRanges, allowDisabled)
 }
 
 func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedSet {
@@ -141,7 +136,7 @@ func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedS
 	return &clone
 }
 
-func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRanges []git.LineRange, allowedDisabled bool) (*node.Root, *RootWalker, error) {
+func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRanges []git.LineRange, allowedDisabled *regexp.Regexp) (*node.Root, *RootWalker, error) {
 	start := time.Now()
 	rootNode := parser.GetRootNode()
 
@@ -173,7 +168,7 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 			out: &strings.Builder{},
 		},
 
-		isDisabled: allowedDisabled,
+		allowDisabledRegexp: allowedDisabled,
 	}
 
 	w.InitFromParser(contents, parser)
