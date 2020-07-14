@@ -183,6 +183,12 @@ func (p *parser) parseRule(st node.Node) error {
 			rule.Level = lintapi.LevelMaybe
 			rule.Message = part.ParamsText
 
+		case "fix":
+			if rule.Fix != "" {
+				return p.errorf(st, "duplicated @fix")
+			}
+			rule.Fix = part.ParamsText
+
 		case "or":
 			rule.Filters = append(rule.Filters, filterSet)
 			filterSet = nil

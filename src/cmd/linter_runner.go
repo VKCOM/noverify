@@ -49,6 +49,8 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, args *cmdlineArguments) error
 		l.outputFp = outputFp
 	}
 
+	linter.ApplyQuickFixes = l.args.fix
+
 	if err := l.compileRegexes(); err != nil {
 		return err
 	}
@@ -81,7 +83,8 @@ func (l *linterRunner) initBaseline() error {
 	if err != nil {
 		return err
 	}
-	profile, err := baseline.ReadProfile(f)
+	defer f.Close()
+	profile, _, err := baseline.ReadProfile(f)
 	if err != nil {
 		return err
 	}

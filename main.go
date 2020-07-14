@@ -27,5 +27,7 @@ func main() {
 	// You can register your own rules here, see src/linter/custom.go
 
 	printVersion()
-	cmd.Main(nil)
+	cmd.Main(&cmd.MainConfig{
+		LinterVersion: BuildCommit,
+	})
 }

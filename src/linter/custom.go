@@ -56,6 +56,14 @@ type CheckInfo struct {
 	// Comment is a short summary of what this diagnostic does.
 	// A single descriptive sentence is a perfect format for it.
 	Comment string
+
+	// Before is a non-compliant code example (before the fix).
+	// Optional, but if present, After should also be non-empty.
+	Before string
+
+	// After is a compliant code example (after the fix).
+	// Optional, but if present, Before should also be non-empty.
+	After string
 }
 
 // BlockChecker is a custom linter that is called on block level
@@ -293,6 +301,12 @@ func DeclareCheck(info CheckInfo) {
 	}
 	if _, ok := checksInfoRegistry[info.Name]; ok {
 		panic(fmt.Sprintf("check %q already declared", info.Name))
+	}
+	if info.Before != "" && info.After == "" {
+		panic(fmt.Sprintf("%s: Before is set, but After is empty", info.Name))
+	}
+	if info.After != "" && info.Before == "" {
+		panic(fmt.Sprintf("%s: After is set, but Before is empty", info.Name))
 	}
 	checksInfoRegistry[info.Name] = info
 }

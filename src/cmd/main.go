@@ -13,6 +13,7 @@ import (
 	"runtime/pprof"
 	"strings"
 	"sync/atomic"
+	"time"
 
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/cmd/stubs"
@@ -175,6 +176,7 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 
 	log.Printf("Indexing %+v", flag.Args())
 	linter.ParseFilenames(linter.ReadFilenames(flag.Args(), nil))
+	parseIndexOnlyFiles(&l)
 	meta.SetIndexingComplete(true)
 	log.Printf("Linting")
 
@@ -227,7 +229,11 @@ func createBaseline(l *linterRunner, cfg *MainConfig, reports []*linter.Report) 
 		files[filename] = f
 	}
 
-	profile := &baseline.Profile{Files: files}
+	profile := &baseline.Profile{
+		LinterVersion: cfg.LinterVersion,
+		CreatedAt:     time.Now().Unix(),
+		Files:         files,
+	}
 	return baseline.WriteProfile(l.outputFp, profile, &stats)
 }
 

@@ -10,9 +10,10 @@ NoVerify is a PHP linter: it finds possible bugs and style violations in your co
 
 ## Features
 
-1. Fast: analyze ~100k LOC/s (lines of code per second) on Core i7
+1. Fast: analyze ~100k LOC/s (lines of code per second) on Core i7.
 2. Incremental: can analyze changes in git and show only new reports. Indexing speed is ~1M LOC/s.
 3. Experimental language server for VS Code and other editors that support language server protocol.
+4. Auto fixes for some warnings (when -fix flag is provided).
 
 ## Default lints
 

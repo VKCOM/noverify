@@ -62,6 +62,9 @@ type Rule struct {
 	// Message is a report text that is printed when this rule matches.
 	Message string
 
+	// Fix is a quickfix template.
+	Fix string
+
 	// Location is a phpgrep variable name that should be used as a warning location.
 	// Empty string selects the root node.
 	Location string

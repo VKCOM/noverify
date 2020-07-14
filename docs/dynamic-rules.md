@@ -210,6 +210,7 @@ TODO.
 | `@warning message...` | Set severity=warning and report text to `message`. |
 | `@info message...` | Set severity=info and report text to `message`. |
 | `@maybe message...` | Set severity=maybe and report text to `message`. |
+| `@fix template...` | Provide a quickfix template for the rule. |
 | `@scope scope_kind` | Controls where rule can be applied. `scope_kind` is `all`, `root` or `local`. |
 | `@location $var` | Selects a sub-expr from a match by a matcher var that defines report cursor position. |
 | `@type type_expr $var` | Adds "type equals to" filter, applied to `$var`. |
@@ -227,6 +228,7 @@ namespace custom;
 function redundantCast() {
   /**
    * @info excessive int cast: expression is already int-typed
+   * @fix $x
    * @location $x
    * @type int $x
    */
@@ -234,6 +236,7 @@ function redundantCast() {
 
   /**
    * @info excessive string cast: expression is already string-typed
+   * @fix $x
    * @location $x
    * @type string $x
    */
