@@ -378,47 +378,6 @@ function bad(string $x) {
 	runRulesTest(t, test, rfile)
 }
 
-func TestInterfaceRules(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-
-interface WithConstants {
-  const r = 10000; // ok
-  public const v = 1; // ok
-  private const b = 100, c1 = 1000; // 'b' can't be private, 'c1' can't be private
-  protected const c = 100; // 'c' can't be protected
-}
-
-interface WithMethods {
-  public function c(); // ok
-  private function b(); // 'b' can't be private
-  protected function f(); // 'f' can't be protected
-}
-
-interface WithStaticMethods {
-  static function f1(); // ok
-  public static function f2(); // ok
-  private static function bad1(); // 'bad1' can't be private
-  static protected function bad2(); // 'bad2' can't be protected
-}
-
-interface WithoutAnyModifier {
-    function f(); // Ok,
-}
-
-`)
-	test.Expect = []string{
-		`'b' can't be private`,
-		`'c1' can't be private`,
-		`'c' can't be protected`,
-		`'b' can't be private`,
-		`'f' can't be protected`,
-		`'bad1' can't be private`,
-		`'bad2' can't be protected`,
-	}
-	test.RunAndMatch()
-}
-
 func runRulesTest(t *testing.T, test *linttest.Suite, rfile string) {
 	rparser := rules.NewParser()
 	rset, err := rparser.Parse("<test>", strings.NewReader(rfile))
