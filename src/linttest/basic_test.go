@@ -110,10 +110,44 @@ try {
 }
 
 func TestLinterDisable(t *testing.T) {
-	linttest.SimpleNegativeTest(t, `<?php
+	test := linttest.NewSuite(t)
+	// TODO(Petr Makhnev): Here we need the ability to add flags for the file
+	test.AddFile(`<?php
 /** @linter disable */
 $_ = array(1);
 `)
+	test.Expect = []string{
+		`You are not allowed to disable linter`,
+		`Use of old array syntax (use short form instead)`,
+	}
+	test.RunAndMatch()
+}
+
+func TestMultiplyLinterDisable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+/** @linter disable */
+$_ = array(1);
+
+/** @linter disable */
+$_ = [
+	1 => 1,
+	1 => 2
+];
+
+/** @linter disable */
+
+/** @linter disable */
+$_ = array(1);
+
+`)
+	test.Expect = []string{
+		`You are not allowed to disable linter`,
+		`Use of old array syntax (use short form instead)`,
+		`Duplicate array key '1'`,
+		`Use of old array syntax (use short form instead)`,
+	}
+	test.RunAndMatch()
 }
 
 func TestKeywordCaseElseif(t *testing.T) {

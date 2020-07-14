@@ -58,7 +58,7 @@ type fileMeta struct {
 // IndexFile parses the file and fills in the meta info. Can use cache.
 func IndexFile(filename string, contents []byte) error {
 	if CacheDir == "" {
-		_, w, err := ParseContents(filename, contents, nil)
+		_, w, err := ParseContents(filename, contents, nil, nil)
 		if w != nil {
 			updateMetaInfo(filename, &w.meta)
 		}
@@ -99,7 +99,7 @@ func IndexFile(filename string, contents []byte) error {
 	start := time.Now()
 	fp, err := os.Open(cacheFile)
 	if err != nil {
-		_, w, err := ParseContents(filename, contents, nil)
+		_, w, err := ParseContents(filename, contents, nil, nil)
 		if err != nil {
 			return err
 		}
@@ -112,7 +112,7 @@ func IndexFile(filename string, contents []byte) error {
 		// do not really care about why exactly reading from cache failed
 		os.Remove(cacheFile)
 
-		_, w, err := ParseContents(filename, contents, nil)
+		_, w, err := ParseContents(filename, contents, nil, nil)
 		if err != nil {
 			return err
 		}

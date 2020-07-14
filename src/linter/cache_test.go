@@ -90,7 +90,7 @@ main();
 `
 
 	runTest := func(iteration int) {
-		_, root, err := ParseContents("cachetest.php", []byte(code), nil)
+		_, root, err := ParseContents("cachetest.php", []byte(code), nil, nil)
 		if err != nil {
 			t.Fatalf("parse error: %v", err)
 		}

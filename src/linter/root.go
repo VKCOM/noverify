@@ -63,7 +63,8 @@ type RootWalker struct {
 
 	currentClassNode node.Node
 
-	disabledFlag bool // user-defined flag that file should not be linted
+	isDisabled   bool            // user-defined flag that file should not be linted
+	handledFiles map[string]bool // files for which the report "not allowed to disable linter" has already been added
 
 	// strictTypes is true if file contains `declare(strict_types=1)`.
 	strictTypes bool
@@ -213,7 +214,7 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 			for _, cs := range *ffs {
 				for _, c := range cs {
 					if c.StringType == freefloating.CommentType {
-						d.handleComment(c)
+						d.handleComment(c, n)
 					}
 				}
 			}
@@ -471,7 +472,7 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 			filename:   d.ctx.st.CurrentFile,
 			msg:        msg,
 			hash:       hash,
-			isDisabled: d.disabledFlag,
+			isDisabled: d.isDisabled,
 		})
 	}
 }
@@ -558,7 +559,7 @@ func (d *RootWalker) reportUndefinedVariable(v node.Node, maybeHave bool) {
 	}
 }
 
-func (d *RootWalker) handleComment(c freefloating.String) {
+func (d *RootWalker) handleComment(c freefloating.String, n node.Node) {
 	if c.StringType != freefloating.CommentType {
 		return
 	}
@@ -568,14 +569,19 @@ func (d *RootWalker) handleComment(c freefloating.String) {
 		return
 	}
 
+	if d.handledFiles == nil {
+		d.handledFiles = make(map[string]bool)
+	}
+
 	for _, ln := range phpdoc.Parse(d.ctx.phpdocTypeParser, str) {
 		if ln.Name() != "linter" {
 			continue
 		}
 
 		for _, p := range ln.(*phpdoc.RawCommentPart).Params {
-			if p == "disable" {
-				d.disabledFlag = true
+			if p == "disable" && !d.isDisabled && !d.handledFiles[d.ctx.st.CurrentFile] {
+				d.Report(n, LevelSecurity, "linterError", "You are not allowed to disable linter")
+				d.handledFiles[d.ctx.st.CurrentFile] = true
 			}
 		}
 	}
