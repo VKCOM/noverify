@@ -1752,6 +1752,37 @@ exprtype(array_map(function($x) { return $x; }, $ints), 'mixed[]');
 	runExprTypeTest(t, &exprTypeTestParams{stubs: stubs, code: code})
 }
 
+func TestPostfixPrefixIncDecInterface(t *testing.T) {
+	code := `<?php
+
+$a = 100;
+
+exprtype($a++, "int");
+exprtype($a--, "int");
+exprtype(++$a, "int");
+exprtype(--$a, "int");
+
+
+$a = 100.5;
+
+exprtype($a++, "float");
+exprtype($a--, "float");
+exprtype(++$a, "float");
+exprtype(--$a, "float");
+
+
+$a = "100";
+
+exprtype($a++, "float");
+exprtype($a--, "float");
+exprtype(++$a, "float");
+exprtype(--$a, "float");
+
+
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {
