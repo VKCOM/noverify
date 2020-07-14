@@ -1791,6 +1791,15 @@ exprtype(++$a, "float");
 exprtype(--$a, "float");
 
 
+class Foo {};
+
+$a = new Foo();
+
+exprtype($a++, "float");
+exprtype($a--, "float");
+exprtype(++$a, "float");
+exprtype(--$a, "float");
+
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
