@@ -484,8 +484,8 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 	}
 }
 
-// ReportPHPDoc registers a single report message about some found problem in PHPDoc.
-func (d *RootWalker) ReportPHPDoc(c freefloating.String, regexpPattern string, level int, checkName, msg string, args ...interface{}) {
+// ReportByLine registers a single report message about some found problem in lineIndex code line.
+func (d *RootWalker) ReportByLine(lineIndex int, level int, checkName, msg string, args ...interface{}) {
 	if !meta.IsIndexingComplete() {
 		return
 	}
@@ -493,82 +493,65 @@ func (d *RootWalker) ReportPHPDoc(c freefloating.String, regexpPattern string, l
 		return
 	}
 
-	value := c.Value
-	lines := strings.Split(value, "\n")
+	line := string(d.Lines[lineIndex])
 
-	var findLines []int
-	for i, line := range lines {
-		matched, _ := regexp.MatchString(regexpPattern, line)
-
-		if matched {
-			findLines = append(findLines, i)
-		}
+	needleLinePosition := position.Position{
+		StartLine: lineIndex,
+		EndLine:   lineIndex,
+		StartPos:  0,
+		EndPos:    len(line),
 	}
 
-	if len(findLines) == 0 {
-		return
-	}
-
-	for _, lineIndex := range findLines {
-		line := lines[lineIndex]
-
-		needleLinePosition := position.Position{
-			StartLine: lineIndex + c.Position.StartLine,
-			EndLine:   lineIndex + c.Position.StartLine,
-			StartPos:  0,
-			EndPos:    len(line),
-		}
-
-		if LangServer {
-			severity, ok := vscodeLevelMap[level]
-			if ok {
-				diag := vscode.Diagnostic{
-					Code:     msg,
-					Message:  fmt.Sprintf(msg, args...),
-					Severity: severity,
-					Range: vscode.Range{
-						Start: vscode.Position{Line: needleLinePosition.StartLine - 1, Character: 0},
-						End:   vscode.Position{Line: needleLinePosition.EndLine - 1, Character: needleLinePosition.EndPos},
-					},
-				}
-
-				if level == LevelUnused {
-					diag.Tags = append(diag.Tags, 1 /* Unnecessary */)
-				}
-
-				d.Diagnostics = append(d.Diagnostics, diag)
+	if LangServer {
+		severity, ok := vscodeLevelMap[level]
+		if ok {
+			diag := vscode.Diagnostic{
+				Code:     msg,
+				Message:  fmt.Sprintf(msg, args...),
+				Severity: severity,
+				Range: vscode.Range{
+					Start: vscode.Position{Line: needleLinePosition.StartLine - 1, Character: 0},
+					End:   vscode.Position{Line: needleLinePosition.EndLine - 1, Character: needleLinePosition.EndPos},
+				},
 			}
-		} else {
-			// Replace Unused with Info (Notice) in non-LSP mode.
+
 			if level == LevelUnused {
-				level = LevelInformation
+				diag.Tags = append(diag.Tags, 1 /* Unnecessary */)
 			}
 
-			msg := fmt.Sprintf(msg, args...)
-			hash := d.reportHash(&needleLinePosition, []byte(line), checkName, msg)
-			if count := d.ctx.baseline.Count(hash); count >= 1 {
-				if d.ctx.hashCounters == nil {
-					d.ctx.hashCounters = make(map[uint64]int)
-				}
-				d.ctx.hashCounters[hash]++
-				if d.ctx.hashCounters[hash] <= count {
-					return
-				}
-			}
-
-			d.reports = append(d.reports, &Report{
-				checkName: checkName,
-				startLn:   line,
-				startChar: needleLinePosition.StartPos,
-				startLine: needleLinePosition.StartLine,
-				endChar:   needleLinePosition.EndPos,
-				level:     level,
-				filename:  d.ctx.st.CurrentFile,
-				msg:       msg,
-				hash:      hash,
-			})
+			d.Diagnostics = append(d.Diagnostics, diag)
 		}
+	} else {
+		// Replace Unused with Info (Notice) in non-LSP mode.
+		if level == LevelUnused {
+			level = LevelInformation
+		}
+
+		msg := fmt.Sprintf(msg, args...)
+		hash := d.reportHash(&needleLinePosition, []byte(line), checkName, msg)
+		if count := d.ctx.baseline.Count(hash); count >= 1 {
+			if d.ctx.hashCounters == nil {
+				d.ctx.hashCounters = make(map[uint64]int)
+			}
+			d.ctx.hashCounters[hash]++
+			if d.ctx.hashCounters[hash] <= count {
+				return
+			}
+		}
+
+		d.reports = append(d.reports, &Report{
+			checkName: checkName,
+			startLn:   line,
+			startChar: needleLinePosition.StartPos,
+			startLine: needleLinePosition.StartLine,
+			endChar:   needleLinePosition.EndPos,
+			level:     level,
+			filename:  d.ctx.st.CurrentFile,
+			msg:       msg,
+			hash:      hash,
+		})
 	}
+
 }
 
 // reportHash computes the report signature hash for the baseline.
@@ -673,7 +656,8 @@ func (d *RootWalker) handleComment(c freefloating.String) {
 				continue
 			}
 			if d.linterDisabled {
-				d.ReportPHPDoc(c, "@linter +disable", LevelInformation, "linterError", "Linter is already disabled for this file")
+				needleLine := ln.Line() + c.Position.StartLine - 2
+				d.ReportByLine(needleLine, LevelInformation, "linterError", "Linter is already disabled for this file")
 				continue
 			}
 			canDisable := false
@@ -682,7 +666,8 @@ func (d *RootWalker) handleComment(c freefloating.String) {
 			}
 			d.linterDisabled = canDisable
 			if !canDisable {
-				d.ReportPHPDoc(c, "@linter +disable", LevelInformation, "linterError", "You are not allowed to disable linter")
+				needleLine := ln.Line() + c.Position.StartLine - 2
+				d.ReportByLine(needleLine, LevelInformation, "linterError", "You are not allowed to disable linter")
 			}
 		}
 	}
