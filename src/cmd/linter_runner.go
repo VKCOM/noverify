@@ -7,10 +7,11 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/client9/misspell"
+
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/rules"
-	"github.com/client9/misspell"
 )
 
 type linterRunner struct {

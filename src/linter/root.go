@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -63,7 +64,10 @@ type RootWalker struct {
 
 	currentClassNode node.Node
 
-	disabledFlag bool // user-defined flag that file should not be linted
+	allowDisabledRegexp        *regexp.Regexp // user-defined flag that files suitable for this regular expression should not be linted
+	allowDisabledRegexpWasUsed bool           // additional flag indicating that the file name has already been checked by regular expression
+	linterDisabled             bool           // flag indicating whether linter is disabled. Flag is set to true only if the file
+	// name matches the pattern and @linter disable was encountered
 
 	// strictTypes is true if file contains `declare(strict_types=1)`.
 	strictTypes bool
@@ -213,7 +217,7 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 			for _, cs := range *ffs {
 				for _, c := range cs {
 					if c.StringType == freefloating.CommentType {
-						d.handleComment(c)
+						d.handleComment(c, n)
 					}
 				}
 			}
@@ -461,6 +465,13 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 				return
 			}
 		}
+
+		allowDisabled := false
+
+		if d.allowDisabledRegexp != nil {
+			allowDisabled = d.allowDisabledRegexp.MatchString(d.ctx.st.CurrentFile)
+		}
+
 		d.reports = append(d.reports, &Report{
 			checkName:  checkName,
 			startLn:    string(startLn),
@@ -471,7 +482,7 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 			filename:   d.ctx.st.CurrentFile,
 			msg:        msg,
 			hash:       hash,
-			isDisabled: d.disabledFlag,
+			isDisabled: allowDisabled,
 		})
 	}
 }
@@ -558,7 +569,7 @@ func (d *RootWalker) reportUndefinedVariable(v node.Node, maybeHave bool) {
 	}
 }
 
-func (d *RootWalker) handleComment(c freefloating.String) {
+func (d *RootWalker) handleComment(c freefloating.String, n node.Node) {
 	if c.StringType != freefloating.CommentType {
 		return
 	}
@@ -574,8 +585,14 @@ func (d *RootWalker) handleComment(c freefloating.String) {
 		}
 
 		for _, p := range ln.(*phpdoc.RawCommentPart).Params {
-			if p == "disable" {
-				d.disabledFlag = true
+
+			if d.allowDisabledRegexp != nil && !d.allowDisabledRegexpWasUsed {
+				d.linterDisabled = d.allowDisabledRegexp.MatchString(d.ctx.st.CurrentFile)
+				d.allowDisabledRegexpWasUsed = true
+			}
+
+			if p == "disable" && !d.linterDisabled {
+				d.Report(nil, LevelInformation, "linterError", "You are not allowed to disable linter")
 			}
 		}
 	}

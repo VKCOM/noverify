@@ -15,6 +15,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/karrick/godirwalk"
+	"github.com/quasilyte/regex/syntax"
+
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/lintdebug"
@@ -23,8 +26,6 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/rules"
-	"github.com/karrick/godirwalk"
-	"github.com/quasilyte/regex/syntax"
 )
 
 type FileInfo struct {
@@ -72,7 +73,7 @@ type ReadCallback func(ch chan FileInfo)
 
 // ParseContents parses specified contents (or file) and returns *RootWalker.
 // Function does not update global meta.
-func ParseContents(filename string, contents []byte, lineRanges []git.LineRange) (rootNode node.Node, w *RootWalker, err error) {
+func ParseContents(filename string, contents []byte, lineRanges []git.LineRange, allowDisabled *regexp.Regexp) (rootNode node.Node, w *RootWalker, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			s := fmt.Sprintf("Panic while parsing %s: %s\n\nStack trace: %s", filename, r, dbg.Stack())
@@ -113,7 +114,7 @@ func ParseContents(filename string, contents []byte, lineRanges []git.LineRange)
 
 	atomic.AddInt64(&initParseTime, int64(time.Since(start)))
 
-	return analyzeFile(filename, contents, parser, lineRanges)
+	return analyzeFile(filename, contents, parser, lineRanges, allowDisabled)
 }
 
 func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedSet {
@@ -135,7 +136,7 @@ func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedS
 	return &clone
 }
 
-func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRanges []git.LineRange) (*node.Root, *RootWalker, error) {
+func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRanges []git.LineRange, allowedDisabled *regexp.Regexp) (*node.Root, *RootWalker, error) {
 	start := time.Now()
 	rootNode := parser.GetRootNode()
 
@@ -166,6 +167,8 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 			}),
 			out: &strings.Builder{},
 		},
+
+		allowDisabledRegexp: allowedDisabled,
 	}
 
 	w.InitFromParser(contents, parser)
@@ -466,7 +469,7 @@ func ReadFilesFromGitWithChanges(repo, commitSHA1 string, changes []git.Change) 
 }
 
 // ParseFilenames is used to do initial parsing of files.
-func ParseFilenames(readFileNamesFunc ReadCallback) []*Report {
+func ParseFilenames(readFileNamesFunc ReadCallback, allowDisabled *regexp.Regexp) []*Report {
 	start := time.Now()
 	defer func() {
 		lintdebug.Send("Processing time: %s", time.Since(start))
@@ -496,7 +499,7 @@ func ParseFilenames(readFileNamesFunc ReadCallback) []*Report {
 		go func() {
 			var rep []*Report
 			for f := range filenamesCh {
-				rep = append(rep, doParseFile(f, needReports)...)
+				rep = append(rep, doParseFile(f, needReports, allowDisabled)...)
 			}
 			reportsCh <- rep
 			wg.Done()
@@ -512,7 +515,7 @@ func ParseFilenames(readFileNamesFunc ReadCallback) []*Report {
 	return allReports
 }
 
-func doParseFile(f FileInfo, needReports bool) (reports []*Report) {
+func doParseFile(f FileInfo, needReports bool, allowDisabled *regexp.Regexp) (reports []*Report) {
 	var err error
 
 	if DebugParseDuration > 0 {
@@ -526,7 +529,7 @@ func doParseFile(f FileInfo, needReports bool) (reports []*Report) {
 
 	if needReports {
 		var w *RootWalker
-		_, w, err = ParseContents(f.Filename, f.Contents, f.LineRanges)
+		_, w, err = ParseContents(f.Filename, f.Contents, f.LineRanges, allowDisabled)
 		if err == nil {
 			reports = w.GetReports()
 		}
@@ -544,7 +547,7 @@ func doParseFile(f FileInfo, needReports bool) (reports []*Report) {
 
 func InitStubs(readFileNamesFunc ReadCallback) {
 	meta.SetLoadingStubs(true)
-	ParseFilenames(readFileNamesFunc)
+	ParseFilenames(readFileNamesFunc, nil)
 	meta.Info.InitStubs()
 	meta.SetLoadingStubs(false)
 }

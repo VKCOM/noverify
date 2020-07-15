@@ -169,7 +169,7 @@ func handleInitialize(req *baseRequest) error {
 	go func() {
 		linter.AnalysisFiles = []string{params.RootURI.Filename()}
 
-		linter.ParseFilenames(linter.ReadFilenames(linter.AnalysisFiles, linter.ExcludeRegex))
+		linter.ParseFilenames(linter.ReadFilenames(linter.AnalysisFiles, linter.ExcludeRegex), nil)
 
 		meta.SetIndexingComplete(true)
 

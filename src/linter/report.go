@@ -451,6 +451,12 @@ function performance_test() {}`,
   public function d();
 }`,
 		},
+
+		{
+			Name:    "linterError",
+			Default: true,
+			Comment: `Report linter error.`,
+		},
 	}
 
 	for _, info := range allChecks {
@@ -520,7 +526,11 @@ func (r *Report) String() string {
 
 	// No context line for security-level warnings.
 	if r.level == LevelSecurity {
-		return fmt.Sprintf("%s %s at %s:%d", severityNames[r.level], msg, r.filename, r.startLine)
+
+		// To make output stable between platforms, see #572
+		filename := strings.ReplaceAll(r.filename, "\\", "/")
+
+		return fmt.Sprintf("%s %s at %s:%d", severityNames[r.level], msg, filename, r.startLine)
 	}
 
 	contextLn := strings.Builder{}

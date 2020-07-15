@@ -219,7 +219,7 @@ func shuffleFiles(files []TestFile) {
 
 func parseTestFile(t testing.TB, f TestFile) (rootNode node.Node, w *linter.RootWalker) {
 	var err error
-	rootNode, w, err = linter.ParseContents(f.Name, f.Data, nil)
+	rootNode, w, err = linter.ParseContents(f.Name, f.Data, nil, nil)
 	if err != nil {
 		t.Fatalf("could not parse %s: %v", f.Name, err.Error())
 	}

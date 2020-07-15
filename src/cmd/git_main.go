@@ -21,7 +21,7 @@ func gitParseUntracked(l *linterRunner) []*linter.Report {
 		log.Fatalf("get untracked files: %v", err)
 	}
 
-	return linter.ParseFilenames(linter.ReadFilenames(filenames, nil))
+	return linter.ParseFilenames(linter.ReadFilenames(filenames, nil), nil)
 }
 
 func parseIndexOnlyFiles(l *linterRunner) {
@@ -29,7 +29,7 @@ func parseIndexOnlyFiles(l *linterRunner) {
 		return
 	}
 	filenames := strings.Split(l.args.indexOnlyFiles, ",")
-	linter.ParseFilenames(linter.ReadFilenames(filenames, nil))
+	linter.ParseFilenames(linter.ReadFilenames(filenames, nil), nil)
 }
 
 // Not the best name, and not the best function signature.
@@ -59,14 +59,14 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 		}
 
 		start = time.Now()
-		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil))
+		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil), nil)
 		parseIndexOnlyFiles(l)
 		log.Printf("Indexed old commit in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		oldReports = linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, linter.ExcludeRegex))
+		oldReports = linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, linter.ExcludeRegex), nil)
 		log.Printf("Parsed old commit for %s (%d reports)", time.Since(start), len(oldReports))
 
 		meta.ResetInfo()
@@ -75,34 +75,34 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 		}
 
 		start = time.Now()
-		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil))
+		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil), nil)
 		log.Printf("Indexed new commit in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		reports = linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, linter.ExcludeRegex))
+		reports = linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, linter.ExcludeRegex), nil)
 		log.Printf("Parsed new commit in %s (%d reports)", time.Since(start), len(reports))
 	} else {
 		start = time.Now()
-		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil))
+		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil), nil)
 		parseIndexOnlyFiles(l)
 		log.Printf("Indexing complete in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		oldReports = linter.ParseFilenames(linter.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes))
+		oldReports = linter.ParseFilenames(linter.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes), nil)
 		log.Printf("Parsed old files versions for %s", time.Since(start))
 
 		start = time.Now()
 		meta.SetIndexingComplete(false)
-		linter.ParseFilenames(linter.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes))
+		linter.ParseFilenames(linter.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes), nil)
 		meta.SetIndexingComplete(true)
 		log.Printf("Indexed files versions for %s", time.Since(start))
 
 		start = time.Now()
-		reports = linter.ParseFilenames(linter.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes))
+		reports = linter.ParseFilenames(linter.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes), nil)
 		log.Printf("Parsed new file versions in %s", time.Since(start))
 	}
 
@@ -129,25 +129,25 @@ func gitRepoComputeReportsFromLocalChanges(l *linterRunner) (oldReports, reports
 	log.Printf("You have changes in your work tree, showing diff between %s and work tree", l.args.mutable.gitCommitFrom)
 
 	start := time.Now()
-	linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil))
+	linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil), nil)
 	parseIndexOnlyFiles(l)
 	log.Printf("Indexing complete in %s", time.Since(start))
 
 	meta.SetIndexingComplete(true)
 
 	start = time.Now()
-	oldReports = linter.ParseFilenames(linter.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes))
+	oldReports = linter.ParseFilenames(linter.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes), nil)
 	log.Printf("Parsed old files versions for %s", time.Since(start))
 
 	start = time.Now()
 	meta.SetIndexingComplete(false)
-	linter.ParseFilenames(linter.ReadChangesFromWorkTree(l.args.gitWorkTree, changes))
+	linter.ParseFilenames(linter.ReadChangesFromWorkTree(l.args.gitWorkTree, changes), nil)
 	gitParseUntracked(l)
 	meta.SetIndexingComplete(true)
 	log.Printf("Indexed new files versions for %s", time.Since(start))
 
 	start = time.Now()
-	reports = linter.ParseFilenames(linter.ReadChangesFromWorkTree(l.args.gitWorkTree, changes))
+	reports = linter.ParseFilenames(linter.ReadChangesFromWorkTree(l.args.gitWorkTree, changes), nil)
 	reports = append(reports, gitParseUntracked(l)...)
 	log.Printf("Parsed new file versions in %s", time.Since(start))
 

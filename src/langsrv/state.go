@@ -40,7 +40,7 @@ func openFile(filename, contents string) {
 	}
 
 	// just parse file, do not fully analyze it as indexing is not yet done
-	rootNode, _, err := linter.ParseContents(filename, []byte(contents), nil)
+	rootNode, _, err := linter.ParseContents(filename, []byte(contents), nil, nil)
 	if err != nil {
 		log.Printf("Could not parse %s: %s", filename, err.Error())
 		lintdebug.Send("Could not parse %s: %s", filename, err.Error())
@@ -68,7 +68,7 @@ func changeFileNonLocked(filename, contents string) {
 	// parse file, update index for it, and then generate diagnostics based on new index
 	meta.SetIndexingComplete(false)
 
-	rootNode, w, err := linter.ParseContents(filename, []byte(contents), nil)
+	rootNode, w, err := linter.ParseContents(filename, []byte(contents), nil, nil)
 	if err != nil {
 		log.Printf("Could not parse %s: %s", filename, err.Error())
 		lintdebug.Send("Could not parse %s: %s", filename, err.Error())

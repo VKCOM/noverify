@@ -175,7 +175,7 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 	linter.AnalysisFiles = flag.Args()
 
 	log.Printf("Indexing %+v", flag.Args())
-	linter.ParseFilenames(linter.ReadFilenames(flag.Args(), nil))
+	linter.ParseFilenames(linter.ReadFilenames(flag.Args(), nil), l.allowDisableRegex)
 	parseIndexOnlyFiles(&l)
 	meta.SetIndexingComplete(true)
 	log.Printf("Linting")
@@ -185,7 +185,7 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 		filenames = strings.Split(args.fullAnalysisFiles, ",")
 	}
 
-	reports := linter.ParseFilenames(linter.ReadFilenames(filenames, linter.ExcludeRegex))
+	reports := linter.ParseFilenames(linter.ReadFilenames(filenames, linter.ExcludeRegex), l.allowDisableRegex)
 	if args.outputBaseline {
 		if err := createBaseline(&l, cfg, reports); err != nil {
 			return 1, fmt.Errorf("write baseline: %v", err)
@@ -239,7 +239,7 @@ func createBaseline(l *linterRunner, cfg *MainConfig, reports []*linter.Report) 
 
 func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (criticalReports int) {
 	filtered := make([]*linter.Report, 0, len(diff))
-	var linterErrors []string
+
 	for _, r := range diff {
 		if cfg.BeforeReport != nil && !cfg.BeforeReport(r) {
 			continue
@@ -250,9 +250,7 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 
 		if r.IsDisabledByUser() {
 			filename := r.GetFilename()
-			if !canBeDisabled(l, filename) {
-				linterErrors = append(linterErrors, fmt.Sprintf("You are not allowed to disable linter for file '%s'", filename))
-			} else {
+			if canBeDisabled(l, filename) {
 				continue
 			}
 		}
@@ -271,7 +269,6 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 		}
 		list := &reportList{
 			Reports: filtered,
-			Errors:  linterErrors,
 		}
 		d := json.NewEncoder(l.outputFp)
 		if err := d.Encode(list); err != nil {
@@ -279,9 +276,6 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 			panic(fmt.Sprintf("report list marshaling failed: %v", err))
 		}
 	} else {
-		for _, err := range linterErrors {
-			fmt.Fprintf(l.outputFp, "%s\n", err)
-		}
 		for _, r := range filtered {
 			if isCritical(l, r) {
 				fmt.Fprintf(l.outputFp, "<critical> %s\n", r.String())
