@@ -466,16 +466,15 @@ function performance_test() {}`,
 
 // Report is a linter report message.
 type Report struct {
-	checkName  string
-	startLn    string
-	startChar  int
-	startLine  int
-	endChar    int
-	level      int
-	msg        string
-	filename   string
-	hash       uint64
-	isDisabled bool // user-defined flag that file should not be linted
+	checkName string
+	startLn   string
+	startChar int
+	startLine int
+	endChar   int
+	level     int
+	msg       string
+	filename  string
+	hash      uint64
 }
 
 func (r *Report) Hash() uint64 {
@@ -558,11 +557,6 @@ func (r *Report) String() string {
 // IsCritical returns whether or not we need to reject whole commit when found this kind of report.
 func (r *Report) IsCritical() bool {
 	return r.level != LevelDoNotReject
-}
-
-// IsDisabledByUser returns whether or not user thinks that this file should not be checked
-func (r *Report) IsDisabledByUser() bool {
-	return r.isDisabled
 }
 
 // GetFilename returns report filename

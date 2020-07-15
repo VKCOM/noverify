@@ -51,15 +51,6 @@ func isEnabled(l *linterRunner, r *linter.Report) bool {
 	return !linter.ExcludeRegex.MatchString(r.GetFilename())
 }
 
-// canBeDisabled returns whether or not '@linter disable' can be used for the specified file
-func canBeDisabled(l *linterRunner, filename string) bool {
-	if l.allowDisableRegex == nil {
-		return false
-	}
-
-	return l.allowDisableRegex.MatchString(filename)
-}
-
 // Run executes linter main function.
 //
 // It is separate from linter so that you can insert your own hooks
@@ -246,13 +237,6 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 		}
 		if !isEnabled(l, r) {
 			continue
-		}
-
-		if r.IsDisabledByUser() {
-			filename := r.GetFilename()
-			if canBeDisabled(l, filename) {
-				continue
-			}
 		}
 
 		filtered = append(filtered, r)
