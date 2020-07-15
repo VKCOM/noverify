@@ -68,8 +68,6 @@ type RootWalker struct {
 	linterDisabled      bool           // flag indicating whether linter is disabled. Flag is set to true only if the file
 	// name matches the pattern and @linter disable was encountered
 
-	usedPHPDocLines map[int]bool // if a string has already been used for ReportPHPDoc, cannot use it anymore
-
 	// strictTypes is true if file contains `declare(strict_types=1)`.
 	strictTypes bool
 
@@ -218,7 +216,7 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 			for _, cs := range *ffs {
 				for _, c := range cs {
 					if c.StringType == freefloating.CommentType {
-						d.handleComment(c, n)
+						d.handleComment(c)
 					}
 				}
 			}
@@ -487,7 +485,7 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 }
 
 // ReportPHPDoc registers a single report message about some found problem in PHPDoc.
-func (d *RootWalker) ReportPHPDoc(n node.Node, regexpPattern string, level int, checkName, msg string, args ...interface{}) {
+func (d *RootWalker) ReportPHPDoc(c freefloating.String, regexpPattern string, level int, checkName, msg string, args ...interface{}) {
 	if !meta.IsIndexingComplete() {
 		return
 	}
@@ -495,89 +493,80 @@ func (d *RootWalker) ReportPHPDoc(n node.Node, regexpPattern string, level int, 
 		return
 	}
 
-	if d.usedPHPDocLines == nil {
-		d.usedPHPDocLines = map[int]bool{}
+	value := c.Value
+	lines := strings.Split(value, "\n")
+
+	var findLines []int
+	for i, line := range lines {
+		matched, _ := regexp.MatchString(regexpPattern, line)
+
+		if matched {
+			findLines = append(findLines, i)
+		}
 	}
 
-	for _, v := range *n.GetFreeFloating() {
-		for _, p := range v {
-			value := p.Value
-			lines := strings.Split(value, "\n")
+	if len(findLines) == 0 {
+		return
+	}
 
-			var findLines []int
-			for i, line := range lines {
-				matched, _ := regexp.MatchString(regexpPattern, line)
+	for _, lineIndex := range findLines {
+		line := lines[lineIndex]
 
-				if matched && !d.usedPHPDocLines[p.Position.StartLine+i] {
-					findLines = append(findLines, i)
-					d.usedPHPDocLines[p.Position.StartLine+i] = true
+		needleLinePosition := position.Position{
+			StartLine: lineIndex + c.Position.StartLine,
+			EndLine:   lineIndex + c.Position.StartLine,
+			StartPos:  0,
+			EndPos:    len(line),
+		}
+
+		if LangServer {
+			severity, ok := vscodeLevelMap[level]
+			if ok {
+				diag := vscode.Diagnostic{
+					Code:     msg,
+					Message:  fmt.Sprintf(msg, args...),
+					Severity: severity,
+					Range: vscode.Range{
+						Start: vscode.Position{Line: needleLinePosition.StartLine - 1, Character: 0},
+						End:   vscode.Position{Line: needleLinePosition.EndLine - 1, Character: needleLinePosition.EndPos},
+					},
+				}
+
+				if level == LevelUnused {
+					diag.Tags = append(diag.Tags, 1 /* Unnecessary */)
+				}
+
+				d.Diagnostics = append(d.Diagnostics, diag)
+			}
+		} else {
+			// Replace Unused with Info (Notice) in non-LSP mode.
+			if level == LevelUnused {
+				level = LevelInformation
+			}
+
+			msg := fmt.Sprintf(msg, args...)
+			hash := d.reportHash(&needleLinePosition, []byte(line), checkName, msg)
+			if count := d.ctx.baseline.Count(hash); count >= 1 {
+				if d.ctx.hashCounters == nil {
+					d.ctx.hashCounters = make(map[uint64]int)
+				}
+				d.ctx.hashCounters[hash]++
+				if d.ctx.hashCounters[hash] <= count {
+					return
 				}
 			}
 
-			if len(findLines) == 0 {
-				continue
-			}
-
-			for _, lineIndex := range findLines {
-				line := lines[lineIndex]
-
-				needleLinePosition := position.Position{
-					StartLine: lineIndex + p.Position.StartLine,
-					EndLine:   lineIndex + p.Position.StartLine,
-					StartPos:  0,
-					EndPos:    len(line),
-				}
-
-				if LangServer {
-					severity, ok := vscodeLevelMap[level]
-					if ok {
-						diag := vscode.Diagnostic{
-							Code:     msg,
-							Message:  fmt.Sprintf(msg, args...),
-							Severity: severity,
-							Range: vscode.Range{
-								Start: vscode.Position{Line: needleLinePosition.StartLine - 1, Character: 0},
-								End:   vscode.Position{Line: needleLinePosition.EndLine - 1, Character: needleLinePosition.EndPos},
-							},
-						}
-
-						if level == LevelUnused {
-							diag.Tags = append(diag.Tags, 1 /* Unnecessary */)
-						}
-
-						d.Diagnostics = append(d.Diagnostics, diag)
-					}
-				} else {
-					// Replace Unused with Info (Notice) in non-LSP mode.
-					if level == LevelUnused {
-						level = LevelInformation
-					}
-
-					msg := fmt.Sprintf(msg, args...)
-					hash := d.reportHash(&needleLinePosition, []byte(line), checkName, msg)
-					if count := d.ctx.baseline.Count(hash); count >= 1 {
-						if d.ctx.hashCounters == nil {
-							d.ctx.hashCounters = make(map[uint64]int)
-						}
-						d.ctx.hashCounters[hash]++
-						if d.ctx.hashCounters[hash] <= count {
-							return
-						}
-					}
-
-					d.reports = append(d.reports, &Report{
-						checkName: checkName,
-						startLn:   line,
-						startChar: needleLinePosition.StartPos,
-						startLine: needleLinePosition.StartLine,
-						endChar:   needleLinePosition.EndPos,
-						level:     level,
-						filename:  d.ctx.st.CurrentFile,
-						msg:       msg,
-						hash:      hash,
-					})
-				}
-			}
+			d.reports = append(d.reports, &Report{
+				checkName: checkName,
+				startLn:   line,
+				startChar: needleLinePosition.StartPos,
+				startLine: needleLinePosition.StartLine,
+				endChar:   needleLinePosition.EndPos,
+				level:     level,
+				filename:  d.ctx.st.CurrentFile,
+				msg:       msg,
+				hash:      hash,
+			})
 		}
 	}
 }
@@ -664,7 +653,7 @@ func (d *RootWalker) reportUndefinedVariable(v node.Node, maybeHave bool) {
 	}
 }
 
-func (d *RootWalker) handleComment(c freefloating.String, n node.Node) {
+func (d *RootWalker) handleComment(c freefloating.String) {
 	if c.StringType != freefloating.CommentType {
 		return
 	}
@@ -684,7 +673,7 @@ func (d *RootWalker) handleComment(c freefloating.String, n node.Node) {
 				continue
 			}
 			if d.linterDisabled {
-				d.ReportPHPDoc(n, "@linter +disable", LevelInformation, "linterError", "Linter is already disabled for this file")
+				d.ReportPHPDoc(c, "@linter +disable", LevelInformation, "linterError", "Linter is already disabled for this file")
 				continue
 			}
 			canDisable := false
@@ -693,7 +682,7 @@ func (d *RootWalker) handleComment(c freefloating.String, n node.Node) {
 			}
 			d.linterDisabled = canDisable
 			if !canDisable {
-				d.ReportPHPDoc(n, "@linter +disable", LevelInformation, "linterError", "You are not allowed to disable linter")
+				d.ReportPHPDoc(c, "@linter +disable", LevelInformation, "linterError", "You are not allowed to disable linter")
 			}
 		}
 	}
