@@ -1416,3 +1416,18 @@ function f3($v) {
 `)
 	test.RunAndMatch()
 }
+
+func TestIssue375(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+function ref_sink(&$ref) {}
+
+function f() {
+  $x = [1];
+  ref_sink($x[0]);
+}
+
+$x = [1, 5];
+ref_sink($x[1]);
+
+`)
+}
