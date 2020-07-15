@@ -324,6 +324,14 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 		return binaryMathOpType(sc, cs, n.Left, n.Right, custom)
 	case *binary.Mod:
 		return binaryMathOpType(sc, cs, n.Left, n.Right, custom)
+	case *expr.PostInc:
+		return unaryMathOpType(sc, cs, n.Variable, custom)
+	case *expr.PreInc:
+		return unaryMathOpType(sc, cs, n.Variable, custom)
+	case *expr.PostDec:
+		return unaryMathOpType(sc, cs, n.Variable, custom)
+	case *expr.PreDec:
+		return unaryMathOpType(sc, cs, n.Variable, custom)
 	case *cast.Array:
 		return meta.NewTypesMap("mixed[]")
 	case *cast.Bool:

@@ -1752,6 +1752,58 @@ exprtype(array_map(function($x) { return $x; }, $ints), 'mixed[]');
 	runExprTypeTest(t, &exprTypeTestParams{stubs: stubs, code: code})
 }
 
+func TestPostfixPrefixIncDec(t *testing.T) {
+	code := `<?php
+
+$a = 100;
+
+exprtype($a++, "int");
+exprtype($a--, "int");
+exprtype(++$a, "int");
+exprtype(--$a, "int");
+
+
+$a = 100.5;
+
+exprtype($a++, "float");
+exprtype($a--, "float");
+exprtype(++$a, "float");
+exprtype(--$a, "float");
+
+
+$a = "100";
+
+exprtype($a++, "float");
+exprtype($a--, "float");
+exprtype(++$a, "float");
+exprtype(--$a, "float");
+
+
+if ($a == 100) {
+	$a = 56.5
+} else {
+	$a = 56
+}
+
+exprtype($a++, "float");
+exprtype($a--, "float");
+exprtype(++$a, "float");
+exprtype(--$a, "float");
+
+
+class Foo {};
+
+$a = new Foo();
+
+exprtype($a++, "float");
+exprtype($a--, "float");
+exprtype(++$a, "float");
+exprtype(--$a, "float");
+
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {
