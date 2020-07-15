@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
@@ -210,7 +211,7 @@ func (b *BlockWalker) checkBinaryDupArgs(n, left, right node.Node) {
 	if !b.sideEffectFree(left) || !b.sideEffectFree(right) {
 		return
 	}
-	if astutil.NodeEqual(left, right) {
+	if b.NodeEqual(left, right) {
 		b.r.Report(n, LevelWarning, "dupSubExpr", "duplicated operands in %s expression", binaryOpString(n))
 	}
 }
@@ -1362,6 +1363,27 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 		case *scalar.Lnumber:
 			key = k.Value
 			constKey = true
+		case *expr.ConstFetch:
+			_, info, ok := solver.GetConstant(b.r.ctx.st, k.Constant)
+
+			if !ok {
+				continue
+			}
+
+			key = info.Value.Value
+
+			if info.Value.Type == meta.Float {
+				val, err := strconv.ParseFloat(key, 64)
+				if err != nil {
+					continue
+				}
+				value := int64(math.Floor(val))
+				key = fmt.Sprint(value)
+			} else if info.Value.Type == meta.Undefined {
+				continue
+			}
+
+			constKey = true
 		}
 
 		if !constKey {
@@ -2435,4 +2457,30 @@ func (b *BlockWalker) isVoid(n node.Node) bool {
 
 func (b *BlockWalker) exprType(n node.Node) meta.TypesMap {
 	return solver.ExprTypeCustom(b.ctx.sc, b.r.ctx.st, n, b.ctx.customTypes)
+}
+
+func (b *BlockWalker) NodeEqual(x, y node.Node) bool {
+	if x == nil || y == nil {
+		return x == y
+	}
+	switch x := x.(type) {
+	case *expr.ConstFetch:
+		y, ok := y.(*expr.ConstFetch)
+		if !ok {
+			return false
+		}
+		_, info1, ok := solver.GetConstant(b.r.ctx.st, x.Constant)
+		if !ok {
+			return false
+		}
+		_, info2, ok := solver.GetConstant(b.r.ctx.st, y.Constant)
+		if !ok {
+			return false
+		}
+
+		return info1.Value.IsEqual(info2.Value)
+
+	default:
+		return astutil.NodeEqual(x, y)
+	}
 }

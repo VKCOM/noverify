@@ -1164,6 +1164,38 @@ func TestDuplicateArrayKey(t *testing.T) {
 	test.RunAndMatch()
 }
 
+func TestDuplicateArrayKeyWithConstants(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+const MAX_VALUE = 1;
+const MIN_VALUE = 1;
+$a = [
+  MAX_VALUE => 'something',
+  MIN_VALUE => 'other_thing',
+];
+const FIRST_SEARCH_KEY = "apple";
+const SECOND_SEARCH_KEY = "apple";
+$b = [
+  FIRST_SEARCH_KEY => 1,
+  SECOND_SEARCH_KEY => 45,
+];
+	
+const START_PERCENT = 0.1;
+const END_PERCENT = 0.1;
+$c = [
+  START_PERCENT => 1,
+  END_PERCENT => 45,
+];
+`)
+	test.Expect = []string{
+		"Duplicate array key '1'",
+		"Duplicate array key '\"apple\"'",
+		"Duplicate array key '0'",
+	}
+
+	test.RunAndMatch()
+}
+
 func TestMixedArrayKeys(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
