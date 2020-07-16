@@ -8,10 +8,11 @@ import (
 	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
+	"github.com/VKCOM/noverify/src/php/parseutil"
 )
 
 func mustParse(t testing.TB, code string) node.Node {
-	n, _, err := parsePHP7([]byte(code))
+	n, _, err := parseutil.Parse([]byte(code))
 	if err != nil {
 		t.Fatalf("parse `%s`: %v", code, err)
 	}

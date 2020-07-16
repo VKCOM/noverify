@@ -1,7 +1,6 @@
 package rules
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -14,7 +13,7 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
-	"github.com/VKCOM/noverify/src/php/parser/php7"
+	"github.com/VKCOM/noverify/src/php/parseutil"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/phpgrep"
 )
@@ -56,13 +55,10 @@ func (p *parser) parse(filename string, r io.Reader) (*Set, error) {
 	if err != nil {
 		return res, err
 	}
-	q := php7.NewParser(sources)
-	q.WithFreeFloating()
-	q.Parse()
-	if errs := q.GetErrors(); len(errs) != 0 {
-		return res, errors.New(errs[0].String())
+	root, err := parseutil.ParseFile(sources)
+	if err != nil {
+		return res, err
 	}
-	root := q.GetRootNode()
 
 	// Convert PHP file into the rule set.
 	p.filename = filename

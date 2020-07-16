@@ -1,16 +1,12 @@
 package phpgrep
 
 import (
-	"bytes"
-	"errors"
-
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/binary"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
-	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/php/parser/position"
 )
 
@@ -164,35 +160,4 @@ func matchMetaVar(n node.Node, s string) bool {
 	default:
 		return false
 	}
-}
-
-func parsePHP7(code []byte) (node.Node, []byte, error) {
-	if bytes.HasPrefix(code, []byte("<?")) || bytes.HasPrefix(code, []byte("<?php")) {
-		n, err := parsePHP7root(code)
-		return n, code, err
-	}
-	return parsePHP7expr(code)
-}
-
-func parsePHP7expr(code []byte) (node.Node, []byte, error) {
-	code = append([]byte("<?php "), code...)
-	code = append(code, ';')
-	root, err := parsePHP7root(code)
-	if err != nil {
-		return nil, code, err
-	}
-	stmts := root.(*node.Root).Stmts
-	if len(stmts) == 0 {
-		return &stmt.Nop{}, code, nil
-	}
-	return root.(*node.Root).Stmts[0], code, nil
-}
-
-func parsePHP7root(code []byte) (node.Node, error) {
-	p := php7.NewParser(code)
-	p.Parse()
-	if len(p.GetErrors()) != 0 {
-		return nil, errors.New(p.GetErrors()[0].String())
-	}
-	return p.GetRootNode(), nil
 }
