@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -70,6 +71,8 @@ type Suite struct {
 
 	Files  []TestFile
 	Expect []string
+
+	AllowDisable *regexp.Regexp
 
 	LoadStubs []string
 }
@@ -172,7 +175,7 @@ func (s *Suite) RunLinter() []*linter.Report {
 
 	shuffleFiles(s.Files)
 	for _, f := range s.Files {
-		parseTestFile(s.t, f)
+		parseTestFile(s.t, f, s.AllowDisable)
 	}
 
 	meta.SetIndexingComplete(true)
@@ -187,12 +190,8 @@ func (s *Suite) RunLinter() []*linter.Report {
 			continue
 		}
 
-		_, w := parseTestFile(s.t, f)
-		for _, r := range w.GetReports() {
-			if !r.IsDisabledByUser() {
-				reports = append(reports, r)
-			}
-		}
+		_, w := parseTestFile(s.t, f, s.AllowDisable)
+		reports = append(reports, w.GetReports()...)
 	}
 
 	return reports
@@ -203,7 +202,7 @@ func ParseTestFile(t *testing.T, filename, content string) (rootNode node.Node, 
 	return parseTestFile(t, TestFile{
 		Name: filename,
 		Data: []byte(content),
-	})
+	}, nil)
 }
 
 func init() {
@@ -217,9 +216,9 @@ func shuffleFiles(files []TestFile) {
 	})
 }
 
-func parseTestFile(t testing.TB, f TestFile) (rootNode node.Node, w *linter.RootWalker) {
+func parseTestFile(t testing.TB, f TestFile, allowDisable *regexp.Regexp) (rootNode node.Node, w *linter.RootWalker) {
 	var err error
-	rootNode, w, err = linter.ParseContents(f.Name, f.Data, nil, nil)
+	rootNode, w, err = linter.ParseContents(f.Name, f.Data, nil, allowDisable)
 	if err != nil {
 		t.Fatalf("could not parse %s: %v", f.Name, err.Error())
 	}

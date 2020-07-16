@@ -2,6 +2,7 @@ package linttest_test
 
 import (
 	"log"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -109,16 +110,40 @@ try {
 	test.RunAndMatch()
 }
 
-func TestLinterDisable(t *testing.T) {
+func TestLinterDisableUnmatchedFilename(t *testing.T) {
 	test := linttest.NewSuite(t)
-	// TODO(Petr Makhnev): Here we need the ability to add flags for the file
+	test.AllowDisable = regexp.MustCompile(`will match nothing`)
 	test.AddFile(`<?php
 /** @linter disable */
 $_ = array(1);
 `)
 	test.Expect = []string{
 		`You are not allowed to disable linter`,
-		`Use of old array syntax (use short form instead)`,
+		`Use of old array syntax`,
+	}
+	test.RunAndMatch()
+}
+
+func TestLinterDisable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AllowDisable = regexp.MustCompile(`.*`)
+	test.AddFile(`<?php
+/** @linter disable */
+$_ = array(1);
+`)
+	test.RunAndMatch()
+}
+
+func TestLinterDisableTwice(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AllowDisable = regexp.MustCompile(`.*`)
+	test.AddFile(`<?php
+/** @linter disable */
+$_ = array(1);
+/** @linter disable */
+`)
+	test.Expect = []string{
+		`Linter is already disabled for this file`,
 	}
 	test.RunAndMatch()
 }
