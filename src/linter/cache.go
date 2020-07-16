@@ -37,7 +37,8 @@ import (
 //          changed meta.scopeVar bool fields representation
 //     38 - replaced TypesMap.immutable:bool with flags:uint8.
 //          added mapPrecise flag to mark precise type maps.
-const cacheVersion = 38
+//     39 - added new field Value in ConstantInfo
+const cacheVersion = 39
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")
