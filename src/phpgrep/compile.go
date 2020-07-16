@@ -7,6 +7,7 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
+	"github.com/VKCOM/noverify/src/php/parseutil"
 )
 
 type compiler struct {
@@ -15,7 +16,7 @@ type compiler struct {
 }
 
 func compile(opts *Compiler, pattern []byte) (*Matcher, error) {
-	root, src, err := parsePHP7(pattern)
+	root, src, err := parseutil.Parse(pattern)
 	if err != nil {
 		return nil, err
 	}
