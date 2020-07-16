@@ -626,7 +626,6 @@ func (d *RootWalker) handleComment(c freefloating.String) {
 			if !canDisable {
 				needleLine := ln.Line() + c.Position.StartLine - 1
 				d.ReportByLine(needleLine, LevelInformation, "linterError", "You are not allowed to disable linter")
-				d.ReportByLine(19, LevelInformation, "linterError", "You are not allowed to disable linter")
 			}
 		}
 	}
