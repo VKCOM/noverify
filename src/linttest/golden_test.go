@@ -176,6 +176,10 @@ func TestGolden(t *testing.T) {
 				`stubs/phpstorm-stubs/curl/curl_d.php`,
 			},
 		},
+
+		{
+			name: "output-test",
+		},
 	}
 
 	for _, target := range targets {
