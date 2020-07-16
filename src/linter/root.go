@@ -666,6 +666,9 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 
 	switch {
 	case b.bareReturn && b.returnsValue:
+
+		d.Report(stmts[0], LevelError, "bareReturnInNonVoidFunctionProhibited", "Replace `return;` for `return null;`")
+
 		b.returnTypes = b.returnTypes.AppendString("null")
 	case b.returnTypes.IsEmpty() && b.returnsValue:
 		b.returnTypes = meta.MixedType
