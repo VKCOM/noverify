@@ -1178,14 +1178,67 @@ $valid_quotes = [
 func TestDuplicateArrayKey(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	function test() {
-	  return [
-		  'key1' => 'something',
-		  'key2' => 'other_thing',
-		  'key1' => 'third_thing', // duplicate
-	  ];
-	}`)
+function test() {
+  return [
+	  'key1' => 'something',
+	  'key2' => 'other_thing',
+	  'key1' => 'third_thing', // duplicate
+  ];
+}
+`)
 	test.Expect = []string{"Duplicate array key 'key1'"}
+	test.RunAndMatch()
+}
+
+func TestDuplicateArrayKeyWithConstants(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+const MAX_VALUE = 1;
+const MIN_VALUE = 1;
+$a = [
+  MAX_VALUE => 'something',
+  MIN_VALUE => 'other_thing',
+];
+const FIRST_SEARCH_KEY = "apple";
+const SECOND_SEARCH_KEY = "apple";
+$b = [
+  FIRST_SEARCH_KEY => 1,
+  SECOND_SEARCH_KEY => 45,
+];
+	
+const START_PERCENT = 0.1;
+const END_PERCENT = 0.1;
+$c = [
+  START_PERCENT => 1,
+  END_PERCENT => 45,
+];
+
+
+const START_PERCENT_REVERT = -1;
+const END_PERCENT_REVERT = -1.51;
+
+$a = [
+	START_PERCENT_REVERT => 2,
+	END_PERCENT_REVERT => 3,
+];
+
+const START_PERCENT_NORMAL = 2;
+const END_PERCENT_NORMAL = 2.51;
+
+$b = [
+	START_PERCENT_NORMAL => 2,
+	END_PERCENT_NORMAL => 3,
+];
+
+`)
+	test.Expect = []string{
+		"Duplicate array key '1'",
+		"Duplicate array key '\"apple\"'",
+		"Duplicate array key '0'",
+		"Duplicate array key '-1'",
+		"Duplicate array key '2'",
+	}
+
 	test.RunAndMatch()
 }
 
