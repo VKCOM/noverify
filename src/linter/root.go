@@ -438,7 +438,7 @@ func (d *RootWalker) report(n node.Node, lineIndex int, level int, checkName, ms
 			endChar = len(endLn)
 		}
 	} else if isReportForLine {
-		if lineIndex < 1 || lineIndex > len(d.Lines)-1 {
+		if lineIndex < 1 || lineIndex > len(d.Lines) {
 			return
 		}
 
