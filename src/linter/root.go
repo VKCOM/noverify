@@ -446,6 +446,10 @@ func (d *RootWalker) report(n node.Node, lineIndex int, level int, checkName, ms
 		startChar = 0
 		endChar = len(startLn)
 
+		if strings.HasSuffix(string(startLn), "\r") {
+			endChar = endChar - 1
+		}
+
 		pos = position.Position{
 			StartLine: lineIndex,
 			EndLine:   lineIndex,
