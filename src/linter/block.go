@@ -212,7 +212,7 @@ func (b *BlockWalker) checkBinaryDupArgs(n, left, right node.Node) {
 		return
 	}
 	if b.NodeEqual(left, right) {
-		b.r.Report(n, LevelWarning, "dupSubExpr", "duplicated operands in %s expression", binaryOpString(n))
+		b.r.Report(n, LevelWarning, "dupSubExpr", "duplicated operands value in %s expression", binaryOpString(n))
 	}
 }
 
@@ -1369,6 +1369,9 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 			if !ok {
 				continue
 			}
+			if info.Value.Type == meta.Undefined {
+				continue
+			}
 
 			key = info.Value.Value
 
@@ -1377,10 +1380,8 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 				if err != nil {
 					continue
 				}
-				value := int64(math.Floor(val))
+				value := int64(val)
 				key = fmt.Sprint(value)
-			} else if info.Value.Type == meta.Undefined {
-				continue
 			}
 
 			constKey = true

@@ -412,23 +412,31 @@ func ExprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 	return res
 }
 
-func GetConstantValue(c *stmt.Constant, cs *meta.ClassParseState) (meta.ConstantValue, bool) {
+func GetConstantValue(c *stmt.Constant) (meta.ConstantValue, bool) {
 	switch c := c.Expr.(type) {
 	case *scalar.Lnumber:
+		return getConstantValue(c, 1)
+	case *scalar.Dnumber:
+		return getConstantValue(c, 1)
+	case *scalar.String:
+		return getConstantValue(c, 1)
+	case *expr.UnaryMinus:
+		return getConstantValue(c.Expr, -1)
+	default:
+		return meta.NewUndefinedConstantValue(), false
+	}
+}
+
+func getConstantValue(n node.Node, modifier int64) (meta.ConstantValue, bool) {
+	switch c := n.(type) {
+	case *scalar.Lnumber:
 		value, err := strconv.ParseInt(c.Value, 10, 64)
-		return meta.NewConstantValueFromInt(value), err == nil
+		return meta.NewConstantValueFromInt(value * modifier), err == nil
 	case *scalar.Dnumber:
 		value, err := strconv.ParseFloat(c.Value, 64)
-		return meta.NewConstantValueFromFloat(value), err == nil
+		return meta.NewConstantValueFromFloat(value * float64(modifier)), err == nil
 	case *scalar.String:
 		return meta.NewConstantValueFromString(c.Value), true
-	case *expr.ConstFetch:
-		_, info, ok := GetConstant(cs, c.Constant)
-		if !ok {
-			return meta.NewUndefinedConstantValue(), false
-		}
-		return info.Value, true
-
 	default:
 		return meta.NewUndefinedConstantValue(), false
 	}
