@@ -1335,6 +1335,10 @@ func (b *BlockWalker) handleArray(arr *expr.Array) bool {
 }
 
 func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) bool {
+	if !meta.IsIndexingComplete() {
+		return true
+	}
+
 	haveKeys := false
 	haveImplicitKeys := false
 	keys := make(map[string]struct{}, len(items))
@@ -2461,6 +2465,11 @@ func (b *BlockWalker) exprType(n node.Node) meta.TypesMap {
 }
 
 func (b *BlockWalker) NodeEqual(x, y node.Node) bool {
+	// Can't do anything fancy during the indexing phase.
+	if !meta.IsIndexingComplete() {
+		return astutil.NodeEqual(x, y)
+	}
+
 	if x == nil || y == nil {
 		return x == y
 	}
