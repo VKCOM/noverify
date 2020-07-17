@@ -378,7 +378,7 @@ func (d *RootWalker) parseStartPos(pos *position.Position) (startLn []byte, star
 	return startLn, startChar
 }
 
-func (d *RootWalker) report(n node.Node, lineIndex int, level int, checkName, msg string, args ...interface{}) {
+func (d *RootWalker) report(n node.Node, lineNumber int, level int, checkName, msg string, args ...interface{}) {
 	if !meta.IsIndexingComplete() {
 		return
 	}
@@ -391,7 +391,7 @@ func (d *RootWalker) report(n node.Node, lineIndex int, level int, checkName, ms
 		return
 	}
 
-	isReportForNode := lineIndex == 0
+	isReportForNode := lineNumber == 0
 	isReportForLine := !isReportForNode
 
 	var pos position.Position
@@ -438,11 +438,11 @@ func (d *RootWalker) report(n node.Node, lineIndex int, level int, checkName, ms
 			endChar = len(endLn)
 		}
 	} else if isReportForLine {
-		if lineIndex < 1 || lineIndex > len(d.Lines) {
+		if lineNumber < 1 || lineNumber > len(d.Lines) {
 			return
 		}
 
-		startLn = d.Lines[lineIndex-1]
+		startLn = d.Lines[lineNumber-1]
 		startChar = 0
 		endChar = len(startLn)
 
@@ -451,8 +451,8 @@ func (d *RootWalker) report(n node.Node, lineIndex int, level int, checkName, ms
 		}
 
 		pos = position.Position{
-			StartLine: lineIndex,
-			EndLine:   lineIndex,
+			StartLine: lineNumber,
+			EndLine:   lineNumber,
 		}
 	}
 
@@ -512,8 +512,8 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 }
 
 // ReportByLine registers a single report message about some found problem in lineIndex code line.
-func (d *RootWalker) ReportByLine(lineIndex int, level int, checkName, msg string, args ...interface{}) {
-	d.report(nil, lineIndex, level, checkName, msg, args...)
+func (d *RootWalker) ReportByLine(lineNumber int, level int, checkName, msg string, args ...interface{}) {
+	d.report(nil, lineNumber, level, checkName, msg, args...)
 }
 
 // reportHash computes the report signature hash for the baseline.
