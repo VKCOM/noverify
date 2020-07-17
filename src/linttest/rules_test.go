@@ -9,6 +9,42 @@ import (
 	"github.com/VKCOM/noverify/src/rules"
 )
 
+func TestRuleIfElseif(t *testing.T) {
+	rfile := `<?php
+function testrule() {
+  /** @warning bad function called */
+  bad();
+}
+`
+	test := linttest.NewSuite(t)
+
+	test.AddFile(`<?php
+function bad() { return 0; }
+function good() { return 1; }
+`)
+
+	addNamedFile(test, `/elseif_cond1.php`, `<?php
+if (good()) {
+} elseif (bad()) {}`)
+
+	addNamedFile(test, `/elseif_cond2.php`, `<?php
+if (good()) {
+} elseif (bad()) {
+} elseif (bad()) {}`)
+
+	addNamedFile(test, `/if_cond.php`, `<?php
+	if (bad()) {
+	} elseif (good()) {}`)
+
+	test.Expect = []string{
+		`bad function called at /elseif_cond1.php`,
+		`bad function called at /elseif_cond2`,
+		`bad function called at /elseif_cond2`,
+		`bad function called at /if_cond.php`,
+	}
+	runRulesTest(t, test, rfile)
+}
+
 func TestRulePathFilter(t *testing.T) {
 	rfile := `<?php
 /**
@@ -26,7 +62,7 @@ eval(${"var"});
         `
 	addNamedFile(test, "/home/john/my/site/foo.php", code)
 	addNamedFile(test, "/home/john/my/site/ads_foo.php", code)
-	addNamedFile(test, "/home/jogh/my/site/ads_bar.php", code)
+	addNamedFile(test, "/home/john/my/site/ads_bar.php", code)
 	test.Expect = []string{
 		`don't eval from variable`,
 		`don't eval from variable`,
