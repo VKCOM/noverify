@@ -49,6 +49,8 @@ type cmdlineArguments struct {
 
 	phpExtensionsArg string
 
+	gitignore bool
+
 	gitPushArg                 string
 	gitAuthorsWhitelist        string
 	gitWorkTree                string
@@ -125,6 +127,9 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 
 	flag.BoolVar(&args.fix, "fix", false,
 		"Apply a quickfix where possible (updates source files)")
+
+	flag.BoolVar(&args.gitignore, "gitignore", false,
+		"If enabled, noverify tries to use .gitignore files to exclude matched ignored files from the analysis")
 
 	flag.StringVar(&args.gitRepo, "git", "", "Path to git repository to analyze")
 	flag.StringVar(&args.mutable.gitCommitFrom, "git-commit-from", "", "Analyze changes between commits <git-commit-from> and <git-commit-to>")

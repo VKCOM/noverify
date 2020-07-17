@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -18,6 +19,8 @@ type linterRunner struct {
 	args *cmdlineArguments
 
 	outputFp io.Writer
+
+	filenameFilter *linter.FilenameFilter
 
 	reportsExcludeChecksSet map[string]bool
 	reportsIncludeChecksSet map[string]bool
@@ -38,8 +41,51 @@ func (l *linterRunner) IsEnabledByFlags(checkName string) bool {
 	return true
 }
 
+func (l *linterRunner) collectGitIgnoreFiles() error {
+	l.filenameFilter = linter.NewFilenameFilter(linter.ExcludeRegex)
+
+	if !l.args.gitignore {
+		return nil
+	}
+
+	workingDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("getwd: %v", err)
+	}
+
+	l.filenameFilter.EnableGitignore()
+
+	// Walk wd up until we find .git (good) or FS root (bad).
+	// We collect all gitignore files along the way.
+	dir := workingDir
+	for {
+		m, err := linter.ParseGitignoreFromDir(dir)
+		if err != nil {
+			return fmt.Errorf("read .gitignore: %v", err)
+		}
+		if m != nil {
+			l.filenameFilter.InitialGitignorePush(dir, m)
+		}
+		if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
+			linter.DebugMessage("discovered git top level: %s", dir)
+			break
+		}
+		parentDir := filepath.Dir(dir)
+		if parentDir == dir {
+			return fmt.Errorf("not a git repository (don't use -gitignore for non-git projects)")
+		}
+		dir = parentDir
+	}
+
+	return nil
+}
+
 func (l *linterRunner) Init(ruleSets []*rules.Set, args *cmdlineArguments) error {
 	l.args = args
+
+	if err := l.collectGitIgnoreFiles(); err != nil {
+		return fmt.Errorf("collect gitignore files: %v", err)
+	}
 
 	l.outputFp = os.Stderr
 	if args.output != "" {
