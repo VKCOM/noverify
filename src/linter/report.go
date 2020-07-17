@@ -459,9 +459,9 @@ function performance_test() {}`,
 		},
 
 		{
-			Name:    "bareReturnInNonVoidFunctionProhibited",
+			Name:    "bareReturnInNonVoidFunction",
 			Default: true,
-			Comment: `Report when function has bare return and has non-void return type.`,
+			Comment: `Report when function has bare return and non-void return type.`,
 		},
 	}
 

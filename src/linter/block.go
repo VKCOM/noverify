@@ -64,10 +64,13 @@ type BlockWalker struct {
 	// state
 	statements map[node.Node]struct{}
 
-	// whether a function has a return without explit expression.
+	// whether a function has a return without explicit expression.
 	// Required to make a decision in void vs null type selection,
 	// since "return" is the same as "return null".
 	bareReturn bool
+	// stores return nodes that have no return value.
+	bareReturns []*stmt.Return
+
 	// whether a function has a return with explicit expression.
 	// When can't infer precise type, can use mixed.
 	returnsValue bool
@@ -80,6 +83,7 @@ type BlockWalker struct {
 	// shared state between all blocks
 	unusedVars   map[string][]node.Node
 	nonLocalVars map[string]struct{} // static, global and other vars that have complex control flow
+
 }
 
 func (b *BlockWalker) addStatement(n node.Node) {
@@ -536,6 +540,7 @@ func (b *BlockWalker) handleReturn(ret *stmt.Return) {
 	if ret.Expr == nil {
 		// Return without explicit return value.
 		b.bareReturn = true
+		b.bareReturns = append(b.bareReturns, ret)
 		return
 	}
 	b.returnsValue = true
