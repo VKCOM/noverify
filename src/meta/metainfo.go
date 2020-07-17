@@ -1,6 +1,8 @@
 package meta
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -367,10 +369,61 @@ type PropertyInfo struct {
 	AccessLevel AccessLevel
 }
 
+type ConstantValueType uint8
+
+const (
+	Undefined ConstantValueType = iota
+	Integer
+	Float
+	String
+)
+
+type ConstantValue struct {
+	Type  ConstantValueType
+	Value string
+}
+
+func (cv ConstantValue) String() string {
+	if cv.Type == Undefined {
+		return "Undefined type"
+	}
+
+	return fmt.Sprintf("%d: %s", cv.Type, cv.Value)
+}
+
+func (cv ConstantValue) IsEqual(v ConstantValue) bool {
+	if v.Type == Undefined || cv.Type == Undefined {
+		return false
+	}
+
+	return cv.Value == v.Value
+}
+
+func NewConstantValueFromString(value string) ConstantValue {
+	unquotedValue, err := strconv.Unquote(value)
+	if err != nil {
+		unquotedValue = value
+	}
+	return ConstantValue{Value: fmt.Sprintf("\"%s\"", unquotedValue), Type: String}
+}
+
+func NewConstantValueFromFloat(value float64) ConstantValue {
+	return ConstantValue{Value: fmt.Sprintf("%f", value), Type: Float}
+}
+
+func NewConstantValueFromInt(value int64) ConstantValue {
+	return ConstantValue{Value: fmt.Sprintf("%d", value), Type: Integer}
+}
+
+func NewUndefinedConstantValue() ConstantValue {
+	return ConstantValue{Type: Undefined}
+}
+
 type ConstantInfo struct {
 	Pos         ElementPosition
 	Typ         TypesMap
 	AccessLevel AccessLevel
+	Value       ConstantValue
 }
 
 type ClassFlags uint8

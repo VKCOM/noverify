@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
@@ -210,8 +211,8 @@ func (b *BlockWalker) checkBinaryDupArgs(n, left, right node.Node) {
 	if !b.sideEffectFree(left) || !b.sideEffectFree(right) {
 		return
 	}
-	if astutil.NodeEqual(left, right) {
-		b.r.Report(n, LevelWarning, "dupSubExpr", "duplicated operands in %s expression", binaryOpString(n))
+	if b.NodeEqual(left, right) {
+		b.r.Report(n, LevelWarning, "dupSubExpr", "duplicated operands value in %s expression", binaryOpString(n))
 	}
 }
 
@@ -386,15 +387,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *stmt.Else:
 		b.r.checkKeywordCase(s, "else")
 	case *stmt.ElseIf:
-		if s.Merged {
-			b.r.checkKeywordCase(s, "else")
-			if ff := (*s.GetFreeFloating())[freefloating.Else]; len(ff) != 0 {
-				rightmostPos := ff[len(ff)-1].Position
-				b.r.checkKeywordCasePos(s, rightmostPos.EndPos, "if")
-			}
-		} else {
-			b.r.checkKeywordCase(s, "elseif")
-		}
+		b.handleElseIf(s)
 	case *stmt.If:
 		// TODO: handle constant if expressions
 		// TODO: maybe try to handle when variables are defined and used with the same condition
@@ -1334,6 +1327,10 @@ func (b *BlockWalker) handleArray(arr *expr.Array) bool {
 }
 
 func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) bool {
+	if !meta.IsIndexingComplete() {
+		return true
+	}
+
 	haveKeys := false
 	haveImplicitKeys := false
 	keys := make(map[string]struct{}, len(items))
@@ -1361,6 +1358,28 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 			constKey = true
 		case *scalar.Lnumber:
 			key = k.Value
+			constKey = true
+		case *expr.ConstFetch:
+			_, info, ok := solver.GetConstant(b.r.ctx.st, k.Constant)
+
+			if !ok {
+				continue
+			}
+			if info.Value.Type == meta.Undefined {
+				continue
+			}
+
+			key = info.Value.Value
+
+			if info.Value.Type == meta.Float {
+				val, err := strconv.ParseFloat(key, 64)
+				if err != nil {
+					continue
+				}
+				value := int64(val)
+				key = fmt.Sprint(value)
+			}
+
 			constKey = true
 		}
 
@@ -1887,8 +1906,11 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 		ctx := b.withNewContext(func() {
 			if elsif, ok := n.(*stmt.ElseIf); ok {
 				walkCond(elsif.Cond)
+				b.handleElseIf(elsif)
+				elsif.Stmt.Walk(b)
+			} else {
+				n.Walk(b)
 			}
-			n.Walk(b)
 			b.r.addScope(n, b.ctx.sc)
 		})
 
@@ -1944,6 +1966,18 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 	}
 
 	return false
+}
+
+func (b *BlockWalker) handleElseIf(s *stmt.ElseIf) {
+	if s.Merged {
+		b.r.checkKeywordCase(s, "else")
+		if ff := (*s.GetFreeFloating())[freefloating.Else]; len(ff) != 0 {
+			rightmostPos := ff[len(ff)-1].Position
+			b.r.checkKeywordCasePos(s, rightmostPos.EndPos, "if")
+		}
+	} else {
+		b.r.checkKeywordCase(s, "elseif")
+	}
 }
 
 func (b *BlockWalker) getCaseStmts(c node.Node) (cond node.Node, list []node.Node) {
@@ -2435,4 +2469,35 @@ func (b *BlockWalker) isVoid(n node.Node) bool {
 
 func (b *BlockWalker) exprType(n node.Node) meta.TypesMap {
 	return solver.ExprTypeCustom(b.ctx.sc, b.r.ctx.st, n, b.ctx.customTypes)
+}
+
+func (b *BlockWalker) NodeEqual(x, y node.Node) bool {
+	// Can't do anything fancy during the indexing phase.
+	if !meta.IsIndexingComplete() {
+		return astutil.NodeEqual(x, y)
+	}
+
+	if x == nil || y == nil {
+		return x == y
+	}
+	switch x := x.(type) {
+	case *expr.ConstFetch:
+		y, ok := y.(*expr.ConstFetch)
+		if !ok {
+			return false
+		}
+		_, info1, ok := solver.GetConstant(b.r.ctx.st, x.Constant)
+		if !ok {
+			return false
+		}
+		_, info2, ok := solver.GetConstant(b.r.ctx.st, y.Constant)
+		if !ok {
+			return false
+		}
+
+		return info1.Value.IsEqual(info2.Value)
+
+	default:
+		return astutil.NodeEqual(x, y)
+	}
 }

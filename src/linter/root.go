@@ -894,11 +894,14 @@ func (d *RootWalker) enterClassConstList(s *stmt.ClassConstList) bool {
 		d.checkCommentMisspellings(c, c.PhpDocComment)
 		typ := solver.ExprTypeLocal(d.scope(), d.ctx.st, c.Expr)
 
+		value, _ := solver.GetConstantValue(c)
+
 		// TODO: handle duplicate constant
 		cl.Constants[nm] = meta.ConstantInfo{
 			Pos:         d.getElementPos(c),
 			Typ:         typ.Immutable(),
 			AccessLevel: accessLevel,
+			Value:       value,
 		}
 	}
 
@@ -1607,12 +1610,15 @@ func (d *RootWalker) enterConstList(lst *stmt.ConstList) bool {
 	for _, sNode := range lst.Consts {
 		s := sNode.(*stmt.Constant)
 
+		value, _ := solver.GetConstantValue(s)
+
 		id := s.ConstantName
 		nm := d.ctx.st.Namespace + `\` + id.Value
 
 		d.meta.Constants[nm] = meta.ConstantInfo{
-			Pos: d.getElementPos(s),
-			Typ: solver.ExprTypeLocal(d.scope(), d.ctx.st, s.Expr),
+			Pos:   d.getElementPos(s),
+			Typ:   solver.ExprTypeLocal(d.scope(), d.ctx.st, s.Expr),
+			Value: value,
 		}
 	}
 

@@ -818,6 +818,11 @@ func getInstanceProperties(className string) (res []string) {
 }
 
 func getMethodCompletionItems(st *meta.ClassParseState, str string, sc *meta.Scope) (result []vscode.CompletionItem) {
+	// It looks like this function could use parseutil.ParseStmt which
+	// handles <?php tag and returns stmt[0], but I wouldn't dare
+	// to re-write it without testing.
+	// TODO: use parseutil.ParseStmt here.
+
 	strTemp := "<?php " + strings.TrimSuffix(str, "->") + ";"
 	parser := php7.NewParser([]byte(strTemp))
 	parser.Parse()
