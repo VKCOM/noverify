@@ -216,7 +216,7 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 			for _, cs := range *ffs {
 				for _, c := range cs {
 					if c.StringType == freefloating.CommentType {
-						d.handleComment(c, n)
+						d.handleComment(c)
 					}
 				}
 			}
@@ -378,8 +378,7 @@ func (d *RootWalker) parseStartPos(pos *position.Position) (startLn []byte, star
 	return startLn, startChar
 }
 
-// Report registers a single report message about some found problem.
-func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args ...interface{}) {
+func (d *RootWalker) report(n node.Node, lineNumber int, level int, checkName, msg string, args ...interface{}) {
 	if !meta.IsIndexingComplete() {
 		return
 	}
@@ -387,51 +386,74 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 		return
 	}
 	// We don't report anything if linter was disabled by a
-	// successfull @linter disable, unless it's the linterError.
+	// successful @linter disable, unless it's the linterError.
 	if d.linterDisabled && checkName != "linterError" {
 		return
 	}
 
+	isReportForNode := lineNumber == 0
+	isReportForLine := !isReportForNode
+
 	var pos position.Position
-
-	if n == nil {
-		// Hack to parse syntax error message from php-parser.
-		// When in language server mode, do not map syntax errors in order not to
-		// complain about unfinished piece of code that user is currently writing.
-		if strings.Contains(msg, "syntax error") && strings.Contains(msg, " at line ") && !LangServer {
-			// it is in form "Syntax error: syntax error: unexpected '*' at line 4"
-			if lastIdx := strings.LastIndexByte(msg, ' '); lastIdx > 0 {
-				lineNumStr := msg[lastIdx+1:]
-				lineNum, err := strconv.Atoi(lineNumStr)
-				if err == nil {
-					pos.StartLine = lineNum
-					pos.EndLine = lineNum
-					msg = msg[0:lastIdx]
-					msg = strings.TrimSuffix(msg, " at line")
-				}
-			}
-		}
-	} else {
-		pos = *n.GetPosition()
-	}
-
+	var startLn []byte
+	var startChar int
 	var endLn []byte
 	var endChar int
 
-	startLn, startChar := d.parseStartPos(&pos)
-
-	if pos.EndLine >= 1 && len(d.Lines) > pos.EndLine {
-		endLn = d.Lines[pos.EndLine-1]
-		p := d.LinesPositions[pos.EndLine-1]
-		if pos.EndPos > p {
-			endChar = pos.EndPos - p
+	if isReportForNode {
+		if n == nil {
+			// Hack to parse syntax error message from php-parser.
+			// When in language server mode, do not map syntax errors in order not to
+			// complain about unfinished piece of code that user is currently writing.
+			if strings.Contains(msg, "syntax error") && strings.Contains(msg, " at line ") && !LangServer {
+				// it is in form "Syntax error: syntax error: unexpected '*' at line 4"
+				if lastIdx := strings.LastIndexByte(msg, ' '); lastIdx > 0 {
+					lineNumStr := msg[lastIdx+1:]
+					lineNum, err := strconv.Atoi(lineNumStr)
+					if err == nil {
+						pos.StartLine = lineNum
+						pos.EndLine = lineNum
+						msg = msg[0:lastIdx]
+						msg = strings.TrimSuffix(msg, " at line")
+					}
+				}
+			}
+		} else {
+			pos = *n.GetPosition()
 		}
-	} else {
-		endLn = startLn
-	}
 
-	if endChar == 0 {
-		endChar = len(endLn)
+		startLn, startChar = d.parseStartPos(&pos)
+
+		if pos.EndLine >= 1 && len(d.Lines) > pos.EndLine {
+			endLn = d.Lines[pos.EndLine-1]
+			p := d.LinesPositions[pos.EndLine-1]
+			if pos.EndPos > p {
+				endChar = pos.EndPos - p
+			}
+		} else {
+			endLn = startLn
+		}
+
+		if endChar == 0 {
+			endChar = len(endLn)
+		}
+	} else if isReportForLine {
+		if lineNumber < 1 || lineNumber > len(d.Lines) {
+			return
+		}
+
+		startLn = d.Lines[lineNumber-1]
+		startChar = 0
+		endChar = len(startLn)
+
+		if strings.HasSuffix(string(startLn), "\r") {
+			endChar = endChar - 1
+		}
+
+		pos = position.Position{
+			StartLine: lineNumber,
+			EndLine:   lineNumber,
+		}
 	}
 
 	if LangServer {
@@ -482,6 +504,16 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 			hash:      hash,
 		})
 	}
+}
+
+// Report registers a single report message about some found problem.
+func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args ...interface{}) {
+	d.report(n, 0, level, checkName, msg, args...)
+}
+
+// ReportByLine registers a single report message about some found problem in lineIndex code line.
+func (d *RootWalker) ReportByLine(lineNumber int, level int, checkName, msg string, args ...interface{}) {
+	d.report(nil, lineNumber, level, checkName, msg, args...)
 }
 
 // reportHash computes the report signature hash for the baseline.
@@ -566,7 +598,7 @@ func (d *RootWalker) reportUndefinedVariable(v node.Node, maybeHave bool) {
 	}
 }
 
-func (d *RootWalker) handleComment(c freefloating.String, n node.Node) {
+func (d *RootWalker) handleComment(c freefloating.String) {
 	if c.StringType != freefloating.CommentType {
 		return
 	}
@@ -586,7 +618,8 @@ func (d *RootWalker) handleComment(c freefloating.String, n node.Node) {
 				continue
 			}
 			if d.linterDisabled {
-				d.Report(nil, LevelInformation, "linterError", "Linter is already disabled for this file")
+				needleLine := ln.Line() + c.Position.StartLine - 1
+				d.ReportByLine(needleLine, LevelInformation, "linterError", "Linter is already disabled for this file")
 				continue
 			}
 			canDisable := false
@@ -595,7 +628,8 @@ func (d *RootWalker) handleComment(c freefloating.String, n node.Node) {
 			}
 			d.linterDisabled = canDisable
 			if !canDisable {
-				d.Report(nil, LevelInformation, "linterError", "You are not allowed to disable linter")
+				needleLine := ln.Line() + c.Position.StartLine - 1
+				d.ReportByLine(needleLine, LevelInformation, "linterError", "You are not allowed to disable linter")
 			}
 		}
 	}
