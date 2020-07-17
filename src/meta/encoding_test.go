@@ -94,3 +94,59 @@ func TestTypeEncoding(t *testing.T) {
 		}
 	}
 }
+
+func TestConstantValueDecodeEncode(t *testing.T) {
+	// encode test
+	v := ConstantValue{
+		Type:  Integer,
+		Value: int64(54),
+	}
+	b, err := v.GobEncode()
+	if err != nil {
+		t.Errorf("unexpected error \"%s\"", err)
+	}
+
+	if b[0] != byte(Integer) || b[1] != 53 || b[2] != 52 {
+		t.Error("error encode")
+	}
+
+	// decode test
+	vb := ConstantValue{}
+	err = vb.GobDecode(b)
+	if err != nil {
+		t.Errorf("unexpected error \"%s\"", err)
+	}
+
+	if vb.Type != v.Type || vb.Value != v.Value {
+		t.Error("error decode, objects not equal")
+	}
+
+	// decode test #2
+	v2 := ConstantValue{
+		Type:  Integer,
+		Value: "hello",
+	}
+
+	b2, err := v2.GobEncode()
+	if err == nil {
+		t.Error("expected error \"corrupted integer\"")
+	}
+
+	vb2 := ConstantValue{}
+	err = vb2.GobDecode(b2)
+	if err == nil {
+		t.Error("expected error \"data corrupted\"")
+	}
+
+	// error type
+	vv := ConstantValue{
+		Type:  100,
+		Value: int64(54),
+	}
+	_, err = vv.GobEncode()
+
+	if err == nil {
+		t.Error("expected error \"unhandled type\"")
+	}
+
+}

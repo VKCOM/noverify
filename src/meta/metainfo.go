@@ -386,28 +386,36 @@ type ConstantValue struct {
 func (c ConstantValue) GobEncode() ([]byte, error) {
 	switch c.Type {
 	case Float:
-		str := fmt.Sprintf(" %f", c.Value.(float64))
-		strByte := []byte(str)
-		strByte[0] = byte(c.Type)
-		return strByte, nil
-
+		val, ok := c.Value.(float64)
+		if !ok {
+			return nil, fmt.Errorf("corrupted float")
+		}
+		str := fmt.Sprintf("%c%f", c.Type, val)
+		return []byte(str), nil
 	case Integer:
-		str := fmt.Sprintf(" %d", c.Value.(int64))
-		strByte := []byte(str)
-		strByte[0] = byte(c.Type)
-		return strByte, nil
-
+		val, ok := c.Value.(int64)
+		if !ok {
+			return nil, fmt.Errorf("corrupted integer")
+		}
+		str := fmt.Sprintf("%c%d", c.Type, val)
+		return []byte(str), nil
 	case String:
-		str := fmt.Sprintf(" %s", c.Value.(string))
-		strByte := []byte(str)
-		strByte[0] = byte(c.Type)
-		return strByte, nil
+		val, ok := c.Value.(string)
+		if !ok {
+			return nil, fmt.Errorf("corrupted string")
+		}
+		str := fmt.Sprintf("%c%s", c.Type, val)
+		return []byte(str), nil
 	}
 
 	return nil, fmt.Errorf("unhandeled type")
 }
 
 func (c *ConstantValue) GobDecode(buf []byte) error {
+	if len(buf) < 1 {
+		return fmt.Errorf("data corrupted")
+	}
+
 	tp := ConstantValueType(buf[0])
 	buf = buf[1:]
 	val := string(buf)
@@ -418,17 +426,13 @@ func (c *ConstantValue) GobDecode(buf []byte) error {
 		if err != nil {
 			return fmt.Errorf("invalid float")
 		}
-
 		c.Value = value
-
 	case Integer:
 		value, err := strconv.ParseInt(val, 10, 64)
 		if err != nil {
 			return fmt.Errorf("invalid integer")
 		}
-
 		c.Value = value
-
 	case String:
 		c.Value = val
 	}
@@ -442,7 +446,6 @@ func (c ConstantValue) String() string {
 	if c.Type == Undefined {
 		return "Undefined type"
 	}
-
 	return fmt.Sprintf("%d: %s", c.Type, c.Value)
 }
 
