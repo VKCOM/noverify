@@ -127,7 +127,7 @@ func (s *Suite) Match(reports []*linter.Report) {
 	matchedReports := map[*linter.Report]bool{}
 	usedMatchers := map[int]bool{}
 	for _, r := range reports {
-		have := r.String()
+		have := cmd.FormatReport(r)
 		for i, want := range expect {
 			if usedMatchers[i] {
 				continue
@@ -143,7 +143,7 @@ func (s *Suite) Match(reports []*linter.Report) {
 		if matchedReports[r] {
 			continue
 		}
-		t.Errorf("unexpected report %d: %s", i, r.String())
+		t.Errorf("unexpected report %d: %s", i, cmd.FormatReport(r))
 	}
 	for i, want := range expect {
 		if usedMatchers[i] {
@@ -156,7 +156,7 @@ func (s *Suite) Match(reports []*linter.Report) {
 	if t.Failed() {
 		t.Log(">>> issues reported:")
 		for _, r := range reports {
-			t.Log(r.String())
+			t.Log(cmd.FormatReport(r))
 		}
 		t.Log("<<<")
 	}

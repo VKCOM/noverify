@@ -40,6 +40,7 @@ type cmdlineArguments struct {
 
 	unusedVarPattern string
 
+	allowAll     bool
 	allowChecks  string
 	allowDisable string
 
@@ -143,6 +144,8 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 	flag.StringVar(&args.allowDisable, "allow-disable", "", "Regexp for filenames where '@linter disable' is allowed")
 	flag.StringVar(&args.allowChecks, "allow-checks", strings.Join(enabledByDefault, ","),
 		"Comma-separated list of check names to be enabled")
+	flag.BoolVar(&args.allowAll, "allow-all-checks", false,
+		"Has the same effect as passing all check names to the -allow-checks parameter")
 	flag.StringVar(&args.misspellList, "misspell-list", "Eng",
 		"Comma-separated list of misspelling dicts; predefined sets are Eng, Eng/US and Eng/UK")
 

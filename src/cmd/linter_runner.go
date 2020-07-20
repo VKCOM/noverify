@@ -27,7 +27,7 @@ type linterRunner struct {
 }
 
 func (l *linterRunner) IsEnabledByFlags(checkName string) bool {
-	if !l.reportsIncludeChecksSet[checkName] {
+	if !l.args.allowAll && !l.reportsIncludeChecksSet[checkName] {
 		return false // Not enabled by -allow-checks
 	}
 

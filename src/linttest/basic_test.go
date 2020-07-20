@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
@@ -1519,7 +1520,7 @@ func TestFunctionThrowsExceptionsAndReturns(t *testing.T) {
 	}
 
 	for _, r := range reports {
-		log.Printf("%s", r)
+		log.Printf("%s", cmd.FormatReport(r))
 	}
 }
 
@@ -1803,7 +1804,7 @@ func filterReports(names []string, reports []*linter.Report) []*linter.Report {
 
 	var out []*linter.Report
 	for _, r := range reports {
-		if _, ok := set[r.CheckName()]; ok {
+		if _, ok := set[r.CheckName]; ok {
 			out = append(out, r)
 		}
 	}
