@@ -493,15 +493,15 @@ func (d *RootWalker) report(n node.Node, lineNumber int, level int, checkName, m
 		}
 
 		d.reports = append(d.reports, &Report{
-			checkName: checkName,
-			startLn:   string(startLn),
-			startChar: startChar,
-			startLine: pos.StartLine,
-			endChar:   endChar,
-			level:     level,
-			filename:  d.ctx.st.CurrentFile,
-			msg:       msg,
-			hash:      hash,
+			CheckName: checkName,
+			Context:   string(startLn),
+			StartChar: startChar,
+			EndChar:   endChar,
+			Line:      pos.StartLine,
+			Level:     level,
+			Filename:  d.ctx.st.CurrentFile,
+			Message:   msg,
+			Hash:      hash,
 		})
 	}
 }

@@ -430,7 +430,7 @@ func runRulesTest(t *testing.T, test *linttest.Suite, rfile string) {
 
 	var filtered []*linter.Report
 	for _, r := range test.RunLinter() {
-		if _, ok := ruleNamesSet[r.CheckName()]; ok {
+		if _, ok := ruleNamesSet[r.CheckName]; ok {
 			filtered = append(filtered, r)
 		}
 	}
