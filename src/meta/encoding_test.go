@@ -96,57 +96,32 @@ func TestTypeEncoding(t *testing.T) {
 }
 
 func TestConstantValueDecodeEncode(t *testing.T) {
-	// encode test
-	v := ConstantValue{
-		Type:  Integer,
-		Value: int64(54),
-	}
-	b, err := v.GobEncode()
-	if err != nil {
-		t.Errorf("unexpected error \"%s\"", err)
-	}
-
-	if b[0] != byte(Integer) || b[1] != 53 || b[2] != 52 {
-		t.Error("error encode")
+	testCases := []ConstantValue{
+		{Type: String, Value: "world"},
+		{Type: Integer, Value: int64(5)},
+		{Type: Float, Value: 5.56},
+		{Type: String, Value: "hello"},
+		{Type: Float, Value: 124.67},
+		{Type: Integer, Value: int64(50000000)},
 	}
 
-	// decode test
-	vb := ConstantValue{}
-	err = vb.GobDecode(b)
-	if err != nil {
-		t.Errorf("unexpected error \"%s\"", err)
-	}
+	for _, testCase := range testCases {
+		// encode this
+		encoded, err := testCase.GobEncode()
+		if err != nil {
+			t.Errorf("unexpected error \"%s\"", err)
+		}
 
-	if vb.Type != v.Type || vb.Value != v.Value {
-		t.Error("error decode, objects not equal")
-	}
+		// decode this
+		decoded := ConstantValue{}
+		err = decoded.GobDecode(encoded)
+		if err != nil {
+			t.Errorf("unexpected error \"%s\"", err)
+		}
 
-	// decode test #2
-	v2 := ConstantValue{
-		Type:  Integer,
-		Value: "hello",
+		// compare
+		if decoded.Type != testCase.Type || decoded.Value != testCase.Value {
+			t.Error("error decode, objects not equal")
+		}
 	}
-
-	b2, err := v2.GobEncode()
-	if err == nil {
-		t.Error("expected error \"corrupted integer\"")
-	}
-
-	vb2 := ConstantValue{}
-	err = vb2.GobDecode(b2)
-	if err == nil {
-		t.Error("expected error \"data corrupted\"")
-	}
-
-	// error type
-	vv := ConstantValue{
-		Type:  100,
-		Value: int64(54),
-	}
-	_, err = vv.GobEncode()
-
-	if err == nil {
-		t.Error("expected error \"unhandled type\"")
-	}
-
 }
