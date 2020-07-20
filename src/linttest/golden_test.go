@@ -25,6 +25,7 @@ type goldenTest struct {
 
 	onlyE2E   bool
 	gitignore bool
+	baseline  bool
 
 	srcDir string
 
@@ -179,6 +180,12 @@ func TestGolden(t *testing.T) {
 			onlyE2E:   true,
 			gitignore: true,
 		},
+
+		{
+			name:     "baseline-test",
+			onlyE2E:  true,
+			baseline: true,
+		},
 	}
 
 	for _, target := range targets {
@@ -253,6 +260,9 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 			}
 			if target.gitignore {
 				args = append(args, "--gitignore")
+			}
+			if target.baseline {
+				args = append(args, "--baseline", filepath.Join("testdata", target.name, "baseline.json"))
 			}
 			args = append(args, target.srcDir)
 
