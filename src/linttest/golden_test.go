@@ -23,6 +23,9 @@ type goldenTest struct {
 	deps    []string
 	disable []string
 
+	onlyE2E   bool
+	gitignore bool
+
 	srcDir string
 
 	// want is a golden file contents.
@@ -170,6 +173,12 @@ func TestGolden(t *testing.T) {
 		{
 			name: "output-test",
 		},
+
+		{
+			name:      "gitignore-test",
+			onlyE2E:   true,
+			gitignore: true,
+		},
 	}
 
 	for _, target := range targets {
@@ -191,6 +200,9 @@ func TestGolden(t *testing.T) {
 	// easier, but it can't test whether our linter can work from
 	// the command-line in the same way as it does here.
 	for _, target := range targets {
+		if target.onlyE2E {
+			continue
+		}
 		runGoldenTest(t, target)
 	}
 
@@ -238,6 +250,9 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 			}
 			if len(target.disable) != 0 {
 				args = append(args, "--exclude-checks", strings.Join(target.disable, ","))
+			}
+			if target.gitignore {
+				args = append(args, "--gitignore")
 			}
 			args = append(args, target.srcDir)
 

@@ -170,14 +170,14 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 	linter.ParseFilenames(linter.ReadFilenames(flag.Args(), nil), l.allowDisableRegex)
 	parseIndexOnlyFiles(&l)
 	meta.SetIndexingComplete(true)
-	log.Printf("Linting")
 
 	filenames := flag.Args()
 	if args.fullAnalysisFiles != "" {
 		filenames = strings.Split(args.fullAnalysisFiles, ",")
 	}
 
-	reports := linter.ParseFilenames(linter.ReadFilenames(filenames, linter.ExcludeRegex), l.allowDisableRegex)
+	log.Printf("Linting")
+	reports := linter.ParseFilenames(linter.ReadFilenames(filenames, l.filenameFilter), l.allowDisableRegex)
 	if args.outputBaseline {
 		if err := createBaseline(&l, cfg, reports); err != nil {
 			return 1, fmt.Errorf("write baseline: %v", err)
