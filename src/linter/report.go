@@ -1,8 +1,6 @@
 package linter
 
 import (
-	"encoding/json"
-	"fmt"
 	"log"
 	"sort"
 	"strings"
@@ -466,102 +464,35 @@ function performance_test() {}`,
 
 // Report is a linter report message.
 type Report struct {
-	checkName string
-	startLn   string
-	startChar int
-	startLine int
-	endChar   int
-	level     int
-	msg       string
-	filename  string
-	hash      uint64
+	CheckName string `json:"check_name"`
+	Level     int    `json:"level"`
+	Context   string `json:"context"`
+	Message   string `json:"message"`
+	Filename  string `json:"filename"`
+	Line      int    `json:"line"`
+	StartChar int    `json:"start_char"`
+	EndChar   int    `json:"end_char"`
+	Hash      uint64 `json:"hash"`
 }
 
-func (r *Report) Hash() uint64 {
-	return r.hash
+var severityNames = map[int]string{
+	LevelError:       "ERROR",
+	LevelWarning:     "WARNING",
+	LevelInformation: "INFO",
+	LevelHint:        "HINT",
+	LevelUnused:      "UNUSED",
+	LevelDoNotReject: "MAYBE",
+	LevelSyntax:      "SYNTAX",
+	LevelSecurity:    "WARNING",
 }
 
-// CheckName returns report associated check name.
-func (r *Report) CheckName() string {
-	return r.checkName
-}
-
-// MarshalJSON is used to write report in its JSON representation.
-//
-// Used for -output-json option.
-func (r *Report) MarshalJSON() ([]byte, error) {
-	type jsonReport struct {
-		CheckName string `json:"check_name"`
-		Severity  string `json:"severity"`
-		Context   string `json:"context"`
-		Message   string `json:"message"`
-		Filename  string `json:"filename"`
-		Line      int    `json:"line"`
-		StartChar int    `json:"start_char"`
-		EndChar   int    `json:"end_char"`
-	}
-
-	b, err := json.Marshal(jsonReport{
-		CheckName: r.checkName,
-		Severity:  strings.TrimSpace(severityNames[r.level]),
-		Context:   r.startLn,
-		Message:   r.msg,
-		Filename:  r.filename,
-		Line:      r.startLine,
-		StartChar: r.startChar,
-		EndChar:   r.endChar,
-	})
-	return b, err
-}
-
-// Message returns report message.
-func (r *Report) Message() string { return r.msg }
-
-func (r *Report) String() string {
-	msg := r.msg
-	if r.checkName != "" {
-		msg = r.checkName + ": " + msg
-	}
-
-	// No context line for security-level warnings.
-	if r.level == LevelSecurity {
-
-		// To make output stable between platforms, see #572
-		filename := strings.ReplaceAll(r.filename, "\\", "/")
-
-		return fmt.Sprintf("%s %s at %s:%d", severityNames[r.level], msg, filename, r.startLine)
-	}
-
-	contextLn := strings.Builder{}
-	for i, ch := range r.startLn {
-		if i == r.startChar {
-			break
-		}
-		if ch == '\t' {
-			contextLn.WriteRune(ch)
-		} else {
-			contextLn.WriteByte(' ')
-		}
-	}
-
-	if r.endChar > r.startChar {
-		contextLn.WriteString(strings.Repeat("^", r.endChar-r.startChar))
-	}
-
-	// To make output stable between platforms, see #572
-	filename := strings.ReplaceAll(r.filename, "\\", "/")
-
-	return fmt.Sprintf("%s %s at %s:%d\n%s\n%s", severityNames[r.level], msg, filename, r.startLine, r.startLn, contextLn.String())
+func (r *Report) Severity() string {
+	return severityNames[r.Level]
 }
 
 // IsCritical returns whether or not we need to reject whole commit when found this kind of report.
 func (r *Report) IsCritical() bool {
-	return r.level != LevelDoNotReject
-}
-
-// GetFilename returns report filename
-func (r *Report) GetFilename() string {
-	return r.filename
+	return r.Level != LevelDoNotReject
 }
 
 // DiffReports returns only reports that are new.
@@ -716,9 +647,9 @@ func reportListToPerLineMap(list []*Report) (res map[int][]*Report, maxLine int)
 	res = make(map[int][]*Report)
 
 	for _, l := range list {
-		res[l.startLine] = append(res[l.startLine], l)
-		if l.startLine > maxLine {
-			maxLine = l.startLine
+		res[l.Line] = append(res[l.Line], l)
+		if l.Line > maxLine {
+			maxLine = l.Line
 		}
 	}
 
@@ -737,12 +668,12 @@ func reportListToMap(list []*Report) map[string][]*Report {
 	res := make(map[string][]*Report)
 
 	for _, r := range list {
-		res[r.filename] = append(res[r.filename], r)
+		res[r.Filename] = append(res[r.Filename], r)
 	}
 
 	for _, l := range res {
 		sort.Slice(l, func(i, j int) bool {
-			return l[i].startLine < l[j].startLine
+			return l[i].Line < l[j].Line
 		})
 	}
 
