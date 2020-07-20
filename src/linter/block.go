@@ -386,15 +386,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *stmt.Else:
 		b.r.checkKeywordCase(s, "else")
 	case *stmt.ElseIf:
-		if s.Merged {
-			b.r.checkKeywordCase(s, "else")
-			if ff := (*s.GetFreeFloating())[freefloating.Else]; len(ff) != 0 {
-				rightmostPos := ff[len(ff)-1].Position
-				b.r.checkKeywordCasePos(s, rightmostPos.EndPos, "if")
-			}
-		} else {
-			b.r.checkKeywordCase(s, "elseif")
-		}
+		b.handleElseIf(s)
 	case *stmt.If:
 		// TODO: handle constant if expressions
 		// TODO: maybe try to handle when variables are defined and used with the same condition
@@ -1920,8 +1912,11 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 		ctx := b.withNewContext(func() {
 			if elsif, ok := n.(*stmt.ElseIf); ok {
 				walkCond(elsif.Cond)
+				b.handleElseIf(elsif)
+				elsif.Stmt.Walk(b)
+			} else {
+				n.Walk(b)
 			}
-			n.Walk(b)
 			b.r.addScope(n, b.ctx.sc)
 		})
 
@@ -1977,6 +1972,18 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 	}
 
 	return false
+}
+
+func (b *BlockWalker) handleElseIf(s *stmt.ElseIf) {
+	if s.Merged {
+		b.r.checkKeywordCase(s, "else")
+		if ff := (*s.GetFreeFloating())[freefloating.Else]; len(ff) != 0 {
+			rightmostPos := ff[len(ff)-1].Position
+			b.r.checkKeywordCasePos(s, rightmostPos.EndPos, "if")
+		}
+	} else {
+		b.r.checkKeywordCase(s, "elseif")
+	}
 }
 
 func (b *BlockWalker) getCaseStmts(c node.Node) (cond node.Node, list []node.Node) {
