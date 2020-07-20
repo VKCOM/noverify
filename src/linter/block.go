@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
@@ -1369,15 +1368,22 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 				continue
 			}
 
-			key = info.Value.Value
+			value := info.Value.Value
 
-			if info.Value.Type == meta.Float {
-				val, err := strconv.ParseFloat(key, 64)
-				if err != nil {
+			switch info.Value.Type {
+			case meta.Float:
+				val, ok := value.(float64)
+				if !ok {
 					continue
 				}
 				value := int64(val)
 				key = fmt.Sprint(value)
+
+			case meta.Integer:
+				key = fmt.Sprint(value)
+
+			case meta.String:
+				key = value.(string)
 			}
 
 			constKey = true

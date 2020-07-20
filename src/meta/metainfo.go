@@ -380,23 +380,81 @@ const (
 
 type ConstantValue struct {
 	Type  ConstantValueType
-	Value string
+	Value interface{}
 }
 
-func (cv ConstantValue) String() string {
-	if cv.Type == Undefined {
-		return "Undefined type"
+func (c ConstantValue) GobEncode() ([]byte, error) {
+	switch c.Type {
+	case Float:
+		val, ok := c.Value.(float64)
+		if !ok {
+			return nil, fmt.Errorf("corrupted float")
+		}
+		str := fmt.Sprintf("%c%f", c.Type, val)
+		return []byte(str), nil
+	case Integer:
+		val, ok := c.Value.(int64)
+		if !ok {
+			return nil, fmt.Errorf("corrupted integer")
+		}
+		str := fmt.Sprintf("%c%d", c.Type, val)
+		return []byte(str), nil
+	case String:
+		val, ok := c.Value.(string)
+		if !ok {
+			return nil, fmt.Errorf("corrupted string")
+		}
+		str := fmt.Sprintf("%c%s", c.Type, val)
+		return []byte(str), nil
 	}
 
-	return fmt.Sprintf("%d: %s", cv.Type, cv.Value)
+	return nil, fmt.Errorf("unhandeled type")
 }
 
-func (cv ConstantValue) IsEqual(v ConstantValue) bool {
-	if v.Type == Undefined || cv.Type == Undefined {
+func (c *ConstantValue) GobDecode(buf []byte) error {
+	if len(buf) < 1 {
+		return fmt.Errorf("data corrupted")
+	}
+
+	tp := ConstantValueType(buf[0])
+	buf = buf[1:]
+	val := string(buf)
+
+	switch tp {
+	case Float:
+		value, err := strconv.ParseFloat(val, 64)
+		if err != nil {
+			return fmt.Errorf("invalid float")
+		}
+		c.Value = value
+	case Integer:
+		value, err := strconv.ParseInt(val, 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid integer")
+		}
+		c.Value = value
+	case String:
+		c.Value = val
+	}
+
+	c.Type = tp
+
+	return nil
+}
+
+func (c ConstantValue) String() string {
+	if c.Type == Undefined {
+		return "Undefined type"
+	}
+	return fmt.Sprintf("%d: %s", c.Type, c.Value)
+}
+
+func (c ConstantValue) IsEqual(v ConstantValue) bool {
+	if v.Type == Undefined || c.Type == Undefined {
 		return false
 	}
 
-	return cv.Value == v.Value
+	return c.Value == v.Value
 }
 
 func NewConstantValueFromString(value string) ConstantValue {
@@ -408,11 +466,11 @@ func NewConstantValueFromString(value string) ConstantValue {
 }
 
 func NewConstantValueFromFloat(value float64) ConstantValue {
-	return ConstantValue{Value: fmt.Sprintf("%f", value), Type: Float}
+	return ConstantValue{Value: value, Type: Float}
 }
 
 func NewConstantValueFromInt(value int64) ConstantValue {
-	return ConstantValue{Value: fmt.Sprintf("%d", value), Type: Integer}
+	return ConstantValue{Value: value, Type: Integer}
 }
 
 func NewUndefinedConstantValue() ConstantValue {
