@@ -1666,7 +1666,7 @@ func (d *RootWalker) sourceNodeString(n node.Node) string {
 	return astutil.FmtNode(n)
 }
 
-func (d *RootWalker) renderRuleMessage(msg string, n node.Node, m phpgrep.MatchData) string {
+func (d *RootWalker) renderRuleMessage(msg string, n node.Node, m phpgrep.MatchData, truncate bool) string {
 	// "$$" stands for the entire matched node, like $0 in regexp.
 	if strings.Contains(msg, "$$") {
 		msg = strings.ReplaceAll(msg, "$$", d.sourceNodeString(n))
@@ -1684,7 +1684,7 @@ func (d *RootWalker) renderRuleMessage(msg string, n node.Node, m phpgrep.MatchD
 		// Don't interpolate strings that are too long
 		// or contain a newline.
 		var replacement string
-		if len(nodeString) > 60 || strings.Contains(nodeString, "\n") {
+		if truncate && (len(nodeString) > 60 || strings.Contains(nodeString, "\n")) {
 			replacement = key
 		} else {
 			replacement = nodeString
@@ -1727,7 +1727,7 @@ func (d *RootWalker) runRule(n node.Node, sc *meta.Scope, rule *rules.Rule) {
 		return
 	}
 
-	message := d.renderRuleMessage(rule.Message, n, m)
+	message := d.renderRuleMessage(rule.Message, n, m, true)
 	d.Report(location, rule.Level, rule.Name, message)
 
 	if ApplyQuickFixes && rule.Fix != "" {
@@ -1737,7 +1737,7 @@ func (d *RootWalker) runRule(n node.Node, sc *meta.Scope, rule *rules.Rule) {
 		d.ctx.fixes = append(d.ctx.fixes, quickfix.TextEdit{
 			StartPos:    pos.StartPos,
 			EndPos:      pos.EndPos,
-			Replacement: d.renderRuleMessage(rule.Fix, n, m),
+			Replacement: d.renderRuleMessage(rule.Fix, n, m, false),
 		})
 	}
 }
