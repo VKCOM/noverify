@@ -7,16 +7,16 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/rules"
-	"github.com/google/go-cmp/cmp"
 )
 
 type goldenTest struct {
@@ -226,16 +226,9 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 		return
 	}
 
-	var linterName string
-	if runtime.GOOS == "windows" {
-		linterName = "phplinter.exe"
-	} else {
-		linterName = "phplinter"
-	}
-
 	goArgs := []string{
 		"build",
-		"-o", linterName,
+		"-o", "phplinter.exe",
 		"-race",
 		"../../", // Using relative target to avoid problems with modules/vendor/GOPATH
 	}
@@ -245,7 +238,7 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 	}
 
 	defer func() {
-		_ = os.Remove("phplinter")
+		_ = os.Remove("phplinter.exe")
 		_ = os.Remove("phplinter-output.json")
 	}()
 
@@ -275,7 +268,7 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 			}
 			args = append(args, target.srcDir)
 
-			out, err := exec.Command("./"+linterName, args...).CombinedOutput()
+			out, err := exec.Command("./phplinter.exe", args...).CombinedOutput()
 			if err != nil {
 				t.Fatalf("%v: %s", err, out)
 			}
