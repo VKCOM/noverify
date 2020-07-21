@@ -499,7 +499,7 @@ func (d *RootWalker) report(n node.Node, lineNumber int, level int, checkName, m
 			EndChar:   endChar,
 			Line:      pos.StartLine,
 			Level:     level,
-			Filename:  d.ctx.st.CurrentFile,
+			Filename:  strings.ReplaceAll(d.ctx.st.CurrentFile, "\\", "/"), // To make output stable between platforms, see #572
 			Message:   msg,
 			Hash:      hash,
 		})

@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -225,9 +226,16 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 		return
 	}
 
+	var linterName string
+	if runtime.GOOS == "windows" {
+		linterName = "phplinter.exe"
+	} else {
+		linterName = "phplinter"
+	}
+
 	goArgs := []string{
 		"build",
-		"-o", "phplinter",
+		"-o", linterName,
 		"-race",
 		"../../", // Using relative target to avoid problems with modules/vendor/GOPATH
 	}
@@ -245,6 +253,7 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 	if err != nil {
 		t.Fatalf("getwd: %v", err)
 	}
+	wd = strings.ReplaceAll(wd, "\\", "/")
 
 	for _, target := range targets {
 		t.Run(target.name+"/e2e", func(t *testing.T) {
@@ -266,7 +275,7 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 			}
 			args = append(args, target.srcDir)
 
-			out, err := exec.Command("./phplinter", args...).CombinedOutput()
+			out, err := exec.Command(linterName, args...).CombinedOutput()
 			if err != nil {
 				t.Fatalf("%v: %s", err, out)
 			}
