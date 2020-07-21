@@ -40,6 +40,7 @@ type cmdlineArguments struct {
 
 	unusedVarPattern string
 
+	allowAll     bool
 	allowChecks  string
 	allowDisable string
 
@@ -48,6 +49,8 @@ type cmdlineArguments struct {
 	reportsCritical      string
 
 	phpExtensionsArg string
+
+	gitignore bool
 
 	gitPushArg                 string
 	gitAuthorsWhitelist        string
@@ -126,6 +129,9 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 	flag.BoolVar(&args.fix, "fix", false,
 		"Apply a quickfix where possible (updates source files)")
 
+	flag.BoolVar(&args.gitignore, "gitignore", false,
+		"If enabled, noverify tries to use .gitignore files to exclude matched ignored files from the analysis")
+
 	flag.StringVar(&args.gitRepo, "git", "", "Path to git repository to analyze")
 	flag.StringVar(&args.mutable.gitCommitFrom, "git-commit-from", "", "Analyze changes between commits <git-commit-from> and <git-commit-to>")
 	flag.StringVar(&args.mutable.gitCommitTo, "git-commit-to", "", "")
@@ -143,6 +149,8 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 	flag.StringVar(&args.allowDisable, "allow-disable", "", "Regexp for filenames where '@linter disable' is allowed")
 	flag.StringVar(&args.allowChecks, "allow-checks", strings.Join(enabledByDefault, ","),
 		"Comma-separated list of check names to be enabled")
+	flag.BoolVar(&args.allowAll, "allow-all-checks", false,
+		"Has the same effect as passing all check names to the -allow-checks parameter")
 	flag.StringVar(&args.misspellList, "misspell-list", "Eng",
 		"Comma-separated list of misspelling dicts; predefined sets are Eng, Eng/US and Eng/UK")
 

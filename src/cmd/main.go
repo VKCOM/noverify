@@ -20,6 +20,7 @@ import (
 	"github.com/VKCOM/noverify/src/langsrv"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/lintapi"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/rules"
 )
@@ -33,13 +34,13 @@ import (
 
 func isCritical(l *linterRunner, r *linter.Report) bool {
 	if len(l.reportsCriticalSet) != 0 {
-		return l.reportsCriticalSet[r.CheckName()]
+		return l.reportsCriticalSet[r.CheckName]
 	}
 	return r.IsCritical()
 }
 
 func isEnabled(l *linterRunner, r *linter.Report) bool {
-	if !l.IsEnabledByFlags(r.CheckName()) {
+	if !l.IsEnabledByFlags(r.CheckName) {
 		return false
 	}
 
@@ -48,7 +49,7 @@ func isEnabled(l *linterRunner, r *linter.Report) bool {
 	}
 
 	// Disabled by a file comment.
-	return !linter.ExcludeRegex.MatchString(r.GetFilename())
+	return !linter.ExcludeRegex.MatchString(r.Filename)
 }
 
 // Run executes linter main function.
@@ -169,14 +170,14 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 	linter.ParseFilenames(linter.ReadFilenames(flag.Args(), nil), l.allowDisableRegex)
 	parseIndexOnlyFiles(&l)
 	meta.SetIndexingComplete(true)
-	log.Printf("Linting")
 
 	filenames := flag.Args()
 	if args.fullAnalysisFiles != "" {
 		filenames = strings.Split(args.fullAnalysisFiles, ",")
 	}
 
-	reports := linter.ParseFilenames(linter.ReadFilenames(filenames, linter.ExcludeRegex), l.allowDisableRegex)
+	log.Printf("Linting")
+	reports := linter.ParseFilenames(linter.ReadFilenames(filenames, l.filenameFilter), l.allowDisableRegex)
 	if args.outputBaseline {
 		if err := createBaseline(&l, cfg, reports); err != nil {
 			return 1, fmt.Errorf("write baseline: %v", err)
@@ -206,17 +207,17 @@ func createBaseline(l *linterRunner, cfg *MainConfig, reports []*linter.Report) 
 		}
 
 		stats.CountTotal++
-		stats.CountPerCheck[r.CheckName()]++
-		filename := filepath.Base(r.GetFilename())
+		stats.CountPerCheck[r.CheckName]++
+		filename := filepath.Base(r.Filename)
 		f, ok := files[filename]
 		if !ok {
 			f.Filename = filename
 			f.Reports = make(map[uint64]baseline.Report)
 		}
-		info := f.Reports[r.Hash()]
+		info := f.Reports[r.Hash]
 		info.Count++
-		info.Hash = r.Hash()
-		f.Reports[r.Hash()] = info
+		info.Hash = r.Hash
+		f.Reports[r.Hash] = info
 		files[filename] = f
 	}
 
@@ -226,6 +227,43 @@ func createBaseline(l *linterRunner, cfg *MainConfig, reports []*linter.Report) 
 		Files:         files,
 	}
 	return baseline.WriteProfile(l.outputFp, profile, &stats)
+}
+
+func FormatReport(r *linter.Report) string {
+	msg := r.Message
+	if r.CheckName != "" {
+		msg = r.CheckName + ": " + msg
+	}
+
+	// No context line for security-level warnings.
+	if r.Level == lintapi.LevelSecurity {
+		// To make output stable between platforms, see #572
+		filename := strings.ReplaceAll(r.Filename, "\\", "/")
+
+		return fmt.Sprintf("%-7s %s at %s:%d", r.Severity(), msg, filename, r.Line)
+	}
+
+	cursor := strings.Builder{}
+	for i, ch := range r.Context {
+		if i == r.StartChar {
+			break
+		}
+		if ch == '\t' {
+			cursor.WriteRune('\t')
+		} else {
+			cursor.WriteByte(' ')
+		}
+	}
+
+	if r.EndChar > r.StartChar {
+		cursor.WriteString(strings.Repeat("^", r.EndChar-r.StartChar))
+	}
+
+	// To make output stable between platforms, see #572
+	filename := strings.ReplaceAll(r.Filename, "\\", "/")
+
+	return fmt.Sprintf("%-7s %s at %s:%d\n%s\n%s",
+		r.Severity(), msg, filename, r.Line, r.Context, cursor.String())
 }
 
 func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (criticalReports int) {
@@ -262,9 +300,9 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 	} else {
 		for _, r := range filtered {
 			if isCritical(l, r) {
-				fmt.Fprintf(l.outputFp, "<critical> %s\n", r.String())
+				fmt.Fprintf(l.outputFp, "<critical> %s\n", FormatReport(r))
 			} else {
-				fmt.Fprintf(l.outputFp, "%s\n", r.String())
+				fmt.Fprintf(l.outputFp, "%s\n", FormatReport(r))
 			}
 		}
 	}

@@ -240,17 +240,6 @@ var vscodeLevelMap = map[int]int{
 	// LevelSyntax is intentionally not included here
 }
 
-var severityNames = map[int]string{
-	LevelError:       "ERROR  ",
-	LevelWarning:     "WARNING",
-	LevelInformation: "INFO   ",
-	LevelHint:        "HINT   ",
-	LevelUnused:      "UNUSED ",
-	LevelDoNotReject: "MAYBE  ",
-	LevelSyntax:      "SYNTAX ",
-	LevelSecurity:    "WARNING",
-}
-
 var (
 	customBlockLinters []BlockCheckerCreateFunc
 	customRootLinters  []RootCheckerCreateFunc

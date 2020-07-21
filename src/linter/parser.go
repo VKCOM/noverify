@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/karrick/godirwalk"
+	"github.com/monochromegane/go-gitignore"
 	"github.com/quasilyte/regex/syntax"
 
 	"github.com/VKCOM/noverify/src/git"
@@ -229,62 +230,121 @@ func DebugMessage(msg string, args ...interface{}) {
 	}
 }
 
-// ReadFilenames returns callback that reads filenames into channel
-func ReadFilenames(filenames []string, ignoreRegex *regexp.Regexp) ReadCallback {
-	return func(ch chan FileInfo) {
-		for _, filename := range filenames {
-			absFilename, err := filepath.Abs(filename)
-			if err == nil {
-				filename = absFilename
-			}
+// ParseGitignoreFromDir tries to parse a gitignore file at path/.gitignore.
+// If no such file exists, <nil, nil> is returned.
+func ParseGitignoreFromDir(path string) (gitignore.IgnoreMatcher, error) {
+	f, err := os.Open(filepath.Join(path, ".gitignore"))
+	switch {
+	case os.IsNotExist(err):
+		return nil, nil // No gitignore file, not an error
+	case err != nil:
+		return nil, err // Some unexpected error (e.g. access failure)
+	}
+	defer f.Close()
+	matcher := gitignore.NewGitIgnoreFromReader(path, f)
+	return matcher, nil
+}
 
-			// If we use stat here, it will return file info of an entry
-			// pointed by a symlink (if filename is a link).
-			// lstat is required for a symlink test below to succeed.
-			// If we ever want to permit top-level (CLI args) symlinks,
-			// caller should resolve them to a files that are pointed by them.
-			st, err := os.Lstat(filename)
-			if err != nil {
-				log.Fatalf("Could not stat file %s: %s", filename, err.Error())
-				continue
-			}
-			if st.Mode()&os.ModeSymlink != 0 {
-				// filepath.Walk does not follow symlinks, but it does
-				// accept it as a root argument without an error.
-				// godirwalk.Walk can traverse symlinks with FollowSymbolicLinks=true,
-				// but we don't use it. It will give an error if root is
-				// a symlink, so we avoid calling Walk() on them.
-				continue
-			}
+func readFilenames(ch chan<- FileInfo, filename string, filter *FilenameFilter) {
+	absFilename, err := filepath.Abs(filename)
+	if err == nil {
+		filename = absFilename
+	}
 
-			if !st.IsDir() {
-				if ignoreRegex != nil && ignoreRegex.MatchString(filename) {
-					continue
+	if filter == nil {
+		// No-op filter that doesn't track gitignore files.
+		filter = &FilenameFilter{}
+	}
+
+	// If we use stat here, it will return file info of an entry
+	// pointed by a symlink (if filename is a link).
+	// lstat is required for a symlink test below to succeed.
+	// If we ever want to permit top-level (CLI args) symlinks,
+	// caller should resolve them to a files that are pointed by them.
+	st, err := os.Lstat(filename)
+	if err != nil {
+		log.Fatalf("Could not stat file %s: %s", filename, err.Error())
+	}
+	if st.Mode()&os.ModeSymlink != 0 {
+		// filepath.Walk does not follow symlinks, but it does
+		// accept it as a root argument without an error.
+		// godirwalk.Walk can traverse symlinks with FollowSymbolicLinks=true,
+		// but we don't use it. It will give an error if root is
+		// a symlink, so we avoid calling Walk() on them.
+		return
+	}
+
+	if !st.IsDir() {
+		if filter.IgnoreFile(filename) {
+			return
+		}
+
+		ch <- FileInfo{Filename: filename}
+		return
+	}
+
+	// Start with a sentinel "" path to make last(gitignorePaths) safe
+	// without a length check.
+	gitignorePaths := []string{""}
+
+	walkOptions := &godirwalk.Options{
+		Unsorted: true,
+
+		Callback: func(path string, de *godirwalk.Dirent) error {
+			if de.IsDir() {
+				if filter.IgnoreDir(path) {
+					return filepath.SkipDir
+				}
+				// During indexing phase and with -gitignore=false
+				// we don't want to do extra FS operations.
+				if !filter.GitignoreIsEnabled() {
+					return nil
 				}
 
-				ch <- FileInfo{Filename: filename}
-				continue
+				matcher, err := ParseGitignoreFromDir(path)
+				if err != nil {
+					linterError(path, "read .gitignore: %v", err)
+				}
+				if matcher != nil {
+					gitignorePaths = append(gitignorePaths, path)
+					filter.GitignorePush(path, matcher)
+				}
+				return nil
 			}
 
-			err = godirwalk.Walk(filename, &godirwalk.Options{
-				Callback: func(path string, de *godirwalk.Dirent) error {
-					if de.IsDir() || !isPHPExtension(path) {
-						return nil
-					}
-
-					if ignoreRegex != nil && ignoreRegex.MatchString(path) {
-						return nil
-					}
-
-					ch <- FileInfo{Filename: path}
-					return nil
-				},
-				Unsorted: true,
-			})
-
-			if err != nil {
-				log.Fatalf("Could not walk filepath %s (%v)", filename, err)
+			if !isPHPExtension(path) {
+				return nil
 			}
+			if filter.IgnoreFile(path) {
+				return nil
+			}
+
+			ch <- FileInfo{Filename: path}
+			return nil
+		},
+	}
+
+	if filter.GitignoreIsEnabled() {
+		walkOptions.PostChildrenCallback = func(path string, de *godirwalk.Dirent) error {
+			topGitignorePath := gitignorePaths[len(gitignorePaths)-1]
+			if topGitignorePath == path {
+				gitignorePaths = gitignorePaths[:len(gitignorePaths)-1]
+				filter.GitignorePop(path)
+			}
+			return nil
+		}
+	}
+
+	if err := godirwalk.Walk(filename, walkOptions); err != nil {
+		log.Fatalf("Could not walk filepath %s (%v)", filename, err)
+	}
+}
+
+// ReadFilenames returns callback that reads filenames into channel
+func ReadFilenames(filenames []string, filter *FilenameFilter) ReadCallback {
+	return func(ch chan FileInfo) {
+		for _, filename := range filenames {
+			readFilenames(ch, filename, filter)
 		}
 	}
 }
