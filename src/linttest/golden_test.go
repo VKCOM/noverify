@@ -275,7 +275,7 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 			}
 			args = append(args, target.srcDir)
 
-			out, err := exec.Command(linterName, args...).CombinedOutput()
+			out, err := exec.Command("./"+linterName, args...).CombinedOutput()
 			if err != nil {
 				t.Fatalf("%v: %s", err, out)
 			}
