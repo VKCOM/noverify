@@ -455,6 +455,12 @@ function performance_test() {}`,
 			Default: true,
 			Comment: `Report linter error.`,
 		},
+
+		{
+			Name:    "bareReturn",
+			Default: true,
+			Comment: `Report when function has bare return and non-void return type.`,
+		},
 	}
 
 	for _, info := range allChecks {

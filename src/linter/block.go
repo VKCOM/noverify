@@ -528,6 +528,45 @@ func (b *BlockWalker) handleReturn(ret *stmt.Return) {
 	if ret.Expr == nil {
 		// Return without explicit return value.
 		b.bareReturn = true
+
+		if !meta.IsIndexingComplete() {
+			return
+		}
+
+		funcName := b.r.ctx.st.CurrentFunction
+		currentClass := b.r.ctx.st.CurrentClass
+		currentMethod := b.r.ctx.st.CurrentMethod
+
+		if len(currentClass) != 0 {
+			funcName = currentMethod
+
+			class, ok := meta.Info.GetClass(currentClass)
+			if !ok {
+				return
+			}
+			fun, ok := class.Methods.Get(funcName)
+			if !ok {
+				return
+			}
+
+			if !fun.Typ.Is("void") {
+				b.r.Report(ret, LevelWarning, "bareReturn", "Replace 'return' with 'return null'")
+			}
+		} else {
+			fun, ok := meta.Info.GetFunction(funcName)
+			if !ok {
+				return
+			}
+
+			if !fun.Typ.Is("void") {
+				b.r.Report(ret, LevelWarning, "bareReturn", "Replace 'return' with 'return null'")
+			}
+		}
+
+		// for _, el := range meta.Info.allFunctions.H {
+		// 	fmt.Println(el.Name)
+		// }
+
 		return
 	}
 	b.returnsValue = true

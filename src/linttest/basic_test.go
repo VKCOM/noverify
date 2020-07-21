@@ -1785,6 +1785,29 @@ echo UNDEFINED_CONST;
 	test.RunAndMatch()
 }
 
+func TestBareReturnInNonVoidFunction(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+/**
+ * @return string|null
+ */
+function f($x) {
+    if ($x === "0") {
+        return; // Better to write as "return null"
+    }
+    if ($x === "1") {
+        return; // Better to write as "return null"
+    }
+    return "saf";
+}
+`)
+	test.Expect = []string{
+		`Replace 'return' with 'return null'`,
+		`Replace 'return' with 'return null'`,
+	}
+	test.RunAndMatch()
+}
+
 func addNamedFile(test *linttest.Suite, name, code string) {
 	test.Files = append(test.Files, linttest.TestFile{
 		Name: name,

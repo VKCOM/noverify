@@ -529,8 +529,8 @@ func (d *RootWalker) reportHash(pos *position.Position, startLine []byte, checkN
 	// want such methods to be considered as a single "scope".
 	scope := "file"
 	switch {
-	case d.ctx.st.CurrentClass != "" && d.ctx.st.CurrentFunction != "":
-		scope = d.ctx.st.CurrentClass + "::" + d.ctx.st.CurrentFunction
+	case d.ctx.st.CurrentClass != "" && d.ctx.st.CurrentMethod != "":
+		scope = d.ctx.st.CurrentClass + "::" + d.ctx.st.CurrentMethod
 	case d.ctx.st.CurrentFunction != "":
 		scope = d.ctx.st.CurrentFunction
 	}
