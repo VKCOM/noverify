@@ -2313,7 +2313,7 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 			return true
 		}
 
-		tp := solver.ExprType(b.ctx.sc, b.r.ctx.st, a.Expression)
+		tp := solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression)
 		var findType string
 		tp.Iterate(func(t string) {
 			if strings.HasPrefix(t, "\\shape") {
