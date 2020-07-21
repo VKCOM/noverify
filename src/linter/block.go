@@ -2309,6 +2309,10 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 		b.checkVoidType(a.Expression)
 		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
 	case *expr.List:
+		if !meta.IsIndexingComplete() {
+			return true
+		}
+
 		tp := solver.ExprType(b.ctx.sc, b.r.ctx.st, a.Expression)
 		var findType string
 		tp.Iterate(func(t string) {
