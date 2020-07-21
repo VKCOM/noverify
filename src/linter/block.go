@@ -2196,9 +2196,16 @@ func (b *BlockWalker) handleAssignReference(a *assign.Reference) bool {
 	return false
 }
 
-func (b *BlockWalker) handleAssignList(items []*expr.ArrayItem) {
-	for _, item := range items {
-		b.handleVariableNode(item.Val, meta.NewTypesMap("unknown_from_list"), "assign")
+func (b *BlockWalker) handleAssignList(items []*expr.ArrayItem, info meta.ClassInfo) {
+	for i, item := range items {
+		prop, ok := info.Properties[fmt.Sprint(i)]
+		var tp meta.TypesMap
+		if !ok {
+			tp = meta.NewTypesMap("unknown_from_list")
+		} else {
+			tp = prop.Typ
+		}
+		b.handleVariableNode(item.Val, tp, "assign")
 	}
 }
 
@@ -2302,7 +2309,15 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 		b.checkVoidType(a.Expression)
 		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
 	case *expr.List:
-		b.handleAssignList(v.Items)
+		tp := solver.ExprType(b.ctx.sc, b.r.ctx.st, a.Expression)
+		var findType string
+		tp.Iterate(func(t string) {
+			if strings.HasPrefix(t, "\\shape") {
+				findType = t
+			}
+		})
+		class, _ := meta.Info.GetClass(findType)
+		b.handleAssignList(v.Items, class)
 	case *expr.PropertyFetch:
 		v.Property.Walk(b)
 		sv, ok := v.Variable.(*node.SimpleVar)
