@@ -237,10 +237,7 @@ func FormatReport(r *linter.Report) string {
 
 	// No context line for security-level warnings.
 	if r.Level == lintapi.LevelSecurity {
-		// To make output stable between platforms, see #572
-		filename := strings.ReplaceAll(r.Filename, "\\", "/")
-
-		return fmt.Sprintf("%-7s %s at %s:%d", r.Severity(), msg, filename, r.Line)
+		return fmt.Sprintf("%-7s %s at %s:%d", r.Severity(), msg, r.Filename, r.Line)
 	}
 
 	cursor := strings.Builder{}
@@ -259,11 +256,8 @@ func FormatReport(r *linter.Report) string {
 		cursor.WriteString(strings.Repeat("^", r.EndChar-r.StartChar))
 	}
 
-	// To make output stable between platforms, see #572
-	filename := strings.ReplaceAll(r.Filename, "\\", "/")
-
 	return fmt.Sprintf("%-7s %s at %s:%d\n%s\n%s",
-		r.Severity(), msg, filename, r.Line, r.Context, cursor.String())
+		r.Severity(), msg, r.Filename, r.Line, r.Context, cursor.String())
 }
 
 func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (criticalReports int) {
