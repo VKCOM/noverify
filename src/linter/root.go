@@ -530,9 +530,10 @@ func (d *RootWalker) reportHash(pos *position.Position, startLine []byte, checkN
 	scope := "file"
 	switch {
 	case d.ctx.st.CurrentClass != "" && d.ctx.st.CurrentMethod != "":
-		scope = d.ctx.st.CurrentClass + "::" + d.ctx.st.CurrentMethod
+		scope = d.ctx.st.CurrentClass + "::" + strings.TrimPrefix(d.ctx.st.CurrentMethod, "\\")
 	case d.ctx.st.CurrentFunction != "":
-		scope = d.ctx.st.CurrentFunction
+		parts := strings.Split(d.ctx.st.CurrentFunction, "\\")
+		scope = parts[len(parts)-1]
 	}
 
 	var prevLine []byte
