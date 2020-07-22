@@ -118,11 +118,22 @@ func NewWalkerForReferencesSearcher(filename string, block BlockCheckerCreateFun
 // InitFromParser initializes common fields that are needed for RootWalker work
 func (d *RootWalker) InitFromParser(contents []byte, parser *php7.Parser) {
 	lines := bytes.Split(contents, []byte("\n"))
+
+	trimedLines := make([]bool, len(lines))
+	for i := range lines {
+		trimedLines[i] = bytes.HasSuffix(lines[i], []byte("\r"))
+		lines[i] = bytes.TrimSuffix(lines[i], []byte("\r"))
+	}
+
 	linesPositions := make([]int, len(lines))
 	pos := 0
 	for idx, ln := range lines {
 		linesPositions[idx] = pos
 		pos += len(ln) + 1
+
+		if trimedLines[idx] {
+			pos += 1
+		}
 	}
 
 	d.fileContents = contents
@@ -446,10 +457,6 @@ func (d *RootWalker) report(n node.Node, lineNumber int, level int, checkName, m
 		startChar = 0
 		endChar = len(startLn)
 
-		if strings.HasSuffix(string(startLn), "\r") {
-			endChar = endChar - 1
-		}
-
 		pos = position.Position{
 			StartLine: lineNumber,
 			EndLine:   lineNumber,
@@ -530,10 +537,9 @@ func (d *RootWalker) reportHash(pos *position.Position, startLine []byte, checkN
 	scope := "file"
 	switch {
 	case d.ctx.st.CurrentClass != "" && d.ctx.st.CurrentMethod != "":
-		scope = d.ctx.st.CurrentClass + "::" + strings.TrimPrefix(d.ctx.st.CurrentMethod, "\\")
+		scope = d.ctx.st.CurrentClass + "::" + d.ctx.st.CurrentMethod
 	case d.ctx.st.CurrentFunction != "":
-		parts := strings.Split(d.ctx.st.CurrentFunction, "\\")
-		scope = parts[len(parts)-1]
+		scope = d.ctx.st.CurrentFunction
 	}
 
 	var prevLine []byte
