@@ -641,7 +641,7 @@ type handleFuncResult struct {
 	callsParentConstructor bool
 }
 
-func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node.Node, sc *meta.Scope) handleFuncResult {
+func (d *RootWalker) handleFuncStmts(fun node.Node, params []meta.FuncParam, uses, stmts []node.Node, sc *meta.Scope, phpDoc *phpDocParseResult) handleFuncResult {
 	b := &BlockWalker{
 		ctx:          &blockContext{sc: sc},
 		r:            d,
@@ -698,7 +698,12 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 		prematureExitFlags = cleanFlags
 	}
 
+	// if the function contains only one statement and this statement is throw.
+	oneThrowStatementFunction := b.containsThrow && len(stmts) == 1
+
 	switch {
+	case !b.containsReturnOrYield && !phpDoc.returnType.IsEmpty() && !phpDoc.returnType.Is("void") && len(stmts) != 0 && !oneThrowStatementFunction:
+		d.Report(fun, LevelWarning, "mismatchingReturn", "Mismatching @return annotations")
 	case b.bareReturn && b.returnsValue:
 		b.returnTypes = b.returnTypes.AppendString("null")
 	case b.returnTypes.IsEmpty() && b.returnsValue:
@@ -1000,7 +1005,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	if stmtList, ok := meth.Stmt.(*stmt.StmtList); ok {
 		stmts = stmtList.Stmts
 	}
-	funcInfo := d.handleFuncStmts(params, nil, stmts, sc)
+	funcInfo := d.handleFuncStmts(meth, params, nil, stmts, sc, &doc)
 	actualReturnTypes := funcInfo.returnTypes
 	exitFlags := funcInfo.prematureExitFlags
 	if nm == `__construct` {
@@ -1454,7 +1459,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 
 	params, minParamsCnt := d.parseFuncArgs(fun.Params, phpDocParamTypes, sc)
 
-	funcInfo := d.handleFuncStmts(params, nil, fun.Stmts, sc)
+	funcInfo := d.handleFuncStmts(fun, params, nil, fun.Stmts, sc, &doc)
 	actualReturnTypes := funcInfo.returnTypes
 	exitFlags := funcInfo.prematureExitFlags
 	d.addScope(fun, sc)

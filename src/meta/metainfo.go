@@ -517,8 +517,8 @@ type ClassParseState struct {
 	CurrentClass            string
 	CurrentParentClass      string
 	CurrentParentInterfaces []string // interfaces allow for multiple inheritance...
-	CurrentFunction         string   // current method or function name
-	CurrentMethod           string   // current method
+	CurrentFunction         string   // current function or method fully qualified name
+	CurrentMethod           string   // current method (only name)
 }
 
 type FunctionsOverrideMap map[string]FuncInfoOverride

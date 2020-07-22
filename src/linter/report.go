@@ -460,6 +460,61 @@ function performance_test() {}`,
 			Name:    "bareReturn",
 			Default: true,
 			Comment: `Report when function has bare return and non-void return type.`,
+			Before: `/**
+ * @param string $x
+ * @return string|null
+ */
+function f($x) {
+    if ($x === "0") {
+        return; // Better to write as "return null"
+    }
+    if ($x === "1") {
+        return; // Better to write as "return null"
+    }
+    return "q";
+}`,
+			After: `/**
+ * @param string $x
+ * @return string|null
+ */
+function f($x) {
+    if ($x === "0") {
+        return null; // Ok
+    }
+    if ($x === "1") {
+        return null; // Ok
+    }
+    return "q";
+}`,
+		},
+
+		{
+			Name:    "mismatchingReturn",
+			Default: true,
+			Comment: `Report when function has @return annotation with non-void value, but the function does not contain return statements.`,
+			Before: `/**
+ * @param int $x
+ * @return string|null
+ */
+function f($x) {
+  echo $x;
+}`,
+			After: `/**
+ * @param int $x
+ * @return string|null
+ */
+function f($x) {
+  echo $x;
+  return $x; // Ok
+}
+// or
+/**
+ * @param int $x
+ * @return void
+ */
+function f($x) {
+  echo $x; // Ok
+}`,
 		},
 	}
 

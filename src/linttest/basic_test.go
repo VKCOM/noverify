@@ -1788,10 +1788,39 @@ echo UNDEFINED_CONST;
 func TestBareReturnInNonVoidFunction(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+class Boo {
+
+	/**
+	 * @return string|null
+	 */
+	function f1($x) {
+	    if ($x === "0") {
+	        return; // Better to write as "return null"
+	    }
+	    if ($x === "1") {
+	        return; // Better to write as "return null"
+	    }
+	    return "saf";
+	}
+	
+	/**
+	 * @return string|null
+	 */
+	static function f2($x) {
+	    if ($x === "0") {
+	        return; // Better to write as "return null"
+	    }
+	    if ($x === "1") {
+	        return; // Better to write as "return null"
+	    }
+	    return "saf";
+	}
+}
+
 /**
  * @return string|null
  */
-function f($x) {
+function f3($x) {
     if ($x === "0") {
         return; // Better to write as "return null"
     }
@@ -1800,12 +1829,135 @@ function f($x) {
     }
     return "saf";
 }
+
+
+/**
+ * @return string|null
+ */
+function f4($x) {
+    return;
+}
 `)
 	test.Expect = []string{
 		`Replace 'return' with 'return null'`,
 		`Replace 'return' with 'return null'`,
+		`Replace 'return' with 'return null'`,
+		`Replace 'return' with 'return null'`,
+		`Replace 'return' with 'return null'`,
+		`Replace 'return' with 'return null'`,
+		`Replace 'return' with 'return null'`,
 	}
 	test.RunAndMatch()
+}
+
+func TestMismatchingReturnAnnotations(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Boo {
+
+	/**
+	 * @return string|null
+	 */
+	function f1($x) {
+	    if ($x === "0") {
+	
+	    }
+	    if ($x === "1") {
+	
+	    }
+	}
+	
+	/**
+	 * @return string|null
+	 */
+	static function f2($x) {
+	    if ($x === "0") {
+	
+	    }
+	    if ($x === "1") {
+	
+	    }
+	}
+}
+
+
+/**
+ * @return string|null
+ */
+function f3($x) {
+    if ($x === "0") {
+
+    }
+    if ($x === "1") {
+
+    }
+}
+
+
+/**
+ * @return string|null
+ */
+function f4($x) {
+	echo $x;
+}
+`)
+	test.Expect = []string{
+		`Mismatching @return annotations`,
+		`Mismatching @return annotations`,
+		`Mismatching @return annotations`,
+		`Mismatching @return annotations`,
+	}
+	test.RunAndMatch()
+}
+
+func TestMismatchingReturnAnnotationsGood(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+/**
+ * @return int[]
+ */
+function f1() {
+    for ($i = 1; $i <= 10; $i++) {
+        yield $i; // Ok
+    }
+}
+
+/**
+ * @return int[]
+ */
+function f2() {
+	yield from f1(); // Ok
+}
+
+/**
+ * @return string|null
+ */
+function f3($x) {
+	return "q"; // Ok
+}
+
+class A {
+	/**
+	 * @return string|null
+	 */
+	function f4($x); // Ok
+}
+
+
+// Functions of this kind are very common in Symfony, so it makes sense not to consider this 
+// a loss of return, although in fact the @return annotation is not entirely correct.
+
+class MException {}
+
+/**
+ * @param string $locale The locale to extract the variants from
+ * @return array The locale variants
+ */
+function getAllVariants(string $locale)
+{
+    throw new MException();
+}
+
+`)
 }
 
 func addNamedFile(test *linttest.Suite, name, code string) {

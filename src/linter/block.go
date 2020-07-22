@@ -64,10 +64,14 @@ type BlockWalker struct {
 	// state
 	statements map[node.Node]struct{}
 
-	// whether a function has a return without explit expression.
+	// whether a function has a return without explicit expression.
 	// Required to make a decision in void vs null type selection,
 	// since "return" is the same as "return null".
 	bareReturn bool
+	// when the function contains at least one return or yield.
+	containsReturnOrYield bool
+	// when the function contains throw.
+	containsThrow bool
 	// whether a function has a return with explicit expression.
 	// When can't infer precise type, can use mixed.
 	returnsValue bool
@@ -458,10 +462,13 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *stmt.Goto:
 		b.r.checkKeywordCase(s, "goto")
 	case *stmt.Throw:
+		b.handleThrow(s)
 		b.r.checkKeywordCase(s, "throw")
 	case *expr.Yield:
+		b.handleYield(s)
 		b.r.checkKeywordCase(s, "yield")
 	case *expr.YieldFrom:
+		b.handleYieldFrom(s)
 		b.r.checkKeywordCase(s, "yield")
 	case *expr.Include:
 		b.r.checkKeywordCase(n, "include")
@@ -489,6 +496,18 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	}
 
 	return res
+}
+
+func (b *BlockWalker) handleYield(yield *expr.Yield) {
+	b.containsReturnOrYield = true
+}
+
+func (b *BlockWalker) handleYieldFrom(yield *expr.YieldFrom) {
+	b.containsReturnOrYield = true
+}
+
+func (b *BlockWalker) handleThrow(throw *stmt.Throw) {
+	b.containsThrow = true
 }
 
 func (b *BlockWalker) handleInterface(int *stmt.Interface) bool {
@@ -525,6 +544,8 @@ func (b *BlockWalker) handleFunction(fun *stmt.Function) bool {
 }
 
 func (b *BlockWalker) handleReturn(ret *stmt.Return) {
+	b.containsReturnOrYield = true
+
 	if ret.Expr == nil {
 		// Return without explicit return value.
 		b.bareReturn = true
@@ -1673,7 +1694,7 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType me
 
 	params, _ := b.r.parseFuncArgs(fun.Params, phpDocParamTypes, sc)
 
-	b.r.handleFuncStmts(params, closureUses, fun.Stmts, sc)
+	b.r.handleFuncStmts(fun, params, closureUses, fun.Stmts, sc, &doc)
 	b.r.addScope(fun, sc)
 
 	return false

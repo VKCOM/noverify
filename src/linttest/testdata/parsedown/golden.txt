@@ -1,27 +1,120 @@
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:353
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:407
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:432
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:456
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:463
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:506
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:545
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:552
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:621
+                        return;
+                        ^^^^^^^
 MAYBE   ternarySimplify: could rewrite as `$matches[1] ?? ''` at testdata/parsedown/parsedown.php:674
             $text = isset($matches[1]) ? $matches[1] : '';
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   regexpSimplify: May re-write '/^>[ ]?+(.*+)/' as '/^> ?+(.*+)/' at testdata/parsedown/parsedown.php:750
         if (preg_match('/^>[ ]?+(.*+)/', $Line['text'], $matches))
                        ^^^^^^^^^^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:771
+            return;
+            ^^^^^^^
 MAYBE   regexpSimplify: May re-write '/^>[ ]?+(.*+)/' as '/^> ?+(.*+)/' at testdata/parsedown/parsedown.php:774
         if ($Line['text'][0] === '>' and preg_match('/^>[ ]?+(.*+)/', $Line['text'], $matches))
                                                     ^^^^^^^^^^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:815
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:833
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:842
+                return;
+                ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:861
+            return;
+            ^^^^^^^
 MAYBE   regexpSimplify: May re-write '/^\[(.+?)\]:[ ]*+<?(\S+?)>?(?:[ ]+["\'(](.+)["\')])?[ ]*+$/' as '/^\[(.+?)\]: *+<?(\S+?)>?(?: +["'(](.+)["')])? *+$/' at testdata/parsedown/parsedown.php:875
             and preg_match('/^\[(.+?)\]:[ ]*+<?(\S+?)>?(?:[ ]+["\'(](.+)["\')])?[ ]*+$/', $Line['text'], $matches)
                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: could rewrite as `$matches[3] ?? null` at testdata/parsedown/parsedown.php:881
                 'title' => isset($matches[3]) ? $matches[3] : null,
                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:901
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:910
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:915
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:933
+                return;
+                ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:964
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:1024
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:1097
+            return;
+            ^^^^^^^
 MAYBE   regexpSimplify: May re-write '/[ ]*+\n/' as '/ *+\n/' at testdata/parsedown/parsedown.php:1265
             $text = preg_replace('/[ ]*+\n/', ' ', $text);
                                  ^^^^^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:1311
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:1326
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:1357
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:1366
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:1418
+            return;
+            ^^^^^^^
 MAYBE   regexpSimplify: May re-write '/^[(]\s*+((?:[^ ()]++|[(][^ )]+[)])++)(?:[ ]+("[^"]*+"|\'[^\']*+\'))?\s*+[)]/' as '/^[(]\s*+((?:[^ ()]++|[(][^ )]+[)])++)(?: +("[^"]*+"|'[^']*+'))?\s*+[)]/' at testdata/parsedown/parsedown.php:1421
         if (preg_match('/^[(]\s*+((?:[^ ()]++|[(][^ )]+[)])++)(?:[ ]+("[^"]*+"|\'[^\']*+\'))?\s*+[)]/', $remainder, $matches))
                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:1448
+                return;
+                ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:1467
+            return;
+            ^^^^^^^
 MAYBE   regexpSimplify: May re-write '/^<\/\w[\w-]*+[ ]*+>/s' as '/^<\/\w[\w-]*+ *+>/s' at testdata/parsedown/parsedown.php:1470
         if ($Excerpt['text'][1] === '/' and preg_match('/^<\/\w[\w-]*+[ ]*+>/s', $Excerpt['text'], $matches))
                                                        ^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:1506
+        return;
+        ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:1513
+            return;
+            ^^^^^^^
+WARNING bareReturn: Replace 'return' with 'return null' at testdata/parsedown/parsedown.php:1536
+            return;
+            ^^^^^^^
 MAYBE   regexpSimplify: May re-write '/\bhttps?+:[\/]{2}[^\s<]+\b\/*+/ui' as '~\bhttps?+:/{2}[^\s<]+\b/*+~ui' at testdata/parsedown/parsedown.php:1540
             and preg_match('/\bhttps?+:[\/]{2}[^\s<]+\b\/*+/ui', $Excerpt['context'], $matches, PREG_OFFSET_CAPTURE)
                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
