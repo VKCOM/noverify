@@ -11,11 +11,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/rules"
-	"github.com/google/go-cmp/cmp"
 )
 
 type goldenTest struct {
@@ -227,7 +228,7 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 
 	goArgs := []string{
 		"build",
-		"-o", "phplinter",
+		"-o", "phplinter.exe",
 		"-race",
 		"../../", // Using relative target to avoid problems with modules/vendor/GOPATH
 	}
@@ -237,7 +238,7 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 	}
 
 	defer func() {
-		_ = os.Remove("phplinter")
+		_ = os.Remove("phplinter.exe")
 		_ = os.Remove("phplinter-output.json")
 	}()
 
@@ -245,6 +246,7 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 	if err != nil {
 		t.Fatalf("getwd: %v", err)
 	}
+	wd = strings.ReplaceAll(wd, "\\", "/")
 
 	for _, target := range targets {
 		t.Run(target.name+"/e2e", func(t *testing.T) {
@@ -266,7 +268,7 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 			}
 			args = append(args, target.srcDir)
 
-			out, err := exec.Command("./phplinter", args...).CombinedOutput()
+			out, err := exec.Command("./phplinter.exe", args...).CombinedOutput()
 			if err != nil {
 				t.Fatalf("%v: %s", err, out)
 			}
