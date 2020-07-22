@@ -1,6 +1,6 @@
 {
 	"LinterVersion": "",
-	"CreatedAt": 1595281530,
+	"CreatedAt": 1595422854,
 	"Version": 3,
 	"Stats": {
 		"CountTotal": 3,
@@ -13,13 +13,13 @@
 		{
 			"File": "file1.php",
 			"Hashes": [
-				"2nv24v5g6ukxh,oh8k7otr41kw"
+				"efcp28m3d934,zvj1i6sv1mkt"
 			]
 		},
 		{
 			"File": "file2.php",
 			"Hashes": [
-				"2bbim48w63elq"
+				"1g5qsg7oziw8q"
 			]
 		}
 	]

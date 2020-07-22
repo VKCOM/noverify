@@ -558,6 +558,7 @@ func (b *BlockWalker) handleReturn(ret *stmt.Return) {
 		currentClass := b.r.ctx.st.CurrentClass
 		currentMethod := b.r.ctx.st.CurrentMethod
 
+		var isBareReturnError bool
 		if len(currentClass) != 0 {
 			funcName = currentMethod
 
@@ -571,7 +572,7 @@ func (b *BlockWalker) handleReturn(ret *stmt.Return) {
 			}
 
 			if !fun.Typ.Is("void") {
-				b.r.Report(ret, LevelWarning, "bareReturn", "Replace 'return' with 'return null'")
+				isBareReturnError = true
 			}
 		} else {
 			fun, ok := meta.Info.GetFunction(funcName)
@@ -580,13 +581,13 @@ func (b *BlockWalker) handleReturn(ret *stmt.Return) {
 			}
 
 			if !fun.Typ.Is("void") {
-				b.r.Report(ret, LevelWarning, "bareReturn", "Replace 'return' with 'return null'")
+				isBareReturnError = true
 			}
 		}
 
-		// for _, el := range meta.Info.allFunctions.H {
-		// 	fmt.Println(el.Name)
-		// }
+		if isBareReturnError {
+			b.r.Report(ret, LevelWarning, "bareReturn", "Replace 'return' with 'return null'. The '%s' function has @return annotation with non-'void' value, so 'return null' is preferred.", funcName)
+		}
 
 		return
 	}

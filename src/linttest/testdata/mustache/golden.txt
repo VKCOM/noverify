@@ -52,19 +52,19 @@ MAYBE   phpdoc: Missing PHPDoc for "getHelperName" public method at testdata/mus
 MAYBE   phpdoc: Missing PHPDoc for "getTemplateName" public method at testdata/mustache/src/Mustache/Exception/UnknownTemplateException.php:34
     public function getTemplateName()
                     ^^^^^^^^^^^^^^^
-WARNING bareReturn: Replace 'return' with 'return null' at testdata/mustache/src/Mustache/Parser.php:207
+WARNING bareReturn: Replace 'return' with 'return null'. The 'clearStandaloneLines' function has @return annotation with non-'void' value, so 'return null' is preferred. at testdata/mustache/src/Mustache/Parser.php:207
             return;
             ^^^^^^^
-WARNING bareReturn: Replace 'return' with 'return null' at testdata/mustache/src/Mustache/Parser.php:216
+WARNING bareReturn: Replace 'return' with 'return null'. The 'clearStandaloneLines' function has @return annotation with non-'void' value, so 'return null' is preferred. at testdata/mustache/src/Mustache/Parser.php:216
                     return;
                     ^^^^^^^
-WARNING bareReturn: Replace 'return' with 'return null' at testdata/mustache/src/Mustache/Parser.php:224
+WARNING bareReturn: Replace 'return' with 'return null'. The 'clearStandaloneLines' function has @return annotation with non-'void' value, so 'return null' is preferred. at testdata/mustache/src/Mustache/Parser.php:224
                 return;
                 ^^^^^^^
-WARNING bareReturn: Replace 'return' with 'return null' at testdata/mustache/src/Mustache/Parser.php:229
+WARNING bareReturn: Replace 'return' with 'return null'. The 'clearStandaloneLines' function has @return annotation with non-'void' value, so 'return null' is preferred. at testdata/mustache/src/Mustache/Parser.php:229
                 return;
                 ^^^^^^^
-WARNING bareReturn: Replace 'return' with 'return null' at testdata/mustache/src/Mustache/Parser.php:236
+WARNING bareReturn: Replace 'return' with 'return null'. The 'clearStandaloneLines' function has @return annotation with non-'void' value, so 'return null' is preferred. at testdata/mustache/src/Mustache/Parser.php:236
                     return;
                     ^^^^^^^
 INFO    unused: Variable v is unused (use $_ to ignore this inspection) at testdata/mustache/src/Mustache/Template.php:122
