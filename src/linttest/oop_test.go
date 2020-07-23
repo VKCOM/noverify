@@ -267,6 +267,38 @@ $m->foo->bar->method();
 `)
 }
 
+func TestNonPublicMagicMethods(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A {
+  static private function __call($name, $arguments) {} // The magic method __call() must have public visibility
+  protected function __toString() {} // The magic method __call() must have public visibility
+  static function __set($name, $value) {} // The magic method __set() cannot be static
+  public function __callStatic($name, $arguments) {} // The magic method __callStatic() must be static
+}`)
+
+	test.Expect = []string{
+		"The magic method __call() cannot be static",
+		"The magic method __call() must have public visibility",
+		"The magic method __toString() must have public visibility",
+		"The magic method __set() cannot be static",
+		"The magic method __callStatic() must be static",
+	}
+	test.RunAndMatch()
+}
+
+func TestNonPublicMagicMethodsGood(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class A {
+  public function __call($name, $arguments) {} // Ok
+  public function __toString() {} // Ok
+  function __set($name, $value) {} // Ok
+  public static function __callStatic($name, $arguments) {} // Ok
+  function __get($name) {} // Ok
+  public function __clone() {} // Ok
+}`)
+}
+
 func TestIteratorForeach(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 interface Iterator extends Traversable {
@@ -315,7 +347,7 @@ interface ArrayAccess {
 
 class SimpleXMLElement implements Traversable, ArrayAccess {
   /** @return SimpleXMLElement */
-  private function __get($name) {}
+  public function __get($name) {}
 
   /** @return static[] */
   public function xpath ($path) {}
@@ -344,7 +376,7 @@ func TestSimpleXMLElement(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 class SimpleXMLElement {
   /** @return SimpleXMLElement */
-  private function __get($name) {}
+  public function __get($name) {}
   /** @return static[] */
   public function xpath ($path) {}
 }
