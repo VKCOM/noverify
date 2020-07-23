@@ -455,6 +455,12 @@ function performance_test() {}`,
 			Default: true,
 			Comment: `Report linter error.`,
 		},
+
+		{
+			Name:    "foreachSimplify",
+			Default: true,
+			Comment: `Report an opportunity to simplify foreach.`,
+		},
 	}
 
 	for _, info := range allChecks {
