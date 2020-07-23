@@ -296,6 +296,9 @@ class A {
   public static function __callStatic($name, $arguments) {} // Ok
   function __get($name) {} // Ok
   public function __clone() {} // Ok
+  protected function __construct() {} // Ok
+  private function __construct() {} // Ok
+  public function __construct() {} // Ok
 }`)
 }
 

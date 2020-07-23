@@ -808,7 +808,7 @@ func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodM
 		} else if !modif.static && name == "__callStatic" {
 			d.Report(meth, LevelError, "magicMethod", "The magic method %s() must be static", name)
 		}
-		if modif.accessLevel != meta.Public {
+		if modif.accessLevel != meta.Public && name != "__construct" {
 			d.Report(meth, LevelError, "magicMethod", "The magic method %s() must have public visibility", name)
 		}
 	default:
