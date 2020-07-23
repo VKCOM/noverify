@@ -1,6 +1,7 @@
 package phpdoc
 
 import (
+	"strconv"
 	"strings"
 )
 
@@ -18,6 +19,16 @@ type RawCommentPart struct {
 
 func (c *RawCommentPart) Line() int    { return c.line }
 func (c *RawCommentPart) Name() string { return c.name }
+
+type DeprecatedCommentPart struct {
+	line       int
+	name       string
+	Since      float64
+	ParamsText string
+}
+
+func (d *DeprecatedCommentPart) Line() int    { return d.line }
+func (d *DeprecatedCommentPart) Name() string { return d.name }
 
 type TypeCommentPart struct {
 	line int
@@ -95,6 +106,11 @@ func Parse(parser *TypeParser, doc string) (res []CommentPart) {
 			part = parseTypeVarComment(parser, line, name, text)
 		case "return":
 			part = parseTypeComment(parser, line, name, text)
+		case "deprecated":
+			part = parseDeprecatedComment(line, name, text)
+		case "removed":
+			// @removed usually has a structure similar to @deprecated.
+			part = parseDeprecatedComment(line, name, text)
 		default:
 			part = parseRawComment(line, name, text)
 		}
@@ -111,6 +127,45 @@ func parseRawComment(line int, name, text string) *RawCommentPart {
 		line:       line,
 		name:       name,
 		Params:     fields,
+		ParamsText: text,
+	}
+}
+
+func parseDeprecatedComment(line int, name, text string) *DeprecatedCommentPart {
+	fields := strings.Fields(text)
+	fieldLen := len(fields)
+
+	var since float64
+	if fieldLen > 0 {
+		if strings.EqualFold(fields[0], "since") {
+			if fieldLen > 1 {
+				sinceValue, err := strconv.ParseFloat(fields[1], 64)
+				if err != nil {
+					since = 0
+				} else {
+					fields = fields[2:]
+					since = sinceValue
+					text = strings.Join(fields, " ")
+				}
+			} else {
+				since = 0
+			}
+		} else {
+			sinceValue, err := strconv.ParseFloat(fields[0], 64)
+			if err != nil {
+				since = 0
+			} else {
+				fields = fields[1:]
+				since = sinceValue
+				text = strings.Join(fields, " ")
+			}
+		}
+	}
+
+	return &DeprecatedCommentPart{
+		line:       line,
+		name:       name,
+		Since:      since,
 		ParamsText: text,
 	}
 }

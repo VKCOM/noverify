@@ -165,26 +165,119 @@ class Bear {
 func TestDeprecatedMethod(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-class Foo {
-  /**
-   * @deprecated use newMethod instead
-   */
-  public function legacyMethod1() {}
+class B {
+    /**
+     * Only version
+     * @deprecated 4.2
+     */
+    function f1() {}
 
-  /**
-   * @deprecated
-   */
-  public function legacyMethod2() {}
+    /**
+     * Only version with "Since"
+     * @deprecated Since 7.2
+     */
+    function f2() {}
+
+    /**
+     * Version & Text
+     * @deprecated 5.3 Some text with reason
+     */
+    function f3() {}
+
+    /**
+     * Empty
+     * @deprecated
+     */
+    function f4() {}
+
+
+    /**
+     * Only version
+     * @deprecated 4.2
+     * @removed 7.2
+     */
+    function f5() {}
+
+    /**
+     * Only version, but @removed with text
+     * @deprecated 4.2
+     * @removed 7.2 Some reason
+     */
+    function f6() {}
+
+    /**
+     * Only version, but @removed is empty
+     * @deprecated 4.2
+     * @removed
+     */
+    function f7() {}
+
+
+
+    /**
+     * Version & text, but @removed only version
+     * @deprecated 5.3 Some text with reason
+     * @removed 7.2
+     */
+    function f8() {}
+
+    /**
+     * Version & text for @deprecated and @removed
+     * @deprecated 5.3 Some text with reason
+     * @removed 7.2 Some reason
+     */
+    function f9() {}
+
+    /**
+     * Version & text, but @removed is empty
+     * @deprecated 5.3 Some text with reason
+     * @removed
+     */
+    function f10() {}
+
+     /**
+      * Empty @deprecated and @removed with version
+      * @deprecated
+      * @removed 7.2
+      */
+    function f11() {}
+
+     /**
+      * All empty
+      * @deprecated
+      * @removed
+      */
+    function f12() {}
 }
 
-(new Foo())->legacyMethod1();
-function f() {
-  (new Foo())->legacyMethod2();
-}
+$b = new B();
+
+$b->f1();
+$b->f2();
+$b->f3();
+$b->f4();
+$b->f5();
+$b->f6();
+$b->f7();
+$b->f8();
+$b->f9();
+$b->f10();
+$b->f11();
+$b->f12();
 `)
 	test.Expect = []string{
-		`Call to deprecated method {\Foo}->legacyMethod1() (use newMethod instead)`,
-		`Call to deprecated method {\Foo}->legacyMethod2()`,
+		`Call to deprecated method {\B}->f1() since 4.2`,
+		`Call to deprecated method {\B}->f2() since 7.2`,
+		`Call to deprecated method {\B}->f3() since 5.3 (Some text with reason)`,
+		`Call to deprecated method {\B}->f4()`,
+		`Call to deprecated method {\B}->f5() since 4.2 (removed since 7.2)`,
+		`Call to deprecated method {\B}->f6() since 4.2 (removed since 7.2 (Some reason))`,
+		`Call to deprecated method {\B}->f7() since 4.2 (removed)`,
+		`Call to deprecated method {\B}->f8() since 5.3 (Some text with reason, removed since 7.2)`,
+		`Call to deprecated method {\B}->f9() since 5.3 (Some text with reason, removed since 7.2 (Some reason))`,
+		`Call to deprecated method {\B}->f10() since 5.3 (Some text with reason, removed)`,
+		`Call to deprecated method {\B}->f11() (was removed since 7.2)`,
+		`Call to deprecated method {\B}->f12() (was removed)`,
 	}
 	test.RunAndMatch()
 }
@@ -193,23 +286,112 @@ func TestDeprecatedFunction(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 /**
- * @deprecated use new_function instead
+ * Only version
+ * @deprecated 4.2
  */
-function legacy_function1() {}
+function f1() {}
 
 /**
+ * Only version with "Since"
+ * @deprecated Since 7.2
+ */
+function f2() {}
+
+/**
+ * Version & Text
+ * @deprecated 5.3 Some text with reason
+ */
+function f3() {}
+
+/**
+ * Empty
  * @deprecated
  */
-function legacy_function2() {}
+function f4() {}
 
-legacy_function1();
-function f() {
-  legacy_function2();
-}
+
+/**
+ * Only version
+ * @deprecated 4.2
+ * @removed 7.2
+ */
+function f5() {}
+
+/**
+ * Only version, but @removed with text
+ * @deprecated 4.2
+ * @removed 7.2 Some reason
+ */
+function f6() {}
+
+/**
+ * Only version, but @removed is empty
+ * @deprecated 4.2
+ * @removed
+ */
+function f7() {}
+
+/**
+ * Version & text, but @removed only version
+ * @deprecated 5.3 Some text with reason
+ * @removed 7.2
+ */
+function f8() {}
+
+/**
+ * Version & text for @deprecated and @removed
+ * @deprecated 5.3 Some text with reason
+ * @removed 7.2 Some reason
+ */
+function f9() {}
+
+/**
+ * Version & text, but @removed is empty
+ * @deprecated 5.3 Some text with reason
+ * @removed
+ */
+function f10() {}
+
+/**
+ * Empty @deprecated and @removed with version
+ * @deprecated
+ * @removed 7.2
+ */
+function f11() {}
+
+/**
+ * All empty
+ * @deprecated
+ * @removed
+ */
+function f12() {}
+
+f1();
+f2();
+f3();
+f4();
+f5();
+f6();
+f7();
+f8();
+f9();
+f10();
+f11();
+f12();
 `)
 	test.Expect = []string{
-		`Call to deprecated function legacy_function1 (use new_function instead)`,
-		`Call to deprecated function legacy_function2`,
+		`Call to deprecated function f1 since 4.2`,
+		`Call to deprecated function f2 since 7.2`,
+		`Call to deprecated function f3 since 5.3 (Some text with reason)`,
+		`Call to deprecated function f4`,
+		`Call to deprecated function f5 since 4.2 (removed since 7.2)`,
+		`Call to deprecated function f6 since 4.2 (removed since 7.2 (Some reason))`,
+		`Call to deprecated function f7 since 4.2 (removed)`,
+		`Call to deprecated function f8 since 5.3 (Some text with reason, removed since 7.2)`,
+		`Call to deprecated function f9 since 5.3 (Some text with reason, removed since 7.2 (Some reason))`,
+		`Call to deprecated function f10 since 5.3 (Some text with reason, removed)`,
+		`Call to deprecated function f11 (was removed since 7.2)`,
+		`Call to deprecated function f12 (was removed)`,
 	}
 	test.RunAndMatch()
 }

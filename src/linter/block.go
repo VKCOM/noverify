@@ -936,12 +936,9 @@ func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
 	}
 
 	if call.info.Doc.Deprecated {
-		if call.info.Doc.DeprecationNote != "" {
-			b.r.Report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s (%s)",
-				meta.NameNodeToString(e.Function), call.info.Doc.DeprecationNote)
-		} else {
-			b.r.Report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s",
-				meta.NameNodeToString(e.Function))
+		msg := call.info.Doc.StringForFunction(meta.NameNodeToString(e.Function))
+		if msg != "" {
+			b.r.Report(e.Function, LevelDoNotReject, "deprecated", msg)
 		}
 	}
 
@@ -1108,12 +1105,9 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 	}
 
 	if fn.Doc.Deprecated {
-		if fn.Doc.DeprecationNote != "" {
-			b.r.Report(e.Method, LevelDoNotReject, "deprecated", "Call to deprecated method {%s}->%s() (%s)",
-				exprType, methodName, fn.Doc.DeprecationNote)
-		} else {
-			b.r.Report(e.Method, LevelDoNotReject, "deprecated", "Call to deprecated method {%s}->%s()",
-				exprType, methodName)
+		msg := fn.Doc.StringForMethod(exprType, methodName)
+		if msg != "" {
+			b.r.Report(e.Method, LevelDoNotReject, "deprecated", msg)
 		}
 	}
 

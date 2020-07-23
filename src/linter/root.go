@@ -1247,10 +1247,18 @@ func (d *RootWalker) parsePHPDoc(n node.Node, doc string, actualParams []node.No
 		d.checkPHPDocRef(n, part)
 
 		if part.Name() == "deprecated" {
-			part := part.(*phpdoc.RawCommentPart)
+			part := part.(*phpdoc.DeprecatedCommentPart)
 			result.info.Deprecated = true
 			result.info.DeprecationNote = part.ParamsText
+			result.info.DeprecatesSince = part.Since
 			continue
+		}
+
+		if part.Name() == "removed" {
+			part := part.(*phpdoc.DeprecatedCommentPart)
+			result.info.Removed = true
+			result.info.RemovedNote = part.ParamsText
+			result.info.RemovedSince = part.Since
 		}
 
 		if part.Name() == "return" {
