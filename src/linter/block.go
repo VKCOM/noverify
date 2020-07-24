@@ -1575,7 +1575,7 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 
 		delete(b.unusedVars, key.Name)
 
-		b.r.Report(s.Key, LevelError, "foreachSimplify", "foreach key $%s is unused, can simplify $%s => $%s to just $%s", key.Name, key.Name, variable.Name, variable.Name)
+		b.r.Report(s.Key, LevelError, "unused", "foreach key $%s is unused, can simplify $%s => $%s to just $%s", key.Name, key.Name, variable.Name, variable.Name)
 	}
 
 	return false
