@@ -9,7 +9,15 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/printer"
 )
 
-//go:generate go run ./gen_equal.go
+//go:generate go run ./codegen.go
+
+func NodeSliceClone(xs []node.Node) []node.Node {
+	cloned := make([]node.Node, len(xs))
+	for i, x := range xs {
+		cloned[i] = NodeClone(x)
+	}
+	return cloned
+}
 
 // Unparen returns n with all parenthesis removed.
 func Unparen(e node.Node) node.Node {
