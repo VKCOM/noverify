@@ -462,11 +462,11 @@ function performance_test() {}`,
 			Comment: `Report error in magic methods.`,
 			Before: `class Foo {
   private function __call($method, $args) {} // The magic method __call() must have public visibility
-  static function __set($name, $value) {} // The magic method __set() cannot be static
+  public static function __set($name, $value) {} // The magic method __set() cannot be static
 }`,
 			After: `class Foo {
   public function __call($method, $args) {} // Ok
-  function __set($name, $value) {} // Ok
+  public function __set($name, $value) {} // Ok
 }`,
 		},
 	}

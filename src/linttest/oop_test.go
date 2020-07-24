@@ -271,9 +271,9 @@ func TestNonPublicMagicMethods(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 class A {
-  static private function __call($name, $arguments) {} // The magic method __call() must have public visibility
+  private static function __call($name, $arguments) {} // The magic method __call() must have public visibility
   protected function __toString() {} // The magic method __call() must have public visibility
-  static function __set($name, $value) {} // The magic method __set() cannot be static
+  public static function __set($name, $value) {} // The magic method __set() cannot be static
   public function __callStatic($name, $arguments) {} // The magic method __callStatic() must be static
 }`)
 
@@ -292,9 +292,9 @@ func TestNonPublicMagicMethodsGood(t *testing.T) {
 class A {
   public function __call($name, $arguments) {} // Ok
   public function __toString() {} // Ok
-  function __set($name, $value) {} // Ok
+  public function __set($name, $value) {} // Ok
   public static function __callStatic($name, $arguments) {} // Ok
-  function __get($name) {} // Ok
+  public function __get($name) {} // Ok
   public function __clone() {} // Ok
   protected function __construct() {} // Ok
   private function __construct() {} // Ok
