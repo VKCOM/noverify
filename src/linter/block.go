@@ -2466,7 +2466,7 @@ func (b *BlockWalker) caseHasFallthroughComment(n node.Node) bool {
 }
 
 func (b *BlockWalker) sideEffectFree(n node.Node) bool {
-	return sideEffectFree(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, n)
+	return solver.SideEffectFree(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, n)
 }
 
 func (b *BlockWalker) isVoid(n node.Node) bool {

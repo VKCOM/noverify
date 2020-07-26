@@ -1024,7 +1024,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	if modif.final {
 		funcFlags |= meta.FuncFinal
 	}
-	if !insideInterface && !modif.abstract && sideEffectFreeFunc(d.scope(), d.ctx.st, nil, stmts) {
+	if !insideInterface && !modif.abstract && solver.SideEffectFreeFunc(d.scope(), d.ctx.st, nil, stmts) {
 		funcFlags |= meta.FuncPure
 	}
 	class.Methods.Set(nm, meta.FuncInfo{
@@ -1469,7 +1469,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	}
 
 	var funcFlags meta.FuncFlags
-	if sideEffectFreeFunc(d.scope(), d.ctx.st, nil, fun.Stmts) {
+	if solver.SideEffectFreeFunc(d.scope(), d.ctx.st, nil, fun.Stmts) {
 		funcFlags |= meta.FuncPure
 	}
 	d.meta.Functions.Set(nm, meta.FuncInfo{
@@ -1767,7 +1767,7 @@ func (d *RootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filter
 		if !d.checkTypeFilter(filter.Type, sc, nn) {
 			return false
 		}
-		if filter.Pure && !sideEffectFree(d.scope(), d.ctx.st, nil, nn) {
+		if filter.Pure && !solver.SideEffectFree(d.scope(), d.ctx.st, nil, nn) {
 			return false
 		}
 	}
