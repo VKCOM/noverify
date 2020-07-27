@@ -359,6 +359,7 @@ func runGoldenTest(t *testing.T, target *goldenTest) {
 			}
 			linttest.AddNamedFile(test, f, string(code))
 		}
+		test.MisspellList = "Eng"
 
 		disable := map[string]bool{}
 		for _, checkName := range target.disable {

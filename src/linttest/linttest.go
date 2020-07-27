@@ -75,6 +75,8 @@ type Suite struct {
 	AllowDisable *regexp.Regexp
 
 	LoadStubs []string
+
+	MisspellList string
 }
 
 // NewSuite returns a new linter test suite for t.
@@ -178,6 +180,13 @@ func (s *Suite) RunLinter() []*linter.Report {
 	if len(s.LoadStubs) != 0 {
 		if err := cmd.LoadEmbeddedStubs(s.LoadStubs); err != nil {
 			s.t.Fatalf("load stubs: %v", err)
+		}
+	}
+
+	if s.MisspellList != "" {
+		err := cmd.LoadMisspellDicts(strings.Split(s.MisspellList, ","))
+		if err != nil {
+			s.t.Fatalf("load misspell dicts: %v", err)
 		}
 	}
 
