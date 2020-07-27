@@ -103,6 +103,14 @@ func (s *Suite) AddNolintFile(contents string) {
 	})
 }
 
+// AddNamedFile adds a file to a suite file list, with specific name.
+func AddNamedFile(test *Suite, name, code string) {
+	test.Files = append(test.Files, TestFile{
+		Name: name,
+		Data: []byte(code),
+	})
+}
+
 // RunAndMatch calls Match with the results of RunLinter.
 //
 // This is a recommended way to use the Suite, but if
@@ -203,6 +211,26 @@ func ParseTestFile(t *testing.T, filename, content string) (rootNode node.Node, 
 		Name: filename,
 		Data: []byte(content),
 	}, nil)
+}
+
+// RunFilterMatch calls Match with the filtered results of RunLinter.
+func RunFilterMatch(test *Suite, names ...string) {
+	test.Match(filterReports(names, test.RunLinter()))
+}
+
+func filterReports(names []string, reports []*linter.Report) []*linter.Report {
+	set := make(map[string]struct{})
+	for _, name := range names {
+		set[name] = struct{}{}
+	}
+
+	var out []*linter.Report
+	for _, r := range reports {
+		if _, ok := set[r.CheckName]; ok {
+			out = append(out, r)
+		}
+	}
+	return out
 }
 
 func init() {
