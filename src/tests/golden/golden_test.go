@@ -230,7 +230,7 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 		"build",
 		"-o", "phplinter.exe",
 		"-race",
-		"../../", // Using relative target to avoid problems with modules/vendor/GOPATH
+		"../../../", // Using relative target to avoid problems with modules/vendor/GOPATH
 	}
 	out, err := exec.Command("go", goArgs...).CombinedOutput()
 	if err != nil {
@@ -342,6 +342,8 @@ func runGoldenTest(t *testing.T, target *goldenTest) {
 		`stubs/phpstorm-stubs/standard/standard_9.php`,
 	}
 
+	misspellList := "Eng"
+
 	t.Run(target.name, func(t *testing.T) {
 		phpFiles, err := findPHPFiles(target.srcDir)
 		if err != nil {
@@ -359,7 +361,7 @@ func runGoldenTest(t *testing.T, target *goldenTest) {
 			}
 			linttest.AddNamedFile(test, f, string(code))
 		}
-		test.MisspellList = "Eng"
+		test.MisspellList = misspellList
 
 		disable := map[string]bool{}
 		for _, checkName := range target.disable {
