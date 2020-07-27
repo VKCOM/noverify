@@ -1,0 +1,18 @@
+MAYBE   regexpSimplify: May re-write '/[^0-9]/' as '/\D/' at testdata/ctype/ctype.php:84
+        return \is_string($text) && '' !== $text && !preg_match('/[^0-9]/', $text);
+                                                                ^^^^^^^^^^
+WARNING regexpVet: suspicious char range '!-~' in [^!-~] at testdata/ctype/ctype.php:100
+        return \is_string($text) && '' !== $text && !preg_match('/[^!-~]/', $text);
+                                                                ^^^^^^^^^^
+WARNING regexpVet: suspicious char range ' -~' in [^ -~] at testdata/ctype/ctype.php:132
+        return \is_string($text) && '' !== $text && !preg_match('/[^ -~]/', $text);
+                                                                ^^^^^^^^^^
+MAYBE   regexpSimplify: May re-write '/[^!-\/\:-@\[-`\{-~]/' as '/[^!-\/:-@\[-`\{-~]/' at testdata/ctype/ctype.php:148
+        return \is_string($text) && '' !== $text && !preg_match('/[^!-\/\:-@\[-`\{-~]/', $text);
+                                                                ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING regexpVet: suspicious char range '!-\/' in [^!-\/\:-@\[-`\{-~] at testdata/ctype/ctype.php:148
+        return \is_string($text) && '' !== $text && !preg_match('/[^!-\/\:-@\[-`\{-~]/', $text);
+                                                                ^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   regexpSimplify: May re-write '/[^\s]/' as '/\S/' at testdata/ctype/ctype.php:164
+        return \is_string($text) && '' !== $text && !preg_match('/[^\s]/', $text);
+                                                                ^^^^^^^^^
