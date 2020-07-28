@@ -185,12 +185,6 @@ func (s *Suite) Match(reports []*linter.Report) {
 func (s *Suite) RunLinter() []*linter.Report {
 	meta.ResetInfo()
 
-	if len(s.DefaultStubs) != 0 {
-		if err := cmd.LoadEmbeddedStubs(s.DefaultStubs); err != nil {
-			s.t.Fatalf("load stubs: %v", err)
-		}
-	}
-
 	if len(s.LoadStubs) != 0 {
 		if err := cmd.LoadEmbeddedStubs(s.LoadStubs); err != nil {
 			s.t.Fatalf("load stubs: %v", err)
