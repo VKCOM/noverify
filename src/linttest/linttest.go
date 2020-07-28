@@ -74,12 +74,20 @@ type Suite struct {
 
 	AllowDisable *regexp.Regexp
 
-	LoadStubs []string
+	DefaultStubs []string
+	LoadStubs    []string
 }
 
 // NewSuite returns a new linter test suite for t.
 func NewSuite(t testing.TB) *Suite {
-	return &Suite{t: t}
+	return &Suite{
+		t: t,
+		DefaultStubs: []string{
+			`stubs/phpstorm-stubs/Core/Core.php`,
+			`stubs/phpstorm-stubs/Core/Core_c.php`,
+			`stubs/phpstorm-stubs/Core/Core_d.php`,
+		},
+	}
 }
 
 // AddFile adds a file to a suite file list.
@@ -166,6 +174,12 @@ func (s *Suite) Match(reports []*linter.Report) {
 // that were produced during that.
 func (s *Suite) RunLinter() []*linter.Report {
 	meta.ResetInfo()
+
+	if len(s.DefaultStubs) != 0 {
+		if err := cmd.LoadEmbeddedStubs(s.DefaultStubs); err != nil {
+			s.t.Fatalf("load stubs: %v", err)
+		}
+	}
 
 	if len(s.LoadStubs) != 0 {
 		if err := cmd.LoadEmbeddedStubs(s.LoadStubs); err != nil {

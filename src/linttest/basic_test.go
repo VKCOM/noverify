@@ -14,7 +14,6 @@ import (
 
 func TestStrictCmp(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.LoadStubs = []string{`stubs/phpstorm-stubs/Core/Core_d.php`}
 	test.AddFile(`<?php
 function f($x) {
   $_ = ($x == false);
@@ -376,10 +375,6 @@ func TestVoidResultUsedInAssignment(t *testing.T) {
 func TestVoidResultUsedInBinary(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	function define($_, $_) {}
-	define('false', 1 == 0);
-	define('true', 1 != 0);
-
 	/**
 	 * @return void
 	 */
@@ -1020,6 +1015,9 @@ func TestBuiltinConstant(t *testing.T) {
 		$_ = NULL;
 		$_ = True;
 		$_ = FaLsE;
+		$_ = false;
+		$_ = true;
+		$_ = null;
 	}`)
 	test.Expect = []string{
 		"Use null instead of NULL",

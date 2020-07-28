@@ -1229,7 +1229,7 @@ function test() {
   exprtype($float, 'float');
   exprtype($string, 'string');
 
-  exprtype(define('foo', 0 == 0), 'void');
+  exprtype(define('foo', 0 == 0), 'bool');
   exprtype(empty_array(), 'mixed[]');
 
   exprtype(new Foo(), 'precise \Foo');
