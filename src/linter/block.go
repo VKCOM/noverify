@@ -2328,10 +2328,11 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 		})
 
 		var class meta.ClassInfo
+		var ok bool
 		var isShape bool
 		if shapeType != "" {
-			class, _ = meta.Info.GetClass(shapeType)
-			isShape = true
+			class, ok = meta.Info.GetClass(shapeType)
+			isShape = ok
 		}
 
 		b.handleAssignList(v.Items, class, isShape)
