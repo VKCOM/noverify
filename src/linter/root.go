@@ -1913,7 +1913,7 @@ func (d *RootWalker) afterLeaveFile() {
 			props := make(meta.PropertiesMap)
 			for _, p := range shape.props {
 				props[p.key] = meta.PropertyInfo{
-					Typ:         newTypesMap(&d.ctx, p.types),
+					Typ:         newTypesMap(&d.ctx, p.types).Immutable(),
 					AccessLevel: meta.Public,
 				}
 			}
