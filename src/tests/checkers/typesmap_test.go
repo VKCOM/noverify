@@ -1,4 +1,4 @@
-package linttest
+package linttest_test
 
 import (
 	"testing"

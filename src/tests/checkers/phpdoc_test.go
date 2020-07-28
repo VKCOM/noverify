@@ -137,7 +137,7 @@ class BadClass {
 		`line 2: @see tag refers to unknown symbol invalid1`,
 		`line 2: @see tag refers to unknown symbol invalid2`,
 	}
-	runFilterMatch(test, "phpdocRef")
+	linttest.RunFilterMatch(test, "phpdocRef")
 }
 
 func TestBadParamName(t *testing.T) {

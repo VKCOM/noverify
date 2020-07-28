@@ -137,7 +137,7 @@ src/linter/block.go:1025:		b.r.Report(e.Call, LevelError, "accessLevel", "Cannot
 src/linter/block.go:1076:		b.r.Report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s->%s", info.AccessLevel, implClass, id.Value)
 src/linter/block.go:1107:		b.r.Report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s::$%s", info.AccessLevel, implClass, sv.Name)
 src/linter/block.go:1193:		b.r.Report(e.ConstantName, LevelError, "accessLevel", "Cannot access %s constant %s::%s", info.AccessLevel, implClass, constName.Value)
-src/linttest/oop_test.go:480:	runFilterMatch(test, "accessLevel")
+src/linttest/oop_test.go:480:	RunFilterMatch(test, "accessLevel")
 ```
 
 > Note that you need to enter the NoVerify directory before running `grep`.
