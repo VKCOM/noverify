@@ -2196,9 +2196,22 @@ func (b *BlockWalker) handleAssignReference(a *assign.Reference) bool {
 	return false
 }
 
-func (b *BlockWalker) handleAssignList(items []*expr.ArrayItem) {
-	for _, item := range items {
-		b.handleVariableNode(item.Val, meta.NewTypesMap("unknown_from_list"), "assign")
+func (b *BlockWalker) handleAssignList(items []*expr.ArrayItem, info meta.ClassInfo, isShape bool) {
+	if isShape {
+		for i, item := range items {
+			prop, ok := info.Properties[fmt.Sprint(i)]
+			var tp meta.TypesMap
+			if !ok {
+				tp = meta.NewTypesMap("unknown_from_list")
+			} else {
+				tp = prop.Typ
+			}
+			b.handleVariableNode(item.Val, tp, "assign")
+		}
+	} else {
+		for _, item := range items {
+			b.handleVariableNode(item.Val, meta.NewTypesMap("unknown_from_list"), "assign")
+		}
 	}
 }
 
@@ -2302,7 +2315,27 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 		b.checkVoidType(a.Expression)
 		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
 	case *expr.List:
-		b.handleAssignList(v.Items)
+		if !meta.IsIndexingComplete() {
+			return true
+		}
+
+		tp := solver.ExprType(b.ctx.sc, b.r.ctx.st, a.Expression)
+		var shapeType string
+		tp.Iterate(func(t string) {
+			if strings.HasPrefix(t, `\shape$`) {
+				shapeType = t
+			}
+		})
+
+		var class meta.ClassInfo
+		var ok bool
+		var isShape bool
+		if shapeType != "" {
+			class, ok = meta.Info.GetClass(shapeType)
+			isShape = ok
+		}
+
+		b.handleAssignList(v.Items, class, isShape)
 	case *expr.PropertyFetch:
 		v.Property.Walk(b)
 		sv, ok := v.Variable.(*node.SimpleVar)
