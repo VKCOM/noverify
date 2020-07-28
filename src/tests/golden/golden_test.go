@@ -268,7 +268,12 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 			}
 			args = append(args, target.srcDir)
 
-			out, err := exec.Command("./phplinter.exe", args...).CombinedOutput()
+			// Use GORACE=history_size to increase the stacktrace limit.
+			// See https://github.com/golang/go/issues/10661
+			phplinterCmd := exec.Command("./phplinter.exe", args...)
+			phplinterCmd.Env = append([]string{}, os.Environ()...)
+			phplinterCmd.Env = append(phplinterCmd.Env, "GORACE=history_size=7")
+			out, err := phplinterCmd.CombinedOutput()
 			if err != nil {
 				t.Fatalf("%v: %s", err, out)
 			}
