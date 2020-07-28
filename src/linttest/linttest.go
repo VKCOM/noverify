@@ -75,6 +75,8 @@ type Suite struct {
 	AllowDisable *regexp.Regexp
 
 	LoadStubs []string
+
+	MisspellList string
 }
 
 // NewSuite returns a new linter test suite for t.
@@ -100,6 +102,14 @@ func (s *Suite) AddNolintFile(contents string) {
 		Name:   fmt.Sprintf("_file%d.php", len(s.Files)),
 		Data:   []byte(contents),
 		Nolint: true,
+	})
+}
+
+// AddNamedFile adds a file to a suite file list, with specific name.
+func AddNamedFile(test *Suite, name, code string) {
+	test.Files = append(test.Files, TestFile{
+		Name: name,
+		Data: []byte(code),
 	})
 }
 
@@ -173,6 +183,13 @@ func (s *Suite) RunLinter() []*linter.Report {
 		}
 	}
 
+	if s.MisspellList != "" {
+		err := cmd.LoadMisspellDicts(strings.Split(s.MisspellList, ","))
+		if err != nil {
+			s.t.Fatalf("load misspell dicts: %v", err)
+		}
+	}
+
 	shuffleFiles(s.Files)
 	for _, f := range s.Files {
 		parseTestFile(s.t, f, s.AllowDisable)
@@ -203,6 +220,26 @@ func ParseTestFile(t *testing.T, filename, content string) (rootNode node.Node, 
 		Name: filename,
 		Data: []byte(content),
 	}, nil)
+}
+
+// RunFilterMatch calls Match with the filtered results of RunLinter.
+func RunFilterMatch(test *Suite, names ...string) {
+	test.Match(filterReports(names, test.RunLinter()))
+}
+
+func filterReports(names []string, reports []*linter.Report) []*linter.Report {
+	set := make(map[string]struct{})
+	for _, name := range names {
+		set[name] = struct{}{}
+	}
+
+	var out []*linter.Report
+	for _, r := range reports {
+		if _, ok := set[r.CheckName]; ok {
+			out = append(out, r)
+		}
+	}
+	return out
 }
 
 func init() {

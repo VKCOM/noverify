@@ -23,7 +23,7 @@ $content = '';
 $dom = new DOMDocument();
 $dom->loadHTML('<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">' . $content);
 `)
-	runFilterMatch(test, "discardExpr")
+	linttest.RunFilterMatch(test, "discardExpr")
 }
 
 func TestDiscardExprVariableCall(t *testing.T) {
@@ -157,7 +157,7 @@ pure_fn1(1, 2); // warn 4
 		`expression evaluated but not used`,
 		`expression evaluated but not used`,
 	}
-	runFilterMatch(test, "discardExpr")
+	linttest.RunFilterMatch(test, "discardExpr")
 }
 
 func TestDiscardExpr(t *testing.T) {
