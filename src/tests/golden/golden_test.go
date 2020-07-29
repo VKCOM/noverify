@@ -358,7 +358,7 @@ func runGoldenTest(t *testing.T, target *goldenTest) {
 		test := linttest.NewSuite(t)
 		deps := target.deps
 		deps = append(deps, coreFiles...)
-		test.LoadStubs = deps
+		test.AddStubs(deps)
 		for _, f := range phpFiles {
 			code, err := ioutil.ReadFile(f)
 			if err != nil {

@@ -74,8 +74,7 @@ type Suite struct {
 
 	AllowDisable *regexp.Regexp
 
-	DefaultStubs []string
-	LoadStubs []string
+	LoadStubs map[string]struct{}
 
 	MisspellList string
 }
@@ -84,10 +83,10 @@ type Suite struct {
 func NewSuite(t testing.TB) *Suite {
 	return &Suite{
 		t: t,
-		DefaultStubs: []string{
-			`stubs/phpstorm-stubs/Core/Core.php`,
-			`stubs/phpstorm-stubs/Core/Core_c.php`,
-			`stubs/phpstorm-stubs/Core/Core_d.php`,
+		LoadStubs: map[string]struct{}{
+			`stubs/phpstorm-stubs/Core/Core.php`:   {},
+			`stubs/phpstorm-stubs/Core/Core_c.php`: {},
+			`stubs/phpstorm-stubs/Core/Core_d.php`: {},
 		},
 	}
 }
@@ -220,6 +219,12 @@ func (s *Suite) RunLinter() []*linter.Report {
 	}
 
 	return reports
+}
+
+func (s *Suite) AddStubs(stubs []string) {
+	for _, stub := range stubs {
+		s.LoadStubs[stub] = struct{}{}
+	}
 }
 
 // ParseTestFile parses given test file.

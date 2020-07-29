@@ -1170,8 +1170,7 @@ func TestExprTypeSimple(t *testing.T) {
 class Foo {}
 
 function define($name, $value) {}
-define('true', (bool)1);
-define('false', (bool)0);
+
 $int = 10;
 $float = 20.5;
 $string = "123";
@@ -1230,7 +1229,7 @@ function test() {
   exprtype($float, 'float');
   exprtype($string, 'string');
 
-  exprtype(define('foo', 0 == 0), 'bool');
+  exprtype(define('foo', 0 == 0), 'void');
   exprtype(empty_array(), 'mixed[]');
 
   exprtype(new Foo(), 'precise \Foo');

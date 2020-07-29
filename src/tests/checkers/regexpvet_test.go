@@ -11,7 +11,7 @@ func TestREVetParse(t *testing.T) {
 	// be dependent on the regexp parser library error messages
 	// too much. We prove that we react on parse errors and that's enough.
 	test := linttest.NewSuite(t)
-	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
+	test.AddStubs([]string{`stubs/phpstorm-stubs/pcre/pcre.php`})
 	test.AddFile(`<?php
 function parseErrors($s) {
   preg_match('', $s);
@@ -32,7 +32,7 @@ function parseErrors($s) {
 
 func TestREVet(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
+	test.AddStubs([]string{`stubs/phpstorm-stubs/pcre/pcre.php`})
 	test.AddFile(`<?php
 function charRange($s) {
 	preg_match('~[$-%]~', $s);
@@ -192,7 +192,7 @@ function danglingCaret() {
 
 func TestREVet_2(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
+	test.AddStubs([]string{`stubs/phpstorm-stubs/pcre/pcre.php`})
 	test.AddFile(`<?php
 function f($s) {
   preg_match('/(?m)^([\s\t]*)([\*\-\+]|\d\.)\s+/', $s);
@@ -210,7 +210,7 @@ function f($s) {
 
 func TestREVet_3(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
+	test.AddStubs([]string{`stubs/phpstorm-stubs/pcre/pcre.php`})
 	test.AddFile(`<?php
 function f($s) {
   preg_match('~^each\s+(\$[\w]*)(?:\s*,\s*(\$[\w0-9\-_]*))?\s+in\s+(.+)$~', $s);
@@ -240,7 +240,7 @@ function f($s) {
 
 func TestREVet_4(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
+	test.AddStubs([]string{`stubs/phpstorm-stubs/pcre/pcre.php`})
 	test.AddFile(`<?php
 function goodFlags($s) {
 	preg_match('~(?:(?i)foo)(?i)bar~', $s);
