@@ -423,9 +423,10 @@ func (p *PrettyPrinter) printNode(n node.Node) {
 func (p *PrettyPrinter) printNodeRoot(n node.Node) {
 	v := n.(*node.Root)
 
-	if len(v.Stmts) > 0 {
-		firstStmt := v.Stmts[0]
-		v.Stmts = v.Stmts[1:]
+	stmts := v.Stmts
+	if len(stmts) > 0 {
+		firstStmt := stmts[0]
+		stmts = stmts[1:]
 
 		switch fs := firstStmt.(type) {
 		case *stmt.InlineHtml:
@@ -439,7 +440,7 @@ func (p *PrettyPrinter) printNodeRoot(n node.Node) {
 		}
 	}
 	p.indentDepth--
-	p.printNodes(v.Stmts)
+	p.printNodes(stmts)
 	io.WriteString(p.w, "\n")
 }
 
