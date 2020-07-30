@@ -647,6 +647,7 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 		r:            d,
 		unusedVars:   make(map[string][]node.Node),
 		nonLocalVars: make(map[string]struct{}),
+		path:         newNodePath(),
 	}
 	for _, createFn := range d.customBlock {
 		b.custom = append(b.custom, createFn(&BlockContext{w: b}))
