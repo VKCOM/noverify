@@ -1,4 +1,4 @@
-package linttest_test
+package golden_test
 
 import (
 	"encoding/json"
