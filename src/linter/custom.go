@@ -165,6 +165,12 @@ type BlockContext struct {
 	w *BlockWalker
 }
 
+// NodePath returns a node path up to the current traversal position.
+// The path includes the node that is being traversed as well.
+func (ctx *BlockContext) NodePath() NodePath {
+	return ctx.w.path
+}
+
 // ExprType resolves the type of e expression node.
 func (ctx *BlockContext) ExprType(e node.Node) meta.TypesMap {
 	return ctx.w.exprType(e)

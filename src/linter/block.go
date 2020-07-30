@@ -58,6 +58,8 @@ type BlockWalker struct {
 
 	custom []BlockChecker
 
+	path NodePath
+
 	ignoreFunctionBodies bool
 	rootLevel            bool // analysing root-level code
 
@@ -224,6 +226,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	}
 
 	n := w.(node.Node)
+	b.path.push(n)
 
 	if b.ctx.exitFlags != 0 {
 		b.reportDeadCode(n)
@@ -488,6 +491,9 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		}
 	}
 
+	if !res {
+		b.path.pop()
+	}
 	return res
 }
 
@@ -2443,6 +2449,8 @@ func (b *BlockWalker) LeaveNode(w walker.Walkable) {
 	for _, c := range b.custom {
 		c.BeforeLeaveNode(w)
 	}
+
+	b.path.pop()
 
 	if b.ctx.exitFlags == 0 {
 		switch w.(type) {

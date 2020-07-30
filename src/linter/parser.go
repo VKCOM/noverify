@@ -210,6 +210,7 @@ func AnalyzeFileRootLevel(rootNode node.Node, d *RootWalker) {
 		nonLocalVars:         make(map[string]struct{}),
 		ignoreFunctionBodies: true,
 		rootLevel:            true,
+		path:                 newNodePath(),
 	}
 
 	for _, createFn := range d.customBlock {
