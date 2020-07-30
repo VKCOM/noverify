@@ -1,4 +1,4 @@
-package linttest_test
+package exprtype_test
 
 import (
 	"strings"
