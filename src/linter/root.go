@@ -1345,7 +1345,7 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 			v := p.Variable
 
 			var argType meta.TypesMap
-			if haveModel {
+			if haveModel && i < len(model.Args) {
 				argType = model.Args[i].Immutable()
 			} else {
 				argType = meta.NewTypesMap("mixed").Immutable()

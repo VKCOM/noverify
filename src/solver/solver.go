@@ -623,32 +623,67 @@ type ClosureCallerInfo struct {
 	FunctionArgs []meta.TypesMap // types for each arg for call caller
 }
 
+type ArgsModel struct {
+	BaseTypeIndex  int // Index of the element whose type will be the main one
+	CountTypedArgs int // Number of arguments in the callback that must have the type of the first element
+	CountAllArgs   int // Number of all arguments in the callback
+
+	BaseTypeIndexShiftCount int // Number of shifts for the base type. See the array_map function
+}
+
 // By function name and argument types, it returns a model
 // that stores the argument types for the closure in the given function.
 func (ci ClosureCallerInfo) Model() (ClosureArgsModel, bool) {
 	switch ci.FunctionName {
 	case `\usort`: // function usort(T[] $array, $callback) {}, $callback -> (T $a, T $b)
-		return ci.model(0, 2)
+		return ci.model(ArgsModel{BaseTypeIndex: 0, CountTypedArgs: 2})
 	case `\array_map`: // function array_map($callback, T[] $array) {}, $callback -> (T $a)
-		return ci.model(1, 1)
+		if len(ci.FunctionArgs) > 2 { // array_map($callback, T[] $a1, T1[] $a2, [...]) {}, $callback -> (T $a, T1 $b, [...])
+			count := len(ci.FunctionArgs) - 1
+			return ci.model(ArgsModel{
+				BaseTypeIndex:           1,
+				CountTypedArgs:          1,
+				BaseTypeIndexShiftCount: count,
+			})
+		}
+		return ci.model(ArgsModel{BaseTypeIndex: 1, CountTypedArgs: 1})
+	case `\array_walk`: // function array_walk(T[] $array, $callback) {}, $callback -> (T $value, mixed $key)
+		return ci.model(ArgsModel{BaseTypeIndex: 0, CountTypedArgs: 1, CountAllArgs: 2})
 	}
 
 	return emptyModel(), false
 }
 
-func (ci ClosureCallerInfo) model(baseIndex int, countArgs int) (ClosureArgsModel, bool) {
-	if baseIndex >= len(ci.FunctionArgs) {
+func (ci ClosureCallerInfo) model(argsModel ArgsModel) (ClosureArgsModel, bool) {
+	if argsModel.BaseTypeIndex >= len(ci.FunctionArgs) {
 		return emptyModel(), false
 	}
 
-	tp, ok := ci.FunctionArgs[baseIndex].ArrayBaseType()
-	if !ok {
-		return emptyModel(), false
+	if argsModel.CountAllArgs == 0 {
+		argsModel.CountAllArgs = argsModel.CountTypedArgs
+	}
+
+	if argsModel.BaseTypeIndexShiftCount == 0 {
+		argsModel.BaseTypeIndexShiftCount = 1
 	}
 
 	var args []meta.TypesMap
-	for i := 0; i < countArgs; i++ {
-		args = append(args, tp)
+
+	for i := 0; i < argsModel.BaseTypeIndexShiftCount; i++ {
+		tp, ok := ci.FunctionArgs[argsModel.BaseTypeIndex+i].ArrayBaseType()
+		if !ok {
+			return ClosureArgsModel{Args: args}, false
+		}
+
+		for i := 0; i < argsModel.CountTypedArgs; i++ {
+			args = append(args, tp)
+		}
+	}
+
+	if len(args) < argsModel.CountAllArgs {
+		for i := 0; i < argsModel.CountAllArgs-len(args); i++ {
+			args = append(args, meta.NewTypesMap("mixed"))
+		}
 	}
 
 	return ClosureArgsModel{
