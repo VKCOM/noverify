@@ -40,6 +40,9 @@ type Scope struct {
 	vars             map[string]*scopeVar // variables declared in the scope
 	inInstanceMethod bool
 	inClosure        bool
+
+	ParentFunction     FuncInfo    // function that is called with this closure
+	ParentFunctionArgs []node.Node // and the arguments with which it is called.
 }
 
 // NewScope creates new empty scope

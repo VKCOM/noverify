@@ -381,3 +381,31 @@ func (m TypesMap) Iterate(cb func(typ string)) {
 		cb(k)
 	}
 }
+
+// Checks that the map contains only arrays
+// Not for *Lazy* type
+func (m TypesMap) ContainsOnlyArray() bool {
+	for typ := range m.m {
+		if !strings.HasSuffix(typ, "[]") {
+			return false
+		}
+	}
+	return true
+}
+
+// Returns the base type for an array. T[] -> T, T[][] -> T[]
+// Not for *Lazy* type
+func (m TypesMap) ArrayBaseType() (TypesMap, bool) {
+	if !m.ContainsOnlyArray() {
+		return m, false
+	}
+
+	tm := NewEmptyTypesMap(m.Len())
+	tm.flags = m.flags
+
+	for t := range m.m {
+		tm.m[strings.TrimSuffix(t, "[]")] = struct{}{}
+	}
+
+	return tm, true
+}

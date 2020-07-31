@@ -1871,6 +1871,61 @@ exprtype($tuple_int_str, "unknown_from_list");
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestClosureCallbackArgumentsTypes(t *testing.T) {
+	code := `<?php
+function usort($array, $callback) {}
+function array_map($callback, $array) {}
+function some_function_without_model($callback, $array) {}
+
+class Foo {
+	public function f() {}
+}
+
+$f = new Foo();
+exprtype($f, "precise \Foo");
+
+$d = [$f, $f, new Foo(), new Foo()];
+exprtype($d, "\Foo[]");
+
+usort($d, function($a, $b)
+{
+	$a->f();
+	$b->f();
+    exprtype($a, "\Foo");
+    exprtype($b, "\Foo");
+});
+
+
+array_map(function($a)
+{
+	$a->f();
+	exprtype($a, "\Foo");
+}, $d);
+
+
+some_function_without_model(function($b)
+{
+	$b->f();
+	exprtype($b, "mixed");
+}, $d);
+
+
+// Not supported
+function callback($a) {
+	exprtype($a, "mixed");
+}
+
+// Not supported
+$callback = function($a) {
+	exprtype($a, "mixed");
+};
+
+array_map($callback, $d);
+array_map('callback', $d);
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {

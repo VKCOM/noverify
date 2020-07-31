@@ -608,3 +608,50 @@ func replaceTraitName(res map[string]struct{}, traitName, className string) map[
 	res[className] = struct{}{}
 	return res
 }
+
+type ClosureArgsModel struct {
+	Args []meta.TypesMap
+}
+
+func emptyModel() ClosureArgsModel {
+	return ClosureArgsModel{}
+}
+
+// class containing information about the function that called the closure.
+type ClosureCallerInfo struct {
+	FunctionName string          // caller function
+	FunctionArgs []meta.TypesMap // types for each arg for call caller
+}
+
+// By function name and argument types, it returns a model
+// that stores the argument types for the closure in the given function.
+func (ci ClosureCallerInfo) Model() (ClosureArgsModel, bool) {
+	switch ci.FunctionName {
+	case `\usort`: // function usort(T[] $array, $callback) {}, $callback -> (T $a, T $b)
+		return ci.model(0, 2)
+	case `\array_map`: // function array_map($callback, T[] $array) {}, $callback -> (T $a)
+		return ci.model(1, 1)
+	}
+
+	return emptyModel(), false
+}
+
+func (ci ClosureCallerInfo) model(baseIndex int, countArgs int) (ClosureArgsModel, bool) {
+	if baseIndex >= len(ci.FunctionArgs) {
+		return emptyModel(), false
+	}
+
+	tp, ok := ci.FunctionArgs[baseIndex].ArrayBaseType()
+	if !ok {
+		return emptyModel(), false
+	}
+
+	var args []meta.TypesMap
+	for i := 0; i < countArgs; i++ {
+		args = append(args, tp)
+	}
+
+	return ClosureArgsModel{
+		Args: args,
+	}, true
+}
