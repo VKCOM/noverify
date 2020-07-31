@@ -646,7 +646,7 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 		ctx:          &blockContext{sc: sc},
 		r:            d,
 		unusedVars:   make(map[string][]node.Node),
-		nonLocalVars: make(map[string]struct{}),
+		nonLocalVars: make(map[string]variableKind),
 		path:         newNodePath(),
 	}
 	for _, createFn := range d.customBlock {
@@ -674,13 +674,13 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 		if !byRef {
 			b.unusedVars[v.Name] = append(b.unusedVars[v.Name], v)
 		} else {
-			b.nonLocalVars[v.Name] = struct{}{}
+			b.nonLocalVars[v.Name] = varRef
 		}
 	}
 
 	for _, p := range params {
 		if p.IsRef {
-			b.nonLocalVars[p.Name] = struct{}{}
+			b.nonLocalVars[p.Name] = varRef
 		}
 	}
 	for _, s := range stmts {
