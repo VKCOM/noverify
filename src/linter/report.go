@@ -101,6 +101,14 @@ func init() {
 		},
 
 		{
+			Name:    "dupGlobal",
+			Default: true,
+			Comment: `Report repeated global statements over variables.`,
+			Before:  `global $x, $y, $x;`,
+			After:   `global $x, $y;`,
+		},
+
+		{
 			Name:    "dupArrayKeys",
 			Default: true,
 			Comment: `Report duplicated keys in array literals.`,

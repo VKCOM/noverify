@@ -207,7 +207,7 @@ func AnalyzeFileRootLevel(rootNode node.Node, d *RootWalker) {
 		ctx:                  &blockContext{sc: sc},
 		r:                    d,
 		unusedVars:           make(map[string][]node.Node),
-		nonLocalVars:         make(map[string]struct{}),
+		nonLocalVars:         make(map[string]variableKind),
 		ignoreFunctionBodies: true,
 		rootLevel:            true,
 		path:                 newNodePath(),
