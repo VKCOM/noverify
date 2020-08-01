@@ -17,6 +17,14 @@ const (
 func init() {
 	allChecks := []CheckInfo{
 		{
+			Name:    "intOverflow",
+			Default: true,
+			Comment: `Report potential integer overflows that may result in unexpected behavior.`,
+			Before:  `return -9223372036854775808;`,
+			After:   `return PHP_INT_MIN;`,
+		},
+
+		{
 			Name:    "discardExpr",
 			Default: true,
 			Comment: `Report expressions that are evaluated but not used.`,

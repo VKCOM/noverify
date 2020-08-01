@@ -12,6 +12,35 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestIntOverflow(t *testing.T) {
+	// See https://bugs.php.net/bug.php?id=53934
+
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+// Overflow cases.
+echo -9223372036854775808;
+echo 9223372036854775808;
+echo 9223372036854775807000;
+
+// Valid cases.
+echo 9223372036854775807;
+echo -9223372036854775807;
+echo 123;
+echo -9223372036854775807 - 1;
+
+// Explicit float literals are OK.
+echo 9223372036854775807000.0;
+echo -9223372036854775807000.0;
+echo -9.2233720368548E+18;
+`)
+	test.Expect = []string{
+		`9223372036854775808 will be interpreted as float due to the overflow`,
+		`9223372036854775808 will be interpreted as float due to the overflow`,
+		`9223372036854775807000 will be interpreted as float due to the overflow`,
+	}
+	test.RunAndMatch()
+}
+
 func TestDupGlobalRoot(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 global $x;
