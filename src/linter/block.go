@@ -476,6 +476,9 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		b.r.checkKeywordCase(n, "require")
 	case *expr.RequireOnce:
 		b.r.checkKeywordCase(n, "require_once")
+
+	case *scalar.Dnumber:
+		b.checkIntOverflow(s)
 	}
 
 	for _, c := range b.custom {
@@ -497,6 +500,17 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		b.path.pop()
 	}
 	return res
+}
+
+func (b *BlockWalker) checkIntOverflow(num *scalar.Dnumber) {
+	// If value contains only [0-9], then it's probably the case
+	// where lexer parsed int literal as Dnumber due to the overflow.
+	for _, ch := range num.Value {
+		if ch < '0' || ch > '9' {
+			return
+		}
+	}
+	b.r.Report(num, LevelWarning, "intOverflow", "%s will be interpreted as float due to the overflow", num.Value)
 }
 
 func (b *BlockWalker) checkDupGlobal(s *stmt.Global) {
