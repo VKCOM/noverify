@@ -142,10 +142,10 @@ func isOneTypeArray(sc *meta.Scope, cs *meta.ClassParseState, items []*expr.Arra
 		return meta.NewEmptyTypesMap(0), false
 	}
 
-	needleType := ExprType(sc, cs, items[0])
+	needleType := ExprTypeLocal(sc, cs, items[0])
 
 	for _, item := range items[1:] {
-		itemType := ExprType(sc, cs, item)
+		itemType := ExprTypeLocal(sc, cs, item)
 		if !needleType.Equals(itemType) {
 			return meta.NewEmptyTypesMap(0), false
 		}
@@ -334,7 +334,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 	case *expr.Array:
 		return arrayType(sc, cs, n.Items)
 	case *expr.ArrayItem:
-		return ExprType(sc, cs, n.Val)
+		return ExprTypeLocalCustom(sc, cs, n.Val, custom)
 	case *expr.BooleanNot, *binary.BooleanAnd, *binary.BooleanOr,
 		*binary.Equal, *binary.NotEqual, *binary.Identical, *binary.NotIdentical,
 		*binary.Greater, *binary.GreaterOrEqual,
