@@ -570,9 +570,9 @@ func (d *RootWalker) reportHash(pos *position.Position, startLine []byte, checkN
 
 	return baseline.ReportHash(baseline.HashFields{
 		Filename:  filename,
-		PrevLine:  prevLine,
-		StartLine: startLine,
-		NextLine:  nextLine,
+		PrevLine:  bytes.TrimSuffix(prevLine, []byte("\r")),
+		StartLine: bytes.TrimSuffix(startLine, []byte("\r")),
+		NextLine:  bytes.TrimSuffix(nextLine, []byte("\r")),
 		CheckName: checkName,
 		Message:   msg,
 		Scope:     scope,
