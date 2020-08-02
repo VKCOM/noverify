@@ -1,7 +1,6 @@
 package phpdoc
 
 import (
-	"strconv"
 	"strings"
 )
 
@@ -23,7 +22,6 @@ func (c *RawCommentPart) Name() string { return c.name }
 type DeprecatedCommentPart struct {
 	line       int
 	name       string
-	Since      float64
 	ParamsText string
 }
 
@@ -132,40 +130,9 @@ func parseRawComment(line int, name, text string) *RawCommentPart {
 }
 
 func parseDeprecatedComment(line int, name, text string) *DeprecatedCommentPart {
-	fields := strings.Fields(text)
-	fieldLen := len(fields)
-
-	var since float64
-	if fieldLen > 0 {
-		if strings.EqualFold(fields[0], "since") {
-			if fieldLen > 1 {
-				sinceValue, err := strconv.ParseFloat(fields[1], 64)
-				if err != nil {
-					since = 0
-				} else {
-					fields = fields[2:]
-					since = sinceValue
-					text = strings.Join(fields, " ")
-				}
-			} else {
-				since = 0
-			}
-		} else {
-			sinceValue, err := strconv.ParseFloat(fields[0], 64)
-			if err != nil {
-				since = 0
-			} else {
-				fields = fields[1:]
-				since = sinceValue
-				text = strings.Join(fields, " ")
-			}
-		}
-	}
-
 	return &DeprecatedCommentPart{
 		line:       line,
 		name:       name,
-		Since:      since,
 		ParamsText: text,
 	}
 }

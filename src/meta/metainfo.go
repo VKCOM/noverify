@@ -298,12 +298,10 @@ type FuncParam struct {
 
 type PhpDocInfo struct {
 	Deprecated      bool
-	DeprecatesSince float64
 	DeprecationNote string
 
-	Removed      bool
-	RemovedSince float64
-	RemovedNote  string
+	Removed     bool
+	RemovalNote string
 }
 
 func (p PhpDocInfo) StringForFunction(funcName string) string {
@@ -324,101 +322,36 @@ func (p PhpDocInfo) string(funcName string, exprType TypesMap, methodName string
 	isMethodDeprecated := methodName != ""
 	isFunctionDeprecated := funcName != ""
 
-	var removedMsg string
+	msgAdditionalParts := make([]string, 0, 2)
+
+	if p.Deprecated && p.DeprecationNote != "" {
+		msgAdditionalParts = append(msgAdditionalParts, p.DeprecationNote)
+	}
+
 	if p.Removed {
-		if p.RemovedNote != "" {
-			if p.RemovedSince == 0 {
-				removedMsg = fmt.Sprintf("removed (%s)", p.RemovedNote)
-			} else {
-				removedMsg = fmt.Sprintf("removed since %.1f (%s)", p.RemovedSince, p.RemovedNote)
-			}
+		if p.RemovalNote != "" {
+			msgAdditionalParts = append(msgAdditionalParts, fmt.Sprintf("removed: %s", p.RemovalNote))
 		} else {
-			if p.RemovedSince == 0 {
-				removedMsg = fmt.Sprintf("removed")
-			} else {
-				removedMsg = fmt.Sprintf("removed since %.1f", p.RemovedSince)
-			}
+			msgAdditionalParts = append(msgAdditionalParts, "removed")
 		}
 	}
 
-	var msg string
+	var msgAdditionalPart string
+	if len(msgAdditionalParts) == 1 {
+		msgAdditionalPart = msgAdditionalParts[0]
+	} else if len(msgAdditionalParts) == 2 {
+		msgAdditionalPart = msgAdditionalParts[0] + ", " + msgAdditionalParts[1]
+	}
 
-	if p.DeprecationNote != "" {
-		if p.DeprecatesSince == 0 {
-			if removedMsg != "" {
-				if isFunctionDeprecated {
-					msg = fmt.Sprintf("Call to deprecated function %s (%s, %s)",
-						funcName, p.DeprecationNote, removedMsg)
-				} else if isMethodDeprecated {
-					msg = fmt.Sprintf("Call to deprecated method {%s}->%s() (%s, %s)",
-						exprType, methodName, p.DeprecationNote, removedMsg)
-				}
-			} else {
-				if isFunctionDeprecated {
-					msg = fmt.Sprintf("Call to deprecated function %s (%s)",
-						funcName, p.DeprecationNote)
-				} else if isMethodDeprecated {
-					msg = fmt.Sprintf("Call to deprecated method {%s}->%s() (%s)",
-						exprType, methodName, p.DeprecationNote)
-				}
-			}
-		} else {
-			if removedMsg != "" {
-				if isFunctionDeprecated {
-					msg = fmt.Sprintf("Call to deprecated function %s since %.1f (%s, %s)",
-						funcName, p.DeprecatesSince, p.DeprecationNote, removedMsg)
-				} else if isMethodDeprecated {
-					msg = fmt.Sprintf("Call to deprecated method {%s}->%s() since %.1f (%s, %s)",
-						exprType, methodName, p.DeprecatesSince, p.DeprecationNote, removedMsg)
-				}
-			} else {
-				if isFunctionDeprecated {
-					msg = fmt.Sprintf("Call to deprecated function %s since %.1f (%s)",
-						funcName, p.DeprecatesSince, p.DeprecationNote)
-				} else if isMethodDeprecated {
-					msg = fmt.Sprintf("Call to deprecated method {%s}->%s() since %.1f (%s)",
-						exprType, methodName, p.DeprecatesSince, p.DeprecationNote)
-				}
-			}
-		}
-	} else {
-		if p.DeprecatesSince == 0 {
-			if removedMsg != "" {
-				if isFunctionDeprecated {
-					msg = fmt.Sprintf("Call to deprecated function %s (was %s)",
-						funcName, removedMsg)
-				} else if isMethodDeprecated {
-					msg = fmt.Sprintf("Call to deprecated method {%s}->%s() (was %s)",
-						exprType, methodName, removedMsg)
-				}
-			} else {
-				if isFunctionDeprecated {
-					msg = fmt.Sprintf("Call to deprecated function %s",
-						funcName)
-				} else if isMethodDeprecated {
-					msg = fmt.Sprintf("Call to deprecated method {%s}->%s()",
-						exprType, methodName)
-				}
-			}
-		} else {
-			if removedMsg != "" {
-				if isFunctionDeprecated {
-					msg = fmt.Sprintf("Call to deprecated function %s since %.1f (%s)",
-						funcName, p.DeprecatesSince, removedMsg)
-				} else if isMethodDeprecated {
-					msg = fmt.Sprintf("Call to deprecated method {%s}->%s() since %.1f (%s)",
-						exprType, methodName, p.DeprecatesSince, removedMsg)
-				}
-			} else {
-				if isFunctionDeprecated {
-					msg = fmt.Sprintf("Call to deprecated function %s since %.1f",
-						funcName, p.DeprecatesSince)
-				} else if isMethodDeprecated {
-					msg = fmt.Sprintf("Call to deprecated method {%s}->%s() since %.1f",
-						exprType, methodName, p.DeprecatesSince)
-				}
-			}
-		}
+	if msgAdditionalPart != "" {
+		msgAdditionalPart = "(" + msgAdditionalPart + ")"
+	}
+
+	var msg string
+	if isFunctionDeprecated {
+		msg = fmt.Sprintf("Call to deprecated function %s %s", funcName, msgAdditionalPart)
+	} else if isMethodDeprecated {
+		msg = fmt.Sprintf("Call to deprecated method {%s}->%s() %s", exprType, methodName, msgAdditionalPart)
 	}
 
 	return msg
