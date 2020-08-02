@@ -1874,81 +1874,60 @@ exprtype($tuple_int_str, "unknown_from_list");
 func TestClosureCallbackArgumentsTypes(t *testing.T) {
 	code := `<?php
 function usort($array, $callback) {}
-function array_map($callback, $array) {}
+function array_map($callback, $array, $_ = null) {}
 function array_walk($callback, $array) {}
 function some_function_without_model($callback, $array) {}
 
-class Foo {
-	public function f() {}
-}
+class Foo { public function f() {} }
+class Boo { public function b() {} }
 
-class Boo {
-  public function b() {}
-}
+/** @return Foo[] */
+function return_foo() { return []; }
+/** @return Boo[] */
+function return_boo() { return []; }
 
-$arrFoo = [new Foo(), new Foo()];
-exprtype($arrFoo, "\Foo[]");
-$arrBoo = [new Boo(), new Boo()];
-exprtype($arrBoo, "\Boo[]");
+$foo_array = return_foo();
+$boo_array = return_boo();
 
-usort($arrFoo, function($a, $b)
-{
-	$a->f();
-	$b->f();
-    exprtype($a, "\Foo");
-    exprtype($b, "\Foo");
+usort($foo_array, function($a, $b) {
+  $a->f();
+  $b->f();
+  exprtype($a, "\Foo");
+  exprtype($b, "\Foo");
 });
 
-array_map(function($a)
-{
-	$a->f();
-	exprtype($a, "\Foo");
-}, $arrFoo);
+array_map(function($a) {
+  $a->f();
+  exprtype($a, "\Foo");
+}, $foo_array);
 
-array_map(function($a, $b)
-{
-	$a->f();
-	$b->b();
-	exprtype($a, "\Foo");
-	exprtype($b, "\Boo");
-}, $arrFoo, $arrBoo);
+array_map(function($a, $b) {
+  $a->f();
+  $b->b();
+  exprtype($a, "\Foo");
+  exprtype($b, "\Boo");
+}, $foo_array, $boo_array);
 
-array_walk($arrFoo, function($a, $b)
-{
-	$a->f();
-	exprtype($a, "\Foo");
-	exprtype($b, "mixed");
+array_walk($foo_array, function($a, $b) {
+  $a->f();
+  exprtype($a, "\Foo");
+  exprtype($b, "mixed");
 });
 
-/**
- * @return \Boo[]
- */
-function SomeFunction() {
-	return [];
-}
-
-array_map(function($a)
-{
-	$a->b();
-	exprtype($a, "\Boo");
-}, SomeFunction());
-
-
-some_function_without_model(function($b)
-{
-	$b->f();
-	exprtype($b, "mixed");
+some_function_without_model(function($b) {
+  $b->f();
+  exprtype($b, "mixed");
 }, $d);
 
 
 // Not supported
 function callback($a) {
-	exprtype($a, "mixed");
+  exprtype($a, "mixed");
 }
 
 // Not supported
 $callback = function($a) {
-	exprtype($a, "mixed");
+  exprtype($a, "mixed");
 };
 
 array_map($callback, $d);
@@ -1961,45 +1940,82 @@ func TestClosureCallbackForArrayMap(t *testing.T) {
 	code := `<?php
 function array_map($callback, array $arr1, array $_ = null) {}
 
-class Foo {
-	public function f() {}
+class Foo { public function f() {} }
+class Boo { public function b() {} }
+class Poo { public function p() {} }
+
+/** @return Foo[] */
+function return_foo() { return []; }
+/** @return Boo[] */
+function return_boo() { return []; }
+/** @return Poo[] */
+function return_poo() { return []; }
+
+$foo_array = return_foo();
+$boo_array = return_boo();
+$poo_array = return_poo();
+
+array_map(function($a) {
+  $a->f();
+  exprtype($a, "\Foo");
+}, $foo_array);
+
+array_map(function($a, $b) {
+  $a->f();
+  $b->b();
+  exprtype($a, "\Foo");
+  exprtype($b, "\Boo");
+}, $foo_array, $boo_array);
+
+array_map(function($a, $b, $c) {
+  $a->f();
+  $b->b();
+  $c->p();
+  exprtype($a, "\Foo");
+  exprtype($b, "\Boo");
+  exprtype($c, "\Poo");
+}, $foo_array, $boo_array, $poo_array);
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
-class Boo {
-  public function b() {}
-}
+func TestNestedClosureCallback(t *testing.T) {
+	code := `<?php
+function array_map($callback, array $arr1, array $_ = null) {}
+function usort($array, $callback) {}
 
-class Poo {
-  public function p() {}
-}
+class Foo { public function f() {} }
 
-$arrFoo = [new Foo(), new Foo()];
-$arrBoo = [new Boo(), new Boo()];
-$arrPoo = [new Poo(), new Poo()];
+/** @return Foo[][] */
+function return_foo() { return []; }
 
-array_map(function($a)
-{
-	$a->f();
-	exprtype($a, "\Foo");
-}, $arrFoo);
+$foo_array = return_foo();
 
-array_map(function($a, $b)
-{
-	$a->f();
-	$b->b();
-	exprtype($a, "\Foo");
-	exprtype($b, "\Boo");
-}, $arrFoo, $arrBoo);
+array_map(function($a) {
+  exprtype($a, "\Foo[]");
 
-array_map(function($a, $b, $c)
-{
-	$a->f();
-	$b->b();
-	$c->p();
-	exprtype($a, "\Foo");
-	exprtype($b, "\Boo");
-	exprtype($c, "\Poo");
-}, $arrFoo, $arrBoo, $arrPoo);
+  array_map(function($a) {
+    exprtype($a, "\Foo");
+  }, $a);
+
+  exprtype($a, "\Foo[]");
+}, $foo_array);
+
+usort($foo_array, function($a, $b) {
+  exprtype($a, "\Foo[]");
+  exprtype($b, "\Foo[]");
+
+  array_map(function($a) {
+    exprtype($a, "\Foo");
+  }, $a);
+
+  array_map(function($b) {
+    exprtype($b, "\Foo");
+  }, $b);
+
+  exprtype($a, "\Foo[]");
+  exprtype($b, "\Foo[]");
+});
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }

@@ -960,7 +960,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	phpDocParamTypes := doc.types
 
 	class := d.getClass()
-	params, minParamsCnt := d.parseFuncArgs(meth.Params, phpDocParamTypes, sc, nil, false)
+	params, minParamsCnt := d.parseFuncArgs(meth.Params, phpDocParamTypes, sc, nil)
 
 	if len(class.Interfaces) != 0 {
 		// If we implement interfaces, methods that take a part in this
@@ -1330,14 +1330,14 @@ func (d *RootWalker) parseTypeNode(n node.Node) (typ meta.TypesMap, ok bool) {
 	return tm, !tm.IsEmpty()
 }
 
-func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap, sc *meta.Scope, ci *solver.ClosureCallerInfo, fromClosure bool) (args []meta.FuncParam, minArgs int) {
+func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap, sc *meta.Scope, ci *solver.ClosureCallerInfo) (args []meta.FuncParam, minArgs int) {
 	if len(params) == 0 {
 		return nil, 0
 	}
 
 	args = make([]meta.FuncParam, 0, len(params))
 
-	if fromClosure {
+	if ci != nil {
 		model, haveModel := ci.Model()
 
 		for i, param := range params {
@@ -1480,7 +1480,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 
 	sc := meta.NewScope()
 
-	params, minParamsCnt := d.parseFuncArgs(fun.Params, phpDocParamTypes, sc, nil, false)
+	params, minParamsCnt := d.parseFuncArgs(fun.Params, phpDocParamTypes, sc, nil)
 
 	funcInfo := d.handleFuncStmts(params, nil, fun.Stmts, sc)
 	actualReturnTypes := funcInfo.returnTypes

@@ -41,8 +41,8 @@ type Scope struct {
 	inInstanceMethod bool
 	inClosure        bool
 
-	ParentFunction     FuncInfo    // function that is called with this closure
-	ParentFunctionArgs []node.Node // and the arguments with which it is called.
+	CallerFunction     FuncInfo    // function that is called with this closure
+	CallerFunctionArgs []node.Node // and the arguments with which it is called
 }
 
 // NewScope creates new empty scope

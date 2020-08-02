@@ -382,9 +382,9 @@ func (m TypesMap) Iterate(cb func(typ string)) {
 	}
 }
 
-// Checks that the map contains only arrays
-// Not for *Lazy* type
-func (m TypesMap) ContainsOnlyArray() bool {
+// Checks that the map contains only arrays.
+// Not for *Lazy* type.
+func (m TypesMap) ContainsOnlyArrays() bool {
 	for typ := range m.m {
 		if !strings.HasSuffix(typ, "[]") {
 			return false
@@ -393,10 +393,10 @@ func (m TypesMap) ContainsOnlyArray() bool {
 	return true
 }
 
-// Returns the base type for an array. T[] -> T, T[][] -> T[]
-// Not for *Lazy* type
+// Returns the base type for an array. T[] -> T, T[][] -> T[].
+// Not for *Lazy* type.
 func (m TypesMap) ArrayBaseType() (TypesMap, bool) {
-	if !m.ContainsOnlyArray() {
+	if !m.ContainsOnlyArrays() {
 		return m, false
 	}
 

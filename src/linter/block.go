@@ -916,8 +916,8 @@ func (b *BlockWalker) handleCallArgs(n node.Node, args []node.Node, fn meta.Func
 			}
 			a.Walk(b)
 		case *expr.Closure:
-			b.ctx.sc.ParentFunction = fn
-			b.ctx.sc.ParentFunctionArgs = args
+			b.ctx.sc.CallerFunction = fn
+			b.ctx.sc.CallerFunctionArgs = args
 			a.Walk(b)
 		default:
 			a.Walk(b)
@@ -1637,19 +1637,19 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType me
 		delete(b.unusedVars, v.Name)
 	}
 
-	// find the types for the arguments of the function that contains this closure.
+	// find the types for the arguments of the function that contains this closure
 	var funcArgs []meta.TypesMap
-	for _, arg := range parentScope.ParentFunctionArgs {
+	for _, arg := range parentScope.CallerFunctionArgs {
 		tp := solver.ExprType(parentScope, b.r.ctx.st, arg.(*node.Argument).Expr)
 		funcArgs = append(funcArgs, tp)
 	}
 
 	ci := solver.ClosureCallerInfo{
-		FunctionName: parentScope.ParentFunction.Name,
+		FunctionName: parentScope.CallerFunction.Name,
 		FunctionArgs: funcArgs,
 	}
 
-	params, _ := b.r.parseFuncArgs(fun.Params, phpDocParamTypes, sc, &ci, true)
+	params, _ := b.r.parseFuncArgs(fun.Params, phpDocParamTypes, sc, &ci)
 
 	b.r.handleFuncStmts(params, closureUses, fun.Stmts, sc)
 	b.r.addScope(fun, sc)
