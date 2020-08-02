@@ -99,7 +99,7 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ex
 	return meta.TypesMap{}, false
 }
 
-func arrayType(items []*expr.ArrayItem) meta.TypesMap {
+func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*expr.ArrayItem) meta.TypesMap {
 	if len(items) == 0 {
 		// Used as a placeholder until more specific type is discovered.
 		//
@@ -121,10 +121,37 @@ func arrayType(items []*expr.ArrayItem) meta.TypesMap {
 			return meta.NewTypesMap("int[]")
 		case isConstantFloatArray(items):
 			return meta.NewTypesMap("float[]")
+		default:
+			if tp, ok := isOneTypeArray(sc, cs, items); ok {
+				wrapped := meta.NewEmptyTypesMap(tp.Len())
+				tp.Iterate(func(t string) {
+					wrapped.AppendString(meta.WrapArrayOf(t))
+				})
+				return wrapped
+			}
 		}
 	}
 
 	return meta.NewTypesMap("mixed[]")
+}
+
+// Checks if all elements are of the same type.
+// If successful, returns the type of the array element.
+func isOneTypeArray(sc *meta.Scope, cs *meta.ClassParseState, items []*expr.ArrayItem) (meta.TypesMap, bool) {
+	if len(items) == 0 {
+		return meta.NewEmptyTypesMap(0), false
+	}
+
+	needleType := ExprType(sc, cs, items[0])
+
+	for _, item := range items[1:] {
+		itemType := ExprType(sc, cs, item)
+		if !needleType.Equals(itemType) {
+			return meta.NewEmptyTypesMap(0), false
+		}
+	}
+
+	return needleType, true
 }
 
 func isConstantStringArray(items []*expr.ArrayItem) bool {
@@ -305,7 +332,9 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n node.Node, 
 	case *binary.Concat:
 		return meta.PreciseStringType
 	case *expr.Array:
-		return arrayType(n.Items)
+		return arrayType(sc, cs, n.Items)
+	case *expr.ArrayItem:
+		return ExprType(sc, cs, n.Val)
 	case *expr.BooleanNot, *binary.BooleanAnd, *binary.BooleanOr,
 		*binary.Equal, *binary.NotEqual, *binary.Identical, *binary.NotIdentical,
 		*binary.Greater, *binary.GreaterOrEqual,

@@ -1871,6 +1871,22 @@ exprtype($tuple_int_str, "unknown_from_list");
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestArrayTypes(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+$one_dimensional = [new Foo(), new Foo()];
+exprtype($one_dimensional, "\Foo[]");
+
+$two_dimensional = [[new Foo(), new Foo()],[new Foo(), new Foo()]];
+exprtype($two_dimensional, "\Foo[][]");
+
+$three_dimensional = [[[new Foo(), new Foo()],[new Foo(), new Foo()]],[[new Foo(), new Foo()],[new Foo(), new Foo()]]];
+exprtype($three_dimensional, "\Foo[][][]");
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {
