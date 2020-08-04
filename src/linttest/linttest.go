@@ -185,7 +185,11 @@ func (s *Suite) RunLinter() []*linter.Report {
 	meta.ResetInfo()
 
 	if len(s.LoadStubs) != 0 {
-		if err := cmd.LoadEmbeddedStubs(s.LoadStubs); err != nil {
+		var stubs []string
+		for key := range s.LoadStubs {
+			stubs = append(stubs, key)
+		}
+		if err := cmd.LoadEmbeddedStubs(stubs); err != nil {
 			s.t.Fatalf("load stubs: %v", err)
 		}
 	}

@@ -318,11 +318,11 @@ func initStubs() error {
 	return nil
 }
 
-func LoadEmbeddedStubs(filenames map[string]struct{}) error {
+func LoadEmbeddedStubs(filenames []string) error {
 	var errorsCount int64
 
 	readStubs := func(ch chan linter.FileInfo) {
-		for filename := range filenames {
+		for _, filename := range filenames {
 			data, err := stubs.Asset(filename)
 			if err != nil {
 				log.Printf("Failed to read embedded %q file: %v", filename, err)
