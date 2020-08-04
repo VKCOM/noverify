@@ -1813,7 +1813,7 @@ class Boo {}
  * @return \tuple(int, \Boo, int, string)
  */
 function foo() {
-    return [5, new Boo(), 10, "gas"];
+   return [5, new Boo(), 10, "gas"];
 }
 
 $tuple = foo();
@@ -1835,12 +1835,12 @@ exprtype($old_str, "string");
 
 
 class Bar {
-	/**
-	 * @return \tuple(int, \Boo, int, string)
-	 */
-	static function foo() {
-	    return [5, new Boo(), 10, "gas"];
-	}
+   /**
+    * @return \tuple(int, \Boo, int, string)
+    */
+   static function foo() {
+      return [5, new Boo(), 10, "gas"];
+   }
 }
 
 $class_static_tuple = Bar::foo();
@@ -1875,14 +1875,68 @@ func TestArrayTypes(t *testing.T) {
 	code := `<?php
 class Foo {}
 
+/** @return Foo */
+function f() {}
+/** @return float */
+function return_float() {}
+/** @return int */
+function return_int() {}
+/** @return string */
+function return_string() {}
+
+
 $one_dimensional = [new Foo(), new Foo()];
 exprtype($one_dimensional, "\Foo[]");
+
 
 $two_dimensional = [[new Foo(), new Foo()],[new Foo(), new Foo()]];
 exprtype($two_dimensional, "\Foo[][]");
 
+
 $three_dimensional = [[[new Foo(), new Foo()],[new Foo(), new Foo()]],[[new Foo(), new Foo()],[new Foo(), new Foo()]]];
 exprtype($three_dimensional, "\Foo[][][]");
+
+
+$a = [10, 20, 30];
+exprtype($a, "int[]");
+$a = [return_int(), return_int(), return_int()];
+exprtype($a, "int[]");
+// but
+$a = [return_int(), 1];
+exprtype($a, "mixed[]");
+
+
+$a = [10.5, 20.5, 30.5];
+exprtype($a, "float[]");
+$a = [return_float(), return_float(), return_float()];
+exprtype($a, "float[]");
+// but
+$a = [return_float(), 12.5];
+exprtype($a, "mixed[]");
+
+
+$a = ["Hello", "World", "!"];
+exprtype($a, "string[]");
+$a = [return_string(), return_string(), return_string()];
+exprtype($a, "string[]");
+// but
+$a = [return_string(), "World!"];
+exprtype($a, "mixed[]");
+
+
+$a = [f(), f()];
+exprtype($a, "\Foo[]");
+// but
+$a = [f(), new Foo()];
+exprtype($a, "mixed[]");
+
+
+$a = [f(), g()];
+exprtype($a, "mixed[]");
+
+
+$a = [];
+exprtype($a, "mixed[]");
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }

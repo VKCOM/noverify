@@ -113,45 +113,30 @@ func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*expr.ArrayItem
 		return meta.NewTypesMap("empty_array")
 	}
 
-	if len(items) > 0 {
-		switch {
-		case isConstantStringArray(items):
-			return meta.NewTypesMap("string[]")
-		case isConstantIntArray(items):
-			return meta.NewTypesMap("int[]")
-		case isConstantFloatArray(items):
-			return meta.NewTypesMap("float[]")
-		default:
-			if tp, ok := isOneTypeArray(sc, cs, items); ok {
-				wrapped := meta.NewEmptyTypesMap(tp.Len())
-				tp.Iterate(func(t string) {
-					wrapped.AppendString(meta.WrapArrayOf(t))
-				})
-				return wrapped
-			}
-		}
+	firstElementType := ExprTypeLocal(sc, cs, items[0])
+
+	switch {
+	case firstElementType.Is("string") && isConstantStringArray(items):
+		return meta.NewTypesMap("string[]")
+	case firstElementType.Is("int") && isConstantIntArray(items):
+		return meta.NewTypesMap("int[]")
+	case firstElementType.Is("float") && isConstantFloatArray(items):
+		return meta.NewTypesMap("float[]")
 	}
-
-	return meta.NewTypesMap("mixed[]")
-}
-
-// Checks if all elements are of the same type.
-// If successful, returns the type of the array element.
-func isOneTypeArray(sc *meta.Scope, cs *meta.ClassParseState, items []*expr.ArrayItem) (meta.TypesMap, bool) {
-	if len(items) == 0 {
-		return meta.NewEmptyTypesMap(0), false
-	}
-
-	needleType := ExprTypeLocal(sc, cs, items[0])
 
 	for _, item := range items[1:] {
 		itemType := ExprTypeLocal(sc, cs, item)
-		if !needleType.Equals(itemType) {
-			return meta.NewEmptyTypesMap(0), false
+		if !firstElementType.Equals(itemType) {
+			return meta.NewTypesMap("mixed[]")
 		}
 	}
 
-	return needleType, true
+	wrapped := meta.NewEmptyTypesMap(firstElementType.Len())
+	firstElementType.Iterate(func(t string) {
+		wrapped.AppendString(meta.WrapArrayOf(t))
+	})
+
+	return wrapped
 }
 
 func isConstantStringArray(items []*expr.ArrayItem) bool {
