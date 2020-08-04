@@ -266,18 +266,18 @@ $b->f11();
 $b->f12();
 `)
 	test.Expect = []string{
-		`Call to deprecated method {\B}->f1() since 4.2`,
-		`Call to deprecated method {\B}->f2() since 7.2`,
-		`Call to deprecated method {\B}->f3() since 5.3 (Some text with reason)`,
+		`Call to deprecated method {\B}->f1() (4.2)`,
+		`Call to deprecated method {\B}->f2() (Since 7.2)`,
+		`Call to deprecated method {\B}->f3() (5.3 Some text with reason)`,
 		`Call to deprecated method {\B}->f4()`,
-		`Call to deprecated method {\B}->f5() since 4.2 (removed since 7.2)`,
-		`Call to deprecated method {\B}->f6() since 4.2 (removed since 7.2 (Some reason))`,
-		`Call to deprecated method {\B}->f7() since 4.2 (removed)`,
-		`Call to deprecated method {\B}->f8() since 5.3 (Some text with reason, removed since 7.2)`,
-		`Call to deprecated method {\B}->f9() since 5.3 (Some text with reason, removed since 7.2 (Some reason))`,
-		`Call to deprecated method {\B}->f10() since 5.3 (Some text with reason, removed)`,
-		`Call to deprecated method {\B}->f11() (was removed since 7.2)`,
-		`Call to deprecated method {\B}->f12() (was removed)`,
+		`Call to deprecated method {\B}->f5() (4.2, removed: 7.2)`,
+		`Call to deprecated method {\B}->f6() (4.2, removed: 7.2 Some reason)`,
+		`Call to deprecated method {\B}->f7() (4.2, removed)`,
+		`Call to deprecated method {\B}->f8() (5.3 Some text with reason, removed: 7.2)`,
+		`Call to deprecated method {\B}->f9() (5.3 Some text with reason, removed: 7.2 Some reason)`,
+		`Call to deprecated method {\B}->f10() (5.3 Some text with reason, removed)`,
+		`Call to deprecated method {\B}->f11() (removed: 7.2)`,
+		`Call to deprecated method {\B}->f12() (removed)`,
 	}
 	test.RunAndMatch()
 }
@@ -380,18 +380,18 @@ f11();
 f12();
 `)
 	test.Expect = []string{
-		`Call to deprecated function f1 since 4.2`,
-		`Call to deprecated function f2 since 7.2`,
-		`Call to deprecated function f3 since 5.3 (Some text with reason)`,
+		`Call to deprecated function f1 (4.2)`,
+		`Call to deprecated function f2 (Since 7.2)`,
+		`Call to deprecated function f3 (5.3 Some text with reason)`,
 		`Call to deprecated function f4`,
-		`Call to deprecated function f5 since 4.2 (removed since 7.2)`,
-		`Call to deprecated function f6 since 4.2 (removed since 7.2 (Some reason))`,
-		`Call to deprecated function f7 since 4.2 (removed)`,
-		`Call to deprecated function f8 since 5.3 (Some text with reason, removed since 7.2)`,
-		`Call to deprecated function f9 since 5.3 (Some text with reason, removed since 7.2 (Some reason))`,
-		`Call to deprecated function f10 since 5.3 (Some text with reason, removed)`,
-		`Call to deprecated function f11 (was removed since 7.2)`,
-		`Call to deprecated function f12 (was removed)`,
+		`Call to deprecated function f5 (4.2, removed: 7.2)`,
+		`Call to deprecated function f6 (4.2, removed: 7.2 Some reason)`,
+		`Call to deprecated function f7 (4.2, removed)`,
+		`Call to deprecated function f8 (5.3 Some text with reason, removed: 7.2)`,
+		`Call to deprecated function f9 (5.3 Some text with reason, removed: 7.2 Some reason)`,
+		`Call to deprecated function f10 (5.3 Some text with reason, removed)`,
+		`Call to deprecated function f11 (removed: 7.2)`,
+		`Call to deprecated function f12 (removed)`,
 	}
 	test.RunAndMatch()
 }

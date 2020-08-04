@@ -39,7 +39,8 @@ import (
 //          added mapPrecise flag to mark precise type maps.
 //     39 - added new field Value in ConstantInfo
 //     40 - added DeprecatedCommentPart struct
-const cacheVersion = 40
+//     41 - added fields in PhpDocInfo struct
+const cacheVersion = 41
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")
