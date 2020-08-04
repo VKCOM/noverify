@@ -1476,6 +1476,40 @@ func TestPrinterPrintExprClosure(t *testing.T) {
 	}
 }
 
+func TestPrinterPrintExprArrowFunction(t *testing.T) {
+	o := bytes.NewBufferString("")
+
+	p := printer.NewPrinter(o)
+	p.Print(&stmt.Expression{
+		Expr: &expr.ArrowFunction{
+			Static:     true,
+			ReturnsRef: true,
+			Params: []node.Node{
+				&node.Parameter{
+					ByRef:    true,
+					Variadic: false,
+					Variable: &node.SimpleVar{
+						Name: "var",
+					},
+				},
+			},
+			ReturnType: &name.FullyQualified{
+				Parts: []node.Node{&name.NamePart{Value: "Foo"}},
+			},
+			Expr: &node.SimpleVar{
+				Name: "a",
+			},
+		},
+	})
+
+	expected := `static fn&(&$var):\Foo=>$a;`
+	actual := o.String()
+
+	if expected != actual {
+		t.Errorf("\nexpected: %s\ngot: %s\n", expected, actual)
+	}
+}
+
 func TestPrinterPrintExprConstFetch(t *testing.T) {
 	o := bytes.NewBufferString("")
 
