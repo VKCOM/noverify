@@ -13,29 +13,30 @@ func emptyModel() ClosureArgsModel {
 	return ClosureArgsModel{}
 }
 
-// Class containing information about the function that called the closure.
-type ClosureCallerInfo struct {
-	FunctionName string          // caller function
-	FunctionArgs []meta.TypesMap // types for each arg for call caller
-}
-
 // The model describes what types the arguments of the closure should have.
 type ArgsModel struct {
 	BaseTypeIndex  int // index of the element whose type will be the main one
-	CountTypedArgs int // number of arguments in the callback that must have the type of the first element
+	CountTypedArgs int // number of arguments in the callback that must have the type of the base element
 	CountAllArgs   int // number of all arguments in the callback
 
-	BaseTypeIndexShiftCount int // number of shifts for the base type. See the array_map function
+	BaseTypeIndexShiftCount int // number of shifts for the base type index. See the array_map function
+}
+
+// Class containing information about the function that called the closure.
+type ClosureCallerInfo struct {
+	FunctionName string          // caller function name
+	FunctionArgs []meta.TypesMap // types for each arg for call caller function
 }
 
 // By function name and argument types, it returns a model that stores the argument types
 // for the closure in the given function.
 func (ci ClosureCallerInfo) Model() (ClosureArgsModel, bool) {
 	switch ci.FunctionName {
-	case `\usort`: // function usort(T[] $array, $callback) {}, $callback -> (T $a, T $b)
+	case `\usort`, `\uasort`: // usort / uasort(T[] $array, $callback), $callback -> (T $a, T $b)
 		return ci.model(ArgsModel{BaseTypeIndex: 0, CountTypedArgs: 2})
-	case `\array_map`: // function array_map($callback, T[] $array) {}, $callback -> (T $a)
-		if len(ci.FunctionArgs) > 2 { // array_map($callback, T[] $a1, T1[] $a2, [...]) {}, $callback -> (T $a, T1 $b, [...])
+
+	case `\array_map`: // function array_map($callback, T[] $array), $callback -> (T $a)
+		if len(ci.FunctionArgs) > 2 { // array_map($callback, T[] $a1, T1[] $a2, [...]), $callback -> (T $a, T1 $b, [...])
 			count := len(ci.FunctionArgs) - 1
 			return ci.model(ArgsModel{
 				BaseTypeIndex:           1,
@@ -44,8 +45,15 @@ func (ci ClosureCallerInfo) Model() (ClosureArgsModel, bool) {
 			})
 		}
 		return ci.model(ArgsModel{BaseTypeIndex: 1, CountTypedArgs: 1})
-	case `\array_walk`: // function array_walk(T[] $array, $callback) {}, $callback -> (T $value, mixed $key)
+
+	case `\array_walk`, `\array_walk_recursive`: // array_walk / array_walk_recursive(T[] $array, $callback), $callback -> (T $value, mixed $key)
 		return ci.model(ArgsModel{BaseTypeIndex: 0, CountTypedArgs: 1, CountAllArgs: 2})
+
+	case `\array_filter`: // array_filter(T[] $array, $callback), $callback -> (T $item)
+		return ci.model(ArgsModel{BaseTypeIndex: 0, CountTypedArgs: 1})
+
+	case `\array_reduce`: // array_reduce(T[] $array, $callback), $callback -> (T $carry, T $item)
+		return ci.model(ArgsModel{BaseTypeIndex: 0, CountTypedArgs: 2})
 	}
 
 	return emptyModel(), false
@@ -76,6 +84,7 @@ func (ci ClosureCallerInfo) model(argsModel ArgsModel) (ClosureArgsModel, bool) 
 		}
 	}
 
+	// fill the remaining arguments with mixed type
 	if len(args) < argsModel.CountAllArgs {
 		for i := 0; i < argsModel.CountAllArgs-len(args); i++ {
 			args = append(args, meta.NewTypesMap("mixed"))

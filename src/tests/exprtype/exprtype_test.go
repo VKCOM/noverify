@@ -1874,8 +1874,12 @@ exprtype($tuple_int_str, "unknown_from_list");
 func TestClosureCallbackArgumentsTypes(t *testing.T) {
 	code := `<?php
 function usort($array, $callback) {}
+function uasort($array, $callback) {}
 function array_map($callback, $array, $_ = null) {}
 function array_walk($callback, $array) {}
+function array_walk_recursive($callback, $array) {}
+function array_filter($array, $callback) {}
+function array_reduce($array, $callback) {}
 function some_function_without_model($callback, $array) {}
 
 class Foo { public function f() {} }
@@ -1890,32 +1894,44 @@ $foo_array = return_foo();
 $boo_array = return_boo();
 
 usort($foo_array, function($a, $b) {
-  $a->f();
-  $b->f();
+  exprtype($a, "\Foo");
+  exprtype($b, "\Foo");
+});
+
+uasort($foo_array, function($a, $b) {
   exprtype($a, "\Foo");
   exprtype($b, "\Foo");
 });
 
 array_map(function($a) {
-  $a->f();
   exprtype($a, "\Foo");
 }, $foo_array);
 
 array_map(function($a, $b) {
-  $a->f();
-  $b->b();
   exprtype($a, "\Foo");
   exprtype($b, "\Boo");
 }, $foo_array, $boo_array);
 
 array_walk($foo_array, function($a, $b) {
-  $a->f();
   exprtype($a, "\Foo");
   exprtype($b, "mixed");
 });
 
+array_walk_recursive($foo_array, function($a, $b) {
+  exprtype($a, "\Foo");
+  exprtype($b, "mixed");
+});
+
+array_filter($foo_array, function($a) {
+  exprtype($a, "\Foo");
+});
+
+array_reduce($foo_array, function($carry, $item) {
+  exprtype($carry, "\Foo");
+  exprtype($item, "\Foo");
+});
+
 some_function_without_model(function($b) {
-  $b->f();
   exprtype($b, "mixed");
 }, $d);
 
@@ -1956,21 +1972,15 @@ $boo_array = return_boo();
 $poo_array = return_poo();
 
 array_map(function($a) {
-  $a->f();
   exprtype($a, "\Foo");
 }, $foo_array);
 
 array_map(function($a, $b) {
-  $a->f();
-  $b->b();
   exprtype($a, "\Foo");
   exprtype($b, "\Boo");
 }, $foo_array, $boo_array);
 
 array_map(function($a, $b, $c) {
-  $a->f();
-  $b->b();
-  $c->p();
   exprtype($a, "\Foo");
   exprtype($b, "\Boo");
   exprtype($c, "\Poo");

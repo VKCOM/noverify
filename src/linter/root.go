@@ -1330,15 +1330,15 @@ func (d *RootWalker) parseTypeNode(n node.Node) (typ meta.TypesMap, ok bool) {
 	return tm, !tm.IsEmpty()
 }
 
-func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap, sc *meta.Scope, ci *solver.ClosureCallerInfo) (args []meta.FuncParam, minArgs int) {
+func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (args []meta.FuncParam, minArgs int) {
 	if len(params) == 0 {
 		return nil, 0
 	}
 
 	args = make([]meta.FuncParam, 0, len(params))
 
-	if ci != nil {
-		model, haveModel := ci.Model()
+	if closureSolver != nil {
+		model, haveModel := closureSolver.Model()
 
 		for i, param := range params {
 			p := param.(*node.Parameter)
