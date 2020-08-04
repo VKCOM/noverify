@@ -1,11 +1,12 @@
-package linttest_test
+package checkers_test
 
 import (
 	"testing"
 
+	"github.com/client9/misspell"
+
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
-	"github.com/client9/misspell"
 )
 
 func init() {

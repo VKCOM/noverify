@@ -1,4 +1,4 @@
-package linttest_test
+package checkers_test
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ func TestShapePropertyFetch(t *testing.T) {
 	// property fetch syntax.
 
 	test := linttest.NewSuite(t)
-	addNamedFile(test, "a/b/test.php", `<?php
+	linttest.AddNamedFile(test, "a/b/test.php", `<?php
 /**
  * @param \shape(x:int,y:float) $s
  */

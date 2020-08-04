@@ -1,4 +1,4 @@
-package linttest_test
+package checkers_test
 
 import (
 	"testing"
@@ -203,7 +203,7 @@ func TestIssue16(t *testing.T) {
 		"Call to undefined method {mixed}->format()",
 		"Class constant \\TestExInterface::TEST2 does not exist",
 	}
-	runFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefined")
 }
 
 func TestIssue26_1(t *testing.T) {
@@ -290,7 +290,7 @@ func TestIssue37(t *testing.T) {
 			}
 		}
 	}`)
-	runFilterMatch(test, "unused")
+	linttest.RunFilterMatch(test, "unused")
 }
 
 func TestIssue78_1(t *testing.T) {

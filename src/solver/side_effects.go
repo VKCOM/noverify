@@ -1,4 +1,4 @@
-package linter
+package solver
 
 import (
 	"github.com/VKCOM/noverify/src/meta"
@@ -8,10 +8,9 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node/name"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
-	"github.com/VKCOM/noverify/src/solver"
 )
 
-func sideEffectFreeFunc(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, stmts []node.Node) bool {
+func SideEffectFreeFunc(sc *meta.Scope, st *meta.ClassParseState, customTypes []CustomType, stmts []node.Node) bool {
 	// TODO: functions that call pure functions are also pure.
 	// TODO: allow local var assignments those RHS is pure.
 	f := sideEffectsFinder{sc: sc, st: st, customTypes: customTypes}
@@ -20,7 +19,11 @@ func sideEffectFreeFunc(sc *meta.Scope, st *meta.ClassParseState, customTypes []
 	return !f.sideEffects
 }
 
-func sideEffectFree(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, n node.Node) bool {
+// SideEffectFree reports whether n is a side effect free expression.
+//
+// If indexing is completed, some function calls may be permitted as well
+// if they're proven to be side effect free as well.
+func SideEffectFree(sc *meta.Scope, st *meta.ClassParseState, customTypes []CustomType, n node.Node) bool {
 	f := sideEffectsFinder{sc: sc, st: st, customTypes: customTypes}
 	n.Walk(&f)
 	return !f.sideEffects
@@ -29,7 +32,7 @@ func sideEffectFree(sc *meta.Scope, st *meta.ClassParseState, customTypes []solv
 type sideEffectsFinder struct {
 	sc          *meta.Scope
 	st          *meta.ClassParseState
-	customTypes []solver.CustomType
+	customTypes []CustomType
 
 	sideEffects bool
 }
@@ -133,11 +136,15 @@ func (f *sideEffectsFinder) functionCallIsPure(n *expr.FunctionCall) bool {
 		}
 	}
 
-	call := resolveFunctionCall(f.sc, f.st, f.customTypes, n)
-	if !call.defined || !call.canAnalyze || call.fqName == "" {
+	fqName, ok := GetFuncName(f.st, n.Function)
+	if !ok {
 		return false
 	}
-	return call.info.IsPure() && call.info.ExitFlags == 0
+	info, ok := meta.Info.GetFunction(fqName)
+	if !ok {
+		return false
+	}
+	return info.IsPure() && info.ExitFlags == 0
 }
 
 func (f *sideEffectsFinder) staticCallIsPure(n *expr.StaticCall) bool {
@@ -148,11 +155,11 @@ func (f *sideEffectsFinder) staticCallIsPure(n *expr.StaticCall) bool {
 	if !ok {
 		return false
 	}
-	className, ok := solver.GetClassName(f.st, n.Class)
+	className, ok := GetClassName(f.st, n.Class)
 	if !ok {
 		return false
 	}
-	m, ok := solver.FindMethod(className, methodName.Value)
+	m, ok := FindMethod(className, methodName.Value)
 	return ok && m.Info.IsPure() && m.Info.ExitFlags == 0
 }
 
@@ -164,12 +171,12 @@ func (f *sideEffectsFinder) methodCallIsPure(n *expr.MethodCall) bool {
 	if !ok {
 		return false
 	}
-	typ := solver.ExprTypeCustom(f.sc, f.st, n.Variable, f.customTypes)
+	typ := ExprTypeCustom(f.sc, f.st, n.Variable, f.customTypes)
 	if typ.Len() != 1 || typ.Is("mixed") {
 		return false
 	}
 	return typ.Find(func(typ string) bool {
-		m, ok := solver.FindMethod(typ, methodName.Value)
+		m, ok := FindMethod(typ, methodName.Value)
 		if meta.IsInternalClass(m.ClassName) {
 			return false
 		}

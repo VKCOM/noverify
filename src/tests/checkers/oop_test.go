@@ -1,4 +1,4 @@
-package linttest_test
+package checkers_test
 
 import (
 	"testing"
@@ -527,7 +527,7 @@ func TestClosureLateBinding(t *testing.T) {
 		"Undefined variable: a",
 		"Call to undefined method {mixed}->method()",
 	}
-	runFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefined")
 }
 
 func TestProtected(t *testing.T) {
@@ -592,7 +592,7 @@ func TestProtected(t *testing.T) {
 		`Cannot access protected method \A->methodFromClosure2()`,
 		`Cannot access protected method \A::staticMethod2()`,
 	}
-	runFilterMatch(test, "accessLevel")
+	linttest.RunFilterMatch(test, "accessLevel")
 }
 
 func TestInvoke(t *testing.T) {
@@ -609,7 +609,7 @@ func TestInvoke(t *testing.T) {
 	(new Example())();
 	`)
 	test.Expect = []string{"Too few arguments"}
-	runFilterMatch(test, "argCount")
+	linttest.RunFilterMatch(test, "argCount")
 }
 
 func TestTraversable(t *testing.T) {
@@ -652,7 +652,7 @@ func TestTraversable(t *testing.T) {
 	test.Expect = []string{
 		`Objects returned by \Example::getIterator() must be traversable or implement interface \Iterator`,
 	}
-	runFilterMatch(test, "stdInterface")
+	linttest.RunFilterMatch(test, "stdInterface")
 }
 
 func TestInstanceOfElseif2(t *testing.T) {
@@ -767,7 +767,7 @@ func TestInstanceOf(t *testing.T) {
 		`Call to undefined method {void}->get2()`,
 		`Call to undefined method {\Element}->callUndefinedMethod()`,
 	}
-	runFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefined")
 }
 
 func TestNullableTypes(t *testing.T) {
@@ -1067,7 +1067,7 @@ trait AbstractTraitAB {
 
 		`Class \T6\Bad must implement \T6\TraitAbstractA::a method`,
 	}
-	runFilterMatch(test, `unimplemented`, `nameCase`, `undefined`)
+	linttest.RunFilterMatch(test, `unimplemented`, `nameCase`, `undefined`)
 }
 
 func TestInterfaceRules(t *testing.T) {

@@ -1,4 +1,4 @@
-package linttest_test
+package golden_test
 
 import (
 	"encoding/json"
@@ -230,7 +230,7 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 		"build",
 		"-o", "phplinter.exe",
 		"-race",
-		"../../", // Using relative target to avoid problems with modules/vendor/GOPATH
+		"../../../", // Using relative target to avoid problems with modules/vendor/GOPATH
 	}
 	out, err := exec.Command("go", goArgs...).CombinedOutput()
 	if err != nil {
@@ -268,7 +268,12 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 			}
 			args = append(args, target.srcDir)
 
-			out, err := exec.Command("./phplinter.exe", args...).CombinedOutput()
+			// Use GORACE=history_size to increase the stacktrace limit.
+			// See https://github.com/golang/go/issues/10661
+			phplinterCmd := exec.Command("./phplinter.exe", args...)
+			phplinterCmd.Env = append([]string{}, os.Environ()...)
+			phplinterCmd.Env = append(phplinterCmd.Env, "GORACE=history_size=7")
+			out, err := phplinterCmd.CombinedOutput()
 			if err != nil {
 				t.Fatalf("%v: %s", err, out)
 			}
@@ -342,6 +347,8 @@ func runGoldenTest(t *testing.T, target *goldenTest) {
 		`stubs/phpstorm-stubs/standard/standard_9.php`,
 	}
 
+	misspellList := "Eng"
+
 	t.Run(target.name, func(t *testing.T) {
 		phpFiles, err := findPHPFiles(target.srcDir)
 		if err != nil {
@@ -357,8 +364,9 @@ func runGoldenTest(t *testing.T, target *goldenTest) {
 			if err != nil {
 				t.Fatalf("read PHP file: %v", err)
 			}
-			addNamedFile(test, f, string(code))
+			linttest.AddNamedFile(test, f, string(code))
 		}
+		test.MisspellList = misspellList
 
 		disable := map[string]bool{}
 		for _, checkName := range target.disable {

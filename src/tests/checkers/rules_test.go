@@ -1,4 +1,4 @@
-package linttest_test
+package checkers_test
 
 import (
 	"strings"
@@ -23,16 +23,16 @@ function bad() { return 0; }
 function good() { return 1; }
 `)
 
-	addNamedFile(test, `/elseif_cond1.php`, `<?php
+	linttest.AddNamedFile(test, `/elseif_cond1.php`, `<?php
 if (good()) {
 } elseif (bad()) {}`)
 
-	addNamedFile(test, `/elseif_cond2.php`, `<?php
+	linttest.AddNamedFile(test, `/elseif_cond2.php`, `<?php
 if (good()) {
 } elseif (bad()) {
 } elseif (bad()) {}`)
 
-	addNamedFile(test, `/if_cond.php`, `<?php
+	linttest.AddNamedFile(test, `/if_cond.php`, `<?php
 	if (bad()) {
 	} elseif (good()) {}`)
 
@@ -60,9 +60,9 @@ eval(${"var"});
           eval($hello);
           eval('echo 456;');
         `
-	addNamedFile(test, "/home/john/my/site/foo.php", code)
-	addNamedFile(test, "/home/john/my/site/ads_foo.php", code)
-	addNamedFile(test, "/home/john/my/site/ads_bar.php", code)
+	linttest.AddNamedFile(test, "/home/john/my/site/foo.php", code)
+	linttest.AddNamedFile(test, "/home/john/my/site/ads_foo.php", code)
+	linttest.AddNamedFile(test, "/home/john/my/site/ads_bar.php", code)
 	test.Expect = []string{
 		`don't eval from variable`,
 		`don't eval from variable`,

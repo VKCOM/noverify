@@ -1,4 +1,4 @@
-package linttest_test
+package checkers_test
 
 import (
 	"testing"
@@ -187,7 +187,7 @@ function danglingCaret() {
 		`dangling or redundant ^, maybe \^ is intended?`,
 		`dangling or redundant ^, maybe \^ is intended?`,
 	}
-	runFilterMatch(test, `regexpVet`)
+	linttest.RunFilterMatch(test, `regexpVet`)
 }
 
 func TestREVet_2(t *testing.T) {
@@ -235,7 +235,7 @@ function f($s) {
 		`'-' is duplicated in [\w-\.-]`,
 		`'/' intersects with '\/' in [/\/]`,
 	}
-	runFilterMatch(test, `regexpVet`)
+	linttest.RunFilterMatch(test, `regexpVet`)
 }
 
 func TestREVet_4(t *testing.T) {

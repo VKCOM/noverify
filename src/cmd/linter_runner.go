@@ -103,7 +103,7 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, args *cmdlineArguments) error
 	}
 
 	if args.misspellList != "" {
-		err := l.loadMisspellDicts(strings.Split(args.misspellList, ","))
+		err := LoadMisspellDicts(strings.Split(args.misspellList, ","))
 		if err != nil {
 			return err
 		}
@@ -136,27 +136,6 @@ func (l *linterRunner) initBaseline() error {
 		return err
 	}
 	linter.BaselineProfile = profile
-	return nil
-}
-
-func (l *linterRunner) loadMisspellDicts(dicts []string) error {
-	linter.TypoFixer = &misspell.Replacer{}
-
-	for _, d := range dicts {
-		d = strings.TrimSpace(d)
-		switch {
-		case d == "Eng":
-			linter.TypoFixer.AddRuleList(misspell.DictMain)
-		case d == "Eng/US":
-			linter.TypoFixer.AddRuleList(misspell.DictAmerican)
-		case d == "Eng/UK" || d == "Eng/GB":
-			linter.TypoFixer.AddRuleList(misspell.DictBritish)
-		default:
-			return fmt.Errorf("unsupported %s misspell-list entry", d)
-		}
-	}
-
-	linter.TypoFixer.Compile()
 	return nil
 }
 
@@ -224,5 +203,26 @@ func (l *linterRunner) initRules(ruleSets []*rules.Set) error {
 		appendRuleSet(rset, ruleFilter)
 	}
 
+	return nil
+}
+
+func LoadMisspellDicts(dicts []string) error {
+	linter.TypoFixer = &misspell.Replacer{}
+
+	for _, d := range dicts {
+		d = strings.TrimSpace(d)
+		switch {
+		case d == "Eng":
+			linter.TypoFixer.AddRuleList(misspell.DictMain)
+		case d == "Eng/US":
+			linter.TypoFixer.AddRuleList(misspell.DictAmerican)
+		case d == "Eng/UK" || d == "Eng/GB":
+			linter.TypoFixer.AddRuleList(misspell.DictBritish)
+		default:
+			return fmt.Errorf("unsupported %s misspell-list entry", d)
+		}
+	}
+
+	linter.TypoFixer.Compile()
 	return nil
 }
