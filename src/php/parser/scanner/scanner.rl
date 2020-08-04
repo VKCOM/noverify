@@ -237,6 +237,7 @@ func (lex *Lexer) Lex(lval Lval) int {
             'foreach'i                        => {lex.setTokenPosition(token); tok = T_FOREACH; fbreak;};
             'function'i | 'cfunction'i        => {lex.setTokenPosition(token); tok = T_FUNCTION; fbreak;};
             'fn'i                             => {lex.setTokenPosition(token); tok = T_FN; fbreak;};
+            'fn'i                             => {lex.setTokenPosition(token); tok = T_FN; fbreak;};
             'global'i                         => {lex.setTokenPosition(token); tok = T_GLOBAL; fbreak;};
             'goto'i                           => {lex.setTokenPosition(token); tok = T_GOTO; fbreak;};
             'if'i                             => {lex.setTokenPosition(token); tok = T_IF; fbreak;};
