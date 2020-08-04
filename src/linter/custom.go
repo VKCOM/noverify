@@ -132,6 +132,10 @@ func (ctx *RootContext) Report(n node.Node, level int, checkName, msg string, ar
 	ctx.w.Report(n, level, checkName, msg, args...)
 }
 
+func (ctx *RootContext) ReportByLine(lineNumber, level int, checkName, msg string, args ...interface{}) {
+	ctx.w.ReportByLine(lineNumber, level, checkName, msg, args...)
+}
+
 // Scope returns variables declared at root level.
 func (ctx *RootContext) Scope() *meta.Scope {
 	return ctx.w.scope()
@@ -181,6 +185,10 @@ func (ctx *BlockContext) ExprType(e node.Node) meta.TypesMap {
 // issue being reported.
 func (ctx *BlockContext) Report(n node.Node, level int, checkName, msg string, args ...interface{}) {
 	ctx.w.r.Report(n, level, checkName, msg, args...)
+}
+
+func (ctx *BlockContext) ReportByLine(lineNumber, level int, checkName, msg string, args ...interface{}) {
+	ctx.w.r.ReportByLine(lineNumber, level, checkName, msg, args...)
 }
 
 // Scope returns variables declared in this block.
