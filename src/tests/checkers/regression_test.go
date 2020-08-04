@@ -1246,7 +1246,7 @@ function f($x) {
 
 func TestIssue547(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.AddStubs([]string{`stubs/phpstorm-stubs/standard/standard_3.php`})
+	test.LoadStubs = []string{`stubs/phpstorm-stubs/standard/standard_3.php`}
 	test.AddFile(`<?php
 putenv("A=1");
 \putenv("B=2");
@@ -1387,7 +1387,7 @@ class A {
 
 func TestIssue556(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.AddStubs([]string{`stubs/phpstorm-stubs/Core/Core_c.php`})
+	test.LoadStubs = []string{`stubs/phpstorm-stubs/Core/Core_c.php`}
 	test.AddFile(`<?php
 /**
  * @param \ArrayAccess|array $v

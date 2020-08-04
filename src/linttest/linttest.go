@@ -74,7 +74,8 @@ type Suite struct {
 
 	AllowDisable *regexp.Regexp
 
-	LoadStubs map[string]struct{}
+	defaultStubs map[string]struct{}
+	LoadStubs    []string
 
 	MisspellList string
 }
@@ -83,7 +84,7 @@ type Suite struct {
 func NewSuite(t testing.TB) *Suite {
 	return &Suite{
 		t: t,
-		LoadStubs: map[string]struct{}{
+		defaultStubs: map[string]struct{}{
 			`stubs/phpstorm-stubs/Core/Core.php`:   {},
 			`stubs/phpstorm-stubs/Core/Core_c.php`: {},
 			`stubs/phpstorm-stubs/Core/Core_d.php`: {},
@@ -184,14 +185,15 @@ func (s *Suite) Match(reports []*linter.Report) {
 func (s *Suite) RunLinter() []*linter.Report {
 	meta.ResetInfo()
 
-	if len(s.LoadStubs) != 0 {
-		var stubs []string
-		for key := range s.LoadStubs {
-			stubs = append(stubs, key)
-		}
-		if err := cmd.LoadEmbeddedStubs(stubs); err != nil {
-			s.t.Fatalf("load stubs: %v", err)
-		}
+	for _, stub := range s.LoadStubs {
+		s.defaultStubs[stub] = struct{}{}
+	}
+	stubs := make([]string, 0, len(s.defaultStubs))
+	for stub := range s.defaultStubs {
+		stubs = append(stubs, stub)
+	}
+	if err := cmd.LoadEmbeddedStubs(stubs); err != nil {
+		s.t.Fatalf("load stubs: %v", err)
 	}
 
 	if s.MisspellList != "" {
@@ -223,12 +225,6 @@ func (s *Suite) RunLinter() []*linter.Report {
 	}
 
 	return reports
-}
-
-func (s *Suite) AddStubs(stubs []string) {
-	for _, stub := range stubs {
-		s.LoadStubs[stub] = struct{}{}
-	}
 }
 
 // ParseTestFile parses given test file.
