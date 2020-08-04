@@ -511,7 +511,7 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 	d.report(n, 0, level, checkName, msg, args...)
 }
 
-// ReportByLine registers a single report message about some found problem in lineIndex code line.
+// ReportByLine registers a single report message about some found problem in lineNumber code line.
 func (d *RootWalker) ReportByLine(lineNumber int, level int, checkName, msg string, args ...interface{}) {
 	d.report(nil, lineNumber, level, checkName, msg, args...)
 }
