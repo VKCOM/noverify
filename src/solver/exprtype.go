@@ -115,15 +115,6 @@ func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*expr.ArrayItem
 
 	firstElementType := ExprTypeLocal(sc, cs, items[0])
 
-	switch {
-	case firstElementType.Is("string") && isConstantStringArray(items):
-		return meta.NewTypesMap("string[]")
-	case firstElementType.Is("int") && isConstantIntArray(items):
-		return meta.NewTypesMap("int[]")
-	case firstElementType.Is("float") && isConstantFloatArray(items):
-		return meta.NewTypesMap("float[]")
-	}
-
 	for _, item := range items[1:] {
 		itemType := ExprTypeLocal(sc, cs, item)
 		if !firstElementType.Equals(itemType) {
@@ -137,36 +128,6 @@ func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*expr.ArrayItem
 	})
 
 	return wrapped
-}
-
-func isConstantStringArray(items []*expr.ArrayItem) bool {
-	for _, item := range items {
-		if _, ok := item.Val.(*scalar.String); !ok {
-			return false
-		}
-	}
-
-	return true
-}
-
-func isConstantIntArray(items []*expr.ArrayItem) bool {
-	for _, item := range items {
-		if _, ok := item.Val.(*scalar.Lnumber); !ok {
-			return false
-		}
-	}
-
-	return true
-}
-
-func isConstantFloatArray(items []*expr.ArrayItem) bool {
-	for _, item := range items {
-		if _, ok := item.Val.(*scalar.Dnumber); !ok {
-			return false
-		}
-	}
-
-	return true
 }
 
 // CustomType specifies a mapping between some AST structure and concrete type (e.g. for <expr> instanceof <something>)
