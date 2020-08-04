@@ -646,7 +646,8 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 		ctx:          &blockContext{sc: sc},
 		r:            d,
 		unusedVars:   make(map[string][]node.Node),
-		nonLocalVars: make(map[string]struct{}),
+		nonLocalVars: make(map[string]variableKind),
+		path:         newNodePath(),
 	}
 	for _, createFn := range d.customBlock {
 		b.custom = append(b.custom, createFn(&BlockContext{w: b}))
@@ -673,13 +674,13 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 		if !byRef {
 			b.unusedVars[v.Name] = append(b.unusedVars[v.Name], v)
 		} else {
-			b.nonLocalVars[v.Name] = struct{}{}
+			b.nonLocalVars[v.Name] = varRef
 		}
 	}
 
 	for _, p := range params {
 		if p.IsRef {
-			b.nonLocalVars[p.Name] = struct{}{}
+			b.nonLocalVars[p.Name] = varRef
 		}
 	}
 	for _, s := range stmts {
@@ -1059,7 +1060,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	if modif.final {
 		funcFlags |= meta.FuncFinal
 	}
-	if !insideInterface && !modif.abstract && sideEffectFreeFunc(d.scope(), d.ctx.st, nil, stmts) {
+	if !insideInterface && !modif.abstract && solver.SideEffectFreeFunc(d.scope(), d.ctx.st, nil, stmts) {
 		funcFlags |= meta.FuncPure
 	}
 	class.Methods.Set(nm, meta.FuncInfo{
@@ -1504,7 +1505,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	}
 
 	var funcFlags meta.FuncFlags
-	if sideEffectFreeFunc(d.scope(), d.ctx.st, nil, fun.Stmts) {
+	if solver.SideEffectFreeFunc(d.scope(), d.ctx.st, nil, fun.Stmts) {
 		funcFlags |= meta.FuncPure
 	}
 	d.meta.Functions.Set(nm, meta.FuncInfo{
@@ -1802,7 +1803,7 @@ func (d *RootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filter
 		if !d.checkTypeFilter(filter.Type, sc, nn) {
 			return false
 		}
-		if filter.Pure && !sideEffectFree(d.scope(), d.ctx.st, nil, nn) {
+		if filter.Pure && !solver.SideEffectFree(d.scope(), d.ctx.st, nil, nn) {
 			return false
 		}
 	}
@@ -1948,7 +1949,7 @@ func (d *RootWalker) afterLeaveFile() {
 			props := make(meta.PropertiesMap)
 			for _, p := range shape.props {
 				props[p.key] = meta.PropertyInfo{
-					Typ:         newTypesMap(&d.ctx, p.types),
+					Typ:         newTypesMap(&d.ctx, p.types).Immutable(),
 					AccessLevel: meta.Public,
 				}
 			}

@@ -1,4 +1,4 @@
-package linttest_test
+package checkers_test
 
 import (
 	"log"
@@ -11,6 +11,101 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
 )
+
+func TestIntOverflow(t *testing.T) {
+	// See https://bugs.php.net/bug.php?id=53934
+
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+// Overflow cases.
+echo -9223372036854775808;
+echo 9223372036854775808;
+echo 9223372036854775807000;
+
+// Valid cases.
+echo 9223372036854775807;
+echo -9223372036854775807;
+echo 123;
+echo -9223372036854775807 - 1;
+
+// Explicit float literals are OK.
+echo 9223372036854775807000.0;
+echo -9223372036854775807000.0;
+echo -9.2233720368548E+18;
+`)
+	test.Expect = []string{
+		`9223372036854775808 will be interpreted as float due to the overflow`,
+		`9223372036854775808 will be interpreted as float due to the overflow`,
+		`9223372036854775807000 will be interpreted as float due to the overflow`,
+	}
+	test.RunAndMatch()
+}
+
+func TestDupGlobalRoot(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+global $x;
+global $x;
+`)
+}
+
+func TestDupGlobalCond(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+function both_conditional($cond1, $cond2) {
+  if ($cond1) {
+    global $x3;
+    return $x3;
+  }
+  if ($cond2) {
+    global $x3;
+    return $x3;
+  }
+  return 0;
+}
+`)
+}
+
+func TestDupGlobalSameStatement(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f1($cond) {
+  if ($cond) {
+    // global is conditional, but contains local duplicates.
+    global $x, $x;
+  }
+}
+`)
+	test.Expect = []string{`global statement mentions $x more than once`}
+	test.RunAndMatch()
+}
+
+func TestDupGlobal(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f1() {
+  global $x1, $x1;
+  return $x1;
+}
+
+function f2() {
+  global $x2;
+  global $x2;
+  return $x2;
+}
+
+function f3() {
+  global $x3;
+  global $x4;
+  global $x3;
+  return $x3 + $x4;
+}
+`)
+	test.Expect = []string{
+		`global statement mentions $x1 more than once`,
+		`$x2 already global'ed above`,
+		`$x3 already global'ed above`,
+	}
+	test.RunAndMatch()
+}
 
 func TestStrictCmp(t *testing.T) {
 	test := linttest.NewSuite(t)
@@ -355,7 +450,7 @@ func TestCallStaticParent(t *testing.T) {
 		}
 	}
 `)
-	runFilterMatch(test, "callStatic")
+	linttest.RunFilterMatch(test, "callStatic")
 }
 
 func TestVoidResultUsedInAssignment(t *testing.T) {
@@ -469,7 +564,7 @@ func TestCallStatic(t *testing.T) {
 		`Calling static method as instance method`,
 		`Calling instance method as static method`,
 	}
-	runFilterMatch(test, "callStatic")
+	linttest.RunFilterMatch(test, "callStatic")
 }
 
 func TestForeachList(t *testing.T) {
@@ -681,7 +776,7 @@ class Foo {
 		"Undefined variable: argc",
 	}
 
-	runFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefined")
 }
 
 func TestAutogenSkip(t *testing.T) {
@@ -953,7 +1048,7 @@ func TestUnusedInSwitch(t *testing.T) {
 		return 20;
 	}`)
 	test.Expect = []string{`Variable x is unused`}
-	runFilterMatch(test, "unused")
+	linttest.RunFilterMatch(test, "unused")
 }
 
 func TestSwitchContinue1(t *testing.T) {
@@ -1614,7 +1709,7 @@ func_A();
 		`Method_a should be spelled method_a`,
 		`\func_A should be spelled \func_a`,
 	}
-	runFilterMatch(test, `nameCase`)
+	linttest.RunFilterMatch(test, `nameCase`)
 }
 
 func TestClassNotFound(t *testing.T) {
@@ -1761,7 +1856,7 @@ function f() {
 		"Undefined variable: x",
 		"Undefined variable: y",
 	}
-	runFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefined")
 }
 
 func TestAssignByRef(t *testing.T) {
@@ -1783,30 +1878,4 @@ echo UNDEFINED_CONST;
 `)
 	test.Expect = []string{`Undefined constant UNDEFINED_CONST`}
 	test.RunAndMatch()
-}
-
-func addNamedFile(test *linttest.Suite, name, code string) {
-	test.Files = append(test.Files, linttest.TestFile{
-		Name: name,
-		Data: []byte(code),
-	})
-}
-
-func runFilterMatch(test *linttest.Suite, names ...string) {
-	test.Match(filterReports(names, test.RunLinter()))
-}
-
-func filterReports(names []string, reports []*linter.Report) []*linter.Report {
-	set := make(map[string]struct{})
-	for _, name := range names {
-		set[name] = struct{}{}
-	}
-
-	var out []*linter.Report
-	for _, r := range reports {
-		if _, ok := set[r.CheckName]; ok {
-			out = append(out, r)
-		}
-	}
-	return out
 }

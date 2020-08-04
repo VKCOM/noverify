@@ -1,9 +1,11 @@
-package linttest_test
+package exprtype_test
 
 import (
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
@@ -13,7 +15,6 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/walker"
-	"github.com/google/go-cmp/cmp"
 )
 
 // Tests in this file make it less likely that type solving will break
@@ -1800,6 +1801,72 @@ exprtype($a--, "float");
 exprtype(++$a, "float");
 exprtype(--$a, "float");
 
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestTypesListOverTuple(t *testing.T) {
+	code := `<?php
+class Boo {}
+
+/**
+ * @return \tuple(int, \Boo, int, string)
+ */
+function foo() {
+    return [5, new Boo(), 10, "gas"];
+}
+
+$tuple = foo();
+
+[$i, $bo, $j, $str] = $tuple; // With short syntax
+
+exprtype($i, "int");
+exprtype($bo, "\Boo");
+exprtype($j, "int");
+exprtype($str, "string");
+
+
+list($old_i, $old_bo, $old_j, $old_str) = $tuple; // With old syntax
+
+exprtype($old_i, "int");
+exprtype($old_bo, "\Boo");
+exprtype($old_j, "int");
+exprtype($old_str, "string");
+
+
+class Bar {
+	/**
+	 * @return \tuple(int, \Boo, int, string)
+	 */
+	static function foo() {
+	    return [5, new Boo(), 10, "gas"];
+	}
+}
+
+$class_static_tuple = Bar::foo();
+
+[$class_static_i, $class_static_bo, $class_static_j, $class_static_str] = $class_static_tuple;
+
+exprtype($class_static_i, "int");
+exprtype($class_static_bo, "\Boo");
+exprtype($class_static_j, "int");
+exprtype($class_static_str, "string");
+
+
+[$function_i, $function_bo, $function_j, $function_str] = Bar::foo();
+
+exprtype($function_i, "int");
+exprtype($function_bo, "\Boo");
+exprtype($function_j, "int");
+exprtype($function_str, "string");
+
+$tuple_int = 10;
+[$tuple_int_i, $tuple_int_foo, $tuple_int_j, $tuple_int_str] = $tuple_int;
+
+exprtype($tuple_int_i, "unknown_from_list");
+exprtype($tuple_int_foo, "unknown_from_list");
+exprtype($tuple_int_j, "unknown_from_list");
+exprtype($tuple_int_str, "unknown_from_list");
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }

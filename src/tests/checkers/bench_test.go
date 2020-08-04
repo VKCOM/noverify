@@ -1,4 +1,4 @@
-package linttest_test
+package checkers_test
 
 import (
 	"strings"

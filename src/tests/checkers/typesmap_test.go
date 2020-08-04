@@ -1,4 +1,4 @@
-package linttest
+package checkers_test
 
 import (
 	"testing"
