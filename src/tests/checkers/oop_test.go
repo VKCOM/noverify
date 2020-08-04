@@ -271,18 +271,24 @@ func TestNonPublicMagicMethods(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 class A {
-  private static function __call($name, $arguments) {} // The magic method __call() must have public visibility
-  protected function __toString() {} // The magic method __call() must have public visibility
   public static function __set($name, $value) {} // The magic method __set() cannot be static
+  protected function __toString() {} // The magic method __call() must have public visibility
   public function __callStatic($name, $arguments) {} // The magic method __callStatic() must be static
+  public static function __destruct($name, $arguments) {} // The magic method __destruct() cannot be static
+  public static function __construct($name, $arguments) {} // The magic method __construct() cannot be static
+  private static function __call($name, $arguments) {} // The magic method __call() must have public visibility
+  private static function __callStatic($name, $arguments) {} // The magic method __callStatic() must have public visibility
 }`)
 
 	test.Expect = []string{
+		"The magic method __set() cannot be static",
+		"The magic method __toString() must have public visibility",
+		"The magic method __callStatic() must be static",
+		"The magic method __destruct() cannot be static",
+		"The magic method __construct() cannot be static",
 		"The magic method __call() cannot be static",
 		"The magic method __call() must have public visibility",
-		"The magic method __toString() must have public visibility",
-		"The magic method __set() cannot be static",
-		"The magic method __callStatic() must be static",
+		"The magic method __callStatic() must have public visibility",
 	}
 	test.RunAndMatch()
 }
@@ -293,12 +299,13 @@ class A {
   public function __call($name, $arguments) {} // Ok
   public function __toString() {} // Ok
   public function __set($name, $value) {} // Ok
-  public static function __callStatic($name, $arguments) {} // Ok
   public function __get($name) {} // Ok
   public function __clone() {} // Ok
-  protected function __construct() {} // Ok
-  private function __construct() {} // Ok
   public function __construct() {} // Ok
+  private function __construct() {} // Ok
+  protected function __construct() {} // Ok
+  public static function __callStatic($name, $arguments) {} // Ok
+  private static function __some_method() {} // Ok, not magic
 }`)
 }
 

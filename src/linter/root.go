@@ -786,10 +786,7 @@ func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodMod
 
 func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodModifiers) {
 	switch name {
-	case " __construct",
-		"__destruct",
-		"__call",
-		"__callStatic",
+	case "__call",
 		"__get",
 		"__set",
 		"__isset",
@@ -804,14 +801,26 @@ func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodM
 		"__clone",
 		"__debugInfo":
 
-		if modif.static && name != "__callStatic" {
+		if modif.static {
 			d.Report(meth, LevelError, "magicMethod", "The magic method %s() cannot be static", name)
-		} else if !modif.static && name == "__callStatic" {
-			d.Report(meth, LevelError, "magicMethod", "The magic method %s() must be static", name)
 		}
-		if modif.accessLevel != meta.Public && name != "__construct" {
+		if modif.accessLevel != meta.Public {
 			d.Report(meth, LevelError, "magicMethod", "The magic method %s() must have public visibility", name)
 		}
+
+	case "__construct", "__destruct":
+		if modif.static {
+			d.Report(meth, LevelError, "magicMethod", "The magic method %s() cannot be static", name)
+		}
+
+	case "__callStatic":
+		if !modif.static {
+			d.Report(meth, LevelError, "magicMethod", "The magic method %s() must be static", name)
+		}
+		if modif.accessLevel != meta.Public {
+			d.Report(meth, LevelError, "magicMethod", "The magic method %s() must have public visibility", name)
+		}
+
 	default:
 		return
 	}
