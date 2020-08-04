@@ -301,6 +301,36 @@ class A {
   public function __set($name, $value) {} // Ok
   public function __get($name) {} // Ok
   public function __clone() {} // Ok
+
+  public function __set_state() {} // Ok
+  private function __set_state() {} // Ok, can be non-public
+  protected function __set_state() {} // Ok, can be non-public
+  public static function __set_state() {} // Ok, can be static
+
+  public function __sleep() {} // Ok
+  private function __sleep() {} // Ok, can be non-public
+  protected function __sleep() {} // Ok, can be non-public
+  public static function __sleep() {} // Ok, can be static
+
+  public function __wakeup() {} // Ok
+  private function __wakeup() {} // Ok, can be non-public
+  protected function __wakeup() {} // Ok, can be non-public
+  public static function __wakeup() {} // Ok, can be static
+
+  public function __serialize() {} // Ok
+  private function __serialize() {} // Ok, can be non-public
+  protected function __serialize() {} // Ok, can be non-public
+  public static function __serialize() {} // Ok, can be static
+
+  public function __unserialize() {} // Ok
+  private function __unserialize() {} // Ok, can be non-public
+  protected function __unserialize() {} // Ok, can be non-public
+  public static function __unserialize() {} // Ok, can be static
+
+  public function __clone() {} // Ok
+  private function __clone() {} // Ok, can be non-public
+  protected function __clone() {} // Ok, can be non-public
+
   public function __construct() {} // Ok
   private function __construct() {} // Ok
   protected function __construct() {} // Ok

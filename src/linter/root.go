@@ -791,16 +791,11 @@ func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodM
 		"__set",
 		"__isset",
 		"__unset",
-		"__sleep",
-		"__wakeup",
-		"__serialize",
-		"__unserialize",
 		"__toString",
 		"__invoke",
-		"__set_state",
-		"__clone",
 		"__debugInfo":
 
+		// must be non-static and public
 		if modif.static {
 			d.Report(meth, LevelError, "magicMethod", "The magic method %s() cannot be static", name)
 		}
@@ -808,18 +803,28 @@ func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodM
 			d.Report(meth, LevelError, "magicMethod", "The magic method %s() must have public visibility", name)
 		}
 
-	case "__construct", "__destruct":
+	case "__construct", "__destruct", "__clone":
+		// must be non-static, can be non-public
 		if modif.static {
 			d.Report(meth, LevelError, "magicMethod", "The magic method %s() cannot be static", name)
 		}
 
 	case "__callStatic":
+		// must be static and public
 		if !modif.static {
 			d.Report(meth, LevelError, "magicMethod", "The magic method %s() must be static", name)
 		}
 		if modif.accessLevel != meta.Public {
 			d.Report(meth, LevelError, "magicMethod", "The magic method %s() must have public visibility", name)
 		}
+
+	case "__sleep",
+		"__wakeup",
+		"__serialize",
+		"__unserialize",
+		"__set_state":
+		// can be non-public and static
+		break
 
 	default:
 		return

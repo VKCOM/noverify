@@ -473,9 +473,9 @@ function performance_test() {}`,
 		},
 
 		{
-			Name:    "magicMethod",
+			Name:    "magicMethodDecl",
 			Default: true,
-			Comment: `Report error in magic methods.`,
+			Comment: `Report issues in magic method declarations.`,
 			Before: `class Foo {
   private function __call($method, $args) {} // The magic method __call() must have public visibility
   public static function __set($name, $value) {} // The magic method __set() cannot be static
