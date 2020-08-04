@@ -193,6 +193,28 @@ $_ = [$x]; // Bad
 	test.RunAndMatch()
 }
 
+func TestForeachSimplify(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f() {
+    $x = [];
+
+    foreach ($x as $i => $v) {
+      echo $v;
+    }
+
+    foreach ([1, 2, 3, 4] as $i => $v) {
+      echo $v;
+    }
+}
+`)
+	test.Expect = []string{
+		`foreach key $i is unused, can simplify $i => $v to just $v`,
+		`foreach key $i is unused, can simplify $i => $v to just $v`,
+	}
+	test.RunAndMatch()
+}
+
 func TestBareTry(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
