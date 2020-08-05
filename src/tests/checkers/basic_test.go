@@ -109,7 +109,6 @@ function f3() {
 
 func TestStrictCmp(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.LoadStubs = []string{`stubs/phpstorm-stubs/Core/Core_d.php`}
 	test.AddFile(`<?php
 function f($x) {
   $_ = ($x == false);
@@ -189,6 +188,28 @@ $_ = [$x]; // Bad
 		`Variable might have not been defined: k`,
 		`Variable might have not been defined: v`,
 		`Variable might have not been defined: x`,
+	}
+	test.RunAndMatch()
+}
+
+func TestForeachSimplify(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f() {
+    $x = [];
+
+    foreach ($x as $i => $v) {
+      echo $v;
+    }
+
+    foreach ([1, 2, 3, 4] as $i => $v) {
+      echo $v;
+    }
+}
+`)
+	test.Expect = []string{
+		`foreach key $i is unused, can simplify $i => $v to just $v`,
+		`foreach key $i is unused, can simplify $i => $v to just $v`,
 	}
 	test.RunAndMatch()
 }
@@ -471,10 +492,6 @@ func TestVoidResultUsedInAssignment(t *testing.T) {
 func TestVoidResultUsedInBinary(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	function define($_, $_) {}
-	define('false', 1 == 0);
-	define('true', 1 != 0);
-
 	/**
 	 * @return void
 	 */
@@ -1115,6 +1132,9 @@ func TestBuiltinConstant(t *testing.T) {
 		$_ = NULL;
 		$_ = True;
 		$_ = FaLsE;
+		$_ = false;
+		$_ = true;
+		$_ = null;
 	}`)
 	test.Expect = []string{
 		"Use null instead of NULL",
@@ -1818,9 +1838,6 @@ func TestArrayUnion(t *testing.T) {
 
 func TestCompactImpliesUsage(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-function define($_, $_) {}
-define('null', 0);
-
 // Declaration from phpstorm-stubs
 function compact ($varname, $_ = null) {}
 
@@ -1841,9 +1858,6 @@ function g() {
 func TestCompactWithUndefined(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-function define($_, $_) {}
-define('null', 0);
-
 // Declaration from phpstorm-stubs
 function compact ($varname, $_ = null) {}
 

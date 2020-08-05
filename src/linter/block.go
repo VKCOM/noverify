@@ -1626,6 +1626,26 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 		b.propagateFlags(ctx)
 	}
 
+	key, ok := s.Key.(*node.SimpleVar)
+	if !ok {
+		return false
+	}
+	if IsDiscardVar(key.Name) {
+		return false
+	}
+
+	_, ok = b.unusedVars[key.Name]
+	if ok {
+		variable, ok := s.Variable.(*node.SimpleVar)
+		if !ok {
+			return false
+		}
+
+		delete(b.unusedVars, key.Name)
+
+		b.r.Report(s.Key, LevelError, "unused", "foreach key $%s is unused, can simplify $%s => $%s to just $%s", key.Name, key.Name, variable.Name, variable.Name)
+	}
+
 	return false
 }
 

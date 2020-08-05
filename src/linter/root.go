@@ -511,7 +511,7 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 	d.report(n, 0, level, checkName, msg, args...)
 }
 
-// ReportByLine registers a single report message about some found problem in lineIndex code line.
+// ReportByLine registers a single report message about some found problem in lineNumber code line.
 func (d *RootWalker) ReportByLine(lineNumber int, level int, checkName, msg string, args ...interface{}) {
 	d.report(nil, lineNumber, level, checkName, msg, args...)
 }
@@ -570,9 +570,9 @@ func (d *RootWalker) reportHash(pos *position.Position, startLine []byte, checkN
 
 	return baseline.ReportHash(baseline.HashFields{
 		Filename:  filename,
-		PrevLine:  prevLine,
-		StartLine: startLine,
-		NextLine:  nextLine,
+		PrevLine:  bytes.TrimSuffix(prevLine, []byte("\r")),
+		StartLine: bytes.TrimSuffix(startLine, []byte("\r")),
+		NextLine:  bytes.TrimSuffix(nextLine, []byte("\r")),
 		CheckName: checkName,
 		Message:   msg,
 		Scope:     scope,
