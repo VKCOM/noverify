@@ -3411,6 +3411,19 @@ expr_without_variable:
 
                 yylex.(*Parser).returnTokenToPool(yyDollar, &yyVAL)
             }
+    |   variable T_SR_EQUAL expr
+            {
+                $$ = assign.NewShiftRight($1, $3)
+
+                // save position
+                $$.SetPosition(yylex.(*Parser).positionBuilder.NewNodesPosition($1, $3))
+
+                // save comments
+                yylex.(*Parser).MoveFreeFloating($1, $$)
+                yylex.(*Parser).setFreeFloating($$, freefloating.Var, $2.FreeFloating)
+
+                yylex.(*Parser).returnTokenToPool(yyDollar, &yyVAL)
+            }
      |   variable T_COALESCE_EQUAL expr
     	    {
     	        $$ = assign.NewCoalesce($1, $3)
@@ -3424,20 +3437,6 @@ expr_without_variable:
 
     	        yylex.(*Parser).returnTokenToPool(yyDollar, &yyVAL)
     	    }
-    |   variable T_SR_EQUAL expr
-            {
-                $$ = assign.NewShiftRight($1, $3)
-
-                // save position
-                $$.SetPosition(yylex.(*Parser).positionBuilder.NewNodesPosition($1, $3))
-
-                // save comments
-                yylex.(*Parser).MoveFreeFloating($1, $$)
-                yylex.(*Parser).setFreeFloating($$, freefloating.Var, $2.FreeFloating)
-
-		yylex.(*Parser).returnTokenToPool(yyDollar, &yyVAL)
-            }
-
     |   variable T_INC
             {
                 $$ = expr.NewPostInc($1)
