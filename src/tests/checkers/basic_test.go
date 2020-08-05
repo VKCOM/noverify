@@ -1,4 +1,4 @@
-package linttest_test
+package checkers_test
 
 import (
 	"log"
@@ -12,9 +12,103 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestIntOverflow(t *testing.T) {
+	// See https://bugs.php.net/bug.php?id=53934
+
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+// Overflow cases.
+echo -9223372036854775808;
+echo 9223372036854775808;
+echo 9223372036854775807000;
+
+// Valid cases.
+echo 9223372036854775807;
+echo -9223372036854775807;
+echo 123;
+echo -9223372036854775807 - 1;
+
+// Explicit float literals are OK.
+echo 9223372036854775807000.0;
+echo -9223372036854775807000.0;
+echo -9.2233720368548E+18;
+`)
+	test.Expect = []string{
+		`9223372036854775808 will be interpreted as float due to the overflow`,
+		`9223372036854775808 will be interpreted as float due to the overflow`,
+		`9223372036854775807000 will be interpreted as float due to the overflow`,
+	}
+	test.RunAndMatch()
+}
+
+func TestDupGlobalRoot(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+global $x;
+global $x;
+`)
+}
+
+func TestDupGlobalCond(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+function both_conditional($cond1, $cond2) {
+  if ($cond1) {
+    global $x3;
+    return $x3;
+  }
+  if ($cond2) {
+    global $x3;
+    return $x3;
+  }
+  return 0;
+}
+`)
+}
+
+func TestDupGlobalSameStatement(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f1($cond) {
+  if ($cond) {
+    // global is conditional, but contains local duplicates.
+    global $x, $x;
+  }
+}
+`)
+	test.Expect = []string{`global statement mentions $x more than once`}
+	test.RunAndMatch()
+}
+
+func TestDupGlobal(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f1() {
+  global $x1, $x1;
+  return $x1;
+}
+
+function f2() {
+  global $x2;
+  global $x2;
+  return $x2;
+}
+
+function f3() {
+  global $x3;
+  global $x4;
+  global $x3;
+  return $x3 + $x4;
+}
+`)
+	test.Expect = []string{
+		`global statement mentions $x1 more than once`,
+		`$x2 already global'ed above`,
+		`$x3 already global'ed above`,
+	}
+	test.RunAndMatch()
+}
+
 func TestStrictCmp(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.LoadStubs = []string{`stubs/phpstorm-stubs/Core/Core_d.php`}
 	test.AddFile(`<?php
 function f($x) {
   $_ = ($x == false);
@@ -94,6 +188,28 @@ $_ = [$x]; // Bad
 		`Variable might have not been defined: k`,
 		`Variable might have not been defined: v`,
 		`Variable might have not been defined: x`,
+	}
+	test.RunAndMatch()
+}
+
+func TestForeachSimplify(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f() {
+    $x = [];
+
+    foreach ($x as $i => $v) {
+      echo $v;
+    }
+
+    foreach ([1, 2, 3, 4] as $i => $v) {
+      echo $v;
+    }
+}
+`)
+	test.Expect = []string{
+		`foreach key $i is unused, can simplify $i => $v to just $v`,
+		`foreach key $i is unused, can simplify $i => $v to just $v`,
 	}
 	test.RunAndMatch()
 }
@@ -376,10 +492,6 @@ func TestVoidResultUsedInAssignment(t *testing.T) {
 func TestVoidResultUsedInBinary(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	function define($_, $_) {}
-	define('false', 1 == 0);
-	define('true', 1 != 0);
-
 	/**
 	 * @return void
 	 */
@@ -1020,6 +1132,9 @@ func TestBuiltinConstant(t *testing.T) {
 		$_ = NULL;
 		$_ = True;
 		$_ = FaLsE;
+		$_ = false;
+		$_ = true;
+		$_ = null;
 	}`)
 	test.Expect = []string{
 		"Use null instead of NULL",
@@ -1723,9 +1838,6 @@ func TestArrayUnion(t *testing.T) {
 
 func TestCompactImpliesUsage(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-function define($_, $_) {}
-define('null', 0);
-
 // Declaration from phpstorm-stubs
 function compact ($varname, $_ = null) {}
 
@@ -1746,9 +1858,6 @@ function g() {
 func TestCompactWithUndefined(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-function define($_, $_) {}
-define('null', 0);
-
 // Declaration from phpstorm-stubs
 function compact ($varname, $_ = null) {}
 

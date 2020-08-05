@@ -38,6 +38,9 @@ func init() {
 //
 // For positive testing, use Suite type directly.
 func SimpleNegativeTest(t *testing.T, contents string) {
+	if !strings.HasPrefix(contents, `<?php`) {
+		t.Fatalf("PHP script doesn't start with <?php")
+	}
 	s := NewSuite(t)
 	s.AddFile(contents)
 	s.RunAndMatch()
@@ -74,14 +77,22 @@ type Suite struct {
 
 	AllowDisable *regexp.Regexp
 
-	LoadStubs []string
+	defaultStubs map[string]struct{}
+	LoadStubs    []string
 
 	MisspellList string
 }
 
 // NewSuite returns a new linter test suite for t.
 func NewSuite(t testing.TB) *Suite {
-	return &Suite{t: t}
+	return &Suite{
+		t: t,
+		defaultStubs: map[string]struct{}{
+			`stubs/phpstorm-stubs/Core/Core.php`:   {},
+			`stubs/phpstorm-stubs/Core/Core_c.php`: {},
+			`stubs/phpstorm-stubs/Core/Core_d.php`: {},
+		},
+	}
 }
 
 // AddFile adds a file to a suite file list.
@@ -177,10 +188,15 @@ func (s *Suite) Match(reports []*linter.Report) {
 func (s *Suite) RunLinter() []*linter.Report {
 	meta.ResetInfo()
 
-	if len(s.LoadStubs) != 0 {
-		if err := cmd.LoadEmbeddedStubs(s.LoadStubs); err != nil {
-			s.t.Fatalf("load stubs: %v", err)
-		}
+	for _, stub := range s.LoadStubs {
+		s.defaultStubs[stub] = struct{}{}
+	}
+	stubs := make([]string, 0, len(s.defaultStubs))
+	for stub := range s.defaultStubs {
+		stubs = append(stubs, stub)
+	}
+	if err := cmd.LoadEmbeddedStubs(stubs); err != nil {
+		s.t.Fatalf("load stubs: %v", err)
 	}
 
 	if s.MisspellList != "" {

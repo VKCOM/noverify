@@ -482,6 +482,18 @@ func TestParseAndPrintClosure(t *testing.T) {
 	}
 }
 
+func TestParseAndPrintArrowFunction(t *testing.T) {
+	src := `<?php
+	$a = static fn & ( $b ) : void => $c ;
+	`
+
+	actual := print(parse(src))
+
+	if src != actual {
+		t.Errorf("\nexpected: %s\ngot: %s\n", src, actual)
+	}
+}
+
 func TestParseAndPrintConstFetch(t *testing.T) {
 	src := `<?php
 	null ;

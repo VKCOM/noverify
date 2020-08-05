@@ -1,4 +1,4 @@
-package linttest_test
+package exprtype_test
 
 import (
 	"strings"
@@ -1399,9 +1399,6 @@ function test() {
 
 func TestExprTypeFunction(t *testing.T) {
 	code := `<?php
-function define($name, $value) {}
-define('null', 0);
-
 class Foo {}
 
 function mixed_array($x) {

@@ -17,6 +17,14 @@ const (
 func init() {
 	allChecks := []CheckInfo{
 		{
+			Name:    "intOverflow",
+			Default: true,
+			Comment: `Report potential integer overflows that may result in unexpected behavior.`,
+			Before:  `return -9223372036854775808;`,
+			After:   `return PHP_INT_MIN;`,
+		},
+
+		{
 			Name:    "discardExpr",
 			Default: true,
 			Comment: `Report expressions that are evaluated but not used.`,
@@ -98,6 +106,14 @@ func init() {
 			Comment: `Report array literals that have both implicit and explicit keys.`,
 			Before:  `['a', 5 => 'b']`,
 			After:   `[0 => 'a', 5 => 'b']`,
+		},
+
+		{
+			Name:    "dupGlobal",
+			Default: true,
+			Comment: `Report repeated global statements over variables.`,
+			Before:  `global $x, $y, $x;`,
+			After:   `global $x, $y;`,
 		},
 
 		{
@@ -454,6 +470,20 @@ function performance_test() {}`,
 			Name:    "linterError",
 			Default: true,
 			Comment: `Report linter error.`,
+		},
+
+		{
+			Name:    "magicMethodDecl",
+			Default: true,
+			Comment: `Report issues in magic method declarations.`,
+			Before: `class Foo {
+  private function __call($method, $args) {} // The magic method __call() must have public visibility
+  public static function __set($name, $value) {} // The magic method __set() cannot be static
+}`,
+			After: `class Foo {
+  public function __call($method, $args) {} // Ok
+  public function __set($name, $value) {} // Ok
+}`,
 		},
 	}
 

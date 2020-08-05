@@ -1,4 +1,4 @@
-package linttest_test
+package checkers_test
 
 import (
 	"testing"
@@ -849,10 +849,6 @@ function error() {}
 
 func TestIssue182(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-define('null', 0);
-
-function define($name, $v) {}
-
 trait SingletonSelf {
     /** @var self */
     private static $instance = null;

@@ -47,6 +47,16 @@ const (
 	FlagDie
 )
 
+type variableKind int
+
+const (
+	varLocal variableKind = iota
+	varRef
+	varGlobal
+	varCondGlobal
+	varStatic
+)
+
 // BlockWalker is used to process function/method contents.
 type BlockWalker struct {
 	ctx *blockContext
@@ -57,6 +67,8 @@ type BlockWalker struct {
 	r *RootWalker
 
 	custom []BlockChecker
+
+	path NodePath
 
 	ignoreFunctionBodies bool
 	rootLevel            bool // analysing root-level code
@@ -78,8 +90,11 @@ type BlockWalker struct {
 	callsParentConstructor bool
 
 	// shared state between all blocks
-	unusedVars   map[string][]node.Node
-	nonLocalVars map[string]struct{} // static, global and other vars that have complex control flow
+	unusedVars map[string][]node.Node
+
+	// static, global and other vars that have complex control flow.
+	// Never contains varLocal elements.
+	nonLocalVars map[string]variableKind
 }
 
 func (b *BlockWalker) addStatement(n node.Node) {
@@ -224,6 +239,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	}
 
 	n := w.(node.Node)
+	b.path.push(n)
 
 	if b.ctx.exitFlags != 0 {
 		b.reportDeadCode(n)
@@ -322,18 +338,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	case *cast.Array:
 		b.checkRedundantCastArray(s.Expr)
 	case *stmt.Global:
-		b.r.checkKeywordCase(s, "global")
-		for _, v := range s.Vars {
-			nm := varToString(v)
-			if nm == "" {
-				continue
-			}
-			if _, ok := superGlobals[nm]; ok {
-				b.r.Report(v, LevelWarning, "redundantGlobal", "%s is superglobal", nm)
-			}
-			b.addVar(v, meta.NewTypesMap(meta.WrapGlobal(nm)), "global", meta.VarAlwaysDefined)
-			b.addNonLocalVar(v)
-		}
+		b.checkGlobalStmt(s)
 		res = false
 	case *stmt.Static:
 		for _, vv := range s.Vars {
@@ -344,7 +349,7 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 			// the previously assigned value.
 			typ.MarkAsImprecise()
 			b.addVarName(v, ev.Name, typ, "static", meta.VarAlwaysDefined)
-			b.addNonLocalVarName(ev.Name)
+			b.addNonLocalVarName(ev.Name, varStatic)
 			if v.Expr != nil {
 				v.Expr.Walk(b)
 			}
@@ -471,6 +476,9 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		b.r.checkKeywordCase(n, "require")
 	case *expr.RequireOnce:
 		b.r.checkKeywordCase(n, "require_once")
+
+	case *scalar.Dnumber:
+		b.checkIntOverflow(s)
 	}
 
 	for _, c := range b.custom {
@@ -488,7 +496,67 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		}
 	}
 
+	if !res {
+		b.path.pop()
+	}
 	return res
+}
+
+func (b *BlockWalker) checkIntOverflow(num *scalar.Dnumber) {
+	// If value contains only [0-9], then it's probably the case
+	// where lexer parsed int literal as Dnumber due to the overflow.
+	for _, ch := range num.Value {
+		if ch < '0' || ch > '9' {
+			return
+		}
+	}
+	b.r.Report(num, LevelWarning, "intOverflow", "%s will be interpreted as float due to the overflow", num.Value)
+}
+
+func (b *BlockWalker) checkDupGlobal(s *stmt.Global) {
+	vars := make(map[string]struct{}, len(s.Vars))
+	for _, v := range s.Vars {
+		v, ok := v.(*node.SimpleVar)
+		if !ok {
+			continue
+		}
+		nm := v.Name
+
+		// Check whether this var was already global'ed.
+		// We use nonLocalVars for function-wide analysis and vars for local analysis.
+		if _, ok := vars[nm]; ok {
+			b.r.Report(v, LevelWarning, "dupGlobal", "global statement mentions $%s more than once", nm)
+		} else {
+			vars[nm] = struct{}{}
+			if b.nonLocalVars[nm] == varGlobal {
+				b.r.Report(v, LevelDoNotReject, "dupGlobal", "$%s already global'ed above", nm)
+			}
+		}
+	}
+}
+
+func (b *BlockWalker) checkGlobalStmt(s *stmt.Global) {
+	if !b.rootLevel {
+		b.checkDupGlobal(s)
+	}
+
+	b.r.checkKeywordCase(s, "global")
+	for _, v := range s.Vars {
+		nm := varToString(v)
+		if nm == "" {
+			continue
+		}
+		if _, ok := superGlobals[nm]; ok {
+			b.r.Report(v, LevelWarning, "redundantGlobal", "%s is superglobal", nm)
+		}
+
+		b.addVar(v, meta.NewTypesMap(meta.WrapGlobal(nm)), "global", meta.VarAlwaysDefined)
+		if b.path.Conditional() {
+			b.addNonLocalVar(v, varCondGlobal)
+		} else {
+			b.addNonLocalVar(v, varGlobal)
+		}
+	}
 }
 
 func (b *BlockWalker) handleInterface(int *stmt.Interface) bool {
@@ -553,16 +621,16 @@ func (b *BlockWalker) handleContinue(s *stmt.Continue) {
 	}
 }
 
-func (b *BlockWalker) addNonLocalVarName(nm string) {
-	b.nonLocalVars[nm] = struct{}{}
+func (b *BlockWalker) addNonLocalVarName(nm string, kind variableKind) {
+	b.nonLocalVars[nm] = kind
 }
 
-func (b *BlockWalker) addNonLocalVar(v node.Node) {
+func (b *BlockWalker) addNonLocalVar(v node.Node, kind variableKind) {
 	sv, ok := v.(*node.SimpleVar)
 	if !ok {
 		return
 	}
-	b.addNonLocalVarName(sv.Name)
+	b.addNonLocalVarName(sv.Name, kind)
 }
 
 // replaceVar must be used to track assignments to conrete var nodes if they are available
@@ -903,7 +971,7 @@ func (b *BlockWalker) handleCallArgs(n node.Node, args []node.Node, fn meta.Func
 		switch a := arg.(*node.Argument).Expr.(type) {
 		case *node.Var, *node.SimpleVar:
 			if ref {
-				b.addNonLocalVar(a)
+				b.addNonLocalVar(a, varRef)
 				// TODO: variable may actually not be set by ref
 				b.addVar(a, fn.Params[i].Typ, "call_with_ref", meta.VarAlwaysDefined)
 				break
@@ -1562,6 +1630,26 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 		b.propagateFlags(ctx)
 	}
 
+	key, ok := s.Key.(*node.SimpleVar)
+	if !ok {
+		return false
+	}
+	if IsDiscardVar(key.Name) {
+		return false
+	}
+
+	_, ok = b.unusedVars[key.Name]
+	if ok {
+		variable, ok := s.Variable.(*node.SimpleVar)
+		if !ok {
+			return false
+		}
+
+		delete(b.unusedVars, key.Name)
+
+		b.r.Report(s.Key, LevelError, "unused", "foreach key $%s is unused, can simplify $%s => $%s to just $%s", key.Name, key.Name, variable.Name, variable.Name)
+	}
+
 	return false
 }
 
@@ -2199,7 +2287,7 @@ func (b *BlockWalker) handleAssignReference(a *assign.Reference) bool {
 		return false
 	case *node.Var, *node.SimpleVar:
 		b.addVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
-		b.addNonLocalVar(v)
+		b.addNonLocalVar(v, varRef)
 	case *expr.List:
 		// TODO: figure out whether this case is reachable.
 		for _, item := range v.Items {
@@ -2460,6 +2548,8 @@ func (b *BlockWalker) LeaveNode(w walker.Walkable) {
 	for _, c := range b.custom {
 		c.BeforeLeaveNode(w)
 	}
+
+	b.path.pop()
 
 	if b.ctx.exitFlags == 0 {
 		switch w.(type) {

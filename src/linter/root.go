@@ -511,7 +511,7 @@ func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args 
 	d.report(n, 0, level, checkName, msg, args...)
 }
 
-// ReportByLine registers a single report message about some found problem in lineIndex code line.
+// ReportByLine registers a single report message about some found problem in lineNumber code line.
 func (d *RootWalker) ReportByLine(lineNumber int, level int, checkName, msg string, args ...interface{}) {
 	d.report(nil, lineNumber, level, checkName, msg, args...)
 }
@@ -570,9 +570,9 @@ func (d *RootWalker) reportHash(pos *position.Position, startLine []byte, checkN
 
 	return baseline.ReportHash(baseline.HashFields{
 		Filename:  filename,
-		PrevLine:  prevLine,
-		StartLine: startLine,
-		NextLine:  nextLine,
+		PrevLine:  bytes.TrimSuffix(prevLine, []byte("\r")),
+		StartLine: bytes.TrimSuffix(startLine, []byte("\r")),
+		NextLine:  bytes.TrimSuffix(nextLine, []byte("\r")),
 		CheckName: checkName,
 		Message:   msg,
 		Scope:     scope,
@@ -646,7 +646,8 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 		ctx:          &blockContext{sc: sc},
 		r:            d,
 		unusedVars:   make(map[string][]node.Node),
-		nonLocalVars: make(map[string]struct{}),
+		nonLocalVars: make(map[string]variableKind),
+		path:         newNodePath(),
 	}
 	for _, createFn := range d.customBlock {
 		b.custom = append(b.custom, createFn(&BlockContext{w: b}))
@@ -673,13 +674,13 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 		if !byRef {
 			b.unusedVars[v.Name] = append(b.unusedVars[v.Name], v)
 		} else {
-			b.nonLocalVars[v.Name] = struct{}{}
+			b.nonLocalVars[v.Name] = varRef
 		}
 	}
 
 	for _, p := range params {
 		if p.IsRef {
-			b.nonLocalVars[p.Name] = struct{}{}
+			b.nonLocalVars[p.Name] = varRef
 		}
 	}
 	for _, s := range stmts {
@@ -781,6 +782,57 @@ func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodMod
 	}
 
 	return res
+}
+
+func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodModifiers) {
+	var (
+		canBeStatic    bool
+		canBeNonPublic bool
+		mustBeStatic   bool
+	)
+
+	switch name {
+	case "__call",
+		"__get",
+		"__set",
+		"__isset",
+		"__unset",
+		"__toString",
+		"__invoke",
+		"__debugInfo":
+		canBeStatic = false
+		canBeNonPublic = false
+
+	case "__construct", "__destruct", "__clone":
+		canBeStatic = false
+		canBeNonPublic = true
+
+	case "__callStatic":
+		canBeStatic = true
+		canBeNonPublic = false
+		mustBeStatic = true
+
+	case "__sleep",
+		"__wakeup",
+		"__serialize",
+		"__unserialize",
+		"__set_state":
+		canBeNonPublic = true
+		canBeStatic = true
+
+	default:
+		return // Not a magic method
+	}
+
+	switch {
+	case mustBeStatic && !modif.static:
+		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must be static", name)
+	case !canBeStatic && modif.static:
+		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() cannot be static", name)
+	}
+	if !canBeNonPublic && modif.accessLevel != meta.Public {
+		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must have public visibility", name)
+	}
 }
 
 func (d *RootWalker) getClass() meta.ClassInfo {
@@ -931,6 +983,8 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	}
 
 	modif := d.parseMethodModifiers(meth)
+
+	d.checkMagicMethod(meth.MethodName, nm, modif)
 
 	sc := meta.NewScope()
 	if !modif.static {
