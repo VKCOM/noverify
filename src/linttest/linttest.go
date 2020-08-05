@@ -129,6 +129,7 @@ func AddNamedFile(test *Suite, name, code string) {
 // This is a recommended way to use the Suite, but if
 // reports slice is needed, one can use RunLinter directly.
 func (s *Suite) RunAndMatch() {
+	s.t.Helper()
 	s.Match(s.RunLinter())
 }
 
@@ -139,6 +140,8 @@ func (s *Suite) RunAndMatch() {
 func (s *Suite) Match(reports []*linter.Report) {
 	expect := s.Expect
 	t := s.t
+
+	t.Helper()
 
 	if len(reports) != len(expect) {
 		t.Errorf("unexpected number of reports: expected %d, got %d",
@@ -186,6 +189,7 @@ func (s *Suite) Match(reports []*linter.Report) {
 // RunLinter executes linter over s Files and returns all issue reports
 // that were produced during that.
 func (s *Suite) RunLinter() []*linter.Report {
+	s.t.Helper()
 	meta.ResetInfo()
 
 	for _, stub := range s.LoadStubs {
