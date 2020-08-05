@@ -785,6 +785,12 @@ func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodMod
 }
 
 func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodModifiers) {
+	var (
+		canBeStatic    bool
+		canBeNonPublic bool
+		mustBeStatic   bool
+	)
+
 	switch name {
 	case "__call",
 		"__get",
@@ -794,40 +800,38 @@ func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodM
 		"__toString",
 		"__invoke",
 		"__debugInfo":
-
-		// must be non-static and public
-		if modif.static {
-			d.Report(meth, LevelError, "magicMethod", "The magic method %s() cannot be static", name)
-		}
-		if modif.accessLevel != meta.Public {
-			d.Report(meth, LevelError, "magicMethod", "The magic method %s() must have public visibility", name)
-		}
+		canBeStatic = false
+		canBeNonPublic = false
 
 	case "__construct", "__destruct", "__clone":
-		// must be non-static, can be non-public
-		if modif.static {
-			d.Report(meth, LevelError, "magicMethod", "The magic method %s() cannot be static", name)
-		}
+		canBeStatic = false
+		canBeNonPublic = true
 
 	case "__callStatic":
-		// must be static and public
-		if !modif.static {
-			d.Report(meth, LevelError, "magicMethod", "The magic method %s() must be static", name)
-		}
-		if modif.accessLevel != meta.Public {
-			d.Report(meth, LevelError, "magicMethod", "The magic method %s() must have public visibility", name)
-		}
+		canBeStatic = true
+		canBeNonPublic = false
+		mustBeStatic = true
 
 	case "__sleep",
 		"__wakeup",
 		"__serialize",
 		"__unserialize",
 		"__set_state":
-		// can be non-public and static
-		break
+		canBeNonPublic = true
+		canBeStatic = true
 
 	default:
-		return
+		return // Not a magic method
+	}
+
+	switch {
+	case mustBeStatic && !modif.static:
+		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must be static", name)
+	case !canBeStatic && modif.static:
+		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() cannot be static", name)
+	}
+	if !canBeNonPublic && modif.accessLevel != meta.Public {
+		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must have public visibility", name)
 	}
 }
 
