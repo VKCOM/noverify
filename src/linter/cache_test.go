@@ -86,6 +86,15 @@ function as_shape($x) {
   return $x;
 }
 
+class Foo {}
+
+function infer_types_in_callback() {
+  /** @var Foo[] $a */
+  $a = [];
+
+  array_map(function($item) {}, $a);
+}
+
 main();
 `
 
@@ -111,7 +120,7 @@ main();
 		//
 		// If cache encoding changes, there is a very high chance that
 		// encoded data lengh will change as well.
-		wantLen := 4091
+		wantLen := 4284
 		haveLen := buf.Len()
 		if haveLen != wantLen {
 			t.Errorf("cache len mismatch:\nhave: %d\nwant: %d", haveLen, wantLen)
@@ -120,7 +129,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "5229b096d5a9f0ed73cea28dce9677760e620ed5fd33ccda12355159735e181b09ef152b4d518af886f13b1c7bebd2f1ca274b5485b91d0f23813d05ee646382"
+		wantStrings := "8e3d8685ba6b012c2bc61a0fd01956308e82eff605cea9bfc5726035f28f42b9e1a51afc5aefa634dc12835f78c012f1ac7df3aed33c2459d93d68b0500010bf"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)
