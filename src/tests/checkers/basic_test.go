@@ -1838,9 +1838,6 @@ func TestArrayUnion(t *testing.T) {
 
 func TestCompactImpliesUsage(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-function define($_, $_) {}
-define('null', 0);
-
 // Declaration from phpstorm-stubs
 function compact ($varname, $_ = null) {}
 
@@ -1861,9 +1858,6 @@ function g() {
 func TestCompactWithUndefined(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-function define($_, $_) {}
-define('null', 0);
-
 // Declaration from phpstorm-stubs
 function compact ($varname, $_ = null) {}
 
