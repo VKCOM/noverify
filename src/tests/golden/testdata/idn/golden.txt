@@ -10,9 +10,6 @@ MAYBE   phpdoc: Missing PHPDoc for "idn_to_utf8" public method at testdata/idn/i
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/idn/idn.php:119
         $idna_info = array(
                      
-MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/idn/idn.php:194
-        $codePoints = array(
-                      
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/idn/idn.php:195
             'all' => array(),
                      ^^^^^^^
@@ -22,6 +19,9 @@ MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdat
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/idn/idn.php:197
             'nonBasic' => array(),
                           ^^^^^^^
+MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/idn/idn.php:194
+        $codePoints = array(
+                      
 MAYBE   redundantCast: expression already has int type at testdata/idn/idn.php:233
             $delta = (int) ($delta / 35);
                            ^^^^^^^^^^^^^
