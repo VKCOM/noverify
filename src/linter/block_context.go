@@ -35,6 +35,9 @@ type blockContext struct {
 
 	customMethods   []customMethod
 	customFunctions []string
+
+	callerFunction     meta.FuncInfo // function that is called with this closure
+	callerFunctionArgs []node.Node   // and the arguments with which it is called
 }
 
 func (ctx *blockContext) addCustomFunction(functionName string) {

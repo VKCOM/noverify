@@ -38,7 +38,7 @@ import (
 //     38 - replaced TypesMap.immutable:bool with flags:uint8.
 //          added mapPrecise flag to mark precise type maps.
 //     39 - added new field Value in ConstantInfo
-//     40 - added new fields in Scope struct
+//     40 - added array_map call in test
 const cacheVersion = 40
 
 var (

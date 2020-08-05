@@ -916,8 +916,8 @@ func (b *BlockWalker) handleCallArgs(n node.Node, args []node.Node, fn meta.Func
 			}
 			a.Walk(b)
 		case *expr.Closure:
-			b.ctx.sc.CallerFunction = fn
-			b.ctx.sc.CallerFunctionArgs = args
+			b.ctx.callerFunction = fn
+			b.ctx.callerFunctionArgs = args
 			a.Walk(b)
 		default:
 			a.Walk(b)
@@ -1639,13 +1639,13 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType me
 
 	// find the types for the arguments of the function that contains this closure
 	var funcArgs []meta.TypesMap
-	for _, arg := range parentScope.CallerFunctionArgs {
+	for _, arg := range b.ctx.callerFunctionArgs {
 		tp := solver.ExprType(parentScope, b.r.ctx.st, arg.(*node.Argument).Expr)
 		funcArgs = append(funcArgs, tp)
 	}
 
 	ci := solver.ClosureCallerInfo{
-		FunctionName: parentScope.CallerFunction.Name,
+		FunctionName: b.ctx.callerFunction.Name,
 		FunctionArgs: funcArgs,
 	}
 
