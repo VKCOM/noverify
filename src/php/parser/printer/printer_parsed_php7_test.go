@@ -270,6 +270,7 @@ func TestParseAndPrintAssign(t *testing.T) {
 	$a &= $b ;
 	$a |= $b ;
 	$a ^= $b ;
+	$a ??= $b ;
 	$a .= $b ;
 	$a /= $b ;
 	$a -= $b ;
