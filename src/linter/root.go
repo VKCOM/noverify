@@ -447,7 +447,7 @@ func (d *RootWalker) report(n node.Node, lineNumber int, level int, checkName, m
 		endChar = len(startLn)
 
 		if strings.HasSuffix(string(startLn), "\r") {
-			endChar = endChar - 1
+			endChar--
 		}
 
 		pos = position.Position{
@@ -642,13 +642,7 @@ type handleFuncResult struct {
 }
 
 func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node.Node, sc *meta.Scope) handleFuncResult {
-	b := &BlockWalker{
-		ctx:          &blockContext{sc: sc},
-		r:            d,
-		unusedVars:   make(map[string][]node.Node),
-		nonLocalVars: make(map[string]variableKind),
-		path:         newNodePath(),
-	}
+	b := newBlockWalker(d, sc)
 	for _, createFn := range d.customBlock {
 		b.custom = append(b.custom, createFn(&BlockContext{w: b}))
 	}
@@ -898,6 +892,11 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 		}
 	}
 
+	var specifiedType meta.TypesMap
+	if typ, ok := d.parseTypeNode(pl.Type); ok {
+		specifiedType = typ
+	}
+
 	for _, pNode := range pl.Properties {
 		p := pNode.(*stmt.Property)
 
@@ -908,6 +907,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 		if p.Expr != nil {
 			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, p.Expr))
 		}
+		typ = typ.Append(specifiedType)
 
 		if isStatic {
 			nm = "$" + nm
@@ -1439,10 +1439,8 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 }
 
 func (d *RootWalker) checkCommentMisspellings(n node.Node, s string) {
-	d.checkMisspellings(n, s, "misspellComment", func(s string) bool {
-		// Try to avoid checking for symbol names and references.
-		return isCapitalized(s)
-	})
+	// Try to avoid checking for symbol names and references.
+	d.checkMisspellings(n, s, "misspellComment", isCapitalized)
 }
 
 func (d *RootWalker) checkVarnameMisspellings(n node.Node, s string) {
@@ -1454,7 +1452,7 @@ func (d *RootWalker) checkVarnameMisspellings(n node.Node, s string) {
 func (d *RootWalker) checkIdentMisspellings(n *node.Identifier) {
 	d.checkMisspellings(n, n.Value, "misspellName", func(s string) bool {
 		// Before PHP got context-sensitive lexer, it was common to use
-		// method names like "includ" to avoid parsing errors.
+		// method names to avoid parsing errors.
 		// We can't suggest a fix that leads to a parsing error.
 		// To avoid false positives, skip PHP keywords.
 		return phpKeywords[s]
@@ -1713,7 +1711,7 @@ func (d *RootWalker) sourceNodeString(n node.Node) string {
 	src := d.fileContents
 	// Taking a node from the source code preserves the original formatting
 	// and is more efficient than printing it.
-	if (from >= 0 && int(from) < len(src)) && (to >= 0 && int(to) < len(src)) {
+	if (from >= 0 && from < len(src)) && (to >= 0 && to < len(src)) {
 		return string(src[from:to])
 	}
 	// If we can't take node out of the source text, print it.
@@ -1782,7 +1780,7 @@ func (d *RootWalker) runRule(n node.Node, sc *meta.Scope, rule *rules.Rule) {
 	}
 
 	message := d.renderRuleMessage(rule.Message, n, m, true)
-	d.Report(location, rule.Level, rule.Name, message)
+	d.Report(location, rule.Level, rule.Name, "%s", message)
 
 	if ApplyQuickFixes && rule.Fix != "" {
 		// As rule sets contain only enabled rules,

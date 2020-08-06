@@ -434,10 +434,11 @@ case INC:
 			Name:    "misspellName",
 			Default: true,
 			Comment: `Report commonly misspelled words in symbol names.`,
-			Before:  `function performace_test() ...`,
+			Before:  `function performace_test() ...`, //nolint:misspell
 			After:   `function performance_test() ...`,
 		},
 
+		//nolint:misspell
 		{
 			Name:    "misspellComment",
 			Default: true,

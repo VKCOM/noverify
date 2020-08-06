@@ -135,8 +135,7 @@ func externalChanges(changes []vscode.FileEvent) {
 
 	meta.Info.Lock()
 	for _, ev := range changes {
-		switch ev.Type {
-		case vscode.Deleted:
+		if ev.Type == vscode.Deleted {
 			meta.Info.DeleteMetaForFileNonLocked(ev.URI.Filename())
 		}
 	}

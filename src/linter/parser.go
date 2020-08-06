@@ -203,15 +203,10 @@ func AnalyzeFileRootLevel(rootNode node.Node, d *RootWalker) {
 	sc := meta.NewScope()
 	sc.AddVarName("argv", meta.NewTypesMap("string[]"), "predefined", meta.VarAlwaysDefined)
 	sc.AddVarName("argc", meta.NewTypesMap("int"), "predefined", meta.VarAlwaysDefined)
-	b := &BlockWalker{
-		ctx:                  &blockContext{sc: sc},
-		r:                    d,
-		unusedVars:           make(map[string][]node.Node),
-		nonLocalVars:         make(map[string]variableKind),
-		ignoreFunctionBodies: true,
-		rootLevel:            true,
-		path:                 newNodePath(),
-	}
+
+	b := newBlockWalker(d, sc)
+	b.ignoreFunctionBodies = true
+	b.rootLevel = true
 
 	for _, createFn := range d.customBlock {
 		b.custom = append(b.custom, createFn(&BlockContext{w: b}))

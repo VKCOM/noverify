@@ -13,12 +13,12 @@ type Position struct {
 }
 
 // NewPosition Position constructor
-func NewPosition(StartLine int, EndLine int, StartPos int, EndPos int) *Position {
+func NewPosition(startLine int, endLine int, startPos int, endPos int) *Position {
 	return &Position{
-		StartLine: StartLine,
-		EndLine:   EndLine,
-		StartPos:  StartPos,
-		EndPos:    EndPos,
+		StartLine: startLine,
+		EndLine:   endLine,
+		StartPos:  startPos,
+		EndPos:    endPos,
 	}
 }
 
