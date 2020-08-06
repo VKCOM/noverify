@@ -1780,7 +1780,7 @@ func (d *RootWalker) runRule(n node.Node, sc *meta.Scope, rule *rules.Rule) {
 	}
 
 	message := d.renderRuleMessage(rule.Message, n, m, true)
-	d.Report(location, rule.Level, rule.Name, message)
+	d.Report(location, rule.Level, rule.Name, "%s", message)
 
 	if ApplyQuickFixes && rule.Fix != "" {
 		// As rule sets contain only enabled rules,
