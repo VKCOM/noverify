@@ -36,7 +36,11 @@ const (
 	loopSwitch
 )
 
-const _ = loopNone // To make "unused" linter happy
+// To make "unused" linter happy.
+const (
+	_ = loopNone
+	_ = varLocal
+)
 
 const (
 	// FlagReturn shows whether or not block has "return"
