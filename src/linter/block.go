@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
@@ -1321,18 +1320,6 @@ func (b *BlockWalker) handleTernary(e *expr.Ternary) bool {
 }
 
 func (b *BlockWalker) handleIf(s *stmt.If) bool {
-	// Check for `if ($cond) { $x } else { $x }`.
-	// Leave more complex if chains to avoid false positives
-	// until we get more examples of valid and invalid cases of
-	// duplicated branches.
-	if len(s.ElseIf) == 0 && s.Else != nil {
-		x := s.Stmt
-		y := s.Else.(*stmt.Else).Stmt
-		if astutil.NodeEqual(x, y) {
-			b.r.Report(s, LevelWarning, "dupBranchBody", "duplicated if/else actions")
-		}
-	}
-
 	var varsToDelete []node.Node
 	customMethods := len(b.ctx.customMethods)
 	customFunctions := len(b.ctx.customFunctions)
@@ -1344,13 +1331,9 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 		b.ctx.customMethods = b.ctx.customMethods[:customMethods]
 		b.ctx.customFunctions = b.ctx.customFunctions[:customFunctions]
 	}()
-	nodeSet := astutil.NewNodeSet()
 	walkCond := func(cond node.Node) {
 		a := &andWalker{b: b}
 		cond.Walk(a)
-		if b.sideEffectFree(cond) && !nodeSet.Add(cond) {
-			b.r.Report(cond, LevelWarning, "dupCond", "duplicated condition in if-else chain")
-		}
 		varsToDelete = append(varsToDelete, a.varsToDelete...)
 	}
 
