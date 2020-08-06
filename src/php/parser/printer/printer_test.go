@@ -544,6 +544,27 @@ func TestPrinterPrintAssignBitwiseXor(t *testing.T) {
 	}
 }
 
+func TestPrinterPrintAssignCoalesce(t *testing.T) {
+	o := bytes.NewBufferString("")
+
+	p := printer.NewPrinter(o)
+	p.Print(&assign.Coalesce{
+		Variable: &node.SimpleVar{
+			Name: "a",
+		},
+		Expression: &node.SimpleVar{
+			Name: "b",
+		},
+	})
+
+	expected := `$a??=$b`
+	actual := o.String()
+
+	if expected != actual {
+		t.Errorf("\nexpected: %s\ngot: %s\n", expected, actual)
+	}
+}
+
 func TestPrinterPrintAssignConcat(t *testing.T) {
 	o := bytes.NewBufferString("")
 
@@ -3514,6 +3535,13 @@ func TestPrinterPrintPropertyList(t *testing.T) {
 			{Value: "public"},
 			{Value: "static"},
 		},
+		Type: &name.Name{
+			Parts: []node.Node{
+				&name.NamePart{
+					Value: "Foo",
+				},
+			},
+		},
 		Properties: []node.Node{
 			&stmt.Property{
 				Variable: &node.SimpleVar{
@@ -3529,7 +3557,7 @@ func TestPrinterPrintPropertyList(t *testing.T) {
 		},
 	})
 
-	expected := `public static $a='a',$b;`
+	expected := `public static Foo $a='a',$b;`
 	actual := o.String()
 
 	if expected != actual {

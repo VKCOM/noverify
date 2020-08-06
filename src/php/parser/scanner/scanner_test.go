@@ -476,6 +476,8 @@ func TestTeplateStringTokens(t *testing.T) {
 
 		"$/$foo"
 		"$0$foo"
+
+		"$foo$"
 	`
 
 	expected := []string{
@@ -530,6 +532,11 @@ func TestTeplateStringTokens(t *testing.T) {
 		TokenID(int('"')).String(),
 		T_ENCAPSED_AND_WHITESPACE.String(),
 		T_VARIABLE.String(),
+		TokenID(int('"')).String(),
+
+		TokenID(int('"')).String(),
+		T_VARIABLE.String(),
+		T_ENCAPSED_AND_WHITESPACE.String(),
 		TokenID(int('"')).String(),
 	}
 
@@ -562,6 +569,7 @@ func TestBackquoteStringTokens(t *testing.T) {
 		` + "`$foo/100`" + `
 		` + "`$/$foo`" + `
 		` + "`$0$foo`" + `
+		` + "`$foo$`" + `
 	`
 
 	expected := []string{
@@ -616,6 +624,11 @@ func TestBackquoteStringTokens(t *testing.T) {
 		TokenID(int('`')).String(),
 		T_ENCAPSED_AND_WHITESPACE.String(),
 		T_VARIABLE.String(),
+		TokenID(int('`')).String(),
+
+		TokenID(int('`')).String(),
+		T_VARIABLE.String(),
+		T_ENCAPSED_AND_WHITESPACE.String(),
 		TokenID(int('`')).String(),
 	}
 
