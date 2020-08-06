@@ -134,8 +134,7 @@ func (d *funcCallVisitor) GetFoundLocations() []vscode.Location {
 func (d *funcCallVisitor) EnterNode(w walker.Walkable) bool {
 	state.EnterNode(&d.st, w)
 
-	switch n := w.(type) {
-	case *expr.FunctionCall:
+	if n, ok := w.(*expr.FunctionCall); ok {
 		_, nameStr, ok := getFunction(&d.st, n)
 		if ok && nameStr == d.funcName {
 			if pos := n.GetPosition(); pos != nil {
@@ -173,8 +172,7 @@ func (d *staticMethodCallVisitor) GetFoundLocations() []vscode.Location {
 func (d *staticMethodCallVisitor) EnterNode(w walker.Walkable) bool {
 	state.EnterNode(&d.st, w)
 
-	switch n := w.(type) {
-	case *expr.StaticCall:
+	if n, ok := w.(*expr.StaticCall); ok {
 		id, ok := n.Call.(*node.Identifier)
 		if !ok {
 			return true
@@ -221,8 +219,7 @@ func (d *constVisitor) GetFoundLocations() []vscode.Location {
 func (d *constVisitor) EnterNode(w walker.Walkable) bool {
 	state.EnterNode(&d.st, w)
 
-	switch n := w.(type) {
-	case *expr.ConstFetch:
+	if n, ok := w.(*expr.ConstFetch); ok {
 		constName, _, ok := solver.GetConstant(&d.st, n.Constant)
 
 		if ok && constName == d.constName {
@@ -261,8 +258,7 @@ func (d *classConstVisitor) GetFoundLocations() []vscode.Location {
 func (d *classConstVisitor) EnterNode(w walker.Walkable) bool {
 	state.EnterNode(&d.st, w)
 
-	switch n := w.(type) {
-	case *expr.ClassConstFetch:
+	if n, ok := w.(*expr.ClassConstFetch); ok {
 		constName := n.ConstantName
 		if constName.Value == `class` || constName.Value == `CLASS` {
 			return true
@@ -302,33 +298,34 @@ type blockMethodCallVisitor struct {
 }
 
 func (d *blockMethodCallVisitor) BeforeEnterNode(w walker.Walkable) {
-	switch n := w.(type) {
-	case *expr.MethodCall:
-		var methodName string
-		switch id := n.Method.(type) {
-		case *node.Identifier:
-			methodName = id.Value
-		default:
-			return
-		}
-
-		if methodName != d.methodName {
-			return
-		}
-
-		exprType := solver.ExprType(d.ctx.Scope(), d.ctx.ClassParseState(), n.Variable)
-
-		exprType.Iterate(func(typ string) {
-			m, ok := solver.FindMethod(typ, methodName)
-			realClassName := m.ImplName()
-
-			if ok && realClassName == d.className {
-				if pos := n.GetPosition(); pos != nil {
-					d.addFound(refPosition(d.filename, pos))
-				}
-			}
-		})
+	n, ok := w.(*expr.MethodCall)
+	if !ok {
+		return
 	}
+	var methodName string
+	switch id := n.Method.(type) {
+	case *node.Identifier:
+		methodName = id.Value
+	default:
+		return
+	}
+
+	if methodName != d.methodName {
+		return
+	}
+
+	exprType := solver.ExprType(d.ctx.Scope(), d.ctx.ClassParseState(), n.Variable)
+
+	exprType.Iterate(func(typ string) {
+		m, ok := solver.FindMethod(typ, methodName)
+		realClassName := m.ImplName()
+
+		if ok && realClassName == d.className {
+			if pos := n.GetPosition(); pos != nil {
+				d.addFound(refPosition(d.filename, pos))
+			}
+		}
+	})
 }
 
 func (d *blockMethodCallVisitor) AfterEnterNode(w walker.Walkable)  {}

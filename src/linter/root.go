@@ -447,7 +447,7 @@ func (d *RootWalker) report(n node.Node, lineNumber int, level int, checkName, m
 		endChar = len(startLn)
 
 		if strings.HasSuffix(string(startLn), "\r") {
-			endChar = endChar - 1
+			endChar--
 		}
 
 		pos = position.Position{
@@ -1433,10 +1433,8 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 }
 
 func (d *RootWalker) checkCommentMisspellings(n node.Node, s string) {
-	d.checkMisspellings(n, s, "misspellComment", func(s string) bool {
-		// Try to avoid checking for symbol names and references.
-		return isCapitalized(s)
-	})
+	// Try to avoid checking for symbol names and references.
+	d.checkMisspellings(n, s, "misspellComment", isCapitalized)
 }
 
 func (d *RootWalker) checkVarnameMisspellings(n node.Node, s string) {
