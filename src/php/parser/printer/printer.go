@@ -2768,6 +2768,12 @@ func (p *Printer) printStmtPropertyList(n node.Node) {
 		p.Print(m)
 	}
 
+	if nn.Type != nil && nn.Type.GetFreeFloating().IsEmpty() {
+		io.WriteString(p.w, " ")
+	}
+
+	p.Print(nn.Type)
+
 	if nn.Properties[0].GetFreeFloating().IsEmpty() {
 		io.WriteString(p.w, " ")
 	}
