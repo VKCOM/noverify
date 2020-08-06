@@ -1707,7 +1707,7 @@ func (d *RootWalker) sourceNodeString(n node.Node) string {
 	src := d.fileContents
 	// Taking a node from the source code preserves the original formatting
 	// and is more efficient than printing it.
-	if (from >= 0 && int(from) < len(src)) && (to >= 0 && int(to) < len(src)) {
+	if (from >= 0 && from < len(src)) && (to >= 0 && to < len(src)) {
 		return string(src[from:to])
 	}
 	// If we can't take node out of the source text, print it.
