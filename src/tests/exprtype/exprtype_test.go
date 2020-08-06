@@ -1872,25 +1872,28 @@ func TestPropertyTypeHints(t *testing.T) {
 	code := `<?php
 class Boo {}
 
-
 class Foo {
-  public static int $int;
+  public int $int;
+  public array $array;
+  public string $string;
+  public iterable $iterable;
+
   public static float $float;
-  public static string $string;
   public static bool $bool;
-  public static array $array;
   public static callable $callable;
-  public static iterable $iterable;
   public static object $object;
 }
 
-exprtype(Foo::$int, "int");
+$f = new Foo();
+
+exprtype($f->int, "int");
+exprtype($f->string, "string");
+exprtype($f->array, "mixed[]");
+exprtype($f->iterable, "iterable");
+
 exprtype(Foo::$float, "float");
-exprtype(Foo::$string, "string");
 exprtype(Foo::$bool, "bool");
-exprtype(Foo::$array, "mixed[]");
 exprtype(Foo::$callable, "callable");
-exprtype(Foo::$iterable, "iterable");
 exprtype(Foo::$object, "object");
 
 
@@ -1898,21 +1901,25 @@ class Poo {
   /** @var float $int */
   public static int $int;
   /** @var array $callable */
-  public static callable $callable;
+  public callable $callable;
 }
 
+$p = new Poo();
+
 exprtype(Poo::$int, "float|int");
-exprtype(Poo::$callable, "callable|mixed[]");
+exprtype($p->callable, "callable|mixed[]");
 
 
 class Too {
   public static Boo $boo;
-  public static Foo $foo;
+  public Foo $foo;
   public static Too $too;
 }
 
+$t = new Too();
+
 exprtype(Too::$boo, "\Boo");
-exprtype(Too::$foo, "\Foo");
+exprtype($t->foo, "\Foo");
 exprtype(Too::$too, "\Too");
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
