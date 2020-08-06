@@ -383,6 +383,7 @@ func TestParseAndPrintArrayItem(t *testing.T) {
 		$world ,
 		& $world ,
 		'Hello' => $world ,
+		... $unpack
 	] ;
 	`
 

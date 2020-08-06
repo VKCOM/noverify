@@ -13,14 +13,16 @@ type ArrayItem struct {
 	Position     *position.Position
 	Key          node.Node
 	Val          node.Node
+	Unpack       bool
 }
 
 // NewArrayItem node constructor
-func NewArrayItem(Key node.Node, Val node.Node) *ArrayItem {
+func NewArrayItem(Key node.Node, Val node.Node, Unpack bool) *ArrayItem {
 	return &ArrayItem{
 		FreeFloating: nil,
 		Key:          Key,
 		Val:          Val,
+		Unpack:       Unpack,
 	}
 }
 
