@@ -82,9 +82,7 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 		}
 	}
 	for _, rset := range ruleSets {
-		for _, name := range rset.Names {
-			enabledByDefault = append(enabledByDefault, name)
-		}
+		enabledByDefault = append(enabledByDefault, rset.Names...)
 	}
 
 	defaultCacheDir, err := os.UserCacheDir()

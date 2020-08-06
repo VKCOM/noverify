@@ -8,13 +8,13 @@ import (
 
 func TestEqualsMatching(t *testing.T) {
 	testCases := [][]meta.TypesMap{
-		[]meta.TypesMap{
+		{
 			meta.NewEmptyTypesMap(1),
 			meta.NewEmptyTypesMap(1),
 		},
-		[]meta.TypesMap{
-			meta.NewTypesMapFromMap(map[string]struct{}{"string": struct{}{}, "int": struct{}{}}),
-			meta.NewTypesMapFromMap(map[string]struct{}{"string": struct{}{}, "int": struct{}{}}),
+		{
+			meta.NewTypesMapFromMap(map[string]struct{}{"string": {}, "int": {}}),
+			meta.NewTypesMapFromMap(map[string]struct{}{"string": {}, "int": {}}),
 		},
 	}
 
@@ -30,13 +30,13 @@ func TestEqualsMatching(t *testing.T) {
 
 func TestEqualNonMatching(t *testing.T) {
 	testCases := [][]meta.TypesMap{
-		[]meta.TypesMap{
+		{
 			meta.NewEmptyTypesMap(1),
-			meta.NewTypesMapFromMap(map[string]struct{}{"int": struct{}{}}),
+			meta.NewTypesMapFromMap(map[string]struct{}{"int": {}}),
 		},
-		[]meta.TypesMap{
-			meta.NewTypesMapFromMap(map[string]struct{}{"string": struct{}{}}),
-			meta.NewTypesMapFromMap(map[string]struct{}{"int": struct{}{}}),
+		{
+			meta.NewTypesMapFromMap(map[string]struct{}{"string": {}}),
+			meta.NewTypesMapFromMap(map[string]struct{}{"int": {}}),
 		},
 	}
 

@@ -555,11 +555,11 @@ func getHoverForFunctionCall(n *expr.FunctionCall, sc *meta.Scope, cs *meta.Clas
 		nameStr = meta.NameToString(nm)
 		fun, ok = meta.Info.GetFunction(cs.Namespace + `\` + nameStr)
 		if !ok && cs.Namespace != "" {
-			fun, ok = meta.Info.GetFunction(`\` + nameStr)
+			fun, _ = meta.Info.GetFunction(`\` + nameStr)
 		}
 	case *name.FullyQualified:
 		nameStr = meta.FullyQualifiedToString(nm)
-		fun, ok = meta.Info.GetFunction(nameStr)
+		fun, _ = meta.Info.GetFunction(nameStr)
 	}
 
 	return linter.FlagsToString(fun.ExitFlags)

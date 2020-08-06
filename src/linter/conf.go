@@ -41,6 +41,7 @@ var (
 	Rules = &rules.Set{}
 
 	// settings
+
 	StubsDir       string
 	Debug          bool
 	MaxConcurrency = runtime.NumCPU()

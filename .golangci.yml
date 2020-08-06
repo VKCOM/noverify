@@ -1,0 +1,46 @@
+run:
+  deadline: 3m
+  skip-files:
+    - php/parser/scanner/scanner.go
+    - php/parser/scanner/lexer_tokens.go
+    - php/parser/scanner/lexer.go
+    - php/parser/printer/printer.go
+    - php/parser/printer/pretty_printer.go
+
+linters:
+  enable:
+    - deadcode
+    - gas
+    - gocritic
+    - gofmt
+    - goimports
+    - golint
+    - gosimple
+    - ineffassign
+    - megacheck
+    - misspell
+    - nakedret
+    - staticcheck
+    - structcheck
+    - typecheck
+    - unconvert
+    - unused
+    - varcheck
+  disable:
+    - depguard
+    - dupl
+    - gocyclo
+    - interfacer
+    - lll
+    - maligned
+    - prealloc
+    - gosec
+    - errcheck # TODO: enabled it some day
+  fast: false
+
+issues:
+  exclude-rules:
+    - path: php/parser/node
+      linters:
+        - gocritic
+        - golint
