@@ -1,15 +1,51 @@
-MAYBE   ternarySimplify: could rewrite as `(bool)$x` at testdata/embeddedrules/file.php:6
+MAYBE   assignOp: could rewrite as `$a += $b` at testdata/embeddedrules/assignOp.php:8
+$a = $a + $b; // Could rewrite
+^^^^^^^^^^^^
+MAYBE   assignOp: could rewrite as `$a -= $b` at testdata/embeddedrules/assignOp.php:12
+$a = $a - $b; // Could rewrite
+^^^^^^^^^^^^
+MAYBE   assignOp: could rewrite as `$a *= $b` at testdata/embeddedrules/assignOp.php:16
+$a = $a * $b; // Could rewrite
+^^^^^^^^^^^^
+MAYBE   assignOp: could rewrite as `$a /= $b` at testdata/embeddedrules/assignOp.php:20
+$a = $a / $b; // Could rewrite
+^^^^^^^^^^^^
+MAYBE   assignOp: could rewrite as `$a %= $b` at testdata/embeddedrules/assignOp.php:24
+$a = $a % $b; // Could rewrite
+^^^^^^^^^^^^
+MAYBE   assignOp: could rewrite as `$a .= $b` at testdata/embeddedrules/assignOp.php:28
+$a = $a . $b; // Could rewrite
+^^^^^^^^^^^^
+MAYBE   assignOp: could rewrite as `$a &= $b` at testdata/embeddedrules/assignOp.php:32
+$a = $a & $b; // Could rewrite
+^^^^^^^^^^^^
+MAYBE   assignOp: could rewrite as `$a |= $b` at testdata/embeddedrules/assignOp.php:36
+$a = $a | $b; // Could rewrite
+^^^^^^^^^^^^
+MAYBE   assignOp: could rewrite as `$a ^= $b` at testdata/embeddedrules/assignOp.php:40
+$a = $a ^ $b; // Could rewrite
+^^^^^^^^^^^^
+MAYBE   assignOp: could rewrite as `$a <<= $b` at testdata/embeddedrules/assignOp.php:44
+$a = $a << $b; // Could rewrite
+^^^^^^^^^^^^^
+MAYBE   assignOp: could rewrite as `$a >>= $b` at testdata/embeddedrules/assignOp.php:48
+$a = $a >> $b; // Could rewrite
+^^^^^^^^^^^^^
+MAYBE   assignOp: could rewrite as `$a ??= $b` at testdata/embeddedrules/assignOp.php:52
+$a = $a ?? $b; // Could rewrite
+^^^^^^^^^^^^^
+MAYBE   ternarySimplify: could rewrite as `(bool)$x` at testdata/embeddedrules/ternarySimplify.php:6
     sink($x ? true : false);
          ^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could replace the ternary with just $x > $y at testdata/embeddedrules/file.php:9
+MAYBE   ternarySimplify: could replace the ternary with just $x > $y at testdata/embeddedrules/ternarySimplify.php:9
     sink($x > $y ? true : false);
          ^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$x ?: $y` at testdata/embeddedrules/file.php:12
+MAYBE   ternarySimplify: could rewrite as `$x ?: $y` at testdata/embeddedrules/ternarySimplify.php:12
     sink($x ? $x : $y);
          ^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$x[1] ?? $y` at testdata/embeddedrules/file.php:15
+MAYBE   ternarySimplify: could rewrite as `$x[1] ?? $y` at testdata/embeddedrules/ternarySimplify.php:15
     sink(isset($x[1]) ? $x[1] : $y);
          ^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `(bool)($flags & SOME_MASK)` at testdata/embeddedrules/file.php:27
+MAYBE   ternarySimplify: could rewrite as `(bool)($flags & SOME_MASK)` at testdata/embeddedrules/ternarySimplify.php:27
     sink(($flags & SOME_MASK) ? true : false);
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
