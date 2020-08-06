@@ -2518,17 +2518,17 @@ class_statement_list:
 ;
 
 class_statement:
-        variable_modifiers property_list ';'
+        variable_modifiers optional_type property_list ';'
             {
-                $$ = stmt.NewPropertyList($1, $2)
+                $$ = stmt.NewPropertyList($1, $2, $3)
 
                 // save position
-                $$.SetPosition(yylex.(*Parser).positionBuilder.NewPosPos(identListStartPos($1), &$3.Position))
+                $$.SetPosition(yylex.(*Parser).positionBuilder.NewPosPos(identListStartPos($1), &$4.Position))
 
                 // save comments
                 yylex.(*Parser).MoveFreeFloating($1[0], $$)
-                yylex.(*Parser).setFreeFloating($$, freefloating.PropertyList, $3.FreeFloating)
-                yylex.(*Parser).setFreeFloating($$, freefloating.SemiColon, yylex.(*Parser).GetFreeFloatingToken($3))
+                yylex.(*Parser).setFreeFloating($$, freefloating.PropertyList, $4.FreeFloating)
+                yylex.(*Parser).setFreeFloating($$, freefloating.SemiColon, yylex.(*Parser).GetFreeFloatingToken($4))
 
                 yylex.(*Parser).returnTokenToPool(yyDollar, &yyVAL)
             }
