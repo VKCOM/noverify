@@ -48,6 +48,9 @@ func (b *blockLinter) enterNode(n node.Node) {
 	case *stmt.Switch:
 		b.checkSwitch(n)
 
+	case *stmt.If:
+		b.checkIfStmt(n)
+
 	case *stmt.Global:
 		b.checkGlobalStmt(n)
 
@@ -480,6 +483,36 @@ func (b *blockLinter) checkSwitch(s *stmt.Switch) {
 		}
 		if !nodeSet.Add(c.Cond) {
 			b.report(c.Cond, LevelWarning, "dupCond", "duplicated switch case #%d", i+1)
+		}
+	}
+}
+
+func (b *blockLinter) checkIfStmt(s *stmt.If) {
+	// Check for `if ($cond) { $x } else { $x }`.
+	// Leave more complex if chains to avoid false positives
+	// until we get more examples of valid and invalid cases of
+	// duplicated branches.
+	if len(s.ElseIf) == 0 && s.Else != nil {
+		x := s.Stmt
+		y := s.Else.(*stmt.Else).Stmt
+		if astutil.NodeEqual(x, y) {
+			b.report(s, LevelWarning, "dupBranchBody", "duplicated if/else actions")
+		}
+	}
+
+	b.checkIfStmtDupCond(s)
+}
+
+func (b *blockLinter) checkIfStmtDupCond(s *stmt.If) {
+	conditions := astutil.NewNodeSet()
+	conditions.Add(s.Cond)
+	for _, elseif := range s.ElseIf {
+		elseif := elseif.(*stmt.ElseIf)
+		if !b.walker.sideEffectFree(elseif.Cond) {
+			continue
+		}
+		if !conditions.Add(elseif.Cond) {
+			b.report(elseif.Cond, LevelWarning, "dupCond", "duplicated condition in if-else chain")
 		}
 	}
 }
