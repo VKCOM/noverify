@@ -370,6 +370,9 @@ func (m *matcher) eqNode(state *matcherState, x, y node.Node) bool {
 	case *assign.Concat:
 		y, ok := y.(*assign.Concat)
 		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expression, y.Expression)
+	case *assign.Coalesce:
+		y, ok := y.(*assign.Coalesce)
+		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expression, y.Expression)
 	case *assign.Div:
 		y, ok := y.(*assign.Div)
 		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expression, y.Expression)
