@@ -21,6 +21,8 @@ import (
 	"github.com/VKCOM/noverify/src/solver"
 )
 
+const foo = 1 // Should trigger build failure
+
 // loopKind describes current looping statement context.
 type loopKind int
 
