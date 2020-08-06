@@ -14170,11 +14170,21 @@ func TestPhp7ControlCharsErrors(t *testing.T) {
 	expected := []*errors.Error{
 		{
 			Msg: "WARNING: Unexpected character in input: '\004' (ASCII=4)",
-			Pos: &position.Position{1, 1, 6, 7},
+			Pos: &position.Position{
+				StartLine: 1,
+				EndLine:   1,
+				StartPos:  6,
+				EndPos:    7,
+			},
 		},
 		{
 			Msg: "WARNING: Unexpected character in input: '\005' (ASCII=5)",
-			Pos: &position.Position{1, 1, 21, 22},
+			Pos: &position.Position{
+				StartLine: 1,
+				EndLine:   1,
+				StartPos:  21,
+				EndPos:    22,
+			},
 		},
 	}
 

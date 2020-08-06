@@ -30,7 +30,6 @@ linters:
     - depguard
     - dupl
     - gocyclo
-    - govet
     - interfacer
     - lll
     - maligned
