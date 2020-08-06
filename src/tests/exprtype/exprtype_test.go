@@ -1870,57 +1870,85 @@ exprtype($tuple_int_str, "unknown_from_list");
 
 func TestPropertyTypeHints(t *testing.T) {
 	code := `<?php
+class Too {}
 class Boo {}
 
+// simple use
 class Foo {
   public int $int;
   public array $array;
-  public string $string;
-  public iterable $iterable;
+  public Boo $boo;
 
   public static float $float;
-  public static bool $bool;
-  public static callable $callable;
   public static object $object;
+  public static Too $too;
 }
 
 $f = new Foo();
 
 exprtype($f->int, "int");
-exprtype($f->string, "string");
 exprtype($f->array, "mixed[]");
-exprtype($f->iterable, "iterable");
+exprtype($f->boo, "\Boo");
 
 exprtype(Foo::$float, "float");
-exprtype(Foo::$bool, "bool");
-exprtype(Foo::$callable, "callable");
 exprtype(Foo::$object, "object");
+exprtype(Foo::$too, "\Too");
 
 
+// with PHPDoc
 class Poo {
   /** @var float $int */
   public static int $int;
+
   /** @var array $callable */
-  public callable $callable;
+  public object $object;
+
+  /** @var array $array */
+  public array $array;
+
+  /** @var float|int $a */
+  public static int $a;
+
+  /** @var int $b */
+  public int $b;
+
+  /** @var Foo|Too $c */
+  public Boo $c;
+
+  /** @var Boo $d */
+  public Boo $d;
 }
 
 $p = new Poo();
 
 exprtype(Poo::$int, "float|int");
-exprtype($p->callable, "callable|mixed[]");
+exprtype($p->object, "mixed[]|object");
+exprtype($p->array, "mixed[]");
+exprtype(Poo::$a, "float|int");
+exprtype($p->b, "int");
+exprtype($p->c, "\Boo|\Foo|\Too");
+exprtype($p->d, "\Boo");
 
 
-class Too {
-  public static Boo $boo;
-  public Foo $foo;
-  public static Too $too;
+// with default value
+class Roo {
+  /** @var float $a */
+  public static int $a = 10;
+
+  /** @var array $b */
+  public array $b = [1,2,3];
+
+  public bool $c = true;
+
+  public static string $d = "Hello";
 }
 
-$t = new Too();
+$r = new Roo();
 
-exprtype(Too::$boo, "\Boo");
-exprtype($t->foo, "\Foo");
-exprtype(Too::$too, "\Too");
+exprtype(Roo::$a, "float|int");
+exprtype($r->b, "int[]|mixed[]");
+exprtype($r->c, "bool");
+exprtype(Roo::$d, "string");
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
