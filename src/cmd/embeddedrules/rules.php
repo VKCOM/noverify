@@ -31,3 +31,89 @@ function ternarySimplify() {
    */
   isset($x) ? $x : $y;
 }
+
+function assignOp() {
+  /**
+   * @maybe could rewrite as `$x += $y`
+   * @fix $x += $y
+   * @pure $x
+   */
+  $x = $x + $y;
+
+  /**
+   * @maybe could rewrite as `$x -= $y`
+   * @fix $x -= $y
+   * @pure $x
+   */
+  $x = $x - $y;
+
+  /**
+   * @maybe could rewrite as `$x *= $y`
+   * @fix $x *= $y
+   * @pure $x
+   */
+  $x = $x * $y;
+
+  /**
+   * @maybe could rewrite as `$x /= $y`
+   * @fix $x /= $y
+   * @pure $x
+   */
+  $x = $x / $y;
+
+  /**
+   * @maybe could rewrite as `$x %= $y`
+   * @fix $x %= $y
+   * @pure $x
+   */
+  $x = $x % $y;
+
+  /**
+   * @maybe could rewrite as `$x &= $y`
+   * @fix $x &= $y
+   * @pure $x
+   */
+  $x = $x & $y;
+
+  /**
+   * @maybe could rewrite as `$x |= $y`
+   * @fix $x |= $y
+   * @pure $x
+   */
+  $x = $x | $y;
+
+  /**
+   * @maybe could rewrite as `$x ^= $y`
+   * @fix $x ^= $y
+   * @pure $x
+   */
+  $x = $x ^ $y;
+
+  /**
+   * @maybe could rewrite as `$x <<= $y`
+   * @fix $x <<= $y
+   * @pure $x
+   */
+  $x = $x << $y;
+
+  /**
+   * @maybe could rewrite as `$x >>= $y`
+   * @fix $x >>= $y
+   * @pure $x
+   */
+  $x = $x >> $y;
+
+  /**
+   * @maybe could rewrite as `$x .= $y`
+   * @fix $x .= $y
+   * @pure $x
+   */
+  $x = $x . $y;
+
+  /**
+   * @maybe could rewrite as `$x ??= $y`
+   * @fix $x ??= $y
+   * @pure $x
+   */
+  $x = $x ?? $y;
+}
