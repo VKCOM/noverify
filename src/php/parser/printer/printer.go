@@ -146,6 +146,8 @@ func (p *Printer) printNode(n node.Node) {
 		p.printAssignBitwiseOr(n)
 	case *assign.BitwiseXor:
 		p.printAssignBitwiseXor(n)
+	case *assign.Coalesce:
+		p.printAssignCoalesce(n)
 	case *assign.Concat:
 		p.printAssignConcat(n)
 	case *assign.Div:
@@ -706,6 +708,17 @@ func (p *Printer) printAssignBitwiseXor(n node.Node) {
 	p.Print(nn.Variable)
 	p.printFreeFloating(nn, freefloating.Var)
 	io.WriteString(p.w, "^=")
+	p.Print(nn.Expression)
+
+	p.printFreeFloating(nn, freefloating.End)
+}
+
+func (p *Printer) printAssignCoalesce(n node.Node) {
+	nn := n.(*assign.Coalesce)
+	p.printFreeFloating(nn, freefloating.Start)
+	p.Print(nn.Variable)
+	p.printFreeFloating(nn, freefloating.Var)
+	io.WriteString(p.w, "??=")
 	p.Print(nn.Expression)
 
 	p.printFreeFloating(nn, freefloating.End)
