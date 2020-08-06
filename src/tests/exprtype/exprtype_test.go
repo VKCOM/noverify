@@ -1868,6 +1868,91 @@ exprtype($tuple_int_str, "unknown_from_list");
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestPropertyTypeHints(t *testing.T) {
+	code := `<?php
+class Too {}
+class Boo {}
+
+// simple use
+class Foo {
+  public int $int;
+  public array $array;
+  public Boo $boo;
+
+  public static float $float;
+  public static object $object;
+  public static Too $too;
+}
+
+$f = new Foo();
+
+exprtype($f->int, "int");
+exprtype($f->array, "mixed[]");
+exprtype($f->boo, "\Boo");
+
+exprtype(Foo::$float, "float");
+exprtype(Foo::$object, "object");
+exprtype(Foo::$too, "\Too");
+
+
+// with PHPDoc
+class Poo {
+  /** @var float $int */
+  public static int $int;
+
+  /** @var array $callable */
+  public object $object;
+
+  /** @var array $array */
+  public array $array;
+
+  /** @var float|int $a */
+  public static int $a;
+
+  /** @var int $b */
+  public int $b;
+
+  /** @var Foo|Too $c */
+  public Boo $c;
+
+  /** @var Boo $d */
+  public Boo $d;
+}
+
+$p = new Poo();
+
+exprtype(Poo::$int, "float|int");
+exprtype($p->object, "mixed[]|object");
+exprtype($p->array, "mixed[]");
+exprtype(Poo::$a, "float|int");
+exprtype($p->b, "int");
+exprtype($p->c, "\Boo|\Foo|\Too");
+exprtype($p->d, "\Boo");
+
+
+// with default value
+class Roo {
+  /** @var float $a */
+  public static int $a = 10;
+
+  /** @var array $b */
+  public array $b = [1,2,3];
+
+  public bool $c = true;
+
+  public static string $d = "Hello";
+}
+
+$r = new Roo();
+
+exprtype(Roo::$a, "float|int");
+exprtype($r->b, "int[]|mixed[]");
+exprtype($r->c, "bool");
+exprtype(Roo::$d, "string");
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {
