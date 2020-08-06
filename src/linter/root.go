@@ -898,6 +898,11 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 		}
 	}
 
+	var specifiedType meta.TypesMap
+	if typ, ok := d.parseTypeNode(pl.Type); ok {
+		specifiedType = typ
+	}
+
 	for _, pNode := range pl.Properties {
 		p := pNode.(*stmt.Property)
 
@@ -908,6 +913,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 		if p.Expr != nil {
 			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, p.Expr))
 		}
+		typ = typ.Append(specifiedType)
 
 		if isStatic {
 			nm = "$" + nm

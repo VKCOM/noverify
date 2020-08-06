@@ -1868,6 +1868,56 @@ exprtype($tuple_int_str, "unknown_from_list");
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestPropertyTypeHints(t *testing.T) {
+	code := `<?php
+class Boo {}
+
+
+class Foo {
+  public static int $int;
+  public static float $float;
+  public static string $string;
+  public static bool $bool;
+  public static array $array;
+  public static callable $callable;
+  public static iterable $iterable;
+  public static object $object;
+}
+
+exprtype(Foo::$int, "int");
+exprtype(Foo::$float, "float");
+exprtype(Foo::$string, "string");
+exprtype(Foo::$bool, "bool");
+exprtype(Foo::$array, "mixed[]");
+exprtype(Foo::$callable, "callable");
+exprtype(Foo::$iterable, "iterable");
+exprtype(Foo::$object, "object");
+
+
+class Poo {
+  /** @var float $int */
+  public static int $int;
+  /** @var array $callable */
+  public static callable $callable;
+}
+
+exprtype(Poo::$int, "float|int");
+exprtype(Poo::$callable, "callable|mixed[]");
+
+
+class Too {
+  public static Boo $boo;
+  public static Foo $foo;
+  public static Too $too;
+}
+
+exprtype(Too::$boo, "\Boo");
+exprtype(Too::$foo, "\Foo");
+exprtype(Too::$too, "\Too");
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {
