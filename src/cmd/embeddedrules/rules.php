@@ -31,3 +31,11 @@ function ternarySimplify() {
    */
   isset($x) ? $x : $y;
 }
+
+function coalesceSimplify() {
+  /**
+   * @maybe could rewrite as `$x ??= $y`
+   * @fix $x ??= $y
+   */
+  $x = $x ?? $y;
+}

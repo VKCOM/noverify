@@ -410,6 +410,47 @@ function bad(string $x) {
 	runRulesTest(t, test, rfile)
 }
 
+func TestRuleCoalesceSimplify(t *testing.T) {
+	rfile := `<?php
+function coalesceSimplify() {
+  /**
+   * @maybe could rewrite as '$x ??= $y'
+   * @fix $x ??= $y
+   */
+  $x = $x ?? $y;
+}
+`
+	test := linttest.NewSuite(t)
+
+	test.AddFile(`<?php
+class Foo {
+  static $value = 100;
+}
+
+$a = 100;
+$a1 = 100;
+$b = 5;
+$c = [];
+
+
+$a = $a ?? $b; // could rewrite
+$c[0] = $c[0] ?? $b; // could rewrite
+Foo::$value = Foo::$value ?? $b; // could rewrite
+
+
+$a = $a1 ?? $b; // Ok
+$c[0] = $c[1] ?? $b; // Ok
+Foo::$value = $b ?? Foo::$value; // Ok
+`)
+
+	test.Expect = []string{
+		`could rewrite as '$a ??= $b'`,
+		`could rewrite as '$c[0] ??= $b'`,
+		`could rewrite as 'Foo::$value ??= $b'`,
+	}
+	runRulesTest(t, test, rfile)
+}
+
 func runRulesTest(t *testing.T, test *linttest.Suite, rfile string) {
 	rparser := rules.NewParser()
 	rset, err := rparser.Parse("<test>", strings.NewReader(rfile))
