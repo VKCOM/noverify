@@ -1448,7 +1448,7 @@ func (d *RootWalker) checkVarnameMisspellings(n node.Node, s string) {
 func (d *RootWalker) checkIdentMisspellings(n *node.Identifier) {
 	d.checkMisspellings(n, n.Value, "misspellName", func(s string) bool {
 		// Before PHP got context-sensitive lexer, it was common to use
-		// method names like "includ" to avoid parsing errors.
+		// method names to avoid parsing errors.
 		// We can't suggest a fix that leads to a parsing error.
 		// To avoid false positives, skip PHP keywords.
 		return phpKeywords[s]
