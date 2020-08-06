@@ -1,0 +1,184 @@
+package linter
+
+import (
+	"fmt"
+	"regexp"
+	"strings"
+
+	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/php/astutil"
+	"github.com/VKCOM/noverify/src/php/parser/freefloating"
+	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr"
+	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
+	"github.com/VKCOM/noverify/src/solver"
+)
+
+// This file contains methods that were defined inside BlockWalker
+// but in fact they can be separated and used in other contexts.
+
+func findMethod(className, methodName string) (res solver.FindMethodResult, magic, ok bool) {
+	m, ok := solver.FindMethod(className, methodName)
+	if ok {
+		return m, false, true
+	}
+	m, ok = solver.FindMethod(className, `__call`)
+	if ok {
+		return m, true, true
+	}
+	return m, false, false
+}
+
+func findProperty(className, propName string) (res solver.FindPropertyResult, magic, ok bool) {
+	p, ok := solver.FindProperty(className, propName)
+	if ok {
+		return p, false, true
+	}
+	m, ok := solver.FindMethod(className, `__get`)
+	if ok {
+		// Construct a dummy property from the magic method.
+		p.ClassName = m.ClassName
+		p.TraitName = m.TraitName
+		p.Info = meta.PropertyInfo{
+			Pos:         m.Info.Pos,
+			Typ:         m.Info.Typ,
+			AccessLevel: m.Info.AccessLevel,
+		}
+		return p, true, true
+	}
+	return p, false, false
+}
+
+func classDistance(st *meta.ClassParseState, class string) int {
+	if class == st.CurrentClass {
+		return 0
+	}
+	if class == st.CurrentParentClass {
+		return 1
+	}
+	// TODO: traverse the class hierarchy?
+	// It looks like a quite rare corner case, so lets
+	// not introduce another map allocating loop per
+	// every property/method lookup.
+	return 2
+}
+
+func enoughArgs(args []node.Node, fn meta.FuncInfo) bool {
+	if len(args) < fn.MinParamsCnt {
+		// If the last argument is ...$arg, then assume it is an array with
+		// sufficient values for the parameters
+		if len(args) == 0 || !args[len(args)-1].(*node.Argument).Variadic {
+			return false
+		}
+	}
+	return true
+}
+
+// checks whether or not we can access to className::method/property/constant/etc from this context
+func canAccess(st *meta.ClassParseState, className string, accessLevel meta.AccessLevel) bool {
+	switch accessLevel {
+	case meta.Private:
+		return st.CurrentClass == className
+	case meta.Protected:
+		if st.CurrentClass == className {
+			return true
+		}
+
+		// TODO: perhaps shpuld extract this common logic with visited map somewhere
+		visited := make(map[string]struct{}, 8)
+		parent := st.CurrentParentClass
+		for parent != "" {
+			if _, ok := visited[parent]; ok {
+				return false
+			}
+
+			visited[parent] = struct{}{}
+
+			if parent == className {
+				return true
+			}
+
+			class, ok := meta.Info.GetClass(parent)
+			if !ok {
+				return false
+			}
+
+			parent = class.Parent
+		}
+
+		return false
+	case meta.Public:
+		return true
+	}
+
+	panic("Invalid access level")
+}
+
+func nodeEqual(st *meta.ClassParseState, x, y node.Node) bool {
+	if x == nil || y == nil {
+		return x == y
+	}
+	switch x := x.(type) {
+	case *expr.ConstFetch:
+		y, ok := y.(*expr.ConstFetch)
+		if !ok {
+			return false
+		}
+		_, info1, ok := solver.GetConstant(st, x.Constant)
+		if !ok {
+			return false
+		}
+		_, info2, ok := solver.GetConstant(st, y.Constant)
+		if !ok {
+			return false
+		}
+
+		return info1.Value.IsEqual(info2.Value)
+
+	default:
+		return astutil.NodeEqual(x, y)
+	}
+}
+
+func getCaseStmts(c node.Node) (cond node.Node, list []node.Node) {
+	switch c := c.(type) {
+	case *stmt.Case:
+		cond = c.Cond
+		list = c.Stmts
+	case *stmt.Default:
+		list = c.Stmts
+	default:
+		panic(fmt.Errorf("Unexpected type in switch statement: %T", c))
+	}
+
+	return cond, list
+}
+
+var fallthroughMarkerRegex = func() *regexp.Regexp {
+	markers := []string{
+		"fallthrough",
+		"fall through",
+		"falls through",
+		"no break",
+	}
+
+	pattern := `(?:/\*|//)\s?(?:` + strings.Join(markers, `|`) + `)`
+	return regexp.MustCompile(pattern)
+}()
+
+func caseHasFallthroughComment(n node.Node) bool {
+	ffs := n.GetFreeFloating()
+	if ffs == nil {
+		return false
+	}
+	for _, cs := range *ffs {
+		for _, c := range cs {
+			if c.StringType == freefloating.CommentType {
+				if fallthroughMarkerRegex.MatchString(c.Value) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}

@@ -642,13 +642,7 @@ type handleFuncResult struct {
 }
 
 func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node.Node, sc *meta.Scope) handleFuncResult {
-	b := &BlockWalker{
-		ctx:          &blockContext{sc: sc},
-		r:            d,
-		unusedVars:   make(map[string][]node.Node),
-		nonLocalVars: make(map[string]variableKind),
-		path:         newNodePath(),
-	}
+	b := newBlockWalker(d, sc)
 	for _, createFn := range d.customBlock {
 		b.custom = append(b.custom, createFn(&BlockContext{w: b}))
 	}
