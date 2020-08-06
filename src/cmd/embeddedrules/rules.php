@@ -36,6 +36,7 @@ function coalesceSimplify() {
   /**
    * @maybe could rewrite as `$x ??= $y`
    * @fix $x ??= $y
+   * @pure $x
    */
   $x = $x ?? $y;
 }
