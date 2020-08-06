@@ -36,7 +36,11 @@ const (
 	loopSwitch
 )
 
-const _ = loopNone // To make "unused" linter happy
+// To make "unused" linter happy.
+const (
+	_ = loopNone
+	_ = varLocal
+)
 
 const (
 	// FlagReturn shows whether or not block has "return"
@@ -692,8 +696,7 @@ func (b *BlockWalker) checkArrayDimFetch(s *expr.ArrayDimFetch) {
 }
 
 func (b *BlockWalker) handleArgsCount(n node.Node, args []node.Node, fn meta.FuncInfo) {
-	switch {
-	case meta.NameNodeEquals(n, "mt_rand"):
+	if meta.NameNodeEquals(n, "mt_rand") {
 		if len(args) != 0 && len(args) != 2 {
 			b.r.Report(n, LevelWarning, "argCount", "mt_rand expects 0 or 2 args")
 		}
@@ -914,13 +917,10 @@ func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
 	magic := haveMagicMethod(className, `__callStatic`)
 	if !ok && !magic && !b.r.ctx.st.IsTrait {
 		b.r.Report(e.Call, LevelError, "undefined", "Call to undefined method %s::%s()", className, methodName)
-	} else {
+	} else if !parentCall && !fn.IsStatic() && !magic {
 		// Method is defined.
-
 		// parent::f() is permitted.
-		if !parentCall && !fn.IsStatic() && !magic {
-			b.r.Report(e.Call, LevelWarning, "callStatic", "Calling instance method as static method")
-		}
+		b.r.Report(e.Call, LevelWarning, "callStatic", "Calling instance method as static method")
 	}
 
 	if ok && !canAccess(b.r.ctx.st, m.ClassName, fn.AccessLevel) {

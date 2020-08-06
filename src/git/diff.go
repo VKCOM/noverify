@@ -67,7 +67,7 @@ func readShortLine(rd *bufio.Reader) (ln []byte, skip bool, err error) {
 	}
 
 	for {
-		ln, isPrefix, err = rd.ReadLine()
+		_, isPrefix, err = rd.ReadLine()
 		if err != nil {
 			return nil, false, err
 		}
