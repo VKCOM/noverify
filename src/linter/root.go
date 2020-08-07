@@ -778,33 +778,56 @@ func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodMod
 	return res
 }
 
-func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodModifiers) {
+func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodModifiers, countArgs int) {
+	const Any = -1
 	var (
 		canBeStatic    bool
 		canBeNonPublic bool
 		mustBeStatic   bool
+
+		numArgsExpected int
 	)
 
 	switch name {
 	case "__call",
-		"__get",
-		"__set",
+		"__set":
+		canBeStatic = false
+		canBeNonPublic = false
+		numArgsExpected = 2
+
+	case "__get",
 		"__isset",
-		"__unset",
-		"__toString",
-		"__invoke",
+		"__unset":
+		canBeStatic = false
+		canBeNonPublic = false
+		numArgsExpected = 1
+
+	case "__toString":
+		canBeStatic = false
+		canBeNonPublic = false
+		numArgsExpected = 0
+
+	case "__invoke",
 		"__debugInfo":
 		canBeStatic = false
 		canBeNonPublic = false
+		numArgsExpected = Any
 
-	case "__construct", "__destruct", "__clone":
+	case "__construct":
 		canBeStatic = false
 		canBeNonPublic = true
+		numArgsExpected = Any
+
+	case "__destruct", "__clone":
+		canBeStatic = false
+		canBeNonPublic = true
+		numArgsExpected = 0
 
 	case "__callStatic":
 		canBeStatic = true
 		canBeNonPublic = false
 		mustBeStatic = true
+		numArgsExpected = 2
 
 	case "__sleep",
 		"__wakeup",
@@ -813,6 +836,7 @@ func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodM
 		"__set_state":
 		canBeNonPublic = true
 		canBeStatic = true
+		numArgsExpected = Any
 
 	default:
 		return // Not a magic method
@@ -826,6 +850,10 @@ func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodM
 	}
 	if !canBeNonPublic && modif.accessLevel != meta.Public {
 		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must have public visibility", name)
+	}
+
+	if countArgs != numArgsExpected && numArgsExpected != Any {
+		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must take exactly %d argument", name, numArgsExpected)
 	}
 }
 
@@ -984,7 +1012,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 
 	modif := d.parseMethodModifiers(meth)
 
-	d.checkMagicMethod(meth.MethodName, nm, modif)
+	d.checkMagicMethod(meth.MethodName, nm, modif, len(meth.Params))
 
 	sc := meta.NewScope()
 	if !modif.static {
