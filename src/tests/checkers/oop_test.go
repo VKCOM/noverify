@@ -354,14 +354,14 @@ class Foo {
 }`)
 
 	test.Expect = []string{
-		"The magic method __destruct() cannot accept any arguments",
+		"The magic method __destruct() must take exactly 0 argument",
 		"The magic method __call() must take exactly 2 argument",
 		"The magic method __callStatic() must take exactly 2 argument",
 		"The magic method __get() must take exactly 1 argument",
 		"The magic method __set() must take exactly 2 argument",
 		"The magic method __isset() must take exactly 1 argument",
 		"The magic method __unset() must take exactly 1 argument",
-		"The magic method __toString() cannot accept any arguments",
+		"The magic method __toString() must take exactly 0 argument",
 	}
 	test.RunAndMatch()
 }

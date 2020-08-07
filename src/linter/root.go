@@ -779,14 +779,13 @@ func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodMod
 }
 
 func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodModifiers, countArgs int) {
+	const Any = -1
 	var (
 		canBeStatic    bool
 		canBeNonPublic bool
 		mustBeStatic   bool
 
-		mustHaveZeroArguments bool
-		mustHaveOneArgument   bool
-		mustHaveTwoArguments  bool
+		numArgsExpected int
 	)
 
 	switch name {
@@ -794,39 +793,41 @@ func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodM
 		"__set":
 		canBeStatic = false
 		canBeNonPublic = false
-		mustHaveTwoArguments = true
+		numArgsExpected = 2
 
 	case "__get",
 		"__isset",
 		"__unset":
 		canBeStatic = false
 		canBeNonPublic = false
-		mustHaveOneArgument = true
+		numArgsExpected = 1
 
 	case "__toString":
 		canBeStatic = false
 		canBeNonPublic = false
-		mustHaveZeroArguments = true
+		numArgsExpected = 0
 
 	case "__invoke",
 		"__debugInfo":
 		canBeStatic = false
 		canBeNonPublic = false
+		numArgsExpected = Any
 
 	case "__construct":
 		canBeStatic = false
 		canBeNonPublic = true
+		numArgsExpected = Any
 
 	case "__destruct", "__clone":
 		canBeStatic = false
 		canBeNonPublic = true
-		mustHaveZeroArguments = true
+		numArgsExpected = 0
 
 	case "__callStatic":
 		canBeStatic = true
 		canBeNonPublic = false
 		mustBeStatic = true
-		mustHaveTwoArguments = true
+		numArgsExpected = 2
 
 	case "__sleep",
 		"__wakeup",
@@ -835,6 +836,7 @@ func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodM
 		"__set_state":
 		canBeNonPublic = true
 		canBeStatic = true
+		numArgsExpected = Any
 
 	default:
 		return // Not a magic method
@@ -850,13 +852,8 @@ func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodM
 		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must have public visibility", name)
 	}
 
-	switch {
-	case mustHaveZeroArguments && countArgs != 0:
-		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() cannot accept any arguments", name)
-	case mustHaveTwoArguments && countArgs != 2:
-		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must take exactly 2 argument", name)
-	case mustHaveOneArgument && countArgs != 1:
-		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must take exactly 1 argument", name)
+	if countArgs != numArgsExpected && numArgsExpected != Any {
+		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must take exactly %d argument", name, numArgsExpected)
 	}
 }
 
