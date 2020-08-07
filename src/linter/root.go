@@ -778,33 +778,55 @@ func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodMod
 	return res
 }
 
-func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodModifiers) {
+func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodModifiers, countArgs int) {
 	var (
 		canBeStatic    bool
 		canBeNonPublic bool
 		mustBeStatic   bool
+
+		mustHaveZeroArguments bool
+		mustHaveOneArgument   bool
+		mustHaveTwoArguments  bool
 	)
 
 	switch name {
 	case "__call",
-		"__get",
-		"__set",
+		"__set":
+		canBeStatic = false
+		canBeNonPublic = false
+		mustHaveTwoArguments = true
+
+	case "__get",
 		"__isset",
-		"__unset",
-		"__toString",
-		"__invoke",
+		"__unset":
+		canBeStatic = false
+		canBeNonPublic = false
+		mustHaveOneArgument = true
+
+	case "__toString":
+		canBeStatic = false
+		canBeNonPublic = false
+		mustHaveZeroArguments = true
+
+	case "__invoke",
 		"__debugInfo":
 		canBeStatic = false
 		canBeNonPublic = false
 
-	case "__construct", "__destruct", "__clone":
+	case "__construct":
 		canBeStatic = false
 		canBeNonPublic = true
+
+	case "__destruct", "__clone":
+		canBeStatic = false
+		canBeNonPublic = true
+		mustHaveZeroArguments = true
 
 	case "__callStatic":
 		canBeStatic = true
 		canBeNonPublic = false
 		mustBeStatic = true
+		mustHaveTwoArguments = true
 
 	case "__sleep",
 		"__wakeup",
@@ -826,6 +848,15 @@ func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodM
 	}
 	if !canBeNonPublic && modif.accessLevel != meta.Public {
 		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must have public visibility", name)
+	}
+
+	switch {
+	case mustHaveZeroArguments && countArgs != 0:
+		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() cannot accept any arguments", name)
+	case mustHaveTwoArguments && countArgs != 2:
+		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must take exactly 2 argument", name)
+	case mustHaveOneArgument && countArgs != 1:
+		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must take exactly 1 argument", name)
 	}
 }
 
@@ -984,7 +1015,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 
 	modif := d.parseMethodModifiers(meth)
 
-	d.checkMagicMethod(meth.MethodName, nm, modif)
+	d.checkMagicMethod(meth.MethodName, nm, modif, len(meth.Params))
 
 	sc := meta.NewScope()
 	if !modif.static {

@@ -274,7 +274,7 @@ class A {
   public static function __set($name, $value) {} // The magic method __set() cannot be static
   protected function __toString() {} // The magic method __call() must have public visibility
   public function __callStatic($name, $arguments) {} // The magic method __callStatic() must be static
-  public static function __destruct($name, $arguments) {} // The magic method __destruct() cannot be static
+  public static function __destruct() {} // The magic method __destruct() cannot be static
   public static function __construct($name, $arguments) {} // The magic method __construct() cannot be static
   private static function __call($name, $arguments) {} // The magic method __call() must have public visibility
   private static function __callStatic($name, $arguments) {} // The magic method __callStatic() must have public visibility
@@ -336,6 +336,59 @@ class A {
   protected function __construct() {} // Ok
   public static function __callStatic($name, $arguments) {} // Ok
   private static function __some_method() {} // Ok, not magic
+}`)
+}
+
+func TestWrongNumberOfArgumentsInMagicMethods(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {
+  public function __destruct($a) {} // 0
+  public function __call($a) {} // 2
+  public static function __callStatic($a, $b, $c) {} // 2
+  public function __get($a, $b) {} // 1
+  public function __set($a) {} // 2
+  public function __isset() {} // 1
+  public function __unset($a, $b) {} // 1
+  public function __toString($a) {} // 0
+}`)
+
+	test.Expect = []string{
+		"The magic method __destruct() cannot accept any arguments",
+		"The magic method __call() must take exactly 2 argument",
+		"The magic method __callStatic() must take exactly 2 argument",
+		"The magic method __get() must take exactly 1 argument",
+		"The magic method __set() must take exactly 2 argument",
+		"The magic method __isset() must take exactly 1 argument",
+		"The magic method __unset() must take exactly 1 argument",
+		"The magic method __toString() cannot accept any arguments",
+	}
+	test.RunAndMatch()
+}
+
+func TestWrongNumberOfArgumentsInMagicMethodsGood(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class Foo {
+  public function __construct($a) {}
+  public function __construct($a, $b) {}
+  public function __destruct() {} // 0
+  public function __call($a, $b) {} // 2
+  public static function __callStatic($a, $b) {} // 2
+  public function __get($a) {} // 1
+  public function __set($a, $b) {} // 2
+  public function __isset($a) {} // 1
+  public function __unset($a) {} // 1
+  public function __sleep($a) {}
+  public function __wakeup() {}
+  public function __serialize() {}
+  public function __unserialize() {}
+  public function __toString() {} // 0
+  public function __invoke() {}
+  public function __set_state() {}
+  public function __clone() {} // 0
+  public function __debugInfo() {}
+  public function __non_magic($a) {} // any
+  public function __non_magic() {} // any
 }`)
 }
 
