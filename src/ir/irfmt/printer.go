@@ -412,10 +412,8 @@ func (p *PrettyPrinter) printNode(n ir.Node) {
 
 // node
 
-func (p *PrettyPrinter) printNodeRoot(n ir.Node) {
-	v := n.(*ir.Root)
-
-	stmts := v.Stmts
+func (p *PrettyPrinter) printNodeRoot(n *ir.Root) {
+	stmts := n.Stmts
 	if len(stmts) > 0 {
 		firstStmt := stmts[0]
 		stmts = stmts[1:]
@@ -436,67 +434,57 @@ func (p *PrettyPrinter) printNodeRoot(n ir.Node) {
 	io.WriteString(p.w, "\n")
 }
 
-func (p *PrettyPrinter) printNodeIdentifier(n ir.Node) {
-	v := n.(*ir.Identifier).Value
-	io.WriteString(p.w, v)
+func (p *PrettyPrinter) printNodeIdentifier(n *ir.Identifier) {
+	io.WriteString(p.w, n.Value)
 }
 
-func (p *PrettyPrinter) printNodeParameter(n ir.Node) {
-	nn := n.(*ir.Parameter)
-
-	if nn.VariableType != nil {
-		p.Print(nn.VariableType)
+func (p *PrettyPrinter) printNodeParameter(n *ir.Parameter) {
+	if n.VariableType != nil {
+		p.Print(n.VariableType)
 		io.WriteString(p.w, " ")
 	}
 
-	if nn.ByRef {
+	if n.ByRef {
 		io.WriteString(p.w, "&")
 	}
 
-	if nn.Variadic {
+	if n.Variadic {
 		io.WriteString(p.w, "...")
 	}
 
-	p.Print(nn.Variable)
+	p.Print(n.Variable)
 
-	if nn.DefaultValue != nil {
+	if n.DefaultValue != nil {
 		io.WriteString(p.w, " = ")
-		p.Print(nn.DefaultValue)
+		p.Print(n.DefaultValue)
 	}
 }
 
-func (p *PrettyPrinter) printNodeNullable(n ir.Node) {
-	nn := n.(*ir.Nullable)
-
+func (p *PrettyPrinter) printNodeNullable(n *ir.Nullable) {
 	io.WriteString(p.w, "?")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printNodeArgument(n ir.Node) {
-	nn := n.(*ir.Argument)
-
-	if nn.IsReference {
+func (p *PrettyPrinter) printNodeArgument(n *ir.Argument) {
+	if n.IsReference {
 		io.WriteString(p.w, "&")
 	}
 
-	if nn.Variadic {
+	if n.Variadic {
 		io.WriteString(p.w, "...")
 	}
 
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
 // name
 
-func (p *PrettyPrinter) printNameNamePart(n ir.Node) {
-	v := n.(*ir.NamePart).Value
-	io.WriteString(p.w, v)
+func (p *PrettyPrinter) printNameNamePart(n *ir.NamePart) {
+	io.WriteString(p.w, n.Value)
 }
 
-func (p *PrettyPrinter) printNameName(n ir.Node) {
-	nn := n.(*ir.Name)
-
-	for k, part := range nn.Parts {
+func (p *PrettyPrinter) printNameName(n *ir.Name) {
+	for k, part := range n.Parts {
 		if k > 0 {
 			io.WriteString(p.w, "\\")
 		}
@@ -505,20 +493,16 @@ func (p *PrettyPrinter) printNameName(n ir.Node) {
 	}
 }
 
-func (p *PrettyPrinter) printNameFullyQualified(n ir.Node) {
-	nn := n.(*ir.FullyQualifiedName)
-
-	for _, part := range nn.Parts {
+func (p *PrettyPrinter) printNameFullyQualified(n *ir.FullyQualifiedName) {
+	for _, part := range n.Parts {
 		io.WriteString(p.w, "\\")
 		p.Print(part)
 	}
 }
 
-func (p *PrettyPrinter) printNameRelative(n ir.Node) {
-	nn := n.(*ir.RelativeName)
-
+func (p *PrettyPrinter) printNameRelative(n *ir.RelativeName) {
 	io.WriteString(p.w, "namespace")
-	for _, part := range nn.Parts {
+	for _, part := range n.Parts {
 		io.WriteString(p.w, "\\")
 		p.Print(part)
 	}
@@ -526,32 +510,26 @@ func (p *PrettyPrinter) printNameRelative(n ir.Node) {
 
 // scalar
 
-func (p *PrettyPrinter) printScalarLNumber(n ir.Node) {
-	v := n.(*ir.Lnumber).Value
-	io.WriteString(p.w, v)
+func (p *PrettyPrinter) printScalarLNumber(n *ir.Lnumber) {
+	io.WriteString(p.w, n.Value)
 }
 
-func (p *PrettyPrinter) printScalarDNumber(n ir.Node) {
-	v := n.(*ir.Dnumber).Value
-	io.WriteString(p.w, v)
+func (p *PrettyPrinter) printScalarDNumber(n *ir.Dnumber) {
+	io.WriteString(p.w, n.Value)
 }
 
-func (p *PrettyPrinter) printScalarString(n ir.Node) {
-	v := n.(*ir.String).Value
-
-	io.WriteString(p.w, v)
+func (p *PrettyPrinter) printScalarString(n *ir.String) {
+	io.WriteString(p.w, n.Value)
 }
 
-func (p *PrettyPrinter) printScalarEncapsedStringPart(n ir.Node) {
-	v := n.(*ir.EncapsedStringPart).Value
-	io.WriteString(p.w, v)
+func (p *PrettyPrinter) printScalarEncapsedStringPart(n *ir.EncapsedStringPart) {
+	io.WriteString(p.w, n.Value)
 }
 
-func (p *PrettyPrinter) printScalarEncapsed(n ir.Node) {
-	nn := n.(*ir.Encapsed)
+func (p *PrettyPrinter) printScalarEncapsed(n *ir.Encapsed) {
 	io.WriteString(p.w, "\"")
 
-	for _, part := range nn.Parts {
+	for _, part := range n.Parts {
 		switch part.(type) {
 		case *ir.EncapsedStringPart:
 			p.Print(part)
@@ -565,12 +543,10 @@ func (p *PrettyPrinter) printScalarEncapsed(n ir.Node) {
 	io.WriteString(p.w, "\"")
 }
 
-func (p *PrettyPrinter) printScalarHeredoc(n ir.Node) {
-	nn := n.(*ir.Heredoc)
+func (p *PrettyPrinter) printScalarHeredoc(n *ir.Heredoc) {
+	io.WriteString(p.w, n.Label)
 
-	io.WriteString(p.w, nn.Label)
-
-	for _, part := range nn.Parts {
+	for _, part := range n.Parts {
 		switch part.(type) {
 		case *ir.EncapsedStringPart:
 			p.Print(part)
@@ -581,381 +557,298 @@ func (p *PrettyPrinter) printScalarHeredoc(n ir.Node) {
 		}
 	}
 
-	io.WriteString(p.w, strings.Trim(nn.Label, "<\"'\n"))
+	io.WriteString(p.w, strings.Trim(n.Label, "<\"'\n"))
 }
 
-func (p *PrettyPrinter) printScalarMagicConstant(n ir.Node) {
-	v := n.(*ir.MagicConstant).Value
-	io.WriteString(p.w, v)
+func (p *PrettyPrinter) printScalarMagicConstant(n *ir.MagicConstant) {
+	io.WriteString(p.w, n.Value)
 }
 
 // Assign
 
-func (p *PrettyPrinter) printAssign(n ir.Node) {
-	nn := n.(*ir.Assign)
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printAssign(n *ir.Assign) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, " = ")
-	p.Print(nn.Expression)
+	p.Print(n.Expression)
 }
 
-func (p *PrettyPrinter) printReference(n ir.Node) {
-	nn := n.(*ir.AssignReference)
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printReference(n *ir.AssignReference) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, " =& ")
-	p.Print(nn.Expression)
+	p.Print(n.Expression)
 }
 
-func (p *PrettyPrinter) printAssignBitwiseAnd(n ir.Node) {
-	nn := n.(*ir.AssignBitwiseAnd)
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printAssignBitwiseAnd(n *ir.AssignBitwiseAnd) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, " &= ")
-	p.Print(nn.Expression)
+	p.Print(n.Expression)
 }
 
-func (p *PrettyPrinter) printAssignBitwiseOr(n ir.Node) {
-	nn := n.(*ir.AssignBitwiseOr)
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printAssignBitwiseOr(n *ir.AssignBitwiseOr) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, " |= ")
-	p.Print(nn.Expression)
+	p.Print(n.Expression)
 }
 
-func (p *PrettyPrinter) printAssignBitwiseXor(n ir.Node) {
-	nn := n.(*ir.AssignBitwiseXor)
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printAssignBitwiseXor(n *ir.AssignBitwiseXor) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, " ^= ")
-	p.Print(nn.Expression)
+	p.Print(n.Expression)
 }
 
-func (p *PrettyPrinter) printAssignConcat(n ir.Node) {
-	nn := n.(*ir.AssignConcat)
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printAssignConcat(n *ir.AssignConcat) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, " .= ")
-	p.Print(nn.Expression)
+	p.Print(n.Expression)
 }
 
-func (p *PrettyPrinter) printAssignDiv(n ir.Node) {
-	nn := n.(*ir.AssignDiv)
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printAssignDiv(n *ir.AssignDiv) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, " /= ")
-	p.Print(nn.Expression)
+	p.Print(n.Expression)
 }
 
-func (p *PrettyPrinter) printAssignMinus(n ir.Node) {
-	nn := n.(*ir.AssignMinus)
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printAssignMinus(n *ir.AssignMinus) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, " -= ")
-	p.Print(nn.Expression)
+	p.Print(n.Expression)
 }
 
-func (p *PrettyPrinter) printAssignMod(n ir.Node) {
-	nn := n.(*ir.AssignMod)
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printAssignMod(n *ir.AssignMod) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, " %= ")
-	p.Print(nn.Expression)
+	p.Print(n.Expression)
 }
 
-func (p *PrettyPrinter) printAssignMul(n ir.Node) {
-	nn := n.(*ir.AssignMul)
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printAssignMul(n *ir.AssignMul) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, " *= ")
-	p.Print(nn.Expression)
+	p.Print(n.Expression)
 }
 
-func (p *PrettyPrinter) printAssignPlus(n ir.Node) {
-	nn := n.(*ir.AssignPlus)
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printAssignPlus(n *ir.AssignPlus) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, " += ")
-	p.Print(nn.Expression)
+	p.Print(n.Expression)
 }
 
-func (p *PrettyPrinter) printAssignPow(n ir.Node) {
-	nn := n.(*ir.AssignPow)
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printAssignPow(n *ir.AssignPow) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, " **= ")
-	p.Print(nn.Expression)
+	p.Print(n.Expression)
 }
 
-func (p *PrettyPrinter) printAssignShiftLeft(n ir.Node) {
-	nn := n.(*ir.AssignShiftLeft)
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printAssignShiftLeft(n *ir.AssignShiftLeft) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, " <<= ")
-	p.Print(nn.Expression)
+	p.Print(n.Expression)
 }
 
-func (p *PrettyPrinter) printAssignShiftRight(n ir.Node) {
-	nn := n.(*ir.AssignShiftRight)
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printAssignShiftRight(n *ir.AssignShiftRight) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, " >>= ")
-	p.Print(nn.Expression)
+	p.Print(n.Expression)
 }
 
 // binary
 
-func (p *PrettyPrinter) printBinaryBitwiseAnd(n ir.Node) {
-	nn := n.(*ir.BitwiseAndExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryBitwiseAnd(n *ir.BitwiseAndExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " & ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryBitwiseOr(n ir.Node) {
-	nn := n.(*ir.BitwiseOrExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryBitwiseOr(n *ir.BitwiseOrExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " | ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryBitwiseXor(n ir.Node) {
-	nn := n.(*ir.BitwiseXorExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryBitwiseXor(n *ir.BitwiseXorExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " ^ ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryBooleanAnd(n ir.Node) {
-	nn := n.(*ir.BooleanAndExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryBooleanAnd(n *ir.BooleanAndExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " && ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryBooleanOr(n ir.Node) {
-	nn := n.(*ir.BooleanOrExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryBooleanOr(n *ir.BooleanOrExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " || ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryCoalesce(n ir.Node) {
-	nn := n.(*ir.CoalesceExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryCoalesce(n *ir.CoalesceExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " ?? ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryConcat(n ir.Node) {
-	nn := n.(*ir.ConcatExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryConcat(n *ir.ConcatExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " . ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryDiv(n ir.Node) {
-	nn := n.(*ir.DivExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryDiv(n *ir.DivExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " / ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryEqual(n ir.Node) {
-	nn := n.(*ir.EqualExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryEqual(n *ir.EqualExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " == ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryGreaterOrEqual(n ir.Node) {
-	nn := n.(*ir.GreaterOrEqualExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryGreaterOrEqual(n *ir.GreaterOrEqualExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " >= ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryGreater(n ir.Node) {
-	nn := n.(*ir.GreaterExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryGreater(n *ir.GreaterExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " > ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryIdentical(n ir.Node) {
-	nn := n.(*ir.IdenticalExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryIdentical(n *ir.IdenticalExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " === ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryLogicalAnd(n ir.Node) {
-	nn := n.(*ir.LogicalAndExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryLogicalAnd(n *ir.LogicalAndExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " and ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryLogicalOr(n ir.Node) {
-	nn := n.(*ir.LogicalOrExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryLogicalOr(n *ir.LogicalOrExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " or ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryLogicalXor(n ir.Node) {
-	nn := n.(*ir.LogicalXorExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryLogicalXor(n *ir.LogicalXorExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " xor ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryMinus(n ir.Node) {
-	nn := n.(*ir.MinusExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryMinus(n *ir.MinusExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " - ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryMod(n ir.Node) {
-	nn := n.(*ir.ModExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryMod(n *ir.ModExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " % ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryMul(n ir.Node) {
-	nn := n.(*ir.MulExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryMul(n *ir.MulExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " * ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryNotEqual(n ir.Node) {
-	nn := n.(*ir.NotEqualExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryNotEqual(n *ir.NotEqualExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " != ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryNotIdentical(n ir.Node) {
-	nn := n.(*ir.NotIdenticalExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryNotIdentical(n *ir.NotIdenticalExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " !== ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryPlus(n ir.Node) {
-	nn := n.(*ir.PlusExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryPlus(n *ir.PlusExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " + ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryPow(n ir.Node) {
-	nn := n.(*ir.PowExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryPow(n *ir.PowExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " ** ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryShiftLeft(n ir.Node) {
-	nn := n.(*ir.ShiftLeftExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryShiftLeft(n *ir.ShiftLeftExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " << ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinaryShiftRight(n ir.Node) {
-	nn := n.(*ir.ShiftRightExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinaryShiftRight(n *ir.ShiftRightExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " >> ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinarySmallerOrEqual(n ir.Node) {
-	nn := n.(*ir.SmallerOrEqualExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinarySmallerOrEqual(n *ir.SmallerOrEqualExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " <= ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinarySmaller(n ir.Node) {
-	nn := n.(*ir.SmallerExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinarySmaller(n *ir.SmallerExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " < ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
-func (p *PrettyPrinter) printBinarySpaceship(n ir.Node) {
-	nn := n.(*ir.SpaceshipExpr)
-
-	p.Print(nn.Left)
+func (p *PrettyPrinter) printBinarySpaceship(n *ir.SpaceshipExpr) {
+	p.Print(n.Left)
 	io.WriteString(p.w, " <=> ")
-	p.Print(nn.Right)
+	p.Print(n.Right)
 }
 
 // cast
 
-func (p *PrettyPrinter) printArray(n ir.Node) {
-	nn := n.(*ir.ArrayCastExpr)
-
+func (p *PrettyPrinter) printArray(n *ir.ArrayCastExpr) {
 	io.WriteString(p.w, "(array)")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printBool(n ir.Node) {
-	nn := n.(*ir.BoolCastExpr)
-
+func (p *PrettyPrinter) printBool(n *ir.BoolCastExpr) {
 	io.WriteString(p.w, "(bool)")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printDouble(n ir.Node) {
-	nn := n.(*ir.DoubleCastExpr)
-
+func (p *PrettyPrinter) printDouble(n *ir.DoubleCastExpr) {
 	io.WriteString(p.w, "(float)")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printInt(n ir.Node) {
-	nn := n.(*ir.IntCastExpr)
-
+func (p *PrettyPrinter) printInt(n *ir.IntCastExpr) {
 	io.WriteString(p.w, "(int)")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printObject(n ir.Node) {
-	nn := n.(*ir.ObjectCastExpr)
-
+func (p *PrettyPrinter) printObject(n *ir.ObjectCastExpr) {
 	io.WriteString(p.w, "(object)")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printString(n ir.Node) {
-	nn := n.(*ir.StringCastExpr)
-
+func (p *PrettyPrinter) printString(n *ir.StringCastExpr) {
 	io.WriteString(p.w, "(string)")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printUnset(n ir.Node) {
-	nn := n.(*ir.UnsetCastExpr)
-
+func (p *PrettyPrinter) printUnset(n *ir.UnsetCastExpr) {
 	io.WriteString(p.w, "(unset)")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
 // expr
@@ -966,296 +859,235 @@ func (p *PrettyPrinter) printExprParen(n *ir.ParenExpr) {
 	io.WriteString(p.w, ")")
 }
 
-func (p *PrettyPrinter) printExprArrayDimFetch(n ir.Node) {
-	nn := n.(*ir.ArrayDimFetchExpr)
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printExprArrayDimFetch(n *ir.ArrayDimFetchExpr) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, "[")
-	p.Print(nn.Dim)
+	p.Print(n.Dim)
 	io.WriteString(p.w, "]")
 }
 
-func (p *PrettyPrinter) printExprArrayItem(n ir.Node) {
-	nn := n.(*ir.ArrayItemExpr)
-
-	if nn.Key != nil {
-		p.Print(nn.Key)
+func (p *PrettyPrinter) printExprArrayItem(n *ir.ArrayItemExpr) {
+	if n.Key != nil {
+		p.Print(n.Key)
 		io.WriteString(p.w, " => ")
 	}
 
-	p.Print(nn.Val)
+	p.Print(n.Val)
 }
 
-func (p *PrettyPrinter) printExprArray(n ir.Node) {
-	nn := n.(*ir.ArrayExpr)
-
-	if nn.ShortSyntax {
+func (p *PrettyPrinter) printExprArray(n *ir.ArrayExpr) {
+	if n.ShortSyntax {
 		io.WriteString(p.w, "[")
-		p.joinPrintArrayItems(", ", nn.Items)
+		p.joinPrintArrayItems(", ", n.Items)
 		io.WriteString(p.w, "]")
 	} else {
 		io.WriteString(p.w, "array(")
-		p.joinPrintArrayItems(", ", nn.Items)
+		p.joinPrintArrayItems(", ", n.Items)
 		io.WriteString(p.w, ")")
 	}
 }
 
-func (p *PrettyPrinter) printExprBitwiseNot(n ir.Node) {
-	nn := n.(*ir.BitwiseNotExpr)
+func (p *PrettyPrinter) printExprBitwiseNot(n *ir.BitwiseNotExpr) {
 	io.WriteString(p.w, "~")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printExprBooleanNot(n ir.Node) {
-	nn := n.(*ir.BooleanNotExpr)
+func (p *PrettyPrinter) printExprBooleanNot(n *ir.BooleanNotExpr) {
 	io.WriteString(p.w, "!")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printExprClassConstFetch(n ir.Node) {
-	nn := n.(*ir.ClassConstFetchExpr)
-
-	p.Print(nn.Class)
+func (p *PrettyPrinter) printExprClassConstFetch(n *ir.ClassConstFetchExpr) {
+	p.Print(n.Class)
 	io.WriteString(p.w, "::")
-	io.WriteString(p.w, nn.ConstantName.Value)
+	io.WriteString(p.w, n.ConstantName.Value)
 }
 
-func (p *PrettyPrinter) printExprClone(n ir.Node) {
-	nn := n.(*ir.CloneExpr)
-
+func (p *PrettyPrinter) printExprClone(n *ir.CloneExpr) {
 	io.WriteString(p.w, "clone ")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printExprClosureUse(n ir.Node) {
-	nn := n.(*ir.ClosureUseExpr)
-
+func (p *PrettyPrinter) printExprClosureUse(n *ir.ClosureUseExpr) {
 	io.WriteString(p.w, "use (")
-	p.joinPrint(", ", nn.Uses)
+	p.joinPrint(", ", n.Uses)
 	io.WriteString(p.w, ")")
 }
 
-func (p *PrettyPrinter) printExprClosure(n ir.Node) {
-	nn := n.(*ir.ClosureExpr)
-
-	if nn.Static {
+func (p *PrettyPrinter) printExprClosure(n *ir.ClosureExpr) {
+	if n.Static {
 		io.WriteString(p.w, "static ")
 	}
 
 	io.WriteString(p.w, "function ")
 
-	if nn.ReturnsRef {
+	if n.ReturnsRef {
 		io.WriteString(p.w, "&")
 	}
 
 	io.WriteString(p.w, "(")
-	p.joinPrint(", ", nn.Params)
+	p.joinPrint(", ", n.Params)
 	io.WriteString(p.w, ")")
 
-	if nn.ClosureUse != nil {
+	if n.ClosureUse != nil {
 		io.WriteString(p.w, " ")
-		p.Print(nn.ClosureUse)
+		p.Print(n.ClosureUse)
 	}
 
-	if nn.ReturnType != nil {
+	if n.ReturnType != nil {
 		io.WriteString(p.w, ": ")
-		p.Print(nn.ReturnType)
+		p.Print(n.ReturnType)
 	}
 
 	io.WriteString(p.w, " {\n")
-	p.printNodes(nn.Stmts)
+	p.printNodes(n.Stmts)
 	io.WriteString(p.w, "\n")
 	p.printIndent()
 	io.WriteString(p.w, "}")
 }
 
-func (p *PrettyPrinter) printExprConstFetch(n ir.Node) {
-	nn := n.(*ir.ConstFetchExpr)
-
-	p.Print(nn.Constant)
+func (p *PrettyPrinter) printExprConstFetch(n *ir.ConstFetchExpr) {
+	p.Print(n.Constant)
 }
 
-func (p *PrettyPrinter) printExprEmpty(n ir.Node) {
-	nn := n.(*ir.EmptyExpr)
-
+func (p *PrettyPrinter) printExprEmpty(n *ir.EmptyExpr) {
 	io.WriteString(p.w, "empty(")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 	io.WriteString(p.w, ")")
 }
 
-func (p *PrettyPrinter) printExprErrorSuppress(n ir.Node) {
-	nn := n.(*ir.ErrorSuppressExpr)
-
+func (p *PrettyPrinter) printExprErrorSuppress(n *ir.ErrorSuppressExpr) {
 	io.WriteString(p.w, "@")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printExprEval(n ir.Node) {
-	nn := n.(*ir.EvalExpr)
-
+func (p *PrettyPrinter) printExprEval(n *ir.EvalExpr) {
 	io.WriteString(p.w, "eval(")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 	io.WriteString(p.w, ")")
 }
 
-func (p *PrettyPrinter) printExprExit(n ir.Node) {
-	nn := n.(*ir.ExitExpr)
-
-	if nn.Die {
+func (p *PrettyPrinter) printExprExit(n *ir.ExitExpr) {
+	if n.Die {
 		io.WriteString(p.w, "die(")
 	} else {
 		io.WriteString(p.w, "exit(")
 	}
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 	io.WriteString(p.w, ")")
 }
 
-func (p *PrettyPrinter) printExprFunctionCall(n ir.Node) {
-	nn := n.(*ir.FunctionCallExpr)
-
-	p.Print(nn.Function)
+func (p *PrettyPrinter) printExprFunctionCall(n *ir.FunctionCallExpr) {
+	p.Print(n.Function)
 	io.WriteString(p.w, "(")
-	p.joinPrint(", ", nn.ArgumentList.Arguments)
+	p.joinPrint(", ", n.ArgumentList.Arguments)
 	io.WriteString(p.w, ")")
 }
 
-func (p *PrettyPrinter) printExprInclude(n ir.Node) {
-	nn := n.(*ir.IncludeExpr)
-
+func (p *PrettyPrinter) printExprInclude(n *ir.IncludeExpr) {
 	io.WriteString(p.w, "include ")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printExprIncludeOnce(n ir.Node) {
-	nn := n.(*ir.IncludeOnceExpr)
-
+func (p *PrettyPrinter) printExprIncludeOnce(n *ir.IncludeOnceExpr) {
 	io.WriteString(p.w, "include_once ")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printExprInstanceOf(n ir.Node) {
-	nn := n.(*ir.InstanceOfExpr)
-
-	p.Print(nn.Expr)
+func (p *PrettyPrinter) printExprInstanceOf(n *ir.InstanceOfExpr) {
+	p.Print(n.Expr)
 	io.WriteString(p.w, " instanceof ")
-	p.Print(nn.Class)
+	p.Print(n.Class)
 }
 
-func (p *PrettyPrinter) printExprIsset(n ir.Node) {
-	nn := n.(*ir.IssetExpr)
-
+func (p *PrettyPrinter) printExprIsset(n *ir.IssetExpr) {
 	io.WriteString(p.w, "isset(")
-	p.joinPrint(", ", nn.Variables)
+	p.joinPrint(", ", n.Variables)
 	io.WriteString(p.w, ")")
 }
 
-func (p *PrettyPrinter) printExprList(n ir.Node) {
-	nn := n.(*ir.ListExpr)
-
-	if nn.ShortSyntax {
+func (p *PrettyPrinter) printExprList(n *ir.ListExpr) {
+	if n.ShortSyntax {
 		io.WriteString(p.w, "[")
-		p.joinPrintArrayItems(", ", nn.Items)
+		p.joinPrintArrayItems(", ", n.Items)
 		io.WriteString(p.w, "]")
 	} else {
 		io.WriteString(p.w, "list(")
-		p.joinPrintArrayItems(", ", nn.Items)
+		p.joinPrintArrayItems(", ", n.Items)
 		io.WriteString(p.w, ")")
 	}
 }
 
-func (p *PrettyPrinter) printExprMethodCall(n ir.Node) {
-	nn := n.(*ir.MethodCallExpr)
-
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printExprMethodCall(n *ir.MethodCallExpr) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, "->")
-	p.Print(nn.Method)
+	p.Print(n.Method)
 	io.WriteString(p.w, "(")
-	p.joinPrint(", ", nn.ArgumentList.Arguments)
+	p.joinPrint(", ", n.ArgumentList.Arguments)
 	io.WriteString(p.w, ")")
 }
 
-func (p *PrettyPrinter) printExprNew(n ir.Node) {
-	nn := n.(*ir.NewExpr)
-
+func (p *PrettyPrinter) printExprNew(n *ir.NewExpr) {
 	io.WriteString(p.w, "new ")
-	p.Print(nn.Class)
+	p.Print(n.Class)
 
-	if nn.ArgumentList != nil {
+	if n.ArgumentList != nil {
 		io.WriteString(p.w, "(")
-		p.joinPrint(", ", nn.ArgumentList.Arguments)
+		p.joinPrint(", ", n.ArgumentList.Arguments)
 		io.WriteString(p.w, ")")
 	}
 }
 
-func (p *PrettyPrinter) printExprPostDec(n ir.Node) {
-	nn := n.(*ir.PostDecExpr)
-
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printExprPostDec(n *ir.PostDecExpr) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, "--")
 }
 
-func (p *PrettyPrinter) printExprPostInc(n ir.Node) {
-	nn := n.(*ir.PostIncExpr)
-
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printExprPostInc(n *ir.PostIncExpr) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, "++")
 }
 
-func (p *PrettyPrinter) printExprPreDec(n ir.Node) {
-	nn := n.(*ir.PreDecExpr)
-
+func (p *PrettyPrinter) printExprPreDec(n *ir.PreDecExpr) {
 	io.WriteString(p.w, "--")
-	p.Print(nn.Variable)
+	p.Print(n.Variable)
 }
 
-func (p *PrettyPrinter) printExprPreInc(n ir.Node) {
-	nn := n.(*ir.PreIncExpr)
-
+func (p *PrettyPrinter) printExprPreInc(n *ir.PreIncExpr) {
 	io.WriteString(p.w, "++")
-	p.Print(nn.Variable)
+	p.Print(n.Variable)
 }
 
-func (p *PrettyPrinter) printExprPrint(n ir.Node) {
-	nn := n.(*ir.PrintExpr)
-
+func (p *PrettyPrinter) printExprPrint(n *ir.PrintExpr) {
 	io.WriteString(p.w, "print(")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 	io.WriteString(p.w, ")")
 }
 
-func (p *PrettyPrinter) printExprPropertyFetch(n ir.Node) {
-	nn := n.(*ir.PropertyFetchExpr)
-
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printExprPropertyFetch(n *ir.PropertyFetchExpr) {
+	p.Print(n.Variable)
 	io.WriteString(p.w, "->")
-	p.Print(nn.Property)
+	p.Print(n.Property)
 }
 
-func (p *PrettyPrinter) printExprReference(n ir.Node) {
-	nn := n.(*ir.ReferenceExpr)
-
+func (p *PrettyPrinter) printExprReference(n *ir.ReferenceExpr) {
 	io.WriteString(p.w, "&")
-	p.Print(nn.Variable)
+	p.Print(n.Variable)
 }
 
-func (p *PrettyPrinter) printExprRequire(n ir.Node) {
-	nn := n.(*ir.RequireExpr)
-
+func (p *PrettyPrinter) printExprRequire(n *ir.RequireExpr) {
 	io.WriteString(p.w, "require ")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printExprRequireOnce(n ir.Node) {
-	nn := n.(*ir.RequireOnceExpr)
-
+func (p *PrettyPrinter) printExprRequireOnce(n *ir.RequireOnceExpr) {
 	io.WriteString(p.w, "require_once ")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printExprShellExec(n ir.Node) {
-	nn := n.(*ir.ShellExecExpr)
-
+func (p *PrettyPrinter) printExprShellExec(n *ir.ShellExecExpr) {
 	io.WriteString(p.w, "`")
-	for _, part := range nn.Parts {
+	for _, part := range n.Parts {
 		switch part.(type) {
 		case *ir.EncapsedStringPart:
 			p.Print(part)
@@ -1268,150 +1100,127 @@ func (p *PrettyPrinter) printExprShellExec(n ir.Node) {
 	io.WriteString(p.w, "`")
 }
 
-func (p *PrettyPrinter) printExprStaticCall(n ir.Node) {
-	nn := n.(*ir.StaticCallExpr)
-
-	p.Print(nn.Class)
+func (p *PrettyPrinter) printExprStaticCall(n *ir.StaticCallExpr) {
+	p.Print(n.Class)
 	io.WriteString(p.w, "::")
-	p.Print(nn.Call)
+	p.Print(n.Call)
 	io.WriteString(p.w, "(")
-	p.joinPrint(", ", nn.ArgumentList.Arguments)
+	p.joinPrint(", ", n.ArgumentList.Arguments)
 	io.WriteString(p.w, ")")
 }
 
-func (p *PrettyPrinter) printExprStaticPropertyFetch(n ir.Node) {
-	nn := n.(*ir.StaticPropertyFetchExpr)
-
-	p.Print(nn.Class)
+func (p *PrettyPrinter) printExprStaticPropertyFetch(n *ir.StaticPropertyFetchExpr) {
+	p.Print(n.Class)
 	io.WriteString(p.w, "::")
-	p.Print(nn.Property)
+	p.Print(n.Property)
 }
 
-func (p *PrettyPrinter) printExprTernary(n ir.Node) {
-	nn := n.(*ir.TernaryExpr)
-
-	p.Print(nn.Condition)
+func (p *PrettyPrinter) printExprTernary(n *ir.TernaryExpr) {
+	p.Print(n.Condition)
 	io.WriteString(p.w, " ?")
 
-	if nn.IfTrue != nil {
+	if n.IfTrue != nil {
 		io.WriteString(p.w, " ")
-		p.Print(nn.IfTrue)
+		p.Print(n.IfTrue)
 		io.WriteString(p.w, " ")
 	}
 
 	io.WriteString(p.w, ": ")
-	p.Print(nn.IfFalse)
+	p.Print(n.IfFalse)
 }
 
-func (p *PrettyPrinter) printExprUnaryMinus(n ir.Node) {
-	nn := n.(*ir.UnaryMinusExpr)
-
+func (p *PrettyPrinter) printExprUnaryMinus(n *ir.UnaryMinusExpr) {
 	io.WriteString(p.w, "-")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printExprUnaryPlus(n ir.Node) {
-	nn := n.(*ir.UnaryPlusExpr)
-
+func (p *PrettyPrinter) printExprUnaryPlus(n *ir.UnaryPlusExpr) {
 	io.WriteString(p.w, "+")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printExprSimpleVar(nn *ir.SimpleVar) {
-	io.WriteString(p.w, "$"+nn.Name)
+func (p *PrettyPrinter) printExprSimpleVar(n *ir.SimpleVar) {
+	io.WriteString(p.w, "$"+n.Name)
 }
 
-func (p *PrettyPrinter) printExprVar(n ir.Node) {
-	nn := n.(*ir.Var)
+func (p *PrettyPrinter) printExprVar(n *ir.Var) {
 	io.WriteString(p.w, "$")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printExprYieldFrom(n ir.Node) {
-	nn := n.(*ir.YieldFromExpr)
-
+func (p *PrettyPrinter) printExprYieldFrom(n *ir.YieldFromExpr) {
 	io.WriteString(p.w, "yield from ")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printExprYield(n ir.Node) {
-	nn := n.(*ir.YieldExpr)
-
+func (p *PrettyPrinter) printExprYield(n *ir.YieldExpr) {
 	io.WriteString(p.w, "yield ")
 
-	if nn.Key != nil {
-		p.Print(nn.Key)
+	if n.Key != nil {
+		p.Print(n.Key)
 		io.WriteString(p.w, " => ")
 	}
 
-	p.Print(nn.Value)
+	p.Print(n.Value)
 }
 
 // smtm
 
-func (p *PrettyPrinter) printStmtBreak(n ir.Node) {
-	nn := n.(*ir.BreakStmt)
-
+func (p *PrettyPrinter) printStmtBreak(n *ir.BreakStmt) {
 	io.WriteString(p.w, "break")
-	if nn.Expr != nil {
+	if n.Expr != nil {
 		io.WriteString(p.w, " ")
-		p.Print(nn.Expr)
+		p.Print(n.Expr)
 	}
 
 	io.WriteString(p.w, ";")
 }
 
-func (p *PrettyPrinter) printStmtCase(n ir.Node) {
-	nn := n.(*ir.CaseStmt)
-
+func (p *PrettyPrinter) printStmtCase(n *ir.CaseStmt) {
 	io.WriteString(p.w, "case ")
-	p.Print(nn.Cond)
+	p.Print(n.Cond)
 	io.WriteString(p.w, ":")
 
-	if len(nn.Stmts) > 0 {
+	if len(n.Stmts) > 0 {
 		io.WriteString(p.w, "\n")
-		p.printNodes(nn.Stmts)
+		p.printNodes(n.Stmts)
 	}
 }
 
-func (p *PrettyPrinter) printStmtCatch(n ir.Node) {
-	nn := n.(*ir.CatchStmt)
-
+func (p *PrettyPrinter) printStmtCatch(n *ir.CatchStmt) {
 	io.WriteString(p.w, "catch (")
-	p.joinPrint(" | ", nn.Types)
+	p.joinPrint(" | ", n.Types)
 	io.WriteString(p.w, " ")
-	p.Print(nn.Variable)
+	p.Print(n.Variable)
 	io.WriteString(p.w, ") {\n")
-	p.printNodes(nn.Stmts)
+	p.printNodes(n.Stmts)
 	io.WriteString(p.w, "\n")
 	p.printIndent()
 	io.WriteString(p.w, "}")
 }
 
-func (p *PrettyPrinter) printStmtClassMethod(n ir.Node) {
-	nn := n.(*ir.ClassMethodStmt)
-
-	if nn.Modifiers != nil {
-		p.joinPrintIdents(" ", nn.Modifiers)
+func (p *PrettyPrinter) printStmtClassMethod(n *ir.ClassMethodStmt) {
+	if n.Modifiers != nil {
+		p.joinPrintIdents(" ", n.Modifiers)
 		io.WriteString(p.w, " ")
 	}
 	io.WriteString(p.w, "function ")
 
-	if nn.ReturnsRef {
+	if n.ReturnsRef {
 		io.WriteString(p.w, "&")
 	}
 
-	p.Print(nn.MethodName)
+	p.Print(n.MethodName)
 	io.WriteString(p.w, "(")
-	p.joinPrint(", ", nn.Params)
+	p.joinPrint(", ", n.Params)
 	io.WriteString(p.w, ")")
 
-	if nn.ReturnType != nil {
+	if n.ReturnType != nil {
 		io.WriteString(p.w, ": ")
-		p.Print(nn.ReturnType)
+		p.Print(n.ReturnType)
 	}
 
-	switch s := nn.Stmt.(type) {
+	switch s := n.Stmt.(type) {
 	case *ir.StmtList:
 		io.WriteString(p.w, "\n")
 		p.printIndent()
@@ -1425,87 +1234,77 @@ func (p *PrettyPrinter) printStmtClassMethod(n ir.Node) {
 	}
 }
 
-func (p *PrettyPrinter) printStmtClass(n ir.Node) {
-	nn := n.(*ir.ClassStmt)
-
-	if nn.Modifiers != nil {
-		p.joinPrintIdents(" ", nn.Modifiers)
+func (p *PrettyPrinter) printStmtClass(n *ir.ClassStmt) {
+	if n.Modifiers != nil {
+		p.joinPrintIdents(" ", n.Modifiers)
 		io.WriteString(p.w, " ")
 	}
 	io.WriteString(p.w, "class")
 
-	if nn.ClassName != nil {
+	if n.ClassName != nil {
 		io.WriteString(p.w, " ")
-		p.Print(nn.ClassName)
+		p.Print(n.ClassName)
 	}
 
-	if nn.ArgumentList != nil {
+	if n.ArgumentList != nil {
 		io.WriteString(p.w, "(")
-		p.joinPrint(", ", nn.ArgumentList.Arguments)
+		p.joinPrint(", ", n.ArgumentList.Arguments)
 		io.WriteString(p.w, ")")
 	}
 
-	if nn.Extends != nil {
+	if n.Extends != nil {
 		io.WriteString(p.w, " extends ")
-		p.Print(nn.Extends.ClassName)
+		p.Print(n.Extends.ClassName)
 	}
 
-	if nn.Implements != nil {
+	if n.Implements != nil {
 		io.WriteString(p.w, " implements ")
-		p.joinPrint(", ", nn.Implements.InterfaceNames)
+		p.joinPrint(", ", n.Implements.InterfaceNames)
 	}
 
 	io.WriteString(p.w, "\n")
 	p.printIndent()
 	io.WriteString(p.w, "{\n")
-	p.printNodes(nn.Stmts)
+	p.printNodes(n.Stmts)
 	io.WriteString(p.w, "\n")
 	p.printIndent()
 	io.WriteString(p.w, "}")
 }
 
-func (p *PrettyPrinter) printStmtClassConstList(n ir.Node) {
-	nn := n.(*ir.ClassConstListStmt)
-
-	if nn.Modifiers != nil {
-		p.joinPrintIdents(" ", nn.Modifiers)
+func (p *PrettyPrinter) printStmtClassConstList(n *ir.ClassConstListStmt) {
+	if n.Modifiers != nil {
+		p.joinPrintIdents(" ", n.Modifiers)
 		io.WriteString(p.w, " ")
 	}
 	io.WriteString(p.w, "const ")
 
-	p.joinPrint(", ", nn.Consts)
+	p.joinPrint(", ", n.Consts)
 
 	io.WriteString(p.w, ";")
 }
 
-func (p *PrettyPrinter) printStmtConstant(n ir.Node) {
-	nn := n.(*ir.ConstantStmt)
-
-	p.Print(nn.ConstantName)
+func (p *PrettyPrinter) printStmtConstant(n *ir.ConstantStmt) {
+	p.Print(n.ConstantName)
 	io.WriteString(p.w, " = ")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printStmtContinue(n ir.Node) {
-	nn := n.(*ir.ContinueStmt)
-
+func (p *PrettyPrinter) printStmtContinue(n *ir.ContinueStmt) {
 	io.WriteString(p.w, "continue")
-	if nn.Expr != nil {
+	if n.Expr != nil {
 		io.WriteString(p.w, " ")
-		p.Print(nn.Expr)
+		p.Print(n.Expr)
 	}
 
 	io.WriteString(p.w, ";")
 }
 
-func (p *PrettyPrinter) printStmtDeclare(n ir.Node) {
-	nn := n.(*ir.DeclareStmt)
-
+func (p *PrettyPrinter) printStmtDeclare(n *ir.DeclareStmt) {
 	io.WriteString(p.w, "declare(")
-	p.joinPrint(", ", nn.Consts)
+	p.joinPrint(", ", n.Consts)
 	io.WriteString(p.w, ")")
 
-	switch s := nn.Stmt.(type) {
+	switch s := n.Stmt.(type) {
 	case *ir.NopStmt:
 		p.Print(s)
 	case *ir.StmtList:
@@ -1520,21 +1319,19 @@ func (p *PrettyPrinter) printStmtDeclare(n ir.Node) {
 	}
 }
 
-func (p *PrettyPrinter) printStmtDefault(n ir.Node) {
-	nn := n.(*ir.DefaultStmt)
+func (p *PrettyPrinter) printStmtDefault(n *ir.DefaultStmt) {
 	io.WriteString(p.w, "default:")
 
-	if len(nn.Stmts) > 0 {
+	if len(n.Stmts) > 0 {
 		io.WriteString(p.w, "\n")
-		p.printNodes(nn.Stmts)
+		p.printNodes(n.Stmts)
 	}
 }
 
-func (p *PrettyPrinter) printStmtDo(n ir.Node) {
-	nn := n.(*ir.DoStmt)
+func (p *PrettyPrinter) printStmtDo(n *ir.DoStmt) {
 	io.WriteString(p.w, "do")
 
-	switch s := nn.Stmt.(type) {
+	switch s := n.Stmt.(type) {
 	case *ir.StmtList:
 		io.WriteString(p.w, " ")
 		p.Print(s)
@@ -1550,34 +1347,31 @@ func (p *PrettyPrinter) printStmtDo(n ir.Node) {
 	}
 
 	io.WriteString(p.w, "while (")
-	p.Print(nn.Cond)
+	p.Print(n.Cond)
 	io.WriteString(p.w, ");")
 }
 
-func (p *PrettyPrinter) printStmtEcho(n ir.Node) {
-	nn := n.(*ir.EchoStmt)
+func (p *PrettyPrinter) printStmtEcho(n *ir.EchoStmt) {
 	io.WriteString(p.w, "echo ")
-	p.joinPrint(", ", nn.Exprs)
+	p.joinPrint(", ", n.Exprs)
 	io.WriteString(p.w, ";")
 }
 
-func (p *PrettyPrinter) printStmtElseif(n ir.Node) {
-	nn := n.(*ir.ElseIfStmt)
-
+func (p *PrettyPrinter) printStmtElseif(n *ir.ElseIfStmt) {
 	io.WriteString(p.w, "elseif (")
-	p.Print(nn.Cond)
+	p.Print(n.Cond)
 
-	if nn.AltSyntax {
+	if n.AltSyntax {
 		io.WriteString(p.w, ") :")
 
-		if s := nn.Stmt.(*ir.StmtList).Stmts; len(s) > 0 {
+		if s := n.Stmt.(*ir.StmtList).Stmts; len(s) > 0 {
 			io.WriteString(p.w, "\n")
 			p.printNodes(s)
 		}
 	} else {
 		io.WriteString(p.w, ")")
 
-		switch s := nn.Stmt.(type) {
+		switch s := n.Stmt.(type) {
 		case *ir.NopStmt:
 			p.Print(s)
 		case *ir.StmtList:
@@ -1593,20 +1387,18 @@ func (p *PrettyPrinter) printStmtElseif(n ir.Node) {
 	}
 }
 
-func (p *PrettyPrinter) printStmtElse(n ir.Node) {
-	nn := n.(*ir.ElseStmt)
-
-	if nn.AltSyntax {
+func (p *PrettyPrinter) printStmtElse(n *ir.ElseStmt) {
+	if n.AltSyntax {
 		io.WriteString(p.w, "else :")
 
-		if s := nn.Stmt.(*ir.StmtList).Stmts; len(s) > 0 {
+		if s := n.Stmt.(*ir.StmtList).Stmts; len(s) > 0 {
 			io.WriteString(p.w, "\n")
 			p.printNodes(s)
 		}
 	} else {
 		io.WriteString(p.w, "else")
 
-		switch s := nn.Stmt.(type) {
+		switch s := n.Stmt.(type) {
 		case *ir.NopStmt:
 			p.Print(s)
 		case *ir.StmtList:
@@ -1622,38 +1414,31 @@ func (p *PrettyPrinter) printStmtElse(n ir.Node) {
 	}
 }
 
-func (p *PrettyPrinter) printStmtExpression(n ir.Node) {
-	nn := n.(*ir.ExpressionStmt)
-
-	p.Print(nn.Expr)
-
+func (p *PrettyPrinter) printStmtExpression(n *ir.ExpressionStmt) {
+	p.Print(n.Expr)
 	io.WriteString(p.w, ";")
 }
 
-func (p *PrettyPrinter) printStmtFinally(n ir.Node) {
-	nn := n.(*ir.FinallyStmt)
-
+func (p *PrettyPrinter) printStmtFinally(n *ir.FinallyStmt) {
 	io.WriteString(p.w, "finally {\n")
-	p.printNodes(nn.Stmts)
+	p.printNodes(n.Stmts)
 	io.WriteString(p.w, "\n")
 	p.printIndent()
 	io.WriteString(p.w, "}")
 }
 
-func (p *PrettyPrinter) printStmtFor(n ir.Node) {
-	nn := n.(*ir.ForStmt)
-
+func (p *PrettyPrinter) printStmtFor(n *ir.ForStmt) {
 	io.WriteString(p.w, "for (")
-	p.joinPrint(", ", nn.Init)
+	p.joinPrint(", ", n.Init)
 	io.WriteString(p.w, "; ")
-	p.joinPrint(", ", nn.Cond)
+	p.joinPrint(", ", n.Cond)
 	io.WriteString(p.w, "; ")
-	p.joinPrint(", ", nn.Loop)
+	p.joinPrint(", ", n.Loop)
 
-	if nn.AltSyntax {
+	if n.AltSyntax {
 		io.WriteString(p.w, ") :\n")
 
-		s := nn.Stmt.(*ir.StmtList)
+		s := n.Stmt.(*ir.StmtList)
 		p.printNodes(s.Stmts)
 		io.WriteString(p.w, "\n")
 		p.printIndent()
@@ -1662,7 +1447,7 @@ func (p *PrettyPrinter) printStmtFor(n ir.Node) {
 	} else {
 		io.WriteString(p.w, ")")
 
-		switch s := nn.Stmt.(type) {
+		switch s := n.Stmt.(type) {
 		case *ir.NopStmt:
 			p.Print(s)
 		case *ir.StmtList:
@@ -1678,32 +1463,30 @@ func (p *PrettyPrinter) printStmtFor(n ir.Node) {
 	}
 }
 
-func (p *PrettyPrinter) printStmtForeach(n ir.Node) {
-	nn := n.(*ir.ForeachStmt)
-
+func (p *PrettyPrinter) printStmtForeach(n *ir.ForeachStmt) {
 	io.WriteString(p.w, "foreach (")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 	io.WriteString(p.w, " as ")
 
-	if nn.Key != nil {
-		p.Print(nn.Key)
+	if n.Key != nil {
+		p.Print(n.Key)
 		io.WriteString(p.w, " => ")
 	}
 
-	p.Print(nn.Variable)
+	p.Print(n.Variable)
 	io.WriteString(p.w, ")")
 
-	if nn.AltSyntax {
+	if n.AltSyntax {
 		io.WriteString(p.w, " :\n")
 
-		s := nn.Stmt.(*ir.StmtList)
+		s := n.Stmt.(*ir.StmtList)
 		p.printNodes(s.Stmts)
 
 		io.WriteString(p.w, "\n")
 		p.printIndent()
 		io.WriteString(p.w, "endforeach;")
 	} else {
-		switch s := nn.Stmt.(type) {
+		switch s := n.Stmt.(type) {
 		case *ir.NopStmt:
 			p.Print(s)
 		case *ir.StmtList:
@@ -1719,62 +1502,54 @@ func (p *PrettyPrinter) printStmtForeach(n ir.Node) {
 	}
 }
 
-func (p *PrettyPrinter) printStmtFunction(n ir.Node) {
-	nn := n.(*ir.FunctionStmt)
-
+func (p *PrettyPrinter) printStmtFunction(n *ir.FunctionStmt) {
 	io.WriteString(p.w, "function ")
 
-	if nn.ReturnsRef {
+	if n.ReturnsRef {
 		io.WriteString(p.w, "&")
 	}
 
-	p.Print(nn.FunctionName)
+	p.Print(n.FunctionName)
 
 	io.WriteString(p.w, "(")
-	p.joinPrint(", ", nn.Params)
+	p.joinPrint(", ", n.Params)
 	io.WriteString(p.w, ")")
 
-	if nn.ReturnType != nil {
+	if n.ReturnType != nil {
 		io.WriteString(p.w, ": ")
-		p.Print(nn.ReturnType)
+		p.Print(n.ReturnType)
 	}
 
 	io.WriteString(p.w, " {\n")
-	p.printNodes(nn.Stmts)
+	p.printNodes(n.Stmts)
 	io.WriteString(p.w, "\n")
 	p.printIndent()
 	io.WriteString(p.w, "}")
 }
 
-func (p *PrettyPrinter) printStmtGlobal(n ir.Node) {
-	nn := n.(*ir.GlobalStmt)
-
+func (p *PrettyPrinter) printStmtGlobal(n *ir.GlobalStmt) {
 	io.WriteString(p.w, "global ")
-	p.joinPrint(", ", nn.Vars)
+	p.joinPrint(", ", n.Vars)
 	io.WriteString(p.w, ";")
 }
 
-func (p *PrettyPrinter) printStmtGoto(n ir.Node) {
-	nn := n.(*ir.GotoStmt)
-
+func (p *PrettyPrinter) printStmtGoto(n *ir.GotoStmt) {
 	io.WriteString(p.w, "goto ")
-	p.Print(nn.Label)
+	p.Print(n.Label)
 	io.WriteString(p.w, ";")
 }
 
-func (p *PrettyPrinter) printStmtGroupUse(n ir.Node) {
-	nn := n.(*ir.GroupUseStmt)
-
+func (p *PrettyPrinter) printStmtGroupUse(n *ir.GroupUseStmt) {
 	io.WriteString(p.w, "use ")
 
-	if nn.UseType != nil {
-		p.Print(nn.UseType)
+	if n.UseType != nil {
+		p.Print(n.UseType)
 		io.WriteString(p.w, " ")
 	}
 
-	p.Print(nn.Prefix)
+	p.Print(n.Prefix)
 	io.WriteString(p.w, "\\{")
-	p.joinPrint(", ", nn.UseList)
+	p.joinPrint(", ", n.UseList)
 	io.WriteString(p.w, "};")
 }
 
@@ -1782,36 +1557,34 @@ func (p *PrettyPrinter) printStmtHaltCompiler(n ir.Node) {
 	io.WriteString(p.w, "__halt_compiler();")
 }
 
-func (p *PrettyPrinter) printStmtIf(n ir.Node) {
-	nn := n.(*ir.IfStmt)
-
+func (p *PrettyPrinter) printStmtIf(n *ir.IfStmt) {
 	io.WriteString(p.w, "if (")
-	p.Print(nn.Cond)
+	p.Print(n.Cond)
 	io.WriteString(p.w, ")")
 
-	if nn.AltSyntax {
+	if n.AltSyntax {
 		io.WriteString(p.w, " :\n")
 
-		s := nn.Stmt.(*ir.StmtList)
+		s := n.Stmt.(*ir.StmtList)
 		p.printNodes(s.Stmts)
 
-		for _, elseif := range nn.ElseIf {
+		for _, elseif := range n.ElseIf {
 			io.WriteString(p.w, "\n")
 			p.printIndent()
 			p.Print(elseif)
 		}
 
-		if nn.Else != nil {
+		if n.Else != nil {
 			io.WriteString(p.w, "\n")
 			p.printIndent()
-			p.Print(nn.Else)
+			p.Print(n.Else)
 		}
 
 		io.WriteString(p.w, "\n")
 		p.printIndent()
 		io.WriteString(p.w, "endif;")
 	} else {
-		switch s := nn.Stmt.(type) {
+		switch s := n.Stmt.(type) {
 		case *ir.NopStmt:
 			p.Print(s)
 		case *ir.StmtList:
@@ -1825,73 +1598,65 @@ func (p *PrettyPrinter) printStmtIf(n ir.Node) {
 			p.indentDepth--
 		}
 
-		if nn.ElseIf != nil {
+		if n.ElseIf != nil {
 			io.WriteString(p.w, "\n")
 			p.indentDepth--
-			p.printNodes(nn.ElseIf)
+			p.printNodes(n.ElseIf)
 			p.indentDepth++
 		}
 
-		if nn.Else != nil {
+		if n.Else != nil {
 			io.WriteString(p.w, "\n")
 			p.printIndent()
-			p.Print(nn.Else)
+			p.Print(n.Else)
 		}
 	}
 }
 
-func (p *PrettyPrinter) printStmtInlineHTML(n ir.Node) {
-	nn := n.(*ir.InlineHTMLStmt)
-
+func (p *PrettyPrinter) printStmtInlineHTML(n *ir.InlineHTMLStmt) {
 	io.WriteString(p.w, "?>")
-	io.WriteString(p.w, nn.Value)
+	io.WriteString(p.w, n.Value)
 	io.WriteString(p.w, "<?php")
 }
 
-func (p *PrettyPrinter) printStmtInterface(n ir.Node) {
-	nn := n.(*ir.InterfaceStmt)
-
+func (p *PrettyPrinter) printStmtInterface(n *ir.InterfaceStmt) {
 	io.WriteString(p.w, "interface")
 
-	if nn.InterfaceName != nil {
+	if n.InterfaceName != nil {
 		io.WriteString(p.w, " ")
-		p.Print(nn.InterfaceName)
+		p.Print(n.InterfaceName)
 	}
 
-	if nn.Extends != nil {
+	if n.Extends != nil {
 		io.WriteString(p.w, " extends ")
-		p.joinPrint(", ", nn.Extends.InterfaceNames)
+		p.joinPrint(", ", n.Extends.InterfaceNames)
 	}
 
 	io.WriteString(p.w, "\n")
 	p.printIndent()
 	io.WriteString(p.w, "{\n")
-	p.printNodes(nn.Stmts)
+	p.printNodes(n.Stmts)
 	io.WriteString(p.w, "\n")
 	p.printIndent()
 	io.WriteString(p.w, "}")
 }
 
-func (p *PrettyPrinter) printStmtLabel(n ir.Node) {
-	nn := n.(*ir.LabelStmt)
-
-	p.Print(nn.LabelName)
+func (p *PrettyPrinter) printStmtLabel(n *ir.LabelStmt) {
+	p.Print(n.LabelName)
 	io.WriteString(p.w, ":")
 }
 
-func (p *PrettyPrinter) printStmtNamespace(n ir.Node) {
-	nn := n.(*ir.NamespaceStmt)
-
+func (p *PrettyPrinter) printStmtNamespace(n *ir.NamespaceStmt) {
 	io.WriteString(p.w, "namespace")
 
-	if nn.NamespaceName != nil {
+	if n.NamespaceName != nil {
 		io.WriteString(p.w, " ")
-		p.Print(nn.NamespaceName)
+		p.Print(n.NamespaceName)
 	}
 
-	if nn.Stmts != nil {
+	if n.Stmts != nil {
 		io.WriteString(p.w, " {\n")
-		p.printNodes(nn.Stmts)
+		p.printNodes(n.Stmts)
 		io.WriteString(p.w, "\n")
 		p.printIndent()
 		io.WriteString(p.w, "}")
@@ -1900,75 +1665,62 @@ func (p *PrettyPrinter) printStmtNamespace(n ir.Node) {
 	}
 }
 
-func (p *PrettyPrinter) printStmtNop(n ir.Node) {
+func (p *PrettyPrinter) printStmtNop(n *ir.NopStmt) {
 	io.WriteString(p.w, ";")
 }
 
-func (p *PrettyPrinter) printStmtPropertyList(n ir.Node) {
-	nn := n.(*ir.PropertyListStmt)
-
-	p.joinPrintIdents(" ", nn.Modifiers)
+func (p *PrettyPrinter) printStmtPropertyList(n *ir.PropertyListStmt) {
+	p.joinPrintIdents(" ", n.Modifiers)
 	io.WriteString(p.w, " ")
-	p.joinPrint(", ", nn.Properties)
+	p.joinPrint(", ", n.Properties)
 	io.WriteString(p.w, ";")
 }
 
-func (p *PrettyPrinter) printStmtProperty(n ir.Node) {
-	nn := n.(*ir.PropertyStmt)
+func (p *PrettyPrinter) printStmtProperty(n *ir.PropertyStmt) {
+	p.Print(n.Variable)
 
-	p.Print(nn.Variable)
-
-	if nn.Expr != nil {
+	if n.Expr != nil {
 		io.WriteString(p.w, " = ")
-		p.Print(nn.Expr)
+		p.Print(n.Expr)
 	}
 }
 
-func (p *PrettyPrinter) printStmtReturn(n ir.Node) {
-	nn := n.(*ir.ReturnStmt)
-
+func (p *PrettyPrinter) printStmtReturn(n *ir.ReturnStmt) {
 	io.WriteString(p.w, "return ")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 	io.WriteString(p.w, ";")
 }
 
-func (p *PrettyPrinter) printStmtStaticVar(n ir.Node) {
-	nn := n.(*ir.StaticVarStmt)
-	p.Print(nn.Variable)
+func (p *PrettyPrinter) printStmtStaticVar(n *ir.StaticVarStmt) {
+	p.Print(n.Variable)
 
-	if nn.Expr != nil {
+	if n.Expr != nil {
 		io.WriteString(p.w, " = ")
-		p.Print(nn.Expr)
+		p.Print(n.Expr)
 	}
 }
 
-func (p *PrettyPrinter) printStmtStatic(n ir.Node) {
-	nn := n.(*ir.StaticStmt)
-
+func (p *PrettyPrinter) printStmtStatic(n *ir.StaticStmt) {
 	io.WriteString(p.w, "static ")
-	p.joinPrint(", ", nn.Vars)
+	p.joinPrint(", ", n.Vars)
 	io.WriteString(p.w, ";")
 }
 
-func (p *PrettyPrinter) printStmtStmtList(n ir.Node) {
-	nn := n.(*ir.StmtList)
-
+func (p *PrettyPrinter) printStmtStmtList(n *ir.StmtList) {
 	io.WriteString(p.w, "{\n")
-	p.printNodes(nn.Stmts)
+	p.printNodes(n.Stmts)
 	io.WriteString(p.w, "\n")
 	p.printIndent()
 	io.WriteString(p.w, "}")
 }
 
-func (p *PrettyPrinter) printStmtSwitch(n ir.Node) {
-	nn := n.(*ir.SwitchStmt)
-
+func (p *PrettyPrinter) printStmtSwitch(n *ir.SwitchStmt) {
 	io.WriteString(p.w, "switch (")
-	p.Print(nn.Cond)
+	p.Print(n.Cond)
 
-	if nn.AltSyntax {
+	if n.AltSyntax {
 		io.WriteString(p.w, ") :\n")
-		s := nn.CaseList.Cases
+		s := n.CaseList.Cases
 		p.printNodes(s)
 
 		io.WriteString(p.w, "\n")
@@ -1978,65 +1730,54 @@ func (p *PrettyPrinter) printStmtSwitch(n ir.Node) {
 		io.WriteString(p.w, ")")
 
 		io.WriteString(p.w, " {\n")
-		p.printNodes(nn.CaseList.Cases)
+		p.printNodes(n.CaseList.Cases)
 		io.WriteString(p.w, "\n")
 		p.printIndent()
 		io.WriteString(p.w, "}")
 	}
 }
 
-func (p *PrettyPrinter) printStmtThrow(n ir.Node) {
-	nn := n.(*ir.ThrowStmt)
-
+func (p *PrettyPrinter) printStmtThrow(n *ir.ThrowStmt) {
 	io.WriteString(p.w, "throw ")
-	p.Print(nn.Expr)
+	p.Print(n.Expr)
 	io.WriteString(p.w, ";")
 }
 
-func (p *PrettyPrinter) printStmtTraitMethodRef(n ir.Node) {
-	nn := n.(*ir.TraitMethodRefStmt)
-
-	p.Print(nn.Trait)
+func (p *PrettyPrinter) printStmtTraitMethodRef(n *ir.TraitMethodRefStmt) {
+	p.Print(n.Trait)
 	io.WriteString(p.w, "::")
-	p.Print(nn.Method)
+	p.Print(n.Method)
 }
 
-func (p *PrettyPrinter) printStmtTraitUseAlias(n ir.Node) {
-	nn := n.(*ir.TraitUseAliasStmt)
-
-	p.Print(nn.Ref)
+func (p *PrettyPrinter) printStmtTraitUseAlias(n *ir.TraitUseAliasStmt) {
+	p.Print(n.Ref)
 	io.WriteString(p.w, " as")
 
-	if nn.Modifier != nil {
+	if n.Modifier != nil {
 		io.WriteString(p.w, " ")
-		p.Print(nn.Modifier)
+		p.Print(n.Modifier)
 	}
 
-	if nn.Alias != nil {
+	if n.Alias != nil {
 		io.WriteString(p.w, " ")
-		p.Print(nn.Alias)
+		p.Print(n.Alias)
 	}
 
 	io.WriteString(p.w, ";")
 }
 
-func (p *PrettyPrinter) printStmtTraitUsePrecedence(n ir.Node) {
-	nn := n.(*ir.TraitUsePrecedenceStmt)
-
-	p.Print(nn.Ref)
+func (p *PrettyPrinter) printStmtTraitUsePrecedence(n *ir.TraitUsePrecedenceStmt) {
+	p.Print(n.Ref)
 	io.WriteString(p.w, " insteadof ")
-	p.joinPrint(", ", nn.Insteadof)
-
+	p.joinPrint(", ", n.Insteadof)
 	io.WriteString(p.w, ";")
 }
 
-func (p *PrettyPrinter) printStmtTraitUse(n ir.Node) {
-	nn := n.(*ir.TraitUseStmt)
-
+func (p *PrettyPrinter) printStmtTraitUse(n *ir.TraitUseStmt) {
 	io.WriteString(p.w, "use ")
-	p.joinPrint(", ", nn.Traits)
+	p.joinPrint(", ", n.Traits)
 
-	if adaptationList, ok := nn.TraitAdaptationList.(*ir.TraitAdaptationListStmt); ok {
+	if adaptationList, ok := n.TraitAdaptationList.(*ir.TraitAdaptationListStmt); ok {
 		adaptations := adaptationList.Adaptations
 		io.WriteString(p.w, " {\n")
 		p.printNodes(adaptations)
@@ -2048,92 +1789,79 @@ func (p *PrettyPrinter) printStmtTraitUse(n ir.Node) {
 	}
 }
 
-func (p *PrettyPrinter) printStmtTrait(n ir.Node) {
-	nn := n.(*ir.TraitStmt)
-
+func (p *PrettyPrinter) printStmtTrait(n *ir.TraitStmt) {
 	io.WriteString(p.w, "trait ")
-	p.Print(nn.TraitName)
-
+	p.Print(n.TraitName)
 	io.WriteString(p.w, "\n")
 	p.printIndent()
 	io.WriteString(p.w, "{\n")
-	p.printNodes(nn.Stmts)
+	p.printNodes(n.Stmts)
 	io.WriteString(p.w, "\n")
 	p.printIndent()
 	io.WriteString(p.w, "}")
 }
 
-func (p *PrettyPrinter) printStmtTry(n ir.Node) {
-	nn := n.(*ir.TryStmt)
-
+func (p *PrettyPrinter) printStmtTry(n *ir.TryStmt) {
 	io.WriteString(p.w, "try {\n")
-	p.printNodes(nn.Stmts)
+	p.printNodes(n.Stmts)
 	io.WriteString(p.w, "\n")
 	p.printIndent()
 	io.WriteString(p.w, "}")
 
-	if nn.Catches != nil {
+	if n.Catches != nil {
 		io.WriteString(p.w, "\n")
 		p.indentDepth--
-		p.printNodes(nn.Catches)
+		p.printNodes(n.Catches)
 		p.indentDepth++
 	}
 
-	if nn.Finally != nil {
+	if n.Finally != nil {
 		io.WriteString(p.w, "\n")
 		p.printIndent()
-		p.Print(nn.Finally)
+		p.Print(n.Finally)
 	}
 }
 
-func (p *PrettyPrinter) printStmtUnset(n ir.Node) {
-	nn := n.(*ir.UnsetStmt)
-
+func (p *PrettyPrinter) printStmtUnset(n *ir.UnsetStmt) {
 	io.WriteString(p.w, "unset(")
-	p.joinPrint(", ", nn.Vars)
+	p.joinPrint(", ", n.Vars)
 	io.WriteString(p.w, ");")
 }
 
-func (p *PrettyPrinter) printStmtUseList(n ir.Node) {
-	nn := n.(*ir.UseListStmt)
-
+func (p *PrettyPrinter) printStmtUseList(n *ir.UseListStmt) {
 	io.WriteString(p.w, "use ")
 
-	if nn.UseType != nil {
-		p.Print(nn.UseType)
+	if n.UseType != nil {
+		p.Print(n.UseType)
 		io.WriteString(p.w, " ")
 	}
 
-	p.joinPrint(", ", nn.Uses)
+	p.joinPrint(", ", n.Uses)
 	io.WriteString(p.w, ";")
 }
 
-func (p *PrettyPrinter) printStmtUse(n ir.Node) {
-	nn := n.(*ir.UseStmt)
-
-	if nn.UseType != nil {
-		p.Print(nn.UseType)
+func (p *PrettyPrinter) printStmtUse(n *ir.UseStmt) {
+	if n.UseType != nil {
+		p.Print(n.UseType)
 		io.WriteString(p.w, " ")
 	}
 
-	p.Print(nn.Use)
+	p.Print(n.Use)
 
-	if nn.Alias != nil {
+	if n.Alias != nil {
 		io.WriteString(p.w, " as ")
-		p.Print(nn.Alias)
+		p.Print(n.Alias)
 	}
 }
 
-func (p *PrettyPrinter) printStmtWhile(n ir.Node) {
-	nn := n.(*ir.WhileStmt)
-
+func (p *PrettyPrinter) printStmtWhile(n *ir.WhileStmt) {
 	io.WriteString(p.w, "while (")
-	p.Print(nn.Cond)
+	p.Print(n.Cond)
 
-	if nn.AltSyntax {
+	if n.AltSyntax {
 		io.WriteString(p.w, ") :\n")
 
-		s := nn.Stmt.(*ir.StmtList)
+		s := n.Stmt.(*ir.StmtList)
 		p.printNodes(s.Stmts)
 
 		io.WriteString(p.w, "\n")
@@ -2142,7 +1870,7 @@ func (p *PrettyPrinter) printStmtWhile(n ir.Node) {
 	} else {
 		io.WriteString(p.w, ")")
 
-		switch s := nn.Stmt.(type) {
+		switch s := n.Stmt.(type) {
 		case *ir.NopStmt:
 			p.Print(s)
 		case *ir.StmtList:
