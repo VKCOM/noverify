@@ -3,10 +3,8 @@ package phpgrep
 import (
 	"strings"
 
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
-	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
+	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/irgen"
 	"github.com/VKCOM/noverify/src/php/parseutil"
 )
 
@@ -20,20 +18,21 @@ func compile(opts *Compiler, pattern []byte) (*Matcher, error) {
 	if err != nil {
 		return nil, err
 	}
+	rootIR := irgen.ConvertNode(root)
 
-	if st, ok := root.(*stmt.Expression); ok {
-		root = st.Expr
+	if st, ok := rootIR.(*ir.ExpressionStmt); ok {
+		rootIR = st.Expr
 	}
 
 	c := compiler{
 		src:  src,
 		vars: make(map[string]struct{}),
 	}
-	root.Walk(&c)
+	rootIR.Walk(&c)
 
 	m := &Matcher{
 		m: matcher{
-			root:    root,
+			root:    rootIR,
 			numVars: len(c.vars),
 		},
 	}
@@ -41,17 +40,17 @@ func compile(opts *Compiler, pattern []byte) (*Matcher, error) {
 	return m, nil
 }
 
-func (c *compiler) EnterNode(w walker.Walkable) bool {
-	if v, ok := w.(*node.SimpleVar); ok {
+func (c *compiler) EnterNode(n ir.Node) bool {
+	if v, ok := n.(*ir.SimpleVar); ok {
 		c.vars[v.Name] = struct{}{}
 		return true
 	}
 
-	v, ok := w.(*node.Var)
+	v, ok := n.(*ir.Var)
 	if !ok {
 		return true
 	}
-	s, ok := v.Expr.(*scalar.String)
+	s, ok := v.Expr.(*ir.String)
 	if !ok {
 		return true
 	}
@@ -94,4 +93,4 @@ func (c *compiler) EnterNode(w walker.Walkable) bool {
 	return true
 }
 
-func (c *compiler) LeaveNode(w walker.Walkable) {}
+func (c *compiler) LeaveNode(n ir.Node) {}

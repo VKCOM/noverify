@@ -7,18 +7,18 @@ import (
 	"sync"
 	"time"
 
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/vscode"
 	"go.lsp.dev/uri"
 )
 
 type openedFile struct {
-	rootNode       node.Node
+	rootNode       ir.Node
 	contents       string
-	scopes         map[node.Node]*meta.Scope
+	scopes         map[ir.Node]*meta.Scope
 	lines          [][]byte
 	linesPositions []int
 }

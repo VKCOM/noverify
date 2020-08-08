@@ -1,7 +1,7 @@
 package astutil
 
 import (
-	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/ir"
 )
 
 // nodeSetListMax specifies how much entries we store inside a
@@ -55,7 +55,7 @@ const nodeSetListMax = 5
 // NodeSet is not thread-safe, but since Root/Block walkers always operate
 // in isolation, we can share on per RootWalker level.
 type NodeSet struct {
-	list []node.Node
+	list []ir.Node
 	m    map[string]struct{}
 }
 
@@ -64,7 +64,7 @@ type NodeSet struct {
 // Intended to be used in places where reusing root node set is
 // tricky or impossible (function is reentrant).
 func NewNodeSet() NodeSet {
-	return NodeSet{list: make([]node.Node, 0, nodeSetListMax)}
+	return NodeSet{list: make([]ir.Node, 0, nodeSetListMax)}
 }
 
 // Reset clears the set state and prepares it for another round.
@@ -83,7 +83,7 @@ func (set *NodeSet) Len() int {
 // Returns true if element was inserted.
 // If x is already in the set, false is returned
 // and no insertion is performed.
-func (set *NodeSet) Add(x node.Node) bool {
+func (set *NodeSet) Add(x ir.Node) bool {
 	for _, y := range set.list {
 		if NodeEqual(x, y) {
 			return false

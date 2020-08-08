@@ -5,10 +5,9 @@ import (
 	"io"
 	"sort"
 
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/linter/lintapi"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/vscode"
 )
@@ -68,20 +67,20 @@ type CheckInfo struct {
 
 // BlockChecker is a custom linter that is called on block level
 type BlockChecker interface {
-	BeforeEnterNode(walker.Walkable)
-	AfterEnterNode(walker.Walkable)
-	BeforeLeaveNode(walker.Walkable)
-	AfterLeaveNode(walker.Walkable)
+	BeforeEnterNode(ir.Node)
+	AfterEnterNode(ir.Node)
+	BeforeLeaveNode(ir.Node)
+	AfterLeaveNode(ir.Node)
 }
 
 // RootChecker is a custom linter that should operator only at root level.
 // Block level analysis (function and method bodies and all if/else/for/etc blocks) must be performed in BlockChecker.
 type RootChecker interface {
 	AfterLeaveFile()
-	BeforeEnterNode(walker.Walkable)
-	AfterEnterNode(walker.Walkable)
-	BeforeLeaveNode(walker.Walkable)
-	AfterLeaveNode(walker.Walkable)
+	BeforeEnterNode(ir.Node)
+	AfterEnterNode(ir.Node)
+	BeforeLeaveNode(ir.Node)
+	AfterLeaveNode(ir.Node)
 }
 
 // BlockCheckerDefaults is a type for embedding into checkers to
@@ -94,10 +93,10 @@ type RootChecker interface {
 // to change your code right away (especially if you don't need a new hook).
 type BlockCheckerDefaults struct{}
 
-func (BlockCheckerDefaults) BeforeEnterNode(walker.Walkable) {}
-func (BlockCheckerDefaults) AfterEnterNode(walker.Walkable)  {}
-func (BlockCheckerDefaults) BeforeLeaveNode(walker.Walkable) {}
-func (BlockCheckerDefaults) AfterLeaveNode(walker.Walkable)  {}
+func (BlockCheckerDefaults) BeforeEnterNode(ir.Node) {}
+func (BlockCheckerDefaults) AfterEnterNode(ir.Node)  {}
+func (BlockCheckerDefaults) BeforeLeaveNode(ir.Node) {}
+func (BlockCheckerDefaults) AfterLeaveNode(ir.Node)  {}
 
 // RootCheckerDefaults is a type for embedding into checkers to
 // get default (empty) RootChecker implementations.
@@ -109,11 +108,11 @@ func (BlockCheckerDefaults) AfterLeaveNode(walker.Walkable)  {}
 // to change your code right away (especially if you don't need a new hook).
 type RootCheckerDefaults struct{}
 
-func (RootCheckerDefaults) AfterLeaveFile()                 {}
-func (RootCheckerDefaults) BeforeEnterNode(walker.Walkable) {}
-func (RootCheckerDefaults) AfterEnterNode(walker.Walkable)  {}
-func (RootCheckerDefaults) BeforeLeaveNode(walker.Walkable) {}
-func (RootCheckerDefaults) AfterLeaveNode(walker.Walkable)  {}
+func (RootCheckerDefaults) AfterLeaveFile()         {}
+func (RootCheckerDefaults) BeforeEnterNode(ir.Node) {}
+func (RootCheckerDefaults) AfterEnterNode(ir.Node)  {}
+func (RootCheckerDefaults) BeforeLeaveNode(ir.Node) {}
+func (RootCheckerDefaults) AfterLeaveNode(ir.Node)  {}
 
 // RootContext is the context for root checker to run on.
 type RootContext struct {
@@ -128,7 +127,7 @@ func (ctx *RootContext) ParsePHPDoc(doc string) []phpdoc.CommentPart {
 // Report records linter warning of specified level.
 // chechName is a key that identifies the "checker" (diagnostic name) that found
 // issue being reported.
-func (ctx *RootContext) Report(n node.Node, level int, checkName, msg string, args ...interface{}) {
+func (ctx *RootContext) Report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
 	ctx.w.Report(n, level, checkName, msg, args...)
 }
 
@@ -176,14 +175,14 @@ func (ctx *BlockContext) NodePath() NodePath {
 }
 
 // ExprType resolves the type of e expression node.
-func (ctx *BlockContext) ExprType(e node.Node) meta.TypesMap {
+func (ctx *BlockContext) ExprType(e ir.Node) meta.TypesMap {
 	return ctx.w.exprType(e)
 }
 
 // Report records linter warning of specified level.
 // chechName is a key that identifies the "checker" (diagnostic name) that found
 // issue being reported.
-func (ctx *BlockContext) Report(n node.Node, level int, checkName, msg string, args ...interface{}) {
+func (ctx *BlockContext) Report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
 	ctx.w.r.Report(n, level, checkName, msg, args...)
 }
 
@@ -212,7 +211,7 @@ func (ctx *BlockContext) IsRootLevel() bool {
 }
 
 // IsStatement reports whether or not specified node is a statement.
-func (ctx *BlockContext) IsStatement(n node.Node) bool {
+func (ctx *BlockContext) IsStatement(n ir.Node) bool {
 	_, ok := ctx.w.statements[n]
 	return ok
 }

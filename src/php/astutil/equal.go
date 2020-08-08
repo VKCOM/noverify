@@ -3,1056 +3,17 @@ package astutil
 
 import (
 	"fmt"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr/binary"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr/cast"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
-	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
-	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
+
+	"github.com/VKCOM/noverify/src/ir"
 )
 
-func NodeEqual(x, y node.Node) bool {
+func NodeEqual(x, y ir.Node) bool {
 	if x == nil || y == nil {
 		return x == y
 	}
 	switch x := x.(type) {
-	case *assign.Assign:
-		y, ok := y.(*assign.Assign)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if !NodeEqual(x.Expression, y.Expression) {
-			return false
-		}
-		return true
-	case *assign.BitwiseAnd:
-		y, ok := y.(*assign.BitwiseAnd)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if !NodeEqual(x.Expression, y.Expression) {
-			return false
-		}
-		return true
-	case *assign.BitwiseOr:
-		y, ok := y.(*assign.BitwiseOr)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if !NodeEqual(x.Expression, y.Expression) {
-			return false
-		}
-		return true
-	case *assign.BitwiseXor:
-		y, ok := y.(*assign.BitwiseXor)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if !NodeEqual(x.Expression, y.Expression) {
-			return false
-		}
-		return true
-	case *assign.Concat:
-		y, ok := y.(*assign.Concat)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if !NodeEqual(x.Expression, y.Expression) {
-			return false
-		}
-		return true
-	case *assign.Div:
-		y, ok := y.(*assign.Div)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if !NodeEqual(x.Expression, y.Expression) {
-			return false
-		}
-		return true
-	case *assign.Minus:
-		y, ok := y.(*assign.Minus)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if !NodeEqual(x.Expression, y.Expression) {
-			return false
-		}
-		return true
-	case *assign.Mod:
-		y, ok := y.(*assign.Mod)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if !NodeEqual(x.Expression, y.Expression) {
-			return false
-		}
-		return true
-	case *assign.Mul:
-		y, ok := y.(*assign.Mul)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if !NodeEqual(x.Expression, y.Expression) {
-			return false
-		}
-		return true
-	case *assign.Plus:
-		y, ok := y.(*assign.Plus)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if !NodeEqual(x.Expression, y.Expression) {
-			return false
-		}
-		return true
-	case *assign.Pow:
-		y, ok := y.(*assign.Pow)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if !NodeEqual(x.Expression, y.Expression) {
-			return false
-		}
-		return true
-	case *assign.Reference:
-		y, ok := y.(*assign.Reference)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if !NodeEqual(x.Expression, y.Expression) {
-			return false
-		}
-		return true
-	case *assign.ShiftLeft:
-		y, ok := y.(*assign.ShiftLeft)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if !NodeEqual(x.Expression, y.Expression) {
-			return false
-		}
-		return true
-	case *assign.ShiftRight:
-		y, ok := y.(*assign.ShiftRight)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if !NodeEqual(x.Expression, y.Expression) {
-			return false
-		}
-		return true
-	case *binary.BitwiseAnd:
-		y, ok := y.(*binary.BitwiseAnd)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.BitwiseOr:
-		y, ok := y.(*binary.BitwiseOr)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.BitwiseXor:
-		y, ok := y.(*binary.BitwiseXor)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.BooleanAnd:
-		y, ok := y.(*binary.BooleanAnd)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.BooleanOr:
-		y, ok := y.(*binary.BooleanOr)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.Coalesce:
-		y, ok := y.(*binary.Coalesce)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.Concat:
-		y, ok := y.(*binary.Concat)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.Div:
-		y, ok := y.(*binary.Div)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.Equal:
-		y, ok := y.(*binary.Equal)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.Greater:
-		y, ok := y.(*binary.Greater)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.GreaterOrEqual:
-		y, ok := y.(*binary.GreaterOrEqual)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.Identical:
-		y, ok := y.(*binary.Identical)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.LogicalAnd:
-		y, ok := y.(*binary.LogicalAnd)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.LogicalOr:
-		y, ok := y.(*binary.LogicalOr)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.LogicalXor:
-		y, ok := y.(*binary.LogicalXor)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.Minus:
-		y, ok := y.(*binary.Minus)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.Mod:
-		y, ok := y.(*binary.Mod)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.Mul:
-		y, ok := y.(*binary.Mul)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.NotEqual:
-		y, ok := y.(*binary.NotEqual)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.NotIdentical:
-		y, ok := y.(*binary.NotIdentical)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.Plus:
-		y, ok := y.(*binary.Plus)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.Pow:
-		y, ok := y.(*binary.Pow)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.ShiftLeft:
-		y, ok := y.(*binary.ShiftLeft)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.ShiftRight:
-		y, ok := y.(*binary.ShiftRight)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.Smaller:
-		y, ok := y.(*binary.Smaller)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.SmallerOrEqual:
-		y, ok := y.(*binary.SmallerOrEqual)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *binary.Spaceship:
-		y, ok := y.(*binary.Spaceship)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *cast.Array:
-		y, ok := y.(*cast.Array)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *cast.Bool:
-		y, ok := y.(*cast.Bool)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *cast.Double:
-		y, ok := y.(*cast.Double)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *cast.Int:
-		y, ok := y.(*cast.Int)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *cast.Object:
-		y, ok := y.(*cast.Object)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *cast.String:
-		y, ok := y.(*cast.String)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *cast.Unset:
-		y, ok := y.(*cast.Unset)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *expr.Array:
-		y, ok := y.(*expr.Array)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if len(x.Items) != len(y.Items) {
-			return false
-		}
-		for i := range x.Items {
-			if !NodeEqual(x.Items[i], y.Items[i]) {
-				return false
-			}
-		}
-		if x.ShortSyntax != y.ShortSyntax {
-			return false
-		}
-		return true
-	case *expr.ArrayDimFetch:
-		y, ok := y.(*expr.ArrayDimFetch)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if !NodeEqual(x.Dim, y.Dim) {
-			return false
-		}
-		return true
-	case *expr.ArrayItem:
-		y, ok := y.(*expr.ArrayItem)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Key, y.Key) {
-			return false
-		}
-		if !NodeEqual(x.Val, y.Val) {
-			return false
-		}
-		return true
-	case *expr.BitwiseNot:
-		y, ok := y.(*expr.BitwiseNot)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *expr.BooleanNot:
-		y, ok := y.(*expr.BooleanNot)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *expr.ClassConstFetch:
-		y, ok := y.(*expr.ClassConstFetch)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Class, y.Class) {
-			return false
-		}
-		if !NodeEqual(x.ConstantName, y.ConstantName) {
-			return false
-		}
-		return true
-	case *expr.Clone:
-		y, ok := y.(*expr.Clone)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *expr.Closure:
-		y, ok := y.(*expr.Closure)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if x.ReturnsRef != y.ReturnsRef {
-			return false
-		}
-		if x.Static != y.Static {
-			return false
-		}
-		if x.PhpDocComment != y.PhpDocComment {
-			return false
-		}
-		if !NodeSliceEqual(x.Params, y.Params) {
-			return false
-		}
-		if !NodeEqual(x.ClosureUse, y.ClosureUse) {
-			return false
-		}
-		if !NodeEqual(x.ReturnType, y.ReturnType) {
-			return false
-		}
-		if !NodeSliceEqual(x.Stmts, y.Stmts) {
-			return false
-		}
-		return true
-	case *expr.ClosureUse:
-		y, ok := y.(*expr.ClosureUse)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeSliceEqual(x.Uses, y.Uses) {
-			return false
-		}
-		return true
-	case *expr.ConstFetch:
-		y, ok := y.(*expr.ConstFetch)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Constant, y.Constant) {
-			return false
-		}
-		return true
-	case *expr.Empty:
-		y, ok := y.(*expr.Empty)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *expr.ErrorSuppress:
-		y, ok := y.(*expr.ErrorSuppress)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *expr.Eval:
-		y, ok := y.(*expr.Eval)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *expr.Exit:
-		y, ok := y.(*expr.Exit)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if x.Die != y.Die {
-			return false
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *expr.FunctionCall:
-		y, ok := y.(*expr.FunctionCall)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Function, y.Function) {
-			return false
-		}
-		if !NodeEqual(x.ArgumentList, y.ArgumentList) {
-			return false
-		}
-		return true
-	case *expr.Include:
-		y, ok := y.(*expr.Include)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *expr.IncludeOnce:
-		y, ok := y.(*expr.IncludeOnce)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *expr.InstanceOf:
-		y, ok := y.(*expr.InstanceOf)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		if !NodeEqual(x.Class, y.Class) {
-			return false
-		}
-		return true
-	case *expr.Isset:
-		y, ok := y.(*expr.Isset)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeSliceEqual(x.Variables, y.Variables) {
-			return false
-		}
-		return true
-	case *expr.List:
-		y, ok := y.(*expr.List)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if len(x.Items) != len(y.Items) {
-			return false
-		}
-		for i := range x.Items {
-			if !NodeEqual(x.Items[i], y.Items[i]) {
-				return false
-			}
-		}
-		if x.ShortSyntax != y.ShortSyntax {
-			return false
-		}
-		return true
-	case *expr.MethodCall:
-		y, ok := y.(*expr.MethodCall)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if !NodeEqual(x.Method, y.Method) {
-			return false
-		}
-		if !NodeEqual(x.ArgumentList, y.ArgumentList) {
-			return false
-		}
-		return true
-	case *expr.New:
-		y, ok := y.(*expr.New)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Class, y.Class) {
-			return false
-		}
-		if !NodeEqual(x.ArgumentList, y.ArgumentList) {
-			return false
-		}
-		return true
-	case *expr.Paren:
-		y, ok := y.(*expr.Paren)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *expr.PostDec:
-		y, ok := y.(*expr.PostDec)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		return true
-	case *expr.PostInc:
-		y, ok := y.(*expr.PostInc)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		return true
-	case *expr.PreDec:
-		y, ok := y.(*expr.PreDec)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		return true
-	case *expr.PreInc:
-		y, ok := y.(*expr.PreInc)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		return true
-	case *expr.Print:
-		y, ok := y.(*expr.Print)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *expr.PropertyFetch:
-		y, ok := y.(*expr.PropertyFetch)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if !NodeEqual(x.Property, y.Property) {
-			return false
-		}
-		return true
-	case *expr.Reference:
-		y, ok := y.(*expr.Reference)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		return true
-	case *expr.Require:
-		y, ok := y.(*expr.Require)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *expr.RequireOnce:
-		y, ok := y.(*expr.RequireOnce)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *expr.ShellExec:
-		y, ok := y.(*expr.ShellExec)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeSliceEqual(x.Parts, y.Parts) {
-			return false
-		}
-		return true
-	case *expr.StaticCall:
-		y, ok := y.(*expr.StaticCall)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Class, y.Class) {
-			return false
-		}
-		if !NodeEqual(x.Call, y.Call) {
-			return false
-		}
-		if !NodeEqual(x.ArgumentList, y.ArgumentList) {
-			return false
-		}
-		return true
-	case *expr.StaticPropertyFetch:
-		y, ok := y.(*expr.StaticPropertyFetch)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Class, y.Class) {
-			return false
-		}
-		if !NodeEqual(x.Property, y.Property) {
-			return false
-		}
-		return true
-	case *expr.Ternary:
-		y, ok := y.(*expr.Ternary)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Condition, y.Condition) {
-			return false
-		}
-		if !NodeEqual(x.IfTrue, y.IfTrue) {
-			return false
-		}
-		if !NodeEqual(x.IfFalse, y.IfFalse) {
-			return false
-		}
-		return true
-	case *expr.UnaryMinus:
-		y, ok := y.(*expr.UnaryMinus)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *expr.UnaryPlus:
-		y, ok := y.(*expr.UnaryPlus)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *expr.Yield:
-		y, ok := y.(*expr.Yield)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Key, y.Key) {
-			return false
-		}
-		if !NodeEqual(x.Value, y.Value) {
-			return false
-		}
-		return true
-	case *expr.YieldFrom:
-		y, ok := y.(*expr.YieldFrom)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *name.FullyQualified:
-		y, ok := y.(*name.FullyQualified)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeSliceEqual(x.Parts, y.Parts) {
-			return false
-		}
-		return true
-	case *name.Name:
-		y, ok := y.(*name.Name)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeSliceEqual(x.Parts, y.Parts) {
-			return false
-		}
-		return true
-	case *name.NamePart:
-		y, ok := y.(*name.NamePart)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if x.Value != y.Value {
-			return false
-		}
-		return true
-	case *name.Relative:
-		y, ok := y.(*name.Relative)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeSliceEqual(x.Parts, y.Parts) {
-			return false
-		}
-		return true
-	case *node.Argument:
-		y, ok := y.(*node.Argument)
+	case *ir.Argument:
+		y, ok := y.(*ir.Argument)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1066,8 +27,8 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *node.ArgumentList:
-		y, ok := y.(*node.ArgumentList)
+	case *ir.ArgumentList:
+		y, ok := y.(*ir.ArgumentList)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1080,17 +41,8 @@ func NodeEqual(x, y node.Node) bool {
 			}
 		}
 		return true
-	case *node.Identifier:
-		y, ok := y.(*node.Identifier)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if x.Value != y.Value {
-			return false
-		}
-		return true
-	case *node.Nullable:
-		y, ok := y.(*node.Nullable)
+	case *ir.ArrayCastExpr:
+		y, ok := y.(*ir.ArrayCastExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1098,31 +50,376 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *node.Parameter:
-		y, ok := y.(*node.Parameter)
+	case *ir.ArrayDimFetchExpr:
+		y, ok := y.(*ir.ArrayDimFetchExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.ByRef != y.ByRef {
-			return false
-		}
-		if x.Variadic != y.Variadic {
-			return false
-		}
-		if !NodeEqual(x.VariableType, y.VariableType) {
-			return false
 		}
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.DefaultValue, y.DefaultValue) {
+		if !NodeEqual(x.Dim, y.Dim) {
 			return false
 		}
 		return true
-	case *node.Root:
-		y, ok := y.(*node.Root)
+	case *ir.ArrayExpr:
+		y, ok := y.(*ir.ArrayExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
+		}
+		if len(x.Items) != len(y.Items) {
+			return false
+		}
+		for i := range x.Items {
+			if !NodeEqual(x.Items[i], y.Items[i]) {
+				return false
+			}
+		}
+		if x.ShortSyntax != y.ShortSyntax {
+			return false
+		}
+		return true
+	case *ir.ArrayItemExpr:
+		y, ok := y.(*ir.ArrayItemExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Key, y.Key) {
+			return false
+		}
+		if !NodeEqual(x.Val, y.Val) {
+			return false
+		}
+		if x.Unpack != y.Unpack {
+			return false
+		}
+		return true
+	case *ir.ArrowFunctionExpr:
+		y, ok := y.(*ir.ArrowFunctionExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if x.ReturnsRef != y.ReturnsRef {
+			return false
+		}
+		if x.Static != y.Static {
+			return false
+		}
+		if x.PhpDocComment != y.PhpDocComment {
+			return false
+		}
+		if len(x.Params) != len(y.Params) {
+			return false
+		}
+		for i := range x.Params {
+			if !NodeEqual(x.Params[i], y.Params[i]) {
+				return false
+			}
+		}
+		if !NodeEqual(x.ReturnType, y.ReturnType) {
+			return false
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.Assign:
+		y, ok := y.(*ir.Assign)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Expression, y.Expression) {
+			return false
+		}
+		return true
+	case *ir.AssignBitwiseAnd:
+		y, ok := y.(*ir.AssignBitwiseAnd)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Expression, y.Expression) {
+			return false
+		}
+		return true
+	case *ir.AssignBitwiseOr:
+		y, ok := y.(*ir.AssignBitwiseOr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Expression, y.Expression) {
+			return false
+		}
+		return true
+	case *ir.AssignBitwiseXor:
+		y, ok := y.(*ir.AssignBitwiseXor)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Expression, y.Expression) {
+			return false
+		}
+		return true
+	case *ir.AssignCoalesce:
+		y, ok := y.(*ir.AssignCoalesce)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Expression, y.Expression) {
+			return false
+		}
+		return true
+	case *ir.AssignConcat:
+		y, ok := y.(*ir.AssignConcat)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Expression, y.Expression) {
+			return false
+		}
+		return true
+	case *ir.AssignDiv:
+		y, ok := y.(*ir.AssignDiv)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Expression, y.Expression) {
+			return false
+		}
+		return true
+	case *ir.AssignMinus:
+		y, ok := y.(*ir.AssignMinus)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Expression, y.Expression) {
+			return false
+		}
+		return true
+	case *ir.AssignMod:
+		y, ok := y.(*ir.AssignMod)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Expression, y.Expression) {
+			return false
+		}
+		return true
+	case *ir.AssignMul:
+		y, ok := y.(*ir.AssignMul)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Expression, y.Expression) {
+			return false
+		}
+		return true
+	case *ir.AssignPlus:
+		y, ok := y.(*ir.AssignPlus)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Expression, y.Expression) {
+			return false
+		}
+		return true
+	case *ir.AssignPow:
+		y, ok := y.(*ir.AssignPow)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Expression, y.Expression) {
+			return false
+		}
+		return true
+	case *ir.AssignReference:
+		y, ok := y.(*ir.AssignReference)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Expression, y.Expression) {
+			return false
+		}
+		return true
+	case *ir.AssignShiftLeft:
+		y, ok := y.(*ir.AssignShiftLeft)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Expression, y.Expression) {
+			return false
+		}
+		return true
+	case *ir.AssignShiftRight:
+		y, ok := y.(*ir.AssignShiftRight)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Expression, y.Expression) {
+			return false
+		}
+		return true
+	case *ir.BitwiseAndExpr:
+		y, ok := y.(*ir.BitwiseAndExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.BitwiseNotExpr:
+		y, ok := y.(*ir.BitwiseNotExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.BitwiseOrExpr:
+		y, ok := y.(*ir.BitwiseOrExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.BitwiseXorExpr:
+		y, ok := y.(*ir.BitwiseXorExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.BoolCastExpr:
+		y, ok := y.(*ir.BoolCastExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.BooleanAndExpr:
+		y, ok := y.(*ir.BooleanAndExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.BooleanNotExpr:
+		y, ok := y.(*ir.BooleanNotExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.BooleanOrExpr:
+		y, ok := y.(*ir.BooleanOrExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.BreakStmt:
+		y, ok := y.(*ir.BreakStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.CaseListStmt:
+		y, ok := y.(*ir.CaseListStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.Cases) != len(y.Cases) {
+			return false
+		}
+		for i := range x.Cases {
+			if !NodeEqual(x.Cases[i], y.Cases[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.CaseStmt:
+		y, ok := y.(*ir.CaseStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Cond, y.Cond) {
+			return false
 		}
 		if len(x.Stmts) != len(y.Stmts) {
 			return false
@@ -1133,137 +430,127 @@ func NodeEqual(x, y node.Node) bool {
 			}
 		}
 		return true
-	case *node.SimpleVar:
-		y, ok := y.(*node.SimpleVar)
+	case *ir.CatchStmt:
+		y, ok := y.(*ir.CatchStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.Name != y.Name {
+		if len(x.Types) != len(y.Types) {
 			return false
 		}
-		return true
-	case *node.Var:
-		y, ok := y.(*node.Var)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *scalar.Dnumber:
-		y, ok := y.(*scalar.Dnumber)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if x.Value != y.Value {
-			return false
-		}
-		return true
-	case *scalar.Encapsed:
-		y, ok := y.(*scalar.Encapsed)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeSliceEqual(x.Parts, y.Parts) {
-			return false
-		}
-		return true
-	case *scalar.EncapsedStringPart:
-		y, ok := y.(*scalar.EncapsedStringPart)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if x.Value != y.Value {
-			return false
-		}
-		return true
-	case *scalar.Heredoc:
-		y, ok := y.(*scalar.Heredoc)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if x.Label != y.Label {
-			return false
-		}
-		if !NodeSliceEqual(x.Parts, y.Parts) {
-			return false
-		}
-		return true
-	case *scalar.Lnumber:
-		y, ok := y.(*scalar.Lnumber)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if x.Value != y.Value {
-			return false
-		}
-		return true
-	case *scalar.MagicConstant:
-		y, ok := y.(*scalar.MagicConstant)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if x.Value != y.Value {
-			return false
-		}
-		return true
-	case *scalar.String:
-		y, ok := y.(*scalar.String)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if x.Value != y.Value {
-			return false
-		}
-		return true
-	case *stmt.Break:
-		y, ok := y.(*stmt.Break)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *stmt.Case:
-		y, ok := y.(*stmt.Case)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Cond, y.Cond) {
-			return false
-		}
-		if !NodeSliceEqual(x.Stmts, y.Stmts) {
-			return false
-		}
-		return true
-	case *stmt.CaseList:
-		y, ok := y.(*stmt.CaseList)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeSliceEqual(x.Cases, y.Cases) {
-			return false
-		}
-		return true
-	case *stmt.Catch:
-		y, ok := y.(*stmt.Catch)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeSliceEqual(x.Types, y.Types) {
-			return false
+		for i := range x.Types {
+			if !NodeEqual(x.Types[i], y.Types[i]) {
+				return false
+			}
 		}
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeSliceEqual(x.Stmts, y.Stmts) {
+		if len(x.Stmts) != len(y.Stmts) {
+			return false
+		}
+		for i := range x.Stmts {
+			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.ClassConstFetchExpr:
+		y, ok := y.(*ir.ClassConstFetchExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Class, y.Class) {
+			return false
+		}
+		if !NodeEqual(x.ConstantName, y.ConstantName) {
 			return false
 		}
 		return true
-	case *stmt.Class:
-		y, ok := y.(*stmt.Class)
+	case *ir.ClassConstListStmt:
+		y, ok := y.(*ir.ClassConstListStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.Modifiers) != len(y.Modifiers) {
+			return false
+		}
+		for i := range x.Modifiers {
+			if !NodeEqual(x.Modifiers[i], y.Modifiers[i]) {
+				return false
+			}
+		}
+		if len(x.Consts) != len(y.Consts) {
+			return false
+		}
+		for i := range x.Consts {
+			if !NodeEqual(x.Consts[i], y.Consts[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.ClassExtendsStmt:
+		y, ok := y.(*ir.ClassExtendsStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.ClassName, y.ClassName) {
+			return false
+		}
+		return true
+	case *ir.ClassImplementsStmt:
+		y, ok := y.(*ir.ClassImplementsStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.InterfaceNames) != len(y.InterfaceNames) {
+			return false
+		}
+		for i := range x.InterfaceNames {
+			if !NodeEqual(x.InterfaceNames[i], y.InterfaceNames[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.ClassMethodStmt:
+		y, ok := y.(*ir.ClassMethodStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if x.ReturnsRef != y.ReturnsRef {
+			return false
+		}
+		if x.PhpDocComment != y.PhpDocComment {
+			return false
+		}
+		if !NodeEqual(x.MethodName, y.MethodName) {
+			return false
+		}
+		if len(x.Modifiers) != len(y.Modifiers) {
+			return false
+		}
+		for i := range x.Modifiers {
+			if !NodeEqual(x.Modifiers[i], y.Modifiers[i]) {
+				return false
+			}
+		}
+		if len(x.Params) != len(y.Params) {
+			return false
+		}
+		for i := range x.Params {
+			if !NodeEqual(x.Params[i], y.Params[i]) {
+				return false
+			}
+		}
+		if !NodeEqual(x.ReturnType, y.ReturnType) {
+			return false
+		}
+		if !NodeEqual(x.Stmt, y.Stmt) {
+			return false
+		}
+		return true
+	case *ir.ClassStmt:
+		y, ok := y.(*ir.ClassStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1290,88 +577,124 @@ func NodeEqual(x, y node.Node) bool {
 		if !NodeEqual(x.Implements, y.Implements) {
 			return false
 		}
-		if !NodeSliceEqual(x.Stmts, y.Stmts) {
+		if len(x.Stmts) != len(y.Stmts) {
 			return false
 		}
-		return true
-	case *stmt.ClassConstList:
-		y, ok := y.(*stmt.ClassConstList)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if len(x.Modifiers) != len(y.Modifiers) {
-			return false
-		}
-		for i := range x.Modifiers {
-			if !NodeEqual(x.Modifiers[i], y.Modifiers[i]) {
+		for i := range x.Stmts {
+			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
 				return false
 			}
 		}
-		if !NodeSliceEqual(x.Consts, y.Consts) {
-			return false
-		}
 		return true
-	case *stmt.ClassExtends:
-		y, ok := y.(*stmt.ClassExtends)
+	case *ir.CloneExpr:
+		y, ok := y.(*ir.CloneExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !NodeEqual(x.ClassName, y.ClassName) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
-	case *stmt.ClassImplements:
-		y, ok := y.(*stmt.ClassImplements)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeSliceEqual(x.InterfaceNames, y.InterfaceNames) {
-			return false
-		}
-		return true
-	case *stmt.ClassMethod:
-		y, ok := y.(*stmt.ClassMethod)
+	case *ir.ClosureExpr:
+		y, ok := y.(*ir.ClosureExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
 		if x.ReturnsRef != y.ReturnsRef {
 			return false
 		}
+		if x.Static != y.Static {
+			return false
+		}
 		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
-		if !NodeEqual(x.MethodName, y.MethodName) {
+		if len(x.Params) != len(y.Params) {
 			return false
 		}
-		if len(x.Modifiers) != len(y.Modifiers) {
-			return false
-		}
-		for i := range x.Modifiers {
-			if !NodeEqual(x.Modifiers[i], y.Modifiers[i]) {
+		for i := range x.Params {
+			if !NodeEqual(x.Params[i], y.Params[i]) {
 				return false
 			}
 		}
-		if !NodeSliceEqual(x.Params, y.Params) {
+		if !NodeEqual(x.ClosureUse, y.ClosureUse) {
 			return false
 		}
 		if !NodeEqual(x.ReturnType, y.ReturnType) {
 			return false
 		}
-		if !NodeEqual(x.Stmt, y.Stmt) {
+		if len(x.Stmts) != len(y.Stmts) {
 			return false
 		}
+		for i := range x.Stmts {
+			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
+				return false
+			}
+		}
 		return true
-	case *stmt.ConstList:
-		y, ok := y.(*stmt.ConstList)
+	case *ir.ClosureUseExpr:
+		y, ok := y.(*ir.ClosureUseExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !NodeSliceEqual(x.Consts, y.Consts) {
+		if len(x.Uses) != len(y.Uses) {
+			return false
+		}
+		for i := range x.Uses {
+			if !NodeEqual(x.Uses[i], y.Uses[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.CoalesceExpr:
+		y, ok := y.(*ir.CoalesceExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
 		return true
-	case *stmt.Constant:
-		y, ok := y.(*stmt.Constant)
+	case *ir.ConcatExpr:
+		y, ok := y.(*ir.ConcatExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.ConstFetchExpr:
+		y, ok := y.(*ir.ConstFetchExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Constant, y.Constant) {
+			return false
+		}
+		return true
+	case *ir.ConstListStmt:
+		y, ok := y.(*ir.ConstListStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.Consts) != len(y.Consts) {
+			return false
+		}
+		for i := range x.Consts {
+			if !NodeEqual(x.Consts[i], y.Consts[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.ConstantStmt:
+		y, ok := y.(*ir.ConstantStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1385,8 +708,8 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.Continue:
-		y, ok := y.(*stmt.Continue)
+	case *ir.ContinueStmt:
+		y, ok := y.(*ir.ContinueStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1394,13 +717,18 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.Declare:
-		y, ok := y.(*stmt.Declare)
+	case *ir.DeclareStmt:
+		y, ok := y.(*ir.DeclareStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !NodeSliceEqual(x.Consts, y.Consts) {
+		if len(x.Consts) != len(y.Consts) {
 			return false
+		}
+		for i := range x.Consts {
+			if !NodeEqual(x.Consts[i], y.Consts[i]) {
+				return false
+			}
 		}
 		if !NodeEqual(x.Stmt, y.Stmt) {
 			return false
@@ -1409,17 +737,43 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.Default:
-		y, ok := y.(*stmt.Default)
+	case *ir.DefaultStmt:
+		y, ok := y.(*ir.DefaultStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !NodeSliceEqual(x.Stmts, y.Stmts) {
+		if len(x.Stmts) != len(y.Stmts) {
+			return false
+		}
+		for i := range x.Stmts {
+			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.DivExpr:
+		y, ok := y.(*ir.DivExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
 		return true
-	case *stmt.Do:
-		y, ok := y.(*stmt.Do)
+	case *ir.Dnumber:
+		y, ok := y.(*ir.Dnumber)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if x.Value != y.Value {
+			return false
+		}
+		return true
+	case *ir.DoStmt:
+		y, ok := y.(*ir.DoStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1430,29 +784,31 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.Echo:
-		y, ok := y.(*stmt.Echo)
+	case *ir.DoubleCastExpr:
+		y, ok := y.(*ir.DoubleCastExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !NodeSliceEqual(x.Exprs, y.Exprs) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
-	case *stmt.Else:
-		y, ok := y.(*stmt.Else)
+	case *ir.EchoStmt:
+		y, ok := y.(*ir.EchoStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !NodeEqual(x.Stmt, y.Stmt) {
+		if len(x.Exprs) != len(y.Exprs) {
 			return false
 		}
-		if x.AltSyntax != y.AltSyntax {
-			return false
+		for i := range x.Exprs {
+			if !NodeEqual(x.Exprs[i], y.Exprs[i]) {
+				return false
+			}
 		}
 		return true
-	case *stmt.ElseIf:
-		y, ok := y.(*stmt.ElseIf)
+	case *ir.ElseIfStmt:
+		y, ok := y.(*ir.ElseIfStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1469,37 +825,10 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.Expression:
-		y, ok := y.(*stmt.Expression)
+	case *ir.ElseStmt:
+		y, ok := y.(*ir.ElseStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *stmt.Finally:
-		y, ok := y.(*stmt.Finally)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeSliceEqual(x.Stmts, y.Stmts) {
-			return false
-		}
-		return true
-	case *stmt.For:
-		y, ok := y.(*stmt.For)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeSliceEqual(x.Init, y.Init) {
-			return false
-		}
-		if !NodeSliceEqual(x.Cond, y.Cond) {
-			return false
-		}
-		if !NodeSliceEqual(x.Loop, y.Loop) {
-			return false
 		}
 		if !NodeEqual(x.Stmt, y.Stmt) {
 			return false
@@ -1508,8 +837,141 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.Foreach:
-		y, ok := y.(*stmt.Foreach)
+	case *ir.EmptyExpr:
+		y, ok := y.(*ir.EmptyExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.Encapsed:
+		y, ok := y.(*ir.Encapsed)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.Parts) != len(y.Parts) {
+			return false
+		}
+		for i := range x.Parts {
+			if !NodeEqual(x.Parts[i], y.Parts[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.EncapsedStringPart:
+		y, ok := y.(*ir.EncapsedStringPart)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if x.Value != y.Value {
+			return false
+		}
+		return true
+	case *ir.EqualExpr:
+		y, ok := y.(*ir.EqualExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.ErrorSuppressExpr:
+		y, ok := y.(*ir.ErrorSuppressExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.EvalExpr:
+		y, ok := y.(*ir.EvalExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.ExitExpr:
+		y, ok := y.(*ir.ExitExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if x.Die != y.Die {
+			return false
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.ExpressionStmt:
+		y, ok := y.(*ir.ExpressionStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.FinallyStmt:
+		y, ok := y.(*ir.FinallyStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.Stmts) != len(y.Stmts) {
+			return false
+		}
+		for i := range x.Stmts {
+			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.ForStmt:
+		y, ok := y.(*ir.ForStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.Init) != len(y.Init) {
+			return false
+		}
+		for i := range x.Init {
+			if !NodeEqual(x.Init[i], y.Init[i]) {
+				return false
+			}
+		}
+		if len(x.Cond) != len(y.Cond) {
+			return false
+		}
+		for i := range x.Cond {
+			if !NodeEqual(x.Cond[i], y.Cond[i]) {
+				return false
+			}
+		}
+		if len(x.Loop) != len(y.Loop) {
+			return false
+		}
+		for i := range x.Loop {
+			if !NodeEqual(x.Loop[i], y.Loop[i]) {
+				return false
+			}
+		}
+		if !NodeEqual(x.Stmt, y.Stmt) {
+			return false
+		}
+		if x.AltSyntax != y.AltSyntax {
+			return false
+		}
+		return true
+	case *ir.ForeachStmt:
+		y, ok := y.(*ir.ForeachStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1529,8 +991,34 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.Function:
-		y, ok := y.(*stmt.Function)
+	case *ir.FullyQualifiedName:
+		y, ok := y.(*ir.FullyQualifiedName)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.Parts) != len(y.Parts) {
+			return false
+		}
+		for i := range x.Parts {
+			if !NodeEqual(x.Parts[i], y.Parts[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.FunctionCallExpr:
+		y, ok := y.(*ir.FunctionCallExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Function, y.Function) {
+			return false
+		}
+		if !NodeEqual(x.ArgumentList, y.ArgumentList) {
+			return false
+		}
+		return true
+	case *ir.FunctionStmt:
+		y, ok := y.(*ir.FunctionStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1543,27 +1031,42 @@ func NodeEqual(x, y node.Node) bool {
 		if !NodeEqual(x.FunctionName, y.FunctionName) {
 			return false
 		}
-		if !NodeSliceEqual(x.Params, y.Params) {
+		if len(x.Params) != len(y.Params) {
 			return false
+		}
+		for i := range x.Params {
+			if !NodeEqual(x.Params[i], y.Params[i]) {
+				return false
+			}
 		}
 		if !NodeEqual(x.ReturnType, y.ReturnType) {
 			return false
 		}
-		if !NodeSliceEqual(x.Stmts, y.Stmts) {
+		if len(x.Stmts) != len(y.Stmts) {
 			return false
 		}
+		for i := range x.Stmts {
+			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
+				return false
+			}
+		}
 		return true
-	case *stmt.Global:
-		y, ok := y.(*stmt.Global)
+	case *ir.GlobalStmt:
+		y, ok := y.(*ir.GlobalStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !NodeSliceEqual(x.Vars, y.Vars) {
+		if len(x.Vars) != len(y.Vars) {
 			return false
 		}
+		for i := range x.Vars {
+			if !NodeEqual(x.Vars[i], y.Vars[i]) {
+				return false
+			}
+		}
 		return true
-	case *stmt.Goto:
-		y, ok := y.(*stmt.Goto)
+	case *ir.GotoStmt:
+		y, ok := y.(*ir.GotoStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1571,8 +1074,32 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.GroupUse:
-		y, ok := y.(*stmt.GroupUse)
+	case *ir.GreaterExpr:
+		y, ok := y.(*ir.GreaterExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.GreaterOrEqualExpr:
+		y, ok := y.(*ir.GreaterOrEqualExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.GroupUseStmt:
+		y, ok := y.(*ir.GroupUseStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1582,18 +1109,61 @@ func NodeEqual(x, y node.Node) bool {
 		if !NodeEqual(x.Prefix, y.Prefix) {
 			return false
 		}
-		if !NodeSliceEqual(x.UseList, y.UseList) {
+		if len(x.UseList) != len(y.UseList) {
 			return false
 		}
+		for i := range x.UseList {
+			if !NodeEqual(x.UseList[i], y.UseList[i]) {
+				return false
+			}
+		}
 		return true
-	case *stmt.HaltCompiler:
-		y, ok := y.(*stmt.HaltCompiler)
+	case *ir.HaltCompilerStmt:
+		y, ok := y.(*ir.HaltCompilerStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
 		return true
-	case *stmt.If:
-		y, ok := y.(*stmt.If)
+	case *ir.Heredoc:
+		y, ok := y.(*ir.Heredoc)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if x.Label != y.Label {
+			return false
+		}
+		if len(x.Parts) != len(y.Parts) {
+			return false
+		}
+		for i := range x.Parts {
+			if !NodeEqual(x.Parts[i], y.Parts[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.IdenticalExpr:
+		y, ok := y.(*ir.IdenticalExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.Identifier:
+		y, ok := y.(*ir.Identifier)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if x.Value != y.Value {
+			return false
+		}
+		return true
+	case *ir.IfStmt:
+		y, ok := y.(*ir.IfStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1603,8 +1173,13 @@ func NodeEqual(x, y node.Node) bool {
 		if !NodeEqual(x.Stmt, y.Stmt) {
 			return false
 		}
-		if !NodeSliceEqual(x.ElseIf, y.ElseIf) {
+		if len(x.ElseIf) != len(y.ElseIf) {
 			return false
+		}
+		for i := range x.ElseIf {
+			if !NodeEqual(x.ElseIf[i], y.ElseIf[i]) {
+				return false
+			}
 		}
 		if !NodeEqual(x.Else, y.Else) {
 			return false
@@ -1613,8 +1188,26 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.InlineHtml:
-		y, ok := y.(*stmt.InlineHtml)
+	case *ir.IncludeExpr:
+		y, ok := y.(*ir.IncludeExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.IncludeOnceExpr:
+		y, ok := y.(*ir.IncludeOnceExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.InlineHTMLStmt:
+		y, ok := y.(*ir.InlineHTMLStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1622,8 +1215,43 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.Interface:
-		y, ok := y.(*stmt.Interface)
+	case *ir.InstanceOfExpr:
+		y, ok := y.(*ir.InstanceOfExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		if !NodeEqual(x.Class, y.Class) {
+			return false
+		}
+		return true
+	case *ir.IntCastExpr:
+		y, ok := y.(*ir.IntCastExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.InterfaceExtendsStmt:
+		y, ok := y.(*ir.InterfaceExtendsStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.InterfaceNames) != len(y.InterfaceNames) {
+			return false
+		}
+		for i := range x.InterfaceNames {
+			if !NodeEqual(x.InterfaceNames[i], y.InterfaceNames[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.InterfaceStmt:
+		y, ok := y.(*ir.InterfaceStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1636,21 +1264,31 @@ func NodeEqual(x, y node.Node) bool {
 		if !NodeEqual(x.Extends, y.Extends) {
 			return false
 		}
-		if !NodeSliceEqual(x.Stmts, y.Stmts) {
+		if len(x.Stmts) != len(y.Stmts) {
 			return false
 		}
+		for i := range x.Stmts {
+			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
+				return false
+			}
+		}
 		return true
-	case *stmt.InterfaceExtends:
-		y, ok := y.(*stmt.InterfaceExtends)
+	case *ir.IssetExpr:
+		y, ok := y.(*ir.IssetExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !NodeSliceEqual(x.InterfaceNames, y.InterfaceNames) {
+		if len(x.Variables) != len(y.Variables) {
 			return false
 		}
+		for i := range x.Variables {
+			if !NodeEqual(x.Variables[i], y.Variables[i]) {
+				return false
+			}
+		}
 		return true
-	case *stmt.Label:
-		y, ok := y.(*stmt.Label)
+	case *ir.LabelStmt:
+		y, ok := y.(*ir.LabelStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1658,26 +1296,366 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.Namespace:
-		y, ok := y.(*stmt.Namespace)
+	case *ir.ListExpr:
+		y, ok := y.(*ir.ListExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.Items) != len(y.Items) {
+			return false
+		}
+		for i := range x.Items {
+			if !NodeEqual(x.Items[i], y.Items[i]) {
+				return false
+			}
+		}
+		if x.ShortSyntax != y.ShortSyntax {
+			return false
+		}
+		return true
+	case *ir.Lnumber:
+		y, ok := y.(*ir.Lnumber)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if x.Value != y.Value {
+			return false
+		}
+		return true
+	case *ir.LogicalAndExpr:
+		y, ok := y.(*ir.LogicalAndExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.LogicalOrExpr:
+		y, ok := y.(*ir.LogicalOrExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.LogicalXorExpr:
+		y, ok := y.(*ir.LogicalXorExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.MagicConstant:
+		y, ok := y.(*ir.MagicConstant)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if x.Value != y.Value {
+			return false
+		}
+		return true
+	case *ir.MethodCallExpr:
+		y, ok := y.(*ir.MethodCallExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Method, y.Method) {
+			return false
+		}
+		if !NodeEqual(x.ArgumentList, y.ArgumentList) {
+			return false
+		}
+		return true
+	case *ir.MinusExpr:
+		y, ok := y.(*ir.MinusExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.ModExpr:
+		y, ok := y.(*ir.ModExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.MulExpr:
+		y, ok := y.(*ir.MulExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.Name:
+		y, ok := y.(*ir.Name)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.Parts) != len(y.Parts) {
+			return false
+		}
+		for i := range x.Parts {
+			if !NodeEqual(x.Parts[i], y.Parts[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.NamePart:
+		y, ok := y.(*ir.NamePart)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if x.Value != y.Value {
+			return false
+		}
+		return true
+	case *ir.NamespaceStmt:
+		y, ok := y.(*ir.NamespaceStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
 		if !NodeEqual(x.NamespaceName, y.NamespaceName) {
 			return false
 		}
-		if !NodeSliceEqual(x.Stmts, y.Stmts) {
+		if len(x.Stmts) != len(y.Stmts) {
+			return false
+		}
+		for i := range x.Stmts {
+			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.NewExpr:
+		y, ok := y.(*ir.NewExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Class, y.Class) {
+			return false
+		}
+		if !NodeEqual(x.ArgumentList, y.ArgumentList) {
 			return false
 		}
 		return true
-	case *stmt.Nop:
-		y, ok := y.(*stmt.Nop)
+	case *ir.NopStmt:
+		y, ok := y.(*ir.NopStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
 		return true
-	case *stmt.Property:
-		y, ok := y.(*stmt.Property)
+	case *ir.NotEqualExpr:
+		y, ok := y.(*ir.NotEqualExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.NotIdenticalExpr:
+		y, ok := y.(*ir.NotIdenticalExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.Nullable:
+		y, ok := y.(*ir.Nullable)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.ObjectCastExpr:
+		y, ok := y.(*ir.ObjectCastExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.Parameter:
+		y, ok := y.(*ir.Parameter)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if x.ByRef != y.ByRef {
+			return false
+		}
+		if x.Variadic != y.Variadic {
+			return false
+		}
+		if !NodeEqual(x.VariableType, y.VariableType) {
+			return false
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.DefaultValue, y.DefaultValue) {
+			return false
+		}
+		return true
+	case *ir.ParenExpr:
+		y, ok := y.(*ir.ParenExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.PlusExpr:
+		y, ok := y.(*ir.PlusExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.PostDecExpr:
+		y, ok := y.(*ir.PostDecExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		return true
+	case *ir.PostIncExpr:
+		y, ok := y.(*ir.PostIncExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		return true
+	case *ir.PowExpr:
+		y, ok := y.(*ir.PowExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.PreDecExpr:
+		y, ok := y.(*ir.PreDecExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		return true
+	case *ir.PreIncExpr:
+		y, ok := y.(*ir.PreIncExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		return true
+	case *ir.PrintExpr:
+		y, ok := y.(*ir.PrintExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.PropertyFetchExpr:
+		y, ok := y.(*ir.PropertyFetchExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Property, y.Property) {
+			return false
+		}
+		return true
+	case *ir.PropertyListStmt:
+		y, ok := y.(*ir.PropertyListStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.Modifiers) != len(y.Modifiers) {
+			return false
+		}
+		for i := range x.Modifiers {
+			if !NodeEqual(x.Modifiers[i], y.Modifiers[i]) {
+				return false
+			}
+		}
+		if !NodeEqual(x.Type, y.Type) {
+			return false
+		}
+		if len(x.Properties) != len(y.Properties) {
+			return false
+		}
+		for i := range x.Properties {
+			if !NodeEqual(x.Properties[i], y.Properties[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.PropertyStmt:
+		y, ok := y.(*ir.PropertyStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1691,25 +1669,31 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.PropertyList:
-		y, ok := y.(*stmt.PropertyList)
+	case *ir.ReferenceExpr:
+		y, ok := y.(*ir.ReferenceExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Modifiers) != len(y.Modifiers) {
-			return false
-		}
-		for i := range x.Modifiers {
-			if !NodeEqual(x.Modifiers[i], y.Modifiers[i]) {
-				return false
-			}
-		}
-		if !NodeSliceEqual(x.Properties, y.Properties) {
+		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
 		return true
-	case *stmt.Return:
-		y, ok := y.(*stmt.Return)
+	case *ir.RelativeName:
+		y, ok := y.(*ir.RelativeName)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.Parts) != len(y.Parts) {
+			return false
+		}
+		for i := range x.Parts {
+			if !NodeEqual(x.Parts[i], y.Parts[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.RequireExpr:
+		y, ok := y.(*ir.RequireExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1717,17 +1701,164 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.Static:
-		y, ok := y.(*stmt.Static)
+	case *ir.RequireOnceExpr:
+		y, ok := y.(*ir.RequireOnceExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !NodeSliceEqual(x.Vars, y.Vars) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
-	case *stmt.StaticVar:
-		y, ok := y.(*stmt.StaticVar)
+	case *ir.ReturnStmt:
+		y, ok := y.(*ir.ReturnStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.Root:
+		y, ok := y.(*ir.Root)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.Stmts) != len(y.Stmts) {
+			return false
+		}
+		for i := range x.Stmts {
+			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.ShellExecExpr:
+		y, ok := y.(*ir.ShellExecExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.Parts) != len(y.Parts) {
+			return false
+		}
+		for i := range x.Parts {
+			if !NodeEqual(x.Parts[i], y.Parts[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.ShiftLeftExpr:
+		y, ok := y.(*ir.ShiftLeftExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.ShiftRightExpr:
+		y, ok := y.(*ir.ShiftRightExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.SimpleVar:
+		y, ok := y.(*ir.SimpleVar)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if x.Name != y.Name {
+			return false
+		}
+		return true
+	case *ir.SmallerExpr:
+		y, ok := y.(*ir.SmallerExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.SmallerOrEqualExpr:
+		y, ok := y.(*ir.SmallerOrEqualExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.SpaceshipExpr:
+		y, ok := y.(*ir.SpaceshipExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Left, y.Left) {
+			return false
+		}
+		if !NodeEqual(x.Right, y.Right) {
+			return false
+		}
+		return true
+	case *ir.StaticCallExpr:
+		y, ok := y.(*ir.StaticCallExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Class, y.Class) {
+			return false
+		}
+		if !NodeEqual(x.Call, y.Call) {
+			return false
+		}
+		if !NodeEqual(x.ArgumentList, y.ArgumentList) {
+			return false
+		}
+		return true
+	case *ir.StaticPropertyFetchExpr:
+		y, ok := y.(*ir.StaticPropertyFetchExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Class, y.Class) {
+			return false
+		}
+		if !NodeEqual(x.Property, y.Property) {
+			return false
+		}
+		return true
+	case *ir.StaticStmt:
+		y, ok := y.(*ir.StaticStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.Vars) != len(y.Vars) {
+			return false
+		}
+		for i := range x.Vars {
+			if !NodeEqual(x.Vars[i], y.Vars[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.StaticVarStmt:
+		y, ok := y.(*ir.StaticVarStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1738,17 +1869,40 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.StmtList:
-		y, ok := y.(*stmt.StmtList)
+	case *ir.StmtList:
+		y, ok := y.(*ir.StmtList)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !NodeSliceEqual(x.Stmts, y.Stmts) {
+		if len(x.Stmts) != len(y.Stmts) {
+			return false
+		}
+		for i := range x.Stmts {
+			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.String:
+		y, ok := y.(*ir.String)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if x.Value != y.Value {
 			return false
 		}
 		return true
-	case *stmt.Switch:
-		y, ok := y.(*stmt.Switch)
+	case *ir.StringCastExpr:
+		y, ok := y.(*ir.StringCastExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.SwitchStmt:
+		y, ok := y.(*ir.SwitchStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1762,8 +1916,23 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.Throw:
-		y, ok := y.(*stmt.Throw)
+	case *ir.TernaryExpr:
+		y, ok := y.(*ir.TernaryExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Condition, y.Condition) {
+			return false
+		}
+		if !NodeEqual(x.IfTrue, y.IfTrue) {
+			return false
+		}
+		if !NodeEqual(x.IfFalse, y.IfFalse) {
+			return false
+		}
+		return true
+	case *ir.ThrowStmt:
+		y, ok := y.(*ir.ThrowStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1771,32 +1940,22 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.Trait:
-		y, ok := y.(*stmt.Trait)
+	case *ir.TraitAdaptationListStmt:
+		y, ok := y.(*ir.TraitAdaptationListStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.PhpDocComment != y.PhpDocComment {
+		if len(x.Adaptations) != len(y.Adaptations) {
 			return false
 		}
-		if !NodeEqual(x.TraitName, y.TraitName) {
-			return false
-		}
-		if !NodeSliceEqual(x.Stmts, y.Stmts) {
-			return false
+		for i := range x.Adaptations {
+			if !NodeEqual(x.Adaptations[i], y.Adaptations[i]) {
+				return false
+			}
 		}
 		return true
-	case *stmt.TraitAdaptationList:
-		y, ok := y.(*stmt.TraitAdaptationList)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeSliceEqual(x.Adaptations, y.Adaptations) {
-			return false
-		}
-		return true
-	case *stmt.TraitMethodRef:
-		y, ok := y.(*stmt.TraitMethodRef)
+	case *ir.TraitMethodRefStmt:
+		y, ok := y.(*ir.TraitMethodRefStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1807,20 +1966,28 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.TraitUse:
-		y, ok := y.(*stmt.TraitUse)
+	case *ir.TraitStmt:
+		y, ok := y.(*ir.TraitStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !NodeSliceEqual(x.Traits, y.Traits) {
+		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
-		if !NodeEqual(x.TraitAdaptationList, y.TraitAdaptationList) {
+		if !NodeEqual(x.TraitName, y.TraitName) {
 			return false
+		}
+		if len(x.Stmts) != len(y.Stmts) {
+			return false
+		}
+		for i := range x.Stmts {
+			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
+				return false
+			}
 		}
 		return true
-	case *stmt.TraitUseAlias:
-		y, ok := y.(*stmt.TraitUseAlias)
+	case *ir.TraitUseAliasStmt:
+		y, ok := y.(*ir.TraitUseAliasStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1834,44 +2001,125 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.TraitUsePrecedence:
-		y, ok := y.(*stmt.TraitUsePrecedence)
+	case *ir.TraitUsePrecedenceStmt:
+		y, ok := y.(*ir.TraitUsePrecedenceStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
 		if !NodeEqual(x.Ref, y.Ref) {
 			return false
 		}
-		if !NodeSliceEqual(x.Insteadof, y.Insteadof) {
+		if len(x.Insteadof) != len(y.Insteadof) {
 			return false
 		}
+		for i := range x.Insteadof {
+			if !NodeEqual(x.Insteadof[i], y.Insteadof[i]) {
+				return false
+			}
+		}
 		return true
-	case *stmt.Try:
-		y, ok := y.(*stmt.Try)
+	case *ir.TraitUseStmt:
+		y, ok := y.(*ir.TraitUseStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !NodeSliceEqual(x.Stmts, y.Stmts) {
+		if len(x.Traits) != len(y.Traits) {
 			return false
 		}
-		if !NodeSliceEqual(x.Catches, y.Catches) {
+		for i := range x.Traits {
+			if !NodeEqual(x.Traits[i], y.Traits[i]) {
+				return false
+			}
+		}
+		if !NodeEqual(x.TraitAdaptationList, y.TraitAdaptationList) {
 			return false
+		}
+		return true
+	case *ir.TryStmt:
+		y, ok := y.(*ir.TryStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.Stmts) != len(y.Stmts) {
+			return false
+		}
+		for i := range x.Stmts {
+			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
+				return false
+			}
+		}
+		if len(x.Catches) != len(y.Catches) {
+			return false
+		}
+		for i := range x.Catches {
+			if !NodeEqual(x.Catches[i], y.Catches[i]) {
+				return false
+			}
 		}
 		if !NodeEqual(x.Finally, y.Finally) {
 			return false
 		}
 		return true
-	case *stmt.Unset:
-		y, ok := y.(*stmt.Unset)
+	case *ir.UnaryMinusExpr:
+		y, ok := y.(*ir.UnaryMinusExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !NodeSliceEqual(x.Vars, y.Vars) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
-	case *stmt.Use:
-		y, ok := y.(*stmt.Use)
+	case *ir.UnaryPlusExpr:
+		y, ok := y.(*ir.UnaryPlusExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.UnsetCastExpr:
+		y, ok := y.(*ir.UnsetCastExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.UnsetStmt:
+		y, ok := y.(*ir.UnsetStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.Vars) != len(y.Vars) {
+			return false
+		}
+		for i := range x.Vars {
+			if !NodeEqual(x.Vars[i], y.Vars[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.UseListStmt:
+		y, ok := y.(*ir.UseListStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.UseType, y.UseType) {
+			return false
+		}
+		if len(x.Uses) != len(y.Uses) {
+			return false
+		}
+		for i := range x.Uses {
+			if !NodeEqual(x.Uses[i], y.Uses[i]) {
+				return false
+			}
+		}
+		return true
+	case *ir.UseStmt:
+		y, ok := y.(*ir.UseStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1885,20 +2133,17 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		return true
-	case *stmt.UseList:
-		y, ok := y.(*stmt.UseList)
+	case *ir.Var:
+		y, ok := y.(*ir.Var)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !NodeEqual(x.UseType, y.UseType) {
-			return false
-		}
-		if !NodeSliceEqual(x.Uses, y.Uses) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
-	case *stmt.While:
-		y, ok := y.(*stmt.While)
+	case *ir.WhileStmt:
+		y, ok := y.(*ir.WhileStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1909,6 +2154,27 @@ func NodeEqual(x, y node.Node) bool {
 			return false
 		}
 		if x.AltSyntax != y.AltSyntax {
+			return false
+		}
+		return true
+	case *ir.YieldExpr:
+		y, ok := y.(*ir.YieldExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Key, y.Key) {
+			return false
+		}
+		if !NodeEqual(x.Value, y.Value) {
+			return false
+		}
+		return true
+	case *ir.YieldFromExpr:
+		y, ok := y.(*ir.YieldFromExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true

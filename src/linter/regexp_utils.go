@@ -3,7 +3,7 @@ package linter
 import (
 	"strings"
 
-	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
+	"github.com/VKCOM/noverify/src/ir"
 )
 
 type regexpPattern struct {
@@ -11,7 +11,7 @@ type regexpPattern struct {
 	quotes rune
 }
 
-func newRegexpPattern(lit *scalar.String) (regexpPattern, bool) {
+func newRegexpPattern(lit *ir.String) (regexpPattern, bool) {
 	// We need to interpret the string literal so we see it in a same
 	// was as regexp engine (PCRE) would.
 	//

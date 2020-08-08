@@ -4,11 +4,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
 )
 
 func init() {
@@ -31,10 +30,10 @@ if ($cond1) {
 }
 `)
 	test.Expect = []string{
-		`$_if (cond=true) : *node.Root/*stmt.If/*stmt.StmtList/*stmt.Echo/*node.SimpleVar`,
-		`$_elseif1 (cond=true) : *node.Root/*stmt.If/*stmt.StmtList/*stmt.Echo/*node.SimpleVar`,
-		`$_elseif2 (cond=true) : *node.Root/*stmt.If/*stmt.StmtList/*stmt.Expression/*node.SimpleVar`,
-		`$_else (cond=true) : *node.Root/*stmt.If/*stmt.Else/*stmt.StmtList/*stmt.Echo/*node.SimpleVar`,
+		`$_if (cond=true) : *ir.Root/*ir.IfStmt/*ir.StmtList/*ir.EchoStmt/*ir.SimpleVar`,
+		`$_elseif1 (cond=true) : *ir.Root/*ir.IfStmt/*ir.StmtList/*ir.EchoStmt/*ir.SimpleVar`,
+		`$_elseif2 (cond=true) : *ir.Root/*ir.IfStmt/*ir.StmtList/*ir.ExpressionStmt/*ir.SimpleVar`,
+		`$_else (cond=true) : *ir.Root/*ir.IfStmt/*ir.ElseStmt/*ir.StmtList/*ir.EchoStmt/*ir.SimpleVar`,
 	}
 	linttest.RunFilterMatch(test, "pathTest")
 }
@@ -45,9 +44,9 @@ func TestPathArgument(t *testing.T) {
 f($_arg1, [$_arg2], $a + $_arg3);
 `)
 	test.Expect = []string{
-		`$_arg1 (cond=false) : *node.Root/*stmt.Expression/*expr.FunctionCall/*node.Argument/*node.SimpleVar`,
-		`$_arg2 (cond=false) : *node.Root/*stmt.Expression/*expr.FunctionCall/*node.Argument/*expr.Array/*node.SimpleVar`,
-		`$_arg3 (cond=false) : *node.Root/*stmt.Expression/*expr.FunctionCall/*node.Argument/*binary.Plus/*node.SimpleVar`,
+		`$_arg1 (cond=false) : *ir.Root/*ir.ExpressionStmt/*ir.FunctionCallExpr/*ir.Argument/*ir.SimpleVar`,
+		`$_arg2 (cond=false) : *ir.Root/*ir.ExpressionStmt/*ir.FunctionCallExpr/*ir.Argument/*ir.ArrayExpr/*ir.SimpleVar`,
+		`$_arg3 (cond=false) : *ir.Root/*ir.ExpressionStmt/*ir.FunctionCallExpr/*ir.Argument/*ir.PlusExpr/*ir.SimpleVar`,
 	}
 	linttest.RunFilterMatch(test, "pathTest")
 }
@@ -58,9 +57,9 @@ func TestPathTernary(t *testing.T) {
 echo $_ternary_cond ? $_ternary_true : $_ternary_false;
 `)
 	test.Expect = []string{
-		`$_ternary_cond (cond=true) : *node.Root/*stmt.Echo/*expr.Ternary/*node.SimpleVar`,
-		`$_ternary_true (cond=true) : *node.Root/*stmt.Echo/*expr.Ternary/*node.SimpleVar`,
-		`$_ternary_false (cond=true) : *node.Root/*stmt.Echo/*expr.Ternary/*node.SimpleVar`,
+		`$_ternary_cond (cond=true) : *ir.Root/*ir.EchoStmt/*ir.TernaryExpr/*ir.SimpleVar`,
+		`$_ternary_true (cond=true) : *ir.Root/*ir.EchoStmt/*ir.TernaryExpr/*ir.SimpleVar`,
+		`$_ternary_false (cond=true) : *ir.Root/*ir.EchoStmt/*ir.TernaryExpr/*ir.SimpleVar`,
 	}
 	linttest.RunFilterMatch(test, "pathTest")
 }
@@ -82,13 +81,13 @@ do {
 } while ($_do_while_cond);
 `)
 	test.Expect = []string{
-		`$_cond (cond=true) : *node.Root/*stmt.If/*node.SimpleVar`,
-		`$_x1 (cond=true) : *node.Root/*stmt.If/*stmt.StmtList/*stmt.Echo/*node.SimpleVar`,
-		`$_case (cond=true) : *node.Root/*stmt.If/*stmt.StmtList/*stmt.Switch/*node.SimpleVar`,
-		`$_x2 (cond=true) : *node.Root/*stmt.If/*stmt.StmtList/*stmt.Switch/*stmt.Echo/*node.SimpleVar`,
+		`$_cond (cond=true) : *ir.Root/*ir.IfStmt/*ir.SimpleVar`,
+		`$_x1 (cond=true) : *ir.Root/*ir.IfStmt/*ir.StmtList/*ir.EchoStmt/*ir.SimpleVar`,
+		`$_case (cond=true) : *ir.Root/*ir.IfStmt/*ir.StmtList/*ir.SwitchStmt/*ir.SimpleVar`,
+		`$_x2 (cond=true) : *ir.Root/*ir.IfStmt/*ir.StmtList/*ir.SwitchStmt/*ir.EchoStmt/*ir.SimpleVar`,
 
-		`$_at_least_once (cond=false) : *node.Root/*stmt.Do/*stmt.StmtList/*stmt.Expression/*node.SimpleVar`,
-		`$_do_while_cond (cond=false) : *node.Root/*stmt.Do/*node.SimpleVar`,
+		`$_at_least_once (cond=false) : *ir.Root/*ir.DoStmt/*ir.StmtList/*ir.ExpressionStmt/*ir.SimpleVar`,
+		`$_do_while_cond (cond=false) : *ir.Root/*ir.DoStmt/*ir.SimpleVar`,
 	}
 	linttest.RunFilterMatch(test, "pathTest")
 }
@@ -108,10 +107,10 @@ function f() {
 }
 `)
 	test.Expect = []string{
-		`$_inside_func (cond=false) : *stmt.Echo/*node.SimpleVar`,
-		`$_inside_loops (cond=true) : *stmt.For/*stmt.StmtList/*stmt.While/*stmt.StmtList/*stmt.Return/*node.SimpleVar`,
-		`$_inside_loop (cond=true) : *stmt.For/*stmt.StmtList/*stmt.Return/*node.SimpleVar`,
-		`$_outside_loops (cond=false) : *stmt.Return/*node.SimpleVar`,
+		`$_inside_func (cond=false) : *ir.EchoStmt/*ir.SimpleVar`,
+		`$_inside_loops (cond=true) : *ir.ForStmt/*ir.StmtList/*ir.WhileStmt/*ir.StmtList/*ir.ReturnStmt/*ir.SimpleVar`,
+		`$_inside_loop (cond=true) : *ir.ForStmt/*ir.StmtList/*ir.ReturnStmt/*ir.SimpleVar`,
+		`$_outside_loops (cond=false) : *ir.ReturnStmt/*ir.SimpleVar`,
 	}
 	linttest.RunFilterMatch(test, "pathTest")
 }
@@ -133,10 +132,10 @@ class C {
 }
 `)
 	test.Expect = []string{
-		`$_inside_func (cond=false) : *stmt.Echo/*node.SimpleVar`,
-		`$_inside_loops (cond=true) : *stmt.For/*stmt.StmtList/*stmt.While/*stmt.StmtList/*stmt.Return/*node.SimpleVar`,
-		`$_inside_loop (cond=true) : *stmt.For/*stmt.StmtList/*stmt.Return/*node.SimpleVar`,
-		`$_outside_loops (cond=false) : *stmt.Return/*node.SimpleVar`,
+		`$_inside_func (cond=false) : *ir.EchoStmt/*ir.SimpleVar`,
+		`$_inside_loops (cond=true) : *ir.ForStmt/*ir.StmtList/*ir.WhileStmt/*ir.StmtList/*ir.ReturnStmt/*ir.SimpleVar`,
+		`$_inside_loop (cond=true) : *ir.ForStmt/*ir.StmtList/*ir.ReturnStmt/*ir.SimpleVar`,
+		`$_outside_loops (cond=false) : *ir.ReturnStmt/*ir.SimpleVar`,
 	}
 	linttest.RunFilterMatch(test, "pathTest")
 }
@@ -146,12 +145,12 @@ type pathTester struct {
 	ctx *linter.BlockContext
 }
 
-func (b *pathTester) AfterEnterNode(w walker.Walkable) {
+func (b *pathTester) AfterEnterNode(n ir.Node) {
 	if !meta.IsIndexingComplete() {
 		return
 	}
 
-	x, ok := w.(*node.SimpleVar)
+	x, ok := n.(*ir.SimpleVar)
 	if !ok || !strings.HasPrefix(x.Name, "_") {
 		return
 	}
