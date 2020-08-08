@@ -1,13 +1,8 @@
 package linter
 
 import (
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr/binary"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
-	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/solver"
 )
 
@@ -19,37 +14,37 @@ import (
 type andWalker struct {
 	b *BlockWalker
 
-	varsToDelete []node.Node
+	varsToDelete []ir.Node
 }
 
-func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
+func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 	switch n := w.(type) {
-	case *expr.FunctionCall:
+	case *ir.FunctionCallExpr:
 		args := n.ArgumentList.Arguments
-		nm, ok := n.Function.(*name.Name)
+		nm, ok := n.Function.(*ir.Name)
 		if !ok {
 			break
 		}
 		switch {
 		case len(args) == 2 && meta.NameEquals(nm, `method_exists`):
-			obj := args[0].(*node.Argument).Expr
-			methodName := args[1].(*node.Argument).Expr
-			lit, ok := methodName.(*scalar.String)
+			obj := args[0].(*ir.Argument).Expr
+			methodName := args[1].(*ir.Argument).Expr
+			lit, ok := methodName.(*ir.String)
 			if ok {
 				a.b.ctx.addCustomMethod(obj, unquote(lit.Value))
 			}
 		case len(args) == 1 && meta.NameEquals(nm, `function_exists`):
-			functionName := args[0].(*node.Argument).Expr
-			lit, ok := functionName.(*scalar.String)
+			functionName := args[0].(*ir.Argument).Expr
+			lit, ok := functionName.(*ir.String)
 			if ok {
 				a.b.ctx.addCustomFunction(unquote(lit.Value))
 			}
 		}
 
-	case *binary.BooleanAnd:
+	case *ir.BooleanAndExpr:
 		return true
 
-	case *expr.Isset:
+	case *ir.IssetExpr:
 		for _, v := range n.Variables {
 			varNode := findVarNode(v)
 			if varNode == nil {
@@ -60,12 +55,12 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 			}
 
 			switch v := varNode.(type) {
-			case *node.SimpleVar:
+			case *ir.SimpleVar:
 				a.b.addVar(v, meta.NewTypesMap("isset_$"+v.Name), "isset", meta.VarAlwaysDefined)
 				a.varsToDelete = append(a.varsToDelete, v)
-			case *node.Var:
+			case *ir.Var:
 				a.b.handleVariable(v.Expr)
-				vv, ok := v.Expr.(*node.SimpleVar)
+				vv, ok := v.Expr.(*ir.SimpleVar)
 				if !ok {
 					continue
 				}
@@ -74,10 +69,10 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 			}
 		}
 
-	case *expr.InstanceOf:
+	case *ir.InstanceOfExpr:
 		if className, ok := solver.GetClassName(a.b.r.ctx.st, n.Class); ok {
 			switch v := n.Expr.(type) {
-			case *node.Var, *node.SimpleVar:
+			case *ir.Var, *ir.SimpleVar:
 				a.b.ctx.sc.AddVar(v, meta.NewTypesMap(className), "instanceof", 0)
 			default:
 				a.b.ctx.customTypes = append(a.b.ctx.customTypes, solver.CustomType{
@@ -88,17 +83,17 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 			// TODO: actually this needs to be present inside if body only
 		}
 
-	case *expr.BooleanNot:
+	case *ir.BooleanNotExpr:
 		// TODO: consolidate with issets handling?
 		// Probably could collect *expr.Variable instead of
 		// isset and empty nodes and handle them in a single loop.
 
 		// !empty($x) implies that isset($x) would return true.
-		empty, ok := n.Expr.(*expr.Empty)
+		empty, ok := n.Expr.(*ir.EmptyExpr)
 		if !ok {
 			break
 		}
-		v, ok := empty.Expr.(*node.SimpleVar)
+		v, ok := empty.Expr.(*ir.SimpleVar)
 		if !ok {
 			break
 		}
@@ -113,4 +108,4 @@ func (a *andWalker) EnterNode(w walker.Walkable) (res bool) {
 	return false
 }
 
-func (a *andWalker) LeaveNode(w walker.Walkable) {}
+func (a *andWalker) LeaveNode(w ir.Node) {}

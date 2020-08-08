@@ -1,18 +1,14 @@
 package astutil
 
 import (
-	"bytes"
-
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
-	"github.com/VKCOM/noverify/src/php/parser/printer"
+	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irfmt"
 )
 
 //go:generate go run ./codegen.go
 
-func NodeSliceClone(xs []node.Node) []node.Node {
-	cloned := make([]node.Node, len(xs))
+func NodeSliceClone(xs []ir.Node) []ir.Node {
+	cloned := make([]ir.Node, len(xs))
 	for i, x := range xs {
 		cloned[i] = NodeClone(x)
 	}
@@ -20,9 +16,9 @@ func NodeSliceClone(xs []node.Node) []node.Node {
 }
 
 // Unparen returns n with all parenthesis removed.
-func Unparen(e node.Node) node.Node {
+func Unparen(e ir.Node) ir.Node {
 	for {
-		p, ok := e.(*expr.Paren)
+		p, ok := e.(*ir.ParenExpr)
 		if !ok {
 			return e
 		}
@@ -30,7 +26,7 @@ func Unparen(e node.Node) node.Node {
 	}
 }
 
-func NodeSliceEqual(xs, ys []node.Node) bool {
+func NodeSliceEqual(xs, ys []ir.Node) bool {
 	if len(xs) != len(ys) {
 		return false
 	}
@@ -42,31 +38,29 @@ func NodeSliceEqual(xs, ys []node.Node) bool {
 	return true
 }
 
-func IsAssign(n node.Node) bool {
+func IsAssign(n ir.Node) bool {
 	switch n.(type) {
-	case *assign.Assign,
-		*assign.Concat,
-		*assign.Plus,
-		*assign.Reference,
-		*assign.Div,
-		*assign.Pow,
-		*assign.BitwiseAnd,
-		*assign.BitwiseOr,
-		*assign.BitwiseXor,
-		*assign.ShiftLeft,
-		*assign.ShiftRight,
-		*assign.Minus,
-		*assign.Mod,
-		*assign.Mul:
+	case *ir.Assign,
+		*ir.AssignConcat,
+		*ir.AssignPlus,
+		*ir.AssignReference,
+		*ir.AssignDiv,
+		*ir.AssignPow,
+		*ir.AssignBitwiseAnd,
+		*ir.AssignBitwiseOr,
+		*ir.AssignBitwiseXor,
+		*ir.AssignShiftLeft,
+		*ir.AssignShiftRight,
+		*ir.AssignMinus,
+		*ir.AssignMod,
+		*ir.AssignMul:
 		return true
 	default:
 		return false
 	}
 }
 
-// FmtNode is used for debug purposes and returns string representation of a specified node.
-func FmtNode(n node.Node) string {
-	var b bytes.Buffer
-	printer.NewPrettyPrinter(&b, " ").Print(n)
-	return b.String()
+// FmtNode returns string representation of n.
+func FmtNode(n ir.Node) string {
+	return irfmt.Node(n)
 }

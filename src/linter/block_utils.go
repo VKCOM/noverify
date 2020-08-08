@@ -5,12 +5,10 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/solver"
 )
 
@@ -63,11 +61,11 @@ func classDistance(st *meta.ClassParseState, class string) int {
 	return 2
 }
 
-func enoughArgs(args []node.Node, fn meta.FuncInfo) bool {
+func enoughArgs(args []ir.Node, fn meta.FuncInfo) bool {
 	if len(args) < fn.MinParamsCnt {
 		// If the last argument is ...$arg, then assume it is an array with
 		// sufficient values for the parameters
-		if len(args) == 0 || !args[len(args)-1].(*node.Argument).Variadic {
+		if len(args) == 0 || !args[len(args)-1].(*ir.Argument).Variadic {
 			return false
 		}
 	}
@@ -114,13 +112,13 @@ func canAccess(st *meta.ClassParseState, className string, accessLevel meta.Acce
 	panic("Invalid access level")
 }
 
-func nodeEqual(st *meta.ClassParseState, x, y node.Node) bool {
+func nodeEqual(st *meta.ClassParseState, x, y ir.Node) bool {
 	if x == nil || y == nil {
 		return x == y
 	}
 	switch x := x.(type) {
-	case *expr.ConstFetch:
-		y, ok := y.(*expr.ConstFetch)
+	case *ir.ConstFetchExpr:
+		y, ok := y.(*ir.ConstFetchExpr)
 		if !ok {
 			return false
 		}
@@ -140,12 +138,12 @@ func nodeEqual(st *meta.ClassParseState, x, y node.Node) bool {
 	}
 }
 
-func getCaseStmts(c node.Node) (cond node.Node, list []node.Node) {
+func getCaseStmts(c ir.Node) (cond ir.Node, list []ir.Node) {
 	switch c := c.(type) {
-	case *stmt.Case:
+	case *ir.CaseStmt:
 		cond = c.Cond
 		list = c.Stmts
-	case *stmt.Default:
+	case *ir.DefaultStmt:
 		list = c.Stmts
 	default:
 		panic(fmt.Errorf("Unexpected type in switch statement: %T", c))
@@ -166,7 +164,7 @@ var fallthroughMarkerRegex = func() *regexp.Regexp {
 	return regexp.MustCompile(pattern)
 }()
 
-func caseHasFallthroughComment(n node.Node) bool {
+func caseHasFallthroughComment(n ir.Node) bool {
 	ffs := n.GetFreeFloating()
 	if ffs == nil {
 		return false

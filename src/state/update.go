@@ -1,44 +1,41 @@
 package state
 
 import (
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
-	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/solver"
 )
 
 // EnterNode must be called upon entering new node to update current state.
-func EnterNode(st *meta.ClassParseState, n walker.Walkable) {
+func EnterNode(st *meta.ClassParseState, n ir.Node) {
 	switch n := n.(type) {
-	case *stmt.Function:
+	case *ir.FunctionStmt:
 		st.CurrentFunction = n.FunctionName.Value
-	case *stmt.ClassMethod:
+	case *ir.ClassMethodStmt:
 		st.CurrentFunction = n.MethodName.Value
 
-	case *stmt.Namespace:
+	case *ir.NamespaceStmt:
 		// TODO: handle another namespace syntax:
 		// namespace NS { ... }
-		nm, ok := n.NamespaceName.(*name.Name)
+		nm, ok := n.NamespaceName.(*ir.Name)
 		if ok {
 			st.Namespace = `\` + meta.NameToString(nm)
 		}
-	case *stmt.UseList:
+	case *ir.UseListStmt:
 		if n.UseType == nil {
 			for _, u := range n.Uses {
-				if u, ok := u.(*stmt.Use); ok {
+				if u, ok := u.(*ir.UseStmt); ok {
 					handleUseClass(st, u)
 				}
 			}
-		} else if id, ok := n.UseType.(*node.Identifier); ok && id.Value == "function" {
+		} else if id, ok := n.UseType.(*ir.Identifier); ok && id.Value == "function" {
 			for _, u := range n.Uses {
-				if u, ok := u.(*stmt.Use); ok {
+				if u, ok := u.(*ir.UseStmt); ok {
 					handleUseFunction(st, u)
 				}
 			}
 		}
-	case *stmt.Interface:
+	case *ir.InterfaceStmt:
 		st.IsTrait = false
 		st.CurrentClass = st.Namespace + `\` + n.InterfaceName.Value
 		st.CurrentParentClass = ""
@@ -52,7 +49,7 @@ func EnterNode(st *meta.ClassParseState, n walker.Walkable) {
 			}
 		}
 
-	case *stmt.Class:
+	case *ir.ClassStmt:
 		// TODO: handle anonymous classes (they can be nested as well)
 		st.IsTrait = false
 		id := n.ClassName
@@ -62,7 +59,7 @@ func EnterNode(st *meta.ClassParseState, n walker.Walkable) {
 		if n.Extends != nil {
 			st.CurrentParentClass, _ = solver.GetClassName(st, n.Extends.ClassName)
 		}
-	case *stmt.Trait:
+	case *ir.TraitStmt:
 		st.IsTrait = true
 		st.CurrentClass = st.Namespace + `\` + n.TraitName.Value
 		st.CurrentParentClass = ""
@@ -70,49 +67,49 @@ func EnterNode(st *meta.ClassParseState, n walker.Walkable) {
 	}
 }
 
-func handleUseClass(st *meta.ClassParseState, n *stmt.Use) {
+func handleUseClass(st *meta.ClassParseState, n *ir.UseStmt) {
 	// TODO: there exists groupUse and other stuff
 	if st.Uses == nil {
 		st.Uses = make(map[string]string)
 	}
 
-	parts := n.Use.(*name.Name).Parts
+	parts := n.Use.(*ir.Name).Parts
 	var alias string
 
 	if n.Alias != nil {
 		alias = n.Alias.Value
 	} else {
-		alias = parts[len(parts)-1].(*name.NamePart).Value
+		alias = parts[len(parts)-1].(*ir.NamePart).Value
 	}
 
-	st.Uses[alias] = `\` + meta.NameToString(n.Use.(*name.Name))
+	st.Uses[alias] = `\` + meta.NameToString(n.Use.(*ir.Name))
 }
 
-func handleUseFunction(st *meta.ClassParseState, n *stmt.Use) {
+func handleUseFunction(st *meta.ClassParseState, n *ir.UseStmt) {
 	// TODO: there exists groupUse and other stuff
 	if st.FunctionUses == nil {
 		st.FunctionUses = make(map[string]string)
 	}
 
-	parts := n.Use.(*name.Name).Parts
+	parts := n.Use.(*ir.Name).Parts
 	var alias string
 
 	if n.Alias != nil {
 		alias = n.Alias.Value
 	} else {
-		alias = parts[len(parts)-1].(*name.NamePart).Value
+		alias = parts[len(parts)-1].(*ir.NamePart).Value
 	}
 
-	st.FunctionUses[alias] = `\` + meta.NameToString(n.Use.(*name.Name))
+	st.FunctionUses[alias] = `\` + meta.NameToString(n.Use.(*ir.Name))
 }
 
 // LeaveNode must be called upon leaving a node to update current state.
-func LeaveNode(st *meta.ClassParseState, n walker.Walkable) {
+func LeaveNode(st *meta.ClassParseState, n ir.Node) {
 	switch n.(type) {
-	case *stmt.ClassMethod, *stmt.Function:
+	case *ir.ClassMethodStmt, *ir.FunctionStmt:
 		st.CurrentFunction = ""
 
-	case *stmt.Class, *stmt.Interface, *stmt.Trait:
+	case *ir.ClassStmt, *ir.InterfaceStmt, *ir.TraitStmt:
 		st.IsTrait = false
 		st.CurrentClass = ""
 		st.CurrentParentClass = ""

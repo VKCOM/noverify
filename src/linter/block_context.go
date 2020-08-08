@@ -1,14 +1,14 @@
 package linter
 
 import (
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/astutil"
-	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/solver"
 )
 
 type customMethod struct {
-	obj  node.Node
+	obj  ir.Node
 	name string
 }
 
@@ -41,7 +41,7 @@ func (ctx *blockContext) addCustomFunction(functionName string) {
 	ctx.customFunctions = append(ctx.customFunctions, functionName)
 }
 
-func (ctx *blockContext) customFunctionExists(nm node.Node) bool {
+func (ctx *blockContext) customFunctionExists(nm ir.Node) bool {
 	for _, functionName := range ctx.customFunctions {
 		if meta.NameNodeEquals(nm, functionName) {
 			return true
@@ -50,14 +50,14 @@ func (ctx *blockContext) customFunctionExists(nm node.Node) bool {
 	return false
 }
 
-func (ctx *blockContext) addCustomMethod(obj node.Node, methodName string) {
+func (ctx *blockContext) addCustomMethod(obj ir.Node, methodName string) {
 	ctx.customMethods = append(ctx.customMethods, customMethod{
 		obj:  astutil.Unparen(obj),
 		name: methodName,
 	})
 }
 
-func (ctx *blockContext) customMethodExists(obj node.Node, methodName string) bool {
+func (ctx *blockContext) customMethodExists(obj ir.Node, methodName string) bool {
 	obj = astutil.Unparen(obj)
 	for _, m := range ctx.customMethods {
 		if m.name == methodName && astutil.NodeEqual(m.obj, obj) {

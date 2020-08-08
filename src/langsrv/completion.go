@@ -1,16 +1,15 @@
 package langsrv
 
 import (
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/state"
 )
 
 type completionWalker struct {
 	// params
 	position int
-	scopes   map[node.Node]*meta.Scope
+	scopes   map[ir.Node]*meta.Scope
 
 	// output
 	foundScope *meta.Scope
@@ -18,22 +17,21 @@ type completionWalker struct {
 }
 
 // EnterNode is invoked at every node in hierarchy
-func (d *completionWalker) EnterNode(w walker.Walkable) bool {
+func (d *completionWalker) EnterNode(w ir.Node) bool {
 	state.EnterNode(&d.st, w)
 
 	return d.foundScope == nil
 }
 
 // LeaveNode is invoked after node process
-func (d *completionWalker) LeaveNode(w walker.Walkable) {
+func (d *completionWalker) LeaveNode(n ir.Node) {
 	if d.foundScope != nil {
 		return
 	}
 
-	state.LeaveNode(&d.st, w)
+	state.LeaveNode(&d.st, n)
 
-	n := w.(node.Node)
-	pos := n.GetPosition()
+	pos := ir.GetPosition(n)
 
 	if pos == nil {
 		return
@@ -43,7 +41,7 @@ func (d *completionWalker) LeaveNode(w walker.Walkable) {
 		return
 	}
 
-	sc, ok := d.scopes[n.(node.Node)]
+	sc, ok := d.scopes[n]
 	if !ok {
 		return
 	}

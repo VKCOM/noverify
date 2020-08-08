@@ -7,14 +7,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/astutil"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
 )
 
 // Tests in this file make it less likely that type solving will break
@@ -39,7 +36,7 @@ import (
 
 var (
 	exprTypeResultMu sync.Mutex
-	exprTypeResult   map[node.Node]meta.TypesMap
+	exprTypeResult   map[ir.Node]meta.TypesMap
 )
 
 func init() {
@@ -1968,7 +1965,7 @@ func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.SetIndexingComplete(true)
 
 	// Reset results map and run expr type collector.
-	exprTypeResult = map[node.Node]meta.TypesMap{}
+	exprTypeResult = map[ir.Node]meta.TypesMap{}
 	root, _ := linttest.ParseTestFile(t, "exprtype.php", params.code)
 
 	// Check that collected types are identical to the expected types.
@@ -2005,13 +2002,13 @@ type exprTypeWalker struct {
 	t *testing.T
 }
 
-func (w *exprTypeWalker) LeaveNode(n walker.Walkable) {}
+func (w *exprTypeWalker) LeaveNode(n ir.Node) {}
 
-func (w *exprTypeWalker) EnterNode(n walker.Walkable) bool {
-	call, ok := n.(*expr.FunctionCall)
+func (w *exprTypeWalker) EnterNode(n ir.Node) bool {
+	call, ok := n.(*ir.FunctionCallExpr)
 	if ok && meta.NameNodeEquals(call.Function, `exprtype`) {
-		checkedExpr := call.ArgumentList.Arguments[0].(*node.Argument).Expr
-		expectedType := call.ArgumentList.Arguments[1].(*node.Argument).Expr.(*scalar.String).Value
+		checkedExpr := call.ArgumentList.Arguments[0].(*ir.Argument).Expr
+		expectedType := call.ArgumentList.Arguments[1].(*ir.Argument).Expr.(*ir.String).Value
 		actualType, ok := exprTypeResult[checkedExpr]
 		if !ok {
 			w.t.Fatalf("no type found for %s expression", astutil.FmtNode(checkedExpr))
@@ -2022,7 +2019,7 @@ func (w *exprTypeWalker) EnterNode(n walker.Walkable) bool {
 			Precise: actualType.IsPrecise(),
 		}
 		if diff := cmp.Diff(have, want); diff != "" {
-			line := checkedExpr.GetPosition().StartLine
+			line := ir.GetPosition(checkedExpr).StartLine
 			w.t.Errorf("line %d: type mismatch for %s (-have +want):\n%s",
 				line, astutil.FmtNode(checkedExpr), diff)
 		}
@@ -2037,16 +2034,16 @@ type exprTypeCollector struct {
 	linter.BlockCheckerDefaults
 }
 
-func (c *exprTypeCollector) AfterEnterNode(n walker.Walkable) {
+func (c *exprTypeCollector) AfterEnterNode(n ir.Node) {
 	if !meta.IsIndexingComplete() {
 		return
 	}
 
-	call, ok := n.(*expr.FunctionCall)
+	call, ok := n.(*ir.FunctionCallExpr)
 	if !ok || !meta.NameNodeEquals(call.Function, `exprtype`) {
 		return
 	}
-	checkedExpr := call.ArgumentList.Arguments[0].(*node.Argument).Expr
+	checkedExpr := call.ArgumentList.Arguments[0].(*ir.Argument).Expr
 
 	// We need to clone a types map because if it belongs to a var
 	// or some other symbol those type can be volatile we'll get

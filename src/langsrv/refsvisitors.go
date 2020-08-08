@@ -3,13 +3,10 @@ package langsrv
 import (
 	"strings"
 
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/state"
 	"github.com/VKCOM/noverify/src/vscode"
@@ -21,7 +18,7 @@ func findFunctionReferences(funcName string) []vscode.Location {
 		substr = funcName[idx+1:]
 	}
 
-	return findReferences(substr, func(filename string, rootNode node.Node, contents []byte, parser *php7.Parser) []vscode.Location {
+	return findReferences(substr, func(filename string, rootNode ir.Node, contents []byte, parser *php7.Parser) []vscode.Location {
 		v := &funcCallVisitor{
 			funcName: funcName,
 			filename: filename,
@@ -32,7 +29,7 @@ func findFunctionReferences(funcName string) []vscode.Location {
 }
 
 func findStaticMethodReferences(className string, methodName string) []vscode.Location {
-	return findReferences(methodName, func(filename string, rootNode node.Node, contents []byte, parser *php7.Parser) []vscode.Location {
+	return findReferences(methodName, func(filename string, rootNode ir.Node, contents []byte, parser *php7.Parser) []vscode.Location {
 		v := &staticMethodCallVisitor{
 			className:  className,
 			methodName: methodName,
@@ -44,7 +41,7 @@ func findStaticMethodReferences(className string, methodName string) []vscode.Lo
 }
 
 func findConstantsReferences(constName string) []vscode.Location {
-	return findReferences(constName, func(filename string, rootNode node.Node, contents []byte, parser *php7.Parser) []vscode.Location {
+	return findReferences(constName, func(filename string, rootNode ir.Node, contents []byte, parser *php7.Parser) []vscode.Location {
 		v := &constVisitor{
 			constName: constName,
 			filename:  filename,
@@ -55,7 +52,7 @@ func findConstantsReferences(constName string) []vscode.Location {
 }
 
 func findClassConstantsReferences(className string, constName string) []vscode.Location {
-	return findReferences(constName, func(filename string, rootNode node.Node, contents []byte, parser *php7.Parser) []vscode.Location {
+	return findReferences(constName, func(filename string, rootNode ir.Node, contents []byte, parser *php7.Parser) []vscode.Location {
 		v := &classConstVisitor{
 			className: className,
 			constName: constName,
@@ -67,7 +64,7 @@ func findClassConstantsReferences(className string, constName string) []vscode.L
 }
 
 func findMethodReferences(className string, methodName string) []vscode.Location {
-	return findReferences(methodName, func(filename string, rootNode node.Node, contents []byte, parser *php7.Parser) []vscode.Location {
+	return findReferences(methodName, func(filename string, rootNode ir.Node, contents []byte, parser *php7.Parser) []vscode.Location {
 		var found []vscode.Location
 
 		rootWalker := linter.NewWalkerForReferencesSearcher(
@@ -93,7 +90,7 @@ func findMethodReferences(className string, methodName string) []vscode.Location
 }
 
 func findPropertyReferences(className string, propName string) []vscode.Location {
-	return findReferences(propName, func(filename string, rootNode node.Node, contents []byte, parser *php7.Parser) []vscode.Location {
+	return findReferences(propName, func(filename string, rootNode ir.Node, contents []byte, parser *php7.Parser) []vscode.Location {
 		var found []vscode.Location
 
 		rootWalker := linter.NewWalkerForReferencesSearcher(
@@ -131,13 +128,13 @@ func (d *funcCallVisitor) GetFoundLocations() []vscode.Location {
 }
 
 // EnterNode is invoked at every node in hierarchy
-func (d *funcCallVisitor) EnterNode(w walker.Walkable) bool {
+func (d *funcCallVisitor) EnterNode(w ir.Node) bool {
 	state.EnterNode(&d.st, w)
 
-	if n, ok := w.(*expr.FunctionCall); ok {
+	if n, ok := w.(*ir.FunctionCallExpr); ok {
 		_, nameStr, ok := getFunction(&d.st, n)
 		if ok && nameStr == d.funcName {
-			if pos := n.GetPosition(); pos != nil {
+			if pos := ir.GetPosition(n); pos != nil {
 				d.found = append(d.found, refPosition(d.filename, pos))
 			}
 		}
@@ -147,7 +144,7 @@ func (d *funcCallVisitor) EnterNode(w walker.Walkable) bool {
 }
 
 // LeaveNode is invoked after node process
-func (d *funcCallVisitor) LeaveNode(w walker.Walkable) {
+func (d *funcCallVisitor) LeaveNode(w ir.Node) {
 	state.LeaveNode(&d.st, w)
 }
 
@@ -169,11 +166,11 @@ func (d *staticMethodCallVisitor) GetFoundLocations() []vscode.Location {
 }
 
 // EnterNode is invoked at every node in hierarchy
-func (d *staticMethodCallVisitor) EnterNode(w walker.Walkable) bool {
-	state.EnterNode(&d.st, w)
+func (d *staticMethodCallVisitor) EnterNode(n ir.Node) bool {
+	state.EnterNode(&d.st, n)
 
-	if n, ok := w.(*expr.StaticCall); ok {
-		id, ok := n.Call.(*node.Identifier)
+	if n, ok := n.(*ir.StaticCallExpr); ok {
+		id, ok := n.Call.(*ir.Identifier)
 		if !ok {
 			return true
 		}
@@ -185,7 +182,7 @@ func (d *staticMethodCallVisitor) EnterNode(w walker.Walkable) bool {
 		realClassName := m.ImplName()
 
 		if ok && realClassName == d.className && id.Value == d.methodName {
-			if pos := n.GetPosition(); pos != nil {
+			if pos := ir.GetPosition(n); pos != nil {
 				d.found = append(d.found, refPosition(d.filename, pos))
 			}
 		}
@@ -195,7 +192,7 @@ func (d *staticMethodCallVisitor) EnterNode(w walker.Walkable) bool {
 }
 
 // LeaveNode is invoked after node process
-func (d *staticMethodCallVisitor) LeaveNode(w walker.Walkable) {
+func (d *staticMethodCallVisitor) LeaveNode(w ir.Node) {
 	state.LeaveNode(&d.st, w)
 }
 
@@ -216,14 +213,14 @@ func (d *constVisitor) GetFoundLocations() []vscode.Location {
 }
 
 // EnterNode is invoked at every node in hierarchy
-func (d *constVisitor) EnterNode(w walker.Walkable) bool {
-	state.EnterNode(&d.st, w)
+func (d *constVisitor) EnterNode(n ir.Node) bool {
+	state.EnterNode(&d.st, n)
 
-	if n, ok := w.(*expr.ConstFetch); ok {
+	if n, ok := n.(*ir.ConstFetchExpr); ok {
 		constName, _, ok := solver.GetConstant(&d.st, n.Constant)
 
 		if ok && constName == d.constName {
-			if pos := n.GetPosition(); pos != nil {
+			if pos := ir.GetPosition(n); pos != nil {
 				d.found = append(d.found, refPosition(d.filename, pos))
 			}
 		}
@@ -233,7 +230,7 @@ func (d *constVisitor) EnterNode(w walker.Walkable) bool {
 }
 
 // LeaveNode is invoked after node process
-func (d *constVisitor) LeaveNode(w walker.Walkable) {
+func (d *constVisitor) LeaveNode(w ir.Node) {
 	state.LeaveNode(&d.st, w)
 }
 
@@ -255,10 +252,10 @@ func (d *classConstVisitor) GetFoundLocations() []vscode.Location {
 }
 
 // EnterNode is invoked at every node in hierarchy
-func (d *classConstVisitor) EnterNode(w walker.Walkable) bool {
-	state.EnterNode(&d.st, w)
+func (d *classConstVisitor) EnterNode(n ir.Node) bool {
+	state.EnterNode(&d.st, n)
 
-	if n, ok := w.(*expr.ClassConstFetch); ok {
+	if n, ok := n.(*ir.ClassConstFetchExpr); ok {
 		constName := n.ConstantName
 		if constName.Value == `class` || constName.Value == `CLASS` {
 			return true
@@ -272,7 +269,7 @@ func (d *classConstVisitor) EnterNode(w walker.Walkable) bool {
 		_, implClassName, ok := solver.FindConstant(className, constName.Value)
 
 		if ok && constName.Value == d.constName && implClassName == d.className {
-			if pos := n.GetPosition(); pos != nil {
+			if pos := ir.GetPosition(n); pos != nil {
 				d.found = append(d.found, refPosition(d.filename, pos))
 			}
 		}
@@ -282,7 +279,7 @@ func (d *classConstVisitor) EnterNode(w walker.Walkable) bool {
 }
 
 // LeaveNode is invoked after node process
-func (d *classConstVisitor) LeaveNode(w walker.Walkable) {
+func (d *classConstVisitor) LeaveNode(w ir.Node) {
 	state.LeaveNode(&d.st, w)
 }
 
@@ -297,14 +294,14 @@ type blockMethodCallVisitor struct {
 	addFound func(f vscode.Location)
 }
 
-func (d *blockMethodCallVisitor) BeforeEnterNode(w walker.Walkable) {
-	n, ok := w.(*expr.MethodCall)
+func (d *blockMethodCallVisitor) BeforeEnterNode(n ir.Node) {
+	call, ok := n.(*ir.MethodCallExpr)
 	if !ok {
 		return
 	}
 	var methodName string
-	switch id := n.Method.(type) {
-	case *node.Identifier:
+	switch id := call.Method.(type) {
+	case *ir.Identifier:
 		methodName = id.Value
 	default:
 		return
@@ -314,23 +311,23 @@ func (d *blockMethodCallVisitor) BeforeEnterNode(w walker.Walkable) {
 		return
 	}
 
-	exprType := solver.ExprType(d.ctx.Scope(), d.ctx.ClassParseState(), n.Variable)
+	exprType := solver.ExprType(d.ctx.Scope(), d.ctx.ClassParseState(), call.Variable)
 
 	exprType.Iterate(func(typ string) {
 		m, ok := solver.FindMethod(typ, methodName)
 		realClassName := m.ImplName()
 
 		if ok && realClassName == d.className {
-			if pos := n.GetPosition(); pos != nil {
+			if pos := ir.GetPosition(call); pos != nil {
 				d.addFound(refPosition(d.filename, pos))
 			}
 		}
 	})
 }
 
-func (d *blockMethodCallVisitor) AfterEnterNode(w walker.Walkable)  {}
-func (d *blockMethodCallVisitor) BeforeLeaveNode(w walker.Walkable) {}
-func (d *blockMethodCallVisitor) AfterLeaveNode(w walker.Walkable)  {}
+func (d *blockMethodCallVisitor) AfterEnterNode(n ir.Node)  {}
+func (d *blockMethodCallVisitor) BeforeLeaveNode(n ir.Node) {}
+func (d *blockMethodCallVisitor) AfterLeaveNode(n ir.Node)  {}
 
 type blockPropertyVisitor struct {
 	ctx *linter.BlockContext
@@ -343,20 +340,20 @@ type blockPropertyVisitor struct {
 	addFound func(f vscode.Location)
 }
 
-func (d *blockPropertyVisitor) BeforeEnterNode(w walker.Walkable) {
-	switch n := w.(type) {
-	case *assign.Assign:
+func (d *blockPropertyVisitor) BeforeEnterNode(n ir.Node) {
+	switch n := n.(type) {
+	case *ir.Assign:
 		// Linter handles assignment separately so we need too :(
-		if f, ok := n.Variable.(*expr.PropertyFetch); ok {
+		if f, ok := n.Variable.(*ir.PropertyFetchExpr); ok {
 			d.handlePropertyFetch(f)
 		}
-	case *expr.PropertyFetch:
+	case *ir.PropertyFetchExpr:
 		d.handlePropertyFetch(n)
 	}
 }
 
-func (d *blockPropertyVisitor) handlePropertyFetch(n *expr.PropertyFetch) {
-	id, ok := n.Property.(*node.Identifier)
+func (d *blockPropertyVisitor) handlePropertyFetch(n *ir.PropertyFetchExpr) {
+	id, ok := n.Property.(*ir.Identifier)
 	if !ok {
 		return
 	}
@@ -371,13 +368,13 @@ func (d *blockPropertyVisitor) handlePropertyFetch(n *expr.PropertyFetch) {
 		realClassName := p.ImplName()
 
 		if ok && realClassName == d.className {
-			if pos := n.GetPosition(); pos != nil {
+			if pos := ir.GetPosition(n); pos != nil {
 				d.addFound(refPosition(d.filename, pos))
 			}
 		}
 	})
 }
 
-func (d *blockPropertyVisitor) AfterEnterNode(w walker.Walkable)  {}
-func (d *blockPropertyVisitor) BeforeLeaveNode(w walker.Walkable) {}
-func (d *blockPropertyVisitor) AfterLeaveNode(w walker.Walkable)  {}
+func (d *blockPropertyVisitor) AfterEnterNode(n ir.Node)  {}
+func (d *blockPropertyVisitor) BeforeLeaveNode(n ir.Node) {}
+func (d *blockPropertyVisitor) AfterLeaveNode(n ir.Node)  {}

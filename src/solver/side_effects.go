@@ -1,20 +1,15 @@
 package solver
 
 import (
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
-	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
 )
 
-func SideEffectFreeFunc(sc *meta.Scope, st *meta.ClassParseState, customTypes []CustomType, stmts []node.Node) bool {
+func SideEffectFreeFunc(sc *meta.Scope, st *meta.ClassParseState, customTypes []CustomType, stmts []ir.Node) bool {
 	// TODO: functions that call pure functions are also pure.
 	// TODO: allow local var assignments those RHS is pure.
 	f := sideEffectsFinder{sc: sc, st: st, customTypes: customTypes}
-	n := &stmt.StmtList{Stmts: stmts}
+	n := &ir.StmtList{Stmts: stmts}
 	n.Walk(&f)
 	return !f.sideEffects
 }
@@ -23,7 +18,7 @@ func SideEffectFreeFunc(sc *meta.Scope, st *meta.ClassParseState, customTypes []
 //
 // If indexing is completed, some function calls may be permitted as well
 // if they're proven to be side effect free as well.
-func SideEffectFree(sc *meta.Scope, st *meta.ClassParseState, customTypes []CustomType, n node.Node) bool {
+func SideEffectFree(sc *meta.Scope, st *meta.ClassParseState, customTypes []CustomType, n ir.Node) bool {
 	f := sideEffectsFinder{sc: sc, st: st, customTypes: customTypes}
 	n.Walk(&f)
 	return !f.sideEffects
@@ -101,16 +96,16 @@ var pureBuiltins = func() map[string]struct{} {
 	return set
 }()
 
-func (f *sideEffectsFinder) functionCallIsPure(n *expr.FunctionCall) bool {
+func (f *sideEffectsFinder) functionCallIsPure(n *ir.FunctionCallExpr) bool {
 	// We allow referencing builtin funcs even before indexing is completed.
 
 	var funcName string
 	switch nm := n.Function.(type) {
-	case *name.Name:
+	case *ir.Name:
 		if len(nm.Parts) == 1 {
 			funcName = `\` + meta.NameToString(nm)
 		}
-	case *name.FullyQualified:
+	case *ir.FullyQualifiedName:
 		if len(nm.Parts) == 1 {
 			funcName = meta.FullyQualifiedToString(nm)
 		}
@@ -147,11 +142,11 @@ func (f *sideEffectsFinder) functionCallIsPure(n *expr.FunctionCall) bool {
 	return info.IsPure() && info.ExitFlags == 0
 }
 
-func (f *sideEffectsFinder) staticCallIsPure(n *expr.StaticCall) bool {
+func (f *sideEffectsFinder) staticCallIsPure(n *ir.StaticCallExpr) bool {
 	if !meta.IsIndexingComplete() {
 		return false
 	}
-	methodName, ok := n.Call.(*node.Identifier)
+	methodName, ok := n.Call.(*ir.Identifier)
 	if !ok {
 		return false
 	}
@@ -163,11 +158,11 @@ func (f *sideEffectsFinder) staticCallIsPure(n *expr.StaticCall) bool {
 	return ok && m.Info.IsPure() && m.Info.ExitFlags == 0
 }
 
-func (f *sideEffectsFinder) methodCallIsPure(n *expr.MethodCall) bool {
+func (f *sideEffectsFinder) methodCallIsPure(n *ir.MethodCallExpr) bool {
 	if !meta.IsIndexingComplete() {
 		return false
 	}
-	methodName, ok := n.Method.(*node.Identifier)
+	methodName, ok := n.Method.(*ir.Identifier)
 	if !ok {
 		return false
 	}
@@ -184,7 +179,7 @@ func (f *sideEffectsFinder) methodCallIsPure(n *expr.MethodCall) bool {
 	})
 }
 
-func (f *sideEffectsFinder) EnterNode(w walker.Walkable) bool {
+func (f *sideEffectsFinder) EnterNode(n ir.Node) bool {
 	if f.sideEffects {
 		return false
 	}
@@ -193,59 +188,59 @@ func (f *sideEffectsFinder) EnterNode(w walker.Walkable) bool {
 	// For example, array index can be an offsetGet() call,
 	// which might not be pure.
 
-	switch n := w.(type) {
-	case *expr.FunctionCall:
+	switch n := n.(type) {
+	case *ir.FunctionCallExpr:
 		if f.functionCallIsPure(n) {
 			return true
 		}
 		f.sideEffects = true
 		return false
 
-	case *expr.MethodCall:
+	case *ir.MethodCallExpr:
 		if f.methodCallIsPure(n) {
 			return true
 		}
 		f.sideEffects = true
 		return false
 
-	case *expr.StaticCall:
+	case *ir.StaticCallExpr:
 		if f.staticCallIsPure(n) {
 			return true
 		}
 		f.sideEffects = true
 		return false
 
-	case *expr.Print,
-		*stmt.Echo,
-		*stmt.Unset,
-		*stmt.Throw,
-		*stmt.Global,
-		*expr.Exit,
-		*assign.Assign,
-		*assign.Reference,
-		*assign.BitwiseAnd,
-		*assign.BitwiseOr,
-		*assign.BitwiseXor,
-		*assign.Concat,
-		*assign.Div,
-		*assign.Minus,
-		*assign.Mod,
-		*assign.Mul,
-		*assign.Plus,
-		*assign.Pow,
-		*assign.ShiftLeft,
-		*assign.ShiftRight,
-		*expr.Yield,
-		*expr.YieldFrom,
-		*expr.Eval,
-		*expr.PreInc,
-		*expr.PostInc,
-		*expr.PreDec,
-		*expr.PostDec,
-		*expr.Require,
-		*expr.RequireOnce,
-		*expr.Include,
-		*expr.IncludeOnce:
+	case *ir.PrintExpr,
+		*ir.EchoStmt,
+		*ir.UnsetStmt,
+		*ir.ThrowStmt,
+		*ir.GlobalStmt,
+		*ir.ExitExpr,
+		*ir.Assign,
+		*ir.AssignReference,
+		*ir.AssignBitwiseAnd,
+		*ir.AssignBitwiseOr,
+		*ir.AssignBitwiseXor,
+		*ir.AssignConcat,
+		*ir.AssignDiv,
+		*ir.AssignMinus,
+		*ir.AssignMod,
+		*ir.AssignMul,
+		*ir.AssignPlus,
+		*ir.AssignPow,
+		*ir.AssignShiftLeft,
+		*ir.AssignShiftRight,
+		*ir.YieldExpr,
+		*ir.YieldFromExpr,
+		*ir.EvalExpr,
+		*ir.PreIncExpr,
+		*ir.PostIncExpr,
+		*ir.PreDecExpr,
+		*ir.PostDecExpr,
+		*ir.RequireExpr,
+		*ir.RequireOnceExpr,
+		*ir.IncludeExpr,
+		*ir.IncludeOnceExpr:
 		f.sideEffects = true
 		return false
 	}
@@ -253,4 +248,4 @@ func (f *sideEffectsFinder) EnterNode(w walker.Walkable) bool {
 	return true
 }
 
-func (f *sideEffectsFinder) LeaveNode(w walker.Walkable) {}
+func (f *sideEffectsFinder) LeaveNode(n ir.Node) {}

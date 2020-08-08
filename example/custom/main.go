@@ -7,14 +7,9 @@ import (
 	"log"
 
 	"github.com/VKCOM/noverify/src/cmd"
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr/binary"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
-	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/solver"
 )
 
@@ -50,8 +45,8 @@ type block struct {
 	ctx *linter.BlockContext
 }
 
-func isString(ctx *linter.BlockContext, n node.Node) bool {
-	_, ok := n.(*scalar.String)
+func isString(ctx *linter.BlockContext, n ir.Node) bool {
+	_, ok := n.(*ir.String)
 	if ok {
 		return true
 	}
@@ -59,23 +54,23 @@ func isString(ctx *linter.BlockContext, n node.Node) bool {
 	return solver.ExprType(ctx.Scope(), ctx.ClassParseState(), n).Is("string")
 }
 
-func (b *block) BeforeEnterNode(w walker.Walkable) {
-	switch n := w.(type) {
-	case *expr.FunctionCall:
+func (b *block) BeforeEnterNode(n ir.Node) {
+	switch n := n.(type) {
+	case *ir.FunctionCallExpr:
 		b.handleFunctionCall(n)
-	case *binary.Equal:
+	case *ir.EqualExpr:
 		if isString(b.ctx, n.Left) || isString(b.ctx, n.Right) {
 			b.ctx.Report(n, linter.LevelWarning, "strictCmp", "Strings must be compared using '===' operator")
 		}
-	case *binary.NotEqual:
+	case *ir.NotEqualExpr:
 		if isString(b.ctx, n.Left) || isString(b.ctx, n.Right) {
 			b.ctx.Report(n, linter.LevelWarning, "strictCmp", "Strings must be compared using '!==' operator")
 		}
 	}
 }
 
-func (b *block) handleFunctionCall(e *expr.FunctionCall) {
-	nm, ok := e.Function.(*name.Name)
+func (b *block) handleFunctionCall(e *ir.FunctionCallExpr) {
+	nm, ok := e.Function.(*ir.Name)
 	if !ok {
 		return
 	}
@@ -86,12 +81,12 @@ func (b *block) handleFunctionCall(e *expr.FunctionCall) {
 	}
 }
 
-func (b *block) handleInArrayCall(e *expr.FunctionCall) {
+func (b *block) handleInArrayCall(e *ir.FunctionCallExpr) {
 	if len(e.ArgumentList.Arguments) != 2 {
 		return
 	}
 
-	arg := e.ArgumentList.Arguments[0].(*node.Argument)
+	arg := e.ArgumentList.Arguments[0].(*ir.Argument)
 	if !isString(b.ctx, arg.Expr) {
 		return
 	}

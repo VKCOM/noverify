@@ -4,17 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr/binary"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr/cast"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
-	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
-	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/solver"
 )
 
@@ -22,175 +15,175 @@ type blockLinter struct {
 	walker *BlockWalker
 }
 
-func (b *blockLinter) enterNode(n node.Node) {
+func (b *blockLinter) enterNode(n ir.Node) {
 	switch n := n.(type) {
-	case *assign.Assign:
+	case *ir.Assign:
 		b.checkAssign(n)
 
-	case *expr.Array:
+	case *ir.ArrayExpr:
 		b.checkArray(n)
 
-	case *expr.FunctionCall:
+	case *ir.FunctionCallExpr:
 		b.checkFunctionCall(n)
 
-	case *expr.New:
+	case *ir.NewExpr:
 		b.checkNew(n)
 
-	case *stmt.Expression:
+	case *ir.ExpressionStmt:
 		b.checkStmtExpression(n)
 
-	case *expr.ConstFetch:
+	case *ir.ConstFetchExpr:
 		b.checkConstFetch(n)
 
-	case *expr.Ternary:
+	case *ir.TernaryExpr:
 		b.checkTernary(n)
 
-	case *stmt.Switch:
+	case *ir.SwitchStmt:
 		b.checkSwitch(n)
 
-	case *stmt.If:
+	case *ir.IfStmt:
 		b.checkIfStmt(n)
 
-	case *stmt.Global:
+	case *ir.GlobalStmt:
 		b.checkGlobalStmt(n)
 
-	case *binary.BitwiseAnd:
+	case *ir.BitwiseAndExpr:
 		b.checkBitwiseOp(n, n.Left, n.Right)
-	case *binary.BitwiseOr:
+	case *ir.BitwiseOrExpr:
 		b.checkBitwiseOp(n, n.Left, n.Right)
-	case *binary.BitwiseXor:
+	case *ir.BitwiseXorExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgs(n, n.Left, n.Right)
-	case *binary.LogicalAnd:
+	case *ir.LogicalAndExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgs(n, n.Left, n.Right)
-	case *binary.BooleanAnd:
+	case *ir.BooleanAndExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgs(n, n.Left, n.Right)
-	case *binary.LogicalOr:
+	case *ir.LogicalOrExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgs(n, n.Left, n.Right)
-	case *binary.BooleanOr:
+	case *ir.BooleanOrExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgs(n, n.Left, n.Right)
-	case *binary.LogicalXor:
+	case *ir.LogicalXorExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgs(n, n.Left, n.Right)
-	case *binary.Plus:
+	case *ir.PlusExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
-	case *binary.Minus:
+	case *ir.MinusExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
-	case *binary.Mul:
+	case *ir.MulExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
-	case *binary.Div:
+	case *ir.DivExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
-	case *binary.Mod:
+	case *ir.ModExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgs(n, n.Left, n.Right)
-	case *binary.Pow:
+	case *ir.PowExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
-	case *binary.Equal:
+	case *ir.EqualExpr:
 		b.checkStrictCmp(n, n.Left, n.Right)
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
-	case *binary.NotEqual:
+	case *ir.NotEqualExpr:
 		b.checkStrictCmp(n, n.Left, n.Right)
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
-	case *binary.Identical:
+	case *ir.IdenticalExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
-	case *binary.NotIdentical:
+	case *ir.NotIdenticalExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
-	case *binary.Smaller:
+	case *ir.SmallerExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgs(n, n.Left, n.Right)
-	case *binary.SmallerOrEqual:
+	case *ir.SmallerOrEqualExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
-	case *binary.Greater:
+	case *ir.GreaterExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgs(n, n.Left, n.Right)
-	case *binary.GreaterOrEqual:
+	case *ir.GreaterOrEqualExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
-	case *binary.Spaceship:
+	case *ir.SpaceshipExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
 
-	case *cast.Double:
+	case *ir.DoubleCastExpr:
 		b.checkRedundantCast(n.Expr, "float")
-	case *cast.Int:
+	case *ir.IntCastExpr:
 		b.checkRedundantCast(n.Expr, "int")
-	case *cast.Bool:
+	case *ir.BoolCastExpr:
 		b.checkRedundantCast(n.Expr, "bool")
-	case *cast.String:
+	case *ir.StringCastExpr:
 		b.checkRedundantCast(n.Expr, "string")
-	case *cast.Array:
+	case *ir.ArrayCastExpr:
 		b.checkRedundantCastArray(n.Expr)
 
-	case *expr.Clone:
+	case *ir.CloneExpr:
 		b.walker.r.checkKeywordCase(n, "clone")
-	case *stmt.ConstList:
+	case *ir.ConstListStmt:
 		b.walker.r.checkKeywordCase(n, "const")
-	case *stmt.Goto:
+	case *ir.GotoStmt:
 		b.walker.r.checkKeywordCase(n, "goto")
-	case *stmt.Throw:
+	case *ir.ThrowStmt:
 		b.walker.r.checkKeywordCase(n, "throw")
-	case *expr.Yield:
+	case *ir.YieldExpr:
 		b.walker.r.checkKeywordCase(n, "yield")
-	case *expr.YieldFrom:
+	case *ir.YieldFromExpr:
 		b.walker.r.checkKeywordCase(n, "yield")
-	case *expr.Include:
+	case *ir.IncludeExpr:
 		b.walker.r.checkKeywordCase(n, "include")
-	case *expr.IncludeOnce:
+	case *ir.IncludeOnceExpr:
 		b.walker.r.checkKeywordCase(n, "include_once")
-	case *expr.Require:
+	case *ir.RequireExpr:
 		b.walker.r.checkKeywordCase(n, "require")
-	case *expr.RequireOnce:
+	case *ir.RequireOnceExpr:
 		b.walker.r.checkKeywordCase(n, "require_once")
-	case *stmt.Break:
+	case *ir.BreakStmt:
 		b.walker.r.checkKeywordCase(n, "break")
-	case *stmt.Return:
+	case *ir.ReturnStmt:
 		b.walker.r.checkKeywordCase(n, "return")
-	case *stmt.Else:
+	case *ir.ElseStmt:
 		b.walker.r.checkKeywordCase(n, "else")
 
-	case *stmt.Foreach:
+	case *ir.ForeachStmt:
 		b.walker.r.checkKeywordCase(n, "foreach")
-	case *stmt.For:
+	case *ir.ForStmt:
 		b.walker.r.checkKeywordCase(n, "for")
-	case *stmt.While:
+	case *ir.WhileStmt:
 		b.walker.r.checkKeywordCase(n, "while")
-	case *stmt.Do:
+	case *ir.DoStmt:
 		b.walker.r.checkKeywordCase(n, "do")
 
-	case *stmt.Continue:
+	case *ir.ContinueStmt:
 		b.checkContinueStmt(n)
 
-	case *scalar.Dnumber:
+	case *ir.Dnumber:
 		b.checkIntOverflow(n)
 
-	case *stmt.Try:
+	case *ir.TryStmt:
 		b.checkTryStmt(n)
 
-	case *stmt.Interface:
+	case *ir.InterfaceStmt:
 		b.checkInterfaceStmt(n)
 	}
 }
 
-func (b *blockLinter) report(n node.Node, level int, checkName, msg string, args ...interface{}) {
+func (b *blockLinter) report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
 	b.walker.r.Report(n, level, checkName, msg, args...)
 }
 
-func (b *blockLinter) checkAssign(a *assign.Assign) {
+func (b *blockLinter) checkAssign(a *ir.Assign) {
 	b.checkVoidType(a.Expression)
 }
 
-func (b *blockLinter) checkTryStmt(s *stmt.Try) {
+func (b *blockLinter) checkTryStmt(s *ir.TryStmt) {
 	if len(s.Catches) == 0 && s.Finally == nil {
 		b.report(s, LevelError, "bareTry", "At least one catch or finally block must be present")
 	}
@@ -206,7 +199,7 @@ func (b *blockLinter) checkTryStmt(s *stmt.Try) {
 	}
 }
 
-func (b *blockLinter) checkBitwiseOp(n, left, right node.Node) {
+func (b *blockLinter) checkBitwiseOp(n, left, right ir.Node) {
 	// Note: we report `$x & $mask != $y` as a precedence issue even
 	// if it can be caught with `typecheckOp` that checks both operand
 	// types (bool is not a good operand for bitwise operation).
@@ -216,24 +209,27 @@ func (b *blockLinter) checkBitwiseOp(n, left, right node.Node) {
 	// Invalid types are a result of that.
 
 	tok := "|"
-	if _, ok := n.(*binary.BitwiseAnd); ok {
+	if _, ok := n.(*ir.BitwiseAndExpr); ok {
 		tok = "&"
 	}
 
-	hasParens := func(n node.Node) bool {
+	// FIXME: it may be redundant now when parens are explicit.
+	// Also, there is a NodePath to check whether the parent is ParenExpr.
+	hasParens := func(n ir.Node) bool {
 		return findFreeFloatingToken(n, freefloating.Start, "(") ||
 			findFreeFloatingToken(n, freefloating.End, ")")
 	}
-	checkArg := func(n, arg node.Node, tok string) {
+
+	checkArg := func(n, arg ir.Node, tok string) {
 		cmpTok := ""
 		switch arg.(type) {
-		case *binary.Equal:
+		case *ir.EqualExpr:
 			cmpTok = "=="
-		case *binary.NotEqual:
+		case *ir.NotEqualExpr:
 			cmpTok = "!="
-		case *binary.Identical:
+		case *ir.IdenticalExpr:
 			cmpTok = "==="
-		case *binary.NotIdentical:
+		case *ir.NotIdenticalExpr:
 			cmpTok = "!=="
 		}
 		if cmpTok != "" && !hasParens(arg) {
@@ -253,19 +249,19 @@ func (b *blockLinter) checkBitwiseOp(n, left, right node.Node) {
 	checkArg(n, right, tok)
 }
 
-func (b *blockLinter) checkBinaryVoidType(left, right node.Node) {
+func (b *blockLinter) checkBinaryVoidType(left, right ir.Node) {
 	b.checkVoidType(left)
 	b.checkVoidType(right)
 }
 
-func (b *blockLinter) checkBinaryDupArgsNoFloat(n, left, right node.Node) {
+func (b *blockLinter) checkBinaryDupArgsNoFloat(n, left, right ir.Node) {
 	if b.walker.exprType(left).Contains("float") || b.walker.exprType(right).Contains("float") {
 		return
 	}
 	b.checkBinaryDupArgs(n, left, right)
 }
 
-func (b *blockLinter) checkBinaryDupArgs(n, left, right node.Node) {
+func (b *blockLinter) checkBinaryDupArgs(n, left, right ir.Node) {
 	// Check for `$x <op> $y` where `<op>` is not a correct way to
 	// handle identical operands.
 	if !b.walker.sideEffectFree(left) || !b.walker.sideEffectFree(right) {
@@ -276,13 +272,13 @@ func (b *blockLinter) checkBinaryDupArgs(n, left, right node.Node) {
 	}
 }
 
-func (b *blockLinter) checkStrictCmp(n node.Node, left, right node.Node) {
-	needsStrictCmp := func(n node.Node) bool {
-		c, ok := n.(*expr.ConstFetch)
+func (b *blockLinter) checkStrictCmp(n ir.Node, left, right ir.Node) {
+	needsStrictCmp := func(n ir.Node) bool {
+		c, ok := n.(*ir.ConstFetchExpr)
 		if !ok {
 			return false
 		}
-		nm, ok := c.Constant.(*name.Name)
+		nm, ok := c.Constant.(*ir.Name)
 		if !ok {
 			return false
 		}
@@ -291,7 +287,7 @@ func (b *blockLinter) checkStrictCmp(n node.Node, left, right node.Node) {
 			meta.NameEquals(nm, "null")
 	}
 
-	var badNode node.Node
+	var badNode ir.Node
 	switch {
 	case needsStrictCmp(left):
 		badNode = left
@@ -300,7 +296,7 @@ func (b *blockLinter) checkStrictCmp(n node.Node, left, right node.Node) {
 	}
 	if badNode != nil {
 		suggest := "==="
-		if _, ok := n.(*binary.NotEqual); ok {
+		if _, ok := n.(*ir.NotEqualExpr); ok {
 			suggest = "!=="
 		}
 		b.report(n, LevelWarning, "strictCmp", "non-strict comparison with %s (use %s)",
@@ -309,20 +305,20 @@ func (b *blockLinter) checkStrictCmp(n node.Node, left, right node.Node) {
 }
 
 // checkVoidType reports if node has void type
-func (b *blockLinter) checkVoidType(n node.Node) {
+func (b *blockLinter) checkVoidType(n ir.Node) {
 	if b.walker.exprType(n).Is("void") {
 		b.report(n, LevelDoNotReject, "voidResultUsed", "void function result used")
 	}
 }
 
-func (b *blockLinter) checkRedundantCastArray(e node.Node) {
+func (b *blockLinter) checkRedundantCastArray(e ir.Node) {
 	typ := b.walker.exprType(e)
 	if typ.Len() == 1 && typ.Is("mixed[]") {
 		b.report(e, LevelDoNotReject, "redundantCast", "expression already has array type")
 	}
 }
 
-func (b *blockLinter) checkRedundantCast(e node.Node, dstType string) {
+func (b *blockLinter) checkRedundantCast(e ir.Node, dstType string) {
 	typ := b.walker.exprType(e)
 	if typ.Len() != 1 {
 		return
@@ -335,11 +331,11 @@ func (b *blockLinter) checkRedundantCast(e node.Node, dstType string) {
 	})
 }
 
-func (b *blockLinter) checkNew(e *expr.New) {
+func (b *blockLinter) checkNew(e *ir.NewExpr) {
 	b.walker.r.checkKeywordCase(e, "new")
 
 	// Can't handle `new class() ...` yet.
-	if _, ok := e.Class.(*stmt.Class); ok {
+	if _, ok := e.Class.(*ir.ClassStmt); ok {
 		return
 	}
 
@@ -382,7 +378,7 @@ func (b *blockLinter) checkNew(e *expr.New) {
 	ctor := m.Info
 	// If new expression is written without (), ArgumentList will be nil.
 	// It's equivalent of 0 arguments constructor call.
-	var args []node.Node
+	var args []ir.Node
 	if e.ArgumentList != nil {
 		args = e.ArgumentList.Arguments
 	}
@@ -391,7 +387,7 @@ func (b *blockLinter) checkNew(e *expr.New) {
 	}
 }
 
-func (b *blockLinter) checkStmtExpression(s *stmt.Expression) {
+func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 	report := false
 
 	// All branches except default try to filter-out common
@@ -400,9 +396,9 @@ func (b *blockLinter) checkStmtExpression(s *stmt.Expression) {
 		return
 	}
 	switch s.Expr.(type) {
-	case *expr.Require, *expr.RequireOnce, *expr.Include, *expr.IncludeOnce, *expr.Exit:
+	case *ir.RequireExpr, *ir.RequireOnceExpr, *ir.IncludeExpr, *ir.IncludeOnceExpr, *ir.ExitExpr:
 		// Skip.
-	case *expr.Array, *expr.New:
+	case *ir.ArrayExpr, *ir.NewExpr:
 		// Report these even if they are not pure.
 		report = true
 	default:
@@ -426,7 +422,7 @@ func (b *blockLinter) checkStmtExpression(s *stmt.Expression) {
 	}
 }
 
-func (b *blockLinter) checkConstFetch(e *expr.ConstFetch) {
+func (b *blockLinter) checkConstFetch(e *ir.ConstFetchExpr) {
 	_, _, defined := solver.GetConstant(b.walker.r.ctx.st, e.Constant)
 
 	if !defined {
@@ -445,7 +441,7 @@ func (b *blockLinter) checkConstFetch(e *expr.ConstFetch) {
 	}
 }
 
-func (b *blockLinter) checkTernary(e *expr.Ternary) {
+func (b *blockLinter) checkTernary(e *ir.TernaryExpr) {
 	if e.IfTrue == nil {
 		return // Skip `$x ?: $y` expressions
 	}
@@ -456,11 +452,11 @@ func (b *blockLinter) checkTernary(e *expr.Ternary) {
 	}
 }
 
-func (b *blockLinter) checkGlobalStmt(s *stmt.Global) {
+func (b *blockLinter) checkGlobalStmt(s *ir.GlobalStmt) {
 	b.walker.r.checkKeywordCase(s, "global")
 
 	for _, v := range s.Vars {
-		v, ok := v.(*node.SimpleVar)
+		v, ok := v.(*ir.SimpleVar)
 		if !ok {
 			continue
 		}
@@ -470,11 +466,11 @@ func (b *blockLinter) checkGlobalStmt(s *stmt.Global) {
 	}
 }
 
-func (b *blockLinter) checkSwitch(s *stmt.Switch) {
+func (b *blockLinter) checkSwitch(s *ir.SwitchStmt) {
 	nodeSet := &b.walker.r.nodeSet
 	nodeSet.Reset()
 	for i, c := range s.CaseList.Cases {
-		c, ok := c.(*stmt.Case)
+		c, ok := c.(*ir.CaseStmt)
 		if !ok {
 			continue
 		}
@@ -487,14 +483,14 @@ func (b *blockLinter) checkSwitch(s *stmt.Switch) {
 	}
 }
 
-func (b *blockLinter) checkIfStmt(s *stmt.If) {
+func (b *blockLinter) checkIfStmt(s *ir.IfStmt) {
 	// Check for `if ($cond) { $x } else { $x }`.
 	// Leave more complex if chains to avoid false positives
 	// until we get more examples of valid and invalid cases of
 	// duplicated branches.
 	if len(s.ElseIf) == 0 && s.Else != nil {
 		x := s.Stmt
-		y := s.Else.(*stmt.Else).Stmt
+		y := s.Else.(*ir.ElseStmt).Stmt
 		if astutil.NodeEqual(x, y) {
 			b.report(s, LevelWarning, "dupBranchBody", "duplicated if/else actions")
 		}
@@ -503,11 +499,11 @@ func (b *blockLinter) checkIfStmt(s *stmt.If) {
 	b.checkIfStmtDupCond(s)
 }
 
-func (b *blockLinter) checkIfStmtDupCond(s *stmt.If) {
+func (b *blockLinter) checkIfStmtDupCond(s *ir.IfStmt) {
 	conditions := astutil.NewNodeSet()
 	conditions.Add(s.Cond)
 	for _, elseif := range s.ElseIf {
-		elseif := elseif.(*stmt.ElseIf)
+		elseif := elseif.(*ir.ElseIfStmt)
 		if !b.walker.sideEffectFree(elseif.Cond) {
 			continue
 		}
@@ -517,7 +513,7 @@ func (b *blockLinter) checkIfStmtDupCond(s *stmt.If) {
 	}
 }
 
-func (b *blockLinter) checkIntOverflow(num *scalar.Dnumber) {
+func (b *blockLinter) checkIntOverflow(num *ir.Dnumber) {
 	// If value contains only [0-9], then it's probably the case
 	// where lexer parsed int literal as Dnumber due to the overflow.
 	for _, ch := range num.Value {
@@ -528,14 +524,14 @@ func (b *blockLinter) checkIntOverflow(num *scalar.Dnumber) {
 	b.report(num, LevelWarning, "intOverflow", "%s will be interpreted as float due to the overflow", num.Value)
 }
 
-func (b *blockLinter) checkContinueStmt(c *stmt.Continue) {
+func (b *blockLinter) checkContinueStmt(c *ir.ContinueStmt) {
 	b.walker.r.checkKeywordCase(c, "continue")
 	if c.Expr == nil && b.walker.ctx.innermostLoop == loopSwitch {
 		b.report(c, LevelError, "caseContinue", "'continue' inside switch is 'break'")
 	}
 }
 
-func (b *blockLinter) checkArray(arr *expr.Array) {
+func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 	if !arr.ShortSyntax {
 		b.report(arr, LevelDoNotReject, "arraySyntax", "Use of old array syntax (use short form instead)")
 	}
@@ -561,13 +557,13 @@ func (b *blockLinter) checkArray(arr *expr.Array) {
 		var constKey bool
 
 		switch k := item.Key.(type) {
-		case *scalar.String:
+		case *ir.String:
 			key = unquote(k.Value)
 			constKey = true
-		case *scalar.Lnumber:
+		case *ir.Lnumber:
 			key = k.Value
 			constKey = true
-		case *expr.ConstFetch:
+		case *ir.ConstFetchExpr:
 			_, info, ok := solver.GetConstant(b.walker.r.ctx.st, k.Constant)
 
 			if !ok {
@@ -614,7 +610,7 @@ func (b *blockLinter) checkArray(arr *expr.Array) {
 	}
 }
 
-func (b *blockLinter) checkFunctionCall(e *expr.FunctionCall) {
+func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 	fqName, ok := solver.GetFuncName(b.walker.r.ctx.st, e.Function)
 	if !ok {
 		return
@@ -625,25 +621,25 @@ func (b *blockLinter) checkFunctionCall(e *expr.FunctionCall) {
 		if len(e.ArgumentList.Arguments) < 1 {
 			break
 		}
-		b.checkRegexp(e, e.ArgumentList.Arguments[0].(*node.Argument))
+		b.checkRegexp(e, e.ArgumentList.Arguments[0].(*ir.Argument))
 	}
 }
 
-func (b *blockLinter) checkInterfaceStmt(iface *stmt.Interface) {
+func (b *blockLinter) checkInterfaceStmt(iface *ir.InterfaceStmt) {
 	for _, st := range iface.Stmts {
 		switch x := st.(type) {
-		case *stmt.ClassMethod:
+		case *ir.ClassMethodStmt:
 			for _, modifier := range x.Modifiers {
 				if strings.EqualFold(modifier.Value, "private") || strings.EqualFold(modifier.Value, "protected") {
 					methodName := x.MethodName.Value
 					b.report(x, LevelWarning, "nonPublicInterfaceMember", "'%s' can't be %s", methodName, modifier.Value)
 				}
 			}
-		case *stmt.ClassConstList:
+		case *ir.ClassConstListStmt:
 			for _, modifier := range x.Modifiers {
 				if strings.EqualFold(modifier.Value, "private") || strings.EqualFold(modifier.Value, "protected") {
 					for _, constant := range x.Consts {
-						constantName := constant.(*stmt.Constant).ConstantName.Value
+						constantName := constant.(*ir.ConstantStmt).ConstantName.Value
 						b.report(x, LevelWarning, "nonPublicInterfaceMember", "'%s' can't be %s", constantName, modifier.Value)
 					}
 				}
@@ -652,8 +648,8 @@ func (b *blockLinter) checkInterfaceStmt(iface *stmt.Interface) {
 	}
 }
 
-func (b *blockLinter) checkRegexp(e *expr.FunctionCall, arg *node.Argument) {
-	s, ok := arg.Expr.(*scalar.String)
+func (b *blockLinter) checkRegexp(e *ir.FunctionCallExpr, arg *ir.Argument) {
+	s, ok := arg.Expr.(*ir.String)
 	if !ok {
 		return
 	}

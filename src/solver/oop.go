@@ -1,9 +1,8 @@
 package solver
 
 import (
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
 )
 
 // GetFuncName resolves func name for the specified func node.
@@ -12,11 +11,11 @@ import (
 // a variable or some other kind of non-name expression.
 //
 // The main purpose of this function is to expand a function name to a FQN.
-func GetFuncName(cs *meta.ClassParseState, funcNode node.Node) (funcName string, ok bool) {
+func GetFuncName(cs *meta.ClassParseState, funcNode ir.Node) (funcName string, ok bool) {
 	switch nm := funcNode.(type) {
-	case *name.Name:
+	case *ir.Name:
 		nameStr := meta.NameToString(nm)
-		firstPart := nm.Parts[0].(*name.NamePart).Value
+		firstPart := nm.Parts[0].(*ir.NamePart).Value
 		if alias, ok := cs.FunctionUses[firstPart]; ok {
 			if len(nm.Parts) == 1 {
 				nameStr = alias
@@ -33,7 +32,7 @@ func GetFuncName(cs *meta.ClassParseState, funcNode node.Node) (funcName string,
 		}
 		return `\` + nameStr, true
 
-	case *name.FullyQualified:
+	case *ir.FullyQualifiedName:
 		return meta.FullyQualifiedToString(nm), true
 
 	default:
@@ -42,24 +41,24 @@ func GetFuncName(cs *meta.ClassParseState, funcNode node.Node) (funcName string,
 }
 
 // GetClassName resolves class name for specified class node (as used in static calls, property fetch, etc)
-func GetClassName(cs *meta.ClassParseState, classNode node.Node) (className string, ok bool) {
-	if nm, ok := classNode.(*name.FullyQualified); ok {
+func GetClassName(cs *meta.ClassParseState, classNode ir.Node) (className string, ok bool) {
+	if nm, ok := classNode.(*ir.FullyQualifiedName); ok {
 		return meta.FullyQualifiedToString(nm), true
 	}
 
 	var firstPart string
-	var parts []node.Node
+	var parts []ir.Node
 	var partsCount int
 
 	switch nm := classNode.(type) {
-	case *node.Identifier:
+	case *ir.Identifier:
 		// actually only handles "static::"
 		className = nm.Value
 		firstPart = nm.Value
 		partsCount = 1 // hack for the later if partsCount == 1
-	case *name.Name:
+	case *ir.Name:
 		className = meta.NameToString(nm)
-		firstPart = nm.Parts[0].(*name.NamePart).Value
+		firstPart = nm.Parts[0].(*ir.NamePart).Value
 		parts = nm.Parts
 		partsCount = len(parts)
 	default:
@@ -85,9 +84,9 @@ func GetClassName(cs *meta.ClassParseState, classNode node.Node) (className stri
 }
 
 // GetConstant searches for specified constant in const fetch.
-func GetConstant(cs *meta.ClassParseState, constNode node.Node) (constName string, ci meta.ConstantInfo, ok bool) {
+func GetConstant(cs *meta.ClassParseState, constNode ir.Node) (constName string, ci meta.ConstantInfo, ok bool) {
 	switch nm := constNode.(type) {
-	case *name.Name:
+	case *ir.Name:
 		nameStr := meta.NameToString(nm)
 		nameWithNs := cs.Namespace + `\` + nameStr
 		ci, ok = meta.Info.GetConstant(nameWithNs)
@@ -102,7 +101,7 @@ func GetConstant(cs *meta.ClassParseState, constNode node.Node) (constName strin
 				return nameRootNs, ci, ok
 			}
 		}
-	case *name.FullyQualified:
+	case *ir.FullyQualifiedName:
 		nameStr := meta.FullyQualifiedToString(nm)
 		ci, ok = meta.Info.GetConstant(nameStr)
 		if ok {

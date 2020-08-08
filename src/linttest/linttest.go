@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/VKCOM/noverify/src/cmd"
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/node"
 )
 
 func init() {
@@ -235,7 +235,7 @@ func (s *Suite) RunLinter() []*linter.Report {
 }
 
 // ParseTestFile parses given test file.
-func ParseTestFile(t *testing.T, filename, content string) (rootNode node.Node, w *linter.RootWalker) {
+func ParseTestFile(t *testing.T, filename, content string) (rootNode *ir.Root, w *linter.RootWalker) {
 	return parseTestFile(t, TestFile{
 		Name: filename,
 		Data: []byte(content),
@@ -273,7 +273,7 @@ func shuffleFiles(files []TestFile) {
 	})
 }
 
-func parseTestFile(t testing.TB, f TestFile, allowDisable *regexp.Regexp) (rootNode node.Node, w *linter.RootWalker) {
+func parseTestFile(t testing.TB, f TestFile, allowDisable *regexp.Regexp) (rootNode *ir.Root, w *linter.RootWalker) {
 	var err error
 	rootNode, w, err = linter.ParseContents(f.Name, f.Data, nil, allowDisable)
 	if err != nil {

@@ -5,18 +5,10 @@ import (
 	"math"
 	"strings"
 
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr/binary"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
-	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
-	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
-	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/solver"
 )
 
@@ -79,7 +71,7 @@ type BlockWalker struct {
 	rootLevel            bool // analysing root-level code
 
 	// state
-	statements map[node.Node]struct{}
+	statements map[ir.Node]struct{}
 
 	// whether a function has a return without explit expression.
 	// Required to make a decision in void vs null type selection,
@@ -95,7 +87,7 @@ type BlockWalker struct {
 	callsParentConstructor bool
 
 	// shared state between all blocks
-	unusedVars map[string][]node.Node
+	unusedVars map[string][]ir.Node
 
 	// static, global and other vars that have complex control flow.
 	// Never contains varLocal elements.
@@ -106,7 +98,7 @@ func newBlockWalker(r *RootWalker, sc *meta.Scope) *BlockWalker {
 	b := &BlockWalker{
 		r:            r,
 		ctx:          &blockContext{sc: sc},
-		unusedVars:   make(map[string][]node.Node),
+		unusedVars:   make(map[string][]ir.Node),
 		nonLocalVars: make(map[string]variableKind),
 		path:         newNodePath(),
 	}
@@ -114,19 +106,19 @@ func newBlockWalker(r *RootWalker, sc *meta.Scope) *BlockWalker {
 	return b
 }
 
-func (b *BlockWalker) addStatement(n node.Node) {
+func (b *BlockWalker) addStatement(n ir.Node) {
 	if b.statements == nil {
-		b.statements = make(map[node.Node]struct{})
+		b.statements = make(map[ir.Node]struct{})
 	}
 	b.statements[n] = struct{}{}
 
 	// A hack for assignment-used-as-expression checks to work
-	e, ok := n.(*stmt.Expression)
+	e, ok := n.(*ir.ExpressionStmt)
 	if !ok {
 		return
 	}
 
-	assignment, ok := e.Expr.(*assign.Assign)
+	assignment, ok := e.Expr.(*ir.Assign)
 	if !ok {
 		return
 	}
@@ -134,13 +126,13 @@ func (b *BlockWalker) addStatement(n node.Node) {
 	b.statements[assignment] = struct{}{}
 }
 
-func (b *BlockWalker) reportDeadCode(n node.Node) {
+func (b *BlockWalker) reportDeadCode(n ir.Node) {
 	if b.ctx.deadCodeReported {
 		return
 	}
 
 	switch n.(type) {
-	case *stmt.Break, *stmt.Return, *expr.Exit, *stmt.Throw:
+	case *ir.BreakStmt, *ir.ReturnStmt, *ir.ExitExpr, *ir.ThrowStmt:
 		// Allow to break code flow more than once.
 		// This is useful in situation like this:
 		//
@@ -148,7 +140,7 @@ func (b *BlockWalker) reportDeadCode(n node.Node) {
 		//
 		// You can explicitly mark that function exits unconditionally for code clarity.
 		return
-	case *stmt.Function, *stmt.Class, *stmt.ConstList, *stmt.Interface, *stmt.Trait:
+	case *ir.FunctionStmt, *ir.ClassStmt, *ir.ConstListStmt, *ir.InterfaceStmt, *ir.TraitStmt:
 		// when we analyze root scope, function definions and other things are parsed even after exit, throw, etc
 		if b.ignoreFunctionBodies {
 			return
@@ -160,14 +152,13 @@ func (b *BlockWalker) reportDeadCode(n node.Node) {
 }
 
 // EnterNode is called before walking to inner nodes.
-func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
+func (b *BlockWalker) EnterNode(n ir.Node) (res bool) {
 	res = true
 
 	for _, c := range b.custom {
-		c.BeforeEnterNode(w)
+		c.BeforeEnterNode(n)
 	}
 
-	n := w.(node.Node)
 	b.path.push(n)
 
 	if b.ctx.exitFlags != 0 {
@@ -182,19 +173,19 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		}
 	}
 
-	switch s := w.(type) {
-	case *binary.LogicalOr:
+	switch s := n.(type) {
+	case *ir.LogicalOrExpr:
 		res = b.handleLogicalOr(s)
 
-	case *expr.ArrayDimFetch:
+	case *ir.ArrayDimFetchExpr:
 		b.checkArrayDimFetch(s)
 
-	case *stmt.Global:
+	case *ir.GlobalStmt:
 		b.checkGlobalStmt(s)
 		res = false
-	case *stmt.Static:
+	case *ir.StaticStmt:
 		for _, vv := range s.Vars {
-			v := vv.(*stmt.StaticVar)
+			v := vv.(*ir.StaticVarStmt)
 			ev := v.Variable
 			typ := solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, v.Expr, b.ctx.customTypes)
 			// Static vars can be assigned below and preserve the type of
@@ -207,82 +198,82 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 			}
 		}
 		res = false
-	case *node.Root:
+	case *ir.Root:
 		for _, st := range s.Stmts {
 			b.addStatement(st)
 		}
-	case *stmt.StmtList:
+	case *ir.StmtList:
 		for _, st := range s.Stmts {
 			b.addStatement(st)
 		}
 	// TODO: analyze control flow in try blocks separately and account for the fact that some functions or operations can
 	// throw exceptions
-	case *stmt.Try:
+	case *ir.TryStmt:
 		res = b.handleTry(s)
-	case *assign.Assign:
+	case *ir.Assign:
 		// TODO: only accept first assignment, not all of them
 		// e.g. if there is a condition like ($a = 10) || ($b = 5)
 		// we must only accept $a = 10 as condition that is always executed
 		res = b.handleAssign(s)
-	case *assign.Reference:
+	case *ir.AssignReference:
 		res = b.handleAssignReference(s)
-	case *expr.Array:
+	case *ir.ArrayExpr:
 		res = b.handleArray(s)
-	case *stmt.Foreach:
+	case *ir.ForeachStmt:
 		res = b.handleForeach(s)
-	case *stmt.For:
+	case *ir.ForStmt:
 		res = b.handleFor(s)
-	case *stmt.While:
+	case *ir.WhileStmt:
 		res = b.handleWhile(s)
-	case *stmt.Do:
+	case *ir.DoStmt:
 		res = b.handleDo(s)
-	case *stmt.ElseIf:
+	case *ir.ElseIfStmt:
 		b.handleElseIf(s)
-	case *stmt.If:
+	case *ir.IfStmt:
 		// TODO: handle constant if expressions
 		// TODO: maybe try to handle when variables are defined and used with the same condition
 		res = b.handleIf(s)
-	case *stmt.Switch:
+	case *ir.SwitchStmt:
 		res = b.handleSwitch(s)
-	case *expr.Ternary:
+	case *ir.TernaryExpr:
 		res = b.handleTernary(s)
-	case *expr.FunctionCall:
+	case *ir.FunctionCallExpr:
 		res = b.handleFunctionCall(s)
-	case *expr.MethodCall:
+	case *ir.MethodCallExpr:
 		res = b.handleMethodCall(s)
-	case *expr.StaticCall:
+	case *ir.StaticCallExpr:
 		res = b.handleStaticCall(s)
-	case *expr.PropertyFetch:
+	case *ir.PropertyFetchExpr:
 		res = b.handlePropertyFetch(s)
-	case *expr.StaticPropertyFetch:
+	case *ir.StaticPropertyFetchExpr:
 		res = b.handleStaticPropertyFetch(s)
-	case *expr.ClassConstFetch:
+	case *ir.ClassConstFetchExpr:
 		res = b.handleClassConstFetch(s)
-	case *stmt.Unset:
+	case *ir.UnsetStmt:
 		res = b.handleUnset(s)
-	case *expr.Isset:
+	case *ir.IssetExpr:
 		res = b.handleIsset(s)
-	case *expr.Empty:
+	case *ir.EmptyExpr:
 		res = b.handleEmpty(s)
-	case *node.Var:
+	case *ir.Var:
 		res = b.handleVariable(s)
-	case *node.SimpleVar:
+	case *ir.SimpleVar:
 		res = b.handleVariable(s)
-	case *stmt.Function:
+	case *ir.FunctionStmt:
 		res = b.handleFunction(s)
-	case *stmt.Class:
+	case *ir.ClassStmt:
 		if b.ignoreFunctionBodies {
 			res = false
 		}
-	case *stmt.Interface:
+	case *ir.InterfaceStmt:
 		if b.ignoreFunctionBodies {
 			res = false
 		}
-	case *stmt.Trait:
+	case *ir.TraitStmt:
 		if b.ignoreFunctionBodies {
 			res = false
 		}
-	case *expr.Closure:
+	case *ir.ClosureExpr:
 		var typ meta.TypesMap
 		isInstance := b.ctx.sc.IsInInstanceMethod()
 		if isInstance {
@@ -290,12 +281,12 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 		}
 		res = b.enterClosure(s, isInstance, typ)
 
-	case *stmt.Return:
+	case *ir.ReturnStmt:
 		b.handleReturn(s)
 	}
 
 	for _, c := range b.custom {
-		c.AfterEnterNode(w)
+		c.AfterEnterNode(n)
 	}
 
 	if meta.IsIndexingComplete() {
@@ -303,12 +294,10 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	}
 	if meta.IsIndexingComplete() && b.r.anyRset != nil {
 		// Note: no need to check localRset for nil.
-		kind := rules.CategorizeNode(n)
-		if kind != rules.KindNone {
-			b.r.runRules(n, b.ctx.sc, b.r.anyRset.RulesByKind[kind])
-			if !b.rootLevel {
-				b.r.runRules(n, b.ctx.sc, b.r.localRset.RulesByKind[kind])
-			}
+		kind := ir.GetNodeKind(n)
+		b.r.runRules(n, b.ctx.sc, b.r.anyRset.RulesByKind[kind])
+		if !b.rootLevel {
+			b.r.runRules(n, b.ctx.sc, b.r.localRset.RulesByKind[kind])
 		}
 	}
 
@@ -318,10 +307,10 @@ func (b *BlockWalker) EnterNode(w walker.Walkable) (res bool) {
 	return res
 }
 
-func (b *BlockWalker) checkDupGlobal(s *stmt.Global) {
+func (b *BlockWalker) checkDupGlobal(s *ir.GlobalStmt) {
 	vars := make(map[string]struct{}, len(s.Vars))
 	for _, v := range s.Vars {
-		v, ok := v.(*node.SimpleVar)
+		v, ok := v.(*ir.SimpleVar)
 		if !ok {
 			continue
 		}
@@ -340,7 +329,7 @@ func (b *BlockWalker) checkDupGlobal(s *stmt.Global) {
 	}
 }
 
-func (b *BlockWalker) checkGlobalStmt(s *stmt.Global) {
+func (b *BlockWalker) checkGlobalStmt(s *ir.GlobalStmt) {
 	if !b.rootLevel {
 		b.checkDupGlobal(s)
 	}
@@ -360,7 +349,7 @@ func (b *BlockWalker) checkGlobalStmt(s *stmt.Global) {
 	}
 }
 
-func (b *BlockWalker) handleFunction(fun *stmt.Function) bool {
+func (b *BlockWalker) handleFunction(fun *ir.FunctionStmt) bool {
 	if b.ignoreFunctionBodies {
 		return false
 	}
@@ -368,7 +357,7 @@ func (b *BlockWalker) handleFunction(fun *stmt.Function) bool {
 	return b.r.enterFunction(fun)
 }
 
-func (b *BlockWalker) handleReturn(ret *stmt.Return) {
+func (b *BlockWalker) handleReturn(ret *ir.ReturnStmt) {
 	if ret.Expr == nil {
 		// Return without explicit return value.
 		b.bareReturn = true
@@ -380,7 +369,7 @@ func (b *BlockWalker) handleReturn(ret *stmt.Return) {
 	b.returnTypes = b.returnTypes.Append(typ)
 }
 
-func (b *BlockWalker) handleLogicalOr(or *binary.LogicalOr) bool {
+func (b *BlockWalker) handleLogicalOr(or *ir.LogicalOrExpr) bool {
 	or.Left.Walk(b)
 
 	// We're going to discard "or" RHS effects on the exit flags.
@@ -395,8 +384,8 @@ func (b *BlockWalker) addNonLocalVarName(nm string, kind variableKind) {
 	b.nonLocalVars[nm] = kind
 }
 
-func (b *BlockWalker) addNonLocalVar(v node.Node, kind variableKind) {
-	sv, ok := v.(*node.SimpleVar)
+func (b *BlockWalker) addNonLocalVar(v ir.Node, kind variableKind) {
+	sv, ok := v.(*ir.SimpleVar)
 	if !ok {
 		return
 	}
@@ -404,9 +393,9 @@ func (b *BlockWalker) addNonLocalVar(v node.Node, kind variableKind) {
 }
 
 // replaceVar must be used to track assignments to conrete var nodes if they are available
-func (b *BlockWalker) replaceVar(v node.Node, typ meta.TypesMap, reason string, flags meta.VarFlags) {
+func (b *BlockWalker) replaceVar(v ir.Node, typ meta.TypesMap, reason string, flags meta.VarFlags) {
 	b.ctx.sc.ReplaceVar(v, typ, reason, flags)
-	sv, ok := v.(*node.SimpleVar)
+	sv, ok := v.(*ir.SimpleVar)
 	if !ok {
 		return
 	}
@@ -424,7 +413,7 @@ func (b *BlockWalker) replaceVar(v node.Node, typ meta.TypesMap, reason string, 
 	}
 }
 
-func (b *BlockWalker) trackVarName(n node.Node, nm string) {
+func (b *BlockWalker) trackVarName(n ir.Node, nm string) {
 	// Writes to non-local variables do count as usages
 	if _, ok := b.nonLocalVars[nm]; ok {
 		delete(b.unusedVars, nm)
@@ -438,22 +427,22 @@ func (b *BlockWalker) trackVarName(n node.Node, nm string) {
 	}
 }
 
-func (b *BlockWalker) addVarName(n node.Node, nm string, typ meta.TypesMap, reason string, flags meta.VarFlags) {
+func (b *BlockWalker) addVarName(n ir.Node, nm string, typ meta.TypesMap, reason string, flags meta.VarFlags) {
 	b.ctx.sc.AddVarName(nm, typ, reason, flags)
 	b.trackVarName(n, nm)
 }
 
 // addVar must be used to track assignments to conrete var nodes if they are available
-func (b *BlockWalker) addVar(v node.Node, typ meta.TypesMap, reason string, flags meta.VarFlags) {
+func (b *BlockWalker) addVar(v ir.Node, typ meta.TypesMap, reason string, flags meta.VarFlags) {
 	b.ctx.sc.AddVar(v, typ, reason, flags)
-	sv, ok := v.(*node.SimpleVar)
+	sv, ok := v.(*ir.SimpleVar)
 	if !ok {
 		return
 	}
 	b.trackVarName(v, sv.Name)
 }
 
-func (b *BlockWalker) walkComments(n node.Node, c freefloating.String) {
+func (b *BlockWalker) walkComments(n ir.Node, c freefloating.String) {
 	if c.StringType != freefloating.CommentType {
 		return
 	}
@@ -478,15 +467,15 @@ func (b *BlockWalker) walkComments(n node.Node, c freefloating.String) {
 	}
 }
 
-func (b *BlockWalker) handleUnset(s *stmt.Unset) bool {
+func (b *BlockWalker) handleUnset(s *ir.UnsetStmt) bool {
 	for _, v := range s.Vars {
 		switch v := v.(type) {
-		case *node.SimpleVar:
+		case *ir.SimpleVar:
 			delete(b.unusedVars, v.Name)
 			b.ctx.sc.DelVar(v, "unset")
-		case *node.Var:
+		case *ir.Var:
 			b.ctx.sc.DelVar(v, "unset")
-		case *expr.ArrayDimFetch:
+		case *ir.ArrayDimFetchExpr:
 			b.handleIssetDimFetch(v) // unset($a["something"]) does not unset $a itself, so no delVar here
 		default:
 			if v != nil {
@@ -498,14 +487,14 @@ func (b *BlockWalker) handleUnset(s *stmt.Unset) bool {
 	return false
 }
 
-func (b *BlockWalker) handleIsset(s *expr.Isset) bool {
+func (b *BlockWalker) handleIsset(s *ir.IssetExpr) bool {
 	for _, v := range s.Variables {
 		switch v := v.(type) {
-		case *node.Var:
+		case *ir.Var:
 			// Do nothing.
-		case *node.SimpleVar:
+		case *ir.SimpleVar:
 			delete(b.unusedVars, v.Name)
-		case *expr.ArrayDimFetch:
+		case *ir.ArrayDimFetchExpr:
 			b.handleIssetDimFetch(v)
 		default:
 			if v != nil {
@@ -517,13 +506,13 @@ func (b *BlockWalker) handleIsset(s *expr.Isset) bool {
 	return false
 }
 
-func (b *BlockWalker) handleEmpty(s *expr.Empty) bool {
+func (b *BlockWalker) handleEmpty(s *ir.EmptyExpr) bool {
 	switch v := s.Expr.(type) {
-	case *node.Var:
+	case *ir.Var:
 		// Do nothing.
-	case *node.SimpleVar:
+	case *ir.SimpleVar:
 		delete(b.unusedVars, v.Name)
-	case *expr.ArrayDimFetch:
+	case *ir.ArrayDimFetchExpr:
 		b.handleIssetDimFetch(v)
 	default:
 		if v != nil {
@@ -552,7 +541,7 @@ func (b *BlockWalker) withNewContext(action func()) *blockContext {
 	return newCtx
 }
 
-func (b *BlockWalker) handleTry(s *stmt.Try) bool {
+func (b *BlockWalker) handleTry(s *ir.TryStmt) bool {
 	contexts := make([]*blockContext, 0, len(s.Catches)+1)
 
 	// Assume that no code in try{} block has executed because exceptions can be thrown from anywhere.
@@ -560,7 +549,7 @@ func (b *BlockWalker) handleTry(s *stmt.Try) bool {
 	for _, c := range s.Catches {
 		ctx := b.withNewContext(func() {
 			b.r.addScope(c, b.ctx.sc)
-			cc := c.(*stmt.Catch)
+			cc := c.(*ir.CatchStmt)
 			for _, s := range cc.Stmts {
 				b.addStatement(s)
 			}
@@ -573,7 +562,7 @@ func (b *BlockWalker) handleTry(s *stmt.Try) bool {
 		b.withNewContext(func() {
 			contexts = append(contexts, b.ctx)
 			b.r.addScope(s.Finally, b.ctx.sc)
-			cc := s.Finally.(*stmt.Finally)
+			cc := s.Finally.(*ir.FinallyStmt)
 			for _, s := range cc.Stmts {
 				b.addStatement(s)
 			}
@@ -620,7 +609,7 @@ func (b *BlockWalker) handleTry(s *stmt.Try) bool {
 	return false
 }
 
-func (b *BlockWalker) handleCatch(s *stmt.Catch) bool {
+func (b *BlockWalker) handleCatch(s *ir.CatchStmt) bool {
 	m := meta.NewEmptyTypesMap(len(s.Types))
 	for _, t := range s.Types {
 		typ, ok := solver.GetClassName(b.r.ctx.st, t)
@@ -643,13 +632,13 @@ func (b *BlockWalker) handleCatch(s *stmt.Catch) bool {
 }
 
 // We still need to analyze expressions in isset()/unset()/empty() statements
-func (b *BlockWalker) handleIssetDimFetch(e *expr.ArrayDimFetch) {
+func (b *BlockWalker) handleIssetDimFetch(e *ir.ArrayDimFetchExpr) {
 	b.checkArrayDimFetch(e)
 
 	switch v := e.Variable.(type) {
-	case *node.SimpleVar:
+	case *ir.SimpleVar:
 		delete(b.unusedVars, v.Name)
-	case *expr.ArrayDimFetch:
+	case *ir.ArrayDimFetchExpr:
 		b.handleIssetDimFetch(v)
 	default:
 		if v != nil {
@@ -662,7 +651,7 @@ func (b *BlockWalker) handleIssetDimFetch(e *expr.ArrayDimFetch) {
 	}
 }
 
-func (b *BlockWalker) checkArrayDimFetch(s *expr.ArrayDimFetch) {
+func (b *BlockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
 	if !meta.IsIndexingComplete() {
 		return
 	}
@@ -694,7 +683,7 @@ func (b *BlockWalker) checkArrayDimFetch(s *expr.ArrayDimFetch) {
 	}
 }
 
-func (b *BlockWalker) handleArgsCount(n node.Node, args []node.Node, fn meta.FuncInfo) {
+func (b *BlockWalker) handleArgsCount(n ir.Node, args []ir.Node, fn meta.FuncInfo) {
 	if meta.NameNodeEquals(n, "mt_rand") {
 		if len(args) != 0 && len(args) != 2 {
 			b.r.Report(n, LevelWarning, "argCount", "mt_rand expects 0 or 2 args")
@@ -707,7 +696,7 @@ func (b *BlockWalker) handleArgsCount(n node.Node, args []node.Node, fn meta.Fun
 	}
 }
 
-func (b *BlockWalker) handleCallArgs(n node.Node, args []node.Node, fn meta.FuncInfo) {
+func (b *BlockWalker) handleCallArgs(n ir.Node, args []ir.Node, fn meta.FuncInfo) {
 	b.handleArgsCount(n, args, fn)
 
 	for i, arg := range args {
@@ -718,8 +707,8 @@ func (b *BlockWalker) handleCallArgs(n node.Node, args []node.Node, fn meta.Func
 
 		ref := fn.Params[i].IsRef
 
-		switch a := arg.(*node.Argument).Expr.(type) {
-		case *node.Var, *node.SimpleVar:
+		switch a := arg.(*ir.Argument).Expr.(type) {
+		case *ir.Var, *ir.SimpleVar:
 			if ref {
 				b.addNonLocalVar(a, varRef)
 				// TODO: variable may actually not be set by ref
@@ -727,7 +716,7 @@ func (b *BlockWalker) handleCallArgs(n node.Node, args []node.Node, fn meta.Func
 				break
 			}
 			a.Walk(b)
-		case *expr.ArrayDimFetch:
+		case *ir.ArrayDimFetchExpr:
 			if ref {
 				b.handleDimFetchLValue(a, "call_with_ref", meta.MixedType)
 				break
@@ -739,7 +728,7 @@ func (b *BlockWalker) handleCallArgs(n node.Node, args []node.Node, fn meta.Func
 	}
 }
 
-func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
+func (b *BlockWalker) handleFunctionCall(e *ir.FunctionCallExpr) bool {
 	call := resolveFunctionCall(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, e)
 
 	if meta.IsIndexingComplete() {
@@ -777,34 +766,36 @@ func (b *BlockWalker) handleFunctionCall(e *expr.FunctionCall) bool {
 
 // handleCompactCallArgs treats strings anywhere in the argument list as uses
 // of the variables named by those strings, which is how compact() behaves.
-func (b *BlockWalker) handleCompactCallArgs(args []node.Node) {
+func (b *BlockWalker) handleCompactCallArgs(args []ir.Node) {
 	// Recursively flatten the argument list and extract strings
-	var strs []*scalar.String
+	var strs []*ir.String
 	for len(args) > 0 {
-		var head node.Node
+		var head ir.Node
 		head, args = args[0], args[1:]
 		switch n := head.(type) {
-		case *node.Argument:
+		case *ir.Argument:
 			args = append(args, n.Expr)
-		case *expr.Array:
+		case *ir.ArrayExpr:
 			for _, item := range n.Items {
 				args = append(args, item)
 			}
-		case *expr.ArrayItem:
+		case *ir.ArrayItemExpr:
 			args = append(args, n.Val)
-		case *scalar.String:
+		case *ir.String:
 			strs = append(strs, n)
 		}
 	}
 
 	for _, s := range strs {
-		v := node.NewSimpleVar(unquote(s.Value))
-		v.SetPosition(s.GetPosition())
+		v := &ir.SimpleVar{
+			Name:     unquote(s.Value),
+			Position: ir.GetPosition(s),
+		}
 		b.handleVariable(v)
 	}
 }
 
-func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
+func (b *BlockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
 	if !meta.IsIndexingComplete() {
 		return true
 	}
@@ -812,7 +803,7 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 	var methodName string
 
 	switch id := e.Method.(type) {
-	case *node.Identifier:
+	case *ir.Identifier:
 		methodName = id.Value
 	default:
 		return true
@@ -882,7 +873,7 @@ func (b *BlockWalker) handleMethodCall(e *expr.MethodCall) bool {
 	return false
 }
 
-func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
+func (b *BlockWalker) handleStaticCall(e *ir.StaticCallExpr) bool {
 	if !meta.IsIndexingComplete() {
 		return true
 	}
@@ -890,13 +881,13 @@ func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
 	var methodName string
 
 	switch id := e.Call.(type) {
-	case *node.Identifier:
+	case *ir.Identifier:
 		methodName = id.Value
 	default:
 		return true
 	}
 
-	classNameNode, ok := e.Class.(*name.Name)
+	classNameNode, ok := e.Class.(*ir.Name)
 	parentCall := ok && meta.NameEquals(classNameNode, "parent")
 	if parentCall && methodName == "__construct" {
 		b.callsParentConstructor = true
@@ -932,19 +923,19 @@ func (b *BlockWalker) handleStaticCall(e *expr.StaticCall) bool {
 	return false
 }
 
-func (b *BlockWalker) isThisInsideClosure(varNode node.Node) bool {
+func (b *BlockWalker) isThisInsideClosure(varNode ir.Node) bool {
 	if !b.ctx.sc.IsInClosure() {
 		return false
 	}
 
-	variable, ok := varNode.(*node.SimpleVar)
+	variable, ok := varNode.(*ir.SimpleVar)
 	if !ok {
 		return false
 	}
 	return variable.Name == `this`
 }
 
-func (b *BlockWalker) handlePropertyFetch(e *expr.PropertyFetch) bool {
+func (b *BlockWalker) handlePropertyFetch(e *ir.PropertyFetchExpr) bool {
 	e.Variable.Walk(b)
 	e.Property.Walk(b)
 
@@ -952,7 +943,7 @@ func (b *BlockWalker) handlePropertyFetch(e *expr.PropertyFetch) bool {
 		return false
 	}
 
-	id, ok := e.Property.(*node.Identifier)
+	id, ok := e.Property.(*ir.Identifier)
 	if !ok {
 		return false
 	}
@@ -990,16 +981,16 @@ func (b *BlockWalker) handlePropertyFetch(e *expr.PropertyFetch) bool {
 	return false
 }
 
-func (b *BlockWalker) handleStaticPropertyFetch(e *expr.StaticPropertyFetch) bool {
+func (b *BlockWalker) handleStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) bool {
 	e.Class.Walk(b)
 
 	if !meta.IsIndexingComplete() {
 		return false
 	}
 
-	sv, ok := e.Property.(*node.SimpleVar)
+	sv, ok := e.Property.(*ir.SimpleVar)
 	if !ok {
-		vv := e.Property.(*node.Var)
+		vv := e.Property.(*ir.Var)
 		vv.Expr.Walk(b)
 		return false
 	}
@@ -1021,11 +1012,11 @@ func (b *BlockWalker) handleStaticPropertyFetch(e *expr.StaticPropertyFetch) boo
 	return false
 }
 
-func (b *BlockWalker) handleArray(arr *expr.Array) bool {
+func (b *BlockWalker) handleArray(arr *ir.ArrayExpr) bool {
 	return b.handleArrayItems(arr, arr.Items)
 }
 
-func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) bool {
+func (b *BlockWalker) handleArrayItems(arr ir.Node, items []*ir.ArrayItemExpr) bool {
 	if !meta.IsIndexingComplete() {
 		return true
 	}
@@ -1042,7 +1033,7 @@ func (b *BlockWalker) handleArrayItems(arr node.Node, items []*expr.ArrayItem) b
 	return false
 }
 
-func (b *BlockWalker) handleClassConstFetch(e *expr.ClassConstFetch) bool {
+func (b *BlockWalker) handleClassConstFetch(e *ir.ClassConstFetchExpr) bool {
 	if !meta.IsIndexingComplete() {
 		return true
 	}
@@ -1072,7 +1063,7 @@ func (b *BlockWalker) handleClassConstFetch(e *expr.ClassConstFetch) bool {
 	return false
 }
 
-func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
+func (b *BlockWalker) handleForeach(s *ir.ForeachStmt) bool {
 	// TODO: add reference semantics to foreach analyze as well
 
 	// expression is always executed and is executed in base context
@@ -1088,7 +1079,7 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 			})
 
 			b.handleVariableNode(s.Key, meta.TypesMap{}, "foreach_key")
-			if list, ok := s.Variable.(*expr.List); ok {
+			if list, ok := s.Variable.(*ir.ListExpr); ok {
 				for _, item := range list.Items {
 					b.handleVariableNode(item.Val, meta.TypesMap{}, "foreach_value")
 				}
@@ -1098,7 +1089,7 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 
 			b.ctx.innermostLoop = loopFor
 			b.ctx.insideLoop = true
-			if _, ok := s.Stmt.(*stmt.StmtList); !ok {
+			if _, ok := s.Stmt.(*ir.StmtList); !ok {
 				b.addStatement(s.Stmt)
 			}
 			s.Stmt.Walk(b)
@@ -1108,7 +1099,7 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 		b.propagateFlags(ctx)
 	}
 
-	key, ok := s.Key.(*node.SimpleVar)
+	key, ok := s.Key.(*ir.SimpleVar)
 	if !ok {
 		return false
 	}
@@ -1118,7 +1109,7 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 
 	_, ok = b.unusedVars[key.Name]
 	if ok {
-		variable, ok := s.Variable.(*node.SimpleVar)
+		variable, ok := s.Variable.(*ir.SimpleVar)
 		if !ok {
 			return false
 		}
@@ -1131,7 +1122,7 @@ func (b *BlockWalker) handleForeach(s *stmt.Foreach) bool {
 	return false
 }
 
-func (b *BlockWalker) handleFor(s *stmt.For) bool {
+func (b *BlockWalker) handleFor(s *ir.ForStmt) bool {
 	for _, v := range s.Init {
 		b.addStatement(v)
 		v.Walk(b)
@@ -1161,7 +1152,7 @@ func (b *BlockWalker) handleFor(s *stmt.For) bool {
 	return false
 }
 
-func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType meta.TypesMap) bool {
+func (b *BlockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType meta.TypesMap) bool {
 	sc := meta.NewScope()
 	sc.SetInClosure(true)
 
@@ -1175,18 +1166,18 @@ func (b *BlockWalker) enterClosure(fun *expr.Closure, haveThis bool, thisType me
 	b.r.reportPhpdocErrors(fun, doc.errs)
 	phpDocParamTypes := doc.types
 
-	var closureUses []node.Node
+	var closureUses []ir.Node
 	if fun.ClosureUse != nil {
 		closureUses = fun.ClosureUse.Uses
 	}
 	for _, useExpr := range closureUses {
 		var byRef bool
-		var v *node.SimpleVar
+		var v *ir.SimpleVar
 		switch u := useExpr.(type) {
-		case *expr.Reference:
-			v = u.Variable.(*node.SimpleVar)
+		case *ir.ReferenceExpr:
+			v = u.Variable.(*ir.SimpleVar)
 			byRef = true
-		case *node.SimpleVar:
+		case *ir.SimpleVar:
 			v = u
 		}
 
@@ -1217,7 +1208,7 @@ func (b *BlockWalker) maybeAddAllVars(sc *meta.Scope, reason string) {
 	})
 }
 
-func (b *BlockWalker) handleWhile(s *stmt.While) bool {
+func (b *BlockWalker) handleWhile(s *ir.WhileStmt) bool {
 	if s.Cond != nil {
 		s.Cond.Walk(b)
 	}
@@ -1236,7 +1227,7 @@ func (b *BlockWalker) handleWhile(s *stmt.While) bool {
 	return false
 }
 
-func (b *BlockWalker) handleDo(s *stmt.Do) bool {
+func (b *BlockWalker) handleDo(s *ir.DoStmt) bool {
 	if s.Stmt != nil {
 		oldInnermostLoop := b.ctx.innermostLoop
 		oldInsideLoop := b.ctx.insideLoop
@@ -1285,13 +1276,13 @@ func (b *BlockWalker) propagateFlagsFromBranches(contexts []*blockContext, links
 	}
 }
 
-func (b *BlockWalker) handleVariable(v node.Node) bool {
+func (b *BlockWalker) handleVariable(v ir.Node) bool {
 	switch v := v.(type) {
-	case *node.Var:
-		if vv, ok := v.Expr.(*node.SimpleVar); ok {
+	case *ir.Var:
+		if vv, ok := v.Expr.(*ir.SimpleVar); ok {
 			delete(b.unusedVars, vv.Name)
 		}
-	case *node.SimpleVar:
+	case *ir.SimpleVar:
 		delete(b.unusedVars, v.Name)
 	}
 
@@ -1303,7 +1294,7 @@ func (b *BlockWalker) handleVariable(v node.Node) bool {
 	return false
 }
 
-func (b *BlockWalker) handleTernary(e *expr.Ternary) bool {
+func (b *BlockWalker) handleTernary(e *ir.TernaryExpr) bool {
 	if e.IfTrue == nil {
 		return true // Skip `$x ?: $y` expressions
 	}
@@ -1319,8 +1310,8 @@ func (b *BlockWalker) handleTernary(e *expr.Ternary) bool {
 	return false
 }
 
-func (b *BlockWalker) handleIf(s *stmt.If) bool {
-	var varsToDelete []node.Node
+func (b *BlockWalker) handleIf(s *ir.IfStmt) bool {
+	var varsToDelete []ir.Node
 	customMethods := len(b.ctx.customMethods)
 	customFunctions := len(b.ctx.customFunctions)
 	// Remove all isset'ed variables after we're finished with this if statement.
@@ -1331,7 +1322,7 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 		b.ctx.customMethods = b.ctx.customMethods[:customMethods]
 		b.ctx.customFunctions = b.ctx.customFunctions[:customFunctions]
 	}()
-	walkCond := func(cond node.Node) {
+	walkCond := func(cond ir.Node) {
 		a := &andWalker{b: b}
 		cond.Walk(a)
 		varsToDelete = append(varsToDelete, a.varsToDelete...)
@@ -1344,18 +1335,18 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 
 	var contexts []*blockContext
 
-	walk := func(n node.Node) (links int) {
+	walk := func(n ir.Node) (links int) {
 		// handle if (...) smth(); else other_thing(); // without braces
-		if els, ok := n.(*stmt.Else); ok {
+		if els, ok := n.(*ir.ElseStmt); ok {
 			b.addStatement(els.Stmt)
-		} else if elsif, ok := n.(*stmt.ElseIf); ok {
+		} else if elsif, ok := n.(*ir.ElseIfStmt); ok {
 			b.addStatement(elsif.Stmt)
 		} else {
 			b.addStatement(n)
 		}
 
 		ctx := b.withNewContext(func() {
-			if elsif, ok := n.(*stmt.ElseIf); ok {
+			if elsif, ok := n.(*ir.ElseIfStmt); ok {
 				walkCond(elsif.Cond)
 				b.handleElseIf(elsif)
 				elsif.Stmt.Walk(b)
@@ -1419,7 +1410,7 @@ func (b *BlockWalker) handleIf(s *stmt.If) bool {
 	return false
 }
 
-func (b *BlockWalker) handleElseIf(s *stmt.ElseIf) {
+func (b *BlockWalker) handleElseIf(s *ir.ElseIfStmt) {
 	if s.Merged {
 		b.r.checkKeywordCase(s, "else")
 		if ff := (*s.GetFreeFloating())[freefloating.Else]; len(ff) != 0 {
@@ -1431,7 +1422,7 @@ func (b *BlockWalker) handleElseIf(s *stmt.ElseIf) {
 	}
 }
 
-func (b *BlockWalker) iterateNextCases(cases []node.Node, startIdx int) {
+func (b *BlockWalker) iterateNextCases(cases []ir.Node, startIdx int) {
 	for i := startIdx; i < len(cases); i++ {
 		cond, list := getCaseStmts(cases[i])
 		if cond != nil {
@@ -1450,7 +1441,7 @@ func (b *BlockWalker) iterateNextCases(cases []node.Node, startIdx int) {
 	}
 }
 
-func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
+func (b *BlockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 	// first condition is always executed, so run it in base context
 	if s.Cond != nil {
 		s.Cond.Walk(b)
@@ -1463,7 +1454,7 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 	breakFlags := FlagBreak | FlagContinue
 
 	for idx, c := range s.CaseList.Cases {
-		var list []node.Node
+		var list []ir.Node
 
 		cond, list := getCaseStmts(c)
 		if cond == nil {
@@ -1567,18 +1558,18 @@ func (b *BlockWalker) handleSwitch(s *stmt.Switch) bool {
 // if $a was previously undefined,
 // handle case when doing assignment like '$a[] = 4;'
 // or call to function that accepts like exec("command", $a)
-func (b *BlockWalker) handleDimFetchLValue(e *expr.ArrayDimFetch, reason string, typ meta.TypesMap) {
+func (b *BlockWalker) handleDimFetchLValue(e *ir.ArrayDimFetchExpr, reason string, typ meta.TypesMap) {
 	b.checkArrayDimFetch(e)
 
 	switch v := e.Variable.(type) {
-	case *node.Var, *node.SimpleVar:
+	case *ir.Var, *ir.SimpleVar:
 		arrTyp := meta.NewEmptyTypesMap(typ.Len())
 		typ.Iterate(func(t string) {
 			arrTyp = arrTyp.AppendString(meta.WrapArrayOf(t))
 		})
 		b.addVar(v, arrTyp, reason, meta.VarAlwaysDefined)
 		b.handleVariable(v)
-	case *expr.ArrayDimFetch:
+	case *ir.ArrayDimFetchExpr:
 		b.handleDimFetchLValue(v, reason, meta.MixedType)
 	default:
 		// probably not assignable?
@@ -1591,16 +1582,16 @@ func (b *BlockWalker) handleDimFetchLValue(e *expr.ArrayDimFetch, reason string,
 }
 
 // some day, perhaps, there will be some difference between handleAssignReference and handleAssign
-func (b *BlockWalker) handleAssignReference(a *assign.Reference) bool {
+func (b *BlockWalker) handleAssignReference(a *ir.AssignReference) bool {
 	switch v := a.Variable.(type) {
-	case *expr.ArrayDimFetch:
+	case *ir.ArrayDimFetchExpr:
 		b.handleDimFetchLValue(v, "assign_array", meta.MixedType)
 		a.Expression.Walk(b)
 		return false
-	case *node.Var, *node.SimpleVar:
+	case *ir.Var, *ir.SimpleVar:
 		b.addVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
 		b.addNonLocalVar(v, varRef)
-	case *expr.List:
+	case *ir.ListExpr:
 		// TODO: figure out whether this case is reachable.
 		for _, item := range v.Items {
 			b.handleVariableNode(item.Val, meta.NewTypesMap("unknown_from_list"), "assign")
@@ -1613,7 +1604,7 @@ func (b *BlockWalker) handleAssignReference(a *assign.Reference) bool {
 	return false
 }
 
-func (b *BlockWalker) handleAssignList(items []*expr.ArrayItem, info meta.ClassInfo, isShape bool) {
+func (b *BlockWalker) handleAssignList(items []*ir.ArrayItemExpr, info meta.ClassInfo, isShape bool) {
 	if isShape {
 		for i, item := range items {
 			prop, ok := info.Properties[fmt.Sprint(i)]
@@ -1632,17 +1623,17 @@ func (b *BlockWalker) handleAssignList(items []*expr.ArrayItem, info meta.ClassI
 	}
 }
 
-func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
+func (b *BlockWalker) handleAssign(a *ir.Assign) bool {
 	a.Expression.Walk(b)
 
 	switch v := a.Variable.(type) {
-	case *expr.ArrayDimFetch:
+	case *ir.ArrayDimFetchExpr:
 		typ := solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression)
 		b.handleDimFetchLValue(v, "assign_array", typ)
 		return false
-	case *node.Var, *node.SimpleVar:
+	case *ir.Var, *ir.SimpleVar:
 		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
-	case *expr.List:
+	case *ir.ListExpr:
 		if !meta.IsIndexingComplete() {
 			return true
 		}
@@ -1664,9 +1655,9 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 		}
 
 		b.handleAssignList(v.Items, class, isShape)
-	case *expr.PropertyFetch:
+	case *ir.PropertyFetchExpr:
 		v.Property.Walk(b)
-		sv, ok := v.Variable.(*node.SimpleVar)
+		sv, ok := v.Variable.(*ir.SimpleVar)
 		if !ok {
 			v.Variable.Walk(b)
 			break
@@ -1682,7 +1673,7 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 			break
 		}
 
-		propertyName, ok := v.Property.(*node.Identifier)
+		propertyName, ok := v.Property.(*ir.Identifier)
 		if !ok {
 			break
 		}
@@ -1692,10 +1683,10 @@ func (b *BlockWalker) handleAssign(a *assign.Assign) bool {
 		p := cls.Properties[propertyName.Value]
 		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, a.Expression, b.ctx.customTypes))
 		cls.Properties[propertyName.Value] = p
-	case *expr.StaticPropertyFetch:
-		sv, ok := v.Property.(*node.SimpleVar)
+	case *ir.StaticPropertyFetchExpr:
+		sv, ok := v.Property.(*ir.SimpleVar)
 		if !ok {
-			vv := v.Property.(*node.Var)
+			vv := v.Property.(*ir.Var)
 			vv.Expr.Walk(b)
 			break
 		}
@@ -1726,7 +1717,7 @@ func (b *BlockWalker) flushUnused() {
 		return
 	}
 
-	visitedMap := make(map[node.Node]struct{})
+	visitedMap := make(map[ir.Node]struct{})
 	for name, nodes := range b.unusedVars {
 		if IsDiscardVar(name) {
 			// blank identifier is a way to tell linter (and PHPStorm) that result is explicitly unused
@@ -1748,16 +1739,16 @@ func (b *BlockWalker) flushUnused() {
 	}
 }
 
-func (b *BlockWalker) handleVariableNode(n node.Node, typ meta.TypesMap, what string) {
+func (b *BlockWalker) handleVariableNode(n ir.Node, typ meta.TypesMap, what string) {
 	if n == nil {
 		return
 	}
 
-	var vv node.Node
+	var vv ir.Node
 	switch n := n.(type) {
-	case *node.Var, *node.SimpleVar:
+	case *ir.Var, *ir.SimpleVar:
 		vv = n
-	case *expr.Reference:
+	case *ir.ReferenceExpr:
 		vv = n.Variable
 	default:
 		return
@@ -1767,7 +1758,7 @@ func (b *BlockWalker) handleVariableNode(n node.Node, typ meta.TypesMap, what st
 }
 
 // LeaveNode is called after all children have been visited.
-func (b *BlockWalker) LeaveNode(w walker.Walkable) {
+func (b *BlockWalker) LeaveNode(w ir.Node) {
 	for _, c := range b.custom {
 		c.BeforeLeaveNode(w)
 	}
@@ -1776,19 +1767,19 @@ func (b *BlockWalker) LeaveNode(w walker.Walkable) {
 
 	if b.ctx.exitFlags == 0 {
 		switch w.(type) {
-		case *stmt.Return:
+		case *ir.ReturnStmt:
 			b.ctx.exitFlags |= FlagReturn
 			b.ctx.containsExitFlags |= FlagReturn
-		case *expr.Exit:
+		case *ir.ExitExpr:
 			b.ctx.exitFlags |= FlagDie
 			b.ctx.containsExitFlags |= FlagDie
-		case *stmt.Throw:
+		case *ir.ThrowStmt:
 			b.ctx.exitFlags |= FlagThrow
 			b.ctx.containsExitFlags |= FlagThrow
-		case *stmt.Continue:
+		case *ir.ContinueStmt:
 			b.ctx.exitFlags |= FlagContinue
 			b.ctx.containsExitFlags |= FlagContinue
-		case *stmt.Break:
+		case *ir.BreakStmt:
 			b.ctx.exitFlags |= FlagBreak
 			b.ctx.containsExitFlags |= FlagBreak
 		}
@@ -1799,10 +1790,10 @@ func (b *BlockWalker) LeaveNode(w walker.Walkable) {
 	}
 }
 
-func (b *BlockWalker) sideEffectFree(n node.Node) bool {
+func (b *BlockWalker) sideEffectFree(n ir.Node) bool {
 	return solver.SideEffectFree(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, n)
 }
 
-func (b *BlockWalker) exprType(n node.Node) meta.TypesMap {
+func (b *BlockWalker) exprType(n ir.Node) meta.TypesMap {
 	return solver.ExprTypeCustom(b.ctx.sc, b.r.ctx.st, n, b.ctx.customTypes)
 }

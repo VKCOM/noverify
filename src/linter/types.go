@@ -3,9 +3,8 @@ package linter
 import (
 	"fmt"
 
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/solver"
 )
@@ -186,11 +185,11 @@ func (conv *phpdocTypeConverter) warn(msg string) {
 // typesFromNode converts type hint node to meta types.
 //
 // No normalization is performed.
-func typesFromNode(typeNode node.Node) []meta.Type {
+func typesFromNode(typeNode ir.Node) []meta.Type {
 	n := typeNode
 
 	var results []meta.Type
-	if nullable, ok := typeNode.(*node.Nullable); ok {
+	if nullable, ok := typeNode.(*ir.Nullable); ok {
 		n = nullable.Expr
 		results = make([]meta.Type, 0, 2)
 		results = append(results, meta.Type{Elem: "null"})
@@ -222,7 +221,7 @@ func (n typeNormalizer) NormalizeTypes(types []meta.Type) {
 	}
 }
 
-func (n typeNormalizer) string2name(s string) *name.Name {
+func (n typeNormalizer) string2name(s string) *ir.Name {
 	// TODO: Can avoid extra work by holding 1 tmp name inside
 	// typeNormalizer, since we never need more than one at the time.
 	return meta.StringToName(s)

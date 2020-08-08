@@ -6,13 +6,9 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr/binary"
-	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/solver"
 )
@@ -54,7 +50,7 @@ func isQuote(r rune) bool {
 //
 // enterNode function is called in place where EnterNode method would be called.
 // If n is nil, no traversal is performed.
-func walkNode(n node.Node, enterNode func(walker.Walkable) bool) {
+func walkNode(n ir.Node, enterNode func(ir.Node) bool) {
 	if n == nil {
 		return
 	}
@@ -63,25 +59,25 @@ func walkNode(n node.Node, enterNode func(walker.Walkable) bool) {
 }
 
 type nodeVisitor struct {
-	enterNode func(walker.Walkable) bool
+	enterNode func(ir.Node) bool
 }
 
-func (v nodeVisitor) LeaveNode(w walker.Walkable) {}
+func (v nodeVisitor) LeaveNode(n ir.Node) {}
 
-func (v nodeVisitor) EnterNode(w walker.Walkable) bool {
-	return v.enterNode(w)
+func (v nodeVisitor) EnterNode(n ir.Node) bool {
+	return v.enterNode(n)
 }
 
-func varToString(v node.Node) string {
+func varToString(v ir.Node) string {
 	switch t := v.(type) {
-	case *node.SimpleVar:
+	case *ir.SimpleVar:
 		return t.Name
-	case *node.Var:
+	case *ir.Var:
 		return "$" + varToString(t.Expr)
-	case *expr.FunctionCall:
+	case *ir.FunctionCallExpr:
 		// TODO: support function calls here :)
 		return ""
-	case *scalar.String:
+	case *ir.String:
 		// Things like ${"x"}
 		return "${" + t.Value + "}"
 	default:
@@ -152,7 +148,7 @@ type funcCallInfo struct {
 
 // TODO: bundle type solving params somehow.
 // We usually need ClassParseState+Scope+[]CustomType.
-func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, call *expr.FunctionCall) funcCallInfo {
+func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, call *ir.FunctionCallExpr) funcCallInfo {
 	var res funcCallInfo
 	res.canAnalyze = true
 	if !meta.IsIndexingComplete() {
@@ -188,13 +184,13 @@ func isCapitalized(s string) bool {
 
 // findVarNode returns expression variable node root.
 // If expression doesn't start from a variable, returns nil.
-func findVarNode(n node.Node) node.Node {
+func findVarNode(n ir.Node) ir.Node {
 	switch n := n.(type) {
-	case *node.Var, *node.SimpleVar:
+	case *ir.Var, *ir.SimpleVar:
 		return n
-	case *expr.PropertyFetch:
+	case *ir.PropertyFetchExpr:
 		return findVarNode(n.Variable)
-	case *expr.ArrayDimFetch:
+	case *ir.ArrayDimFetchExpr:
 		return findVarNode(n.Variable)
 	default:
 		return nil
@@ -220,53 +216,53 @@ func classHasProp(className, propName string) bool {
 	return ok
 }
 
-func binaryOpString(n node.Node) string {
+func binaryOpString(n ir.Node) string {
 	switch n.(type) {
-	case *binary.BitwiseAnd:
+	case *ir.BitwiseAndExpr:
 		return "&"
-	case *binary.BitwiseOr:
+	case *ir.BitwiseOrExpr:
 		return "|"
-	case *binary.BitwiseXor:
+	case *ir.BitwiseXorExpr:
 		return "^"
-	case *binary.LogicalAnd:
+	case *ir.LogicalAndExpr:
 		return "and"
-	case *binary.BooleanAnd:
+	case *ir.BooleanAndExpr:
 		return "&&"
-	case *binary.LogicalOr:
+	case *ir.LogicalOrExpr:
 		return "or"
-	case *binary.BooleanOr:
+	case *ir.BooleanOrExpr:
 		return "||"
-	case *binary.LogicalXor:
+	case *ir.LogicalXorExpr:
 		return "xor"
-	case *binary.Plus:
+	case *ir.PlusExpr:
 		return "+"
-	case *binary.Minus:
+	case *ir.MinusExpr:
 		return "-"
-	case *binary.Mul:
+	case *ir.MulExpr:
 		return "*"
-	case *binary.Div:
+	case *ir.DivExpr:
 		return "/"
-	case *binary.Mod:
+	case *ir.ModExpr:
 		return "%"
-	case *binary.Pow:
+	case *ir.PowExpr:
 		return "**"
-	case *binary.Equal:
+	case *ir.EqualExpr:
 		return "=="
-	case *binary.NotEqual:
+	case *ir.NotEqualExpr:
 		return "!="
-	case *binary.Identical:
+	case *ir.IdenticalExpr:
 		return "==="
-	case *binary.NotIdentical:
+	case *ir.NotIdenticalExpr:
 		return "!=="
-	case *binary.Smaller:
+	case *ir.SmallerExpr:
 		return "<"
-	case *binary.SmallerOrEqual:
+	case *ir.SmallerOrEqualExpr:
 		return "<="
-	case *binary.Greater:
+	case *ir.GreaterExpr:
 		return ">"
-	case *binary.GreaterOrEqual:
+	case *ir.GreaterOrEqualExpr:
 		return ">="
-	case *binary.Spaceship:
+	case *ir.SpaceshipExpr:
 		return "<=>"
 
 	default:
@@ -274,7 +270,7 @@ func binaryOpString(n node.Node) string {
 	}
 }
 
-func findFreeFloatingToken(n node.Node, pos freefloating.Position, s string) bool {
+func findFreeFloatingToken(n ir.Node, pos freefloating.Position, s string) bool {
 	ff := n.GetFreeFloating()
 	if ff == nil {
 		return false
