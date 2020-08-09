@@ -1342,7 +1342,7 @@ func (b *BlockWalker) handleVariable(v ir.Node) bool {
 			s := bw.ctx.sc
 
 			if !s.HaveVar(v) {
-				if varMaybeNotDefined != true {
+				if !varMaybeNotDefined {
 					varMaybeNotDefined = s.MaybeHaveVar(v)
 				}
 				varNotFound = true
@@ -1350,7 +1350,6 @@ func (b *BlockWalker) handleVariable(v ir.Node) bool {
 			}
 
 			tp, _ := s.GetVarNameType(varName)
-			varNotFound = false
 			b.ctx.sc.AddVar(v, tp, "from_parent_scope", meta.VarAlwaysDefined)
 			return false
 		}

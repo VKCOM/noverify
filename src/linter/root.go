@@ -635,7 +635,8 @@ type handleFuncResult struct {
 func (d *RootWalker) handleArrowFuncExpr(params []meta.FuncParam, expr ir.Node, sc *meta.Scope, parentBlockWalker *BlockWalker) handleFuncResult {
 	b := newBlockWalker(d, sc)
 	b.inArrowFunction = true
-	b.parentBlockWalkers = append(parentBlockWalker.parentBlockWalkers, parentBlockWalker)
+	parentBlockWalker.parentBlockWalkers = append(parentBlockWalker.parentBlockWalkers, parentBlockWalker)
+	b.parentBlockWalkers = parentBlockWalker.parentBlockWalkers
 
 	for _, p := range params {
 		if p.IsRef {
