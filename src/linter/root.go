@@ -1414,7 +1414,7 @@ func (d *RootWalker) parseFuncArgs(params []ir.Node, parTypes phpDocParamsMap, s
 		model, haveModel := closureSolver.Model()
 
 		for i, param := range params {
-			p := param.(*node.Parameter)
+			p := param.(*ir.Parameter)
 			v := p.Variable
 
 			var argType meta.TypesMap

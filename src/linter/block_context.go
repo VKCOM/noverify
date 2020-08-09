@@ -37,7 +37,7 @@ type blockContext struct {
 	customFunctions []string
 
 	callerFunction     meta.FuncInfo // function that is called with this closure
-	callerFunctionArgs []node.Node   // and the arguments with which it is called
+	callerFunctionArgs []ir.Node     // and the arguments with which it is called
 }
 
 func (ctx *blockContext) addCustomFunction(functionName string) {
