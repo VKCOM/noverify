@@ -1578,6 +1578,64 @@ func TestFunctionJustReturns(t *testing.T) {
 	}`)
 }
 
+func TestArrowFunction(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	class Boo {
+		/** @return int */
+		public function b() { }
+	}
+
+	function foo() {
+		$value = 10;
+
+		// simple function
+		$_ = fn($x) => $x + 5;
+
+		// with capture
+		$_ = fn($x) => $x + $value;
+
+		// reference
+		$_ = fn&($x) => $x + $value;
+
+		// with undefined variable
+		$_ = fn($x) => $x + $undefined_variable;
+
+		if ($value == 0) {
+			$maybe_defined = 100;
+		}
+
+		// with maybe defined variable
+		$_ = fn($x) => $x + $maybe_defined;
+
+		// with PHPDoc
+		/**
+		 * @param Boo $x
+		 */
+		$_ = fn($x) => $x->b();
+
+		// nested
+		$_ = fn($x) => fn($y) => fn($w) => $x * $y + $w - $value;
+
+		// nested with maybe defined variable
+		$_ = fn($x) => fn($y) => fn($w) => $x * $y + $w - $maybe_defined;
+
+		// arguments are not visible outside of arrow function
+		echo $x; // Undefined $x
+		echo $y; // Undefined $y
+		echo $w; // Undefined $w
+	}`)
+	test.Expect = []string{
+		`Undefined variable: undefined_variable`,
+		`Variable might have not been defined: maybe_defined`,
+		`Undefined variable: x`,
+		`Undefined variable: y`,
+		`Undefined variable: w`,
+		`Variable might have not been defined: maybe_defined`,
+	}
+	test.RunAndMatch()
+}
+
 func TestSwitchFallthrough(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	function withFallthrough($a) {

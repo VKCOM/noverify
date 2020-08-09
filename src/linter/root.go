@@ -632,6 +632,25 @@ type handleFuncResult struct {
 	callsParentConstructor bool
 }
 
+func (d *RootWalker) handleArrowFuncExpr(params []meta.FuncParam, expr ir.Node, sc *meta.Scope, parentBlockWalker *BlockWalker) handleFuncResult {
+	b := newBlockWalker(d, sc)
+	b.inArrowFunction = true
+	b.parentBlockWalkers = append(parentBlockWalker.parentBlockWalkers, parentBlockWalker)
+
+	for _, p := range params {
+		if p.IsRef {
+			b.nonLocalVars[p.Name] = varRef
+		}
+	}
+
+	b.addStatement(expr)
+	expr.Walk(b)
+
+	return handleFuncResult{
+		returnTypes: b.returnTypes,
+	}
+}
+
 func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.Node, sc *meta.Scope) handleFuncResult {
 	b := newBlockWalker(d, sc)
 	for _, createFn := range d.customBlock {

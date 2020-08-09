@@ -92,6 +92,9 @@ type BlockWalker struct {
 	// static, global and other vars that have complex control flow.
 	// Never contains varLocal elements.
 	nonLocalVars map[string]variableKind
+
+	inArrowFunction    bool
+	parentBlockWalkers []*BlockWalker // all parent block walkers if we handle nested arrow functions.
 }
 
 func newBlockWalker(r *RootWalker, sc *meta.Scope) *BlockWalker {
@@ -261,6 +264,8 @@ func (b *BlockWalker) EnterNode(n ir.Node) (res bool) {
 		res = b.handleVariable(s)
 	case *ir.FunctionStmt:
 		res = b.handleFunction(s)
+	case *ir.ArrowFunctionExpr:
+		res = b.handleArrowFunction(s)
 	case *ir.ClassStmt:
 		if b.ignoreFunctionBodies {
 			res = false
@@ -355,6 +360,14 @@ func (b *BlockWalker) handleFunction(fun *ir.FunctionStmt) bool {
 	}
 
 	return b.r.enterFunction(fun)
+}
+
+func (b *BlockWalker) handleArrowFunction(fun *ir.ArrowFunctionExpr) bool {
+	if b.ignoreFunctionBodies {
+		return false
+	}
+
+	return b.enterArrowFunction(fun)
 }
 
 func (b *BlockWalker) handleReturn(ret *ir.ReturnStmt) {
@@ -1152,6 +1165,19 @@ func (b *BlockWalker) handleFor(s *ir.ForStmt) bool {
 	return false
 }
 
+func (b *BlockWalker) enterArrowFunction(fun *ir.ArrowFunctionExpr) bool {
+	sc := meta.NewScope()
+
+	doc := b.r.parsePHPDoc(fun, fun.PhpDocComment, fun.Params)
+	b.r.reportPhpdocErrors(fun, doc.errs)
+	phpDocParamTypes := doc.types
+
+	params, _ := b.r.parseFuncArgs(fun.Params, phpDocParamTypes, sc)
+	b.r.handleArrowFuncExpr(params, fun.Expr, sc, b)
+
+	return false
+}
+
 func (b *BlockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType meta.TypesMap) bool {
 	sc := meta.NewScope()
 	sc.SetInClosure(true)
@@ -1277,18 +1303,62 @@ func (b *BlockWalker) propagateFlagsFromBranches(contexts []*blockContext, links
 }
 
 func (b *BlockWalker) handleVariable(v ir.Node) bool {
+	var varName string
 	switch v := v.(type) {
 	case *ir.Var:
 		if vv, ok := v.Expr.(*ir.SimpleVar); ok {
-			delete(b.unusedVars, vv.Name)
+			varName = vv.Name
+			if b.inArrowFunction {
+				for _, w := range b.parentBlockWalkers {
+					delete(w.unusedVars, varName)
+				}
+			} else {
+				delete(b.unusedVars, varName)
+			}
 		}
 	case *ir.SimpleVar:
-		delete(b.unusedVars, v.Name)
+		varName = v.Name
+		if b.inArrowFunction {
+			for _, w := range b.parentBlockWalkers {
+				delete(w.unusedVars, varName)
+			}
+		} else {
+			delete(b.unusedVars, varName)
+		}
 	}
 
-	if !b.ctx.sc.HaveVar(v) {
+	have := b.ctx.sc.HaveVar(v)
+
+	if !have && !b.inArrowFunction {
 		b.r.reportUndefinedVariable(v, b.ctx.sc.MaybeHaveVar(v))
 		b.ctx.sc.AddVar(v, meta.NewTypesMap("undefined"), "undefined", meta.VarAlwaysDefined)
+	}
+
+	if b.inArrowFunction && !have {
+		var varNotFound bool
+		var varMaybeNotDefined bool
+
+		for _, bw := range b.parentBlockWalkers {
+			s := bw.ctx.sc
+
+			if !s.HaveVar(v) {
+				if varMaybeNotDefined != true {
+					varMaybeNotDefined = s.MaybeHaveVar(v)
+				}
+				varNotFound = true
+				continue
+			}
+
+			tp, _ := s.GetVarNameType(varName)
+			varNotFound = false
+			b.ctx.sc.AddVar(v, tp, "from_parent_scope", meta.VarAlwaysDefined)
+			return false
+		}
+
+		if varNotFound {
+			b.r.reportUndefinedVariable(v, varMaybeNotDefined)
+			b.ctx.sc.AddVar(v, meta.NewTypesMap("undefined"), "undefined", meta.VarAlwaysDefined)
+		}
 	}
 
 	return false

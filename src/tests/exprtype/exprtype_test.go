@@ -1865,6 +1865,18 @@ exprtype($tuple_int_str, "unknown_from_list");
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestArrowFunction(t *testing.T) {
+	code := `<?php
+function f() {
+   $value = 10;
+   $_ = fn($x) => $value = "probably now $value has type int|string";
+   // but, no
+   exprtype($value, "precise int"); // Ok, see specification
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestPropertyTypeHints(t *testing.T) {
 	code := `<?php
 class Too {}
