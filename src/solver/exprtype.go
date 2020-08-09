@@ -222,7 +222,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 		return meta.NewTypesMap(meta.WrapStaticPropertyFetch(nm, "$"+v.Name))
 	case *ir.SimpleVar:
 		typ, _ := sc.GetVarNameType(n.Name)
-		return typ
+		return typ.Immutable()
 	case *ir.MethodCallExpr:
 		// Support only $obj->callSomething().
 		// Do not support $obj->$method()
