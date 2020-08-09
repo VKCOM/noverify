@@ -229,7 +229,7 @@ func (m TypesMap) AppendString(str string) TypesMap {
 }
 
 func (m TypesMap) Clone() TypesMap {
-	if m.Len() == 0 || m.isImmutable() {
+	if m.Len() == 0 {
 		return m
 	}
 
