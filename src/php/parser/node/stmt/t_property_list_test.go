@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/VKCOM/noverify/src/linttest/assert"
+	"github.com/VKCOM/noverify/src/php/parser/node/name"
 
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
@@ -306,6 +307,104 @@ func TestProperties2(t *testing.T) {
 										EndPos:    38,
 									},
 									Name: "b",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	php7parser := php7.NewParser([]byte(src))
+	php7parser.Parse()
+	actual := php7parser.GetRootNode()
+	assert.DeepEqual(t, expected, actual)
+}
+
+func TestPropertyType(t *testing.T) {
+	src := `<? class foo {var bar $a;}`
+
+	expected := &node.Root{
+		Position: &position.Position{
+			StartLine: 1,
+			EndLine:   1,
+			StartPos:  3,
+			EndPos:    26,
+		},
+		Stmts: []node.Node{
+			&stmt.Class{
+				Position: &position.Position{
+					StartLine: 1,
+					EndLine:   1,
+					StartPos:  3,
+					EndPos:    26,
+				},
+				PhpDocComment: "",
+				ClassName: &node.Identifier{
+					Position: &position.Position{
+						StartLine: 1,
+						EndLine:   1,
+						StartPos:  9,
+						EndPos:    12,
+					},
+					Value: "foo",
+				},
+				Stmts: []node.Node{
+					&stmt.PropertyList{
+						Position: &position.Position{
+							StartLine: 1,
+							EndLine:   1,
+							StartPos:  14,
+							EndPos:    25,
+						},
+						Modifiers: []*node.Identifier{
+							{
+								Position: &position.Position{
+									StartLine: 1,
+									EndLine:   1,
+									StartPos:  14,
+									EndPos:    17,
+								},
+								Value: "var",
+							},
+						},
+						Type: &name.Name{
+							Position: &position.Position{
+								StartLine: 1,
+								EndLine:   1,
+								StartPos:  18,
+								EndPos:    21,
+							},
+							Parts: []node.Node{
+								&name.NamePart{
+									Position: &position.Position{
+										StartLine: 1,
+										EndLine:   1,
+										StartPos:  18,
+										EndPos:    21,
+									},
+									Value: "bar",
+								},
+							},
+						},
+						Properties: []node.Node{
+							&stmt.Property{
+								Position: &position.Position{
+									StartLine: 1,
+									EndLine:   1,
+									StartPos:  22,
+									EndPos:    24,
+								},
+								PhpDocComment: "",
+								Variable: &node.SimpleVar{
+									Position: &position.Position{
+										StartLine: 1,
+										EndLine:   1,
+										StartPos:  22,
+										EndPos:    24,
+									},
+									Name: "a",
 								},
 							},
 						},

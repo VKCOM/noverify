@@ -4,10 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
-	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
+	"github.com/VKCOM/noverify/src/ir"
 )
 
 func BenchmarkNodeSet(b *testing.B) {
@@ -35,23 +32,23 @@ func BenchmarkNodeSet(b *testing.B) {
 	runBench(1000)
 }
 
-func createFQN(parts ...string) *name.FullyQualified {
-	nm := &name.FullyQualified{
-		Parts: make([]node.Node, len(parts)),
+func createFQN(parts ...string) *ir.FullyQualifiedName {
+	nm := &ir.FullyQualifiedName{
+		Parts: make([]ir.Node, len(parts)),
 	}
 	for i, s := range parts {
-		nm.Parts[i] = &name.NamePart{Value: s}
+		nm.Parts[i] = &ir.NamePart{Value: s}
 	}
 	return nm
 }
 
-func createSwitchCases(ncases int) []node.Node {
-	cases := make([]node.Node, ncases)
+func createSwitchCases(ncases int) []ir.Node {
+	cases := make([]ir.Node, ncases)
 	for i := range cases {
-		cases[i] = &stmt.Case{
-			Cond: &expr.ClassConstFetch{
+		cases[i] = &ir.CaseStmt{
+			Cond: &ir.ClassConstFetchExpr{
 				Class:        createFQN("Namespace", "Foo"),
-				ConstantName: &node.Identifier{Value: fmt.Sprintf("Bar%d", i)},
+				ConstantName: &ir.Identifier{Value: fmt.Sprintf("Bar%d", i)},
 			},
 		}
 	}

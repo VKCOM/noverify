@@ -4,17 +4,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
+	"github.com/VKCOM/noverify/src/ir"
 )
 
 type NodePath struct {
-	stack []node.Node
+	stack []ir.Node
 }
 
 func newNodePath() NodePath {
-	return NodePath{stack: make([]node.Node, 0, 20)}
+	return NodePath{stack: make([]ir.Node, 0, 20)}
 }
 
 func (p NodePath) String() string {
@@ -25,11 +23,11 @@ func (p NodePath) String() string {
 	return strings.Join(parts, "/")
 }
 
-func (p NodePath) Parent() node.Node {
+func (p NodePath) Parent() ir.Node {
 	return p.NthParent(1)
 }
 
-func (p NodePath) Current() node.Node {
+func (p NodePath) Current() ir.Node {
 	return p.NthParent(0)
 }
 
@@ -37,7 +35,7 @@ func (p NodePath) Conditional() bool {
 	return p.ConditionalUntil(p.Current())
 }
 
-func (p NodePath) NthParent(n int) node.Node {
+func (p NodePath) NthParent(n int) ir.Node {
 	index := len(p.stack) - n - 1
 	if index >= 0 {
 		return p.stack[index]
@@ -45,7 +43,7 @@ func (p NodePath) NthParent(n int) node.Node {
 	return nil
 }
 
-func (p NodePath) ConditionalUntil(end node.Node) bool {
+func (p NodePath) ConditionalUntil(end ir.Node) bool {
 	// TODO: can we report if statement as unconditioncal?
 	// stmt.If is pushed before we handle condition,
 	// so it will occure as a path element.
@@ -57,15 +55,15 @@ func (p NodePath) ConditionalUntil(end node.Node) bool {
 
 		switch n.(type) {
 		// Obvious branching.
-		case *stmt.If, *stmt.ElseIf, *expr.Ternary:
+		case *ir.IfStmt, *ir.ElseIfStmt, *ir.TernaryExpr:
 			return true
 		// Else executes only if condition failed.
-		case *stmt.Else:
+		case *ir.ElseStmt:
 			return true
 		// Loops that can be executed 0 times.
-		case *stmt.For, *stmt.Foreach, *stmt.While:
+		case *ir.ForStmt, *ir.ForeachStmt, *ir.WhileStmt:
 			return true
-		case *stmt.Catch:
+		case *ir.CatchStmt:
 			return true
 		}
 	}
@@ -73,7 +71,7 @@ func (p NodePath) ConditionalUntil(end node.Node) bool {
 	return false
 }
 
-func (p *NodePath) push(n node.Node) {
+func (p *NodePath) push(n ir.Node) {
 	p.stack = append(p.stack, n)
 }
 

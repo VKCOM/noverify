@@ -1,7 +1,7 @@
 package phpgrep
 
 import (
-	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/ir"
 )
 
 // Compiler creates matcher objects out of the string patterns.
@@ -20,15 +20,15 @@ type Matcher struct {
 
 type CapturedNode struct {
 	Name string
-	Node node.Node
+	Node ir.Node
 }
 
 type MatchData struct {
-	Node    node.Node
+	Node    ir.Node
 	Capture []CapturedNode
 }
 
-func (data MatchData) CapturedByName(name string) (node.Node, bool) {
+func (data MatchData) CapturedByName(name string) (ir.Node, bool) {
 	return findNamed(data.Capture, name)
 }
 
@@ -41,7 +41,7 @@ func (m *Matcher) Clone() *Matcher {
 //
 // Returned match data should only be examined if the
 // second return value is true.
-func (m *Matcher) Match(n node.Node) (MatchData, bool) {
+func (m *Matcher) Match(n ir.Node) (MatchData, bool) {
 	var state matcherState
 	return m.m.match(&state, n)
 }

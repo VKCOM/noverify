@@ -59,11 +59,6 @@ func (m TypesMap) isImmutable() bool { return m.flags&mapImmutable != 0 }
 // Users should not depend on the "false" result meaning.
 // If "true" is returned, TypesMap is guaranteed to be free of lazy types.
 func (m TypesMap) IsResolved() bool {
-	if m.IsPrecise() {
-		// Using the invariant that precise types are resolved.
-		return true
-	}
-
 	// TODO: could do a `s[0] >= meta.WMax` check over map keys
 	// to check if it contains any lazy types.
 	// It can be safe to start with maps of size 1.
@@ -72,7 +67,7 @@ func (m TypesMap) IsResolved() bool {
 	// than we would like to spend.
 	// Note that most maps have a size that is less than 4, but
 	// some of them can have 100+ elements.
-	return false
+	return m.IsPrecise()
 }
 
 // NewEmptyTypesMap creates new type map that has no types in it

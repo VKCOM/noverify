@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/VKCOM/noverify/src/php/parser/node"
+	"github.com/VKCOM/noverify/src/ir"
 )
 
 var debugScope = false
@@ -140,7 +140,7 @@ func (s *Scope) Len() int {
 }
 
 // AddVar adds variable with specified types to scope
-func (s *Scope) AddVar(v node.Node, typ TypesMap, reason string, flags VarFlags) {
+func (s *Scope) AddVar(v ir.Node, typ TypesMap, reason string, flags VarFlags) {
 	name, ok := scopeVarName(v)
 	if !ok {
 		return
@@ -149,7 +149,7 @@ func (s *Scope) AddVar(v node.Node, typ TypesMap, reason string, flags VarFlags)
 }
 
 // ReplaceVar replaces variable with specified types to scope
-func (s *Scope) ReplaceVar(v node.Node, typ TypesMap, reason string, flags VarFlags) {
+func (s *Scope) ReplaceVar(v ir.Node, typ TypesMap, reason string, flags VarFlags) {
 	name, ok := scopeVarName(v)
 	if !ok {
 		return
@@ -159,7 +159,7 @@ func (s *Scope) ReplaceVar(v node.Node, typ TypesMap, reason string, flags VarFl
 }
 
 // DelVar deletes specified variable from scope
-func (s *Scope) DelVar(v node.Node, reason string) {
+func (s *Scope) DelVar(v ir.Node, reason string) {
 	name, ok := scopeVarName(v)
 	if !ok {
 		return
@@ -225,7 +225,7 @@ func (s *Scope) AddVarFromPHPDoc(name string, typ TypesMap, reason string) {
 }
 
 // HaveVar checks whether or not specified variable is present in the scope and that it is always defined
-func (s *Scope) HaveVar(v node.Node) bool {
+func (s *Scope) HaveVar(v ir.Node) bool {
 	name, ok := scopeVarName(v)
 	if !ok {
 		return false
@@ -235,7 +235,7 @@ func (s *Scope) HaveVar(v node.Node) bool {
 }
 
 // MaybeHaveVar checks that variable is present in the scope (it may be not always defined)
-func (s *Scope) MaybeHaveVar(v node.Node) bool {
+func (s *Scope) MaybeHaveVar(v ir.Node) bool {
 	name, ok := scopeVarName(v)
 	if !ok {
 		return false
@@ -297,12 +297,12 @@ func (s *Scope) Clone() *Scope {
 	return res
 }
 
-func scopeVarName(v node.Node) (string, bool) {
+func scopeVarName(v ir.Node) (string, bool) {
 	switch v := v.(type) {
-	case *node.SimpleVar:
+	case *ir.SimpleVar:
 		return v.Name, true
-	case *node.Var:
-		vv, ok := v.Expr.(*node.SimpleVar)
+	case *ir.Var:
+		vv, ok := v.Expr.(*ir.SimpleVar)
 		if !ok {
 			return "", false // Don't go further than 1 level
 		}

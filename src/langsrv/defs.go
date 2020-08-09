@@ -3,12 +3,9 @@ package langsrv
 import (
 	"fmt"
 
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/state"
 	"github.com/VKCOM/noverify/src/vscode"
@@ -19,13 +16,13 @@ type definitionWalker struct {
 	st meta.ClassParseState
 
 	position int
-	scopes   map[node.Node]*meta.Scope
+	scopes   map[ir.Node]*meta.Scope
 
 	result      []vscode.Location
 	foundScopes []*meta.Scope
 }
 
-func safeExprType(sc *meta.Scope, cs *meta.ClassParseState, n node.Node) (res meta.TypesMap) {
+func safeExprType(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node) (res meta.TypesMap) {
 	defer func() {
 		if r := recover(); r != nil {
 			res = meta.NewTypesMap(fmt.Sprintf("Panic: %s", fmt.Sprint(r)))
@@ -37,9 +34,7 @@ func safeExprType(sc *meta.Scope, cs *meta.ClassParseState, n node.Node) (res me
 }
 
 // EnterNode is invoked at every node in hierarchy
-func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
-	n := w.(node.Node)
-
+func (d *definitionWalker) EnterNode(n ir.Node) bool {
 	sc, ok := d.scopes[n]
 	if ok {
 		d.foundScopes = append(d.foundScopes, sc)
@@ -47,9 +42,9 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 
 	state.EnterNode(&d.st, n)
 
-	switch n := w.(type) {
-	case *expr.FunctionCall:
-		pos := n.Function.GetPosition()
+	switch n := n.(type) {
+	case *ir.FunctionCallExpr:
+		pos := ir.GetPosition(n.Function)
 
 		if d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
@@ -60,13 +55,13 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 		var nameStr string
 
 		switch nm := n.Function.(type) {
-		case *name.Name:
+		case *ir.Name:
 			nameStr = meta.NameToString(nm)
 			fun, ok = meta.Info.GetFunction(d.st.Namespace + `\` + nameStr)
 			if !ok && d.st.Namespace != "" {
 				fun, ok = meta.Info.GetFunction(`\` + nameStr)
 			}
-		case *name.FullyQualified:
+		case *ir.FullyQualifiedName:
 			nameStr = meta.FullyQualifiedToString(nm)
 			fun, ok = meta.Info.GetFunction(nameStr)
 		}
@@ -82,8 +77,8 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 		}
 
 		lintdebug.Send("Found function %s: %s:%d", nameStr, fun.Pos.Filename, fun.Pos.Line)
-	case *expr.StaticCall:
-		pos := n.Call.GetPosition()
+	case *ir.StaticCallExpr:
+		pos := ir.GetPosition(n.Call)
 
 		if d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
@@ -92,7 +87,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 		lintdebug.Send("Static call found")
 
 		// not going to resolve $obj->$someMethod(); calls
-		id, ok := n.Call.(*node.Identifier)
+		id, ok := n.Call.(*ir.Identifier)
 		if !ok {
 			lintdebug.Send("Static Call is not identifier")
 			return true
@@ -113,8 +108,8 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 				},
 			})
 		}
-	case *expr.MethodCall:
-		pos := n.Method.GetPosition()
+	case *ir.MethodCallExpr:
+		pos := ir.GetPosition(n.Method)
 
 		if d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
@@ -130,7 +125,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 		foundScope := d.foundScopes[len(d.foundScopes)-1]
 
 		// not going to resolve $obj->$someMethod(); calls
-		id, ok := n.Method.(*node.Identifier)
+		id, ok := n.Method.(*ir.Identifier)
 		if !ok {
 			lintdebug.Send("Method is not identifier")
 			return true
@@ -153,8 +148,8 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 				},
 			})
 		})
-	case *expr.PropertyFetch:
-		pos := n.Property.GetPosition()
+	case *ir.PropertyFetchExpr:
+		pos := ir.GetPosition(n.Property)
 
 		if d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
@@ -170,7 +165,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 		foundScope := d.foundScopes[len(d.foundScopes)-1]
 
 		// not going to resolve $obj->$someProperty
-		id, ok := n.Property.(*node.Identifier)
+		id, ok := n.Property.(*ir.Identifier)
 		if !ok {
 			lintdebug.Send("Method is not identifier")
 			return true
@@ -193,8 +188,8 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 				},
 			})
 		})
-	case *expr.ConstFetch:
-		pos := n.Constant.GetPosition()
+	case *ir.ConstFetchExpr:
+		pos := ir.GetPosition(n.Constant)
 
 		if d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
@@ -211,8 +206,8 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 				},
 			})
 		}
-	case *expr.ClassConstFetch:
-		if pos := n.ConstantName.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
+	case *ir.ClassConstFetchExpr:
+		if pos := ir.GetPosition(n.ConstantName); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
 
@@ -237,8 +232,8 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 			})
 		}
 
-	case *name.Name:
-		pos := n.GetPosition()
+	case *ir.Name:
+		pos := ir.GetPosition(n)
 
 		if d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
@@ -262,8 +257,8 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 				End:   vscode.Position{Line: int(c.Pos.Line) - 1},
 			},
 		})
-	case *name.FullyQualified:
-		pos := n.GetPosition()
+	case *ir.FullyQualifiedName:
+		pos := ir.GetPosition(n)
 		if d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
@@ -294,9 +289,7 @@ func (d *definitionWalker) EnterNode(w walker.Walkable) bool {
 }
 
 // LeaveNode is invoked after node process
-func (d *definitionWalker) LeaveNode(w walker.Walkable) {
-	n := w.(node.Node)
-
+func (d *definitionWalker) LeaveNode(n ir.Node) {
 	if d.scopes != nil {
 		_, ok := d.scopes[n]
 		if ok && len(d.foundScopes) > 0 {

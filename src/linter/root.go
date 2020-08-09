@@ -11,18 +11,12 @@ import (
 
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/git"
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
-	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
-	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/php/parser/position"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/phpgrep"
 	"github.com/VKCOM/noverify/src/quickfix"
@@ -62,7 +56,7 @@ type RootWalker struct {
 	// internal state
 	meta fileMeta
 
-	currentClassNode node.Node
+	currentClassNode ir.Node
 
 	allowDisabledRegexp *regexp.Regexp // user-defined flag that files suitable for this regular expression should not be linted
 	linterDisabled      bool           // flag indicating whether linter is disabled. Flag is set to true only if the file
@@ -80,7 +74,7 @@ type RootWalker struct {
 	LinesPositions []int
 
 	// exposed meta-information for language server to use
-	Scopes      map[node.Node]*meta.Scope
+	Scopes      map[ir.Node]*meta.Scope
 	Diagnostics []vscode.Diagnostic
 }
 
@@ -204,55 +198,53 @@ func (d *RootWalker) GetReports() []*Report {
 }
 
 // EnterNode is invoked at every node in hierarchy
-func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
+func (d *RootWalker) EnterNode(n ir.Node) (res bool) {
 	res = true
 
 	for _, c := range d.custom {
-		c.BeforeEnterNode(w)
+		c.BeforeEnterNode(n)
 	}
 
-	if n, ok := w.(node.Node); ok {
-		if ffs := n.GetFreeFloating(); ffs != nil {
-			for _, cs := range *ffs {
-				for _, c := range cs {
-					if c.StringType == freefloating.CommentType {
-						d.handleComment(c)
-					}
+	if ffs := n.GetFreeFloating(); ffs != nil {
+		for _, cs := range *ffs {
+			for _, c := range cs {
+				if c.StringType == freefloating.CommentType {
+					d.handleComment(c)
 				}
 			}
 		}
 	}
 
-	if class, ok := w.(*stmt.Class); ok && class.ClassName == nil {
+	if class, ok := n.(*ir.ClassStmt); ok && class.ClassName == nil {
 		// TODO: remove when #62 and anon class support in general is ready.
 		return false // Don't walk nor enter anon classes
 	}
 
-	state.EnterNode(d.ctx.st, w)
+	state.EnterNode(d.ctx.st, n)
 
-	switch n := w.(type) {
-	case *stmt.Declare:
+	switch n := n.(type) {
+	case *ir.DeclareStmt:
 		for _, c := range n.Consts {
-			c, ok := c.(*stmt.Constant)
+			c, ok := c.(*ir.ConstantStmt)
 			if !ok {
 				continue
 			}
 			if c.ConstantName.Value == "strict_types" {
-				v, ok := c.Expr.(*scalar.Lnumber)
+				v, ok := c.Expr.(*ir.Lnumber)
 				if ok && v.Value == "1" {
 					d.strictTypes = true
 				}
 			}
 		}
 
-	case *stmt.Interface:
+	case *ir.InterfaceStmt:
 		d.currentClassNode = n
 		d.checkKeywordCase(n, "interface")
 		d.checkCommentMisspellings(n.InterfaceName, n.PhpDocComment)
 		if !strings.HasSuffix(n.InterfaceName.Value, "able") {
 			d.checkIdentMisspellings(n.InterfaceName)
 		}
-	case *stmt.Class:
+	case *ir.ClassStmt:
 		d.currentClassNode = n
 		cl := d.getClass()
 		var classFlags meta.ClassFlags
@@ -306,12 +298,12 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 			}
 		}
 
-	case *stmt.Trait:
+	case *ir.TraitStmt:
 		d.currentClassNode = n
 		d.checkKeywordCase(n, "trait")
 		d.checkCommentMisspellings(n.TraitName, n.PhpDocComment)
 		d.checkIdentMisspellings(n.TraitName)
-	case *stmt.TraitUse:
+	case *ir.TraitUseStmt:
 		d.checkKeywordCase(n, "use")
 		cl := d.getClass()
 		for _, tr := range n.Traits {
@@ -321,38 +313,37 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 				d.checkTraitImplemented(tr, traitName)
 			}
 		}
-	case *assign.Assign:
-		v, ok := n.Variable.(*node.SimpleVar)
+	case *ir.Assign:
+		v, ok := n.Variable.(*ir.SimpleVar)
 		if !ok {
 			break
 		}
 
 		d.scope().AddVar(v, solver.ExprTypeLocal(d.scope(), d.ctx.st, n.Expression), "global variable", meta.VarAlwaysDefined)
-	case *stmt.Function:
+	case *ir.FunctionStmt:
 		res = d.enterFunction(n)
 		d.checkKeywordCase(n, "function")
-	case *stmt.PropertyList:
+	case *ir.PropertyListStmt:
 		res = d.enterPropertyList(n)
-	case *stmt.ClassConstList:
+	case *ir.ClassConstListStmt:
 		res = d.enterClassConstList(n)
-	case *stmt.ClassMethod:
+	case *ir.ClassMethodStmt:
 		res = d.enterClassMethod(n)
-	case *expr.FunctionCall:
+	case *ir.FunctionCallExpr:
 		res = d.enterFunctionCall(n)
-	case *stmt.ConstList:
+	case *ir.ConstListStmt:
 		res = d.enterConstList(n)
 
-	case *stmt.Namespace:
+	case *ir.NamespaceStmt:
 		d.checkKeywordCase(n, "namespace")
 	}
 
 	for _, c := range d.custom {
-		c.AfterEnterNode(w)
+		c.AfterEnterNode(n)
 	}
 
 	if meta.IsIndexingComplete() && d.rootRset != nil {
-		n := w.(node.Node)
-		kind := rules.CategorizeNode(n)
+		kind := ir.GetNodeKind(n)
 		d.runRules(n, d.scope(), d.rootRset.RulesByKind[kind])
 	}
 
@@ -361,7 +352,7 @@ func (d *RootWalker) EnterNode(w walker.Walkable) (res bool) {
 		// LeaveNode will not be called for this node.
 		// But we still need to "leave" them if they
 		// were entered in the ClassParseState.
-		state.LeaveNode(d.ctx.st, w)
+		state.LeaveNode(d.ctx.st, n)
 	}
 	return res
 }
@@ -378,7 +369,7 @@ func (d *RootWalker) parseStartPos(pos *position.Position) (startLn []byte, star
 	return startLn, startChar
 }
 
-func (d *RootWalker) report(n node.Node, lineNumber int, level int, checkName, msg string, args ...interface{}) {
+func (d *RootWalker) report(n ir.Node, lineNumber int, level int, checkName, msg string, args ...interface{}) {
 	if !meta.IsIndexingComplete() {
 		return
 	}
@@ -419,7 +410,7 @@ func (d *RootWalker) report(n node.Node, lineNumber int, level int, checkName, m
 				}
 			}
 		} else {
-			pos = *n.GetPosition()
+			pos = *ir.GetPosition(n)
 		}
 
 		startLn, startChar = d.parseStartPos(&pos)
@@ -447,7 +438,7 @@ func (d *RootWalker) report(n node.Node, lineNumber int, level int, checkName, m
 		endChar = len(startLn)
 
 		if strings.HasSuffix(string(startLn), "\r") {
-			endChar = endChar - 1
+			endChar--
 		}
 
 		pos = position.Position{
@@ -507,7 +498,7 @@ func (d *RootWalker) report(n node.Node, lineNumber int, level int, checkName, m
 }
 
 // Report registers a single report message about some found problem.
-func (d *RootWalker) Report(n node.Node, level int, checkName, msg string, args ...interface{}) {
+func (d *RootWalker) Report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
 	d.report(n, 0, level, checkName, msg, args...)
 }
 
@@ -579,8 +570,8 @@ func (d *RootWalker) reportHash(pos *position.Position, startLine []byte, checkN
 	})
 }
 
-func (d *RootWalker) reportUndefinedVariable(v node.Node, maybeHave bool) {
-	sv, ok := v.(*node.SimpleVar)
+func (d *RootWalker) reportUndefinedVariable(v ir.Node, maybeHave bool) {
+	sv, ok := v.(*ir.SimpleVar)
 	if !ok {
 		d.Report(v, LevelInformation, "undefined", "Unknown variable variable %s used",
 			meta.NameNodeToString(v))
@@ -641,26 +632,20 @@ type handleFuncResult struct {
 	callsParentConstructor bool
 }
 
-func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node.Node, sc *meta.Scope) handleFuncResult {
-	b := &BlockWalker{
-		ctx:          &blockContext{sc: sc},
-		r:            d,
-		unusedVars:   make(map[string][]node.Node),
-		nonLocalVars: make(map[string]variableKind),
-		path:         newNodePath(),
-	}
+func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.Node, sc *meta.Scope) handleFuncResult {
+	b := newBlockWalker(d, sc)
 	for _, createFn := range d.customBlock {
 		b.custom = append(b.custom, createFn(&BlockContext{w: b}))
 	}
 
 	for _, useExpr := range uses {
 		var byRef bool
-		var v *node.SimpleVar
+		var v *ir.SimpleVar
 		switch u := useExpr.(type) {
-		case *expr.Reference:
-			v = u.Variable.(*node.SimpleVar)
+		case *ir.ReferenceExpr:
+			v = u.Variable.(*ir.SimpleVar)
 			byRef = true
-		case *node.SimpleVar:
+		case *ir.SimpleVar:
 			v = u
 		}
 
@@ -713,12 +698,12 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []node
 	}
 }
 
-func (d *RootWalker) checkParentConstructorCall(n node.Node, parentConstructorCalled bool) {
+func (d *RootWalker) checkParentConstructorCall(n ir.Node, parentConstructorCalled bool) {
 	if !meta.IsIndexingComplete() {
 		return
 	}
 
-	class, ok := d.currentClassNode.(*stmt.Class)
+	class, ok := d.currentClassNode.(*ir.ClassStmt)
 	if !ok || class.Extends == nil {
 		return
 	}
@@ -732,8 +717,8 @@ func (d *RootWalker) checkParentConstructorCall(n node.Node, parentConstructorCa
 	}
 }
 
-func (d *RootWalker) getElementPos(n node.Node) meta.ElementPosition {
-	pos := n.GetPosition()
+func (d *RootWalker) getElementPos(n ir.Node) meta.ElementPosition {
+	pos := ir.GetPosition(n)
 	_, startChar := d.parseStartPos(pos)
 
 	return meta.ElementPosition{
@@ -745,9 +730,9 @@ func (d *RootWalker) getElementPos(n node.Node) meta.ElementPosition {
 	}
 }
 
-func (d *RootWalker) addScope(n node.Node, sc *meta.Scope) {
+func (d *RootWalker) addScope(n ir.Node, sc *meta.Scope) {
 	if d.Scopes == nil {
-		d.Scopes = make(map[node.Node]*meta.Scope)
+		d.Scopes = make(map[ir.Node]*meta.Scope)
 	}
 	d.Scopes[n] = sc
 }
@@ -759,7 +744,7 @@ type methodModifiers struct {
 	final       bool
 }
 
-func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodModifiers) {
+func (d *RootWalker) parseMethodModifiers(meth *ir.ClassMethodStmt) (res methodModifiers) {
 	res.accessLevel = meta.Public
 
 	for _, m := range meth.Modifiers {
@@ -784,33 +769,56 @@ func (d *RootWalker) parseMethodModifiers(meth *stmt.ClassMethod) (res methodMod
 	return res
 }
 
-func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodModifiers) {
+func (d *RootWalker) checkMagicMethod(meth ir.Node, name string, modif methodModifiers, countArgs int) {
+	const Any = -1
 	var (
 		canBeStatic    bool
 		canBeNonPublic bool
 		mustBeStatic   bool
+
+		numArgsExpected int
 	)
 
 	switch name {
 	case "__call",
-		"__get",
-		"__set",
+		"__set":
+		canBeStatic = false
+		canBeNonPublic = false
+		numArgsExpected = 2
+
+	case "__get",
 		"__isset",
-		"__unset",
-		"__toString",
-		"__invoke",
+		"__unset":
+		canBeStatic = false
+		canBeNonPublic = false
+		numArgsExpected = 1
+
+	case "__toString":
+		canBeStatic = false
+		canBeNonPublic = false
+		numArgsExpected = 0
+
+	case "__invoke",
 		"__debugInfo":
 		canBeStatic = false
 		canBeNonPublic = false
+		numArgsExpected = Any
 
-	case "__construct", "__destruct", "__clone":
+	case "__construct":
 		canBeStatic = false
 		canBeNonPublic = true
+		numArgsExpected = Any
+
+	case "__destruct", "__clone":
+		canBeStatic = false
+		canBeNonPublic = true
+		numArgsExpected = 0
 
 	case "__callStatic":
 		canBeStatic = true
 		canBeNonPublic = false
 		mustBeStatic = true
+		numArgsExpected = 2
 
 	case "__sleep",
 		"__wakeup",
@@ -819,6 +827,7 @@ func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodM
 		"__set_state":
 		canBeNonPublic = true
 		canBeStatic = true
+		numArgsExpected = Any
 
 	default:
 		return // Not a magic method
@@ -832,6 +841,10 @@ func (d *RootWalker) checkMagicMethod(meth node.Node, name string, modif methodM
 	}
 	if !canBeNonPublic && modif.accessLevel != meta.Public {
 		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must have public visibility", name)
+	}
+
+	if countArgs != numArgsExpected && numArgsExpected != Any {
+		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must take exactly %d argument", name, numArgsExpected)
 	}
 }
 
@@ -870,7 +883,7 @@ func (d *RootWalker) getClass() meta.ClassInfo {
 	return cl
 }
 
-func (d *RootWalker) lowerCaseModifier(m *node.Identifier) string {
+func (d *RootWalker) lowerCaseModifier(m *ir.Identifier) string {
 	lcase := strings.ToLower(m.Value)
 	if lcase != m.Value {
 		d.Report(m, LevelWarning, "keywordCase", "Use %s instead of %s",
@@ -879,7 +892,7 @@ func (d *RootWalker) lowerCaseModifier(m *node.Identifier) string {
 	return lcase
 }
 
-func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
+func (d *RootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 	cl := d.getClass()
 
 	isStatic := false
@@ -898,8 +911,13 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 		}
 	}
 
+	var specifiedType meta.TypesMap
+	if typ, ok := d.parseTypeNode(pl.Type); ok {
+		specifiedType = typ
+	}
+
 	for _, pNode := range pl.Properties {
-		p := pNode.(*stmt.Property)
+		p := pNode.(*ir.PropertyStmt)
 
 		nm := p.Variable.Name
 
@@ -908,6 +926,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 		if p.Expr != nil {
 			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, p.Expr))
 		}
+		typ = typ.Append(specifiedType)
 
 		if isStatic {
 			nm = "$" + nm
@@ -924,7 +943,7 @@ func (d *RootWalker) enterPropertyList(pl *stmt.PropertyList) bool {
 	return true
 }
 
-func (d *RootWalker) enterClassConstList(s *stmt.ClassConstList) bool {
+func (d *RootWalker) enterClassConstList(s *ir.ClassConstListStmt) bool {
 	cl := d.getClass()
 	accessLevel := meta.Public
 
@@ -940,7 +959,7 @@ func (d *RootWalker) enterClassConstList(s *stmt.ClassConstList) bool {
 	}
 
 	for _, cNode := range s.Consts {
-		c := cNode.(*stmt.Constant)
+		c := cNode.(*ir.ConstantStmt)
 
 		nm := c.ConstantName.Value
 		d.checkCommentMisspellings(c, c.PhpDocComment)
@@ -960,23 +979,23 @@ func (d *RootWalker) enterClassConstList(s *stmt.ClassConstList) bool {
 	return true
 }
 
-func (d *RootWalker) checkOldStyleConstructor(meth *stmt.ClassMethod, nm string) {
+func (d *RootWalker) checkOldStyleConstructor(meth *ir.ClassMethodStmt, nm string) {
 	lastDelim := strings.IndexByte(d.ctx.st.CurrentClass, '\\')
 	if strings.EqualFold(d.ctx.st.CurrentClass[lastDelim+1:], nm) {
-		_, isClass := d.currentClassNode.(*stmt.Class)
+		_, isClass := d.currentClassNode.(*ir.ClassStmt)
 		if isClass {
 			d.Report(meth.MethodName, LevelDoNotReject, "oldStyleConstructor", "Old-style constructor usage, use __construct instead")
 		}
 	}
 }
 
-func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
+func (d *RootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	nm := meth.MethodName.Value
-	_, insideInterface := d.currentClassNode.(*stmt.Interface)
+	_, insideInterface := d.currentClassNode.(*ir.InterfaceStmt)
 
 	d.checkOldStyleConstructor(meth, nm)
 
-	pos := meth.GetPosition()
+	pos := ir.GetPosition(meth)
 
 	if funcSize := pos.EndLine - pos.StartLine; funcSize > maxFunctionLines {
 		d.Report(meth.MethodName, LevelDoNotReject, "complexity", "Too big method: more than %d lines", maxFunctionLines)
@@ -984,7 +1003,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 
 	modif := d.parseMethodModifiers(meth)
 
-	d.checkMagicMethod(meth.MethodName, nm, modif)
+	d.checkMagicMethod(meth.MethodName, nm, modif, len(meth.Params))
 
 	sc := meta.NewScope()
 	if !modif.static {
@@ -1006,7 +1025,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	d.checkCommentMisspellings(meth.MethodName, meth.PhpDocComment)
 	d.checkIdentMisspellings(meth.MethodName)
 	for _, p := range meth.Params {
-		d.checkVarnameMisspellings(p, p.(*node.Parameter).Variable.Name)
+		d.checkVarnameMisspellings(p, p.(*ir.Parameter).Variable.Name)
 	}
 	doc := d.parsePHPDoc(meth.MethodName, meth.PhpDocComment, meth.Params)
 	d.reportPhpdocErrors(meth.MethodName, doc.errs)
@@ -1050,8 +1069,8 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 		}
 	}
 
-	var stmts []node.Node
-	if stmtList, ok := meth.Stmt.(*stmt.StmtList); ok {
+	var stmts []ir.Node
+	if stmtList, ok := meth.Stmt.(*ir.StmtList); ok {
 		stmts = stmtList.Stmts
 	}
 	funcInfo := d.handleFuncStmts(params, nil, stmts, sc)
@@ -1106,7 +1125,7 @@ func (d *RootWalker) enterClassMethod(meth *stmt.ClassMethod) bool {
 	return false
 }
 
-func (d *RootWalker) reportPhpdocErrors(n node.Node, errs phpdocErrors) {
+func (d *RootWalker) reportPhpdocErrors(n ir.Node, errs phpdocErrors) {
 	for _, err := range errs.phpdocLint {
 		d.Report(n, LevelInformation, "phpdocLint", "%s", err)
 	}
@@ -1115,7 +1134,7 @@ func (d *RootWalker) reportPhpdocErrors(n node.Node, errs phpdocErrors) {
 	}
 }
 
-func (d *RootWalker) parsePHPDocVar(n node.Node, doc string) (m meta.TypesMap) {
+func (d *RootWalker) parsePHPDocVar(n ir.Node, doc string) (m meta.TypesMap) {
 	for _, part := range phpdoc.Parse(d.ctx.phpdocTypeParser, doc) {
 		d.checkPHPDocRef(n, part)
 		part, ok := part.(*phpdoc.TypeVarCommentPart)
@@ -1138,7 +1157,7 @@ type phpDocParseResult struct {
 	errs       phpdocErrors
 }
 
-func (d *RootWalker) isValidPHPDocRef(n node.Node, ref string) bool {
+func (d *RootWalker) isValidPHPDocRef(n ir.Node, ref string) bool {
 	// Skip:
 	// - URLs
 	// - Things that can be a filename (e.g. "foo.php")
@@ -1247,7 +1266,7 @@ func (d *RootWalker) isValidPHPDocRef(n node.Node, ref string) bool {
 	}
 }
 
-func (d *RootWalker) checkPHPDocRef(n node.Node, part phpdoc.CommentPart) {
+func (d *RootWalker) checkPHPDocRef(n ir.Node, part phpdoc.CommentPart) {
 	if !meta.IsIndexingComplete() {
 		return
 	}
@@ -1280,7 +1299,7 @@ func (d *RootWalker) checkPHPDocRef(n node.Node, part phpdoc.CommentPart) {
 	}
 }
 
-func (d *RootWalker) parsePHPDoc(n node.Node, doc string, actualParams []node.Node) phpDocParseResult {
+func (d *RootWalker) parsePHPDoc(n ir.Node, doc string, actualParams []ir.Node) phpDocParseResult {
 	var result phpDocParseResult
 
 	if doc == "" {
@@ -1289,7 +1308,7 @@ func (d *RootWalker) parsePHPDoc(n node.Node, doc string, actualParams []node.No
 
 	actualParamNames := make(map[string]struct{}, len(actualParams))
 	for _, p := range actualParams {
-		p := p.(*node.Parameter)
+		p := p.(*ir.Parameter)
 		actualParamNames[p.Variable.Name] = struct{}{}
 	}
 
@@ -1342,7 +1361,7 @@ func (d *RootWalker) parsePHPDoc(n node.Node, doc string, actualParams []node.No
 		variable := part.Var
 		if !strings.HasPrefix(variable, "$") {
 			if len(actualParams) > curParam {
-				variable = actualParams[curParam].(*node.Parameter).Variable.Name
+				variable = actualParams[curParam].(*ir.Parameter).Variable.Name
 			}
 		}
 		if _, ok := actualParamNames[strings.TrimPrefix(variable, "$")]; !ok {
@@ -1374,7 +1393,7 @@ func (d *RootWalker) parsePHPDoc(n node.Node, doc string, actualParams []node.No
 }
 
 // parse type info, e.g. "string" in "someFunc() : string { ... }"
-func (d *RootWalker) parseTypeNode(n node.Node) (typ meta.TypesMap, ok bool) {
+func (d *RootWalker) parseTypeNode(n ir.Node) (typ meta.TypesMap, ok bool) {
 	if n == nil {
 		return meta.TypesMap{}, false
 	}
@@ -1384,7 +1403,7 @@ func (d *RootWalker) parseTypeNode(n node.Node) (typ meta.TypesMap, ok bool) {
 	return tm, !tm.IsEmpty()
 }
 
-func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (args []meta.FuncParam, minArgs int) {
+func (d *RootWalker) parseFuncArgs(params []ir.Node, parTypes phpDocParamsMap, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (args []meta.FuncParam, minArgs int) {
 	if len(params) == 0 {
 		return nil, 0
 	}
@@ -1419,7 +1438,7 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 	}
 
 	for _, param := range params {
-		p := param.(*node.Parameter)
+		p := param.(*ir.Parameter)
 		v := p.Variable
 		parTyp := parTypes[v.Name]
 
@@ -1466,30 +1485,28 @@ func (d *RootWalker) parseFuncArgs(params []node.Node, parTypes phpDocParamsMap,
 	return args, minArgs
 }
 
-func (d *RootWalker) checkCommentMisspellings(n node.Node, s string) {
-	d.checkMisspellings(n, s, "misspellComment", func(s string) bool {
-		// Try to avoid checking for symbol names and references.
-		return isCapitalized(s)
-	})
+func (d *RootWalker) checkCommentMisspellings(n ir.Node, s string) {
+	// Try to avoid checking for symbol names and references.
+	d.checkMisspellings(n, s, "misspellComment", isCapitalized)
 }
 
-func (d *RootWalker) checkVarnameMisspellings(n node.Node, s string) {
+func (d *RootWalker) checkVarnameMisspellings(n ir.Node, s string) {
 	d.checkMisspellings(n, s, "misspellName", func(string) bool {
 		return false
 	})
 }
 
-func (d *RootWalker) checkIdentMisspellings(n *node.Identifier) {
+func (d *RootWalker) checkIdentMisspellings(n *ir.Identifier) {
 	d.checkMisspellings(n, n.Value, "misspellName", func(s string) bool {
 		// Before PHP got context-sensitive lexer, it was common to use
-		// method names like "includ" to avoid parsing errors.
+		// method names to avoid parsing errors.
 		// We can't suggest a fix that leads to a parsing error.
 		// To avoid false positives, skip PHP keywords.
 		return phpKeywords[s]
 	})
 }
 
-func (d *RootWalker) checkMisspellings(n node.Node, s string, label string, skip func(string) bool) {
+func (d *RootWalker) checkMisspellings(n ir.Node, s string, label string, skip func(string) bool) {
 	if !meta.IsIndexingComplete() {
 		return
 	}
@@ -1505,9 +1522,9 @@ func (d *RootWalker) checkMisspellings(n node.Node, s string, label string, skip
 	}
 }
 
-func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
+func (d *RootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	nm := d.ctx.st.Namespace + `\` + fun.FunctionName.Value
-	pos := fun.GetPosition()
+	pos := ir.GetPosition(fun)
 
 	if funcSize := pos.EndLine - pos.StartLine; funcSize > maxFunctionLines {
 		d.Report(fun.FunctionName, LevelDoNotReject, "complexity", "Too big function: more than %d lines", maxFunctionLines)
@@ -1521,7 +1538,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	d.checkCommentMisspellings(fun.FunctionName, fun.PhpDocComment)
 	d.checkIdentMisspellings(fun.FunctionName)
 	for _, p := range fun.Params {
-		d.checkVarnameMisspellings(p, p.(*node.Parameter).Variable.Name)
+		d.checkVarnameMisspellings(p, p.(*ir.Parameter).Variable.Name)
 	}
 	doc := d.parsePHPDoc(fun.FunctionName, fun.PhpDocComment, fun.Params)
 	d.reportPhpdocErrors(fun.FunctionName, doc.errs)
@@ -1547,7 +1564,7 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	}
 
 	for _, param := range fun.Params {
-		d.checkFuncParam(param.(*node.Parameter))
+		d.checkFuncParam(param.(*ir.Parameter))
 	}
 
 	var funcFlags meta.FuncFlags
@@ -1568,19 +1585,19 @@ func (d *RootWalker) enterFunction(fun *stmt.Function) bool {
 	return false
 }
 
-func (d *RootWalker) checkFuncParam(p *node.Parameter) {
+func (d *RootWalker) checkFuncParam(p *ir.Parameter) {
 	// TODO(quasilyte): DefaultValue can only contain constant expressions.
 	// Could run special check over them to detect the potential fatal errors.
-	walkNode(p.DefaultValue, func(w walker.Walkable) bool {
-		if n, ok := w.(*expr.Array); ok && !n.ShortSyntax {
+	walkNode(p.DefaultValue, func(w ir.Node) bool {
+		if n, ok := w.(*ir.ArrayExpr); ok && !n.ShortSyntax {
 			d.Report(n, LevelDoNotReject, "arraySyntax", "Use of old array syntax (use short form instead)")
 		}
 		return true
 	})
 }
 
-func (d *RootWalker) enterFunctionCall(s *expr.FunctionCall) bool {
-	nm, ok := s.Function.(*name.Name)
+func (d *RootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {
+	nm, ok := s.Function.(*ir.Name)
 	if !ok {
 		return true
 	}
@@ -1594,14 +1611,14 @@ func (d *RootWalker) enterFunctionCall(s *expr.FunctionCall) bool {
 		return true
 	}
 
-	arg := s.ArgumentList.Arguments[0].(*node.Argument)
+	arg := s.ArgumentList.Arguments[0].(*ir.Argument)
 
-	str, ok := arg.Expr.(*scalar.String)
+	str, ok := arg.Expr.(*ir.String)
 	if !ok {
 		return true
 	}
 
-	valueArg := s.ArgumentList.Arguments[1].(*node.Argument)
+	valueArg := s.ArgumentList.Arguments[1].(*ir.Argument)
 
 	if d.meta.Constants == nil {
 		d.meta.Constants = make(meta.ConstantsMap)
@@ -1616,30 +1633,30 @@ func (d *RootWalker) enterFunctionCall(s *expr.FunctionCall) bool {
 
 // Handle e.g. "override(\array_shift(0), elementType(0));"
 // which means "return type of array_shift() is the type of element of first function parameter"
-func (d *RootWalker) handleOverride(s *expr.FunctionCall) bool {
+func (d *RootWalker) handleOverride(s *ir.FunctionCallExpr) bool {
 	if len(s.ArgumentList.Arguments) != 2 {
 		return true
 	}
 
-	arg0 := s.ArgumentList.Arguments[0].(*node.Argument)
-	arg1 := s.ArgumentList.Arguments[1].(*node.Argument)
+	arg0 := s.ArgumentList.Arguments[0].(*ir.Argument)
+	arg1 := s.ArgumentList.Arguments[1].(*ir.Argument)
 
-	fc0, ok := arg0.Expr.(*expr.FunctionCall)
+	fc0, ok := arg0.Expr.(*ir.FunctionCallExpr)
 	if !ok {
 		return true
 	}
 
-	fc1, ok := arg1.Expr.(*expr.FunctionCall)
+	fc1, ok := arg1.Expr.(*ir.FunctionCallExpr)
 	if !ok {
 		return true
 	}
 
-	fnNameNode, ok := fc0.Function.(*name.FullyQualified)
+	fnNameNode, ok := fc0.Function.(*ir.FullyQualifiedName)
 	if !ok {
 		return true
 	}
 
-	overrideNameNode, ok := fc1.Function.(*name.Name)
+	overrideNameNode, ok := fc1.Function.(*ir.Name)
 	if !ok {
 		return true
 	}
@@ -1648,9 +1665,9 @@ func (d *RootWalker) handleOverride(s *expr.FunctionCall) bool {
 		return true
 	}
 
-	fc1Arg0 := fc1.ArgumentList.Arguments[0].(*node.Argument)
+	fc1Arg0 := fc1.ArgumentList.Arguments[0].(*ir.Argument)
 
-	argNumNode, ok := fc1Arg0.Expr.(*scalar.Lnumber)
+	argNumNode, ok := fc1Arg0.Expr.(*ir.Lnumber)
 	if !ok {
 		return true
 	}
@@ -1684,13 +1701,13 @@ func (d *RootWalker) handleOverride(s *expr.FunctionCall) bool {
 	return true
 }
 
-func (d *RootWalker) enterConstList(lst *stmt.ConstList) bool {
+func (d *RootWalker) enterConstList(lst *ir.ConstListStmt) bool {
 	if d.meta.Constants == nil {
 		d.meta.Constants = make(meta.ConstantsMap)
 	}
 
 	for _, sNode := range lst.Consts {
-		s := sNode.(*stmt.Constant)
+		s := sNode.(*ir.ConstantStmt)
 
 		value, _ := solver.GetConstantValue(s)
 
@@ -1708,13 +1725,13 @@ func (d *RootWalker) enterConstList(lst *stmt.ConstList) bool {
 }
 
 // LeaveNode is invoked after node process
-func (d *RootWalker) LeaveNode(n walker.Walkable) {
+func (d *RootWalker) LeaveNode(n ir.Node) {
 	for _, c := range d.custom {
 		c.BeforeLeaveNode(n)
 	}
 
 	switch n.(type) {
-	case *stmt.Class, *stmt.Interface, *stmt.Trait:
+	case *ir.ClassStmt, *ir.InterfaceStmt, *ir.TraitStmt:
 		d.getClass() // populate classes map
 
 		d.currentClassNode = nil
@@ -1727,28 +1744,28 @@ func (d *RootWalker) LeaveNode(n walker.Walkable) {
 	}
 }
 
-func (d *RootWalker) runRules(n node.Node, sc *meta.Scope, rlist []rules.Rule) {
+func (d *RootWalker) runRules(n ir.Node, sc *meta.Scope, rlist []rules.Rule) {
 	for i := range rlist {
 		rule := &rlist[i]
 		d.runRule(n, sc, rule)
 	}
 }
 
-func (d *RootWalker) sourceNodeString(n node.Node) string {
-	pos := n.GetPosition()
+func (d *RootWalker) sourceNodeString(n ir.Node) string {
+	pos := ir.GetPosition(n)
 	from := pos.StartPos
 	to := pos.EndPos
 	src := d.fileContents
 	// Taking a node from the source code preserves the original formatting
 	// and is more efficient than printing it.
-	if (from >= 0 && int(from) < len(src)) && (to >= 0 && int(to) < len(src)) {
+	if (from >= 0 && from < len(src)) && (to >= 0 && to < len(src)) {
 		return string(src[from:to])
 	}
 	// If we can't take node out of the source text, print it.
 	return astutil.FmtNode(n)
 }
 
-func (d *RootWalker) renderRuleMessage(msg string, n node.Node, m phpgrep.MatchData, truncate bool) string {
+func (d *RootWalker) renderRuleMessage(msg string, n ir.Node, m phpgrep.MatchData, truncate bool) string {
 	// "$$" stands for the entire matched node, like $0 in regexp.
 	if strings.Contains(msg, "$$") {
 		msg = strings.ReplaceAll(msg, "$$", d.sourceNodeString(n))
@@ -1776,7 +1793,7 @@ func (d *RootWalker) renderRuleMessage(msg string, n node.Node, m phpgrep.MatchD
 	return msg
 }
 
-func (d *RootWalker) runRule(n node.Node, sc *meta.Scope, rule *rules.Rule) {
+func (d *RootWalker) runRule(n ir.Node, sc *meta.Scope, rule *rules.Rule) {
 	m, ok := rule.Matcher.Match(n)
 	if !ok {
 		return
@@ -1796,7 +1813,7 @@ func (d *RootWalker) runRule(n node.Node, sc *meta.Scope, rule *rules.Rule) {
 
 	// If location is explicitly set, use named match set.
 	// Otherwise peek the root target node.
-	var location node.Node
+	var location ir.Node
 	switch {
 	case matched && rule.Location != "":
 		named, _ := m.CapturedByName(rule.Location)
@@ -1810,12 +1827,12 @@ func (d *RootWalker) runRule(n node.Node, sc *meta.Scope, rule *rules.Rule) {
 	}
 
 	message := d.renderRuleMessage(rule.Message, n, m, true)
-	d.Report(location, rule.Level, rule.Name, message)
+	d.Report(location, rule.Level, rule.Name, "%s", message)
 
 	if ApplyQuickFixes && rule.Fix != "" {
 		// As rule sets contain only enabled rules,
 		// we should be OK without any filtering here.
-		pos := n.GetPosition()
+		pos := ir.GetPosition(n)
 		d.ctx.fixes = append(d.ctx.fixes, quickfix.TextEdit{
 			StartPos:    pos.StartPos,
 			EndPos:      pos.EndPos,
@@ -1824,7 +1841,7 @@ func (d *RootWalker) runRule(n node.Node, sc *meta.Scope, rule *rules.Rule) {
 	}
 }
 
-func (d *RootWalker) checkTypeFilter(wantType *phpdoc.Type, sc *meta.Scope, nn node.Node) bool {
+func (d *RootWalker) checkTypeFilter(wantType *phpdoc.Type, sc *meta.Scope, nn ir.Node) bool {
 	if wantType == nil {
 		return true
 	}
@@ -1857,7 +1874,7 @@ func (d *RootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filter
 	return true
 }
 
-func (d *RootWalker) checkTraitImplemented(n node.Node, nameUsed string) {
+func (d *RootWalker) checkTraitImplemented(n ir.Node, nameUsed string) {
 	if !meta.IsIndexingComplete() {
 		return
 	}
@@ -1869,7 +1886,7 @@ func (d *RootWalker) checkTraitImplemented(n node.Node, nameUsed string) {
 	d.checkImplemented(n, nameUsed, trait)
 }
 
-func (d *RootWalker) checkClassImplemented(n node.Node, nameUsed string) {
+func (d *RootWalker) checkClassImplemented(n ir.Node, nameUsed string) {
 	if !meta.IsIndexingComplete() {
 		return
 	}
@@ -1881,11 +1898,11 @@ func (d *RootWalker) checkClassImplemented(n node.Node, nameUsed string) {
 	d.checkImplemented(n, nameUsed, class)
 }
 
-func (d *RootWalker) checkIfaceImplemented(n node.Node, nameUsed string) {
+func (d *RootWalker) checkIfaceImplemented(n ir.Node, nameUsed string) {
 	d.checkClassImplemented(n, nameUsed)
 }
 
-func (d *RootWalker) checkImplemented(n node.Node, nameUsed string, otherClass meta.ClassInfo) {
+func (d *RootWalker) checkImplemented(n ir.Node, nameUsed string, otherClass meta.ClassInfo) {
 	cl := d.getClass()
 	if d.ctx.st.IsTrait || cl.IsAbstract() {
 		return
@@ -1895,7 +1912,7 @@ func (d *RootWalker) checkImplemented(n node.Node, nameUsed string, otherClass m
 	d.checkImplementedStep(n, nameUsed, otherClass, visited)
 }
 
-func (d *RootWalker) checkImplementedStep(n node.Node, className string, otherClass meta.ClassInfo, visited map[string]struct{}) {
+func (d *RootWalker) checkImplementedStep(n ir.Node, className string, otherClass meta.ClassInfo, visited map[string]struct{}) {
 	// TODO: check that method signatures are compatible?
 	if _, ok := visited[className]; ok {
 		return
@@ -1927,11 +1944,11 @@ func (d *RootWalker) checkImplementedStep(n node.Node, className string, otherCl
 	}
 }
 
-func (d *RootWalker) reportUndefinedType(n node.Node, name string) {
+func (d *RootWalker) reportUndefinedType(n ir.Node, name string) {
 	d.Report(n, LevelError, "undefined", "Type %s not found", name)
 }
 
-func (d *RootWalker) checkNameCase(n node.Node, nameUsed, nameExpected string) {
+func (d *RootWalker) checkNameCase(n ir.Node, nameUsed, nameExpected string) {
 	if nameUsed == "" || nameExpected == "" {
 		return
 	}
@@ -1941,7 +1958,7 @@ func (d *RootWalker) checkNameCase(n node.Node, nameUsed, nameExpected string) {
 	}
 }
 
-func (d *RootWalker) checkKeywordCasePos(n node.Node, begin int, keyword string) {
+func (d *RootWalker) checkKeywordCasePos(n ir.Node, begin int, keyword string) {
 	from := begin
 	to := from + len(keyword)
 
@@ -1953,13 +1970,13 @@ func (d *RootWalker) checkKeywordCasePos(n node.Node, begin int, keyword string)
 	}
 }
 
-func (d *RootWalker) checkKeywordCase(n node.Node, keyword string) {
+func (d *RootWalker) checkKeywordCase(n ir.Node, keyword string) {
 	// Only works for nodes that have a keyword of interest
 	// as the leftmost token.
-	d.checkKeywordCasePos(n, n.GetPosition().StartPos, keyword)
+	d.checkKeywordCasePos(n, ir.GetPosition(n).StartPos, keyword)
 }
 
-func (d *RootWalker) parseClassPHPDoc(n node.Node, doc string) classPhpDocParseResult {
+func (d *RootWalker) parseClassPHPDoc(n ir.Node, doc string) classPhpDocParseResult {
 	var result classPhpDocParseResult
 
 	if doc == "" {

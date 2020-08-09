@@ -3,6 +3,7 @@ package rules
 import (
 	"io"
 
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/phpgrep"
 )
@@ -40,7 +41,7 @@ type Set struct {
 // ScopedSet is a categorized rules collection.
 // Categories help to assign a better execution strategy for a rule.
 type ScopedSet struct {
-	RulesByKind [_KindCount][]Rule
+	RulesByKind [ir.NumKinds][]Rule
 }
 
 // Rule is a dynamically-loaded linter rule.

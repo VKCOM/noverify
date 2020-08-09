@@ -5,21 +5,22 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/irgen"
 	"github.com/VKCOM/noverify/src/php/astutil"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parseutil"
 )
 
-func mustParse(t testing.TB, code string) node.Node {
+func mustParse(t testing.TB, code string) ir.Node {
 	n, _, err := parseutil.Parse([]byte(code))
 	if err != nil {
 		t.Fatalf("parse `%s`: %v", code, err)
 	}
-	if n, ok := n.(*stmt.Expression); ok {
+	irnode := irgen.ConvertNode(n)
+	if n, ok := irnode.(*ir.ExpressionStmt); ok {
 		return n.Expr
 	}
-	return n
+	return irnode
 }
 
 func matchInText(t *testing.T, m *Matcher, code string) bool {
@@ -87,7 +88,7 @@ func TestMatchCapture(t *testing.T) {
 func TestMatchConcurrent(t *testing.T) {
 	matcher := mustCompile(t, `f($x, ${"*"}, $x)`)
 
-	nodes := []node.Node{
+	nodes := []ir.Node{
 		mustParse(t, `1`),
 		mustParse(t, `f(1, 2, 3, 4, 3, 2, 1)`),
 		mustParse(t, `[0 => f(1, 2), 2 => f(1, 1)]`),

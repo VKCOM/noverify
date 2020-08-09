@@ -82,10 +82,6 @@ func lastNode(nn []node.Node) node.Node {
 	return nn[len(nn)-1]
 }
 
-func firstNode(nn []node.Node) node.Node {
-	return nn[0]
-}
-
 func isDollar(r rune) bool {
 	return r == '$'
 }
@@ -208,10 +204,10 @@ func (l *Parser) splitSemiColonAndPhpCloseTag(htmlNode node.Node, prevNode node.
 	l.setFreeFloating(htmlNode, freefloating.Start, append(phpCloseTag, (*htmlNode.GetFreeFloating())[freefloating.Start]...))
 }
 
-func (p *Parser) returnTokenToPool(yyDollar []yySymType, yyVAL *yySymType) {
+func (l *Parser) returnTokenToPool(yyDollar []yySymType, yyVAL *yySymType) {
 	for i := 1; i < len(yyDollar); i++ {
 		if yyDollar[i].token != nil {
-			p.Lexer.ReturnTokenToPool(yyDollar[i].token)
+			l.Lexer.ReturnTokenToPool(yyDollar[i].token)
 		}
 		yyDollar[i].token = nil
 	}

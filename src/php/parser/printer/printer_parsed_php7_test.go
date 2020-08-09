@@ -270,6 +270,7 @@ func TestParseAndPrintAssign(t *testing.T) {
 	$a &= $b ;
 	$a |= $b ;
 	$a ^= $b ;
+	$a ??= $b ;
 	$a .= $b ;
 	$a /= $b ;
 	$a -= $b ;
@@ -383,6 +384,7 @@ func TestParseAndPrintArrayItem(t *testing.T) {
 		$world ,
 		& $world ,
 		'Hello' => $world ,
+		... $unpack
 	] ;
 	`
 
@@ -1255,7 +1257,7 @@ func TestParseAndPrintPropertyList(t *testing.T) {
 	class Foo {
 		var $a = '' , $b = null ;
 		private $c ;
-		public static $d ;
+		public static Bar $d ;
 		
 	}`
 

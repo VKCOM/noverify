@@ -6,8 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
+	"github.com/VKCOM/noverify/src/ir"
 )
 
 var (
@@ -582,50 +581,50 @@ func IsIndexingComplete() bool {
 	return indexingComplete
 }
 
-func FullyQualifiedToString(n *name.FullyQualified) string {
+func FullyQualifiedToString(n *ir.FullyQualifiedName) string {
 	s := make([]string, 1, len(n.Parts)+1)
 	for _, v := range n.Parts {
-		s = append(s, v.(*name.NamePart).Value)
+		s = append(s, v.(*ir.NamePart).Value)
 	}
 	return strings.Join(s, `\`)
 }
 
 // NameToString returns string like 'NS\SomeClass' for given name node
-func NameToString(n *name.Name) string {
+func NameToString(n *ir.Name) string {
 	return NamePartsToString(n.Parts)
 }
 
 // StringToName creates name node that can be analyzed using solver
-func StringToName(nm string) *name.Name {
-	var parts []node.Node
+func StringToName(nm string) *ir.Name {
+	var parts []ir.Node
 	for _, p := range strings.Split(nm, `\`) {
-		parts = append(parts, name.NewNamePart(p))
+		parts = append(parts, &ir.NamePart{Value: p})
 	}
-	return name.NewName(parts)
+	return &ir.Name{Parts: parts}
 }
 
 // NamePartsToString converts slice of *name.NamePart to string
-func NamePartsToString(parts []node.Node) string {
+func NamePartsToString(parts []ir.Node) string {
 	s := make([]string, 0, len(parts))
 	for _, v := range parts {
-		s = append(s, v.(*name.NamePart).Value)
+		s = append(s, v.(*ir.NamePart).Value)
 	}
 	return strings.Join(s, `\`)
 }
 
 // NameNodeToString converts nodes of *name.Name, *name.FullyQualified and *node.Identifier to string.
 // This function is a helper function to aid printing function names, not for actual code analysis.
-func NameNodeToString(n node.Node) string {
+func NameNodeToString(n ir.Node) string {
 	switch n := n.(type) {
-	case *name.Name:
+	case *ir.Name:
 		return NameToString(n)
-	case *name.FullyQualified:
+	case *ir.FullyQualifiedName:
 		return FullyQualifiedToString(n)
-	case *node.Identifier:
+	case *ir.Identifier:
 		return n.Value
-	case *node.SimpleVar:
+	case *ir.SimpleVar:
 		return "$" + n.Name
-	case *node.Var:
+	case *ir.Var:
 		return "$" + NameNodeToString(n.Expr)
 	default:
 		return "<expression>"
@@ -633,27 +632,27 @@ func NameNodeToString(n node.Node) string {
 }
 
 // NameNodeEquals checks whether n node name value is identical to s.
-func NameNodeEquals(n node.Node, s string) bool {
+func NameNodeEquals(n ir.Node, s string) bool {
 	switch n := n.(type) {
-	case *name.Name:
+	case *ir.Name:
 		return NameEquals(n, s)
-	case *node.Identifier:
+	case *ir.Identifier:
 		return n.Value == s
-	case *name.FullyQualified:
+	case *ir.FullyQualifiedName:
 		return FullyQualifiedToString(n) == s
 	default:
 		return false
 	}
 }
 
-func NameEquals(n *name.Name, s string) bool {
+func NameEquals(n *ir.Name, s string) bool {
 	if len(n.Parts) != strings.Count(s, `\`)+1 {
 		return false
 	}
 
 	rest := s
 	for i, part := range n.Parts {
-		part := part.(*name.NamePart)
+		part := part.(*ir.NamePart)
 		if i == len(n.Parts)-1 {
 			if part.Value != rest {
 				return false
