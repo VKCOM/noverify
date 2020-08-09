@@ -1,43 +1,40 @@
 package langsrv
 
 import (
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/state"
 )
 
 type hoverWalker struct {
 	position int
-	n        node.Node
+	n        ir.Node
 	st       meta.ClassParseState
 }
 
 // EnterNode is invoked at every node in hierarchy
-func (d *hoverWalker) EnterNode(w walker.Walkable) bool {
-	state.EnterNode(&d.st, w)
+func (d *hoverWalker) EnterNode(n ir.Node) bool {
+	state.EnterNode(&d.st, n)
 	return true
 }
 
 // LeaveNode is invoked after node process
-func (d *hoverWalker) LeaveNode(w walker.Walkable) {
+func (d *hoverWalker) LeaveNode(n ir.Node) {
 	if d.n != nil {
 		return
 	}
 
 	checkPos := false
 
-	n := w.(node.Node)
 	switch n.(type) {
-	case *node.SimpleVar, *expr.MethodCall, *expr.FunctionCall, *expr.StaticCall:
+	case *ir.SimpleVar, *ir.MethodCallExpr, *ir.FunctionCallExpr, *ir.StaticCallExpr:
 		checkPos = true
 	}
 
-	state.LeaveNode(&d.st, w)
+	state.LeaveNode(&d.st, n)
 
 	if checkPos {
-		pos := n.GetPosition()
+		pos := ir.GetPosition(n)
 
 		if d.position > pos.EndPos || d.position < pos.StartPos {
 			return

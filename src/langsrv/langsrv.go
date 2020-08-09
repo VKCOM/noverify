@@ -15,13 +15,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/irgen"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
-	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/vscode"
@@ -524,49 +522,49 @@ func handleTextDocumentHover(req *baseRequest) error {
 	return nil
 }
 
-func getHoverForNode(n node.Node, sc *meta.Scope, cs *meta.ClassParseState) string {
+func getHoverForNode(n ir.Node, sc *meta.Scope, cs *meta.ClassParseState) string {
 	switch n := n.(type) {
-	case *node.SimpleVar:
+	case *ir.SimpleVar:
 		return getHoverForVariable(n, sc, cs)
-	case *expr.FunctionCall:
+	case *ir.FunctionCallExpr:
 		return getHoverForFunctionCall(n, sc, cs)
-	case *expr.MethodCall:
+	case *ir.MethodCallExpr:
 		return getHoverForMethodCall(n, sc, cs)
-	case *expr.StaticCall:
+	case *ir.StaticCallExpr:
 		return getHoverForStaticCall(n, sc, cs)
 	}
 
 	return ""
 }
 
-func getHoverForVariable(v *node.SimpleVar, sc *meta.Scope, cs *meta.ClassParseState) string {
+func getHoverForVariable(v *ir.SimpleVar, sc *meta.Scope, cs *meta.ClassParseState) string {
 	typ, _ := sc.GetVarNameType(v.Name)
 	newM := meta.NewTypesMapFromMap(resolveTypesSafe(cs.CurrentClass, typ, make(solver.ResolverMap)))
 	return newM.String() + " $" + v.Name
 }
 
-func getHoverForFunctionCall(n *expr.FunctionCall, sc *meta.Scope, cs *meta.ClassParseState) string {
+func getHoverForFunctionCall(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassParseState) string {
 	var fun meta.FuncInfo
 	var ok bool
 	var nameStr string
 
 	switch nm := n.Function.(type) {
-	case *name.Name:
+	case *ir.Name:
 		nameStr = meta.NameToString(nm)
 		fun, ok = meta.Info.GetFunction(cs.Namespace + `\` + nameStr)
 		if !ok && cs.Namespace != "" {
-			fun, ok = meta.Info.GetFunction(`\` + nameStr)
+			fun, _ = meta.Info.GetFunction(`\` + nameStr)
 		}
-	case *name.FullyQualified:
+	case *ir.FullyQualifiedName:
 		nameStr = meta.FullyQualifiedToString(nm)
-		fun, ok = meta.Info.GetFunction(nameStr)
+		fun, _ = meta.Info.GetFunction(nameStr)
 	}
 
 	return linter.FlagsToString(fun.ExitFlags)
 }
 
-func getHoverForMethodCall(n *expr.MethodCall, sc *meta.Scope, cs *meta.ClassParseState) string {
-	id, ok := n.Method.(*node.Identifier)
+func getHoverForMethodCall(n *ir.MethodCallExpr, sc *meta.Scope, cs *meta.ClassParseState) string {
+	id, ok := n.Method.(*ir.Identifier)
 	if !ok {
 		return ""
 	}
@@ -582,8 +580,8 @@ func getHoverForMethodCall(n *expr.MethodCall, sc *meta.Scope, cs *meta.ClassPar
 	return linter.FlagsToString(fun.ExitFlags)
 }
 
-func getHoverForStaticCall(n *expr.StaticCall, sc *meta.Scope, cs *meta.ClassParseState) string {
-	id, ok := n.Call.(*node.Identifier)
+func getHoverForStaticCall(n *ir.StaticCallExpr, sc *meta.Scope, cs *meta.ClassParseState) string {
+	id, ok := n.Call.(*ir.Identifier)
 	if !ok {
 		return ""
 	}
@@ -833,13 +831,14 @@ func getMethodCompletionItems(st *meta.ClassParseState, str string, sc *meta.Sco
 		lintdebug.Send("Could not parse %s", strTemp)
 		return nil
 	}
+	rootIR := irgen.ConvertRoot(tempNode)
 
-	stmtLst := tempNode.Stmts
+	stmtLst := rootIR.Stmts
 	if len(stmtLst) == 0 {
 		return nil
 	}
 
-	s, ok := stmtLst[0].(*stmt.Expression)
+	s, ok := stmtLst[0].(*ir.ExpressionStmt)
 	if !ok {
 		return nil
 	}

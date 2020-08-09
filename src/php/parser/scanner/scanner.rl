@@ -237,6 +237,7 @@ func (lex *Lexer) Lex(lval Lval) int {
             'foreach'i                        => {lex.setTokenPosition(token); tok = T_FOREACH; fbreak;};
             'function'i | 'cfunction'i        => {lex.setTokenPosition(token); tok = T_FUNCTION; fbreak;};
             'fn'i                             => {lex.setTokenPosition(token); tok = T_FN; fbreak;};
+            'fn'i                             => {lex.setTokenPosition(token); tok = T_FN; fbreak;};
             'global'i                         => {lex.setTokenPosition(token); tok = T_GLOBAL; fbreak;};
             'goto'i                           => {lex.setTokenPosition(token); tok = T_GOTO; fbreak;};
             'if'i                             => {lex.setTokenPosition(token); tok = T_IF; fbreak;};
@@ -413,10 +414,10 @@ func (lex *Lexer) Lex(lval Lval) int {
         *|;
         
         backqote := |*
-            "{$" => {lex.ungetCnt(1); lex.setTokenPosition(token); tok = T_CURLY_OPEN; lex.call(ftargs, fentry(php)); goto _out;};
-            "${" => {lex.setTokenPosition(token); tok = T_DOLLAR_OPEN_CURLY_BRACES; lex.call(ftargs, fentry(string_var_name)); goto _out;};
-            "$"  => {lex.ungetCnt(1); fcall string_var;};
-            '`'  => {lex.setTokenPosition(token); tok = TokenID(int('`')); fnext php; fbreak;};
+            "{$"              => {lex.ungetCnt(1); lex.setTokenPosition(token); tok = T_CURLY_OPEN; lex.call(ftargs, fentry(php)); goto _out;};
+            "${"              => {lex.setTokenPosition(token); tok = T_DOLLAR_OPEN_CURLY_BRACES; lex.call(ftargs, fentry(string_var_name)); goto _out;};
+            "$" varname_first => {lex.ungetCnt(2); fcall string_var;};
+            '`'               => {lex.setTokenPosition(token); tok = TokenID(int('`')); fnext php; fbreak;};
             any_line* when is_not_backqoute_end_or_var => {
                 lex.setTokenPosition(token);
                 tok = T_ENCAPSED_AND_WHITESPACE;
@@ -425,10 +426,10 @@ func (lex *Lexer) Lex(lval Lval) int {
         *|;
         
         template_string := |*
-            "{$" => {lex.ungetCnt(1); lex.setTokenPosition(token); tok = T_CURLY_OPEN; lex.call(ftargs, fentry(php)); goto _out;};
-            "${" => {lex.setTokenPosition(token); tok = T_DOLLAR_OPEN_CURLY_BRACES; lex.call(ftargs, fentry(string_var_name)); goto _out;};
-            "$"  => {lex.ungetCnt(1); fcall string_var;};
-            '"'  => {lex.setTokenPosition(token); tok = TokenID(int('"')); fnext php; fbreak;};
+            "{$"              => {lex.ungetCnt(1); lex.setTokenPosition(token); tok = T_CURLY_OPEN; lex.call(ftargs, fentry(php)); goto _out;};
+            "${"              => {lex.setTokenPosition(token); tok = T_DOLLAR_OPEN_CURLY_BRACES; lex.call(ftargs, fentry(string_var_name)); goto _out;};
+            "$" varname_first => {lex.ungetCnt(2); fcall string_var;};
+            '"'               => {lex.setTokenPosition(token); tok = TokenID(int('"')); fnext php; fbreak;};
             any_line* when is_not_string_end_or_var => {
                 lex.setTokenPosition(token);
                 tok = T_ENCAPSED_AND_WHITESPACE;

@@ -303,7 +303,7 @@ func (m FindMethodResult) ImplName() string {
 
 // FindMethod searches for a method in specified class
 func FindMethod(className string, methodName string) (FindMethodResult, bool) {
-	// We do 2 lookup attemps.
+	// We do 2 lookup attempts.
 	//
 	// The first round ignores interfaces inside hierarchy tree.
 	// The second round processes leftovers, interfaces.

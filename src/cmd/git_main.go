@@ -37,7 +37,6 @@ func parseIndexOnlyFiles(l *linterRunner) {
 func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []string) (oldReports, reports []*linter.Report, changes []git.Change, changeLog []git.Commit, ok bool) {
 	// TODO(quasilyte): hard to replace fatalf with error return here. Use panicf for now.
 
-	start := time.Now()
 	changeLog, err := git.Log(l.args.gitRepo, logArgs)
 	if err != nil {
 		log.Panicf("Could not get commits in range %+v: %s", logArgs, err.Error())
@@ -58,7 +57,7 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 			log.Panicf("Load embedded stubs: %v", err)
 		}
 
-		start = time.Now()
+		start := time.Now()
 		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil), nil)
 		parseIndexOnlyFiles(l)
 		log.Printf("Indexed old commit in %s", time.Since(start))
@@ -84,7 +83,7 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 		reports = linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, linter.ExcludeRegex), nil)
 		log.Printf("Parsed new commit in %s (%d reports)", time.Since(start), len(reports))
 	} else {
-		start = time.Now()
+		start := time.Now()
 		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil), nil)
 		parseIndexOnlyFiles(l)
 		log.Printf("Indexing complete in %s", time.Since(start))

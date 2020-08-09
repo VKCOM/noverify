@@ -267,6 +267,131 @@ $m->foo->bar->method();
 `)
 }
 
+func TestNonPublicMagicMethods(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A {
+  public static function __set($name, $value) {} // The magic method __set() cannot be static
+  protected function __toString() {} // The magic method __call() must have public visibility
+  public function __callStatic($name, $arguments) {} // The magic method __callStatic() must be static
+  public static function __destruct() {} // The magic method __destruct() cannot be static
+  public static function __construct($name, $arguments) {} // The magic method __construct() cannot be static
+  private static function __call($name, $arguments) {} // The magic method __call() must have public visibility
+  private static function __callStatic($name, $arguments) {} // The magic method __callStatic() must have public visibility
+}`)
+
+	test.Expect = []string{
+		"The magic method __set() cannot be static",
+		"The magic method __toString() must have public visibility",
+		"The magic method __callStatic() must be static",
+		"The magic method __destruct() cannot be static",
+		"The magic method __construct() cannot be static",
+		"The magic method __call() cannot be static",
+		"The magic method __call() must have public visibility",
+		"The magic method __callStatic() must have public visibility",
+	}
+	test.RunAndMatch()
+}
+
+func TestNonPublicMagicMethodsGood(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class A {
+  public function __call($name, $arguments) {} // Ok
+  public function __toString() {} // Ok
+  public function __set($name, $value) {} // Ok
+  public function __get($name) {} // Ok
+  public function __clone() {} // Ok
+
+  public function __set_state() {} // Ok
+  private function __set_state() {} // Ok, can be non-public
+  protected function __set_state() {} // Ok, can be non-public
+  public static function __set_state() {} // Ok, can be static
+
+  public function __sleep() {} // Ok
+  private function __sleep() {} // Ok, can be non-public
+  protected function __sleep() {} // Ok, can be non-public
+  public static function __sleep() {} // Ok, can be static
+
+  public function __wakeup() {} // Ok
+  private function __wakeup() {} // Ok, can be non-public
+  protected function __wakeup() {} // Ok, can be non-public
+  public static function __wakeup() {} // Ok, can be static
+
+  public function __serialize() {} // Ok
+  private function __serialize() {} // Ok, can be non-public
+  protected function __serialize() {} // Ok, can be non-public
+  public static function __serialize() {} // Ok, can be static
+
+  public function __unserialize() {} // Ok
+  private function __unserialize() {} // Ok, can be non-public
+  protected function __unserialize() {} // Ok, can be non-public
+  public static function __unserialize() {} // Ok, can be static
+
+  public function __clone() {} // Ok
+  private function __clone() {} // Ok, can be non-public
+  protected function __clone() {} // Ok, can be non-public
+
+  public function __construct() {} // Ok
+  private function __construct() {} // Ok
+  protected function __construct() {} // Ok
+  public static function __callStatic($name, $arguments) {} // Ok
+  private static function __some_method() {} // Ok, not magic
+}`)
+}
+
+func TestWrongNumberOfArgumentsInMagicMethods(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {
+  public function __destruct($a) {} // 0
+  public function __call($a) {} // 2
+  public static function __callStatic($a, $b, $c) {} // 2
+  public function __get($a, $b) {} // 1
+  public function __set($a) {} // 2
+  public function __isset() {} // 1
+  public function __unset($a, $b) {} // 1
+  public function __toString($a) {} // 0
+}`)
+
+	test.Expect = []string{
+		"The magic method __destruct() must take exactly 0 argument",
+		"The magic method __call() must take exactly 2 argument",
+		"The magic method __callStatic() must take exactly 2 argument",
+		"The magic method __get() must take exactly 1 argument",
+		"The magic method __set() must take exactly 2 argument",
+		"The magic method __isset() must take exactly 1 argument",
+		"The magic method __unset() must take exactly 1 argument",
+		"The magic method __toString() must take exactly 0 argument",
+	}
+	test.RunAndMatch()
+}
+
+func TestWrongNumberOfArgumentsInMagicMethodsGood(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class Foo {
+  public function __construct($a) {}
+  public function __construct($a, $b) {}
+  public function __destruct() {} // 0
+  public function __call($a, $b) {} // 2
+  public static function __callStatic($a, $b) {} // 2
+  public function __get($a) {} // 1
+  public function __set($a, $b) {} // 2
+  public function __isset($a) {} // 1
+  public function __unset($a) {} // 1
+  public function __sleep($a) {}
+  public function __wakeup() {}
+  public function __serialize() {}
+  public function __unserialize() {}
+  public function __toString() {} // 0
+  public function __invoke() {}
+  public function __set_state() {}
+  public function __clone() {} // 0
+  public function __debugInfo() {}
+  public function __non_magic($a) {} // any
+  public function __non_magic() {} // any
+}`)
+}
+
 func TestIteratorForeach(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 interface Iterator extends Traversable {
@@ -315,7 +440,7 @@ interface ArrayAccess {
 
 class SimpleXMLElement implements Traversable, ArrayAccess {
   /** @return SimpleXMLElement */
-  private function __get($name) {}
+  public function __get($name) {}
 
   /** @return static[] */
   public function xpath ($path) {}
@@ -344,7 +469,7 @@ func TestSimpleXMLElement(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 class SimpleXMLElement {
   /** @return SimpleXMLElement */
-  private function __get($name) {}
+  public function __get($name) {}
   /** @return static[] */
   public function xpath ($path) {}
 }

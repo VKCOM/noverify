@@ -151,12 +151,8 @@ $x === false;
 function stripos($haystack, $needle, $offset = 0) { return 0; }
 function explode($delimeter, $s, $limit = 0) { return []; }
 function in_array($needle, $haystack, $strict = false) { return true; }
-function define($name, $value) {}
 function array_key_exists($needle, $haystack) { return false; }
 function implode($glue, $pieces) { return ''; }
-
-define('true', 1 == 1);
-define('false', 1 == 0);
 
 function stringCond(string $s) {
   if ($s !== '') { // Good

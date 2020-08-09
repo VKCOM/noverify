@@ -133,13 +133,13 @@ func TestIssue8(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	class Magic
 	{
-		public function __get();
-		public function __set();
-		public function __call();
+		public function __get($a);
+		public function __set($a, $b);
+		public function __call($a, $b);
 	}
 
 	class MagicStatic {
-		public static function __callStatic();
+		public static function __callStatic($a, $b);
 	}
 
 	function test() {
@@ -849,10 +849,6 @@ function error() {}
 
 func TestIssue182(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-define('null', 0);
-
-function define($name, $v) {}
-
 trait SingletonSelf {
     /** @var self */
     private static $instance = null;

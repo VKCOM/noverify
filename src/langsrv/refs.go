@@ -4,16 +4,13 @@ import (
 	"bytes"
 	"sync"
 
+	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/irgen"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
-	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/php/parser/position"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/state"
 	"github.com/VKCOM/noverify/src/vscode"
@@ -24,15 +21,15 @@ type referencesWalker struct {
 	st meta.ClassParseState
 
 	position int
-	scopes   map[node.Node]*meta.Scope
+	scopes   map[ir.Node]*meta.Scope
 
 	result      []vscode.Location
 	foundScopes []*meta.Scope
 }
 
-func getFunction(st *meta.ClassParseState, n *expr.FunctionCall) (fun meta.FuncInfo, nameStr string, ok bool) {
+func getFunction(st *meta.ClassParseState, n *ir.FunctionCallExpr) (fun meta.FuncInfo, nameStr string, ok bool) {
 	switch nm := n.Function.(type) {
-	case *name.Name:
+	case *ir.Name:
 		nameStr = meta.NameToString(nm)
 		tryStr := st.Namespace + `\` + nameStr
 
@@ -48,7 +45,7 @@ func getFunction(st *meta.ClassParseState, n *expr.FunctionCall) (fun meta.FuncI
 				return fun, tryStr, true
 			}
 		}
-	case *name.FullyQualified:
+	case *ir.FullyQualifiedName:
 		nameStr = meta.FullyQualifiedToString(nm)
 		fun, ok = meta.Info.GetFunction(nameStr)
 	}
@@ -57,9 +54,7 @@ func getFunction(st *meta.ClassParseState, n *expr.FunctionCall) (fun meta.FuncI
 }
 
 // EnterNode is invoked at every node in hierarchy
-func (d *referencesWalker) EnterNode(w walker.Walkable) bool {
-	n := w.(node.Node)
-
+func (d *referencesWalker) EnterNode(n ir.Node) bool {
 	sc, ok := d.scopes[n]
 	if ok {
 		d.foundScopes = append(d.foundScopes, sc)
@@ -67,9 +62,9 @@ func (d *referencesWalker) EnterNode(w walker.Walkable) bool {
 
 	state.EnterNode(&d.st, n)
 
-	switch n := w.(type) {
-	case *expr.FunctionCall:
-		if pos := n.Function.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
+	switch n := n.(type) {
+	case *ir.FunctionCallExpr:
+		if pos := ir.GetPosition(n.Function); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
 
@@ -77,13 +72,13 @@ func (d *referencesWalker) EnterNode(w walker.Walkable) bool {
 		if ok {
 			d.result = findFunctionReferences(nameStr)
 		}
-	case *expr.StaticCall:
-		if pos := n.Call.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
+	case *ir.StaticCallExpr:
+		if pos := ir.GetPosition(n.Call); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
 
 		// not going to resolve $obj->$someMethod(); calls
-		id, ok := n.Call.(*node.Identifier)
+		id, ok := n.Call.(*ir.Identifier)
 		if !ok {
 			return true
 		}
@@ -98,14 +93,14 @@ func (d *referencesWalker) EnterNode(w walker.Walkable) bool {
 			realClassName := m.ImplName()
 			d.result = findStaticMethodReferences(realClassName, id.Value)
 		}
-	case *stmt.Function:
-		if pos := n.FunctionName.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
+	case *ir.FunctionStmt:
+		if pos := ir.GetPosition(n.FunctionName); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
 
 		d.result = findFunctionReferences(d.st.Namespace + `\` + n.FunctionName.Value)
-	case *stmt.ClassMethod:
-		if pos := n.MethodName.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
+	case *ir.ClassMethodStmt:
+		if pos := ir.GetPosition(n.MethodName); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
 
@@ -122,14 +117,14 @@ func (d *referencesWalker) EnterNode(w walker.Walkable) bool {
 		} else {
 			d.result = findMethodReferences(d.st.CurrentClass, n.MethodName.Value)
 		}
-	case *stmt.Property:
-		if pos := n.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
+	case *ir.PropertyStmt:
+		if pos := ir.GetPosition(n); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
 
 		d.result = findPropertyReferences(d.st.CurrentClass, n.Variable.Name)
-	case *stmt.Constant:
-		if pos := n.ConstantName.GetPosition(); d.position > pos.EndPos || d.position < pos.StartPos {
+	case *ir.ConstantStmt:
+		if pos := ir.GetPosition(n.ConstantName); d.position > pos.EndPos || d.position < pos.StartPos {
 			return true
 		}
 
@@ -144,9 +139,7 @@ func (d *referencesWalker) EnterNode(w walker.Walkable) bool {
 }
 
 // LeaveNode is invoked after node process
-func (d *referencesWalker) LeaveNode(w walker.Walkable) {
-	n := w.(node.Node)
-
+func (d *referencesWalker) LeaveNode(n ir.Node) {
 	if d.scopes != nil {
 		_, ok := d.scopes[n]
 		if ok && len(d.foundScopes) > 0 {
@@ -193,7 +186,7 @@ func refPosition(filename string, pos *position.Position) vscode.Location {
 	}
 }
 
-type parseFn func(filename string, rootNode node.Node, contents []byte, parser *php7.Parser) []vscode.Location
+type parseFn func(filename string, rootNode ir.Node, contents []byte, parser *php7.Parser) []vscode.Location
 
 func findReferences(substr string, parse parseFn) []vscode.Location {
 	cb := linter.ReadFilenames(linter.AnalysisFiles, nil)
@@ -227,6 +220,7 @@ func findReferences(substr string, parse parseFn) []vscode.Location {
 						parser.Parse()
 
 						rootNode := parser.GetRootNode()
+						rootIR := irgen.ConvertRoot(rootNode)
 						if rootNode != nil {
 							var found []vscode.Location
 							func() {
@@ -236,7 +230,7 @@ func findReferences(substr string, parse parseFn) []vscode.Location {
 									}
 								}()
 
-								found = parse(fi.Filename, rootNode, contents, parser)
+								found = parse(fi.Filename, rootIR, contents, parser)
 							}()
 							resultMutex.Lock()
 							result = append(result, found...)

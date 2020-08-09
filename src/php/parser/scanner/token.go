@@ -13,7 +13,7 @@ type Token struct {
 }
 
 func (t *Token) String() string {
-	return string(t.Value)
+	return t.Value
 }
 
 func (t *Token) GetFreeFloatingToken() []freefloating.String {

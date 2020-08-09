@@ -942,3 +942,57 @@ func TestShiftRight(t *testing.T) {
 	actual := php7parser.GetRootNode()
 	assert.DeepEqual(t, expected, actual)
 }
+
+func TestCoalesce(t *testing.T) {
+	src := `<? $a ??= $b;`
+
+	expected := &node.Root{
+		Position: &position.Position{
+			StartLine: 1,
+			EndLine:   1,
+			StartPos:  3,
+			EndPos:    13,
+		},
+		Stmts: []node.Node{
+			&stmt.Expression{
+				Position: &position.Position{
+					StartLine: 1,
+					EndLine:   1,
+					StartPos:  3,
+					EndPos:    13,
+				},
+				Expr: &assign.Coalesce{
+					Position: &position.Position{
+						StartLine: 1,
+						EndLine:   1,
+						StartPos:  3,
+						EndPos:    12,
+					},
+					Variable: &node.SimpleVar{
+						Position: &position.Position{
+							StartLine: 1,
+							EndLine:   1,
+							StartPos:  3,
+							EndPos:    5,
+						},
+						Name: "a",
+					},
+					Expression: &node.SimpleVar{
+						Position: &position.Position{
+							StartLine: 1,
+							EndLine:   1,
+							StartPos:  10,
+							EndPos:    12,
+						},
+						Name: "b",
+					},
+				},
+			},
+		},
+	}
+
+	php7parser := php7.NewParser([]byte(src))
+	php7parser.Parse()
+	actual := php7parser.GetRootNode()
+	assert.DeepEqual(t, expected, actual)
+}

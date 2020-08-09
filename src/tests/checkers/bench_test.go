@@ -4,11 +4,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
 	"github.com/VKCOM/noverify/src/solver"
 )
 
@@ -37,24 +35,24 @@ class Foo {
 	test.RunLinter()
 	meta.SetIndexingComplete(true)
 
-	newName := func(nm string) *name.Name {
+	newName := func(nm string) *ir.Name {
 		stringParts := strings.Split(nm, `\`)
-		nameParts := make([]node.Node, len(stringParts))
+		nameParts := make([]ir.Node, len(stringParts))
 		for i, p := range stringParts {
-			nameParts[i] = &name.NamePart{Value: p}
+			nameParts[i] = &ir.NamePart{Value: p}
 		}
-		return &name.Name{Parts: nameParts}
+		return &ir.Name{Parts: nameParts}
 	}
-	f1call := &expr.FunctionCall{Function: newName("f1")}
-	f3call := &expr.FunctionCall{Function: newName("f3")}
-	foovar := &node.SimpleVar{Name: "foo"}
-	m4call := &expr.MethodCall{Variable: foovar, Method: &node.Identifier{Value: "m1"}}
-	newpropfetch := &expr.PropertyFetch{
-		Variable: &expr.StaticCall{
-			Call:  &node.Identifier{Value: "create"},
+	f1call := &ir.FunctionCallExpr{Function: newName("f1")}
+	f3call := &ir.FunctionCallExpr{Function: newName("f3")}
+	foovar := &ir.SimpleVar{Name: "foo"}
+	m4call := &ir.MethodCallExpr{Variable: foovar, Method: &ir.Identifier{Value: "m1"}}
+	newpropfetch := &ir.PropertyFetchExpr{
+		Variable: &ir.StaticCallExpr{
+			Call:  &ir.Identifier{Value: "create"},
 			Class: newName("Foo"),
 		},
-		Property: &node.Identifier{Value: "i"},
+		Property: &ir.Identifier{Value: "i"},
 	}
 
 	st := &meta.ClassParseState{}

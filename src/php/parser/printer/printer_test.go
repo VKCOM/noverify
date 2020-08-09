@@ -544,6 +544,27 @@ func TestPrinterPrintAssignBitwiseXor(t *testing.T) {
 	}
 }
 
+func TestPrinterPrintAssignCoalesce(t *testing.T) {
+	o := bytes.NewBufferString("")
+
+	p := printer.NewPrinter(o)
+	p.Print(&assign.Coalesce{
+		Variable: &node.SimpleVar{
+			Name: "a",
+		},
+		Expression: &node.SimpleVar{
+			Name: "b",
+		},
+	})
+
+	expected := `$a??=$b`
+	actual := o.String()
+
+	if expected != actual {
+		t.Errorf("\nexpected: %s\ngot: %s\n", expected, actual)
+	}
+}
+
 func TestPrinterPrintAssignConcat(t *testing.T) {
 	o := bytes.NewBufferString("")
 
@@ -1324,6 +1345,25 @@ func TestPrinterPrintExprArrayItem(t *testing.T) {
 	}
 }
 
+func TestPrinterPrintExprArrayItemUnpack(t *testing.T) {
+	o := bytes.NewBufferString("")
+
+	p := printer.NewPrinter(o)
+	p.Print(&expr.ArrayItem{
+		Unpack: true,
+		Val: &node.SimpleVar{
+			Name: "world",
+		},
+	})
+
+	expected := `...$world`
+	actual := o.String()
+
+	if expected != actual {
+		t.Errorf("\nexpected: %s\ngot: %s\n", expected, actual)
+	}
+}
+
 func TestPrinterPrintExprArray(t *testing.T) {
 	o := bytes.NewBufferString("")
 
@@ -1469,6 +1509,40 @@ func TestPrinterPrintExprClosure(t *testing.T) {
 	})
 
 	expected := `static function&(&$var)use(&$a,$b):\Foo{$a;}`
+	actual := o.String()
+
+	if expected != actual {
+		t.Errorf("\nexpected: %s\ngot: %s\n", expected, actual)
+	}
+}
+
+func TestPrinterPrintExprArrowFunction(t *testing.T) {
+	o := bytes.NewBufferString("")
+
+	p := printer.NewPrinter(o)
+	p.Print(&stmt.Expression{
+		Expr: &expr.ArrowFunction{
+			Static:     true,
+			ReturnsRef: true,
+			Params: []node.Node{
+				&node.Parameter{
+					ByRef:    true,
+					Variadic: false,
+					Variable: &node.SimpleVar{
+						Name: "var",
+					},
+				},
+			},
+			ReturnType: &name.FullyQualified{
+				Parts: []node.Node{&name.NamePart{Value: "Foo"}},
+			},
+			Expr: &node.SimpleVar{
+				Name: "a",
+			},
+		},
+	})
+
+	expected := `static fn&(&$var):\Foo=>$a;`
 	actual := o.String()
 
 	if expected != actual {
@@ -3461,6 +3535,13 @@ func TestPrinterPrintPropertyList(t *testing.T) {
 			{Value: "public"},
 			{Value: "static"},
 		},
+		Type: &name.Name{
+			Parts: []node.Node{
+				&name.NamePart{
+					Value: "Foo",
+				},
+			},
+		},
 		Properties: []node.Node{
 			&stmt.Property{
 				Variable: &node.SimpleVar{
@@ -3476,7 +3557,7 @@ func TestPrinterPrintPropertyList(t *testing.T) {
 		},
 	})
 
-	expected := `public static $a='a',$b;`
+	expected := `public static Foo $a='a',$b;`
 	actual := o.String()
 
 	if expected != actual {

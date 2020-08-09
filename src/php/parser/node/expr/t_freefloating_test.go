@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/VKCOM/noverify/src/linttest/assert"
+	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
 
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parser/node"
@@ -35,7 +36,13 @@ var nodes = []node.Node{
 	&expr.Array{
 		FreeFloating: expected,
 	},
+	&expr.ArrowFunction{
+		FreeFloating: expected,
+	},
 	&expr.BitwiseNot{
+		FreeFloating: expected,
+	},
+	&assign.Coalesce{
 		FreeFloating: expected,
 	},
 	&expr.BooleanNot{

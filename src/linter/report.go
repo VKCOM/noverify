@@ -434,10 +434,11 @@ case INC:
 			Name:    "misspellName",
 			Default: true,
 			Comment: `Report commonly misspelled words in symbol names.`,
-			Before:  `function performace_test() ...`,
+			Before:  `function performace_test() ...`, //nolint:misspell
 			After:   `function performance_test() ...`,
 		},
 
+		//nolint:misspell
 		{
 			Name:    "misspellComment",
 			Default: true,
@@ -470,6 +471,20 @@ function performance_test() {}`,
 			Name:    "linterError",
 			Default: true,
 			Comment: `Report linter error.`,
+		},
+
+		{
+			Name:    "magicMethodDecl",
+			Default: true,
+			Comment: `Report issues in magic method declarations.`,
+			Before: `class Foo {
+  private function __call($method, $args) {} // The magic method __call() must have public visibility
+  public static function __set($name, $value) {} // The magic method __set() cannot be static
+}`,
+			After: `class Foo {
+  public function __call($method, $args) {} // Ok
+  public function __set($name, $value) {} // Ok
+}`,
 		},
 	}
 

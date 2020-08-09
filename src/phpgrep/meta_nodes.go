@@ -1,18 +1,15 @@
 package phpgrep
 
 import (
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
-	"github.com/VKCOM/noverify/src/php/parser/position"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
 )
 
 type metaNode struct {
 	name string
 }
 
-func (metaNode) Walk(v walker.Visitor)                     {}
-func (metaNode) SetPosition(p *position.Position)          {}
-func (metaNode) GetPosition() *position.Position           { return nil }
+func (metaNode) Walk(v ir.Visitor)                         {}
 func (metaNode) GetFreeFloating() *freefloating.Collection { return nil }
 
 type (

@@ -7,14 +7,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/astutil"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/expr"
-	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
-	"github.com/VKCOM/noverify/src/php/parser/walker"
 )
 
 // Tests in this file make it less likely that type solving will break
@@ -39,7 +36,7 @@ import (
 
 var (
 	exprTypeResultMu sync.Mutex
-	exprTypeResult   map[node.Node]meta.TypesMap
+	exprTypeResult   map[ir.Node]meta.TypesMap
 )
 
 func init() {
@@ -1399,9 +1396,6 @@ function test() {
 
 func TestExprTypeFunction(t *testing.T) {
 	code := `<?php
-function define($name, $value) {}
-define('null', 0);
-
 class Foo {}
 
 function mixed_array($x) {
@@ -1941,6 +1935,91 @@ exprtype($a, "mixed[]");
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestPropertyTypeHints(t *testing.T) {
+	code := `<?php
+class Too {}
+class Boo {}
+
+// simple use
+class Foo {
+  public int $int;
+  public array $array;
+  public Boo $boo;
+
+  public static float $float;
+  public static object $object;
+  public static Too $too;
+}
+
+$f = new Foo();
+
+exprtype($f->int, "int");
+exprtype($f->array, "mixed[]");
+exprtype($f->boo, "\Boo");
+
+exprtype(Foo::$float, "float");
+exprtype(Foo::$object, "object");
+exprtype(Foo::$too, "\Too");
+
+
+// with PHPDoc
+class Poo {
+  /** @var float $int */
+  public static int $int;
+
+  /** @var array $callable */
+  public object $object;
+
+  /** @var array $array */
+  public array $array;
+
+  /** @var float|int $a */
+  public static int $a;
+
+  /** @var int $b */
+  public int $b;
+
+  /** @var Foo|Too $c */
+  public Boo $c;
+
+  /** @var Boo $d */
+  public Boo $d;
+}
+
+$p = new Poo();
+
+exprtype(Poo::$int, "float|int");
+exprtype($p->object, "mixed[]|object");
+exprtype($p->array, "mixed[]");
+exprtype(Poo::$a, "float|int");
+exprtype($p->b, "int");
+exprtype($p->c, "\Boo|\Foo|\Too");
+exprtype($p->d, "\Boo");
+
+
+// with default value
+class Roo {
+  /** @var float $a */
+  public static int $a = 10;
+
+  /** @var array $b */
+  public array $b = [1,2,3];
+
+  public bool $c = true;
+
+  public static string $d = "Hello";
+}
+
+$r = new Roo();
+
+exprtype(Roo::$a, "float|int");
+exprtype($r->b, "int[]|mixed[]");
+exprtype($r->c, "bool");
+exprtype(Roo::$d, "string");
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {
@@ -1956,7 +2035,7 @@ func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.SetIndexingComplete(true)
 
 	// Reset results map and run expr type collector.
-	exprTypeResult = map[node.Node]meta.TypesMap{}
+	exprTypeResult = map[ir.Node]meta.TypesMap{}
 	root, _ := linttest.ParseTestFile(t, "exprtype.php", params.code)
 
 	// Check that collected types are identical to the expected types.
@@ -1993,13 +2072,13 @@ type exprTypeWalker struct {
 	t *testing.T
 }
 
-func (w *exprTypeWalker) LeaveNode(n walker.Walkable) {}
+func (w *exprTypeWalker) LeaveNode(n ir.Node) {}
 
-func (w *exprTypeWalker) EnterNode(n walker.Walkable) bool {
-	call, ok := n.(*expr.FunctionCall)
+func (w *exprTypeWalker) EnterNode(n ir.Node) bool {
+	call, ok := n.(*ir.FunctionCallExpr)
 	if ok && meta.NameNodeEquals(call.Function, `exprtype`) {
-		checkedExpr := call.ArgumentList.Arguments[0].(*node.Argument).Expr
-		expectedType := call.ArgumentList.Arguments[1].(*node.Argument).Expr.(*scalar.String).Value
+		checkedExpr := call.ArgumentList.Arguments[0].(*ir.Argument).Expr
+		expectedType := call.ArgumentList.Arguments[1].(*ir.Argument).Expr.(*ir.String).Value
 		actualType, ok := exprTypeResult[checkedExpr]
 		if !ok {
 			w.t.Fatalf("no type found for %s expression", astutil.FmtNode(checkedExpr))
@@ -2010,7 +2089,7 @@ func (w *exprTypeWalker) EnterNode(n walker.Walkable) bool {
 			Precise: actualType.IsPrecise(),
 		}
 		if diff := cmp.Diff(have, want); diff != "" {
-			line := checkedExpr.GetPosition().StartLine
+			line := ir.GetPosition(checkedExpr).StartLine
 			w.t.Errorf("line %d: type mismatch for %s (-have +want):\n%s",
 				line, astutil.FmtNode(checkedExpr), diff)
 		}
@@ -2025,16 +2104,16 @@ type exprTypeCollector struct {
 	linter.BlockCheckerDefaults
 }
 
-func (c *exprTypeCollector) AfterEnterNode(n walker.Walkable) {
+func (c *exprTypeCollector) AfterEnterNode(n ir.Node) {
 	if !meta.IsIndexingComplete() {
 		return
 	}
 
-	call, ok := n.(*expr.FunctionCall)
+	call, ok := n.(*ir.FunctionCallExpr)
 	if !ok || !meta.NameNodeEquals(call.Function, `exprtype`) {
 		return
 	}
-	checkedExpr := call.ArgumentList.Arguments[0].(*node.Argument).Expr
+	checkedExpr := call.ArgumentList.Arguments[0].(*ir.Argument).Expr
 
 	// We need to clone a types map because if it belongs to a var
 	// or some other symbol those type can be volatile we'll get

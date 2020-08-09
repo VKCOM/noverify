@@ -4,8 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
+	"github.com/VKCOM/noverify/src/ir"
 )
 
 func TestNameEquals(t *testing.T) {
@@ -32,11 +31,11 @@ func TestNameEquals(t *testing.T) {
 		{`a\b\c`, `a\b\x`, false},
 	}
 
-	makeNameNode := func(s string) *name.Name {
+	makeNameNode := func(s string) *ir.Name {
 		parts := strings.Split(s, `\`)
-		nm := &name.Name{Parts: make([]node.Node, len(parts))}
+		nm := &ir.Name{Parts: make([]ir.Node, len(parts))}
 		for i := range parts {
-			nm.Parts[i] = &name.NamePart{Value: strings.TrimSpace(parts[i])}
+			nm.Parts[i] = &ir.NamePart{Value: strings.TrimSpace(parts[i])}
 		}
 		return nm
 	}
@@ -53,16 +52,16 @@ func TestNameEquals(t *testing.T) {
 }
 
 func BenchmarkNameEquals(b *testing.B) {
-	var theName1 = &name.Name{
-		Parts: []node.Node{
-			&name.NamePart{Value: `method_exists`},
+	var theName1 = &ir.Name{
+		Parts: []ir.Node{
+			&ir.NamePart{Value: `method_exists`},
 		},
 	}
-	var theName3 = &name.Name{
-		Parts: []node.Node{
-			&name.NamePart{Value: `a`},
-			&name.NamePart{Value: `b`},
-			&name.NamePart{Value: `c`},
+	var theName3 = &ir.Name{
+		Parts: []ir.Node{
+			&ir.NamePart{Value: `a`},
+			&ir.NamePart{Value: `b`},
+			&ir.NamePart{Value: `c`},
 		},
 	}
 

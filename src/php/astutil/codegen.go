@@ -38,14 +38,16 @@ type context struct {
 
 func main() {
 	packages := []string{
-		"parser/node",
-		"parser/node/stmt",
-		"parser/node/name",
-		"parser/node/scalar",
-		"parser/node/expr",
-		"parser/node/expr/binary",
-		"parser/node/expr/cast",
-		"parser/node/expr/assign",
+		// "parser/node",
+		// "parser/node/stmt",
+		// "parser/node/name",
+		// "parser/node/scalar",
+		// "parser/node/expr",
+		// "parser/node/expr/binary",
+		// "parser/node/expr/cast",
+		// "parser/node/expr/assign",
+
+		"ir",
 	}
 
 	ctx := context{
@@ -72,7 +74,7 @@ func generateClone(ctx *context) {
 		buf.WriteString("  \"" + path + "\"\n")
 	}
 	buf.WriteString(")\n")
-	buf.WriteString("func NodeClone(x node.Node) node.Node {\n")
+	buf.WriteString("func NodeClone(x ir.Node) ir.Node {\n")
 	buf.WriteString("  if x == nil { return nil }\n")
 	buf.WriteString("  switch x := x.(type) {\n")
 	for _, pkg := range ctx.packages {
@@ -203,7 +205,7 @@ func generateEqual(ctx *context) {
 		buf.WriteString("  \"" + path + "\"\n")
 	}
 	buf.WriteString(")\n")
-	buf.WriteString("func NodeEqual(x, y node.Node) bool {\n")
+	buf.WriteString("func NodeEqual(x, y ir.Node) bool {\n")
 	buf.WriteString("  if x == nil || y == nil { return x == y }\n")
 	buf.WriteString("  switch x := x.(type) {\n")
 	for _, pkg := range ctx.packages {
@@ -258,7 +260,7 @@ func writeCompare(w *bytes.Buffer, pkg *packageData, typ *typeData) {
 func importPaths(packages []string) []string {
 	paths := make([]string, len(packages))
 	for i, pkg := range packages {
-		paths[i] = "github.com/VKCOM/noverify/src/php/" + pkg
+		paths[i] = "github.com/VKCOM/noverify/src/" + pkg
 	}
 	paths = append(paths, "fmt")
 	return paths
@@ -270,7 +272,7 @@ var typechecker = types.Config{
 
 func loadPackage(ctx *context, pkg string) error {
 	pkgName := path.Base(pkg)
-	parsedPkgs, err := parser.ParseDir(ctx.fset, "../"+pkg, nil, 0)
+	parsedPkgs, err := parser.ParseDir(ctx.fset, "../../"+pkg, nil, 0)
 	if err != nil {
 		return err
 	}

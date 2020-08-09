@@ -21,9 +21,10 @@ import (
 
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/inputs"
+	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/irgen"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/rules"
@@ -74,7 +75,7 @@ type ReadCallback func(ch chan FileInfo)
 
 // ParseContents parses specified contents (or file) and returns *RootWalker.
 // Function does not update global meta.
-func ParseContents(filename string, contents []byte, lineRanges []git.LineRange, allowDisabled *regexp.Regexp) (rootNode node.Node, w *RootWalker, err error) {
+func ParseContents(filename string, contents []byte, lineRanges []git.LineRange, allowDisabled *regexp.Regexp) (rootNode *ir.Root, w *RootWalker, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			s := fmt.Sprintf("Panic while parsing %s: %s\n\nStack trace: %s", filename, r, dbg.Stack())
@@ -137,7 +138,7 @@ func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedS
 	return &clone
 }
 
-func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRanges []git.LineRange, allowedDisabled *regexp.Regexp) (*node.Root, *RootWalker, error) {
+func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRanges []git.LineRange, allowedDisabled *regexp.Regexp) (*ir.Root, *RootWalker, error) {
 	start := time.Now()
 	rootNode := parser.GetRootNode()
 
@@ -145,6 +146,8 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 		lintdebug.Send("Could not parse %s at all due to errors", filename)
 		return nil, nil, errors.New("Empty root node")
 	}
+
+	rootIR := irgen.ConvertRoot(rootNode)
 
 	st := &meta.ClassParseState{CurrentFile: filename}
 	w := &RootWalker{
@@ -175,9 +178,9 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 	w.InitFromParser(contents, parser)
 	w.InitCustom()
 
-	rootNode.Walk(w)
+	rootIR.Walk(w)
 	if meta.IsIndexingComplete() {
-		AnalyzeFileRootLevel(rootNode, w)
+		AnalyzeFileRootLevel(rootIR, w)
 	}
 	w.afterLeaveFile()
 
@@ -193,25 +196,20 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 
 	atomic.AddInt64(&initWalkTime, int64(time.Since(start)))
 
-	return rootNode, w, nil
+	return rootIR, w, nil
 }
 
 // AnalyzeFileRootLevel does analyze file top-level code.
 // This method is exposed for language server use, you usually
 // do not need to call it yourself.
-func AnalyzeFileRootLevel(rootNode node.Node, d *RootWalker) {
+func AnalyzeFileRootLevel(rootNode ir.Node, d *RootWalker) {
 	sc := meta.NewScope()
 	sc.AddVarName("argv", meta.NewTypesMap("string[]"), "predefined", meta.VarAlwaysDefined)
 	sc.AddVarName("argc", meta.NewTypesMap("int"), "predefined", meta.VarAlwaysDefined)
-	b := &BlockWalker{
-		ctx:                  &blockContext{sc: sc},
-		r:                    d,
-		unusedVars:           make(map[string][]node.Node),
-		nonLocalVars:         make(map[string]variableKind),
-		ignoreFunctionBodies: true,
-		rootLevel:            true,
-		path:                 newNodePath(),
-	}
+
+	b := newBlockWalker(d, sc)
+	b.ignoreFunctionBodies = true
+	b.rootLevel = true
 
 	for _, createFn := range d.customBlock {
 		b.custom = append(b.custom, createFn(&BlockContext{w: b}))

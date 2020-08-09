@@ -8,11 +8,11 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/irgen"
 	"github.com/VKCOM/noverify/src/linter/lintapi"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
 	"github.com/VKCOM/noverify/src/php/parseutil"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/phpgrep"
@@ -59,13 +59,14 @@ func (p *parser) parse(filename string, r io.Reader) (*Set, error) {
 	if err != nil {
 		return res, err
 	}
+	rootIR := irgen.ConvertRoot(root)
 
 	// Convert PHP file into the rule set.
 	p.filename = filename
 	p.sources = sources
 	p.res = res
 	p.names = make(map[string]struct{})
-	for _, st := range root.Stmts {
+	for _, st := range rootIR.Stmts {
 		if err := p.parseRule(st); err != nil {
 			return p.res, err
 		}
@@ -80,9 +81,9 @@ func (p *parser) parse(filename string, r io.Reader) (*Set, error) {
 	return p.res, nil
 }
 
-func (p *parser) parseRule(st node.Node) error {
+func (p *parser) parseRule(st ir.Node) error {
 	switch st := st.(type) {
-	case *stmt.Function:
+	case *ir.FunctionStmt:
 		p.funcName = st.FunctionName.Value
 		for _, st := range st.Stmts {
 			if err := p.parseRule(st); err != nil {
@@ -92,7 +93,7 @@ func (p *parser) parseRule(st node.Node) error {
 		p.funcName = ""
 		return nil
 
-	case *stmt.Namespace:
+	case *ir.NamespaceStmt:
 		if len(st.Stmts) != 0 {
 			return p.errorf(st, "namespace with body is not supported")
 		}
@@ -254,27 +255,24 @@ func (p *parser) parseRule(st node.Node) error {
 		rule.Filters = append(rule.Filters, filterSet)
 	}
 
-	pos := st.GetPosition()
+	pos := ir.GetPosition(st)
 	m, err := p.compiler.Compile(p.sources[pos.StartPos-1 : pos.EndPos])
 	if err != nil {
 		return p.errorf(st, "pattern compilation error: %v", err)
 	}
 	rule.Matcher = m
 
-	if st2, ok := st.(*stmt.Expression); ok {
+	if st2, ok := st.(*ir.ExpressionStmt); ok {
 		st = st2.Expr
 	}
-	kind := CategorizeNode(st)
-	if kind == KindNone {
-		return p.errorf(st, "can't categorize pattern node: %T", st)
-	}
+	kind := ir.GetNodeKind(st)
 	dst.RulesByKind[kind] = append(dst.RulesByKind[kind], rule)
 
 	return nil
 }
 
-func (p *parser) errorf(n node.Node, format string, args ...interface{}) *parseError {
-	pos := n.GetPosition()
+func (p *parser) errorf(n ir.Node, format string, args ...interface{}) *parseError {
+	pos := ir.GetPosition(n)
 	return &parseError{
 		filename: p.filename,
 		lineNum:  pos.StartLine,
