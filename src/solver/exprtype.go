@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/astutil"
 )
 
 func bitwiseOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right ir.Node, custom []CustomType) meta.TypesMap {
@@ -167,7 +167,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 	}
 
 	for _, c := range custom {
-		if astutil.NodeEqual(c.Node, n) {
+		if irutil.NodeEqual(c.Node, n) {
 			return c.Typ
 		}
 	}
