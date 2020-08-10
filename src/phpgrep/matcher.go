@@ -646,24 +646,9 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 			m.eqNode(state, x.Method, y.Method) &&
 			m.eqNodeSlice(state, x.ArgumentList.Arguments, y.ArgumentList.Arguments)
 
-	case *ir.DoubleCastExpr:
-		y, ok := y.(*ir.DoubleCastExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
-	case *ir.ArrayCastExpr:
-		y, ok := y.(*ir.ArrayCastExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
-	case *ir.BoolCastExpr:
-		y, ok := y.(*ir.BoolCastExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
-	case *ir.IntCastExpr:
-		y, ok := y.(*ir.IntCastExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
-	case *ir.ObjectCastExpr:
-		y, ok := y.(*ir.ObjectCastExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
-	case *ir.StringCastExpr:
-		y, ok := y.(*ir.StringCastExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
+	case *ir.TypeCastExpr:
+		y, ok := y.(*ir.TypeCastExpr)
+		return ok && x.Type == y.Type && m.eqNode(state, x.Expr, y.Expr)
 
 	case *ir.Root:
 		return false

@@ -327,16 +327,21 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 		return unaryMathOpType(sc, cs, n.Variable, custom)
 	case *ir.PreDecExpr:
 		return unaryMathOpType(sc, cs, n.Variable, custom)
-	case *ir.ArrayCastExpr:
-		return meta.NewTypesMap("mixed[]")
-	case *ir.BoolCastExpr:
-		return meta.PreciseBoolType
-	case *ir.DoubleCastExpr:
-		return meta.PreciseFloatType
-	case *ir.IntCastExpr, *ir.ShiftLeftExpr, *ir.ShiftRightExpr:
+	case *ir.TypeCastExpr:
+		switch n.Type {
+		case "array":
+			return meta.NewTypesMap("mixed[]")
+		case "int":
+			return meta.PreciseIntType
+		case "string":
+			return meta.PreciseStringType
+		case "float":
+			return meta.PreciseFloatType
+		case "bool":
+			return meta.PreciseBoolType
+		}
+	case *ir.ShiftLeftExpr, *ir.ShiftRightExpr:
 		return meta.PreciseIntType
-	case *ir.StringCastExpr:
-		return meta.PreciseStringType
 	case *ir.ClassConstFetchExpr:
 		className, ok := GetClassName(cs, n.Class)
 		if !ok {

@@ -309,39 +309,10 @@ type SpaceshipExpr struct {
 	Right        Node
 }
 
-type ArrayCastExpr struct {
+type TypeCastExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	Expr         Node
-}
-
-type BoolCastExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Expr         Node
-}
-
-type DoubleCastExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Expr         Node
-}
-
-type IntCastExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Expr         Node
-}
-
-type ObjectCastExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Expr         Node
-}
-
-type StringCastExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
+	Type         string // "array" "bool" "int" "float" "object" "string"
 	Expr         Node
 }
 

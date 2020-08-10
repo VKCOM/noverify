@@ -546,57 +546,7 @@ func (n *SpaceshipExpr) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
-func (n *ArrayCastExpr) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	if n.Expr != nil {
-		n.Expr.Walk(v)
-	}
-	v.LeaveNode(n)
-}
-
-func (n *BoolCastExpr) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	if n.Expr != nil {
-		n.Expr.Walk(v)
-	}
-	v.LeaveNode(n)
-}
-
-func (n *DoubleCastExpr) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	if n.Expr != nil {
-		n.Expr.Walk(v)
-	}
-	v.LeaveNode(n)
-}
-
-func (n *IntCastExpr) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	if n.Expr != nil {
-		n.Expr.Walk(v)
-	}
-	v.LeaveNode(n)
-}
-
-func (n *ObjectCastExpr) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	if n.Expr != nil {
-		n.Expr.Walk(v)
-	}
-	v.LeaveNode(n)
-}
-
-func (n *StringCastExpr) Walk(v Visitor) {
+func (n *TypeCastExpr) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
 	}

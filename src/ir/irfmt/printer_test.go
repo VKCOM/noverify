@@ -1101,7 +1101,8 @@ func TestPrintArray(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.ArrayCastExpr{
+	p.Print(&ir.TypeCastExpr{
+		Type: "array",
 		Expr: &ir.SimpleVar{Name: "var"},
 	})
 
@@ -1117,7 +1118,8 @@ func TestPrintBool(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.BoolCastExpr{
+	p.Print(&ir.TypeCastExpr{
+		Type: "bool",
 		Expr: &ir.SimpleVar{Name: "var"},
 	})
 
@@ -1133,7 +1135,8 @@ func TestPrintDouble(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.DoubleCastExpr{
+	p.Print(&ir.TypeCastExpr{
+		Type: "float",
 		Expr: &ir.SimpleVar{Name: "var"},
 	})
 
@@ -1149,7 +1152,8 @@ func TestPrintInt(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.IntCastExpr{
+	p.Print(&ir.TypeCastExpr{
+		Type: "int",
 		Expr: &ir.SimpleVar{Name: "var"},
 	})
 
@@ -1165,7 +1169,8 @@ func TestPrintObject(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.ObjectCastExpr{
+	p.Print(&ir.TypeCastExpr{
+		Type: "object",
 		Expr: &ir.SimpleVar{Name: "var"},
 	})
 
@@ -1181,7 +1186,8 @@ func TestPrintString(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.StringCastExpr{
+	p.Print(&ir.TypeCastExpr{
+		Type: "string",
 		Expr: &ir.SimpleVar{Name: "var"},
 	})
 

@@ -92,17 +92,7 @@ func GetPosition(n Node) *position.Position {
 		return n.Position
 	case *SpaceshipExpr:
 		return n.Position
-	case *ArrayCastExpr:
-		return n.Position
-	case *BoolCastExpr:
-		return n.Position
-	case *DoubleCastExpr:
-		return n.Position
-	case *IntCastExpr:
-		return n.Position
-	case *ObjectCastExpr:
-		return n.Position
-	case *StringCastExpr:
+	case *TypeCastExpr:
 		return n.Position
 	case *UnsetCastExpr:
 		return n.Position

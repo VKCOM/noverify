@@ -88,17 +88,7 @@ func (n *SmallerOrEqualExpr) GetFreeFloating() *freefloating.Collection { return
 
 func (n *SpaceshipExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
 
-func (n *ArrayCastExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
-
-func (n *BoolCastExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
-
-func (n *DoubleCastExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
-
-func (n *IntCastExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
-
-func (n *ObjectCastExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
-
-func (n *StringCastExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
+func (n *TypeCastExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
 
 func (n *UnsetCastExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
 

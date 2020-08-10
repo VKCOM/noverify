@@ -495,66 +495,20 @@ func ConvertNode(n node.Node) ir.Node {
 		return out
 
 	case *cast.Array:
-		if n == nil {
-			return (*ir.ArrayCastExpr)(nil)
-		}
-		out := &ir.ArrayCastExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
-
+		return convCastExpr(n, n.Expr, "array")
 	case *cast.Bool:
-		if n == nil {
-			return (*ir.BoolCastExpr)(nil)
-		}
-		out := &ir.BoolCastExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
-
-	case *cast.Double:
-		if n == nil {
-			return (*ir.DoubleCastExpr)(nil)
-		}
-		out := &ir.DoubleCastExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
-
+		return convCastExpr(n, n.Expr, "bool")
 	case *cast.Int:
-		if n == nil {
-			return (*ir.IntCastExpr)(nil)
-		}
-		out := &ir.IntCastExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
-
+		return convCastExpr(n, n.Expr, "int")
+	case *cast.Double:
+		return convCastExpr(n, n.Expr, "float")
 	case *cast.Object:
-		if n == nil {
-			return (*ir.ObjectCastExpr)(nil)
-		}
-		out := &ir.ObjectCastExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
-
+		return convCastExpr(n, n.Expr, "object")
 	case *cast.String:
-		if n == nil {
-			return (*ir.StringCastExpr)(nil)
-		}
-		out := &ir.StringCastExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
+		return convCastExpr(n, n.Expr, "string")
 
 	case *cast.Unset:
+		// We dont convert (unset)$x into CastExpr deliberately.
 		if n == nil {
 			return (*ir.UnsetCastExpr)(nil)
 		}
@@ -1848,4 +1802,13 @@ func ConvertNode(n node.Node) ir.Node {
 	}
 
 	panic(fmt.Sprintf("unhandled type %T", n))
+}
+
+func convCastExpr(n, e node.Node, typ string) *ir.TypeCastExpr {
+	return &ir.TypeCastExpr{
+		FreeFloating: *n.GetFreeFloating(),
+		Position:     n.GetPosition(),
+		Type:         typ,
+		Expr:         ConvertNode(e),
+	}
 }

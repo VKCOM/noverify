@@ -49,12 +49,7 @@ const (
 	KindSmallerExpr
 	KindSmallerOrEqualExpr
 	KindSpaceshipExpr
-	KindArrayCastExpr
-	KindBoolCastExpr
-	KindDoubleCastExpr
-	KindIntCastExpr
-	KindObjectCastExpr
-	KindStringCastExpr
+	KindTypeCastExpr
 	KindUnsetCastExpr
 	KindArrayExpr
 	KindArrayDimFetchExpr
@@ -259,18 +254,8 @@ func GetNodeKind(n Node) NodeKind {
 		return KindSmallerOrEqualExpr
 	case *SpaceshipExpr:
 		return KindSpaceshipExpr
-	case *ArrayCastExpr:
-		return KindArrayCastExpr
-	case *BoolCastExpr:
-		return KindBoolCastExpr
-	case *DoubleCastExpr:
-		return KindDoubleCastExpr
-	case *IntCastExpr:
-		return KindIntCastExpr
-	case *ObjectCastExpr:
-		return KindObjectCastExpr
-	case *StringCastExpr:
-		return KindStringCastExpr
+	case *TypeCastExpr:
+		return KindTypeCastExpr
 	case *UnsetCastExpr:
 		return KindUnsetCastExpr
 	case *ArrayExpr:
