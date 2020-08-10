@@ -128,10 +128,6 @@ func GetPosition(n Node) *position.Position {
 		return n.Position
 	case *FunctionCallExpr:
 		return n.Position
-	case *IncludeExpr:
-		return n.Position
-	case *IncludeOnceExpr:
-		return n.Position
 	case *InstanceOfExpr:
 		return n.Position
 	case *IssetExpr:
@@ -158,9 +154,7 @@ func GetPosition(n Node) *position.Position {
 		return n.Position
 	case *ReferenceExpr:
 		return n.Position
-	case *RequireExpr:
-		return n.Position
-	case *RequireOnceExpr:
+	case *ImportExpr:
 		return n.Position
 	case *ShellExecExpr:
 		return n.Position

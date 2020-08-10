@@ -133,14 +133,8 @@ func (b *blockLinter) enterNode(n ir.Node) {
 		b.walker.r.checkKeywordCase(n, "yield")
 	case *ir.YieldFromExpr:
 		b.walker.r.checkKeywordCase(n, "yield")
-	case *ir.IncludeExpr:
-		b.walker.r.checkKeywordCase(n, "include")
-	case *ir.IncludeOnceExpr:
-		b.walker.r.checkKeywordCase(n, "include_once")
-	case *ir.RequireExpr:
-		b.walker.r.checkKeywordCase(n, "require")
-	case *ir.RequireOnceExpr:
-		b.walker.r.checkKeywordCase(n, "require_once")
+	case *ir.ImportExpr:
+		b.walker.r.checkKeywordCase(n, n.Func)
 	case *ir.BreakStmt:
 		b.walker.r.checkKeywordCase(n, "break")
 	case *ir.ReturnStmt:
@@ -392,7 +386,7 @@ func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 		return
 	}
 	switch s.Expr.(type) {
-	case *ir.RequireExpr, *ir.RequireOnceExpr, *ir.IncludeExpr, *ir.IncludeOnceExpr, *ir.ExitExpr:
+	case *ir.ImportExpr, *ir.ExitExpr:
 		// Skip.
 	case *ir.ArrayExpr, *ir.NewExpr:
 		// Report these even if they are not pure.

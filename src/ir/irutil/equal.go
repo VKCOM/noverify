@@ -1160,19 +1160,13 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		return true
-	case *ir.IncludeExpr:
-		y, ok := y.(*ir.IncludeExpr)
+	case *ir.ImportExpr:
+		y, ok := y.(*ir.ImportExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !NodeEqual(x.Expr, y.Expr) {
+		if x.Func != y.Func {
 			return false
-		}
-		return true
-	case *ir.IncludeOnceExpr:
-		y, ok := y.(*ir.IncludeOnceExpr)
-		if !ok || x == nil || y == nil {
-			return x == y
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
 			return false
@@ -1644,24 +1638,6 @@ func NodeEqual(x, y ir.Node) bool {
 			if !NodeEqual(x.Parts[i], y.Parts[i]) {
 				return false
 			}
-		}
-		return true
-	case *ir.RequireExpr:
-		y, ok := y.(*ir.RequireExpr)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *ir.RequireOnceExpr:
-		y, ok := y.(*ir.RequireOnceExpr)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
 		}
 		return true
 	case *ir.ReturnStmt:
