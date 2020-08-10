@@ -1,0 +1,22 @@
+package regression_test
+
+import (
+	"testing"
+
+	"github.com/VKCOM/noverify/src/linttest"
+)
+
+func TestIssue375(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+function ref_sink(&$ref) {}
+
+function f() {
+  $x = [1];
+  ref_sink($x[0]);
+}
+
+$x = [1, 5];
+ref_sink($x[1]);
+
+`)
+}
