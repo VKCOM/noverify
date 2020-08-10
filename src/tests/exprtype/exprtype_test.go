@@ -8,10 +8,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/astutil"
 )
 
 // Tests in this file make it less likely that type solving will break
@@ -2011,7 +2011,7 @@ func (w *exprTypeWalker) EnterNode(n ir.Node) bool {
 		expectedType := call.ArgumentList.Arguments[1].(*ir.Argument).Expr.(*ir.String).Value
 		actualType, ok := exprTypeResult[checkedExpr]
 		if !ok {
-			w.t.Fatalf("no type found for %s expression", astutil.FmtNode(checkedExpr))
+			w.t.Fatalf("no type found for %s expression", irutil.FmtNode(checkedExpr))
 		}
 		want := makeType(expectedType[len(`"`) : len(expectedType)-len(`"`)])
 		have := testTypesMap{
@@ -2021,7 +2021,7 @@ func (w *exprTypeWalker) EnterNode(n ir.Node) bool {
 		if diff := cmp.Diff(have, want); diff != "" {
 			line := ir.GetPosition(checkedExpr).StartLine
 			w.t.Errorf("line %d: type mismatch for %s (-have +want):\n%s",
-				line, astutil.FmtNode(checkedExpr), diff)
+				line, irutil.FmtNode(checkedExpr), diff)
 		}
 		return false
 	}

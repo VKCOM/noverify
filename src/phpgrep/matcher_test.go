@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/irgen"
-	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parseutil"
 )
 
@@ -68,7 +68,7 @@ func TestMatchCapture(t *testing.T) {
 			t.Errorf("%s not captured", name)
 			return
 		}
-		have := astutil.FmtNode(n)
+		have := irutil.FmtNode(n)
 		if have != want {
 			t.Errorf("%s mismatched: have %s, want %s", name, have, want)
 		}
