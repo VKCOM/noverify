@@ -1,6 +1,7 @@
 package irfmt
 
 import (
+	"fmt"
 	"io"
 	"strings"
 
@@ -209,18 +210,8 @@ func (p *PrettyPrinter) printNode(n ir.Node) {
 
 		// cast
 
-	case *ir.ArrayCastExpr:
-		p.printArray(n)
-	case *ir.BoolCastExpr:
-		p.printBool(n)
-	case *ir.DoubleCastExpr:
-		p.printDouble(n)
-	case *ir.IntCastExpr:
-		p.printInt(n)
-	case *ir.ObjectCastExpr:
-		p.printObject(n)
-	case *ir.StringCastExpr:
-		p.printString(n)
+	case *ir.TypeCastExpr:
+		p.printTypeCastExpr(n)
 	case *ir.UnsetCastExpr:
 		p.printUnset(n)
 
@@ -816,33 +807,8 @@ func (p *PrettyPrinter) printBinarySpaceship(n *ir.SpaceshipExpr) {
 
 // cast
 
-func (p *PrettyPrinter) printArray(n *ir.ArrayCastExpr) {
-	io.WriteString(p.w, "(array)")
-	p.Print(n.Expr)
-}
-
-func (p *PrettyPrinter) printBool(n *ir.BoolCastExpr) {
-	io.WriteString(p.w, "(bool)")
-	p.Print(n.Expr)
-}
-
-func (p *PrettyPrinter) printDouble(n *ir.DoubleCastExpr) {
-	io.WriteString(p.w, "(float)")
-	p.Print(n.Expr)
-}
-
-func (p *PrettyPrinter) printInt(n *ir.IntCastExpr) {
-	io.WriteString(p.w, "(int)")
-	p.Print(n.Expr)
-}
-
-func (p *PrettyPrinter) printObject(n *ir.ObjectCastExpr) {
-	io.WriteString(p.w, "(object)")
-	p.Print(n.Expr)
-}
-
-func (p *PrettyPrinter) printString(n *ir.StringCastExpr) {
-	io.WriteString(p.w, "(string)")
+func (p *PrettyPrinter) printTypeCastExpr(n *ir.TypeCastExpr) {
+	fmt.Fprintf(p.w, "(%s)", n.Type)
 	p.Print(n.Expr)
 }
 

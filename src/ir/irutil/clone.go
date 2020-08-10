@@ -27,12 +27,6 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.Arguments = sliceClone
 		}
 		return &clone
-	case *ir.ArrayCastExpr:
-		clone := *x
-		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
-		}
-		return &clone
 	case *ir.ArrayDimFetchExpr:
 		clone := *x
 		if x.Variable != nil {
@@ -243,12 +237,6 @@ func NodeClone(x ir.Node) ir.Node {
 		}
 		if x.Right != nil {
 			clone.Right = NodeClone(x.Right).(ir.Node)
-		}
-		return &clone
-	case *ir.BoolCastExpr:
-		clone := *x
-		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
 		}
 		return &clone
 	case *ir.BooleanAndExpr:
@@ -553,12 +541,6 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.Cond = NodeClone(x.Cond).(ir.Node)
 		}
 		return &clone
-	case *ir.DoubleCastExpr:
-		clone := *x
-		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
-		}
-		return &clone
 	case *ir.EchoStmt:
 		clone := *x
 		{
@@ -848,12 +830,6 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.Class = NodeClone(x.Class).(ir.Node)
 		}
 		return &clone
-	case *ir.IntCastExpr:
-		clone := *x
-		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
-		}
-		return &clone
 	case *ir.InterfaceExtendsStmt:
 		clone := *x
 		{
@@ -1035,12 +1011,6 @@ func NodeClone(x ir.Node) ir.Node {
 		}
 		return &clone
 	case *ir.Nullable:
-		clone := *x
-		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
-		}
-		return &clone
-	case *ir.ObjectCastExpr:
 		clone := *x
 		if x.Expr != nil {
 			clone.Expr = NodeClone(x.Expr).(ir.Node)
@@ -1305,12 +1275,6 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.String:
 		clone := *x
 		return &clone
-	case *ir.StringCastExpr:
-		clone := *x
-		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
-		}
-		return &clone
 	case *ir.SwitchStmt:
 		clone := *x
 		if x.Cond != nil {
@@ -1426,6 +1390,12 @@ func NodeClone(x ir.Node) ir.Node {
 		}
 		if x.Finally != nil {
 			clone.Finally = NodeClone(x.Finally).(ir.Node)
+		}
+		return &clone
+	case *ir.TypeCastExpr:
+		clone := *x
+		if x.Expr != nil {
+			clone.Expr = NodeClone(x.Expr).(ir.Node)
 		}
 		return &clone
 	case *ir.UnaryMinusExpr:

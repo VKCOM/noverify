@@ -114,16 +114,12 @@ func (b *blockLinter) enterNode(n ir.Node) {
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
 
-	case *ir.DoubleCastExpr:
-		b.checkRedundantCast(n.Expr, "float")
-	case *ir.IntCastExpr:
-		b.checkRedundantCast(n.Expr, "int")
-	case *ir.BoolCastExpr:
-		b.checkRedundantCast(n.Expr, "bool")
-	case *ir.StringCastExpr:
-		b.checkRedundantCast(n.Expr, "string")
-	case *ir.ArrayCastExpr:
-		b.checkRedundantCastArray(n.Expr)
+	case *ir.TypeCastExpr:
+		if n.Type == "array" {
+			b.checkRedundantCastArray(n.Expr)
+		} else {
+			b.checkRedundantCast(n.Expr, n.Type)
+		}
 
 	case *ir.CloneExpr:
 		b.walker.r.checkKeywordCase(n, "clone")

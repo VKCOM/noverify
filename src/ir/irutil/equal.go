@@ -40,15 +40,6 @@ func NodeEqual(x, y ir.Node) bool {
 			}
 		}
 		return true
-	case *ir.ArrayCastExpr:
-		y, ok := y.(*ir.ArrayCastExpr)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
 	case *ir.ArrayDimFetchExpr:
 		y, ok := y.(*ir.ArrayDimFetchExpr)
 		if !ok || x == nil || y == nil {
@@ -344,15 +335,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		if !NodeEqual(x.Right, y.Right) {
-			return false
-		}
-		return true
-	case *ir.BoolCastExpr:
-		y, ok := y.(*ir.BoolCastExpr)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -780,15 +762,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		if !NodeEqual(x.Cond, y.Cond) {
-			return false
-		}
-		return true
-	case *ir.DoubleCastExpr:
-		y, ok := y.(*ir.DoubleCastExpr)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -1226,15 +1199,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		return true
-	case *ir.IntCastExpr:
-		y, ok := y.(*ir.IntCastExpr)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
 	case *ir.InterfaceExtendsStmt:
 		y, ok := y.(*ir.InterfaceExtendsStmt)
 		if !ok || x == nil || y == nil {
@@ -1501,15 +1465,6 @@ func NodeEqual(x, y ir.Node) bool {
 		return true
 	case *ir.Nullable:
 		y, ok := y.(*ir.Nullable)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
-	case *ir.ObjectCastExpr:
-		y, ok := y.(*ir.ObjectCastExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -1891,15 +1846,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		return true
-	case *ir.StringCastExpr:
-		y, ok := y.(*ir.StringCastExpr)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		return true
 	case *ir.SwitchStmt:
 		y, ok := y.(*ir.SwitchStmt)
 		if !ok || x == nil || y == nil {
@@ -2056,6 +2002,18 @@ func NodeEqual(x, y ir.Node) bool {
 			}
 		}
 		if !NodeEqual(x.Finally, y.Finally) {
+			return false
+		}
+		return true
+	case *ir.TypeCastExpr:
+		y, ok := y.(*ir.TypeCastExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if x.Type != y.Type {
+			return false
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
