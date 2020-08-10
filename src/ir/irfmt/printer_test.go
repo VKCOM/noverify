@@ -1542,7 +1542,7 @@ func TestPrintInclude(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.IncludeExpr{Expr: &ir.String{Value: "'path'"}})
+	p.Print(&ir.ImportExpr{Func: "include", Expr: &ir.String{Value: "'path'"}})
 
 	expected := `include 'path'`
 	actual := o.String()
@@ -1556,7 +1556,7 @@ func TestPrintIncludeOnce(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.IncludeOnceExpr{Expr: &ir.String{Value: "'path'"}})
+	p.Print(&ir.ImportExpr{Func: "include_once", Expr: &ir.String{Value: "'path'"}})
 
 	expected := `include_once 'path'`
 	actual := o.String()
@@ -1802,7 +1802,7 @@ func TestPrintRequire(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.RequireExpr{Expr: &ir.String{Value: "'path'"}})
+	p.Print(&ir.ImportExpr{Func: "require", Expr: &ir.String{Value: "'path'"}})
 
 	expected := `require 'path'`
 	actual := o.String()
@@ -1816,7 +1816,7 @@ func TestPrintRequireOnce(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.RequireOnceExpr{Expr: &ir.String{Value: "'path'"}})
+	p.Print(&ir.ImportExpr{Func: "require_once", Expr: &ir.String{Value: "'path'"}})
 
 	expected := `require_once 'path'`
 	actual := o.String()

@@ -124,10 +124,6 @@ func (n *ExitExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFl
 
 func (n *FunctionCallExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
 
-func (n *IncludeExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
-
-func (n *IncludeOnceExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
-
 func (n *InstanceOfExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
 
 func (n *IssetExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
@@ -154,9 +150,7 @@ func (n *PropertyFetchExpr) GetFreeFloating() *freefloating.Collection { return 
 
 func (n *ReferenceExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
 
-func (n *RequireExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
-
-func (n *RequireOnceExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
+func (n *ImportExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
 
 func (n *ShellExecExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
 

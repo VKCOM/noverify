@@ -806,13 +806,7 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.Else = NodeClone(x.Else).(ir.Node)
 		}
 		return &clone
-	case *ir.IncludeExpr:
-		clone := *x
-		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
-		}
-		return &clone
-	case *ir.IncludeOnceExpr:
+	case *ir.ImportExpr:
 		clone := *x
 		if x.Expr != nil {
 			clone.Expr = NodeClone(x.Expr).(ir.Node)
@@ -1134,18 +1128,6 @@ func NodeClone(x ir.Node) ir.Node {
 				sliceClone[i] = NodeClone(x.Parts[i]).(ir.Node)
 			}
 			clone.Parts = sliceClone
-		}
-		return &clone
-	case *ir.RequireExpr:
-		clone := *x
-		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
-		}
-		return &clone
-	case *ir.RequireOnceExpr:
-		clone := *x
-		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
 		}
 		return &clone
 	case *ir.ReturnStmt:

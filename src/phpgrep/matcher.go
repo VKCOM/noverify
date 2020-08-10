@@ -434,18 +434,9 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 		y, ok := y.(*ir.ExitExpr)
 		return ok && x.Die == y.Die && m.eqNode(state, x.Expr, y.Expr)
 
-	case *ir.IncludeExpr:
-		y, ok := y.(*ir.IncludeExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
-	case *ir.IncludeOnceExpr:
-		y, ok := y.(*ir.IncludeOnceExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
-	case *ir.RequireExpr:
-		y, ok := y.(*ir.RequireExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
-	case *ir.RequireOnceExpr:
-		y, ok := y.(*ir.RequireOnceExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
+	case *ir.ImportExpr:
+		y, ok := y.(*ir.ImportExpr)
+		return ok && x.Func == y.Func && m.eqNode(state, x.Expr, y.Expr)
 	case *ir.EmptyExpr:
 		y, ok := y.(*ir.EmptyExpr)
 		return ok && m.eqNode(state, x.Expr, y.Expr)

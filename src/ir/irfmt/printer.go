@@ -249,10 +249,6 @@ func (p *PrettyPrinter) printNode(n ir.Node) {
 		p.printExprExit(n)
 	case *ir.FunctionCallExpr:
 		p.printExprFunctionCall(n)
-	case *ir.IncludeExpr:
-		p.printExprInclude(n)
-	case *ir.IncludeOnceExpr:
-		p.printExprIncludeOnce(n)
 	case *ir.InstanceOfExpr:
 		p.printExprInstanceOf(n)
 	case *ir.IssetExpr:
@@ -277,10 +273,8 @@ func (p *PrettyPrinter) printNode(n ir.Node) {
 		p.printExprPropertyFetch(n)
 	case *ir.ReferenceExpr:
 		p.printExprReference(n)
-	case *ir.RequireExpr:
-		p.printExprRequire(n)
-	case *ir.RequireOnceExpr:
-		p.printExprRequireOnce(n)
+	case *ir.ImportExpr:
+		p.printExprImport(n)
 	case *ir.ShellExecExpr:
 		p.printExprShellExec(n)
 	case *ir.StaticCallExpr:
@@ -950,16 +944,6 @@ func (p *PrettyPrinter) printExprFunctionCall(n *ir.FunctionCallExpr) {
 	io.WriteString(p.w, ")")
 }
 
-func (p *PrettyPrinter) printExprInclude(n *ir.IncludeExpr) {
-	io.WriteString(p.w, "include ")
-	p.Print(n.Expr)
-}
-
-func (p *PrettyPrinter) printExprIncludeOnce(n *ir.IncludeOnceExpr) {
-	io.WriteString(p.w, "include_once ")
-	p.Print(n.Expr)
-}
-
 func (p *PrettyPrinter) printExprInstanceOf(n *ir.InstanceOfExpr) {
 	p.Print(n.Expr)
 	io.WriteString(p.w, " instanceof ")
@@ -1041,13 +1025,8 @@ func (p *PrettyPrinter) printExprReference(n *ir.ReferenceExpr) {
 	p.Print(n.Variable)
 }
 
-func (p *PrettyPrinter) printExprRequire(n *ir.RequireExpr) {
-	io.WriteString(p.w, "require ")
-	p.Print(n.Expr)
-}
-
-func (p *PrettyPrinter) printExprRequireOnce(n *ir.RequireOnceExpr) {
-	io.WriteString(p.w, "require_once ")
+func (p *PrettyPrinter) printExprImport(n *ir.ImportExpr) {
+	io.WriteString(p.w, n.Func+" ")
 	p.Print(n.Expr)
 }
 

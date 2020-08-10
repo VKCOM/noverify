@@ -436,15 +436,10 @@ type FunctionCallExpr struct {
 	ArgumentList *ArgumentList
 }
 
-type IncludeExpr struct {
+type ImportExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	Expr         Node
-}
-
-type IncludeOnceExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
+	Func         string // "include" "include_once" "require" "require_once"
 	Expr         Node
 }
 
@@ -530,18 +525,6 @@ type ReferenceExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-}
-
-type RequireExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Expr         Node
-}
-
-type RequireOnceExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Expr         Node
 }
 
 type ShellExecExpr struct {

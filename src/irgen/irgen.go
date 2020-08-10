@@ -702,26 +702,6 @@ func ConvertNode(n node.Node) ir.Node {
 		out.ArgumentList = ConvertNode(n.ArgumentList).(*ir.ArgumentList)
 		return out
 
-	case *expr.Include:
-		if n == nil {
-			return (*ir.IncludeExpr)(nil)
-		}
-		out := &ir.IncludeExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
-
-	case *expr.IncludeOnce:
-		if n == nil {
-			return (*ir.IncludeOnceExpr)(nil)
-		}
-		out := &ir.IncludeOnceExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
-
 	case *expr.InstanceOf:
 		if n == nil {
 			return (*ir.InstanceOfExpr)(nil)
@@ -865,24 +845,13 @@ func ConvertNode(n node.Node) ir.Node {
 		return out
 
 	case *expr.Require:
-		if n == nil {
-			return (*ir.RequireExpr)(nil)
-		}
-		out := &ir.RequireExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
-
+		return convImportExpr(n, n.Expr, "require")
 	case *expr.RequireOnce:
-		if n == nil {
-			return (*ir.RequireOnceExpr)(nil)
-		}
-		out := &ir.RequireOnceExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
+		return convImportExpr(n, n.Expr, "require_once")
+	case *expr.Include:
+		return convImportExpr(n, n.Expr, "include")
+	case *expr.IncludeOnce:
+		return convImportExpr(n, n.Expr, "include_once")
 
 	case *expr.ShellExec:
 		if n == nil {
@@ -1802,6 +1771,15 @@ func ConvertNode(n node.Node) ir.Node {
 	}
 
 	panic(fmt.Sprintf("unhandled type %T", n))
+}
+
+func convImportExpr(n, e node.Node, fn string) *ir.ImportExpr {
+	return &ir.ImportExpr{
+		FreeFloating: *n.GetFreeFloating(),
+		Position:     n.GetPosition(),
+		Func:         fn,
+		Expr:         ConvertNode(e),
+	}
 }
 
 func convCastExpr(n, e node.Node, typ string) *ir.TypeCastExpr {

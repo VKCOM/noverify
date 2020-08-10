@@ -67,8 +67,6 @@ const (
 	KindEvalExpr
 	KindExitExpr
 	KindFunctionCallExpr
-	KindIncludeExpr
-	KindIncludeOnceExpr
 	KindInstanceOfExpr
 	KindIssetExpr
 	KindListExpr
@@ -82,8 +80,7 @@ const (
 	KindPrintExpr
 	KindPropertyFetchExpr
 	KindReferenceExpr
-	KindRequireExpr
-	KindRequireOnceExpr
+	KindImportExpr
 	KindShellExecExpr
 	KindStaticCallExpr
 	KindStaticPropertyFetchExpr
@@ -290,10 +287,6 @@ func GetNodeKind(n Node) NodeKind {
 		return KindExitExpr
 	case *FunctionCallExpr:
 		return KindFunctionCallExpr
-	case *IncludeExpr:
-		return KindIncludeExpr
-	case *IncludeOnceExpr:
-		return KindIncludeOnceExpr
 	case *InstanceOfExpr:
 		return KindInstanceOfExpr
 	case *IssetExpr:
@@ -320,10 +313,8 @@ func GetNodeKind(n Node) NodeKind {
 		return KindPropertyFetchExpr
 	case *ReferenceExpr:
 		return KindReferenceExpr
-	case *RequireExpr:
-		return KindRequireExpr
-	case *RequireOnceExpr:
-		return KindRequireOnceExpr
+	case *ImportExpr:
+		return KindImportExpr
 	case *ShellExecExpr:
 		return KindShellExecExpr
 	case *StaticCallExpr:

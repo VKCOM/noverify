@@ -237,10 +237,7 @@ func (f *sideEffectsFinder) EnterNode(n ir.Node) bool {
 		*ir.PostIncExpr,
 		*ir.PreDecExpr,
 		*ir.PostDecExpr,
-		*ir.RequireExpr,
-		*ir.RequireOnceExpr,
-		*ir.IncludeExpr,
-		*ir.IncludeOnceExpr:
+		*ir.ImportExpr:
 		f.sideEffects = true
 		return false
 	}
