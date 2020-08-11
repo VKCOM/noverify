@@ -87,8 +87,6 @@ function as_shape($x) {
   return $x;
 }
 
-class Foo {}
-
 function infer_types_in_callback() {
   /** @var int $a */
   $a = [];
