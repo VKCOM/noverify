@@ -1334,6 +1334,11 @@ func (b *BlockWalker) handleVariable(v ir.Node) bool {
 		b.ctx.sc.AddVar(v, meta.NewTypesMap("undefined"), "undefined", meta.VarAlwaysDefined)
 	}
 
+	// In case the required variable was not found in the current scope,
+	// we need to look at all scopes above up to the scope in which the given
+	// arrow function is declared or, in case it is a nested arrow function,
+	// to the scope, which contains the parent arrow function.
+	// This is necessary because arrow functions implicitly capture variables.
 	if b.inArrowFunction && !have {
 		var varNotFound bool
 		var varMaybeNotDefined bool
@@ -1350,6 +1355,13 @@ func (b *BlockWalker) handleVariable(v ir.Node) bool {
 			}
 
 			tp, _ := s.GetVarNameType(varName)
+
+			// If a variable was found in one of the scopes,
+			// we must add it to the current scope, that is, capture the variable.
+			// Thus, by changing this variable inside the arrow function,
+			// we will not change the variable that was captured,
+			// as it should be according to the specification
+			// (www.php.net/manual/en/functions.arrow.php).
 			b.ctx.sc.AddVar(v, tp, "from_parent_scope", meta.VarAlwaysDefined)
 			return false
 		}
