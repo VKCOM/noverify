@@ -1612,6 +1612,8 @@ func TestArrowFunction(t *testing.T) {
 		$_ = fn($x) => $a = $x + 5;
 		$_ = fn($x) => ($a = $x + 5) && $x;
 
+		$_ = fn($x) => ($a = $x + 5) && $a + 5;
+
 		// with PHPDoc
 		/**
 		 * @param Boo $x
@@ -1626,6 +1628,8 @@ func TestArrowFunction(t *testing.T) {
 
 		// nested with unused variable
 		$_ = fn($x) => fn($y) => fn($w) => $a = $x + $y + $w;
+
+		$_ = fn($x) => fn($y) => fn($w) => ($a = $x + 5) && $a + 5;
 
 		// arguments are not visible outside of arrow function
 		echo $x; // Undefined $x

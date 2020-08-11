@@ -1312,9 +1312,9 @@ func (b *BlockWalker) handleVariable(v ir.Node) bool {
 				for _, w := range b.parentBlockWalkers {
 					delete(w.unusedVars, varName)
 				}
-			} else {
-				delete(b.unusedVars, varName)
 			}
+
+			delete(b.unusedVars, varName)
 		}
 	case *ir.SimpleVar:
 		varName = v.Name
@@ -1322,9 +1322,9 @@ func (b *BlockWalker) handleVariable(v ir.Node) bool {
 			for _, w := range b.parentBlockWalkers {
 				delete(w.unusedVars, varName)
 			}
-		} else {
-			delete(b.unusedVars, varName)
 		}
+
+		delete(b.unusedVars, varName)
 	}
 
 	have := b.ctx.sc.HaveVar(v)
