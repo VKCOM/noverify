@@ -1,4 +1,4 @@
-package astutil
+package irutil
 
 import (
 	"github.com/VKCOM/noverify/src/ir"

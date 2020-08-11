@@ -1,6 +1,7 @@
 package irfmt
 
 import (
+	"fmt"
 	"io"
 	"strings"
 
@@ -209,18 +210,8 @@ func (p *PrettyPrinter) printNode(n ir.Node) {
 
 		// cast
 
-	case *ir.ArrayCastExpr:
-		p.printArray(n)
-	case *ir.BoolCastExpr:
-		p.printBool(n)
-	case *ir.DoubleCastExpr:
-		p.printDouble(n)
-	case *ir.IntCastExpr:
-		p.printInt(n)
-	case *ir.ObjectCastExpr:
-		p.printObject(n)
-	case *ir.StringCastExpr:
-		p.printString(n)
+	case *ir.TypeCastExpr:
+		p.printTypeCastExpr(n)
 	case *ir.UnsetCastExpr:
 		p.printUnset(n)
 
@@ -258,10 +249,6 @@ func (p *PrettyPrinter) printNode(n ir.Node) {
 		p.printExprExit(n)
 	case *ir.FunctionCallExpr:
 		p.printExprFunctionCall(n)
-	case *ir.IncludeExpr:
-		p.printExprInclude(n)
-	case *ir.IncludeOnceExpr:
-		p.printExprIncludeOnce(n)
 	case *ir.InstanceOfExpr:
 		p.printExprInstanceOf(n)
 	case *ir.IssetExpr:
@@ -286,10 +273,8 @@ func (p *PrettyPrinter) printNode(n ir.Node) {
 		p.printExprPropertyFetch(n)
 	case *ir.ReferenceExpr:
 		p.printExprReference(n)
-	case *ir.RequireExpr:
-		p.printExprRequire(n)
-	case *ir.RequireOnceExpr:
-		p.printExprRequireOnce(n)
+	case *ir.ImportExpr:
+		p.printExprImport(n)
 	case *ir.ShellExecExpr:
 		p.printExprShellExec(n)
 	case *ir.StaticCallExpr:
@@ -816,33 +801,8 @@ func (p *PrettyPrinter) printBinarySpaceship(n *ir.SpaceshipExpr) {
 
 // cast
 
-func (p *PrettyPrinter) printArray(n *ir.ArrayCastExpr) {
-	io.WriteString(p.w, "(array)")
-	p.Print(n.Expr)
-}
-
-func (p *PrettyPrinter) printBool(n *ir.BoolCastExpr) {
-	io.WriteString(p.w, "(bool)")
-	p.Print(n.Expr)
-}
-
-func (p *PrettyPrinter) printDouble(n *ir.DoubleCastExpr) {
-	io.WriteString(p.w, "(float)")
-	p.Print(n.Expr)
-}
-
-func (p *PrettyPrinter) printInt(n *ir.IntCastExpr) {
-	io.WriteString(p.w, "(int)")
-	p.Print(n.Expr)
-}
-
-func (p *PrettyPrinter) printObject(n *ir.ObjectCastExpr) {
-	io.WriteString(p.w, "(object)")
-	p.Print(n.Expr)
-}
-
-func (p *PrettyPrinter) printString(n *ir.StringCastExpr) {
-	io.WriteString(p.w, "(string)")
+func (p *PrettyPrinter) printTypeCastExpr(n *ir.TypeCastExpr) {
+	fmt.Fprintf(p.w, "(%s)", n.Type)
 	p.Print(n.Expr)
 }
 
@@ -984,16 +944,6 @@ func (p *PrettyPrinter) printExprFunctionCall(n *ir.FunctionCallExpr) {
 	io.WriteString(p.w, ")")
 }
 
-func (p *PrettyPrinter) printExprInclude(n *ir.IncludeExpr) {
-	io.WriteString(p.w, "include ")
-	p.Print(n.Expr)
-}
-
-func (p *PrettyPrinter) printExprIncludeOnce(n *ir.IncludeOnceExpr) {
-	io.WriteString(p.w, "include_once ")
-	p.Print(n.Expr)
-}
-
 func (p *PrettyPrinter) printExprInstanceOf(n *ir.InstanceOfExpr) {
 	p.Print(n.Expr)
 	io.WriteString(p.w, " instanceof ")
@@ -1075,13 +1025,8 @@ func (p *PrettyPrinter) printExprReference(n *ir.ReferenceExpr) {
 	p.Print(n.Variable)
 }
 
-func (p *PrettyPrinter) printExprRequire(n *ir.RequireExpr) {
-	io.WriteString(p.w, "require ")
-	p.Print(n.Expr)
-}
-
-func (p *PrettyPrinter) printExprRequireOnce(n *ir.RequireOnceExpr) {
-	io.WriteString(p.w, "require_once ")
+func (p *PrettyPrinter) printExprImport(n *ir.ImportExpr) {
+	io.WriteString(p.w, n.Func+" ")
 	p.Print(n.Expr)
 }
 

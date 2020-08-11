@@ -1,4 +1,4 @@
-package checkers_test
+package rules_test
 
 import (
 	"strings"
