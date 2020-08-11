@@ -28,9 +28,15 @@ type referencesWalker struct {
 }
 
 func getFunction(st *meta.ClassParseState, n *ir.FunctionCallExpr) (fun meta.FuncInfo, nameStr string, ok bool) {
-	switch nm := n.Function.(type) {
-	case *ir.Name:
-		nameStr = meta.NameToString(nm)
+	nm, ok := n.Function.(*ir.Name)
+	if !ok {
+		return fun, nameStr, ok
+	}
+
+	nameStr = nm.Value
+	if nm.IsFullyQualified() {
+		fun, ok = meta.Info.GetFunction(nameStr)
+	} else {
 		tryStr := st.Namespace + `\` + nameStr
 
 		fun, ok = meta.Info.GetFunction(tryStr)
@@ -45,9 +51,6 @@ func getFunction(st *meta.ClassParseState, n *ir.FunctionCallExpr) (fun meta.Fun
 				return fun, tryStr, true
 			}
 		}
-	case *ir.FullyQualifiedName:
-		nameStr = meta.FullyQualifiedToString(nm)
-		fun, ok = meta.Info.GetFunction(nameStr)
 	}
 
 	return fun, nameStr, ok

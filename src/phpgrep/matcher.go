@@ -40,20 +40,6 @@ func (m *matcher) match(state *matcherState, n ir.Node) (data MatchData, ok bool
 	return data, true
 }
 
-func (m *matcher) eqNameParts(xs, ys []ir.Node) bool {
-	if len(xs) != len(ys) {
-		return false
-	}
-	for i, p1 := range xs {
-		p1 := p1.(*ir.NamePart).Value
-		p2 := ys[i].(*ir.NamePart).Value
-		if p1 != p2 {
-			return false
-		}
-	}
-	return true
-}
-
 func (m *matcher) eqNodeSliceNoMeta(state *matcherState, xs, ys []ir.Node) bool {
 	if len(xs) != len(ys) {
 		return false
@@ -434,18 +420,9 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 		y, ok := y.(*ir.ExitExpr)
 		return ok && x.Die == y.Die && m.eqNode(state, x.Expr, y.Expr)
 
-	case *ir.IncludeExpr:
-		y, ok := y.(*ir.IncludeExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
-	case *ir.IncludeOnceExpr:
-		y, ok := y.(*ir.IncludeOnceExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
-	case *ir.RequireExpr:
-		y, ok := y.(*ir.RequireExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
-	case *ir.RequireOnceExpr:
-		y, ok := y.(*ir.RequireOnceExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
+	case *ir.ImportExpr:
+		y, ok := y.(*ir.ImportExpr)
+		return ok && x.Func == y.Func && m.eqNode(state, x.Expr, y.Expr)
 	case *ir.EmptyExpr:
 		y, ok := y.(*ir.EmptyExpr)
 		return ok && m.eqNode(state, x.Expr, y.Expr)
@@ -604,10 +581,7 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 		return ok && m.eqNode(state, x.Constant, y.Constant)
 	case *ir.Name:
 		y, ok := y.(*ir.Name)
-		return ok && m.eqNameParts(x.Parts, y.Parts)
-	case *ir.FullyQualifiedName:
-		y, ok := y.(*ir.FullyQualifiedName)
-		return ok && m.eqNameParts(x.Parts, y.Parts)
+		return ok && x.Value == y.Value
 	case *ir.Identifier:
 		y, ok := y.(*ir.Identifier)
 		return ok && x.Value == y.Value
@@ -646,24 +620,9 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 			m.eqNode(state, x.Method, y.Method) &&
 			m.eqNodeSlice(state, x.ArgumentList.Arguments, y.ArgumentList.Arguments)
 
-	case *ir.DoubleCastExpr:
-		y, ok := y.(*ir.DoubleCastExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
-	case *ir.ArrayCastExpr:
-		y, ok := y.(*ir.ArrayCastExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
-	case *ir.BoolCastExpr:
-		y, ok := y.(*ir.BoolCastExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
-	case *ir.IntCastExpr:
-		y, ok := y.(*ir.IntCastExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
-	case *ir.ObjectCastExpr:
-		y, ok := y.(*ir.ObjectCastExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
-	case *ir.StringCastExpr:
-		y, ok := y.(*ir.StringCastExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr)
+	case *ir.TypeCastExpr:
+		y, ok := y.(*ir.TypeCastExpr)
+		return ok && x.Type == y.Type && m.eqNode(state, x.Expr, y.Expr)
 
 	case *ir.Root:
 		return false

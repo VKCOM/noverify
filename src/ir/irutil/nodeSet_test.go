@@ -1,7 +1,8 @@
-package astutil
+package irutil
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/VKCOM/noverify/src/ir"
@@ -32,14 +33,8 @@ func BenchmarkNodeSet(b *testing.B) {
 	runBench(1000)
 }
 
-func createFQN(parts ...string) *ir.FullyQualifiedName {
-	nm := &ir.FullyQualifiedName{
-		Parts: make([]ir.Node, len(parts)),
-	}
-	for i, s := range parts {
-		nm.Parts[i] = &ir.NamePart{Value: s}
-	}
-	return nm
+func createFQN(parts ...string) *ir.Name {
+	return &ir.Name{Value: `\` + strings.Join(parts, `\`)}
 }
 
 func createSwitchCases(ncases int) []ir.Node {

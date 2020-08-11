@@ -14,14 +14,18 @@ import (
 func GetFuncName(cs *meta.ClassParseState, funcNode ir.Node) (funcName string, ok bool) {
 	switch nm := funcNode.(type) {
 	case *ir.Name:
-		nameStr := meta.NameToString(nm)
-		firstPart := nm.Parts[0].(*ir.NamePart).Value
+		if nm.IsFullyQualified() {
+			return nm.Value, true
+		}
+
+		nameStr := nm.Value
+		firstPart := nm.FirstPart()
 		if alias, ok := cs.FunctionUses[firstPart]; ok {
-			if len(nm.Parts) == 1 {
+			if nm.NumParts() == 1 {
 				nameStr = alias
 			} else {
 				// handle situations like 'use NS\Foo; Foo\Bar::doSomething();'
-				nameStr = alias + `\` + meta.NamePartsToString(nm.Parts[1:])
+				nameStr = alias + `\` + nm.RestParts()
 			}
 			return nameStr, true
 		}
@@ -32,9 +36,6 @@ func GetFuncName(cs *meta.ClassParseState, funcNode ir.Node) (funcName string, o
 		}
 		return `\` + nameStr, true
 
-	case *ir.FullyQualifiedName:
-		return meta.FullyQualifiedToString(nm), true
-
 	default:
 		return "", false
 	}
@@ -42,13 +43,9 @@ func GetFuncName(cs *meta.ClassParseState, funcNode ir.Node) (funcName string, o
 
 // GetClassName resolves class name for specified class node (as used in static calls, property fetch, etc)
 func GetClassName(cs *meta.ClassParseState, classNode ir.Node) (className string, ok bool) {
-	if nm, ok := classNode.(*ir.FullyQualifiedName); ok {
-		return meta.FullyQualifiedToString(nm), true
-	}
-
 	var firstPart string
-	var parts []ir.Node
 	var partsCount int
+	var restParts string
 
 	switch nm := classNode.(type) {
 	case *ir.Identifier:
@@ -57,10 +54,12 @@ func GetClassName(cs *meta.ClassParseState, classNode ir.Node) (className string
 		firstPart = nm.Value
 		partsCount = 1 // hack for the later if partsCount == 1
 	case *ir.Name:
-		className = meta.NameToString(nm)
-		firstPart = nm.Parts[0].(*ir.NamePart).Value
-		parts = nm.Parts
-		partsCount = len(parts)
+		if nm.IsFullyQualified() {
+			return nm.Value, true
+		}
+		className = nm.Value
+		firstPart, restParts = nm.HeadTail()
+		partsCount = nm.NumParts()
 	default:
 		return "", false
 	}
@@ -74,7 +73,7 @@ func GetClassName(cs *meta.ClassParseState, classNode ir.Node) (className string
 			className = alias
 		} else {
 			// handle situations like 'use NS\Foo; Foo\Bar::doSomething();'
-			className = alias + `\` + meta.NamePartsToString(parts[1:])
+			className = alias + `\` + restParts
 		}
 	} else {
 		className = cs.Namespace + `\` + className
@@ -85,27 +84,30 @@ func GetClassName(cs *meta.ClassParseState, classNode ir.Node) (className string
 
 // GetConstant searches for specified constant in const fetch.
 func GetConstant(cs *meta.ClassParseState, constNode ir.Node) (constName string, ci meta.ConstantInfo, ok bool) {
-	switch nm := constNode.(type) {
-	case *ir.Name:
-		nameStr := meta.NameToString(nm)
-		nameWithNs := cs.Namespace + `\` + nameStr
-		ci, ok = meta.Info.GetConstant(nameWithNs)
-		if ok {
-			return nameWithNs, ci, true
-		}
+	nm, ok := constNode.(*ir.Name)
+	if !ok {
+		return "", meta.ConstantInfo{}, false
+	}
 
-		if cs.Namespace != "" {
-			nameRootNs := `\` + nameStr
-			ci, ok = meta.Info.GetConstant(nameRootNs)
-			if ok {
-				return nameRootNs, ci, ok
-			}
-		}
-	case *ir.FullyQualifiedName:
-		nameStr := meta.FullyQualifiedToString(nm)
+	nameStr := nm.Value
+	if nm.IsFullyQualified() {
 		ci, ok = meta.Info.GetConstant(nameStr)
 		if ok {
 			return nameStr, ci, true
+		}
+	}
+
+	nameWithNs := cs.Namespace + `\` + nameStr
+	ci, ok = meta.Info.GetConstant(nameWithNs)
+	if ok {
+		return nameWithNs, ci, true
+	}
+
+	if cs.Namespace != "" {
+		nameRootNs := `\` + nameStr
+		ci, ok = meta.Info.GetConstant(nameRootNs)
+		if ok {
+			return nameRootNs, ci, ok
 		}
 	}
 

@@ -545,7 +545,7 @@ class C
 
 $b = new B();
 foreach ($b->create() as $item) {
-    $item->getC()->hello();
+    echo $item->getC()->hello();
 }
 `)
 }

@@ -92,17 +92,7 @@ func GetPosition(n Node) *position.Position {
 		return n.Position
 	case *SpaceshipExpr:
 		return n.Position
-	case *ArrayCastExpr:
-		return n.Position
-	case *BoolCastExpr:
-		return n.Position
-	case *DoubleCastExpr:
-		return n.Position
-	case *IntCastExpr:
-		return n.Position
-	case *ObjectCastExpr:
-		return n.Position
-	case *StringCastExpr:
+	case *TypeCastExpr:
 		return n.Position
 	case *UnsetCastExpr:
 		return n.Position
@@ -138,10 +128,6 @@ func GetPosition(n Node) *position.Position {
 		return n.Position
 	case *FunctionCallExpr:
 		return n.Position
-	case *IncludeExpr:
-		return n.Position
-	case *IncludeOnceExpr:
-		return n.Position
 	case *InstanceOfExpr:
 		return n.Position
 	case *IssetExpr:
@@ -168,9 +154,7 @@ func GetPosition(n Node) *position.Position {
 		return n.Position
 	case *ReferenceExpr:
 		return n.Position
-	case *RequireExpr:
-		return n.Position
-	case *RequireOnceExpr:
+	case *ImportExpr:
 		return n.Position
 	case *ShellExecExpr:
 		return n.Position
@@ -188,13 +172,7 @@ func GetPosition(n Node) *position.Position {
 		return n.Position
 	case *YieldFromExpr:
 		return n.Position
-	case *FullyQualifiedName:
-		return n.Position
 	case *Name:
-		return n.Position
-	case *NamePart:
-		return n.Position
-	case *RelativeName:
 		return n.Position
 	case *Argument:
 		return n.Position

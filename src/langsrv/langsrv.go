@@ -545,19 +545,19 @@ func getHoverForVariable(v *ir.SimpleVar, sc *meta.Scope, cs *meta.ClassParseSta
 
 func getHoverForFunctionCall(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassParseState) string {
 	var fun meta.FuncInfo
-	var ok bool
 	var nameStr string
 
-	switch nm := n.Function.(type) {
-	case *ir.Name:
-		nameStr = meta.NameToString(nm)
-		fun, ok = meta.Info.GetFunction(cs.Namespace + `\` + nameStr)
-		if !ok && cs.Namespace != "" {
-			fun, _ = meta.Info.GetFunction(`\` + nameStr)
+	if nm, ok := n.Function.(*ir.Name); ok {
+		if nm.IsFullyQualified() {
+			nameStr = nm.Value
+			fun, _ = meta.Info.GetFunction(nameStr)
+		} else {
+			nameStr = nm.Value
+			fun, ok = meta.Info.GetFunction(cs.Namespace + `\` + nameStr)
+			if !ok && cs.Namespace != "" {
+				fun, _ = meta.Info.GetFunction(`\` + nameStr)
+			}
 		}
-	case *ir.FullyQualifiedName:
-		nameStr = meta.FullyQualifiedToString(nm)
-		fun, _ = meta.Info.GetFunction(nameStr)
 	}
 
 	return linter.FlagsToString(fun.ExitFlags)

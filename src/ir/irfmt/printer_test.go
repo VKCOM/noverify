@@ -14,21 +14,13 @@ func TestPrintFile(t *testing.T) {
 	p.Print(&ir.Root{
 		Stmts: []ir.Node{
 			&ir.NamespaceStmt{
-				NamespaceName: &ir.Name{
-					Parts: []ir.Node{
-						&ir.NamePart{Value: "Foo"},
-					},
-				},
+				NamespaceName: &ir.Name{Value: "Foo"},
 			},
 			&ir.ClassStmt{
 				Modifiers: []*ir.Identifier{{Value: "abstract"}},
 				ClassName: &ir.Identifier{Value: "Bar"},
 				Extends: &ir.ClassExtendsStmt{
-					ClassName: &ir.Name{
-						Parts: []ir.Node{
-							&ir.NamePart{Value: "Baz"},
-						},
-					},
+					ClassName: &ir.Name{Value: "Baz"},
 				},
 				Stmts: []ir.Node{
 					&ir.ClassMethodStmt{
@@ -116,7 +108,7 @@ func TestPrintParameter(t *testing.T) {
 	p.Print(&ir.Parameter{
 		ByRef:        false,
 		Variadic:     true,
-		VariableType: &ir.FullyQualifiedName{Parts: []ir.Node{&ir.NamePart{Value: "Foo"}}},
+		VariableType: &ir.Name{Value: `\Foo`},
 		Variable:     &ir.SimpleVar{Name: "var"},
 		DefaultValue: &ir.String{Value: "'default'"},
 	})
@@ -137,7 +129,7 @@ func TestPrintNullable(t *testing.T) {
 		Expr: &ir.Parameter{
 			ByRef:        false,
 			Variadic:     true,
-			VariableType: &ir.FullyQualifiedName{Parts: []ir.Node{&ir.NamePart{Value: "Foo"}}},
+			VariableType: &ir.Name{Value: `\Foo`},
 			Variable:     &ir.SimpleVar{Name: "var"},
 			DefaultValue: &ir.String{Value: "'default'"},
 		},
@@ -186,86 +178,13 @@ func TestPrintArgumentByRef(t *testing.T) {
 	}
 }
 
-// name
-
-func TestPrintNameNamePart(t *testing.T) {
-	o := bytes.NewBufferString("")
-
-	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.NamePart{
-		Value: "foo",
-	})
-
-	expected := "foo"
-	actual := o.String()
-
-	if expected != actual {
-		t.Errorf("\nexpected: %s\ngot: %s\n", expected, actual)
-	}
-}
-
 func TestPrintNameName(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.Name{
-		Parts: []ir.Node{
-			&ir.NamePart{
-				Value: "Foo",
-			},
-			&ir.NamePart{
-				Value: "Bar",
-			},
-		},
-	})
+	p.Print(&ir.Name{Value: `Foo\Bar`})
 
 	expected := "Foo\\Bar"
-	actual := o.String()
-
-	if expected != actual {
-		t.Errorf("\nexpected: %s\ngot: %s\n", expected, actual)
-	}
-}
-
-func TestPrintNameFullyQualified(t *testing.T) {
-	o := bytes.NewBufferString("")
-
-	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.FullyQualifiedName{
-		Parts: []ir.Node{
-			&ir.NamePart{
-				Value: "Foo",
-			},
-			&ir.NamePart{
-				Value: "Bar",
-			},
-		},
-	})
-
-	expected := "\\Foo\\Bar"
-	actual := o.String()
-
-	if expected != actual {
-		t.Errorf("\nexpected: %s\ngot: %s\n", expected, actual)
-	}
-}
-
-func TestPrintNameRelative(t *testing.T) {
-	o := bytes.NewBufferString("")
-
-	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.RelativeName{
-		Parts: []ir.Node{
-			&ir.NamePart{
-				Value: "Foo",
-			},
-			&ir.NamePart{
-				Value: "Bar",
-			},
-		},
-	})
-
-	expected := "namespace\\Foo\\Bar"
 	actual := o.String()
 
 	if expected != actual {
@@ -1101,7 +1020,8 @@ func TestPrintArray(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.ArrayCastExpr{
+	p.Print(&ir.TypeCastExpr{
+		Type: "array",
 		Expr: &ir.SimpleVar{Name: "var"},
 	})
 
@@ -1117,7 +1037,8 @@ func TestPrintBool(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.BoolCastExpr{
+	p.Print(&ir.TypeCastExpr{
+		Type: "bool",
 		Expr: &ir.SimpleVar{Name: "var"},
 	})
 
@@ -1133,7 +1054,8 @@ func TestPrintDouble(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.DoubleCastExpr{
+	p.Print(&ir.TypeCastExpr{
+		Type: "float",
 		Expr: &ir.SimpleVar{Name: "var"},
 	})
 
@@ -1149,7 +1071,8 @@ func TestPrintInt(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.IntCastExpr{
+	p.Print(&ir.TypeCastExpr{
+		Type: "int",
 		Expr: &ir.SimpleVar{Name: "var"},
 	})
 
@@ -1165,7 +1088,8 @@ func TestPrintObject(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.ObjectCastExpr{
+	p.Print(&ir.TypeCastExpr{
+		Type: "object",
 		Expr: &ir.SimpleVar{Name: "var"},
 	})
 
@@ -1181,7 +1105,8 @@ func TestPrintString(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.StringCastExpr{
+	p.Print(&ir.TypeCastExpr{
+		Type: "string",
 		Expr: &ir.SimpleVar{Name: "var"},
 	})
 
@@ -1395,7 +1320,7 @@ func TestPrintExprClosure(t *testing.T) {
 						&ir.SimpleVar{Name: "b"},
 					},
 				},
-				ReturnType: &ir.FullyQualifiedName{Parts: []ir.Node{&ir.NamePart{Value: "Foo"}}},
+				ReturnType: &ir.Name{Value: `\Foo`},
 				Stmts: []ir.Node{
 					&ir.ExpressionStmt{Expr: &ir.SimpleVar{Name: "a"}},
 				},
@@ -1420,7 +1345,7 @@ func TestPrintExprConstFetch(t *testing.T) {
 
 	p := NewPrettyPrinter(o, "    ")
 	p.Print(&ir.ConstFetchExpr{
-		Constant: &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "null"}}},
+		Constant: &ir.Name{Value: "null"},
 	})
 
 	expected := "null"
@@ -1536,7 +1461,7 @@ func TestPrintInclude(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.IncludeExpr{Expr: &ir.String{Value: "'path'"}})
+	p.Print(&ir.ImportExpr{Func: "include", Expr: &ir.String{Value: "'path'"}})
 
 	expected := `include 'path'`
 	actual := o.String()
@@ -1550,7 +1475,7 @@ func TestPrintIncludeOnce(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.IncludeOnceExpr{Expr: &ir.String{Value: "'path'"}})
+	p.Print(&ir.ImportExpr{Func: "include_once", Expr: &ir.String{Value: "'path'"}})
 
 	expected := `include_once 'path'`
 	actual := o.String()
@@ -1566,7 +1491,7 @@ func TestPrintInstanceOf(t *testing.T) {
 	p := NewPrettyPrinter(o, "    ")
 	p.Print(&ir.InstanceOfExpr{
 		Expr:  &ir.SimpleVar{Name: "var"},
-		Class: &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Foo"}}},
+		Class: &ir.Name{Value: "Foo"},
 	})
 
 	expected := `$var instanceof Foo`
@@ -1660,7 +1585,7 @@ func TestPrintNew(t *testing.T) {
 
 	p := NewPrettyPrinter(o, "    ")
 	p.Print(&ir.NewExpr{
-		Class: &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Foo"}}},
+		Class: &ir.Name{Value: "Foo"},
 		ArgumentList: &ir.ArgumentList{
 			Arguments: []ir.Node{
 				&ir.Argument{
@@ -1796,7 +1721,7 @@ func TestPrintRequire(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.RequireExpr{Expr: &ir.String{Value: "'path'"}})
+	p.Print(&ir.ImportExpr{Func: "require", Expr: &ir.String{Value: "'path'"}})
 
 	expected := `require 'path'`
 	actual := o.String()
@@ -1810,7 +1735,7 @@ func TestPrintRequireOnce(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.RequireOnceExpr{Expr: &ir.String{Value: "'path'"}})
+	p.Print(&ir.ImportExpr{Func: "require_once", Expr: &ir.String{Value: "'path'"}})
 
 	expected := `require_once 'path'`
 	actual := o.String()
@@ -2422,8 +2347,8 @@ func TestPrintStmtCatch(t *testing.T) {
 		Stmts: []ir.Node{
 			&ir.CatchStmt{
 				Types: []ir.Node{
-					&ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Exception"}}},
-					&ir.FullyQualifiedName{Parts: []ir.Node{&ir.NamePart{Value: "RuntimeException"}}},
+					&ir.Name{Value: "Exception"},
+					&ir.Name{Value: `\RuntimeException`},
 				},
 				Variable: &ir.SimpleVar{Name: "e"},
 				Stmts: []ir.Node{
@@ -2456,16 +2381,16 @@ func TestPrintStmtClassMethod(t *testing.T) {
 		Params: []ir.Node{
 			&ir.Parameter{
 				ByRef:        true,
-				VariableType: &ir.Nullable{Expr: &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "int"}}}},
+				VariableType: &ir.Nullable{Expr: &ir.Name{Value: "int"}},
 				Variable:     &ir.SimpleVar{Name: "a"},
-				DefaultValue: &ir.ConstFetchExpr{Constant: &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "null"}}}},
+				DefaultValue: &ir.ConstFetchExpr{Constant: &ir.Name{Value: "null"}},
 			},
 			&ir.Parameter{
 				Variadic: true,
 				Variable: &ir.SimpleVar{Name: "b"},
 			},
 		},
-		ReturnType: &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "void"}}},
+		ReturnType: &ir.Name{Value: "void"},
 		Stmt: &ir.StmtList{
 			Stmts: []ir.Node{
 				&ir.ExpressionStmt{Expr: &ir.SimpleVar{Name: "a"}},
@@ -2494,16 +2419,16 @@ func TestPrintStmtAbstractClassMethod(t *testing.T) {
 		Params: []ir.Node{
 			&ir.Parameter{
 				ByRef:        true,
-				VariableType: &ir.Nullable{Expr: &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "int"}}}},
+				VariableType: &ir.Nullable{Expr: &ir.Name{Value: "int"}},
 				Variable:     &ir.SimpleVar{Name: "a"},
-				DefaultValue: &ir.ConstFetchExpr{Constant: &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "null"}}}},
+				DefaultValue: &ir.ConstFetchExpr{Constant: &ir.Name{Value: "null"}},
 			},
 			&ir.Parameter{
 				Variadic: true,
 				Variable: &ir.SimpleVar{Name: "b"},
 			},
 		},
-		ReturnType: &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "void"}}},
+		ReturnType: &ir.Name{Value: "void"},
 		Stmt:       &ir.NopStmt{},
 	})
 
@@ -2525,12 +2450,12 @@ func TestPrintStmtClass(t *testing.T) {
 				Modifiers: []*ir.Identifier{{Value: "abstract"}},
 				ClassName: &ir.Identifier{Value: "Foo"},
 				Extends: &ir.ClassExtendsStmt{
-					ClassName: &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Bar"}}},
+					ClassName: &ir.Name{Value: "Bar"},
 				},
 				Implements: &ir.ClassImplementsStmt{
 					InterfaceNames: []ir.Node{
-						&ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Baz"}}},
-						&ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Quuz"}}},
+						&ir.Name{Value: "Baz"},
+						&ir.Name{Value: "Quuz"},
 					},
 				},
 				Stmts: []ir.Node{
@@ -2580,12 +2505,12 @@ func TestPrintStmtAnonymousClass(t *testing.T) {
 					},
 				},
 				Extends: &ir.ClassExtendsStmt{
-					ClassName: &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Bar"}}},
+					ClassName: &ir.Name{Value: "Bar"},
 				},
 				Implements: &ir.ClassImplementsStmt{
 					InterfaceNames: []ir.Node{
-						&ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Baz"}}},
-						&ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Quuz"}}},
+						&ir.Name{Value: "Baz"},
+						&ir.Name{Value: "Quuz"},
 					},
 				},
 				Stmts: []ir.Node{
@@ -3211,7 +3136,7 @@ func TestPrintStmtFunction(t *testing.T) {
 						Variable: &ir.SimpleVar{Name: "var"},
 					},
 				},
-				ReturnType: &ir.FullyQualifiedName{Parts: []ir.Node{&ir.NamePart{Value: "Foo"}}},
+				ReturnType: &ir.Name{Value: `\Foo`},
 				Stmts: []ir.Node{
 					&ir.NopStmt{},
 				},
@@ -3272,14 +3197,14 @@ func TestPrintStmtGroupUse(t *testing.T) {
 	p := NewPrettyPrinter(o, "    ")
 	p.Print(&ir.GroupUseStmt{
 		UseType: &ir.Identifier{Value: "function"},
-		Prefix:  &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Foo"}}},
+		Prefix:  &ir.Name{Value: "Foo"},
 		UseList: []ir.Node{
 			&ir.UseStmt{
-				Use:   &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Bar"}}},
+				Use:   &ir.Name{Value: "Bar"},
 				Alias: &ir.Identifier{Value: "Baz"},
 			},
 			&ir.UseStmt{
-				Use: &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Quuz"}}},
+				Use: &ir.Name{Value: "Quuz"},
 			},
 		},
 	})
@@ -3433,8 +3358,8 @@ func TestPrintInterface(t *testing.T) {
 				InterfaceName: &ir.Identifier{Value: "Foo"},
 				Extends: &ir.InterfaceExtendsStmt{
 					InterfaceNames: []ir.Node{
-						&ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Bar"}}},
-						&ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Baz"}}},
+						&ir.Name{Value: "Bar"},
+						&ir.Name{Value: "Baz"},
 					},
 				},
 				Stmts: []ir.Node{
@@ -3490,7 +3415,7 @@ func TestPrintNamespace(t *testing.T) {
 
 	p := NewPrettyPrinter(o, "    ")
 	p.Print(&ir.NamespaceStmt{
-		NamespaceName: &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Foo"}}},
+		NamespaceName: &ir.Name{Value: "Foo"},
 	})
 
 	expected := `namespace Foo;`
@@ -3508,7 +3433,7 @@ func TestPrintNamespaceWithStmts(t *testing.T) {
 	p.Print(&ir.StmtList{
 		Stmts: []ir.Node{
 			&ir.NamespaceStmt{
-				NamespaceName: &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Foo"}}},
+				NamespaceName: &ir.Name{Value: "Foo"},
 				Stmts: []ir.Node{
 					&ir.ExpressionStmt{Expr: &ir.SimpleVar{Name: "a"}},
 				},
@@ -3764,7 +3689,7 @@ func TestPrintStmtTraitMethodRef(t *testing.T) {
 
 	p := NewPrettyPrinter(o, "    ")
 	p.Print(&ir.TraitMethodRefStmt{
-		Trait:  &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Foo"}}},
+		Trait:  &ir.Name{Value: "Foo"},
 		Method: &ir.Identifier{Value: "a"},
 	})
 
@@ -3782,7 +3707,7 @@ func TestPrintStmtTraitUseAlias(t *testing.T) {
 	p := NewPrettyPrinter(o, "    ")
 	p.Print(&ir.TraitUseAliasStmt{
 		Ref: &ir.TraitMethodRefStmt{
-			Trait:  &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Foo"}}},
+			Trait:  &ir.Name{Value: "Foo"},
 			Method: &ir.Identifier{Value: "a"},
 		},
 		Modifier: &ir.Identifier{Value: "public"},
@@ -3803,12 +3728,12 @@ func TestPrintStmtTraitUsePrecedence(t *testing.T) {
 	p := NewPrettyPrinter(o, "    ")
 	p.Print(&ir.TraitUsePrecedenceStmt{
 		Ref: &ir.TraitMethodRefStmt{
-			Trait:  &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Foo"}}},
+			Trait:  &ir.Name{Value: "Foo"},
 			Method: &ir.Identifier{Value: "a"},
 		},
 		Insteadof: []ir.Node{
-			&ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Bar"}}},
-			&ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Baz"}}},
+			&ir.Name{Value: "Bar"},
+			&ir.Name{Value: "Baz"},
 		},
 	})
 
@@ -3826,8 +3751,8 @@ func TestPrintStmtTraitUse(t *testing.T) {
 	p := NewPrettyPrinter(o, "    ")
 	p.Print(&ir.TraitUseStmt{
 		Traits: []ir.Node{
-			&ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Foo"}}},
-			&ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Bar"}}},
+			&ir.Name{Value: "Foo"},
+			&ir.Name{Value: "Bar"},
 		},
 	})
 
@@ -3847,14 +3772,14 @@ func TestPrintStmtTraitAdaptations(t *testing.T) {
 		Stmts: []ir.Node{
 			&ir.TraitUseStmt{
 				Traits: []ir.Node{
-					&ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Foo"}}},
-					&ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Bar"}}},
+					&ir.Name{Value: "Foo"},
+					&ir.Name{Value: "Bar"},
 				},
 				TraitAdaptationList: &ir.TraitAdaptationListStmt{
 					Adaptations: []ir.Node{
 						&ir.TraitUseAliasStmt{
 							Ref: &ir.TraitMethodRefStmt{
-								Trait:  &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Foo"}}},
+								Trait:  &ir.Name{Value: "Foo"},
 								Method: &ir.Identifier{Value: "a"},
 							},
 							Alias: &ir.Identifier{Value: "b"},
@@ -3930,8 +3855,8 @@ func TestPrintStmtTry(t *testing.T) {
 				Catches: []ir.Node{
 					&ir.CatchStmt{
 						Types: []ir.Node{
-							&ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Exception"}}},
-							&ir.FullyQualifiedName{Parts: []ir.Node{&ir.NamePart{Value: "RuntimeException"}}},
+							&ir.Name{Value: "Exception"},
+							&ir.Name{Value: `\RuntimeException`},
 						},
 						Variable: &ir.SimpleVar{Name: "e"},
 						Stmts: []ir.Node{
@@ -3993,11 +3918,11 @@ func TestPrintStmtUseList(t *testing.T) {
 		UseType: &ir.Identifier{Value: "function"},
 		Uses: []ir.Node{
 			&ir.UseStmt{
-				Use:   &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Foo"}}},
+				Use:   &ir.Name{Value: "Foo"},
 				Alias: &ir.Identifier{Value: "Bar"},
 			},
 			&ir.UseStmt{
-				Use: &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Baz"}}},
+				Use: &ir.Name{Value: "Baz"},
 			},
 		},
 	})
@@ -4016,7 +3941,7 @@ func TestPrintUse(t *testing.T) {
 	p := NewPrettyPrinter(o, "    ")
 	p.Print(&ir.UseStmt{
 		UseType: &ir.Identifier{Value: "function"},
-		Use:     &ir.Name{Parts: []ir.Node{&ir.NamePart{Value: "Foo"}}},
+		Use:     &ir.Name{Value: "Foo"},
 		Alias:   &ir.Identifier{Value: "Bar"},
 	})
 

@@ -224,7 +224,7 @@ func (n typeNormalizer) NormalizeTypes(types []meta.Type) {
 func (n typeNormalizer) string2name(s string) *ir.Name {
 	// TODO: Can avoid extra work by holding 1 tmp name inside
 	// typeNormalizer, since we never need more than one at the time.
-	return meta.StringToName(s)
+	return &ir.Name{Value: s}
 }
 
 func (n typeNormalizer) normalizeType(typ *meta.Type) {

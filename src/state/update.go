@@ -17,9 +17,8 @@ func EnterNode(st *meta.ClassParseState, n ir.Node) {
 	case *ir.NamespaceStmt:
 		// TODO: handle another namespace syntax:
 		// namespace NS { ... }
-		nm, ok := n.NamespaceName.(*ir.Name)
-		if ok {
-			st.Namespace = `\` + meta.NameToString(nm)
+		if n.NamespaceName != nil {
+			st.Namespace = `\` + n.NamespaceName.Value
 		}
 	case *ir.UseListStmt:
 		if n.UseType == nil {
@@ -73,16 +72,16 @@ func handleUseClass(st *meta.ClassParseState, n *ir.UseStmt) {
 		st.Uses = make(map[string]string)
 	}
 
-	parts := n.Use.(*ir.Name).Parts
+	nm := n.Use.(*ir.Name)
 	var alias string
 
 	if n.Alias != nil {
 		alias = n.Alias.Value
 	} else {
-		alias = parts[len(parts)-1].(*ir.NamePart).Value
+		alias = nm.LastPart()
 	}
 
-	st.Uses[alias] = `\` + meta.NameToString(n.Use.(*ir.Name))
+	st.Uses[alias] = `\` + nm.Value
 }
 
 func handleUseFunction(st *meta.ClassParseState, n *ir.UseStmt) {
@@ -91,16 +90,16 @@ func handleUseFunction(st *meta.ClassParseState, n *ir.UseStmt) {
 		st.FunctionUses = make(map[string]string)
 	}
 
-	parts := n.Use.(*ir.Name).Parts
+	nm := n.Use.(*ir.Name)
 	var alias string
 
 	if n.Alias != nil {
 		alias = n.Alias.Value
 	} else {
-		alias = parts[len(parts)-1].(*ir.NamePart).Value
+		alias = nm.LastPart()
 	}
 
-	st.FunctionUses[alias] = `\` + meta.NameToString(n.Use.(*ir.Name))
+	st.FunctionUses[alias] = `\` + nm.Value
 }
 
 // LeaveNode must be called upon leaving a node to update current state.
