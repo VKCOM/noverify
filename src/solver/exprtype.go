@@ -149,26 +149,22 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 	case *ir.FunctionCallExpr:
 		nm, ok := n.Function.(*ir.Name)
 		if !ok {
-			if nm, ok := n.Function.(*ir.FullyQualifiedName); ok {
-				funcName := meta.FullyQualifiedToString(nm)
-				if strings.Count(funcName, `\`) == 1 {
-					typ, ok := internalFuncType(strings.TrimPrefix(funcName, `\`), sc, cs, n, custom)
-					if ok {
-						return typ
-					}
-				}
-				return meta.NewTypesMap(meta.WrapFunctionCall(funcName))
-			}
 			return meta.TypesMap{}
 		}
-
-		funcName := meta.NameToString(nm)
-		typ, ok := internalFuncType(`\`+funcName, sc, cs, n, custom)
+		if nm.IsFullyQualified() {
+			if nm.NumParts() == 1 {
+				typ, ok := internalFuncType(strings.TrimPrefix(nm.Value, `\`), sc, cs, n, custom)
+				if ok {
+					return typ
+				}
+			}
+			return meta.NewTypesMap(meta.WrapFunctionCall(nm.Value))
+		}
+		typ, ok := internalFuncType(`\`+nm.Value, sc, cs, n, custom)
 		if ok {
 			return typ
 		}
-
-		return meta.NewTypesMap(meta.WrapFunctionCall(cs.Namespace + `\` + funcName))
+		return meta.NewTypesMap(meta.WrapFunctionCall(cs.Namespace + `\` + nm.Value))
 	case *ir.StaticCallExpr:
 		id, ok := n.Call.(*ir.Identifier)
 		if !ok {
@@ -324,25 +320,17 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 		}
 		return meta.NewTypesMap(meta.WrapClassConstFetch(className, n.ConstantName.Value))
 	case *ir.ConstFetchExpr:
-		nm, ok := n.Constant.(*ir.Name)
-		if !ok {
-			return meta.TypesMap{}
-		}
-
 		// TODO: handle namespaces
-		p := nm.Parts
-		if len(p) == 1 {
-			constName := p[0].(*ir.NamePart).Value
-
-			if constName == "false" || constName == "true" {
-				return meta.PreciseBoolType
+		nm := n.Constant
+		switch nm.Value {
+		case "false", "true":
+			return meta.PreciseBoolType
+		case "null":
+			return meta.NewTypesMap("null")
+		default:
+			if nm.NumParts() == 0 {
+				return meta.NewTypesMap(meta.WrapConstant(nm.Value))
 			}
-
-			if constName == "null" {
-				return meta.NewTypesMap("null")
-			}
-
-			return meta.NewTypesMap(meta.WrapConstant(constName))
 		}
 	case *ir.String, *ir.Encapsed, *ir.Heredoc:
 		return meta.PreciseStringType

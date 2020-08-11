@@ -54,16 +54,17 @@ func (d *definitionWalker) EnterNode(n ir.Node) bool {
 		var ok bool
 		var nameStr string
 
-		switch nm := n.Function.(type) {
-		case *ir.Name:
-			nameStr = meta.NameToString(nm)
-			fun, ok = meta.Info.GetFunction(d.st.Namespace + `\` + nameStr)
-			if !ok && d.st.Namespace != "" {
-				fun, ok = meta.Info.GetFunction(`\` + nameStr)
+		if nm, isName := n.Function.(*ir.Name); isName {
+			if nm.IsFullyQualified() {
+				nameStr = nm.Value
+				fun, ok = meta.Info.GetFunction(nameStr)
+			} else {
+				nameStr = nm.Value
+				fun, ok = meta.Info.GetFunction(d.st.Namespace + `\` + nameStr)
+				if !ok && d.st.Namespace != "" {
+					fun, ok = meta.Info.GetFunction(`\` + nameStr)
+				}
 			}
-		case *ir.FullyQualifiedName:
-			nameStr = meta.FullyQualifiedToString(nm)
-			fun, ok = meta.Info.GetFunction(nameStr)
 		}
 
 		if ok {
@@ -249,32 +250,6 @@ func (d *definitionWalker) EnterNode(n ir.Node) bool {
 		if !ok {
 			return true
 		}
-
-		d.result = append(d.result, vscode.Location{
-			URI: uri.File(c.Pos.Filename),
-			Range: vscode.Range{
-				Start: vscode.Position{Line: int(c.Pos.Line) - 1},
-				End:   vscode.Position{Line: int(c.Pos.Line) - 1},
-			},
-		})
-	case *ir.FullyQualifiedName:
-		pos := ir.GetPosition(n)
-		if d.position > pos.EndPos || d.position < pos.StartPos {
-			return true
-		}
-
-		className, ok := solver.GetClassName(&d.st, n)
-		if !ok {
-			return true
-		}
-
-		c, ok := meta.Info.GetClassOrTrait(className)
-
-		if !ok {
-			return true
-		}
-
-		lintdebug.Send("name:%s , uri:%s", c.Pos.Filename, uri.File(c.Pos.Filename))
 
 		d.result = append(d.result, vscode.Location{
 			URI: uri.File(c.Pos.Filename),

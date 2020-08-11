@@ -100,14 +100,12 @@ func (f *sideEffectsFinder) functionCallIsPure(n *ir.FunctionCallExpr) bool {
 	// We allow referencing builtin funcs even before indexing is completed.
 
 	var funcName string
-	switch nm := n.Function.(type) {
-	case *ir.Name:
-		if len(nm.Parts) == 1 {
-			funcName = `\` + meta.NameToString(nm)
-		}
-	case *ir.FullyQualifiedName:
-		if len(nm.Parts) == 1 {
-			funcName = meta.FullyQualifiedToString(nm)
+	nm, ok := n.Function.(*ir.Name)
+	if ok {
+		if nm.IsFullyQualified() {
+			funcName = nm.Value
+		} else {
+			funcName = `\` + nm.Value
 		}
 	}
 

@@ -1574,11 +1574,11 @@ func (d *RootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {
 		return true
 	}
 
-	if d.ctx.st.Namespace == `\PHPSTORM_META` && meta.NameEquals(nm, `override`) {
+	if d.ctx.st.Namespace == `\PHPSTORM_META` && nm.Value == `override` {
 		return d.handleOverride(s)
 	}
 
-	if !meta.NameEquals(nm, `define`) || len(s.ArgumentList.Arguments) < 2 {
+	if nm.Value != `define` || len(s.ArgumentList.Arguments) < 2 {
 		// TODO: actually we could warn about bogus defines
 		return true
 	}
@@ -1623,8 +1623,8 @@ func (d *RootWalker) handleOverride(s *ir.FunctionCallExpr) bool {
 		return true
 	}
 
-	fnNameNode, ok := fc0.Function.(*ir.FullyQualifiedName)
-	if !ok {
+	fnNameNode, ok := fc0.Function.(*ir.Name)
+	if !ok || !fnNameNode.IsFullyQualified() {
 		return true
 	}
 
@@ -1651,15 +1651,15 @@ func (d *RootWalker) handleOverride(s *ir.FunctionCallExpr) bool {
 
 	var overrideTyp meta.OverrideType
 	switch {
-	case meta.NameEquals(overrideNameNode, `type`):
+	case overrideNameNode.Value == `type`:
 		overrideTyp = meta.OverrideArgType
-	case meta.NameEquals(overrideNameNode, `elementType`):
+	case overrideNameNode.Value == `elementType`:
 		overrideTyp = meta.OverrideElementType
 	default:
 		return true
 	}
 
-	fnName := meta.FullyQualifiedToString(fnNameNode)
+	fnName := fnNameNode.Value
 
 	if d.meta.FunctionOverrides == nil {
 		d.meta.FunctionOverrides = make(meta.FunctionsOverrideMap)

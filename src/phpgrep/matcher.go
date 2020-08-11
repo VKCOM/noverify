@@ -40,20 +40,6 @@ func (m *matcher) match(state *matcherState, n ir.Node) (data MatchData, ok bool
 	return data, true
 }
 
-func (m *matcher) eqNameParts(xs, ys []ir.Node) bool {
-	if len(xs) != len(ys) {
-		return false
-	}
-	for i, p1 := range xs {
-		p1 := p1.(*ir.NamePart).Value
-		p2 := ys[i].(*ir.NamePart).Value
-		if p1 != p2 {
-			return false
-		}
-	}
-	return true
-}
-
 func (m *matcher) eqNodeSliceNoMeta(state *matcherState, xs, ys []ir.Node) bool {
 	if len(xs) != len(ys) {
 		return false
@@ -595,10 +581,7 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 		return ok && m.eqNode(state, x.Constant, y.Constant)
 	case *ir.Name:
 		y, ok := y.(*ir.Name)
-		return ok && m.eqNameParts(x.Parts, y.Parts)
-	case *ir.FullyQualifiedName:
-		y, ok := y.(*ir.FullyQualifiedName)
-		return ok && m.eqNameParts(x.Parts, y.Parts)
+		return ok && x.Value == y.Value
 	case *ir.Identifier:
 		y, ok := y.(*ir.Identifier)
 		return ok && x.Value == y.Value

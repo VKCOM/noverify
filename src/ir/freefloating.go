@@ -168,13 +168,7 @@ func (n *YieldExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeF
 
 func (n *YieldFromExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
 
-func (n *FullyQualifiedName) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
-
 func (n *Name) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
-
-func (n *NamePart) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
-
-func (n *RelativeName) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
 
 func (n *Argument) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
 

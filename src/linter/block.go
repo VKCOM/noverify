@@ -888,7 +888,7 @@ func (b *BlockWalker) handleStaticCall(e *ir.StaticCallExpr) bool {
 	}
 
 	classNameNode, ok := e.Class.(*ir.Name)
-	parentCall := ok && meta.NameEquals(classNameNode, "parent")
+	parentCall := ok && classNameNode.Value == "parent"
 	if parentCall && methodName == "__construct" {
 		b.callsParentConstructor = true
 	}
