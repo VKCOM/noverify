@@ -9,7 +9,6 @@ import (
 	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/linter"
-	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/solver"
 )
 
@@ -75,7 +74,7 @@ func (b *block) handleFunctionCall(e *ir.FunctionCallExpr) {
 		return
 	}
 
-	if meta.NameEquals(nm, `in_array`) {
+	if nm.Value == `in_array` {
 		b.handleInArrayCall(e)
 		return
 	}

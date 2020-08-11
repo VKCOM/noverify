@@ -268,13 +268,8 @@ func (b *blockLinter) checkStrictCmp(n ir.Node, left, right ir.Node) {
 		if !ok {
 			return false
 		}
-		nm, ok := c.Constant.(*ir.Name)
-		if !ok {
-			return false
-		}
-		return meta.NameEquals(nm, "true") ||
-			meta.NameEquals(nm, "false") ||
-			meta.NameEquals(nm, "null")
+		nm := c.Constant
+		return nm.Value == "true" || nm.Value == "false" || nm.Value == "null"
 	}
 
 	var badNode ir.Node

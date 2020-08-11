@@ -963,20 +963,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		return true
-	case *ir.FullyQualifiedName:
-		y, ok := y.(*ir.FullyQualifiedName)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if len(x.Parts) != len(y.Parts) {
-			return false
-		}
-		for i := range x.Parts {
-			if !NodeEqual(x.Parts[i], y.Parts[i]) {
-				return false
-			}
-		}
-		return true
 	case *ir.FunctionCallExpr:
 		y, ok := y.(*ir.FunctionCallExpr)
 		if !ok || x == nil || y == nil {
@@ -1380,20 +1366,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Parts) != len(y.Parts) {
-			return false
-		}
-		for i := range x.Parts {
-			if !NodeEqual(x.Parts[i], y.Parts[i]) {
-				return false
-			}
-		}
-		return true
-	case *ir.NamePart:
-		y, ok := y.(*ir.NamePart)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
 		if x.Value != y.Value {
 			return false
 		}
@@ -1624,20 +1596,6 @@ func NodeEqual(x, y ir.Node) bool {
 		}
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
-		}
-		return true
-	case *ir.RelativeName:
-		y, ok := y.(*ir.RelativeName)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if len(x.Parts) != len(y.Parts) {
-			return false
-		}
-		for i := range x.Parts {
-			if !NodeEqual(x.Parts[i], y.Parts[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.ReturnStmt:

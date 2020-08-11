@@ -1,7 +1,6 @@
 package bench_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/VKCOM/noverify/src/ir"
@@ -36,12 +35,7 @@ class Foo {
 	meta.SetIndexingComplete(true)
 
 	newName := func(nm string) *ir.Name {
-		stringParts := strings.Split(nm, `\`)
-		nameParts := make([]ir.Node, len(stringParts))
-		for i, p := range stringParts {
-			nameParts[i] = &ir.NamePart{Value: p}
-		}
-		return &ir.Name{Parts: nameParts}
+		return &ir.Name{Value: nm}
 	}
 	f1call := &ir.FunctionCallExpr{Function: newName("f1")}
 	f3call := &ir.FunctionCallExpr{Function: newName("f3")}

@@ -89,10 +89,7 @@ const (
 	KindUnaryPlusExpr
 	KindYieldExpr
 	KindYieldFromExpr
-	KindFullyQualifiedName
 	KindName
-	KindNamePart
-	KindRelativeName
 	KindArgument
 	KindArgumentList
 	KindIdentifier
@@ -331,14 +328,8 @@ func GetNodeKind(n Node) NodeKind {
 		return KindYieldExpr
 	case *YieldFromExpr:
 		return KindYieldFromExpr
-	case *FullyQualifiedName:
-		return KindFullyQualifiedName
 	case *Name:
 		return KindName
-	case *NamePart:
-		return KindNamePart
-	case *RelativeName:
-		return KindRelativeName
 	case *Argument:
 		return KindArgument
 	case *ArgumentList:

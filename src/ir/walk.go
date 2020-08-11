@@ -1022,45 +1022,9 @@ func (n *YieldFromExpr) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
-func (n *FullyQualifiedName) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	for i := range n.Parts {
-		if n.Parts[i] != nil {
-			n.Parts[i].Walk(v)
-		}
-	}
-	v.LeaveNode(n)
-}
-
 func (n *Name) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
-	}
-	for i := range n.Parts {
-		if n.Parts[i] != nil {
-			n.Parts[i].Walk(v)
-		}
-	}
-	v.LeaveNode(n)
-}
-
-func (n *NamePart) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	v.LeaveNode(n)
-}
-
-func (n *RelativeName) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	for i := range n.Parts {
-		if n.Parts[i] != nil {
-			n.Parts[i].Walk(v)
-		}
 	}
 	v.LeaveNode(n)
 }

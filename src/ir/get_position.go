@@ -172,13 +172,7 @@ func GetPosition(n Node) *position.Position {
 		return n.Position
 	case *YieldFromExpr:
 		return n.Position
-	case *FullyQualifiedName:
-		return n.Position
 	case *Name:
-		return n.Position
-	case *NamePart:
-		return n.Position
-	case *RelativeName:
 		return n.Position
 	case *Argument:
 		return n.Position

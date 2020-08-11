@@ -26,14 +26,14 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 			break
 		}
 		switch {
-		case len(args) == 2 && meta.NameEquals(nm, `method_exists`):
+		case len(args) == 2 && nm.Value == `method_exists`:
 			obj := args[0].(*ir.Argument).Expr
 			methodName := args[1].(*ir.Argument).Expr
 			lit, ok := methodName.(*ir.String)
 			if ok {
 				a.b.ctx.addCustomMethod(obj, unquote(lit.Value))
 			}
-		case len(args) == 1 && meta.NameEquals(nm, `function_exists`):
+		case len(args) == 1 && nm.Value == `function_exists`:
 			functionName := args[0].(*ir.Argument).Expr
 			lit, ok := functionName.(*ir.String)
 			if ok {

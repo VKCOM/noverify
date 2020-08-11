@@ -92,16 +92,8 @@ func (p *PrettyPrinter) printNode(n ir.Node) {
 	case *ir.Argument:
 		p.printNodeArgument(n)
 
-		// name
-
-	case *ir.NamePart:
-		p.printNameNamePart(n)
 	case *ir.Name:
 		p.printNameName(n)
-	case *ir.FullyQualifiedName:
-		p.printNameFullyQualified(n)
-	case *ir.RelativeName:
-		p.printNameRelative(n)
 
 		// scalar
 
@@ -464,33 +456,8 @@ func (p *PrettyPrinter) printNodeArgument(n *ir.Argument) {
 
 // name
 
-func (p *PrettyPrinter) printNameNamePart(n *ir.NamePart) {
-	io.WriteString(p.w, n.Value)
-}
-
 func (p *PrettyPrinter) printNameName(n *ir.Name) {
-	for k, part := range n.Parts {
-		if k > 0 {
-			io.WriteString(p.w, "\\")
-		}
-
-		p.Print(part)
-	}
-}
-
-func (p *PrettyPrinter) printNameFullyQualified(n *ir.FullyQualifiedName) {
-	for _, part := range n.Parts {
-		io.WriteString(p.w, "\\")
-		p.Print(part)
-	}
-}
-
-func (p *PrettyPrinter) printNameRelative(n *ir.RelativeName) {
-	io.WriteString(p.w, "namespace")
-	for _, part := range n.Parts {
-		io.WriteString(p.w, "\\")
-		p.Print(part)
-	}
+	io.WriteString(p.w, n.Value)
 }
 
 // scalar

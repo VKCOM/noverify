@@ -581,45 +581,12 @@ func IsIndexingComplete() bool {
 	return indexingComplete
 }
 
-func FullyQualifiedToString(n *ir.FullyQualifiedName) string {
-	s := make([]string, 1, len(n.Parts)+1)
-	for _, v := range n.Parts {
-		s = append(s, v.(*ir.NamePart).Value)
-	}
-	return strings.Join(s, `\`)
-}
-
-// NameToString returns string like 'NS\SomeClass' for given name node
-func NameToString(n *ir.Name) string {
-	return NamePartsToString(n.Parts)
-}
-
-// StringToName creates name node that can be analyzed using solver
-func StringToName(nm string) *ir.Name {
-	var parts []ir.Node
-	for _, p := range strings.Split(nm, `\`) {
-		parts = append(parts, &ir.NamePart{Value: p})
-	}
-	return &ir.Name{Parts: parts}
-}
-
-// NamePartsToString converts slice of *name.NamePart to string
-func NamePartsToString(parts []ir.Node) string {
-	s := make([]string, 0, len(parts))
-	for _, v := range parts {
-		s = append(s, v.(*ir.NamePart).Value)
-	}
-	return strings.Join(s, `\`)
-}
-
-// NameNodeToString converts nodes of *name.Name, *name.FullyQualified and *node.Identifier to string.
+// NameNodeToString converts nodes of *name.Name, and *node.Identifier to string.
 // This function is a helper function to aid printing function names, not for actual code analysis.
 func NameNodeToString(n ir.Node) string {
 	switch n := n.(type) {
 	case *ir.Name:
-		return NameToString(n)
-	case *ir.FullyQualifiedName:
-		return FullyQualifiedToString(n)
+		return n.Value
 	case *ir.Identifier:
 		return n.Value
 	case *ir.SimpleVar:
@@ -635,35 +602,10 @@ func NameNodeToString(n ir.Node) string {
 func NameNodeEquals(n ir.Node, s string) bool {
 	switch n := n.(type) {
 	case *ir.Name:
-		return NameEquals(n, s)
+		return n.Value == s
 	case *ir.Identifier:
 		return n.Value == s
-	case *ir.FullyQualifiedName:
-		return FullyQualifiedToString(n) == s
 	default:
 		return false
 	}
-}
-
-func NameEquals(n *ir.Name, s string) bool {
-	if len(n.Parts) != strings.Count(s, `\`)+1 {
-		return false
-	}
-
-	rest := s
-	for i, part := range n.Parts {
-		part := part.(*ir.NamePart)
-		if i == len(n.Parts)-1 {
-			if part.Value != rest {
-				return false
-			}
-		} else {
-			if !strings.HasPrefix(rest, part.Value) {
-				return false
-			}
-			rest = rest[len(part.Value)+len(`\`):]
-		}
-	}
-
-	return true
 }

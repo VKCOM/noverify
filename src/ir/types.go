@@ -401,7 +401,7 @@ type ClosureUseExpr struct {
 type ConstFetchExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	Constant     Node
+	Constant     *Name
 }
 
 type EmptyExpr struct {
@@ -581,28 +581,10 @@ type YieldFromExpr struct {
 	Expr         Node
 }
 
-type FullyQualifiedName struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Parts        []Node
-}
-
 type Name struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	Parts        []Node
-}
-
-type NamePart struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
 	Value        string
-}
-
-type RelativeName struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Parts        []Node
 }
 
 type Argument struct {
@@ -943,7 +925,7 @@ type LabelStmt struct {
 type NamespaceStmt struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
-	NamespaceName Node
+	NamespaceName *Name
 	Stmts         []Node
 }
 
