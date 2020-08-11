@@ -1865,6 +1865,89 @@ exprtype($tuple_int_str, "unknown_from_list");
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestTypesShapeOverList(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+/** @return shape(key:\Foo, key2:float, key3:int) */
+function asShapeWithStringKey() { return []; }
+
+/** @return shape(0:\Foo, 2:float, 1:int) */
+function asShapeWithIntKey() { return []; }
+
+/** @return shape(0:\Foo, 4:float, 2:int) */
+function asShapeWithSomeIntKey() { return []; }
+
+function foo() {
+  // simple
+  ["key" => $a1, "key2" => $b1, "key3" => $c1] = asShapeWithStringKey();
+
+  exprtype($a1, "\Foo");
+  exprtype($b1, "float");
+  exprtype($c1, "int");
+
+
+  // mixed positions
+  ["key" => $a2, "key3" => $c2, "key2" => $b2] = asShapeWithStringKey();
+
+  exprtype($a2, "\Foo");
+  exprtype($b2, "float");
+  exprtype($c2, "int");
+
+
+  // without keys and shape with string key
+  [$a3, $c3, $b3] = asShapeWithStringKey();
+
+  exprtype($a3, "unknown_from_list");
+  exprtype($b3, "unknown_from_list");
+  exprtype($c3, "unknown_from_list");
+
+
+  // without keys and shape with int key
+  [$a4, $b4, $c4] = asShapeWithIntKey();
+
+  exprtype($a4, "\Foo");
+  exprtype($b4, "int");
+  exprtype($c4, "float");
+
+
+  // without keys and shape with some int key
+  [$a5, $b5, $c5, $d5, $e5] = asShapeWithSomeIntKey();
+
+  exprtype($a5, "\Foo");
+  exprtype($b5, "unknown_from_list");
+  exprtype($c5, "int");
+  exprtype($d5, "unknown_from_list");
+  exprtype($e5, "float");
+
+
+  // with keys and shape with some int key
+  [0 => $a6, 2 => $b6, 4 => $c6] = asShapeWithSomeIntKey();
+
+  exprtype($a6, "\Foo");
+  exprtype($b6, "int");
+  exprtype($c6, "float");
+
+
+  // with old style and keys and shape with some int key
+  list(0 => $a7, 2 => $b7, 4 => $c7) = asShapeWithSomeIntKey();
+
+  exprtype($a7, "\Foo");
+  exprtype($b7, "int");
+  exprtype($c7, "float");
+
+
+  // with old style and without keys and shape with string key
+  list($a8, $c8, $b8) = asShapeWithStringKey();
+
+  exprtype($a8, "unknown_from_list");
+  exprtype($b8, "unknown_from_list");
+  exprtype($c8, "unknown_from_list");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestArrayTypes(t *testing.T) {
 	code := `<?php
 class Foo {}
