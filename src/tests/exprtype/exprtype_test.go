@@ -8,10 +8,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/astutil"
 )
 
 // Tests in this file make it less likely that type solving will break
@@ -1807,7 +1807,7 @@ class Boo {}
  * @return \tuple(int, \Boo, int, string)
  */
 function foo() {
-    return [5, new Boo(), 10, "gas"];
+   return [5, new Boo(), 10, "gas"];
 }
 
 $tuple = foo();
@@ -1829,12 +1829,12 @@ exprtype($old_str, "string");
 
 
 class Bar {
-	/**
-	 * @return \tuple(int, \Boo, int, string)
-	 */
-	static function foo() {
-	    return [5, new Boo(), 10, "gas"];
-	}
+   /**
+    * @return \tuple(int, \Boo, int, string)
+    */
+   static function foo() {
+      return [5, new Boo(), 10, "gas"];
+   }
 }
 
 $class_static_tuple = Bar::foo();
@@ -2024,6 +2024,76 @@ usort($foo_array, function($a, $b) {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestArrayTypes(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+/** @return Foo */
+function f() {}
+/** @return float */
+function return_float() {}
+/** @return int */
+function return_int() {}
+/** @return string */
+function return_string() {}
+
+
+$one_dimensional = [new Foo(), new Foo()];
+exprtype($one_dimensional, "\Foo[]");
+
+
+$two_dimensional = [[new Foo(), new Foo()],[new Foo(), new Foo()]];
+exprtype($two_dimensional, "\Foo[][]");
+
+
+$three_dimensional = [[[new Foo(), new Foo()],[new Foo(), new Foo()]],[[new Foo(), new Foo()],[new Foo(), new Foo()]]];
+exprtype($three_dimensional, "\Foo[][][]");
+
+
+$a = [10, 20, 30];
+exprtype($a, "int[]");
+$a = [return_int(), return_int(), return_int()];
+exprtype($a, "int[]");
+// but
+$a = [return_int(), 1];
+exprtype($a, "mixed[]");
+
+
+$a = [10.5, 20.5, 30.5];
+exprtype($a, "float[]");
+$a = [return_float(), return_float(), return_float()];
+exprtype($a, "float[]");
+// but
+$a = [return_float(), 12.5];
+exprtype($a, "mixed[]");
+
+
+$a = ["Hello", "World", "!"];
+exprtype($a, "string[]");
+$a = [return_string(), return_string(), return_string()];
+exprtype($a, "string[]");
+// but
+$a = [return_string(), "World!"];
+exprtype($a, "mixed[]");
+
+
+$a = [f(), f()];
+exprtype($a, "\Foo[]");
+// but
+$a = [f(), new Foo()];
+exprtype($a, "mixed[]");
+
+
+$a = [f(), g()];
+exprtype($a, "mixed[]");
+
+
+$a = [];
+exprtype($a, "mixed[]");
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestPropertyTypeHints(t *testing.T) {
 	code := `<?php
 class Too {}
@@ -2170,7 +2240,7 @@ func (w *exprTypeWalker) EnterNode(n ir.Node) bool {
 		expectedType := call.ArgumentList.Arguments[1].(*ir.Argument).Expr.(*ir.String).Value
 		actualType, ok := exprTypeResult[checkedExpr]
 		if !ok {
-			w.t.Fatalf("no type found for %s expression", astutil.FmtNode(checkedExpr))
+			w.t.Fatalf("no type found for %s expression", irutil.FmtNode(checkedExpr))
 		}
 		want := makeType(expectedType[len(`"`) : len(expectedType)-len(`"`)])
 		have := testTypesMap{
@@ -2180,7 +2250,7 @@ func (w *exprTypeWalker) EnterNode(n ir.Node) bool {
 		if diff := cmp.Diff(have, want); diff != "" {
 			line := ir.GetPosition(checkedExpr).StartLine
 			w.t.Errorf("line %d: type mismatch for %s (-have +want):\n%s",
-				line, astutil.FmtNode(checkedExpr), diff)
+				line, irutil.FmtNode(checkedExpr), diff)
 		}
 		return false
 	}

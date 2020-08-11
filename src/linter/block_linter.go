@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/solver"
 )
@@ -114,16 +114,12 @@ func (b *blockLinter) enterNode(n ir.Node) {
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
 
-	case *ir.DoubleCastExpr:
-		b.checkRedundantCast(n.Expr, "float")
-	case *ir.IntCastExpr:
-		b.checkRedundantCast(n.Expr, "int")
-	case *ir.BoolCastExpr:
-		b.checkRedundantCast(n.Expr, "bool")
-	case *ir.StringCastExpr:
-		b.checkRedundantCast(n.Expr, "string")
-	case *ir.ArrayCastExpr:
-		b.checkRedundantCastArray(n.Expr)
+	case *ir.TypeCastExpr:
+		if n.Type == "array" {
+			b.checkRedundantCastArray(n.Expr)
+		} else {
+			b.checkRedundantCast(n.Expr, n.Type)
+		}
 
 	case *ir.CloneExpr:
 		b.walker.r.checkKeywordCase(n, "clone")
@@ -137,14 +133,8 @@ func (b *blockLinter) enterNode(n ir.Node) {
 		b.walker.r.checkKeywordCase(n, "yield")
 	case *ir.YieldFromExpr:
 		b.walker.r.checkKeywordCase(n, "yield")
-	case *ir.IncludeExpr:
-		b.walker.r.checkKeywordCase(n, "include")
-	case *ir.IncludeOnceExpr:
-		b.walker.r.checkKeywordCase(n, "include_once")
-	case *ir.RequireExpr:
-		b.walker.r.checkKeywordCase(n, "require")
-	case *ir.RequireOnceExpr:
-		b.walker.r.checkKeywordCase(n, "require_once")
+	case *ir.ImportExpr:
+		b.walker.r.checkKeywordCase(n, n.Func)
 	case *ir.BreakStmt:
 		b.walker.r.checkKeywordCase(n, "break")
 	case *ir.ReturnStmt:
@@ -300,7 +290,7 @@ func (b *blockLinter) checkStrictCmp(n ir.Node, left, right ir.Node) {
 			suggest = "!=="
 		}
 		b.report(n, LevelWarning, "strictCmp", "non-strict comparison with %s (use %s)",
-			astutil.FmtNode(badNode), suggest)
+			irutil.FmtNode(badNode), suggest)
 	}
 }
 
@@ -392,11 +382,11 @@ func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 
 	// All branches except default try to filter-out common
 	// cases to reduce the number of type solving performed.
-	if astutil.IsAssign(s.Expr) {
+	if irutil.IsAssign(s.Expr) {
 		return
 	}
 	switch s.Expr.(type) {
-	case *ir.RequireExpr, *ir.RequireOnceExpr, *ir.IncludeExpr, *ir.IncludeOnceExpr, *ir.ExitExpr:
+	case *ir.ImportExpr, *ir.ExitExpr:
 		// Skip.
 	case *ir.ArrayExpr, *ir.NewExpr:
 		// Report these even if they are not pure.
@@ -447,7 +437,7 @@ func (b *blockLinter) checkTernary(e *ir.TernaryExpr) {
 	}
 
 	// Check for `$cond ? $x : $x` which makes no sense.
-	if astutil.NodeEqual(e.IfTrue, e.IfFalse) {
+	if irutil.NodeEqual(e.IfTrue, e.IfFalse) {
 		b.report(e, LevelWarning, "dupBranchBody", "then/else operands are identical")
 	}
 }
@@ -491,7 +481,7 @@ func (b *blockLinter) checkIfStmt(s *ir.IfStmt) {
 	if len(s.ElseIf) == 0 && s.Else != nil {
 		x := s.Stmt
 		y := s.Else.(*ir.ElseStmt).Stmt
-		if astutil.NodeEqual(x, y) {
+		if irutil.NodeEqual(x, y) {
 			b.report(s, LevelWarning, "dupBranchBody", "duplicated if/else actions")
 		}
 	}
@@ -500,7 +490,7 @@ func (b *blockLinter) checkIfStmt(s *ir.IfStmt) {
 }
 
 func (b *blockLinter) checkIfStmtDupCond(s *ir.IfStmt) {
-	conditions := astutil.NewNodeSet()
+	conditions := irutil.NewNodeSet()
 	conditions.Add(s.Cond)
 	for _, elseif := range s.ElseIf {
 		elseif := elseif.(*ir.ElseIfStmt)

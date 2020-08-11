@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/astutil"
 )
 
 func bitwiseOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right ir.Node, custom []CustomType) meta.TypesMap {
@@ -92,7 +92,7 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 	return meta.TypesMap{}, false
 }
 
-func arrayType(items []*ir.ArrayItemExpr) meta.TypesMap {
+func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*ir.ArrayItemExpr) meta.TypesMap {
 	if len(items) == 0 {
 		// Used as a placeholder until more specific type is discovered.
 		//
@@ -106,48 +106,21 @@ func arrayType(items []*ir.ArrayItemExpr) meta.TypesMap {
 		return meta.NewTypesMap("empty_array")
 	}
 
-	if len(items) > 0 {
-		switch {
-		case isConstantStringArray(items):
-			return meta.NewTypesMap("string[]")
-		case isConstantIntArray(items):
-			return meta.NewTypesMap("int[]")
-		case isConstantFloatArray(items):
-			return meta.NewTypesMap("float[]")
+	firstElementType := ExprTypeLocal(sc, cs, items[0])
+
+	for _, item := range items[1:] {
+		itemType := ExprTypeLocal(sc, cs, item)
+		if !firstElementType.Equals(itemType) {
+			return meta.NewTypesMap("mixed[]")
 		}
 	}
 
-	return meta.NewTypesMap("mixed[]")
-}
+	wrapped := meta.NewEmptyTypesMap(firstElementType.Len())
+	firstElementType.Iterate(func(t string) {
+		wrapped.AppendString(meta.WrapArrayOf(t))
+	})
 
-func isConstantStringArray(items []*ir.ArrayItemExpr) bool {
-	for _, item := range items {
-		if _, ok := item.Val.(*ir.String); !ok {
-			return false
-		}
-	}
-
-	return true
-}
-
-func isConstantIntArray(items []*ir.ArrayItemExpr) bool {
-	for _, item := range items {
-		if _, ok := item.Val.(*ir.Lnumber); !ok {
-			return false
-		}
-	}
-
-	return true
-}
-
-func isConstantFloatArray(items []*ir.ArrayItemExpr) bool {
-	for _, item := range items {
-		if _, ok := item.Val.(*ir.Dnumber); !ok {
-			return false
-		}
-	}
-
-	return true
+	return wrapped
 }
 
 // CustomType specifies a mapping between some AST structure and concrete type (e.g. for <expr> instanceof <something>)
@@ -167,7 +140,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 	}
 
 	for _, c := range custom {
-		if astutil.NodeEqual(c.Node, n) {
+		if irutil.NodeEqual(c.Node, n) {
 			return c.Typ
 		}
 	}
@@ -298,7 +271,9 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 	case *ir.ConcatExpr:
 		return meta.PreciseStringType
 	case *ir.ArrayExpr:
-		return arrayType(n.Items)
+		return arrayType(sc, cs, n.Items)
+	case *ir.ArrayItemExpr:
+		return ExprTypeLocalCustom(sc, cs, n.Val, custom)
 	case *ir.BooleanNotExpr, *ir.BooleanAndExpr, *ir.BooleanOrExpr,
 		*ir.EqualExpr, *ir.NotEqualExpr, *ir.IdenticalExpr, *ir.NotIdenticalExpr,
 		*ir.GreaterExpr, *ir.GreaterOrEqualExpr,
@@ -327,16 +302,21 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 		return unaryMathOpType(sc, cs, n.Variable, custom)
 	case *ir.PreDecExpr:
 		return unaryMathOpType(sc, cs, n.Variable, custom)
-	case *ir.ArrayCastExpr:
-		return meta.NewTypesMap("mixed[]")
-	case *ir.BoolCastExpr:
-		return meta.PreciseBoolType
-	case *ir.DoubleCastExpr:
-		return meta.PreciseFloatType
-	case *ir.IntCastExpr, *ir.ShiftLeftExpr, *ir.ShiftRightExpr:
+	case *ir.TypeCastExpr:
+		switch n.Type {
+		case "array":
+			return meta.NewTypesMap("mixed[]")
+		case "int":
+			return meta.PreciseIntType
+		case "string":
+			return meta.PreciseStringType
+		case "float":
+			return meta.PreciseFloatType
+		case "bool":
+			return meta.PreciseBoolType
+		}
+	case *ir.ShiftLeftExpr, *ir.ShiftRightExpr:
 		return meta.PreciseIntType
-	case *ir.StringCastExpr:
-		return meta.PreciseStringType
 	case *ir.ClassConstFetchExpr:
 		className, ok := GetClassName(cs, n.Class)
 		if !ok {

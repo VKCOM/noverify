@@ -309,39 +309,10 @@ type SpaceshipExpr struct {
 	Right        Node
 }
 
-type ArrayCastExpr struct {
+type TypeCastExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	Expr         Node
-}
-
-type BoolCastExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Expr         Node
-}
-
-type DoubleCastExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Expr         Node
-}
-
-type IntCastExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Expr         Node
-}
-
-type ObjectCastExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Expr         Node
-}
-
-type StringCastExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
+	Type         string // "array" "bool" "int" "float" "object" "string"
 	Expr         Node
 }
 
@@ -465,15 +436,10 @@ type FunctionCallExpr struct {
 	ArgumentList *ArgumentList
 }
 
-type IncludeExpr struct {
+type ImportExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	Expr         Node
-}
-
-type IncludeOnceExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
+	Func         string // "include" "include_once" "require" "require_once"
 	Expr         Node
 }
 
@@ -559,18 +525,6 @@ type ReferenceExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-}
-
-type RequireExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Expr         Node
-}
-
-type RequireOnceExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Expr         Node
 }
 
 type ShellExecExpr struct {

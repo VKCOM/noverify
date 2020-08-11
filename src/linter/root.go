@@ -12,8 +12,8 @@ import (
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/php/parser/position"
@@ -48,7 +48,7 @@ type RootWalker struct {
 	ctx rootContext
 
 	// nodeSet is a reusable node set for both root and block walkers.
-	nodeSet astutil.NodeSet
+	nodeSet irutil.NodeSet
 
 	reSimplifier *regexpSimplifier
 	reVet        *regexpVet
@@ -1762,7 +1762,7 @@ func (d *RootWalker) sourceNodeString(n ir.Node) string {
 		return string(src[from:to])
 	}
 	// If we can't take node out of the source text, print it.
-	return astutil.FmtNode(n)
+	return irutil.FmtNode(n)
 }
 
 func (d *RootWalker) renderRuleMessage(msg string, n ir.Node, m phpgrep.MatchData, truncate bool) string {

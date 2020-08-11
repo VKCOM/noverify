@@ -1,4 +1,4 @@
-package astutil
+package irutil
 
 import (
 	"fmt"
