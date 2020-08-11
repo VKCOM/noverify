@@ -647,6 +647,8 @@ func (d *RootWalker) handleArrowFuncExpr(params []meta.FuncParam, expr ir.Node, 
 	b.addStatement(expr)
 	expr.Walk(b)
 
+	b.flushUnused()
+
 	return handleFuncResult{
 		returnTypes: b.returnTypes,
 	}
