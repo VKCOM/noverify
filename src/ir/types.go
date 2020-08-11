@@ -309,39 +309,10 @@ type SpaceshipExpr struct {
 	Right        Node
 }
 
-type ArrayCastExpr struct {
+type TypeCastExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	Expr         Node
-}
-
-type BoolCastExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Expr         Node
-}
-
-type DoubleCastExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Expr         Node
-}
-
-type IntCastExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Expr         Node
-}
-
-type ObjectCastExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Expr         Node
-}
-
-type StringCastExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
+	Type         string // "array" "bool" "int" "float" "object" "string"
 	Expr         Node
 }
 
@@ -430,7 +401,7 @@ type ClosureUseExpr struct {
 type ConstFetchExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	Constant     Node
+	Constant     *Name
 }
 
 type EmptyExpr struct {
@@ -465,15 +436,10 @@ type FunctionCallExpr struct {
 	ArgumentList *ArgumentList
 }
 
-type IncludeExpr struct {
+type ImportExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	Expr         Node
-}
-
-type IncludeOnceExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
+	Func         string // "include" "include_once" "require" "require_once"
 	Expr         Node
 }
 
@@ -561,18 +527,6 @@ type ReferenceExpr struct {
 	Variable     Node
 }
 
-type RequireExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Expr         Node
-}
-
-type RequireOnceExpr struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Expr         Node
-}
-
 type ShellExecExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
@@ -627,28 +581,10 @@ type YieldFromExpr struct {
 	Expr         Node
 }
 
-type FullyQualifiedName struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Parts        []Node
-}
-
 type Name struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	Parts        []Node
-}
-
-type NamePart struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
 	Value        string
-}
-
-type RelativeName struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Parts        []Node
 }
 
 type Argument struct {
@@ -989,7 +925,7 @@ type LabelStmt struct {
 type NamespaceStmt struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
-	NamespaceName Node
+	NamespaceName *Name
 	Stmts         []Node
 }
 

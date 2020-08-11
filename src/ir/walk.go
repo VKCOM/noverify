@@ -546,57 +546,7 @@ func (n *SpaceshipExpr) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
-func (n *ArrayCastExpr) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	if n.Expr != nil {
-		n.Expr.Walk(v)
-	}
-	v.LeaveNode(n)
-}
-
-func (n *BoolCastExpr) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	if n.Expr != nil {
-		n.Expr.Walk(v)
-	}
-	v.LeaveNode(n)
-}
-
-func (n *DoubleCastExpr) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	if n.Expr != nil {
-		n.Expr.Walk(v)
-	}
-	v.LeaveNode(n)
-}
-
-func (n *IntCastExpr) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	if n.Expr != nil {
-		n.Expr.Walk(v)
-	}
-	v.LeaveNode(n)
-}
-
-func (n *ObjectCastExpr) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	if n.Expr != nil {
-		n.Expr.Walk(v)
-	}
-	v.LeaveNode(n)
-}
-
-func (n *StringCastExpr) Walk(v Visitor) {
+func (n *TypeCastExpr) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
 	}
@@ -813,26 +763,6 @@ func (n *FunctionCallExpr) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
-func (n *IncludeExpr) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	if n.Expr != nil {
-		n.Expr.Walk(v)
-	}
-	v.LeaveNode(n)
-}
-
-func (n *IncludeOnceExpr) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	if n.Expr != nil {
-		n.Expr.Walk(v)
-	}
-	v.LeaveNode(n)
-}
-
 func (n *InstanceOfExpr) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
@@ -982,17 +912,7 @@ func (n *ReferenceExpr) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
-func (n *RequireExpr) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	if n.Expr != nil {
-		n.Expr.Walk(v)
-	}
-	v.LeaveNode(n)
-}
-
-func (n *RequireOnceExpr) Walk(v Visitor) {
+func (n *ImportExpr) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
 	}
@@ -1102,45 +1022,9 @@ func (n *YieldFromExpr) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
-func (n *FullyQualifiedName) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	for i := range n.Parts {
-		if n.Parts[i] != nil {
-			n.Parts[i].Walk(v)
-		}
-	}
-	v.LeaveNode(n)
-}
-
 func (n *Name) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
-	}
-	for i := range n.Parts {
-		if n.Parts[i] != nil {
-			n.Parts[i].Walk(v)
-		}
-	}
-	v.LeaveNode(n)
-}
-
-func (n *NamePart) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	v.LeaveNode(n)
-}
-
-func (n *RelativeName) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	for i := range n.Parts {
-		if n.Parts[i] != nil {
-			n.Parts[i].Walk(v)
-		}
 	}
 	v.LeaveNode(n)
 }

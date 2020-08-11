@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/solver"
 )
@@ -134,7 +134,7 @@ func nodeEqual(st *meta.ClassParseState, x, y ir.Node) bool {
 		return info1.Value.IsEqual(info2.Value)
 
 	default:
-		return astutil.NodeEqual(x, y)
+		return irutil.NodeEqual(x, y)
 	}
 }
 

@@ -49,12 +49,7 @@ const (
 	KindSmallerExpr
 	KindSmallerOrEqualExpr
 	KindSpaceshipExpr
-	KindArrayCastExpr
-	KindBoolCastExpr
-	KindDoubleCastExpr
-	KindIntCastExpr
-	KindObjectCastExpr
-	KindStringCastExpr
+	KindTypeCastExpr
 	KindUnsetCastExpr
 	KindArrayExpr
 	KindArrayDimFetchExpr
@@ -72,8 +67,6 @@ const (
 	KindEvalExpr
 	KindExitExpr
 	KindFunctionCallExpr
-	KindIncludeExpr
-	KindIncludeOnceExpr
 	KindInstanceOfExpr
 	KindIssetExpr
 	KindListExpr
@@ -87,8 +80,7 @@ const (
 	KindPrintExpr
 	KindPropertyFetchExpr
 	KindReferenceExpr
-	KindRequireExpr
-	KindRequireOnceExpr
+	KindImportExpr
 	KindShellExecExpr
 	KindStaticCallExpr
 	KindStaticPropertyFetchExpr
@@ -97,10 +89,7 @@ const (
 	KindUnaryPlusExpr
 	KindYieldExpr
 	KindYieldFromExpr
-	KindFullyQualifiedName
 	KindName
-	KindNamePart
-	KindRelativeName
 	KindArgument
 	KindArgumentList
 	KindIdentifier
@@ -259,18 +248,8 @@ func GetNodeKind(n Node) NodeKind {
 		return KindSmallerOrEqualExpr
 	case *SpaceshipExpr:
 		return KindSpaceshipExpr
-	case *ArrayCastExpr:
-		return KindArrayCastExpr
-	case *BoolCastExpr:
-		return KindBoolCastExpr
-	case *DoubleCastExpr:
-		return KindDoubleCastExpr
-	case *IntCastExpr:
-		return KindIntCastExpr
-	case *ObjectCastExpr:
-		return KindObjectCastExpr
-	case *StringCastExpr:
-		return KindStringCastExpr
+	case *TypeCastExpr:
+		return KindTypeCastExpr
 	case *UnsetCastExpr:
 		return KindUnsetCastExpr
 	case *ArrayExpr:
@@ -305,10 +284,6 @@ func GetNodeKind(n Node) NodeKind {
 		return KindExitExpr
 	case *FunctionCallExpr:
 		return KindFunctionCallExpr
-	case *IncludeExpr:
-		return KindIncludeExpr
-	case *IncludeOnceExpr:
-		return KindIncludeOnceExpr
 	case *InstanceOfExpr:
 		return KindInstanceOfExpr
 	case *IssetExpr:
@@ -335,10 +310,8 @@ func GetNodeKind(n Node) NodeKind {
 		return KindPropertyFetchExpr
 	case *ReferenceExpr:
 		return KindReferenceExpr
-	case *RequireExpr:
-		return KindRequireExpr
-	case *RequireOnceExpr:
-		return KindRequireOnceExpr
+	case *ImportExpr:
+		return KindImportExpr
 	case *ShellExecExpr:
 		return KindShellExecExpr
 	case *StaticCallExpr:
@@ -355,14 +328,8 @@ func GetNodeKind(n Node) NodeKind {
 		return KindYieldExpr
 	case *YieldFromExpr:
 		return KindYieldFromExpr
-	case *FullyQualifiedName:
-		return KindFullyQualifiedName
 	case *Name:
 		return KindName
-	case *NamePart:
-		return KindNamePart
-	case *RelativeName:
-		return KindRelativeName
 	case *Argument:
 		return KindArgument
 	case *ArgumentList:

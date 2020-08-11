@@ -15,19 +15,28 @@ import (
 )
 
 func ConvertRoot(n *node.Root) *ir.Root {
-	return ConvertNode(n).(*ir.Root)
-}
-
-func ConvertNodeSlice(xs []node.Node) []ir.Node {
-	out := make([]ir.Node, len(xs))
-	for i, x := range xs {
-		out[i] = ConvertNode(x)
-	}
-	return out
-
+	var state convState
+	return convertNode(&state, n).(*ir.Root)
 }
 
 func ConvertNode(n node.Node) ir.Node {
+	var state convState
+	return convertNode(&state, n)
+}
+
+type convState struct {
+	namespace string
+}
+
+func convertNodeSlice(state *convState, xs []node.Node) []ir.Node {
+	out := make([]ir.Node, len(xs))
+	for i, x := range xs {
+		out[i] = convertNode(state, x)
+	}
+	return out
+}
+
+func convertNode(state *convState, n node.Node) ir.Node {
 	if n == nil {
 		return nil
 	}
@@ -39,8 +48,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.Assign{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
-		out.Expression = ConvertNode(n.Expression)
+		out.Variable = convertNode(state, n.Variable)
+		out.Expression = convertNode(state, n.Expression)
 		return out
 
 	case *assign.BitwiseAnd:
@@ -50,8 +59,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.AssignBitwiseAnd{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
-		out.Expression = ConvertNode(n.Expression)
+		out.Variable = convertNode(state, n.Variable)
+		out.Expression = convertNode(state, n.Expression)
 		return out
 
 	case *assign.BitwiseOr:
@@ -61,8 +70,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.AssignBitwiseOr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
-		out.Expression = ConvertNode(n.Expression)
+		out.Variable = convertNode(state, n.Variable)
+		out.Expression = convertNode(state, n.Expression)
 		return out
 
 	case *assign.BitwiseXor:
@@ -72,8 +81,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.AssignBitwiseXor{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
-		out.Expression = ConvertNode(n.Expression)
+		out.Variable = convertNode(state, n.Variable)
+		out.Expression = convertNode(state, n.Expression)
 		return out
 
 	case *assign.Coalesce:
@@ -83,8 +92,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.AssignCoalesce{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
-		out.Expression = ConvertNode(n.Expression)
+		out.Variable = convertNode(state, n.Variable)
+		out.Expression = convertNode(state, n.Expression)
 		return out
 
 	case *assign.Concat:
@@ -94,8 +103,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.AssignConcat{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
-		out.Expression = ConvertNode(n.Expression)
+		out.Variable = convertNode(state, n.Variable)
+		out.Expression = convertNode(state, n.Expression)
 		return out
 
 	case *assign.Div:
@@ -105,8 +114,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.AssignDiv{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
-		out.Expression = ConvertNode(n.Expression)
+		out.Variable = convertNode(state, n.Variable)
+		out.Expression = convertNode(state, n.Expression)
 		return out
 
 	case *assign.Minus:
@@ -116,8 +125,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.AssignMinus{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
-		out.Expression = ConvertNode(n.Expression)
+		out.Variable = convertNode(state, n.Variable)
+		out.Expression = convertNode(state, n.Expression)
 		return out
 
 	case *assign.Mod:
@@ -127,8 +136,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.AssignMod{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
-		out.Expression = ConvertNode(n.Expression)
+		out.Variable = convertNode(state, n.Variable)
+		out.Expression = convertNode(state, n.Expression)
 		return out
 
 	case *assign.Mul:
@@ -138,8 +147,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.AssignMul{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
-		out.Expression = ConvertNode(n.Expression)
+		out.Variable = convertNode(state, n.Variable)
+		out.Expression = convertNode(state, n.Expression)
 		return out
 
 	case *assign.Plus:
@@ -149,8 +158,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.AssignPlus{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
-		out.Expression = ConvertNode(n.Expression)
+		out.Variable = convertNode(state, n.Variable)
+		out.Expression = convertNode(state, n.Expression)
 		return out
 
 	case *assign.Pow:
@@ -160,8 +169,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.AssignPow{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
-		out.Expression = ConvertNode(n.Expression)
+		out.Variable = convertNode(state, n.Variable)
+		out.Expression = convertNode(state, n.Expression)
 		return out
 
 	case *assign.Reference:
@@ -171,8 +180,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.AssignReference{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
-		out.Expression = ConvertNode(n.Expression)
+		out.Variable = convertNode(state, n.Variable)
+		out.Expression = convertNode(state, n.Expression)
 		return out
 
 	case *assign.ShiftLeft:
@@ -182,8 +191,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.AssignShiftLeft{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
-		out.Expression = ConvertNode(n.Expression)
+		out.Variable = convertNode(state, n.Variable)
+		out.Expression = convertNode(state, n.Expression)
 		return out
 
 	case *assign.ShiftRight:
@@ -193,8 +202,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.AssignShiftRight{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
-		out.Expression = ConvertNode(n.Expression)
+		out.Variable = convertNode(state, n.Variable)
+		out.Expression = convertNode(state, n.Expression)
 		return out
 
 	case *binary.BitwiseAnd:
@@ -204,8 +213,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.BitwiseAndExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.BitwiseOr:
@@ -215,8 +224,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.BitwiseOrExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.BitwiseXor:
@@ -226,8 +235,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.BitwiseXorExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.BooleanAnd:
@@ -237,8 +246,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.BooleanAndExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.BooleanOr:
@@ -248,8 +257,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.BooleanOrExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.Coalesce:
@@ -259,8 +268,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.CoalesceExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.Concat:
@@ -270,8 +279,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ConcatExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.Div:
@@ -281,8 +290,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.DivExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.Equal:
@@ -292,8 +301,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.EqualExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.Greater:
@@ -303,8 +312,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.GreaterExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.GreaterOrEqual:
@@ -314,8 +323,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.GreaterOrEqualExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.Identical:
@@ -325,8 +334,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.IdenticalExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.LogicalAnd:
@@ -336,8 +345,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.LogicalAndExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.LogicalOr:
@@ -347,8 +356,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.LogicalOrExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.LogicalXor:
@@ -358,8 +367,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.LogicalXorExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.Minus:
@@ -369,8 +378,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.MinusExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.Mod:
@@ -380,8 +389,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ModExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.Mul:
@@ -391,8 +400,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.MulExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.NotEqual:
@@ -402,8 +411,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.NotEqualExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.NotIdentical:
@@ -413,8 +422,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.NotIdenticalExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.Plus:
@@ -424,8 +433,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.PlusExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.Pow:
@@ -435,8 +444,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.PowExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.ShiftLeft:
@@ -446,8 +455,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ShiftLeftExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.ShiftRight:
@@ -457,8 +466,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ShiftRightExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.Smaller:
@@ -468,8 +477,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.SmallerExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.SmallerOrEqual:
@@ -479,8 +488,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.SmallerOrEqualExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *binary.Spaceship:
@@ -490,78 +499,32 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.SpaceshipExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Left = ConvertNode(n.Left)
-		out.Right = ConvertNode(n.Right)
+		out.Left = convertNode(state, n.Left)
+		out.Right = convertNode(state, n.Right)
 		return out
 
 	case *cast.Array:
-		if n == nil {
-			return (*ir.ArrayCastExpr)(nil)
-		}
-		out := &ir.ArrayCastExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
-
+		return convCastExpr(state, n, n.Expr, "array")
 	case *cast.Bool:
-		if n == nil {
-			return (*ir.BoolCastExpr)(nil)
-		}
-		out := &ir.BoolCastExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
-
-	case *cast.Double:
-		if n == nil {
-			return (*ir.DoubleCastExpr)(nil)
-		}
-		out := &ir.DoubleCastExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
-
+		return convCastExpr(state, n, n.Expr, "bool")
 	case *cast.Int:
-		if n == nil {
-			return (*ir.IntCastExpr)(nil)
-		}
-		out := &ir.IntCastExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
-
+		return convCastExpr(state, n, n.Expr, "int")
+	case *cast.Double:
+		return convCastExpr(state, n, n.Expr, "float")
 	case *cast.Object:
-		if n == nil {
-			return (*ir.ObjectCastExpr)(nil)
-		}
-		out := &ir.ObjectCastExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
-
+		return convCastExpr(state, n, n.Expr, "object")
 	case *cast.String:
-		if n == nil {
-			return (*ir.StringCastExpr)(nil)
-		}
-		out := &ir.StringCastExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
+		return convCastExpr(state, n, n.Expr, "string")
 
 	case *cast.Unset:
+		// We dont convert (unset)$x into CastExpr deliberately.
 		if n == nil {
 			return (*ir.UnsetCastExpr)(nil)
 		}
 		out := &ir.UnsetCastExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *expr.Array:
@@ -574,7 +537,7 @@ func ConvertNode(n node.Node) ir.Node {
 		{
 			slice := make([]*ir.ArrayItemExpr, len(n.Items))
 			for i := range n.Items {
-				slice[i] = ConvertNode(n.Items[i]).(*ir.ArrayItemExpr)
+				slice[i] = convertNode(state, n.Items[i]).(*ir.ArrayItemExpr)
 			}
 			out.Items = slice
 		}
@@ -588,8 +551,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ArrayDimFetchExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
-		out.Dim = ConvertNode(n.Dim)
+		out.Variable = convertNode(state, n.Variable)
+		out.Dim = convertNode(state, n.Dim)
 		return out
 
 	case *expr.ArrayItem:
@@ -599,8 +562,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ArrayItemExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Key = ConvertNode(n.Key)
-		out.Val = ConvertNode(n.Val)
+		out.Key = convertNode(state, n.Key)
+		out.Val = convertNode(state, n.Val)
 		out.Unpack = n.Unpack
 		return out
 
@@ -614,9 +577,9 @@ func ConvertNode(n node.Node) ir.Node {
 		out.ReturnsRef = n.ReturnsRef
 		out.Static = n.Static
 		out.PhpDocComment = n.PhpDocComment
-		out.Params = ConvertNodeSlice(n.Params)
-		out.ReturnType = ConvertNode(n.ReturnType)
-		out.Expr = ConvertNode(n.Expr)
+		out.Params = convertNodeSlice(state, n.Params)
+		out.ReturnType = convertNode(state, n.ReturnType)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *expr.BitwiseNot:
@@ -626,7 +589,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.BitwiseNotExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *expr.BooleanNot:
@@ -636,7 +599,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.BooleanNotExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *expr.ClassConstFetch:
@@ -646,8 +609,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ClassConstFetchExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Class = ConvertNode(n.Class)
-		out.ConstantName = ConvertNode(n.ConstantName).(*ir.Identifier)
+		out.Class = convertNode(state, n.Class)
+		out.ConstantName = convertNode(state, n.ConstantName).(*ir.Identifier)
 		return out
 
 	case *expr.Clone:
@@ -657,7 +620,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.CloneExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *expr.Closure:
@@ -670,10 +633,10 @@ func ConvertNode(n node.Node) ir.Node {
 		out.ReturnsRef = n.ReturnsRef
 		out.Static = n.Static
 		out.PhpDocComment = n.PhpDocComment
-		out.Params = ConvertNodeSlice(n.Params)
-		out.ClosureUse = ConvertNode(n.ClosureUse).(*ir.ClosureUseExpr)
-		out.ReturnType = ConvertNode(n.ReturnType)
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.Params = convertNodeSlice(state, n.Params)
+		out.ClosureUse = convertNode(state, n.ClosureUse).(*ir.ClosureUseExpr)
+		out.ReturnType = convertNode(state, n.ReturnType)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *expr.ClosureUse:
@@ -683,7 +646,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ClosureUseExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Uses = ConvertNodeSlice(n.Uses)
+		out.Uses = convertNodeSlice(state, n.Uses)
 		return out
 
 	case *expr.ConstFetch:
@@ -693,7 +656,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ConstFetchExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Constant = ConvertNode(n.Constant)
+		out.Constant = convertNode(state, n.Constant).(*ir.Name)
 		return out
 
 	case *expr.Empty:
@@ -703,7 +666,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.EmptyExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *expr.ErrorSuppress:
@@ -713,7 +676,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ErrorSuppressExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *expr.Eval:
@@ -723,7 +686,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.EvalExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *expr.Exit:
@@ -734,7 +697,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Die = n.Die
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *expr.FunctionCall:
@@ -744,28 +707,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.FunctionCallExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Function = ConvertNode(n.Function)
-		out.ArgumentList = ConvertNode(n.ArgumentList).(*ir.ArgumentList)
-		return out
-
-	case *expr.Include:
-		if n == nil {
-			return (*ir.IncludeExpr)(nil)
-		}
-		out := &ir.IncludeExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
-
-	case *expr.IncludeOnce:
-		if n == nil {
-			return (*ir.IncludeOnceExpr)(nil)
-		}
-		out := &ir.IncludeOnceExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Function = convertNode(state, n.Function)
+		out.ArgumentList = convertNode(state, n.ArgumentList).(*ir.ArgumentList)
 		return out
 
 	case *expr.InstanceOf:
@@ -775,8 +718,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.InstanceOfExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		out.Class = ConvertNode(n.Class)
+		out.Expr = convertNode(state, n.Expr)
+		out.Class = convertNode(state, n.Class)
 		return out
 
 	case *expr.Isset:
@@ -786,7 +729,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.IssetExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variables = ConvertNodeSlice(n.Variables)
+		out.Variables = convertNodeSlice(state, n.Variables)
 		return out
 
 	case *expr.List:
@@ -799,7 +742,7 @@ func ConvertNode(n node.Node) ir.Node {
 		{
 			slice := make([]*ir.ArrayItemExpr, len(n.Items))
 			for i := range n.Items {
-				slice[i] = ConvertNode(n.Items[i]).(*ir.ArrayItemExpr)
+				slice[i] = convertNode(state, n.Items[i]).(*ir.ArrayItemExpr)
 			}
 			out.Items = slice
 		}
@@ -813,9 +756,9 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.MethodCallExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
-		out.Method = ConvertNode(n.Method)
-		out.ArgumentList = ConvertNode(n.ArgumentList).(*ir.ArgumentList)
+		out.Variable = convertNode(state, n.Variable)
+		out.Method = convertNode(state, n.Method)
+		out.ArgumentList = convertNode(state, n.ArgumentList).(*ir.ArgumentList)
 		return out
 
 	case *expr.New:
@@ -825,8 +768,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.NewExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Class = ConvertNode(n.Class)
-		out.ArgumentList = ConvertNode(n.ArgumentList).(*ir.ArgumentList)
+		out.Class = convertNode(state, n.Class)
+		out.ArgumentList = convertNode(state, n.ArgumentList).(*ir.ArgumentList)
 		return out
 
 	case *expr.Paren:
@@ -836,7 +779,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ParenExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *expr.PostDec:
@@ -846,7 +789,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.PostDecExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
+		out.Variable = convertNode(state, n.Variable)
 		return out
 
 	case *expr.PostInc:
@@ -856,7 +799,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.PostIncExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
+		out.Variable = convertNode(state, n.Variable)
 		return out
 
 	case *expr.PreDec:
@@ -866,7 +809,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.PreDecExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
+		out.Variable = convertNode(state, n.Variable)
 		return out
 
 	case *expr.PreInc:
@@ -876,7 +819,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.PreIncExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
+		out.Variable = convertNode(state, n.Variable)
 		return out
 
 	case *expr.Print:
@@ -886,7 +829,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.PrintExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *expr.PropertyFetch:
@@ -896,8 +839,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.PropertyFetchExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
-		out.Property = ConvertNode(n.Property)
+		out.Variable = convertNode(state, n.Variable)
+		out.Property = convertNode(state, n.Property)
 		return out
 
 	case *expr.Reference:
@@ -907,28 +850,17 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ReferenceExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable)
+		out.Variable = convertNode(state, n.Variable)
 		return out
 
 	case *expr.Require:
-		if n == nil {
-			return (*ir.RequireExpr)(nil)
-		}
-		out := &ir.RequireExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
-
+		return convImportExpr(state, n, n.Expr, "require")
 	case *expr.RequireOnce:
-		if n == nil {
-			return (*ir.RequireOnceExpr)(nil)
-		}
-		out := &ir.RequireOnceExpr{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		return out
+		return convImportExpr(state, n, n.Expr, "require_once")
+	case *expr.Include:
+		return convImportExpr(state, n, n.Expr, "include")
+	case *expr.IncludeOnce:
+		return convImportExpr(state, n, n.Expr, "include_once")
 
 	case *expr.ShellExec:
 		if n == nil {
@@ -937,7 +869,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ShellExecExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Parts = ConvertNodeSlice(n.Parts)
+		out.Parts = convertNodeSlice(state, n.Parts)
 		return out
 
 	case *expr.StaticCall:
@@ -947,9 +879,9 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.StaticCallExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Class = ConvertNode(n.Class)
-		out.Call = ConvertNode(n.Call)
-		out.ArgumentList = ConvertNode(n.ArgumentList).(*ir.ArgumentList)
+		out.Class = convertNode(state, n.Class)
+		out.Call = convertNode(state, n.Call)
+		out.ArgumentList = convertNode(state, n.ArgumentList).(*ir.ArgumentList)
 		return out
 
 	case *expr.StaticPropertyFetch:
@@ -959,8 +891,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.StaticPropertyFetchExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Class = ConvertNode(n.Class)
-		out.Property = ConvertNode(n.Property)
+		out.Class = convertNode(state, n.Class)
+		out.Property = convertNode(state, n.Property)
 		return out
 
 	case *expr.Ternary:
@@ -970,9 +902,9 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.TernaryExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Condition = ConvertNode(n.Condition)
-		out.IfTrue = ConvertNode(n.IfTrue)
-		out.IfFalse = ConvertNode(n.IfFalse)
+		out.Condition = convertNode(state, n.Condition)
+		out.IfTrue = convertNode(state, n.IfTrue)
+		out.IfFalse = convertNode(state, n.IfFalse)
 		return out
 
 	case *expr.UnaryMinus:
@@ -982,7 +914,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.UnaryMinusExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *expr.UnaryPlus:
@@ -992,7 +924,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.UnaryPlusExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *expr.Yield:
@@ -1002,8 +934,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.YieldExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Key = ConvertNode(n.Key)
-		out.Value = ConvertNode(n.Value)
+		out.Key = convertNode(state, n.Key)
+		out.Value = convertNode(state, n.Value)
 		return out
 
 	case *expr.YieldFrom:
@@ -1013,48 +945,23 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.YieldFromExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *name.FullyQualified:
-		if n == nil {
-			return (*ir.FullyQualifiedName)(nil)
+		return &ir.Name{
+			FreeFloating: n.FreeFloating,
+			Position:     n.Position,
+			Value:        fullyQualifiedToString(n),
 		}
-		out := &ir.FullyQualifiedName{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Parts = ConvertNodeSlice(n.Parts)
-		return out
-
 	case *name.Name:
-		if n == nil {
-			return (*ir.Name)(nil)
+		return &ir.Name{
+			FreeFloating: n.FreeFloating,
+			Position:     n.Position,
+			Value:        namePartsToString(n.Parts),
 		}
-		out := &ir.Name{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Parts = ConvertNodeSlice(n.Parts)
-		return out
-
-	case *name.NamePart:
-		if n == nil {
-			return (*ir.NamePart)(nil)
-		}
-		out := &ir.NamePart{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Value = n.Value
-		return out
-
 	case *name.Relative:
-		if n == nil {
-			return (*ir.RelativeName)(nil)
-		}
-		out := &ir.RelativeName{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Parts = ConvertNodeSlice(n.Parts)
-		return out
+		return convRelativeName(state, n)
 
 	case *node.Argument:
 		if n == nil {
@@ -1065,7 +972,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out.Position = n.Position
 		out.Variadic = n.Variadic
 		out.IsReference = n.IsReference
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *node.ArgumentList:
@@ -1078,7 +985,7 @@ func ConvertNode(n node.Node) ir.Node {
 		{
 			slice := make([]ir.Node, len(n.Arguments))
 			for i := range n.Arguments {
-				slice[i] = ConvertNode(n.Arguments[i])
+				slice[i] = convertNode(state, n.Arguments[i])
 			}
 			out.Arguments = slice
 		}
@@ -1101,7 +1008,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.Nullable{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *node.Parameter:
@@ -1113,9 +1020,9 @@ func ConvertNode(n node.Node) ir.Node {
 		out.Position = n.Position
 		out.ByRef = n.ByRef
 		out.Variadic = n.Variadic
-		out.VariableType = ConvertNode(n.VariableType)
-		out.Variable = ConvertNode(n.Variable).(*ir.SimpleVar)
-		out.DefaultValue = ConvertNode(n.DefaultValue)
+		out.VariableType = convertNode(state, n.VariableType)
+		out.Variable = convertNode(state, n.Variable).(*ir.SimpleVar)
+		out.DefaultValue = convertNode(state, n.DefaultValue)
 		return out
 
 	case *node.Root:
@@ -1128,7 +1035,7 @@ func ConvertNode(n node.Node) ir.Node {
 		{
 			slice := make([]ir.Node, len(n.Stmts))
 			for i := range n.Stmts {
-				slice[i] = ConvertNode(n.Stmts[i])
+				slice[i] = convertNode(state, n.Stmts[i])
 			}
 			out.Stmts = slice
 		}
@@ -1151,7 +1058,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.Var{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *scalar.Dnumber:
@@ -1171,7 +1078,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.Encapsed{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Parts = ConvertNodeSlice(n.Parts)
+		out.Parts = convertNodeSlice(state, n.Parts)
 		return out
 
 	case *scalar.EncapsedStringPart:
@@ -1192,7 +1099,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
 		out.Label = n.Label
-		out.Parts = ConvertNodeSlice(n.Parts)
+		out.Parts = convertNodeSlice(state, n.Parts)
 		return out
 
 	case *scalar.Lnumber:
@@ -1232,7 +1139,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.BreakStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *stmt.Case:
@@ -1242,8 +1149,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.CaseStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Cond = ConvertNode(n.Cond)
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.Cond = convertNode(state, n.Cond)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.CaseList:
@@ -1253,7 +1160,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.CaseListStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Cases = ConvertNodeSlice(n.Cases)
+		out.Cases = convertNodeSlice(state, n.Cases)
 		return out
 
 	case *stmt.Catch:
@@ -1263,9 +1170,9 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.CatchStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Types = ConvertNodeSlice(n.Types)
-		out.Variable = ConvertNode(n.Variable).(*ir.SimpleVar)
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.Types = convertNodeSlice(state, n.Types)
+		out.Variable = convertNode(state, n.Variable).(*ir.SimpleVar)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.Class:
@@ -1276,18 +1183,18 @@ func ConvertNode(n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
 		out.PhpDocComment = n.PhpDocComment
-		out.ClassName = ConvertNode(n.ClassName).(*ir.Identifier)
+		out.ClassName = convertNode(state, n.ClassName).(*ir.Identifier)
 		{
 			slice := make([]*ir.Identifier, len(n.Modifiers))
 			for i := range n.Modifiers {
-				slice[i] = ConvertNode(n.Modifiers[i]).(*ir.Identifier)
+				slice[i] = convertNode(state, n.Modifiers[i]).(*ir.Identifier)
 			}
 			out.Modifiers = slice
 		}
-		out.ArgumentList = ConvertNode(n.ArgumentList).(*ir.ArgumentList)
-		out.Extends = ConvertNode(n.Extends).(*ir.ClassExtendsStmt)
-		out.Implements = ConvertNode(n.Implements).(*ir.ClassImplementsStmt)
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.ArgumentList = convertNode(state, n.ArgumentList).(*ir.ArgumentList)
+		out.Extends = convertNode(state, n.Extends).(*ir.ClassExtendsStmt)
+		out.Implements = convertNode(state, n.Implements).(*ir.ClassImplementsStmt)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.ClassConstList:
@@ -1300,11 +1207,11 @@ func ConvertNode(n node.Node) ir.Node {
 		{
 			slice := make([]*ir.Identifier, len(n.Modifiers))
 			for i := range n.Modifiers {
-				slice[i] = ConvertNode(n.Modifiers[i]).(*ir.Identifier)
+				slice[i] = convertNode(state, n.Modifiers[i]).(*ir.Identifier)
 			}
 			out.Modifiers = slice
 		}
-		out.Consts = ConvertNodeSlice(n.Consts)
+		out.Consts = convertNodeSlice(state, n.Consts)
 		return out
 
 	case *stmt.ClassExtends:
@@ -1314,7 +1221,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ClassExtendsStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.ClassName = ConvertNode(n.ClassName)
+		out.ClassName = convertNode(state, n.ClassName)
 		return out
 
 	case *stmt.ClassImplements:
@@ -1324,7 +1231,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ClassImplementsStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.InterfaceNames = ConvertNodeSlice(n.InterfaceNames)
+		out.InterfaceNames = convertNodeSlice(state, n.InterfaceNames)
 		return out
 
 	case *stmt.ClassMethod:
@@ -1336,17 +1243,17 @@ func ConvertNode(n node.Node) ir.Node {
 		out.Position = n.Position
 		out.ReturnsRef = n.ReturnsRef
 		out.PhpDocComment = n.PhpDocComment
-		out.MethodName = ConvertNode(n.MethodName).(*ir.Identifier)
+		out.MethodName = convertNode(state, n.MethodName).(*ir.Identifier)
 		{
 			slice := make([]*ir.Identifier, len(n.Modifiers))
 			for i := range n.Modifiers {
-				slice[i] = ConvertNode(n.Modifiers[i]).(*ir.Identifier)
+				slice[i] = convertNode(state, n.Modifiers[i]).(*ir.Identifier)
 			}
 			out.Modifiers = slice
 		}
-		out.Params = ConvertNodeSlice(n.Params)
-		out.ReturnType = ConvertNode(n.ReturnType)
-		out.Stmt = ConvertNode(n.Stmt)
+		out.Params = convertNodeSlice(state, n.Params)
+		out.ReturnType = convertNode(state, n.ReturnType)
+		out.Stmt = convertNode(state, n.Stmt)
 		return out
 
 	case *stmt.ConstList:
@@ -1356,7 +1263,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ConstListStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Consts = ConvertNodeSlice(n.Consts)
+		out.Consts = convertNodeSlice(state, n.Consts)
 		return out
 
 	case *stmt.Constant:
@@ -1367,8 +1274,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
 		out.PhpDocComment = n.PhpDocComment
-		out.ConstantName = ConvertNode(n.ConstantName).(*ir.Identifier)
-		out.Expr = ConvertNode(n.Expr)
+		out.ConstantName = convertNode(state, n.ConstantName).(*ir.Identifier)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *stmt.Continue:
@@ -1378,7 +1285,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ContinueStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *stmt.Declare:
@@ -1388,8 +1295,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.DeclareStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Consts = ConvertNodeSlice(n.Consts)
-		out.Stmt = ConvertNode(n.Stmt)
+		out.Consts = convertNodeSlice(state, n.Consts)
+		out.Stmt = convertNode(state, n.Stmt)
 		out.Alt = n.Alt
 		return out
 
@@ -1400,7 +1307,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.DefaultStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.Do:
@@ -1410,8 +1317,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.DoStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Stmt = ConvertNode(n.Stmt)
-		out.Cond = ConvertNode(n.Cond)
+		out.Stmt = convertNode(state, n.Stmt)
+		out.Cond = convertNode(state, n.Cond)
 		return out
 
 	case *stmt.Echo:
@@ -1421,7 +1328,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.EchoStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Exprs = ConvertNodeSlice(n.Exprs)
+		out.Exprs = convertNodeSlice(state, n.Exprs)
 		return out
 
 	case *stmt.Else:
@@ -1431,7 +1338,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ElseStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Stmt = ConvertNode(n.Stmt)
+		out.Stmt = convertNode(state, n.Stmt)
 		out.AltSyntax = n.AltSyntax
 		return out
 
@@ -1442,8 +1349,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ElseIfStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Cond = ConvertNode(n.Cond)
-		out.Stmt = ConvertNode(n.Stmt)
+		out.Cond = convertNode(state, n.Cond)
+		out.Stmt = convertNode(state, n.Stmt)
 		out.AltSyntax = n.AltSyntax
 		out.Merged = n.Merged
 		return out
@@ -1455,7 +1362,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ExpressionStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *stmt.Finally:
@@ -1465,7 +1372,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.FinallyStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.For:
@@ -1475,10 +1382,10 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ForStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Init = ConvertNodeSlice(n.Init)
-		out.Cond = ConvertNodeSlice(n.Cond)
-		out.Loop = ConvertNodeSlice(n.Loop)
-		out.Stmt = ConvertNode(n.Stmt)
+		out.Init = convertNodeSlice(state, n.Init)
+		out.Cond = convertNodeSlice(state, n.Cond)
+		out.Loop = convertNodeSlice(state, n.Loop)
+		out.Stmt = convertNode(state, n.Stmt)
 		out.AltSyntax = n.AltSyntax
 		return out
 
@@ -1489,10 +1396,10 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ForeachStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
-		out.Key = ConvertNode(n.Key)
-		out.Variable = ConvertNode(n.Variable)
-		out.Stmt = ConvertNode(n.Stmt)
+		out.Expr = convertNode(state, n.Expr)
+		out.Key = convertNode(state, n.Key)
+		out.Variable = convertNode(state, n.Variable)
+		out.Stmt = convertNode(state, n.Stmt)
 		out.AltSyntax = n.AltSyntax
 		return out
 
@@ -1505,10 +1412,10 @@ func ConvertNode(n node.Node) ir.Node {
 		out.Position = n.Position
 		out.ReturnsRef = n.ReturnsRef
 		out.PhpDocComment = n.PhpDocComment
-		out.FunctionName = ConvertNode(n.FunctionName).(*ir.Identifier)
-		out.Params = ConvertNodeSlice(n.Params)
-		out.ReturnType = ConvertNode(n.ReturnType)
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.FunctionName = convertNode(state, n.FunctionName).(*ir.Identifier)
+		out.Params = convertNodeSlice(state, n.Params)
+		out.ReturnType = convertNode(state, n.ReturnType)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.Global:
@@ -1518,7 +1425,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.GlobalStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Vars = ConvertNodeSlice(n.Vars)
+		out.Vars = convertNodeSlice(state, n.Vars)
 		return out
 
 	case *stmt.Goto:
@@ -1528,7 +1435,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.GotoStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Label = ConvertNode(n.Label).(*ir.Identifier)
+		out.Label = convertNode(state, n.Label).(*ir.Identifier)
 		return out
 
 	case *stmt.GroupUse:
@@ -1538,9 +1445,9 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.GroupUseStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.UseType = ConvertNode(n.UseType)
-		out.Prefix = ConvertNode(n.Prefix)
-		out.UseList = ConvertNodeSlice(n.UseList)
+		out.UseType = convertNode(state, n.UseType)
+		out.Prefix = convertNode(state, n.Prefix)
+		out.UseList = convertNodeSlice(state, n.UseList)
 		return out
 
 	case *stmt.HaltCompiler:
@@ -1559,10 +1466,10 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.IfStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Cond = ConvertNode(n.Cond)
-		out.Stmt = ConvertNode(n.Stmt)
-		out.ElseIf = ConvertNodeSlice(n.ElseIf)
-		out.Else = ConvertNode(n.Else)
+		out.Cond = convertNode(state, n.Cond)
+		out.Stmt = convertNode(state, n.Stmt)
+		out.ElseIf = convertNodeSlice(state, n.ElseIf)
+		out.Else = convertNode(state, n.Else)
 		out.AltSyntax = n.AltSyntax
 		return out
 
@@ -1584,9 +1491,9 @@ func ConvertNode(n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
 		out.PhpDocComment = n.PhpDocComment
-		out.InterfaceName = ConvertNode(n.InterfaceName).(*ir.Identifier)
-		out.Extends = ConvertNode(n.Extends).(*ir.InterfaceExtendsStmt)
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.InterfaceName = convertNode(state, n.InterfaceName).(*ir.Identifier)
+		out.Extends = convertNode(state, n.Extends).(*ir.InterfaceExtendsStmt)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.InterfaceExtends:
@@ -1596,7 +1503,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.InterfaceExtendsStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.InterfaceNames = ConvertNodeSlice(n.InterfaceNames)
+		out.InterfaceNames = convertNodeSlice(state, n.InterfaceNames)
 		return out
 
 	case *stmt.Label:
@@ -1606,7 +1513,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.LabelStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.LabelName = ConvertNode(n.LabelName).(*ir.Identifier)
+		out.LabelName = convertNode(state, n.LabelName).(*ir.Identifier)
 		return out
 
 	case *stmt.Namespace:
@@ -1616,8 +1523,11 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.NamespaceStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.NamespaceName = ConvertNode(n.NamespaceName)
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		if n.NamespaceName != nil {
+			out.NamespaceName = convertNode(state, n.NamespaceName).(*ir.Name)
+			state.namespace = out.NamespaceName.Value
+		}
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.Nop:
@@ -1637,8 +1547,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
 		out.PhpDocComment = n.PhpDocComment
-		out.Variable = ConvertNode(n.Variable).(*ir.SimpleVar)
-		out.Expr = ConvertNode(n.Expr)
+		out.Variable = convertNode(state, n.Variable).(*ir.SimpleVar)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *stmt.PropertyList:
@@ -1651,12 +1561,12 @@ func ConvertNode(n node.Node) ir.Node {
 		{
 			slice := make([]*ir.Identifier, len(n.Modifiers))
 			for i := range n.Modifiers {
-				slice[i] = ConvertNode(n.Modifiers[i]).(*ir.Identifier)
+				slice[i] = convertNode(state, n.Modifiers[i]).(*ir.Identifier)
 			}
 			out.Modifiers = slice
 		}
-		out.Type = ConvertNode(n.Type)
-		out.Properties = ConvertNodeSlice(n.Properties)
+		out.Type = convertNode(state, n.Type)
+		out.Properties = convertNodeSlice(state, n.Properties)
 		return out
 
 	case *stmt.Return:
@@ -1666,7 +1576,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ReturnStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *stmt.Static:
@@ -1676,7 +1586,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.StaticStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Vars = ConvertNodeSlice(n.Vars)
+		out.Vars = convertNodeSlice(state, n.Vars)
 		return out
 
 	case *stmt.StaticVar:
@@ -1686,8 +1596,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.StaticVarStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variable = ConvertNode(n.Variable).(*ir.SimpleVar)
-		out.Expr = ConvertNode(n.Expr)
+		out.Variable = convertNode(state, n.Variable).(*ir.SimpleVar)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *stmt.StmtList:
@@ -1697,7 +1607,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.StmtList{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.Switch:
@@ -1707,8 +1617,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.SwitchStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Cond = ConvertNode(n.Cond)
-		out.CaseList = ConvertNode(n.CaseList).(*ir.CaseListStmt)
+		out.Cond = convertNode(state, n.Cond)
+		out.CaseList = convertNode(state, n.CaseList).(*ir.CaseListStmt)
 		out.AltSyntax = n.AltSyntax
 		return out
 
@@ -1719,7 +1629,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ThrowStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Expr = ConvertNode(n.Expr)
+		out.Expr = convertNode(state, n.Expr)
 		return out
 
 	case *stmt.Trait:
@@ -1730,8 +1640,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
 		out.PhpDocComment = n.PhpDocComment
-		out.TraitName = ConvertNode(n.TraitName).(*ir.Identifier)
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.TraitName = convertNode(state, n.TraitName).(*ir.Identifier)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.TraitAdaptationList:
@@ -1741,7 +1651,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.TraitAdaptationListStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Adaptations = ConvertNodeSlice(n.Adaptations)
+		out.Adaptations = convertNodeSlice(state, n.Adaptations)
 		return out
 
 	case *stmt.TraitMethodRef:
@@ -1751,8 +1661,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.TraitMethodRefStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Trait = ConvertNode(n.Trait)
-		out.Method = ConvertNode(n.Method).(*ir.Identifier)
+		out.Trait = convertNode(state, n.Trait)
+		out.Method = convertNode(state, n.Method).(*ir.Identifier)
 		return out
 
 	case *stmt.TraitUse:
@@ -1762,8 +1672,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.TraitUseStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Traits = ConvertNodeSlice(n.Traits)
-		out.TraitAdaptationList = ConvertNode(n.TraitAdaptationList)
+		out.Traits = convertNodeSlice(state, n.Traits)
+		out.TraitAdaptationList = convertNode(state, n.TraitAdaptationList)
 		return out
 
 	case *stmt.TraitUseAlias:
@@ -1773,9 +1683,9 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.TraitUseAliasStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Ref = ConvertNode(n.Ref)
-		out.Modifier = ConvertNode(n.Modifier)
-		out.Alias = ConvertNode(n.Alias).(*ir.Identifier)
+		out.Ref = convertNode(state, n.Ref)
+		out.Modifier = convertNode(state, n.Modifier)
+		out.Alias = convertNode(state, n.Alias).(*ir.Identifier)
 		return out
 
 	case *stmt.TraitUsePrecedence:
@@ -1785,8 +1695,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.TraitUsePrecedenceStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Ref = ConvertNode(n.Ref)
-		out.Insteadof = ConvertNodeSlice(n.Insteadof)
+		out.Ref = convertNode(state, n.Ref)
+		out.Insteadof = convertNodeSlice(state, n.Insteadof)
 		return out
 
 	case *stmt.Try:
@@ -1796,9 +1706,9 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.TryStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Stmts = ConvertNodeSlice(n.Stmts)
-		out.Catches = ConvertNodeSlice(n.Catches)
-		out.Finally = ConvertNode(n.Finally)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
+		out.Catches = convertNodeSlice(state, n.Catches)
+		out.Finally = convertNode(state, n.Finally)
 		return out
 
 	case *stmt.Unset:
@@ -1808,7 +1718,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.UnsetStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Vars = ConvertNodeSlice(n.Vars)
+		out.Vars = convertNodeSlice(state, n.Vars)
 		return out
 
 	case *stmt.Use:
@@ -1818,9 +1728,9 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.UseStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.UseType = ConvertNode(n.UseType).(*ir.Identifier)
-		out.Use = ConvertNode(n.Use)
-		out.Alias = ConvertNode(n.Alias).(*ir.Identifier)
+		out.UseType = convertNode(state, n.UseType).(*ir.Identifier)
+		out.Use = convertNode(state, n.Use)
+		out.Alias = convertNode(state, n.Alias).(*ir.Identifier)
 		return out
 
 	case *stmt.UseList:
@@ -1830,8 +1740,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.UseListStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.UseType = ConvertNode(n.UseType)
-		out.Uses = ConvertNodeSlice(n.Uses)
+		out.UseType = convertNode(state, n.UseType)
+		out.Uses = convertNodeSlice(state, n.Uses)
 		return out
 
 	case *stmt.While:
@@ -1841,11 +1751,41 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.WhileStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Cond = ConvertNode(n.Cond)
-		out.Stmt = ConvertNode(n.Stmt)
+		out.Cond = convertNode(state, n.Cond)
+		out.Stmt = convertNode(state, n.Stmt)
 		out.AltSyntax = n.AltSyntax
 		return out
 	}
 
 	panic(fmt.Sprintf("unhandled type %T", n))
+}
+
+func convRelativeName(state *convState, n *name.Relative) *ir.Name {
+	value := namePartsToString(n.Parts)
+	if state.namespace != "" {
+		value = `\` + state.namespace + `\` + value
+	}
+	return &ir.Name{
+		FreeFloating: n.FreeFloating,
+		Position:     n.Position,
+		Value:        value,
+	}
+}
+
+func convImportExpr(state *convState, n, e node.Node, fn string) *ir.ImportExpr {
+	return &ir.ImportExpr{
+		FreeFloating: *n.GetFreeFloating(),
+		Position:     n.GetPosition(),
+		Func:         fn,
+		Expr:         convertNode(state, e),
+	}
+}
+
+func convCastExpr(state *convState, n, e node.Node, typ string) *ir.TypeCastExpr {
+	return &ir.TypeCastExpr{
+		FreeFloating: *n.GetFreeFloating(),
+		Position:     n.GetPosition(),
+		Type:         typ,
+		Expr:         convertNode(state, e),
+	}
 }

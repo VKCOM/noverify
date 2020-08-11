@@ -12,8 +12,8 @@ import (
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/astutil"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/php/parser/position"
@@ -48,7 +48,7 @@ type RootWalker struct {
 	ctx rootContext
 
 	// nodeSet is a reusable node set for both root and block walkers.
-	nodeSet astutil.NodeSet
+	nodeSet irutil.NodeSet
 
 	reSimplifier *regexpSimplifier
 	reVet        *regexpVet
@@ -1594,11 +1594,11 @@ func (d *RootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {
 		return true
 	}
 
-	if d.ctx.st.Namespace == `\PHPSTORM_META` && meta.NameEquals(nm, `override`) {
+	if d.ctx.st.Namespace == `\PHPSTORM_META` && nm.Value == `override` {
 		return d.handleOverride(s)
 	}
 
-	if !meta.NameEquals(nm, `define`) || len(s.ArgumentList.Arguments) < 2 {
+	if nm.Value != `define` || len(s.ArgumentList.Arguments) < 2 {
 		// TODO: actually we could warn about bogus defines
 		return true
 	}
@@ -1643,8 +1643,8 @@ func (d *RootWalker) handleOverride(s *ir.FunctionCallExpr) bool {
 		return true
 	}
 
-	fnNameNode, ok := fc0.Function.(*ir.FullyQualifiedName)
-	if !ok {
+	fnNameNode, ok := fc0.Function.(*ir.Name)
+	if !ok || !fnNameNode.IsFullyQualified() {
 		return true
 	}
 
@@ -1671,15 +1671,15 @@ func (d *RootWalker) handleOverride(s *ir.FunctionCallExpr) bool {
 
 	var overrideTyp meta.OverrideType
 	switch {
-	case meta.NameEquals(overrideNameNode, `type`):
+	case overrideNameNode.Value == `type`:
 		overrideTyp = meta.OverrideArgType
-	case meta.NameEquals(overrideNameNode, `elementType`):
+	case overrideNameNode.Value == `elementType`:
 		overrideTyp = meta.OverrideElementType
 	default:
 		return true
 	}
 
-	fnName := meta.FullyQualifiedToString(fnNameNode)
+	fnName := fnNameNode.Value
 
 	if d.meta.FunctionOverrides == nil {
 		d.meta.FunctionOverrides = make(meta.FunctionsOverrideMap)
@@ -1754,7 +1754,7 @@ func (d *RootWalker) sourceNodeString(n ir.Node) string {
 		return string(src[from:to])
 	}
 	// If we can't take node out of the source text, print it.
-	return astutil.FmtNode(n)
+	return irutil.FmtNode(n)
 }
 
 func (d *RootWalker) renderRuleMessage(msg string, n ir.Node, m phpgrep.MatchData, truncate bool) string {
