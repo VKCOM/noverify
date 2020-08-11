@@ -11,8 +11,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/VKCOM/noverify/src/linttest/assert"
 	"github.com/google/go-cmp/cmp"
+
+	"github.com/VKCOM/noverify/src/linttest/assert"
 )
 
 func TestCache(t *testing.T) {
@@ -92,7 +93,9 @@ function infer_types_in_callback() {
   /** @var Foo[] $a */
   $a = [];
 
-  array_map(function($item) {}, $a);
+  $_ = array_map(function($item) {
+    return $item + 5;
+  }, $a);
 }
 
 main();
