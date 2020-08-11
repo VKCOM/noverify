@@ -15,19 +15,27 @@ import (
 )
 
 func ConvertRoot(n *node.Root) *ir.Root {
-	return ConvertNode(n).(*ir.Root)
-}
-
-func ConvertNodeSlice(xs []node.Node) []ir.Node {
-	out := make([]ir.Node, len(xs))
-	for i, x := range xs {
-		out[i] = ConvertNode(x)
-	}
-	return out
-
+	var state convState
+	return convertNode(&state, n).(*ir.Root)
 }
 
 func ConvertNode(n node.Node) ir.Node {
+	var state convState
+	return convertNode(&state, n)
+}
+
+type convState struct {
+}
+
+func convertNodeSlice(state *convState, xs []node.Node) []ir.Node {
+	out := make([]ir.Node, len(xs))
+	for i, x := range xs {
+		out[i] = convertNode(state, x)
+	}
+	return out
+}
+
+func convertNode(state *convState, n node.Node) ir.Node {
 	if n == nil {
 		return nil
 	}
@@ -568,7 +576,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out.ReturnsRef = n.ReturnsRef
 		out.Static = n.Static
 		out.PhpDocComment = n.PhpDocComment
-		out.Params = ConvertNodeSlice(n.Params)
+		out.Params = convertNodeSlice(state, n.Params)
 		out.ReturnType = ConvertNode(n.ReturnType)
 		out.Expr = ConvertNode(n.Expr)
 		return out
@@ -624,10 +632,10 @@ func ConvertNode(n node.Node) ir.Node {
 		out.ReturnsRef = n.ReturnsRef
 		out.Static = n.Static
 		out.PhpDocComment = n.PhpDocComment
-		out.Params = ConvertNodeSlice(n.Params)
+		out.Params = convertNodeSlice(state, n.Params)
 		out.ClosureUse = ConvertNode(n.ClosureUse).(*ir.ClosureUseExpr)
 		out.ReturnType = ConvertNode(n.ReturnType)
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *expr.ClosureUse:
@@ -637,7 +645,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ClosureUseExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Uses = ConvertNodeSlice(n.Uses)
+		out.Uses = convertNodeSlice(state, n.Uses)
 		return out
 
 	case *expr.ConstFetch:
@@ -720,7 +728,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.IssetExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Variables = ConvertNodeSlice(n.Variables)
+		out.Variables = convertNodeSlice(state, n.Variables)
 		return out
 
 	case *expr.List:
@@ -860,7 +868,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ShellExecExpr{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Parts = ConvertNodeSlice(n.Parts)
+		out.Parts = convertNodeSlice(state, n.Parts)
 		return out
 
 	case *expr.StaticCall:
@@ -946,7 +954,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.FullyQualifiedName{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Parts = ConvertNodeSlice(n.Parts)
+		out.Parts = convertNodeSlice(state, n.Parts)
 		return out
 
 	case *name.Name:
@@ -956,7 +964,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.Name{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Parts = ConvertNodeSlice(n.Parts)
+		out.Parts = convertNodeSlice(state, n.Parts)
 		return out
 
 	case *name.NamePart:
@@ -976,7 +984,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.RelativeName{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Parts = ConvertNodeSlice(n.Parts)
+		out.Parts = convertNodeSlice(state, n.Parts)
 		return out
 
 	case *node.Argument:
@@ -1094,7 +1102,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.Encapsed{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Parts = ConvertNodeSlice(n.Parts)
+		out.Parts = convertNodeSlice(state, n.Parts)
 		return out
 
 	case *scalar.EncapsedStringPart:
@@ -1115,7 +1123,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
 		out.Label = n.Label
-		out.Parts = ConvertNodeSlice(n.Parts)
+		out.Parts = convertNodeSlice(state, n.Parts)
 		return out
 
 	case *scalar.Lnumber:
@@ -1166,7 +1174,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
 		out.Cond = ConvertNode(n.Cond)
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.CaseList:
@@ -1176,7 +1184,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.CaseListStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Cases = ConvertNodeSlice(n.Cases)
+		out.Cases = convertNodeSlice(state, n.Cases)
 		return out
 
 	case *stmt.Catch:
@@ -1186,9 +1194,9 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.CatchStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Types = ConvertNodeSlice(n.Types)
+		out.Types = convertNodeSlice(state, n.Types)
 		out.Variable = ConvertNode(n.Variable).(*ir.SimpleVar)
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.Class:
@@ -1210,7 +1218,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out.ArgumentList = ConvertNode(n.ArgumentList).(*ir.ArgumentList)
 		out.Extends = ConvertNode(n.Extends).(*ir.ClassExtendsStmt)
 		out.Implements = ConvertNode(n.Implements).(*ir.ClassImplementsStmt)
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.ClassConstList:
@@ -1227,7 +1235,7 @@ func ConvertNode(n node.Node) ir.Node {
 			}
 			out.Modifiers = slice
 		}
-		out.Consts = ConvertNodeSlice(n.Consts)
+		out.Consts = convertNodeSlice(state, n.Consts)
 		return out
 
 	case *stmt.ClassExtends:
@@ -1247,7 +1255,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ClassImplementsStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.InterfaceNames = ConvertNodeSlice(n.InterfaceNames)
+		out.InterfaceNames = convertNodeSlice(state, n.InterfaceNames)
 		return out
 
 	case *stmt.ClassMethod:
@@ -1267,7 +1275,7 @@ func ConvertNode(n node.Node) ir.Node {
 			}
 			out.Modifiers = slice
 		}
-		out.Params = ConvertNodeSlice(n.Params)
+		out.Params = convertNodeSlice(state, n.Params)
 		out.ReturnType = ConvertNode(n.ReturnType)
 		out.Stmt = ConvertNode(n.Stmt)
 		return out
@@ -1279,7 +1287,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ConstListStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Consts = ConvertNodeSlice(n.Consts)
+		out.Consts = convertNodeSlice(state, n.Consts)
 		return out
 
 	case *stmt.Constant:
@@ -1311,7 +1319,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.DeclareStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Consts = ConvertNodeSlice(n.Consts)
+		out.Consts = convertNodeSlice(state, n.Consts)
 		out.Stmt = ConvertNode(n.Stmt)
 		out.Alt = n.Alt
 		return out
@@ -1323,7 +1331,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.DefaultStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.Do:
@@ -1344,7 +1352,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.EchoStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Exprs = ConvertNodeSlice(n.Exprs)
+		out.Exprs = convertNodeSlice(state, n.Exprs)
 		return out
 
 	case *stmt.Else:
@@ -1388,7 +1396,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.FinallyStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.For:
@@ -1398,9 +1406,9 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.ForStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Init = ConvertNodeSlice(n.Init)
-		out.Cond = ConvertNodeSlice(n.Cond)
-		out.Loop = ConvertNodeSlice(n.Loop)
+		out.Init = convertNodeSlice(state, n.Init)
+		out.Cond = convertNodeSlice(state, n.Cond)
+		out.Loop = convertNodeSlice(state, n.Loop)
 		out.Stmt = ConvertNode(n.Stmt)
 		out.AltSyntax = n.AltSyntax
 		return out
@@ -1429,9 +1437,9 @@ func ConvertNode(n node.Node) ir.Node {
 		out.ReturnsRef = n.ReturnsRef
 		out.PhpDocComment = n.PhpDocComment
 		out.FunctionName = ConvertNode(n.FunctionName).(*ir.Identifier)
-		out.Params = ConvertNodeSlice(n.Params)
+		out.Params = convertNodeSlice(state, n.Params)
 		out.ReturnType = ConvertNode(n.ReturnType)
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.Global:
@@ -1441,7 +1449,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.GlobalStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Vars = ConvertNodeSlice(n.Vars)
+		out.Vars = convertNodeSlice(state, n.Vars)
 		return out
 
 	case *stmt.Goto:
@@ -1463,7 +1471,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out.Position = n.Position
 		out.UseType = ConvertNode(n.UseType)
 		out.Prefix = ConvertNode(n.Prefix)
-		out.UseList = ConvertNodeSlice(n.UseList)
+		out.UseList = convertNodeSlice(state, n.UseList)
 		return out
 
 	case *stmt.HaltCompiler:
@@ -1484,7 +1492,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out.Position = n.Position
 		out.Cond = ConvertNode(n.Cond)
 		out.Stmt = ConvertNode(n.Stmt)
-		out.ElseIf = ConvertNodeSlice(n.ElseIf)
+		out.ElseIf = convertNodeSlice(state, n.ElseIf)
 		out.Else = ConvertNode(n.Else)
 		out.AltSyntax = n.AltSyntax
 		return out
@@ -1509,7 +1517,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out.PhpDocComment = n.PhpDocComment
 		out.InterfaceName = ConvertNode(n.InterfaceName).(*ir.Identifier)
 		out.Extends = ConvertNode(n.Extends).(*ir.InterfaceExtendsStmt)
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.InterfaceExtends:
@@ -1519,7 +1527,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.InterfaceExtendsStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.InterfaceNames = ConvertNodeSlice(n.InterfaceNames)
+		out.InterfaceNames = convertNodeSlice(state, n.InterfaceNames)
 		return out
 
 	case *stmt.Label:
@@ -1540,7 +1548,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
 		out.NamespaceName = ConvertNode(n.NamespaceName)
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.Nop:
@@ -1579,7 +1587,7 @@ func ConvertNode(n node.Node) ir.Node {
 			out.Modifiers = slice
 		}
 		out.Type = ConvertNode(n.Type)
-		out.Properties = ConvertNodeSlice(n.Properties)
+		out.Properties = convertNodeSlice(state, n.Properties)
 		return out
 
 	case *stmt.Return:
@@ -1599,7 +1607,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.StaticStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Vars = ConvertNodeSlice(n.Vars)
+		out.Vars = convertNodeSlice(state, n.Vars)
 		return out
 
 	case *stmt.StaticVar:
@@ -1620,7 +1628,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.StmtList{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.Switch:
@@ -1654,7 +1662,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out.Position = n.Position
 		out.PhpDocComment = n.PhpDocComment
 		out.TraitName = ConvertNode(n.TraitName).(*ir.Identifier)
-		out.Stmts = ConvertNodeSlice(n.Stmts)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
 		return out
 
 	case *stmt.TraitAdaptationList:
@@ -1664,7 +1672,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.TraitAdaptationListStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Adaptations = ConvertNodeSlice(n.Adaptations)
+		out.Adaptations = convertNodeSlice(state, n.Adaptations)
 		return out
 
 	case *stmt.TraitMethodRef:
@@ -1685,7 +1693,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.TraitUseStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Traits = ConvertNodeSlice(n.Traits)
+		out.Traits = convertNodeSlice(state, n.Traits)
 		out.TraitAdaptationList = ConvertNode(n.TraitAdaptationList)
 		return out
 
@@ -1709,7 +1717,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
 		out.Ref = ConvertNode(n.Ref)
-		out.Insteadof = ConvertNodeSlice(n.Insteadof)
+		out.Insteadof = convertNodeSlice(state, n.Insteadof)
 		return out
 
 	case *stmt.Try:
@@ -1719,8 +1727,8 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.TryStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Stmts = ConvertNodeSlice(n.Stmts)
-		out.Catches = ConvertNodeSlice(n.Catches)
+		out.Stmts = convertNodeSlice(state, n.Stmts)
+		out.Catches = convertNodeSlice(state, n.Catches)
 		out.Finally = ConvertNode(n.Finally)
 		return out
 
@@ -1731,7 +1739,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out := &ir.UnsetStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.Vars = ConvertNodeSlice(n.Vars)
+		out.Vars = convertNodeSlice(state, n.Vars)
 		return out
 
 	case *stmt.Use:
@@ -1754,7 +1762,7 @@ func ConvertNode(n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
 		out.UseType = ConvertNode(n.UseType)
-		out.Uses = ConvertNodeSlice(n.Uses)
+		out.Uses = convertNodeSlice(state, n.Uses)
 		return out
 
 	case *stmt.While:
