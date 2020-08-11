@@ -388,9 +388,9 @@ func (m TypesMap) ContainsOnlyArrays() bool {
 	return true
 }
 
-// Returns the base type for an array. T[] -> T, T[][] -> T[].
+// Returns type of array element. T[] -> T, T[][] -> T[].
 // Not for *Lazy* type.
-func (m TypesMap) ArrayBaseType() (TypesMap, bool) {
+func (m TypesMap) ArrayElemType() (TypesMap, bool) {
 	if !m.ContainsOnlyArrays() {
 		return m, false
 	}

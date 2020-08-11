@@ -74,7 +74,7 @@ func (ci ClosureCallerInfo) model(argsModel ArgsModel) (ClosureArgsModel, bool) 
 	var args []meta.TypesMap
 
 	for i := 0; i < argsModel.BaseTypeIndexShiftCount; i++ {
-		tp, ok := ci.FunctionArgs[argsModel.BaseTypeIndex+i].ArrayBaseType()
+		tp, ok := ci.FunctionArgs[argsModel.BaseTypeIndex+i].ArrayElemType()
 		if !ok {
 			return ClosureArgsModel{Args: args}, false
 		}
