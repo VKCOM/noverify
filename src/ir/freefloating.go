@@ -172,8 +172,6 @@ func (n *Name) GetFreeFloating() *freefloating.Collection { return &n.FreeFloati
 
 func (n *Argument) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
 
-func (n *ArgumentList) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
-
 func (n *Identifier) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
 
 func (n *Nullable) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }

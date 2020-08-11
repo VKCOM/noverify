@@ -81,11 +81,11 @@ func (b *block) handleFunctionCall(e *ir.FunctionCallExpr) {
 }
 
 func (b *block) handleInArrayCall(e *ir.FunctionCallExpr) {
-	if len(e.ArgumentList.Arguments) != 2 {
+	if len(e.Args) != 2 {
 		return
 	}
 
-	arg := e.ArgumentList.Arguments[0].(*ir.Argument)
+	arg := e.Arg(0)
 	if !isString(b.ctx, arg.Expr) {
 		return
 	}

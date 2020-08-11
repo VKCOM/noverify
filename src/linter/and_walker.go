@@ -20,21 +20,20 @@ type andWalker struct {
 func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 	switch n := w.(type) {
 	case *ir.FunctionCallExpr:
-		args := n.ArgumentList.Arguments
 		nm, ok := n.Function.(*ir.Name)
 		if !ok {
 			break
 		}
 		switch {
-		case len(args) == 2 && nm.Value == `method_exists`:
-			obj := args[0].(*ir.Argument).Expr
-			methodName := args[1].(*ir.Argument).Expr
+		case len(n.Args) == 2 && nm.Value == `method_exists`:
+			obj := n.Arg(0).Expr
+			methodName := n.Arg(1).Expr
 			lit, ok := methodName.(*ir.String)
 			if ok {
 				a.b.ctx.addCustomMethod(obj, unquote(lit.Value))
 			}
-		case len(args) == 1 && nm.Value == `function_exists`:
-			functionName := args[0].(*ir.Argument).Expr
+		case len(n.Args) == 1 && nm.Value == `function_exists`:
+			functionName := n.Arg(0).Expr
 			lit, ok := functionName.(*ir.String)
 			if ok {
 				a.b.ctx.addCustomFunction(unquote(lit.Value))
