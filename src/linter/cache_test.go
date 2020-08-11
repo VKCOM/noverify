@@ -90,7 +90,7 @@ function as_shape($x) {
 class Foo {}
 
 function infer_types_in_callback() {
-  /** @var Foo[] $a */
+  /** @var int $a */
   $a = [];
 
   $_ = array_map(function($item) {
