@@ -152,7 +152,7 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 	flag.StringVar(&args.misspellList, "misspell-list", "Eng",
 		"Comma-separated list of misspelling dicts; predefined sets are Eng, Eng/US and Eng/UK")
 
-	flag.StringVar(&args.phpExtensionsArg, "php-extensions", "php,inc,php5,phtml,inc", "List of PHP extensions to be recognized")
+	flag.StringVar(&args.phpExtensionsArg, "php-extensions", "php,inc,php5,phtml", "List of PHP extensions to be recognized")
 
 	flag.StringVar(&args.fullAnalysisFiles, "full-analysis-files", "", "Comma-separated list of files to do full analysis")
 	flag.StringVar(&args.indexOnlyFiles, "index-only-files", "", "Comma-separated list of files to do indexing")

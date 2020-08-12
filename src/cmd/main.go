@@ -23,6 +23,7 @@ import (
 	"github.com/VKCOM/noverify/src/linter/lintapi"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/rules"
+	"github.com/VKCOM/noverify/src/workspace"
 )
 
 // Line below implies that we have `https://github.com/VKCOM/phpstorm-stubs.git` cloned
@@ -138,7 +139,7 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 		}()
 	}
 
-	linter.PHPExtensions = strings.Split(args.phpExtensionsArg, ",")
+	workspace.PHPExtensions = strings.Split(args.phpExtensionsArg, ",")
 
 	var l linterRunner
 	if err := l.Init(ruleSets, args); err != nil {
@@ -167,7 +168,7 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 	linter.AnalysisFiles = flag.Args()
 
 	log.Printf("Indexing %+v", flag.Args())
-	linter.ParseFilenames(linter.ReadFilenames(flag.Args(), nil), l.allowDisableRegex)
+	linter.ParseFilenames(workspace.ReadFilenames(flag.Args(), nil), l.allowDisableRegex)
 	parseIndexOnlyFiles(&l)
 	meta.SetIndexingComplete(true)
 
@@ -177,7 +178,7 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 	}
 
 	log.Printf("Linting")
-	reports := linter.ParseFilenames(linter.ReadFilenames(filenames, l.filenameFilter), l.allowDisableRegex)
+	reports := linter.ParseFilenames(workspace.ReadFilenames(filenames, l.filenameFilter), l.allowDisableRegex)
 	if args.outputBaseline {
 		if err := createBaseline(&l, cfg, reports); err != nil {
 			return 1, fmt.Errorf("write baseline: %v", err)
@@ -321,7 +322,7 @@ func initStubs() error {
 func LoadEmbeddedStubs(filenames []string) error {
 	var errorsCount int64
 
-	readStubs := func(ch chan linter.FileInfo) {
+	readStubs := func(ch chan workspace.FileInfo) {
 		for _, filename := range filenames {
 			data, err := stubs.Asset(filename)
 			if err != nil {
@@ -329,7 +330,7 @@ func LoadEmbeddedStubs(filenames []string) error {
 				atomic.AddInt64(&errorsCount, 1)
 				continue
 			}
-			ch <- linter.FileInfo{
+			ch <- workspace.FileInfo{
 				Filename: filename,
 				Contents: data,
 			}
