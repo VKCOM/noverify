@@ -376,3 +376,17 @@ func (m TypesMap) Iterate(cb func(typ string)) {
 		cb(k)
 	}
 }
+
+// Returns type of array element. T[] -> T, T[][] -> T[].
+// For *Lazy* type.
+func (m TypesMap) ArrayElemLazyType() TypesMap {
+	if m.Len() == 0 {
+		return MixedType
+	}
+
+	mm := make(map[string]struct{}, m.Len())
+	for typ := range m.m {
+		mm[UnwrapArrayOf(typ)] = struct{}{}
+	}
+	return TypesMap{m: mm, flags: m.flags}
+}

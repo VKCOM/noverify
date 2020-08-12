@@ -107,9 +107,16 @@ func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*ir.ArrayItemEx
 	}
 
 	firstElementType := ExprTypeLocal(sc, cs, items[0])
+	if items[0].Unpack {
+		firstElementType = firstElementType.ArrayElemLazyType()
+	}
 
 	for _, item := range items[1:] {
 		itemType := ExprTypeLocal(sc, cs, item)
+		if item.Unpack {
+			itemType = itemType.ArrayElemLazyType()
+		}
+
 		if !firstElementType.Equals(itemType) {
 			return meta.NewTypesMap("mixed[]")
 		}
