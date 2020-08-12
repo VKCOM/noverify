@@ -948,7 +948,7 @@ func (p *PrettyPrinter) printExprNew(n *ir.NewExpr) {
 	io.WriteString(p.w, "new ")
 	p.Print(n.Class)
 
-	if len(n.Args) != 0 {
+	if n.Args != nil {
 		io.WriteString(p.w, "(")
 		p.joinPrint(", ", n.Args)
 		io.WriteString(p.w, ")")

@@ -1600,6 +1600,37 @@ func TestPrintNew(t *testing.T) {
 	}
 }
 
+func TestPrintNewNoParens(t *testing.T) {
+	o := bytes.NewBufferString("")
+
+	p := NewPrettyPrinter(o, "    ")
+	p.Print(&ir.NewExpr{Class: &ir.Name{Value: "Foo"}})
+
+	expected := `new Foo`
+	actual := o.String()
+
+	if expected != actual {
+		t.Errorf("\nexpected: %s\ngot: %s\n", expected, actual)
+	}
+}
+
+func TestPrintNewWithParens(t *testing.T) {
+	o := bytes.NewBufferString("")
+
+	p := NewPrettyPrinter(o, "    ")
+	p.Print(&ir.NewExpr{
+		Class: &ir.Name{Value: "Foo"},
+		Args:  []ir.Node{},
+	})
+
+	expected := `new Foo()`
+	actual := o.String()
+
+	if expected != actual {
+		t.Errorf("\nexpected: %s\ngot: %s\n", expected, actual)
+	}
+}
+
 func TestPrintPostDec(t *testing.T) {
 	o := bytes.NewBufferString("")
 
