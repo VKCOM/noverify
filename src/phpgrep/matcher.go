@@ -307,10 +307,13 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 		if !ok || !m.eqNode(state, x.Class, y.Class) {
 			return false
 		}
-		if x.ArgumentList == nil || y.ArgumentList == nil {
-			return x.ArgumentList == y.ArgumentList
+		if x.Args == nil {
+			return y.Args == nil
 		}
-		return m.eqNodeSlice(state, x.ArgumentList.Arguments, y.ArgumentList.Arguments)
+		if y.Args == nil {
+			return x.Args == nil
+		}
+		return m.eqNodeSlice(state, x.Args, y.Args)
 
 	case *ir.CaseStmt:
 		y, ok := y.(*ir.CaseStmt)
@@ -401,7 +404,7 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 		if !ok || !m.eqNode(state, x.Function, y.Function) {
 			return false
 		}
-		return m.eqNodeSlice(state, x.ArgumentList.Arguments, y.ArgumentList.Arguments)
+		return m.eqNodeSlice(state, x.Args, y.Args)
 
 	case *ir.PostIncExpr:
 		y, ok := y.(*ir.PostIncExpr)
@@ -469,7 +472,7 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 		return ok &&
 			m.eqNode(state, x.Class, y.Class) &&
 			m.eqNode(state, x.Call, y.Call) &&
-			m.eqNodeSlice(state, x.ArgumentList.Arguments, y.ArgumentList.Arguments)
+			m.eqNodeSlice(state, x.Args, y.Args)
 
 	case *ir.ShellExecExpr:
 		y, ok := y.(*ir.ShellExecExpr)
@@ -618,7 +621,7 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 		y, ok := y.(*ir.MethodCallExpr)
 		return ok && m.eqNode(state, x.Variable, y.Variable) &&
 			m.eqNode(state, x.Method, y.Method) &&
-			m.eqNodeSlice(state, x.ArgumentList.Arguments, y.ArgumentList.Arguments)
+			m.eqNodeSlice(state, x.Args, y.Args)
 
 	case *ir.TypeCastExpr:
 		y, ok := y.(*ir.TypeCastExpr)

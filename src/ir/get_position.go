@@ -176,8 +176,6 @@ func GetPosition(n Node) *position.Position {
 		return n.Position
 	case *Argument:
 		return n.Position
-	case *ArgumentList:
-		return n.Position
 	case *Identifier:
 		return n.Position
 	case *Nullable:

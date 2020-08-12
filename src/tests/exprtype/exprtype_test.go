@@ -2018,6 +2018,61 @@ exprtype($a, "mixed[]");
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestArrayTypesWithUnpack(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+/** @return Boo[] */
+function returnBooArray() {}
+
+function f() {
+  // with simple type
+  $a = [1,2,3];
+  $b = [0, ...$a];
+  exprtype($b, "int[]");
+
+
+  // with class type
+  $a1 = [new Foo(), new Foo()];
+  $b1 = [new Foo(), ...$a1];
+  exprtype($b1, "\Foo[]");
+
+
+  // different types
+  $a2 = [new Foo(), new Foo()];
+  $b2 = [new Foo(), ...returnBooArray()];
+  exprtype($b2, "mixed[]");
+
+
+  // with two unpack
+  $a3 = [new Foo(), new Foo()];
+  $b3 = [new Foo(), new Foo()];
+  $c3 = [...$a3, ...$b3];
+  exprtype($c3, "\Foo[]");
+
+
+  // with two unpack with different type
+  $a4 = [new Foo(), new Foo()];
+  $c4 = [...$a4, ...returnBooArray()];
+  exprtype($c4, "mixed[]");
+
+
+  // one unpack
+  $a5 = [new Foo(), new Foo()];
+  $b5 = [...$a5];
+  exprtype($b5, "\Foo[]");
+
+
+  // with two unpack and just type
+  $a6 = [new Foo(), new Foo()];
+  $b6 = [new Foo(), new Foo()];
+  $c6 = [...$a6, new Foo(),...$b6];
+  exprtype($c6, "\Foo[]");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestPropertyTypeHints(t *testing.T) {
 	code := `<?php
 class Too {}
@@ -2160,8 +2215,8 @@ func (w *exprTypeWalker) LeaveNode(n ir.Node) {}
 func (w *exprTypeWalker) EnterNode(n ir.Node) bool {
 	call, ok := n.(*ir.FunctionCallExpr)
 	if ok && meta.NameNodeEquals(call.Function, `exprtype`) {
-		checkedExpr := call.ArgumentList.Arguments[0].(*ir.Argument).Expr
-		expectedType := call.ArgumentList.Arguments[1].(*ir.Argument).Expr.(*ir.String).Value
+		checkedExpr := call.Arg(0).Expr
+		expectedType := call.Arg(1).Expr.(*ir.String).Value
 		actualType, ok := exprTypeResult[checkedExpr]
 		if !ok {
 			w.t.Fatalf("no type found for %s expression", irutil.FmtNode(checkedExpr))
@@ -2196,7 +2251,7 @@ func (c *exprTypeCollector) AfterEnterNode(n ir.Node) {
 	if !ok || !meta.NameNodeEquals(call.Function, `exprtype`) {
 		return
 	}
-	checkedExpr := call.ArgumentList.Arguments[0].(*ir.Argument).Expr
+	checkedExpr := call.Arg(0).Expr
 
 	// We need to clone a types map because if it belongs to a var
 	// or some other symbol those type can be volatile we'll get

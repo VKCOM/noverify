@@ -1432,19 +1432,17 @@ func TestPrintFunctionCall(t *testing.T) {
 	p := NewPrettyPrinter(o, "    ")
 	p.Print(&ir.FunctionCallExpr{
 		Function: &ir.SimpleVar{Name: "var"},
-		ArgumentList: &ir.ArgumentList{
-			Arguments: []ir.Node{
-				&ir.Argument{
-					IsReference: true,
-					Expr:        &ir.SimpleVar{Name: "a"},
-				},
-				&ir.Argument{
-					Variadic: true,
-					Expr:     &ir.SimpleVar{Name: "b"},
-				},
-				&ir.Argument{
-					Expr: &ir.SimpleVar{Name: "c"},
-				},
+		Args: []ir.Node{
+			&ir.Argument{
+				IsReference: true,
+				Expr:        &ir.SimpleVar{Name: "a"},
+			},
+			&ir.Argument{
+				Variadic: true,
+				Expr:     &ir.SimpleVar{Name: "b"},
+			},
+			&ir.Argument{
+				Expr: &ir.SimpleVar{Name: "c"},
 			},
 		},
 	})
@@ -1560,14 +1558,12 @@ func TestPrintMethodCall(t *testing.T) {
 	p.Print(&ir.MethodCallExpr{
 		Variable: &ir.SimpleVar{Name: "foo"},
 		Method:   &ir.Identifier{Value: "bar"},
-		ArgumentList: &ir.ArgumentList{
-			Arguments: []ir.Node{
-				&ir.Argument{
-					Expr: &ir.SimpleVar{Name: "a"},
-				},
-				&ir.Argument{
-					Expr: &ir.SimpleVar{Name: "b"},
-				},
+		Args: []ir.Node{
+			&ir.Argument{
+				Expr: &ir.SimpleVar{Name: "a"},
+			},
+			&ir.Argument{
+				Expr: &ir.SimpleVar{Name: "b"},
 			},
 		},
 	})
@@ -1586,14 +1582,12 @@ func TestPrintNew(t *testing.T) {
 	p := NewPrettyPrinter(o, "    ")
 	p.Print(&ir.NewExpr{
 		Class: &ir.Name{Value: "Foo"},
-		ArgumentList: &ir.ArgumentList{
-			Arguments: []ir.Node{
-				&ir.Argument{
-					Expr: &ir.SimpleVar{Name: "a"},
-				},
-				&ir.Argument{
-					Expr: &ir.SimpleVar{Name: "b"},
-				},
+		Args: []ir.Node{
+			&ir.Argument{
+				Expr: &ir.SimpleVar{Name: "a"},
+			},
+			&ir.Argument{
+				Expr: &ir.SimpleVar{Name: "b"},
 			},
 		},
 	})
@@ -1834,14 +1828,12 @@ func TestPrintStaticCall(t *testing.T) {
 	p.Print(&ir.StaticCallExpr{
 		Class: &ir.Identifier{Value: "Foo"},
 		Call:  &ir.Identifier{Value: "bar"},
-		ArgumentList: &ir.ArgumentList{
-			Arguments: []ir.Node{
-				&ir.Argument{
-					Expr: &ir.SimpleVar{Name: "a"},
-				},
-				&ir.Argument{
-					Expr: &ir.SimpleVar{Name: "b"},
-				},
+		Args: []ir.Node{
+			&ir.Argument{
+				Expr: &ir.SimpleVar{Name: "a"},
+			},
+			&ir.Argument{
+				Expr: &ir.SimpleVar{Name: "b"},
 			},
 		},
 	})
@@ -2494,14 +2486,12 @@ func TestPrintStmtAnonymousClass(t *testing.T) {
 		Stmts: []ir.Node{
 			&ir.ClassStmt{
 				Modifiers: []*ir.Identifier{{Value: "abstract"}},
-				ArgumentList: &ir.ArgumentList{
-					Arguments: []ir.Node{
-						&ir.Argument{
-							Expr: &ir.SimpleVar{Name: "a"},
-						},
-						&ir.Argument{
-							Expr: &ir.SimpleVar{Name: "b"},
-						},
+				Args: []ir.Node{
+					&ir.Argument{
+						Expr: &ir.SimpleVar{Name: "a"},
+					},
+					&ir.Argument{
+						Expr: &ir.SimpleVar{Name: "b"},
 					},
 				},
 				Extends: &ir.ClassExtendsStmt{
