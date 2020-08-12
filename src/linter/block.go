@@ -1604,18 +1604,42 @@ func (b *BlockWalker) handleAssignReference(a *ir.AssignReference) bool {
 	return false
 }
 
+func (b *BlockWalker) handleAssignShapeToList(items []*ir.ArrayItemExpr, info meta.ClassInfo) {
+	for i, item := range items {
+		var prop meta.PropertyInfo
+		var ok bool
+
+		if item.Key != nil {
+			var key string
+			switch keyNode := item.Key.(type) {
+			case *ir.String:
+				key = unquote(keyNode.Value)
+			case *ir.Lnumber:
+				key = keyNode.Value
+			case *ir.Dnumber:
+				key = keyNode.Value
+			}
+
+			if key != "" {
+				prop, ok = info.Properties[key]
+			}
+		} else {
+			prop, ok = info.Properties[fmt.Sprint(i)]
+		}
+
+		var tp meta.TypesMap
+		if !ok {
+			tp = meta.NewTypesMap("unknown_from_list")
+		} else {
+			tp = prop.Typ
+		}
+		b.handleVariableNode(item.Val, tp, "assign")
+	}
+}
+
 func (b *BlockWalker) handleAssignList(items []*ir.ArrayItemExpr, info meta.ClassInfo, isShape bool) {
 	if isShape {
-		for i, item := range items {
-			prop, ok := info.Properties[fmt.Sprint(i)]
-			var tp meta.TypesMap
-			if !ok {
-				tp = meta.NewTypesMap("unknown_from_list")
-			} else {
-				tp = prop.Typ
-			}
-			b.handleVariableNode(item.Val, tp, "assign")
-		}
+		b.handleAssignShapeToList(items, info)
 	} else {
 		for _, item := range items {
 			b.handleVariableNode(item.Val, meta.NewTypesMap("unknown_from_list"), "assign")
