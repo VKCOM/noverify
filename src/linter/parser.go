@@ -22,7 +22,7 @@ import (
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/ir"
-	"github.com/VKCOM/noverify/src/irgen"
+	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
@@ -147,7 +147,7 @@ func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRang
 		return nil, nil, errors.New("Empty root node")
 	}
 
-	rootIR := irgen.ConvertRoot(rootNode)
+	rootIR := irconv.ConvertRoot(rootNode)
 
 	st := &meta.ClassParseState{CurrentFile: filename}
 	w := &RootWalker{

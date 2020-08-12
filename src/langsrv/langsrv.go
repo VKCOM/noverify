@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/VKCOM/noverify/src/ir"
-	"github.com/VKCOM/noverify/src/irgen"
+	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
@@ -831,7 +831,7 @@ func getMethodCompletionItems(st *meta.ClassParseState, str string, sc *meta.Sco
 		lintdebug.Send("Could not parse %s", strTemp)
 		return nil
 	}
-	rootIR := irgen.ConvertRoot(tempNode)
+	rootIR := irconv.ConvertRoot(tempNode)
 
 	stmtLst := rootIR.Stmts
 	if len(stmtLst) == 0 {
