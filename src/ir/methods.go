@@ -73,3 +73,18 @@ func (n *Name) RestParts() string {
 	}
 	return s[len(`\`)+slash:]
 }
+
+// Arg returns the ith argument.
+func (n *FunctionCallExpr) Arg(i int) *Argument { return n.Args[i].(*Argument) }
+
+// Arg returns the ith argument.
+func (n *MethodCallExpr) Arg(i int) *Argument { return n.Args[i].(*Argument) }
+
+// Arg returns the ith argument.
+func (n *NewExpr) Arg(i int) *Argument { return n.Args[i].(*Argument) }
+
+// Arg returns the ith argument.
+func (n *StaticCallExpr) Arg(i int) *Argument { return n.Args[i].(*Argument) }
+
+// Arg returns the ith argument.
+func (n *ClassStmt) Arg(i int) *Argument { return n.Args[i].(*Argument) }

@@ -755,9 +755,9 @@ func (b *BlockWalker) handleFunctionCall(e *ir.FunctionCallExpr) bool {
 	e.Function.Walk(b)
 
 	if call.fqName == `\compact` {
-		b.handleCompactCallArgs(e.ArgumentList.Arguments)
+		b.handleCompactCallArgs(e.Args)
 	} else {
-		b.handleCallArgs(e.Function, e.ArgumentList.Arguments, call.info)
+		b.handleCallArgs(e.Function, e.Args, call.info)
 	}
 	b.ctx.exitFlags |= call.info.ExitFlags
 
@@ -866,7 +866,7 @@ func (b *BlockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
 	}
 
 	if !magic {
-		b.handleCallArgs(e.Method, e.ArgumentList.Arguments, fn)
+		b.handleCallArgs(e.Method, e.Args, fn)
 	}
 	b.ctx.exitFlags |= fn.ExitFlags
 
@@ -917,7 +917,7 @@ func (b *BlockWalker) handleStaticCall(e *ir.StaticCallExpr) bool {
 		b.r.Report(e.Call, LevelError, "accessLevel", "Cannot access %s method %s::%s()", fn.AccessLevel, m.ClassName, methodName)
 	}
 
-	b.handleCallArgs(e.Call, e.ArgumentList.Arguments, fn)
+	b.handleCallArgs(e.Call, e.Args, fn)
 	b.ctx.exitFlags |= fn.ExitFlags
 
 	return false

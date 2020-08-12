@@ -17,16 +17,6 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.Expr = NodeClone(x.Expr).(ir.Node)
 		}
 		return &clone
-	case *ir.ArgumentList:
-		clone := *x
-		{
-			sliceClone := make([]ir.Node, len(x.Arguments))
-			for i := range x.Arguments {
-				sliceClone[i] = NodeClone(x.Arguments[i]).(ir.Node)
-			}
-			clone.Arguments = sliceClone
-		}
-		return &clone
 	case *ir.ArrayDimFetchExpr:
 		clone := *x
 		if x.Variable != nil {
@@ -392,8 +382,12 @@ func NodeClone(x ir.Node) ir.Node {
 			}
 			clone.Modifiers = sliceClone
 		}
-		if x.ArgumentList != nil {
-			clone.ArgumentList = NodeClone(x.ArgumentList).(*ir.ArgumentList)
+		{
+			sliceClone := make([]ir.Node, len(x.Args))
+			for i := range x.Args {
+				sliceClone[i] = NodeClone(x.Args[i]).(ir.Node)
+			}
+			clone.Args = sliceClone
 		}
 		if x.Extends != nil {
 			clone.Extends = NodeClone(x.Extends).(*ir.ClassExtendsStmt)
@@ -675,8 +669,12 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Function != nil {
 			clone.Function = NodeClone(x.Function).(ir.Node)
 		}
-		if x.ArgumentList != nil {
-			clone.ArgumentList = NodeClone(x.ArgumentList).(*ir.ArgumentList)
+		{
+			sliceClone := make([]ir.Node, len(x.Args))
+			for i := range x.Args {
+				sliceClone[i] = NodeClone(x.Args[i]).(ir.Node)
+			}
+			clone.Args = sliceClone
 		}
 		return &clone
 	case *ir.FunctionStmt:
@@ -907,8 +905,12 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Method != nil {
 			clone.Method = NodeClone(x.Method).(ir.Node)
 		}
-		if x.ArgumentList != nil {
-			clone.ArgumentList = NodeClone(x.ArgumentList).(*ir.ArgumentList)
+		{
+			sliceClone := make([]ir.Node, len(x.Args))
+			for i := range x.Args {
+				sliceClone[i] = NodeClone(x.Args[i]).(ir.Node)
+			}
+			clone.Args = sliceClone
 		}
 		return &clone
 	case *ir.MinusExpr:
@@ -959,8 +961,12 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Class != nil {
 			clone.Class = NodeClone(x.Class).(ir.Node)
 		}
-		if x.ArgumentList != nil {
-			clone.ArgumentList = NodeClone(x.ArgumentList).(*ir.ArgumentList)
+		{
+			sliceClone := make([]ir.Node, len(x.Args))
+			for i := range x.Args {
+				sliceClone[i] = NodeClone(x.Args[i]).(ir.Node)
+			}
+			clone.Args = sliceClone
 		}
 		return &clone
 	case *ir.NopStmt:
@@ -1182,8 +1188,12 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Call != nil {
 			clone.Call = NodeClone(x.Call).(ir.Node)
 		}
-		if x.ArgumentList != nil {
-			clone.ArgumentList = NodeClone(x.ArgumentList).(*ir.ArgumentList)
+		{
+			sliceClone := make([]ir.Node, len(x.Args))
+			for i := range x.Args {
+				sliceClone[i] = NodeClone(x.Args[i]).(ir.Node)
+			}
+			clone.Args = sliceClone
 		}
 		return &clone
 	case *ir.StaticPropertyFetchExpr:

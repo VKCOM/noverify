@@ -708,7 +708,8 @@ func convertNode(state *convState, n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
 		out.Function = convertNode(state, n.Function)
-		out.ArgumentList = convertNode(state, n.ArgumentList).(*ir.ArgumentList)
+		out.ArgsFreeFloating = n.ArgumentList.FreeFloating
+		out.Args = convertNodeSlice(state, n.ArgumentList.Arguments)
 		return out
 
 	case *expr.InstanceOf:
@@ -758,7 +759,8 @@ func convertNode(state *convState, n node.Node) ir.Node {
 		out.Position = n.Position
 		out.Variable = convertNode(state, n.Variable)
 		out.Method = convertNode(state, n.Method)
-		out.ArgumentList = convertNode(state, n.ArgumentList).(*ir.ArgumentList)
+		out.ArgsFreeFloating = n.ArgumentList.FreeFloating
+		out.Args = convertNodeSlice(state, n.ArgumentList.Arguments)
 		return out
 
 	case *expr.New:
@@ -769,7 +771,10 @@ func convertNode(state *convState, n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
 		out.Class = convertNode(state, n.Class)
-		out.ArgumentList = convertNode(state, n.ArgumentList).(*ir.ArgumentList)
+		if n.ArgumentList != nil {
+			out.ArgsFreeFloating = n.ArgumentList.FreeFloating
+			out.Args = convertNodeSlice(state, n.ArgumentList.Arguments)
+		}
 		return out
 
 	case *expr.Paren:
@@ -881,7 +886,8 @@ func convertNode(state *convState, n node.Node) ir.Node {
 		out.Position = n.Position
 		out.Class = convertNode(state, n.Class)
 		out.Call = convertNode(state, n.Call)
-		out.ArgumentList = convertNode(state, n.ArgumentList).(*ir.ArgumentList)
+		out.ArgsFreeFloating = n.ArgumentList.FreeFloating
+		out.Args = convertNodeSlice(state, n.ArgumentList.Arguments)
 		return out
 
 	case *expr.StaticPropertyFetch:
@@ -973,22 +979,6 @@ func convertNode(state *convState, n node.Node) ir.Node {
 		out.Variadic = n.Variadic
 		out.IsReference = n.IsReference
 		out.Expr = convertNode(state, n.Expr)
-		return out
-
-	case *node.ArgumentList:
-		if n == nil {
-			return (*ir.ArgumentList)(nil)
-		}
-		out := &ir.ArgumentList{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		{
-			slice := make([]ir.Node, len(n.Arguments))
-			for i := range n.Arguments {
-				slice[i] = convertNode(state, n.Arguments[i])
-			}
-			out.Arguments = slice
-		}
 		return out
 
 	case *node.Identifier:
@@ -1191,7 +1181,10 @@ func convertNode(state *convState, n node.Node) ir.Node {
 			}
 			out.Modifiers = slice
 		}
-		out.ArgumentList = convertNode(state, n.ArgumentList).(*ir.ArgumentList)
+		if n.ArgumentList != nil {
+			out.ArgsFreeFloating = n.ArgumentList.FreeFloating
+			out.Args = convertNodeSlice(state, n.ArgumentList.Arguments)
+		}
 		out.Extends = convertNode(state, n.Extends).(*ir.ClassExtendsStmt)
 		out.Implements = convertNode(state, n.Implements).(*ir.ClassImplementsStmt)
 		out.Stmts = convertNodeSlice(state, n.Stmts)

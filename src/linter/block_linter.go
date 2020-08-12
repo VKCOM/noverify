@@ -363,11 +363,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 	ctor := m.Info
 	// If new expression is written without (), ArgumentList will be nil.
 	// It's equivalent of 0 arguments constructor call.
-	var args []ir.Node
-	if e.ArgumentList != nil {
-		args = e.ArgumentList.Arguments
-	}
-	if ok && !enoughArgs(args, ctor) {
+	if ok && !enoughArgs(e.Args, ctor) {
 		b.report(e, LevelError, "argCount", "Too few arguments for %s constructor", className)
 	}
 }
@@ -603,10 +599,10 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 
 	switch fqName {
 	case `\preg_match`, `\preg_match_all`, `\preg_replace`, `\preg_split`:
-		if len(e.ArgumentList.Arguments) < 1 {
+		if len(e.Args) < 1 {
 			break
 		}
-		b.checkRegexp(e, e.ArgumentList.Arguments[0].(*ir.Argument))
+		b.checkRegexp(e, e.Arg(0))
 	}
 }
 

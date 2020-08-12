@@ -907,7 +907,7 @@ func (p *PrettyPrinter) printExprExit(n *ir.ExitExpr) {
 func (p *PrettyPrinter) printExprFunctionCall(n *ir.FunctionCallExpr) {
 	p.Print(n.Function)
 	io.WriteString(p.w, "(")
-	p.joinPrint(", ", n.ArgumentList.Arguments)
+	p.joinPrint(", ", n.Args)
 	io.WriteString(p.w, ")")
 }
 
@@ -940,7 +940,7 @@ func (p *PrettyPrinter) printExprMethodCall(n *ir.MethodCallExpr) {
 	io.WriteString(p.w, "->")
 	p.Print(n.Method)
 	io.WriteString(p.w, "(")
-	p.joinPrint(", ", n.ArgumentList.Arguments)
+	p.joinPrint(", ", n.Args)
 	io.WriteString(p.w, ")")
 }
 
@@ -948,9 +948,9 @@ func (p *PrettyPrinter) printExprNew(n *ir.NewExpr) {
 	io.WriteString(p.w, "new ")
 	p.Print(n.Class)
 
-	if n.ArgumentList != nil {
+	if len(n.Args) != 0 {
 		io.WriteString(p.w, "(")
-		p.joinPrint(", ", n.ArgumentList.Arguments)
+		p.joinPrint(", ", n.Args)
 		io.WriteString(p.w, ")")
 	}
 }
@@ -1017,7 +1017,7 @@ func (p *PrettyPrinter) printExprStaticCall(n *ir.StaticCallExpr) {
 	io.WriteString(p.w, "::")
 	p.Print(n.Call)
 	io.WriteString(p.w, "(")
-	p.joinPrint(", ", n.ArgumentList.Arguments)
+	p.joinPrint(", ", n.Args)
 	io.WriteString(p.w, ")")
 }
 
@@ -1158,9 +1158,9 @@ func (p *PrettyPrinter) printStmtClass(n *ir.ClassStmt) {
 		p.Print(n.ClassName)
 	}
 
-	if n.ArgumentList != nil {
+	if len(n.Args) != 0 {
 		io.WriteString(p.w, "(")
-		p.joinPrint(", ", n.ArgumentList.Arguments)
+		p.joinPrint(", ", n.Args)
 		io.WriteString(p.w, ")")
 	}
 

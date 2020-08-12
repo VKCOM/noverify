@@ -26,20 +26,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		return true
-	case *ir.ArgumentList:
-		y, ok := y.(*ir.ArgumentList)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if len(x.Arguments) != len(y.Arguments) {
-			return false
-		}
-		for i := range x.Arguments {
-			if !NodeEqual(x.Arguments[i], y.Arguments[i]) {
-				return false
-			}
-		}
-		return true
 	case *ir.ArrayDimFetchExpr:
 		y, ok := y.(*ir.ArrayDimFetchExpr)
 		if !ok || x == nil || y == nil {
@@ -549,8 +535,13 @@ func NodeEqual(x, y ir.Node) bool {
 				return false
 			}
 		}
-		if !NodeEqual(x.ArgumentList, y.ArgumentList) {
+		if len(x.Args) != len(y.Args) {
 			return false
+		}
+		for i := range x.Args {
+			if !NodeEqual(x.Args[i], y.Args[i]) {
+				return false
+			}
 		}
 		if !NodeEqual(x.Extends, y.Extends) {
 			return false
@@ -971,8 +962,13 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Function, y.Function) {
 			return false
 		}
-		if !NodeEqual(x.ArgumentList, y.ArgumentList) {
+		if len(x.Args) != len(y.Args) {
 			return false
+		}
+		for i := range x.Args {
+			if !NodeEqual(x.Args[i], y.Args[i]) {
+				return false
+			}
 		}
 		return true
 	case *ir.FunctionStmt:
@@ -1321,8 +1317,13 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Method, y.Method) {
 			return false
 		}
-		if !NodeEqual(x.ArgumentList, y.ArgumentList) {
+		if len(x.Args) != len(y.Args) {
 			return false
+		}
+		for i := range x.Args {
+			if !NodeEqual(x.Args[i], y.Args[i]) {
+				return false
+			}
 		}
 		return true
 	case *ir.MinusExpr:
@@ -1395,8 +1396,13 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Class, y.Class) {
 			return false
 		}
-		if !NodeEqual(x.ArgumentList, y.ArgumentList) {
+		if len(x.Args) != len(y.Args) {
 			return false
+		}
+		for i := range x.Args {
+			if !NodeEqual(x.Args[i], y.Args[i]) {
+				return false
+			}
 		}
 		return true
 	case *ir.NopStmt:
@@ -1715,8 +1721,13 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Call, y.Call) {
 			return false
 		}
-		if !NodeEqual(x.ArgumentList, y.ArgumentList) {
+		if len(x.Args) != len(y.Args) {
 			return false
+		}
+		for i := range x.Args {
+			if !NodeEqual(x.Args[i], y.Args[i]) {
+				return false
+			}
 		}
 		return true
 	case *ir.StaticPropertyFetchExpr:

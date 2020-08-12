@@ -2077,8 +2077,8 @@ func (w *exprTypeWalker) LeaveNode(n ir.Node) {}
 func (w *exprTypeWalker) EnterNode(n ir.Node) bool {
 	call, ok := n.(*ir.FunctionCallExpr)
 	if ok && meta.NameNodeEquals(call.Function, `exprtype`) {
-		checkedExpr := call.ArgumentList.Arguments[0].(*ir.Argument).Expr
-		expectedType := call.ArgumentList.Arguments[1].(*ir.Argument).Expr.(*ir.String).Value
+		checkedExpr := call.Arg(0).Expr
+		expectedType := call.Arg(1).Expr.(*ir.String).Value
 		actualType, ok := exprTypeResult[checkedExpr]
 		if !ok {
 			w.t.Fatalf("no type found for %s expression", irutil.FmtNode(checkedExpr))
@@ -2113,7 +2113,7 @@ func (c *exprTypeCollector) AfterEnterNode(n ir.Node) {
 	if !ok || !meta.NameNodeEquals(call.Function, `exprtype`) {
 		return
 	}
-	checkedExpr := call.ArgumentList.Arguments[0].(*ir.Argument).Expr
+	checkedExpr := call.Arg(0).Expr
 
 	// We need to clone a types map because if it belongs to a var
 	// or some other symbol those type can be volatile we'll get
