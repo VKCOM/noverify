@@ -1618,11 +1618,11 @@ func (b *BlockWalker) handleAssignShapeToList(items []*ir.ArrayItemExpr, info me
 				key = keyNode.Value
 			case *ir.Dnumber:
 				key = keyNode.Value
-			default:
-				key = "unhandled_type_of_key"
 			}
 
-			prop, ok = info.Properties[key]
+			if key != "" {
+				prop, ok = info.Properties[key]
+			}
 		} else {
 			prop, ok = info.Properties[fmt.Sprint(i)]
 		}
