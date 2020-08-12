@@ -1600,19 +1600,19 @@ func (d *RootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {
 		return d.handleOverride(s)
 	}
 
-	if nm.Value != `define` || len(s.ArgumentList.Arguments) < 2 {
+	if nm.Value != `define` || len(s.Args) < 2 {
 		// TODO: actually we could warn about bogus defines
 		return true
 	}
 
-	arg := s.ArgumentList.Arguments[0].(*ir.Argument)
+	arg := s.Arg(0)
 
 	str, ok := arg.Expr.(*ir.String)
 	if !ok {
 		return true
 	}
 
-	valueArg := s.ArgumentList.Arguments[1].(*ir.Argument)
+	valueArg := s.Arg(1)
 
 	if d.meta.Constants == nil {
 		d.meta.Constants = make(meta.ConstantsMap)
@@ -1628,12 +1628,12 @@ func (d *RootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {
 // Handle e.g. "override(\array_shift(0), elementType(0));"
 // which means "return type of array_shift() is the type of element of first function parameter"
 func (d *RootWalker) handleOverride(s *ir.FunctionCallExpr) bool {
-	if len(s.ArgumentList.Arguments) != 2 {
+	if len(s.Args) != 2 {
 		return true
 	}
 
-	arg0 := s.ArgumentList.Arguments[0].(*ir.Argument)
-	arg1 := s.ArgumentList.Arguments[1].(*ir.Argument)
+	arg0 := s.Arg(0)
+	arg1 := s.Arg(1)
 
 	fc0, ok := arg0.Expr.(*ir.FunctionCallExpr)
 	if !ok {
@@ -1655,11 +1655,11 @@ func (d *RootWalker) handleOverride(s *ir.FunctionCallExpr) bool {
 		return true
 	}
 
-	if len(fc1.ArgumentList.Arguments) != 1 {
+	if len(fc1.Args) != 1 {
 		return true
 	}
 
-	fc1Arg0 := fc1.ArgumentList.Arguments[0].(*ir.Argument)
+	fc1Arg0 := fc1.Arg(0)
 
 	argNumNode, ok := fc1Arg0.Expr.(*ir.Lnumber)
 	if !ok {

@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/VKCOM/noverify/src/ir"
-	"github.com/VKCOM/noverify/src/irgen"
+	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
@@ -223,7 +223,7 @@ func findReferences(substr string, parse parseFn) []vscode.Location {
 						parser.Parse()
 
 						rootNode := parser.GetRootNode()
-						rootIR := irgen.ConvertRoot(rootNode)
+						rootIR := irconv.ConvertRoot(rootNode)
 						if rootNode != nil {
 							var found []vscode.Location
 							func() {

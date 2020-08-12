@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
-	"github.com/VKCOM/noverify/src/irgen"
+	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/php/parseutil"
 )
 
@@ -18,7 +18,7 @@ func compile(opts *Compiler, pattern []byte) (*Matcher, error) {
 	if err != nil {
 		return nil, err
 	}
-	rootIR := irgen.ConvertNode(root)
+	rootIR := irconv.ConvertNode(root)
 
 	if st, ok := rootIR.(*ir.ExpressionStmt); ok {
 		rootIR = st.Expr

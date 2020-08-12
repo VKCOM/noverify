@@ -72,11 +72,11 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 	}
 
 	override, ok := meta.GetInternalFunctionOverrideInfo(nm)
-	if !ok || len(c.ArgumentList.Arguments) <= override.ArgNum {
+	if !ok || len(c.Args) <= override.ArgNum {
 		return fn.Typ, true
 	}
 
-	arg := c.ArgumentList.Arguments[override.ArgNum].(*ir.Argument)
+	arg := c.Arg(override.ArgNum)
 	typ = ExprTypeLocalCustom(sc, cs, arg.Expr, custom)
 	if override.OverrideType == meta.OverrideArgType {
 		return typ, true
@@ -107,9 +107,16 @@ func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*ir.ArrayItemEx
 	}
 
 	firstElementType := ExprTypeLocal(sc, cs, items[0])
+	if items[0].Unpack {
+		firstElementType = firstElementType.ArrayElemLazyType()
+	}
 
 	for _, item := range items[1:] {
 		itemType := ExprTypeLocal(sc, cs, item)
+		if item.Unpack {
+			itemType = itemType.ArrayElemLazyType()
+		}
+
 		if !firstElementType.Equals(itemType) {
 			return meta.NewTypesMap("mixed[]")
 		}
