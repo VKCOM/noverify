@@ -1,4 +1,4 @@
-package linter
+package workspace
 
 import (
 	"regexp"
@@ -29,7 +29,6 @@ func (filter *FilenameFilter) InitialGitignorePush(path string, matcher gitignor
 	if !filter.gitignoreEnabled {
 		panic("add when gitignore is disabled")
 	}
-	DebugMessage("gitignore: add %s/.gitignore", path)
 	filter.initialMatchers[path] = struct{}{}
 	filter.matchers = append(filter.matchers, matcher)
 }
@@ -39,10 +38,8 @@ func (filter *FilenameFilter) GitignorePush(path string, matcher gitignore.Ignor
 		panic("pop when gitignore is disabled")
 	}
 	if _, ok := filter.initialMatchers[path]; ok {
-		DebugMessage("gitignore: don't push %s/.gitignore", path)
 		return
 	}
-	DebugMessage("gitignore: push %s/.gitignore", path)
 	filter.matchers = append(filter.matchers, matcher)
 }
 
@@ -51,10 +48,8 @@ func (filter *FilenameFilter) GitignorePop(path string) {
 		panic("pop when gitignore is disabled")
 	}
 	if _, ok := filter.initialMatchers[path]; ok {
-		DebugMessage("gitignore: don't pop %s/.gitignore", path)
 		return
 	}
-	DebugMessage("gitignore: pop %s/.gitignore", path)
 	filter.matchers = filter.matchers[:len(filter.matchers)-1]
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/workspace"
 )
 
 func gitParseUntracked(l *linterRunner) []*linter.Report {
@@ -21,7 +22,7 @@ func gitParseUntracked(l *linterRunner) []*linter.Report {
 		log.Fatalf("get untracked files: %v", err)
 	}
 
-	return linter.ParseFilenames(linter.ReadFilenames(filenames, nil), l.allowDisableRegex)
+	return linter.ParseFilenames(workspace.ReadFilenames(filenames, nil), l.allowDisableRegex)
 }
 
 func parseIndexOnlyFiles(l *linterRunner) {
@@ -29,7 +30,7 @@ func parseIndexOnlyFiles(l *linterRunner) {
 		return
 	}
 	filenames := strings.Split(l.args.indexOnlyFiles, ",")
-	linter.ParseFilenames(linter.ReadFilenames(filenames, nil), l.allowDisableRegex)
+	linter.ParseFilenames(workspace.ReadFilenames(filenames, nil), l.allowDisableRegex)
 }
 
 // Not the best name, and not the best function signature.
@@ -58,14 +59,14 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 		}
 
 		start := time.Now()
-		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil), l.allowDisableRegex)
+		linter.ParseFilenames(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil), l.allowDisableRegex)
 		parseIndexOnlyFiles(l)
 		log.Printf("Indexed old commit in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		oldReports = linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, linter.ExcludeRegex), l.allowDisableRegex)
+		oldReports = linter.ParseFilenames(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, linter.ExcludeRegex), l.allowDisableRegex)
 		log.Printf("Parsed old commit for %s (%d reports)", time.Since(start), len(oldReports))
 
 		meta.ResetInfo()
@@ -74,34 +75,34 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 		}
 
 		start = time.Now()
-		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil), l.allowDisableRegex)
+		linter.ParseFilenames(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil), l.allowDisableRegex)
 		log.Printf("Indexed new commit in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		reports = linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, linter.ExcludeRegex), l.allowDisableRegex)
+		reports = linter.ParseFilenames(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, linter.ExcludeRegex), l.allowDisableRegex)
 		log.Printf("Parsed new commit in %s (%d reports)", time.Since(start), len(reports))
 	} else {
 		start := time.Now()
-		linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil), l.allowDisableRegex)
+		linter.ParseFilenames(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil), l.allowDisableRegex)
 		parseIndexOnlyFiles(l)
 		log.Printf("Indexing complete in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		oldReports = linter.ParseFilenames(linter.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes), l.allowDisableRegex)
+		oldReports = linter.ParseFilenames(workspace.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes), l.allowDisableRegex)
 		log.Printf("Parsed old files versions for %s", time.Since(start))
 
 		start = time.Now()
 		meta.SetIndexingComplete(false)
-		linter.ParseFilenames(linter.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes), l.allowDisableRegex)
+		linter.ParseFilenames(workspace.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes), l.allowDisableRegex)
 		meta.SetIndexingComplete(true)
 		log.Printf("Indexed files versions for %s", time.Since(start))
 
 		start = time.Now()
-		reports = linter.ParseFilenames(linter.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes), l.allowDisableRegex)
+		reports = linter.ParseFilenames(workspace.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes), l.allowDisableRegex)
 		log.Printf("Parsed new file versions in %s", time.Since(start))
 	}
 
@@ -128,25 +129,25 @@ func gitRepoComputeReportsFromLocalChanges(l *linterRunner) (oldReports, reports
 	log.Printf("You have changes in your work tree, showing diff between %s and work tree", l.args.mutable.gitCommitFrom)
 
 	start := time.Now()
-	linter.ParseFilenames(linter.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil), l.allowDisableRegex)
+	linter.ParseFilenames(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil), l.allowDisableRegex)
 	parseIndexOnlyFiles(l)
 	log.Printf("Indexing complete in %s", time.Since(start))
 
 	meta.SetIndexingComplete(true)
 
 	start = time.Now()
-	oldReports = linter.ParseFilenames(linter.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes), l.allowDisableRegex)
+	oldReports = linter.ParseFilenames(workspace.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes), l.allowDisableRegex)
 	log.Printf("Parsed old files versions for %s", time.Since(start))
 
 	start = time.Now()
 	meta.SetIndexingComplete(false)
-	linter.ParseFilenames(linter.ReadChangesFromWorkTree(l.args.gitWorkTree, changes), l.allowDisableRegex)
+	linter.ParseFilenames(workspace.ReadChangesFromWorkTree(l.args.gitWorkTree, changes), l.allowDisableRegex)
 	gitParseUntracked(l)
 	meta.SetIndexingComplete(true)
 	log.Printf("Indexed new files versions for %s", time.Since(start))
 
 	start = time.Now()
-	reports = linter.ParseFilenames(linter.ReadChangesFromWorkTree(l.args.gitWorkTree, changes), l.allowDisableRegex)
+	reports = linter.ParseFilenames(workspace.ReadChangesFromWorkTree(l.args.gitWorkTree, changes), l.allowDisableRegex)
 	reports = append(reports, gitParseUntracked(l)...)
 	log.Printf("Parsed new file versions in %s", time.Since(start))
 
