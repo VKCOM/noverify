@@ -539,7 +539,7 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 
 		switch k := item.Key.(type) {
 		case *ir.String:
-			key = unquote(k.Value)
+			key = irutil.Unquote(k.Value)
 			constKey = true
 		case *ir.Lnumber:
 			key = k.Value

@@ -2,6 +2,7 @@ package linter
 
 import (
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/solver"
 )
@@ -30,13 +31,13 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 			methodName := n.Arg(1).Expr
 			lit, ok := methodName.(*ir.String)
 			if ok {
-				a.b.ctx.addCustomMethod(obj, unquote(lit.Value))
+				a.b.ctx.addCustomMethod(obj, irutil.Unquote(lit.Value))
 			}
 		case len(n.Args) == 1 && nm.Value == `function_exists`:
 			functionName := n.Arg(0).Expr
 			lit, ok := functionName.(*ir.String)
 			if ok {
-				a.b.ctx.addCustomFunction(unquote(lit.Value))
+				a.b.ctx.addCustomFunction(irutil.Unquote(lit.Value))
 			}
 		}
 

@@ -715,14 +715,6 @@ func isUnderscore(s string) bool {
 	return s == "_"
 }
 
-// unquote returns unquoted version of s, if there are any quotes.
-func unquote(s string) string {
-	if len(s) >= 2 && s[0] == '\'' || s[0] == '"' {
-		return s[1 : len(s)-1]
-	}
-	return s
-}
-
 func linterError(filename, format string, args ...interface{}) {
 	log.Printf("error: "+filename+": "+format, args...)
 }

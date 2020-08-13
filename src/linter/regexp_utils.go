@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 )
 
 type regexpPattern struct {
@@ -32,7 +33,7 @@ func newRegexpPattern(lit *ir.String) (regexpPattern, bool) {
 	switch lit.Value[0] {
 	case '\'':
 		// Single quotes only interpret \' and \\ sequences.
-		pat := unquote(lit.Value)
+		pat := irutil.Unquote(lit.Value)
 		pat = strings.ReplaceAll(pat, `\\`, `\`)
 		pat = strings.ReplaceAll(pat, `\'`, `'`)
 		result.value = pat
