@@ -7,6 +7,14 @@ import (
 
 //go:generate go run ./codegen.go
 
+// Unquote returns unquoted version of s, if there are any quotes.
+func Unquote(s string) string {
+	if len(s) >= 2 && s[0] == '\'' || s[0] == '"' {
+		return s[1 : len(s)-1]
+	}
+	return s
+}
+
 func NodeSliceClone(xs []ir.Node) []ir.Node {
 	cloned := make([]ir.Node, len(xs))
 	for i, x := range xs {

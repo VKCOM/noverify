@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 )
 
 var (
@@ -445,7 +446,7 @@ func (c ConstantValue) String() string {
 	if c.Type == Undefined {
 		return "Undefined type"
 	}
-	return fmt.Sprintf("%d: %s", c.Type, c.Value)
+	return fmt.Sprintf("%d: %v", c.Type, c.Value)
 }
 
 func (c ConstantValue) IsEqual(v ConstantValue) bool {
@@ -457,11 +458,8 @@ func (c ConstantValue) IsEqual(v ConstantValue) bool {
 }
 
 func NewConstantValueFromString(value string) ConstantValue {
-	unquotedValue, err := strconv.Unquote(value)
-	if err != nil {
-		unquotedValue = value
-	}
-	return ConstantValue{Value: fmt.Sprintf("\"%s\"", unquotedValue), Type: String}
+	v := irutil.Unquote(value)
+	return ConstantValue{Value: v, Type: String}
 }
 
 func NewConstantValueFromFloat(value float64) ConstantValue {

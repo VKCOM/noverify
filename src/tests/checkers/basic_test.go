@@ -1349,7 +1349,7 @@ $b = [
 `)
 	test.Expect = []string{
 		"Duplicate array key '1'",
-		"Duplicate array key '\"apple\"'",
+		"Duplicate array key 'apple'",
 		"Duplicate array key '0'",
 		"Duplicate array key '-1'",
 		"Duplicate array key '2'",

@@ -38,7 +38,8 @@ import (
 //     38 - replaced TypesMap.immutable:bool with flags:uint8.
 //          added mapPrecise flag to mark precise type maps.
 //     39 - added new field Value in ConstantInfo
-const cacheVersion = 39
+//     40 - changed string const value storage (no quotes)
+const cacheVersion = 40
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")
