@@ -2,7 +2,6 @@ package solver
 
 import (
 	"log"
-	"strconv"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
@@ -378,34 +377,4 @@ func ExprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 		return meta.MixedType
 	}
 	return res
-}
-
-func GetConstantValue(c *ir.ConstantStmt) (meta.ConstantValue, bool) {
-	switch c := c.Expr.(type) {
-	case *ir.Lnumber:
-		return getConstantValue(c, 1)
-	case *ir.Dnumber:
-		return getConstantValue(c, 1)
-	case *ir.String:
-		return getConstantValue(c, 1)
-	case *ir.UnaryMinusExpr:
-		return getConstantValue(c.Expr, -1)
-	default:
-		return meta.NewUndefinedConstantValue(), false
-	}
-}
-
-func getConstantValue(n ir.Node, modifier int64) (meta.ConstantValue, bool) {
-	switch c := n.(type) {
-	case *ir.Lnumber:
-		value, err := strconv.ParseInt(c.Value, 10, 64)
-		return meta.NewConstantValueFromInt(value * modifier), err == nil
-	case *ir.Dnumber:
-		value, err := strconv.ParseFloat(c.Value, 64)
-		return meta.NewConstantValueFromFloat(value * float64(modifier)), err == nil
-	case *ir.String:
-		return meta.NewConstantValueFromString(c.Value), true
-	default:
-		return meta.NewUndefinedConstantValue(), false
-	}
 }
