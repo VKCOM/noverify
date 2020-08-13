@@ -8,10 +8,14 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irfmt"
 	"github.com/VKCOM/noverify/src/ir/irutil"
+	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/solver"
 )
 
 type Config struct {
-	CurrentClass  string
+	CurrentClass string
+	Namespace    string
+
 	NormalizeMore bool
 }
 
@@ -33,8 +37,8 @@ func FuncBody(conf Config, params, statements []ir.Node) []ir.Node {
 }
 
 type normalizer struct {
-	out      []ir.Node
 	conf     Config
+	out      []ir.Node
 	varNames map[string]int
 	globals  map[string]struct{}
 }
@@ -132,8 +136,8 @@ func (norm *normalizer) sortStatements(statements []ir.Node) []ir.Node {
 
 func (norm *normalizer) LeaveNode(n ir.Node) {}
 
-func (norm *normalizer) EnterNode(w ir.Node) bool {
-	switch n := w.(type) {
+func (norm *normalizer) EnterNode(n ir.Node) bool {
+	switch n := n.(type) {
 	case *ir.GlobalStmt:
 		for _, v := range n.Vars {
 			v, ok := v.(*ir.SimpleVar)
@@ -305,7 +309,7 @@ func (norm *normalizer) normalizedExpr(e ir.Node) ir.Node {
 			break
 		}
 		if !strings.ContainsAny(e.Value, `'\`) {
-			e.Value = `'` + strings.Trim(e.Value, `"`) + `'`
+			e.Value = `'` + irutil.Unquote(e.Value) + `'`
 		}
 
 	case *ir.TernaryExpr:
@@ -332,6 +336,23 @@ func (norm *normalizer) normalizedExpr(e ir.Node) ir.Node {
 			if constNameString != `false` {
 				e.Constant = &ir.Name{Value: `false`}
 			}
+		}
+		// Named const => its value
+		if !meta.IsIndexingComplete() {
+			return e
+		}
+		info, ok := norm.getConstant(e.Constant)
+		if !ok {
+			return e
+		}
+		value := info.Value.Value
+		switch info.Value.Type {
+		case meta.Integer:
+			return &ir.Lnumber{Value: fmt.Sprint(value)}
+		case meta.String:
+			return &ir.String{Value: `'` + value.(string) + `'`}
+		default:
+			return e
 		}
 
 	case *ir.FunctionCallExpr:
@@ -420,6 +441,13 @@ func (norm *normalizer) renameVar(v *ir.SimpleVar) {
 	}
 	id := norm.internVarName(v.Name)
 	v.Name = fmt.Sprintf("v%d", id)
+}
+
+func (norm *normalizer) getConstant(n ir.Node) (meta.ConstantInfo, bool) {
+	var cs meta.ClassParseState
+	cs.Namespace = norm.conf.Namespace
+	_, info, ok := solver.GetConstant(&cs, n)
+	return info, ok
 }
 
 var (

@@ -8,6 +8,8 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/ir/irfmt"
+	"github.com/VKCOM/noverify/src/linttest"
+	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/php/parseutil"
 )
@@ -91,11 +93,46 @@ func TestNormalizeStmtList(t *testing.T) {
 	}
 }
 
+type normalizationTest struct {
+	orig string
+	want string
+}
+
+func runNormalizeTests(t *testing.T, tests []normalizationTest) {
+	t.Helper()
+
+	conf := Config{CurrentClass: `Foo`}
+	for _, test := range tests {
+		n, _, err := parseutil.ParseStmt([]byte(test.orig))
+		if err != nil {
+			t.Errorf("parse `%s`: %v", test.orig, err)
+			return
+		}
+		irNode := irconv.ConvertNode(n)
+		normalized := FuncBody(conf, nil, []ir.Node{irNode})
+		have := strings.TrimSuffix(irfmt.Node(normalized[0]), ";")
+		if have != test.want {
+			t.Errorf("normalize `%s`:\nhave: %s\nwant: %s",
+				test.orig, have, test.want)
+			return
+		}
+		n2, _, err := parseutil.ParseStmt([]byte(have))
+		if err != nil {
+			t.Errorf("parse normalized `%s`: %v", test.orig, err)
+			return
+		}
+		irNode2 := irconv.ConvertNode(n2)
+		normalized2 := FuncBody(conf, nil, []ir.Node{irNode2})
+		have2 := strings.TrimSuffix(irfmt.Node(normalized2[0]), ";")
+		if have != have2 {
+			t.Errorf("second normalization of `%s`:\nhave: %s\nwant: %s",
+				test.orig, have2, have)
+		}
+	}
+}
+
 func TestNormalizeExpr(t *testing.T) {
-	tests := []struct {
-		orig string
-		want string
-	}{
+	runNormalizeTests(t, []normalizationTest{
 		{`new T`, `new T()`},
 
 		{`"$x"`, `'' . $v0`},
@@ -129,36 +166,23 @@ func TestNormalizeExpr(t *testing.T) {
 
 		{`$x ? $x : $y`, `$v0 ?: $v1`},
 		{`f() ? f() : $y`, `f() ? f() : $v0`},
-	}
+	})
+}
 
-	conf := Config{CurrentClass: `Foo`}
-	for _, test := range tests {
-		n, _, err := parseutil.ParseStmt([]byte(test.orig))
-		if err != nil {
-			t.Errorf("parse `%s`: %v", test.orig, err)
-			continue
-		}
-		irNode := irconv.ConvertNode(n)
-		normalized := FuncBody(conf, nil, []ir.Node{irNode})
-		have := strings.TrimSuffix(irfmt.Node(normalized[0]), ";")
-		if have != test.want {
-			t.Errorf("normalize `%s`:\nhave: %s\nwant: %s",
-				test.orig, have, test.want)
-			continue
-		}
-		n2, _, err := parseutil.ParseStmt([]byte(have))
-		if err != nil {
-			t.Errorf("parse normalized `%s`: %v", test.orig, err)
-			continue
-		}
-		irNode2 := irconv.ConvertNode(n2)
-		normalized2 := FuncBody(conf, nil, []ir.Node{irNode2})
-		have2 := strings.TrimSuffix(irfmt.Node(normalized2[0]), ";")
-		if have != have2 {
-			t.Errorf("second normalization of `%s`:\nhave: %s\nwant: %s",
-				test.orig, have2, have)
-		}
-	}
+func TestNormalizeExprAfterIndexing(t *testing.T) {
+	linttest.ParseTestFile(t, "defs.php", `<?php
+const ZERO = 0;
+const HELLO_WORLD = 'hello, world';
+const LOCALHOST = "127.0.0.1";
+`)
+	meta.SetIndexingComplete(true)
+	defer meta.SetIndexingComplete(false)
+
+	runNormalizeTests(t, []normalizationTest{
+		{`ZERO`, `0`},
+		{`HELLO_WORLD`, `'hello, world'`},
+		{`LOCALHOST`, `'127.0.0.1'`},
+	})
 }
 
 func parseStmtList(s string) ([]ir.Node, error) {

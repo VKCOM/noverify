@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"sync"
 
+	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/cmd/php-guru/guru"
 	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/php/parseutil"
@@ -22,6 +23,19 @@ import (
 
 // TODO: handle methods better (don't give up on self-references).
 
+type normalizationLevel int
+
+const (
+	// -norm=0 is "no normalization".
+	normNone normalizationLevel = iota
+	// -norm=1 enables basic normalization.
+	normFast
+	// -norm=2 also does indexing, so normalization can do more.
+	normSafe
+	// -norm=3 also enables risky normalizations.
+	normMore
+)
+
 func Main(ctx *guru.Context) (int, error) {
 	var args arguments
 	flag.BoolVar(&args.checkPrivate, "private", false,
@@ -30,10 +44,12 @@ func Main(ctx *guru.Context) (int, error) {
 		"whether auto-generated files should be analyzed")
 	flag.StringVar(&args.exclude, "exclude", "",
 		"regexp that excludes files from the analysis")
+	flag.StringVar(&args.cacheDir, "cache-dir", cmd.DefaultCacheDir(),
+		"Directory for linter cache (greatly improves indexing speed)")
 	flag.UintVar(&args.minComplexity, "min-complexity", 20,
 		"min function complexity level threshold")
-	flag.UintVar(&args.norm, "norm", 1,
-		"code normalization level: 0 for none, 1 for safe, 2 if you feel lucky")
+	flag.UintVar(&args.norm, "norm", uint(normFast),
+		"code normalization level: 0 for none, 1 for fast-only, 2 for safe, 3 if you feel lucky")
 
 	flag.Parse()
 
@@ -45,9 +61,16 @@ func Main(ctx *guru.Context) (int, error) {
 			return 1, fmt.Errorf("parse -exclude: %v", err)
 		}
 	}
+	var normLevel normalizationLevel
 	switch args.norm {
-	case 0, 1, 2:
-		// OK.
+	case 0:
+		normLevel = normNone
+	case 1:
+		normLevel = normFast
+	case 2:
+		normLevel = normSafe
+	case 3:
+		normLevel = normMore
 	default:
 		return 1, fmt.Errorf("invalid -norm level %d", args.norm)
 	}
@@ -55,6 +78,9 @@ func Main(ctx *guru.Context) (int, error) {
 	targets := flag.Args()
 
 	filter := workspace.NewFilenameFilter(exclude)
+	if normLevel > normFast {
+		runIndexing(args.cacheDir, targets, filter)
+	}
 	readFileNamesFunc := workspace.ReadFilenames(targets, filter)
 	filenamesCh := make(chan workspace.FileInfo, 512)
 	go func() {
@@ -88,6 +114,7 @@ func Main(ctx *guru.Context) (int, error) {
 					fileContents: data,
 					filename:     f.Filename,
 					args:         &args,
+					normLevel:    normLevel,
 				}
 				indexer.CollectFuncs(rootIR)
 			}
@@ -111,6 +138,7 @@ type arguments struct {
 	checkPrivate  bool
 	checkAutogen  bool
 	exclude       string
+	cacheDir      string
 	minComplexity uint
 	norm          uint
 }

@@ -10,6 +10,7 @@ type fileIndexer struct {
 	fileContents []byte
 	filename     string
 	args         *arguments
+	normLevel    normalizationLevel
 }
 
 func (indexer *fileIndexer) CollectFuncs(root *ir.Root) {
@@ -67,9 +68,9 @@ func (indexer *fileIndexer) walkFunc(n *ir.FunctionStmt) {
 }
 
 func (indexer *fileIndexer) collectFunc(n ir.Node, className, funcName string, params, stmts []ir.Node) {
-	if indexer.args.norm != 0 {
+	if indexer.normLevel != normNone {
 		conf := normalize.Config{
-			NormalizeMore: indexer.args.norm > 1,
+			NormalizeMore: indexer.normLevel > normSafe,
 		}
 		stmts = normalize.FuncBody(conf, params, stmts)
 	}
