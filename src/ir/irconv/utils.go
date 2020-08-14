@@ -167,7 +167,7 @@ func interpretStringQ2(s string) (string, bool) {
 				if hasOffset(s, i+3) && isOctalDigit(s[i+3]) {
 					digits++
 				}
-				v, err := strconv.ParseInt(s[i+len(`\`):i+len(`\`)+digits], 8, 64)
+				v, err := strconv.ParseUint(s[i+len(`\`):i+len(`\`)+digits], 8, 64)
 				if err == nil {
 					out.WriteByte(byte(v)) // Overflow is OK
 				} else {
@@ -187,7 +187,7 @@ func interpretStringQ2(s string) (string, bool) {
 					i += 2
 					break
 				}
-				v, err := strconv.ParseInt(s[i+len(`\x`):i+len(`\x`)+digits], 16, 64)
+				v, err := strconv.ParseUint(s[i+len(`\x`):i+len(`\x`)+digits], 16, 64)
 				if err == nil && v <= 255 {
 					out.WriteByte(byte(v))
 				} else {
