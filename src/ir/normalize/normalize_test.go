@@ -73,7 +73,8 @@ func TestNormalizeStmtList(t *testing.T) {
 		},
 	}
 
-	conf := Config{CurrentClass: `Foo`}
+	conf := Config{}
+	st := &meta.ClassParseState{CurrentClass: `Foo`}
 	for _, test := range tests {
 
 		list, err := parseStmtList(test.orig)
@@ -81,7 +82,7 @@ func TestNormalizeStmtList(t *testing.T) {
 			t.Errorf("parse `%s`: %v", test.orig, err)
 			continue
 		}
-		normalized := FuncBody(conf, nil, list)
+		normalized := FuncBody(st, conf, nil, list)
 		have := strings.ReplaceAll(irfmt.Node(&ir.StmtList{Stmts: normalized}), "\n", "")
 		have = strings.ReplaceAll(have, "  ", " ")
 		want := `{ ` + test.want + `}`
@@ -101,7 +102,8 @@ type normalizationTest struct {
 func runNormalizeTests(t *testing.T, tests []normalizationTest) {
 	t.Helper()
 
-	conf := Config{CurrentClass: `Foo`}
+	conf := Config{}
+	st := &meta.ClassParseState{CurrentClass: `Foo`}
 	for _, test := range tests {
 		n, _, err := parseutil.ParseStmt([]byte(test.orig))
 		if err != nil {
@@ -109,7 +111,7 @@ func runNormalizeTests(t *testing.T, tests []normalizationTest) {
 			return
 		}
 		irNode := irconv.ConvertNode(n)
-		normalized := FuncBody(conf, nil, []ir.Node{irNode})
+		normalized := FuncBody(st, conf, nil, []ir.Node{irNode})
 		have := strings.TrimSuffix(irfmt.Node(normalized[0]), ";")
 		if have != test.want {
 			t.Errorf("normalize `%s`:\nhave: %s\nwant: %s",
@@ -122,7 +124,7 @@ func runNormalizeTests(t *testing.T, tests []normalizationTest) {
 			return
 		}
 		irNode2 := irconv.ConvertNode(n2)
-		normalized2 := FuncBody(conf, nil, []ir.Node{irNode2})
+		normalized2 := FuncBody(st, conf, nil, []ir.Node{irNode2})
 		have2 := strings.TrimSuffix(irfmt.Node(normalized2[0]), ";")
 		if have != have2 {
 			t.Errorf("second normalization of `%s`:\nhave: %s\nwant: %s",
@@ -166,6 +168,12 @@ func TestNormalizeExpr(t *testing.T) {
 
 		{`$x ? $x : $y`, `$v0 ?: $v1`},
 		{`f() ? f() : $y`, `f() ? f() : $v0`},
+
+		// Const-folded.
+		{`1 + 5`, `6`},
+		{`(1 + 5) + 1`, `7`},
+		{`1 + 2 * 4`, `9`},
+		{`(1 + 2) * 4`, `12`},
 	})
 }
 
