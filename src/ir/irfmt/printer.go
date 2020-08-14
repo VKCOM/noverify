@@ -1147,7 +1147,7 @@ func (p *PrettyPrinter) printStmtClassMethod(n *ir.ClassMethodStmt) {
 }
 
 func (p *PrettyPrinter) printStmtClass(n *ir.ClassStmt) {
-	if len(n.Modifiers) != 0 {
+	if n.Modifiers != nil {
 		p.joinPrintIdents(" ", n.Modifiers)
 		io.WriteString(p.w, " ")
 	}
