@@ -1137,27 +1137,12 @@ func (d *RootWalker) isValidPHPDocRef(n ir.Node, ref string) bool {
 	}
 
 	// expandName tries to convert s symbol into fully qualified form.
-	//
-	// We can't use solver/meta helpers since we deal with raw strings
-	// instead of nodes/names.
-	// TODO: make it easier to re-use that code in both cases.
 	expandName := func(s string) string {
-		if strings.HasPrefix(s, `\`) {
+		s, ok := solver.GetClassName(d.ctx.st, &ir.Name{Value: s})
+		if !ok {
 			return s
 		}
-		switch s {
-		case "self", "static":
-			return d.ctx.st.CurrentClass
-		}
-		parts := strings.Split(s, `\`)
-		firstPart := parts[0]
-		if alias, ok := d.ctx.st.Uses[firstPart]; ok {
-			if len(parts) == 1 {
-				return alias
-			}
-			return alias + `\` + s
-		}
-		return d.ctx.st.Namespace + `\` + s
+		return s
 	}
 
 	isValidGlobalVar := func(ref string) bool {
