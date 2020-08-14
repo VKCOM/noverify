@@ -296,7 +296,7 @@ $_ = array(1);
 		`You are not allowed to disable linter`,
 		`You are not allowed to disable linter`,
 		`Use of old array syntax (use short form instead)`,
-		`Duplicate array key '1'`,
+		`Duplicate array key 1`,
 		`Use of old array syntax (use short form instead)`,
 	}
 	test.RunAndMatch()
@@ -1289,6 +1289,15 @@ func TestAllowAssignmentInForLoop(t *testing.T) {
 	`)
 }
 
+func TestDuplicateArrayKeyEscapes(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$_ = ["\n" => 1, "\xa" => 2];
+`)
+	test.Expect = []string{`Duplicate array key "\n"`}
+	test.RunAndMatch()
+}
+
 func TestDuplicateArrayKeyGood(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 $valid_quotes = [
@@ -1328,7 +1337,7 @@ $b = [
   FIRST_SEARCH_KEY => 1,
   SECOND_SEARCH_KEY => 45,
 ];
-	
+
 const START_PERCENT = 0.1;
 const END_PERCENT = 0.1;
 $c = [
@@ -1355,11 +1364,11 @@ $b = [
 
 `)
 	test.Expect = []string{
-		"Duplicate array key '1'",
-		"Duplicate array key 'apple'",
-		"Duplicate array key '0'",
-		"Duplicate array key '-1'",
-		"Duplicate array key '2'",
+		"Duplicate array key MAX_VALUE (value `1`)",
+		"Duplicate array key FIRST_SEARCH_KEY (value `apple`)",
+		"Duplicate array key START_PERCENT (value `0`)",
+		"Duplicate array key START_PERCENT_REVERT (value `-1`)",
+		"Duplicate array key START_PERCENT_NORMAL (value `2`)",
 	}
 
 	test.RunAndMatch()
