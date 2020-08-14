@@ -1913,6 +1913,11 @@ func (d *RootWalker) checkKeywordCase(n ir.Node, keyword string) {
 	d.checkKeywordCasePos(n, ir.GetPosition(n).StartPos, keyword)
 }
 
+func (d *RootWalker) nodeText(n ir.Node) []byte {
+	pos := ir.GetPosition(n)
+	return d.fileContents[pos.StartPos:pos.EndPos]
+}
+
 func (d *RootWalker) parseClassPHPDoc(n ir.Node, doc string) classPhpDocParseResult {
 	var result classPhpDocParseResult
 

@@ -520,7 +520,7 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 	items := arr.Items
 	haveKeys := false
 	haveImplicitKeys := false
-	keys := make(map[string]struct{}, len(items))
+	keys := make(map[string]ir.Node, len(items))
 
 	for _, item := range items {
 		if item.Val == nil {
@@ -579,11 +579,17 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 			continue
 		}
 
-		if _, ok := keys[key]; ok {
-			b.report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", key)
+		if n, ok := keys[key]; ok {
+			origKey := string(b.walker.r.nodeText(n))
+			dupKey := fmt.Sprintf("%#q", key)
+			msg := fmt.Sprintf("Duplicate array key %s", origKey)
+			if origKey != dupKey && origKey != key {
+				msg += " (value " + dupKey + ")"
+			}
+			b.report(item.Key, LevelWarning, "dupArrayKeys", "%s", msg)
 		}
 
-		keys[key] = struct{}{}
+		keys[key] = item.Key
 	}
 
 	if haveImplicitKeys && haveKeys {
@@ -637,8 +643,7 @@ func (b *blockLinter) checkRegexp(e *ir.FunctionCallExpr, arg *ir.Argument) {
 	pat := s.Value
 	simplified := b.walker.r.reSimplifier.simplifyRegexp(pat)
 	if simplified != "" {
-		pos := ir.GetPosition(s)
-		rawPattern := b.walker.r.fileContents[pos.StartPos:pos.EndPos]
+		rawPattern := b.walker.r.nodeText(s)
 		b.report(arg, LevelDoNotReject, "regexpSimplify", "May re-write %s as '%s'",
 			rawPattern, simplified)
 	}
