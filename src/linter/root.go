@@ -1646,7 +1646,7 @@ func (d *RootWalker) enterConstList(lst *ir.ConstListStmt) bool {
 	for _, sNode := range lst.Consts {
 		s := sNode.(*ir.ConstantStmt)
 
-		value, _ := solver.GetConstantValue(s)
+		value, _ := solver.GetConstantValue(s.Expr)
 
 		id := s.ConstantName
 		nm := d.ctx.st.Namespace + `\` + id.Value

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
-	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/phpdoc"
@@ -789,7 +788,7 @@ func (b *BlockWalker) handleCompactCallArgs(args []ir.Node) {
 
 	for _, s := range strs {
 		v := &ir.SimpleVar{
-			Name:     irutil.Unquote(s.Value),
+			Name:     s.Value,
 			Position: ir.GetPosition(s),
 		}
 		b.handleVariable(v)
@@ -1614,7 +1613,7 @@ func (b *BlockWalker) handleAssignShapeToList(items []*ir.ArrayItemExpr, info me
 			var key string
 			switch keyNode := item.Key.(type) {
 			case *ir.String:
-				key = irutil.Unquote(keyNode.Value)
+				key = keyNode.Value
 			case *ir.Lnumber:
 				key = keyNode.Value
 			case *ir.Dnumber:
