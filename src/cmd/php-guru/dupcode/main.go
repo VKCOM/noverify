@@ -107,6 +107,7 @@ func Main(ctx *guru.Context) (int, error) {
 				root, err := parseutil.ParseFile(data)
 				if err != nil {
 					log.Printf("parse %s file: %v", f.Filename, err)
+					continue
 				}
 				rootIR := irconv.ConvertRoot(root)
 
