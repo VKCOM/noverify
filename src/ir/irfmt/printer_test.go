@@ -6,15 +6,15 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
+	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/ir/irfmt"
-	"github.com/VKCOM/noverify/src/linttest"
+	"github.com/VKCOM/noverify/src/php/parseutil"
 )
 
 func TestPrinter(t *testing.T) {
 
 	testCases := []string{
-		`<?php
-namespace Foo {
+		`namespace Foo {
 
 }
 abstract class Bar extends Baz
@@ -26,316 +26,255 @@ abstract class Bar extends Baz
 }
 `,
 
-		`<?php
-$_ = 'hello world';
+		`$_ = 'hello world';
 
 `,
 
-		`<?php
-$_ = <<<LBL
+		`$_ = <<<LBL
 hello {$var} world
 LBL;
 
 `,
 
-		`<?php
-$_ = <<<'LBL'
+		`$_ = <<<'LBL'
 hello world
 LBL;
 
 `,
 
-		`<?php
-$a = $b;
+		`$a = $b;
 
 `,
 
-		`<?php
-$a =& $b;
+		`$a =& $b;
 
 `,
 
-		`<?php
-$a &= $b;
+		`$a &= $b;
 
 `,
 
-		`<?php
-$a |= $b;
+		`$a |= $b;
 
 `,
 
-		`<?php
-$a ^= $b;
+		`$a ^= $b;
 
 `,
 
-		`<?php
-$a .= $b;
+		`$a .= $b;
 
 `,
 
-		`<?php
-$a /= $b;
+		`$a /= $b;
 
 `,
 
-		`<?php
-$a -= $b;
+		`$a -= $b;
 
 `,
 
-		`<?php
-$a %= $b;
+		`$a %= $b;
 
 `,
 
-		`<?php
-$a *= $b;
+		`$a *= $b;
 
 `,
 
-		`<?php
-$a += $b;
+		`$a += $b;
 
 `,
 
-		`<?php
-$a **= $b;
+		`$a **= $b;
 
 `,
 
-		`<?php
-$a <<= $b;
+		`$a <<= $b;
 
 `,
 
-		`<?php
-$a >>= $b;
+		`$a >>= $b;
 
 `,
 
-		`<?php
-$a & $b;
+		`$a & $b;
 
 `,
 
-		`<?php
-$a | $b;
+		`$a | $b;
 
 `,
 
-		`<?php
-$a ^ $b;
+		`$a ^ $b;
 
 `,
 
-		`<?php
-$a && $b;
+		`$a && $b;
 
 `,
 
-		`<?php
-$a || $b;
+		`$a || $b;
 
 `,
 
-		`<?php
-$a ?? $b;
+		`$a ?? $b;
 
 `,
 
-		`<?php
-$a . $b;
+		`$a . $b;
 
 `,
 
-		`<?php
-$a / $b;
+		`$a / $b;
 
 `,
 
-		`<?php
-$a == $b;
+		`$a == $b;
 
 `,
 
-		`<?php
-$a >= $b;
+		`$a >= $b;
 
 `,
 
-		`<?php
-$a > $b;
+		`$a > $b;
 
 `,
 
-		`<?php
-$a === $b;
+		`$a === $b;
 
 `,
 
-		`<?php
-$a and $b;
+		`$a and $b;
 
 `,
 
-		`<?php
-$a or $b;
+		`$a or $b;
 
 `,
 
-		`<?php
-$a xor $b;
+		`$a xor $b;
 
 `,
 
-		`<?php
-$a - $b;
+		`$a - $b;
 
 `,
 
-		`<?php
-$a % $b;
+		`$a % $b;
 
 `,
 
-		`<?php
-$a * $b;
+		`$a * $b;
 
 `,
 
-		`<?php
-$a != $b;
+		`$a != $b;
 
 `,
 
-		`<?php
-$a !== $b;
+		`$a !== $b;
 
 `,
 
-		`<?php
-$a + $b;
+		`$a + $b;
 
 `,
 
-		`<?php
-$a ** $b;
+		`$a ** $b;
 
 `,
 
-		`<?php
-$a << $b;
+		`$a << $b;
 
 `,
 
-		`<?php
-$a >> $b;
+		`$a >> $b;
 
 `,
 
-		`<?php
-$a <= $b;
+		`$a <= $b;
 
 `,
 
-		`<?php
-$a < $b;
+		`$a < $b;
 
 `,
 
-		`<?php
-$a <=> $b;
+		`$a <=> $b;
 
 `,
 
-		`<?php
-(array)$var;
+		`(array)$var;
 
 `,
 
-		`<?php
-(bool)$var;
+		`(bool)$var;
 
 `,
 
-		`<?php
-(float)$var;
+		`(float)$var;
 
 `,
 
-		`<?php
-(int)$var;
+		`(int)$var;
 
 `,
 
-		`<?php
-(object)$var;
+		`(object)$var;
 
 `,
 
-		`<?php
-(string)$var;
+		`(string)$var;
 
 `,
 
-		`<?php
-(unset)$var;
+		`(unset)$var;
 
 `,
 
-		`<?php
-$var[1];
+		`$var[1];
 
 `,
 
-		`<?php
-$_ = ['Hello' => $world];
+		`$_ = ['Hello' => $world];
 
 `,
 
-		`<?php
-function foo(&$world) {
+		`function foo(&$world) {
 
 }
 
 `,
 
-		`<?php
-$_ = array('Hello' => $world, 2 => &$var, $var);
+		`$_ = array('Hello' => $world, 2 => &$var, $var);
 
 `,
 
-		`<?php
-~$var;
+		`~$var;
 
 `,
 
-		`<?php
-!$var;
+		`!$var;
 
 `,
 
-		`<?php
-$var::CONST;
+		`$var::CONST;
 
 `,
 
-		`<?php
-clone $var;
+		`clone $var;
 
 `,
 
-		`<?php
-$_ = function () use (&$foo, $bar) {
+		`$_ = function () use (&$foo, $bar) {
 
 };
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     $_ = function &(&$var) use (&$a, $b): Foo {
         $a;
     };
@@ -343,185 +282,149 @@ namespace {
 
 `,
 
-		`<?php
-empty($var);
+		`empty($var);
 
 `,
 
-		`<?php
-@$var;
+		`@$var;
 
 `,
 
-		`<?php
-eval($var);
+		`eval($var);
 
 `,
 
-		`<?php
-exit($var);
+		`exit($var);
 
 `,
 
-		`<?php
-die($var);
+		`die($var);
 
 `,
 
-		`<?php
-foo($a, ...$b, $c);
+		`foo($a, ...$b, $c);
 
 `,
 
-		`<?php
-include 'path';
+		`include 'path';
 
 `,
 
-		`<?php
-include_once 'path';
+		`include_once 'path';
 
 `,
 
-		`<?php
-$var instanceof Foo;
+		`$var instanceof Foo;
 
 `,
 
-		`<?php
-isset($a, $b);
+		`isset($a, $b);
 
 `,
 
-		`<?php
-list($a, list($b, $c)) = $a;
+		`list($a, list($b, $c)) = $a;
 
 `,
 
-		`<?php
-$foo->bar($a, $b);
+		`$foo->bar($a, $b);
 
 `,
 
-		`<?php
-new Foo($a, $b);
+		`new Foo($a, $b);
 
 `,
 
-		`<?php
-new Foo;
+		`new Foo;
 
 `,
 
-		`<?php
-new Foo();
+		`new Foo();
 
 `,
 
-		`<?php
-$var--;
+		`$var--;
 
 `,
 
-		`<?php
-$var++;
+		`$var++;
 
 `,
 
-		`<?php
---$var;
+		`--$var;
 
 `,
 
-		`<?php
-++$var;
+		`++$var;
 
 `,
 
-		`<?php
-$foo->bar;
+		`$foo->bar;
 
 `,
 
-		`<?php
-function f(&$foo) {
+		`function f(&$foo) {
 
 }
 
 `,
 
-		`<?php
-require 'path';
+		`require 'path';
 
 `,
 
-		`<?php
-require_once 'path';
+		`require_once 'path';
 
 `,
 
-		`<?php
-['Hello' => $world, 2 => &$var, $var];
+		`['Hello' => $world, 2 => &$var, $var];
 
 `,
 
-		`<?php
-[$a, list($b, $c)];
+		`[$a, list($b, $c)];
 
 `,
 
-		`<?php
-Foo::bar($a, $b);
+		`Foo::bar($a, $b);
 
 `,
 
-		`<?php
-Foo::$bar;
+		`Foo::$bar;
 
 `,
 
-		`<?php
-$a ?: $b;
+		`$a ?: $b;
 
 `,
 
-		`<?php
-$a ? $b : $c;
+		`$a ? $b : $c;
 
 `,
 
-		`<?php
--$var;
+		`-$var;
 
 `,
 
-		`<?php
-+$var;
+		`+$var;
 
 `,
 
-		`<?php
-$$var;
+		`$$var;
 
 `,
 
-		`<?php
-yield from $var;
+		`yield from $var;
 
 `,
 
-		`<?php
-yield $var;
+		`yield $var;
 
 `,
 
-		`<?php
-yield $k => $var;
+		`yield $k => $var;
 
 `,
 
-		`<?php
-if ($b) :
+		`if ($b) :
     $a;
 elseif ($a) :
     $b;
@@ -531,8 +434,7 @@ endif;
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     for ($a; $b; $c) :
         $d;
     endfor;
@@ -540,8 +442,7 @@ namespace {
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     foreach ($var as $key => &$val) :
         $d;
     endforeach;
@@ -549,8 +450,7 @@ namespace {
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     if ($a) :
         $d;
     elseif ($b) :
@@ -563,8 +463,7 @@ namespace {
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     switch ($var) :
         case 'a':
             $a;
@@ -575,8 +474,7 @@ namespace {
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     while ($a) :
         $b;
     endwhile;
@@ -584,16 +482,14 @@ namespace {
 
 `,
 
-		`<?php
-switch ($a) :
+		`switch ($a) :
     case $a:
         $a;
 endswitch;
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     try {
 
     }
@@ -604,8 +500,7 @@ namespace {
 
 `,
 
-		`<?php
-class Foo
+		`class Foo
 {
     public function &foo(?int &$a = null, ...$b): void
     {
@@ -615,16 +510,14 @@ class Foo
 
 `,
 
-		`<?php
-class Foo
+		`class Foo
 {
     public function &foo(?int &$a = null, ...$b): void;
 }
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     abstract class Foo extends Bar implements Baz, Quuz
     {
         public const FOO = 'bar';
@@ -633,8 +526,7 @@ namespace {
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     abstract class Foo extends Bar implements Baz, Quuz
     {
         public const FOO = 'bar';
@@ -643,23 +535,20 @@ namespace {
 
 `,
 
-		`<?php
-class Foo
+		`class Foo
 {
     public const FOO = 'a', BAR = 'b';
 }
 
 `,
 
-		`<?php
-for ($a = 1; $a < 5; $a++) {
+		`for ($a = 1; $a < 5; $a++) {
     continue 1;
 }
 
 `,
 
-		`<?php
-{
+		`{
     declare(FOO = 'bar') {
         ;
     }
@@ -667,29 +556,25 @@ for ($a = 1; $a < 5; $a++) {
 
 `,
 
-		`<?php
-{
+		`{
     declare(FOO = 'bar')
         'bar';
 }
 
 `,
 
-		`<?php
-declare(FOO = 'bar');
+		`declare(FOO = 'bar');
 
 `,
 
-		`<?php
-switch ($a) {
+		`switch ($a) {
     default:
         $a;
 }
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     do
         $a;
     while (1);
@@ -697,8 +582,7 @@ namespace {
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     do {
         $a;
     } while (1);
@@ -706,18 +590,15 @@ namespace {
 
 `,
 
-		`<?php
-echo $a, $b;
+		`echo $a, $b;
 
 `,
 
-		`<?php
-$a;
+		`$a;
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     try {
 
     }
@@ -729,8 +610,7 @@ namespace {
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     for ($a, $b; $c, $d; $e, $f) {
         ;
     }
@@ -738,21 +618,18 @@ namespace {
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     for ($a; $b; $c)
         'bar';
 }
 
 `,
 
-		`<?php
-for ($a; $b; $c);
+		`for ($a; $b; $c);
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     foreach ($a as $b) {
         ;
     }
@@ -760,21 +637,18 @@ namespace {
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     foreach ($a as $k => $v)
         'bar';
 }
 
 `,
 
-		`<?php
-foreach ($a as $k => &$v);
+		`foreach ($a as $k => &$v);
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     function &foo(&$var): \Foo {
         ;
     }
@@ -782,28 +656,23 @@ namespace {
 
 `,
 
-		`<?php
-global $a, $b;
+		`global $a, $b;
 
 `,
 
-		`<?php
-goto FOO;
+		`goto FOO;
 
 `,
 
-		`<?php
-use function Foo\{Bar as Baz, Quuz};
+		`use function Foo\{Bar as Baz, Quuz};
 
 `,
 
-		`<?php
-__halt_compiler();
+		`__halt_compiler();
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     if ($a)
         $b;
     elseif ($c) {
@@ -816,8 +685,7 @@ namespace {
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     if ($a) {
         $b;
     }
@@ -826,20 +694,17 @@ namespace {
 
 `,
 
-		`<?php
-if ($a);
+		`if ($a);
 
 
 `,
 
-		`<?php
-;
+		`;
 ?>test
 <?php
 `,
 
-		`<?php
-namespace {
+		`namespace {
     interface Foo extends Bar, Baz
     {
         public function foo()
@@ -851,66 +716,56 @@ namespace {
 
 `,
 
-		`<?php
-FOO:
+		`FOO:
 
 `,
 
-		`<?php
-namespace Foo {
+		`namespace Foo {
 
 }
 
 `,
 
-		`<?php
-namespace Foo {
+		`namespace Foo {
     $a;
 }
 
 `,
 
-		`<?php
-;
+		`;
 
 `,
 
-		`<?php
-class Foo
+		`class Foo
 {
     public static $a, $b;
 }
 
 `,
 
-		`<?php
-$a = 1;
+		`$a = 1;
 
 `,
 
-		`<?php
-return 1;
+		`return 1;
 
 `,
 
-		`<?php
-class Foo
+		`class Foo
 {
     static $a, $b;
 }
 
 `,
 
-		`<?php
-{
+		`{
     $a;
     $b;
 }
 
 `,
 
-		`<?php
-{
+		`{
     $a;
     {
         $b;
@@ -922,8 +777,7 @@ class Foo
 
 `,
 
-		`<?php
-{
+		`{
     switch ($var) {
         case 'a':
             $a;
@@ -934,23 +788,19 @@ class Foo
 
 `,
 
-		`<?php
-throw $var;
+		`throw $var;
 
 `,
 
-		`<?php
-Foo::a;
+		`Foo::a;
 
 `,
 
-		`<?php
-use Foo, Bar;
+		`use Foo, Bar;
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     trait Foo
     {
         public function foo()
@@ -962,8 +812,7 @@ namespace {
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     try {
         $a;
     }
@@ -977,13 +826,11 @@ namespace {
 
 `,
 
-		`<?php
-unset($a, $b);
+		`unset($a, $b);
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     while ($a) {
         $a;
     }
@@ -991,16 +838,14 @@ namespace {
 
 `,
 
-		`<?php
-namespace {
+		`namespace {
     while ($a)
         $a;
 }
 
 `,
 
-		`<?php
-while ($a);
+		`while ($a);
 
 `,
 	}
@@ -1011,12 +856,20 @@ while ($a);
 }
 
 func runPrinterTest(t *testing.T, code string) {
-	rootNode, _ := linttest.ParseTestFile(t, "printer_test.php", code)
+	t.Helper()
+
+	code = "<?php\n" + code
+	root, err := parseutil.ParseFile([]byte(code))
+	if err != nil {
+		t.Errorf("parse %s: %v", code, err)
+		return
+	}
+	rootIR := irconv.ConvertRoot(root)
 
 	o := bytes.NewBufferString("")
 	p := irfmt.NewPrettyPrinter(o, "    ")
 
-	p.Print(rootNode)
+	p.Print(rootIR)
 	want := o.String()
 	have := code
 
