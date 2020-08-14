@@ -69,12 +69,12 @@ func TestNormalizeStmtList(t *testing.T) {
 
 		{
 			`self::$x; self::myconst;`,
-			`Foo::$x; Foo::myconst;`,
+			`\Foo::$x; \Foo::myconst;`,
 		},
 	}
 
 	conf := Config{}
-	st := &meta.ClassParseState{CurrentClass: `Foo`}
+	st := &meta.ClassParseState{CurrentClass: `\Foo`}
 	for _, test := range tests {
 
 		list, err := parseStmtList(test.orig)
@@ -103,7 +103,7 @@ func runNormalizeTests(t *testing.T, tests []normalizationTest) {
 	t.Helper()
 
 	conf := Config{}
-	st := &meta.ClassParseState{CurrentClass: `Foo`}
+	st := &meta.ClassParseState{CurrentClass: `\Foo`}
 	for _, test := range tests {
 		n, _, err := parseutil.ParseStmt([]byte(test.orig))
 		if err != nil {
@@ -164,7 +164,7 @@ func TestNormalizeExpr(t *testing.T) {
 		{`$x = $x - 1`, `--$v0`},
 
 		{`array(1, 2)`, `[1, 2]`},
-		{`list($x, $y) = f()`, `[$v0, $v1] = f()`},
+		{`list($x, $y) = f()`, `[0 => $v0, 1 => $v1] = f()`},
 
 		{`$x ? $x : $y`, `$v0 ?: $v1`},
 		{`f() ? f() : $y`, `f() ? f() : $v0`},
@@ -174,6 +174,12 @@ func TestNormalizeExpr(t *testing.T) {
 		{`(1 + 5) + 1`, `7`},
 		{`1 + 2 * 4`, `9`},
 		{`(1 + 2) * 4`, `12`},
+
+		// List assignments.
+		{`list(, $x) = f()`, `[1 => $v0] = f()`},
+		{`list(, $x, , $y) = f()`, `[1 => $v0, 3 => $v1] = f()`},
+		{`[5 => $x] = f()`, `[5 => $v0] = f()`},
+		{`[$x, ] = f()`, `[0 => $v0] = f()`},
 	})
 }
 
@@ -182,6 +188,10 @@ func TestNormalizeExprAfterIndexing(t *testing.T) {
 const ZERO = 0;
 const HELLO_WORLD = 'hello, world';
 const LOCALHOST = "127.0.0.1";
+
+class Foo {
+  const FOO_VALUE = 53.001122334455665;
+}
 `)
 	meta.SetIndexingComplete(true)
 	defer meta.SetIndexingComplete(false)
@@ -190,6 +200,7 @@ const LOCALHOST = "127.0.0.1";
 		{`ZERO`, `0`},
 		{`HELLO_WORLD`, `'hello, world'`},
 		{`LOCALHOST`, `'127.0.0.1'`},
+		{`self::FOO_VALUE`, `53.001122334455665`},
 	})
 }
 

@@ -3,6 +3,7 @@ package normalize
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/constfold"
@@ -395,6 +396,19 @@ func (norm *normalizer) normalizedExpr(e ir.Node) ir.Node {
 	case *ir.ListExpr:
 		// `list(...)` => `[...]`
 		e.ShortSyntax = true
+		// `list($x, $y)` => `list(0 => $x, 1 => $y)`
+		// `list(, $x)` => `list(1 => $x)`,
+		items := e.Items[:0]
+		for i, item := range e.Items {
+			if item.Val == nil {
+				continue
+			}
+			if item.Key == nil {
+				item.Key = &ir.Lnumber{Value: strconv.Itoa(i)}
+			}
+			items = append(items, item)
+		}
+		e.Items = items
 	}
 
 	return e
@@ -480,6 +494,8 @@ func constToIR(v meta.ConstantValue) ir.Node {
 	switch v.Type {
 	case meta.Integer:
 		return &ir.Lnumber{Value: fmt.Sprint(value)}
+	case meta.Float:
+		return &ir.Dnumber{Value: fmt.Sprint(value)}
 	case meta.String:
 		return &ir.String{Value: value.(string)}
 	default:
