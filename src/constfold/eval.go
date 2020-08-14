@@ -19,6 +19,20 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstantValue {
 	case *ir.ParenExpr:
 		return Eval(st, e.Expr)
 
+	case *ir.ClassConstFetchExpr:
+		if !meta.IsIndexingComplete() {
+			return meta.UnknownValue
+		}
+		className, ok := solver.GetClassName(st, e.Class)
+		if !ok {
+			return meta.UnknownValue
+		}
+		info, _, ok := solver.FindConstant(className, e.ConstantName.Value)
+		if !ok {
+			return meta.UnknownValue
+		}
+		return info.Value
+
 	case *ir.ConstFetchExpr:
 		switch e.Constant.Value {
 		case `true`:
