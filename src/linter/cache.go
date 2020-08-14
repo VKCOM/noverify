@@ -40,7 +40,8 @@ import (
 //     39 - added new field Value in ConstantInfo
 //     40 - changed string const value storage (no quotes)
 //     41 - const-folding affected const definition values
-const cacheVersion = 41
+//     42 - bool-typed consts are now stored in meta info
+const cacheVersion = 42
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")

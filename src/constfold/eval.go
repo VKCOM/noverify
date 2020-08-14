@@ -19,6 +19,12 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstantValue {
 		return Eval(st, e.Expr)
 
 	case *ir.ConstFetchExpr:
+		switch e.Constant.Value {
+		case `true`:
+			return meta.TrueValue
+		case `false`:
+			return meta.FalseValue
+		}
 		if !meta.IsIndexingComplete() {
 			return meta.UnknownValue
 		}

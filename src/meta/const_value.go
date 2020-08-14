@@ -7,17 +7,20 @@ import (
 
 type ConstantValueType uint8
 
-// TODO: add bool const values?
-
 //go:generate stringer -type=ConstantValueType
 const (
 	Undefined ConstantValueType = iota
 	Integer
 	Float
 	String
+	Bool
 )
 
-var UnknownValue = ConstantValue{Type: Undefined}
+var (
+	UnknownValue = ConstantValue{Type: Undefined}
+	TrueValue    = ConstantValue{Type: Bool, Value: true}
+	FalseValue   = ConstantValue{Type: Bool, Value: false}
+)
 
 type ConstantValue struct {
 	Type  ConstantValueType
@@ -46,6 +49,17 @@ func (c ConstantValue) GobEncode() ([]byte, error) {
 			return nil, fmt.Errorf("corrupted string")
 		}
 		str := fmt.Sprintf("%c%s", c.Type, val)
+		return []byte(str), nil
+	case Bool:
+		val, ok := c.Value.(bool)
+		if !ok {
+			return nil, fmt.Errorf("corrupted bool")
+		}
+		x := "f"
+		if val {
+			x = "t"
+		}
+		str := fmt.Sprintf("%c%s", c.Type, x)
 		return []byte(str), nil
 	}
 
@@ -76,6 +90,15 @@ func (c *ConstantValue) GobDecode(buf []byte) error {
 		c.Value = value
 	case String:
 		c.Value = val
+	case Bool:
+		switch val {
+		case "t":
+			c.Value = true
+		case "f":
+			c.Value = false
+		default:
+			return fmt.Errorf("invalid bool: %q", val)
+		}
 	}
 
 	c.Type = tp

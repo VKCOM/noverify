@@ -1322,6 +1322,30 @@ function test() {
 	test.RunAndMatch()
 }
 
+func TestDuplicateArrayKeyWithBoolConstants(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+// TODO: define'd consts should work as well.
+// define('TRUE_CONST', true);
+// define('FALSE_CONST', false);
+
+const TRUE_CONST = true;
+const FALSE_CONST = false;
+
+$_ = [TRUE_CONST => 1, true => 2];
+$_ = [FALSE_CONST => 1, false => 2];
+$_ = [0 => 1, false => 2];
+$_ = [1 => 1, true => 2];
+`)
+	test.Expect = []string{
+		"Duplicate array key TRUE_CONST (value `1`)",
+		"Duplicate array key FALSE_CONST (value `0`)",
+		`Duplicate array key 0`,
+		`Duplicate array key 1`,
+	}
+	test.RunAndMatch()
+}
+
 func TestDuplicateArrayKeyWithConstants(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
