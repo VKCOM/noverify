@@ -34,6 +34,9 @@ const WITH_CONST_FOLD = 10 + 15;
 const BOOL_CONST1 = true;
 const BOOL_CONST2 = false;
 
+define('DEF_INT', 10+3);
+define('DEF_STRING', '123');
+
 $globalIntVar = 10;
 $globalStringVar = 'string';
 
@@ -116,7 +119,7 @@ main();
 		//
 		// If cache encoding changes, there is a very high chance that
 		// encoded data lengh will change as well.
-		wantLen := 4632
+		wantLen := 4846
 		haveLen := buf.Len()
 		if haveLen != wantLen {
 			t.Errorf("cache len mismatch:\nhave: %d\nwant: %d", haveLen, wantLen)
@@ -125,7 +128,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "034a55094dc7cbdf1f19fa1eb36c8666e7266023e2e370cd6e4fb5e6cd15b82031ca1877bf34641f2a8b895fdbe29e86269697bd548c273dd9fa428fc92d15b1"
+		wantStrings := "cc4141d5dc69f8f49dfaa717c59596ee5e6c490b8274fe2742393bea87c1fcd0cc4be443127b117cdd8e58aeef09603c548e6461d2f45ff7be7fb6834b40533c"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)
