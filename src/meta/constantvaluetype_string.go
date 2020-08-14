@@ -12,11 +12,12 @@ func _() {
 	_ = x[Integer-1]
 	_ = x[Float-2]
 	_ = x[String-3]
+	_ = x[Bool-4]
 }
 
-const _ConstantValueType_name = "UndefinedIntegerFloatString"
+const _ConstantValueType_name = "UndefinedIntegerFloatStringBool"
 
-var _ConstantValueType_index = [...]uint8{0, 9, 16, 21, 27}
+var _ConstantValueType_index = [...]uint8{0, 9, 16, 21, 27, 31}
 
 func (i ConstantValueType) String() string {
 	if i >= ConstantValueType(len(_ConstantValueType_index)-1) {
