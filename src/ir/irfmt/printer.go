@@ -471,7 +471,13 @@ func (p *PrettyPrinter) printScalarDNumber(n *ir.Dnumber) {
 }
 
 func (p *PrettyPrinter) printScalarString(n *ir.String) {
-	io.WriteString(p.w, n.Value)
+	var s string
+	if n.DoubleQuotes {
+		s = `"` + n.Value + `"`
+	} else {
+		s = "'" + n.Value + "'"
+	}
+	io.WriteString(p.w, s)
 }
 
 func (p *PrettyPrinter) printScalarEncapsedStringPart(n *ir.EncapsedStringPart) {
@@ -948,7 +954,7 @@ func (p *PrettyPrinter) printExprNew(n *ir.NewExpr) {
 	io.WriteString(p.w, "new ")
 	p.Print(n.Class)
 
-	if len(n.Args) != 0 {
+	if n.Args != nil {
 		io.WriteString(p.w, "(")
 		p.joinPrint(", ", n.Args)
 		io.WriteString(p.w, ")")

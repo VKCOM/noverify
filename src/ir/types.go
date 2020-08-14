@@ -684,6 +684,7 @@ type String struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Value        string
+	DoubleQuotes bool
 }
 
 type BreakStmt struct {

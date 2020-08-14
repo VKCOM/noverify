@@ -23,6 +23,7 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/vscode"
+	"github.com/VKCOM/noverify/src/workspace"
 	"go.lsp.dev/uri"
 )
 
@@ -167,8 +168,8 @@ func handleInitialize(req *baseRequest) error {
 	go func() {
 		linter.AnalysisFiles = []string{params.RootURI.Filename()}
 
-		filter := linter.NewFilenameFilter(linter.ExcludeRegex)
-		linter.ParseFilenames(linter.ReadFilenames(linter.AnalysisFiles, filter), nil)
+		filter := workspace.NewFilenameFilter(linter.ExcludeRegex)
+		linter.ParseFilenames(workspace.ReadFilenames(linter.AnalysisFiles, filter), nil)
 
 		meta.SetIndexingComplete(true)
 

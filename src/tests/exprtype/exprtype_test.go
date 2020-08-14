@@ -12,6 +12,7 @@ import (
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/workspace"
 )
 
 // Tests in this file make it less likely that type solving will break
@@ -2173,8 +2174,8 @@ function f() {
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {
-		linter.InitStubs(func(ch chan linter.FileInfo) {
-			ch <- linter.FileInfo{
+		linter.InitStubs(func(ch chan workspace.FileInfo) {
+			ch <- workspace.FileInfo{
 				Filename: "stubs.php",
 				Contents: []byte(params.stubs),
 			}
@@ -2233,7 +2234,7 @@ func (w *exprTypeWalker) EnterNode(n ir.Node) bool {
 		if !ok {
 			w.t.Fatalf("no type found for %s expression", irutil.FmtNode(checkedExpr))
 		}
-		want := makeType(expectedType[len(`"`) : len(expectedType)-len(`"`)])
+		want := makeType(expectedType)
 		have := testTypesMap{
 			Types:   actualType.String(),
 			Precise: actualType.IsPrecise(),

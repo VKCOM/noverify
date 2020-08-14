@@ -30,13 +30,13 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 			methodName := n.Arg(1).Expr
 			lit, ok := methodName.(*ir.String)
 			if ok {
-				a.b.ctx.addCustomMethod(obj, unquote(lit.Value))
+				a.b.ctx.addCustomMethod(obj, lit.Value)
 			}
 		case len(n.Args) == 1 && nm.Value == `function_exists`:
 			functionName := n.Arg(0).Expr
 			lit, ok := functionName.(*ir.String)
 			if ok {
-				a.b.ctx.addCustomFunction(unquote(lit.Value))
+				a.b.ctx.addCustomFunction(lit.Value)
 			}
 		}
 

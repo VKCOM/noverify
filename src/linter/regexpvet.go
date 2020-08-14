@@ -21,12 +21,12 @@ type regexpVet struct {
 
 type regexpFlagState [utf8.RuneSelf]bool // 128 bytes per group context
 
-func (c *regexpVet) CheckRegexp(pat regexpPattern) ([]string, error) {
+func (c *regexpVet) CheckRegexp(pat string) ([]string, error) {
 	c.issues = c.issues[:0]
 	c.flagStates = c.flagStates[:0]
 	c.goodAnchors = c.goodAnchors[:0]
 
-	re, err := c.parser.ParsePCRE(pat.value)
+	re, err := c.parser.ParsePCRE(pat)
 	if err != nil {
 		if strings.Contains(err.Error(), "not supported") {
 			// Can't analyze, can't report an error.

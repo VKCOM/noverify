@@ -801,7 +801,7 @@ func (b *BlockWalker) handleCompactCallArgs(args []ir.Node) {
 
 	for _, s := range strs {
 		v := &ir.SimpleVar{
-			Name:     unquote(s.Value),
+			Name:     s.Value,
 			Position: ir.GetPosition(s),
 		}
 		b.handleVariable(v)
@@ -1694,7 +1694,7 @@ func (b *BlockWalker) handleAssignShapeToList(items []*ir.ArrayItemExpr, info me
 			var key string
 			switch keyNode := item.Key.(type) {
 			case *ir.String:
-				key = unquote(keyNode.Value)
+				key = keyNode.Value
 			case *ir.Lnumber:
 				key = keyNode.Value
 			case *ir.Dnumber:
