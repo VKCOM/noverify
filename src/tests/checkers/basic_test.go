@@ -1326,7 +1326,7 @@ func TestDuplicateArrayKeyWithConstants(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 const MAX_VALUE = 1;
-const MIN_VALUE = 1;
+const MIN_VALUE = 0+1; // Const-folded to 1
 $a = [
   MAX_VALUE => 'something',
   MIN_VALUE => 'other_thing',
@@ -1344,7 +1344,6 @@ $c = [
   START_PERCENT => 1,
   END_PERCENT => 45,
 ];
-
 
 const START_PERCENT_REVERT = -1;
 const END_PERCENT_REVERT = -1.51;

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/baseline"
+	"github.com/VKCOM/noverify/src/constfold"
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
@@ -930,7 +931,7 @@ func (d *RootWalker) enterClassConstList(s *ir.ClassConstListStmt) bool {
 		d.checkCommentMisspellings(c, c.PhpDocComment)
 		typ := solver.ExprTypeLocal(d.scope(), d.ctx.st, c.Expr)
 
-		value, _ := solver.GetConstantValue(c)
+		value := constfold.Eval(d.ctx.st, c.Expr)
 
 		// TODO: handle duplicate constant
 		cl.Constants[nm] = meta.ConstantInfo{
@@ -1646,7 +1647,7 @@ func (d *RootWalker) enterConstList(lst *ir.ConstListStmt) bool {
 	for _, sNode := range lst.Consts {
 		s := sNode.(*ir.ConstantStmt)
 
-		value, _ := solver.GetConstantValue(s.Expr)
+		value := constfold.Eval(d.ctx.st, s.Expr)
 
 		id := s.ConstantName
 		nm := d.ctx.st.Namespace + `\` + id.Value
