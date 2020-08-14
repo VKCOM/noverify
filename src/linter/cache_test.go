@@ -30,6 +30,7 @@ func TestCache(t *testing.T) {
 const GLOBAL_CONST = 1;
 const FLOAT_CONST = 153.5;
 const NEGATIVE_INT_CONST = -43;
+const WITH_CONST_FOLD = 10 + 15;
 
 $globalIntVar = 10;
 $globalStringVar = 'string';
@@ -113,7 +114,7 @@ main();
 		//
 		// If cache encoding changes, there is a very high chance that
 		// encoded data lengh will change as well.
-		wantLen := 4296
+		wantLen := 4413
 		haveLen := buf.Len()
 		if haveLen != wantLen {
 			t.Errorf("cache len mismatch:\nhave: %d\nwant: %d", haveLen, wantLen)
@@ -122,7 +123,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "10dbc28ec87d69246d9b65c17638491e5463ae05a589b11753df79ecbe6ce1f61810a4243a90cc53254c9cea280b22f9fd5b34ee468a299e258bdc2b878982b0"
+		wantStrings := "266ae111001785053b77fc003fe4566dcfb16e1d5674c08cb867c87531f2882a8c2157b2b737adb4da7f62d2e038e289ae2dd8ea92381607768c5e8ac4496744"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)

@@ -7,12 +7,17 @@ import (
 
 type ConstantValueType uint8
 
+// TODO: add bool const values?
+
+//go:generate stringer -type=ConstantValueType
 const (
 	Undefined ConstantValueType = iota
 	Integer
 	Float
 	String
 )
+
+var UnknownValue = ConstantValue{Type: Undefined}
 
 type ConstantValue struct {
 	Type  ConstantValueType
@@ -82,7 +87,8 @@ func (c ConstantValue) String() string {
 	if c.Type == Undefined {
 		return "Undefined type"
 	}
-	return fmt.Sprintf("%d: %v", c.Type, c.Value)
+
+	return fmt.Sprintf("%s(%v)", c.Type, c.Value)
 }
 
 func (c ConstantValue) IsEqual(v ConstantValue) bool {
