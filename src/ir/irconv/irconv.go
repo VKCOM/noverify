@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
@@ -1113,14 +1114,7 @@ func convertNode(state *convState, n node.Node) ir.Node {
 		return out
 
 	case *scalar.String:
-		if n == nil {
-			return (*ir.String)(nil)
-		}
-		out := &ir.String{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Value = n.Value
-		return out
+		return convString(n)
 
 	case *stmt.Break:
 		if n == nil {
@@ -1175,11 +1169,13 @@ func convertNode(state *convState, n node.Node) ir.Node {
 		out.PhpDocComment = n.PhpDocComment
 		out.ClassName = convertNode(state, n.ClassName).(*ir.Identifier)
 		{
-			slice := make([]*ir.Identifier, len(n.Modifiers))
-			for i := range n.Modifiers {
-				slice[i] = convertNode(state, n.Modifiers[i]).(*ir.Identifier)
+			if n.Modifiers != nil {
+				slice := make([]*ir.Identifier, len(n.Modifiers))
+				for i := range n.Modifiers {
+					slice[i] = convertNode(state, n.Modifiers[i]).(*ir.Identifier)
+				}
+				out.Modifiers = slice
 			}
-			out.Modifiers = slice
 		}
 		if n.ArgumentList != nil {
 			out.ArgsFreeFloating = n.ArgumentList.FreeFloating
@@ -1781,4 +1777,31 @@ func convCastExpr(state *convState, n, e node.Node, typ string) *ir.TypeCastExpr
 		Type:         typ,
 		Expr:         convertNode(state, e),
 	}
+}
+
+func convString(n *scalar.String) *ir.String {
+	out := &ir.String{
+		FreeFloating: n.FreeFloating,
+		Position:     n.Position,
+	}
+
+	// We can't use n.Value[0] as quote char directly as when
+	// we parse string parts like $_SERVER[HTTP_HOST] we get
+	// HTTP_HOST as a value with no quotes.
+	var quote byte
+	if n.Value[0] == '"' {
+		quote = '"'
+	} else {
+		quote = '\''
+	}
+
+	out.DoubleQuotes = n.Value[0] == '"'
+	s, ok := interpretString(irutil.Unquote(n.Value), quote)
+	if !ok {
+		panic(fmt.Sprintf("can't interpret %s (line=%d bytes=%#v)",
+			n.Value, n.GetPosition().StartLine, []byte(n.Value)))
+	}
+	out.Value = s
+
+	return out
 }

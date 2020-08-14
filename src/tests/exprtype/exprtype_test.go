@@ -2222,7 +2222,7 @@ func (w *exprTypeWalker) EnterNode(n ir.Node) bool {
 		if !ok {
 			w.t.Fatalf("no type found for %s expression", irutil.FmtNode(checkedExpr))
 		}
-		want := makeType(expectedType[len(`"`) : len(expectedType)-len(`"`)])
+		want := makeType(expectedType)
 		have := testTypesMap{
 			Types:   actualType.String(),
 			Precise: actualType.IsPrecise(),

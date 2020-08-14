@@ -305,12 +305,7 @@ func (norm *normalizer) normalizedExpr(e ir.Node) ir.Node {
 
 	case *ir.String:
 		// `"abc"` => `'abc'`
-		if e.Value[0] != '"' {
-			break
-		}
-		if !strings.ContainsAny(e.Value, `'\`) {
-			e.Value = `'` + irutil.Unquote(e.Value) + `'`
-		}
+		e.DoubleQuotes = false
 
 	case *ir.TernaryExpr:
 		// `$x ? $x : $y` => `$x ?: $y`
@@ -350,7 +345,7 @@ func (norm *normalizer) normalizedExpr(e ir.Node) ir.Node {
 		case meta.Integer:
 			return &ir.Lnumber{Value: fmt.Sprint(value)}
 		case meta.String:
-			return &ir.String{Value: `'` + value.(string) + `'`}
+			return &ir.String{Value: value.(string)}
 		default:
 			return e
 		}
@@ -452,7 +447,7 @@ func (norm *normalizer) getConstant(n ir.Node) (meta.ConstantInfo, bool) {
 
 var (
 	nullConstNode   = &ir.ConstFetchExpr{Constant: &ir.Name{Value: "null"}}
-	emptyStringNode = &ir.String{Value: `''`}
+	emptyStringNode = &ir.String{}
 )
 
 var funcAliases = map[string]*ir.Name{
@@ -492,7 +487,7 @@ func literalValue(e ir.Node) string {
 func encapsedPartToConcatArg(n ir.Node) ir.Node {
 	switch n := n.(type) {
 	case *ir.EncapsedStringPart:
-		return &ir.String{Value: `'` + n.Value + `'`}
+		return &ir.String{Value: n.Value}
 	default:
 		return n
 	}

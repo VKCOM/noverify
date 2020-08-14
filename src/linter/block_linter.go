@@ -539,7 +539,7 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 
 		switch k := item.Key.(type) {
 		case *ir.String:
-			key = irutil.Unquote(k.Value)
+			key = k.Value
 			constKey = true
 		case *ir.Lnumber:
 			key = k.Value
@@ -634,14 +634,13 @@ func (b *blockLinter) checkRegexp(e *ir.FunctionCallExpr, arg *ir.Argument) {
 	if !ok {
 		return
 	}
-	pat, ok := newRegexpPattern(s)
-	if !ok {
-		return
-	}
+	pat := s.Value
 	simplified := b.walker.r.reSimplifier.simplifyRegexp(pat)
 	if simplified != "" {
+		pos := ir.GetPosition(s)
+		rawPattern := b.walker.r.fileContents[pos.StartPos:pos.EndPos]
 		b.report(arg, LevelDoNotReject, "regexpSimplify", "May re-write %s as '%s'",
-			s.Value, simplified)
+			rawPattern, simplified)
 	}
 	issues, err := b.walker.r.reVet.CheckRegexp(pat)
 	if err != nil {
