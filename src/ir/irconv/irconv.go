@@ -1169,11 +1169,13 @@ func convertNode(state *convState, n node.Node) ir.Node {
 		out.PhpDocComment = n.PhpDocComment
 		out.ClassName = convertNode(state, n.ClassName).(*ir.Identifier)
 		{
-			slice := make([]*ir.Identifier, len(n.Modifiers))
-			for i := range n.Modifiers {
-				slice[i] = convertNode(state, n.Modifiers[i]).(*ir.Identifier)
+			if len(n.Modifiers) != 0 {
+				slice := make([]*ir.Identifier, len(n.Modifiers))
+				for i := range n.Modifiers {
+					slice[i] = convertNode(state, n.Modifiers[i]).(*ir.Identifier)
+				}
+				out.Modifiers = slice
 			}
-			out.Modifiers = slice
 		}
 		if n.ArgumentList != nil {
 			out.ArgsFreeFloating = n.ArgumentList.FreeFloating
