@@ -4,7 +4,6 @@ import (
 	"strconv"
 
 	"github.com/VKCOM/noverify/src/ir"
-	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/solver"
 )
@@ -59,8 +58,7 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstantValue {
 		return meta.ConstantValue{Type: meta.Float, Value: value}
 
 	case *ir.String:
-		v := irutil.Unquote(e.Value)
-		return meta.ConstantValue{Value: v, Type: meta.String}
+		return meta.ConstantValue{Value: e.Value, Type: meta.String}
 	}
 
 	return meta.UnknownValue
