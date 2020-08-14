@@ -30,7 +30,7 @@ func TestPrintFile(t *testing.T) {
 							Stmts: []ir.Node{
 								&ir.EchoStmt{
 									Exprs: []ir.Node{
-										&ir.String{Value: "'Hello world'"},
+										&ir.String{Value: "Hello world"},
 									},
 								},
 							},
@@ -110,7 +110,7 @@ func TestPrintParameter(t *testing.T) {
 		Variadic:     true,
 		VariableType: &ir.Name{Value: `\Foo`},
 		Variable:     &ir.SimpleVar{Name: "var"},
-		DefaultValue: &ir.String{Value: "'default'"},
+		DefaultValue: &ir.String{Value: "default"},
 	})
 
 	expected := "\\Foo ...$var = 'default'"
@@ -131,7 +131,7 @@ func TestPrintNullable(t *testing.T) {
 			Variadic:     true,
 			VariableType: &ir.Name{Value: `\Foo`},
 			Variable:     &ir.SimpleVar{Name: "var"},
-			DefaultValue: &ir.String{Value: "'default'"},
+			DefaultValue: &ir.String{Value: "default"},
 		},
 	})
 
@@ -220,9 +220,23 @@ func TestPrintScalarString(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.String{Value: "'hello world'"})
+	p.Print(&ir.String{Value: "hello world"})
 
 	expected := `'hello world'`
+	actual := o.String()
+
+	if expected != actual {
+		t.Errorf("\nexpected: %s\ngot: %s\n", expected, actual)
+	}
+}
+
+func TestPrintScalarStringDoubleQuotes(t *testing.T) {
+	o := bytes.NewBufferString("")
+
+	p := NewPrettyPrinter(o, "    ")
+	p.Print(&ir.String{Value: "hello world", DoubleQuotes: true})
+
+	expected := `"hello world"`
 	actual := o.String()
 
 	if expected != actual {
@@ -1158,7 +1172,7 @@ func TestPrintExprArrayItemWithKey(t *testing.T) {
 
 	p := NewPrettyPrinter(o, "    ")
 	p.Print(&ir.ArrayItemExpr{
-		Key: &ir.String{Value: "'Hello'"},
+		Key: &ir.String{Value: "Hello"},
 		Val: &ir.SimpleVar{Name: "world"},
 	})
 
@@ -1193,7 +1207,7 @@ func TestPrintExprArray(t *testing.T) {
 	p.Print(&ir.ArrayExpr{
 		Items: []*ir.ArrayItemExpr{
 			{
-				Key: &ir.String{Value: "'Hello'"},
+				Key: &ir.String{Value: "Hello"},
 				Val: &ir.SimpleVar{Name: "world"},
 			},
 			{
@@ -1459,7 +1473,7 @@ func TestPrintInclude(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.ImportExpr{Func: "include", Expr: &ir.String{Value: "'path'"}})
+	p.Print(&ir.ImportExpr{Func: "include", Expr: &ir.String{Value: "path"}})
 
 	expected := `include 'path'`
 	actual := o.String()
@@ -1473,7 +1487,7 @@ func TestPrintIncludeOnce(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.ImportExpr{Func: "include_once", Expr: &ir.String{Value: "'path'"}})
+	p.Print(&ir.ImportExpr{Func: "include_once", Expr: &ir.String{Value: "path"}})
 
 	expected := `include_once 'path'`
 	actual := o.String()
@@ -1746,7 +1760,7 @@ func TestPrintRequire(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.ImportExpr{Func: "require", Expr: &ir.String{Value: "'path'"}})
+	p.Print(&ir.ImportExpr{Func: "require", Expr: &ir.String{Value: "path"}})
 
 	expected := `require 'path'`
 	actual := o.String()
@@ -1760,7 +1774,7 @@ func TestPrintRequireOnce(t *testing.T) {
 	o := bytes.NewBufferString("")
 
 	p := NewPrettyPrinter(o, "    ")
-	p.Print(&ir.ImportExpr{Func: "require_once", Expr: &ir.String{Value: "'path'"}})
+	p.Print(&ir.ImportExpr{Func: "require_once", Expr: &ir.String{Value: "path"}})
 
 	expected := `require_once 'path'`
 	actual := o.String()
@@ -1798,7 +1812,7 @@ func TestPrintExprShortArray(t *testing.T) {
 		ShortSyntax: true,
 		Items: []*ir.ArrayItemExpr{
 			{
-				Key: &ir.String{Value: "'Hello'"},
+				Key: &ir.String{Value: "Hello"},
 				Val: &ir.SimpleVar{Name: "world"},
 			},
 			{
@@ -2247,13 +2261,13 @@ func TestPrintStmtAltSwitch(t *testing.T) {
 				CaseList: &ir.CaseListStmt{
 					Cases: []ir.Node{
 						&ir.CaseStmt{
-							Cond: &ir.String{Value: "'a'"},
+							Cond: &ir.String{Value: "a"},
 							Stmts: []ir.Node{
 								&ir.ExpressionStmt{Expr: &ir.SimpleVar{Name: "a"}},
 							},
 						},
 						&ir.CaseStmt{
-							Cond: &ir.String{Value: "'b'"},
+							Cond: &ir.String{Value: "b"},
 							Stmts: []ir.Node{
 								&ir.ExpressionStmt{Expr: &ir.SimpleVar{Name: "b"}},
 							},
@@ -2487,7 +2501,7 @@ func TestPrintStmtClass(t *testing.T) {
 						Consts: []ir.Node{
 							&ir.ConstantStmt{
 								ConstantName: &ir.Identifier{Value: "FOO"},
-								Expr:         &ir.String{Value: "'bar'"},
+								Expr:         &ir.String{Value: "bar"},
 							},
 						},
 					},
@@ -2540,7 +2554,7 @@ func TestPrintStmtAnonymousClass(t *testing.T) {
 						Consts: []ir.Node{
 							&ir.ConstantStmt{
 								ConstantName: &ir.Identifier{Value: "FOO"},
-								Expr:         &ir.String{Value: "'bar'"},
+								Expr:         &ir.String{Value: "bar"},
 							},
 						},
 					},
@@ -2571,11 +2585,11 @@ func TestPrintStmtClassConstList(t *testing.T) {
 		Consts: []ir.Node{
 			&ir.ConstantStmt{
 				ConstantName: &ir.Identifier{Value: "FOO"},
-				Expr:         &ir.String{Value: "'a'"},
+				Expr:         &ir.String{Value: "a"},
 			},
 			&ir.ConstantStmt{
 				ConstantName: &ir.Identifier{Value: "BAR"},
-				Expr:         &ir.String{Value: "'b'"},
+				Expr:         &ir.String{Value: "b"},
 			},
 		},
 	})
@@ -2594,7 +2608,7 @@ func TestPrintStmtConstant(t *testing.T) {
 	p := NewPrettyPrinter(o, "    ")
 	p.Print(&ir.ConstantStmt{
 		ConstantName: &ir.Identifier{Value: "FOO"},
-		Expr:         &ir.String{Value: "'BAR'"},
+		Expr:         &ir.String{Value: "BAR"},
 	})
 
 	expected := "FOO = 'BAR'"
@@ -2631,7 +2645,7 @@ func TestPrintStmtDeclareStmts(t *testing.T) {
 				Consts: []ir.Node{
 					&ir.ConstantStmt{
 						ConstantName: &ir.Identifier{Value: "FOO"},
-						Expr:         &ir.String{Value: "'bar'"},
+						Expr:         &ir.String{Value: "bar"},
 					},
 				},
 				Stmt: &ir.StmtList{
@@ -2665,10 +2679,10 @@ func TestPrintStmtDeclareExpr(t *testing.T) {
 				Consts: []ir.Node{
 					&ir.ConstantStmt{
 						ConstantName: &ir.Identifier{Value: "FOO"},
-						Expr:         &ir.String{Value: "'bar'"},
+						Expr:         &ir.String{Value: "bar"},
 					},
 				},
-				Stmt: &ir.ExpressionStmt{Expr: &ir.String{Value: "'bar'"}},
+				Stmt: &ir.ExpressionStmt{Expr: &ir.String{Value: "bar"}},
 			},
 		},
 	})
@@ -2692,7 +2706,7 @@ func TestPrintStmtDeclareNop(t *testing.T) {
 		Consts: []ir.Node{
 			&ir.ConstantStmt{
 				ConstantName: &ir.Identifier{Value: "FOO"},
-				Expr:         &ir.String{Value: "'bar'"},
+				Expr:         &ir.String{Value: "bar"},
 			},
 		},
 		Stmt: &ir.NopStmt{},
@@ -2845,7 +2859,7 @@ func TestPrintStmtElseIfExpr(t *testing.T) {
 	p := NewPrettyPrinter(o, "    ")
 	p.Print(&ir.ElseIfStmt{
 		Cond: &ir.SimpleVar{Name: "a"},
-		Stmt: &ir.ExpressionStmt{Expr: &ir.String{Value: "'bar'"}},
+		Stmt: &ir.ExpressionStmt{Expr: &ir.String{Value: "bar"}},
 	})
 
 	expected := `elseif ($a)
@@ -2901,7 +2915,7 @@ func TestPrintStmtElseExpr(t *testing.T) {
 
 	p := NewPrettyPrinter(o, "    ")
 	p.Print(&ir.ElseStmt{
-		Stmt: &ir.ExpressionStmt{Expr: &ir.String{Value: "'bar'"}},
+		Stmt: &ir.ExpressionStmt{Expr: &ir.String{Value: "bar"}},
 	})
 
 	expected := `else
@@ -3025,7 +3039,7 @@ func TestPrintStmtForExpr(t *testing.T) {
 				Loop: []ir.Node{
 					&ir.SimpleVar{Name: "c"},
 				},
-				Stmt: &ir.ExpressionStmt{Expr: &ir.String{Value: "'bar'"}},
+				Stmt: &ir.ExpressionStmt{Expr: &ir.String{Value: "bar"}},
 			},
 		},
 	})
@@ -3106,7 +3120,7 @@ func TestPrintStmtForeachExpr(t *testing.T) {
 				Expr:     &ir.SimpleVar{Name: "a"},
 				Key:      &ir.SimpleVar{Name: "k"},
 				Variable: &ir.SimpleVar{Name: "v"},
-				Stmt:     &ir.ExpressionStmt{Expr: &ir.String{Value: "'bar'"}},
+				Stmt:     &ir.ExpressionStmt{Expr: &ir.String{Value: "bar"}},
 			},
 		},
 	})
@@ -3657,13 +3671,13 @@ func TestPrintStmtSwitch(t *testing.T) {
 				CaseList: &ir.CaseListStmt{
 					Cases: []ir.Node{
 						&ir.CaseStmt{
-							Cond: &ir.String{Value: "'a'"},
+							Cond: &ir.String{Value: "a"},
 							Stmts: []ir.Node{
 								&ir.ExpressionStmt{Expr: &ir.SimpleVar{Name: "a"}},
 							},
 						},
 						&ir.CaseStmt{
-							Cond: &ir.String{Value: "'b'"},
+							Cond: &ir.String{Value: "b"},
 							Stmts: []ir.Node{
 								&ir.ExpressionStmt{Expr: &ir.SimpleVar{Name: "b"}},
 							},

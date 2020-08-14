@@ -21,12 +21,12 @@ type regexpSimplifier struct {
 	escapedDelims int
 }
 
-func (c *regexpSimplifier) simplifyRegexp(pat regexpPattern) string {
+func (c *regexpSimplifier) simplifyRegexp(pat string) string {
 	// Only do up to 2 passes for now.
 	// We can increase this threshold later if there
 	// will be any simplifications that are enabled by it.
 	const maxPasses = 2
-	simplified := pat.value
+	simplified := pat
 	for pass := 0; pass < maxPasses; pass++ {
 		candidate := c.simplify(pass, simplified)
 		if candidate == "" {
@@ -35,7 +35,7 @@ func (c *regexpSimplifier) simplifyRegexp(pat regexpPattern) string {
 		simplified = candidate
 	}
 
-	if simplified == pat.value {
+	if simplified == pat {
 		return ""
 	}
 	return simplified

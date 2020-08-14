@@ -54,20 +54,19 @@ func (c *compiler) EnterNode(n ir.Node) bool {
 	if !ok {
 		return true
 	}
-	value := unquoted(s.Value)
 
 	var name string
 	var class string
 
-	colon := strings.Index(value, ":")
+	colon := strings.Index(s.Value, ":")
 	if colon == -1 {
 		// Anonymous matcher.
 		name = "_"
-		class = value
+		class = s.Value
 	} else {
 		// Named matcher.
-		name = value[:colon]
-		class = value[colon+len(":"):]
+		name = s.Value[:colon]
+		class = s.Value[colon+len(":"):]
 		c.vars[name] = struct{}{}
 	}
 

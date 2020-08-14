@@ -244,6 +244,7 @@ func ParseTestFile(t *testing.T, filename, content string) (rootNode *ir.Root, w
 
 // RunFilterMatch calls Match with the filtered results of RunLinter.
 func RunFilterMatch(test *Suite, names ...string) {
+	test.t.Helper()
 	test.Match(filterReports(names, test.RunLinter()))
 }
 
