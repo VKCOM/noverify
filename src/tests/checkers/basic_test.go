@@ -1325,12 +1325,8 @@ function test() {
 func TestDuplicateArrayKeyWithBoolConstants(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-// TODO: define'd consts should work as well.
-// define('TRUE_CONST', true);
-// define('FALSE_CONST', false);
-
-const TRUE_CONST = true;
-const FALSE_CONST = false;
+define('TRUE_CONST', true);
+define('FALSE_CONST', false);
 
 $_ = [TRUE_CONST => 1, true => 2];
 $_ = [FALSE_CONST => 1, false => 2];

@@ -14,6 +14,8 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstantValue {
 	// TODO: support more operators and some builtin PHP functions like strlen.
 
 	switch e := e.(type) {
+	case *ir.Argument:
+		return Eval(st, e.Expr)
 	case *ir.ParenExpr:
 		return Eval(st, e.Expr)
 

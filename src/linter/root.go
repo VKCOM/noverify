@@ -1562,9 +1562,12 @@ func (d *RootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {
 		d.meta.Constants = make(meta.ConstantsMap)
 	}
 
+	value := constfold.Eval(d.ctx.st, valueArg)
+
 	d.meta.Constants[`\`+strings.TrimFunc(str.Value, isQuote)] = meta.ConstantInfo{
-		Pos: d.getElementPos(s),
-		Typ: solver.ExprTypeLocal(d.scope(), d.ctx.st, valueArg.Expr),
+		Pos:   d.getElementPos(s),
+		Typ:   solver.ExprTypeLocal(d.scope(), d.ctx.st, valueArg.Expr),
+		Value: value,
 	}
 	return true
 }
