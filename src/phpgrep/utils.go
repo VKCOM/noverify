@@ -30,10 +30,6 @@ func getNodePos(n ir.Node) *position.Position {
 	return pos
 }
 
-func unquoted(s string) string {
-	return s[1 : len(s)-1]
-}
-
 func nodeIsVar(n ir.Node) bool {
 	switch n.(type) {
 	case *ir.SimpleVar, *ir.Var:
@@ -147,7 +143,7 @@ func matchMetaVar(n ir.Node, s string) bool {
 
 	case *ir.Var:
 		nm, ok := n.Expr.(*ir.String)
-		return ok && unquoted(nm.Value) == s
+		return ok && nm.Value == s
 
 	default:
 		return false

@@ -12,6 +12,13 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestStringNoQuotes(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+$arr = [];
+echo "$arr[key]\n";
+`)
+}
+
 func TestIntOverflow(t *testing.T) {
 	// See https://bugs.php.net/bug.php?id=53934
 

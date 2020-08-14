@@ -4,7 +4,6 @@ import (
 	"strconv"
 
 	"github.com/VKCOM/noverify/src/ir"
-	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
 )
 
@@ -21,8 +20,7 @@ func GetConstantValue(c ir.Node) (meta.ConstantValue, bool) {
 		return meta.ConstantValue{Type: meta.Float, Value: value}, err == nil
 
 	case *ir.String:
-		v := irutil.Unquote(c.Value)
-		return meta.ConstantValue{Value: v, Type: meta.String}, true
+		return meta.ConstantValue{Value: c.Value, Type: meta.String}, true
 
 	case *ir.UnaryMinusExpr:
 		v, ok := GetConstantValue(c.Expr)

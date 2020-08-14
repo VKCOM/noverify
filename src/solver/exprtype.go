@@ -249,8 +249,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 		m.Iterate(func(className string) {
 			switch dim := n.Dim.(type) {
 			case *ir.String:
-				key := dim.Value[len(`"`) : len(dim.Value)-len(`"`)]
-				res[meta.WrapElemOfKey(className, key)] = struct{}{}
+				res[meta.WrapElemOfKey(className, dim.Value)] = struct{}{}
 			case *ir.Lnumber:
 				res[meta.WrapElemOfKey(className, dim.Value)] = struct{}{}
 			default:
