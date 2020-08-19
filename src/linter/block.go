@@ -279,7 +279,7 @@ func (b *BlockWalker) EnterNode(n ir.Node) (res bool) {
 		if isInstance {
 			typ, _ = b.ctx.sc.GetVarNameType("this")
 		}
-		res = b.enterClosure(s, isInstance, typ)
+		res = b.enterClosure(s, isInstance, typ, nil)
 
 	case *ir.ReturnStmt:
 		b.handleReturn(s)
@@ -722,6 +722,26 @@ func (b *BlockWalker) handleCallArgs(n ir.Node, args []ir.Node, fn meta.FuncInfo
 				break
 			}
 			a.Walk(b)
+		case *ir.ClosureExpr:
+			var typ meta.TypesMap
+			isInstance := b.ctx.sc.IsInInstanceMethod()
+			if isInstance {
+				typ, _ = b.ctx.sc.GetVarNameType("this")
+			}
+
+			// find the types for the arguments of the function that contains this closure
+			var funcArgTypes []meta.TypesMap
+			for _, arg := range args {
+				tp := solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, arg.(*ir.Argument).Expr)
+				funcArgTypes = append(funcArgTypes, tp)
+			}
+
+			closureSolver := &solver.ClosureCallerInfo{
+				Name:     fn.Name,
+				ArgTypes: funcArgTypes,
+			}
+
+			b.enterClosure(a, isInstance, typ, closureSolver)
 		default:
 			a.Walk(b)
 		}
@@ -1152,7 +1172,7 @@ func (b *BlockWalker) handleFor(s *ir.ForStmt) bool {
 	return false
 }
 
-func (b *BlockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType meta.TypesMap) bool {
+func (b *BlockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType meta.TypesMap, closureSolver *solver.ClosureCallerInfo) bool {
 	sc := meta.NewScope()
 	sc.SetInClosure(true)
 
@@ -1193,7 +1213,7 @@ func (b *BlockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		delete(b.unusedVars, v.Name)
 	}
 
-	params, _ := b.r.parseFuncArgs(fun.Params, phpDocParamTypes, sc)
+	params, _ := b.r.parseFuncArgs(fun.Params, phpDocParamTypes, sc, closureSolver)
 
 	b.r.handleFuncStmts(params, closureUses, fun.Stmts, sc)
 	b.r.addScope(fun, sc)
