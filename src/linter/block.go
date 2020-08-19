@@ -1080,8 +1080,36 @@ func (b *BlockWalker) handleForeach(s *ir.ForeachStmt) bool {
 
 			b.handleVariableNode(s.Key, meta.TypesMap{}, "foreach_key")
 			if list, ok := s.Variable.(*ir.ListExpr); ok {
-				for _, item := range list.Items {
-					b.handleVariableNode(item.Val, meta.TypesMap{}, "foreach_value")
+				if !meta.IsIndexingComplete() {
+					return
+				}
+
+				tp := solver.ExprType(b.ctx.sc, b.r.ctx.st, s.Expr)
+				var shapeType string
+				tp.Iterate(func(t string) {
+					if strings.HasPrefix(t, `\shape$`) {
+						shapeType = t
+					}
+				})
+
+				isArrayOfShape := strings.HasSuffix(shapeType, "[]")
+
+				if !isArrayOfShape {
+					for _, item := range list.Items {
+						b.handleVariableNode(item.Val, meta.MixedType, "foreach_value")
+					}
+				} else {
+					shapeType = strings.TrimSuffix(shapeType, "[]")
+
+					var class meta.ClassInfo
+					var ok bool
+					var isShape bool
+					if shapeType != "" {
+						class, ok = meta.Info.GetClass(shapeType)
+						isShape = ok
+					}
+
+					b.handleAssignList(list.Items, class, isShape)
 				}
 			} else {
 				b.handleVariableNode(s.Variable, meta.TypesMap{}, "foreach_value")

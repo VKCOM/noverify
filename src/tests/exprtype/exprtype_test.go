@@ -2159,6 +2159,71 @@ exprtype(Roo::$d, "string");
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestForeachListForTuple(t *testing.T) {
+	code := `<?php
+/**
+ * @return tuple(int, string)
+ */
+function asTuple() {
+    return [];
+}
+
+function f() {
+  // array of tuples
+  $tuples = [asTuple(), asTuple(), asTuple()];
+  foreach ($tuples as list($a, $b, $c)) {
+    exprtype($a, "int");
+    exprtype($b, "string");
+    exprtype($c, "unknown_from_list");
+  }
+
+  // not array
+  $tuple = asTuple();
+  foreach ($tuple as list($a1, $b1)) {
+    exprtype($a1, "mixed");
+    exprtype($b1, "mixed");
+  }
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestForeachListForShape(t *testing.T) {
+	code := `<?php
+/**
+ * @return shape(Key1:int, Key2:string)
+ */
+function asShape() {
+    return [];
+}
+
+function f() {
+  // array of shapes
+  $shapes = [asShape(), asShape(), asShape()];
+  foreach ($shapes as list("Key1" => $a, "Key2" => $b, $c)) {
+    exprtype($a, "int");
+    exprtype($b, "string");
+    exprtype($c, "unknown_from_list");
+  }
+
+  // list with mixed keys
+  foreach ($shapes as list("Key2" => $b, $c, "Key1" => $a)) {
+    exprtype($a, "int");
+    exprtype($b, "string");
+    exprtype($c, "unknown_from_list");
+  }
+
+  // not array
+  $shape = asShape();
+  foreach ($shape as list($a1, $b1)) {
+    exprtype($a1, "mixed");
+    exprtype($b1, "mixed");
+  }
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {
