@@ -91,7 +91,7 @@ func NewTypesMapFromTypes(types []Type) TypesMap {
 func NewTypesMap(str string) TypesMap {
 	m := make(map[string]struct{}, strings.Count(str, "|")+1)
 	for _, s := range strings.Split(str, "|") {
-		for strings.HasSuffix(s, "[]") {
+		if IsArrayType(s) {
 			s = WrapArrayOf(strings.TrimSuffix(s, "[]"))
 		}
 		m[s] = struct{}{}
