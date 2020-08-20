@@ -38,6 +38,7 @@ func init() {
 //
 // For positive testing, use Suite type directly.
 func SimpleNegativeTest(t *testing.T, contents string) {
+	t.Helper()
 	if !strings.HasPrefix(contents, `<?php`) {
 		t.Fatalf("PHP script doesn't start with <?php")
 	}
