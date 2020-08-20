@@ -16,6 +16,22 @@ func init() {
 	})
 }
 
+func TestPathTryCatch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+try {
+  echo $_try;
+} catch (Exception $e) {
+  echo $_catch;
+}
+`)
+	test.Expect = []string{
+		`$_try (cond=false) : *ir.Root/*ir.TryStmt/*ir.EchoStmt/*ir.SimpleVar`,
+		`$_catch (cond=true) : *ir.Root/*ir.TryStmt/*ir.CatchStmt/*ir.EchoStmt/*ir.SimpleVar`,
+	}
+	linttest.RunFilterMatch(test, "pathTest")
+}
+
 func TestPathIfElse(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

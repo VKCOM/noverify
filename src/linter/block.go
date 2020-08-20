@@ -283,6 +283,10 @@ func (b *BlockWalker) EnterNode(n ir.Node) (res bool) {
 
 	case *ir.ReturnStmt:
 		b.handleReturn(s)
+
+	case *ir.CatchStmt:
+		b.handleCatch(s)
+		res = false
 	}
 
 	for _, c := range b.custom {
@@ -543,7 +547,7 @@ func (b *BlockWalker) handleTry(s *ir.TryStmt) bool {
 			for _, s := range cc.Stmts {
 				b.addStatement(s)
 			}
-			b.handleCatch(cc)
+			cc.Walk(b)
 		})
 		contexts = append(contexts, ctx)
 	}
@@ -599,7 +603,7 @@ func (b *BlockWalker) handleTry(s *ir.TryStmt) bool {
 	return false
 }
 
-func (b *BlockWalker) handleCatch(s *ir.CatchStmt) bool {
+func (b *BlockWalker) handleCatch(s *ir.CatchStmt) {
 	m := meta.NewEmptyTypesMap(len(s.Types))
 	for _, t := range s.Types {
 		typ, ok := solver.GetClassName(b.r.ctx.st, t)
@@ -617,8 +621,6 @@ func (b *BlockWalker) handleCatch(s *ir.CatchStmt) bool {
 			stmt.Walk(b)
 		}
 	}
-
-	return false
 }
 
 // We still need to analyze expressions in isset()/unset()/empty() statements
