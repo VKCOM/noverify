@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,6 +19,24 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/rules"
 )
+
+func TestMain(m *testing.M) {
+	exitCode := m.Run()
+
+	_ = os.Remove("phplinter.exe")
+	toRemove, err := filepath.Glob("phplinter-output-*.json")
+	if err != nil {
+		log.Fatalf("glob: %v", err)
+	}
+	for _, filename := range toRemove {
+		err := os.Remove(filename)
+		if err != nil {
+			log.Printf("tests cleanup: remove %s: %v", filename, err)
+		}
+	}
+
+	os.Exit(exitCode)
+}
 
 type goldenTest struct {
 	name    string
@@ -237,11 +256,6 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 		t.Fatalf("build noverify: %v: %s", err, out)
 	}
 
-	defer func() {
-		_ = os.Remove("phplinter.exe")
-		_ = os.Remove("phplinter-output.json")
-	}()
-
 	wd, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("getwd: %v", err)
@@ -249,13 +263,17 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 	wd = strings.ReplaceAll(wd, "\\", "/")
 
 	for _, target := range targets {
+		target := target // To avoid the invalid capture in parallel tests
 		t.Run(target.name+"/e2e", func(t *testing.T) {
+			t.Parallel()
+
+			outputFilename := fmt.Sprintf("phplinter-output-%s.json", target.name)
 			args := []string{
 				"--critical", "",
 				"--output-json",
 				"--disable-cache", // TODO: test with cache as well
 				"--allow-all-checks",
-				"--output", "phplinter-output.json",
+				"--output", outputFilename,
 			}
 			if len(target.disable) != 0 {
 				args = append(args, "--exclude-checks", strings.Join(target.disable, ","))
@@ -278,9 +296,9 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 				t.Fatalf("%v: %s", err, out)
 			}
 
-			output, err := readReportsFile("phplinter-output.json")
+			output, err := readReportsFile(outputFilename)
 			if err != nil {
-				t.Fatalf("read output file: %v", err)
+				t.Fatalf("read output file %s: %v", outputFilename, err)
 			}
 
 			for _, r := range output.Reports {
