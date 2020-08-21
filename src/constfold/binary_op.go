@@ -64,16 +64,10 @@ func Concat(x, y meta.ConstantValue) meta.ConstantValue {
 func Or(x, y meta.ConstantValue) meta.ConstantValue {
 	v1, ok1 := x.ToBool()
 	v2, ok2 := y.ToBool()
-	switch {
-	case ok1 && v1:
-		return meta.TrueValue
-	case ok2 && v2:
-		return meta.TrueValue
-	case ok1 && ok2:
+	if ok1 && ok2 {
 		return meta.ConstantBoolValue(v1 || v2)
-	default:
-		return meta.UnknownValue
 	}
+	return meta.UnknownValue
 }
 
 // And performs logical "&&".
@@ -81,16 +75,10 @@ func Or(x, y meta.ConstantValue) meta.ConstantValue {
 func And(x, y meta.ConstantValue) meta.ConstantValue {
 	v1, ok1 := x.ToBool()
 	v2, ok2 := y.ToBool()
-	switch {
-	case ok1 && v1:
-		return meta.FalseValue
-	case ok2 && v2:
-		return meta.FalseValue
-	case ok1 && ok2:
+	if ok1 && ok2 {
 		return meta.ConstantBoolValue(v1 && v2)
-	default:
-		return meta.UnknownValue
 	}
+	return meta.UnknownValue
 }
 
 // BitOr performs bitwise "|".
