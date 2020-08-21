@@ -9,11 +9,11 @@ func Plus(x, y meta.ConstantValue) meta.ConstantValue {
 	switch x.Type {
 	case meta.Integer:
 		if y.Type == meta.Integer {
-			return meta.IntValue(x.ToInt() + y.ToInt())
+			return meta.ConstantIntValue(x.ToInt() + y.ToInt())
 		}
 	case meta.Float:
 		if y.Type == meta.Float {
-			return meta.FloatValue(x.ToFloat() + y.ToFloat())
+			return meta.ConstantFloatValue(x.ToFloat() + y.ToFloat())
 		}
 	}
 	return meta.UnknownValue
@@ -24,11 +24,11 @@ func Minus(x, y meta.ConstantValue) meta.ConstantValue {
 	switch x.Type {
 	case meta.Integer:
 		if y.Type == meta.Integer {
-			return meta.IntValue(x.ToInt() - y.ToInt())
+			return meta.ConstantIntValue(x.ToInt() - y.ToInt())
 		}
 	case meta.Float:
 		if y.Type == meta.Float {
-			return meta.FloatValue(x.ToFloat() - y.ToFloat())
+			return meta.ConstantFloatValue(x.ToFloat() - y.ToFloat())
 		}
 	}
 	return meta.UnknownValue
@@ -39,11 +39,11 @@ func Mul(x, y meta.ConstantValue) meta.ConstantValue {
 	switch x.Type {
 	case meta.Integer:
 		if y.Type == meta.Integer {
-			return meta.IntValue(x.ToInt() * y.ToInt())
+			return meta.ConstantIntValue(x.ToInt() * y.ToInt())
 		}
 	case meta.Float:
 		if y.Type == meta.Float {
-			return meta.FloatValue(x.ToFloat() * y.ToFloat())
+			return meta.ConstantFloatValue(x.ToFloat() * y.ToFloat())
 		}
 	}
 	return meta.UnknownValue
@@ -54,7 +54,7 @@ func Concat(x, y meta.ConstantValue) meta.ConstantValue {
 	v1, ok1 := ToString(x)
 	v2, ok2 := ToString(y)
 	if ok1 && ok2 {
-		return meta.StringValue(v1 + v2)
+		return meta.ConstantStringValue(v1 + v2)
 	}
 	return meta.UnknownValue
 }
@@ -70,7 +70,7 @@ func Or(x, y meta.ConstantValue) meta.ConstantValue {
 	case ok2 && v2:
 		return meta.TrueValue
 	case ok1 && ok2:
-		return meta.BoolValue(v1 || v2)
+		return meta.ConstantBoolValue(v1 || v2)
 	default:
 		return meta.UnknownValue
 	}
@@ -87,7 +87,7 @@ func And(x, y meta.ConstantValue) meta.ConstantValue {
 	case ok2 && v2:
 		return meta.FalseValue
 	case ok1 && ok2:
-		return meta.BoolValue(v1 && v2)
+		return meta.ConstantBoolValue(v1 && v2)
 	default:
 		return meta.UnknownValue
 	}
@@ -98,7 +98,7 @@ func BitOr(x, y meta.ConstantValue) meta.ConstantValue {
 	v1, ok1 := ToInt(x)
 	v2, ok2 := ToInt(y)
 	if ok1 && ok2 {
-		return meta.IntValue(v1 | v2)
+		return meta.ConstantIntValue(v1 | v2)
 	}
 	return meta.UnknownValue
 }
@@ -108,7 +108,7 @@ func BitAnd(x, y meta.ConstantValue) meta.ConstantValue {
 	v1, ok1 := ToInt(x)
 	v2, ok2 := ToInt(y)
 	if ok1 && ok2 {
-		return meta.IntValue(v1 & v2)
+		return meta.ConstantIntValue(v1 & v2)
 	}
 	return meta.UnknownValue
 }
