@@ -64,3 +64,37 @@ func Concat(x, y meta.ConstantValue) meta.ConstantValue {
 	}
 	return meta.UnknownValue
 }
+
+// Or performs logical "||".
+// Also works for "or" operator.
+func Or(x, y meta.ConstantValue) meta.ConstantValue {
+	v1, ok1 := ToBool(x)
+	v2, ok2 := ToBool(y)
+	switch {
+	case ok1 && v1:
+		return meta.TrueValue
+	case ok2 && v2:
+		return meta.TrueValue
+	case ok1 && ok2:
+		return meta.BoolValue(v1 || v2)
+	default:
+		return meta.UnknownValue
+	}
+}
+
+// And performs logical "&&".
+// Also works for "and" operator.
+func And(x, y meta.ConstantValue) meta.ConstantValue {
+	v1, ok1 := ToBool(x)
+	v2, ok2 := ToBool(y)
+	switch {
+	case ok1 && v1:
+		return meta.FalseValue
+	case ok2 && v2:
+		return meta.FalseValue
+	case ok1 && ok2:
+		return meta.BoolValue(v1 && v2)
+	default:
+		return meta.UnknownValue
+	}
+}

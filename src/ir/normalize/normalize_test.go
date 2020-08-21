@@ -179,6 +179,11 @@ func TestNormalizeExpr(t *testing.T) {
 		{`!true`, `false`},
 		{`!false`, `true`},
 		{`!!false`, `false`},
+		{`true || false`, `true`},
+		{`true && false`, `false`},
+		{`!true && (!!false || true)`, `false`},
+		{`true and false`, `false`},
+		{`true or false`, `true`},
 		{`"Hello " . "World!"`, `'Hello World!'`},
 		{`"Hello " . "World" . "!"`, `'Hello World!'`},
 
