@@ -4,6 +4,7 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+// Not performs unary "!".
 func Not(x meta.ConstantValue) meta.ConstantValue {
 	v, ok := x.ToBool()
 	if !ok {
@@ -12,6 +13,7 @@ func Not(x meta.ConstantValue) meta.ConstantValue {
 	return meta.ConstantBoolValue(!v)
 }
 
+// Neg performs unary "-".
 func Neg(x meta.ConstantValue) meta.ConstantValue {
 	switch x.Type {
 	case meta.Integer:

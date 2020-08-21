@@ -44,18 +44,22 @@ func ConstantBoolValue(v bool) ConstantValue {
 	return ConstantValue{Type: Bool, Value: v}
 }
 
+// GetInt returns the value stored in c.Value cast to int type.
 func (c ConstantValue) GetInt() int64 {
 	return c.Value.(int64)
 }
 
+// GetFloat returns the value stored in c.Value cast to float type.
 func (c ConstantValue) GetFloat() float64 {
 	return c.Value.(float64)
 }
 
+// GetString returns the value stored in c.Value cast to string type.
 func (c ConstantValue) GetString() string {
 	return c.Value.(string)
 }
 
+// GetBool returns the value stored in c.Value cast to bool type.
 func (c ConstantValue) GetBool() bool {
 	return c.Value.(bool)
 }
