@@ -43,19 +43,19 @@ func ConstantBoolValue(v bool) ConstantValue {
 	return ConstantValue{Type: Bool, Value: v}
 }
 
-func (c ConstantValue) ToInt() int64 {
+func (c ConstantValue) GetInt() int64 {
 	return c.Value.(int64)
 }
 
-func (c ConstantValue) ToFloat() float64 {
+func (c ConstantValue) GetFloat() float64 {
 	return c.Value.(float64)
 }
 
-func (c ConstantValue) ToString() string {
+func (c ConstantValue) GetString() string {
 	return c.Value.(string)
 }
 
-func (c ConstantValue) ToBool() bool {
+func (c ConstantValue) GetBool() bool {
 	return c.Value.(bool)
 }
 

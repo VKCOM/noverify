@@ -15,9 +15,9 @@ func Not(x meta.ConstantValue) meta.ConstantValue {
 func Neg(x meta.ConstantValue) meta.ConstantValue {
 	switch x.Type {
 	case meta.Integer:
-		return meta.ConstantIntValue(-x.ToInt())
+		return meta.ConstantIntValue(-x.GetInt())
 	case meta.Float:
-		return meta.ConstantFloatValue(-x.ToFloat())
+		return meta.ConstantFloatValue(-x.GetFloat())
 	}
 	return meta.UnknownValue
 }

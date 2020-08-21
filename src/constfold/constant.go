@@ -11,13 +11,13 @@ import (
 func ToBool(x meta.ConstantValue) (bool, bool) {
 	switch x.Type {
 	case meta.Bool:
-		return x.ToBool(), true
+		return x.GetBool(), true
 	case meta.Integer:
-		return x.ToInt() != 0, true
+		return x.GetInt() != 0, true
 	case meta.Float:
-		return x.ToFloat() != 0, true
+		return x.GetFloat() != 0, true
 	case meta.String:
-		v := x.ToString()
+		v := x.GetString()
 		return v != "" && v != "0", true
 	}
 	return false, false
@@ -28,14 +28,14 @@ func ToBool(x meta.ConstantValue) (bool, bool) {
 func ToInt(x meta.ConstantValue) (int64, bool) {
 	switch x.Type {
 	case meta.Bool:
-		if x.ToBool() {
+		if x.GetBool() {
 			return 1, true
 		}
 		return 0, true
 	case meta.Integer:
-		return x.ToInt(), true
+		return x.GetInt(), true
 	case meta.Float:
-		return int64(x.ToFloat()), true
+		return int64(x.GetFloat()), true
 	}
 	return 0, false
 }
@@ -45,14 +45,14 @@ func ToInt(x meta.ConstantValue) (int64, bool) {
 func ToString(x meta.ConstantValue) (string, bool) {
 	switch x.Type {
 	case meta.Bool:
-		if x.ToBool() {
+		if x.GetBool() {
 			return "1", true
 		}
 		return "", true
 	case meta.Integer:
-		return strconv.FormatInt(x.ToInt(), 10), true
+		return strconv.FormatInt(x.GetInt(), 10), true
 	case meta.String:
-		return x.ToString(), true
+		return x.GetString(), true
 	}
 	return "", false
 }

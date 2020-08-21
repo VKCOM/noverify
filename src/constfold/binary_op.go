@@ -9,11 +9,11 @@ func Plus(x, y meta.ConstantValue) meta.ConstantValue {
 	switch x.Type {
 	case meta.Integer:
 		if y.Type == meta.Integer {
-			return meta.ConstantIntValue(x.ToInt() + y.ToInt())
+			return meta.ConstantIntValue(x.GetInt() + y.GetInt())
 		}
 	case meta.Float:
 		if y.Type == meta.Float {
-			return meta.ConstantFloatValue(x.ToFloat() + y.ToFloat())
+			return meta.ConstantFloatValue(x.GetFloat() + y.GetFloat())
 		}
 	}
 	return meta.UnknownValue
@@ -24,11 +24,11 @@ func Minus(x, y meta.ConstantValue) meta.ConstantValue {
 	switch x.Type {
 	case meta.Integer:
 		if y.Type == meta.Integer {
-			return meta.ConstantIntValue(x.ToInt() - y.ToInt())
+			return meta.ConstantIntValue(x.GetInt() - y.GetInt())
 		}
 	case meta.Float:
 		if y.Type == meta.Float {
-			return meta.ConstantFloatValue(x.ToFloat() - y.ToFloat())
+			return meta.ConstantFloatValue(x.GetFloat() - y.GetFloat())
 		}
 	}
 	return meta.UnknownValue
@@ -39,11 +39,11 @@ func Mul(x, y meta.ConstantValue) meta.ConstantValue {
 	switch x.Type {
 	case meta.Integer:
 		if y.Type == meta.Integer {
-			return meta.ConstantIntValue(x.ToInt() * y.ToInt())
+			return meta.ConstantIntValue(x.GetInt() * y.GetInt())
 		}
 	case meta.Float:
 		if y.Type == meta.Float {
-			return meta.ConstantFloatValue(x.ToFloat() * y.ToFloat())
+			return meta.ConstantFloatValue(x.GetFloat() * y.GetFloat())
 		}
 	}
 	return meta.UnknownValue
