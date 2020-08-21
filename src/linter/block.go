@@ -665,11 +665,7 @@ func (b *BlockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
 
 	typ.Iterate(func(t string) {
 		// FullyQualified class name will have "\" in the beginning
-		if len(t) > 0 && t[0] == '\\' && !strings.HasSuffix(t, "[]") {
-			if strings.HasPrefix(t, `\shape$`) {
-				return
-			}
-
+		if meta.IsClassType(t) {
 			maybeHaveClasses = true
 
 			if !haveArrayAccess && solver.Implements(t, `\ArrayAccess`) {
@@ -1681,7 +1677,7 @@ func (b *BlockWalker) handleAssign(a *ir.Assign) bool {
 		tp := solver.ExprType(b.ctx.sc, b.r.ctx.st, a.Expression)
 		var shapeType string
 		tp.Iterate(func(t string) {
-			if strings.HasPrefix(t, `\shape$`) {
+			if meta.IsShapeType(t) {
 				shapeType = t
 			}
 		})
