@@ -92,3 +92,23 @@ func And(x, y meta.ConstantValue) meta.ConstantValue {
 		return meta.UnknownValue
 	}
 }
+
+// BitOr performs bitwise "|".
+func BitOr(x, y meta.ConstantValue) meta.ConstantValue {
+	v1, ok1 := ToInt(x)
+	v2, ok2 := ToInt(y)
+	if ok1 && ok2 {
+		return meta.IntValue(v1 | v2)
+	}
+	return meta.UnknownValue
+}
+
+// BitAnd performs bitwise "&".
+func BitAnd(x, y meta.ConstantValue) meta.ConstantValue {
+	v1, ok1 := ToInt(x)
+	v2, ok2 := ToInt(y)
+	if ok1 && ok2 {
+		return meta.IntValue(v1 & v2)
+	}
+	return meta.UnknownValue
+}

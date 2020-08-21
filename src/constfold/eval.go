@@ -73,6 +73,11 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstantValue {
 	case *ir.ConcatExpr:
 		return Concat(Eval(st, e.Left), Eval(st, e.Right))
 
+	case *ir.BitwiseAndExpr:
+		return BitAnd(Eval(st, e.Left), Eval(st, e.Right))
+	case *ir.BitwiseOrExpr:
+		return BitOr(Eval(st, e.Left), Eval(st, e.Right))
+
 	case *ir.Lnumber:
 		value, err := strconv.ParseInt(e.Value, 10, 64)
 		if err != nil {

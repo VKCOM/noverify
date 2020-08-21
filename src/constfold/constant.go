@@ -23,6 +23,23 @@ func ToBool(x meta.ConstantValue) (bool, bool) {
 	return false, false
 }
 
+// ToInt converts x constant to int constants following PHP conversion rules.
+// Second bool result tells whether that conversion was successful.
+func ToInt(x meta.ConstantValue) (int64, bool) {
+	switch x.Type {
+	case meta.Bool:
+		if x.ToBool() {
+			return 1, true
+		}
+		return 0, true
+	case meta.Integer:
+		return x.ToInt(), true
+	case meta.Float:
+		return int64(x.ToFloat()), true
+	}
+	return 0, false
+}
+
 // ToString converts x constant to string constants following PHP conversion rules.
 // Second bool result tells whether that conversion was successful.
 func ToString(x meta.ConstantValue) (string, bool) {
