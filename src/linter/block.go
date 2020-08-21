@@ -80,6 +80,8 @@ type BlockWalker struct {
 	// whether a function has a return with explicit expression.
 	// When can't infer precise type, can use mixed.
 	returnsValue bool
+	// whether func_get_args() was called.
+	callsFuncGetArgs bool
 
 	// callsParentConstructor is set to true when parent::__construct() call
 	// is found. This is needed for a root walker to report constructors
@@ -87,7 +89,8 @@ type BlockWalker struct {
 	callsParentConstructor bool
 
 	// shared state between all blocks
-	unusedVars map[string][]ir.Node
+	unusedVars   map[string][]ir.Node
+	unusedParams map[string]struct{}
 
 	// static, global and other vars that have complex control flow.
 	// Never contains varLocal elements.
@@ -410,7 +413,7 @@ func (b *BlockWalker) replaceVar(v ir.Node, typ meta.TypesMap, reason string, fl
 func (b *BlockWalker) trackVarName(n ir.Node, nm string) {
 	// Writes to non-local variables do count as usages
 	if _, ok := b.nonLocalVars[nm]; ok {
-		delete(b.unusedVars, nm)
+		b.untrackVarName(nm)
 		return
 	}
 
@@ -419,6 +422,11 @@ func (b *BlockWalker) trackVarName(n ir.Node, nm string) {
 	if !b.ctx.insideLoop {
 		b.unusedVars[nm] = append(b.unusedVars[nm], n)
 	}
+}
+
+func (b *BlockWalker) untrackVarName(nm string) {
+	delete(b.unusedVars, nm)
+	delete(b.unusedParams, nm)
 }
 
 func (b *BlockWalker) addVarName(n ir.Node, nm string, typ meta.TypesMap, reason string, flags meta.VarFlags) {
@@ -465,7 +473,7 @@ func (b *BlockWalker) handleUnset(s *ir.UnsetStmt) bool {
 	for _, v := range s.Vars {
 		switch v := v.(type) {
 		case *ir.SimpleVar:
-			delete(b.unusedVars, v.Name)
+			b.untrackVarName(v.Name)
 			b.ctx.sc.DelVar(v, "unset")
 		case *ir.Var:
 			b.ctx.sc.DelVar(v, "unset")
@@ -487,7 +495,7 @@ func (b *BlockWalker) handleIsset(s *ir.IssetExpr) bool {
 		case *ir.Var:
 			// Do nothing.
 		case *ir.SimpleVar:
-			delete(b.unusedVars, v.Name)
+			b.untrackVarName(v.Name)
 		case *ir.ArrayDimFetchExpr:
 			b.handleIssetDimFetch(v)
 		default:
@@ -505,7 +513,7 @@ func (b *BlockWalker) handleEmpty(s *ir.EmptyExpr) bool {
 	case *ir.Var:
 		// Do nothing.
 	case *ir.SimpleVar:
-		delete(b.unusedVars, v.Name)
+		b.untrackVarName(v.Name)
 	case *ir.ArrayDimFetchExpr:
 		b.handleIssetDimFetch(v)
 	default:
@@ -629,7 +637,7 @@ func (b *BlockWalker) handleIssetDimFetch(e *ir.ArrayDimFetchExpr) {
 
 	switch v := e.Variable.(type) {
 	case *ir.SimpleVar:
-		delete(b.unusedVars, v.Name)
+		b.untrackVarName(v.Name)
 	case *ir.ArrayDimFetchExpr:
 		b.handleIssetDimFetch(v)
 	default:
@@ -745,6 +753,10 @@ func (b *BlockWalker) handleFunctionCall(e *ir.FunctionCallExpr) bool {
 	}
 
 	e.Function.Walk(b)
+
+	if call.fqName == `\func_get_args` {
+		b.callsFuncGetArgs = true
+	}
 
 	if call.fqName == `\compact` {
 		b.handleCompactCallArgs(e.Args)
@@ -1106,7 +1118,7 @@ func (b *BlockWalker) handleForeach(s *ir.ForeachStmt) bool {
 			return false
 		}
 
-		delete(b.unusedVars, key.Name)
+		b.untrackVarName(key.Name)
 
 		b.r.Report(s.Key, LevelError, "unused", "foreach key $%s is unused, can simplify $%s => $%s to just $%s", key.Name, key.Name, variable.Name, variable.Name)
 	}
@@ -1182,7 +1194,7 @@ func (b *BlockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 			sc.AddVarName(v.Name, typ, "use", meta.VarAlwaysDefined)
 		}
 
-		delete(b.unusedVars, v.Name)
+		b.untrackVarName(v.Name)
 	}
 
 	params, _ := b.r.parseFuncArgs(fun.Params, phpDocParamTypes, sc)
@@ -1272,10 +1284,10 @@ func (b *BlockWalker) handleVariable(v ir.Node) bool {
 	switch v := v.(type) {
 	case *ir.Var:
 		if vv, ok := v.Expr.(*ir.SimpleVar); ok {
-			delete(b.unusedVars, vv.Name)
+			b.untrackVarName(vv.Name)
 		}
 	case *ir.SimpleVar:
-		delete(b.unusedVars, v.Name)
+		b.untrackVarName(v.Name)
 	}
 
 	if !b.ctx.sc.HaveVar(v) {
@@ -1639,6 +1651,15 @@ func (b *BlockWalker) handleAssignList(items []*ir.ArrayItemExpr, info meta.Clas
 	}
 }
 
+func (b *BlockWalker) paramClobberCheck(v *ir.SimpleVar) {
+	if b.callsFuncGetArgs {
+		return
+	}
+	if _, ok := b.unusedParams[v.Name]; ok && !b.path.Conditional() {
+		b.r.Report(v, LevelWarning, "paramClobber", "$%s param re-assigned before being used", v.Name)
+	}
+}
+
 func (b *BlockWalker) handleAssign(a *ir.Assign) bool {
 	a.Expression.Walk(b)
 
@@ -1647,7 +1668,10 @@ func (b *BlockWalker) handleAssign(a *ir.Assign) bool {
 		typ := solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression)
 		b.handleDimFetchLValue(v, "assign_array", typ)
 		return false
-	case *ir.Var, *ir.SimpleVar:
+	case *ir.SimpleVar:
+		b.paramClobberCheck(v)
+		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
+	case *ir.Var:
 		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
 	case *ir.ListExpr:
 		if !meta.IsIndexingComplete() {
@@ -1679,7 +1703,7 @@ func (b *BlockWalker) handleAssign(a *ir.Assign) bool {
 			break
 		}
 
-		delete(b.unusedVars, sv.Name)
+		b.untrackVarName(sv.Name)
 
 		if sv.Name != "this" {
 			break
