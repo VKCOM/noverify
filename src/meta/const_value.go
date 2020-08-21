@@ -59,6 +59,57 @@ func (c ConstantValue) GetBool() bool {
 	return c.Value.(bool)
 }
 
+// ToBool converts x constant to boolean constants following PHP conversion rules.
+// Second bool result tells whether that conversion was successful.
+func (c ConstantValue) ToBool() (bool, bool) {
+	switch c.Type {
+	case Bool:
+		return c.GetBool(), true
+	case Integer:
+		return c.GetInt() != 0, true
+	case Float:
+		return c.GetFloat() != 0, true
+	case String:
+		v := c.GetString()
+		return v != "" && v != "0", true
+	}
+	return false, false
+}
+
+// ToInt converts x constant to int constants following PHP conversion rules.
+// Second bool result tells whether that conversion was successful.
+func (c ConstantValue) ToInt() (int64, bool) {
+	switch c.Type {
+	case Bool:
+		if c.GetBool() {
+			return 1, true
+		}
+		return 0, true
+	case Integer:
+		return c.GetInt(), true
+	case Float:
+		return int64(c.GetFloat()), true
+	}
+	return 0, false
+}
+
+// ToString converts x constant to string constants following PHP conversion rules.
+// Second bool result tells whether that conversion was successful.
+func (c ConstantValue) ToString() (string, bool) {
+	switch c.Type {
+	case Bool:
+		if c.GetBool() {
+			return "1", true
+		}
+		return "", true
+	case Integer:
+		return strconv.FormatInt(c.GetInt(), 10), true
+	case String:
+		return c.GetString(), true
+	}
+	return "", false
+}
+
 func (c ConstantValue) GobEncode() ([]byte, error) {
 	switch c.Type {
 	case Float:

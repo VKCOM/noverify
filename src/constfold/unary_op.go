@@ -5,7 +5,7 @@ import (
 )
 
 func Not(x meta.ConstantValue) meta.ConstantValue {
-	v, ok := ToBool(x)
+	v, ok := x.ToBool()
 	if !ok {
 		return meta.UnknownValue
 	}

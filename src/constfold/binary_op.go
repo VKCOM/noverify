@@ -51,8 +51,8 @@ func Mul(x, y meta.ConstantValue) meta.ConstantValue {
 
 // Concat performs string "." operation.
 func Concat(x, y meta.ConstantValue) meta.ConstantValue {
-	v1, ok1 := ToString(x)
-	v2, ok2 := ToString(y)
+	v1, ok1 := x.ToString()
+	v2, ok2 := y.ToString()
 	if ok1 && ok2 {
 		return meta.ConstantStringValue(v1 + v2)
 	}
@@ -62,8 +62,8 @@ func Concat(x, y meta.ConstantValue) meta.ConstantValue {
 // Or performs logical "||".
 // Also works for "or" operator.
 func Or(x, y meta.ConstantValue) meta.ConstantValue {
-	v1, ok1 := ToBool(x)
-	v2, ok2 := ToBool(y)
+	v1, ok1 := x.ToBool()
+	v2, ok2 := y.ToBool()
 	switch {
 	case ok1 && v1:
 		return meta.TrueValue
@@ -79,8 +79,8 @@ func Or(x, y meta.ConstantValue) meta.ConstantValue {
 // And performs logical "&&".
 // Also works for "and" operator.
 func And(x, y meta.ConstantValue) meta.ConstantValue {
-	v1, ok1 := ToBool(x)
-	v2, ok2 := ToBool(y)
+	v1, ok1 := x.ToBool()
+	v2, ok2 := y.ToBool()
 	switch {
 	case ok1 && v1:
 		return meta.FalseValue
@@ -95,8 +95,8 @@ func And(x, y meta.ConstantValue) meta.ConstantValue {
 
 // BitOr performs bitwise "|".
 func BitOr(x, y meta.ConstantValue) meta.ConstantValue {
-	v1, ok1 := ToInt(x)
-	v2, ok2 := ToInt(y)
+	v1, ok1 := x.ToInt()
+	v2, ok2 := y.ToInt()
 	if ok1 && ok2 {
 		return meta.ConstantIntValue(v1 | v2)
 	}
@@ -105,8 +105,8 @@ func BitOr(x, y meta.ConstantValue) meta.ConstantValue {
 
 // BitAnd performs bitwise "&".
 func BitAnd(x, y meta.ConstantValue) meta.ConstantValue {
-	v1, ok1 := ToInt(x)
-	v2, ok2 := ToInt(y)
+	v1, ok1 := x.ToInt()
+	v2, ok2 := y.ToInt()
 	if ok1 && ok2 {
 		return meta.ConstantIntValue(v1 & v2)
 	}
