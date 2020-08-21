@@ -486,6 +486,38 @@ function performance_test() {}`,
   public function __set($name, $value) {} // Ok
 }`,
 		},
+
+		{
+			Name:    "nameCase",
+			Default: true,
+			Comment: `Report symbol case mismatches.`,
+			Before: `class Foo {}
+$foo = new foo();`,
+			After: `class Foo {}
+$foo = new Foo();`,
+		},
+
+		{
+			Name:    "strictCmp",
+			Default: true,
+			Comment: `Report non-strict comparison with false/true/null.`,
+			Before:  `$result == null`,
+			After:   `$result === null`,
+		},
+
+		{
+			Name:    "paramClobber",
+			Default: true,
+			Comment: `Report assignments that overwrite params prior to their usage.`,
+			Before: `function api_get_video($user_id) {
+  $user_id = 0;
+  return get_video($user_id);
+}`,
+			After: `function api_get_video($user_id) {
+  $user_id = $user_id ?: 0;
+  return get_video($user_id);
+}`,
+		},
 	}
 
 	for _, info := range allChecks {

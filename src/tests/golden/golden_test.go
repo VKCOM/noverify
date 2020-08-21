@@ -21,6 +21,17 @@ import (
 )
 
 func TestMain(m *testing.M) {
+	enableAllRules := func(_ rules.Rule) bool { return true }
+	p := rules.NewParser()
+	linter.Rules = rules.NewSet()
+	ruleSets, err := cmd.InitEmbeddedRules(p, enableAllRules)
+	if err != nil {
+		panic(fmt.Sprintf("init embedded rules: %v", err))
+	}
+	for _, rset := range ruleSets {
+		linter.DeclareRules(rset)
+	}
+
 	exitCode := m.Run()
 
 	_ = os.Remove("phplinter.exe")
@@ -57,13 +68,6 @@ func TestGolden(t *testing.T) {
 	defer func(rset *rules.Set) {
 		linter.Rules = rset
 	}(linter.Rules)
-
-	enableAllRules := func(_ rules.Rule) bool { return true }
-	p := rules.NewParser()
-	linter.Rules = rules.NewSet()
-	if _, err := cmd.InitEmbeddedRules(p, enableAllRules); err != nil {
-		t.Fatalf("init embedded rules: %v", err)
-	}
 
 	targets := []*goldenTest{
 		{

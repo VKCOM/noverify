@@ -411,6 +411,8 @@ function bad(string $x) {
 }
 
 func runRulesTest(t *testing.T, test *linttest.Suite, rfile string) {
+	test.IgnoreUndeclaredChecks = true
+
 	rparser := rules.NewParser()
 	rset, err := rparser.Parse("<test>", strings.NewReader(rfile))
 	if err != nil {

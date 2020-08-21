@@ -9,6 +9,7 @@ import (
 	"github.com/VKCOM/noverify/src/linter/lintapi"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
+	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/vscode"
 )
 
@@ -290,6 +291,17 @@ func RegisterRootCheckerWithCacher(cacher MetaCacher, c RootCheckerCreateFunc) {
 		}
 	}
 	metaCachers = append(metaCachers, cacher)
+}
+
+func DeclareRules(rset *rules.Set) {
+	for _, ruleName := range rset.Names {
+		// TODO: better documentation. See #466.
+		DeclareCheck(CheckInfo{
+			Name:    ruleName,
+			Comment: fmt.Sprintf("%s is a dynamic rule", ruleName),
+			Default: true,
+		})
+	}
 }
 
 // DeclareCheck declares a check described by an info.
