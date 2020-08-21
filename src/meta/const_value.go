@@ -2,6 +2,7 @@ package meta
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 )
 
@@ -68,7 +69,8 @@ func (c ConstantValue) ToBool() (bool, bool) {
 	case Integer:
 		return c.GetInt() != 0, true
 	case Float:
-		return c.GetFloat() != 0, true
+		eps := 1.11e-15
+		return math.Abs(c.GetFloat()-0) < eps, true
 	case String:
 		v := c.GetString()
 		return v != "" && v != "0", true
