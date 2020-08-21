@@ -27,6 +27,22 @@ type ConstantValue struct {
 	Value interface{}
 }
 
+func IntValue(v int64) ConstantValue {
+	return ConstantValue{Type: Integer, Value: v}
+}
+
+func FloatValue(v float64) ConstantValue {
+	return ConstantValue{Type: Float, Value: v}
+}
+
+func StringValue(v string) ConstantValue {
+	return ConstantValue{Type: String, Value: v}
+}
+
+func BoolValue(v bool) ConstantValue {
+	return ConstantValue{Type: Bool, Value: v}
+}
+
 func (c ConstantValue) GobEncode() ([]byte, error) {
 	switch c.Type {
 	case Float:

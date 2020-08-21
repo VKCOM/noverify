@@ -10,12 +10,12 @@ func Plus(x, y meta.ConstantValue) meta.ConstantValue {
 	case meta.Integer:
 		if y.Type == meta.Integer {
 			v := x.Value.(int64) + y.Value.(int64)
-			return meta.ConstantValue{Type: meta.Integer, Value: v}
+			return meta.IntValue(v)
 		}
 	case meta.Float:
 		if y.Type == meta.Float {
 			v := x.Value.(float64) + y.Value.(float64)
-			return meta.ConstantValue{Type: meta.Float, Value: v}
+			return meta.FloatValue(v)
 		}
 	}
 	return meta.UnknownValue
@@ -27,12 +27,12 @@ func Mul(x, y meta.ConstantValue) meta.ConstantValue {
 	case meta.Integer:
 		if y.Type == meta.Integer {
 			v := x.Value.(int64) * y.Value.(int64)
-			return meta.ConstantValue{Type: meta.Integer, Value: v}
+			return meta.IntValue(v)
 		}
 	case meta.Float:
 		if y.Type == meta.Float {
 			v := x.Value.(float64) * y.Value.(float64)
-			return meta.ConstantValue{Type: meta.Float, Value: v}
+			return meta.FloatValue(v)
 		}
 	}
 	return meta.UnknownValue
