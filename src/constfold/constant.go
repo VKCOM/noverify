@@ -1,6 +1,8 @@
 package constfold
 
 import (
+	"strconv"
+
 	"github.com/VKCOM/noverify/src/meta"
 )
 
@@ -18,4 +20,21 @@ func ToBool(x meta.ConstantValue) (bool, bool) {
 		return x.Value.(string) != "" && x.Value.(string) != "0", true
 	}
 	return false, false
+}
+
+// ToString converts x constant to string constants following PHP conversion rules.
+// Second bool result tells whether that conversion was successful.
+func ToString(x meta.ConstantValue) (string, bool) {
+	switch x.Type {
+	case meta.Bool:
+		if x.Value.(bool) {
+			return "1", true
+		}
+		return "", true
+	case meta.Integer:
+		return strconv.FormatInt(x.Value.(int64), 10), true
+	case meta.String:
+		return x.Value.(string), true
+	}
+	return "", false
 }

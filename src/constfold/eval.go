@@ -59,6 +59,8 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstantValue {
 		return Plus(Eval(st, e.Left), Eval(st, e.Right))
 	case *ir.MulExpr:
 		return Mul(Eval(st, e.Left), Eval(st, e.Right))
+	case *ir.ConcatExpr:
+		return Concat(Eval(st, e.Left), Eval(st, e.Right))
 
 	case *ir.Lnumber:
 		value, err := strconv.ParseInt(e.Value, 10, 64)

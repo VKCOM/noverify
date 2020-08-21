@@ -37,3 +37,13 @@ func Mul(x, y meta.ConstantValue) meta.ConstantValue {
 	}
 	return meta.UnknownValue
 }
+
+// Concat performs string "." operation.
+func Concat(x, y meta.ConstantValue) meta.ConstantValue {
+	v1, ok1 := ToString(x)
+	v2, ok2 := ToString(y)
+	if ok1 && ok2 {
+		return meta.StringValue(v1 + v2)
+	}
+	return meta.UnknownValue
+}

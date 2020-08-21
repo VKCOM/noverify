@@ -177,6 +177,8 @@ func TestNormalizeExpr(t *testing.T) {
 		{`!true`, `false`},
 		{`!false`, `true`},
 		{`!!false`, `false`},
+		{`"Hello " . "World!"`, `'Hello World!'`},
+		{`"Hello " . "World" . "!"`, `'Hello World!'`},
 
 		// List assignments.
 		{`list(, $x) = f()`, `[1 => $v0] = f()`},
