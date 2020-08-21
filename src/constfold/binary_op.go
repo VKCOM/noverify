@@ -21,6 +21,23 @@ func Plus(x, y meta.ConstantValue) meta.ConstantValue {
 	return meta.UnknownValue
 }
 
+// Minus performs arithmetic "-".
+func Minus(x, y meta.ConstantValue) meta.ConstantValue {
+	switch x.Type {
+	case meta.Integer:
+		if y.Type == meta.Integer {
+			v := x.Value.(int64) - y.Value.(int64)
+			return meta.IntValue(v)
+		}
+	case meta.Float:
+		if y.Type == meta.Float {
+			v := x.Value.(float64) - y.Value.(float64)
+			return meta.FloatValue(v)
+		}
+	}
+	return meta.UnknownValue
+}
+
 // Mul performs arithmetic "*".
 func Mul(x, y meta.ConstantValue) meta.ConstantValue {
 	switch x.Type {

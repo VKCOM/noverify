@@ -174,6 +174,8 @@ func TestNormalizeExpr(t *testing.T) {
 		{`(1 + 5) + 1`, `7`},
 		{`1 + 2 * 4`, `9`},
 		{`(1 + 2) * 4`, `12`},
+		{`5 - 6`, `-1`},
+		{`(5 - 6) * 8 + 6`, `-2`},
 		{`!true`, `false`},
 		{`!false`, `true`},
 		{`!!false`, `false`},
