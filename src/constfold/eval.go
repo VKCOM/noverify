@@ -52,6 +52,9 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstantValue {
 	case *ir.UnaryMinusExpr:
 		return Neg(Eval(st, e.Expr))
 
+	case *ir.BooleanNotExpr:
+		return Not(Eval(st, e.Expr))
+
 	case *ir.PlusExpr:
 		return Plus(Eval(st, e.Left), Eval(st, e.Right))
 	case *ir.MulExpr:

@@ -4,6 +4,14 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func Not(x meta.ConstantValue) meta.ConstantValue {
+	v, ok := ToBool(x)
+	if !ok {
+		return meta.UnknownValue
+	}
+	return meta.ConstantValue{Type: meta.Bool, Value: !v.Value.(bool)}
+}
+
 func Neg(x meta.ConstantValue) meta.ConstantValue {
 	switch x.Type {
 	case meta.Integer:

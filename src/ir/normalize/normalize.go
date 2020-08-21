@@ -498,6 +498,8 @@ func constToIR(v meta.ConstantValue) ir.Node {
 		return &ir.Dnumber{Value: fmt.Sprint(value)}
 	case meta.String:
 		return &ir.String{Value: value.(string)}
+	case meta.Bool:
+		return &ir.Name{Value: fmt.Sprint(value)}
 	default:
 		return nil
 	}

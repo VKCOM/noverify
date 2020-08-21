@@ -174,6 +174,9 @@ func TestNormalizeExpr(t *testing.T) {
 		{`(1 + 5) + 1`, `7`},
 		{`1 + 2 * 4`, `9`},
 		{`(1 + 2) * 4`, `12`},
+		{`!true`, `false`},
+		{`!false`, `true`},
+		{`!!false`, `false`},
 
 		// List assignments.
 		{`list(, $x) = f()`, `[1 => $v0] = f()`},
