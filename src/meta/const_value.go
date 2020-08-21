@@ -28,19 +28,19 @@ type ConstValue struct {
 	Value interface{}
 }
 
-func ConstIntValue(v int64) ConstValue {
+func NewIntConst(v int64) ConstValue {
 	return ConstValue{Type: Integer, Value: v}
 }
 
-func ConstFloatValue(v float64) ConstValue {
+func NewFloatConst(v float64) ConstValue {
 	return ConstValue{Type: Float, Value: v}
 }
 
-func ConstStringValue(v string) ConstValue {
+func NewStringConstant(v string) ConstValue {
 	return ConstValue{Type: String, Value: v}
 }
 
-func ConstBoolValue(v bool) ConstValue {
+func NewBoolConstant(v bool) ConstValue {
 	return ConstValue{Type: Bool, Value: v}
 }
 

@@ -10,16 +10,16 @@ func Not(x meta.ConstValue) meta.ConstValue {
 	if !ok {
 		return meta.UnknownValue
 	}
-	return meta.ConstBoolValue(!v)
+	return meta.NewBoolConstant(!v)
 }
 
 // Neg performs unary "-".
 func Neg(x meta.ConstValue) meta.ConstValue {
 	switch x.Type {
 	case meta.Integer:
-		return meta.ConstIntValue(-x.GetInt())
+		return meta.NewIntConst(-x.GetInt())
 	case meta.Float:
-		return meta.ConstFloatValue(-x.GetFloat())
+		return meta.NewFloatConst(-x.GetFloat())
 	}
 	return meta.UnknownValue
 }
