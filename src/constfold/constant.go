@@ -11,13 +11,14 @@ import (
 func ToBool(x meta.ConstantValue) (bool, bool) {
 	switch x.Type {
 	case meta.Bool:
-		return x.Value.(bool), true
+		return x.ToBool(), true
 	case meta.Integer:
-		return x.Value.(int64) != 0, true
+		return x.ToInt() != 0, true
 	case meta.Float:
-		return x.Value.(float64) != 0, true
+		return x.ToFloat() != 0, true
 	case meta.String:
-		return x.Value.(string) != "" && x.Value.(string) != "0", true
+		v := x.ToString()
+		return v != "" && v != "0", true
 	}
 	return false, false
 }
@@ -27,14 +28,14 @@ func ToBool(x meta.ConstantValue) (bool, bool) {
 func ToString(x meta.ConstantValue) (string, bool) {
 	switch x.Type {
 	case meta.Bool:
-		if x.Value.(bool) {
+		if x.ToBool() {
 			return "1", true
 		}
 		return "", true
 	case meta.Integer:
-		return strconv.FormatInt(x.Value.(int64), 10), true
+		return strconv.FormatInt(x.ToInt(), 10), true
 	case meta.String:
-		return x.Value.(string), true
+		return x.ToString(), true
 	}
 	return "", false
 }

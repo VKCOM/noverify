@@ -43,6 +43,22 @@ func BoolValue(v bool) ConstantValue {
 	return ConstantValue{Type: Bool, Value: v}
 }
 
+func (c ConstantValue) ToInt() int64 {
+	return c.Value.(int64)
+}
+
+func (c ConstantValue) ToFloat() float64 {
+	return c.Value.(float64)
+}
+
+func (c ConstantValue) ToString() string {
+	return c.Value.(string)
+}
+
+func (c ConstantValue) ToBool() bool {
+	return c.Value.(bool)
+}
+
 func (c ConstantValue) GobEncode() ([]byte, error) {
 	switch c.Type {
 	case Float:
