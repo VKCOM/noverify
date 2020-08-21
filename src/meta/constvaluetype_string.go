@@ -15,13 +15,13 @@ func _() {
 	_ = x[Bool-4]
 }
 
-const _ConstantValueType_name = "UndefinedIntegerFloatStringBool"
+const _ConstValueType_name = "UndefinedIntegerFloatStringBool"
 
-var _ConstantValueType_index = [...]uint8{0, 9, 16, 21, 27, 31}
+var _ConstValueType_index = [...]uint8{0, 9, 16, 21, 27, 31}
 
 func (i ConstValueType) String() string {
-	if i >= ConstValueType(len(_ConstantValueType_index)-1) {
+	if i >= ConstValueType(len(_ConstValueType_index)-1) {
 		return "ConstValueType(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
-	return _ConstantValueType_name[_ConstantValueType_index[i]:_ConstantValueType_index[i+1]]
+	return _ConstValueType_name[_ConstValueType_index[i]:_ConstValueType_index[i+1]]
 }
