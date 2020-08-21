@@ -79,7 +79,7 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstantValue {
 		return BitOr(Eval(st, e.Left), Eval(st, e.Right))
 
 	case *ir.Lnumber:
-		value, err := strconv.ParseInt(e.Value, 10, 64)
+		value, err := strconv.ParseInt(e.Value, 0, 64)
 		if err != nil {
 			return meta.UnknownValue
 		}
