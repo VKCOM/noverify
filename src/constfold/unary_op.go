@@ -5,21 +5,21 @@ import (
 )
 
 // Not performs unary "!".
-func Not(x meta.ConstantValue) meta.ConstantValue {
+func Not(x meta.ConstValue) meta.ConstValue {
 	v, ok := x.ToBool()
 	if !ok {
 		return meta.UnknownValue
 	}
-	return meta.ConstantBoolValue(!v)
+	return meta.ConstBoolValue(!v)
 }
 
 // Neg performs unary "-".
-func Neg(x meta.ConstantValue) meta.ConstantValue {
+func Neg(x meta.ConstValue) meta.ConstValue {
 	switch x.Type {
 	case meta.Integer:
-		return meta.ConstantIntValue(-x.GetInt())
+		return meta.ConstIntValue(-x.GetInt())
 	case meta.Float:
-		return meta.ConstantFloatValue(-x.GetFloat())
+		return meta.ConstFloatValue(-x.GetFloat())
 	}
 	return meta.UnknownValue
 }

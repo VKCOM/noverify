@@ -37,7 +37,7 @@ import (
 //          changed meta.scopeVar bool fields representation
 //     38 - replaced TypesMap.immutable:bool with flags:uint8.
 //          added mapPrecise flag to mark precise type maps.
-//     39 - added new field Value in ConstantInfo
+//     39 - added new field Value in ConstInfo
 //     40 - changed string const value storage (no quotes)
 //     41 - const-folding affected const definition values
 //     42 - bool-typed consts are now stored in meta info

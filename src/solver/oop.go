@@ -83,10 +83,10 @@ func GetClassName(cs *meta.ClassParseState, classNode ir.Node) (className string
 }
 
 // GetConstant searches for specified constant in const fetch.
-func GetConstant(cs *meta.ClassParseState, constNode ir.Node) (constName string, ci meta.ConstantInfo, ok bool) {
+func GetConstant(cs *meta.ClassParseState, constNode ir.Node) (constName string, ci meta.ConstInfo, ok bool) {
 	nm, ok := constNode.(*ir.Name)
 	if !ok {
-		return "", meta.ConstantInfo{}, false
+		return "", meta.ConstInfo{}, false
 	}
 
 	nameStr := nm.Value
@@ -111,5 +111,5 @@ func GetConstant(cs *meta.ClassParseState, constNode ir.Node) (constName string,
 		}
 	}
 
-	return "", meta.ConstantInfo{}, false
+	return "", meta.ConstInfo{}, false
 }
