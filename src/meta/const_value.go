@@ -8,7 +8,7 @@ import (
 
 type ConstValueType uint8
 
-//go:generate stringer -type=ConstantValueType
+//go:generate stringer -type=ConstValueType
 const (
 	Undefined ConstValueType = iota
 	Integer
