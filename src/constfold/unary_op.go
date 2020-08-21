@@ -4,12 +4,22 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+// Not performs unary "!".
+func Not(x meta.ConstantValue) meta.ConstantValue {
+	v, ok := x.ToBool()
+	if !ok {
+		return meta.UnknownValue
+	}
+	return meta.ConstantBoolValue(!v)
+}
+
+// Neg performs unary "-".
 func Neg(x meta.ConstantValue) meta.ConstantValue {
 	switch x.Type {
 	case meta.Integer:
-		return meta.ConstantValue{Type: meta.Integer, Value: -x.Value.(int64)}
+		return meta.ConstantIntValue(-x.GetInt())
 	case meta.Float:
-		return meta.ConstantValue{Type: meta.Float, Value: -x.Value.(float64)}
+		return meta.ConstantFloatValue(-x.GetFloat())
 	}
 	return meta.UnknownValue
 }
