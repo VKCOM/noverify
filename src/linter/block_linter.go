@@ -612,6 +612,12 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 			break
 		}
 		b.checkRegexp(e, e.Arg(0))
+	case `\sprintf`, `\printf`:
+		if len(e.Args) < 1 {
+			break
+		}
+		// TODO: handle fprintf as well?
+		b.checkFormatString(e, e.Arg(0))
 	}
 }
 
@@ -657,4 +663,67 @@ func (b *blockLinter) checkRegexp(e *ir.FunctionCallExpr, arg *ir.Argument) {
 	for _, issue := range issues {
 		b.report(arg, LevelWarning, "regexpVet", "%s", issue)
 	}
+}
+
+func (b *blockLinter) checkFormatString(e *ir.FunctionCallExpr, arg *ir.Argument) {
+	s, ok := arg.Expr.(*ir.String)
+	if !ok {
+		return
+	}
+	const argsLimit = 16
+	if len(s.Value) > 255 || len(e.Args) > argsLimit {
+		return
+	}
+
+	format, err := parseFormatString(s.Value)
+	if err != nil {
+		b.report(arg, LevelWarning, "printf", "%s", err.Error())
+		return
+	}
+
+	// TODO: detect `% <char>` cases.
+	// For example in, "Handler % tried to add additional_field %s but % could not be added!"
+	// we have 2 bad formatting directives here, but only one is reported, `% t`, since
+	// 't' is not a correct specifier (while '% c' is technically OK).
+	//
+	// TODO: test whether things like `%1%` make sense. We report all %% directive
+	// usages that have any modifiers.
+
+	usages := make([]uint8, argsLimit)
+	for _, d := range format.directives {
+		if d.specifier == '%' {
+			hasModifiers := d.argNum != -1 || d.flags != "" || d.precision != -1 || d.width != -1
+			if hasModifiers {
+				b.report(arg, LevelWarning, "printf", "%%%% directive has modifiers")
+			}
+			continue
+		}
+
+		if d.argNum == -1 {
+			continue
+		}
+		if d.argNum >= len(e.Args) {
+			s := s.Value[d.begin:d.end]
+			b.report(arg, LevelWarning, "printf", "%s directive refers to the args[%d] which is not provided", s, d.argNum)
+			continue
+		}
+		if d.argNum < len(usages) {
+			usages[d.argNum]++
+		}
+
+		arg := e.Arg(d.argNum)
+		if d.specifier == 's' && b.isArrayType(b.walker.exprType(arg.Expr)) {
+			b.report(arg, LevelWarning, "printf", "potential array to string conversion")
+		}
+	}
+
+	for i := 1; i < len(e.Args); i++ {
+		if usages[i] == 0 {
+			b.report(e.Arg(i), LevelWarning, "printf", "argument is not referenced from the formatting string")
+		}
+	}
+}
+
+func (b *blockLinter) isArrayType(typ meta.TypesMap) bool {
+	return typ.Len() == 1 && typ.Find(meta.IsArrayType)
 }

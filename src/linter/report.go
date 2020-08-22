@@ -518,6 +518,14 @@ $foo = new Foo();`,
   return get_video($user_id);
 }`,
 		},
+
+		{
+			Name:    "printf",
+			Default: true,
+			Comment: `Report issues in printf-like function calls.`,
+			Before:  `sprintf("id=%d")`,
+			After:   `sprintf("id=%d", $id)`,
+		},
 	}
 
 	for _, info := range allChecks {
