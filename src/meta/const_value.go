@@ -203,6 +203,14 @@ func (c ConstantValue) String() string {
 	return fmt.Sprintf("%s(%v)", c.Type, c.Value)
 }
 
+func (c ConstantValue) StringValue() string {
+	if c.Type == Undefined {
+		return ""
+	}
+
+	return fmt.Sprintf("%v", c.Value)
+}
+
 func (c ConstantValue) IsEqual(v ConstantValue) bool {
 	if v.Type == Undefined || c.Type == Undefined {
 		return false
