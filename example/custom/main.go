@@ -16,7 +16,7 @@ func init() {
 	linter.RegisterBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker { return &block{ctx: ctx} })
 
 	linter.DeclareCheck(linter.CheckInfo{
-		Name:    "strictCmp",
+		Name:    "exampleStrictCmp",
 		Default: true,
 		Comment: "Report not-strict-enough comparisons.",
 	})
@@ -59,11 +59,11 @@ func (b *block) BeforeEnterNode(n ir.Node) {
 		b.handleFunctionCall(n)
 	case *ir.EqualExpr:
 		if isString(b.ctx, n.Left) || isString(b.ctx, n.Right) {
-			b.ctx.Report(n, linter.LevelWarning, "strictCmp", "Strings must be compared using '===' operator")
+			b.ctx.Report(n, linter.LevelWarning, "exampleStrictCmp", "Strings must be compared using '===' operator")
 		}
 	case *ir.NotEqualExpr:
 		if isString(b.ctx, n.Left) || isString(b.ctx, n.Right) {
-			b.ctx.Report(n, linter.LevelWarning, "strictCmp", "Strings must be compared using '!==' operator")
+			b.ctx.Report(n, linter.LevelWarning, "exampleStrictCmp", "Strings must be compared using '!==' operator")
 		}
 	}
 }
@@ -90,5 +90,5 @@ func (b *block) handleInArrayCall(e *ir.FunctionCallExpr) {
 		return
 	}
 
-	b.ctx.Report(e, linter.LevelWarning, "strictCmp", "3rd argument of in_array must be true when comparing strings")
+	b.ctx.Report(e, linter.LevelWarning, "exampleStrictCmp", "3rd argument of in_array must be true when comparing strings")
 }

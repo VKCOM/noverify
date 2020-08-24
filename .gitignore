@@ -1,6 +1,6 @@
 phplinter.sh
 phplinter.exe
-phplinter-output.json
+phplinter-output-*.json
 err.log
 src/cmd/stubs/phpstorm-stubs/
 y.output

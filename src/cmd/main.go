@@ -71,6 +71,9 @@ func Run(cfg *MainConfig) (int, error) {
 	if err != nil {
 		return 1, fmt.Errorf("preload rules: %v", err)
 	}
+	for _, rset := range ruleSets {
+		linter.DeclareRules(rset)
+	}
 
 	var args cmdlineArguments
 	bindFlags(ruleSets, &args)

@@ -629,9 +629,17 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.N
 		}
 	}
 
+	// It's OK to read from and delete from a nil map.
+	// If a func/method has 0 params, don't allocate a map for it.
+	if len(params) != 0 {
+		b.unusedParams = make(map[string]struct{}, len(params))
+	}
 	for _, p := range params {
 		if p.IsRef {
 			b.nonLocalVars[p.Name] = varRef
+		}
+		if !p.IsRef && !IsDiscardVar(p.Name) {
+			b.unusedParams[p.Name] = struct{}{}
 		}
 	}
 	for _, s := range stmts {

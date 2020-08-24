@@ -52,13 +52,34 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstantValue {
 	case *ir.UnaryMinusExpr:
 		return Neg(Eval(st, e.Expr))
 
+	case *ir.BooleanNotExpr:
+		return Not(Eval(st, e.Expr))
+
+	case *ir.BooleanAndExpr:
+		return And(Eval(st, e.Left), Eval(st, e.Right))
+	case *ir.BooleanOrExpr:
+		return Or(Eval(st, e.Left), Eval(st, e.Right))
+	case *ir.LogicalAndExpr:
+		return And(Eval(st, e.Left), Eval(st, e.Right))
+	case *ir.LogicalOrExpr:
+		return Or(Eval(st, e.Left), Eval(st, e.Right))
+
 	case *ir.PlusExpr:
 		return Plus(Eval(st, e.Left), Eval(st, e.Right))
+	case *ir.MinusExpr:
+		return Minus(Eval(st, e.Left), Eval(st, e.Right))
 	case *ir.MulExpr:
 		return Mul(Eval(st, e.Left), Eval(st, e.Right))
+	case *ir.ConcatExpr:
+		return Concat(Eval(st, e.Left), Eval(st, e.Right))
+
+	case *ir.BitwiseAndExpr:
+		return BitAnd(Eval(st, e.Left), Eval(st, e.Right))
+	case *ir.BitwiseOrExpr:
+		return BitOr(Eval(st, e.Left), Eval(st, e.Right))
 
 	case *ir.Lnumber:
-		value, err := strconv.ParseInt(e.Value, 10, 64)
+		value, err := strconv.ParseInt(e.Value, 0, 64)
 		if err != nil {
 			return meta.UnknownValue
 		}
