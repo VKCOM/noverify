@@ -489,7 +489,7 @@ func encapsedPartToConcatArg(n ir.Node) ir.Node {
 	}
 }
 
-func constToIR(v meta.ConstantValue) ir.Node {
+func constToIR(v meta.ConstValue) ir.Node {
 	value := v.Value
 	switch v.Type {
 	case meta.Integer:

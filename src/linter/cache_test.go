@@ -11,8 +11,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/VKCOM/noverify/src/linttest/assert"
 	"github.com/google/go-cmp/cmp"
+
+	"github.com/VKCOM/noverify/src/linttest/assert"
 )
 
 func TestCache(t *testing.T) {
@@ -119,7 +120,7 @@ main();
 		//
 		// If cache encoding changes, there is a very high chance that
 		// encoded data lengh will change as well.
-		wantLen := 4846
+		wantLen := 4843
 		haveLen := buf.Len()
 		if haveLen != wantLen {
 			t.Errorf("cache len mismatch:\nhave: %d\nwant: %d", haveLen, wantLen)
@@ -128,7 +129,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "cc4141d5dc69f8f49dfaa717c59596ee5e6c490b8274fe2742393bea87c1fcd0cc4be443127b117cdd8e58aeef09603c548e6461d2f45ff7be7fb6834b40533c"
+		wantStrings := "a1509317129f7b0556e2ecf6b52c3319ffcde53180f81def1f28be025d437171026e908ec87ee8ddd44bc315295c5f51620f58838f759e289131e79d0307c8e1"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)
