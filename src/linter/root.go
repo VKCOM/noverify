@@ -942,7 +942,7 @@ func (d *RootWalker) enterClassConstList(s *ir.ClassConstListStmt) bool {
 		value := constfold.Eval(d.ctx.st, c.Expr)
 
 		// TODO: handle duplicate constant
-		cl.Constants[nm] = meta.ConstantInfo{
+		cl.Constants[nm] = meta.ConstInfo{
 			Pos:         d.getElementPos(c),
 			Typ:         typ.Immutable(),
 			AccessLevel: accessLevel,
@@ -1613,7 +1613,7 @@ func (d *RootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {
 
 	value := constfold.Eval(d.ctx.st, valueArg)
 
-	d.meta.Constants[`\`+strings.TrimFunc(str.Value, isQuote)] = meta.ConstantInfo{
+	d.meta.Constants[`\`+strings.TrimFunc(str.Value, isQuote)] = meta.ConstInfo{
 		Pos:   d.getElementPos(s),
 		Typ:   solver.ExprTypeLocal(d.scope(), d.ctx.st, valueArg.Expr),
 		Value: value,
@@ -1704,7 +1704,7 @@ func (d *RootWalker) enterConstList(lst *ir.ConstListStmt) bool {
 		id := s.ConstantName
 		nm := d.ctx.st.Namespace + `\` + id.Value
 
-		d.meta.Constants[nm] = meta.ConstantInfo{
+		d.meta.Constants[nm] = meta.ConstInfo{
 			Pos:   d.getElementPos(s),
 			Typ:   solver.ExprTypeLocal(d.scope(), d.ctx.st, s.Expr),
 			Value: value,

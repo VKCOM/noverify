@@ -65,7 +65,7 @@ type PerFile struct {
 	Constants ConstantsMap
 }
 
-func (i *info) GetConstant(nm string) (res ConstantInfo, ok bool) {
+func (i *info) GetConstant(nm string) (res ConstInfo, ok bool) {
 	res, ok = i.allConstants[nm]
 	return res, ok
 }
@@ -404,7 +404,7 @@ type ClassParseState struct {
 
 type FunctionsOverrideMap map[string]FuncInfoOverride
 type PropertiesMap map[string]PropertyInfo
-type ConstantsMap map[string]ConstantInfo
+type ConstantsMap map[string]ConstInfo
 
 type ElementPosition struct {
 	Filename  string
