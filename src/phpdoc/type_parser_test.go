@@ -110,9 +110,19 @@ func TestParser(t *testing.T) {
 		{`foo(A):B`, `KeyVal="foo(A):B"{GenericParen="foo(A)"{Name="foo" Name="A"} Name="B"}`},
 
 		// MemberType.
-		{`\Foo::CONST`, `MemberType="\Foo::CONST"{Class="\Foo" Member="CONST"}`},
-		{`\Foo::CONST|\Foo::CONST2`, `Union="\Foo::CONST|\Foo::CONST2"{MemberType="\Foo::CONST"{Class="\Foo" Member="CONST"} MemberType="\Foo::CONST2"{Class="\Foo" Member="CONST2"}}`},
-		{`\Foo::$a|\Foo::CONST2`, `Union="\Foo::$a|\Foo::CONST2"{MemberType="\Foo::$a"{Class="\Foo" Member="$a"} MemberType="\Foo::CONST2"{Class="\Foo" Member="CONST2"}}`},
+		{`\Foo::CONST`, `MemberType="\Foo::CONST"{Name="\Foo" Name="CONST"}`},
+		{`\Foo::CONST|\Foo::CONST2`, `Union="\Foo::CONST|\Foo::CONST2"{MemberType="\Foo::CONST"{Name="\Foo" Name="CONST"} MemberType="\Foo::CONST2"{Name="\Foo" Name="CONST2"}}`},
+		{`\Foo::$a|\Foo::CONST2`, `Union="\Foo::$a|\Foo::CONST2"{MemberType="\Foo::$a"{Name="\Foo" Name="$a"} MemberType="\Foo::CONST2"{Name="\Foo" Name="CONST2"}}`},
+		// MemberType and other.
+		{`\Foo::CONST|string`, `Union="\Foo::CONST|string"{MemberType="\Foo::CONST"{Name="\Foo" Name="CONST"} Name="string"}`},
+		{`\Foo::CONST|x&(y|z)`, `Union="\Foo::CONST|x&(y|z)"{MemberType="\Foo::CONST"{Name="\Foo" Name="CONST"} Inter="x&(y|z)"{Name="x" Paren="(y|z)"{Union="y|z"{Name="y" Name="z"}}}}`},
+		{`\Foo::CONST|shape(i:int, ...)`, `Union="\Foo::CONST|shape(i:int, ...)"{MemberType="\Foo::CONST"{Name="\Foo" Name="CONST"} GenericParen="shape(i:int, ...)"{Name="shape" KeyVal="i:int"{Name="i" Name="int"} SpecialName="..."}}`},
+		{`\Foo::CONST|?x[]`, `Union="\Foo::CONST|?x[]"{MemberType="\Foo::CONST"{Name="\Foo" Name="CONST"} Array="?x[]"{Nullable="?x"{Name="x"}}}`},
+		{`\Foo::CONST|[](int|float)`, `Union="\Foo::CONST|[](int|float)"{MemberType="\Foo::CONST"{Name="\Foo" Name="CONST"} PrefixArray="[](int|float)"{Paren="(int|float)"{Union="int|float"{Name="int" Name="float"}}}}`},
+		{`\Foo::CONST|?callable() : int`, `Union="\Foo::CONST|?callable() : int"{MemberType="\Foo::CONST"{Name="\Foo" Name="CONST"} Nullable="?callable() : int"{TypedCallable="callable() : int"{Name="int"}}}`},
+		{`\Foo::CONST|tuple(T)|false`, `Union="\Foo::CONST|tuple(T)|false"{MemberType="\Foo::CONST"{Name="\Foo" Name="CONST"} GenericParen="tuple(T)"{Name="tuple" Name="T"} Name="false"}`},
+		{`\Foo::CONST|A<>`, `Union="\Foo::CONST|A<>"{MemberType="\Foo::CONST"{Name="\Foo" Name="CONST"} Generic="A<>"{Name="A"}}`},
+		{`\Foo::CONST|!?x`, `Union="\Foo::CONST|!?x"{MemberType="\Foo::CONST"{Name="\Foo" Name="CONST"} Not="!?x"{Nullable="?x"{Name="x"}}}`},
 
 		// Intersection types has higher priority that union types.
 		{`x&y|z`, `Union="x&y|z"{Inter="x&y"{Name="x" Name="y"} Name="z"}`},
