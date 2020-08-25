@@ -1631,6 +1631,12 @@ func TestArrowFunction(t *testing.T) {
 
 		$_ = fn($x) => fn($y) => fn($w) => ($a = $x + 5) && $a + 5;
 
+		// ok
+		$_ = fn() => ($a = 10) && $a;
+
+		// $a is undefined
+        $_ = fn() => $a = 10 && $a;
+
 		// arguments are not visible outside of arrow function
 		echo $x; // Undefined $x
 		echo $y; // Undefined $y
@@ -1642,6 +1648,8 @@ func TestArrowFunction(t *testing.T) {
 		`Variable a is unused (use $_ to ignore this inspection)`,
 		`Variable a is unused (use $_ to ignore this inspection)`,
 		`Variable a is unused (use $_ to ignore this inspection)`,
+		`Variable a is unused (use $_ to ignore this inspection)`,
+		`Undefined variable: a`,
 		`Undefined variable: x`,
 		`Undefined variable: y`,
 		`Undefined variable: w`,
