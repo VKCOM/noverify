@@ -427,7 +427,7 @@ func (b *blockLinter) checkSwitch(s *ir.SwitchStmt) {
 			continue
 		}
 
-		var v meta.ConstantValue
+		var v meta.ConstValue
 		var isConstKey bool
 		if k, ok := c.Cond.(*ir.ConstFetchExpr); ok {
 			v = constfold.Eval(b.walker.r.ctx.st, k)
