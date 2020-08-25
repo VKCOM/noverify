@@ -5,6 +5,11 @@
  * @linter       disable
  */
 
+/**
+ * @comment Report ternary expressions that can be simplified.
+ * @before  $x ? $x : $y
+ * @after   $x ?: $y
+ */
 function ternarySimplify() {
   /**
    * @maybe could replace the ternary with just $cond
@@ -89,6 +94,11 @@ function precedence() {
   $_ | $_ !== $_;
 }
 
+/**
+ * @comment Report assignments that can be simplified.
+ * @before  $x = $x + $y;
+ * @after   $x += $y;
+ */
 function assignOp() {
   /**
    * @maybe could rewrite as `$x += $y`
