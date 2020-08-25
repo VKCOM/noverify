@@ -34,6 +34,54 @@ $a = $a >> $b; // Could rewrite
 MAYBE   assignOp: could rewrite as `$a ??= $b` at testdata/embeddedrules/assignOp.php:52
 $a = $a ?? $b; // Could rewrite
 ^^^^^^^^^^^^^
+WARNING precedence: == has higher precedence than & at testdata/embeddedrules/precedence.php:4
+  $_ = 0 == $mask & $x;
+       ^^^^^^^^^^^^^^^
+WARNING precedence: != has higher precedence than & at testdata/embeddedrules/precedence.php:5
+  $_ = 0 != $mask & $x;
+       ^^^^^^^^^^^^^^^
+WARNING precedence: === has higher precedence than & at testdata/embeddedrules/precedence.php:6
+  $_ = 0 === $mask & $x;
+       ^^^^^^^^^^^^^^^^
+WARNING precedence: !== has higher precedence than & at testdata/embeddedrules/precedence.php:7
+  $_ = 0 !== $mask & $x;
+       ^^^^^^^^^^^^^^^^
+WARNING precedence: == has higher precedence than | at testdata/embeddedrules/precedence.php:9
+  $_ = 0 == $mask | $x;
+       ^^^^^^^^^^^^^^^
+WARNING precedence: != has higher precedence than | at testdata/embeddedrules/precedence.php:10
+  $_ = 0 != $mask | $x;
+       ^^^^^^^^^^^^^^^
+WARNING precedence: === has higher precedence than | at testdata/embeddedrules/precedence.php:11
+  $_ = 0 === $mask | $x;
+       ^^^^^^^^^^^^^^^^
+WARNING precedence: !== has higher precedence than | at testdata/embeddedrules/precedence.php:12
+  $_ = 0 !== $mask | $x;
+       ^^^^^^^^^^^^^^^^
+WARNING precedence: == has higher precedence than & at testdata/embeddedrules/precedence.php:16
+  $_ = $x & $mask == 0;
+       ^^^^^^^^^^^^^^^
+WARNING precedence: != has higher precedence than & at testdata/embeddedrules/precedence.php:17
+  $_ = $x & $mask != 0;
+       ^^^^^^^^^^^^^^^
+WARNING precedence: === has higher precedence than & at testdata/embeddedrules/precedence.php:18
+  $_ = $x & $mask === 0;
+       ^^^^^^^^^^^^^^^^
+WARNING precedence: !== has higher precedence than & at testdata/embeddedrules/precedence.php:19
+  $_ = $x & $mask !== 0;
+       ^^^^^^^^^^^^^^^^
+WARNING precedence: == has higher precedence than | at testdata/embeddedrules/precedence.php:21
+  $_ = $x | $mask == 0;
+       ^^^^^^^^^^^^^^^
+WARNING precedence: != has higher precedence than | at testdata/embeddedrules/precedence.php:22
+  $_ = $x | $mask != 0;
+       ^^^^^^^^^^^^^^^
+WARNING precedence: === has higher precedence than | at testdata/embeddedrules/precedence.php:23
+  $_ = $x | $mask === 0;
+       ^^^^^^^^^^^^^^^^
+WARNING precedence: !== has higher precedence than | at testdata/embeddedrules/precedence.php:24
+  $_ = $x | $mask !== 0;
+       ^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: could rewrite as `(bool)$x` at testdata/embeddedrules/ternarySimplify.php:6
     sink($x ? true : false);
          ^^^^^^^^^^^^^^^^^

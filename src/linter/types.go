@@ -59,6 +59,9 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []meta.Type {
 		}
 		return []meta.Type{{Elem: e.Value}}
 
+	case phpdoc.ExprMemberType:
+		return []meta.Type{{Elem: "mixed"}}
+
 	case phpdoc.ExprGeneric:
 		typ := e.Args[0]
 		params := e.Args[1:]

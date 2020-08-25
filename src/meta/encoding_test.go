@@ -96,7 +96,7 @@ func TestTypeEncoding(t *testing.T) {
 }
 
 func TestConstantValueDecodeEncode(t *testing.T) {
-	testCases := []ConstantValue{
+	testCases := []ConstValue{
 		{Type: String, Value: "world"},
 		{Type: Integer, Value: int64(5)},
 		{Type: Float, Value: 5.56},
@@ -113,7 +113,7 @@ func TestConstantValueDecodeEncode(t *testing.T) {
 		}
 
 		// decode this
-		decoded := ConstantValue{}
+		decoded := ConstValue{}
 		err = decoded.GobDecode(encoded)
 		if err != nil {
 			t.Errorf("unexpected error \"%s\"", err)

@@ -191,41 +191,9 @@ func (b *blockLinter) checkTryStmt(s *ir.TryStmt) {
 }
 
 func (b *blockLinter) checkBitwiseOp(n, left, right ir.Node) {
-	// Note: we report `$x & $mask != $y` as a precedence issue even
-	// if it can be caught with `typecheckOp` that checks both operand
-	// types (bool is not a good operand for bitwise operation).
-	//
-	// Reporting `invalid types, expected number found bool` is
-	// not that helpful, because the root of the problem is precedence.
-	// Invalid types are a result of that.
-
 	tok := "|"
 	if _, ok := n.(*ir.BitwiseAndExpr); ok {
 		tok = "&"
-	}
-
-	// FIXME: it may be redundant now when parens are explicit.
-	// Also, there is a NodePath to check whether the parent is ParenExpr.
-	hasParens := func(n ir.Node) bool {
-		return findFreeFloatingToken(n, freefloating.Start, "(") ||
-			findFreeFloatingToken(n, freefloating.End, ")")
-	}
-
-	checkArg := func(n, arg ir.Node, tok string) {
-		cmpTok := ""
-		switch arg.(type) {
-		case *ir.EqualExpr:
-			cmpTok = "=="
-		case *ir.NotEqualExpr:
-			cmpTok = "!="
-		case *ir.IdenticalExpr:
-			cmpTok = "==="
-		case *ir.NotIdenticalExpr:
-			cmpTok = "!=="
-		}
-		if cmpTok != "" && !hasParens(arg) {
-			b.report(n, LevelWarning, "precedence", "%s has higher precedence than %s", cmpTok, tok)
-		}
 	}
 
 	b.checkBinaryDupArgs(n, left, right)
@@ -236,8 +204,6 @@ func (b *blockLinter) checkBitwiseOp(n, left, right ir.Node) {
 			"Used %s bitwise op over bool operands, perhaps %s is intended?", tok, tok+tok)
 		return
 	}
-	checkArg(n, left, tok)
-	checkArg(n, right, tok)
 }
 
 func (b *blockLinter) checkBinaryVoidType(left, right ir.Node) {

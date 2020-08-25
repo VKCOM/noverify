@@ -2159,6 +2159,223 @@ exprtype(Roo::$d, "string");
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestClosureCallbackArgumentsTypes(t *testing.T) {
+	code := `<?php
+function usort($array, $callback) {}
+function uasort($array, $callback) {}
+function array_map($callback, $array, $_ = null) {}
+function array_walk($callback, $array) {}
+function array_walk_recursive($callback, $array) {}
+function array_filter($array, $callback) {}
+function array_reduce($array, $callback) {}
+function some_function_without_model($callback, $array) {}
+
+class Foo { public function f() {} }
+class Boo { public function b() {} }
+
+/** @return Foo[] */
+function return_foo() { return []; }
+
+/** @return Boo[] */
+function return_boo() { return []; }
+
+$foo_array = return_foo();
+$boo_array = return_boo();
+
+usort($foo_array, function($a, $b) {
+  exprtype($a, "\Foo");
+  exprtype($b, "\Foo");
+});
+
+uasort($foo_array, function($a, $b) {
+  exprtype($a, "\Foo");
+  exprtype($b, "\Foo");
+});
+
+array_map(function($a) {
+  exprtype($a, "\Foo");
+}, $foo_array);
+
+array_walk($foo_array, function($a, $b) {
+  exprtype($a, "\Foo");
+  exprtype($b, "mixed");
+});
+
+// wrong number of args
+array_walk($foo_array, function($a, $b, $c) {
+  exprtype($a, "\Foo");
+  exprtype($b, "mixed");
+  exprtype($c, "mixed");
+});
+
+array_walk_recursive($foo_array, function($a, $b) {
+  exprtype($a, "\Foo");
+  exprtype($b, "mixed");
+});
+
+array_filter($foo_array, function($a) {
+  exprtype($a, "\Foo");
+});
+
+array_reduce($foo_array, function($carry, $item) {
+  exprtype($carry, "\Foo");
+  exprtype($item, "\Foo");
+});
+
+some_function_without_model(function($b) {
+  exprtype($b, "mixed");
+}, $d);
+
+// Not supported
+function callback($a) {
+  exprtype($a, "mixed");
+}
+
+// Not supported
+$callback = function($a) {
+  exprtype($a, "mixed");
+};
+
+array_map($callback, $d);
+array_map('callback', $d);
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestClosureCallbackArgumentsPossibleErrorVariations(t *testing.T) {
+	code := `<?php
+function usort($array, $callback) {}
+function uasort($array, $callback) {}
+function array_map($callback, $array, $_ = null) {}
+function array_walk($callback, $array) {}
+function array_walk_recursive($callback, $array) {}
+function array_filter($array, $callback) {}
+function array_reduce($array, $callback) {}
+
+class Foo { public function f() {} }
+
+/** @return Foo[] */
+function return_foo() { return []; }
+
+$foo_array = return_foo();
+
+// more arguments than necessary
+usort($foo_array, function($a, $b, $c) {
+  exprtype($a, "\Foo");
+  exprtype($b, "\Foo");
+  exprtype($c, "mixed");
+});
+
+// less arguments than necessary
+uasort($foo_array, function($a) {
+  exprtype($a, "\Foo");
+});
+
+// more arguments than necessary
+array_map(function($a, $b) {
+  exprtype($a, "\Foo");
+  exprtype($b, "mixed");
+}, $foo_array);
+
+// less arguments than necessary
+array_map(function() {
+
+}, $foo_array);
+
+// more arguments than necessary
+array_walk($foo_array, function($a, $b, $c) {
+  exprtype($a, "\Foo");
+  exprtype($b, "mixed");
+  exprtype($c, "mixed");
+});
+
+// less arguments than necessary
+array_walk($foo_array, function() {
+});
+
+// more arguments than necessary
+array_filter($foo_array, function($a, $b) {
+  exprtype($a, "\Foo");
+  exprtype($b, "mixed");
+});
+
+// less arguments than necessary
+array_filter($foo_array, function() {
+});
+
+// more arguments than necessary
+array_reduce($foo_array, function($carry, $item, $c) {
+  exprtype($carry, "\Foo");
+  exprtype($item, "\Foo");
+  exprtype($c, "mixed");
+});
+
+// less arguments than necessary
+array_reduce($foo_array, function() {
+});
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestNestedClosureCallback(t *testing.T) {
+	code := `<?php
+function array_map($callback, array $arr1, array $_ = null) {}
+function usort($array, $callback) {}
+
+class Foo { public function f() {} }
+/** @return Foo[][] */
+
+function return_foo() { return []; }
+
+$foo_array = return_foo();
+
+array_map(function($a) {
+  exprtype($a, "\Foo[]");
+  array_map(function($a) {
+    exprtype($a, "\Foo");
+  }, $a);
+  exprtype($a, "\Foo[]");
+}, $foo_array);
+
+usort($foo_array, function($a, $b) {
+  exprtype($a, "\Foo[]");
+  exprtype($b, "\Foo[]");
+
+  array_map(function($a) {
+    exprtype($a, "\Foo");
+  }, $a);
+
+  array_map(function($b) {
+    exprtype($b, "\Foo");
+  }, $b);
+
+  exprtype($a, "\Foo[]");
+  exprtype($b, "\Foo[]");
+});
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestMemberTypeInPHPDoc(t *testing.T) {
+	code := `<?php
+class Foo {
+	const BAR = 5;
+	const BAZ = 10;
+}
+
+/**
+ * @return \Foo::BAR|\Foo::BAZ
+ */
+function f() {}
+
+function f2() {
+	exprtype(f(), "mixed");
+}
+
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {

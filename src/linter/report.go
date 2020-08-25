@@ -37,14 +37,6 @@ func init() {
 		},
 
 		{
-			Name:    "precedence",
-			Default: true,
-			Comment: `Report potential operation precedence issues.`,
-			Before:  `$x & $mask == 0; // == has higher precedence than &`,
-			After:   `($x & $mask) == 0`,
-		},
-
-		{
 			Name:    "voidResultUsed",
 			Default: true,
 			Comment: `Report usages of the void-type expressions`,

@@ -42,7 +42,8 @@ import (
 //     41 - const-folding affected const definition values
 //     42 - bool-typed consts are now stored in meta info
 //     43 - define'd const values stored in cache
-const cacheVersion = 43
+//     44 - rename ConstantInfo => ConstInfo
+const cacheVersion = 44
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")

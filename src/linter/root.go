@@ -942,7 +942,7 @@ func (d *RootWalker) enterClassConstList(s *ir.ClassConstListStmt) bool {
 		value := constfold.Eval(d.ctx.st, c.Expr)
 
 		// TODO: handle duplicate constant
-		cl.Constants[nm] = meta.ConstantInfo{
+		cl.Constants[nm] = meta.ConstInfo{
 			Pos:         d.getElementPos(c),
 			Typ:         typ.Immutable(),
 			AccessLevel: accessLevel,
@@ -1007,7 +1007,7 @@ func (d *RootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	phpDocParamTypes := doc.types
 
 	class := d.getClass()
-	params, minParamsCnt := d.parseFuncArgs(meth.Params, phpDocParamTypes, sc)
+	params, minParamsCnt := d.parseFuncArgs(meth.Params, phpDocParamTypes, sc, nil)
 
 	if len(class.Interfaces) != 0 {
 		// If we implement interfaces, methods that take a part in this
@@ -1362,12 +1362,68 @@ func (d *RootWalker) parseTypeNode(n ir.Node) (typ meta.TypesMap, ok bool) {
 	return tm, !tm.IsEmpty()
 }
 
-func (d *RootWalker) parseFuncArgs(params []ir.Node, parTypes phpDocParamsMap, sc *meta.Scope) (args []meta.FuncParam, minArgs int) {
+func (d *RootWalker) callbackParamByIndex(param ir.Node, argType meta.TypesMap) meta.FuncParam {
+	p := param.(*ir.Parameter)
+	v := p.Variable
+	var typ meta.TypesMap
+	argType.Iterate(func(t string) {
+		typ = typ.AppendString(meta.WrapElemOf(t))
+	})
+	arg := meta.FuncParam{
+		IsRef: p.ByRef,
+		Name:  v.Name,
+		Typ:   typ,
+	}
+	return arg
+}
+
+func (d *RootWalker) parseFuncArgsForCallback(params []ir.Node, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (args []meta.FuncParam, minArgs int) {
+	countParams := len(params)
+	minArgs = countParams
+	if countParams == 0 {
+		return nil, 0
+	}
+	args = make([]meta.FuncParam, countParams)
+
+	switch closureSolver.Name {
+	case `\usort`, `\uasort`, `\array_reduce`:
+		args[0] = d.callbackParamByIndex(params[0], closureSolver.ArgTypes[0])
+		if countParams > 1 {
+			args[1] = d.callbackParamByIndex(params[1], closureSolver.ArgTypes[0])
+		}
+	case `\array_walk`, `\array_walk_recursive`, `\array_filter`:
+		args[0] = d.callbackParamByIndex(params[0], closureSolver.ArgTypes[0])
+	case `\array_map`:
+		args[0] = d.callbackParamByIndex(params[0], closureSolver.ArgTypes[1])
+	}
+
+	for i, param := range params {
+		p := param.(*ir.Parameter)
+		v := p.Variable
+		var typ meta.TypesMap
+		if i < len(args) {
+			typ = args[i].Typ
+		} else {
+			typ = meta.MixedType
+		}
+
+		sc.AddVarName(v.Name, typ, "param", meta.VarAlwaysDefined)
+	}
+
+	return args, minArgs
+}
+
+func (d *RootWalker) parseFuncArgs(params []ir.Node, parTypes phpDocParamsMap, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (args []meta.FuncParam, minArgs int) {
 	if len(params) == 0 {
 		return nil, 0
 	}
 
 	args = make([]meta.FuncParam, 0, len(params))
+
+	if closureSolver != nil && solver.IsSupportedFunction(closureSolver.Name) {
+		return d.parseFuncArgsForCallback(params, sc, closureSolver)
+	}
+
 	for _, param := range params {
 		p := param.(*ir.Parameter)
 		v := p.Variable
@@ -1482,7 +1538,7 @@ func (d *RootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 
 	sc := meta.NewScope()
 
-	params, minParamsCnt := d.parseFuncArgs(fun.Params, phpDocParamTypes, sc)
+	params, minParamsCnt := d.parseFuncArgs(fun.Params, phpDocParamTypes, sc, nil)
 
 	funcInfo := d.handleFuncStmts(params, nil, fun.Stmts, sc)
 	actualReturnTypes := funcInfo.returnTypes
@@ -1557,7 +1613,7 @@ func (d *RootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {
 
 	value := constfold.Eval(d.ctx.st, valueArg)
 
-	d.meta.Constants[`\`+strings.TrimFunc(str.Value, isQuote)] = meta.ConstantInfo{
+	d.meta.Constants[`\`+strings.TrimFunc(str.Value, isQuote)] = meta.ConstInfo{
 		Pos:   d.getElementPos(s),
 		Typ:   solver.ExprTypeLocal(d.scope(), d.ctx.st, valueArg.Expr),
 		Value: value,
@@ -1648,7 +1704,7 @@ func (d *RootWalker) enterConstList(lst *ir.ConstListStmt) bool {
 		id := s.ConstantName
 		nm := d.ctx.st.Namespace + `\` + id.Value
 
-		d.meta.Constants[nm] = meta.ConstantInfo{
+		d.meta.Constants[nm] = meta.ConstInfo{
 			Pos:   d.getElementPos(s),
 			Typ:   solver.ExprTypeLocal(d.scope(), d.ctx.st, s.Expr),
 			Value: value,
