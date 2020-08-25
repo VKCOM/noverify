@@ -11,26 +11,24 @@ func _() {
 	_ = x[ExprInvalid-0]
 	_ = x[ExprUnknown-1]
 	_ = x[ExprName-2]
-	_ = x[ExprClass-3]
-	_ = x[ExprMember-4]
-	_ = x[ExprSpecialName-5]
-	_ = x[ExprInt-6]
-	_ = x[ExprKeyVal-7]
-	_ = x[ExprMemberType-8]
-	_ = x[ExprArray-9]
-	_ = x[ExprParen-10]
-	_ = x[ExprNullable-11]
-	_ = x[ExprOptional-12]
-	_ = x[ExprNot-13]
-	_ = x[ExprUnion-14]
-	_ = x[ExprInter-15]
-	_ = x[ExprGeneric-16]
-	_ = x[ExprTypedCallable-17]
+	_ = x[ExprSpecialName-3]
+	_ = x[ExprInt-4]
+	_ = x[ExprKeyVal-5]
+	_ = x[ExprMemberType-6]
+	_ = x[ExprArray-7]
+	_ = x[ExprParen-8]
+	_ = x[ExprNullable-9]
+	_ = x[ExprOptional-10]
+	_ = x[ExprNot-11]
+	_ = x[ExprUnion-12]
+	_ = x[ExprInter-13]
+	_ = x[ExprGeneric-14]
+	_ = x[ExprTypedCallable-15]
 }
 
-const _ExprKind_name = "InvalidUnknownNameClassMemberSpecialNameIntKeyValMemberTypeArrayParenNullableOptionalNotUnionInterGenericTypedCallable"
+const _ExprKind_name = "InvalidUnknownNameSpecialNameIntKeyValMemberTypeArrayParenNullableOptionalNotUnionInterGenericTypedCallable"
 
-var _ExprKind_index = [...]uint8{0, 7, 14, 18, 23, 29, 40, 43, 49, 59, 64, 69, 77, 85, 88, 93, 98, 105, 118}
+var _ExprKind_index = [...]uint8{0, 7, 14, 18, 29, 32, 38, 48, 53, 58, 66, 74, 77, 82, 87, 94, 107}
 
 func (i ExprKind) String() string {
 	if i >= ExprKind(len(_ExprKind_index)-1) {

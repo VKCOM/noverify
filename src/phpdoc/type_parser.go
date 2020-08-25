@@ -49,14 +49,6 @@ const (
 	// Examples: `int` `\Foo\Bar` `$this`
 	ExprName
 
-	// ExprClass is a type of class that is identified by its name.
-	// Examples: `\Foo` `\Bar`
-	ExprClass
-
-	// ExprMember is a type of class member that is identified by its name.
-	// Examples: `\Foo` `\Bar`
-	ExprMember
-
 	// ExprKeyword is a special name-like type node.
 	// Examples: `*` `...`
 	ExprSpecialName
@@ -300,7 +292,7 @@ func (p *TypeParser) parseExpr(precedence byte) *TypeExpr {
 	calcPrecedence := func() byte {
 		prc := infixPrecedenceTab[p.peek()]
 		if p.peek() == ':' {
-			ch := p.lookAhead()
+			ch := p.peekAt(p.pos + 1)
 			if ch == ':' {
 				prc = 3
 			}
@@ -318,8 +310,6 @@ func (p *TypeParser) parseExpr(precedence byte) *TypeExpr {
 			if isMemberType {
 				_ = p.nextByte()
 				right := p.parseExpr(infixPrecedenceTab[';'])
-				right.Kind = ExprMember
-				left.Kind = ExprClass
 				left = p.newExpr(ExprMemberType, begin, uint16(p.pos), left, right)
 			} else {
 				right := p.parseExpr(infixPrecedenceTab[':'])
@@ -459,15 +449,6 @@ func (p *TypeParser) nextByte() byte {
 	if p.pos < uint(len(p.input)) {
 		i := p.pos
 		p.pos++
-		return p.input[i]
-	}
-	return 0
-}
-
-func (p *TypeParser) lookAhead() byte {
-	if p.pos+1 < uint(len(p.input)) {
-		i := p.pos
-		i++
 		return p.input[i]
 	}
 	return 0
