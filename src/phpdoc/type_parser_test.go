@@ -115,9 +115,9 @@ func TestParser(t *testing.T) {
 		{`\Foo::$a|\Foo::CONST2`, `Union="\Foo::$a|\Foo::CONST2"{MemberType="\Foo::$a"{Name="\Foo" Name="$a"} MemberType="\Foo::CONST2"{Name="\Foo" Name="CONST2"}}`},
 		// MemberType and other.
 		{`\Foo::CONST|string`, `Union="\Foo::CONST|string"{MemberType="\Foo::CONST"{Name="\Foo" Name="CONST"} Name="string"}`},
-		{`\Foo::$a|x&(y|z)`, `Union="\Foo::CONST|x&(y|z)"{MemberType="\Foo::CONST"{Name="\Foo" Name="CONST"} Inter="x&(y|z)"{Name="x" Paren="(y|z)"{Union="y|z"{Name="y" Name="z"}}}}`},
+		{`\Foo::$a|x&(y|z)`, `Union="\Foo::$a|x&(y|z)"{MemberType="\Foo::$a"{Name="\Foo" Name="$a"} Inter="x&(y|z)"{Name="x" Paren="(y|z)"{Union="y|z"{Name="y" Name="z"}}}}`},
 		{`\Foo::CONST|shape(i:int, ...)`, `Union="\Foo::CONST|shape(i:int, ...)"{MemberType="\Foo::CONST"{Name="\Foo" Name="CONST"} GenericParen="shape(i:int, ...)"{Name="shape" KeyVal="i:int"{Name="i" Name="int"} SpecialName="..."}}`},
-		{`\Boo::CONST|?x[]`, `Union="\Foo::CONST|?x[]"{MemberType="\Foo::CONST"{Name="\Foo" Name="CONST"} Array="?x[]"{Nullable="?x"{Name="x"}}}`},
+		{`\Boo::CONST|?x[]`, `Union="\Boo::CONST|?x[]"{MemberType="\Boo::CONST"{Name="\Boo" Name="CONST"} Array="?x[]"{Nullable="?x"{Name="x"}}}`},
 		{`Foo::$a|[](int|float)`, `Union="Foo::$a|[](int|float)"{MemberType="Foo::$a"{Name="Foo" Name="$a"} PrefixArray="[](int|float)"{Paren="(int|float)"{Union="int|float"{Name="int" Name="float"}}}}`},
 		{`self::CONST|?callable() : int`, `Union="self::CONST|?callable() : int"{MemberType="self::CONST"{Name="self" Name="CONST"} Nullable="?callable() : int"{TypedCallable="callable() : int"{Name="int"}}}`},
 		{`self::$a|tuple(T)|false`, `Union="self::$a|tuple(T)|false"{MemberType="self::$a"{Name="self" Name="$a"} GenericParen="tuple(T)"{Name="tuple" Name="T"} Name="false"}`},
