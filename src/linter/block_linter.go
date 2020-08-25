@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/VKCOM/noverify/src/constfold"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
@@ -545,18 +546,13 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 			key = k.Value
 			constKey = true
 		case *ir.ConstFetchExpr:
-			_, info, ok := solver.GetConstant(b.walker.r.ctx.st, k.Constant)
-
-			if !ok {
-				continue
-			}
-			if info.Value.Type == meta.Undefined {
+			v := constfold.Eval(b.walker.r.ctx.st, k)
+			if v.Type == meta.Undefined {
 				continue
 			}
 
-			value := info.Value.Value
-
-			switch info.Value.Type {
+			value := v.Value
+			switch v.Type {
 			case meta.Float:
 				val, ok := value.(float64)
 				if !ok {
@@ -570,6 +566,13 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 
 			case meta.String:
 				key = value.(string)
+
+			case meta.Bool:
+				if value.(bool) {
+					key = "1"
+				} else {
+					key = "0"
+				}
 			}
 
 			constKey = true

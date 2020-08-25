@@ -492,3 +492,11 @@ func NameNodeEquals(n ir.Node, s string) bool {
 		return false
 	}
 }
+
+func IsClassType(s string) bool {
+	return strings.HasPrefix(s, `\`) && !IsShapeType(s) && !IsArrayType(s)
+}
+
+func IsShapeType(s string) bool { return strings.HasPrefix(s, `\shape$`) }
+
+func IsArrayType(s string) bool { return strings.HasSuffix(s, `[]`) }

@@ -38,6 +38,7 @@ func init() {
 //
 // For positive testing, use Suite type directly.
 func SimpleNegativeTest(t *testing.T, contents string) {
+	t.Helper()
 	if !strings.HasPrefix(contents, `<?php`) {
 		t.Fatalf("PHP script doesn't start with <?php")
 	}
@@ -81,6 +82,8 @@ type Suite struct {
 	LoadStubs    []string
 
 	MisspellList string
+
+	IgnoreUndeclaredChecks bool
 }
 
 // NewSuite returns a new linter test suite for t.
@@ -229,6 +232,19 @@ func (s *Suite) RunLinter() []*linter.Report {
 
 		_, w := parseTestFile(s.t, f, s.AllowDisable)
 		reports = append(reports, w.GetReports()...)
+	}
+
+	declared := make(map[string]struct{})
+	for _, info := range linter.GetDeclaredChecks() {
+		declared[info.Name] = struct{}{}
+	}
+	if !s.IgnoreUndeclaredChecks {
+		for _, r := range reports {
+			_, ok := declared[r.CheckName]
+			if !ok {
+				s.t.Errorf("got report from undeclared checker %s", r.CheckName)
+			}
+		}
 	}
 
 	return reports

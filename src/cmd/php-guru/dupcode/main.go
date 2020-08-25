@@ -12,6 +12,7 @@ import (
 	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/cmd/php-guru/guru"
 	"github.com/VKCOM/noverify/src/ir/irconv"
+	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parseutil"
 	"github.com/VKCOM/noverify/src/workspace"
 )
@@ -106,10 +107,12 @@ func Main(ctx *guru.Context) (int, error) {
 				root, err := parseutil.ParseFile(data)
 				if err != nil {
 					log.Printf("parse %s file: %v", f.Filename, err)
+					continue
 				}
 				rootIR := irconv.ConvertRoot(root)
 
 				indexer := &fileIndexer{
+					st:           &meta.ClassParseState{},
 					funcs:        workerResult,
 					fileContents: data,
 					filename:     f.Filename,

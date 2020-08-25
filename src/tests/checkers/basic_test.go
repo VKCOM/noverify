@@ -1267,6 +1267,7 @@ func TestForeachByRefUnused(t *testing.T) {
 	 * @param SomeClass[] $some_arr
 	 */
 	function doSometing($some_arr) {
+		$_ = $some_arr;
 		$some_arr = [];
 
 		foreach ($some_arr as $var) {
@@ -1322,11 +1323,31 @@ function test() {
 	test.RunAndMatch()
 }
 
+func TestDuplicateArrayKeyWithBoolConstants(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+define('TRUE_CONST', true);
+define('FALSE_CONST', false);
+
+$_ = [TRUE_CONST => 1, true => 2];
+$_ = [FALSE_CONST => 1, false => 2];
+$_ = [0 => 1, false => 2];
+$_ = [1 => 1, true => 2];
+`)
+	test.Expect = []string{
+		"Duplicate array key TRUE_CONST (value `1`)",
+		"Duplicate array key FALSE_CONST (value `0`)",
+		`Duplicate array key 0`,
+		`Duplicate array key 1`,
+	}
+	test.RunAndMatch()
+}
+
 func TestDuplicateArrayKeyWithConstants(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 const MAX_VALUE = 1;
-const MIN_VALUE = 1;
+const MIN_VALUE = 0+1; // Const-folded to 1
 $a = [
   MAX_VALUE => 'something',
   MIN_VALUE => 'other_thing',
@@ -1344,7 +1365,6 @@ $c = [
   START_PERCENT => 1,
   END_PERCENT => 45,
 ];
-
 
 const START_PERCENT_REVERT = -1;
 const END_PERCENT_REVERT = -1.51;

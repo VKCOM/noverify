@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/baseline"
+	"github.com/VKCOM/noverify/src/constfold"
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
@@ -650,9 +651,17 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.N
 		}
 	}
 
+	// It's OK to read from and delete from a nil map.
+	// If a func/method has 0 params, don't allocate a map for it.
+	if len(params) != 0 {
+		b.unusedParams = make(map[string]struct{}, len(params))
+	}
 	for _, p := range params {
 		if p.IsRef {
 			b.nonLocalVars[p.Name] = varRef
+		}
+		if !p.IsRef && !IsDiscardVar(p.Name) {
+			b.unusedParams[p.Name] = struct{}{}
 		}
 	}
 	for _, s := range stmts {
@@ -952,7 +961,7 @@ func (d *RootWalker) enterClassConstList(s *ir.ClassConstListStmt) bool {
 		d.checkCommentMisspellings(c, c.PhpDocComment)
 		typ := solver.ExprTypeLocal(d.scope(), d.ctx.st, c.Expr)
 
-		value, _ := solver.GetConstantValue(c)
+		value := constfold.Eval(d.ctx.st, c.Expr)
 
 		// TODO: handle duplicate constant
 		cl.Constants[nm] = meta.ConstantInfo{
@@ -1020,7 +1029,7 @@ func (d *RootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	phpDocParamTypes := doc.types
 
 	class := d.getClass()
-	params, minParamsCnt := d.parseFuncArgs(meth.Params, phpDocParamTypes, sc)
+	params, minParamsCnt := d.parseFuncArgs(meth.Params, phpDocParamTypes, sc, nil)
 
 	if len(class.Interfaces) != 0 {
 		// If we implement interfaces, methods that take a part in this
@@ -1158,27 +1167,12 @@ func (d *RootWalker) isValidPHPDocRef(n ir.Node, ref string) bool {
 	}
 
 	// expandName tries to convert s symbol into fully qualified form.
-	//
-	// We can't use solver/meta helpers since we deal with raw strings
-	// instead of nodes/names.
-	// TODO: make it easier to re-use that code in both cases.
 	expandName := func(s string) string {
-		if strings.HasPrefix(s, `\`) {
+		s, ok := solver.GetClassName(d.ctx.st, &ir.Name{Value: s})
+		if !ok {
 			return s
 		}
-		switch s {
-		case "self", "static":
-			return d.ctx.st.CurrentClass
-		}
-		parts := strings.Split(s, `\`)
-		firstPart := parts[0]
-		if alias, ok := d.ctx.st.Uses[firstPart]; ok {
-			if len(parts) == 1 {
-				return alias
-			}
-			return alias + `\` + s
-		}
-		return d.ctx.st.Namespace + `\` + s
+		return s
 	}
 
 	isValidGlobalVar := func(ref string) bool {
@@ -1390,12 +1384,68 @@ func (d *RootWalker) parseTypeNode(n ir.Node) (typ meta.TypesMap, ok bool) {
 	return tm, !tm.IsEmpty()
 }
 
-func (d *RootWalker) parseFuncArgs(params []ir.Node, parTypes phpDocParamsMap, sc *meta.Scope) (args []meta.FuncParam, minArgs int) {
+func (d *RootWalker) callbackParamByIndex(param ir.Node, argType meta.TypesMap) meta.FuncParam {
+	p := param.(*ir.Parameter)
+	v := p.Variable
+	var typ meta.TypesMap
+	argType.Iterate(func(t string) {
+		typ = typ.AppendString(meta.WrapElemOf(t))
+	})
+	arg := meta.FuncParam{
+		IsRef: p.ByRef,
+		Name:  v.Name,
+		Typ:   typ,
+	}
+	return arg
+}
+
+func (d *RootWalker) parseFuncArgsForCallback(params []ir.Node, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (args []meta.FuncParam, minArgs int) {
+	countParams := len(params)
+	minArgs = countParams
+	if countParams == 0 {
+		return nil, 0
+	}
+	args = make([]meta.FuncParam, countParams)
+
+	switch closureSolver.Name {
+	case `\usort`, `\uasort`, `\array_reduce`:
+		args[0] = d.callbackParamByIndex(params[0], closureSolver.ArgTypes[0])
+		if countParams > 1 {
+			args[1] = d.callbackParamByIndex(params[1], closureSolver.ArgTypes[0])
+		}
+	case `\array_walk`, `\array_walk_recursive`, `\array_filter`:
+		args[0] = d.callbackParamByIndex(params[0], closureSolver.ArgTypes[0])
+	case `\array_map`:
+		args[0] = d.callbackParamByIndex(params[0], closureSolver.ArgTypes[1])
+	}
+
+	for i, param := range params {
+		p := param.(*ir.Parameter)
+		v := p.Variable
+		var typ meta.TypesMap
+		if i < len(args) {
+			typ = args[i].Typ
+		} else {
+			typ = meta.MixedType
+		}
+
+		sc.AddVarName(v.Name, typ, "param", meta.VarAlwaysDefined)
+	}
+
+	return args, minArgs
+}
+
+func (d *RootWalker) parseFuncArgs(params []ir.Node, parTypes phpDocParamsMap, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (args []meta.FuncParam, minArgs int) {
 	if len(params) == 0 {
 		return nil, 0
 	}
 
 	args = make([]meta.FuncParam, 0, len(params))
+
+	if closureSolver != nil && solver.IsSupportedFunction(closureSolver.Name) {
+		return d.parseFuncArgsForCallback(params, sc, closureSolver)
+	}
+
 	for _, param := range params {
 		p := param.(*ir.Parameter)
 		v := p.Variable
@@ -1510,7 +1560,7 @@ func (d *RootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 
 	sc := meta.NewScope()
 
-	params, minParamsCnt := d.parseFuncArgs(fun.Params, phpDocParamTypes, sc)
+	params, minParamsCnt := d.parseFuncArgs(fun.Params, phpDocParamTypes, sc, nil)
 
 	funcInfo := d.handleFuncStmts(params, nil, fun.Stmts, sc)
 	actualReturnTypes := funcInfo.returnTypes
@@ -1583,9 +1633,12 @@ func (d *RootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {
 		d.meta.Constants = make(meta.ConstantsMap)
 	}
 
+	value := constfold.Eval(d.ctx.st, valueArg)
+
 	d.meta.Constants[`\`+strings.TrimFunc(str.Value, isQuote)] = meta.ConstantInfo{
-		Pos: d.getElementPos(s),
-		Typ: solver.ExprTypeLocal(d.scope(), d.ctx.st, valueArg.Expr),
+		Pos:   d.getElementPos(s),
+		Typ:   solver.ExprTypeLocal(d.scope(), d.ctx.st, valueArg.Expr),
+		Value: value,
 	}
 	return true
 }
@@ -1668,7 +1721,7 @@ func (d *RootWalker) enterConstList(lst *ir.ConstListStmt) bool {
 	for _, sNode := range lst.Consts {
 		s := sNode.(*ir.ConstantStmt)
 
-		value, _ := solver.GetConstantValue(s.Expr)
+		value := constfold.Eval(d.ctx.st, s.Expr)
 
 		id := s.ConstantName
 		nm := d.ctx.st.Namespace + `\` + id.Value

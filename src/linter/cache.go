@@ -39,7 +39,10 @@ import (
 //          added mapPrecise flag to mark precise type maps.
 //     39 - added new field Value in ConstantInfo
 //     40 - changed string const value storage (no quotes)
-const cacheVersion = 40
+//     41 - const-folding affected const definition values
+//     42 - bool-typed consts are now stored in meta info
+//     43 - define'd const values stored in cache
+const cacheVersion = 43
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")

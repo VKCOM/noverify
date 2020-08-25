@@ -3,26 +3,25 @@ package normalize
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
+	"github.com/VKCOM/noverify/src/constfold"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irfmt"
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/solver"
 )
 
 type Config struct {
-	CurrentClass string
-	Namespace    string
-
 	NormalizeMore bool
 }
 
-func FuncBody(conf Config, params, statements []ir.Node) []ir.Node {
+func FuncBody(st *meta.ClassParseState, conf Config, params, statements []ir.Node) []ir.Node {
 	norm := normalizer{
 		out:     irutil.NodeSliceClone(statements),
 		conf:    conf,
+		st:      st,
 		globals: make(map[string]struct{}),
 	}
 
@@ -38,6 +37,7 @@ func FuncBody(conf Config, params, statements []ir.Node) []ir.Node {
 
 type normalizer struct {
 	conf     Config
+	st       *meta.ClassParseState
 	out      []ir.Node
 	varNames map[string]int
 	globals  map[string]struct{}
@@ -247,10 +247,17 @@ func (norm *normalizer) normalizedStmtExpr(e ir.Node) ir.Node {
 }
 
 func (norm *normalizer) normalizedExpr(e ir.Node) ir.Node {
+	constFolded := constfold.Eval(norm.st, e)
+	if constFolded.Type != meta.Undefined {
+		if e2 := constToIR(constFolded); e2 != nil {
+			return e2
+		}
+	}
+
 	switch e := e.(type) {
 	case *ir.Name:
 		if e.Value == "self" {
-			return &ir.Name{Value: norm.conf.CurrentClass}
+			return &ir.Name{Value: norm.st.CurrentClass}
 		}
 
 	case *ir.NewExpr:
@@ -332,23 +339,6 @@ func (norm *normalizer) normalizedExpr(e ir.Node) ir.Node {
 				e.Constant = &ir.Name{Value: `false`}
 			}
 		}
-		// Named const => its value
-		if !meta.IsIndexingComplete() {
-			return e
-		}
-		info, ok := norm.getConstant(e.Constant)
-		if !ok {
-			return e
-		}
-		value := info.Value.Value
-		switch info.Value.Type {
-		case meta.Integer:
-			return &ir.Lnumber{Value: fmt.Sprint(value)}
-		case meta.String:
-			return &ir.String{Value: value.(string)}
-		default:
-			return e
-		}
 
 	case *ir.FunctionCallExpr:
 		funcName, ok := e.Function.(*ir.Name)
@@ -406,6 +396,19 @@ func (norm *normalizer) normalizedExpr(e ir.Node) ir.Node {
 	case *ir.ListExpr:
 		// `list(...)` => `[...]`
 		e.ShortSyntax = true
+		// `list($x, $y)` => `list(0 => $x, 1 => $y)`
+		// `list(, $x)` => `list(1 => $x)`,
+		items := e.Items[:0]
+		for i, item := range e.Items {
+			if item.Val == nil {
+				continue
+			}
+			if item.Key == nil {
+				item.Key = &ir.Lnumber{Value: strconv.Itoa(i)}
+			}
+			items = append(items, item)
+		}
+		e.Items = items
 	}
 
 	return e
@@ -436,13 +439,6 @@ func (norm *normalizer) renameVar(v *ir.SimpleVar) {
 	}
 	id := norm.internVarName(v.Name)
 	v.Name = fmt.Sprintf("v%d", id)
-}
-
-func (norm *normalizer) getConstant(n ir.Node) (meta.ConstantInfo, bool) {
-	var cs meta.ClassParseState
-	cs.Namespace = norm.conf.Namespace
-	_, info, ok := solver.GetConstant(&cs, n)
-	return info, ok
 }
 
 var (
@@ -490,5 +486,21 @@ func encapsedPartToConcatArg(n ir.Node) ir.Node {
 		return &ir.String{Value: n.Value}
 	default:
 		return n
+	}
+}
+
+func constToIR(v meta.ConstantValue) ir.Node {
+	value := v.Value
+	switch v.Type {
+	case meta.Integer:
+		return &ir.Lnumber{Value: fmt.Sprint(value)}
+	case meta.Float:
+		return &ir.Dnumber{Value: fmt.Sprint(value)}
+	case meta.String:
+		return &ir.String{Value: value.(string)}
+	case meta.Bool:
+		return &ir.Name{Value: fmt.Sprint(value)}
+	default:
+		return nil
 	}
 }

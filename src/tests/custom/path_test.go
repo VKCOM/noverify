@@ -16,6 +16,28 @@ func init() {
 	})
 }
 
+func runPathTest(t *testing.T, suite *linttest.Suite) {
+	t.Helper()
+	suite.IgnoreUndeclaredChecks = true
+	linttest.RunFilterMatch(suite, "pathTest")
+}
+
+func TestPathTryCatch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+try {
+  echo $_try;
+} catch (Exception $e) {
+  echo $_catch;
+}
+`)
+	test.Expect = []string{
+		`$_try (cond=false) : *ir.Root/*ir.TryStmt/*ir.EchoStmt/*ir.SimpleVar`,
+		`$_catch (cond=true) : *ir.Root/*ir.TryStmt/*ir.CatchStmt/*ir.EchoStmt/*ir.SimpleVar`,
+	}
+	runPathTest(t, test)
+}
+
 func TestPathIfElse(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -35,7 +57,7 @@ if ($cond1) {
 		`$_elseif2 (cond=true) : *ir.Root/*ir.IfStmt/*ir.StmtList/*ir.ExpressionStmt/*ir.SimpleVar`,
 		`$_else (cond=true) : *ir.Root/*ir.IfStmt/*ir.ElseStmt/*ir.StmtList/*ir.EchoStmt/*ir.SimpleVar`,
 	}
-	linttest.RunFilterMatch(test, "pathTest")
+	runPathTest(t, test)
 }
 
 func TestPathArgument(t *testing.T) {
@@ -48,7 +70,7 @@ f($_arg1, [$_arg2], $a + $_arg3);
 		`$_arg2 (cond=false) : *ir.Root/*ir.ExpressionStmt/*ir.FunctionCallExpr/*ir.Argument/*ir.ArrayExpr/*ir.SimpleVar`,
 		`$_arg3 (cond=false) : *ir.Root/*ir.ExpressionStmt/*ir.FunctionCallExpr/*ir.Argument/*ir.PlusExpr/*ir.SimpleVar`,
 	}
-	linttest.RunFilterMatch(test, "pathTest")
+	runPathTest(t, test)
 }
 
 func TestPathTernary(t *testing.T) {
@@ -61,7 +83,7 @@ echo $_ternary_cond ? $_ternary_true : $_ternary_false;
 		`$_ternary_true (cond=true) : *ir.Root/*ir.EchoStmt/*ir.TernaryExpr/*ir.SimpleVar`,
 		`$_ternary_false (cond=true) : *ir.Root/*ir.EchoStmt/*ir.TernaryExpr/*ir.SimpleVar`,
 	}
-	linttest.RunFilterMatch(test, "pathTest")
+	runPathTest(t, test)
 }
 
 func TestPathTopLevel(t *testing.T) {
@@ -89,7 +111,7 @@ do {
 		`$_at_least_once (cond=false) : *ir.Root/*ir.DoStmt/*ir.StmtList/*ir.ExpressionStmt/*ir.SimpleVar`,
 		`$_do_while_cond (cond=false) : *ir.Root/*ir.DoStmt/*ir.SimpleVar`,
 	}
-	linttest.RunFilterMatch(test, "pathTest")
+	runPathTest(t, test)
 }
 
 func TestPathFuncScope(t *testing.T) {
@@ -112,7 +134,7 @@ function f() {
 		`$_inside_loop (cond=true) : *ir.ForStmt/*ir.StmtList/*ir.ReturnStmt/*ir.SimpleVar`,
 		`$_outside_loops (cond=false) : *ir.ReturnStmt/*ir.SimpleVar`,
 	}
-	linttest.RunFilterMatch(test, "pathTest")
+	runPathTest(t, test)
 }
 
 func TestPathMethodScope(t *testing.T) {
@@ -137,7 +159,7 @@ class C {
 		`$_inside_loop (cond=true) : *ir.ForStmt/*ir.StmtList/*ir.ReturnStmt/*ir.SimpleVar`,
 		`$_outside_loops (cond=false) : *ir.ReturnStmt/*ir.SimpleVar`,
 	}
-	linttest.RunFilterMatch(test, "pathTest")
+	runPathTest(t, test)
 }
 
 type pathTester struct {

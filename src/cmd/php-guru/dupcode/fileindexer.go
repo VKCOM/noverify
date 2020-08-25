@@ -3,9 +3,11 @@ package dupcode
 import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/normalize"
+	"github.com/VKCOM/noverify/src/meta"
 )
 
 type fileIndexer struct {
+	st           *meta.ClassParseState
 	funcs        funcSet
 	fileContents []byte
 	filename     string
@@ -69,10 +71,12 @@ func (indexer *fileIndexer) walkFunc(n *ir.FunctionStmt) {
 
 func (indexer *fileIndexer) collectFunc(n ir.Node, className, funcName string, params, stmts []ir.Node) {
 	if indexer.normLevel != normNone {
+		// TODO: indexer.st needs to have a proper CurrentClass.
+		// We can't use className param here as it won't be FQN.
 		conf := normalize.Config{
 			NormalizeMore: indexer.normLevel > normSafe,
 		}
-		stmts = normalize.FuncBody(conf, params, stmts)
+		stmts = normalize.FuncBody(indexer.st, conf, params, stmts)
 	}
 
 	pos := ir.GetPosition(n)
