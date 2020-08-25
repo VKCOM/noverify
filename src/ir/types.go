@@ -433,7 +433,9 @@ type FunctionCallExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Function     Node
-	ArgumentList *ArgumentList
+
+	ArgsFreeFloating freefloating.Collection
+	Args             []Node
 }
 
 type ImportExpr struct {
@@ -468,14 +470,18 @@ type MethodCallExpr struct {
 	Position     *position.Position
 	Variable     Node
 	Method       Node
-	ArgumentList *ArgumentList
+
+	ArgsFreeFloating freefloating.Collection
+	Args             []Node
 }
 
 type NewExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Class        Node
-	ArgumentList *ArgumentList
+
+	ArgsFreeFloating freefloating.Collection
+	Args             []Node
 }
 
 type ParenExpr struct {
@@ -538,7 +544,9 @@ type StaticCallExpr struct {
 	Position     *position.Position
 	Class        Node
 	Call         Node
-	ArgumentList *ArgumentList
+
+	ArgsFreeFloating freefloating.Collection
+	Args             []Node
 }
 
 type StaticPropertyFetchExpr struct {
@@ -593,12 +601,6 @@ type Argument struct {
 	Variadic     bool
 	IsReference  bool
 	Expr         Node
-}
-
-type ArgumentList struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Arguments    []Node
 }
 
 type Identifier struct {
@@ -682,6 +684,7 @@ type String struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Value        string
+	DoubleQuotes bool
 }
 
 type BreakStmt struct {
@@ -717,10 +720,12 @@ type ClassStmt struct {
 	PhpDocComment string
 	ClassName     *Identifier
 	Modifiers     []*Identifier
-	ArgumentList  *ArgumentList
 	Extends       *ClassExtendsStmt
 	Implements    *ClassImplementsStmt
 	Stmts         []Node
+
+	ArgsFreeFloating freefloating.Collection
+	Args             []Node
 }
 
 type ClassConstListStmt struct {

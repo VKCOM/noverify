@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/VKCOM/noverify/src/ir"
-	"github.com/VKCOM/noverify/src/irgen"
+	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
@@ -14,6 +14,7 @@ import (
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/state"
 	"github.com/VKCOM/noverify/src/vscode"
+	"github.com/VKCOM/noverify/src/workspace"
 	"go.lsp.dev/uri"
 )
 
@@ -192,8 +193,8 @@ func refPosition(filename string, pos *position.Position) vscode.Location {
 type parseFn func(filename string, rootNode ir.Node, contents []byte, parser *php7.Parser) []vscode.Location
 
 func findReferences(substr string, parse parseFn) []vscode.Location {
-	cb := linter.ReadFilenames(linter.AnalysisFiles, nil)
-	ch := make(chan linter.FileInfo)
+	cb := workspace.ReadFilenames(linter.AnalysisFiles, nil)
+	ch := make(chan workspace.FileInfo)
 	go func() {
 		cb(ch)
 		close(ch)
@@ -223,7 +224,7 @@ func findReferences(substr string, parse parseFn) []vscode.Location {
 						parser.Parse()
 
 						rootNode := parser.GetRootNode()
-						rootIR := irgen.ConvertRoot(rootNode)
+						rootIR := irconv.ConvertRoot(rootNode)
 						if rootNode != nil {
 							var found []vscode.Location
 							func() {

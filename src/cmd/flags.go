@@ -73,6 +73,16 @@ type cmdlineArguments struct {
 	disableCache bool
 }
 
+func DefaultCacheDir() string {
+	defaultCacheDir, err := os.UserCacheDir()
+	if err != nil {
+		defaultCacheDir = ""
+	} else {
+		defaultCacheDir = filepath.Join(defaultCacheDir, "noverify-cache")
+	}
+	return defaultCacheDir
+}
+
 func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 	var enabledByDefault []string
 	declaredChecks := linter.GetDeclaredChecks()
@@ -83,13 +93,6 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 	}
 	for _, rset := range ruleSets {
 		enabledByDefault = append(enabledByDefault, rset.Names...)
-	}
-
-	defaultCacheDir, err := os.UserCacheDir()
-	if err != nil {
-		defaultCacheDir = ""
-	} else {
-		defaultCacheDir = filepath.Join(defaultCacheDir, "noverify-cache")
 	}
 
 	flag.Usage = func() {
@@ -152,7 +155,7 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 	flag.StringVar(&args.misspellList, "misspell-list", "Eng",
 		"Comma-separated list of misspelling dicts; predefined sets are Eng, Eng/US and Eng/UK")
 
-	flag.StringVar(&args.phpExtensionsArg, "php-extensions", "php,inc,php5,phtml,inc", "List of PHP extensions to be recognized")
+	flag.StringVar(&args.phpExtensionsArg, "php-extensions", "php,inc,php5,phtml", "List of PHP extensions to be recognized")
 
 	flag.StringVar(&args.fullAnalysisFiles, "full-analysis-files", "", "Comma-separated list of files to do full analysis")
 	flag.StringVar(&args.indexOnlyFiles, "index-only-files", "", "Comma-separated list of files to do indexing")
@@ -169,7 +172,7 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 	flag.BoolVar(&linter.LangServer, "lang-server", false, "Run language server for VS Code")
 
 	flag.StringVar(&linter.StubsDir, "stubs-dir", "", "phpstorm-stubs directory")
-	flag.StringVar(&linter.CacheDir, "cache-dir", defaultCacheDir, "Directory for linter cache (greatly improves indexing speed)")
+	flag.StringVar(&linter.CacheDir, "cache-dir", DefaultCacheDir(), "Directory for linter cache (greatly improves indexing speed)")
 	flag.BoolVar(&args.disableCache, "disable-cache", false, "If set, cache is not used and cache-dir is ignored")
 
 	flag.StringVar(&args.unusedVarPattern, "unused-var-regex", `^_$`,

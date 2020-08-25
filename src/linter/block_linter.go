@@ -363,11 +363,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 	ctor := m.Info
 	// If new expression is written without (), ArgumentList will be nil.
 	// It's equivalent of 0 arguments constructor call.
-	var args []ir.Node
-	if e.ArgumentList != nil {
-		args = e.ArgumentList.Arguments
-	}
-	if ok && !enoughArgs(args, ctor) {
+	if ok && !enoughArgs(e.Args, ctor) {
 		b.report(e, LevelError, "argCount", "Too few arguments for %s constructor", className)
 	}
 }
@@ -524,7 +520,7 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 	items := arr.Items
 	haveKeys := false
 	haveImplicitKeys := false
-	keys := make(map[string]struct{}, len(items))
+	keys := make(map[string]ir.Node, len(items))
 
 	for _, item := range items {
 		if item.Val == nil {
@@ -543,7 +539,7 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 
 		switch k := item.Key.(type) {
 		case *ir.String:
-			key = unquote(k.Value)
+			key = k.Value
 			constKey = true
 		case *ir.Lnumber:
 			key = k.Value
@@ -583,11 +579,17 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 			continue
 		}
 
-		if _, ok := keys[key]; ok {
-			b.report(item.Key, LevelWarning, "dupArrayKeys", "Duplicate array key '%s'", key)
+		if n, ok := keys[key]; ok {
+			origKey := string(b.walker.r.nodeText(n))
+			dupKey := fmt.Sprintf("%#q", key)
+			msg := fmt.Sprintf("Duplicate array key %s", origKey)
+			if origKey != dupKey && origKey != key {
+				msg += " (value " + dupKey + ")"
+			}
+			b.report(item.Key, LevelWarning, "dupArrayKeys", "%s", msg)
 		}
 
-		keys[key] = struct{}{}
+		keys[key] = item.Key
 	}
 
 	if haveImplicitKeys && haveKeys {
@@ -603,10 +605,10 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 
 	switch fqName {
 	case `\preg_match`, `\preg_match_all`, `\preg_replace`, `\preg_split`:
-		if len(e.ArgumentList.Arguments) < 1 {
+		if len(e.Args) < 1 {
 			break
 		}
-		b.checkRegexp(e, e.ArgumentList.Arguments[0].(*ir.Argument))
+		b.checkRegexp(e, e.Arg(0))
 	}
 }
 
@@ -638,14 +640,12 @@ func (b *blockLinter) checkRegexp(e *ir.FunctionCallExpr, arg *ir.Argument) {
 	if !ok {
 		return
 	}
-	pat, ok := newRegexpPattern(s)
-	if !ok {
-		return
-	}
+	pat := s.Value
 	simplified := b.walker.r.reSimplifier.simplifyRegexp(pat)
 	if simplified != "" {
+		rawPattern := b.walker.r.nodeText(s)
 		b.report(arg, LevelDoNotReject, "regexpSimplify", "May re-write %s as '%s'",
-			s.Value, simplified)
+			rawPattern, simplified)
 	}
 	issues, err := b.walker.r.reVet.CheckRegexp(pat)
 	if err != nil {

@@ -13,6 +13,7 @@ import (
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/rules"
+	"github.com/VKCOM/noverify/src/workspace"
 )
 
 type linterRunner struct {
@@ -20,7 +21,7 @@ type linterRunner struct {
 
 	outputFp io.Writer
 
-	filenameFilter *linter.FilenameFilter
+	filenameFilter *workspace.FilenameFilter
 
 	reportsExcludeChecksSet map[string]bool
 	reportsIncludeChecksSet map[string]bool
@@ -42,7 +43,7 @@ func (l *linterRunner) IsEnabledByFlags(checkName string) bool {
 }
 
 func (l *linterRunner) collectGitIgnoreFiles() error {
-	l.filenameFilter = linter.NewFilenameFilter(linter.ExcludeRegex)
+	l.filenameFilter = workspace.NewFilenameFilter(linter.ExcludeRegex)
 
 	if !l.args.gitignore {
 		return nil
@@ -59,7 +60,7 @@ func (l *linterRunner) collectGitIgnoreFiles() error {
 	// We collect all gitignore files along the way.
 	dir := workingDir
 	for {
-		m, err := linter.ParseGitignoreFromDir(dir)
+		m, err := workspace.ParseGitignoreFromDir(dir)
 		if err != nil {
 			return fmt.Errorf("read .gitignore: %v", err)
 		}

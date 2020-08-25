@@ -757,8 +757,8 @@ func (n *FunctionCallExpr) Walk(v Visitor) {
 	if n.Function != nil {
 		n.Function.Walk(v)
 	}
-	if n.ArgumentList != nil {
-		n.ArgumentList.Walk(v)
+	for _, arg := range n.Args {
+		arg.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -810,8 +810,8 @@ func (n *MethodCallExpr) Walk(v Visitor) {
 	if n.Method != nil {
 		n.Method.Walk(v)
 	}
-	if n.ArgumentList != nil {
-		n.ArgumentList.Walk(v)
+	for _, arg := range n.Args {
+		arg.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -823,8 +823,8 @@ func (n *NewExpr) Walk(v Visitor) {
 	if n.Class != nil {
 		n.Class.Walk(v)
 	}
-	if n.ArgumentList != nil {
-		n.ArgumentList.Walk(v)
+	for _, arg := range n.Args {
+		arg.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -944,8 +944,8 @@ func (n *StaticCallExpr) Walk(v Visitor) {
 	if n.Call != nil {
 		n.Call.Walk(v)
 	}
-	if n.ArgumentList != nil {
-		n.ArgumentList.Walk(v)
+	for _, arg := range n.Args {
+		arg.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -1035,18 +1035,6 @@ func (n *Argument) Walk(v Visitor) {
 	}
 	if n.Expr != nil {
 		n.Expr.Walk(v)
-	}
-	v.LeaveNode(n)
-}
-
-func (n *ArgumentList) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	for i := range n.Arguments {
-		if n.Arguments[i] != nil {
-			n.Arguments[i].Walk(v)
-		}
 	}
 	v.LeaveNode(n)
 }
@@ -1241,8 +1229,8 @@ func (n *ClassStmt) Walk(v Visitor) {
 			n.Modifiers[i].Walk(v)
 		}
 	}
-	if n.ArgumentList != nil {
-		n.ArgumentList.Walk(v)
+	for _, arg := range n.Args {
+		arg.Walk(v)
 	}
 	if n.Extends != nil {
 		n.Extends.Walk(v)

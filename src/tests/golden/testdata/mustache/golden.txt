@@ -52,6 +52,9 @@ MAYBE   phpdoc: Missing PHPDoc for "getHelperName" public method at testdata/mus
 MAYBE   phpdoc: Missing PHPDoc for "getTemplateName" public method at testdata/mustache/src/Mustache/Exception/UnknownTemplateException.php:34
     public function getTemplateName()
                     ^^^^^^^^^^^^^^^
+WARNING regexpVet: '\w' intersects with '\d' in [\w\d\.] at testdata/mustache/src/Mustache/Loader/InlineLoader.php:115
+            foreach (preg_split("/^@@(?= [\w\d\.]+$)/m", $data, -1) as $chunk) {
+                                ^^^^^^^^^^^^^^^^^^^^^^^
 INFO    unused: Variable v is unused (use $_ to ignore this inspection) at testdata/mustache/src/Mustache/Template.php:122
                 foreach ($value as $k => $v) {
                                          ^^

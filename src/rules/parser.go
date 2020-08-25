@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
-	"github.com/VKCOM/noverify/src/irgen"
+	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/linter/lintapi"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
@@ -59,7 +59,7 @@ func (p *parser) parse(filename string, r io.Reader) (*Set, error) {
 	if err != nil {
 		return res, err
 	}
-	rootIR := irgen.ConvertRoot(root)
+	rootIR := irconv.ConvertRoot(root)
 
 	// Convert PHP file into the rule set.
 	p.filename = filename

@@ -91,7 +91,6 @@ const (
 	KindYieldFromExpr
 	KindName
 	KindArgument
-	KindArgumentList
 	KindIdentifier
 	KindNullable
 	KindParameter
@@ -332,8 +331,6 @@ func GetNodeKind(n Node) NodeKind {
 		return KindName
 	case *Argument:
 		return KindArgument
-	case *ArgumentList:
-		return KindArgumentList
 	case *Identifier:
 		return KindIdentifier
 	case *Nullable:

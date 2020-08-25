@@ -46,7 +46,6 @@ var (
 	Debug          bool
 	MaxConcurrency = runtime.NumCPU()
 	MaxFileSize    int
-	PHPExtensions  []string
 
 	// DebugParseDuration specifies the minimum parse duration for it to be printed to debug output.
 	DebugParseDuration time.Duration

@@ -2,7 +2,6 @@ package solver
 
 import (
 	"log"
-	"strconv"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
@@ -72,11 +71,11 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 	}
 
 	override, ok := meta.GetInternalFunctionOverrideInfo(nm)
-	if !ok || len(c.ArgumentList.Arguments) <= override.ArgNum {
+	if !ok || len(c.Args) <= override.ArgNum {
 		return fn.Typ, true
 	}
 
-	arg := c.ArgumentList.Arguments[override.ArgNum].(*ir.Argument)
+	arg := c.Arg(override.ArgNum)
 	typ = ExprTypeLocalCustom(sc, cs, arg.Expr, custom)
 	if override.OverrideType == meta.OverrideArgType {
 		return typ, true
@@ -107,9 +106,16 @@ func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*ir.ArrayItemEx
 	}
 
 	firstElementType := ExprTypeLocal(sc, cs, items[0])
+	if items[0].Unpack {
+		firstElementType = firstElementType.ArrayElemLazyType()
+	}
 
 	for _, item := range items[1:] {
 		itemType := ExprTypeLocal(sc, cs, item)
+		if item.Unpack {
+			itemType = itemType.ArrayElemLazyType()
+		}
+
 		if !firstElementType.Equals(itemType) {
 			return meta.NewTypesMap("mixed[]")
 		}
@@ -243,8 +249,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 		m.Iterate(func(className string) {
 			switch dim := n.Dim.(type) {
 			case *ir.String:
-				key := dim.Value[len(`"`) : len(dim.Value)-len(`"`)]
-				res[meta.WrapElemOfKey(className, key)] = struct{}{}
+				res[meta.WrapElemOfKey(className, dim.Value)] = struct{}{}
 			case *ir.Lnumber:
 				res[meta.WrapElemOfKey(className, dim.Value)] = struct{}{}
 			default:
@@ -371,34 +376,4 @@ func ExprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 		return meta.MixedType
 	}
 	return res
-}
-
-func GetConstantValue(c *ir.ConstantStmt) (meta.ConstantValue, bool) {
-	switch c := c.Expr.(type) {
-	case *ir.Lnumber:
-		return getConstantValue(c, 1)
-	case *ir.Dnumber:
-		return getConstantValue(c, 1)
-	case *ir.String:
-		return getConstantValue(c, 1)
-	case *ir.UnaryMinusExpr:
-		return getConstantValue(c.Expr, -1)
-	default:
-		return meta.NewUndefinedConstantValue(), false
-	}
-}
-
-func getConstantValue(n ir.Node, modifier int64) (meta.ConstantValue, bool) {
-	switch c := n.(type) {
-	case *ir.Lnumber:
-		value, err := strconv.ParseInt(c.Value, 10, 64)
-		return meta.NewConstantValueFromInt(value * modifier), err == nil
-	case *ir.Dnumber:
-		value, err := strconv.ParseFloat(c.Value, 64)
-		return meta.NewConstantValueFromFloat(value * float64(modifier)), err == nil
-	case *ir.String:
-		return meta.NewConstantValueFromString(c.Value), true
-	default:
-		return meta.NewUndefinedConstantValue(), false
-	}
 }

@@ -1,9 +1,10 @@
-package irgen
+package irconv
 
 import (
 	"fmt"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
@@ -708,7 +709,8 @@ func convertNode(state *convState, n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
 		out.Function = convertNode(state, n.Function)
-		out.ArgumentList = convertNode(state, n.ArgumentList).(*ir.ArgumentList)
+		out.ArgsFreeFloating = n.ArgumentList.FreeFloating
+		out.Args = convertNodeSlice(state, n.ArgumentList.Arguments)
 		return out
 
 	case *expr.InstanceOf:
@@ -758,7 +760,8 @@ func convertNode(state *convState, n node.Node) ir.Node {
 		out.Position = n.Position
 		out.Variable = convertNode(state, n.Variable)
 		out.Method = convertNode(state, n.Method)
-		out.ArgumentList = convertNode(state, n.ArgumentList).(*ir.ArgumentList)
+		out.ArgsFreeFloating = n.ArgumentList.FreeFloating
+		out.Args = convertNodeSlice(state, n.ArgumentList.Arguments)
 		return out
 
 	case *expr.New:
@@ -769,7 +772,10 @@ func convertNode(state *convState, n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
 		out.Class = convertNode(state, n.Class)
-		out.ArgumentList = convertNode(state, n.ArgumentList).(*ir.ArgumentList)
+		if n.ArgumentList != nil {
+			out.ArgsFreeFloating = n.ArgumentList.FreeFloating
+			out.Args = convertNodeSlice(state, n.ArgumentList.Arguments)
+		}
 		return out
 
 	case *expr.Paren:
@@ -881,7 +887,8 @@ func convertNode(state *convState, n node.Node) ir.Node {
 		out.Position = n.Position
 		out.Class = convertNode(state, n.Class)
 		out.Call = convertNode(state, n.Call)
-		out.ArgumentList = convertNode(state, n.ArgumentList).(*ir.ArgumentList)
+		out.ArgsFreeFloating = n.ArgumentList.FreeFloating
+		out.Args = convertNodeSlice(state, n.ArgumentList.Arguments)
 		return out
 
 	case *expr.StaticPropertyFetch:
@@ -973,22 +980,6 @@ func convertNode(state *convState, n node.Node) ir.Node {
 		out.Variadic = n.Variadic
 		out.IsReference = n.IsReference
 		out.Expr = convertNode(state, n.Expr)
-		return out
-
-	case *node.ArgumentList:
-		if n == nil {
-			return (*ir.ArgumentList)(nil)
-		}
-		out := &ir.ArgumentList{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		{
-			slice := make([]ir.Node, len(n.Arguments))
-			for i := range n.Arguments {
-				slice[i] = convertNode(state, n.Arguments[i])
-			}
-			out.Arguments = slice
-		}
 		return out
 
 	case *node.Identifier:
@@ -1123,14 +1114,7 @@ func convertNode(state *convState, n node.Node) ir.Node {
 		return out
 
 	case *scalar.String:
-		if n == nil {
-			return (*ir.String)(nil)
-		}
-		out := &ir.String{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.Value = n.Value
-		return out
+		return convString(n)
 
 	case *stmt.Break:
 		if n == nil {
@@ -1185,13 +1169,18 @@ func convertNode(state *convState, n node.Node) ir.Node {
 		out.PhpDocComment = n.PhpDocComment
 		out.ClassName = convertNode(state, n.ClassName).(*ir.Identifier)
 		{
-			slice := make([]*ir.Identifier, len(n.Modifiers))
-			for i := range n.Modifiers {
-				slice[i] = convertNode(state, n.Modifiers[i]).(*ir.Identifier)
+			if n.Modifiers != nil {
+				slice := make([]*ir.Identifier, len(n.Modifiers))
+				for i := range n.Modifiers {
+					slice[i] = convertNode(state, n.Modifiers[i]).(*ir.Identifier)
+				}
+				out.Modifiers = slice
 			}
-			out.Modifiers = slice
 		}
-		out.ArgumentList = convertNode(state, n.ArgumentList).(*ir.ArgumentList)
+		if n.ArgumentList != nil {
+			out.ArgsFreeFloating = n.ArgumentList.FreeFloating
+			out.Args = convertNodeSlice(state, n.ArgumentList.Arguments)
+		}
 		out.Extends = convertNode(state, n.Extends).(*ir.ClassExtendsStmt)
 		out.Implements = convertNode(state, n.Implements).(*ir.ClassImplementsStmt)
 		out.Stmts = convertNodeSlice(state, n.Stmts)
@@ -1788,4 +1777,31 @@ func convCastExpr(state *convState, n, e node.Node, typ string) *ir.TypeCastExpr
 		Type:         typ,
 		Expr:         convertNode(state, e),
 	}
+}
+
+func convString(n *scalar.String) *ir.String {
+	out := &ir.String{
+		FreeFloating: n.FreeFloating,
+		Position:     n.Position,
+	}
+
+	// We can't use n.Value[0] as quote char directly as when
+	// we parse string parts like $_SERVER[HTTP_HOST] we get
+	// HTTP_HOST as a value with no quotes.
+	var quote byte
+	if n.Value[0] == '"' {
+		quote = '"'
+	} else {
+		quote = '\''
+	}
+
+	out.DoubleQuotes = n.Value[0] == '"'
+	s, ok := interpretString(irutil.Unquote(n.Value), quote)
+	if !ok {
+		panic(fmt.Sprintf("can't interpret %s (line=%d bytes=%#v)",
+			n.Value, n.GetPosition().StartLine, []byte(n.Value)))
+	}
+	out.Value = s
+
+	return out
 }

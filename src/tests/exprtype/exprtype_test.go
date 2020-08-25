@@ -12,6 +12,7 @@ import (
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/workspace"
 )
 
 // Tests in this file make it less likely that type solving will break
@@ -1865,13 +1866,84 @@ exprtype($tuple_int_str, "unknown_from_list");
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
-func TestArrowFunction(t *testing.T) {
+func TestTypesShapeOverList(t *testing.T) {
 	code := `<?php
-function f() {
-   $value = 10;
-   $_ = fn($x) => $value = "probably now $value has type int|string";
-   // but, no
-   exprtype($value, "precise int"); // Ok, see specification
+class Foo {}
+
+/** @return shape(key:\Foo, key2:float, key3:int) */
+function asShapeWithStringKey() { return []; }
+
+/** @return shape(0:\Foo, 2:float, 1:int) */
+function asShapeWithIntKey() { return []; }
+
+/** @return shape(0:\Foo, 4:float, 2:int) */
+function asShapeWithSomeIntKey() { return []; }
+
+function foo() {
+  // simple
+  ["key" => $a1, "key2" => $b1, "key3" => $c1] = asShapeWithStringKey();
+
+  exprtype($a1, "\Foo");
+  exprtype($b1, "float");
+  exprtype($c1, "int");
+
+
+  // mixed positions
+  ["key" => $a2, "key3" => $c2, "key2" => $b2] = asShapeWithStringKey();
+
+  exprtype($a2, "\Foo");
+  exprtype($b2, "float");
+  exprtype($c2, "int");
+
+
+  // without keys and shape with string key
+  [$a3, $c3, $b3] = asShapeWithStringKey();
+
+  exprtype($a3, "unknown_from_list");
+  exprtype($b3, "unknown_from_list");
+  exprtype($c3, "unknown_from_list");
+
+
+  // without keys and shape with int key
+  [$a4, $b4, $c4] = asShapeWithIntKey();
+
+  exprtype($a4, "\Foo");
+  exprtype($b4, "int");
+  exprtype($c4, "float");
+
+
+  // without keys and shape with some int key
+  [$a5, $b5, $c5, $d5, $e5] = asShapeWithSomeIntKey();
+
+  exprtype($a5, "\Foo");
+  exprtype($b5, "unknown_from_list");
+  exprtype($c5, "int");
+  exprtype($d5, "unknown_from_list");
+  exprtype($e5, "float");
+
+
+  // with keys and shape with some int key
+  [0 => $a6, 2 => $b6, 4 => $c6] = asShapeWithSomeIntKey();
+
+  exprtype($a6, "\Foo");
+  exprtype($b6, "int");
+  exprtype($c6, "float");
+
+
+  // with old style and keys and shape with some int key
+  list(0 => $a7, 2 => $b7, 4 => $c7) = asShapeWithSomeIntKey();
+
+  exprtype($a7, "\Foo");
+  exprtype($b7, "int");
+  exprtype($c7, "float");
+
+
+  // with old style and without keys and shape with string key
+  list($a8, $c8, $b8) = asShapeWithStringKey();
+
+  exprtype($a8, "unknown_from_list");
+  exprtype($b8, "unknown_from_list");
+  exprtype($c8, "unknown_from_list");
 }
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
@@ -1943,6 +2015,61 @@ exprtype($a, "mixed[]");
 
 $a = [];
 exprtype($a, "mixed[]");
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestArrayTypesWithUnpack(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+/** @return Boo[] */
+function returnBooArray() {}
+
+function f() {
+  // with simple type
+  $a = [1,2,3];
+  $b = [0, ...$a];
+  exprtype($b, "int[]");
+
+
+  // with class type
+  $a1 = [new Foo(), new Foo()];
+  $b1 = [new Foo(), ...$a1];
+  exprtype($b1, "\Foo[]");
+
+
+  // different types
+  $a2 = [new Foo(), new Foo()];
+  $b2 = [new Foo(), ...returnBooArray()];
+  exprtype($b2, "mixed[]");
+
+
+  // with two unpack
+  $a3 = [new Foo(), new Foo()];
+  $b3 = [new Foo(), new Foo()];
+  $c3 = [...$a3, ...$b3];
+  exprtype($c3, "\Foo[]");
+
+
+  // with two unpack with different type
+  $a4 = [new Foo(), new Foo()];
+  $c4 = [...$a4, ...returnBooArray()];
+  exprtype($c4, "mixed[]");
+
+
+  // one unpack
+  $a5 = [new Foo(), new Foo()];
+  $b5 = [...$a5];
+  exprtype($b5, "\Foo[]");
+
+
+  // with two unpack and just type
+  $a6 = [new Foo(), new Foo()];
+  $b6 = [new Foo(), new Foo()];
+  $c6 = [...$a6, new Foo(),...$b6];
+  exprtype($c6, "\Foo[]");
+}
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
@@ -2032,11 +2159,23 @@ exprtype(Roo::$d, "string");
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestArrowFunction(t *testing.T) {
+	code := `<?php
+function f() {
+   $value = 10;
+   $_ = fn($x) => $value = "probably now $value has type int|string";
+   // but, no
+   exprtype($value, "precise int"); // Ok, see specification
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {
-		linter.InitStubs(func(ch chan linter.FileInfo) {
-			ch <- linter.FileInfo{
+		linter.InitStubs(func(ch chan workspace.FileInfo) {
+			ch <- workspace.FileInfo{
 				Filename: "stubs.php",
 				Contents: []byte(params.stubs),
 			}
@@ -2089,13 +2228,13 @@ func (w *exprTypeWalker) LeaveNode(n ir.Node) {}
 func (w *exprTypeWalker) EnterNode(n ir.Node) bool {
 	call, ok := n.(*ir.FunctionCallExpr)
 	if ok && meta.NameNodeEquals(call.Function, `exprtype`) {
-		checkedExpr := call.ArgumentList.Arguments[0].(*ir.Argument).Expr
-		expectedType := call.ArgumentList.Arguments[1].(*ir.Argument).Expr.(*ir.String).Value
+		checkedExpr := call.Arg(0).Expr
+		expectedType := call.Arg(1).Expr.(*ir.String).Value
 		actualType, ok := exprTypeResult[checkedExpr]
 		if !ok {
 			w.t.Fatalf("no type found for %s expression", irutil.FmtNode(checkedExpr))
 		}
-		want := makeType(expectedType[len(`"`) : len(expectedType)-len(`"`)])
+		want := makeType(expectedType)
 		have := testTypesMap{
 			Types:   actualType.String(),
 			Precise: actualType.IsPrecise(),
@@ -2125,7 +2264,7 @@ func (c *exprTypeCollector) AfterEnterNode(n ir.Node) {
 	if !ok || !meta.NameNodeEquals(call.Function, `exprtype`) {
 		return
 	}
-	checkedExpr := call.ArgumentList.Arguments[0].(*ir.Argument).Expr
+	checkedExpr := call.Arg(0).Expr
 
 	// We need to clone a types map because if it belongs to a var
 	// or some other symbol those type can be volatile we'll get
