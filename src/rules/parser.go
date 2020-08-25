@@ -81,10 +81,45 @@ func (p *parser) parse(filename string, r io.Reader) (*Set, error) {
 	return p.res, nil
 }
 
+func (p *parser) commentText(n ir.Node) string {
+	for _, ff := range (*n.GetFreeFloating())[freefloating.Start] {
+		if ff.StringType != freefloating.CommentType {
+			continue
+		}
+		if strings.HasPrefix(ff.Value, "/**") && magicComment.MatchString(ff.Value) {
+			return ff.Value
+		}
+	}
+	return ""
+}
+
+func (p *parser) parseFuncComment(fn *ir.FunctionStmt) error {
+	if fn.PhpDocComment == "" {
+		return nil
+	}
+	var doc RuleDoc
+	for _, part := range phpdoc.Parse(p.typeParser, fn.PhpDocComment) {
+		part := part.(*phpdoc.RawCommentPart)
+		switch part.Name() {
+		case "comment":
+			doc.Comment = part.ParamsText
+		case "before":
+			doc.Before = part.ParamsText
+		case "after":
+			doc.After = part.ParamsText
+		}
+	}
+	p.res.DocByName[p.funcName] = doc
+	return nil
+}
+
 func (p *parser) parseRule(st ir.Node) error {
 	switch st := st.(type) {
 	case *ir.FunctionStmt:
 		p.funcName = st.FunctionName.Value
+		if err := p.parseFuncComment(st); err != nil {
+			return nil
+		}
 		for _, st := range st.Stmts {
 			if err := p.parseRule(st); err != nil {
 				return p.errorf(st, "%s: %v", p.funcName, err)
@@ -104,16 +139,7 @@ func (p *parser) parseRule(st ir.Node) error {
 		return nil
 	}
 
-	comment := ""
-	for _, ff := range (*st.GetFreeFloating())[freefloating.Start] {
-		if ff.StringType != freefloating.CommentType {
-			continue
-		}
-		if strings.HasPrefix(ff.Value, "/**") && magicComment.MatchString(ff.Value) {
-			comment = ff.Value
-			break
-		}
-	}
+	comment := p.commentText(st)
 	if comment == "" {
 		return nil
 	}
