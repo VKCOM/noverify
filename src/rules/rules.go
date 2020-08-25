@@ -22,9 +22,10 @@ func (*Parser) Parse(filename string, r io.Reader) (*Set, error) {
 // NewSet returns a new empty rules set.
 func NewSet() *Set {
 	return &Set{
-		Any:   &ScopedSet{},
-		Root:  &ScopedSet{},
-		Local: &ScopedSet{},
+		Any:       &ScopedSet{},
+		Root:      &ScopedSet{},
+		Local:     &ScopedSet{},
+		DocByName: make(map[string]RuleDoc),
 	}
 }
 
@@ -35,13 +36,20 @@ type Set struct {
 	Local   *ScopedSet // Only inside functions
 	Builtin bool       // Whether this is a NoVerify builtin rule set
 
-	Names []string // All rule names
+	Names     []string // All rule names
+	DocByName map[string]RuleDoc
 }
 
 // ScopedSet is a categorized rules collection.
 // Categories help to assign a better execution strategy for a rule.
 type ScopedSet struct {
 	RulesByKind [ir.NumKinds][]Rule
+}
+
+type RuleDoc struct {
+	Comment string
+	Before  string
+	After   string
 }
 
 // Rule is a dynamically-loaded linter rule.

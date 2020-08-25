@@ -295,11 +295,17 @@ func RegisterRootCheckerWithCacher(cacher MetaCacher, c RootCheckerCreateFunc) {
 
 func DeclareRules(rset *rules.Set) {
 	for _, ruleName := range rset.Names {
-		// TODO: better documentation. See #466.
+		doc := rset.DocByName[ruleName]
+		comment := doc.Comment
+		if comment == "" {
+			comment = fmt.Sprintf("%s is a dynamic rule", ruleName)
+		}
 		DeclareCheck(CheckInfo{
 			Name:    ruleName,
-			Comment: fmt.Sprintf("%s is a dynamic rule", ruleName),
+			Comment: comment,
 			Default: true,
+			Before:  doc.Before,
+			After:   doc.After,
 		})
 	}
 }
