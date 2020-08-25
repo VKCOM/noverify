@@ -1192,7 +1192,7 @@ func (b *BlockWalker) enterArrowFunction(fun *ir.ArrowFunctionExpr) bool {
 	b.r.reportPhpdocErrors(fun, doc.errs)
 	phpDocParamTypes := doc.types
 
-	params, _ := b.r.parseFuncArgs(fun.Params, phpDocParamTypes, sc)
+	params, _ := b.r.parseFuncArgs(fun.Params, phpDocParamTypes, sc, nil)
 	b.r.handleArrowFuncExpr(params, fun.Expr, sc, b)
 
 	return false
@@ -1330,21 +1330,21 @@ func (b *BlockWalker) handleVariable(v ir.Node) bool {
 			varName = vv.Name
 			if b.inArrowFunction {
 				for _, w := range b.parentBlockWalkers {
-					delete(w.unusedVars, varName)
+					w.untrackVarName(varName)
 				}
 			}
 
-			delete(b.unusedVars, varName)
+			b.untrackVarName(varName)
 		}
 	case *ir.SimpleVar:
 		varName = v.Name
 		if b.inArrowFunction {
 			for _, w := range b.parentBlockWalkers {
-				delete(w.unusedVars, varName)
+				w.untrackVarName(varName)
 			}
 		}
 
-		delete(b.unusedVars, varName)
+		b.untrackVarName(varName)
 	}
 
 	have := b.ctx.sc.HaveVar(v)
