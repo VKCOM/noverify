@@ -2356,6 +2356,26 @@ usort($foo_array, function($a, $b) {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestMemberTypeInPHPDoc(t *testing.T) {
+	code := `<?php
+class Foo {
+	const BAR = 5;
+	const BAZ = 10;
+}
+
+/**
+ * @return \Foo::BAR|\Foo::BAZ
+ */
+function f() {}
+
+function f2() {
+	exprtype(f(), "mixed");
+}
+
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {

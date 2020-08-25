@@ -49,6 +49,14 @@ const (
 	// Examples: `int` `\Foo\Bar` `$this`
 	ExprName
 
+	// ExprClass is a type of class that is identified by its name.
+	// Examples: `\Foo` `\Bar`
+	ExprClass
+
+	// ExprMember is a type of class member that is identified by its name.
+	// Examples: `\Foo` `\Bar`
+	ExprMember
+
 	// ExprKeyword is a special name-like type node.
 	// Examples: `*` `...`
 	ExprSpecialName
@@ -62,6 +70,12 @@ const (
 	// Args[0] - key expression (left)
 	// Args[1] - val expression (right)
 	ExprKeyVal
+
+	// ExprMemberType is access to member.
+	// Examples: `\Foo::SOME_CONSTANT` `\Foo::$a`
+	// Args[0] - class fqn expression (left)
+	// Args[1] - member name expression (right)
+	ExprMemberType
 
 	// ExprArray is `elem[]` or `[]elem` type.
 	// Examples: `int[]` `(int|float)[]` `int[`
@@ -129,20 +143,21 @@ const (
 )
 
 var prefixPrecedenceTab = [256]byte{
-	'?': 4,
-	'[': 4,
-	'!': 4,
+	'?': 5,
+	'[': 5,
+	'!': 5,
 }
 
 var infixPrecedenceTab = [256]byte{
 	':': 1,
 	'|': 2,
-	'&': 3,
-	'[': 4,
-	'<': 5,
-	'(': 5,
-	'{': 5,
-	'?': 4,
+	';': 3, // is ::
+	'&': 4,
+	'[': 5,
+	'<': 6,
+	'(': 6,
+	'{': 6,
+	'?': 5,
 }
 
 type TypeParser struct {
@@ -282,14 +297,34 @@ func (p *TypeParser) parseExpr(precedence byte) *TypeExpr {
 		p.skipWhitespace()
 	}
 
-	for precedence < infixPrecedenceTab[p.peek()] {
+	calcPrecedence := func() byte {
+		prc := infixPrecedenceTab[p.peek()]
+		if p.peek() == ':' {
+			ch := p.lookAhead()
+			if ch == ':' {
+				prc = 3
+			}
+		}
+		return prc
+	}
+
+	for precedence < calcPrecedence() {
 		ch := p.nextByte()
 		switch ch {
 		case '?':
 			left = p.newExpr(ExprOptional, begin, uint16(p.pos), left)
 		case ':':
-			right := p.parseExpr(infixPrecedenceTab[':'])
-			left = p.newExpr(ExprKeyVal, begin, uint16(p.pos), left, right)
+			isMemberType := p.peek() == ':'
+			if isMemberType {
+				_ = p.nextByte()
+				right := p.parseExpr(infixPrecedenceTab[';'])
+				right.Kind = ExprMember
+				left.Kind = ExprClass
+				left = p.newExpr(ExprMemberType, begin, uint16(p.pos), left, right)
+			} else {
+				right := p.parseExpr(infixPrecedenceTab[':'])
+				left = p.newExpr(ExprKeyVal, begin, uint16(p.pos), left, right)
+			}
 		case '[':
 			if p.peek() == ']' {
 				p.pos++
@@ -424,6 +459,15 @@ func (p *TypeParser) nextByte() byte {
 	if p.pos < uint(len(p.input)) {
 		i := p.pos
 		p.pos++
+		return p.input[i]
+	}
+	return 0
+}
+
+func (p *TypeParser) lookAhead() byte {
+	if p.pos+1 < uint(len(p.input)) {
+		i := p.pos
+		i++
 		return p.input[i]
 	}
 	return 0
