@@ -10,7 +10,7 @@ import (
 
 // Eval tries to compute the e using the constant expressions folding.
 // In case of failure, meta.UnknownValue is returned.
-func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstantValue {
+func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 	// TODO: support more operators and some builtin PHP functions like strlen.
 
 	switch e := e.(type) {
@@ -83,17 +83,17 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstantValue {
 		if err != nil {
 			return meta.UnknownValue
 		}
-		return meta.ConstantValue{Type: meta.Integer, Value: value}
+		return meta.ConstValue{Type: meta.Integer, Value: value}
 
 	case *ir.Dnumber:
 		value, err := strconv.ParseFloat(e.Value, 64)
 		if err != nil {
 			return meta.UnknownValue
 		}
-		return meta.ConstantValue{Type: meta.Float, Value: value}
+		return meta.ConstValue{Type: meta.Float, Value: value}
 
 	case *ir.String:
-		return meta.ConstantValue{Value: e.Value, Type: meta.String}
+		return meta.ConstValue{Value: e.Value, Type: meta.String}
 	}
 
 	return meta.UnknownValue
