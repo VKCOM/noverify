@@ -65,7 +65,7 @@ const (
 
 	// ExprMemberType is access to member.
 	// Examples: `\Foo::SOME_CONSTANT` `\Foo::$a`
-	// Args[0] - class fqn expression (left)
+	// Args[0] - class type expression (left)
 	// Args[1] - member name expression (right)
 	ExprMemberType
 
