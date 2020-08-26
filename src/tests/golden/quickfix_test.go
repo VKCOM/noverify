@@ -23,11 +23,7 @@ const (
 )
 
 type QuickFixTest struct {
-	t *testing.T
-
-	code     []byte
-	expected []byte
-
+	t      *testing.T
 	folder string
 }
 
