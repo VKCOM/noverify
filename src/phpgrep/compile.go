@@ -79,6 +79,8 @@ func (c *compiler) EnterNode(n ir.Node) bool {
 		v.Expr = anyFloat{metaNode{name: name}}
 	case "str":
 		v.Expr = anyStr{metaNode{name: name}}
+	case "char":
+		v.Expr = anyStr1{metaNode{name: name}}
 	case "num":
 		v.Expr = anyNum{metaNode{name: name}}
 	case "expr":

@@ -203,3 +203,38 @@ function offBy1() {
    */
   $a[sizeof($a)];
 }
+
+/**
+ * @comment Report suspicious arguments order.
+ * @before  strpos('/', $s)
+ * @after   strpos($s, '/')
+ */
+function argsOrder() {
+  /**
+   * @warning potentially incorrect haystack and needle arguments order
+   */
+  any_haystack_needle: {
+    strpos(${"char"}, ${"*"});
+    stripos(${"char"}, ${"*"});
+    strrpos(${"char"}, ${"*"});
+    substr_count(${"str"}, ${"*"});
+  }
+
+  /**
+   * @warning potentially incorrect replacement and subject arguments order
+   */
+  preg_replace($_, $_, ${"str"}, ${"*"});
+
+  /**
+   * @warning potentially incorrect replace and string arguments order
+   */
+  any_str_replace: {
+    str_replace($_, $_, ${"char"}, ${"*"});
+    str_replace($_, $_, "", ${"*"});
+  }
+
+  /**
+   * @warning potentially incorrect delimiter and string arguments order
+   */
+  explode($_, ${"char"}, ${"*"});
+}

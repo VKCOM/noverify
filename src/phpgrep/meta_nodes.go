@@ -18,6 +18,7 @@ type (
 	anyInt   struct{ metaNode }
 	anyFloat struct{ metaNode }
 	anyStr   struct{ metaNode }
+	anyStr1  struct{ metaNode }
 	anyNum   struct{ metaNode }
 	anyExpr  struct{ metaNode }
 	anyFunc  struct{ metaNode }
