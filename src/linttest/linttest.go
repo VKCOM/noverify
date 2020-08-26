@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -84,6 +85,8 @@ type Suite struct {
 	MisspellList string
 
 	IgnoreUndeclaredChecks bool
+
+	ApplyQuickFixes bool
 }
 
 // NewSuite returns a new linter test suite for t.
@@ -104,6 +107,13 @@ func NewSuite(t testing.TB) *Suite {
 func (s *Suite) AddFile(contents string) {
 	s.Files = append(s.Files, TestFile{
 		Name: fmt.Sprintf("_file%d.php", len(s.Files)),
+		Data: []byte(contents),
+	})
+}
+
+func (s *Suite) AddNamedFile(name, contents string) {
+	s.Files = append(s.Files, TestFile{
+		Name: name,
 		Data: []byte(contents),
 	})
 }
@@ -213,6 +223,8 @@ func (s *Suite) RunLinter() []*linter.Report {
 		}
 	}
 
+	linter.ApplyQuickFixes = s.ApplyQuickFixes
+
 	shuffleFiles(s.Files)
 	for _, f := range s.Files {
 		parseTestFile(s.t, f, s.AllowDisable)
@@ -302,4 +314,19 @@ func parseTestFile(t testing.TB, f TestFile, allowDisable *regexp.Regexp) (rootN
 	}
 
 	return rootNode, w
+}
+
+func FindPHPFiles(root string) ([]string, error) {
+	var files []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() || !strings.HasSuffix(path, ".php") {
+			return nil
+		}
+		files = append(files, path)
+		return nil
+	})
+	return files, err
 }

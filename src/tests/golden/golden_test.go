@@ -372,7 +372,7 @@ func runGoldenTest(t *testing.T, target *goldenTest) {
 	misspellList := "Eng"
 
 	t.Run(target.name, func(t *testing.T) {
-		phpFiles, err := findPHPFiles(target.srcDir)
+		phpFiles, err := linttest.FindPHPFiles(target.srcDir)
 		if err != nil {
 			t.Fatalf("list files: %v", err)
 		}
@@ -404,21 +404,6 @@ func runGoldenTest(t *testing.T, target *goldenTest) {
 
 		checkGoldenOutput(t, target.want, filteredReports)
 	})
-}
-
-func findPHPFiles(root string) ([]string, error) {
-	var files []string
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() || !strings.HasSuffix(path, ".php") {
-			return nil
-		}
-		files = append(files, path)
-		return nil
-	})
-	return files, err
 }
 
 func checkGoldenOutput(t *testing.T, want []byte, reports []*linter.Report) {

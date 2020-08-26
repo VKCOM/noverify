@@ -1,0 +1,6 @@
+<?php
+
+function ternarySimplify() {
+    $z = $x ?: 5;
+    $z = $x ?? $y;
+}
