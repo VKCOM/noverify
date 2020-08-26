@@ -34,6 +34,15 @@ $a = $a >> $b; // Could rewrite
 MAYBE   assignOp: could rewrite as `$a ??= $b` at testdata/embeddedrules/assignOp.php:52
 $a = $a ?? $b; // Could rewrite
 ^^^^^^^^^^^^^
+WARNING offBy1: probably intended to use count-1 as an index at testdata/embeddedrules/offBy1.php:7
+  $_ = $xs[count($xs)];
+       ^^^^^^^^^^^^^^^
+WARNING offBy1: probably intended to use sizeof-1 as an index at testdata/embeddedrules/offBy1.php:8
+  $_ = $xs[sizeof($xs)];
+       ^^^^^^^^^^^^^^^^
+WARNING offBy1: probably intended to use count-1 as an index at testdata/embeddedrules/offBy1.php:10
+  if ($tabs[count($tabs)] == "") {
+      ^^^^^^^^^^^^^^^^^^^
 WARNING precedence: == has higher precedence than & at testdata/embeddedrules/precedence.php:4
   $_ = 0 == $mask & $x;
        ^^^^^^^^^^^^^^^

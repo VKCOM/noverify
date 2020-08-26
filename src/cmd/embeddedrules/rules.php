@@ -184,3 +184,22 @@ function assignOp() {
    */
   $x = $x ?? $y;
 }
+
+/**
+ * @comment Report potential off-by-one mistakes.
+ * @before  $a[count($a)]
+ * @after   $a[count($a)-1]
+ */
+function offBy1() {
+  /**
+   * @warning probably intended to use count-1 as an index
+   * @fix     $a[count($a) - 1]
+   */
+  $a[count($a)];
+
+  /**
+   * @warning probably intended to use sizeof-1 as an index
+   * @fix     $a[sizeof($a) - 1]
+   */
+  $a[sizeof($a)];
+}
