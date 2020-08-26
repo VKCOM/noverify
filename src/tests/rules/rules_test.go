@@ -9,6 +9,41 @@ import (
 	"github.com/VKCOM/noverify/src/rules"
 )
 
+func TestRuleBlock(t *testing.T) {
+	rfile := `<?php
+function blockEndsWithExit() {
+  /** @warning block ends with exit */
+  { ${"*"}; exit($_); }
+}
+`
+	test := linttest.NewSuite(t)
+
+	test.AddFile(`<?php
+{
+  exit(0); // 1
+}
+
+{
+  echo 123;
+  exit(1); // 2
+}
+
+{}
+
+{
+  echo 1;
+  exit(2);
+  echo 2;
+}
+`)
+	test.Expect = []string{
+		`block ends with exit`,
+		`block ends with exit`,
+	}
+
+	runRulesTest(t, test, rfile)
+}
+
 func TestRuleIfElseif(t *testing.T) {
 	rfile := `<?php
 function testrule() {
