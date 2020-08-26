@@ -43,8 +43,6 @@ function ternarySimplify() {
  * @after   ($x & $mask) == 0
  */
 function precedence() {
-  // TODO: merge RHS+LHS rules when #276 is decided.
-
   // Note: we report `$x & $mask != $y` as a precedence issue even
   // if it can be caught with `typecheckOp` that checks both operand
   // types (bool is not a good operand for bitwise operation).
@@ -53,45 +51,47 @@ function precedence() {
   // not that helpful, because the root of the problem is precedence.
   // Invalid types are a result of that.
 
-  // LHS rules.
-
   /** @warning == has higher precedence than & */
-  $_ == $_ & $_;
+  any_eq_bitand: {
+    $_ == $_ & $_;
+    $_ & $_ == $_;
+  }
   /** @warning != has higher precedence than & */
-  $_ != $_ & $_;
+  any_neq_bitand: {
+    $_ != $_ & $_;
+    $_ & $_ != $_;
+  }
   /** @warning === has higher precedence than & */
-  $_ === $_ & $_;
+  any_eq3_bitand: {
+    $_ === $_ & $_;
+    $_ & $_ === $_;
+  }
   /** @warning !== has higher precedence than & */
-  $_ !== $_ & $_;
+  any_neq3_bitand: {
+    $_ !== $_ & $_;
+    $_ & $_ !== $_;
+  }
 
   /** @warning == has higher precedence than | */
-  $_ == $_ | $_;
+  any_eq_bitor: {
+    $_ == $_ | $_;
+    $_ | $_ == $_;
+  }
   /** @warning != has higher precedence than | */
-  $_ != $_ | $_;
+  any_neq_bitor: {
+    $_ != $_ | $_;
+    $_ | $_ != $_;
+  }
   /** @warning === has higher precedence than | */
-  $_ === $_ | $_;
+  any_eq3_bitor: {
+    $_ === $_ | $_;
+    $_ | $_ === $_;
+  }
   /** @warning !== has higher precedence than | */
-  $_ !== $_ | $_;
-
-  // RHS rules (should be merged with LHS rules in future).
-
-  /** @warning == has higher precedence than & */
-  $_ & $_ == $_;
-  /** @warning != has higher precedence than & */
-  $_ & $_ != $_;
-  /** @warning === has higher precedence than & */
-  $_ & $_ === $_;
-  /** @warning !== has higher precedence than & */
-  $_ & $_ !== $_;
-
-  /** @warning == has higher precedence than | */
-  $_ | $_ == $_;
-  /** @warning != has higher precedence than | */
-  $_ | $_ != $_;
-  /** @warning === has higher precedence than | */
-  $_ | $_ === $_;
-  /** @warning !== has higher precedence than | */
-  $_ | $_ !== $_;
+  any_neq3_bitor: {
+    $_ !== $_ | $_;
+    $_ | $_ !== $_;
+  }
 }
 
 /**
