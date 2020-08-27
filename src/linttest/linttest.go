@@ -85,8 +85,6 @@ type Suite struct {
 	MisspellList string
 
 	IgnoreUndeclaredChecks bool
-
-	ApplyQuickFixes bool
 }
 
 // NewSuite returns a new linter test suite for t.
@@ -222,8 +220,6 @@ func (s *Suite) RunLinter() []*linter.Report {
 			s.t.Fatalf("load misspell dicts: %v", err)
 		}
 	}
-
-	linter.ApplyQuickFixes = s.ApplyQuickFixes
 
 	shuffleFiles(s.Files)
 	for _, f := range s.Files {

@@ -1,6 +1,7 @@
 package golden
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
+	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
@@ -22,19 +24,31 @@ const (
 	fixExtension      = ".fix"
 )
 
-type QuickFixTest struct {
+type quickFixTest struct {
 	t      *testing.T
 	folder string
 }
 
-func NewQuickFixTest(t *testing.T, folder string) QuickFixTest {
-	return QuickFixTest{
+func NewQuickFixTest(t *testing.T, folder string) quickFixTest {
+	return quickFixTest{
 		t:      t,
 		folder: folder,
 	}
 }
 
-func (t *QuickFixTest) runQuickFixTest() {
+func openFile(filename string) (f *os.File, found bool, err error) {
+	f, err = os.Open(filename)
+	if err != nil {
+		f, err = os.Create(filename)
+		if err != nil {
+			return nil, false, fmt.Errorf("file creation %s failed: %s", filename, err)
+		}
+		return f, false, nil
+	}
+	return f, true, nil
+}
+
+func (t *quickFixTest) runQuickFixTest() {
 	files, err := linttest.FindPHPFiles(t.folder)
 	if err != nil {
 		t.t.Errorf("Error while searching for files in the %s folder: %s", t.folder, err)
@@ -46,26 +60,16 @@ func (t *QuickFixTest) runQuickFixTest() {
 			expectedFileName := file + expectedExtension
 			fixedFileName := file + fixExtension
 
-			testFile, err := os.Open(testFileName)
-			if err != nil {
-				t.Errorf("File %s not open: %s", testFileName, err)
-				return
-			}
-			testFileContent, err := ioutil.ReadAll(testFile)
+			testFileContent, err := ioutil.ReadFile(testFileName)
 			if err != nil {
 				t.Errorf("Reading file %s failed: %s", testFileName, err)
 			}
-			testFile.Close()
 
-			expectedFile, err := os.Open(expectedFileName)
-			expectedFileFound := true
-			if err != nil || expectedFile == nil {
-				expectedFileFound = false
-				expectedFile, err = os.Create(expectedFileName)
-				if err != nil {
-					t.Errorf("File creation %s failed: %s", expectedFileName, err)
-				}
+			expectedFile, expectedFileFound, err := openFile(expectedFileName)
+			if err != nil {
+				t.Errorf("File open %s failed: %s", expectedFileName, err)
 			}
+			defer expectedFile.Close()
 
 			var expectedFileContent []byte
 			if expectedFileFound {
@@ -73,37 +77,30 @@ func (t *QuickFixTest) runQuickFixTest() {
 				if err != nil {
 					t.Errorf("Reading file %s failed: %s", expectedFileName, err)
 				}
-				expectedFile.Close()
 			}
 
-			fixedFile, err := os.Open(fixedFileName)
-			if err != nil || fixedFile == nil {
-				fixedFile, err = os.Create(fixedFileName)
-				if err != nil {
-					t.Errorf("File creation %s failed: %s", fixedFileName, err)
-				}
+			fixedFile, _, err := openFile(fixedFileName)
+			if err != nil {
+				t.Errorf("File open %s failed: %s", fixedFileName, err)
 			}
 			_, _ = fixedFile.Write(testFileContent)
 			fixedFile.Close()
 
 			test := linttest.NewSuite(t)
-			test.ApplyQuickFixes = true
 			test.AddNamedFile(fixedFileName, string(testFileContent))
+			linter.ApplyQuickFixes = true
+			defer func() {
+				linter.ApplyQuickFixes = false
+			}()
 			_ = test.RunLinter()
 
-			fixedFile, err = os.Open(fixedFileName)
-			if err != nil {
-				t.Errorf("File %s not open: %s", fixedFileName, err)
-			}
-			fixedFileContent, err := ioutil.ReadAll(fixedFile)
+			fixedFileContent, err := ioutil.ReadFile(fixedFileName)
 			if err != nil {
 				t.Errorf("Reading file %s failed: %s", fixedFileName, err)
 			}
-			fixedFile.Close()
 
 			if !expectedFileFound {
 				_, _ = expectedFile.Write(fixedFileContent)
-				expectedFile.Close()
 				t.Logf("The expected files for \"%s\" were not found and were generated automatically.", filepath.Base(testFileName))
 				return
 			}
