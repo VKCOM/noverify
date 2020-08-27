@@ -15,7 +15,7 @@ import (
 )
 
 func TestQuickFix(t *testing.T) {
-	s := NewQuickFixTest(t, `testdata/quickfix`)
+	s := newQuickFixTest(t, `testdata/quickfix`)
 	s.runQuickFixTest()
 }
 
@@ -29,7 +29,7 @@ type quickFixTest struct {
 	folder string
 }
 
-func NewQuickFixTest(t *testing.T, folder string) quickFixTest {
+func newQuickFixTest(t *testing.T, folder string) quickFixTest {
 	return quickFixTest{
 		t:      t,
 		folder: folder,
