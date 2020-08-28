@@ -52,6 +52,11 @@ const (
 	varStatic
 )
 
+// arrayKeyType is an universal PHP array key type.
+// In PHP, all array keys are converted to either int or string,
+// so we can always assume that `int|string` is good enough.
+var arrayKeyType = meta.NewTypesMap("int|string").Immutable()
+
 // BlockWalker is used to process function/method contents.
 type BlockWalker struct {
 	ctx *blockContext
@@ -1098,7 +1103,7 @@ func (b *BlockWalker) handleForeach(s *ir.ForeachStmt) bool {
 				b.handleVariableNode(s.Variable, meta.NewTypesMap(meta.WrapElemOf(typ)), "foreach_value")
 			})
 
-			b.handleVariableNode(s.Key, meta.TypesMap{}, "foreach_key")
+			b.handleVariableNode(s.Key, arrayKeyType, "foreach_key")
 			if list, ok := s.Variable.(*ir.ListExpr); ok {
 				for _, item := range list.Items {
 					b.handleVariableNode(item.Val, meta.TypesMap{}, "foreach_value")

@@ -46,6 +46,28 @@ func init() {
 	})
 }
 
+func TestExprTypeForeachKey(t *testing.T) {
+	code := `<?php
+$xs = [[1], [2]];
+
+foreach ($xs as $k => $ys) {
+  exprtype($k, 'int|string');
+
+  foreach ($xs as $k2 => $_) {
+    exprtype($k2, 'int|string');
+    $k2 = 10;
+    exprtype($k2, 'precise int');
+  }
+
+  exprtype($k, 'int|string');
+
+  $v = $xs ? $k : [1];
+  exprtype($v, 'int|int[]|string');
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestExprTypeRecursiveType1(t *testing.T) {
 	code := `<?php
 class Feed {
