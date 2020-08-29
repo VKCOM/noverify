@@ -59,7 +59,7 @@ func TestParseClassPHPDoc(t *testing.T) {
 	}
 
 	st := &meta.ClassParseState{}
-	walker := RootWalker{ctx: newRootContext(st)}
+	walker := RootWalker{ctx: newRootContext(NewWorkerContext(), st)}
 	for _, test := range tests {
 		doc := fmt.Sprintf(`/** %s */`, test.line)
 		result := walker.parseClassPHPDoc(nil, doc)
@@ -208,7 +208,7 @@ func TestTypeFilter(t *testing.T) {
 
 func BenchmarkParseTypes(b *testing.B) {
 	st := &meta.ClassParseState{}
-	ctx := newRootContext(st)
+	ctx := newRootContext(NewWorkerContext(), st)
 	typeString := `?x|array<int>|T[]`
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

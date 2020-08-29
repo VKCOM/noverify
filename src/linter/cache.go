@@ -2,7 +2,6 @@ package linter
 
 import (
 	"bufio"
-	"crypto/md5"
 	"encoding/gob"
 	"errors"
 	"fmt"
@@ -10,8 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"sync/atomic"
-	"time"
 
 	"github.com/VKCOM/noverify/src/meta"
 )
@@ -59,75 +56,6 @@ type fileMeta struct {
 	Functions         meta.FunctionsMap
 	Constants         meta.ConstantsMap
 	FunctionOverrides meta.FunctionsOverrideMap
-}
-
-// IndexFile parses the file and fills in the meta info. Can use cache.
-func IndexFile(filename string, contents []byte) error {
-	if CacheDir == "" {
-		_, w, err := ParseContents(filename, contents, nil, nil)
-		if w != nil {
-			updateMetaInfo(filename, &w.meta)
-		}
-		return err
-	}
-
-	h := md5.New()
-
-	if contents == nil {
-		start := time.Now()
-		fp, err := os.Open(filename)
-		if err != nil {
-			return err
-		}
-		defer fp.Close()
-		if _, err := io.Copy(h, fp); err != nil {
-			return err
-		}
-		atomic.AddInt64(&initFileReadTime, int64(time.Since(start)))
-	} else {
-		h.Write(contents)
-	}
-
-	contentsHash := fmt.Sprintf("%x", h.Sum(nil))
-
-	cacheFilenamePart := filename
-
-	volumeName := filepath.VolumeName(filename)
-
-	// windows user supplied full path to directory to be analyzed,
-	// but windows paths does not support ":" in the middle
-	if len(volumeName) == 2 && volumeName[1] == ':' {
-		cacheFilenamePart = filename[0:1] + "_" + filename[2:]
-	}
-
-	cacheFile := filepath.Join(CacheDir, cacheFilenamePart+"."+contentsHash)
-
-	start := time.Now()
-	fp, err := os.Open(cacheFile)
-	if err != nil {
-		_, w, err := ParseContents(filename, contents, nil, nil)
-		if err != nil {
-			return err
-		}
-
-		return createMetaCacheFile(filename, cacheFile, w)
-	}
-	defer fp.Close()
-
-	if err := restoreMetaFromCache(filename, fp); err != nil {
-		// do not really care about why exactly reading from cache failed
-		os.Remove(cacheFile)
-
-		_, w, err := ParseContents(filename, contents, nil, nil)
-		if err != nil {
-			return err
-		}
-
-		return createMetaCacheFile(filename, cacheFile, w)
-	}
-
-	atomic.AddInt64(&initCacheReadTime, int64(time.Since(start)))
-	return nil
 }
 
 func writeMetaCache(w *bufio.Writer, root *RootWalker) error {

@@ -79,7 +79,7 @@ func changeFileNonLocked(filename, contents string) {
 
 	meta.SetIndexingComplete(true)
 
-	newWalker := linter.NewWalkerForLangServer(w)
+	newWalker := linter.NewWalkerForLangServer(linter.NewWorkerContext(), w)
 
 	newWalker.InitCustom()
 	rootNode.Walk(newWalker)
