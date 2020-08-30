@@ -12,6 +12,7 @@ import (
 	"regexp"
 	dbg "runtime/debug"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -61,6 +62,10 @@ func newWorker(id int) *Worker {
 }
 
 func (w *Worker) ID() int { return w.id }
+
+var bytesBufPool = sync.Pool{
+	New: func() interface{} { return &bytes.Buffer{} },
+}
 
 // ParseContents parses specified contents (or file) and returns *RootWalker.
 // Function does not update global meta.
