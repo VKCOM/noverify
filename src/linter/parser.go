@@ -1,7 +1,6 @@
 package linter
 
 import (
-	"bytes"
 	"log"
 	"regexp"
 	"strings"
@@ -67,10 +66,6 @@ func AnalyzeFileRootLevel(rootNode ir.Node, d *RootWalker) {
 	}
 
 	rootNode.Walk(b)
-}
-
-var bytesBufPool = sync.Pool{
-	New: func() interface{} { return &bytes.Buffer{} },
 }
 
 // DebugMessage is used to actually print debug messages.
