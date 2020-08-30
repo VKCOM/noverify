@@ -1,7 +1,6 @@
 package linter
 
 import (
-	"bytes"
 	"crypto/md5"
 	"errors"
 	"fmt"
@@ -12,7 +11,6 @@ import (
 	"regexp"
 	dbg "runtime/debug"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -75,10 +73,6 @@ func newWorker(id int) *Worker {
 
 func (w *Worker) ID() int { return w.id }
 
-var bytesBufPool = sync.Pool{
-	New: func() interface{} { return &bytes.Buffer{} },
-}
-
 // ParseContents parses specified contents (or file) and returns *RootWalker.
 // Function does not update global meta.
 func (w *Worker) ParseContents(filename string, contents []byte, lineRanges []git.LineRange) (root *ir.Root, walker *RootWalker, err error) {
@@ -106,10 +100,8 @@ func (w *Worker) ParseContents(filename string, contents []byte, lineRanges []gi
 	}
 	defer rd.Close()
 
-	b := bytesBufPool.Get().(*bytes.Buffer)
+	b := w.ctx.scratchBuf
 	b.Reset()
-	defer bytesBufPool.Put(b)
-
 	b.ReadFrom(rd)
 	contents = append(make([]byte, 0, b.Len()), b.Bytes()...)
 
