@@ -438,14 +438,19 @@ func (d *RootWalker) report(n ir.Node, lineNumber int, level int, checkName, msg
 			level = LevelInformation
 		}
 		msg := fmt.Sprintf(msg, args...)
-		hash := d.reportHash(&pos, startLn, checkName, msg)
-		if count := d.ctx.baseline.Count(hash); count >= 1 {
-			if d.ctx.hashCounters == nil {
-				d.ctx.hashCounters = make(map[uint64]int)
-			}
-			d.ctx.hashCounters[hash]++
-			if d.ctx.hashCounters[hash] <= count {
-				return
+		var hash uint64
+		if BaselineProfile != nil {
+			// If baseline is not enabled, don't waste time on hash computations.
+			// See #727.
+			hash = d.reportHash(&pos, startLn, checkName, msg)
+			if count := d.ctx.baseline.Count(hash); count >= 1 {
+				if d.ctx.hashCounters == nil {
+					d.ctx.hashCounters = make(map[uint64]int)
+				}
+				d.ctx.hashCounters[hash]++
+				if d.ctx.hashCounters[hash] <= count {
+					return
+				}
 			}
 		}
 
