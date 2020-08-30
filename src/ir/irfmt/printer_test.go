@@ -864,7 +864,7 @@ func runPrinterTest(t *testing.T, code string) {
 		t.Errorf("parse %s: %v", code, err)
 		return
 	}
-	rootIR := irconv.ConvertRoot(root)
+	rootIR := irconv.NewConverter().ConvertRoot(root)
 
 	o := bytes.NewBufferString("")
 	p := irfmt.NewPrettyPrinter(o, "    ")

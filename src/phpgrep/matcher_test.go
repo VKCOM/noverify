@@ -16,7 +16,7 @@ func mustParse(t testing.TB, code string) ir.Node {
 	if err != nil {
 		t.Fatalf("parse `%s`: %v", code, err)
 	}
-	irnode := irconv.ConvertNode(n)
+	irnode := irconv.NewConverter().ConvertNode(n)
 	if n, ok := irnode.(*ir.ExpressionStmt); ok {
 		return n.Expr
 	}

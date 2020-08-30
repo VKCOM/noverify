@@ -69,7 +69,7 @@ func (p *parser) parse(filename string, r io.Reader) (*Set, error) {
 	if err != nil {
 		return res, err
 	}
-	rootIR := irconv.ConvertRoot(root)
+	rootIR := irconv.NewConverter().ConvertRoot(root)
 
 	// Convert PHP file into the rule set.
 	p.filename = filename

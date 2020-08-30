@@ -104,13 +104,14 @@ func runNormalizeTests(t *testing.T, tests []normalizationTest) {
 
 	conf := Config{}
 	st := &meta.ClassParseState{CurrentClass: `\Foo`}
+	irConverter := irconv.NewConverter()
 	for _, test := range tests {
 		n, _, err := parseutil.ParseStmt([]byte(test.orig))
 		if err != nil {
 			t.Errorf("parse `%s`: %v", test.orig, err)
 			return
 		}
-		irNode := irconv.ConvertNode(n)
+		irNode := irConverter.ConvertNode(n)
 		normalized := FuncBody(st, conf, nil, []ir.Node{irNode})
 		have := strings.TrimSuffix(irfmt.Node(normalized[0]), ";")
 		if have != test.want {
@@ -123,7 +124,7 @@ func runNormalizeTests(t *testing.T, tests []normalizationTest) {
 			t.Errorf("parse normalized `%s`: %v", test.orig, err)
 			return
 		}
-		irNode2 := irconv.ConvertNode(n2)
+		irNode2 := irConverter.ConvertNode(n2)
 		normalized2 := FuncBody(st, conf, nil, []ir.Node{irNode2})
 		have2 := strings.TrimSuffix(irfmt.Node(normalized2[0]), ";")
 		if have != have2 {
@@ -227,6 +228,6 @@ func parseStmtList(s string) ([]ir.Node, error) {
 	if len(p.GetErrors()) != 0 {
 		return nil, errors.New(p.GetErrors()[0].String())
 	}
-	rootIR := irconv.ConvertRoot(p.GetRootNode())
+	rootIR := irconv.NewConverter().ConvertRoot(p.GetRootNode())
 	return rootIR.Stmts, nil
 }

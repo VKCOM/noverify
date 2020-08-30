@@ -832,7 +832,7 @@ func getMethodCompletionItems(st *meta.ClassParseState, str string, sc *meta.Sco
 		lintdebug.Send("Could not parse %s", strTemp)
 		return nil
 	}
-	rootIR := irconv.ConvertRoot(tempNode)
+	rootIR := irconv.NewConverter().ConvertRoot(tempNode)
 
 	stmtLst := rootIR.Stmts
 	if len(stmtLst) == 0 {

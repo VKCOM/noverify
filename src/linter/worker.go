@@ -37,6 +37,8 @@ type Worker struct {
 	id  int
 	ctx *WorkerContext
 
+	irconv *irconv.Converter
+
 	needReports bool
 
 	AllowDisable *regexp.Regexp
@@ -56,8 +58,9 @@ func NewIndexingWorker(id int) *Worker {
 
 func newWorker(id int) *Worker {
 	return &Worker{
-		id:  id,
-		ctx: NewWorkerContext(),
+		id:     id,
+		ctx:    NewWorkerContext(),
+		irconv: irconv.NewConverter(),
 	}
 }
 
@@ -223,7 +226,7 @@ func (w *Worker) analyzeFile(filename string, contents []byte, parser *php7.Pars
 		return nil, nil, errors.New("Empty root node")
 	}
 
-	rootIR := irconv.ConvertRoot(rootNode)
+	rootIR := w.irconv.ConvertRoot(rootNode)
 
 	st := &meta.ClassParseState{CurrentFile: filename}
 	walker := &RootWalker{

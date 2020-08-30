@@ -18,7 +18,7 @@ func compile(opts *Compiler, pattern []byte) (*Matcher, error) {
 	if err != nil {
 		return nil, err
 	}
-	rootIR := irconv.ConvertNode(root)
+	rootIR := irconv.NewConverter().ConvertNode(root)
 
 	if st, ok := rootIR.(*ir.ExpressionStmt); ok {
 		rootIR = st.Expr
