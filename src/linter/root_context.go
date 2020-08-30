@@ -6,15 +6,15 @@ import (
 
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/quickfix"
 )
 
 type rootContext struct {
+	*WorkerContext
+
 	st *meta.ClassParseState
 
-	typeNormalizer   typeNormalizer
-	phpdocTypeParser *phpdoc.TypeParser
+	typeNormalizer typeNormalizer
 
 	// shapes is a list of generated shape types for the current file.
 	shapes []shapeTypeInfo
@@ -25,17 +25,18 @@ type rootContext struct {
 	fixes []quickfix.TextEdit
 }
 
-func newRootContext(st *meta.ClassParseState) rootContext {
+func newRootContext(workerCtx *WorkerContext, st *meta.ClassParseState) rootContext {
 	var p baseline.FileProfile
 	if BaselineProfile != nil {
 		filename := filepath.Base(st.CurrentFile)
 		p = BaselineProfile.Files[filename]
 	}
 	return rootContext{
-		typeNormalizer:   typeNormalizer{st: st},
-		phpdocTypeParser: phpdoc.NewTypeParser(),
-		st:               st,
-		baseline:         p,
+		WorkerContext: workerCtx,
+
+		typeNormalizer: typeNormalizer{st: st},
+		st:             st,
+		baseline:       p,
 	}
 }
 
