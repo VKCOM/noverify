@@ -39,6 +39,9 @@ type Worker struct {
 
 	irconv *irconv.Converter
 
+	reParserNoLiterals *syntax.Parser
+	reParser           *syntax.Parser
+
 	needReports bool
 
 	AllowDisable *regexp.Regexp
@@ -61,6 +64,12 @@ func newWorker(id int) *Worker {
 		id:     id,
 		ctx:    NewWorkerContext(),
 		irconv: irconv.NewConverter(),
+		reParserNoLiterals: syntax.NewParser(&syntax.ParserOptions{
+			NoLiterals: true,
+		}),
+		reParser: syntax.NewParser(&syntax.ParserOptions{
+			NoLiterals: false,
+		}),
 	}
 }
 
@@ -240,15 +249,11 @@ func (w *Worker) analyzeFile(filename string, contents []byte, parser *php7.Pars
 		localRset: cloneRulesForFile(filename, Rules.Local),
 
 		reVet: &regexpVet{
-			parser: syntax.NewParser(&syntax.ParserOptions{
-				NoLiterals: false,
-			}),
+			parser: w.reParser,
 		},
 		reSimplifier: &regexpSimplifier{
-			parser: syntax.NewParser(&syntax.ParserOptions{
-				NoLiterals: true,
-			}),
-			out: &strings.Builder{},
+			parser: w.reParserNoLiterals,
+			out:    &strings.Builder{},
 		},
 
 		allowDisabledRegexp: w.AllowDisable,
