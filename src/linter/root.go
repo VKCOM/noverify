@@ -441,7 +441,6 @@ func (d *RootWalker) report(n ir.Node, lineNumber int, level int, checkName, msg
 		var hash uint64
 		if BaselineProfile != nil {
 			// If baseline is not enabled, don't waste time on hash computations.
-			// See #727.
 			hash = d.reportHash(&pos, startLn, checkName, msg)
 			if count := d.ctx.baseline.Count(hash); count >= 1 {
 				if d.ctx.hashCounters == nil {
@@ -530,7 +529,8 @@ func (d *RootWalker) reportHash(pos *position.Position, startLine []byte, checkN
 	// We'll see how it goes.
 	filename := filepath.Base(d.ctx.st.CurrentFile)
 
-	return baseline.ReportHash(baseline.HashFields{
+	d.ctx.scratchBuf.Reset()
+	return baseline.ReportHash(&d.ctx.scratchBuf, baseline.HashFields{
 		Filename:  filename,
 		PrevLine:  bytes.TrimSuffix(prevLine, []byte("\r")),
 		StartLine: bytes.TrimSuffix(startLine, []byte("\r")),

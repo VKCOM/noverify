@@ -1,6 +1,8 @@
 package linter
 
 import (
+	"bytes"
+
 	"github.com/VKCOM/noverify/src/phpdoc"
 )
 
@@ -13,10 +15,13 @@ import (
 // from different threads, so we can re-use it without synchronization.
 type WorkerContext struct {
 	phpdocTypeParser *phpdoc.TypeParser
+
+	scratchBuf bytes.Buffer
 }
 
 func NewWorkerContext() *WorkerContext {
 	return &WorkerContext{
 		phpdocTypeParser: phpdoc.NewTypeParser(),
+		scratchBuf:       bytes.Buffer{},
 	}
 }
