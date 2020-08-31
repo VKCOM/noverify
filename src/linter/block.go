@@ -225,6 +225,14 @@ func (b *BlockWalker) EnterNode(n ir.Node) (res bool) {
 		res = b.handleAssign(s)
 	case *ir.AssignReference:
 		res = b.handleAssignReference(s)
+	case *ir.AssignPlus:
+		res = b.handleAssignOp(s)
+	case *ir.AssignMinus:
+		res = b.handleAssignOp(s)
+	case *ir.AssignMul:
+		res = b.handleAssignOp(s)
+	case *ir.AssignDiv:
+		res = b.handleAssignOp(s)
 	case *ir.ArrayExpr:
 		res = b.handleArray(s)
 	case *ir.ForeachStmt:
@@ -1768,6 +1776,51 @@ func (b *BlockWalker) handleAssign(a *ir.Assign) bool {
 		cls.Properties["$"+sv.Name] = p
 	default:
 		a.Variable.Walk(b)
+	}
+
+	return false
+}
+
+func (b *BlockWalker) handleAssignOp(o ir.Node) (res bool) {
+	// We are converting "$x += $y" to "$x = $x + $y"
+	// to reuse existing processing code.
+	switch s := o.(type) {
+	case *ir.AssignPlus:
+		as := ir.Assign{
+			Variable: s.Variable,
+			Expression: &ir.PlusExpr{
+				Left:  s.Variable,
+				Right: s.Expression,
+			},
+		}
+		as.Walk(b)
+	case *ir.AssignMinus:
+		as := ir.Assign{
+			Variable: s.Variable,
+			Expression: &ir.MinusExpr{
+				Left:  s.Variable,
+				Right: s.Expression,
+			},
+		}
+		as.Walk(b)
+	case *ir.AssignMul:
+		as := ir.Assign{
+			Variable: s.Variable,
+			Expression: &ir.MulExpr{
+				Left:  s.Variable,
+				Right: s.Expression,
+			},
+		}
+		as.Walk(b)
+	case *ir.AssignDiv:
+		as := ir.Assign{
+			Variable: s.Variable,
+			Expression: &ir.DivExpr{
+				Left:  s.Variable,
+				Right: s.Expression,
+			},
+		}
+		as.Walk(b)
 	}
 
 	return false
