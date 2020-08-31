@@ -1782,45 +1782,47 @@ func (b *BlockWalker) handleAssign(a *ir.Assign) bool {
 }
 
 func (b *BlockWalker) handleAssignOp(o ir.Node) (res bool) {
-	// We are converting "$x += $y" to "$x = $x + $y"
-	// to reuse existing processing code.
 	switch s := o.(type) {
 	case *ir.AssignPlus:
-		as := ir.Assign{
-			Variable: s.Variable,
-			Expression: &ir.PlusExpr{
-				Left:  s.Variable,
-				Right: s.Expression,
-			},
+		s.Variable.Walk(b)
+		s.Expression.Walk(b)
+		as := &ir.PlusExpr{
+			Position: s.Position,
+			Left:     s.Variable,
+			Right:    s.Expression,
 		}
-		as.Walk(b)
+		tp := solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, as)
+		b.replaceVar(s.Variable, tp, "", meta.VarAlwaysDefined)
 	case *ir.AssignMinus:
-		as := ir.Assign{
-			Variable: s.Variable,
-			Expression: &ir.MinusExpr{
-				Left:  s.Variable,
-				Right: s.Expression,
-			},
+		s.Variable.Walk(b)
+		s.Expression.Walk(b)
+		as := &ir.MinusExpr{
+			Position: s.Position,
+			Left:     s.Variable,
+			Right:    s.Expression,
 		}
-		as.Walk(b)
+		tp := solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, as)
+		b.replaceVar(s.Variable, tp, "", meta.VarAlwaysDefined)
 	case *ir.AssignMul:
-		as := ir.Assign{
-			Variable: s.Variable,
-			Expression: &ir.MulExpr{
-				Left:  s.Variable,
-				Right: s.Expression,
-			},
+		s.Variable.Walk(b)
+		s.Expression.Walk(b)
+		as := &ir.MulExpr{
+			Position: s.Position,
+			Left:     s.Variable,
+			Right:    s.Expression,
 		}
-		as.Walk(b)
+		tp := solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, as)
+		b.replaceVar(s.Variable, tp, "", meta.VarAlwaysDefined)
 	case *ir.AssignDiv:
-		as := ir.Assign{
-			Variable: s.Variable,
-			Expression: &ir.DivExpr{
-				Left:  s.Variable,
-				Right: s.Expression,
-			},
+		s.Variable.Walk(b)
+		s.Expression.Walk(b)
+		as := &ir.DivExpr{
+			Position: s.Position,
+			Left:     s.Variable,
+			Right:    s.Expression,
 		}
-		as.Walk(b)
+		tp := solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, as)
+		b.replaceVar(s.Variable, tp, "", meta.VarAlwaysDefined)
 	}
 
 	return false
