@@ -53,6 +53,10 @@ type CheckInfo struct {
 	// enabled by default or it should be included by allow-checks explicitly.
 	Default bool
 
+	// Quickfix tells whether this checker can automatically fix the reported
+	// issues when linter works in -fix mode.
+	Quickfix bool
+
 	// Comment is a short summary of what this diagnostic does.
 	// A single descriptive sentence is a perfect format for it.
 	Comment string
