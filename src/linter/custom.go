@@ -305,11 +305,12 @@ func DeclareRules(rset *rules.Set) {
 			comment = fmt.Sprintf("%s is a dynamic rule", ruleName)
 		}
 		DeclareCheck(CheckInfo{
-			Name:    ruleName,
-			Comment: comment,
-			Default: true,
-			Before:  doc.Before,
-			After:   doc.After,
+			Name:     ruleName,
+			Comment:  comment,
+			Default:  true,
+			Quickfix: doc.Fix,
+			Before:   doc.Before,
+			After:    doc.After,
 		})
 	}
 }
