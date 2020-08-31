@@ -11,6 +11,11 @@ func NodeClone(x ir.Node) ir.Node {
 		return nil
 	}
 	switch x := x.(type) {
+	case *ir.AnonClassExpr:
+		clone := *x
+		clone.Class = classClone(x.Class)
+		clone.Args = NodeSliceClone(x.Args)
+		return &clone
 	case *ir.Argument:
 		clone := *x
 		if x.Expr != nil {
@@ -334,14 +339,7 @@ func NodeClone(x ir.Node) ir.Node {
 			}
 			clone.Modifiers = sliceClone
 		}
-		if x.Extends != nil {
-			clone.Extends = NodeClone(x.Extends).(*ir.ClassExtendsStmt)
-		}
-		if x.Implements != nil {
-			clone.Implements = NodeClone(x.Implements).(*ir.ClassImplementsStmt)
-		}
-		clone.Stmts = NodeSliceClone(x.Stmts)
-		clone.Args = NodeSliceClone(x.Args)
+		clone.Class = classClone(x.Class)
 		return &clone
 	case *ir.CloneExpr:
 		clone := *x

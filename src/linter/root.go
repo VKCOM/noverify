@@ -181,7 +181,7 @@ func (d *RootWalker) EnterNode(n ir.Node) (res bool) {
 		}
 	}
 
-	if class, ok := n.(*ir.ClassStmt); ok && class.ClassName == nil {
+	if _, ok := n.(*ir.AnonClassExpr); ok {
 		// TODO: remove when #62 and anon class support in general is ready.
 		return false // Don't walk nor enter anon classes
 	}

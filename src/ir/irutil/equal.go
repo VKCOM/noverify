@@ -11,6 +11,18 @@ func NodeEqual(x, y ir.Node) bool {
 		return x == y
 	}
 	switch x := x.(type) {
+	case *ir.AnonClassExpr:
+		y, ok := y.(*ir.AnonClassExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !classEqual(x.Class, y.Class) {
+			return false
+		}
+		if !NodeSliceEqual(x.Args, y.Args) {
+			return false
+		}
+		return true
 	case *ir.Argument:
 		y, ok := y.(*ir.Argument)
 		if !ok || x == nil || y == nil {
@@ -481,9 +493,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.PhpDocComment != y.PhpDocComment {
-			return false
-		}
 		if !NodeEqual(x.ClassName, y.ClassName) {
 			return false
 		}
@@ -495,16 +504,7 @@ func NodeEqual(x, y ir.Node) bool {
 				return false
 			}
 		}
-		if !NodeEqual(x.Extends, y.Extends) {
-			return false
-		}
-		if !NodeEqual(x.Implements, y.Implements) {
-			return false
-		}
-		if !NodeSliceEqual(x.Stmts, y.Stmts) {
-			return false
-		}
-		if !NodeSliceEqual(x.Args, y.Args) {
+		if !classEqual(x.Class, y.Class) {
 			return false
 		}
 		return true
