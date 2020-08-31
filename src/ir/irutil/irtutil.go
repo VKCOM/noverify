@@ -72,3 +72,19 @@ func IsAssign(n ir.Node) bool {
 func FmtNode(n ir.Node) string {
 	return irfmt.Node(n)
 }
+
+func classEqual(x, y ir.Class) bool {
+	return x.PhpDocComment == y.PhpDocComment &&
+		NodeEqual(x.Extends, y.Extends) &&
+		NodeEqual(x.Implements, y.Implements) &&
+		NodeSliceEqual(x.Stmts, y.Stmts)
+}
+
+func classClone(x ir.Class) ir.Class {
+	return ir.Class{
+		PhpDocComment: x.PhpDocComment,
+		Extends:       NodeClone(x.Extends).(*ir.ClassExtendsStmt),
+		Implements:    NodeClone(x.Implements).(*ir.ClassImplementsStmt),
+		Stmts:         NodeSliceClone(x.Stmts),
+	}
+}

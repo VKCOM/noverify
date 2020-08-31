@@ -195,6 +195,27 @@ func (n *AssignShiftRight) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
+func (n *AnonClassExpr) Walk(v Visitor) {
+	if !v.EnterNode(n) {
+		return
+	}
+	for _, arg := range n.Args {
+		arg.Walk(v)
+	}
+	if n.Extends != nil {
+		n.Extends.Walk(v)
+	}
+	if n.Implements != nil {
+		n.Implements.Walk(v)
+	}
+	for i := range n.Stmts {
+		if n.Stmts[i] != nil {
+			n.Stmts[i].Walk(v)
+		}
+	}
+	v.LeaveNode(n)
+}
+
 func (n *BitwiseAndExpr) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
@@ -1228,9 +1249,6 @@ func (n *ClassStmt) Walk(v Visitor) {
 		if n.Modifiers[i] != nil {
 			n.Modifiers[i].Walk(v)
 		}
-	}
-	for _, arg := range n.Args {
-		arg.Walk(v)
 	}
 	if n.Extends != nil {
 		n.Extends.Walk(v)
