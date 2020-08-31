@@ -119,7 +119,7 @@ func writeWalkCase(w *bytes.Buffer, pkg *packageData, typ *typeData) {
 	for i := 0; i < typ.info.NumFields(); i++ {
 		field := typ.info.Field(i)
 		switch typeString := field.Type().String(); typeString {
-		case "[]github.com/VKCOM/noverify/src/php/parser/node.Node":
+		case "[]ir.Node":
 			fmt.Fprintf(w, "    NodeSliceWalk(x.%[1]s, visit)\n", field.Name())
 		case "github.com/VKCOM/noverify/src/php/parser/freefloating.Collection":
 			// Do nothing.
@@ -159,7 +159,7 @@ func writeCloneCase(w *bytes.Buffer, pkg *packageData, typ *typeData) {
 	for i := 0; i < typ.info.NumFields(); i++ {
 		field := typ.info.Field(i)
 		switch typeString := field.Type().String(); typeString {
-		case "[]github.com/VKCOM/noverify/src/php/parser/node.Node":
+		case "[]ir.Node":
 			fmt.Fprintf(w, "    clone.%[1]s = NodeSliceClone(x.%[1]s)\n", field.Name())
 		case "github.com/VKCOM/noverify/src/php/parser/freefloating.Collection":
 			// Do nothing.
@@ -229,7 +229,7 @@ func writeCompare(w *bytes.Buffer, pkg *packageData, typ *typeData) {
 		switch typeString := field.Type().String(); typeString {
 		case "string", "bool":
 			fmt.Fprintf(w, "    if x.%[1]s != y.%[1]s { return false }\n", field.Name())
-		case "[]github.com/VKCOM/noverify/src/php/parser/node.Node":
+		case "[]ir.Node":
 			fmt.Fprintf(w, "    if !NodeSliceEqual(x.%[1]s, y.%[1]s) { return false }\n", field.Name())
 		case "github.com/VKCOM/noverify/src/php/parser/freefloating.Collection":
 			// Do nothing.

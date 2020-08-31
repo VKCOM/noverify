@@ -84,13 +84,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
-		if len(x.Params) != len(y.Params) {
+		if !NodeSliceEqual(x.Params, y.Params) {
 			return false
-		}
-		for i := range x.Params {
-			if !NodeEqual(x.Params[i], y.Params[i]) {
-				return false
-			}
 		}
 		if !NodeEqual(x.ReturnType, y.ReturnType) {
 			return false
@@ -371,13 +366,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Cases) != len(y.Cases) {
+		if !NodeSliceEqual(x.Cases, y.Cases) {
 			return false
-		}
-		for i := range x.Cases {
-			if !NodeEqual(x.Cases[i], y.Cases[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.CaseStmt:
@@ -388,13 +378,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Cond, y.Cond) {
 			return false
 		}
-		if len(x.Stmts) != len(y.Stmts) {
+		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
-		}
-		for i := range x.Stmts {
-			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.CatchStmt:
@@ -402,24 +387,14 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Types) != len(y.Types) {
+		if !NodeSliceEqual(x.Types, y.Types) {
 			return false
-		}
-		for i := range x.Types {
-			if !NodeEqual(x.Types[i], y.Types[i]) {
-				return false
-			}
 		}
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if len(x.Stmts) != len(y.Stmts) {
+		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
-		}
-		for i := range x.Stmts {
-			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.ClassConstFetchExpr:
@@ -447,13 +422,8 @@ func NodeEqual(x, y ir.Node) bool {
 				return false
 			}
 		}
-		if len(x.Consts) != len(y.Consts) {
+		if !NodeSliceEqual(x.Consts, y.Consts) {
 			return false
-		}
-		for i := range x.Consts {
-			if !NodeEqual(x.Consts[i], y.Consts[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.ClassExtendsStmt:
@@ -470,13 +440,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.InterfaceNames) != len(y.InterfaceNames) {
+		if !NodeSliceEqual(x.InterfaceNames, y.InterfaceNames) {
 			return false
-		}
-		for i := range x.InterfaceNames {
-			if !NodeEqual(x.InterfaceNames[i], y.InterfaceNames[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.ClassMethodStmt:
@@ -501,13 +466,8 @@ func NodeEqual(x, y ir.Node) bool {
 				return false
 			}
 		}
-		if len(x.Params) != len(y.Params) {
+		if !NodeSliceEqual(x.Params, y.Params) {
 			return false
-		}
-		for i := range x.Params {
-			if !NodeEqual(x.Params[i], y.Params[i]) {
-				return false
-			}
 		}
 		if !NodeEqual(x.ReturnType, y.ReturnType) {
 			return false
@@ -535,27 +495,17 @@ func NodeEqual(x, y ir.Node) bool {
 				return false
 			}
 		}
-		if len(x.Args) != len(y.Args) {
-			return false
-		}
-		for i := range x.Args {
-			if !NodeEqual(x.Args[i], y.Args[i]) {
-				return false
-			}
-		}
 		if !NodeEqual(x.Extends, y.Extends) {
 			return false
 		}
 		if !NodeEqual(x.Implements, y.Implements) {
 			return false
 		}
-		if len(x.Stmts) != len(y.Stmts) {
+		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
 		}
-		for i := range x.Stmts {
-			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
-				return false
-			}
+		if !NodeSliceEqual(x.Args, y.Args) {
+			return false
 		}
 		return true
 	case *ir.CloneExpr:
@@ -581,13 +531,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
-		if len(x.Params) != len(y.Params) {
+		if !NodeSliceEqual(x.Params, y.Params) {
 			return false
-		}
-		for i := range x.Params {
-			if !NodeEqual(x.Params[i], y.Params[i]) {
-				return false
-			}
 		}
 		if !NodeEqual(x.ClosureUse, y.ClosureUse) {
 			return false
@@ -595,13 +540,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.ReturnType, y.ReturnType) {
 			return false
 		}
-		if len(x.Stmts) != len(y.Stmts) {
+		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
-		}
-		for i := range x.Stmts {
-			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.ClosureUseExpr:
@@ -609,13 +549,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Uses) != len(y.Uses) {
+		if !NodeSliceEqual(x.Uses, y.Uses) {
 			return false
-		}
-		for i := range x.Uses {
-			if !NodeEqual(x.Uses[i], y.Uses[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.CoalesceExpr:
@@ -656,13 +591,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Consts) != len(y.Consts) {
+		if !NodeSliceEqual(x.Consts, y.Consts) {
 			return false
-		}
-		for i := range x.Consts {
-			if !NodeEqual(x.Consts[i], y.Consts[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.ConstantStmt:
@@ -694,13 +624,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Consts) != len(y.Consts) {
+		if !NodeSliceEqual(x.Consts, y.Consts) {
 			return false
-		}
-		for i := range x.Consts {
-			if !NodeEqual(x.Consts[i], y.Consts[i]) {
-				return false
-			}
 		}
 		if !NodeEqual(x.Stmt, y.Stmt) {
 			return false
@@ -714,13 +639,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Stmts) != len(y.Stmts) {
+		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
-		}
-		for i := range x.Stmts {
-			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.DivExpr:
@@ -761,13 +681,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Exprs) != len(y.Exprs) {
+		if !NodeSliceEqual(x.Exprs, y.Exprs) {
 			return false
-		}
-		for i := range x.Exprs {
-			if !NodeEqual(x.Exprs[i], y.Exprs[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.ElseIfStmt:
@@ -814,13 +729,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Parts) != len(y.Parts) {
+		if !NodeSliceEqual(x.Parts, y.Parts) {
 			return false
-		}
-		for i := range x.Parts {
-			if !NodeEqual(x.Parts[i], y.Parts[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.EncapsedStringPart:
@@ -888,13 +798,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Stmts) != len(y.Stmts) {
+		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
-		}
-		for i := range x.Stmts {
-			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.ForStmt:
@@ -902,29 +807,14 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Init) != len(y.Init) {
+		if !NodeSliceEqual(x.Init, y.Init) {
 			return false
 		}
-		for i := range x.Init {
-			if !NodeEqual(x.Init[i], y.Init[i]) {
-				return false
-			}
-		}
-		if len(x.Cond) != len(y.Cond) {
+		if !NodeSliceEqual(x.Cond, y.Cond) {
 			return false
 		}
-		for i := range x.Cond {
-			if !NodeEqual(x.Cond[i], y.Cond[i]) {
-				return false
-			}
-		}
-		if len(x.Loop) != len(y.Loop) {
+		if !NodeSliceEqual(x.Loop, y.Loop) {
 			return false
-		}
-		for i := range x.Loop {
-			if !NodeEqual(x.Loop[i], y.Loop[i]) {
-				return false
-			}
 		}
 		if !NodeEqual(x.Stmt, y.Stmt) {
 			return false
@@ -962,13 +852,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Function, y.Function) {
 			return false
 		}
-		if len(x.Args) != len(y.Args) {
+		if !NodeSliceEqual(x.Args, y.Args) {
 			return false
-		}
-		for i := range x.Args {
-			if !NodeEqual(x.Args[i], y.Args[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.FunctionStmt:
@@ -985,24 +870,14 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.FunctionName, y.FunctionName) {
 			return false
 		}
-		if len(x.Params) != len(y.Params) {
+		if !NodeSliceEqual(x.Params, y.Params) {
 			return false
-		}
-		for i := range x.Params {
-			if !NodeEqual(x.Params[i], y.Params[i]) {
-				return false
-			}
 		}
 		if !NodeEqual(x.ReturnType, y.ReturnType) {
 			return false
 		}
-		if len(x.Stmts) != len(y.Stmts) {
+		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
-		}
-		for i := range x.Stmts {
-			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.GlobalStmt:
@@ -1010,13 +885,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Vars) != len(y.Vars) {
+		if !NodeSliceEqual(x.Vars, y.Vars) {
 			return false
-		}
-		for i := range x.Vars {
-			if !NodeEqual(x.Vars[i], y.Vars[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.GotoStmt:
@@ -1063,13 +933,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Prefix, y.Prefix) {
 			return false
 		}
-		if len(x.UseList) != len(y.UseList) {
+		if !NodeSliceEqual(x.UseList, y.UseList) {
 			return false
-		}
-		for i := range x.UseList {
-			if !NodeEqual(x.UseList[i], y.UseList[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.HaltCompilerStmt:
@@ -1086,13 +951,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if x.Label != y.Label {
 			return false
 		}
-		if len(x.Parts) != len(y.Parts) {
+		if !NodeSliceEqual(x.Parts, y.Parts) {
 			return false
-		}
-		for i := range x.Parts {
-			if !NodeEqual(x.Parts[i], y.Parts[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.IdenticalExpr:
@@ -1127,13 +987,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Stmt, y.Stmt) {
 			return false
 		}
-		if len(x.ElseIf) != len(y.ElseIf) {
+		if !NodeSliceEqual(x.ElseIf, y.ElseIf) {
 			return false
-		}
-		for i := range x.ElseIf {
-			if !NodeEqual(x.ElseIf[i], y.ElseIf[i]) {
-				return false
-			}
 		}
 		if !NodeEqual(x.Else, y.Else) {
 			return false
@@ -1180,13 +1035,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.InterfaceNames) != len(y.InterfaceNames) {
+		if !NodeSliceEqual(x.InterfaceNames, y.InterfaceNames) {
 			return false
-		}
-		for i := range x.InterfaceNames {
-			if !NodeEqual(x.InterfaceNames[i], y.InterfaceNames[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.InterfaceStmt:
@@ -1203,13 +1053,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Extends, y.Extends) {
 			return false
 		}
-		if len(x.Stmts) != len(y.Stmts) {
+		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
-		}
-		for i := range x.Stmts {
-			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.IssetExpr:
@@ -1217,13 +1062,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Variables) != len(y.Variables) {
+		if !NodeSliceEqual(x.Variables, y.Variables) {
 			return false
-		}
-		for i := range x.Variables {
-			if !NodeEqual(x.Variables[i], y.Variables[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.LabelStmt:
@@ -1317,13 +1157,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Method, y.Method) {
 			return false
 		}
-		if len(x.Args) != len(y.Args) {
+		if !NodeSliceEqual(x.Args, y.Args) {
 			return false
-		}
-		for i := range x.Args {
-			if !NodeEqual(x.Args[i], y.Args[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.MinusExpr:
@@ -1379,13 +1214,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.NamespaceName, y.NamespaceName) {
 			return false
 		}
-		if len(x.Stmts) != len(y.Stmts) {
+		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
-		}
-		for i := range x.Stmts {
-			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.NewExpr:
@@ -1396,13 +1226,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Class, y.Class) {
 			return false
 		}
-		if len(x.Args) != len(y.Args) {
+		if !NodeSliceEqual(x.Args, y.Args) {
 			return false
-		}
-		for i := range x.Args {
-			if !NodeEqual(x.Args[i], y.Args[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.NopStmt:
@@ -1571,13 +1396,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Type, y.Type) {
 			return false
 		}
-		if len(x.Properties) != len(y.Properties) {
+		if !NodeSliceEqual(x.Properties, y.Properties) {
 			return false
-		}
-		for i := range x.Properties {
-			if !NodeEqual(x.Properties[i], y.Properties[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.PropertyStmt:
@@ -1618,13 +1438,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Stmts) != len(y.Stmts) {
+		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
-		}
-		for i := range x.Stmts {
-			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.ShellExecExpr:
@@ -1632,13 +1447,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Parts) != len(y.Parts) {
+		if !NodeSliceEqual(x.Parts, y.Parts) {
 			return false
-		}
-		for i := range x.Parts {
-			if !NodeEqual(x.Parts[i], y.Parts[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.ShiftLeftExpr:
@@ -1721,13 +1531,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Call, y.Call) {
 			return false
 		}
-		if len(x.Args) != len(y.Args) {
+		if !NodeSliceEqual(x.Args, y.Args) {
 			return false
-		}
-		for i := range x.Args {
-			if !NodeEqual(x.Args[i], y.Args[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.StaticPropertyFetchExpr:
@@ -1747,13 +1552,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Vars) != len(y.Vars) {
+		if !NodeSliceEqual(x.Vars, y.Vars) {
 			return false
-		}
-		for i := range x.Vars {
-			if !NodeEqual(x.Vars[i], y.Vars[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.StaticVarStmt:
@@ -1773,13 +1573,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Stmts) != len(y.Stmts) {
+		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
-		}
-		for i := range x.Stmts {
-			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.String:
@@ -1788,6 +1583,9 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if x.Value != y.Value {
+			return false
+		}
+		if x.DoubleQuotes != y.DoubleQuotes {
 			return false
 		}
 		return true
@@ -1835,13 +1633,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Adaptations) != len(y.Adaptations) {
+		if !NodeSliceEqual(x.Adaptations, y.Adaptations) {
 			return false
-		}
-		for i := range x.Adaptations {
-			if !NodeEqual(x.Adaptations[i], y.Adaptations[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.TraitMethodRefStmt:
@@ -1867,13 +1660,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.TraitName, y.TraitName) {
 			return false
 		}
-		if len(x.Stmts) != len(y.Stmts) {
+		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
-		}
-		for i := range x.Stmts {
-			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.TraitUseAliasStmt:
@@ -1899,13 +1687,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Ref, y.Ref) {
 			return false
 		}
-		if len(x.Insteadof) != len(y.Insteadof) {
+		if !NodeSliceEqual(x.Insteadof, y.Insteadof) {
 			return false
-		}
-		for i := range x.Insteadof {
-			if !NodeEqual(x.Insteadof[i], y.Insteadof[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.TraitUseStmt:
@@ -1913,13 +1696,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Traits) != len(y.Traits) {
+		if !NodeSliceEqual(x.Traits, y.Traits) {
 			return false
-		}
-		for i := range x.Traits {
-			if !NodeEqual(x.Traits[i], y.Traits[i]) {
-				return false
-			}
 		}
 		if !NodeEqual(x.TraitAdaptationList, y.TraitAdaptationList) {
 			return false
@@ -1930,21 +1708,11 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Stmts) != len(y.Stmts) {
+		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
 		}
-		for i := range x.Stmts {
-			if !NodeEqual(x.Stmts[i], y.Stmts[i]) {
-				return false
-			}
-		}
-		if len(x.Catches) != len(y.Catches) {
+		if !NodeSliceEqual(x.Catches, y.Catches) {
 			return false
-		}
-		for i := range x.Catches {
-			if !NodeEqual(x.Catches[i], y.Catches[i]) {
-				return false
-			}
 		}
 		if !NodeEqual(x.Finally, y.Finally) {
 			return false
@@ -1994,13 +1762,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if len(x.Vars) != len(y.Vars) {
+		if !NodeSliceEqual(x.Vars, y.Vars) {
 			return false
-		}
-		for i := range x.Vars {
-			if !NodeEqual(x.Vars[i], y.Vars[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.UseListStmt:
@@ -2011,13 +1774,8 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.UseType, y.UseType) {
 			return false
 		}
-		if len(x.Uses) != len(y.Uses) {
+		if !NodeSliceEqual(x.Uses, y.Uses) {
 			return false
-		}
-		for i := range x.Uses {
-			if !NodeEqual(x.Uses[i], y.Uses[i]) {
-				return false
-			}
 		}
 		return true
 	case *ir.UseStmt:
