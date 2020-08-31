@@ -1787,6 +1787,8 @@ func (b *BlockWalker) handleAssignOp(o ir.Node) (res bool) {
 
 	switch s := o.(type) {
 	case *ir.AssignPlus:
+		s.Variable.Walk(b)
+		s.Expression.Walk(b)
 		as := &ir.PlusExpr{
 			Position: s.Position,
 			Left:     s.Variable,
