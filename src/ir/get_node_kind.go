@@ -4,6 +4,8 @@ import (
 	"fmt"
 )
 
+// TODO: generate this code automatically.
+
 type NodeKind int
 
 const (
@@ -22,6 +24,7 @@ const (
 	KindAssignReference
 	KindAssignShiftLeft
 	KindAssignShiftRight
+	KindAnonClassExpr
 	KindBitwiseAndExpr
 	KindBitwiseOrExpr
 	KindBitwiseXorExpr
@@ -193,6 +196,8 @@ func GetNodeKind(n Node) NodeKind {
 		return KindAssignShiftLeft
 	case *AssignShiftRight:
 		return KindAssignShiftRight
+	case *AnonClassExpr:
+		return KindAnonClassExpr
 	case *BitwiseAndExpr:
 		return KindBitwiseAndExpr
 	case *BitwiseOrExpr:
