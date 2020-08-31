@@ -167,6 +167,8 @@ func writeCloneCase(w *bytes.Buffer, pkg *packageData, typ *typeData) {
 			// Do nothing.
 		case "string", "bool":
 			// Do nothing.
+		case "ir.Class":
+			fmt.Fprintf(w, "    clone.%[1]s = classClone(x.%[1]s)\n", field.Name())
 		default:
 			if !strings.HasPrefix(typeString, "[]") {
 				fmt.Fprintf(w, "    if x.%s != nil {\n", field.Name())
@@ -235,6 +237,8 @@ func writeCompare(w *bytes.Buffer, pkg *packageData, typ *typeData) {
 			// Do nothing.
 		case "*github.com/VKCOM/noverify/src/php/parser/position.Position":
 			// Do nothing.
+		case "ir.Class":
+			fmt.Fprintf(w, "    if !classEqual(x.%[1]s, y.%[1]s) { return false }\n", field.Name())
 		default:
 			if !strings.HasPrefix(typeString, "[]") {
 				fmt.Fprintf(w, "    if !NodeEqual(x.%[1]s, y.%[1]s) { return false }\n", field.Name())
@@ -286,6 +290,11 @@ func loadPackage(ctx *context, pkg string) error {
 		path:  pkg,
 		scope: root,
 	}
+	nodeObject := root.Lookup("Node")
+	nodeIface, ok := nodeObject.Type().Underlying().(*types.Interface)
+	if !ok {
+		panic(fmt.Sprintf("can't find ir.Node type"))
+	}
 	for _, sym := range root.Names() {
 		tn, ok := root.Lookup(sym).(*types.TypeName)
 		if !ok {
@@ -297,6 +306,9 @@ func loadPackage(ctx *context, pkg string) error {
 		}
 		structType, ok := named.Underlying().(*types.Struct)
 		if !ok {
+			continue
+		}
+		if !types.Implements(types.NewPointer(named), nodeIface) {
 			continue
 		}
 		result.types = append(result.types, &typeData{

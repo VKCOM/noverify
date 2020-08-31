@@ -287,7 +287,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 	b.walker.r.checkKeywordCase(e, "new")
 
 	// Can't handle `new class() ...` yet.
-	if _, ok := e.Class.(*ir.ClassStmt); ok {
+	if _, ok := e.Class.(*ir.AnonClassExpr); ok {
 		return
 	}
 

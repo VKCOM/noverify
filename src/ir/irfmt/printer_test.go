@@ -848,6 +848,18 @@ endswitch;
 		`while ($a);
 
 `,
+		`new class
+{
+    public $foo = 10;
+};
+
+`,
+		`new class(1, "arg2")
+{
+
+};
+
+`,
 	}
 
 	for _, code := range testCases {

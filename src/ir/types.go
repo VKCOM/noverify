@@ -120,6 +120,15 @@ type AssignShiftRight struct {
 	Expression   Node
 }
 
+type AnonClassExpr struct {
+	FreeFloating freefloating.Collection
+	Position     *position.Position
+	Class
+
+	ArgsFreeFloating freefloating.Collection
+	Args             []Node
+}
+
 type BitwiseAndExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
@@ -715,17 +724,11 @@ type CatchStmt struct {
 }
 
 type ClassStmt struct {
-	FreeFloating  freefloating.Collection
-	Position      *position.Position
-	PhpDocComment string
-	ClassName     *Identifier
-	Modifiers     []*Identifier
-	Extends       *ClassExtendsStmt
-	Implements    *ClassImplementsStmt
-	Stmts         []Node
-
-	ArgsFreeFloating freefloating.Collection
-	Args             []Node
+	FreeFloating freefloating.Collection
+	Position     *position.Position
+	ClassName    *Identifier
+	Modifiers    []*Identifier
+	Class
 }
 
 type ClassConstListStmt struct {
