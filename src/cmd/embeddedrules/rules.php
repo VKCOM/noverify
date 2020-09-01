@@ -238,3 +238,52 @@ function argsOrder() {
    */
   explode($_, ${"char"}, ${"*"});
 }
+
+/**
+ * @comment Report not-strict-enough comparisons.
+ * @before  in_array("what", $s)
+ * @after   in_array("what", $s, true)
+ */
+function strictCmp() {
+    /**
+     * @warning non-strict comparison (use ===)
+     * @type string $x
+     * @type string $y
+     */
+    any_equal: {
+        $_ == true;
+        true == $_;
+        $_ == false;
+        false == $_;
+        $_ == null;
+        null == $_;
+        $x == $y;
+    }
+
+    /**
+     * @warning non-strict comparison (use !==)
+     * @type string $x
+     * @type string $y
+     */
+    any_not_equal: {
+        $_ != true;
+        true != $_;
+        $_ != false;
+        false != $_;
+        $_ != null;
+        null != $_;
+        $x != $y;
+    }
+
+    /**
+     * @warning 3rd argument of in_array must be true when comparing strings
+     * @type string $b
+     */
+    in_array($b, $_);
+
+    /**
+     * @warning 3rd argument of array_search must be true when comparing strings
+     * @type string $b
+     */
+    array_search($b, $_);
+}
