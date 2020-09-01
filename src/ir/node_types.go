@@ -5,16 +5,6 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/position"
 )
 
-type Visitor interface {
-	EnterNode(Node) bool
-	LeaveNode(Node)
-}
-
-type Node interface {
-	Walk(Visitor)
-	GetFreeFloating() *freefloating.Collection
-}
-
 type Assign struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
