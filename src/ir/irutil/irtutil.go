@@ -5,8 +5,6 @@ import (
 	"github.com/VKCOM/noverify/src/ir/irfmt"
 )
 
-//go:generate go run ./codegen.go
-
 // Unquote returns unquoted version of s, if there are any quotes.
 func Unquote(s string) string {
 	if len(s) >= 2 && s[0] == '\'' || s[0] == '"' {
