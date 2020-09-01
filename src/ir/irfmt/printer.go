@@ -835,6 +835,10 @@ func (p *PrettyPrinter) printExprArrayDimFetch(n *ir.ArrayDimFetchExpr) {
 }
 
 func (p *PrettyPrinter) printExprArrayItem(n *ir.ArrayItemExpr) {
+	if n.Unpack {
+		io.WriteString(p.w, "...")
+	}
+
 	if n.Key != nil {
 		p.Print(n.Key)
 		io.WriteString(p.w, " => ")

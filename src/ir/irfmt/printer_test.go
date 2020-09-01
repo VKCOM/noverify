@@ -251,6 +251,9 @@ LBL;
 		`$_ = array('Hello' => $world, 2 => &$var, $var);
 
 `,
+		`[...$x, $y, ...$z];
+
+`,
 
 		`~$var;
 
@@ -885,7 +888,7 @@ func runPrinterTest(t *testing.T, code string) {
 	want := o.String()
 	have := code
 
-	if !cmp.Equal(want, have) {
-		t.Errorf("results mismatch (+ have) (- want): %s", cmp.Diff(want, have))
+	if !cmp.Equal(have, want) {
+		t.Errorf("results mismatch (+ have) (- want): %s", cmp.Diff(have, want))
 	}
 }
