@@ -30,7 +30,7 @@ func TestAssignmentAsExpression(t *testing.T) {
 	}`)
 
 	test.Expect = []string{
-		"3rd argument of in_array must be true when comparing strings (2)",
+		"3rd argument of in_array must be true when comparing strings",
 		"Strings must be compared using '===' operator",
 	}
 
