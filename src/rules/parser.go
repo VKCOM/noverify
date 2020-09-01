@@ -348,7 +348,7 @@ func (p *parser) parseRule(st ir.Node, proto *Rule) error {
 	}
 
 	if rulesDoc, ok := p.res.DocByName[p.funcName]; ok {
-		if rulesDoc.Fix == false && rule.Fix != "" {
+		if !rulesDoc.Fix && rule.Fix != "" {
 			rulesDoc.Fix = true
 			p.res.DocByName[p.funcName] = rulesDoc
 		}
