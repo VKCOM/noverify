@@ -79,6 +79,9 @@ func (p *PrettyPrinter) printIndent() {
 func (p *PrettyPrinter) printNode(n ir.Node) {
 	switch n := n.(type) {
 
+	case *ir.AnonClassExpr:
+		p.printExprAnonClass(n)
+
 	// node
 
 	case *ir.Root:
@@ -385,6 +388,38 @@ func (p *PrettyPrinter) printNode(n ir.Node) {
 	case *ir.WhileStmt:
 		p.printStmtWhile(n)
 	}
+}
+
+func (p *PrettyPrinter) printClass(class ir.Class) {
+	if class.Extends != nil {
+		io.WriteString(p.w, " extends ")
+		p.Print(class.Extends.ClassName)
+	}
+
+	if class.Implements != nil {
+		io.WriteString(p.w, " implements ")
+		p.joinPrint(", ", class.Implements.InterfaceNames)
+	}
+
+	io.WriteString(p.w, "\n")
+	p.printIndent()
+	io.WriteString(p.w, "{\n")
+	p.printNodes(class.Stmts)
+	io.WriteString(p.w, "\n")
+	p.printIndent()
+	io.WriteString(p.w, "}")
+}
+
+func (p *PrettyPrinter) printExprAnonClass(n *ir.AnonClassExpr) {
+	io.WriteString(p.w, "class")
+
+	if len(n.Args) != 0 {
+		io.WriteString(p.w, "(")
+		p.joinPrint(", ", n.Args)
+		io.WriteString(p.w, ")")
+	}
+
+	p.printClass(n.Class)
 }
 
 // node
@@ -1159,34 +1194,10 @@ func (p *PrettyPrinter) printStmtClass(n *ir.ClassStmt) {
 	}
 	io.WriteString(p.w, "class")
 
-	if n.ClassName != nil {
-		io.WriteString(p.w, " ")
-		p.Print(n.ClassName)
-	}
+	io.WriteString(p.w, " ")
+	p.Print(n.ClassName)
 
-	if len(n.Args) != 0 {
-		io.WriteString(p.w, "(")
-		p.joinPrint(", ", n.Args)
-		io.WriteString(p.w, ")")
-	}
-
-	if n.Extends != nil {
-		io.WriteString(p.w, " extends ")
-		p.Print(n.Extends.ClassName)
-	}
-
-	if n.Implements != nil {
-		io.WriteString(p.w, " implements ")
-		p.joinPrint(", ", n.Implements.InterfaceNames)
-	}
-
-	io.WriteString(p.w, "\n")
-	p.printIndent()
-	io.WriteString(p.w, "{\n")
-	p.printNodes(n.Stmts)
-	io.WriteString(p.w, "\n")
-	p.printIndent()
-	io.WriteString(p.w, "}")
+	p.printClass(n.Class)
 }
 
 func (p *PrettyPrinter) printStmtClassConstList(n *ir.ClassConstListStmt) {

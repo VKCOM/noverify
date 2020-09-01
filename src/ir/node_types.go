@@ -5,16 +5,6 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/position"
 )
 
-type Visitor interface {
-	EnterNode(Node) bool
-	LeaveNode(Node)
-}
-
-type Node interface {
-	Walk(Visitor)
-	GetFreeFloating() *freefloating.Collection
-}
-
 type Assign struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
@@ -118,6 +108,15 @@ type AssignShiftRight struct {
 	Position     *position.Position
 	Variable     Node
 	Expression   Node
+}
+
+type AnonClassExpr struct {
+	FreeFloating freefloating.Collection
+	Position     *position.Position
+	Class
+
+	ArgsFreeFloating freefloating.Collection
+	Args             []Node
 }
 
 type BitwiseAndExpr struct {
@@ -715,17 +714,11 @@ type CatchStmt struct {
 }
 
 type ClassStmt struct {
-	FreeFloating  freefloating.Collection
-	Position      *position.Position
-	PhpDocComment string
-	ClassName     *Identifier
-	Modifiers     []*Identifier
-	Extends       *ClassExtendsStmt
-	Implements    *ClassImplementsStmt
-	Stmts         []Node
-
-	ArgsFreeFloating freefloating.Collection
-	Args             []Node
+	FreeFloating freefloating.Collection
+	Position     *position.Position
+	ClassName    *Identifier
+	Modifiers    []*Identifier
+	Class
 }
 
 type ClassConstListStmt struct {

@@ -1170,28 +1170,7 @@ func (c *Converter) convNode(n node.Node) ir.Node {
 		if n == nil {
 			return (*ir.ClassStmt)(nil)
 		}
-		out := &ir.ClassStmt{}
-		out.FreeFloating = n.FreeFloating
-		out.Position = n.Position
-		out.PhpDocComment = n.PhpDocComment
-		out.ClassName = c.convNode(n.ClassName).(*ir.Identifier)
-		{
-			if n.Modifiers != nil {
-				slice := make([]*ir.Identifier, len(n.Modifiers))
-				for i := range n.Modifiers {
-					slice[i] = c.convNode(n.Modifiers[i]).(*ir.Identifier)
-				}
-				out.Modifiers = slice
-			}
-		}
-		if n.ArgumentList != nil {
-			out.ArgsFreeFloating = n.ArgumentList.FreeFloating
-			out.Args = c.convNodeSlice(n.ArgumentList.Arguments)
-		}
-		out.Extends = c.convNode(n.Extends).(*ir.ClassExtendsStmt)
-		out.Implements = c.convNode(n.Implements).(*ir.ClassImplementsStmt)
-		out.Stmts = c.convNodeSlice(n.Stmts)
-		return out
+		return c.convClass(n)
 
 	case *stmt.ClassConstList:
 		if n == nil {
@@ -1784,6 +1763,44 @@ func (c *Converter) convCastExpr(n, e node.Node, typ string) *ir.TypeCastExpr {
 		Type:         typ,
 		Expr:         c.convNode(e),
 	}
+}
+
+func (c *Converter) convClass(n *stmt.Class) ir.Node {
+	class := ir.Class{
+		PhpDocComment: n.PhpDocComment,
+		Extends:       c.convNode(n.Extends).(*ir.ClassExtendsStmt),
+		Implements:    c.convNode(n.Implements).(*ir.ClassImplementsStmt),
+		Stmts:         c.convNodeSlice(n.Stmts),
+	}
+
+	if n.ClassName == nil {
+		// Anonymous class expression.
+		out := &ir.AnonClassExpr{
+			FreeFloating: n.FreeFloating,
+			Position:     n.Position,
+			Class:        class,
+		}
+		if n.ArgumentList != nil {
+			out.ArgsFreeFloating = n.ArgumentList.FreeFloating
+			out.Args = c.convNodeSlice(n.ArgumentList.Arguments)
+		}
+		return out
+	}
+
+	out := &ir.ClassStmt{
+		FreeFloating: n.FreeFloating,
+		Position:     n.Position,
+		Class:        class,
+		ClassName:    c.convNode(n.ClassName).(*ir.Identifier),
+	}
+	if n.Modifiers != nil {
+		slice := make([]*ir.Identifier, len(n.Modifiers))
+		for i := range n.Modifiers {
+			slice[i] = c.convNode(n.Modifiers[i]).(*ir.Identifier)
+		}
+		out.Modifiers = slice
+	}
+	return out
 }
 
 func convString(n *scalar.String) *ir.String {

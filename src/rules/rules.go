@@ -50,6 +50,7 @@ type RuleDoc struct {
 	Comment string
 	Before  string
 	After   string
+	Fix     bool
 }
 
 // Rule is a dynamically-loaded linter rule.

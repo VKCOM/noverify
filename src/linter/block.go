@@ -277,6 +277,8 @@ func (b *BlockWalker) EnterNode(n ir.Node) (res bool) {
 		res = b.handleVariable(s)
 	case *ir.FunctionStmt:
 		res = b.handleFunction(s)
+	case *ir.AnonClassExpr:
+		res = !b.ignoreFunctionBodies
 	case *ir.ClassStmt:
 		if b.ignoreFunctionBodies {
 			res = false

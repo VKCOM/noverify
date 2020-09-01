@@ -209,6 +209,8 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 		return false // FIXME #23
 	case *ir.TraitStmt:
 		return false // FIXME #23
+	case *ir.AnonClassExpr:
+		return false
 
 	case *ir.InlineHTMLStmt:
 		y, ok := y.(*ir.InlineHTMLStmt)
