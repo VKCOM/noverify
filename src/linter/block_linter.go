@@ -584,6 +584,11 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 		}
 		// TODO: handle fprintf as well?
 		b.checkFormatString(e, e.Arg(0))
+	case `\in_array`, `\array_search`:
+		if len(e.Args) < 1 {
+			break
+		}
+		b.checkStrictCmpForArraySearch(e, fqName)
 	}
 }
 
@@ -692,4 +697,10 @@ func (b *blockLinter) checkFormatString(e *ir.FunctionCallExpr, arg *ir.Argument
 
 func (b *blockLinter) isArrayType(typ meta.TypesMap) bool {
 	return typ.Len() == 1 && typ.Find(meta.IsArrayType)
+}
+
+func (b *blockLinter) checkStrictCmpForArraySearch(e *ir.FunctionCallExpr, fqName string) {
+	if len(e.Args) < 3 && solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, e.Args[0].(*ir.Argument).Expr).Is("string") {
+		b.report(e, LevelWarning, "strictCmp", "3rd argument of %s must be true when comparing strings", fqName[len(`\`):])
+	}
 }

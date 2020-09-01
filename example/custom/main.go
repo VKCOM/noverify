@@ -90,5 +90,5 @@ func (b *block) handleInArrayCall(e *ir.FunctionCallExpr) {
 		return
 	}
 
-	b.ctx.Report(e, linter.LevelWarning, "exampleStrictCmp", "3rd argument of in_array must be true when comparing strings")
+	b.ctx.Report(e, linter.LevelWarning, "exampleStrictCmp", "3rd argument of in_array must be true when comparing strings (2)")
 }

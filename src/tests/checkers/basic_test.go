@@ -151,6 +151,80 @@ $_ = (null != f(0));
 	test.RunAndMatch()
 }
 
+func TestStrictCmpForArraySearchGood(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+/** @return bool */
+function in_array ($needle, array $haystack, $strict = null) { return true; }
+/** @return int */
+function array_search ($needle, array $haystack, $strict = null) { return 0; }
+/** @return string */
+function retString() { return ""; }
+
+function f() {
+  $a = [];
+
+  $_ = in_array("str", $a, true);
+  $_ = in_array(retString(), $a, true);
+  $_ = in_array(10, $a);
+  $_ = in_array(true, $a);
+
+  $_ = array_search("str", $a, true);
+  $_ = array_search(retString(), $a, true);
+  $_ = array_search(10, $a, true);
+  $_ = array_search(true, $a, true);
+}
+
+$a = [];
+
+$_ = in_array("str", $a, true);
+$_ = in_array(10, $a);
+$_ = in_array(true, $a);
+
+$_ = array_search("str", $a, true);
+$_ = array_search(10, $a, true);
+$_ = array_search(true, $a, true);
+`)
+}
+
+func TestStrictCmpForArraySearch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+/** @return bool */
+function in_array ($needle, array $haystack, $strict = null) { return true; }
+/** @return int */
+function array_search ($needle, array $haystack, $strict = null) { return 0; }
+/** @return string */
+function retString() { return ""; }
+
+function f() {
+  $a = [];
+
+  $_ = in_array("str", $a);
+  $_ = in_array(retString(), $a);
+  $_ = array_search("str", $a);
+  $_ = array_search(retString(), $a);
+}
+
+$a = [];
+
+$_ = in_array("str", $a);
+$_ = in_array(retString(), $a);
+$_ = array_search("str", $a);
+$_ = array_search(retString(), $a);
+`)
+	test.Expect = []string{
+		`3rd argument of in_array must be true when comparing strings`,
+		`3rd argument of in_array must be true when comparing strings`,
+		`3rd argument of array_search must be true when comparing strings`,
+		`3rd argument of array_search must be true when comparing strings`,
+		`3rd argument of in_array must be true when comparing strings`,
+		`3rd argument of in_array must be true when comparing strings`,
+		`3rd argument of array_search must be true when comparing strings`,
+		`3rd argument of array_search must be true when comparing strings`,
+	}
+	test.RunAndMatch()
+}
+
 func TestRedundantGlobal(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

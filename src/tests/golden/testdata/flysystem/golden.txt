@@ -7,6 +7,9 @@ MAYBE   regexpSimplify: May re-write '/^total [0-9]*$/' as '/^total \d*$/' at te
 MAYBE   ternarySimplify: could rewrite as `$mkdirError['message'] ?? ''` at testdata/flysystem/src/Adapter/Local.php:111
                 $errorMessage = isset($mkdirError['message']) ? $mkdirError['message'] : '';
                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/flysystem/src/Adapter/Local.php:324
+        if (in_array($mimetype, ['application/octet-stream', 'inode/x-empty', 'application/x-empty'])) {
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING phpdocRef: line 8: @see tag refers to unknown symbol League\Flysystem\ReadInterface::readStream at testdata/flysystem/src/Adapter/Polyfill/StreamedReadingTrait.php:19
     public function readStream($path)
                     ^^^^^^^^^^
