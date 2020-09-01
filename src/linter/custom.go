@@ -53,6 +53,10 @@ type CheckInfo struct {
 	// enabled by default or it should be included by allow-checks explicitly.
 	Default bool
 
+	// Quickfix tells whether this checker can automatically fix the reported
+	// issues when linter works in -fix mode.
+	Quickfix bool
+
 	// Comment is a short summary of what this diagnostic does.
 	// A single descriptive sentence is a perfect format for it.
 	Comment string
@@ -301,11 +305,12 @@ func DeclareRules(rset *rules.Set) {
 			comment = fmt.Sprintf("%s is a dynamic rule", ruleName)
 		}
 		DeclareCheck(CheckInfo{
-			Name:    ruleName,
-			Comment: comment,
-			Default: true,
-			Before:  doc.Before,
-			After:   doc.After,
+			Name:     ruleName,
+			Comment:  comment,
+			Default:  true,
+			Quickfix: doc.Fix,
+			Before:   doc.Before,
+			After:    doc.After,
 		})
 	}
 }
