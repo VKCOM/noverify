@@ -347,6 +347,13 @@ func (p *parser) parseRule(st ir.Node, proto *Rule) error {
 		dst = p.res.Local
 	}
 
+	if rulesDoc, ok := p.res.DocByName[p.funcName]; ok {
+		if !rulesDoc.Fix && rule.Fix != "" {
+			rulesDoc.Fix = true
+			p.res.DocByName[p.funcName] = rulesDoc
+		}
+	}
+
 	pos := ir.GetPosition(st)
 	m, err := p.compiler.Compile(p.sources[pos.StartPos-1 : pos.EndPos])
 	if err != nil {

@@ -225,6 +225,14 @@ func (b *BlockWalker) EnterNode(n ir.Node) (res bool) {
 		res = b.handleAssign(s)
 	case *ir.AssignReference:
 		res = b.handleAssignReference(s)
+	case *ir.AssignPlus:
+		b.handleAssignOp(s)
+	case *ir.AssignMinus:
+		b.handleAssignOp(s)
+	case *ir.AssignMul:
+		b.handleAssignOp(s)
+	case *ir.AssignDiv:
+		b.handleAssignOp(s)
 	case *ir.ArrayExpr:
 		res = b.handleArray(s)
 	case *ir.ForeachStmt:
@@ -1773,6 +1781,44 @@ func (b *BlockWalker) handleAssign(a *ir.Assign) bool {
 	}
 
 	return false
+}
+
+func (b *BlockWalker) handleAssignOp(assign ir.Node) {
+	var typ meta.TypesMap
+	var v ir.Node
+
+	switch assign := assign.(type) {
+	case *ir.AssignPlus:
+		e := &ir.PlusExpr{
+			Left:  assign.Variable,
+			Right: assign.Expression,
+		}
+		v = assign.Variable
+		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
+	case *ir.AssignMinus:
+		e := &ir.MinusExpr{
+			Left:  assign.Variable,
+			Right: assign.Expression,
+		}
+		v = assign.Variable
+		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
+	case *ir.AssignMul:
+		e := &ir.MulExpr{
+			Left:  assign.Variable,
+			Right: assign.Expression,
+		}
+		v = assign.Variable
+		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
+	case *ir.AssignDiv:
+		e := &ir.DivExpr{
+			Left:  assign.Variable,
+			Right: assign.Expression,
+		}
+		v = assign.Variable
+		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
+	}
+
+	b.replaceVar(v, typ, "assign", meta.VarAlwaysDefined)
 }
 
 func (b *BlockWalker) flushUnused() {
