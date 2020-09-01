@@ -2398,6 +2398,48 @@ function f2() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestTypeWithAssignOperators(t *testing.T) {
+	code := `<?php
+function f() {
+	$a = 10;
+	$a += 12.5;
+	exprtype($a, "float");
+	$a = 10;
+	$a += 12;
+	exprtype($a, "int");
+
+	$a = 10;
+	$a -= 12.5;
+	exprtype($a, "float");
+	$a = 10;
+	$a -= 12;
+	exprtype($a, "int");
+
+	$a = "Hello";
+	$a .= 12.5;
+	exprtype($a, "precise string");
+	$a = "Hello";
+	$a .= " World";
+	exprtype($a, "precise string");
+
+	$a = 5;
+	$a /= 5.5;
+	exprtype($a, "float");
+	$a = 5;
+	$a /= 5;
+	exprtype($a, "int");
+
+	$a = 5;
+	$a *= 5.5;
+	exprtype($a, "float");
+	$a = 5;
+	$a *= 5;
+	exprtype($a, "int");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {
