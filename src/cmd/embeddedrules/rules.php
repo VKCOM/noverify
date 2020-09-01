@@ -9,7 +9,6 @@
  * @comment Report ternary expressions that can be simplified.
  * @before  $x ? $x : $y
  * @after   $x ?: $y
- * @fix     $x ?: $y
  */
 function ternarySimplify() {
   /**
@@ -99,7 +98,6 @@ function precedence() {
  * @comment Report assignments that can be simplified.
  * @before  $x = $x + $y;
  * @after   $x += $y;
- * @fix     $x += $y;
  */
 function assignOp() {
   /**
