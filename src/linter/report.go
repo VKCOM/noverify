@@ -535,15 +535,6 @@ $foo = new Foo();`,
 		},
 
 		{
-			Name:     "strictCmp",
-			Default:  true,
-			Quickfix: false,
-			Comment:  `Report non-strict comparison with false/true/null.`,
-			Before:   `$result == null`,
-			After:    `$result === null`,
-		},
-
-		{
 			Name:     "paramClobber",
 			Default:  true,
 			Quickfix: false,
