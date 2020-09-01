@@ -7,6 +7,8 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 )
 
+//go:generate go run ./codegen
+
 type Visitor interface {
 	EnterNode(Node) bool
 	LeaveNode(Node)
