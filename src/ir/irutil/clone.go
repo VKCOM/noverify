@@ -19,16 +19,16 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.Argument:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.ArrayDimFetchExpr:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Dim != nil {
-			clone.Dim = NodeClone(x.Dim).(ir.Node)
+			clone.Dim = NodeClone(x.Dim)
 		}
 		return &clone
 	case *ir.ArrayExpr:
@@ -44,218 +44,218 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.ArrayItemExpr:
 		clone := *x
 		if x.Key != nil {
-			clone.Key = NodeClone(x.Key).(ir.Node)
+			clone.Key = NodeClone(x.Key)
 		}
 		if x.Val != nil {
-			clone.Val = NodeClone(x.Val).(ir.Node)
+			clone.Val = NodeClone(x.Val)
 		}
 		return &clone
 	case *ir.ArrowFunctionExpr:
 		clone := *x
 		clone.Params = NodeSliceClone(x.Params)
 		if x.ReturnType != nil {
-			clone.ReturnType = NodeClone(x.ReturnType).(ir.Node)
+			clone.ReturnType = NodeClone(x.ReturnType)
 		}
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.Assign:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression).(ir.Node)
+			clone.Expression = NodeClone(x.Expression)
 		}
 		return &clone
 	case *ir.AssignBitwiseAnd:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression).(ir.Node)
+			clone.Expression = NodeClone(x.Expression)
 		}
 		return &clone
 	case *ir.AssignBitwiseOr:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression).(ir.Node)
+			clone.Expression = NodeClone(x.Expression)
 		}
 		return &clone
 	case *ir.AssignBitwiseXor:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression).(ir.Node)
+			clone.Expression = NodeClone(x.Expression)
 		}
 		return &clone
 	case *ir.AssignCoalesce:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression).(ir.Node)
+			clone.Expression = NodeClone(x.Expression)
 		}
 		return &clone
 	case *ir.AssignConcat:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression).(ir.Node)
+			clone.Expression = NodeClone(x.Expression)
 		}
 		return &clone
 	case *ir.AssignDiv:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression).(ir.Node)
+			clone.Expression = NodeClone(x.Expression)
 		}
 		return &clone
 	case *ir.AssignMinus:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression).(ir.Node)
+			clone.Expression = NodeClone(x.Expression)
 		}
 		return &clone
 	case *ir.AssignMod:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression).(ir.Node)
+			clone.Expression = NodeClone(x.Expression)
 		}
 		return &clone
 	case *ir.AssignMul:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression).(ir.Node)
+			clone.Expression = NodeClone(x.Expression)
 		}
 		return &clone
 	case *ir.AssignPlus:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression).(ir.Node)
+			clone.Expression = NodeClone(x.Expression)
 		}
 		return &clone
 	case *ir.AssignPow:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression).(ir.Node)
+			clone.Expression = NodeClone(x.Expression)
 		}
 		return &clone
 	case *ir.AssignReference:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression).(ir.Node)
+			clone.Expression = NodeClone(x.Expression)
 		}
 		return &clone
 	case *ir.AssignShiftLeft:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression).(ir.Node)
+			clone.Expression = NodeClone(x.Expression)
 		}
 		return &clone
 	case *ir.AssignShiftRight:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression).(ir.Node)
+			clone.Expression = NodeClone(x.Expression)
 		}
 		return &clone
 	case *ir.BitwiseAndExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.BitwiseNotExpr:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.BitwiseOrExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.BitwiseXorExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.BooleanAndExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.BooleanNotExpr:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.BooleanOrExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.BreakStmt:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.CaseListStmt:
@@ -265,7 +265,7 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.CaseStmt:
 		clone := *x
 		if x.Cond != nil {
-			clone.Cond = NodeClone(x.Cond).(ir.Node)
+			clone.Cond = NodeClone(x.Cond)
 		}
 		clone.Stmts = NodeSliceClone(x.Stmts)
 		return &clone
@@ -280,7 +280,7 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.ClassConstFetchExpr:
 		clone := *x
 		if x.Class != nil {
-			clone.Class = NodeClone(x.Class).(ir.Node)
+			clone.Class = NodeClone(x.Class)
 		}
 		if x.ConstantName != nil {
 			clone.ConstantName = NodeClone(x.ConstantName).(*ir.Identifier)
@@ -300,7 +300,7 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.ClassExtendsStmt:
 		clone := *x
 		if x.ClassName != nil {
-			clone.ClassName = NodeClone(x.ClassName).(ir.Node)
+			clone.ClassName = NodeClone(x.ClassName)
 		}
 		return &clone
 	case *ir.ClassImplementsStmt:
@@ -321,10 +321,10 @@ func NodeClone(x ir.Node) ir.Node {
 		}
 		clone.Params = NodeSliceClone(x.Params)
 		if x.ReturnType != nil {
-			clone.ReturnType = NodeClone(x.ReturnType).(ir.Node)
+			clone.ReturnType = NodeClone(x.ReturnType)
 		}
 		if x.Stmt != nil {
-			clone.Stmt = NodeClone(x.Stmt).(ir.Node)
+			clone.Stmt = NodeClone(x.Stmt)
 		}
 		return &clone
 	case *ir.ClassStmt:
@@ -344,7 +344,7 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.CloneExpr:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.ClosureExpr:
@@ -354,7 +354,7 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.ClosureUse = NodeClone(x.ClosureUse).(*ir.ClosureUseExpr)
 		}
 		if x.ReturnType != nil {
-			clone.ReturnType = NodeClone(x.ReturnType).(ir.Node)
+			clone.ReturnType = NodeClone(x.ReturnType)
 		}
 		clone.Stmts = NodeSliceClone(x.Stmts)
 		return &clone
@@ -365,19 +365,19 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.CoalesceExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.ConcatExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.ConstFetchExpr:
@@ -396,20 +396,20 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.ConstantName = NodeClone(x.ConstantName).(*ir.Identifier)
 		}
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.ContinueStmt:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.DeclareStmt:
 		clone := *x
 		clone.Consts = NodeSliceClone(x.Consts)
 		if x.Stmt != nil {
-			clone.Stmt = NodeClone(x.Stmt).(ir.Node)
+			clone.Stmt = NodeClone(x.Stmt)
 		}
 		return &clone
 	case *ir.DefaultStmt:
@@ -419,10 +419,10 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.DivExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.Dnumber:
@@ -431,10 +431,10 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.DoStmt:
 		clone := *x
 		if x.Stmt != nil {
-			clone.Stmt = NodeClone(x.Stmt).(ir.Node)
+			clone.Stmt = NodeClone(x.Stmt)
 		}
 		if x.Cond != nil {
-			clone.Cond = NodeClone(x.Cond).(ir.Node)
+			clone.Cond = NodeClone(x.Cond)
 		}
 		return &clone
 	case *ir.EchoStmt:
@@ -444,22 +444,22 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.ElseIfStmt:
 		clone := *x
 		if x.Cond != nil {
-			clone.Cond = NodeClone(x.Cond).(ir.Node)
+			clone.Cond = NodeClone(x.Cond)
 		}
 		if x.Stmt != nil {
-			clone.Stmt = NodeClone(x.Stmt).(ir.Node)
+			clone.Stmt = NodeClone(x.Stmt)
 		}
 		return &clone
 	case *ir.ElseStmt:
 		clone := *x
 		if x.Stmt != nil {
-			clone.Stmt = NodeClone(x.Stmt).(ir.Node)
+			clone.Stmt = NodeClone(x.Stmt)
 		}
 		return &clone
 	case *ir.EmptyExpr:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.Encapsed:
@@ -472,34 +472,34 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.EqualExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.ErrorSuppressExpr:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.EvalExpr:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.ExitExpr:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.ExpressionStmt:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.FinallyStmt:
@@ -512,28 +512,28 @@ func NodeClone(x ir.Node) ir.Node {
 		clone.Cond = NodeSliceClone(x.Cond)
 		clone.Loop = NodeSliceClone(x.Loop)
 		if x.Stmt != nil {
-			clone.Stmt = NodeClone(x.Stmt).(ir.Node)
+			clone.Stmt = NodeClone(x.Stmt)
 		}
 		return &clone
 	case *ir.ForeachStmt:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		if x.Key != nil {
-			clone.Key = NodeClone(x.Key).(ir.Node)
+			clone.Key = NodeClone(x.Key)
 		}
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Stmt != nil {
-			clone.Stmt = NodeClone(x.Stmt).(ir.Node)
+			clone.Stmt = NodeClone(x.Stmt)
 		}
 		return &clone
 	case *ir.FunctionCallExpr:
 		clone := *x
 		if x.Function != nil {
-			clone.Function = NodeClone(x.Function).(ir.Node)
+			clone.Function = NodeClone(x.Function)
 		}
 		clone.Args = NodeSliceClone(x.Args)
 		return &clone
@@ -544,7 +544,7 @@ func NodeClone(x ir.Node) ir.Node {
 		}
 		clone.Params = NodeSliceClone(x.Params)
 		if x.ReturnType != nil {
-			clone.ReturnType = NodeClone(x.ReturnType).(ir.Node)
+			clone.ReturnType = NodeClone(x.ReturnType)
 		}
 		clone.Stmts = NodeSliceClone(x.Stmts)
 		return &clone
@@ -561,28 +561,28 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.GreaterExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.GreaterOrEqualExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.GroupUseStmt:
 		clone := *x
 		if x.UseType != nil {
-			clone.UseType = NodeClone(x.UseType).(ir.Node)
+			clone.UseType = NodeClone(x.UseType)
 		}
 		if x.Prefix != nil {
-			clone.Prefix = NodeClone(x.Prefix).(ir.Node)
+			clone.Prefix = NodeClone(x.Prefix)
 		}
 		clone.UseList = NodeSliceClone(x.UseList)
 		return &clone
@@ -596,10 +596,10 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.IdenticalExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.Identifier:
@@ -608,20 +608,20 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.IfStmt:
 		clone := *x
 		if x.Cond != nil {
-			clone.Cond = NodeClone(x.Cond).(ir.Node)
+			clone.Cond = NodeClone(x.Cond)
 		}
 		if x.Stmt != nil {
-			clone.Stmt = NodeClone(x.Stmt).(ir.Node)
+			clone.Stmt = NodeClone(x.Stmt)
 		}
 		clone.ElseIf = NodeSliceClone(x.ElseIf)
 		if x.Else != nil {
-			clone.Else = NodeClone(x.Else).(ir.Node)
+			clone.Else = NodeClone(x.Else)
 		}
 		return &clone
 	case *ir.ImportExpr:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.InlineHTMLStmt:
@@ -630,10 +630,10 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.InstanceOfExpr:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		if x.Class != nil {
-			clone.Class = NodeClone(x.Class).(ir.Node)
+			clone.Class = NodeClone(x.Class)
 		}
 		return &clone
 	case *ir.InterfaceExtendsStmt:
@@ -676,28 +676,28 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.LogicalAndExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.LogicalOrExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.LogicalXorExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.MagicConstant:
@@ -706,38 +706,38 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.MethodCallExpr:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Method != nil {
-			clone.Method = NodeClone(x.Method).(ir.Node)
+			clone.Method = NodeClone(x.Method)
 		}
 		clone.Args = NodeSliceClone(x.Args)
 		return &clone
 	case *ir.MinusExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.ModExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.MulExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.Name:
@@ -753,7 +753,7 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.NewExpr:
 		clone := *x
 		if x.Class != nil {
-			clone.Class = NodeClone(x.Class).(ir.Node)
+			clone.Class = NodeClone(x.Class)
 		}
 		clone.Args = NodeSliceClone(x.Args)
 		return &clone
@@ -763,100 +763,100 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.NotEqualExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.NotIdenticalExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.Nullable:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.Parameter:
 		clone := *x
 		if x.VariableType != nil {
-			clone.VariableType = NodeClone(x.VariableType).(ir.Node)
+			clone.VariableType = NodeClone(x.VariableType)
 		}
 		if x.Variable != nil {
 			clone.Variable = NodeClone(x.Variable).(*ir.SimpleVar)
 		}
 		if x.DefaultValue != nil {
-			clone.DefaultValue = NodeClone(x.DefaultValue).(ir.Node)
+			clone.DefaultValue = NodeClone(x.DefaultValue)
 		}
 		return &clone
 	case *ir.ParenExpr:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.PlusExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.PostDecExpr:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		return &clone
 	case *ir.PostIncExpr:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		return &clone
 	case *ir.PowExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.PreDecExpr:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		return &clone
 	case *ir.PreIncExpr:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		return &clone
 	case *ir.PrintExpr:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.PropertyFetchExpr:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		if x.Property != nil {
-			clone.Property = NodeClone(x.Property).(ir.Node)
+			clone.Property = NodeClone(x.Property)
 		}
 		return &clone
 	case *ir.PropertyListStmt:
@@ -869,7 +869,7 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.Modifiers = sliceClone
 		}
 		if x.Type != nil {
-			clone.Type = NodeClone(x.Type).(ir.Node)
+			clone.Type = NodeClone(x.Type)
 		}
 		clone.Properties = NodeSliceClone(x.Properties)
 		return &clone
@@ -879,19 +879,19 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.Variable = NodeClone(x.Variable).(*ir.SimpleVar)
 		}
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.ReferenceExpr:
 		clone := *x
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(ir.Node)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		return &clone
 	case *ir.ReturnStmt:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.Root:
@@ -905,19 +905,19 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.ShiftLeftExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.ShiftRightExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.SimpleVar:
@@ -926,47 +926,47 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.SmallerExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.SmallerOrEqualExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.SpaceshipExpr:
 		clone := *x
 		if x.Left != nil {
-			clone.Left = NodeClone(x.Left).(ir.Node)
+			clone.Left = NodeClone(x.Left)
 		}
 		if x.Right != nil {
-			clone.Right = NodeClone(x.Right).(ir.Node)
+			clone.Right = NodeClone(x.Right)
 		}
 		return &clone
 	case *ir.StaticCallExpr:
 		clone := *x
 		if x.Class != nil {
-			clone.Class = NodeClone(x.Class).(ir.Node)
+			clone.Class = NodeClone(x.Class)
 		}
 		if x.Call != nil {
-			clone.Call = NodeClone(x.Call).(ir.Node)
+			clone.Call = NodeClone(x.Call)
 		}
 		clone.Args = NodeSliceClone(x.Args)
 		return &clone
 	case *ir.StaticPropertyFetchExpr:
 		clone := *x
 		if x.Class != nil {
-			clone.Class = NodeClone(x.Class).(ir.Node)
+			clone.Class = NodeClone(x.Class)
 		}
 		if x.Property != nil {
-			clone.Property = NodeClone(x.Property).(ir.Node)
+			clone.Property = NodeClone(x.Property)
 		}
 		return &clone
 	case *ir.StaticStmt:
@@ -979,7 +979,7 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.Variable = NodeClone(x.Variable).(*ir.SimpleVar)
 		}
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.StmtList:
@@ -992,7 +992,7 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.SwitchStmt:
 		clone := *x
 		if x.Cond != nil {
-			clone.Cond = NodeClone(x.Cond).(ir.Node)
+			clone.Cond = NodeClone(x.Cond)
 		}
 		if x.CaseList != nil {
 			clone.CaseList = NodeClone(x.CaseList).(*ir.CaseListStmt)
@@ -1001,19 +1001,19 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.TernaryExpr:
 		clone := *x
 		if x.Condition != nil {
-			clone.Condition = NodeClone(x.Condition).(ir.Node)
+			clone.Condition = NodeClone(x.Condition)
 		}
 		if x.IfTrue != nil {
-			clone.IfTrue = NodeClone(x.IfTrue).(ir.Node)
+			clone.IfTrue = NodeClone(x.IfTrue)
 		}
 		if x.IfFalse != nil {
-			clone.IfFalse = NodeClone(x.IfFalse).(ir.Node)
+			clone.IfFalse = NodeClone(x.IfFalse)
 		}
 		return &clone
 	case *ir.ThrowStmt:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.TraitAdaptationListStmt:
@@ -1023,7 +1023,7 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.TraitMethodRefStmt:
 		clone := *x
 		if x.Trait != nil {
-			clone.Trait = NodeClone(x.Trait).(ir.Node)
+			clone.Trait = NodeClone(x.Trait)
 		}
 		if x.Method != nil {
 			clone.Method = NodeClone(x.Method).(*ir.Identifier)
@@ -1039,10 +1039,10 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.TraitUseAliasStmt:
 		clone := *x
 		if x.Ref != nil {
-			clone.Ref = NodeClone(x.Ref).(ir.Node)
+			clone.Ref = NodeClone(x.Ref)
 		}
 		if x.Modifier != nil {
-			clone.Modifier = NodeClone(x.Modifier).(ir.Node)
+			clone.Modifier = NodeClone(x.Modifier)
 		}
 		if x.Alias != nil {
 			clone.Alias = NodeClone(x.Alias).(*ir.Identifier)
@@ -1051,7 +1051,7 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.TraitUsePrecedenceStmt:
 		clone := *x
 		if x.Ref != nil {
-			clone.Ref = NodeClone(x.Ref).(ir.Node)
+			clone.Ref = NodeClone(x.Ref)
 		}
 		clone.Insteadof = NodeSliceClone(x.Insteadof)
 		return &clone
@@ -1059,7 +1059,7 @@ func NodeClone(x ir.Node) ir.Node {
 		clone := *x
 		clone.Traits = NodeSliceClone(x.Traits)
 		if x.TraitAdaptationList != nil {
-			clone.TraitAdaptationList = NodeClone(x.TraitAdaptationList).(ir.Node)
+			clone.TraitAdaptationList = NodeClone(x.TraitAdaptationList)
 		}
 		return &clone
 	case *ir.TryStmt:
@@ -1067,31 +1067,31 @@ func NodeClone(x ir.Node) ir.Node {
 		clone.Stmts = NodeSliceClone(x.Stmts)
 		clone.Catches = NodeSliceClone(x.Catches)
 		if x.Finally != nil {
-			clone.Finally = NodeClone(x.Finally).(ir.Node)
+			clone.Finally = NodeClone(x.Finally)
 		}
 		return &clone
 	case *ir.TypeCastExpr:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.UnaryMinusExpr:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.UnaryPlusExpr:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.UnsetCastExpr:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.UnsetStmt:
@@ -1101,7 +1101,7 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.UseListStmt:
 		clone := *x
 		if x.UseType != nil {
-			clone.UseType = NodeClone(x.UseType).(ir.Node)
+			clone.UseType = NodeClone(x.UseType)
 		}
 		clone.Uses = NodeSliceClone(x.Uses)
 		return &clone
@@ -1111,7 +1111,7 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.UseType = NodeClone(x.UseType).(*ir.Identifier)
 		}
 		if x.Use != nil {
-			clone.Use = NodeClone(x.Use).(ir.Node)
+			clone.Use = NodeClone(x.Use)
 		}
 		if x.Alias != nil {
 			clone.Alias = NodeClone(x.Alias).(*ir.Identifier)
@@ -1120,31 +1120,31 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.Var:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.WhileStmt:
 		clone := *x
 		if x.Cond != nil {
-			clone.Cond = NodeClone(x.Cond).(ir.Node)
+			clone.Cond = NodeClone(x.Cond)
 		}
 		if x.Stmt != nil {
-			clone.Stmt = NodeClone(x.Stmt).(ir.Node)
+			clone.Stmt = NodeClone(x.Stmt)
 		}
 		return &clone
 	case *ir.YieldExpr:
 		clone := *x
 		if x.Key != nil {
-			clone.Key = NodeClone(x.Key).(ir.Node)
+			clone.Key = NodeClone(x.Key)
 		}
 		if x.Value != nil {
-			clone.Value = NodeClone(x.Value).(ir.Node)
+			clone.Value = NodeClone(x.Value)
 		}
 		return &clone
 	case *ir.YieldFromExpr:
 		clone := *x
 		if x.Expr != nil {
-			clone.Expr = NodeClone(x.Expr).(ir.Node)
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	}

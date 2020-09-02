@@ -37,6 +37,15 @@ func (g *genClone) Run() error {
 	})
 }
 
+func (g *genClone) writeAssign(w *bytes.Buffer, pad, lhs, rhs string, typ types.Type) {
+	if typ.String() == "ir.Node" {
+		// Avoid n.(ir.Node) type asserts that are redundant.
+		fmt.Fprintf(w, "%s%s = %s\n", pad, lhs, rhs)
+	} else {
+		fmt.Fprintf(w, "%s%s = %s.(%s)\n", pad, lhs, rhs, formatType(typ))
+	}
+}
+
 func (g *genClone) writeCloneCase(w *bytes.Buffer, pkg *packageData, typ *typeData) {
 	// This clones all value-type fields.
 	w.WriteString("    clone := *x\n")
@@ -57,7 +66,7 @@ func (g *genClone) writeCloneCase(w *bytes.Buffer, pkg *packageData, typ *typeDa
 		default:
 			if !strings.HasPrefix(typeString, "[]") {
 				fmt.Fprintf(w, "    if x.%s != nil {\n", field.Name())
-				fmt.Fprintf(w, "      clone.%[1]s = NodeClone(x.%[1]s).(%s)\n", field.Name(), formatType(field.Type()))
+				g.writeAssign(w, "      ", "clone."+field.Name(), "NodeClone(x."+field.Name()+")", field.Type())
 				fmt.Fprintf(w, "    }\n")
 				continue
 			}
@@ -65,7 +74,7 @@ func (g *genClone) writeCloneCase(w *bytes.Buffer, pkg *packageData, typ *typeDa
 			fmt.Fprintf(w, "    {\n")
 			fmt.Fprintf(w, "      sliceClone := make(%s, len(x.%s))\n", formatType(field.Type()), field.Name())
 			fmt.Fprintf(w, "      for i := range x.%s {\n", field.Name())
-			fmt.Fprintf(w, "        sliceClone[i] = NodeClone(x.%s[i]).(%s)\n", field.Name(), formatType(elemType))
+			g.writeAssign(w, "        ", "sliceClone[i]", "NodeClone(x."+field.Name()+"[i])", elemType)
 			fmt.Fprintf(w, "      }\n")
 			fmt.Fprintf(w, "      clone.%s = sliceClone\n", field.Name())
 			fmt.Fprintf(w, "    }\n")
