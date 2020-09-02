@@ -9,12 +9,15 @@ import (
 
 //go:generate go run ./codegen
 
-type Visitor interface {
-	EnterNode(Node) bool
-	LeaveNode(Node)
-}
-
+// Node is a type that is implemented by all IR types.
+// node_types.go contains all implementations.
 type Node interface {
 	Walk(Visitor)
 	GetFreeFloating() *freefloating.Collection
+}
+
+// Visitor is an interface for basic IR nodes traversal.
+type Visitor interface {
+	EnterNode(Node) bool
+	LeaveNode(Node)
 }
