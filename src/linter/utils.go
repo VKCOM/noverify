@@ -94,8 +94,26 @@ func typeIsCompatible(dst, val phpdoc.TypeExpr) bool {
 	// TODO: allow implementations to be compatible with interfaces.
 	// TODO: allow derived classes to be compatible with base classes.
 
+	if val.Value == "mixed" {
+		// Mixed type usually mean the we failed to infer the expression type.
+		// We conservatively assume that mixed could be anything,
+		// including something that is assignable to dst.
+		// We may want to add a strict version of the type filter
+		// that chooses a different stratage here.
+		return false
+	}
+
 	for val.Kind == phpdoc.ExprParen {
 		val = val.Args[0]
+	}
+
+	if val.Kind == phpdoc.ExprUnion {
+		for _, variant := range val.Args {
+			if typeIsCompatible(dst, variant) {
+				return true
+			}
+		}
+		return false
 	}
 
 	switch dst.Kind {
@@ -117,17 +135,24 @@ func typeIsCompatible(dst, val phpdoc.TypeExpr) bool {
 		return !typeIsCompatible(dst.Args[0], val)
 
 	case phpdoc.ExprNullable:
-		return val.Kind == dst.Kind && typeIsCompatible(dst.Args[0], val.Args[0])
+		if val.Value == "null" {
+			return true
+		}
+		if typeIsCompatible(dst.Args[0], val) {
+			return true
+		}
+		return dst.Kind == val.Kind && typeIsCompatible(dst.Args[0], val.Args[0])
 
 	case phpdoc.ExprArray:
 		return val.Kind == dst.Kind && typeIsCompatible(dst.Args[0], val.Args[0])
 
 	case phpdoc.ExprUnion:
-		if val.Kind == dst.Kind {
-			return typeIsCompatible(dst.Args[0], val.Args[0]) &&
-				typeIsCompatible(dst.Args[1], val.Args[1])
+		for _, variant := range dst.Args {
+			if typeIsCompatible(variant, val) {
+				return true
+			}
 		}
-		return typeIsCompatible(dst.Args[0], val) || typeIsCompatible(dst.Args[1], val)
+		return false
 
 	case phpdoc.ExprInter:
 		// TODO: make it work as intended. (See #310)
