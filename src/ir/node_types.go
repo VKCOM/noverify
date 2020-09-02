@@ -877,11 +877,10 @@ type ClassConstListStmt struct {
 }
 
 // ClassExtendsStmt is a `extends $ClassName` statement.
-// TODO: shouldn't ClassName be a *Name?
 type ClassExtendsStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	ClassName    Node
+	ClassName    *Name
 }
 
 // ClassImplementsStmt is a `implements $InterfaceNames...` statement.
