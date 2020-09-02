@@ -2400,6 +2400,17 @@ function f2() {
 
 func TestTypeWithAssignOperators(t *testing.T) {
 	code := `<?php
+function g($x) {
+	exprtype($x <<= 5, 'precise int');
+	exprtype($x, 'precise int');
+
+	exprtype($x .= 'abc', 'precise string');
+	exprtype($x, 'precise string');
+
+	exprtype($x >>= 5, 'precise int');
+	exprtype($x, 'precise int');
+}
+
 function f() {
 	$a = 10;
 	$a += 12.5;
