@@ -9,6 +9,13 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func unaryBitwiseOpType(sc *meta.Scope, cs *meta.ClassParseState, x ir.Node, custom []CustomType) meta.TypesMap {
+	if ExprTypeLocalCustom(sc, cs, x, custom).Is("string") {
+		return meta.NewTypesMap("string")
+	}
+	return meta.NewTypesMap("int")
+}
+
 func bitwiseOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right ir.Node, custom []CustomType) meta.TypesMap {
 	if ExprTypeLocalCustom(sc, cs, left, custom).Is("string") && ExprTypeLocalCustom(sc, cs, right, custom).Is("string") {
 		return meta.NewTypesMap("string")
@@ -259,10 +266,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 
 		return meta.NewTypesMapFromMap(res)
 	case *ir.BitwiseNotExpr:
-		if ExprTypeLocalCustom(sc, cs, n.Expr, custom).Is("string") {
-			return meta.NewTypesMap("string")
-		}
-		return meta.NewTypesMap("int")
+		return unaryBitwiseOpType(sc, cs, n.Expr, custom)
 	case *ir.BitwiseAndExpr:
 		return bitwiseOpType(sc, cs, n.Left, n.Right, custom)
 	case *ir.BitwiseOrExpr:
@@ -358,8 +362,14 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 		return meta.TypesMap{}
 	case *ir.ParenExpr:
 		return ExprTypeLocalCustom(sc, cs, n.Expr, custom)
+
 	case *ir.Assign:
 		return ExprTypeLocalCustom(sc, cs, n.Expression, custom)
+	case *ir.AssignConcat:
+		return meta.PreciseStringType
+	case *ir.AssignShiftLeft, *ir.AssignShiftRight:
+		return meta.PreciseIntType
+
 	case *ir.CloneExpr:
 		return ExprTypeLocalCustom(sc, cs, n.Expr, custom)
 	case *ir.ClosureExpr:

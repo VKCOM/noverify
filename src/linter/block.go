@@ -233,6 +233,12 @@ func (b *BlockWalker) EnterNode(n ir.Node) (res bool) {
 		b.handleAssignOp(s)
 	case *ir.AssignDiv:
 		b.handleAssignOp(s)
+	case *ir.AssignConcat:
+		b.handleAssignOp(s)
+	case *ir.AssignShiftLeft:
+		b.handleAssignOp(s)
+	case *ir.AssignShiftRight:
+		b.handleAssignOp(s)
 	case *ir.ArrayExpr:
 		res = b.handleArray(s)
 	case *ir.ForeachStmt:
@@ -1816,6 +1822,19 @@ func (b *BlockWalker) handleAssignOp(assign ir.Node) {
 		}
 		v = assign.Variable
 		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
+
+	case *ir.AssignConcat:
+		v = assign.Variable
+		typ = meta.PreciseStringType
+	case *ir.AssignShiftLeft:
+		v = assign.Variable
+		typ = meta.PreciseIntType
+	case *ir.AssignShiftRight:
+		v = assign.Variable
+		typ = meta.PreciseIntType
+
+	default:
+		return
 	}
 
 	b.replaceVar(v, typ, "assign", meta.VarAlwaysDefined)
