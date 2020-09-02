@@ -1196,7 +1196,7 @@ func (c *Converter) convNode(n node.Node) ir.Node {
 		out := &ir.ClassExtendsStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.ClassName = c.convNode(n.ClassName)
+		out.ClassName = c.convNode(n.ClassName).(*ir.Name)
 		return out
 
 	case *stmt.ClassImplements:

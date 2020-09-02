@@ -300,7 +300,7 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.ClassExtendsStmt:
 		clone := *x
 		if x.ClassName != nil {
-			clone.ClassName = NodeClone(x.ClassName)
+			clone.ClassName = NodeClone(x.ClassName).(*ir.Name)
 		}
 		return &clone
 	case *ir.ClassImplementsStmt:
