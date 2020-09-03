@@ -252,7 +252,7 @@ ${"boo"} = $_;
 			expect: "<test>:6: pattern compilation error: unknown matcher class 'boo'",
 		},
 		{
-			name: `VariableNotPresentInPattern`,
+			name: `VariableFromTypeNotPresentInPattern`,
 			rule: `<?php
 /**
  * @name Some
@@ -265,7 +265,7 @@ $_ = $y;
 			expect: "<test>:8: @type contains a reference to a variable x that is not present in the pattern",
 		},
 		{
-			name: `VariableNotPresentInPatternGood`,
+			name: `VariableFromTypeNotPresentInPatternGood`,
 			rule: `<?php
 /**
  * @name Some
@@ -277,7 +277,7 @@ $x = 1;
 			expect: "",
 		},
 		{
-			name: `VariableNotPresentInPatternGood#2`,
+			name: `VariableFromTypeNotPresentInPatternGood#2`,
 			rule: `<?php
 function someRules() {
 	/**
@@ -293,7 +293,7 @@ function someRules() {
 			expect: "",
 		},
 		{
-			name: `VariableNotPresentInPatternGood#3`,
+			name: `VariableFromTypeNotPresentInPatternGood#3`,
 			rule: `<?php
 /**
  * @name Some
@@ -303,6 +303,19 @@ function someRules() {
 ${"x:var"} = 1;
 `,
 			expect: "",
+		},
+		{
+			name: `VariableFromPureNotPresentInPattern`,
+			rule: `<?php
+/**
+ * @name Some
+ * @warning Some
+ * @type int $y
+ * @pure $x
+ */
+$_ = $y;
+`,
+			expect: "<test>:8: @pure contains a reference to a variable x that is not present in the pattern",
 		},
 	}
 

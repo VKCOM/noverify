@@ -157,7 +157,13 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 		rule.Name = p.funcName
 	}
 
+	verifiedVars := make(map[string]struct{})
 	var filterSet map[string]Filter
+
+	patternStmt := st
+	if _, ok := st.(*ir.LabelStmt); ok {
+		patternStmt = labelStmt
+	}
 
 	for _, part := range phpdoc.Parse(p.typeParser, comment) {
 		part := part.(*phpdoc.RawCommentPart)
@@ -236,11 +242,7 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 				return rule, p.errorf(st, "@type 2nd param must be a phpgrep variable")
 			}
 			name = strings.TrimPrefix(name, "$")
-			patternStmt := st
-			if _, ok := st.(*ir.LabelStmt); ok {
-				patternStmt = labelStmt
-			}
-			found := p.checkForVariableInPattern(name, patternStmt)
+			found := p.checkForVariableInPattern(name, patternStmt, verifiedVars)
 			if !found {
 				return rule, p.errorf(st, "@type contains a reference to a variable %s that is not present in the pattern", name)
 			}
@@ -268,6 +270,10 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 				return rule, p.errorf(st, "@pure param must be a phpgrep variable")
 			}
 			name = strings.TrimPrefix(name, "$")
+			found := p.checkForVariableInPattern(name, patternStmt, verifiedVars)
+			if !found {
+				return rule, p.errorf(st, "@pure contains a reference to a variable %s that is not present in the pattern", name)
+			}
 			if filterSet == nil {
 				filterSet = map[string]Filter{}
 			}
@@ -420,15 +426,24 @@ func (p *parser) errorf(n ir.Node, format string, args ...interface{}) *parseErr
 	}
 }
 
-func (p *parser) checkForVariableInPattern(name string, pattern ir.Node) bool {
-	return irutil.FindWithPredicate(&ir.SimpleVar{Name: name}, pattern, func(what ir.Node, cur ir.Node) bool {
-		// We need to check if there is a variable with this name
-		// in case the pattern contains the ${"[varName]:var"} template.
-		if s, ok := cur.(*ir.Var); ok {
-			if s, ok := s.Expr.(*ir.String); ok {
-				return strings.Contains(s.Value, what.(*ir.SimpleVar).Name+":var")
+func (p *parser) checkForVariableInPattern(name string, pattern ir.Node, verifiedVars map[string]struct{}) bool {
+	var found bool
+	if _, ok := verifiedVars[name]; ok {
+		found = true
+	} else {
+		found = irutil.FindWithPredicate(&ir.SimpleVar{Name: name}, pattern, func(what ir.Node, cur ir.Node) bool {
+			// We need to check if there is a variable with this name
+			// in case the pattern contains the ${"[varName]:var"} template.
+			if s, ok := cur.(*ir.Var); ok {
+				if s, ok := s.Expr.(*ir.String); ok {
+					return strings.Contains(s.Value, what.(*ir.SimpleVar).Name+":var")
+				}
 			}
+			return false
+		})
+		if found {
+			verifiedVars[name] = struct{}{}
 		}
-		return false
-	})
+	}
+	return found
 }
