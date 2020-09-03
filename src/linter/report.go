@@ -93,15 +93,6 @@ func init() {
 		},
 
 		{
-			Name:     "bitwiseOps",
-			Default:  true,
-			Quickfix: false,
-			Comment:  `Report suspicious usage of bitwise operations.`,
-			Before:   `if ($isURL & $verify) ...`,
-			After:    `if ($isURL && $veriry) ...`,
-		},
-
-		{
 			Name:     "mixedArrayKeys",
 			Default:  true,
 			Quickfix: false,
