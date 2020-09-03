@@ -262,9 +262,7 @@ function strictCmp() {
      * @type string $x
      * @type string $y
      */
-    any_string_equal: {
-        $x == $y;
-    }
+     $x == $y;
 
     /**
      * @warning non-strict comparison (use !==)
@@ -283,9 +281,7 @@ function strictCmp() {
      * @type string $x
      * @type string $y
      */
-    any_string_not_equal: {
-        $x != $y;
-    }
+    $x != $y;
 
     /**
      * @warning 3rd argument of in_array must be true when comparing strings
