@@ -1674,17 +1674,56 @@ func (b *BlockWalker) handleAssignShapeToList(items []*ir.ArrayItemExpr, info me
 		} else {
 			tp = prop.Typ
 		}
-		b.handleVariableNode(item.Val, tp, "assign")
+		b.handleVariableNode(item.Val, tp, "list-assign")
 	}
 }
 
-func (b *BlockWalker) handleAssignList(items []*ir.ArrayItemExpr, info meta.ClassInfo, isShape bool) {
-	if isShape {
-		b.handleAssignShapeToList(items, info)
-	} else {
-		for _, item := range items {
-			b.handleVariableNode(item.Val, meta.NewTypesMap("unknown_from_list"), "assign")
+func (b *BlockWalker) handleAssignList(list *ir.ListExpr, rhs ir.Node) {
+	typ := solver.ExprType(b.ctx.sc, b.r.ctx.st, rhs)
+
+	// TODO: test if we can prealloc elemTypes to const size hint like 2
+	// and get stack allocation which will help to avoid the unwanted heap allocs.
+	// Hint: only const (literal) size hints work for this.
+	// Hint: check the compiler output to see whether elemTypes "escape" or not.
+	//
+	// We store meta.Type instead of string to avoid the need to do strings.Join
+	// when we want to create a TypesMap.
+	var elemTypes []meta.Type
+	var shapeType string
+	typ.Iterate(func(typ string) {
+		switch {
+		case meta.IsShapeType(typ):
+			shapeType = typ
+		case meta.IsArrayType(typ):
+			elemType := strings.TrimSuffix(typ, "[]")
+			elemTypes = append(elemTypes, meta.Type{Elem: elemType})
 		}
+	})
+
+	// Try to handle it as a shape assignment.
+	if shapeType != "" {
+		class, ok := meta.Info.GetClass(shapeType)
+		if ok {
+			b.handleAssignShapeToList(list.Items, class)
+			return
+		}
+	}
+
+	// Try to handle it as an array assignment.
+	if len(elemTypes) != 0 {
+		elemTypeMap := meta.NewTypesMapFromTypes(elemTypes).Immutable()
+		for _, item := range list.Items {
+			b.handleVariableNode(item.Val, elemTypeMap, "list-assign")
+		}
+		return
+	}
+
+	// Fallback: define vars with unknown types.
+	//
+	// TODO: shouldn't it be a mixed type? I would prefer a "mixed" type here
+	// and "unknown from list" reason.
+	for _, item := range list.Items {
+		b.handleVariableNode(item.Val, meta.NewTypesMap("unknown_from_list"), "list-assign")
 	}
 }
 
@@ -1715,23 +1754,7 @@ func (b *BlockWalker) handleAssign(a *ir.Assign) bool {
 			return true
 		}
 
-		tp := solver.ExprType(b.ctx.sc, b.r.ctx.st, a.Expression)
-		var shapeType string
-		tp.Iterate(func(t string) {
-			if meta.IsShapeType(t) {
-				shapeType = t
-			}
-		})
-
-		var class meta.ClassInfo
-		var ok bool
-		var isShape bool
-		if shapeType != "" {
-			class, ok = meta.Info.GetClass(shapeType)
-			isShape = ok
-		}
-
-		b.handleAssignList(v.Items, class, isShape)
+		b.handleAssignList(v, a.Expression)
 	case *ir.PropertyFetchExpr:
 		v.Property.Walk(b)
 		sv, ok := v.Variable.(*ir.SimpleVar)

@@ -106,16 +106,16 @@ INFO    unused: Variable __ is unused (use $_ to ignore this inspection) at test
 INFO    unused: Variable args is unused (use $_ to ignore this inspection) at testdata/underscore/underscore.php:615
     $args = self::_wrapArgs(func_get_args(), 1);
     ^^^^^
-ERROR   undefined: Property {\__|null|unknown_from_list}->isEqual does not exist at testdata/underscore/underscore.php:723
+ERROR   undefined: Property {\__|mixed|null}->isEqual does not exist at testdata/underscore/underscore.php:723
       if(is_object($a) && isset($a->isEqual)) return self::_wrap($a->isEqual($b));
                                     ^^^^^^^
-ERROR   undefined: Property {null|unknown_from_list}->isEqual does not exist at testdata/underscore/underscore.php:724
+ERROR   undefined: Property {mixed|null}->isEqual does not exist at testdata/underscore/underscore.php:724
       if(is_object($b) && isset($b->isEqual)) return self::_wrap($b->isEqual($a));
                                     ^^^^^^^
-ERROR   undefined: Call to undefined method {null|unknown_from_list}->isEqual() at testdata/underscore/underscore.php:724
+ERROR   undefined: Call to undefined method {mixed|null}->isEqual() at testdata/underscore/underscore.php:724
       if(is_object($b) && isset($b->isEqual)) return self::_wrap($b->isEqual($a));
                                                                      ^^^^^^^
-MAYBE   arrayAccess: Array access to non-array type \__|null|unknown_from_list at testdata/underscore/underscore.php:725
+MAYBE   arrayAccess: Array access to non-array type \__|mixed|null at testdata/underscore/underscore.php:725
       if(is_array($a) && array_key_exists('isEqual', $a)) return self::_wrap($a['isEqual']($b));
                                                                              ^^
 ERROR   undefined: Property {mixed}->_uniqueId does not exist at testdata/underscore/underscore.php:822

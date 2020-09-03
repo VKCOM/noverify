@@ -46,6 +46,65 @@ func init() {
 	})
 }
 
+func TestExprTypeListOverArray(t *testing.T) {
+	code := `<?php
+/**
+ * @param int[] $xs
+ */
+function ints($xs) {
+  list ($a, $b) = $xs;
+  exprtype($a, 'int');
+  exprtype($b, 'int');
+}
+
+/**
+ * @param string[]|false $xs
+ */
+function strings_or_false($xs) {
+  list ($a, $b) = $xs;
+  exprtype($a, 'string');
+  exprtype($b, 'string');
+}
+
+/**
+ * @param null|\Foo[]|int $xs
+ */
+function null_or_foos_or_int($xs) {
+  list ($a, $b) = $xs;
+  exprtype($a, '\Foo');
+  exprtype($b, '\Foo');
+}
+
+/**
+ * @param int[]|string[] $xs
+ */
+function ints_or_strings($xs) {
+  list ($a, $b) = $xs;
+  exprtype($a, 'int|string');
+  exprtype($b, 'int|string');
+}
+
+/**
+ * @param mixed[]|string[]|int[]|false $xs
+ */
+function mixeds_or_strings_or_ints_or_false($xs) {
+  list ($a, $b) = $xs;
+  exprtype($a, 'int|mixed|string');
+  exprtype($b, 'int|mixed|string');
+}
+
+/**
+ * @param int|float|null $xs
+ */
+function not_an_array($xs) {
+  list ($a, $b) = $xs;
+  exprtype($a, 'unknown_from_list');
+  exprtype($b, 'unknown_from_list');
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestExprTypeForeachKey(t *testing.T) {
 	code := `<?php
 $xs = [[1], [2]];
