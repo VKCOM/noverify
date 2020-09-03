@@ -78,6 +78,7 @@ func (c *compiler) EnterNode(n ir.Node) bool {
 	}
 
 	switch class {
+	case "*":
 	case "var":
 		v.Expr = anyVar{metaNode{name: name}}
 	case "int":

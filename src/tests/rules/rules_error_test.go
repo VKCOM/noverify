@@ -249,7 +249,7 @@ $_ = foo();
  */
 ${"boo"} = $_;
 `,
-			expect: "<test>:6: pattern compilation error: unknown matcher class 'foo'",
+			expect: "<test>:6: pattern compilation error: unknown matcher class 'boo'",
 		},
 	}
 
