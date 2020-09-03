@@ -251,6 +251,59 @@ ${"boo"} = $_;
 `,
 			expect: "<test>:6: pattern compilation error: unknown matcher class 'boo'",
 		},
+		{
+			name: `VariableNotPresentInPattern`,
+			rule: `<?php
+/**
+ * @name Some
+ * @warning Some
+ * @type int $x
+ * @type int $y
+ */
+$_ = $y;
+`,
+			expect: "<test>:8: @type contains a reference to a variable x that is not present in the pattern",
+		},
+		{
+			name: `VariableNotPresentInPatternGood`,
+			rule: `<?php
+/**
+ * @name Some
+ * @warning Some
+ * @type int $x
+ */
+$x = 1;
+`,
+			expect: "",
+		},
+		{
+			name: `VariableNotPresentInPatternGood#2`,
+			rule: `<?php
+function someRules() {
+	/**
+	 * @warning Some
+	 * @type int $x
+	 */
+	any: {
+		$x = 1;
+		$x = 2;
+	}
+}
+`,
+			expect: "",
+		},
+		{
+			name: `VariableNotPresentInPatternGood#3`,
+			rule: `<?php
+/**
+ * @name Some
+ * @warning Some
+ * @type int $x
+ */
+${"x:var"} = 1;
+`,
+			expect: "",
+		},
 	}
 
 	runRulesErrorTest(t, tests)

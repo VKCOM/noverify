@@ -71,6 +71,24 @@ func FmtNode(n ir.Node) string {
 	return irfmt.Node(n)
 }
 
+func Find(what ir.Node, where ir.Node) bool {
+	if what == nil || where == nil {
+		return false
+	}
+	w := newFindWalker(what, where)
+	where.Walk(w)
+	return w.Found
+}
+
+func FindWithPredicate(what ir.Node, where ir.Node, pred func(what ir.Node, cur ir.Node) bool) bool {
+	if what == nil || where == nil {
+		return false
+	}
+	w := newFindWalkerWithPredicate(what, where, pred)
+	where.Walk(w)
+	return w.Found
+}
+
 func classEqual(x, y ir.Class) bool {
 	return x.PhpDocComment == y.PhpDocComment &&
 		NodeEqual(x.Extends, y.Extends) &&
