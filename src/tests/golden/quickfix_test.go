@@ -37,7 +37,7 @@ func newQuickFixTest(t *testing.T, folder string) quickFixTest {
 }
 
 func openFile(filename string) (f *os.File, found bool, err error) {
-	f, err = os.Open(filename)
+	f, err = os.OpenFile(filename, os.O_RDWR, 0)
 	if err != nil {
 		f, err = os.Create(filename)
 		if err != nil {
@@ -51,7 +51,7 @@ func openFile(filename string) (f *os.File, found bool, err error) {
 func (t *quickFixTest) runQuickFixTest() {
 	files, err := linttest.FindPHPFiles(t.folder)
 	if err != nil {
-		t.t.Errorf("Error while searching for files in the %s folder: %s", t.folder, err)
+		t.t.Fatalf("Error while searching for files in the %s folder: %s", t.folder, err)
 	}
 
 	for _, file := range files {
@@ -83,8 +83,11 @@ func (t *quickFixTest) runQuickFixTest() {
 			if err != nil {
 				t.Errorf("File open %s failed: %s", fixedFileName, err)
 			}
-			_, _ = fixedFile.Write(testFileContent)
+			_, err = fixedFile.Write(testFileContent)
 			fixedFile.Close()
+			if err != nil {
+				t.Errorf("File write %s failed: %s", fixedFileName, err)
+			}
 
 			test := linttest.NewSuite(t)
 			test.AddNamedFile(fixedFileName, string(testFileContent))
@@ -100,16 +103,19 @@ func (t *quickFixTest) runQuickFixTest() {
 			}
 
 			if !expectedFileFound {
-				_, _ = expectedFile.Write(fixedFileContent)
+				_, err = expectedFile.Write(fixedFileContent)
+				if err != nil {
+					t.Errorf("File write %s failed: %s", expectedFileName, err)
+				}
 				t.Logf("The expected files for \"%s\" were not found and were generated automatically.", filepath.Base(testFileName))
 				return
 			}
 
-			expected := string(expectedFileContent)
-			want := string(fixedFileContent)
+			want := string(expectedFileContent)
+			have := string(fixedFileContent)
 
-			if !cmp.Equal(expected, want) {
-				t.Error(cmp.Diff(expected, want))
+			if want != have {
+				t.Error(cmp.Diff(want, have))
 			}
 
 			if !t.Failed() {
