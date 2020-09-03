@@ -89,55 +89,6 @@ func typesMapToTypeExpr(p *phpdoc.TypeParser, m meta.TypesMap) phpdoc.Type {
 	return p.Parse(typeString)
 }
 
-// typesIsCompatible reports whether val type is compatible with dst type.
-func typeIsCompatible(dst, val phpdoc.TypeExpr) bool {
-	// TODO: allow implementations to be compatible with interfaces.
-	// TODO: allow derived classes to be compatible with base classes.
-
-	for val.Kind == phpdoc.ExprParen {
-		val = val.Args[0]
-	}
-
-	switch dst.Kind {
-	case phpdoc.ExprParen:
-		return typeIsCompatible(dst.Args[0], val)
-
-	case phpdoc.ExprName:
-		switch dst.Value {
-		case "object":
-			// For object we accept any kind of object instance.
-			// https://wiki.php.net/rfc/object-typehint
-			return val.Kind == dst.Kind && (val.Value == "object" || strings.HasPrefix(val.Value, `\`))
-		case "array":
-			return val.Kind == phpdoc.ExprArray
-		}
-		return val.Kind == dst.Kind && dst.Value == val.Value
-
-	case phpdoc.ExprNot:
-		return !typeIsCompatible(dst.Args[0], val)
-
-	case phpdoc.ExprNullable:
-		return val.Kind == dst.Kind && typeIsCompatible(dst.Args[0], val.Args[0])
-
-	case phpdoc.ExprArray:
-		return val.Kind == dst.Kind && typeIsCompatible(dst.Args[0], val.Args[0])
-
-	case phpdoc.ExprUnion:
-		if val.Kind == dst.Kind {
-			return typeIsCompatible(dst.Args[0], val.Args[0]) &&
-				typeIsCompatible(dst.Args[1], val.Args[1])
-		}
-		return typeIsCompatible(dst.Args[0], val) || typeIsCompatible(dst.Args[1], val)
-
-	case phpdoc.ExprInter:
-		// TODO: make it work as intended. (See #310)
-		return false
-
-	default:
-		return false
-	}
-}
-
 type funcCallInfo struct {
 	canAnalyze bool
 	defined    bool

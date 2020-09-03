@@ -1846,7 +1846,7 @@ func (d *RootWalker) checkTypeFilter(wantType *phpdoc.Type, sc *meta.Scope, nn i
 	// Can we use `meta.Type` for this?
 	typ := solver.ExprType(sc, d.ctx.st, nn)
 	haveType := typesMapToTypeExpr(d.ctx.phpdocTypeParser, typ)
-	return typeIsCompatible(wantType.Expr, haveType.Expr)
+	return rules.TypeIsCompatible(wantType.Expr, haveType.Expr)
 }
 
 func (d *RootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filterSet map[string]rules.Filter) bool {
