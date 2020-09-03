@@ -16,7 +16,7 @@ type ruleTest struct {
 func TestRuleError(t *testing.T) {
 	tests := []ruleTest{
 		{
-			name: `NamespaceWithBody`,
+			name: `NamespaceWithBodyNotSupported`,
 			rule: `<?php
 namespace Foo {
 	function boo() {}
@@ -24,7 +24,7 @@ namespace Foo {
 			expect: "namespace with body is not supported",
 		},
 		{
-			name: `MultiPartNamespace`,
+			name: `MultiPartNamespaceNotSupported`,
 			rule: `<?php
 namespace Soo\Foo;
 `,
