@@ -299,3 +299,37 @@ function strictCmp() {
      */
     array_search($b, $_);
 }
+
+/**
+ * @comment Report suspicious usage of bitwise operations.
+ * @before  if ($isURL & $verify) ...
+ * @after   if ($isURL && $verify) ...
+ */
+function bitwiseOps() {
+  /**
+   * @warning Used & bitwise operator over bool operands, perhaps && is intended?
+   * @fix $x && $y
+   * @type bool $x
+   * @type bool $y
+   */
+  $x & $y;
+
+  /**
+   * @warning Used | bitwise operator over bool operands, perhaps || is intended?
+   * @fix $x || $y
+   * @type bool $x
+   * @type bool $y
+   */
+  $x | $y;
+
+  /**
+   * @maybe Used bitwise operator on something that may not be a numeric type
+   * @type !(int|float) $x
+   * @type !(int|float) $y
+   */
+  any: {
+    $x & $y;
+    $x | $y;
+    $x ^ $y;
+  }
+}

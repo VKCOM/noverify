@@ -193,8 +193,8 @@ type bintree struct {
 }
 
 var _bintree = &bintree{nil, map[string]*bintree{
-	"embeddedrules": {nil, map[string]*bintree{
-		"rules.php": {embeddedrulesRulesPhp, map[string]*bintree{}},
+	"embeddedrules": &bintree{nil, map[string]*bintree{
+		"rules.php": &bintree{embeddedrulesRulesPhp, map[string]*bintree{}},
 	}},
 }}
 

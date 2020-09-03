@@ -90,7 +90,7 @@ func appendRuleSet(rset *rules.Set, filter func(r rules.Rule) bool) {
 		for i, list := range src.RulesByKind {
 			for _, r := range list {
 				if !filter(r) {
-					break
+					continue
 				}
 				dst.RulesByKind[i] = append(dst.RulesByKind[i], r)
 			}
