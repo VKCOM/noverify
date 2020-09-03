@@ -16,7 +16,7 @@ type ruleTest struct {
 func TestRuleError(t *testing.T) {
 	tests := []ruleTest{
 		{
-			name: `TestNamespaceWithBodyRuleError`,
+			name: `NamespaceWithBody`,
 			rule: `<?php
 namespace Foo {
 	function boo() {}
@@ -24,14 +24,14 @@ namespace Foo {
 			expect: "namespace with body is not supported",
 		},
 		{
-			name: `TestMultiPartNamespaceRuleError`,
+			name: `MultiPartNamespace`,
 			rule: `<?php
 namespace Soo\Foo;
 `,
 			expect: "multi-part namespace names are not supported",
 		},
 		{
-			name: `TestNameExpectsExactlyOneParamRuleError`,
+			name: `NameExpectsExactlyOneParam`,
 			rule: `<?php
 /**
  * @name Some check
@@ -42,7 +42,7 @@ $_ = foo();
 			expect: "@name expects exactly 1 param, got 2",
 		},
 		{
-			name: `TestNameNotAllowedInFunctionRuleError`,
+			name: `NameNotAllowedInFunction`,
 			rule: `<?php
 /**
  * @comment Some comment
@@ -60,7 +60,7 @@ function someCheckWithInvalidRule() {
 			expect: "someCheckWithInvalidRule: :12: @name is not allowed inside a function",
 		},
 		{
-			name: `TestLocationExpectsExactlyOneParamRuleError`,
+			name: `LocationExpectsExactlyOneParam`,
 			rule: `<?php
 /**
  * @name Some
@@ -72,7 +72,7 @@ $_ = foo();
 			expect: "@location expects exactly 1 params, got 4",
 		},
 		{
-			name: `TestLocationSecondParamMustBePHPGrepVariableRuleError`,
+			name: `LocationSecondParamMustBePHPGrepVariable`,
 			rule: `<?php
 /**
  * @name Some
@@ -84,7 +84,7 @@ $_ = foo();
 			expect: "@location 2nd param must be a phpgrep variable",
 		},
 		{
-			name: `TestScopeExpectsExactlyOneParamRuleError`,
+			name: `ScopeExpectsExactlyOneParam`,
 			rule: `<?php
 /**
  * @name Some
@@ -96,7 +96,7 @@ $_ = foo();
 			expect: "@scope expects exactly 1 params, got 4",
 		},
 		{
-			name: `TestUnknownScopeRuleError`,
+			name: `UnknownScope`,
 			rule: `<?php
 /**
  * @name Some
@@ -108,7 +108,7 @@ $_ = foo();
 			expect: "unknown @scope: city",
 		},
 		{
-			name: `TestDuplicatedFixRuleError`,
+			name: `DuplicatedFix`,
 			rule: `<?php
 /**
  * @name Some
@@ -121,7 +121,7 @@ $_ = foo();
 			expect: "duplicated @fix",
 		},
 		{
-			name: `TestPathExpectsExactlyOneParamRuleError`,
+			name: `PathExpectsExactlyOneParam`,
 			rule: `<?php
 /**
  * @name Some
@@ -133,7 +133,7 @@ $_ = foo();
 			expect: "@path expects exactly 1 param, got 2",
 		},
 		{
-			name: `TestDuplicatedPathRuleError`,
+			name: `DuplicatedPath`,
 			rule: `<?php
 /**
  * @name Some
@@ -146,7 +146,7 @@ $_ = foo();
 			expect: "duplicate @path constraint",
 		},
 		{
-			name: `TestPathExpectsExactlyTwoParamRuleError`,
+			name: `PathExpectsExactlyTwoParam`,
 			rule: `<?php
 /**
  * @name Some
@@ -158,7 +158,7 @@ $a = foo();
 			expect: "@type expects exactly 2 params, got 4",
 		},
 		{
-			name: `TestTypeSecondParamMustBePHPGrepVariableRuleError`,
+			name: `TypeSecondParamMustBePHPGrepVariable`,
 			rule: `<?php
 /**
  * @name Some
@@ -170,7 +170,7 @@ $a = foo();
 			expect: "@type 2nd param must be a phpgrep variable",
 		},
 		{
-			name: `TestDuplicateTypeRuleError`,
+			name: `DuplicateType`,
 			rule: `<?php
 /**
  * @name Some
@@ -183,7 +183,7 @@ $a = foo();
 			expect: "$a: duplicate type constraint",
 		},
 		{
-			name: `TestBadTypeExpressionRuleError`,
+			name: `BadTypeExpression`,
 			rule: `<?php
 /**
  * @name Some
@@ -195,7 +195,7 @@ $a = foo();
 			expect: "$a: parseType(<=): bad type expression",
 		},
 		{
-			name: `TestPureExpectsExactlyOneParamRuleError`,
+			name: `PureExpectsExactlyOneParam`,
 			rule: `<?php
 /**
  * @name Some
@@ -207,7 +207,7 @@ $_ = foo();
 			expect: "@pure expects exactly 1 param, got 3",
 		},
 		{
-			name: `TestPureSecondParamMustBePHPGrepVariableRuleError`,
+			name: `PureSecondParamMustBePHPGrepVariable`,
 			rule: `<?php
 /**
  * @name Some
@@ -219,7 +219,7 @@ $a = foo();
 			expect: "@pure param must be a phpgrep variable",
 		},
 		{
-			name: `TestUnknownAttributeRuleError`,
+			name: `UnknownAttribute`,
 			rule: `<?php
 /**
  * @name Some
@@ -231,7 +231,7 @@ $a = foo();
 			expect: "unknown attribute @hello on line 4",
 		},
 		{
-			name: `TestMissingNameRuleError`,
+			name: `MissingName`,
 			rule: `<?php
 /**
  * @maybe Some
