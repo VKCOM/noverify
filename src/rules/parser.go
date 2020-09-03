@@ -29,14 +29,18 @@ const (
 	parseSeq // To be implemented
 )
 
-type parseError struct {
+type ParseError struct {
 	filename string
 	lineNum  int
 	msg      string
 }
 
-func (e *parseError) Error() string {
+func (e *ParseError) Error() string {
 	return fmt.Sprintf("%s:%d: %s", e.filename, e.lineNum, e.msg)
+}
+
+func (e *ParseError) Message() string {
+	return e.msg
 }
 
 // parser parses rules file into a RuleSet.
@@ -402,9 +406,9 @@ func (p *parser) commentText(n ir.Node) string {
 	return ""
 }
 
-func (p *parser) errorf(n ir.Node, format string, args ...interface{}) *parseError {
+func (p *parser) errorf(n ir.Node, format string, args ...interface{}) *ParseError {
 	pos := ir.GetPosition(n)
-	return &parseError{
+	return &ParseError{
 		filename: p.filename,
 		lineNum:  pos.StartLine,
 		msg:      fmt.Sprintf(format, args...),
