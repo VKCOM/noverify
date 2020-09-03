@@ -1742,7 +1742,14 @@ func (d *RootWalker) LeaveNode(n ir.Node) {
 func (d *RootWalker) runRules(n ir.Node, sc *meta.Scope, rlist []rules.Rule) {
 	for i := range rlist {
 		rule := &rlist[i]
-		d.runRule(n, sc, rule)
+		if d.runRule(n, sc, rule) {
+			// Stop at the first matched rule per IR node.
+			// Sometimes it's useful to report more, but we rely on the rules definition
+			// order so we can report more specific issues instead of the
+			// more generic ones whether possible.
+			// This also makes rules execution faster.
+			break
+		}
 	}
 }
 
@@ -1788,10 +1795,10 @@ func (d *RootWalker) renderRuleMessage(msg string, n ir.Node, m phpgrep.MatchDat
 	return msg
 }
 
-func (d *RootWalker) runRule(n ir.Node, sc *meta.Scope, rule *rules.Rule) {
+func (d *RootWalker) runRule(n ir.Node, sc *meta.Scope, rule *rules.Rule) bool {
 	m, ok := rule.Matcher.Match(n)
 	if !ok {
-		return
+		return false
 	}
 
 	matched := false
@@ -1818,7 +1825,7 @@ func (d *RootWalker) runRule(n ir.Node, sc *meta.Scope, rule *rules.Rule) {
 	}
 
 	if location == nil {
-		return
+		return false
 	}
 
 	message := d.renderRuleMessage(rule.Message, n, m, true)
@@ -1834,6 +1841,8 @@ func (d *RootWalker) runRule(n ir.Node, sc *meta.Scope, rule *rules.Rule) {
 			Replacement: d.renderRuleMessage(rule.Fix, n, m, false),
 		})
 	}
+
+	return true
 }
 
 func (d *RootWalker) checkTypeFilter(wantType *phpdoc.Type, sc *meta.Scope, nn ir.Node) bool {
