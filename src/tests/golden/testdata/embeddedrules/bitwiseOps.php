@@ -20,16 +20,6 @@ function andor_bool_good() {
   $_ = 10 | $x;
 }
 
-function bitwise_non_number(string $s1, string $s2, array $a) {
-  $_ = $s1 & $s2; // Bad 1
-  $_ = $a | $s1;  // Bad 2
-  $_ = $s2 ^ [];  // Bad 3
-
-  $obj1 = new BitwiseExample1();
-  $obj2 = new BitwiseExample2();
-  return $obj1 & $obj2;
-}
-
 /**
  * @param int|float $x
  * @param float|int $y
