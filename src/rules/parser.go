@@ -236,11 +236,11 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 				return rule, p.errorf(st, "@type 2nd param must be a phpgrep variable")
 			}
 			name = strings.TrimPrefix(name, "$")
-			where := st
+			patternStmt := st
 			if _, ok := st.(*ir.LabelStmt); ok {
-				where = labelStmt
+				patternStmt = labelStmt
 			}
-			found := p.checkForVariableInPattern(name, where)
+			found := p.checkForVariableInPattern(name, patternStmt)
 			if !found {
 				return rule, p.errorf(st, "@type contains a reference to a variable %s that is not present in the pattern", name)
 			}
