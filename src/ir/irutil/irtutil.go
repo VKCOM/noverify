@@ -77,7 +77,7 @@ func Find(what ir.Node, where ir.Node) bool {
 	}
 	w := newFindWalker(what, where)
 	where.Walk(w)
-	return w.Found
+	return w.found
 }
 
 func FindWithPredicate(what ir.Node, where ir.Node, pred func(what ir.Node, cur ir.Node) bool) bool {
@@ -86,7 +86,7 @@ func FindWithPredicate(what ir.Node, where ir.Node, pred func(what ir.Node, cur 
 	}
 	w := newFindWalkerWithPredicate(what, where, pred)
 	where.Walk(w)
-	return w.Found
+	return w.found
 }
 
 func classEqual(x, y ir.Class) bool {

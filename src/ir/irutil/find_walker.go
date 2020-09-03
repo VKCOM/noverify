@@ -7,7 +7,7 @@ import (
 type findWalker struct {
 	what  ir.Node
 	where ir.Node
-	Found bool
+	found bool
 
 	withPredicate bool
 	predicate     func(what ir.Node, cur ir.Node) bool
@@ -32,13 +32,13 @@ func newFindWalkerWithPredicate(what ir.Node, where ir.Node, pred func(what ir.N
 func (w *findWalker) EnterNode(n ir.Node) (res bool) {
 	if w.withPredicate {
 		if w.predicate(w.what, n) {
-			w.Found = true
+			w.found = true
 			return false
 		}
 	}
 
 	if NodeEqual(n, w.what) {
-		w.Found = true
+		w.found = true
 		return false
 	}
 	return true

@@ -3,13 +3,14 @@ package langsrv
 import (
 	"fmt"
 
+	"go.lsp.dev/uri"
+
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/state"
 	"github.com/VKCOM/noverify/src/vscode"
-	"go.lsp.dev/uri"
 )
 
 type definitionWalker struct {
