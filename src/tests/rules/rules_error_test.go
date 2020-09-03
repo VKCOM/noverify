@@ -317,6 +317,18 @@ $_ = $y;
 `,
 			expect: "<test>:8: @pure contains a reference to a variable x that is not present in the pattern",
 		},
+		{
+			name: `VariableFromLocationNotPresentInPattern`,
+			rule: `<?php
+/**
+ * @name Some
+ * @warning Some
+ * @location $y
+ */
+(string)$x;
+`,
+			expect: "<test>:7: @location contains a reference to a variable y that is not present in the pattern",
+		},
 	}
 
 	runRulesErrorTest(t, tests)

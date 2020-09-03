@@ -186,6 +186,10 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 				return rule, p.errorf(st, "@location 2nd param must be a phpgrep variable")
 			}
 			rule.Location = strings.TrimPrefix(name, "$")
+			found := p.checkForVariableInPattern(rule.Location, patternStmt, verifiedVars)
+			if !found {
+				return rule, p.errorf(st, "@location contains a reference to a variable %s that is not present in the pattern", rule.Location)
+			}
 
 		case "scope":
 			if len(part.Params) != 1 {
