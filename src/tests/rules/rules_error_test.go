@@ -240,6 +240,17 @@ $_ = foo();
 `,
 			expect: "<test>:5: missing @name attribute",
 		},
+		{
+			name: `UnknownMatcherClass`,
+			rule: `<?php
+/**
+ * @name Some
+ * @maybe Some
+ */
+${"boo"} = $_;
+`,
+			expect: "<test>:6: pattern compilation error: unknown matcher class 'boo'",
+		},
 	}
 
 	runRulesErrorTest(t, tests)
