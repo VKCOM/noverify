@@ -7,14 +7,14 @@ import (
 	"github.com/VKCOM/noverify/src/rules"
 )
 
-type ruleTest struct {
+type ruleErrorTest struct {
 	name   string
 	rule   string
 	expect string
 }
 
 func TestRuleError(t *testing.T) {
-	tests := []ruleTest{
+	tests := []ruleErrorTest{
 		{
 			name: `NamespaceWithBodyNotSupported`,
 			rule: `<?php
@@ -245,7 +245,7 @@ $_ = foo();
 	runRulesErrorTest(t, tests)
 }
 
-func runRulesErrorTest(t *testing.T, rulesTest []ruleTest) {
+func runRulesErrorTest(t *testing.T, rulesTest []ruleErrorTest) {
 	t.Helper()
 
 	for _, test := range rulesTest {
