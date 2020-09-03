@@ -58,6 +58,24 @@ MAYBE   assignOp: could rewrite as `$a >>= $b` at testdata/embeddedrules/assignO
 MAYBE   assignOp: could rewrite as `$a ??= $b` at testdata/embeddedrules/assignOp.php:83
   $a = $a ?? $b; // Could rewrite
   ^^^^^^^^^^^^^
+WARNING bitwiseOps: Used & bitwise operator over bool operands, perhaps && is intended? at testdata/embeddedrules/bitwiseOps.php:8
+  $_ = (($x > 0) & ($x != 15)); // Bad 1
+        ^^^^^^^^^^^^^^^^^^^^^
+WARNING bitwiseOps: Used | bitwise operator over bool operands, perhaps || is intended? at testdata/embeddedrules/bitwiseOps.php:9
+  $_ = (($x == 1) | ($x == 2)); // Bad 2
+        ^^^^^^^^^^^^^^^^^^^^^
+MAYBE   bitwiseOps: Used bitwise operator on something that may not be a numeric type at testdata/embeddedrules/bitwiseOps.php:24
+  $_ = $s1 & $s2; // Bad 1
+       ^^^^^^^^^
+MAYBE   bitwiseOps: Used bitwise operator on something that may not be a numeric type at testdata/embeddedrules/bitwiseOps.php:25
+  $_ = $a | $s1;  // Bad 2
+       ^^^^^^^^
+MAYBE   bitwiseOps: Used bitwise operator on something that may not be a numeric type at testdata/embeddedrules/bitwiseOps.php:26
+  $_ = $s2 ^ [];  // Bad 3
+       ^^^^^^^^
+MAYBE   bitwiseOps: Used bitwise operator on something that may not be a numeric type at testdata/embeddedrules/bitwiseOps.php:30
+  return $obj1 & $obj2;
+         ^^^^^^^^^^^^^
 WARNING offBy1: probably intended to use count-1 as an index at testdata/embeddedrules/offBy1.php:7
   $_ = $xs[count($xs)];
        ^^^^^^^^^^^^^^^

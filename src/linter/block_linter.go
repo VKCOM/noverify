@@ -191,19 +191,8 @@ func (b *blockLinter) checkTryStmt(s *ir.TryStmt) {
 }
 
 func (b *blockLinter) checkBitwiseOp(n, left, right ir.Node) {
-	tok := "|"
-	if _, ok := n.(*ir.BitwiseAndExpr); ok {
-		tok = "&"
-	}
-
 	b.checkBinaryDupArgs(n, left, right)
 	b.checkBinaryVoidType(left, right)
-
-	if b.walker.exprType(left).Is("bool") && b.walker.exprType(right).Is("bool") {
-		b.report(n, LevelWarning, "bitwiseOps",
-			"Used %s bitwise op over bool operands, perhaps %s is intended?", tok, tok+tok)
-		return
-	}
 }
 
 func (b *blockLinter) checkBinaryVoidType(left, right ir.Node) {

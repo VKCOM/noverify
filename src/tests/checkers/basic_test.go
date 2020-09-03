@@ -686,20 +686,6 @@ function lhs($x, $mask) {
 `)
 }
 
-func TestBitwiseOps(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-$x = 10;
-$_ = ($x > 0 & $x != 15);
-$_ = ($x == 1 | $x == 2);
-`)
-	test.Expect = []string{
-		`Used & bitwise op over bool operands, perhaps && is intended?`,
-		`Used | bitwise op over bool operands, perhaps || is intended?`,
-	}
-	test.RunAndMatch()
-}
-
 func TestArgvGlobal(t *testing.T) {
 	test := linttest.NewSuite(t)
 
