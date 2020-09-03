@@ -21,14 +21,14 @@ func TestRuleError(t *testing.T) {
 namespace Foo {
 	function boo() {}
 }`,
-			expect: "namespace with body is not supported",
+			expect: "<test>:2: namespace with body is not supported",
 		},
 		{
 			name: `MultiPartNamespaceNotSupported`,
 			rule: `<?php
 namespace Soo\Foo;
 `,
-			expect: "multi-part namespace names are not supported",
+			expect: "<test>:2: multi-part namespace names are not supported",
 		},
 		{
 			name: `NameExpectsExactlyOneParam`,
@@ -39,7 +39,7 @@ namespace Soo\Foo;
  */
 $_ = foo();
 `,
-			expect: "@name expects exactly 1 param, got 2",
+			expect: "<test>:6: @name expects exactly 1 param, got 2",
 		},
 		{
 			name: `NameNotAllowedInFunction`,
@@ -57,7 +57,7 @@ function someCheckWithInvalidRule() {
     $_ = foo();
 }
 `,
-			expect: "someCheckWithInvalidRule: :12: @name is not allowed inside a function",
+			expect: "<test>:7: someCheckWithInvalidRule: <test>:12: @name is not allowed inside a function",
 		},
 		{
 			name: `LocationExpectsExactlyOneParam`,
@@ -69,7 +69,7 @@ function someCheckWithInvalidRule() {
  */
 $_ = foo();
 `,
-			expect: "@location expects exactly 1 params, got 4",
+			expect: "<test>:7: @location expects exactly 1 params, got 4",
 		},
 		{
 			name: `LocationSecondParamMustBePHPGrepVariable`,
@@ -81,7 +81,7 @@ $_ = foo();
  */
 $_ = foo();
 `,
-			expect: "@location 2nd param must be a phpgrep variable",
+			expect: "<test>:7: @location 2nd param must be a phpgrep variable",
 		},
 		{
 			name: `ScopeExpectsExactlyOneParam`,
@@ -93,7 +93,7 @@ $_ = foo();
  */
 $_ = foo();
 `,
-			expect: "@scope expects exactly 1 params, got 4",
+			expect: "<test>:7: @scope expects exactly 1 params, got 4",
 		},
 		{
 			name: `UnknownScope`,
@@ -105,7 +105,7 @@ $_ = foo();
  */
 $_ = foo();
 `,
-			expect: "unknown @scope: city",
+			expect: "<test>:7: unknown @scope: city",
 		},
 		{
 			name: `DuplicatedFix`,
@@ -118,7 +118,7 @@ $_ = foo();
  */
 $_ = foo();
 `,
-			expect: "duplicated @fix",
+			expect: "<test>:8: duplicated @fix",
 		},
 		{
 			name: `PathExpectsExactlyOneParam`,
@@ -130,7 +130,7 @@ $_ = foo();
  */
 $_ = foo();
 `,
-			expect: "@path expects exactly 1 param, got 2",
+			expect: "<test>:7: @path expects exactly 1 param, got 2",
 		},
 		{
 			name: `DuplicatedPath`,
@@ -143,7 +143,7 @@ $_ = foo();
  */
 $_ = foo();
 `,
-			expect: "duplicate @path constraint",
+			expect: "<test>:8: duplicate @path constraint",
 		},
 		{
 			name: `PathExpectsExactlyTwoParam`,
@@ -155,7 +155,7 @@ $_ = foo();
  */
 $a = foo();
 `,
-			expect: "@type expects exactly 2 params, got 4",
+			expect: "<test>:7: @type expects exactly 2 params, got 4",
 		},
 		{
 			name: `TypeSecondParamMustBePHPGrepVariable`,
@@ -167,7 +167,7 @@ $a = foo();
  */
 $a = foo();
 `,
-			expect: "@type 2nd param must be a phpgrep variable",
+			expect: "<test>:7: @type 2nd param must be a phpgrep variable",
 		},
 		{
 			name: `DuplicateType`,
@@ -180,7 +180,7 @@ $a = foo();
  */
 $a = foo();
 `,
-			expect: "$a: duplicate type constraint",
+			expect: "<test>:8: $a: duplicate type constraint",
 		},
 		{
 			name: `BadTypeExpression`,
@@ -192,7 +192,7 @@ $a = foo();
  */
 $a = foo();
 `,
-			expect: "$a: parseType(<=): bad type expression",
+			expect: "<test>:7: $a: parseType(<=): bad type expression",
 		},
 		{
 			name: `PureExpectsExactlyOneParam`,
@@ -204,7 +204,7 @@ $a = foo();
  */
 $_ = foo();
 `,
-			expect: "@pure expects exactly 1 param, got 3",
+			expect: "<test>:7: @pure expects exactly 1 param, got 3",
 		},
 		{
 			name: `PureSecondParamMustBePHPGrepVariable`,
@@ -216,7 +216,7 @@ $_ = foo();
  */
 $a = foo();
 `,
-			expect: "@pure param must be a phpgrep variable",
+			expect: "<test>:7: @pure param must be a phpgrep variable",
 		},
 		{
 			name: `UnknownAttribute`,
@@ -228,7 +228,7 @@ $a = foo();
  */
 $a = foo();
 `,
-			expect: "unknown attribute @hello on line 4",
+			expect: "<test>:7: unknown attribute @hello on line 4",
 		},
 		{
 			name: `MissingName`,
@@ -238,7 +238,7 @@ $a = foo();
  */
 $_ = foo();
 `,
-			expect: "missing @name attribute",
+			expect: "<test>:5: missing @name attribute",
 		},
 	}
 
@@ -251,17 +251,9 @@ func runRulesErrorTest(t *testing.T, rulesTest []ruleTest) {
 	for _, test := range rulesTest {
 		t.Run(test.name, func(t *testing.T) {
 			rparser := rules.NewParser()
-			_, err := rparser.Parse("", strings.NewReader(test.rule))
+			_, err := rparser.Parse("<test>", strings.NewReader(test.rule))
 			if err != nil {
-				var msg string
-
-				switch err := err.(type) {
-				case *rules.ParseError:
-					msg = err.Message()
-				default:
-					msg = err.Error()
-				}
-
+				msg := err.Error()
 				if msg != test.expect {
 					t.Errorf("unexpected error:\nwant: %s\nhave: %s", test.expect, msg)
 				}
