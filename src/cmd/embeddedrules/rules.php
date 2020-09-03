@@ -260,15 +260,4 @@ function bitwiseOps() {
    * @type bool $y
    */
   $x | $y;
-
-  /**
-   * @maybe Used bitwise operator on something that may not be a numeric type
-   * @type !(int|float) $x
-   * @type !(int|float) $y
-   */
-  any: {
-    $x & $y;
-    $x | $y;
-    $x ^ $y;
-  }
 }
