@@ -815,12 +815,23 @@ type MagicConstant struct {
 // The $Value contains interpreted string bytes, if you need a raw
 // string value, use positions and fetch relevant the source bytes.
 //
-// DoubleQuotes tell whether originally this string literal was ""-quoted.
+// $DoubleQuotes tell whether originally this string literal was ""-quoted.
 type String struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Value        string
 	DoubleQuotes bool
+}
+
+// BadString is a string that we couldn't interpret correctly.
+// The $Value contains uninterpreted (raw) string bytes.
+// $Error contains the reason why this string is "bad".
+type BadString struct {
+	FreeFloating freefloating.Collection
+	Position     *position.Position
+	Value        string
+	DoubleQuotes bool
+	Error        string
 }
 
 // BreakStmt is a `break $Expr` statement.

@@ -163,6 +163,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 	case *ir.InterfaceStmt:
 		b.checkInterfaceStmt(n)
+
+	case *ir.BadString:
+		b.report(n, LevelSyntax, "syntax", "%s", n.Error)
 	}
 }
 

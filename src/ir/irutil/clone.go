@@ -195,6 +195,9 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.Expression = NodeClone(x.Expression)
 		}
 		return &clone
+	case *ir.BadString:
+		clone := *x
+		return &clone
 	case *ir.BitwiseAndExpr:
 		clone := *x
 		if x.Left != nil {

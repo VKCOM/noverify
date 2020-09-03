@@ -1803,7 +1803,7 @@ func (c *Converter) convClass(n *stmt.Class) ir.Node {
 	return out
 }
 
-func convString(n *scalar.String) *ir.String {
+func convString(n *scalar.String) ir.Node {
 	out := &ir.String{
 		FreeFloating: n.FreeFloating,
 		Position:     n.Position,
@@ -1820,10 +1820,16 @@ func convString(n *scalar.String) *ir.String {
 	}
 
 	out.DoubleQuotes = n.Value[0] == '"'
-	s, ok := interpretString(irutil.Unquote(n.Value), quote)
-	if !ok {
-		panic(fmt.Sprintf("can't interpret %s (line=%d bytes=%#v)",
-			n.Value, n.GetPosition().StartLine, []byte(n.Value)))
+	unquoted := irutil.Unquote(n.Value)
+	s, err := interpretString(unquoted, quote)
+	if err != nil {
+		return &ir.BadString{
+			FreeFloating: n.FreeFloating,
+			Position:     n.Position,
+			Value:        unquoted,
+			Error:        err.Error(),
+			DoubleQuotes: out.DoubleQuotes,
+		}
 	}
 	out.Value = s
 
