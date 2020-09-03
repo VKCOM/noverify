@@ -247,8 +247,6 @@ function argsOrder() {
 function strictCmp() {
     /**
      * @warning non-strict comparison (use ===)
-     * @type string $x
-     * @type string $y
      */
     any_equal: {
         $_ == true;
@@ -257,13 +255,19 @@ function strictCmp() {
         false == $_;
         $_ == null;
         null == $_;
+    }
+
+    /**
+     * @warning non-strict string comparison (use ===)
+     * @type string $x
+     * @type string $y
+     */
+    any_string_equal: {
         $x == $y;
     }
 
     /**
      * @warning non-strict comparison (use !==)
-     * @type string $x
-     * @type string $y
      */
     any_not_equal: {
         $_ != true;
@@ -272,6 +276,14 @@ function strictCmp() {
         false != $_;
         $_ != null;
         null != $_;
+    }
+
+    /**
+     * @warning non-strict string comparison (use !==)
+     * @type string $x
+     * @type string $y
+     */
+    any_string_not_equal: {
         $x != $y;
     }
 
