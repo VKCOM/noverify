@@ -1,6 +1,7 @@
 package phpgrep
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
@@ -11,6 +12,8 @@ import (
 type compiler struct {
 	src  []byte
 	vars map[string]struct{}
+
+	err error
 }
 
 func compile(opts *Compiler, pattern []byte) (*Matcher, error) {
@@ -29,6 +32,10 @@ func compile(opts *Compiler, pattern []byte) (*Matcher, error) {
 		vars: make(map[string]struct{}),
 	}
 	rootIR.Walk(&c)
+
+	if c.err != nil {
+		return nil, c.err
+	}
 
 	m := &Matcher{
 		m: matcher{
@@ -89,6 +96,9 @@ func (c *compiler) EnterNode(n ir.Node) bool {
 		v.Expr = anyConst{metaNode{name: name}}
 	case "func":
 		v.Expr = anyFunc{metaNode{name: name}}
+	default:
+		c.err = fmt.Errorf("unknown matcher class '%s'", class)
+		return false
 	}
 
 	return true
