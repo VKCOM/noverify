@@ -15,6 +15,15 @@ func TypeIsCompatible(dst, val phpdoc.TypeExpr) bool {
 		val = val.Args[0]
 	}
 
+	if val.Value == "mixed" {
+		// Mixed type usually mean the we failed to infer the expression type.
+		// We conservatively assume that mixed could be anything,
+		// including something that is assignable to dst.
+		// We may want to add a strict version of the type filter
+		// that chooses a different stratage here.
+		return false
+	}
+
 	switch dst.Kind {
 	case phpdoc.ExprParen:
 		return TypeIsCompatible(dst.Args[0], val)
@@ -34,6 +43,12 @@ func TypeIsCompatible(dst, val phpdoc.TypeExpr) bool {
 		return !TypeIsCompatible(dst.Args[0], val)
 
 	case phpdoc.ExprNullable:
+		if val.Value == "null" {
+			return true
+		}
+		if TypeIsCompatible(dst.Args[0], val) {
+			return true
+		}
 		return val.Kind == dst.Kind && TypeIsCompatible(dst.Args[0], val.Args[0])
 
 	case phpdoc.ExprArray:
