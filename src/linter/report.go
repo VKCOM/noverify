@@ -263,7 +263,7 @@ thisFunctionExits();`,
 
 		{
 			Name:     "phpdoc",
-			Default:  true,
+			Default:  false,
 			Quickfix: false,
 			Comment:  `Report missing phpdoc on public methods.`,
 			Before: `public function process($acts, $config) {
