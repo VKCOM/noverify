@@ -65,6 +65,13 @@ type PerFile struct {
 	Constants ConstantsMap
 }
 
+type StubsInfo struct {
+	Classes           ClassesMap
+	Constants         ConstantsMap
+	Functions         FunctionsMap
+	FunctionOverrides FunctionsOverrideMap
+}
+
 func (i *info) GetConstant(nm string) (res ConstInfo, ok bool) {
 	res, ok = i.allConstants[nm]
 	return res, ok
@@ -131,7 +138,7 @@ func (i *info) FindConstants(substr string) (res []string) {
 	return res
 }
 
-func (i *info) InitStubs() {
+func (i *info) InitStubs() StubsInfo {
 	i.Lock()
 	defer i.Unlock()
 
@@ -156,6 +163,13 @@ func (i *info) InitStubs() {
 	internalFunctionOverrides = make(FunctionsOverrideMap)
 	for k, v := range i.allFunctionsOverrides {
 		internalFunctionOverrides[k] = v
+	}
+
+	return StubsInfo{
+		Constants:         i.allConstants,
+		Classes:           internalClasses,
+		Functions:         internalFunctions,
+		FunctionOverrides: internalFunctionOverrides,
 	}
 }
 

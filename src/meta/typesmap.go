@@ -9,8 +9,11 @@ import (
 
 // Preallocated and shared immutable type maps.
 var (
-	MixedType = NewTypesMap("mixed").Immutable()
-	VoidType  = NewTypesMap("void").Immutable()
+	MixedType  = NewTypesMap("mixed").Immutable()
+	VoidType   = NewTypesMap("void").Immutable()
+	StringType = NewTypesMap("string").Immutable()
+	BoolType   = NewTypesMap("bool").Immutable()
+	IntType    = NewTypesMap("int").Immutable()
 
 	PreciseIntType    = NewPreciseTypesMap("int").Immutable()
 	PreciseFloatType  = NewPreciseTypesMap("float").Immutable()

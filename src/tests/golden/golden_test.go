@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 
@@ -176,7 +177,6 @@ func TestGolden(t *testing.T) {
 			deps: []string{
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
 				`stubs/phpstorm-stubs/Reflection/Reflection.php`,
-				`stubs/phpstorm-stubs/Reflection/ReflectionClass.php`,
 				`stubs/phpstorm-stubs/Reflection/ReflectionFunctionAbstract.php`,
 				`stubs/phpstorm-stubs/Reflection/ReflectionFunction.php`,
 				`stubs/phpstorm-stubs/Reflection/ReflectionParameter.php`,
@@ -255,10 +255,13 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 		"-race",
 		"../../../", // Using relative target to avoid problems with modules/vendor/GOPATH
 	}
+	t.Log("building noverify binary...")
+	start := time.Now()
 	out, err := exec.Command("go", goArgs...).CombinedOutput()
 	if err != nil {
 		t.Fatalf("build noverify: %v: %s", err, out)
 	}
+	t.Logf("time to build noverify: %.2f", time.Since(start).Seconds())
 
 	wd, err := os.Getwd()
 	if err != nil {

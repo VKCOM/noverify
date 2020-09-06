@@ -12,7 +12,6 @@ import (
 	"runtime"
 	"runtime/pprof"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/VKCOM/noverify/src/baseline"
@@ -29,7 +28,7 @@ import (
 // Line below implies that we have `https://github.com/VKCOM/phpstorm-stubs.git` cloned
 // to the `./src/cmd/stubs/phpstorm-stubs`.
 //
-//go:generate go-bindata -pkg stubs -nometadata -o ./stubs/phpstorm_stubs.go -ignore=\.idea -ignore=\.git ./stubs/phpstorm-stubs/...
+//go:generate go run ./gen_stubs.go
 
 //go:generate go-bindata -pkg embeddedrules -nometadata -o ./embeddedrules/rules.go ./embeddedrules/rules.php
 
@@ -314,7 +313,7 @@ func initStubs() error {
 		return nil
 	}
 
-	// Try to use embedded stubs (from stubs/phpstorm_stubs.go).
+	// Try to use embedded stubs.
 	if err := loadEmbeddedStubs(); err != nil {
 		return fmt.Errorf("failed to load embedded stubs: %v", err)
 	}
@@ -323,37 +322,21 @@ func initStubs() error {
 }
 
 func LoadEmbeddedStubs(filenames []string) error {
-	var errorsCount int64
-
-	readStubs := func(ch chan workspace.FileInfo) {
+	_, err := linter.InitStubs(func() error {
 		for _, filename := range filenames {
-			data, err := stubs.Asset(filename)
-			if err != nil {
-				log.Printf("Failed to read embedded %q file: %v", filename, err)
-				atomic.AddInt64(&errorsCount, 1)
-				continue
-			}
-			ch <- workspace.FileInfo{
-				Filename: filename,
-				Contents: data,
+			if !stubs.LoadByName(filename) {
+				return fmt.Errorf("load %s: file not found", filename)
 			}
 		}
-	}
-
-	linter.InitStubs(readStubs)
-
-	// Using atomic here for consistency.
-	if atomic.LoadInt64(&errorsCount) != 0 {
-		return fmt.Errorf("failed to load %d embedded files", errorsCount)
-	}
-
-	return nil
+		return nil
+	})
+	return err
 }
 
 func loadEmbeddedStubs() error {
-	filenames := stubs.AssetNames()
-	if len(filenames) == 0 {
-		return fmt.Errorf("empty file list")
-	}
-	return LoadEmbeddedStubs(filenames)
+	linter.InitStubs(func() error {
+		stubs.Load()
+		return nil
+	})
+	return nil
 }

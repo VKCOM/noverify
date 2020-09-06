@@ -129,14 +129,25 @@ func ParseFilenames(readFileNamesFunc workspace.ReadCallback, allowDisabled *reg
 	return allReports
 }
 
-func InitStubs(readFileNamesFunc workspace.ReadCallback) {
+func InitStubsFromReadCallback(readFileNamesFunc workspace.ReadCallback) meta.StubsInfo {
+	info, _ := InitStubs(func() error {
+		ParseFilenames(readFileNamesFunc, nil)
+		return nil
+	})
+	return info
+}
+
+func InitStubs(fn func() error) (meta.StubsInfo, error) {
 	meta.SetLoadingStubs(true)
-	ParseFilenames(readFileNamesFunc, nil)
-	meta.Info.InitStubs()
+	if err := fn(); err != nil {
+		return meta.StubsInfo{}, err
+	}
+	stubsInfo := meta.Info.InitStubs()
 	meta.SetLoadingStubs(false)
+	return stubsInfo, nil
 }
 
 // InitStubsFromDir parses directory with PHPStorm stubs which has all internal PHP classes and functions declared.
 func InitStubsFromDir(dir string) {
-	InitStubs(workspace.ReadFilenames([]string{dir}, nil))
+	InitStubsFromReadCallback(workspace.ReadFilenames([]string{dir}, nil))
 }
