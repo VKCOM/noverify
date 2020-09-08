@@ -1,4 +1,4 @@
-package golden
+package golden_test
 
 import (
 	"fmt"
@@ -49,7 +49,7 @@ func openFile(filename string) (f *os.File, found bool, err error) {
 }
 
 func (t *quickFixTest) runQuickFixTest() {
-	files, err := linttest.FindPHPFiles(t.folder)
+	files, err := findPHPFiles(t.folder)
 	if err != nil {
 		t.t.Fatalf("Error while searching for files in the %s folder: %s", t.folder, err)
 	}

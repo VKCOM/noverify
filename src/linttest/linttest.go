@@ -6,7 +6,6 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -323,19 +322,4 @@ func parseTestFile(t testing.TB, worker *linter.Worker, f TestFile) (rootNode *i
 	}
 
 	return rootNode, w
-}
-
-func FindPHPFiles(root string) ([]string, error) {
-	var files []string
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() || !strings.HasSuffix(path, ".php") {
-			return nil
-		}
-		files = append(files, path)
-		return nil
-	})
-	return files, err
 }
