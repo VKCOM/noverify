@@ -72,6 +72,9 @@ func TestGolden(t *testing.T) {
 	targets := []*goldenTest{
 		{
 			name: "embeddedrules",
+			deps: []string{
+				`stubs/phpstorm-stubs/pcre/pcre.php`,
+			},
 		},
 
 		{
@@ -81,6 +84,7 @@ func TestGolden(t *testing.T) {
 				`redundantCast`,
 			},
 			deps: []string{
+				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
 				`stubs/phpstorm-stubs/SPL/SPL_f.php`,
 				`stubs/phpstorm-stubs/json/json.php`,
@@ -91,6 +95,7 @@ func TestGolden(t *testing.T) {
 		{
 			name: "math",
 			deps: []string{
+				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/gmp/gmp.php`,
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
 				`stubs/phpstorm-stubs/bcmath/bcmath.php`,
@@ -124,6 +129,7 @@ func TestGolden(t *testing.T) {
 			name:    "parsedown",
 			disable: []string{`phpdoc`, `arraySyntax`},
 			deps: []string{
+				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/mbstring/mbstring.php`,
 			},
 		},
@@ -131,7 +137,9 @@ func TestGolden(t *testing.T) {
 		{
 			name:    "underscore",
 			disable: []string{`phpdoc`},
-			deps:    []string{},
+			deps: []string{
+				`stubs/phpstorm-stubs/pcre/pcre.php`,
+			},
 		},
 
 		{
@@ -149,6 +157,7 @@ func TestGolden(t *testing.T) {
 			name:    "flysystem",
 			disable: []string{`redundantCast`},
 			deps: []string{
+				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
 				`stubs/phpstorm-stubs/SPL/SPL_c1.php`,
 				`stubs/phpstorm-stubs/SPL/SPL_f.php`,
@@ -165,6 +174,7 @@ func TestGolden(t *testing.T) {
 			name:    "inflector",
 			disable: []string{"phpdoc"},
 			deps: []string{
+				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
 				`stubs/phpstorm-stubs/mbstring/mbstring.php`,
 			},
@@ -187,6 +197,7 @@ func TestGolden(t *testing.T) {
 			name:    "twitter-api-php",
 			disable: []string{"phpdoc", "arraySyntax"},
 			deps: []string{
+				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
 				`stubs/phpstorm-stubs/date/date.php`,
 				`stubs/phpstorm-stubs/hash/hash.php`,
@@ -223,6 +234,26 @@ func TestGolden(t *testing.T) {
 		if target.srcDir == "" {
 			target.srcDir = filepath.Join("testdata", target.name)
 		}
+	}
+
+	coreFiles := []string{
+		`stubs/phpstorm-stubs/Core/Core.php`,
+		`stubs/phpstorm-stubs/Core/Core_d.php`,
+		`stubs/phpstorm-stubs/Core/Core_c.php`,
+		`stubs/phpstorm-stubs/standard/standard_defines.php`,
+		`stubs/phpstorm-stubs/standard/standard_0.php`,
+		`stubs/phpstorm-stubs/standard/standard_1.php`,
+		`stubs/phpstorm-stubs/standard/standard_2.php`,
+		`stubs/phpstorm-stubs/standard/standard_3.php`,
+		`stubs/phpstorm-stubs/standard/standard_4.php`,
+		`stubs/phpstorm-stubs/standard/standard_5.php`,
+		`stubs/phpstorm-stubs/standard/standard_6.php`,
+		`stubs/phpstorm-stubs/standard/standard_7.php`,
+		`stubs/phpstorm-stubs/standard/standard_8.php`,
+		`stubs/phpstorm-stubs/standard/standard_9.php`,
+	}
+	for _, target := range targets {
+		target.deps = append(target.deps, coreFiles...)
 	}
 
 	// Old-style tests: run tests inside the same process,
@@ -295,6 +326,11 @@ func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
 			phplinterCmd := exec.Command("./phplinter.exe", args...)
 			phplinterCmd.Env = append([]string{}, os.Environ()...)
 			phplinterCmd.Env = append(phplinterCmd.Env, "GORACE=history_size=7")
+			if len(target.deps) != 0 {
+				deps := strings.Join(target.deps, ",")
+				phplinterCmd.Env = append(phplinterCmd.Env, "NOVERIFYDEBUG_LOAD_STUBS="+deps)
+			}
+
 			out, err := phplinterCmd.CombinedOutput()
 			if err != nil {
 				t.Fatalf("%v: %s", err, out)
@@ -350,24 +386,6 @@ func readReportsFile(filename string) (*linterOutput, error) {
 }
 
 func runGoldenTest(t *testing.T, target *goldenTest) {
-	coreFiles := []string{
-		`stubs/phpstorm-stubs/Core/Core.php`,
-		`stubs/phpstorm-stubs/Core/Core_d.php`,
-		`stubs/phpstorm-stubs/Core/Core_c.php`,
-		`stubs/phpstorm-stubs/gd/gd.php`,
-		`stubs/phpstorm-stubs/pcre/pcre.php`,
-		`stubs/phpstorm-stubs/standard/standard_defines.php`,
-		`stubs/phpstorm-stubs/standard/standard_0.php`,
-		`stubs/phpstorm-stubs/standard/standard_1.php`,
-		`stubs/phpstorm-stubs/standard/standard_2.php`,
-		`stubs/phpstorm-stubs/standard/standard_3.php`,
-		`stubs/phpstorm-stubs/standard/standard_4.php`,
-		`stubs/phpstorm-stubs/standard/standard_5.php`,
-		`stubs/phpstorm-stubs/standard/standard_6.php`,
-		`stubs/phpstorm-stubs/standard/standard_7.php`,
-		`stubs/phpstorm-stubs/standard/standard_8.php`,
-		`stubs/phpstorm-stubs/standard/standard_9.php`,
-	}
 
 	misspellList := "Eng"
 
@@ -378,9 +396,7 @@ func runGoldenTest(t *testing.T, target *goldenTest) {
 		}
 
 		test := linttest.NewSuite(t)
-		deps := target.deps
-		deps = append(deps, coreFiles...)
-		test.LoadStubs = deps
+		test.LoadStubs = target.deps
 		for _, f := range phpFiles {
 			code, err := ioutil.ReadFile(f)
 			if err != nil {
