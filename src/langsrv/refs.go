@@ -224,7 +224,7 @@ func findReferences(substr string, parse parseFn) []vscode.Location {
 						parser.Parse()
 
 						rootNode := parser.GetRootNode()
-						rootIR := irconv.NewConverter().ConvertRoot(rootNode)
+						rootIR := irconv.ConvertNode(rootNode).(*ir.Root)
 						if rootNode != nil {
 							var found []vscode.Location
 							func() {

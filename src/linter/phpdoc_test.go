@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/phpdoc"
 )
 
 func TestParseClassPHPDoc(t *testing.T) {
@@ -60,7 +61,8 @@ func TestParseClassPHPDoc(t *testing.T) {
 	st := &meta.ClassParseState{}
 	walker := RootWalker{ctx: newRootContext(NewWorkerContext(), st)}
 	for _, test := range tests {
-		doc := fmt.Sprintf(`/** %s */`, test.line)
+		docString := fmt.Sprintf(`/** %s */`, test.line)
+		doc := phpdoc.Parse(walker.ctx.phpdocTypeParser, docString)
 		result := walker.parseClassPHPDoc(nil, doc)
 
 		switch {

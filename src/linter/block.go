@@ -1203,7 +1203,7 @@ func (b *BlockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		sc.AddVarName("this", meta.NewTypesMap("possibly_late_bound"), "possibly late bound $this", meta.VarAlwaysDefined)
 	}
 
-	doc := b.r.parsePHPDoc(fun, fun.PhpDocComment, fun.Params)
+	doc := b.r.parsePHPDoc(fun, fun.PhpDoc, fun.Params)
 	b.r.reportPhpdocErrors(fun, doc.errs)
 	phpDocParamTypes := doc.types
 

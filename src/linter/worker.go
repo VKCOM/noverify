@@ -58,10 +58,12 @@ func NewIndexingWorker(id int) *Worker {
 }
 
 func newWorker(id int) *Worker {
+	ctx := NewWorkerContext()
+	irConverter := irconv.NewConverter(ctx.phpdocTypeParser)
 	return &Worker{
 		id:     id,
-		ctx:    NewWorkerContext(),
-		irconv: irconv.NewConverter(),
+		ctx:    ctx,
+		irconv: irConverter,
 		reParserNoLiterals: syntax.NewParser(&syntax.ParserOptions{
 			NoLiterals: true,
 		}),
