@@ -100,10 +100,18 @@ func NewSuite(t testing.TB) *Suite {
 
 // AddFile adds a file to a suite file list.
 // File gets an auto-generated name. If custom name is important,
-// append a properly initialized TestFile to a s Files slice directly.
+// use AddNamedFile.
 func (s *Suite) AddFile(contents string) {
 	s.Files = append(s.Files, TestFile{
 		Name: fmt.Sprintf("_file%d.php", len(s.Files)),
+		Data: []byte(contents),
+	})
+}
+
+// AddNamedFile adds a file with a specific name to a suite file list.
+func (s *Suite) AddNamedFile(name, contents string) {
+	s.Files = append(s.Files, TestFile{
+		Name: name,
 		Data: []byte(contents),
 	})
 }
