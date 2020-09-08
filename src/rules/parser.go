@@ -20,6 +20,15 @@ import (
 
 var magicComment = regexp.MustCompile(`\* @(?:warning|error|info|maybe) `)
 
+//go:generate stringer -type=parseMode
+type parseMode int
+
+const (
+	parseNormal parseMode = iota
+	parseAny
+	parseSeq // To be implemented
+)
+
 type parseError struct {
 	filename string
 	lineNum  int
@@ -38,6 +47,7 @@ type parser struct {
 	compiler   phpgrep.Compiler
 	typeParser *phpdoc.TypeParser
 	names      map[string]struct{}
+	mode       parseMode
 
 	namespace string
 	funcName  string
@@ -59,17 +69,15 @@ func (p *parser) parse(filename string, r io.Reader) (*Set, error) {
 	if err != nil {
 		return res, err
 	}
-	rootIR := irconv.ConvertRoot(root)
+	rootIR := irconv.NewConverter().ConvertRoot(root)
 
 	// Convert PHP file into the rule set.
 	p.filename = filename
 	p.sources = sources
 	p.res = res
 	p.names = make(map[string]struct{})
-	for _, st := range rootIR.Stmts {
-		if err := p.parseRule(st); err != nil {
-			return p.res, err
-		}
+	if err := p.parseRules(rootIR.Stmts, nil); err != nil {
+		return p.res, err
 	}
 
 	res.Names = make([]string, 0, len(p.names))
@@ -81,90 +89,110 @@ func (p *parser) parse(filename string, r io.Reader) (*Set, error) {
 	return p.res, nil
 }
 
-func (p *parser) parseRule(st ir.Node) error {
-	switch st := st.(type) {
-	case *ir.FunctionStmt:
-		p.funcName = st.FunctionName.Value
-		for _, st := range st.Stmts {
-			if err := p.parseRule(st); err != nil {
-				return p.errorf(st, "%s: %v", p.funcName, err)
+func (p *parser) tryParseLabeledStmt(stmts []ir.Node, proto *Rule) (bool, error) {
+	if len(stmts) < 2 {
+		return false, nil
+	}
+	label, ok := stmts[0].(*ir.LabelStmt)
+	if !ok {
+		return false, nil
+	}
+	next, ok := stmts[1].(*ir.StmtList)
+	if !ok {
+		return false, nil
+	}
+
+	labelName := label.LabelName.Value
+	var mode parseMode
+	switch {
+	case labelName == "any" || strings.HasPrefix(labelName, "any_"):
+		mode = parseAny
+	case labelName == "seq" || strings.HasPrefix(labelName, "seq_"):
+		mode = parseSeq
+	default:
+		return false, nil
+	}
+
+	if mode == parseSeq {
+		return true, p.errorf(label, "seq is not implemented yet")
+	}
+
+	nextProto, err := p.parseRuleInfo(label, proto)
+	if err != nil {
+		return true, err
+	}
+
+	prevMode := p.mode
+	p.mode = mode
+	err = p.parseRules(next.Stmts, &nextProto)
+	p.mode = prevMode
+	return true, err
+}
+
+func (p *parser) parseRuleInfo(st ir.Node, proto *Rule) (Rule, error) {
+	var rule Rule
+
+	comment := p.commentText(st)
+	if p.mode == parseNormal && comment == "" {
+		return rule, nil
+	}
+
+	if proto != nil {
+		rule.Level = proto.Level
+		rule.Message = proto.Message
+		rule.Location = proto.Location
+		rule.Path = proto.Path
+
+		rule.Filters = make([]map[string]Filter, len(proto.Filters))
+		for i, filterSet := range proto.Filters {
+			rule.Filters[i] = make(map[string]Filter)
+			for name, filter := range filterSet {
+				rule.Filters[i][name] = filter
 			}
 		}
-		p.funcName = ""
-		return nil
-
-	case *ir.NamespaceStmt:
-		if len(st.Stmts) != 0 {
-			return p.errorf(st, "namespace with body is not supported")
-		}
-		p.namespace = meta.NameNodeToString(st.NamespaceName)
-		if strings.Contains(p.namespace, `\`) {
-			return p.errorf(st, "multi-part namespace names are not supported")
-		}
-		return nil
 	}
-
-	comment := ""
-	for _, ff := range (*st.GetFreeFloating())[freefloating.Start] {
-		if ff.StringType != freefloating.CommentType {
-			continue
-		}
-		if strings.HasPrefix(ff.Value, "/**") && magicComment.MatchString(ff.Value) {
-			comment = ff.Value
-			break
-		}
-	}
-	if comment == "" {
-		return nil
-	}
-
-	var rule Rule
 
 	if p.funcName != "" {
 		rule.Name = p.funcName
 	}
 
 	var filterSet map[string]Filter
-	dst := p.res.Any // Use "any" set by default
 
 	for _, part := range phpdoc.Parse(p.typeParser, comment) {
 		part := part.(*phpdoc.RawCommentPart)
 		switch part.Name() {
 		case "name":
 			if len(part.Params) != 1 {
-				return p.errorf(st, "@name expects exactly 1 param, got %d", len(part.Params))
+				return rule, p.errorf(st, "@name expects exactly 1 param, got %d", len(part.Params))
 			}
 			if p.funcName != "" {
-				return p.errorf(st, "@name is not allowed inside a function")
+				return rule, p.errorf(st, "@name is not allowed inside a function")
 			}
 			rule.Name = part.Params[0]
 
 		case "location":
 			if len(part.Params) != 1 {
-				return p.errorf(st, "@location expects exactly 1 params, got %d", len(part.Params))
+				return rule, p.errorf(st, "@location expects exactly 1 params, got %d", len(part.Params))
 			}
 			name := part.Params[0]
 			if !strings.HasPrefix(name, "$") {
-				return p.errorf(st, "@location 2nd param must be a phpgrep variable")
+				return rule, p.errorf(st, "@location 2nd param must be a phpgrep variable")
 			}
 			rule.Location = strings.TrimPrefix(name, "$")
 
 		case "scope":
 			if len(part.Params) != 1 {
-				return p.errorf(st, "@scope expects exactly 1 params, got %d", len(part.Params))
+				return rule, p.errorf(st, "@scope expects exactly 1 params, got %d", len(part.Params))
 			}
 			switch part.Params[0] {
 			case "any":
-				dst = p.res.Any
 				rule.scope = "any"
 			case "root":
-				dst = p.res.Root
 				rule.scope = "root"
 			case "local":
-				dst = p.res.Local
-				rule.scope = "block"
+				rule.scope = "local"
 			default:
-				return p.errorf(st, "unknown @scope: %s", part.Params[0])
+				return rule, p.errorf(st, "unknown @scope: %s", part.Params[0])
 			}
 
 		case "error":
@@ -182,7 +210,7 @@ func (p *parser) parseRule(st ir.Node) error {
 
 		case "fix":
 			if rule.Fix != "" {
-				return p.errorf(st, "duplicated @fix")
+				return rule, p.errorf(st, "duplicated @fix")
 			}
 			rule.Fix = part.ParamsText
 
@@ -191,20 +219,20 @@ func (p *parser) parseRule(st ir.Node) error {
 			filterSet = nil
 		case "path":
 			if len(part.Params) != 1 {
-				return p.errorf(st, "@path expects exactly 1 param, got %d", len(part.Params))
+				return rule, p.errorf(st, "@path expects exactly 1 param, got %d", len(part.Params))
 			}
 			if rule.Path != "" {
-				return p.errorf(st, "duplicate @path constraint")
+				return rule, p.errorf(st, "duplicate @path constraint")
 			}
 			rule.Path = part.Params[0]
 		case "type":
 			if len(part.Params) != 2 {
-				return p.errorf(st, "@type expects exactly 2 params, got %d", len(part.Params))
+				return rule, p.errorf(st, "@type expects exactly 2 params, got %d", len(part.Params))
 			}
 			typeString := part.Params[0]
 			name := part.Params[1]
 			if !strings.HasPrefix(name, "$") {
-				return p.errorf(st, "@type 2nd param must be a phpgrep variable")
+				return rule, p.errorf(st, "@type 2nd param must be a phpgrep variable")
 			}
 			name = strings.TrimPrefix(name, "$")
 			if filterSet == nil {
@@ -212,23 +240,23 @@ func (p *parser) parseRule(st ir.Node) error {
 			}
 			filter := filterSet[name]
 			if filter.Type != nil {
-				return p.errorf(st, "$%s: duplicate type constraint", name)
+				return rule, p.errorf(st, "$%s: duplicate type constraint", name)
 			}
 			typ := p.typeParser.Parse(typeString).Clone()
 			switch typ.Expr.Kind {
 			case phpdoc.ExprInvalid, phpdoc.ExprUnknown:
-				return p.errorf(st, "$%s: parseType(%s): bad type expression", name, typ)
+				return rule, p.errorf(st, "$%s: parseType(%s): bad type expression", name, typ)
 			}
 			filter.Type = new(phpdoc.Type)
 			*filter.Type = typ
 			filterSet[name] = filter
 		case "pure":
 			if len(part.Params) != 1 {
-				return p.errorf(st, "@pure expects exactly 1 param, got %d", len(part.Params))
+				return rule, p.errorf(st, "@pure expects exactly 1 param, got %d", len(part.Params))
 			}
 			name := part.Params[0]
 			if !strings.HasPrefix(name, "$") {
-				return p.errorf(st, "@pure param must be a phpgrep variable")
+				return rule, p.errorf(st, "@pure param must be a phpgrep variable")
 			}
 			name = strings.TrimPrefix(name, "$")
 			if filterSet == nil {
@@ -239,12 +267,12 @@ func (p *parser) parseRule(st ir.Node) error {
 			filterSet[name] = filter
 
 		default:
-			return p.errorf(st, "unknown attribute @%s on line %d", part.Name(), part.Line())
+			return rule, p.errorf(st, "unknown attribute @%s on line %d", part.Name(), part.Line())
 		}
 	}
 
 	if rule.Name == "" {
-		return p.errorf(st, "missing @name attribute")
+		return rule, p.errorf(st, "missing @name attribute")
 	}
 	if p.namespace != "" {
 		rule.Name = p.namespace + "/" + rule.Name
@@ -253,6 +281,77 @@ func (p *parser) parseRule(st ir.Node) error {
 
 	if filterSet != nil {
 		rule.Filters = append(rule.Filters, filterSet)
+	}
+
+	return rule, nil
+}
+
+func (p *parser) parseRules(stmts []ir.Node, proto *Rule) error {
+	for len(stmts) > 0 {
+		stmt := stmts[0]
+
+		ok, err := p.tryParseLabeledStmt(stmts, proto)
+		if err != nil {
+			return err
+		}
+		if ok {
+			stmts = stmts[2:]
+			continue
+		}
+
+		if err := p.parseRule(stmt, proto); err != nil {
+			return err
+		}
+		stmts = stmts[1:]
+	}
+
+	return nil
+}
+
+func (p *parser) parseRule(st ir.Node, proto *Rule) error {
+	switch st := st.(type) {
+	case *ir.FunctionStmt:
+		p.funcName = st.FunctionName.Value
+		if err := p.parseFuncComment(st); err != nil {
+			return nil
+		}
+		if err := p.parseRules(st.Stmts, proto); err != nil {
+			return p.errorf(st, "%s: %v", p.funcName, err)
+		}
+		p.funcName = ""
+		return nil
+
+	case *ir.NamespaceStmt:
+		if len(st.Stmts) != 0 {
+			return p.errorf(st, "namespace with body is not supported")
+		}
+		p.namespace = meta.NameNodeToString(st.NamespaceName)
+		if strings.Contains(p.namespace, `\`) {
+			return p.errorf(st, "multi-part namespace names are not supported")
+		}
+		return nil
+	}
+
+	rule, err := p.parseRuleInfo(st, proto)
+	if err != nil {
+		return err
+	}
+
+	dst := p.res.Any // Use "any" set by default
+	switch rule.scope {
+	case "any":
+		dst = p.res.Any
+	case "root":
+		dst = p.res.Root
+	case "local":
+		dst = p.res.Local
+	}
+
+	if rulesDoc, ok := p.res.DocByName[p.funcName]; ok {
+		if !rulesDoc.Fix && rule.Fix != "" {
+			rulesDoc.Fix = true
+			p.res.DocByName[p.funcName] = rulesDoc
+		}
 	}
 
 	pos := ir.GetPosition(st)
@@ -269,6 +368,38 @@ func (p *parser) parseRule(st ir.Node) error {
 	dst.RulesByKind[kind] = append(dst.RulesByKind[kind], rule)
 
 	return nil
+}
+
+func (p *parser) parseFuncComment(fn *ir.FunctionStmt) error {
+	if fn.PhpDocComment == "" {
+		return nil
+	}
+	var doc RuleDoc
+	for _, part := range phpdoc.Parse(p.typeParser, fn.PhpDocComment) {
+		part := part.(*phpdoc.RawCommentPart)
+		switch part.Name() {
+		case "comment":
+			doc.Comment = part.ParamsText
+		case "before":
+			doc.Before = part.ParamsText
+		case "after":
+			doc.After = part.ParamsText
+		}
+	}
+	p.res.DocByName[p.funcName] = doc
+	return nil
+}
+
+func (p *parser) commentText(n ir.Node) string {
+	for _, ff := range (*n.GetFreeFloating())[freefloating.Start] {
+		if ff.StringType != freefloating.CommentType {
+			continue
+		}
+		if strings.HasPrefix(ff.Value, "/**") && magicComment.MatchString(ff.Value) {
+			return ff.Value
+		}
+	}
+	return ""
 }
 
 func (p *parser) errorf(n ir.Node, format string, args ...interface{}) *parseError {

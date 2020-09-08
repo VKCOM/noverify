@@ -17,17 +17,19 @@ const (
 func init() {
 	allChecks := []CheckInfo{
 		{
-			Name:    "intOverflow",
-			Default: true,
-			Comment: `Report potential integer overflows that may result in unexpected behavior.`,
-			Before:  `return -9223372036854775808;`,
-			After:   `return PHP_INT_MIN;`,
+			Name:     "intOverflow",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report potential integer overflows that may result in unexpected behavior.`,
+			Before:   `return -9223372036854775808;`,
+			After:    `return PHP_INT_MIN;`,
 		},
 
 		{
-			Name:    "discardExpr",
-			Default: true,
-			Comment: `Report expressions that are evaluated but not used.`,
+			Name:     "discardExpr",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report expressions that are evaluated but not used.`,
 			Before: `if ($cond) {
   [$v, $err];
 }`,
@@ -37,97 +39,91 @@ func init() {
 		},
 
 		{
-			Name:    "precedence",
-			Default: true,
-			Comment: `Report potential operation precedence issues.`,
-			Before:  `$x & $mask == 0; // == has higher precedence than &`,
-			After:   `($x & $mask) == 0`,
+			Name:     "voidResultUsed",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report usages of the void-type expressions`,
+			Before:   `$x = var_dump($v); // var_dump returns void`,
+			After:    `$x = print_r($v, true);`,
 		},
 
 		{
-			Name:    "voidResultUsed",
-			Default: true,
-			Comment: `Report usages of the void-type expressions`,
-			Before:  `$x = var_dump($v); // var_dump returns void`,
-			After:   `$x = print_r($v, true);`,
+			Name:     "keywordCase",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report keywords that are not in the lower case.`,
+			Before:   `RETURN $x;`,
+			After:    `return $x;`,
 		},
 
 		{
-			Name:    "keywordCase",
-			Default: true,
-			Comment: `Report keywords that are not in the lower case.`,
-			Before:  `RETURN $x;`,
-			After:   `return $x;`,
+			Name:     "accessLevel",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report erroneous member access.`,
+			Before:   `$x->_run(); // _run() is private, can't be accessed`,
+			After:    `$x->run(); // run() is public`,
 		},
 
 		{
-			Name:    "accessLevel",
-			Default: true,
-			Comment: `Report erroneous member access.`,
-			Before:  `$x->_run(); // _run() is private, can't be accessed`,
-			After:   `$x->run(); // run() is public`,
+			Name:     "argCount",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report mismatching args count inside call expressions.`,
+			Before:   `array_combine($keys)`,
+			After:    `array_combine($keys, $values)`,
 		},
 
 		{
-			Name:    "argCount",
-			Default: true,
-			Comment: `Report mismatching args count inside call expressions.`,
-			Before:  `array_combine($keys)`,
-			After:   `array_combine($keys, $values)`,
+			Name:     "redundantGlobal",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report global statement over superglobal variables (which is redundant).`,
+			Before:   `global $Foo, $_GET; // $_GET is superglobal`,
+			After:    `global $Foo;`,
 		},
 
 		{
-			Name:    "redundantGlobal",
-			Default: true,
-			Comment: `Report global statement over superglobal variables (which is redundant).`,
-			Before:  `global $Foo, $_GET; // $_GET is superglobal`,
-			After:   `global $Foo;`,
+			Name:     "arrayAccess",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report array access to non-array objects.`,
+			Before:   `return $foo[0]; // $foo value may not implement ArrayAccess`,
+			After:    `if ($foo instanceof ArrayAccess) { return $foo[0]; }`,
 		},
 
 		{
-			Name:    "arrayAccess",
-			Default: true,
-			Comment: `Report array access to non-array objects.`,
-			Before:  `return $foo[0]; // $foo value may not implement ArrayAccess`,
-			After:   `if ($foo instanceof ArrayAccess) { return $foo[0]; }`,
+			Name:     "mixedArrayKeys",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report array literals that have both implicit and explicit keys.`,
+			Before:   `['a', 5 => 'b']`,
+			After:    `[0 => 'a', 5 => 'b']`,
 		},
 
 		{
-			Name:    "bitwiseOps",
-			Default: true,
-			Comment: `Report suspicious usage of bitwise operations.`,
-			Before:  `if ($isURL & $verify) ...`,
-			After:   `if ($isURL && $veriry) ...`,
+			Name:     "dupGlobal",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report repeated global statements over variables.`,
+			Before:   `global $x, $y, $x;`,
+			After:    `global $x, $y;`,
 		},
 
 		{
-			Name:    "mixedArrayKeys",
-			Default: true,
-			Comment: `Report array literals that have both implicit and explicit keys.`,
-			Before:  `['a', 5 => 'b']`,
-			After:   `[0 => 'a', 5 => 'b']`,
+			Name:     "dupArrayKeys",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report duplicated keys in array literals.`,
+			Before:   `[A => 1, B => 2, A => 3]`,
+			After:    `[A => 1, B => 2, C => 3]`,
 		},
 
 		{
-			Name:    "dupGlobal",
-			Default: true,
-			Comment: `Report repeated global statements over variables.`,
-			Before:  `global $x, $y, $x;`,
-			After:   `global $x, $y;`,
-		},
-
-		{
-			Name:    "dupArrayKeys",
-			Default: true,
-			Comment: `Report duplicated keys in array literals.`,
-			Before:  `[A => 1, B => 2, A => 3]`,
-			After:   `[A => 1, B => 2, C => 3]`,
-		},
-
-		{
-			Name:    "dupCond",
-			Default: true,
-			Comment: `Report duplicated conditions in switch and if/else statements.`,
+			Name:     "dupCond",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report duplicated conditions in switch and if/else statements.`,
 			Before: `if ($status == OK) {
   return "OK";
 } elseif ($status == OK) { // Duplicated condition
@@ -145,33 +141,37 @@ func init() {
 		},
 
 		{
-			Name:    "dupBranchBody",
-			Default: true,
-			Comment: `Report suspicious conditional branches that execute the same action.`,
-			Before:  `$pickLeft ? foo($left) : foo($left)`,
-			After:   `$pickLeft ? foo($left) : foo($right)`,
+			Name:     "dupBranchBody",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report suspicious conditional branches that execute the same action.`,
+			Before:   `$pickLeft ? foo($left) : foo($left)`,
+			After:    `$pickLeft ? foo($left) : foo($right)`,
 		},
 
 		{
-			Name:    "dupSubExpr",
-			Default: true,
-			Comment: `Report suspicious duplicated operands in expressions.`,
-			Before:  `return $x[$i] < $x[$i]; // $x[$i] is duplicated`,
-			After:   `return $x[$i] < $x[$j];`,
+			Name:     "dupSubExpr",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report suspicious duplicated operands in expressions.`,
+			Before:   `return $x[$i] < $x[$i]; // $x[$i] is duplicated`,
+			After:    `return $x[$i] < $x[$j];`,
 		},
 
 		{
-			Name:    "arraySyntax",
-			Default: true,
-			Comment: `Report usages of old array() syntax.`,
-			Before:  `array(1, 2)`,
-			After:   `[1, 2]`,
+			Name:     "arraySyntax",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report usages of old array() syntax.`,
+			Before:   `array(1, 2)`,
+			After:    `[1, 2]`,
 		},
 
 		{
-			Name:    "bareTry",
-			Default: true,
-			Comment: `Report try blocks without catch/finally.`,
+			Name:     "bareTry",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report try blocks without catch/finally.`,
 			Before: `try {
   doit();
 }`,
@@ -183,9 +183,10 @@ func init() {
 		},
 
 		{
-			Name:    "caseBreak",
-			Default: true,
-			Comment: `Report switch cases without break.`,
+			Name:     "caseBreak",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report switch cases without break.`,
 			Before: `switch ($v) {
 case 1:
   echo "one"; // May want to insert a "break" here
@@ -208,9 +209,10 @@ case 3:
 		},
 
 		{
-			Name:    "complexity",
-			Default: true,
-			Comment: `Report funcs/methods that are too complex.`,
+			Name:     "complexity",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report funcs/methods that are too complex.`,
 			Before: `function checkRights() {
   // Super big function.
 }`,
@@ -220,9 +222,10 @@ case 3:
 		},
 
 		{
-			Name:    "deadCode",
-			Default: true,
-			Comment: `Report potentially unreachable code.`,
+			Name:     "deadCode",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report potentially unreachable code.`,
 			Before: `
 thisFunctionExits(); // Always exits
 foo(); // Dead code`,
@@ -232,33 +235,37 @@ thisFunctionExits();`,
 		},
 
 		{
-			Name:    "phpdocLint",
-			Default: true,
-			Comment: `Report malformed phpdoc comments.`,
-			Before:  `@property $foo`,
-			After:   `@property Foo $foo`,
+			Name:     "phpdocLint",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report malformed phpdoc comments.`,
+			Before:   `@property $foo`,
+			After:    `@property Foo $foo`,
 		},
 
 		{
-			Name:    "phpdocType",
-			Default: true,
-			Comment: `Report potential issues in phpdoc types.`,
-			Before:  `@var []int $xs`,
-			After:   `@var int[] $xs`,
+			Name:     "phpdocType",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report potential issues in phpdoc types.`,
+			Before:   `@var []int $xs`,
+			After:    `@var int[] $xs`,
 		},
 
 		{
-			Name:    "phpdocRef",
-			Default: true,
-			Comment: `Report invalid symbol references inside phpdoc.`,
-			Before:  `@see MyClass`,
-			After:   `@see \Foo\MyClass`,
+			Name:     "phpdocRef",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report invalid symbol references inside phpdoc.`,
+			Before:   `@see MyClass`,
+			After:    `@see \Foo\MyClass`,
 		},
 
 		{
-			Name:    "phpdoc",
-			Default: true,
-			Comment: `Report missing phpdoc on public methods.`,
+			Name:     "phpdoc",
+			Default:  false,
+			Quickfix: false,
+			Comment:  `Report missing phpdoc on public methods.`,
 			Before: `public function process($acts, $config) {
   // Does something very complicated.
 }`,
@@ -276,15 +283,17 @@ public function process($acts, $config) {
 		},
 
 		{
-			Name:    "stdInterface",
-			Default: true,
-			Comment: `Report issues related to std PHP interfaces.`,
+			Name:     "stdInterface",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report issues related to std PHP interfaces.`,
 		},
 
 		{
-			Name:    "unimplemented",
-			Default: true,
-			Comment: `Report classes that don't implement their contract.`,
+			Name:     "unimplemented",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report classes that don't implement their contract.`,
 			Before: `class MyObj implements Serializable {
   public function serialize() { /* ... */ }
 }`,
@@ -295,17 +304,19 @@ public function process($acts, $config) {
 		},
 
 		{
-			Name:    "syntax",
-			Default: true,
-			Comment: `Report syntax errors.`,
-			Before:  `foo(1]`,
-			After:   `foo(1)`,
+			Name:     "syntax",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report syntax errors.`,
+			Before:   `foo(1]`,
+			After:    `foo(1)`,
 		},
 
 		{
-			Name:    "undefined",
-			Default: true,
-			Comment: `Report usages of potentially undefined symbols.`,
+			Name:     "undefined",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report usages of potentially undefined symbols.`,
 			Before: `if ($cond) {
   $v = 10;
 }
@@ -318,9 +329,10 @@ return $v;`,
 		},
 
 		{
-			Name:    "unused",
-			Default: true,
-			Comment: `Report potentially unused variables.`,
+			Name:     "unused",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report potentially unused variables.`,
 			Before: `$result = calculateResult(); // Unused $result
 return [$err];`,
 			After: `$result = calculateResult();
@@ -328,47 +340,53 @@ return [$result, $err];`,
 		},
 
 		{
-			Name:    "redundantCast",
-			Default: false,
-			Comment: `Report redundant type casts.`,
-			Before:  `return (int)10;`,
-			After:   `return 10;`,
+			Name:     "redundantCast",
+			Default:  false,
+			Quickfix: false,
+			Comment:  `Report redundant type casts.`,
+			Before:   `return (int)10;`,
+			After:    `return 10;`,
 		},
 
 		{
-			Name:    "newAbstract",
-			Default: true,
-			Comment: `Report abstract classes usages in new expressions.`,
-			Before:  `return new AbstractFactory();`,
-			After:   `return new NonAbstractFactory();`,
+			Name:     "newAbstract",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report abstract classes usages in new expressions.`,
+			Before:   `return new AbstractFactory();`,
+			After:    `return new NonAbstractFactory();`,
 		},
 
 		{
-			Name:    "regexpSimplify",
-			Default: true,
-			Comment: `Report regular expressions that can be simplified.`,
-			Before:  `preg_match('/x(?:a|b|c){0,}/', $s)`,
-			After:   `preg_match('/x[abc]*/', $s)`,
+			Name:     "regexpSimplify",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report regular expressions that can be simplified.`,
+			Before:   `preg_match('/x(?:a|b|c){0,}/', $s)`,
+			After:    `preg_match('/x[abc]*/', $s)`,
 		},
 
 		{
-			Name:    "regexpVet",
-			Default: true,
-			Comment: `Report suspicious regexp patterns.`,
-			Before:  `preg_match('a\d+a', $s); // 'a' is not a valid delimiter`,
-			After:   `preg_match('/\d+/', $s);`,
+			Name:     "regexpVet",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report suspicious regexp patterns.`,
+			Before:   `preg_match('a\d+a', $s); // 'a' is not a valid delimiter`,
+			After:    `preg_match('/\d+/', $s);`,
 		},
 
 		{
-			Name:    "regexpSyntax",
-			Default: true,
-			Comment: `Report regexp syntax errors.`,
+			Name:     "regexpSyntax",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report regexp syntax errors.`,
 		},
 
 		{
-			Name:    "caseContinue",
-			Default: true,
-			Comment: `Report suspicious 'continue' usages inside switch cases.`,
+			Name:     "caseContinue",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report suspicious 'continue' usages inside switch cases.`,
 			Before: `switch ($v) {
 case STOP:
   continue; // This acts like a "break"
@@ -386,25 +404,28 @@ case INC:
 		},
 
 		{
-			Name:    "deprecated",
-			Default: false, // Experimental
-			Comment: `Report usages of deprecated symbols.`,
-			Before:  `ereg($pat, $s)`,
-			After:   `preg_match($pat, $s)`,
+			Name:     "deprecated",
+			Default:  false, // Experimental
+			Quickfix: false,
+			Comment:  `Report usages of deprecated symbols.`,
+			Before:   `ereg($pat, $s)`,
+			After:    `preg_match($pat, $s)`,
 		},
 
 		{
-			Name:    "callStatic",
-			Default: true,
-			Comment: `Report static calls of instance methods and vice versa.`,
-			Before:  `$object::instance_method()`,
-			After:   `$object->instance_method()`,
+			Name:     "callStatic",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report static calls of instance methods and vice versa.`,
+			Before:   `$object::instance_method()`,
+			After:    `$object->instance_method()`,
 		},
 
 		{
-			Name:    "parentConstructor",
-			Default: true,
-			Comment: `Report missing parent::__construct calls in class constructors.`,
+			Name:     "parentConstructor",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report missing parent::__construct calls in class constructors.`,
 			Before: `class Foo extends Bar {
   public function __construct($x, $y) {
     $this->y = $y;
@@ -419,9 +440,10 @@ case INC:
 		},
 
 		{
-			Name:    "oldStyleConstructor",
-			Default: true,
-			Comment: `Report old-style (PHP4) class constructors.`,
+			Name:     "oldStyleConstructor",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report old-style (PHP4) class constructors.`,
 			Before: `class Foo {
   public function Foo($v) { $this->v = $v; }
 }`,
@@ -431,18 +453,20 @@ case INC:
 		},
 
 		{
-			Name:    "misspellName",
-			Default: true,
-			Comment: `Report commonly misspelled words in symbol names.`,
-			Before:  `function performace_test() ...`, //nolint:misspell
-			After:   `function performance_test() ...`,
+			Name:     "misspellName",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report commonly misspelled words in symbol names.`,
+			Before:   `function performace_test() ...`, //nolint:misspell
+			After:    `function performance_test() ...`,
 		},
 
 		//nolint:misspell
 		{
-			Name:    "misspellComment",
-			Default: true,
-			Comment: `Report commonly misspelled words in comments.`,
+			Name:     "misspellComment",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report commonly misspelled words in comments.`,
 			Before: `/** This is our performace test. */
 function performance_test() {}`,
 			After: `/** This is our performance test. */
@@ -450,9 +474,10 @@ function performance_test() {}`,
 		},
 
 		{
-			Name:    "nonPublicInterfaceMember",
-			Default: true,
-			Comment: `Report illegal non-public access level in interfaces.`,
+			Name:     "nonPublicInterfaceMember",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report illegal non-public access level in interfaces.`,
 			Before: `interface Iface {
   function a(); // OK, public implied
   public function b(); // OK, public
@@ -468,15 +493,17 @@ function performance_test() {}`,
 		},
 
 		{
-			Name:    "linterError",
-			Default: true,
-			Comment: `Report linter error.`,
+			Name:     "linterError",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report linter error.`,
 		},
 
 		{
-			Name:    "magicMethodDecl",
-			Default: true,
-			Comment: `Report issues in magic method declarations.`,
+			Name:     "magicMethodDecl",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report issues in magic method declarations.`,
 			Before: `class Foo {
   private function __call($method, $args) {} // The magic method __call() must have public visibility
   public static function __set($name, $value) {} // The magic method __set() cannot be static
@@ -488,9 +515,10 @@ function performance_test() {}`,
 		},
 
 		{
-			Name:    "nameCase",
-			Default: true,
-			Comment: `Report symbol case mismatches.`,
+			Name:     "nameCase",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report symbol case mismatches.`,
 			Before: `class Foo {}
 $foo = new foo();`,
 			After: `class Foo {}
@@ -498,17 +526,19 @@ $foo = new Foo();`,
 		},
 
 		{
-			Name:    "strictCmp",
-			Default: true,
-			Comment: `Report non-strict comparison with false/true/null.`,
-			Before:  `$result == null`,
-			After:   `$result === null`,
+			Name:     "strictCmp",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report non-strict comparison with false/true/null.`,
+			Before:   `$result == null`,
+			After:    `$result === null`,
 		},
 
 		{
-			Name:    "paramClobber",
-			Default: true,
-			Comment: `Report assignments that overwrite params prior to their usage.`,
+			Name:     "paramClobber",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report assignments that overwrite params prior to their usage.`,
 			Before: `function api_get_video($user_id) {
   $user_id = 0;
   return get_video($user_id);
@@ -517,6 +547,15 @@ $foo = new Foo();`,
   $user_id = $user_id ?: 0;
   return get_video($user_id);
 }`,
+		},
+
+		{
+			Name:     "printf",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report issues in printf-like function calls.`,
+			Before:   `sprintf("id=%d")`,
+			After:    `sprintf("id=%d", $id)`,
 		},
 	}
 

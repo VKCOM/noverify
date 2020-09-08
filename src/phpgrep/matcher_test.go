@@ -16,7 +16,7 @@ func mustParse(t testing.TB, code string) ir.Node {
 	if err != nil {
 		t.Fatalf("parse `%s`: %v", code, err)
 	}
-	irnode := irconv.ConvertNode(n)
+	irnode := irconv.NewConverter().ConvertNode(n)
 	if n, ok := irnode.(*ir.ExpressionStmt); ok {
 		return n.Expr
 	}
@@ -308,6 +308,7 @@ func TestMatch(t *testing.T) {
 		{`${"int"}`, `13`},
 		{`${"float"}`, `3.4`},
 		{`${"str"}`, `"123"`},
+		{`${"char"}`, `"x"`},
 		{`${"num"}`, `13`},
 		{`${"num"}`, `3.4`},
 
@@ -457,6 +458,8 @@ func TestMatchNegative(t *testing.T) {
 		{`${"int"}`, `13.5`},
 		{`${"float"}`, `3`},
 		{`${"str"}`, `5`},
+		{`${"char"}`, `"aa"`},
+		{`${"char"}`, `1`},
 		{`${"num"}`, `$x`},
 		{`${"num"}`, `"1"`},
 

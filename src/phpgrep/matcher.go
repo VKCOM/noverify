@@ -209,6 +209,8 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 		return false // FIXME #23
 	case *ir.TraitStmt:
 		return false // FIXME #23
+	case *ir.AnonClassExpr:
+		return false
 
 	case *ir.InlineHTMLStmt:
 		y, ok := y.(*ir.InlineHTMLStmt)
@@ -739,6 +741,9 @@ func (m *matcher) eqVar(state *matcherState, x *ir.Var, y ir.Node) bool {
 	case anyStr:
 		_, ok := y.(*ir.String)
 		return ok && m.matchNamed(state, vn.name, y)
+	case anyStr1:
+		y, ok := y.(*ir.String)
+		return ok && len(y.Value) == 1 && m.matchNamed(state, vn.name, y)
 	case anyNum:
 		switch y.(type) {
 		case *ir.Lnumber, *ir.Dnumber:

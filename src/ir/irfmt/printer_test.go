@@ -1,7 +1,7 @@
 package irfmt_test
 
 import (
-	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -11,9 +11,137 @@ import (
 	"github.com/VKCOM/noverify/src/php/parseutil"
 )
 
-func TestPrinter(t *testing.T) {
-
+func TestPrinterSingleLine(t *testing.T) {
 	testCases := []string{
+		`$a`,
+		`$a = $b`,
+		`$a = 1`,
+		`$a =& $b`,
+		`$a &= $b`,
+		`$a |= $b`,
+		`$a ^= $b`,
+		`$a .= $b`,
+		`$a /= $b`,
+		`$a -= $b`,
+		`$a %= $b`,
+		`$a *= $b`,
+		`$a += $b`,
+		`$a **= $b`,
+		`$a <<= $b`,
+		`$a >>= $b`,
+		`$a & $b`,
+		`$a | $b`,
+		`$a ^ $b`,
+		`$a && $b`,
+		`$a || $b`,
+		`$a ?? $b`,
+		`$a . $b`,
+		`$a / $b`,
+		`$a == $b`,
+		`$a >= $b`,
+		`$a > $b`,
+		`$a === $b`,
+		`$a and $b`,
+		`$a or $b`,
+		`$a xor $b`,
+		`$a - $b`,
+		`$a % $b`,
+		`$a * $b`,
+		`$a != $b`,
+		`$a !== $b`,
+		`$a + $b`,
+		`$a ** $b`,
+		`$a << $b`,
+		`$a >> $b`,
+		`$a <= $b`,
+		`$a < $b`,
+		`$a <=> $b`,
+		`(array)$var`,
+		`(bool)$var`,
+		`(float)$var`,
+		`(int)$var`,
+		`(object)$var`,
+		`(string)$var`,
+		`(unset)$var`,
+		`$var[1]`,
+		`['Hello' => $world]`,
+		`array('Hello' => $world, 2 => &$var, $var)`,
+		`[...$x, $y, ...$z]`,
+		`~$var`,
+		`!$var`,
+		`$var::CONST`,
+		`clone $var`,
+		`empty($var)`,
+		`@$var`,
+		`eval($var)`,
+		`foo($a, ...$b, $c)`,
+		`include 'path'`,
+		`include_once 'path'`,
+		`require 'path'`,
+		`require_once 'path'`,
+		`$var instanceof Foo`,
+		`isset($a, $b)`,
+		`$foo->bar($a, $b)`,
+		`new Foo($a, $b)`,
+		`new Foo`,
+		`new Foo()`,
+		`$var--`,
+		`$var++`,
+		`--$var`,
+		`++$var`,
+		`$foo->bar`,
+		`['Hello' => $world, 2 => &$var, $var]`,
+		`[$a, list($b, $c)]`,
+		`Foo::bar($a, $b)`,
+		`Foo::$bar`,
+		`Foo::a`,
+		`$a ?: $b`,
+		`$a ? $b : $c`,
+		`-$var`,
+		`+$var`,
+		`$$var`,
+		`yield from $var`,
+		`yield $var`,
+		`yield $k => $var`,
+		`echo $a`,
+		`echo $a, $b`,
+		`global $a, $b`,
+		`goto FOO`,
+		`use function Foo\{Bar as Baz, Quuz}`,
+		`__halt_compiler()`,
+		`return 1.5`,
+		`throw new Exception($x)`,
+		`use Foo, Bar`,
+		`unset($a, $b)`,
+		`exit($var)`,
+		`die($var)`,
+		`list($a, list($b, $c)) = $a`,
+	}
+
+	for _, code := range testCases {
+		code += ";"
+		root, _, err := parseutil.ParseStmt([]byte(code))
+		if err != nil {
+			t.Fatalf("parse %s: %v", code, err)
+		}
+		rootIR := irconv.NewConverter().ConvertNode(root)
+
+		var buf strings.Builder
+		irfmt.NewPrettyPrinter(&buf, "    ").Print(rootIR)
+
+		want := code
+		have := buf.String()
+		if have != want {
+			t.Errorf("results mismatch (-have +want): %s", cmp.Diff(have, want))
+		}
+	}
+}
+
+func TestPrinter(t *testing.T) {
+	testCases := []string{
+		`FOO:
+
+`,
 		`namespace Foo {
 
 }
@@ -42,229 +170,9 @@ LBL;
 
 `,
 
-		`$a = $b;
-
-`,
-
-		`$a =& $b;
-
-`,
-
-		`$a &= $b;
-
-`,
-
-		`$a |= $b;
-
-`,
-
-		`$a ^= $b;
-
-`,
-
-		`$a .= $b;
-
-`,
-
-		`$a /= $b;
-
-`,
-
-		`$a -= $b;
-
-`,
-
-		`$a %= $b;
-
-`,
-
-		`$a *= $b;
-
-`,
-
-		`$a += $b;
-
-`,
-
-		`$a **= $b;
-
-`,
-
-		`$a <<= $b;
-
-`,
-
-		`$a >>= $b;
-
-`,
-
-		`$a & $b;
-
-`,
-
-		`$a | $b;
-
-`,
-
-		`$a ^ $b;
-
-`,
-
-		`$a && $b;
-
-`,
-
-		`$a || $b;
-
-`,
-
-		`$a ?? $b;
-
-`,
-
-		`$a . $b;
-
-`,
-
-		`$a / $b;
-
-`,
-
-		`$a == $b;
-
-`,
-
-		`$a >= $b;
-
-`,
-
-		`$a > $b;
-
-`,
-
-		`$a === $b;
-
-`,
-
-		`$a and $b;
-
-`,
-
-		`$a or $b;
-
-`,
-
-		`$a xor $b;
-
-`,
-
-		`$a - $b;
-
-`,
-
-		`$a % $b;
-
-`,
-
-		`$a * $b;
-
-`,
-
-		`$a != $b;
-
-`,
-
-		`$a !== $b;
-
-`,
-
-		`$a + $b;
-
-`,
-
-		`$a ** $b;
-
-`,
-
-		`$a << $b;
-
-`,
-
-		`$a >> $b;
-
-`,
-
-		`$a <= $b;
-
-`,
-
-		`$a < $b;
-
-`,
-
-		`$a <=> $b;
-
-`,
-
-		`(array)$var;
-
-`,
-
-		`(bool)$var;
-
-`,
-
-		`(float)$var;
-
-`,
-
-		`(int)$var;
-
-`,
-
-		`(object)$var;
-
-`,
-
-		`(string)$var;
-
-`,
-
-		`(unset)$var;
-
-`,
-
-		`$var[1];
-
-`,
-
-		`$_ = ['Hello' => $world];
-
-`,
-
 		`function foo(&$world) {
 
 }
-
-`,
-
-		`$_ = array('Hello' => $world, 2 => &$var, $var);
-
-`,
-
-		`~$var;
-
-`,
-
-		`!$var;
-
-`,
-
-		`$var::CONST;
-
-`,
-
-		`clone $var;
 
 `,
 
@@ -282,145 +190,9 @@ LBL;
 
 `,
 
-		`empty($var);
-
-`,
-
-		`@$var;
-
-`,
-
-		`eval($var);
-
-`,
-
-		`exit($var);
-
-`,
-
-		`die($var);
-
-`,
-
-		`foo($a, ...$b, $c);
-
-`,
-
-		`include 'path';
-
-`,
-
-		`include_once 'path';
-
-`,
-
-		`$var instanceof Foo;
-
-`,
-
-		`isset($a, $b);
-
-`,
-
-		`list($a, list($b, $c)) = $a;
-
-`,
-
-		`$foo->bar($a, $b);
-
-`,
-
-		`new Foo($a, $b);
-
-`,
-
-		`new Foo;
-
-`,
-
-		`new Foo();
-
-`,
-
-		`$var--;
-
-`,
-
-		`$var++;
-
-`,
-
-		`--$var;
-
-`,
-
-		`++$var;
-
-`,
-
-		`$foo->bar;
-
-`,
-
 		`function f(&$foo) {
 
 }
-
-`,
-
-		`require 'path';
-
-`,
-
-		`require_once 'path';
-
-`,
-
-		`['Hello' => $world, 2 => &$var, $var];
-
-`,
-
-		`[$a, list($b, $c)];
-
-`,
-
-		`Foo::bar($a, $b);
-
-`,
-
-		`Foo::$bar;
-
-`,
-
-		`$a ?: $b;
-
-`,
-
-		`$a ? $b : $c;
-
-`,
-
-		`-$var;
-
-`,
-
-		`+$var;
-
-`,
-
-		`$$var;
-
-`,
-
-		`yield from $var;
-
-`,
-
-		`yield $var;
-
-`,
-
-		`yield $k => $var;
 
 `,
 
@@ -590,14 +362,6 @@ endswitch;
 
 `,
 
-		`echo $a, $b;
-
-`,
-
-		`$a;
-
-`,
-
 		`namespace {
     try {
 
@@ -656,22 +420,6 @@ endswitch;
 
 `,
 
-		`global $a, $b;
-
-`,
-
-		`goto FOO;
-
-`,
-
-		`use function Foo\{Bar as Baz, Quuz};
-
-`,
-
-		`__halt_compiler();
-
-`,
-
 		`namespace {
     if ($a)
         $b;
@@ -716,10 +464,6 @@ endswitch;
 
 `,
 
-		`FOO:
-
-`,
-
 		`namespace Foo {
 
 }
@@ -740,14 +484,6 @@ endswitch;
 {
     public static $a, $b;
 }
-
-`,
-
-		`$a = 1;
-
-`,
-
-		`return 1;
 
 `,
 
@@ -788,18 +524,6 @@ endswitch;
 
 `,
 
-		`throw $var;
-
-`,
-
-		`Foo::a;
-
-`,
-
-		`use Foo, Bar;
-
-`,
-
 		`namespace {
     trait Foo
     {
@@ -825,11 +549,6 @@ endswitch;
 }
 
 `,
-
-		`unset($a, $b);
-
-`,
-
 		`namespace {
     while ($a) {
         $a;
@@ -837,7 +556,6 @@ endswitch;
 }
 
 `,
-
 		`namespace {
     while ($a)
         $a;
@@ -848,32 +566,36 @@ endswitch;
 		`while ($a);
 
 `,
+		`new class
+{
+    public $foo = 10;
+};
+
+`,
+		`new class(1, "arg2")
+{
+
+};
+
+`,
 	}
 
 	for _, code := range testCases {
-		runPrinterTest(t, code)
-	}
-}
+		code = "<?php\n" + code
+		root, err := parseutil.ParseFile([]byte(code))
+		if err != nil {
+			t.Fatalf("parse %s: %v", code, err)
+		}
 
-func runPrinterTest(t *testing.T, code string) {
-	t.Helper()
+		rootIR := irconv.NewConverter().ConvertNode(root)
 
-	code = "<?php\n" + code
-	root, err := parseutil.ParseFile([]byte(code))
-	if err != nil {
-		t.Errorf("parse %s: %v", code, err)
-		return
-	}
-	rootIR := irconv.ConvertRoot(root)
+		var buf strings.Builder
+		irfmt.NewPrettyPrinter(&buf, "    ").Print(rootIR)
 
-	o := bytes.NewBufferString("")
-	p := irfmt.NewPrettyPrinter(o, "    ")
-
-	p.Print(rootIR)
-	want := o.String()
-	have := code
-
-	if !cmp.Equal(want, have) {
-		t.Errorf("results mismatch (+ have) (- want): %s", cmp.Diff(want, have))
+		want := code
+		have := buf.String()
+		if have != want {
+			t.Errorf("results mismatch (-have +want): %s", cmp.Diff(have, want))
+		}
 	}
 }

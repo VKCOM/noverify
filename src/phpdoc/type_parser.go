@@ -63,6 +63,12 @@ const (
 	// Args[1] - val expression (right)
 	ExprKeyVal
 
+	// ExprMemberType is access to member.
+	// Examples: `\Foo::SOME_CONSTANT` `\Foo::$a`
+	// Args[0] - class type expression (left)
+	// Args[1] - member name expression (right)
+	ExprMemberType
+
 	// ExprArray is `elem[]` or `[]elem` type.
 	// Examples: `int[]` `(int|float)[]` `int[`
 	// Args[0] - array element type
@@ -129,20 +135,21 @@ const (
 )
 
 var prefixPrecedenceTab = [256]byte{
-	'?': 4,
-	'[': 4,
-	'!': 4,
+	'?': 5,
+	'[': 5,
+	'!': 5,
 }
 
 var infixPrecedenceTab = [256]byte{
 	':': 1,
 	'|': 2,
-	'&': 3,
-	'[': 4,
-	'<': 5,
-	'(': 5,
-	'{': 5,
-	'?': 4,
+	';': 3, // is ::
+	'&': 4,
+	'[': 5,
+	'<': 6,
+	'(': 6,
+	'{': 6,
+	'?': 5,
 }
 
 type TypeParser struct {
@@ -282,14 +289,32 @@ func (p *TypeParser) parseExpr(precedence byte) *TypeExpr {
 		p.skipWhitespace()
 	}
 
-	for precedence < infixPrecedenceTab[p.peek()] {
+	calcPrecedence := func() byte {
+		prc := infixPrecedenceTab[p.peek()]
+		if p.peek() == ':' {
+			ch := p.peekAt(p.pos + 1)
+			if ch == ':' {
+				prc = 3
+			}
+		}
+		return prc
+	}
+
+	for precedence < calcPrecedence() {
 		ch := p.nextByte()
 		switch ch {
 		case '?':
 			left = p.newExpr(ExprOptional, begin, uint16(p.pos), left)
 		case ':':
-			right := p.parseExpr(infixPrecedenceTab[':'])
-			left = p.newExpr(ExprKeyVal, begin, uint16(p.pos), left, right)
+			isMemberType := p.peek() == ':'
+			if isMemberType {
+				_ = p.nextByte()
+				right := p.parseExpr(infixPrecedenceTab[';'])
+				left = p.newExpr(ExprMemberType, begin, uint16(p.pos), left, right)
+			} else {
+				right := p.parseExpr(infixPrecedenceTab[':'])
+				left = p.newExpr(ExprKeyVal, begin, uint16(p.pos), left, right)
+			}
 		case '[':
 			if p.peek() == ']' {
 				p.pos++

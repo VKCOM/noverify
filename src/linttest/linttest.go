@@ -222,12 +222,18 @@ func (s *Suite) RunLinter() []*linter.Report {
 		}
 	}
 
+	indexing := linter.NewIndexingWorker(0)
+	indexing.AllowDisable = s.AllowDisable
+
 	shuffleFiles(s.Files)
 	for _, f := range s.Files {
-		parseTestFile(s.t, f, s.AllowDisable)
+		parseTestFile(s.t, indexing, f)
 	}
 
 	meta.SetIndexingComplete(true)
+
+	linting := linter.NewLintingWorker(0)
+	linting.AllowDisable = s.AllowDisable
 
 	shuffleFiles(s.Files)
 	var reports []*linter.Report
@@ -239,7 +245,7 @@ func (s *Suite) RunLinter() []*linter.Report {
 			continue
 		}
 
-		_, w := parseTestFile(s.t, f, s.AllowDisable)
+		_, w := parseTestFile(s.t, linting, f)
 		reports = append(reports, w.GetReports()...)
 	}
 
@@ -261,10 +267,16 @@ func (s *Suite) RunLinter() []*linter.Report {
 
 // ParseTestFile parses given test file.
 func ParseTestFile(t *testing.T, filename, content string) (rootNode *ir.Root, w *linter.RootWalker) {
-	return parseTestFile(t, TestFile{
+	var worker *linter.Worker
+	if meta.IsIndexingComplete() {
+		worker = linter.NewLintingWorker(0)
+	} else {
+		worker = linter.NewIndexingWorker(0)
+	}
+	return parseTestFile(t, worker, TestFile{
 		Name: filename,
 		Data: []byte(content),
-	}, nil)
+	})
 }
 
 // RunFilterMatch calls Match with the filtered results of RunLinter.
@@ -299,9 +311,9 @@ func shuffleFiles(files []TestFile) {
 	})
 }
 
-func parseTestFile(t testing.TB, f TestFile, allowDisable *regexp.Regexp) (rootNode *ir.Root, w *linter.RootWalker) {
+func parseTestFile(t testing.TB, worker *linter.Worker, f TestFile) (rootNode *ir.Root, w *linter.RootWalker) {
 	var err error
-	rootNode, w, err = linter.ParseContents(f.Name, f.Data, nil, allowDisable)
+	rootNode, w, err = worker.ParseContents(f.Name, f.Data, nil)
 	if err != nil {
 		t.Fatalf("could not parse %s: %v", f.Name, err.Error())
 	}

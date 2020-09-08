@@ -1,6 +1,7 @@
 package phpgrep
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
@@ -11,6 +12,8 @@ import (
 type compiler struct {
 	src  []byte
 	vars map[string]struct{}
+
+	err error
 }
 
 func compile(opts *Compiler, pattern []byte) (*Matcher, error) {
@@ -18,7 +21,7 @@ func compile(opts *Compiler, pattern []byte) (*Matcher, error) {
 	if err != nil {
 		return nil, err
 	}
-	rootIR := irconv.ConvertNode(root)
+	rootIR := irconv.NewConverter().ConvertNode(root)
 
 	if st, ok := rootIR.(*ir.ExpressionStmt); ok {
 		rootIR = st.Expr
@@ -29,6 +32,10 @@ func compile(opts *Compiler, pattern []byte) (*Matcher, error) {
 		vars: make(map[string]struct{}),
 	}
 	rootIR.Walk(&c)
+
+	if c.err != nil {
+		return nil, c.err
+	}
 
 	m := &Matcher{
 		m: matcher{
@@ -71,6 +78,7 @@ func (c *compiler) EnterNode(n ir.Node) bool {
 	}
 
 	switch class {
+	case "*":
 	case "var":
 		v.Expr = anyVar{metaNode{name: name}}
 	case "int":
@@ -79,6 +87,8 @@ func (c *compiler) EnterNode(n ir.Node) bool {
 		v.Expr = anyFloat{metaNode{name: name}}
 	case "str":
 		v.Expr = anyStr{metaNode{name: name}}
+	case "char":
+		v.Expr = anyStr1{metaNode{name: name}}
 	case "num":
 		v.Expr = anyNum{metaNode{name: name}}
 	case "expr":
@@ -87,6 +97,9 @@ func (c *compiler) EnterNode(n ir.Node) bool {
 		v.Expr = anyConst{metaNode{name: name}}
 	case "func":
 		v.Expr = anyFunc{metaNode{name: name}}
+	default:
+		c.err = fmt.Errorf("unknown matcher class '%s'", class)
+		return false
 	}
 
 	return true

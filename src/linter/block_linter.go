@@ -163,6 +163,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 	case *ir.InterfaceStmt:
 		b.checkInterfaceStmt(n)
+
+	case *ir.BadString:
+		b.report(n, LevelSyntax, "syntax", "%s", n.Error)
 	}
 }
 
@@ -191,53 +194,8 @@ func (b *blockLinter) checkTryStmt(s *ir.TryStmt) {
 }
 
 func (b *blockLinter) checkBitwiseOp(n, left, right ir.Node) {
-	// Note: we report `$x & $mask != $y` as a precedence issue even
-	// if it can be caught with `typecheckOp` that checks both operand
-	// types (bool is not a good operand for bitwise operation).
-	//
-	// Reporting `invalid types, expected number found bool` is
-	// not that helpful, because the root of the problem is precedence.
-	// Invalid types are a result of that.
-
-	tok := "|"
-	if _, ok := n.(*ir.BitwiseAndExpr); ok {
-		tok = "&"
-	}
-
-	// FIXME: it may be redundant now when parens are explicit.
-	// Also, there is a NodePath to check whether the parent is ParenExpr.
-	hasParens := func(n ir.Node) bool {
-		return findFreeFloatingToken(n, freefloating.Start, "(") ||
-			findFreeFloatingToken(n, freefloating.End, ")")
-	}
-
-	checkArg := func(n, arg ir.Node, tok string) {
-		cmpTok := ""
-		switch arg.(type) {
-		case *ir.EqualExpr:
-			cmpTok = "=="
-		case *ir.NotEqualExpr:
-			cmpTok = "!="
-		case *ir.IdenticalExpr:
-			cmpTok = "==="
-		case *ir.NotIdenticalExpr:
-			cmpTok = "!=="
-		}
-		if cmpTok != "" && !hasParens(arg) {
-			b.report(n, LevelWarning, "precedence", "%s has higher precedence than %s", cmpTok, tok)
-		}
-	}
-
 	b.checkBinaryDupArgs(n, left, right)
 	b.checkBinaryVoidType(left, right)
-
-	if b.walker.exprType(left).Is("bool") && b.walker.exprType(right).Is("bool") {
-		b.report(n, LevelWarning, "bitwiseOps",
-			"Used %s bitwise op over bool operands, perhaps %s is intended?", tok, tok+tok)
-		return
-	}
-	checkArg(n, left, tok)
-	checkArg(n, right, tok)
 }
 
 func (b *blockLinter) checkBinaryVoidType(left, right ir.Node) {
@@ -321,7 +279,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 	b.walker.r.checkKeywordCase(e, "new")
 
 	// Can't handle `new class() ...` yet.
-	if _, ok := e.Class.(*ir.ClassStmt); ok {
+	if _, ok := e.Class.(*ir.AnonClassExpr); ok {
 		return
 	}
 
@@ -612,6 +570,12 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 			break
 		}
 		b.checkRegexp(e, e.Arg(0))
+	case `\sprintf`, `\printf`:
+		if len(e.Args) < 1 {
+			break
+		}
+		// TODO: handle fprintf as well?
+		b.checkFormatString(e, e.Arg(0))
 	}
 }
 
@@ -657,4 +621,67 @@ func (b *blockLinter) checkRegexp(e *ir.FunctionCallExpr, arg *ir.Argument) {
 	for _, issue := range issues {
 		b.report(arg, LevelWarning, "regexpVet", "%s", issue)
 	}
+}
+
+func (b *blockLinter) checkFormatString(e *ir.FunctionCallExpr, arg *ir.Argument) {
+	s, ok := arg.Expr.(*ir.String)
+	if !ok {
+		return
+	}
+	const argsLimit = 16
+	if len(s.Value) > 255 || len(e.Args) > argsLimit {
+		return
+	}
+
+	format, err := parseFormatString(s.Value)
+	if err != nil {
+		b.report(arg, LevelWarning, "printf", "%s", err.Error())
+		return
+	}
+
+	// TODO: detect `% <char>` cases.
+	// For example in, "Handler % tried to add additional_field %s but % could not be added!"
+	// we have 2 bad formatting directives here, but only one is reported, `% t`, since
+	// 't' is not a correct specifier (while '% c' is technically OK).
+	//
+	// TODO: test whether things like `%1%` make sense. We report all %% directive
+	// usages that have any modifiers.
+
+	usages := make([]uint8, argsLimit)
+	for _, d := range format.directives {
+		if d.specifier == '%' {
+			hasModifiers := d.argNum != -1 || d.flags != "" || d.precision != -1 || d.width != -1
+			if hasModifiers {
+				b.report(arg, LevelWarning, "printf", "%%%% directive has modifiers")
+			}
+			continue
+		}
+
+		if d.argNum == -1 {
+			continue
+		}
+		if d.argNum >= len(e.Args) {
+			s := s.Value[d.begin:d.end]
+			b.report(arg, LevelWarning, "printf", "%s directive refers to the args[%d] which is not provided", s, d.argNum)
+			continue
+		}
+		if d.argNum < len(usages) {
+			usages[d.argNum]++
+		}
+
+		arg := e.Arg(d.argNum)
+		if d.specifier == 's' && b.isArrayType(b.walker.exprType(arg.Expr)) {
+			b.report(arg, LevelWarning, "printf", "potential array to string conversion")
+		}
+	}
+
+	for i := 1; i < len(e.Args); i++ {
+		if usages[i] == 0 {
+			b.report(e.Arg(i), LevelWarning, "printf", "argument is not referenced from the formatting string")
+		}
+	}
+}
+
+func (b *blockLinter) isArrayType(typ meta.TypesMap) bool {
+	return typ.Len() == 1 && typ.Find(meta.IsArrayType)
 }

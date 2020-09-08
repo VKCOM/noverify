@@ -194,11 +194,10 @@ type HashFields struct {
 }
 
 // ReportHash computes the report signature hash for the baseline.
-func ReportHash(fields HashFields) uint64 {
+func ReportHash(scratchBuf *bytes.Buffer, fields HashFields) uint64 {
 	const partSeparator = byte('#')
 
-	var buf bytes.Buffer
-	buf.Grow(256)
+	buf := scratchBuf
 	buf.WriteString(fields.Filename)
 	buf.WriteByte(partSeparator)
 	buf.WriteString(fields.Scope)

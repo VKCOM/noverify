@@ -5,8 +5,6 @@ import (
 	"github.com/VKCOM/noverify/src/ir/irfmt"
 )
 
-//go:generate go run ./codegen.go
-
 // Unquote returns unquoted version of s, if there are any quotes.
 func Unquote(s string) string {
 	if len(s) >= 2 && s[0] == '\'' || s[0] == '"' {
@@ -71,4 +69,20 @@ func IsAssign(n ir.Node) bool {
 // FmtNode returns string representation of n.
 func FmtNode(n ir.Node) string {
 	return irfmt.Node(n)
+}
+
+func classEqual(x, y ir.Class) bool {
+	return x.PhpDocComment == y.PhpDocComment &&
+		NodeEqual(x.Extends, y.Extends) &&
+		NodeEqual(x.Implements, y.Implements) &&
+		NodeSliceEqual(x.Stmts, y.Stmts)
+}
+
+func classClone(x ir.Class) ir.Class {
+	return ir.Class{
+		PhpDocComment: x.PhpDocComment,
+		Extends:       NodeClone(x.Extends).(*ir.ClassExtendsStmt),
+		Implements:    NodeClone(x.Implements).(*ir.ClassImplementsStmt),
+		Stmts:         NodeSliceClone(x.Stmts),
+	}
 }

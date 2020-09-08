@@ -52,6 +52,11 @@ const (
 	varStatic
 )
 
+// arrayKeyType is an universal PHP array key type.
+// In PHP, all array keys are converted to either int or string,
+// so we can always assume that `int|string` is good enough.
+var arrayKeyType = meta.NewTypesMap("int|string").Immutable()
+
 // BlockWalker is used to process function/method contents.
 type BlockWalker struct {
 	ctx *blockContext
@@ -220,6 +225,20 @@ func (b *BlockWalker) EnterNode(n ir.Node) (res bool) {
 		res = b.handleAssign(s)
 	case *ir.AssignReference:
 		res = b.handleAssignReference(s)
+	case *ir.AssignPlus:
+		b.handleAssignOp(s)
+	case *ir.AssignMinus:
+		b.handleAssignOp(s)
+	case *ir.AssignMul:
+		b.handleAssignOp(s)
+	case *ir.AssignDiv:
+		b.handleAssignOp(s)
+	case *ir.AssignConcat:
+		b.handleAssignOp(s)
+	case *ir.AssignShiftLeft:
+		b.handleAssignOp(s)
+	case *ir.AssignShiftRight:
+		b.handleAssignOp(s)
 	case *ir.ArrayExpr:
 		res = b.handleArray(s)
 	case *ir.ForeachStmt:
@@ -264,6 +283,8 @@ func (b *BlockWalker) EnterNode(n ir.Node) (res bool) {
 		res = b.handleVariable(s)
 	case *ir.FunctionStmt:
 		res = b.handleFunction(s)
+	case *ir.AnonClassExpr:
+		res = !b.ignoreFunctionBodies
 	case *ir.ClassStmt:
 		if b.ignoreFunctionBodies {
 			res = false
@@ -1098,7 +1119,7 @@ func (b *BlockWalker) handleForeach(s *ir.ForeachStmt) bool {
 				b.handleVariableNode(s.Variable, meta.NewTypesMap(meta.WrapElemOf(typ)), "foreach_value")
 			})
 
-			b.handleVariableNode(s.Key, meta.TypesMap{}, "foreach_key")
+			b.handleVariableNode(s.Key, arrayKeyType, "foreach_key")
 			if list, ok := s.Variable.(*ir.ListExpr); ok {
 				for _, item := range list.Items {
 					b.handleVariableNode(item.Val, meta.TypesMap{}, "foreach_value")
@@ -1653,17 +1674,56 @@ func (b *BlockWalker) handleAssignShapeToList(items []*ir.ArrayItemExpr, info me
 		} else {
 			tp = prop.Typ
 		}
-		b.handleVariableNode(item.Val, tp, "assign")
+		b.handleVariableNode(item.Val, tp, "list-assign")
 	}
 }
 
-func (b *BlockWalker) handleAssignList(items []*ir.ArrayItemExpr, info meta.ClassInfo, isShape bool) {
-	if isShape {
-		b.handleAssignShapeToList(items, info)
-	} else {
-		for _, item := range items {
-			b.handleVariableNode(item.Val, meta.NewTypesMap("unknown_from_list"), "assign")
+func (b *BlockWalker) handleAssignList(list *ir.ListExpr, rhs ir.Node) {
+	typ := solver.ExprType(b.ctx.sc, b.r.ctx.st, rhs)
+
+	// TODO: test if we can prealloc elemTypes to const size hint like 2
+	// and get stack allocation which will help to avoid the unwanted heap allocs.
+	// Hint: only const (literal) size hints work for this.
+	// Hint: check the compiler output to see whether elemTypes "escape" or not.
+	//
+	// We store meta.Type instead of string to avoid the need to do strings.Join
+	// when we want to create a TypesMap.
+	var elemTypes []meta.Type
+	var shapeType string
+	typ.Iterate(func(typ string) {
+		switch {
+		case meta.IsShapeType(typ):
+			shapeType = typ
+		case meta.IsArrayType(typ):
+			elemType := strings.TrimSuffix(typ, "[]")
+			elemTypes = append(elemTypes, meta.Type{Elem: elemType})
 		}
+	})
+
+	// Try to handle it as a shape assignment.
+	if shapeType != "" {
+		class, ok := meta.Info.GetClass(shapeType)
+		if ok {
+			b.handleAssignShapeToList(list.Items, class)
+			return
+		}
+	}
+
+	// Try to handle it as an array assignment.
+	if len(elemTypes) != 0 {
+		elemTypeMap := meta.NewTypesMapFromTypes(elemTypes).Immutable()
+		for _, item := range list.Items {
+			b.handleVariableNode(item.Val, elemTypeMap, "list-assign")
+		}
+		return
+	}
+
+	// Fallback: define vars with unknown types.
+	//
+	// TODO: shouldn't it be a mixed type? I would prefer a "mixed" type here
+	// and "unknown from list" reason.
+	for _, item := range list.Items {
+		b.handleVariableNode(item.Val, meta.NewTypesMap("unknown_from_list"), "list-assign")
 	}
 }
 
@@ -1694,23 +1754,7 @@ func (b *BlockWalker) handleAssign(a *ir.Assign) bool {
 			return true
 		}
 
-		tp := solver.ExprType(b.ctx.sc, b.r.ctx.st, a.Expression)
-		var shapeType string
-		tp.Iterate(func(t string) {
-			if meta.IsShapeType(t) {
-				shapeType = t
-			}
-		})
-
-		var class meta.ClassInfo
-		var ok bool
-		var isShape bool
-		if shapeType != "" {
-			class, ok = meta.Info.GetClass(shapeType)
-			isShape = ok
-		}
-
-		b.handleAssignList(v.Items, class, isShape)
+		b.handleAssignList(v, a.Expression)
 	case *ir.PropertyFetchExpr:
 		v.Property.Walk(b)
 		sv, ok := v.Variable.(*ir.SimpleVar)
@@ -1766,6 +1810,57 @@ func (b *BlockWalker) handleAssign(a *ir.Assign) bool {
 	}
 
 	return false
+}
+
+func (b *BlockWalker) handleAssignOp(assign ir.Node) {
+	var typ meta.TypesMap
+	var v ir.Node
+
+	switch assign := assign.(type) {
+	case *ir.AssignPlus:
+		e := &ir.PlusExpr{
+			Left:  assign.Variable,
+			Right: assign.Expression,
+		}
+		v = assign.Variable
+		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
+	case *ir.AssignMinus:
+		e := &ir.MinusExpr{
+			Left:  assign.Variable,
+			Right: assign.Expression,
+		}
+		v = assign.Variable
+		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
+	case *ir.AssignMul:
+		e := &ir.MulExpr{
+			Left:  assign.Variable,
+			Right: assign.Expression,
+		}
+		v = assign.Variable
+		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
+	case *ir.AssignDiv:
+		e := &ir.DivExpr{
+			Left:  assign.Variable,
+			Right: assign.Expression,
+		}
+		v = assign.Variable
+		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
+
+	case *ir.AssignConcat:
+		v = assign.Variable
+		typ = meta.PreciseStringType
+	case *ir.AssignShiftLeft:
+		v = assign.Variable
+		typ = meta.PreciseIntType
+	case *ir.AssignShiftRight:
+		v = assign.Variable
+		typ = meta.PreciseIntType
+
+	default:
+		return
+	}
+
+	b.replaceVar(v, typ, "assign", meta.VarAlwaysDefined)
 }
 
 func (b *BlockWalker) flushUnused() {

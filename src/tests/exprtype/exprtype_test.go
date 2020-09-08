@@ -46,6 +46,87 @@ func init() {
 	})
 }
 
+func TestExprTypeListOverArray(t *testing.T) {
+	code := `<?php
+/**
+ * @param int[] $xs
+ */
+function ints($xs) {
+  list ($a, $b) = $xs;
+  exprtype($a, 'int');
+  exprtype($b, 'int');
+}
+
+/**
+ * @param string[]|false $xs
+ */
+function strings_or_false($xs) {
+  list ($a, $b) = $xs;
+  exprtype($a, 'string');
+  exprtype($b, 'string');
+}
+
+/**
+ * @param null|\Foo[]|int $xs
+ */
+function null_or_foos_or_int($xs) {
+  list ($a, $b) = $xs;
+  exprtype($a, '\Foo');
+  exprtype($b, '\Foo');
+}
+
+/**
+ * @param int[]|string[] $xs
+ */
+function ints_or_strings($xs) {
+  list ($a, $b) = $xs;
+  exprtype($a, 'int|string');
+  exprtype($b, 'int|string');
+}
+
+/**
+ * @param mixed[]|string[]|int[]|false $xs
+ */
+function mixeds_or_strings_or_ints_or_false($xs) {
+  list ($a, $b) = $xs;
+  exprtype($a, 'int|mixed|string');
+  exprtype($b, 'int|mixed|string');
+}
+
+/**
+ * @param int|float|null $xs
+ */
+function not_an_array($xs) {
+  list ($a, $b) = $xs;
+  exprtype($a, 'unknown_from_list');
+  exprtype($b, 'unknown_from_list');
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestExprTypeForeachKey(t *testing.T) {
+	code := `<?php
+$xs = [[1], [2]];
+
+foreach ($xs as $k => $ys) {
+  exprtype($k, 'int|string');
+
+  foreach ($xs as $k2 => $_) {
+    exprtype($k2, 'int|string');
+    $k2 = 10;
+    exprtype($k2, 'precise int');
+  }
+
+  exprtype($k, 'int|string');
+
+  $v = $xs ? $k : [1];
+  exprtype($v, 'int|int[]|string');
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestExprTypeRecursiveType1(t *testing.T) {
 	code := `<?php
 class Feed {
@@ -2352,6 +2433,79 @@ usort($foo_array, function($a, $b) {
   exprtype($a, "\Foo[]");
   exprtype($b, "\Foo[]");
 });
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestMemberTypeInPHPDoc(t *testing.T) {
+	code := `<?php
+class Foo {
+	const BAR = 5;
+	const BAZ = 10;
+}
+
+/**
+ * @return \Foo::BAR|\Foo::BAZ
+ */
+function f() {}
+
+function f2() {
+	exprtype(f(), "mixed");
+}
+
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestTypeWithAssignOperators(t *testing.T) {
+	code := `<?php
+function g($x) {
+	exprtype($x <<= 5, 'precise int');
+	exprtype($x, 'precise int');
+
+	exprtype($x .= 'abc', 'precise string');
+	exprtype($x, 'precise string');
+
+	exprtype($x >>= 5, 'precise int');
+	exprtype($x, 'precise int');
+}
+
+function f() {
+	$a = 10;
+	$a += 12.5;
+	exprtype($a, "float");
+	$a = 10;
+	$a += 12;
+	exprtype($a, "int");
+
+	$a = 10;
+	$a -= 12.5;
+	exprtype($a, "float");
+	$a = 10;
+	$a -= 12;
+	exprtype($a, "int");
+
+	$a = "Hello";
+	$a .= 12.5;
+	exprtype($a, "precise string");
+	$a = "Hello";
+	$a .= " World";
+	exprtype($a, "precise string");
+
+	$a = 5;
+	$a /= 5.5;
+	exprtype($a, "float");
+	$a = 5;
+	$a /= 5;
+	exprtype($a, "int");
+
+	$a = 5;
+	$a *= 5.5;
+	exprtype($a, "float");
+	$a = 5;
+	$a *= 5;
+	exprtype($a, "int");
+}
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
