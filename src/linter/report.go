@@ -161,7 +161,7 @@ func init() {
 		{
 			Name:     "arraySyntax",
 			Default:  true,
-			Quickfix: false,
+			Quickfix: true,
 			Comment:  `Report usages of old array() syntax.`,
 			Before:   `array(1, 2)`,
 			After:    `[1, 2]`,
