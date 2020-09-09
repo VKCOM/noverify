@@ -1,0 +1,15 @@
+<?php
+
+$a = 5;
+function f() {
+    $a++;
+    return $a;
+}
+
+function ternarySimplify() {
+    $z = $x ?: 5;
+    // f not pure
+    $z = f() ? f() : 5;
+
+    $z = $x ?? $y;
+}
