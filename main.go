@@ -6,7 +6,7 @@ import (
 	"github.com/VKCOM/noverify/src/cmd"
 )
 
-// Build* заполняются при сборке go build -ldflags
+// Build* are initialized during the build via -ldflags
 var (
 	BuildTime    string
 	BuildOSUname string
