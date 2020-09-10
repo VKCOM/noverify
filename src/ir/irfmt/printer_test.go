@@ -124,7 +124,7 @@ func TestPrinterSingleLine(t *testing.T) {
 		if err != nil {
 			t.Fatalf("parse %s: %v", code, err)
 		}
-		rootIR := irconv.NewConverter().ConvertNode(root)
+		rootIR := irconv.ConvertNode(root)
 
 		var buf strings.Builder
 		irfmt.NewPrettyPrinter(&buf, "    ").Print(rootIR)
@@ -587,7 +587,7 @@ endswitch;
 			t.Fatalf("parse %s: %v", code, err)
 		}
 
-		rootIR := irconv.NewConverter().ConvertNode(root)
+		rootIR := irconv.ConvertNode(root)
 
 		var buf strings.Builder
 		irfmt.NewPrettyPrinter(&buf, "    ").Print(rootIR)

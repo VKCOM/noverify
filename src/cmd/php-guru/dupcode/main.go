@@ -95,7 +95,7 @@ func Main(ctx *guru.Context) (int, error) {
 	wg.Add(nworkers)
 	for i := 0; i < nworkers; i++ {
 		go func(workerID int) {
-			irConverter := irconv.NewConverter()
+			irConverter := irconv.NewConverter(nil)
 			workerResult := make(funcSet)
 			for f := range filenamesCh {
 				data, err := ioutil.ReadFile(f.Filename)

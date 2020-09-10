@@ -69,7 +69,7 @@ func (p *parser) parse(filename string, r io.Reader) (*Set, error) {
 	if err != nil {
 		return res, err
 	}
-	rootIR := irconv.NewConverter().ConvertRoot(root)
+	rootIR := irconv.ConvertNode(root).(*ir.Root)
 
 	// Convert PHP file into the rule set.
 	p.filename = filename
@@ -371,11 +371,11 @@ func (p *parser) parseRule(st ir.Node, proto *Rule) error {
 }
 
 func (p *parser) parseFuncComment(fn *ir.FunctionStmt) error {
-	if fn.PhpDocComment == "" {
+	if len(fn.PhpDoc) == 0 {
 		return nil
 	}
 	var doc RuleDoc
-	for _, part := range phpdoc.Parse(p.typeParser, fn.PhpDocComment) {
+	for _, part := range fn.PhpDoc {
 		part := part.(*phpdoc.RawCommentPart)
 		switch part.Name() {
 		case "comment":
