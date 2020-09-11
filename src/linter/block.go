@@ -884,7 +884,7 @@ func (b *BlockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
 		if !b.ctx.customMethodExists(e.Variable, methodName) {
 			b.r.Report(e.Method, LevelError, "undefined", "Call to undefined method {%s}->%s()", exprType, methodName)
 		}
-	} else if !magic {
+	} else if !magic && !b.r.ctx.st.IsTrait {
 		// Method is defined.
 		b.r.checkNameCase(e.Method, methodName, fn.Name)
 		if fn.IsStatic() {
@@ -948,7 +948,7 @@ func (b *BlockWalker) handleStaticCall(e *ir.StaticCallExpr) bool {
 	magic := haveMagicMethod(className, `__callStatic`)
 	if !ok && !magic && !b.r.ctx.st.IsTrait {
 		b.r.Report(e.Call, LevelError, "undefined", "Call to undefined method %s::%s()", className, methodName)
-	} else if !parentCall && !fn.IsStatic() && !magic {
+	} else if !parentCall && !fn.IsStatic() && !magic && !b.r.ctx.st.IsTrait {
 		// Method is defined.
 		// parent::f() is permitted.
 		b.r.Report(e.Call, LevelWarning, "callStatic", "Calling instance method as static method")
