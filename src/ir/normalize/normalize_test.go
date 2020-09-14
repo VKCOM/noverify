@@ -104,7 +104,7 @@ func runNormalizeTests(t *testing.T, tests []normalizationTest) {
 
 	conf := Config{}
 	st := &meta.ClassParseState{CurrentClass: `\Foo`}
-	irConverter := irconv.NewConverter()
+	irConverter := irconv.NewConverter(nil)
 	for _, test := range tests {
 		n, _, err := parseutil.ParseStmt([]byte(test.orig))
 		if err != nil {
@@ -228,6 +228,6 @@ func parseStmtList(s string) ([]ir.Node, error) {
 	if len(p.GetErrors()) != 0 {
 		return nil, errors.New(p.GetErrors()[0].String())
 	}
-	rootIR := irconv.NewConverter().ConvertRoot(p.GetRootNode())
+	rootIR := irconv.ConvertNode(p.GetRootNode()).(*ir.Root)
 	return rootIR.Stmts, nil
 }

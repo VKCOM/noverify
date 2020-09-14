@@ -13,14 +13,30 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/node/name"
 	"github.com/VKCOM/noverify/src/php/parser/node/scalar"
 	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
+	"github.com/VKCOM/noverify/src/phpdoc"
 )
+
+func ConvertNode(n node.Node) ir.Node {
+	c := NewConverter(phpdoc.NewTypeParser())
+	return c.ConvertNode(n)
+}
 
 type Converter struct {
 	namespace string
+
+	phpdocTypeParser *phpdoc.TypeParser
 }
 
-func NewConverter() *Converter {
-	return &Converter{}
+// NewConverter returns a new AST->IR converter.
+//
+// If typeParser is nil, it will not eagerly try to parse phpdoc
+// strings into phpdoc.CommentPart.
+//
+// It's intended to be re-used inside a signle thread context.
+func NewConverter(typeParser *phpdoc.TypeParser) *Converter {
+	return &Converter{
+		phpdocTypeParser: typeParser,
+	}
 }
 
 func (c *Converter) ConvertRoot(n *node.Root) *ir.Root {
@@ -641,6 +657,7 @@ func (c *Converter) convNode(n node.Node) ir.Node {
 		out.ReturnsRef = n.ReturnsRef
 		out.Static = n.Static
 		out.PhpDocComment = n.PhpDocComment
+		out.PhpDoc = c.parsePHPDoc(n.PhpDocComment)
 		out.Params = c.convNodeSlice(n.Params)
 		out.ClosureUse = c.convNode(n.ClosureUse).(*ir.ClosureUseExpr)
 		out.ReturnType = c.convNode(n.ReturnType)
@@ -1218,6 +1235,7 @@ func (c *Converter) convNode(n node.Node) ir.Node {
 		out.Position = n.Position
 		out.ReturnsRef = n.ReturnsRef
 		out.PhpDocComment = n.PhpDocComment
+		out.PhpDoc = c.parsePHPDoc(n.PhpDocComment)
 		out.MethodName = c.convNode(n.MethodName).(*ir.Identifier)
 		{
 			slice := make([]*ir.Identifier, len(n.Modifiers))
@@ -1387,6 +1405,7 @@ func (c *Converter) convNode(n node.Node) ir.Node {
 		out.Position = n.Position
 		out.ReturnsRef = n.ReturnsRef
 		out.PhpDocComment = n.PhpDocComment
+		out.PhpDoc = c.parsePHPDoc(n.PhpDocComment)
 		out.FunctionName = c.convNode(n.FunctionName).(*ir.Identifier)
 		out.Params = c.convNodeSlice(n.Params)
 		out.ReturnType = c.convNode(n.ReturnType)
@@ -1522,6 +1541,7 @@ func (c *Converter) convNode(n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
 		out.PhpDocComment = n.PhpDocComment
+		out.PhpDoc = c.parsePHPDoc(n.PhpDocComment)
 		out.Variable = c.convNode(n.Variable).(*ir.SimpleVar)
 		out.Expr = c.convNode(n.Expr)
 		return out
@@ -1768,6 +1788,7 @@ func (c *Converter) convCastExpr(n, e node.Node, typ string) *ir.TypeCastExpr {
 func (c *Converter) convClass(n *stmt.Class) ir.Node {
 	class := ir.Class{
 		PhpDocComment: n.PhpDocComment,
+		PhpDoc:        c.parsePHPDoc(n.PhpDocComment),
 		Extends:       c.convNode(n.Extends).(*ir.ClassExtendsStmt),
 		Implements:    c.convNode(n.Implements).(*ir.ClassImplementsStmt),
 		Stmts:         c.convNodeSlice(n.Stmts),
@@ -1801,6 +1822,13 @@ func (c *Converter) convClass(n *stmt.Class) ir.Node {
 		out.Modifiers = slice
 	}
 	return out
+}
+
+func (c *Converter) parsePHPDoc(doc string) []phpdoc.CommentPart {
+	if c.phpdocTypeParser != nil {
+		return phpdoc.Parse(c.phpdocTypeParser, doc)
+	}
+	return nil
 }
 
 func convString(n *scalar.String) ir.Node {

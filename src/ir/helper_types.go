@@ -1,5 +1,9 @@
 package ir
 
+import (
+	"github.com/VKCOM/noverify/src/phpdoc"
+)
+
 // Helper types are not real nodes, they're usually used
 // to express some structure that is common between several nodes.
 //
@@ -9,6 +13,7 @@ package ir
 // It doesn't include positions/freefloating info.
 type Class struct {
 	PhpDocComment string
+	PhpDoc        []phpdoc.CommentPart
 	Extends       *ClassExtendsStmt
 	Implements    *ClassImplementsStmt
 	Stmts         []Node
