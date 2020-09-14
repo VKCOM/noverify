@@ -52,7 +52,11 @@ func (r *resolver) collectMethodCallTypes(out, possibleTypes map[string]struct{}
 
 func (r *resolver) resolveType(class, typ string) map[string]struct{} {
 	res := r.resolveTypeNoLateStaticBinding(class, typ)
-	r.visited[typ] = res
+	if typ == "static" {
+		r.visited[typ+class] = res
+	} else {
+		r.visited[typ] = res
+	}
 
 	if _, ok := res["static"]; ok {
 		delete(res, "static")
