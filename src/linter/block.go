@@ -239,6 +239,8 @@ func (b *BlockWalker) EnterNode(n ir.Node) (res bool) {
 		b.handleAssignOp(s)
 	case *ir.AssignShiftRight:
 		b.handleAssignOp(s)
+	case *ir.AssignCoalesce:
+		b.handleAssignOp(s)
 	case *ir.ArrayExpr:
 		res = b.handleArray(s)
 	case *ir.ForeachStmt:
@@ -1855,6 +1857,13 @@ func (b *BlockWalker) handleAssignOp(assign ir.Node) {
 	case *ir.AssignShiftRight:
 		v = assign.Variable
 		typ = meta.PreciseIntType
+	case *ir.AssignCoalesce:
+		e := &ir.CoalesceExpr{
+			Left:  assign.Variable,
+			Right: assign.Expression,
+		}
+		v = assign.Variable
+		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
 
 	default:
 		return

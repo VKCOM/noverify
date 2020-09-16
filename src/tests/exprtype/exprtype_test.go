@@ -2525,6 +2525,11 @@ function f() {
 
 	$s = $c ?? $f;
 	exprtype($s, "\Foo|int|string");
+
+	$e = 10.5;
+
+	$e ??= $s;
+	exprtype($e, "\Foo|float|int|string");
 }
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
