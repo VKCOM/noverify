@@ -2510,7 +2510,7 @@ function f() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
-func TestNullCoalesce(t *testing.T) {
+func TestNullCoalesceType(t *testing.T) {
 	code := `<?php
 class Foo {}
 
