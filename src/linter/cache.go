@@ -46,7 +46,6 @@ const cacheVersion = 45
 var (
 	errWrongVersion = errors.New("Wrong cache version")
 
-	initFileReadTime  int64
 	initCacheReadTime int64
 )
 
