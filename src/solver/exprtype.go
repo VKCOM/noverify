@@ -395,13 +395,8 @@ func ExprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 }
 
 func magicConstantType(n *ir.MagicConstant) meta.TypesMap {
-	switch n.Value {
-	case "__LINE__":
+	if n.Value == "__LINE__" {
 		return meta.PreciseIntType
-	case "__FILE__", "__DIR__", "__FUNCTION__",
-		"__CLASS__", "__TRAIT__", "__METHOD__", "__NAMESPACE__":
-		return meta.PreciseStringType
 	}
-
-	return meta.TypesMap{}
+	return meta.PreciseStringType
 }
