@@ -19,9 +19,9 @@ const (
 	VarAlwaysDefined
 )
 
-type scopeVar struct {
-	typesMap TypesMap
-	flags    VarFlags
+type ScopeVar struct {
+	TypesMap TypesMap
+	Flags    VarFlags
 }
 
 func (flags VarFlags) IsNoReplace() bool     { return flags&varNoReplace != 0 }
@@ -37,29 +37,29 @@ func (flags *VarFlags) SetAlwaysDefined(v bool) {
 
 // Scope contains variables with their types in the respective scope
 type Scope struct {
-	vars             map[string]*scopeVar // variables declared in the scope
-	inInstanceMethod bool
-	inClosure        bool
+	Vars             map[string]*ScopeVar // variables declared in the scope
+	InInstanceMethod bool
+	InClosure        bool
 }
 
 // NewScope creates new empty scope
 func NewScope() *Scope {
-	return &Scope{vars: make(map[string]*scopeVar)}
+	return &Scope{Vars: make(map[string]*ScopeVar)}
 }
 
 // GobEncode is a custom gob marshaller
 func (s *Scope) GobEncode() ([]byte, error) {
 	w := new(bytes.Buffer)
 	encoder := gob.NewEncoder(w)
-	err := encoder.Encode(s.vars)
+	err := encoder.Encode(s.Vars)
 	if err != nil {
 		return nil, err
 	}
-	err = encoder.Encode(s.inInstanceMethod)
+	err = encoder.Encode(s.InInstanceMethod)
 	if err != nil {
 		return nil, err
 	}
-	err = encoder.Encode(s.inClosure)
+	err = encoder.Encode(s.InClosure)
 	if err != nil {
 		return nil, err
 	}
@@ -70,26 +70,31 @@ func (s *Scope) GobEncode() ([]byte, error) {
 func (s *Scope) GobDecode(buf []byte) error {
 	r := bytes.NewBuffer(buf)
 	decoder := gob.NewDecoder(r)
-	err := decoder.Decode(&s.vars)
+	err := decoder.Decode(&s.Vars)
 	if err != nil {
 		return err
 	}
-	err = decoder.Decode(&s.inInstanceMethod)
+	err = decoder.Decode(&s.InInstanceMethod)
 	if err != nil {
 		return err
 	}
-	return decoder.Decode(&s.inClosure)
+	return decoder.Decode(&s.InClosure)
+}
+
+// GoString is used when %#v print format is requested.
+func (s *ScopeVar) GoString() string {
+	return fmt.Sprintf("&meta.ScopeVar{TypesMap: %#v, Flags: %#v}", s.TypesMap, s.Flags)
 }
 
 // GobEncode is a custom gob marshaller
-func (s *scopeVar) GobEncode() ([]byte, error) {
+func (s *ScopeVar) GobEncode() ([]byte, error) {
 	w := new(bytes.Buffer)
 	encoder := gob.NewEncoder(w)
-	err := encoder.Encode(s.typesMap)
+	err := encoder.Encode(s.TypesMap)
 	if err != nil {
 		return nil, err
 	}
-	err = encoder.Encode(s.flags)
+	err = encoder.Encode(s.Flags)
 	if err != nil {
 		return nil, err
 	}
@@ -97,51 +102,51 @@ func (s *scopeVar) GobEncode() ([]byte, error) {
 }
 
 // GobDecode is custom gob unmarshaller
-func (s *scopeVar) GobDecode(buf []byte) error {
+func (s *ScopeVar) GobDecode(buf []byte) error {
 	r := bytes.NewBuffer(buf)
 	decoder := gob.NewDecoder(r)
-	err := decoder.Decode(&s.typesMap)
+	err := decoder.Decode(&s.TypesMap)
 	if err != nil {
 		return err
 	}
-	return decoder.Decode(&s.flags)
+	return decoder.Decode(&s.Flags)
 }
 
 // IsInInstanceMethod returns whether or not this scope exists in instance method (and thus closures must capture $this)
 func (s *Scope) IsInInstanceMethod() bool {
-	return s.inInstanceMethod
+	return s.InInstanceMethod
 }
 
 // IsInClosure returns whether or not this scope is inside a closure and thus $this can be late-bound.
 func (s *Scope) IsInClosure() bool {
-	return s.inClosure
+	return s.InClosure
 }
 
 // SetInInstanceMethod updates "inInstanceMethod" flag that indicated whether or not scope is located inside instance method
 // and that "$this" needs to be captured
 func (s *Scope) SetInInstanceMethod(v bool) {
-	s.inInstanceMethod = v
+	s.InInstanceMethod = v
 }
 
 // SetInClosure updates "inClosure" flag that indicates whether or not we are inside a closure
 // and thus late $this binding is possible.
 func (s *Scope) SetInClosure(v bool) {
-	s.inClosure = v
+	s.InClosure = v
 }
 
 func (s *Scope) Iterate(cb func(varName string, typ TypesMap, flags VarFlags)) {
-	for varName, v := range s.vars {
-		cb(varName, v.typesMap, v.flags)
+	for varName, v := range s.Vars {
+		cb(varName, v.TypesMap, v.Flags)
 	}
 }
 
 func (s *Scope) Len() int {
-	return len(s.vars)
+	return len(s.Vars)
 }
 
 // AddVar adds variable with specified types to scope
 func (s *Scope) AddVar(v ir.Node, typ TypesMap, reason string, flags VarFlags) {
-	name, ok := scopeVarName(v)
+	name, ok := ScopeVarName(v)
 	if !ok {
 		return
 	}
@@ -150,7 +155,7 @@ func (s *Scope) AddVar(v ir.Node, typ TypesMap, reason string, flags VarFlags) {
 
 // ReplaceVar replaces variable with specified types to scope
 func (s *Scope) ReplaceVar(v ir.Node, typ TypesMap, reason string, flags VarFlags) {
-	name, ok := scopeVarName(v)
+	name, ok := ScopeVarName(v)
 	if !ok {
 		return
 	}
@@ -160,7 +165,7 @@ func (s *Scope) ReplaceVar(v ir.Node, typ TypesMap, reason string, flags VarFlag
 
 // DelVar deletes specified variable from scope
 func (s *Scope) DelVar(v ir.Node, reason string) {
-	name, ok := scopeVarName(v)
+	name, ok := ScopeVarName(v)
 	if !ok {
 		return
 	}
@@ -173,45 +178,45 @@ func (s *Scope) DelVarName(name, reason string) {
 	if debugScope {
 		fmt.Println("unset $" + name + " - " + reason)
 	}
-	delete(s.vars, name)
+	delete(s.Vars, name)
 }
 
 // ReplaceVarName replaces variable with specified types to the scope
 func (s *Scope) ReplaceVarName(name string, typ TypesMap, reason string, flags VarFlags) {
-	oldVar, ok := s.vars[name]
-	if ok && oldVar.flags.IsNoReplace() {
-		oldVar.typesMap = oldVar.typesMap.Append(typ)
+	oldVar, ok := s.Vars[name]
+	if ok && oldVar.Flags.IsNoReplace() {
+		oldVar.TypesMap = oldVar.TypesMap.Append(typ)
 		return
 	}
 
-	s.vars[name] = &scopeVar{
-		typesMap: typ,
-		flags:    flags,
+	s.Vars[name] = &ScopeVar{
+		TypesMap: typ,
+		Flags:    flags,
 	}
 }
 
 // AddVarName adds variable with specified types to the scope
 func (s *Scope) addVarName(name string, typ TypesMap, reason string, flags VarFlags) {
-	v, ok := s.vars[name]
+	v, ok := s.Vars[name]
 
 	if !ok {
-		s.vars[name] = &scopeVar{
-			typesMap: typ,
-			flags:    flags,
+		s.Vars[name] = &ScopeVar{
+			TypesMap: typ,
+			Flags:    flags,
 		}
 		return
 	}
 
-	if !v.flags.IsAlwaysDefined() && flags.IsAlwaysDefined() {
-		v.flags |= VarAlwaysDefined
+	if !v.Flags.IsAlwaysDefined() && flags.IsAlwaysDefined() {
+		v.Flags |= VarAlwaysDefined
 	}
 
-	if !v.flags.IsNoReplace() && flags.IsNoReplace() {
-		v.flags |= varNoReplace
+	if !v.Flags.IsNoReplace() && flags.IsNoReplace() {
+		v.Flags |= varNoReplace
 	}
 
-	v.typesMap = v.typesMap.Append(typ)
-	s.vars[name] = v
+	v.TypesMap = v.TypesMap.Append(typ)
+	s.Vars[name] = v
 }
 
 // AddVarName adds variable with specified types to the scope
@@ -226,7 +231,7 @@ func (s *Scope) AddVarFromPHPDoc(name string, typ TypesMap, reason string) {
 
 // HaveVar checks whether or not specified variable is present in the scope and that it is always defined
 func (s *Scope) HaveVar(v ir.Node) bool {
-	name, ok := scopeVarName(v)
+	name, ok := ScopeVarName(v)
 	if !ok {
 		return false
 	}
@@ -236,7 +241,7 @@ func (s *Scope) HaveVar(v ir.Node) bool {
 
 // MaybeHaveVar checks that variable is present in the scope (it may be not always defined)
 func (s *Scope) MaybeHaveVar(v ir.Node) bool {
-	name, ok := scopeVarName(v)
+	name, ok := ScopeVarName(v)
 	if !ok {
 		return false
 	}
@@ -246,25 +251,25 @@ func (s *Scope) MaybeHaveVar(v ir.Node) bool {
 
 // HaveVarName checks whether or not specified variable is present in the scope and that it is always defined
 func (s *Scope) HaveVarName(name string) bool {
-	v, ok := s.vars[name]
+	v, ok := s.Vars[name]
 	if !ok {
 		return false
 	}
-	return v.flags.IsAlwaysDefined()
+	return v.Flags.IsAlwaysDefined()
 }
 
 // GetVarNameType returns type map for variable if it exists
 func (s *Scope) GetVarNameType(name string) (m TypesMap, ok bool) {
-	res, ok := s.vars[name]
+	res, ok := s.Vars[name]
 	if !ok {
 		return TypesMap{}, false
 	}
-	return res.typesMap, ok
+	return res.TypesMap, ok
 }
 
 // MaybeHaveVarName checks that variable is present in the scope (it may be not always defined)
 func (s *Scope) MaybeHaveVarName(name string) bool {
-	_, ok := s.vars[name]
+	_, ok := s.Vars[name]
 	return ok
 }
 
@@ -272,8 +277,8 @@ func (s *Scope) MaybeHaveVarName(name string) bool {
 func (s *Scope) String() string {
 	var res []string
 
-	for name, v := range s.vars {
-		res = append(res, fmt.Sprintf("%s: alwaysDefined=%v, typ=%s", name, v.flags.IsAlwaysDefined(), v.typesMap))
+	for name, v := range s.Vars {
+		res = append(res, fmt.Sprintf("%s: alwaysDefined=%v, typ=%s", name, v.Flags.IsAlwaysDefined(), v.TypesMap))
 	}
 
 	return strings.Join(res, "\n")
@@ -285,19 +290,19 @@ func (s *Scope) Clone() *Scope {
 		return NewScope()
 	}
 
-	res := &Scope{vars: make(map[string]*scopeVar, len(s.vars))}
-	for k, v := range s.vars {
-		res.vars[k] = &scopeVar{
-			typesMap: v.typesMap.Clone(),
-			flags:    v.flags,
+	res := &Scope{Vars: make(map[string]*ScopeVar, len(s.Vars))}
+	for k, v := range s.Vars {
+		res.Vars[k] = &ScopeVar{
+			TypesMap: v.TypesMap.Clone(),
+			Flags:    v.Flags,
 		}
 	}
-	res.inInstanceMethod = s.inInstanceMethod
-	res.inClosure = s.inClosure
+	res.InInstanceMethod = s.InInstanceMethod
+	res.InClosure = s.InClosure
 	return res
 }
 
-func scopeVarName(v ir.Node) (string, bool) {
+func ScopeVarName(v ir.Node) (string, bool) {
 	switch v := v.(type) {
 	case *ir.SimpleVar:
 		return v.Name, true

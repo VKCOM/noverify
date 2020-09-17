@@ -42,7 +42,38 @@ type Worker struct {
 
 	needReports bool
 
+	CodeCache    *CodeCache
 	AllowDisable *regexp.Regexp
+
+	// VisitedFiles contains the stat->hash mapping for all files visited.
+	VisitedFiles map[string]StatCacheEntry
+}
+
+// CodeCache is an implementation of PHP project cache such that the cache is compiled as native Go code.
+type CodeCache struct {
+	StatCache      map[string]StatCacheEntry
+	CacheCallbacks map[string]func() *meta.PerFileCache // map from cache file names to the callbacks directly
+}
+
+// StatCacheEntry stores a cache of file contents hashes for a given mtime and size.
+type StatCacheEntry struct {
+	MTime int64
+	Size  int64
+	Hash  string
+}
+
+// StatCacheEntryFromFileInfo creates StatCacheEntry from provided FileInfo and file contents hash.
+func StatCacheEntryFromFileInfo(fi os.FileInfo, hash string) StatCacheEntry {
+	return StatCacheEntry{
+		MTime: fi.ModTime().UnixNano(),
+		Size:  fi.Size(),
+		Hash:  hash,
+	}
+}
+
+// EqualToFileInfo returns whether or not the stored mtime and size match the provided FileInfo.
+func (s StatCacheEntry) EqualToFileInfo(fi os.FileInfo) bool {
+	return fi.ModTime().UnixNano() == s.MTime && fi.Size() == s.Size
 }
 
 func NewLintingWorker(id int) *Worker {
@@ -70,6 +101,7 @@ func newWorker(id int) *Worker {
 		reParser: syntax.NewParser(&syntax.ParserOptions{
 			NoLiterals: false,
 		}),
+		VisitedFiles: make(map[string]StatCacheEntry),
 	}
 }
 
@@ -129,24 +161,44 @@ func (w *Worker) IndexFile(filename string, contents []byte) error {
 		return err
 	}
 
-	h := md5.New()
+	var st os.FileInfo
+	var contentsHash string
 
-	if contents == nil {
-		start := time.Now()
-		fp, err := os.Open(filename)
+	if w.CodeCache != nil && contents == nil {
+		var err error
+		st, err = os.Stat(filename)
 		if err != nil {
 			return err
 		}
-		defer fp.Close()
-		if _, err := io.Copy(h, fp); err != nil {
-			return err
+
+		if existing, ok := w.CodeCache.StatCache[filename]; ok && existing.EqualToFileInfo(st) {
+			contentsHash = existing.Hash
 		}
-		atomic.AddInt64(&initFileReadTime, int64(time.Since(start)))
-	} else {
-		h.Write(contents)
 	}
 
-	contentsHash := fmt.Sprintf("%x", h.Sum(nil))
+	if contentsHash == "" {
+		if contents == nil {
+			fp, err := os.Open(filename)
+			if err != nil {
+				return err
+			}
+			defer fp.Close()
+
+			h := md5.New()
+			if _, err := io.Copy(h, fp); err != nil {
+				return err
+			}
+			contentsHash = fmt.Sprintf("%x", h.Sum(nil))
+		} else {
+			h := md5.New()
+			h.Write(contents)
+			contentsHash = fmt.Sprintf("%x", h.Sum(nil))
+		}
+	}
+
+	if st != nil {
+		w.VisitedFiles[filename] = StatCacheEntryFromFileInfo(st, contentsHash)
+	}
 
 	cacheFilenamePart := filename
 
@@ -158,7 +210,16 @@ func (w *Worker) IndexFile(filename string, contents []byte) error {
 		cacheFilenamePart = filename[0:1] + "_" + filename[2:]
 	}
 
-	cacheFile := filepath.Join(CacheDir, cacheFilenamePart+"."+contentsHash)
+	cacheBasename := cacheFilenamePart + "." + contentsHash
+
+	if w.CodeCache != nil {
+		if cb, ok := w.CodeCache.CacheCallbacks[cacheBasename]; ok {
+			updateMetaInfo(filename, cb())
+			return nil
+		}
+	}
+
+	cacheFile := filepath.Join(CacheDir, cacheBasename)
 
 	start := time.Now()
 	fp, err := os.Open(cacheFile)
@@ -168,6 +229,7 @@ func (w *Worker) IndexFile(filename string, contents []byte) error {
 			return err
 		}
 
+		w.meta.CacheFilename = cacheBasename
 		return createMetaCacheFile(filename, cacheFile, w)
 	}
 	defer fp.Close()
@@ -181,6 +243,7 @@ func (w *Worker) IndexFile(filename string, contents []byte) error {
 			return err
 		}
 
+		w.meta.CacheFilename = cacheBasename
 		return createMetaCacheFile(filename, cacheFile, w)
 	}
 

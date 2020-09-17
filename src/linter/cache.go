@@ -40,7 +40,8 @@ import (
 //     42 - bool-typed consts are now stored in meta info
 //     43 - define'd const values stored in cache
 //     44 - rename ConstantInfo => ConstInfo
-const cacheVersion = 44
+//     45 - renamed fileMeta -> meta.PerFileCache
+const cacheVersion = 45
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")
@@ -48,15 +49,6 @@ var (
 	initFileReadTime  int64
 	initCacheReadTime int64
 )
-
-type fileMeta struct {
-	Scope             *meta.Scope
-	Classes           meta.ClassesMap
-	Traits            meta.ClassesMap
-	Functions         meta.FunctionsMap
-	Constants         meta.ConstantsMap
-	FunctionOverrides meta.FunctionsOverrideMap
-}
 
 func writeMetaCache(w *bufio.Writer, root *RootWalker) error {
 	if err := writeMetaCacheHeader(w, root); err != nil {
@@ -108,7 +100,7 @@ func createMetaCacheFile(filename, cacheFile string, root *RootWalker) error {
 	return nil
 }
 
-func readMetaCache(r io.Reader, filename string, dst *fileMeta) error {
+func readMetaCache(r io.Reader, filename string, dst *meta.PerFileCache) error {
 	bufrd := bufio.NewReader(r)
 	if err := readMetaCacheHeader(bufrd); err != nil {
 		return err
@@ -125,7 +117,7 @@ func readMetaCache(r io.Reader, filename string, dst *fileMeta) error {
 }
 
 func restoreMetaFromCache(filename string, rd io.Reader) error {
-	var m fileMeta
+	var m meta.PerFileCache
 	if err := readMetaCache(rd, filename, &m); err != nil {
 		return err
 	}
@@ -134,7 +126,7 @@ func restoreMetaFromCache(filename string, rd io.Reader) error {
 	return nil
 }
 
-func updateMetaInfo(filename string, m *fileMeta) {
+func updateMetaInfo(filename string, m *meta.PerFileCache) {
 	if meta.IsIndexingComplete() {
 		panic("Trying to update meta info when not indexing")
 	}
@@ -144,6 +136,7 @@ func updateMetaInfo(filename string, m *fileMeta) {
 
 	meta.Info.DeleteMetaForFileNonLocked(filename)
 
+	meta.Info.AddPerFileCacheNonLocked(filename, m)
 	meta.Info.AddFilenameNonLocked(filename)
 	meta.Info.AddClassesNonLocked(filename, m.Classes)
 	meta.Info.AddTraitsNonLocked(filename, m.Traits)

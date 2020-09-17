@@ -56,7 +56,7 @@ type RootWalker struct {
 	reVet        *regexpVet
 
 	// internal state
-	meta fileMeta
+	meta meta.PerFileCache
 
 	currentClassNode ir.Node
 

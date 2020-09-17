@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/rules"
 )
 
@@ -26,4 +27,6 @@ type MainConfig struct {
 	BeforeReport func(*linter.Report) bool
 
 	LinterVersion string
+
+	CodeCache map[string]func() *meta.PerFileCache
 }

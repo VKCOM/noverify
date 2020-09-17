@@ -76,7 +76,7 @@ func DebugMessage(msg string, args ...interface{}) {
 }
 
 // ParseFilenames is used to do initial parsing of files.
-func ParseFilenames(readFileNamesFunc workspace.ReadCallback, allowDisabled *regexp.Regexp) []*Report {
+func ParseFilenames(readFileNamesFunc workspace.ReadCallback, allowDisabled *regexp.Regexp, cc *CodeCache) ([]*Report, map[string]StatCacheEntry) {
 	start := time.Now()
 	defer func() {
 		lintdebug.Send("Processing time: %s", time.Since(start))
@@ -100,6 +100,8 @@ func ParseFilenames(readFileNamesFunc workspace.ReadCallback, allowDisabled *reg
 
 	var wg sync.WaitGroup
 	reportsCh := make(chan []*Report, MaxConcurrency)
+	visitedCh := make(chan map[string]StatCacheEntry, MaxConcurrency)
+	allVisited := make(map[string]StatCacheEntry)
 
 	wg.Add(MaxConcurrency)
 	for i := 0; i < MaxConcurrency; i++ {
@@ -111,11 +113,13 @@ func ParseFilenames(readFileNamesFunc workspace.ReadCallback, allowDisabled *reg
 				w = NewIndexingWorker(id)
 			}
 			w.AllowDisable = allowDisabled
+			w.CodeCache = cc
 			var rep []*Report
 			for f := range filenamesCh {
 				rep = append(rep, w.doParseFile(f)...)
 			}
 			reportsCh <- rep
+			visitedCh <- w.VisitedFiles
 			wg.Done()
 		}(i)
 	}
@@ -126,17 +130,23 @@ func ParseFilenames(readFileNamesFunc workspace.ReadCallback, allowDisabled *reg
 		allReports = append(allReports, (<-reportsCh)...)
 	}
 
-	return allReports
+	for i := 0; i < MaxConcurrency; i++ {
+		for k, v := range <-visitedCh {
+			allVisited[k] = v
+		}
+	}
+
+	return allReports, allVisited
 }
 
-func InitStubs(readFileNamesFunc workspace.ReadCallback) {
+func InitStubs(readFileNamesFunc workspace.ReadCallback, codeCache *CodeCache) {
 	meta.SetLoadingStubs(true)
-	ParseFilenames(readFileNamesFunc, nil)
+	ParseFilenames(readFileNamesFunc, nil, codeCache)
 	meta.Info.InitStubs()
 	meta.SetLoadingStubs(false)
 }
 
 // InitStubsFromDir parses directory with PHPStorm stubs which has all internal PHP classes and functions declared.
-func InitStubsFromDir(dir string) {
-	InitStubs(workspace.ReadFilenames([]string{dir}, nil))
+func InitStubsFromDir(dir string, codeCache *CodeCache) {
+	InitStubs(workspace.ReadFilenames([]string{dir}, nil), codeCache)
 }

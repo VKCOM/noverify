@@ -46,11 +46,17 @@ func NewBoolConstant(v bool) ConstValue {
 
 // GetInt returns the value stored in c.Value cast to int type.
 func (c ConstValue) GetInt() int64 {
+	if v, ok := c.Value.(int); ok {
+		return int64(v)
+	}
 	return c.Value.(int64)
 }
 
 // GetFloat returns the value stored in c.Value cast to float type.
 func (c ConstValue) GetFloat() float64 {
+	if v, ok := c.Value.(float32); ok {
+		return float64(v)
+	}
 	return c.Value.(float64)
 }
 

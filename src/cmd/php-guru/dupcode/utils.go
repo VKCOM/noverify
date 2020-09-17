@@ -53,7 +53,7 @@ func runIndexing(cacheDir string, targets []string, filter *workspace.FilenameFi
 	cmd.LoadEmbeddedStubs(filenames)
 
 	// Handle workspace files.
-	linter.ParseFilenames(workspace.ReadFilenames(targets, filter), nil)
+	linter.ParseFilenames(workspace.ReadFilenames(targets, filter), nil, nil)
 
 	meta.SetIndexingComplete(true)
 }

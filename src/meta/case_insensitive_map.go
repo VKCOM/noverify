@@ -4,16 +4,16 @@ import (
 	"strings"
 )
 
-// lowercaseString type is used to avoid invalid mixing of normal strings
+// LowercaseString type is used to avoid invalid mixing of normal strings
 // and ones that are guaranteed to be lowercase.
-type lowercaseString string
+type LowercaseString string
 
 type ClassesMap struct {
-	H map[lowercaseString]ClassInfo
+	H map[LowercaseString]ClassInfo
 }
 
 func NewClassesMap() ClassesMap {
-	return ClassesMap{H: make(map[lowercaseString]ClassInfo)}
+	return ClassesMap{H: make(map[LowercaseString]ClassInfo)}
 }
 
 func (m ClassesMap) Len() int           { return len(m.H) }
@@ -29,11 +29,11 @@ func (m ClassesMap) Set(name string, class ClassInfo) {
 }
 
 type FunctionsMap struct {
-	H map[lowercaseString]FuncInfo
+	H map[LowercaseString]FuncInfo
 }
 
 func NewFunctionsMap() FunctionsMap {
-	return FunctionsMap{H: make(map[lowercaseString]FuncInfo)}
+	return FunctionsMap{H: make(map[LowercaseString]FuncInfo)}
 }
 
 func (m FunctionsMap) Len() int           { return len(m.H) }
@@ -49,8 +49,8 @@ func (m FunctionsMap) Set(name string, fn FuncInfo) {
 }
 
 // toLower is like strings.ToLower, but specialized for ascii-only.
-// It also returns lowercaseString type.
-func toLower(s string) lowercaseString {
+// It also returns LowercaseString type.
+func toLower(s string) LowercaseString {
 	hasUpper := false
 	for i := 0; i < len(s); i++ {
 		c := s[i]
@@ -61,7 +61,7 @@ func toLower(s string) lowercaseString {
 	}
 
 	if !hasUpper {
-		return lowercaseString(s)
+		return LowercaseString(s)
 	}
 
 	var b strings.Builder
@@ -73,5 +73,5 @@ func toLower(s string) lowercaseString {
 		}
 		b.WriteByte(c)
 	}
-	return lowercaseString(b.String())
+	return LowercaseString(b.String())
 }

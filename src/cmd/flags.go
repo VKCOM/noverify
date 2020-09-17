@@ -71,6 +71,9 @@ type cmdlineArguments struct {
 	}
 
 	disableCache bool
+
+	codeCacheDump          string
+	codeCachePackagePrefix string
 }
 
 func DefaultCacheDir() string {
@@ -185,4 +188,7 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 
 	var encodingUnused string
 	flag.StringVar(&encodingUnused, "encoding", "", "deprecated and unused")
+
+	flag.StringVar(&args.codeCacheDump, "code-cache-dump", "", "generate code cache (faster cache that needs to be compiled into the binary) into the specified directory")
+	flag.StringVar(&args.codeCachePackagePrefix, "code-cache-package-prefix", "github.com/VKCOM/noverifycache", "package prefix for the code cache generated (depends on the directory where you decided to put the code cache)")
 }

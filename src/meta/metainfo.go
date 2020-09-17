@@ -33,6 +33,7 @@ func ResetInfo() {
 		allFunctions:          NewFunctionsMap(),
 		allConstants:          make(ConstantsMap),
 		allFunctionsOverrides: make(FunctionsOverrideMap),
+		perFileCache:          make(map[string]*PerFileCache),
 		perFileTraits:         make(map[string]ClassesMap),
 		perFileClasses:        make(map[string]ClassesMap),
 		perFileFunctions:      make(map[string]FunctionsMap),
@@ -51,10 +52,22 @@ type info struct {
 	allFunctions          FunctionsMap
 	allConstants          ConstantsMap
 	allFunctionsOverrides FunctionsOverrideMap
+	perFileCache          map[string]*PerFileCache
 	perFileTraits         map[string]ClassesMap
 	perFileClasses        map[string]ClassesMap
 	perFileFunctions      map[string]FunctionsMap
 	perFileConstants      map[string]ConstantsMap
+}
+
+// PerFileCache is a type for per-file cache entries that can be either stored in Go code or in the cache directory.
+type PerFileCache struct {
+	CacheFilename     string
+	Scope             *Scope
+	Classes           ClassesMap
+	Traits            ClassesMap
+	Functions         FunctionsMap
+	Constants         ConstantsMap
+	FunctionOverrides FunctionsOverrideMap
 }
 
 // PerFile contains all meta information about the specified file
@@ -137,7 +150,7 @@ func (i *info) InitStubs() {
 
 	{
 		internalFunctions = NewFunctionsMap()
-		h := make(map[lowercaseString]FuncInfo, len(i.allFunctions.H))
+		h := make(map[LowercaseString]FuncInfo, len(i.allFunctions.H))
 		for k, v := range i.allFunctions.H {
 			h[k] = v
 		}
@@ -146,7 +159,7 @@ func (i *info) InitStubs() {
 
 	{
 		internalClasses = NewClassesMap()
-		h := make(map[lowercaseString]ClassInfo, len(i.allClasses.H))
+		h := make(map[LowercaseString]ClassInfo, len(i.allClasses.H))
 		for k, v := range i.allClasses.H {
 			h[k] = v
 		}
@@ -189,6 +202,7 @@ func (i *info) GetMetaForFile(filename string) (res PerFile) {
 
 func (i *info) DeleteMetaForFileNonLocked(filename string) {
 	oldClasses := i.perFileClasses[filename]
+	delete(i.perFileCache, filename)
 	delete(i.allFiles, filename)
 	delete(i.perFileClasses, filename)
 
@@ -223,6 +237,14 @@ func (i *info) DeleteMetaForFileNonLocked(filename string) {
 	for f := range oldConstants {
 		delete(i.allConstants, f)
 	}
+}
+
+func (i *info) AddPerFileCacheNonLocked(filename string, c *PerFileCache) {
+	i.perFileCache[filename] = c
+}
+
+func (i *info) GetAllPerFileCaches() map[string]*PerFileCache {
+	return i.perFileCache
 }
 
 func (i *info) AddClassesNonLocked(filename string, m ClassesMap) {

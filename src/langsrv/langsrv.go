@@ -169,7 +169,7 @@ func handleInitialize(req *baseRequest) error {
 		linter.AnalysisFiles = []string{params.RootURI.Filename()}
 
 		filter := workspace.NewFilenameFilter(linter.ExcludeRegex)
-		linter.ParseFilenames(workspace.ReadFilenames(linter.AnalysisFiles, filter), nil)
+		linter.ParseFilenames(workspace.ReadFilenames(linter.AnalysisFiles, filter), nil, nil)
 
 		meta.SetIndexingComplete(true)
 
@@ -903,7 +903,7 @@ func Start() {
 	rd := bufio.NewReader(os.Stdin)
 	connWr = os.Stdout
 
-	linter.InitStubsFromDir(linter.StubsDir)
+	linter.InitStubsFromDir(linter.StubsDir, nil)
 
 	for {
 		ln, err := rd.ReadString('\n')

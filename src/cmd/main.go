@@ -160,7 +160,7 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 
 	log.Printf("Started")
 
-	if err := initStubs(); err != nil {
+	if err := initStubs(&linter.CodeCache{CacheCallbacks: cfg.CodeCache}); err != nil {
 		return 0, fmt.Errorf("Init stubs: %v", err)
 	}
 
@@ -171,7 +171,10 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 	linter.AnalysisFiles = flag.Args()
 
 	log.Printf("Indexing %+v", flag.Args())
-	linter.ParseFilenames(workspace.ReadFilenames(flag.Args(), nil), l.allowDisableRegex)
+	_, visitedCache := linter.ParseFilenames(workspace.ReadFilenames(flag.Args(), nil), l.allowDisableRegex, &linter.CodeCache{
+		StatCache:      readVisitedCache(),
+		CacheCallbacks: cfg.CodeCache,
+	})
 	parseIndexOnlyFiles(&l)
 	meta.SetIndexingComplete(true)
 
@@ -181,19 +184,25 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 	}
 
 	log.Printf("Linting")
-	reports := linter.ParseFilenames(workspace.ReadFilenames(filenames, l.filenameFilter), l.allowDisableRegex)
+	reports, _ := linter.ParseFilenames(workspace.ReadFilenames(filenames, l.filenameFilter), l.allowDisableRegex, nil)
 	if args.outputBaseline {
 		if err := createBaseline(&l, cfg, reports); err != nil {
 			return 1, fmt.Errorf("write baseline: %v", err)
 		}
 		return 0, nil
 	}
+	writeVisitedCache(visitedCache)
 	criticalReports := analyzeReports(&l, cfg, reports)
 
 	if criticalReports > 0 {
 		log.Printf("Found %d critical reports", criticalReports)
 		return 2, nil
 	}
+
+	if args.codeCacheDump != "" {
+		return dumpCodeCache(args.codeCacheDump, args.codeCachePackagePrefix)
+	}
+
 	return 0, nil
 }
 
@@ -308,21 +317,21 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 	return criticalReports
 }
 
-func initStubs() error {
+func initStubs(codeCache *linter.CodeCache) error {
 	if linter.StubsDir != "" {
-		linter.InitStubsFromDir(linter.StubsDir)
+		linter.InitStubsFromDir(linter.StubsDir, codeCache)
 		return nil
 	}
 
 	// Try to use embedded stubs (from stubs/phpstorm_stubs.go).
-	if err := loadEmbeddedStubs(); err != nil {
+	if err := loadEmbeddedStubs(codeCache); err != nil {
 		return fmt.Errorf("failed to load embedded stubs: %v", err)
 	}
 
 	return nil
 }
 
-func LoadEmbeddedStubs(filenames []string) error {
+func LoadEmbeddedStubs(filenames []string, codeCache *linter.CodeCache) error {
 	var errorsCount int64
 
 	readStubs := func(ch chan workspace.FileInfo) {
@@ -340,7 +349,7 @@ func LoadEmbeddedStubs(filenames []string) error {
 		}
 	}
 
-	linter.InitStubs(readStubs)
+	linter.InitStubs(readStubs, codeCache)
 
 	// Using atomic here for consistency.
 	if atomic.LoadInt64(&errorsCount) != 0 {
@@ -350,7 +359,7 @@ func LoadEmbeddedStubs(filenames []string) error {
 	return nil
 }
 
-func loadEmbeddedStubs() error {
+func loadEmbeddedStubs(codeCache *linter.CodeCache) error {
 	var filenames []string
 	// NOVERIFYDEBUG_LOAD_STUBS is used in golden tests to specify
 	// the test dependencies that need to be loaded.
@@ -362,5 +371,5 @@ func loadEmbeddedStubs() error {
 	if len(filenames) == 0 {
 		return fmt.Errorf("empty file list")
 	}
-	return LoadEmbeddedStubs(filenames)
+	return LoadEmbeddedStubs(filenames, codeCache)
 }

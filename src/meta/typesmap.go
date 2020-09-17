@@ -23,17 +23,17 @@ type Type struct {
 	Dims int
 }
 
-type mapFlags uint8
+type MapFlags uint8
 
 const (
-	mapImmutable mapFlags = 1 << iota
+	mapImmutable MapFlags = 1 << iota
 	mapPrecise
 )
 
 // TypesMap holds a set of types and can be made immutable to prevent unexpected changes.
 type TypesMap struct {
-	flags mapFlags
-	m     map[string]struct{}
+	Flags MapFlags
+	M     map[string]struct{}
 }
 
 // IsPrecise reports whether the type set represented by the map is precise
@@ -46,13 +46,13 @@ type TypesMap struct {
 // Adding an imprecise type to a types map makes the entire type map imprecise.
 //
 // Important invariant: a precise map contains no lazy types.
-func (m TypesMap) IsPrecise() bool { return m.flags&mapPrecise != 0 }
+func (m TypesMap) IsPrecise() bool { return m.Flags&mapPrecise != 0 }
 
 func (m *TypesMap) MarkAsImprecise() {
-	m.flags &^= mapPrecise
+	m.Flags &^= mapPrecise
 }
 
-func (m TypesMap) isImmutable() bool { return m.flags&mapImmutable != 0 }
+func (m TypesMap) isImmutable() bool { return m.Flags&mapImmutable != 0 }
 
 // IsResolved reports whether all types inside types map are resolved.
 //
@@ -72,7 +72,7 @@ func (m TypesMap) IsResolved() bool {
 
 // NewEmptyTypesMap creates new type map that has no types in it
 func NewEmptyTypesMap(cap int) TypesMap {
-	return TypesMap{m: make(map[string]struct{}, cap)}
+	return TypesMap{M: make(map[string]struct{}, cap)}
 }
 
 func NewTypesMapFromTypes(types []Type) TypesMap {
@@ -84,7 +84,7 @@ func NewTypesMapFromTypes(types []Type) TypesMap {
 		}
 		m[s] = struct{}{}
 	}
-	return TypesMap{m: m}
+	return TypesMap{M: m}
 }
 
 // NewTypesMap returns new TypesMap that is initialized with the provided types (separated by "|" symbol)
@@ -96,12 +96,12 @@ func NewTypesMap(str string) TypesMap {
 		}
 		m[s] = struct{}{}
 	}
-	return TypesMap{m: m}
+	return TypesMap{M: m}
 }
 
 func NewPreciseTypesMap(str string) TypesMap {
 	m := NewTypesMap(str)
-	m.flags |= mapPrecise
+	m.Flags |= mapPrecise
 	return m
 }
 
@@ -122,29 +122,29 @@ func MergeTypeMaps(maps ...TypesMap) TypesMap {
 
 // NewTypesMapFromMap creates TypesMap from provided map[string]struct{}
 func NewTypesMapFromMap(m map[string]struct{}) TypesMap {
-	return TypesMap{m: m}
+	return TypesMap{M: m}
 }
 
 // Immutable returns immutable view of TypesMap
 func (m TypesMap) Immutable() TypesMap {
 	return TypesMap{
-		flags: m.flags | mapImmutable,
-		m:     m.m,
+		Flags: m.Flags | mapImmutable,
+		M:     m.M,
 	}
 }
 
 // IsEmpty checks if map has no types at all
 func (m TypesMap) IsEmpty() bool {
-	return len(m.m) == 0
+	return len(m.M) == 0
 }
 
 // Equals check if two typesmaps are the same
 func (m TypesMap) Equals(m2 TypesMap) bool {
-	if len(m.m) != len(m2.m) {
+	if len(m.M) != len(m2.M) {
 		return false
 	}
-	for k := range m.m {
-		_, ok := m2.m[k]
+	for k := range m.M {
+		_, ok := m2.M[k]
 		if !ok {
 			return false
 		}
@@ -154,18 +154,18 @@ func (m TypesMap) Equals(m2 TypesMap) bool {
 
 // Len returns number of different types in map
 func (m TypesMap) Len() int {
-	return len(m.m)
+	return len(m.M)
 }
 
 // IsArray checks if map contains only array of any type
 //
 // Warning: use only for *lazy* types!
 func (m TypesMap) IsArray() bool {
-	if len(m.m) != 1 {
+	if len(m.M) != 1 {
 		return false
 	}
 
-	for typ := range m.m {
+	for typ := range m.M {
 		if len(typ) > 0 && typ[0] == WArrayOf {
 			return true
 		}
@@ -177,11 +177,11 @@ func (m TypesMap) IsArray() bool {
 //
 // Warning: use only for *lazy* types!
 func (m TypesMap) IsArrayOf(typ string) bool {
-	if len(m.m) != 1 {
+	if len(m.M) != 1 {
 		return false
 	}
 
-	_, ok := m.m[WrapArrayOf(typ)]
+	_, ok := m.M[WrapArrayOf(typ)]
 	return ok
 }
 
@@ -193,19 +193,19 @@ func (m TypesMap) Is(typ string) bool {
 		return false
 	}
 
-	_, ok := m.m[typ]
+	_, ok := m.M[typ]
 	return ok
 }
 
 // AppendString adds provided types to current map and returns new one (immutable maps are always copied)
 func (m TypesMap) AppendString(str string) TypesMap {
 	if !m.isImmutable() {
-		if m.m == nil {
-			m.m = make(map[string]struct{}, strings.Count(str, "|")+1)
+		if m.M == nil {
+			m.M = make(map[string]struct{}, strings.Count(str, "|")+1)
 		}
 
 		for _, s := range strings.Split(str, "|") {
-			m.m[s] = struct{}{}
+			m.M[s] = struct{}{}
 		}
 
 		// Since we have no idea where str is coming from,
@@ -216,7 +216,7 @@ func (m TypesMap) AppendString(str string) TypesMap {
 	}
 
 	mm := make(map[string]struct{}, m.Len()+strings.Count(str, "|")+1)
-	for k, v := range m.m {
+	for k, v := range m.M {
 		mm[k] = v
 	}
 
@@ -225,7 +225,7 @@ func (m TypesMap) AppendString(str string) TypesMap {
 	}
 
 	// The returned map is mutable and imprecise.
-	return TypesMap{m: mm}
+	return TypesMap{M: mm}
 }
 
 func (m TypesMap) Clone() TypesMap {
@@ -234,10 +234,10 @@ func (m TypesMap) Clone() TypesMap {
 	}
 
 	mm := make(map[string]struct{}, m.Len())
-	for typ := range m.m {
+	for typ := range m.M {
 		mm[typ] = struct{}{}
 	}
-	return TypesMap{m: mm, flags: m.flags}
+	return TypesMap{M: mm, Flags: m.Flags}
 }
 
 // Append adds provided types to current map and returns new one (immutable maps are always copied)
@@ -250,48 +250,48 @@ func (m TypesMap) Append(n TypesMap) TypesMap {
 	}
 
 	if !m.isImmutable() {
-		if m.m == nil {
-			if n.m == nil {
+		if m.M == nil {
+			if n.M == nil {
 				return m
 			}
-			m.m = make(map[string]struct{}, n.Len())
+			m.M = make(map[string]struct{}, n.Len())
 		}
 
 		m.MarkAsImprecise()
-		for k, v := range n.m {
-			m.m[k] = v
+		for k, v := range n.M {
+			m.M[k] = v
 		}
 		return m
 	}
 
 	mm := make(map[string]struct{}, m.Len()+n.Len())
-	for k, v := range m.m {
+	for k, v := range m.M {
 		mm[k] = v
 	}
-	for k, v := range n.m {
+	for k, v := range n.M {
 		mm[k] = v
 	}
 
 	// Previously, returned map was always mutable, so we ignore mapImmutable flag.
 	// If both maps are precise, we preserve that property.
-	var flags mapFlags
+	var flags MapFlags
 	if m.IsPrecise() && n.IsPrecise() {
 		flags |= mapPrecise
 	}
 
-	return TypesMap{m: mm, flags: flags}
+	return TypesMap{M: mm, Flags: flags}
 }
 
 // String returns string representation of a map
 func (m TypesMap) String() string {
-	if len(m.m) == 1 {
-		for k := range m.m {
+	if len(m.M) == 1 {
+		for k := range m.M {
 			return k
 		}
 	}
 
-	types := make([]string, 0, len(m.m))
-	for k := range m.m {
+	types := make([]string, 0, len(m.M))
+	for k := range m.M {
 		types = append(types, formatType(k))
 	}
 	sort.Strings(types)
@@ -302,11 +302,11 @@ func (m TypesMap) String() string {
 func (m TypesMap) GobEncode() ([]byte, error) {
 	w := new(bytes.Buffer)
 	encoder := gob.NewEncoder(w)
-	err := encoder.Encode(m.flags)
+	err := encoder.Encode(m.Flags)
 	if err != nil {
 		return nil, err
 	}
-	err = encoder.Encode(m.m)
+	err = encoder.Encode(m.M)
 	if err != nil {
 		return nil, err
 	}
@@ -317,18 +317,18 @@ func (m TypesMap) GobEncode() ([]byte, error) {
 func (m *TypesMap) GobDecode(buf []byte) error {
 	r := bytes.NewBuffer(buf)
 	decoder := gob.NewDecoder(r)
-	err := decoder.Decode(&m.flags)
+	err := decoder.Decode(&m.Flags)
 	if err != nil {
 		return err
 	}
-	return decoder.Decode(&m.m)
+	return decoder.Decode(&m.M)
 }
 
 func (m TypesMap) Contains(typ string) bool {
 	if m.Len() == 0 {
 		return false
 	}
-	for typ2 := range m.m {
+	for typ2 := range m.M {
 		if typ2 == typ {
 			return true
 		}
@@ -344,8 +344,8 @@ func (m TypesMap) Find(pred func(typ string) bool) bool {
 		return false
 	}
 
-	keys := make([]string, 0, len(m.m))
-	for k := range m.m {
+	keys := make([]string, 0, len(m.M))
+	for k := range m.M {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
@@ -365,8 +365,8 @@ func (m TypesMap) Iterate(cb func(typ string)) {
 	}
 
 	// We need to sort types so that we always iterate classes using the same order.
-	keys := make([]string, 0, len(m.m))
-	for k := range m.m {
+	keys := make([]string, 0, len(m.M))
+	for k := range m.M {
 		keys = append(keys, k)
 	}
 
@@ -385,8 +385,8 @@ func (m TypesMap) ArrayElemLazyType() TypesMap {
 	}
 
 	mm := make(map[string]struct{}, m.Len())
-	for typ := range m.m {
+	for typ := range m.M {
 		mm[UnwrapArrayOf(typ)] = struct{}{}
 	}
-	return TypesMap{m: mm, flags: m.flags}
+	return TypesMap{M: mm, Flags: m.Flags}
 }
