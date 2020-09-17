@@ -2510,6 +2510,42 @@ function f() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestMagicConstants(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+function f() {
+	$line = __LINE__;
+	exprtype($line, "precise int");
+
+	$file = __FILE__;
+	exprtype($file, "precise string");
+
+	$dir = __DIR__;
+	exprtype($dir, "precise string");
+
+	$function = __FUNCTION__;
+	exprtype($function, "precise string");
+
+	$class = __CLASS__;
+	exprtype($class, "precise string");
+
+	$trait = __TRAIT__;
+	exprtype($trait, "precise string");
+
+	$method = __METHOD__;
+	exprtype($method, "precise string");
+
+	$namespace = __NAMESPACE__;
+	exprtype($namespace, "precise string");
+
+	$className = Foo::class;
+	exprtype($className, "precise string");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {

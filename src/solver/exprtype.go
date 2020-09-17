@@ -323,6 +323,9 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 	case *ir.ShiftLeftExpr, *ir.ShiftRightExpr:
 		return meta.PreciseIntType
 	case *ir.ClassConstFetchExpr:
+		if n.ConstantName.Value == "class" {
+			return meta.PreciseStringType
+		}
 		className, ok := GetClassName(cs, n.Class)
 		if !ok {
 			return meta.TypesMap{}
@@ -374,6 +377,9 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 		return ExprTypeLocalCustom(sc, cs, n.Expr, custom)
 	case *ir.ClosureExpr:
 		return meta.NewTypesMap(`\Closure`)
+
+	case *ir.MagicConstant:
+		return magicConstantType(n)
 	}
 
 	return meta.TypesMap{}
@@ -386,4 +392,16 @@ func ExprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 		return meta.MixedType
 	}
 	return res
+}
+
+func magicConstantType(n *ir.MagicConstant) meta.TypesMap {
+	switch n.Value {
+	case "__LINE__":
+		return meta.PreciseIntType
+	case "__FILE__", "__DIR__", "__FUNCTION__",
+		"__CLASS__", "__TRAIT__", "__METHOD__", "__NAMESPACE__":
+		return meta.PreciseStringType
+	}
+
+	return meta.TypesMap{}
 }
