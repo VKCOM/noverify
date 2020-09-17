@@ -210,7 +210,7 @@ func (s *Suite) RunLinter() []*linter.Report {
 	for stub := range s.defaultStubs {
 		stubs = append(stubs, stub)
 	}
-	if err := cmd.LoadEmbeddedStubs(stubs); err != nil {
+	if err := cmd.LoadEmbeddedStubs(stubs, nil); err != nil {
 		s.t.Fatalf("load stubs: %v", err)
 	}
 

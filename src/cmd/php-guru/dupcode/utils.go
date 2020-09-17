@@ -50,7 +50,7 @@ func runIndexing(cacheDir string, targets []string, filter *workspace.FilenameFi
 
 	// Handle stubs.
 	filenames := stubs.AssetNames()
-	cmd.LoadEmbeddedStubs(filenames)
+	cmd.LoadEmbeddedStubs(filenames, nil)
 
 	// Handle workspace files.
 	linter.ParseFilenames(workspace.ReadFilenames(targets, filter), nil, nil)

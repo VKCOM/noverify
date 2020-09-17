@@ -2554,7 +2554,7 @@ func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 				Filename: "stubs.php",
 				Contents: []byte(params.stubs),
 			}
-		})
+		}, nil)
 	}
 	linttest.ParseTestFile(t, "exprtype.php", params.code)
 

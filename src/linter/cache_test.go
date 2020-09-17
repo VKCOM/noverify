@@ -14,6 +14,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/VKCOM/noverify/src/linttest/assert"
+	"github.com/VKCOM/noverify/src/meta"
 )
 
 func TestCache(t *testing.T) {
@@ -120,7 +121,7 @@ main();
 		//
 		// If cache encoding changes, there is a very high chance that
 		// encoded data lengh will change as well.
-		wantLen := 4843
+		wantLen := 5064
 		haveLen := buf.Len()
 		if haveLen != wantLen {
 			t.Errorf("cache len mismatch:\nhave: %d\nwant: %d", haveLen, wantLen)
@@ -129,7 +130,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "a1509317129f7b0556e2ecf6b52c3319ffcde53180f81def1f28be025d437171026e908ec87ee8ddd44bc315295c5f51620f58838f759e289131e79d0307c8e1"
+		wantStrings := "4d79812336ab542b160430eb3abce6eea53adaaf84c76d7d8854f2b96688354a705a6310083de6f950764b06abb7b36c41922ddf8a42beeb49627e4e31776cdc"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)
@@ -139,7 +140,7 @@ main();
 		//
 		// If it fails, encoding and/or decoding is broken.
 		encodedMeta := &root.meta
-		decodedMeta := &fileMeta{}
+		decodedMeta := &meta.PerFileCache{}
 		if err := readMetaCache(bytes.NewReader(buf.Bytes()), "", decodedMeta); err != nil {
 			t.Errorf("decoding failed: %v", err)
 		} else {
