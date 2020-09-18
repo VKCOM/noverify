@@ -138,9 +138,7 @@ func PrepareGoldenTestSuite(s *GoldenTestSuite, t *testing.T, baseDir string) {
 		`stubs/phpstorm-stubs/standard/standard_9.php`,
 	}
 
-	for _, standardDep := range standardDeps {
-		s.Deps = append(s.Deps, standardDep)
-	}
+	s.Deps = append(s.Deps, standardDeps...)
 }
 
 func (s *GoldenTestSuite) Run() {
@@ -170,15 +168,11 @@ func (s *GoldenTestSuite) loadGoldenFile() {
 }
 
 func (s *GoldenTestSuite) AddDeps(deps []string) {
-	for _, dep := range deps {
-		s.Deps = append(s.Deps, dep)
-	}
+	s.Deps = append(s.Deps, deps...)
 }
 
 func (s *GoldenTestSuite) AddDisabled(disabled []string) {
-	for _, disable := range disabled {
-		s.Disable = append(s.Disable, disable)
-	}
+	s.Disable = append(s.Disable, disabled...)
 }
 
 func runGoldenTest(target *GoldenTestSuite) {
