@@ -156,18 +156,16 @@ type linterOutput struct {
 	Errors  []string
 }
 
-func (s *GoldenTestSuite) loadReportsFile(filename string) error {
+func (s *GoldenTestSuite) loadReportsFile(filename string) {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return err
+		s.suite.t.Fatalf("read reports file: %v", err)
 	}
 	var output linterOutput
 	if err := json.Unmarshal(data, &output); err != nil {
-		return err
+		s.suite.t.Fatalf("unmarshal reports file: %v", err)
 	}
-
 	s.reportFile = &output
-	return nil
 }
 
 func (s *GoldenTestSuite) checkGoldenOutput(want []byte, reports []*linter.Report) {
@@ -274,10 +272,7 @@ func (s *GoldenE2ETestSuite) Run() {
 				t.Fatalf("%v: %s", err, out)
 			}
 
-			err = target.loadReportsFile(outputFilename)
-			if err != nil {
-				t.Fatalf("read output file %s: %v", outputFilename, err)
-			}
+			target.loadReportsFile(outputFilename)
 
 			for _, r := range target.reportFile.Reports {
 				// Turn absolute paths to something that is compatible
