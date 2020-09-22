@@ -2303,6 +2303,40 @@ array_reduce($foo_array, function($carry, $item) {
   exprtype($item, "\Foo");
 });
 
+// mixed array, but function args with type hints
+$mixed_arr = [];
+usort($mixed_arr, function(Foo $a, Foo $b) {
+  exprtype($a, "\Foo");
+  exprtype($b, "\Foo");
+});
+
+$mixed_arr_2 = [];
+usort($mixed_arr_2, function(int $a, int $b) {
+  exprtype($a, "int");
+  exprtype($b, "int");
+});
+
+// mixed array, but not all function args have type hints
+$mixed_arr_3 = [];
+usort($mixed_arr_3, function(Foo $a, $b) {
+  exprtype($a, "\Foo");
+  exprtype($b, "mixed");
+});
+
+// non mixed array, but function args with type hints
+$non_mixed_arr = [1, 2, 3];
+usort($non_mixed_arr, function(int $a, int $b) {
+  exprtype($a, "int");
+  exprtype($b, "int");
+});
+
+// non mixed array, but not all function args have type hints
+$non_mixed_arr_2 = [new Foo, new Foo, new Foo];
+usort($non_mixed_arr_2, function(Foo $a, $b) {
+  exprtype($a, "\Foo");
+  exprtype($b, "\Foo");
+});
+
 some_function_without_model(function($b) {
   exprtype($b, "mixed");
 }, $d);
@@ -2510,26 +2544,37 @@ function f() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
-func TestNullCoalesceType(t *testing.T) {
+func TestMagicConstants(t *testing.T) {
 	code := `<?php
 class Foo {}
 
 function f() {
-	$a = 10;
-	$b = "Hello";
+	$line = __LINE__;
+	exprtype($line, "precise int");
 
-	$c = $a ?? $b;
-	exprtype($c, "precise int|string");
+	$file = __FILE__;
+	exprtype($file, "precise string");
 
-	$f = new Foo();
+	$dir = __DIR__;
+	exprtype($dir, "precise string");
 
-	$s = $c ?? $f;
-	exprtype($s, "\Foo|int|string");
+	$function = __FUNCTION__;
+	exprtype($function, "precise string");
 
-	$e = 10.5;
+	$class = __CLASS__;
+	exprtype($class, "precise string");
 
-	$e ??= $s;
-	exprtype($e, "\Foo|float|int|string");
+	$trait = __TRAIT__;
+	exprtype($trait, "precise string");
+
+	$method = __METHOD__;
+	exprtype($method, "precise string");
+
+	$namespace = __NAMESPACE__;
+	exprtype($namespace, "precise string");
+
+	$className = Foo::class;
+	exprtype($className, "precise string");
 }
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
