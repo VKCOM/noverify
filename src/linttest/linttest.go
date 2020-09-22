@@ -141,14 +141,6 @@ func (s *Suite) AddNolintFile(contents string) {
 	})
 }
 
-// AddNamedFile adds a file to a suite file list, with specific name.
-func AddNamedFile(test *Suite, name, code string) {
-	test.Files = append(test.Files, TestFile{
-		Name: name,
-		Data: []byte(code),
-	})
-}
-
 // RunAndMatch calls Match with the results of RunLinter.
 //
 // This is a recommended way to use the Suite, but if
