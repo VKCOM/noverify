@@ -1,6 +1,7 @@
 package golden_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/VKCOM/noverify/src/linter"
@@ -14,7 +15,9 @@ func TestMain(t *testing.M) {
 		panic(err)
 	}
 
-	t.Run()
+	exitCode := t.Run()
+
+	os.Exit(exitCode)
 }
 
 func TestGolden(t *testing.T) {
