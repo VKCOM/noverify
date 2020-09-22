@@ -82,7 +82,7 @@ type Suite struct {
 	AllowDisable *regexp.Regexp
 
 	defaultStubs map[string]struct{}
-	LoadedStubs  []string
+	LoadStubs    []string
 
 	MisspellList string
 
@@ -128,16 +128,6 @@ func (s *Suite) ReadAndAddFiles(files []string) {
 		}
 		s.AddNamedFile(f, string(code))
 	}
-}
-
-// LoadStubs adds stubs to the test.
-func (s *Suite) LoadStubs(stubs []string) {
-	s.LoadedStubs = stubs
-}
-
-// SetMisspellList set value of MisspellList.
-func (s *Suite) SetMisspellList(name string) {
-	s.MisspellList = name
 }
 
 // AddNolintFile adds a file to a suite file list that will be parsed, but not linted.
@@ -227,7 +217,7 @@ func (s *Suite) RunLinter() []*linter.Report {
 	s.t.Helper()
 	meta.ResetInfo()
 
-	for _, stub := range s.LoadedStubs {
+	for _, stub := range s.LoadStubs {
 		s.defaultStubs[stub] = struct{}{}
 	}
 	stubs := make([]string, 0, len(s.defaultStubs))

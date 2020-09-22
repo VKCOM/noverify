@@ -114,9 +114,9 @@ func runGoldenTest(s *GoldenTestSuite) {
 			t.Fatalf("list files: %v", err)
 		}
 
-		s.suite.LoadStubs(s.Deps)
+		s.suite.LoadStubs = s.Deps
+		s.suite.MisspellList = misspellList
 		s.suite.ReadAndAddFiles(phpFiles)
-		s.suite.SetMisspellList(misspellList)
 
 		reports := s.suite.RunFilterLinter(s.Disable)
 

@@ -8,7 +8,7 @@ import (
 
 func TestIssue547(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.LoadedStubs = []string{`stubs/phpstorm-stubs/standard/standard_3.php`}
+	test.LoadStubs = []string{`stubs/phpstorm-stubs/standard/standard_3.php`}
 	test.AddFile(`<?php
 putenv("A=1");
 \putenv("B=2");

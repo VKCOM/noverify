@@ -8,7 +8,7 @@ import (
 
 func TestSprintf(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.LoadedStubs = []string{`stubs/phpstorm-stubs/standard/standard_2.php`}
+	test.LoadStubs = []string{`stubs/phpstorm-stubs/standard/standard_2.php`}
 	test.AddFile(`<?php
 function f($s, array $a) {
   $_ = sprintf('%d');
@@ -40,7 +40,7 @@ function f($s, array $a) {
 
 func TestPrintf(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.LoadedStubs = []string{`stubs/phpstorm-stubs/standard/standard_2.php`}
+	test.LoadStubs = []string{`stubs/phpstorm-stubs/standard/standard_2.php`}
 	test.AddFile(`<?php
 function f($s, array $a) {
   printf('%d');

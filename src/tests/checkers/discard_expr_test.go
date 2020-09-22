@@ -8,7 +8,7 @@ import (
 
 func TestDiscardExprInternalClassCall(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.LoadedStubs = []string{
+	test.LoadStubs = []string{
 		`stubs/phpstorm-stubs/dom/dom_c.php`,
 	}
 	test.AddFile(`<?php
