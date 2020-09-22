@@ -46,6 +46,65 @@ func init() {
 	})
 }
 
+func TestExprTypeListOverArray(t *testing.T) {
+	code := `<?php
+/**
+ * @param int[] $xs
+ */
+function ints($xs) {
+  list ($a, $b) = $xs;
+  exprtype($a, 'int');
+  exprtype($b, 'int');
+}
+
+/**
+ * @param string[]|false $xs
+ */
+function strings_or_false($xs) {
+  list ($a, $b) = $xs;
+  exprtype($a, 'string');
+  exprtype($b, 'string');
+}
+
+/**
+ * @param null|\Foo[]|int $xs
+ */
+function null_or_foos_or_int($xs) {
+  list ($a, $b) = $xs;
+  exprtype($a, '\Foo');
+  exprtype($b, '\Foo');
+}
+
+/**
+ * @param int[]|string[] $xs
+ */
+function ints_or_strings($xs) {
+  list ($a, $b) = $xs;
+  exprtype($a, 'int|string');
+  exprtype($b, 'int|string');
+}
+
+/**
+ * @param mixed[]|string[]|int[]|false $xs
+ */
+function mixeds_or_strings_or_ints_or_false($xs) {
+  list ($a, $b) = $xs;
+  exprtype($a, 'int|mixed|string');
+  exprtype($b, 'int|mixed|string');
+}
+
+/**
+ * @param int|float|null $xs
+ */
+function not_an_array($xs) {
+  list ($a, $b) = $xs;
+  exprtype($a, 'unknown_from_list');
+  exprtype($b, 'unknown_from_list');
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestExprTypeForeachKey(t *testing.T) {
 	code := `<?php
 $xs = [[1], [2]];
@@ -2244,6 +2303,40 @@ array_reduce($foo_array, function($carry, $item) {
   exprtype($item, "\Foo");
 });
 
+// mixed array, but function args with type hints
+$mixed_arr = [];
+usort($mixed_arr, function(Foo $a, Foo $b) {
+  exprtype($a, "\Foo");
+  exprtype($b, "\Foo");
+});
+
+$mixed_arr_2 = [];
+usort($mixed_arr_2, function(int $a, int $b) {
+  exprtype($a, "int");
+  exprtype($b, "int");
+});
+
+// mixed array, but not all function args have type hints
+$mixed_arr_3 = [];
+usort($mixed_arr_3, function(Foo $a, $b) {
+  exprtype($a, "\Foo");
+  exprtype($b, "mixed");
+});
+
+// non mixed array, but function args with type hints
+$non_mixed_arr = [1, 2, 3];
+usort($non_mixed_arr, function(int $a, int $b) {
+  exprtype($a, "int");
+  exprtype($b, "int");
+});
+
+// non mixed array, but not all function args have type hints
+$non_mixed_arr_2 = [new Foo, new Foo, new Foo];
+usort($non_mixed_arr_2, function(Foo $a, $b) {
+  exprtype($a, "\Foo");
+  exprtype($b, "\Foo");
+});
+
 some_function_without_model(function($b) {
   exprtype($b, "mixed");
 }, $d);
@@ -2446,6 +2539,42 @@ function f() {
 	$a = 5;
 	$a *= 5;
 	exprtype($a, "int");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestMagicConstants(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+function f() {
+	$line = __LINE__;
+	exprtype($line, "precise int");
+
+	$file = __FILE__;
+	exprtype($file, "precise string");
+
+	$dir = __DIR__;
+	exprtype($dir, "precise string");
+
+	$function = __FUNCTION__;
+	exprtype($function, "precise string");
+
+	$class = __CLASS__;
+	exprtype($class, "precise string");
+
+	$trait = __TRAIT__;
+	exprtype($trait, "precise string");
+
+	$method = __METHOD__;
+	exprtype($method, "precise string");
+
+	$namespace = __NAMESPACE__;
+	exprtype($namespace, "precise string");
+
+	$className = Foo::class;
+	exprtype($className, "precise string");
 }
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})

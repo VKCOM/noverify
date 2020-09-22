@@ -161,7 +161,7 @@ func init() {
 		{
 			Name:     "arraySyntax",
 			Default:  true,
-			Quickfix: false,
+			Quickfix: true,
 			Comment:  `Report usages of old array() syntax.`,
 			Before:   `array(1, 2)`,
 			After:    `[1, 2]`,
@@ -263,7 +263,7 @@ thisFunctionExits();`,
 
 		{
 			Name:     "phpdoc",
-			Default:  true,
+			Default:  false,
 			Quickfix: false,
 			Comment:  `Report missing phpdoc on public methods.`,
 			Before: `public function process($acts, $config) {

@@ -277,6 +277,13 @@ func (n *AssignShiftRight) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
+func (n *BadString) Walk(v Visitor) {
+	if !v.EnterNode(n) {
+		return
+	}
+	v.LeaveNode(n)
+}
+
 func (n *BitwiseAndExpr) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return

@@ -12,6 +12,19 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestBadString(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$_ = "\u{";
+$_ = "\u{zzzz}";
+`)
+	test.Expect = []string{
+		`missing closing '}' for UTF-8 sequence`,
+		`decode UTF-8 codepoints: invalid syntax`,
+	}
+	test.RunAndMatch()
+}
+
 func TestStringNoQuotes(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 $arr = [];

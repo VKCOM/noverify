@@ -1,6 +1,7 @@
 package linter
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
+	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/solver"
 )
 
@@ -161,6 +163,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 	case *ir.InterfaceStmt:
 		b.checkInterfaceStmt(n)
+
+	case *ir.BadString:
+		b.report(n, LevelSyntax, "syntax", "%s", n.Error)
 	}
 }
 
@@ -439,9 +444,28 @@ func (b *blockLinter) checkContinueStmt(c *ir.ContinueStmt) {
 	}
 }
 
+func (b *blockLinter) addFixForArray(arr *ir.ArrayExpr) {
+	if !ApplyQuickFixes {
+		return
+	}
+
+	from := arr.Position.StartPos
+	to := arr.Position.EndPos
+	have := b.walker.r.fileContents[from:to]
+	have = bytes.TrimPrefix(have, []byte("array("))
+	have = bytes.TrimSuffix(have, []byte(")"))
+
+	b.walker.r.ctx.fixes = append(b.walker.r.ctx.fixes, quickfix.TextEdit{
+		StartPos:    arr.Position.StartPos,
+		EndPos:      arr.Position.EndPos,
+		Replacement: fmt.Sprintf("[%s]", string(have)),
+	})
+}
+
 func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 	if !arr.ShortSyntax {
 		b.report(arr, LevelDoNotReject, "arraySyntax", "Use of old array syntax (use short form instead)")
+		b.addFixForArray(arr)
 	}
 
 	items := arr.Items

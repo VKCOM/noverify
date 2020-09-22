@@ -1,6 +1,8 @@
 package irconv
 
 import (
+	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -34,17 +36,17 @@ func namePartsToString(parts []node.Node) string {
 //
 // If, for whatever reason, a bad strign escape was encountered,
 // second returned value will be false.
-func interpretString(s string, quote byte) (string, bool) {
+func interpretString(s string, quote byte) (string, error) {
 	switch quote {
 	case '\'', '"':
 		// OK
 	default:
-		return "", false
+		panic("invalid quote type")
 	}
 
 	if !strings.Contains(s, `\`) {
 		// Fast path: nothing to replace.
-		return s, true
+		return s, nil
 	}
 
 	// To understand what's going on, consult the manual:
@@ -57,7 +59,7 @@ func interpretString(s string, quote byte) (string, bool) {
 }
 
 // interpretStringQ1 returns s interpreted value as a single-quoted PHP string.
-func interpretStringQ1(s string) (string, bool) {
+func interpretStringQ1(s string) (string, error) {
 	var out strings.Builder
 	out.Grow(len(s))
 
@@ -68,7 +70,7 @@ func interpretStringQ1(s string) (string, bool) {
 		switch {
 		case ch == '\\':
 			if !hasOffset(s, i+1) {
-				return "", false
+				return "", errors.New(`illegal trailing \`)
 			}
 			switch s[i+1] {
 			case '\'':
@@ -93,11 +95,11 @@ func interpretStringQ1(s string) (string, bool) {
 		}
 	}
 
-	return out.String(), true
+	return out.String(), nil
 }
 
 // interpretStringQ2 returns s interpreted value as a double-quoted PHP string.
-func interpretStringQ2(s string) (string, bool) {
+func interpretStringQ2(s string) (string, error) {
 	var out strings.Builder
 	out.Grow(len(s))
 
@@ -108,7 +110,7 @@ func interpretStringQ2(s string) (string, bool) {
 		switch {
 		case ch == '\\':
 			if !hasOffset(s, i+1) {
-				return "", false
+				return "", errors.New(`illegal trailing \`)
 			}
 			switch s[i+1] {
 			case 'u': // \u{[0-9A-Fa-f]+}
@@ -119,13 +121,13 @@ func interpretStringQ2(s string) (string, bool) {
 				}
 				end := strings.IndexByte(s[i+len(`\u`):], '}')
 				if end == -1 {
-					return "", false
+					return "", errors.New("missing closing '}' for UTF-8 sequence")
 				}
 				codepoints := s[i+len(`\u{`) : i+len(`\u{`)+end-len(`}`)]
 				goLiteral := `\U` + zeros[:8-len(codepoints)] + codepoints
 				ch, _, _, err := strconv.UnquoteChar(goLiteral, '"')
 				if err != nil {
-					return "", false
+					return "", fmt.Errorf("decode UTF-8 codepoints: %v", err)
 				}
 				out.WriteRune(ch)
 				i += len(`\u{`) + len(codepoints) + len(`}`)
@@ -210,7 +212,7 @@ func interpretStringQ2(s string) (string, bool) {
 		}
 	}
 
-	return out.String(), true
+	return out.String(), nil
 }
 
 var zeros = "00000000"

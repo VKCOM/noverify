@@ -47,6 +47,8 @@ func (n *AssignShiftLeft) GetFreeFloating() *freefloating.Collection { return &n
 
 func (n *AssignShiftRight) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
 
+func (n *BadString) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
+
 func (n *BitwiseAndExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
 
 func (n *BitwiseNotExpr) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }

@@ -241,7 +241,7 @@ func (d *RootWalker) EnterNode(n ir.Node) (res bool) {
 		}
 		d.checkCommentMisspellings(n.ClassName, n.PhpDocComment)
 		d.checkIdentMisspellings(n.ClassName)
-		doc := d.parseClassPHPDoc(n.ClassName, n.PhpDocComment)
+		doc := d.parseClassPHPDoc(n.ClassName, n.PhpDoc)
 		d.reportPhpdocErrors(n.ClassName, doc.errs)
 		// If we ever need to distinguish @property-annotated and real properties,
 		// more work will be required here.
@@ -901,7 +901,7 @@ func (d *RootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 		nm := p.Variable.Name
 
 		d.checkCommentMisspellings(p, p.PhpDocComment)
-		typ := d.parsePHPDocVar(p, p.PhpDocComment)
+		typ := d.parsePHPDocVar(p, p.PhpDoc)
 		if p.Expr != nil {
 			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, p.Expr))
 		}
@@ -1006,7 +1006,7 @@ func (d *RootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	for _, p := range meth.Params {
 		d.checkVarnameMisspellings(p, p.(*ir.Parameter).Variable.Name)
 	}
-	doc := d.parsePHPDoc(meth.MethodName, meth.PhpDocComment, meth.Params)
+	doc := d.parsePHPDoc(meth.MethodName, meth.PhpDoc, meth.Params)
 	d.reportPhpdocErrors(meth.MethodName, doc.errs)
 	phpdocReturnType := doc.returnType
 	phpDocParamTypes := doc.types
@@ -1113,8 +1113,8 @@ func (d *RootWalker) reportPhpdocErrors(n ir.Node, errs phpdocErrors) {
 	}
 }
 
-func (d *RootWalker) parsePHPDocVar(n ir.Node, doc string) (m meta.TypesMap) {
-	for _, part := range phpdoc.Parse(d.ctx.phpdocTypeParser, doc) {
+func (d *RootWalker) parsePHPDocVar(n ir.Node, doc []phpdoc.CommentPart) (m meta.TypesMap) {
+	for _, part := range doc {
 		d.checkPHPDocRef(n, part)
 		part, ok := part.(*phpdoc.TypeVarCommentPart)
 		if ok && part.Name() == "var" {
@@ -1263,10 +1263,10 @@ func (d *RootWalker) checkPHPDocRef(n ir.Node, part phpdoc.CommentPart) {
 	}
 }
 
-func (d *RootWalker) parsePHPDoc(n ir.Node, doc string, actualParams []ir.Node) phpDocParseResult {
+func (d *RootWalker) parsePHPDoc(n ir.Node, doc []phpdoc.CommentPart, actualParams []ir.Node) phpDocParseResult {
 	var result phpDocParseResult
 
-	if doc == "" {
+	if len(doc) == 0 {
 		return result
 	}
 
@@ -1280,7 +1280,7 @@ func (d *RootWalker) parsePHPDoc(n ir.Node, doc string, actualParams []ir.Node) 
 
 	var curParam int
 
-	for _, part := range phpdoc.Parse(d.ctx.phpdocTypeParser, doc) {
+	for _, part := range doc {
 		d.checkPHPDocRef(n, part)
 
 		if part.Name() == "deprecated" {
@@ -1370,10 +1370,17 @@ func (d *RootWalker) parseTypeNode(n ir.Node) (typ meta.TypesMap, ok bool) {
 func (d *RootWalker) callbackParamByIndex(param ir.Node, argType meta.TypesMap) meta.FuncParam {
 	p := param.(*ir.Parameter)
 	v := p.Variable
+
 	var typ meta.TypesMap
-	argType.Iterate(func(t string) {
-		typ = typ.AppendString(meta.WrapElemOf(t))
-	})
+	tp, ok := d.parseTypeNode(p.VariableType)
+	if ok {
+		typ = tp
+	} else {
+		argType.Iterate(func(t string) {
+			typ = typ.AppendString(meta.WrapElemOf(t))
+		})
+	}
+
 	arg := meta.FuncParam{
 		IsRef: p.ByRef,
 		Name:  v.Name,
@@ -1532,7 +1539,7 @@ func (d *RootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	for _, p := range fun.Params {
 		d.checkVarnameMisspellings(p, p.(*ir.Parameter).Variable.Name)
 	}
-	doc := d.parsePHPDoc(fun.FunctionName, fun.PhpDocComment, fun.Params)
+	doc := d.parsePHPDoc(fun.FunctionName, fun.PhpDoc, fun.Params)
 	d.reportPhpdocErrors(fun.FunctionName, doc.errs)
 	phpdocReturnType := doc.returnType
 	phpDocParamTypes := doc.types
@@ -1985,10 +1992,10 @@ func (d *RootWalker) nodeText(n ir.Node) []byte {
 	return d.fileContents[pos.StartPos:pos.EndPos]
 }
 
-func (d *RootWalker) parseClassPHPDoc(n ir.Node, doc string) classPhpDocParseResult {
+func (d *RootWalker) parseClassPHPDoc(n ir.Node, doc []phpdoc.CommentPart) classPhpDocParseResult {
 	var result classPhpDocParseResult
 
-	if doc == "" {
+	if len(doc) == 0 {
 		return result
 	}
 
@@ -1998,7 +2005,7 @@ func (d *RootWalker) parseClassPHPDoc(n ir.Node, doc string) classPhpDocParseRes
 	result.properties = make(meta.PropertiesMap)
 	result.methods = meta.NewFunctionsMap()
 
-	for _, part := range phpdoc.Parse(d.ctx.phpdocTypeParser, doc) {
+	for _, part := range doc {
 		d.checkPHPDocRef(n, part)
 		switch part.Name() {
 		case "property", "property-read", "property-write":
