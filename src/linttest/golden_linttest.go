@@ -245,12 +245,12 @@ func (s *GoldenE2ETestSuite) RunOnlyTests() {
 	wd = strings.ReplaceAll(wd, "\\", "/")
 
 	s.t.Run("e2e", func(t *testing.T) {
-		for _, target := range s.tests {
-			target := target // To avoid the invalid capture in parallel tests
-			t.Run(target.Name+"/e2e", func(t *testing.T) {
+		for _, test := range s.tests {
+			test := test // To avoid the invalid capture in parallel tests
+			t.Run(test.Name+"/e2e", func(t *testing.T) {
 				t.Parallel()
 
-				outputFilename := fmt.Sprintf("phplinter-output-%s.json", target.Name)
+				outputFilename := fmt.Sprintf("phplinter-output-%s.json", test.Name)
 				args := []string{
 					"--critical", "",
 					"--output-json",
@@ -258,24 +258,24 @@ func (s *GoldenE2ETestSuite) RunOnlyTests() {
 					"--allow-all-checks",
 					"--output", outputFilename,
 				}
-				if len(target.Disable) != 0 {
-					args = append(args, "--exclude-checks", strings.Join(target.Disable, ","))
+				if len(test.Disable) != 0 {
+					args = append(args, "--exclude-checks", strings.Join(test.Disable, ","))
 				}
-				if target.Gitignore {
+				if test.Gitignore {
 					args = append(args, "--gitignore")
 				}
-				if target.Baseline {
-					args = append(args, "--baseline", filepath.Join("testdata", target.Name, "baseline.json"))
+				if test.Baseline {
+					args = append(args, "--baseline", filepath.Join("testdata", test.Name, "baseline.json"))
 				}
-				args = append(args, target.SrcDir)
+				args = append(args, test.SrcDir)
 
 				// Use GORACE=history_size to increase the stacktrace limit.
 				// See https://github.com/golang/go/issues/10661
 				phplinterCmd := exec.Command("./phplinter.exe", args...)
 				phplinterCmd.Env = append([]string{}, os.Environ()...)
 				phplinterCmd.Env = append(phplinterCmd.Env, "GORACE=history_size=7")
-				if len(target.Deps) != 0 {
-					deps := strings.Join(target.Deps, ",")
+				if len(test.Deps) != 0 {
+					deps := strings.Join(test.Deps, ",")
 					phplinterCmd.Env = append(phplinterCmd.Env, "NOVERIFYDEBUG_LOAD_STUBS="+deps)
 				}
 
@@ -284,9 +284,9 @@ func (s *GoldenE2ETestSuite) RunOnlyTests() {
 					t.Fatalf("%v: %s", err, out)
 				}
 
-				target.loadReportsFile(outputFilename)
+				test.loadReportsFile(outputFilename)
 
-				for _, r := range target.reportFile.Reports {
+				for _, r := range test.reportFile.Reports {
 					// Turn absolute paths to something that is compatible
 					// with what we get from the testdata-loaded inputs.
 					r.Filename = strings.TrimPrefix(r.Filename, wd)
@@ -295,7 +295,7 @@ func (s *GoldenE2ETestSuite) RunOnlyTests() {
 					r.Filename = strings.TrimPrefix(r.Filename, "/")
 				}
 
-				target.checkGoldenOutput(target.want, target.reportFile.Reports)
+				test.checkGoldenOutput(test.want, test.reportFile.Reports)
 			})
 		}
 	})
