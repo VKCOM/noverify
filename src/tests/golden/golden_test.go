@@ -1,6 +1,9 @@
 package golden_test
 
 import (
+	"log"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/VKCOM/noverify/src/linter"
@@ -9,7 +12,24 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	linttest.PrepareForGoldenTesting(m)
+	err := linttest.InitEmbeddedRules()
+	if err != nil {
+		panic(err)
+	}
+
+	m.Run()
+
+	_ = os.Remove("phplinter.exe")
+	toRemove, err := filepath.Glob("phplinter-output-*.json")
+	if err != nil {
+		log.Fatalf("glob: %v", err)
+	}
+	for _, filename := range toRemove {
+		err := os.Remove(filename)
+		if err != nil {
+			log.Printf("tests cleanup: remove %s: %v", filename, err)
+		}
+	}
 }
 
 func TestGolden(t *testing.T) {
@@ -174,7 +194,7 @@ func TestGolden(t *testing.T) {
 	e2eSuite := linttest.NewGoldenE2ETestSuite(t)
 
 	for _, target := range targets {
-		linttest.PrepareGoldenTestSuite(target, t, "testdata")
+		linttest.PrepareGoldenTestSuite(target, t, "testdata", "golden.txt")
 		target.Run()
 		e2eSuite.AddTest(target)
 	}

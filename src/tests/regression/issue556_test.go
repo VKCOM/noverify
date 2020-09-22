@@ -8,7 +8,7 @@ import (
 
 func TestIssue556(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.LoadStubs = []string{`stubs/phpstorm-stubs/Core/Core_c.php`}
+	test.LoadedStubs = []string{`stubs/phpstorm-stubs/Core/Core_c.php`}
 	test.AddFile(`<?php
 /**
  * @param \ArrayAccess|array $v

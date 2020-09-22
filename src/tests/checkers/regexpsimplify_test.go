@@ -8,7 +8,7 @@ import (
 
 func TestRESimplifyMixed(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
+	test.LoadedStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
 	test.AddFile(`<?php
 function f($s) {
   preg_match('/x(?:a|b|c){0,}/', $s);
@@ -28,7 +28,7 @@ function f($s) {
 
 func TestRESimplify(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
+	test.LoadedStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
 	test.AddFile(`<?php
 // (?:x) -> x
 function ungroup($s) {
@@ -127,7 +127,7 @@ function unrepeat($s) {
 
 func TestRESimplifyChangeDelim(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
+	test.LoadedStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
 	test.AddFile(`<?php
 function f($s) {
   preg_match('/^http:\/\//', $s);
@@ -147,7 +147,7 @@ function f($s) {
 
 func TestRENegativeTests(t *testing.T) {
 	test := linttest.NewSuite(t)
-	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
+	test.LoadedStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
 	test.AddFile(`<?php
 function f($s) {
   // Should not suggest unescaping the delimiter.
