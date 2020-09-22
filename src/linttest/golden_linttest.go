@@ -42,6 +42,23 @@ type GoldenTestSuite struct {
 	prepared bool
 }
 
+var defaultStubs = []string{
+	`stubs/phpstorm-stubs/Core/Core.php`,
+	`stubs/phpstorm-stubs/Core/Core_d.php`,
+	`stubs/phpstorm-stubs/Core/Core_c.php`,
+	`stubs/phpstorm-stubs/standard/standard_defines.php`,
+	`stubs/phpstorm-stubs/standard/standard_0.php`,
+	`stubs/phpstorm-stubs/standard/standard_1.php`,
+	`stubs/phpstorm-stubs/standard/standard_2.php`,
+	`stubs/phpstorm-stubs/standard/standard_3.php`,
+	`stubs/phpstorm-stubs/standard/standard_4.php`,
+	`stubs/phpstorm-stubs/standard/standard_5.php`,
+	`stubs/phpstorm-stubs/standard/standard_6.php`,
+	`stubs/phpstorm-stubs/standard/standard_7.php`,
+	`stubs/phpstorm-stubs/standard/standard_8.php`,
+	`stubs/phpstorm-stubs/standard/standard_9.php`,
+}
+
 // NewGoldenTestSuite returns a new golden test suite for t.
 func NewGoldenTestSuite(t *testing.T, name, baseDir, goldenFileName string) *GoldenTestSuite {
 	return &GoldenTestSuite{
@@ -49,23 +66,8 @@ func NewGoldenTestSuite(t *testing.T, name, baseDir, goldenFileName string) *Gol
 		Name:           name,
 		BaseDir:        baseDir,
 		GoldenFileName: goldenFileName,
-		Deps: []string{
-			`stubs/phpstorm-stubs/Core/Core.php`,
-			`stubs/phpstorm-stubs/Core/Core_d.php`,
-			`stubs/phpstorm-stubs/Core/Core_c.php`,
-			`stubs/phpstorm-stubs/standard/standard_defines.php`,
-			`stubs/phpstorm-stubs/standard/standard_0.php`,
-			`stubs/phpstorm-stubs/standard/standard_1.php`,
-			`stubs/phpstorm-stubs/standard/standard_2.php`,
-			`stubs/phpstorm-stubs/standard/standard_3.php`,
-			`stubs/phpstorm-stubs/standard/standard_4.php`,
-			`stubs/phpstorm-stubs/standard/standard_5.php`,
-			`stubs/phpstorm-stubs/standard/standard_6.php`,
-			`stubs/phpstorm-stubs/standard/standard_7.php`,
-			`stubs/phpstorm-stubs/standard/standard_8.php`,
-			`stubs/phpstorm-stubs/standard/standard_9.php`,
-		},
-		prepared: true,
+		Deps:           defaultStubs,
+		prepared:       true,
 	}
 }
 
@@ -77,25 +79,7 @@ func PrepareGoldenTestSuite(s *GoldenTestSuite, t *testing.T, baseDir, goldenFil
 	s.BaseDir = baseDir
 	s.prepared = true
 	s.GoldenFileName = goldenFileName
-
-	standardDeps := []string{
-		`stubs/phpstorm-stubs/Core/Core.php`,
-		`stubs/phpstorm-stubs/Core/Core_d.php`,
-		`stubs/phpstorm-stubs/Core/Core_c.php`,
-		`stubs/phpstorm-stubs/standard/standard_defines.php`,
-		`stubs/phpstorm-stubs/standard/standard_0.php`,
-		`stubs/phpstorm-stubs/standard/standard_1.php`,
-		`stubs/phpstorm-stubs/standard/standard_2.php`,
-		`stubs/phpstorm-stubs/standard/standard_3.php`,
-		`stubs/phpstorm-stubs/standard/standard_4.php`,
-		`stubs/phpstorm-stubs/standard/standard_5.php`,
-		`stubs/phpstorm-stubs/standard/standard_6.php`,
-		`stubs/phpstorm-stubs/standard/standard_7.php`,
-		`stubs/phpstorm-stubs/standard/standard_8.php`,
-		`stubs/phpstorm-stubs/standard/standard_9.php`,
-	}
-
-	s.Deps = append(s.Deps, standardDeps...)
+	s.Deps = append(s.Deps, defaultStubs...)
 }
 
 func (s *GoldenTestSuite) AddDeps(deps []string) {
