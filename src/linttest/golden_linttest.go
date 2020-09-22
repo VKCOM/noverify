@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -200,6 +201,13 @@ func (s *GoldenE2ETestSuite) Run() {
 		return
 	}
 
+	s.BuildNoVerify()
+	s.RunOnlyTests()
+	s.RemoveNoVerify()
+	s.RemoveTestsFiles()
+}
+
+func (s *GoldenE2ETestSuite) BuildNoVerify() {
 	goArgs := []string{
 		"build",
 		"-o", "phplinter.exe",
@@ -210,64 +218,85 @@ func (s *GoldenE2ETestSuite) Run() {
 	if err != nil {
 		s.t.Fatalf("build noverify: %v: %s", err, out)
 	}
+}
 
+func (s *GoldenE2ETestSuite) RemoveNoVerify() {
+	_ = os.Remove("phplinter.exe")
+}
+
+func (s *GoldenE2ETestSuite) RemoveTestsFiles() {
+	toRemove, err := filepath.Glob("phplinter-output-*.json")
+	if err != nil {
+		log.Fatalf("glob: %v", err)
+	}
+	for _, filename := range toRemove {
+		err := os.Remove(filename)
+		if err != nil {
+			log.Printf("tests cleanup: remove %s: %v", filename, err)
+		}
+	}
+}
+
+func (s *GoldenE2ETestSuite) RunOnlyTests() {
 	wd, err := os.Getwd()
 	if err != nil {
 		s.t.Fatalf("getwd: %v", err)
 	}
 	wd = strings.ReplaceAll(wd, "\\", "/")
 
-	for _, target := range s.tests {
-		target := target // To avoid the invalid capture in parallel tests
-		s.t.Run(target.Name+"/e2e", func(t *testing.T) {
-			t.Parallel()
+	s.t.Run("e2e", func(t *testing.T) {
+		for _, target := range s.tests {
+			target := target // To avoid the invalid capture in parallel tests
+			t.Run(target.Name+"/e2e", func(t *testing.T) {
+				t.Parallel()
 
-			outputFilename := fmt.Sprintf("phplinter-output-%s.json", target.Name)
-			args := []string{
-				"--critical", "",
-				"--output-json",
-				"--disable-cache", // TODO: test with cache as well
-				"--allow-all-checks",
-				"--output", outputFilename,
-			}
-			if len(target.Disable) != 0 {
-				args = append(args, "--exclude-checks", strings.Join(target.Disable, ","))
-			}
-			if target.Gitignore {
-				args = append(args, "--gitignore")
-			}
-			if target.Baseline {
-				args = append(args, "--baseline", filepath.Join("testdata", target.Name, "baseline.json"))
-			}
-			args = append(args, target.SrcDir)
+				outputFilename := fmt.Sprintf("phplinter-output-%s.json", target.Name)
+				args := []string{
+					"--critical", "",
+					"--output-json",
+					"--disable-cache", // TODO: test with cache as well
+					"--allow-all-checks",
+					"--output", outputFilename,
+				}
+				if len(target.Disable) != 0 {
+					args = append(args, "--exclude-checks", strings.Join(target.Disable, ","))
+				}
+				if target.Gitignore {
+					args = append(args, "--gitignore")
+				}
+				if target.Baseline {
+					args = append(args, "--baseline", filepath.Join("testdata", target.Name, "baseline.json"))
+				}
+				args = append(args, target.SrcDir)
 
-			// Use GORACE=history_size to increase the stacktrace limit.
-			// See https://github.com/golang/go/issues/10661
-			phplinterCmd := exec.Command("./phplinter.exe", args...)
-			phplinterCmd.Env = append([]string{}, os.Environ()...)
-			phplinterCmd.Env = append(phplinterCmd.Env, "GORACE=history_size=7")
-			if len(target.Deps) != 0 {
-				deps := strings.Join(target.Deps, ",")
-				phplinterCmd.Env = append(phplinterCmd.Env, "NOVERIFYDEBUG_LOAD_STUBS="+deps)
-			}
+				// Use GORACE=history_size to increase the stacktrace limit.
+				// See https://github.com/golang/go/issues/10661
+				phplinterCmd := exec.Command("./phplinter.exe", args...)
+				phplinterCmd.Env = append([]string{}, os.Environ()...)
+				phplinterCmd.Env = append(phplinterCmd.Env, "GORACE=history_size=7")
+				if len(target.Deps) != 0 {
+					deps := strings.Join(target.Deps, ",")
+					phplinterCmd.Env = append(phplinterCmd.Env, "NOVERIFYDEBUG_LOAD_STUBS="+deps)
+				}
 
-			out, err := phplinterCmd.CombinedOutput()
-			if err != nil {
-				t.Fatalf("%v: %s", err, out)
-			}
+				out, err := phplinterCmd.CombinedOutput()
+				if err != nil {
+					t.Fatalf("%v: %s", err, out)
+				}
 
-			target.loadReportsFile(outputFilename)
+				target.loadReportsFile(outputFilename)
 
-			for _, r := range target.reportFile.Reports {
-				// Turn absolute paths to something that is compatible
-				// with what we get from the testdata-loaded inputs.
-				r.Filename = strings.TrimPrefix(r.Filename, wd)
-				// TODO: make paths absolute in non-e2e tests so we can
-				// remove this "/" prefix trimming.
-				r.Filename = strings.TrimPrefix(r.Filename, "/")
-			}
+				for _, r := range target.reportFile.Reports {
+					// Turn absolute paths to something that is compatible
+					// with what we get from the testdata-loaded inputs.
+					r.Filename = strings.TrimPrefix(r.Filename, wd)
+					// TODO: make paths absolute in non-e2e tests so we can
+					// remove this "/" prefix trimming.
+					r.Filename = strings.TrimPrefix(r.Filename, "/")
+				}
 
-			target.checkGoldenOutput(target.want, target.reportFile.Reports)
-		})
-	}
+				target.checkGoldenOutput(target.want, target.reportFile.Reports)
+			})
+		}
+	})
 }

@@ -1,9 +1,6 @@
 package golden_test
 
 import (
-	"log"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/VKCOM/noverify/src/linter"
@@ -11,31 +8,15 @@ import (
 	"github.com/VKCOM/noverify/src/rules"
 )
 
-func TestMain(m *testing.M) {
-	err := linttest.InitEmbeddedRules()
-	if err != nil {
-		panic(err)
-	}
-
-	m.Run()
-
-	_ = os.Remove("phplinter.exe")
-	toRemove, err := filepath.Glob("phplinter-output-*.json")
-	if err != nil {
-		log.Fatalf("glob: %v", err)
-	}
-	for _, filename := range toRemove {
-		err := os.Remove(filename)
-		if err != nil {
-			log.Printf("tests cleanup: remove %s: %v", filename, err)
-		}
-	}
-}
-
 func TestGolden(t *testing.T) {
 	defer func(rset *rules.Set) {
 		linter.Rules = rset
 	}(linter.Rules)
+
+	err := linttest.InitEmbeddedRules()
+	if err != nil {
+		panic(err)
+	}
 
 	targets := []*linttest.GoldenTestSuite{
 		{
