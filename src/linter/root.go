@@ -1370,10 +1370,17 @@ func (d *RootWalker) parseTypeNode(n ir.Node) (typ meta.TypesMap, ok bool) {
 func (d *RootWalker) callbackParamByIndex(param ir.Node, argType meta.TypesMap) meta.FuncParam {
 	p := param.(*ir.Parameter)
 	v := p.Variable
+
 	var typ meta.TypesMap
-	argType.Iterate(func(t string) {
-		typ = typ.AppendString(meta.WrapElemOf(t))
-	})
+	tp, ok := d.parseTypeNode(p.VariableType)
+	if ok {
+		typ = tp
+	} else {
+		argType.Iterate(func(t string) {
+			typ = typ.AppendString(meta.WrapElemOf(t))
+		})
+	}
+
 	arg := meta.FuncParam{
 		IsRef: p.ByRef,
 		Name:  v.Name,
