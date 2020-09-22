@@ -8,15 +8,19 @@ import (
 	"github.com/VKCOM/noverify/src/rules"
 )
 
-func TestGolden(t *testing.T) {
-	defer func(rset *rules.Set) {
-		linter.Rules = rset
-	}(linter.Rules)
-
+func TestMain(t *testing.M) {
 	err := linttest.InitEmbeddedRules()
 	if err != nil {
 		panic(err)
 	}
+
+	t.Run()
+}
+
+func TestGolden(t *testing.T) {
+	defer func(rset *rules.Set) {
+		linter.Rules = rset
+	}(linter.Rules)
 
 	targets := []*linttest.GoldenTestSuite{
 		{
