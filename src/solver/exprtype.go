@@ -150,6 +150,8 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 		return ExprTypeLocalCustom(sc, cs, n.Expr, custom)
 	case *ir.ClosureExpr:
 		return meta.NewTypesMap(`\Closure`)
+	case *ir.MagicConstant:
+		return magicConstantType(n)
 	}
 
 	return meta.TypesMap{}
@@ -297,6 +299,9 @@ func constFetchType(n *ir.ConstFetchExpr) meta.TypesMap {
 }
 
 func classConstFetchType(n *ir.ClassConstFetchExpr, cs *meta.ClassParseState) meta.TypesMap {
+	if n.ConstantName.Value == "class" {
+		return meta.PreciseStringType
+	}
 	className, ok := GetClassName(cs, n.Class)
 	if !ok {
 		return meta.TypesMap{}
@@ -394,7 +399,7 @@ func simpleVarType(n *ir.SimpleVar, sc *meta.Scope) meta.TypesMap {
 func staticPropertyFetchType(n *ir.StaticPropertyFetchExpr, cs *meta.ClassParseState) meta.TypesMap {
 	v, ok := n.Property.(*ir.SimpleVar)
 	if !ok {
-    return meta.TypesMap{}
+		return meta.TypesMap{}
 	}
 
 	nm, ok := GetClassName(cs, n.Class)
