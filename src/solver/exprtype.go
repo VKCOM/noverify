@@ -394,7 +394,7 @@ func simpleVarType(n *ir.SimpleVar, sc *meta.Scope) meta.TypesMap {
 func staticPropertyFetchType(n *ir.StaticPropertyFetchExpr, cs *meta.ClassParseState) meta.TypesMap {
 	v, ok := n.Property.(*ir.SimpleVar)
 	if !ok {
-		return meta.TypesMap{}
+    return meta.TypesMap{}
 	}
 
 	nm, ok := GetClassName(cs, n.Class)
@@ -438,4 +438,11 @@ func functionCallType(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassPars
 		return typ
 	}
 	return meta.NewTypesMap(meta.WrapFunctionCall(cs.Namespace + `\` + nm.Value))
+}
+
+func magicConstantType(n *ir.MagicConstant) meta.TypesMap {
+	if n.Value == "__LINE__" {
+		return meta.PreciseIntType
+	}
+	return meta.PreciseStringType
 }
