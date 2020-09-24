@@ -136,12 +136,8 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 		return meta.PreciseFloatType
 	case *ir.TernaryExpr:
 		return ternaryExprType(n, sc, cs, custom)
-    
-    
-  case *ir.CoalesceExpr:
-    return coalesceExprType(n, sc, cs, custom)
-    
-    
+	case *ir.CoalesceExpr:
+		return coalesceExprType(n, sc, cs, custom)
 	case *ir.NewExpr:
 		return newExprType(n, cs)
 	case *ir.ParenExpr:
