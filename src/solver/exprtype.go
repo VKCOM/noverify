@@ -136,6 +136,12 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 		return meta.PreciseFloatType
 	case *ir.TernaryExpr:
 		return ternaryExprType(n, sc, cs, custom)
+    
+    
+  case *ir.CoalesceExpr:
+    return coalesceExprType(n, sc, cs, custom)
+    
+    
 	case *ir.NewExpr:
 		return newExprType(n, cs)
 	case *ir.ParenExpr:
@@ -280,6 +286,12 @@ func ternaryExprType(n *ir.TernaryExpr, sc *meta.Scope, cs *meta.ClassParseState
 	t := ExprTypeLocalCustom(sc, cs, n.IfTrue, custom)
 	f := ExprTypeLocalCustom(sc, cs, n.IfFalse, custom)
 	return meta.NewEmptyTypesMap(t.Len() + f.Len()).Append(t).Append(f)
+}
+
+func coalesceExprType(n *ir.CoalesceExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) meta.TypesMap {
+	l := ExprTypeLocalCustom(sc, cs, n.Left, custom)
+	r := ExprTypeLocalCustom(sc, cs, n.Right, custom)
+	return meta.NewEmptyTypesMap(l.Len() + r.Len()).Append(l).Append(r)
 }
 
 func constFetchType(n *ir.ConstFetchExpr) meta.TypesMap {
