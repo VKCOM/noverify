@@ -354,6 +354,10 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 		t := ExprTypeLocalCustom(sc, cs, n.IfTrue, custom)
 		f := ExprTypeLocalCustom(sc, cs, n.IfFalse, custom)
 		return meta.NewEmptyTypesMap(t.Len() + f.Len()).Append(t).Append(f)
+	case *ir.CoalesceExpr:
+		l := ExprTypeLocalCustom(sc, cs, n.Left, custom)
+		r := ExprTypeLocalCustom(sc, cs, n.Right, custom)
+		return meta.NewEmptyTypesMap(l.Len() + r.Len()).Append(l).Append(r)
 	case *ir.NewExpr:
 		if meta.NameNodeToString(n.Class) == "static" {
 			return meta.NewTypesMap("static")

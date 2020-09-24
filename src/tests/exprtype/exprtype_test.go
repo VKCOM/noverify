@@ -2580,6 +2580,31 @@ function f() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestNullCoalesceType(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+function f() {
+	$a = 10;
+	$b = "Hello";
+
+	$c = $a ?? $b;
+	exprtype($c, "precise int|string");
+
+	$f = new Foo();
+
+	$s = $c ?? $f;
+	exprtype($s, "\Foo|int|string");
+
+	$e = 10.5;
+
+	$e ??= $s;
+	exprtype($e, "\Foo|float|int|string");
+  }
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {
