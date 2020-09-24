@@ -1,67 +1,23 @@
 package golden_test
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"log"
 	"os"
-	"os/exec"
-	"path/filepath"
-	"sort"
-	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-
-	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/rules"
 )
 
-func TestMain(m *testing.M) {
-	enableAllRules := func(_ rules.Rule) bool { return true }
-	p := rules.NewParser()
-	linter.Rules = rules.NewSet()
-	ruleSets, err := cmd.InitEmbeddedRules(p, enableAllRules)
+func TestMain(t *testing.M) {
+	err := linttest.InitEmbeddedRules()
 	if err != nil {
-		panic(fmt.Sprintf("init embedded rules: %v", err))
-	}
-	for _, rset := range ruleSets {
-		linter.DeclareRules(rset)
+		panic(err)
 	}
 
-	exitCode := m.Run()
-
-	_ = os.Remove("phplinter.exe")
-	toRemove, err := filepath.Glob("phplinter-output-*.json")
-	if err != nil {
-		log.Fatalf("glob: %v", err)
-	}
-	for _, filename := range toRemove {
-		err := os.Remove(filename)
-		if err != nil {
-			log.Printf("tests cleanup: remove %s: %v", filename, err)
-		}
-	}
+	exitCode := t.Run()
 
 	os.Exit(exitCode)
-}
-
-type goldenTest struct {
-	name    string
-	deps    []string
-	disable []string
-
-	onlyE2E   bool
-	gitignore bool
-	baseline  bool
-
-	srcDir string
-
-	// want is a golden file contents.
-	want []byte
 }
 
 func TestGolden(t *testing.T) {
@@ -69,21 +25,21 @@ func TestGolden(t *testing.T) {
 		linter.Rules = rset
 	}(linter.Rules)
 
-	targets := []*goldenTest{
+	targets := []*linttest.GoldenTestSuite{
 		{
-			name: "embeddedrules",
-			deps: []string{
+			Name: "embeddedrules",
+			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 			},
 		},
 
 		{
-			name: "mustache",
-			disable: []string{
+			Name: "mustache",
+			Disable: []string{
 				`arraySyntax`,
 				`redundantCast`,
 			},
-			deps: []string{
+			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
 				`stubs/phpstorm-stubs/SPL/SPL_f.php`,
@@ -93,8 +49,8 @@ func TestGolden(t *testing.T) {
 		},
 
 		{
-			name: "math",
-			deps: []string{
+			Name: "math",
+			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/gmp/gmp.php`,
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
@@ -104,48 +60,48 @@ func TestGolden(t *testing.T) {
 		},
 
 		{
-			name: "qrcode",
-			deps: []string{
+			Name: "qrcode",
+			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/gd/gd.php`,
 			},
 		},
 
 		{
-			name: "ctype",
-			deps: []string{
+			Name: "ctype",
+			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 			},
 		},
 
 		{
-			name: "idn",
-			deps: []string{
+			Name: "idn",
+			Deps: []string{
 				`stubs/phpstorm-stubs/mbstring/mbstring.php`,
 			},
 		},
 
 		{
-			name:    "parsedown",
-			disable: []string{`phpdoc`, `arraySyntax`},
-			deps: []string{
+			Name:    "parsedown",
+			Disable: []string{`phpdoc`, `arraySyntax`},
+			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/mbstring/mbstring.php`,
 			},
 		},
 
 		{
-			name:    "underscore",
-			disable: []string{`phpdoc`},
-			deps: []string{
+			Name:    "underscore",
+			Disable: []string{`phpdoc`},
+			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 			},
 		},
 
 		{
-			name:    "phprocksyd",
-			disable: []string{`phpdoc`},
-			deps: []string{
+			Name:    "phprocksyd",
+			Disable: []string{`phpdoc`},
+			Deps: []string{
 				`stubs/phpstorm-stubs/standard/basic.php`,
 				`stubs/phpstorm-stubs/pcntl/pcntl.php`,
 				`stubs/phpstorm-stubs/json/json.php`,
@@ -154,9 +110,9 @@ func TestGolden(t *testing.T) {
 		},
 
 		{
-			name:    "flysystem",
-			disable: []string{`redundantCast`},
-			deps: []string{
+			Name:    "flysystem",
+			Disable: []string{`redundantCast`},
+			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
 				`stubs/phpstorm-stubs/SPL/SPL_c1.php`,
@@ -171,9 +127,9 @@ func TestGolden(t *testing.T) {
 		},
 
 		{
-			name:    "inflector",
-			disable: []string{"phpdoc"},
-			deps: []string{
+			Name:    "inflector",
+			Disable: []string{"phpdoc"},
+			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
 				`stubs/phpstorm-stubs/mbstring/mbstring.php`,
@@ -181,9 +137,9 @@ func TestGolden(t *testing.T) {
 		},
 
 		{
-			name:    "options-resolver",
-			disable: []string{"phpdoc"},
-			deps: []string{
+			Name:    "options-resolver",
+			Disable: []string{"phpdoc"},
+			Deps: []string{
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
 				`stubs/phpstorm-stubs/Reflection/Reflection.php`,
 				`stubs/phpstorm-stubs/Reflection/ReflectionClass.php`,
@@ -194,9 +150,9 @@ func TestGolden(t *testing.T) {
 		},
 
 		{
-			name:    "twitter-api-php",
-			disable: []string{"phpdoc", "arraySyntax"},
-			deps: []string{
+			Name:    "twitter-api-php",
+			Disable: []string{"phpdoc", "arraySyntax"},
+			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
 				`stubs/phpstorm-stubs/date/date.php`,
@@ -207,245 +163,32 @@ func TestGolden(t *testing.T) {
 		},
 
 		{
-			name: "output-test",
+			Name: "output-test",
 		},
 
 		{
-			name:      "gitignore-test",
-			onlyE2E:   true,
-			gitignore: true,
+			Name:      "gitignore-test",
+			OnlyE2E:   true,
+			Gitignore: true,
 		},
 
 		{
-			name:     "baseline-test",
-			onlyE2E:  true,
-			baseline: true,
+			Name:     "baseline-test",
+			OnlyE2E:  true,
+			Baseline: true,
 		},
 	}
 
-	for _, target := range targets {
-		goldenFile := filepath.Join("testdata/", target.name, "golden.txt")
-		want, err := ioutil.ReadFile(goldenFile)
-		if err != nil {
-			t.Fatalf("read golden file: %v", err)
-		}
-		target.want = want
+	e2eSuite := linttest.NewGoldenE2ETestSuite(t)
 
-		if target.srcDir == "" {
-			target.srcDir = filepath.Join("testdata", target.name)
-		}
-	}
-
-	coreFiles := []string{
-		`stubs/phpstorm-stubs/Core/Core.php`,
-		`stubs/phpstorm-stubs/Core/Core_d.php`,
-		`stubs/phpstorm-stubs/Core/Core_c.php`,
-		`stubs/phpstorm-stubs/standard/standard_defines.php`,
-		`stubs/phpstorm-stubs/standard/standard_0.php`,
-		`stubs/phpstorm-stubs/standard/standard_1.php`,
-		`stubs/phpstorm-stubs/standard/standard_2.php`,
-		`stubs/phpstorm-stubs/standard/standard_3.php`,
-		`stubs/phpstorm-stubs/standard/standard_4.php`,
-		`stubs/phpstorm-stubs/standard/standard_5.php`,
-		`stubs/phpstorm-stubs/standard/standard_6.php`,
-		`stubs/phpstorm-stubs/standard/standard_7.php`,
-		`stubs/phpstorm-stubs/standard/standard_8.php`,
-		`stubs/phpstorm-stubs/standard/standard_9.php`,
-	}
 	for _, target := range targets {
-		target.deps = append(target.deps, coreFiles...)
-	}
-
-	// Old-style tests: run tests inside the same process,
-	// using the global state override.
-	// This is simple and fast, makes test coverage collection
-	// easier, but it can't test whether our linter can work from
-	// the command-line in the same way as it does here.
-	for _, target := range targets {
-		if target.onlyE2E {
-			continue
-		}
-		runGoldenTest(t, target)
+		linttest.PrepareGoldenTestSuite(target, t, "testdata", "golden.txt")
+		target.Run()
+		e2eSuite.AddTest(target)
 	}
 
 	// Second pass only happens if none of the tests above have failed.
 	if !t.Failed() {
-		runGoldenTestsE2E(t, targets)
-	}
-}
-
-func runGoldenTestsE2E(t *testing.T, targets []*goldenTest) {
-	if testing.Short() {
-		t.Logf("e2e is skipped in -short mode")
-		return
-	}
-
-	goArgs := []string{
-		"build",
-		"-o", "phplinter.exe",
-		"-race",
-		"../../../", // Using relative target to avoid problems with modules/vendor/GOPATH
-	}
-	out, err := exec.Command("go", goArgs...).CombinedOutput()
-	if err != nil {
-		t.Fatalf("build noverify: %v: %s", err, out)
-	}
-
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("getwd: %v", err)
-	}
-	wd = strings.ReplaceAll(wd, "\\", "/")
-
-	for _, target := range targets {
-		target := target // To avoid the invalid capture in parallel tests
-		t.Run(target.name+"/e2e", func(t *testing.T) {
-			t.Parallel()
-
-			outputFilename := fmt.Sprintf("phplinter-output-%s.json", target.name)
-			args := []string{
-				"--critical", "",
-				"--output-json",
-				"--disable-cache", // TODO: test with cache as well
-				"--allow-all-checks",
-				"--output", outputFilename,
-			}
-			if len(target.disable) != 0 {
-				args = append(args, "--exclude-checks", strings.Join(target.disable, ","))
-			}
-			if target.gitignore {
-				args = append(args, "--gitignore")
-			}
-			if target.baseline {
-				args = append(args, "--baseline", filepath.Join("testdata", target.name, "baseline.json"))
-			}
-			args = append(args, target.srcDir)
-
-			// Use GORACE=history_size to increase the stacktrace limit.
-			// See https://github.com/golang/go/issues/10661
-			phplinterCmd := exec.Command("./phplinter.exe", args...)
-			phplinterCmd.Env = append([]string{}, os.Environ()...)
-			phplinterCmd.Env = append(phplinterCmd.Env, "GORACE=history_size=7")
-			if len(target.deps) != 0 {
-				deps := strings.Join(target.deps, ",")
-				phplinterCmd.Env = append(phplinterCmd.Env, "NOVERIFYDEBUG_LOAD_STUBS="+deps)
-			}
-
-			out, err := phplinterCmd.CombinedOutput()
-			if err != nil {
-				t.Fatalf("%v: %s", err, out)
-			}
-
-			output, err := readReportsFile(outputFilename)
-			if err != nil {
-				t.Fatalf("read output file %s: %v", outputFilename, err)
-			}
-
-			for _, r := range output.Reports {
-				// Turn absolute paths to something that is compatible
-				// with what we get from the testdata-loaded inputs.
-				r.Filename = strings.TrimPrefix(r.Filename, wd)
-				// TODO: make paths absolute in non-e2e tests so we can
-				// remove this "/" prefix trimming.
-				r.Filename = strings.TrimPrefix(r.Filename, "/")
-			}
-
-			checkGoldenOutput(t, target.want, output.Reports)
-		})
-	}
-}
-
-func formatReportLines(reports []*linter.Report) []string {
-	sort.SliceStable(reports, func(i, j int) bool {
-		return reports[i].Filename < reports[j].Filename
-	})
-	var parts []string
-	for _, r := range reports {
-		part := strings.ReplaceAll(cmd.FormatReport(r), "\r", "")
-		parts = append(parts, strings.Split(part, "\n")...)
-	}
-	parts = append(parts, "") // Trailing EOL
-	return parts
-}
-
-type linterOutput struct {
-	Reports []*linter.Report
-	Errors  []string
-}
-
-func readReportsFile(filename string) (*linterOutput, error) {
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-	var output linterOutput
-	if err := json.Unmarshal(data, &output); err != nil {
-		return nil, err
-	}
-	return &output, nil
-}
-
-func runGoldenTest(t *testing.T, target *goldenTest) {
-
-	misspellList := "Eng"
-
-	t.Run(target.name, func(t *testing.T) {
-		phpFiles, err := findPHPFiles(target.srcDir)
-		if err != nil {
-			t.Fatalf("list files: %v", err)
-		}
-
-		test := linttest.NewSuite(t)
-		test.LoadStubs = target.deps
-		for _, f := range phpFiles {
-			code, err := ioutil.ReadFile(f)
-			if err != nil {
-				t.Fatalf("read PHP file: %v", err)
-			}
-			linttest.AddNamedFile(test, f, string(code))
-		}
-		test.MisspellList = misspellList
-
-		disable := map[string]bool{}
-		for _, checkName := range target.disable {
-			disable[checkName] = true
-		}
-		reports := test.RunLinter()
-		filteredReports := reports[:0]
-		for _, r := range reports {
-			if !disable[r.CheckName] {
-				filteredReports = append(filteredReports, r)
-			}
-		}
-
-		checkGoldenOutput(t, target.want, filteredReports)
-	})
-}
-
-func findPHPFiles(root string) ([]string, error) {
-	var files []string
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() || !strings.HasSuffix(path, ".php") {
-			return nil
-		}
-		files = append(files, path)
-		return nil
-	})
-	return files, err
-}
-
-func checkGoldenOutput(t *testing.T, want []byte, reports []*linter.Report) {
-	haveLines := formatReportLines(reports)
-	wantString := string(want)
-	wantLines := strings.Split(strings.ReplaceAll(wantString, "\r", ""), "\n")
-	if diff := cmp.Diff(wantLines, haveLines); diff != "" {
-		t.Errorf("results mismatch (+ have) (- want): %s", diff)
-		// Use fmt.Printf() instead of t.Logf() to make the output
-		// more copy/paste friendly.
-		fmt.Printf("have:\n%s", strings.Join(haveLines, "\n"))
-		fmt.Printf("want:\n%s", want)
+		e2eSuite.Run()
 	}
 }

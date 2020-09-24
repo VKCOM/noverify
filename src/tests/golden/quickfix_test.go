@@ -49,7 +49,7 @@ func openFile(filename string) (f *os.File, found bool, err error) {
 }
 
 func (t *quickFixTest) runQuickFixTest() {
-	files, err := findPHPFiles(t.folder)
+	files, err := linttest.FindPHPFiles(t.folder)
 	if err != nil {
 		t.t.Fatalf("Error while searching for files in the %s folder: %s", t.folder, err)
 	}
