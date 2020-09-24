@@ -8,6 +8,7 @@ import (
 	"github.com/VKCOM/noverify/src/constfold"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
+	"github.com/VKCOM/noverify/src/linter/utils"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/quickfix"
@@ -219,7 +220,7 @@ func (b *blockLinter) checkBinaryDupArgs(n, left, right ir.Node) {
 		return
 	}
 	if nodeEqual(b.walker.r.ctx.st, left, right) {
-		b.report(n, LevelWarning, "dupSubExpr", "duplicated operands value in %s expression", binaryOpString(n))
+		b.report(n, LevelWarning, "dupSubExpr", "duplicated operands value in %s expression", utils.BinaryOpString(n))
 	}
 }
 

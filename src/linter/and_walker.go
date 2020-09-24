@@ -2,6 +2,7 @@ package linter
 
 import (
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/linter/utils"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/solver"
 )
@@ -45,7 +46,7 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 
 	case *ir.IssetExpr:
 		for _, v := range n.Variables {
-			varNode := findVarNode(v)
+			varNode := utils.FindVarNode(v)
 			if varNode == nil {
 				continue
 			}

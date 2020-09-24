@@ -1,55 +1,21 @@
-package linter
+package utils
 
 import (
-	"fmt"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/solver"
 )
 
-// FlagsToString is designed for debugging flags.
-func FlagsToString(f int) string {
-	var res []string
-
-	if (f & FlagReturn) == FlagReturn {
-		res = append(res, "Return")
-	}
-
-	if (f & FlagDie) == FlagDie {
-		res = append(res, "Die")
-	}
-
-	if (f & FlagThrow) == FlagThrow {
-		res = append(res, "Throw")
-	}
-
-	if (f & FlagBreak) == FlagBreak {
-		res = append(res, "Break")
-	}
-
-	return "Exit flags: [" + strings.Join(res, ", ") + "], digits: " + fmt.Sprintf("%d", f)
-}
-
-func haveMagicMethod(class string, methodName string) bool {
-	_, ok := solver.FindMethod(class, methodName)
-	return ok
-}
-
-func isQuote(r rune) bool {
-	return r == '"' || r == '\''
-}
-
-// walkNode is a convenience wrapper for EnterNode-only traversals.
+// WalkNode is a convenience wrapper for EnterNode-only traversals.
 // It gives a way to traverse a node without defining a new kind of walker.
 //
 // enterNode function is called in place where EnterNode method would be called.
 // If n is nil, no traversal is performed.
-func walkNode(n ir.Node, enterNode func(ir.Node) bool) {
+func WalkNode(n ir.Node, enterNode func(ir.Node) bool) {
 	if n == nil {
 		return
 	}
@@ -67,87 +33,14 @@ func (v nodeVisitor) EnterNode(n ir.Node) bool {
 	return v.enterNode(n)
 }
 
-func varToString(v ir.Node) string {
-	switch t := v.(type) {
-	case *ir.SimpleVar:
-		return t.Name
-	case *ir.Var:
-		return "$" + varToString(t.Expr)
-	case *ir.FunctionCallExpr:
-		// TODO: support function calls here :)
-		return ""
-	case *ir.String:
-		// Things like ${"x"}
-		return "${" + t.Value + "}"
-	default:
-		return ""
-	}
+// HaveMagicMethod checks for the presence of a magic method in the passed class.
+func HaveMagicMethod(class string, methodName string) bool {
+	_, ok := solver.FindMethod(class, methodName)
+	return ok
 }
 
-func typesMapToTypeExpr(p *phpdoc.TypeParser, m meta.TypesMap) phpdoc.Type {
-	typeString := m.String()
-	return p.Parse(typeString)
-}
-
-type funcCallInfo struct {
-	canAnalyze bool
-	defined    bool
-	fqName     string
-	info       meta.FuncInfo
-}
-
-// TODO: bundle type solving params somehow.
-// We usually need ClassParseState+Scope+[]CustomType.
-func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, call *ir.FunctionCallExpr) funcCallInfo {
-	var res funcCallInfo
-	res.canAnalyze = true
-	if !meta.IsIndexingComplete() {
-		return res
-	}
-
-	fqName, ok := solver.GetFuncName(st, call.Function)
-	if ok {
-		res.fqName = fqName
-		res.info, res.defined = meta.Info.GetFunction(fqName)
-	} else {
-		solver.ExprTypeCustom(sc, st, call.Function, customTypes).Iterate(func(typ string) {
-			if res.defined {
-				return
-			}
-			m, ok := solver.FindMethod(typ, `__invoke`)
-			res.info = m.Info
-			res.defined = ok
-		})
-		if !res.defined {
-			res.canAnalyze = false
-		}
-	}
-
-	return res
-}
-
-// isCapitalized reports whether s starts with an upper case letter.
-func isCapitalized(s string) bool {
-	ch, _ := utf8.DecodeRuneInString(s)
-	return unicode.IsUpper(ch)
-}
-
-// findVarNode returns expression variable node root.
-// If expression doesn't start from a variable, returns nil.
-func findVarNode(n ir.Node) ir.Node {
-	switch n := n.(type) {
-	case *ir.Var, *ir.SimpleVar:
-		return n
-	case *ir.PropertyFetchExpr:
-		return findVarNode(n.Variable)
-	case *ir.ArrayDimFetchExpr:
-		return findVarNode(n.Variable)
-	default:
-		return nil
-	}
-}
-
-func classHasProp(className, propName string) bool {
+// ClassHasProp checks for the property in the passed class.
+func ClassHasProp(className, propName string) bool {
 	var nameWithDollar string
 	var nameWithoutDollar string
 	if strings.HasPrefix(propName, "$") {
@@ -166,7 +59,88 @@ func classHasProp(className, propName string) bool {
 	return ok
 }
 
-func binaryOpString(n ir.Node) string {
+// IsQuote reports whether r is quote.
+func IsQuote(r rune) bool {
+	return r == '"' || r == '\''
+}
+
+// IsCapitalized reports whether s starts with an upper case letter.
+func IsCapitalized(s string) bool {
+	ch, _ := utf8.DecodeRuneInString(s)
+	return unicode.IsUpper(ch)
+}
+
+func VarToString(v ir.Node) string {
+	switch t := v.(type) {
+	case *ir.SimpleVar:
+		return t.Name
+	case *ir.Var:
+		return "$" + VarToString(t.Expr)
+	case *ir.FunctionCallExpr:
+		// TODO: support function calls here :)
+		return ""
+	case *ir.String:
+		// Things like ${"x"}
+		return "${" + t.Value + "}"
+	default:
+		return ""
+	}
+}
+
+type FuncCallInfo struct {
+	CanAnalyze bool
+	Defined    bool
+	FqName     string
+	Info       meta.FuncInfo
+}
+
+// ResolveFunctionCall
+// TODO: bundle type solving params somehow.
+// We usually need ClassParseState+Scope+[]CustomType.
+func ResolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, call *ir.FunctionCallExpr) FuncCallInfo {
+	var res FuncCallInfo
+	res.CanAnalyze = true
+	if !meta.IsIndexingComplete() {
+		return res
+	}
+
+	fqName, ok := solver.GetFuncName(st, call.Function)
+	if ok {
+		res.FqName = fqName
+		res.Info, res.Defined = meta.Info.GetFunction(fqName)
+	} else {
+		solver.ExprTypeCustom(sc, st, call.Function, customTypes).Iterate(func(typ string) {
+			if res.Defined {
+				return
+			}
+			m, ok := solver.FindMethod(typ, `__invoke`)
+			res.Info = m.Info
+			res.Defined = ok
+		})
+		if !res.Defined {
+			res.CanAnalyze = false
+		}
+	}
+
+	return res
+}
+
+// FindVarNode returns expression variable node root.
+// If expression doesn't start from a variable, returns nil.
+func FindVarNode(n ir.Node) ir.Node {
+	switch n := n.(type) {
+	case *ir.Var, *ir.SimpleVar:
+		return n
+	case *ir.PropertyFetchExpr:
+		return FindVarNode(n.Variable)
+	case *ir.ArrayDimFetchExpr:
+		return FindVarNode(n.Variable)
+	default:
+		return nil
+	}
+}
+
+func BinaryOpString(n ir.Node) string {
 	switch n.(type) {
 	case *ir.BitwiseAndExpr:
 		return "&"
@@ -214,14 +188,13 @@ func binaryOpString(n ir.Node) string {
 		return ">="
 	case *ir.SpaceshipExpr:
 		return "<=>"
-
 	default:
 		return ""
 	}
 }
 
-// List taken from https://wiki.php.net/rfc/context_sensitive_lexer
-var phpKeywords = map[string]bool{
+// PhpKeywords list taken from https://wiki.php.net/rfc/context_sensitive_lexer
+var PhpKeywords = map[string]bool{
 	"callable":     true,
 	"class":        true,
 	"trait":        true,

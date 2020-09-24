@@ -14,6 +14,7 @@ import (
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
+	"github.com/VKCOM/noverify/src/linter/utils"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
@@ -1175,7 +1176,7 @@ func (d *RootWalker) isValidPHPDocRef(n ir.Node, ref string) bool {
 			return ok
 		}
 		if strings.HasPrefix(symbolName, "$") {
-			return classHasProp(typeName, symbolName)
+			return utils.ClassHasProp(typeName, symbolName)
 		}
 		if _, ok := solver.FindMethod(typeName, symbolName); ok {
 			return true
@@ -1192,7 +1193,7 @@ func (d *RootWalker) isValidPHPDocRef(n ir.Node, ref string) bool {
 				if _, ok := solver.FindMethod(d.ctx.st.CurrentClass, ref); ok {
 					return true // OK: class method reference
 				}
-				if classHasProp(d.ctx.st.CurrentClass, ref) {
+				if utils.ClassHasProp(d.ctx.st.CurrentClass, ref) {
 					return true // OK: class prop reference
 				}
 			}
@@ -1486,7 +1487,7 @@ func (d *RootWalker) parseFuncArgs(params []ir.Node, parTypes phpDocParamsMap, s
 
 func (d *RootWalker) checkCommentMisspellings(n ir.Node, s string) {
 	// Try to avoid checking for symbol names and references.
-	d.checkMisspellings(n, s, "misspellComment", isCapitalized)
+	d.checkMisspellings(n, s, "misspellComment", utils.IsCapitalized)
 }
 
 func (d *RootWalker) checkVarnameMisspellings(n ir.Node, s string) {
@@ -1501,7 +1502,7 @@ func (d *RootWalker) checkIdentMisspellings(n *ir.Identifier) {
 		// method names to avoid parsing errors.
 		// We can't suggest a fix that leads to a parsing error.
 		// To avoid false positives, skip PHP keywords.
-		return phpKeywords[s]
+		return utils.PhpKeywords[s]
 	})
 }
 
@@ -1587,7 +1588,7 @@ func (d *RootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 func (d *RootWalker) checkFuncParam(p *ir.Parameter) {
 	// TODO(quasilyte): DefaultValue can only contain constant expressions.
 	// Could run special check over them to detect the potential fatal errors.
-	walkNode(p.DefaultValue, func(w ir.Node) bool {
+	utils.WalkNode(p.DefaultValue, func(w ir.Node) bool {
 		if n, ok := w.(*ir.ArrayExpr); ok && !n.ShortSyntax {
 			d.Report(n, LevelDoNotReject, "arraySyntax", "Use of old array syntax (use short form instead)")
 		}
@@ -1625,7 +1626,7 @@ func (d *RootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {
 
 	value := constfold.Eval(d.ctx.st, valueArg)
 
-	d.meta.Constants[`\`+strings.TrimFunc(str.Value, isQuote)] = meta.ConstInfo{
+	d.meta.Constants[`\`+strings.TrimFunc(str.Value, utils.IsQuote)] = meta.ConstInfo{
 		Pos:   d.getElementPos(s),
 		Typ:   solver.ExprTypeLocal(d.scope(), d.ctx.st, valueArg.Expr),
 		Value: value,
@@ -1861,7 +1862,7 @@ func (d *RootWalker) checkTypeFilter(wantType *phpdoc.Type, sc *meta.Scope, nn i
 	// Or maybe store TypeExpr inside a TypesMap instead of strings?
 	// Can we use `meta.Type` for this?
 	typ := solver.ExprType(sc, d.ctx.st, nn)
-	haveType := typesMapToTypeExpr(d.ctx.phpdocTypeParser, typ)
+	haveType := typ.ToTypeExpr(d.ctx.phpdocTypeParser)
 	return rules.TypeIsCompatible(wantType.Expr, haveType.Expr)
 }
 

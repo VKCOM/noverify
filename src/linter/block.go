@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/linter/utils"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/phpdoc"
@@ -363,7 +364,7 @@ func (b *BlockWalker) checkGlobalStmt(s *ir.GlobalStmt) {
 	}
 
 	for _, v := range s.Vars {
-		nm := varToString(v)
+		nm := utils.VarToString(v)
 		if nm == "" {
 			continue
 		}
@@ -766,23 +767,23 @@ func (b *BlockWalker) handleCallArgs(n ir.Node, args []ir.Node, fn meta.FuncInfo
 }
 
 func (b *BlockWalker) handleFunctionCall(e *ir.FunctionCallExpr) bool {
-	call := resolveFunctionCall(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, e)
+	call := utils.ResolveFunctionCall(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, e)
 
 	if meta.IsIndexingComplete() {
-		if !call.canAnalyze {
+		if !call.CanAnalyze {
 			return true
 		}
 
-		if !call.defined && !b.ctx.customFunctionExists(e.Function) {
+		if !call.Defined && !b.ctx.customFunctionExists(e.Function) {
 			b.r.Report(e.Function, LevelError, "undefined", "Call to undefined function %s", meta.NameNodeToString(e.Function))
 		}
-		b.r.checkNameCase(e.Function, call.fqName, call.info.Name)
+		b.r.checkNameCase(e.Function, call.FqName, call.Info.Name)
 	}
 
-	if call.info.Doc.Deprecated {
-		if call.info.Doc.DeprecationNote != "" {
+	if call.Info.Doc.Deprecated {
+		if call.Info.Doc.DeprecationNote != "" {
 			b.r.Report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s (%s)",
-				meta.NameNodeToString(e.Function), call.info.Doc.DeprecationNote)
+				meta.NameNodeToString(e.Function), call.Info.Doc.DeprecationNote)
 		} else {
 			b.r.Report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s",
 				meta.NameNodeToString(e.Function))
@@ -791,16 +792,16 @@ func (b *BlockWalker) handleFunctionCall(e *ir.FunctionCallExpr) bool {
 
 	e.Function.Walk(b)
 
-	if call.fqName == `\func_get_args` {
+	if call.FqName == `\func_get_args` {
 		b.callsFuncGetArgs = true
 	}
 
-	if call.fqName == `\compact` {
+	if call.FqName == `\compact` {
 		b.handleCompactCallArgs(e.Args)
 	} else {
-		b.handleCallArgs(e.Function, e.Args, call.info)
+		b.handleCallArgs(e.Function, e.Args, call.Info)
 	}
-	b.ctx.exitFlags |= call.info.ExitFlags
+	b.ctx.exitFlags |= call.Info.ExitFlags
 
 	return false
 }
@@ -945,7 +946,7 @@ func (b *BlockWalker) handleStaticCall(e *ir.StaticCallExpr) bool {
 	e.Class.Walk(b)
 	e.Call.Walk(b)
 
-	magic := haveMagicMethod(className, `__callStatic`)
+	magic := utils.HaveMagicMethod(className, `__callStatic`)
 	if !ok && !magic && !b.r.ctx.st.IsTrait {
 		b.r.Report(e.Call, LevelError, "undefined", "Call to undefined method %s::%s()", className, methodName)
 	} else if !parentCall && !fn.IsStatic() && !magic && !b.r.ctx.st.IsTrait {
@@ -1947,4 +1948,27 @@ func (b *BlockWalker) sideEffectFree(n ir.Node) bool {
 
 func (b *BlockWalker) exprType(n ir.Node) meta.TypesMap {
 	return solver.ExprTypeCustom(b.ctx.sc, b.r.ctx.st, n, b.ctx.customTypes)
+}
+
+// FlagsToString is designed for debugging flags.
+func FlagsToString(f int) string {
+	var res []string
+
+	if (f & FlagReturn) == FlagReturn {
+		res = append(res, "Return")
+	}
+
+	if (f & FlagDie) == FlagDie {
+		res = append(res, "Die")
+	}
+
+	if (f & FlagThrow) == FlagThrow {
+		res = append(res, "Throw")
+	}
+
+	if (f & FlagBreak) == FlagBreak {
+		res = append(res, "Break")
+	}
+
+	return "Exit flags: [" + strings.Join(res, ", ") + "], digits: " + fmt.Sprintf("%d", f)
 }

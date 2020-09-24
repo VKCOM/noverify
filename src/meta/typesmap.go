@@ -5,6 +5,8 @@ import (
 	"encoding/gob"
 	"sort"
 	"strings"
+
+	"github.com/VKCOM/noverify/src/phpdoc"
 )
 
 // Preallocated and shared immutable type maps.
@@ -389,4 +391,9 @@ func (m TypesMap) ArrayElemLazyType() TypesMap {
 		mm[UnwrapArrayOf(typ)] = struct{}{}
 	}
 	return TypesMap{m: mm, flags: m.flags}
+}
+
+func (m TypesMap) ToTypeExpr(p *phpdoc.TypeParser) phpdoc.Type {
+	typeString := m.String()
+	return p.Parse(typeString)
 }
