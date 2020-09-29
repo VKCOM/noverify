@@ -46,7 +46,7 @@ abstract class Bar extends Baz
 	p.Print(rootNode)
 
 	// Output:
-	//<?php
+	// <?php
 	//
 	// namespace Foo\Quuz;
 	//
