@@ -7,7 +7,7 @@ install:
 	go install -ldflags "-X 'main.BuildTime=$(NOW)' -X 'main.BuildOSUname=$(OS)' -X 'main.BuildCommit=$(AFTER_COMMIT)'" .
 
 check:
-	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/0d2da56da532f444df6827c5054f5d036bcd7096/install.sh | sh -s -- -b $(GOPATH_DIR)/bin v1.30.0
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH_DIR)/bin v1.30.0
 	@echo "running linters..."
 	@$(GOPATH_DIR)/bin/golangci-lint run ./src/...
 	@echo "running tests..."
