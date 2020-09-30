@@ -2018,6 +2018,12 @@ func (d *RootWalker) parseClassPHPDoc(n ir.Node, doc []phpdoc.CommentPart) class
 	return result
 }
 
+func (d *RootWalker) beforeEnterFile() {
+	for _, c := range d.custom {
+		c.BeforeEnterFile()
+	}
+}
+
 func (d *RootWalker) afterLeaveFile() {
 	for _, c := range d.custom {
 		c.AfterLeaveFile()

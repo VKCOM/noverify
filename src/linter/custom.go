@@ -81,6 +81,7 @@ type BlockChecker interface {
 // RootChecker is a custom linter that should operator only at root level.
 // Block level analysis (function and method bodies and all if/else/for/etc blocks) must be performed in BlockChecker.
 type RootChecker interface {
+	BeforeEnterFile()
 	AfterLeaveFile()
 	BeforeEnterNode(ir.Node)
 	AfterEnterNode(ir.Node)
