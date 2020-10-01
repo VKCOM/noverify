@@ -19,6 +19,8 @@ type regexpSimplifier struct {
 	// escapedDelims counts how many times we've seen escaped
 	// pattern delimiter inside the current regexp.
 	escapedDelims int
+
+	hasSingleQuotes bool
 }
 
 func (c *regexpSimplifier) simplifyRegexp(pat string) string {
@@ -52,6 +54,10 @@ func (c *regexpSimplifier) simplify(pass int, pat string) string {
 	c.out.Reset()
 
 	c.walk(c.re.Expr)
+
+	if c.hasSingleQuotes {
+		return "" // Conservative, but safe
+	}
 
 	// Since '/' delimiter is so ubiquitous, tolerate 1 '\/' without
 	// suggesting an alternative delimiter.
@@ -128,9 +134,24 @@ func (c *regexpSimplifier) walk(e syntax.Expr) {
 		c.walk(e.Args[0])
 		out.WriteString(")")
 	case syntax.OpNamedCapture:
-		out.WriteString("(?P<")
-		out.WriteString(e.Args[1].Value)
-		out.WriteString(">")
+		out.WriteString("(?")
+		switch e.Form {
+		case syntax.FormNamedCaptureAngle:
+			out.WriteString("<")
+			out.WriteString(e.Args[1].Value)
+			out.WriteString(">")
+		case syntax.FormNamedCaptureQuote:
+			// We can't suggest single quote replacement with these.
+			// Collect this fact.
+			c.hasSingleQuotes = true
+			out.WriteString("'")
+			out.WriteString(e.Args[1].Value)
+			out.WriteString("'")
+		default:
+			out.WriteString("P<")
+			out.WriteString(e.Args[1].Value)
+			out.WriteString(">")
+		}
 		c.walk(e.Args[0])
 		out.WriteString(")")
 
