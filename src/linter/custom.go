@@ -114,6 +114,7 @@ func (BlockCheckerDefaults) AfterLeaveNode(ir.Node)  {}
 // to change your code right away (especially if you don't need a new hook).
 type RootCheckerDefaults struct{}
 
+func (RootCheckerDefaults) BeforeEnterFile()        {}
 func (RootCheckerDefaults) AfterLeaveFile()         {}
 func (RootCheckerDefaults) BeforeEnterNode(ir.Node) {}
 func (RootCheckerDefaults) AfterEnterNode(ir.Node)  {}

@@ -221,6 +221,38 @@ class Foo {
 	})
 }
 
+func TestMagicConstFold(t *testing.T) {
+	linttest.ParseTestFile(t, "files/file.php", `<?php
+namespace Boo;
+
+const NAMESPACE_NAME = __NAMESPACE__;
+const FILENAME = __FILE__;
+const DIR = __DIR__;
+const DIR_WITH_FUNC = dirname(__FILE__);
+
+const CUSTOM_DIR = __DIR__ . "/file2.php";
+const CUSTOM_DIR_2 = dirname(__FILE__) . "/file2.php";
+
+class Foo {
+  const CLASSNAME = __CLASS__;
+  const LINE = __LINE__;
+}
+`)
+	meta.SetIndexingComplete(true)
+	defer meta.SetIndexingComplete(false)
+
+	runNormalizeTests(t, []normalizationTest{
+		{`\Boo\NAMESPACE_NAME`, `'\Boo'`},
+		{`\Boo\FILENAME`, `'files/file.php'`},
+		{`\Boo\DIR`, `'files'`},
+		{`\Boo\DIR_WITH_FUNC`, `'files'`},
+		{`\Boo\CUSTOM_DIR`, `'files/file2.php'`},
+		{`\Boo\CUSTOM_DIR_2`, `'files/file2.php'`},
+		{`\Boo\Foo::CLASSNAME`, `'\Boo\Foo'`},
+		{`\Boo\Foo::LINE`, `14`},
+	})
+}
+
 func parseStmtList(s string) ([]ir.Node, error) {
 	source := "<?php " + s
 	p := php7.NewParser([]byte(source))
