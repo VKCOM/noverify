@@ -101,6 +101,9 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 		if !meta.NameNodeEquals(e.Function, `dirname`) {
 			return meta.UnknownValue
 		}
+		if len(e.Args) == 0 {
+			return meta.UnknownValue
+		}
 		arg, ok := e.Arg(0).Expr.(*ir.MagicConstant)
 		if !ok || arg.Value != "__FILE__" {
 			return meta.UnknownValue
