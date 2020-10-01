@@ -1,6 +1,7 @@
 package constfold
 
 import (
+	"path/filepath"
 	"strconv"
 
 	"github.com/VKCOM/noverify/src/ir"
@@ -94,6 +95,39 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 
 	case *ir.String:
 		return meta.ConstValue{Value: e.Value, Type: meta.String}
+
+	case *ir.FunctionCallExpr:
+		// dirname(__FILE__)
+		if !meta.NameNodeEquals(e.Function, `dirname`) {
+			return meta.UnknownValue
+		}
+		arg, ok := e.Arg(0).Expr.(*ir.MagicConstant)
+		if !ok || arg.Value != "__FILE__" {
+			return meta.UnknownValue
+		}
+		return meta.NewStringConstant(filepath.Dir(st.CurrentFile))
+
+	case *ir.MagicConstant:
+		switch e.Value {
+		case "__LINE__":
+			return meta.NewIntConst(int64(e.Position.StartLine))
+		case "__FILE__":
+			return meta.NewStringConstant(st.CurrentFile)
+		case "__DIR__":
+			return meta.NewStringConstant(filepath.Dir(st.CurrentFile))
+		case "__FUNCTION__":
+			return meta.NewStringConstant(st.CurrentFunction)
+		case "__METHOD__":
+			return meta.NewStringConstant(st.CurrentClass + "::" + st.CurrentFunction)
+		case "__CLASS__":
+			return meta.NewStringConstant(st.CurrentClass)
+		case "__NAMESPACE__":
+			return meta.NewStringConstant(st.Namespace)
+		case "__TRAIT__":
+			if st.IsTrait {
+				return meta.NewStringConstant(st.CurrentClass)
+			}
+		}
 	}
 
 	return meta.UnknownValue
