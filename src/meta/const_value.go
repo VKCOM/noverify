@@ -61,7 +61,7 @@ func (c ConstValue) IsValid() bool {
 
 // GetInt returns the value stored in c.Value cast to int type.
 //
-// Used with care, it can panic if the type is not equal to the
+// Should be used with care, it can panic if the type is not equal to the
 // required one. Usually used in places where the type has already
 // been clearly defined and the probability of panic is 0.
 func (c ConstValue) GetInt() int64 {
@@ -70,7 +70,7 @@ func (c ConstValue) GetInt() int64 {
 
 // GetFloat returns the value stored in c.Value cast to float type.
 //
-// Used with care, it can panic if the type is not equal to the
+// Should be used with care, it can panic if the type is not equal to the
 // required one. Usually used in places where the type has already
 // been clearly defined and the probability of panic is 0.
 func (c ConstValue) GetFloat() float64 {
@@ -79,7 +79,7 @@ func (c ConstValue) GetFloat() float64 {
 
 // GetString returns the value stored in c.Value cast to string type.
 //
-// Used with care, it can panic if the type is not equal to the
+// Should be used with care, it can panic if the type is not equal to the
 // required one. Usually used in places where the type has already
 // been clearly defined and the probability of panic is 0.
 func (c ConstValue) GetString() string {
@@ -88,7 +88,7 @@ func (c ConstValue) GetString() string {
 
 // GetBool returns the value stored in c.Value cast to bool type.
 //
-// Used with care, it can panic if the type is not equal to the
+// Should be used with care, it can panic if the type is not equal to the
 // required one. Usually used in places where the type has already
 // been clearly defined and the probability of panic is 0.
 func (c ConstValue) GetBool() bool {
