@@ -526,7 +526,7 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 			constKey = true
 		case *ir.ConstFetchExpr:
 			v := constfold.Eval(b.walker.r.ctx.st, k)
-			if v.Type == meta.Undefined {
+			if !v.IsValid() {
 				continue
 			}
 

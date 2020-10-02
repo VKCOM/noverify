@@ -55,7 +55,6 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 
 	case *ir.BooleanNotExpr:
 		return Not(Eval(st, e.Expr))
-
 	case *ir.BooleanAndExpr:
 		return And(Eval(st, e.Left), Eval(st, e.Right))
 	case *ir.BooleanOrExpr:
@@ -84,17 +83,17 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 		if err != nil {
 			return meta.UnknownValue
 		}
-		return meta.ConstValue{Type: meta.Integer, Value: value}
+		return meta.NewIntConst(value)
 
 	case *ir.Dnumber:
 		value, err := strconv.ParseFloat(e.Value, 64)
 		if err != nil {
 			return meta.UnknownValue
 		}
-		return meta.ConstValue{Type: meta.Float, Value: value}
+		return meta.NewFloatConst(value)
 
 	case *ir.String:
-		return meta.ConstValue{Value: e.Value, Type: meta.String}
+		return meta.NewStringConst(e.Value)
 
 	case *ir.FunctionCallExpr:
 		// dirname(__FILE__)
@@ -108,27 +107,27 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 		if !ok || arg.Value != "__FILE__" {
 			return meta.UnknownValue
 		}
-		return meta.NewStringConstant(filepath.Dir(st.CurrentFile))
+		return meta.NewStringConst(filepath.Dir(st.CurrentFile))
 
 	case *ir.MagicConstant:
 		switch e.Value {
 		case "__LINE__":
 			return meta.NewIntConst(int64(e.Position.StartLine))
 		case "__FILE__":
-			return meta.NewStringConstant(st.CurrentFile)
+			return meta.NewStringConst(st.CurrentFile)
 		case "__DIR__":
-			return meta.NewStringConstant(filepath.Dir(st.CurrentFile))
+			return meta.NewStringConst(filepath.Dir(st.CurrentFile))
 		case "__FUNCTION__":
-			return meta.NewStringConstant(st.CurrentFunction)
+			return meta.NewStringConst(st.CurrentFunction)
 		case "__METHOD__":
-			return meta.NewStringConstant(st.CurrentClass + "::" + st.CurrentFunction)
+			return meta.NewStringConst(st.CurrentClass + "::" + st.CurrentFunction)
 		case "__CLASS__":
-			return meta.NewStringConstant(st.CurrentClass)
+			return meta.NewStringConst(st.CurrentClass)
 		case "__NAMESPACE__":
-			return meta.NewStringConstant(st.Namespace)
+			return meta.NewStringConst(st.Namespace)
 		case "__TRAIT__":
 			if st.IsTrait {
-				return meta.NewStringConstant(st.CurrentClass)
+				return meta.NewStringConst(st.CurrentClass)
 			}
 		}
 	}

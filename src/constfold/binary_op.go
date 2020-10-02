@@ -54,7 +54,7 @@ func Concat(x, y meta.ConstValue) meta.ConstValue {
 	v1, ok1 := x.ToString()
 	v2, ok2 := y.ToString()
 	if ok1 && ok2 {
-		return meta.NewStringConstant(v1 + v2)
+		return meta.NewStringConst(v1 + v2)
 	}
 	return meta.UnknownValue
 }
@@ -65,7 +65,7 @@ func Or(x, y meta.ConstValue) meta.ConstValue {
 	v1, ok1 := x.ToBool()
 	v2, ok2 := y.ToBool()
 	if ok1 && ok2 {
-		return meta.NewBoolConstant(v1 || v2)
+		return meta.NewBoolConst(v1 || v2)
 	}
 	return meta.UnknownValue
 }
@@ -76,7 +76,7 @@ func And(x, y meta.ConstValue) meta.ConstValue {
 	v1, ok1 := x.ToBool()
 	v2, ok2 := y.ToBool()
 	if ok1 && ok2 {
-		return meta.NewBoolConstant(v1 && v2)
+		return meta.NewBoolConst(v1 && v2)
 	}
 	return meta.UnknownValue
 }
