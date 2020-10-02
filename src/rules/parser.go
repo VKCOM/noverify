@@ -431,23 +431,24 @@ func (p *parser) errorf(n ir.Node, format string, args ...interface{}) *parseErr
 }
 
 func (p *parser) checkForVariableInPattern(name string, pattern ir.Node, verifiedVars map[string]struct{}) bool {
-	var found bool
 	if _, ok := verifiedVars[name]; ok {
-		found = true
-	} else {
-		found = irutil.FindWithPredicate(&ir.SimpleVar{Name: name}, pattern, func(what ir.Node, cur ir.Node) bool {
-			// We need to check if there is a variable with this name
-			// in case the pattern contains the ${"[varName]:var"} template.
-			if s, ok := cur.(*ir.Var); ok {
-				if s, ok := s.Expr.(*ir.String); ok {
-					return strings.Contains(s.Value, what.(*ir.SimpleVar).Name+":var")
-				}
-			}
-			return false
-		})
-		if found {
-			verifiedVars[name] = struct{}{}
-		}
+		return true
 	}
+
+	found := irutil.FindWithPredicate(&ir.SimpleVar{Name: name}, pattern, func(what ir.Node, cur ir.Node) bool {
+		// We need to check if there is a variable with this name
+		// in case the pattern contains the ${"[varName]:var"} template.
+		if s, ok := cur.(*ir.Var); ok {
+			if s, ok := s.Expr.(*ir.String); ok {
+				return strings.Contains(s.Value, what.(*ir.SimpleVar).Name+":var")
+			}
+		}
+		return false
+	})
+
+	if found {
+		verifiedVars[name] = struct{}{}
+	}
+
 	return found
 }

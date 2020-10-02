@@ -71,6 +71,7 @@ func FmtNode(n ir.Node) string {
 	return irfmt.Node(n)
 }
 
+// Find searches for a node in the passed subtree.
 func Find(what ir.Node, where ir.Node) bool {
 	if what == nil || where == nil {
 		return false
@@ -80,7 +81,11 @@ func Find(what ir.Node, where ir.Node) bool {
 	return w.found
 }
 
-func FindWithPredicate(what ir.Node, where ir.Node, pred func(what ir.Node, cur ir.Node) bool) bool {
+// FindWithPredicate searches for a node in the passed
+// subtree using a predicate.
+//
+// If the predicate returns true, the search ends.
+func FindWithPredicate(what ir.Node, where ir.Node, pred findPredicate) bool {
 	if what == nil || where == nil {
 		return false
 	}
