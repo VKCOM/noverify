@@ -10,7 +10,7 @@ import (
 )
 
 // Eval tries to compute the e using the constant expressions folding.
-// In case of failure, meta.UnknownValue and false flag is returned.
+// In case of failure, meta.UnknownValue is returned.
 func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 	// TODO: support more operators and some builtin PHP functions like strlen.
 
