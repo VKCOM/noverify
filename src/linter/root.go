@@ -944,7 +944,7 @@ func (d *RootWalker) enterClassConstList(s *ir.ClassConstListStmt) bool {
 		d.checkCommentMisspellings(c, c.PhpDocComment)
 		typ := solver.ExprTypeLocal(d.scope(), d.ctx.st, c.Expr)
 
-		value := constfold.Eval(d.ctx.st, c.Expr)
+		value, _ := constfold.Eval(d.ctx.st, c.Expr)
 
 		// TODO: handle duplicate constant
 		cl.Constants[nm] = meta.ConstInfo{
@@ -1623,7 +1623,7 @@ func (d *RootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {
 		d.meta.Constants = make(meta.ConstantsMap)
 	}
 
-	value := constfold.Eval(d.ctx.st, valueArg)
+	value, _ := constfold.Eval(d.ctx.st, valueArg)
 
 	d.meta.Constants[`\`+strings.TrimFunc(str.Value, isQuote)] = meta.ConstInfo{
 		Pos:   d.getElementPos(s),
@@ -1711,7 +1711,7 @@ func (d *RootWalker) enterConstList(lst *ir.ConstListStmt) bool {
 	for _, sNode := range lst.Consts {
 		s := sNode.(*ir.ConstantStmt)
 
-		value := constfold.Eval(d.ctx.st, s.Expr)
+		value, _ := constfold.Eval(d.ctx.st, s.Expr)
 
 		id := s.ConstantName
 		nm := d.ctx.st.Namespace + `\` + id.Value

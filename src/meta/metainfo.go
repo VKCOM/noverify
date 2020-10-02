@@ -366,6 +366,13 @@ type PropertyInfo struct {
 	AccessLevel AccessLevel
 }
 
+type ConstInfo struct {
+	Pos         ElementPosition
+	Typ         TypesMap
+	AccessLevel AccessLevel
+	Value       ConstValue
+}
+
 type ClassFlags uint8
 
 const (

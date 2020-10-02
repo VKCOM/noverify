@@ -10,15 +10,20 @@ import (
 )
 
 // Eval tries to compute the e using the constant expressions folding.
-// In case of failure, meta.UnknownValue is returned.
-func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
+// In case of failure, meta.UnknownValue and false flag is returned.
+func Eval(st *meta.ClassParseState, e ir.Node) (meta.ConstValue, bool) {
+	res := eval(st, e)
+	return res, res.Type != meta.Undefined
+}
+
+func eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 	// TODO: support more operators and some builtin PHP functions like strlen.
 
 	switch e := e.(type) {
 	case *ir.Argument:
-		return Eval(st, e.Expr)
+		return eval(st, e.Expr)
 	case *ir.ParenExpr:
-		return Eval(st, e.Expr)
+		return eval(st, e.Expr)
 
 	case *ir.ClassConstFetchExpr:
 		if !meta.IsIndexingComplete() {
@@ -51,50 +56,49 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 		return info.Value
 
 	case *ir.UnaryMinusExpr:
-		return Neg(Eval(st, e.Expr))
+		return Neg(eval(st, e.Expr))
 
 	case *ir.BooleanNotExpr:
-		return Not(Eval(st, e.Expr))
-
+		return Not(eval(st, e.Expr))
 	case *ir.BooleanAndExpr:
-		return And(Eval(st, e.Left), Eval(st, e.Right))
+		return And(eval(st, e.Left), eval(st, e.Right))
 	case *ir.BooleanOrExpr:
-		return Or(Eval(st, e.Left), Eval(st, e.Right))
+		return Or(eval(st, e.Left), eval(st, e.Right))
 	case *ir.LogicalAndExpr:
-		return And(Eval(st, e.Left), Eval(st, e.Right))
+		return And(eval(st, e.Left), eval(st, e.Right))
 	case *ir.LogicalOrExpr:
-		return Or(Eval(st, e.Left), Eval(st, e.Right))
+		return Or(eval(st, e.Left), eval(st, e.Right))
 
 	case *ir.PlusExpr:
-		return Plus(Eval(st, e.Left), Eval(st, e.Right))
+		return Plus(eval(st, e.Left), eval(st, e.Right))
 	case *ir.MinusExpr:
-		return Minus(Eval(st, e.Left), Eval(st, e.Right))
+		return Minus(eval(st, e.Left), eval(st, e.Right))
 	case *ir.MulExpr:
-		return Mul(Eval(st, e.Left), Eval(st, e.Right))
+		return Mul(eval(st, e.Left), eval(st, e.Right))
 	case *ir.ConcatExpr:
-		return Concat(Eval(st, e.Left), Eval(st, e.Right))
+		return Concat(eval(st, e.Left), eval(st, e.Right))
 
 	case *ir.BitwiseAndExpr:
-		return BitAnd(Eval(st, e.Left), Eval(st, e.Right))
+		return BitAnd(eval(st, e.Left), eval(st, e.Right))
 	case *ir.BitwiseOrExpr:
-		return BitOr(Eval(st, e.Left), Eval(st, e.Right))
+		return BitOr(eval(st, e.Left), eval(st, e.Right))
 
 	case *ir.Lnumber:
 		value, err := strconv.ParseInt(e.Value, 0, 64)
 		if err != nil {
 			return meta.UnknownValue
 		}
-		return meta.ConstValue{Type: meta.Integer, Value: value}
+		return meta.NewIntConst(value)
 
 	case *ir.Dnumber:
 		value, err := strconv.ParseFloat(e.Value, 64)
 		if err != nil {
 			return meta.UnknownValue
 		}
-		return meta.ConstValue{Type: meta.Float, Value: value}
+		return meta.NewFloatConst(value)
 
 	case *ir.String:
-		return meta.ConstValue{Value: e.Value, Type: meta.String}
+		return meta.NewStringConst(e.Value)
 
 	case *ir.FunctionCallExpr:
 		// dirname(__FILE__)
@@ -108,27 +112,27 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 		if !ok || arg.Value != "__FILE__" {
 			return meta.UnknownValue
 		}
-		return meta.NewStringConstant(filepath.Dir(st.CurrentFile))
+		return meta.NewStringConst(filepath.Dir(st.CurrentFile))
 
 	case *ir.MagicConstant:
 		switch e.Value {
 		case "__LINE__":
 			return meta.NewIntConst(int64(e.Position.StartLine))
 		case "__FILE__":
-			return meta.NewStringConstant(st.CurrentFile)
+			return meta.NewStringConst(st.CurrentFile)
 		case "__DIR__":
-			return meta.NewStringConstant(filepath.Dir(st.CurrentFile))
+			return meta.NewStringConst(filepath.Dir(st.CurrentFile))
 		case "__FUNCTION__":
-			return meta.NewStringConstant(st.CurrentFunction)
+			return meta.NewStringConst(st.CurrentFunction)
 		case "__METHOD__":
-			return meta.NewStringConstant(st.CurrentClass + "::" + st.CurrentFunction)
+			return meta.NewStringConst(st.CurrentClass + "::" + st.CurrentFunction)
 		case "__CLASS__":
-			return meta.NewStringConstant(st.CurrentClass)
+			return meta.NewStringConst(st.CurrentClass)
 		case "__NAMESPACE__":
-			return meta.NewStringConstant(st.Namespace)
+			return meta.NewStringConst(st.Namespace)
 		case "__TRAIT__":
 			if st.IsTrait {
-				return meta.NewStringConstant(st.CurrentClass)
+				return meta.NewStringConst(st.CurrentClass)
 			}
 		}
 	}
