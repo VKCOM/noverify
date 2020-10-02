@@ -54,6 +54,11 @@ func NewBoolConst(v bool) ConstValue {
 	return ConstValue{Type: Bool, Value: v}
 }
 
+// IsValid checks that the value is valid and its type is not undefined.
+func (c ConstValue) IsValid() bool {
+	return c.Type != Undefined
+}
+
 // GetInt returns the value stored in c.Value cast to int type.
 //
 // Used with care, it can panic if the type is not equal to the

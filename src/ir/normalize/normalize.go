@@ -247,8 +247,8 @@ func (norm *normalizer) normalizedStmtExpr(e ir.Node) ir.Node {
 }
 
 func (norm *normalizer) normalizedExpr(e ir.Node) ir.Node {
-	constFolded, ok := constfold.Eval(norm.st, e)
-	if ok {
+	constFolded := constfold.Eval(norm.st, e)
+	if constFolded.IsValid() {
 		if e2 := constToIR(constFolded); e2 != nil {
 			return e2
 		}

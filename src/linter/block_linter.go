@@ -525,8 +525,8 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 			key = k.Value
 			constKey = true
 		case *ir.ConstFetchExpr:
-			v, ok := constfold.Eval(b.walker.r.ctx.st, k)
-			if !ok {
+			v := constfold.Eval(b.walker.r.ctx.st, k)
+			if !v.IsValid() {
 				continue
 			}
 

@@ -11,19 +11,14 @@ import (
 
 // Eval tries to compute the e using the constant expressions folding.
 // In case of failure, meta.UnknownValue and false flag is returned.
-func Eval(st *meta.ClassParseState, e ir.Node) (meta.ConstValue, bool) {
-	res := eval(st, e)
-	return res, res.Type != meta.Undefined
-}
-
-func eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
+func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 	// TODO: support more operators and some builtin PHP functions like strlen.
 
 	switch e := e.(type) {
 	case *ir.Argument:
-		return eval(st, e.Expr)
+		return Eval(st, e.Expr)
 	case *ir.ParenExpr:
-		return eval(st, e.Expr)
+		return Eval(st, e.Expr)
 
 	case *ir.ClassConstFetchExpr:
 		if !meta.IsIndexingComplete() {
@@ -56,32 +51,32 @@ func eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 		return info.Value
 
 	case *ir.UnaryMinusExpr:
-		return Neg(eval(st, e.Expr))
+		return Neg(Eval(st, e.Expr))
 
 	case *ir.BooleanNotExpr:
-		return Not(eval(st, e.Expr))
+		return Not(Eval(st, e.Expr))
 	case *ir.BooleanAndExpr:
-		return And(eval(st, e.Left), eval(st, e.Right))
+		return And(Eval(st, e.Left), Eval(st, e.Right))
 	case *ir.BooleanOrExpr:
-		return Or(eval(st, e.Left), eval(st, e.Right))
+		return Or(Eval(st, e.Left), Eval(st, e.Right))
 	case *ir.LogicalAndExpr:
-		return And(eval(st, e.Left), eval(st, e.Right))
+		return And(Eval(st, e.Left), Eval(st, e.Right))
 	case *ir.LogicalOrExpr:
-		return Or(eval(st, e.Left), eval(st, e.Right))
+		return Or(Eval(st, e.Left), Eval(st, e.Right))
 
 	case *ir.PlusExpr:
-		return Plus(eval(st, e.Left), eval(st, e.Right))
+		return Plus(Eval(st, e.Left), Eval(st, e.Right))
 	case *ir.MinusExpr:
-		return Minus(eval(st, e.Left), eval(st, e.Right))
+		return Minus(Eval(st, e.Left), Eval(st, e.Right))
 	case *ir.MulExpr:
-		return Mul(eval(st, e.Left), eval(st, e.Right))
+		return Mul(Eval(st, e.Left), Eval(st, e.Right))
 	case *ir.ConcatExpr:
-		return Concat(eval(st, e.Left), eval(st, e.Right))
+		return Concat(Eval(st, e.Left), Eval(st, e.Right))
 
 	case *ir.BitwiseAndExpr:
-		return BitAnd(eval(st, e.Left), eval(st, e.Right))
+		return BitAnd(Eval(st, e.Left), Eval(st, e.Right))
 	case *ir.BitwiseOrExpr:
-		return BitOr(eval(st, e.Left), eval(st, e.Right))
+		return BitOr(Eval(st, e.Left), Eval(st, e.Right))
 
 	case *ir.Lnumber:
 		value, err := strconv.ParseInt(e.Value, 0, 64)
