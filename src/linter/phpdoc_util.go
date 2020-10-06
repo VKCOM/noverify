@@ -25,6 +25,7 @@ type classPhpDocParseResult struct {
 	properties meta.PropertiesMap
 	methods    meta.FunctionsMap
 	errs       phpdocErrors
+	mixins     []string
 }
 
 func parseClassPHPDocMethod(ctx *rootContext, result *classPhpDocParseResult, part *phpdoc.RawCommentPart) {
@@ -99,4 +100,19 @@ func parseClassPHPDocProperty(ctx *rootContext, result *classPhpDocParseResult, 
 		Typ:         newTypesMap(ctx, types),
 		AccessLevel: meta.Public,
 	}
+}
+
+func parseClassPHPDocMixin(ctx *rootContext, result *classPhpDocParseResult, part *phpdoc.RawCommentPart) {
+	params := part.Params
+
+	if len(params) == 0 {
+		return
+	}
+
+	param := params[0]
+	if !strings.HasPrefix(param, `\`) {
+		param = `\` + param
+	}
+
+	result.mixins = append(result.mixins, param)
 }

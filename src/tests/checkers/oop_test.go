@@ -1280,3 +1280,78 @@ interface WithoutAnyModifier {
 	}
 	test.RunAndMatch()
 }
+
+func TestMixinAnnotation(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class SomeClass {
+  /** */
+  public function method()
+  {
+    echo "";
+  }
+}
+
+/**
+ * @mixin SomeClass
+ */
+class SomeClass2 {
+  /** */
+  public function method2()
+  {
+    echo $this->method(); // Ok, from mixin SomeClass
+  }
+}
+
+/** */
+class SomeClass3 {
+  /** */
+  public function method3()
+  {
+    echo "";
+  }
+}
+
+/**
+ * @mixin \SomeClass2
+ * @mixin 
+ */
+class BarWithSomeMixin {
+  /** */
+  public function run()
+  {
+    $this->method(); // Ok, from mixin SomeClass
+    $this->method2(); // Ok, from mixin SomeClass2
+    $this->method3(); // Error, no SomeClass3 mixin
+  }
+
+  /** */
+  public function barWithSomeMixinMethod()
+  {
+    echo "";
+  }
+}
+
+/**
+ * @mixin \BarWithSomeMixin
+ * @mixin SomeClass3
+ * @mixin Boo // Error, Boo not found
+ */
+class Bar {
+  /** */
+  public function run()
+  {
+    $this->method(); // Ok, from mixin SomeClass
+    $this->method2(); // Ok, from mixin SomeClass2
+    $this->method3(); // Ok, from mixin SomeClass3
+    $this->barWithSomeMixinMethod(); // Ok, from mixin BarWithSomeMixin
+  }
+}
+
+`)
+	test.Expect = []string{
+		`Call to undefined method {\BarWithSomeMixin}->method3()`,
+		`line 4: @mixin tag refers to unknown class \Boo`,
+	}
+	test.RunAndMatch()
+}

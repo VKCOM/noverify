@@ -389,6 +389,18 @@ func findMethod(className string, methodName string, visitedMap map[string]struc
 			}
 		}
 
+		for _, mixin := range class.Mixins {
+			_, ok := getClassOrTrait(mixin)
+			if !ok {
+				continue
+			}
+
+			result, ok := findMethod(mixin, methodName, make(map[string]struct{}))
+			if ok {
+				return result, true
+			}
+		}
+
 		for ifaceName := range class.Interfaces {
 			m, ok := findMethod(ifaceName, methodName, visitedMap)
 			if ok {
