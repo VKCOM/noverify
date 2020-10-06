@@ -1289,6 +1289,18 @@ class Foo {
   public static function some_method() {}
 }
 
+function ret_int() {
+  return 12;
+}
+
+function ret_string() {
+  return "Foo";
+}
+
+function ret_object() {
+  return new Foo();
+}
+
 function f($arg) {
   $foo = new Foo();
   $foo::some_method(); // Ok
@@ -1301,6 +1313,10 @@ function f($arg) {
   $foo3 = new Foo();
   $foo4 = $arg;
 
+  $foo5 = ret_string();
+  $foo6 = ret_object();
+  $foo7 = ret_int();
+
   if ($a > 100) {
     $foo2 = "Foo";
     $foo3 = 10;
@@ -1309,12 +1325,16 @@ function f($arg) {
   $foo2::some_method(); // Skip, via \Foo|string type (both is correct for class name)
   $foo3::some_method(); // Error, int type is invalid class name
   $foo4::some_method(); // Skip, via mixed type
+  $foo5::some_method(); // Ok ret_string returns the string
+  $foo6::some_method(); // Ok ret_object returns the Foo object
+  $foo7::some_method(); // Error, ret_int returns the int
 }
 `)
 	test.Expect = []string{
 		`Call to undefined method \Foo::non_existing_method()`,
 		`Class name must be a valid object or a string (passed int)`,
 		`Class name must be a valid object or a string (passed \Foo|int)`,
+		`Class name must be a valid object or a string (passed int)`,
 	}
 	test.RunAndMatch()
 }

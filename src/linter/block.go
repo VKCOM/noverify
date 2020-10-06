@@ -952,6 +952,14 @@ func (b *BlockWalker) handleStaticCall(e *ir.StaticCallExpr) bool {
 			return true
 		}
 
+		// We need to resolve the types here, as the function may
+		// return a class or a string with the class name.
+		if !tp.IsResolved() {
+			visitedMap := make(solver.ResolverMap)
+			resolvedTypes := solver.ResolveTypes(b.r.ctx.st.CurrentClass, tp, visitedMap)
+			tp = meta.NewTypesMapFromMap(resolvedTypes)
+		}
+
 		var isClass bool
 		var isString bool
 		var isMixed bool
