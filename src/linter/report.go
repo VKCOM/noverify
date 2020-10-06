@@ -557,6 +557,19 @@ $foo = new Foo();`,
 			Before:   `sprintf("id=%d")`,
 			After:    `sprintf("id=%d", $id)`,
 		},
+
+		{
+			Name:     "invalidClassName",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report an incorrect class name when calling a static method with a variable.`,
+			Before: `class Foo {}
+$foo = 10;
+$foo::some_method();`,
+			After: `class Foo {}
+$foo = "Foo";
+$foo::some_method();`,
+		},
 	}
 
 	for _, info := range allChecks {

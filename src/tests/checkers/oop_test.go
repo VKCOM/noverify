@@ -1280,3 +1280,41 @@ interface WithoutAnyModifier {
 	}
 	test.RunAndMatch()
 }
+
+func TestCallStaticWithVariable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {
+  /** */
+  public static function some_method() {}
+}
+
+function f($arg) {
+  $foo = new Foo();
+  $foo::some_method(); // Ok
+  $foo::non_existing_method(); // Error
+
+  $a = 10;
+  $a::some_method(); // invalidClassName
+
+  $foo2 = new Foo();
+  $foo3 = new Foo();
+  $foo4 = $arg;
+
+  if ($a > 100) {
+    $foo2 = "Foo";
+    $foo3 = 10;
+  }
+
+  $foo2::some_method(); // Skip, via \Foo|string type (both is correct for class name)
+  $foo3::some_method(); // Error, int type is invalid class name
+  $foo4::some_method(); // Skip, via mixed type
+}
+`)
+	test.Expect = []string{
+		`Call to undefined method \Foo::non_existing_method()`,
+		`Class name must be a valid object or a string (passed int)`,
+		`Class name must be a valid object or a string (passed \Foo|int)`,
+	}
+	test.RunAndMatch()
+}
