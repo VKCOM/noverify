@@ -7,8 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/VKCOM/noverify/src/git"
 	"github.com/karrick/godirwalk"
+
+	"github.com/VKCOM/noverify/src/git"
 )
 
 type ReadCallback func(ch chan FileInfo)
@@ -99,6 +100,10 @@ func readFilenames(ch chan<- FileInfo, filename string, filter *FilenameFilter) 
 
 	if !st.IsDir() {
 		if filter.IgnoreFile(filename) {
+			return
+		}
+
+		if !isPHPExtension(filename) {
 			return
 		}
 
