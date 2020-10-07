@@ -425,7 +425,7 @@ func (b *blockLinter) checkSwitch(s *ir.SwitchStmt) {
 		var isConstKey bool
 		if k, ok := c.Cond.(*ir.ConstFetchExpr); ok {
 			v = constfold.Eval(b.walker.r.ctx.st, k)
-			if v.Type == meta.Undefined {
+			if !v.IsValid() {
 				continue
 			}
 			value := v.Value
