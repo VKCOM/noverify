@@ -6,11 +6,11 @@ import (
 	"strconv"
 )
 
-type ConstantValueType uint8
+type ConstValueType uint8
 
-//go:generate stringer -type=ConstantValueType
+//go:generate stringer -type=ConstValueType
 const (
-	Undefined ConstantValueType = iota
+	Undefined ConstValueType = iota
 	Integer
 	Float
 	String
@@ -18,55 +18,86 @@ const (
 )
 
 var (
-	UnknownValue = ConstantValue{Type: Undefined}
-	TrueValue    = ConstantValue{Type: Bool, Value: true}
-	FalseValue   = ConstantValue{Type: Bool, Value: false}
+	UnknownValue = ConstValue{Type: Undefined}
+	TrueValue    = ConstValue{Type: Bool, Value: true}
+	FalseValue   = ConstValue{Type: Bool, Value: false}
 )
 
-type ConstantValue struct {
-	Type  ConstantValueType
+// ConstValue structure is used to store
+// the value and type of a constant.
+type ConstValue struct {
+	Type  ConstValueType
 	Value interface{}
 }
 
-func ConstantIntValue(v int64) ConstantValue {
-	return ConstantValue{Type: Integer, Value: v}
+// NewIntConst returns a new constant value with the
+// preset int type and the passed value v.
+func NewIntConst(v int64) ConstValue {
+	return ConstValue{Type: Integer, Value: v}
 }
 
-func ConstantFloatValue(v float64) ConstantValue {
-	return ConstantValue{Type: Float, Value: v}
+// NewFloatConst returns a new constant value with the
+// preset float type and the passed value v.
+func NewFloatConst(v float64) ConstValue {
+	return ConstValue{Type: Float, Value: v}
 }
 
-func ConstantStringValue(v string) ConstantValue {
-	return ConstantValue{Type: String, Value: v}
+// NewStringConst returns a new constant value with the
+// preset string type and the passed value v.
+func NewStringConst(v string) ConstValue {
+	return ConstValue{Type: String, Value: v}
 }
 
-func ConstantBoolValue(v bool) ConstantValue {
-	return ConstantValue{Type: Bool, Value: v}
+// NewBoolConst returns a new constant value with the
+// preset bool type and the passed value v.
+func NewBoolConst(v bool) ConstValue {
+	return ConstValue{Type: Bool, Value: v}
+}
+
+// IsValid checks that the value is valid and its type is not undefined.
+func (c ConstValue) IsValid() bool {
+	return c.Type != Undefined
 }
 
 // GetInt returns the value stored in c.Value cast to int type.
-func (c ConstantValue) GetInt() int64 {
+//
+// Should be used with care, it can panic if the type is not equal to the
+// required one. Usually used in places where the type has already
+// been clearly defined and the probability of panic is 0.
+func (c ConstValue) GetInt() int64 {
 	return c.Value.(int64)
 }
 
 // GetFloat returns the value stored in c.Value cast to float type.
-func (c ConstantValue) GetFloat() float64 {
+//
+// Should be used with care, it can panic if the type is not equal to the
+// required one. Usually used in places where the type has already
+// been clearly defined and the probability of panic is 0.
+func (c ConstValue) GetFloat() float64 {
 	return c.Value.(float64)
 }
 
 // GetString returns the value stored in c.Value cast to string type.
-func (c ConstantValue) GetString() string {
+//
+// Should be used with care, it can panic if the type is not equal to the
+// required one. Usually used in places where the type has already
+// been clearly defined and the probability of panic is 0.
+func (c ConstValue) GetString() string {
 	return c.Value.(string)
 }
 
 // GetBool returns the value stored in c.Value cast to bool type.
-func (c ConstantValue) GetBool() bool {
+//
+// Should be used with care, it can panic if the type is not equal to the
+// required one. Usually used in places where the type has already
+// been clearly defined and the probability of panic is 0.
+func (c ConstValue) GetBool() bool {
 	return c.Value.(bool)
 }
 
 // ToBool converts x constant to boolean constants following PHP conversion rules.
 // Second bool result tells whether that conversion was successful.
-func (c ConstantValue) ToBool() (bool, bool) {
+func (c ConstValue) ToBool() (bool, bool) {
 	switch c.Type {
 	case Bool:
 		return c.GetBool(), true
@@ -84,7 +115,7 @@ func (c ConstantValue) ToBool() (bool, bool) {
 
 // ToInt converts x constant to int constants following PHP conversion rules.
 // Second bool result tells whether that conversion was successful.
-func (c ConstantValue) ToInt() (int64, bool) {
+func (c ConstValue) ToInt() (int64, bool) {
 	switch c.Type {
 	case Bool:
 		if c.GetBool() {
@@ -101,7 +132,7 @@ func (c ConstantValue) ToInt() (int64, bool) {
 
 // ToString converts x constant to string constants following PHP conversion rules.
 // Second bool result tells whether that conversion was successful.
-func (c ConstantValue) ToString() (string, bool) {
+func (c ConstValue) ToString() (string, bool) {
 	switch c.Type {
 	case Bool:
 		if c.GetBool() {
@@ -116,7 +147,26 @@ func (c ConstantValue) ToString() (string, bool) {
 	return "", false
 }
 
-func (c ConstantValue) GobEncode() ([]byte, error) {
+// IsEqual checks for equality with the passed constant value.
+//
+// If any of the constants are undefined, false is returned.
+func (c ConstValue) IsEqual(v ConstValue) bool {
+	if v.Type == Undefined || c.Type == Undefined {
+		return false
+	}
+
+	return c.Value == v.Value
+}
+
+func (c ConstValue) String() string {
+	if c.Type == Undefined {
+		return "Undefined type"
+	}
+
+	return fmt.Sprintf("%s(%v)", c.Type, c.Value)
+}
+
+func (c ConstValue) GobEncode() ([]byte, error) {
 	switch c.Type {
 	case Float:
 		val, ok := c.Value.(float64)
@@ -155,12 +205,12 @@ func (c ConstantValue) GobEncode() ([]byte, error) {
 	return nil, fmt.Errorf("unhandeled type")
 }
 
-func (c *ConstantValue) GobDecode(buf []byte) error {
+func (c *ConstValue) GobDecode(buf []byte) error {
 	if len(buf) < 1 {
 		return fmt.Errorf("data corrupted")
 	}
 
-	tp := ConstantValueType(buf[0])
+	tp := ConstValueType(buf[0])
 	buf = buf[1:]
 	val := string(buf)
 
@@ -193,27 +243,4 @@ func (c *ConstantValue) GobDecode(buf []byte) error {
 	c.Type = tp
 
 	return nil
-}
-
-func (c ConstantValue) String() string {
-	if c.Type == Undefined {
-		return "Undefined type"
-	}
-
-	return fmt.Sprintf("%s(%v)", c.Type, c.Value)
-}
-
-func (c ConstantValue) IsEqual(v ConstantValue) bool {
-	if v.Type == Undefined || c.Type == Undefined {
-		return false
-	}
-
-	return c.Value == v.Value
-}
-
-type ConstantInfo struct {
-	Pos         ElementPosition
-	Typ         TypesMap
-	AccessLevel AccessLevel
-	Value       ConstantValue
 }

@@ -31,12 +31,12 @@ func TestWriteReadBaseline(t *testing.T) {
 				Scope:     fields.Scope,
 			}
 			fieldsList[i].Filename = filename
-			counters[ReportHash(fieldsList[i])]++
+			counters[ReportHash(&bytes.Buffer{}, fieldsList[i])]++
 		}
 
 		reports := make(map[uint64]Report, len(fieldsList))
 		for _, fields := range fieldsList {
-			hash := ReportHash(fields)
+			hash := ReportHash(&bytes.Buffer{}, fields)
 			reports[hash] = Report{
 				Hash:  hash,
 				Count: counters[hash],

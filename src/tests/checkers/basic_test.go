@@ -12,6 +12,19 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestBadString(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$_ = "\u{";
+$_ = "\u{zzzz}";
+`)
+	test.Expect = []string{
+		`missing closing '}' for UTF-8 sequence`,
+		`decode UTF-8 codepoints: invalid syntax`,
+	}
+	test.RunAndMatch()
+}
+
 func TestStringNoQuotes(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 $arr = [];
@@ -650,62 +663,6 @@ func TestFuncComplexity(t *testing.T) {
 	test.RunAndMatch()
 }
 
-func TestPrecedenceBadLHS(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-function lhs($x, $mask) {
-  $_ = 0 == $mask & $x;
-  $_ = 0 != $mask & $x;
-  $_ = 0 === $mask & $x;
-  $_ = 0 !== $mask & $x;
-
-  $_ = 0 == $mask | $x;
-  $_ = 0 != $mask | $x;
-  $_ = 0 === $mask | $x;
-  $_ = 0 !== $mask | $x;
-}
-`)
-	test.Expect = []string{
-		`== has higher precedence than &`,
-		`!= has higher precedence than &`,
-		`=== has higher precedence than &`,
-		`!== has higher precedence than &`,
-		`== has higher precedence than |`,
-		`!= has higher precedence than |`,
-		`=== has higher precedence than |`,
-		`!== has higher precedence than |`,
-	}
-	test.RunAndMatch()
-}
-
-func TestPrecedenceBadRHS(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-function rhs($x, $mask) {
-  $_ = $x & $mask == 0;
-  $_ = $x & $mask != 0;
-  $_ = $x & $mask === 0;
-  $_ = $x & $mask !== 0;
-
-  $_ = $x | $mask == 0;
-  $_ = $x | $mask != 0;
-  $_ = $x | $mask === 0;
-  $_ = $x | $mask !== 0;
-}
-`)
-	test.Expect = []string{
-		`== has higher precedence than &`,
-		`!= has higher precedence than &`,
-		`=== has higher precedence than &`,
-		`!== has higher precedence than &`,
-		`== has higher precedence than |`,
-		`!= has higher precedence than |`,
-		`=== has higher precedence than |`,
-		`!== has higher precedence than |`,
-	}
-	test.RunAndMatch()
-}
-
 func TestPrecedenceGood(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 function foo() { return 10; }
@@ -740,20 +697,6 @@ function lhs($x, $mask) {
   $_ = (foo() !== 0) & 0x02;
 }
 `)
-}
-
-func TestBitwiseOps(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-$x = 10;
-$_ = ($x > 0 & $x != 15);
-$_ = ($x == 1 | $x == 2);
-`)
-	test.Expect = []string{
-		`Used & bitwise op over bool operands, perhaps && is intended?`,
-		`Used | bitwise op over bool operands, perhaps || is intended?`,
-	}
-	test.RunAndMatch()
 }
 
 func TestArgvGlobal(t *testing.T) {

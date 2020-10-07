@@ -14,20 +14,21 @@ func _() {
 	_ = x[ExprSpecialName-3]
 	_ = x[ExprInt-4]
 	_ = x[ExprKeyVal-5]
-	_ = x[ExprArray-6]
-	_ = x[ExprParen-7]
-	_ = x[ExprNullable-8]
-	_ = x[ExprOptional-9]
-	_ = x[ExprNot-10]
-	_ = x[ExprUnion-11]
-	_ = x[ExprInter-12]
-	_ = x[ExprGeneric-13]
-	_ = x[ExprTypedCallable-14]
+	_ = x[ExprMemberType-6]
+	_ = x[ExprArray-7]
+	_ = x[ExprParen-8]
+	_ = x[ExprNullable-9]
+	_ = x[ExprOptional-10]
+	_ = x[ExprNot-11]
+	_ = x[ExprUnion-12]
+	_ = x[ExprInter-13]
+	_ = x[ExprGeneric-14]
+	_ = x[ExprTypedCallable-15]
 }
 
-const _ExprKind_name = "InvalidUnknownNameSpecialNameIntKeyValArrayParenNullableOptionalNotUnionInterGenericTypedCallable"
+const _ExprKind_name = "InvalidUnknownNameSpecialNameIntKeyValMemberTypeArrayParenNullableOptionalNotUnionInterGenericTypedCallable"
 
-var _ExprKind_index = [...]uint8{0, 7, 14, 18, 29, 32, 38, 43, 48, 56, 64, 67, 72, 77, 84, 97}
+var _ExprKind_index = [...]uint8{0, 7, 14, 18, 29, 32, 38, 48, 53, 58, 66, 74, 77, 82, 87, 94, 107}
 
 func (i ExprKind) String() string {
 	if i >= ExprKind(len(_ExprKind_index)-1) {

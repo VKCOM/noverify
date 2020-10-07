@@ -615,6 +615,51 @@ func TestStaticResolutionInsideSameClass(t *testing.T) {
 	test.RunAndMatch()
 }
 
+func TestStaticResolutionInsideOtherStaticResolution(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+	class SomeMainClass extends ParentClass {
+		/**
+		* @var string
+		*/
+		public $testProperty = '';
+		
+		/**
+		* Some test method
+		*/
+		public function testMethod() {}
+	}
+	
+	class ParentClass {
+		/** @return static Some */
+		public static function findOne() {
+		// static here
+			return static::findByCondition();
+		}
+		
+		/** @return static Some */
+		public static function findByCondition() {
+			// and static here
+			$_ = static::find();
+			return new static();
+		}
+		
+		/** @return int object_id */
+		public static function find() {
+			return 0;
+		}
+	}
+	
+	function f() {
+		$result = '';
+		
+		$objectB = SomeMainClass::findOne();
+		$objectB->testMethod();
+		
+		$result .= $objectB->testProperty;
+		echo $result;
+	}`)
+}
+
 func TestInheritanceLoop(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

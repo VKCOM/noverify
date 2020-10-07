@@ -52,7 +52,11 @@ func (r *resolver) collectMethodCallTypes(out, possibleTypes map[string]struct{}
 
 func (r *resolver) resolveType(class, typ string) map[string]struct{} {
 	res := r.resolveTypeNoLateStaticBinding(class, typ)
-	r.visited[typ] = res
+	if typ == "static" {
+		r.visited[typ+class] = res
+	} else {
+		r.visited[typ] = res
+	}
 
 	if _, ok := res["static"]; ok {
 		delete(res, "static")
@@ -532,12 +536,12 @@ func interfaceExtends(orig string, parent string, visited map[string]struct{}) b
 }
 
 // FindConstant searches for a costant in specified class and returns actual class that contains the constant.
-func FindConstant(className string, constName string) (res meta.ConstantInfo, implClassName string, ok bool) {
+func FindConstant(className string, constName string) (res meta.ConstInfo, implClassName string, ok bool) {
 	visitedClasses := make(map[string]struct{}, 8) // expecting to be not so many inheritance levels
 	return findConstant(className, constName, visitedClasses)
 }
 
-func findConstant(className string, constName string, visitedClasses map[string]struct{}) (res meta.ConstantInfo, implClassName string, ok bool) {
+func findConstant(className string, constName string, visitedClasses map[string]struct{}) (res meta.ConstInfo, implClassName string, ok bool) {
 	for {
 		// check for inheritance loops
 		if _, ok := visitedClasses[className]; ok {

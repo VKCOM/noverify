@@ -2,6 +2,7 @@ package irconv
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 )
 
@@ -251,12 +252,12 @@ func TestInterpretString(t *testing.T) {
 		{
 			raw:         `\u{zzzz}`,
 			singleQuote: []byte(`\u{zzzz}`),
-			doubleQuote: []byte("FAIL"),
+			doubleQuote: []byte("FAIL: decode UTF-8 codepoints: invalid syntax"),
 		},
 		{
 			raw:         `\u{zz`,
 			singleQuote: []byte(`\u{zz`),
-			doubleQuote: []byte("FAIL"),
+			doubleQuote: []byte("FAIL: missing closing '}' for UTF-8 sequence"),
 		},
 		{
 			raw:         `\u0`,
@@ -272,26 +273,33 @@ func TestInterpretString(t *testing.T) {
 		// Unterminated escape sequence.
 		{
 			raw:         `a\`,
-			singleQuote: []byte("FAIL"),
-			doubleQuote: []byte("FAIL"),
+			singleQuote: []byte(`FAIL: illegal trailing \`),
+			doubleQuote: []byte(`FAIL: illegal trailing \`),
 		},
 	}
 
 	runTest := func(t *testing.T, raw string, quote byte, want []byte) {
 		t.Helper()
-		have, ok := interpretString(raw, quote)
+		have, err := interpretString(raw, quote)
 
-		if bytes.Equal(want, []byte("FAIL")) {
-			if ok {
+		if wantString := string(want); strings.HasPrefix(wantString, "FAIL: ") {
+			wantString = strings.TrimPrefix(wantString, "FAIL: ")
+			if err == nil {
 				t.Errorf("expected %s interpretation to fail, got success", raw)
+				return
+			}
+			if wantString != err.Error() {
+				t.Errorf("interpretation error mismatch:\nhave: %s\nwant: %s", err.Error(), wantString)
+				return
 			}
 			return
 		}
 
-		if !ok {
-			t.Errorf("failed to interpret %s (quote=%c)", raw, quote)
+		if err != nil {
+			t.Errorf("failed to interpret %s (quote=%c): %v", raw, quote, err)
 			return
 		}
+
 		haveBytes := []byte(have)
 		if !bytes.Equal(haveBytes, want) {
 			t.Errorf("%s bytes mismatch (quote=%c):\nhave: %[3]v\nwant: %[4]v\nhave-string: %[3]s\nwant-string: %[4]s",

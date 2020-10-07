@@ -191,6 +191,9 @@ class Foo {
     return self::$x;
   }
 }
+
+$a = 10;
+$xs ??= $a; // Ok
 `)
 	test.Expect = []string{
 		`expression evaluated but not used`,

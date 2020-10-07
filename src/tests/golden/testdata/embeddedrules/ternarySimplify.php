@@ -2,7 +2,7 @@
 
 function sink($_) {}
 
-function ternarySimplify($x, $y) {
+function ternarySimplify(int $x, $y) {
     sink($x ? true : false);
     sink((bool)$x);
 

@@ -22,7 +22,7 @@ var templateShort = template.Must(template.New("short").Parse(`
 `))
 
 var templateFull = template.Must(template.New("short").Parse(`
-{{- .Name}} checker documentation
+{{- .Name}} checker documentation{{if .Quickfix}} (auto fix available){{end}}
 
 {{.Comment}}
 

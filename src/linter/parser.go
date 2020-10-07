@@ -1,75 +1,33 @@
 package linter
 
 import (
-	"bytes"
-	"errors"
-	"fmt"
 	"log"
 	"regexp"
-	dbg "runtime/debug"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
-	"github.com/quasilyte/regex/syntax"
-
 	"github.com/VKCOM/noverify/src/git"
-	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/ir"
-	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/php7"
-	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
-// ParseContents parses specified contents (or file) and returns *RootWalker.
-// Function does not update global meta.
-func ParseContents(filename string, contents []byte, lineRanges []git.LineRange, allowDisabled *regexp.Regexp) (rootNode *ir.Root, w *RootWalker, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			s := fmt.Sprintf("Panic while parsing %s: %s\n\nStack trace: %s", filename, r, dbg.Stack())
-			log.Print(s)
-			err = errors.New(s)
-		}
-	}()
+// ParseContents is a legacy way of linting files.
+// Deprecated: use Worker.ParseContents instead.
+func ParseContents(filename string, contents []byte, lineRanges []git.LineRange, allowDisabled *regexp.Regexp) (root *ir.Root, walker *RootWalker, err error) {
+	w := NewLintingWorker(0)
+	w.AllowDisable = allowDisabled
+	return w.ParseContents(filename, contents, lineRanges)
+}
 
-	start := time.Now()
-
-	// TODO: Ragel lexer can handle non-UTF8 input.
-	// We can simplify code below and read from files directly.
-
-	var rd inputs.ReadCloseSizer
-	if contents == nil {
-		rd, err = SrcInput.NewReader(filename)
-	} else {
-		rd, err = SrcInput.NewBytesReader(filename, contents)
-	}
-	if err != nil {
-		log.Panicf("open source input: %v", err)
-	}
-	defer rd.Close()
-
-	b := bytesBufPool.Get().(*bytes.Buffer)
-	b.Reset()
-	defer bytesBufPool.Put(b)
-
-	b.ReadFrom(rd)
-	contents = append(make([]byte, 0, b.Len()), b.Bytes()...)
-
-	waiter := BeforeParse(len(contents), filename)
-	defer waiter.Finish()
-
-	parser := php7.NewParser(contents)
-	parser.WithFreeFloating()
-	parser.Parse()
-
-	atomic.AddInt64(&initParseTime, int64(time.Since(start)))
-
-	return analyzeFile(filename, contents, parser, lineRanges, allowDisabled)
+// IndexFile is a legacy way of indexing files.
+// Deprecated: use Worker.IndexFile instead.
+func IndexFile(filename string, contents []byte) error {
+	w := NewIndexingWorker(0)
+	return w.IndexFile(filename, contents)
 }
 
 func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedSet {
@@ -91,67 +49,6 @@ func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedS
 	return &clone
 }
 
-func analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRanges []git.LineRange, allowedDisabled *regexp.Regexp) (*ir.Root, *RootWalker, error) {
-	start := time.Now()
-	rootNode := parser.GetRootNode()
-
-	if rootNode == nil {
-		lintdebug.Send("Could not parse %s at all due to errors", filename)
-		return nil, nil, errors.New("Empty root node")
-	}
-
-	rootIR := irconv.ConvertRoot(rootNode)
-
-	st := &meta.ClassParseState{CurrentFile: filename}
-	w := &RootWalker{
-		lineRanges: lineRanges,
-		ctx:        newRootContext(st),
-
-		// We clone rules sets to remove all rules that
-		// should not be applied to this file because of the @path.
-		anyRset:   cloneRulesForFile(filename, Rules.Any),
-		rootRset:  cloneRulesForFile(filename, Rules.Root),
-		localRset: cloneRulesForFile(filename, Rules.Local),
-
-		reVet: &regexpVet{
-			parser: syntax.NewParser(&syntax.ParserOptions{
-				NoLiterals: false,
-			}),
-		},
-		reSimplifier: &regexpSimplifier{
-			parser: syntax.NewParser(&syntax.ParserOptions{
-				NoLiterals: true,
-			}),
-			out: &strings.Builder{},
-		},
-
-		allowDisabledRegexp: allowedDisabled,
-	}
-
-	w.InitFromParser(contents, parser)
-	w.InitCustom()
-
-	rootIR.Walk(w)
-	if meta.IsIndexingComplete() {
-		AnalyzeFileRootLevel(rootIR, w)
-	}
-	w.afterLeaveFile()
-
-	if len(w.ctx.fixes) != 0 {
-		if err := quickfix.Apply(filename, contents, w.ctx.fixes); err != nil {
-			linterError(filename, "apply quickfix: %v", err)
-		}
-	}
-
-	for _, e := range parser.GetErrors() {
-		w.Report(nil, LevelError, "syntax", "Syntax error: "+e.String())
-	}
-
-	atomic.AddInt64(&initWalkTime, int64(time.Since(start)))
-
-	return rootIR, w, nil
-}
-
 // AnalyzeFileRootLevel does analyze file top-level code.
 // This method is exposed for language server use, you usually
 // do not need to call it yourself.
@@ -169,10 +66,6 @@ func AnalyzeFileRootLevel(rootNode ir.Node, d *RootWalker) {
 	}
 
 	rootNode.Walk(b)
-}
-
-var bytesBufPool = sync.Pool{
-	New: func() interface{} { return &bytes.Buffer{} },
 }
 
 // DebugMessage is used to actually print debug messages.
@@ -208,16 +101,23 @@ func ParseFilenames(readFileNamesFunc workspace.ReadCallback, allowDisabled *reg
 	var wg sync.WaitGroup
 	reportsCh := make(chan []*Report, MaxConcurrency)
 
+	wg.Add(MaxConcurrency)
 	for i := 0; i < MaxConcurrency; i++ {
-		wg.Add(1)
-		go func() {
+		go func(id int) {
+			var w *Worker
+			if needReports {
+				w = NewLintingWorker(id)
+			} else {
+				w = NewIndexingWorker(id)
+			}
+			w.AllowDisable = allowDisabled
 			var rep []*Report
 			for f := range filenamesCh {
-				rep = append(rep, doParseFile(f, needReports, allowDisabled)...)
+				rep = append(rep, w.doParseFile(f)...)
 			}
 			reportsCh <- rep
 			wg.Done()
-		}()
+		}(i)
 	}
 	wg.Wait()
 
@@ -227,36 +127,6 @@ func ParseFilenames(readFileNamesFunc workspace.ReadCallback, allowDisabled *reg
 	}
 
 	return allReports
-}
-
-func doParseFile(f workspace.FileInfo, needReports bool, allowDisabled *regexp.Regexp) (reports []*Report) {
-	var err error
-
-	if DebugParseDuration > 0 {
-		start := time.Now()
-		defer func() {
-			if dur := time.Since(start); dur > DebugParseDuration {
-				log.Printf("Parsing of %s took %s", f.Filename, dur)
-			}
-		}()
-	}
-
-	if needReports {
-		var w *RootWalker
-		_, w, err = ParseContents(f.Filename, f.Contents, f.LineRanges, allowDisabled)
-		if err == nil {
-			reports = w.GetReports()
-		}
-	} else {
-		err = IndexFile(f.Filename, f.Contents)
-	}
-
-	if err != nil {
-		log.Printf("Failed parsing %s: %s", f.Filename, err.Error())
-		lintdebug.Send("Failed parsing %s: %s", f.Filename, err.Error())
-	}
-
-	return reports
 }
 
 func InitStubs(readFileNamesFunc workspace.ReadCallback) {

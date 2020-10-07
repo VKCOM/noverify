@@ -107,7 +107,11 @@ That constraint makes a rule match only when either of `==` operands have a `str
 As an example of unrepeatable constraints, there is a `@scope` attribute:
 
 ```php
-// Using function group to avoid repeated @name attribute.
+/**
+ * @comment Suggests *once versions of include and require.
+ * @before  require("foo.php")
+ * @after   require_once("foo.php")
+ */
 function requireOnce() {
   /**
    * @maybe prefer require_once over require
@@ -203,6 +207,8 @@ TODO.
 
 ### Attributes reference
 
+Rule related attributes:
+
 | Syntax | Description |
 | ------------- | ------------- |
 | `@name name` | Set diagnostic name (only outside of the function group). |
@@ -214,7 +220,16 @@ TODO.
 | `@scope scope_kind` | Controls where rule can be applied. `scope_kind` is `all`, `root` or `local`. |
 | `@location $var` | Selects a sub-expr from a match by a matcher var that defines report cursor position. |
 | `@type type_expr $var` | Adds "type equals to" filter, applied to `$var`. |
+| `@pure $var` | Adds "side effect free" filter, applied to `$var`. |
 | `@or` | Add a new filter set. "Closes" the previous filter set and "opens" a new one. |
+
+Function related attributes:
+
+| Syntax | Description |
+| --- | --- |
+| `@comment text...` | Rule documentation text, usually a short one sentence summary. |
+| `@before text...` | Non-compliant code example, "before the fix". |
+| `@after text...` | Compliant code example, "after the fix". |
 
 ### Creating a new rule + debugging it
 

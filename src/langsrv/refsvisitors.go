@@ -68,6 +68,7 @@ func findMethodReferences(className string, methodName string) []vscode.Location
 		var found []vscode.Location
 
 		rootWalker := linter.NewWalkerForReferencesSearcher(
+			linter.NewWorkerContext(),
 			filename,
 			func(ctx *linter.BlockContext) linter.BlockChecker {
 				return &blockMethodCallVisitor{
@@ -94,6 +95,7 @@ func findPropertyReferences(className string, propName string) []vscode.Location
 		var found []vscode.Location
 
 		rootWalker := linter.NewWalkerForReferencesSearcher(
+			linter.NewWorkerContext(),
 			filename,
 			func(ctx *linter.BlockContext) linter.BlockChecker {
 				return &blockPropertyVisitor{

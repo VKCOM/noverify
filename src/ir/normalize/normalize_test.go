@@ -104,13 +104,14 @@ func runNormalizeTests(t *testing.T, tests []normalizationTest) {
 
 	conf := Config{}
 	st := &meta.ClassParseState{CurrentClass: `\Foo`}
+	irConverter := irconv.NewConverter(nil)
 	for _, test := range tests {
 		n, _, err := parseutil.ParseStmt([]byte(test.orig))
 		if err != nil {
 			t.Errorf("parse `%s`: %v", test.orig, err)
 			return
 		}
-		irNode := irconv.ConvertNode(n)
+		irNode := irConverter.ConvertNode(n)
 		normalized := FuncBody(st, conf, nil, []ir.Node{irNode})
 		have := strings.TrimSuffix(irfmt.Node(normalized[0]), ";")
 		if have != test.want {
@@ -123,7 +124,7 @@ func runNormalizeTests(t *testing.T, tests []normalizationTest) {
 			t.Errorf("parse normalized `%s`: %v", test.orig, err)
 			return
 		}
-		irNode2 := irconv.ConvertNode(n2)
+		irNode2 := irConverter.ConvertNode(n2)
 		normalized2 := FuncBody(st, conf, nil, []ir.Node{irNode2})
 		have2 := strings.TrimSuffix(irfmt.Node(normalized2[0]), ";")
 		if have != have2 {
@@ -220,6 +221,38 @@ class Foo {
 	})
 }
 
+func TestMagicConstFold(t *testing.T) {
+	linttest.ParseTestFile(t, "files/file.php", `<?php
+namespace Boo;
+
+const NAMESPACE_NAME = __NAMESPACE__;
+const FILENAME = __FILE__;
+const DIR = __DIR__;
+const DIR_WITH_FUNC = dirname(__FILE__);
+
+const CUSTOM_DIR = __DIR__ . "/file2.php";
+const CUSTOM_DIR_2 = dirname(__FILE__) . "/file2.php";
+
+class Foo {
+  const CLASSNAME = __CLASS__;
+  const LINE = __LINE__;
+}
+`)
+	meta.SetIndexingComplete(true)
+	defer meta.SetIndexingComplete(false)
+
+	runNormalizeTests(t, []normalizationTest{
+		{`\Boo\NAMESPACE_NAME`, `'\Boo'`},
+		{`\Boo\FILENAME`, `'files/file.php'`},
+		{`\Boo\DIR`, `'files'`},
+		{`\Boo\DIR_WITH_FUNC`, `'files'`},
+		{`\Boo\CUSTOM_DIR`, `'files/file2.php'`},
+		{`\Boo\CUSTOM_DIR_2`, `'files/file2.php'`},
+		{`\Boo\Foo::CLASSNAME`, `'\Boo\Foo'`},
+		{`\Boo\Foo::LINE`, `14`},
+	})
+}
+
 func parseStmtList(s string) ([]ir.Node, error) {
 	source := "<?php " + s
 	p := php7.NewParser([]byte(source))
@@ -227,6 +260,6 @@ func parseStmtList(s string) ([]ir.Node, error) {
 	if len(p.GetErrors()) != 0 {
 		return nil, errors.New(p.GetErrors()[0].String())
 	}
-	rootIR := irconv.ConvertRoot(p.GetRootNode())
+	rootIR := irconv.ConvertNode(p.GetRootNode()).(*ir.Root)
 	return rootIR.Stmts, nil
 }

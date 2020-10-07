@@ -65,7 +65,7 @@ type PerFile struct {
 	Constants ConstantsMap
 }
 
-func (i *info) GetConstant(nm string) (res ConstantInfo, ok bool) {
+func (i *info) GetConstant(nm string) (res ConstInfo, ok bool) {
 	res, ok = i.allConstants[nm]
 	return res, ok
 }
@@ -366,6 +366,13 @@ type PropertyInfo struct {
 	AccessLevel AccessLevel
 }
 
+type ConstInfo struct {
+	Pos         ElementPosition
+	Typ         TypesMap
+	AccessLevel AccessLevel
+	Value       ConstValue
+}
+
 type ClassFlags uint8
 
 const (
@@ -404,7 +411,7 @@ type ClassParseState struct {
 
 type FunctionsOverrideMap map[string]FuncInfoOverride
 type PropertiesMap map[string]PropertyInfo
-type ConstantsMap map[string]ConstantInfo
+type ConstantsMap map[string]ConstInfo
 
 type ElementPosition struct {
 	Filename  string

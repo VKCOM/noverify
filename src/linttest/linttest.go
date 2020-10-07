@@ -3,9 +3,11 @@ package linttest
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -17,6 +19,7 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/rules"
 )
 
 func init() {
@@ -100,12 +103,31 @@ func NewSuite(t testing.TB) *Suite {
 
 // AddFile adds a file to a suite file list.
 // File gets an auto-generated name. If custom name is important,
-// append a properly initialized TestFile to a s Files slice directly.
+// use AddNamedFile.
 func (s *Suite) AddFile(contents string) {
 	s.Files = append(s.Files, TestFile{
 		Name: fmt.Sprintf("_file%d.php", len(s.Files)),
 		Data: []byte(contents),
 	})
+}
+
+// AddNamedFile adds a file with a specific name to a suite file list.
+func (s *Suite) AddNamedFile(name, contents string) {
+	s.Files = append(s.Files, TestFile{
+		Name: name,
+		Data: []byte(contents),
+	})
+}
+
+// ReadAndAddFiles read and adds a files to a suite file list.
+func (s *Suite) ReadAndAddFiles(files []string) {
+	for _, f := range files {
+		code, err := ioutil.ReadFile(f)
+		if err != nil {
+			s.t.Fatalf("read PHP file: %v", err)
+		}
+		s.AddNamedFile(f, string(code))
+	}
 }
 
 // AddNolintFile adds a file to a suite file list that will be parsed, but not linted.
@@ -116,14 +138,6 @@ func (s *Suite) AddNolintFile(contents string) {
 		Name:   fmt.Sprintf("_file%d.php", len(s.Files)),
 		Data:   []byte(contents),
 		Nolint: true,
-	})
-}
-
-// AddNamedFile adds a file to a suite file list, with specific name.
-func AddNamedFile(test *Suite, name, code string) {
-	test.Files = append(test.Files, TestFile{
-		Name: name,
-		Data: []byte(code),
 	})
 }
 
@@ -213,12 +227,18 @@ func (s *Suite) RunLinter() []*linter.Report {
 		}
 	}
 
+	indexing := linter.NewIndexingWorker(0)
+	indexing.AllowDisable = s.AllowDisable
+
 	shuffleFiles(s.Files)
 	for _, f := range s.Files {
-		parseTestFile(s.t, f, s.AllowDisable)
+		parseTestFile(s.t, indexing, f)
 	}
 
 	meta.SetIndexingComplete(true)
+
+	linting := linter.NewLintingWorker(0)
+	linting.AllowDisable = s.AllowDisable
 
 	shuffleFiles(s.Files)
 	var reports []*linter.Report
@@ -230,7 +250,7 @@ func (s *Suite) RunLinter() []*linter.Report {
 			continue
 		}
 
-		_, w := parseTestFile(s.t, f, s.AllowDisable)
+		_, w := parseTestFile(s.t, linting, f)
 		reports = append(reports, w.GetReports()...)
 	}
 
@@ -250,18 +270,73 @@ func (s *Suite) RunLinter() []*linter.Report {
 	return reports
 }
 
+// RunFilterLinter calls RunLinter with the filter.
+func (s *Suite) RunFilterLinter(filters []string) []*linter.Report {
+	s.t.Helper()
+	reports := s.RunLinter()
+
+	disable := map[string]bool{}
+	for _, checkName := range filters {
+		disable[checkName] = true
+	}
+	filteredReports := reports[:0]
+	for _, r := range reports {
+		if !disable[r.CheckName] {
+			filteredReports = append(filteredReports, r)
+		}
+	}
+
+	return filteredReports
+}
+
 // ParseTestFile parses given test file.
 func ParseTestFile(t *testing.T, filename, content string) (rootNode *ir.Root, w *linter.RootWalker) {
-	return parseTestFile(t, TestFile{
+	var worker *linter.Worker
+	if meta.IsIndexingComplete() {
+		worker = linter.NewLintingWorker(0)
+	} else {
+		worker = linter.NewIndexingWorker(0)
+	}
+	return parseTestFile(t, worker, TestFile{
 		Name: filename,
 		Data: []byte(content),
-	}, nil)
+	})
 }
 
 // RunFilterMatch calls Match with the filtered results of RunLinter.
 func RunFilterMatch(test *Suite, names ...string) {
 	test.t.Helper()
 	test.Match(filterReports(names, test.RunLinter()))
+}
+
+func FindPHPFiles(root string) ([]string, error) {
+	var files []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() || !strings.HasSuffix(path, ".php") {
+			return nil
+		}
+		files = append(files, path)
+		return nil
+	})
+	return files, err
+}
+
+// InitEmbeddedRules initializes embedded rules for testing.
+func InitEmbeddedRules() error {
+	enableAllRules := func(_ rules.Rule) bool { return true }
+	p := rules.NewParser()
+	linter.Rules = rules.NewSet()
+	ruleSets, err := cmd.InitEmbeddedRules(p, enableAllRules)
+	if err != nil {
+		return fmt.Errorf("init embedded rules: %v", err)
+	}
+	for _, rset := range ruleSets {
+		linter.DeclareRules(rset)
+	}
+	return nil
 }
 
 func filterReports(names []string, reports []*linter.Report) []*linter.Report {
@@ -290,9 +365,9 @@ func shuffleFiles(files []TestFile) {
 	})
 }
 
-func parseTestFile(t testing.TB, f TestFile, allowDisable *regexp.Regexp) (rootNode *ir.Root, w *linter.RootWalker) {
+func parseTestFile(t testing.TB, worker *linter.Worker, f TestFile) (rootNode *ir.Root, w *linter.RootWalker) {
 	var err error
-	rootNode, w, err = linter.ParseContents(f.Name, f.Data, nil, allowDisable)
+	rootNode, w, err = worker.ParseContents(f.Name, f.Data, nil)
 	if err != nil {
 		t.Fatalf("could not parse %s: %v", f.Name, err.Error())
 	}

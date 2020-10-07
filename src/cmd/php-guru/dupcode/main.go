@@ -95,6 +95,7 @@ func Main(ctx *guru.Context) (int, error) {
 	wg.Add(nworkers)
 	for i := 0; i < nworkers; i++ {
 		go func(workerID int) {
+			irConverter := irconv.NewConverter(nil)
 			workerResult := make(funcSet)
 			for f := range filenamesCh {
 				data, err := ioutil.ReadFile(f.Filename)
@@ -109,7 +110,7 @@ func Main(ctx *guru.Context) (int, error) {
 					log.Printf("parse %s file: %v", f.Filename, err)
 					continue
 				}
-				rootIR := irconv.ConvertRoot(root)
+				rootIR := irConverter.ConvertRoot(root)
 
 				indexer := &fileIndexer{
 					st:           &meta.ClassParseState{},
