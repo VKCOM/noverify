@@ -601,6 +601,7 @@ func (c *Converter) convNode(n node.Node) ir.Node {
 		out.ReturnsRef = n.ReturnsRef
 		out.Static = n.Static
 		out.PhpDocComment = n.PhpDocComment
+		out.PhpDoc = c.parsePHPDoc(n.PhpDocComment)
 		out.Params = c.convNodeSlice(n.Params)
 		out.ReturnType = c.convNode(n.ReturnType)
 		out.Expr = c.convNode(n.Expr)

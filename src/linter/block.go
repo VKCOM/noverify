@@ -1211,7 +1211,7 @@ func (b *BlockWalker) handleFor(s *ir.ForStmt) bool {
 func (b *BlockWalker) enterArrowFunction(fun *ir.ArrowFunctionExpr) bool {
 	sc := meta.NewScope()
 
-	doc := b.r.parsePHPDoc(fun, fun.PhpDocComment, fun.Params)
+	doc := b.r.parsePHPDoc(fun, fun.PhpDoc, fun.Params)
 	b.r.reportPhpdocErrors(fun, doc.errs)
 	phpDocParamTypes := doc.types
 
