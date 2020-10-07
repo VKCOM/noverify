@@ -17,12 +17,12 @@ func TestIndexingOrderClasses(t *testing.T) {
 	// have troubles creating A with 0 constructor arguments.
 
 	test := linttest.NewSuite(t)
-	linttest.AddNamedFile(test, "/foo/A.php", `<?php
+	test.AddNamedFile("/foo/A.php", `<?php
 class A {}
 
 $v = new A();
 `)
-	linttest.AddNamedFile(test, "/bar/A.php", `<?php
+	test.AddNamedFile("/bar/A.php", `<?php
 class A {
   public $field;
   public function __construct($x) { $this->field = $x; }
@@ -43,14 +43,14 @@ echo $v->field;
 
 func TestIndexingOrderTraits(t *testing.T) {
 	test := linttest.NewSuite(t)
-	linttest.AddNamedFile(test, "/foo/A.php", `<?php
+	test.AddNamedFile("/foo/A.php", `<?php
 trait TA {}
 
 class A { use TA; }
 
 $v = new A();
 `)
-	linttest.AddNamedFile(test, "/bar/A.php", `<?php
+	test.AddNamedFile("/bar/A.php", `<?php
 trait TA {
   public $field;
   public function __construct($x) { $this->field = $x; }
@@ -75,12 +75,12 @@ echo $v->field;
 
 func TestIndexingOrderFuncs(t *testing.T) {
 	test := linttest.NewSuite(t)
-	linttest.AddNamedFile(test, "/foo/A.php", `<?php
+	test.AddNamedFile("/foo/A.php", `<?php
 function a() {}
 
 a();
 `)
-	linttest.AddNamedFile(test, "/bar/A.php", `<?php
+	test.AddNamedFile("/bar/A.php", `<?php
 function a($x) {}
 
 a(1);

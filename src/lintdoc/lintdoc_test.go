@@ -62,4 +62,20 @@ Compliant code:
 class Foo {
   public function __construct($v) { $this->v = $v; }
 }`)
+
+	runTest(linter.CheckInfo{
+		Name:     "ternarySimplify",
+		Comment:  `Report ternary expressions that can be simplified.`,
+		Before:   `$x ? $x : $y`,
+		After:    `$x ?: $y`,
+		Quickfix: true,
+	}, `ternarySimplify checker documentation (auto fix available)
+
+Report ternary expressions that can be simplified.
+
+Non-compliant code:
+$x ? $x : $y
+
+Compliant code:
+$x ?: $y`)
 }

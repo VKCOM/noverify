@@ -5,6 +5,11 @@
  * @linter       disable
  */
 
+/**
+ * @comment Report ternary expressions that can be simplified.
+ * @before  $x ? $x : $y
+ * @after   $x ?: $y
+ */
 function ternarySimplify() {
   /**
    * @maybe could replace the ternary with just $cond
@@ -38,8 +43,6 @@ function ternarySimplify() {
  * @after   ($x & $mask) == 0
  */
 function precedence() {
-  // TODO: merge RHS+LHS rules when #276 is decided.
-
   // Note: we report `$x & $mask != $y` as a precedence issue even
   // if it can be caught with `typecheckOp` that checks both operand
   // types (bool is not a good operand for bitwise operation).
@@ -48,47 +51,54 @@ function precedence() {
   // not that helpful, because the root of the problem is precedence.
   // Invalid types are a result of that.
 
-  // LHS rules.
-
   /** @warning == has higher precedence than & */
-  $_ == $_ & $_;
+  any_eq_bitand: {
+    $_ == $_ & $_;
+    $_ & $_ == $_;
+  }
   /** @warning != has higher precedence than & */
-  $_ != $_ & $_;
+  any_neq_bitand: {
+    $_ != $_ & $_;
+    $_ & $_ != $_;
+  }
   /** @warning === has higher precedence than & */
-  $_ === $_ & $_;
+  any_eq3_bitand: {
+    $_ === $_ & $_;
+    $_ & $_ === $_;
+  }
   /** @warning !== has higher precedence than & */
-  $_ !== $_ & $_;
+  any_neq3_bitand: {
+    $_ !== $_ & $_;
+    $_ & $_ !== $_;
+  }
 
   /** @warning == has higher precedence than | */
-  $_ == $_ | $_;
+  any_eq_bitor: {
+    $_ == $_ | $_;
+    $_ | $_ == $_;
+  }
   /** @warning != has higher precedence than | */
-  $_ != $_ | $_;
+  any_neq_bitor: {
+    $_ != $_ | $_;
+    $_ | $_ != $_;
+  }
   /** @warning === has higher precedence than | */
-  $_ === $_ | $_;
+  any_eq3_bitor: {
+    $_ === $_ | $_;
+    $_ | $_ === $_;
+  }
   /** @warning !== has higher precedence than | */
-  $_ !== $_ | $_;
-
-  // RHS rules (should be merged with LHS rules in future).
-
-  /** @warning == has higher precedence than & */
-  $_ & $_ == $_;
-  /** @warning != has higher precedence than & */
-  $_ & $_ != $_;
-  /** @warning === has higher precedence than & */
-  $_ & $_ === $_;
-  /** @warning !== has higher precedence than & */
-  $_ & $_ !== $_;
-
-  /** @warning == has higher precedence than | */
-  $_ | $_ == $_;
-  /** @warning != has higher precedence than | */
-  $_ | $_ != $_;
-  /** @warning === has higher precedence than | */
-  $_ | $_ === $_;
-  /** @warning !== has higher precedence than | */
-  $_ | $_ !== $_;
+  any_neq3_bitor: {
+    $_ !== $_ | $_;
+    $_ | $_ !== $_;
+  }
 }
 
+/**
+ * @comment Report assignments that can be simplified.
+ * @before  $x = $x + $y;
+ * @after   $x += $y;
+ */
 function assignOp() {
   /**
    * @maybe could rewrite as `$x += $y`
@@ -173,4 +183,81 @@ function assignOp() {
    * @pure $x
    */
   $x = $x ?? $y;
+}
+
+/**
+ * @comment Report potential off-by-one mistakes.
+ * @before  $a[count($a)]
+ * @after   $a[count($a)-1]
+ */
+function offBy1() {
+  /**
+   * @warning probably intended to use count-1 as an index
+   * @fix     $a[count($a) - 1]
+   */
+  $a[count($a)];
+
+  /**
+   * @warning probably intended to use sizeof-1 as an index
+   * @fix     $a[sizeof($a) - 1]
+   */
+  $a[sizeof($a)];
+}
+
+/**
+ * @comment Report suspicious arguments order.
+ * @before  strpos('/', $s)
+ * @after   strpos($s, '/')
+ */
+function argsOrder() {
+  /**
+   * @warning potentially incorrect haystack and needle arguments order
+   */
+  any_haystack_needle: {
+    strpos(${"char"}, ${"*"});
+    stripos(${"char"}, ${"*"});
+    strrpos(${"char"}, ${"*"});
+    substr_count(${"str"}, ${"*"});
+  }
+
+  /**
+   * @warning potentially incorrect replacement and subject arguments order
+   */
+  preg_replace($_, $_, ${"str"}, ${"*"});
+
+  /**
+   * @warning potentially incorrect replace and string arguments order
+   */
+  any_str_replace: {
+    str_replace($_, $_, ${"char"}, ${"*"});
+    str_replace($_, $_, "", ${"*"});
+  }
+
+  /**
+   * @warning potentially incorrect delimiter and string arguments order
+   */
+  explode($_, ${"char"}, ${"*"});
+}
+
+/**
+ * @comment Report suspicious usage of bitwise operations.
+ * @before  if ($isURL & $verify) ...
+ * @after   if ($isURL && $verify) ...
+ */
+function bitwiseOps() {
+  /**
+   * @warning Used & bitwise operator over bool operands, perhaps && is intended?
+   * @fix $x && $y
+   * @type bool $x
+   * @type bool $y
+   */
+  $x & $y;
+
+  /**
+   * @warning Used | bitwise operator over bool operands, perhaps || is intended?
+   * @fix $x || $y
+   * @type bool $x
+   * @type bool $y
+   */
+  $x | $y;
 }

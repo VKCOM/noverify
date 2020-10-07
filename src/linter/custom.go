@@ -53,6 +53,10 @@ type CheckInfo struct {
 	// enabled by default or it should be included by allow-checks explicitly.
 	Default bool
 
+	// Quickfix tells whether this checker can automatically fix the reported
+	// issues when linter works in -fix mode.
+	Quickfix bool
+
 	// Comment is a short summary of what this diagnostic does.
 	// A single descriptive sentence is a perfect format for it.
 	Comment string
@@ -77,6 +81,7 @@ type BlockChecker interface {
 // RootChecker is a custom linter that should operator only at root level.
 // Block level analysis (function and method bodies and all if/else/for/etc blocks) must be performed in BlockChecker.
 type RootChecker interface {
+	BeforeEnterFile()
 	AfterLeaveFile()
 	BeforeEnterNode(ir.Node)
 	AfterEnterNode(ir.Node)
@@ -109,6 +114,7 @@ func (BlockCheckerDefaults) AfterLeaveNode(ir.Node)  {}
 // to change your code right away (especially if you don't need a new hook).
 type RootCheckerDefaults struct{}
 
+func (RootCheckerDefaults) BeforeEnterFile()        {}
 func (RootCheckerDefaults) AfterLeaveFile()         {}
 func (RootCheckerDefaults) BeforeEnterNode(ir.Node) {}
 func (RootCheckerDefaults) AfterEnterNode(ir.Node)  {}
@@ -295,11 +301,18 @@ func RegisterRootCheckerWithCacher(cacher MetaCacher, c RootCheckerCreateFunc) {
 
 func DeclareRules(rset *rules.Set) {
 	for _, ruleName := range rset.Names {
-		// TODO: better documentation. See #466.
+		doc := rset.DocByName[ruleName]
+		comment := doc.Comment
+		if comment == "" {
+			comment = fmt.Sprintf("%s is a dynamic rule", ruleName)
+		}
 		DeclareCheck(CheckInfo{
-			Name:    ruleName,
-			Comment: fmt.Sprintf("%s is a dynamic rule", ruleName),
-			Default: true,
+			Name:     ruleName,
+			Comment:  comment,
+			Default:  true,
+			Quickfix: doc.Fix,
+			Before:   doc.Before,
+			After:    doc.After,
 		})
 	}
 }

@@ -23,43 +23,74 @@ var (
 	FalseValue   = ConstValue{Type: Bool, Value: false}
 )
 
+// ConstValue structure is used to store
+// the value and type of a constant.
 type ConstValue struct {
 	Type  ConstValueType
 	Value interface{}
 }
 
+// NewIntConst returns a new constant value with the
+// preset int type and the passed value v.
 func NewIntConst(v int64) ConstValue {
 	return ConstValue{Type: Integer, Value: v}
 }
 
+// NewFloatConst returns a new constant value with the
+// preset float type and the passed value v.
 func NewFloatConst(v float64) ConstValue {
 	return ConstValue{Type: Float, Value: v}
 }
 
-func NewStringConstant(v string) ConstValue {
+// NewStringConst returns a new constant value with the
+// preset string type and the passed value v.
+func NewStringConst(v string) ConstValue {
 	return ConstValue{Type: String, Value: v}
 }
 
-func NewBoolConstant(v bool) ConstValue {
+// NewBoolConst returns a new constant value with the
+// preset bool type and the passed value v.
+func NewBoolConst(v bool) ConstValue {
 	return ConstValue{Type: Bool, Value: v}
 }
 
+// IsValid checks that the value is valid and its type is not undefined.
+func (c ConstValue) IsValid() bool {
+	return c.Type != Undefined
+}
+
 // GetInt returns the value stored in c.Value cast to int type.
+//
+// Should be used with care, it can panic if the type is not equal to the
+// required one. Usually used in places where the type has already
+// been clearly defined and the probability of panic is 0.
 func (c ConstValue) GetInt() int64 {
 	return c.Value.(int64)
 }
 
 // GetFloat returns the value stored in c.Value cast to float type.
+//
+// Should be used with care, it can panic if the type is not equal to the
+// required one. Usually used in places where the type has already
+// been clearly defined and the probability of panic is 0.
 func (c ConstValue) GetFloat() float64 {
 	return c.Value.(float64)
 }
 
 // GetString returns the value stored in c.Value cast to string type.
+//
+// Should be used with care, it can panic if the type is not equal to the
+// required one. Usually used in places where the type has already
+// been clearly defined and the probability of panic is 0.
 func (c ConstValue) GetString() string {
 	return c.Value.(string)
 }
 
 // GetBool returns the value stored in c.Value cast to bool type.
+//
+// Should be used with care, it can panic if the type is not equal to the
+// required one. Usually used in places where the type has already
+// been clearly defined and the probability of panic is 0.
 func (c ConstValue) GetBool() bool {
 	return c.Value.(bool)
 }
@@ -114,6 +145,33 @@ func (c ConstValue) ToString() (string, bool) {
 		return c.GetString(), true
 	}
 	return "", false
+}
+
+// IsEqual checks for equality with the passed constant value.
+//
+// If any of the constants are undefined, false is returned.
+func (c ConstValue) IsEqual(v ConstValue) bool {
+	if v.Type == Undefined || c.Type == Undefined {
+		return false
+	}
+
+	return c.Value == v.Value
+}
+
+func (c ConstValue) String() string {
+	if c.Type == Undefined {
+		return "Undefined type"
+	}
+
+	return fmt.Sprintf("%s(%v)", c.Type, c.Value)
+}
+
+func (c ConstValue) StringValue() string {
+	if c.Type == Undefined {
+		return ""
+	}
+
+	return fmt.Sprintf("%v", c.Value)
 }
 
 func (c ConstValue) GobEncode() ([]byte, error) {
@@ -193,35 +251,4 @@ func (c *ConstValue) GobDecode(buf []byte) error {
 	c.Type = tp
 
 	return nil
-}
-
-func (c ConstValue) String() string {
-	if c.Type == Undefined {
-		return "Undefined type"
-	}
-
-	return fmt.Sprintf("%s(%v)", c.Type, c.Value)
-}
-
-func (c ConstValue) StringValue() string {
-	if c.Type == Undefined {
-		return ""
-	}
-
-	return fmt.Sprintf("%v", c.Value)
-}
-
-func (c ConstValue) IsEqual(v ConstValue) bool {
-	if v.Type == Undefined || c.Type == Undefined {
-		return false
-	}
-
-	return c.Value == v.Value
-}
-
-type ConstInfo struct {
-	Pos         ElementPosition
-	Typ         TypesMap
-	AccessLevel AccessLevel
-	Value       ConstValue
 }

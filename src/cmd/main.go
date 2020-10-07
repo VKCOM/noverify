@@ -351,7 +351,14 @@ func LoadEmbeddedStubs(filenames []string) error {
 }
 
 func loadEmbeddedStubs() error {
-	filenames := stubs.AssetNames()
+	var filenames []string
+	// NOVERIFYDEBUG_LOAD_STUBS is used in golden tests to specify
+	// the test dependencies that need to be loaded.
+	if list := os.Getenv("NOVERIFYDEBUG_LOAD_STUBS"); list != "" {
+		filenames = strings.Split(list, ",")
+	} else {
+		filenames = stubs.AssetNames()
+	}
 	if len(filenames) == 0 {
 		return fmt.Errorf("empty file list")
 	}

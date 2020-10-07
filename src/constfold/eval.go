@@ -1,6 +1,7 @@
 package constfold
 
 import (
+	"path/filepath"
 	"strconv"
 
 	"github.com/VKCOM/noverify/src/ir"
@@ -54,7 +55,6 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 
 	case *ir.BooleanNotExpr:
 		return Not(Eval(st, e.Expr))
-
 	case *ir.BooleanAndExpr:
 		return And(Eval(st, e.Left), Eval(st, e.Right))
 	case *ir.BooleanOrExpr:
@@ -83,17 +83,53 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 		if err != nil {
 			return meta.UnknownValue
 		}
-		return meta.ConstValue{Type: meta.Integer, Value: value}
+		return meta.NewIntConst(value)
 
 	case *ir.Dnumber:
 		value, err := strconv.ParseFloat(e.Value, 64)
 		if err != nil {
 			return meta.UnknownValue
 		}
-		return meta.ConstValue{Type: meta.Float, Value: value}
+		return meta.NewFloatConst(value)
 
 	case *ir.String:
-		return meta.ConstValue{Value: e.Value, Type: meta.String}
+		return meta.NewStringConst(e.Value)
+
+	case *ir.FunctionCallExpr:
+		// dirname(__FILE__)
+		if !meta.NameNodeEquals(e.Function, `dirname`) {
+			return meta.UnknownValue
+		}
+		if len(e.Args) == 0 {
+			return meta.UnknownValue
+		}
+		arg, ok := e.Arg(0).Expr.(*ir.MagicConstant)
+		if !ok || arg.Value != "__FILE__" {
+			return meta.UnknownValue
+		}
+		return meta.NewStringConst(filepath.Dir(st.CurrentFile))
+
+	case *ir.MagicConstant:
+		switch e.Value {
+		case "__LINE__":
+			return meta.NewIntConst(int64(e.Position.StartLine))
+		case "__FILE__":
+			return meta.NewStringConst(st.CurrentFile)
+		case "__DIR__":
+			return meta.NewStringConst(filepath.Dir(st.CurrentFile))
+		case "__FUNCTION__":
+			return meta.NewStringConst(st.CurrentFunction)
+		case "__METHOD__":
+			return meta.NewStringConst(st.CurrentClass + "::" + st.CurrentFunction)
+		case "__CLASS__":
+			return meta.NewStringConst(st.CurrentClass)
+		case "__NAMESPACE__":
+			return meta.NewStringConst(st.Namespace)
+		case "__TRAIT__":
+			if st.IsTrait {
+				return meta.NewStringConst(st.CurrentClass)
+			}
+		}
 	}
 
 	return meta.UnknownValue

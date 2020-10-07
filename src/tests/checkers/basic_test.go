@@ -12,6 +12,19 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
+func TestBadString(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$_ = "\u{";
+$_ = "\u{zzzz}";
+`)
+	test.Expect = []string{
+		`missing closing '}' for UTF-8 sequence`,
+		`decode UTF-8 codepoints: invalid syntax`,
+	}
+	test.RunAndMatch()
+}
+
 func TestStringNoQuotes(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 $arr = [];
@@ -684,20 +697,6 @@ function lhs($x, $mask) {
   $_ = (foo() !== 0) & 0x02;
 }
 `)
-}
-
-func TestBitwiseOps(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-$x = 10;
-$_ = ($x > 0 & $x != 15);
-$_ = ($x == 1 | $x == 2);
-`)
-	test.Expect = []string{
-		`Used & bitwise op over bool operands, perhaps && is intended?`,
-		`Used | bitwise op over bool operands, perhaps || is intended?`,
-	}
-	test.RunAndMatch()
 }
 
 func TestArgvGlobal(t *testing.T) {
