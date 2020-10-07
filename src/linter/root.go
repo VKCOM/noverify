@@ -1389,6 +1389,7 @@ func (d *RootWalker) parseTypeNode(n ir.Node) (typ meta.TypesMap, ok bool) {
 	return tm, !tm.IsEmpty()
 }
 
+// callbackParamByIndex returns the description of the parameter for the function by its index.
 func (d *RootWalker) callbackParamByIndex(param ir.Node, argType meta.TypesMap) meta.FuncParam {
 	p := param.(*ir.Parameter)
 	v := p.Variable
