@@ -1614,7 +1614,7 @@ func TestArrowFunction(t *testing.T) {
 		$_ = fn() => ($a = 10) && $a;
 
 		// $a is undefined
-        $_ = fn() => $a = 10 && $a;
+		$_ = fn() => $a = 10 && $a;
 
 		// arguments are not visible outside of arrow function
 		echo $x; // Undefined $x
