@@ -1284,11 +1284,37 @@ interface WithoutAnyModifier {
 func TestMixinAnnotation(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+namespace QQ\WW;
+
+class SomeQQClass1 {
+  /** */
+  public function methodQQ1()
+  {
+    echo "";
+  }
+}
+
+/**
+ * @mixin SomeQQClass1
+ */
+class SomeQQClass {
+  /** */
+  public function methodQQ()
+  {
+    echo "";
+  }
+}
+`)
+
+	test.AddFile(`<?php
+/**
+ * @mixin QQ\WW\SomeQQClass
+ */
 class SomeClass {
   /** */
   public function method()
   {
-    echo "";
+    echo $this->methodQQ1();
   }
 }
 

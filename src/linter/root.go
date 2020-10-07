@@ -1287,6 +1287,10 @@ func (d *RootWalker) checkPHPDocMixinRef(n ir.Node, part phpdoc.CommentPart) {
 	if !strings.HasPrefix(param, `\`) {
 		param = `\` + param
 	}
+	if d.ctx.st.Namespace != "" {
+		param = d.ctx.st.Namespace + param
+	}
+
 	if _, ok := meta.Info.GetClass(param); !ok {
 		d.Report(n, LevelWarning, "phpdocRef", "line %d: @mixin tag refers to unknown class %s", part.Line(), param)
 	}

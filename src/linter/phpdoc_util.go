@@ -113,6 +113,9 @@ func parseClassPHPDocMixin(ctx *rootContext, result *classPhpDocParseResult, par
 	if !strings.HasPrefix(param, `\`) {
 		param = `\` + param
 	}
+	if ctx.st.Namespace != "" {
+		param = ctx.st.Namespace + param
+	}
 
 	result.mixins = append(result.mixins, param)
 }
