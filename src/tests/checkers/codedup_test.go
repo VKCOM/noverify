@@ -319,13 +319,22 @@ function f($cond) {
   case impurefunc(1): break;
   case impurefunc(1): break;
   }
+
+  switch ($cond) {
+  case 3: break; // Bad: duplicated value 3 (C3 = 3)
+  case 1: break;
+  case C1: break; // Bad: duplicated value 1 (C1 = 1)
+  case C3: break;
+  }
 }
 `)
 	test.Expect = []string{
 		`duplicated switch case #2`,
 		`duplicated switch case #4`,
-		`duplicated switch case #5`,
+		`duplicated switch case #5 (value 2)`,
 		`duplicated switch case #2`,
+		`duplicated switch case #3 (value 1)`,
+		`duplicated switch case #4 (value 3)`,
 	}
 	test.RunAndMatch()
 }
