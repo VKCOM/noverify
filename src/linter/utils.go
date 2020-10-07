@@ -166,6 +166,14 @@ func classHasProp(className, propName string) bool {
 	return ok
 }
 
+func getConstValue(c meta.ConstValue) string {
+	if c.Type == meta.Undefined {
+		return ""
+	}
+
+	return fmt.Sprintf("%v", c.Value)
+}
+
 func binaryOpString(n ir.Node) string {
 	switch n.(type) {
 	case *ir.BitwiseAndExpr:
