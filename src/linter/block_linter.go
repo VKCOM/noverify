@@ -469,7 +469,7 @@ func (b *blockLinter) checkSwitch(s *ir.SwitchStmt) {
 		if isDupKey {
 			msg := fmt.Sprintf("duplicated switch case #%d", i+1)
 			if isConstKey {
-				dupKey := v.StringValue()
+				dupKey := getConstValue(v)
 				msg += " (value " + dupKey + ")"
 			}
 			b.report(c.Cond, LevelWarning, "dupCond", "%s", msg)
