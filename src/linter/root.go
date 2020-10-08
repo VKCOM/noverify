@@ -1278,21 +1278,16 @@ func (d *RootWalker) checkPHPDocMixinRef(n ir.Node, part phpdoc.CommentPart) {
 	}
 
 	params := rawPart.Params
-
 	if len(params) == 0 {
 		return
 	}
 
-	param := params[0]
-	if !strings.HasPrefix(param, `\`) {
-		param = `\` + param
-	}
-	if d.ctx.st.Namespace != "" {
-		param = d.ctx.st.Namespace + param
-	}
+	name, ok := solver.GetClassName(d.ctx.st, &ir.Name{
+		Value: params[0],
+	})
 
-	if _, ok := meta.Info.GetClass(param); !ok {
-		d.Report(n, LevelWarning, "phpdocRef", "line %d: @mixin tag refers to unknown class %s", part.Line(), param)
+	if _, ok := meta.Info.GetClass(name); !ok {
+		d.Report(n, LevelWarning, "phpdocRef", "line %d: @mixin tag refers to unknown class %s", part.Line(), name)
 	}
 }
 
@@ -2046,7 +2041,7 @@ func (d *RootWalker) parseClassPHPDoc(n ir.Node, doc []phpdoc.CommentPart) class
 		case "method":
 			parseClassPHPDocMethod(&d.ctx, &result, part.(*phpdoc.RawCommentPart))
 		case "mixin":
-			parseClassPHPDocMixin(&d.ctx, &result, part.(*phpdoc.RawCommentPart))
+			parseClassPHPDocMixin(d.ctx.st, &result, part.(*phpdoc.RawCommentPart))
 		}
 	}
 

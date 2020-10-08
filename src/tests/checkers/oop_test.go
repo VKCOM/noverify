@@ -1286,6 +1286,9 @@ func TestMixinAnnotation(t *testing.T) {
 	test.AddFile(`<?php
 namespace QQ\WW;
 
+/**
+ * @mixin SomeQQClass
+ */
 class SomeQQClass1 {
   /** */
   public function methodQQ1()
@@ -1307,8 +1310,11 @@ class SomeQQClass {
 `)
 
 	test.AddFile(`<?php
+use QQ\WW\SomeQQClass;
+use QQ\WW\SomeQQClass1 as SomeQQClass2;
+
 /**
- * @mixin QQ\WW\SomeQQClass
+ * @mixin SomeQQClass
  */
 class SomeClass {
   /** */
@@ -1329,7 +1335,9 @@ class SomeClass2 {
   }
 }
 
-/** */
+/** 
+ * @mixin SomeQQClass2
+ */
 class SomeClass3 {
   /** */
   public function method3()
@@ -1373,7 +1381,6 @@ class Bar {
     $this->barWithSomeMixinMethod(); // Ok, from mixin BarWithSomeMixin
   }
 }
-
 `)
 	test.Expect = []string{
 		`Call to undefined method {\BarWithSomeMixin}->method3()`,

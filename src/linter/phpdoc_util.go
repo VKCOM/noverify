@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
+	"github.com/VKCOM/noverify/src/solver"
 )
 
 type phpdocErrors struct {
@@ -102,20 +104,19 @@ func parseClassPHPDocProperty(ctx *rootContext, result *classPhpDocParseResult, 
 	}
 }
 
-func parseClassPHPDocMixin(ctx *rootContext, result *classPhpDocParseResult, part *phpdoc.RawCommentPart) {
+func parseClassPHPDocMixin(cs *meta.ClassParseState, result *classPhpDocParseResult, part *phpdoc.RawCommentPart) {
 	params := part.Params
-
 	if len(params) == 0 {
 		return
 	}
 
-	param := params[0]
-	if !strings.HasPrefix(param, `\`) {
-		param = `\` + param
-	}
-	if ctx.st.Namespace != "" {
-		param = ctx.st.Namespace + param
+	name, ok := solver.GetClassName(cs, &ir.Name{
+		Value: params[0],
+	})
+
+	if !ok {
+		return
 	}
 
-	result.mixins = append(result.mixins, param)
+	result.mixins = append(result.mixins, name)
 }

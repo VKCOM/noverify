@@ -395,7 +395,7 @@ func findMethod(className string, methodName string, visitedMap map[string]struc
 				continue
 			}
 
-			result, ok := findMethod(mixin, methodName, make(map[string]struct{}))
+			result, ok := findMethod(mixin, methodName, visitedMap)
 			if ok {
 				return result, true
 			}
