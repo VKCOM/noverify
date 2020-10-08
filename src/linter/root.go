@@ -1286,6 +1286,10 @@ func (d *RootWalker) checkPHPDocMixinRef(n ir.Node, part phpdoc.CommentPart) {
 		Value: params[0],
 	})
 
+	if !ok {
+		return
+	}
+
 	if _, ok := meta.Info.GetClass(name); !ok {
 		d.Report(n, LevelWarning, "phpdocRef", "line %d: @mixin tag refers to unknown class %s", part.Line(), name)
 	}
