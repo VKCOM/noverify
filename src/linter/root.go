@@ -606,6 +606,28 @@ type handleFuncResult struct {
 	callsParentConstructor bool
 }
 
+func (d *RootWalker) handleArrowFuncExpr(params []meta.FuncParam, expr ir.Node, sc *meta.Scope, parentBlockWalker *BlockWalker) handleFuncResult {
+	b := newBlockWalker(d, sc)
+	b.inArrowFunction = true
+	parentBlockWalker.parentBlockWalkers = append(parentBlockWalker.parentBlockWalkers, parentBlockWalker)
+	b.parentBlockWalkers = parentBlockWalker.parentBlockWalkers
+
+	for _, p := range params {
+		if p.IsRef {
+			b.nonLocalVars[p.Name] = varRef
+		}
+	}
+
+	b.addStatement(expr)
+	expr.Walk(b)
+
+	b.flushUnused()
+
+	return handleFuncResult{
+		returnTypes: b.returnTypes,
+	}
+}
+
 func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.Node, sc *meta.Scope) handleFuncResult {
 	b := newBlockWalker(d, sc)
 	for _, createFn := range d.customBlock {
@@ -1399,6 +1421,7 @@ func (d *RootWalker) parseTypeNode(n ir.Node) (typ meta.TypesMap, ok bool) {
 	return tm, !tm.IsEmpty()
 }
 
+// callbackParamByIndex returns the description of the parameter for the function by its index.
 func (d *RootWalker) callbackParamByIndex(param ir.Node, argType meta.TypesMap) meta.FuncParam {
 	p := param.(*ir.Parameter)
 	v := p.Variable
