@@ -753,6 +753,13 @@ func (m *matcher) eqVar(state *matcherState, x *ir.Var, y ir.Node) bool {
 		}
 	case anyExpr:
 		return nodeIsExpr(y) && m.matchNamed(state, vn.name, y)
+	case anyCall:
+		switch y.(type) {
+		case *ir.FunctionCallExpr, *ir.StaticCallExpr, *ir.MethodCallExpr:
+			return m.matchNamed(state, vn.name, y)
+		default:
+			return false
+		}
 	}
 
 	if y, ok := y.(*ir.Var); ok {

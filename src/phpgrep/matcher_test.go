@@ -379,6 +379,12 @@ func TestMatch(t *testing.T) {
 		{`${"func"}`, `function($x) {}`},
 		{`${"func"}`, `function() { return 1; }`},
 
+		{`${"call"}`, `f()`},
+		{`${"call"}`, `$o->method()`},
+		{`${"call"}`, `C::method()`},
+		{`${"call"}`, `$a[0]->method()`},
+		{`${"x:call"} + ${"x:call"}`, `f() + f()`},
+
 		{`1`, `1`},
 		{`(1)`, `(1)`},
 		{`((1))`, `((1))`},
@@ -534,6 +540,10 @@ func TestMatchNegative(t *testing.T) {
 		{`${"func"}`, `1`},
 		{`${"func"}`, `$x`},
 		{`${"func"}`, `f()`},
+
+		{`${"call"}`, `10`},
+		{`${"call"}`, `$x[0]`},
+		{`${"x:call"} + ${"x:call"}`, `f() + g()`},
 
 		{`(1)`, `1`},
 		{`((1))`, `(1)`},

@@ -60,6 +60,7 @@ matcher_class = <see the table of supported classes below>
 | `var` | Variable |
 | `func` | Anonymous function/closure expression |
 | `expr` | Any expression |
+| `call` | Function or method (static or not) call expression |
 
 Some examples of complete matcher expressions:
 * `${'*'}` - matches any number of nodes
