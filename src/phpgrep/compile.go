@@ -93,6 +93,8 @@ func (c *compiler) EnterNode(n ir.Node) bool {
 		v.Expr = anyNum{metaNode{name: name}}
 	case "expr":
 		v.Expr = anyExpr{metaNode{name: name}}
+	case "call":
+		v.Expr = anyCall{metaNode{name: name}}
 	case "const":
 		v.Expr = anyConst{metaNode{name: name}}
 	case "func":
