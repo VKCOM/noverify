@@ -264,6 +264,9 @@ func (d *RootWalker) EnterNode(n ir.Node) (res bool) {
 			}
 		}
 
+		cl.Mixins = doc.mixins
+		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
+
 	case *ir.TraitStmt:
 		d.currentClassNode = n
 		d.checkKeywordCase(n, "trait")
@@ -1257,10 +1260,15 @@ func (d *RootWalker) checkPHPDocRef(n ir.Node, part phpdoc.CommentPart) {
 		return
 	}
 
-	if part.Name() != "see" {
-		return
+	switch part.Name() {
+	case "mixin":
+		d.checkPHPDocMixinRef(n, part)
+	case "see":
+		d.checkPHPDocSeeRef(n, part)
 	}
+}
 
+func (d *RootWalker) checkPHPDocSeeRef(n ir.Node, part phpdoc.CommentPart) {
 	params := part.(*phpdoc.RawCommentPart).Params
 	if len(params) == 0 {
 		return
@@ -1282,6 +1290,30 @@ func (d *RootWalker) checkPHPDocRef(n ir.Node, part phpdoc.CommentPart) {
 			d.Report(n, LevelWarning, "phpdocRef", "line %d: @see tag refers to unknown symbol %s",
 				part.Line(), ref)
 		}
+	}
+}
+
+func (d *RootWalker) checkPHPDocMixinRef(n ir.Node, part phpdoc.CommentPart) {
+	rawPart, ok := part.(*phpdoc.RawCommentPart)
+	if !ok {
+		return
+	}
+
+	params := rawPart.Params
+	if len(params) == 0 {
+		return
+	}
+
+	name, ok := solver.GetClassName(d.ctx.st, &ir.Name{
+		Value: params[0],
+	})
+
+	if !ok {
+		return
+	}
+
+	if _, ok := meta.Info.GetClass(name); !ok {
+		d.Report(n, LevelWarning, "phpdocRef", "line %d: @mixin tag refers to unknown class %s", part.Line(), name)
 	}
 }
 
@@ -2035,6 +2067,8 @@ func (d *RootWalker) parseClassPHPDoc(n ir.Node, doc []phpdoc.CommentPart) class
 			parseClassPHPDocProperty(&d.ctx, &result, part.(*phpdoc.TypeVarCommentPart))
 		case "method":
 			parseClassPHPDocMethod(&d.ctx, &result, part.(*phpdoc.RawCommentPart))
+		case "mixin":
+			parseClassPHPDocMixin(d.ctx.st, &result, part.(*phpdoc.RawCommentPart))
 		}
 	}
 
