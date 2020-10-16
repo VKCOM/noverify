@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
+	"github.com/VKCOM/noverify/src/solver"
 )
 
 type phpdocErrors struct {
@@ -25,6 +27,7 @@ type classPhpDocParseResult struct {
 	properties meta.PropertiesMap
 	methods    meta.FunctionsMap
 	errs       phpdocErrors
+	mixins     []string
 }
 
 func parseClassPHPDocMethod(ctx *rootContext, result *classPhpDocParseResult, part *phpdoc.RawCommentPart) {
@@ -99,4 +102,21 @@ func parseClassPHPDocProperty(ctx *rootContext, result *classPhpDocParseResult, 
 		Typ:         newTypesMap(ctx, types),
 		AccessLevel: meta.Public,
 	}
+}
+
+func parseClassPHPDocMixin(cs *meta.ClassParseState, result *classPhpDocParseResult, part *phpdoc.RawCommentPart) {
+	params := part.Params
+	if len(params) == 0 {
+		return
+	}
+
+	name, ok := solver.GetClassName(cs, &ir.Name{
+		Value: params[0],
+	})
+
+	if !ok {
+		return
+	}
+
+	result.mixins = append(result.mixins, name)
 }

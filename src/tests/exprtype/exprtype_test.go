@@ -2240,6 +2240,18 @@ exprtype(Roo::$d, "string");
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestArrowFunction(t *testing.T) {
+	code := `<?php
+function f() {
+   $value = 10;
+   $_ = fn($x) => $value = "probably now $value has type int|string";
+   // but, no
+   exprtype($value, "precise int"); // Ok, see specification
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestClosureCallbackArgumentsTypes(t *testing.T) {
 	code := `<?php
 function usort($array, $callback) {}

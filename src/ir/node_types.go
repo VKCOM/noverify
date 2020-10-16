@@ -409,6 +409,7 @@ type ArrowFunctionExpr struct {
 	ReturnsRef    bool
 	Static        bool
 	PhpDocComment string
+	PhpDoc        []phpdoc.CommentPart
 	Params        []Node
 	ReturnType    Node
 	Expr          Node
