@@ -1335,7 +1335,7 @@ function f($arg) {
 		`Class name must be a valid object or a string (passed int)`,
 		`Class name must be a valid object or a string (passed \Foo|int)`,
 		`Class name must be a valid object or a string (passed int)`,
-    	}
+	}
 	test.RunAndMatch()
 }
 
