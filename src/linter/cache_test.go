@@ -45,6 +45,10 @@ interface Arrayable {
   public function toArray();
 }
 
+trait TraitFoo {
+  public function foo() { return 42; }
+}
+
 final class Consts {
   const C1 = GLOBAL_CONST;
   const C2 = 'a';
@@ -56,6 +60,8 @@ abstract class AbstractClass {
 }
 
 class Point implements Arrayable {
+  use TraitFoo;
+
   public $x = 0.0;
   public $y = 0.0;
 
@@ -120,7 +126,7 @@ main();
 		//
 		// If cache encoding changes, there is a very high chance that
 		// encoded data lengh will change as well.
-		wantLen := 4855
+		wantLen := 5030
 		haveLen := buf.Len()
 		if haveLen != wantLen {
 			t.Errorf("cache len mismatch:\nhave: %d\nwant: %d", haveLen, wantLen)
@@ -129,7 +135,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "b1f7e6cda392008c031ab307366b843dcb277f7b479ad129c67063b4aa6fbce71baf25bd60dce46278b30ff7e89602eb2fdb69eabcadf079e31c49ad61efad63"
+		wantStrings := "62321eae8ac6f753221d367a0a0e2a3190202ef49c608ceef6e03dd6b09906c64bf20a1470abef9e26b917836a68415a5459491208fb692d8773524cdbe6d239"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)
