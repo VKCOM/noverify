@@ -21,6 +21,8 @@ type matcher struct {
 	// numVars is a max number of named captures this matcher may need.
 	numVars int
 
+	caseSensitive bool
+
 	// Used only when -tracing build tag is specified.
 	tracingBuf   *bytes.Buffer
 	tracingDepth int
@@ -166,6 +168,33 @@ func (m *matcher) eqEncapsedStringPart(state *matcherState, x, y ir.Node) bool {
 	}
 }
 
+func (m *matcher) eqNodeWithCase(state *matcherState, x, y ir.Node) bool {
+	switch x := x.(type) {
+	case *ir.Name:
+		y, ok := y.(*ir.Name)
+		if !ok {
+			return false
+		}
+		if m.caseSensitive {
+			return x.Value == y.Value
+		}
+		return strings.EqualFold(x.Value, y.Value)
+
+	case *ir.Identifier:
+		y, ok := y.(*ir.Identifier)
+		if !ok {
+			return false
+		}
+		if m.caseSensitive {
+			return x.Value == y.Value
+		}
+		return strings.EqualFold(x.Value, y.Value)
+
+	default:
+		return m.eqNode(state, x, y)
+	}
+}
+
 func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 	if tracingEnabled && m.tracingBuf != nil {
 		pad := strings.Repeat(" • ", m.tracingDepth)
@@ -297,7 +326,8 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 
 	case *ir.InstanceOfExpr:
 		y, ok := y.(*ir.InstanceOfExpr)
-		return ok && m.eqNode(state, x.Expr, y.Expr) && m.eqNode(state, x.Class, y.Class)
+		return ok && m.eqNode(state, x.Expr, y.Expr) &&
+			m.eqNodeWithCase(state, x.Class, y.Class)
 
 	case *ir.ListExpr:
 		y, ok := y.(*ir.ListExpr)
@@ -306,7 +336,7 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 
 	case *ir.NewExpr:
 		y, ok := y.(*ir.NewExpr)
-		if !ok || !m.eqNode(state, x.Class, y.Class) {
+		if !ok || !m.eqNodeWithCase(state, x.Class, y.Class) {
 			return false
 		}
 		if x.Args == nil {
@@ -403,7 +433,7 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 			m.eqNode(state, x.Expr, y.Expr)
 	case *ir.FunctionCallExpr:
 		y, ok := y.(*ir.FunctionCallExpr)
-		if !ok || !m.eqNode(state, x.Function, y.Function) {
+		if !ok || !m.eqNodeWithCase(state, x.Function, y.Function) {
 			return false
 		}
 		return m.eqNodeSlice(state, x.Args, y.Args)
@@ -456,11 +486,11 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 	case *ir.StaticPropertyFetchExpr:
 		switch y := y.(type) {
 		case *ir.StaticPropertyFetchExpr:
-			return m.eqNode(state, x.Class, y.Class) &&
+			return m.eqNodeWithCase(state, x.Class, y.Class) &&
 				m.eqNode(state, x.Property, y.Property)
 		case *ir.ClassConstFetchExpr:
 			return nodeIsVar(x.Property) &&
-				m.eqNode(state, x.Class, y.Class) &&
+				m.eqNodeWithCase(state, x.Class, y.Class) &&
 				m.eqNode(state, x.Property, y.ConstantName)
 		default:
 			return false
@@ -468,12 +498,12 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 
 	case *ir.ClassConstFetchExpr:
 		y, ok := y.(*ir.ClassConstFetchExpr)
-		return ok && m.eqNode(state, x.Class, y.Class) && m.eqNode(state, x.ConstantName, y.ConstantName)
+		return ok && m.eqNodeWithCase(state, x.Class, y.Class) && m.eqNode(state, x.ConstantName, y.ConstantName)
 	case *ir.StaticCallExpr:
 		y, ok := y.(*ir.StaticCallExpr)
 		return ok &&
-			m.eqNode(state, x.Class, y.Class) &&
-			m.eqNode(state, x.Call, y.Call) &&
+			m.eqNodeWithCase(state, x.Class, y.Class) &&
+			m.eqNodeWithCase(state, x.Call, y.Call) &&
 			m.eqNodeSlice(state, x.Args, y.Args)
 
 	case *ir.ShellExecExpr:
@@ -622,7 +652,7 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 	case *ir.MethodCallExpr:
 		y, ok := y.(*ir.MethodCallExpr)
 		return ok && m.eqNode(state, x.Variable, y.Variable) &&
-			m.eqNode(state, x.Method, y.Method) &&
+			m.eqNodeWithCase(state, x.Method, y.Method) &&
 			m.eqNodeSlice(state, x.Args, y.Args)
 
 	case *ir.TypeCastExpr:

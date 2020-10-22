@@ -39,8 +39,9 @@ func compile(opts *Compiler, pattern []byte) (*Matcher, error) {
 
 	m := &Matcher{
 		m: matcher{
-			root:    rootIR,
-			numVars: len(c.vars),
+			root:          rootIR,
+			numVars:       len(c.vars),
+			caseSensitive: opts.CaseSensitive,
 		},
 	}
 
