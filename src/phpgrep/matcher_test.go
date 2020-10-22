@@ -33,8 +33,7 @@ type matcherTest struct {
 	input   string
 }
 
-func mustCompile(t testing.TB, code string) *Matcher {
-	var c Compiler
+func mustCompile(t testing.TB, c *Compiler, code string) *Matcher {
 	matcher, err := c.Compile([]byte(code))
 	if err != nil {
 		t.Fatalf("pattern compilation error:\ntext: %q\nerr: %v", code, err)
@@ -42,10 +41,10 @@ func mustCompile(t testing.TB, code string) *Matcher {
 	return matcher
 }
 
-func runMatchTest(t *testing.T, want bool, tests []*matcherTest) {
+func runMatchTest(t *testing.T, c *Compiler, want bool, tests []*matcherTest) {
 	for i, test := range tests {
 		t.Run(fmt.Sprintf("%d_%v", i, want), func(t *testing.T) {
-			matcher := mustCompile(t, test.pattern)
+			matcher := mustCompile(t, c, test.pattern)
 			have := matchInText(t, matcher, test.input)
 			if have != want {
 				t.Errorf("match results mismatch:\npattern: %q\ninput: %q\nhave: %v\nwant: %v",
@@ -56,7 +55,8 @@ func runMatchTest(t *testing.T, want bool, tests []*matcherTest) {
 }
 
 func TestMatchDebug(t *testing.T) {
-	runMatchTest(t, true, []*matcherTest{
+	var c Compiler
+	runMatchTest(t, &c, true, []*matcherTest{
 		{`if ($c) $_; else if ($c) {1;};`, `if ($c1) {1; 2;} else if ($c1) {1;}`},
 	})
 }
@@ -74,7 +74,8 @@ func TestMatchCapture(t *testing.T) {
 		}
 	}
 
-	matcher := mustCompile(t, `$x = $x[$y]`)
+	var c Compiler
+	matcher := mustCompile(t, &c, `$x = $x[$y]`)
 	for i := 0; i < 5; i++ {
 		result, ok := matcher.Match(mustParse(t, `$a[0] = $a[0][1]`))
 		if !ok {
@@ -86,7 +87,8 @@ func TestMatchCapture(t *testing.T) {
 }
 
 func TestMatchConcurrent(t *testing.T) {
-	matcher := mustCompile(t, `f($x, ${"*"}, $x)`)
+	var c Compiler
+	matcher := mustCompile(t, &c, `f($x, ${"*"}, $x)`)
 
 	nodes := []ir.Node{
 		mustParse(t, `1`),
@@ -114,8 +116,48 @@ func TestMatchConcurrent(t *testing.T) {
 	}
 }
 
+func TestMatchCaseSensitive(t *testing.T) {
+	var c Compiler
+	c.CaseSensitive = true
+
+	runMatchTest(t, &c, true, []*matcherTest{
+		{`f()`, `f()`},
+		{`C::f()`, `C::f()`},
+		{`new c`, `new c`},
+		{`$x->f()`, `$x->f()`},
+		{`$x instanceof c`, `$x instanceof c`},
+		{`c::value`, `c::value`},
+		{`c::$value`, `c::$value`},
+	})
+}
+
+func TestMatchCaseSensitiveNegative(t *testing.T) {
+	var c Compiler
+	c.CaseSensitive = true
+
+	runMatchTest(t, &c, false, []*matcherTest{
+		{`f()`, `F()`},
+		{`F()`, `f()`},
+		{`C::f()`, `C::F()`},
+		{`C::F()`, `C::f()`},
+		{`c::f()`, `C::f()`},
+		{`C::f()`, `c::f()`},
+		{`new c`, `new C`},
+		{`new C`, `new c`},
+		{`$x->f()`, `$x->F()`},
+		{`$x->F()`, `$x->f()`},
+		{`$x instanceof c`, `$x instanceof C`},
+		{`$x instanceof C`, `$x instanceof c`},
+		{`c::value`, `C::value`},
+		{`C::value`, `c::value`},
+		{`c::$value`, `C::$value`},
+		{`C::$value`, `c::$value`},
+	})
+}
+
 func TestMatch(t *testing.T) {
-	runMatchTest(t, true, []*matcherTest{
+	var c Compiler
+	runMatchTest(t, &c, true, []*matcherTest{
 		{"``", "``"},
 		{"`ls`", "`ls`"},
 		{"`rm -rf /`", "`rm -rf /`"},
@@ -173,6 +215,31 @@ func TestMatch(t *testing.T) {
 		{`$f()`, `g()`},
 		{`$f($a1, $a2)`, `f(1, 2)`},
 		{`$f($a1, $a2)`, `f("sa", $t)`},
+
+		{`f()`, `f()`},
+		{`f()`, `F()`},
+		{`F()`, `f()`},
+		{`C::f()`, `C::f()`},
+		{`C::f()`, `C::F()`},
+		{`C::F()`, `C::f()`},
+		{`c::f()`, `c::f()`},
+		{`c::f()`, `C::F()`},
+		{`C::F()`, `c::f()`},
+		{`new c()`, `new c()`},
+		{`new c()`, `new C()`},
+		{`new C()`, `new c()`},
+		{`$x->f()`, `$x->f()`},
+		{`$x->f()`, `$x->F()`},
+		{`$x->F()`, `$x->f()`},
+		{`$x instanceof c`, `$x instanceof c`},
+		{`$x instanceof c`, `$x instanceof C`},
+		{`$x instanceof C`, `$x instanceof c`},
+		{`c::value`, `c::value`},
+		{`c::value`, `C::value`},
+		{`C::value`, `c::value`},
+		{`c::$value`, `c::$value`},
+		{`c::$value`, `C::$value`},
+		{`C::$value`, `c::$value`},
 
 		{`$x + $x`, `1 + 1`},
 		{`$x + $y`, `1 + 1`},
@@ -396,7 +463,8 @@ func TestMatch(t *testing.T) {
 }
 
 func TestMatchNegative(t *testing.T) {
-	runMatchTest(t, false, []*matcherTest{
+	var c Compiler
+	runMatchTest(t, &c, false, []*matcherTest{
 		{`1`, `2`},
 		{`"1"`, `"2ed"`},
 		{`'1'`, `'x'`},
@@ -558,7 +626,8 @@ func TestMatchNegative(t *testing.T) {
 func BenchmarkMatch(b *testing.B) {
 	runBench := func(name, pattern string, input string) {
 		b.Run(name, func(b *testing.B) {
-			matcher := mustCompile(b, pattern)
+			var c Compiler
+			matcher := mustCompile(b, &c, pattern)
 			root := mustParse(b, input)
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
