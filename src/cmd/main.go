@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/pprof"
+	"sort"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -90,9 +91,44 @@ func Run(cfg *MainConfig) (int, error) {
 	return mainNoExit(ruleSets, &args, cfg)
 }
 
+func RunWithCommands(cfg *MainConfig) (int, error) {
+	commands := getSubCommands(cfg)
+
+	sort.Slice(commands, func(i, j int) bool {
+		return commands[i].name < commands[j].name
+	})
+
+	var subcmd *subCommand
+	if len(os.Args) >= 2 {
+		subcmdName := os.Args[1]
+		subcmd = findSubCommand(commands, subcmdName)
+		if subcmd == nil {
+			if looksLikeCommandName(subcmdName) {
+				fmt.Printf("Sub-command %s doesn't exist\n\n", subcmdName)
+				printSupportedCommands(commands)
+				return 0, nil
+			}
+		} else {
+			subIdx := 1 // [0] is program name
+			// Erase sub-command argument (index=1) to make it invisible for
+			// sub commands themselves.
+			os.Args = append(os.Args[:subIdx], os.Args[subIdx+1:]...)
+		}
+	}
+	if subcmd == nil {
+		subcmd = findSubCommand(commands, "check")
+	}
+
+	status, err := subcmd.main(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return status, nil
+}
+
 // Main is like Run(), but it calls os.Exit() and does not return.
 func Main(cfg *MainConfig) {
-	status, err := Run(cfg)
+	status, err := RunWithCommands(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
