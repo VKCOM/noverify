@@ -116,6 +116,7 @@ func RunWithCommands(cfg *MainConfig) (int, error) {
 		}
 	}
 	if subcmd == nil {
+		log.Print("\n\nNoVerify migrates to the new CLI using commands, launching in this way is still possible, but is already deprecated.\nUse 'noverify help' for more information.\n\n")
 		subcmd = findSubCommand(commands, "check")
 	}
 

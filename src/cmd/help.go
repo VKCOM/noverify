@@ -16,6 +16,8 @@ func cmdHelp(*MainConfig) (int, error) {
 	args := flag.Args()
 
 	if len(args) == 0 {
+		fmt.Printf("Usage of noverify:\n")
+		fmt.Printf("  $ noverify [command] -stubs-dir=/path/to/phpstorm-stubs -cache-dir=/cache/dir /project/root\n\n")
 		printSupportedCommands(getSubCommands(nil))
 		return 0, nil
 	}
