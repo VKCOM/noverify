@@ -10,7 +10,6 @@ type subCommand struct {
 	main     func(*MainConfig) (int, error)
 	summary  string
 	examples []subCommandExample
-	cfg      *MainConfig
 }
 
 type subCommandExample struct {

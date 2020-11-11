@@ -16,7 +16,6 @@ func getSubCommands(cfg *MainConfig) []*subCommand {
 					line:    "<analyze-path>",
 				},
 			},
-			cfg: cfg,
 		},
 
 		{
