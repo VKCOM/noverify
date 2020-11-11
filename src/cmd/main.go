@@ -92,7 +92,7 @@ func Run(cfg *MainConfig) (int, error) {
 }
 
 func RunWithCommands(cfg *MainConfig) (int, error) {
-	commands := getSubCommands(cfg)
+	commands := getSubCommands()
 
 	sort.Slice(commands, func(i, j int) bool {
 		return commands[i].name < commands[j].name

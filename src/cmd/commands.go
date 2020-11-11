@@ -1,6 +1,6 @@
 package cmd
 
-func getSubCommands(cfg *MainConfig) []*subCommand {
+func getSubCommands() []*subCommand {
 	subCommands := []*subCommand{
 		{
 			name:    "check",
