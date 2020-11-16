@@ -59,7 +59,7 @@ func (c *Commands) HelpPage() string {
 		return commands[i].Name < commands[j].Name
 	})
 
-	res += fmt.Sprintf("Supported sub-commands:\n")
+	res += "Supported sub-commands:\n"
 	for _, cmd := range commands {
 		res += cmd.String()
 	}
