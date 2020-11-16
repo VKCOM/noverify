@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/pprof"
-	"sort"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -26,6 +25,48 @@ import (
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/workspace"
 )
+
+// GlobalCmds is a global map of commands.
+var GlobalCmds = NewCommands()
+
+// RegisterDefaultCommands registers default commands for NoVerify.
+func RegisterDefaultCommands() {
+	GlobalCmds.RegisterCommand(&SubCommand{
+		Name:        "check",
+		Main:        cmdCheck,
+		Description: "lint the entire project",
+		Examples: []SubCommandExample{
+			{
+				Description: "show subcommand usage",
+				Line:        "-help",
+			},
+			{
+				Description: "run linter with default options",
+				Line:        "<analyze-path>",
+			},
+		},
+	})
+
+	GlobalCmds.RegisterCommand(&SubCommand{
+		Name:        "help",
+		Main:        cmdHelp,
+		Description: "print linter documentation based on the subject",
+		Examples: []SubCommandExample{
+			{
+				Description: "show supported sub-subCommands",
+				Line:        "",
+			},
+			{
+				Description: "print all supported checkers short summary",
+				Line:        "checkers",
+			},
+			{
+				Description: "print dupSubExpr checker detailed documentation",
+				Line:        "checkers dupSubExpr",
+			},
+		},
+	})
+}
 
 // Line below implies that we have `https://github.com/VKCOM/phpstorm-stubs.git` cloned
 // to the `./src/cmd/stubs/phpstorm-stubs`.
@@ -64,63 +105,42 @@ func isEnabled(l *linterRunner, r *linter.Report) bool {
 //
 // Optionally, non-nil config can be passed to customize function behavior.
 func Run(cfg *MainConfig) (int, error) {
-	if cfg == nil {
-		cfg = &MainConfig{}
+	RegisterDefaultCommands()
+
+	if cfg.OverriddenCommands != nil {
+		GlobalCmds.OverrideCommands(cfg.OverriddenCommands)
 	}
 
-	ruleSets, err := parseRules()
-	if err != nil {
-		return 1, fmt.Errorf("preload rules: %v", err)
-	}
-	for _, rset := range ruleSets {
-		linter.DeclareRules(rset)
-	}
-
-	var args cmdlineArguments
-	bindFlags(ruleSets, &args)
-	flag.Parse()
-	if args.disableCache {
-		linter.CacheDir = ""
-	}
-	if cfg.AfterFlagParse != nil {
-		cfg.AfterFlagParse(InitEnvironment{
-			RuleSets: ruleSets,
-		})
-	}
-
-	return mainNoExit(ruleSets, &args, cfg)
-}
-
-func RunWithCommands(cfg *MainConfig) (int, error) {
-	commands := getSubCommands()
-
-	sort.Slice(commands, func(i, j int) bool {
-		return commands[i].name < commands[j].name
-	})
-
-	var subcmd *subCommand
+	var subcmd *SubCommand
+	var found bool
 	if len(os.Args) >= 2 {
-		subcmdName := os.Args[1]
-		subcmd = findSubCommand(commands, subcmdName)
-		if subcmd == nil {
-			if looksLikeCommandName(subcmdName) {
-				fmt.Printf("Sub-command %s doesn't exist\n\n", subcmdName)
-				printSupportedCommands(commands)
-				return 0, nil
-			}
-		} else {
+		commandName := os.Args[1]
+		subcmd, found = GlobalCmds.GetCommand(commandName)
+		if found {
 			subIdx := 1 // [0] is program name
 			// Erase sub-command argument (index=1) to make it invisible for
 			// sub commands themselves.
 			os.Args = append(os.Args[:subIdx], os.Args[subIdx+1:]...)
+		} else {
+			if looksLikeCommandName(commandName) {
+				fmt.Printf("Sub-command %s doesn't exist\n\n", commandName)
+				GlobalCmds.PrintHelpPage()
+				return 0, nil
+			}
 		}
+
 	}
 	if subcmd == nil {
-		log.Print("\n\nNoVerify migrates to the new CLI using commands, launching in this way is still possible, but is already deprecated.\nUse 'noverify help' for more information.\n\n")
-		subcmd = findSubCommand(commands, "check")
+		log.Print(`
+
+NoVerify migrates to the new CLI using commands, launching in this way is still possible, but is already deprecated.
+Use 'noverify help' for more information.
+
+`)
+		subcmd, _ = GlobalCmds.GetCommand("check")
 	}
 
-	status, err := subcmd.main(cfg)
+	status, err := subcmd.Main(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -129,7 +149,7 @@ func RunWithCommands(cfg *MainConfig) (int, error) {
 
 // Main is like Run(), but it calls os.Exit() and does not return.
 func Main(cfg *MainConfig) {
-	status, err := RunWithCommands(cfg)
+	status, err := Run(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}

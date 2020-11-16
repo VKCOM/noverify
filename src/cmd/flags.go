@@ -100,15 +100,7 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 		fmt.Fprintf(out, "Usage of noverify:\n")
 		fmt.Fprintf(out, "  $ noverify [command] -stubs-dir=/path/to/phpstorm-stubs -cache-dir=/cache/dir /project/root\n")
 		fmt.Fprintln(out)
-		fmt.Fprintf(out, "Commands:\n")
-		for _, cmd := range getSubCommands() {
-			fmt.Fprintf(out, "\n\tnoverify %s\n", cmd.name)
-			fmt.Fprintf(out, "\tDescription: %s.\n", cmd.summary)
-			for _, ex := range cmd.examples {
-				fmt.Fprintf(out, "\t%s:\n", ex.comment)
-				fmt.Fprintf(out, "\t\t$ noverify %s %s\n", cmd.name, ex.line)
-			}
-		}
+		GlobalCmds.WriteHelpPage(out)
 		fmt.Fprintln(out)
 		fmt.Fprintf(out, "Flags:\n")
 		flag.PrintDefaults()

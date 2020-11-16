@@ -1,43 +1,76 @@
 package cmd
 
-func getSubCommands() []*subCommand {
-	subCommands := []*subCommand{
-		{
-			name:    "check",
-			main:    cmdCheck,
-			summary: "lint the entire project",
-			examples: []subCommandExample{
-				{
-					comment: "show subcommand usage",
-					line:    "-help",
-				},
-				{
-					comment: "run linter with default options",
-					line:    "<analyze-path>",
-				},
-			},
-		},
+import (
+	"fmt"
+	"io"
+	"sort"
+)
 
-		{
-			name:    "help",
-			main:    cmdHelp,
-			summary: "print linter documentation based on the subject",
-			examples: []subCommandExample{
-				{
-					comment: "show supported sub-subCommands",
-					line:    "",
-				},
-				{
-					comment: "print all supported checkers short summary",
-					line:    "checkers",
-				},
-				{
-					comment: "print dupSubExpr checker detailed documentation",
-					line:    "checkers dupSubExpr",
-				},
-			},
-		},
+type Commands struct {
+	Commands map[string]*SubCommand
+}
+
+func NewCommands() *Commands {
+	return &Commands{
+		Commands: map[string]*SubCommand{},
+	}
+}
+
+func (c *Commands) RegisterCommand(command *SubCommand) {
+	if command == nil {
+		return
 	}
 
-	return subCommands
+	name := command.Name
+	c.Commands[name] = command
+}
+
+func (c *Commands) OverrideCommand(command *SubCommand) {
+	c.RegisterCommand(command)
+}
+
+func (c *Commands) GetCommand(name string) (*SubCommand, bool) {
+	command, ok := c.Commands[name]
+	return command, ok
+}
+
+func (c *Commands) OverrideCommands(commands *Commands) {
+	if commands == nil {
+		return
+	}
+	if commands.Commands == nil {
+		return
+	}
+
+	for _, command := range commands.Commands {
+		c.OverrideCommand(command)
+	}
+}
+
+func (c *Commands) HelpPage() string {
+	var res string
+
+	commands := make([]*SubCommand, 0, len(c.Commands))
+	for _, command := range c.Commands {
+		commands = append(commands, command)
+	}
+
+	sort.Slice(commands, func(i, j int) bool {
+		return commands[i].Name < commands[j].Name
+	})
+
+	res += fmt.Sprintf("Supported sub-commands:\n")
+	for _, cmd := range commands {
+		res += cmd.String()
+	}
+
+	return res
+}
+
+func (c *Commands) PrintHelpPage() {
+	fmt.Print(c.HelpPage())
+}
+
+func (c *Commands) WriteHelpPage(w io.Writer) {
+	fmt.Fprint(w, c.HelpPage())
 }
