@@ -5,10 +5,8 @@
 In order to get reports for all files in repository, run the following:
 
 ```sh
-$ noverify -cache-dir=$HOME/tmp/cache/noverify /path/to/your/project/root
+$ noverify check /path/to/your/project/root
 ```
-
-Cache dir is optional, but recommended. Next launch would be much faster with cache if you specify some cache directory.
 
 By default, "embedded" phpstorm-stubs are used.
 If there is some error during the NoVerify run, like "failed to load embedded stubs", try
@@ -19,7 +17,7 @@ several fixes that are important for static analysis.
 Running NoVerify with custom phpstorm-stubs can look like this:
 
 ```sh
-$ noverify -stubs-dir=/path/to/phpstorm-stubs -cache-dir=$HOME/tmp/cache/noverify /path/to/your/project/root
+$ noverify check -stubs-dir=/path/to/phpstorm-stubs /path/to/your/project/root
 ```
 
 The command will print you some progress messages and reports like that:
@@ -51,7 +49,7 @@ if [ -z "$prev_ref" ]; then
 fi
 
 # Call noverify
-noverify\
+noverify check\
     -git=.git\
     -git-skip-fetch\
     -git-commit-from=$prev_ref\
@@ -95,7 +93,7 @@ $x = array($v, 2);
 By default, NoVerify would report 2 issues:
 
 ```sh
-$ noverify hello.php
+$ noverify check hello.php
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at /home/quasilyte/CODE/php/hello.php:3
 $x = array($v, 2);
      ^^^^^^^^^^^^
@@ -107,7 +105,7 @@ $x = array($v, 2);
 The `arraySyntax` and `undefined` are so-called "check names" which you can use to disable associated reports.
 
 ```sh
-$ noverify -exclude-checks arraySyntax,undefined hello.php
+$ noverify check -exclude-checks arraySyntax,undefined hello.php
 # No warnings
 ```
 
@@ -121,7 +119,7 @@ it by passing your own comma-separated list of check names instead:
 
 ```sh
 # Run only 2 checks, undefined and deadCode.
-$ noverify -allow-checks undefined,deadCode hello.php
+$ noverify check -allow-checks undefined,deadCode hello.php
 ```
 
 You can use it in combination with `-exclude-checks`.
