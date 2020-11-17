@@ -99,7 +99,9 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 	flag.Usage = func() {
 		out := flag.CommandLine.Output()
 		fmt.Fprintf(out, "Usage of noverify:\n")
-		fmt.Fprintf(out, "  $ noverify -stubs-dir=/path/to/phpstorm-stubs -cache-dir=/cache/dir /project/root\n")
+		fmt.Fprintf(out, "  $ noverify [command] -stubs-dir=/path/to/phpstorm-stubs -cache-dir=/cache/dir /project/root\n")
+		fmt.Fprintln(out)
+		GlobalCmds.WriteHelpPage(out)
 		fmt.Fprintln(out)
 		fmt.Fprintf(out, "Flags:\n")
 		flag.PrintDefaults()
