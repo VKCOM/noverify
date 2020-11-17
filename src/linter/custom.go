@@ -233,8 +233,8 @@ func (ctx *BlockContext) Filename() string {
 	return ctx.w.r.ctx.st.CurrentFile
 }
 
-// FileContent returns the content of the file being analyzed.
-func (ctx *BlockContext) FileContent() []byte {
+// FileContents returns the content of the file being analyzed.
+func (ctx *BlockContext) FileContents() []byte {
 	return ctx.w.r.fileContents
 }
 
