@@ -9,6 +9,7 @@ import (
 	"github.com/VKCOM/noverify/src/linter/lintapi"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
+	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/vscode"
 )
@@ -230,6 +231,16 @@ func (ctx *BlockContext) PrematureExitFlags() int {
 // Filename returns the file name of the file being analyzed.
 func (ctx *BlockContext) Filename() string {
 	return ctx.w.r.ctx.st.CurrentFile
+}
+
+// FileContent returns the content of the file being analyzed.
+func (ctx *BlockContext) FileContent() []byte {
+	return ctx.w.r.fileContents
+}
+
+// AddQuickfix adds a new quick fix.
+func (ctx *BlockContext) AddQuickfix(fix quickfix.TextEdit) {
+	ctx.w.r.ctx.fixes = append(ctx.w.r.ctx.fixes, fix)
 }
 
 // BlockCheckerCreateFunc is a factory function for BlockChecker
