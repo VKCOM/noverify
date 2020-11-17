@@ -6,7 +6,7 @@ You can install https://github.com/tomv564/LSP using Package Control. Here is an
 {
   "clients": {
     "phpls": {
-      "command": ["/path/to/noverify", "check", "-cache-dir=/path/to/cache", "-cores=4", "-lang-server"],
+      "command": ["/path/to/noverify", "check", "-cores=4", "-lang-server"],
       "scopes": ["source.php", "embedding.php"],
       "syntaxes": ["Packages/PHP/PHP.sublime-syntax"],
       "languageId": "php"

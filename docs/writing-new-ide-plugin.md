@@ -5,7 +5,7 @@ NoVerify implements [Language Server Protocol](https://langserver.org) for PHP, 
 Use the following command to run `noverify` as language server:
 
 ```sh
-$ noverify check -lang-server -cores=4 -cache-dir=/path/to/cache
+$ noverify check -lang-server -cores=4
 ```
 
 ## PHP language server features
