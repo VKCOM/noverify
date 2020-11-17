@@ -366,6 +366,13 @@ type PropertyInfo struct {
 	AccessLevel AccessLevel
 }
 
+type ConstInfo struct {
+	Pos         ElementPosition
+	Typ         TypesMap
+	AccessLevel AccessLevel
+	Value       ConstValue
+}
+
 type ClassFlags uint8
 
 const (
@@ -385,6 +392,7 @@ type ClassInfo struct {
 	Methods          FunctionsMap
 	Properties       PropertiesMap // both instance and static properties are inside. Static properties have "$" prefix
 	Constants        ConstantsMap
+	Mixins           []string
 }
 
 func (info *ClassInfo) IsAbstract() bool { return info.Flags&ClassAbstract != 0 }

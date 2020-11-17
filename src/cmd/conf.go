@@ -26,4 +26,8 @@ type MainConfig struct {
 	BeforeReport func(*linter.Report) bool
 
 	LinterVersion string
+
+	// OverriddenCommands is a list of new commands and
+	// commands that override existing commands.
+	OverriddenCommands *Commands
 }

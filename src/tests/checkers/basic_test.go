@@ -1520,6 +1520,86 @@ func TestFunctionJustReturns(t *testing.T) {
 	}`)
 }
 
+func TestArrowFunction(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	class Boo {
+		/** @return int */
+		public function b() { }
+	}
+
+	function foo() {
+		$value = 10;
+
+		// simple function
+		$_ = fn($x) => $x + 5;
+
+		// with capture
+		$_ = fn($x) => $x + $value;
+
+		// reference
+		$_ = fn&($x) => $x + $value;
+
+		// with undefined variable
+		$_ = fn($x) => $x + $undefined_variable;
+
+		if ($value == 0) {
+			$maybe_defined = 100;
+		}
+
+		// with maybe defined variable
+		$_ = fn($x) => $x + $maybe_defined;
+
+		// with unused variable
+		$_ = fn($x) => $a = $x + 5;
+		$_ = fn($x) => ($a = $x + 5) && $x;
+
+		$_ = fn($x) => ($a = $x + 5) && $a + 5;
+
+		// with PHPDoc
+		/**
+		 * @param Boo $x
+		 */
+		$_ = fn($x) => $x->b();
+
+		// nested
+		$_ = fn($x) => fn($y) => fn($w) => $x * $y + $w - $value;
+
+		// nested with maybe defined variable
+		$_ = fn($x) => fn($y) => fn($w) => $x * $y + $w - $maybe_defined;
+
+		// nested with unused variable
+		$_ = fn($x) => fn($y) => fn($w) => $a = $x + $y + $w;
+
+		$_ = fn($x) => fn($y) => fn($w) => ($a = $x + 5) && $a + 5;
+
+		// ok
+		$_ = fn() => ($a = 10) && $a;
+
+		// $a is undefined
+		$_ = fn() => $a = 10 && $a;
+
+		// arguments are not visible outside of arrow function
+		echo $x; // Undefined $x
+		echo $y; // Undefined $y
+		echo $w; // Undefined $w
+	}`)
+	test.Expect = []string{
+		`Undefined variable: undefined_variable`,
+		`Variable might have not been defined: maybe_defined`,
+		`Variable a is unused (use $_ to ignore this inspection)`,
+		`Variable a is unused (use $_ to ignore this inspection)`,
+		`Variable a is unused (use $_ to ignore this inspection)`,
+		`Variable a is unused (use $_ to ignore this inspection)`,
+		`Undefined variable: a`,
+		`Undefined variable: x`,
+		`Undefined variable: y`,
+		`Undefined variable: w`,
+		`Variable might have not been defined: maybe_defined`,
+	}
+	test.RunAndMatch()
+}
+
 func TestSwitchFallthrough(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 	function withFallthrough($a) {

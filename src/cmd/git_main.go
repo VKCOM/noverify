@@ -75,6 +75,7 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 		}
 
 		start = time.Now()
+		parseIndexOnlyFiles(l)
 		linter.ParseFilenames(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil), l.allowDisableRegex)
 		log.Printf("Indexed new commit in %s", time.Since(start))
 
@@ -97,6 +98,7 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 
 		start = time.Now()
 		meta.SetIndexingComplete(false)
+		parseIndexOnlyFiles(l)
 		linter.ParseFilenames(workspace.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes), l.allowDisableRegex)
 		meta.SetIndexingComplete(true)
 		log.Printf("Indexed files versions for %s", time.Since(start))
@@ -142,6 +144,7 @@ func gitRepoComputeReportsFromLocalChanges(l *linterRunner) (oldReports, reports
 	start = time.Now()
 	meta.SetIndexingComplete(false)
 	linter.ParseFilenames(workspace.ReadChangesFromWorkTree(l.args.gitWorkTree, changes), l.allowDisableRegex)
+	parseIndexOnlyFiles(l)
 	gitParseUntracked(l)
 	meta.SetIndexingComplete(true)
 	log.Printf("Indexed new files versions for %s", time.Since(start))

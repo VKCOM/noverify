@@ -58,16 +58,16 @@ function bad() { return 0; }
 function good() { return 1; }
 `)
 
-	linttest.AddNamedFile(test, `/elseif_cond1.php`, `<?php
+	test.AddNamedFile(`/elseif_cond1.php`, `<?php
 if (good()) {
 } elseif (bad()) {}`)
 
-	linttest.AddNamedFile(test, `/elseif_cond2.php`, `<?php
+	test.AddNamedFile(`/elseif_cond2.php`, `<?php
 if (good()) {
 } elseif (bad()) {
 } elseif (bad()) {}`)
 
-	linttest.AddNamedFile(test, `/if_cond.php`, `<?php
+	test.AddNamedFile(`/if_cond.php`, `<?php
 	if (bad()) {
 	} elseif (good()) {}`)
 
@@ -95,9 +95,9 @@ eval(${"var"});
           eval($hello);
           eval('echo 456;');
         `
-	linttest.AddNamedFile(test, "/home/john/my/site/foo.php", code)
-	linttest.AddNamedFile(test, "/home/john/my/site/ads_foo.php", code)
-	linttest.AddNamedFile(test, "/home/john/my/site/ads_bar.php", code)
+	test.AddNamedFile("/home/john/my/site/foo.php", code)
+	test.AddNamedFile("/home/john/my/site/ads_foo.php", code)
+	test.AddNamedFile("/home/john/my/site/ads_bar.php", code)
 	test.Expect = []string{
 		`don't eval from variable`,
 		`don't eval from variable`,

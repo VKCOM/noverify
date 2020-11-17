@@ -2240,6 +2240,18 @@ exprtype(Roo::$d, "string");
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestArrowFunction(t *testing.T) {
+	code := `<?php
+function f() {
+   $value = 10;
+   $_ = fn($x) => $value = "probably now $value has type int|string";
+   // but, no
+   exprtype($value, "precise int"); // Ok, see specification
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestClosureCallbackArgumentsTypes(t *testing.T) {
 	code := `<?php
 function usort($array, $callback) {}
@@ -2576,6 +2588,31 @@ function f() {
 	$className = Foo::class;
 	exprtype($className, "precise string");
 }
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestNullCoalesceType(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+function f() {
+	$a = 10;
+	$b = "Hello";
+
+	$c = $a ?? $b;
+	exprtype($c, "precise int|string");
+
+	$f = new Foo();
+
+	$s = $c ?? $f;
+	exprtype($s, "\Foo|int|string");
+
+	$e = 10.5;
+
+	$e ??= $s;
+	exprtype($e, "\Foo|float|int|string");
+  }
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
