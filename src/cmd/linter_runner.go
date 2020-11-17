@@ -98,6 +98,7 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, args *cmdlineArguments) error
 	}
 
 	linter.ApplyQuickFixes = l.args.fix
+	linter.KPHP = l.args.kphp
 
 	if err := l.compileRegexes(); err != nil {
 		return err

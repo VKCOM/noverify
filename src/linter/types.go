@@ -240,6 +240,15 @@ func (n typeNormalizer) normalizeType(typ *meta.Type) {
 		return
 	}
 
+	if typ.Elem == "any" && KPHP {
+		// `any` is a special KPHP type that is more-or-less
+		// identical to `mixed|object`. In PHP, `mixed` already covers
+		// objects, so there is no need to add `object`.
+		// See https://php.watch/versions/8.0/mixed-type
+		typ.Elem = "mixed"
+		return
+	}
+
 	switch typ.Elem {
 	case "array":
 		// Rewrite `array` to `mixed[]`.
