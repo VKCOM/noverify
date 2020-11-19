@@ -5,10 +5,10 @@
 In order to get reports for all files in repository, run the following:
 
 ```sh
-$ noverify check [-cache-dir=$HOME/tmp/cache/noverify] /path/to/your/project/root
+$ noverify check -cache-dir=$HOME/tmp/cache/noverify /path/to/your/project/root
 ```
 
-The cache directory is optional, by default it is already set to `temporary_folder_path/noverify`, but if you want to change the folder for storing the cache, then use the `-cache-dir` flag.
+The cache directory is optional, by default it is already set to `$TMPDIR/noverify`, but if you want to change the folder for storing the cache, then use the `-cache-dir` flag.
 
 By default, "embedded" phpstorm-stubs are used.
 If there is some error during the NoVerify run, like "failed to load embedded stubs", try
