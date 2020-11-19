@@ -7,7 +7,7 @@ import (
 	"github.com/VKCOM/noverify/src/linter"
 )
 
-func cmdCheck(cfg *MainConfig) (int, error) {
+func Check(cfg *MainConfig) (int, error) {
 	if cfg == nil {
 		cfg = &MainConfig{}
 	}
@@ -20,10 +20,10 @@ func cmdCheck(cfg *MainConfig) (int, error) {
 		linter.DeclareRules(rset)
 	}
 
-	var args CmdlineArguments
-	BindFlags(ruleSets, &args)
+	var args cmdlineArguments
+	bindFlags(ruleSets, &args)
 	flag.Parse()
-	if args.DisableCache {
+	if args.disableCache {
 		linter.CacheDir = ""
 	}
 	if cfg.AfterFlagParse != nil {
@@ -32,5 +32,5 @@ func cmdCheck(cfg *MainConfig) (int, error) {
 		})
 	}
 
-	return MainNoExit(ruleSets, &args, cfg)
+	return mainNoExit(ruleSets, &args, cfg)
 }

@@ -17,7 +17,7 @@ import (
 )
 
 type linterRunner struct {
-	args *CmdlineArguments
+	args *cmdlineArguments
 
 	outputFp io.Writer
 
@@ -81,7 +81,7 @@ func (l *linterRunner) collectGitIgnoreFiles() error {
 	return nil
 }
 
-func (l *linterRunner) Init(ruleSets []*rules.Set, args *CmdlineArguments) error {
+func (l *linterRunner) Init(ruleSets []*rules.Set, args *cmdlineArguments) error {
 	l.args = args
 
 	if err := l.collectGitIgnoreFiles(); err != nil {

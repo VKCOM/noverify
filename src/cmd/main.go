@@ -33,7 +33,7 @@ var GlobalCmds = NewCommands()
 func RegisterDefaultCommands() {
 	GlobalCmds.RegisterCommand(&SubCommand{
 		Name:        "check",
-		Main:        cmdCheck,
+		Main:        Check,
 		Description: "lint the entire project",
 		Examples: []SubCommandExample{
 			{
@@ -49,7 +49,7 @@ func RegisterDefaultCommands() {
 
 	GlobalCmds.RegisterCommand(&SubCommand{
 		Name:        "help",
-		Main:        cmdHelp,
+		Main:        Help,
 		Description: "print linter documentation based on the subject",
 		Examples: []SubCommandExample{
 			{
@@ -154,12 +154,12 @@ func Main(cfg *MainConfig) {
 	os.Exit(status)
 }
 
-// MainNoExit implements main, but instead of doing log.Fatal or os.Exit it
+// mainNoExit implements main, but instead of doing log.Fatal or os.Exit it
 // returns error or non-zero integer status code to be passed to os.Exit by the caller.
 // Note that if error is not nil, integer code will be discarded, so it can be 0.
 //
 // We don't want os.Exit to be inserted randomly to avoid defer cancellation.
-func MainNoExit(ruleSets []*rules.Set, args *CmdlineArguments, cfg *MainConfig) (int, error) {
+func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) (int, error) {
 	if args.version {
 		// Version is already printed. Can exit here.
 		return 0, nil
