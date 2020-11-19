@@ -12,7 +12,7 @@ func Check(cfg *MainConfig) (int, error) {
 		cfg = &MainConfig{}
 	}
 
-	ruleSets, err := ParseRules()
+	ruleSets, err := parseRules()
 	if err != nil {
 		return 1, fmt.Errorf("preload rules: %v", err)
 	}
