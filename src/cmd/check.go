@@ -12,7 +12,7 @@ func cmdCheck(cfg *MainConfig) (int, error) {
 		cfg = &MainConfig{}
 	}
 
-	ruleSets, err := parseRules()
+	ruleSets, err := ParseRules()
 	if err != nil {
 		return 1, fmt.Errorf("preload rules: %v", err)
 	}
@@ -20,10 +20,10 @@ func cmdCheck(cfg *MainConfig) (int, error) {
 		linter.DeclareRules(rset)
 	}
 
-	var args cmdlineArguments
-	bindFlags(ruleSets, &args)
+	var args CmdlineArguments
+	BindFlags(ruleSets, &args)
 	flag.Parse()
-	if args.disableCache {
+	if args.DisableCache {
 		linter.CacheDir = ""
 	}
 	if cfg.AfterFlagParse != nil {
@@ -32,5 +32,5 @@ func cmdCheck(cfg *MainConfig) (int, error) {
 		})
 	}
 
-	return mainNoExit(ruleSets, &args, cfg)
+	return MainNoExit(ruleSets, &args, cfg)
 }

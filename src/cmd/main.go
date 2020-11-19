@@ -154,12 +154,12 @@ func Main(cfg *MainConfig) {
 	os.Exit(status)
 }
 
-// mainNoExit implements main, but instead of doing log.Fatal or os.Exit it
+// MainNoExit implements main, but instead of doing log.Fatal or os.Exit it
 // returns error or non-zero integer status code to be passed to os.Exit by the caller.
 // Note that if error is not nil, integer code will be discarded, so it can be 0.
 //
 // We don't want os.Exit to be inserted randomly to avoid defer cancellation.
-func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) (int, error) {
+func MainNoExit(ruleSets []*rules.Set, args *CmdlineArguments, cfg *MainConfig) (int, error) {
 	if args.version {
 		// Version is already printed. Can exit here.
 		return 0, nil

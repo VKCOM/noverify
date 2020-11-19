@@ -23,7 +23,7 @@ func InitEmbeddedRules(p *rules.Parser, filter func(r rules.Rule) bool) ([]*rule
 	return ruleSets, nil
 }
 
-func parseRules() ([]*rules.Set, error) {
+func ParseRules() ([]*rules.Set, error) {
 	p := rules.NewParser()
 
 	ruleSets, err := parseEmbeddedRules(p)

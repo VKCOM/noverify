@@ -14,7 +14,7 @@ import (
 
 const allNonMaybe = "<all-non-maybe>"
 
-type cmdlineArguments struct {
+type CmdlineArguments struct {
 	version bool
 
 	pprofHost string
@@ -71,7 +71,7 @@ type cmdlineArguments struct {
 		gitCommitTo   string
 	}
 
-	disableCache bool
+	DisableCache bool
 }
 
 func DefaultCacheDir() string {
@@ -84,7 +84,7 @@ func DefaultCacheDir() string {
 	return defaultCacheDir
 }
 
-func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
+func BindFlags(ruleSets []*rules.Set, args *CmdlineArguments) {
 	var enabledByDefault []string
 	declaredChecks := linter.GetDeclaredChecks()
 	for _, info := range declaredChecks {
@@ -178,7 +178,7 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 
 	flag.StringVar(&linter.StubsDir, "stubs-dir", "", "phpstorm-stubs directory")
 	flag.StringVar(&linter.CacheDir, "cache-dir", DefaultCacheDir(), "Directory for linter cache (greatly improves indexing speed)")
-	flag.BoolVar(&args.disableCache, "disable-cache", false, "If set, cache is not used and cache-dir is ignored")
+	flag.BoolVar(&args.DisableCache, "disable-cache", false, "If set, cache is not used and cache-dir is ignored")
 
 	flag.StringVar(&args.unusedVarPattern, "unused-var-regex", `^_$`,
 		"Variables that match such regexp are marked as discarded; not reported as unused, but should not be used as values")
