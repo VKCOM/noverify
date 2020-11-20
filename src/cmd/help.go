@@ -10,7 +10,7 @@ import (
 	"github.com/VKCOM/noverify/src/rules"
 )
 
-func cmdHelp(*MainConfig) (int, error) {
+func Help(*MainConfig) (int, error) {
 	flag.Parse()
 
 	args := flag.Args()

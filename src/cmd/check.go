@@ -7,7 +7,7 @@ import (
 	"github.com/VKCOM/noverify/src/linter"
 )
 
-func cmdCheck(cfg *MainConfig) (int, error) {
+func Check(cfg *MainConfig) (int, error) {
 	if cfg == nil {
 		cfg = &MainConfig{}
 	}
