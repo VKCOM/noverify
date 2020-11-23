@@ -106,7 +106,7 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []meta.Type {
 	case phpdoc.ExprOptional:
 		// If the type does not denote the shape or tuple type,
 		// then it is most likely an invalid nullable type syntax.
-		if !strings.Contains(e.Value, "shape") || !strings.Contains(e.Value, "tuple") {
+		if !strings.Contains(e.Value, "shape") && !strings.Contains(e.Value, "tuple") {
 			conv.warn(e.Value + ": nullable syntax is ?T, not T?")
 		}
 	}
