@@ -12,8 +12,8 @@ For example, you can configure the following after VS Code installation:
 {
   "php-noverify.noverifyPath": "<noverify binary path>",
   "php-noverify.noverifyExtraArgs": [
-    "-cores=4",
-    "-cache-dir=/path/to/cache"
+    "check",
+    "-cores=4"
   ]
 }
 ```
