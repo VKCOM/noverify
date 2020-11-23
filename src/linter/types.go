@@ -2,6 +2,7 @@ package linter
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
@@ -101,6 +102,13 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []meta.Type {
 			types = append(types, conv.mapType(a)...)
 		}
 		return types
+
+	case phpdoc.ExprOptional:
+		// If the type does not denote the shape or tuple type,
+		// then it is most likely an invalid nullable type syntax.
+		if !strings.Contains(e.Value, "shape") || !strings.Contains(e.Value, "tuple") {
+			conv.warn(e.Value + ": nullable syntax is ?T, not T?")
+		}
 	}
 
 	return nil

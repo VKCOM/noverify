@@ -306,11 +306,15 @@ class Foo {
 
   /** @var real */
   public $x;
+
+  /** @var int? */
+  public $x;
 }
 `)
 	test.Expect = []string{
 		`use int type instead of integer`,
 		`use float type instead of real`,
+		`int?: nullable syntax is ?T, not T?`,
 	}
 	test.RunAndMatch()
 }
@@ -325,6 +329,7 @@ func TestPHPDocProperty(t *testing.T) {
  * @property string
  * @property $int string
  * @property boolean[] $bools
+ * @property int? $nullable
  */
 class Foo {}
 `)
@@ -336,6 +341,7 @@ class Foo {}
 		`line 4: @property requires type and property name fields`,
 		`line 5: @property requires type and property name fields`,
 		`use bool type instead of boolean on line 7`,
+		`int?: nullable syntax is ?T, not T?`,
 	}
 	test.RunAndMatch()
 }
@@ -349,19 +355,21 @@ func TestPHPDocType(t *testing.T) {
 	 * @param real $x3
 	 * @param integer $x4
 	 * @param boolean $x5
+	 * @param int? $x6
 	 * @return []int
 	 */
-	function f($x1, $x2, $x3, $x4, $x5) {
-		$_ = [$x1, $x2, $x3, $x4, $x5];
+	function f($x1, $x2, $x3, $x4, $x5, $x6) {
+		$_ = [$x1, $x2, $x3, $x4, $x5, $x6];
 		return [1];
 	}`)
 	test.Expect = []string{
-		`[]int: array syntax is T[], not []T on line 7`,
 		`[][]string: array syntax is T[], not []T on line 2`,
 		`use float type instead of double`,
 		`use float type instead of real`,
 		`use int type instead of integer`,
 		`use bool type instead of boolean`,
+		`int?: nullable syntax is ?T, not T?`,
+		`[]int: array syntax is T[], not []T on line 8`,
 	}
 	test.RunAndMatch()
 }
