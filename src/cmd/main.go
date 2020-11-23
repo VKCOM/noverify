@@ -33,7 +33,7 @@ var GlobalCmds = NewCommands()
 func RegisterDefaultCommands() {
 	GlobalCmds.RegisterCommand(&SubCommand{
 		Name:        "check",
-		Main:        cmdCheck,
+		Main:        Check,
 		Description: "lint the entire project",
 		Examples: []SubCommandExample{
 			{
@@ -49,7 +49,7 @@ func RegisterDefaultCommands() {
 
 	GlobalCmds.RegisterCommand(&SubCommand{
 		Name:        "help",
-		Main:        cmdHelp,
+		Main:        Help,
 		Description: "print linter documentation based on the subject",
 		Examples: []SubCommandExample{
 			{
