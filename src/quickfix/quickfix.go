@@ -3,6 +3,7 @@ package quickfix
 import (
 	"bytes"
 	"os"
+	"sort"
 )
 
 // TODO: add quickfixes support in lang server?
@@ -23,6 +24,10 @@ func Apply(filename string, contents []byte, fixes []TextEdit) error {
 	if len(fixes) == 0 {
 		return nil
 	}
+
+	sort.Slice(fixes, func(i, j int) bool {
+		return fixes[i].StartPos < fixes[j].EndPos
+	})
 
 	var buf bytes.Buffer
 	buf.Grow(len(contents))
