@@ -385,14 +385,16 @@ func TestPHPDocIncorrectSyntaxOptionalTypesType(t *testing.T) {
 	 * @param shape(key:int, opt?:int) $x2 // ok, is shape
 	 * @param shape(key?:int, opt?:int) $x3 // ok, is shape
 	 * @param Foo? $x4 // error
+	 * @param string[]? $x5 // error
 	 */
-	function f1($x1, $x2, $x3, $x4) {
-		$_ = [$x1, $x2, $x3, $x4];
+	function f1($x1, $x2, $x3, $x4, $x5) {
+		$_ = [$x1, $x2, $x3, $x4, $x5];
 	}
 `)
 	test.Expect = []string{
 		`int?: nullable syntax is ?T, not T?`,
 		`Foo?: nullable syntax is ?T, not T?`,
+		`tring[]?: nullable syntax is ?T, not T?`,
 	}
 	test.RunAndMatch()
 }
