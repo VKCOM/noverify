@@ -1,4 +1,4 @@
-## NoVerify [![Build Status](https://travis-ci.org/VKCOM/noverify.svg?branch=master)](https://travis-ci.org/VKCOM/noverify)
+## NoVerify ![Build Status](https://github.com/VKCOM/noverify/workflows/Go/badge.svg)
 
 ![](/docs/noverify_small.png)
 
