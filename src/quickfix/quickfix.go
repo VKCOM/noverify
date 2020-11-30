@@ -26,7 +26,7 @@ func Apply(filename string, contents []byte, fixes []TextEdit) error {
 	}
 
 	sort.Slice(fixes, func(i, j int) bool {
-		return fixes[i].StartPos < fixes[j].EndPos
+		return fixes[i].StartPos < fixes[j].StartPos
 	})
 
 	var buf bytes.Buffer

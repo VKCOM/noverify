@@ -2,6 +2,12 @@
 
 class Foo {}
 
+$_ = array(1,2,3);
+$_ = array( new Foo,    "Hello",
+        1,2,
+        3,4,
+);
+
 function f() {
     $_ = array();
     $_ = array(1,2,);
