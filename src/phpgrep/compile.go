@@ -21,7 +21,7 @@ func compile(opts *Compiler, pattern []byte) (*Matcher, error) {
 	if err != nil {
 		return nil, err
 	}
-	rootIR := irconv.NewConverter().ConvertNode(root)
+	rootIR := irconv.ConvertNode(root)
 
 	if st, ok := rootIR.(*ir.ExpressionStmt); ok {
 		rootIR = st.Expr
@@ -39,8 +39,9 @@ func compile(opts *Compiler, pattern []byte) (*Matcher, error) {
 
 	m := &Matcher{
 		m: matcher{
-			root:    rootIR,
-			numVars: len(c.vars),
+			root:          rootIR,
+			numVars:       len(c.vars),
+			caseSensitive: opts.CaseSensitive,
 		},
 	}
 
@@ -93,6 +94,8 @@ func (c *compiler) EnterNode(n ir.Node) bool {
 		v.Expr = anyNum{metaNode{name: name}}
 	case "expr":
 		v.Expr = anyExpr{metaNode{name: name}}
+	case "call":
+		v.Expr = anyCall{metaNode{name: name}}
 	case "const":
 		v.Expr = anyConst{metaNode{name: name}}
 	case "func":

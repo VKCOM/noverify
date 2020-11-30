@@ -6,6 +6,23 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
+func TestRESimplifyNamedCaptureForms(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
+	test.AddFile(`<?php
+function f($s) {
+  preg_match('~(?P<abc>[0-9])~', $s);
+  preg_match('~(?<abc>[0-9])~', $s);
+  preg_match("~(?'abc'[0-9])~", $s); // Ignore due to the FormNamedCaptureQuote
+}
+`)
+	test.Expect = []string{
+		`May re-write '~(?P<abc>[0-9])~' as '~(?P<abc>\d)~'`,
+		`May re-write '~(?<abc>[0-9])~' as '~(?<abc>\d)~'`,
+	}
+	test.RunAndMatch()
+}
+
 func TestRESimplifyMixed(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}

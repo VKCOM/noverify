@@ -52,7 +52,11 @@ func (r *resolver) collectMethodCallTypes(out, possibleTypes map[string]struct{}
 
 func (r *resolver) resolveType(class, typ string) map[string]struct{} {
 	res := r.resolveTypeNoLateStaticBinding(class, typ)
-	r.visited[typ] = res
+	if typ == "static" {
+		r.visited[typ+class] = res
+	} else {
+		r.visited[typ] = res
+	}
 
 	if _, ok := res["static"]; ok {
 		delete(res, "static")
@@ -382,6 +386,18 @@ func findMethod(className string, methodName string, visitedMap map[string]struc
 			if ok {
 				m.Implemented = false
 				return m, true
+			}
+		}
+
+		for _, mixin := range class.Mixins {
+			_, ok := getClassOrTrait(mixin)
+			if !ok {
+				continue
+			}
+
+			result, ok := findMethod(mixin, methodName, visitedMap)
+			if ok {
+				return result, true
 			}
 		}
 

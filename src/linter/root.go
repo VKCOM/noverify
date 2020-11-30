@@ -241,7 +241,7 @@ func (d *RootWalker) EnterNode(n ir.Node) (res bool) {
 		}
 		d.checkCommentMisspellings(n.ClassName, n.PhpDocComment)
 		d.checkIdentMisspellings(n.ClassName)
-		doc := d.parseClassPHPDoc(n.ClassName, n.PhpDocComment)
+		doc := d.parseClassPHPDoc(n.ClassName, n.PhpDoc)
 		d.reportPhpdocErrors(n.ClassName, doc.errs)
 		// If we ever need to distinguish @property-annotated and real properties,
 		// more work will be required here.
@@ -263,6 +263,9 @@ func (d *RootWalker) EnterNode(n ir.Node) (res bool) {
 				d.checkClassImplemented(n.Extends.ClassName, className)
 			}
 		}
+
+		cl.Mixins = doc.mixins
+		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
 
 	case *ir.TraitStmt:
 		d.currentClassNode = n
@@ -603,6 +606,28 @@ type handleFuncResult struct {
 	callsParentConstructor bool
 }
 
+func (d *RootWalker) handleArrowFuncExpr(params []meta.FuncParam, expr ir.Node, sc *meta.Scope, parentBlockWalker *BlockWalker) handleFuncResult {
+	b := newBlockWalker(d, sc)
+	b.inArrowFunction = true
+	parentBlockWalker.parentBlockWalkers = append(parentBlockWalker.parentBlockWalkers, parentBlockWalker)
+	b.parentBlockWalkers = parentBlockWalker.parentBlockWalkers
+
+	for _, p := range params {
+		if p.IsRef {
+			b.nonLocalVars[p.Name] = varRef
+		}
+	}
+
+	b.addStatement(expr)
+	expr.Walk(b)
+
+	b.flushUnused()
+
+	return handleFuncResult{
+		returnTypes: b.returnTypes,
+	}
+}
+
 func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.Node, sc *meta.Scope) handleFuncResult {
 	b := newBlockWalker(d, sc)
 	for _, createFn := range d.customBlock {
@@ -901,7 +926,7 @@ func (d *RootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 		nm := p.Variable.Name
 
 		d.checkCommentMisspellings(p, p.PhpDocComment)
-		typ := d.parsePHPDocVar(p, p.PhpDocComment)
+		typ := d.parsePHPDocVar(p, p.PhpDoc)
 		if p.Expr != nil {
 			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, p.Expr))
 		}
@@ -1006,7 +1031,7 @@ func (d *RootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	for _, p := range meth.Params {
 		d.checkVarnameMisspellings(p, p.(*ir.Parameter).Variable.Name)
 	}
-	doc := d.parsePHPDoc(meth.MethodName, meth.PhpDocComment, meth.Params)
+	doc := d.parsePHPDoc(meth.MethodName, meth.PhpDoc, meth.Params)
 	d.reportPhpdocErrors(meth.MethodName, doc.errs)
 	phpdocReturnType := doc.returnType
 	phpDocParamTypes := doc.types
@@ -1113,8 +1138,8 @@ func (d *RootWalker) reportPhpdocErrors(n ir.Node, errs phpdocErrors) {
 	}
 }
 
-func (d *RootWalker) parsePHPDocVar(n ir.Node, doc string) (m meta.TypesMap) {
-	for _, part := range phpdoc.Parse(d.ctx.phpdocTypeParser, doc) {
+func (d *RootWalker) parsePHPDocVar(n ir.Node, doc []phpdoc.CommentPart) (m meta.TypesMap) {
+	for _, part := range doc {
 		d.checkPHPDocRef(n, part)
 		part, ok := part.(*phpdoc.TypeVarCommentPart)
 		if ok && part.Name() == "var" {
@@ -1235,10 +1260,15 @@ func (d *RootWalker) checkPHPDocRef(n ir.Node, part phpdoc.CommentPart) {
 		return
 	}
 
-	if part.Name() != "see" {
-		return
+	switch part.Name() {
+	case "mixin":
+		d.checkPHPDocMixinRef(n, part)
+	case "see":
+		d.checkPHPDocSeeRef(n, part)
 	}
+}
 
+func (d *RootWalker) checkPHPDocSeeRef(n ir.Node, part phpdoc.CommentPart) {
 	params := part.(*phpdoc.RawCommentPart).Params
 	if len(params) == 0 {
 		return
@@ -1263,10 +1293,34 @@ func (d *RootWalker) checkPHPDocRef(n ir.Node, part phpdoc.CommentPart) {
 	}
 }
 
-func (d *RootWalker) parsePHPDoc(n ir.Node, doc string, actualParams []ir.Node) phpDocParseResult {
+func (d *RootWalker) checkPHPDocMixinRef(n ir.Node, part phpdoc.CommentPart) {
+	rawPart, ok := part.(*phpdoc.RawCommentPart)
+	if !ok {
+		return
+	}
+
+	params := rawPart.Params
+	if len(params) == 0 {
+		return
+	}
+
+	name, ok := solver.GetClassName(d.ctx.st, &ir.Name{
+		Value: params[0],
+	})
+
+	if !ok {
+		return
+	}
+
+	if _, ok := meta.Info.GetClass(name); !ok {
+		d.Report(n, LevelWarning, "phpdocRef", "line %d: @mixin tag refers to unknown class %s", part.Line(), name)
+	}
+}
+
+func (d *RootWalker) parsePHPDoc(n ir.Node, doc []phpdoc.CommentPart, actualParams []ir.Node) phpDocParseResult {
 	var result phpDocParseResult
 
-	if doc == "" {
+	if len(doc) == 0 {
 		return result
 	}
 
@@ -1280,7 +1334,7 @@ func (d *RootWalker) parsePHPDoc(n ir.Node, doc string, actualParams []ir.Node) 
 
 	var curParam int
 
-	for _, part := range phpdoc.Parse(d.ctx.phpdocTypeParser, doc) {
+	for _, part := range doc {
 		d.checkPHPDocRef(n, part)
 
 		if part.Name() == "deprecated" {
@@ -1367,13 +1421,21 @@ func (d *RootWalker) parseTypeNode(n ir.Node) (typ meta.TypesMap, ok bool) {
 	return tm, !tm.IsEmpty()
 }
 
+// callbackParamByIndex returns the description of the parameter for the function by its index.
 func (d *RootWalker) callbackParamByIndex(param ir.Node, argType meta.TypesMap) meta.FuncParam {
 	p := param.(*ir.Parameter)
 	v := p.Variable
+
 	var typ meta.TypesMap
-	argType.Iterate(func(t string) {
-		typ = typ.AppendString(meta.WrapElemOf(t))
-	})
+	tp, ok := d.parseTypeNode(p.VariableType)
+	if ok {
+		typ = tp
+	} else {
+		argType.Iterate(func(t string) {
+			typ = typ.AppendString(meta.WrapElemOf(t))
+		})
+	}
+
 	arg := meta.FuncParam{
 		IsRef: p.ByRef,
 		Name:  v.Name,
@@ -1532,7 +1594,7 @@ func (d *RootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	for _, p := range fun.Params {
 		d.checkVarnameMisspellings(p, p.(*ir.Parameter).Variable.Name)
 	}
-	doc := d.parsePHPDoc(fun.FunctionName, fun.PhpDocComment, fun.Params)
+	doc := d.parsePHPDoc(fun.FunctionName, fun.PhpDoc, fun.Params)
 	d.reportPhpdocErrors(fun.FunctionName, doc.errs)
 	phpdocReturnType := doc.returnType
 	phpDocParamTypes := doc.types
@@ -1985,10 +2047,10 @@ func (d *RootWalker) nodeText(n ir.Node) []byte {
 	return d.fileContents[pos.StartPos:pos.EndPos]
 }
 
-func (d *RootWalker) parseClassPHPDoc(n ir.Node, doc string) classPhpDocParseResult {
+func (d *RootWalker) parseClassPHPDoc(n ir.Node, doc []phpdoc.CommentPart) classPhpDocParseResult {
 	var result classPhpDocParseResult
 
-	if doc == "" {
+	if len(doc) == 0 {
 		return result
 	}
 
@@ -1998,17 +2060,25 @@ func (d *RootWalker) parseClassPHPDoc(n ir.Node, doc string) classPhpDocParseRes
 	result.properties = make(meta.PropertiesMap)
 	result.methods = meta.NewFunctionsMap()
 
-	for _, part := range phpdoc.Parse(d.ctx.phpdocTypeParser, doc) {
+	for _, part := range doc {
 		d.checkPHPDocRef(n, part)
 		switch part.Name() {
 		case "property", "property-read", "property-write":
 			parseClassPHPDocProperty(&d.ctx, &result, part.(*phpdoc.TypeVarCommentPart))
 		case "method":
 			parseClassPHPDocMethod(&d.ctx, &result, part.(*phpdoc.RawCommentPart))
+		case "mixin":
+			parseClassPHPDocMixin(d.ctx.st, &result, part.(*phpdoc.RawCommentPart))
 		}
 	}
 
 	return result
+}
+
+func (d *RootWalker) beforeEnterFile() {
+	for _, c := range d.custom {
+		c.BeforeEnterFile()
+	}
 }
 
 func (d *RootWalker) afterLeaveFile() {

@@ -286,6 +286,21 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		return true
+	case *ir.BadString:
+		y, ok := y.(*ir.BadString)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if x.Value != y.Value {
+			return false
+		}
+		if x.DoubleQuotes != y.DoubleQuotes {
+			return false
+		}
+		if x.Error != y.Error {
+			return false
+		}
+		return true
 	case *ir.BitwiseAndExpr:
 		y, ok := y.(*ir.BitwiseAndExpr)
 		if !ok || x == nil || y == nil {

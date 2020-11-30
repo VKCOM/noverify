@@ -26,6 +26,48 @@ import (
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
+// GlobalCmds is a global map of commands.
+var GlobalCmds = NewCommands()
+
+// RegisterDefaultCommands registers default commands for NoVerify.
+func RegisterDefaultCommands() {
+	GlobalCmds.RegisterCommand(&SubCommand{
+		Name:        "check",
+		Main:        Check,
+		Description: "lint the entire project",
+		Examples: []SubCommandExample{
+			{
+				Description: "show subcommand usage",
+				Line:        "-help",
+			},
+			{
+				Description: "run linter with default options",
+				Line:        "<analyze-path>",
+			},
+		},
+	})
+
+	GlobalCmds.RegisterCommand(&SubCommand{
+		Name:        "help",
+		Main:        Help,
+		Description: "print linter documentation based on the subject",
+		Examples: []SubCommandExample{
+			{
+				Description: "show supported sub-subCommands",
+				Line:        "",
+			},
+			{
+				Description: "print all supported checkers short summary",
+				Line:        "checkers",
+			},
+			{
+				Description: "print dupSubExpr checker detailed documentation",
+				Line:        "checkers dupSubExpr",
+			},
+		},
+	})
+}
+
 // Line below implies that we have `https://github.com/VKCOM/phpstorm-stubs.git` cloned
 // to the `./src/cmd/stubs/phpstorm-stubs`.
 //
@@ -63,31 +105,44 @@ func isEnabled(l *linterRunner, r *linter.Report) bool {
 //
 // Optionally, non-nil config can be passed to customize function behavior.
 func Run(cfg *MainConfig) (int, error) {
-	if cfg == nil {
-		cfg = &MainConfig{}
+	RegisterDefaultCommands()
+
+	if cfg.OverriddenCommands != nil {
+		GlobalCmds.OverrideCommands(cfg.OverriddenCommands)
 	}
 
-	ruleSets, err := parseRules()
+	var subcmd *SubCommand
+	var found bool
+	if len(os.Args) >= 2 {
+		commandName := os.Args[1]
+		subcmd, found = GlobalCmds.GetCommand(commandName)
+		if found {
+			subIdx := 1 // [0] is program name
+			// Erase sub-command argument (index=1) to make it invisible for
+			// sub commands themselves.
+			os.Args = append(os.Args[:subIdx], os.Args[subIdx+1:]...)
+		} else if looksLikeCommandName(commandName) {
+			fmt.Printf("Sub-command %s doesn't exist\n\n", commandName)
+			GlobalCmds.PrintHelpPage()
+			return 0, nil
+		}
+
+	}
+	if subcmd == nil {
+		log.Print(`
+
+NoVerify migrates to the new CLI using commands, launching in this way is still possible, but is already deprecated.
+Use 'noverify help' for more information.
+
+`)
+		subcmd, _ = GlobalCmds.GetCommand("check")
+	}
+
+	status, err := subcmd.Main(cfg)
 	if err != nil {
-		return 1, fmt.Errorf("preload rules: %v", err)
+		log.Fatal(err)
 	}
-	for _, rset := range ruleSets {
-		linter.DeclareRules(rset)
-	}
-
-	var args cmdlineArguments
-	bindFlags(ruleSets, &args)
-	flag.Parse()
-	if args.disableCache {
-		linter.CacheDir = ""
-	}
-	if cfg.AfterFlagParse != nil {
-		cfg.AfterFlagParse(InitEnvironment{
-			RuleSets: ruleSets,
-		})
-	}
-
-	return mainNoExit(ruleSets, &args, cfg)
+	return status, nil
 }
 
 // Main is like Run(), but it calls os.Exit() and does not return.
@@ -351,7 +406,14 @@ func LoadEmbeddedStubs(filenames []string) error {
 }
 
 func loadEmbeddedStubs() error {
-	filenames := stubs.AssetNames()
+	var filenames []string
+	// NOVERIFYDEBUG_LOAD_STUBS is used in golden tests to specify
+	// the test dependencies that need to be loaded.
+	if list := os.Getenv("NOVERIFYDEBUG_LOAD_STUBS"); list != "" {
+		filenames = strings.Split(list, ",")
+	} else {
+		filenames = stubs.AssetNames()
+	}
 	if len(filenames) == 0 {
 		return fmt.Errorf("empty file list")
 	}

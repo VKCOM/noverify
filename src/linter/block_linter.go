@@ -1,6 +1,7 @@
 package linter
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
+	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/solver"
 )
 
@@ -163,6 +165,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 	case *ir.InterfaceStmt:
 		b.checkInterfaceStmt(n)
+
+	case *ir.BadString:
+		b.report(n, LevelSyntax, "syntax", "%s", n.Error)
 	}
 }
 
@@ -406,6 +411,7 @@ func (b *blockLinter) checkGlobalStmt(s *ir.GlobalStmt) {
 func (b *blockLinter) checkSwitch(s *ir.SwitchStmt) {
 	nodeSet := &b.walker.r.nodeSet
 	nodeSet.Reset()
+	wasAdded := false
 	for i, c := range s.CaseList.Cases {
 		c, ok := c.(*ir.CaseStmt)
 		if !ok {
@@ -414,8 +420,59 @@ func (b *blockLinter) checkSwitch(s *ir.SwitchStmt) {
 		if !b.walker.sideEffectFree(c.Cond) {
 			continue
 		}
-		if !nodeSet.Add(c.Cond) {
-			b.report(c.Cond, LevelWarning, "dupCond", "duplicated switch case #%d", i+1)
+
+		var v meta.ConstValue
+		var isConstKey bool
+		if k, ok := c.Cond.(*ir.ConstFetchExpr); ok {
+			v = constfold.Eval(b.walker.r.ctx.st, k)
+			if !v.IsValid() {
+				continue
+			}
+			value := v.Value
+
+			switch v.Type {
+			case meta.Float:
+				val, ok := value.(float64)
+				if !ok {
+					continue
+				}
+				wasAdded = nodeSet.Add(&ir.Dnumber{Value: fmt.Sprint(val)})
+			case meta.Integer:
+				val, ok := value.(int64)
+				if !ok {
+					continue
+				}
+				wasAdded = nodeSet.Add(&ir.Lnumber{Value: fmt.Sprint(val)})
+			case meta.String:
+				val, ok := value.(string)
+				if !ok {
+					continue
+				}
+				wasAdded = nodeSet.Add(&ir.String{Value: fmt.Sprint(val)})
+			case meta.Bool:
+				val, ok := value.(bool)
+				if !ok {
+					continue
+				}
+				wasAdded = nodeSet.Add(&ir.Name{Value: fmt.Sprint(val)})
+			default:
+				continue
+			}
+			isConstKey = true
+		}
+
+		isDupKey := isConstKey && !wasAdded
+		if !isDupKey {
+			isDupKey = !nodeSet.Add(c.Cond)
+		}
+
+		if isDupKey {
+			msg := fmt.Sprintf("duplicated switch case #%d", i+1)
+			if isConstKey {
+				dupKey := getConstValue(v)
+				msg += " (value " + dupKey + ")"
+			}
+			b.report(c.Cond, LevelWarning, "dupCond", "%s", msg)
 		}
 	}
 }
@@ -468,9 +525,28 @@ func (b *blockLinter) checkContinueStmt(c *ir.ContinueStmt) {
 	}
 }
 
+func (b *blockLinter) addFixForArray(arr *ir.ArrayExpr) {
+	if !ApplyQuickFixes {
+		return
+	}
+
+	from := arr.Position.StartPos
+	to := arr.Position.EndPos
+	have := b.walker.r.fileContents[from:to]
+	have = bytes.TrimPrefix(have, []byte("array("))
+	have = bytes.TrimSuffix(have, []byte(")"))
+
+	b.walker.r.ctx.fixes = append(b.walker.r.ctx.fixes, quickfix.TextEdit{
+		StartPos:    arr.Position.StartPos,
+		EndPos:      arr.Position.EndPos,
+		Replacement: fmt.Sprintf("[%s]", string(have)),
+	})
+}
+
 func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 	if !arr.ShortSyntax {
 		b.report(arr, LevelDoNotReject, "arraySyntax", "Use of old array syntax (use short form instead)")
+		b.addFixForArray(arr)
 	}
 
 	items := arr.Items
@@ -502,7 +578,7 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 			constKey = true
 		case *ir.ConstFetchExpr:
 			v := constfold.Eval(b.walker.r.ctx.st, k)
-			if v.Type == meta.Undefined {
+			if !v.IsValid() {
 				continue
 			}
 

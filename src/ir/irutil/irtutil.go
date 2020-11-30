@@ -59,7 +59,8 @@ func IsAssign(n ir.Node) bool {
 		*ir.AssignShiftRight,
 		*ir.AssignMinus,
 		*ir.AssignMod,
-		*ir.AssignMul:
+		*ir.AssignMul,
+		*ir.AssignCoalesce:
 		return true
 	default:
 		return false

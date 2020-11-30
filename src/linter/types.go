@@ -101,6 +101,13 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []meta.Type {
 			types = append(types, conv.mapType(a)...)
 		}
 		return types
+
+	case phpdoc.ExprOptional:
+		// Due to the fact that the optional keys for shape are processed in the mapShapeType
+		// function, while the optionality for the key is cleared, and the key itself is not
+		// processed by the mapType function, then in the mapType function the phpdoc.ExprOptional
+		// type can only be in one case, if it is an incorrect syntax of the optional type.
+		conv.warn(e.Value + ": nullable syntax is ?T, not T?")
 	}
 
 	return nil
@@ -237,6 +244,15 @@ func (n typeNormalizer) normalizeType(typ *meta.Type) {
 
 	if typename, ok := typeAliases[typ.Elem]; ok {
 		typ.Elem = typename
+		return
+	}
+
+	if typ.Elem == "any" && KPHP {
+		// `any` is a special KPHP type that is more-or-less
+		// identical to `mixed|object`. In PHP, `mixed` already covers
+		// objects, so there is no need to add `object`.
+		// See https://php.watch/versions/8.0/mixed-type
+		typ.Elem = "mixed"
 		return
 	}
 

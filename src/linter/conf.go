@@ -22,6 +22,9 @@ var (
 
 	ApplyQuickFixes bool
 
+	// KPHP tells whether we're working in KPHP-compatible mode.
+	KPHP bool
+
 	CacheDir string
 
 	// TypoFixer is a rule set for English typos correction.

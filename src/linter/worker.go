@@ -14,6 +14,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/quasilyte/regex/syntax"
+
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/ir"
@@ -23,7 +25,6 @@ import (
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/workspace"
-	"github.com/quasilyte/regex/syntax"
 )
 
 // Worker is a linter handle that is expected to be executed in a single goroutine context.
@@ -58,10 +59,12 @@ func NewIndexingWorker(id int) *Worker {
 }
 
 func newWorker(id int) *Worker {
+	ctx := NewWorkerContext()
+	irConverter := irconv.NewConverter(ctx.phpdocTypeParser)
 	return &Worker{
 		id:     id,
-		ctx:    NewWorkerContext(),
-		irconv: irconv.NewConverter(),
+		ctx:    ctx,
+		irconv: irConverter,
 		reParserNoLiterals: syntax.NewParser(&syntax.ParserOptions{
 			NoLiterals: true,
 		}),
@@ -254,6 +257,7 @@ func (w *Worker) analyzeFile(filename string, contents []byte, parser *php7.Pars
 	walker.InitFromParser(contents, parser)
 	walker.InitCustom()
 
+	walker.beforeEnterFile()
 	rootIR.Walk(walker)
 	if meta.IsIndexingComplete() {
 		AnalyzeFileRootLevel(rootIR, walker)

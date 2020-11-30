@@ -1,0 +1,47 @@
+<?php
+
+class Foo {}
+
+$_ = [1,2,3];
+$_ = [ new Foo,    "Hello",
+        1,2,
+        3,4,
+];
+
+function f() {
+    $_ = [];
+    $_ = [1,2,];
+    $_ = [1,2,3];
+    $_ = [new Foo, new Foo];
+    $_ = ["info" => new Foo, new Foo];
+    $_ = ["info" => new Foo, "for" => 2, "home" => function() {}];
+
+    $_ = [
+        "info" => new Foo,
+        new Foo
+    ];
+    $_ = [
+        1,2,
+        3,4,
+    ];
+    $_ = [ new Foo,    "Hello",
+        1,2,
+        3,4,
+    ];
+
+    b([1,2]);
+
+    // So far, we cannot replace recursively, so replacement in
+    // multidimensional arrays will only be performed for external arrays.
+    $_ = [array(1,2,3), array(1,2,3)];
+    $_ = [array("info" => new Foo, "for" => 2, "home" => function() {}), array(1,2,3)];
+}
+
+function b($a) {
+    switch ($a) {
+    case 1:
+        return [1, 2, 3];
+    case 2:
+        return ["info" => new Foo, "for" => 2, "home" => function() {}];
+    }
+}

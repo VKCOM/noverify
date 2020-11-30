@@ -21,5 +21,6 @@ type (
 	anyStr1  struct{ metaNode }
 	anyNum   struct{ metaNode }
 	anyExpr  struct{ metaNode }
+	anyCall  struct{ metaNode }
 	anyFunc  struct{ metaNode }
 )

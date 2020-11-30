@@ -6,6 +6,13 @@ import (
 
 // Compiler creates matcher objects out of the string patterns.
 type Compiler struct {
+	// CaseSensitive option specifies whether compiled patterns
+	// should match identifiers in a strictly case-sensitive manner.
+	//
+	// In PHP, f() and F() refer to the same function `f`, but if
+	// case sensitivity is set to true, compiled matcher will reject
+	// any spelling mismatches.
+	CaseSensitive bool
 }
 
 // Compile compiler a given pattern into a matcher.

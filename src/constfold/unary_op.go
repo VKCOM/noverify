@@ -10,7 +10,7 @@ func Not(x meta.ConstValue) meta.ConstValue {
 	if !ok {
 		return meta.UnknownValue
 	}
-	return meta.NewBoolConstant(!v)
+	return meta.NewBoolConst(!v)
 }
 
 // Neg performs unary "-".

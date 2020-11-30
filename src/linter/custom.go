@@ -9,6 +9,7 @@ import (
 	"github.com/VKCOM/noverify/src/linter/lintapi"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
+	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/vscode"
 )
@@ -81,6 +82,7 @@ type BlockChecker interface {
 // RootChecker is a custom linter that should operator only at root level.
 // Block level analysis (function and method bodies and all if/else/for/etc blocks) must be performed in BlockChecker.
 type RootChecker interface {
+	BeforeEnterFile()
 	AfterLeaveFile()
 	BeforeEnterNode(ir.Node)
 	AfterEnterNode(ir.Node)
@@ -113,6 +115,7 @@ func (BlockCheckerDefaults) AfterLeaveNode(ir.Node)  {}
 // to change your code right away (especially if you don't need a new hook).
 type RootCheckerDefaults struct{}
 
+func (RootCheckerDefaults) BeforeEnterFile()        {}
 func (RootCheckerDefaults) AfterLeaveFile()         {}
 func (RootCheckerDefaults) BeforeEnterNode(ir.Node) {}
 func (RootCheckerDefaults) AfterEnterNode(ir.Node)  {}
@@ -228,6 +231,16 @@ func (ctx *BlockContext) PrematureExitFlags() int {
 // Filename returns the file name of the file being analyzed.
 func (ctx *BlockContext) Filename() string {
 	return ctx.w.r.ctx.st.CurrentFile
+}
+
+// FileContents returns the content of the file being analyzed.
+func (ctx *BlockContext) FileContents() []byte {
+	return ctx.w.r.fileContents
+}
+
+// AddQuickfix adds a new quick fix.
+func (ctx *BlockContext) AddQuickfix(fix quickfix.TextEdit) {
+	ctx.w.r.ctx.fixes = append(ctx.w.r.ctx.fixes, fix)
 }
 
 // BlockCheckerCreateFunc is a factory function for BlockChecker

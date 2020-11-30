@@ -3,6 +3,7 @@ package ir
 import (
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parser/position"
+	"github.com/VKCOM/noverify/src/phpdoc"
 )
 
 // TODO: make Alt and AltSyntax field names consistent.
@@ -408,6 +409,7 @@ type ArrowFunctionExpr struct {
 	ReturnsRef    bool
 	Static        bool
 	PhpDocComment string
+	PhpDoc        []phpdoc.CommentPart
 	Params        []Node
 	ReturnType    Node
 	Expr          Node
@@ -453,6 +455,7 @@ type ClosureExpr struct {
 	ReturnsRef    bool
 	Static        bool
 	PhpDocComment string
+	PhpDoc        []phpdoc.CommentPart
 	Params        []Node
 	ClosureUse    *ClosureUseExpr
 	ReturnType    Node
@@ -815,12 +818,23 @@ type MagicConstant struct {
 // The $Value contains interpreted string bytes, if you need a raw
 // string value, use positions and fetch relevant the source bytes.
 //
-// DoubleQuotes tell whether originally this string literal was ""-quoted.
+// $DoubleQuotes tell whether originally this string literal was ""-quoted.
 type String struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Value        string
 	DoubleQuotes bool
+}
+
+// BadString is a string that we couldn't interpret correctly.
+// The $Value contains uninterpreted (raw) string bytes.
+// $Error contains the reason why this string is "bad".
+type BadString struct {
+	FreeFloating freefloating.Collection
+	Position     *position.Position
+	Value        string
+	DoubleQuotes bool
+	Error        string
 }
 
 // BreakStmt is a `break $Expr` statement.
@@ -897,6 +911,7 @@ type ClassMethodStmt struct {
 	Position      *position.Position
 	ReturnsRef    bool
 	PhpDocComment string
+	PhpDoc        []phpdoc.CommentPart
 	MethodName    *Identifier
 	Modifiers     []*Identifier
 	Params        []Node
@@ -1031,6 +1046,7 @@ type FunctionStmt struct {
 	Position      *position.Position
 	ReturnsRef    bool
 	PhpDocComment string
+	PhpDoc        []phpdoc.CommentPart
 	FunctionName  *Identifier
 	Params        []Node
 	ReturnType    Node
@@ -1139,6 +1155,7 @@ type PropertyStmt struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
 	PhpDocComment string
+	PhpDoc        []phpdoc.CommentPart
 	Variable      *SimpleVar
 	Expr          Node
 }

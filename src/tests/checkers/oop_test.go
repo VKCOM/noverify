@@ -615,6 +615,51 @@ func TestStaticResolutionInsideSameClass(t *testing.T) {
 	test.RunAndMatch()
 }
 
+func TestStaticResolutionInsideOtherStaticResolution(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+	class SomeMainClass extends ParentClass {
+		/**
+		* @var string
+		*/
+		public $testProperty = '';
+		
+		/**
+		* Some test method
+		*/
+		public function testMethod() {}
+	}
+	
+	class ParentClass {
+		/** @return static Some */
+		public static function findOne() {
+		// static here
+			return static::findByCondition();
+		}
+		
+		/** @return static Some */
+		public static function findByCondition() {
+			// and static here
+			$_ = static::find();
+			return new static();
+		}
+		
+		/** @return int object_id */
+		public static function find() {
+			return 0;
+		}
+	}
+	
+	function f() {
+		$result = '';
+		
+		$objectB = SomeMainClass::findOne();
+		$objectB->testMethod();
+		
+		$result .= $objectB->testProperty;
+		echo $result;
+	}`)
+}
+
 func TestInheritanceLoop(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -1232,6 +1277,114 @@ interface WithoutAnyModifier {
 		`'f' can't be protected`,
 		`'bad1' can't be private`,
 		`'bad2' can't be protected`,
+	}
+	test.RunAndMatch()
+}
+
+func TestMixinAnnotation(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+namespace QQ\WW;
+
+/**
+ * @mixin SomeQQClass
+ */
+class SomeQQClass1 {
+  /** */
+  public function methodQQ1()
+  {
+    echo "";
+  }
+}
+
+/**
+ * @mixin SomeQQClass1
+ */
+class SomeQQClass {
+  /** */
+  public function methodQQ()
+  {
+    echo "";
+  }
+}
+`)
+
+	test.AddFile(`<?php
+use QQ\WW\SomeQQClass;
+use QQ\WW\SomeQQClass1 as SomeQQClass2;
+
+/**
+ * @mixin SomeQQClass
+ */
+class SomeClass {
+  /** */
+  public function method()
+  {
+    echo $this->methodQQ1();
+  }
+}
+
+/**
+ * @mixin SomeClass
+ */
+class SomeClass2 {
+  /** */
+  public function method2()
+  {
+    echo $this->method(); // Ok, from mixin SomeClass
+  }
+}
+
+/** 
+ * @mixin SomeQQClass2
+ */
+class SomeClass3 {
+  /** */
+  public function method3()
+  {
+    echo "";
+  }
+}
+
+/**
+ * @mixin \SomeClass2
+ * @mixin 
+ */
+class BarWithSomeMixin {
+  /** */
+  public function run()
+  {
+    $this->method(); // Ok, from mixin SomeClass
+    $this->method2(); // Ok, from mixin SomeClass2
+    $this->method3(); // Error, no SomeClass3 mixin
+  }
+
+  /** */
+  public function barWithSomeMixinMethod()
+  {
+    echo "";
+  }
+}
+
+/**
+ * @mixin \BarWithSomeMixin
+ * @mixin SomeClass3
+ * @mixin Boo // Error, Boo not found
+ */
+class Bar {
+  /** */
+  public function run()
+  {
+    $this->method(); // Ok, from mixin SomeClass
+    $this->method2(); // Ok, from mixin SomeClass2
+    $this->method3(); // Ok, from mixin SomeClass3
+    $this->barWithSomeMixinMethod(); // Ok, from mixin BarWithSomeMixin
+  }
+}
+`)
+	test.Expect = []string{
+		`Call to undefined method {\BarWithSomeMixin}->method3()`,
+		`line 4: @mixin tag refers to unknown class \Boo`,
 	}
 	test.RunAndMatch()
 }

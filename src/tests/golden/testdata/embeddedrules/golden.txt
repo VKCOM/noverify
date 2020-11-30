@@ -64,6 +64,9 @@ WARNING bitwiseOps: Used & bitwise operator over bool operands, perhaps && is in
 WARNING bitwiseOps: Used | bitwise operator over bool operands, perhaps || is intended? at testdata/embeddedrules/bitwiseOps.php:9
   $_ = (($x == 1) | ($x == 2)); // Bad 2
         ^^^^^^^^^^^^^^^^^^^^^
+MAYBE   callSimplify: Could simplify to array_key_exists('abc', $array) at testdata/embeddedrules/callSimplify.php:4
+    $_ = in_array('abc', array_keys($array)); // bad
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING offBy1: probably intended to use count-1 as an index at testdata/embeddedrules/offBy1.php:7
   $_ = $xs[count($xs)];
        ^^^^^^^^^^^^^^^

@@ -40,7 +40,8 @@ import (
 //     42 - bool-typed consts are now stored in meta info
 //     43 - define'd const values stored in cache
 //     44 - rename ConstantInfo => ConstInfo
-const cacheVersion = 44
+//     45 - added Mixins field to meta.ClassInfo
+const cacheVersion = 45
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")

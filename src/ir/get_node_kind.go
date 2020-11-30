@@ -29,6 +29,7 @@ const (
 	KindAssignReference
 	KindAssignShiftLeft
 	KindAssignShiftRight
+	KindBadString
 	KindBitwiseAndExpr
 	KindBitwiseNotExpr
 	KindBitwiseOrExpr
@@ -207,6 +208,8 @@ func GetNodeKind(x Node) NodeKind {
 		return KindAssignShiftLeft
 	case *AssignShiftRight:
 		return KindAssignShiftRight
+	case *BadString:
+		return KindBadString
 	case *BitwiseAndExpr:
 		return KindBitwiseAndExpr
 	case *BitwiseNotExpr:
