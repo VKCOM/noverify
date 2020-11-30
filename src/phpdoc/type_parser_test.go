@@ -59,6 +59,10 @@ func TestParser(t *testing.T) {
 		// Nullable types.
 		{`?x`, `Nullable="?x"{Name="x"}`},
 		{`??x`, `Nullable="??x"{Nullable="?x"{Name="x"}}`},
+		// Writing a nullable type incorrectly will result in its type being inferred as Optional.
+		{`x?`, `Optional="x?"{Name="x"}`},
+		// For complex ones, the type will be completely incorrect.
+		{`x[]?`, `Optional="x[]?"{Array="x[]"{Name="x"}}`},
 
 		// Negated (Not) types.
 		{`!x`, `Not="!x"{Name="x"}`},
