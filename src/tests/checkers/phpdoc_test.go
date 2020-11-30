@@ -394,7 +394,7 @@ func TestPHPDocIncorrectSyntaxOptionalTypesType(t *testing.T) {
 	test.Expect = []string{
 		`int?: nullable syntax is ?T, not T?`,
 		`Foo?: nullable syntax is ?T, not T?`,
-		`tring[]?: nullable syntax is ?T, not T?`,
+		`string[]?: nullable syntax is ?T, not T?`,
 	}
 	test.RunAndMatch()
 }
