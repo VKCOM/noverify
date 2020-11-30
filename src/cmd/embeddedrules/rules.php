@@ -261,3 +261,16 @@ function bitwiseOps() {
    */
   $x | $y;
 }
+
+/**
+ * @comment Report call expressions that can be simplified.
+ * @before  in_array($k, array_keys($this->data))
+ * @after   array_key_exists($k, $this->data)
+ */
+function callSimplify() {
+  /**
+   * @maybe Could simplify to array_key_exists($key, $a)
+   * @fix   array_key_exists($key, $a)
+   */
+  in_array($key, array_keys($a));
+}
