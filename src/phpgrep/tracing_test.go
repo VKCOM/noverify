@@ -224,9 +224,10 @@ func TestTracing(t *testing.T) {
 		},
 	}
 
+	var c Compiler
 	for _, test := range tests {
 		var buf bytes.Buffer
-		matcher := mustCompile(t, test.pattern)
+		matcher := mustCompile(t, &c, test.pattern)
 		matcher.m.tracingBuf = &buf
 		matcher.Match(mustParse(t, test.input))
 		trace := strings.Split(buf.String(), "\n")

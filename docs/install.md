@@ -13,8 +13,8 @@ This command installs `noverify` into `$GOPATH/bin/noverify` (which expands into
 Alternatively, you can build `noverify` with version info:
 
 ```sh
-mkdir -p $GOPATH/github.com/VKCOM
-git clone https://github.com/VKCOM/noverify.git $GOPATH/github.com/VKCOM
+mkdir -p $GOPATH/src/github.com/VKCOM
+git clone https://github.com/VKCOM/noverify.git $GOPATH/src/github.com/VKCOM
 
 cd $GOPATH/src/github.com/VKCOM/noverify
 make install

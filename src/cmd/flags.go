@@ -51,6 +51,7 @@ type cmdlineArguments struct {
 	phpExtensionsArg string
 
 	gitignore bool
+	kphp      bool
 
 	gitPushArg                 string
 	gitAuthorsWhitelist        string
@@ -98,7 +99,9 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 	flag.Usage = func() {
 		out := flag.CommandLine.Output()
 		fmt.Fprintf(out, "Usage of noverify:\n")
-		fmt.Fprintf(out, "  $ noverify -stubs-dir=/path/to/phpstorm-stubs -cache-dir=/cache/dir /project/root\n")
+		fmt.Fprintf(out, "  $ noverify [command] -stubs-dir=/path/to/phpstorm-stubs -cache-dir=/cache/dir /project/root\n")
+		fmt.Fprintln(out)
+		GlobalCmds.WriteHelpPage(out)
 		fmt.Fprintln(out)
 		fmt.Fprintf(out, "Flags:\n")
 		flag.PrintDefaults()
@@ -132,6 +135,8 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 
 	flag.BoolVar(&args.gitignore, "gitignore", false,
 		"If enabled, noverify tries to use .gitignore files to exclude matched ignored files from the analysis")
+	flag.BoolVar(&args.kphp, "kphp", false,
+		"If enabled, treat the code as KPHP")
 
 	flag.StringVar(&args.gitRepo, "git", "", "Path to git repository to analyze")
 	flag.StringVar(&args.mutable.gitCommitFrom, "git-commit-from", "", "Analyze changes between commits <git-commit-from> and <git-commit-to>")
