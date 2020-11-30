@@ -101,6 +101,13 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []meta.Type {
 			types = append(types, conv.mapType(a)...)
 		}
 		return types
+
+	case phpdoc.ExprOptional:
+		// Due to the fact that the optional keys for shape are processed in the mapShapeType
+		// function, while the optionality for the key is cleared, and the key itself is not
+		// processed by the mapType function, then in the mapType function the phpdoc.ExprOptional
+		// type can only be in one case, if it is an incorrect syntax of the optional type.
+		conv.warn(e.Value + ": nullable syntax is ?T, not T?")
 	}
 
 	return nil
