@@ -2,6 +2,12 @@
 
 class Foo {}
 
+$_ = array(1,2,3);
+$_ = array( new Foo,    "Hello",
+        1,2,
+        3,4,
+);
+
 function f() {
     $_ = array();
     $_ = array(1,2,);
@@ -26,7 +32,7 @@ function f() {
     b(array(1,2));
 
     // So far, we cannot replace recursively, so replacement in
-    // multidimensional arrays will only be performed for internal arrays.
+    // multidimensional arrays will only be performed for external arrays.
     $_ = array(array(1,2,3), array(1,2,3));
     $_ = array(array("info" => new Foo, "for" => 2, "home" => function() {}), array(1,2,3));
 }
