@@ -2,7 +2,6 @@ package linter
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
@@ -104,11 +103,11 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []meta.Type {
 		return types
 
 	case phpdoc.ExprOptional:
-		// If the type does not denote the shape or tuple type,
-		// then it is most likely an invalid nullable type syntax.
-		if !strings.Contains(e.Value, "shape") && !strings.Contains(e.Value, "tuple") {
-			conv.warn(e.Value + ": nullable syntax is ?T, not T?")
-		}
+		// Due to the fact that the optional keys for shape are processed in the mapShapeType
+		// function, while the optionality for the key is cleared, and the key itself is not
+		// processed by the mapType function, then in the mapType function the phpdoc.ExprOptional
+		// type can only be in one case, if it is an incorrect syntax of the optional type.
+		conv.warn(e.Value + ": nullable syntax is ?T, not T?")
 	}
 
 	return nil

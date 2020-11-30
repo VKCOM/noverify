@@ -361,7 +361,8 @@ func TestPHPDocType(t *testing.T) {
 	function f($x1, $x2, $x3, $x4, $x5, $x6) {
 		$_ = [$x1, $x2, $x3, $x4, $x5, $x6];
 		return [1];
-	}`)
+	}
+`)
 	test.Expect = []string{
 		`[][]string: array syntax is T[], not []T on line 2`,
 		`use float type instead of double`,
@@ -370,6 +371,28 @@ func TestPHPDocType(t *testing.T) {
 		`use bool type instead of boolean`,
 		`int?: nullable syntax is ?T, not T?`,
 		`[]int: array syntax is T[], not []T on line 8`,
+	}
+	test.RunAndMatch()
+}
+
+func TestPHPDocIncorrectSyntaxOptionalTypesType(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+	class Foo {}
+
+	/**
+	 * @param int? $x1 // error
+	 * @param shape(key:int, opt?:int) $x2 // ok, is shape
+	 * @param shape(key?:int, opt?:int) $x3 // ok, is shape
+	 * @param Foo? $x4 // error
+	 */
+	function f1($x1, $x2, $x3, $x4) {
+		$_ = [$x1, $x2, $x3, $x4];
+	}
+`)
+	test.Expect = []string{
+		`int?: nullable syntax is ?T, not T?`,
+		`Foo?: nullable syntax is ?T, not T?`,
 	}
 	test.RunAndMatch()
 }
