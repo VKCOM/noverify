@@ -878,10 +878,10 @@ var_dump($_global);
 `)
 
 	test.Expect = []string{
-		`Used discard variable $_a value`,
-		`Used discard variable $_global value`,
-		`Used discard variable $_FOO value`,
-		`Used discard variable $_global value`,
+		`Used var $_a that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_global that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_FOO that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_global that is supposed to be unused (rename variable if it's intended)`,
 	}
 
 	test.RunAndMatch()
@@ -905,15 +905,32 @@ var_dump($_); // 6. Also forbidden in global scope
 `)
 
 	test.Expect = []string{
-		`Used discard variable $_ value`,
-		`Used discard variable $_ value`,
-		`Used discard variable $_ value`,
-		`Used discard variable $_ value`,
-		`Used discard variable $_ value`,
-		`Used discard variable $_ value`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
 	}
 
 	test.RunAndMatch()
+}
+
+func TestDiscardVarNotUsage(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+function foo(): int { return 0; }
+
+function f() {
+  list($_, $b) = foo(); // $_ is not used.
+  echo $b;
+
+  $_ = function($_, $x) {}; // $_ is not used.
+
+  $_ = fn($_, $x) => $x; // $_ is not used.
+
+  try {} catch(Exception $_) {} // $_ is not used.
+}
+`)
 }
 
 func TestClosureCapture(t *testing.T) {

@@ -561,7 +561,7 @@ $foo = new Foo();`,
 		{
 			Name:    "discardVar",
 			Default: true,
-			Comment: `Report usages of discard variables like $_.`,
+			Comment: `Report the use of variables that were supposed to be unused, like $ _.`,
 		},
 	}
 
