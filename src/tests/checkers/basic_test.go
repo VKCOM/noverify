@@ -923,11 +923,8 @@ function foo(): int { return 0; }
 function f() {
   list($_, $b) = foo(); // $_ is not used.
   echo $b;
-
   $_ = function($_, $x) {}; // $_ is not used.
-
   $_ = fn($_, $x) => $x; // $_ is not used.
-
   try {} catch(Exception $_) {} // $_ is not used.
 }
 `)
