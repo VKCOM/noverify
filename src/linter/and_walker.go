@@ -1,6 +1,8 @@
 package linter
 
 import (
+	"strings"
+
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/solver"
@@ -37,6 +39,29 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 			lit, ok := functionName.(*ir.String)
 			if ok {
 				a.b.ctx.addCustomFunction(lit.Value)
+			}
+		case nm.Value == "is_array":
+			if !meta.IsIndexingComplete() {
+				return false
+			}
+
+			varNode := n.Arg(0).Expr
+			varType := solver.ExprType(a.b.ctx.sc, a.b.r.ctx.st, varNode)
+
+			if varType.HasAtLeastOneArray() {
+				var typeWithOnlyArrays meta.TypesMap
+
+				varType.Iterate(func(typ string) {
+					if strings.HasSuffix(typ, "[]") {
+						typeWithOnlyArrays = typeWithOnlyArrays.AppendString(typ)
+					}
+				})
+
+				a.b.replaceVar(varNode, typeWithOnlyArrays, "is_array", meta.VarAlwaysDefined)
+				a.varsToDelete = append(a.varsToDelete, varNode)
+			} else if !varType.HasOnlyArrays() {
+				a.b.replaceVar(varNode, meta.NewTypesMap("mixed[]"), "is_array", meta.VarAlwaysDefined)
+				a.varsToDelete = append(a.varsToDelete, varNode)
 			}
 		}
 

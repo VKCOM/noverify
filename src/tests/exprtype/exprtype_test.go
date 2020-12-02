@@ -2617,6 +2617,84 @@ function f() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestIsArrayType(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+/** @return mixed */
+function getMixed() {}
+
+/** @return int[]|string[] */
+function getIntOrStringArray() {}
+
+/** @return int[]|null */
+function getIntArrayOrNull() {}
+
+/** @return int|null */
+function getIntOrNull() {}
+
+function f() {
+	// array and non-array
+    $foo = new Foo;
+    if (1) {
+        $foo = [new Foo];
+    }
+    if (is_array($foo)) {
+        exprtype($foo, "\Foo[]");
+    }
+
+
+	// both array
+	$a = [100];
+	if (1) {
+        $a = ["sss"];
+    }
+	if (is_array($a)) {
+        exprtype($a, "int[]|string[]");
+    }
+
+
+	// both non-array
+	$b = 100;
+	if (1) {
+        $b = "hello";
+    }
+	if (is_array($b)) {
+        exprtype($b, "mixed[]");
+    }
+
+
+	// if mixed
+	$c = getMixed();
+	if (is_array($c)) {
+        exprtype($c, "mixed[]");
+    }
+
+
+	// return both array
+	$d = getIntOrStringArray();
+	if (is_array($d)) {
+        exprtype($d, "int[]|string[]");
+    }
+
+
+	// return array and non-array
+	$e = getIntArrayOrNull();
+	if (is_array($e)) {
+        exprtype($e, "int[]");
+    }
+
+
+	// return both non-array
+	$f = getIntOrNull();
+	if (is_array($f)) {
+        exprtype($f, "mixed[]");
+    }
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {
