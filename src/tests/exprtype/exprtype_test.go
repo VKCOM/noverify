@@ -2619,8 +2619,6 @@ function f() {
 
 func TestIsArrayType(t *testing.T) {
 	code := `<?php
-function is_array($var) { return true; }
-
 class Foo {}
 
 /** @return mixed */
@@ -2636,99 +2634,99 @@ function getIntArrayOrNull() {}
 function getIntOrNull() {}
 
 function f() {
-	// simple
-	// array and non-array
-    $foo = new Foo;
-    if (1) {
-        $foo = [new Foo];
-    }
-    if (is_array($foo)) {
-        exprtype($foo, "\Foo[]");
-    }
+  // simple
+  // array and non-array
+  $foo = new Foo;
+  if (1) {
+    $foo = [new Foo];
+  }
+  if (is_array($foo)) {
+    exprtype($foo, "\Foo[]");
+  }
 
 
-	// both array
-	$a = [100];
-	if (1) {
-        $a = ["sss"];
-    }
-	if (is_array($a)) {
-        exprtype($a, "int[]|string[]");
-    }
+  // both array
+  $a = [100];
+  if (1) {
+    $a = ["sss"];
+  }
+  if (is_array($a)) {
+    exprtype($a, "int[]|string[]");
+  }
 
 
 
-	// with function call
-	// both non-array
-	$b = 100;
-	if (1) {
-        $b = "hello";
-    }
-	if (is_array($b)) {
-        exprtype($b, "mixed[]");
-    }
+  // with function call
+  // both non-array
+  $b = 100;
+  if (1) {
+    $b = "hello";
+  }
+  if (is_array($b)) {
+    exprtype($b, "mixed[]");
+  }
 
 
-	// if mixed
-	$c = getMixed();
-	if (is_array($c)) {
-        exprtype($c, "mixed[]");
-    }
+  // if mixed
+  $c = getMixed();
+  if (is_array($c)) {
+    exprtype($c, "mixed[]");
+  }
 
 
-	// return both array
-	$d = getIntOrStringArray();
-	if (is_array($d)) {
-        exprtype($d, "int[]|string[]");
-    }
+  // return both array
+  $d = getIntOrStringArray();
+  if (is_array($d)) {
+    exprtype($d, "int[]|string[]");
+  }
 
 
-	// return array and non-array
-	$e = getIntArrayOrNull();
-	if (is_array($e)) {
-        exprtype($e, "int[]");
-    }
+  // return array and non-array
+  $e = getIntArrayOrNull();
+  if (is_array($e)) {
+    exprtype($e, "int[]");
+  }
 
 
-	// return both non-array
-	$f = getIntOrNull();
-	if (is_array($f)) {
-        exprtype($f, "mixed[]");
-    }
-
-	
-
-	// type after if
-	// if mixed
-	$ca = getMixed();
-	if (is_array($ca)) {
-        exprtype($ca, "mixed[]");
-    }
-	exprtype($ca, "mixed");
+  // return both non-array
+  $f = getIntOrNull();
+  if (is_array($f)) {
+    exprtype($f, "mixed[]");
+  }
 
 
-	// return both array
-	$da = getIntOrStringArray();
-	if (is_array($da)) {
-        exprtype($da, "int[]|string[]");
-    }
-	exprtype($da, "int[]|string[]");
+
+  // type after if
+  // if mixed
+  $ca = getMixed();
+  if (is_array($ca)) {
+    exprtype($ca, "mixed[]");
+  }
+  exprtype($ca, "mixed");
 
 
-	// return array and non-array
-	$ea = getIntArrayOrNull();
-	if (is_array($ea)) {
-        exprtype($ea, "int[]");
-    }
-	exprtype($ea, "int[]|null");
+  // return both array
+  $da = getIntOrStringArray();
+  if (is_array($da)) {
+    exprtype($da, "int[]|string[]");
+  }
+  exprtype($da, "int[]|string[]");
 
 
-	// return both non-array
-	$fa = getIntOrNull();
-	if (is_array($fa)) {
-        exprtype($fa, "mixed[]");
-    }
-	exprtype($fa, "int|null");
+  // return array and non-array
+  $ea = getIntArrayOrNull();
+  if (is_array($ea)) {
+    exprtype($ea, "int[]");
+  }
+  exprtype($ea, "int[]|null");
+
+
+  // return both non-array
+  $fa = getIntOrNull();
+  if (is_array($fa)) {
+    exprtype($fa, "mixed[]");
+  }
+  exprtype($fa, "int|null");
 }
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
