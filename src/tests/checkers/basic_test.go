@@ -127,43 +127,6 @@ function f3() {
 	test.RunAndMatch()
 }
 
-func TestStrictCmp(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-function f($x) {
-  $_ = ($x == false);
-  $_ = (false == $x);
-  $_ = ($x == true);
-  $_ = (true == $x);
-  $_ = ($x == null);
-  $_ = (null == $x);
-  return true;
-}
-
-$_ = (f(0) != false);
-$_ = (false != f(0));
-$_ = (f(0) != true);
-$_ = (true != f(0));
-$_ = (f(0) != null);
-$_ = (null != f(0));
-`)
-	test.Expect = []string{
-		`non-strict comparison with false (use ===)`,
-		`non-strict comparison with false (use ===)`,
-		`non-strict comparison with false (use !==)`,
-		`non-strict comparison with false (use !==)`,
-		`non-strict comparison with true (use ===)`,
-		`non-strict comparison with true (use ===)`,
-		`non-strict comparison with true (use !==)`,
-		`non-strict comparison with true (use !==)`,
-		`non-strict comparison with null (use ===)`,
-		`non-strict comparison with null (use ===)`,
-		`non-strict comparison with null (use !==)`,
-		`non-strict comparison with null (use !==)`,
-	}
-	test.RunAndMatch()
-}
-
 func TestRedundantGlobal(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

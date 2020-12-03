@@ -124,6 +124,54 @@ WARNING precedence: === has higher precedence than | at testdata/embeddedrules/p
 WARNING precedence: !== has higher precedence than | at testdata/embeddedrules/precedence.php:24
   $_ = $x | $mask !== 0;
        ^^^^^^^^^^^^^^^^
+WARNING strictCmp: non-strict comparison (use ===) at testdata/embeddedrules/strictCmp.php:6
+  $_ = ($x == false);
+        ^^^^^^^^^^^
+WARNING strictCmp: non-strict comparison (use ===) at testdata/embeddedrules/strictCmp.php:7
+  $_ = (false == $x);
+        ^^^^^^^^^^^
+WARNING strictCmp: non-strict comparison (use ===) at testdata/embeddedrules/strictCmp.php:8
+  $_ = ($x == true);
+        ^^^^^^^^^^
+WARNING strictCmp: non-strict comparison (use ===) at testdata/embeddedrules/strictCmp.php:9
+  $_ = (true == $x);
+        ^^^^^^^^^^
+WARNING strictCmp: non-strict comparison (use ===) at testdata/embeddedrules/strictCmp.php:10
+  $_ = ($x == null);
+        ^^^^^^^^^^
+WARNING strictCmp: non-strict comparison (use ===) at testdata/embeddedrules/strictCmp.php:11
+  $_ = (null == $x);
+        ^^^^^^^^^^
+WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/embeddedrules/strictCmp.php:25
+  $_ = in_array("str", $a);
+       ^^^^^^^^^^^^^^^^^^^
+WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/embeddedrules/strictCmp.php:26
+  $_ = in_array(retString(), $a);
+       ^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING strictCmp: 3rd argument of array_search must be true when comparing strings at testdata/embeddedrules/strictCmp.php:27
+  $_ = array_search("str", $a);
+       ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING strictCmp: 3rd argument of array_search must be true when comparing strings at testdata/embeddedrules/strictCmp.php:28
+  $_ = array_search(retString(), $a);
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING strictCmp: non-strict comparison (use !==) at testdata/embeddedrules/strictCmp.php:15
+$_ = (nonStrictComparison(0) != false);
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING strictCmp: non-strict comparison (use !==) at testdata/embeddedrules/strictCmp.php:16
+$_ = (false != nonStrictComparison(0));
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING strictCmp: non-strict comparison (use !==) at testdata/embeddedrules/strictCmp.php:17
+$_ = (nonStrictComparison(0) != true);
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING strictCmp: non-strict comparison (use !==) at testdata/embeddedrules/strictCmp.php:18
+$_ = (true != nonStrictComparison(0));
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING strictCmp: non-strict comparison (use !==) at testdata/embeddedrules/strictCmp.php:19
+$_ = (nonStrictComparison(0) != null);
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING strictCmp: non-strict comparison (use !==) at testdata/embeddedrules/strictCmp.php:20
+$_ = (null != nonStrictComparison(0));
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: could rewrite as `(bool)$x` at testdata/embeddedrules/ternarySimplify.php:6
     sink($x ? true : false);
          ^^^^^^^^^^^^^^^^^
