@@ -16,7 +16,13 @@ import (
 type andWalker struct {
 	b *BlockWalker
 
-	varsToDelete []ir.Node
+	varsToDelete  []ir.Node
+	varsToReplace []varToReplace
+}
+
+type varToReplace struct {
+	Node ir.Node
+	Type meta.TypesMap
 }
 
 func (a *andWalker) EnterNode(w ir.Node) (res bool) {
@@ -48,6 +54,9 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 			varNode := n.Arg(0).Expr
 			varType := solver.ExprType(a.b.ctx.sc, a.b.r.ctx.st, varNode)
 
+			// In case we have at least one type representing an array,
+			// we keep only the types representing arrays.
+			// int|Foo[] -> Foo[]
 			if varType.HasAtLeastOneArray() {
 				var typeWithOnlyArrays meta.TypesMap
 
@@ -57,11 +66,17 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 					}
 				})
 
-				a.b.replaceVar(varNode, typeWithOnlyArrays, "is_array", meta.VarAlwaysDefined)
-				a.varsToDelete = append(a.varsToDelete, varNode)
-			} else if !varType.HasOnlyArrays() {
-				a.b.replaceVar(varNode, meta.NewTypesMap("mixed[]"), "is_array", meta.VarAlwaysDefined)
-				a.varsToDelete = append(a.varsToDelete, varNode)
+				a.b.ctx.sc.ReplaceVar(varNode, typeWithOnlyArrays, "is_array", meta.VarAlwaysDefined)
+				a.varsToReplace = append(a.varsToReplace, varToReplace{
+					Node: varNode,
+					Type: varType,
+				})
+			} else if !varType.HasOnlyArrays() { // If we have no arrays at all, the type becomes mixed[].
+				a.b.ctx.sc.ReplaceVar(varNode, meta.NewTypesMap("mixed[]"), "is_array", meta.VarAlwaysDefined)
+				a.varsToReplace = append(a.varsToReplace, varToReplace{
+					Node: varNode,
+					Type: varType,
+				})
 			}
 		}
 

@@ -2619,6 +2619,8 @@ function f() {
 
 func TestIsArrayType(t *testing.T) {
 	code := `<?php
+function is_array($var) { return true; }
+
 class Foo {}
 
 /** @return mixed */
@@ -2634,6 +2636,7 @@ function getIntArrayOrNull() {}
 function getIntOrNull() {}
 
 function f() {
+	// simple
 	// array and non-array
     $foo = new Foo;
     if (1) {
@@ -2654,6 +2657,8 @@ function f() {
     }
 
 
+
+	// with function call
 	// both non-array
 	$b = 100;
 	if (1) {
@@ -2690,6 +2695,40 @@ function f() {
 	if (is_array($f)) {
         exprtype($f, "mixed[]");
     }
+
+	
+
+	// type after if
+	// if mixed
+	$ca = getMixed();
+	if (is_array($ca)) {
+        exprtype($ca, "mixed[]");
+    }
+	exprtype($ca, "mixed");
+
+
+	// return both array
+	$da = getIntOrStringArray();
+	if (is_array($da)) {
+        exprtype($da, "int[]|string[]");
+    }
+	exprtype($da, "int[]|string[]");
+
+
+	// return array and non-array
+	$ea = getIntArrayOrNull();
+	if (is_array($ea)) {
+        exprtype($ea, "int[]");
+    }
+	exprtype($ea, "int[]|null");
+
+
+	// return both non-array
+	$fa = getIntOrNull();
+	if (is_array($fa)) {
+        exprtype($fa, "mixed[]");
+    }
+	exprtype($fa, "int|null");
 }
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})

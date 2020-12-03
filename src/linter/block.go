@@ -1436,12 +1436,16 @@ func (b *BlockWalker) handleTernary(e *ir.TernaryExpr) bool {
 
 func (b *BlockWalker) handleIf(s *ir.IfStmt) bool {
 	var varsToDelete []ir.Node
+	var varsToReplace []varToReplace
 	customMethods := len(b.ctx.customMethods)
 	customFunctions := len(b.ctx.customFunctions)
 	// Remove all isset'ed variables after we're finished with this if statement.
 	defer func() {
 		for _, v := range varsToDelete {
 			b.ctx.sc.DelVar(v, "isset/!empty")
+		}
+		for _, v := range varsToReplace {
+			b.ctx.sc.ReplaceVar(v.Node, v.Type, "type_revert", meta.VarAlwaysDefined)
 		}
 		b.ctx.customMethods = b.ctx.customMethods[:customMethods]
 		b.ctx.customFunctions = b.ctx.customFunctions[:customFunctions]
@@ -1450,6 +1454,7 @@ func (b *BlockWalker) handleIf(s *ir.IfStmt) bool {
 		a := &andWalker{b: b}
 		cond.Walk(a)
 		varsToDelete = append(varsToDelete, a.varsToDelete...)
+		varsToReplace = append(varsToReplace, a.varsToReplace...)
 	}
 
 	// first condition is always executed, so run it in base context
