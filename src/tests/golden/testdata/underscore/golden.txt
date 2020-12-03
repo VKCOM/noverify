@@ -115,9 +115,6 @@ ERROR   undefined: Property {mixed|null}->isEqual does not exist at testdata/und
 ERROR   undefined: Call to undefined method {mixed|null}->isEqual() at testdata/underscore/underscore.php:724
       if(is_object($b) && isset($b->isEqual)) return self::_wrap($b->isEqual($a));
                                                                      ^^^^^^^
-MAYBE   arrayAccess: Array access to non-array type \__|mixed|null at testdata/underscore/underscore.php:725
-      if(is_array($a) && array_key_exists('isEqual', $a)) return self::_wrap($a['isEqual']($b));
-                                                                             ^^
 ERROR   undefined: Property {mixed}->_uniqueId does not exist at testdata/underscore/underscore.php:822
     $_instance->_uniqueId++;
                 ^^^^^^^^^
