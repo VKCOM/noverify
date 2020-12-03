@@ -943,14 +943,55 @@ func (b *BlockWalker) handleStaticCall(e *ir.StaticCallExpr) bool {
 		return true
 	}
 
-	classNameNode, ok := e.Class.(*ir.Name)
-	parentCall := ok && classNameNode.Value == "parent"
-	if parentCall && methodName == "__construct" {
-		b.callsParentConstructor = true
-	}
+	var className string
+	var ok bool
+	var parentCall bool
 
-	className, ok := solver.GetClassName(b.r.ctx.st, e.Class)
-	if !ok {
+	switch n := e.Class.(type) {
+	case *ir.Name:
+		parentCall = n.Value == "parent"
+		if parentCall && methodName == "__construct" {
+			b.callsParentConstructor = true
+		}
+
+		className, ok = solver.GetClassName(b.r.ctx.st, e.Class)
+		if !ok {
+			return true
+		}
+	case *ir.SimpleVar:
+		tp, ok := b.ctx.sc.GetVarNameType(n.Name)
+		if !ok {
+			return true
+		}
+
+		// We need to resolve the types here, as the function may
+		// return a class or a string with the class name.
+		if !tp.IsResolved() {
+			resolvedTypes := solver.ResolveTypes(b.r.ctx.st.CurrentClass, tp, solver.ResolverMap{})
+			tp = meta.NewTypesMapFromMap(resolvedTypes)
+		}
+
+		var isClass bool
+		var isString bool
+		var isMixed bool
+		tp.Iterate(func(typ string) {
+			isString = typ == "string"
+			isMixed = typ == "mixed"
+			if !isString && !isMixed {
+				_, isClass = meta.Info.GetClass(typ)
+			}
+		})
+
+		if !isClass && !isString && !isMixed {
+			return true
+		}
+
+		if !isClass || tp.Len() != 1 {
+			return true
+		}
+
+		className = tp.String()
+	default:
 		return true
 	}
 
