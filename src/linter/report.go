@@ -548,6 +548,12 @@ $foo = new Foo();`,
 			Before:   `sprintf("id=%d")`,
 			After:    `sprintf("id=%d", $id)`,
 		},
+
+		{
+			Name:    "discardVar",
+			Default: true,
+			Comment: `Report the use of variables that were supposed to be unused, like $ _.`,
+		},
 	}
 
 	for _, info := range allChecks {

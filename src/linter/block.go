@@ -1366,6 +1366,9 @@ func (b *BlockWalker) handleVariable(v ir.Node) bool {
 				w.untrackVarName(varName)
 			}
 		}
+		if IsDiscardVar(varName) && !isSuperGlobal(varName) {
+			b.r.Report(v, LevelError, "discardVar", "Used var $%s that is supposed to be unused (rename variable if it's intended)", varName)
+		}
 
 		b.untrackVarName(varName)
 	}
