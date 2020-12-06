@@ -70,6 +70,9 @@ func (m *matcher) eqArrayItemSlice(state *matcherState, xs, ys []*ir.ArrayItemEx
 
 	maybeBacktrack := func(matched bool) bool {
 		if !matched && backXS != nil {
+			if tracingEnabled && m.tracingBuf != nil {
+				fmt.Fprintf(m.tracingBuf, "%*sbacktrack!\n", m.tracingDepth, " • ")
+			}
 			return m.eqArrayItemSlice(state, backXS, backYS)
 		}
 		return matched
@@ -124,6 +127,9 @@ func (m *matcher) eqNodeSlice(state *matcherState, xs, ys []ir.Node) bool {
 
 	maybeBacktrack := func(matched bool) bool {
 		if !matched && backXS != nil {
+			if tracingEnabled && m.tracingBuf != nil {
+				fmt.Fprintf(m.tracingBuf, "%*sbacktrack!\n", m.tracingDepth, " • ")
+			}
 			return m.eqNodeSlice(state, backXS, backYS)
 		}
 		return matched
