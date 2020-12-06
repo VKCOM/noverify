@@ -88,11 +88,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.PowExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 	case *ir.EqualExpr:
-		b.checkStrictCmp(n, n.Left, n.Right)
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
 	case *ir.NotEqualExpr:
-		b.checkStrictCmp(n, n.Left, n.Right)
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
 	case *ir.IdenticalExpr:
@@ -220,33 +218,6 @@ func (b *blockLinter) checkBinaryDupArgs(n, left, right ir.Node) {
 	}
 	if nodeEqual(b.walker.r.ctx.st, left, right) {
 		b.report(n, LevelWarning, "dupSubExpr", "duplicated operands value in %s expression", binaryOpString(n))
-	}
-}
-
-func (b *blockLinter) checkStrictCmp(n ir.Node, left, right ir.Node) {
-	needsStrictCmp := func(n ir.Node) bool {
-		c, ok := n.(*ir.ConstFetchExpr)
-		if !ok {
-			return false
-		}
-		nm := c.Constant
-		return nm.Value == "true" || nm.Value == "false" || nm.Value == "null"
-	}
-
-	var badNode ir.Node
-	switch {
-	case needsStrictCmp(left):
-		badNode = left
-	case needsStrictCmp(right):
-		badNode = right
-	}
-	if badNode != nil {
-		suggest := "==="
-		if _, ok := n.(*ir.NotEqualExpr); ok {
-			suggest = "!=="
-		}
-		b.report(n, LevelWarning, "strictCmp", "non-strict comparison with %s (use %s)",
-			irutil.FmtNode(badNode), suggest)
 	}
 }
 
