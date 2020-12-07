@@ -323,6 +323,42 @@ func resolveStaticPropertyFetch(st *meta.ClassParseState, e *ir.StaticPropertyFe
 	}
 }
 
+type classPropertyFetchInfo struct {
+	constName     string
+	className     string
+	implClassName string
+	info          meta.ConstInfo
+	isFound       bool
+	canAnalyze    bool
+}
+
+func resolveClassConstFetch(st *meta.ClassParseState, e *ir.ClassConstFetchExpr) classPropertyFetchInfo {
+	if !meta.IsIndexingComplete() {
+		return classPropertyFetchInfo{canAnalyze: false}
+	}
+
+	constName := e.ConstantName
+	if constName.Value == `class` || constName.Value == `CLASS` {
+		return classPropertyFetchInfo{canAnalyze: false}
+	}
+
+	className, ok := solver.GetClassName(st, e.Class)
+	if !ok {
+		return classPropertyFetchInfo{canAnalyze: false}
+	}
+
+	info, implClass, found := solver.FindConstant(className, constName.Value)
+
+	return classPropertyFetchInfo{
+		constName:     constName.Value,
+		className:     className,
+		implClassName: implClass,
+		info:          info,
+		isFound:       found,
+		canAnalyze:    true,
+	}
+}
+
 // isCapitalized reports whether s starts with an upper case letter.
 func isCapitalized(s string) bool {
 	ch, _ := utf8.DecodeRuneInString(s)

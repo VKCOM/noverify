@@ -44,6 +44,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.StaticPropertyFetchExpr:
 		b.checkStaticPropertyFetch(n)
 
+	case *ir.ClassConstFetchExpr:
+		b.checkClassConstFetch(n)
+
 	case *ir.NewExpr:
 		b.checkNew(n)
 
@@ -828,6 +831,21 @@ func (b *blockLinter) checkStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) {
 
 	if fetch.isFound && !canAccess(b.walker.r.ctx.st, fetch.info.ClassName, fetch.info.Info.AccessLevel) {
 		b.report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s::$%s", fetch.info.Info.AccessLevel, fetch.info.ClassName, fetch.propertyName)
+	}
+}
+
+func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
+	fetch := resolveClassConstFetch(b.walker.r.ctx.st, e)
+	if !fetch.canAnalyze {
+		return
+	}
+
+	if !fetch.isFound && !b.walker.r.ctx.st.IsTrait {
+		b.walker.r.Report(e.ConstantName, LevelError, "undefined", "Class constant %s::%s does not exist", fetch.className, fetch.constName)
+	}
+
+	if fetch.isFound && !canAccess(b.walker.r.ctx.st, fetch.implClassName, fetch.info.AccessLevel) {
+		b.walker.r.Report(e.ConstantName, LevelError, "accessLevel", "Cannot access %s constant %s::%s", fetch.info.AccessLevel, fetch.implClassName, fetch.constName)
 	}
 }
 

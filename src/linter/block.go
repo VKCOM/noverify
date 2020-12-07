@@ -898,14 +898,10 @@ func (b *BlockWalker) handleStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) b
 }
 
 func (b *BlockWalker) handleArray(arr *ir.ArrayExpr) bool {
-	return b.handleArrayItems(arr, arr.Items)
+	return b.handleArrayItems(arr.Items)
 }
 
-func (b *BlockWalker) handleArrayItems(arr ir.Node, items []*ir.ArrayItemExpr) bool {
-	if !meta.IsIndexingComplete() {
-		return true
-	}
-
+func (b *BlockWalker) handleArrayItems(items []*ir.ArrayItemExpr) bool {
 	for _, item := range items {
 		if item.Val != nil {
 			item.Val.Walk(b)
@@ -919,32 +915,7 @@ func (b *BlockWalker) handleArrayItems(arr ir.Node, items []*ir.ArrayItemExpr) b
 }
 
 func (b *BlockWalker) handleClassConstFetch(e *ir.ClassConstFetchExpr) bool {
-	if !meta.IsIndexingComplete() {
-		return true
-	}
-
-	constName := e.ConstantName
-	if constName.Value == `class` || constName.Value == `CLASS` {
-		return false
-	}
-
-	className, ok := solver.GetClassName(b.r.ctx.st, e.Class)
-	if !ok {
-		return false
-	}
-
-	info, implClass, ok := solver.FindConstant(className, constName.Value)
-
 	e.Class.Walk(b)
-
-	if !ok && !b.r.ctx.st.IsTrait {
-		b.r.Report(e.ConstantName, LevelError, "undefined", "Class constant %s::%s does not exist", className, constName.Value)
-	}
-
-	if ok && !canAccess(b.r.ctx.st, implClass, info.AccessLevel) {
-		b.r.Report(e.ConstantName, LevelError, "accessLevel", "Cannot access %s constant %s::%s", info.AccessLevel, implClass, constName.Value)
-	}
-
 	return false
 }
 
@@ -1077,6 +1048,8 @@ func (b *BlockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 			byRef = true
 		case *ir.SimpleVar:
 			v = u
+		default:
+			continue
 		}
 
 		if !b.ctx.sc.HaveVar(v) && !byRef {
