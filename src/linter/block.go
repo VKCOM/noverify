@@ -2,7 +2,6 @@ package linter
 
 import (
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
@@ -917,41 +916,6 @@ func (b *BlockWalker) handlePropertyFetch(e *ir.PropertyFetchExpr) bool {
 
 	if !meta.IsIndexingComplete() {
 		return false
-	}
-
-	id, ok := e.Property.(*ir.Identifier)
-	if !ok {
-		return false
-	}
-
-	found := false
-	magic := false
-	matchDist := math.MaxInt32
-	var className string
-	var info meta.PropertyInfo
-
-	typ := b.exprType(e.Variable)
-	typ.Find(func(typ string) bool {
-		p, isMagic, ok := findProperty(typ, id.Value)
-		if !ok {
-			return false
-		}
-		found = true
-		if dist := classDistance(b.r.ctx.st, typ); dist < matchDist {
-			matchDist = dist
-			info = p.Info
-			className = p.ClassName
-			magic = isMagic
-		}
-		return matchDist == 0 // Stop if found inside the current class
-	})
-
-	if !found && !magic && !b.r.ctx.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
-		b.r.Report(e.Property, LevelError, "undefined", "Property {%s}->%s does not exist", typ, id.Value)
-	}
-
-	if found && !magic && !canAccess(b.r.ctx.st, className, info.AccessLevel) {
-		b.r.Report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s->%s", info.AccessLevel, className, id.Value)
 	}
 
 	return false

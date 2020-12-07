@@ -239,6 +239,55 @@ func resolveStaticMethodCall(st *meta.ClassParseState, e *ir.StaticCallExpr) sta
 	}
 }
 
+type propertyFetchInfo struct {
+	className         string
+	isFound           bool
+	isMagic           bool
+	info              meta.PropertyInfo
+	propertyFetchType meta.TypesMap
+	propertyNode      *ir.Identifier
+	canAnalyze        bool
+}
+
+func resolvePropertyFetch(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, e *ir.PropertyFetchExpr) propertyFetchInfo {
+	propertyNode, ok := e.Property.(*ir.Identifier)
+	if !ok {
+		return propertyFetchInfo{canAnalyze: false}
+	}
+
+	var found bool
+	var magic bool
+	var matchDist = math.MaxInt32
+	var className string
+	var info meta.PropertyInfo
+
+	propertyFetchType := solver.ExprTypeCustom(sc, st, e.Variable, customTypes)
+	propertyFetchType.Find(func(typ string) bool {
+		p, isMagic, ok := findProperty(typ, propertyNode.Value)
+		if !ok {
+			return false
+		}
+		found = true
+		if dist := classDistance(st, typ); dist < matchDist {
+			matchDist = dist
+			info = p.Info
+			className = p.ClassName
+			magic = isMagic
+		}
+		return matchDist == 0 // Stop if found inside the current class
+	})
+
+	return propertyFetchInfo{
+		className:         className,
+		isFound:           found,
+		isMagic:           magic,
+		info:              info,
+		propertyFetchType: propertyFetchType,
+		propertyNode:      propertyNode,
+		canAnalyze:        true,
+	}
+}
+
 // isCapitalized reports whether s starts with an upper case letter.
 func isCapitalized(s string) bool {
 	ch, _ := utf8.DecodeRuneInString(s)
