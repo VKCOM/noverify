@@ -884,51 +884,17 @@ func (b *BlockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
 }
 
 func (b *BlockWalker) handleStaticCall(e *ir.StaticCallExpr) bool {
-	if !meta.IsIndexingComplete() {
+	call := resolveStaticMethodCall(b.r.ctx.st, e)
+	if !call.canAnalyze {
 		return true
 	}
-
-	var methodName string
-
-	switch id := e.Call.(type) {
-	case *ir.Identifier:
-		methodName = id.Value
-	default:
-		return true
-	}
-
-	classNameNode, ok := e.Class.(*ir.Name)
-	parentCall := ok && classNameNode.Value == "parent"
-	if parentCall && methodName == "__construct" {
-		b.callsParentConstructor = true
-	}
-
-	className, ok := solver.GetClassName(b.r.ctx.st, e.Class)
-	if !ok {
-		return true
-	}
-
-	m, ok := solver.FindMethod(className, methodName)
-	fn := m.Info
+	b.callsParentConstructor = call.isCallsParentConstructor
 
 	e.Class.Walk(b)
 	e.Call.Walk(b)
 
-	magic := haveMagicMethod(className, `__callStatic`)
-	if !ok && !magic && !b.r.ctx.st.IsTrait {
-		b.r.Report(e.Call, LevelError, "undefined", "Call to undefined method %s::%s()", className, methodName)
-	} else if !parentCall && !fn.IsStatic() && !magic && !b.r.ctx.st.IsTrait {
-		// Method is defined.
-		// parent::f() is permitted.
-		b.r.Report(e.Call, LevelWarning, "callStatic", "Calling instance method as static method")
-	}
-
-	if ok && !canAccess(b.r.ctx.st, m.ClassName, fn.AccessLevel) {
-		b.r.Report(e.Call, LevelError, "accessLevel", "Cannot access %s method %s::%s()", fn.AccessLevel, m.ClassName, methodName)
-	}
-
-	b.handleCallArgs(e.Args, fn)
-	b.ctx.exitFlags |= fn.ExitFlags
+	b.handleCallArgs(e.Args, call.methodInfo.Info)
+	b.ctx.exitFlags |= call.methodInfo.Info.ExitFlags
 
 	return false
 }

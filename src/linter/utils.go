@@ -187,6 +187,58 @@ func resolveMethodCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []s
 	}
 }
 
+type staticMethodCallInfo struct {
+	methodName               string
+	className                string
+	methodInfo               solver.FindMethodResult
+	isParentCall             bool
+	isMagic                  bool
+	isFound                  bool
+	isCallsParentConstructor bool
+	canAnalyze               bool
+}
+
+func resolveStaticMethodCall(st *meta.ClassParseState, e *ir.StaticCallExpr) staticMethodCallInfo {
+	if !meta.IsIndexingComplete() {
+		return staticMethodCallInfo{canAnalyze: false}
+	}
+
+	var methodName string
+
+	switch id := e.Call.(type) {
+	case *ir.Identifier:
+		methodName = id.Value
+	default:
+		return staticMethodCallInfo{canAnalyze: false}
+	}
+
+	classNameNode, ok := e.Class.(*ir.Name)
+	parentCall := ok && classNameNode.Value == "parent"
+	var callsParentConstructor bool
+	if parentCall && methodName == "__construct" {
+		callsParentConstructor = true
+	}
+
+	className, ok := solver.GetClassName(st, e.Class)
+	if !ok {
+		return staticMethodCallInfo{canAnalyze: false}
+	}
+
+	m, found := solver.FindMethod(className, methodName)
+	isMagic := haveMagicMethod(className, `__callStatic`)
+
+	return staticMethodCallInfo{
+		methodName:               methodName,
+		className:                className,
+		methodInfo:               m,
+		isMagic:                  isMagic,
+		isParentCall:             parentCall,
+		isFound:                  found,
+		isCallsParentConstructor: callsParentConstructor,
+		canAnalyze:               true,
+	}
+}
+
 // isCapitalized reports whether s starts with an upper case letter.
 func isCapitalized(s string) bool {
 	ch, _ := utf8.DecodeRuneInString(s)

@@ -35,6 +35,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.MethodCallExpr:
 		b.checkMethodCall(n)
 
+	case *ir.StaticCallExpr:
+		b.checkStaticCall(n)
+
 	case *ir.NewExpr:
 		b.checkNew(n)
 
@@ -762,6 +765,25 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 
 	if call.isFound && !call.isMagic && !canAccess(parseState, call.className, call.info.AccessLevel) {
 		b.report(e.Method, LevelError, "accessLevel", "Cannot access %s method %s->%s()", call.info.AccessLevel, call.className, call.methodName)
+	}
+}
+
+func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
+	call := resolveStaticMethodCall(b.walker.r.ctx.st, e)
+	if !call.canAnalyze {
+		return
+	}
+
+	if !call.isFound && !call.isMagic && !b.walker.r.ctx.st.IsTrait {
+		b.report(e.Call, LevelError, "undefined", "Call to undefined method %s::%s()", call.className, call.methodName)
+	} else if !call.isParentCall && !call.methodInfo.Info.IsStatic() && !call.isMagic && !b.walker.r.ctx.st.IsTrait {
+		// Method is defined.
+		// parent::f() is permitted.
+		b.report(e.Call, LevelWarning, "callStatic", "Calling instance method as static method")
+	}
+
+	if call.isFound && !canAccess(b.walker.r.ctx.st, call.methodInfo.ClassName, call.methodInfo.Info.AccessLevel) {
+		b.report(e.Call, LevelError, "accessLevel", "Cannot access %s method %s::%s()", call.methodInfo.Info.AccessLevel, call.methodInfo.ClassName, call.methodName)
 	}
 }
 
