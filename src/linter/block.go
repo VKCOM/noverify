@@ -187,10 +187,6 @@ func (b *BlockWalker) EnterNode(n ir.Node) (res bool) {
 	case *ir.LogicalOrExpr:
 		res = b.handleLogicalOr(s)
 
-	// перенесено в block_linter
-	// case *ir.ArrayDimFetchExpr:
-	// 	b.checkArrayDimFetch(s)
-
 	case *ir.GlobalStmt:
 		b.handleAndCheckGlobalStmt(s)
 		res = false
@@ -342,7 +338,6 @@ func (b *BlockWalker) EnterNode(n ir.Node) (res bool) {
 	return res
 }
 
-// функция не подлежит переносу
 func (b *BlockWalker) checkDupGlobal(s *ir.GlobalStmt) {
 	vars := make(map[string]struct{}, len(s.Vars))
 	for _, v := range s.Vars {
@@ -365,12 +360,8 @@ func (b *BlockWalker) checkDupGlobal(s *ir.GlobalStmt) {
 	}
 }
 
-// функция и обрабатывает и проверяет => checkGlobalStmt -> handleAndCheckGlobalStmt
 func (b *BlockWalker) handleAndCheckGlobalStmt(s *ir.GlobalStmt) {
 	if !b.rootLevel {
-		// функцию нельзя вынести, так как в таком случае
-		// addNonLocalVar добавит переменные и после этого произойдет
-		// проверка, а должно быть наоборот.
 		b.checkDupGlobal(s)
 	}
 
@@ -674,8 +665,6 @@ func (b *BlockWalker) handleCatch(s *ir.CatchStmt) {
 
 // We still need to analyze expressions in isset()/unset()/empty() statements
 func (b *BlockWalker) handleAndCheckIssetUnsetEmptyDimFetch(e *ir.ArrayDimFetchExpr) {
-	// мы не можем вынести отсюда функцию, так как после обработки переменная
-	// уже будет удалена поэтому обработка будет неверной
 	b.linter.checkArrayDimFetch(e)
 
 	switch v := e.Variable.(type) {
@@ -694,55 +683,7 @@ func (b *BlockWalker) handleAndCheckIssetUnsetEmptyDimFetch(e *ir.ArrayDimFetchE
 	}
 }
 
-// deprecated
-// проверка вынесена в block_linter
-func (b *BlockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
-	if !meta.IsIndexingComplete() {
-		return
-	}
-
-	typ := solver.ExprType(b.ctx.sc, b.r.ctx.st, s.Variable)
-
-	var (
-		maybeHaveClasses bool
-		haveArrayAccess  bool
-	)
-
-	typ.Iterate(func(t string) {
-		// FullyQualified class name will have "\" in the beginning
-		if meta.IsClassType(t) {
-			maybeHaveClasses = true
-
-			if !haveArrayAccess && solver.Implements(t, `\ArrayAccess`) {
-				haveArrayAccess = true
-			}
-		}
-	})
-
-	if maybeHaveClasses && !haveArrayAccess {
-		b.r.Report(s.Variable, LevelDoNotReject, "arrayAccess", "Array access to non-array type %s", typ)
-	}
-}
-
-// deprecated
-// проверка вынесена в block_linter
-func (b *BlockWalker) checkCallArgsCount(n ir.Node, args []ir.Node, fn meta.FuncInfo) {
-	if meta.NameNodeEquals(n, "mt_rand") {
-		if len(args) != 0 && len(args) != 2 {
-			b.r.Report(n, LevelWarning, "argCount", "mt_rand expects 0 or 2 args")
-		}
-		return
-	}
-
-	if !enoughArgs(args, fn) {
-		b.r.Report(n, LevelWarning, "argCount", "Too few arguments for %s", meta.NameNodeToString(n))
-	}
-}
-
 func (b *BlockWalker) handleCallArgs(args []ir.Node, fn meta.FuncInfo) {
-	// проверка вынесена в block_linter
-	// b.checkCallArgsCount(n, args, fn)
-
 	for i, arg := range args {
 		if i >= len(fn.Params) {
 			arg.Walk(b)
@@ -1488,9 +1429,6 @@ func (b *BlockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 // handle case when doing assignment like '$a[] = 4;'
 // or call to function that accepts like exec("command", $a)
 func (b *BlockWalker) handleAndCheckDimFetchLValue(e *ir.ArrayDimFetchExpr, reason string, typ meta.TypesMap) {
-	// мы не можем вынести отсюда функцию, так как если у нас будет присвоение
-	// чего с типом массива, то после обработки переменная будет хранить
-	// тип массива и ошибка не найдется, так что проверять нужно до
 	b.linter.checkArrayDimFetch(e)
 
 	switch v := e.Variable.(type) {
