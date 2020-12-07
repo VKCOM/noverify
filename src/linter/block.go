@@ -797,15 +797,15 @@ func (b *BlockWalker) handleFunctionCall(e *ir.FunctionCallExpr) bool {
 
 	e.Function.Walk(b)
 
-	if call.fqName == `\func_get_args` {
+	switch call.funcName {
+	case `\func_get_args`:
 		b.callsFuncGetArgs = true
-	}
-
-	if call.fqName == `\compact` {
+	case `\compact`:
 		b.handleCompactCallArgs(e.Args)
-	} else {
+	default:
 		b.handleCallArgs(e.Args, call.info)
 	}
+
 	b.ctx.exitFlags |= call.info.ExitFlags
 
 	return false

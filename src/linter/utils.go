@@ -91,10 +91,10 @@ func typesMapToTypeExpr(p *phpdoc.TypeParser, m meta.TypesMap) phpdoc.Type {
 }
 
 type funcCallInfo struct {
-	canAnalyze bool
-	defined    bool
-	fqName     string
+	funcName   string
 	info       meta.FuncInfo
+	isFound    bool
+	canAnalyze bool
 }
 
 // TODO: bundle type solving params somehow.
@@ -108,18 +108,18 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 
 	fqName, ok := solver.GetFuncName(st, call.Function)
 	if ok {
-		res.fqName = fqName
-		res.info, res.defined = meta.Info.GetFunction(fqName)
+		res.funcName = fqName
+		res.info, res.isFound = meta.Info.GetFunction(fqName)
 	} else {
 		solver.ExprTypeCustom(sc, st, call.Function, customTypes).Iterate(func(typ string) {
-			if res.defined {
+			if res.isFound {
 				return
 			}
 			m, ok := solver.FindMethod(typ, `__invoke`)
 			res.info = m.Info
-			res.defined = ok
+			res.isFound = ok
 		})
-		if !res.defined {
+		if !res.isFound {
 			res.canAnalyze = false
 		}
 	}
@@ -130,10 +130,10 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 type methodCallInfo struct {
 	methodName       string
 	className        string
-	isFound          bool
-	isMagic          bool
 	info             meta.FuncInfo
 	methodCallerType meta.TypesMap
+	isFound          bool
+	isMagic          bool
 	canAnalyze       bool
 }
 
@@ -241,11 +241,11 @@ func resolveStaticMethodCall(st *meta.ClassParseState, e *ir.StaticCallExpr) sta
 
 type propertyFetchInfo struct {
 	className         string
-	isFound           bool
-	isMagic           bool
 	info              meta.PropertyInfo
 	propertyFetchType meta.TypesMap
 	propertyNode      *ir.Identifier
+	isFound           bool
+	isMagic           bool
 	canAnalyze        bool
 }
 

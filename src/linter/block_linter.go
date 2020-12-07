@@ -684,7 +684,7 @@ func (b *blockLinter) checkDeprecatedFunctionCall(e *ir.FunctionCallExpr, call *
 }
 
 func (b *blockLinter) checkFunctionAvailability(e *ir.FunctionCallExpr, call *funcCallInfo) {
-	if !call.defined && !b.walker.ctx.customFunctionExists(e.Function) {
+	if !call.isFound && !b.walker.ctx.customFunctionExists(e.Function) {
 		b.report(e.Function, LevelError, "undefined", "Call to undefined function %s", meta.NameNodeToString(e.Function))
 	}
 }
@@ -702,7 +702,7 @@ func (b *blockLinter) checkCallArgsCount(n ir.Node, args []ir.Node, fn meta.Func
 	}
 
 	if fn.Name == `\compact` || fn.Name == `\func_get_args` {
-		// для этих функций проверять количество аргументов не нужно
+		// there is no need to check the number of arguments for these functions.
 		return
 	}
 
@@ -713,13 +713,13 @@ func (b *blockLinter) checkCallArgsCount(n ir.Node, args []ir.Node, fn meta.Func
 
 func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 	call := resolveFunctionCall(b.walker.ctx.sc, b.walker.r.ctx.st, b.walker.ctx.customTypes, e)
-	fqName := call.fqName
+	fqName := call.funcName
 
 	if call.canAnalyze {
 		b.checkCallArgs(e.Function, e.Args, call.info)
 		b.checkDeprecatedFunctionCall(e, &call)
 		b.checkFunctionAvailability(e, &call)
-		b.walker.r.checkNameCase(e.Function, call.fqName, call.info.Name)
+		b.walker.r.checkNameCase(e.Function, call.funcName, call.info.Name)
 	}
 
 	switch fqName {
