@@ -26,6 +26,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.ArrayExpr:
 		b.checkArray(n)
 
+	case *ir.ArrayDimFetchExpr:
+		b.checkArrayDimFetch(n)
+
 	case *ir.FunctionCallExpr:
 		b.checkFunctionCall(n)
 
@@ -173,6 +176,30 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 func (b *blockLinter) report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
 	b.walker.r.Report(n, level, checkName, msg, args...)
+}
+
+func (b *blockLinter) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
+	typ := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, s.Variable)
+
+	var (
+		maybeHaveClasses bool
+		haveArrayAccess  bool
+	)
+
+	typ.Iterate(func(t string) {
+		// FullyQualified class name will have "\" in the beginning
+		if meta.IsClassType(t) {
+			maybeHaveClasses = true
+
+			if !haveArrayAccess && solver.Implements(t, `\ArrayAccess`) {
+				haveArrayAccess = true
+			}
+		}
+	})
+
+	if maybeHaveClasses && !haveArrayAccess {
+		b.report(s.Variable, LevelDoNotReject, "arrayAccess", "Array access to non-array type %s", typ)
+	}
 }
 
 func (b *blockLinter) checkAssign(a *ir.Assign) {
@@ -631,10 +658,56 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 	}
 }
 
-func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
-	fqName, ok := solver.GetFuncName(b.walker.r.ctx.st, e.Function)
-	if !ok {
+func (b *blockLinter) checkDeprecatedFunctionCall(e *ir.FunctionCallExpr, call *funcCallInfo) {
+	if !call.info.Doc.Deprecated {
 		return
+	}
+
+	if call.info.Doc.DeprecationNote != "" {
+		b.report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s (%s)", meta.NameNodeToString(e.Function), call.info.Doc.DeprecationNote)
+		return
+	}
+
+	b.report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s", meta.NameNodeToString(e.Function))
+}
+
+func (b *blockLinter) checkFunctionAvailability(e *ir.FunctionCallExpr, call *funcCallInfo) {
+	if !call.defined && !b.walker.ctx.customFunctionExists(e.Function) {
+		b.report(e.Function, LevelError, "undefined", "Call to undefined function %s", meta.NameNodeToString(e.Function))
+	}
+}
+
+func (b *blockLinter) checkCallArgs(n ir.Node, args []ir.Node, fn meta.FuncInfo) {
+	b.checkCallArgsCount(n, args, fn)
+}
+
+func (b *blockLinter) checkCallArgsCount(n ir.Node, args []ir.Node, fn meta.FuncInfo) {
+	if fn.Name == `\mt_rand` {
+		if len(args) != 0 && len(args) != 2 {
+			b.report(n, LevelWarning, "argCount", "mt_rand expects 0 or 2 args")
+		}
+		return
+	}
+
+	if fn.Name == `\compact` || fn.Name == `\func_get_args` {
+		// для этих функций проверять количество аргументов не нужно
+		return
+	}
+
+	if !enoughArgs(args, fn) {
+		b.report(n, LevelWarning, "argCount", "Too few arguments for %s", meta.NameNodeToString(n))
+	}
+}
+
+func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
+	call := resolveFunctionCall(b.walker.ctx.sc, b.walker.r.ctx.st, b.walker.ctx.customTypes, e)
+	fqName := call.fqName
+
+	if call.canAnalyze {
+		b.checkCallArgs(e.Function, e.Args, call.info)
+		b.checkDeprecatedFunctionCall(e, &call)
+		b.checkFunctionAvailability(e, &call)
+		b.walker.r.checkNameCase(e.Function, call.fqName, call.info.Name)
 	}
 
 	switch fqName {

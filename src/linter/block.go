@@ -188,11 +188,12 @@ func (b *BlockWalker) EnterNode(n ir.Node) (res bool) {
 	case *ir.LogicalOrExpr:
 		res = b.handleLogicalOr(s)
 
-	case *ir.ArrayDimFetchExpr:
-		b.checkArrayDimFetch(s)
+	// перенесено в block_linter
+	// case *ir.ArrayDimFetchExpr:
+	// 	b.checkArrayDimFetch(s)
 
 	case *ir.GlobalStmt:
-		b.checkGlobalStmt(s)
+		b.handleAndCheckGlobalStmt(s)
 		res = false
 	case *ir.StaticStmt:
 		for _, vv := range s.Vars {
@@ -342,6 +343,7 @@ func (b *BlockWalker) EnterNode(n ir.Node) (res bool) {
 	return res
 }
 
+// функция не подлежит переносу
 func (b *BlockWalker) checkDupGlobal(s *ir.GlobalStmt) {
 	vars := make(map[string]struct{}, len(s.Vars))
 	for _, v := range s.Vars {
@@ -364,8 +366,12 @@ func (b *BlockWalker) checkDupGlobal(s *ir.GlobalStmt) {
 	}
 }
 
-func (b *BlockWalker) checkGlobalStmt(s *ir.GlobalStmt) {
+// функция и обрабатывает и проверяет => checkGlobalStmt -> handleAndCheckGlobalStmt
+func (b *BlockWalker) handleAndCheckGlobalStmt(s *ir.GlobalStmt) {
 	if !b.rootLevel {
+		// функцию нельзя вынести, так как в таком случае
+		// addNonLocalVar добавит переменные и после этого произойдет
+		// проверка, а должно быть наоборот.
 		b.checkDupGlobal(s)
 	}
 
@@ -514,7 +520,7 @@ func (b *BlockWalker) handleUnset(s *ir.UnsetStmt) bool {
 		case *ir.Var:
 			b.ctx.sc.DelVar(v, "unset")
 		case *ir.ArrayDimFetchExpr:
-			b.handleIssetDimFetch(v) // unset($a["something"]) does not unset $a itself, so no delVar here
+			b.handleAndCheckIssetUnsetEmptyDimFetch(v) // unset($a["something"]) does not unset $a itself, so no delVar here
 		default:
 			if v != nil {
 				v.Walk(b)
@@ -533,7 +539,7 @@ func (b *BlockWalker) handleIsset(s *ir.IssetExpr) bool {
 		case *ir.SimpleVar:
 			b.untrackVarName(v.Name)
 		case *ir.ArrayDimFetchExpr:
-			b.handleIssetDimFetch(v)
+			b.handleAndCheckIssetUnsetEmptyDimFetch(v)
 		default:
 			if v != nil {
 				v.Walk(b)
@@ -551,7 +557,7 @@ func (b *BlockWalker) handleEmpty(s *ir.EmptyExpr) bool {
 	case *ir.SimpleVar:
 		b.untrackVarName(v.Name)
 	case *ir.ArrayDimFetchExpr:
-		b.handleIssetDimFetch(v)
+		b.handleAndCheckIssetUnsetEmptyDimFetch(v)
 	default:
 		if v != nil {
 			v.Walk(b)
@@ -668,14 +674,16 @@ func (b *BlockWalker) handleCatch(s *ir.CatchStmt) {
 }
 
 // We still need to analyze expressions in isset()/unset()/empty() statements
-func (b *BlockWalker) handleIssetDimFetch(e *ir.ArrayDimFetchExpr) {
-	b.checkArrayDimFetch(e)
+func (b *BlockWalker) handleAndCheckIssetUnsetEmptyDimFetch(e *ir.ArrayDimFetchExpr) {
+	// мы не можем вынести отсюда функцию, так как после обработки переменная
+	// уже будет удалена поэтому обработка будет неверной
+	b.linter.checkArrayDimFetch(e)
 
 	switch v := e.Variable.(type) {
 	case *ir.SimpleVar:
 		b.untrackVarName(v.Name)
 	case *ir.ArrayDimFetchExpr:
-		b.handleIssetDimFetch(v)
+		b.handleAndCheckIssetUnsetEmptyDimFetch(v)
 	default:
 		if v != nil {
 			v.Walk(b)
@@ -687,6 +695,8 @@ func (b *BlockWalker) handleIssetDimFetch(e *ir.ArrayDimFetchExpr) {
 	}
 }
 
+// deprecated
+// проверка вынесена в block_linter
 func (b *BlockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
 	if !meta.IsIndexingComplete() {
 		return
@@ -715,7 +725,9 @@ func (b *BlockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
 	}
 }
 
-func (b *BlockWalker) handleArgsCount(n ir.Node, args []ir.Node, fn meta.FuncInfo) {
+// deprecated
+// проверка вынесена в block_linter
+func (b *BlockWalker) checkCallArgsCount(n ir.Node, args []ir.Node, fn meta.FuncInfo) {
 	if meta.NameNodeEquals(n, "mt_rand") {
 		if len(args) != 0 && len(args) != 2 {
 			b.r.Report(n, LevelWarning, "argCount", "mt_rand expects 0 or 2 args")
@@ -728,8 +740,9 @@ func (b *BlockWalker) handleArgsCount(n ir.Node, args []ir.Node, fn meta.FuncInf
 	}
 }
 
-func (b *BlockWalker) handleCallArgs(n ir.Node, args []ir.Node, fn meta.FuncInfo) {
-	b.handleArgsCount(n, args, fn)
+func (b *BlockWalker) handleCallArgs(args []ir.Node, fn meta.FuncInfo) {
+	// проверка вынесена в block_linter
+	// b.checkCallArgsCount(n, args, fn)
 
 	for i, arg := range args {
 		if i >= len(fn.Params) {
@@ -750,7 +763,7 @@ func (b *BlockWalker) handleCallArgs(n ir.Node, args []ir.Node, fn meta.FuncInfo
 			a.Walk(b)
 		case *ir.ArrayDimFetchExpr:
 			if ref {
-				b.handleDimFetchLValue(a, "call_with_ref", meta.MixedType)
+				b.handleAndCheckDimFetchLValue(a, "call_with_ref", meta.MixedType)
 				break
 			}
 			a.Walk(b)
@@ -783,26 +796,28 @@ func (b *BlockWalker) handleCallArgs(n ir.Node, args []ir.Node, fn meta.FuncInfo
 func (b *BlockWalker) handleFunctionCall(e *ir.FunctionCallExpr) bool {
 	call := resolveFunctionCall(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, e)
 
-	if meta.IsIndexingComplete() {
-		if !call.canAnalyze {
-			return true
-		}
+	// перенесено в block_linter
+	// if meta.IsIndexingComplete() {
+	// 	if !call.canAnalyze {
+	// 		return true
+	// 	}
+	//
+	// 	if !call.defined && !b.ctx.customFunctionExists(e.Function) {
+	// 		b.r.Report(e.Function, LevelError, "undefined", "Call to undefined function %s", meta.NameNodeToString(e.Function))
+	// 	}
+	// 	b.r.checkNameCase(e.Function, call.fqName, call.info.Name)
+	// }
 
-		if !call.defined && !b.ctx.customFunctionExists(e.Function) {
-			b.r.Report(e.Function, LevelError, "undefined", "Call to undefined function %s", meta.NameNodeToString(e.Function))
-		}
-		b.r.checkNameCase(e.Function, call.fqName, call.info.Name)
-	}
-
-	if call.info.Doc.Deprecated {
-		if call.info.Doc.DeprecationNote != "" {
-			b.r.Report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s (%s)",
-				meta.NameNodeToString(e.Function), call.info.Doc.DeprecationNote)
-		} else {
-			b.r.Report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s",
-				meta.NameNodeToString(e.Function))
-		}
-	}
+	// перенесено в block_linter
+	// if call.info.Doc.Deprecated {
+	// 	if call.info.Doc.DeprecationNote != "" {
+	// 		b.r.Report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s (%s)",
+	// 			meta.NameNodeToString(e.Function), call.info.Doc.DeprecationNote)
+	// 	} else {
+	// 		b.r.Report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s",
+	// 			meta.NameNodeToString(e.Function))
+	// 	}
+	// }
 
 	e.Function.Walk(b)
 
@@ -813,7 +828,7 @@ func (b *BlockWalker) handleFunctionCall(e *ir.FunctionCallExpr) bool {
 	if call.fqName == `\compact` {
 		b.handleCompactCallArgs(e.Args)
 	} else {
-		b.handleCallArgs(e.Function, e.Args, call.info)
+		b.handleCallArgs(e.Args, call.info)
 	}
 	b.ctx.exitFlags |= call.info.ExitFlags
 
@@ -866,7 +881,7 @@ func (b *BlockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
 	}
 
 	var (
-		matchDist   = int(math.MaxInt32)
+		matchDist   = math.MaxInt32
 		foundMethod bool
 		magic       bool
 		fn          meta.FuncInfo
@@ -922,7 +937,7 @@ func (b *BlockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
 	}
 
 	if !magic {
-		b.handleCallArgs(e.Method, e.Args, fn)
+		b.handleCallArgs(e.Args, fn)
 	}
 	b.ctx.exitFlags |= fn.ExitFlags
 
@@ -973,7 +988,7 @@ func (b *BlockWalker) handleStaticCall(e *ir.StaticCallExpr) bool {
 		b.r.Report(e.Call, LevelError, "accessLevel", "Cannot access %s method %s::%s()", fn.AccessLevel, m.ClassName, methodName)
 	}
 
-	b.handleCallArgs(e.Call, e.Args, fn)
+	b.handleCallArgs(e.Args, fn)
 	b.ctx.exitFlags |= fn.ExitFlags
 
 	return false
@@ -1006,7 +1021,7 @@ func (b *BlockWalker) handlePropertyFetch(e *ir.PropertyFetchExpr) bool {
 
 	found := false
 	magic := false
-	matchDist := int(math.MaxInt32)
+	matchDist := math.MaxInt32
 	var className string
 	var info meta.PropertyInfo
 
@@ -1685,8 +1700,11 @@ func (b *BlockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 // if $a was previously undefined,
 // handle case when doing assignment like '$a[] = 4;'
 // or call to function that accepts like exec("command", $a)
-func (b *BlockWalker) handleDimFetchLValue(e *ir.ArrayDimFetchExpr, reason string, typ meta.TypesMap) {
-	b.checkArrayDimFetch(e)
+func (b *BlockWalker) handleAndCheckDimFetchLValue(e *ir.ArrayDimFetchExpr, reason string, typ meta.TypesMap) {
+	// мы не можем вынести отсюда функцию, так как если у нас будет присвоение
+	// чего с типом массива, то после обработки переменная будет хранить
+	// тип массива и ошибка не найдется, так что проверять нужно до
+	b.linter.checkArrayDimFetch(e)
 
 	switch v := e.Variable.(type) {
 	case *ir.Var, *ir.SimpleVar:
@@ -1697,7 +1715,7 @@ func (b *BlockWalker) handleDimFetchLValue(e *ir.ArrayDimFetchExpr, reason strin
 		b.addVar(v, arrTyp, reason, meta.VarAlwaysDefined)
 		b.handleVariable(v)
 	case *ir.ArrayDimFetchExpr:
-		b.handleDimFetchLValue(v, reason, meta.MixedType)
+		b.handleAndCheckDimFetchLValue(v, reason, meta.MixedType)
 	default:
 		// probably not assignable?
 		v.Walk(b)
@@ -1712,7 +1730,7 @@ func (b *BlockWalker) handleDimFetchLValue(e *ir.ArrayDimFetchExpr, reason strin
 func (b *BlockWalker) handleAssignReference(a *ir.AssignReference) bool {
 	switch v := a.Variable.(type) {
 	case *ir.ArrayDimFetchExpr:
-		b.handleDimFetchLValue(v, "assign_array", meta.MixedType)
+		b.handleAndCheckDimFetchLValue(v, "assign_array", meta.MixedType)
 		a.Expression.Walk(b)
 		return false
 	case *ir.Var, *ir.SimpleVar:
@@ -1828,7 +1846,7 @@ func (b *BlockWalker) handleAssign(a *ir.Assign) bool {
 	switch v := a.Variable.(type) {
 	case *ir.ArrayDimFetchExpr:
 		typ := solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression)
-		b.handleDimFetchLValue(v, "assign_array", typ)
+		b.handleAndCheckDimFetchLValue(v, "assign_array", typ)
 		return false
 	case *ir.SimpleVar:
 		b.paramClobberCheck(v)
