@@ -795,29 +795,6 @@ func (b *BlockWalker) handleCallArgs(args []ir.Node, fn meta.FuncInfo) {
 func (b *BlockWalker) handleFunctionCall(e *ir.FunctionCallExpr) bool {
 	call := resolveFunctionCall(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, e)
 
-	// перенесено в block_linter
-	// if meta.IsIndexingComplete() {
-	// 	if !call.canAnalyze {
-	// 		return true
-	// 	}
-	//
-	// 	if !call.defined && !b.ctx.customFunctionExists(e.Function) {
-	// 		b.r.Report(e.Function, LevelError, "undefined", "Call to undefined function %s", meta.NameNodeToString(e.Function))
-	// 	}
-	// 	b.r.checkNameCase(e.Function, call.fqName, call.info.Name)
-	// }
-
-	// перенесено в block_linter
-	// if call.info.Doc.Deprecated {
-	// 	if call.info.Doc.DeprecationNote != "" {
-	// 		b.r.Report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s (%s)",
-	// 			meta.NameNodeToString(e.Function), call.info.Doc.DeprecationNote)
-	// 	} else {
-	// 		b.r.Report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s",
-	// 			meta.NameNodeToString(e.Function))
-	// 	}
-	// }
-
 	e.Function.Walk(b)
 
 	if call.fqName == `\func_get_args` {
@@ -867,9 +844,6 @@ func (b *BlockWalker) handleCompactCallArgs(args []ir.Node) {
 
 func (b *BlockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
 	call := resolveMethodCall(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, e)
-	if !call.canAnalyze {
-		return true
-	}
 
 	e.Variable.Walk(b)
 	e.Method.Walk(b)
@@ -884,9 +858,6 @@ func (b *BlockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
 
 func (b *BlockWalker) handleStaticCall(e *ir.StaticCallExpr) bool {
 	call := resolveStaticMethodCall(b.r.ctx.st, e)
-	if !call.canAnalyze {
-		return true
-	}
 	b.callsParentConstructor = call.isCallsParentConstructor
 
 	e.Class.Walk(b)
@@ -913,11 +884,6 @@ func (b *BlockWalker) isThisInsideClosure(varNode ir.Node) bool {
 func (b *BlockWalker) handlePropertyFetch(e *ir.PropertyFetchExpr) bool {
 	e.Variable.Walk(b)
 	e.Property.Walk(b)
-
-	if !meta.IsIndexingComplete() {
-		return false
-	}
-
 	return false
 }
 
