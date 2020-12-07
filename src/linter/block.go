@@ -1106,6 +1106,10 @@ func (b *BlockWalker) handleClassConstFetch(e *ir.ClassConstFetchExpr) bool {
 
 	info, implClass, ok := solver.FindConstant(className, constName.Value)
 
+	if ok {
+		b.r.checkNameCase(e.Class, className, implClass)
+	}
+
 	e.Class.Walk(b)
 
 	if !ok && !b.r.ctx.st.IsTrait {

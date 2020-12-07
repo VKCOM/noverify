@@ -1821,6 +1821,8 @@ func TestNameCase(t *testing.T) {
 	test.AddFile(`<?php
 class FooBar {
   public function method_a() {}
+
+  const TheConst = 10;
 }
 
 class Baz extends foobar {}
@@ -1831,12 +1833,15 @@ $foo->Method_a();
 function func_a() {}
 
 func_A();
+
+$_ = FOObar::TheConst;
 `)
 	test.Expect = []string{
 		`\Foobar should be spelled \FooBar`,
 		`\foobar should be spelled \FooBar`,
 		`Method_a should be spelled method_a`,
 		`\func_A should be spelled \func_a`,
+		`\FOObar should be spelled \FooBar`,
 	}
 	linttest.RunFilterMatch(test, `nameCase`)
 }
