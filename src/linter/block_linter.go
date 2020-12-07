@@ -32,6 +32,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.FunctionCallExpr:
 		b.checkFunctionCall(n)
 
+	case *ir.MethodCallExpr:
+		b.checkMethodCall(n)
+
 	case *ir.NewExpr:
 		b.checkNew(n)
 
@@ -722,6 +725,43 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 		}
 		// TODO: handle fprintf as well?
 		b.checkFormatString(e, e.Arg(0))
+	}
+}
+
+func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
+	parseState := b.walker.r.ctx.st
+
+	call := resolveMethodCall(b.walker.ctx.sc, parseState, b.walker.ctx.customTypes, e)
+	if !call.canAnalyze {
+		return
+	}
+
+	if !call.isFound && !call.isMagic && !parseState.IsTrait && !b.walker.isThisInsideClosure(e.Variable) {
+		// The method is undefined but we permit calling it if `method_exists`
+		// was called prior to that call.
+		if !b.walker.ctx.customMethodExists(e.Variable, call.methodName) {
+			b.report(e.Method, LevelError, "undefined", "Call to undefined method {%s}->%s()", call.methodCallerType, call.methodName)
+		}
+	} else if !call.isMagic && !parseState.IsTrait {
+		// Method is defined.
+		b.walker.r.checkNameCase(e.Method, call.methodName, call.info.Name)
+		if call.info.IsStatic() {
+			b.report(e.Method, LevelWarning, "callStatic", "Calling static method as instance method")
+		}
+	}
+
+	if call.info.Doc.Deprecated {
+		if call.info.Doc.DeprecationNote != "" {
+			b.report(e.Method, LevelDoNotReject, "deprecated", "Call to deprecated method {%s}->%s() (%s)",
+				call.methodCallerType, call.methodName, call.info.Doc.DeprecationNote)
+		} else {
+			b.report(e.Method, LevelDoNotReject, "deprecated", "Call to deprecated method {%s}->%s()",
+				call.methodCallerType, call.methodName)
+		}
+	}
+
+	if call.isFound && !call.isMagic && !canAccess(parseState, call.className, call.info.AccessLevel) {
+		b.report(e.Method, LevelError, "accessLevel", "Cannot access %s method %s->%s()", call.info.AccessLevel, call.className, call.methodName)
 	}
 }
 

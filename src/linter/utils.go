@@ -2,6 +2,7 @@ package linter
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -100,10 +101,10 @@ type funcCallInfo struct {
 // We usually need ClassParseState+Scope+[]CustomType.
 func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, call *ir.FunctionCallExpr) funcCallInfo {
 	var res funcCallInfo
-	res.canAnalyze = true
 	if !meta.IsIndexingComplete() {
 		return res
 	}
+	res.canAnalyze = true
 
 	fqName, ok := solver.GetFuncName(st, call.Function)
 	if ok {
@@ -124,6 +125,66 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 	}
 
 	return res
+}
+
+type methodCallInfo struct {
+	methodName       string
+	className        string
+	isFound          bool
+	isMagic          bool
+	info             meta.FuncInfo
+	methodCallerType meta.TypesMap
+	canAnalyze       bool
+}
+
+func resolveMethodCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, e *ir.MethodCallExpr) methodCallInfo {
+	if !meta.IsIndexingComplete() {
+		return methodCallInfo{canAnalyze: false}
+	}
+
+	var methodName string
+
+	switch id := e.Method.(type) {
+	case *ir.Identifier:
+		methodName = id.Value
+	default:
+		return methodCallInfo{canAnalyze: false}
+	}
+
+	var (
+		matchDist   = math.MaxInt32
+		foundMethod bool
+		magic       bool
+		fn          meta.FuncInfo
+		className   string
+	)
+
+	methodCallerType := solver.ExprTypeCustom(sc, st, e.Variable, customTypes)
+
+	methodCallerType.Find(func(typ string) bool {
+		m, isMagic, ok := findMethod(typ, methodName)
+		if !ok {
+			return false
+		}
+		foundMethod = true
+		if dist := classDistance(st, typ); dist < matchDist {
+			matchDist = dist
+			fn = m.Info
+			className = m.ClassName
+			magic = isMagic
+		}
+		return matchDist == 0 // Stop if found inside the current class
+	})
+
+	return methodCallInfo{
+		methodName:       methodName,
+		className:        className,
+		isFound:          foundMethod,
+		isMagic:          magic,
+		info:             fn,
+		methodCallerType: methodCallerType,
+		canAnalyze:       true,
+	}
 }
 
 // isCapitalized reports whether s starts with an upper case letter.

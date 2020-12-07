@@ -867,79 +867,18 @@ func (b *BlockWalker) handleCompactCallArgs(args []ir.Node) {
 }
 
 func (b *BlockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
-	if !meta.IsIndexingComplete() {
+	call := resolveMethodCall(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, e)
+	if !call.canAnalyze {
 		return true
 	}
-
-	var methodName string
-
-	switch id := e.Method.(type) {
-	case *ir.Identifier:
-		methodName = id.Value
-	default:
-		return true
-	}
-
-	var (
-		matchDist   = math.MaxInt32
-		foundMethod bool
-		magic       bool
-		fn          meta.FuncInfo
-		className   string
-	)
-
-	exprType := b.exprType(e.Variable)
-
-	exprType.Find(func(typ string) bool {
-		m, isMagic, ok := findMethod(typ, methodName)
-		if !ok {
-			return false
-		}
-		foundMethod = true
-		if dist := classDistance(b.r.ctx.st, typ); dist < matchDist {
-			matchDist = dist
-			fn = m.Info
-			className = m.ClassName
-			magic = isMagic
-		}
-		return matchDist == 0 // Stop if found inside the current class
-	})
 
 	e.Variable.Walk(b)
 	e.Method.Walk(b)
 
-	if !foundMethod && !magic && !b.r.ctx.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
-		// The method is undefined but we permit calling it if `method_exists`
-		// was called prior to that call.
-		if !b.ctx.customMethodExists(e.Variable, methodName) {
-			b.r.Report(e.Method, LevelError, "undefined", "Call to undefined method {%s}->%s()", exprType, methodName)
-		}
-	} else if !magic && !b.r.ctx.st.IsTrait {
-		// Method is defined.
-		b.r.checkNameCase(e.Method, methodName, fn.Name)
-		if fn.IsStatic() {
-			b.r.Report(e.Method, LevelWarning, "callStatic", "Calling static method as instance method")
-		}
+	if !call.isMagic {
+		b.handleCallArgs(e.Args, call.info)
 	}
-
-	if fn.Doc.Deprecated {
-		if fn.Doc.DeprecationNote != "" {
-			b.r.Report(e.Method, LevelDoNotReject, "deprecated", "Call to deprecated method {%s}->%s() (%s)",
-				exprType, methodName, fn.Doc.DeprecationNote)
-		} else {
-			b.r.Report(e.Method, LevelDoNotReject, "deprecated", "Call to deprecated method {%s}->%s()",
-				exprType, methodName)
-		}
-	}
-
-	if foundMethod && !magic && !canAccess(b.r.ctx.st, className, fn.AccessLevel) {
-		b.r.Report(e.Method, LevelError, "accessLevel", "Cannot access %s method %s->%s()", fn.AccessLevel, className, methodName)
-	}
-
-	if !magic {
-		b.handleCallArgs(e.Args, fn)
-	}
-	b.ctx.exitFlags |= fn.ExitFlags
+	b.ctx.exitFlags |= call.info.ExitFlags
 
 	return false
 }
