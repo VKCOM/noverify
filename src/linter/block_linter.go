@@ -745,6 +745,10 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 		return
 	}
 
+	if !call.isMagic {
+		b.checkCallArgs(e.Method, e.Args, call.info)
+	}
+
 	if !call.isFound && !call.isMagic && !parseState.IsTrait && !b.walker.isThisInsideClosure(e.Variable) {
 		// The method is undefined but we permit calling it if `method_exists`
 		// was called prior to that call.
@@ -778,6 +782,10 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 	call := resolveStaticMethodCall(b.walker.r.ctx.st, e)
 	if !call.canAnalyze {
 		return
+	}
+
+	if !call.isMagic {
+		b.checkCallArgs(e.Call, e.Args, call.methodInfo.Info)
 	}
 
 	if !call.isFound && !call.isMagic && !b.walker.r.ctx.st.IsTrait {
