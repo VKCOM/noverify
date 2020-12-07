@@ -890,29 +890,8 @@ func (b *BlockWalker) handlePropertyFetch(e *ir.PropertyFetchExpr) bool {
 func (b *BlockWalker) handleStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) bool {
 	e.Class.Walk(b)
 
-	if !meta.IsIndexingComplete() {
-		return false
-	}
-
-	sv, ok := e.Property.(*ir.SimpleVar)
-	if !ok {
-		vv := e.Property.(*ir.Var)
-		vv.Expr.Walk(b)
-		return false
-	}
-
-	className, ok := solver.GetClassName(b.r.ctx.st, e.Class)
-	if !ok {
-		return false
-	}
-
-	p, ok := solver.FindProperty(className, "$"+sv.Name)
-	if !ok && !b.r.ctx.st.IsTrait {
-		b.r.Report(e.Property, LevelError, "undefined", "Property %s::$%s does not exist", className, sv.Name)
-	}
-
-	if ok && !canAccess(b.r.ctx.st, p.ClassName, p.Info.AccessLevel) {
-		b.r.Report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s::$%s", p.Info.AccessLevel, p.ClassName, sv.Name)
+	if propertyVarNode, propertyIsVarNode := e.Property.(*ir.Var); propertyIsVarNode {
+		propertyVarNode.Expr.Walk(b)
 	}
 
 	return false

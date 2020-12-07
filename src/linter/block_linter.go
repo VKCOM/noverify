@@ -41,6 +41,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.PropertyFetchExpr:
 		b.checkPropertyFetch(n)
 
+	case *ir.StaticPropertyFetchExpr:
+		b.checkStaticPropertyFetch(n)
+
 	case *ir.NewExpr:
 		b.checkNew(n)
 
@@ -802,6 +805,21 @@ func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
 
 	if fetch.isFound && !fetch.isMagic && !canAccess(b.walker.r.ctx.st, fetch.className, fetch.info.AccessLevel) {
 		b.report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s->%s", fetch.info.AccessLevel, fetch.className, fetch.propertyNode.Value)
+	}
+}
+
+func (b *blockLinter) checkStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) {
+	fetch := resolveStaticPropertyFetch(b.walker.r.ctx.st, e)
+	if !fetch.canAnalyze {
+		return
+	}
+
+	if !fetch.isFound && !b.walker.r.ctx.st.IsTrait {
+		b.report(e.Property, LevelError, "undefined", "Property %s::$%s does not exist", fetch.className, fetch.propertyName)
+	}
+
+	if fetch.isFound && !canAccess(b.walker.r.ctx.st, fetch.info.ClassName, fetch.info.Info.AccessLevel) {
+		b.report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s::$%s", fetch.info.Info.AccessLevel, fetch.info.ClassName, fetch.propertyName)
 	}
 }
 
