@@ -191,6 +191,52 @@ func (b *blockLinter) checkTryStmt(s *ir.TryStmt) {
 	if s.Finally != nil {
 		b.walker.r.checkKeywordCase(s.Finally, "finally")
 	}
+
+	if len(s.Catches) > 1 {
+		b.checkCatchOrder(s)
+	}
+}
+
+func (b *blockLinter) checkCatchOrder(s *ir.TryStmt) {
+	// This code has O(n^2) complexity, but there are usually no more than 3-4 catch clauses in the code.
+	// We could avoid some extra work if we would not add leaf types to the classes list,
+	// but we don't have that information available.
+
+	classes := make([]string, 0, len(s.Catches))
+
+	for _, c := range s.Catches {
+		c := c.(*ir.CatchStmt)
+		if len(c.Types) > 1 {
+			return // give up on A|B catch
+		}
+
+		class, ok := solver.GetClassName(b.walker.r.ctx.st, c.Types[0])
+		if !ok {
+			continue
+		}
+
+		add := true
+		for _, otherClass := range classes {
+			if class == otherClass {
+				b.report(c.Types[0], LevelWarning, "dupCatch", "duplicated catch on %s", class)
+				add = false
+				break
+			}
+			if solver.Extends(class, otherClass) {
+				b.report(c.Types[0], LevelWarning, "catchOrder", "catch %s block will never run as it extends %s which is caught above", class, otherClass)
+				add = false
+				break
+			}
+			if solver.Implements(class, otherClass) {
+				b.report(c.Types[0], LevelWarning, "catchOrder", "catch %s block will never run as it implements %s which is caught above", class, otherClass)
+				add = false
+				break
+			}
+		}
+		if add {
+			classes = append(classes, class)
+		}
+	}
 }
 
 func (b *blockLinter) checkBitwiseOp(n, left, right ir.Node) {
