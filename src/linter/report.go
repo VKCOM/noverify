@@ -554,6 +554,42 @@ $foo = new Foo();`,
 			Default: true,
 			Comment: `Report the use of variables that were supposed to be unused, like $ _.`,
 		},
+
+		{
+			Name:     "dupCatch",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report duplicated catch clauses.`,
+			Before: `try {
+  // some code
+} catch (Exception1 $e) {
+} catch (Exception1 $e) {} // <- note the typo`,
+			After: `try {
+  // some code
+} catch (Exception1 $e) {
+} catch (Exception2 $e) {}`,
+		},
+
+		{
+			Name:     "catchOrder",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report erroneous catch order in try statements.`,
+			Before: `try {
+  // some code
+} catch (Exception $e) {
+  // bad: this will catch both Exception and TimeoutException
+} catch (TimeoutException $e) {
+  // bad: this is a dead code
+}`,
+			After: `try {
+  // some code
+} catch (TimeoutException $e) {
+  // good: it can catch TimeoutException
+} catch (Exception $e) {
+  // good: it will catch everything else
+}`,
+		},
 	}
 
 	for _, info := range allChecks {
