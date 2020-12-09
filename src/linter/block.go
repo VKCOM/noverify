@@ -510,7 +510,7 @@ func (b *BlockWalker) handleUnset(s *ir.UnsetStmt) bool {
 		case *ir.Var:
 			b.ctx.sc.DelVar(v, "unset")
 		case *ir.ArrayDimFetchExpr:
-			b.handleAndCheckIssetUnsetEmptyDimFetch(v) // unset($a["something"]) does not unset $a itself, so no delVar here
+			b.handleIssetDimFetch(v) // unset($a["something"]) does not unset $a itself, so no delVar here
 		default:
 			if v != nil {
 				v.Walk(b)
@@ -529,7 +529,7 @@ func (b *BlockWalker) handleIsset(s *ir.IssetExpr) bool {
 		case *ir.SimpleVar:
 			b.untrackVarName(v.Name)
 		case *ir.ArrayDimFetchExpr:
-			b.handleAndCheckIssetUnsetEmptyDimFetch(v)
+			b.handleIssetDimFetch(v)
 		default:
 			if v != nil {
 				v.Walk(b)
@@ -547,7 +547,7 @@ func (b *BlockWalker) handleEmpty(s *ir.EmptyExpr) bool {
 	case *ir.SimpleVar:
 		b.untrackVarName(v.Name)
 	case *ir.ArrayDimFetchExpr:
-		b.handleAndCheckIssetUnsetEmptyDimFetch(v)
+		b.handleIssetDimFetch(v)
 	default:
 		if v != nil {
 			v.Walk(b)
@@ -664,14 +664,14 @@ func (b *BlockWalker) handleCatch(s *ir.CatchStmt) {
 }
 
 // We still need to analyze expressions in isset()/unset()/empty() statements
-func (b *BlockWalker) handleAndCheckIssetUnsetEmptyDimFetch(e *ir.ArrayDimFetchExpr) {
+func (b *BlockWalker) handleIssetDimFetch(e *ir.ArrayDimFetchExpr) {
 	b.linter.checkArrayDimFetch(e)
 
 	switch v := e.Variable.(type) {
 	case *ir.SimpleVar:
 		b.untrackVarName(v.Name)
 	case *ir.ArrayDimFetchExpr:
-		b.handleAndCheckIssetUnsetEmptyDimFetch(v)
+		b.handleIssetDimFetch(v)
 	default:
 		if v != nil {
 			v.Walk(b)
