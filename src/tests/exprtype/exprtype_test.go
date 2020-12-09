@@ -2619,9 +2619,6 @@ function f() {
 
 func TestArrayFirstLastType(t *testing.T) {
 	code := `<?php
-function array_last_element(array $el) {}
-function array_first_element(array $el) {}
-
 class Foo {}
 
 /**
@@ -2703,7 +2700,7 @@ function f1() {
 	exprtype($m, "mixed");
 }
 `
-	runExprTypeTest(t, &exprTypeTestParams{code: code})
+	runExprTypeTest(t, &exprTypeTestParams{code: code, stubs: "<?php /* no code */"})
 }
 
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {

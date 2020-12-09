@@ -202,31 +202,7 @@ func binaryPlusOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right ir.N
 	return binaryMathOpType(sc, cs, left, right, custom)
 }
 
-func kphpInternalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir.FunctionCallExpr, custom []CustomType) (typ meta.TypesMap, isInternalKphpFunc bool) {
-	if nm == `\array_last_element` || nm == `\array_first_element` {
-		if len(c.Args) == 0 {
-			return meta.MixedType, true
-		}
-
-		typ = ExprTypeCustom(sc, cs, c.Arg(0).Expr, custom)
-
-		if !typ.HasAtLeastOneArray() {
-			return meta.MixedType, true
-		}
-
-		typ = typ.ArrayElemType()
-		return typ, true
-	}
-
-	return meta.MixedType, false
-}
-
 func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir.FunctionCallExpr, custom []CustomType) (typ meta.TypesMap, ok bool) {
-	typ, isInternalKphpFunc := kphpInternalFuncType(nm, sc, cs, c, custom)
-	if isInternalKphpFunc {
-		return typ, true
-	}
-
 	fn, ok := meta.GetInternalFunctionInfo(nm)
 	if !ok || fn.Typ.IsEmpty() {
 		return meta.TypesMap{}, false
