@@ -133,14 +133,12 @@ func (i *info) FindConstants(substr string) (res []string) {
 
 func (i *info) InitKphpStubs() {
 	internalFunctions.H[`\array_first_element`] = FuncInfo{
-		Pos:          ElementPosition{},
 		Name:         `\array_first_element`,
 		Params:       []FuncParam{{Name: "el"}},
 		MinParamsCnt: 1,
 		Typ:          NewTypesMap("mixed"),
 	}
 	internalFunctions.H[`\array_last_element`] = FuncInfo{
-		Pos:          ElementPosition{},
 		Name:         `\array_last_element`,
 		Params:       []FuncParam{{Name: "el"}},
 		MinParamsCnt: 1,
