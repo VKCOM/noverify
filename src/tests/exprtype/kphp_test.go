@@ -3,7 +3,7 @@ package exprtype_test
 import (
 	"testing"
 
-	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/config"
 )
 
 func TestExprTypeAny(t *testing.T) {
@@ -25,7 +25,7 @@ exprtype(get_any_arr(), 'int[][]|mixed[][]');
 }
 
 func runKPHPExprTypeTest(t *testing.T, params *exprTypeTestParams) {
-	linter.KPHP = true
+	config.KPHP = true
 	runExprTypeTest(t, params)
-	linter.KPHP = false
+	config.KPHP = false
 }

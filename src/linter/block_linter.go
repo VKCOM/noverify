@@ -8,6 +8,7 @@ import (
 	"github.com/VKCOM/noverify/src/constfold"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/quickfix"
@@ -526,7 +527,7 @@ func (b *blockLinter) checkContinueStmt(c *ir.ContinueStmt) {
 }
 
 func (b *blockLinter) addFixForArray(arr *ir.ArrayExpr) {
-	if !ApplyQuickFixes {
+	if !config.ApplyQuickFixes {
 		return
 	}
 

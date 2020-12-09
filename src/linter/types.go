@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/solver"
@@ -247,7 +248,7 @@ func (n typeNormalizer) normalizeType(typ *meta.Type) {
 		return
 	}
 
-	if typ.Elem == "any" && KPHP {
+	if typ.Elem == "any" && config.KPHP {
 		// `any` is a special KPHP type that is more-or-less
 		// identical to `mixed|object`. In PHP, `mixed` already covers
 		// objects, so there is no need to add `object`.

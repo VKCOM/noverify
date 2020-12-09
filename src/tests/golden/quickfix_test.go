@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
@@ -91,9 +91,9 @@ func (t *quickFixTest) runQuickFixTest() {
 
 			test := linttest.NewSuite(t)
 			test.AddNamedFile(fixedFileName, string(testFileContent))
-			linter.ApplyQuickFixes = true
+			config.ApplyQuickFixes = true
 			defer func() {
-				linter.ApplyQuickFixes = false
+				config.ApplyQuickFixes = false
 			}()
 			_ = test.RunLinter()
 

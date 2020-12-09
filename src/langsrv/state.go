@@ -7,12 +7,14 @@ import (
 	"sync"
 	"time"
 
+	"go.lsp.dev/uri"
+
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/vscode"
-	"go.lsp.dev/uri"
 )
 
 type openedFile struct {
@@ -110,7 +112,7 @@ func concurrentParseChanges(changes []vscode.FileEvent) {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < linter.MaxConcurrency; i++ {
+	for i := 0; i < config.MaxConcurrency; i++ {
 		wg.Add(1)
 		go func() {
 			for filename := range filenamesCh {
@@ -174,7 +176,7 @@ func externalChanges(changes []vscode.FileEvent) {
 
 // getFileContents reads specified file and returns UTF-8 encoded bytes.
 func getFileContents(filename string) ([]byte, error) {
-	r, err := linter.SrcInput.NewReader(filename)
+	r, err := config.SrcInput.NewReader(filename)
 	if err != nil {
 		return nil, fmt.Errorf("open input: %v", err)
 	}

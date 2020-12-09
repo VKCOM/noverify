@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/config"
 )
 
 func Check(cfg *MainConfig) (int, error) {
@@ -24,7 +25,7 @@ func Check(cfg *MainConfig) (int, error) {
 	bindFlags(ruleSets, &args)
 	flag.Parse()
 	if args.disableCache {
-		linter.CacheDir = ""
+		config.CacheDir = ""
 	}
 	if cfg.AfterFlagParse != nil {
 		cfg.AfterFlagParse(InitEnvironment{

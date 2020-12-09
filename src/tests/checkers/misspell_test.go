@@ -5,12 +5,12 @@ import (
 
 	"github.com/client9/misspell"
 
-	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
 func init() {
-	linter.TypoFixer = misspell.New()
+	config.TypoFixer = misspell.New()
 }
 
 //nolint:misspell

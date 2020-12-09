@@ -8,6 +8,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/workspace"
 )
@@ -66,7 +67,7 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		oldReports = linter.ParseFilenames(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, linter.ExcludeRegex), l.allowDisableRegex)
+		oldReports = linter.ParseFilenames(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, config.ExcludeRegex), l.allowDisableRegex)
 		log.Printf("Parsed old commit for %s (%d reports)", time.Since(start), len(oldReports))
 
 		meta.ResetInfo()
@@ -82,7 +83,7 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		reports = linter.ParseFilenames(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, linter.ExcludeRegex), l.allowDisableRegex)
+		reports = linter.ParseFilenames(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, config.ExcludeRegex), l.allowDisableRegex)
 		log.Printf("Parsed new commit in %s (%d reports)", time.Since(start), len(reports))
 	} else {
 		start := time.Now()

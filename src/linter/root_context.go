@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/VKCOM/noverify/src/baseline"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/quickfix"
 )
@@ -27,9 +28,9 @@ type rootContext struct {
 
 func newRootContext(workerCtx *WorkerContext, st *meta.ClassParseState) rootContext {
 	var p baseline.FileProfile
-	if BaselineProfile != nil {
+	if config.BaselineProfile != nil {
 		filename := filepath.Base(st.CurrentFile)
-		p = BaselineProfile.Files[filename]
+		p = config.BaselineProfile.Files[filename]
 	}
 	return rootContext{
 		WorkerContext: workerCtx,

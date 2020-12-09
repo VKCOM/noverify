@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"sync"
 
+	"go.lsp.dev/uri"
+
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/php/parser/position"
@@ -15,7 +18,6 @@ import (
 	"github.com/VKCOM/noverify/src/state"
 	"github.com/VKCOM/noverify/src/vscode"
 	"github.com/VKCOM/noverify/src/workspace"
-	"go.lsp.dev/uri"
 )
 
 type referencesWalker struct {
@@ -193,7 +195,7 @@ func refPosition(filename string, pos *position.Position) vscode.Location {
 type parseFn func(filename string, rootNode ir.Node, contents []byte, parser *php7.Parser) []vscode.Location
 
 func findReferences(substr string, parse parseFn) []vscode.Location {
-	cb := workspace.ReadFilenames(linter.AnalysisFiles, nil)
+	cb := workspace.ReadFilenames(config.AnalysisFiles, nil)
 	ch := make(chan workspace.FileInfo)
 	go func() {
 		cb(ch)
@@ -210,7 +212,7 @@ func findReferences(substr string, parse parseFn) []vscode.Location {
 
 	openMapCopy := copyOpenMap()
 
-	for i := 0; i < linter.MaxConcurrency; i++ {
+	for i := 0; i < config.MaxConcurrency; i++ {
 		wg.Add(1)
 		go func() {
 			for fi := range ch {

@@ -20,6 +20,7 @@ import (
 	"github.com/VKCOM/noverify/src/langsrv"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/linter/lintapi"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/rules"
@@ -87,12 +88,12 @@ func isEnabled(l *linterRunner, r *linter.Report) bool {
 		return false
 	}
 
-	if linter.ExcludeRegex == nil {
+	if config.ExcludeRegex == nil {
 		return true
 	}
 
 	// Disabled by a file comment.
-	return !linter.ExcludeRegex.MatchString(r.Filename)
+	return !config.ExcludeRegex.MatchString(r.Filename)
 }
 
 // Run executes linter main function.
@@ -207,7 +208,7 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 	lintdebug.Register(func(msg string) { linter.DebugMessage("%s", msg) })
 	go linter.MemoryLimiterThread()
 
-	if linter.LangServer {
+	if config.LangServer {
 		langsrv.RegisterDebug()
 		langsrv.Start()
 		return 0, nil
@@ -223,7 +224,7 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 		return gitMain(&l, cfg)
 	}
 
-	linter.AnalysisFiles = flag.Args()
+	config.AnalysisFiles = flag.Args()
 
 	log.Printf("Indexing %+v", flag.Args())
 	linter.ParseFilenames(workspace.ReadFilenames(flag.Args(), nil), l.allowDisableRegex)
@@ -364,8 +365,8 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 }
 
 func initStubs() error {
-	if linter.StubsDir != "" {
-		linter.InitStubsFromDir(linter.StubsDir)
+	if config.StubsDir != "" {
+		linter.InitStubsFromDir(config.StubsDir)
 		return nil
 	}
 

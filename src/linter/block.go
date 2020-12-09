@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/phpdoc"
@@ -1159,7 +1160,7 @@ func (b *BlockWalker) handleForeach(s *ir.ForeachStmt) bool {
 	if !ok {
 		return false
 	}
-	if IsDiscardVar(key.Name) {
+	if config.IsDiscardVar(key.Name) {
 		return false
 	}
 
@@ -1366,7 +1367,7 @@ func (b *BlockWalker) handleVariable(v ir.Node) bool {
 				w.untrackVarName(varName)
 			}
 		}
-		if IsDiscardVar(varName) && !isSuperGlobal(varName) {
+		if config.IsDiscardVar(varName) && !isSuperGlobal(varName) {
 			b.r.Report(v, LevelError, "discardVar", "Used var $%s that is supposed to be unused (rename variable if it's intended)", varName)
 		}
 
@@ -1963,7 +1964,7 @@ func (b *BlockWalker) flushUnused() {
 
 	visitedMap := make(map[ir.Node]struct{})
 	for name, nodes := range b.unusedVars {
-		if IsDiscardVar(name) {
+		if config.IsDiscardVar(name) {
 			// blank identifier is a way to tell linter (and PHPStorm) that result is explicitly unused
 			continue
 		}

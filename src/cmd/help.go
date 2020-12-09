@@ -7,6 +7,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/lintdoc"
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/rules"
 )
 
@@ -46,7 +47,7 @@ func Help(*MainConfig) (int, error) {
 
 func declareRules() {
 	p := rules.NewParser()
-	linter.Rules = rules.NewSet()
+	config.Rules = rules.NewSet()
 	ruleSets, err := InitEmbeddedRules(p, func(r rules.Rule) bool { return true })
 	if err != nil {
 		panic(err)

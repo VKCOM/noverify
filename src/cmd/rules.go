@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/cmd/embeddedrules"
-	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/rules"
 )
 
@@ -97,7 +97,7 @@ func appendRuleSet(rset *rules.Set, filter func(r rules.Rule) bool) {
 		}
 	}
 
-	appendRules(linter.Rules.Any, rset.Any)
-	appendRules(linter.Rules.Root, rset.Root)
-	appendRules(linter.Rules.Local, rset.Local)
+	appendRules(config.Rules.Any, rset.Any)
+	appendRules(config.Rules.Root, rset.Root)
+	appendRules(config.Rules.Local, rset.Local)
 }

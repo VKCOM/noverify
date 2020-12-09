@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/rules"
 )
@@ -455,8 +456,8 @@ func runRulesTest(t *testing.T, test *linttest.Suite, rfile string) {
 	if err != nil {
 		t.Fatalf("parse rules: %v", err)
 	}
-	oldRules := linter.Rules
-	linter.Rules = rset
+	oldRules := config.Rules
+	config.Rules = rset
 
 	ruleNamesSet := make(map[string]struct{}, len(rset.Names))
 	for _, name := range rset.Names {
@@ -471,5 +472,5 @@ func runRulesTest(t *testing.T, test *linttest.Suite, rfile string) {
 	}
 	test.Match(filtered)
 
-	linter.Rules = oldRules
+	config.Rules = oldRules
 }

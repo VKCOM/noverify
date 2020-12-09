@@ -1,6 +1,9 @@
 package linter
 
-import "github.com/VKCOM/noverify/src/lintdebug"
+import (
+	"github.com/VKCOM/noverify/src/lintdebug"
+	"github.com/VKCOM/noverify/src/linter/config"
+)
 
 // ParseWaiter waits to allow parsing of a file.
 type ParseWaiter struct {
@@ -29,13 +32,13 @@ func MemoryLimiterThread() {
 		select {
 		case req := <-plusCh:
 			used += req.size
-			if used > MaxFileSize {
+			if used > config.MaxFileSize {
 				lintdebug.Send("Limiting concurrency to save memory: currently parsing %s, total file size %d KiB", req.filename, used/1024)
 				plusCh = nil
 			}
 		case sz := <-minusCh:
 			used -= sz
-			if used <= MaxFileSize {
+			if used <= config.MaxFileSize {
 				plusCh = parseStartCh
 			}
 		}

@@ -10,6 +10,7 @@ import (
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/lintdebug"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/workspace"
@@ -70,7 +71,7 @@ func AnalyzeFileRootLevel(rootNode ir.Node, d *RootWalker) {
 
 // DebugMessage is used to actually print debug messages.
 func DebugMessage(msg string, args ...interface{}) {
-	if Debug {
+	if config.Debug {
 		log.Printf(msg, args...)
 	}
 }
@@ -89,7 +90,7 @@ func ParseFilenames(readFileNamesFunc workspace.ReadCallback, allowDisabled *reg
 
 	needReports := meta.IsIndexingComplete()
 
-	lintdebug.Send("Parsing using %d cores", MaxConcurrency)
+	lintdebug.Send("Parsing using %d cores", config.MaxConcurrency)
 
 	filenamesCh := make(chan workspace.FileInfo, 512)
 
@@ -99,10 +100,10 @@ func ParseFilenames(readFileNamesFunc workspace.ReadCallback, allowDisabled *reg
 	}()
 
 	var wg sync.WaitGroup
-	reportsCh := make(chan []*Report, MaxConcurrency)
+	reportsCh := make(chan []*Report, config.MaxConcurrency)
 
-	wg.Add(MaxConcurrency)
-	for i := 0; i < MaxConcurrency; i++ {
+	wg.Add(config.MaxConcurrency)
+	for i := 0; i < config.MaxConcurrency; i++ {
 		go func(id int) {
 			var w *Worker
 			if needReports {
@@ -122,8 +123,8 @@ func ParseFilenames(readFileNamesFunc workspace.ReadCallback, allowDisabled *reg
 	wg.Wait()
 
 	var allReports []*Report
-	for i := 0; i < MaxConcurrency; i++ {
-		allReports = append(allReports, (<-reportsCh)...)
+	for i := 0; i < config.MaxConcurrency; i++ {
+		allReports = append(allReports, <-reportsCh...)
 	}
 
 	return allReports

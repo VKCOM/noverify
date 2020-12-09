@@ -788,10 +788,6 @@ func reportListToMap(list []*Report) map[string][]*Report {
 	return res
 }
 
-func isUnderscore(s string) bool {
-	return s == "_"
-}
-
 func linterError(filename, format string, args ...interface{}) {
 	log.Printf("error: "+filename+": "+format, args...)
 }

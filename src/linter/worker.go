@@ -21,6 +21,7 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/lintdebug"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/quickfix"
@@ -94,9 +95,9 @@ func (w *Worker) ParseContents(filename string, contents []byte, lineRanges []gi
 
 	var rd inputs.ReadCloseSizer
 	if contents == nil {
-		rd, err = SrcInput.NewReader(filename)
+		rd, err = config.SrcInput.NewReader(filename)
 	} else {
-		rd, err = SrcInput.NewBytesReader(filename, contents)
+		rd, err = config.SrcInput.NewBytesReader(filename, contents)
 	}
 	if err != nil {
 		log.Panicf("open source input: %v", err)
@@ -115,14 +116,14 @@ func (w *Worker) ParseContents(filename string, contents []byte, lineRanges []gi
 	parser.WithFreeFloating()
 	parser.Parse()
 
-	atomic.AddInt64(&initParseTime, int64(time.Since(start)))
+	atomic.AddInt64(&config.InitParseTime, int64(time.Since(start)))
 
 	return w.analyzeFile(filename, contents, parser, lineRanges)
 }
 
 // IndexFile parses the file and fills in the meta info. Can use cache.
 func (w *Worker) IndexFile(filename string, contents []byte) error {
-	if CacheDir == "" {
+	if config.CacheDir == "" {
 		_, w, err := w.ParseContents(filename, contents, nil)
 		if w != nil {
 			updateMetaInfo(filename, &w.meta)
@@ -159,7 +160,7 @@ func (w *Worker) IndexFile(filename string, contents []byte) error {
 		cacheFilenamePart = filename[0:1] + "_" + filename[2:]
 	}
 
-	cacheFile := filepath.Join(CacheDir, cacheFilenamePart+"."+contentsHash)
+	cacheFile := filepath.Join(config.CacheDir, cacheFilenamePart+"."+contentsHash)
 
 	start := time.Now()
 	fp, err := os.Open(cacheFile)
@@ -192,10 +193,10 @@ func (w *Worker) IndexFile(filename string, contents []byte) error {
 func (w *Worker) doParseFile(f workspace.FileInfo) []*Report {
 	var err error
 
-	if DebugParseDuration > 0 {
+	if config.DebugParseDuration > 0 {
 		start := time.Now()
 		defer func() {
-			if dur := time.Since(start); dur > DebugParseDuration {
+			if dur := time.Since(start); dur > config.DebugParseDuration {
 				log.Printf("Parsing of %s took %s", f.Filename, dur)
 			}
 		}()
@@ -239,9 +240,9 @@ func (w *Worker) analyzeFile(filename string, contents []byte, parser *php7.Pars
 
 		// We clone rules sets to remove all rules that
 		// should not be applied to this file because of the @path.
-		anyRset:   cloneRulesForFile(filename, Rules.Any),
-		rootRset:  cloneRulesForFile(filename, Rules.Root),
-		localRset: cloneRulesForFile(filename, Rules.Local),
+		anyRset:   cloneRulesForFile(filename, config.Rules.Any),
+		rootRset:  cloneRulesForFile(filename, config.Rules.Root),
+		localRset: cloneRulesForFile(filename, config.Rules.Local),
 
 		reVet: &regexpVet{
 			parser: w.reParser,
@@ -274,7 +275,7 @@ func (w *Worker) analyzeFile(filename string, contents []byte, parser *php7.Pars
 		walker.Report(nil, LevelError, "syntax", "Syntax error: "+e.String())
 	}
 
-	atomic.AddInt64(&initWalkTime, int64(time.Since(start)))
+	atomic.AddInt64(&config.InitWalkTime, int64(time.Since(start)))
 
 	return rootIR, walker, nil
 }

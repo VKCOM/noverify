@@ -12,6 +12,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/workspace"
 )
@@ -43,7 +44,7 @@ func (l *linterRunner) IsEnabledByFlags(checkName string) bool {
 }
 
 func (l *linterRunner) collectGitIgnoreFiles() error {
-	l.filenameFilter = workspace.NewFilenameFilter(linter.ExcludeRegex)
+	l.filenameFilter = workspace.NewFilenameFilter(config.ExcludeRegex)
 
 	if !l.args.gitignore {
 		return nil
@@ -97,8 +98,8 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, args *cmdlineArguments) error
 		l.outputFp = outputFp
 	}
 
-	linter.ApplyQuickFixes = l.args.fix
-	linter.KPHP = l.args.kphp
+	config.ApplyQuickFixes = l.args.fix
+	config.KPHP = l.args.kphp
 
 	if err := l.compileRegexes(); err != nil {
 		return err
@@ -123,7 +124,7 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, args *cmdlineArguments) error
 }
 
 func (l *linterRunner) initBaseline() error {
-	linter.ConservativeBaseline = l.args.conservativeBaseline
+	config.ConservativeBaseline = l.args.conservativeBaseline
 	if l.args.baseline == "" {
 		return nil
 	}
@@ -137,14 +138,14 @@ func (l *linterRunner) initBaseline() error {
 	if err != nil {
 		return err
 	}
-	linter.BaselineProfile = profile
+	config.BaselineProfile = profile
 	return nil
 }
 
 func (l *linterRunner) compileRegexes() error {
 	if l.args.reportsExclude != "" {
 		var err error
-		linter.ExcludeRegex, err = regexp.Compile(l.args.reportsExclude)
+		config.ExcludeRegex, err = regexp.Compile(l.args.reportsExclude)
 		if err != nil {
 			return fmt.Errorf("incorrect exclude regex: %v", err)
 		}
@@ -165,7 +166,7 @@ func (l *linterRunner) compileRegexes() error {
 	case "^_.*$":
 		// Leading underscore plus anything after it.
 		// Recognize as quite common pattern.
-		linter.IsDiscardVar = func(s string) bool {
+		config.IsDiscardVar = func(s string) bool {
 			return strings.HasPrefix(s, "_")
 		}
 	default:
@@ -173,7 +174,7 @@ func (l *linterRunner) compileRegexes() error {
 		if err != nil {
 			return fmt.Errorf("incorrect unused-var-regex regex: %v", err)
 		}
-		linter.IsDiscardVar = re.MatchString
+		config.IsDiscardVar = re.MatchString
 	}
 
 	return nil
@@ -200,7 +201,7 @@ func (l *linterRunner) initRules(ruleSets []*rules.Set) error {
 		return l.IsEnabledByFlags(r.Name)
 	}
 
-	linter.Rules = rules.NewSet()
+	config.Rules = rules.NewSet()
 	for _, rset := range ruleSets {
 		appendRuleSet(rset, ruleFilter)
 	}
@@ -209,22 +210,22 @@ func (l *linterRunner) initRules(ruleSets []*rules.Set) error {
 }
 
 func LoadMisspellDicts(dicts []string) error {
-	linter.TypoFixer = &misspell.Replacer{}
+	config.TypoFixer = &misspell.Replacer{}
 
 	for _, d := range dicts {
 		d = strings.TrimSpace(d)
 		switch {
 		case d == "Eng":
-			linter.TypoFixer.AddRuleList(misspell.DictMain)
+			config.TypoFixer.AddRuleList(misspell.DictMain)
 		case d == "Eng/US":
-			linter.TypoFixer.AddRuleList(misspell.DictAmerican)
+			config.TypoFixer.AddRuleList(misspell.DictAmerican)
 		case d == "Eng/UK" || d == "Eng/GB":
-			linter.TypoFixer.AddRuleList(misspell.DictBritish)
+			config.TypoFixer.AddRuleList(misspell.DictBritish)
 		default:
 			return fmt.Errorf("unsupported %s misspell-list entry", d)
 		}
 	}
 
-	linter.TypoFixer.Compile()
+	config.TypoFixer.Compile()
 	return nil
 }

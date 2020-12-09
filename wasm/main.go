@@ -7,6 +7,7 @@ import (
 	"syscall/js"
 
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/vscode"
@@ -39,7 +40,7 @@ func getReports(contents string) ([]vscode.Diagnostic, error) {
 }
 
 func main() {
-	linter.LangServer = true
+	config.LangServer = true
 
 	go linter.MemoryLimiterThread()
 

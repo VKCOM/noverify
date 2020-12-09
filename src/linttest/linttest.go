@@ -18,6 +18,7 @@ import (
 	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/rules"
 )
@@ -328,7 +329,7 @@ func FindPHPFiles(root string) ([]string, error) {
 func InitEmbeddedRules() error {
 	enableAllRules := func(_ rules.Rule) bool { return true }
 	p := rules.NewParser()
-	linter.Rules = rules.NewSet()
+	config.Rules = rules.NewSet()
 	ruleSets, err := cmd.InitEmbeddedRules(p, enableAllRules)
 	if err != nil {
 		return fmt.Errorf("init embedded rules: %v", err)

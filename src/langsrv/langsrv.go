@@ -15,16 +15,18 @@ import (
 	"sync"
 	"time"
 
+	"go.lsp.dev/uri"
+
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/vscode"
 	"github.com/VKCOM/noverify/src/workspace"
-	"go.lsp.dev/uri"
 )
 
 const maxLength = 16 << 20
@@ -166,10 +168,10 @@ func handleInitialize(req *baseRequest) error {
 	lintdebug.Send("Root dir: %s", params.RootURI.Filename())
 
 	go func() {
-		linter.AnalysisFiles = []string{params.RootURI.Filename()}
+		config.AnalysisFiles = []string{params.RootURI.Filename()}
 
-		filter := workspace.NewFilenameFilter(linter.ExcludeRegex)
-		linter.ParseFilenames(workspace.ReadFilenames(linter.AnalysisFiles, filter), nil)
+		filter := workspace.NewFilenameFilter(config.ExcludeRegex)
+		linter.ParseFilenames(workspace.ReadFilenames(config.AnalysisFiles, filter), nil)
 
 		meta.SetIndexingComplete(true)
 
@@ -903,7 +905,7 @@ func Start() {
 	rd := bufio.NewReader(os.Stdin)
 	connWr = os.Stdout
 
-	linter.InitStubsFromDir(linter.StubsDir)
+	linter.InitStubsFromDir(config.StubsDir)
 
 	for {
 		ln, err := rd.ReadString('\n')

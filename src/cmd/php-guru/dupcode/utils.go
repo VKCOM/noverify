@@ -6,6 +6,7 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/workspace"
 )
@@ -42,8 +43,8 @@ func hasModifier(list []*ir.Identifier, key string) bool {
 }
 
 func runIndexing(cacheDir string, targets []string, filter *workspace.FilenameFilter) {
-	linter.CacheDir = cacheDir
-	linter.AnalysisFiles = targets
+	config.CacheDir = cacheDir
+	config.AnalysisFiles = targets
 
 	// If we don't do this, the program will hang.
 	go linter.MemoryLimiterThread()

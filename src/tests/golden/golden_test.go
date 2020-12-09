@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/rules"
 )
@@ -22,8 +22,8 @@ func TestMain(t *testing.M) {
 
 func TestGolden(t *testing.T) {
 	defer func(rset *rules.Set) {
-		linter.Rules = rset
-	}(linter.Rules)
+		config.Rules = rset
+	}(config.Rules)
 
 	targets := []*linttest.GoldenTestSuite{
 		{

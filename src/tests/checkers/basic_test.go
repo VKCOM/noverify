@@ -8,6 +8,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/linter/config"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
 )
@@ -825,10 +826,10 @@ for ($i = 0; $i == 0; $i = $i++) {}
 
 func TestCustomUnusedVarRegex(t *testing.T) {
 	defer func(isDiscardVar func(string) bool) {
-		linter.IsDiscardVar = isDiscardVar
-	}(linter.IsDiscardVar)
+		config.IsDiscardVar = isDiscardVar
+	}(config.IsDiscardVar)
 
-	linter.IsDiscardVar = func(s string) bool {
+	config.IsDiscardVar = func(s string) bool {
 		return strings.HasPrefix(s, "_")
 	}
 
