@@ -113,3 +113,23 @@ func GetConstant(cs *meta.ClassParseState, constNode ir.Node) (constName string,
 
 	return "", meta.ConstInfo{}, false
 }
+
+// Extends reports whether derived class extends the base class.
+// It returns false for the derived==base case.
+func Extends(derived, base string) bool {
+	if derived == base {
+		return false
+	}
+	class, ok := meta.Info.GetClass(derived)
+	if !ok {
+		return false
+	}
+	switch class.Parent {
+	case base:
+		return true
+	case "":
+		return false
+	default:
+		return Extends(class.Parent, base)
+	}
+}

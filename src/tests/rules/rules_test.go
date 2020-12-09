@@ -158,22 +158,6 @@ $x && $x;
 explode("", ${"*"});
 
 /**
- * @name strictCmp
- * @warning 3rd argument of in_array must be true when comparing strings
- * @type string $needle
- */
-in_array($needle, $_);
-
-/**
- * @name strictCmp
- * @warning strings must be compared using '===' operator
- * @type string $x
- * @or
- * @type string $y
- */
-$x == $y;
-
-/**
  * @name falseCmp
  * @maybe did you meant to compare an object with null?
  * @type object $x
@@ -228,10 +212,6 @@ function f($x, $y) {
 
   $str = 'x';
   $int = 1;
-  $_ = in_array('x', $x);    // Bad
-  $_ = in_array($str, $x);   // Bad
-  $_ = in_array('x', $x, 1); // Good
-  $_ = in_array($int, $x);   // Good
 
   $_ = $str == '1';  // Bad
   $_ = '1' == $str;  // Bad
@@ -278,11 +258,6 @@ $_ = implode($s, $i); // BAD: string, int
 		`duplicated sub-expressions inside boolean expression`,
 		`suspicious order of stripos function arguments`,
 		`don't call explode with empty delimiter`,
-		`3rd argument of in_array must be true when comparing strings`,
-		`3rd argument of in_array must be true when comparing strings`,
-		`strings must be compared using '===' operator`,
-		`strings must be compared using '===' operator`,
-		`strings must be compared using '===' operator`,
 		`did you meant to compare an object with null?`,
 		`did you meant to compare an object with null?`,
 		`did you meant to compare an object with null?`,

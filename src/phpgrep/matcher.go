@@ -65,6 +65,20 @@ func (m *matcher) eqArrayItemSlice(state *matcherState, xs, ys []*ir.ArrayItemEx
 
 	matchAny := false
 
+	var backXS []*ir.ArrayItemExpr
+	var backYS []*ir.ArrayItemExpr
+
+	maybeBacktrack := func(matched bool) bool {
+		if !matched && backXS != nil {
+			if tracingEnabled && m.tracingBuf != nil {
+				pad := strings.Repeat(" • ", m.tracingDepth)
+				fmt.Fprintf(m.tracingBuf, "%sbacktrack!\n", pad)
+			}
+			return m.eqArrayItemSlice(state, backXS, backYS)
+		}
+		return matched
+	}
+
 	i := 0
 	for i < len(xs) {
 		x := xs[i]
@@ -81,6 +95,8 @@ func (m *matcher) eqArrayItemSlice(state *matcherState, xs, ys []*ir.ArrayItemEx
 				i++
 			// Lookahead for non-greedy matching.
 			case i+1 < len(xs) && m.eqNode(state, xs[i+1], ys[0]):
+				backXS = xs
+				backYS = ys[1:]
 				matchAny = false
 				i += 2
 				ys = ys[1:]
@@ -91,13 +107,13 @@ func (m *matcher) eqArrayItemSlice(state *matcherState, xs, ys []*ir.ArrayItemEx
 		}
 
 		if len(ys) == 0 || !m.eqNode(state, x, ys[0]) {
-			return false
+			return maybeBacktrack(false)
 		}
 		i++
 		ys = ys[1:]
 	}
 
-	return len(ys) == 0
+	return maybeBacktrack(len(ys) == 0)
 }
 
 func (m *matcher) eqNodeSlice(state *matcherState, xs, ys []ir.Node) bool {
@@ -107,6 +123,20 @@ func (m *matcher) eqNodeSlice(state *matcherState, xs, ys []ir.Node) bool {
 
 	matchAny := false
 
+	var backXS []ir.Node
+	var backYS []ir.Node
+
+	maybeBacktrack := func(matched bool) bool {
+		if !matched && backXS != nil {
+			if tracingEnabled && m.tracingBuf != nil {
+				pad := strings.Repeat(" • ", m.tracingDepth)
+				fmt.Fprintf(m.tracingBuf, "%sbacktrack!\n", pad)
+			}
+			return m.eqNodeSlice(state, backXS, backYS)
+		}
+		return matched
+	}
+
 	i := 0
 	for i < len(xs) {
 		x := xs[i]
@@ -123,6 +153,8 @@ func (m *matcher) eqNodeSlice(state *matcherState, xs, ys []ir.Node) bool {
 				i++
 			// Lookahead for non-greedy matching.
 			case i+1 < len(xs) && m.eqNode(state, xs[i+1], ys[0]):
+				backXS = xs
+				backYS = ys[1:]
 				matchAny = false
 				i += 2
 				ys = ys[1:]
@@ -133,13 +165,13 @@ func (m *matcher) eqNodeSlice(state *matcherState, xs, ys []ir.Node) bool {
 		}
 
 		if len(ys) == 0 || !m.eqNode(state, x, ys[0]) {
-			return false
+			return maybeBacktrack(false)
 		}
 		i++
 		ys = ys[1:]
 	}
 
-	return len(ys) == 0
+	return maybeBacktrack(len(ys) == 0)
 }
 
 func (m *matcher) eqEncapsedStringPartSlice(state *matcherState, xs, ys []ir.Node) bool {
