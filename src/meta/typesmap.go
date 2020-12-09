@@ -173,20 +173,6 @@ func (m TypesMap) IsArray() bool {
 	return false
 }
 
-// HasAtLeastOneArray checks if map contains at least one array of any type
-func (m TypesMap) HasAtLeastOneArray() bool {
-	if len(m.m) == 0 {
-		return false
-	}
-
-	for typ := range m.m {
-		if strings.HasSuffix(typ, "[]") {
-			return true
-		}
-	}
-	return false
-}
-
 // IsArrayOf checks if map contains only array of given type
 //
 // Warning: use only for *lazy* types!
@@ -401,19 +387,6 @@ func (m TypesMap) ArrayElemLazyType() TypesMap {
 	mm := make(map[string]struct{}, m.Len())
 	for typ := range m.m {
 		mm[UnwrapArrayOf(typ)] = struct{}{}
-	}
-	return TypesMap{m: mm, flags: m.flags}
-}
-
-// ArrayElemType returns type of array element. T[] -> T, T[][] -> T[].
-func (m TypesMap) ArrayElemType() TypesMap {
-	if m.Len() == 0 {
-		return MixedType
-	}
-
-	mm := make(map[string]struct{}, m.Len())
-	for typ := range m.m {
-		mm[strings.TrimSuffix(typ, "[]")] = struct{}{}
 	}
 	return TypesMap{m: mm, flags: m.flags}
 }
