@@ -475,6 +475,9 @@ func TestMatch(t *testing.T) {
 		{`f((1))`, `f((1))`},
 		{`($foo)()`, `($foo)()`},
 		{`($foo)->x`, `($foo)->x`},
+
+		{`try { ${"*"}; } catch (Exception $_) { ${"*"}; }`, `try {} catch (Exception $e) {}`},
+		{`try { ${"*"}; } catch (Exception $_) { ${"*"}; }`, `try {} catch (Exception $ex) { var_dump($ex); }`},
 	})
 }
 
@@ -643,6 +646,9 @@ func TestMatchNegative(t *testing.T) {
 		{`($foo)->x`, `$foo->x`},
 		{`(($foo))()`, `($foo)()`},
 		{`(($foo))->x`, `($foo)->x`},
+
+		{`try { ${"*"}; } catch (Exception $_) { ${"*"}; }`, `try {} catch (MyException $e) {}`},
+		{`try { ${"*"}; } catch (Exception $_) { ${"*"}; }`, `try {} catch (Exception $_) {} catch (Exception $_) {}`},
 	})
 }
 
