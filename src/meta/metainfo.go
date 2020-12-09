@@ -131,6 +131,30 @@ func (i *info) FindConstants(substr string) (res []string) {
 	return res
 }
 
+func (i *info) InitKphpStubs() {
+	internalFunctions.H[`\array_first_element`] = FuncInfo{
+		Name:         `\array_first_element`,
+		Params:       []FuncParam{{Name: "el"}},
+		MinParamsCnt: 1,
+		Typ:          NewTypesMap("mixed"),
+	}
+	internalFunctions.H[`\array_last_element`] = FuncInfo{
+		Name:         `\array_last_element`,
+		Params:       []FuncParam{{Name: "el"}},
+		MinParamsCnt: 1,
+		Typ:          NewTypesMap("mixed"),
+	}
+
+	internalFunctionOverrides[`\array_first_element`] = FuncInfoOverride{
+		OverrideType: OverrideElementType,
+		ArgNum:       0,
+	}
+	internalFunctionOverrides[`\array_last_element`] = FuncInfoOverride{
+		OverrideType: OverrideElementType,
+		ArgNum:       0,
+	}
+}
+
 func (i *info) InitStubs() {
 	i.Lock()
 	defer i.Unlock()
