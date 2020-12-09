@@ -183,8 +183,6 @@ func (i *info) InitStubs() {
 	for k, v := range i.allFunctionsOverrides {
 		internalFunctionOverrides[k] = v
 	}
-
-	i.InitKphpStubs()
 }
 
 func (i *info) AddFilenameNonLocked(filename string) {

@@ -2700,6 +2700,10 @@ function f1() {
 	exprtype($m, "mixed");
 }
 `
+	linter.KPHP = true
+	defer func() {
+		linter.KPHP = false
+	}()
 	runExprTypeTest(t, &exprTypeTestParams{code: code, stubs: "<?php /* no code */"})
 }
 
