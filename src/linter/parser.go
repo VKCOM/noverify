@@ -123,7 +123,7 @@ func ParseFilenames(readFileNamesFunc workspace.ReadCallback, allowDisabled *reg
 
 	var allReports []*Report
 	for i := 0; i < MaxConcurrency; i++ {
-		allReports = append(allReports, (<-reportsCh)...)
+		allReports = append(allReports, <-reportsCh...)
 	}
 
 	return allReports
@@ -133,6 +133,9 @@ func InitStubs(readFileNamesFunc workspace.ReadCallback) {
 	meta.SetLoadingStubs(true)
 	ParseFilenames(readFileNamesFunc, nil)
 	meta.Info.InitStubs()
+	if KPHP {
+		meta.Info.InitKphpStubs()
+	}
 	meta.SetLoadingStubs(false)
 }
 
