@@ -59,6 +59,8 @@ func (g *genClone) writeCloneCase(w *bytes.Buffer, pkg *packageData, typ *typeDa
 			// Do nothing.
 		case "*github.com/VKCOM/noverify/src/php/parser/position.Position":
 			// Do nothing.
+		case "[]github.com/VKCOM/noverify/src/phpdoc.CommentPart":
+			// Do nothing.
 		case "string", "bool":
 			// Do nothing.
 		case "ir.Class":
