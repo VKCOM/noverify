@@ -243,7 +243,11 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 		}
 		return 0, nil
 	}
-	criticalReports := analyzeReports(&l, cfg, reports)
+	criticalReports, containsAutofixableReports := analyzeReports(&l, cfg, reports)
+
+	if containsAutofixableReports {
+		log.Println("Some issues are autofixable (try using the `-fix` flag)")
+	}
 
 	if criticalReports > 0 {
 		log.Printf("Found %d critical reports", criticalReports)
@@ -319,7 +323,30 @@ func FormatReport(r *linter.Report) string {
 		r.Severity(), msg, r.Filename, r.Line, r.Context, cursor.String())
 }
 
-func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (criticalReports int) {
+func haveAutofixableReports(reports []*linter.Report) bool {
+	declaredChecks := linter.GetDeclaredChecks()
+	checksWithQuickfix := make(map[string]struct{})
+
+	for _, check := range declaredChecks {
+		if !check.Quickfix {
+			continue
+		}
+
+		checksWithQuickfix[check.Name] = struct{}{}
+	}
+
+	var withAutofixableReports bool
+	for _, r := range reports {
+		if _, ok := checksWithQuickfix[r.CheckName]; ok {
+			withAutofixableReports = true
+			break
+		}
+	}
+
+	return withAutofixableReports
+}
+
+func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (criticalReports int, containsAutofixableReports bool) {
 	filtered := make([]*linter.Report, 0, len(diff))
 
 	for _, r := range diff {
@@ -336,6 +363,8 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 			criticalReports++
 		}
 	}
+
+	containsAutofixableReports = haveAutofixableReports(diff)
 
 	if l.args.outputJSON {
 		type reportList struct {
@@ -360,7 +389,7 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 		}
 	}
 
-	return criticalReports
+	return criticalReports, containsAutofixableReports
 }
 
 func initStubs() error {

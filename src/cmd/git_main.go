@@ -187,7 +187,11 @@ func gitMain(l *linterRunner, cfg *MainConfig) (int, error) {
 	}
 	log.Printf("Computed reports diff for %s", time.Since(start))
 
-	criticalReports := analyzeReports(l, cfg, diff)
+	criticalReports, containsAutofixableReports := analyzeReports(l, cfg, diff)
+
+	if containsAutofixableReports {
+		log.Println("Some issues are autofixable (try using the `-fix` flag)")
+	}
 
 	if criticalReports > 0 {
 		log.Printf("Found %d critical issues, please fix them.", criticalReports)
