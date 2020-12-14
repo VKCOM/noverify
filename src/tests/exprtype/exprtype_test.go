@@ -1694,11 +1694,11 @@ exprtype(get_array(), 'mixed[]');
 
 /** @return array */
 function get_array_or_null() { return null; }
-exprtype(get_array_or_null(), 'mixed[]|null');
+exprtype(get_array_or_null(), 'mixed[]');
 
 /** @return null */
 function get_null_or_array() { return []; }
-exprtype(get_null_or_array(), 'mixed[]|null');
+exprtype(get_null_or_array(), 'null');
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
