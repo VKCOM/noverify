@@ -202,6 +202,23 @@ func binaryPlusOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right ir.N
 	return binaryMathOpType(sc, cs, left, right, custom)
 }
 
+func classNameToString(n ir.Node) (string, bool) {
+	switch n := n.(type) {
+	case *ir.String:
+		return n.Value, true
+	case *ir.ClassConstFetchExpr:
+		className, ok := n.Class.(*ir.Name)
+		if !ok {
+			return "", false
+		}
+
+		if strings.EqualFold(n.ConstantName.Value, "class") {
+			return className.Value, true
+		}
+	}
+	return "", false
+}
+
 func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir.FunctionCallExpr, custom []CustomType) (typ meta.TypesMap, ok bool) {
 	fn, ok := meta.GetInternalFunctionInfo(nm)
 	if !ok || fn.Typ.IsEmpty() {
@@ -215,14 +232,27 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 
 	arg := c.Arg(override.ArgNum)
 	typ = ExprTypeLocalCustom(sc, cs, arg.Expr, custom)
-	if override.OverrideType == meta.OverrideArgType {
+
+	switch override.OverrideType {
+	case meta.OverrideArgType:
 		return typ, true
-	} else if override.OverrideType == meta.OverrideElementType {
+
+	case meta.OverrideElementType:
 		newTyp := meta.NewEmptyTypesMap(typ.Len())
 		typ.Iterate(func(t string) {
 			newTyp = newTyp.AppendString(meta.WrapElemOf(t))
 		})
 		return newTyp, true
+
+	case meta.OverrideClassType:
+		// due to the fact that it is impossible for us to use constfold
+		// here, we have to process only a part of the possible options,
+		// although the most popular ones.
+		className, ok := classNameToString(arg.Expr)
+		if !ok {
+			return meta.NewTypesMap("mixed"), true
+		}
+		return meta.NewTypesMap(`\` + className + "|null"), true
 	}
 
 	log.Printf("Internal error: unexpected override type %d for function %s", override.OverrideType, nm)
