@@ -2744,11 +2744,26 @@ function f4() {
 }
 exprtype(f4(), "\Foo|int");
 
+
 /** Without @return and type hint and return */
 function f5() {
 	
 }
 exprtype(f5(), "void");
+
+
+/** @return int[] */
+function f6(): array {
+	return [1,2,4];
+}
+exprtype(f6(), "int[]|mixed[]");
+
+
+/** @return Foo */
+function f7(): object {
+	return new Foo;
+}
+exprtype(f7(), "\Foo|object");
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
