@@ -2707,6 +2707,52 @@ function f1() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code, stubs: "<?php /* no code */"})
 }
 
+func TestNewFunctionReturnExprType(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+/** @return int */
+function f1() {
+	return 5;
+}
+exprtype(f1(), "int");
+
+
+/** @return int */
+function f2(): float {
+	return 5;
+}
+exprtype(f2(), "float|int");
+
+
+/** Without @return */
+function f3(): float {
+	if (1) {
+		return new Foo;
+	}
+	return 5;
+}
+exprtype(f3(), "float");
+
+
+/** Without @return and type hint */
+function f4() {
+	if (1) {
+		return 10;
+	}
+	return new Foo;
+}
+exprtype(f4(), "\Foo|int");
+
+/** Without @return and type hint and return */
+function f5() {
+	
+}
+exprtype(f5(), "void");
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {
