@@ -1015,9 +1015,9 @@ func (d *RootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		sc.SetInInstanceMethod(true)
 	}
 
-	var specifiedReturnType meta.TypesMap
+	var hintReturnType meta.TypesMap
 	if typ, ok := d.parseTypeNode(meth.ReturnType); ok {
-		specifiedReturnType = typ
+		hintReturnType = typ
 	}
 
 	if meth.PhpDocComment == "" && modif.accessLevel == meta.Public {
@@ -1086,7 +1086,7 @@ func (d *RootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 
 	d.addScope(meth, sc)
 
-	returnTypes := functionReturnType(phpdocReturnType, specifiedReturnType, actualReturnTypes)
+	returnTypes := functionReturnType(phpdocReturnType, hintReturnType, actualReturnTypes)
 
 	// TODO: handle duplicate method
 	var funcFlags meta.FuncFlags
@@ -1582,9 +1582,9 @@ func (d *RootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 		d.Report(fun.FunctionName, LevelDoNotReject, "complexity", "Too big function: more than %d lines", maxFunctionLines)
 	}
 
-	var specifiedReturnType meta.TypesMap
+	var hintReturnType meta.TypesMap
 	if typ, ok := d.parseTypeNode(fun.ReturnType); ok {
-		specifiedReturnType = typ
+		hintReturnType = typ
 	}
 
 	d.checkCommentMisspellings(fun.FunctionName, fun.PhpDocComment)
@@ -1610,7 +1610,7 @@ func (d *RootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	exitFlags := funcInfo.prematureExitFlags
 	d.addScope(fun, sc)
 
-	returnTypes := functionReturnType(phpdocReturnType, specifiedReturnType, actualReturnTypes)
+	returnTypes := functionReturnType(phpdocReturnType, hintReturnType, actualReturnTypes)
 
 	for _, param := range fun.Params {
 		d.checkFuncParam(param.(*ir.Parameter))

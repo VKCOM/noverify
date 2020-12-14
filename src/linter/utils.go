@@ -101,10 +101,10 @@ func typesMapToTypeExpr(p *phpdoc.TypeParser, m meta.TypesMap) phpdoc.Type {
 //
 // 3. If there is no @param annotation and type hint, then the return type is equal to
 //    the union of the types that are returned from the function by return.
-func functionReturnType(phpdocReturnType meta.TypesMap, specifiedReturnType meta.TypesMap, actualReturnTypes meta.TypesMap) meta.TypesMap {
+func functionReturnType(phpdocReturnType meta.TypesMap, hintReturnType meta.TypesMap, actualReturnTypes meta.TypesMap) meta.TypesMap {
 	var returnTypes meta.TypesMap
-	if !phpdocReturnType.IsEmpty() || !specifiedReturnType.IsEmpty() {
-		returnTypes = meta.MergeTypeMaps(phpdocReturnType, specifiedReturnType)
+	if !phpdocReturnType.IsEmpty() || !hintReturnType.IsEmpty() {
+		returnTypes = meta.MergeTypeMaps(phpdocReturnType, hintReturnType)
 	} else {
 		returnTypes = actualReturnTypes
 	}
