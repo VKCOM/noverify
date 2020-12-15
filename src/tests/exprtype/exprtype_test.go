@@ -2707,32 +2707,6 @@ function f1() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code, stubs: "<?php /* no code */"})
 }
 
-func TestInstanceDeserializeType(t *testing.T) {
-	code := `<?php
-class Foo {
-	/** Method */
-	public function method() {}
-}
-
-const CLASS_NAME = "Foo";
-
-function f() {
-	$className = "";
-
-	exprtype(instance_deserialize($text, Foo::class), "\Foo|null");
-	exprtype(instance_deserialize($text, "Foo"), "\Foo|null");
-	exprtype(instance_deserialize($text, 10), "mixed");
-	exprtype(instance_deserialize($text, $className), "mixed");
-	exprtype(instance_deserialize($text, CLASS_NAME), "mixed");
-}
-`
-	linter.KPHP = true
-	defer func() {
-		linter.KPHP = false
-	}()
-	runExprTypeTest(t, &exprTypeTestParams{code: code, stubs: "<?php /* no code */"})
-}
-
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {
