@@ -227,9 +227,7 @@ func classNameToString(cs *meta.ClassParseState, n ir.Node) (string, bool) {
 		return "", false
 	}
 
-	className, ok := GetClassName(cs, &ir.Name{
-		Value: name,
-	})
+	className, ok := GetClassName(cs, &ir.Name{Value: name})
 	if !ok {
 		return "", false
 	}
