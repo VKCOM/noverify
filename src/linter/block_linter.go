@@ -26,8 +26,26 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.ArrayExpr:
 		b.checkArray(n)
 
+	case *ir.ArrayDimFetchExpr:
+		b.checkArrayDimFetch(n)
+
 	case *ir.FunctionCallExpr:
 		b.checkFunctionCall(n)
+
+	case *ir.MethodCallExpr:
+		b.checkMethodCall(n)
+
+	case *ir.StaticCallExpr:
+		b.checkStaticCall(n)
+
+	case *ir.PropertyFetchExpr:
+		b.checkPropertyFetch(n)
+
+	case *ir.StaticPropertyFetchExpr:
+		b.checkStaticPropertyFetch(n)
+
+	case *ir.ClassConstFetchExpr:
+		b.checkClassConstFetch(n)
 
 	case *ir.NewExpr:
 		b.checkNew(n)
@@ -88,11 +106,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.PowExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 	case *ir.EqualExpr:
-		b.checkStrictCmp(n, n.Left, n.Right)
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
 	case *ir.NotEqualExpr:
-		b.checkStrictCmp(n, n.Left, n.Right)
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
 	case *ir.IdenticalExpr:
@@ -175,6 +191,30 @@ func (b *blockLinter) report(n ir.Node, level int, checkName, msg string, args .
 	b.walker.r.Report(n, level, checkName, msg, args...)
 }
 
+func (b *blockLinter) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
+	typ := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, s.Variable)
+
+	var (
+		maybeHaveClasses bool
+		haveArrayAccess  bool
+	)
+
+	typ.Iterate(func(t string) {
+		// FullyQualified class name will have "\" in the beginning
+		if meta.IsClassType(t) {
+			maybeHaveClasses = true
+
+			if !haveArrayAccess && solver.Implements(t, `\ArrayAccess`) {
+				haveArrayAccess = true
+			}
+		}
+	})
+
+	if maybeHaveClasses && !haveArrayAccess {
+		b.report(s.Variable, LevelDoNotReject, "arrayAccess", "Array access to non-array type %s", typ)
+	}
+}
+
 func (b *blockLinter) checkAssign(a *ir.Assign) {
 	b.checkVoidType(a.Expression)
 }
@@ -192,6 +232,52 @@ func (b *blockLinter) checkTryStmt(s *ir.TryStmt) {
 
 	if s.Finally != nil {
 		b.walker.r.checkKeywordCase(s.Finally, "finally")
+	}
+
+	if len(s.Catches) > 1 {
+		b.checkCatchOrder(s)
+	}
+}
+
+func (b *blockLinter) checkCatchOrder(s *ir.TryStmt) {
+	// This code has O(n^2) complexity, but there are usually no more than 3-4 catch clauses in the code.
+	// We could avoid some extra work if we would not add leaf types to the classes list,
+	// but we don't have that information available.
+
+	classes := make([]string, 0, len(s.Catches))
+
+	for _, c := range s.Catches {
+		c := c.(*ir.CatchStmt)
+		if len(c.Types) > 1 {
+			return // give up on A|B catch
+		}
+
+		class, ok := solver.GetClassName(b.walker.r.ctx.st, c.Types[0])
+		if !ok {
+			continue
+		}
+
+		add := true
+		for _, otherClass := range classes {
+			if class == otherClass {
+				b.report(c.Types[0], LevelWarning, "dupCatch", "duplicated catch on %s", class)
+				add = false
+				break
+			}
+			if solver.Extends(class, otherClass) {
+				b.report(c.Types[0], LevelWarning, "catchOrder", "catch %s block will never run as it extends %s which is caught above", class, otherClass)
+				add = false
+				break
+			}
+			if solver.Implements(class, otherClass) {
+				b.report(c.Types[0], LevelWarning, "catchOrder", "catch %s block will never run as it implements %s which is caught above", class, otherClass)
+				add = false
+				break
+			}
+		}
+		if add {
+			classes = append(classes, class)
+		}
 	}
 }
 
@@ -220,33 +306,6 @@ func (b *blockLinter) checkBinaryDupArgs(n, left, right ir.Node) {
 	}
 	if nodeEqual(b.walker.r.ctx.st, left, right) {
 		b.report(n, LevelWarning, "dupSubExpr", "duplicated operands value in %s expression", binaryOpString(n))
-	}
-}
-
-func (b *blockLinter) checkStrictCmp(n ir.Node, left, right ir.Node) {
-	needsStrictCmp := func(n ir.Node) bool {
-		c, ok := n.(*ir.ConstFetchExpr)
-		if !ok {
-			return false
-		}
-		nm := c.Constant
-		return nm.Value == "true" || nm.Value == "false" || nm.Value == "null"
-	}
-
-	var badNode ir.Node
-	switch {
-	case needsStrictCmp(left):
-		badNode = left
-	case needsStrictCmp(right):
-		badNode = right
-	}
-	if badNode != nil {
-		suggest := "==="
-		if _, ok := n.(*ir.NotEqualExpr); ok {
-			suggest = "!=="
-		}
-		b.report(n, LevelWarning, "strictCmp", "non-strict comparison with %s (use %s)",
-			irutil.FmtNode(badNode), suggest)
 	}
 }
 
@@ -631,10 +690,56 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 	}
 }
 
-func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
-	fqName, ok := solver.GetFuncName(b.walker.r.ctx.st, e.Function)
-	if !ok {
+func (b *blockLinter) checkDeprecatedFunctionCall(e *ir.FunctionCallExpr, call *funcCallInfo) {
+	if !call.info.Doc.Deprecated {
 		return
+	}
+
+	if call.info.Doc.DeprecationNote != "" {
+		b.report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s (%s)", meta.NameNodeToString(e.Function), call.info.Doc.DeprecationNote)
+		return
+	}
+
+	b.report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s", meta.NameNodeToString(e.Function))
+}
+
+func (b *blockLinter) checkFunctionAvailability(e *ir.FunctionCallExpr, call *funcCallInfo) {
+	if !call.isFound && !b.walker.ctx.customFunctionExists(e.Function) {
+		b.report(e.Function, LevelError, "undefined", "Call to undefined function %s", meta.NameNodeToString(e.Function))
+	}
+}
+
+func (b *blockLinter) checkCallArgs(n ir.Node, args []ir.Node, fn meta.FuncInfo) {
+	b.checkCallArgsCount(n, args, fn)
+}
+
+func (b *blockLinter) checkCallArgsCount(n ir.Node, args []ir.Node, fn meta.FuncInfo) {
+	if fn.Name == `\mt_rand` {
+		if len(args) != 0 && len(args) != 2 {
+			b.report(n, LevelWarning, "argCount", "mt_rand expects 0 or 2 args")
+		}
+		return
+	}
+
+	if fn.Name == `\compact` || fn.Name == `\func_get_args` {
+		// there is no need to check the number of arguments for these functions.
+		return
+	}
+
+	if !enoughArgs(args, fn) {
+		b.report(n, LevelWarning, "argCount", "Too few arguments for %s", meta.NameNodeToString(n))
+	}
+}
+
+func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
+	call := resolveFunctionCall(b.walker.ctx.sc, b.walker.r.ctx.st, b.walker.ctx.customTypes, e)
+	fqName := call.funcName
+
+	if call.canAnalyze {
+		b.checkCallArgs(e.Function, e.Args, call.info)
+		b.checkDeprecatedFunctionCall(e, &call)
+		b.checkFunctionAvailability(e, &call)
+		b.walker.r.checkNameCase(e.Function, call.funcName, call.info.Name)
 	}
 
 	switch fqName {
@@ -649,6 +754,115 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 		}
 		// TODO: handle fprintf as well?
 		b.checkFormatString(e, e.Arg(0))
+	}
+}
+
+func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
+	parseState := b.walker.r.ctx.st
+
+	call := resolveMethodCall(b.walker.ctx.sc, parseState, b.walker.ctx.customTypes, e)
+	if !call.canAnalyze {
+		return
+	}
+
+	if !call.isMagic {
+		b.checkCallArgs(e.Method, e.Args, call.info)
+	}
+
+	if !call.isFound && !call.isMagic && !parseState.IsTrait && !b.walker.isThisInsideClosure(e.Variable) {
+		// The method is undefined but we permit calling it if `method_exists`
+		// was called prior to that call.
+		if !b.walker.ctx.customMethodExists(e.Variable, call.methodName) {
+			b.report(e.Method, LevelError, "undefined", "Call to undefined method {%s}->%s()", call.methodCallerType, call.methodName)
+		}
+	} else if !call.isMagic && !parseState.IsTrait {
+		// Method is defined.
+		b.walker.r.checkNameCase(e.Method, call.methodName, call.info.Name)
+		if call.info.IsStatic() {
+			b.report(e.Method, LevelWarning, "callStatic", "Calling static method as instance method")
+		}
+	}
+
+	if call.info.Doc.Deprecated {
+		if call.info.Doc.DeprecationNote != "" {
+			b.report(e.Method, LevelDoNotReject, "deprecated", "Call to deprecated method {%s}->%s() (%s)",
+				call.methodCallerType, call.methodName, call.info.Doc.DeprecationNote)
+		} else {
+			b.report(e.Method, LevelDoNotReject, "deprecated", "Call to deprecated method {%s}->%s()",
+				call.methodCallerType, call.methodName)
+		}
+	}
+
+	if call.isFound && !call.isMagic && !canAccess(parseState, call.className, call.info.AccessLevel) {
+		b.report(e.Method, LevelError, "accessLevel", "Cannot access %s method %s->%s()", call.info.AccessLevel, call.className, call.methodName)
+	}
+}
+
+func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
+	call := resolveStaticMethodCall(b.walker.r.ctx.st, e)
+	if !call.canAnalyze {
+		return
+	}
+
+	if !call.isMagic {
+		b.checkCallArgs(e.Call, e.Args, call.methodInfo.Info)
+	}
+
+	if !call.isFound && !call.isMagic && !b.walker.r.ctx.st.IsTrait {
+		b.report(e.Call, LevelError, "undefined", "Call to undefined method %s::%s()", call.className, call.methodName)
+	} else if !call.isParentCall && !call.methodInfo.Info.IsStatic() && !call.isMagic && !b.walker.r.ctx.st.IsTrait {
+		// Method is defined.
+		// parent::f() is permitted.
+		b.report(e.Call, LevelWarning, "callStatic", "Calling instance method as static method")
+	}
+
+	if call.isFound && !canAccess(b.walker.r.ctx.st, call.methodInfo.ClassName, call.methodInfo.Info.AccessLevel) {
+		b.report(e.Call, LevelError, "accessLevel", "Cannot access %s method %s::%s()", call.methodInfo.Info.AccessLevel, call.methodInfo.ClassName, call.methodName)
+	}
+}
+
+func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
+	fetch := resolvePropertyFetch(b.walker.ctx.sc, b.walker.r.ctx.st, b.walker.ctx.customTypes, e)
+	if !fetch.canAnalyze {
+		return
+	}
+
+	if !fetch.isFound && !fetch.isMagic && !b.walker.r.ctx.st.IsTrait && !b.walker.isThisInsideClosure(e.Variable) {
+		b.report(e.Property, LevelError, "undefined", "Property {%s}->%s does not exist", fetch.propertyFetchType, fetch.propertyNode.Value)
+	}
+
+	if fetch.isFound && !fetch.isMagic && !canAccess(b.walker.r.ctx.st, fetch.className, fetch.info.AccessLevel) {
+		b.report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s->%s", fetch.info.AccessLevel, fetch.className, fetch.propertyNode.Value)
+	}
+}
+
+func (b *blockLinter) checkStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) {
+	fetch := resolveStaticPropertyFetch(b.walker.r.ctx.st, e)
+	if !fetch.canAnalyze {
+		return
+	}
+
+	if !fetch.isFound && !b.walker.r.ctx.st.IsTrait {
+		b.report(e.Property, LevelError, "undefined", "Property %s::$%s does not exist", fetch.className, fetch.propertyName)
+	}
+
+	if fetch.isFound && !canAccess(b.walker.r.ctx.st, fetch.info.ClassName, fetch.info.Info.AccessLevel) {
+		b.report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s::$%s", fetch.info.Info.AccessLevel, fetch.info.ClassName, fetch.propertyName)
+	}
+}
+
+func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
+	fetch := resolveClassConstFetch(b.walker.r.ctx.st, e)
+	if !fetch.canAnalyze {
+		return
+	}
+
+	if !fetch.isFound && !b.walker.r.ctx.st.IsTrait {
+		b.walker.r.Report(e.ConstantName, LevelError, "undefined", "Class constant %s::%s does not exist", fetch.className, fetch.constName)
+	}
+
+	if fetch.isFound && !canAccess(b.walker.r.ctx.st, fetch.implClassName, fetch.info.AccessLevel) {
+		b.walker.r.Report(e.ConstantName, LevelError, "accessLevel", "Cannot access %s constant %s::%s", fetch.info.AccessLevel, fetch.implClassName, fetch.constName)
 	}
 }
 

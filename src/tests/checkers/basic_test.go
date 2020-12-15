@@ -127,43 +127,6 @@ function f3() {
 	test.RunAndMatch()
 }
 
-func TestStrictCmp(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-function f($x) {
-  $_ = ($x == false);
-  $_ = (false == $x);
-  $_ = ($x == true);
-  $_ = (true == $x);
-  $_ = ($x == null);
-  $_ = (null == $x);
-  return true;
-}
-
-$_ = (f(0) != false);
-$_ = (false != f(0));
-$_ = (f(0) != true);
-$_ = (true != f(0));
-$_ = (f(0) != null);
-$_ = (null != f(0));
-`)
-	test.Expect = []string{
-		`non-strict comparison with false (use ===)`,
-		`non-strict comparison with false (use ===)`,
-		`non-strict comparison with false (use !==)`,
-		`non-strict comparison with false (use !==)`,
-		`non-strict comparison with true (use ===)`,
-		`non-strict comparison with true (use ===)`,
-		`non-strict comparison with true (use !==)`,
-		`non-strict comparison with true (use !==)`,
-		`non-strict comparison with null (use ===)`,
-		`non-strict comparison with null (use ===)`,
-		`non-strict comparison with null (use !==)`,
-		`non-strict comparison with null (use !==)`,
-	}
-	test.RunAndMatch()
-}
-
 func TestRedundantGlobal(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -833,12 +796,99 @@ func TestCustomUnusedVarRegex(t *testing.T) {
 	}
 
 	linttest.SimpleNegativeTest(t, `<?php
+class Foo {
+  public $_;
+  private $_foo;
+  public static $_bar;
+  private function f1() { return $this->_; }
+  protected function f2() { return $this->_foo; }
+  private function f3() { return self::$_bar; }
+  private function f4() { return __CLASS__; }
+}
+$_ = __FILE__;
+`)
+
+	linttest.SimpleNegativeTest(t, `<?php
 $_unused = 10;
 
 function f() {
   $_unused2 = 20;
   $_ = 30;
   foreach ([1] as $_ => $_user) {}
+
+  $_POST = ["foo" => 123];
+  $_ = $_POST["foo"];
+  $_ = $_ENV["GOPATH"];
+}
+`)
+
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function var_dump($v) {}
+$_global = 120;
+function f() {
+  global $_global;
+  $_a = 1;
+  $_FOO = 2;
+  var_dump($_a);
+  $xs = [$_global];
+  $xs = $_FOO;
+  if ($_POST) {} // No warning
+  if (0 == $_GET["a"]) {} // No warning
+  $_ = $xs;
+}
+var_dump($_global);
+`)
+
+	test.Expect = []string{
+		`Used var $_a that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_global that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_FOO that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_global that is supposed to be unused (rename variable if it's intended)`,
+	}
+
+	test.RunAndMatch()
+}
+
+func TestDiscardVarUsage(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function var_dump($v) {}
+function f() {
+  $_ = 1;
+  var_dump($_); // 1. Used as argument
+  $xs = [$_]; // 2. Used as array element
+  $xs = $_; // 3. Used in assignment RHS
+  if ($_) {} // 4. Used inside if condition
+  if (0 == $_) {} // 5. Used inside binary operator
+  $_ = $xs;
+}
+$_ = 1; // Global var
+var_dump($_); // 6. Also forbidden in global scope
+`)
+
+	test.Expect = []string{
+		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
+	}
+
+	test.RunAndMatch()
+}
+
+func TestDiscardVarNotUsage(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+function foo(): int { return 0; }
+
+function f() {
+  list($_, $b) = foo(); // $_ is not used.
+  echo $b;
+  $_ = function($_, $x) {}; // $_ is not used.
+  $_ = fn($_, $x) => $x; // $_ is not used.
+  try {} catch(Exception $_) {} // $_ is not used.
 }
 `)
 }

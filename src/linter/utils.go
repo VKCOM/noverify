@@ -2,6 +2,7 @@ package linter
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -90,40 +91,272 @@ func typesMapToTypeExpr(p *phpdoc.TypeParser, m meta.TypesMap) phpdoc.Type {
 }
 
 type funcCallInfo struct {
-	canAnalyze bool
-	defined    bool
-	fqName     string
+	funcName   string
 	info       meta.FuncInfo
+	isFound    bool
+	canAnalyze bool
 }
 
 // TODO: bundle type solving params somehow.
 // We usually need ClassParseState+Scope+[]CustomType.
 func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, call *ir.FunctionCallExpr) funcCallInfo {
 	var res funcCallInfo
-	res.canAnalyze = true
 	if !meta.IsIndexingComplete() {
 		return res
 	}
+	res.canAnalyze = true
 
 	fqName, ok := solver.GetFuncName(st, call.Function)
 	if ok {
-		res.fqName = fqName
-		res.info, res.defined = meta.Info.GetFunction(fqName)
+		res.funcName = fqName
+		res.info, res.isFound = meta.Info.GetFunction(fqName)
 	} else {
 		solver.ExprTypeCustom(sc, st, call.Function, customTypes).Iterate(func(typ string) {
-			if res.defined {
+			if res.isFound {
 				return
 			}
 			m, ok := solver.FindMethod(typ, `__invoke`)
 			res.info = m.Info
-			res.defined = ok
+			res.isFound = ok
 		})
-		if !res.defined {
+		if !res.isFound {
 			res.canAnalyze = false
 		}
 	}
 
 	return res
+}
+
+type methodCallInfo struct {
+	methodName       string
+	className        string
+	info             meta.FuncInfo
+	methodCallerType meta.TypesMap
+	isFound          bool
+	isMagic          bool
+	canAnalyze       bool
+}
+
+func resolveMethodCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, e *ir.MethodCallExpr) methodCallInfo {
+	if !meta.IsIndexingComplete() {
+		return methodCallInfo{canAnalyze: false}
+	}
+
+	var methodName string
+
+	switch id := e.Method.(type) {
+	case *ir.Identifier:
+		methodName = id.Value
+	default:
+		return methodCallInfo{canAnalyze: false}
+	}
+
+	var (
+		matchDist   = math.MaxInt32
+		foundMethod bool
+		magic       bool
+		fn          meta.FuncInfo
+		className   string
+	)
+
+	methodCallerType := solver.ExprTypeCustom(sc, st, e.Variable, customTypes)
+
+	methodCallerType.Find(func(typ string) bool {
+		m, isMagic, ok := findMethod(typ, methodName)
+		if !ok {
+			return false
+		}
+		foundMethod = true
+		if dist := classDistance(st, typ); dist < matchDist {
+			matchDist = dist
+			fn = m.Info
+			className = m.ClassName
+			magic = isMagic
+		}
+		return matchDist == 0 // Stop if found inside the current class
+	})
+
+	return methodCallInfo{
+		methodName:       methodName,
+		className:        className,
+		isFound:          foundMethod,
+		isMagic:          magic,
+		info:             fn,
+		methodCallerType: methodCallerType,
+		canAnalyze:       true,
+	}
+}
+
+type staticMethodCallInfo struct {
+	methodName               string
+	className                string
+	methodInfo               solver.FindMethodResult
+	isParentCall             bool
+	isMagic                  bool
+	isFound                  bool
+	isCallsParentConstructor bool
+	canAnalyze               bool
+}
+
+func resolveStaticMethodCall(st *meta.ClassParseState, e *ir.StaticCallExpr) staticMethodCallInfo {
+	if !meta.IsIndexingComplete() {
+		return staticMethodCallInfo{canAnalyze: false}
+	}
+
+	var methodName string
+
+	switch id := e.Call.(type) {
+	case *ir.Identifier:
+		methodName = id.Value
+	default:
+		return staticMethodCallInfo{canAnalyze: false}
+	}
+
+	classNameNode, ok := e.Class.(*ir.Name)
+	parentCall := ok && classNameNode.Value == "parent"
+	var callsParentConstructor bool
+	if parentCall && methodName == "__construct" {
+		callsParentConstructor = true
+	}
+
+	className, ok := solver.GetClassName(st, e.Class)
+	if !ok {
+		return staticMethodCallInfo{canAnalyze: false}
+	}
+
+	m, found := solver.FindMethod(className, methodName)
+	isMagic := haveMagicMethod(className, `__callStatic`)
+
+	return staticMethodCallInfo{
+		methodName:               methodName,
+		className:                className,
+		methodInfo:               m,
+		isMagic:                  isMagic,
+		isParentCall:             parentCall,
+		isFound:                  found,
+		isCallsParentConstructor: callsParentConstructor,
+		canAnalyze:               true,
+	}
+}
+
+type propertyFetchInfo struct {
+	className         string
+	info              meta.PropertyInfo
+	propertyFetchType meta.TypesMap
+	propertyNode      *ir.Identifier
+	isFound           bool
+	isMagic           bool
+	canAnalyze        bool
+}
+
+func resolvePropertyFetch(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, e *ir.PropertyFetchExpr) propertyFetchInfo {
+	propertyNode, ok := e.Property.(*ir.Identifier)
+	if !ok {
+		return propertyFetchInfo{canAnalyze: false}
+	}
+
+	var found bool
+	var magic bool
+	var matchDist = math.MaxInt32
+	var className string
+	var info meta.PropertyInfo
+
+	propertyFetchType := solver.ExprTypeCustom(sc, st, e.Variable, customTypes)
+	propertyFetchType.Find(func(typ string) bool {
+		p, isMagic, ok := findProperty(typ, propertyNode.Value)
+		if !ok {
+			return false
+		}
+		found = true
+		if dist := classDistance(st, typ); dist < matchDist {
+			matchDist = dist
+			info = p.Info
+			className = p.ClassName
+			magic = isMagic
+		}
+		return matchDist == 0 // Stop if found inside the current class
+	})
+
+	return propertyFetchInfo{
+		className:         className,
+		isFound:           found,
+		isMagic:           magic,
+		info:              info,
+		propertyFetchType: propertyFetchType,
+		propertyNode:      propertyNode,
+		canAnalyze:        true,
+	}
+}
+
+type propertyStaticFetchInfo struct {
+	className       string
+	propertyName    string
+	info            solver.FindPropertyResult
+	isFound         bool
+	needHandleAsVar bool
+	canAnalyze      bool
+}
+
+func resolveStaticPropertyFetch(st *meta.ClassParseState, e *ir.StaticPropertyFetchExpr) propertyStaticFetchInfo {
+	if !meta.IsIndexingComplete() {
+		return propertyStaticFetchInfo{canAnalyze: false}
+	}
+
+	propertyNode, ok := e.Property.(*ir.SimpleVar)
+	if !ok {
+		return propertyStaticFetchInfo{needHandleAsVar: true, canAnalyze: false}
+	}
+
+	className, ok := solver.GetClassName(st, e.Class)
+	if !ok {
+		return propertyStaticFetchInfo{canAnalyze: false}
+	}
+
+	property, found := solver.FindProperty(className, "$"+propertyNode.Name)
+
+	return propertyStaticFetchInfo{
+		className:    className,
+		propertyName: propertyNode.Name,
+		info:         property,
+		isFound:      found,
+		canAnalyze:   true,
+	}
+}
+
+type classPropertyFetchInfo struct {
+	constName     string
+	className     string
+	implClassName string
+	info          meta.ConstInfo
+	isFound       bool
+	canAnalyze    bool
+}
+
+func resolveClassConstFetch(st *meta.ClassParseState, e *ir.ClassConstFetchExpr) classPropertyFetchInfo {
+	if !meta.IsIndexingComplete() {
+		return classPropertyFetchInfo{canAnalyze: false}
+	}
+
+	constName := e.ConstantName
+	if constName.Value == `class` || constName.Value == `CLASS` {
+		return classPropertyFetchInfo{canAnalyze: false}
+	}
+
+	className, ok := solver.GetClassName(st, e.Class)
+	if !ok {
+		return classPropertyFetchInfo{canAnalyze: false}
+	}
+
+	info, implClass, found := solver.FindConstant(className, constName.Value)
+
+	return classPropertyFetchInfo{
+		constName:     constName.Value,
+		className:     className,
+		implClassName: implClass,
+		info:          info,
+		isFound:       found,
+		canAnalyze:    true,
+	}
 }
 
 // isCapitalized reports whether s starts with an upper case letter.

@@ -377,7 +377,7 @@ func (m TypesMap) Iterate(cb func(typ string)) {
 	}
 }
 
-// Returns type of array element. T[] -> T, T[][] -> T[].
+// ArrayElemLazyType returns type of array element. T[] -> T, T[][] -> T[].
 // For *Lazy* type.
 func (m TypesMap) ArrayElemLazyType() TypesMap {
 	if m.Len() == 0 {

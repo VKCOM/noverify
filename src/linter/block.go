@@ -2,7 +2,6 @@ package linter
 
 import (
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
@@ -188,11 +187,8 @@ func (b *BlockWalker) EnterNode(n ir.Node) (res bool) {
 	case *ir.LogicalOrExpr:
 		res = b.handleLogicalOr(s)
 
-	case *ir.ArrayDimFetchExpr:
-		b.checkArrayDimFetch(s)
-
 	case *ir.GlobalStmt:
-		b.checkGlobalStmt(s)
+		b.handleAndCheckGlobalStmt(s)
 		res = false
 	case *ir.StaticStmt:
 		for _, vv := range s.Vars {
@@ -364,7 +360,7 @@ func (b *BlockWalker) checkDupGlobal(s *ir.GlobalStmt) {
 	}
 }
 
-func (b *BlockWalker) checkGlobalStmt(s *ir.GlobalStmt) {
+func (b *BlockWalker) handleAndCheckGlobalStmt(s *ir.GlobalStmt) {
 	if !b.rootLevel {
 		b.checkDupGlobal(s)
 	}
@@ -669,7 +665,7 @@ func (b *BlockWalker) handleCatch(s *ir.CatchStmt) {
 
 // We still need to analyze expressions in isset()/unset()/empty() statements
 func (b *BlockWalker) handleIssetDimFetch(e *ir.ArrayDimFetchExpr) {
-	b.checkArrayDimFetch(e)
+	b.linter.checkArrayDimFetch(e)
 
 	switch v := e.Variable.(type) {
 	case *ir.SimpleVar:
@@ -687,50 +683,7 @@ func (b *BlockWalker) handleIssetDimFetch(e *ir.ArrayDimFetchExpr) {
 	}
 }
 
-func (b *BlockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
-	if !meta.IsIndexingComplete() {
-		return
-	}
-
-	typ := solver.ExprType(b.ctx.sc, b.r.ctx.st, s.Variable)
-
-	var (
-		maybeHaveClasses bool
-		haveArrayAccess  bool
-	)
-
-	typ.Iterate(func(t string) {
-		// FullyQualified class name will have "\" in the beginning
-		if meta.IsClassType(t) {
-			maybeHaveClasses = true
-
-			if !haveArrayAccess && solver.Implements(t, `\ArrayAccess`) {
-				haveArrayAccess = true
-			}
-		}
-	})
-
-	if maybeHaveClasses && !haveArrayAccess {
-		b.r.Report(s.Variable, LevelDoNotReject, "arrayAccess", "Array access to non-array type %s", typ)
-	}
-}
-
-func (b *BlockWalker) handleArgsCount(n ir.Node, args []ir.Node, fn meta.FuncInfo) {
-	if meta.NameNodeEquals(n, "mt_rand") {
-		if len(args) != 0 && len(args) != 2 {
-			b.r.Report(n, LevelWarning, "argCount", "mt_rand expects 0 or 2 args")
-		}
-		return
-	}
-
-	if !enoughArgs(args, fn) {
-		b.r.Report(n, LevelWarning, "argCount", "Too few arguments for %s", meta.NameNodeToString(n))
-	}
-}
-
-func (b *BlockWalker) handleCallArgs(n ir.Node, args []ir.Node, fn meta.FuncInfo) {
-	b.handleArgsCount(n, args, fn)
-
+func (b *BlockWalker) handleCallArgs(args []ir.Node, fn meta.FuncInfo) {
 	for i, arg := range args {
 		if i >= len(fn.Params) {
 			arg.Walk(b)
@@ -750,7 +703,7 @@ func (b *BlockWalker) handleCallArgs(n ir.Node, args []ir.Node, fn meta.FuncInfo
 			a.Walk(b)
 		case *ir.ArrayDimFetchExpr:
 			if ref {
-				b.handleDimFetchLValue(a, "call_with_ref", meta.MixedType)
+				b.handleAndCheckDimFetchLValue(a, "call_with_ref", meta.MixedType)
 				break
 			}
 			a.Walk(b)
@@ -783,38 +736,17 @@ func (b *BlockWalker) handleCallArgs(n ir.Node, args []ir.Node, fn meta.FuncInfo
 func (b *BlockWalker) handleFunctionCall(e *ir.FunctionCallExpr) bool {
 	call := resolveFunctionCall(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, e)
 
-	if meta.IsIndexingComplete() {
-		if !call.canAnalyze {
-			return true
-		}
-
-		if !call.defined && !b.ctx.customFunctionExists(e.Function) {
-			b.r.Report(e.Function, LevelError, "undefined", "Call to undefined function %s", meta.NameNodeToString(e.Function))
-		}
-		b.r.checkNameCase(e.Function, call.fqName, call.info.Name)
-	}
-
-	if call.info.Doc.Deprecated {
-		if call.info.Doc.DeprecationNote != "" {
-			b.r.Report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s (%s)",
-				meta.NameNodeToString(e.Function), call.info.Doc.DeprecationNote)
-		} else {
-			b.r.Report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s",
-				meta.NameNodeToString(e.Function))
-		}
-	}
-
 	e.Function.Walk(b)
 
-	if call.fqName == `\func_get_args` {
+	switch call.funcName {
+	case `\func_get_args`:
 		b.callsFuncGetArgs = true
+	case `\compact`:
+		b.handleCompactCallArgs(e.Args)
+	default:
+		b.handleCallArgs(e.Args, call.info)
 	}
 
-	if call.fqName == `\compact` {
-		b.handleCompactCallArgs(e.Args)
-	} else {
-		b.handleCallArgs(e.Function, e.Args, call.info)
-	}
 	b.ctx.exitFlags |= call.info.ExitFlags
 
 	return false
@@ -852,129 +784,28 @@ func (b *BlockWalker) handleCompactCallArgs(args []ir.Node) {
 }
 
 func (b *BlockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
-	if !meta.IsIndexingComplete() {
-		return true
-	}
-
-	var methodName string
-
-	switch id := e.Method.(type) {
-	case *ir.Identifier:
-		methodName = id.Value
-	default:
-		return true
-	}
-
-	var (
-		matchDist   = int(math.MaxInt32)
-		foundMethod bool
-		magic       bool
-		fn          meta.FuncInfo
-		className   string
-	)
-
-	exprType := b.exprType(e.Variable)
-
-	exprType.Find(func(typ string) bool {
-		m, isMagic, ok := findMethod(typ, methodName)
-		if !ok {
-			return false
-		}
-		foundMethod = true
-		if dist := classDistance(b.r.ctx.st, typ); dist < matchDist {
-			matchDist = dist
-			fn = m.Info
-			className = m.ClassName
-			magic = isMagic
-		}
-		return matchDist == 0 // Stop if found inside the current class
-	})
+	call := resolveMethodCall(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, e)
 
 	e.Variable.Walk(b)
 	e.Method.Walk(b)
 
-	if !foundMethod && !magic && !b.r.ctx.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
-		// The method is undefined but we permit calling it if `method_exists`
-		// was called prior to that call.
-		if !b.ctx.customMethodExists(e.Variable, methodName) {
-			b.r.Report(e.Method, LevelError, "undefined", "Call to undefined method {%s}->%s()", exprType, methodName)
-		}
-	} else if !magic && !b.r.ctx.st.IsTrait {
-		// Method is defined.
-		b.r.checkNameCase(e.Method, methodName, fn.Name)
-		if fn.IsStatic() {
-			b.r.Report(e.Method, LevelWarning, "callStatic", "Calling static method as instance method")
-		}
+	if !call.isMagic {
+		b.handleCallArgs(e.Args, call.info)
 	}
-
-	if fn.Doc.Deprecated {
-		if fn.Doc.DeprecationNote != "" {
-			b.r.Report(e.Method, LevelDoNotReject, "deprecated", "Call to deprecated method {%s}->%s() (%s)",
-				exprType, methodName, fn.Doc.DeprecationNote)
-		} else {
-			b.r.Report(e.Method, LevelDoNotReject, "deprecated", "Call to deprecated method {%s}->%s()",
-				exprType, methodName)
-		}
-	}
-
-	if foundMethod && !magic && !canAccess(b.r.ctx.st, className, fn.AccessLevel) {
-		b.r.Report(e.Method, LevelError, "accessLevel", "Cannot access %s method %s->%s()", fn.AccessLevel, className, methodName)
-	}
-
-	if !magic {
-		b.handleCallArgs(e.Method, e.Args, fn)
-	}
-	b.ctx.exitFlags |= fn.ExitFlags
+	b.ctx.exitFlags |= call.info.ExitFlags
 
 	return false
 }
 
 func (b *BlockWalker) handleStaticCall(e *ir.StaticCallExpr) bool {
-	if !meta.IsIndexingComplete() {
-		return true
-	}
-
-	var methodName string
-
-	switch id := e.Call.(type) {
-	case *ir.Identifier:
-		methodName = id.Value
-	default:
-		return true
-	}
-
-	classNameNode, ok := e.Class.(*ir.Name)
-	parentCall := ok && classNameNode.Value == "parent"
-	if parentCall && methodName == "__construct" {
-		b.callsParentConstructor = true
-	}
-
-	className, ok := solver.GetClassName(b.r.ctx.st, e.Class)
-	if !ok {
-		return true
-	}
-
-	m, ok := solver.FindMethod(className, methodName)
-	fn := m.Info
+	call := resolveStaticMethodCall(b.r.ctx.st, e)
+	b.callsParentConstructor = call.isCallsParentConstructor
 
 	e.Class.Walk(b)
 	e.Call.Walk(b)
 
-	magic := haveMagicMethod(className, `__callStatic`)
-	if !ok && !magic && !b.r.ctx.st.IsTrait {
-		b.r.Report(e.Call, LevelError, "undefined", "Call to undefined method %s::%s()", className, methodName)
-	} else if !parentCall && !fn.IsStatic() && !magic && !b.r.ctx.st.IsTrait {
-		// Method is defined.
-		// parent::f() is permitted.
-		b.r.Report(e.Call, LevelWarning, "callStatic", "Calling instance method as static method")
-	}
-
-	if ok && !canAccess(b.r.ctx.st, m.ClassName, fn.AccessLevel) {
-		b.r.Report(e.Call, LevelError, "accessLevel", "Cannot access %s method %s::%s()", fn.AccessLevel, m.ClassName, methodName)
-	}
-
-	b.handleCallArgs(e.Call, e.Args, fn)
-	b.ctx.exitFlags |= fn.ExitFlags
+	b.handleCallArgs(e.Args, call.methodInfo.Info)
+	b.ctx.exitFlags |= call.methodInfo.Info.ExitFlags
 
 	return false
 }
@@ -994,89 +825,24 @@ func (b *BlockWalker) isThisInsideClosure(varNode ir.Node) bool {
 func (b *BlockWalker) handlePropertyFetch(e *ir.PropertyFetchExpr) bool {
 	e.Variable.Walk(b)
 	e.Property.Walk(b)
-
-	if !meta.IsIndexingComplete() {
-		return false
-	}
-
-	id, ok := e.Property.(*ir.Identifier)
-	if !ok {
-		return false
-	}
-
-	found := false
-	magic := false
-	matchDist := int(math.MaxInt32)
-	var className string
-	var info meta.PropertyInfo
-
-	typ := b.exprType(e.Variable)
-	typ.Find(func(typ string) bool {
-		p, isMagic, ok := findProperty(typ, id.Value)
-		if !ok {
-			return false
-		}
-		found = true
-		if dist := classDistance(b.r.ctx.st, typ); dist < matchDist {
-			matchDist = dist
-			info = p.Info
-			className = p.ClassName
-			magic = isMagic
-		}
-		return matchDist == 0 // Stop if found inside the current class
-	})
-
-	if !found && !magic && !b.r.ctx.st.IsTrait && !b.isThisInsideClosure(e.Variable) {
-		b.r.Report(e.Property, LevelError, "undefined", "Property {%s}->%s does not exist", typ, id.Value)
-	}
-
-	if found && !magic && !canAccess(b.r.ctx.st, className, info.AccessLevel) {
-		b.r.Report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s->%s", info.AccessLevel, className, id.Value)
-	}
-
 	return false
 }
 
 func (b *BlockWalker) handleStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) bool {
 	e.Class.Walk(b)
 
-	if !meta.IsIndexingComplete() {
-		return false
-	}
-
-	sv, ok := e.Property.(*ir.SimpleVar)
-	if !ok {
-		vv := e.Property.(*ir.Var)
-		vv.Expr.Walk(b)
-		return false
-	}
-
-	className, ok := solver.GetClassName(b.r.ctx.st, e.Class)
-	if !ok {
-		return false
-	}
-
-	p, ok := solver.FindProperty(className, "$"+sv.Name)
-	if !ok && !b.r.ctx.st.IsTrait {
-		b.r.Report(e.Property, LevelError, "undefined", "Property %s::$%s does not exist", className, sv.Name)
-	}
-
-	if ok && !canAccess(b.r.ctx.st, p.ClassName, p.Info.AccessLevel) {
-		b.r.Report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s::$%s", p.Info.AccessLevel, p.ClassName, sv.Name)
+	if propertyVarNode, propertyIsVarNode := e.Property.(*ir.Var); propertyIsVarNode {
+		propertyVarNode.Expr.Walk(b)
 	}
 
 	return false
 }
 
 func (b *BlockWalker) handleArray(arr *ir.ArrayExpr) bool {
-	return b.handleArrayItems(arr, arr.Items)
+	return b.handleArrayItems(arr.Items)
 }
 
-func (b *BlockWalker) handleArrayItems(arr ir.Node, items []*ir.ArrayItemExpr) bool {
-	if !meta.IsIndexingComplete() {
-		return true
-	}
-
+func (b *BlockWalker) handleArrayItems(items []*ir.ArrayItemExpr) bool {
 	for _, item := range items {
 		if item.Val != nil {
 			item.Val.Walk(b)
@@ -1090,32 +856,7 @@ func (b *BlockWalker) handleArrayItems(arr ir.Node, items []*ir.ArrayItemExpr) b
 }
 
 func (b *BlockWalker) handleClassConstFetch(e *ir.ClassConstFetchExpr) bool {
-	if !meta.IsIndexingComplete() {
-		return true
-	}
-
-	constName := e.ConstantName
-	if constName.Value == `class` || constName.Value == `CLASS` {
-		return false
-	}
-
-	className, ok := solver.GetClassName(b.r.ctx.st, e.Class)
-	if !ok {
-		return false
-	}
-
-	info, implClass, ok := solver.FindConstant(className, constName.Value)
-
 	e.Class.Walk(b)
-
-	if !ok && !b.r.ctx.st.IsTrait {
-		b.r.Report(e.ConstantName, LevelError, "undefined", "Class constant %s::%s does not exist", className, constName.Value)
-	}
-
-	if ok && !canAccess(b.r.ctx.st, implClass, info.AccessLevel) {
-		b.r.Report(e.ConstantName, LevelError, "accessLevel", "Cannot access %s constant %s::%s", info.AccessLevel, implClass, constName.Value)
-	}
-
 	return false
 }
 
@@ -1248,6 +989,8 @@ func (b *BlockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 			byRef = true
 		case *ir.SimpleVar:
 			v = u
+		default:
+			continue
 		}
 
 		if !b.ctx.sc.HaveVar(v) && !byRef {
@@ -1365,6 +1108,9 @@ func (b *BlockWalker) handleVariable(v ir.Node) bool {
 			for _, w := range b.parentBlockWalkers {
 				w.untrackVarName(varName)
 			}
+		}
+		if IsDiscardVar(varName) && !isSuperGlobal(varName) {
+			b.r.Report(v, LevelError, "discardVar", "Used var $%s that is supposed to be unused (rename variable if it's intended)", varName)
 		}
 
 		b.untrackVarName(varName)
@@ -1687,8 +1433,8 @@ func (b *BlockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 // if $a was previously undefined,
 // handle case when doing assignment like '$a[] = 4;'
 // or call to function that accepts like exec("command", $a)
-func (b *BlockWalker) handleDimFetchLValue(e *ir.ArrayDimFetchExpr, reason string, typ meta.TypesMap) {
-	b.checkArrayDimFetch(e)
+func (b *BlockWalker) handleAndCheckDimFetchLValue(e *ir.ArrayDimFetchExpr, reason string, typ meta.TypesMap) {
+	b.linter.checkArrayDimFetch(e)
 
 	switch v := e.Variable.(type) {
 	case *ir.Var, *ir.SimpleVar:
@@ -1699,7 +1445,7 @@ func (b *BlockWalker) handleDimFetchLValue(e *ir.ArrayDimFetchExpr, reason strin
 		b.addVar(v, arrTyp, reason, meta.VarAlwaysDefined)
 		b.handleVariable(v)
 	case *ir.ArrayDimFetchExpr:
-		b.handleDimFetchLValue(v, reason, meta.MixedType)
+		b.handleAndCheckDimFetchLValue(v, reason, meta.MixedType)
 	default:
 		// probably not assignable?
 		v.Walk(b)
@@ -1714,7 +1460,7 @@ func (b *BlockWalker) handleDimFetchLValue(e *ir.ArrayDimFetchExpr, reason strin
 func (b *BlockWalker) handleAssignReference(a *ir.AssignReference) bool {
 	switch v := a.Variable.(type) {
 	case *ir.ArrayDimFetchExpr:
-		b.handleDimFetchLValue(v, "assign_array", meta.MixedType)
+		b.handleAndCheckDimFetchLValue(v, "assign_array", meta.MixedType)
 		a.Expression.Walk(b)
 		return false
 	case *ir.Var, *ir.SimpleVar:
@@ -1830,7 +1576,7 @@ func (b *BlockWalker) handleAssign(a *ir.Assign) bool {
 	switch v := a.Variable.(type) {
 	case *ir.ArrayDimFetchExpr:
 		typ := solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression)
-		b.handleDimFetchLValue(v, "assign_array", typ)
+		b.handleAndCheckDimFetchLValue(v, "assign_array", typ)
 		return false
 	case *ir.SimpleVar:
 		b.paramClobberCheck(v)

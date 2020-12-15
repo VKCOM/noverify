@@ -274,3 +274,60 @@ function callSimplify() {
    */
   in_array($key, array_keys($a));
 }
+
+/**
+ * @comment Report not-strict-enough comparisons.
+ * @before  in_array("what", $s)
+ * @after   in_array("what", $s, true)
+ */
+function strictCmp() {
+    /**
+     * @warning non-strict comparison (use ===)
+     */
+    any_equal: {
+        $_ == true;
+        true == $_;
+        $_ == false;
+        false == $_;
+        $_ == null;
+        null == $_;
+    }
+
+    /**
+     * @warning non-strict string comparison (use ===)
+     * @type string $x
+     * @type string $y
+     */
+     $x == $y;
+
+    /**
+     * @warning non-strict comparison (use !==)
+     */
+    any_not_equal: {
+        $_ != true;
+        true != $_;
+        $_ != false;
+        false != $_;
+        $_ != null;
+        null != $_;
+    }
+
+    /**
+     * @warning non-strict string comparison (use !==)
+     * @type string $x
+     * @type string $y
+     */
+    $x != $y;
+
+    /**
+     * @warning 3rd argument of in_array must be true when comparing strings
+     * @type string $b
+     */
+    in_array($b, $_);
+
+    /**
+     * @warning 3rd argument of array_search must be true when comparing strings
+     * @type string $b
+     */
+    array_search($b, $_);
+}

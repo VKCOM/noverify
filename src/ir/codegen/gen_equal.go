@@ -52,6 +52,8 @@ func (g *genEqual) writeCompare(w *bytes.Buffer, pkg *packageData, typ *typeData
 			// Do nothing.
 		case "*github.com/VKCOM/noverify/src/php/parser/position.Position":
 			// Do nothing.
+		case "[]github.com/VKCOM/noverify/src/phpdoc.CommentPart":
+			// Do nothing.
 		case "ir.Class":
 			fmt.Fprintf(w, "    if !classEqual(x.%[1]s, y.%[1]s) { return false }\n", field.Name())
 		default:
