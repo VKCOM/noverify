@@ -33,7 +33,18 @@ class Foo {
 
 const CLASS_NAME = "Foo";
 
+class Boo {
+	/** Method */
+	public function method() {
+		$text = "";
+		exprtype(instance_deserialize($text, self::class), "\Boo|null");
+		exprtype(instance_deserialize($text, static::class), "\Boo|null");
+		exprtype(instance_deserialize($text, $this::class), "\Boo|null");
+	}
+}
+
 function f() {
+	$text = "";
 	$className = "";
 
 	exprtype(instance_deserialize($text, Foo::class), "\Foo|null");

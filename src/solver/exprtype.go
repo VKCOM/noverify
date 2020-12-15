@@ -202,21 +202,39 @@ func binaryPlusOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right ir.N
 	return binaryMathOpType(sc, cs, left, right, custom)
 }
 
-func classNameToString(n ir.Node) (string, bool) {
+func classNameToString(cs *meta.ClassParseState, n ir.Node) (string, bool) {
+	var name string
+
 	switch n := n.(type) {
 	case *ir.String:
-		return n.Value, true
+		name = n.Value
 	case *ir.ClassConstFetchExpr:
-		className, ok := n.Class.(*ir.Name)
-		if !ok {
+		if !strings.EqualFold(n.ConstantName.Value, "class") {
 			return "", false
 		}
 
-		if strings.EqualFold(n.ConstantName.Value, "class") {
-			return className.Value, true
+		switch class := n.Class.(type) {
+		case *ir.Name:
+			name = class.Value
+		case *ir.Identifier:
+			name = class.Value
+		case *ir.SimpleVar:
+			name = "$" + class.Name
+		default:
+			return "", false
 		}
+	default:
+		return "", false
 	}
-	return "", false
+
+	className, ok := GetClassName(cs, &ir.Name{
+		Value: name,
+	})
+	if !ok {
+		return "", false
+	}
+
+	return className, true
 }
 
 func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir.FunctionCallExpr, custom []CustomType) (typ meta.TypesMap, ok bool) {
@@ -248,11 +266,11 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 		// due to the fact that it is impossible for us to use constfold
 		// here, we have to process only a part of the possible options,
 		// although the most popular ones.
-		className, ok := classNameToString(arg.Expr)
+		className, ok := classNameToString(cs, arg.Expr)
 		if !ok {
 			return meta.NewTypesMap("mixed"), true
 		}
-		return meta.NewTypesMap(`\` + className + "|null"), true
+		return meta.NewTypesMap(className + "|null"), true
 	}
 
 	log.Printf("Internal error: unexpected override type %d for function %s", override.OverrideType, nm)
