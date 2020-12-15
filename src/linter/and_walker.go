@@ -54,10 +54,21 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 			varNode := n.Arg(0).Expr
 			varType := solver.ExprType(a.b.ctx.sc, a.b.r.ctx.st, varNode)
 
+			var hasAtLeastOneArray bool
+			var hasNoArray bool
+
+			hasNoArray = true
+			varType.Iterate(func(typ string) {
+				if strings.HasSuffix(typ, "[]") {
+					hasAtLeastOneArray = true
+					hasNoArray = false
+				}
+			})
+
 			// In case we have at least one type representing an array,
 			// we keep only the types representing arrays.
 			// int|Foo[] -> Foo[]
-			if varType.HasAtLeastOneArray() {
+			if hasAtLeastOneArray {
 				var typeWithOnlyArrays meta.TypesMap
 
 				varType.Iterate(func(typ string) {
@@ -71,7 +82,7 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 					Node: varNode,
 					Type: varType,
 				})
-			} else if !varType.HasOnlyArrays() { // If we have no arrays at all, the type becomes mixed[].
+			} else if hasNoArray { // If we have no arrays at all, the type becomes mixed[].
 				a.b.ctx.sc.ReplaceVar(varNode, meta.NewTypesMap("mixed[]"), "is_array", meta.VarAlwaysDefined)
 				a.varsToReplace = append(a.varsToReplace, varToReplace{
 					Node: varNode,

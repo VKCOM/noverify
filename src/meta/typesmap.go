@@ -173,34 +173,6 @@ func (m TypesMap) IsArray() bool {
 	return false
 }
 
-// HasOnlyArrays checks if map contains only arrays of any type
-func (m TypesMap) HasOnlyArrays() bool {
-	if len(m.m) == 0 {
-		return false
-	}
-
-	for typ := range m.m {
-		if !strings.HasSuffix(typ, "[]") {
-			return false
-		}
-	}
-	return true
-}
-
-// HasAtLeastOneArray checks if map contains at least one array of any type
-func (m TypesMap) HasAtLeastOneArray() bool {
-	if len(m.m) == 0 {
-		return false
-	}
-
-	for typ := range m.m {
-		if strings.HasSuffix(typ, "[]") {
-			return true
-		}
-	}
-	return false
-}
-
 // IsArrayOf checks if map contains only array of given type
 //
 // Warning: use only for *lazy* types!
