@@ -25,7 +25,7 @@ func init() {
 var customFlag = flag.String("custom-flag", "", "An example of the additional linter flag")
 
 func main() {
-	log.SetFlags(log.Flags() | log.Lmicroseconds)
+	log.SetFlags(log.Flags() | log.Ltime)
 
 	// Config argument can be nil to use "all default" behavior.
 	cmd.Main(&cmd.MainConfig{

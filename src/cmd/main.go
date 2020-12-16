@@ -253,6 +253,7 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 		log.Printf("Found %d critical reports", criticalReports)
 		return 2, nil
 	}
+	log.Printf("No critical issues found. Your code is perfect.")
 	return 0, nil
 }
 
