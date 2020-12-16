@@ -94,12 +94,12 @@ func typesMapToTypeExpr(p *phpdoc.TypeParser, m meta.TypesMap) phpdoc.Type {
 // according to the convention below:
 //
 // The types are inferred as follows:
-// 1. If there is an @param annotation, then its value becomes the return type;
+// 1. If there is an @return annotation, then its value becomes the return type;
 //
-// 2. If there is a type hint, then it is added to the types from the @param.
-//    If the @param is empty, then the type matches the type hint itself;
+// 2. If there is a type hint, then it is added to the types from the @return.
+//    If the @return is empty, then the type matches the type hint itself;
 //
-// 3. If there is no @param annotation and type hint, then the return type is equal to
+// 3. If there is no @return annotation and type hint, then the return type is equal to
 //    the union of the types that are returned from the function by return.
 func functionReturnType(phpdocReturnType meta.TypesMap, hintReturnType meta.TypesMap, actualReturnTypes meta.TypesMap) meta.TypesMap {
 	var returnTypes meta.TypesMap
