@@ -335,15 +335,13 @@ func haveAutofixableReports(reports []*linter.Report) bool {
 		checksWithQuickfix[check.Name] = struct{}{}
 	}
 
-	var withAutofixableReports bool
 	for _, r := range reports {
 		if _, ok := checksWithQuickfix[r.CheckName]; ok {
-			withAutofixableReports = true
-			break
+			return true
 		}
 	}
 
-	return withAutofixableReports
+	return false
 }
 
 func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (criticalReports int, containsAutofixableReports bool) {
