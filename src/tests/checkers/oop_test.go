@@ -1388,3 +1388,60 @@ class Bar {
 	}
 	test.RunAndMatch()
 }
+
+func TestGroupUse(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+namespace Test;
+
+class TestClass {};
+class TestClass2 {};
+
+function testFunction() {}
+function testFunction2() {}
+`)
+
+	test.AddFile(`<?php
+namespace Test\Something;
+
+class TestSomethingClass {};
+class TestSomethingClass2 {};
+
+function testSomethingFunction() {}
+function testSomethingFunction2() {}
+`)
+
+	test.AddFile(`<?php
+namespace Foo;
+
+use Test\{
+	TestClass, 
+	TestClass2 as SomeClass,
+
+	Something\TestSomethingClass, 
+	Something\TestSomethingClass2 as SomethingClass
+};
+
+use function Test\{
+	testFunction, 
+	testFunction2 as someFunc,
+
+	Something\testSomethingFunction,
+	Something\testSomethingFunction2 as somethingFunc
+};
+
+function f() {
+    $_ = new TestClass();
+    $_ = new SomeClass();
+    $_ = new TestSomethingClass();
+    $_ = new SomethingClass();
+
+    $_ = testFunction();
+    $_ = someFunc();
+    $_ = testSomethingFunction();
+    $_ = somethingFunc();
+}
+`)
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
