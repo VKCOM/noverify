@@ -1074,7 +1074,7 @@ type GroupUseStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	UseType      Node
-	Prefix       Node
+	Prefix       *Name
 	UseList      []Node
 }
 

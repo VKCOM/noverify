@@ -585,7 +585,7 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.UseType = NodeClone(x.UseType)
 		}
 		if x.Prefix != nil {
-			clone.Prefix = NodeClone(x.Prefix)
+			clone.Prefix = NodeClone(x.Prefix).(*ir.Name)
 		}
 		clone.UseList = NodeSliceClone(x.UseList)
 		return &clone
