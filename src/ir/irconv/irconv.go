@@ -1441,7 +1441,7 @@ func (c *Converter) convNode(n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
 		out.UseType = c.convNode(n.UseType)
-		out.Prefix = c.convNode(n.Prefix)
+		out.Prefix = c.convNode(n.Prefix).(*ir.Name)
 		out.UseList = c.convNodeSlice(n.UseList)
 		return out
 
