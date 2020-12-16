@@ -1067,10 +1067,9 @@ type GotoStmt struct {
 	Label        *Identifier
 }
 
-// GroupUseStmt is a `use $UseType $Prefix { $UseList }` statement.
+// GroupUseStmt is a `use $UseType $Prefix\{ $UseList }` statement.
 // $UseType is a "function" or "const".
 // TODO: change $UseType type to *Identifier?
-// TODO: figure out what $Prefix means.
 type GroupUseStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
