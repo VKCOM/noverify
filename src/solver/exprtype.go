@@ -202,6 +202,39 @@ func binaryPlusOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right ir.N
 	return binaryMathOpType(sc, cs, left, right, custom)
 }
 
+func classNameToString(cs *meta.ClassParseState, n ir.Node) (string, bool) {
+	var name string
+
+	switch n := n.(type) {
+	case *ir.String:
+		name = n.Value
+	case *ir.ClassConstFetchExpr:
+		if !strings.EqualFold(n.ConstantName.Value, "class") {
+			return "", false
+		}
+
+		switch class := n.Class.(type) {
+		case *ir.Name:
+			name = class.Value
+		case *ir.Identifier:
+			name = class.Value
+		case *ir.SimpleVar:
+			name = "$" + class.Name
+		default:
+			return "", false
+		}
+	default:
+		return "", false
+	}
+
+	className, ok := GetClassName(cs, &ir.Name{Value: name})
+	if !ok {
+		return "", false
+	}
+
+	return className, true
+}
+
 func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir.FunctionCallExpr, custom []CustomType) (typ meta.TypesMap, ok bool) {
 	fn, ok := meta.GetInternalFunctionInfo(nm)
 	if !ok || fn.Typ.IsEmpty() {
@@ -215,14 +248,27 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 
 	arg := c.Arg(override.ArgNum)
 	typ = ExprTypeLocalCustom(sc, cs, arg.Expr, custom)
-	if override.OverrideType == meta.OverrideArgType {
+
+	switch override.OverrideType {
+	case meta.OverrideArgType:
 		return typ, true
-	} else if override.OverrideType == meta.OverrideElementType {
+
+	case meta.OverrideElementType:
 		newTyp := meta.NewEmptyTypesMap(typ.Len())
 		typ.Iterate(func(t string) {
 			newTyp = newTyp.AppendString(meta.WrapElemOf(t))
 		})
 		return newTyp, true
+
+	case meta.OverrideClassType:
+		// due to the fact that it is impossible for us to use constfold
+		// here, we have to process only a part of the possible options,
+		// although the most popular ones.
+		className, ok := classNameToString(cs, arg.Expr)
+		if !ok {
+			return meta.NewTypesMap("mixed"), true
+		}
+		return meta.NewTypesMap(className + "|null"), true
 	}
 
 	log.Printf("Internal error: unexpected override type %d for function %s", override.OverrideType, nm)
