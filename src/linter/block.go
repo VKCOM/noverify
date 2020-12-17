@@ -1436,7 +1436,7 @@ func (b *BlockWalker) handleAndCheckDimFetchLValue(e *ir.ArrayDimFetchExpr, reas
 	case *ir.Var, *ir.SimpleVar:
 		arrTypRaw := make(meta.RawTypesMap, types.Len())
 		types.Iterate(func(typ meta.Type) {
-			arrTypRaw.Add(meta.WrapArrayOf(typ))
+			arrTypRaw = arrTypRaw.Append(meta.WrapArrayOf(typ))
 		})
 
 		arrTyp := meta.NewTypesMapFromMap(arrTypRaw)
@@ -1527,7 +1527,7 @@ func (b *BlockWalker) handleAssignList(list *ir.ListExpr, rhs ir.Node) {
 			shapeType = typ
 		case typ.IsArray():
 			elemType := typ.ElementType()
-			elemTypes.Add(elemType)
+			elemTypes = elemTypes.Append(elemType)
 		}
 	})
 

@@ -36,8 +36,9 @@ func NewRawTypesMap(cap int) RawTypesMap {
 	return make(RawTypesMap, cap)
 }
 
-func (m RawTypesMap) Add(typ Type) {
+func (m RawTypesMap) Append(typ Type) RawTypesMap {
 	m[typ] = struct{}{}
+	return m
 }
 
 func (m RawTypesMap) Delete(typ Type) {
@@ -102,7 +103,7 @@ func NewTypesMapFromPhpDocTypes(phpDocTypes []PhpDocType) TypesMap {
 
 	for _, phpDocType := range phpDocTypes {
 		typ := NewTypeFromPhpDocType(phpDocType)
-		m.Add(typ)
+		m = m.Append(typ)
 	}
 
 	return TypesMap{m: m}
@@ -117,7 +118,7 @@ func NewTypesMap(str string) TypesMap {
 		if typ.IsArray() {
 			typ = WrapArrayOf(typ.ElementType())
 		}
-		m.Add(typ)
+		m = m.Append(typ)
 	}
 
 	return TypesMap{m: m}
@@ -143,7 +144,7 @@ func MergeTypeMaps(maps ...TypesMap) TypesMap {
 
 	for _, typeMap := range maps {
 		for typ := range typeMap.m {
-			res.Add(typ)
+			res = res.Append(typ)
 		}
 		if !typeMap.IsPrecise() {
 			allIsPrecise = false
@@ -473,7 +474,7 @@ func (m TypesMap) ArrayElemLazyType() TypesMap {
 
 	res := NewRawTypesMap(m.Len())
 	for typ := range m.m {
-		res.Add(typ.UnwrapArrayOf())
+		res = res.Append(typ.UnwrapArrayOf())
 	}
 	return TypesMap{m: res, flags: m.flags}
 }

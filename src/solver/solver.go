@@ -44,7 +44,7 @@ func (r *resolver) collectMethodCallTypes(out, possibleTypes meta.RawTypesMap, m
 		m, ok := FindMethod(className, methodName)
 		if ok {
 			for resolvedType := range r.resolveTypes(className, m.Info.Typ) {
-				out.Add(resolvedType)
+				out = out.Append(resolvedType)
 			}
 		}
 	}
@@ -61,7 +61,7 @@ func (r *resolver) resolveType(class string, typ meta.Type) meta.RawTypesMap {
 
 	if _, ok := res["static"]; ok {
 		delete(res, "static")
-		res.Add(meta.NewType(class))
+		res = res.Append(meta.NewType(class))
 	}
 
 	return res
@@ -86,19 +86,19 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class string, typ meta.Type) m
 		varTyp, ok := meta.Info.GetVarNameType(typ.UnwrapGlobal())
 		if ok {
 			for resolvedType := range r.resolveTypes(class, varTyp) {
-				res.Add(resolvedType)
+				res = res.Append(resolvedType)
 			}
 		}
 	case meta.WConstant:
 		ci, ok := meta.Info.GetConstant(typ.UnwrapConstant())
 		if ok {
 			for resolvedType := range r.resolveTypes(class, ci.Typ) {
-				res.Add(resolvedType)
+				res = res.Append(resolvedType)
 			}
 		}
 	case meta.WArrayOf:
 		for resolvedType := range r.resolveType(class, typ.UnwrapArrayOf()) {
-			res.Add(meta.NewType(resolvedType.String() + "[]"))
+			res = res.Append(meta.NewType(resolvedType.String() + "[]"))
 		}
 	case meta.WElemOfKey:
 		arrayType, key := typ.UnwrapElemOfKey()
@@ -141,7 +141,7 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class string, typ meta.Type) m
 			prop, ok := FindProperty(className, propertyName)
 			if ok {
 				for resolvedType := range r.resolveTypes(class, prop.Info.Typ) {
-					res.Add(resolvedType)
+					res = res.Append(resolvedType)
 				}
 			} else {
 				// If there is a __get method, it might have
@@ -226,7 +226,7 @@ func (r *resolver) solveElemOfShape(class, shapeName, key string, res meta.RawTy
 	prop, ok := shape.Properties[key]
 	if ok {
 		for resolvedType := range r.resolveTypes(class, prop.Typ) {
-			res.Add(resolvedType)
+			res = res.Append(resolvedType)
 		}
 	}
 	return res
@@ -235,21 +235,21 @@ func (r *resolver) solveElemOfShape(class, shapeName, key string, res meta.RawTy
 func (r *resolver) solveElemOf(typ meta.Type, res meta.RawTypesMap) meta.RawTypesMap {
 	switch {
 	case typ.IsArray():
-		res.Add(typ.ElementType())
+		res = res.Append(typ.ElementType())
 	case typ.IsMixed():
-		res.Add("mixed")
+		res = res.Append("mixed")
 	case Implements(typ.String(), `\ArrayAccess`):
 		m, ok := FindMethod(typ.String(), "offsetGet")
 		if ok {
 			for resolvedType := range r.resolveTypes(typ.String(), m.Info.Typ) {
-				res.Add(resolvedType)
+				res = res.Append(resolvedType)
 			}
 		}
 	case Implements(typ.String(), `\Traversable`):
 		m, ok := FindMethod(typ.String(), "current")
 		if ok {
 			for resolvedType := range r.resolveTypes(typ.String(), m.Info.Typ) {
-				res.Add(resolvedType)
+				res = res.Append(resolvedType)
 			}
 		}
 	}
@@ -268,7 +268,7 @@ func (r *resolver) resolveTypes(class string, m meta.TypesMap) meta.RawTypesMap 
 		}()
 
 		for resolvedType := range r.resolveType(class, typ) {
-			res.Add(resolvedType)
+			res = res.Append(resolvedType)
 		}
 	})
 
@@ -286,7 +286,7 @@ func (r *resolver) resolveTypes(class string, m meta.TypesMap) meta.RawTypesMap 
 			}
 		}
 		if !specialized {
-			res.Add("mixed[]")
+			res = res.Append("mixed[]")
 		}
 	}
 
@@ -600,7 +600,7 @@ func findConstant(className string, constName string, visitedClasses map[string]
 
 func identityType(typ meta.Type) meta.RawTypesMap {
 	res := make(meta.RawTypesMap, 1)
-	res.Add(typ)
+	res = res.Append(typ)
 	return res
 }
 
@@ -624,6 +624,6 @@ func replaceTraitName(res meta.RawTypesMap, traitName, className string) meta.Ra
 		return res
 	}
 	res.Delete(traitType)
-	res.Add(meta.NewType(className))
+	res = res.Append(meta.NewType(className))
 	return res
 }

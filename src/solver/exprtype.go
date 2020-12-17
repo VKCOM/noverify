@@ -256,7 +256,7 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 	case meta.OverrideElementType:
 		res := make(meta.RawTypesMap, types.Len())
 		types.Iterate(func(typ meta.Type) {
-			res.Add(meta.WrapElemOf(typ))
+			res = res.Append(meta.WrapElemOf(typ))
 		})
 		return meta.NewTypesMapFromMap(res), true
 
@@ -308,7 +308,7 @@ func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*ir.ArrayItemEx
 	wrapped := make(meta.RawTypesMap, firstElementType.Len())
 
 	firstElementType.Iterate(func(typ meta.Type) {
-		wrapped.Add(meta.WrapArrayOf(typ))
+		wrapped = wrapped.Append(meta.WrapArrayOf(typ))
 	})
 
 	return meta.NewTypesMapFromMap(wrapped)
@@ -392,11 +392,11 @@ func arrayDimFetchType(n *ir.ArrayDimFetchExpr, sc *meta.Scope, cs *meta.ClassPa
 	types.Iterate(func(className meta.Type) {
 		switch dim := n.Dim.(type) {
 		case *ir.String:
-			res.Add(meta.WrapElemOfKey(className, dim.Value))
+			res = res.Append(meta.WrapElemOfKey(className, dim.Value))
 		case *ir.Lnumber:
-			res.Add(meta.WrapElemOfKey(className, dim.Value))
+			res = res.Append(meta.WrapElemOfKey(className, dim.Value))
 		default:
-			res.Add(meta.WrapElemOf(className))
+			res = res.Append(meta.WrapElemOf(className))
 		}
 	})
 
@@ -420,7 +420,7 @@ func propertyFetchType(n *ir.PropertyFetchExpr, sc *meta.Scope, cs *meta.ClassPa
 
 	types.Iterate(func(typ meta.Type) {
 		className := typ.String()
-		res.Add(meta.WrapInstancePropertyFetch(className, id.Value))
+		res = res.Append(meta.WrapInstancePropertyFetch(className, id.Value))
 	})
 
 	return meta.NewTypesMapFromMap(res)
@@ -442,7 +442,7 @@ func methodCallType(n *ir.MethodCallExpr, sc *meta.Scope, cs *meta.ClassParseSta
 	res := make(meta.RawTypesMap, types.Len())
 
 	types.Iterate(func(classType meta.Type) {
-		res.Add(meta.WrapInstanceMethodCall(classType, id.Value))
+		res = res.Append(meta.WrapInstanceMethodCall(classType, id.Value))
 	})
 
 	return meta.NewTypesMapFromMap(res)
