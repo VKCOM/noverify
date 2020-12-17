@@ -27,7 +27,7 @@ func (t Type) IsEmpty() bool {
 }
 
 func (t Type) ElementType() Type {
-	if t[0] == WArrayOf {
+	if !t.IsEmpty() && t[0] == WArrayOf {
 		return t.UnwrapArrayOf()
 	}
 
@@ -39,6 +39,10 @@ func (t Type) Is(str string) bool {
 }
 
 func (t Type) IsLazy() bool {
+	if t.IsEmpty() {
+		return false
+	}
+
 	return t[0] < WMax
 }
 
@@ -47,6 +51,10 @@ func (t Type) IsMixed() bool {
 }
 
 func (t Type) IsArray() bool {
+	if t.IsEmpty() {
+		return false
+	}
+
 	return strings.HasSuffix(string(t), "[]") || t[0] == WArrayOf
 }
 

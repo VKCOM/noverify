@@ -32,6 +32,10 @@ const (
 
 type RawTypesMap map[Type]struct{}
 
+func NewRawTypesMap(cap int) RawTypesMap {
+	return make(RawTypesMap, cap)
+}
+
 func (m RawTypesMap) Add(typ Type) {
 	m[typ] = struct{}{}
 }
@@ -94,7 +98,7 @@ func NewEmptyTypesMap(cap int) TypesMap {
 }
 
 func NewTypesMapFromPhpDocTypes(phpDocTypes []PhpDocType) TypesMap {
-	m := make(RawTypesMap, len(phpDocTypes))
+	m := NewRawTypesMap(len(phpDocTypes))
 
 	for _, phpDocType := range phpDocTypes {
 		typ := NewTypeFromPhpDocType(phpDocType)
@@ -106,7 +110,7 @@ func NewTypesMapFromPhpDocTypes(phpDocTypes []PhpDocType) TypesMap {
 
 // NewTypesMap returns new TypesMap that is initialized with the provided types (separated by "|" symbol)
 func NewTypesMap(str string) TypesMap {
-	m := make(RawTypesMap, strings.Count(str, "|")+1)
+	m := NewRawTypesMap(strings.Count(str, "|") + 1)
 
 	for _, typeStr := range strings.Split(str, "|") {
 		typ := NewType(typeStr)
@@ -135,7 +139,7 @@ func MergeTypeMaps(maps ...TypesMap) TypesMap {
 	var flags mapFlags
 	var allIsPrecise = true
 	var allIsImmutable = true
-	var res = make(RawTypesMap, totalLen)
+	var res = NewRawTypesMap(totalLen)
 
 	for _, typeMap := range maps {
 		for typ := range typeMap.m {
@@ -255,7 +259,7 @@ func (m TypesMap) Is(typ string) bool {
 func (m TypesMap) AppendType(typ Type) TypesMap {
 	if !m.isImmutable() {
 		if m.m == nil {
-			m.m = make(RawTypesMap, 1)
+			m.m = NewRawTypesMap(1)
 		}
 
 		m.m[typ] = struct{}{}
@@ -264,7 +268,7 @@ func (m TypesMap) AppendType(typ Type) TypesMap {
 		return m
 	}
 
-	mm := make(RawTypesMap, 1)
+	mm := NewRawTypesMap(1)
 	for k, v := range m.m {
 		mm[k] = v
 	}
@@ -279,7 +283,7 @@ func (m TypesMap) AppendType(typ Type) TypesMap {
 func (m TypesMap) AppendString(str string) TypesMap {
 	if !m.isImmutable() {
 		if m.m == nil {
-			m.m = make(RawTypesMap, strings.Count(str, "|")+1)
+			m.m = NewRawTypesMap(strings.Count(str, "|") + 1)
 		}
 
 		for _, typeStr := range strings.Split(str, "|") {
@@ -293,7 +297,7 @@ func (m TypesMap) AppendString(str string) TypesMap {
 		return m
 	}
 
-	mm := make(RawTypesMap, m.Len()+strings.Count(str, "|")+1)
+	mm := NewRawTypesMap(m.Len() + strings.Count(str, "|") + 1)
 	for k, v := range m.m {
 		mm[k] = v
 	}
@@ -311,7 +315,7 @@ func (m TypesMap) Clone() TypesMap {
 		return m
 	}
 
-	mm := make(RawTypesMap, m.Len())
+	mm := NewRawTypesMap(m.Len())
 	for typ := range m.m {
 		mm[typ] = struct{}{}
 	}
@@ -332,7 +336,7 @@ func (m TypesMap) Append(n TypesMap) TypesMap {
 			if n.m == nil {
 				return m
 			}
-			m.m = make(RawTypesMap, n.Len())
+			m.m = NewRawTypesMap(n.Len())
 		}
 
 		m.MarkAsImprecise()
@@ -342,7 +346,7 @@ func (m TypesMap) Append(n TypesMap) TypesMap {
 		return m
 	}
 
-	mm := make(RawTypesMap, m.Len()+n.Len())
+	mm := NewRawTypesMap(m.Len() + n.Len())
 	for k, v := range m.m {
 		mm[k] = v
 	}
@@ -467,7 +471,7 @@ func (m TypesMap) ArrayElemLazyType() TypesMap {
 		return MixedType
 	}
 
-	res := make(RawTypesMap, m.Len())
+	res := NewRawTypesMap(m.Len())
 	for typ := range m.m {
 		res.Add(typ.UnwrapArrayOf())
 	}

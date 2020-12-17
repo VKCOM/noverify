@@ -1395,11 +1395,9 @@ func (d *RootWalker) parsePHPDoc(n ir.Node, doc []phpdoc.CommentPart, actualPara
 			result.errs.pushType("%s on line %d", warning, part.Line())
 		}
 		param.typ = newTypesMap(&d.ctx, types)
-		param.typ.Iterate(func(t meta.Type) {
-			if t.Is("void") {
-				result.errs.pushType("void is not a valid type for input parameter")
-			}
-		})
+		if param.typ.Contains("void") {
+			result.errs.pushType("void is not a valid type for input parameter")
+		}
 		param.optional = optional
 
 		variable = strings.TrimPrefix(variable, "$")

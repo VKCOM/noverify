@@ -146,18 +146,19 @@ func (t Type) unwrap3() (b1 uint8, one, two string) {
 	var b [stringLenBytes]byte
 	var rawBuf [stringLenBytes / 2]byte
 
+	typeStr := t.String()
 	pos := 1
-	copy(b[:], t.String()[pos:pos+uint8fieldBytes])
+	copy(b[:], typeStr[pos:pos+uint8fieldBytes])
 	hex.Decode(rawBuf[:], b[:uint8fieldBytes])
 	b1 = rawBuf[0]
 	pos += uint8fieldBytes
-	copy(b[:], t.String()[pos:pos+stringLenBytes])
+	copy(b[:], typeStr[pos:pos+stringLenBytes])
 	hex.Decode(rawBuf[:], b[:])
 	l = int(binary.LittleEndian.Uint16(rawBuf[:]))
 	pos += stringLenBytes
-	one = t.String()[pos : pos+l]
+	one = typeStr[pos : pos+l]
 	pos += l
-	two = t.String()[pos+stringLenBytes:] // do not care about length of last param
+	two = typeStr[pos+stringLenBytes:] // do not care about length of last param
 
 	return b1, one, two
 }
@@ -288,7 +289,7 @@ func (t Type) Format() (res string) {
 
 	switch t[0] {
 	case WGlobal:
-		return "global_$" + t.UnwrapGlobal()
+		return "global_$" + NewType(t.UnwrapGlobal()).Format()
 	case WConstant:
 		return "constant(" + t.UnwrapConstant() + ")"
 	case WArrayOf:
