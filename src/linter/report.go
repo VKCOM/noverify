@@ -550,9 +550,14 @@ $foo = new Foo();`,
 		},
 
 		{
-			Name:    "discardVar",
-			Default: true,
-			Comment: `Report the use of variables that were supposed to be unused, like $ _.`,
+			Name:     "discardVar",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report the use of variables that were supposed to be unused, like $_.`,
+			Before: `$_ = some();
+echo $_;`,
+			After: `$someVal = some();
+echo $someVal;`,
 		},
 
 		{
