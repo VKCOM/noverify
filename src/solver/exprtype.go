@@ -236,7 +236,6 @@ func classNameToString(cs *meta.ClassParseState, n ir.Node) (string, bool) {
 }
 
 func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir.FunctionCallExpr, custom []CustomType) (typ meta.TypesMap, ok bool) {
-
 	fn, ok := meta.GetInternalFunctionInfo(nm)
 	if !ok || fn.Typ.IsEmpty() {
 		return meta.TypesMap{}, false
@@ -248,7 +247,7 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 	}
 
 	arg := c.Arg(override.ArgNum)
-	types = ExprTypeLocalCustom(sc, cs, arg.Expr, custom)
+	types := ExprTypeLocalCustom(sc, cs, arg.Expr, custom)
 
 	switch override.OverrideType {
 	case meta.OverrideArgType:
