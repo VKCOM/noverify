@@ -36,11 +36,15 @@ func (m RawTypesMap) Add(typ Type) {
 	m[typ] = struct{}{}
 }
 
+func (m RawTypesMap) Delete(typ Type) {
+	delete(m, typ)
+}
+
 func (m RawTypesMap) AddString(str string) {
 	m[NewType(str)] = struct{}{}
 }
 
-func (m RawTypesMap) Empty() bool {
+func (m RawTypesMap) IsEmpty() bool {
 	return len(m) == 0
 }
 

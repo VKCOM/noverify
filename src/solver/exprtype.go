@@ -347,7 +347,7 @@ func constFetchType(n *ir.ConstFetchExpr) meta.TypesMap {
 		return meta.NewTypesMap("null")
 	default:
 		if nm.NumParts() == 0 {
-			return meta.NewEmptyTypesMap(1).AppendType(meta.WrapConstant(nm.Value))
+			return meta.NewTypesMap(meta.WrapConstant(nm.Value).String())
 		}
 	}
 	return meta.TypesMap{}
@@ -362,7 +362,7 @@ func classConstFetchType(n *ir.ClassConstFetchExpr, cs *meta.ClassParseState) me
 		return meta.TypesMap{}
 	}
 	typ := meta.WrapClassConstFetch(className, n.ConstantName.Value)
-	return meta.NewEmptyTypesMap(1).AppendType(typ)
+	return meta.NewTypesMap(typ.String())
 }
 
 func typeCastType(n *ir.TypeCastExpr) meta.TypesMap {
@@ -418,8 +418,9 @@ func propertyFetchType(n *ir.PropertyFetchExpr, sc *meta.Scope, cs *meta.ClassPa
 
 	res := make(meta.RawTypesMap, types.Len())
 
-	types.Iterate(func(className meta.Type) {
-		res.Add(meta.WrapInstancePropertyFetch(className.String(), id.Value))
+	types.Iterate(func(typ meta.Type) {
+		className := typ.String()
+		res.Add(meta.WrapInstancePropertyFetch(className, id.Value))
 	})
 
 	return meta.NewTypesMapFromMap(res)
@@ -440,8 +441,8 @@ func methodCallType(n *ir.MethodCallExpr, sc *meta.Scope, cs *meta.ClassParseSta
 
 	res := make(meta.RawTypesMap, types.Len())
 
-	types.Iterate(func(className meta.Type) {
-		res.Add(meta.WrapInstanceMethodCall(className, id.Value))
+	types.Iterate(func(classType meta.Type) {
+		res.Add(meta.WrapInstanceMethodCall(classType, id.Value))
 	})
 
 	return meta.NewTypesMapFromMap(res)

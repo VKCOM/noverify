@@ -1541,7 +1541,7 @@ func (b *BlockWalker) handleAssignList(list *ir.ListExpr, rhs ir.Node) {
 	}
 
 	// Try to handle it as an array assignment.
-	if !elemTypes.Empty() {
+	if !elemTypes.IsEmpty() {
 		elemTypeMap := meta.NewTypesMapFromMap(elemTypes).Immutable()
 		for _, item := range list.Items {
 			b.handleVariableNode(item.Val, elemTypeMap, "list-assign")
