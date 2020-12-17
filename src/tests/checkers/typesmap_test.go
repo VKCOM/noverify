@@ -13,8 +13,8 @@ func TestEqualsMatching(t *testing.T) {
 			meta.NewEmptyTypesMap(1),
 		},
 		{
-			meta.NewTypesMapFromMap(map[string]struct{}{"string": {}, "int": {}}),
-			meta.NewTypesMapFromMap(map[string]struct{}{"string": {}, "int": {}}),
+			meta.NewTypesMapFromMap(meta.RawTypesMap{"string": {}, "int": {}}),
+			meta.NewTypesMapFromMap(meta.RawTypesMap{"string": {}, "int": {}}),
 		},
 	}
 
@@ -32,11 +32,11 @@ func TestEqualNonMatching(t *testing.T) {
 	testCases := [][]meta.TypesMap{
 		{
 			meta.NewEmptyTypesMap(1),
-			meta.NewTypesMapFromMap(map[string]struct{}{"int": {}}),
+			meta.NewTypesMapFromMap(meta.RawTypesMap{"int": {}}),
 		},
 		{
-			meta.NewTypesMapFromMap(map[string]struct{}{"string": {}}),
-			meta.NewTypesMapFromMap(map[string]struct{}{"int": {}}),
+			meta.NewTypesMapFromMap(meta.RawTypesMap{"string": {}}),
+			meta.NewTypesMapFromMap(meta.RawTypesMap{"int": {}}),
 		},
 	}
 

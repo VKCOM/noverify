@@ -120,204 +120,205 @@ func wrap(typ byte, byteFields []uint8, args ...string) string {
 	return string(buf)
 }
 
-func unwrap1(s string) (one string) {
-	return s[stringLenBytes+1:] // do not care about length, there is only 1 param
+func (t Type) unwrap1() (one string) {
+	return t.String()[stringLenBytes+1:] // do not care about length, there is only 1 param
 }
 
-func unwrap2(s string) (one, two string) {
+func (t Type) unwrap2() (one, two string) {
 	var l int
 	var b [stringLenBytes]byte
 	var rawBuf [stringLenBytes / 2]byte
 
 	pos := 1
-	copy(b[:], s[pos:pos+stringLenBytes])
+	copy(b[:], t.String()[pos:pos+stringLenBytes])
 	hex.Decode(rawBuf[:], b[:])
 	l = int(binary.LittleEndian.Uint16(rawBuf[:]))
 	pos += stringLenBytes
-	one = s[pos : pos+l]
+	one = t.String()[pos : pos+l]
 	pos += l
-	two = s[pos+stringLenBytes:] // do not care about length of last param
+	two = t.String()[pos+stringLenBytes:] // do not care about length of last param
 
 	return one, two
 }
 
-func unwrap3(s string) (b1 uint8, one, two string) {
+func (t Type) unwrap3() (b1 uint8, one, two string) {
 	var l int
 	var b [stringLenBytes]byte
 	var rawBuf [stringLenBytes / 2]byte
 
 	pos := 1
-	copy(b[:], s[pos:pos+uint8fieldBytes])
+	copy(b[:], t.String()[pos:pos+uint8fieldBytes])
 	hex.Decode(rawBuf[:], b[:uint8fieldBytes])
 	b1 = rawBuf[0]
 	pos += uint8fieldBytes
-	copy(b[:], s[pos:pos+stringLenBytes])
+	copy(b[:], t.String()[pos:pos+stringLenBytes])
 	hex.Decode(rawBuf[:], b[:])
 	l = int(binary.LittleEndian.Uint16(rawBuf[:]))
 	pos += stringLenBytes
-	one = s[pos : pos+l]
+	one = t.String()[pos : pos+l]
 	pos += l
-	two = s[pos+stringLenBytes:] // do not care about length of last param
+	two = t.String()[pos+stringLenBytes:] // do not care about length of last param
 
 	return b1, one, two
 }
 
-func WrapBaseMethodParam(paramIndex int, className, methodName string) string {
-	return wrap(WBaseMethodParam, []uint8{uint8(paramIndex)}, className, methodName)
+func WrapBaseMethodParam(paramIndex int, className, methodName string) Type {
+	return NewType(wrap(WBaseMethodParam, []uint8{uint8(paramIndex)}, className, methodName))
 }
 
-func UnwrapBaseMethodParam(s string) (paramIndex uint8, className, methodName string) {
-	return unwrap3(s)
+func (t Type) UnwrapBaseMethodParam() (paramIndex uint8, className, methodName string) {
+	return t.unwrap3()
 }
 
-func WrapStaticMethodCall(className, methodName string) string {
-	return wrap(WStaticMethodCall, nil, className, methodName)
+func WrapStaticMethodCall(className, methodName string) Type {
+	return NewType(wrap(WStaticMethodCall, nil, className, methodName))
 }
 
-func UnwrapStaticMethodCall(s string) (className, methodName string) {
-	return unwrap2(s)
+func (t Type) UnwrapStaticMethodCall() (className, methodName string) {
+	return t.unwrap2()
 }
 
-func WrapInstanceMethodCall(typ, methodName string) string {
-	return wrap(WInstanceMethodCall, nil, typ, methodName)
+func WrapInstanceMethodCall(typ Type, methodName string) Type {
+	return NewType(wrap(WInstanceMethodCall, nil, typ.String(), methodName))
 }
 
-func UnwrapInstanceMethodCall(s string) (typ, methodName string) {
-	return unwrap2(s)
+func (t Type) UnwrapInstanceMethodCall() (typ Type, methodName string) {
+	rawType, methodName := t.unwrap2()
+	typ = NewType(rawType)
+	return typ, methodName
 }
 
-func WrapClassConstFetch(className, constName string) string {
-	return wrap(WClassConstFetch, nil, className, constName)
+func WrapClassConstFetch(className, constName string) Type {
+	return NewType(wrap(WClassConstFetch, nil, className, constName))
 }
 
-func UnwrapClassConstFetch(s string) (className, constName string) {
-	return unwrap2(s)
+func (t Type) UnwrapClassConstFetch() (className, constName string) {
+	return t.unwrap2()
 }
 
-func WrapStaticPropertyFetch(className, propName string) string {
+func WrapStaticPropertyFetch(className, propName string) Type {
 	if !strings.HasPrefix(propName, "$") {
 		propName = "$" + propName
 	}
-	return wrap(WStaticPropertyFetch, nil, className, propName)
+	return NewType(wrap(WStaticPropertyFetch, nil, className, propName))
 }
 
-func UnwrapStaticPropertyFetch(s string) (className, propName string) {
-	return unwrap2(s)
+func (t Type) UnwrapStaticPropertyFetch() (className, propName string) {
+	return t.unwrap2()
 }
 
-func WrapInstancePropertyFetch(typ, propName string) string {
-	return wrap(WInstancePropertyFetch, nil, typ, propName)
+func WrapInstancePropertyFetch(typ, propName string) Type {
+	return NewType(wrap(WInstancePropertyFetch, nil, typ, propName))
 }
 
-func UnwrapInstancePropertyFetch(s string) (typ, propName string) {
-	return unwrap2(s)
+func (t Type) UnwrapInstancePropertyFetch() (typ Type, propName string) {
+	rawType, propName := t.unwrap2()
+	typ = NewType(rawType)
+	return typ, propName
 }
 
-func WrapFunctionCall(funcName string) string {
-	return wrap(WFunctionCall, nil, funcName)
+func WrapFunctionCall(funcName string) Type {
+	return NewType(wrap(WFunctionCall, nil, funcName))
 }
 
-func UnwrapFunctionCall(s string) (funcName string) {
-	return unwrap1(s)
+func (t Type) UnwrapFunctionCall() (funcName string) {
+	return t.unwrap1()
 }
 
-func WrapArrayOf(typ string) string {
-	return wrap(WArrayOf, nil, typ)
+func WrapArrayOf(typ Type) Type {
+	return NewType(wrap(WArrayOf, nil, typ.String()))
 }
 
-func UnwrapArrayOf(s string) (typ string) {
-	return unwrap1(s)
+func (t Type) UnwrapArrayOf() (typ Type) {
+	return NewType(t.unwrap1())
 }
 
-func WrapArray2(ktyp, vtyp string) string {
-	// TODO: actually support types of keys
-	return WrapArrayOf(vtyp)
-}
-
-func WrapElemOf(typ string) string {
+func WrapElemOf(typ Type) Type {
 	// ElemOf(ArrayOf(typ)) == typ
 	if len(typ) >= 1+stringLenBytes && typ[0] == WArrayOf {
 		return typ[1+stringLenBytes:]
 	}
 
-	return wrap(WElemOf, nil, typ)
+	return NewType(wrap(WElemOf, nil, typ.String()))
 }
 
-func UnwrapElemOf(s string) (typ string) {
-	return unwrap1(s)
+func (t Type) UnwrapElemOf() (typ Type) {
+	return NewType(t.unwrap1())
 }
 
-func WrapElemOfKey(typ, key string) string {
+func WrapElemOfKey(typ Type, key string) Type {
 	if len(typ) >= 1+stringLenBytes && typ[0] == WArrayOf {
 		return typ[1+stringLenBytes:]
 	}
-	return wrap(WElemOfKey, nil, typ, key)
+	return NewType(wrap(WElemOfKey, nil, typ.String(), key))
 }
 
-func UnwrapElemOfKey(s string) (typ, key string) {
-	return unwrap2(s)
+func (t Type) UnwrapElemOfKey() (typ Type, key string) {
+	rawType, key := t.unwrap2()
+	typ = NewType(rawType)
+	return typ, key
 }
 
-func WrapGlobal(varName string) string {
-	return wrap(WGlobal, nil, varName)
+func WrapGlobal(varName string) Type {
+	return NewType(wrap(WGlobal, nil, varName))
 }
 
-func UnwrapGlobal(s string) (varName string) {
-	return unwrap1(s)
+func (t Type) UnwrapGlobal() (varName string) {
+	return t.unwrap1()
 }
 
-func WrapConstant(constName string) string {
-	return wrap(WConstant, nil, constName)
+func WrapConstant(constName string) Type {
+	return NewType(wrap(WConstant, nil, constName))
 }
 
-func UnwrapConstant(s string) (constName string) {
-	return unwrap1(s)
+func (t Type) UnwrapConstant() (constName string) {
+	return t.unwrap1()
 }
 
-func formatType(s string) (res string) {
-	if len(s) == 0 || s[0] >= WMax {
-		return s
+func (t Type) Format() (res string) {
+	if t.IsEmpty() || !t.IsLazy() {
+		return t.String()
 	}
 
 	defer func() {
 		if r := recover(); r != nil {
-			res = fmt.Sprintf("panic!(orig='%s', hex='%x')", s, s)
+			res = fmt.Sprintf("panic!(orig='%s', hex='%x')", t, t)
 		}
 	}()
 
-	switch s[0] {
+	switch t[0] {
 	case WGlobal:
-		return "global_$" + formatType(UnwrapGlobal(s))
+		return "global_$" + t.UnwrapGlobal()
 	case WConstant:
-		return "constant(" + UnwrapConstant(s) + ")"
+		return "constant(" + t.UnwrapConstant() + ")"
 	case WArrayOf:
-		return formatType(UnwrapArrayOf(s)) + "[]"
+		return t.UnwrapArrayOf().Format() + "[]"
 	case WElemOf:
-		return "elem(" + formatType(UnwrapElemOf(s)) + ")"
+		return "elem(" + t.UnwrapElemOf().Format() + ")"
 	case WElemOfKey:
-		typ, key := UnwrapElemOfKey(s)
-		return fmt.Sprintf("elem(%s)[%s]", formatType(typ), key)
+		typ, key := t.UnwrapElemOfKey()
+		return fmt.Sprintf("elem(%s)[%s]", typ.Format(), key)
 	case WFunctionCall:
-		return UnwrapFunctionCall(s) + "()"
+		return t.UnwrapFunctionCall() + "()"
 	case WInstanceMethodCall:
-		expr, methodName := UnwrapInstanceMethodCall(s)
-		return "(" + formatType(expr) + ")->" + methodName + "()"
+		expr, methodName := t.UnwrapInstanceMethodCall()
+		return "(" + expr.Format() + ")->" + methodName + "()"
 	case WInstancePropertyFetch:
-		expr, propertyName := UnwrapInstancePropertyFetch(s)
-		return "(" + formatType(expr) + ")->" + propertyName
+		expr, propertyName := t.UnwrapInstancePropertyFetch()
+		return "(" + expr.Format() + ")->" + propertyName
 	case WBaseMethodParam:
-		index, className, methodName := unwrap3(s)
+		index, className, methodName := t.unwrap3()
 		return fmt.Sprintf("param(%s)::%s[%d]", className, methodName, index)
 	case WStaticMethodCall:
-		className, methodName := UnwrapStaticMethodCall(s)
+		className, methodName := t.UnwrapStaticMethodCall()
 		return className + "::" + methodName + "()"
 	case WStaticPropertyFetch:
-		className, propertyName := UnwrapStaticPropertyFetch(s)
+		className, propertyName := t.UnwrapStaticPropertyFetch()
 		return className + "::" + propertyName
 	case WClassConstFetch:
-		className, constName := UnwrapClassConstFetch(s)
+		className, constName := t.UnwrapClassConstFetch()
 		return className + "::" + constName
 	}
 
-	return "unknown(" + s + ")"
+	return "unknown(" + t.String() + ")"
 }

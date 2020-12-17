@@ -1526,10 +1526,10 @@ func TestAtVar(t *testing.T) {
 	hasBool := false
 	hasString := false
 
-	typ.Iterate(func(typ string) {
-		if typ == "string" {
+	typ.Iterate(func(typ meta.Type) {
+		if typ.Is("string") {
 			hasString = true
-		} else if typ == "bool" {
+		} else if typ.Is("bool") {
 			hasBool = true
 		}
 	})

@@ -7,23 +7,23 @@ import (
 
 func TestTypeEncoding(t *testing.T) {
 	tests := []struct {
-		wrapped     string
+		wrapped     Type
 		stringified string
-		unwrapCheck func(typ string) bool
+		unwrapCheck func(typ Type) bool
 	}{
-		{`int`, `int`, func(typ string) bool { return typ == `int` }},
-		{`\Foo`, `\Foo`, func(typ string) bool { return typ == `\Foo` }},
+		{`int`, `int`, func(typ Type) bool { return typ.Is(`int`) }},
+		{`\Foo`, `\Foo`, func(typ Type) bool { return typ.Is(`\Foo`) }},
 
 		{
 			WrapArrayOf(`int`), `int[]`,
-			func(typ string) bool { return unwrap1(typ) == `int` },
+			func(typ Type) bool { return typ.unwrap1() == `int` },
 		},
 
 		{
 			WrapBaseMethodParam(0, `FooClass`, `barMethod`),
 			`param(FooClass)::barMethod[0]`,
-			func(typ string) bool {
-				index, className, methodName := unwrap3(typ)
+			func(typ Type) bool {
+				index, className, methodName := typ.unwrap3()
 				return index == 0 && className == `FooClass` && methodName == `barMethod`
 			},
 		},
@@ -31,23 +31,23 @@ func TestTypeEncoding(t *testing.T) {
 		{
 			WrapBaseMethodParam('|', `FooClass`, `barMethod`),
 			`param(FooClass)::barMethod[124]`,
-			func(typ string) bool {
-				index, className, methodName := unwrap3(typ)
+			func(typ Type) bool {
+				index, className, methodName := typ.unwrap3()
 				return index == '|' && className == `FooClass` && methodName == `barMethod`
 			},
 		},
 
 		{
-			WrapArrayOf(strings.Repeat(`a`, '|')),
+			WrapArrayOf(NewType(strings.Repeat(`a`, '|'))),
 			strings.Repeat(`a`, '|') + `[]`,
-			func(typ string) bool {
-				return unwrap1(typ) == strings.Repeat(`a`, '|')
+			func(typ Type) bool {
+				return typ.unwrap1() == strings.Repeat(`a`, '|')
 			},
 		},
 	}
 
 	for _, test := range tests {
-		stringified := formatType(test.wrapped)
+		stringified := test.wrapped.Format()
 		if stringified != test.stringified {
 			t.Errorf("formatType %q:\nhave: %q\nwant: %q",
 				test.stringified, stringified, test.stringified)
@@ -86,10 +86,10 @@ func TestTypeEncoding(t *testing.T) {
 		// encoded (wrapped) so much. For now, we need tests below to ensure
 		// that nothing blows up because some <uint8> or type byte look like '|'
 		// when printed as a string.
-		if len(strings.Split(test.wrapped, `|`)) != len(strings.Split(test.stringified, `|`)) {
+		if len(strings.Split(test.wrapped.String(), `|`)) != len(strings.Split(test.stringified, `|`)) {
 			t.Errorf("mismatched |-split parts count for %q:\nhave: %d\nwant: %d",
 				test.stringified,
-				len(strings.Split(test.wrapped, `|`)),
+				len(strings.Split(test.wrapped.String(), `|`)),
 				len(strings.Split(test.stringified, `|`)))
 		}
 	}

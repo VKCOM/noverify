@@ -111,14 +111,17 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 		res.funcName = fqName
 		res.info, res.isFound = meta.Info.GetFunction(fqName)
 	} else {
-		solver.ExprTypeCustom(sc, st, call.Function, customTypes).Iterate(func(typ string) {
+		functionType := solver.ExprTypeCustom(sc, st, call.Function, customTypes)
+
+		functionType.Iterate(func(typ meta.Type) {
 			if res.isFound {
 				return
 			}
-			m, ok := solver.FindMethod(typ, `__invoke`)
+			m, ok := solver.FindMethod(typ.String(), `__invoke`)
 			res.info = m.Info
 			res.isFound = ok
 		})
+
 		if !res.isFound {
 			res.canAnalyze = false
 		}
@@ -161,13 +164,13 @@ func resolveMethodCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []s
 
 	methodCallerType := solver.ExprTypeCustom(sc, st, e.Variable, customTypes)
 
-	methodCallerType.Find(func(typ string) bool {
-		m, isMagic, ok := findMethod(typ, methodName)
+	methodCallerType.Find(func(typ meta.Type) bool {
+		m, isMagic, ok := findMethod(typ.String(), methodName)
 		if !ok {
 			return false
 		}
 		foundMethod = true
-		if dist := classDistance(st, typ); dist < matchDist {
+		if dist := classDistance(st, typ.String()); dist < matchDist {
 			matchDist = dist
 			fn = m.Info
 			className = m.ClassName
@@ -262,13 +265,13 @@ func resolvePropertyFetch(sc *meta.Scope, st *meta.ClassParseState, customTypes 
 	var info meta.PropertyInfo
 
 	propertyFetchType := solver.ExprTypeCustom(sc, st, e.Variable, customTypes)
-	propertyFetchType.Find(func(typ string) bool {
-		p, isMagic, ok := findProperty(typ, propertyNode.Value)
+	propertyFetchType.Find(func(typ meta.Type) bool {
+		p, isMagic, ok := findProperty(typ.String(), propertyNode.Value)
 		if !ok {
 			return false
 		}
 		found = true
-		if dist := classDistance(st, typ); dist < matchDist {
+		if dist := classDistance(st, typ.String()); dist < matchDist {
 			matchDist = dist
 			info = p.Info
 			className = p.ClassName

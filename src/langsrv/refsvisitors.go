@@ -315,8 +315,8 @@ func (d *blockMethodCallVisitor) BeforeEnterNode(n ir.Node) {
 
 	exprType := solver.ExprType(d.ctx.Scope(), d.ctx.ClassParseState(), call.Variable)
 
-	exprType.Iterate(func(typ string) {
-		m, ok := solver.FindMethod(typ, methodName)
+	exprType.Iterate(func(typ meta.Type) {
+		m, ok := solver.FindMethod(typ.String(), methodName)
 		realClassName := m.ImplName()
 
 		if ok && realClassName == d.className {
@@ -365,9 +365,10 @@ func (d *blockPropertyVisitor) handlePropertyFetch(n *ir.PropertyFetchExpr) {
 	}
 
 	exprType := solver.ExprType(d.ctx.Scope(), d.ctx.ClassParseState(), n.Variable)
-	exprType.Iterate(func(className string) {
-		p, ok := solver.FindProperty(className, id.Value)
-		realClassName := p.ImplName()
+	exprType.Iterate(func(typ meta.Type) {
+		className := typ.String()
+		prop, ok := solver.FindProperty(className, id.Value)
+		realClassName := prop.ImplName()
 
 		if ok && realClassName == d.className {
 			if pos := ir.GetPosition(n); pos != nil {

@@ -137,7 +137,7 @@ func (b *blockLinter) enterNode(n ir.Node) {
 		if n.Type == "array" {
 			b.checkRedundantCastArray(n.Expr)
 		} else {
-			b.checkRedundantCast(n.Expr, n.Type)
+			b.checkRedundantCast(n.Expr, meta.NewType(n.Type))
 		}
 
 	case *ir.CloneExpr:
@@ -199,12 +199,12 @@ func (b *blockLinter) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
 		haveArrayAccess  bool
 	)
 
-	typ.Iterate(func(t string) {
+	typ.Iterate(func(t meta.Type) {
 		// FullyQualified class name will have "\" in the beginning
-		if meta.IsClassType(t) {
+		if t.IsClass() {
 			maybeHaveClasses = true
 
-			if !haveArrayAccess && solver.Implements(t, `\ArrayAccess`) {
+			if !haveArrayAccess && solver.Implements(t.String(), `\ArrayAccess`) {
 				haveArrayAccess = true
 			}
 		}
@@ -323,12 +323,12 @@ func (b *blockLinter) checkRedundantCastArray(e ir.Node) {
 	}
 }
 
-func (b *blockLinter) checkRedundantCast(e ir.Node, dstType string) {
+func (b *blockLinter) checkRedundantCast(e ir.Node, dstType meta.Type) {
 	typ := b.walker.exprType(e)
 	if typ.Len() != 1 {
 		return
 	}
-	typ.Iterate(func(x string) {
+	typ.Iterate(func(x meta.Type) {
 		if x == dstType {
 			b.report(e, LevelDoNotReject, "redundantCast",
 				"expression already has %s type", dstType)
@@ -957,7 +957,7 @@ func (b *blockLinter) checkFormatString(e *ir.FunctionCallExpr, arg *ir.Argument
 		}
 
 		arg := e.Arg(d.argNum)
-		if d.specifier == 's' && b.isArrayType(b.walker.exprType(arg.Expr)) {
+		if d.specifier == 's' && b.walker.exprType(arg.Expr).IsArray() {
 			b.report(arg, LevelWarning, "printf", "potential array to string conversion")
 		}
 	}
@@ -967,8 +967,4 @@ func (b *blockLinter) checkFormatString(e *ir.FunctionCallExpr, arg *ir.Argument
 			b.report(e.Arg(i), LevelWarning, "printf", "argument is not referenced from the formatting string")
 		}
 	}
-}
-
-func (b *blockLinter) isArrayType(typ meta.TypesMap) bool {
-	return typ.Len() == 1 && typ.Find(meta.IsArrayType)
 }

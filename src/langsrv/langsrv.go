@@ -15,6 +15,8 @@ import (
 	"sync"
 	"time"
 
+	"go.lsp.dev/uri"
+
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/lintdebug"
@@ -24,7 +26,6 @@ import (
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/vscode"
 	"github.com/VKCOM/noverify/src/workspace"
-	"go.lsp.dev/uri"
 )
 
 const maxLength = 16 << 20
@@ -439,17 +440,16 @@ func handleTextDocumentReferences(req *baseRequest) error {
 	})
 }
 
-func resolveTypesSafe(curStaticClass string, m meta.TypesMap, visitedMap solver.ResolverMap) (res map[string]struct{}) {
+func resolveTypesSafe(curStaticClass string, m meta.TypesMap, visitedMap solver.ResolverMap) (res meta.RawTypesMap) {
 	defer func() {
 		if r := recover(); r != nil {
-			res = make(map[string]struct{})
-			res["panic: "+fmt.Sprint(r)] = struct{}{}
-			res["orig: "+m.String()] = struct{}{}
+			res = make(meta.RawTypesMap, 2)
+			res.AddString("panic: " + fmt.Sprint(r))
+			res.AddString("orig: " + m.String())
 		}
 	}()
 
-	res = solver.ResolveTypes(curStaticClass, m, visitedMap)
-	return
+	return solver.ResolveTypes(curStaticClass, m, visitedMap)
 }
 
 func handleTextDocumentHover(req *baseRequest) error {
@@ -573,8 +573,8 @@ func getHoverForMethodCall(n *ir.MethodCallExpr, sc *meta.Scope, cs *meta.ClassP
 	types := safeExprType(sc, cs, n.Variable)
 
 	var fun meta.FuncInfo
-	types.Find(func(t string) bool {
-		_, ok := solver.FindMethod(t, id.Value)
+	types.Find(func(typ meta.Type) bool {
+		_, ok := solver.FindMethod(typ.String(), id.Value)
 		return ok
 	})
 
@@ -849,8 +849,8 @@ func getMethodCompletionItems(st *meta.ClassParseState, str string, sc *meta.Sco
 	methodDedup := map[string]struct{}{}
 	propDedup := map[string]struct{}{}
 
-	safeExprType(sc, st, s.Expr).Iterate(func(t string) {
-		for _, m := range getMethods(t) {
+	safeExprType(sc, st, s.Expr).Iterate(func(typ meta.Type) {
+		for _, m := range getMethods(typ.String()) {
 			if _, ok := methodDedup[m]; ok {
 				continue
 			}
@@ -858,7 +858,7 @@ func getMethodCompletionItems(st *meta.ClassParseState, str string, sc *meta.Sco
 			methodDedup[m] = struct{}{}
 		}
 
-		for _, m := range getInstanceProperties(t) {
+		for _, m := range getInstanceProperties(typ.String()) {
 			if _, ok := propDedup[m]; ok {
 				continue
 			}

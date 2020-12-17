@@ -8,19 +8,19 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 )
 
-func resolve(typ string) map[string]struct{} {
+func resolve(typ meta.Type) meta.RawTypesMap {
 	return resolveType("", typ, make(ResolverMap))
 }
 
-func makeTyp(typ string) map[string]struct{} {
-	res := make(map[string]struct{})
+func makeTyp(typ string) meta.RawTypesMap {
+	res := make(meta.RawTypesMap)
 	for _, t := range strings.Split(typ, "|") {
-		res[t] = struct{}{}
+		res.AddString(t)
 	}
 	return res
 }
 
-func typesEqual(a map[string]struct{}, b string) bool {
+func typesEqual(a meta.RawTypesMap, b string) bool {
 	return reflect.DeepEqual(a, makeTyp(b))
 }
 
@@ -31,8 +31,8 @@ func TestSolver(t *testing.T) {
 	sc.AddVarName("MC", tm("Memcache"), "global", meta.VarAlwaysDefined)
 
 	fm := meta.NewFunctionsMap()
-	fm.Set(`\array_map`, meta.FuncInfo{Typ: tm(`array|bool|` + meta.WrapFunctionCall(`\my_func`))})
-	fm.Set(`\my_func`, meta.FuncInfo{Typ: tm(meta.WrapFunctionCall(`\array_map`) + `|float`)})
+	fm.Set(`\array_map`, meta.FuncInfo{Typ: tm(`array|bool|` + meta.WrapFunctionCall(`\my_func`).String())})
+	fm.Set(`\my_func`, meta.FuncInfo{Typ: tm(meta.WrapFunctionCall(`\array_map`).String() + `|float`)})
 
 	cmfm := meta.NewFunctionsMap()
 	cmfm.Set(`do_something`, meta.FuncInfo{Typ: tm(`string`)})

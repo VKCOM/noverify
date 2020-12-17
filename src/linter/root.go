@@ -1066,7 +1066,7 @@ func (d *RootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 				break // Current implementation limit reached
 			}
 
-			res := make(map[string]struct{})
+			res := make(meta.RawTypesMap)
 			res[meta.WrapBaseMethodParam(i, d.ctx.st.CurrentClass, nm)] = struct{}{}
 			params[i].Typ = meta.NewTypesMapFromMap(res)
 			sc.AddVarName(p.Name, params[i].Typ, "param", meta.VarAlwaysDefined)
@@ -1117,8 +1117,8 @@ func (d *RootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	})
 
 	if nm == "getIterator" && meta.IsIndexingComplete() && solver.Implements(d.ctx.st.CurrentClass, `\IteratorAggregate`) {
-		implementsTraversable := returnType.Find(func(typ string) bool {
-			return solver.Implements(typ, `\Traversable`)
+		implementsTraversable := returnType.Find(func(typ meta.Type) bool {
+			return solver.Implements(typ.String(), `\Traversable`)
 		})
 
 		if !implementsTraversable {
@@ -1395,8 +1395,8 @@ func (d *RootWalker) parsePHPDoc(n ir.Node, doc []phpdoc.CommentPart, actualPara
 			result.errs.pushType("%s on line %d", warning, part.Line())
 		}
 		param.typ = newTypesMap(&d.ctx, types)
-		param.typ.Iterate(func(t string) {
-			if t == "void" {
+		param.typ.Iterate(func(t meta.Type) {
+			if t.Is("void") {
 				result.errs.pushType("void is not a valid type for input parameter")
 			}
 		})
@@ -1422,24 +1422,24 @@ func (d *RootWalker) parseTypeNode(n ir.Node) (typ meta.TypesMap, ok bool) {
 }
 
 // callbackParamByIndex returns the description of the parameter for the function by its index.
-func (d *RootWalker) callbackParamByIndex(param ir.Node, argType meta.TypesMap) meta.FuncParam {
+func (d *RootWalker) callbackParamByIndex(param ir.Node, argTypes meta.TypesMap) meta.FuncParam {
 	p := param.(*ir.Parameter)
 	v := p.Variable
 
-	var typ meta.TypesMap
+	var types meta.TypesMap
 	tp, ok := d.parseTypeNode(p.VariableType)
 	if ok {
-		typ = tp
+		types = tp
 	} else {
-		argType.Iterate(func(t string) {
-			typ = typ.AppendString(meta.WrapElemOf(t))
+		argTypes.Iterate(func(argType meta.Type) {
+			types = types.AppendType(meta.WrapElemOf(argType))
 		})
 	}
 
 	arg := meta.FuncParam{
 		IsRef: p.ByRef,
 		Name:  v.Name,
-		Typ:   typ,
+		Typ:   types,
 	}
 	return arg
 }
@@ -1522,7 +1522,9 @@ func (d *RootWalker) parseFuncArgs(params []ir.Node, parTypes phpDocParamsMap, s
 
 		if p.Variadic {
 			arrTyp := meta.NewEmptyTypesMap(typ.Len())
-			typ.Iterate(func(t string) { arrTyp = arrTyp.AppendString(meta.WrapArrayOf(t)) })
+			typ.Iterate(func(t meta.Type) {
+				arrTyp = arrTyp.AppendType(meta.WrapArrayOf(t))
+			})
 			typ = arrTyp
 		}
 

@@ -160,19 +160,23 @@ func (f *sideEffectsFinder) methodCallIsPure(n *ir.MethodCallExpr) bool {
 	if !meta.IsIndexingComplete() {
 		return false
 	}
+
 	methodName, ok := n.Method.(*ir.Identifier)
 	if !ok {
 		return false
 	}
-	typ := ExprTypeCustom(f.sc, f.st, n.Variable, f.customTypes)
-	if typ.Len() != 1 || typ.Is("mixed") {
+
+	types := ExprTypeCustom(f.sc, f.st, n.Variable, f.customTypes)
+	if types.Len() != 1 || types.Is("mixed") {
 		return false
 	}
-	return typ.Find(func(typ string) bool {
-		m, ok := FindMethod(typ, methodName.Value)
+
+	return types.Find(func(typ meta.Type) bool {
+		m, ok := FindMethod(typ.String(), methodName.Value)
 		if meta.IsInternalClass(m.ClassName) {
 			return false
 		}
+
 		return ok && m.Info.IsPure() && m.Info.ExitFlags == 0
 	})
 }

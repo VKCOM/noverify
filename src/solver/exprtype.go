@@ -196,13 +196,13 @@ func binaryPlusOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right ir.N
 	// TODO: PHP will raise fatal error if one operand is array and other is not, so we may check it too
 	leftType := ExprTypeLocalCustom(sc, cs, left, custom)
 	rightType := ExprTypeLocalCustom(sc, cs, right, custom)
-	if leftType.IsArray() && rightType.IsArray() {
+	if leftType.IsArrayLazy() && rightType.IsArrayLazy() {
 		return meta.MergeTypeMaps(leftType, rightType)
 	}
 	return binaryMathOpType(sc, cs, left, right, custom)
 }
 
-func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir.FunctionCallExpr, custom []CustomType) (typ meta.TypesMap, ok bool) {
+func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir.FunctionCallExpr, custom []CustomType) (types meta.TypesMap, ok bool) {
 	fn, ok := meta.GetInternalFunctionInfo(nm)
 	if !ok || fn.Typ.IsEmpty() {
 		return meta.TypesMap{}, false
@@ -214,15 +214,15 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 	}
 
 	arg := c.Arg(override.ArgNum)
-	typ = ExprTypeLocalCustom(sc, cs, arg.Expr, custom)
+	types = ExprTypeLocalCustom(sc, cs, arg.Expr, custom)
 	if override.OverrideType == meta.OverrideArgType {
-		return typ, true
+		return types, true
 	} else if override.OverrideType == meta.OverrideElementType {
-		newTyp := meta.NewEmptyTypesMap(typ.Len())
-		typ.Iterate(func(t string) {
-			newTyp = newTyp.AppendString(meta.WrapElemOf(t))
+		res := make(meta.RawTypesMap, types.Len())
+		types.Iterate(func(typ meta.Type) {
+			res.Add(meta.WrapElemOf(typ))
 		})
-		return newTyp, true
+		return meta.NewTypesMapFromMap(res), true
 	}
 
 	log.Printf("Internal error: unexpected override type %d for function %s", override.OverrideType, nm)
@@ -259,12 +259,13 @@ func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*ir.ArrayItemEx
 		}
 	}
 
-	wrapped := meta.NewEmptyTypesMap(firstElementType.Len())
-	firstElementType.Iterate(func(t string) {
-		wrapped.AppendString(meta.WrapArrayOf(t))
+	wrapped := make(meta.RawTypesMap, firstElementType.Len())
+
+	firstElementType.Iterate(func(typ meta.Type) {
+		wrapped.Add(meta.WrapArrayOf(typ))
 	})
 
-	return wrapped
+	return meta.NewTypesMapFromMap(wrapped)
 }
 
 func newExprType(n *ir.NewExpr, cs *meta.ClassParseState) meta.TypesMap {
@@ -281,13 +282,13 @@ func newExprType(n *ir.NewExpr, cs *meta.ClassParseState) meta.TypesMap {
 func ternaryExprType(n *ir.TernaryExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) meta.TypesMap {
 	t := ExprTypeLocalCustom(sc, cs, n.IfTrue, custom)
 	f := ExprTypeLocalCustom(sc, cs, n.IfFalse, custom)
-	return meta.NewEmptyTypesMap(t.Len() + f.Len()).Append(t).Append(f)
+	return meta.MergeTypeMaps(t, f)
 }
 
 func coalesceExprType(n *ir.CoalesceExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) meta.TypesMap {
 	l := ExprTypeLocalCustom(sc, cs, n.Left, custom)
 	r := ExprTypeLocalCustom(sc, cs, n.Right, custom)
-	return meta.NewEmptyTypesMap(l.Len() + r.Len()).Append(l).Append(r)
+	return meta.MergeTypeMaps(l, r)
 }
 
 func constFetchType(n *ir.ConstFetchExpr) meta.TypesMap {
@@ -300,7 +301,7 @@ func constFetchType(n *ir.ConstFetchExpr) meta.TypesMap {
 		return meta.NewTypesMap("null")
 	default:
 		if nm.NumParts() == 0 {
-			return meta.NewTypesMap(meta.WrapConstant(nm.Value))
+			return meta.NewEmptyTypesMap(1).AppendType(meta.WrapConstant(nm.Value))
 		}
 	}
 	return meta.TypesMap{}
@@ -314,7 +315,8 @@ func classConstFetchType(n *ir.ClassConstFetchExpr, cs *meta.ClassParseState) me
 	if !ok {
 		return meta.TypesMap{}
 	}
-	return meta.NewTypesMap(meta.WrapClassConstFetch(className, n.ConstantName.Value))
+	typ := meta.WrapClassConstFetch(className, n.ConstantName.Value)
+	return meta.NewEmptyTypesMap(1).AppendType(typ)
 }
 
 func typeCastType(n *ir.TypeCastExpr) meta.TypesMap {
@@ -334,21 +336,21 @@ func typeCastType(n *ir.TypeCastExpr) meta.TypesMap {
 }
 
 func arrayDimFetchType(n *ir.ArrayDimFetchExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) meta.TypesMap {
-	m := ExprTypeLocalCustom(sc, cs, n.Variable, custom)
-	if m.IsEmpty() {
+	types := ExprTypeLocalCustom(sc, cs, n.Variable, custom)
+	if types.IsEmpty() {
 		return meta.TypesMap{}
 	}
 
-	res := make(map[string]struct{}, m.Len())
+	res := make(meta.RawTypesMap, types.Len())
 
-	m.Iterate(func(className string) {
+	types.Iterate(func(className meta.Type) {
 		switch dim := n.Dim.(type) {
 		case *ir.String:
-			res[meta.WrapElemOfKey(className, dim.Value)] = struct{}{}
+			res.Add(meta.WrapElemOfKey(className, dim.Value))
 		case *ir.Lnumber:
-			res[meta.WrapElemOfKey(className, dim.Value)] = struct{}{}
+			res.Add(meta.WrapElemOfKey(className, dim.Value))
 		default:
-			res[meta.WrapElemOf(className)] = struct{}{}
+			res.Add(meta.WrapElemOf(className))
 		}
 	})
 
@@ -363,15 +365,15 @@ func propertyFetchType(n *ir.PropertyFetchExpr, sc *meta.Scope, cs *meta.ClassPa
 		return meta.TypesMap{}
 	}
 
-	m := ExprTypeLocalCustom(sc, cs, n.Variable, custom)
-	if m.IsEmpty() {
+	types := ExprTypeLocalCustom(sc, cs, n.Variable, custom)
+	if types.IsEmpty() {
 		return meta.TypesMap{}
 	}
 
-	res := make(map[string]struct{}, m.Len())
+	res := make(meta.RawTypesMap, types.Len())
 
-	m.Iterate(func(className string) {
-		res[meta.WrapInstancePropertyFetch(className, id.Value)] = struct{}{}
+	types.Iterate(func(className meta.Type) {
+		res.Add(meta.WrapInstancePropertyFetch(className.String(), id.Value))
 	})
 
 	return meta.NewTypesMapFromMap(res)
@@ -385,15 +387,15 @@ func methodCallType(n *ir.MethodCallExpr, sc *meta.Scope, cs *meta.ClassParseSta
 		return meta.TypesMap{}
 	}
 
-	m := ExprTypeLocalCustom(sc, cs, n.Variable, custom)
-	if m.IsEmpty() {
+	types := ExprTypeLocalCustom(sc, cs, n.Variable, custom)
+	if types.IsEmpty() {
 		return meta.TypesMap{}
 	}
 
-	res := make(map[string]struct{}, m.Len())
+	res := make(meta.RawTypesMap, types.Len())
 
-	m.Iterate(func(className string) {
-		res[meta.WrapInstanceMethodCall(className, id.Value)] = struct{}{}
+	types.Iterate(func(className meta.Type) {
+		res.Add(meta.WrapInstanceMethodCall(className, id.Value))
 	})
 
 	return meta.NewTypesMapFromMap(res)
@@ -415,7 +417,7 @@ func staticPropertyFetchType(n *ir.StaticPropertyFetchExpr, cs *meta.ClassParseS
 		return meta.TypesMap{}
 	}
 
-	return meta.NewTypesMap(meta.WrapStaticPropertyFetch(nm, "$"+v.Name))
+	return meta.NewTypesMap(meta.WrapStaticPropertyFetch(nm, "$"+v.Name).String())
 }
 
 func staticFunctionCallType(n *ir.StaticCallExpr, cs *meta.ClassParseState) meta.TypesMap {
@@ -429,7 +431,7 @@ func staticFunctionCallType(n *ir.StaticCallExpr, cs *meta.ClassParseState) meta
 		return meta.TypesMap{}
 	}
 
-	return meta.NewTypesMap(meta.WrapStaticMethodCall(nm, id.Value))
+	return meta.NewTypesMap(meta.WrapStaticMethodCall(nm, id.Value).String())
 }
 
 func functionCallType(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) meta.TypesMap {
@@ -444,13 +446,13 @@ func functionCallType(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassPars
 				return typ
 			}
 		}
-		return meta.NewTypesMap(meta.WrapFunctionCall(nm.Value))
+		return meta.NewTypesMap(meta.WrapFunctionCall(nm.Value).String())
 	}
 	typ, ok := internalFuncType(`\`+nm.Value, sc, cs, n, custom)
 	if ok {
 		return typ
 	}
-	return meta.NewTypesMap(meta.WrapFunctionCall(cs.Namespace + `\` + nm.Value))
+	return meta.NewTypesMap(meta.WrapFunctionCall(cs.Namespace + `\` + nm.Value).String())
 }
 
 func magicConstantType(n *ir.MagicConstant) meta.TypesMap {

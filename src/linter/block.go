@@ -371,7 +371,7 @@ func (b *BlockWalker) handleAndCheckGlobalStmt(s *ir.GlobalStmt) {
 			continue
 		}
 
-		b.addVar(v, meta.NewTypesMap(meta.WrapGlobal(nm)), "global", meta.VarAlwaysDefined)
+		b.addVar(v, meta.NewTypesMap(meta.WrapGlobal(nm).String()), "global", meta.VarAlwaysDefined)
 		if b.path.Conditional() {
 			b.addNonLocalVar(v, varCondGlobal)
 		} else {
@@ -871,8 +871,9 @@ func (b *BlockWalker) handleForeach(s *ir.ForeachStmt) bool {
 	// foreach body can do 0 cycles so we need a separate context for that
 	if s.Stmt != nil {
 		ctx := b.withNewContext(func() {
-			solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, s.Expr, b.ctx.customTypes).Iterate(func(typ string) {
-				b.handleVariableNode(s.Variable, meta.NewTypesMap(meta.WrapElemOf(typ)), "foreach_value")
+			exprType := solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, s.Expr, b.ctx.customTypes)
+			exprType.Iterate(func(typ meta.Type) {
+				b.handleVariableNode(s.Variable, meta.NewTypesMap(meta.WrapElemOf(typ).String()), "foreach_value")
 			})
 
 			b.handleVariableNode(s.Key, arrayKeyType, "foreach_key")
@@ -1428,15 +1429,18 @@ func (b *BlockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 // if $a was previously undefined,
 // handle case when doing assignment like '$a[] = 4;'
 // or call to function that accepts like exec("command", $a)
-func (b *BlockWalker) handleAndCheckDimFetchLValue(e *ir.ArrayDimFetchExpr, reason string, typ meta.TypesMap) {
+func (b *BlockWalker) handleAndCheckDimFetchLValue(e *ir.ArrayDimFetchExpr, reason string, types meta.TypesMap) {
 	b.linter.checkArrayDimFetch(e)
 
 	switch v := e.Variable.(type) {
 	case *ir.Var, *ir.SimpleVar:
-		arrTyp := meta.NewEmptyTypesMap(typ.Len())
-		typ.Iterate(func(t string) {
-			arrTyp = arrTyp.AppendString(meta.WrapArrayOf(t))
+		arrTypRaw := make(meta.RawTypesMap, types.Len())
+		types.Iterate(func(typ meta.Type) {
+			arrTypRaw.Add(meta.WrapArrayOf(typ))
 		})
+
+		arrTyp := meta.NewTypesMapFromMap(arrTypRaw)
+
 		b.addVar(v, arrTyp, reason, meta.VarAlwaysDefined)
 		b.handleVariable(v)
 	case *ir.ArrayDimFetchExpr:
@@ -1514,24 +1518,22 @@ func (b *BlockWalker) handleAssignList(list *ir.ListExpr, rhs ir.Node) {
 	// and get stack allocation which will help to avoid the unwanted heap allocs.
 	// Hint: only const (literal) size hints work for this.
 	// Hint: check the compiler output to see whether elemTypes "escape" or not.
-	//
-	// We store meta.Type instead of string to avoid the need to do strings.Join
-	// when we want to create a TypesMap.
-	var elemTypes []meta.Type
-	var shapeType string
-	typ.Iterate(func(typ string) {
+	var elemTypes = make(meta.RawTypesMap, typ.Len())
+	var shapeType meta.Type
+
+	typ.Iterate(func(typ meta.Type) {
 		switch {
-		case meta.IsShapeType(typ):
+		case typ.IsShape():
 			shapeType = typ
-		case meta.IsArrayType(typ):
-			elemType := strings.TrimSuffix(typ, "[]")
-			elemTypes = append(elemTypes, meta.Type{Elem: elemType})
+		case typ.IsArray():
+			elemType := typ.ElementType()
+			elemTypes.Add(elemType)
 		}
 	})
 
 	// Try to handle it as a shape assignment.
-	if shapeType != "" {
-		class, ok := meta.Info.GetClass(shapeType)
+	if !shapeType.IsEmpty() {
+		class, ok := meta.Info.GetClass(shapeType.String())
 		if ok {
 			b.handleAssignShapeToList(list.Items, class)
 			return
@@ -1539,8 +1541,8 @@ func (b *BlockWalker) handleAssignList(list *ir.ListExpr, rhs ir.Node) {
 	}
 
 	// Try to handle it as an array assignment.
-	if len(elemTypes) != 0 {
-		elemTypeMap := meta.NewTypesMapFromTypes(elemTypes).Immutable()
+	if !elemTypes.Empty() {
+		elemTypeMap := meta.NewTypesMapFromMap(elemTypes).Immutable()
 		for _, item := range list.Items {
 			b.handleVariableNode(item.Val, elemTypeMap, "list-assign")
 		}

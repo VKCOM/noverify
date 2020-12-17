@@ -15,7 +15,7 @@ type warningString string
 
 type shapeTypeProp struct {
 	key   string
-	types []meta.Type
+	types []meta.PhpDocType
 }
 
 type shapeTypeInfo struct {
@@ -27,11 +27,11 @@ type shapeTypeInfo struct {
 //
 // No normalization is performed, but some PHPDoc-specific types
 // are simplified to be compatible with our type system.
-func typesFromPHPDoc(ctx *rootContext, typ phpdoc.Type) ([]meta.Type, warningString) {
+func typesFromPHPDoc(ctx *rootContext, typ phpdoc.Type) ([]meta.PhpDocType, warningString) {
 	conv := phpdocTypeConverter{ctx: ctx}
 	types := conv.mapType(typ.Expr)
 	if conv.nullable {
-		types = append(types, meta.Type{Elem: "null"})
+		types = append(types, meta.PhpDocType{Elem: "null"})
 	}
 	return types, conv.warning
 }
@@ -42,12 +42,12 @@ type phpdocTypeConverter struct {
 	nullable bool
 }
 
-func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []meta.Type {
+func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []meta.PhpDocType {
 	switch e.Kind {
 	case phpdoc.ExprInvalid, phpdoc.ExprUnknown:
 		if e.Value == "-" {
 			conv.warn(`expected a type, found '-'; if you want to express 'any' type, use 'mixed'`)
-			return []meta.Type{{Elem: "mixed"}}
+			return []meta.PhpDocType{{Elem: "mixed"}}
 		}
 
 	case phpdoc.ExprParen:
@@ -57,10 +57,10 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []meta.Type {
 		if suggest, ok := typeAliases[e.Value]; ok {
 			conv.warn(fmt.Sprintf("use %s type instead of %s", suggest, e.Value))
 		}
-		return []meta.Type{{Elem: e.Value}}
+		return []meta.PhpDocType{{Elem: e.Value}}
 
 	case phpdoc.ExprMemberType:
-		return []meta.Type{{Elem: "mixed"}}
+		return []meta.PhpDocType{{Elem: "mixed"}}
 
 	case phpdoc.ExprGeneric:
 		typ := e.Args[0]
@@ -96,7 +96,7 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []meta.Type {
 		return conv.mapArrayType(e.Args[0])
 
 	case phpdoc.ExprUnion:
-		types := make([]meta.Type, 0, len(e.Args))
+		types := make([]meta.PhpDocType, 0, len(e.Args))
 		for _, a := range e.Args {
 			types = append(types, conv.mapType(a)...)
 		}
@@ -113,10 +113,10 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []meta.Type {
 	return nil
 }
 
-func (conv *phpdocTypeConverter) mapArrayType(elem phpdoc.TypeExpr) []meta.Type {
+func (conv *phpdocTypeConverter) mapArrayType(elem phpdoc.TypeExpr) []meta.PhpDocType {
 	types := conv.mapType(elem)
 	if len(types) == 0 {
-		return []meta.Type{{Elem: "mixed", Dims: 1}}
+		return []meta.PhpDocType{{Elem: "mixed", Dims: 1}}
 	}
 	for i := range types {
 		types[i].Dims++
@@ -124,7 +124,7 @@ func (conv *phpdocTypeConverter) mapArrayType(elem phpdoc.TypeExpr) []meta.Type 
 	return types
 }
 
-func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []meta.Type {
+func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []meta.PhpDocType {
 	props := make([]shapeTypeProp, 0, len(params))
 	for i, p := range params {
 		if p.Value == "*" || p.Value == "..." {
@@ -159,10 +159,10 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []meta.T
 	}
 	conv.ctx.shapes = append(conv.ctx.shapes, shape)
 
-	return []meta.Type{{Elem: shape.name}}
+	return []meta.PhpDocType{{Elem: shape.name}}
 }
 
-func (conv *phpdocTypeConverter) mapTupleType(params []phpdoc.TypeExpr) []meta.Type {
+func (conv *phpdocTypeConverter) mapTupleType(params []phpdoc.TypeExpr) []meta.PhpDocType {
 	types := make([]phpdoc.TypeExpr, 0, len(params))
 	for i, p := range params {
 		if p.Value == "*" || p.Value == "..." {
@@ -195,23 +195,23 @@ func (conv *phpdocTypeConverter) warn(msg string) {
 // typesFromNode converts type hint node to meta types.
 //
 // No normalization is performed.
-func typesFromNode(typeNode ir.Node) []meta.Type {
+func typesFromNode(typeNode ir.Node) []meta.PhpDocType {
 	n := typeNode
 
-	var results []meta.Type
+	var results []meta.PhpDocType
 	if nullable, ok := typeNode.(*ir.Nullable); ok {
 		n = nullable.Expr
-		results = make([]meta.Type, 0, 2)
-		results = append(results, meta.Type{Elem: "null"})
+		results = make([]meta.PhpDocType, 0, 2)
+		results = append(results, meta.PhpDocType{Elem: "null"})
 	} else {
-		results = make([]meta.Type, 0, 1)
+		results = make([]meta.PhpDocType, 0, 1)
 	}
 
 	// There is a trick here.
 	// Unlike with phpdoc types, having `integer` here
 	// means that we need to force it to be interpreted as
 	// `\integer`, not as `int`. This is why we prepend `\`.
-	typ := meta.Type{Elem: meta.NameNodeToString(n)}
+	typ := meta.PhpDocType{Elem: meta.NameNodeToString(n)}
 	if _, isAlias := typeAliases[typ.Elem]; isAlias {
 		typ.Elem = `\` + typ.Elem
 	}
@@ -225,7 +225,7 @@ type typeNormalizer struct {
 	st *meta.ClassParseState
 }
 
-func (n typeNormalizer) NormalizeTypes(types []meta.Type) {
+func (n typeNormalizer) NormalizeTypes(types []meta.PhpDocType) {
 	for i := range types {
 		n.normalizeType(&types[i])
 	}
@@ -237,7 +237,7 @@ func (n typeNormalizer) string2name(s string) *ir.Name {
 	return &ir.Name{Value: s}
 }
 
-func (n typeNormalizer) normalizeType(typ *meta.Type) {
+func (n typeNormalizer) normalizeType(typ *meta.PhpDocType) {
 	if trivialTypes[typ.Elem] {
 		return
 	}

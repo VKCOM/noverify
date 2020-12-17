@@ -48,7 +48,7 @@ func (ctx *rootContext) generateShapeName() string {
 	return fmt.Sprintf(`\shape$%s$%d$`, ctx.st.CurrentFile, len(ctx.shapes))
 }
 
-func newTypesMap(ctx *rootContext, types []meta.Type) meta.TypesMap {
+func newTypesMap(ctx *rootContext, types []meta.PhpDocType) meta.TypesMap {
 	ctx.typeNormalizer.NormalizeTypes(types)
-	return meta.NewTypesMapFromTypes(types)
+	return meta.NewTypesMapFromPhpDocTypes(types)
 }

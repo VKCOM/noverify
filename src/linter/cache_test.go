@@ -126,7 +126,7 @@ main();
 		//
 		// If cache encoding changes, there is a very high chance that
 		// encoded data lengh will change as well.
-		wantLen := 5030
+		wantLen := 4741
 		haveLen := buf.Len()
 		if haveLen != wantLen {
 			t.Errorf("cache len mismatch:\nhave: %d\nwant: %d", haveLen, wantLen)
@@ -135,7 +135,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "62321eae8ac6f753221d367a0a0e2a3190202ef49c608ceef6e03dd6b09906c64bf20a1470abef9e26b917836a68415a5459491208fb692d8773524cdbe6d239"
+		wantStrings := "dc486a1cdb1bd6dcac2742113c0eeeed28f67644704c0fda1c7229e6620d3c838c39f2cf0ce83736eea9ef23cf8818197ff7ea851f0987fdddefaa6ae26f4ef1"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)

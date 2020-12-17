@@ -3,13 +3,14 @@ package langsrv
 import (
 	"fmt"
 
+	"go.lsp.dev/uri"
+
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/state"
 	"github.com/VKCOM/noverify/src/vscode"
-	"go.lsp.dev/uri"
 )
 
 type definitionWalker struct {
@@ -152,10 +153,10 @@ func (d *definitionWalker) processPropertyFetchExpr(n *ir.PropertyFetchExpr) boo
 
 	types := safeExprType(foundScope, &d.st, n.Variable)
 
-	types.Iterate(func(t string) {
-		p, ok := solver.FindProperty(t, id.Value)
+	types.Iterate(func(typ meta.Type) {
+		p, ok := solver.FindProperty(typ.String(), id.Value)
 		if !ok {
-			lintdebug.Send("Could not find property for %s->%s", t, id.Value)
+			lintdebug.Send("Could not find property for %s->%s", typ, id.Value)
 			return
 		}
 
@@ -189,10 +190,10 @@ func (d *definitionWalker) processMethodCallExpr(n *ir.MethodCallExpr) bool {
 
 	types := safeExprType(foundScope, &d.st, n.Variable)
 
-	types.Iterate(func(t string) {
-		p, ok := solver.FindMethod(t, id.Value)
+	types.Iterate(func(typ meta.Type) {
+		p, ok := solver.FindMethod(typ.String(), id.Value)
 		if !ok {
-			lintdebug.Send("Could not find method for %s::%s", t, id.Value)
+			lintdebug.Send("Could not find method for %s::%s", typ, id.Value)
 			return
 		}
 
