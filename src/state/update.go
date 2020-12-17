@@ -28,7 +28,7 @@ func EnterNode(st *meta.ClassParseState, n ir.Node) {
 			UseType:      n.UseType,
 			Uses:         n.UseList,
 		}
-		handleUseList(`\`+n.Prefix.(*ir.Name).Value, st, list)
+		handleUseList(`\`+n.Prefix.Value, st, list)
 
 	case *ir.UseListStmt:
 		handleUseList("", st, n)
