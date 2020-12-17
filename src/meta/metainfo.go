@@ -312,9 +312,10 @@ func (i *info) AddToGlobalScopeNonLocked(filename string, sc *Scope) {
 }
 
 type FuncParam struct {
-	IsRef bool
-	Name  string
-	Typ   TypesMap
+	IsRef   bool
+	Name    string
+	Typ     TypesMap
+	Default *ConstValue
 }
 
 type PhpDocInfo struct {

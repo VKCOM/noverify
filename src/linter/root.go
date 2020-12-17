@@ -1528,9 +1528,18 @@ func (d *RootWalker) parseFuncArgs(params []ir.Node, parTypes phpDocParamsMap, s
 
 		sc.AddVarName(v.Name, typ, "param", meta.VarAlwaysDefined)
 
+		var defaultValue *meta.ConstValue
+		if p.DefaultValue != nil {
+			val := constfold.Eval(d.ctx.st, p.DefaultValue)
+			if val.IsValid() {
+				defaultValue = &val
+			}
+		}
+
 		par := meta.FuncParam{
-			Typ:   typ.Immutable(),
-			IsRef: p.ByRef,
+			Typ:     typ.Immutable(),
+			IsRef:   p.ByRef,
+			Default: defaultValue,
 		}
 
 		par.Name = v.Name
