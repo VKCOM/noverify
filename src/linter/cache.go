@@ -41,7 +41,8 @@ import (
 //     43 - define'd const values stored in cache
 //     44 - rename ConstantInfo => ConstInfo
 //     45 - added Mixins field to meta.ClassInfo
-const cacheVersion = 45
+//     46 - element type in meta.TypesMap changed from string to Type.
+const cacheVersion = 46
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")
