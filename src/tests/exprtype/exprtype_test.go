@@ -2756,14 +2756,21 @@ exprtype(f5(), "void");
 function f6(): array {
 	return [1,2,4];
 }
-exprtype(f6(), "int[]|mixed[]");
+exprtype(f6(), "int[]");
+
+
+/** @return int[] */
+function f7(): array {
+	return f6();
+}
+exprtype(f7(), "int[]");
 
 
 /** @return Foo */
-function f7(): object {
+function f8(): object {
 	return new Foo;
 }
-exprtype(f7(), "\Foo|object");
+exprtype(f8(), "\Foo");
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
