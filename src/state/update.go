@@ -20,20 +20,19 @@ func EnterNode(st *meta.ClassParseState, n ir.Node) {
 		if n.NamespaceName != nil {
 			st.Namespace = `\` + n.NamespaceName.Value
 		}
-	case *ir.UseListStmt:
-		if n.UseType == nil {
-			for _, u := range n.Uses {
-				if u, ok := u.(*ir.UseStmt); ok {
-					handleUseClass(st, u)
-				}
-			}
-		} else if id, ok := n.UseType.(*ir.Identifier); ok && id.Value == "function" {
-			for _, u := range n.Uses {
-				if u, ok := u.(*ir.UseStmt); ok {
-					handleUseFunction(st, u)
-				}
-			}
+
+	case *ir.GroupUseStmt:
+		list := &ir.UseListStmt{
+			FreeFloating: nil,
+			Position:     nil,
+			UseType:      n.UseType,
+			Uses:         n.UseList,
 		}
+		handleUseList(`\`+n.Prefix.Value, st, list)
+
+	case *ir.UseListStmt:
+		handleUseList("", st, n)
+
 	case *ir.InterfaceStmt:
 		st.IsTrait = false
 		st.CurrentClass = st.Namespace + `\` + n.InterfaceName.Value
@@ -66,7 +65,31 @@ func EnterNode(st *meta.ClassParseState, n ir.Node) {
 	}
 }
 
-func handleUseClass(st *meta.ClassParseState, n *ir.UseStmt) {
+func handleUseList(prefix string, st *meta.ClassParseState, n *ir.UseListStmt) {
+	if n.UseType == nil {
+		for _, u := range n.Uses {
+			if u, ok := u.(*ir.UseStmt); ok {
+				handleUseClass(prefix, st, u)
+			}
+		}
+		return
+	}
+
+	id, ok := n.UseType.(*ir.Identifier)
+	if !ok {
+		return
+	}
+
+	if id.Value == "function" {
+		for _, u := range n.Uses {
+			if u, ok := u.(*ir.UseStmt); ok {
+				handleUseFunction(prefix, st, u)
+			}
+		}
+	}
+}
+
+func handleUseClass(prefix string, st *meta.ClassParseState, n *ir.UseStmt) {
 	// TODO: there exists groupUse and other stuff
 	if st.Uses == nil {
 		st.Uses = make(map[string]string)
@@ -81,10 +104,10 @@ func handleUseClass(st *meta.ClassParseState, n *ir.UseStmt) {
 		alias = nm.LastPart()
 	}
 
-	st.Uses[alias] = `\` + nm.Value
+	st.Uses[alias] = prefix + `\` + nm.Value
 }
 
-func handleUseFunction(st *meta.ClassParseState, n *ir.UseStmt) {
+func handleUseFunction(prefix string, st *meta.ClassParseState, n *ir.UseStmt) {
 	// TODO: there exists groupUse and other stuff
 	if st.FunctionUses == nil {
 		st.FunctionUses = make(map[string]string)
@@ -99,7 +122,7 @@ func handleUseFunction(st *meta.ClassParseState, n *ir.UseStmt) {
 		alias = nm.LastPart()
 	}
 
-	st.FunctionUses[alias] = `\` + nm.Value
+	st.FunctionUses[alias] = prefix + `\` + nm.Value
 }
 
 // LeaveNode must be called upon leaving a node to update current state.

@@ -144,6 +144,12 @@ func (i *info) InitKphpStubs() {
 		MinParamsCnt: 1,
 		Typ:          NewTypesMap("mixed"),
 	}
+	internalFunctions.H[`\instance_deserialize`] = FuncInfo{
+		Name:         `\instance_deserialize`,
+		Params:       []FuncParam{{Name: "packed_str"}, {Name: "type_of_instance"}},
+		MinParamsCnt: 2,
+		Typ:          NewTypesMap("object|null"),
+	}
 
 	internalFunctionOverrides[`\array_first_element`] = FuncInfoOverride{
 		OverrideType: OverrideElementType,
@@ -152,6 +158,10 @@ func (i *info) InitKphpStubs() {
 	internalFunctionOverrides[`\array_last_element`] = FuncInfoOverride{
 		OverrideType: OverrideElementType,
 		ArgNum:       0,
+	}
+	internalFunctionOverrides[`\instance_deserialize`] = FuncInfoOverride{
+		OverrideType: OverrideClassType,
+		ArgNum:       1,
 	}
 }
 
@@ -354,6 +364,8 @@ const (
 	OverrideArgType OverrideType = iota
 	// OverrideElementType means that return type of a function is the same as the type of an element of the argument
 	OverrideElementType
+	// OverrideClassType means that return type of a function is the same as the type represented by the class name.
+	OverrideClassType
 )
 
 type AccessLevel int

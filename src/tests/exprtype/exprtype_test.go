@@ -1694,11 +1694,11 @@ exprtype(get_array(), 'mixed[]');
 
 /** @return array */
 function get_array_or_null() { return null; }
-exprtype(get_array_or_null(), 'mixed[]|null');
+exprtype(get_array_or_null(), 'mixed[]');
 
 /** @return null */
 function get_null_or_array() { return []; }
-exprtype(get_null_or_array(), 'mixed[]|null');
+exprtype(get_null_or_array(), 'null');
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
@@ -2705,6 +2705,74 @@ function f1() {
 		linter.KPHP = false
 	}()
 	runExprTypeTest(t, &exprTypeTestParams{code: code, stubs: "<?php /* no code */"})
+}
+
+func TestNewFunctionReturnExprType(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+/** @return int */
+function f1() {
+	return 5;
+}
+exprtype(f1(), "int");
+
+
+/** @return int */
+function f2(): float {
+	return 5;
+}
+exprtype(f2(), "float|int");
+
+
+/** Without @return */
+function f3(): float {
+	if (1) {
+		return new Foo;
+	}
+	return 5;
+}
+exprtype(f3(), "float");
+
+
+/** Without @return and type hint */
+function f4() {
+	if (1) {
+		return 10;
+	}
+	return new Foo;
+}
+exprtype(f4(), "\Foo|int");
+
+
+/** Without @return and type hint and return */
+function f5() {
+	
+}
+exprtype(f5(), "void");
+
+
+/** @return int[] */
+function f6(): array {
+	return [1,2,4];
+}
+exprtype(f6(), "int[]");
+
+
+/** @return int[] */
+function f7(): array {
+	return f6();
+}
+exprtype(f7(), "int[]");
+
+
+/** @return Foo */
+function f8(): object {
+	return new Foo;
+}
+exprtype(f8(), "\Foo");
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
