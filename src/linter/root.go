@@ -1015,9 +1015,9 @@ func (d *RootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		sc.SetInInstanceMethod(true)
 	}
 
-	var specifiedReturnType meta.TypesMap
+	var hintReturnType meta.TypesMap
 	if typ, ok := d.parseTypeNode(meth.ReturnType); ok {
-		specifiedReturnType = typ
+		hintReturnType = typ
 	}
 
 	if meth.PhpDocComment == "" && modif.accessLevel == meta.Public {
@@ -1086,11 +1086,9 @@ func (d *RootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 
 	d.addScope(meth, sc)
 
+	returnTypes := functionReturnType(phpdocReturnType, hintReturnType, actualReturnTypes)
+
 	// TODO: handle duplicate method
-	returnType := meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType)
-	if returnType.IsEmpty() {
-		returnType = meta.VoidType
-	}
 	var funcFlags meta.FuncFlags
 	if modif.static {
 		funcFlags |= meta.FuncStatic
@@ -1108,7 +1106,7 @@ func (d *RootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		Params:       params,
 		Name:         nm,
 		Pos:          d.getElementPos(meth),
-		Typ:          returnType.Immutable(),
+		Typ:          returnTypes.Immutable(),
 		MinParamsCnt: minParamsCnt,
 		AccessLevel:  modif.accessLevel,
 		Flags:        funcFlags,
@@ -1117,7 +1115,7 @@ func (d *RootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	})
 
 	if nm == "getIterator" && meta.IsIndexingComplete() && solver.Implements(d.ctx.st.CurrentClass, `\IteratorAggregate`) {
-		implementsTraversable := returnType.Find(func(typ string) bool {
+		implementsTraversable := returnTypes.Find(func(typ string) bool {
 			return solver.Implements(typ, `\Traversable`)
 		})
 
@@ -1584,9 +1582,9 @@ func (d *RootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 		d.Report(fun.FunctionName, LevelDoNotReject, "complexity", "Too big function: more than %d lines", maxFunctionLines)
 	}
 
-	var specifiedReturnType meta.TypesMap
+	var hintReturnType meta.TypesMap
 	if typ, ok := d.parseTypeNode(fun.ReturnType); ok {
-		specifiedReturnType = typ
+		hintReturnType = typ
 	}
 
 	d.checkCommentMisspellings(fun.FunctionName, fun.PhpDocComment)
@@ -1612,10 +1610,7 @@ func (d *RootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	exitFlags := funcInfo.prematureExitFlags
 	d.addScope(fun, sc)
 
-	returnType := meta.MergeTypeMaps(phpdocReturnType, actualReturnTypes, specifiedReturnType)
-	if returnType.IsEmpty() {
-		returnType = meta.VoidType
-	}
+	returnTypes := functionReturnType(phpdocReturnType, hintReturnType, actualReturnTypes)
 
 	for _, param := range fun.Params {
 		d.checkFuncParam(param.(*ir.Parameter))
@@ -1629,7 +1624,7 @@ func (d *RootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 		Params:       params,
 		Name:         nm,
 		Pos:          d.getElementPos(fun),
-		Typ:          returnType.Immutable(),
+		Typ:          returnTypes.Immutable(),
 		MinParamsCnt: minParamsCnt,
 		Flags:        funcFlags,
 		ExitFlags:    exitFlags,

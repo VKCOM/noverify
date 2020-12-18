@@ -90,6 +90,62 @@ func typesMapToTypeExpr(p *phpdoc.TypeParser, m meta.TypesMap) phpdoc.Type {
 	return p.Parse(typeString)
 }
 
+// MergeTypeMaps merges two typesmaps without losing information.
+// So merging int[] and array will give int[], and Foo and object will give Foo.
+func MergeTypeMaps(left meta.TypesMap, right meta.TypesMap) meta.TypesMap {
+	var hasAtLeastOneArray bool
+	var hasAtLeastOneClass bool
+	newMap := meta.NewEmptyTypesMap(left.Len() + right.Len())
+
+	left.Iterate(func(typ string) {
+		if typ[0] == meta.WArrayOf {
+			hasAtLeastOneArray = true
+		}
+		if typ[0] == '\\' {
+			hasAtLeastOneClass = true
+		}
+		newMap.AppendString(typ)
+	})
+
+	right.Iterate(func(typ string) {
+		if typ[0] == meta.WArrayOf && meta.UnwrapArrayOf(typ) == "mixed" && hasAtLeastOneArray {
+			return
+		}
+		if typ == "object" && hasAtLeastOneClass {
+			return
+		}
+		newMap.AppendString(typ)
+	})
+
+	return newMap
+}
+
+// functionReturnType returns the return type of a function over computed types
+// according to the convention below:
+//
+// The types are inferred as follows:
+// 1. If there is an @return annotation, then its value becomes the return type;
+//
+// 2. If there is a type hint, then it is added to the types from the @return.
+//    If the @return is empty, then the type matches the type hint itself;
+//
+// 3. If there is no @return annotation and type hint, then the return type is equal to
+//    the union of the types that are returned from the function by return.
+func functionReturnType(phpdocReturnType meta.TypesMap, hintReturnType meta.TypesMap, actualReturnTypes meta.TypesMap) meta.TypesMap {
+	var returnTypes meta.TypesMap
+	if !phpdocReturnType.IsEmpty() || !hintReturnType.IsEmpty() {
+		returnTypes = MergeTypeMaps(phpdocReturnType, hintReturnType)
+	} else {
+		returnTypes = actualReturnTypes
+	}
+
+	if returnTypes.IsEmpty() {
+		returnTypes = meta.VoidType
+	}
+
+	return returnTypes
+}
+
 type funcCallInfo struct {
 	funcName   string
 	info       meta.FuncInfo
