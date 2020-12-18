@@ -325,7 +325,7 @@ type FuncParam struct {
 	IsRef   bool
 	Name    string
 	Typ     TypesMap
-	Default *ConstValue
+	Default ConstValue
 }
 
 type PhpDocInfo struct {

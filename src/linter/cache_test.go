@@ -120,7 +120,7 @@ function withDefault($x = 100) {
 
 class WithDefaultMethod {
   /** With default */
-  public function withDefault($x = 100) {
+  public function withDefault($x = "db") {
     return $x;
   }
 }
@@ -150,7 +150,7 @@ main();
 		//
 		// If cache encoding changes, there is a very high chance that
 		// encoded data lengh will change as well.
-		wantLen := 5507
+		wantLen := 5826
 		haveLen := buf.Len()
 		if haveLen != wantLen {
 			t.Errorf("cache len mismatch:\nhave: %d\nwant: %d", haveLen, wantLen)
@@ -159,7 +159,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "6361c1d023f4686bd64358c2d6d79dc910e1e9b237411950c11b6cf21cd6786b9b64d47466880670a7eb60a68b5e57a8846972bcd00d72382da0ffdcd51385e8"
+		wantStrings := "ae88c68168ce3559ae8d87fd14aa2fbb66e771782125d65844cd16b8789cdce7672d0fb214f219df3b0a4ee2f7787d2c6b3a3d2016e252079b2e29a3c410aa79"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)
