@@ -41,8 +41,9 @@ import (
 //     43 - define'd const values stored in cache
 //     44 - rename ConstantInfo => ConstInfo
 //     45 - added Mixins field to meta.ClassInfo
-//     46 - added Default field to meta.FuncParam
-const cacheVersion = 46
+//     46 - changed the way of inferring the return type of functions and methods
+//     47 - added Default field to meta.FuncParam
+const cacheVersion = 47
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")

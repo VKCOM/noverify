@@ -101,6 +101,18 @@ function as_shape($x) {
   return $x;
 }
 
+/** @param int|null */
+function return_null() {
+  return null;
+}
+
+class ByNull {
+  /** @param int|null */
+  public function return_null() {
+    return null;
+  }
+}
+
 /** With default */
 function withDefault($x = 100) {
   return $x;
