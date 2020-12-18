@@ -328,6 +328,10 @@ type FuncParam struct {
 	Default ConstValue
 }
 
+func (p FuncParam) HasDefaultValue() bool {
+	return p.Default.IsValid()
+}
+
 type PhpDocInfo struct {
 	Deprecated      bool
 	DeprecationNote string
