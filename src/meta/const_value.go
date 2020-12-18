@@ -143,6 +143,8 @@ func (c ConstValue) ToString() (string, bool) {
 		return strconv.FormatInt(c.GetInt(), 10), true
 	case String:
 		return c.GetString(), true
+	case Float:
+		return fmt.Sprintf("%g", c.GetFloat()), true
 	}
 	return "", false
 }
