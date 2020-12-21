@@ -265,7 +265,7 @@ func (m TypesMap) AppendType(typ Type) TypesMap {
 			m.m = NewRawTypesMap(1)
 		}
 
-		m.m[typ] = struct{}{}
+		m.m = m.m.Append(typ)
 
 		m.MarkAsImprecise()
 		return m
@@ -276,7 +276,7 @@ func (m TypesMap) AppendType(typ Type) TypesMap {
 		mm[k] = v
 	}
 
-	mm[typ] = struct{}{}
+	m.m = m.m.Append(typ)
 
 	// The returned map is mutable and imprecise.
 	return TypesMap{m: mm}
@@ -290,7 +290,7 @@ func (m TypesMap) AppendString(str string) TypesMap {
 		}
 
 		for _, typeStr := range strings.Split(str, "|") {
-			m.m[NewType(typeStr)] = struct{}{}
+			m.m = m.m.AppendString(typeStr)
 		}
 
 		// Since we have no idea where str is coming from,
@@ -306,7 +306,7 @@ func (m TypesMap) AppendString(str string) TypesMap {
 	}
 
 	for _, typeStr := range strings.Split(str, "|") {
-		mm[NewType(typeStr)] = struct{}{}
+		mm = mm.AppendString(typeStr)
 	}
 
 	// The returned map is mutable and imprecise.

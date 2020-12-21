@@ -574,7 +574,8 @@ func getHoverForMethodCall(n *ir.MethodCallExpr, sc *meta.Scope, cs *meta.ClassP
 
 	var fun meta.FuncInfo
 	types.Find(func(typ meta.Type) bool {
-		_, ok := solver.FindMethod(typ.String(), id.Value)
+		className := typ.String()
+		_, ok := solver.FindMethod(className, id.Value)
 		return ok
 	})
 
@@ -850,7 +851,8 @@ func getMethodCompletionItems(st *meta.ClassParseState, str string, sc *meta.Sco
 	propDedup := map[string]struct{}{}
 
 	safeExprType(sc, st, s.Expr).Iterate(func(typ meta.Type) {
-		for _, m := range getMethods(typ.String()) {
+		className := typ.String()
+		for _, m := range getMethods(className) {
 			if _, ok := methodDedup[m]; ok {
 				continue
 			}
@@ -858,7 +860,7 @@ func getMethodCompletionItems(st *meta.ClassParseState, str string, sc *meta.Sco
 			methodDedup[m] = struct{}{}
 		}
 
-		for _, m := range getInstanceProperties(typ.String()) {
+		for _, m := range getInstanceProperties(className) {
 			if _, ok := propDedup[m]; ok {
 				continue
 			}

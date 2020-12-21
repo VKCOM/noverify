@@ -203,8 +203,8 @@ func (b *blockLinter) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
 		// FullyQualified class name will have "\" in the beginning
 		if t.IsClass() {
 			maybeHaveClasses = true
-
-			if !haveArrayAccess && solver.Implements(t.String(), `\ArrayAccess`) {
+			className := t.String()
+			if !haveArrayAccess && solver.Implements(className, `\ArrayAccess`) {
 				haveArrayAccess = true
 			}
 		}

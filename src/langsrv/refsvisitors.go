@@ -316,7 +316,8 @@ func (d *blockMethodCallVisitor) BeforeEnterNode(n ir.Node) {
 	exprType := solver.ExprType(d.ctx.Scope(), d.ctx.ClassParseState(), call.Variable)
 
 	exprType.Iterate(func(typ meta.Type) {
-		m, ok := solver.FindMethod(typ.String(), methodName)
+		className := typ.String()
+		m, ok := solver.FindMethod(className, methodName)
 		realClassName := m.ImplName()
 
 		if ok && realClassName == d.className {

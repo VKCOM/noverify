@@ -129,14 +129,15 @@ func (t Type) unwrap2() (one, two string) {
 	var b [stringLenBytes]byte
 	var rawBuf [stringLenBytes / 2]byte
 
+	tp := t.String()
 	pos := 1
-	copy(b[:], t.String()[pos:pos+stringLenBytes])
+	copy(b[:], tp[pos:pos+stringLenBytes])
 	hex.Decode(rawBuf[:], b[:])
 	l = int(binary.LittleEndian.Uint16(rawBuf[:]))
 	pos += stringLenBytes
-	one = t.String()[pos : pos+l]
+	one = tp[pos : pos+l]
 	pos += l
-	two = t.String()[pos+stringLenBytes:] // do not care about length of last param
+	two = tp[pos+stringLenBytes:] // do not care about length of last param
 
 	return one, two
 }
