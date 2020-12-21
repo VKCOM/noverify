@@ -277,7 +277,7 @@ func (r *resolver) resolveTypes(class string, m meta.TypesMap) meta.RawTypesMap 
 	}
 
 	if _, ok := res["empty_array"]; ok {
-		res.Delete("empty_array")
+		res = res.Delete("empty_array")
 		specialized := false
 		for typ := range res {
 			if typ.IsArray() {
@@ -623,7 +623,7 @@ func replaceTraitName(res meta.RawTypesMap, traitName, className string) meta.Ra
 	if !ok {
 		return res
 	}
-	res.Delete(traitType)
+	res = res.Delete(traitType)
 	res = res.Append(meta.NewType(className))
 	return res
 }

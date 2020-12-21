@@ -41,12 +41,9 @@ func (m RawTypesMap) Append(typ Type) RawTypesMap {
 	return m
 }
 
-func (m RawTypesMap) Delete(typ Type) {
+func (m RawTypesMap) Delete(typ Type) RawTypesMap {
 	delete(m, typ)
-}
-
-func (m RawTypesMap) AddString(str string) {
-	m[NewType(str)] = struct{}{}
+	return m
 }
 
 func (m RawTypesMap) IsEmpty() bool {
