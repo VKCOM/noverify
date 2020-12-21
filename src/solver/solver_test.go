@@ -15,7 +15,7 @@ func resolve(typ meta.Type) meta.RawTypesMap {
 func makeTyp(typ string) meta.RawTypesMap {
 	res := make(meta.RawTypesMap)
 	for _, t := range strings.Split(typ, "|") {
-		res.AddString(t)
+		res = res.AppendString(t)
 	}
 	return res
 }

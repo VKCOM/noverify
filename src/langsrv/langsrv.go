@@ -444,8 +444,8 @@ func resolveTypesSafe(curStaticClass string, m meta.TypesMap, visitedMap solver.
 	defer func() {
 		if r := recover(); r != nil {
 			res = make(meta.RawTypesMap, 2)
-			res.AddString("panic: " + fmt.Sprint(r))
-			res.AddString("orig: " + m.String())
+			res = res.AppendString("panic: " + fmt.Sprint(r))
+			res = res.AppendString("orig: " + m.String())
 		}
 	}()
 
