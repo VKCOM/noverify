@@ -146,19 +146,19 @@ func (t Type) unwrap3() (b1 uint8, one, two string) {
 	var b [stringLenBytes]byte
 	var rawBuf [stringLenBytes / 2]byte
 
-	typeStr := t.String()
+	tp := t.String()
 	pos := 1
-	copy(b[:], typeStr[pos:pos+uint8fieldBytes])
+	copy(b[:], tp[pos:pos+uint8fieldBytes])
 	hex.Decode(rawBuf[:], b[:uint8fieldBytes])
 	b1 = rawBuf[0]
 	pos += uint8fieldBytes
-	copy(b[:], typeStr[pos:pos+stringLenBytes])
+	copy(b[:], tp[pos:pos+stringLenBytes])
 	hex.Decode(rawBuf[:], b[:])
 	l = int(binary.LittleEndian.Uint16(rawBuf[:]))
 	pos += stringLenBytes
-	one = typeStr[pos : pos+l]
+	one = tp[pos : pos+l]
 	pos += l
-	two = typeStr[pos+stringLenBytes:] // do not care about length of last param
+	two = tp[pos+stringLenBytes:] // do not care about length of last param
 
 	return b1, one, two
 }
