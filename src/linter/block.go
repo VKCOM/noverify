@@ -1533,7 +1533,8 @@ func (b *BlockWalker) handleAssignList(list *ir.ListExpr, rhs ir.Node) {
 
 	// Try to handle it as a shape assignment.
 	if !shapeType.IsEmpty() {
-		class, ok := meta.Info.GetClass(shapeType.String())
+		className := shapeType.String()
+		class, ok := meta.Info.GetClass(className)
 		if ok {
 			b.handleAssignShapeToList(list.Items, class)
 			return

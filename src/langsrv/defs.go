@@ -154,9 +154,10 @@ func (d *definitionWalker) processPropertyFetchExpr(n *ir.PropertyFetchExpr) boo
 	types := safeExprType(foundScope, &d.st, n.Variable)
 
 	types.Iterate(func(typ meta.Type) {
-		p, ok := solver.FindProperty(typ.String(), id.Value)
+		className := typ.String()
+		p, ok := solver.FindProperty(className, id.Value)
 		if !ok {
-			lintdebug.Send("Could not find property for %s->%s", typ, id.Value)
+			lintdebug.Send("Could not find property for %s->%s", className, id.Value)
 			return
 		}
 
@@ -191,9 +192,10 @@ func (d *definitionWalker) processMethodCallExpr(n *ir.MethodCallExpr) bool {
 	types := safeExprType(foundScope, &d.st, n.Variable)
 
 	types.Iterate(func(typ meta.Type) {
-		p, ok := solver.FindMethod(typ.String(), id.Value)
+		className := typ.String()
+		p, ok := solver.FindMethod(className, id.Value)
 		if !ok {
-			lintdebug.Send("Could not find method for %s::%s", typ, id.Value)
+			lintdebug.Send("Could not find method for %s::%s", className, id.Value)
 			return
 		}
 
