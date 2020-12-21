@@ -239,16 +239,18 @@ func (r *resolver) solveElemOf(typ meta.Type, res meta.RawTypesMap) meta.RawType
 	case typ.IsMixed():
 		res = res.Append("mixed")
 	case Implements(typ.String(), `\ArrayAccess`):
-		m, ok := FindMethod(typ.String(), "offsetGet")
+		className := typ.String()
+		m, ok := FindMethod(className, "offsetGet")
 		if ok {
-			for resolvedType := range r.resolveTypes(typ.String(), m.Info.Typ) {
+			for resolvedType := range r.resolveTypes(className, m.Info.Typ) {
 				res = res.Append(resolvedType)
 			}
 		}
 	case Implements(typ.String(), `\Traversable`):
-		m, ok := FindMethod(typ.String(), "current")
+		className := typ.String()
+		m, ok := FindMethod(className, "current")
 		if ok {
-			for resolvedType := range r.resolveTypes(typ.String(), m.Info.Typ) {
+			for resolvedType := range r.resolveTypes(className, m.Info.Typ) {
 				res = res.Append(resolvedType)
 			}
 		}
