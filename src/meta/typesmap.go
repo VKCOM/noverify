@@ -132,6 +132,10 @@ func NewPreciseTypesMap(str string) TypesMap {
 	return m
 }
 
+func NewTypesMapFromType(typ Type) TypesMap {
+	return TypesMap{m: NewRawTypesMap(1).Append(typ)}
+}
+
 // MergeTypeMaps creates a new types map from union of specified type maps
 func MergeTypeMaps(maps ...TypesMap) TypesMap {
 	totalLen := 0

@@ -166,13 +166,13 @@ func resolveMethodCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []s
 	methodCallerType := solver.ExprTypeCustom(sc, st, e.Variable, customTypes)
 
 	methodCallerType.Find(func(typ meta.Type) bool {
-		className := typ.String()
-		m, isMagic, ok := findMethod(className, methodName)
+		clName := typ.String()
+		m, isMagic, ok := findMethod(clName, methodName)
 		if !ok {
 			return false
 		}
 		foundMethod = true
-		if dist := classDistance(st, typ.String()); dist < matchDist {
+		if dist := classDistance(st, clName); dist < matchDist {
 			matchDist = dist
 			fn = m.Info
 			className = m.ClassName

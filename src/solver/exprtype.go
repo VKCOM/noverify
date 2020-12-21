@@ -347,7 +347,7 @@ func constFetchType(n *ir.ConstFetchExpr) meta.TypesMap {
 		return meta.NewTypesMap("null")
 	default:
 		if nm.NumParts() == 0 {
-			return meta.NewTypesMap(meta.WrapConstant(nm.Value).String())
+			return meta.NewTypesMapFromType(meta.WrapConstant(nm.Value))
 		}
 	}
 	return meta.TypesMap{}
@@ -362,7 +362,7 @@ func classConstFetchType(n *ir.ClassConstFetchExpr, cs *meta.ClassParseState) me
 		return meta.TypesMap{}
 	}
 	typ := meta.WrapClassConstFetch(className, n.ConstantName.Value)
-	return meta.NewTypesMap(typ.String())
+	return meta.NewTypesMapFromType(typ)
 }
 
 func typeCastType(n *ir.TypeCastExpr) meta.TypesMap {
@@ -464,7 +464,7 @@ func staticPropertyFetchType(n *ir.StaticPropertyFetchExpr, cs *meta.ClassParseS
 		return meta.TypesMap{}
 	}
 
-	return meta.NewTypesMap(meta.WrapStaticPropertyFetch(nm, "$"+v.Name).String())
+	return meta.NewTypesMapFromType(meta.WrapStaticPropertyFetch(nm, "$"+v.Name))
 }
 
 func staticFunctionCallType(n *ir.StaticCallExpr, cs *meta.ClassParseState) meta.TypesMap {
@@ -478,7 +478,7 @@ func staticFunctionCallType(n *ir.StaticCallExpr, cs *meta.ClassParseState) meta
 		return meta.TypesMap{}
 	}
 
-	return meta.NewTypesMap(meta.WrapStaticMethodCall(nm, id.Value).String())
+	return meta.NewTypesMapFromType(meta.WrapStaticMethodCall(nm, id.Value))
 }
 
 func functionCallType(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) meta.TypesMap {
@@ -493,13 +493,13 @@ func functionCallType(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassPars
 				return typ
 			}
 		}
-		return meta.NewTypesMap(meta.WrapFunctionCall(nm.Value).String())
+		return meta.NewTypesMapFromType(meta.WrapFunctionCall(nm.Value))
 	}
 	typ, ok := internalFuncType(`\`+nm.Value, sc, cs, n, custom)
 	if ok {
 		return typ
 	}
-	return meta.NewTypesMap(meta.WrapFunctionCall(cs.Namespace + `\` + nm.Value).String())
+	return meta.NewTypesMapFromType(meta.WrapFunctionCall(cs.Namespace + `\` + nm.Value))
 }
 
 func magicConstantType(n *ir.MagicConstant) meta.TypesMap {

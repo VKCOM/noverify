@@ -371,7 +371,7 @@ func (b *BlockWalker) handleAndCheckGlobalStmt(s *ir.GlobalStmt) {
 			continue
 		}
 
-		b.addVar(v, meta.NewTypesMap(meta.WrapGlobal(nm).String()), "global", meta.VarAlwaysDefined)
+		b.addVar(v, meta.NewTypesMapFromType(meta.WrapGlobal(nm)), "global", meta.VarAlwaysDefined)
 		if b.path.Conditional() {
 			b.addNonLocalVar(v, varCondGlobal)
 		} else {
@@ -873,7 +873,7 @@ func (b *BlockWalker) handleForeach(s *ir.ForeachStmt) bool {
 		ctx := b.withNewContext(func() {
 			exprType := solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, s.Expr, b.ctx.customTypes)
 			exprType.Iterate(func(typ meta.Type) {
-				b.handleVariableNode(s.Variable, meta.NewTypesMap(meta.WrapElemOf(typ).String()), "foreach_value")
+				b.handleVariableNode(s.Variable, meta.NewTypesMapFromType(meta.WrapElemOf(typ)), "foreach_value")
 			})
 
 			b.handleVariableNode(s.Key, arrayKeyType, "foreach_key")

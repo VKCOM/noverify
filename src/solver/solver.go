@@ -262,7 +262,7 @@ func (r *resolver) resolveTypes(class string, m meta.TypesMap) meta.RawTypesMap 
 	m.Iterate(func(typ meta.Type) {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Printf("Panic during parsing '%s'", meta.NewTypesMap(typ.String()))
+				log.Printf("Panic during parsing '%s'", meta.NewTypesMapFromType(typ))
 				panic(r)
 			}
 		}()
