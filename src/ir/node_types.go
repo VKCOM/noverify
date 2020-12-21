@@ -531,7 +531,7 @@ type InstanceOfExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Expr         Node
-	Class        Node
+	Class        Node // *ir.Identifier (static), *ir.Name (ClassNames, self), *ir.SimpleVar ($this)
 }
 
 // IssetExpr is a `isset($Variables...)` expression.
@@ -556,7 +556,7 @@ type MethodCallExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	Method       Node
+	Method       Node // *ir.SimpleVar, *ir.Identifier
 
 	ArgsFreeFloating freefloating.Collection
 	Args             []Node
@@ -567,7 +567,7 @@ type MethodCallExpr struct {
 type NewExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	Class        Node
+	Class        Node // *ir.AnonClassExpr, *ir.Identifier (static), *ir.Name (ClassNames, self), *ir.SimpleVar ($this)
 
 	ArgsFreeFloating freefloating.Collection
 	Args             []Node
@@ -620,7 +620,7 @@ type PropertyFetchExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	Property     Node
+	Property     Node // *ir.Identifier, *ir.SimpleVar
 }
 
 // ReferenceExpr is a `&$Variable` expression.
@@ -1073,7 +1073,7 @@ type GotoStmt struct {
 type GroupUseStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	UseType      Node
+	UseType      *Identifier
 	Prefix       *Name
 	UseList      []Node
 }
@@ -1165,7 +1165,7 @@ type PropertyListStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Modifiers    []*Identifier
-	Type         Node
+	Type         Node // *ir.Nullable, *ir.Identifier (callable, array,...), *ir.Name (ClassName, bool, int,...)
 	Properties   []Node
 }
 
@@ -1284,14 +1284,14 @@ type UseStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	UseType      *Identifier
-	Use          Node
+	Use          *Name
 	Alias        *Identifier
 }
 
 type UseListStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	UseType      Node
+	UseType      *Identifier
 	Uses         []Node
 }
 

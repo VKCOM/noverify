@@ -1440,7 +1440,10 @@ func (c *Converter) convNode(n node.Node) ir.Node {
 		out := &ir.GroupUseStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.UseType = c.convNode(n.UseType)
+		useType := c.convNode(n.UseType)
+		if useType != nil {
+			out.UseType = useType.(*ir.Identifier)
+		}
 		out.Prefix = c.convNode(n.Prefix).(*ir.Name)
 		out.UseList = c.convNodeSlice(n.UseList)
 		return out
@@ -1725,7 +1728,7 @@ func (c *Converter) convNode(n node.Node) ir.Node {
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
 		out.UseType = c.convNode(n.UseType).(*ir.Identifier)
-		out.Use = c.convNode(n.Use)
+		out.Use = c.convNode(n.Use).(*ir.Name)
 		out.Alias = c.convNode(n.Alias).(*ir.Identifier)
 		return out
 
@@ -1736,7 +1739,10 @@ func (c *Converter) convNode(n node.Node) ir.Node {
 		out := &ir.UseListStmt{}
 		out.FreeFloating = n.FreeFloating
 		out.Position = n.Position
-		out.UseType = c.convNode(n.UseType)
+		useType := c.convNode(n.UseType)
+		if useType != nil {
+			out.UseType = useType.(*ir.Identifier)
+		}
 		out.Uses = c.convNodeSlice(n.Uses)
 		return out
 
