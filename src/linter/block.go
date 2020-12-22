@@ -976,6 +976,11 @@ func (b *BlockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 	b.r.reportPhpdocErrors(fun, doc.errs)
 	phpDocParamTypes := doc.types
 
+	var hintReturnType meta.TypesMap
+	if typ, ok := b.r.parseTypeNode(fun.ReturnType); ok {
+		hintReturnType = typ
+	}
+
 	var closureUses []ir.Node
 	if fun.ClosureUse != nil {
 		closureUses = fun.ClosureUse.Uses
@@ -1005,10 +1010,35 @@ func (b *BlockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		b.untrackVarName(v.Name)
 	}
 
-	params, _ := b.r.parseFuncArgs(fun.Params, phpDocParamTypes, sc, closureSolver)
+	params, minParamsCnt := b.r.parseFuncArgs(fun.Params, phpDocParamTypes, sc, closureSolver)
 
-	b.r.handleFuncStmts(params, closureUses, fun.Stmts, sc)
+	funcInfo := b.r.handleFuncStmts(params, closureUses, fun.Stmts, sc)
+	actualReturnTypes := funcInfo.returnTypes
+	exitFlags := funcInfo.prematureExitFlags
 	b.r.addScope(fun, sc)
+
+	returnTypes := functionReturnType(meta.NewEmptyTypesMap(0), hintReturnType, actualReturnTypes)
+
+	for _, param := range fun.Params {
+		b.r.checkFuncParam(param.(*ir.Parameter))
+	}
+
+	name := solver.GetClosureName(fun, b.r.ctx.st.CurrentFunction, b.r.ctx.st.CurrentFile)
+
+	if b.r.meta.Functions.H == nil {
+		b.r.meta.Functions = meta.NewFunctionsMap()
+	}
+
+	b.r.meta.Functions.Set(name, meta.FuncInfo{
+		Params:       params,
+		Name:         name,
+		Pos:          b.r.getElementPos(fun),
+		Typ:          returnTypes.Immutable(),
+		MinParamsCnt: minParamsCnt,
+		Flags:        0,
+		ExitFlags:    exitFlags,
+		Doc:          doc.info,
+	})
 
 	return false
 }

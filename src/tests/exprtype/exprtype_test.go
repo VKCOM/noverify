@@ -2775,6 +2775,37 @@ exprtype(f8(), "\Foo");
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestClosureExprType(t *testing.T) {
+	code := `<?php
+class Foo {
+  public function method() {}
+}
+
+function func() {
+  $f = function(): Foo { return new Foo; };
+  $foo = $f();
+  
+  exprtype($f, "\Closure(exprtype.php,func):7");
+  exprtype($foo, "\Foo");
+}
+
+function func1() {
+  $f1 = function(): float {
+    if (1) {
+	  return new Foo;
+	}
+    return 10; 
+  };
+
+  $foo1 = $f1();
+
+  exprtype($f1, "\Closure(exprtype.php,func1):15");
+  exprtype($foo1, "float");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {

@@ -735,11 +735,17 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 	call := resolveFunctionCall(b.walker.ctx.sc, b.walker.r.ctx.st, b.walker.ctx.customTypes, e)
 	fqName := call.funcName
 
-	if call.canAnalyze {
-		b.checkCallArgs(e.Function, e.Args, call.info)
-		b.checkDeprecatedFunctionCall(e, &call)
+	if !call.isClosure {
 		b.checkFunctionAvailability(e, &call)
 		b.walker.r.checkNameCase(e.Function, call.funcName, call.info.Name)
+	} else {
+		varName := strings.TrimPrefix(fqName, `\`)
+		b.walker.untrackVarName(varName)
+	}
+
+	if call.isFound {
+		b.checkCallArgs(e.Function, e.Args, call.info)
+		b.checkDeprecatedFunctionCall(e, &call)
 	}
 
 	switch fqName {

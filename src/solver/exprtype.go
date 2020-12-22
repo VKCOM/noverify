@@ -151,7 +151,8 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 	case *ir.CloneExpr:
 		return ExprTypeLocalCustom(sc, cs, n.Expr, custom)
 	case *ir.ClosureExpr:
-		return meta.NewTypesMap(`\Closure`)
+		name := GetClosureName(n, cs.CurrentFunction, cs.CurrentFile)
+		return meta.NewTypesMap(name)
 	case *ir.MagicConstant:
 		return magicConstantType(n)
 	}
@@ -479,24 +480,30 @@ func staticFunctionCallType(n *ir.StaticCallExpr, cs *meta.ClassParseState) meta
 }
 
 func functionCallType(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) meta.TypesMap {
-	nm, ok := n.Function.(*ir.Name)
-	if !ok {
-		return meta.TypesMap{}
-	}
-	if nm.IsFullyQualified() {
-		if nm.NumParts() == 1 {
-			typ, ok := internalFuncType(strings.TrimPrefix(nm.Value, `\`), sc, cs, n, custom)
-			if ok {
-				return typ
+	switch nm := n.Function.(type) {
+	case *ir.Name:
+		if nm.IsFullyQualified() {
+			if nm.NumParts() == 1 {
+				typ, ok := internalFuncType(strings.TrimPrefix(nm.Value, `\`), sc, cs, n, custom)
+				if ok {
+					return typ
+				}
 			}
+			return meta.NewTypesMap(meta.WrapFunctionCall(nm.Value))
 		}
-		return meta.NewTypesMap(meta.WrapFunctionCall(nm.Value))
+		typ, ok := internalFuncType(`\`+nm.Value, sc, cs, n, custom)
+		if ok {
+			return typ
+		}
+		return meta.NewTypesMap(meta.WrapFunctionCall(cs.Namespace + `\` + nm.Value))
+	case *ir.SimpleVar:
+		cl, ok := closureTypeByNameNode(n.Function, sc, cs)
+		if ok {
+			return cl
+		}
 	}
-	typ, ok := internalFuncType(`\`+nm.Value, sc, cs, n, custom)
-	if ok {
-		return typ
-	}
-	return meta.NewTypesMap(meta.WrapFunctionCall(cs.Namespace + `\` + nm.Value))
+
+	return meta.MixedType
 }
 
 func magicConstantType(n *ir.MagicConstant) meta.TypesMap {
@@ -504,4 +511,13 @@ func magicConstantType(n *ir.MagicConstant) meta.TypesMap {
 		return meta.PreciseIntType
 	}
 	return meta.PreciseStringType
+}
+
+func closureTypeByNameNode(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState) (meta.TypesMap, bool) {
+	fi, ok := GetClosure(name, sc, cs)
+	if !ok {
+		return meta.TypesMap{}, false
+	}
+
+	return meta.NewTypesMap(meta.WrapFunctionCall(fi.Name)), true
 }

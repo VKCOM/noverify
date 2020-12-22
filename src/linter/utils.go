@@ -150,6 +150,7 @@ type funcCallInfo struct {
 	funcName   string
 	info       meta.FuncInfo
 	isFound    bool
+	isClosure  bool
 	canAnalyze bool
 }
 
@@ -163,10 +164,7 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 	res.canAnalyze = true
 
 	fqName, ok := solver.GetFuncName(st, call.Function)
-	if ok {
-		res.funcName = fqName
-		res.info, res.isFound = meta.Info.GetFunction(fqName)
-	} else {
+	if !ok {
 		solver.ExprTypeCustom(sc, st, call.Function, customTypes).Iterate(func(typ string) {
 			if res.isFound {
 				return
@@ -175,8 +173,22 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 			res.info = m.Info
 			res.isFound = ok
 		})
-		if !res.isFound {
-			res.canAnalyze = false
+		if res.isFound {
+			return res
+		}
+		// we think of a function as a closure,
+		// since we don't know where it came from.
+		res.isClosure = true
+	}
+
+	res.funcName = fqName
+	res.info, res.isFound = meta.Info.GetFunction(fqName)
+	if !res.isFound {
+		// If the function has not been found up to this point,
+		// we try to check if the function is a variable with the closure type.
+		res.info, res.isFound = solver.GetClosure(call.Function, sc, st)
+		if res.isFound {
+			res.isClosure = true
 		}
 	}
 
