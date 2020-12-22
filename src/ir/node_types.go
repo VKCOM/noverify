@@ -531,7 +531,7 @@ type InstanceOfExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Expr         Node
-	Class        Node // *ir.Identifier (static), *ir.Name (ClassNames, self), *ir.SimpleVar ($this)
+	Class        Node
 }
 
 // IssetExpr is a `isset($Variables...)` expression.
@@ -556,7 +556,7 @@ type MethodCallExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	Method       Node // *ir.SimpleVar, *ir.Identifier
+	Method       Node
 
 	ArgsFreeFloating freefloating.Collection
 	Args             []Node
@@ -567,7 +567,7 @@ type MethodCallExpr struct {
 type NewExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	Class        Node // *ir.AnonClassExpr, *ir.Identifier (static), *ir.Name (ClassNames, self), *ir.SimpleVar ($this)
+	Class        Node
 
 	ArgsFreeFloating freefloating.Collection
 	Args             []Node
@@ -620,7 +620,7 @@ type PropertyFetchExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	Property     Node // *ir.Identifier, *ir.SimpleVar
+	Property     Node
 }
 
 // ReferenceExpr is a `&$Variable` expression.
@@ -1165,7 +1165,7 @@ type PropertyListStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Modifiers    []*Identifier
-	Type         Node // *ir.Nullable, *ir.Identifier (callable, array,...), *ir.Name (ClassName, bool, int,...)
+	Type         Node
 	Properties   []Node
 }
 
