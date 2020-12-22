@@ -39,6 +39,10 @@ func GetClosureName(fun *ir.ClosureExpr, curFunction, curFile string) string {
 }
 
 func GetClosure(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState) (meta.FuncInfo, bool) {
+	if !meta.IsIndexingComplete() {
+		return meta.FuncInfo{}, false
+	}
+
 	nmf, ok := name.(*ir.SimpleVar)
 	if !ok {
 		return meta.FuncInfo{}, false
