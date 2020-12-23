@@ -132,7 +132,8 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.SpaceshipExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
-
+	case *ir.CoalesceExpr:
+		b.checkCoalesceExpr(n)
 	case *ir.TypeCastExpr:
 		if n.Type == "array" {
 			b.checkRedundantCastArray(n.Expr)
@@ -189,6 +190,17 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 func (b *blockLinter) report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
 	b.walker.r.Report(n, level, checkName, msg, args...)
+}
+
+func (b *blockLinter) checkCoalesceExpr(n *ir.CoalesceExpr) {
+	lhsType := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, n.Left)
+	if !lhsType.IsPrecise() {
+		return
+	}
+
+	if !lhsType.Contains("null") {
+		b.report(n.Right, LevelInformation, "deadCode", "%s is not nullable, right side of the expression is unreachable", irutil.FmtNode(n.Left))
+	}
 }
 
 func (b *blockLinter) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
