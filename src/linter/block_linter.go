@@ -193,12 +193,12 @@ func (b *blockLinter) report(n ir.Node, level int, checkName, msg string, args .
 }
 
 func (b *blockLinter) checkCoalesceExpr(n *ir.CoalesceExpr) {
-	lt := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, n.Left)
-	if !lt.IsPrecise() {
+	lhsType := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, n.Left)
+	if !lhsType.IsPrecise() {
 		return
 	}
 
-	if !lt.Contains("null") {
+	if !lhsType.Contains("null") {
 		b.report(n.Right, LevelInformation, "deadCode", "%s is not nullable, right side of the expression is unreachable", irutil.FmtNode(n.Left))
 	}
 }
