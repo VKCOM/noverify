@@ -582,7 +582,7 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.GroupUseStmt:
 		clone := *x
 		if x.UseType != nil {
-			clone.UseType = NodeClone(x.UseType)
+			clone.UseType = NodeClone(x.UseType).(*ir.Identifier)
 		}
 		if x.Prefix != nil {
 			clone.Prefix = NodeClone(x.Prefix).(*ir.Name)
@@ -1104,7 +1104,7 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.UseListStmt:
 		clone := *x
 		if x.UseType != nil {
-			clone.UseType = NodeClone(x.UseType)
+			clone.UseType = NodeClone(x.UseType).(*ir.Identifier)
 		}
 		clone.Uses = NodeSliceClone(x.Uses)
 		return &clone
@@ -1114,7 +1114,7 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.UseType = NodeClone(x.UseType).(*ir.Identifier)
 		}
 		if x.Use != nil {
-			clone.Use = NodeClone(x.Use)
+			clone.Use = NodeClone(x.Use).(*ir.Name)
 		}
 		if x.Alias != nil {
 			clone.Alias = NodeClone(x.Alias).(*ir.Identifier)
