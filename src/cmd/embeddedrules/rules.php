@@ -92,6 +92,46 @@ function precedence() {
     $_ !== $_ | $_;
     $_ | $_ !== $_;
   }
+
+  /** @warning === has higher precedence than ?? */
+  any_eq3_coalesce: {
+    $_ === $_ ?? $_;
+  }
+
+  /** @warning !== has higher precedence than ?? */
+  any_neq3_coalesce: {
+    $_ !== $_ ?? $_;
+  }
+
+  /** @warning == has higher precedence than ?? */
+  any_eq_coalesce: {
+    $_ == $_ ?? $_;
+  }
+
+  /** @warning != has higher precedence than ?? */
+  any_neq_coalesce: {
+    $_ != $_ ?? $_;
+  }
+
+  /** @warning > has higher precedence than ?? */
+  any_gr_coalesce: {
+    $_ > $_ ?? $_;
+  }
+
+  /** @warning >= has higher precedence than ?? */
+  any_greq_coalesce: {
+    $_ >= $_ ?? $_;
+  }
+
+  /** @warning < has higher precedence than ?? */
+  any_lr_coalesce: {
+    $_ < $_ ?? $_;
+  }
+
+  /** @warning <= has higher precedence than ?? */
+  any_lreq_coalesce: {
+    $_ <= $_ ?? $_;
+  }
 }
 
 /**
