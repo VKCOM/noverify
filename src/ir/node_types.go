@@ -1073,7 +1073,7 @@ type GotoStmt struct {
 type GroupUseStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	UseType      Node
+	UseType      *Identifier
 	Prefix       *Name
 	UseList      []Node
 }
@@ -1284,14 +1284,14 @@ type UseStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	UseType      *Identifier
-	Use          Node
+	Use          *Name
 	Alias        *Identifier
 }
 
 type UseListStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	UseType      Node
+	UseType      *Identifier
 	Uses         []Node
 }
 
