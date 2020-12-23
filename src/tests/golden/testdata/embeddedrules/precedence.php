@@ -64,10 +64,19 @@ function precedence_lhs_good($x, $mask, $z) {
   $_ = (($x & $mask) != 0) | 0x02;
   $_ = (precedence_foo() !== 0) & 0x02;
 
+  $_ = $x ?? $mask > $z;
+  $_ = $x ?? $mask >= $z;
+  $_ = $x ?? $mask < $z;
+  $_ = $x ?? $mask <= $z;
+  $_ = $x ?? $mask == $z;
+  $_ = $x ?? $mask != $z;
+  $_ = $x ?? $mask === $z;
+  $_ = $x ?? $mask !== $z;
+
   $_ = ($mask > $z) ?? $x;
+  $_ = ($mask >= $z) ?? $x;
   $_ = ($mask < $z) ?? $x;
   $_ = ($mask <= $z) ?? $x;
-  $_ = ($mask >= $z) ?? $x;
   $_ = ($mask == $z) ?? $x;
   $_ = ($mask != $z) ?? $x;
   $_ = ($mask === $z) ?? $x;
