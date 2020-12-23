@@ -92,6 +92,30 @@ function precedence() {
     $_ !== $_ | $_;
     $_ | $_ !== $_;
   }
+
+  /** @warning === has higher precedence than ?? */
+  $_ === $_ ?? $_;
+
+  /** @warning !== has higher precedence than ?? */
+  $_ !== $_ ?? $_;
+
+  /** @warning == has higher precedence than ?? */
+  $_ == $_ ?? $_;
+
+  /** @warning != has higher precedence than ?? */
+  $_ != $_ ?? $_;
+
+  /** @warning > has higher precedence than ?? */
+  $_ > $_ ?? $_;
+
+  /** @warning >= has higher precedence than ?? */
+  $_ >= $_ ?? $_;
+
+  /** @warning < has higher precedence than ?? */
+  $_ < $_ ?? $_;
+
+  /** @warning <= has higher precedence than ?? */
+  $_ <= $_ ?? $_;
 }
 
 /**
