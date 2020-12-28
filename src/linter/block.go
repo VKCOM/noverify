@@ -186,7 +186,8 @@ func (b *BlockWalker) EnterNode(n ir.Node) (res bool) {
 	switch s := n.(type) {
 	case *ir.LogicalOrExpr:
 		res = b.handleLogicalOr(s)
-
+	case *ir.ArrayDimFetchExpr:
+		b.checkArrayDimFetch(s)
 	case *ir.GlobalStmt:
 		b.handleAndCheckGlobalStmt(s)
 		res = false
@@ -665,7 +666,7 @@ func (b *BlockWalker) handleCatch(s *ir.CatchStmt) {
 
 // We still need to analyze expressions in isset()/unset()/empty() statements
 func (b *BlockWalker) handleIssetDimFetch(e *ir.ArrayDimFetchExpr) {
-	b.linter.checkArrayDimFetch(e)
+	b.checkArrayDimFetch(e)
 
 	switch v := e.Variable.(type) {
 	case *ir.SimpleVar:
@@ -1429,7 +1430,7 @@ func (b *BlockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 // handle case when doing assignment like '$a[] = 4;'
 // or call to function that accepts like exec("command", $a)
 func (b *BlockWalker) handleAndCheckDimFetchLValue(e *ir.ArrayDimFetchExpr, reason string, typ meta.TypesMap) {
-	b.linter.checkArrayDimFetch(e)
+	b.checkArrayDimFetch(e)
 
 	switch v := e.Variable.(type) {
 	case *ir.Var, *ir.SimpleVar:
@@ -1448,6 +1449,34 @@ func (b *BlockWalker) handleAndCheckDimFetchLValue(e *ir.ArrayDimFetchExpr, reas
 
 	if e.Dim != nil {
 		e.Dim.Walk(b)
+	}
+}
+
+func (b *BlockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
+	if !meta.IsIndexingComplete() {
+		return
+	}
+
+	typ := solver.ExprType(b.ctx.sc, b.r.ctx.st, s.Variable)
+
+	var (
+		maybeHaveClasses bool
+		haveArrayAccess  bool
+	)
+
+	typ.Iterate(func(t string) {
+		// FullyQualified class name will have "\" in the beginning
+		if meta.IsClassType(t) {
+			maybeHaveClasses = true
+
+			if !haveArrayAccess && solver.Implements(t, `\ArrayAccess`) {
+				haveArrayAccess = true
+			}
+		}
+	})
+
+	if maybeHaveClasses && !haveArrayAccess {
+		b.r.Report(s.Variable, LevelDoNotReject, "arrayAccess", "Array access to non-array type %s", typ)
 	}
 }
 

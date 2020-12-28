@@ -26,9 +26,6 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.ArrayExpr:
 		b.checkArray(n)
 
-	case *ir.ArrayDimFetchExpr:
-		b.checkArrayDimFetch(n)
-
 	case *ir.FunctionCallExpr:
 		b.checkFunctionCall(n)
 
@@ -189,30 +186,6 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 func (b *blockLinter) report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
 	b.walker.r.Report(n, level, checkName, msg, args...)
-}
-
-func (b *blockLinter) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
-	typ := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, s.Variable)
-
-	var (
-		maybeHaveClasses bool
-		haveArrayAccess  bool
-	)
-
-	typ.Iterate(func(t string) {
-		// FullyQualified class name will have "\" in the beginning
-		if meta.IsClassType(t) {
-			maybeHaveClasses = true
-
-			if !haveArrayAccess && solver.Implements(t, `\ArrayAccess`) {
-				haveArrayAccess = true
-			}
-		}
-	})
-
-	if maybeHaveClasses && !haveArrayAccess {
-		b.report(s.Variable, LevelDoNotReject, "arrayAccess", "Array access to non-array type %s", typ)
-	}
 }
 
 func (b *blockLinter) checkAssign(a *ir.Assign) {
