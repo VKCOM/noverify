@@ -5,10 +5,11 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/client9/misspell"
+
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/rules"
-	"github.com/client9/misspell"
 )
 
 var (
@@ -39,6 +40,10 @@ var (
 	//
 	// TODO(quasilyte): avoid having it as a global variable?
 	SrcInput = inputs.NewDefaultSourceInput()
+
+	// GitDir is an absolute path to a directory that contains ".git".
+	// Empty string if NoVerify is executed in a non-git mode.
+	GitDir string
 
 	// Rules is a set of dynamically loaded linter diagnostics.
 	Rules = &rules.Set{}
