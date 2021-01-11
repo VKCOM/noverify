@@ -147,6 +147,22 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []meta.T
 			continue
 		}
 		types := conv.mapType(typeExpr)
+
+		// We need to replace the values with the exact class name when processing
+		// tuples and shapes, because otherwise, during resolution, we will already
+		// be outside the class and get an empty string in the type.
+		for i, typ := range types {
+			if typ.Elem == "static" || typ.Elem == "$this" || typ.Elem == "self" {
+				types[i].Elem = conv.ctx.st.CurrentClass
+			}
+		}
+		if conv.nullable {
+			types = append(types, meta.Type{
+				Elem: "null",
+				Dims: 0,
+			})
+		}
+
 		props = append(props, shapeTypeProp{
 			key:   key.Value,
 			types: types,

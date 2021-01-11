@@ -2775,6 +2775,70 @@ exprtype(f8(), "\Foo");
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestNullableInTupleExprType(t *testing.T) {
+	code := `<?php
+class Boo {}
+
+class Foo {
+	/**
+	 * @return tuple(?Foo, int)
+	 */
+	public static function staticMethodNullable() {}
+
+	/**
+	 * @return tuple(?Boo, int)
+	 */
+	public static function staticMethodNullableBoo() {}
+
+	/**
+	 * @return tuple(?self, int)
+	 */
+	public static function staticMethodSelfNullable() {}
+}
+
+function f1() {
+    list($a, $_) = Foo::staticMethodNullable();
+	list($b, $_) = Foo::staticMethodNullableBoo();
+	list($c, $_) = Foo::staticMethodSelfNullable();
+    exprtype($a, "\Foo|null");
+    exprtype($b, "\Boo|null");
+    exprtype($c, "\Foo|null");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestSelfStaticInTupleExprType(t *testing.T) {
+	code := `<?php
+class Foo {
+	/**
+	 * @return tuple(static, int)
+	 */
+	public static function staticMethodStatic() {}
+	
+	/**
+	 * @return tuple($this, int)
+	 */
+	public static function staticMethodThis() {}
+	
+	/**
+	 * @return tuple(self, int)
+	 */
+	public static function staticMethodSelf() {}
+}
+
+function f1() {
+    list($a, $_) = Foo::staticMethodStatic();
+    list($b, $_) = Foo::staticMethodThis();
+    list($c, $_) = Foo::staticMethodSelf();
+    exprtype($a, "\Foo");
+    exprtype($b, "\Foo");
+    exprtype($c, "\Foo");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {
