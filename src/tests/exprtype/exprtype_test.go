@@ -2797,12 +2797,12 @@ class Foo {
 }
 
 function f1() {
-    list($a, $_) = Foo::staticMethodNullable();
+	list($a, $_) = Foo::staticMethodNullable();
 	list($b, $_) = Foo::staticMethodNullableBoo();
 	list($c, $_) = Foo::staticMethodSelfNullable();
-    exprtype($a, "\Foo|null");
-    exprtype($b, "\Boo|null");
-    exprtype($c, "\Foo|null");
+	exprtype($a, "\Foo|null");
+	exprtype($b, "\Boo|null");
+	exprtype($c, "\Foo|null");
 }
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
