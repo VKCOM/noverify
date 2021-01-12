@@ -325,6 +325,10 @@ func FormatReport(r *linter.Report) string {
 }
 
 func haveAutofixableReports(reports []*linter.Report) bool {
+	if len(reports) == 0 {
+		return false
+	}
+
 	declaredChecks := linter.GetDeclaredChecks()
 	checksWithQuickfix := make(map[string]struct{})
 
