@@ -5,10 +5,11 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/client9/misspell"
+
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/rules"
-	"github.com/client9/misspell"
 )
 
 var (

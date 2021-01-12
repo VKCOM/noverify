@@ -55,7 +55,7 @@ func ReadChangesFromWorkTree(dir string, changes []git.Change) ReadCallback {
 }
 
 // ReadFilesFromGit parses file contents in the specified commit
-func ReadFilesFromGit(repo, commitSHA1 string, ignoreRegex *regexp.Regexp) ReadCallback {
+func ReadFilesFromGit(gitDir, repo, commitSHA1 string, ignoreRegex *regexp.Regexp) ReadCallback {
 	catter, err := git.NewCatter(repo)
 	if err != nil {
 		log.Fatalf("Could not start catter: %s", err.Error())
@@ -93,7 +93,7 @@ func ReadFilesFromGit(repo, commitSHA1 string, ignoreRegex *regexp.Regexp) ReadC
 					return
 				}
 
-				ch <- NewFileWithContents(filename, contents)
+				ch <- NewFileWithContents(filepath.Join(gitDir, filename), contents)
 			},
 		)
 
@@ -104,7 +104,7 @@ func ReadFilesFromGit(repo, commitSHA1 string, ignoreRegex *regexp.Regexp) ReadC
 }
 
 // ReadOldFilesFromGit parses file contents in the specified commit, the old version
-func ReadOldFilesFromGit(repo, commitSHA1 string, changes []git.Change) ReadCallback {
+func ReadOldFilesFromGit(gitDir, repo, commitSHA1 string, changes []git.Change) ReadCallback {
 	changedMap := make(map[string][]git.LineRange, len(changes))
 	for _, ch := range changes {
 		if ch.Type == git.Added {
@@ -138,7 +138,7 @@ func ReadOldFilesFromGit(repo, commitSHA1 string, changes []git.Change) ReadCall
 				return ok
 			},
 			func(filename string, contents []byte) {
-				file := NewFileWithContents(filename, contents)
+				file := NewFileWithContents(filepath.Join(gitDir, filename), contents)
 				file.SetLineRanges(changedMap[filename])
 
 				ch <- file
@@ -152,7 +152,7 @@ func ReadOldFilesFromGit(repo, commitSHA1 string, changes []git.Change) ReadCall
 }
 
 // ReadFilesFromGitWithChanges parses file contents in the specified commit, but only specified ranges
-func ReadFilesFromGitWithChanges(repo, commitSHA1 string, changes []git.Change) ReadCallback {
+func ReadFilesFromGitWithChanges(gitDir, repo, commitSHA1 string, changes []git.Change) ReadCallback {
 	changedMap := make(map[string][]git.LineRange, len(changes))
 	for _, ch := range changes {
 		if ch.Type == git.Deleted {
@@ -188,7 +188,7 @@ func ReadFilesFromGitWithChanges(repo, commitSHA1 string, changes []git.Change) 
 				return ok
 			},
 			func(filename string, contents []byte) {
-				file := NewFileWithContents(filename, contents)
+				file := NewFileWithContents(filepath.Join(gitDir, filename), contents)
 				file.SetLineRanges(changedMap[filename])
 
 				ch <- file

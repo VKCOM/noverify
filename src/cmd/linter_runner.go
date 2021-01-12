@@ -28,6 +28,10 @@ type linterRunner struct {
 	reportsCriticalSet      map[string]bool
 
 	allowDisableRegex *regexp.Regexp
+
+	// gitDir is an absolute path to a directory that contains ".git".
+	// Empty string if NoVerify is executed in a non-git mode.
+	gitDir string
 }
 
 func (l *linterRunner) IsEnabledByFlags(checkName string) bool {
@@ -108,6 +112,16 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, args *cmdlineArguments) error
 		err := LoadMisspellDicts(strings.Split(args.misspellList, ","))
 		if err != nil {
 			return err
+		}
+	}
+
+	if args.gitRepo != "" {
+		var err error
+		// args.gitRepo contains the path to the .git folder,
+		// so we need to get the folder above.
+		l.gitDir, err = filepath.Abs(args.gitRepo + "/../")
+		if err != nil {
+			return fmt.Errorf("find git dir: %v", err)
 		}
 	}
 
