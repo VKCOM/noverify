@@ -148,13 +148,23 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []meta.T
 		}
 		types := conv.mapType(typeExpr)
 
-		// We need to replace the values with the exact class name when processing
-		// tuples and shapes, because otherwise, during resolution, we will already
-		// be outside the class and get an empty string in the type.
+		// We need to resolve the class names as well as static,
+		// self and $this here for it to work properly.
 		for i, typ := range types {
-			if typ.Elem == "static" || typ.Elem == "$this" || typ.Elem == "self" {
-				types[i].Elem = conv.ctx.st.CurrentClass
+			if _, ok := typeAliases[typ.Elem]; ok {
+				continue
 			}
+
+			if trivialTypes[typ.Elem] {
+				continue
+			}
+
+			className, ok := solver.GetClassName(conv.ctx.st, &ir.Name{Value: typ.Elem})
+			if !ok {
+				continue
+			}
+
+			types[i].Elem = className
 		}
 		if conv.nullable {
 			types = append(types, meta.Type{

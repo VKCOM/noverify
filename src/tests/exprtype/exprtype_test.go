@@ -2839,6 +2839,48 @@ function f1() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestClassesInTupleExprType(t *testing.T) {
+	code := `<?php
+namespace Boo {
+	class B {}
+	class C {}
+}
+
+namespace Foo {
+	use Boo\B;
+	use Boo\C as ClassFromBoo;
+
+	class F extends ClassFromBoo {
+		/**
+		 * @return tuple(parent, int)
+		 */
+		public static function method() {}
+	}
+	
+	/**
+	 * @return tuple(?B, integer)
+	 */
+	function f() {}
+
+	/**
+	 * @return tuple(ClassFromBoo, int)
+	 */
+	function f1() {}
+	
+	function f2() {
+		list($a, $_) = f();
+		list($b, $_) = f1();
+		list($c, $_) = F::method();
+		
+		exprtype($a, "\Boo\B|null");
+		exprtype($b, "\Boo\C");
+		exprtype($c, "\Boo\C");
+	}
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {
