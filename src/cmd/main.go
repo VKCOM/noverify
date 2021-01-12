@@ -363,7 +363,7 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 		}
 	}
 
-	containsAutofixableReports = haveAutofixableReports(diff)
+	containsAutofixableReports = haveAutofixableReports(filtered)
 
 	if l.args.outputJSON {
 		type reportList struct {
