@@ -2778,11 +2778,8 @@ exprtype(f8(), "\Foo");
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	meta.ResetInfo()
 	if params.stubs != "" {
-		linter.InitStubs(func(ch chan workspace.FileInfo) {
-			ch <- workspace.FileInfo{
-				Filename: "stubs.php",
-				Contents: []byte(params.stubs),
-			}
+		linter.InitStubs(func(ch chan *workspace.File) {
+			ch <- workspace.NewFileWithContents("stubs.php", []byte(params.stubs))
 		})
 	}
 	linttest.ParseTestFile(t, "exprtype.php", params.code)

@@ -9,9 +9,10 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/monochromegane/go-gitignore"
+
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/monochromegane/go-gitignore"
 )
 
 // ParseGitignoreFromDir tries to parse a gitignore file at path/.gitignore.
@@ -31,7 +32,7 @@ func ParseGitignoreFromDir(path string) (gitignore.IgnoreMatcher, error) {
 
 // ReadChangesFromWorkTree returns callback that reads files from workTree dir that are changed
 func ReadChangesFromWorkTree(dir string, changes []git.Change) ReadCallback {
-	return func(ch chan FileInfo) {
+	return func(ch chan *File) {
 		for _, c := range changes {
 			if c.Type == git.Deleted {
 				continue
@@ -48,10 +49,7 @@ func ReadChangesFromWorkTree(dir string, changes []git.Change) ReadCallback {
 				log.Fatalf("Could not read file %s: %s", filename, err.Error())
 			}
 
-			ch <- FileInfo{
-				Filename: filename,
-				Contents: contents,
-			}
+			ch <- NewFileWithContents(filename, contents)
 		}
 	}
 }
@@ -70,7 +68,7 @@ func ReadFilesFromGit(repo, commitSHA1 string, ignoreRegex *regexp.Regexp) ReadC
 
 	suffixes := makePHPExtensionSuffixes()
 
-	return func(ch chan FileInfo) {
+	return func(ch chan *File) {
 		start := time.Now()
 		idx := 0
 
@@ -95,10 +93,7 @@ func ReadFilesFromGit(repo, commitSHA1 string, ignoreRegex *regexp.Regexp) ReadC
 					return
 				}
 
-				ch <- FileInfo{
-					Filename: filename,
-					Contents: contents,
-				}
+				ch <- NewFileWithContents(filename, contents)
 			},
 		)
 
@@ -130,7 +125,7 @@ func ReadOldFilesFromGit(repo, commitSHA1 string, changes []git.Change) ReadCall
 
 	suffixes := makePHPExtensionSuffixes()
 
-	return func(ch chan FileInfo) {
+	return func(ch chan *File) {
 		err = catter.Walk(
 			"",
 			tree,
@@ -143,11 +138,10 @@ func ReadOldFilesFromGit(repo, commitSHA1 string, changes []git.Change) ReadCall
 				return ok
 			},
 			func(filename string, contents []byte) {
-				ch <- FileInfo{
-					Filename:   filename,
-					Contents:   contents,
-					LineRanges: changedMap[filename],
-				}
+				file := NewFileWithContents(filename, contents)
+				file.SetLineRanges(changedMap[filename])
+
+				ch <- file
 			},
 		)
 
@@ -181,7 +175,7 @@ func ReadFilesFromGitWithChanges(repo, commitSHA1 string, changes []git.Change) 
 
 	suffixes := makePHPExtensionSuffixes()
 
-	return func(ch chan FileInfo) {
+	return func(ch chan *File) {
 		err = catter.Walk(
 			"",
 			tree,
@@ -194,11 +188,10 @@ func ReadFilesFromGitWithChanges(repo, commitSHA1 string, changes []git.Change) 
 				return ok
 			},
 			func(filename string, contents []byte) {
-				ch <- FileInfo{
-					Filename:   filename,
-					Contents:   contents,
-					LineRanges: changedMap[filename],
-				}
+				file := NewFileWithContents(filename, contents)
+				file.SetLineRanges(changedMap[filename])
+
+				ch <- file
 			},
 		)
 

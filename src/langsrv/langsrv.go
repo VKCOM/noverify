@@ -15,6 +15,8 @@ import (
 	"sync"
 	"time"
 
+	"go.lsp.dev/uri"
+
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/lintdebug"
@@ -24,7 +26,6 @@ import (
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/vscode"
 	"github.com/VKCOM/noverify/src/workspace"
-	"go.lsp.dev/uri"
 )
 
 const maxLength = 16 << 20
@@ -177,7 +178,7 @@ func handleInitialize(req *baseRequest) error {
 		// other files are not analyzed fully at all
 		openMapMutex.Lock()
 		for filename, op := range openMap {
-			go openFile(filename, op.contents)
+			go openFile(filename, string(op.file.Contents()))
 		}
 		openMapMutex.Unlock()
 	}()
@@ -383,9 +384,9 @@ func handleTextDocumentDefinition(req *baseRequest) error {
 
 	result := make([]vscode.Location, 0)
 
-	if params.Position.Line < len(f.linesPositions) {
+	if params.Position.Line < f.file.CountLinePosition() {
 		w := &definitionWalker{
-			position: f.linesPositions[params.Position.Line] + params.Position.Character,
+			position: f.file.LinePosition(params.Position.Line) + params.Position.Character,
 			scopes:   f.scopes,
 		}
 		f.rootNode.Walk(w)
@@ -422,9 +423,9 @@ func handleTextDocumentReferences(req *baseRequest) error {
 
 	result := make([]vscode.Location, 0)
 
-	if params.Position.Line < len(f.linesPositions) {
+	if params.Position.Line < f.file.CountLinePosition() {
 		w := &referencesWalker{
-			position: f.linesPositions[params.Position.Line] + params.Position.Character,
+			position: f.file.LinePosition(params.Position.Line) + params.Position.Character,
 		}
 		f.rootNode.Walk(w)
 		if len(w.result) > 0 {
@@ -485,12 +486,12 @@ func handleTextDocumentHover(req *baseRequest) error {
 	lnPos := params.Position.Line
 	chPos := params.Position.Character - 1
 
-	if lnPos >= len(f.lines) {
+	if lnPos >= f.file.CountLines() {
 		lintdebug.Send("Line out of range for file %s: %d", filename, lnPos)
 		return nil
 	}
 
-	ln := f.lines[lnPos]
+	ln := f.file.Line(lnPos)
 
 	if chPos < 0 || chPos >= len(ln) {
 		lintdebug.Send("Char out of range for file %s: line '%s', char %d", filename, ln, chPos)
@@ -498,7 +499,7 @@ func handleTextDocumentHover(req *baseRequest) error {
 	}
 
 	compl := &completionWalker{
-		position: f.linesPositions[params.Position.Line] + params.Position.Character,
+		position: f.file.LinePosition(params.Position.Line) + params.Position.Character,
 		scopes:   f.scopes,
 	}
 
@@ -628,19 +629,19 @@ func handleTextDocumentCompletion(req *baseRequest) error {
 	var ln []byte
 	var position int
 
-	if lnPos >= len(f.lines) {
+	if lnPos >= f.file.CountLines() {
 		lintdebug.Send("Line out of range for file %s: %d", filename, lnPos)
 		return nil
 	}
 
-	ln = f.lines[lnPos]
+	ln = f.file.Line(lnPos)
 
 	if chPos < 0 || chPos >= len(ln) {
 		lintdebug.Send("Char out of range for file %s: line '%s', char %d", filename, ln, chPos)
 		return nil
 	}
 
-	position = f.linesPositions[params.Position.Line] + params.Position.Character
+	position = f.file.LinePosition(params.Position.Line) + params.Position.Character
 
 	compl := &completionWalker{
 		position: position,

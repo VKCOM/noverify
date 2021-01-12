@@ -20,6 +20,7 @@ import (
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/rules"
+	"github.com/VKCOM/noverify/src/workspace"
 )
 
 func init() {
@@ -367,7 +368,8 @@ func shuffleFiles(files []TestFile) {
 
 func parseTestFile(t testing.TB, worker *linter.Worker, f TestFile) (rootNode *ir.Root, w *linter.RootWalker) {
 	var err error
-	rootNode, w, err = worker.ParseContents(f.Name, f.Data, nil)
+	file := workspace.NewFileWithContents(f.Name, f.Data)
+	rootNode, w, err = worker.ParseContents(file)
 	if err != nil {
 		t.Fatalf("could not parse %s: %v", f.Name, err.Error())
 	}
