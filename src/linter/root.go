@@ -211,61 +211,11 @@ func (d *RootWalker) EnterNode(n ir.Node) (res bool) {
 			d.checkIdentMisspellings(n.InterfaceName)
 		}
 	case *ir.ClassStmt:
-		d.currentClassNode = n
-		cl := d.getClass()
-		var classFlags meta.ClassFlags
-		for _, m := range n.Modifiers {
-			switch {
-			case strings.EqualFold("abstract", m.Value):
-				classFlags |= meta.ClassAbstract
-			case strings.EqualFold("final", m.Value):
-				classFlags |= meta.ClassFinal
-			}
-		}
-		if classFlags != 0 {
-			// Since cl is not a pointer and it's illegal to update
-			// individual fields through map, we update cl and
-			// then assign it back to the map.
-			cl.Flags = classFlags
-			d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
-		}
-		if n.Implements != nil {
-			d.checkKeywordCase(n.Implements, "implements")
-			for _, tr := range n.Implements.InterfaceNames {
-				interfaceName, ok := solver.GetClassName(d.ctx.st, tr)
-				if ok {
-					cl.Interfaces[interfaceName] = struct{}{}
-					d.checkIfaceImplemented(tr, interfaceName)
-				}
-			}
-		}
-		d.checkCommentMisspellings(n.ClassName, n.PhpDocComment)
-		d.checkIdentMisspellings(n.ClassName)
-		doc := d.parseClassPHPDoc(n.ClassName, n.PhpDoc)
-		d.reportPhpdocErrors(n.ClassName, doc.errs)
-		// If we ever need to distinguish @property-annotated and real properties,
-		// more work will be required here.
-		for name, p := range doc.properties {
-			p.Pos = cl.Pos
-			cl.Properties[name] = p
-		}
-		for name, m := range doc.methods.H {
-			m.Pos = cl.Pos
-			cl.Methods.H[name] = m
-		}
-		for _, m := range n.Modifiers {
-			d.lowerCaseModifier(m)
-		}
-		if n.Extends != nil {
-			d.checkKeywordCase(n.Extends, "extends")
-			className, ok := solver.GetClassName(d.ctx.st, n.Extends.ClassName)
-			if ok {
-				d.checkClassImplemented(n.Extends.ClassName, className)
-			}
-		}
+		d.handleClass(n)
 
-		cl.Mixins = doc.mixins
-		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
+		if meta.IsIndexingComplete() {
+			d.checkClass(n)
+		}
 
 	case *ir.TraitStmt:
 		d.currentClassNode = n
@@ -324,6 +274,153 @@ func (d *RootWalker) EnterNode(n ir.Node) (res bool) {
 		state.LeaveNode(d.ctx.st, n)
 	}
 	return res
+}
+
+func (d *RootWalker) checkClass(classNode *ir.ClassStmt) {
+	d.checkClassModifiers(classNode.Modifiers)
+	d.checkClassImplements(classNode.Implements)
+	d.checkClassExtends(classNode.Extends)
+
+	doc := d.parseClassPHPDoc(classNode, classNode.PhpDoc)
+	d.checkClassPHPDoc(classNode, classNode.PhpDoc)
+	d.reportPhpdocErrors(classNode, doc.errs)
+
+	d.checkCommentMisspellings(classNode.ClassName, classNode.PhpDocComment)
+	d.checkIdentMisspellings(classNode.ClassName)
+}
+
+func (d *RootWalker) handleClass(classNode *ir.ClassStmt) {
+	if d.meta.Classes.H == nil {
+		d.meta.Classes = meta.NewClassesMap()
+	}
+
+	d.currentClassNode = classNode
+
+	name := classNode.ClassName.Value
+	namespace := d.ctx.st.Namespace
+
+	flags := d.handleClassModifiers(classNode.Modifiers)
+	ifaces := d.handleClassImplements(classNode.Implements)
+	parent := d.handleClassExtends(classNode.Extends)
+
+	doc := d.parseClassPHPDoc(classNode, classNode.PhpDoc)
+	docProps, docMethods, mixins := d.handleClassPhpDoc(doc)
+
+	cl := meta.ClassInfo{
+		Pos:              d.getElementPos(classNode),
+		Flags:            flags,
+		Name:             namespace + `\` + name,
+		Parent:           parent,
+		ParentInterfaces: d.ctx.st.CurrentParentInterfaces,
+		Interfaces:       ifaces,
+		Traits:           make(map[string]struct{}),
+		Methods:          docMethods,
+		Properties:       docProps,
+		Constants:        make(meta.ConstantsMap),
+		Mixins:           mixins,
+	}
+
+	d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
+}
+
+func (d *RootWalker) handleClassModifiers(modifiers []*ir.Identifier) meta.ClassFlags {
+	var kind meta.ClassFlags
+	for _, m := range modifiers {
+		switch {
+		case strings.EqualFold("abstract", m.Value):
+			kind |= meta.ClassAbstract
+		case strings.EqualFold("final", m.Value):
+			kind |= meta.ClassFinal
+		}
+	}
+	return kind
+}
+
+func (d *RootWalker) checkClassModifiers(modifiers []*ir.Identifier) {
+	for _, m := range modifiers {
+		d.checkLowerCaseModifier(m)
+	}
+}
+
+func (d *RootWalker) handleClassImplements(impl *ir.ClassImplementsStmt) map[string]struct{} {
+	if impl == nil {
+		return map[string]struct{}{}
+	}
+	ifaces := make(map[string]struct{}, len(impl.InterfaceNames))
+
+	for _, tr := range impl.InterfaceNames {
+		interfaceName, ok := solver.GetClassName(d.ctx.st, tr)
+		if !ok {
+			continue
+		}
+
+		ifaces[interfaceName] = struct{}{}
+	}
+
+	return ifaces
+}
+
+func (d *RootWalker) checkClassImplements(impl *ir.ClassImplementsStmt) {
+	if impl == nil {
+		return
+	}
+
+	d.checkKeywordCase(impl, "implements")
+
+	for _, tr := range impl.InterfaceNames {
+		interfaceName, ok := solver.GetClassName(d.ctx.st, tr)
+		if !ok {
+			continue
+		}
+
+		d.checkIfaceImplemented(tr, interfaceName)
+	}
+}
+
+func (d *RootWalker) handleClassExtends(exts *ir.ClassExtendsStmt) (parent string) {
+	if exts == nil {
+		return ""
+	}
+
+	className, ok := solver.GetClassName(d.ctx.st, exts.ClassName)
+	if !ok {
+		return ""
+	}
+
+	return className
+}
+
+func (d *RootWalker) checkClassExtends(exts *ir.ClassExtendsStmt) {
+	if exts == nil {
+		return
+	}
+
+	d.checkKeywordCase(exts, "extends")
+
+	className, ok := solver.GetClassName(d.ctx.st, exts.ClassName)
+	if !ok {
+		return
+	}
+
+	d.checkClassImplemented(exts.ClassName, className)
+}
+
+func (d *RootWalker) handleClassPhpDoc(doc classPhpDocParseResult) (props meta.PropertiesMap, methods meta.FunctionsMap, mixins []string) {
+	props = make(meta.PropertiesMap, len(doc.properties))
+	methods = meta.NewFunctionsMap()
+
+	// If we ever need to distinguish @property-annotated and real properties,
+	// more work will be required here.
+	for name, prop := range doc.properties {
+		props[name] = prop
+	}
+	for name, method := range doc.methods.H {
+		methods.Set(string(name), method)
+	}
+
+	mixins = doc.mixins
+
+	return props, methods, mixins
 }
 
 func (d *RootWalker) parseStartPos(pos *position.Position) (startLn []byte, startChar int) {
@@ -752,7 +849,7 @@ func (d *RootWalker) parseMethodModifiers(meth *ir.ClassMethodStmt) (res methodM
 	res.accessLevel = meta.Public
 
 	for _, m := range meth.Modifiers {
-		switch d.lowerCaseModifier(m) {
+		switch d.checkLowerCaseModifier(m) {
 		case "abstract":
 			res.abstract = true
 		case "static":
@@ -887,7 +984,7 @@ func (d *RootWalker) getClass() meta.ClassInfo {
 	return cl
 }
 
-func (d *RootWalker) lowerCaseModifier(m *ir.Identifier) string {
+func (d *RootWalker) checkLowerCaseModifier(m *ir.Identifier) string {
 	lcase := strings.ToLower(m.Value)
 	if lcase != m.Value {
 		d.Report(m, LevelWarning, "keywordCase", "Use %s instead of %s",
@@ -903,7 +1000,7 @@ func (d *RootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 	accessLevel := meta.Public
 
 	for _, m := range pl.Modifiers {
-		switch d.lowerCaseModifier(m) {
+		switch d.checkLowerCaseModifier(m) {
 		case "public":
 			accessLevel = meta.Public
 		case "protected":
@@ -952,7 +1049,7 @@ func (d *RootWalker) enterClassConstList(s *ir.ClassConstListStmt) bool {
 	accessLevel := meta.Public
 
 	for _, m := range s.Modifiers {
-		switch d.lowerCaseModifier(m) {
+		switch d.checkLowerCaseModifier(m) {
 		case "public":
 			accessLevel = meta.Public
 		case "protected":
@@ -2056,7 +2153,6 @@ func (d *RootWalker) parseClassPHPDoc(n ir.Node, doc []phpdoc.CommentPart) class
 	result.methods = meta.NewFunctionsMap()
 
 	for _, part := range doc {
-		d.checkPHPDocRef(n, part)
 		switch part.Name() {
 		case "property", "property-read", "property-write":
 			parseClassPHPDocProperty(&d.ctx, &result, part.(*phpdoc.TypeVarCommentPart))
@@ -2068,6 +2164,16 @@ func (d *RootWalker) parseClassPHPDoc(n ir.Node, doc []phpdoc.CommentPart) class
 	}
 
 	return result
+}
+
+func (d *RootWalker) checkClassPHPDoc(n ir.Node, doc []phpdoc.CommentPart) {
+	if len(doc) == 0 {
+		return
+	}
+
+	for _, part := range doc {
+		d.checkPHPDocRef(n, part)
+	}
 }
 
 func (d *RootWalker) beforeEnterFile() {
