@@ -646,14 +646,15 @@ func (b *BlockWalker) handleTry(s *ir.TryStmt) bool {
 }
 
 func (b *BlockWalker) handleCatch(s *ir.CatchStmt) {
-	m := meta.NewEmptyTypesMap(len(s.Types))
+	types := make([]meta.Type, 0, len(s.Types))
 	for _, t := range s.Types {
 		typ, ok := solver.GetClassName(b.r.ctx.st, t)
 		if !ok {
 			continue
 		}
-		m = m.AppendString(typ)
+		types = append(types, meta.Type{Elem: typ})
 	}
+	m := meta.NewTypesMapFromTypes(types)
 
 	b.handleVariableNode(s.Variable, m, "catch")
 
@@ -1438,10 +1439,7 @@ func (b *BlockWalker) handleAndCheckDimFetchLValue(e *ir.ArrayDimFetchExpr, reas
 
 	switch v := e.Variable.(type) {
 	case *ir.Var, *ir.SimpleVar:
-		arrTyp := meta.NewEmptyTypesMap(typ.Len())
-		typ.Iterate(func(t string) {
-			arrTyp = arrTyp.AppendString(meta.WrapArrayOf(t))
-		})
+		arrTyp := typ.Map(meta.WrapArrayOf)
 		b.addVar(v, arrTyp, reason, meta.VarAlwaysDefined)
 		b.handleVariable(v)
 	case *ir.ArrayDimFetchExpr:
