@@ -1636,7 +1636,7 @@ func (b *BlockWalker) handleAssign(a *ir.Assign) bool {
 			break
 		}
 
-		cls := b.r.getClass()
+		cls := b.r.getOrCreateCurrentClass()
 
 		p := cls.Properties[propertyName.Value]
 		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, a.Expression, b.ctx.customTypes))
@@ -1658,7 +1658,7 @@ func (b *BlockWalker) handleAssign(a *ir.Assign) bool {
 			break
 		}
 
-		cls := b.r.getClass()
+		cls := b.r.getOrCreateCurrentClass()
 
 		p := cls.Properties["$"+sv.Name]
 		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, a.Expression, b.ctx.customTypes))
