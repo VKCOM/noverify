@@ -222,11 +222,11 @@ func handleTextDocumentDidOpen(req *baseRequest) error {
 		return err
 	}
 
-	uri := params.TextDocument.URI
-	lintdebug.Send("Open text document %s", uri)
+	u := params.TextDocument.URI
+	lintdebug.Send("Open text document %s", u)
 
-	if isFileScheme(uri) {
-		openFile(uri.Filename(), params.TextDocument.Text)
+	if isFileScheme(u) {
+		openFile(u.Filename(), params.TextDocument.Text)
 	}
 
 	return nil
@@ -238,11 +238,11 @@ func handleTextDocumentDidClose(req *baseRequest) error {
 		return err
 	}
 
-	uri := params.TextDocument.URI
-	lintdebug.Send("Close text document %s", uri)
+	u := params.TextDocument.URI
+	lintdebug.Send("Close text document %s", u)
 
-	if isFileScheme(uri) {
-		closeFile(uri.Filename())
+	if isFileScheme(u) {
+		closeFile(u.Filename())
 	}
 
 	return nil
@@ -259,10 +259,10 @@ func handleTextDocumentDidChange(req *baseRequest) error {
 		return nil
 	}
 
-	uri := params.TextDocument.URI
+	u := params.TextDocument.URI
 
-	if isFileScheme(uri) {
-		changeFile(uri.Filename(), params.ContentChanges[0].Text)
+	if isFileScheme(u) {
+		changeFile(u.Filename(), params.ContentChanges[0].Text)
 	}
 
 	return nil
@@ -284,12 +284,12 @@ func handleTextDocumentSymbol(req *baseRequest) error {
 	// TODO: make it actually safe
 
 	meta.OnIndexingComplete(func() {
-		uri := params.TextDocument.URI
+		u := params.TextDocument.URI
 
 		var result []vscode.SymbolInformation
 
-		if isFileScheme(uri) {
-			filename := uri.Filename()
+		if isFileScheme(u) {
+			filename := u.Filename()
 			res := meta.Info.GetMetaForFile(filename)
 
 			for _, classInfo := range res.Classes.H {

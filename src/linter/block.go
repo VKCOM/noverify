@@ -581,7 +581,8 @@ func (b *BlockWalker) handleTry(s *ir.TryStmt) bool {
 
 	// Assume that no code in try{} block has executed because exceptions can be thrown from anywhere.
 	// So we handle catches and finally blocks first.
-	for _, c := range s.Catches {
+	for i := range s.Catches {
+		c := s.Catches[i]
 		ctx := b.withNewContext(func() {
 			b.r.addScope(c, b.ctx.sc)
 			cc := c.(*ir.CatchStmt)
@@ -1208,11 +1209,12 @@ func (b *BlockWalker) handleIf(s *ir.IfStmt) bool {
 
 	walk := func(n ir.Node) (links int) {
 		// handle if (...) smth(); else other_thing(); // without braces
-		if els, ok := n.(*ir.ElseStmt); ok {
-			b.addStatement(els.Stmt)
-		} else if elsif, ok := n.(*ir.ElseIfStmt); ok {
-			b.addStatement(elsif.Stmt)
-		} else {
+		switch n := n.(type) {
+		case *ir.ElseStmt:
+			b.addStatement(n.Stmt)
+		case *ir.ElseIfStmt:
+			b.addStatement(n.Stmt)
+		default:
 			b.addStatement(n)
 		}
 
@@ -1324,7 +1326,9 @@ func (b *BlockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 	haveDefault := false
 	breakFlags := FlagBreak | FlagContinue
 
-	for idx, c := range s.CaseList.Cases {
+	for i := range s.CaseList.Cases {
+		idx := i
+		c := s.CaseList.Cases[i]
 		var list []ir.Node
 
 		cond, list := getCaseStmts(c)

@@ -45,9 +45,9 @@ type codegenFile struct {
 	deps     []string
 }
 
-func (ctx *context) Debugf(format string, args ...interface{}) {
+func (ctx *context) Debugf(formatString string, args ...interface{}) {
 	if ctx.args.debug {
-		log.Println("DEBUG: " + fmt.Sprintf(format, args...))
+		log.Println("DEBUG: " + fmt.Sprintf(formatString, args...))
 	}
 }
 
