@@ -222,9 +222,20 @@ func (d *RootWalker) EnterNode(n ir.Node) (res bool) {
 		}
 
 	case *ir.PropertyListStmt:
-		res = d.enterPropertyList(n)
+		if meta.IsIndexingComplete() {
+			d.checkPropertyList(n)
+		} else {
+			d.handlePropertyList(n)
+		}
+		res = true
+
 	case *ir.ClassConstListStmt:
-		res = d.enterClassConstList(n)
+		if meta.IsIndexingComplete() {
+			d.checkClassConstList(n)
+		} else {
+			d.handleClassConstList(n)
+		}
+		res = true
 
 	case *ir.ClassMethodStmt:
 		if meta.IsIndexingComplete() {
@@ -249,10 +260,13 @@ func (d *RootWalker) EnterNode(n ir.Node) (res bool) {
 		for _, tr := range n.Traits {
 			traitName, ok := solver.GetClassName(d.ctx.st, tr)
 			if ok {
-				cl.Traits[traitName] = struct{}{}
+				if !meta.IsIndexingComplete() {
+					cl.Traits[traitName] = struct{}{}
+				}
 				d.checkTraitImplemented(tr, traitName)
 			}
 		}
+
 	case *ir.Assign:
 		v, ok := n.Variable.(*ir.SimpleVar)
 		if !ok {
@@ -984,14 +998,59 @@ func (d *RootWalker) checkLowerCaseModifier(m *ir.Identifier) string {
 	return lcase
 }
 
-func (d *RootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
+func (d *RootWalker) handlePropertyList(pl *ir.PropertyListStmt) bool {
 	cl := d.getOrCreateCurrentClass()
 
+	isStatic, accessLevel := d.handlePropertyModifiers(pl)
+	hintType := d.handleTypeHint(pl.Type)
+
+	for _, pNode := range pl.Properties {
+		prop := pNode.(*ir.PropertyStmt)
+
+		propName := prop.Variable.Name
+
+		d.checkCommentMisspellings(prop, prop.PhpDocComment)
+
+		typ := d.parsePHPDocVar(prop, prop.PhpDoc)
+		if prop.Expr != nil {
+			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, prop.Expr))
+		}
+		typ = typ.Append(hintType)
+
+		if isStatic {
+			propName = "$" + propName
+		}
+
+		// TODO: handle duplicate property
+		cl.Properties[propName] = meta.PropertyInfo{
+			Pos:         d.getElementPos(prop),
+			Typ:         typ.Immutable(),
+			AccessLevel: accessLevel,
+		}
+	}
+
+	return true
+}
+
+func (d *RootWalker) checkPropertyList(pl *ir.PropertyListStmt) bool {
+	d.checkPropertyModifiers(pl)
+
+	for _, pNode := range pl.Properties {
+		prop := pNode.(*ir.PropertyStmt)
+
+		d.checkCommentMisspellings(prop, prop.PhpDocComment)
+		d.checkPHPDocVar(prop, prop.PhpDoc)
+	}
+
+	return true
+}
+
+func (d *RootWalker) handlePropertyModifiers(pl *ir.PropertyListStmt) (bool, meta.AccessLevel) {
 	isStatic := false
 	accessLevel := meta.Public
 
 	for _, m := range pl.Modifiers {
-		switch d.checkLowerCaseModifier(m) {
+		switch strings.ToLower(m.Value) {
 		case "public":
 			accessLevel = meta.Public
 		case "protected":
@@ -1003,72 +1062,66 @@ func (d *RootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 		}
 	}
 
-	var specifiedType meta.TypesMap
-	if typ, ok := d.parseTypeNode(pl.Type); ok {
-		specifiedType = typ
-	}
-
-	for _, pNode := range pl.Properties {
-		p := pNode.(*ir.PropertyStmt)
-
-		nm := p.Variable.Name
-
-		d.checkCommentMisspellings(p, p.PhpDocComment)
-		typ := d.parsePHPDocVar(p, p.PhpDoc)
-		if p.Expr != nil {
-			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, p.Expr))
-		}
-		typ = typ.Append(specifiedType)
-
-		if isStatic {
-			nm = "$" + nm
-		}
-
-		// TODO: handle duplicate property
-		cl.Properties[nm] = meta.PropertyInfo{
-			Pos:         d.getElementPos(p),
-			Typ:         typ.Immutable(),
-			AccessLevel: accessLevel,
-		}
-	}
-
-	return true
+	return isStatic, accessLevel
 }
 
-func (d *RootWalker) enterClassConstList(s *ir.ClassConstListStmt) bool {
-	cl := d.getOrCreateCurrentClass()
-	accessLevel := meta.Public
-
-	for _, m := range s.Modifiers {
-		switch d.checkLowerCaseModifier(m) {
-		case "public":
-			accessLevel = meta.Public
-		case "protected":
-			accessLevel = meta.Protected
-		case "private":
-			accessLevel = meta.Private
-		}
+func (d *RootWalker) checkPropertyModifiers(pl *ir.PropertyListStmt) {
+	for _, m := range pl.Modifiers {
+		d.checkLowerCaseModifier(m)
 	}
+}
+
+func (d *RootWalker) handleClassConstList(s *ir.ClassConstListStmt) {
+	class := d.getOrCreateCurrentClass()
+
+	accessLevel := d.handleConstantAccessLevel(s)
 
 	for _, cNode := range s.Consts {
 		c := cNode.(*ir.ConstantStmt)
 
-		nm := c.ConstantName.Value
-		d.checkCommentMisspellings(c, c.PhpDocComment)
+		constantName := c.ConstantName.Value
 		typ := solver.ExprTypeLocal(d.scope(), d.ctx.st, c.Expr)
-
 		value := constfold.Eval(d.ctx.st, c.Expr)
 
 		// TODO: handle duplicate constant
-		cl.Constants[nm] = meta.ConstInfo{
+		class.Constants[constantName] = meta.ConstInfo{
 			Pos:         d.getElementPos(c),
 			Typ:         typ.Immutable(),
 			AccessLevel: accessLevel,
 			Value:       value,
 		}
 	}
+}
 
-	return true
+func (d *RootWalker) checkClassConstList(s *ir.ClassConstListStmt) {
+	d.checkConstantAccessLevel(s)
+
+	for _, constant := range s.Consts {
+		d.checkCommentMisspellings(constant, constant.(*ir.ConstantStmt).PhpDocComment)
+	}
+}
+
+func (d *RootWalker) handleConstantAccessLevel(s *ir.ClassConstListStmt) meta.AccessLevel {
+	level := meta.Public
+
+	for _, m := range s.Modifiers {
+		switch strings.ToLower(m.Value) {
+		case "public":
+			level = meta.Public
+		case "protected":
+			level = meta.Protected
+		case "private":
+			level = meta.Private
+		}
+	}
+
+	return level
+}
+
+func (d *RootWalker) checkConstantAccessLevel(s *ir.ClassConstListStmt) {
+	for _, m := range s.Modifiers {
+		d.checkLowerCaseModifier(m)
+	}
 }
 
 func (d *RootWalker) addClassMethodThisVariableToScope(modif methodModifiers, sc *meta.Scope) {
@@ -1201,18 +1254,29 @@ func (d *RootWalker) reportPhpdocErrors(n ir.Node, errs phpdocErrors) {
 
 func (d *RootWalker) parsePHPDocVar(n ir.Node, doc []phpdoc.CommentPart) (m meta.TypesMap) {
 	for _, part := range doc {
-		d.checkPHPDocRef(n, part)
 		part, ok := part.(*phpdoc.TypeVarCommentPart)
 		if ok && part.Name() == "var" {
-			types, warning := typesFromPHPDoc(&d.ctx, part.Type)
-			if warning != "" {
-				d.Report(n, LevelInformation, "phpdocType", "%s on line %d", warning, part.Line())
-			}
+			types, _ := typesFromPHPDoc(&d.ctx, part.Type)
 			m = newTypesMap(&d.ctx, types)
 		}
 	}
 
 	return m
+}
+
+func (d *RootWalker) checkPHPDocVar(n ir.Node, doc []phpdoc.CommentPart) {
+	for _, part := range doc {
+		d.checkPHPDocRef(n, part)
+		part, ok := part.(*phpdoc.TypeVarCommentPart)
+		if !ok || part.Name() != "var" {
+			continue
+		}
+
+		_, warning := typesFromPHPDoc(&d.ctx, part.Type)
+		if warning != "" {
+			d.Report(n, LevelInformation, "phpdocType", "%s on line %d", warning, part.Line())
+		}
+	}
 }
 
 type phpDocParseResult struct {
