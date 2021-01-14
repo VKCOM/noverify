@@ -62,7 +62,7 @@ func RegisterDebug() {
 }
 
 func writeLog(msg string) {
-	writeMessage(&methodCall{
+	_ = writeMessage(&methodCall{
 		JSONRPC: "2.0",
 		Method:  "window/logMessage",
 		Params: map[string]interface{}{
@@ -341,7 +341,7 @@ func handleTextDocumentSymbol(req *baseRequest) error {
 			}
 		}
 
-		writeMessage(&response{
+		_ = writeMessage(&response{
 			JSONRPC: req.JSONRPC,
 			ID:      req.ID,
 			Result:  result,
@@ -452,20 +452,26 @@ func resolveTypesSafe(curStaticClass string, m meta.TypesMap, visitedMap solver.
 	return
 }
 
-func handleTextDocumentHover(req *baseRequest) error {
+func handleTextDocumentHover(req *baseRequest) (finalErr error) {
 	changingMutex.Lock()
 	defer changingMutex.Unlock()
 
 	var contents string
 
 	defer func() {
-		writeMessage(&response{
+		if finalErr != nil {
+			return
+		}
+		err := writeMessage(&response{
 			JSONRPC: req.JSONRPC,
 			ID:      req.ID,
 			Result: map[string]interface{}{
 				"contents": contents,
 			},
 		})
+		if err != nil {
+			finalErr = err
+		}
 	}()
 
 	var params vscode.DefinitionParams
@@ -921,7 +927,9 @@ func Start() {
 		}
 
 		// should be empty line
-		rd.ReadString('\n')
+		if _, err := rd.ReadString('\n'); err != nil {
+			log.Fatalf("Could not read delimiter: %v", err)
+		}
 
 		if length > maxLength {
 			log.Fatalf("Length too high: %d, max: %d", length, maxLength)

@@ -35,7 +35,6 @@ linters:
     - maligned
     - prealloc
     - gosec
-    - errcheck # TODO: enabled it some day
   fast: false
 
 issues:

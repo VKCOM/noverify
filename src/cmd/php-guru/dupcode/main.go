@@ -80,7 +80,9 @@ func Main(ctx *guru.Context) (int, error) {
 
 	filter := workspace.NewFilenameFilter(exclude)
 	if normLevel > normFast {
-		runIndexing(args.cacheDir, targets, filter)
+		if err := runIndexing(args.cacheDir, targets, filter); err != nil {
+			return 1, err
+		}
 	}
 	readFileNamesFunc := workspace.ReadFilenames(targets, filter)
 	filenamesCh := make(chan workspace.FileInfo, 512)
