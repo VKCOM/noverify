@@ -11,6 +11,7 @@ import (
 var (
 	MixedType = NewTypesMap("mixed").Immutable()
 	VoidType  = NewTypesMap("void").Immutable()
+	NullType  = NewTypesMap("null").Immutable()
 
 	PreciseIntType    = NewPreciseTypesMap("int").Immutable()
 	PreciseFloatType  = NewPreciseTypesMap("float").Immutable()
@@ -68,6 +69,16 @@ func (m TypesMap) IsResolved() bool {
 	// Note that most maps have a size that is less than 4, but
 	// some of them can have 100+ elements.
 	return m.IsPrecise()
+}
+
+// Map returns a new types map with the results of calling fn for every type contained inside m.
+// The result type map is never marked as precise.
+func (m TypesMap) Map(fn func(string) string) TypesMap {
+	mapped := make(map[string]struct{}, len(m.m))
+	for typ := range m.m {
+		mapped[fn(typ)] = struct{}{}
+	}
+	return NewTypesMapFromMap(mapped)
 }
 
 // NewEmptyTypesMap creates new type map that has no types in it
@@ -195,37 +206,6 @@ func (m TypesMap) Is(typ string) bool {
 
 	_, ok := m.m[typ]
 	return ok
-}
-
-// AppendString adds provided types to current map and returns new one (immutable maps are always copied)
-func (m TypesMap) AppendString(str string) TypesMap {
-	if !m.isImmutable() {
-		if m.m == nil {
-			m.m = make(map[string]struct{}, strings.Count(str, "|")+1)
-		}
-
-		for _, s := range strings.Split(str, "|") {
-			m.m[s] = struct{}{}
-		}
-
-		// Since we have no idea where str is coming from,
-		// mark map as imprecise.
-		m.MarkAsImprecise()
-
-		return m
-	}
-
-	mm := make(map[string]struct{}, m.Len()+strings.Count(str, "|")+1)
-	for k, v := range m.m {
-		mm[k] = v
-	}
-
-	for _, s := range strings.Split(str, "|") {
-		mm[s] = struct{}{}
-	}
-
-	// The returned map is mutable and imprecise.
-	return TypesMap{m: mm}
 }
 
 func (m TypesMap) Clone() TypesMap {
