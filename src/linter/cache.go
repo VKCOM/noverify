@@ -42,7 +42,8 @@ import (
 //     44 - rename ConstantInfo => ConstInfo
 //     45 - added Mixins field to meta.ClassInfo
 //     46 - changed the way of inferring the return type of functions and methods
-const cacheVersion = 46
+//     47 - interfaces and traits are now created without allocating memory for some unnecessary fields
+const cacheVersion = 47
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")

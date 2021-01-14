@@ -205,11 +205,13 @@ func (d *RootWalker) EnterNode(n ir.Node) (res bool) {
 
 	case *ir.InterfaceStmt:
 		d.currentClassNode = n
-		d.checkKeywordCase(n, "interface")
-		d.checkCommentMisspellings(n.InterfaceName, n.PhpDocComment)
-		if !strings.HasSuffix(n.InterfaceName.Value, "able") {
-			d.checkIdentMisspellings(n.InterfaceName)
+
+		if meta.IsIndexingComplete() {
+			d.checkInterface(n)
+		} else {
+			d.handleInterface(n)
 		}
+
 	case *ir.ClassStmt:
 		d.currentClassNode = n
 
@@ -219,11 +221,28 @@ func (d *RootWalker) EnterNode(n ir.Node) (res bool) {
 			d.handleClass(n)
 		}
 
+	case *ir.PropertyListStmt:
+		res = d.enterPropertyList(n)
+	case *ir.ClassConstListStmt:
+		res = d.enterClassConstList(n)
+
+	case *ir.ClassMethodStmt:
+		if meta.IsIndexingComplete() {
+			d.checkClassMethod(n)
+		} else {
+			d.handleClassMethod(n)
+		}
+		res = false
+
 	case *ir.TraitStmt:
 		d.currentClassNode = n
-		d.checkKeywordCase(n, "trait")
-		d.checkCommentMisspellings(n.TraitName, n.PhpDocComment)
-		d.checkIdentMisspellings(n.TraitName)
+
+		if meta.IsIndexingComplete() {
+			d.checkTrait(n)
+		} else {
+			d.handleTrait(n)
+		}
+
 	case *ir.TraitUseStmt:
 		d.checkKeywordCase(n, "use")
 		cl := d.getOrCreateCurrentClass()
@@ -244,12 +263,6 @@ func (d *RootWalker) EnterNode(n ir.Node) (res bool) {
 	case *ir.FunctionStmt:
 		res = d.enterFunction(n)
 		d.checkKeywordCase(n, "function")
-	case *ir.PropertyListStmt:
-		res = d.enterPropertyList(n)
-	case *ir.ClassConstListStmt:
-		res = d.enterClassConstList(n)
-	case *ir.ClassMethodStmt:
-		res = d.enterClassMethod(n)
 	case *ir.FunctionCallExpr:
 		res = d.enterFunctionCall(n)
 	case *ir.ConstListStmt:
@@ -278,6 +291,71 @@ func (d *RootWalker) EnterNode(n ir.Node) (res bool) {
 	return res
 }
 
+func (d *RootWalker) handleTrait(n *ir.TraitStmt) {
+	if d.meta.Traits.H == nil {
+		d.meta.Traits = meta.NewClassesMap()
+	}
+
+	name := n.TraitName.Value
+	namespace := d.ctx.st.Namespace
+	fullName := namespace + `\` + name
+
+	trait := meta.ClassInfo{
+		Pos:              d.getElementPos(d.currentClassNode),
+		Name:             fullName,
+		Parent:           "",
+		ParentInterfaces: d.ctx.st.CurrentParentInterfaces,
+		Methods:          meta.NewFunctionsMap(),
+		Properties:       make(meta.PropertiesMap),
+		Traits:           make(map[string]struct{}),
+		Constants:        nil, // not need
+		Interfaces:       nil, // not need
+	}
+
+	d.meta.Traits.Set(fullName, trait)
+}
+
+func (d *RootWalker) handleInterface(n *ir.InterfaceStmt) {
+	if d.meta.Classes.H == nil {
+		d.meta.Classes = meta.NewClassesMap()
+	}
+
+	name := n.InterfaceName.Value
+	namespace := d.ctx.st.Namespace
+	fullName := namespace + `\` + name
+
+	extends := d.handleInterfaceExtends(n)
+
+	iface := meta.ClassInfo{
+		Pos:              d.getElementPos(d.currentClassNode),
+		Name:             fullName,
+		Parent:           "",
+		ParentInterfaces: extends,
+		Methods:          meta.NewFunctionsMap(),
+		Constants:        make(meta.ConstantsMap),
+		Interfaces:       nil, // not need
+		Traits:           nil, // not need
+		Properties:       nil, // not need
+	}
+
+	d.meta.Classes.Set(fullName, iface)
+}
+
+func (d *RootWalker) handleInterfaceExtends(n *ir.InterfaceStmt) []string {
+	var extends []string
+	if n.Extends != nil {
+		for _, iface := range n.Extends.InterfaceNames {
+			ifaceName, ok := solver.GetClassName(d.ctx.st, iface)
+			if !ok {
+				continue
+			}
+
+			extends = append(extends, ifaceName)
+		}
+	}
+	return extends
+}
+
 func (d *RootWalker) handleClass(classNode *ir.ClassStmt) {
 	if d.meta.Classes.H == nil {
 		d.meta.Classes = meta.NewClassesMap()
@@ -285,6 +363,7 @@ func (d *RootWalker) handleClass(classNode *ir.ClassStmt) {
 
 	name := classNode.ClassName.Value
 	namespace := d.ctx.st.Namespace
+	fullName := namespace + `\` + name
 
 	flags := d.handleClassModifiers(classNode.Modifiers)
 	ifaces := d.handleClassImplements(classNode.Implements)
@@ -293,10 +372,10 @@ func (d *RootWalker) handleClass(classNode *ir.ClassStmt) {
 	doc := d.parseClassPHPDoc(classNode, classNode.PhpDoc)
 	docProps, docMethods, mixins := d.handleClassPhpDoc(doc)
 
-	cl := meta.ClassInfo{
+	class := meta.ClassInfo{
 		Pos:              d.getElementPos(classNode),
 		Flags:            flags,
-		Name:             namespace + `\` + name,
+		Name:             fullName,
 		Parent:           parent,
 		ParentInterfaces: d.ctx.st.CurrentParentInterfaces,
 		Interfaces:       ifaces,
@@ -307,7 +386,7 @@ func (d *RootWalker) handleClass(classNode *ir.ClassStmt) {
 		Mixins:           mixins,
 	}
 
-	d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
+	d.meta.Classes.Set(fullName, class)
 }
 
 func (d *RootWalker) handleClassModifiers(modifiers []*ir.Identifier) meta.ClassFlags {
@@ -775,8 +854,11 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.N
 	}
 }
 
-func (d *RootWalker) checkParentConstructorCall(n ir.Node, parentConstructorCalled bool) {
+func (d *RootWalker) checkParentConstructorCall(n *ir.Identifier, parentConstructorCalled bool) {
 	if !meta.IsIndexingComplete() {
+		return
+	}
+	if n.Value != "__construct" {
 		return
 	}
 
@@ -846,85 +928,6 @@ func (d *RootWalker) parseMethodModifiers(meth *ir.ClassMethodStmt) (res methodM
 	return res
 }
 
-func (d *RootWalker) checkMagicMethod(meth ir.Node, name string, modif methodModifiers, countArgs int) {
-	const Any = -1
-	var (
-		canBeStatic    bool
-		canBeNonPublic bool
-		mustBeStatic   bool
-
-		numArgsExpected int
-	)
-
-	switch name {
-	case "__call",
-		"__set":
-		canBeStatic = false
-		canBeNonPublic = false
-		numArgsExpected = 2
-
-	case "__get",
-		"__isset",
-		"__unset":
-		canBeStatic = false
-		canBeNonPublic = false
-		numArgsExpected = 1
-
-	case "__toString":
-		canBeStatic = false
-		canBeNonPublic = false
-		numArgsExpected = 0
-
-	case "__invoke",
-		"__debugInfo":
-		canBeStatic = false
-		canBeNonPublic = false
-		numArgsExpected = Any
-
-	case "__construct":
-		canBeStatic = false
-		canBeNonPublic = true
-		numArgsExpected = Any
-
-	case "__destruct", "__clone":
-		canBeStatic = false
-		canBeNonPublic = true
-		numArgsExpected = 0
-
-	case "__callStatic":
-		canBeStatic = true
-		canBeNonPublic = false
-		mustBeStatic = true
-		numArgsExpected = 2
-
-	case "__sleep",
-		"__wakeup",
-		"__serialize",
-		"__unserialize",
-		"__set_state":
-		canBeNonPublic = true
-		canBeStatic = true
-		numArgsExpected = Any
-
-	default:
-		return // Not a magic method
-	}
-
-	switch {
-	case mustBeStatic && !modif.static:
-		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must be static", name)
-	case !canBeStatic && modif.static:
-		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() cannot be static", name)
-	}
-	if !canBeNonPublic && modif.accessLevel != meta.Public {
-		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must have public visibility", name)
-	}
-
-	if countArgs != numArgsExpected && numArgsExpected != Any {
-		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must take exactly %d argument", name, numArgsExpected)
-	}
-}
-
 func (d *RootWalker) getOrCreateCurrentClass() meta.ClassInfo {
 	var classes meta.ClassesMap
 
@@ -944,7 +947,11 @@ func (d *RootWalker) getOrCreateCurrentClass() meta.ClassInfo {
 	if !ok {
 		var foundInGlobalMeta bool
 		if meta.IsIndexingComplete() {
-			cl, ok = meta.Info.GetClass(d.ctx.st.CurrentClass)
+			if d.ctx.st.IsTrait {
+				cl, ok = meta.Info.GetTrait(d.ctx.st.CurrentClass)
+			} else {
+				cl, ok = meta.Info.GetClass(d.ctx.st.CurrentClass)
+			}
 			foundInGlobalMeta = ok
 		}
 
@@ -1064,61 +1071,40 @@ func (d *RootWalker) enterClassConstList(s *ir.ClassConstListStmt) bool {
 	return true
 }
 
-func (d *RootWalker) checkOldStyleConstructor(meth *ir.ClassMethodStmt, nm string) {
-	lastDelim := strings.IndexByte(d.ctx.st.CurrentClass, '\\')
-	if strings.EqualFold(d.ctx.st.CurrentClass[lastDelim+1:], nm) {
-		_, isClass := d.currentClassNode.(*ir.ClassStmt)
-		if isClass {
-			d.Report(meth.MethodName, LevelDoNotReject, "oldStyleConstructor", "Old-style constructor usage, use __construct instead")
-		}
+func (d *RootWalker) addClassMethodThisVariableToScope(modif methodModifiers, sc *meta.Scope) {
+	if modif.static {
+		return
+	}
+
+	sc.AddVarName("this", meta.NewTypesMap(d.ctx.st.CurrentClass).Immutable(), "instance method", meta.VarAlwaysDefined)
+	sc.SetInInstanceMethod(true)
+}
+
+func (d *RootWalker) addClassMethodParamsToScope(method meta.FuncInfo, sc *meta.Scope) {
+	for _, param := range method.Params {
+		sc.AddVarName(param.Name, param.Typ, "param", meta.VarAlwaysDefined)
 	}
 }
 
-func (d *RootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
-	nm := meth.MethodName.Value
+func (d *RootWalker) handleClassMethod(m *ir.ClassMethodStmt) bool {
+	class := d.getOrCreateCurrentClass()
+
+	name := m.MethodName.Value
 	_, insideInterface := d.currentClassNode.(*ir.InterfaceStmt)
 
-	d.checkOldStyleConstructor(meth, nm)
-
-	pos := ir.GetPosition(meth)
-
-	if funcSize := pos.EndLine - pos.StartLine; funcSize > maxFunctionLines {
-		d.Report(meth.MethodName, LevelDoNotReject, "complexity", "Too big method: more than %d lines", maxFunctionLines)
-	}
-
-	modif := d.parseMethodModifiers(meth)
-
-	d.checkMagicMethod(meth.MethodName, nm, modif, len(meth.Params))
-
 	sc := meta.NewScope()
-	if !modif.static {
-		sc.AddVarName("this", meta.NewTypesMap(d.ctx.st.CurrentClass).Immutable(), "instance method", meta.VarAlwaysDefined)
-		sc.SetInInstanceMethod(true)
-	}
 
-	var hintReturnType meta.TypesMap
-	if typ, ok := d.parseTypeNode(meth.ReturnType); ok {
-		hintReturnType = typ
-	}
+	modif := d.parseMethodModifiers(m)
+	hintReturnType := d.handleTypeHint(m.ReturnType)
 
-	if meth.PhpDocComment == "" && modif.accessLevel == meta.Public {
-		// Permit having "__call" and other magic method without comments.
-		if !insideInterface && !strings.HasPrefix(nm, "_") {
-			d.Report(meth.MethodName, LevelDoNotReject, "phpdoc", "Missing PHPDoc for %q public method", nm)
-		}
-	}
-	d.checkCommentMisspellings(meth.MethodName, meth.PhpDocComment)
-	d.checkIdentMisspellings(meth.MethodName)
-	for _, p := range meth.Params {
-		d.checkVarnameMisspellings(p, p.(*ir.Parameter).Variable.Name)
-	}
-	doc := d.parsePHPDoc(meth.MethodName, meth.PhpDoc, meth.Params)
-	d.reportPhpdocErrors(meth.MethodName, doc.errs)
+	doc := d.parsePHPDoc(m.MethodName, m.PhpDoc, m.Params)
 	phpdocReturnType := doc.returnType
 	phpDocParamTypes := doc.types
 
-	class := d.getOrCreateCurrentClass()
-	params, minParamsCnt := d.parseFuncArgs(meth.Params, phpDocParamTypes, sc, nil)
+	// need to proper return type
+	d.addClassMethodThisVariableToScope(modif, sc)
+
+	params, minParamsCnt := d.parseFuncArgs(m.Params, phpDocParamTypes, sc, nil)
 
 	if len(class.Interfaces) != 0 {
 		// If we implement interfaces, methods that take a part in this
@@ -1148,28 +1134,38 @@ func (d *RootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 			}
 
 			res := make(map[string]struct{})
-			res[meta.WrapBaseMethodParam(i, d.ctx.st.CurrentClass, nm)] = struct{}{}
+			res[meta.WrapBaseMethodParam(i, d.ctx.st.CurrentClass, name)] = struct{}{}
 			params[i].Typ = meta.NewTypesMapFromMap(res)
+			// need to proper return type
 			sc.AddVarName(p.Name, params[i].Typ, "param", meta.VarAlwaysDefined)
 		}
 	}
 
-	var stmts []ir.Node
-	if stmtList, ok := meth.Stmt.(*ir.StmtList); ok {
-		stmts = stmtList.Stmts
-	}
+	stmts := convertNodeToStmts(m.Stmt)
 	funcInfo := d.handleFuncStmts(params, nil, stmts, sc)
 	actualReturnTypes := funcInfo.returnTypes
 	exitFlags := funcInfo.prematureExitFlags
-	if nm == `__construct` {
-		d.checkParentConstructorCall(meth.MethodName, funcInfo.callsParentConstructor)
-	}
-
-	d.addScope(meth, sc)
 
 	returnTypes := functionReturnType(phpdocReturnType, hintReturnType, actualReturnTypes)
+	funcFlags := d.transformClassMethodModifiersToFuncFlags(modif, insideInterface, stmts)
 
 	// TODO: handle duplicate method
+	class.Methods.Set(name, meta.FuncInfo{
+		Params:       params,
+		Name:         name,
+		Pos:          d.getElementPos(m),
+		Typ:          returnTypes.Immutable(),
+		MinParamsCnt: minParamsCnt,
+		AccessLevel:  modif.accessLevel,
+		Flags:        funcFlags,
+		ExitFlags:    exitFlags,
+		Doc:          doc.info,
+	})
+
+	return false
+}
+
+func (d *RootWalker) transformClassMethodModifiersToFuncFlags(modif methodModifiers, insideInterface bool, stmts []ir.Node) meta.FuncFlags {
 	var funcFlags meta.FuncFlags
 	if modif.static {
 		funcFlags |= meta.FuncStatic
@@ -1183,29 +1179,15 @@ func (d *RootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	if !insideInterface && !modif.abstract && solver.SideEffectFreeFunc(d.scope(), d.ctx.st, nil, stmts) {
 		funcFlags |= meta.FuncPure
 	}
-	class.Methods.Set(nm, meta.FuncInfo{
-		Params:       params,
-		Name:         nm,
-		Pos:          d.getElementPos(meth),
-		Typ:          returnTypes.Immutable(),
-		MinParamsCnt: minParamsCnt,
-		AccessLevel:  modif.accessLevel,
-		Flags:        funcFlags,
-		ExitFlags:    exitFlags,
-		Doc:          doc.info,
-	})
+	return funcFlags
+}
 
-	if nm == "getIterator" && meta.IsIndexingComplete() && solver.Implements(d.ctx.st.CurrentClass, `\IteratorAggregate`) {
-		implementsTraversable := returnTypes.Find(func(typ string) bool {
-			return solver.Implements(typ, `\Traversable`)
-		})
-
-		if !implementsTraversable {
-			d.Report(meth.MethodName, LevelError, "stdInterface", "Objects returned by %s::getIterator() must be traversable or implement interface \\Iterator", d.ctx.st.CurrentClass)
-		}
+func (d *RootWalker) handleTypeHint(n ir.Node) meta.TypesMap {
+	var hintReturnType meta.TypesMap
+	if typ, ok := d.parseTypeNode(n); ok {
+		hintReturnType = typ
 	}
-
-	return false
+	return hintReturnType
 }
 
 func (d *RootWalker) reportPhpdocErrors(n ir.Node, errs phpdocErrors) {
@@ -1670,9 +1652,11 @@ func (d *RootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 
 	d.checkCommentMisspellings(fun.FunctionName, fun.PhpDocComment)
 	d.checkIdentMisspellings(fun.FunctionName)
-	for _, p := range fun.Params {
-		d.checkVarnameMisspellings(p, p.(*ir.Parameter).Variable.Name)
+	for _, param := range fun.Params {
+		d.checkVarnameMisspellings(param, param.(*ir.Parameter).Variable.Name)
+		d.checkFuncParam(param.(*ir.Parameter))
 	}
+
 	doc := d.parsePHPDoc(fun.FunctionName, fun.PhpDoc, fun.Params)
 	d.reportPhpdocErrors(fun.FunctionName, doc.errs)
 	phpdocReturnType := doc.returnType
@@ -1692,10 +1676,6 @@ func (d *RootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	d.addScope(fun, sc)
 
 	returnTypes := functionReturnType(phpdocReturnType, hintReturnType, actualReturnTypes)
-
-	for _, param := range fun.Params {
-		d.checkFuncParam(param.(*ir.Parameter))
-	}
 
 	var funcFlags meta.FuncFlags
 	if solver.SideEffectFreeFunc(d.scope(), d.ctx.st, nil, fun.Stmts) {
@@ -1864,9 +1844,7 @@ func (d *RootWalker) LeaveNode(n ir.Node) {
 	}
 
 	switch n.(type) {
-	case *ir.InterfaceStmt, *ir.TraitStmt:
-		d.getOrCreateCurrentClass() // populate classes map
-
+	case *ir.ClassStmt, *ir.InterfaceStmt, *ir.TraitStmt:
 		d.currentClassNode = nil
 	}
 

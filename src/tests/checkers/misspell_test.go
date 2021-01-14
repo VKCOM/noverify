@@ -103,7 +103,7 @@ class Mocrotransactions {
 function f_overpoweing() {
 }
 
-class c {
+class d {
   private function set_persistance() {}
 }
 `)

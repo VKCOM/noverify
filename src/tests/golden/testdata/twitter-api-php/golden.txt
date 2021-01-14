@@ -4,12 +4,12 @@ INFO    unused: Variable key is unused (use $_ to ignore this inspection) at tes
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/twitter-api-php/TwitterAPIExchange.php:207
         if (!in_array(strtolower($requestMethod), array('post', 'get', 'put', 'delete')))
              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-INFO    phpdocType: use bool type instead of boolean on line 4 at testdata/twitter-api-php/TwitterAPIExchange.php:274
-    public function performRequest($return = true, $curlOptions = array())
-                    ^^^^^^^^^^^^^^
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/twitter-api-php/TwitterAPIExchange.php:286
         if (in_array(strtolower($this->requestMethod), array('put', 'delete')))
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+INFO    phpdocType: use bool type instead of boolean on line 4 at testdata/twitter-api-php/TwitterAPIExchange.php:274
+    public function performRequest($return = true, $curlOptions = array())
+                    ^^^^^^^^^^^^^^
 INFO    phpdocType: use int type instead of integer on line 4 at testdata/twitter-api-php/TwitterAPIExchange.php:406
     public function getHttpStatusCode()
                     ^^^^^^^^^^^^^^^^^

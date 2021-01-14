@@ -463,6 +463,24 @@ func getConstValue(c meta.ConstValue) string {
 	return fmt.Sprintf("%v", c.Value)
 }
 
+// convertNodeToStmts converts an untyped node to one of
+// the possible types with a set of nodes in one of the
+// fields and returns that field.
+//
+// Used to get all the nodes from the method body.
+func convertNodeToStmts(n ir.Node) []ir.Node {
+	var stmts []ir.Node
+
+	switch n := n.(type) {
+	case *ir.StmtList:
+		stmts = n.Stmts
+	case *ir.NopStmt:
+		// do nothing
+	}
+
+	return stmts
+}
+
 func binaryOpString(n ir.Node) string {
 	switch n.(type) {
 	case *ir.BitwiseAndExpr:
