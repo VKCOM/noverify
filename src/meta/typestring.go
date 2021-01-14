@@ -282,7 +282,7 @@ func UnwrapConstant(s string) (constName string) {
 }
 
 func formatType(s string) (res string) {
-	if len(s) == 0 || s[0] >= WMax {
+	if s == "" || s[0] >= WMax {
 		return s
 	}
 

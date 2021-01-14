@@ -96,7 +96,7 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 		return meta.NewStringConst(e.Value)
 
 	case *ir.FunctionCallExpr:
-		// dirname(__FILE__)
+		// Only dirname(__FILE__) is const-folded right now.
 		if !meta.NameNodeEquals(e.Function, `dirname`) {
 			return meta.UnknownValue
 		}
