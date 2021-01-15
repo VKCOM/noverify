@@ -11,7 +11,6 @@ import (
 
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/constfold"
-	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
@@ -98,8 +97,8 @@ func NewWalkerForReferencesSearcher(workerCtx *WorkerContext, filename string, b
 	return d
 }
 
-// InitFileData initializes file that are needed for RootWalker work
-func (d *RootWalker) InitFileData(filename string, contents []byte, lineRanges []git.LineRange) {
+// InitCustomFileData initializes file that are needed for RootWalker work for language server
+func (d *RootWalker) InitCustomFileData(filename string, contents []byte) {
 	d.file = workspace.NewFile(filename, contents)
 }
 

@@ -81,7 +81,7 @@ func findMethodReferences(className string, methodName string) []vscode.Location
 			},
 		)
 
-		rootWalker.InitFileData(filename, contents, nil)
+		rootWalker.InitCustomFileData(filename, contents)
 
 		rootNode.Walk(rootWalker)
 		linter.AnalyzeFileRootLevel(rootNode, rootWalker)
@@ -108,7 +108,7 @@ func findPropertyReferences(className string, propName string) []vscode.Location
 			},
 		)
 
-		rootWalker.InitFileData(filename, contents, nil)
+		rootWalker.InitCustomFileData(filename, contents)
 
 		rootNode.Walk(rootWalker)
 		linter.AnalyzeFileRootLevel(rootNode, rootWalker)
