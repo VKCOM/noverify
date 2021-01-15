@@ -75,10 +75,10 @@ func RegisterDefaultCommands() {
 //go:generate go-bindata -pkg embeddedrules -nometadata -o ./embeddedrules/rules.go ./embeddedrules/rules.php
 
 func isCritical(l *linterRunner, r *linter.Report) bool {
-	if len(l.reportsCriticalSet) == 0 {
-		return true
+	if len(l.reportsCriticalSet) != 0 {
+		return l.reportsCriticalSet[r.CheckName]
 	}
-	return l.reportsCriticalSet[r.CheckName]
+	return r.IsCritical()
 }
 
 func isEnabled(l *linterRunner, r *linter.Report) bool {

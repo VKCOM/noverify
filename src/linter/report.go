@@ -627,6 +627,11 @@ func (r *Report) Severity() string {
 	return severityNames[r.Level]
 }
 
+// IsCritical returns whether or not we need to reject whole commit when found this kind of report.
+func (r *Report) IsCritical() bool {
+	return r.Level != LevelNotice
+}
+
 // DiffReports returns only reports that are new.
 // Pass diffArgs=nil if we are called from diff in working copy.
 func DiffReports(gitRepo string, diffArgs []string, changesList []git.Change, changeLog []git.Commit, oldList, newList []*Report, maxConcurrency int) (res []*Report, err error) {
