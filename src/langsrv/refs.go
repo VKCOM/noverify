@@ -195,7 +195,7 @@ type parseFn func(filename string, rootNode ir.Node, contents []byte, parser *ph
 
 func findReferences(substr string, parse parseFn) []vscode.Location {
 	cb := workspace.ReadFilenames(linter.AnalysisFiles, nil)
-	ch := make(chan *workspace.FileInfo)
+	ch := make(chan workspace.FileInfo)
 	go func() {
 		cb(ch)
 		close(ch)

@@ -368,7 +368,7 @@ func shuffleFiles(files []TestFile) {
 
 func parseTestFile(t testing.TB, worker *linter.Worker, f TestFile) (rootNode *ir.Root, w *linter.RootWalker) {
 	var err error
-	file := &workspace.FileInfo{
+	file := workspace.FileInfo{
 		Name:     f.Name,
 		Contents: f.Data,
 	}

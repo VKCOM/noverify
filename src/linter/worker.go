@@ -77,7 +77,7 @@ func (w *Worker) ID() int { return w.id }
 
 // ParseContents parses specified contents (or file) and returns *RootWalker.
 // Function does not update global meta.
-func (w *Worker) ParseContents(fileInfo *workspace.FileInfo) (root *ir.Root, walker *RootWalker, err error) {
+func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (root *ir.Root, walker *RootWalker, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			s := fmt.Sprintf("Panic while parsing %s: %s\n\nStack trace: %s", fileInfo.Name, r, dbg.Stack())
@@ -123,7 +123,7 @@ func (w *Worker) ParseContents(fileInfo *workspace.FileInfo) (root *ir.Root, wal
 }
 
 // IndexFile parses the file and fills in the meta info. Can use cache.
-func (w *Worker) IndexFile(file *workspace.FileInfo) error {
+func (w *Worker) IndexFile(file workspace.FileInfo) error {
 	if CacheDir == "" {
 		_, w, err := w.ParseContents(file)
 		if w != nil {
@@ -132,6 +132,7 @@ func (w *Worker) IndexFile(file *workspace.FileInfo) error {
 		return err
 	}
 
+	var contents []byte
 	h := md5.New()
 
 	if file.Contents == nil {
@@ -191,7 +192,7 @@ func (w *Worker) IndexFile(file *workspace.FileInfo) error {
 	return nil
 }
 
-func (w *Worker) doParseFile(f *workspace.FileInfo) []*Report {
+func (w *Worker) doParseFile(f workspace.FileInfo) []*Report {
 	var err error
 
 	if DebugParseDuration > 0 {

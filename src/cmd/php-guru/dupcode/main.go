@@ -85,7 +85,7 @@ func Main(ctx *guru.Context) (int, error) {
 		}
 	}
 	readFileNamesFunc := workspace.ReadFilenames(targets, filter)
-	filenamesCh := make(chan *workspace.FileInfo, 512)
+	filenamesCh := make(chan workspace.FileInfo, 512)
 	go func() {
 		readFileNamesFunc(filenamesCh)
 		close(filenamesCh)

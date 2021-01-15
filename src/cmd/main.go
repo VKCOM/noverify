@@ -417,7 +417,7 @@ func initStubs() error {
 func LoadEmbeddedStubs(filenames []string) error {
 	var errorsCount int64
 
-	readStubs := func(ch chan *workspace.FileInfo) {
+	readStubs := func(ch chan workspace.FileInfo) {
 		for _, filename := range filenames {
 			contents, err := stubs.Asset(filename)
 			if err != nil {
@@ -425,7 +425,7 @@ func LoadEmbeddedStubs(filenames []string) error {
 				atomic.AddInt64(&errorsCount, 1)
 				continue
 			}
-			ch <- &workspace.FileInfo{
+			ch <- workspace.FileInfo{
 				Name:     filename,
 				Contents: contents,
 			}
