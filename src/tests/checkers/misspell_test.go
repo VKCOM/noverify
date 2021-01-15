@@ -5,17 +5,13 @@ import (
 
 	"github.com/client9/misspell"
 
-	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 )
-
-func init() {
-	linter.TypoFixer = misspell.New()
-}
 
 //nolint:misspell // misspelled on purpose
 func TestMisspellPhpdocPositive(t *testing.T) {
 	test := linttest.NewSuite(t)
+	test.Config.TypoFixer = misspell.New()
 	test.AddFile(`<?php
 /**
  * This function is a pure perfektion.
@@ -54,7 +50,9 @@ class c1 {
 
 //nolint:misspell // misspelled on purpose
 func TestMisspellPhpdocNegative(t *testing.T) {
-	linttest.SimpleNegativeTest(t, `<?php
+	test := linttest.NewSuite(t)
+	test.Config.TypoFixer = misspell.New()
+	test.AddFile(`<?php
 interface Responsable {}
 
 /**
@@ -82,11 +80,13 @@ class c1 {
   private static function secret() {}
 }
 `)
+	test.RunAndMatch()
 }
 
 //nolint:misspell // misspelled on purpose
 func TestMisspellNamePositive(t *testing.T) {
 	test := linttest.NewSuite(t)
+	test.Config.TypoFixer = misspell.New()
 	test.AddFile(`<?php
 function unconditionnally_rollback() {}
 
@@ -120,7 +120,9 @@ class c {
 
 //nolint:misspell // misspelled on purpose
 func TestMisspellNameNegative(t *testing.T) {
-	linttest.SimpleNegativeTest(t, `<?php
+	test := linttest.NewSuite(t)
+	test.Config.TypoFixer = misspell.New()
+	test.AddFile(`<?php
 function includ() {
 }
 
@@ -128,4 +130,5 @@ class impelments {}
 
 class PostRedirect {}
 `)
+	test.RunAndMatch()
 }

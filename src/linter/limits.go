@@ -17,10 +17,14 @@ var (
 	parseFinishedCh = make(chan int)
 )
 
-// MemoryLimiterThread starts memory limiter goroutine that disallows to use parse files more than MaxFileSize
+// MemoryLimiterThread starts memory limiter goroutine that disallows to use parse files more than maxFileSize
 // total bytes.
-func MemoryLimiterThread() {
+func MemoryLimiterThread(maxFileSize int) {
 	var used int
+
+	if maxFileSize <= 0 {
+		maxFileSize = 20 * 1024 * 1024
+	}
 
 	plusCh := parseStartCh
 	minusCh := parseFinishedCh
@@ -29,13 +33,13 @@ func MemoryLimiterThread() {
 		select {
 		case req := <-plusCh:
 			used += req.size
-			if used > MaxFileSize {
+			if used > maxFileSize {
 				lintdebug.Send("Limiting concurrency to save memory: currently parsing %s, total file size %d KiB", req.filename, used/1024)
 				plusCh = nil
 			}
 		case sz := <-minusCh:
 			used -= sz
-			if used <= MaxFileSize {
+			if used <= maxFileSize {
 				plusCh = parseStartCh
 			}
 		}

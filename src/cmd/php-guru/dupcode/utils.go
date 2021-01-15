@@ -42,19 +42,21 @@ func hasModifier(list []*ir.Identifier, key string) bool {
 }
 
 func runIndexing(cacheDir string, targets []string, filter *workspace.FilenameFilter) error {
-	linter.CacheDir = cacheDir
+	config := linter.NewConfig()
+	config.CacheDir = cacheDir
 
 	// If we don't do this, the program will hang.
-	go linter.MemoryLimiterThread()
+	go linter.MemoryLimiterThread(0)
 
 	// Handle stubs.
 	filenames := stubs.AssetNames()
-	if err := cmd.LoadEmbeddedStubs(filenames); err != nil {
+	if err := cmd.LoadEmbeddedStubs(config, filenames); err != nil {
 		return err
 	}
 
 	// Handle workspace files.
-	linter.ParseFilenames(workspace.ReadFilenames(targets, filter), nil)
+	l := linter.NewLinter(config)
+	l.AnalyzeFiles(workspace.ReadFilenames(targets, filter))
 
 	meta.SetIndexingComplete(true)
 	return nil

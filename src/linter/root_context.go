@@ -25,16 +25,16 @@ type rootContext struct {
 	fixes []quickfix.TextEdit
 }
 
-func newRootContext(workerCtx *WorkerContext, st *meta.ClassParseState) rootContext {
+func newRootContext(config *Config, workerCtx *WorkerContext, st *meta.ClassParseState) rootContext {
 	var p baseline.FileProfile
-	if BaselineProfile != nil {
+	if config.BaselineProfile != nil {
 		filename := filepath.Base(st.CurrentFile)
-		p = BaselineProfile.Files[filename]
+		p = config.BaselineProfile.Files[filename]
 	}
 	return rootContext{
 		WorkerContext: workerCtx,
 
-		typeNormalizer: typeNormalizer{st: st},
+		typeNormalizer: typeNormalizer{st: st, kphp: config.KPHP},
 		st:             st,
 		baseline:       p,
 	}
