@@ -63,7 +63,7 @@ func Parse(parser *TypeParser, doc string) (res []CommentPart) {
 
 	for i, ln := range lines {
 		ln = strings.TrimSpace(ln)
-		if len(ln) == 0 {
+		if ln == "" {
 			continue
 		}
 

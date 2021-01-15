@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"sync"
 
+	"go.lsp.dev/uri"
+
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/lintdebug"
@@ -15,7 +17,6 @@ import (
 	"github.com/VKCOM/noverify/src/state"
 	"github.com/VKCOM/noverify/src/vscode"
 	"github.com/VKCOM/noverify/src/workspace"
-	"go.lsp.dev/uri"
 )
 
 type referencesWalker struct {
@@ -159,7 +160,7 @@ func copyOpenMap() map[string]string {
 	openMapMutex.Lock()
 	res := make(map[string]string, len(openMap))
 	for filename, info := range openMap {
-		res[filename] = info.contents
+		res[filename] = string(info.file.Contents())
 	}
 	openMapMutex.Unlock()
 
@@ -214,10 +215,10 @@ func findReferences(substr string, parse parseFn) []vscode.Location {
 		wg.Add(1)
 		go func() {
 			for fi := range ch {
-				contents, err := readFile(openMapCopy, fi.Filename)
+				contents, err := readFile(openMapCopy, fi.Name)
 				if err == nil && bytes.Contains(contents, substrBytes) {
 					func() {
-						waiter := linter.BeforeParse(len(contents), fi.Filename)
+						waiter := linter.BeforeParse(len(contents), fi.Name)
 						defer waiter.Finish()
 
 						parser := php7.NewParser(contents)
@@ -230,11 +231,11 @@ func findReferences(substr string, parse parseFn) []vscode.Location {
 							func() {
 								defer func() {
 									if r := recover(); r != nil {
-										lintdebug.Send("Panic while processing %s: %v", fi.Filename, r)
+										lintdebug.Send("Panic while processing %s: %v", fi.Name, r)
 									}
 								}()
 
-								found = parse(fi.Filename, rootIR, contents, parser)
+								found = parse(fi.Name, rootIR, contents, parser)
 							}()
 							resultMutex.Lock()
 							result = append(result, found...)

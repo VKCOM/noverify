@@ -15,6 +15,8 @@ import (
 	"sync"
 	"time"
 
+	"go.lsp.dev/uri"
+
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/lintdebug"
@@ -24,7 +26,6 @@ import (
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/vscode"
 	"github.com/VKCOM/noverify/src/workspace"
-	"go.lsp.dev/uri"
 )
 
 const maxLength = 16 << 20
@@ -62,7 +63,7 @@ func RegisterDebug() {
 }
 
 func writeLog(msg string) {
-	writeMessage(&methodCall{
+	_ = writeMessage(&methodCall{
 		JSONRPC: "2.0",
 		Method:  "window/logMessage",
 		Params: map[string]interface{}{
@@ -177,7 +178,7 @@ func handleInitialize(req *baseRequest) error {
 		// other files are not analyzed fully at all
 		openMapMutex.Lock()
 		for filename, op := range openMap {
-			go openFile(filename, op.contents)
+			go openFile(filename, string(op.file.Contents()))
 		}
 		openMapMutex.Unlock()
 	}()
@@ -222,11 +223,11 @@ func handleTextDocumentDidOpen(req *baseRequest) error {
 		return err
 	}
 
-	uri := params.TextDocument.URI
-	lintdebug.Send("Open text document %s", uri)
+	u := params.TextDocument.URI
+	lintdebug.Send("Open text document %s", u)
 
-	if isFileScheme(uri) {
-		openFile(uri.Filename(), params.TextDocument.Text)
+	if isFileScheme(u) {
+		openFile(u.Filename(), params.TextDocument.Text)
 	}
 
 	return nil
@@ -238,11 +239,11 @@ func handleTextDocumentDidClose(req *baseRequest) error {
 		return err
 	}
 
-	uri := params.TextDocument.URI
-	lintdebug.Send("Close text document %s", uri)
+	u := params.TextDocument.URI
+	lintdebug.Send("Close text document %s", u)
 
-	if isFileScheme(uri) {
-		closeFile(uri.Filename())
+	if isFileScheme(u) {
+		closeFile(u.Filename())
 	}
 
 	return nil
@@ -259,10 +260,10 @@ func handleTextDocumentDidChange(req *baseRequest) error {
 		return nil
 	}
 
-	uri := params.TextDocument.URI
+	u := params.TextDocument.URI
 
-	if isFileScheme(uri) {
-		changeFile(uri.Filename(), params.ContentChanges[0].Text)
+	if isFileScheme(u) {
+		changeFile(u.Filename(), params.ContentChanges[0].Text)
 	}
 
 	return nil
@@ -284,12 +285,12 @@ func handleTextDocumentSymbol(req *baseRequest) error {
 	// TODO: make it actually safe
 
 	meta.OnIndexingComplete(func() {
-		uri := params.TextDocument.URI
+		u := params.TextDocument.URI
 
 		var result []vscode.SymbolInformation
 
-		if isFileScheme(uri) {
-			filename := uri.Filename()
+		if isFileScheme(u) {
+			filename := u.Filename()
 			res := meta.Info.GetMetaForFile(filename)
 
 			for _, classInfo := range res.Classes.H {
@@ -341,7 +342,7 @@ func handleTextDocumentSymbol(req *baseRequest) error {
 			}
 		}
 
-		writeMessage(&response{
+		_ = writeMessage(&response{
 			JSONRPC: req.JSONRPC,
 			ID:      req.ID,
 			Result:  result,
@@ -383,9 +384,9 @@ func handleTextDocumentDefinition(req *baseRequest) error {
 
 	result := make([]vscode.Location, 0)
 
-	if params.Position.Line < len(f.linesPositions) {
+	if params.Position.Line < f.file.NumLinesPosition() {
 		w := &definitionWalker{
-			position: f.linesPositions[params.Position.Line] + params.Position.Character,
+			position: f.file.LinePosition(params.Position.Line) + params.Position.Character,
 			scopes:   f.scopes,
 		}
 		f.rootNode.Walk(w)
@@ -422,9 +423,9 @@ func handleTextDocumentReferences(req *baseRequest) error {
 
 	result := make([]vscode.Location, 0)
 
-	if params.Position.Line < len(f.linesPositions) {
+	if params.Position.Line < f.file.NumLinesPosition() {
 		w := &referencesWalker{
-			position: f.linesPositions[params.Position.Line] + params.Position.Character,
+			position: f.file.LinePosition(params.Position.Line) + params.Position.Character,
 		}
 		f.rootNode.Walk(w)
 		if len(w.result) > 0 {
@@ -452,20 +453,26 @@ func resolveTypesSafe(curStaticClass string, m meta.TypesMap, visitedMap solver.
 	return
 }
 
-func handleTextDocumentHover(req *baseRequest) error {
+func handleTextDocumentHover(req *baseRequest) (finalErr error) {
 	changingMutex.Lock()
 	defer changingMutex.Unlock()
 
 	var contents string
 
 	defer func() {
-		writeMessage(&response{
+		if finalErr != nil {
+			return
+		}
+		err := writeMessage(&response{
 			JSONRPC: req.JSONRPC,
 			ID:      req.ID,
 			Result: map[string]interface{}{
 				"contents": contents,
 			},
 		})
+		if err != nil {
+			finalErr = err
+		}
 	}()
 
 	var params vscode.DefinitionParams
@@ -485,12 +492,12 @@ func handleTextDocumentHover(req *baseRequest) error {
 	lnPos := params.Position.Line
 	chPos := params.Position.Character - 1
 
-	if lnPos >= len(f.lines) {
+	if lnPos >= f.file.NumLines() {
 		lintdebug.Send("Line out of range for file %s: %d", filename, lnPos)
 		return nil
 	}
 
-	ln := f.lines[lnPos]
+	ln := f.file.Line(lnPos)
 
 	if chPos < 0 || chPos >= len(ln) {
 		lintdebug.Send("Char out of range for file %s: line '%s', char %d", filename, ln, chPos)
@@ -498,7 +505,7 @@ func handleTextDocumentHover(req *baseRequest) error {
 	}
 
 	compl := &completionWalker{
-		position: f.linesPositions[params.Position.Line] + params.Position.Character,
+		position: f.file.LinePosition(params.Position.Line) + params.Position.Character,
 		scopes:   f.scopes,
 	}
 
@@ -628,19 +635,19 @@ func handleTextDocumentCompletion(req *baseRequest) error {
 	var ln []byte
 	var position int
 
-	if lnPos >= len(f.lines) {
+	if lnPos >= f.file.NumLines() {
 		lintdebug.Send("Line out of range for file %s: %d", filename, lnPos)
 		return nil
 	}
 
-	ln = f.lines[lnPos]
+	ln = f.file.Line(lnPos)
 
 	if chPos < 0 || chPos >= len(ln) {
 		lintdebug.Send("Char out of range for file %s: line '%s', char %d", filename, ln, chPos)
 		return nil
 	}
 
-	position = f.linesPositions[params.Position.Line] + params.Position.Character
+	position = f.file.LinePosition(params.Position.Line) + params.Position.Character
 
 	compl := &completionWalker{
 		position: position,
@@ -921,7 +928,9 @@ func Start() {
 		}
 
 		// should be empty line
-		rd.ReadString('\n')
+		if _, err := rd.ReadString('\n'); err != nil {
+			log.Fatalf("Could not read delimiter: %v", err)
+		}
 
 		if length > maxLength {
 			log.Fatalf("Length too high: %d, max: %d", length, maxLength)

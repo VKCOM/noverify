@@ -7,20 +7,20 @@ import (
 	"sync"
 	"time"
 
+	"go.lsp.dev/uri"
+
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/vscode"
-	"go.lsp.dev/uri"
+	"github.com/VKCOM/noverify/src/workspace"
 )
 
 type openedFile struct {
-	rootNode       ir.Node
-	contents       string
-	scopes         map[ir.Node]*meta.Scope
-	lines          [][]byte
-	linesPositions []int
+	rootNode ir.Node
+	scopes   map[ir.Node]*meta.Scope
+	file     *workspace.File
 }
 
 var (
@@ -48,7 +48,10 @@ func openFile(filename, contents string) {
 	}
 
 	openMapMutex.Lock()
-	openMap[filename] = openedFile{rootNode: rootNode, contents: contents}
+	openMap[filename] = openedFile{
+		rootNode: rootNode,
+		file:     workspace.NewFile(filename, []byte(contents)),
+	}
 	openMapMutex.Unlock()
 }
 
@@ -86,7 +89,11 @@ func changeFileNonLocked(filename, contents string) {
 	linter.AnalyzeFileRootLevel(rootNode, newWalker)
 
 	openMapMutex.Lock()
-	f := openedFile{rootNode, contents, w.Scopes, w.Lines, w.LinesPositions}
+	f := openedFile{
+		rootNode: rootNode,
+		scopes:   w.Scopes,
+		file:     w.File(),
+	}
 	openMap[filename] = f
 	openMapMutex.Unlock()
 
@@ -191,7 +198,7 @@ func flushReports(filename string, d *linter.RootWalker) {
 		diag = make([]vscode.Diagnostic, 0)
 	}
 
-	writeMessage(&methodCall{
+	_ = writeMessage(&methodCall{
 		JSONRPC: "2.0",
 		Method:  "textDocument/publishDiagnostics",
 		Params: &vscode.PublishDiagnosticsParams{

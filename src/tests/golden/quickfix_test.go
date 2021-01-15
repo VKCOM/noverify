@@ -54,7 +54,8 @@ func (t *quickFixTest) runQuickFixTest() {
 		t.t.Fatalf("Error while searching for files in the %s folder: %s", t.folder, err)
 	}
 
-	for _, file := range files {
+	for i := range files {
+		file := files[i]
 		t.t.Run(strings.TrimSuffix(filepath.Base(file), ".php"), func(t *testing.T) {
 			testFileName := file
 			expectedFileName := file + expectedExtension
