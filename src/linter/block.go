@@ -581,9 +581,9 @@ func (b *BlockWalker) handleTry(s *ir.TryStmt) bool {
 
 	// Assume that no code in try{} block has executed because exceptions can be thrown from anywhere.
 	// So we handle catches and finally blocks first.
-	for _, c := range s.Catches {
+	for i := range s.Catches {
+		c := s.Catches[i]
 		ctx := b.withNewContext(func() {
-			b.r.addScope(c, b.ctx.sc)
 			cc := c.(*ir.CatchStmt)
 			for _, s := range cc.Stmts {
 				b.addStatement(s)
@@ -596,7 +596,6 @@ func (b *BlockWalker) handleTry(s *ir.TryStmt) bool {
 	if s.Finally != nil {
 		b.withNewContext(func() {
 			contexts = append(contexts, b.ctx)
-			b.r.addScope(s.Finally, b.ctx.sc)
 			cc := s.Finally.(*ir.FinallyStmt)
 			for _, s := range cc.Stmts {
 				b.addStatement(s)
@@ -623,7 +622,6 @@ func (b *BlockWalker) handleTry(s *ir.TryStmt) bool {
 		for _, s := range s.Stmts {
 			b.addStatement(s)
 			s.Walk(b)
-			b.r.addScope(s, b.ctx.sc)
 		}
 	})
 
@@ -645,14 +643,15 @@ func (b *BlockWalker) handleTry(s *ir.TryStmt) bool {
 }
 
 func (b *BlockWalker) handleCatch(s *ir.CatchStmt) {
-	m := meta.NewEmptyTypesMap(len(s.Types))
+	types := make([]meta.Type, 0, len(s.Types))
 	for _, t := range s.Types {
 		typ, ok := solver.GetClassName(b.r.ctx.st, t)
 		if !ok {
 			continue
 		}
-		m = m.AppendString(typ)
+		types = append(types, meta.Type{Elem: typ})
 	}
+	m := meta.NewTypesMapFromTypes(types)
 
 	b.handleVariableNode(s.Variable, m, "catch")
 
@@ -1009,7 +1008,6 @@ func (b *BlockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 	params, _ := b.r.parseFuncArgs(fun.Params, phpDocParamTypes, sc, closureSolver)
 
 	b.r.handleFuncStmts(params, closureUses, fun.Stmts, sc)
-	b.r.addScope(fun, sc)
 
 	return false
 }
@@ -1208,11 +1206,12 @@ func (b *BlockWalker) handleIf(s *ir.IfStmt) bool {
 
 	walk := func(n ir.Node) (links int) {
 		// handle if (...) smth(); else other_thing(); // without braces
-		if els, ok := n.(*ir.ElseStmt); ok {
-			b.addStatement(els.Stmt)
-		} else if elsif, ok := n.(*ir.ElseIfStmt); ok {
-			b.addStatement(elsif.Stmt)
-		} else {
+		switch n := n.(type) {
+		case *ir.ElseStmt:
+			b.addStatement(n.Stmt)
+		case *ir.ElseIfStmt:
+			b.addStatement(n.Stmt)
+		default:
 			b.addStatement(n)
 		}
 
@@ -1224,7 +1223,6 @@ func (b *BlockWalker) handleIf(s *ir.IfStmt) bool {
 			} else {
 				n.Walk(b)
 			}
-			b.r.addScope(n, b.ctx.sc)
 		})
 
 		contexts = append(contexts, ctx)
@@ -1324,7 +1322,9 @@ func (b *BlockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 	haveDefault := false
 	breakFlags := FlagBreak | FlagContinue
 
-	for idx, c := range s.CaseList.Cases {
+	for i := range s.CaseList.Cases {
+		idx := i
+		c := s.CaseList.Cases[i]
 		var list []ir.Node
 
 		cond, list := getCaseStmts(c)
@@ -1434,10 +1434,7 @@ func (b *BlockWalker) handleAndCheckDimFetchLValue(e *ir.ArrayDimFetchExpr, reas
 
 	switch v := e.Variable.(type) {
 	case *ir.Var, *ir.SimpleVar:
-		arrTyp := meta.NewEmptyTypesMap(typ.Len())
-		typ.Iterate(func(t string) {
-			arrTyp = arrTyp.AppendString(meta.WrapArrayOf(t))
-		})
+		arrTyp := typ.Map(meta.WrapArrayOf)
 		b.addVar(v, arrTyp, reason, meta.VarAlwaysDefined)
 		b.handleVariable(v)
 	case *ir.ArrayDimFetchExpr:

@@ -177,7 +177,6 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 	flag.DurationVar(&linter.DebugParseDuration, "debug-parse-duration", 0, "Print files that took longer than the specified time to analyse")
 	flag.IntVar(&linter.MaxFileSize, "max-sum-filesize", 20*1024*1024, "Max total file size to be parsed concurrently in bytes (limits max memory consumption)")
 	flag.IntVar(&linter.MaxConcurrency, "cores", runtime.NumCPU(), "Max cores")
-	flag.BoolVar(&linter.LangServer, "lang-server", false, "Run language server for VS Code")
 
 	flag.StringVar(&linter.StubsDir, "stubs-dir", "", "Directory with phpstorm-stubs")
 	flag.StringVar(&linter.CacheDir, "cache-dir", DefaultCacheDir(), "Directory for linter cache (greatly improves indexing speed)")

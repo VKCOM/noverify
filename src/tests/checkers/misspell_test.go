@@ -13,7 +13,7 @@ func init() {
 	linter.TypoFixer = misspell.New()
 }
 
-//nolint:misspell
+//nolint:misspell // misspelled on purpose
 func TestMisspellPhpdocPositive(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -52,7 +52,7 @@ class c1 {
 	test.RunAndMatch()
 }
 
-//nolint:misspell
+//nolint:misspell // misspelled on purpose
 func TestMisspellPhpdocNegative(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 interface Responsable {}
@@ -84,7 +84,7 @@ class c1 {
 `)
 }
 
-//nolint:misspell
+//nolint:misspell // misspelled on purpose
 func TestMisspellNamePositive(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -118,7 +118,7 @@ class c {
 	test.RunAndMatch()
 }
 
-//nolint:misspell
+//nolint:misspell // misspelled on purpose
 func TestMisspellNameNegative(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 function includ() {

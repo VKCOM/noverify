@@ -11,7 +11,7 @@ import (
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/rules"
-	"github.com/VKCOM/noverify/src/vscode"
+	"github.com/VKCOM/noverify/src/workspace"
 )
 
 // MetaCacher is an interface for integrating checker-specific
@@ -163,12 +163,11 @@ func (ctx *RootContext) Filename() string {
 	return ctx.w.ctx.st.CurrentFile
 }
 
-// FileContents returns analyzed file source code.
-// Caller should not modify the returned slice.
+// File returns analyzed file.
 //
 // Experimental API.
-func (ctx *RootContext) FileContents() []byte {
-	return ctx.w.fileContents
+func (ctx *RootContext) File() *workspace.File {
+	return ctx.w.file
 }
 
 // BlockContext is the context for block checker.
@@ -233,9 +232,9 @@ func (ctx *BlockContext) Filename() string {
 	return ctx.w.r.ctx.st.CurrentFile
 }
 
-// FileContents returns the content of the file being analyzed.
-func (ctx *BlockContext) FileContents() []byte {
-	return ctx.w.r.fileContents
+// File returns the file being analyzed.
+func (ctx *BlockContext) File() *workspace.File {
+	return ctx.w.r.file
 }
 
 // AddQuickfix adds a new quick fix.
@@ -259,17 +258,6 @@ const (
 	LevelSyntax      = lintapi.LevelSyntax
 	LevelSecurity    = lintapi.LevelSecurity // Like warning, but reported without a context line
 )
-
-var vscodeLevelMap = map[int]int{
-	LevelError:       vscode.Error,
-	LevelWarning:     vscode.Warning,
-	LevelInformation: vscode.Information,
-	LevelHint:        vscode.Hint,
-	LevelUnused:      vscode.Information,
-	LevelDoNotReject: vscode.Warning,
-	LevelSecurity:    vscode.Warning,
-	// LevelSyntax is intentionally not included here
-}
 
 var (
 	customBlockLinters []BlockCheckerCreateFunc

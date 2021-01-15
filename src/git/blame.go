@@ -2,7 +2,6 @@ package git
 
 import (
 	"fmt"
-	"os/exec"
 	"strings"
 )
 
@@ -18,10 +17,7 @@ func Blame(gitDir string, refspec []string, filename string) (BlameResult, error
 	args = append(args, refspec...)
 	args = append(args, "--", filename)
 
-	cmd := exec.Command("git", args...)
-	defer cmd.Wait()
-
-	out, err := cmd.Output()
+	out, err := execOutput("git", args...)
 	if err != nil {
 		return BlameResult{}, err
 	}
@@ -39,13 +35,13 @@ func Blame(gitDir string, refspec []string, filename string) (BlameResult, error
 
 		idx := strings.IndexByte(ln, ' ')
 		if idx < 0 {
-			return BlameResult{}, fmt.Errorf("Bad blame line: %s", ln)
+			return BlameResult{}, fmt.Errorf("bad blame line: %s", ln)
 		}
 
 		commit := ln[0:idx]
 
 		if len(commit) < CommitHashLen {
-			return BlameResult{}, fmt.Errorf("Too short commit: %s", commit)
+			return BlameResult{}, fmt.Errorf("too short commit: %s", commit)
 		}
 
 		if commit[0] == '^' {

@@ -123,7 +123,9 @@ func Diff(gitDir, workTreeDir string, refspec []string) ([]Change, error) {
 	args = append(args, "--")
 
 	cmd := exec.Command("git", args...)
-	defer cmd.Wait()
+	defer func() {
+		_ = cmd.Wait()
+	}()
 
 	var out io.Reader
 	var err error
@@ -173,10 +175,7 @@ func Log(gitDir string, refspec []string) (res []Commit, err error) {
 	args = append(args, "--git-dir="+gitDir, "--no-pager", "log", "--oneline", "--format=%H/%an/%s")
 	args = append(args, refspec...)
 
-	cmd := exec.Command("git", args...)
-	defer cmd.Wait()
-
-	out, err := cmd.Output()
+	out, err := execOutput("git", args...)
 	if err != nil {
 		return nil, err
 	}
@@ -346,4 +345,14 @@ func (c *Change) parsePatchHeader(ln []byte) error {
 	c.OldLineRanges = append(c.OldLineRanges, oldR)
 
 	return nil
+}
+
+func execOutput(name string, args ...string) ([]byte, error) {
+	var buf bytes.Buffer
+	cmd := exec.Command(name, args...)
+	cmd.Stdout = &buf
+	if err := cmd.Run(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }

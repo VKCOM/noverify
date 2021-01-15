@@ -42,7 +42,8 @@ func mustCompile(t testing.TB, c *Compiler, code string) *Matcher {
 }
 
 func runMatchTest(t *testing.T, c *Compiler, want bool, tests []*matcherTest) {
-	for i, test := range tests {
+	for i := range tests {
+		test := tests[i]
 		t.Run(fmt.Sprintf("%d_%v", i, want), func(t *testing.T) {
 			matcher := mustCompile(t, c, test.pattern)
 			have := matchInText(t, matcher, test.input)

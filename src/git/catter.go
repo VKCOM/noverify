@@ -180,7 +180,9 @@ func (o *ObjectCatter) Walk(dir string, treeSHA1 string, filenameFilter func(fil
 			} else {
 				filePath = dir + string(filename) + string(os.PathSeparator)
 			}
-			o.Walk(filePath, fmt.Sprintf("%x", sha), filenameFilter, cb)
+			if err := o.Walk(filePath, fmt.Sprintf("%x", sha), filenameFilter, cb); err != nil {
+				return err
+			}
 		}
 	}
 

@@ -214,7 +214,7 @@ func ReportHash(scratchBuf *bytes.Buffer, fields HashFields) uint64 {
 
 	// fnv64a gives the same results (no collisions) as md5 for the 3kk+ SLOC code base.
 	hasher := fnv.New64a()
-	hasher.Write(buf.Bytes())
+	_, _ = hasher.Write(buf.Bytes()) // Hasher returned error is always nil
 	return hasher.Sum64()
 }
 
