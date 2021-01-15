@@ -28,6 +28,9 @@ func TestGolden(t *testing.T) {
 	targets := []*linttest.GoldenTestSuite{
 		{
 			Name: "embeddedrules",
+			Disable: []string{
+				`deadCode`,
+			},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 			},

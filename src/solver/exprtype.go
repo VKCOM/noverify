@@ -255,10 +255,7 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 		return typ, true
 
 	case meta.OverrideElementType:
-		newTyp := meta.NewEmptyTypesMap(typ.Len())
-		typ.Iterate(func(t string) {
-			newTyp = newTyp.AppendString(meta.WrapElemOf(t))
-		})
+		newTyp := typ.Map(meta.WrapElemOf)
 		return newTyp, true
 
 	case meta.OverrideClassType:
@@ -306,12 +303,7 @@ func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*ir.ArrayItemEx
 		}
 	}
 
-	wrapped := meta.NewEmptyTypesMap(firstElementType.Len())
-	firstElementType.Iterate(func(t string) {
-		wrapped.AppendString(meta.WrapArrayOf(t))
-	})
-
-	return wrapped
+	return firstElementType.Map(meta.WrapArrayOf)
 }
 
 func newExprType(n *ir.NewExpr, cs *meta.ClassParseState) meta.TypesMap {

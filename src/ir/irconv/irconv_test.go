@@ -16,7 +16,8 @@ func BenchmarkInterpretString(b *testing.B) {
 		{name: "HarderInput", input: `\u{1f575} Hell\151, \x57orld! 💔`},
 	}
 
-	for _, test := range tests {
+	for i := range tests {
+		test := tests[i]
 		b.Run(test.name+"Q1", func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
 				_, _ = interpretString(test.input, '\'')

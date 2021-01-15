@@ -1,6 +1,9 @@
 # Writing new IDE/editor plugin
 
-NoVerify implements [Language Server Protocol](https://langserver.org) for PHP, so you can write own extension for your IDE or editor.
+> **Note**: only available in version **0.3.0** and below.
+
+NoVerify implements [Language Server Protocol](https://langserver.org) for PHP, so you can write own extension for your
+IDE or editor.
 
 Use the following command to run `noverify` as language server:
 

@@ -73,7 +73,7 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 		return result
 	}
 
-	if len(typ) == 0 || typ[0] >= meta.WMax {
+	if typ == "" || typ[0] >= meta.WMax {
 		return identityType(typ)
 	}
 

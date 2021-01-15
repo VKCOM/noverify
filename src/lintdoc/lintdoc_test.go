@@ -12,7 +12,10 @@ func TestRenderCheckDocumentation(t *testing.T) {
 	runTest := func(info linter.CheckInfo, expect string) {
 		t.Helper()
 		var buf strings.Builder
-		RenderCheckDocumentation(&buf, info)
+		err := RenderCheckDocumentation(&buf, info)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
 		if diff := cmp.Diff(buf.String(), expect); diff != "" {
 			t.Errorf("%#v:\n%s", info, diff)
 		}
