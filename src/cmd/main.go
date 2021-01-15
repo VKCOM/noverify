@@ -128,7 +128,8 @@ func Run(cfg *MainConfig) (int, error) {
 
 	}
 	if subcmd == nil {
-		subcmd, _ = GlobalCmds.GetCommand("help")
+		GlobalCmds.PrintHelpPage()
+		return 0, nil
 	}
 
 	status, err := subcmd.Main(cfg)
