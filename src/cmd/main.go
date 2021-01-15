@@ -120,21 +120,16 @@ func Run(cfg *MainConfig) (int, error) {
 			// Erase sub-command argument (index=1) to make it invisible for
 			// sub commands themselves.
 			os.Args = append(os.Args[:subIdx], os.Args[subIdx+1:]...)
-		} else if looksLikeCommandName(commandName) {
-			fmt.Printf("Sub-command %s doesn't exist\n\n", commandName)
+		} else {
+			fmt.Printf("Sub-command '%s' doesn't exist\n\n", commandName)
 			GlobalCmds.PrintHelpPage()
 			return 0, nil
 		}
 
 	}
 	if subcmd == nil {
-		log.Print(`
-
-NoVerify migrates to the new CLI using commands, launching in this way is still possible, but is already deprecated.
-Use 'noverify help' for more information.
-
-`)
-		subcmd, _ = GlobalCmds.GetCommand("check")
+		GlobalCmds.PrintHelpPage()
+		return 0, nil
 	}
 
 	status, err := subcmd.Main(cfg)

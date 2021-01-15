@@ -252,6 +252,7 @@ func (s *GoldenE2ETestSuite) RunOnlyTests() {
 
 				outputFilename := fmt.Sprintf("phplinter-output-%s.json", test.Name)
 				args := []string{
+					"check",
 					"--critical", "",
 					"--output-json",
 					"--disable-cache", // TODO: test with cache as well
