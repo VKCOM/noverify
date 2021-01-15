@@ -65,7 +65,7 @@ type blockWalker struct {
 	// inferred return types if any
 	returnTypes meta.TypesMap
 
-	r *RootWalker
+	r *rootWalker
 
 	custom []BlockChecker
 
@@ -104,7 +104,7 @@ type blockWalker struct {
 	parentBlockWalkers []*blockWalker // all parent block walkers if we handle nested arrow functions.
 }
 
-func newBlockWalker(r *RootWalker, sc *meta.Scope) *blockWalker {
+func newBlockWalker(r *rootWalker, sc *meta.Scope) *blockWalker {
 	b := &blockWalker{
 		r:            r,
 		ctx:          &blockContext{sc: sc},

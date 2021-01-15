@@ -14,7 +14,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/VKCOM/noverify/src/git"
-	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/linttest/assert"
 	"github.com/VKCOM/noverify/src/workspace"
 )
@@ -120,13 +119,13 @@ main();
 `
 
 	runTest := func(iteration int) {
-		_, root, err := parseContents("cachetest.php", []byte(code), nil, nil)
+		result, err := parseContents("cachetest.php", []byte(code), nil, nil)
 		if err != nil {
 			t.Fatalf("parse error: %v", err)
 		}
 		var buf bytes.Buffer
 		wr := bufio.NewWriter(&buf)
-		if err := writeMetaCache(wr, root); err != nil {
+		if err := writeMetaCache(wr, result.walker); err != nil {
 			t.Fatalf("write cache: %v", err)
 		}
 		wr.Flush()
@@ -159,7 +158,7 @@ main();
 		// 3. Check meta decoding.
 		//
 		// If it fails, encoding and/or decoding is broken.
-		encodedMeta := &root.meta
+		encodedMeta := &result.walker.meta
 		decodedMeta := &fileMeta{}
 		if err := readMetaCache(bytes.NewReader(buf.Bytes()), "", decodedMeta); err != nil {
 			t.Errorf("decoding failed: %v", err)
@@ -192,7 +191,7 @@ func collectCacheStrings(data string) string {
 	return hex.EncodeToString(enc.Sum(nil))
 }
 
-func parseContents(filename string, contents []byte, lineRanges []git.LineRange, allowDisabled *regexp.Regexp) (root *ir.Root, walker *RootWalker, err error) {
+func parseContents(filename string, contents []byte, lineRanges []git.LineRange, allowDisabled *regexp.Regexp) (ParseResult, error) {
 	w := NewLintingWorker(0)
 	w.AllowDisable = allowDisabled
 	file := workspace.FileInfo{

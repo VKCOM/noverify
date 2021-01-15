@@ -2947,13 +2947,13 @@ func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 
 	// Reset results map and run expr type collector.
 	exprTypeResult = map[ir.Node]meta.TypesMap{}
-	root, _ := linttest.ParseTestFile(t, "exprtype.php", params.code)
+	result := linttest.ParseTestFile(t, "exprtype.php", params.code)
 
 	// Check that collected types are identical to the expected types.
 	// We need the second walker to pass *testing.T parameter to
 	// the walker that does the comparison.
 	walker := exprTypeWalker{t: t}
-	root.Walk(&walker)
+	result.RootNode.Walk(&walker)
 }
 
 type testTypesMap struct {
