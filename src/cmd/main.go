@@ -17,7 +17,6 @@ import (
 
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/cmd/stubs"
-	"github.com/VKCOM/noverify/src/langsrv"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linter/lintapi"
@@ -211,12 +210,6 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 
 	lintdebug.Register(func(msg string) { linter.DebugMessage("%s", msg) })
 	go linter.MemoryLimiterThread()
-
-	if linter.LangServer {
-		langsrv.RegisterDebug()
-		langsrv.Start()
-		return 0, nil
-	}
 
 	log.Printf("Started")
 
