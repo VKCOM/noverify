@@ -249,14 +249,11 @@ type BlockCheckerCreateFunc func(*BlockContext) BlockChecker
 type RootCheckerCreateFunc func(*RootContext) RootChecker
 
 const (
-	LevelError       = lintapi.LevelError
-	LevelWarning     = lintapi.LevelWarning
-	LevelInformation = lintapi.LevelInformation
-	LevelHint        = lintapi.LevelHint
-	LevelUnused      = lintapi.LevelUnused
-	LevelDoNotReject = lintapi.LevelMaybe
-	LevelSyntax      = lintapi.LevelSyntax
-	LevelSecurity    = lintapi.LevelSecurity // Like warning, but reported without a context line
+	LevelError    = lintapi.LevelError
+	LevelWarning  = lintapi.LevelWarning
+	LevelInfo     = lintapi.LevelInfo
+	LevelNotice   = lintapi.LevelNotice
+	LevelSecurity = lintapi.LevelSecurity // Like warning, but reported without a context line
 )
 
 var (

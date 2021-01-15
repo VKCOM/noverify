@@ -10,12 +10,9 @@ package lintapi
 // linter.Report type in here, as well as some related utilities.
 
 const (
-	LevelError       = 1
-	LevelWarning     = 2
-	LevelInformation = 3
-	LevelHint        = 4
-	LevelUnused      = 5
-	LevelMaybe       = 6 // do not treat this warning as a reason to reject if we get this kind of warning
-	LevelSyntax      = 7
-	LevelSecurity    = 8
+	LevelError    = 1
+	LevelWarning  = 2
+	LevelInfo     = 3
+	LevelNotice   = 4 // do not treat this warning as a reason to reject if we get this kind of warning
+	LevelSecurity = 5
 )

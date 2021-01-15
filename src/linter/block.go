@@ -158,7 +158,7 @@ func (b *blockWalker) reportDeadCode(n ir.Node) {
 	}
 
 	b.ctx.deadCodeReported = true
-	b.r.Report(n, LevelInformation, "deadCode", "Unreachable code")
+	b.r.Report(n, LevelInfo, "deadCode", "Unreachable code")
 }
 
 // EnterNode is called before walking to inner nodes.
@@ -355,7 +355,7 @@ func (b *blockWalker) checkDupGlobal(s *ir.GlobalStmt) {
 		} else {
 			vars[nm] = struct{}{}
 			if b.nonLocalVars[nm] == varGlobal {
-				b.r.Report(v, LevelDoNotReject, "dupGlobal", "$%s already global'ed above", nm)
+				b.r.Report(v, LevelNotice, "dupGlobal", "$%s already global'ed above", nm)
 			}
 		}
 	}
@@ -495,7 +495,7 @@ func (b *blockWalker) walkComments(n ir.Node, c freefloating.String) {
 
 		types, warning := typesFromPHPDoc(&b.r.ctx, p.Type)
 		if warning != "" {
-			b.r.Report(n, LevelInformation, "phpdocType", "%s on line %d", warning, p.Line())
+			b.r.Report(n, LevelInfo, "phpdocType", "%s on line %d", warning, p.Line())
 		}
 		m := newTypesMap(&b.r.ctx, types)
 		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(p.Var, "$"), m, "@var")
@@ -1356,7 +1356,7 @@ func (b *blockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 				// allow the fallthrough if appropriate comment is present
 				nextCase := s.CaseList.Cases[idx+1]
 				if !caseHasFallthroughComment(nextCase) {
-					b.r.Report(c, LevelInformation, "caseBreak", "Add break or '// fallthrough' to the end of the case")
+					b.r.Report(c, LevelInfo, "caseBreak", "Add break or '// fallthrough' to the end of the case")
 				}
 			}
 
@@ -1473,7 +1473,7 @@ func (b *blockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
 	})
 
 	if maybeHaveClasses && !haveArrayAccess {
-		b.r.Report(s.Variable, LevelDoNotReject, "arrayAccess", "Array access to non-array type %s", typ)
+		b.r.Report(s.Variable, LevelNotice, "arrayAccess", "Array access to non-array type %s", typ)
 	}
 }
 
@@ -1747,7 +1747,7 @@ func (b *blockWalker) flushUnused() {
 			}
 
 			visitedMap[n] = struct{}{}
-			b.r.Report(n, LevelUnused, "unused", `Variable %s is unused (use $_ to ignore this inspection)`, name)
+			b.r.Report(n, LevelInfo, "unused", `Variable %s is unused (use $_ to ignore this inspection)`, name)
 		}
 	}
 }

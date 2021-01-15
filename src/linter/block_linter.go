@@ -181,7 +181,7 @@ func (b *blockLinter) enterNode(n ir.Node) {
 		b.checkInterfaceStmt(n)
 
 	case *ir.BadString:
-		b.report(n, LevelSyntax, "syntax", "%s", n.Error)
+		b.report(n, LevelError, "syntax", "%s", n.Error)
 	}
 }
 
@@ -196,7 +196,7 @@ func (b *blockLinter) checkCoalesceExpr(n *ir.CoalesceExpr) {
 	}
 
 	if !lhsType.Contains("null") {
-		b.report(n.Right, LevelInformation, "deadCode", "%s is not nullable, right side of the expression is unreachable", irutil.FmtNode(n.Left))
+		b.report(n.Right, LevelInfo, "deadCode", "%s is not nullable, right side of the expression is unreachable", irutil.FmtNode(n.Left))
 	}
 }
 
@@ -297,14 +297,14 @@ func (b *blockLinter) checkBinaryDupArgs(n, left, right ir.Node) {
 // checkVoidType reports if node has void type
 func (b *blockLinter) checkVoidType(n ir.Node) {
 	if b.walker.exprType(n).Is("void") {
-		b.report(n, LevelDoNotReject, "voidResultUsed", "void function result used")
+		b.report(n, LevelNotice, "voidResultUsed", "void function result used")
 	}
 }
 
 func (b *blockLinter) checkRedundantCastArray(e ir.Node) {
 	typ := b.walker.exprType(e)
 	if typ.Len() == 1 && typ.Is("mixed[]") {
-		b.report(e, LevelDoNotReject, "redundantCast", "expression already has array type")
+		b.report(e, LevelNotice, "redundantCast", "expression already has array type")
 	}
 }
 
@@ -315,7 +315,7 @@ func (b *blockLinter) checkRedundantCast(e ir.Node, dstType string) {
 	}
 	typ.Iterate(func(x string) {
 		if x == dstType {
-			b.report(e, LevelDoNotReject, "redundantCast",
+			b.report(e, LevelNotice, "redundantCast",
 				"expression already has %s type", dstType)
 		}
 	})
@@ -589,7 +589,7 @@ func (b *blockLinter) addFixForArray(arr *ir.ArrayExpr) {
 
 func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 	if !arr.ShortSyntax {
-		b.report(arr, LevelDoNotReject, "arraySyntax", "Use of old array syntax (use short form instead)")
+		b.report(arr, LevelNotice, "arraySyntax", "Use of old array syntax (use short form instead)")
 		b.addFixForArray(arr)
 	}
 
@@ -681,11 +681,11 @@ func (b *blockLinter) checkDeprecatedFunctionCall(e *ir.FunctionCallExpr, call *
 	}
 
 	if call.info.Doc.DeprecationNote != "" {
-		b.report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s (%s)", meta.NameNodeToString(e.Function), call.info.Doc.DeprecationNote)
+		b.report(e.Function, LevelNotice, "deprecated", "Call to deprecated function %s (%s)", meta.NameNodeToString(e.Function), call.info.Doc.DeprecationNote)
 		return
 	}
 
-	b.report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s", meta.NameNodeToString(e.Function))
+	b.report(e.Function, LevelNotice, "deprecated", "Call to deprecated function %s", meta.NameNodeToString(e.Function))
 }
 
 func (b *blockLinter) checkFunctionAvailability(e *ir.FunctionCallExpr, call *funcCallInfo) {
@@ -770,10 +770,10 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 
 	if call.info.Doc.Deprecated {
 		if call.info.Doc.DeprecationNote != "" {
-			b.report(e.Method, LevelDoNotReject, "deprecated", "Call to deprecated method {%s}->%s() (%s)",
+			b.report(e.Method, LevelNotice, "deprecated", "Call to deprecated method {%s}->%s() (%s)",
 				call.methodCallerType, call.methodName, call.info.Doc.DeprecationNote)
 		} else {
-			b.report(e.Method, LevelDoNotReject, "deprecated", "Call to deprecated method {%s}->%s()",
+			b.report(e.Method, LevelNotice, "deprecated", "Call to deprecated method {%s}->%s()",
 				call.methodCallerType, call.methodName)
 		}
 	}
@@ -803,10 +803,10 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 
 	if call.methodInfo.Info.Doc.Deprecated {
 		if call.methodInfo.Info.Doc.DeprecationNote != "" {
-			b.report(e.Call, LevelDoNotReject, "deprecated", "Call to deprecated static method %s::%s() (%s)",
+			b.report(e.Call, LevelNotice, "deprecated", "Call to deprecated static method %s::%s() (%s)",
 				call.className, call.methodName, call.methodInfo.Info.Doc.DeprecationNote)
 		} else {
-			b.report(e.Call, LevelDoNotReject, "deprecated", "Call to deprecated static method %s::%s()",
+			b.report(e.Call, LevelNotice, "deprecated", "Call to deprecated static method %s::%s()",
 				call.className, call.methodName)
 		}
 	}
@@ -893,7 +893,7 @@ func (b *blockLinter) checkRegexp(e *ir.FunctionCallExpr, arg *ir.Argument) {
 	simplified := b.walker.r.reSimplifier.simplifyRegexp(pat)
 	if simplified != "" {
 		rawPattern := b.walker.r.nodeText(s)
-		b.report(arg, LevelDoNotReject, "regexpSimplify", "May re-write %s as '%s'",
+		b.report(arg, LevelNotice, "regexpSimplify", "May re-write %s as '%s'",
 			rawPattern, simplified)
 	}
 	issues, err := b.walker.r.reVet.CheckRegexp(pat)

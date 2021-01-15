@@ -282,8 +282,6 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 }
 
 // analyzeFileRootLevel does analyze file top-level code.
-// This method is exposed for language server use, you usually
-// do not need to call it yourself.
 func analyzeFileRootLevel(rootNode ir.Node, d *RootWalker) {
 	sc := meta.NewScope()
 	sc.AddVarName("argv", meta.NewTypesMap("string[]"), "predefined", meta.VarAlwaysDefined)
