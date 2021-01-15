@@ -185,6 +185,6 @@ func collectCacheStrings(data string) string {
 	sort.Strings(parts)
 
 	enc := sha512.New()
-	enc.Write([]byte(strings.Join(parts, ",")))
+	_, _ = enc.Write([]byte(strings.Join(parts, ","))) // sha512.Write always returns nil error
 	return hex.EncodeToString(enc.Sum(nil))
 }

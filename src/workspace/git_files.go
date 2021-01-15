@@ -9,9 +9,10 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/monochromegane/go-gitignore"
+
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/monochromegane/go-gitignore"
 )
 
 // ParseGitignoreFromDir tries to parse a gitignore file at path/.gitignore.
@@ -49,7 +50,7 @@ func ReadChangesFromWorkTree(dir string, changes []git.Change) ReadCallback {
 			}
 
 			ch <- FileInfo{
-				Filename: filename,
+				Name:     filename,
 				Contents: contents,
 			}
 		}
@@ -96,7 +97,7 @@ func ReadFilesFromGit(repo, commitSHA1 string, ignoreRegex *regexp.Regexp) ReadC
 				}
 
 				ch <- FileInfo{
-					Filename: filename,
+					Name:     filename,
 					Contents: contents,
 				}
 			},
@@ -144,7 +145,7 @@ func ReadOldFilesFromGit(repo, commitSHA1 string, changes []git.Change) ReadCall
 			},
 			func(filename string, contents []byte) {
 				ch <- FileInfo{
-					Filename:   filename,
+					Name:       filename,
 					Contents:   contents,
 					LineRanges: changedMap[filename],
 				}
@@ -195,7 +196,7 @@ func ReadFilesFromGitWithChanges(repo, commitSHA1 string, changes []git.Change) 
 			},
 			func(filename string, contents []byte) {
 				ch <- FileInfo{
-					Filename:   filename,
+					Name:       filename,
 					Contents:   contents,
 					LineRanges: changedMap[filename],
 				}

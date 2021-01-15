@@ -5,16 +5,14 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/client9/misspell"
+
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/rules"
-	"github.com/client9/misspell"
 )
 
 var (
-	// LangServer represents whether or not we run in a language server mode.
-	LangServer bool
-
 	// BaselineProfile is a suppression database for warnings.
 	// Nil profile is an empty suppression profile.
 	BaselineProfile      *baseline.Profile
@@ -31,9 +29,6 @@ var (
 	// If nil, no misspell checking is performed.
 	// See github.com/client9/misspell for details.
 	TypoFixer *misspell.Replacer
-
-	// AnalysisFiles is a list of files that are being analyzed (in non-git mode)
-	AnalysisFiles []string
 
 	// SrcInput implements source code reading from files and buffers.
 	//

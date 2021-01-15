@@ -105,6 +105,49 @@ function not_an_array($xs) {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestExprTypeCatch(t *testing.T) {
+	code := `<?php
+try {
+} catch (Foo $x) {
+  exprtype($x, '\Foo');
+} catch (Exception $e) {
+  exprtype($e, '\Exception');
+} catch (A|B $ab) {
+  exprtype($ab, '\A|\B');
+} catch (\A\B\C $abc) {
+  exprtype($abc, '\A\B\C');
+  exprtype($ab, 'undefined');
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestExprTypeVariadicParam(t *testing.T) {
+	code := `<?php
+function scalar_int(int ...$xs) {
+  exprtype($xs, 'int[]');
+}
+
+function no_typehint(...$xs) {
+  exprtype($xs, 'mixed'); // TODO: mixed[]?
+}
+
+function foo_array(Foo ...$xs) {
+  exprtype($xs, '\Foo[]');
+}
+
+function mixed_array2(array ...$xs) {
+  exprtype($xs, 'mixed[][]');
+}
+
+/** @param $xs Foo */
+function scalar_int(int ...$xs) {
+  exprtype($xs, '\Foo|int[]');
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestExprTypeForeachKey(t *testing.T) {
 	code := `<?php
 $xs = [[1], [2]];
@@ -1537,6 +1580,13 @@ function bare_ret2($cond) {
 }
 exprtype(bare_ret2(false), 'int|null');
 
+function bare_ret3($cond) {
+  if ($cond == 1) { return 10; }
+  if ($cond == 2) { return ""; }
+  return;
+}
+exprtype(bare_ret3(10), 'int|null|string');
+
 function untyped_param($x) { return $x; }
 exprtype(untyped_param(0), 'mixed');
 
@@ -2811,7 +2861,7 @@ func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	if params.stubs != "" {
 		linter.InitStubs(func(ch chan workspace.FileInfo) {
 			ch <- workspace.FileInfo{
-				Filename: "stubs.php",
+				Name:     "stubs.php",
 				Contents: []byte(params.stubs),
 			}
 		})

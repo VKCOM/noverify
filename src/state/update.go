@@ -75,12 +75,9 @@ func handleUseList(prefix string, st *meta.ClassParseState, n *ir.UseListStmt) {
 		return
 	}
 
-	id, ok := n.UseType.(*ir.Identifier)
-	if !ok {
-		return
-	}
+	useType := n.UseType.Value
 
-	if id.Value == "function" {
+	if useType == "function" {
 		for _, u := range n.Uses {
 			if u, ok := u.(*ir.UseStmt); ok {
 				handleUseFunction(prefix, st, u)
@@ -95,16 +92,15 @@ func handleUseClass(prefix string, st *meta.ClassParseState, n *ir.UseStmt) {
 		st.Uses = make(map[string]string)
 	}
 
-	nm := n.Use.(*ir.Name)
 	var alias string
 
 	if n.Alias != nil {
 		alias = n.Alias.Value
 	} else {
-		alias = nm.LastPart()
+		alias = n.Use.LastPart()
 	}
 
-	st.Uses[alias] = prefix + `\` + nm.Value
+	st.Uses[alias] = prefix + `\` + n.Use.Value
 }
 
 func handleUseFunction(prefix string, st *meta.ClassParseState, n *ir.UseStmt) {
@@ -113,16 +109,15 @@ func handleUseFunction(prefix string, st *meta.ClassParseState, n *ir.UseStmt) {
 		st.FunctionUses = make(map[string]string)
 	}
 
-	nm := n.Use.(*ir.Name)
 	var alias string
 
 	if n.Alias != nil {
 		alias = n.Alias.Value
 	} else {
-		alias = nm.LastPart()
+		alias = n.Use.LastPart()
 	}
 
-	st.FunctionUses[alias] = prefix + `\` + nm.Value
+	st.FunctionUses[alias] = prefix + `\` + n.Use.Value
 }
 
 // LeaveNode must be called upon leaving a node to update current state.

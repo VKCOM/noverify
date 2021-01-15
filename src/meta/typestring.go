@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"strings"
 )
 
@@ -131,7 +132,9 @@ func unwrap2(s string) (one, two string) {
 
 	pos := 1
 	copy(b[:], s[pos:pos+stringLenBytes])
-	hex.Decode(rawBuf[:], b[:])
+	if _, err := hex.Decode(rawBuf[:], b[:]); err != nil {
+		log.Printf("decode type string error: unwrap2: %v", err)
+	}
 	l = int(binary.LittleEndian.Uint16(rawBuf[:]))
 	pos += stringLenBytes
 	one = s[pos : pos+l]
@@ -148,11 +151,15 @@ func unwrap3(s string) (b1 uint8, one, two string) {
 
 	pos := 1
 	copy(b[:], s[pos:pos+uint8fieldBytes])
-	hex.Decode(rawBuf[:], b[:uint8fieldBytes])
+	if _, err := hex.Decode(rawBuf[:], b[:uint8fieldBytes]); err != nil {
+		log.Printf("decode type string error: unwrap3: %v", err)
+	}
 	b1 = rawBuf[0]
 	pos += uint8fieldBytes
 	copy(b[:], s[pos:pos+stringLenBytes])
-	hex.Decode(rawBuf[:], b[:])
+	if _, err := hex.Decode(rawBuf[:], b[:]); err != nil {
+		log.Printf("decode type string error: unwrap3: %v", err)
+	}
 	l = int(binary.LittleEndian.Uint16(rawBuf[:]))
 	pos += stringLenBytes
 	one = s[pos : pos+l]
@@ -275,7 +282,7 @@ func UnwrapConstant(s string) (constName string) {
 }
 
 func formatType(s string) (res string) {
-	if len(s) == 0 || s[0] >= WMax {
+	if s == "" || s[0] >= WMax {
 		return s
 	}
 
