@@ -26,6 +26,13 @@ import (
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
+type ParseResult struct {
+	RootNode *ir.Root
+	Reports  []*Report
+
+	walker *rootWalker
+}
+
 // Worker is a linter handle that is expected to be executed in a single goroutine context.
 //
 // It's not thread-safe and contains the state that will be re-used between the linter API calls.
@@ -77,7 +84,7 @@ func (w *Worker) ID() int { return w.id }
 
 // ParseContents parses specified contents (or file) and returns *RootWalker.
 // Function does not update global meta.
-func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (root *ir.Root, walker *RootWalker, err error) {
+func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			s := fmt.Sprintf("Panic while parsing %s: %s\n\nStack trace: %s", fileInfo.Name, r, dbg.Stack())
@@ -105,7 +112,7 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (root *ir.Root, walk
 	b := w.ctx.scratchBuf
 	b.Reset()
 	if _, err := b.ReadFrom(rd); err != nil {
-		return nil, nil, err
+		return result, err
 	}
 	contents := append(make([]byte, 0, b.Len()), b.Bytes()...)
 
@@ -119,15 +126,24 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (root *ir.Root, walk
 	atomic.AddInt64(&initParseTime, int64(time.Since(start)))
 
 	file := workspace.NewFile(fileInfo.Name, contents)
-	return w.analyzeFile(file, parser)
+	rootNode, walker, err := w.analyzeFile(file, parser)
+	if err != nil {
+		return result, err
+	}
+	result = ParseResult{
+		RootNode: rootNode,
+		Reports:  walker.reports,
+		walker:   walker,
+	}
+	return result, nil
 }
 
 // IndexFile parses the file and fills in the meta info. Can use cache.
 func (w *Worker) IndexFile(file workspace.FileInfo) error {
 	if CacheDir == "" {
-		_, w, err := w.ParseContents(file)
+		result, err := w.ParseContents(file)
 		if w != nil {
-			updateMetaInfo(file.Name, &w.meta)
+			updateMetaInfo(file.Name, &result.walker.meta)
 		}
 		return err
 	}
@@ -167,12 +183,12 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 	start := time.Now()
 	fp, err := os.Open(cacheFile)
 	if err != nil {
-		_, w, err := w.ParseContents(file)
+		result, err := w.ParseContents(file)
 		if err != nil {
 			return err
 		}
 
-		return createMetaCacheFile(file.Name, cacheFile, w)
+		return createMetaCacheFile(file.Name, cacheFile, result.walker)
 	}
 	defer fp.Close()
 
@@ -180,12 +196,12 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 		// do not really care about why exactly reading from cache failed
 		os.Remove(cacheFile)
 
-		_, w, err := w.ParseContents(file)
+		result, err := w.ParseContents(file)
 		if err != nil {
 			return err
 		}
 
-		return createMetaCacheFile(file.Name, cacheFile, w)
+		return createMetaCacheFile(file.Name, cacheFile, result.walker)
 	}
 
 	atomic.AddInt64(&initCacheReadTime, int64(time.Since(start)))
@@ -207,10 +223,10 @@ func (w *Worker) doParseFile(f workspace.FileInfo) []*Report {
 	var reports []*Report
 
 	if w.needReports {
-		var walker *RootWalker
-		_, walker, err = w.ParseContents(f)
+		var result ParseResult
+		result, err = w.ParseContents(f)
 		if err == nil {
-			reports = walker.GetReports()
+			reports = result.Reports
 		}
 	} else {
 		err = w.IndexFile(f)
@@ -224,7 +240,7 @@ func (w *Worker) doParseFile(f workspace.FileInfo) []*Report {
 	return reports
 }
 
-func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Root, *RootWalker, error) {
+func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Root, *rootWalker, error) {
 	start := time.Now()
 	rootNode := parser.GetRootNode()
 
@@ -236,7 +252,7 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 	rootIR := w.irconv.ConvertRoot(rootNode)
 
 	st := &meta.ClassParseState{CurrentFile: file.Name()}
-	walker := &RootWalker{
+	walker := &rootWalker{
 		file: file,
 		ctx:  newRootContext(w.ctx, st),
 
@@ -284,7 +300,7 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 // analyzeFileRootLevel does analyze file top-level code.
 // This method is exposed for language server use, you usually
 // do not need to call it yourself.
-func analyzeFileRootLevel(rootNode ir.Node, d *RootWalker) {
+func analyzeFileRootLevel(rootNode ir.Node, d *rootWalker) {
 	sc := meta.NewScope()
 	sc.AddVarName("argv", meta.NewTypesMap("string[]"), "predefined", meta.VarAlwaysDefined)
 	sc.AddVarName("argc", meta.NewTypesMap("int"), "predefined", meta.VarAlwaysDefined)

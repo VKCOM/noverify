@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/VKCOM/noverify/src/cmd"
-	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/rules"
@@ -251,8 +250,8 @@ func (s *Suite) RunLinter() []*linter.Report {
 			continue
 		}
 
-		_, w := parseTestFile(s.t, linting, f)
-		reports = append(reports, w.GetReports()...)
+		result := parseTestFile(s.t, linting, f)
+		reports = append(reports, result.Reports...)
 	}
 
 	declared := make(map[string]struct{})
@@ -291,7 +290,7 @@ func (s *Suite) RunFilterLinter(filters []string) []*linter.Report {
 }
 
 // ParseTestFile parses given test file.
-func ParseTestFile(t *testing.T, filename, content string) (rootNode *ir.Root, w *linter.RootWalker) {
+func ParseTestFile(t *testing.T, filename, content string) linter.ParseResult {
 	var worker *linter.Worker
 	if meta.IsIndexingComplete() {
 		worker = linter.NewLintingWorker(0)
@@ -366,20 +365,22 @@ func shuffleFiles(files []TestFile) {
 	})
 }
 
-func parseTestFile(t testing.TB, worker *linter.Worker, f TestFile) (rootNode *ir.Root, w *linter.RootWalker) {
-	var err error
+func parseTestFile(t testing.TB, worker *linter.Worker, f TestFile) linter.ParseResult {
 	file := workspace.FileInfo{
 		Name:     f.Name,
 		Contents: f.Data,
 	}
-	rootNode, w, err = worker.ParseContents(file)
+
+	var err error
+	var result linter.ParseResult
+	if meta.IsIndexingComplete() {
+		result, err = worker.ParseContents(file)
+	} else {
+		err = worker.IndexFile(file)
+	}
 	if err != nil {
 		t.Fatalf("could not parse %s: %v", f.Name, err.Error())
 	}
 
-	if !meta.IsIndexingComplete() {
-		w.UpdateMetaInfo()
-	}
-
-	return rootNode, w
+	return result
 }
