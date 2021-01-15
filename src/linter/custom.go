@@ -11,7 +11,6 @@ import (
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/rules"
-	"github.com/VKCOM/noverify/src/vscode"
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
@@ -259,17 +258,6 @@ const (
 	LevelSyntax      = lintapi.LevelSyntax
 	LevelSecurity    = lintapi.LevelSecurity // Like warning, but reported without a context line
 )
-
-var vscodeLevelMap = map[int]int{
-	LevelError:       vscode.Error,
-	LevelWarning:     vscode.Warning,
-	LevelInformation: vscode.Information,
-	LevelHint:        vscode.Hint,
-	LevelUnused:      vscode.Information,
-	LevelDoNotReject: vscode.Warning,
-	LevelSecurity:    vscode.Warning,
-	// LevelSyntax is intentionally not included here
-}
 
 var (
 	customBlockLinters []BlockCheckerCreateFunc

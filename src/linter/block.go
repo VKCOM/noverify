@@ -584,7 +584,6 @@ func (b *BlockWalker) handleTry(s *ir.TryStmt) bool {
 	for i := range s.Catches {
 		c := s.Catches[i]
 		ctx := b.withNewContext(func() {
-			b.r.addScope(c, b.ctx.sc)
 			cc := c.(*ir.CatchStmt)
 			for _, s := range cc.Stmts {
 				b.addStatement(s)
@@ -597,7 +596,6 @@ func (b *BlockWalker) handleTry(s *ir.TryStmt) bool {
 	if s.Finally != nil {
 		b.withNewContext(func() {
 			contexts = append(contexts, b.ctx)
-			b.r.addScope(s.Finally, b.ctx.sc)
 			cc := s.Finally.(*ir.FinallyStmt)
 			for _, s := range cc.Stmts {
 				b.addStatement(s)
@@ -624,7 +622,6 @@ func (b *BlockWalker) handleTry(s *ir.TryStmt) bool {
 		for _, s := range s.Stmts {
 			b.addStatement(s)
 			s.Walk(b)
-			b.r.addScope(s, b.ctx.sc)
 		}
 	})
 
@@ -1011,7 +1008,6 @@ func (b *BlockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 	params, _ := b.r.parseFuncArgs(fun.Params, phpDocParamTypes, sc, closureSolver)
 
 	b.r.handleFuncStmts(params, closureUses, fun.Stmts, sc)
-	b.r.addScope(fun, sc)
 
 	return false
 }
@@ -1227,7 +1223,6 @@ func (b *BlockWalker) handleIf(s *ir.IfStmt) bool {
 			} else {
 				n.Walk(b)
 			}
-			b.r.addScope(n, b.ctx.sc)
 		})
 
 		contexts = append(contexts, ctx)

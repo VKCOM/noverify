@@ -221,8 +221,6 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 		return gitMain(&l, cfg)
 	}
 
-	linter.AnalysisFiles = flag.Args()
-
 	log.Printf("Indexing %+v", flag.Args())
 	linter.ParseFilenames(workspace.ReadFilenames(flag.Args(), nil), l.allowDisableRegex)
 	parseIndexOnlyFiles(&l)
