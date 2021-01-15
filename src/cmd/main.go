@@ -128,13 +128,7 @@ func Run(cfg *MainConfig) (int, error) {
 
 	}
 	if subcmd == nil {
-		log.Print(`
-
-NoVerify migrates to the new CLI using commands, launching in this way is still possible, but is already deprecated.
-Use 'noverify help' for more information.
-
-`)
-		subcmd, _ = GlobalCmds.GetCommand("check")
+		subcmd, _ = GlobalCmds.GetCommand("help")
 	}
 
 	status, err := subcmd.Main(cfg)
