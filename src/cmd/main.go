@@ -166,7 +166,12 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 	}
 
 	if args.pprofHost != "" {
-		go http.ListenAndServe(args.pprofHost, nil)
+		go func() {
+			err := http.ListenAndServe(args.pprofHost, nil)
+			if err != nil {
+				log.Printf("pprof listen and serve: %v", err)
+			}
+		}()
 	}
 
 	// Since this function is expected to be exit-free, it's OK

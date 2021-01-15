@@ -104,8 +104,9 @@ func (w *Worker) ParseContents(fileInfo *workspace.FileInfo) (root *ir.Root, wal
 
 	b := w.ctx.scratchBuf
 	b.Reset()
-	b.ReadFrom(rd)
-
+	if _, err := b.ReadFrom(rd); err != nil {
+		return nil, nil, err
+	}
 	contents := append(make([]byte, 0, b.Len()), b.Bytes()...)
 
 	waiter := BeforeParse(len(contents), fileInfo.Name)
@@ -144,8 +145,8 @@ func (w *Worker) IndexFile(file *workspace.FileInfo) error {
 			return err
 		}
 		atomic.AddInt64(&initFileReadTime, int64(time.Since(start)))
-	} else {
-		h.Write(file.Contents)
+	} else if _, err := h.Write(contents); err != nil {
+		return err
 	}
 
 	contentsHash := fmt.Sprintf("%x", h.Sum(nil))

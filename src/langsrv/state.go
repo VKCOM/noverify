@@ -198,7 +198,7 @@ func flushReports(filename string, d *linter.RootWalker) {
 		diag = make([]vscode.Diagnostic, 0)
 	}
 
-	writeMessage(&methodCall{
+	_ = writeMessage(&methodCall{
 		JSONRPC: "2.0",
 		Method:  "textDocument/publishDiagnostics",
 		Params: &vscode.PublishDiagnosticsParams{

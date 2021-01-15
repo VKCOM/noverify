@@ -95,7 +95,8 @@ func typesMapToTypeExpr(p *phpdoc.TypeParser, m meta.TypesMap) phpdoc.Type {
 func MergeTypeMaps(left meta.TypesMap, right meta.TypesMap) meta.TypesMap {
 	var hasAtLeastOneArray bool
 	var hasAtLeastOneClass bool
-	newMap := meta.NewEmptyTypesMap(left.Len() + right.Len())
+
+	merged := make(map[string]struct{}, left.Len()+right.Len())
 
 	left.Iterate(func(typ string) {
 		if typ[0] == meta.WArrayOf {
@@ -104,7 +105,7 @@ func MergeTypeMaps(left meta.TypesMap, right meta.TypesMap) meta.TypesMap {
 		if typ[0] == '\\' {
 			hasAtLeastOneClass = true
 		}
-		newMap.AppendString(typ)
+		merged[typ] = struct{}{}
 	})
 
 	right.Iterate(func(typ string) {
@@ -114,10 +115,10 @@ func MergeTypeMaps(left meta.TypesMap, right meta.TypesMap) meta.TypesMap {
 		if typ == "object" && hasAtLeastOneClass {
 			return
 		}
-		newMap.AppendString(typ)
+		merged[typ] = struct{}{}
 	})
 
-	return newMap
+	return meta.NewTypesMapFromMap(merged)
 }
 
 // functionReturnType returns the return type of a function over computed types

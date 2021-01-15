@@ -671,7 +671,7 @@ func (d *RootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.N
 
 	switch {
 	case b.bareReturn && b.returnsValue:
-		b.returnTypes = b.returnTypes.AppendString("null")
+		b.returnTypes = meta.MergeTypeMaps(b.returnTypes, meta.NullType)
 	case b.returnTypes.IsEmpty() && b.returnsValue:
 		b.returnTypes = meta.MixedType
 	}
@@ -1410,9 +1410,7 @@ func (d *RootWalker) callbackParamByIndex(param ir.Node, argType meta.TypesMap) 
 	if ok {
 		typ = tp
 	} else {
-		argType.Iterate(func(t string) {
-			typ = typ.AppendString(meta.WrapElemOf(t))
-		})
+		typ = argType.Map(meta.WrapElemOf)
 	}
 
 	arg := meta.FuncParam{
@@ -1500,9 +1498,7 @@ func (d *RootWalker) parseFuncArgs(params []ir.Node, parTypes phpDocParamsMap, s
 		}
 
 		if p.Variadic {
-			arrTyp := meta.NewEmptyTypesMap(typ.Len())
-			typ.Iterate(func(t string) { arrTyp = arrTyp.AppendString(meta.WrapArrayOf(t)) })
-			typ = arrTyp
+			typ = typ.Map(meta.WrapArrayOf)
 		}
 
 		sc.AddVarName(v.Name, typ, "param", meta.VarAlwaysDefined)
