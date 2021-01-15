@@ -121,7 +121,7 @@ func Run(cfg *MainConfig) (int, error) {
 			// sub commands themselves.
 			os.Args = append(os.Args[:subIdx], os.Args[subIdx+1:]...)
 		} else {
-			fmt.Printf("Sub-command %s doesn't exist\n\n", commandName)
+			fmt.Printf("Sub-command '%s' doesn't exist\n\n", commandName)
 			GlobalCmds.PrintHelpPage()
 			return 0, nil
 		}
