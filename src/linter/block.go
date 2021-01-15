@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/phpdoc"
@@ -69,7 +70,7 @@ type blockWalker struct {
 
 	custom []BlockChecker
 
-	path NodePath
+	path irutil.NodePath
 
 	ignoreFunctionBodies bool
 	rootLevel            bool // analysing root-level code
@@ -110,7 +111,7 @@ func newBlockWalker(r *rootWalker, sc *meta.Scope) *blockWalker {
 		ctx:          &blockContext{sc: sc},
 		unusedVars:   make(map[string][]ir.Node),
 		nonLocalVars: make(map[string]variableKind),
-		path:         newNodePath(),
+		path:         irutil.NewNodePath(),
 	}
 	b.linter = blockLinter{walker: b}
 	return b
@@ -169,7 +170,7 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 		c.BeforeEnterNode(n)
 	}
 
-	b.path.push(n)
+	b.path.Push(n)
 
 	if b.ctx.exitFlags != 0 {
 		b.reportDeadCode(n)
@@ -334,7 +335,7 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 	}
 
 	if !res {
-		b.path.pop()
+		b.path.Pop()
 	}
 	return res
 }
@@ -1776,7 +1777,7 @@ func (b *blockWalker) LeaveNode(w ir.Node) {
 		c.BeforeLeaveNode(w)
 	}
 
-	b.path.pop()
+	b.path.Pop()
 
 	if b.ctx.exitFlags == 0 {
 		switch w.(type) {

@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/linter/lintapi"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
@@ -177,7 +178,7 @@ type BlockContext struct {
 
 // NodePath returns a node path up to the current traversal position.
 // The path includes the node that is being traversed as well.
-func (ctx *BlockContext) NodePath() NodePath {
+func (ctx *BlockContext) NodePath() irutil.NodePath {
 	return ctx.w.path
 }
 
