@@ -77,10 +77,10 @@ func (w *Worker) ID() int { return w.id }
 
 // ParseContents parses specified contents (or file) and returns *RootWalker.
 // Function does not update global meta.
-func (w *Worker) ParseContents(file *workspace.File) (root *ir.Root, walker *RootWalker, err error) {
+func (w *Worker) ParseContents(fileInfo *workspace.FileInfo) (root *ir.Root, walker *RootWalker, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			s := fmt.Sprintf("Panic while parsing %s: %s\n\nStack trace: %s", file.Name(), r, dbg.Stack())
+			s := fmt.Sprintf("Panic while parsing %s: %s\n\nStack trace: %s", fileInfo.Name, r, dbg.Stack())
 			log.Print(s)
 			err = errors.New(s)
 		}
@@ -92,10 +92,10 @@ func (w *Worker) ParseContents(file *workspace.File) (root *ir.Root, walker *Roo
 	// We can simplify code below and read from files directly.
 
 	var rd inputs.ReadCloseSizer
-	if file.Contents() == nil {
-		rd, err = SrcInput.NewReader(file.Name())
+	if fileInfo.Contents == nil {
+		rd, err = SrcInput.NewReader(fileInfo.Name)
 	} else {
-		rd, err = SrcInput.NewBytesReader(file.Name(), file.Contents())
+		rd, err = SrcInput.NewBytesReader(fileInfo.Name, fileInfo.Contents)
 	}
 	if err != nil {
 		log.Panicf("open source input: %v", err)
@@ -107,9 +107,8 @@ func (w *Worker) ParseContents(file *workspace.File) (root *ir.Root, walker *Roo
 	b.ReadFrom(rd)
 
 	contents := append(make([]byte, 0, b.Len()), b.Bytes()...)
-	file.ResetContents(contents)
 
-	waiter := BeforeParse(len(contents), file.Name())
+	waiter := BeforeParse(len(contents), fileInfo.Name)
 	defer waiter.Finish()
 
 	parser := php7.NewParser(contents)
@@ -118,24 +117,25 @@ func (w *Worker) ParseContents(file *workspace.File) (root *ir.Root, walker *Roo
 
 	atomic.AddInt64(&initParseTime, int64(time.Since(start)))
 
+	file := workspace.NewFile(fileInfo.Name, contents)
 	return w.analyzeFile(file, parser)
 }
 
 // IndexFile parses the file and fills in the meta info. Can use cache.
-func (w *Worker) IndexFile(file *workspace.File) error {
+func (w *Worker) IndexFile(file *workspace.FileInfo) error {
 	if CacheDir == "" {
 		_, w, err := w.ParseContents(file)
 		if w != nil {
-			updateMetaInfo(file.Name(), &w.meta)
+			updateMetaInfo(file.Name, &w.meta)
 		}
 		return err
 	}
 
 	h := md5.New()
 
-	if file.Contents() == nil {
+	if file.Contents == nil {
 		start := time.Now()
-		fp, err := os.Open(file.Name())
+		fp, err := os.Open(file.Name)
 		if err != nil {
 			return err
 		}
@@ -145,19 +145,19 @@ func (w *Worker) IndexFile(file *workspace.File) error {
 		}
 		atomic.AddInt64(&initFileReadTime, int64(time.Since(start)))
 	} else {
-		h.Write(file.Contents())
+		h.Write(file.Contents)
 	}
 
 	contentsHash := fmt.Sprintf("%x", h.Sum(nil))
 
-	cacheFilenamePart := file.Name()
+	cacheFilenamePart := file.Name
 
-	volumeName := filepath.VolumeName(file.Name())
+	volumeName := filepath.VolumeName(file.Name)
 
 	// windows user supplied full path to directory to be analyzed,
 	// but windows paths does not support ":" in the middle
 	if len(volumeName) == 2 && volumeName[1] == ':' {
-		cacheFilenamePart = file.Name()[0:1] + "_" + file.Name()[2:]
+		cacheFilenamePart = file.Name[0:1] + "_" + file.Name[2:]
 	}
 
 	cacheFile := filepath.Join(CacheDir, cacheFilenamePart+"."+contentsHash)
@@ -170,11 +170,11 @@ func (w *Worker) IndexFile(file *workspace.File) error {
 			return err
 		}
 
-		return createMetaCacheFile(file.Name(), cacheFile, w)
+		return createMetaCacheFile(file.Name, cacheFile, w)
 	}
 	defer fp.Close()
 
-	if err := restoreMetaFromCache(file.Name(), fp); err != nil {
+	if err := restoreMetaFromCache(file.Name, fp); err != nil {
 		// do not really care about why exactly reading from cache failed
 		os.Remove(cacheFile)
 
@@ -183,21 +183,21 @@ func (w *Worker) IndexFile(file *workspace.File) error {
 			return err
 		}
 
-		return createMetaCacheFile(file.Name(), cacheFile, w)
+		return createMetaCacheFile(file.Name, cacheFile, w)
 	}
 
 	atomic.AddInt64(&initCacheReadTime, int64(time.Since(start)))
 	return nil
 }
 
-func (w *Worker) doParseFile(f *workspace.File) []*Report {
+func (w *Worker) doParseFile(f *workspace.FileInfo) []*Report {
 	var err error
 
 	if DebugParseDuration > 0 {
 		start := time.Now()
 		defer func() {
 			if dur := time.Since(start); dur > DebugParseDuration {
-				log.Printf("Parsing of %s took %s", f.Name(), dur)
+				log.Printf("Parsing of %s took %s", f.Name, dur)
 			}
 		}()
 	}
@@ -215,8 +215,8 @@ func (w *Worker) doParseFile(f *workspace.File) []*Report {
 	}
 
 	if err != nil {
-		log.Printf("Failed parsing %s: %s", f.Name(), err.Error())
-		lintdebug.Send("Failed parsing %s: %s", f.Name(), err.Error())
+		log.Printf("Failed parsing %s: %s", f.Name, err.Error())
+		lintdebug.Send("Failed parsing %s: %s", f.Name, err.Error())
 	}
 
 	return reports
@@ -235,7 +235,8 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 
 	st := &meta.ClassParseState{CurrentFile: file.Name()}
 	walker := &RootWalker{
-		ctx: newRootContext(w.ctx, st),
+		file: file,
+		ctx:  newRootContext(w.ctx, st),
 
 		// We clone rules sets to remove all rules that
 		// should not be applied to this file because of the @path.
@@ -254,7 +255,6 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 		allowDisabledRegexp: w.AllowDisable,
 	}
 
-	walker.file = file
 	walker.InitCustom()
 
 	walker.beforeEnterFile()

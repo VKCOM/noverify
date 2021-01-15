@@ -20,8 +20,11 @@ import (
 func ParseContents(filename string, contents []byte, lineRanges []git.LineRange, allowDisabled *regexp.Regexp) (root *ir.Root, walker *RootWalker, err error) {
 	w := NewLintingWorker(0)
 	w.AllowDisable = allowDisabled
-	file := workspace.NewFileWithContents(filename, contents)
-	file.SetLineRanges(lineRanges)
+	file := &workspace.FileInfo{
+		Name:       filename,
+		Contents:   contents,
+		LineRanges: lineRanges,
+	}
 	return w.ParseContents(file)
 }
 
@@ -29,7 +32,10 @@ func ParseContents(filename string, contents []byte, lineRanges []git.LineRange,
 // Deprecated: use Worker.IndexFile instead.
 func IndexFile(filename string, contents []byte) error {
 	w := NewIndexingWorker(0)
-	file := workspace.NewFileWithContents(filename, contents)
+	file := &workspace.FileInfo{
+		Name:     filename,
+		Contents: contents,
+	}
 	return w.IndexFile(file)
 }
 
@@ -94,7 +100,7 @@ func ParseFilenames(readFileNamesFunc workspace.ReadCallback, allowDisabled *reg
 
 	lintdebug.Send("Parsing using %d cores", MaxConcurrency)
 
-	filenamesCh := make(chan *workspace.File, 512)
+	filenamesCh := make(chan *workspace.FileInfo, 512)
 
 	go func() {
 		readFileNamesFunc(filenamesCh)

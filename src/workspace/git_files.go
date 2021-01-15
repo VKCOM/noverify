@@ -32,7 +32,7 @@ func ParseGitignoreFromDir(path string) (gitignore.IgnoreMatcher, error) {
 
 // ReadChangesFromWorkTree returns callback that reads files from workTree dir that are changed
 func ReadChangesFromWorkTree(dir string, changes []git.Change) ReadCallback {
-	return func(ch chan *File) {
+	return func(ch chan *FileInfo) {
 		for _, c := range changes {
 			if c.Type == git.Deleted {
 				continue
@@ -49,7 +49,10 @@ func ReadChangesFromWorkTree(dir string, changes []git.Change) ReadCallback {
 				log.Fatalf("Could not read file %s: %s", filename, err.Error())
 			}
 
-			ch <- NewFileWithContents(filename, contents)
+			ch <- &FileInfo{
+				Name:     filename,
+				Contents: contents,
+			}
 		}
 	}
 }
@@ -68,7 +71,7 @@ func ReadFilesFromGit(gitDir, repo, commitSHA1 string, ignoreRegex *regexp.Regex
 
 	suffixes := makePHPExtensionSuffixes()
 
-	return func(ch chan *File) {
+	return func(ch chan *FileInfo) {
 		start := time.Now()
 		idx := 0
 
@@ -93,7 +96,10 @@ func ReadFilesFromGit(gitDir, repo, commitSHA1 string, ignoreRegex *regexp.Regex
 					return
 				}
 
-				ch <- NewFileWithContents(filepath.Join(gitDir, filename), contents)
+				ch <- &FileInfo{
+					Name:     filename,
+					Contents: contents,
+				}
 			},
 		)
 
@@ -125,7 +131,7 @@ func ReadOldFilesFromGit(gitDir, repo, commitSHA1 string, changes []git.Change) 
 
 	suffixes := makePHPExtensionSuffixes()
 
-	return func(ch chan *File) {
+	return func(ch chan *FileInfo) {
 		err = catter.Walk(
 			"",
 			tree,
@@ -138,10 +144,11 @@ func ReadOldFilesFromGit(gitDir, repo, commitSHA1 string, changes []git.Change) 
 				return ok
 			},
 			func(filename string, contents []byte) {
-				file := NewFileWithContents(filepath.Join(gitDir, filename), contents)
-				file.SetLineRanges(changedMap[filename])
-
-				ch <- file
+				ch <- &FileInfo{
+					Name:       filename,
+					Contents:   contents,
+					LineRanges: changedMap[filename],
+				}
 			},
 		)
 
@@ -175,7 +182,7 @@ func ReadFilesFromGitWithChanges(gitDir, repo, commitSHA1 string, changes []git.
 
 	suffixes := makePHPExtensionSuffixes()
 
-	return func(ch chan *File) {
+	return func(ch chan *FileInfo) {
 		err = catter.Walk(
 			"",
 			tree,
@@ -188,10 +195,11 @@ func ReadFilesFromGitWithChanges(gitDir, repo, commitSHA1 string, changes []git.
 				return ok
 			},
 			func(filename string, contents []byte) {
-				file := NewFileWithContents(filepath.Join(gitDir, filename), contents)
-				file.SetLineRanges(changedMap[filename])
-
-				ch <- file
+				ch <- &FileInfo{
+					Name:       filename,
+					Contents:   contents,
+					LineRanges: changedMap[filename],
+				}
 			},
 		)
 

@@ -50,7 +50,7 @@ func openFile(filename, contents string) {
 	openMapMutex.Lock()
 	openMap[filename] = openedFile{
 		rootNode: rootNode,
-		file:     workspace.NewFileWithContents(filename, []byte(contents)),
+		file:     workspace.NewFile(filename, []byte(contents)),
 	}
 	openMapMutex.Unlock()
 }

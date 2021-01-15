@@ -384,7 +384,7 @@ func handleTextDocumentDefinition(req *baseRequest) error {
 
 	result := make([]vscode.Location, 0)
 
-	if params.Position.Line < f.file.CountLinePosition() {
+	if params.Position.Line < f.file.NumLinesPosition() {
 		w := &definitionWalker{
 			position: f.file.LinePosition(params.Position.Line) + params.Position.Character,
 			scopes:   f.scopes,
@@ -423,7 +423,7 @@ func handleTextDocumentReferences(req *baseRequest) error {
 
 	result := make([]vscode.Location, 0)
 
-	if params.Position.Line < f.file.CountLinePosition() {
+	if params.Position.Line < f.file.NumLinesPosition() {
 		w := &referencesWalker{
 			position: f.file.LinePosition(params.Position.Line) + params.Position.Character,
 		}
@@ -486,7 +486,7 @@ func handleTextDocumentHover(req *baseRequest) error {
 	lnPos := params.Position.Line
 	chPos := params.Position.Character - 1
 
-	if lnPos >= f.file.CountLines() {
+	if lnPos >= f.file.NumLines() {
 		lintdebug.Send("Line out of range for file %s: %d", filename, lnPos)
 		return nil
 	}
@@ -629,7 +629,7 @@ func handleTextDocumentCompletion(req *baseRequest) error {
 	var ln []byte
 	var position int
 
-	if lnPos >= f.file.CountLines() {
+	if lnPos >= f.file.NumLines() {
 		lintdebug.Send("Line out of range for file %s: %d", filename, lnPos)
 		return nil
 	}

@@ -8,18 +8,18 @@ import (
 	"github.com/karrick/godirwalk"
 )
 
-type ReadCallback func(ch chan *File)
+type ReadCallback func(ch chan *FileInfo)
 
 // ReadFilenames returns callback that reads filenames into channel
 func ReadFilenames(filenames []string, filter *FilenameFilter) ReadCallback {
-	return func(ch chan *File) {
+	return func(ch chan *FileInfo) {
 		for _, filename := range filenames {
 			readFilenames(ch, filename, filter)
 		}
 	}
 }
 
-func readFilenames(ch chan<- *File, filename string, filter *FilenameFilter) {
+func readFilenames(ch chan<- *FileInfo, filename string, filter *FilenameFilter) {
 	absFilename, err := filepath.Abs(filename)
 	if err == nil {
 		filename = absFilename
@@ -57,7 +57,9 @@ func readFilenames(ch chan<- *File, filename string, filter *FilenameFilter) {
 			return
 		}
 
-		ch <- NewFile(filename)
+		ch <- &FileInfo{
+			Name: filename,
+		}
 		return
 	}
 
@@ -97,7 +99,9 @@ func readFilenames(ch chan<- *File, filename string, filter *FilenameFilter) {
 				return nil
 			}
 
-			ch <- NewFile(path)
+			ch <- &FileInfo{
+				Name: path,
+			}
 			return nil
 		},
 	}

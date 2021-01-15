@@ -576,7 +576,7 @@ func (b *blockLinter) addFixForArray(arr *ir.ArrayExpr) {
 
 	from := arr.Position.StartPos
 	to := arr.Position.EndPos
-	have := b.walker.r.file.Part(from, to)
+	have := b.walker.r.file.Contents()[from:to]
 	have = bytes.TrimPrefix(have, []byte("array("))
 	have = bytes.TrimSuffix(have, []byte(")"))
 

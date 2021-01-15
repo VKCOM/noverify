@@ -368,7 +368,10 @@ func shuffleFiles(files []TestFile) {
 
 func parseTestFile(t testing.TB, worker *linter.Worker, f TestFile) (rootNode *ir.Root, w *linter.RootWalker) {
 	var err error
-	file := workspace.NewFileWithContents(f.Name, f.Data)
+	file := &workspace.FileInfo{
+		Name:     f.Name,
+		Contents: f.Data,
+	}
 	rootNode, w, err = worker.ParseContents(file)
 	if err != nil {
 		t.Fatalf("could not parse %s: %v", f.Name, err.Error())

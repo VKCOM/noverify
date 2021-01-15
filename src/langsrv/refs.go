@@ -195,7 +195,7 @@ type parseFn func(filename string, rootNode ir.Node, contents []byte, parser *ph
 
 func findReferences(substr string, parse parseFn) []vscode.Location {
 	cb := workspace.ReadFilenames(linter.AnalysisFiles, nil)
-	ch := make(chan *workspace.File)
+	ch := make(chan *workspace.FileInfo)
 	go func() {
 		cb(ch)
 		close(ch)
@@ -215,10 +215,10 @@ func findReferences(substr string, parse parseFn) []vscode.Location {
 		wg.Add(1)
 		go func() {
 			for fi := range ch {
-				contents, err := readFile(openMapCopy, fi.Name())
+				contents, err := readFile(openMapCopy, fi.Name)
 				if err == nil && bytes.Contains(contents, substrBytes) {
 					func() {
-						waiter := linter.BeforeParse(len(contents), fi.Name())
+						waiter := linter.BeforeParse(len(contents), fi.Name)
 						defer waiter.Finish()
 
 						parser := php7.NewParser(contents)
@@ -231,11 +231,11 @@ func findReferences(substr string, parse parseFn) []vscode.Location {
 							func() {
 								defer func() {
 									if r := recover(); r != nil {
-										lintdebug.Send("Panic while processing %s: %v", fi.Name(), r)
+										lintdebug.Send("Panic while processing %s: %v", fi.Name, r)
 									}
 								}()
 
-								found = parse(fi.Name(), rootIR, contents, parser)
+								found = parse(fi.Name, rootIR, contents, parser)
 							}()
 							resultMutex.Lock()
 							result = append(result, found...)

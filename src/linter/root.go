@@ -100,8 +100,7 @@ func NewWalkerForReferencesSearcher(workerCtx *WorkerContext, filename string, b
 
 // InitFileData initializes file that are needed for RootWalker work
 func (d *RootWalker) InitFileData(filename string, contents []byte, lineRanges []git.LineRange) {
-	d.file = workspace.NewFileWithContents(filename, contents)
-	d.file.SetLineRanges(lineRanges)
+	d.file = workspace.NewFile(filename, contents)
 }
 
 // InitCustom is needed to initialize walker state
@@ -309,7 +308,7 @@ func (d *RootWalker) EnterNode(n ir.Node) (res bool) {
 }
 
 func (d *RootWalker) parseStartPos(pos *position.Position) (startLn []byte, startChar int) {
-	if pos.StartLine >= 1 && d.file.CountLines() > pos.StartLine {
+	if pos.StartLine >= 1 && d.file.NumLines() > pos.StartLine {
 		startLn = d.file.Line(pos.StartLine - 1)
 		p := d.file.LinePosition(pos.StartLine - 1)
 		if pos.StartPos > p {
@@ -366,7 +365,7 @@ func (d *RootWalker) report(n ir.Node, lineNumber int, level int, checkName, msg
 
 		startLn, startChar = d.parseStartPos(&pos)
 
-		if pos.EndLine >= 1 && d.file.CountLines() > pos.EndLine {
+		if pos.EndLine >= 1 && d.file.NumLines() > pos.EndLine {
 			endLn = d.file.Line(pos.EndLine - 1)
 			p := d.file.LinePosition(pos.EndLine - 1)
 			if pos.EndPos > p {
@@ -380,7 +379,7 @@ func (d *RootWalker) report(n ir.Node, lineNumber int, level int, checkName, msg
 			endChar = len(endLn)
 		}
 	} else if isReportForLine {
-		if lineNumber < 1 || lineNumber > d.file.CountLines() {
+		if lineNumber < 1 || lineNumber > d.file.NumLines() {
 			return
 		}
 
@@ -491,7 +490,7 @@ func (d *RootWalker) reportHash(pos *position.Position, startLine []byte, checkN
 		if index >= 1 {
 			prevLine = d.file.Line(index - 1)
 		}
-		if d.file.CountLines() > index+1 {
+		if d.file.NumLines() > index+1 {
 			nextLine = d.file.Line(index + 1)
 		}
 	}
@@ -1796,14 +1795,14 @@ func (d *RootWalker) sourceNodeString(n ir.Node) string {
 	pos := ir.GetPosition(n)
 	from := pos.StartPos
 	to := pos.EndPos
+	src := d.file.Contents()
 	// Taking a node from the source code preserves the original formatting
 	// and is more efficient than printing it.
-	part := d.file.Part(from, to)
-	if part == nil {
-		// If we can't take node out of the source text, print it.
-		return irutil.FmtNode(n)
+	if (from >= 0 && from < len(src)) && (to >= 0 && to < len(src)) {
+		return string(src[from:to])
 	}
-	return string(part)
+	// If we can't take node out of the source text, print it.
+	return irutil.FmtNode(n)
 }
 
 func (d *RootWalker) renderRuleMessage(msg string, n ir.Node, m phpgrep.MatchData, truncate bool) string {
@@ -2006,7 +2005,7 @@ func (d *RootWalker) checkKeywordCasePos(n ir.Node, begin int, keyword string) {
 	to := from + len(keyword)
 
 	wantKwd := keyword
-	haveKwd := d.file.Part(from, to)
+	haveKwd := d.file.Contents()[from:to]
 	if wantKwd != string(haveKwd) {
 		d.Report(n, LevelWarning, "keywordCase", "Use %s instead of %s",
 			wantKwd, haveKwd)
@@ -2021,7 +2020,7 @@ func (d *RootWalker) checkKeywordCase(n ir.Node, keyword string) {
 
 func (d *RootWalker) nodeText(n ir.Node) []byte {
 	pos := ir.GetPosition(n)
-	return d.file.Part(pos.StartPos, pos.EndPos)
+	return d.file.Contents()[pos.StartPos:pos.EndPos]
 }
 
 func (d *RootWalker) parseClassPHPDoc(n ir.Node, doc []phpdoc.CommentPart) classPhpDocParseResult {
