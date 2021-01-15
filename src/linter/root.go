@@ -77,26 +77,6 @@ type phpDocParamEl struct {
 
 type phpDocParamsMap map[string]phpDocParamEl
 
-// NewWalkerForLangServer creates a copy of RootWalker to make full analysis of a file
-func NewWalkerForLangServer(workerCtx *WorkerContext, prev *RootWalker) *RootWalker {
-	st := &meta.ClassParseState{CurrentFile: prev.ctx.st.CurrentFile}
-	return &RootWalker{
-		file: prev.file,
-		ctx:  newRootContext(workerCtx, st),
-	}
-}
-
-// NewWalkerForReferencesSearcher allows to access full context of a parser so that we can perform complex
-// searches if needed.
-func NewWalkerForReferencesSearcher(workerCtx *WorkerContext, filename string, block BlockCheckerCreateFunc) *RootWalker {
-	st := &meta.ClassParseState{CurrentFile: filename}
-	d := &RootWalker{
-		ctx:         newRootContext(workerCtx, st),
-		customBlock: []BlockCheckerCreateFunc{block},
-	}
-	return d
-}
-
 // InitCustomFileData initializes file that are needed for RootWalker work for language server
 func (d *RootWalker) InitCustomFileData(filename string, contents []byte) {
 	d.file = workspace.NewFile(filename, contents)
