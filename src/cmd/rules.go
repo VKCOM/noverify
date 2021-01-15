@@ -87,7 +87,7 @@ func parseEmbeddedRules(p *rules.Parser) ([]*rules.Set, error) {
 
 func appendRuleSet(rset *rules.Set, filter func(r rules.Rule) bool) {
 	appendRules := func(dst, src *rules.ScopedSet) {
-		for i, list := range src.RulesByKind {
+		for i, list := range &src.RulesByKind {
 			for _, r := range list {
 				if !filter(r) {
 					continue

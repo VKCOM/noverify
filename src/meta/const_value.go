@@ -97,7 +97,7 @@ func (c ConstValue) GetBool() bool {
 
 // ToBool converts x constant to boolean constants following PHP conversion rules.
 // Second bool result tells whether that conversion was successful.
-func (c ConstValue) ToBool() (bool, bool) {
+func (c ConstValue) ToBool() (value bool, ok bool) {
 	switch c.Type {
 	case Bool:
 		return c.GetBool(), true
@@ -143,6 +143,8 @@ func (c ConstValue) ToString() (string, bool) {
 		return strconv.FormatInt(c.GetInt(), 10), true
 	case String:
 		return c.GetString(), true
+	case Float:
+		return fmt.Sprintf("%g", c.GetFloat()), true
 	}
 	return "", false
 }

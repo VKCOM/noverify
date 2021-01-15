@@ -101,6 +101,18 @@ function as_shape($x) {
   return $x;
 }
 
+/** @param int|null */
+function return_null() {
+  return null;
+}
+
+class ByNull {
+  /** @param int|null */
+  public function return_null() {
+    return null;
+  }
+}
+
 main();
 `
 
@@ -126,7 +138,7 @@ main();
 		//
 		// If cache encoding changes, there is a very high chance that
 		// encoded data lengh will change as well.
-		wantLen := 5030
+		wantLen := 5332
 		haveLen := buf.Len()
 		if haveLen != wantLen {
 			t.Errorf("cache len mismatch:\nhave: %d\nwant: %d", haveLen, wantLen)
@@ -135,7 +147,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "62321eae8ac6f753221d367a0a0e2a3190202ef49c608ceef6e03dd6b09906c64bf20a1470abef9e26b917836a68415a5459491208fb692d8773524cdbe6d239"
+		wantStrings := "cfbe2074534e9b4116dc9e4a629e5fcfba2344c363314643dce1f90156c9b20006a006cb4e7d724d9d5fca6c6034d078d95127a9cbb002f79fb68debc2a59def"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)
@@ -173,6 +185,6 @@ func collectCacheStrings(data string) string {
 	sort.Strings(parts)
 
 	enc := sha512.New()
-	enc.Write([]byte(strings.Join(parts, ",")))
+	_, _ = enc.Write([]byte(strings.Join(parts, ","))) // sha512.Write always returns nil error
 	return hex.EncodeToString(enc.Sum(nil))
 }

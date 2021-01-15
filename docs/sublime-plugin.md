@@ -1,6 +1,9 @@
 # Using NoVerify as language server for Sublime Text
 
-You can install https://github.com/tomv564/LSP using Package Control. Here is an example config for NoVerify (replaces phpls):
+> **Note**: only available in version **0.3.0** and below.
+
+You can install https://github.com/tomv564/LSP using Package Control. Here is an example config for NoVerify (replaces
+phpls):
 
 ```json
 {

@@ -26,9 +26,6 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.ArrayExpr:
 		b.checkArray(n)
 
-	case *ir.ArrayDimFetchExpr:
-		b.checkArrayDimFetch(n)
-
 	case *ir.FunctionCallExpr:
 		b.checkFunctionCall(n)
 
@@ -132,7 +129,8 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.SpaceshipExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
-
+	case *ir.CoalesceExpr:
+		b.checkCoalesceExpr(n)
 	case *ir.TypeCastExpr:
 		if n.Type == "array" {
 			b.checkRedundantCastArray(n.Expr)
@@ -191,27 +189,14 @@ func (b *blockLinter) report(n ir.Node, level int, checkName, msg string, args .
 	b.walker.r.Report(n, level, checkName, msg, args...)
 }
 
-func (b *blockLinter) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
-	typ := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, s.Variable)
+func (b *blockLinter) checkCoalesceExpr(n *ir.CoalesceExpr) {
+	lhsType := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, n.Left)
+	if !lhsType.IsPrecise() {
+		return
+	}
 
-	var (
-		maybeHaveClasses bool
-		haveArrayAccess  bool
-	)
-
-	typ.Iterate(func(t string) {
-		// FullyQualified class name will have "\" in the beginning
-		if meta.IsClassType(t) {
-			maybeHaveClasses = true
-
-			if !haveArrayAccess && solver.Implements(t, `\ArrayAccess`) {
-				haveArrayAccess = true
-			}
-		}
-	})
-
-	if maybeHaveClasses && !haveArrayAccess {
-		b.report(s.Variable, LevelDoNotReject, "arrayAccess", "Array access to non-array type %s", typ)
+	if !lhsType.Contains("null") {
+		b.report(n.Right, LevelInformation, "deadCode", "%s is not nullable, right side of the expression is unreachable", irutil.FmtNode(n.Left))
 	}
 }
 
@@ -591,7 +576,7 @@ func (b *blockLinter) addFixForArray(arr *ir.ArrayExpr) {
 
 	from := arr.Position.StartPos
 	to := arr.Position.EndPos
-	have := b.walker.r.fileContents[from:to]
+	have := b.walker.r.file.Contents()[from:to]
 	have = bytes.TrimPrefix(have, []byte("array("))
 	have = bytes.TrimSuffix(have, []byte(")"))
 

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
 )
 
 type SubCommand struct {
@@ -26,11 +25,4 @@ func (s *SubCommand) String() string {
 		res += fmt.Sprintf("\t\t$ noverify %s %s\n", s.Name, ex.Line)
 	}
 	return res
-}
-
-func looksLikeCommandName(s string) bool {
-	return !strings.HasPrefix(s, "-") &&
-		!strings.Contains(s, ".") &&
-		!strings.Contains(s, "/") &&
-		!strings.Contains(s, "\\")
 }

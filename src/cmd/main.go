@@ -17,7 +17,6 @@ import (
 
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/cmd/stubs"
-	"github.com/VKCOM/noverify/src/langsrv"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linter/lintapi"
@@ -121,21 +120,16 @@ func Run(cfg *MainConfig) (int, error) {
 			// Erase sub-command argument (index=1) to make it invisible for
 			// sub commands themselves.
 			os.Args = append(os.Args[:subIdx], os.Args[subIdx+1:]...)
-		} else if looksLikeCommandName(commandName) {
-			fmt.Printf("Sub-command %s doesn't exist\n\n", commandName)
+		} else {
+			fmt.Printf("Sub-command '%s' doesn't exist\n\n", commandName)
 			GlobalCmds.PrintHelpPage()
 			return 0, nil
 		}
 
 	}
 	if subcmd == nil {
-		log.Print(`
-
-NoVerify migrates to the new CLI using commands, launching in this way is still possible, but is already deprecated.
-Use 'noverify help' for more information.
-
-`)
-		subcmd, _ = GlobalCmds.GetCommand("check")
+		GlobalCmds.PrintHelpPage()
+		return 0, nil
 	}
 
 	status, err := subcmd.Main(cfg)
@@ -166,7 +160,12 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 	}
 
 	if args.pprofHost != "" {
-		go http.ListenAndServe(args.pprofHost, nil)
+		go func() {
+			err := http.ListenAndServe(args.pprofHost, nil)
+			if err != nil {
+				log.Printf("pprof listen and serve: %v", err)
+			}
+		}()
 	}
 
 	// Since this function is expected to be exit-free, it's OK
@@ -207,12 +206,6 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 	lintdebug.Register(func(msg string) { linter.DebugMessage("%s", msg) })
 	go linter.MemoryLimiterThread()
 
-	if linter.LangServer {
-		langsrv.RegisterDebug()
-		langsrv.Start()
-		return 0, nil
-	}
-
 	log.Printf("Started")
 
 	if err := initStubs(); err != nil {
@@ -222,8 +215,6 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 	if args.gitRepo != "" {
 		return gitMain(&l, cfg)
 	}
-
-	linter.AnalysisFiles = flag.Args()
 
 	log.Printf("Indexing %+v", flag.Args())
 	linter.ParseFilenames(workspace.ReadFilenames(flag.Args(), nil), l.allowDisableRegex)
@@ -325,6 +316,10 @@ func FormatReport(r *linter.Report) string {
 }
 
 func haveAutofixableReports(reports []*linter.Report) bool {
+	if len(reports) == 0 {
+		return false
+	}
+
 	declaredChecks := linter.GetDeclaredChecks()
 	checksWithQuickfix := make(map[string]struct{})
 
@@ -363,7 +358,7 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 		}
 	}
 
-	containsAutofixableReports = haveAutofixableReports(diff)
+	containsAutofixableReports = haveAutofixableReports(filtered)
 
 	if l.args.outputJSON {
 		type reportList struct {
@@ -410,15 +405,15 @@ func LoadEmbeddedStubs(filenames []string) error {
 
 	readStubs := func(ch chan workspace.FileInfo) {
 		for _, filename := range filenames {
-			data, err := stubs.Asset(filename)
+			contents, err := stubs.Asset(filename)
 			if err != nil {
 				log.Printf("Failed to read embedded %q file: %v", filename, err)
 				atomic.AddInt64(&errorsCount, 1)
 				continue
 			}
 			ch <- workspace.FileInfo{
-				Filename: filename,
-				Contents: data,
+				Name:     filename,
+				Contents: contents,
 			}
 		}
 	}

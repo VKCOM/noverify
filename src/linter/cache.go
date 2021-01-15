@@ -41,7 +41,8 @@ import (
 //     43 - define'd const values stored in cache
 //     44 - rename ConstantInfo => ConstInfo
 //     45 - added Mixins field to meta.ClassInfo
-const cacheVersion = 45
+//     46 - changed the way of inferring the return type of functions and methods
+const cacheVersion = 46
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")
@@ -75,7 +76,9 @@ func writeMetaCache(w *bufio.Writer, root *RootWalker) error {
 
 func createMetaCacheFile(filename, cacheFile string, root *RootWalker) error {
 	tmpPath := cacheFile + ".tmp"
-	os.MkdirAll(filepath.Dir(tmpPath), 0777)
+	if err := os.MkdirAll(filepath.Dir(tmpPath), 0777); err != nil {
+		return err
+	}
 
 	// TODO: some kind of file-based locking
 	fp, err := os.OpenFile(tmpPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)

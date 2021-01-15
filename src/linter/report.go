@@ -457,11 +457,11 @@ case INC:
 			Default:  true,
 			Quickfix: false,
 			Comment:  `Report commonly misspelled words in symbol names.`,
-			Before:   `function performace_test() ...`, //nolint:misspell
+			Before:   `function performace_test() ...`, //nolint:misspell // misspelled on purpose
 			After:    `function performance_test() ...`,
 		},
 
-		//nolint:misspell
+		//nolint:misspell // misspelled on purpose
 		{
 			Name:     "misspellComment",
 			Default:  true,
@@ -811,7 +811,8 @@ func reportListToMap(list []*Report) map[string][]*Report {
 		res[r.Filename] = append(res[r.Filename], r)
 	}
 
-	for _, l := range res {
+	for i := range res {
+		l := res[i]
 		sort.Slice(l, func(i, j int) bool {
 			return l[i].Line < l[j].Line
 		})

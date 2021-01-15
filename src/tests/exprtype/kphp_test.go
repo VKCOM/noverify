@@ -18,8 +18,8 @@ function get_any_arr() {
   return [[1]];
 }
 
-exprtype(get_any(), 'int|mixed');
-exprtype(get_any_arr(), 'int[][]|mixed[][]');
+exprtype(get_any(), 'mixed');
+exprtype(get_any_arr(), 'mixed[][]');
 `
 	runKPHPExprTypeTest(t, &exprTypeTestParams{code: code})
 }
