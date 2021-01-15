@@ -43,7 +43,6 @@ func hasModifier(list []*ir.Identifier, key string) bool {
 
 func runIndexing(cacheDir string, targets []string, filter *workspace.FilenameFilter) error {
 	linter.CacheDir = cacheDir
-	linter.AnalysisFiles = targets
 
 	// If we don't do this, the program will hang.
 	go linter.MemoryLimiterThread()

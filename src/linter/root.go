@@ -22,7 +22,6 @@ import (
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/state"
-	"github.com/VKCOM/noverify/src/vscode"
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
@@ -64,10 +63,6 @@ type RootWalker struct {
 	strictTypes bool
 
 	reports []*Report
-
-	// exposed meta-information for language server to use
-	Scopes      map[ir.Node]*meta.Scope
-	Diagnostics []vscode.Diagnostic
 }
 
 type phpDocParamEl struct {
@@ -76,11 +71,6 @@ type phpDocParamEl struct {
 }
 
 type phpDocParamsMap map[string]phpDocParamEl
-
-// InitCustomFileData initializes file that are needed for RootWalker work for language server
-func (d *RootWalker) InitCustomFileData(filename string, contents []byte) {
-	d.file = workspace.NewFile(filename, contents)
-}
 
 // InitCustom is needed to initialize walker state
 func (d *RootWalker) InitCustom() {
@@ -499,7 +489,7 @@ func (d *RootWalker) report(n ir.Node, lineNumber int, level int, checkName, msg
 			// Hack to parse syntax error message from php-parser.
 			// When in language server mode, do not map syntax errors in order not to
 			// complain about unfinished piece of code that user is currently writing.
-			if strings.Contains(msg, "syntax error") && strings.Contains(msg, " at line ") && !LangServer {
+			if strings.Contains(msg, "syntax error") && strings.Contains(msg, " at line ") {
 				// it is in form "Syntax error: syntax error: unexpected '*' at line 4"
 				if lastIdx := strings.LastIndexByte(msg, ' '); lastIdx > 0 {
 					lineNumStr := msg[lastIdx+1:]
@@ -550,58 +540,37 @@ func (d *RootWalker) report(n ir.Node, lineNumber int, level int, checkName, msg
 		}
 	}
 
-	if LangServer {
-		severity, ok := vscodeLevelMap[level]
-		if ok {
-			diag := vscode.Diagnostic{
-				Code:     msg,
-				Message:  fmt.Sprintf(msg, args...),
-				Severity: severity,
-				Range: vscode.Range{
-					Start: vscode.Position{Line: pos.StartLine - 1, Character: startChar},
-					End:   vscode.Position{Line: pos.EndLine - 1, Character: endChar},
-				},
-			}
-
-			if level == LevelUnused {
-				diag.Tags = append(diag.Tags, 1 /* Unnecessary */)
-			}
-
-			d.Diagnostics = append(d.Diagnostics, diag)
-		}
-	} else {
-		// Replace Unused with Info (Notice) in non-LSP mode.
-		if level == LevelUnused {
-			level = LevelInformation
-		}
-		msg := fmt.Sprintf(msg, args...)
-		var hash uint64
-		if BaselineProfile != nil {
-			// If baseline is not enabled, don't waste time on hash computations.
-			hash = d.reportHash(&pos, startLn, checkName, msg)
-			if count := d.ctx.baseline.Count(hash); count >= 1 {
-				if d.ctx.hashCounters == nil {
-					d.ctx.hashCounters = make(map[uint64]int)
-				}
-				d.ctx.hashCounters[hash]++
-				if d.ctx.hashCounters[hash] <= count {
-					return
-				}
-			}
-		}
-
-		d.reports = append(d.reports, &Report{
-			CheckName: checkName,
-			Context:   string(startLn),
-			StartChar: startChar,
-			EndChar:   endChar,
-			Line:      pos.StartLine,
-			Level:     level,
-			Filename:  strings.ReplaceAll(d.ctx.st.CurrentFile, "\\", "/"), // To make output stable between platforms, see #572
-			Message:   msg,
-			Hash:      hash,
-		})
+	// Replace Unused with Info (Notice) in non-LSP mode.
+	if level == LevelUnused {
+		level = LevelInformation
 	}
+	msg = fmt.Sprintf(msg, args...)
+	var hash uint64
+	if BaselineProfile != nil {
+		// If baseline is not enabled, don't waste time on hash computations.
+		hash = d.reportHash(&pos, startLn, checkName, msg)
+		if count := d.ctx.baseline.Count(hash); count >= 1 {
+			if d.ctx.hashCounters == nil {
+				d.ctx.hashCounters = make(map[uint64]int)
+			}
+			d.ctx.hashCounters[hash]++
+			if d.ctx.hashCounters[hash] <= count {
+				return
+			}
+		}
+	}
+
+	d.reports = append(d.reports, &Report{
+		CheckName: checkName,
+		Context:   string(startLn),
+		StartChar: startChar,
+		EndChar:   endChar,
+		Line:      pos.StartLine,
+		Level:     level,
+		Filename:  strings.ReplaceAll(d.ctx.st.CurrentFile, "\\", "/"), // To make output stable between platforms, see #572
+		Message:   msg,
+		Hash:      hash,
+	})
 }
 
 // Report registers a single report message about some found problem.
@@ -869,13 +838,6 @@ func (d *RootWalker) getElementPos(n ir.Node) meta.ElementPosition {
 		EndLine:   int32(pos.EndLine),
 		Length:    int32(pos.EndPos - pos.StartPos),
 	}
-}
-
-func (d *RootWalker) addScope(n ir.Node, sc *meta.Scope) {
-	if d.Scopes == nil {
-		d.Scopes = make(map[ir.Node]*meta.Scope)
-	}
-	d.Scopes[n] = sc
 }
 
 type methodModifiers struct {
@@ -1647,7 +1609,6 @@ func (d *RootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	funcInfo := d.handleFuncStmts(params, nil, fun.Stmts, sc)
 	actualReturnTypes := funcInfo.returnTypes
 	exitFlags := funcInfo.prematureExitFlags
-	d.addScope(fun, sc)
 
 	returnTypes := functionReturnType(phpdocReturnType, hintReturnType, actualReturnTypes)
 
