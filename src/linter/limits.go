@@ -2,8 +2,8 @@ package linter
 
 import "github.com/VKCOM/noverify/src/lintdebug"
 
-// ParseWaiter waits to allow parsing of a file.
-type ParseWaiter struct {
+// parseWaiter waits to allow parsing of a file.
+type parseWaiter struct {
 	size int
 }
 
@@ -42,18 +42,18 @@ func MemoryLimiterThread() {
 	}
 }
 
-// BeforeParse must be called before parsing file, so that soft memory
+// beforeParse must be called before parsing file, so that soft memory
 // limit can be applied.
 // Do not forget to call Finish()!
-func BeforeParse(size int, filename string) *ParseWaiter {
+func beforeParse(size int, filename string) *parseWaiter {
 	parseStartCh <- memoryRequest{size: size, filename: filename}
-	return &ParseWaiter{
+	return &parseWaiter{
 		size: size,
 	}
 }
 
 // Finish must be called after parsing is finished (e.g. using defer p.Finish()) to
 // allow other goroutines to parse files.
-func (p *ParseWaiter) Finish() {
+func (p *parseWaiter) Finish() {
 	parseFinishedCh <- p.size
 }

@@ -172,7 +172,7 @@ func (ctx *RootContext) File() *workspace.File {
 
 // BlockContext is the context for block checker.
 type BlockContext struct {
-	w *BlockWalker
+	w *blockWalker
 }
 
 // NodePath returns a node path up to the current traversal position.

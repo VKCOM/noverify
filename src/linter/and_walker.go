@@ -12,7 +12,7 @@ import (
 // All variables defined by andWalker should be removed after
 // if body is handled, this is why we collect varsToDelete.
 type andWalker struct {
-	b *BlockWalker
+	b *blockWalker
 
 	varsToDelete []ir.Node
 }
