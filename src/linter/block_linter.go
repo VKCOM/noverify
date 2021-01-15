@@ -349,6 +349,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 	class, ok := meta.Info.GetClass(className)
 	if !ok {
 		b.walker.r.reportUndefinedType(e.Class, className)
+		return
 	} else {
 		b.walker.r.checkNameCase(e.Class, className, class.Name)
 	}

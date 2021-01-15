@@ -1,3 +1,30 @@
+ERROR   undefined: Call to undefined method {mixed}->setDefined() at testdata/options-resolver/OptionConfigurator.php:25
+        $this->resolver->setDefined($name);
+                         ^^^^^^^^^^
+ERROR   undefined: Call to undefined method {mixed}->setAllowedTypes() at testdata/options-resolver/OptionConfigurator.php:39
+        $this->resolver->setAllowedTypes($this->name, $types);
+                         ^^^^^^^^^^^^^^^
+ERROR   undefined: Call to undefined method {mixed}->setAllowedValues() at testdata/options-resolver/OptionConfigurator.php:55
+        $this->resolver->setAllowedValues($this->name, $values);
+                         ^^^^^^^^^^^^^^^^
+ERROR   undefined: Call to undefined method {mixed}->setDefault() at testdata/options-resolver/OptionConfigurator.php:71
+        $this->resolver->setDefault($this->name, $value);
+                         ^^^^^^^^^^
+ERROR   undefined: Call to undefined method {mixed}->define() at testdata/options-resolver/OptionConfigurator.php:81
+        return $this->resolver->define($option);
+                                ^^^^^^
+ERROR   undefined: Call to undefined method {mixed}->setDeprecated() at testdata/options-resolver/OptionConfigurator.php:95
+        $this->resolver->setDeprecated($this->name, $package, $version, $message);
+                         ^^^^^^^^^^^^^
+ERROR   undefined: Call to undefined method {mixed}->setNormalizer() at testdata/options-resolver/OptionConfigurator.php:111
+        $this->resolver->setNormalizer($this->name, $normalizer);
+                         ^^^^^^^^^^^^^
+ERROR   undefined: Call to undefined method {mixed}->setRequired() at testdata/options-resolver/OptionConfigurator.php:125
+        $this->resolver->setRequired($this->name);
+                         ^^^^^^^^^^^
+ERROR   undefined: Call to undefined method {mixed}->setInfo() at testdata/options-resolver/OptionConfigurator.php:139
+        $this->resolver->setInfo($this->name, $info);
+                         ^^^^^^^
 MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (7.4) at testdata/options-resolver/OptionsResolver.php:188
             if (isset($params[0]) && null !== ($class = $params[0]->getClass()) && Options::class === $class->name) {
                                                                     ^^^^^^^^

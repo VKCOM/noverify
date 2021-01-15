@@ -207,7 +207,6 @@ func (d *RootWalker) EnterNode(n ir.Node) (res bool) {
 		} else {
 			d.handlePropertyList(n)
 		}
-		res = true
 
 	case *ir.ClassConstListStmt:
 		if meta.IsIndexingComplete() {
@@ -215,7 +214,6 @@ func (d *RootWalker) EnterNode(n ir.Node) (res bool) {
 		} else {
 			d.handleClassConstList(n)
 		}
-		res = true
 
 	case *ir.ClassMethodStmt:
 		if meta.IsIndexingComplete() {
@@ -235,16 +233,10 @@ func (d *RootWalker) EnterNode(n ir.Node) (res bool) {
 		}
 
 	case *ir.TraitUseStmt:
-		d.checkKeywordCase(n, "use")
-		cl := d.getOrCreateCurrentClass()
-		for _, tr := range n.Traits {
-			traitName, ok := solver.GetClassName(d.ctx.st, tr)
-			if ok {
-				if !meta.IsIndexingComplete() {
-					cl.Traits[traitName] = struct{}{}
-				}
-				d.checkTraitImplemented(tr, traitName)
-			}
+		if meta.IsIndexingComplete() {
+			d.checkTraitUse(n)
+		} else {
+			d.handleTraitUse(n)
 		}
 
 	case *ir.Assign:
@@ -307,6 +299,22 @@ func (d *RootWalker) handleTrait(n *ir.TraitStmt) {
 	}
 
 	d.meta.Traits.Set(fullName, trait)
+}
+
+func (d *RootWalker) handleTraitUse(n *ir.TraitUseStmt) {
+	class, ok := d.getCurrentClass()
+	if !ok {
+		return
+	}
+
+	for _, tr := range n.Traits {
+		traitName, ok := solver.GetClassName(d.ctx.st, tr)
+		if !ok {
+			continue
+		}
+
+		class.Traits[traitName] = struct{}{}
+	}
 }
 
 func (d *RootWalker) handleInterface(n *ir.InterfaceStmt) {
@@ -920,7 +928,7 @@ func (d *RootWalker) parseMethodModifiers(meth *ir.ClassMethodStmt) (res methodM
 	return res
 }
 
-func (d *RootWalker) getOrCreateCurrentClass() meta.ClassInfo {
+func (d *RootWalker) getCurrentClass() (meta.ClassInfo, bool) {
 	var classes meta.ClassesMap
 
 	if d.ctx.st.IsTrait {
@@ -937,10 +945,13 @@ func (d *RootWalker) getOrCreateCurrentClass() meta.ClassInfo {
 			} else {
 				cl, ok = meta.Info.GetClass(d.ctx.st.CurrentClass)
 			}
+			if !ok {
+				return cl, false
+			}
 		}
 	}
 
-	return cl
+	return cl, true
 }
 
 func (d *RootWalker) checkLowerCaseModifier(m *ir.Identifier) string {
@@ -952,8 +963,11 @@ func (d *RootWalker) checkLowerCaseModifier(m *ir.Identifier) string {
 	return lcase
 }
 
-func (d *RootWalker) handlePropertyList(pl *ir.PropertyListStmt) bool {
-	cl := d.getOrCreateCurrentClass()
+func (d *RootWalker) handlePropertyList(pl *ir.PropertyListStmt) {
+	class, ok := d.getCurrentClass()
+	if !ok {
+		return
+	}
 
 	isStatic, accessLevel := d.handlePropertyModifiers(pl)
 	hintType := d.handleTypeHint(pl.Type)
@@ -973,14 +987,12 @@ func (d *RootWalker) handlePropertyList(pl *ir.PropertyListStmt) bool {
 		}
 
 		// TODO: handle duplicate property
-		cl.Properties[propName] = meta.PropertyInfo{
+		class.Properties[propName] = meta.PropertyInfo{
 			Pos:         d.getElementPos(prop),
 			Typ:         typ.Immutable(),
 			AccessLevel: accessLevel,
 		}
 	}
-
-	return true
 }
 
 func (d *RootWalker) handlePropertyModifiers(pl *ir.PropertyListStmt) (bool, meta.AccessLevel) {
@@ -1004,7 +1016,10 @@ func (d *RootWalker) handlePropertyModifiers(pl *ir.PropertyListStmt) (bool, met
 }
 
 func (d *RootWalker) handleClassConstList(s *ir.ClassConstListStmt) {
-	class := d.getOrCreateCurrentClass()
+	class, ok := d.getCurrentClass()
+	if !ok {
+		return
+	}
 
 	accessLevel := d.handleConstantAccessLevel(s)
 
@@ -1057,8 +1072,11 @@ func (d *RootWalker) addClassMethodParamsToScope(method meta.FuncInfo, sc *meta.
 	}
 }
 
-func (d *RootWalker) handleClassMethod(m *ir.ClassMethodStmt) bool {
-	class := d.getOrCreateCurrentClass()
+func (d *RootWalker) handleClassMethod(m *ir.ClassMethodStmt) {
+	class, ok := d.getCurrentClass()
+	if !ok {
+		return
+	}
 
 	name := m.MethodName.Value
 	_, insideInterface := d.currentClassNode.(*ir.InterfaceStmt)
@@ -1132,8 +1150,6 @@ func (d *RootWalker) handleClassMethod(m *ir.ClassMethodStmt) bool {
 		ExitFlags:    exitFlags,
 		Doc:          doc.info,
 	})
-
-	return false
 }
 
 func (d *RootWalker) transformClassMethodModifiersToFuncFlags(modif methodModifiers, insideInterface bool, stmts []ir.Node) meta.FuncFlags {
@@ -2001,8 +2017,12 @@ func (d *RootWalker) checkIfaceImplemented(n ir.Node, nameUsed string) {
 }
 
 func (d *RootWalker) checkImplemented(n ir.Node, nameUsed string, otherClass meta.ClassInfo) {
-	cl := d.getOrCreateCurrentClass()
-	if d.ctx.st.IsTrait || cl.IsAbstract() {
+	class, ok := d.getCurrentClass()
+	if !ok {
+		return
+	}
+
+	if d.ctx.st.IsTrait || class.IsAbstract() {
 		return
 	}
 	d.checkNameCase(n, nameUsed, otherClass.Name)

@@ -71,7 +71,10 @@ func (d *RootWalker) checkClassPHPDoc(n ir.Node, doc []phpdoc.CommentPart) {
 }
 
 func (d *RootWalker) checkClassMethod(m *ir.ClassMethodStmt) {
-	class := d.getOrCreateCurrentClass()
+	class, ok := d.getCurrentClass()
+	if !ok {
+		return
+	}
 
 	// data
 	name := m.MethodName.Value
@@ -265,7 +268,20 @@ func (d *RootWalker) checkTrait(n *ir.TraitStmt) {
 	d.checkIdentMisspellings(n.TraitName)
 }
 
-func (d *RootWalker) checkPropertyList(pl *ir.PropertyListStmt) bool {
+func (d *RootWalker) checkTraitUse(n *ir.TraitUseStmt) {
+	d.checkKeywordCase(n, "use")
+
+	for _, tr := range n.Traits {
+		traitName, ok := solver.GetClassName(d.ctx.st, tr)
+		if !ok {
+			continue
+		}
+
+		d.checkTraitImplemented(tr, traitName)
+	}
+}
+
+func (d *RootWalker) checkPropertyList(pl *ir.PropertyListStmt) {
 	d.checkPropertyModifiers(pl)
 
 	for _, pNode := range pl.Properties {
@@ -274,8 +290,6 @@ func (d *RootWalker) checkPropertyList(pl *ir.PropertyListStmt) bool {
 		d.checkCommentMisspellings(prop, prop.PhpDocComment)
 		d.checkPHPDocVar(prop, prop.PhpDoc)
 	}
-
-	return true
 }
 
 func (d *RootWalker) checkPropertyModifiers(pl *ir.PropertyListStmt) {
