@@ -322,12 +322,6 @@ require($_);
  * @scope root
  */
 $_ ? $x : $x;
-
-/**
- * @name noverifyString
- * @info the linter is spelled NoVerify
- */
-"noverify";
 `
 
 	test := linttest.NewSuite(t)
@@ -356,7 +350,6 @@ $name = "NoVerify"; // No warning
 		`self-assignment`,
 		`duplicated then/else parts in ternary expression`,
 		`use require_once instead of require`,
-		`the linter is spelled NoVerify`,
 	}
 	runRulesTest(t, test, rfile)
 }

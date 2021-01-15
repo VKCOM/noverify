@@ -12,7 +12,6 @@ package lintapi
 const (
 	LevelError    = 1
 	LevelWarning  = 2
-	LevelInfo     = 3
-	LevelNotice   = 4 // do not treat this warning as a reason to reject if we get this kind of warning
-	LevelSecurity = 5
+	LevelNotice   = 3 // do not treat this warning as a reason to reject if we get this kind of warning
+	LevelSecurity = 4
 )

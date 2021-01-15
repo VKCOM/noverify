@@ -196,7 +196,7 @@ func (b *blockLinter) checkCoalesceExpr(n *ir.CoalesceExpr) {
 	}
 
 	if !lhsType.Contains("null") {
-		b.report(n.Right, LevelInfo, "deadCode", "%s is not nullable, right side of the expression is unreachable", irutil.FmtNode(n.Left))
+		b.report(n.Right, LevelWarning, "deadCode", "%s is not nullable, right side of the expression is unreachable", irutil.FmtNode(n.Left))
 	}
 }
 

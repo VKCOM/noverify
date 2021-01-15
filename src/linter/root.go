@@ -460,7 +460,7 @@ func (d *rootWalker) reportHash(pos *position.Position, startLine []byte, checkN
 func (d *rootWalker) reportUndefinedVariable(v ir.Node, maybeHave bool) {
 	sv, ok := v.(*ir.SimpleVar)
 	if !ok {
-		d.Report(v, LevelInfo, "undefined", "Unknown variable variable %s used",
+		d.Report(v, LevelWarning, "undefined", "Unknown variable variable %s used",
 			meta.NameNodeToString(v))
 		return
 	}
@@ -470,7 +470,7 @@ func (d *rootWalker) reportUndefinedVariable(v ir.Node, maybeHave bool) {
 	}
 
 	if maybeHave {
-		d.Report(sv, LevelInfo, "undefined", "Variable might have not been defined: %s", sv.Name)
+		d.Report(sv, LevelWarning, "undefined", "Variable might have not been defined: %s", sv.Name)
 	} else {
 		d.Report(sv, LevelError, "undefined", "Undefined variable: %s", sv.Name)
 	}
@@ -497,7 +497,7 @@ func (d *rootWalker) handleComment(c freefloating.String) {
 			}
 			if d.linterDisabled {
 				needleLine := ln.Line() + c.Position.StartLine - 1
-				d.ReportByLine(needleLine, LevelInfo, "linterError", "Linter is already disabled for this file")
+				d.ReportByLine(needleLine, LevelWarning, "linterError", "Linter is already disabled for this file")
 				continue
 			}
 			canDisable := false
@@ -507,7 +507,7 @@ func (d *rootWalker) handleComment(c freefloating.String) {
 			d.linterDisabled = canDisable
 			if !canDisable {
 				needleLine := ln.Line() + c.Position.StartLine - 1
-				d.ReportByLine(needleLine, LevelInfo, "linterError", "You are not allowed to disable linter")
+				d.ReportByLine(needleLine, LevelWarning, "linterError", "You are not allowed to disable linter")
 			}
 		}
 	}
@@ -1033,10 +1033,10 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 
 func (d *rootWalker) reportPhpdocErrors(n ir.Node, errs phpdocErrors) {
 	for _, err := range errs.phpdocLint {
-		d.Report(n, LevelInfo, "phpdocLint", "%s", err)
+		d.Report(n, LevelWarning, "phpdocLint", "%s", err)
 	}
 	for _, err := range errs.phpdocType {
-		d.Report(n, LevelInfo, "phpdocType", "%s", err)
+		d.Report(n, LevelWarning, "phpdocType", "%s", err)
 	}
 }
 
@@ -1047,7 +1047,7 @@ func (d *rootWalker) parsePHPDocVar(n ir.Node, doc []phpdoc.CommentPart) (m meta
 		if ok && part.Name() == "var" {
 			types, warning := typesFromPHPDoc(&d.ctx, part.Type)
 			if warning != "" {
-				d.Report(n, LevelInfo, "phpdocType", "%s on line %d", warning, part.Line())
+				d.Report(n, LevelWarning, "phpdocType", "%s on line %d", warning, part.Line())
 			}
 			m = newTypesMap(&d.ctx, types)
 		}
@@ -1913,7 +1913,7 @@ func (d *rootWalker) checkNameCase(n ir.Node, nameUsed, nameExpected string) {
 		return
 	}
 	if nameUsed != nameExpected {
-		d.Report(n, LevelInfo, "nameCase", "%s should be spelled %s",
+		d.Report(n, LevelWarning, "nameCase", "%s should be spelled %s",
 			nameUsed, nameExpected)
 	}
 }

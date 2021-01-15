@@ -16,8 +16,6 @@ func formatRule(r *Rule) string {
 		buf.WriteString(" * @error " + r.Message + "\n")
 	case lintapi.LevelWarning:
 		buf.WriteString(" * @warning " + r.Message + "\n")
-	case lintapi.LevelInfo:
-		buf.WriteString(" * @info " + r.Message + "\n")
 	case lintapi.LevelNotice:
 		buf.WriteString(" * @maybe " + r.Message + "\n")
 	}

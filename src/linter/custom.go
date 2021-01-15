@@ -251,7 +251,6 @@ type RootCheckerCreateFunc func(*RootContext) RootChecker
 const (
 	LevelError    = lintapi.LevelError
 	LevelWarning  = lintapi.LevelWarning
-	LevelInfo     = lintapi.LevelInfo
 	LevelNotice   = lintapi.LevelNotice
 	LevelSecurity = lintapi.LevelSecurity // Like warning, but reported without a context line
 )

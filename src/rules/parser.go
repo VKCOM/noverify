@@ -201,9 +201,6 @@ func (p *parser) parseRuleInfo(st ir.Node, proto *Rule) (Rule, error) {
 		case "warning":
 			rule.Level = lintapi.LevelWarning
 			rule.Message = part.ParamsText
-		case "info":
-			rule.Level = lintapi.LevelInfo
-			rule.Message = part.ParamsText
 		case "maybe":
 			rule.Level = lintapi.LevelNotice
 			rule.Message = part.ParamsText

@@ -618,7 +618,6 @@ type Report struct {
 var severityNames = map[int]string{
 	LevelError:    "ERROR",
 	LevelWarning:  "WARNING",
-	LevelInfo:     "INFO",
 	LevelNotice:   "MAYBE",
 	LevelSecurity: "WARNING",
 }
