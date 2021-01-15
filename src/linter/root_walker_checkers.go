@@ -89,7 +89,6 @@ func (d *RootWalker) checkClassMethod(m *ir.ClassMethodStmt) {
 	// state
 	d.addClassMethodThisVariableToScope(modif, sc)
 	d.addClassMethodParamsToScope(method, sc)
-	d.addScope(m, sc)
 
 	handleMethodInfo := d.handleFuncStmts(method.Params, nil, convertNodeToStmts(m.Stmt), sc)
 
