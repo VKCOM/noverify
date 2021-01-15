@@ -801,6 +801,16 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 		b.report(e.Call, LevelWarning, "callStatic", "Calling instance method as static method")
 	}
 
+	if call.methodInfo.Info.Doc.Deprecated {
+		if call.methodInfo.Info.Doc.DeprecationNote != "" {
+			b.report(e.Call, LevelDoNotReject, "deprecated", "Call to deprecated static method %s::%s() (%s)",
+				call.className, call.methodName, call.methodInfo.Info.Doc.DeprecationNote)
+		} else {
+			b.report(e.Call, LevelDoNotReject, "deprecated", "Call to deprecated static method %s::%s()",
+				call.className, call.methodName)
+		}
+	}
+
 	if call.isFound && !canAccess(b.walker.r.ctx.st, call.methodInfo.ClassName, call.methodInfo.Info.AccessLevel) {
 		b.report(e.Call, LevelError, "accessLevel", "Cannot access %s method %s::%s()", call.methodInfo.Info.AccessLevel, call.methodInfo.ClassName, call.methodName)
 	}
