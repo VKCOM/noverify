@@ -147,6 +147,32 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []meta.T
 			continue
 		}
 		types := conv.mapType(typeExpr)
+
+		// We need to resolve the class names as well as static,
+		// self and $this here for it to work properly.
+		for i, typ := range types {
+			if _, ok := typeAliases[typ.Elem]; ok {
+				continue
+			}
+
+			if trivialTypes[typ.Elem] {
+				continue
+			}
+
+			className, ok := solver.GetClassName(conv.ctx.st, &ir.Name{Value: typ.Elem})
+			if !ok {
+				continue
+			}
+
+			types[i].Elem = className
+		}
+		if conv.nullable {
+			types = append(types, meta.Type{
+				Elem: "null",
+				Dims: 0,
+			})
+		}
+
 		props = append(props, shapeTypeProp{
 			key:   key.Value,
 			types: types,
