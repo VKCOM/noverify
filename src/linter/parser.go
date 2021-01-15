@@ -7,37 +7,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/workspace"
 )
-
-// ParseContents is a legacy way of linting files.
-// Deprecated: use Worker.ParseContents instead.
-func ParseContents(filename string, contents []byte, lineRanges []git.LineRange, allowDisabled *regexp.Regexp) (root *ir.Root, walker *RootWalker, err error) {
-	w := NewLintingWorker(0)
-	w.AllowDisable = allowDisabled
-	file := workspace.FileInfo{
-		Name:       filename,
-		Contents:   contents,
-		LineRanges: lineRanges,
-	}
-	return w.ParseContents(file)
-}
-
-// IndexFile is a legacy way of indexing files.
-// Deprecated: use Worker.IndexFile instead.
-func IndexFile(filename string, contents []byte) error {
-	w := NewIndexingWorker(0)
-	file := workspace.FileInfo{
-		Name:     filename,
-		Contents: contents,
-	}
-	return w.IndexFile(file)
-}
 
 func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedSet {
 	if ruleSet == nil {
