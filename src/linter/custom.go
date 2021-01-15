@@ -12,6 +12,7 @@ import (
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/vscode"
+	"github.com/VKCOM/noverify/src/workspace"
 )
 
 // MetaCacher is an interface for integrating checker-specific
@@ -163,12 +164,11 @@ func (ctx *RootContext) Filename() string {
 	return ctx.w.ctx.st.CurrentFile
 }
 
-// FileContents returns analyzed file source code.
-// Caller should not modify the returned slice.
+// File returns analyzed file.
 //
 // Experimental API.
-func (ctx *RootContext) FileContents() []byte {
-	return ctx.w.fileContents
+func (ctx *RootContext) File() *workspace.File {
+	return ctx.w.file
 }
 
 // BlockContext is the context for block checker.
@@ -233,9 +233,9 @@ func (ctx *BlockContext) Filename() string {
 	return ctx.w.r.ctx.st.CurrentFile
 }
 
-// FileContents returns the content of the file being analyzed.
-func (ctx *BlockContext) FileContents() []byte {
-	return ctx.w.r.fileContents
+// File returns the file being analyzed.
+func (ctx *BlockContext) File() *workspace.File {
+	return ctx.w.r.file
 }
 
 // AddQuickfix adds a new quick fix.

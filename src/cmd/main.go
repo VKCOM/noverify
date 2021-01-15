@@ -419,15 +419,15 @@ func LoadEmbeddedStubs(filenames []string) error {
 
 	readStubs := func(ch chan workspace.FileInfo) {
 		for _, filename := range filenames {
-			data, err := stubs.Asset(filename)
+			contents, err := stubs.Asset(filename)
 			if err != nil {
 				log.Printf("Failed to read embedded %q file: %v", filename, err)
 				atomic.AddInt64(&errorsCount, 1)
 				continue
 			}
 			ch <- workspace.FileInfo{
-				Filename: filename,
-				Contents: data,
+				Name:     filename,
+				Contents: contents,
 			}
 		}
 	}

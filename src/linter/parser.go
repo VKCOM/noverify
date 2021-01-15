@@ -20,14 +20,23 @@ import (
 func ParseContents(filename string, contents []byte, lineRanges []git.LineRange, allowDisabled *regexp.Regexp) (root *ir.Root, walker *RootWalker, err error) {
 	w := NewLintingWorker(0)
 	w.AllowDisable = allowDisabled
-	return w.ParseContents(filename, contents, lineRanges)
+	file := workspace.FileInfo{
+		Name:       filename,
+		Contents:   contents,
+		LineRanges: lineRanges,
+	}
+	return w.ParseContents(file)
 }
 
 // IndexFile is a legacy way of indexing files.
 // Deprecated: use Worker.IndexFile instead.
 func IndexFile(filename string, contents []byte) error {
 	w := NewIndexingWorker(0)
-	return w.IndexFile(filename, contents)
+	file := workspace.FileInfo{
+		Name:     filename,
+		Contents: contents,
+	}
+	return w.IndexFile(file)
 }
 
 func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedSet {

@@ -2830,7 +2830,7 @@ func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	if params.stubs != "" {
 		linter.InitStubs(func(ch chan workspace.FileInfo) {
 			ch <- workspace.FileInfo{
-				Filename: "stubs.php",
+				Name:     "stubs.php",
 				Contents: []byte(params.stubs),
 			}
 		})
