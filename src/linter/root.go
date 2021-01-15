@@ -893,15 +893,15 @@ func (d *RootWalker) addScope(n ir.Node, sc *meta.Scope) {
 type methodModifiers struct {
 	abstract    bool
 	static      bool
-	accessLevel meta.AccessLevel
 	final       bool
+	accessLevel meta.AccessLevel
 }
 
 func (d *RootWalker) parseMethodModifiers(meth *ir.ClassMethodStmt) (res methodModifiers) {
 	res.accessLevel = meta.Public
 
 	for _, m := range meth.Modifiers {
-		switch d.checkLowerCaseModifier(m) {
+		switch strings.ToLower(m.Value) {
 		case "abstract":
 			res.abstract = true
 		case "static":
@@ -914,8 +914,6 @@ func (d *RootWalker) parseMethodModifiers(meth *ir.ClassMethodStmt) (res methodM
 			res.accessLevel = meta.Protected
 		case "final":
 			res.final = true
-		default:
-			linterError(d.ctx.st.CurrentFile, "Unrecognized method modifier: %s", m.Value)
 		}
 	}
 
@@ -926,43 +924,19 @@ func (d *RootWalker) getOrCreateCurrentClass() meta.ClassInfo {
 	var classes meta.ClassesMap
 
 	if d.ctx.st.IsTrait {
-		if d.meta.Traits.H == nil {
-			d.meta.Traits = meta.NewClassesMap()
-		}
 		classes = d.meta.Traits
 	} else {
-		if d.meta.Classes.H == nil {
-			d.meta.Classes = meta.NewClassesMap()
-		}
 		classes = d.meta.Classes
 	}
 
 	cl, ok := classes.Get(d.ctx.st.CurrentClass)
 	if !ok {
-		var foundInGlobalMeta bool
 		if meta.IsIndexingComplete() {
 			if d.ctx.st.IsTrait {
 				cl, ok = meta.Info.GetTrait(d.ctx.st.CurrentClass)
 			} else {
 				cl, ok = meta.Info.GetClass(d.ctx.st.CurrentClass)
 			}
-			foundInGlobalMeta = ok
-		}
-
-		if !foundInGlobalMeta {
-			cl = meta.ClassInfo{
-				Pos:              d.getElementPos(d.currentClassNode),
-				Name:             d.ctx.st.CurrentClass,
-				Parent:           d.ctx.st.CurrentParentClass,
-				ParentInterfaces: d.ctx.st.CurrentParentInterfaces,
-				Interfaces:       make(map[string]struct{}),
-				Traits:           make(map[string]struct{}),
-				Methods:          meta.NewFunctionsMap(),
-				Properties:       make(meta.PropertiesMap),
-				Constants:        make(meta.ConstantsMap),
-			}
-
-			classes.Set(d.ctx.st.CurrentClass, cl)
 		}
 	}
 
@@ -986,10 +960,7 @@ func (d *RootWalker) handlePropertyList(pl *ir.PropertyListStmt) bool {
 
 	for _, pNode := range pl.Properties {
 		prop := pNode.(*ir.PropertyStmt)
-
 		propName := prop.Variable.Name
-
-		d.checkCommentMisspellings(prop, prop.PhpDocComment)
 
 		typ := d.parsePHPDocVar(prop, prop.PhpDoc)
 		if prop.Expr != nil {
@@ -1007,19 +978,6 @@ func (d *RootWalker) handlePropertyList(pl *ir.PropertyListStmt) bool {
 			Typ:         typ.Immutable(),
 			AccessLevel: accessLevel,
 		}
-	}
-
-	return true
-}
-
-func (d *RootWalker) checkPropertyList(pl *ir.PropertyListStmt) bool {
-	d.checkPropertyModifiers(pl)
-
-	for _, pNode := range pl.Properties {
-		prop := pNode.(*ir.PropertyStmt)
-
-		d.checkCommentMisspellings(prop, prop.PhpDocComment)
-		d.checkPHPDocVar(prop, prop.PhpDoc)
 	}
 
 	return true
@@ -1045,12 +1003,6 @@ func (d *RootWalker) handlePropertyModifiers(pl *ir.PropertyListStmt) (bool, met
 	return isStatic, accessLevel
 }
 
-func (d *RootWalker) checkPropertyModifiers(pl *ir.PropertyListStmt) {
-	for _, m := range pl.Modifiers {
-		d.checkLowerCaseModifier(m)
-	}
-}
-
 func (d *RootWalker) handleClassConstList(s *ir.ClassConstListStmt) {
 	class := d.getOrCreateCurrentClass()
 
@@ -1073,14 +1025,6 @@ func (d *RootWalker) handleClassConstList(s *ir.ClassConstListStmt) {
 	}
 }
 
-func (d *RootWalker) checkClassConstList(s *ir.ClassConstListStmt) {
-	d.checkConstantAccessLevel(s)
-
-	for _, constant := range s.Consts {
-		d.checkCommentMisspellings(constant, constant.(*ir.ConstantStmt).PhpDocComment)
-	}
-}
-
 func (d *RootWalker) handleConstantAccessLevel(s *ir.ClassConstListStmt) meta.AccessLevel {
 	level := meta.Public
 
@@ -1096,12 +1040,6 @@ func (d *RootWalker) handleConstantAccessLevel(s *ir.ClassConstListStmt) meta.Ac
 	}
 
 	return level
-}
-
-func (d *RootWalker) checkConstantAccessLevel(s *ir.ClassConstListStmt) {
-	for _, m := range s.Modifiers {
-		d.checkLowerCaseModifier(m)
-	}
 }
 
 func (d *RootWalker) addClassMethodThisVariableToScope(modif methodModifiers, sc *meta.Scope) {

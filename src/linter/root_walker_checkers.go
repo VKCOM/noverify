@@ -94,14 +94,27 @@ func (d *RootWalker) checkClassMethod(m *ir.ClassMethodStmt) {
 	d.checkClassMethodOldStyleConstructor(m, name)
 	d.checkParentConstructorCall(m.MethodName, handleMethodInfo.callsParentConstructor)
 
-	d.checkClassMethodComplexity(m)
-	d.checkClassMethodPhpDoc(m, name, modif, insideInterface)
 	d.checkClassMethodParams(m)
+	d.checkClassMethodModifiers(m)
+	d.checkClassMethodComplexity(m)
 	d.checkClassMethodTraversable(m, name, method)
+	d.checkClassMethodPhpDoc(m, name, modif, insideInterface)
 	d.checkClassMagicMethod(m.MethodName, name, modif, len(m.Params))
 
 	d.checkIdentMisspellings(m.MethodName)
 	d.checkCommentMisspellings(m.MethodName, m.PhpDocComment)
+}
+
+func (d *RootWalker) checkClassMethodModifiers(meth *ir.ClassMethodStmt) {
+	for _, m := range meth.Modifiers {
+		modifier := d.checkLowerCaseModifier(m)
+		switch modifier {
+		case "abstract", "static", "public", "private", "protected", "final":
+			// ok
+		default:
+			linterError(d.ctx.st.CurrentFile, "Unrecognized method modifier: %s", m.Value)
+		}
+	}
 }
 
 func (d *RootWalker) checkClassMethodOldStyleConstructor(meth *ir.ClassMethodStmt, nm string) {
@@ -250,4 +263,37 @@ func (d *RootWalker) checkTrait(n *ir.TraitStmt) {
 	d.checkKeywordCase(n, "trait")
 	d.checkCommentMisspellings(n.TraitName, n.PhpDocComment)
 	d.checkIdentMisspellings(n.TraitName)
+}
+
+func (d *RootWalker) checkPropertyList(pl *ir.PropertyListStmt) bool {
+	d.checkPropertyModifiers(pl)
+
+	for _, pNode := range pl.Properties {
+		prop := pNode.(*ir.PropertyStmt)
+
+		d.checkCommentMisspellings(prop, prop.PhpDocComment)
+		d.checkPHPDocVar(prop, prop.PhpDoc)
+	}
+
+	return true
+}
+
+func (d *RootWalker) checkPropertyModifiers(pl *ir.PropertyListStmt) {
+	for _, m := range pl.Modifiers {
+		d.checkLowerCaseModifier(m)
+	}
+}
+
+func (d *RootWalker) checkClassConstList(s *ir.ClassConstListStmt) {
+	d.checkConstantAccessLevel(s)
+
+	for _, constant := range s.Consts {
+		d.checkCommentMisspellings(constant, constant.(*ir.ConstantStmt).PhpDocComment)
+	}
+}
+
+func (d *RootWalker) checkConstantAccessLevel(s *ir.ClassConstListStmt) {
+	for _, m := range s.Modifiers {
+		d.checkLowerCaseModifier(m)
+	}
 }
