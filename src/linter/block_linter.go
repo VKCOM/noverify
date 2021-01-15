@@ -350,9 +350,9 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 	if !ok {
 		b.walker.r.reportUndefinedType(e.Class, className)
 		return
-	} else {
-		b.walker.r.checkNameCase(e.Class, className, class.Name)
 	}
+
+	b.walker.r.checkNameCase(e.Class, className, class.Name)
 
 	// It's illegal to instantiate abstract class, but `static` can
 	// resolve to something else due to the late static binding,

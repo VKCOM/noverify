@@ -1624,28 +1624,6 @@ func (b *BlockWalker) handleAssign(a *ir.Assign) bool {
 		}
 
 		b.untrackVarName(sv.Name)
-
-		// if sv.Name != "this" {
-		// 	break
-		// }
-		//
-		// if b.r.ctx.st.CurrentClass == "" {
-		// 	break
-		// }
-		//
-		// propertyName, ok := v.Property.(*ir.Identifier)
-		// if !ok {
-		// 	break
-		// }
-		//
-		// class, ok := b.r.getCurrentClass()
-		// if !ok {
-		// 	break
-		// }
-		//
-		// p := class.Properties[propertyName.Value]
-		// p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, a.Expression, b.ctx.customTypes))
-		// class.Properties[propertyName.Value] = p
 	case *ir.StaticPropertyFetchExpr:
 		_, ok := v.Property.(*ir.SimpleVar)
 		if !ok {
@@ -1657,20 +1635,6 @@ func (b *BlockWalker) handleAssign(a *ir.Assign) bool {
 		if b.r.ctx.st.CurrentClass == "" {
 			break
 		}
-		//
-		// className, ok := solver.GetClassName(b.r.ctx.st, v.Class)
-		// if !ok || className != b.r.ctx.st.CurrentClass {
-		// 	break
-		// }
-		//
-		// class, ok := b.r.getCurrentClass()
-		// if !ok {
-		// 	break
-		// }
-		//
-		// p := class.Properties["$"+sv.Name]
-		// p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, a.Expression, b.ctx.customTypes))
-		// class.Properties["$"+sv.Name] = p
 	default:
 		a.Variable.Walk(b)
 	}
