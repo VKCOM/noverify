@@ -1,5 +1,7 @@
 # Using NoVerify as language server for VSCode
 
+> **Note**: only available in version **0.3.0** and below.
+
 [![Version](https://vsmarketplacebadge.apphb.com/version-short/EdgardMessias.php-noverify.svg)](https://marketplace.visualstudio.com/items?itemName=EdgardMessias.php-noverify)
 [![Installs](https://vsmarketplacebadge.apphb.com/installs-short/EdgardMessias.php-noverify.svg)](https://marketplace.visualstudio.com/items?itemName=EdgardMessias.php-noverify)
 [![Ratings](https://vsmarketplacebadge.apphb.com/rating-short/EdgardMessias.php-noverify.svg)](https://marketplace.visualstudio.com/items?itemName=EdgardMessias.php-noverify)
