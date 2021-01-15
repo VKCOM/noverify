@@ -109,7 +109,7 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (root *ir.Root, walk
 	}
 	contents := append(make([]byte, 0, b.Len()), b.Bytes()...)
 
-	waiter := BeforeParse(len(contents), fileInfo.Name)
+	waiter := beforeParse(len(contents), fileInfo.Name)
 	defer waiter.Finish()
 
 	parser := php7.NewParser(contents)
@@ -262,7 +262,7 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 	walker.beforeEnterFile()
 	rootIR.Walk(walker)
 	if meta.IsIndexingComplete() {
-		AnalyzeFileRootLevel(rootIR, walker)
+		analyzeFileRootLevel(rootIR, walker)
 	}
 	walker.afterLeaveFile()
 
@@ -279,4 +279,23 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 	atomic.AddInt64(&initWalkTime, int64(time.Since(start)))
 
 	return rootIR, walker, nil
+}
+
+// analyzeFileRootLevel does analyze file top-level code.
+// This method is exposed for language server use, you usually
+// do not need to call it yourself.
+func analyzeFileRootLevel(rootNode ir.Node, d *RootWalker) {
+	sc := meta.NewScope()
+	sc.AddVarName("argv", meta.NewTypesMap("string[]"), "predefined", meta.VarAlwaysDefined)
+	sc.AddVarName("argc", meta.NewTypesMap("int"), "predefined", meta.VarAlwaysDefined)
+
+	b := newBlockWalker(d, sc)
+	b.ignoreFunctionBodies = true
+	b.rootLevel = true
+
+	for _, createFn := range d.customBlock {
+		b.custom = append(b.custom, createFn(&BlockContext{w: b}))
+	}
+
+	rootNode.Walk(b)
 }
