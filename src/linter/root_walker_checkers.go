@@ -156,9 +156,6 @@ func (d *RootWalker) checkClassMethodParams(m *ir.ClassMethodStmt) {
 }
 
 func (d *RootWalker) checkClassMethodTraversable(m *ir.ClassMethodStmt, name string, method meta.FuncInfo) {
-	if !meta.IsIndexingComplete() {
-		return
-	}
 	if name != "getIterator" {
 		return
 	}

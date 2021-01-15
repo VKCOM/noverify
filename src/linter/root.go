@@ -1969,9 +1969,6 @@ func (d *RootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filter
 }
 
 func (d *RootWalker) checkTraitImplemented(n ir.Node, nameUsed string) {
-	if !meta.IsIndexingComplete() {
-		return
-	}
 	trait, ok := meta.Info.GetTrait(nameUsed)
 	if !ok {
 		d.reportUndefinedType(n, nameUsed)
@@ -1981,9 +1978,6 @@ func (d *RootWalker) checkTraitImplemented(n ir.Node, nameUsed string) {
 }
 
 func (d *RootWalker) checkClassImplemented(n ir.Node, nameUsed string) {
-	if !meta.IsIndexingComplete() {
-		return
-	}
 	class, ok := meta.Info.GetClass(nameUsed)
 	if !ok {
 		d.reportUndefinedType(n, nameUsed)
