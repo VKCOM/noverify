@@ -297,6 +297,7 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 	return rootIR, walker, nil
 }
 
+// analyzeFileRootLevel does analyze file top-level code.
 // This method is exposed for language server use, you usually
 // do not need to call it yourself.
 func analyzeFileRootLevel(rootNode ir.Node, d *rootWalker) {

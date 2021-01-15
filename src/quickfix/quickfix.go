@@ -6,6 +6,8 @@ import (
 	"sort"
 )
 
+// TODO: add quickfixes support in lang server?
+
 // TextEdit is a suggested issue fix.
 //
 // More or less, it represents our version of the https://godoc.org/golang.org/x/tools/go/analysis#TextEdit
