@@ -1717,10 +1717,11 @@ func (d *rootWalker) runRules(n ir.Node, sc *meta.Scope, rlist []rules.Rule) {
 	}
 }
 
-func (d *rootWalker) sourceNodeString(n ir.Node) string {
+// nodeText is used to get the string that represents the
+// passed node more efficiently than irutil.FmtNode.
+func (d *rootWalker) nodeText(n ir.Node) string {
 	pos := ir.GetPosition(n)
-	from := pos.StartPos
-	to := pos.EndPos
+	from, to := pos.StartPos, pos.EndPos
 	src := d.file.Contents()
 	// Taking a node from the source code preserves the original formatting
 	// and is more efficient than printing it.
@@ -1734,7 +1735,7 @@ func (d *rootWalker) sourceNodeString(n ir.Node) string {
 func (d *rootWalker) renderRuleMessage(msg string, n ir.Node, m phpgrep.MatchData, truncate bool) string {
 	// "$$" stands for the entire matched node, like $0 in regexp.
 	if strings.Contains(msg, "$$") {
-		msg = strings.ReplaceAll(msg, "$$", d.sourceNodeString(n))
+		msg = strings.ReplaceAll(msg, "$$", d.nodeText(n))
 	}
 
 	if len(m.Capture) == 0 {
@@ -1745,7 +1746,7 @@ func (d *rootWalker) renderRuleMessage(msg string, n ir.Node, m phpgrep.MatchDat
 		if !strings.Contains(msg, key) {
 			continue
 		}
-		nodeString := d.sourceNodeString(c.Node)
+		nodeString := d.nodeText(c.Node)
 		// Don't interpolate strings that are too long
 		// or contain a newline.
 		var replacement string
@@ -1942,11 +1943,6 @@ func (d *rootWalker) checkKeywordCase(n ir.Node, keyword string) {
 	// Only works for nodes that have a keyword of interest
 	// as the leftmost token.
 	d.checkKeywordCasePos(n, ir.GetPosition(n).StartPos, keyword)
-}
-
-func (d *rootWalker) nodeText(n ir.Node) []byte {
-	pos := ir.GetPosition(n)
-	return d.file.Contents()[pos.StartPos:pos.EndPos]
 }
 
 func (d *rootWalker) parseClassPHPDoc(n ir.Node, doc []phpdoc.CommentPart) classPhpDocParseResult {
