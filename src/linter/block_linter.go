@@ -659,7 +659,7 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 		}
 
 		if n, ok := keys[key]; ok {
-			origKey := string(b.walker.r.nodeText(n))
+			origKey := b.walker.r.nodeText(n)
 			dupKey := fmt.Sprintf("%#q", key)
 			msg := fmt.Sprintf("Duplicate array key %s", origKey)
 			if origKey != dupKey && origKey != key {
