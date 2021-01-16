@@ -1,9 +1,6 @@
 MAYBE   ternarySimplify: could rewrite as `$baseDir ?: 0` at testdata/mustache/src/Mustache/Autoloader.php:56
         $key = $baseDir ? $baseDir : 0;
                ^^^^^^^^^^^^^^^^^^^^^^^
-ERROR   undefined: Call to undefined method {null}->log() at testdata/mustache/src/Mustache/Cache/AbstractCache.php:57
-            $this->logger->log($level, $message, $context);
-                           ^^^
 MAYBE   ternarySimplify: could rewrite as `$this->fileMode ?? (0666 & ~umask())` at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:142
                 $mode = isset($this->fileMode) ? $this->fileMode : (0666 & ~umask());
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -31,9 +28,6 @@ MAYBE   ternarySimplify: could rewrite as `$options['cache_file_mode'] ?? null` 
 MAYBE   misspellComment: "entitity" is a misspelling of "entity" at testdata/mustache/src/Mustache/Engine.php:254
     public function getEntityFlags()
                     ^^^^^^^^^^^^^^
-ERROR   undefined: Call to undefined method {mixed}->setTemplates() at testdata/mustache/src/Mustache/Engine.php:350
-        $this->partialsLoader->setTemplates($partials);
-                               ^^^^^^^^^^^^
 ERROR   undefined: Call to undefined method {\Mustache_Cache}->getLogger() at testdata/mustache/src/Mustache/Engine.php:459
         if ($this->getCache()->getLogger() === null) {
                                ^^^^^^^^^
@@ -49,12 +43,6 @@ ERROR   undefined: Call to undefined method {\Mustache_Cache}->setLogger() at te
 MAYBE   ternarySimplify: could rewrite as `$this->delimiters ?: '{{ }}'` at testdata/mustache/src/Mustache/Engine.php:628
             'delimiters'      => $this->delimiters ? $this->delimiters : '{{ }}',
                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR   undefined: Call to undefined method {mixed}->load() at testdata/mustache/src/Mustache/Engine.php:681
-            return $this->loadSource($loader->load($name));
-                                              ^^^^
-ERROR   undefined: Call to undefined method {mixed}->log() at testdata/mustache/src/Mustache/Engine.php:826
-            $this->logger->log($level, $message, $context);
-                           ^^^
 MAYBE   phpdoc: Missing PHPDoc for "getFilterName" public method at testdata/mustache/src/Mustache/Exception/UnknownFilterException.php:34
     public function getFilterName()
                     ^^^^^^^^^^^^^
@@ -64,12 +52,6 @@ MAYBE   phpdoc: Missing PHPDoc for "getHelperName" public method at testdata/mus
 MAYBE   phpdoc: Missing PHPDoc for "getTemplateName" public method at testdata/mustache/src/Mustache/Exception/UnknownTemplateException.php:34
     public function getTemplateName()
                     ^^^^^^^^^^^^^^^
-ERROR   undefined: Call to undefined method {mixed}->loadLambda() at testdata/mustache/src/Mustache/LambdaHelper.php:49
-            ->loadLambda((string) $string, $this->delims)
-              ^^^^^^^^^^
-ERROR   undefined: Call to undefined method {mixed}->renderInternal() at testdata/mustache/src/Mustache/LambdaHelper.php:50
-            ->renderInternal($this->context);
-              ^^^^^^^^^^^^^^
 WARNING regexpVet: '\w' intersects with '\d' in [\w\d\.] at testdata/mustache/src/Mustache/Loader/InlineLoader.php:115
             foreach (preg_split("/^@@(?= [\w\d\.]+$)/m", $data, -1) as $chunk) {
                                 ^^^^^^^^^^^^^^^^^^^^^^^
