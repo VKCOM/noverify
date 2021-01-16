@@ -248,7 +248,8 @@ func typesFromNode(typeNode ir.Node) []meta.Type {
 }
 
 type typeNormalizer struct {
-	st *meta.ClassParseState
+	st   *meta.ClassParseState
+	kphp bool
 }
 
 func (n typeNormalizer) NormalizeTypes(types []meta.Type) {
@@ -273,7 +274,7 @@ func (n typeNormalizer) normalizeType(typ *meta.Type) {
 		return
 	}
 
-	if typ.Elem == "any" && KPHP {
+	if typ.Elem == "any" && n.kphp {
 		// `any` is a special KPHP type that is more-or-less
 		// identical to `mixed|object`. In PHP, `mixed` already covers
 		// objects, so there is no need to add `object`.

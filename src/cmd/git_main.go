@@ -22,7 +22,7 @@ func gitParseUntracked(l *linterRunner) []*linter.Report {
 		log.Fatalf("get untracked files: %v", err)
 	}
 
-	return linter.ParseFilenames(workspace.ReadFilenames(filenames, nil), l.allowDisableRegex)
+	return l.getLinter().AnalyzeFiles(workspace.ReadFilenames(filenames, nil))
 }
 
 func parseIndexOnlyFiles(l *linterRunner) {
@@ -30,7 +30,7 @@ func parseIndexOnlyFiles(l *linterRunner) {
 		return
 	}
 	filenames := strings.Split(l.args.indexOnlyFiles, ",")
-	linter.ParseFilenames(workspace.ReadFilenames(filenames, nil), l.allowDisableRegex)
+	l.getLinter().AnalyzeFiles(workspace.ReadFilenames(filenames, nil))
 }
 
 // Not the best name, and not the best function signature.
@@ -54,57 +54,57 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 
 	if l.args.gitFullDiff {
 		meta.ResetInfo()
-		if err := loadEmbeddedStubs(); err != nil {
+		if err := loadEmbeddedStubs(l.config); err != nil {
 			log.Panicf("Load embedded stubs: %v", err)
 		}
 
 		start := time.Now()
-		linter.ParseFilenames(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil), l.allowDisableRegex)
+		l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil))
 		parseIndexOnlyFiles(l)
 		log.Printf("Indexed old commit in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		oldReports = linter.ParseFilenames(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, linter.ExcludeRegex), l.allowDisableRegex)
+		oldReports = l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, l.config.ExcludeRegex))
 		log.Printf("Parsed old commit for %s (%d reports)", time.Since(start), len(oldReports))
 
 		meta.ResetInfo()
-		if err := loadEmbeddedStubs(); err != nil {
+		if err := loadEmbeddedStubs(l.config); err != nil {
 			log.Panicf("Load embedded stubs: %v", err)
 		}
 
 		start = time.Now()
 		parseIndexOnlyFiles(l)
-		linter.ParseFilenames(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil), l.allowDisableRegex)
+		l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil))
 		log.Printf("Indexed new commit in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		reports = linter.ParseFilenames(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, linter.ExcludeRegex), l.allowDisableRegex)
+		reports = l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, l.config.ExcludeRegex))
 		log.Printf("Parsed new commit in %s (%d reports)", time.Since(start), len(reports))
 	} else {
 		start := time.Now()
-		linter.ParseFilenames(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil), l.allowDisableRegex)
+		l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil))
 		parseIndexOnlyFiles(l)
 		log.Printf("Indexing complete in %s", time.Since(start))
 
 		meta.SetIndexingComplete(true)
 
 		start = time.Now()
-		oldReports = linter.ParseFilenames(workspace.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes), l.allowDisableRegex)
+		oldReports = l.getLinter().AnalyzeFiles(workspace.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes))
 		log.Printf("Parsed old files versions for %s", time.Since(start))
 
 		start = time.Now()
 		meta.SetIndexingComplete(false)
 		parseIndexOnlyFiles(l)
-		linter.ParseFilenames(workspace.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes), l.allowDisableRegex)
+		l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes))
 		meta.SetIndexingComplete(true)
 		log.Printf("Indexed files versions for %s", time.Since(start))
 
 		start = time.Now()
-		reports = linter.ParseFilenames(workspace.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes), l.allowDisableRegex)
+		reports = l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes))
 		log.Printf("Parsed new file versions in %s", time.Since(start))
 	}
 
@@ -131,26 +131,26 @@ func gitRepoComputeReportsFromLocalChanges(l *linterRunner) (oldReports, reports
 	log.Printf("You have changes in your work tree, showing diff between %s and work tree", l.args.mutable.gitCommitFrom)
 
 	start := time.Now()
-	linter.ParseFilenames(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil), l.allowDisableRegex)
+	l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil))
 	parseIndexOnlyFiles(l)
 	log.Printf("Indexing complete in %s", time.Since(start))
 
 	meta.SetIndexingComplete(true)
 
 	start = time.Now()
-	oldReports = linter.ParseFilenames(workspace.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes), l.allowDisableRegex)
+	oldReports = l.getLinter().AnalyzeFiles(workspace.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes))
 	log.Printf("Parsed old files versions for %s", time.Since(start))
 
 	start = time.Now()
 	meta.SetIndexingComplete(false)
-	linter.ParseFilenames(workspace.ReadChangesFromWorkTree(l.args.gitWorkTree, changes), l.allowDisableRegex)
+	l.getLinter().AnalyzeFiles(workspace.ReadChangesFromWorkTree(l.args.gitWorkTree, changes))
 	parseIndexOnlyFiles(l)
 	gitParseUntracked(l)
 	meta.SetIndexingComplete(true)
 	log.Printf("Indexed new files versions for %s", time.Since(start))
 
 	start = time.Now()
-	reports = linter.ParseFilenames(workspace.ReadChangesFromWorkTree(l.args.gitWorkTree, changes), l.allowDisableRegex)
+	reports = l.getLinter().AnalyzeFiles(workspace.ReadChangesFromWorkTree(l.args.gitWorkTree, changes))
 	reports = append(reports, gitParseUntracked(l)...)
 	log.Printf("Parsed new file versions in %s", time.Since(start))
 

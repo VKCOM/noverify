@@ -86,12 +86,12 @@ func isEnabled(l *linterRunner, r *linter.Report) bool {
 		return false
 	}
 
-	if linter.ExcludeRegex == nil {
+	if l.config.ExcludeRegex == nil {
 		return true
 	}
 
 	// Disabled by a file comment.
-	return !linter.ExcludeRegex.MatchString(r.Filename)
+	return !l.config.ExcludeRegex.MatchString(r.Filename)
 }
 
 // Run executes linter main function.
@@ -153,7 +153,7 @@ func Main(cfg *MainConfig) {
 // Note that if error is not nil, integer code will be discarded, so it can be 0.
 //
 // We don't want os.Exit to be inserted randomly to avoid defer cancellation.
-func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) (int, error) {
+func mainNoExit(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) (int, error) {
 	if args.version {
 		// Version is already printed. Can exit here.
 		return 0, nil
@@ -198,17 +198,23 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 
 	workspace.PHPExtensions = strings.Split(args.phpExtensionsArg, ",")
 
-	var l linterRunner
+	l := linterRunner{
+		config: config,
+	}
 	if err := l.Init(ruleSets, args); err != nil {
 		return 1, fmt.Errorf("init: %v", err)
 	}
 
-	lintdebug.Register(func(msg string) { linter.DebugMessage("%s", msg) })
-	go linter.MemoryLimiterThread()
+	lintdebug.Register(func(msg string) {
+		if config.Debug {
+			log.Print(msg)
+		}
+	})
+	go linter.MemoryLimiterThread(args.maxFileSize)
 
 	log.Printf("Started")
 
-	if err := initStubs(); err != nil {
+	if err := initStubs(l.config, l.getLinter()); err != nil {
 		return 0, fmt.Errorf("Init stubs: %v", err)
 	}
 
@@ -217,7 +223,7 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 	}
 
 	log.Printf("Indexing %+v", flag.Args())
-	linter.ParseFilenames(workspace.ReadFilenames(flag.Args(), nil), l.allowDisableRegex)
+	l.getLinter().AnalyzeFiles(workspace.ReadFilenames(flag.Args(), nil))
 	parseIndexOnlyFiles(&l)
 	meta.SetIndexingComplete(true)
 
@@ -227,7 +233,7 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 	}
 
 	log.Printf("Linting")
-	reports := linter.ParseFilenames(workspace.ReadFilenames(filenames, l.filenameFilter), l.allowDisableRegex)
+	reports := l.getLinter().AnalyzeFiles(workspace.ReadFilenames(filenames, l.filenameFilter))
 	if args.outputBaseline {
 		if err := createBaseline(&l, cfg, reports); err != nil {
 			return 1, fmt.Errorf("write baseline: %v", err)
@@ -386,21 +392,21 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 	return criticalReports, containsAutofixableReports
 }
 
-func initStubs() error {
-	if linter.StubsDir != "" {
-		linter.InitStubsFromDir(linter.StubsDir)
+func initStubs(config *linter.Config, l *linter.Linter) error {
+	if config.StubsDir != "" {
+		l.InitStubsFromDir(config.StubsDir)
 		return nil
 	}
 
 	// Try to use embedded stubs (from stubs/phpstorm_stubs.go).
-	if err := loadEmbeddedStubs(); err != nil {
+	if err := loadEmbeddedStubs(config); err != nil {
 		return fmt.Errorf("failed to load embedded stubs: %v", err)
 	}
 
 	return nil
 }
 
-func LoadEmbeddedStubs(filenames []string) error {
+func LoadEmbeddedStubs(config *linter.Config, filenames []string) error {
 	var errorsCount int64
 
 	readStubs := func(ch chan workspace.FileInfo) {
@@ -418,7 +424,8 @@ func LoadEmbeddedStubs(filenames []string) error {
 		}
 	}
 
-	linter.InitStubs(readStubs)
+	l := linter.NewLinter(config)
+	l.InitStubs(readStubs)
 
 	// Using atomic here for consistency.
 	if atomic.LoadInt64(&errorsCount) != 0 {
@@ -428,7 +435,7 @@ func LoadEmbeddedStubs(filenames []string) error {
 	return nil
 }
 
-func loadEmbeddedStubs() error {
+func loadEmbeddedStubs(config *linter.Config) error {
 	var filenames []string
 	// NOVERIFYDEBUG_LOAD_STUBS is used in golden tests to specify
 	// the test dependencies that need to be loaded.
@@ -440,5 +447,5 @@ func loadEmbeddedStubs() error {
 	if len(filenames) == 0 {
 		return fmt.Errorf("empty file list")
 	}
-	return LoadEmbeddedStubs(filenames)
+	return LoadEmbeddedStubs(config, filenames)
 }

@@ -901,7 +901,7 @@ func (b *blockWalker) handleForeach(s *ir.ForeachStmt) bool {
 	if !ok {
 		return false
 	}
-	if IsDiscardVar(key.Name) {
+	if b.r.config.IsDiscardVar(key.Name) {
 		return false
 	}
 
@@ -1109,7 +1109,7 @@ func (b *blockWalker) handleVariable(v ir.Node) bool {
 				w.untrackVarName(varName)
 			}
 		}
-		if IsDiscardVar(varName) && !isSuperGlobal(varName) {
+		if b.r.config.IsDiscardVar(varName) && !isSuperGlobal(varName) {
 			b.r.Report(v, LevelError, "discardVar", "Used var $%s that is supposed to be unused (rename variable if it's intended)", varName)
 		}
 
@@ -1733,7 +1733,7 @@ func (b *blockWalker) flushUnused() {
 
 	visitedMap := make(map[ir.Node]struct{})
 	for name, nodes := range b.unusedVars {
-		if IsDiscardVar(name) {
+		if b.r.config.IsDiscardVar(name) {
 			// blank identifier is a way to tell linter (and PHPStorm) that result is explicitly unused
 			continue
 		}

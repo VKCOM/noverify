@@ -19,7 +19,7 @@ import (
 )
 
 func TestCache(t *testing.T) {
-	go MemoryLimiterThread()
+	go MemoryLimiterThread(0)
 
 	// If this test is failing, you haven't broken anything (unless the decoding is failing),
 	// but meta cache probably needs to be invalidated.
@@ -118,8 +118,9 @@ class ByNull {
 main();
 `
 
+	l := NewLinter(NewConfig())
 	runTest := func(iteration int) {
-		result, err := parseContents("cachetest.php", []byte(code), nil, nil)
+		result, err := parseContents(l, "cachetest.php", []byte(code), nil)
 		if err != nil {
 			t.Fatalf("parse error: %v", err)
 		}
@@ -191,9 +192,9 @@ func collectCacheStrings(data string) string {
 	return hex.EncodeToString(enc.Sum(nil))
 }
 
-func parseContents(filename string, contents []byte, lineRanges []git.LineRange, allowDisabled *regexp.Regexp) (ParseResult, error) {
-	w := NewLintingWorker(0)
-	w.AllowDisable = allowDisabled
+func parseContents(l *Linter, filename string, contents []byte, lineRanges []git.LineRange) (ParseResult, error) {
+	w := l.NewLintingWorker(0)
+	w.AllowDisable = l.config.AllowDisable
 	file := workspace.FileInfo{
 		Name:       filename,
 		Contents:   contents,

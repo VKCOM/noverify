@@ -2667,96 +2667,6 @@ function f() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
-func TestArrayFirstLastType(t *testing.T) {
-	code := `<?php
-class Foo {}
-
-/**
- * @return Foo[]
- */
-function returnFooArray() {
-	return [new Foo, new Foo, new Foo];
-}
-
-/**
- * @return mixed
- */
-function returnMixed() {}
-
-/**
- * @return mixed[]
- */
-function returnMixedArray() {}
-
-function f() {
-	$a = [10, 20, 30];
-	$b = array_last_element($a);
-	exprtype($b, "int");
-	
-	$c = [new Foo, new Foo, new Foo];
-	$d = array_last_element($c);
-	exprtype($d, "\Foo");
-
-	$e = returnFooArray();
-	$f = array_last_element($e);
-	exprtype($f, "\Foo");
-
-	$g = returnMixed();
-	$h = array_last_element($g);
-	exprtype($h, "mixed");
-
-	$i = returnMixedArray();
-	$j = array_last_element($i);
-	exprtype($j, "mixed");
-
-	$k = array_last_element([10, 20]);
-	exprtype($k, "int");
-
-	$l = array_last_element(20);
-	exprtype($l, "mixed");
-
-	$m = array_last_element();
-	exprtype($m, "mixed");
-}
-
-function f1() {
-	$a = [10, 20, 30];
-	$b = array_first_element($a);
-	exprtype($b, "int");
-	
-	$c = [new Foo, new Foo, new Foo];
-	$d = array_first_element($c);
-	exprtype($d, "\Foo");
-
-	$e = returnFooArray();
-	$f = array_first_element($e);
-	exprtype($f, "\Foo");
-
-	$g = returnMixed();
-	$h = array_first_element($g);
-	exprtype($h, "mixed");
-
-	$i = returnMixedArray();
-	$j = array_first_element($i);
-	exprtype($j, "mixed");
-
-	$k = array_first_element([10, 20]);
-	exprtype($k, "int");
-
-	$l = array_first_element(20);
-	exprtype($l, "mixed");
-
-	$m = array_first_element();
-	exprtype($m, "mixed");
-}
-`
-	linter.KPHP = true
-	defer func() {
-		linter.KPHP = false
-	}()
-	runExprTypeTest(t, &exprTypeTestParams{code: code, stubs: "<?php /* no code */"})
-}
-
 func TestNewFunctionReturnExprType(t *testing.T) {
 	code := `<?php
 class Foo {}
@@ -2932,22 +2842,30 @@ namespace Foo {
 }
 
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
+	exprTypeTestImpl(t, params, false)
+}
+
+func exprTypeTestImpl(t *testing.T, params *exprTypeTestParams, kphp bool) {
 	meta.ResetInfo()
+
+	config := linter.NewConfig()
+	config.KPHP = kphp
+	l := linter.NewLinter(config)
 	if params.stubs != "" {
-		linter.InitStubs(func(ch chan workspace.FileInfo) {
+		l.InitStubs(func(ch chan workspace.FileInfo) {
 			ch <- workspace.FileInfo{
 				Name:     "stubs.php",
 				Contents: []byte(params.stubs),
 			}
 		})
 	}
-	linttest.ParseTestFile(t, "exprtype.php", params.code)
+	linttest.ParseTestFile(t, l, "exprtype.php", params.code)
 
 	meta.SetIndexingComplete(true)
 
 	// Reset results map and run expr type collector.
 	exprTypeResult = map[ir.Node]meta.TypesMap{}
-	result := linttest.ParseTestFile(t, "exprtype.php", params.code)
+	result := linttest.ParseTestFile(t, l, "exprtype.php", params.code)
 
 	// Check that collected types are identical to the expected types.
 	// We need the second walker to pass *testing.T parameter to

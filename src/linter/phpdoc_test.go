@@ -58,8 +58,9 @@ func TestParseClassPHPDoc(t *testing.T) {
 		},
 	}
 
+	l := NewLinter(NewConfig())
 	st := &meta.ClassParseState{}
-	walker := rootWalker{ctx: newRootContext(NewWorkerContext(), st)}
+	walker := rootWalker{ctx: newRootContext(l.config, NewWorkerContext(), st)}
 	for _, test := range tests {
 		docString := fmt.Sprintf(`/** %s */`, test.line)
 		doc := phpdoc.Parse(walker.ctx.phpdocTypeParser, docString)
@@ -110,8 +111,9 @@ func TestParseClassPHPDoc(t *testing.T) {
 }
 
 func BenchmarkParseTypes(b *testing.B) {
+	l := NewLinter(NewConfig())
 	st := &meta.ClassParseState{}
-	ctx := newRootContext(NewWorkerContext(), st)
+	ctx := newRootContext(l.config, NewWorkerContext(), st)
 	typeString := `?x|array<int>|T[]`
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
