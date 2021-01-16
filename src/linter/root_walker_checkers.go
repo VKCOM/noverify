@@ -9,7 +9,7 @@ import (
 	"github.com/VKCOM/noverify/src/solver"
 )
 
-func (d *RootWalker) checkClass(classNode *ir.ClassStmt) {
+func (d *rootWalker) checkClass(classNode *ir.ClassStmt) {
 	d.checkClassModifiers(classNode.Modifiers)
 	d.checkClassImplements(classNode.Implements)
 	d.checkClassExtends(classNode.Extends)
@@ -22,13 +22,13 @@ func (d *RootWalker) checkClass(classNode *ir.ClassStmt) {
 	d.checkIdentMisspellings(classNode.ClassName)
 }
 
-func (d *RootWalker) checkClassModifiers(modifiers []*ir.Identifier) {
+func (d *rootWalker) checkClassModifiers(modifiers []*ir.Identifier) {
 	for _, m := range modifiers {
 		d.checkLowerCaseModifier(m)
 	}
 }
 
-func (d *RootWalker) checkClassImplements(impl *ir.ClassImplementsStmt) {
+func (d *rootWalker) checkClassImplements(impl *ir.ClassImplementsStmt) {
 	if impl == nil {
 		return
 	}
@@ -45,7 +45,7 @@ func (d *RootWalker) checkClassImplements(impl *ir.ClassImplementsStmt) {
 	}
 }
 
-func (d *RootWalker) checkClassExtends(exts *ir.ClassExtendsStmt) {
+func (d *rootWalker) checkClassExtends(exts *ir.ClassExtendsStmt) {
 	if exts == nil {
 		return
 	}
@@ -60,7 +60,7 @@ func (d *RootWalker) checkClassExtends(exts *ir.ClassExtendsStmt) {
 	d.checkClassImplemented(exts.ClassName, className)
 }
 
-func (d *RootWalker) checkClassPHPDoc(n ir.Node, doc []phpdoc.CommentPart) {
+func (d *rootWalker) checkClassPHPDoc(n ir.Node, doc []phpdoc.CommentPart) {
 	if len(doc) == 0 {
 		return
 	}
@@ -70,7 +70,7 @@ func (d *RootWalker) checkClassPHPDoc(n ir.Node, doc []phpdoc.CommentPart) {
 	}
 }
 
-func (d *RootWalker) checkClassMethod(m *ir.ClassMethodStmt) {
+func (d *rootWalker) checkClassMethod(m *ir.ClassMethodStmt) {
 	class, ok := d.getCurrentClass()
 	if !ok {
 		return
@@ -107,7 +107,7 @@ func (d *RootWalker) checkClassMethod(m *ir.ClassMethodStmt) {
 	d.checkCommentMisspellings(m.MethodName, m.PhpDocComment)
 }
 
-func (d *RootWalker) checkClassMethodModifiers(meth *ir.ClassMethodStmt) {
+func (d *rootWalker) checkClassMethodModifiers(meth *ir.ClassMethodStmt) {
 	for _, m := range meth.Modifiers {
 		modifier := d.checkLowerCaseModifier(m)
 		switch modifier {
@@ -119,7 +119,7 @@ func (d *RootWalker) checkClassMethodModifiers(meth *ir.ClassMethodStmt) {
 	}
 }
 
-func (d *RootWalker) checkClassMethodOldStyleConstructor(meth *ir.ClassMethodStmt, nm string) {
+func (d *rootWalker) checkClassMethodOldStyleConstructor(meth *ir.ClassMethodStmt, nm string) {
 	lastDelim := strings.IndexByte(d.ctx.st.CurrentClass, '\\')
 	if strings.EqualFold(d.ctx.st.CurrentClass[lastDelim+1:], nm) {
 		_, isClass := d.currentClassNode.(*ir.ClassStmt)
@@ -129,7 +129,7 @@ func (d *RootWalker) checkClassMethodOldStyleConstructor(meth *ir.ClassMethodStm
 	}
 }
 
-func (d *RootWalker) checkClassMethodPhpDoc(m *ir.ClassMethodStmt, name string, modif methodModifiers, insideInterface bool) {
+func (d *rootWalker) checkClassMethodPhpDoc(m *ir.ClassMethodStmt, name string, modif methodModifiers, insideInterface bool) {
 	if m.PhpDocComment == "" && modif.accessLevel == meta.Public {
 		// Permit having "__call" and other magic method without comments.
 		if !insideInterface && !strings.HasPrefix(name, "_") {
@@ -141,20 +141,20 @@ func (d *RootWalker) checkClassMethodPhpDoc(m *ir.ClassMethodStmt, name string, 
 	d.reportPhpdocErrors(m.MethodName, doc.errs)
 }
 
-func (d *RootWalker) checkClassMethodComplexity(m *ir.ClassMethodStmt) {
+func (d *rootWalker) checkClassMethodComplexity(m *ir.ClassMethodStmt) {
 	pos := ir.GetPosition(m)
 	if funcSize := pos.EndLine - pos.StartLine; funcSize > maxFunctionLines {
 		d.Report(m.MethodName, LevelDoNotReject, "complexity", "Too big method: more than %d lines", maxFunctionLines)
 	}
 }
 
-func (d *RootWalker) checkClassMethodParams(m *ir.ClassMethodStmt) {
+func (d *rootWalker) checkClassMethodParams(m *ir.ClassMethodStmt) {
 	for _, p := range m.Params {
 		d.checkVarnameMisspellings(p, p.(*ir.Parameter).Variable.Name)
 	}
 }
 
-func (d *RootWalker) checkClassMethodTraversable(m *ir.ClassMethodStmt, name string, method meta.FuncInfo) {
+func (d *rootWalker) checkClassMethodTraversable(m *ir.ClassMethodStmt, name string, method meta.FuncInfo) {
 	if name != "getIterator" {
 		return
 	}
@@ -171,7 +171,7 @@ func (d *RootWalker) checkClassMethodTraversable(m *ir.ClassMethodStmt, name str
 	}
 }
 
-func (d *RootWalker) checkClassMagicMethod(meth ir.Node, name string, modif methodModifiers, countArgs int) {
+func (d *rootWalker) checkClassMagicMethod(meth ir.Node, name string, modif methodModifiers, countArgs int) {
 	const Any = -1
 	var (
 		canBeStatic    bool
@@ -250,7 +250,7 @@ func (d *RootWalker) checkClassMagicMethod(meth ir.Node, name string, modif meth
 	}
 }
 
-func (d *RootWalker) checkInterface(n *ir.InterfaceStmt) {
+func (d *rootWalker) checkInterface(n *ir.InterfaceStmt) {
 	d.checkKeywordCase(n, "interface")
 	d.checkCommentMisspellings(n.InterfaceName, n.PhpDocComment)
 	if !strings.HasSuffix(n.InterfaceName.Value, "able") {
@@ -258,13 +258,13 @@ func (d *RootWalker) checkInterface(n *ir.InterfaceStmt) {
 	}
 }
 
-func (d *RootWalker) checkTrait(n *ir.TraitStmt) {
+func (d *rootWalker) checkTrait(n *ir.TraitStmt) {
 	d.checkKeywordCase(n, "trait")
 	d.checkCommentMisspellings(n.TraitName, n.PhpDocComment)
 	d.checkIdentMisspellings(n.TraitName)
 }
 
-func (d *RootWalker) checkTraitUse(n *ir.TraitUseStmt) {
+func (d *rootWalker) checkTraitUse(n *ir.TraitUseStmt) {
 	d.checkKeywordCase(n, "use")
 
 	for _, tr := range n.Traits {
@@ -277,7 +277,7 @@ func (d *RootWalker) checkTraitUse(n *ir.TraitUseStmt) {
 	}
 }
 
-func (d *RootWalker) checkPropertyList(pl *ir.PropertyListStmt) {
+func (d *rootWalker) checkPropertyList(pl *ir.PropertyListStmt) {
 	d.checkPropertyModifiers(pl)
 
 	for _, pNode := range pl.Properties {
@@ -288,13 +288,13 @@ func (d *RootWalker) checkPropertyList(pl *ir.PropertyListStmt) {
 	}
 }
 
-func (d *RootWalker) checkPropertyModifiers(pl *ir.PropertyListStmt) {
+func (d *rootWalker) checkPropertyModifiers(pl *ir.PropertyListStmt) {
 	for _, m := range pl.Modifiers {
 		d.checkLowerCaseModifier(m)
 	}
 }
 
-func (d *RootWalker) checkClassConstList(s *ir.ClassConstListStmt) {
+func (d *rootWalker) checkClassConstList(s *ir.ClassConstListStmt) {
 	d.checkConstantAccessLevel(s)
 
 	for _, constant := range s.Consts {
@@ -302,7 +302,7 @@ func (d *RootWalker) checkClassConstList(s *ir.ClassConstListStmt) {
 	}
 }
 
-func (d *RootWalker) checkConstantAccessLevel(s *ir.ClassConstListStmt) {
+func (d *rootWalker) checkConstantAccessLevel(s *ir.ClassConstListStmt) {
 	for _, m := range s.Modifiers {
 		d.checkLowerCaseModifier(m)
 	}

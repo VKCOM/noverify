@@ -1,4 +1,4 @@
-package linter
+package irutil
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ type NodePath struct {
 	stack []ir.Node
 }
 
-func newNodePath() NodePath {
+func NewNodePath() NodePath {
 	return NodePath{stack: make([]ir.Node, 0, 20)}
 }
 
@@ -71,10 +71,10 @@ func (p NodePath) ConditionalUntil(end ir.Node) bool {
 	return false
 }
 
-func (p *NodePath) push(n ir.Node) {
+func (p *NodePath) Push(n ir.Node) {
 	p.stack = append(p.stack, n)
 }
 
-func (p *NodePath) pop() {
+func (p *NodePath) Pop() {
 	p.stack = p.stack[:len(p.stack)-1]
 }

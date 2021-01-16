@@ -15,7 +15,7 @@ import (
 )
 
 type blockLinter struct {
-	walker *BlockWalker
+	walker *blockWalker
 }
 
 func (b *blockLinter) enterNode(n ir.Node) {

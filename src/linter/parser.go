@@ -1,43 +1,16 @@
 package linter
 
 import (
-	"log"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/VKCOM/noverify/src/git"
-	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/workspace"
 )
-
-// ParseContents is a legacy way of linting files.
-// Deprecated: use Worker.ParseContents instead.
-func ParseContents(filename string, contents []byte, lineRanges []git.LineRange, allowDisabled *regexp.Regexp) (root *ir.Root, walker *RootWalker, err error) {
-	w := NewLintingWorker(0)
-	w.AllowDisable = allowDisabled
-	file := workspace.FileInfo{
-		Name:       filename,
-		Contents:   contents,
-		LineRanges: lineRanges,
-	}
-	return w.ParseContents(file)
-}
-
-// IndexFile is a legacy way of indexing files.
-// Deprecated: use Worker.IndexFile instead.
-func IndexFile(filename string, contents []byte) error {
-	w := NewIndexingWorker(0)
-	file := workspace.FileInfo{
-		Name:     filename,
-		Contents: contents,
-	}
-	return w.IndexFile(file)
-}
 
 func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedSet {
 	if ruleSet == nil {
@@ -56,32 +29,6 @@ func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedS
 		clone.RulesByKind[i] = res
 	}
 	return &clone
-}
-
-// AnalyzeFileRootLevel does analyze file top-level code.
-// This method is exposed for language server use, you usually
-// do not need to call it yourself.
-func AnalyzeFileRootLevel(rootNode ir.Node, d *RootWalker) {
-	sc := meta.NewScope()
-	sc.AddVarName("argv", meta.NewTypesMap("string[]"), "predefined", meta.VarAlwaysDefined)
-	sc.AddVarName("argc", meta.NewTypesMap("int"), "predefined", meta.VarAlwaysDefined)
-
-	b := newBlockWalker(d, sc)
-	b.ignoreFunctionBodies = true
-	b.rootLevel = true
-
-	for _, createFn := range d.customBlock {
-		b.custom = append(b.custom, createFn(&BlockContext{w: b}))
-	}
-
-	rootNode.Walk(b)
-}
-
-// DebugMessage is used to actually print debug messages.
-func DebugMessage(msg string, args ...interface{}) {
-	if Debug {
-		log.Printf(msg, args...)
-	}
 }
 
 // ParseFilenames is used to do initial parsing of files.

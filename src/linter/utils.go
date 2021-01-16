@@ -90,9 +90,9 @@ func typesMapToTypeExpr(p *phpdoc.TypeParser, m meta.TypesMap) phpdoc.Type {
 	return p.Parse(typeString)
 }
 
-// MergeTypeMaps merges two typesmaps without losing information.
+// mergeTypeMaps merges two typesmaps without losing information.
 // So merging int[] and array will give int[], and Foo and object will give Foo.
-func MergeTypeMaps(left meta.TypesMap, right meta.TypesMap) meta.TypesMap {
+func mergeTypeMaps(left meta.TypesMap, right meta.TypesMap) meta.TypesMap {
 	var hasAtLeastOneArray bool
 	var hasAtLeastOneClass bool
 
@@ -135,7 +135,7 @@ func MergeTypeMaps(left meta.TypesMap, right meta.TypesMap) meta.TypesMap {
 func functionReturnType(phpdocReturnType meta.TypesMap, hintReturnType meta.TypesMap, actualReturnTypes meta.TypesMap) meta.TypesMap {
 	var returnTypes meta.TypesMap
 	if !phpdocReturnType.IsEmpty() || !hintReturnType.IsEmpty() {
-		returnTypes = MergeTypeMaps(phpdocReturnType, hintReturnType)
+		returnTypes = mergeTypeMaps(phpdocReturnType, hintReturnType)
 	} else {
 		returnTypes = actualReturnTypes
 	}

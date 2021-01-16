@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/linter/lintapi"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
@@ -124,7 +125,7 @@ func (RootCheckerDefaults) AfterLeaveNode(ir.Node)  {}
 
 // RootContext is the context for root checker to run on.
 type RootContext struct {
-	w *RootWalker
+	w *rootWalker
 }
 
 // ParsePHPDoc returns parsed phpdoc comment parts.
@@ -172,12 +173,12 @@ func (ctx *RootContext) File() *workspace.File {
 
 // BlockContext is the context for block checker.
 type BlockContext struct {
-	w *BlockWalker
+	w *blockWalker
 }
 
 // NodePath returns a node path up to the current traversal position.
 // The path includes the node that is being traversed as well.
-func (ctx *BlockContext) NodePath() NodePath {
+func (ctx *BlockContext) NodePath() irutil.NodePath {
 	return ctx.w.path
 }
 
