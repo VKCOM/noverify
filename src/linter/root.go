@@ -1717,9 +1717,9 @@ func (d *rootWalker) runRules(n ir.Node, sc *meta.Scope, rlist []rules.Rule) {
 	}
 }
 
-// fmtNode is used to get the string that represents the
+// nodeText is used to get the string that represents the
 // passed node more efficiently than irutil.FmtNode.
-func (d *rootWalker) fmtNode(n ir.Node) string {
+func (d *rootWalker) nodeText(n ir.Node) string {
 	pos := ir.GetPosition(n)
 	from, to := pos.StartPos, pos.EndPos
 	src := d.file.Contents()
@@ -1735,7 +1735,7 @@ func (d *rootWalker) fmtNode(n ir.Node) string {
 func (d *rootWalker) renderRuleMessage(msg string, n ir.Node, m phpgrep.MatchData, truncate bool) string {
 	// "$$" stands for the entire matched node, like $0 in regexp.
 	if strings.Contains(msg, "$$") {
-		msg = strings.ReplaceAll(msg, "$$", d.fmtNode(n))
+		msg = strings.ReplaceAll(msg, "$$", d.nodeText(n))
 	}
 
 	if len(m.Capture) == 0 {
@@ -1746,7 +1746,7 @@ func (d *rootWalker) renderRuleMessage(msg string, n ir.Node, m phpgrep.MatchDat
 		if !strings.Contains(msg, key) {
 			continue
 		}
-		nodeString := d.fmtNode(c.Node)
+		nodeString := d.nodeText(c.Node)
 		// Don't interpolate strings that are too long
 		// or contain a newline.
 		var replacement string
