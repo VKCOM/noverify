@@ -87,8 +87,8 @@ func (d *rootWalker) checkClassMethod(m *ir.ClassMethodStmt) {
 	modif := d.parseMethodModifiers(m)
 
 	// state
-	d.addClassMethodThisVariableToScope(modif, sc)
-	d.addClassMethodParamsToScope(method, sc)
+	d.addThisVariableToClassMethodScope(modif, sc)
+	d.addParamsToClassMethodScope(method, sc)
 
 	handleMethodInfo := d.handleFuncStmts(method.Params, nil, convertNodeToStmts(m.Stmt), sc)
 

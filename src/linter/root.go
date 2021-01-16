@@ -798,9 +798,6 @@ func (d *rootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.N
 }
 
 func (d *rootWalker) checkParentConstructorCall(n *ir.Identifier, parentConstructorCalled bool) {
-	if !meta.IsIndexingComplete() {
-		return
-	}
 	if n.Value != "__construct" {
 		return
 	}
@@ -809,8 +806,9 @@ func (d *rootWalker) checkParentConstructorCall(n *ir.Identifier, parentConstruc
 	if !ok || class.Extends == nil {
 		return
 	}
-	m, ok := solver.FindMethod(d.ctx.st.CurrentParentClass, `__construct`)
-	if !ok || m.Info.AccessLevel == meta.Private || m.Info.IsAbstract() {
+
+	method, ok := solver.FindMethod(d.ctx.st.CurrentParentClass, `__construct`)
+	if !ok || method.Info.AccessLevel == meta.Private || method.Info.IsAbstract() {
 		return
 	}
 
@@ -910,7 +908,7 @@ func (d *rootWalker) handlePropertyList(pl *ir.PropertyListStmt) {
 		prop := pNode.(*ir.PropertyStmt)
 		propName := prop.Variable.Name
 
-		typ := d.parsePHPDocVar(prop, prop.PhpDoc)
+		typ := d.parsePHPDocVar(prop.PhpDoc)
 		if prop.Expr != nil {
 			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, prop.Expr))
 		}
@@ -991,7 +989,7 @@ func (d *rootWalker) handleConstantAccessLevel(s *ir.ClassConstListStmt) meta.Ac
 	return level
 }
 
-func (d *rootWalker) addClassMethodThisVariableToScope(modif methodModifiers, sc *meta.Scope) {
+func (d *rootWalker) addThisVariableToClassMethodScope(modif methodModifiers, sc *meta.Scope) {
 	if modif.static {
 		return
 	}
@@ -1000,7 +998,7 @@ func (d *rootWalker) addClassMethodThisVariableToScope(modif methodModifiers, sc
 	sc.SetInInstanceMethod(true)
 }
 
-func (d *rootWalker) addClassMethodParamsToScope(method meta.FuncInfo, sc *meta.Scope) {
+func (d *rootWalker) addParamsToClassMethodScope(method meta.FuncInfo, sc *meta.Scope) {
 	for _, param := range method.Params {
 		sc.AddVarName(param.Name, param.Typ, "param", meta.VarAlwaysDefined)
 	}
@@ -1014,62 +1012,25 @@ func (d *rootWalker) handleClassMethod(m *ir.ClassMethodStmt) {
 
 	name := m.MethodName.Value
 	_, insideInterface := d.currentClassNode.(*ir.InterfaceStmt)
-
 	sc := meta.NewScope()
 
 	modif := d.parseMethodModifiers(m)
 	hintReturnType := d.handleTypeHint(m.ReturnType)
-
 	doc := d.parsePHPDoc(m.MethodName, m.PhpDoc, m.Params)
-	phpdocReturnType := doc.returnType
-	phpDocParamTypes := doc.types
 
 	// need to proper return type
-	d.addClassMethodThisVariableToScope(modif, sc)
+	d.addThisVariableToClassMethodScope(modif, sc)
 
-	params, minParamsCnt := d.parseFuncArgs(m.Params, phpDocParamTypes, sc, nil)
-
-	if len(class.Interfaces) != 0 {
-		// If we implement interfaces, methods that take a part in this
-		// can borrow types information from them.
-		// Programmers sometimes leave implementing methods without a
-		// comment or use @inheritdoc there.
-		//
-		// If method params are properly documented, it's possible to
-		// derive that information, but we need to know in which
-		// interface we can find that method.
-		//
-		// Since we don't have all interfaces during the indexing phase
-		// and shouldn't update meta after it, we defer type resolving by
-		// using BaseMethodParam here. We would have to lookup
-		// matching interface during the type resolving.
-
-		// Find params without type and annotate them with special
-		// type that will force solver to walk interface types that
-		// current class implements to have a chance of finding relevant type info.
-		for i, p := range params {
-			if !p.Typ.IsEmpty() {
-				continue // Already has a type
-			}
-
-			if i > math.MaxUint8 {
-				break // Current implementation limit reached
-			}
-
-			res := make(map[string]struct{})
-			res[meta.WrapBaseMethodParam(i, d.ctx.st.CurrentClass, name)] = struct{}{}
-			params[i].Typ = meta.NewTypesMapFromMap(res)
-			// need to proper return type
-			sc.AddVarName(p.Name, params[i].Typ, "param", meta.VarAlwaysDefined)
-		}
-	}
+	params, minParamsCnt := d.parseFuncArgs(m.Params, doc.types, sc, nil)
+	d.handleClassInterfacesForMethod(class, params, name, sc)
 
 	stmts := convertNodeToStmts(m.Stmt)
 	funcInfo := d.handleFuncStmts(params, nil, stmts, sc)
+
 	actualReturnTypes := funcInfo.returnTypes
 	exitFlags := funcInfo.prematureExitFlags
 
-	returnTypes := functionReturnType(phpdocReturnType, hintReturnType, actualReturnTypes)
+	returnTypes := functionReturnType(doc.returnType, hintReturnType, actualReturnTypes)
 	funcFlags := d.transformClassMethodModifiersToFuncFlags(modif, insideInterface, stmts)
 
 	// TODO: handle duplicate method
@@ -1084,6 +1045,45 @@ func (d *rootWalker) handleClassMethod(m *ir.ClassMethodStmt) {
 		ExitFlags:    exitFlags,
 		Doc:          doc.info,
 	})
+}
+
+func (d *rootWalker) handleClassInterfacesForMethod(class meta.ClassInfo, params []meta.FuncParam, name string, sc *meta.Scope) {
+	// If we implement interfaces, methods that take a part in this
+	// can borrow types information from them.
+	// Programmers sometimes leave implementing methods without a
+	// comment or use @inheritdoc there.
+	//
+	// If method params are properly documented, it's possible to
+	// derive that information, but we need to know in which
+	// interface we can find that method.
+	//
+	// Since we don't have all interfaces during the indexing phase
+	// and shouldn't update meta after it, we defer type resolving by
+	// using BaseMethodParam here. We would have to lookup
+	// matching interface during the type resolving.
+
+	// Find params without type and annotate them with special
+	// type that will force solver to walk interface types that
+	// current class implements to have a chance of finding relevant type info.
+	if len(class.Interfaces) == 0 {
+		return
+	}
+
+	for i, p := range params {
+		if !p.Typ.IsEmpty() {
+			continue // Already has a type
+		}
+
+		if i > math.MaxUint8 {
+			break // Current implementation limit reached
+		}
+
+		res := make(map[string]struct{})
+		res[meta.WrapBaseMethodParam(i, d.ctx.st.CurrentClass, name)] = struct{}{}
+		params[i].Typ = meta.NewTypesMapFromMap(res)
+		// need to proper return type
+		sc.AddVarName(p.Name, params[i].Typ, "param", meta.VarAlwaysDefined)
+	}
 }
 
 func (d *rootWalker) transformClassMethodModifiersToFuncFlags(modif methodModifiers, insideInterface bool, stmts []ir.Node) meta.FuncFlags {
@@ -1120,13 +1120,15 @@ func (d *rootWalker) reportPhpdocErrors(n ir.Node, errs phpdocErrors) {
 	}
 }
 
-func (d *rootWalker) parsePHPDocVar(n ir.Node, doc []phpdoc.CommentPart) (m meta.TypesMap) {
+func (d *rootWalker) parsePHPDocVar(doc []phpdoc.CommentPart) (m meta.TypesMap) {
 	for _, part := range doc {
 		part, ok := part.(*phpdoc.TypeVarCommentPart)
-		if ok && part.Name() == "var" {
-			types, _ := typesFromPHPDoc(&d.ctx, part.Type)
-			m = newTypesMap(&d.ctx, types)
+		if !ok || part.Name() != "var" {
+			continue
 		}
+
+		types, _ := typesFromPHPDoc(&d.ctx, part.Type)
+		m = newTypesMap(&d.ctx, types)
 	}
 
 	return m
