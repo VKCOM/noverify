@@ -10,6 +10,7 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
+	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/solver"
 )
 
@@ -534,6 +535,25 @@ func binaryOpString(n ir.Node) string {
 	default:
 		return ""
 	}
+}
+
+func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedSet {
+	if ruleSet == nil {
+		return nil
+	}
+
+	var clone rules.ScopedSet
+	for i, list := range &ruleSet.RulesByKind {
+		res := make([]rules.Rule, 0, len(list))
+		for _, rule := range list {
+			if !strings.Contains(filename, rule.Path) {
+				continue
+			}
+			res = append(res, rule)
+		}
+		clone.RulesByKind[i] = res
+	}
+	return &clone
 }
 
 // List taken from https://wiki.php.net/rfc/context_sensitive_lexer

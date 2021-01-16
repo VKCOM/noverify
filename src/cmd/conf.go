@@ -27,6 +27,8 @@ type MainConfig struct {
 
 	LinterVersion string
 
+	LinterConfig *linter.Config
+
 	// OverriddenCommands is a list of new commands and
 	// commands that override existing commands.
 	OverriddenCommands *Commands

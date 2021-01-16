@@ -571,7 +571,7 @@ func (b *blockLinter) checkContinueStmt(c *ir.ContinueStmt) {
 }
 
 func (b *blockLinter) addFixForArray(arr *ir.ArrayExpr) {
-	if !ApplyQuickFixes {
+	if !b.walker.r.config.ApplyQuickFixes {
 		return
 	}
 

@@ -20,11 +20,15 @@ func Check(cfg *MainConfig) (int, error) {
 		linter.DeclareRules(rset)
 	}
 
+	config := cfg.LinterConfig
+	if config == nil {
+		config = linter.NewConfig()
+	}
 	var args cmdlineArguments
-	bindFlags(ruleSets, &args)
+	bindFlags(config, ruleSets, &args)
 	flag.Parse()
 	if args.disableCache {
-		linter.CacheDir = ""
+		config.CacheDir = ""
 	}
 	if cfg.AfterFlagParse != nil {
 		cfg.AfterFlagParse(InitEnvironment{
@@ -32,5 +36,5 @@ func Check(cfg *MainConfig) (int, error) {
 		})
 	}
 
-	return mainNoExit(ruleSets, &args, cfg)
+	return mainNoExit(config, ruleSets, &args, cfg)
 }

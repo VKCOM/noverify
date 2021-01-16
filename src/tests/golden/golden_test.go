@@ -6,11 +6,12 @@ import (
 
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
-	"github.com/VKCOM/noverify/src/rules"
 )
 
+var linterConfig = linter.NewConfig()
+
 func TestMain(t *testing.M) {
-	err := linttest.InitEmbeddedRules()
+	err := linttest.InitEmbeddedRules(linterConfig)
 	if err != nil {
 		panic(err)
 	}
@@ -21,10 +22,6 @@ func TestMain(t *testing.M) {
 }
 
 func TestGolden(t *testing.T) {
-	defer func(rset *rules.Set) {
-		linter.Rules = rset
-	}(linter.Rules)
-
 	targets := []*linttest.GoldenTestSuite{
 		{
 			Name: "embeddedrules",
@@ -185,7 +182,7 @@ func TestGolden(t *testing.T) {
 	e2eSuite := linttest.NewGoldenE2ETestSuite(t)
 
 	for _, target := range targets {
-		linttest.PrepareGoldenTestSuite(target, t, "testdata", "golden.txt")
+		linttest.PrepareGoldenTestSuite(target, t, linterConfig, "testdata", "golden.txt")
 		target.Run()
 		e2eSuite.AddTest(target)
 	}

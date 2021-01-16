@@ -87,6 +87,8 @@ type Suite struct {
 	MisspellList string
 
 	IgnoreUndeclaredChecks bool
+
+	Config *linter.Config
 }
 
 // NewSuite returns a new linter test suite for t.
@@ -98,6 +100,7 @@ func NewSuite(t testing.TB) *Suite {
 			`stubs/phpstorm-stubs/Core/Core_c.php`: {},
 			`stubs/phpstorm-stubs/Core/Core_d.php`: {},
 		},
+		Config: linter.NewConfig(),
 	}
 }
 
@@ -209,6 +212,8 @@ func (s *Suite) RunLinter() []*linter.Report {
 	s.t.Helper()
 	meta.ResetInfo()
 
+	l := linter.NewLinter(s.Config)
+
 	for _, stub := range s.LoadStubs {
 		s.defaultStubs[stub] = struct{}{}
 	}
@@ -216,18 +221,18 @@ func (s *Suite) RunLinter() []*linter.Report {
 	for stub := range s.defaultStubs {
 		stubs = append(stubs, stub)
 	}
-	if err := cmd.LoadEmbeddedStubs(stubs); err != nil {
+	if err := cmd.LoadEmbeddedStubs(s.Config, stubs); err != nil {
 		s.t.Fatalf("load stubs: %v", err)
 	}
 
 	if s.MisspellList != "" {
-		err := cmd.LoadMisspellDicts(strings.Split(s.MisspellList, ","))
+		err := cmd.LoadMisspellDicts(s.Config, strings.Split(s.MisspellList, ","))
 		if err != nil {
 			s.t.Fatalf("load misspell dicts: %v", err)
 		}
 	}
 
-	indexing := linter.NewIndexingWorker(0)
+	indexing := l.NewIndexingWorker(0)
 	indexing.AllowDisable = s.AllowDisable
 
 	shuffleFiles(s.Files)
@@ -237,7 +242,7 @@ func (s *Suite) RunLinter() []*linter.Report {
 
 	meta.SetIndexingComplete(true)
 
-	linting := linter.NewLintingWorker(0)
+	linting := l.NewLintingWorker(0)
 	linting.AllowDisable = s.AllowDisable
 
 	shuffleFiles(s.Files)
@@ -289,13 +294,12 @@ func (s *Suite) RunFilterLinter(filters []string) []*linter.Report {
 	return filteredReports
 }
 
-// ParseTestFile parses given test file.
-func ParseTestFile(t *testing.T, filename, content string) linter.ParseResult {
+func ParseTestFile(t *testing.T, l *linter.Linter, filename, content string) linter.ParseResult {
 	var worker *linter.Worker
 	if meta.IsIndexingComplete() {
-		worker = linter.NewLintingWorker(0)
+		worker = l.NewLintingWorker(0)
 	} else {
-		worker = linter.NewIndexingWorker(0)
+		worker = l.NewIndexingWorker(0)
 	}
 	return parseTestFile(t, worker, TestFile{
 		Name: filename,
@@ -325,11 +329,11 @@ func FindPHPFiles(root string) ([]string, error) {
 }
 
 // InitEmbeddedRules initializes embedded rules for testing.
-func InitEmbeddedRules() error {
+func InitEmbeddedRules(config *linter.Config) error {
 	enableAllRules := func(_ rules.Rule) bool { return true }
 	p := rules.NewParser()
-	linter.Rules = rules.NewSet()
-	ruleSets, err := cmd.InitEmbeddedRules(p, enableAllRules)
+	config.Rules = rules.NewSet()
+	ruleSets, err := cmd.InitEmbeddedRules(config, p, enableAllRules)
 	if err != nil {
 		return fmt.Errorf("init embedded rules: %v", err)
 	}
@@ -356,7 +360,7 @@ func filterReports(names []string, reports []*linter.Report) []*linter.Report {
 
 func init() {
 	var once sync.Once
-	once.Do(func() { go linter.MemoryLimiterThread() })
+	once.Do(func() { go linter.MemoryLimiterThread(0) })
 }
 
 func shuffleFiles(files []TestFile) {

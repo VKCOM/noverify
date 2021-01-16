@@ -787,15 +787,13 @@ for ($i = 0; $i == 0; $i = $i++) {}
 }
 
 func TestCustomUnusedVarRegex(t *testing.T) {
-	defer func(isDiscardVar func(string) bool) {
-		linter.IsDiscardVar = isDiscardVar
-	}(linter.IsDiscardVar)
-
-	linter.IsDiscardVar = func(s string) bool {
+	isDiscardVar := func(s string) bool {
 		return strings.HasPrefix(s, "_")
 	}
 
-	linttest.SimpleNegativeTest(t, `<?php
+	test := linttest.NewSuite(t)
+	test.Config.IsDiscardVar = isDiscardVar
+	test.AddFile(`<?php
 class Foo {
   public $_;
   private $_foo;
@@ -807,8 +805,11 @@ class Foo {
 }
 $_ = __FILE__;
 `)
+	test.RunAndMatch()
 
-	linttest.SimpleNegativeTest(t, `<?php
+	test = linttest.NewSuite(t)
+	test.Config.IsDiscardVar = isDiscardVar
+	test.AddFile(`<?php
 $_unused = 10;
 
 function f() {
@@ -822,7 +823,8 @@ function f() {
 }
 `)
 
-	test := linttest.NewSuite(t)
+	test = linttest.NewSuite(t)
+	test.Config.IsDiscardVar = isDiscardVar
 	test.AddFile(`<?php
 function var_dump($v) {}
 $_global = 120;

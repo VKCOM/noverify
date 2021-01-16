@@ -75,8 +75,11 @@ func NewGoldenTestSuite(t *testing.T, name, baseDir, goldenFileName string) *Gol
 // PrepareGoldenTestSuite configures fields and standard stubs.
 //
 // Used if the structure was created directly.
-func PrepareGoldenTestSuite(s *GoldenTestSuite, t *testing.T, baseDir, goldenFileName string) {
+func PrepareGoldenTestSuite(s *GoldenTestSuite, t *testing.T, config *linter.Config, baseDir, goldenFileName string) {
 	s.suite = NewSuite(t)
+	if config != nil {
+		s.suite.Config = config
+	}
 	s.BaseDir = baseDir
 	s.prepared = true
 	s.GoldenFileName = goldenFileName

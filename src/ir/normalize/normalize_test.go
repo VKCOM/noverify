@@ -8,6 +8,7 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/ir/irfmt"
+	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
@@ -210,7 +211,8 @@ func TestNormalizeExpr(t *testing.T) {
 }
 
 func TestNormalizeExprAfterIndexing(t *testing.T) {
-	linttest.ParseTestFile(t, "defs.php", `<?php
+	l := linter.NewLinter(linter.NewConfig())
+	linttest.ParseTestFile(t, l, "defs.php", `<?php
 const ZERO = 0;
 const HELLO_WORLD = 'hello, world';
 const LOCALHOST = "127.0.0.1";
@@ -231,7 +233,8 @@ class Foo {
 }
 
 func TestMagicConstFold(t *testing.T) {
-	linttest.ParseTestFile(t, "files/file.php", `<?php
+	l := linter.NewLinter(linter.NewConfig())
+	linttest.ParseTestFile(t, l, "files/file.php", `<?php
 namespace Boo;
 
 const NAMESPACE_NAME = __NAMESPACE__;
