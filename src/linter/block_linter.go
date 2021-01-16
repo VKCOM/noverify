@@ -658,7 +658,7 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 		}
 
 		if n, ok := keys[key]; ok {
-			origKey := string(b.walker.r.nodeText(n))
+			origKey := b.walker.r.fmtNode(n)
 			dupKey := fmt.Sprintf("%#q", key)
 			msg := fmt.Sprintf("Duplicate array key %s", origKey)
 			if origKey != dupKey && origKey != key {
@@ -892,7 +892,7 @@ func (b *blockLinter) checkRegexp(e *ir.FunctionCallExpr, arg *ir.Argument) {
 	pat := s.Value
 	simplified := b.walker.r.reSimplifier.simplifyRegexp(pat)
 	if simplified != "" {
-		rawPattern := b.walker.r.nodeText(s)
+		rawPattern := b.walker.r.fmtNode(s)
 		b.report(arg, LevelDoNotReject, "regexpSimplify", "May re-write %s as '%s'",
 			rawPattern, simplified)
 	}
