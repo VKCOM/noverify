@@ -1,6 +1,7 @@
 package linter
 
 import (
+	"regexp"
 	"sync"
 	"time"
 
@@ -33,10 +34,10 @@ func (l *Linter) NewIndexingWorker(id int) *Worker {
 
 // AnalyzeFiles runs linter on the files that are provided by the readFileNamesFunc function.
 func (l *Linter) AnalyzeFiles(readFileNamesFunc workspace.ReadCallback) []*Report {
-	return l.analyzeFiles(readFileNamesFunc)
+	return l.analyzeFiles(readFileNamesFunc, l.config.AllowDisable)
 }
 
-func (l *Linter) analyzeFiles(readFileNamesFunc workspace.ReadCallback) []*Report {
+func (l *Linter) analyzeFiles(readFileNamesFunc workspace.ReadCallback, allowDisable *regexp.Regexp) []*Report {
 	start := time.Now()
 	defer func() {
 		lintdebug.Send("Processing time: %s", time.Since(start))
@@ -70,7 +71,7 @@ func (l *Linter) analyzeFiles(readFileNamesFunc workspace.ReadCallback) []*Repor
 			} else {
 				w = l.NewIndexingWorker(id)
 			}
-			w.AllowDisable = l.config.AllowDisable
+			w.AllowDisable = allowDisable
 			var rep []*Report
 			for f := range filenamesCh {
 				rep = append(rep, w.doParseFile(f)...)
@@ -91,7 +92,7 @@ func (l *Linter) analyzeFiles(readFileNamesFunc workspace.ReadCallback) []*Repor
 
 func (l *Linter) InitStubs(readFileNamesFunc workspace.ReadCallback) {
 	meta.SetLoadingStubs(true)
-	l.AnalyzeFiles(readFileNamesFunc)
+	l.analyzeFiles(readFileNamesFunc, nil)
 	meta.Info.InitStubs()
 	if l.config.KPHP {
 		meta.Info.InitKphpStubs()
