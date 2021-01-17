@@ -195,8 +195,6 @@ func mainNoExit(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgum
 		}()
 	}
 
-	workspace.PHPExtensions = strings.Split(args.phpExtensionsArg, ",")
-
 	l := linterRunner{
 		config: config,
 	}
@@ -222,7 +220,7 @@ func mainNoExit(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgum
 	}
 
 	log.Printf("Indexing %+v", flag.Args())
-	l.getLinter().AnalyzeFiles(workspace.ReadFilenames(flag.Args(), nil))
+	l.getLinter().AnalyzeFiles(workspace.ReadFilenames(flag.Args(), nil, config.PhpExtensions))
 	parseIndexOnlyFiles(&l)
 	l.getLinter().MetaInfo().SetIndexingComplete(true)
 
@@ -232,7 +230,7 @@ func mainNoExit(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgum
 	}
 
 	log.Printf("Linting")
-	reports := l.getLinter().AnalyzeFiles(workspace.ReadFilenames(filenames, l.filenameFilter))
+	reports := l.getLinter().AnalyzeFiles(workspace.ReadFilenames(filenames, l.filenameFilter, config.PhpExtensions))
 	if args.outputBaseline {
 		if err := createBaseline(&l, cfg, reports); err != nil {
 			return 1, fmt.Errorf("write baseline: %v", err)
