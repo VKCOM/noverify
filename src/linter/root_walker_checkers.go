@@ -158,12 +158,12 @@ func (d *rootWalker) checkClassMethodTraversable(m *ir.ClassMethodStmt, name str
 	if name != "getIterator" {
 		return
 	}
-	if !solver.Implements(d.ctx.st.CurrentClass, `\IteratorAggregate`) {
+	if !solver.Implements(d.metaInfo(), d.ctx.st.CurrentClass, `\IteratorAggregate`) {
 		return
 	}
 
 	implementsTraversable := method.Typ.Find(func(typ string) bool {
-		return solver.Implements(typ, `\Traversable`)
+		return solver.Implements(d.metaInfo(), typ, `\Traversable`)
 	})
 
 	if !implementsTraversable {

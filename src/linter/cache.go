@@ -109,7 +109,7 @@ func createMetaCacheFile(filename, cacheFile string, root *rootWalker) error {
 
 	// if using cache, this is the only proper place to update meta info:
 	// after all cache meta info was successfully written to disk
-	updateMetaInfo(filename, &root.meta)
+	updateMetaInfo(root.ctx.st.Info, filename, &root.meta)
 	return nil
 }
 
@@ -129,35 +129,35 @@ func readMetaCache(r io.Reader, filename string, dst *fileMeta) error {
 	return nil
 }
 
-func restoreMetaFromCache(filename string, rd io.Reader) error {
+func restoreMetaFromCache(info *meta.Info, filename string, rd io.Reader) error {
 	var m fileMeta
 	if err := readMetaCache(rd, filename, &m); err != nil {
 		return err
 	}
 
-	updateMetaInfo(filename, &m)
+	updateMetaInfo(info, filename, &m)
 	return nil
 }
 
-func updateMetaInfo(filename string, m *fileMeta) {
-	if meta.IsIndexingComplete() {
+func updateMetaInfo(info *meta.Info, filename string, m *fileMeta) {
+	if info.IsIndexingComplete() {
 		panic("Trying to update meta info when not indexing")
 	}
 
-	meta.Info.Lock()
-	defer meta.Info.Unlock()
+	info.Lock()
+	defer info.Unlock()
 
-	meta.Info.DeleteMetaForFileNonLocked(filename)
+	info.DeleteMetaForFileNonLocked(filename)
 
-	meta.Info.AddFilenameNonLocked(filename)
-	meta.Info.AddClassesNonLocked(filename, m.Classes)
-	meta.Info.AddTraitsNonLocked(filename, m.Traits)
-	meta.Info.AddFunctionsNonLocked(filename, m.Functions)
-	meta.Info.AddConstantsNonLocked(filename, m.Constants)
-	meta.Info.AddFunctionsOverridesNonLocked(filename, m.FunctionOverrides)
+	info.AddFilenameNonLocked(filename)
+	info.AddClassesNonLocked(filename, m.Classes)
+	info.AddTraitsNonLocked(filename, m.Traits)
+	info.AddFunctionsNonLocked(filename, m.Functions)
+	info.AddConstantsNonLocked(filename, m.Constants)
+	info.AddFunctionsOverridesNonLocked(filename, m.FunctionOverrides)
 
 	if m.Scope != nil {
-		meta.Info.AddToGlobalScopeNonLocked(filename, m.Scope)
+		info.AddToGlobalScopeNonLocked(filename, m.Scope)
 	}
 }
 
