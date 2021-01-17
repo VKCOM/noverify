@@ -50,9 +50,9 @@ func SimpleNegativeTest(t *testing.T, contents string) {
 	s.RunAndMatch()
 }
 
-// GetFileReports runs linter over a single file out of given content
+// CheckFile runs linter over a single file out of given content
 // and returns all reports that were found.
-func GetFileReports(t *testing.T, contents string) []*linter.Report {
+func CheckFile(t *testing.T, contents string) RunResult {
 	s := NewSuite(t)
 	s.AddFile(contents)
 	return s.RunLinter()
@@ -150,7 +150,7 @@ func (s *Suite) AddNolintFile(contents string) {
 // reports slice is needed, one can use RunLinter directly.
 func (s *Suite) RunAndMatch() {
 	s.t.Helper()
-	s.Match(s.RunLinter())
+	s.Match(s.RunLinter().Reports)
 }
 
 // Match tries to match every report against Expect list of s.
@@ -206,11 +206,15 @@ func (s *Suite) Match(reports []*linter.Report) {
 	}
 }
 
+type RunResult struct {
+	Reports []*linter.Report
+	Info    *meta.Info
+}
+
 // RunLinter executes linter over s Files and returns all issue reports
 // that were produced during that.
-func (s *Suite) RunLinter() []*linter.Report {
+func (s *Suite) RunLinter() RunResult {
 	s.t.Helper()
-	meta.ResetInfo()
 
 	l := linter.NewLinter(s.Config)
 
@@ -221,7 +225,7 @@ func (s *Suite) RunLinter() []*linter.Report {
 	for stub := range s.defaultStubs {
 		stubs = append(stubs, stub)
 	}
-	if err := cmd.LoadEmbeddedStubs(s.Config, stubs); err != nil {
+	if err := cmd.LoadEmbeddedStubs(l, stubs); err != nil {
 		s.t.Fatalf("load stubs: %v", err)
 	}
 
@@ -240,7 +244,7 @@ func (s *Suite) RunLinter() []*linter.Report {
 		parseTestFile(s.t, indexing, f)
 	}
 
-	meta.SetIndexingComplete(true)
+	l.MetaInfo().SetIndexingComplete(true)
 
 	linting := l.NewLintingWorker(0)
 	linting.AllowDisable = s.AllowDisable
@@ -272,20 +276,23 @@ func (s *Suite) RunLinter() []*linter.Report {
 		}
 	}
 
-	return reports
+	return RunResult{
+		Reports: reports,
+		Info:    l.MetaInfo(),
+	}
 }
 
 // RunFilterLinter calls RunLinter with the filter.
 func (s *Suite) RunFilterLinter(filters []string) []*linter.Report {
 	s.t.Helper()
-	reports := s.RunLinter()
+	result := s.RunLinter()
 
 	disable := map[string]bool{}
 	for _, checkName := range filters {
 		disable[checkName] = true
 	}
-	filteredReports := reports[:0]
-	for _, r := range reports {
+	filteredReports := result.Reports[:0]
+	for _, r := range result.Reports {
 		if !disable[r.CheckName] {
 			filteredReports = append(filteredReports, r)
 		}
@@ -294,9 +301,9 @@ func (s *Suite) RunFilterLinter(filters []string) []*linter.Report {
 	return filteredReports
 }
 
-func ParseTestFile(t *testing.T, l *linter.Linter, filename, content string) linter.ParseResult {
+func ParseTestFile(t testing.TB, l *linter.Linter, filename, content string) linter.ParseResult {
 	var worker *linter.Worker
-	if meta.IsIndexingComplete() {
+	if l.MetaInfo().IsIndexingComplete() {
 		worker = l.NewLintingWorker(0)
 	} else {
 		worker = l.NewIndexingWorker(0)
@@ -310,7 +317,7 @@ func ParseTestFile(t *testing.T, l *linter.Linter, filename, content string) lin
 // RunFilterMatch calls Match with the filtered results of RunLinter.
 func RunFilterMatch(test *Suite, names ...string) {
 	test.t.Helper()
-	test.Match(filterReports(names, test.RunLinter()))
+	test.Match(filterReports(names, test.RunLinter().Reports))
 }
 
 func FindPHPFiles(root string) ([]string, error) {
@@ -377,7 +384,7 @@ func parseTestFile(t testing.TB, worker *linter.Worker, f TestFile) linter.Parse
 
 	var err error
 	var result linter.ParseResult
-	if meta.IsIndexingComplete() {
+	if worker.MetaInfo().IsIndexingComplete() {
 		result, err = worker.ParseContents(file)
 	} else {
 		err = worker.IndexFile(file)

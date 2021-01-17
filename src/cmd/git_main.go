@@ -8,7 +8,6 @@ import (
 
 	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/linter"
-	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
@@ -53,8 +52,8 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 	}
 
 	if l.args.gitFullDiff {
-		meta.ResetInfo()
-		if err := loadEmbeddedStubs(l.config); err != nil {
+		resetMetaInfo(l)
+		if err := loadEmbeddedStubs(l.getLinter()); err != nil {
 			log.Panicf("Load embedded stubs: %v", err)
 		}
 
@@ -63,14 +62,14 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 		parseIndexOnlyFiles(l)
 		log.Printf("Indexed old commit in %s", time.Since(start))
 
-		meta.SetIndexingComplete(true)
+		l.getLinter().MetaInfo().SetIndexingComplete(true)
 
 		start = time.Now()
 		oldReports = l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, l.config.ExcludeRegex))
 		log.Printf("Parsed old commit for %s (%d reports)", time.Since(start), len(oldReports))
 
-		meta.ResetInfo()
-		if err := loadEmbeddedStubs(l.config); err != nil {
+		resetMetaInfo(l)
+		if err := loadEmbeddedStubs(l.getLinter()); err != nil {
 			log.Panicf("Load embedded stubs: %v", err)
 		}
 
@@ -79,7 +78,7 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 		l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil))
 		log.Printf("Indexed new commit in %s", time.Since(start))
 
-		meta.SetIndexingComplete(true)
+		l.getLinter().MetaInfo().SetIndexingComplete(true)
 
 		start = time.Now()
 		reports = l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, l.config.ExcludeRegex))
@@ -90,17 +89,17 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 		parseIndexOnlyFiles(l)
 		log.Printf("Indexing complete in %s", time.Since(start))
 
-		meta.SetIndexingComplete(true)
+		l.getLinter().MetaInfo().SetIndexingComplete(true)
 
 		start = time.Now()
 		oldReports = l.getLinter().AnalyzeFiles(workspace.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes))
 		log.Printf("Parsed old files versions for %s", time.Since(start))
 
 		start = time.Now()
-		meta.SetIndexingComplete(false)
+		l.getLinter().MetaInfo().SetIndexingComplete(false)
 		parseIndexOnlyFiles(l)
 		l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes))
-		meta.SetIndexingComplete(true)
+		l.getLinter().MetaInfo().SetIndexingComplete(true)
 		log.Printf("Indexed files versions for %s", time.Since(start))
 
 		start = time.Now()
@@ -135,18 +134,18 @@ func gitRepoComputeReportsFromLocalChanges(l *linterRunner) (oldReports, reports
 	parseIndexOnlyFiles(l)
 	log.Printf("Indexing complete in %s", time.Since(start))
 
-	meta.SetIndexingComplete(true)
+	l.getLinter().MetaInfo().SetIndexingComplete(true)
 
 	start = time.Now()
 	oldReports = l.getLinter().AnalyzeFiles(workspace.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes))
 	log.Printf("Parsed old files versions for %s", time.Since(start))
 
 	start = time.Now()
-	meta.SetIndexingComplete(false)
+	l.getLinter().MetaInfo().SetIndexingComplete(false)
 	l.getLinter().AnalyzeFiles(workspace.ReadChangesFromWorkTree(l.args.gitWorkTree, changes))
 	parseIndexOnlyFiles(l)
 	gitParseUntracked(l)
-	meta.SetIndexingComplete(true)
+	l.getLinter().MetaInfo().SetIndexingComplete(true)
 	log.Printf("Indexed new files versions for %s", time.Since(start))
 
 	start = time.Now()
@@ -262,4 +261,9 @@ func prepareGitArgs(l *linterRunner) (logArgs, diffArgs []string, err error) {
 	diffArgs = []string{l.args.mutable.gitCommitFrom + ".." + l.args.mutable.gitCommitTo}
 
 	return logArgs, diffArgs, nil
+}
+
+// This function is a kludge to make old git-related code work without many modifications.
+func resetMetaInfo(l *linterRunner) {
+	l.linter = linter.NewLinter(l.config)
 }
