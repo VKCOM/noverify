@@ -52,13 +52,15 @@ type Worker struct {
 	AllowDisable *regexp.Regexp
 
 	config *Config
+	info   *meta.Info
 }
 
-func newWorker(config *Config, id int) *Worker {
+func newWorker(config *Config, info *meta.Info, id int) *Worker {
 	ctx := NewWorkerContext()
 	irConverter := irconv.NewConverter(ctx.phpdocTypeParser)
 	return &Worker{
 		config: config,
+		info:   info,
 		id:     id,
 		ctx:    ctx,
 		irconv: irConverter,
@@ -72,6 +74,8 @@ func newWorker(config *Config, id int) *Worker {
 }
 
 func (w *Worker) ID() int { return w.id }
+
+func (w *Worker) MetaInfo() *meta.Info { return w.info }
 
 // ParseContents parses specified contents (or file) and returns *RootWalker.
 // Function does not update global meta.
@@ -130,7 +134,7 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 	if w.config.CacheDir == "" {
 		result, err := w.ParseContents(file)
 		if w != nil {
-			updateMetaInfo(file.Name, &result.walker.meta)
+			updateMetaInfo(w.info, file.Name, &result.walker.meta)
 		}
 		return err
 	}
@@ -179,7 +183,7 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 	}
 	defer fp.Close()
 
-	if err := restoreMetaFromCache(file.Name, fp); err != nil {
+	if err := restoreMetaFromCache(w.info, file.Name, fp); err != nil {
 		// do not really care about why exactly reading from cache failed
 		os.Remove(cacheFile)
 
@@ -237,7 +241,7 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 
 	rootIR := w.irconv.ConvertRoot(rootNode)
 
-	st := &meta.ClassParseState{CurrentFile: file.Name()}
+	st := &meta.ClassParseState{Info: w.info, CurrentFile: file.Name()}
 	walker := &rootWalker{
 		config: w.config,
 		file:   file,
@@ -264,7 +268,7 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 
 	walker.beforeEnterFile()
 	rootIR.Walk(walker)
-	if meta.IsIndexingComplete() {
+	if w.info.IsIndexingComplete() {
 		analyzeFileRootLevel(rootIR, walker)
 	}
 	walker.afterLeaveFile()

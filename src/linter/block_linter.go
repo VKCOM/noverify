@@ -190,7 +190,7 @@ func (b *blockLinter) report(n ir.Node, level int, checkName, msg string, args .
 }
 
 func (b *blockLinter) checkCoalesceExpr(n *ir.CoalesceExpr) {
-	lhsType := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, n.Left)
+	lhsType := solver.ExprType(b.walker.ctx.sc, b.classParseState(), n.Left)
 	if !lhsType.IsPrecise() {
 		return
 	}
@@ -237,7 +237,7 @@ func (b *blockLinter) checkCatchOrder(s *ir.TryStmt) {
 			return // give up on A|B catch
 		}
 
-		class, ok := solver.GetClassName(b.walker.r.ctx.st, c.Types[0])
+		class, ok := solver.GetClassName(b.classParseState(), c.Types[0])
 		if !ok {
 			continue
 		}
@@ -249,12 +249,12 @@ func (b *blockLinter) checkCatchOrder(s *ir.TryStmt) {
 				add = false
 				break
 			}
-			if solver.Extends(class, otherClass) {
+			if solver.Extends(b.metaInfo(), class, otherClass) {
 				b.report(c.Types[0], LevelWarning, "catchOrder", "catch %s block will never run as it extends %s which is caught above", class, otherClass)
 				add = false
 				break
 			}
-			if solver.Implements(class, otherClass) {
+			if solver.Implements(b.metaInfo(), class, otherClass) {
 				b.report(c.Types[0], LevelWarning, "catchOrder", "catch %s block will never run as it implements %s which is caught above", class, otherClass)
 				add = false
 				break
@@ -289,7 +289,7 @@ func (b *blockLinter) checkBinaryDupArgs(n, left, right ir.Node) {
 	if !b.walker.sideEffectFree(left) || !b.walker.sideEffectFree(right) {
 		return
 	}
-	if nodeEqual(b.walker.r.ctx.st, left, right) {
+	if nodeEqual(b.classParseState(), left, right) {
 		b.report(n, LevelWarning, "dupSubExpr", "duplicated operands value in %s expression", binaryOpString(n))
 	}
 }
@@ -329,7 +329,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 		return
 	}
 
-	if b.walker.r.ctx.st.IsTrait {
+	if b.classParseState().IsTrait {
 		switch {
 		case meta.NameNodeEquals(e.Class, "self"):
 			// Don't try to resolve "self" inside trait context.
@@ -340,13 +340,13 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 		}
 	}
 
-	className, ok := solver.GetClassName(b.walker.r.ctx.st, e.Class)
+	className, ok := solver.GetClassName(b.classParseState(), e.Class)
 	if !ok {
 		// perhaps something like 'new $class', cannot check this.
 		return
 	}
 
-	class, ok := meta.Info.GetClass(className)
+	class, ok := b.metaInfo().GetClass(className)
 	if !ok {
 		b.walker.r.reportUndefinedType(e.Class, className)
 	} else {
@@ -361,7 +361,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 	}
 
 	// Check implicitly invoked constructor method arguments count.
-	m, ok := solver.FindMethod(className, "__construct")
+	m, ok := solver.FindMethod(b.metaInfo(), className, "__construct")
 	if !ok {
 		return
 	}
@@ -409,7 +409,7 @@ func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 }
 
 func (b *blockLinter) checkConstFetch(e *ir.ConstFetchExpr) {
-	_, _, defined := solver.GetConstant(b.walker.r.ctx.st, e.Constant)
+	_, _, defined := solver.GetConstant(b.classParseState(), e.Constant)
 
 	if !defined {
 		// If it's builtin constant, give a more precise report message.
@@ -468,7 +468,7 @@ func (b *blockLinter) checkSwitch(s *ir.SwitchStmt) {
 		var v meta.ConstValue
 		var isConstKey bool
 		if k, ok := c.Cond.(*ir.ConstFetchExpr); ok {
-			v = constfold.Eval(b.walker.r.ctx.st, k)
+			v = constfold.Eval(b.classParseState(), k)
 			if !v.IsValid() {
 				continue
 			}
@@ -621,7 +621,7 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 			key = k.Value
 			constKey = true
 		case *ir.ConstFetchExpr:
-			v := constfold.Eval(b.walker.r.ctx.st, k)
+			v := constfold.Eval(b.classParseState(), k)
 			if !v.IsValid() {
 				continue
 			}
@@ -717,7 +717,7 @@ func (b *blockLinter) checkCallArgsCount(n ir.Node, args []ir.Node, fn meta.Func
 }
 
 func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
-	call := resolveFunctionCall(b.walker.ctx.sc, b.walker.r.ctx.st, b.walker.ctx.customTypes, e)
+	call := resolveFunctionCall(b.walker.ctx.sc, b.classParseState(), b.walker.ctx.customTypes, e)
 	fqName := call.funcName
 
 	if call.canAnalyze {
@@ -743,7 +743,7 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 }
 
 func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
-	parseState := b.walker.r.ctx.st
+	parseState := b.classParseState()
 
 	call := resolveMethodCall(b.walker.ctx.sc, parseState, b.walker.ctx.customTypes, e)
 	if !call.canAnalyze {
@@ -784,7 +784,7 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 }
 
 func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
-	call := resolveStaticMethodCall(b.walker.r.ctx.st, e)
+	call := resolveStaticMethodCall(b.classParseState(), e)
 	if !call.canAnalyze {
 		return
 	}
@@ -793,9 +793,9 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 		b.checkCallArgs(e.Call, e.Args, call.methodInfo.Info)
 	}
 
-	if !call.isFound && !call.isMagic && !b.walker.r.ctx.st.IsTrait {
+	if !call.isFound && !call.isMagic && !b.classParseState().IsTrait {
 		b.report(e.Call, LevelError, "undefined", "Call to undefined method %s::%s()", call.className, call.methodName)
-	} else if !call.isParentCall && !call.methodInfo.Info.IsStatic() && !call.isMagic && !b.walker.r.ctx.st.IsTrait {
+	} else if !call.isParentCall && !call.methodInfo.Info.IsStatic() && !call.isMagic && !b.classParseState().IsTrait {
 		// Method is defined.
 		// parent::f() is permitted.
 		b.report(e.Call, LevelWarning, "callStatic", "Calling instance method as static method")
@@ -811,52 +811,52 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 		}
 	}
 
-	if call.isFound && !canAccess(b.walker.r.ctx.st, call.methodInfo.ClassName, call.methodInfo.Info.AccessLevel) {
+	if call.isFound && !canAccess(b.classParseState(), call.methodInfo.ClassName, call.methodInfo.Info.AccessLevel) {
 		b.report(e.Call, LevelError, "accessLevel", "Cannot access %s method %s::%s()", call.methodInfo.Info.AccessLevel, call.methodInfo.ClassName, call.methodName)
 	}
 }
 
 func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
-	fetch := resolvePropertyFetch(b.walker.ctx.sc, b.walker.r.ctx.st, b.walker.ctx.customTypes, e)
+	fetch := resolvePropertyFetch(b.walker.ctx.sc, b.classParseState(), b.walker.ctx.customTypes, e)
 	if !fetch.canAnalyze {
 		return
 	}
 
-	if !fetch.isFound && !fetch.isMagic && !b.walker.r.ctx.st.IsTrait && !b.walker.isThisInsideClosure(e.Variable) {
+	if !fetch.isFound && !fetch.isMagic && !b.classParseState().IsTrait && !b.walker.isThisInsideClosure(e.Variable) {
 		b.report(e.Property, LevelError, "undefined", "Property {%s}->%s does not exist", fetch.propertyFetchType, fetch.propertyNode.Value)
 	}
 
-	if fetch.isFound && !fetch.isMagic && !canAccess(b.walker.r.ctx.st, fetch.className, fetch.info.AccessLevel) {
+	if fetch.isFound && !fetch.isMagic && !canAccess(b.classParseState(), fetch.className, fetch.info.AccessLevel) {
 		b.report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s->%s", fetch.info.AccessLevel, fetch.className, fetch.propertyNode.Value)
 	}
 }
 
 func (b *blockLinter) checkStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) {
-	fetch := resolveStaticPropertyFetch(b.walker.r.ctx.st, e)
+	fetch := resolveStaticPropertyFetch(b.classParseState(), e)
 	if !fetch.canAnalyze {
 		return
 	}
 
-	if !fetch.isFound && !b.walker.r.ctx.st.IsTrait {
+	if !fetch.isFound && !b.classParseState().IsTrait {
 		b.report(e.Property, LevelError, "undefined", "Property %s::$%s does not exist", fetch.className, fetch.propertyName)
 	}
 
-	if fetch.isFound && !canAccess(b.walker.r.ctx.st, fetch.info.ClassName, fetch.info.Info.AccessLevel) {
+	if fetch.isFound && !canAccess(b.classParseState(), fetch.info.ClassName, fetch.info.Info.AccessLevel) {
 		b.report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s::$%s", fetch.info.Info.AccessLevel, fetch.info.ClassName, fetch.propertyName)
 	}
 }
 
 func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
-	fetch := resolveClassConstFetch(b.walker.r.ctx.st, e)
+	fetch := resolveClassConstFetch(b.classParseState(), e)
 	if !fetch.canAnalyze {
 		return
 	}
 
-	if !fetch.isFound && !b.walker.r.ctx.st.IsTrait {
+	if !fetch.isFound && !b.classParseState().IsTrait {
 		b.walker.r.Report(e.ConstantName, LevelError, "undefined", "Class constant %s::%s does not exist", fetch.className, fetch.constName)
 	}
 
-	if fetch.isFound && !canAccess(b.walker.r.ctx.st, fetch.implClassName, fetch.info.AccessLevel) {
+	if fetch.isFound && !canAccess(b.classParseState(), fetch.implClassName, fetch.info.AccessLevel) {
 		b.walker.r.Report(e.ConstantName, LevelError, "accessLevel", "Cannot access %s constant %s::%s", fetch.info.AccessLevel, fetch.implClassName, fetch.constName)
 	}
 }
@@ -966,4 +966,12 @@ func (b *blockLinter) checkFormatString(e *ir.FunctionCallExpr, arg *ir.Argument
 
 func (b *blockLinter) isArrayType(typ meta.TypesMap) bool {
 	return typ.Len() == 1 && typ.Find(meta.IsArrayType)
+}
+
+func (b *blockLinter) classParseState() *meta.ClassParseState {
+	return b.walker.r.ctx.st
+}
+
+func (b *blockLinter) metaInfo() *meta.Info {
+	return b.walker.r.ctx.st.Info
 }

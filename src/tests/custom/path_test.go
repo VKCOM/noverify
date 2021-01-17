@@ -7,7 +7,6 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
-	"github.com/VKCOM/noverify/src/meta"
 )
 
 func init() {
@@ -168,7 +167,7 @@ type pathTester struct {
 }
 
 func (b *pathTester) AfterEnterNode(n ir.Node) {
-	if !meta.IsIndexingComplete() {
+	if !b.ctx.ClassParseState().Info.IsIndexingComplete() {
 		return
 	}
 
