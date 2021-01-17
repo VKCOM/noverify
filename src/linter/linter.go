@@ -12,22 +12,29 @@ import (
 
 type Linter struct {
 	config *Config
+
+	info *meta.Info
 }
 
 func NewLinter(config *Config) *Linter {
 	return &Linter{
 		config: config,
+		info:   meta.NewInfo(),
 	}
 }
 
+func (l *Linter) MetaInfo() *meta.Info {
+	return l.info
+}
+
 func (l *Linter) NewLintingWorker(id int) *Worker {
-	w := newWorker(l.config, id)
+	w := newWorker(l.config, l.info, id)
 	w.needReports = true
 	return w
 }
 
 func (l *Linter) NewIndexingWorker(id int) *Worker {
-	w := newWorker(l.config, id)
+	w := newWorker(l.config, l.info, id)
 	w.needReports = false
 	return w
 }
@@ -39,16 +46,18 @@ func (l *Linter) AnalyzeFiles(readFileNamesFunc workspace.ReadCallback) []*Repor
 
 func (l *Linter) analyzeFiles(readFileNamesFunc workspace.ReadCallback, allowDisable *regexp.Regexp) []*Report {
 	start := time.Now()
+
 	defer func() {
 		lintdebug.Send("Processing time: %s", time.Since(start))
 
-		meta.Info.Lock()
-		defer meta.Info.Unlock()
+		l.info.Lock()
+		defer l.info.Unlock()
 
-		lintdebug.Send("Funcs: %d, consts: %d, files: %d", meta.Info.NumFunctions(), meta.Info.NumConstants(), meta.Info.NumFilesWithFunctions())
+		lintdebug.Send("Funcs: %d, consts: %d, files: %d",
+			l.info.NumFunctions(), l.info.NumConstants(), l.info.NumFilesWithFunctions())
 	}()
 
-	needReports := meta.IsIndexingComplete()
+	needReports := l.info.IsIndexingComplete()
 
 	lintdebug.Send("Parsing using %d cores", l.config.MaxConcurrency)
 
@@ -91,13 +100,13 @@ func (l *Linter) analyzeFiles(readFileNamesFunc workspace.ReadCallback, allowDis
 }
 
 func (l *Linter) InitStubs(readFileNamesFunc workspace.ReadCallback) {
-	meta.SetLoadingStubs(true)
+	l.info.SetLoadingStubs(true)
 	l.analyzeFiles(readFileNamesFunc, nil)
-	meta.Info.InitStubs()
+	l.info.InitStubs()
 	if l.config.KPHP {
-		meta.Info.InitKphpStubs()
+		l.info.InitKphpStubs()
 	}
-	meta.SetLoadingStubs(false)
+	l.info.SetLoadingStubs(false)
 }
 
 // InitStubsFromDir parses directory with PHPStorm stubs which has all internal PHP classes and functions declared.

@@ -117,6 +117,10 @@ func newBlockWalker(r *rootWalker, sc *meta.Scope) *blockWalker {
 	return b
 }
 
+func (b *blockWalker) isIndexingComplete() bool {
+	return b.r.ctx.st.Info.IsIndexingComplete()
+}
+
 func (b *blockWalker) addStatement(n ir.Node) {
 	if b.statements == nil {
 		b.statements = make(map[ir.Node]struct{})
@@ -322,10 +326,10 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 		c.AfterEnterNode(n)
 	}
 
-	if meta.IsIndexingComplete() {
+	if b.isIndexingComplete() {
 		b.linter.enterNode(n)
 	}
-	if meta.IsIndexingComplete() && b.r.anyRset != nil {
+	if b.isIndexingComplete() && b.r.anyRset != nil {
 		// Note: no need to check localRset for nil.
 		kind := ir.GetNodeKind(n)
 		b.r.runRules(n, b.ctx.sc, b.r.anyRset.RulesByKind[kind])
@@ -1451,7 +1455,7 @@ func (b *blockWalker) handleAndCheckDimFetchLValue(e *ir.ArrayDimFetchExpr, reas
 }
 
 func (b *blockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
-	if !meta.IsIndexingComplete() {
+	if !b.isIndexingComplete() {
 		return
 	}
 
@@ -1467,7 +1471,7 @@ func (b *blockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
 		if meta.IsClassType(t) {
 			maybeHaveClasses = true
 
-			if !haveArrayAccess && solver.Implements(t, `\ArrayAccess`) {
+			if !haveArrayAccess && solver.Implements(b.r.ctx.st.Info, t, `\ArrayAccess`) {
 				haveArrayAccess = true
 			}
 		}
@@ -1558,7 +1562,7 @@ func (b *blockWalker) handleAssignList(list *ir.ListExpr, rhs ir.Node) {
 
 	// Try to handle it as a shape assignment.
 	if shapeType != "" {
-		class, ok := meta.Info.GetClass(shapeType)
+		class, ok := b.r.ctx.st.Info.GetClass(shapeType)
 		if ok {
 			b.handleAssignShapeToList(list.Items, class)
 			return
@@ -1606,7 +1610,7 @@ func (b *blockWalker) handleAssign(a *ir.Assign) bool {
 	case *ir.Var:
 		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
 	case *ir.ListExpr:
-		if !meta.IsIndexingComplete() {
+		if !b.isIndexingComplete() {
 			return true
 		}
 
@@ -1727,7 +1731,7 @@ func (b *blockWalker) handleAssignOp(assign ir.Node) {
 }
 
 func (b *blockWalker) flushUnused() {
-	if !meta.IsIndexingComplete() {
+	if !b.isIndexingComplete() {
 		return
 	}
 

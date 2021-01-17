@@ -12,7 +12,6 @@ import (
 	"github.com/monochromegane/go-gitignore"
 
 	"github.com/VKCOM/noverify/src/git"
-	"github.com/VKCOM/noverify/src/meta"
 )
 
 // ParseGitignoreFromDir tries to parse a gitignore file at path/.gitignore.
@@ -85,11 +84,7 @@ func ReadFilesFromGit(repo, commitSHA1 string, ignoreRegex *regexp.Regexp, phpEx
 				idx++
 				if time.Since(start) >= 2*time.Second {
 					start = time.Now()
-					action := "Indexed"
-					if meta.IsIndexingComplete() {
-						action = "Analyzed"
-					}
-					log.Printf("%s %d files from git", action, idx)
+					log.Printf("Processed %d files from git", idx)
 				}
 
 				if ignoreRegex != nil && ignoreRegex.MatchString(filename) {

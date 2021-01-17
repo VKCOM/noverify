@@ -2846,8 +2846,6 @@ func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 }
 
 func exprTypeTestImpl(t *testing.T, params *exprTypeTestParams, kphp bool) {
-	meta.ResetInfo()
-
 	config := linter.NewConfig()
 	config.KPHP = kphp
 	l := linter.NewLinter(config)
@@ -2861,7 +2859,7 @@ func exprTypeTestImpl(t *testing.T, params *exprTypeTestParams, kphp bool) {
 	}
 	linttest.ParseTestFile(t, l, "exprtype.php", params.code)
 
-	meta.SetIndexingComplete(true)
+	l.MetaInfo().SetIndexingComplete(true)
 
 	// Reset results map and run expr type collector.
 	exprTypeResult = map[ir.Node]meta.TypesMap{}
@@ -2934,7 +2932,7 @@ type exprTypeCollector struct {
 }
 
 func (c *exprTypeCollector) AfterEnterNode(n ir.Node) {
-	if !meta.IsIndexingComplete() {
+	if !c.ctx.ClassParseState().Info.IsIndexingComplete() {
 		return
 	}
 

@@ -20,7 +20,6 @@ import (
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linter/lintapi"
-	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/workspace"
 )
@@ -223,7 +222,7 @@ func mainNoExit(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgum
 	log.Printf("Indexing %+v", flag.Args())
 	l.getLinter().AnalyzeFiles(workspace.ReadFilenames(flag.Args(), nil, config.PhpExtensions))
 	parseIndexOnlyFiles(&l)
-	meta.SetIndexingComplete(true)
+	l.getLinter().MetaInfo().SetIndexingComplete(true)
 
 	filenames := flag.Args()
 	if args.fullAnalysisFiles != "" {
@@ -397,14 +396,14 @@ func initStubs(config *linter.Config, l *linter.Linter) error {
 	}
 
 	// Try to use embedded stubs (from stubs/phpstorm_stubs.go).
-	if err := loadEmbeddedStubs(config); err != nil {
+	if err := loadEmbeddedStubs(l); err != nil {
 		return fmt.Errorf("failed to load embedded stubs: %v", err)
 	}
 
 	return nil
 }
 
-func LoadEmbeddedStubs(config *linter.Config, filenames []string) error {
+func LoadEmbeddedStubs(l *linter.Linter, filenames []string) error {
 	var errorsCount int64
 
 	readStubs := func(ch chan workspace.FileInfo) {
@@ -422,7 +421,6 @@ func LoadEmbeddedStubs(config *linter.Config, filenames []string) error {
 		}
 	}
 
-	l := linter.NewLinter(config)
 	l.InitStubs(readStubs)
 
 	// Using atomic here for consistency.
@@ -433,7 +431,7 @@ func LoadEmbeddedStubs(config *linter.Config, filenames []string) error {
 	return nil
 }
 
-func loadEmbeddedStubs(config *linter.Config) error {
+func loadEmbeddedStubs(l *linter.Linter) error {
 	var filenames []string
 	// NOVERIFYDEBUG_LOAD_STUBS is used in golden tests to specify
 	// the test dependencies that need to be loaded.
@@ -445,5 +443,5 @@ func loadEmbeddedStubs(config *linter.Config) error {
 	if len(filenames) == 0 {
 		return fmt.Errorf("empty file list")
 	}
-	return LoadEmbeddedStubs(config, filenames)
+	return LoadEmbeddedStubs(l, filenames)
 }

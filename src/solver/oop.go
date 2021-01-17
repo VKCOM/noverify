@@ -30,7 +30,7 @@ func GetFuncName(cs *meta.ClassParseState, funcNode ir.Node) (funcName string, o
 			return nameStr, true
 		}
 		fqName := cs.Namespace + `\` + nameStr
-		_, ok := meta.Info.GetFunction(fqName)
+		_, ok := cs.Info.GetFunction(fqName)
 		if ok {
 			return fqName, true
 		}
@@ -91,21 +91,21 @@ func GetConstant(cs *meta.ClassParseState, constNode ir.Node) (constName string,
 
 	nameStr := nm.Value
 	if nm.IsFullyQualified() {
-		ci, ok = meta.Info.GetConstant(nameStr)
+		ci, ok = cs.Info.GetConstant(nameStr)
 		if ok {
 			return nameStr, ci, true
 		}
 	}
 
 	nameWithNs := cs.Namespace + `\` + nameStr
-	ci, ok = meta.Info.GetConstant(nameWithNs)
+	ci, ok = cs.Info.GetConstant(nameWithNs)
 	if ok {
 		return nameWithNs, ci, true
 	}
 
 	if cs.Namespace != "" {
 		nameRootNs := `\` + nameStr
-		ci, ok = meta.Info.GetConstant(nameRootNs)
+		ci, ok = cs.Info.GetConstant(nameRootNs)
 		if ok {
 			return nameRootNs, ci, ok
 		}
@@ -116,11 +116,11 @@ func GetConstant(cs *meta.ClassParseState, constNode ir.Node) (constName string,
 
 // Extends reports whether derived class extends the base class.
 // It returns false for the derived==base case.
-func Extends(derived, base string) bool {
+func Extends(info *meta.Info, derived, base string) bool {
 	if derived == base {
 		return false
 	}
-	class, ok := meta.Info.GetClass(derived)
+	class, ok := info.GetClass(derived)
 	if !ok {
 		return false
 	}
@@ -130,6 +130,6 @@ func Extends(derived, base string) bool {
 	case "":
 		return false
 	default:
-		return Extends(class.Parent, base)
+		return Extends(info, class.Parent, base)
 	}
 }
