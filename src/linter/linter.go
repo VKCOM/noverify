@@ -1,7 +1,6 @@
 package linter
 
 import (
-	"regexp"
 	"sync"
 	"time"
 
@@ -34,10 +33,10 @@ func (l *Linter) NewIndexingWorker(id int) *Worker {
 
 // AnalyzeFiles runs linter on the files that are provided by the readFileNamesFunc function.
 func (l *Linter) AnalyzeFiles(readFileNamesFunc workspace.ReadCallback) []*Report {
-	return l.analyzeFiles(readFileNamesFunc, l.config.AllowDisable)
+	return l.analyzeFiles(readFileNamesFunc)
 }
 
-func (l *Linter) analyzeFiles(readFileNamesFunc workspace.ReadCallback, allowDisable *regexp.Regexp) []*Report {
+func (l *Linter) analyzeFiles(readFileNamesFunc workspace.ReadCallback) []*Report {
 	start := time.Now()
 	defer func() {
 		lintdebug.Send("Processing time: %s", time.Since(start))
@@ -71,7 +70,7 @@ func (l *Linter) analyzeFiles(readFileNamesFunc workspace.ReadCallback, allowDis
 			} else {
 				w = l.NewIndexingWorker(id)
 			}
-			w.AllowDisable = allowDisable
+			w.AllowDisable = l.config.AllowDisable
 			var rep []*Report
 			for f := range filenamesCh {
 				rep = append(rep, w.doParseFile(f)...)
@@ -92,7 +91,7 @@ func (l *Linter) analyzeFiles(readFileNamesFunc workspace.ReadCallback, allowDis
 
 func (l *Linter) InitStubs(readFileNamesFunc workspace.ReadCallback) {
 	meta.SetLoadingStubs(true)
-	l.analyzeFiles(readFileNamesFunc, nil)
+	l.AnalyzeFiles(readFileNamesFunc)
 	meta.Info.InitStubs()
 	if l.config.KPHP {
 		meta.Info.InitKphpStubs()
@@ -102,5 +101,5 @@ func (l *Linter) InitStubs(readFileNamesFunc workspace.ReadCallback) {
 
 // InitStubsFromDir parses directory with PHPStorm stubs which has all internal PHP classes and functions declared.
 func (l *Linter) InitStubsFromDir(dir string) {
-	l.InitStubs(workspace.ReadFilenames([]string{dir}, nil))
+	l.InitStubs(workspace.ReadFilenames([]string{dir}, nil, l.config.PhpExtensions))
 }

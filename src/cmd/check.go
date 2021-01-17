@@ -3,6 +3,7 @@ package cmd
 import (
 	"flag"
 	"fmt"
+	"strings"
 
 	"github.com/VKCOM/noverify/src/linter"
 )
@@ -27,9 +28,12 @@ func Check(cfg *MainConfig) (int, error) {
 	var args cmdlineArguments
 	bindFlags(config, ruleSets, &args)
 	flag.Parse()
+
 	if args.disableCache {
 		config.CacheDir = ""
 	}
+	config.PhpExtensions = strings.Split(args.phpExtensionsArg, ",")
+
 	if cfg.AfterFlagParse != nil {
 		cfg.AfterFlagParse(InitEnvironment{
 			RuleSets: ruleSets,

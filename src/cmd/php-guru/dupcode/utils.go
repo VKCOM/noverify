@@ -56,7 +56,7 @@ func runIndexing(cacheDir string, targets []string, filter *workspace.FilenameFi
 
 	// Handle workspace files.
 	l := linter.NewLinter(config)
-	l.AnalyzeFiles(workspace.ReadFilenames(targets, filter))
+	l.AnalyzeFiles(workspace.ReadFilenames(targets, filter, []string{"php", "inc", "php5", "phtml"}))
 
 	meta.SetIndexingComplete(true)
 	return nil
