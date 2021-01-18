@@ -19,6 +19,7 @@ func TestParser(t *testing.T) {
 		{`foo`, `Name="foo"`},
 		{`\A\B`, `Name="\A\B"`},
 		{`$this`, `Name="$this"`},
+		{`non-empty-list`, `Name="non-empty-list"`},
 
 		// Ints.
 		{`0`, `Int="0"`},
@@ -79,6 +80,9 @@ func TestParser(t *testing.T) {
 		{`array<int>`, `Generic="array<int>"{Name="array" Name="int"}`},
 		{`array<int,string>`, `Generic="array<int,string>"{Name="array" Name="int" Name="string"}`},
 		{`array<int, array<string, stdclass> >`, `Generic="array<int, array<string, stdclass> >"{Name="array" Name="int" Generic="array<string, stdclass>"{Name="array" Name="string" Name="stdclass"}}`},
+		{`array<non-empty-list<string>>`, `Generic="array<non-empty-list<string>>"{Name="array" Generic="non-empty-list<string>"{Name="non-empty-list" Name="string"}}`},
+		{`array<non-empty-list<string>`, `Generic="array<non-empty-list<string>"{Name="array" Generic="non-empty-list<string>"{Name="non-empty-list" Name="string"}}`},
+		{`non-empty-list<string>`, `Generic="non-empty-list<string>"{Name="non-empty-list" Name="string"}`},
 		{`?A<B>`, `Nullable="?A<B>"{Generic="A<B>"{Name="A" Name="B"}}`},
 
 		// Alternative generic syntax 1.
