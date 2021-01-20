@@ -9,13 +9,15 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/z7zmey/php-parser/pkg/position"
+	"github.com/z7zmey/php-parser/pkg/token"
+
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/constfold"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
-	"github.com/VKCOM/noverify/src/php/parser/position"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/phpgrep"
 	"github.com/VKCOM/noverify/src/quickfix"
@@ -103,6 +105,18 @@ func (d *rootWalker) state() map[string]interface{} {
 // File returns file for current root walker.
 func (d *rootWalker) File() *workspace.File {
 	return d.file
+}
+
+func (d *rootWalker) handleFreeFloating(tok *token.Token) {
+	if tok == nil {
+		return
+	}
+
+	for _, tk := range tok.FreeFloating {
+		if tk.ID == token.T_COMMENT {
+
+		}
+	}
 }
 
 // EnterNode is invoked at every node in hierarchy
@@ -550,14 +564,18 @@ func (d *rootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.N
 	}
 
 	for _, useExpr := range uses {
+		useExpr := useExpr.(*ir.ClosureUseExpr)
+
 		var byRef bool
 		var v *ir.SimpleVar
-		switch u := useExpr.(type) {
+		switch u := useExpr.Var.(type) {
 		case *ir.ReferenceExpr:
 			v = u.Variable.(*ir.SimpleVar)
 			byRef = true
 		case *ir.SimpleVar:
 			v = u
+		default:
+			return handleFuncResult{}
 		}
 
 		typ, ok := sc.GetVarNameType(v.Name)
@@ -1922,21 +1940,18 @@ func (d *rootWalker) checkNameCase(n ir.Node, nameUsed, nameExpected string) {
 }
 
 func (d *rootWalker) checkKeywordCasePos(n ir.Node, begin int, keyword string) {
-	from := begin
-	to := from + len(keyword)
-
-	wantKwd := keyword
-	haveKwd := d.file.Contents()[from:to]
-	if wantKwd != string(haveKwd) {
-		d.Report(n, LevelWarning, "keywordCase", "Use %s instead of %s",
-			wantKwd, haveKwd)
-	}
+	// wantKwd := keyword
+	// haveKwd := tok.Value
+	// if wantKwd != string(haveKwd) {
+	// 	d.Report(n, LevelWarning, "keywordCase", "Use %s instead of %s",
+	// 		wantKwd, haveKwd)
+	// }
 }
 
 func (d *rootWalker) checkKeywordCase(n ir.Node, keyword string) {
 	// Only works for nodes that have a keyword of interest
 	// as the leftmost token.
-	d.checkKeywordCasePos(n, ir.GetPosition(n).StartPos, keyword)
+	// d.checkKeywordCasePos(n, 0, keyword)
 }
 
 func (d *rootWalker) parseClassPHPDoc(n ir.Node, doc []phpdoc.CommentPart) classPhpDocParseResult {

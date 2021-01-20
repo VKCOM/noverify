@@ -1,8 +1,9 @@
 package phpgrep
 
 import (
+	"github.com/z7zmey/php-parser/pkg/position"
+
 	"github.com/VKCOM/noverify/src/ir"
-	"github.com/VKCOM/noverify/src/php/parser/position"
 )
 
 func findNamed(capture []CapturedNode, name string) (ir.Node, bool) {
