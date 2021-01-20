@@ -8,23 +8,31 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
+	"github.com/z7zmey/php-parser/pkg/ast"
 )
 
-func fullyQualifiedToString(n *name.FullyQualified) string {
+func fullyQualifiedToString(n *ast.NameFullyQualified) string {
 	s := make([]string, 1, len(n.Parts)+1)
 	for _, v := range n.Parts {
-		s = append(s, v.(*name.NamePart).Value)
+		s = append(s, string(v.(*ast.NamePart).Value))
 	}
 	return strings.Join(s, `\`)
 }
 
 // namePartsToString converts slice of *name.NamePart to string
-func namePartsToString(parts []node.Node) string {
+func namePartsToString(parts []ast.Vertex) string {
 	s := make([]string, 0, len(parts))
 	for _, v := range parts {
-		s = append(s, v.(*name.NamePart).Value)
+		var value string
+
+		switch v := v.(type) {
+		case *ast.NamePart:
+			value = string(v.Value)
+		case *ast.ScalarEncapsedStringPart:
+			value = string(v.Value)
+		}
+
+		s = append(s, value)
 	}
 	return strings.Join(s, `\`)
 }

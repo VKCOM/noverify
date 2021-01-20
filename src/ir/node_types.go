@@ -1,14 +1,12 @@
 package ir
 
 import (
+	"github.com/z7zmey/php-parser/pkg/position"
+	"github.com/z7zmey/php-parser/pkg/token"
+
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
-	"github.com/VKCOM/noverify/src/php/parser/position"
 	"github.com/VKCOM/noverify/src/phpdoc"
 )
-
-// Token is a stub while switching to a new version of the parser.
-// Replace later to token.Token from php-parser
-type Token struct{}
 
 // TODO: make Alt and AltSyntax field names consistent.
 
@@ -17,7 +15,7 @@ type Assign struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	EqualTkn     *Token
+	EqualTkn     *token.Token
 	Expression   Node
 }
 
@@ -26,7 +24,7 @@ type AssignBitwiseAnd struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	EqualTkn     *Token
+	EqualTkn     *token.Token
 	Expression   Node
 }
 
@@ -35,7 +33,7 @@ type AssignBitwiseOr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	EqualTkn     *Token
+	EqualTkn     *token.Token
 	Expression   Node
 }
 
@@ -44,7 +42,7 @@ type AssignBitwiseXor struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	EqualTkn     *Token
+	EqualTkn     *token.Token
 	Expression   Node
 }
 
@@ -53,7 +51,7 @@ type AssignCoalesce struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	EqualTkn     *Token
+	EqualTkn     *token.Token
 	Expression   Node
 }
 
@@ -62,7 +60,7 @@ type AssignConcat struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	EqualTkn     *Token
+	EqualTkn     *token.Token
 	Expression   Node
 }
 
@@ -71,7 +69,7 @@ type AssignDiv struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	EqualTkn     *Token
+	EqualTkn     *token.Token
 	Expression   Node
 }
 
@@ -80,7 +78,7 @@ type AssignMinus struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	EqualTkn     *Token
+	EqualTkn     *token.Token
 	Expression   Node
 }
 
@@ -89,7 +87,7 @@ type AssignMod struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	EqualTkn     *Token
+	EqualTkn     *token.Token
 	Expression   Node
 }
 
@@ -98,7 +96,7 @@ type AssignMul struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	EqualTkn     *Token
+	EqualTkn     *token.Token
 	Expression   Node
 }
 
@@ -107,7 +105,7 @@ type AssignPlus struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	EqualTkn     *Token
+	EqualTkn     *token.Token
 	Expression   Node
 }
 
@@ -116,7 +114,7 @@ type AssignPow struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	EqualTkn     *Token
+	EqualTkn     *token.Token
 	Expression   Node
 }
 
@@ -125,7 +123,7 @@ type AssignReference struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	EqualTkn     *Token
+	EqualTkn     *token.Token
 	Expression   Node
 }
 
@@ -134,7 +132,7 @@ type AssignShiftLeft struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	EqualTkn     *Token
+	EqualTkn     *token.Token
 	Expression   Node
 }
 
@@ -143,7 +141,7 @@ type AssignShiftRight struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	EqualTkn     *Token
+	EqualTkn     *token.Token
 	Expression   Node
 }
 
@@ -152,17 +150,17 @@ type AssignShiftRight struct {
 type AnonClassExpr struct {
 	FreeFloating            freefloating.Collection
 	Position                *position.Position
-	ClassTkn                *Token
-	OpenParenthesisTkn      *Token
+	ClassTkn                *token.Token
+	OpenParenthesisTkn      *token.Token
 	ArgsFreeFloating        freefloating.Collection
 	Args                    []Node
-	SeparatorTkns           []*Token
-	CloseParenthesisTkn     *Token
-	ExtendsTkn              *Token
-	ImplementsTkn           *Token
-	ImplementsSeparatorTkns []*Token
-	OpenCurlyBracketTkn     *Token
-	CloseCurlyBracketTkn    *Token
+	SeparatorTkns           []*token.Token
+	CloseParenthesisTkn     *token.Token
+	ExtendsTkn              *token.Token
+	ImplementsTkn           *token.Token
+	ImplementsSeparatorTkns []*token.Token
+	OpenCurlyBracketTkn     *token.Token
+	CloseCurlyBracketTkn    *token.Token
 	Class
 }
 
@@ -171,7 +169,7 @@ type BitwiseAndExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -180,7 +178,7 @@ type BitwiseOrExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -189,7 +187,7 @@ type BitwiseXorExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -198,7 +196,7 @@ type BooleanAndExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -207,7 +205,7 @@ type BooleanOrExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -216,7 +214,7 @@ type CoalesceExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -225,7 +223,7 @@ type ConcatExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -234,7 +232,7 @@ type DivExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -243,7 +241,7 @@ type EqualExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -252,7 +250,7 @@ type GreaterExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -261,7 +259,7 @@ type GreaterOrEqualExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -270,7 +268,7 @@ type IdenticalExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -279,7 +277,7 @@ type LogicalAndExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -288,7 +286,7 @@ type LogicalOrExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -297,7 +295,7 @@ type LogicalXorExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -306,7 +304,7 @@ type MinusExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -315,7 +313,7 @@ type ModExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -324,7 +322,7 @@ type MulExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -333,7 +331,7 @@ type NotEqualExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -342,7 +340,7 @@ type NotIdenticalExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -351,7 +349,7 @@ type PlusExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -360,7 +358,7 @@ type PowExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -369,7 +367,7 @@ type ShiftLeftExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -378,7 +376,7 @@ type ShiftRightExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -387,7 +385,7 @@ type SmallerExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -396,7 +394,7 @@ type SmallerOrEqualExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -405,7 +403,7 @@ type SpaceshipExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Left         Node
-	OpTkn        *Token
+	OpTkn        *token.Token
 	Right        Node
 }
 
@@ -413,7 +411,7 @@ type SpaceshipExpr struct {
 type TypeCastExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	CastTkn      *Token
+	CastTkn      *token.Token
 	Type         string // "array" "bool" "int" "float" "object" "string"
 	Expr         Node
 }
@@ -422,7 +420,7 @@ type TypeCastExpr struct {
 type UnsetCastExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	CastTkn      *Token
+	CastTkn      *token.Token
 	Expr         Node
 }
 
@@ -431,11 +429,11 @@ type UnsetCastExpr struct {
 type ArrayExpr struct {
 	FreeFloating    freefloating.Collection
 	Position        *position.Position
-	ArrayTkn        *Token
-	OpenBracketTkn  *Token
+	ArrayTkn        *token.Token
+	OpenBracketTkn  *token.Token
 	Items           []*ArrayItemExpr
-	SeparatorTkns   []*Token
-	CloseBracketTkn *Token
+	SeparatorTkns   []*token.Token
+	CloseBracketTkn *token.Token
 	ShortSyntax     bool
 }
 
@@ -444,9 +442,9 @@ type ArrayDimFetchExpr struct {
 	FreeFloating    freefloating.Collection
 	Position        *position.Position
 	Variable        Node
-	OpenBracketTkn  *Token
+	OpenBracketTkn  *token.Token
 	Dim             Node
-	CloseBracketTkn *Token
+	CloseBracketTkn *token.Token
 }
 
 // ArrayItemExpr is a `$Key => $Val` expression.
@@ -456,10 +454,10 @@ type ArrayDimFetchExpr struct {
 type ArrayItemExpr struct {
 	FreeFloating   freefloating.Collection
 	Position       *position.Position
-	EllipsisTkn    *Token
+	EllipsisTkn    *token.Token
 	Key            Node
-	DoubleArrowTkn *Token
-	AmpersandTkn   *Token
+	DoubleArrowTkn *token.Token
+	AmpersandTkn   *token.Token
 	Val            Node
 	Unpack         bool
 }
@@ -471,16 +469,16 @@ type ArrayItemExpr struct {
 type ArrowFunctionExpr struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
-	StaticTkn           *Token
-	FnTkn               *Token
-	AmpersandTkn        *Token
-	OpenParenthesisTkn  *Token
+	StaticTkn           *token.Token
+	FnTkn               *token.Token
+	AmpersandTkn        *token.Token
+	OpenParenthesisTkn  *token.Token
 	Params              []Node
-	SeparatorTkns       []*Token
-	CloseParenthesisTkn *Token
-	ColonTkn            *Token
+	SeparatorTkns       []*token.Token
+	CloseParenthesisTkn *token.Token
+	ColonTkn            *token.Token
 	ReturnType          Node
-	DoubleArrowTkn      *Token
+	DoubleArrowTkn      *token.Token
 	Expr                Node
 	ReturnsRef          bool
 	Static              bool
@@ -491,7 +489,7 @@ type ArrowFunctionExpr struct {
 // BitwiseNotExpr is a `~$Expr` expression.
 type BitwiseNotExpr struct {
 	FreeFloating freefloating.Collection
-	TildaTkn     *Token
+	TildaTkn     *token.Token
 	Position     *position.Position
 	Expr         Node
 }
@@ -499,7 +497,7 @@ type BitwiseNotExpr struct {
 // BooleanNotExpr is a `!$Expr` expression.
 type BooleanNotExpr struct {
 	FreeFloating   freefloating.Collection
-	ExclamationTkn *Token
+	ExclamationTkn *token.Token
 	Position       *position.Position
 	Expr           Node
 }
@@ -509,7 +507,7 @@ type ClassConstFetchExpr struct {
 	FreeFloating   freefloating.Collection
 	Position       *position.Position
 	Class          Node
-	DoubleColonTkn *Token
+	DoubleColonTkn *token.Token
 	ConstantName   *Identifier
 }
 
@@ -517,7 +515,7 @@ type ClassConstFetchExpr struct {
 type CloneExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	CloneTkn     *Token
+	CloneTkn     *token.Token
 	Expr         Node
 }
 
@@ -529,35 +527,35 @@ type CloneExpr struct {
 type ClosureExpr struct {
 	FreeFloating           freefloating.Collection
 	Position               *position.Position
-	StaticTkn              *Token
-	FunctionTkn            *Token
-	AmpersandTkn           *Token
-	OpenParenthesisTkn     *Token
+	StaticTkn              *token.Token
+	FunctionTkn            *token.Token
+	AmpersandTkn           *token.Token
+	OpenParenthesisTkn     *token.Token
 	Params                 []Node
-	SeparatorTkns          []*Token
-	CloseParenthesisTkn    *Token
-	UseTkn                 *Token
-	UseOpenParenthesisTkn  *Token
-	ClosureUse             *ClosureUseExpr
-	UseSeparatorTkns       []*Token
-	UseCloseParenthesisTkn *Token
-	ColonTkn               *Token
+	SeparatorTkns          []*token.Token
+	CloseParenthesisTkn    *token.Token
+	UseTkn                 *token.Token
+	UseOpenParenthesisTkn  *token.Token
+	ClosureUse             []Node
+	UseSeparatorTkns       []*token.Token
+	UseCloseParenthesisTkn *token.Token
+	ColonTkn               *token.Token
 	ReturnType             Node
-	OpenCurlyBracketTkn    *Token
+	OpenCurlyBracketTkn    *token.Token
 	Stmts                  []Node
-	CloseCurlyBracketTkn   *Token
+	CloseCurlyBracketTkn   *token.Token
 	ReturnsRef             bool
 	Static                 bool
 	PhpDocComment          string
 	PhpDoc                 []phpdoc.CommentPart
 }
 
-// ClosureUseExpr is a `use ($Uses...)` expression.
-// TODO: it's not a expression really.
+// ClosureUseExpr is a $Uses single part in `use ($Uses...)` expression.
 type ClosureUseExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	Uses         []Node
+	AmpersandTkn *token.Token
+	Var          Node
 }
 
 // ConstFetchExpr is a `$Constant` expression.
@@ -571,17 +569,17 @@ type ConstFetchExpr struct {
 type EmptyExpr struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
-	EmptyTkn            *Token
-	OpenParenthesisTkn  *Token
+	EmptyTkn            *token.Token
+	OpenParenthesisTkn  *token.Token
 	Expr                Node
-	CloseParenthesisTkn *Token
+	CloseParenthesisTkn *token.Token
 }
 
 // ErrorSuppressExpr is a `@$Expr` expression.
 type ErrorSuppressExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	AtTkn        *Token
+	AtTkn        *token.Token
 	Expr         Node
 }
 
@@ -589,10 +587,10 @@ type ErrorSuppressExpr struct {
 type EvalExpr struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
-	EvalTkn             *Token
-	OpenParenthesisTkn  *Token
+	EvalTkn             *token.Token
+	OpenParenthesisTkn  *token.Token
 	Expr                Node
-	CloseParenthesisTkn *Token
+	CloseParenthesisTkn *token.Token
 }
 
 // ExitExpr is a `exit($Expr)` expression.
@@ -600,10 +598,10 @@ type EvalExpr struct {
 type ExitExpr struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
-	ExitTkn             *Token
-	OpenParenthesisTkn  *Token
+	ExitTkn             *token.Token
+	OpenParenthesisTkn  *token.Token
 	Expr                Node
-	CloseParenthesisTkn *Token
+	CloseParenthesisTkn *token.Token
 	Die                 bool
 }
 
@@ -612,11 +610,11 @@ type FunctionCallExpr struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
 	Function            Node
-	OpenParenthesisTkn  *Token
+	OpenParenthesisTkn  *token.Token
 	ArgsFreeFloating    freefloating.Collection
 	Args                []Node
-	SeparatorTkns       []*Token
-	CloseParenthesisTkn *Token
+	SeparatorTkns       []*token.Token
+	CloseParenthesisTkn *token.Token
 }
 
 // ImportExpr is a `$Func $Expr` expression.
@@ -624,7 +622,7 @@ type FunctionCallExpr struct {
 type ImportExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	ImportTkn    *Token
+	ImportTkn    *token.Token
 	Func         string // "include" "include_once" "require" "require_once"
 	Expr         Node
 }
@@ -634,7 +632,7 @@ type InstanceOfExpr struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
 	Expr          Node
-	InstanceOfTkn *Token
+	InstanceOfTkn *token.Token
 	Class         Node
 }
 
@@ -642,11 +640,11 @@ type InstanceOfExpr struct {
 type IssetExpr struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
-	IssetTkn            *Token
-	OpenParenthesisTkn  *Token
+	IssetTkn            *token.Token
+	OpenParenthesisTkn  *token.Token
 	Variables           []Node
-	SeparatorTkns       []*Token
-	CloseParenthesisTkn *Token
+	SeparatorTkns       []*token.Token
+	CloseParenthesisTkn *token.Token
 }
 
 // ListExpr is a `list($Items...)` expression.
@@ -656,11 +654,11 @@ type IssetExpr struct {
 type ListExpr struct {
 	FreeFloating    freefloating.Collection
 	Position        *position.Position
-	ListTkn         *Token
-	OpenBracketTkn  *Token
+	ListTkn         *token.Token
+	OpenBracketTkn  *token.Token
 	Items           []*ArrayItemExpr
-	SeparatorTkns   []*Token
-	CloseBracketTkn *Token
+	SeparatorTkns   []*token.Token
+	CloseBracketTkn *token.Token
 	ShortSyntax     bool
 }
 
@@ -669,15 +667,15 @@ type MethodCallExpr struct {
 	FreeFloating         freefloating.Collection
 	Position             *position.Position
 	Variable             Node
-	ObjectOperatorTkn    *Token
-	OpenCurlyBracketTkn  *Token
+	ObjectOperatorTkn    *token.Token
+	OpenCurlyBracketTkn  *token.Token
 	Method               Node
-	CloseCurlyBracketTkn *Token
-	OpenParenthesisTkn   *Token
+	CloseCurlyBracketTkn *token.Token
+	OpenParenthesisTkn   *token.Token
 	ArgsFreeFloating     freefloating.Collection
 	Args                 []Node
-	SeparatorTkns        []*Token
-	CloseParenthesisTkn  *Token
+	SeparatorTkns        []*token.Token
+	CloseParenthesisTkn  *token.Token
 }
 
 // NewExpr is a `new $Class($Args...)` expression.
@@ -685,22 +683,22 @@ type MethodCallExpr struct {
 type NewExpr struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
-	NewTkn              *Token
+	NewTkn              *token.Token
 	Class               Node
-	OpenParenthesisTkn  *Token
+	OpenParenthesisTkn  *token.Token
 	ArgsFreeFloating    freefloating.Collection
 	Args                []Node
-	SeparatorTkns       []*Token
-	CloseParenthesisTkn *Token
+	SeparatorTkns       []*token.Token
+	CloseParenthesisTkn *token.Token
 }
 
 // ParenExpr is a `($Expr)` expression.
 type ParenExpr struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
-	OpenParenthesisTkn  *Token
+	OpenParenthesisTkn  *token.Token
 	Expr                Node
-	CloseParenthesisTkn *Token
+	CloseParenthesisTkn *token.Token
 }
 
 // PostDecExpr is a `$Variable--` expression.
@@ -708,7 +706,7 @@ type PostDecExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	DecTkn       *Token
+	DecTkn       *token.Token
 }
 
 // PostIncExpr is a `$Variable++` expression.
@@ -716,14 +714,14 @@ type PostIncExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     Node
-	IncTkn       *Token
+	IncTkn       *token.Token
 }
 
 // PreDecExpr is a `--$Variable` expression.
 type PreDecExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	DecTkn       *Token
+	DecTkn       *token.Token
 	Variable     Node
 }
 
@@ -731,7 +729,7 @@ type PreDecExpr struct {
 type PreIncExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	IncTkn       *Token
+	IncTkn       *token.Token
 	Variable     Node
 }
 
@@ -739,7 +737,7 @@ type PreIncExpr struct {
 type PrintExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	PrintTkn     *Token
+	PrintTkn     *token.Token
 	Expr         Node
 }
 
@@ -748,16 +746,16 @@ type PropertyFetchExpr struct {
 	FreeFloating         freefloating.Collection
 	Position             *position.Position
 	Variable             Node
-	ObjectOperatorTkn    *Token
-	OpenCurlyBracketTkn  *Token
+	ObjectOperatorTkn    *token.Token
+	OpenCurlyBracketTkn  *token.Token
 	Property             Node
-	CloseCurlyBracketTkn *Token
+	CloseCurlyBracketTkn *token.Token
 }
 
 // ReferenceExpr is a `&$Variable` expression.
 type ReferenceExpr struct {
 	FreeFloating freefloating.Collection
-	AmpersandTkn *Token
+	AmpersandTkn *token.Token
 	Position     *position.Position
 	Variable     Node
 }
@@ -766,9 +764,9 @@ type ReferenceExpr struct {
 type ShellExecExpr struct {
 	FreeFloating     freefloating.Collection
 	Position         *position.Position
-	OpenBacktickTkn  *Token
+	OpenBacktickTkn  *token.Token
 	Parts            []Node
-	CloseBacktickTkn *Token
+	CloseBacktickTkn *token.Token
 }
 
 // StaticCallExpr is a `$Class::$Call($Args...)` expression.
@@ -776,15 +774,15 @@ type StaticCallExpr struct {
 	FreeFloating         freefloating.Collection
 	Position             *position.Position
 	Class                Node
-	DoubleColonTkn       *Token
-	OpenCurlyBracketTkn  *Token
+	DoubleColonTkn       *token.Token
+	OpenCurlyBracketTkn  *token.Token
 	Call                 Node
-	CloseCurlyBracketTkn *Token
-	OpenParenthesisTkn   *Token
+	CloseCurlyBracketTkn *token.Token
+	OpenParenthesisTkn   *token.Token
 	ArgsFreeFloating     freefloating.Collection
 	Args                 []Node
-	SeparatorTkns        []*Token
-	CloseParenthesisTkn  *Token
+	SeparatorTkns        []*token.Token
+	CloseParenthesisTkn  *token.Token
 }
 
 // StaticPropertyFetchExpr is a `$Class::$Property` expression.
@@ -792,7 +790,7 @@ type StaticPropertyFetchExpr struct {
 	FreeFloating   freefloating.Collection
 	Position       *position.Position
 	Class          Node
-	DoubleColonTkn *Token
+	DoubleColonTkn *token.Token
 	Property       Node
 }
 
@@ -802,9 +800,9 @@ type TernaryExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Condition    Node
-	QuestionTkn  *Token
+	QuestionTkn  *token.Token
 	IfTrue       Node
-	ColonTkn     *Token
+	ColonTkn     *token.Token
 	IfFalse      Node
 }
 
@@ -812,7 +810,7 @@ type TernaryExpr struct {
 type UnaryMinusExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	MinusTkn     *Token
+	MinusTkn     *token.Token
 	Expr         Node
 }
 
@@ -820,7 +818,7 @@ type UnaryMinusExpr struct {
 type UnaryPlusExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	PlusTkn      *Token
+	PlusTkn      *token.Token
 	Expr         Node
 }
 
@@ -829,9 +827,9 @@ type UnaryPlusExpr struct {
 type YieldExpr struct {
 	FreeFloating   freefloating.Collection
 	Position       *position.Position
-	YieldTkn       *Token
+	YieldTkn       *token.Token
 	Key            Node
-	DoubleArrowTkn *Token
+	DoubleArrowTkn *token.Token
 	Value          Node
 }
 
@@ -839,7 +837,7 @@ type YieldExpr struct {
 type YieldFromExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	YieldFromTkn *Token
+	YieldFromTkn *token.Token
 	Expr         Node
 }
 
@@ -857,8 +855,8 @@ type Name struct {
 type Argument struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	VariadicTkn  *Token
-	AmpersandTkn *Token
+	VariadicTkn  *token.Token
+	AmpersandTkn *token.Token
 	Expr         Node
 	Variadic     bool
 	IsReference  bool
@@ -869,7 +867,7 @@ type Argument struct {
 type Identifier struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
-	IdentifierTkn *Token
+	IdentifierTkn *token.Token
 	Value         string
 }
 
@@ -877,7 +875,7 @@ type Identifier struct {
 type Nullable struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	QuestionTkn  *Token
+	QuestionTkn  *token.Token
 	Expr         Node
 }
 
@@ -892,10 +890,10 @@ type Parameter struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	VariableType Node
-	AmpersandTkn *Token
-	VariadicTkn  *Token
+	AmpersandTkn *token.Token
+	VariadicTkn  *token.Token
 	Variable     *SimpleVar
-	EqualTkn     *Token
+	EqualTkn     *token.Token
 	DefaultValue Node
 	ByRef        bool
 	Variadic     bool
@@ -906,14 +904,14 @@ type Root struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Stmts        []Node
-	EndTkn       *Token
+	EndTkn       *token.Token
 }
 
 // SimpleVar is a normal PHP variable like `$foo` or `$bar`.
 type SimpleVar struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	DollarTkn    *Token
+	DollarTkn    *token.Token
 	Name         string
 }
 
@@ -921,17 +919,17 @@ type SimpleVar struct {
 type Var struct {
 	FreeFloating         freefloating.Collection
 	Position             *position.Position
-	DollarTkn            *Token
-	OpenCurlyBracketTkn  *Token
+	DollarTkn            *token.Token
+	OpenCurlyBracketTkn  *token.Token
 	Expr                 Node
-	CloseCurlyBracketTkn *Token
+	CloseCurlyBracketTkn *token.Token
 }
 
 // Dnumber is a floating point literal.
 type Dnumber struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	NumberTkn    *Token
+	NumberTkn    *token.Token
 	Value        string
 }
 
@@ -939,16 +937,16 @@ type Dnumber struct {
 type Encapsed struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
-	OpenQuoteTkn  *Token
+	OpenQuoteTkn  *token.Token
 	Parts         []Node
-	CloseQuoteTkn *Token
+	CloseQuoteTkn *token.Token
 }
 
 // EncapsedStringPart is a part of the Encapsed literal.
 type EncapsedStringPart struct {
 	FreeFloating   freefloating.Collection
 	Position       *position.Position
-	EncapsedStrTkn *Token
+	EncapsedStrTkn *token.Token
 	Value          string
 }
 
@@ -958,16 +956,16 @@ type Heredoc struct {
 	FreeFloating    freefloating.Collection
 	Position        *position.Position
 	Label           string
-	OpenHeredocTkn  *Token
+	OpenHeredocTkn  *token.Token
 	Parts           []Node
-	CloseHeredocTkn *Token
+	CloseHeredocTkn *token.Token
 }
 
 // Lnumber is an integer literal.
 type Lnumber struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	NumberTkn    *Token
+	NumberTkn    *token.Token
 	Value        string
 }
 
@@ -976,7 +974,7 @@ type Lnumber struct {
 type MagicConstant struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
-	MagicConstTkn *Token
+	MagicConstTkn *token.Token
 	Value         string
 }
 
@@ -989,8 +987,8 @@ type MagicConstant struct {
 type String struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	MinusTkn     *Token
-	StringTkn    *Token
+	MinusTkn     *token.Token
+	StringTkn    *token.Token
 	Value        string
 	DoubleQuotes bool
 }
@@ -1003,8 +1001,8 @@ type String struct {
 type BadString struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	MinusTkn     *Token
-	StringTkn    *Token
+	MinusTkn     *token.Token
+	StringTkn    *token.Token
 	Value        string
 	DoubleQuotes bool
 	Error        string
@@ -1014,18 +1012,18 @@ type BadString struct {
 type BreakStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	BreakTkn     *Token
+	BreakTkn     *token.Token
 	Expr         Node
-	SemiColonTkn *Token
+	SemiColonTkn *token.Token
 }
 
 // CaseStmt is a `case $Cond: $Stmts...` statement.
 type CaseStmt struct {
 	FreeFloating     freefloating.Collection
 	Position         *position.Position
-	CaseTkn          *Token
+	CaseTkn          *token.Token
 	Cond             Node
-	CaseSeparatorTkn *Token
+	CaseSeparatorTkn *token.Token
 	Stmts            []Node
 }
 
@@ -1042,15 +1040,15 @@ type CaseListStmt struct {
 type CatchStmt struct {
 	FreeFloating         freefloating.Collection
 	Position             *position.Position
-	CatchTkn             *Token
-	OpenParenthesisTkn   *Token
+	CatchTkn             *token.Token
+	OpenParenthesisTkn   *token.Token
 	Types                []Node
-	SeparatorTkns        []*Token
+	SeparatorTkns        []*token.Token
 	Variable             *SimpleVar
-	CloseParenthesisTkn  *Token
-	OpenCurlyBracketTkn  *Token
+	CloseParenthesisTkn  *token.Token
+	OpenCurlyBracketTkn  *token.Token
 	Stmts                []Node
-	CloseCurlyBracketTkn *Token
+	CloseCurlyBracketTkn *token.Token
 }
 
 // ClassStmt is a named class declaration.
@@ -1059,13 +1057,13 @@ type ClassStmt struct {
 	FreeFloating            freefloating.Collection
 	Position                *position.Position
 	Modifiers               []*Identifier
-	ClassTkn                *Token
+	ClassTkn                *token.Token
 	ClassName               *Identifier
-	ExtendsTkn              *Token
-	ImplementsTkn           *Token
-	ImplementsSeparatorTkns []*Token
-	OpenCurlyBracketTkn     *Token
-	CloseCurlyBracketTkn    *Token
+	ExtendsTkn              *token.Token
+	ImplementsTkn           *token.Token
+	ImplementsSeparatorTkns []*token.Token
+	OpenCurlyBracketTkn     *token.Token
+	CloseCurlyBracketTkn    *token.Token
 	Class
 }
 
@@ -1076,10 +1074,10 @@ type ClassConstListStmt struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
 	Modifiers     []*Identifier
-	ConstTkn      *Token
+	ConstTkn      *token.Token
 	Consts        []Node
-	SeparatorTkns []*Token
-	SemiColonTkn  *Token
+	SeparatorTkns []*token.Token
+	SemiColonTkn  *token.Token
 }
 
 // ClassExtendsStmt is a `extends $ClassName` statement.
@@ -1102,14 +1100,14 @@ type ClassMethodStmt struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
 	Modifiers           []*Identifier
-	FunctionTkn         *Token
-	AmpersandTkn        *Token
+	FunctionTkn         *token.Token
+	AmpersandTkn        *token.Token
 	MethodName          *Identifier
-	OpenParenthesisTkn  *Token
+	OpenParenthesisTkn  *token.Token
 	Params              []Node
-	SeparatorTkns       []*Token
-	CloseParenthesisTkn *Token
-	ColonTkn            *Token
+	SeparatorTkns       []*token.Token
+	CloseParenthesisTkn *token.Token
+	ColonTkn            *token.Token
 	ReturnType          Node
 	Stmt                Node
 	ReturnsRef          bool
@@ -1122,10 +1120,10 @@ type ClassMethodStmt struct {
 type ConstListStmt struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
-	ConstTkn      *Token
+	ConstTkn      *token.Token
 	Consts        []Node
-	SeparatorTkns []*Token
-	SemiColonTkn  *Token
+	SeparatorTkns []*token.Token
+	SemiColonTkn  *token.Token
 }
 
 // ConstantStmt is a `$ConstantName = $Expr` statement.
@@ -1134,7 +1132,7 @@ type ConstantStmt struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
 	ConstantName  *Identifier
-	EqualTkn      *Token
+	EqualTkn      *token.Token
 	Expr          Node
 	PhpDocComment string
 }
@@ -1143,9 +1141,9 @@ type ConstantStmt struct {
 type ContinueStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	ContinueTkn  *Token
+	ContinueTkn  *token.Token
 	Expr         Node
-	SemiColonTkn *Token
+	SemiColonTkn *token.Token
 }
 
 // DeclareStmt is a `declare ($Consts...) $Stmt` statement.
@@ -1156,15 +1154,15 @@ type ContinueStmt struct {
 type DeclareStmt struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
-	DeclareTkn          *Token
-	OpenParenthesisTkn  *Token
+	DeclareTkn          *token.Token
+	OpenParenthesisTkn  *token.Token
 	Consts              []Node
-	SeparatorTkns       []*Token
-	CloseParenthesisTkn *Token
-	ColonTkn            *Token
+	SeparatorTkns       []*token.Token
+	CloseParenthesisTkn *token.Token
+	ColonTkn            *token.Token
 	Stmt                Node
-	EndDeclareTkn       *Token
-	SemiColonTkn        *Token
+	EndDeclareTkn       *token.Token
+	SemiColonTkn        *token.Token
 	Alt                 bool
 }
 
@@ -1172,8 +1170,8 @@ type DeclareStmt struct {
 type DefaultStmt struct {
 	FreeFloating     freefloating.Collection
 	Position         *position.Position
-	DefaultTkn       *Token
-	CaseSeparatorTkn *Token
+	DefaultTkn       *token.Token
+	CaseSeparatorTkn *token.Token
 	Stmts            []Node
 }
 
@@ -1181,23 +1179,23 @@ type DefaultStmt struct {
 type DoStmt struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
-	DoTkn               *Token
+	DoTkn               *token.Token
 	Stmt                Node
-	WhileTkn            *Token
-	OpenParenthesisTkn  *Token
+	WhileTkn            *token.Token
+	OpenParenthesisTkn  *token.Token
 	Cond                Node
-	CloseParenthesisTkn *Token
-	SemiColonTkn        *Token
+	CloseParenthesisTkn *token.Token
+	SemiColonTkn        *token.Token
 }
 
 // EchoStmt is a `echo $Exprs...` statement.
 type EchoStmt struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
-	EchoTkn       *Token
+	EchoTkn       *token.Token
 	Exprs         []Node
-	SeparatorTkns []*Token
-	SemiColonTkn  *Token
+	SeparatorTkns []*token.Token
+	SemiColonTkn  *token.Token
 }
 
 // ElseStmt is a `else $Stmt` statement.
@@ -1205,8 +1203,8 @@ type EchoStmt struct {
 type ElseStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	ElseTkn      *Token
-	ColonTkn     *Token
+	ElseTkn      *token.Token
+	ColonTkn     *token.Token
 	Stmt         Node
 	AltSyntax    bool
 }
@@ -1217,11 +1215,11 @@ type ElseStmt struct {
 type ElseIfStmt struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
-	ElseIfTkn           *Token
-	OpenParenthesisTkn  *Token
+	ElseIfTkn           *token.Token
+	OpenParenthesisTkn  *token.Token
 	Cond                Node
-	CloseParenthesisTkn *Token
-	ColonTkn            *Token
+	CloseParenthesisTkn *token.Token
+	ColonTkn            *token.Token
 	Stmt                Node
 	AltSyntax           bool
 	Merged              bool
@@ -1234,17 +1232,17 @@ type ExpressionStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Expr         Node
-	SemiColonTkn *Token
+	SemiColonTkn *token.Token
 }
 
 // FinallyStmt is a `finally { $Stmts... }` statement.
 type FinallyStmt struct {
 	FreeFloating         freefloating.Collection
 	Position             *position.Position
-	FinallyTkn           *Token
-	OpenCurlyBracketTkn  *Token
+	FinallyTkn           *token.Token
+	OpenCurlyBracketTkn  *token.Token
 	Stmts                []Node
-	CloseCurlyBracketTkn *Token
+	CloseCurlyBracketTkn *token.Token
 }
 
 // ForStmt is a `for ($Init; $Cond; $Loop) $Stmt` statement.
@@ -1252,21 +1250,21 @@ type FinallyStmt struct {
 type ForStmt struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
-	ForTkn              *Token
-	OpenParenthesisTkn  *Token
+	ForTkn              *token.Token
+	OpenParenthesisTkn  *token.Token
 	Init                []Node
-	InitSeparatorTkns   []*Token
-	InitSemiColonTkn    *Token
+	InitSeparatorTkns   []*token.Token
+	InitSemiColonTkn    *token.Token
 	Cond                []Node
-	CondSeparatorTkns   []*Token
-	CondSemiColonTkn    *Token
+	CondSeparatorTkns   []*token.Token
+	CondSemiColonTkn    *token.Token
 	Loop                []Node
-	LoopSeparatorTkns   []*Token
-	CloseParenthesisTkn *Token
-	ColonTkn            *Token
+	LoopSeparatorTkns   []*token.Token
+	CloseParenthesisTkn *token.Token
+	ColonTkn            *token.Token
 	Stmt                Node
-	EndForTkn           *Token
-	SemiColonTkn        *Token
+	EndForTkn           *token.Token
+	SemiColonTkn        *token.Token
 	AltSyntax           bool
 }
 
@@ -1275,19 +1273,19 @@ type ForStmt struct {
 type ForeachStmt struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
-	ForeachTkn          *Token
-	OpenParenthesisTkn  *Token
+	ForeachTkn          *token.Token
+	OpenParenthesisTkn  *token.Token
 	Expr                Node
-	AsTkn               *Token
+	AsTkn               *token.Token
 	Key                 Node
-	DoubleArrowTkn      *Token
-	AmpersandTkn        *Token
+	DoubleArrowTkn      *token.Token
+	AmpersandTkn        *token.Token
 	Variable            Node
-	CloseParenthesisTkn *Token
-	ColonTkn            *Token
+	CloseParenthesisTkn *token.Token
+	ColonTkn            *token.Token
 	Stmt                Node
-	EndForeachTkn       *Token
-	SemiColonTkn        *Token
+	EndForeachTkn       *token.Token
+	SemiColonTkn        *token.Token
 	AltSyntax           bool
 }
 
@@ -1295,18 +1293,18 @@ type ForeachStmt struct {
 type FunctionStmt struct {
 	FreeFloating         freefloating.Collection
 	Position             *position.Position
-	FunctionTkn          *Token
-	AmpersandTkn         *Token
+	FunctionTkn          *token.Token
+	AmpersandTkn         *token.Token
 	FunctionName         *Identifier
-	OpenParenthesisTkn   *Token
+	OpenParenthesisTkn   *token.Token
 	Params               []Node
-	SeparatorTkns        []*Token
-	CloseParenthesisTkn  *Token
-	ColonTkn             *Token
+	SeparatorTkns        []*token.Token
+	CloseParenthesisTkn  *token.Token
+	ColonTkn             *token.Token
 	ReturnType           Node
-	OpenCurlyBracketTkn  *Token
+	OpenCurlyBracketTkn  *token.Token
 	Stmts                []Node
-	CloseCurlyBracketTkn *Token
+	CloseCurlyBracketTkn *token.Token
 	ReturnsRef           bool
 	PhpDocComment        string
 	PhpDoc               []phpdoc.CommentPart
@@ -1316,19 +1314,19 @@ type FunctionStmt struct {
 type GlobalStmt struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
-	GlobalTkn     *Token
+	GlobalTkn     *token.Token
 	Vars          []Node
-	SeparatorTkns []*Token
-	SemiColonTkn  *Token
+	SeparatorTkns []*token.Token
+	SemiColonTkn  *token.Token
 }
 
 // GotoStmt is a `goto $Label` statement.
 type GotoStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	GotoTkn      *Token
+	GotoTkn      *token.Token
 	Label        *Identifier
-	SemiColonTkn *Token
+	SemiColonTkn *token.Token
 }
 
 // GroupUseStmt is a `use $UseType $Prefix\{ $UseList }` statement.
@@ -1337,26 +1335,26 @@ type GotoStmt struct {
 type GroupUseStmt struct {
 	FreeFloating          freefloating.Collection
 	Position              *position.Position
-	UseTkn                *Token
+	UseTkn                *token.Token
 	UseType               *Identifier
-	LeadingNsSeparatorTkn *Token
+	LeadingNsSeparatorTkn *token.Token
 	Prefix                *Name
-	NsSeparatorTkn        *Token
-	OpenCurlyBracketTkn   *Token
+	NsSeparatorTkn        *token.Token
+	OpenCurlyBracketTkn   *token.Token
 	UseList               []Node
-	SeparatorTkns         []*Token
-	CloseCurlyBracketTkn  *Token
-	SemiColonTkn          *Token
+	SeparatorTkns         []*token.Token
+	CloseCurlyBracketTkn  *token.Token
+	SemiColonTkn          *token.Token
 }
 
 // HaltCompilerStmt is a `__halt_compiler()` statement.
 type HaltCompilerStmt struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
-	HaltCompilerTkn     *Token
-	OpenParenthesisTkn  *Token
-	CloseParenthesisTkn *Token
-	SemiColonTkn        *Token
+	HaltCompilerTkn     *token.Token
+	OpenParenthesisTkn  *token.Token
+	CloseParenthesisTkn *token.Token
+	SemiColonTkn        *token.Token
 }
 
 // IfStmt is a `if ($Cond) $Stmt` statement.
@@ -1365,16 +1363,16 @@ type HaltCompilerStmt struct {
 type IfStmt struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
-	IfTkn               *Token
-	OpenParenthesisTkn  *Token
+	IfTkn               *token.Token
+	OpenParenthesisTkn  *token.Token
 	Cond                Node
-	CloseParenthesisTkn *Token
-	ColonTkn            *Token
+	CloseParenthesisTkn *token.Token
+	ColonTkn            *token.Token
 	Stmt                Node
 	ElseIf              []Node
 	Else                Node
-	EndIfTkn            *Token
-	SemiColonTkn        *Token
+	EndIfTkn            *token.Token
+	SemiColonTkn        *token.Token
 	AltSyntax           bool
 }
 
@@ -1384,7 +1382,7 @@ type IfStmt struct {
 type InlineHTMLStmt struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
-	InlineHtmlTkn *Token
+	InlineHTMLTkn *token.Token
 	Value         string
 }
 
@@ -1393,14 +1391,14 @@ type InterfaceStmt struct {
 	FreeFloating         freefloating.Collection
 	Position             *position.Position
 	PhpDocComment        string
-	InterfaceTkn         *Token
+	InterfaceTkn         *token.Token
 	InterfaceName        *Identifier
-	ExtendsTkn           *Token
+	ExtendsTkn           *token.Token
 	Extends              *InterfaceExtendsStmt
-	ExtendsSeparatorTkns []*Token
-	OpenCurlyBracketTkn  *Token
+	ExtendsSeparatorTkns []*token.Token
+	OpenCurlyBracketTkn  *token.Token
 	Stmts                []Node
-	CloseCurlyBracketTkn *Token
+	CloseCurlyBracketTkn *token.Token
 }
 
 // InterfaceExtendsStmt is a `extends $InterfaceNames...` statement.
@@ -1408,7 +1406,6 @@ type InterfaceStmt struct {
 // TODO: InterfaceNames could be a []*Name.
 type InterfaceExtendsStmt struct {
 	FreeFloating   freefloating.Collection
-	Token          *Token
 	Position       *position.Position
 	InterfaceNames []Node
 }
@@ -1418,7 +1415,7 @@ type LabelStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	LabelName    *Identifier
-	ColonTkn     *Token
+	ColonTkn     *token.Token
 }
 
 // NamespaceStmt is a `namespace $NamespaceName` statement.
@@ -1426,12 +1423,12 @@ type LabelStmt struct {
 type NamespaceStmt struct {
 	FreeFloating         freefloating.Collection
 	Position             *position.Position
-	NsTkn                *Token
+	NsTkn                *token.Token
 	NamespaceName        *Name
-	OpenCurlyBracketTkn  *Token
+	OpenCurlyBracketTkn  *token.Token
 	Stmts                []Node
-	CloseCurlyBracketTkn *Token
-	SemiColonTkn         *Token
+	CloseCurlyBracketTkn *token.Token
+	SemiColonTkn         *token.Token
 }
 
 // NopStmt is a `;` statement.
@@ -1439,7 +1436,7 @@ type NamespaceStmt struct {
 type NopStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	SemiColonTkn *Token
+	SemiColonTkn *token.Token
 }
 
 // PropertyStmt is a `$Variable = $Expr` statement.
@@ -1448,7 +1445,7 @@ type PropertyStmt struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
 	Variable      *SimpleVar
-	EqualTkn      *Token
+	EqualTkn      *token.Token
 	Expr          Node
 	PhpDocComment string
 	PhpDoc        []phpdoc.CommentPart
@@ -1462,17 +1459,17 @@ type PropertyListStmt struct {
 	Modifiers     []*Identifier
 	Type          Node
 	Properties    []Node
-	SeparatorTkns []*Token
-	SemiColonTkn  *Token
+	SeparatorTkns []*token.Token
+	SemiColonTkn  *token.Token
 }
 
 // ReturnStmt is a `return $Expr` statement.
 type ReturnStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	ReturnTkn    *Token
+	ReturnTkn    *token.Token
 	Expr         Node
-	SemiColonTkn *Token
+	SemiColonTkn *token.Token
 }
 
 // StaticStmt is a `static $Vars...` statement.
@@ -1480,10 +1477,10 @@ type ReturnStmt struct {
 type StaticStmt struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
-	StaticTkn     *Token
+	StaticTkn     *token.Token
 	Vars          []Node
-	SeparatorTkns []*Token
-	SemiColonTkn  *Token
+	SeparatorTkns []*token.Token
+	SemiColonTkn  *token.Token
 }
 
 // StaticVarStmt is a `$Variable = $Expr`.
@@ -1492,7 +1489,7 @@ type StaticVarStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	Variable     *SimpleVar
-	EqualTkn     *Token
+	EqualTkn     *token.Token
 	Expr         Node
 }
 
@@ -1501,9 +1498,9 @@ type StaticVarStmt struct {
 type StmtList struct {
 	FreeFloating         freefloating.Collection
 	Position             *position.Position
-	OpenCurlyBracketTkn  *Token
+	OpenCurlyBracketTkn  *token.Token
 	Stmts                []Node
-	CloseCurlyBracketTkn *Token
+	CloseCurlyBracketTkn *token.Token
 }
 
 // SwitchStmt is a `switch ($Cond) $CaseList` statement.
@@ -1511,17 +1508,17 @@ type StmtList struct {
 type SwitchStmt struct {
 	FreeFloating         freefloating.Collection
 	Position             *position.Position
-	SwitchTkn            *Token
-	OpenParenthesisTkn   *Token
+	SwitchTkn            *token.Token
+	OpenParenthesisTkn   *token.Token
 	Cond                 Node
-	CloseParenthesisTkn  *Token
-	ColonTkn             *Token
-	OpenCurlyBracketTkn  *Token
-	CaseSeparatorTkn     *Token
+	CloseParenthesisTkn  *token.Token
+	ColonTkn             *token.Token
+	OpenCurlyBracketTkn  *token.Token
+	CaseSeparatorTkn     *token.Token
 	CaseList             *CaseListStmt
-	CloseCurlyBracketTkn *Token
-	EndSwitchTkn         *Token
-	SemiColonTkn         *Token
+	CloseCurlyBracketTkn *token.Token
+	EndSwitchTkn         *token.Token
+	SemiColonTkn         *token.Token
 	AltSyntax            bool
 }
 
@@ -1529,20 +1526,20 @@ type SwitchStmt struct {
 type ThrowStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	ThrowTkn     *Token
+	ThrowTkn     *token.Token
 	Expr         Node
-	SemiColonTkn *Token
+	SemiColonTkn *token.Token
 }
 
 // TraitStmt is a trait declaration.
 type TraitStmt struct {
 	FreeFloating         freefloating.Collection
 	Position             *position.Position
-	TraitTkn             *Token
+	TraitTkn             *token.Token
 	TraitName            *Identifier
-	OpenCurlyBracketTkn  *Token
+	OpenCurlyBracketTkn  *token.Token
 	Stmts                []Node
-	CloseCurlyBracketTkn *Token
+	CloseCurlyBracketTkn *token.Token
 	PhpDocComment        string
 }
 
@@ -1563,35 +1560,35 @@ type TraitMethodRefStmt struct {
 type TraitUseStmt struct {
 	FreeFloating         freefloating.Collection
 	Position             *position.Position
-	UseTkn               *Token
+	UseTkn               *token.Token
 	Traits               []Node
-	SeparatorTkns        []*Token
-	OpenCurlyBracketTkn  *Token
+	SeparatorTkns        []*token.Token
+	OpenCurlyBracketTkn  *token.Token
 	TraitAdaptationList  Node
-	CloseCurlyBracketTkn *Token
-	SemiColonTkn         *Token
+	CloseCurlyBracketTkn *token.Token
+	SemiColonTkn         *token.Token
 }
 
 type TraitUseAliasStmt struct {
 	FreeFloating   freefloating.Collection
 	Position       *position.Position
-	DoubleColonTkn *Token
+	DoubleColonTkn *token.Token
 	Ref            Node
-	AsTkn          *Token
+	AsTkn          *token.Token
 	Modifier       Node
 	Alias          *Identifier
-	SemiColonTkn   *Token
+	SemiColonTkn   *token.Token
 }
 
 type TraitUsePrecedenceStmt struct {
 	FreeFloating   freefloating.Collection
 	Position       *position.Position
-	DoubleColonTkn *Token
+	DoubleColonTkn *token.Token
 	Ref            Node
-	InsteadofTkn   *Token
+	InsteadofTkn   *token.Token
 	Insteadof      []Node
-	SeparatorTkns  []*Token
-	SemiColonTkn   *Token
+	SeparatorTkns  []*token.Token
+	SemiColonTkn   *token.Token
 }
 
 // TryStmt is a `try { $Stmts... } $Catches` statement.
@@ -1599,10 +1596,10 @@ type TraitUsePrecedenceStmt struct {
 type TryStmt struct {
 	FreeFloating         freefloating.Collection
 	Position             *position.Position
-	TryTkn               *Token
-	OpenCurlyBracketTkn  *Token
+	TryTkn               *token.Token
+	OpenCurlyBracketTkn  *token.Token
 	Stmts                []Node
-	CloseCurlyBracketTkn *Token
+	CloseCurlyBracketTkn *token.Token
 	Catches              []Node
 	Finally              Node
 }
@@ -1611,32 +1608,32 @@ type TryStmt struct {
 type UnsetStmt struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
-	UnsetTkn            *Token
-	OpenParenthesisTkn  *Token
+	UnsetTkn            *token.Token
+	OpenParenthesisTkn  *token.Token
 	Vars                []Node
-	SeparatorTkns       []*Token
-	CloseParenthesisTkn *Token
-	SemiColonTkn        *Token
+	SeparatorTkns       []*token.Token
+	CloseParenthesisTkn *token.Token
+	SemiColonTkn        *token.Token
 }
 
 type UseStmt struct {
 	FreeFloating   freefloating.Collection
 	Position       *position.Position
 	UseType        *Identifier
-	NsSeparatorTkn *Token
+	NsSeparatorTkn *token.Token
 	Use            *Name
-	AsTkn          *Token
+	AsTkn          *token.Token
 	Alias          *Identifier
 }
 
 type UseListStmt struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
-	UseTkn        *Token
+	UseTkn        *token.Token
 	UseType       *Identifier
 	Uses          []Node
-	SeparatorTkns []*Token
-	SemiColonTkn  *Token
+	SeparatorTkns []*token.Token
+	SemiColonTkn  *token.Token
 }
 
 // WhileStmt is a `while ($Cond) $Stmt` statement.
@@ -1644,13 +1641,13 @@ type UseListStmt struct {
 type WhileStmt struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
-	WhileTkn            *Token
-	OpenParenthesisTkn  *Token
+	WhileTkn            *token.Token
+	OpenParenthesisTkn  *token.Token
 	Cond                Node
-	CloseParenthesisTkn *Token
-	ColonTkn            *Token
+	CloseParenthesisTkn *token.Token
+	ColonTkn            *token.Token
 	Stmt                Node
-	EndWhileTkn         *Token
-	SemiColonTkn        *Token
+	EndWhileTkn         *token.Token
+	SemiColonTkn        *token.Token
 	AltSyntax           bool
 }

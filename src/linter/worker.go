@@ -15,13 +15,17 @@ import (
 	"time"
 
 	"github.com/quasilyte/regex/syntax"
+	"github.com/z7zmey/php-parser/pkg/ast"
+	"github.com/z7zmey/php-parser/pkg/cfg"
+	phperrors "github.com/z7zmey/php-parser/pkg/errors"
+	"github.com/z7zmey/php-parser/pkg/parser"
+	"github.com/z7zmey/php-parser/pkg/version"
 
 	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/workspace"
 )
@@ -112,17 +116,31 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult,
 	waiter := beforeParse(len(contents), fileInfo.Name)
 	defer waiter.Finish()
 
-	parser := php7.NewParser(contents)
-	parser.WithFreeFloating()
-	parser.Parse()
+	phpVersion, err := version.New("7.4")
+	if err != nil {
+		fmt.Println("Error: " + err.Error())
+	}
+
+	var parserErrors []*phperrors.Error
+	rootNode, err := parser.Parse(contents, cfg.Config{
+		Version: phpVersion,
+		ErrorHandlerFunc: func(e *phperrors.Error) {
+			parserErrors = append(parserErrors, e)
+		},
+	})
+	if err != nil {
+		fmt.Println("Error: " + err.Error())
+	}
+
+	rootIR := w.irconv.ConvertRoot(rootNode.(*ast.Root))
 
 	file := workspace.NewFile(fileInfo.Name, contents)
-	rootNode, walker, err := w.analyzeFile(file, parser)
+	walker, err := w.analyzeFile(file, rootIR)
 	if err != nil {
 		return result, err
 	}
 	result = ParseResult{
-		RootNode: rootNode,
+		RootNode: rootIR,
 		Reports:  walker.reports,
 		walker:   walker,
 	}
@@ -231,15 +249,11 @@ func (w *Worker) doParseFile(f workspace.FileInfo) []*Report {
 	return reports
 }
 
-func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Root, *rootWalker, error) {
-	rootNode := parser.GetRootNode()
-
+func (w *Worker) analyzeFile(file *workspace.File, rootNode *ir.Root) (*rootWalker, error) {
 	if rootNode == nil {
 		lintdebug.Send("Could not parse %s at all due to errors", file.Name())
-		return nil, nil, errors.New("empty root node")
+		return nil, errors.New("empty root node")
 	}
-
-	rootIR := w.irconv.ConvertRoot(rootNode)
 
 	st := &meta.ClassParseState{Info: w.info, CurrentFile: file.Name()}
 	walker := &rootWalker{
@@ -267,9 +281,9 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 	walker.InitCustom()
 
 	walker.beforeEnterFile()
-	rootIR.Walk(walker)
+	rootNode.Walk(walker)
 	if w.info.IsIndexingComplete() {
-		analyzeFileRootLevel(rootIR, walker)
+		analyzeFileRootLevel(rootNode, walker)
 	}
 	walker.afterLeaveFile()
 
@@ -279,11 +293,11 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 		}
 	}
 
-	for _, e := range parser.GetErrors() {
-		walker.Report(nil, LevelError, "syntax", "Syntax error: "+e.String())
-	}
+	// for _, e := range parser.GetErrors() {
+	// 	walker.Report(nil, LevelError, "syntax", "Syntax error: "+e.String())
+	// }
 
-	return rootIR, walker, nil
+	return walker, nil
 }
 
 // analyzeFileRootLevel does analyze file top-level code.

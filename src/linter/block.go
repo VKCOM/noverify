@@ -983,12 +983,14 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 
 	var closureUses []ir.Node
 	if fun.ClosureUse != nil {
-		closureUses = fun.ClosureUse.Uses
+		closureUses = fun.ClosureUse
 	}
 	for _, useExpr := range closureUses {
+		useExpr := useExpr.(*ir.ClosureUseExpr)
+
 		var byRef bool
 		var v *ir.SimpleVar
-		switch u := useExpr.(type) {
+		switch u := useExpr.Var.(type) {
 		case *ir.ReferenceExpr:
 			v = u.Variable.(*ir.SimpleVar)
 			byRef = true

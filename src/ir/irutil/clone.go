@@ -13,8 +13,8 @@ func NodeClone(x ir.Node) ir.Node {
 	switch x := x.(type) {
 	case *ir.AnonClassExpr:
 		clone := *x
-		clone.Class = classClone(x.Class)
 		clone.Args = NodeSliceClone(x.Args)
+		clone.Class = classClone(x.Class)
 		return &clone
 	case *ir.Argument:
 		clone := *x
@@ -312,15 +312,15 @@ func NodeClone(x ir.Node) ir.Node {
 		return &clone
 	case *ir.ClassMethodStmt:
 		clone := *x
-		if x.MethodName != nil {
-			clone.MethodName = NodeClone(x.MethodName).(*ir.Identifier)
-		}
 		{
 			sliceClone := make([]*ir.Identifier, len(x.Modifiers))
 			for i := range x.Modifiers {
 				sliceClone[i] = NodeClone(x.Modifiers[i]).(*ir.Identifier)
 			}
 			clone.Modifiers = sliceClone
+		}
+		if x.MethodName != nil {
+			clone.MethodName = NodeClone(x.MethodName).(*ir.Identifier)
 		}
 		clone.Params = NodeSliceClone(x.Params)
 		if x.ReturnType != nil {
@@ -332,15 +332,15 @@ func NodeClone(x ir.Node) ir.Node {
 		return &clone
 	case *ir.ClassStmt:
 		clone := *x
-		if x.ClassName != nil {
-			clone.ClassName = NodeClone(x.ClassName).(*ir.Identifier)
-		}
 		{
 			sliceClone := make([]*ir.Identifier, len(x.Modifiers))
 			for i := range x.Modifiers {
 				sliceClone[i] = NodeClone(x.Modifiers[i]).(*ir.Identifier)
 			}
 			clone.Modifiers = sliceClone
+		}
+		if x.ClassName != nil {
+			clone.ClassName = NodeClone(x.ClassName).(*ir.Identifier)
 		}
 		clone.Class = classClone(x.Class)
 		return &clone
@@ -353,9 +353,7 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.ClosureExpr:
 		clone := *x
 		clone.Params = NodeSliceClone(x.Params)
-		if x.ClosureUse != nil {
-			clone.ClosureUse = NodeClone(x.ClosureUse).(*ir.ClosureUseExpr)
-		}
+		clone.ClosureUse = NodeSliceClone(x.ClosureUse)
 		if x.ReturnType != nil {
 			clone.ReturnType = NodeClone(x.ReturnType)
 		}
@@ -363,7 +361,9 @@ func NodeClone(x ir.Node) ir.Node {
 		return &clone
 	case *ir.ClosureUseExpr:
 		clone := *x
-		clone.Uses = NodeSliceClone(x.Uses)
+		if x.Var != nil {
+			clone.Var = NodeClone(x.Var)
+		}
 		return &clone
 	case *ir.CoalesceExpr:
 		clone := *x
