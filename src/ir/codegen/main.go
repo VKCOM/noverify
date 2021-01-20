@@ -40,7 +40,7 @@ func main() {
 		{"generate get freefloating", doGenerateGetFreeFloating},
 		{"generate get node kind", doGenerateGetNodeKind},
 		{"generate get position", doGenerateGetPosition},
-		{"generate iterate tokens	", doGenerateIterateTokens},
+		{"generate iterate tokens", doGenerateIterateTokens},
 	}
 
 	for _, step := range steps {
