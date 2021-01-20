@@ -1384,7 +1384,7 @@ type IfStmt struct {
 type InlineHTMLStmt struct {
 	FreeFloating  freefloating.Collection
 	Position      *position.Position
-	InlineHtmlTkn *Token
+	InlineHTMLTkn *Token
 	Value         string
 }
 
