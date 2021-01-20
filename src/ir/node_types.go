@@ -8,7 +8,9 @@ import (
 
 // Token is a stub while switching to a new version of the parser.
 // Replace later to token.Token from php-parser
-type Token struct{}
+type Token struct {
+	Value []byte
+}
 
 // TODO: make Alt and AltSyntax field names consistent.
 
