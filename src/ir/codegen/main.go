@@ -40,6 +40,7 @@ func main() {
 		{"generate get freefloating", doGenerateGetFreeFloating},
 		{"generate get node kind", doGenerateGetNodeKind},
 		{"generate get position", doGenerateGetPosition},
+		{"generate iterate tokens	", doGenerateIterateTokens},
 	}
 
 	for _, step := range steps {
@@ -114,5 +115,10 @@ func doGenerateGetNodeKind(ctx *context) error {
 
 func doGenerateGetPosition(ctx *context) error {
 	g := &genGetPosition{ctx: ctx}
+	return g.Run()
+}
+
+func doGenerateIterateTokens(ctx *context) error {
+	g := &genIterate{ctx: ctx}
 	return g.Run()
 }

@@ -14,6 +14,7 @@ import (
 type Node interface {
 	Walk(Visitor)
 	GetFreeFloating() *freefloating.Collection
+	IterateTokens(func(*Token) bool)
 }
 
 // Visitor is an interface for basic IR nodes traversal.
