@@ -27,9 +27,11 @@ func Check(cfg *MainConfig) (int, error) {
 	var args cmdlineArguments
 	bindFlags(config, ruleSets, &args)
 	flag.Parse()
+
 	if args.disableCache {
 		config.CacheDir = ""
 	}
+
 	if cfg.AfterFlagParse != nil {
 		cfg.AfterFlagParse(InitEnvironment{
 			RuleSets: ruleSets,

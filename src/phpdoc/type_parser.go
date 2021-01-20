@@ -433,8 +433,8 @@ func (p *TypeParser) isDigit(ch byte) bool {
 }
 
 func (p *TypeParser) isNameChar(ch byte) bool {
-	// [\\a-zA-Z_\x7f-\xff0-9]
-	return ch == '\\' || p.isFirstIdentChar(ch) || p.isDigit(ch)
+	// [\\a-zA-Z_\x7f-\xff0-9] and '-'
+	return ch == '\\' || p.isFirstIdentChar(ch) || p.isDigit(ch) || ch == '-'
 }
 
 func (p *TypeParser) isFirstIdentChar(ch byte) bool {

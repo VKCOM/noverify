@@ -54,6 +54,8 @@ type Config struct {
 	ExcludeRegex *regexp.Regexp
 
 	AllowDisable *regexp.Regexp
+
+	PhpExtensions []string
 }
 
 func NewConfig() *Config {

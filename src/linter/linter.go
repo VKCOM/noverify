@@ -111,5 +111,5 @@ func (l *Linter) InitStubs(readFileNamesFunc workspace.ReadCallback) {
 
 // InitStubsFromDir parses directory with PHPStorm stubs which has all internal PHP classes and functions declared.
 func (l *Linter) InitStubsFromDir(dir string) {
-	l.InitStubs(workspace.ReadFilenames([]string{dir}, nil))
+	l.InitStubs(workspace.ReadFilenames([]string{dir}, nil, l.config.PhpExtensions))
 }
