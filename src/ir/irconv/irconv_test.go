@@ -8,7 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/VKCOM/noverify/src/ir"
-	"github.com/VKCOM/noverify/src/php/parser/php7"
+	"github.com/VKCOM/noverify/src/php/parseutil"
 )
 
 func BenchmarkInterpretString(b *testing.B) {
@@ -325,47 +325,43 @@ func TestCurlyBraceArrayDimFetch(t *testing.T) {
 		curlyBrace bool
 	}{
 		{
-			code:       `$arr{'x'};`,
+			code:       `$arr{'x'}`,
 			curlyBrace: true,
 		},
 		{
-			code:       `$arr['x'];`,
+			code:       `$arr['x']`,
 			curlyBrace: false,
 		},
 		{
-			code:       `$arr  [  'x'   ]   ;`,
+			code:       `$arr  [  'x'   ]   `,
 			curlyBrace: false,
 		},
 		{
-			code:       `$arr  {  'x'   }   ;`,
+			code:       `$arr  {  'x'   }   `,
 			curlyBrace: true,
 		},
 		{
-			code:       `$arr{  'x'   };`,
+			code:       `$arr{  'x'   }`,
 			curlyBrace: true,
 		},
 		{
-			code:       `$arr[  'x'   ];`,
+			code:       `$arr[  'x'   ]`,
 			curlyBrace: false,
 		},
 		{
-			code:       `$arr{'x'   };`,
+			code:       `$arr{'x'   }`,
 			curlyBrace: true,
 		},
 		{
-			code:       `$arr['x'   ];`,
+			code:       `$arr['x'   ]`,
 			curlyBrace: false,
 		},
 	}
 
 	for _, test := range tests {
-		p := php7.NewParser([]byte(`<?php ` + test.code))
-		p.WithFreeFloating()
-		p.Parse()
-		root := p.GetRootNode()
-		rootIR := ConvertNode(root).(*ir.Root)
-
-		fetchNode := rootIR.Stmts[0].(*ir.ExpressionStmt).Expr.(*ir.ArrayDimFetchExpr)
+		root, _, _ := parseutil.ParseStmt([]byte(test.code))
+		exprNode := ConvertNode(root).(*ir.ExpressionStmt)
+		fetchNode := exprNode.Expr.(*ir.ArrayDimFetchExpr)
 
 		want := test.curlyBrace
 		have := fetchNode.CurlyBrace
