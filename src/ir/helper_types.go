@@ -18,3 +18,8 @@ type Class struct {
 	Implements    *ClassImplementsStmt
 	Stmts         []Node
 }
+
+type Doc struct {
+	PhpDocComment string
+	PhpDoc        []phpdoc.CommentPart
+}

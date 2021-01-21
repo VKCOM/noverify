@@ -107,16 +107,63 @@ func (d *rootWalker) File() *workspace.File {
 	return d.file
 }
 
-func (d *rootWalker) handleFreeFloating(tok *token.Token) {
-	if tok == nil {
+func (d *rootWalker) handleToken(t *token.Token) {
+	if t == nil {
 		return
 	}
 
-	for _, tk := range tok.FreeFloating {
-		if tk.ID == token.T_COMMENT {
+	if t.ID != token.T_DOC_COMMENT {
+		return
+	}
+	str := string(t.Value)
 
+	if !phpdoc.IsPHPDoc(str) {
+		return
+	}
+
+	for _, ln := range phpdoc.Parse(d.ctx.phpdocTypeParser, str) {
+		if ln.Name() != "linter" {
+			continue
+		}
+
+		for _, p := range ln.(*phpdoc.RawCommentPart).Params {
+			if p != "disable" {
+				continue
+			}
+			if d.linterDisabled {
+				needleLine := ln.Line() + t.Position.StartLine - 1
+				d.ReportByLine(needleLine, LevelInformation, "linterError", "Linter is already disabled for this file")
+				continue
+			}
+			canDisable := false
+			if d.allowDisabledRegexp != nil {
+				canDisable = d.allowDisabledRegexp.MatchString(d.ctx.st.CurrentFile)
+			}
+			d.linterDisabled = canDisable
+			if !canDisable {
+				needleLine := ln.Line() + t.Position.StartLine - 1
+				d.ReportByLine(needleLine, LevelInformation, "linterError", "You are not allowed to disable linter")
+			}
 		}
 	}
+}
+
+func (d *rootWalker) handleComments(n ir.Node) {
+	if n == nil {
+		return
+	}
+
+	n.IterateTokens(func(t *token.Token) bool {
+		if t == nil {
+			return true
+		}
+
+		d.handleToken(t)
+		for _, ff := range t.FreeFloating {
+			d.handleToken(ff)
+		}
+		return true
+	})
 }
 
 // EnterNode is invoked at every node in hierarchy
@@ -126,6 +173,8 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 	for _, c := range d.custom {
 		c.BeforeEnterNode(n)
 	}
+
+	d.handleComments(n)
 
 	if ffs := n.GetFreeFloating(); ffs != nil {
 		for _, cs := range *ffs {
@@ -846,13 +895,14 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 		specifiedType = typ
 	}
 
+	d.checkCommentMisspellings(pl, pl.PhpDocComment)
+	typ := d.parsePHPDocVar(pl, pl.PhpDoc)
+
 	for _, pNode := range pl.Properties {
 		p := pNode.(*ir.PropertyStmt)
 
 		nm := p.Variable.Name
 
-		d.checkCommentMisspellings(p, p.PhpDocComment)
-		typ := d.parsePHPDocVar(p, p.PhpDoc)
 		if p.Expr != nil {
 			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, p.Expr))
 		}

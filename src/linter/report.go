@@ -150,7 +150,7 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 		},
 
 		{
-			Name:     "dupSubExpr",
+			Name:     `dupSubExpr`,
 			Default:  true,
 			Quickfix: false,
 			Comment:  `Report suspicious duplicated operands in expressions.`,

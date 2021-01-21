@@ -1467,6 +1467,9 @@ func (n *SimpleVar) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
 	}
+	if n.NameNode != nil {
+		n.NameNode.Walk(v)
+	}
 	v.LeaveNode(n)
 }
 

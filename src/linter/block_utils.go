@@ -5,10 +5,11 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/z7zmey/php-parser/pkg/token"
+
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/solver"
 )
 
@@ -165,17 +166,18 @@ var fallthroughMarkerRegex = func() *regexp.Regexp {
 }()
 
 func caseHasFallthroughComment(n ir.Node) bool {
-	ffs := n.GetFreeFloating()
-	if ffs == nil {
+	cas, ok := n.(*ir.CaseStmt)
+	if !ok {
 		return false
 	}
-	for _, cs := range *ffs {
-		for _, c := range cs {
-			if c.StringType == freefloating.CommentType {
-				if fallthroughMarkerRegex.MatchString(c.Value) {
-					return true
-				}
-			}
+
+	for _, tok := range cas.CaseTkn.FreeFloating {
+		if tok.ID != token.T_COMMENT {
+			continue
+		}
+
+		if fallthroughMarkerRegex.Match(tok.Value) {
+			return true
 		}
 	}
 	return false
