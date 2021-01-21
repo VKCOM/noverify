@@ -4,6 +4,11 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+
+	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/php/parser/php7"
 )
 
 func BenchmarkInterpretString(b *testing.B) {
@@ -311,5 +316,61 @@ func TestInterpretString(t *testing.T) {
 	for _, test := range tests {
 		runTest(t, test.raw, '\'', test.singleQuote)
 		runTest(t, test.raw, '"', test.doubleQuote)
+	}
+}
+
+func TestCurlyBraceArrayDimFetch(t *testing.T) {
+	tests := []struct {
+		code       string
+		curlyBrace bool
+	}{
+		{
+			code:       `$arr{'x'};`,
+			curlyBrace: true,
+		},
+		{
+			code:       `$arr['x'];`,
+			curlyBrace: false,
+		},
+		{
+			code:       `$arr  [  'x'   ]   ;`,
+			curlyBrace: false,
+		},
+		{
+			code:       `$arr  {  'x'   }   ;`,
+			curlyBrace: true,
+		},
+		{
+			code:       `$arr{  'x'   };`,
+			curlyBrace: true,
+		},
+		{
+			code:       `$arr[  'x'   ];`,
+			curlyBrace: false,
+		},
+		{
+			code:       `$arr{'x'   };`,
+			curlyBrace: true,
+		},
+		{
+			code:       `$arr['x'   ];`,
+			curlyBrace: false,
+		},
+	}
+
+	for _, test := range tests {
+		p := php7.NewParser([]byte(`<?php ` + test.code))
+		p.WithFreeFloating()
+		p.Parse()
+		root := p.GetRootNode()
+		rootIR := ConvertNode(root).(*ir.Root)
+
+		fetchNode := rootIR.Stmts[0].(*ir.ExpressionStmt).Expr.(*ir.ArrayDimFetchExpr)
+
+		want := test.curlyBrace
+		have := fetchNode.CurlyBrace
+		if have != want {
+			t.Errorf("results mismatch (-have +want): %s", cmp.Diff(have, want))
+		}
 	}
 }
