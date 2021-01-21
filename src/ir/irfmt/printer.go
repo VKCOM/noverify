@@ -829,9 +829,13 @@ func (p *PrettyPrinter) printExprParen(n *ir.ParenExpr) {
 
 func (p *PrettyPrinter) printExprArrayDimFetch(n *ir.ArrayDimFetchExpr) {
 	p.Print(n.Variable)
-	writeString(p.w, "[")
+	openBrace, closeBrace := "[", "]"
+	if n.CurlyBrace {
+		openBrace, closeBrace = "{", "}"
+	}
+	writeString(p.w, openBrace)
 	p.Print(n.Dim)
-	writeString(p.w, "]")
+	writeString(p.w, closeBrace)
 }
 
 func (p *PrettyPrinter) printExprArrayItem(n *ir.ArrayItemExpr) {
