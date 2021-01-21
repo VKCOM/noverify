@@ -912,6 +912,7 @@ type SimpleVar struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
 	DollarTkn    *token.Token
+	NameNode     *Identifier
 	Name         string
 }
 
@@ -1111,8 +1112,8 @@ type ClassMethodStmt struct {
 	ReturnType          Node
 	Stmt                Node
 	ReturnsRef          bool
-	PhpDocComment       string
-	PhpDoc              []phpdoc.CommentPart
+
+	Doc
 }
 
 // ConstListStmt is a `const $Consts` statement.
@@ -1442,13 +1443,11 @@ type NopStmt struct {
 // PropertyStmt is a `$Variable = $Expr` statement.
 // It's a part of the *PropertyListStmt.
 type PropertyStmt struct {
-	FreeFloating  freefloating.Collection
-	Position      *position.Position
-	Variable      *SimpleVar
-	EqualTkn      *token.Token
-	Expr          Node
-	PhpDocComment string
-	PhpDoc        []phpdoc.CommentPart
+	FreeFloating freefloating.Collection
+	Position     *position.Position
+	Variable     *SimpleVar
+	EqualTkn     *token.Token
+	Expr         Node
 }
 
 // PropertyListStmt is a `$Modifiers $Type $Properties` statement.
@@ -1461,6 +1460,8 @@ type PropertyListStmt struct {
 	Properties    []Node
 	SeparatorTkns []*token.Token
 	SemiColonTkn  *token.Token
+
+	Doc
 }
 
 // ReturnStmt is a `return $Expr` statement.

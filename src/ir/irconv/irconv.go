@@ -608,7 +608,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.ReturnsRef = hasValue(n.AmpersandTkn)
 		out.Static = hasValue(n.StaticTkn)
 
-		out.PhpDocComment, out.PhpDoc = c.getPhpDocWithParse(n.FnTkn)
+		var tokenWithDoc *token.Token
+		if n.StaticTkn != nil {
+			tokenWithDoc = n.StaticTkn
+		} else {
+			tokenWithDoc = n.FnTkn
+		}
+
+		out.PhpDocComment, out.PhpDoc = c.getPhpDocWithParse(tokenWithDoc)
 
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
@@ -684,7 +691,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 
-		out.PhpDocComment, out.PhpDoc = c.getPhpDocWithParse(n.FunctionTkn)
+		var tokenWithDoc *token.Token
+		if n.StaticTkn != nil {
+			tokenWithDoc = n.StaticTkn
+		} else {
+			tokenWithDoc = n.FunctionTkn
+		}
+
+		out.PhpDocComment, out.PhpDoc = c.getPhpDocWithParse(tokenWithDoc)
 
 		out.ReturnsRef = hasValue(n.AmpersandTkn)
 		out.Static = hasValue(n.StaticTkn)
@@ -1127,7 +1141,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out := &ir.SimpleVar{}
 		out.Position = n.Position
 		out.DollarTkn = n.DollarTkn
+		out.NameNode = c.convNode(nameNode).(*ir.Identifier)
 		out.Name = string(bytes.TrimPrefix(nameNode.Value, []byte("$")))
+
+		if out.Name == "foo" {
+			fmt.Print()
+		}
+
 		return out
 
 	case *ast.ScalarDnumber:
@@ -1303,7 +1323,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
 
-		out.PhpDocComment, out.PhpDoc = c.getPhpDocWithParse(n.FunctionTkn)
+		var tokenWithDoc *token.Token
+		if len(n.Modifiers) != 0 {
+			tokenWithDoc = n.Modifiers[0].(*ast.Identifier).IdentifierTkn
+		} else {
+			tokenWithDoc = n.FunctionTkn
+		}
+
+		out.PhpDocComment, out.PhpDoc = c.getPhpDocWithParse(tokenWithDoc)
 
 		out.MethodName = c.convNode(n.Name).(*ir.Identifier)
 		{
@@ -1702,10 +1729,6 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out := &ir.PropertyStmt{}
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
-
-		// TODO:
-		out.PhpDocComment, out.PhpDoc = c.getPhpDocWithParse(n.EqualTkn)
-
 		out.Variable = c.convNode(n.Var).(*ir.SimpleVar)
 		out.Expr = c.convNode(n.Expr)
 		return out
@@ -1725,6 +1748,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			}
 			out.Modifiers = slice
 		}
+
+		var tokenWithDoc *token.Token
+		if len(n.Modifiers) != 0 {
+			tokenWithDoc = n.Modifiers[0].(*ast.Identifier).IdentifierTkn
+		}
+		out.PhpDocComment, out.PhpDoc = c.getPhpDocWithParse(tokenWithDoc)
+
 		out.Type = c.convNode(n.Type)
 		out.Properties = c.convNodeSlice(n.Props)
 		return out

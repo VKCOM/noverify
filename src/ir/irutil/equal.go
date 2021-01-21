@@ -2,7 +2,6 @@
 package irutil
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/VKCOM/noverify/src/ir"
 )
@@ -17,92 +16,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.ClassTkn == nil && y.ClassTkn == nil {
-			return true
-		}
-		if x.ClassTkn == nil || y.ClassTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ClassTkn.Value, y.ClassTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Args, y.Args) {
-			return false
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
-			return false
-		}
-		if x.ExtendsTkn == nil && y.ExtendsTkn == nil {
-			return true
-		}
-		if x.ExtendsTkn == nil || y.ExtendsTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ExtendsTkn.Value, y.ExtendsTkn.Value) {
-			return false
-		}
-		if x.ImplementsTkn == nil && y.ImplementsTkn == nil {
-			return true
-		}
-		if x.ImplementsTkn == nil || y.ImplementsTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ImplementsTkn.Value, y.ImplementsTkn.Value) {
-			return false
-		}
-		for i := range x.ImplementsSeparatorTkns {
-			if x.ImplementsSeparatorTkns[i] == nil && y.ImplementsSeparatorTkns[i] == nil {
-				return true
-			}
-			if x.ImplementsSeparatorTkns[i] == nil || y.ImplementsSeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.ImplementsSeparatorTkns[i].Value, y.ImplementsSeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.OpenCurlyBracketTkn == nil && y.OpenCurlyBracketTkn == nil {
-			return true
-		}
-		if x.OpenCurlyBracketTkn == nil || y.OpenCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenCurlyBracketTkn.Value, y.OpenCurlyBracketTkn.Value) {
-			return false
-		}
-		if x.CloseCurlyBracketTkn == nil && y.CloseCurlyBracketTkn == nil {
-			return true
-		}
-		if x.CloseCurlyBracketTkn == nil || y.CloseCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseCurlyBracketTkn.Value, y.CloseCurlyBracketTkn.Value) {
 			return false
 		}
 		if !classEqual(x.Class, y.Class) {
@@ -113,24 +27,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.Argument)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.VariadicTkn == nil && y.VariadicTkn == nil {
-			return true
-		}
-		if x.VariadicTkn == nil || y.VariadicTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.VariadicTkn.Value, y.VariadicTkn.Value) {
-			return false
-		}
-		if x.AmpersandTkn == nil && y.AmpersandTkn == nil {
-			return true
-		}
-		if x.AmpersandTkn == nil || y.AmpersandTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.AmpersandTkn.Value, y.AmpersandTkn.Value) {
-			return false
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
 			return false
@@ -150,25 +46,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if x.OpenBracketTkn == nil && y.OpenBracketTkn == nil {
-			return true
-		}
-		if x.OpenBracketTkn == nil || y.OpenBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenBracketTkn.Value, y.OpenBracketTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Dim, y.Dim) {
-			return false
-		}
-		if x.CloseBracketTkn == nil && y.CloseBracketTkn == nil {
-			return true
-		}
-		if x.CloseBracketTkn == nil || y.CloseBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseBracketTkn.Value, y.CloseBracketTkn.Value) {
 			return false
 		}
 		return true
@@ -177,24 +55,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.ArrayTkn == nil && y.ArrayTkn == nil {
-			return true
-		}
-		if x.ArrayTkn == nil || y.ArrayTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ArrayTkn.Value, y.ArrayTkn.Value) {
-			return false
-		}
-		if x.OpenBracketTkn == nil && y.OpenBracketTkn == nil {
-			return true
-		}
-		if x.OpenBracketTkn == nil || y.OpenBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenBracketTkn.Value, y.OpenBracketTkn.Value) {
-			return false
-		}
 		if len(x.Items) != len(y.Items) {
 			return false
 		}
@@ -202,26 +62,6 @@ func NodeEqual(x, y ir.Node) bool {
 			if !NodeEqual(x.Items[i], y.Items[i]) {
 				return false
 			}
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.CloseBracketTkn == nil && y.CloseBracketTkn == nil {
-			return true
-		}
-		if x.CloseBracketTkn == nil || y.CloseBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseBracketTkn.Value, y.CloseBracketTkn.Value) {
-			return false
 		}
 		if x.ShortSyntax != y.ShortSyntax {
 			return false
@@ -232,34 +72,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.EllipsisTkn == nil && y.EllipsisTkn == nil {
-			return true
-		}
-		if x.EllipsisTkn == nil || y.EllipsisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EllipsisTkn.Value, y.EllipsisTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Key, y.Key) {
-			return false
-		}
-		if x.DoubleArrowTkn == nil && y.DoubleArrowTkn == nil {
-			return true
-		}
-		if x.DoubleArrowTkn == nil || y.DoubleArrowTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.DoubleArrowTkn.Value, y.DoubleArrowTkn.Value) {
-			return false
-		}
-		if x.AmpersandTkn == nil && y.AmpersandTkn == nil {
-			return true
-		}
-		if x.AmpersandTkn == nil || y.AmpersandTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.AmpersandTkn.Value, y.AmpersandTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Val, y.Val) {
@@ -274,84 +87,10 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.StaticTkn == nil && y.StaticTkn == nil {
-			return true
-		}
-		if x.StaticTkn == nil || y.StaticTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.StaticTkn.Value, y.StaticTkn.Value) {
-			return false
-		}
-		if x.FnTkn == nil && y.FnTkn == nil {
-			return true
-		}
-		if x.FnTkn == nil || y.FnTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.FnTkn.Value, y.FnTkn.Value) {
-			return false
-		}
-		if x.AmpersandTkn == nil && y.AmpersandTkn == nil {
-			return true
-		}
-		if x.AmpersandTkn == nil || y.AmpersandTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.AmpersandTkn.Value, y.AmpersandTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Params, y.Params) {
 			return false
 		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
-			return false
-		}
-		if x.ColonTkn == nil && y.ColonTkn == nil {
-			return true
-		}
-		if x.ColonTkn == nil || y.ColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ColonTkn.Value, y.ColonTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.ReturnType, y.ReturnType) {
-			return false
-		}
-		if x.DoubleArrowTkn == nil && y.DoubleArrowTkn == nil {
-			return true
-		}
-		if x.DoubleArrowTkn == nil || y.DoubleArrowTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.DoubleArrowTkn.Value, y.DoubleArrowTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
@@ -375,15 +114,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expression, y.Expression) {
 			return false
 		}
@@ -394,15 +124,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Expression, y.Expression) {
@@ -417,15 +138,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expression, y.Expression) {
 			return false
 		}
@@ -436,15 +148,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Expression, y.Expression) {
@@ -459,15 +162,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expression, y.Expression) {
 			return false
 		}
@@ -478,15 +172,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Expression, y.Expression) {
@@ -501,15 +186,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expression, y.Expression) {
 			return false
 		}
@@ -520,15 +196,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Expression, y.Expression) {
@@ -543,15 +210,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expression, y.Expression) {
 			return false
 		}
@@ -562,15 +220,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Expression, y.Expression) {
@@ -585,15 +234,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expression, y.Expression) {
 			return false
 		}
@@ -604,15 +244,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Expression, y.Expression) {
@@ -627,15 +258,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expression, y.Expression) {
 			return false
 		}
@@ -646,15 +268,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Expression, y.Expression) {
@@ -669,15 +282,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expression, y.Expression) {
 			return false
 		}
@@ -686,24 +290,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.BadString)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.MinusTkn == nil && y.MinusTkn == nil {
-			return true
-		}
-		if x.MinusTkn == nil || y.MinusTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.MinusTkn.Value, y.MinusTkn.Value) {
-			return false
-		}
-		if x.StringTkn == nil && y.StringTkn == nil {
-			return true
-		}
-		if x.StringTkn == nil || y.StringTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.StringTkn.Value, y.StringTkn.Value) {
-			return false
 		}
 		if x.Value != y.Value {
 			return false
@@ -723,15 +309,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Left, y.Left) {
 			return false
 		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
@@ -740,15 +317,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.BitwiseNotExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.TildaTkn == nil && y.TildaTkn == nil {
-			return true
-		}
-		if x.TildaTkn == nil || y.TildaTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.TildaTkn.Value, y.TildaTkn.Value) {
-			return false
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
 			return false
@@ -760,15 +328,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Right, y.Right) {
@@ -783,15 +342,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Left, y.Left) {
 			return false
 		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
@@ -804,15 +354,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Left, y.Left) {
 			return false
 		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
@@ -821,15 +362,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.BooleanNotExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.ExclamationTkn == nil && y.ExclamationTkn == nil {
-			return true
-		}
-		if x.ExclamationTkn == nil || y.ExclamationTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ExclamationTkn.Value, y.ExclamationTkn.Value) {
-			return false
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
 			return false
@@ -843,15 +375,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Left, y.Left) {
 			return false
 		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
@@ -861,25 +384,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.BreakTkn == nil && y.BreakTkn == nil {
-			return true
-		}
-		if x.BreakTkn == nil || y.BreakTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.BreakTkn.Value, y.BreakTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		return true
@@ -897,25 +402,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.CaseTkn == nil && y.CaseTkn == nil {
-			return true
-		}
-		if x.CaseTkn == nil || y.CaseTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CaseTkn.Value, y.CaseTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Cond, y.Cond) {
-			return false
-		}
-		if x.CaseSeparatorTkn == nil && y.CaseSeparatorTkn == nil {
-			return true
-		}
-		if x.CaseSeparatorTkn == nil || y.CaseSeparatorTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CaseSeparatorTkn.Value, y.CaseSeparatorTkn.Value) {
 			return false
 		}
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
@@ -927,69 +414,13 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.CatchTkn == nil && y.CatchTkn == nil {
-			return true
-		}
-		if x.CatchTkn == nil || y.CatchTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CatchTkn.Value, y.CatchTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Types, y.Types) {
 			return false
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
 		}
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
-			return false
-		}
-		if x.OpenCurlyBracketTkn == nil && y.OpenCurlyBracketTkn == nil {
-			return true
-		}
-		if x.OpenCurlyBracketTkn == nil || y.OpenCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenCurlyBracketTkn.Value, y.OpenCurlyBracketTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
-			return false
-		}
-		if x.CloseCurlyBracketTkn == nil && y.CloseCurlyBracketTkn == nil {
-			return true
-		}
-		if x.CloseCurlyBracketTkn == nil || y.CloseCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseCurlyBracketTkn.Value, y.CloseCurlyBracketTkn.Value) {
 			return false
 		}
 		return true
@@ -999,15 +430,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Class, y.Class) {
-			return false
-		}
-		if x.DoubleColonTkn == nil && y.DoubleColonTkn == nil {
-			return true
-		}
-		if x.DoubleColonTkn == nil || y.DoubleColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.DoubleColonTkn.Value, y.DoubleColonTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.ConstantName, y.ConstantName) {
@@ -1027,36 +449,7 @@ func NodeEqual(x, y ir.Node) bool {
 				return false
 			}
 		}
-		if x.ConstTkn == nil && y.ConstTkn == nil {
-			return true
-		}
-		if x.ConstTkn == nil || y.ConstTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ConstTkn.Value, y.ConstTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Consts, y.Consts) {
-			return false
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		return true
@@ -1091,66 +484,10 @@ func NodeEqual(x, y ir.Node) bool {
 				return false
 			}
 		}
-		if x.FunctionTkn == nil && y.FunctionTkn == nil {
-			return true
-		}
-		if x.FunctionTkn == nil || y.FunctionTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.FunctionTkn.Value, y.FunctionTkn.Value) {
-			return false
-		}
-		if x.AmpersandTkn == nil && y.AmpersandTkn == nil {
-			return true
-		}
-		if x.AmpersandTkn == nil || y.AmpersandTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.AmpersandTkn.Value, y.AmpersandTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.MethodName, y.MethodName) {
 			return false
 		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Params, y.Params) {
-			return false
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
-			return false
-		}
-		if x.ColonTkn == nil && y.ColonTkn == nil {
-			return true
-		}
-		if x.ColonTkn == nil || y.ColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ColonTkn.Value, y.ColonTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.ReturnType, y.ReturnType) {
@@ -1179,63 +516,7 @@ func NodeEqual(x, y ir.Node) bool {
 				return false
 			}
 		}
-		if x.ClassTkn == nil && y.ClassTkn == nil {
-			return true
-		}
-		if x.ClassTkn == nil || y.ClassTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ClassTkn.Value, y.ClassTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.ClassName, y.ClassName) {
-			return false
-		}
-		if x.ExtendsTkn == nil && y.ExtendsTkn == nil {
-			return true
-		}
-		if x.ExtendsTkn == nil || y.ExtendsTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ExtendsTkn.Value, y.ExtendsTkn.Value) {
-			return false
-		}
-		if x.ImplementsTkn == nil && y.ImplementsTkn == nil {
-			return true
-		}
-		if x.ImplementsTkn == nil || y.ImplementsTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ImplementsTkn.Value, y.ImplementsTkn.Value) {
-			return false
-		}
-		for i := range x.ImplementsSeparatorTkns {
-			if x.ImplementsSeparatorTkns[i] == nil && y.ImplementsSeparatorTkns[i] == nil {
-				return true
-			}
-			if x.ImplementsSeparatorTkns[i] == nil || y.ImplementsSeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.ImplementsSeparatorTkns[i].Value, y.ImplementsSeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.OpenCurlyBracketTkn == nil && y.OpenCurlyBracketTkn == nil {
-			return true
-		}
-		if x.OpenCurlyBracketTkn == nil || y.OpenCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenCurlyBracketTkn.Value, y.OpenCurlyBracketTkn.Value) {
-			return false
-		}
-		if x.CloseCurlyBracketTkn == nil && y.CloseCurlyBracketTkn == nil {
-			return true
-		}
-		if x.CloseCurlyBracketTkn == nil || y.CloseCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseCurlyBracketTkn.Value, y.CloseCurlyBracketTkn.Value) {
 			return false
 		}
 		if !classEqual(x.Class, y.Class) {
@@ -1247,15 +528,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.CloneTkn == nil && y.CloneTkn == nil {
-			return true
-		}
-		if x.CloneTkn == nil || y.CloneTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloneTkn.Value, y.CloneTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
@@ -1265,137 +537,16 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.StaticTkn == nil && y.StaticTkn == nil {
-			return true
-		}
-		if x.StaticTkn == nil || y.StaticTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.StaticTkn.Value, y.StaticTkn.Value) {
-			return false
-		}
-		if x.FunctionTkn == nil && y.FunctionTkn == nil {
-			return true
-		}
-		if x.FunctionTkn == nil || y.FunctionTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.FunctionTkn.Value, y.FunctionTkn.Value) {
-			return false
-		}
-		if x.AmpersandTkn == nil && y.AmpersandTkn == nil {
-			return true
-		}
-		if x.AmpersandTkn == nil || y.AmpersandTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.AmpersandTkn.Value, y.AmpersandTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Params, y.Params) {
-			return false
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
-			return false
-		}
-		if x.UseTkn == nil && y.UseTkn == nil {
-			return true
-		}
-		if x.UseTkn == nil || y.UseTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.UseTkn.Value, y.UseTkn.Value) {
-			return false
-		}
-		if x.UseOpenParenthesisTkn == nil && y.UseOpenParenthesisTkn == nil {
-			return true
-		}
-		if x.UseOpenParenthesisTkn == nil || y.UseOpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.UseOpenParenthesisTkn.Value, y.UseOpenParenthesisTkn.Value) {
 			return false
 		}
 		if !NodeSliceEqual(x.ClosureUse, y.ClosureUse) {
 			return false
 		}
-		for i := range x.UseSeparatorTkns {
-			if x.UseSeparatorTkns[i] == nil && y.UseSeparatorTkns[i] == nil {
-				return true
-			}
-			if x.UseSeparatorTkns[i] == nil || y.UseSeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.UseSeparatorTkns[i].Value, y.UseSeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.UseCloseParenthesisTkn == nil && y.UseCloseParenthesisTkn == nil {
-			return true
-		}
-		if x.UseCloseParenthesisTkn == nil || y.UseCloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.UseCloseParenthesisTkn.Value, y.UseCloseParenthesisTkn.Value) {
-			return false
-		}
-		if x.ColonTkn == nil && y.ColonTkn == nil {
-			return true
-		}
-		if x.ColonTkn == nil || y.ColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ColonTkn.Value, y.ColonTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.ReturnType, y.ReturnType) {
 			return false
 		}
-		if x.OpenCurlyBracketTkn == nil && y.OpenCurlyBracketTkn == nil {
-			return true
-		}
-		if x.OpenCurlyBracketTkn == nil || y.OpenCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenCurlyBracketTkn.Value, y.OpenCurlyBracketTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
-			return false
-		}
-		if x.CloseCurlyBracketTkn == nil && y.CloseCurlyBracketTkn == nil {
-			return true
-		}
-		if x.CloseCurlyBracketTkn == nil || y.CloseCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseCurlyBracketTkn.Value, y.CloseCurlyBracketTkn.Value) {
 			return false
 		}
 		if x.ReturnsRef != y.ReturnsRef {
@@ -1413,15 +564,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.AmpersandTkn == nil && y.AmpersandTkn == nil {
-			return true
-		}
-		if x.AmpersandTkn == nil || y.AmpersandTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.AmpersandTkn.Value, y.AmpersandTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Var, y.Var) {
 			return false
 		}
@@ -1434,15 +576,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Left, y.Left) {
 			return false
 		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
@@ -1453,15 +586,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Right, y.Right) {
@@ -1482,36 +606,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.ConstTkn == nil && y.ConstTkn == nil {
-			return true
-		}
-		if x.ConstTkn == nil || y.ConstTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ConstTkn.Value, y.ConstTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Consts, y.Consts) {
-			return false
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		return true
@@ -1521,15 +616,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.ConstantName, y.ConstantName) {
-			return false
-		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
@@ -1544,25 +630,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.ContinueTkn == nil && y.ContinueTkn == nil {
-			return true
-		}
-		if x.ContinueTkn == nil || y.ContinueTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ContinueTkn.Value, y.ContinueTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		return true
@@ -1571,75 +639,10 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.DeclareTkn == nil && y.DeclareTkn == nil {
-			return true
-		}
-		if x.DeclareTkn == nil || y.DeclareTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.DeclareTkn.Value, y.DeclareTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Consts, y.Consts) {
 			return false
 		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
-			return false
-		}
-		if x.ColonTkn == nil && y.ColonTkn == nil {
-			return true
-		}
-		if x.ColonTkn == nil || y.ColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ColonTkn.Value, y.ColonTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Stmt, y.Stmt) {
-			return false
-		}
-		if x.EndDeclareTkn == nil && y.EndDeclareTkn == nil {
-			return true
-		}
-		if x.EndDeclareTkn == nil || y.EndDeclareTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EndDeclareTkn.Value, y.EndDeclareTkn.Value) {
-			return false
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		if x.Alt != y.Alt {
@@ -1650,24 +653,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.DefaultStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.DefaultTkn == nil && y.DefaultTkn == nil {
-			return true
-		}
-		if x.DefaultTkn == nil || y.DefaultTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.DefaultTkn.Value, y.DefaultTkn.Value) {
-			return false
-		}
-		if x.CaseSeparatorTkn == nil && y.CaseSeparatorTkn == nil {
-			return true
-		}
-		if x.CaseSeparatorTkn == nil || y.CaseSeparatorTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CaseSeparatorTkn.Value, y.CaseSeparatorTkn.Value) {
-			return false
 		}
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
@@ -1681,15 +666,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Left, y.Left) {
 			return false
 		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
@@ -1698,15 +674,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.Dnumber)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.NumberTkn == nil && y.NumberTkn == nil {
-			return true
-		}
-		if x.NumberTkn == nil || y.NumberTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.NumberTkn.Value, y.NumberTkn.Value) {
-			return false
 		}
 		if x.Value != y.Value {
 			return false
@@ -1717,55 +684,10 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.DoTkn == nil && y.DoTkn == nil {
-			return true
-		}
-		if x.DoTkn == nil || y.DoTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.DoTkn.Value, y.DoTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Stmt, y.Stmt) {
 			return false
 		}
-		if x.WhileTkn == nil && y.WhileTkn == nil {
-			return true
-		}
-		if x.WhileTkn == nil || y.WhileTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.WhileTkn.Value, y.WhileTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Cond, y.Cond) {
-			return false
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
-			return false
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		return true
@@ -1774,36 +696,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.EchoTkn == nil && y.EchoTkn == nil {
-			return true
-		}
-		if x.EchoTkn == nil || y.EchoTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EchoTkn.Value, y.EchoTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Exprs, y.Exprs) {
-			return false
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		return true
@@ -1812,43 +705,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.ElseIfTkn == nil && y.ElseIfTkn == nil {
-			return true
-		}
-		if x.ElseIfTkn == nil || y.ElseIfTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ElseIfTkn.Value, y.ElseIfTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Cond, y.Cond) {
-			return false
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
-			return false
-		}
-		if x.ColonTkn == nil && y.ColonTkn == nil {
-			return true
-		}
-		if x.ColonTkn == nil || y.ColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ColonTkn.Value, y.ColonTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Stmt, y.Stmt) {
@@ -1866,24 +723,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.ElseTkn == nil && y.ElseTkn == nil {
-			return true
-		}
-		if x.ElseTkn == nil || y.ElseTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ElseTkn.Value, y.ElseTkn.Value) {
-			return false
-		}
-		if x.ColonTkn == nil && y.ColonTkn == nil {
-			return true
-		}
-		if x.ColonTkn == nil || y.ColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ColonTkn.Value, y.ColonTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Stmt, y.Stmt) {
 			return false
 		}
@@ -1896,34 +735,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.EmptyTkn == nil && y.EmptyTkn == nil {
-			return true
-		}
-		if x.EmptyTkn == nil || y.EmptyTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EmptyTkn.Value, y.EmptyTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
 			return false
 		}
 		return true
@@ -1932,25 +744,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.OpenQuoteTkn == nil && y.OpenQuoteTkn == nil {
-			return true
-		}
-		if x.OpenQuoteTkn == nil || y.OpenQuoteTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenQuoteTkn.Value, y.OpenQuoteTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Parts, y.Parts) {
-			return false
-		}
-		if x.CloseQuoteTkn == nil && y.CloseQuoteTkn == nil {
-			return true
-		}
-		if x.CloseQuoteTkn == nil || y.CloseQuoteTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseQuoteTkn.Value, y.CloseQuoteTkn.Value) {
 			return false
 		}
 		return true
@@ -1958,15 +752,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.EncapsedStringPart)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.EncapsedStrTkn == nil && y.EncapsedStrTkn == nil {
-			return true
-		}
-		if x.EncapsedStrTkn == nil || y.EncapsedStrTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EncapsedStrTkn.Value, y.EncapsedStrTkn.Value) {
-			return false
 		}
 		if x.Value != y.Value {
 			return false
@@ -1980,15 +765,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Left, y.Left) {
 			return false
 		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
@@ -1997,15 +773,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.ErrorSuppressExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.AtTkn == nil && y.AtTkn == nil {
-			return true
-		}
-		if x.AtTkn == nil || y.AtTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.AtTkn.Value, y.AtTkn.Value) {
-			return false
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
 			return false
@@ -2016,34 +783,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.EvalTkn == nil && y.EvalTkn == nil {
-			return true
-		}
-		if x.EvalTkn == nil || y.EvalTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EvalTkn.Value, y.EvalTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
 			return false
 		}
 		return true
@@ -2052,34 +792,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.ExitTkn == nil && y.ExitTkn == nil {
-			return true
-		}
-		if x.ExitTkn == nil || y.ExitTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ExitTkn.Value, y.ExitTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
 			return false
 		}
 		if x.Die != y.Die {
@@ -2094,49 +807,13 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
-			return false
-		}
 		return true
 	case *ir.FinallyStmt:
 		y, ok := y.(*ir.FinallyStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.FinallyTkn == nil && y.FinallyTkn == nil {
-			return true
-		}
-		if x.FinallyTkn == nil || y.FinallyTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.FinallyTkn.Value, y.FinallyTkn.Value) {
-			return false
-		}
-		if x.OpenCurlyBracketTkn == nil && y.OpenCurlyBracketTkn == nil {
-			return true
-		}
-		if x.OpenCurlyBracketTkn == nil || y.OpenCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenCurlyBracketTkn.Value, y.OpenCurlyBracketTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
-			return false
-		}
-		if x.CloseCurlyBracketTkn == nil && y.CloseCurlyBracketTkn == nil {
-			return true
-		}
-		if x.CloseCurlyBracketTkn == nil || y.CloseCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseCurlyBracketTkn.Value, y.CloseCurlyBracketTkn.Value) {
 			return false
 		}
 		return true
@@ -2145,121 +822,16 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.ForTkn == nil && y.ForTkn == nil {
-			return true
-		}
-		if x.ForTkn == nil || y.ForTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ForTkn.Value, y.ForTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Init, y.Init) {
-			return false
-		}
-		for i := range x.InitSeparatorTkns {
-			if x.InitSeparatorTkns[i] == nil && y.InitSeparatorTkns[i] == nil {
-				return true
-			}
-			if x.InitSeparatorTkns[i] == nil || y.InitSeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.InitSeparatorTkns[i].Value, y.InitSeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.InitSemiColonTkn == nil && y.InitSemiColonTkn == nil {
-			return true
-		}
-		if x.InitSemiColonTkn == nil || y.InitSemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.InitSemiColonTkn.Value, y.InitSemiColonTkn.Value) {
 			return false
 		}
 		if !NodeSliceEqual(x.Cond, y.Cond) {
 			return false
 		}
-		for i := range x.CondSeparatorTkns {
-			if x.CondSeparatorTkns[i] == nil && y.CondSeparatorTkns[i] == nil {
-				return true
-			}
-			if x.CondSeparatorTkns[i] == nil || y.CondSeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.CondSeparatorTkns[i].Value, y.CondSeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.CondSemiColonTkn == nil && y.CondSemiColonTkn == nil {
-			return true
-		}
-		if x.CondSemiColonTkn == nil || y.CondSemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CondSemiColonTkn.Value, y.CondSemiColonTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Loop, y.Loop) {
 			return false
 		}
-		for i := range x.LoopSeparatorTkns {
-			if x.LoopSeparatorTkns[i] == nil && y.LoopSeparatorTkns[i] == nil {
-				return true
-			}
-			if x.LoopSeparatorTkns[i] == nil || y.LoopSeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.LoopSeparatorTkns[i].Value, y.LoopSeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
-			return false
-		}
-		if x.ColonTkn == nil && y.ColonTkn == nil {
-			return true
-		}
-		if x.ColonTkn == nil || y.ColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ColonTkn.Value, y.ColonTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Stmt, y.Stmt) {
-			return false
-		}
-		if x.EndForTkn == nil && y.EndForTkn == nil {
-			return true
-		}
-		if x.EndForTkn == nil || y.EndForTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EndForTkn.Value, y.EndForTkn.Value) {
-			return false
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		if x.AltSyntax != y.AltSyntax {
@@ -2271,97 +843,16 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.ForeachTkn == nil && y.ForeachTkn == nil {
-			return true
-		}
-		if x.ForeachTkn == nil || y.ForeachTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ForeachTkn.Value, y.ForeachTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		if x.AsTkn == nil && y.AsTkn == nil {
-			return true
-		}
-		if x.AsTkn == nil || y.AsTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.AsTkn.Value, y.AsTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Key, y.Key) {
 			return false
 		}
-		if x.DoubleArrowTkn == nil && y.DoubleArrowTkn == nil {
-			return true
-		}
-		if x.DoubleArrowTkn == nil || y.DoubleArrowTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.DoubleArrowTkn.Value, y.DoubleArrowTkn.Value) {
-			return false
-		}
-		if x.AmpersandTkn == nil && y.AmpersandTkn == nil {
-			return true
-		}
-		if x.AmpersandTkn == nil || y.AmpersandTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.AmpersandTkn.Value, y.AmpersandTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
-			return false
-		}
-		if x.ColonTkn == nil && y.ColonTkn == nil {
-			return true
-		}
-		if x.ColonTkn == nil || y.ColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ColonTkn.Value, y.ColonTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Stmt, y.Stmt) {
-			return false
-		}
-		if x.EndForeachTkn == nil && y.EndForeachTkn == nil {
-			return true
-		}
-		if x.EndForeachTkn == nil || y.EndForeachTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EndForeachTkn.Value, y.EndForeachTkn.Value) {
-			return false
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		if x.AltSyntax != y.AltSyntax {
@@ -2376,36 +867,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Function, y.Function) {
 			return false
 		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Args, y.Args) {
-			return false
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
 			return false
 		}
 		return true
@@ -2414,90 +876,16 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.FunctionTkn == nil && y.FunctionTkn == nil {
-			return true
-		}
-		if x.FunctionTkn == nil || y.FunctionTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.FunctionTkn.Value, y.FunctionTkn.Value) {
-			return false
-		}
-		if x.AmpersandTkn == nil && y.AmpersandTkn == nil {
-			return true
-		}
-		if x.AmpersandTkn == nil || y.AmpersandTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.AmpersandTkn.Value, y.AmpersandTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.FunctionName, y.FunctionName) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
 			return false
 		}
 		if !NodeSliceEqual(x.Params, y.Params) {
 			return false
 		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
-			return false
-		}
-		if x.ColonTkn == nil && y.ColonTkn == nil {
-			return true
-		}
-		if x.ColonTkn == nil || y.ColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ColonTkn.Value, y.ColonTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.ReturnType, y.ReturnType) {
 			return false
 		}
-		if x.OpenCurlyBracketTkn == nil && y.OpenCurlyBracketTkn == nil {
-			return true
-		}
-		if x.OpenCurlyBracketTkn == nil || y.OpenCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenCurlyBracketTkn.Value, y.OpenCurlyBracketTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
-			return false
-		}
-		if x.CloseCurlyBracketTkn == nil && y.CloseCurlyBracketTkn == nil {
-			return true
-		}
-		if x.CloseCurlyBracketTkn == nil || y.CloseCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseCurlyBracketTkn.Value, y.CloseCurlyBracketTkn.Value) {
 			return false
 		}
 		if x.ReturnsRef != y.ReturnsRef {
@@ -2512,36 +900,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.GlobalTkn == nil && y.GlobalTkn == nil {
-			return true
-		}
-		if x.GlobalTkn == nil || y.GlobalTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.GlobalTkn.Value, y.GlobalTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Vars, y.Vars) {
-			return false
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		return true
@@ -2550,25 +909,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.GotoTkn == nil && y.GotoTkn == nil {
-			return true
-		}
-		if x.GotoTkn == nil || y.GotoTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.GotoTkn.Value, y.GotoTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Label, y.Label) {
-			return false
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		return true
@@ -2578,15 +919,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Right, y.Right) {
@@ -2601,15 +933,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Left, y.Left) {
 			return false
 		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
@@ -2619,78 +942,13 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.UseTkn == nil && y.UseTkn == nil {
-			return true
-		}
-		if x.UseTkn == nil || y.UseTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.UseTkn.Value, y.UseTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.UseType, y.UseType) {
-			return false
-		}
-		if x.LeadingNsSeparatorTkn == nil && y.LeadingNsSeparatorTkn == nil {
-			return true
-		}
-		if x.LeadingNsSeparatorTkn == nil || y.LeadingNsSeparatorTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.LeadingNsSeparatorTkn.Value, y.LeadingNsSeparatorTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Prefix, y.Prefix) {
 			return false
 		}
-		if x.NsSeparatorTkn == nil && y.NsSeparatorTkn == nil {
-			return true
-		}
-		if x.NsSeparatorTkn == nil || y.NsSeparatorTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.NsSeparatorTkn.Value, y.NsSeparatorTkn.Value) {
-			return false
-		}
-		if x.OpenCurlyBracketTkn == nil && y.OpenCurlyBracketTkn == nil {
-			return true
-		}
-		if x.OpenCurlyBracketTkn == nil || y.OpenCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenCurlyBracketTkn.Value, y.OpenCurlyBracketTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.UseList, y.UseList) {
-			return false
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.CloseCurlyBracketTkn == nil && y.CloseCurlyBracketTkn == nil {
-			return true
-		}
-		if x.CloseCurlyBracketTkn == nil || y.CloseCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseCurlyBracketTkn.Value, y.CloseCurlyBracketTkn.Value) {
-			return false
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		return true
@@ -2698,42 +956,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.HaltCompilerStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.HaltCompilerTkn == nil && y.HaltCompilerTkn == nil {
-			return true
-		}
-		if x.HaltCompilerTkn == nil || y.HaltCompilerTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.HaltCompilerTkn.Value, y.HaltCompilerTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
-			return false
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
-			return false
 		}
 		return true
 	case *ir.Heredoc:
@@ -2744,25 +966,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if x.Label != y.Label {
 			return false
 		}
-		if x.OpenHeredocTkn == nil && y.OpenHeredocTkn == nil {
-			return true
-		}
-		if x.OpenHeredocTkn == nil || y.OpenHeredocTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenHeredocTkn.Value, y.OpenHeredocTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Parts, y.Parts) {
-			return false
-		}
-		if x.CloseHeredocTkn == nil && y.CloseHeredocTkn == nil {
-			return true
-		}
-		if x.CloseHeredocTkn == nil || y.CloseHeredocTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseHeredocTkn.Value, y.CloseHeredocTkn.Value) {
 			return false
 		}
 		return true
@@ -2774,15 +978,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Left, y.Left) {
 			return false
 		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
@@ -2791,15 +986,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.Identifier)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.IdentifierTkn == nil && y.IdentifierTkn == nil {
-			return true
-		}
-		if x.IdentifierTkn == nil || y.IdentifierTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.IdentifierTkn.Value, y.IdentifierTkn.Value) {
-			return false
 		}
 		if x.Value != y.Value {
 			return false
@@ -2810,43 +996,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.IfTkn == nil && y.IfTkn == nil {
-			return true
-		}
-		if x.IfTkn == nil || y.IfTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.IfTkn.Value, y.IfTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Cond, y.Cond) {
-			return false
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
-			return false
-		}
-		if x.ColonTkn == nil && y.ColonTkn == nil {
-			return true
-		}
-		if x.ColonTkn == nil || y.ColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ColonTkn.Value, y.ColonTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Stmt, y.Stmt) {
@@ -2858,24 +1008,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Else, y.Else) {
 			return false
 		}
-		if x.EndIfTkn == nil && y.EndIfTkn == nil {
-			return true
-		}
-		if x.EndIfTkn == nil || y.EndIfTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EndIfTkn.Value, y.EndIfTkn.Value) {
-			return false
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
-			return false
-		}
 		if x.AltSyntax != y.AltSyntax {
 			return false
 		}
@@ -2884,15 +1016,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.ImportExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.ImportTkn == nil && y.ImportTkn == nil {
-			return true
-		}
-		if x.ImportTkn == nil || y.ImportTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ImportTkn.Value, y.ImportTkn.Value) {
-			return false
 		}
 		if x.Func != y.Func {
 			return false
@@ -2906,15 +1029,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.InlineHTMLTkn == nil && y.InlineHTMLTkn == nil {
-			return true
-		}
-		if x.InlineHTMLTkn == nil || y.InlineHTMLTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.InlineHTMLTkn.Value, y.InlineHTMLTkn.Value) {
-			return false
-		}
 		if x.Value != y.Value {
 			return false
 		}
@@ -2925,15 +1039,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		if x.InstanceOfTkn == nil && y.InstanceOfTkn == nil {
-			return true
-		}
-		if x.InstanceOfTkn == nil || y.InstanceOfTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.InstanceOfTkn.Value, y.InstanceOfTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Class, y.Class) {
@@ -2957,60 +1062,13 @@ func NodeEqual(x, y ir.Node) bool {
 		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
-		if x.InterfaceTkn == nil && y.InterfaceTkn == nil {
-			return true
-		}
-		if x.InterfaceTkn == nil || y.InterfaceTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.InterfaceTkn.Value, y.InterfaceTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.InterfaceName, y.InterfaceName) {
-			return false
-		}
-		if x.ExtendsTkn == nil && y.ExtendsTkn == nil {
-			return true
-		}
-		if x.ExtendsTkn == nil || y.ExtendsTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ExtendsTkn.Value, y.ExtendsTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Extends, y.Extends) {
 			return false
 		}
-		for i := range x.ExtendsSeparatorTkns {
-			if x.ExtendsSeparatorTkns[i] == nil && y.ExtendsSeparatorTkns[i] == nil {
-				return true
-			}
-			if x.ExtendsSeparatorTkns[i] == nil || y.ExtendsSeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.ExtendsSeparatorTkns[i].Value, y.ExtendsSeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.OpenCurlyBracketTkn == nil && y.OpenCurlyBracketTkn == nil {
-			return true
-		}
-		if x.OpenCurlyBracketTkn == nil || y.OpenCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenCurlyBracketTkn.Value, y.OpenCurlyBracketTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
-			return false
-		}
-		if x.CloseCurlyBracketTkn == nil && y.CloseCurlyBracketTkn == nil {
-			return true
-		}
-		if x.CloseCurlyBracketTkn == nil || y.CloseCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseCurlyBracketTkn.Value, y.CloseCurlyBracketTkn.Value) {
 			return false
 		}
 		return true
@@ -3019,45 +1077,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.IssetTkn == nil && y.IssetTkn == nil {
-			return true
-		}
-		if x.IssetTkn == nil || y.IssetTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.IssetTkn.Value, y.IssetTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Variables, y.Variables) {
-			return false
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
 			return false
 		}
 		return true
@@ -3069,38 +1089,11 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.LabelName, y.LabelName) {
 			return false
 		}
-		if x.ColonTkn == nil && y.ColonTkn == nil {
-			return true
-		}
-		if x.ColonTkn == nil || y.ColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ColonTkn.Value, y.ColonTkn.Value) {
-			return false
-		}
 		return true
 	case *ir.ListExpr:
 		y, ok := y.(*ir.ListExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.ListTkn == nil && y.ListTkn == nil {
-			return true
-		}
-		if x.ListTkn == nil || y.ListTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ListTkn.Value, y.ListTkn.Value) {
-			return false
-		}
-		if x.OpenBracketTkn == nil && y.OpenBracketTkn == nil {
-			return true
-		}
-		if x.OpenBracketTkn == nil || y.OpenBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenBracketTkn.Value, y.OpenBracketTkn.Value) {
-			return false
 		}
 		if len(x.Items) != len(y.Items) {
 			return false
@@ -3110,26 +1103,6 @@ func NodeEqual(x, y ir.Node) bool {
 				return false
 			}
 		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.CloseBracketTkn == nil && y.CloseBracketTkn == nil {
-			return true
-		}
-		if x.CloseBracketTkn == nil || y.CloseBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseBracketTkn.Value, y.CloseBracketTkn.Value) {
-			return false
-		}
 		if x.ShortSyntax != y.ShortSyntax {
 			return false
 		}
@@ -3138,15 +1111,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.Lnumber)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.NumberTkn == nil && y.NumberTkn == nil {
-			return true
-		}
-		if x.NumberTkn == nil || y.NumberTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.NumberTkn.Value, y.NumberTkn.Value) {
-			return false
 		}
 		if x.Value != y.Value {
 			return false
@@ -3158,15 +1122,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Right, y.Right) {
@@ -3181,15 +1136,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Left, y.Left) {
 			return false
 		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
@@ -3202,15 +1148,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Left, y.Left) {
 			return false
 		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
@@ -3219,15 +1156,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.MagicConstant)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.MagicConstTkn == nil && y.MagicConstTkn == nil {
-			return true
-		}
-		if x.MagicConstTkn == nil || y.MagicConstTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.MagicConstTkn.Value, y.MagicConstTkn.Value) {
-			return false
 		}
 		if x.Value != y.Value {
 			return false
@@ -3241,66 +1169,10 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if x.ObjectOperatorTkn == nil && y.ObjectOperatorTkn == nil {
-			return true
-		}
-		if x.ObjectOperatorTkn == nil || y.ObjectOperatorTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ObjectOperatorTkn.Value, y.ObjectOperatorTkn.Value) {
-			return false
-		}
-		if x.OpenCurlyBracketTkn == nil && y.OpenCurlyBracketTkn == nil {
-			return true
-		}
-		if x.OpenCurlyBracketTkn == nil || y.OpenCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenCurlyBracketTkn.Value, y.OpenCurlyBracketTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Method, y.Method) {
 			return false
 		}
-		if x.CloseCurlyBracketTkn == nil && y.CloseCurlyBracketTkn == nil {
-			return true
-		}
-		if x.CloseCurlyBracketTkn == nil || y.CloseCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseCurlyBracketTkn.Value, y.CloseCurlyBracketTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Args, y.Args) {
-			return false
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
 			return false
 		}
 		return true
@@ -3310,15 +1182,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Right, y.Right) {
@@ -3333,15 +1196,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Left, y.Left) {
 			return false
 		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
@@ -3352,15 +1206,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Right, y.Right) {
@@ -3381,46 +1226,10 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.NsTkn == nil && y.NsTkn == nil {
-			return true
-		}
-		if x.NsTkn == nil || y.NsTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.NsTkn.Value, y.NsTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.NamespaceName, y.NamespaceName) {
 			return false
 		}
-		if x.OpenCurlyBracketTkn == nil && y.OpenCurlyBracketTkn == nil {
-			return true
-		}
-		if x.OpenCurlyBracketTkn == nil || y.OpenCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenCurlyBracketTkn.Value, y.OpenCurlyBracketTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
-			return false
-		}
-		if x.CloseCurlyBracketTkn == nil && y.CloseCurlyBracketTkn == nil {
-			return true
-		}
-		if x.CloseCurlyBracketTkn == nil || y.CloseCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseCurlyBracketTkn.Value, y.CloseCurlyBracketTkn.Value) {
-			return false
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		return true
@@ -3429,48 +1238,10 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.NewTkn == nil && y.NewTkn == nil {
-			return true
-		}
-		if x.NewTkn == nil || y.NewTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.NewTkn.Value, y.NewTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Class, y.Class) {
 			return false
 		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Args, y.Args) {
-			return false
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
 			return false
 		}
 		return true
@@ -3479,15 +1250,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
-			return false
-		}
 		return true
 	case *ir.NotEqualExpr:
 		y, ok := y.(*ir.NotEqualExpr)
@@ -3495,15 +1257,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Right, y.Right) {
@@ -3518,15 +1271,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Left, y.Left) {
 			return false
 		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
@@ -3535,15 +1279,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.Nullable)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.QuestionTkn == nil && y.QuestionTkn == nil {
-			return true
-		}
-		if x.QuestionTkn == nil || y.QuestionTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.QuestionTkn.Value, y.QuestionTkn.Value) {
-			return false
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
 			return false
@@ -3557,34 +1292,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.VariableType, y.VariableType) {
 			return false
 		}
-		if x.AmpersandTkn == nil && y.AmpersandTkn == nil {
-			return true
-		}
-		if x.AmpersandTkn == nil || y.AmpersandTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.AmpersandTkn.Value, y.AmpersandTkn.Value) {
-			return false
-		}
-		if x.VariadicTkn == nil && y.VariadicTkn == nil {
-			return true
-		}
-		if x.VariadicTkn == nil || y.VariadicTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.VariadicTkn.Value, y.VariadicTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.DefaultValue, y.DefaultValue) {
@@ -3602,25 +1310,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
 			return false
 		}
 		return true
@@ -3630,15 +1320,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Right, y.Right) {
@@ -3653,15 +1334,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if x.DecTkn == nil && y.DecTkn == nil {
-			return true
-		}
-		if x.DecTkn == nil || y.DecTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.DecTkn.Value, y.DecTkn.Value) {
-			return false
-		}
 		return true
 	case *ir.PostIncExpr:
 		y, ok := y.(*ir.PostIncExpr)
@@ -3669,15 +1341,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Variable, y.Variable) {
-			return false
-		}
-		if x.IncTkn == nil && y.IncTkn == nil {
-			return true
-		}
-		if x.IncTkn == nil || y.IncTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.IncTkn.Value, y.IncTkn.Value) {
 			return false
 		}
 		return true
@@ -3689,15 +1352,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Left, y.Left) {
 			return false
 		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
@@ -3706,15 +1360,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.PreDecExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.DecTkn == nil && y.DecTkn == nil {
-			return true
-		}
-		if x.DecTkn == nil || y.DecTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.DecTkn.Value, y.DecTkn.Value) {
-			return false
 		}
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
@@ -3725,15 +1370,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.IncTkn == nil && y.IncTkn == nil {
-			return true
-		}
-		if x.IncTkn == nil || y.IncTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.IncTkn.Value, y.IncTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
@@ -3742,15 +1378,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.PrintExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.PrintTkn == nil && y.PrintTkn == nil {
-			return true
-		}
-		if x.PrintTkn == nil || y.PrintTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.PrintTkn.Value, y.PrintTkn.Value) {
-			return false
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
 			return false
@@ -3764,34 +1391,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if x.ObjectOperatorTkn == nil && y.ObjectOperatorTkn == nil {
-			return true
-		}
-		if x.ObjectOperatorTkn == nil || y.ObjectOperatorTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ObjectOperatorTkn.Value, y.ObjectOperatorTkn.Value) {
-			return false
-		}
-		if x.OpenCurlyBracketTkn == nil && y.OpenCurlyBracketTkn == nil {
-			return true
-		}
-		if x.OpenCurlyBracketTkn == nil || y.OpenCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenCurlyBracketTkn.Value, y.OpenCurlyBracketTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Property, y.Property) {
-			return false
-		}
-		if x.CloseCurlyBracketTkn == nil && y.CloseCurlyBracketTkn == nil {
-			return true
-		}
-		if x.CloseCurlyBracketTkn == nil || y.CloseCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseCurlyBracketTkn.Value, y.CloseCurlyBracketTkn.Value) {
 			return false
 		}
 		return true
@@ -3814,24 +1414,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeSliceEqual(x.Properties, y.Properties) {
 			return false
 		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
+		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
 		return true
@@ -3843,19 +1426,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
 		return true
@@ -3863,15 +1434,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.ReferenceExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.AmpersandTkn == nil && y.AmpersandTkn == nil {
-			return true
-		}
-		if x.AmpersandTkn == nil || y.AmpersandTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.AmpersandTkn.Value, y.AmpersandTkn.Value) {
-			return false
 		}
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
@@ -3882,25 +1444,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.ReturnTkn == nil && y.ReturnTkn == nil {
-			return true
-		}
-		if x.ReturnTkn == nil || y.ReturnTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ReturnTkn.Value, y.ReturnTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		return true
@@ -3912,40 +1456,13 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
 		}
-		if x.EndTkn == nil && y.EndTkn == nil {
-			return true
-		}
-		if x.EndTkn == nil || y.EndTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EndTkn.Value, y.EndTkn.Value) {
-			return false
-		}
 		return true
 	case *ir.ShellExecExpr:
 		y, ok := y.(*ir.ShellExecExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.OpenBacktickTkn == nil && y.OpenBacktickTkn == nil {
-			return true
-		}
-		if x.OpenBacktickTkn == nil || y.OpenBacktickTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenBacktickTkn.Value, y.OpenBacktickTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Parts, y.Parts) {
-			return false
-		}
-		if x.CloseBacktickTkn == nil && y.CloseBacktickTkn == nil {
-			return true
-		}
-		if x.CloseBacktickTkn == nil || y.CloseBacktickTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseBacktickTkn.Value, y.CloseBacktickTkn.Value) {
 			return false
 		}
 		return true
@@ -3955,15 +1472,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Right, y.Right) {
@@ -3978,15 +1486,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Left, y.Left) {
 			return false
 		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
@@ -3996,13 +1495,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.DollarTkn == nil && y.DollarTkn == nil {
-			return true
-		}
-		if x.DollarTkn == nil || y.DollarTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.DollarTkn.Value, y.DollarTkn.Value) {
+		if !NodeEqual(x.NameNode, y.NameNode) {
 			return false
 		}
 		if x.Name != y.Name {
@@ -4017,15 +1510,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Left, y.Left) {
 			return false
 		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
@@ -4036,15 +1520,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Left, y.Left) {
-			return false
-		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Right, y.Right) {
@@ -4059,15 +1534,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Left, y.Left) {
 			return false
 		}
-		if x.OpTkn == nil && y.OpTkn == nil {
-			return true
-		}
-		if x.OpTkn == nil || y.OpTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpTkn.Value, y.OpTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Right, y.Right) {
 			return false
 		}
@@ -4080,66 +1546,10 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Class, y.Class) {
 			return false
 		}
-		if x.DoubleColonTkn == nil && y.DoubleColonTkn == nil {
-			return true
-		}
-		if x.DoubleColonTkn == nil || y.DoubleColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.DoubleColonTkn.Value, y.DoubleColonTkn.Value) {
-			return false
-		}
-		if x.OpenCurlyBracketTkn == nil && y.OpenCurlyBracketTkn == nil {
-			return true
-		}
-		if x.OpenCurlyBracketTkn == nil || y.OpenCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenCurlyBracketTkn.Value, y.OpenCurlyBracketTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Call, y.Call) {
 			return false
 		}
-		if x.CloseCurlyBracketTkn == nil && y.CloseCurlyBracketTkn == nil {
-			return true
-		}
-		if x.CloseCurlyBracketTkn == nil || y.CloseCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseCurlyBracketTkn.Value, y.CloseCurlyBracketTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Args, y.Args) {
-			return false
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
 			return false
 		}
 		return true
@@ -4151,15 +1561,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Class, y.Class) {
 			return false
 		}
-		if x.DoubleColonTkn == nil && y.DoubleColonTkn == nil {
-			return true
-		}
-		if x.DoubleColonTkn == nil || y.DoubleColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.DoubleColonTkn.Value, y.DoubleColonTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Property, y.Property) {
 			return false
 		}
@@ -4169,36 +1570,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.StaticTkn == nil && y.StaticTkn == nil {
-			return true
-		}
-		if x.StaticTkn == nil || y.StaticTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.StaticTkn.Value, y.StaticTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Vars, y.Vars) {
-			return false
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		return true
@@ -4210,15 +1582,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if x.EqualTkn == nil && y.EqualTkn == nil {
-			return true
-		}
-		if x.EqualTkn == nil || y.EqualTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EqualTkn.Value, y.EqualTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
@@ -4228,25 +1591,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.OpenCurlyBracketTkn == nil && y.OpenCurlyBracketTkn == nil {
-			return true
-		}
-		if x.OpenCurlyBracketTkn == nil || y.OpenCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenCurlyBracketTkn.Value, y.OpenCurlyBracketTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
-			return false
-		}
-		if x.CloseCurlyBracketTkn == nil && y.CloseCurlyBracketTkn == nil {
-			return true
-		}
-		if x.CloseCurlyBracketTkn == nil || y.CloseCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseCurlyBracketTkn.Value, y.CloseCurlyBracketTkn.Value) {
 			return false
 		}
 		return true
@@ -4254,24 +1599,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.String)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.MinusTkn == nil && y.MinusTkn == nil {
-			return true
-		}
-		if x.MinusTkn == nil || y.MinusTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.MinusTkn.Value, y.MinusTkn.Value) {
-			return false
-		}
-		if x.StringTkn == nil && y.StringTkn == nil {
-			return true
-		}
-		if x.StringTkn == nil || y.StringTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.StringTkn.Value, y.StringTkn.Value) {
-			return false
 		}
 		if x.Value != y.Value {
 			return false
@@ -4285,91 +1612,10 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.SwitchTkn == nil && y.SwitchTkn == nil {
-			return true
-		}
-		if x.SwitchTkn == nil || y.SwitchTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SwitchTkn.Value, y.SwitchTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Cond, y.Cond) {
 			return false
 		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
-			return false
-		}
-		if x.ColonTkn == nil && y.ColonTkn == nil {
-			return true
-		}
-		if x.ColonTkn == nil || y.ColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ColonTkn.Value, y.ColonTkn.Value) {
-			return false
-		}
-		if x.OpenCurlyBracketTkn == nil && y.OpenCurlyBracketTkn == nil {
-			return true
-		}
-		if x.OpenCurlyBracketTkn == nil || y.OpenCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenCurlyBracketTkn.Value, y.OpenCurlyBracketTkn.Value) {
-			return false
-		}
-		if x.CaseSeparatorTkn == nil && y.CaseSeparatorTkn == nil {
-			return true
-		}
-		if x.CaseSeparatorTkn == nil || y.CaseSeparatorTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CaseSeparatorTkn.Value, y.CaseSeparatorTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.CaseList, y.CaseList) {
-			return false
-		}
-		if x.CloseCurlyBracketTkn == nil && y.CloseCurlyBracketTkn == nil {
-			return true
-		}
-		if x.CloseCurlyBracketTkn == nil || y.CloseCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseCurlyBracketTkn.Value, y.CloseCurlyBracketTkn.Value) {
-			return false
-		}
-		if x.EndSwitchTkn == nil && y.EndSwitchTkn == nil {
-			return true
-		}
-		if x.EndSwitchTkn == nil || y.EndSwitchTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EndSwitchTkn.Value, y.EndSwitchTkn.Value) {
-			return false
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		if x.AltSyntax != y.AltSyntax {
@@ -4384,25 +1630,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Condition, y.Condition) {
 			return false
 		}
-		if x.QuestionTkn == nil && y.QuestionTkn == nil {
-			return true
-		}
-		if x.QuestionTkn == nil || y.QuestionTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.QuestionTkn.Value, y.QuestionTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.IfTrue, y.IfTrue) {
-			return false
-		}
-		if x.ColonTkn == nil && y.ColonTkn == nil {
-			return true
-		}
-		if x.ColonTkn == nil || y.ColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ColonTkn.Value, y.ColonTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.IfFalse, y.IfFalse) {
@@ -4414,25 +1642,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.ThrowTkn == nil && y.ThrowTkn == nil {
-			return true
-		}
-		if x.ThrowTkn == nil || y.ThrowTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ThrowTkn.Value, y.ThrowTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		return true
@@ -4462,37 +1672,10 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.TraitTkn == nil && y.TraitTkn == nil {
-			return true
-		}
-		if x.TraitTkn == nil || y.TraitTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.TraitTkn.Value, y.TraitTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.TraitName, y.TraitName) {
 			return false
 		}
-		if x.OpenCurlyBracketTkn == nil && y.OpenCurlyBracketTkn == nil {
-			return true
-		}
-		if x.OpenCurlyBracketTkn == nil || y.OpenCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenCurlyBracketTkn.Value, y.OpenCurlyBracketTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
-			return false
-		}
-		if x.CloseCurlyBracketTkn == nil && y.CloseCurlyBracketTkn == nil {
-			return true
-		}
-		if x.CloseCurlyBracketTkn == nil || y.CloseCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseCurlyBracketTkn.Value, y.CloseCurlyBracketTkn.Value) {
 			return false
 		}
 		if x.PhpDocComment != y.PhpDocComment {
@@ -4504,25 +1687,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.DoubleColonTkn == nil && y.DoubleColonTkn == nil {
-			return true
-		}
-		if x.DoubleColonTkn == nil || y.DoubleColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.DoubleColonTkn.Value, y.DoubleColonTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Ref, y.Ref) {
-			return false
-		}
-		if x.AsTkn == nil && y.AsTkn == nil {
-			return true
-		}
-		if x.AsTkn == nil || y.AsTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.AsTkn.Value, y.AsTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Modifier, y.Modifier) {
@@ -4531,63 +1696,16 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Alias, y.Alias) {
 			return false
 		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
-			return false
-		}
 		return true
 	case *ir.TraitUsePrecedenceStmt:
 		y, ok := y.(*ir.TraitUsePrecedenceStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.DoubleColonTkn == nil && y.DoubleColonTkn == nil {
-			return true
-		}
-		if x.DoubleColonTkn == nil || y.DoubleColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.DoubleColonTkn.Value, y.DoubleColonTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Ref, y.Ref) {
 			return false
 		}
-		if x.InsteadofTkn == nil && y.InsteadofTkn == nil {
-			return true
-		}
-		if x.InsteadofTkn == nil || y.InsteadofTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.InsteadofTkn.Value, y.InsteadofTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Insteadof, y.Insteadof) {
-			return false
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		return true
@@ -4596,57 +1714,10 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.UseTkn == nil && y.UseTkn == nil {
-			return true
-		}
-		if x.UseTkn == nil || y.UseTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.UseTkn.Value, y.UseTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Traits, y.Traits) {
 			return false
 		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.OpenCurlyBracketTkn == nil && y.OpenCurlyBracketTkn == nil {
-			return true
-		}
-		if x.OpenCurlyBracketTkn == nil || y.OpenCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenCurlyBracketTkn.Value, y.OpenCurlyBracketTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.TraitAdaptationList, y.TraitAdaptationList) {
-			return false
-		}
-		if x.CloseCurlyBracketTkn == nil && y.CloseCurlyBracketTkn == nil {
-			return true
-		}
-		if x.CloseCurlyBracketTkn == nil || y.CloseCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseCurlyBracketTkn.Value, y.CloseCurlyBracketTkn.Value) {
-			return false
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		return true
@@ -4655,34 +1726,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.TryTkn == nil && y.TryTkn == nil {
-			return true
-		}
-		if x.TryTkn == nil || y.TryTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.TryTkn.Value, y.TryTkn.Value) {
-			return false
-		}
-		if x.OpenCurlyBracketTkn == nil && y.OpenCurlyBracketTkn == nil {
-			return true
-		}
-		if x.OpenCurlyBracketTkn == nil || y.OpenCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenCurlyBracketTkn.Value, y.OpenCurlyBracketTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
-			return false
-		}
-		if x.CloseCurlyBracketTkn == nil && y.CloseCurlyBracketTkn == nil {
-			return true
-		}
-		if x.CloseCurlyBracketTkn == nil || y.CloseCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseCurlyBracketTkn.Value, y.CloseCurlyBracketTkn.Value) {
 			return false
 		}
 		if !NodeSliceEqual(x.Catches, y.Catches) {
@@ -4697,15 +1741,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.CastTkn == nil && y.CastTkn == nil {
-			return true
-		}
-		if x.CastTkn == nil || y.CastTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CastTkn.Value, y.CastTkn.Value) {
-			return false
-		}
 		if x.Type != y.Type {
 			return false
 		}
@@ -4718,15 +1753,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.MinusTkn == nil && y.MinusTkn == nil {
-			return true
-		}
-		if x.MinusTkn == nil || y.MinusTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.MinusTkn.Value, y.MinusTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
@@ -4735,15 +1761,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.UnaryPlusExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.PlusTkn == nil && y.PlusTkn == nil {
-			return true
-		}
-		if x.PlusTkn == nil || y.PlusTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.PlusTkn.Value, y.PlusTkn.Value) {
-			return false
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
 			return false
@@ -4754,15 +1771,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.CastTkn == nil && y.CastTkn == nil {
-			return true
-		}
-		if x.CastTkn == nil || y.CastTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CastTkn.Value, y.CastTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
@@ -4772,54 +1780,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.UnsetTkn == nil && y.UnsetTkn == nil {
-			return true
-		}
-		if x.UnsetTkn == nil || y.UnsetTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.UnsetTkn.Value, y.UnsetTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeSliceEqual(x.Vars, y.Vars) {
-			return false
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
-			return false
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		return true
@@ -4828,39 +1789,10 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.UseTkn == nil && y.UseTkn == nil {
-			return true
-		}
-		if x.UseTkn == nil || y.UseTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.UseTkn.Value, y.UseTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.UseType, y.UseType) {
 			return false
 		}
 		if !NodeSliceEqual(x.Uses, y.Uses) {
-			return false
-		}
-		for i := range x.SeparatorTkns {
-			if x.SeparatorTkns[i] == nil && y.SeparatorTkns[i] == nil {
-				return true
-			}
-			if x.SeparatorTkns[i] == nil || y.SeparatorTkns[i] == nil {
-				return false
-			}
-			if !bytes.Equal(x.SeparatorTkns[i].Value, y.SeparatorTkns[i].Value) {
-				return false
-			}
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		return true
@@ -4872,25 +1804,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.UseType, y.UseType) {
 			return false
 		}
-		if x.NsSeparatorTkn == nil && y.NsSeparatorTkn == nil {
-			return true
-		}
-		if x.NsSeparatorTkn == nil || y.NsSeparatorTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.NsSeparatorTkn.Value, y.NsSeparatorTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Use, y.Use) {
-			return false
-		}
-		if x.AsTkn == nil && y.AsTkn == nil {
-			return true
-		}
-		if x.AsTkn == nil || y.AsTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.AsTkn.Value, y.AsTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Alias, y.Alias) {
@@ -4902,34 +1816,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.DollarTkn == nil && y.DollarTkn == nil {
-			return true
-		}
-		if x.DollarTkn == nil || y.DollarTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.DollarTkn.Value, y.DollarTkn.Value) {
-			return false
-		}
-		if x.OpenCurlyBracketTkn == nil && y.OpenCurlyBracketTkn == nil {
-			return true
-		}
-		if x.OpenCurlyBracketTkn == nil || y.OpenCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenCurlyBracketTkn.Value, y.OpenCurlyBracketTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		if x.CloseCurlyBracketTkn == nil && y.CloseCurlyBracketTkn == nil {
-			return true
-		}
-		if x.CloseCurlyBracketTkn == nil || y.CloseCurlyBracketTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseCurlyBracketTkn.Value, y.CloseCurlyBracketTkn.Value) {
 			return false
 		}
 		return true
@@ -4938,64 +1825,10 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.WhileTkn == nil && y.WhileTkn == nil {
-			return true
-		}
-		if x.WhileTkn == nil || y.WhileTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.WhileTkn.Value, y.WhileTkn.Value) {
-			return false
-		}
-		if x.OpenParenthesisTkn == nil && y.OpenParenthesisTkn == nil {
-			return true
-		}
-		if x.OpenParenthesisTkn == nil || y.OpenParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.OpenParenthesisTkn.Value, y.OpenParenthesisTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Cond, y.Cond) {
 			return false
 		}
-		if x.CloseParenthesisTkn == nil && y.CloseParenthesisTkn == nil {
-			return true
-		}
-		if x.CloseParenthesisTkn == nil || y.CloseParenthesisTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.CloseParenthesisTkn.Value, y.CloseParenthesisTkn.Value) {
-			return false
-		}
-		if x.ColonTkn == nil && y.ColonTkn == nil {
-			return true
-		}
-		if x.ColonTkn == nil || y.ColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.ColonTkn.Value, y.ColonTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Stmt, y.Stmt) {
-			return false
-		}
-		if x.EndWhileTkn == nil && y.EndWhileTkn == nil {
-			return true
-		}
-		if x.EndWhileTkn == nil || y.EndWhileTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.EndWhileTkn.Value, y.EndWhileTkn.Value) {
-			return false
-		}
-		if x.SemiColonTkn == nil && y.SemiColonTkn == nil {
-			return true
-		}
-		if x.SemiColonTkn == nil || y.SemiColonTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.SemiColonTkn.Value, y.SemiColonTkn.Value) {
 			return false
 		}
 		if x.AltSyntax != y.AltSyntax {
@@ -5007,25 +1840,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.YieldTkn == nil && y.YieldTkn == nil {
-			return true
-		}
-		if x.YieldTkn == nil || y.YieldTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.YieldTkn.Value, y.YieldTkn.Value) {
-			return false
-		}
 		if !NodeEqual(x.Key, y.Key) {
-			return false
-		}
-		if x.DoubleArrowTkn == nil && y.DoubleArrowTkn == nil {
-			return true
-		}
-		if x.DoubleArrowTkn == nil || y.DoubleArrowTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.DoubleArrowTkn.Value, y.DoubleArrowTkn.Value) {
 			return false
 		}
 		if !NodeEqual(x.Value, y.Value) {
@@ -5036,15 +1851,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.YieldFromExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if x.YieldFromTkn == nil && y.YieldFromTkn == nil {
-			return true
-		}
-		if x.YieldFromTkn == nil || y.YieldFromTkn == nil {
-			return false
-		}
-		if !bytes.Equal(x.YieldFromTkn.Value, y.YieldFromTkn.Value) {
-			return false
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
 			return false

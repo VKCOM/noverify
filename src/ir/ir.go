@@ -4,6 +4,8 @@
 package ir
 
 import (
+	"github.com/z7zmey/php-parser/pkg/token"
+
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 )
 
@@ -14,6 +16,7 @@ import (
 type Node interface {
 	Walk(Visitor)
 	GetFreeFloating() *freefloating.Collection
+	IterateTokens(func(*token.Token) bool)
 }
 
 // Visitor is an interface for basic IR nodes traversal.

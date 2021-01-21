@@ -2,8 +2,14 @@ package normalize
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/z7zmey/php-parser/pkg/cfg"
+	phperrors "github.com/z7zmey/php-parser/pkg/errors"
+	"github.com/z7zmey/php-parser/pkg/parser"
+	"github.com/z7zmey/php-parser/pkg/version"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"
@@ -11,7 +17,6 @@ import (
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/php/parseutil"
 )
 
@@ -267,11 +272,30 @@ class Foo {
 
 func parseStmtList(s string) ([]ir.Node, error) {
 	source := "<?php " + s
-	p := php7.NewParser([]byte(source))
-	p.Parse()
-	if len(p.GetErrors()) != 0 {
-		return nil, errors.New(p.GetErrors()[0].String())
+	// p := php7.NewParser([]byte(source))
+	// p.Parse()
+	// if len(p.GetErrors()) != 0 {
+	// 	return nil, errors.New(p.GetErrors()[0].String())
+	// }
+
+	phpVersion, err := version.New("7.4")
+	if err != nil {
+		fmt.Println("Error: " + err.Error())
 	}
-	rootIR := irconv.ConvertNode(p.GetRootNode()).(*ir.Root)
+
+	var parserErrors []*phperrors.Error
+	rootNode, err := parser.Parse([]byte(source), cfg.Config{
+		Version: phpVersion,
+		ErrorHandlerFunc: func(e *phperrors.Error) {
+			parserErrors = append(parserErrors, e)
+		},
+	})
+	if err != nil {
+		fmt.Println("Error: " + err.Error())
+		return nil, errors.New(parserErrors[0].String())
+	}
+
+	rootIR := irconv.ConvertNode(rootNode).(*ir.Root)
+
 	return rootIR.Stmts, nil
 }
