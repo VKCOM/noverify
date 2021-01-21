@@ -2000,3 +2000,20 @@ echo UNDEFINED_CONST;
 	test.Expect = []string{`Undefined constant UNDEFINED_CONST`}
 	test.RunAndMatch()
 }
+
+func TestCurlyBraceArrayDimFetch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$a = [];
+
+$_ = $a[0];
+$_ = $a[0][0];
+$_ = $a{0};
+$_ = $a[0]{0};
+`)
+	test.Expect = []string{
+		`Don't use curly braces to take an item by index (use square braces form instead)`,
+		`Don't use curly braces to take an item by index (use square braces form instead)`,
+	}
+	test.RunAndMatch()
+}
