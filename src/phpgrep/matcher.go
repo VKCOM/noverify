@@ -448,7 +448,7 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 
 	case *ir.ArrayDimFetchExpr:
 		y, ok := y.(*ir.ArrayDimFetchExpr)
-		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Dim, y.Dim)
+		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Dim, y.Dim) && x.CurlyBrace == y.CurlyBrace
 	case *ir.ArrayItemExpr:
 		y, ok := y.(*ir.ArrayItemExpr)
 		if !ok {
