@@ -45,6 +45,7 @@ type rootWalker struct {
 	ctx rootContext
 
 	// nodeSet is a reusable node set for both root and block walkers.
+	// TODO: move to WorkerContext as we store reusable objects there.
 	nodeSet irutil.NodeSet
 
 	reSimplifier *regexpSimplifier
@@ -77,11 +78,10 @@ type phpDocParamsMap map[string]phpDocParamEl
 // InitCustom is needed to initialize walker state
 func (d *rootWalker) InitCustom() {
 	d.custom = nil
-	for _, createFn := range customRootLinters {
+	for _, createFn := range d.config.Checkers.rootCheckers {
 		d.custom = append(d.custom, createFn(&RootContext{w: d}))
 	}
-
-	d.customBlock = customBlockLinters
+	d.customBlock = append(d.customBlock, d.config.Checkers.blockCheckers...)
 }
 
 // scope returns root-level variable scope if applicable.

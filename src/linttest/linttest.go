@@ -88,7 +88,10 @@ type Suite struct {
 
 	IgnoreUndeclaredChecks bool
 
-	Config *linter.Config
+	// Linter is nil by default and will be created automatically
+	// during Run(), but it can be assigned directly to
+	// have a specific linter instance during the test execution.
+	Linter *linter.Linter
 }
 
 // NewSuite returns a new linter test suite for t.
@@ -100,7 +103,6 @@ func NewSuite(t testing.TB) *Suite {
 			`stubs/phpstorm-stubs/Core/Core_c.php`: {},
 			`stubs/phpstorm-stubs/Core/Core_d.php`: {},
 		},
-		Config: linter.NewConfig(),
 	}
 }
 
@@ -216,7 +218,10 @@ type RunResult struct {
 func (s *Suite) RunLinter() RunResult {
 	s.t.Helper()
 
-	l := linter.NewLinter(s.Config)
+	l := s.Linter
+	if l == nil {
+		l = linter.NewLinter(linter.NewConfig())
+	}
 
 	for _, stub := range s.LoadStubs {
 		s.defaultStubs[stub] = struct{}{}
@@ -230,7 +235,7 @@ func (s *Suite) RunLinter() RunResult {
 	}
 
 	if s.MisspellList != "" {
-		err := cmd.LoadMisspellDicts(s.Config, strings.Split(s.MisspellList, ","))
+		err := cmd.LoadMisspellDicts(l.Config(), strings.Split(s.MisspellList, ","))
 		if err != nil {
 			s.t.Fatalf("load misspell dicts: %v", err)
 		}
@@ -264,7 +269,7 @@ func (s *Suite) RunLinter() RunResult {
 	}
 
 	declared := make(map[string]struct{})
-	for _, info := range linter.GetDeclaredChecks() {
+	for _, info := range l.Config().Checkers.ListDeclared() {
 		declared[info.Name] = struct{}{}
 	}
 	if !s.IgnoreUndeclaredChecks {
@@ -345,7 +350,7 @@ func InitEmbeddedRules(config *linter.Config) error {
 		return fmt.Errorf("init embedded rules: %v", err)
 	}
 	for _, rset := range ruleSets {
-		linter.DeclareRules(rset)
+		config.Checkers.DeclareRules(rset)
 	}
 	return nil
 }

@@ -152,7 +152,7 @@ func Main(cfg *MainConfig) {
 // Note that if error is not nil, integer code will be discarded, so it can be 0.
 //
 // We don't want os.Exit to be inserted randomly to avoid defer cancellation.
-func mainNoExit(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) (int, error) {
+func mainNoExit(l *linter.Linter, ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) (int, error) {
 	if args.version {
 		// Version is already printed. Can exit here.
 		return 0, nil
@@ -195,15 +195,16 @@ func mainNoExit(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgum
 		}()
 	}
 
-	l := linterRunner{
-		config: config,
+	runner := linterRunner{
+		config: l.Config(),
+		linter: l,
 	}
-	if err := l.Init(ruleSets, args); err != nil {
+	if err := runner.Init(ruleSets, args); err != nil {
 		return 1, fmt.Errorf("init: %v", err)
 	}
 
 	lintdebug.Register(func(msg string) {
-		if config.Debug {
+		if l.Config().Debug {
 			log.Print(msg)
 		}
 	})
@@ -211,18 +212,18 @@ func mainNoExit(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgum
 
 	log.Printf("Started")
 
-	if err := initStubs(l.config, l.getLinter()); err != nil {
+	if err := initStubs(runner.linter); err != nil {
 		return 0, fmt.Errorf("Init stubs: %v", err)
 	}
 
 	if args.gitRepo != "" {
-		return gitMain(&l, cfg)
+		return gitMain(&runner, cfg)
 	}
 
 	log.Printf("Indexing %+v", flag.Args())
-	l.getLinter().AnalyzeFiles(workspace.ReadFilenames(flag.Args(), nil, config.PhpExtensions))
-	parseIndexOnlyFiles(&l)
-	l.getLinter().MetaInfo().SetIndexingComplete(true)
+	runner.linter.AnalyzeFiles(workspace.ReadFilenames(flag.Args(), nil, l.Config().PhpExtensions))
+	parseIndexOnlyFiles(&runner)
+	runner.linter.MetaInfo().SetIndexingComplete(true)
 
 	filenames := flag.Args()
 	if args.fullAnalysisFiles != "" {
@@ -230,14 +231,14 @@ func mainNoExit(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgum
 	}
 
 	log.Printf("Linting")
-	reports := l.getLinter().AnalyzeFiles(workspace.ReadFilenames(filenames, l.filenameFilter, config.PhpExtensions))
+	reports := runner.linter.AnalyzeFiles(workspace.ReadFilenames(filenames, runner.filenameFilter, l.Config().PhpExtensions))
 	if args.outputBaseline {
-		if err := createBaseline(&l, cfg, reports); err != nil {
+		if err := createBaseline(&runner, cfg, reports); err != nil {
 			return 1, fmt.Errorf("write baseline: %v", err)
 		}
 		return 0, nil
 	}
-	criticalReports, containsAutofixableReports := analyzeReports(&l, cfg, reports)
+	criticalReports, containsAutofixableReports := analyzeReports(&runner, cfg, reports)
 
 	if containsAutofixableReports {
 		log.Println("Some issues are autofixable (try using the `-fix` flag)")
@@ -318,12 +319,12 @@ func FormatReport(r *linter.Report) string {
 		r.Severity(), msg, r.Filename, r.Line, r.Context, cursor.String())
 }
 
-func haveAutofixableReports(reports []*linter.Report) bool {
+func haveAutofixableReports(config *linter.Config, reports []*linter.Report) bool {
 	if len(reports) == 0 {
 		return false
 	}
 
-	declaredChecks := linter.GetDeclaredChecks()
+	declaredChecks := config.Checkers.ListDeclared()
 	checksWithQuickfix := make(map[string]struct{})
 
 	for _, check := range declaredChecks {
@@ -361,7 +362,7 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 		}
 	}
 
-	containsAutofixableReports = haveAutofixableReports(filtered)
+	containsAutofixableReports = haveAutofixableReports(l.config, filtered)
 
 	if l.args.outputJSON {
 		type reportList struct {
@@ -389,9 +390,9 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 	return criticalReports, containsAutofixableReports
 }
 
-func initStubs(config *linter.Config, l *linter.Linter) error {
-	if config.StubsDir != "" {
-		l.InitStubsFromDir(config.StubsDir)
+func initStubs(l *linter.Linter) error {
+	if l.Config().StubsDir != "" {
+		l.InitStubsFromDir(l.Config().StubsDir)
 		return nil
 	}
 

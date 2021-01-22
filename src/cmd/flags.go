@@ -84,7 +84,7 @@ func DefaultCacheDir() string {
 
 func bindFlags(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArguments) {
 	var enabledByDefault []string
-	declaredChecks := linter.GetDeclaredChecks()
+	declaredChecks := config.Checkers.ListDeclared()
 	for _, info := range declaredChecks {
 		if info.Default {
 			enabledByDefault = append(enabledByDefault, info.Name)
