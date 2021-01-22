@@ -2012,8 +2012,8 @@ $_ = $a{0};
 $_ = $a[0]{0};
 `)
 	test.Expect = []string{
-		`Don't use curly braces to take an item by index (use square braces form instead)`,
-		`Don't use curly braces to take an item by index (use square braces form instead)`,
+		`a{i} indexing is deprecated since PHP 7.4, use a[i] instead`,
+		`a{i} indexing is deprecated since PHP 7.4, use a[i] instead`,
 	}
 	test.RunAndMatch()
 }
