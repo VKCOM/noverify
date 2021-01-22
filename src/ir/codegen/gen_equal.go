@@ -48,6 +48,10 @@ func (g *genEqual) writeCompare(w *bytes.Buffer, pkg *packageData, typ *typeData
 			fmt.Fprintf(w, "    if x.%[1]s != y.%[1]s { return false }\n", field.Name())
 		case "[]ir.Node":
 			fmt.Fprintf(w, "    if !NodeSliceEqual(x.%[1]s, y.%[1]s) { return false }\n", field.Name())
+		case "*ir.Token": // replace later with *github.com/z7zmey/php-parser/pkg/token.Token
+			// Do nothing.
+		case "[]*ir.Token": // replace later with []*github.com/z7zmey/php-parser/pkg/token.Token
+			// Do nothing.
 		case "github.com/VKCOM/noverify/src/php/parser/freefloating.Collection":
 			// Do nothing.
 		case "*github.com/VKCOM/noverify/src/php/parser/position.Position":
