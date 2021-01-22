@@ -440,6 +440,7 @@ type ArrayExpr struct {
 }
 
 // ArrayDimFetchExpr is a `$Variable[$Dim]` expression.
+// If $CurlyBrace is true, it's `$Variable{$Dim}`
 type ArrayDimFetchExpr struct {
 	FreeFloating    freefloating.Collection
 	Position        *position.Position
@@ -447,6 +448,7 @@ type ArrayDimFetchExpr struct {
 	OpenBracketTkn  *Token
 	Dim             Node
 	CloseBracketTkn *Token
+	CurlyBrace      bool
 }
 
 // ArrayItemExpr is a `$Key => $Val` expression.

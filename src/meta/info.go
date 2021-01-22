@@ -9,7 +9,7 @@ import (
 type Info struct {
 	indexingComplete   bool
 	loadingStubs       bool
-	onIndexingComplete []func()
+	onIndexingComplete []func(*Info)
 
 	sync.Mutex
 	*Scope
@@ -44,9 +44,9 @@ func NewInfo() *Info {
 	}
 }
 
-func (i *Info) OnIndexingComplete(cb func()) {
+func (i *Info) OnIndexingComplete(cb func(*Info)) {
 	if i.indexingComplete {
-		cb()
+		cb(i)
 	} else {
 		i.onIndexingComplete = append(i.onIndexingComplete, cb)
 	}
@@ -73,7 +73,7 @@ func (i *Info) SetIndexingComplete(complete bool) {
 
 	if complete {
 		for _, cb := range i.onIndexingComplete {
-			cb()
+			cb(i)
 		}
 	}
 }
