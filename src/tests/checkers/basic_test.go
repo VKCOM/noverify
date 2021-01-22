@@ -791,8 +791,11 @@ func TestCustomUnusedVarRegex(t *testing.T) {
 		return strings.HasPrefix(s, "_")
 	}
 
+	config := linter.NewConfig()
+	config.IsDiscardVar = isDiscardVar
+
 	test := linttest.NewSuite(t)
-	test.Config.IsDiscardVar = isDiscardVar
+	test.Linter = linter.NewLinter(config)
 	test.AddFile(`<?php
 class Foo {
   public $_;
@@ -808,7 +811,7 @@ $_ = __FILE__;
 	test.RunAndMatch()
 
 	test = linttest.NewSuite(t)
-	test.Config.IsDiscardVar = isDiscardVar
+	test.Linter = linter.NewLinter(config)
 	test.AddFile(`<?php
 $_unused = 10;
 
@@ -824,7 +827,7 @@ function f() {
 `)
 
 	test = linttest.NewSuite(t)
-	test.Config.IsDiscardVar = isDiscardVar
+	test.Linter = linter.NewLinter(config)
 	test.AddFile(`<?php
 function var_dump($v) {}
 $_global = 120;

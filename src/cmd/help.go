@@ -25,16 +25,16 @@ func Help(*MainConfig) (int, error) {
 	mainSubject := args[0]
 	switch mainSubject {
 	case "checkers":
-		declareRules()
+		config := declareRules()
 		var subSubject string
 		if len(args) > 1 {
 			subSubject = args[1]
 		}
 		if subSubject == "" {
-			helpAllCheckers()
+			helpAllCheckers(config)
 			return 0, nil
 		}
-		err := helpChecker(subSubject)
+		err := helpChecker(config, subSubject)
 		if err != nil {
 			return 1, err
 		}
@@ -44,7 +44,7 @@ func Help(*MainConfig) (int, error) {
 	}
 }
 
-func declareRules() {
+func declareRules() *linter.Config {
 	p := rules.NewParser()
 	config := linter.NewConfig()
 	ruleSets, err := InitEmbeddedRules(config, p, func(r rules.Rule) bool { return true })
@@ -52,19 +52,20 @@ func declareRules() {
 		panic(err)
 	}
 	for _, rset := range ruleSets {
-		linter.DeclareRules(rset)
+		config.Checkers.DeclareRules(rset)
 	}
+	return config
 }
 
-func helpAllCheckers() {
-	for _, info := range linter.GetDeclaredChecks() {
+func helpAllCheckers(config *linter.Config) {
+	for _, info := range config.Checkers.ListDeclared() {
 		fmt.Printf("%s: %s\n", info.Name, info.Comment)
 	}
 }
 
-func helpChecker(checkerName string) error {
-	var info linter.CheckInfo
-	checks := linter.GetDeclaredChecks()
+func helpChecker(config *linter.Config, checkerName string) error {
+	var info linter.CheckerInfo
+	checks := config.Checkers.ListDeclared()
 	for i := range checks {
 		if checks[i].Name == checkerName {
 			info = checks[i]

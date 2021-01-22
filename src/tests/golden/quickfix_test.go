@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
+	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
@@ -48,10 +49,12 @@ func openFile(filename string) (f *os.File, found bool, err error) {
 }
 
 func (t *quickFixTest) runQuickFixTest() {
-	defer func(applyQuickFixes bool) {
-		linterConfig.ApplyQuickFixes = applyQuickFixes
-	}(linterConfig.ApplyQuickFixes)
+	var linterConfig = linter.NewConfig()
 	linterConfig.ApplyQuickFixes = true
+	err := linttest.InitEmbeddedRules(linterConfig)
+	if err != nil {
+		t.t.Fatal(err)
+	}
 
 	files, err := linttest.FindPHPFiles(t.folder)
 	if err != nil {
@@ -95,7 +98,7 @@ func (t *quickFixTest) runQuickFixTest() {
 			}
 
 			test := linttest.NewSuite(t)
-			test.Config = linterConfig
+			test.Linter = linter.NewLinter(linterConfig)
 			test.AddNamedFile(fixedFileName, string(testFileContent))
 			_ = test.RunLinter()
 
