@@ -14,8 +14,8 @@ const (
 	IgnoreLinterMessage = "@linter disable"
 )
 
-func init() {
-	allChecks := []CheckInfo{
+func addBuiltinCheckers(reg *CheckersRegistry) {
+	allChecks := []CheckerInfo{
 		{
 			Name:     "intOverflow",
 			Default:  true,
@@ -598,7 +598,7 @@ echo $someVal;`,
 	}
 
 	for _, info := range allChecks {
-		DeclareCheck(info)
+		reg.DeclareChecker(info)
 	}
 }
 

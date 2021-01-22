@@ -23,6 +23,10 @@ func NewLinter(config *Config) *Linter {
 	}
 }
 
+func (l *Linter) Config() *Config {
+	return l.config
+}
+
 func (l *Linter) MetaInfo() *meta.Info {
 	return l.info
 }

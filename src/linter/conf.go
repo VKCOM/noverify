@@ -56,13 +56,20 @@ type Config struct {
 	AllowDisable *regexp.Regexp
 
 	PhpExtensions []string
+
+	Checkers *CheckersRegistry
 }
 
 func NewConfig() *Config {
+	reg := &CheckersRegistry{
+		info: map[string]CheckerInfo{},
+	}
+	addBuiltinCheckers(reg)
 	return &Config{
 		SrcInput:       inputs.NewDefaultSourceInput(),
 		Rules:          &rules.Set{},
 		MaxConcurrency: runtime.NumCPU(),
 		IsDiscardVar:   isUnderscore,
+		Checkers:       reg,
 	}
 }

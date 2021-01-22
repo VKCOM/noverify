@@ -9,7 +9,7 @@ import (
 )
 
 func TestRenderCheckDocumentation(t *testing.T) {
-	runTest := func(info linter.CheckInfo, expect string) {
+	runTest := func(info linter.CheckerInfo, expect string) {
 		t.Helper()
 		var buf strings.Builder
 		err := RenderCheckDocumentation(&buf, info)
@@ -21,14 +21,14 @@ func TestRenderCheckDocumentation(t *testing.T) {
 		}
 	}
 
-	runTest(linter.CheckInfo{
+	runTest(linter.CheckerInfo{
 		Name:    "shortExample",
 		Comment: "Report nothing, but test short info rendering.",
 	}, `shortExample checker documentation
 
 Report nothing, but test short info rendering.`)
 
-	runTest(linter.CheckInfo{
+	runTest(linter.CheckerInfo{
 		Name:    "fullExample",
 		Comment: "Report nothing, but test full info rendering.",
 		Before:  `ereg($pat, $s)`,
@@ -43,7 +43,7 @@ ereg($pat, $s)
 Compliant code:
 preg_match($pat, $s)`)
 
-	runTest(linter.CheckInfo{
+	runTest(linter.CheckerInfo{
 		Name:    "fullExampleMultiLine",
 		Comment: "Report nothing, but test full info rendering.",
 		Before: `class Foo {
@@ -66,7 +66,7 @@ class Foo {
   public function __construct($v) { $this->v = $v; }
 }`)
 
-	runTest(linter.CheckInfo{
+	runTest(linter.CheckerInfo{
 		Name:     "ternarySimplify",
 		Comment:  `Report ternary expressions that can be simplified.`,
 		Before:   `$x ? $x : $y`,

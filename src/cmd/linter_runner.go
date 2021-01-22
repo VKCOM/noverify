@@ -33,13 +33,6 @@ type linterRunner struct {
 	reportsCriticalSet      map[string]bool
 }
 
-func (l *linterRunner) getLinter() *linter.Linter {
-	if l.linter == nil {
-		l.linter = linter.NewLinter(l.config)
-	}
-	return l.linter
-}
-
 func (l *linterRunner) IsEnabledByFlags(checkName string) bool {
 	if !l.args.allowAll && !l.reportsIncludeChecksSet[checkName] {
 		return false // Not enabled by -allow-checks
