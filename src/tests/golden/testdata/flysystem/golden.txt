@@ -31,15 +31,9 @@ INFO    unused: Variable e is unused (use $_ to ignore this inspection) at testd
 MAYBE   deprecated: Call to deprecated method {\League\Flysystem\FilesystemInterface}->get() at testdata/flysystem/src/MountManager.php:646
         return $this->getFilesystem($prefix)->get($path);
                                               ^^^
-INFO    undefined: Variable might have not been defined: deleted at testdata/flysystem/src/Plugin/ForcedCopy.php:38
-        if ($deleted) {
-            ^^^^^^^^
 INFO    unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Plugin/ForcedCopy.php:33
         } catch (FileNotFoundException $e) {
                                        ^^
-INFO    undefined: Variable might have not been defined: deleted at testdata/flysystem/src/Plugin/ForcedRename.php:38
-        if ($deleted) {
-            ^^^^^^^^
 INFO    unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Plugin/ForcedRename.php:33
         } catch (FileNotFoundException $e) {
                                        ^^
