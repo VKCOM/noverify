@@ -495,7 +495,7 @@ func (b *blockWalker) walkComments(n ir.Node, c freefloating.String) {
 
 		types, warning := typesFromPHPDoc(&b.r.ctx, p.Type)
 		if warning != "" {
-			b.r.Report(n, LevelWarning, "phpdocType", "%s on line %d", warning, p.Line())
+			b.r.Report(n, LevelNotice, "phpdocType", "%s on line %d", warning, p.Line())
 		}
 		m := newTypesMap(&b.r.ctx, types)
 		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(p.Var, "$"), m, "@var")

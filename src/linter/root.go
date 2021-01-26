@@ -1036,7 +1036,7 @@ func (d *rootWalker) reportPhpdocErrors(n ir.Node, errs phpdocErrors) {
 		d.Report(n, LevelWarning, "phpdocLint", "%s", err)
 	}
 	for _, err := range errs.phpdocType {
-		d.Report(n, LevelWarning, "phpdocType", "%s", err)
+		d.Report(n, LevelNotice, "phpdocType", "%s", err)
 	}
 }
 
@@ -1047,7 +1047,7 @@ func (d *rootWalker) parsePHPDocVar(n ir.Node, doc []phpdoc.CommentPart) (m meta
 		if ok && part.Name() == "var" {
 			types, warning := typesFromPHPDoc(&d.ctx, part.Type)
 			if warning != "" {
-				d.Report(n, LevelWarning, "phpdocType", "%s on line %d", warning, part.Line())
+				d.Report(n, LevelNotice, "phpdocType", "%s on line %d", warning, part.Line())
 			}
 			m = newTypesMap(&d.ctx, types)
 		}
