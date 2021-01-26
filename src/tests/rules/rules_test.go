@@ -423,8 +423,9 @@ func runRulesTest(t *testing.T, test *linttest.Suite, rfile string) {
 	if err != nil {
 		t.Fatalf("parse rules: %v", err)
 	}
-	oldRules := linter.Rules
-	linter.Rules = rset
+	config := linter.NewConfig()
+	config.Rules = rset
+	test.Linter = linter.NewLinter(config)
 
 	ruleNamesSet := make(map[string]struct{}, len(rset.Names))
 	for _, name := range rset.Names {
@@ -432,12 +433,11 @@ func runRulesTest(t *testing.T, test *linttest.Suite, rfile string) {
 	}
 
 	var filtered []*linter.Report
-	for _, r := range test.RunLinter() {
+	result := test.RunLinter()
+	for _, r := range result.Reports {
 		if _, ok := ruleNamesSet[r.CheckName]; ok {
 			filtered = append(filtered, r)
 		}
 	}
 	test.Match(filtered)
-
-	linter.Rules = oldRules
 }

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/phpdoc"
@@ -69,7 +70,7 @@ type blockWalker struct {
 
 	custom []BlockChecker
 
-	path NodePath
+	path irutil.NodePath
 
 	ignoreFunctionBodies bool
 	rootLevel            bool // analysing root-level code
@@ -110,10 +111,14 @@ func newBlockWalker(r *rootWalker, sc *meta.Scope) *blockWalker {
 		ctx:          &blockContext{sc: sc},
 		unusedVars:   make(map[string][]ir.Node),
 		nonLocalVars: make(map[string]variableKind),
-		path:         newNodePath(),
+		path:         irutil.NewNodePath(),
 	}
 	b.linter = blockLinter{walker: b}
 	return b
+}
+
+func (b *blockWalker) isIndexingComplete() bool {
+	return b.r.ctx.st.Info.IsIndexingComplete()
 }
 
 func (b *blockWalker) addStatement(n ir.Node) {
@@ -169,7 +174,7 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 		c.BeforeEnterNode(n)
 	}
 
-	b.path.push(n)
+	b.path.Push(n)
 
 	if b.ctx.exitFlags != 0 {
 		b.reportDeadCode(n)
@@ -321,10 +326,10 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 		c.AfterEnterNode(n)
 	}
 
-	if meta.IsIndexingComplete() {
+	if b.isIndexingComplete() {
 		b.linter.enterNode(n)
 	}
-	if meta.IsIndexingComplete() && b.r.anyRset != nil {
+	if b.isIndexingComplete() && b.r.anyRset != nil {
 		// Note: no need to check localRset for nil.
 		kind := ir.GetNodeKind(n)
 		b.r.runRules(n, b.ctx.sc, b.r.anyRset.RulesByKind[kind])
@@ -334,7 +339,7 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 	}
 
 	if !res {
-		b.path.pop()
+		b.path.Pop()
 	}
 	return res
 }
@@ -900,7 +905,7 @@ func (b *blockWalker) handleForeach(s *ir.ForeachStmt) bool {
 	if !ok {
 		return false
 	}
-	if IsDiscardVar(key.Name) {
+	if b.r.config.IsDiscardVar(key.Name) {
 		return false
 	}
 
@@ -1108,7 +1113,7 @@ func (b *blockWalker) handleVariable(v ir.Node) bool {
 				w.untrackVarName(varName)
 			}
 		}
-		if IsDiscardVar(varName) && !isSuperGlobal(varName) {
+		if b.r.config.IsDiscardVar(varName) && !isSuperGlobal(varName) {
 			b.r.Report(v, LevelError, "discardVar", "Used var $%s that is supposed to be unused (rename variable if it's intended)", varName)
 		}
 
@@ -1450,7 +1455,7 @@ func (b *blockWalker) handleAndCheckDimFetchLValue(e *ir.ArrayDimFetchExpr, reas
 }
 
 func (b *blockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
-	if !meta.IsIndexingComplete() {
+	if !b.isIndexingComplete() {
 		return
 	}
 
@@ -1466,7 +1471,7 @@ func (b *blockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
 		if meta.IsClassType(t) {
 			maybeHaveClasses = true
 
-			if !haveArrayAccess && solver.Implements(t, `\ArrayAccess`) {
+			if !haveArrayAccess && solver.Implements(b.r.ctx.st.Info, t, `\ArrayAccess`) {
 				haveArrayAccess = true
 			}
 		}
@@ -1557,7 +1562,7 @@ func (b *blockWalker) handleAssignList(list *ir.ListExpr, rhs ir.Node) {
 
 	// Try to handle it as a shape assignment.
 	if shapeType != "" {
-		class, ok := meta.Info.GetClass(shapeType)
+		class, ok := b.r.ctx.st.Info.GetClass(shapeType)
 		if ok {
 			b.handleAssignShapeToList(list.Items, class)
 			return
@@ -1605,7 +1610,7 @@ func (b *blockWalker) handleAssign(a *ir.Assign) bool {
 	case *ir.Var:
 		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
 	case *ir.ListExpr:
-		if !meta.IsIndexingComplete() {
+		if !b.isIndexingComplete() {
 			return true
 		}
 
@@ -1726,13 +1731,13 @@ func (b *blockWalker) handleAssignOp(assign ir.Node) {
 }
 
 func (b *blockWalker) flushUnused() {
-	if !meta.IsIndexingComplete() {
+	if !b.isIndexingComplete() {
 		return
 	}
 
 	visitedMap := make(map[ir.Node]struct{})
 	for name, nodes := range b.unusedVars {
-		if IsDiscardVar(name) {
+		if b.r.config.IsDiscardVar(name) {
 			// blank identifier is a way to tell linter (and PHPStorm) that result is explicitly unused
 			continue
 		}
@@ -1776,7 +1781,7 @@ func (b *blockWalker) LeaveNode(w ir.Node) {
 		c.BeforeLeaveNode(w)
 	}
 
-	b.path.pop()
+	b.path.Pop()
 
 	if b.ctx.exitFlags == 0 {
 		switch w.(type) {

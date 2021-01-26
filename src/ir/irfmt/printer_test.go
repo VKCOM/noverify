@@ -64,6 +64,7 @@ func TestPrinterSingleLine(t *testing.T) {
 		`(string)$var`,
 		`(unset)$var`,
 		`$var[1]`,
+		`$var{1}`,
 		`['Hello' => $world]`,
 		`array('Hello' => $world, 2 => &$var, $var)`,
 		`[...$x, $y, ...$z]`,

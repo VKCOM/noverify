@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/rules"
 )
 
@@ -9,6 +10,8 @@ import (
 // custom linters initialization.
 type InitEnvironment struct {
 	RuleSets []*rules.Set
+
+	MetaInfo *meta.Info
 }
 
 // MainConfig describes optional main function config.
@@ -26,6 +29,8 @@ type MainConfig struct {
 	BeforeReport func(*linter.Report) bool
 
 	LinterVersion string
+
+	LinterConfig *linter.Config
 
 	// OverriddenCommands is a list of new commands and
 	// commands that override existing commands.

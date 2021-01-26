@@ -787,15 +787,16 @@ for ($i = 0; $i == 0; $i = $i++) {}
 }
 
 func TestCustomUnusedVarRegex(t *testing.T) {
-	defer func(isDiscardVar func(string) bool) {
-		linter.IsDiscardVar = isDiscardVar
-	}(linter.IsDiscardVar)
-
-	linter.IsDiscardVar = func(s string) bool {
+	isDiscardVar := func(s string) bool {
 		return strings.HasPrefix(s, "_")
 	}
 
-	linttest.SimpleNegativeTest(t, `<?php
+	config := linter.NewConfig()
+	config.IsDiscardVar = isDiscardVar
+
+	test := linttest.NewSuite(t)
+	test.Linter = linter.NewLinter(config)
+	test.AddFile(`<?php
 class Foo {
   public $_;
   private $_foo;
@@ -807,8 +808,11 @@ class Foo {
 }
 $_ = __FILE__;
 `)
+	test.RunAndMatch()
 
-	linttest.SimpleNegativeTest(t, `<?php
+	test = linttest.NewSuite(t)
+	test.Linter = linter.NewLinter(config)
+	test.AddFile(`<?php
 $_unused = 10;
 
 function f() {
@@ -822,7 +826,8 @@ function f() {
 }
 `)
 
-	test := linttest.NewSuite(t)
+	test = linttest.NewSuite(t)
+	test.Linter = linter.NewLinter(config)
 	test.AddFile(`<?php
 function var_dump($v) {}
 $_global = 120;
@@ -1510,14 +1515,14 @@ func TestUnused(t *testing.T) {
 
 func TestAtVar(t *testing.T) {
 	// variables declared using @var should not be overridden
-	_ = linttest.GetFileReports(t, `<?php
+	result := linttest.CheckFile(t, `<?php
 	function test() {
 		/** @var string $a */
 		$a = true;
 		return $a;
 	}`)
 
-	fi, ok := meta.Info.GetFunction(`\test`)
+	fi, ok := result.Info.GetFunction(`\test`)
 	if !ok {
 		t.Errorf("Could not get function test")
 	}
@@ -1711,7 +1716,7 @@ func TestSwitchFallthrough(t *testing.T) {
 }
 
 func TestFunctionThrowsExceptionsAndReturns(t *testing.T) {
-	reports := linttest.GetFileReports(t, `<?php
+	result := linttest.CheckFile(t, `<?php
 	class Exception {}
 
 	function handle($b) {
@@ -1733,17 +1738,17 @@ func TestFunctionThrowsExceptionsAndReturns(t *testing.T) {
 		echo "This code is reachable\n";
 	}`)
 
-	if len(reports) != 0 {
-		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
+	if len(result.Reports) != 0 {
+		t.Errorf("Unexpected number of reports: expected 0, got %d", len(result.Reports))
 	}
 
-	fi, ok := meta.Info.GetFunction(`\handle`)
+	fi, ok := result.Info.GetFunction(`\handle`)
 
 	if ok {
 		log.Printf("handle exitFlags: %d (%s)", fi.ExitFlags, linter.FlagsToString(fi.ExitFlags))
 	}
 
-	for _, r := range reports {
+	for _, r := range result.Reports {
 		log.Printf("%s", cmd.FormatReport(r))
 	}
 }
@@ -1862,16 +1867,14 @@ interface Iface extends IfaceBase {}
 }
 
 func TestCorrectArrayTypes(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
+	result := linttest.CheckFile(t, `<?php
 	function test() {
 		$a = [ 'a' => 123, 'b' => 3456 ];
 		return $a['a'];
 	}
 	`)
-	test.RunLinter()
 
-	fn, ok := meta.Info.GetFunction(`\test`)
+	fn, ok := result.Info.GetFunction(`\test`)
 	if !ok {
 		t.Errorf("Could not find function test")
 		t.Fail()
@@ -1887,8 +1890,7 @@ func TestCorrectArrayTypes(t *testing.T) {
 }
 
 func TestArrayUnion(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
+	result := linttest.CheckFile(t, `<?php
 	function testInt() {
 		return 1 + 1;
 	}
@@ -1899,9 +1901,8 @@ func TestArrayUnion(t *testing.T) {
 		return [1] + ['foo'];
 	}
 	`)
-	test.RunLinter()
 
-	fnInt, ok := meta.Info.GetFunction(`\testInt`)
+	fnInt, ok := result.Info.GetFunction(`\testInt`)
 	if !ok {
 		t.Errorf("Could not find function testInt")
 		t.Fail()
@@ -1915,7 +1916,7 @@ func TestArrayUnion(t *testing.T) {
 		t.Errorf("Wrong type: %s, expected int", fnInt.Typ)
 	}
 
-	fnIntArr, ok := meta.Info.GetFunction(`\testIntArr`)
+	fnIntArr, ok := result.Info.GetFunction(`\testIntArr`)
 	if !ok {
 		t.Errorf("Could not find function testIntArr")
 		t.Fail()
@@ -1929,7 +1930,7 @@ func TestArrayUnion(t *testing.T) {
 		t.Errorf("Wrong type: %s, expected int[]", fnIntArr.Typ)
 	}
 
-	fnMixedArr, ok := meta.Info.GetFunction(`\testMixedArr`)
+	fnMixedArr, ok := result.Info.GetFunction(`\testMixedArr`)
 	if !ok {
 		t.Errorf("Could not find function testMixedArr")
 		t.Fail()
