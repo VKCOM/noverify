@@ -165,6 +165,8 @@ function f() {
 func TestTryCatchVariablesWithExit(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+class ExceptionDerived extends ExceptionBase {}
+
 function f() {
 	try {
 		$a = 100;
