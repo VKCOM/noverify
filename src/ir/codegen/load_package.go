@@ -6,10 +6,11 @@ import (
 	"go/parser"
 	"go/types"
 	"path"
+	"path/filepath"
 )
 
 func loadPackage(typechecker *types.Config, ctx *context, dir string) (*packageData, error) {
-	pkgName := path.Base(dir)
+	pkgName := path.Base(filepath.ToSlash(dir))
 	parsedPkgs, err := parser.ParseDir(ctx.fset, dir, nil, 0)
 	if err != nil {
 		return nil, err

@@ -84,7 +84,7 @@ func Main(ctx *guru.Context) (int, error) {
 			return 1, err
 		}
 	}
-	readFileNamesFunc := workspace.ReadFilenames(targets, filter)
+	readFileNamesFunc := workspace.ReadFilenames(targets, filter, []string{"php", "inc", "php5", "phtml"})
 	filenamesCh := make(chan workspace.FileInfo, 512)
 	go func() {
 		readFileNamesFunc(filenamesCh)

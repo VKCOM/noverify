@@ -10,6 +10,7 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
+	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/solver"
 )
 
@@ -36,8 +37,8 @@ func FlagsToString(f int) string {
 	return "Exit flags: [" + strings.Join(res, ", ") + "], digits: " + fmt.Sprintf("%d", f)
 }
 
-func haveMagicMethod(class string, methodName string) bool {
-	_, ok := solver.FindMethod(class, methodName)
+func haveMagicMethod(info *meta.Info, class, methodName string) bool {
+	_, ok := solver.FindMethod(info, class, methodName)
 	return ok
 }
 
@@ -158,7 +159,7 @@ type funcCallInfo struct {
 // We usually need ClassParseState+Scope+[]CustomType.
 func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, call *ir.FunctionCallExpr) funcCallInfo {
 	var res funcCallInfo
-	if !meta.IsIndexingComplete() {
+	if !st.Info.IsIndexingComplete() {
 		return res
 	}
 	res.canAnalyze = true
@@ -166,13 +167,13 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 	fqName, ok := solver.GetFuncName(st, call.Function)
 	if ok {
 		res.funcName = fqName
-		res.info, res.isFound = meta.Info.GetFunction(fqName)
+		res.info, res.isFound = st.Info.GetFunction(fqName)
 	} else {
 		solver.ExprTypeCustom(sc, st, call.Function, customTypes).Iterate(func(typ string) {
 			if res.isFound {
 				return
 			}
-			m, ok := solver.FindMethod(typ, `__invoke`)
+			m, ok := solver.FindMethod(st.Info, typ, `__invoke`)
 			res.info = m.Info
 			res.isFound = ok
 		})
@@ -195,7 +196,7 @@ type methodCallInfo struct {
 }
 
 func resolveMethodCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, e *ir.MethodCallExpr) methodCallInfo {
-	if !meta.IsIndexingComplete() {
+	if !st.Info.IsIndexingComplete() {
 		return methodCallInfo{canAnalyze: false}
 	}
 
@@ -219,7 +220,7 @@ func resolveMethodCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []s
 	methodCallerType := solver.ExprTypeCustom(sc, st, e.Variable, customTypes)
 
 	methodCallerType.Find(func(typ string) bool {
-		m, isMagic, ok := findMethod(typ, methodName)
+		m, isMagic, ok := findMethod(st.Info, typ, methodName)
 		if !ok {
 			return false
 		}
@@ -256,7 +257,7 @@ type staticMethodCallInfo struct {
 }
 
 func resolveStaticMethodCall(st *meta.ClassParseState, e *ir.StaticCallExpr) staticMethodCallInfo {
-	if !meta.IsIndexingComplete() {
+	if !st.Info.IsIndexingComplete() {
 		return staticMethodCallInfo{canAnalyze: false}
 	}
 
@@ -281,8 +282,8 @@ func resolveStaticMethodCall(st *meta.ClassParseState, e *ir.StaticCallExpr) sta
 		return staticMethodCallInfo{canAnalyze: false}
 	}
 
-	m, found := solver.FindMethod(className, methodName)
-	isMagic := haveMagicMethod(className, `__callStatic`)
+	m, found := solver.FindMethod(st.Info, className, methodName)
+	isMagic := haveMagicMethod(st.Info, className, `__callStatic`)
 
 	return staticMethodCallInfo{
 		methodName:               methodName,
@@ -320,7 +321,7 @@ func resolvePropertyFetch(sc *meta.Scope, st *meta.ClassParseState, customTypes 
 
 	propertyFetchType := solver.ExprTypeCustom(sc, st, e.Variable, customTypes)
 	propertyFetchType.Find(func(typ string) bool {
-		p, isMagic, ok := findProperty(typ, propertyNode.Value)
+		p, isMagic, ok := findProperty(st.Info, typ, propertyNode.Value)
 		if !ok {
 			return false
 		}
@@ -355,7 +356,7 @@ type propertyStaticFetchInfo struct {
 }
 
 func resolveStaticPropertyFetch(st *meta.ClassParseState, e *ir.StaticPropertyFetchExpr) propertyStaticFetchInfo {
-	if !meta.IsIndexingComplete() {
+	if !st.Info.IsIndexingComplete() {
 		return propertyStaticFetchInfo{canAnalyze: false}
 	}
 
@@ -369,7 +370,7 @@ func resolveStaticPropertyFetch(st *meta.ClassParseState, e *ir.StaticPropertyFe
 		return propertyStaticFetchInfo{canAnalyze: false}
 	}
 
-	property, found := solver.FindProperty(className, "$"+propertyNode.Name)
+	property, found := solver.FindProperty(st.Info, className, "$"+propertyNode.Name)
 
 	return propertyStaticFetchInfo{
 		className:    className,
@@ -390,7 +391,7 @@ type classPropertyFetchInfo struct {
 }
 
 func resolveClassConstFetch(st *meta.ClassParseState, e *ir.ClassConstFetchExpr) classPropertyFetchInfo {
-	if !meta.IsIndexingComplete() {
+	if !st.Info.IsIndexingComplete() {
 		return classPropertyFetchInfo{canAnalyze: false}
 	}
 
@@ -404,7 +405,7 @@ func resolveClassConstFetch(st *meta.ClassParseState, e *ir.ClassConstFetchExpr)
 		return classPropertyFetchInfo{canAnalyze: false}
 	}
 
-	info, implClass, found := solver.FindConstant(className, constName.Value)
+	info, implClass, found := solver.FindConstant(st.Info, className, constName.Value)
 
 	return classPropertyFetchInfo{
 		constName:     constName.Value,
@@ -437,7 +438,7 @@ func findVarNode(n ir.Node) ir.Node {
 	}
 }
 
-func classHasProp(className, propName string) bool {
+func classHasProp(st *meta.ClassParseState, className, propName string) bool {
 	var nameWithDollar string
 	var nameWithoutDollar string
 	if strings.HasPrefix(propName, "$") {
@@ -449,10 +450,10 @@ func classHasProp(className, propName string) bool {
 	}
 
 	// Static props stored with leading "$".
-	if _, ok := solver.FindProperty(className, nameWithDollar); ok {
+	if _, ok := solver.FindProperty(st.Info, className, nameWithDollar); ok {
 		return true
 	}
-	_, ok := solver.FindProperty(className, nameWithoutDollar)
+	_, ok := solver.FindProperty(st.Info, className, nameWithoutDollar)
 	return ok
 }
 
@@ -516,6 +517,25 @@ func binaryOpString(n ir.Node) string {
 	default:
 		return ""
 	}
+}
+
+func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedSet {
+	if ruleSet == nil {
+		return nil
+	}
+
+	var clone rules.ScopedSet
+	for i, list := range &ruleSet.RulesByKind {
+		res := make([]rules.Rule, 0, len(list))
+		for _, rule := range list {
+			if !strings.Contains(filename, rule.Path) {
+				continue
+			}
+			res = append(res, rule)
+		}
+		clone.RulesByKind[i] = res
+	}
+	return &clone
 }
 
 // List taken from https://wiki.php.net/rfc/context_sensitive_lexer

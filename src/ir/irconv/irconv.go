@@ -5,6 +5,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
+	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parser/node"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr"
 	"github.com/VKCOM/noverify/src/php/parser/node/expr/assign"
@@ -577,6 +578,14 @@ func (c *Converter) convNode(n node.Node) ir.Node {
 		out.Position = n.Position
 		out.Variable = c.convNode(n.Variable)
 		out.Dim = c.convNode(n.Dim)
+
+		ffs := n.FreeFloating[freefloating.Var]
+		for _, ff := range ffs {
+			if ff.Value == "{" {
+				out.CurlyBrace = true
+				break
+			}
+		}
 		return out
 
 	case *expr.ArrayItem:

@@ -2,8 +2,6 @@ package exprtype_test
 
 import (
 	"testing"
-
-	"github.com/VKCOM/noverify/src/linter"
 )
 
 func TestExprTypeAny(t *testing.T) {
@@ -57,8 +55,92 @@ function f() {
 	runKPHPExprTypeTest(t, &exprTypeTestParams{code: code, stubs: "<?php /* no code */"})
 }
 
+func TestArrayFirstLastType(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+/**
+ * @return Foo[]
+ */
+function returnFooArray() {
+	return [new Foo, new Foo, new Foo];
+}
+
+/**
+ * @return mixed
+ */
+function returnMixed() {}
+
+/**
+ * @return mixed[]
+ */
+function returnMixedArray() {}
+
+function f() {
+	$a = [10, 20, 30];
+	$b = array_last_element($a);
+	exprtype($b, "int");
+	
+	$c = [new Foo, new Foo, new Foo];
+	$d = array_last_element($c);
+	exprtype($d, "\Foo");
+
+	$e = returnFooArray();
+	$f = array_last_element($e);
+	exprtype($f, "\Foo");
+
+	$g = returnMixed();
+	$h = array_last_element($g);
+	exprtype($h, "mixed");
+
+	$i = returnMixedArray();
+	$j = array_last_element($i);
+	exprtype($j, "mixed");
+
+	$k = array_last_element([10, 20]);
+	exprtype($k, "int");
+
+	$l = array_last_element(20);
+	exprtype($l, "mixed");
+
+	$m = array_last_element();
+	exprtype($m, "mixed");
+}
+
+function f1() {
+	$a = [10, 20, 30];
+	$b = array_first_element($a);
+	exprtype($b, "int");
+	
+	$c = [new Foo, new Foo, new Foo];
+	$d = array_first_element($c);
+	exprtype($d, "\Foo");
+
+	$e = returnFooArray();
+	$f = array_first_element($e);
+	exprtype($f, "\Foo");
+
+	$g = returnMixed();
+	$h = array_first_element($g);
+	exprtype($h, "mixed");
+
+	$i = returnMixedArray();
+	$j = array_first_element($i);
+	exprtype($j, "mixed");
+
+	$k = array_first_element([10, 20]);
+	exprtype($k, "int");
+
+	$l = array_first_element(20);
+	exprtype($l, "mixed");
+
+	$m = array_first_element();
+	exprtype($m, "mixed");
+}
+`
+	runKPHPExprTypeTest(t, &exprTypeTestParams{code: code, stubs: "<?php /* no code */"})
+}
+
 func runKPHPExprTypeTest(t *testing.T, params *exprTypeTestParams) {
-	linter.KPHP = true
-	runExprTypeTest(t, params)
-	linter.KPHP = false
+	exprTypeTestImpl(t, params, true)
 }

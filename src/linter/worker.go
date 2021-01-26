@@ -50,24 +50,17 @@ type Worker struct {
 	needReports bool
 
 	AllowDisable *regexp.Regexp
+
+	config *Config
+	info   *meta.Info
 }
 
-func NewLintingWorker(id int) *Worker {
-	w := newWorker(id)
-	w.needReports = true
-	return w
-}
-
-func NewIndexingWorker(id int) *Worker {
-	w := newWorker(id)
-	w.needReports = false
-	return w
-}
-
-func newWorker(id int) *Worker {
+func newWorker(config *Config, info *meta.Info, id int) *Worker {
 	ctx := NewWorkerContext()
 	irConverter := irconv.NewConverter(ctx.phpdocTypeParser)
 	return &Worker{
+		config: config,
+		info:   info,
 		id:     id,
 		ctx:    ctx,
 		irconv: irConverter,
@@ -82,6 +75,8 @@ func newWorker(id int) *Worker {
 
 func (w *Worker) ID() int { return w.id }
 
+func (w *Worker) MetaInfo() *meta.Info { return w.info }
+
 // ParseContents parses specified contents (or file) and returns *RootWalker.
 // Function does not update global meta.
 func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult, err error) {
@@ -93,16 +88,14 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult,
 		}
 	}()
 
-	start := time.Now()
-
 	// TODO: Ragel lexer can handle non-UTF8 input.
 	// We can simplify code below and read from files directly.
 
 	var rd inputs.ReadCloseSizer
 	if fileInfo.Contents == nil {
-		rd, err = SrcInput.NewReader(fileInfo.Name)
+		rd, err = w.config.SrcInput.NewReader(fileInfo.Name)
 	} else {
-		rd, err = SrcInput.NewBytesReader(fileInfo.Name, fileInfo.Contents)
+		rd, err = w.config.SrcInput.NewBytesReader(fileInfo.Name, fileInfo.Contents)
 	}
 	if err != nil {
 		log.Panicf("open source input: %v", err)
@@ -123,8 +116,6 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult,
 	parser.WithFreeFloating()
 	parser.Parse()
 
-	atomic.AddInt64(&initParseTime, int64(time.Since(start)))
-
 	file := workspace.NewFile(fileInfo.Name, contents)
 	rootNode, walker, err := w.analyzeFile(file, parser)
 	if err != nil {
@@ -140,10 +131,10 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult,
 
 // IndexFile parses the file and fills in the meta info. Can use cache.
 func (w *Worker) IndexFile(file workspace.FileInfo) error {
-	if CacheDir == "" {
+	if w.config.CacheDir == "" {
 		result, err := w.ParseContents(file)
 		if w != nil {
-			updateMetaInfo(file.Name, &result.walker.meta)
+			updateMetaInfo(w.info, file.Name, &result.walker.meta)
 		}
 		return err
 	}
@@ -178,7 +169,7 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 		cacheFilenamePart = file.Name[0:1] + "_" + file.Name[2:]
 	}
 
-	cacheFile := filepath.Join(CacheDir, cacheFilenamePart+"."+contentsHash)
+	cacheFile := filepath.Join(w.config.CacheDir, cacheFilenamePart+"."+contentsHash)
 
 	start := time.Now()
 	fp, err := os.Open(cacheFile)
@@ -192,7 +183,7 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 	}
 	defer fp.Close()
 
-	if err := restoreMetaFromCache(file.Name, fp); err != nil {
+	if err := restoreMetaFromCache(w.info, w.config.Checkers.cachers, file.Name, fp); err != nil {
 		// do not really care about why exactly reading from cache failed
 		os.Remove(cacheFile)
 
@@ -211,10 +202,10 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 func (w *Worker) doParseFile(f workspace.FileInfo) []*Report {
 	var err error
 
-	if DebugParseDuration > 0 {
+	if w.config.DebugParseDuration > 0 {
 		start := time.Now()
 		defer func() {
-			if dur := time.Since(start); dur > DebugParseDuration {
+			if dur := time.Since(start); dur > w.config.DebugParseDuration {
 				log.Printf("Parsing of %s took %s", f.Name, dur)
 			}
 		}()
@@ -241,7 +232,6 @@ func (w *Worker) doParseFile(f workspace.FileInfo) []*Report {
 }
 
 func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Root, *rootWalker, error) {
-	start := time.Now()
 	rootNode := parser.GetRootNode()
 
 	if rootNode == nil {
@@ -251,16 +241,17 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 
 	rootIR := w.irconv.ConvertRoot(rootNode)
 
-	st := &meta.ClassParseState{CurrentFile: file.Name()}
+	st := &meta.ClassParseState{Info: w.info, CurrentFile: file.Name()}
 	walker := &rootWalker{
-		file: file,
-		ctx:  newRootContext(w.ctx, st),
+		config: w.config,
+		file:   file,
+		ctx:    newRootContext(w.config, w.ctx, st),
 
 		// We clone rules sets to remove all rules that
 		// should not be applied to this file because of the @path.
-		anyRset:   cloneRulesForFile(file.Name(), Rules.Any),
-		rootRset:  cloneRulesForFile(file.Name(), Rules.Root),
-		localRset: cloneRulesForFile(file.Name(), Rules.Local),
+		anyRset:   cloneRulesForFile(file.Name(), w.config.Rules.Any),
+		rootRset:  cloneRulesForFile(file.Name(), w.config.Rules.Root),
+		localRset: cloneRulesForFile(file.Name(), w.config.Rules.Local),
 
 		reVet: &regexpVet{
 			parser: w.reParser,
@@ -277,7 +268,7 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 
 	walker.beforeEnterFile()
 	rootIR.Walk(walker)
-	if meta.IsIndexingComplete() {
+	if w.info.IsIndexingComplete() {
 		analyzeFileRootLevel(rootIR, walker)
 	}
 	walker.afterLeaveFile()
@@ -291,8 +282,6 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 	for _, e := range parser.GetErrors() {
 		walker.Report(nil, LevelError, "syntax", "Syntax error: "+e.String())
 	}
-
-	atomic.AddInt64(&initWalkTime, int64(time.Since(start)))
 
 	return rootIR, walker, nil
 }
