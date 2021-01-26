@@ -106,6 +106,8 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, args *cmdlineArguments) error
 
 	l.config.PhpExtensions = strings.Split(args.phpExtensionsArg, ",")
 
+	l.config.ComputeBaselineHashes = l.args.baseline != "" || l.args.outputBaseline
+
 	if args.misspellList != "" {
 		err := LoadMisspellDicts(l.config, strings.Split(args.misspellList, ","))
 		if err != nil {

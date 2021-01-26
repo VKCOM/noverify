@@ -364,8 +364,8 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, level int, checkName, msg
 	}
 	msg = fmt.Sprintf(msg, args...)
 	var hash uint64
-	if d.config.BaselineProfile != nil {
-		// If baseline is not enabled, don't waste time on hash computations.
+	// If baseline is not enabled, don't waste time on hash computations.
+	if d.config.ComputeBaselineHashes {
 		hash = d.reportHash(&pos, startLn, checkName, msg)
 		if count := d.ctx.baseline.Count(hash); count >= 1 {
 			if d.ctx.hashCounters == nil {
