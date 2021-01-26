@@ -115,18 +115,18 @@ func TestTryCatchVariables(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 function f() {
-    try {
-        $a = 100;
+	try {
+		$a = 100;
 		$c = 100;
 		$d = 100;
-    } catch (Exception $_) {
-        $a = 200;
-    } catch (ExceptionDerived $_) {
-        $a = 200;
+	} catch (Exception $_) {
+		$a = 200;
+	} catch (ExceptionDerived $_) {
+		$a = 200;
 		$d = 200;
-    } finally {
-        $b = 100;
-    }
+	} finally {
+		$b = 100;
+	}
 
 	echo $a; // ok
 	echo $b; // from finally, ok
@@ -134,9 +134,9 @@ function f() {
 	echo $d; // might not defined (not all catches)
 
 	try {
-        $e = 100;
-        $f = 100;
-    } catch (Exception $_) {
+		$e = 100;
+		$f = 100;
+	} catch (Exception $_) {
 		$e = 200;
 	}
 
@@ -144,8 +144,8 @@ function f() {
 	echo $f; // might not defined
 
 	try {
-        $g = 100;
-    } finally {
+		$g = 100;
+	} finally {
 		$g = 200;
 		$h = 200;
 	}
@@ -166,41 +166,41 @@ func TestTryCatchVariablesWithExit(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 function f() {
-    try {
-        $a = 100;
+	try {
+		$a = 100;
 		$b = 200;
 		return;
-    } catch (Exception $_) {
-        $a = 200;
+	} catch (Exception $_) {
+		$a = 200;
 		$b = 200;
-        $c = 200;
-    } catch (ExceptionDerived $_) {
-        $a = 200;
-        $c = 200;
-    }
+		$c = 200;
+	} catch (ExceptionDerived $_) {
+		$a = 200;
+		$c = 200;
+	}
 
 	echo $a; // ok
 	echo $b; // might not defined
 	echo $c; // ok, try end with return
 
 	try {
-        $d = 100;
+		$d = 100;
 		return;
-    } catch (Exception $_) {
-        $d = 200;
+	} catch (Exception $_) {
+		$d = 200;
 		return;
-    } catch (ExceptionDerived $_) {
-        $d = 200;
+	} catch (ExceptionDerived $_) {
+		$d = 200;
 		$e = 100;
-        return;
-    }
+		return;
+	}
 
 	echo $d; // not defined
 	echo $e; // not defined
 
 	try {
-        $f = 100;
-    } finally {
+		$f = 100;
+	} finally {
 		$g = 100;
 		return;
 	}
