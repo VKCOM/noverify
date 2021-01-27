@@ -51,9 +51,8 @@ type Worker struct {
 
 	AllowDisable *regexp.Regexp
 
-	config   *Config
-	info     *meta.Info
-	checkers *CheckersRegistry
+	config *Config
+	info   *meta.Info
 }
 
 func newWorker(config *Config, info *meta.Info, id int) *Worker {
@@ -184,7 +183,7 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 	}
 	defer fp.Close()
 
-	if err := restoreMetaFromCache(w.info, w.checkers.cachers, file.Name, fp); err != nil {
+	if err := restoreMetaFromCache(w.info, w.config.Checkers.cachers, file.Name, fp); err != nil {
 		// do not really care about why exactly reading from cache failed
 		os.Remove(cacheFile)
 
