@@ -26,9 +26,6 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.ArrayExpr:
 		b.checkArray(n)
 
-	case *ir.ArrayDimFetchExpr:
-		b.checkArrayDimFetch(n)
-
 	case *ir.FunctionCallExpr:
 		b.checkFunctionCall(n)
 
@@ -569,12 +566,6 @@ func (b *blockLinter) checkContinueStmt(c *ir.ContinueStmt) {
 	b.walker.r.checkKeywordCase(c, "continue")
 	if c.Expr == nil && b.walker.ctx.innermostLoop == loopSwitch {
 		b.report(c, LevelError, "caseContinue", "'continue' inside switch is 'break'")
-	}
-}
-
-func (b *blockLinter) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
-	if s.CurlyBrace {
-		b.report(s, LevelDoNotReject, "arraySyntax", "a{i} indexing is deprecated since PHP 7.4, use a[i] instead")
 	}
 }
 

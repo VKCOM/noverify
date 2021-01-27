@@ -2003,20 +2003,3 @@ echo UNDEFINED_CONST;
 	test.Expect = []string{`Undefined constant UNDEFINED_CONST`}
 	test.RunAndMatch()
 }
-
-func TestCurlyBraceArrayDimFetch(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-$a = [];
-
-$_ = $a[0];
-$_ = $a[0][0];
-$_ = $a{0};
-$_ = $a[0]{0};
-`)
-	test.Expect = []string{
-		`a{i} indexing is deprecated since PHP 7.4, use a[i] instead`,
-		`a{i} indexing is deprecated since PHP 7.4, use a[i] instead`,
-	}
-	test.RunAndMatch()
-}
