@@ -8,19 +8,19 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/cmd/embeddedrules"
-	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/rules"
 )
 
-func InitEmbeddedRules(config *linter.Config, p *rules.Parser, filter func(r rules.Rule) bool) ([]*rules.Set, error) {
+func AddEmbeddedRules(rules *rules.Set, p *rules.Parser, filter func(r rules.Rule) bool) ([]*rules.Set, error) {
 	ruleSets, err := parseEmbeddedRules(p)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, rset := range ruleSets {
-		appendRuleSet(config, rset, filter)
+		appendRuleSet(rules, rset, filter)
 	}
+
 	return ruleSets, nil
 }
 
@@ -86,7 +86,7 @@ func parseEmbeddedRules(p *rules.Parser) ([]*rules.Set, error) {
 	return ruleSets, nil
 }
 
-func appendRuleSet(config *linter.Config, rset *rules.Set, filter func(r rules.Rule) bool) {
+func appendRuleSet(rulesSet *rules.Set, rset *rules.Set, filter func(r rules.Rule) bool) {
 	appendRules := func(dst, src *rules.ScopedSet) {
 		for i, list := range &src.RulesByKind {
 			for _, r := range list {
@@ -97,7 +97,7 @@ func appendRuleSet(config *linter.Config, rset *rules.Set, filter func(r rules.R
 			}
 		}
 	}
-	appendRules(config.Rules.Any, rset.Any)
-	appendRules(config.Rules.Root, rset.Root)
-	appendRules(config.Rules.Local, rset.Local)
+	appendRules(rulesSet.Any, rset.Any)
+	appendRules(rulesSet.Root, rset.Root)
+	appendRules(rulesSet.Local, rset.Local)
 }
