@@ -11,14 +11,14 @@ import (
 	"github.com/VKCOM/noverify/src/rules"
 )
 
-func AddEmbeddedRules(rules *rules.Set, p *rules.Parser, filter func(r rules.Rule) bool) ([]*rules.Set, error) {
+func AddEmbeddedRules(rulesSet *rules.Set, p *rules.Parser, filter func(r rules.Rule) bool) ([]*rules.Set, error) {
 	ruleSets, err := parseEmbeddedRules(p)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, rset := range ruleSets {
-		appendRuleSet(rules, rset, filter)
+		appendRuleSet(rulesSet, rset, filter)
 	}
 
 	return ruleSets, nil
