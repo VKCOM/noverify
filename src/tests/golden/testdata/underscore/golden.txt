@@ -142,6 +142,9 @@ ERROR   undefined: Property {mixed}->_template_settings does not exist at testda
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/underscore/underscore.php:885
       $_template_settings = array(
                             
+WARNING trailingComma: last element in a multi-line array must have a trailing comma at testdata/underscore/underscore.php:888
+        'escape'      => self::TEMPLATE_DEFAULT_ESCAPE
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ERROR   undefined: Property {mixed}->_template_settings does not exist at testdata/underscore/underscore.php:909
       $ts = $class_name::getInstance()->_template_settings;
                                         ^^^^^^^^^^^^^^^^^^
@@ -151,9 +154,15 @@ MAYBE   deprecated: Call to deprecated function create_function (7.2 Use anonymo
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/underscore/underscore.php:970
         return md5(join('_', array(
                              
+WARNING trailingComma: last element in a multi-line array must have a trailing comma at testdata/underscore/underscore.php:972
+          var_export($args, true)
+          ^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/underscore/underscore.php:995
       $key = md5(join('', array(
                           
+WARNING trailingComma: last element in a multi-line array must have a trailing comma at testdata/underscore/underscore.php:997
+        $wait
+        ^^^^^
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/underscore/underscore.php:1036
       $args = array_merge(array($function), func_get_args());
                           ^^^^^^^^^^^^^^^^

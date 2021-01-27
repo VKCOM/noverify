@@ -595,6 +595,21 @@ echo $someVal;`,
   // good: it will catch everything else
 }`,
 		},
+
+		{
+			Name:     "trailingComma",
+			Default:  true,
+			Quickfix: true,
+			Comment:  `Report the absence of a comma for the last element in a multi-line array.`,
+			Before: `$_ = [
+	10,
+	20
+]`,
+			After: `$_ = [
+	10,
+	20,
+]`,
+		},
 	}
 
 	for _, info := range allChecks {

@@ -273,6 +273,7 @@ $_ = array(1);
 		`You are not allowed to disable linter`,
 		`Use of old array syntax (use short form instead)`,
 		`Duplicate array key 1`,
+		`last element in a multi-line array must have a trailing comma`,
 		`Use of old array syntax (use short form instead)`,
 	}
 	test.RunAndMatch()
@@ -2001,5 +2002,48 @@ func TestUndefinedConst(t *testing.T) {
 echo UNDEFINED_CONST;
 `)
 	test.Expect = []string{`Undefined constant UNDEFINED_CONST`}
+	test.RunAndMatch()
+}
+
+func TestTrailingCommaForArray(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f() {
+    $_ = [10, 20, 30]; // ok
+
+    $_ = [10, 20,
+    30]; // ok
+
+	$_ = [10,
+		20,
+		30 // need comma
+	];
+
+	$_ = [10,
+		20,
+		30]; // ok
+
+	$_ = [
+		10,
+		20,
+		30]; // ok
+	
+	$_ = [
+        10,
+        20,
+        30,  // ok
+    ];
+
+    $_ = [
+        10,
+        20,
+        30  // need comma
+    ];
+}
+`)
+	test.Expect = []string{
+		`last element in a multi-line array must have a trailing comma`,
+		`last element in a multi-line array must have a trailing comma`,
+	}
 	test.RunAndMatch()
 }
