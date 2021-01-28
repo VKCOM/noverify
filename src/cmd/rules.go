@@ -13,16 +13,16 @@ import (
 )
 
 func AddEmbeddedRules(rset *rules.Set, p *rules.Parser, filter func(r rules.Rule) bool) ([]*rules.Set, error) {
-	embeddedRules, err := parseEmbeddedRules(p)
+	embeddedRuleSets, err := parseEmbeddedRules(p)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, embeddedRule := range embeddedRules {
-		appendRuleSet(rset, embeddedRule, filter)
+	for _, embeddedRuleSet := range embeddedRuleSets {
+		appendRuleSet(rset, embeddedRuleSet, filter)
 	}
 
-	return embeddedRules, nil
+	return embeddedRuleSets, nil
 }
 
 func parseRules() ([]*rules.Set, error) {
