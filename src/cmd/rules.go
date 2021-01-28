@@ -17,6 +17,7 @@ func InitEmbeddedRules(config *linter.Config, p *rules.Parser, filter func(r rul
 	if err != nil {
 		return nil, err
 	}
+
 	for _, rset := range ruleSets {
 		appendRuleSet(config, rset, filter)
 	}

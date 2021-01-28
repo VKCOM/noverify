@@ -161,7 +161,7 @@ main();
 		// If it fails, encoding and/or decoding is broken.
 		encodedMeta := &result.walker.meta
 		decodedMeta := &fileMeta{}
-		if err := readMetaCache(bytes.NewReader(buf.Bytes()), "", decodedMeta); err != nil {
+		if err := readMetaCache(bytes.NewReader(buf.Bytes()), nil, "", decodedMeta); err != nil {
 			t.Errorf("decoding failed: %v", err)
 		} else {
 			// TODO: due to lots of important unexported fields,

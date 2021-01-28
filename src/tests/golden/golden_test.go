@@ -1,25 +1,11 @@
 package golden_test
 
 import (
-	"os"
 	"testing"
 
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 )
-
-var linterConfig = linter.NewConfig()
-
-func TestMain(t *testing.M) {
-	err := linttest.InitEmbeddedRules(linterConfig)
-	if err != nil {
-		panic(err)
-	}
-
-	exitCode := t.Run()
-
-	os.Exit(exitCode)
-}
 
 func TestGolden(t *testing.T) {
 	targets := []*linttest.GoldenTestSuite{
@@ -181,8 +167,15 @@ func TestGolden(t *testing.T) {
 
 	e2eSuite := linttest.NewGoldenE2ETestSuite(t)
 
+	var linterConfig = linter.NewConfig()
+	err := linttest.InitEmbeddedRules(linterConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	for _, target := range targets {
-		linttest.PrepareGoldenTestSuite(target, t, linterConfig, "testdata", "golden.txt")
+		l := linter.NewLinter(linterConfig)
+		linttest.PrepareGoldenTestSuite(target, t, l, "testdata", "golden.txt")
 		target.Run()
 		e2eSuite.AddTest(target)
 	}

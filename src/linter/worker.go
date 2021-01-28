@@ -183,7 +183,7 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 	}
 	defer fp.Close()
 
-	if err := restoreMetaFromCache(w.info, file.Name, fp); err != nil {
+	if err := restoreMetaFromCache(w.info, w.config.Checkers.cachers, file.Name, fp); err != nil {
 		// do not really care about why exactly reading from cache failed
 		os.Remove(cacheFile)
 

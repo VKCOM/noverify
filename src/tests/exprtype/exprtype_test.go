@@ -40,12 +40,6 @@ var (
 	exprTypeResult   map[ir.Node]meta.TypesMap
 )
 
-func init() {
-	linter.RegisterBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker {
-		return &exprTypeCollector{ctx: ctx}
-	})
-}
-
 func TestExprTypeListOverArray(t *testing.T) {
 	code := `<?php
 /**
@@ -2847,6 +2841,9 @@ func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 
 func exprTypeTestImpl(t *testing.T, params *exprTypeTestParams, kphp bool) {
 	config := linter.NewConfig()
+	config.Checkers.AddBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker {
+		return &exprTypeCollector{ctx: ctx}
+	})
 	config.KPHP = kphp
 	l := linter.NewLinter(config)
 	if params.stubs != "" {
