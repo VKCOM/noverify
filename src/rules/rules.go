@@ -44,6 +44,17 @@ type Set struct {
 // Categories help to assign a better execution strategy for a rule.
 type ScopedSet struct {
 	RulesByKind [ir.NumKinds][]Rule
+	CountRules  int
+}
+
+func (s *ScopedSet) Add(kind ir.NodeKind, rule Rule) {
+	s.RulesByKind[kind] = append(s.RulesByKind[kind], rule)
+	s.CountRules++
+}
+
+func (s *ScopedSet) Set(kind ir.NodeKind, rules []Rule) {
+	s.RulesByKind[kind] = append(s.RulesByKind[kind], rules...)
+	s.CountRules += len(rules)
 }
 
 type RuleDoc struct {

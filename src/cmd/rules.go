@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/cmd/embeddedrules"
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/rules"
 )
 
@@ -88,12 +89,13 @@ func parseEmbeddedRules(p *rules.Parser) ([]*rules.Set, error) {
 
 func appendRuleSet(dstSet *rules.Set, srcSet *rules.Set, filter func(r rules.Rule) bool) {
 	appendRules := func(dst, src *rules.ScopedSet) {
-		for i, list := range &src.RulesByKind {
-			for _, r := range list {
-				if !filter(r) {
+		for kind, ruleByKind := range &src.RulesByKind {
+			for _, rule := range ruleByKind {
+				if !filter(rule) {
 					continue
 				}
-				dst.RulesByKind[i] = append(dst.RulesByKind[i], r)
+
+				dst.Add(ir.NodeKind(kind), rule)
 			}
 		}
 	}
