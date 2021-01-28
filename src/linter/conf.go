@@ -15,8 +15,9 @@ import (
 type Config struct {
 	// BaselineProfile is a suppression database for warnings.
 	// Nil profile is an empty suppression profile.
-	BaselineProfile      *baseline.Profile
-	ConservativeBaseline bool
+	BaselineProfile       *baseline.Profile
+	ComputeBaselineHashes bool // Whether we need to compute report hashes
+	ConservativeBaseline  bool
 
 	ApplyQuickFixes bool
 

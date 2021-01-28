@@ -4,31 +4,31 @@ MAYBE   deprecated: Call to deprecated function dl (5.3) at testdata/phprocksyd/
 ERROR   undefined: Use null instead of NULL at testdata/phprocksyd/Phprocksyd.php:321
             $n = stream_select($read, $write, $except, NULL);
                                                        ^^^^
-INFO    phpdocLint: malformed @param $stream_id tag (maybe type is missing?) on line 2 at testdata/phprocksyd/Phprocksyd.php:367
+WARNING phpdocLint: malformed @param $stream_id tag (maybe type is missing?) on line 2 at testdata/phprocksyd/Phprocksyd.php:367
     private function requestFree($stream_id, $req)
                      ^^^^^^^^^^^
-INFO    phpdocLint: malformed @param $req tag (maybe type is missing?) on line 3 at testdata/phprocksyd/Phprocksyd.php:367
+WARNING phpdocLint: malformed @param $req tag (maybe type is missing?) on line 3 at testdata/phprocksyd/Phprocksyd.php:367
     private function requestFree($stream_id, $req)
                      ^^^^^^^^^^^
-INFO    phpdocLint: malformed @param $stream_id tag (maybe type is missing?) on line 2 at testdata/phprocksyd/Phprocksyd.php:392
+WARNING phpdocLint: malformed @param $stream_id tag (maybe type is missing?) on line 2 at testdata/phprocksyd/Phprocksyd.php:392
     private function requestCheck($stream_id, $req)
                      ^^^^^^^^^^^^
-INFO    phpdocLint: malformed @param $req tag (maybe type is missing?) on line 3 at testdata/phprocksyd/Phprocksyd.php:392
+WARNING phpdocLint: malformed @param $req tag (maybe type is missing?) on line 3 at testdata/phprocksyd/Phprocksyd.php:392
     private function requestCheck($stream_id, $req)
                      ^^^^^^^^^^^^
-INFO    unused: Variable status is unused (use $_ to ignore this inspection) at testdata/phprocksyd/Phprocksyd.php:394
+WARNING unused: Variable status is unused (use $_ to ignore this inspection) at testdata/phprocksyd/Phprocksyd.php:394
         $status = null;
         ^^^^^^^
-INFO    phpdocLint: malformed @param $stream_id tag (maybe type is missing?) on line 2 at testdata/phprocksyd/Phprocksyd.php:424
+WARNING phpdocLint: malformed @param $stream_id tag (maybe type is missing?) on line 2 at testdata/phprocksyd/Phprocksyd.php:424
     protected function requestTerminate($stream_id, $req)
                        ^^^^^^^^^^^^^^^^
-INFO    phpdocLint: malformed @param $req tag (maybe type is missing?) on line 3 at testdata/phprocksyd/Phprocksyd.php:424
+WARNING phpdocLint: malformed @param $req tag (maybe type is missing?) on line 3 at testdata/phprocksyd/Phprocksyd.php:424
     protected function requestTerminate($stream_id, $req)
                        ^^^^^^^^^^^^^^^^
-INFO    phpdocLint: malformed @param $stream_id tag (maybe type is missing?) on line 2 at testdata/phprocksyd/Phprocksyd.php:447
+WARNING phpdocLint: malformed @param $stream_id tag (maybe type is missing?) on line 2 at testdata/phprocksyd/Phprocksyd.php:447
     protected function requestRun($stream_id, $req)
                        ^^^^^^^^^^
-INFO    phpdocLint: malformed @param $req tag (maybe type is missing?) on line 3 at testdata/phprocksyd/Phprocksyd.php:447
+WARNING phpdocLint: malformed @param $req tag (maybe type is missing?) on line 3 at testdata/phprocksyd/Phprocksyd.php:447
     protected function requestRun($stream_id, $req)
                        ^^^^^^^^^^
 ERROR   undefined: Call to undefined method {mixed}->run() at testdata/phprocksyd/Phprocksyd.php:479

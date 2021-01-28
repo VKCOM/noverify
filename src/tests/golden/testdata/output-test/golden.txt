@@ -1,18 +1,18 @@
-INFO    linterError: You are not allowed to disable linter at testdata/output-test/output_test.php:3
+WARNING linterError: You are not allowed to disable linter at testdata/output-test/output_test.php:3
 /** @linter disable */
 ^^^^^^^^^^^^^^^^^^^^^^
-INFO    linterError: You are not allowed to disable linter at testdata/output-test/output_test.php:6
+WARNING linterError: You are not allowed to disable linter at testdata/output-test/output_test.php:6
  * @linter disable
 ^^^^^^^^^^^^^^^^^^
-INFO    linterError: You are not allowed to disable linter at testdata/output-test/output_test.php:10
+WARNING linterError: You are not allowed to disable linter at testdata/output-test/output_test.php:10
  * @linter disable
 ^^^^^^^^^^^^^^^^^^
-INFO    linterError: You are not allowed to disable linter at testdata/output-test/output_test.php:11
+WARNING linterError: You are not allowed to disable linter at testdata/output-test/output_test.php:11
  * @linter disable
 ^^^^^^^^^^^^^^^^^^
-INFO    linterError: You are not allowed to disable linter at testdata/output-test/output_test.php:12
+WARNING linterError: You are not allowed to disable linter at testdata/output-test/output_test.php:12
  * @linter disable
 ^^^^^^^^^^^^^^^^^^
-INFO    linterError: You are not allowed to disable linter at testdata/output-test/output_test.php:13
+WARNING linterError: You are not allowed to disable linter at testdata/output-test/output_test.php:13
  * @linter disable
 ^^^^^^^^^^^^^^^^^^

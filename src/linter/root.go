@@ -305,8 +305,6 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, level int, checkName, msg
 	if isReportForNode {
 		if n == nil {
 			// Hack to parse syntax error message from php-parser.
-			// When in language server mode, do not map syntax errors in order not to
-			// complain about unfinished piece of code that user is currently writing.
 			if strings.Contains(msg, "syntax error") && strings.Contains(msg, " at line ") {
 				// it is in form "Syntax error: syntax error: unexpected '*' at line 4"
 				if lastIdx := strings.LastIndexByte(msg, ' '); lastIdx > 0 {
@@ -358,14 +356,10 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, level int, checkName, msg
 		}
 	}
 
-	// Replace Unused with Info (Notice) in non-LSP mode.
-	if level == LevelUnused {
-		level = LevelInformation
-	}
 	msg = fmt.Sprintf(msg, args...)
 	var hash uint64
-	if d.config.BaselineProfile != nil {
-		// If baseline is not enabled, don't waste time on hash computations.
+	// If baseline is not enabled, don't waste time on hash computations.
+	if d.config.ComputeBaselineHashes {
 		hash = d.reportHash(&pos, startLn, checkName, msg)
 		if count := d.ctx.baseline.Count(hash); count >= 1 {
 			if d.ctx.hashCounters == nil {
@@ -468,7 +462,7 @@ func (d *rootWalker) reportHash(pos *position.Position, startLine []byte, checkN
 func (d *rootWalker) reportUndefinedVariable(v ir.Node, maybeHave bool) {
 	sv, ok := v.(*ir.SimpleVar)
 	if !ok {
-		d.Report(v, LevelInformation, "undefined", "Unknown variable variable %s used",
+		d.Report(v, LevelWarning, "undefined", "Unknown variable variable %s used",
 			meta.NameNodeToString(v))
 		return
 	}
@@ -478,7 +472,7 @@ func (d *rootWalker) reportUndefinedVariable(v ir.Node, maybeHave bool) {
 	}
 
 	if maybeHave {
-		d.Report(sv, LevelInformation, "undefined", "Variable might have not been defined: %s", sv.Name)
+		d.Report(sv, LevelWarning, "undefined", "Variable might have not been defined: %s", sv.Name)
 	} else {
 		d.Report(sv, LevelError, "undefined", "Undefined variable: %s", sv.Name)
 	}
@@ -505,7 +499,7 @@ func (d *rootWalker) handleComment(c freefloating.String) {
 			}
 			if d.linterDisabled {
 				needleLine := ln.Line() + c.Position.StartLine - 1
-				d.ReportByLine(needleLine, LevelInformation, "linterError", "Linter is already disabled for this file")
+				d.ReportByLine(needleLine, LevelWarning, "linterError", "Linter is already disabled for this file")
 				continue
 			}
 			canDisable := false
@@ -515,7 +509,7 @@ func (d *rootWalker) handleComment(c freefloating.String) {
 			d.linterDisabled = canDisable
 			if !canDisable {
 				needleLine := ln.Line() + c.Position.StartLine - 1
-				d.ReportByLine(needleLine, LevelInformation, "linterError", "You are not allowed to disable linter")
+				d.ReportByLine(needleLine, LevelWarning, "linterError", "You are not allowed to disable linter")
 			}
 		}
 	}
@@ -902,7 +896,7 @@ func (d *rootWalker) checkOldStyleConstructor(meth *ir.ClassMethodStmt, nm strin
 	if strings.EqualFold(d.ctx.st.CurrentClass[lastDelim+1:], nm) {
 		_, isClass := d.currentClassNode.(*ir.ClassStmt)
 		if isClass {
-			d.Report(meth.MethodName, LevelDoNotReject, "oldStyleConstructor", "Old-style constructor usage, use __construct instead")
+			d.Report(meth.MethodName, LevelNotice, "oldStyleConstructor", "Old-style constructor usage, use __construct instead")
 		}
 	}
 }
@@ -916,7 +910,7 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	pos := ir.GetPosition(meth)
 
 	if funcSize := pos.EndLine - pos.StartLine; funcSize > maxFunctionLines {
-		d.Report(meth.MethodName, LevelDoNotReject, "complexity", "Too big method: more than %d lines", maxFunctionLines)
+		d.Report(meth.MethodName, LevelNotice, "complexity", "Too big method: more than %d lines", maxFunctionLines)
 	}
 
 	modif := d.parseMethodModifiers(meth)
@@ -937,7 +931,7 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	if meth.PhpDocComment == "" && modif.accessLevel == meta.Public {
 		// Permit having "__call" and other magic method without comments.
 		if !insideInterface && !strings.HasPrefix(nm, "_") {
-			d.Report(meth.MethodName, LevelDoNotReject, "phpdoc", "Missing PHPDoc for %q public method", nm)
+			d.Report(meth.MethodName, LevelNotice, "phpdoc", "Missing PHPDoc for %q public method", nm)
 		}
 	}
 	d.checkCommentMisspellings(meth.MethodName, meth.PhpDocComment)
@@ -1041,10 +1035,10 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 
 func (d *rootWalker) reportPhpdocErrors(n ir.Node, errs phpdocErrors) {
 	for _, err := range errs.phpdocLint {
-		d.Report(n, LevelInformation, "phpdocLint", "%s", err)
+		d.Report(n, LevelWarning, "phpdocLint", "%s", err)
 	}
 	for _, err := range errs.phpdocType {
-		d.Report(n, LevelInformation, "phpdocType", "%s", err)
+		d.Report(n, LevelNotice, "phpdocType", "%s", err)
 	}
 }
 
@@ -1055,7 +1049,7 @@ func (d *rootWalker) parsePHPDocVar(n ir.Node, doc []phpdoc.CommentPart) (m meta
 		if ok && part.Name() == "var" {
 			types, warning := typesFromPHPDoc(&d.ctx, part.Type)
 			if warning != "" {
-				d.Report(n, LevelInformation, "phpdocType", "%s on line %d", warning, part.Line())
+				d.Report(n, LevelNotice, "phpdocType", "%s on line %d", warning, part.Line())
 			}
 			m = newTypesMap(&d.ctx, types)
 		}
@@ -1478,7 +1472,7 @@ func (d *rootWalker) checkMisspellings(n ir.Node, s string, label string, skip f
 		if skip(c.Corrected) || skip(c.Original) {
 			continue
 		}
-		d.Report(n, LevelDoNotReject, label, `"%s" is a misspelling of "%s"`, c.Original, c.Corrected)
+		d.Report(n, LevelNotice, label, `"%s" is a misspelling of "%s"`, c.Original, c.Corrected)
 	}
 }
 
@@ -1487,7 +1481,7 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	pos := ir.GetPosition(fun)
 
 	if funcSize := pos.EndLine - pos.StartLine; funcSize > maxFunctionLines {
-		d.Report(fun.FunctionName, LevelDoNotReject, "complexity", "Too big function: more than %d lines", maxFunctionLines)
+		d.Report(fun.FunctionName, LevelNotice, "complexity", "Too big function: more than %d lines", maxFunctionLines)
 	}
 
 	var hintReturnType meta.TypesMap
@@ -1546,7 +1540,7 @@ func (d *rootWalker) checkFuncParam(p *ir.Parameter) {
 	// Could run special check over them to detect the potential fatal errors.
 	walkNode(p.DefaultValue, func(w ir.Node) bool {
 		if n, ok := w.(*ir.ArrayExpr); ok && !n.ShortSyntax {
-			d.Report(n, LevelDoNotReject, "arraySyntax", "Use of old array syntax (use short form instead)")
+			d.Report(n, LevelNotice, "arraySyntax", "Use of old array syntax (use short form instead)")
 		}
 		return true
 	})
@@ -1895,7 +1889,7 @@ func (d *rootWalker) checkImplementedStep(n ir.Node, className string, otherClas
 			continue
 		}
 		if m.Info.Name != ifaceMethod.Name {
-			d.Report(n, LevelDoNotReject, "nameCase", "%s::%s should be spelled as %s::%s",
+			d.Report(n, LevelNotice, "nameCase", "%s::%s should be spelled as %s::%s",
 				d.ctx.st.CurrentClass, m.Info.Name, className, ifaceMethod.Name)
 		}
 	}
@@ -1922,7 +1916,7 @@ func (d *rootWalker) checkNameCase(n ir.Node, nameUsed, nameExpected string) {
 		return
 	}
 	if nameUsed != nameExpected {
-		d.Report(n, LevelInformation, "nameCase", "%s should be spelled %s",
+		d.Report(n, LevelWarning, "nameCase", "%s should be spelled %s",
 			nameUsed, nameExpected)
 	}
 }

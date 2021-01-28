@@ -47,6 +47,7 @@ func Help(*MainConfig) (int, error) {
 func declareRules() *linter.Config {
 	p := rules.NewParser()
 	config := linter.NewConfig()
+	config.Rules = rules.NewSet()
 	ruleSets, err := InitEmbeddedRules(config, p, func(r rules.Rule) bool { return true })
 	if err != nil {
 		panic(err)
