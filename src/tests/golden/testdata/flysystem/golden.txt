@@ -31,10 +31,10 @@ WARNING unused: Variable e is unused (use $_ to ignore this inspection) at testd
 MAYBE   deprecated: Call to deprecated method {\League\Flysystem\FilesystemInterface}->get() at testdata/flysystem/src/MountManager.php:646
         return $this->getFilesystem($prefix)->get($path);
                                               ^^^
-INFO    unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Plugin/ForcedCopy.php:33
+WARNING unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Plugin/ForcedCopy.php:33
         } catch (FileNotFoundException $e) {
                                        ^^
-INFO    unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Plugin/ForcedRename.php:33
+WARNING unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Plugin/ForcedRename.php:33
         } catch (FileNotFoundException $e) {
                                        ^^
 WARNING unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Plugin/PluggableTrait.php:89
