@@ -711,7 +711,7 @@ func (b *blockLinter) checkMultilineArrayTrailingComma(item *ir.ArrayItemExpr) {
 
 	itemText := src[from : to+1]
 	if itemText[len(itemText)-1] != ',' && itemText[len(itemText)-1] != ']' {
-		b.report(item, LevelDoNotReject, "trailingComma", "last element in a multi-line array must have a trailing comma")
+		b.report(item, LevelNotice, "trailingComma", "last element in a multi-line array must have a trailing comma")
 		b.addFixForMultilineArrayTrailingComma(item)
 	}
 }
