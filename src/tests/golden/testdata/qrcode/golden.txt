@@ -13,7 +13,7 @@ MAYBE   ternarySimplify: could rewrite as `$this->options['fc'] ?? '000000'` at 
 INFO    deadCode: Unreachable code at testdata/qrcode/qrcode.php:155
     return null;
            ^^^^
-WARNING trailingComma: last element in a multi-line array must have a trailing comma at testdata/qrcode/qrcode.php:185
+MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/qrcode/qrcode.php:185
       'b' => $mtx
       ^^^^^^^^^^^
 INFO    unused: Variable mode is unused (use $_ to ignore this inspection) at testdata/qrcode/qrcode.php:177
