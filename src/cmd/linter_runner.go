@@ -193,7 +193,7 @@ func (l *linterRunner) initCheckMappings() {
 
 	l.reportsExcludeChecksSet = stringToSet(l.args.reportsExcludeChecks)
 	l.reportsIncludeChecksSet = stringToSet(l.args.allowChecks)
-	if l.args.reportsCritical != allNonMaybe {
+	if l.args.reportsCritical != allNonNotice {
 		l.reportsCriticalSet = stringToSet(l.args.reportsCritical)
 	}
 }

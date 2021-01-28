@@ -1,4 +1,4 @@
-INFO    unused: Variable a is unused (use $_ to ignore this inspection) at testdata/math/src/BigDecimal.php:292
+WARNING unused: Variable a is unused (use $_ to ignore this inspection) at testdata/math/src/BigDecimal.php:292
         [$a, $b] = $this->scaleValues($this, $that);
          ^^
 MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/math/src/BigInteger.php:435
