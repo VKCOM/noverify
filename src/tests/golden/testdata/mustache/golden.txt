@@ -19,7 +19,7 @@ MAYBE   ternarySimplify: could rewrite as `$node[Mustache_Tokenizer::INDENT] ?? 
 MAYBE   ternarySimplify: could rewrite as `$node[Mustache_Tokenizer::FILTERS] ?? array()` at testdata/mustache/src/Mustache/Compiler.php:166
                         isset($node[Mustache_Tokenizer::FILTERS]) ? $node[Mustache_Tokenizer::FILTERS] : array(),
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-INFO    unused: Variable keystr is unused (use $_ to ignore this inspection) at testdata/mustache/src/Mustache/Compiler.php:289
+WARNING unused: Variable keystr is unused (use $_ to ignore this inspection) at testdata/mustache/src/Mustache/Compiler.php:289
         $keystr = var_export($key, true);
         ^^^^^^^
 MAYBE   ternarySimplify: could rewrite as `$options['cache_file_mode'] ?? null` at testdata/mustache/src/Mustache/Engine.php:156
@@ -55,6 +55,6 @@ MAYBE   phpdoc: Missing PHPDoc for "getTemplateName" public method at testdata/m
 WARNING regexpVet: '\w' intersects with '\d' in [\w\d\.] at testdata/mustache/src/Mustache/Loader/InlineLoader.php:115
             foreach (preg_split("/^@@(?= [\w\d\.]+$)/m", $data, -1) as $chunk) {
                                 ^^^^^^^^^^^^^^^^^^^^^^^
-INFO    unused: Variable v is unused (use $_ to ignore this inspection) at testdata/mustache/src/Mustache/Template.php:122
+WARNING unused: Variable v is unused (use $_ to ignore this inspection) at testdata/mustache/src/Mustache/Template.php:122
                 foreach ($value as $k => $v) {
                                          ^^
