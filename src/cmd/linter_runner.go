@@ -203,9 +203,8 @@ func (l *linterRunner) initRules(ruleSets []*rules.Set) error {
 		return l.IsEnabledByFlags(r.Name)
 	}
 
-	l.config.Rules = rules.NewSet()
 	for _, rset := range ruleSets {
-		appendRuleSet(l.config, rset, ruleFilter)
+		appendRuleSet(l.config.Rules, rset, ruleFilter)
 	}
 
 	return nil

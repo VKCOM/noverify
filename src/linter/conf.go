@@ -68,7 +68,7 @@ func NewConfig() *Config {
 	addBuiltinCheckers(reg)
 	return &Config{
 		SrcInput:       inputs.NewDefaultSourceInput(),
-		Rules:          &rules.Set{},
+		Rules:          rules.NewSet(),
 		MaxConcurrency: runtime.NumCPU(),
 		IsDiscardVar:   isUnderscore,
 		Checkers:       reg,
