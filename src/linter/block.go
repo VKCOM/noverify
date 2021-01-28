@@ -804,7 +804,9 @@ func (b *blockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
 
 func (b *blockWalker) handleStaticCall(e *ir.StaticCallExpr) bool {
 	call := resolveStaticMethodCall(b.r.ctx.st, e)
-	b.callsParentConstructor = call.isCallsParentConstructor
+	if !b.callsParentConstructor {
+		b.callsParentConstructor = call.isCallsParentConstructor
+	}
 
 	e.Class.Walk(b)
 	e.Call.Walk(b)
