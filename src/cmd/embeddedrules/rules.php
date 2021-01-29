@@ -355,3 +355,16 @@ function strictCmp() {
      */
     array_search($b, $_);
 }
+
+/**
+ * @comment Report the use of curly braces for indexing.
+ * @before  $x{0}
+ * @after   $x[0]
+ */
+function indexingSyntax() {
+    /**
+     * @warning a{i} indexing is deprecated since PHP 7.4, use a[i] instead
+     * @fix $x[$y]
+     */
+    $x{$y};
+}
