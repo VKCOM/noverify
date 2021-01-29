@@ -74,6 +74,33 @@ class Bad2 extends WithTwoParams {
 	test.RunAndMatch()
 }
 
+func TestParentConstructorCallWithOtherStaticCall(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class Foo {
+	public function __construct(int $a) {}
+}
+
+class Boo extends Foo {
+  /** doc */
+  public static function getId(): int {}
+
+  public function __construct() {
+    parent::__construct(self::getId());
+  }
+}
+
+class Goo extends Foo {
+  /** doc */
+  public static function getId(): int {}
+
+  public function __construct() {
+    parent::__construct(100);
+    $_ = self::getId();
+  }
+}
+`)
+}
+
 func TestNewAbstract(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

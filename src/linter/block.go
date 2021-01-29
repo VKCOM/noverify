@@ -329,11 +329,12 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 	if b.isIndexingComplete() {
 		b.linter.enterNode(n)
 	}
-	if b.isIndexingComplete() && b.r.anyRset != nil {
+	if b.isIndexingComplete() {
 		// Note: no need to check localRset for nil.
 		kind := ir.GetNodeKind(n)
-		b.r.runRules(n, b.ctx.sc, b.r.anyRset.RulesByKind[kind])
-		if !b.rootLevel {
+		if b.r.anyRset != nil {
+			b.r.runRules(n, b.ctx.sc, b.r.anyRset.RulesByKind[kind])
+		} else if !b.rootLevel && b.r.localRset != nil {
 			b.r.runRules(n, b.ctx.sc, b.r.localRset.RulesByKind[kind])
 		}
 	}
@@ -837,7 +838,9 @@ func (b *blockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
 
 func (b *blockWalker) handleStaticCall(e *ir.StaticCallExpr) bool {
 	call := resolveStaticMethodCall(b.r.ctx.st, e)
-	b.callsParentConstructor = call.isCallsParentConstructor
+	if !b.callsParentConstructor {
+		b.callsParentConstructor = call.isCallsParentConstructor
+	}
 
 	e.Class.Walk(b)
 	e.Call.Walk(b)

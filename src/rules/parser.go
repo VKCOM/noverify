@@ -362,8 +362,7 @@ func (p *parser) parseRule(st ir.Node, proto *Rule) error {
 		st = st2.Expr
 	}
 	kind := ir.GetNodeKind(st)
-	dst.RulesByKind[kind] = append(dst.RulesByKind[kind], rule)
-
+	dst.Add(kind, rule)
 	return nil
 }
 
