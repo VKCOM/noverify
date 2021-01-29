@@ -1,9 +1,18 @@
 WARNING unused: Variable a is unused (use $_ to ignore this inspection) at testdata/math/src/BigDecimal.php:292
         [$a, $b] = $this->scaleValues($this, $that);
          ^^
+MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/math/src/BigInteger.php:435
+            new BigInteger($remainder)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: could rewrite as `$matches['fractional'] ?? ''` at testdata/math/src/BigNumber.php:90
             $fractional = isset($matches['fractional']) ? $matches['fractional'] : '';
                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   assignOp: could rewrite as `$number ^= $xor` at testdata/math/src/Internal/Calculator.php:622
         $number = $number ^ $xor;
         ^^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/math/src/Internal/Calculator/GmpCalculator.php:67
+            \gmp_strval($r)
+            ^^^^^^^^^^^^^^^
+MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/math/src/Internal/Calculator/NativeCalculator.php:187
+                    (string) $r
+                    ^^^^^^^^^^^
