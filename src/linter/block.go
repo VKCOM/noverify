@@ -1820,27 +1820,53 @@ func (b *blockWalker) LeaveNode(w ir.Node) {
 	b.path.Pop()
 
 	if b.ctx.exitFlags == 0 {
-		switch w.(type) {
-		case *ir.ReturnStmt:
-			b.ctx.exitFlags |= FlagReturn
-			b.ctx.containsExitFlags |= FlagReturn
-		case *ir.ExitExpr:
-			b.ctx.exitFlags |= FlagDie
-			b.ctx.containsExitFlags |= FlagDie
-		case *ir.ThrowStmt:
-			b.ctx.exitFlags |= FlagThrow
-			b.ctx.containsExitFlags |= FlagThrow
-		case *ir.ContinueStmt:
-			b.ctx.exitFlags |= FlagContinue
-			b.ctx.containsExitFlags |= FlagContinue
-		case *ir.BreakStmt:
-			b.ctx.exitFlags |= FlagBreak
-			b.ctx.containsExitFlags |= FlagBreak
-		}
+		b.updateExitFlags(w)
 	}
 
 	for _, c := range b.custom {
 		c.AfterLeaveNode(w)
+	}
+}
+
+func (b *blockWalker) updateExitFlags(n ir.Node) {
+	switch n := n.(type) {
+	case *ir.ReturnStmt:
+		b.ctx.exitFlags |= FlagReturn
+		b.ctx.containsExitFlags |= FlagReturn
+	case *ir.ExitExpr:
+		b.ctx.exitFlags |= FlagDie
+		b.ctx.containsExitFlags |= FlagDie
+	case *ir.ThrowStmt:
+		b.ctx.exitFlags |= FlagThrow
+		b.ctx.containsExitFlags |= FlagThrow
+	case *ir.ContinueStmt:
+		b.ctx.exitFlags |= FlagContinue
+		b.ctx.containsExitFlags |= FlagContinue
+	case *ir.BreakStmt:
+		b.ctx.exitFlags |= FlagBreak
+		b.ctx.containsExitFlags |= FlagBreak
+	case *ir.ExpressionStmt:
+		b.updateExitFlags(n.Expr)
+	case *ir.FunctionCallExpr:
+		if b.r.config.IgnoreTriggerError {
+			return
+		}
+		nm, ok := n.Function.(*ir.Name)
+		if !ok {
+			return
+		}
+		// We can't use solver.GetFuncName here as PHP function names
+		// lookup requires full symbol table information => we can't use
+		// it during the indexing.
+		funcName := strings.TrimPrefix(nm.Value, `\`)
+		if (funcName != `trigger_error` && funcName != `user_error`) || len(n.Args) != 2 {
+			return
+		}
+		errorLevel, ok := n.Arg(1).Expr.(*ir.ConstFetchExpr)
+		// TODO: add meta.GetConstName() func and use it here.
+		if ok && errorLevel.Constant.Value == `E_USER_ERROR` {
+			b.ctx.exitFlags |= FlagDie
+		}
 	}
 }
 
