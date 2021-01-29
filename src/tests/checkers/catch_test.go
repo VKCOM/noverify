@@ -110,3 +110,115 @@ try {
 }
 `)
 }
+
+func TestTryCatchVariables(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class ExceptionDerived extends Exception {}
+
+function f() {
+	try {
+		$a = 100;
+		$c = 100;
+		$d = 100;
+	} catch (ExceptionDerived $_) {
+		$a = 200;
+		$d = 200;
+	} catch (Exception $_) {
+		$a = 200;
+	} finally {
+		$b = 100;
+	}
+
+	echo $a; // ok
+	echo $b; // from finally, ok
+	echo $c; // might not defined
+	echo $d; // might not defined (not all catches)
+
+	try {
+		$e = 100;
+		$f = 100;
+	} catch (Exception $_) {
+		$e = 200;
+	}
+
+	echo $e; // ok
+	echo $f; // might not defined
+
+	try {
+		$g = 100;
+	} finally {
+		$g = 200;
+		$h = 200;
+	}
+
+	echo $g; // ok
+	echo $h; // ok
+}
+`)
+	test.Expect = []string{
+		`Variable might have not been defined: c`,
+		`Variable might have not been defined: d`,
+		`Variable might have not been defined: f`,
+	}
+	test.RunAndMatch()
+}
+
+func TestTryCatchVariablesWithExit(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class ExceptionDerived extends Exception {}
+
+function f() {
+	try {
+		$a = 100;
+		$b = 200;
+		return;
+	} catch (ExceptionDerived $_) {
+		$a = 200;
+		$c = 200;
+	} catch (Exception $_) {
+		$a = 200;
+		$b = 200;
+		$c = 200;
+	}
+
+	echo $a; // ok
+	echo $b; // might not defined
+	echo $c; // ok, try end with return
+
+	try {
+		$d = 100;
+		return;
+	} catch (ExceptionDerived $_) {
+		$d = 200;
+		$e = 100;
+		return;
+	} catch (Exception $_) {
+		$d = 200;
+		return;
+	} 
+
+	echo $d; // not defined
+	echo $e; // not defined
+
+	try {
+		$f = 100;
+	} finally {
+		$g = 100;
+		return;
+	}
+
+	echo $f; // ok
+	echo $g; // not defined
+}
+`)
+	test.Expect = []string{
+		`Variable might have not been defined: b`,
+		`Unreachable code`,
+		`Undefined variable: d`,
+		`Undefined variable: e`,
+		`Variable might have not been defined: g`,
+	}
+	test.RunAndMatch()
+}

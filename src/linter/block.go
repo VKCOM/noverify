@@ -583,6 +583,9 @@ func (b *blockWalker) withNewContext(action func()) *blockContext {
 }
 
 func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
+	var linksCount int
+	var finallyCtx *blockContext
+
 	contexts := make([]*blockContext, 0, len(s.Catches)+1)
 
 	// Assume that no code in try{} block has executed because exceptions can be thrown from anywhere.
@@ -597,11 +600,14 @@ func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
 			cc.Walk(b)
 		})
 		contexts = append(contexts, ctx)
+
+		if ctx.exitFlags == 0 {
+			linksCount++
+		}
 	}
 
 	if s.Finally != nil {
-		b.withNewContext(func() {
-			contexts = append(contexts, b.ctx)
+		finallyCtx = b.withNewContext(func() {
 			cc := s.Finally.(*ir.FinallyStmt)
 			for _, s := range cc.Stmts {
 				b.addStatement(s)
@@ -630,13 +636,40 @@ func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
 			s.Walk(b)
 		}
 	})
+	if ctx.exitFlags == 0 {
+		linksCount++
+	}
 
-	ctx.sc.Iterate(func(varName string, typ meta.TypesMap, flags meta.VarFlags) {
-		if !othersExit {
-			flags &^= meta.VarAlwaysDefined
+	contexts = append(contexts, ctx)
+
+	varTypes := make(map[string]meta.TypesMap, b.ctx.sc.Len())
+	defCounts := make(map[string]int, b.ctx.sc.Len())
+
+	for _, ctx := range contexts {
+		if ctx.exitFlags != 0 {
+			continue
 		}
-		b.ctx.sc.AddVarName(varName, typ, "try var", flags)
-	})
+
+		ctx.sc.Iterate(func(nm string, typ meta.TypesMap, flags meta.VarFlags) {
+			varTypes[nm] = varTypes[nm].Append(typ)
+			if flags.IsAlwaysDefined() {
+				defCounts[nm]++
+			}
+		})
+	}
+
+	for nm, types := range varTypes {
+		var flags meta.VarFlags
+		flags.SetAlwaysDefined(defCounts[nm] == linksCount)
+		b.ctx.sc.AddVarName(nm, types, "all branches try catch", flags)
+	}
+
+	if finallyCtx != nil {
+		finallyCtx.sc.Iterate(func(nm string, typ meta.TypesMap, flags meta.VarFlags) {
+			flags.SetAlwaysDefined(finallyCtx.exitFlags == 0)
+			b.ctx.sc.AddVarName(nm, typ, "finally", flags)
+		})
+	}
 
 	if othersExit && ctx.exitFlags != 0 {
 		b.ctx.exitFlags |= prematureExitFlags
