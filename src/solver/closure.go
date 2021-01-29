@@ -39,7 +39,7 @@ func GetClosureName(fun *ir.ClosureExpr, curFunction, curFile string) string {
 }
 
 func GetClosure(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState) (meta.FuncInfo, bool) {
-	if !meta.IsIndexingComplete() {
+	if !cs.Info.IsIndexingComplete() {
 		return meta.FuncInfo{}, false
 	}
 
@@ -55,7 +55,7 @@ func GetClosure(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState) (meta.Fu
 	tp := ExprTypeLocal(sc, cs, sv)
 	tp.Iterate(func(typ string) {
 		if strings.HasPrefix(typ, `\Closure`) {
-			funcInfo, ok := meta.Info.GetFunction(typ)
+			funcInfo, ok := cs.Info.GetFunction(typ)
 			if !ok {
 				return
 			}

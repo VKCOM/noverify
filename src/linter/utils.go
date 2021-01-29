@@ -187,7 +187,7 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 	}
 
 	res.funcName = fqName
-	res.info, res.isFound = meta.Info.GetFunction(fqName)
+	res.info, res.isFound = st.Info.GetFunction(fqName)
 	if !res.isFound {
 		// If the function has not been found up to this point,
 		// we try to check if the function is a variable with the closure type.
