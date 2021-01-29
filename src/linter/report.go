@@ -598,7 +598,7 @@ echo $someVal;`,
 
 		{
 			Name:     "trailingComma",
-			Default:  true,
+			Default:  false,
 			Quickfix: true,
 			Comment:  `Report the absence of a comma for the last element in a multi-line array.`,
 			Before: `$_ = [
