@@ -179,10 +179,10 @@ func bindFlags(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgume
 	flag.StringVar(&config.StubsDir, "stubs-dir", "", "Directory with phpstorm-stubs")
 	flag.StringVar(&config.CacheDir, "cache-dir", DefaultCacheDir(), "Directory for linter cache (greatly improves indexing speed)")
 	flag.BoolVar(&args.disableCache, "disable-cache", false, "If set, cache is not used and cache-dir is ignored")
+	flag.BoolVar(&config.IgnoreTriggerError, "ignore-trigger-error", false, "If set, trigger_error control flow will be ignored")
 
 	flag.StringVar(&args.unusedVarPattern, "unused-var-regex", `^_$`,
 		"Variables that match such regexp are marked as discarded; not reported as unused, but should not be used as values")
-
 	flag.BoolVar(&args.version, "version", false, "Show version info and exit")
 
 	flag.StringVar(&args.cpuProfile, "cpuprofile", "", "Write cpu profile to `file`")

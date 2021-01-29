@@ -59,6 +59,8 @@ type Config struct {
 	PhpExtensions []string
 
 	Checkers *CheckersRegistry
+
+	IgnoreTriggerError bool
 }
 
 func NewConfig() *Config {
