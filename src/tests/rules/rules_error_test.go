@@ -251,6 +251,84 @@ ${"boo"} = $_;
 `,
 			expect: "<test>:6: pattern compilation error: unknown matcher class 'boo'",
 		},
+		{
+			name: `VariableFromTypeNotPresentInPattern`,
+			rule: `<?php
+/**
+ * @name Some
+ * @warning Some
+ * @type int $x
+ * @type int $y
+ */
+$_ = $y;
+`,
+			expect: "<test>:8: @type contains a reference to a variable x that is not present in the pattern",
+		},
+		{
+			name: `VariableFromTypeNotPresentInPatternGood`,
+			rule: `<?php
+/**
+ * @name Some
+ * @warning Some
+ * @type int $x
+ */
+$x = 1;
+`,
+			expect: "",
+		},
+		{
+			name: `VariableFromTypeNotPresentInPatternGood#2`,
+			rule: `<?php
+function someRules() {
+	/**
+	 * @warning Some
+	 * @type int $x
+	 */
+	any: {
+		$x = 1;
+		$x = 2;
+	}
+}
+`,
+			expect: "",
+		},
+		{
+			name: `VariableFromTypeNotPresentInPatternGood#3`,
+			rule: `<?php
+/**
+ * @name Some
+ * @warning Some
+ * @type int $x
+ */
+${"x:var"} = 1;
+`,
+			expect: "",
+		},
+		{
+			name: `VariableFromPureNotPresentInPattern`,
+			rule: `<?php
+/**
+ * @name Some
+ * @warning Some
+ * @type int $y
+ * @pure $x
+ */
+$_ = $y;
+`,
+			expect: "<test>:8: @pure contains a reference to a variable x that is not present in the pattern",
+		},
+		{
+			name: `VariableFromLocationNotPresentInPattern`,
+			rule: `<?php
+/**
+ * @name Some
+ * @warning Some
+ * @location $y
+ */
+(string)$x;
+`,
+			expect: "<test>:7: @location contains a reference to a variable y that is not present in the pattern",
+		},
 	}
 
 	runRulesErrorTest(t, tests)

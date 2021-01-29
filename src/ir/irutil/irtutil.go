@@ -72,6 +72,29 @@ func FmtNode(n ir.Node) string {
 	return irfmt.Node(n)
 }
 
+// Find searches for a node in the passed subtree.
+func Find(what ir.Node, where ir.Node) bool {
+	if what == nil || where == nil {
+		return false
+	}
+	w := newFindWalker(what, where)
+	where.Walk(w)
+	return w.found
+}
+
+// FindWithPredicate searches for a node in the passed
+// subtree using a predicate.
+//
+// If the predicate returns true, the search ends.
+func FindWithPredicate(what ir.Node, where ir.Node, pred findPredicate) bool {
+	if what == nil || where == nil {
+		return false
+	}
+	w := newFindWalkerWithPredicate(what, where, pred)
+	where.Walk(w)
+	return w.found
+}
+
 func classEqual(x, y ir.Class) bool {
 	return x.PhpDocComment == y.PhpDocComment &&
 		NodeEqual(x.Extends, y.Extends) &&
