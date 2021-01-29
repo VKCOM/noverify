@@ -163,7 +163,7 @@ func (b *blockWalker) reportDeadCode(n ir.Node) {
 	}
 
 	b.ctx.deadCodeReported = true
-	b.r.Report(n, LevelInformation, "deadCode", "Unreachable code")
+	b.r.Report(n, LevelWarning, "deadCode", "Unreachable code")
 }
 
 // EnterNode is called before walking to inner nodes.
@@ -329,11 +329,12 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 	if b.isIndexingComplete() {
 		b.linter.enterNode(n)
 	}
-	if b.isIndexingComplete() && b.r.anyRset != nil {
+	if b.isIndexingComplete() {
 		// Note: no need to check localRset for nil.
 		kind := ir.GetNodeKind(n)
-		b.r.runRules(n, b.ctx.sc, b.r.anyRset.RulesByKind[kind])
-		if !b.rootLevel {
+		if b.r.anyRset != nil {
+			b.r.runRules(n, b.ctx.sc, b.r.anyRset.RulesByKind[kind])
+		} else if !b.rootLevel && b.r.localRset != nil {
 			b.r.runRules(n, b.ctx.sc, b.r.localRset.RulesByKind[kind])
 		}
 	}
@@ -360,7 +361,7 @@ func (b *blockWalker) checkDupGlobal(s *ir.GlobalStmt) {
 		} else {
 			vars[nm] = struct{}{}
 			if b.nonLocalVars[nm] == varGlobal {
-				b.r.Report(v, LevelDoNotReject, "dupGlobal", "$%s already global'ed above", nm)
+				b.r.Report(v, LevelNotice, "dupGlobal", "$%s already global'ed above", nm)
 			}
 		}
 	}
@@ -500,7 +501,7 @@ func (b *blockWalker) walkComments(n ir.Node, c freefloating.String) {
 
 		types, warning := typesFromPHPDoc(&b.r.ctx, p.Type)
 		if warning != "" {
-			b.r.Report(n, LevelInformation, "phpdocType", "%s on line %d", warning, p.Line())
+			b.r.Report(n, LevelNotice, "phpdocType", "%s on line %d", warning, p.Line())
 		}
 		m := newTypesMap(&b.r.ctx, types)
 		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(p.Var, "$"), m, "@var")
@@ -804,7 +805,9 @@ func (b *blockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
 
 func (b *blockWalker) handleStaticCall(e *ir.StaticCallExpr) bool {
 	call := resolveStaticMethodCall(b.r.ctx.st, e)
-	b.callsParentConstructor = call.isCallsParentConstructor
+	if !b.callsParentConstructor {
+		b.callsParentConstructor = call.isCallsParentConstructor
+	}
 
 	e.Class.Walk(b)
 	e.Call.Walk(b)
@@ -1361,7 +1364,7 @@ func (b *blockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 				// allow the fallthrough if appropriate comment is present
 				nextCase := s.CaseList.Cases[idx+1]
 				if !caseHasFallthroughComment(nextCase) {
-					b.r.Report(c, LevelInformation, "caseBreak", "Add break or '// fallthrough' to the end of the case")
+					b.r.Report(c, LevelWarning, "caseBreak", "Add break or '// fallthrough' to the end of the case")
 				}
 			}
 
@@ -1478,7 +1481,7 @@ func (b *blockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
 	})
 
 	if maybeHaveClasses && !haveArrayAccess {
-		b.r.Report(s.Variable, LevelDoNotReject, "arrayAccess", "Array access to non-array type %s", typ)
+		b.r.Report(s.Variable, LevelNotice, "arrayAccess", "Array access to non-array type %s", typ)
 	}
 }
 
@@ -1752,7 +1755,7 @@ func (b *blockWalker) flushUnused() {
 			}
 
 			visitedMap[n] = struct{}{}
-			b.r.Report(n, LevelUnused, "unused", `Variable %s is unused (use $_ to ignore this inspection)`, name)
+			b.r.Report(n, LevelWarning, "unused", `Variable %s is unused (use $_ to ignore this inspection)`, name)
 		}
 	}
 }

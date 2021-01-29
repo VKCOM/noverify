@@ -47,10 +47,12 @@ func Help(*MainConfig) (int, error) {
 func declareRules() *linter.Config {
 	p := rules.NewParser()
 	config := linter.NewConfig()
-	ruleSets, err := InitEmbeddedRules(config, p, func(r rules.Rule) bool { return true })
+
+	ruleSets, err := AddEmbeddedRules(config.Rules, p, func(r rules.Rule) bool { return true })
 	if err != nil {
 		panic(err)
 	}
+
 	for _, rset := range ruleSets {
 		config.Checkers.DeclareRules(rset)
 	}

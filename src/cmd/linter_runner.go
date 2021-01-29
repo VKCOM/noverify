@@ -193,7 +193,7 @@ func (l *linterRunner) initCheckMappings() {
 
 	l.reportsExcludeChecksSet = stringToSet(l.args.reportsExcludeChecks)
 	l.reportsIncludeChecksSet = stringToSet(l.args.allowChecks)
-	if l.args.reportsCritical != allNonMaybe {
+	if l.args.reportsCritical != allNonNotice {
 		l.reportsCriticalSet = stringToSet(l.args.reportsCritical)
 	}
 }
@@ -203,9 +203,8 @@ func (l *linterRunner) initRules(ruleSets []*rules.Set) error {
 		return l.IsEnabledByFlags(r.Name)
 	}
 
-	l.config.Rules = rules.NewSet()
 	for _, rset := range ruleSets {
-		appendRuleSet(l.config, rset, ruleFilter)
+		appendRuleSet(l.config.Rules, rset, ruleFilter)
 	}
 
 	return nil

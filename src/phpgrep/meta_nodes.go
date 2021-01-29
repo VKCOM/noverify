@@ -11,6 +11,7 @@ type metaNode struct {
 
 func (metaNode) Walk(v ir.Visitor)                         {}
 func (metaNode) GetFreeFloating() *freefloating.Collection { return nil }
+func (metaNode) IterateTokens(func(token *ir.Token) bool)  {}
 
 type (
 	anyConst struct{ metaNode }

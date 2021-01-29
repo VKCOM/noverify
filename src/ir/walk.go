@@ -5,6 +5,9 @@ func (n *AnonClassExpr) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
 	}
+	for _, nn := range n.Args {
+		nn.Walk(v)
+	}
 	if n.Extends != nil {
 		n.Extends.Walk(v)
 	}
@@ -12,9 +15,6 @@ func (n *AnonClassExpr) Walk(v Visitor) {
 		n.Implements.Walk(v)
 	}
 	for _, nn := range n.Stmts {
-		nn.Walk(v)
-	}
-	for _, nn := range n.Args {
 		nn.Walk(v)
 	}
 	v.LeaveNode(n)
@@ -468,11 +468,11 @@ func (n *ClassMethodStmt) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
 	}
-	if n.MethodName != nil {
-		n.MethodName.Walk(v)
-	}
 	for _, nn := range n.Modifiers {
 		nn.Walk(v)
+	}
+	if n.MethodName != nil {
+		n.MethodName.Walk(v)
 	}
 	for _, nn := range n.Params {
 		nn.Walk(v)
@@ -490,11 +490,11 @@ func (n *ClassStmt) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
 	}
-	if n.ClassName != nil {
-		n.ClassName.Walk(v)
-	}
 	for _, nn := range n.Modifiers {
 		nn.Walk(v)
+	}
+	if n.ClassName != nil {
+		n.ClassName.Walk(v)
 	}
 	if n.Extends != nil {
 		n.Extends.Walk(v)
