@@ -582,9 +582,10 @@ func (b *blockWalker) withNewContext(action func()) *blockContext {
 }
 
 func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
-	var contexts = make([]*blockContext, 0, len(s.Catches)+1)
 	var linksCount int
 	var finallyCtx *blockContext
+
+	contexts := make([]*blockContext, 0, len(s.Catches)+1)
 
 	// Assume that no code in try{} block has executed because exceptions can be thrown from anywhere.
 	// So we handle catches and finally blocks first.
