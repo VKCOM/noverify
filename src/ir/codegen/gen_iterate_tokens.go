@@ -31,14 +31,14 @@ func (g *genIterate) writeIterate(w *bytes.Buffer, pkg *packageData, typ *typeDa
 	for i := 0; i < typ.info.NumFields(); i++ {
 		field := typ.info.Field(i)
 		switch typeString := field.Type().String(); typeString {
-		case "*ir.Token": // replace later with *github.com/z7zmey/php-parser/pkg/token.Token
-			fmt.Fprintf(w, "    if n.%[1]s != nil {\n", field.Name())
-			fmt.Fprintf(w, "        if !cb(n.%[1]s) {\n", field.Name())
+		case "*ir.Token": // TODO: replace later with *github.com/z7zmey/php-parser/pkg/token.Token
+			fmt.Fprintf(w, "    if n.%s != nil {\n", field.Name())
+			fmt.Fprintf(w, "        if !cb(n.%s) {\n", field.Name())
 			fmt.Fprintf(w, "            return\n")
 			fmt.Fprintf(w, "        }\n")
 			fmt.Fprintf(w, "    }\n")
-		case "[]*ir.Token": // replace later with []*github.com/z7zmey/php-parser/pkg/token.Token
-			fmt.Fprintf(w, "    for _, tk := range n.%[1]s {\n", field.Name())
+		case "[]*ir.Token": // TODO: replace later with []*github.com/z7zmey/php-parser/pkg/token.Token
+			fmt.Fprintf(w, "    for _, tk := range n.%s {\n", field.Name())
 			fmt.Fprintf(w, "        if !cb(tk) {\n")
 			fmt.Fprintf(w, "            return\n")
 			fmt.Fprintf(w, "        }\n")
