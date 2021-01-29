@@ -593,14 +593,23 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 		b.addFixForArray(arr)
 	}
 
+	multiline := false
 	items := arr.Items
 	haveKeys := false
 	haveImplicitKeys := false
 	keys := make(map[string]ir.Node, len(items))
 
-	for _, item := range items {
+	if arr.Position.EndLine != arr.Position.StartLine {
+		multiline = true
+	}
+
+	for index, item := range items {
 		if item.Val == nil {
 			continue
+		}
+
+		if multiline && index == len(items)-1 {
+			b.checkMultilineArrayTrailingComma(item)
 		}
 
 		if item.Key == nil {
@@ -672,6 +681,38 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 
 	if haveImplicitKeys && haveKeys {
 		b.report(arr, LevelWarning, "mixedArrayKeys", "Mixing implicit and explicit array keys")
+	}
+}
+
+func (b *blockLinter) addFixForMultilineArrayTrailingComma(item *ir.ArrayItemExpr) {
+	if !b.walker.r.config.ApplyQuickFixes {
+		return
+	}
+
+	from := item.Position.StartPos
+	to := item.Position.EndPos
+	have := b.walker.r.file.Contents()[from:to]
+
+	b.walker.r.ctx.fixes = append(b.walker.r.ctx.fixes, quickfix.TextEdit{
+		StartPos:    item.Position.StartPos,
+		EndPos:      item.Position.EndPos,
+		Replacement: string(have) + ",",
+	})
+}
+
+func (b *blockLinter) checkMultilineArrayTrailingComma(item *ir.ArrayItemExpr) {
+	from := item.Position.StartPos
+	to := item.Position.EndPos
+	src := b.walker.r.file.Contents()
+
+	if to+1 >= len(src) {
+		return
+	}
+
+	itemText := src[from : to+1]
+	if itemText[len(itemText)-1] != ',' && itemText[len(itemText)-1] != ']' {
+		b.report(item, LevelNotice, "trailingComma", "last element in a multi-line array must have a trailing comma")
+		b.addFixForMultilineArrayTrailingComma(item)
 	}
 }
 
