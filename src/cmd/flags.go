@@ -12,7 +12,7 @@ import (
 	"github.com/VKCOM/noverify/src/rules"
 )
 
-const allNonMaybe = "<all-non-maybe>"
+const allNonNotice = "<all-non-notice>"
 
 type cmdlineArguments struct {
 	version bool
@@ -125,8 +125,8 @@ func bindFlags(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgume
 	flag.BoolVar(&config.ConservativeBaseline, "conservative-baseline", false,
 		"If enabled, baseline mode will have less false positive, but more false negatives")
 
-	flag.StringVar(&args.reportsCritical, "critical", allNonMaybe,
-		"Comma-separated list of check names that are considered critical (all non-maybe checks by default)")
+	flag.StringVar(&args.reportsCritical, "critical", allNonNotice,
+		"Comma-separated list of check names that are considered critical (all non-notice checks by default)")
 
 	flag.StringVar(&args.rulesList, "rules", "",
 		"Comma-separated list of rules files")

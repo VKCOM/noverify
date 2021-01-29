@@ -176,5 +176,5 @@ func (b *pathTester) AfterEnterNode(n ir.Node) {
 	}
 
 	path := b.ctx.NodePath()
-	b.ctx.Report(x, linter.LevelInformation, "pathTest", "$%s (cond=%v) : %s", x.Name, path.Conditional(), path.String())
+	b.ctx.Report(x, linter.LevelWarning, "pathTest", "$%s (cond=%v) : %s", x.Name, path.Conditional(), path.String())
 }

@@ -201,11 +201,8 @@ func (p *parser) parseRuleInfo(st ir.Node, proto *Rule) (Rule, error) {
 		case "warning":
 			rule.Level = lintapi.LevelWarning
 			rule.Message = part.ParamsText
-		case "info":
-			rule.Level = lintapi.LevelInformation
-			rule.Message = part.ParamsText
 		case "maybe":
-			rule.Level = lintapi.LevelMaybe
+			rule.Level = lintapi.LevelNotice
 			rule.Message = part.ParamsText
 
 		case "fix":
@@ -365,8 +362,7 @@ func (p *parser) parseRule(st ir.Node, proto *Rule) error {
 		st = st2.Expr
 	}
 	kind := ir.GetNodeKind(st)
-	dst.RulesByKind[kind] = append(dst.RulesByKind[kind], rule)
-
+	dst.Add(kind, rule)
 	return nil
 }
 

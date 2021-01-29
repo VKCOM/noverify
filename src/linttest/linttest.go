@@ -344,14 +344,16 @@ func FindPHPFiles(root string) ([]string, error) {
 func InitEmbeddedRules(config *linter.Config) error {
 	enableAllRules := func(_ rules.Rule) bool { return true }
 	p := rules.NewParser()
-	config.Rules = rules.NewSet()
-	ruleSets, err := cmd.InitEmbeddedRules(config, p, enableAllRules)
+
+	ruleSets, err := cmd.AddEmbeddedRules(config.Rules, p, enableAllRules)
 	if err != nil {
 		return fmt.Errorf("init embedded rules: %v", err)
 	}
+
 	for _, rset := range ruleSets {
 		config.Checkers.DeclareRules(rset)
 	}
+
 	return nil
 }
 
