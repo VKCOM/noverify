@@ -49,6 +49,13 @@ func openFile(filename string) (f *os.File, found bool, err error) {
 }
 
 func (t *quickFixTest) runQuickFixTest() {
+	var linterConfig = linter.NewConfig()
+	linterConfig.ApplyQuickFixes = true
+	err := linttest.InitEmbeddedRules(linterConfig)
+	if err != nil {
+		t.t.Fatal(err)
+	}
+
 	files, err := linttest.FindPHPFiles(t.folder)
 	if err != nil {
 		t.t.Fatalf("Error while searching for files in the %s folder: %s", t.folder, err)
@@ -91,11 +98,8 @@ func (t *quickFixTest) runQuickFixTest() {
 			}
 
 			test := linttest.NewSuite(t)
+			test.Linter = linter.NewLinter(linterConfig)
 			test.AddNamedFile(fixedFileName, string(testFileContent))
-			linter.ApplyQuickFixes = true
-			defer func() {
-				linter.ApplyQuickFixes = false
-			}()
 			_ = test.RunLinter()
 
 			fixedFileContent, err := ioutil.ReadFile(fixedFileName)

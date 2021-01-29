@@ -26,7 +26,7 @@ func ExprType(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node) meta.TypesMap
 func ExprTypeCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, custom []CustomType) meta.TypesMap {
 	m := ExprTypeLocalCustom(sc, cs, n, custom)
 
-	if !meta.IsIndexingComplete() {
+	if !cs.Info.IsIndexingComplete() {
 		return m
 	}
 	if m.IsResolved() {
@@ -34,7 +34,7 @@ func ExprTypeCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, custom 
 	}
 
 	visitedMap := make(ResolverMap)
-	resolvedTypes := ResolveTypes(cs.CurrentClass, m, visitedMap)
+	resolvedTypes := ResolveTypes(cs.Info, cs.CurrentClass, m, visitedMap)
 	return meta.NewTypesMapFromMap(resolvedTypes)
 }
 
@@ -237,12 +237,12 @@ func classNameToString(cs *meta.ClassParseState, n ir.Node) (string, bool) {
 }
 
 func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir.FunctionCallExpr, custom []CustomType) (typ meta.TypesMap, ok bool) {
-	fn, ok := meta.GetInternalFunctionInfo(nm)
+	fn, ok := cs.Info.GetInternalFunctionInfo(nm)
 	if !ok || fn.Typ.IsEmpty() {
 		return meta.TypesMap{}, false
 	}
 
-	override, ok := meta.GetInternalFunctionOverrideInfo(nm)
+	override, ok := cs.Info.GetInternalFunctionOverrideInfo(nm)
 	if !ok || len(c.Args) <= override.ArgNum {
 		return fn.Typ, true
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/ir/irfmt"
+	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/php7"
@@ -74,7 +75,8 @@ func TestNormalizeStmtList(t *testing.T) {
 	}
 
 	conf := Config{}
-	st := &meta.ClassParseState{CurrentClass: `\Foo`}
+	l := linter.NewLinter(linter.NewConfig())
+	st := &meta.ClassParseState{Info: l.MetaInfo(), CurrentClass: `\Foo`}
 	for _, test := range tests {
 
 		list, err := parseStmtList(test.orig)
@@ -99,11 +101,11 @@ type normalizationTest struct {
 	want string
 }
 
-func runNormalizeTests(t *testing.T, tests []normalizationTest) {
+func runNormalizeTests(t *testing.T, l *linter.Linter, tests []normalizationTest) {
 	t.Helper()
 
 	conf := Config{}
-	st := &meta.ClassParseState{CurrentClass: `\Foo`}
+	st := &meta.ClassParseState{Info: l.MetaInfo(), CurrentClass: `\Foo`}
 	irConverter := irconv.NewConverter(nil)
 	for _, test := range tests {
 		n, _, err := parseutil.ParseStmt([]byte(test.orig))
@@ -135,7 +137,8 @@ func runNormalizeTests(t *testing.T, tests []normalizationTest) {
 }
 
 func TestNormalizeExpr(t *testing.T) {
-	runNormalizeTests(t, []normalizationTest{
+	l := linter.NewLinter(linter.NewConfig())
+	runNormalizeTests(t, l, []normalizationTest{
 		{`new T`, `new T()`},
 
 		{`"$x"`, `'' . $v0`},
@@ -210,7 +213,8 @@ func TestNormalizeExpr(t *testing.T) {
 }
 
 func TestNormalizeExprAfterIndexing(t *testing.T) {
-	linttest.ParseTestFile(t, "defs.php", `<?php
+	l := linter.NewLinter(linter.NewConfig())
+	linttest.ParseTestFile(t, l, "defs.php", `<?php
 const ZERO = 0;
 const HELLO_WORLD = 'hello, world';
 const LOCALHOST = "127.0.0.1";
@@ -219,10 +223,9 @@ class Foo {
   const FOO_VALUE = 53.001122334455665;
 }
 `)
-	meta.SetIndexingComplete(true)
-	defer meta.SetIndexingComplete(false)
+	l.MetaInfo().SetIndexingComplete(true)
 
-	runNormalizeTests(t, []normalizationTest{
+	runNormalizeTests(t, l, []normalizationTest{
 		{`ZERO`, `0`},
 		{`HELLO_WORLD`, `'hello, world'`},
 		{`LOCALHOST`, `'127.0.0.1'`},
@@ -231,7 +234,8 @@ class Foo {
 }
 
 func TestMagicConstFold(t *testing.T) {
-	linttest.ParseTestFile(t, "files/file.php", `<?php
+	l := linter.NewLinter(linter.NewConfig())
+	linttest.ParseTestFile(t, l, "files/file.php", `<?php
 namespace Boo;
 
 const NAMESPACE_NAME = __NAMESPACE__;
@@ -247,10 +251,9 @@ class Foo {
   const LINE = __LINE__;
 }
 `)
-	meta.SetIndexingComplete(true)
-	defer meta.SetIndexingComplete(false)
+	l.MetaInfo().SetIndexingComplete(true)
 
-	runNormalizeTests(t, []normalizationTest{
+	runNormalizeTests(t, l, []normalizationTest{
 		{`\Boo\NAMESPACE_NAME`, `'\Boo'`},
 		{`\Boo\FILENAME`, `'files/file.php'`},
 		{`\Boo\DIR`, `'files'`},

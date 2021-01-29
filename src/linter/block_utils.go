@@ -15,24 +15,24 @@ import (
 // This file contains methods that were defined inside BlockWalker
 // but in fact they can be separated and used in other contexts.
 
-func findMethod(className, methodName string) (res solver.FindMethodResult, magic, ok bool) {
-	m, ok := solver.FindMethod(className, methodName)
+func findMethod(info *meta.Info, className, methodName string) (res solver.FindMethodResult, magic, ok bool) {
+	m, ok := solver.FindMethod(info, className, methodName)
 	if ok {
 		return m, false, true
 	}
-	m, ok = solver.FindMethod(className, `__call`)
+	m, ok = solver.FindMethod(info, className, `__call`)
 	if ok {
 		return m, true, true
 	}
 	return m, false, false
 }
 
-func findProperty(className, propName string) (res solver.FindPropertyResult, magic, ok bool) {
-	p, ok := solver.FindProperty(className, propName)
+func findProperty(info *meta.Info, className, propName string) (res solver.FindPropertyResult, magic, ok bool) {
+	p, ok := solver.FindProperty(info, className, propName)
 	if ok {
 		return p, false, true
 	}
-	m, ok := solver.FindMethod(className, `__get`)
+	m, ok := solver.FindMethod(info, className, `__get`)
 	if ok {
 		// Construct a dummy property from the magic method.
 		p.ClassName = m.ClassName
@@ -96,7 +96,7 @@ func canAccess(st *meta.ClassParseState, className string, accessLevel meta.Acce
 				return true
 			}
 
-			class, ok := meta.Info.GetClass(parent)
+			class, ok := st.Info.GetClass(parent)
 			if !ok {
 				return false
 			}

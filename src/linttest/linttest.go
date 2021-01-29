@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/VKCOM/noverify/src/cmd"
-	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/rules"
@@ -51,9 +50,9 @@ func SimpleNegativeTest(t *testing.T, contents string) {
 	s.RunAndMatch()
 }
 
-// GetFileReports runs linter over a single file out of given content
+// CheckFile runs linter over a single file out of given content
 // and returns all reports that were found.
-func GetFileReports(t *testing.T, contents string) []*linter.Report {
+func CheckFile(t *testing.T, contents string) RunResult {
 	s := NewSuite(t)
 	s.AddFile(contents)
 	return s.RunLinter()
@@ -88,6 +87,11 @@ type Suite struct {
 	MisspellList string
 
 	IgnoreUndeclaredChecks bool
+
+	// Linter is nil by default and will be created automatically
+	// during Run(), but it can be assigned directly to
+	// have a specific linter instance during the test execution.
+	Linter *linter.Linter
 }
 
 // NewSuite returns a new linter test suite for t.
@@ -148,7 +152,7 @@ func (s *Suite) AddNolintFile(contents string) {
 // reports slice is needed, one can use RunLinter directly.
 func (s *Suite) RunAndMatch() {
 	s.t.Helper()
-	s.Match(s.RunLinter())
+	s.Match(s.RunLinter().Reports)
 }
 
 // Match tries to match every report against Expect list of s.
@@ -204,11 +208,20 @@ func (s *Suite) Match(reports []*linter.Report) {
 	}
 }
 
+type RunResult struct {
+	Reports []*linter.Report
+	Info    *meta.Info
+}
+
 // RunLinter executes linter over s Files and returns all issue reports
 // that were produced during that.
-func (s *Suite) RunLinter() []*linter.Report {
+func (s *Suite) RunLinter() RunResult {
 	s.t.Helper()
-	meta.ResetInfo()
+
+	l := s.Linter
+	if l == nil {
+		l = linter.NewLinter(linter.NewConfig())
+	}
 
 	for _, stub := range s.LoadStubs {
 		s.defaultStubs[stub] = struct{}{}
@@ -217,18 +230,18 @@ func (s *Suite) RunLinter() []*linter.Report {
 	for stub := range s.defaultStubs {
 		stubs = append(stubs, stub)
 	}
-	if err := cmd.LoadEmbeddedStubs(stubs); err != nil {
+	if err := cmd.LoadEmbeddedStubs(l, stubs); err != nil {
 		s.t.Fatalf("load stubs: %v", err)
 	}
 
 	if s.MisspellList != "" {
-		err := cmd.LoadMisspellDicts(strings.Split(s.MisspellList, ","))
+		err := cmd.LoadMisspellDicts(l.Config(), strings.Split(s.MisspellList, ","))
 		if err != nil {
 			s.t.Fatalf("load misspell dicts: %v", err)
 		}
 	}
 
-	indexing := linter.NewIndexingWorker(0)
+	indexing := l.NewIndexingWorker(0)
 	indexing.AllowDisable = s.AllowDisable
 
 	shuffleFiles(s.Files)
@@ -236,9 +249,9 @@ func (s *Suite) RunLinter() []*linter.Report {
 		parseTestFile(s.t, indexing, f)
 	}
 
-	meta.SetIndexingComplete(true)
+	l.MetaInfo().SetIndexingComplete(true)
 
-	linting := linter.NewLintingWorker(0)
+	linting := l.NewLintingWorker(0)
 	linting.AllowDisable = s.AllowDisable
 
 	shuffleFiles(s.Files)
@@ -251,12 +264,12 @@ func (s *Suite) RunLinter() []*linter.Report {
 			continue
 		}
 
-		_, w := parseTestFile(s.t, linting, f)
-		reports = append(reports, w.GetReports()...)
+		result := parseTestFile(s.t, linting, f)
+		reports = append(reports, result.Reports...)
 	}
 
 	declared := make(map[string]struct{})
-	for _, info := range linter.GetDeclaredChecks() {
+	for _, info := range l.Config().Checkers.ListDeclared() {
 		declared[info.Name] = struct{}{}
 	}
 	if !s.IgnoreUndeclaredChecks {
@@ -268,20 +281,23 @@ func (s *Suite) RunLinter() []*linter.Report {
 		}
 	}
 
-	return reports
+	return RunResult{
+		Reports: reports,
+		Info:    l.MetaInfo(),
+	}
 }
 
 // RunFilterLinter calls RunLinter with the filter.
 func (s *Suite) RunFilterLinter(filters []string) []*linter.Report {
 	s.t.Helper()
-	reports := s.RunLinter()
+	result := s.RunLinter()
 
 	disable := map[string]bool{}
 	for _, checkName := range filters {
 		disable[checkName] = true
 	}
-	filteredReports := reports[:0]
-	for _, r := range reports {
+	filteredReports := result.Reports[:0]
+	for _, r := range result.Reports {
 		if !disable[r.CheckName] {
 			filteredReports = append(filteredReports, r)
 		}
@@ -290,13 +306,12 @@ func (s *Suite) RunFilterLinter(filters []string) []*linter.Report {
 	return filteredReports
 }
 
-// ParseTestFile parses given test file.
-func ParseTestFile(t *testing.T, filename, content string) (rootNode *ir.Root, w *linter.RootWalker) {
+func ParseTestFile(t testing.TB, l *linter.Linter, filename, content string) linter.ParseResult {
 	var worker *linter.Worker
-	if meta.IsIndexingComplete() {
-		worker = linter.NewLintingWorker(0)
+	if l.MetaInfo().IsIndexingComplete() {
+		worker = l.NewLintingWorker(0)
 	} else {
-		worker = linter.NewIndexingWorker(0)
+		worker = l.NewIndexingWorker(0)
 	}
 	return parseTestFile(t, worker, TestFile{
 		Name: filename,
@@ -307,7 +322,7 @@ func ParseTestFile(t *testing.T, filename, content string) (rootNode *ir.Root, w
 // RunFilterMatch calls Match with the filtered results of RunLinter.
 func RunFilterMatch(test *Suite, names ...string) {
 	test.t.Helper()
-	test.Match(filterReports(names, test.RunLinter()))
+	test.Match(filterReports(names, test.RunLinter().Reports))
 }
 
 func FindPHPFiles(root string) ([]string, error) {
@@ -326,17 +341,19 @@ func FindPHPFiles(root string) ([]string, error) {
 }
 
 // InitEmbeddedRules initializes embedded rules for testing.
-func InitEmbeddedRules() error {
+func InitEmbeddedRules(config *linter.Config) error {
 	enableAllRules := func(_ rules.Rule) bool { return true }
 	p := rules.NewParser()
-	linter.Rules = rules.NewSet()
-	ruleSets, err := cmd.InitEmbeddedRules(p, enableAllRules)
+
+	ruleSets, err := cmd.AddEmbeddedRules(config.Rules, p, enableAllRules)
 	if err != nil {
 		return fmt.Errorf("init embedded rules: %v", err)
 	}
+
 	for _, rset := range ruleSets {
-		linter.DeclareRules(rset)
+		config.Checkers.DeclareRules(rset)
 	}
+
 	return nil
 }
 
@@ -357,7 +374,7 @@ func filterReports(names []string, reports []*linter.Report) []*linter.Report {
 
 func init() {
 	var once sync.Once
-	once.Do(func() { go linter.MemoryLimiterThread() })
+	once.Do(func() { go linter.MemoryLimiterThread(0) })
 }
 
 func shuffleFiles(files []TestFile) {
@@ -366,20 +383,22 @@ func shuffleFiles(files []TestFile) {
 	})
 }
 
-func parseTestFile(t testing.TB, worker *linter.Worker, f TestFile) (rootNode *ir.Root, w *linter.RootWalker) {
-	var err error
+func parseTestFile(t testing.TB, worker *linter.Worker, f TestFile) linter.ParseResult {
 	file := workspace.FileInfo{
 		Name:     f.Name,
 		Contents: f.Data,
 	}
-	rootNode, w, err = worker.ParseContents(file)
+
+	var err error
+	var result linter.ParseResult
+	if worker.MetaInfo().IsIndexingComplete() {
+		result, err = worker.ParseContents(file)
+	} else {
+		err = worker.IndexFile(file)
+	}
 	if err != nil {
 		t.Fatalf("could not parse %s: %v", f.Name, err.Error())
 	}
 
-	if !meta.IsIndexingComplete() {
-		w.UpdateMetaInfo()
-	}
-
-	return rootNode, w
+	return result
 }

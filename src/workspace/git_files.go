@@ -12,7 +12,6 @@ import (
 	"github.com/monochromegane/go-gitignore"
 
 	"github.com/VKCOM/noverify/src/git"
-	"github.com/VKCOM/noverify/src/meta"
 )
 
 // ParseGitignoreFromDir tries to parse a gitignore file at path/.gitignore.
@@ -31,14 +30,14 @@ func ParseGitignoreFromDir(path string) (gitignore.IgnoreMatcher, error) {
 }
 
 // ReadChangesFromWorkTree returns callback that reads files from workTree dir that are changed
-func ReadChangesFromWorkTree(dir string, changes []git.Change) ReadCallback {
+func ReadChangesFromWorkTree(dir string, changes []git.Change, phpExtensions []string) ReadCallback {
 	return func(ch chan FileInfo) {
 		for _, c := range changes {
 			if c.Type == git.Deleted {
 				continue
 			}
 
-			if !isPHPExtension(c.NewName) {
+			if !isPHPExtension(c.NewName, phpExtensions) {
 				continue
 			}
 
@@ -58,7 +57,7 @@ func ReadChangesFromWorkTree(dir string, changes []git.Change) ReadCallback {
 }
 
 // ReadFilesFromGit parses file contents in the specified commit
-func ReadFilesFromGit(repo, commitSHA1 string, ignoreRegex *regexp.Regexp) ReadCallback {
+func ReadFilesFromGit(repo, commitSHA1 string, ignoreRegex *regexp.Regexp, phpExtensions []string) ReadCallback {
 	catter, err := git.NewCatter(repo)
 	if err != nil {
 		log.Fatalf("Could not start catter: %s", err.Error())
@@ -69,7 +68,7 @@ func ReadFilesFromGit(repo, commitSHA1 string, ignoreRegex *regexp.Regexp) ReadC
 		log.Fatalf("Could not get tree sha1: %s", err.Error())
 	}
 
-	suffixes := makePHPExtensionSuffixes()
+	suffixes := makePHPExtensionSuffixes(phpExtensions)
 
 	return func(ch chan FileInfo) {
 		start := time.Now()
@@ -85,11 +84,7 @@ func ReadFilesFromGit(repo, commitSHA1 string, ignoreRegex *regexp.Regexp) ReadC
 				idx++
 				if time.Since(start) >= 2*time.Second {
 					start = time.Now()
-					action := "Indexed"
-					if meta.IsIndexingComplete() {
-						action = "Analyzed"
-					}
-					log.Printf("%s %d files from git", action, idx)
+					log.Printf("Processed %d files from git", idx)
 				}
 
 				if ignoreRegex != nil && ignoreRegex.MatchString(filename) {
@@ -110,7 +105,7 @@ func ReadFilesFromGit(repo, commitSHA1 string, ignoreRegex *regexp.Regexp) ReadC
 }
 
 // ReadOldFilesFromGit parses file contents in the specified commit, the old version
-func ReadOldFilesFromGit(repo, commitSHA1 string, changes []git.Change) ReadCallback {
+func ReadOldFilesFromGit(repo, commitSHA1 string, changes []git.Change, phpExtensions []string) ReadCallback {
 	changedMap := make(map[string][]git.LineRange, len(changes))
 	for _, ch := range changes {
 		if ch.Type == git.Added {
@@ -129,7 +124,7 @@ func ReadOldFilesFromGit(repo, commitSHA1 string, changes []git.Change) ReadCall
 		log.Fatalf("Could not get tree sha1: %s", err.Error())
 	}
 
-	suffixes := makePHPExtensionSuffixes()
+	suffixes := makePHPExtensionSuffixes(phpExtensions)
 
 	return func(ch chan FileInfo) {
 		err = catter.Walk(
@@ -159,7 +154,7 @@ func ReadOldFilesFromGit(repo, commitSHA1 string, changes []git.Change) ReadCall
 }
 
 // ReadFilesFromGitWithChanges parses file contents in the specified commit, but only specified ranges
-func ReadFilesFromGitWithChanges(repo, commitSHA1 string, changes []git.Change) ReadCallback {
+func ReadFilesFromGitWithChanges(repo, commitSHA1 string, changes []git.Change, phpExtensions []string) ReadCallback {
 	changedMap := make(map[string][]git.LineRange, len(changes))
 	for _, ch := range changes {
 		if ch.Type == git.Deleted {
@@ -180,7 +175,7 @@ func ReadFilesFromGitWithChanges(repo, commitSHA1 string, changes []git.Change) 
 		log.Fatalf("Could not get tree sha1: %s", err.Error())
 	}
 
-	suffixes := makePHPExtensionSuffixes()
+	suffixes := makePHPExtensionSuffixes(phpExtensions)
 
 	return func(ch chan FileInfo) {
 		err = catter.Walk(
@@ -209,9 +204,9 @@ func ReadFilesFromGitWithChanges(repo, commitSHA1 string, changes []git.Change) 
 	}
 }
 
-func makePHPExtensionSuffixes() [][]byte {
-	res := make([][]byte, 0, len(PHPExtensions))
-	for _, ext := range PHPExtensions {
+func makePHPExtensionSuffixes(phpExtensions []string) [][]byte {
+	res := make([][]byte, 0, len(phpExtensions))
+	for _, ext := range phpExtensions {
 		res = append(res, []byte("."+ext))
 	}
 	return res

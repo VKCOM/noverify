@@ -60,7 +60,7 @@ type fileMeta struct {
 	FunctionOverrides meta.FunctionsOverrideMap
 }
 
-func writeMetaCache(w *bufio.Writer, root *RootWalker) error {
+func writeMetaCache(w *bufio.Writer, root *rootWalker) error {
 	if err := writeMetaCacheHeader(w, root); err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func writeMetaCache(w *bufio.Writer, root *RootWalker) error {
 	return nil
 }
 
-func createMetaCacheFile(filename, cacheFile string, root *RootWalker) error {
+func createMetaCacheFile(filename, cacheFile string, root *rootWalker) error {
 	tmpPath := cacheFile + ".tmp"
 	if err := os.MkdirAll(filepath.Dir(tmpPath), 0777); err != nil {
 		return err
@@ -108,13 +108,13 @@ func createMetaCacheFile(filename, cacheFile string, root *RootWalker) error {
 
 	// if using cache, this is the only proper place to update meta info:
 	// after all cache meta info was successfully written to disk
-	updateMetaInfo(filename, &root.meta)
+	updateMetaInfo(root.ctx.st.Info, filename, &root.meta)
 	return nil
 }
 
-func readMetaCache(r io.Reader, filename string, dst *fileMeta) error {
+func readMetaCache(r io.Reader, cachers []MetaCacher, filename string, dst *fileMeta) error {
 	bufrd := bufio.NewReader(r)
-	if err := readMetaCacheHeader(bufrd); err != nil {
+	if err := readMetaCacheHeader(cachers, bufrd); err != nil {
 		return err
 	}
 
@@ -122,51 +122,51 @@ func readMetaCache(r io.Reader, filename string, dst *fileMeta) error {
 	if err := dec.Decode(dst); err != nil {
 		return err
 	}
-	if err := customCachersDecode(filename, bufrd); err != nil {
+	if err := customCachersDecode(cachers, filename, bufrd); err != nil {
 		return err
 	}
 	return nil
 }
 
-func restoreMetaFromCache(filename string, rd io.Reader) error {
+func restoreMetaFromCache(info *meta.Info, cachers []MetaCacher, filename string, rd io.Reader) error {
 	var m fileMeta
-	if err := readMetaCache(rd, filename, &m); err != nil {
+	if err := readMetaCache(rd, cachers, filename, &m); err != nil {
 		return err
 	}
 
-	updateMetaInfo(filename, &m)
+	updateMetaInfo(info, filename, &m)
 	return nil
 }
 
-func updateMetaInfo(filename string, m *fileMeta) {
-	if meta.IsIndexingComplete() {
+func updateMetaInfo(info *meta.Info, filename string, m *fileMeta) {
+	if info.IsIndexingComplete() {
 		panic("Trying to update meta info when not indexing")
 	}
 
-	meta.Info.Lock()
-	defer meta.Info.Unlock()
+	info.Lock()
+	defer info.Unlock()
 
-	meta.Info.DeleteMetaForFileNonLocked(filename)
+	info.DeleteMetaForFileNonLocked(filename)
 
-	meta.Info.AddFilenameNonLocked(filename)
-	meta.Info.AddClassesNonLocked(filename, m.Classes)
-	meta.Info.AddTraitsNonLocked(filename, m.Traits)
-	meta.Info.AddFunctionsNonLocked(filename, m.Functions)
-	meta.Info.AddConstantsNonLocked(filename, m.Constants)
-	meta.Info.AddFunctionsOverridesNonLocked(filename, m.FunctionOverrides)
+	info.AddFilenameNonLocked(filename)
+	info.AddClassesNonLocked(filename, m.Classes)
+	info.AddTraitsNonLocked(filename, m.Traits)
+	info.AddFunctionsNonLocked(filename, m.Functions)
+	info.AddConstantsNonLocked(filename, m.Constants)
+	info.AddFunctionsOverridesNonLocked(filename, m.FunctionOverrides)
 
 	if m.Scope != nil {
-		meta.Info.AddToGlobalScopeNonLocked(filename, m.Scope)
+		info.AddToGlobalScopeNonLocked(filename, m.Scope)
 	}
 }
 
-func writeMetaCacheHeader(wr *bufio.Writer, root *RootWalker) error {
+func writeMetaCacheHeader(wr *bufio.Writer, root *rootWalker) error {
 	if err := wr.WriteByte(cacheVersion); err != nil {
 		return err
 	}
 
 	for i := range root.custom {
-		cacher := metaCachers[i]
+		cacher := root.config.Checkers.cachers[i]
 		if cacher == nil {
 			continue
 		}
@@ -185,9 +185,9 @@ func writeMetaCacheHeader(wr *bufio.Writer, root *RootWalker) error {
 	return nil
 }
 
-func customCachersEncode(wr *bufio.Writer, root *RootWalker) error {
+func customCachersEncode(wr *bufio.Writer, root *rootWalker) error {
 	for i, c := range root.custom {
-		cacher := metaCachers[i]
+		cacher := root.config.Checkers.cachers[i]
 		if cacher == nil {
 			continue
 		}
@@ -199,7 +199,7 @@ func customCachersEncode(wr *bufio.Writer, root *RootWalker) error {
 	return nil
 }
 
-func readMetaCacheHeader(rd *bufio.Reader) error {
+func readMetaCacheHeader(cachers []MetaCacher, rd *bufio.Reader) error {
 	ver, err := rd.ReadByte()
 	if err != nil {
 		return err
@@ -210,7 +210,7 @@ func readMetaCacheHeader(rd *bufio.Reader) error {
 	}
 
 	var versionBuf [256]byte
-	for _, cacher := range metaCachers {
+	for _, cacher := range cachers {
 		if cacher == nil {
 			continue
 		}
@@ -232,8 +232,8 @@ func readMetaCacheHeader(rd *bufio.Reader) error {
 	return nil
 }
 
-func customCachersDecode(filename string, rd *bufio.Reader) error {
-	for _, cacher := range metaCachers {
+func customCachersDecode(cachers []MetaCacher, filename string, rd *bufio.Reader) error {
+	for _, cacher := range cachers {
 		if cacher == nil {
 			continue
 		}

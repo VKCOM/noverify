@@ -14,8 +14,8 @@ const (
 	IgnoreLinterMessage = "@linter disable"
 )
 
-func init() {
-	allChecks := []CheckInfo{
+func addBuiltinCheckers(reg *CheckersRegistry) {
+	allChecks := []CheckerInfo{
 		{
 			Name:     "intOverflow",
 			Default:  true,
@@ -598,7 +598,7 @@ echo $someVal;`,
 	}
 
 	for _, info := range allChecks {
-		DeclareCheck(info)
+		reg.DeclareChecker(info)
 	}
 }
 
@@ -616,14 +616,10 @@ type Report struct {
 }
 
 var severityNames = map[int]string{
-	LevelError:       "ERROR",
-	LevelWarning:     "WARNING",
-	LevelInformation: "INFO",
-	LevelHint:        "HINT",
-	LevelUnused:      "UNUSED",
-	LevelDoNotReject: "MAYBE",
-	LevelSyntax:      "SYNTAX",
-	LevelSecurity:    "WARNING",
+	LevelError:    "ERROR",
+	LevelWarning:  "WARNING",
+	LevelNotice:   "MAYBE",
+	LevelSecurity: "WARNING",
 }
 
 func (r *Report) Severity() string {
@@ -632,7 +628,7 @@ func (r *Report) Severity() string {
 
 // IsCritical returns whether or not we need to reject whole commit when found this kind of report.
 func (r *Report) IsCritical() bool {
-	return r.Level != LevelDoNotReject
+	return r.Level != LevelNotice
 }
 
 // DiffReports returns only reports that are new.

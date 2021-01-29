@@ -116,14 +116,14 @@ func (f *sideEffectsFinder) functionCallIsPure(n *ir.FunctionCallExpr) bool {
 		}
 	}
 
-	if !meta.IsIndexingComplete() {
+	if !f.st.Info.IsIndexingComplete() {
 		return false
 	}
 	if funcName != "" {
 		// We can't properly annotate builtin funcs
 		// as pure during the indexing, since we don't have
 		// their PHP sources.
-		_, ok := meta.GetInternalFunctionInfo(funcName)
+		_, ok := f.st.Info.GetInternalFunctionInfo(funcName)
 		if ok {
 			return false
 		}
@@ -133,7 +133,7 @@ func (f *sideEffectsFinder) functionCallIsPure(n *ir.FunctionCallExpr) bool {
 	if !ok {
 		return false
 	}
-	info, ok := meta.Info.GetFunction(fqName)
+	info, ok := f.st.Info.GetFunction(fqName)
 	if !ok {
 		return false
 	}
@@ -141,7 +141,7 @@ func (f *sideEffectsFinder) functionCallIsPure(n *ir.FunctionCallExpr) bool {
 }
 
 func (f *sideEffectsFinder) staticCallIsPure(n *ir.StaticCallExpr) bool {
-	if !meta.IsIndexingComplete() {
+	if !f.st.Info.IsIndexingComplete() {
 		return false
 	}
 	methodName, ok := n.Call.(*ir.Identifier)
@@ -152,12 +152,12 @@ func (f *sideEffectsFinder) staticCallIsPure(n *ir.StaticCallExpr) bool {
 	if !ok {
 		return false
 	}
-	m, ok := FindMethod(className, methodName.Value)
+	m, ok := FindMethod(f.st.Info, className, methodName.Value)
 	return ok && m.Info.IsPure() && m.Info.ExitFlags == 0
 }
 
 func (f *sideEffectsFinder) methodCallIsPure(n *ir.MethodCallExpr) bool {
-	if !meta.IsIndexingComplete() {
+	if !f.st.Info.IsIndexingComplete() {
 		return false
 	}
 	methodName, ok := n.Method.(*ir.Identifier)
@@ -169,8 +169,8 @@ func (f *sideEffectsFinder) methodCallIsPure(n *ir.MethodCallExpr) bool {
 		return false
 	}
 	return typ.Find(func(typ string) bool {
-		m, ok := FindMethod(typ, methodName.Value)
-		if meta.IsInternalClass(m.ClassName) {
+		m, ok := FindMethod(f.st.Info, typ, methodName.Value)
+		if f.st.Info.IsInternalClass(m.ClassName) {
 			return false
 		}
 		return ok && m.Info.IsPure() && m.Info.ExitFlags == 0

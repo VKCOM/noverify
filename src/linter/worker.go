@@ -26,6 +26,13 @@ import (
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
+type ParseResult struct {
+	RootNode *ir.Root
+	Reports  []*Report
+
+	walker *rootWalker
+}
+
 // Worker is a linter handle that is expected to be executed in a single goroutine context.
 //
 // It's not thread-safe and contains the state that will be re-used between the linter API calls.
@@ -43,24 +50,17 @@ type Worker struct {
 	needReports bool
 
 	AllowDisable *regexp.Regexp
+
+	config *Config
+	info   *meta.Info
 }
 
-func NewLintingWorker(id int) *Worker {
-	w := newWorker(id)
-	w.needReports = true
-	return w
-}
-
-func NewIndexingWorker(id int) *Worker {
-	w := newWorker(id)
-	w.needReports = false
-	return w
-}
-
-func newWorker(id int) *Worker {
+func newWorker(config *Config, info *meta.Info, id int) *Worker {
 	ctx := NewWorkerContext()
 	irConverter := irconv.NewConverter(ctx.phpdocTypeParser)
 	return &Worker{
+		config: config,
+		info:   info,
 		id:     id,
 		ctx:    ctx,
 		irconv: irConverter,
@@ -75,9 +75,11 @@ func newWorker(id int) *Worker {
 
 func (w *Worker) ID() int { return w.id }
 
+func (w *Worker) MetaInfo() *meta.Info { return w.info }
+
 // ParseContents parses specified contents (or file) and returns *RootWalker.
 // Function does not update global meta.
-func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (root *ir.Root, walker *RootWalker, err error) {
+func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			s := fmt.Sprintf("Panic while parsing %s: %s\n\nStack trace: %s", fileInfo.Name, r, dbg.Stack())
@@ -86,16 +88,14 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (root *ir.Root, walk
 		}
 	}()
 
-	start := time.Now()
-
 	// TODO: Ragel lexer can handle non-UTF8 input.
 	// We can simplify code below and read from files directly.
 
 	var rd inputs.ReadCloseSizer
 	if fileInfo.Contents == nil {
-		rd, err = SrcInput.NewReader(fileInfo.Name)
+		rd, err = w.config.SrcInput.NewReader(fileInfo.Name)
 	} else {
-		rd, err = SrcInput.NewBytesReader(fileInfo.Name, fileInfo.Contents)
+		rd, err = w.config.SrcInput.NewBytesReader(fileInfo.Name, fileInfo.Contents)
 	}
 	if err != nil {
 		log.Panicf("open source input: %v", err)
@@ -105,29 +105,36 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (root *ir.Root, walk
 	b := w.ctx.scratchBuf
 	b.Reset()
 	if _, err := b.ReadFrom(rd); err != nil {
-		return nil, nil, err
+		return result, err
 	}
 	contents := append(make([]byte, 0, b.Len()), b.Bytes()...)
 
-	waiter := BeforeParse(len(contents), fileInfo.Name)
+	waiter := beforeParse(len(contents), fileInfo.Name)
 	defer waiter.Finish()
 
 	parser := php7.NewParser(contents)
 	parser.WithFreeFloating()
 	parser.Parse()
 
-	atomic.AddInt64(&initParseTime, int64(time.Since(start)))
-
 	file := workspace.NewFile(fileInfo.Name, contents)
-	return w.analyzeFile(file, parser)
+	rootNode, walker, err := w.analyzeFile(file, parser)
+	if err != nil {
+		return result, err
+	}
+	result = ParseResult{
+		RootNode: rootNode,
+		Reports:  walker.reports,
+		walker:   walker,
+	}
+	return result, nil
 }
 
 // IndexFile parses the file and fills in the meta info. Can use cache.
 func (w *Worker) IndexFile(file workspace.FileInfo) error {
-	if CacheDir == "" {
-		_, w, err := w.ParseContents(file)
+	if w.config.CacheDir == "" {
+		result, err := w.ParseContents(file)
 		if w != nil {
-			updateMetaInfo(file.Name, &w.meta)
+			updateMetaInfo(w.info, file.Name, &result.walker.meta)
 		}
 		return err
 	}
@@ -162,30 +169,30 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 		cacheFilenamePart = file.Name[0:1] + "_" + file.Name[2:]
 	}
 
-	cacheFile := filepath.Join(CacheDir, cacheFilenamePart+"."+contentsHash)
+	cacheFile := filepath.Join(w.config.CacheDir, cacheFilenamePart+"."+contentsHash)
 
 	start := time.Now()
 	fp, err := os.Open(cacheFile)
 	if err != nil {
-		_, w, err := w.ParseContents(file)
+		result, err := w.ParseContents(file)
 		if err != nil {
 			return err
 		}
 
-		return createMetaCacheFile(file.Name, cacheFile, w)
+		return createMetaCacheFile(file.Name, cacheFile, result.walker)
 	}
 	defer fp.Close()
 
-	if err := restoreMetaFromCache(file.Name, fp); err != nil {
+	if err := restoreMetaFromCache(w.info, w.config.Checkers.cachers, file.Name, fp); err != nil {
 		// do not really care about why exactly reading from cache failed
 		os.Remove(cacheFile)
 
-		_, w, err := w.ParseContents(file)
+		result, err := w.ParseContents(file)
 		if err != nil {
 			return err
 		}
 
-		return createMetaCacheFile(file.Name, cacheFile, w)
+		return createMetaCacheFile(file.Name, cacheFile, result.walker)
 	}
 
 	atomic.AddInt64(&initCacheReadTime, int64(time.Since(start)))
@@ -195,10 +202,10 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 func (w *Worker) doParseFile(f workspace.FileInfo) []*Report {
 	var err error
 
-	if DebugParseDuration > 0 {
+	if w.config.DebugParseDuration > 0 {
 		start := time.Now()
 		defer func() {
-			if dur := time.Since(start); dur > DebugParseDuration {
+			if dur := time.Since(start); dur > w.config.DebugParseDuration {
 				log.Printf("Parsing of %s took %s", f.Name, dur)
 			}
 		}()
@@ -207,10 +214,10 @@ func (w *Worker) doParseFile(f workspace.FileInfo) []*Report {
 	var reports []*Report
 
 	if w.needReports {
-		var walker *RootWalker
-		_, walker, err = w.ParseContents(f)
+		var result ParseResult
+		result, err = w.ParseContents(f)
 		if err == nil {
-			reports = walker.GetReports()
+			reports = result.Reports
 		}
 	} else {
 		err = w.IndexFile(f)
@@ -224,8 +231,7 @@ func (w *Worker) doParseFile(f workspace.FileInfo) []*Report {
 	return reports
 }
 
-func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Root, *RootWalker, error) {
-	start := time.Now()
+func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Root, *rootWalker, error) {
 	rootNode := parser.GetRootNode()
 
 	if rootNode == nil {
@@ -235,16 +241,17 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 
 	rootIR := w.irconv.ConvertRoot(rootNode)
 
-	st := &meta.ClassParseState{CurrentFile: file.Name()}
-	walker := &RootWalker{
-		file: file,
-		ctx:  newRootContext(w.ctx, st),
+	st := &meta.ClassParseState{Info: w.info, CurrentFile: file.Name()}
+	walker := &rootWalker{
+		config: w.config,
+		file:   file,
+		ctx:    newRootContext(w.config, w.ctx, st),
 
 		// We clone rules sets to remove all rules that
 		// should not be applied to this file because of the @path.
-		anyRset:   cloneRulesForFile(file.Name(), Rules.Any),
-		rootRset:  cloneRulesForFile(file.Name(), Rules.Root),
-		localRset: cloneRulesForFile(file.Name(), Rules.Local),
+		anyRset:   cloneRulesForFile(file.Name(), w.config.Rules.Any),
+		rootRset:  cloneRulesForFile(file.Name(), w.config.Rules.Root),
+		localRset: cloneRulesForFile(file.Name(), w.config.Rules.Local),
 
 		reVet: &regexpVet{
 			parser: w.reParser,
@@ -261,8 +268,8 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 
 	walker.beforeEnterFile()
 	rootIR.Walk(walker)
-	if meta.IsIndexingComplete() {
-		AnalyzeFileRootLevel(rootIR, walker)
+	if w.info.IsIndexingComplete() {
+		analyzeFileRootLevel(rootIR, walker)
 	}
 	walker.afterLeaveFile()
 
@@ -276,7 +283,24 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 		walker.Report(nil, LevelError, "syntax", "Syntax error: "+e.String())
 	}
 
-	atomic.AddInt64(&initWalkTime, int64(time.Since(start)))
-
 	return rootIR, walker, nil
+}
+
+// analyzeFileRootLevel does analyze file top-level code.
+// This method is exposed for language server use, you usually
+// do not need to call it yourself.
+func analyzeFileRootLevel(rootNode ir.Node, d *rootWalker) {
+	sc := meta.NewScope()
+	sc.AddVarName("argv", meta.NewTypesMap("string[]"), "predefined", meta.VarAlwaysDefined)
+	sc.AddVarName("argc", meta.NewTypesMap("int"), "predefined", meta.VarAlwaysDefined)
+
+	b := newBlockWalker(d, sc)
+	b.ignoreFunctionBodies = true
+	b.rootLevel = true
+
+	for _, createFn := range d.customBlock {
+		b.custom = append(b.custom, createFn(&BlockContext{w: b}))
+	}
+
+	rootNode.Walk(b)
 }

@@ -13,11 +13,13 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
+	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/linttest/assert"
+	"github.com/VKCOM/noverify/src/workspace"
 )
 
 func TestCache(t *testing.T) {
-	go MemoryLimiterThread()
+	go MemoryLimiterThread(0)
 
 	// If this test is failing, you haven't broken anything (unless the decoding is failing),
 	// but meta cache probably needs to be invalidated.
@@ -116,14 +118,15 @@ class ByNull {
 main();
 `
 
+	l := NewLinter(NewConfig())
 	runTest := func(iteration int) {
-		_, root, err := ParseContents("cachetest.php", []byte(code), nil, nil)
+		result, err := parseContents(l, "cachetest.php", []byte(code), nil)
 		if err != nil {
 			t.Fatalf("parse error: %v", err)
 		}
 		var buf bytes.Buffer
 		wr := bufio.NewWriter(&buf)
-		if err := writeMetaCache(wr, root); err != nil {
+		if err := writeMetaCache(wr, result.walker); err != nil {
 			t.Fatalf("write cache: %v", err)
 		}
 		wr.Flush()
@@ -156,9 +159,9 @@ main();
 		// 3. Check meta decoding.
 		//
 		// If it fails, encoding and/or decoding is broken.
-		encodedMeta := &root.meta
+		encodedMeta := &result.walker.meta
 		decodedMeta := &fileMeta{}
-		if err := readMetaCache(bytes.NewReader(buf.Bytes()), "", decodedMeta); err != nil {
+		if err := readMetaCache(bytes.NewReader(buf.Bytes()), nil, "", decodedMeta); err != nil {
 			t.Errorf("decoding failed: %v", err)
 		} else {
 			// TODO: due to lots of important unexported fields,
@@ -187,4 +190,15 @@ func collectCacheStrings(data string) string {
 	enc := sha512.New()
 	_, _ = enc.Write([]byte(strings.Join(parts, ","))) // sha512.Write always returns nil error
 	return hex.EncodeToString(enc.Sum(nil))
+}
+
+func parseContents(l *Linter, filename string, contents []byte, lineRanges []git.LineRange) (ParseResult, error) {
+	w := l.NewLintingWorker(0)
+	w.AllowDisable = l.config.AllowDisable
+	file := workspace.FileInfo{
+		Name:       filename,
+		Contents:   contents,
+		LineRanges: lineRanges,
+	}
+	return w.ParseContents(file)
 }

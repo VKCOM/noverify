@@ -77,7 +77,7 @@ The second rule wants you to use `$strict=true` when using [in_array](https://ww
 
 The only mandatory attribute is rule **category** that combines severity level and report message text.
 
-There are 4 categories right now: `error`, `warning`, `info` and `maybe`.<br>
+There are 3 categories right now: `error`, `warning` and `maybe`.<br>
 `error` and `warning` makes a rules **critical**, so linter will exit with non-zero status if it matches.
 
 All other available attributes are matching **constraints**. Constraints that can be repeated can be called **filters**.
@@ -159,7 +159,7 @@ This rule, for example, finds all for loops that call `count` on every iteration
 ```php
 /**
  * @name countCallCond
- * @info count is called on every loop iteration
+ * @warning count is called on every loop iteration
  */
 for ($i = 0; $i < count($a); $i++) $_;
 ```
@@ -169,10 +169,10 @@ for ($i = 0; $i < count($a); $i++) $_;
 Here are possible reports for that rule:
 
 ```
-INFO rules.php:13: count is called on every loop iteration at www/foo.php:693
+WARNING rules.php:13: count is called on every loop iteration at www/foo.php:693
 for ($i = 0; $i < count($words); $i++) {
 ^
-INFO rules.php:13: count is called on every loop iteration at www/foo.php:58
+WARNING rules.php:13: count is called on every loop iteration at www/foo.php:58
 for ($i = 0; $i < count($matches[2]); $i++) {
 ^
 ```
@@ -182,7 +182,7 @@ although it would be better to point to the `count()` position. There is a `@loc
 
 ```php
 /**
- * @info count is called on every loop iteration
+ * @warning count is called on every loop iteration
  * @location $a
  */
 for ($i = 0; $i < count($a); $i++) $_;
@@ -191,10 +191,10 @@ for ($i = 0; $i < count($a); $i++) $_;
 Now result is different:
 
 ```
-INFO rules.php:14: count is called on every loop iteration at www/foo.php:693
+WARNING rules.php:14: count is called on every loop iteration at www/foo.php:693
 for ($i = 0; $i < count($words); $i++) {
                         ^^^^^^
-INFO rules.php:14: count is called on every loop iteration at www/foo.php:58
+WARNING rules.php:14: count is called on every loop iteration at www/foo.php:58
 for ($i = 0; $i < count($matches[2]); $i++) {
                         ^^^^^^^^^^^
 ```
@@ -214,7 +214,6 @@ Rule related attributes:
 | `@name name` | Set diagnostic name (only outside of the function group). |
 | `@error message...` | Set severity=error and report text to `message`. |
 | `@warning message...` | Set severity=warning and report text to `message`. |
-| `@info message...` | Set severity=info and report text to `message`. |
 | `@maybe message...` | Set severity=maybe and report text to `message`. |
 | `@fix template...` | Provide a quickfix template for the rule. |
 | `@scope scope_kind` | Controls where rule can be applied. `scope_kind` is `all`, `root` or `local`. |
@@ -242,7 +241,7 @@ namespace custom;
 
 function redundantCast() {
   /**
-   * @info excessive int cast: expression is already int-typed
+   * @warning excessive int cast: expression is already int-typed
    * @fix $x
    * @location $x
    * @type int $x
@@ -250,7 +249,7 @@ function redundantCast() {
   (int)$x;
 
   /**
-   * @info excessive string cast: expression is already string-typed
+   * @warning excessive string cast: expression is already string-typed
    * @fix $x
    * @location $x
    * @type string $x
