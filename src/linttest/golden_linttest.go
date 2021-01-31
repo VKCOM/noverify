@@ -183,9 +183,28 @@ func (s *GoldenTestSuite) formatReportLines(reports []*linter.Report) []string {
 	return parts
 }
 
+type CommandE2ETestSuite struct {
+	Name string
+	Args []string
+}
+
+func (s *CommandE2ETestSuite) run(t *testing.T) {
+	t.Run(strings.Join(s.Args, " "), func(t *testing.T) {
+		s.execHelpCommand(t, s.Args)
+	})
+}
+
+func (s *CommandE2ETestSuite) execHelpCommand(t *testing.T, args []string) {
+	data, err := exec.Command("./phplinter.exe", args...).CombinedOutput()
+	if err != nil {
+		t.Errorf("Error running command '%s': %v\nOutput:\n%s", strings.Join(args, " "), err, string(data))
+	}
+}
+
 type GoldenE2ETestSuite struct {
-	t     *testing.T
-	tests []*GoldenTestSuite
+	t            *testing.T
+	tests        []*GoldenTestSuite
+	commandTests []*CommandE2ETestSuite
 }
 
 func NewGoldenE2ETestSuite(t *testing.T) *GoldenE2ETestSuite {
@@ -194,7 +213,7 @@ func NewGoldenE2ETestSuite(t *testing.T) *GoldenE2ETestSuite {
 	}
 }
 
-func (s *GoldenE2ETestSuite) AddTest(test *GoldenTestSuite) {
+func (s *GoldenE2ETestSuite) RegisterTest(test *GoldenTestSuite) {
 	s.tests = append(s.tests, test)
 }
 
@@ -206,6 +225,7 @@ func (s *GoldenE2ETestSuite) Run() {
 
 	s.BuildNoVerify()
 	s.RunOnlyTests()
+	s.RunCommandsTest()
 	s.RemoveNoVerify()
 	s.RemoveTestsFiles()
 }
@@ -301,6 +321,18 @@ func (s *GoldenE2ETestSuite) RunOnlyTests() {
 
 				test.checkGoldenOutput(test.want, test.reportFile.Reports)
 			})
+		}
+	})
+}
+
+func (s *GoldenE2ETestSuite) RegisterCommandTest(suite *CommandE2ETestSuite) {
+	s.commandTests = append(s.commandTests, suite)
+}
+
+func (s *GoldenE2ETestSuite) RunCommandsTest() {
+	s.t.Run("commands", func(t *testing.T) {
+		for _, test := range s.commandTests {
+			test.run(t)
 		}
 	})
 }

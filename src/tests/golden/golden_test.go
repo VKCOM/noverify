@@ -8,6 +8,20 @@ import (
 )
 
 func TestGolden(t *testing.T) {
+	commandTests := []*linttest.CommandE2ETestSuite{
+		{
+			Name: "help",
+			Args: []string{"help"},
+		},
+		{
+			Name: "help",
+			Args: []string{"help", "checkers"},
+		},
+		{
+			Name: "help",
+			Args: []string{"help", "checkers", "arraySyntax"},
+		},
+	}
 	targets := []*linttest.GoldenTestSuite{
 		{
 			Name: "embeddedrules",
@@ -177,7 +191,10 @@ func TestGolden(t *testing.T) {
 		l := linter.NewLinter(linterConfig)
 		linttest.PrepareGoldenTestSuite(target, t, l, "testdata", "golden.txt")
 		target.Run()
-		e2eSuite.AddTest(target)
+		e2eSuite.RegisterTest(target)
+	}
+	for _, test := range commandTests {
+		e2eSuite.RegisterCommandTest(test)
 	}
 
 	// Second pass only happens if none of the tests above have failed.
