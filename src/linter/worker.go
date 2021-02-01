@@ -139,7 +139,6 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 		return err
 	}
 
-	var contents []byte
 	h := md5.New()
 
 	if file.Contents == nil {
@@ -153,7 +152,7 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 			return err
 		}
 		atomic.AddInt64(&initFileReadTime, int64(time.Since(start)))
-	} else if _, err := h.Write(contents); err != nil {
+	} else if _, err := h.Write(file.Contents); err != nil {
 		return err
 	}
 
