@@ -75,6 +75,9 @@ type blockWalker struct {
 	ignoreFunctionBodies bool
 	rootLevel            bool // analysing root-level code
 
+	// An array of nodes for which this walker was created.
+	stmts []ir.Node
+
 	// state
 	statements map[ir.Node]struct{}
 
@@ -105,13 +108,14 @@ type blockWalker struct {
 	parentBlockWalkers []*blockWalker // all parent block walkers if we handle nested arrow functions.
 }
 
-func newBlockWalker(r *rootWalker, sc *meta.Scope) *blockWalker {
+func newBlockWalker(r *rootWalker, sc *meta.Scope, stmts []ir.Node) *blockWalker {
 	b := &blockWalker{
 		r:            r,
 		ctx:          &blockContext{sc: sc},
 		unusedVars:   make(map[string][]ir.Node),
 		nonLocalVars: make(map[string]variableKind),
 		path:         irutil.NewNodePath(),
+		stmts:        stmts,
 	}
 	b.linter = blockLinter{walker: b}
 	return b

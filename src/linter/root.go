@@ -522,7 +522,7 @@ type handleFuncResult struct {
 }
 
 func (d *rootWalker) handleArrowFuncExpr(params []meta.FuncParam, expr ir.Node, sc *meta.Scope, parentBlockWalker *blockWalker) handleFuncResult {
-	b := newBlockWalker(d, sc)
+	b := newBlockWalker(d, sc, []ir.Node{expr})
 	b.inArrowFunction = true
 	parentBlockWalker.parentBlockWalkers = append(parentBlockWalker.parentBlockWalkers, parentBlockWalker)
 	b.parentBlockWalkers = parentBlockWalker.parentBlockWalkers
@@ -544,7 +544,7 @@ func (d *rootWalker) handleArrowFuncExpr(params []meta.FuncParam, expr ir.Node, 
 }
 
 func (d *rootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.Node, sc *meta.Scope) handleFuncResult {
-	b := newBlockWalker(d, sc)
+	b := newBlockWalker(d, sc, stmts)
 	for _, createFn := range d.customBlock {
 		b.custom = append(b.custom, createFn(&BlockContext{w: b}))
 	}
@@ -558,6 +558,8 @@ func (d *rootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.N
 			byRef = true
 		case *ir.SimpleVar:
 			v = u
+		default:
+			return handleFuncResult{}
 		}
 
 		typ, ok := sc.GetVarNameType(v.Name)

@@ -293,7 +293,7 @@ func analyzeFileRootLevel(rootNode ir.Node, d *rootWalker) {
 	sc.AddVarName("argv", meta.NewTypesMap("string[]"), "predefined", meta.VarAlwaysDefined)
 	sc.AddVarName("argc", meta.NewTypesMap("int"), "predefined", meta.VarAlwaysDefined)
 
-	b := newBlockWalker(d, sc)
+	b := newBlockWalker(d, sc, []ir.Node{rootNode})
 	b.ignoreFunctionBodies = true
 	b.rootLevel = true
 

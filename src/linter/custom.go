@@ -243,6 +243,11 @@ func (ctx *BlockContext) AddQuickfix(fix quickfix.TextEdit) {
 	ctx.w.r.ctx.fixes = append(ctx.w.r.ctx.fixes, fix)
 }
 
+// Stmts returns an array of nodes for which this walker was created.
+func (ctx *BlockContext) Stmts() []ir.Node {
+	return ctx.w.stmts
+}
+
 // BlockCheckerCreateFunc is a factory function for BlockChecker
 type BlockCheckerCreateFunc func(*BlockContext) BlockChecker
 
