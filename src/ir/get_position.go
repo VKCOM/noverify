@@ -68,8 +68,6 @@ func GetPosition(n Node) *position.Position {
 		return n.Position
 	case *BreakStmt:
 		return n.Position
-	case *CaseListStmt:
-		return n.Position
 	case *CaseStmt:
 		return n.Position
 	case *CatchStmt:

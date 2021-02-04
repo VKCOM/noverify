@@ -596,7 +596,7 @@ endswitch;
 		want := code
 		have := buf.String()
 		if have != want {
-			t.Errorf("results mismatch (-have +want): %s", cmp.Diff(have, want))
+			t.Errorf("results mismatch (-have +want): %s", cmp.Diff(want, have))
 		}
 	}
 }

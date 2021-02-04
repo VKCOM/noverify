@@ -394,7 +394,7 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 		y, ok := y.(*ir.SwitchStmt)
 		return ok && x.AltSyntax == y.AltSyntax &&
 			m.eqNode(state, x.Cond, y.Cond) &&
-			m.eqNodeSlice(state, x.CaseList.Cases, y.CaseList.Cases)
+			m.eqNodeSlice(state, x.Cases, y.Cases)
 
 	case *ir.ReturnStmt:
 		y, ok := y.(*ir.ReturnStmt)
@@ -751,10 +751,10 @@ func (m *matcher) eqClosure(state *matcherState, x *ir.ClosureExpr, y ir.Node) b
 	if y, ok := y.(*ir.ClosureExpr); ok {
 		var xUses, yUses []ir.Node
 		if x.ClosureUse != nil {
-			xUses = x.ClosureUse
+			xUses = x.ClosureUse.Uses
 		}
 		if y.ClosureUse != nil {
-			yUses = y.ClosureUse
+			yUses = y.ClosureUse.Uses
 		}
 		return ok && x.ReturnsRef == y.ReturnsRef &&
 			x.Static == y.Static &&

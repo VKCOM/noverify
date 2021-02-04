@@ -9,7 +9,6 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/solver"
 )
@@ -169,19 +168,8 @@ func (b *blockWalker) reportDeadCode(n ir.Node) {
 }
 
 func (b *blockWalker) handleComments(n ir.Node) {
-	if n == nil {
-		return
-	}
-
 	n.IterateTokens(func(t *token.Token) bool {
-		if t == nil {
-			return true
-		}
-
 		b.handleToken(n, t)
-		for _, ff := range t.FreeFloating {
-			b.handleToken(n, ff)
-		}
 		return true
 	})
 }
@@ -208,54 +196,7 @@ func (b *blockWalker) handleToken(n ir.Node, t *token.Token) {
 
 		types, warning := typesFromPHPDoc(&b.r.ctx, p.Type)
 		if warning != "" {
-			b.r.Report(n, LevelInformation, "phpdocType", "%s on line %d", warning, p.Line())
-		}
-		m := newTypesMap(&b.r.ctx, types)
-		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(p.Var, "$"), m, "@var")
-	}
-}
-
-func (b *blockWalker) handleComments(n ir.Node) {
-	if n == nil {
-		return
-	}
-
-	n.IterateTokens(func(t *token.Token) bool {
-		if t == nil {
-			return true
-		}
-
-		b.handleToken(n, t)
-		for _, ff := range t.FreeFloating {
-			b.handleToken(n, ff)
-		}
-		return true
-	})
-}
-
-func (b *blockWalker) handleToken(n ir.Node, t *token.Token) {
-	if t == nil {
-		return
-	}
-
-	if t.ID != token.T_DOC_COMMENT && t.ID != token.T_COMMENT {
-		return
-	}
-	str := string(t.Value)
-
-	if !phpdoc.IsPHPDoc(str) {
-		return
-	}
-
-	for _, p := range phpdoc.Parse(b.r.ctx.phpdocTypeParser, str) {
-		p, ok := p.(*phpdoc.TypeVarCommentPart)
-		if !ok || p.Name() != "var" {
-			continue
-		}
-
-		types, warning := typesFromPHPDoc(&b.r.ctx, p.Type)
-		if warning != "" {
-			b.r.Report(n, LevelInformation, "phpdocType", "%s on line %d", warning, p.Line())
+			b.r.Report(n, LevelWarning, "phpdocType", "%s on line %d", warning, p.Line())
 		}
 		m := newTypesMap(&b.r.ctx, types)
 		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(p.Var, "$"), m, "@var")
@@ -277,14 +218,6 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 	}
 
 	b.handleComments(n)
-
-	if ffs := n.GetFreeFloating(); ffs != nil {
-		for _, cs := range *ffs {
-			for _, c := range cs {
-				b.walkComments(n, c)
-			}
-		}
-	}
 
 	switch s := n.(type) {
 	case *ir.LogicalOrExpr:
@@ -579,31 +512,6 @@ func (b *blockWalker) addVar(v ir.Node, typ meta.TypesMap, reason string, flags 
 		return
 	}
 	b.trackVarName(v, sv.Name)
-}
-
-func (b *blockWalker) walkComments(n ir.Node, c freefloating.String) {
-	if c.StringType != freefloating.CommentType {
-		return
-	}
-	str := c.Value
-
-	if !phpdoc.IsPHPDoc(str) {
-		return
-	}
-
-	for _, p := range phpdoc.Parse(b.r.ctx.phpdocTypeParser, str) {
-		p, ok := p.(*phpdoc.TypeVarCommentPart)
-		if !ok || p.Name() != "var" {
-			continue
-		}
-
-		types, warning := typesFromPHPDoc(&b.r.ctx, p.Type)
-		if warning != "" {
-			b.r.Report(n, LevelNotice, "phpdocType", "%s on line %d", warning, p.Line())
-		}
-		m := newTypesMap(&b.r.ctx, types)
-		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(p.Var, "$"), m, "@var")
-	}
 }
 
 func (b *blockWalker) handleUnset(s *ir.UnsetStmt) bool {
@@ -1117,14 +1025,12 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 
 	var closureUses []ir.Node
 	if fun.ClosureUse != nil {
-		closureUses = fun.ClosureUse
+		closureUses = fun.ClosureUse.Uses
 	}
 	for _, useExpr := range closureUses {
-		useExpr := useExpr.(*ir.ClosureUseExpr)
-
 		var byRef bool
 		var v *ir.SimpleVar
-		switch u := useExpr.Var.(type) {
+		switch u := useExpr.(type) {
 		case *ir.ReferenceExpr:
 			v = u.Variable.(*ir.SimpleVar)
 			byRef = true
@@ -1421,15 +1327,7 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 }
 
 func (b *blockWalker) handleElseIf(s *ir.ElseIfStmt) {
-	if s.Merged {
-		b.r.checkKeywordCase(s, "else")
-		if ff := (*s.GetFreeFloating())[freefloating.Else]; len(ff) != 0 {
-			rightmostPos := ff[len(ff)-1].Position
-			b.r.checkKeywordCasePos(s, rightmostPos.EndPos, "if")
-		}
-	} else {
-		b.r.checkKeywordCase(s, "elseif")
-	}
+	b.r.checkKeywordCase(s, "elseif")
 }
 
 func (b *blockWalker) iterateNextCases(cases []ir.Node, startIdx int) {
@@ -1463,9 +1361,9 @@ func (b *blockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 	haveDefault := false
 	breakFlags := FlagBreak | FlagContinue
 
-	for i := range s.CaseList.Cases {
+	for i := range s.Cases {
 		idx := i
-		c := s.CaseList.Cases[i]
+		c := s.Cases[i]
 		var list []ir.Node
 
 		cond, list := getCaseStmts(c)
@@ -1493,9 +1391,9 @@ func (b *blockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 			}
 
 			// allow to omit "break;" in the final statement
-			if idx != len(s.CaseList.Cases)-1 && b.ctx.exitFlags == 0 {
+			if idx != len(s.Cases)-1 && b.ctx.exitFlags == 0 {
 				// allow the fallthrough if appropriate comment is present
-				nextCase := s.CaseList.Cases[idx+1]
+				nextCase := s.Cases[idx+1]
 				if !caseHasFallthroughComment(nextCase) {
 					b.r.Report(c, LevelWarning, "caseBreak", "Add break or '// fallthrough' to the end of the case")
 				}
@@ -1505,7 +1403,7 @@ func (b *blockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 				linksCount++
 
 				if b.ctx.exitFlags == 0 {
-					b.iterateNextCases(s.CaseList.Cases, idx+1)
+					b.iterateNextCases(s.Cases, idx+1)
 				}
 			}
 		})
@@ -1741,7 +1639,7 @@ func (b *blockWalker) handleAssign(a *ir.Assign) bool {
 		b.handleAndCheckDimFetchLValue(v, "assign_array", typ)
 		return false
 	case *ir.SimpleVar:
-		b.handleComments(v.NameNode)
+		b.handleComments(v)
 		b.paramClobberCheck(v)
 		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
 	case *ir.Var:

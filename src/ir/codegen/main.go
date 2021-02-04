@@ -35,12 +35,12 @@ func main() {
 		{"validate args", doValidateArgs},
 		{"init context", doInitContext},
 		{"generate equal", doGenerateEqual},
-		// {"generate clone", doGenerateClone},
-		// {"generate walk", doGenerateWalk},
-		// {"generate get freefloating", doGenerateGetFreeFloating},
-		// {"generate get node kind", doGenerateGetNodeKind},
-		// {"generate get position", doGenerateGetPosition},
-		// {"generate iterate tokens", doGenerateIterateTokens},
+		{"generate clone", doGenerateClone},
+		{"generate walk", doGenerateWalk},
+		{"generate get freefloating", doGenerateGetFreeFloating},
+		{"generate get node kind", doGenerateGetNodeKind},
+		{"generate get position", doGenerateGetPosition},
+		{"generate iterate tokens", doGenerateIterateTokens},
 	}
 
 	for _, step := range steps {

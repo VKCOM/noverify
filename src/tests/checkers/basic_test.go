@@ -355,7 +355,7 @@ FUNCTION f() {
   Goto label;
   label:
   YIELD 'yelling!';
-  yielD FROM 'blah!';
+  yielD  FROM 'blah!';
   FOR (;;) {}
   for (;;):
   EndFor;
@@ -440,6 +440,7 @@ function good() {
 		`Use while instead of whilE`,
 		`Use yield instead of YIELD`,
 		`Use yield instead of yielD`,
+		`Use from instead of FROM`,
 		`Use public instead of PubliC`,
 	}
 

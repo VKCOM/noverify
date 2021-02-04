@@ -166,12 +166,18 @@ var fallthroughMarkerRegex = func() *regexp.Regexp {
 }()
 
 func caseHasFallthroughComment(n ir.Node) bool {
-	cas, ok := n.(*ir.CaseStmt)
-	if !ok {
+	var docTkn *token.Token
+
+	switch n := n.(type) {
+	case *ir.CaseStmt:
+		docTkn = n.CaseTkn
+	case *ir.DefaultStmt:
+		docTkn = n.DefaultTkn
+	default:
 		return false
 	}
 
-	for _, tok := range cas.CaseTkn.FreeFloating {
+	for _, tok := range docTkn.FreeFloating {
 		if tok.ID != token.T_COMMENT {
 			continue
 		}

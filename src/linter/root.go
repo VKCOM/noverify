@@ -108,10 +108,6 @@ func (d *rootWalker) File() *workspace.File {
 }
 
 func (d *rootWalker) handleToken(t *token.Token) {
-	if t == nil {
-		return
-	}
-
 	if t.ID != token.T_DOC_COMMENT {
 		return
 	}
@@ -132,7 +128,7 @@ func (d *rootWalker) handleToken(t *token.Token) {
 			}
 			if d.linterDisabled {
 				needleLine := ln.Line() + t.Position.StartLine - 1
-				d.ReportByLine(needleLine, LevelInformation, "linterError", "Linter is already disabled for this file")
+				d.ReportByLine(needleLine, LevelWarning, "linterError", "Linter is already disabled for this file")
 				continue
 			}
 			canDisable := false
@@ -142,26 +138,15 @@ func (d *rootWalker) handleToken(t *token.Token) {
 			d.linterDisabled = canDisable
 			if !canDisable {
 				needleLine := ln.Line() + t.Position.StartLine - 1
-				d.ReportByLine(needleLine, LevelInformation, "linterError", "You are not allowed to disable linter")
+				d.ReportByLine(needleLine, LevelWarning, "linterError", "You are not allowed to disable linter")
 			}
 		}
 	}
 }
 
 func (d *rootWalker) handleComments(n ir.Node) {
-	if n == nil {
-		return
-	}
-
 	n.IterateTokens(func(t *token.Token) bool {
-		if t == nil {
-			return true
-		}
-
 		d.handleToken(t)
-		for _, ff := range t.FreeFloating {
-			d.handleToken(ff)
-		}
 		return true
 	})
 }
@@ -613,11 +598,9 @@ func (d *rootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.N
 	}
 
 	for _, useExpr := range uses {
-		useExpr := useExpr.(*ir.ClosureUseExpr)
-
 		var byRef bool
 		var v *ir.SimpleVar
-		switch u := useExpr.Var.(type) {
+		switch u := useExpr.(type) {
 		case *ir.ReferenceExpr:
 			v = u.Variable.(*ir.SimpleVar)
 			byRef = true
@@ -923,11 +906,11 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 	return true
 }
 
-func (d *rootWalker) enterClassConstList(s *ir.ClassConstListStmt) bool {
+func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
 	cl := d.getClass()
 	accessLevel := meta.Public
 
-	for _, m := range s.Modifiers {
+	for _, m := range list.Modifiers {
 		switch d.lowerCaseModifier(m) {
 		case "public":
 			accessLevel = meta.Public
@@ -938,11 +921,11 @@ func (d *rootWalker) enterClassConstList(s *ir.ClassConstListStmt) bool {
 		}
 	}
 
-	for _, cNode := range s.Consts {
+	for _, cNode := range list.Consts {
 		c := cNode.(*ir.ConstantStmt)
 
 		nm := c.ConstantName.Value
-		d.checkCommentMisspellings(c, c.PhpDocComment)
+		d.checkCommentMisspellings(c, list.PhpDocComment)
 		typ := solver.ExprTypeLocal(d.scope(), d.ctx.st, c.Expr)
 
 		value := constfold.Eval(d.ctx.st, c.Expr)
@@ -1989,19 +1972,38 @@ func (d *rootWalker) checkNameCase(n ir.Node, nameUsed, nameExpected string) {
 	}
 }
 
-func (d *rootWalker) checkKeywordCasePos(n ir.Node, begin int, keyword string) {
-	// wantKwd := keyword
-	// haveKwd := tok.Value
-	// if wantKwd != string(haveKwd) {
-	// 	d.Report(n, LevelWarning, "keywordCase", "Use %s instead of %s",
-	// 		wantKwd, haveKwd)
-	// }
+func (d *rootWalker) checkKeywordCase(n ir.Node, keyword string) {
+	toks := irutil.Keywords(n)
+	if toks == nil {
+		return
+	}
+
+	tok := toks[0]
+
+	switch n := n.(type) {
+	case *ir.YieldFromExpr:
+		d.compareKeywordWithTokenCase(n, toks[0], "yield")
+		d.compareKeywordWithTokenCase(n, toks[1], "from")
+		return
+
+	case *ir.ElseIfStmt:
+		if !n.Merged {
+			d.compareKeywordWithTokenCase(n, toks[0], "if")
+			d.compareKeywordWithTokenCase(n, toks[1], "else")
+			return
+		}
+	}
+
+	d.compareKeywordWithTokenCase(n, tok, keyword)
 }
 
-func (d *rootWalker) checkKeywordCase(n ir.Node, keyword string) {
-	// Only works for nodes that have a keyword of interest
-	// as the leftmost token.
-	// d.checkKeywordCasePos(n, 0, keyword)
+func (d *rootWalker) compareKeywordWithTokenCase(n ir.Node, tok *token.Token, keyword string) {
+	wantKwd := keyword
+	haveKwd := tok.Value
+	if wantKwd != string(haveKwd) {
+		d.Report(n, LevelWarning, "keywordCase", "Use %s instead of %s",
+			wantKwd, haveKwd)
+	}
 }
 
 func (d *rootWalker) parseClassPHPDoc(n ir.Node, doc []phpdoc.CommentPart) classPhpDocParseResult {

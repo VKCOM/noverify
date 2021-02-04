@@ -261,10 +261,6 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
-	case *ir.CaseListStmt:
-		clone := *x
-		clone.Cases = NodeSliceClone(x.Cases)
-		return &clone
 	case *ir.CaseStmt:
 		clone := *x
 		if x.Cond != nil {
@@ -353,17 +349,14 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.ClosureExpr:
 		clone := *x
 		clone.Params = NodeSliceClone(x.Params)
-		clone.ClosureUse = NodeSliceClone(x.ClosureUse)
-		if x.ReturnType != nil {
-			clone.ReturnType = NodeClone(x.ReturnType)
+		if x.ClosureUse != nil {
+			clone.ClosureUse = NodeClone(x.ClosureUse).(*ir.ClosureUseExpr)
 		}
 		clone.Stmts = NodeSliceClone(x.Stmts)
 		return &clone
 	case *ir.ClosureUseExpr:
 		clone := *x
-		if x.Var != nil {
-			clone.Var = NodeClone(x.Var)
-		}
+		clone.Uses = NodeSliceClone(x.Uses)
 		return &clone
 	case *ir.CoalesceExpr:
 		clone := *x
@@ -997,8 +990,8 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Cond != nil {
 			clone.Cond = NodeClone(x.Cond)
 		}
-		if x.CaseList != nil {
-			clone.CaseList = NodeClone(x.CaseList).(*ir.CaseListStmt)
+		if x.Cases != nil {
+			clone.Cases = NodeSliceClone(x.Cases)
 		}
 		return &clone
 	case *ir.TernaryExpr:

@@ -1,6 +1,8 @@
 package irutil
 
 import (
+	"github.com/z7zmey/php-parser/pkg/token"
+
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irfmt"
 )
@@ -70,6 +72,26 @@ func IsAssign(n ir.Node) bool {
 // FmtNode returns string representation of n.
 func FmtNode(n ir.Node) string {
 	return irfmt.Node(n)
+}
+
+// FindPhpDoc searches for phpdoc by traversing all subtree and all tokens.
+func FindPhpDoc(n ir.Node) (string, bool) {
+	var doc string
+
+	Inspect(n, func(n ir.Node) bool {
+		n.IterateTokens(func(t *token.Token) bool {
+			if t.ID == token.T_DOC_COMMENT {
+				doc = string(t.Value)
+				return false
+			}
+
+			return doc == ""
+		})
+
+		return doc == ""
+	})
+
+	return doc, doc != ""
 }
 
 func classEqual(x, y ir.Class) bool {

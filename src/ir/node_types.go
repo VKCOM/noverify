@@ -148,19 +148,16 @@ type AssignShiftRight struct {
 // AnonClassExpr is an anonymous class expression.
 // $Args may contain constructor call arguments `new class ($Args...) {}`.
 type AnonClassExpr struct {
-	FreeFloating            freefloating.Collection
-	Position                *position.Position
-	ClassTkn                *token.Token
-	OpenParenthesisTkn      *token.Token
-	ArgsFreeFloating        freefloating.Collection
-	Args                    []Node
-	SeparatorTkns           []*token.Token
-	CloseParenthesisTkn     *token.Token
-	ExtendsTkn              *token.Token
-	ImplementsTkn           *token.Token
-	ImplementsSeparatorTkns []*token.Token
-	OpenCurlyBracketTkn     *token.Token
-	CloseCurlyBracketTkn    *token.Token
+	FreeFloating         freefloating.Collection
+	Position             *position.Position
+	ClassTkn             *token.Token
+	OpenParenthesisTkn   *token.Token
+	ArgsFreeFloating     freefloating.Collection
+	Args                 []Node
+	SeparatorTkns        []*token.Token
+	CloseParenthesisTkn  *token.Token
+	OpenCurlyBracketTkn  *token.Token
+	CloseCurlyBracketTkn *token.Token
 	Class
 }
 
@@ -438,6 +435,7 @@ type ArrayExpr struct {
 }
 
 // ArrayDimFetchExpr is a `$Variable[$Dim]` expression.
+// If $CurlyBrace is true, it's `$Variable{$Dim}`
 type ArrayDimFetchExpr struct {
 	FreeFloating    freefloating.Collection
 	Position        *position.Position
@@ -445,6 +443,7 @@ type ArrayDimFetchExpr struct {
 	OpenBracketTkn  *token.Token
 	Dim             Node
 	CloseBracketTkn *token.Token
+	CurlyBrace      bool
 }
 
 // ArrayItemExpr is a `$Key => $Val` expression.
@@ -482,8 +481,8 @@ type ArrowFunctionExpr struct {
 	Expr                Node
 	ReturnsRef          bool
 	Static              bool
-	PhpDocComment       string
-	PhpDoc              []phpdoc.CommentPart
+
+	Doc
 }
 
 // BitwiseNotExpr is a `~$Expr` expression.
@@ -536,7 +535,7 @@ type ClosureExpr struct {
 	CloseParenthesisTkn    *token.Token
 	UseTkn                 *token.Token
 	UseOpenParenthesisTkn  *token.Token
-	ClosureUse             []Node
+	ClosureUse             *ClosureUseExpr
 	UseSeparatorTkns       []*token.Token
 	UseCloseParenthesisTkn *token.Token
 	ColonTkn               *token.Token
@@ -550,12 +549,12 @@ type ClosureExpr struct {
 	PhpDoc                 []phpdoc.CommentPart
 }
 
-// ClosureUseExpr is a $Uses single part in `use ($Uses...)` expression.
+// ClosureUseExpr is a `use ($Uses...)` expression.
+// TODO: it's not a expression really.
 type ClosureUseExpr struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
-	AmpersandTkn *token.Token
-	Var          Node
+	Uses         []Node
 }
 
 // ConstFetchExpr is a `$Constant` expression.
@@ -846,6 +845,7 @@ type YieldFromExpr struct {
 type Name struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
+	NameTkn      *token.Token
 	Value        string
 }
 
@@ -909,11 +909,11 @@ type Root struct {
 
 // SimpleVar is a normal PHP variable like `$foo` or `$bar`.
 type SimpleVar struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	DollarTkn    *token.Token
-	NameNode     *Identifier
-	Name         string
+	FreeFloating  freefloating.Collection
+	Position      *position.Position
+	DollarTkn     *token.Token
+	IdentifierTkn *token.Token
+	Name          string
 }
 
 // Var is variable variable expression like `$$foo` or `${"foo"}`.
@@ -1028,14 +1028,6 @@ type CaseStmt struct {
 	Stmts            []Node
 }
 
-// CaseListStmt is a wrapper node that contains all switch statement cases.
-// TODO: can we get rid of it?
-type CaseListStmt struct {
-	FreeFloating freefloating.Collection
-	Position     *position.Position
-	Cases        []Node
-}
-
 // CatchStmt is a `catch ($Types... $Variable) { $Stmts... }` statement.
 // Note that $Types are |-separated, like in `T1 | T2`.
 type CatchStmt struct {
@@ -1055,16 +1047,13 @@ type CatchStmt struct {
 // ClassStmt is a named class declaration.
 // $Modifiers consist of identifiers like `final` and `abstract`.
 type ClassStmt struct {
-	FreeFloating            freefloating.Collection
-	Position                *position.Position
-	Modifiers               []*Identifier
-	ClassTkn                *token.Token
-	ClassName               *Identifier
-	ExtendsTkn              *token.Token
-	ImplementsTkn           *token.Token
-	ImplementsSeparatorTkns []*token.Token
-	OpenCurlyBracketTkn     *token.Token
-	CloseCurlyBracketTkn    *token.Token
+	FreeFloating         freefloating.Collection
+	Position             *position.Position
+	Modifiers            []*Identifier
+	ClassTkn             *token.Token
+	ClassName            *Identifier
+	OpenCurlyBracketTkn  *token.Token
+	CloseCurlyBracketTkn *token.Token
 	Class
 }
 
@@ -1079,21 +1068,26 @@ type ClassConstListStmt struct {
 	Consts        []Node
 	SeparatorTkns []*token.Token
 	SemiColonTkn  *token.Token
+
+	Doc
 }
 
 // ClassExtendsStmt is a `extends $ClassName` statement.
 type ClassExtendsStmt struct {
 	FreeFloating freefloating.Collection
 	Position     *position.Position
+	ExtendsTkn   *token.Token
 	ClassName    *Name
 }
 
 // ClassImplementsStmt is a `implements $InterfaceNames...` statement.
 // TODO: shouldn't every InterfaceName be a *Name?
 type ClassImplementsStmt struct {
-	FreeFloating   freefloating.Collection
-	Position       *position.Position
-	InterfaceNames []Node
+	FreeFloating            freefloating.Collection
+	Position                *position.Position
+	ImplementsTkn           *token.Token
+	ImplementsSeparatorTkns []*token.Token
+	InterfaceNames          []Node
 }
 
 // ClassMethodStmt is a class method declaration.
@@ -1130,12 +1124,11 @@ type ConstListStmt struct {
 // ConstantStmt is a `$ConstantName = $Expr` statement.
 // It's a part of the *ConstListStmt, *ClassConstListStmt and *DeclareStmt.
 type ConstantStmt struct {
-	FreeFloating  freefloating.Collection
-	Position      *position.Position
-	ConstantName  *Identifier
-	EqualTkn      *token.Token
-	Expr          Node
-	PhpDocComment string
+	FreeFloating freefloating.Collection
+	Position     *position.Position
+	ConstantName *Identifier
+	EqualTkn     *token.Token
+	Expr         Node
 }
 
 // ContinueStmt is a `continue $Expe` statement.
@@ -1217,6 +1210,8 @@ type ElseIfStmt struct {
 	FreeFloating        freefloating.Collection
 	Position            *position.Position
 	ElseIfTkn           *token.Token
+	ElseTkn             *token.Token
+	IfTkn               *token.Token
 	OpenParenthesisTkn  *token.Token
 	Cond                Node
 	CloseParenthesisTkn *token.Token
@@ -1374,6 +1369,7 @@ type IfStmt struct {
 	Else                Node
 	EndIfTkn            *token.Token
 	SemiColonTkn        *token.Token
+	ElseTkn             *token.Token
 	AltSyntax           bool
 }
 
@@ -1391,7 +1387,6 @@ type InlineHTMLStmt struct {
 type InterfaceStmt struct {
 	FreeFloating         freefloating.Collection
 	Position             *position.Position
-	PhpDocComment        string
 	InterfaceTkn         *token.Token
 	InterfaceName        *Identifier
 	ExtendsTkn           *token.Token
@@ -1400,6 +1395,8 @@ type InterfaceStmt struct {
 	OpenCurlyBracketTkn  *token.Token
 	Stmts                []Node
 	CloseCurlyBracketTkn *token.Token
+
+	Doc
 }
 
 // InterfaceExtendsStmt is a `extends $InterfaceNames...` statement.
@@ -1448,6 +1445,8 @@ type PropertyStmt struct {
 	Variable     *SimpleVar
 	EqualTkn     *token.Token
 	Expr         Node
+
+	Doc
 }
 
 // PropertyListStmt is a `$Modifiers $Type $Properties` statement.
@@ -1516,7 +1515,7 @@ type SwitchStmt struct {
 	ColonTkn             *token.Token
 	OpenCurlyBracketTkn  *token.Token
 	CaseSeparatorTkn     *token.Token
-	CaseList             *CaseListStmt
+	Cases                []Node
 	CloseCurlyBracketTkn *token.Token
 	EndSwitchTkn         *token.Token
 	SemiColonTkn         *token.Token
@@ -1541,7 +1540,8 @@ type TraitStmt struct {
 	OpenCurlyBracketTkn  *token.Token
 	Stmts                []Node
 	CloseCurlyBracketTkn *token.Token
-	PhpDocComment        string
+
+	Doc
 }
 
 // TraitAdaptationListStmt is a block inside a *TraitUseStmt.

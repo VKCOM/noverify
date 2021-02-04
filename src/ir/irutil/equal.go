@@ -49,6 +49,9 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Dim, y.Dim) {
 			return false
 		}
+		if x.CurlyBrace != y.CurlyBrace {
+			return false
+		}
 		return true
 	case *ir.ArrayExpr:
 		y, ok := y.(*ir.ArrayExpr)
@@ -388,15 +391,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		return true
-	case *ir.CaseListStmt:
-		y, ok := y.(*ir.CaseListStmt)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeSliceEqual(x.Cases, y.Cases) {
-			return false
-		}
-		return true
 	case *ir.CaseStmt:
 		y, ok := y.(*ir.CaseStmt)
 		if !ok || x == nil || y == nil {
@@ -450,6 +444,9 @@ func NodeEqual(x, y ir.Node) bool {
 			}
 		}
 		if !NodeSliceEqual(x.Consts, y.Consts) {
+			return false
+		}
+		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
 		return true
@@ -540,7 +537,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeSliceEqual(x.Params, y.Params) {
 			return false
 		}
-		if !NodeSliceEqual(x.ClosureUse, y.ClosureUse) {
+		if !NodeEqual(x.ClosureUse, y.ClosureUse) {
 			return false
 		}
 		if !NodeEqual(x.ReturnType, y.ReturnType) {
@@ -564,7 +561,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !NodeEqual(x.Var, y.Var) {
+		if !NodeSliceEqual(x.Uses, y.Uses) {
 			return false
 		}
 		return true
@@ -619,9 +616,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
 		return true
@@ -1429,6 +1423,9 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
+		if x.PhpDocComment != y.PhpDocComment {
+			return false
+		}
 		return true
 	case *ir.ReferenceExpr:
 		y, ok := y.(*ir.ReferenceExpr)
@@ -1494,9 +1491,6 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.SimpleVar)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if !NodeEqual(x.NameNode, y.NameNode) {
-			return false
 		}
 		if x.Name != y.Name {
 			return false
@@ -1615,7 +1609,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Cond, y.Cond) {
 			return false
 		}
-		if !NodeEqual(x.CaseList, y.CaseList) {
+		if !NodeSliceEqual(x.Cases, y.Cases) {
 			return false
 		}
 		if x.AltSyntax != y.AltSyntax {

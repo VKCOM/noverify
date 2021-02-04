@@ -65,8 +65,6 @@ func (n *BooleanOrExpr) GetFreeFloating() *freefloating.Collection { return &n.F
 
 func (n *BreakStmt) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
 
-func (n *CaseListStmt) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
-
 func (n *CaseStmt) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }
 
 func (n *CatchStmt) GetFreeFloating() *freefloating.Collection { return &n.FreeFloating }

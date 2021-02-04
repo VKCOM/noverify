@@ -379,16 +379,6 @@ func (n *BreakStmt) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
-func (n *CaseListStmt) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	for _, nn := range n.Cases {
-		nn.Walk(v)
-	}
-	v.LeaveNode(n)
-}
-
 func (n *CaseStmt) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
@@ -525,8 +515,8 @@ func (n *ClosureExpr) Walk(v Visitor) {
 	for _, nn := range n.Params {
 		nn.Walk(v)
 	}
-	for _, nn := range n.ClosureUse {
-		nn.Walk(v)
+	if n.ClosureUse != nil {
+		n.ClosureUse.Walk(v)
 	}
 	if n.ReturnType != nil {
 		n.ReturnType.Walk(v)
@@ -541,8 +531,8 @@ func (n *ClosureUseExpr) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
 	}
-	if n.Var != nil {
-		n.Var.Walk(v)
+	for _, nn := range n.Uses {
+		nn.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -1467,9 +1457,6 @@ func (n *SimpleVar) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
 	}
-	if n.NameNode != nil {
-		n.NameNode.Walk(v)
-	}
 	v.LeaveNode(n)
 }
 
@@ -1588,8 +1575,8 @@ func (n *SwitchStmt) Walk(v Visitor) {
 	if n.Cond != nil {
 		n.Cond.Walk(v)
 	}
-	if n.CaseList != nil {
-		n.CaseList.Walk(v)
+	for _, nn := range n.Cases {
+		nn.Walk(v)
 	}
 	v.LeaveNode(n)
 }

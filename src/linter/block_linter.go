@@ -456,7 +456,7 @@ func (b *blockLinter) checkSwitch(s *ir.SwitchStmt) {
 	nodeSet := &b.walker.r.nodeSet
 	nodeSet.Reset()
 	wasAdded := false
-	for i, c := range s.CaseList.Cases {
+	for i, c := range s.Cases {
 		c, ok := c.(*ir.CaseStmt)
 		if !ok {
 			continue

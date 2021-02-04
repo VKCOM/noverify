@@ -1,6 +1,7 @@
 package irconv
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"strconv"
@@ -9,6 +10,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/z7zmey/php-parser/pkg/ast"
+	"github.com/z7zmey/php-parser/pkg/position"
+	"github.com/z7zmey/php-parser/pkg/token"
 )
 
 func fullyQualifiedToString(n *ast.NameFullyQualified) string {
@@ -28,13 +31,42 @@ func namePartsToString(parts []ast.Vertex) string {
 		switch v := v.(type) {
 		case *ast.NamePart:
 			value = string(v.Value)
-		case *ast.ScalarEncapsedStringPart:
-			value = string(v.Value)
 		}
 
 		s = append(s, value)
 	}
 	return strings.Join(s, `\`)
+}
+
+// namePartsToToken converts slice of *name.NamePart tokens to single token
+func namePartsToToken(parts []ast.Vertex) *token.Token {
+	if len(parts) == 0 {
+		return &token.Token{}
+	}
+
+	ff := make([]*token.Token, 0, len(parts))
+	valueParts := make([][]byte, 0, len(parts))
+
+	for _, v := range parts {
+		switch v := v.(type) {
+		case *ast.NamePart:
+			ff = append(ff, v.StringTkn)
+			valueParts = append(valueParts, v.Value)
+		case *ast.ScalarEncapsedStringPart:
+			ff = append(ff, v.EncapsedStrTkn)
+			valueParts = append(valueParts, v.Value)
+		}
+	}
+
+	startPos := parts[0].GetPosition()
+	endPos := parts[len(parts)-1].GetPosition()
+
+	return &token.Token{
+		ID:           token.T_STRING,
+		Value:        bytes.Join(valueParts, []byte(`\`)),
+		Position:     position.NewPosition(startPos.StartLine, endPos.EndLine, startPos.StartPos, endPos.EndPos),
+		FreeFloating: ff,
+	}
 }
 
 // interpretString returns s with all escape sequences replaced.
