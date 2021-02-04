@@ -45,23 +45,15 @@ func (g *genEqual) writeCompare(w *bytes.Buffer, pkg *packageData, typ *typeData
 		field := typ.info.Field(i)
 		switch typeString := field.Type().String(); typeString {
 		case "*github.com/z7zmey/php-parser/pkg/token.Token":
-			fmt.Fprintf(w, "    if x.%[1]s == nil && y.%[1]s == nil { return true }\n", field.Name())
-			fmt.Fprintf(w, "    if x.%[1]s == nil || y.%[1]s == nil { return false }\n", field.Name())
-			fmt.Fprintf(w, "    if !bytes.Equal(x.%[1]s.Value, y.%[1]s.Value) { return false }\n", field.Name())
+			// Do nothing.
 		case "[]*github.com/z7zmey/php-parser/pkg/token.Token":
-			fmt.Fprintf(w, "    for i := range x.%s {\n", field.Name())
-			fmt.Fprintf(w, "      if x.%[1]s[i] == nil && y.%[1]s[i] == nil { return true }\n", field.Name())
-			fmt.Fprintf(w, "      if x.%[1]s[i] == nil || y.%[1]s[i] == nil { return false }\n", field.Name())
-			fmt.Fprintf(w, "      if !bytes.Equal(x.%[1]s[i].Value, y.%[1]s[i].Value) { return false }\n", field.Name())
-			fmt.Fprintf(w, "    }\n")
+			// Do nothing.
 		case "string", "bool":
 			fmt.Fprintf(w, "    if x.%[1]s != y.%[1]s { return false }\n", field.Name())
 		case "[]ir.Node":
 			fmt.Fprintf(w, "    if !NodeSliceEqual(x.%[1]s, y.%[1]s) { return false }\n", field.Name())
-		case "*ir.Token": // replace later with *github.com/z7zmey/php-parser/pkg/token.Token
-			// Do nothing.
-		case "[]*ir.Token": // replace later with []*github.com/z7zmey/php-parser/pkg/token.Token
-			// Do nothing.
+		case "ir.Doc":
+			fmt.Fprintf(w, "    if x.PhpDocComment != y.PhpDocComment { return false }\n")
 		case "github.com/VKCOM/noverify/src/php/parser/freefloating.Collection":
 			// Do nothing.
 		case "*github.com/z7zmey/php-parser/pkg/position.Position":

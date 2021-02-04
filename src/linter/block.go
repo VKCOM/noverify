@@ -215,6 +215,53 @@ func (b *blockWalker) handleToken(n ir.Node, t *token.Token) {
 	}
 }
 
+func (b *blockWalker) handleComments(n ir.Node) {
+	if n == nil {
+		return
+	}
+
+	n.IterateTokens(func(t *token.Token) bool {
+		if t == nil {
+			return true
+		}
+
+		b.handleToken(n, t)
+		for _, ff := range t.FreeFloating {
+			b.handleToken(n, ff)
+		}
+		return true
+	})
+}
+
+func (b *blockWalker) handleToken(n ir.Node, t *token.Token) {
+	if t == nil {
+		return
+	}
+
+	if t.ID != token.T_DOC_COMMENT && t.ID != token.T_COMMENT {
+		return
+	}
+	str := string(t.Value)
+
+	if !phpdoc.IsPHPDoc(str) {
+		return
+	}
+
+	for _, p := range phpdoc.Parse(b.r.ctx.phpdocTypeParser, str) {
+		p, ok := p.(*phpdoc.TypeVarCommentPart)
+		if !ok || p.Name() != "var" {
+			continue
+		}
+
+		types, warning := typesFromPHPDoc(&b.r.ctx, p.Type)
+		if warning != "" {
+			b.r.Report(n, LevelInformation, "phpdocType", "%s on line %d", warning, p.Line())
+		}
+		m := newTypesMap(&b.r.ctx, types)
+		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(p.Var, "$"), m, "@var")
+	}
+}
+
 // EnterNode is called before walking to inner nodes.
 func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 	res = true

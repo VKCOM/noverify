@@ -540,7 +540,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeSliceEqual(x.Params, y.Params) {
 			return false
 		}
-		if !NodeEqual(x.ClosureUse, y.ClosureUse) {
+		if !NodeSliceEqual(x.ClosureUse, y.ClosureUse) {
 			return false
 		}
 		if !NodeEqual(x.ReturnType, y.ReturnType) {
@@ -564,7 +564,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !NodeSliceEqual(x.Uses, y.Uses) {
+		if !NodeEqual(x.Var, y.Var) {
 			return false
 		}
 		return true
@@ -1414,6 +1414,9 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeSliceEqual(x.Properties, y.Properties) {
 			return false
 		}
+		if x.PhpDocComment != y.PhpDocComment {
+			return false
+		}
 		return true
 	case *ir.PropertyStmt:
 		y, ok := y.(*ir.PropertyStmt)
@@ -1424,9 +1427,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
 		return true
@@ -1494,6 +1494,9 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.SimpleVar)
 		if !ok || x == nil || y == nil {
 			return x == y
+		}
+		if !NodeEqual(x.NameNode, y.NameNode) {
+			return false
 		}
 		if x.Name != y.Name {
 			return false
