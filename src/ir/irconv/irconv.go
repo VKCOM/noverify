@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/i582/php-parser/pkg/ast"
+	"github.com/i582/php-parser/pkg/position"
 	"github.com/i582/php-parser/pkg/token"
 
 	"github.com/VKCOM/noverify/src/ir"
@@ -78,7 +79,6 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		// $_ = fn($x) => $x->b();
 		if arrowFn, ok := out.Expression.(*ir.ArrowFunctionExpr); ok {
 			doc, found := irutil.FindPhpDoc(out.Variable)
-
 			if found {
 				arrowFn.PhpDocComment = doc
 				arrowFn.PhpDoc = c.parsePHPDoc(doc)
@@ -644,7 +644,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			tokenWithDoc = n.FnTkn
 		}
 
-		out.PhpDocComment, out.PhpDoc = c.getPhpDocWithParse(tokenWithDoc)
+		out.PhpDocComment, out.PhpDoc = c.getPhpDoc(tokenWithDoc)
 
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
@@ -727,14 +727,23 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			tokenWithDoc = n.FunctionTkn
 		}
 
-		out.PhpDocComment, out.PhpDoc = c.getPhpDocWithParse(tokenWithDoc)
+		out.PhpDocComment, out.PhpDoc = c.getPhpDoc(tokenWithDoc)
 
 		out.ReturnsRef = hasValue(n.AmpersandTkn)
 		out.Static = hasValue(n.StaticTkn)
 
 		out.Params = c.convNodeSlice(n.Params)
+
+		var pos *position.Position
+		if len(n.Uses) != 0 {
+			firstPos := n.Uses[0].GetPosition()
+			lastPos := n.Uses[len(n.Uses)-1].GetPosition()
+
+			pos = position.NewPosition(firstPos.StartLine, lastPos.EndLine, firstPos.StartPos, lastPos.EndPos)
+		}
+
 		out.ClosureUse = &ir.ClosureUseExpr{
-			Position: nil,
+			Position: pos,
 			Uses:     c.convNodeSlice(n.Uses),
 		}
 		out.ReturnType = c.convNode(n.ReturnType)
@@ -746,14 +755,16 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.SimpleVar)(nil)
 		}
 
-		varNode := c.convNode(n.Var)
+		var varNode ir.Node
 
 		if hasValue(n.AmpersandTkn) {
 			varNode = &ir.ReferenceExpr{
 				AmpersandTkn: n.AmpersandTkn,
 				Position:     n.Position,
-				Variable:     varNode,
+				Variable:     c.convNode(n.Var),
 			}
+		} else {
+			varNode = c.convNode(n.Var)
 		}
 
 		switch varNode := varNode.(type) {
@@ -818,7 +829,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
 		out.Expr = c.convNode(n.Expr)
 
-		out.Die = hasValue(n.ExitTkn) && bytes.Equal(n.ExitTkn.Value, []byte("die"))
+		out.Die = hasValue(n.ExitTkn) && bytes.EqualFold(n.ExitTkn.Value, []byte("die"))
 		return out
 
 	case *ast.ExprFunctionCall:
@@ -899,8 +910,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.NewExpr)(nil)
 		}
 		out := &ir.NewExpr{}
-		out.Position = n.Position
 
+		out.Position = n.Position
 		out.NewTkn = n.NewTkn
 		out.OpenParenthesisTkn = n.OpenParenthesisTkn
 		out.SeparatorTkns = n.SeparatorTkns
@@ -1360,7 +1371,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			out.Modifiers = slice
 		}
 
-		out.PhpDocComment, out.PhpDoc = c.getPhpDocWithParse(n.ConstTkn)
+		out.PhpDocComment, out.PhpDoc = c.getPhpDoc(n.ConstTkn)
 
 		out.Consts = c.convNodeSlice(n.Consts)
 		return out
@@ -1385,7 +1396,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			tokenWithDoc = n.FunctionTkn
 		}
 
-		out.PhpDocComment, out.PhpDoc = c.getPhpDocWithParse(tokenWithDoc)
+		out.PhpDocComment, out.PhpDoc = c.getPhpDoc(tokenWithDoc)
 
 		out.MethodName = c.convNode(n.Name).(*ir.Identifier)
 		{
@@ -1508,6 +1519,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		// Since the parser turns the else if statement into an ir.ElseStmt
 		// node with the Stmt field equal to the ir.IfStmt node, we need
 		// to convert this to an ir.ElseIfStmt node.
+		//
 		// For this, if ir.ElseStmt contains ir.IfStmt, then it is necessary to
 		// return the ir.IfStmt node, which contains the necessary fields,
 		// to create the ir.ElseIfStmt node in the future.
@@ -1639,7 +1651,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 
-		out.PhpDocComment, out.PhpDoc = c.getPhpDocWithParse(n.FunctionTkn)
+		out.PhpDocComment, out.PhpDoc = c.getPhpDoc(n.FunctionTkn)
 
 		out.FunctionName = c.convNode(n.Name).(*ir.Identifier)
 		out.Params = c.convNodeSlice(n.Params)
@@ -1781,7 +1793,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 
-		out.PhpDocComment, out.PhpDoc = c.getPhpDocWithParse(n.InterfaceTkn)
+		out.PhpDocComment, out.PhpDoc = c.getPhpDoc(n.InterfaceTkn)
 
 		out.InterfaceName = c.convNode(n.Name).(*ir.Identifier)
 		out.Extends = &ir.InterfaceExtendsStmt{
@@ -1858,7 +1870,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		if len(n.Modifiers) != 0 {
 			tokenWithDoc = n.Modifiers[0].(*ast.Identifier).IdentifierTkn
 		}
-		out.PhpDocComment, out.PhpDoc = c.getPhpDocWithParse(tokenWithDoc)
+		out.PhpDocComment, out.PhpDoc = c.getPhpDoc(tokenWithDoc)
 
 		out.Type = c.convNode(n.Type)
 		out.Properties = c.convNodeSlice(n.Props)
@@ -1952,7 +1964,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 
-		out.PhpDocComment, out.PhpDoc = c.getPhpDocWithParse(out.TraitTkn)
+		out.PhpDocComment, out.PhpDoc = c.getPhpDoc(out.TraitTkn)
 
 		out.TraitName = c.convNode(n.Name).(*ir.Identifier)
 		out.Stmts = c.convNodeSlice(n.Stmts)
@@ -1972,8 +1984,17 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.SemiColonTkn = n.SemiColonTkn
 
 		out.Traits = c.convNodeSlice(n.Traits)
-		// TODO:
+
+		var pos *position.Position
+		if len(n.Adaptations) != 0 {
+			firstPos := n.Adaptations[0].GetPosition()
+			lastPos := n.Adaptations[len(n.Adaptations)-1].GetPosition()
+
+			pos = position.NewPosition(firstPos.StartLine, lastPos.EndLine, firstPos.StartPos, lastPos.EndPos)
+		}
+
 		out.TraitAdaptationList = &ir.TraitAdaptationListStmt{
+			Position:    pos,
 			Adaptations: c.convNodeSlice(n.Adaptations),
 		}
 		return out
@@ -2090,11 +2111,15 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 	panic(fmt.Sprintf("unhandled type %T", n))
 }
 
+// hasValue function is used to determine if the
+// passed token exists.
+//
+// It is usually used to get additional information about a node.
 func hasValue(tok *token.Token) bool {
 	return tok != nil
 }
 
-func (c *Converter) getPhpDocWithParse(tok *token.Token) (doc string, parsed []phpdoc.CommentPart) {
+func (c *Converter) getPhpDoc(tok *token.Token) (doc string, parsed []phpdoc.CommentPart) {
 	if tok == nil {
 		return doc, parsed
 	}
@@ -2165,7 +2190,7 @@ func (c *Converter) convClass(n *ast.StmtClass) ir.Node {
 		}
 	}
 
-	class.PhpDocComment, class.PhpDoc = c.getPhpDocWithParse(n.ClassTkn)
+	class.PhpDocComment, class.PhpDoc = c.getPhpDoc(n.ClassTkn)
 
 	if n.Name == nil {
 		// Anonymous class expression.

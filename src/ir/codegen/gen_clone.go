@@ -56,9 +56,9 @@ func (g *genClone) writeCloneCase(w *bytes.Buffer, pkg *packageData, typ *typeDa
 		case "[]ir.Node":
 			fmt.Fprintf(w, "    clone.%[1]s = NodeSliceClone(x.%[1]s)\n", field.Name())
 		case "*github.com/i582/php-parser/pkg/token.Token":
-
+			// Do nothing.
 		case "[]*github.com/i582/php-parser/pkg/token.Token":
-
+			// Do nothing.
 		case "*github.com/i582/php-parser/pkg/position.Position":
 			// Do nothing.
 		case "[]github.com/VKCOM/noverify/src/phpdoc.CommentPart":
