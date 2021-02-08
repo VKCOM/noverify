@@ -37,9 +37,7 @@ linters:
     - prealloc
     - gosec
   fast: false
-  linters:
-    enable:
-      - gocritic
+
 linters-settings:
   gocritic:
     enabled-checks:
