@@ -1253,9 +1253,7 @@ type InterfaceStmt struct {
 	Position             *position.Position
 	InterfaceTkn         *token.Token
 	InterfaceName        *Identifier
-	ExtendsTkn           *token.Token
 	Extends              *InterfaceExtendsStmt
-	ExtendsSeparatorTkns []*token.Token
 	OpenCurlyBracketTkn  *token.Token
 	Stmts                []Node
 	CloseCurlyBracketTkn *token.Token
@@ -1264,11 +1262,12 @@ type InterfaceStmt struct {
 }
 
 // InterfaceExtendsStmt is a `extends $InterfaceNames...` statement.
-// TODO: do we need this wrapper node?
 // TODO: InterfaceNames could be a []*Name.
 type InterfaceExtendsStmt struct {
-	Position       *position.Position
-	InterfaceNames []Node
+	Position             *position.Position
+	ExtendsTkn           *token.Token
+	InterfaceNames       []Node
+	ExtendsSeparatorTkns []*token.Token
 }
 
 // LabelStmt is a `$LabelName:` statement.

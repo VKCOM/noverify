@@ -509,14 +509,14 @@ func (n *InstanceOfExpr) IterateTokens(cb func(*token.Token) bool) {
 }
 
 func (n *InterfaceExtendsStmt) IterateTokens(cb func(*token.Token) bool) {
-}
-
-func (n *InterfaceStmt) IterateTokens(cb func(*token.Token) bool) {
-	handleToken(n.InterfaceTkn, cb)
 	handleToken(n.ExtendsTkn, cb)
 	for _, tk := range n.ExtendsSeparatorTkns {
 		handleToken(tk, cb)
 	}
+}
+
+func (n *InterfaceStmt) IterateTokens(cb func(*token.Token) bool) {
+	handleToken(n.InterfaceTkn, cb)
 	handleToken(n.OpenCurlyBracketTkn, cb)
 	handleToken(n.CloseCurlyBracketTkn, cb)
 }

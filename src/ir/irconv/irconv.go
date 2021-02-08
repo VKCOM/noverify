@@ -726,21 +726,10 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 
 		out.PhpDocComment, out.PhpDoc = c.getPhpDoc(tokenWithDoc)
 
-		out.ReturnsRef = hasValue(n.AmpersandTkn)
-		out.Static = hasValue(n.StaticTkn)
-
 		out.Params = c.convNodeSlice(n.Params)
 
-		var pos *position.Position
-		if len(n.Uses) != 0 {
-			firstPos := n.Uses[0].GetPosition()
-			lastPos := n.Uses[len(n.Uses)-1].GetPosition()
-
-			pos = position.NewPosition(firstPos.StartLine, lastPos.EndLine, firstPos.StartPos, lastPos.EndPos)
-		}
-
 		out.ClosureUse = &ir.ClosureUsesExpr{
-			Position:               pos,
+			Position:               c.convertSliceNodeToPosition(n.Uses),
 			UseTkn:                 n.UseTkn,
 			UseOpenParenthesisTkn:  n.UseOpenParenthesisTkn,
 			Uses:                   c.convNodeSlice(n.Uses),
@@ -750,6 +739,9 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 
 		out.ReturnType = c.convNode(n.ReturnType)
 		out.Stmts = c.convNodeSlice(n.Stmts)
+
+		out.ReturnsRef = hasValue(n.AmpersandTkn)
+		out.Static = hasValue(n.StaticTkn)
 		return out
 
 	case *ast.ExprClosureUse:
@@ -1613,7 +1605,6 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.AsTkn = n.AsTkn
 		out.DoubleArrowTkn = n.DoubleArrowTkn
 		out.AmpersandTkn = n.AmpersandTkn
-
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
 		out.ColonTkn = n.ColonTkn
 		out.EndForeachTkn = n.EndForeachTkn
@@ -1624,8 +1615,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 
 		if hasValue(n.AmpersandTkn) {
 			out.Variable = &ir.ReferenceExpr{
-				AmpersandTkn: n.AmpersandTkn,
 				Position:     n.Position,
+				AmpersandTkn: n.AmpersandTkn,
 				Variable:     c.convNode(n.Var),
 			}
 		} else {
@@ -1790,17 +1781,20 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 
 		out.InterfaceTkn = n.InterfaceTkn
-		out.ExtendsTkn = n.ExtendsTkn
-		out.ExtendsSeparatorTkns = n.ExtendsSeparatorTkns
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 
 		out.PhpDocComment, out.PhpDoc = c.getPhpDoc(n.InterfaceTkn)
 
 		out.InterfaceName = c.convNode(n.Name).(*ir.Identifier)
+
 		out.Extends = &ir.InterfaceExtendsStmt{
-			InterfaceNames: c.convNodeSlice(n.Extends),
+			Position:             c.convertSliceNodeToPosition(n.Extends),
+			ExtendsTkn:           n.ExtendsTkn,
+			InterfaceNames:       c.convNodeSlice(n.Extends),
+			ExtendsSeparatorTkns: n.ExtendsSeparatorTkns,
 		}
+
 		out.Stmts = c.convNodeSlice(n.Stmts)
 		return out
 
@@ -1987,16 +1981,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 
 		out.Traits = c.convNodeSlice(n.Traits)
 
-		var pos *position.Position
-		if len(n.Adaptations) != 0 {
-			firstPos := n.Adaptations[0].GetPosition()
-			lastPos := n.Adaptations[len(n.Adaptations)-1].GetPosition()
-
-			pos = position.NewPosition(firstPos.StartLine, lastPos.EndLine, firstPos.StartPos, lastPos.EndPos)
-		}
-
 		out.TraitAdaptationList = &ir.TraitAdaptationListStmt{
-			Position:    pos,
+			Position:    c.convertSliceNodeToPosition(n.Adaptations),
 			Adaptations: c.convNodeSlice(n.Adaptations),
 		}
 		return out
@@ -2113,6 +2099,19 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 	panic(fmt.Sprintf("unhandled type %T", n))
 }
 
+// convertSliceNodeToPosition converts the passed slice
+// f nodes to the position of all those nodes.
+func (c *Converter) convertSliceNodeToPosition(list []ast.Vertex) *position.Position {
+	if len(list) == 0 {
+		return nil
+	}
+
+	firstPos := list[0].GetPosition()
+	lastPos := list[len(list)-1].GetPosition()
+
+	return position.NewPosition(firstPos.StartLine, lastPos.EndLine, firstPos.StartPos, lastPos.EndPos)
+}
+
 // hasValue function is used to determine if the
 // passed token exists.
 //
@@ -2185,7 +2184,7 @@ func (c *Converter) convClass(n *ast.StmtClass) ir.Node {
 
 	if len(implements) != 0 {
 		class.Implements = &ir.ClassImplementsStmt{
-			Position:                n.ImplementsTkn.Position,
+			Position:                c.convertSliceNodeToPosition(n.Implements),
 			ImplementsTkn:           n.ImplementsTkn,
 			ImplementsSeparatorTkns: n.ImplementsSeparatorTkns,
 			InterfaceNames:          implements,
