@@ -59,8 +59,6 @@ func (g *genClone) writeCloneCase(w *bytes.Buffer, pkg *packageData, typ *typeDa
 
 		case "[]*github.com/i582/php-parser/pkg/token.Token":
 
-		case "github.com/VKCOM/noverify/src/php/parser/freefloating.Collection":
-			// Do nothing.
 		case "*github.com/i582/php-parser/pkg/position.Position":
 			// Do nothing.
 		case "[]github.com/VKCOM/noverify/src/phpdoc.CommentPart":

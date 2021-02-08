@@ -9,7 +9,6 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/solver"
 )
@@ -395,15 +394,6 @@ func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 	}
 
 	if report {
-		ff := s.GetFreeFloating()
-		if ff != nil {
-			for _, tok := range (*ff)[freefloating.Expr] {
-				if tok.StringType == freefloating.CommentType {
-					return
-				}
-			}
-		}
-
 		b.report(s.Expr, LevelWarning, "discardExpr", "expression evaluated but not used")
 	}
 }

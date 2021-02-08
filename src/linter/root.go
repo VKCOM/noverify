@@ -17,7 +17,6 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/phpgrep"
 	"github.com/VKCOM/noverify/src/quickfix"
@@ -160,16 +159,6 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 	}
 
 	d.handleComments(n)
-
-	if ffs := n.GetFreeFloating(); ffs != nil {
-		for _, cs := range *ffs {
-			for _, c := range cs {
-				if c.StringType == freefloating.CommentType {
-					d.handleComment(c)
-				}
-			}
-		}
-	}
 
 	if _, ok := n.(*ir.AnonClassExpr); ok {
 		// TODO: remove when #62 and anon class support in general is ready.
@@ -523,43 +512,6 @@ func (d *rootWalker) reportUndefinedVariable(v ir.Node, maybeHave bool) {
 		d.Report(sv, LevelWarning, "undefined", "Variable might have not been defined: %s", sv.Name)
 	} else {
 		d.Report(sv, LevelError, "undefined", "Undefined variable: %s", sv.Name)
-	}
-}
-
-func (d *rootWalker) handleComment(c freefloating.String) {
-	if c.StringType != freefloating.CommentType {
-		return
-	}
-	str := c.Value
-
-	if !phpdoc.IsPHPDoc(str) {
-		return
-	}
-
-	for _, ln := range phpdoc.Parse(d.ctx.phpdocTypeParser, str) {
-		if ln.Name() != "linter" {
-			continue
-		}
-
-		for _, p := range ln.(*phpdoc.RawCommentPart).Params {
-			if p != "disable" {
-				continue
-			}
-			if d.linterDisabled {
-				needleLine := ln.Line() + c.Position.StartLine - 1
-				d.ReportByLine(needleLine, LevelWarning, "linterError", "Linter is already disabled for this file")
-				continue
-			}
-			canDisable := false
-			if d.allowDisabledRegexp != nil {
-				canDisable = d.allowDisabledRegexp.MatchString(d.ctx.st.CurrentFile)
-			}
-			d.linterDisabled = canDisable
-			if !canDisable {
-				needleLine := ln.Line() + c.Position.StartLine - 1
-				d.ReportByLine(needleLine, LevelWarning, "linterError", "You are not allowed to disable linter")
-			}
-		}
 	}
 }
 

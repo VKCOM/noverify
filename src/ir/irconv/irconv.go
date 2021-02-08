@@ -611,7 +611,6 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 
 		if hasValue(n.AmpersandTkn) {
 			out.Val = &ir.ReferenceExpr{
-				FreeFloating: nil,
 				AmpersandTkn: n.AmpersandTkn,
 				Position:     n.Position,
 				Variable:     c.convNode(n.Val),
@@ -735,9 +734,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 
 		out.Params = c.convNodeSlice(n.Params)
 		out.ClosureUse = &ir.ClosureUseExpr{
-			FreeFloating: nil,
-			Position:     nil,
-			Uses:         c.convNodeSlice(n.Uses),
+			Position: nil,
+			Uses:     c.convNodeSlice(n.Uses),
 		}
 		out.ReturnType = c.convNode(n.ReturnType)
 		out.Stmts = c.convNodeSlice(n.Stmts)
@@ -752,7 +750,6 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 
 		if hasValue(n.AmpersandTkn) {
 			varNode = &ir.ReferenceExpr{
-				FreeFloating: nil,
 				AmpersandTkn: n.AmpersandTkn,
 				Position:     n.Position,
 				Variable:     varNode,
@@ -1613,7 +1610,6 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 
 		if hasValue(n.AmpersandTkn) {
 			out.Variable = &ir.ReferenceExpr{
-				FreeFloating: nil,
 				AmpersandTkn: n.AmpersandTkn,
 				Position:     n.Position,
 				Variable:     c.convNode(n.Var),

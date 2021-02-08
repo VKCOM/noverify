@@ -5,8 +5,6 @@ package ir
 
 import (
 	"github.com/i582/php-parser/pkg/token"
-
-	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 )
 
 //go:generate go run ./codegen
@@ -15,7 +13,6 @@ import (
 // node_types.go contains all implementations.
 type Node interface {
 	Walk(Visitor)
-	GetFreeFloating() *freefloating.Collection
 	IterateTokens(func(*token.Token) bool)
 }
 

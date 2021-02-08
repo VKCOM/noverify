@@ -4,7 +4,6 @@ import (
 	"github.com/i582/php-parser/pkg/token"
 
 	"github.com/VKCOM/noverify/src/ir"
-	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 )
 
 type metaNode struct {
@@ -12,7 +11,6 @@ type metaNode struct {
 }
 
 func (metaNode) Walk(v ir.Visitor)                           {}
-func (metaNode) GetFreeFloating() *freefloating.Collection   { return nil }
 func (metaNode) IterateTokens(func(token *token.Token) bool) {}
 
 type (
