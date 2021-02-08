@@ -2,6 +2,7 @@ package parseutil
 
 import (
 	"bytes"
+	"errors"
 
 	"github.com/i582/php-parser/pkg/ast"
 	"github.com/i582/php-parser/pkg/cfg"
@@ -42,6 +43,9 @@ func ParseFile(code []byte) (*ast.Root, error) {
 	})
 	if err != nil {
 		return nil, err
+	}
+	if len(parserErrors) != 0 {
+		return nil, errors.New(parserErrors[0].String())
 	}
 
 	return rootNode.(*ast.Root), nil

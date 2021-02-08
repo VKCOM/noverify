@@ -229,7 +229,6 @@ func TestLinterDisable(t *testing.T) {
 	test.AllowDisable = regexp.MustCompile(`.*`)
 	test.AddFile(`<?php
 /** @linter disable */
-
 $_ = array(1);
 `)
 	test.RunAndMatch()

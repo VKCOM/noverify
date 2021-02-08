@@ -18,7 +18,6 @@ import (
 	"github.com/i582/php-parser/pkg/cfg"
 	phperrors "github.com/i582/php-parser/pkg/errors"
 	"github.com/i582/php-parser/pkg/parser"
-	"github.com/i582/php-parser/pkg/version"
 	"github.com/quasilyte/regex/syntax"
 
 	"github.com/VKCOM/noverify/src/inputs"
@@ -116,14 +115,9 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult,
 	waiter := beforeParse(len(contents), fileInfo.Name)
 	defer waiter.Finish()
 
-	phpVersion, err := version.New("7.4")
-	if err != nil {
-		fmt.Println("Error: " + err.Error())
-	}
-
 	var parserErrors []*phperrors.Error
 	rootNode, err := parser.Parse(contents, cfg.Config{
-		Version: phpVersion,
+		Version: w.config.PhpVersion,
 		ErrorHandlerFunc: func(e *phperrors.Error) {
 			parserErrors = append(parserErrors, e)
 		},

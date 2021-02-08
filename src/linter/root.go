@@ -106,14 +106,14 @@ func (d *rootWalker) File() *workspace.File {
 	return d.file
 }
 
-func (d *rootWalker) handleToken(t *token.Token) {
-	if t.ID != token.T_DOC_COMMENT {
-		return
+func (d *rootWalker) handleCommentToken(t *token.Token) bool {
+	if t.ID != token.T_DOC_COMMENT && t.ID != token.T_COMMENT {
+		return true
 	}
 	str := string(t.Value)
 
 	if !phpdoc.IsPHPDoc(str) {
-		return
+		return true
 	}
 
 	for _, ln := range phpdoc.Parse(d.ctx.phpdocTypeParser, str) {
@@ -141,13 +141,12 @@ func (d *rootWalker) handleToken(t *token.Token) {
 			}
 		}
 	}
+
+	return true
 }
 
 func (d *rootWalker) handleComments(n ir.Node) {
-	n.IterateTokens(func(t *token.Token) bool {
-		d.handleToken(t)
-		return true
-	})
+	n.IterateTokens(d.handleCommentToken)
 }
 
 // EnterNode is invoked at every node in hierarchy
