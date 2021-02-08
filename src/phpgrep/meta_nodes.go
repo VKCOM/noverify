@@ -1,7 +1,7 @@
 package phpgrep
 
 import (
-	"github.com/z7zmey/php-parser/pkg/token"
+	"github.com/i582/php-parser/pkg/token"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"

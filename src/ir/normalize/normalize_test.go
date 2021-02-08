@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/z7zmey/php-parser/pkg/cfg"
-	phperrors "github.com/z7zmey/php-parser/pkg/errors"
-	"github.com/z7zmey/php-parser/pkg/parser"
-	"github.com/z7zmey/php-parser/pkg/version"
+	"github.com/i582/php-parser/pkg/cfg"
+	phperrors "github.com/i582/php-parser/pkg/errors"
+	"github.com/i582/php-parser/pkg/parser"
+	"github.com/i582/php-parser/pkg/version"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"

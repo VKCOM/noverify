@@ -14,12 +14,12 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/i582/php-parser/pkg/ast"
+	"github.com/i582/php-parser/pkg/cfg"
+	phperrors "github.com/i582/php-parser/pkg/errors"
+	"github.com/i582/php-parser/pkg/parser"
+	"github.com/i582/php-parser/pkg/version"
 	"github.com/quasilyte/regex/syntax"
-	"github.com/z7zmey/php-parser/pkg/ast"
-	"github.com/z7zmey/php-parser/pkg/cfg"
-	phperrors "github.com/z7zmey/php-parser/pkg/errors"
-	"github.com/z7zmey/php-parser/pkg/parser"
-	"github.com/z7zmey/php-parser/pkg/version"
 
 	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/ir"

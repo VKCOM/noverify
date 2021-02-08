@@ -43,7 +43,7 @@ func (g *genIterate) Run() error {
 		filename: "iterate.go",
 		pkgPath:  "ir",
 		deps: []string{
-			"github.com/z7zmey/php-parser/pkg/token",
+			"github.com/i582/php-parser/pkg/token",
 		},
 		contents: buf.Bytes(),
 	})
@@ -53,9 +53,9 @@ func (g *genIterate) writeIterate(w *bytes.Buffer, pkg *packageData, typ *typeDa
 	for i := 0; i < typ.info.NumFields(); i++ {
 		field := typ.info.Field(i)
 		switch typeString := field.Type().String(); typeString {
-		case "*github.com/z7zmey/php-parser/pkg/token.Token":
+		case "*github.com/i582/php-parser/pkg/token.Token":
 			fmt.Fprintf(w, "    handleToken(n.%s, cb)\n", field.Name())
-		case "[]*github.com/z7zmey/php-parser/pkg/token.Token":
+		case "[]*github.com/i582/php-parser/pkg/token.Token":
 			fmt.Fprintf(w, "    for _, tk := range n.%s {\n", field.Name())
 			fmt.Fprintf(w, "        handleToken(tk, cb)")
 			fmt.Fprintf(w, "    }\n")

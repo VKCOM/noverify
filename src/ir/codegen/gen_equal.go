@@ -44,9 +44,9 @@ func (g *genEqual) writeCompare(w *bytes.Buffer, pkg *packageData, typ *typeData
 	for i := 0; i < typ.info.NumFields(); i++ {
 		field := typ.info.Field(i)
 		switch typeString := field.Type().String(); typeString {
-		case "*github.com/z7zmey/php-parser/pkg/token.Token":
+		case "*github.com/i582/php-parser/pkg/token.Token":
 			// Do nothing.
-		case "[]*github.com/z7zmey/php-parser/pkg/token.Token":
+		case "[]*github.com/i582/php-parser/pkg/token.Token":
 			// Do nothing.
 		case "string", "bool":
 			fmt.Fprintf(w, "    if x.%[1]s != y.%[1]s { return false }\n", field.Name())
@@ -56,7 +56,7 @@ func (g *genEqual) writeCompare(w *bytes.Buffer, pkg *packageData, typ *typeData
 			fmt.Fprintf(w, "    if x.PhpDocComment != y.PhpDocComment { return false }\n")
 		case "github.com/VKCOM/noverify/src/php/parser/freefloating.Collection":
 			// Do nothing.
-		case "*github.com/z7zmey/php-parser/pkg/position.Position":
+		case "*github.com/i582/php-parser/pkg/position.Position":
 			// Do nothing.
 		case "[]github.com/VKCOM/noverify/src/phpdoc.CommentPart":
 			// Do nothing.
