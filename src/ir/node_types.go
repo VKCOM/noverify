@@ -3,8 +3,6 @@ package ir
 import (
 	"github.com/i582/php-parser/pkg/position"
 	"github.com/i582/php-parser/pkg/token"
-
-	"github.com/VKCOM/noverify/src/phpdoc"
 )
 
 // TODO: make Alt and AltSyntax field names consistent.
@@ -469,35 +467,35 @@ type CloneExpr struct {
 // $ReturnType is optional, without it we have `function($Params...) use ($ClosureUse) { $Stmts... }` syntax.
 // $ClosureUse is optional, without it we have `function($Params...) : $ReturnType { $Stmts... }` syntax.
 type ClosureExpr struct {
-	Position               *position.Position
-	StaticTkn              *token.Token
-	FunctionTkn            *token.Token
-	AmpersandTkn           *token.Token
-	OpenParenthesisTkn     *token.Token
-	Params                 []Node
-	SeparatorTkns          []*token.Token
-	CloseParenthesisTkn    *token.Token
-	UseTkn                 *token.Token
-	UseOpenParenthesisTkn  *token.Token
-	ClosureUse             *ClosureUseExpr
-	UseSeparatorTkns       []*token.Token
-	UseCloseParenthesisTkn *token.Token
-	ColonTkn               *token.Token
-	ReturnType             Node
-	OpenCurlyBracketTkn    *token.Token
-	Stmts                  []Node
-	CloseCurlyBracketTkn   *token.Token
-	ReturnsRef             bool
-	Static                 bool
-	PhpDocComment          string
-	PhpDoc                 []phpdoc.CommentPart
+	Position             *position.Position
+	StaticTkn            *token.Token
+	FunctionTkn          *token.Token
+	AmpersandTkn         *token.Token
+	OpenParenthesisTkn   *token.Token
+	Params               []Node
+	SeparatorTkns        []*token.Token
+	CloseParenthesisTkn  *token.Token
+	ClosureUse           *ClosureUsesExpr
+	ColonTkn             *token.Token
+	ReturnType           Node
+	OpenCurlyBracketTkn  *token.Token
+	Stmts                []Node
+	CloseCurlyBracketTkn *token.Token
+	ReturnsRef           bool
+	Static               bool
+
+	Doc
 }
 
-// ClosureUseExpr is a `use ($Uses...)` expression.
+// ClosureUsesExpr is a `use ($Uses...)` expression.
 // TODO: it's not a expression really.
-type ClosureUseExpr struct {
-	Position *position.Position
-	Uses     []Node
+type ClosureUsesExpr struct {
+	Position               *position.Position
+	UseTkn                 *token.Token
+	UseOpenParenthesisTkn  *token.Token
+	Uses                   []Node
+	UseSeparatorTkns       []*token.Token
+	UseCloseParenthesisTkn *token.Token
 }
 
 // ConstFetchExpr is a `$Constant` expression.
@@ -1175,8 +1173,8 @@ type FunctionStmt struct {
 	Stmts                []Node
 	CloseCurlyBracketTkn *token.Token
 	ReturnsRef           bool
-	PhpDocComment        string
-	PhpDoc               []phpdoc.CommentPart
+
+	Doc
 }
 
 // GlobalStmt is a `global $Vars` statement.

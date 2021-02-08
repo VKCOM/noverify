@@ -556,8 +556,8 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		return true
-	case *ir.ClosureUseExpr:
-		y, ok := y.(*ir.ClosureUseExpr)
+	case *ir.ClosureUsesExpr:
+		y, ok := y.(*ir.ClosureUsesExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}

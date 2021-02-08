@@ -238,18 +238,18 @@ func (n *ClosureExpr) IterateTokens(cb func(*token.Token) bool) {
 		handleToken(tk, cb)
 	}
 	handleToken(n.CloseParenthesisTkn, cb)
+	handleToken(n.ColonTkn, cb)
+	handleToken(n.OpenCurlyBracketTkn, cb)
+	handleToken(n.CloseCurlyBracketTkn, cb)
+}
+
+func (n *ClosureUsesExpr) IterateTokens(cb func(*token.Token) bool) {
 	handleToken(n.UseTkn, cb)
 	handleToken(n.UseOpenParenthesisTkn, cb)
 	for _, tk := range n.UseSeparatorTkns {
 		handleToken(tk, cb)
 	}
 	handleToken(n.UseCloseParenthesisTkn, cb)
-	handleToken(n.ColonTkn, cb)
-	handleToken(n.OpenCurlyBracketTkn, cb)
-	handleToken(n.CloseCurlyBracketTkn, cb)
-}
-
-func (n *ClosureUseExpr) IterateTokens(cb func(*token.Token) bool) {
 }
 
 func (n *CoalesceExpr) IterateTokens(cb func(*token.Token) bool) {

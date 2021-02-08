@@ -527,7 +527,7 @@ func (n *ClosureExpr) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
-func (n *ClosureUseExpr) Walk(v Visitor) {
+func (n *ClosureUsesExpr) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
 	}

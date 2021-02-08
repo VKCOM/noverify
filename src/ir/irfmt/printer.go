@@ -228,7 +228,7 @@ func (p *PrettyPrinter) printNode(n ir.Node) {
 		p.printExprClassConstFetch(n)
 	case *ir.CloneExpr:
 		p.printExprClone(n)
-	case *ir.ClosureUseExpr:
+	case *ir.ClosureUsesExpr:
 		p.printExprClosureUse(n)
 	case *ir.ClosureExpr:
 		p.printExprClosure(n)
@@ -884,7 +884,7 @@ func (p *PrettyPrinter) printExprClone(n *ir.CloneExpr) {
 	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printExprClosureUse(n *ir.ClosureUseExpr) {
+func (p *PrettyPrinter) printExprClosureUse(n *ir.ClosureUsesExpr) {
 	writeString(p.w, "use (")
 	p.joinPrint(", ", n.Uses)
 	writeString(p.w, ")")

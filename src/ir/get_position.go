@@ -88,7 +88,7 @@ func GetPosition(n Node) *position.Position {
 		return n.Position
 	case *ClosureExpr:
 		return n.Position
-	case *ClosureUseExpr:
+	case *ClosureUsesExpr:
 		return n.Position
 	case *CoalesceExpr:
 		return n.Position

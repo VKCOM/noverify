@@ -93,7 +93,7 @@ func nodeIsExpr(n ir.Node) bool {
 		*ir.ClassConstFetchExpr,
 		*ir.CloneExpr,
 		*ir.ClosureExpr,
-		*ir.ClosureUseExpr,
+		*ir.ClosureUsesExpr,
 		*ir.ConstFetchExpr,
 		*ir.EmptyExpr,
 		*ir.ErrorSuppressExpr,

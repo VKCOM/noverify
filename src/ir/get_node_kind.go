@@ -245,7 +245,7 @@ func GetNodeKind(x Node) NodeKind {
 		return KindCloneExpr
 	case *ClosureExpr:
 		return KindClosureExpr
-	case *ClosureUseExpr:
+	case *ClosureUsesExpr:
 		return KindClosureUseExpr
 	case *CoalesceExpr:
 		return KindCoalesceExpr

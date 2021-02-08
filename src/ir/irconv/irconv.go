@@ -712,10 +712,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenParenthesisTkn = n.OpenParenthesisTkn
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
-		out.UseTkn = n.UseTkn
-		out.UseOpenParenthesisTkn = n.UseOpenParenthesisTkn
-		out.UseSeparatorTkns = n.UseSeparatorTkns
-		out.UseCloseParenthesisTkn = n.UseCloseParenthesisTkn
+
 		out.ColonTkn = n.ColonTkn
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
@@ -742,10 +739,15 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			pos = position.NewPosition(firstPos.StartLine, lastPos.EndLine, firstPos.StartPos, lastPos.EndPos)
 		}
 
-		out.ClosureUse = &ir.ClosureUseExpr{
-			Position: pos,
-			Uses:     c.convNodeSlice(n.Uses),
+		out.ClosureUse = &ir.ClosureUsesExpr{
+			Position:               pos,
+			UseTkn:                 n.UseTkn,
+			UseOpenParenthesisTkn:  n.UseOpenParenthesisTkn,
+			Uses:                   c.convNodeSlice(n.Uses),
+			UseSeparatorTkns:       n.UseSeparatorTkns,
+			UseCloseParenthesisTkn: n.UseCloseParenthesisTkn,
 		}
+
 		out.ReturnType = c.convNode(n.ReturnType)
 		out.Stmts = c.convNodeSlice(n.Stmts)
 		return out
