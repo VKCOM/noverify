@@ -67,3 +67,15 @@ func ParseStmt(code []byte) (ast.Vertex, []byte, error) {
 	}
 	return root.Stmts[0], code, nil
 }
+
+// ParseStmtList parses a list of PHP statement (which can be an expression).
+//
+// Useful for testing.
+func ParseStmtList(code []byte) (*ast.Root, error) {
+	code = append([]byte("<?php "), code...)
+	root, err := ParseFile(code)
+	if err != nil {
+		return nil, err
+	}
+	return root, nil
+}

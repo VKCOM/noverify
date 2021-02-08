@@ -1,15 +1,8 @@
 package normalize
 
 import (
-	"errors"
-	"fmt"
 	"strings"
 	"testing"
-
-	"github.com/i582/php-parser/pkg/cfg"
-	phperrors "github.com/i582/php-parser/pkg/errors"
-	"github.com/i582/php-parser/pkg/parser"
-	"github.com/i582/php-parser/pkg/version"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"
@@ -82,20 +75,24 @@ func TestNormalizeStmtList(t *testing.T) {
 	conf := Config{}
 	l := linter.NewLinter(linter.NewConfig())
 	st := &meta.ClassParseState{Info: l.MetaInfo(), CurrentClass: `\Foo`}
-	for _, test := range tests {
 
-		list, err := parseStmtList(test.orig)
+	for _, test := range tests {
+		root, err := parseutil.ParseStmtList([]byte(test.orig))
 		if err != nil {
 			t.Errorf("parse `%s`: %v", test.orig, err)
 			continue
 		}
-		normalized := FuncBody(st, conf, nil, list)
+
+		rootIR := irconv.ConvertNode(root).(*ir.Root)
+		normalized := FuncBody(st, conf, nil, rootIR.Stmts)
+
 		have := strings.ReplaceAll(irfmt.Node(&ir.StmtList{Stmts: normalized}), "\n", "")
 		have = strings.ReplaceAll(have, "  ", " ")
+
 		want := `{ ` + test.want + `}`
+
 		if have != want {
-			t.Errorf("normalize `%s`:\nhave: %s\nwant: %s",
-				test.orig, have, want)
+			t.Errorf("normalize `%s`:\nhave: %s\nwant: %s", test.orig, have, want)
 			continue
 		}
 	}
@@ -112,20 +109,24 @@ func runNormalizeTests(t *testing.T, l *linter.Linter, tests []normalizationTest
 	conf := Config{}
 	st := &meta.ClassParseState{Info: l.MetaInfo(), CurrentClass: `\Foo`}
 	irConverter := irconv.NewConverter(nil)
+
 	for _, test := range tests {
 		n, _, err := parseutil.ParseStmt([]byte(test.orig))
 		if err != nil {
 			t.Errorf("parse `%s`: %v", test.orig, err)
 			return
 		}
+
 		irNode := irConverter.ConvertNode(n)
 		normalized := FuncBody(st, conf, nil, []ir.Node{irNode})
+
 		have := strings.TrimSuffix(irfmt.Node(normalized[0]), ";")
 		if have != test.want {
 			t.Errorf("normalize `%s`:\nhave: %s\nwant: %s",
 				test.orig, have, test.want)
 			return
 		}
+
 		n2, _, err := parseutil.ParseStmt([]byte(have))
 		if err != nil {
 			t.Errorf("parse normalized `%s`: %v", test.orig, err)
@@ -133,7 +134,9 @@ func runNormalizeTests(t *testing.T, l *linter.Linter, tests []normalizationTest
 		}
 		irNode2 := irConverter.ConvertNode(n2)
 		normalized2 := FuncBody(st, conf, nil, []ir.Node{irNode2})
+
 		have2 := strings.TrimSuffix(irfmt.Node(normalized2[0]), ";")
+
 		if have != have2 {
 			t.Errorf("second normalization of `%s`:\nhave: %s\nwant: %s",
 				test.orig, have2, have)
@@ -268,29 +271,4 @@ class Foo {
 		{`\Boo\Foo::CLASSNAME`, `'\Boo\Foo'`},
 		{`\Boo\Foo::LINE`, `14`},
 	})
-}
-
-func parseStmtList(s string) ([]ir.Node, error) {
-	source := "<?php " + s
-
-	phpVersion, err := version.New("7.4")
-	if err != nil {
-		fmt.Println("Error: " + err.Error())
-	}
-
-	var parserErrors []*phperrors.Error
-	rootNode, err := parser.Parse([]byte(source), cfg.Config{
-		Version: phpVersion,
-		ErrorHandlerFunc: func(e *phperrors.Error) {
-			parserErrors = append(parserErrors, e)
-		},
-	})
-	if err != nil {
-		fmt.Println("Error: " + err.Error())
-		return nil, errors.New(parserErrors[0].String())
-	}
-
-	rootIR := irconv.ConvertNode(rootNode).(*ir.Root)
-
-	return rootIR.Stmts, nil
 }
