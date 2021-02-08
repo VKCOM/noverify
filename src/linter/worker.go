@@ -292,10 +292,6 @@ func (w *Worker) analyzeFile(file *workspace.File, rootNode *ir.Root) (*rootWalk
 		}
 	}
 
-	// for _, e := range parser.GetErrors() {
-	// 	walker.Report(nil, LevelError, "syntax", "Syntax error: "+e.String())
-	// }
-
 	return walker, nil
 }
 
