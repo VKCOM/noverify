@@ -129,7 +129,7 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult,
 		},
 	})
 	if err != nil {
-		fmt.Println("Error: " + err.Error())
+		return ParseResult{}, fmt.Errorf("parse error: %v", err.Error())
 	}
 
 	rootIR := w.irconv.ConvertRoot(rootNode.(*ast.Root))
@@ -139,6 +139,11 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult,
 	if err != nil {
 		return result, err
 	}
+
+	for _, e := range parserErrors {
+		walker.Report(nil, LevelError, "syntax", "Syntax error: "+e.String())
+	}
+
 	result = ParseResult{
 		RootNode: rootIR,
 		Reports:  walker.reports,
