@@ -26,14 +26,7 @@ func fullyQualifiedToString(n *ast.NameFullyQualified) string {
 func namePartsToString(parts []ast.Vertex) string {
 	s := make([]string, 0, len(parts))
 	for _, v := range parts {
-		var value string
-
-		switch v := v.(type) {
-		case *ast.NamePart:
-			value = string(v.Value)
-		}
-
-		s = append(s, value)
+		s = append(s, string(v.(*ast.NamePart).Value))
 	}
 	return strings.Join(s, `\`)
 }
