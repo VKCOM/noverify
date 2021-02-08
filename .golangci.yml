@@ -89,7 +89,7 @@ linters-settings:
       - regexpPattern
       - regexpSimplify
       - ruleguard
-#      - singleCaseSwitch
+      - singleCaseSwitch
       - sloppyLen
       - sloppyReassign
       - sloppyTypeAssert
