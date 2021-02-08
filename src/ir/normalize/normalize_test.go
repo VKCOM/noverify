@@ -272,11 +272,6 @@ class Foo {
 
 func parseStmtList(s string) ([]ir.Node, error) {
 	source := "<?php " + s
-	// p := php7.NewParser([]byte(source))
-	// p.Parse()
-	// if len(p.GetErrors()) != 0 {
-	// 	return nil, errors.New(p.GetErrors()[0].String())
-	// }
 
 	phpVersion, err := version.New("7.4")
 	if err != nil {
