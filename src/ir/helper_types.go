@@ -12,11 +12,11 @@ import (
 // Class is a common shape between the ClassStmt and AnonClassExpr.
 // It doesn't include positions info.
 type Class struct {
-	PhpDocComment string
-	PhpDoc        []phpdoc.CommentPart
-	Extends       *ClassExtendsStmt
-	Implements    *ClassImplementsStmt
-	Stmts         []Node
+	Extends    *ClassExtendsStmt
+	Implements *ClassImplementsStmt
+	Stmts      []Node
+
+	Doc
 }
 
 type Doc struct {

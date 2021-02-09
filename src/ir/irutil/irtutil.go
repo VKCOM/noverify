@@ -103,9 +103,11 @@ func classEqual(x, y ir.Class) bool {
 
 func classClone(x ir.Class) ir.Class {
 	return ir.Class{
-		PhpDocComment: x.PhpDocComment,
-		Extends:       NodeClone(x.Extends).(*ir.ClassExtendsStmt),
-		Implements:    NodeClone(x.Implements).(*ir.ClassImplementsStmt),
-		Stmts:         NodeSliceClone(x.Stmts),
+		Doc: ir.Doc{
+			PhpDocComment: x.PhpDocComment,
+		},
+		Extends:    NodeClone(x.Extends).(*ir.ClassExtendsStmt),
+		Implements: NodeClone(x.Implements).(*ir.ClassImplementsStmt),
+		Stmts:      NodeSliceClone(x.Stmts),
 	}
 }

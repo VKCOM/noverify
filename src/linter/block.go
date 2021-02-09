@@ -168,7 +168,16 @@ func (b *blockWalker) reportDeadCode(n ir.Node) {
 }
 
 func (b *blockWalker) handleComments(n ir.Node) {
-	n.IterateTokens(func(t *token.Token) bool {
+	var node ir.Node
+
+	switch n := n.(type) {
+	case *ir.ArrayDimFetchExpr:
+		node = n.Variable
+	default:
+		node = n
+	}
+
+	node.IterateTokens(func(t *token.Token) bool {
 		b.handleToken(n, t)
 		return true
 	})
@@ -1631,6 +1640,8 @@ func (b *blockWalker) paramClobberCheck(v *ir.SimpleVar) {
 }
 
 func (b *blockWalker) handleAssign(a *ir.Assign) bool {
+	b.handleComments(a.Variable)
+
 	a.Expression.Walk(b)
 
 	switch v := a.Variable.(type) {
@@ -1639,7 +1650,6 @@ func (b *blockWalker) handleAssign(a *ir.Assign) bool {
 		b.handleAndCheckDimFetchLValue(v, "assign_array", typ)
 		return false
 	case *ir.SimpleVar:
-		b.handleComments(v)
 		b.paramClobberCheck(v)
 		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
 	case *ir.Var:
