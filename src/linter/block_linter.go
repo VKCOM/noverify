@@ -198,12 +198,8 @@ func (b *blockLinter) checkNopStmt(n *ir.NopStmt) {
 	}
 
 	// Check whether it's `?>`; it it is, ignore it.
-	if ffs := n.GetFreeFloating(); ffs != nil {
-		for _, tok := range (*ffs)[freefloating.SemiColon] {
-			if tok.StringType == freefloating.TokenType && strings.HasPrefix(tok.Value, "?>") {
-				return
-			}
-		}
+	if bytes.HasPrefix(n.SemiColonTkn.Value, []byte("?>")) {
+		return
 	}
 
 	b.report(n, LevelNotice, "emptyStmt", "semicolon (;) is not needed here, it can be safely removed")
