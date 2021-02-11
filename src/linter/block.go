@@ -168,36 +168,25 @@ func (b *blockWalker) reportDeadCode(n ir.Node) {
 }
 
 func (b *blockWalker) handleComments(n ir.Node) {
-	var node ir.Node
-
-	switch n := n.(type) {
+	switch node := n.(type) {
 	case *ir.ArrayDimFetchExpr:
-		node = n.Variable
+		n = node.Variable
 	default:
-		node = n
+		n = node
 	}
 
-	node.IterateTokens(func(t *token.Token) bool {
-		b.handleToken(n, t)
+	n.IterateTokens(func(t *token.Token) bool {
+		b.handleCommentToken(n, t)
 		return true
 	})
 }
 
-func (b *blockWalker) handleToken(n ir.Node, t *token.Token) {
-	if t == nil {
+func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
+	if !phpdoc.IsPHPDocToken(t) {
 		return
 	}
 
-	if t.ID != token.T_DOC_COMMENT && t.ID != token.T_COMMENT {
-		return
-	}
-	str := string(t.Value)
-
-	if !phpdoc.IsPHPDoc(str) {
-		return
-	}
-
-	for _, p := range phpdoc.Parse(b.r.ctx.phpdocTypeParser, str) {
+	for _, p := range phpdoc.Parse(b.r.ctx.phpdocTypeParser, string(t.Value)) {
 		p, ok := p.(*phpdoc.TypeVarCommentPart)
 		if !ok || p.Name() != "var" {
 			continue
