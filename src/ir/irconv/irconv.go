@@ -1104,10 +1104,11 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			Value:    fullyQualifiedToString(n),
 		}
 	case *ast.Name:
+		tok := namePartsToToken(n.Parts)
 		return &ir.Name{
 			Position: n.Position,
-			NameTkn:  namePartsToToken(n.Parts),
-			Value:    namePartsToString(n.Parts),
+			NameTkn:  tok,
+			Value:    string(tok.Value),
 		}
 	case *ast.NameRelative:
 		return c.convRelativeName(n)
