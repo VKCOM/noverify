@@ -157,7 +157,8 @@ func interpretStringQ2(s []byte) ([]byte, error) {
 				codepoints := s[i+len(`\u{`) : i+len(`\u{`)+end-len(`}`)]
 
 				goLiteral := make([]byte, 0, len([]byte(`\U`))+len(zeros[:8-len(codepoints)])+len(codepoints))
-				goLiteral = append([]byte(`\U`), zeros[:8-len(codepoints)]...)
+				goLiteral = append(goLiteral, []byte(`\U`)...)
+				goLiteral = append(goLiteral, zeros[:8-len(codepoints)]...)
 				goLiteral = append(goLiteral, codepoints...)
 
 				ch, _, _, err := strconv.UnquoteChar(string(goLiteral), '"')
