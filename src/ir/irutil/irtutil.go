@@ -8,7 +8,7 @@ import (
 )
 
 // Unquote returns unquoted version of s, if there are any quotes.
-func Unquote(s string) string {
+func Unquote(s []byte) []byte {
 	if len(s) >= 2 && s[0] == '\'' || s[0] == '"' {
 		return s[1 : len(s)-1]
 	}
