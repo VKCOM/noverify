@@ -2255,7 +2255,7 @@ func convString(n *ast.ScalarString) ir.Node {
 	}
 
 	out.DoubleQuotes = n.Value[0] == '"'
-	unquoted := irutil.Unquote(n.Value)
+	unquoted := unquote(n.Value)
 	s, err := interpretString(unquoted, quote)
 	if err != nil {
 		return &ir.BadString{
@@ -2267,7 +2267,15 @@ func convString(n *ast.ScalarString) ir.Node {
 			DoubleQuotes: out.DoubleQuotes,
 		}
 	}
-	out.Value = string(s)
+	out.Value = s
 
 	return out
+}
+
+// unquote returns unquoted version of s, if there are any quotes.
+func unquote(s []byte) []byte {
+	if len(s) >= 2 && (s[0] == '\'' || s[0] == '"') {
+		return s[1 : len(s)-1]
+	}
+	return s
 }

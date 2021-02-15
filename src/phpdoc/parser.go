@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"strings"
 
-	"github.com/i582/php-parser/pkg/token"
+	"github.com/z7zmey/php-parser/pkg/token"
 )
 
 type CommentPart interface {

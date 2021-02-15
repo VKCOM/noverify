@@ -306,7 +306,8 @@ func TestInterpretString(t *testing.T) {
 			return
 		}
 
-		if !bytes.Equal(have, want) {
+		haveBytes := []byte(have)
+		if !bytes.Equal(haveBytes, want) {
 			t.Errorf("%s bytes mismatch (quote=%c):\nhave: %[3]v\nwant: %[4]v\nhave-string: %[3]s\nwant-string: %[4]s",
 				raw, quote, have, want)
 		}
