@@ -93,7 +93,7 @@ func interpretString(s []byte, quote byte) (string, error) {
 
 // interpretStringQ1 returns s interpreted value as a single-quoted PHP string.
 func interpretStringQ1(s string) (string, error) {
-	var out bytes.Buffer
+	var out strings.Builder
 	out.Grow(len(s))
 
 	i := 0
@@ -122,8 +122,9 @@ func interpretStringQ1(s string) (string, error) {
 			i++
 
 		default:
-			out.WriteByte(ch)
-			i++
+			r, n := utf8.DecodeRuneInString(s[i:])
+			out.WriteRune(r)
+			i += n
 		}
 	}
 
@@ -239,9 +240,8 @@ func interpretStringQ2(s string) (string, error) {
 			i++
 
 		default:
-			r, n := utf8.DecodeRuneInString(s[i:])
-			out.WriteRune(r)
-			i += n
+			out.WriteString(s[i : i+2])
+			i += 2
 		}
 	}
 
