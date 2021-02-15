@@ -1,8 +1,8 @@
 package ir
 
 import (
-	"github.com/i582/php-parser/pkg/position"
-	"github.com/i582/php-parser/pkg/token"
+	"github.com/z7zmey/php-parser/pkg/position"
+	"github.com/z7zmey/php-parser/pkg/token"
 )
 
 // TODO: make Alt and AltSyntax field names consistent.

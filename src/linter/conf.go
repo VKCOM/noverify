@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/client9/misspell"
-	"github.com/i582/php-parser/pkg/version"
+	"github.com/z7zmey/php-parser/pkg/version"
 
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/inputs"

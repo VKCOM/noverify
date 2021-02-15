@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/i582/php-parser/pkg/ast"
-	"github.com/i582/php-parser/pkg/position"
-	"github.com/i582/php-parser/pkg/token"
+	"github.com/z7zmey/php-parser/pkg/ast"
+	"github.com/z7zmey/php-parser/pkg/position"
+	"github.com/z7zmey/php-parser/pkg/token"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
@@ -75,7 +75,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		// hack for expressions like:
 		// /**
 		//  * @param Boo $x
-		// */
+		//  */
 		// $_ = fn($x) => $x->b();
 		if arrowFn, ok := out.Expression.(*ir.ArrowFunctionExpr); ok {
 			doc, found := irutil.FindPhpDoc(out.Variable)

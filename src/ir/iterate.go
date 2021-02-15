@@ -2,7 +2,7 @@
 package ir
 
 import (
-	"github.com/i582/php-parser/pkg/token"
+	"github.com/z7zmey/php-parser/pkg/token"
 )
 
 func handleToken(t *token.Token, cb func(*token.Token) bool) bool {

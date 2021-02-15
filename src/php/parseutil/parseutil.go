@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"errors"
 
-	"github.com/i582/php-parser/pkg/ast"
-	"github.com/i582/php-parser/pkg/cfg"
-	phperrors "github.com/i582/php-parser/pkg/errors"
-	"github.com/i582/php-parser/pkg/parser"
-	"github.com/i582/php-parser/pkg/version"
+	"github.com/z7zmey/php-parser/pkg/ast"
+	"github.com/z7zmey/php-parser/pkg/conf"
+	phperrors "github.com/z7zmey/php-parser/pkg/errors"
+	"github.com/z7zmey/php-parser/pkg/parser"
+	"github.com/z7zmey/php-parser/pkg/version"
 )
 
 // Parse combines ParseFile and ParseStmt.
@@ -35,7 +35,7 @@ func ParseFile(code []byte) (*ast.Root, error) {
 	}
 
 	var parserErrors []*phperrors.Error
-	rootNode, err := parser.Parse(code, cfg.Config{
+	rootNode, err := parser.Parse(code, conf.Config{
 		Version: phpVersion,
 		ErrorHandlerFunc: func(e *phperrors.Error) {
 			parserErrors = append(parserErrors, e)

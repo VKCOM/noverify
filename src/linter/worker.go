@@ -14,11 +14,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/i582/php-parser/pkg/ast"
-	"github.com/i582/php-parser/pkg/cfg"
-	phperrors "github.com/i582/php-parser/pkg/errors"
-	"github.com/i582/php-parser/pkg/parser"
 	"github.com/quasilyte/regex/syntax"
+	"github.com/z7zmey/php-parser/pkg/ast"
+	"github.com/z7zmey/php-parser/pkg/conf"
+	phperrors "github.com/z7zmey/php-parser/pkg/errors"
+	"github.com/z7zmey/php-parser/pkg/parser"
 
 	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/ir"
@@ -116,7 +116,7 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult,
 	defer waiter.Finish()
 
 	var parserErrors []*phperrors.Error
-	rootNode, err := parser.Parse(contents, cfg.Config{
+	rootNode, err := parser.Parse(contents, conf.Config{
 		Version: w.config.PhpVersion,
 		ErrorHandlerFunc: func(e *phperrors.Error) {
 			parserErrors = append(parserErrors, e)

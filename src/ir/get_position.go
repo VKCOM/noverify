@@ -3,7 +3,7 @@ package ir
 
 import (
 	"fmt"
-	"github.com/i582/php-parser/pkg/position"
+	"github.com/z7zmey/php-parser/pkg/position"
 )
 
 func GetPosition(n Node) *position.Position {

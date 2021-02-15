@@ -1,7 +1,7 @@
 package phpgrep
 
 import (
-	"github.com/i582/php-parser/pkg/position"
+	"github.com/z7zmey/php-parser/pkg/position"
 
 	"github.com/VKCOM/noverify/src/ir"
 )
