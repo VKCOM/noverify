@@ -168,27 +168,25 @@ func (b *blockWalker) reportDeadCode(n ir.Node) {
 }
 
 func (b *blockWalker) handleComments(n ir.Node) {
+	switch node := n.(type) {
+	case *ir.ArrayDimFetchExpr:
+		n = node.Variable
+	default:
+		n = node
+	}
+
 	n.IterateTokens(func(t *token.Token) bool {
-		b.handleToken(n, t)
+		b.handleCommentToken(n, t)
 		return true
 	})
 }
 
-func (b *blockWalker) handleToken(n ir.Node, t *token.Token) {
-	if t == nil {
+func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
+	if !phpdoc.IsPHPDocToken(t) {
 		return
 	}
 
-	if t.ID != token.T_DOC_COMMENT && t.ID != token.T_COMMENT {
-		return
-	}
-	str := string(t.Value)
-
-	if !phpdoc.IsPHPDoc(str) {
-		return
-	}
-
-	for _, p := range phpdoc.Parse(b.r.ctx.phpdocTypeParser, str) {
+	for _, p := range phpdoc.Parse(b.r.ctx.phpdocTypeParser, string(t.Value)) {
 		p, ok := p.(*phpdoc.TypeVarCommentPart)
 		if !ok || p.Name() != "var" {
 			continue
@@ -1631,6 +1629,8 @@ func (b *blockWalker) paramClobberCheck(v *ir.SimpleVar) {
 }
 
 func (b *blockWalker) handleAssign(a *ir.Assign) bool {
+	b.handleComments(a.Variable)
+
 	a.Expression.Walk(b)
 
 	switch v := a.Variable.(type) {
@@ -1639,7 +1639,6 @@ func (b *blockWalker) handleAssign(a *ir.Assign) bool {
 		b.handleAndCheckDimFetchLValue(v, "assign_array", typ)
 		return false
 	case *ir.SimpleVar:
-		b.handleComments(v)
 		b.paramClobberCheck(v)
 		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
 	case *ir.Var:

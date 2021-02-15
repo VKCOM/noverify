@@ -25,12 +25,12 @@ func BenchmarkInterpretString(b *testing.B) {
 		test := tests[i]
 		b.Run(test.name+"Q1", func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				_, _ = interpretString(test.input, '\'')
+				_, _ = interpretString([]byte(test.input), '\'')
 			}
 		})
 		b.Run(test.name+"Q2", func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				_, _ = interpretString(test.input, '"')
+				_, _ = interpretString([]byte(test.input), '"')
 			}
 		})
 	}
@@ -286,7 +286,7 @@ func TestInterpretString(t *testing.T) {
 
 	runTest := func(t *testing.T, raw string, quote byte, want []byte) {
 		t.Helper()
-		have, err := interpretString(raw, quote)
+		have, err := interpretString([]byte(raw), quote)
 
 		if wantString := string(want); strings.HasPrefix(wantString, "FAIL: ") {
 			wantString = strings.TrimPrefix(wantString, "FAIL: ")
@@ -306,10 +306,9 @@ func TestInterpretString(t *testing.T) {
 			return
 		}
 
-		haveBytes := []byte(have)
-		if !bytes.Equal(haveBytes, want) {
+		if !bytes.Equal(have, want) {
 			t.Errorf("%s bytes mismatch (quote=%c):\nhave: %[3]v\nwant: %[4]v\nhave-string: %[3]s\nwant-string: %[4]s",
-				raw, quote, haveBytes, want)
+				raw, quote, have, want)
 		}
 	}
 

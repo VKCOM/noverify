@@ -1104,10 +1104,11 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			Value:    fullyQualifiedToString(n),
 		}
 	case *ast.Name:
+		tok := namePartsToToken(n.Parts)
 		return &ir.Name{
 			Position: n.Position,
-			NameTkn:  namePartsToToken(n.Parts),
-			Value:    namePartsToString(n.Parts),
+			NameTkn:  tok,
+			Value:    string(tok.Value),
 		}
 	case *ast.NameRelative:
 		return c.convRelativeName(n)
@@ -2254,19 +2255,19 @@ func convString(n *ast.ScalarString) ir.Node {
 	}
 
 	out.DoubleQuotes = n.Value[0] == '"'
-	unquoted := irutil.Unquote(string(n.Value))
+	unquoted := irutil.Unquote(n.Value)
 	s, err := interpretString(unquoted, quote)
 	if err != nil {
 		return &ir.BadString{
 			MinusTkn:     n.MinusTkn,
 			StringTkn:    n.StringTkn,
 			Position:     n.Position,
-			Value:        unquoted,
+			Value:        string(unquoted),
 			Error:        err.Error(),
 			DoubleQuotes: out.DoubleQuotes,
 		}
 	}
-	out.Value = s
+	out.Value = string(s)
 
 	return out
 }

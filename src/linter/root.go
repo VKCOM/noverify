@@ -107,16 +107,11 @@ func (d *rootWalker) File() *workspace.File {
 }
 
 func (d *rootWalker) handleCommentToken(t *token.Token) bool {
-	if t.ID != token.T_DOC_COMMENT && t.ID != token.T_COMMENT {
-		return true
-	}
-	str := string(t.Value)
-
-	if !phpdoc.IsPHPDoc(str) {
+	if !phpdoc.IsPHPDocToken(t) {
 		return true
 	}
 
-	for _, ln := range phpdoc.Parse(d.ctx.phpdocTypeParser, str) {
+	for _, ln := range phpdoc.Parse(d.ctx.phpdocTypeParser, string(t.Value)) {
 		if ln.Name() != "linter" {
 			continue
 		}
@@ -1935,17 +1930,18 @@ func (d *rootWalker) checkKeywordCase(n ir.Node, keyword string) {
 	case *ir.YieldFromExpr:
 		d.compareKeywordWithTokenCase(n, toks[0], "yield")
 		d.compareKeywordWithTokenCase(n, toks[1], "from")
-		return
 
 	case *ir.ElseIfStmt:
 		if !n.Merged {
 			d.compareKeywordWithTokenCase(n, toks[0], "if")
 			d.compareKeywordWithTokenCase(n, toks[1], "else")
-			return
+		} else {
+			d.compareKeywordWithTokenCase(n, tok, "elseif")
 		}
-	}
 
-	d.compareKeywordWithTokenCase(n, tok, keyword)
+	default:
+		d.compareKeywordWithTokenCase(n, tok, keyword)
+	}
 }
 
 func (d *rootWalker) compareKeywordWithTokenCase(n ir.Node, tok *token.Token, keyword string) {

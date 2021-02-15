@@ -1291,6 +1291,7 @@ type NamespaceStmt struct {
 
 // NopStmt is a `;` statement.
 // It's also known as "empty statement".
+// It could also be a `?>` (script closing marker).
 type NopStmt struct {
 	Position     *position.Position
 	SemiColonTkn *token.Token

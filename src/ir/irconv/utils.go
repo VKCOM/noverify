@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
-	"unicode/utf8"
 
 	"github.com/z7zmey/php-parser/pkg/ast"
 	"github.com/z7zmey/php-parser/pkg/position"
@@ -67,9 +66,9 @@ func namePartsToToken(parts []ast.Vertex) *token.Token {
 // It tries to follow PHP rules as close are possible, but also
 // expects strings to be valid and parseable by the compliant PHP-parser.
 //
-// If, for whatever reason, a bad strign escape was encountered,
+// If, for whatever reason, a bad string escape was encountered,
 // second returned value will be false.
-func interpretString(s string, quote byte) (string, error) {
+func interpretString(s []byte, quote byte) ([]byte, error) {
 	switch quote {
 	case '\'', '"':
 		// OK
@@ -77,7 +76,7 @@ func interpretString(s string, quote byte) (string, error) {
 		panic("invalid quote type")
 	}
 
-	if !strings.Contains(s, `\`) {
+	if !bytes.ContainsRune(s, '\\') {
 		// Fast path: nothing to replace.
 		return s, nil
 	}
@@ -92,8 +91,8 @@ func interpretString(s string, quote byte) (string, error) {
 }
 
 // interpretStringQ1 returns s interpreted value as a single-quoted PHP string.
-func interpretStringQ1(s string) (string, error) {
-	var out strings.Builder
+func interpretStringQ1(s []byte) ([]byte, error) {
+	var out bytes.Buffer
 	out.Grow(len(s))
 
 	i := 0
@@ -103,7 +102,7 @@ func interpretStringQ1(s string) (string, error) {
 		switch {
 		case ch == '\\':
 			if !hasOffset(s, i+1) {
-				return "", errors.New(`illegal trailing \`)
+				return nil, errors.New(`illegal trailing \`)
 			}
 			switch s[i+1] {
 			case '\'':
@@ -113,7 +112,7 @@ func interpretStringQ1(s string) (string, error) {
 				out.WriteByte(s[i+1])
 				i += 2
 			default:
-				out.WriteString(s[i : i+2])
+				out.Write(s[i : i+2])
 				i += 2
 			}
 
@@ -122,18 +121,17 @@ func interpretStringQ1(s string) (string, error) {
 			i++
 
 		default:
-			r, n := utf8.DecodeRuneInString(s[i:])
-			out.WriteRune(r)
-			i += n
+			out.WriteByte(ch)
+			i++
 		}
 	}
 
-	return out.String(), nil
+	return out.Bytes(), nil
 }
 
 // interpretStringQ2 returns s interpreted value as a double-quoted PHP string.
-func interpretStringQ2(s string) (string, error) {
-	var out strings.Builder
+func interpretStringQ2(s []byte) ([]byte, error) {
+	var out bytes.Buffer
 	out.Grow(len(s))
 
 	i := 0
@@ -143,7 +141,7 @@ func interpretStringQ2(s string) (string, error) {
 		switch {
 		case ch == '\\':
 			if !hasOffset(s, i+1) {
-				return "", errors.New(`illegal trailing \`)
+				return nil, errors.New(`illegal trailing \`)
 			}
 			switch s[i+1] {
 			case 'u': // \u{[0-9A-Fa-f]+}
@@ -152,15 +150,20 @@ func interpretStringQ2(s string) (string, error) {
 					i += 2
 					break
 				}
-				end := strings.IndexByte(s[i+len(`\u`):], '}')
+				end := bytes.IndexByte(s[i+len(`\u`):], '}')
 				if end == -1 {
-					return "", errors.New("missing closing '}' for UTF-8 sequence")
+					return nil, errors.New("missing closing '}' for UTF-8 sequence")
 				}
 				codepoints := s[i+len(`\u{`) : i+len(`\u{`)+end-len(`}`)]
-				goLiteral := `\U` + zeros[:8-len(codepoints)] + codepoints
-				ch, _, _, err := strconv.UnquoteChar(goLiteral, '"')
+
+				goLiteral := make([]byte, 0, len([]byte(`\U`))+len(zeros[:8-len(codepoints)])+len(codepoints))
+				goLiteral = append(goLiteral, []byte(`\U`)...)
+				goLiteral = append(goLiteral, zeros[:8-len(codepoints)]...)
+				goLiteral = append(goLiteral, codepoints...)
+
+				ch, _, _, err := strconv.UnquoteChar(string(goLiteral), '"')
 				if err != nil {
-					return "", fmt.Errorf("decode UTF-8 codepoints: %v", err)
+					return nil, fmt.Errorf("decode UTF-8 codepoints: %v", err)
 				}
 				out.WriteRune(ch)
 				i += len(`\u{`) + len(codepoints) + len(`}`)
@@ -202,11 +205,11 @@ func interpretStringQ2(s string) (string, error) {
 				if hasOffset(s, i+3) && isOctalDigit(s[i+3]) {
 					digits++
 				}
-				v, err := strconv.ParseUint(s[i+len(`\`):i+len(`\`)+digits], 8, 64)
+				v, err := strconv.ParseUint(string(s[i+len(`\`):i+len(`\`)+digits]), 8, 64)
 				if err == nil {
 					out.WriteByte(byte(v)) // Overflow is OK
 				} else {
-					out.WriteString(s[i : i+len(`\`)+digits])
+					out.Write(s[i : i+len(`\`)+digits])
 				}
 				i += len(`\`) + digits
 			case 'x':
@@ -222,15 +225,15 @@ func interpretStringQ2(s string) (string, error) {
 					i += 2
 					break
 				}
-				v, err := strconv.ParseUint(s[i+len(`\x`):i+len(`\x`)+digits], 16, 64)
+				v, err := strconv.ParseUint(string(s[i+len(`\x`):i+len(`\x`)+digits]), 16, 64)
 				if err == nil && v <= 255 {
 					out.WriteByte(byte(v))
 				} else {
-					out.WriteString(s[i : i+len(`\x`)+digits])
+					out.Write(s[i : i+len(`\x`)+digits])
 				}
 				i += len(`\x`) + digits
 			default:
-				out.WriteString(s[i : i+2])
+				out.Write(s[i : i+2])
 				i += 2
 			}
 
@@ -239,13 +242,12 @@ func interpretStringQ2(s string) (string, error) {
 			i++
 
 		default:
-			r, n := utf8.DecodeRuneInString(s[i:])
-			out.WriteRune(r)
-			i += n
+			out.WriteByte(ch)
+			i++
 		}
 	}
 
-	return out.String(), nil
+	return out.Bytes(), nil
 }
 
 var zeros = "00000000"
@@ -258,6 +260,6 @@ func isHexDigit(ch byte) bool {
 		(ch >= 'A' && ch <= 'F')
 }
 
-func hasOffset(s string, offset int) bool {
+func hasOffset(s []byte, offset int) bool {
 	return len(s) > offset
 }

@@ -179,6 +179,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.InterfaceStmt:
 		b.checkInterfaceStmt(n)
 
+	case *ir.NopStmt:
+		b.checkNopStmt(n)
+
 	case *ir.BadString:
 		b.report(n, LevelError, "syntax", "%s", n.Error)
 	}
@@ -186,6 +189,20 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 func (b *blockLinter) report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
 	b.walker.r.Report(n, level, checkName, msg, args...)
+}
+
+func (b *blockLinter) checkNopStmt(n *ir.NopStmt) {
+	switch b.walker.path.Parent().(type) {
+	case *ir.DeclareStmt, *ir.IfStmt, *ir.ForStmt, *ir.ForeachStmt, *ir.WhileStmt, *ir.DoStmt:
+		return
+	}
+
+	// Check whether it's `?>`; it it is, ignore it.
+	if bytes.HasPrefix(n.SemiColonTkn.Value, []byte("?>")) {
+		return
+	}
+
+	b.report(n, LevelNotice, "emptyStmt", "semicolon (;) is not needed here, it can be safely removed")
 }
 
 func (b *blockLinter) checkCoalesceExpr(n *ir.CoalesceExpr) {

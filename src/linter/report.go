@@ -17,6 +17,15 @@ const (
 func addBuiltinCheckers(reg *CheckersRegistry) {
 	allChecks := []CheckerInfo{
 		{
+			Name:     "emptyStmt",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report redundant empty statements that can be safely removed.`,
+			Before:   `echo $foo;;`,
+			After:    `echo $foo;`,
+		},
+
+		{
 			Name:     "intOverflow",
 			Default:  true,
 			Quickfix: false,
