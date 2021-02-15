@@ -230,9 +230,8 @@ func interpretStringQ2(s string) (string, error) {
 				}
 				i += len(`\x`) + digits
 			default:
-				r, n := utf8.DecodeRuneInString(s[i:])
-				out.WriteRune(r)
-				i += n
+				out.WriteString(s[i : i+2])
+				i += 2
 			}
 
 		case ch <= unicode.MaxASCII:
@@ -240,8 +239,9 @@ func interpretStringQ2(s string) (string, error) {
 			i++
 
 		default:
-			out.WriteString(s[i : i+2])
-			i += 2
+			r, n := utf8.DecodeRuneInString(s[i:])
+			out.WriteRune(r)
+			i += n
 		}
 	}
 
