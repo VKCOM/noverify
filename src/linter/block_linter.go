@@ -790,6 +790,11 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 	}
 
 	switch fqName {
+	case `\strip_tags`:
+		if len(e.Args) < 2 {
+			break
+		}
+		b.checkStripTags(e)
 	case `\preg_match`, `\preg_match_all`, `\preg_replace`, `\preg_split`:
 		if len(e.Args) < 1 {
 			break
@@ -801,6 +806,74 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 		}
 		// TODO: handle fprintf as well?
 		b.checkFormatString(e, e.Arg(0))
+	}
+}
+
+func (b *blockLinter) checkStripTags(e *ir.FunctionCallExpr) {
+	reportArg := func(n ir.Node, format string, args ...interface{}) {
+		message := fmt.Sprintf(format, args...)
+		b.report(n, LevelWarning, "stripTags", "$allowed_tags argument: "+message)
+	}
+
+	normalizeTag := func(s string) string {
+		s = strings.ReplaceAll(s, " ", "")
+		if strings.HasSuffix(s, "/>") {
+			s = strings.TrimSuffix(s, "/>") + ">"
+		}
+		s = strings.ToLower(s)
+		return s
+	}
+
+	set := make(map[string]string)
+	addTag := func(n ir.Node, tag string) {
+		normalized := normalizeTag(tag)
+		if prev := set[normalized]; prev != "" {
+			if prev == tag {
+				reportArg(n, "tag '%s' is duplicated", tag)
+			} else {
+				reportArg(n, "tag '%s' is duplicated, previously spelled as '%s'", tag, prev)
+			}
+		} else {
+			set[normalized] = tag
+		}
+	}
+
+	switch allowed := e.Arg(1).Expr.(type) {
+	case *ir.ArrayExpr:
+		for _, item := range allowed.Items {
+			literal, ok := item.Val.(*ir.String)
+			if !ok {
+				continue
+			}
+			s := strings.TrimSpace(literal.Value)
+			if strings.HasPrefix(s, "<") {
+				reportArg(item.Val, "'<' and '>' are not needed for tags when using array argument")
+			}
+			addTag(literal, literal.Value)
+		}
+	case *ir.String:
+		s := allowed.Value
+		if strings.ContainsAny(s, `'"`) {
+			reportArg(allowed, "using values/attrs is an error; they make matching always fail")
+			break
+		}
+		for {
+			s = strings.TrimLeft(s, " \n\r\t")
+			end := strings.IndexByte(s, '>')
+			if end == -1 {
+				break
+			}
+			tag := s[:end+1]
+			if strings.HasSuffix(tag, "/>") {
+				fixed := strings.TrimSuffix(tag, "/>") + ">"
+				reportArg(allowed, "'%s' should be written as '%s'", tag, fixed)
+			}
+			if strings.Contains(tag, " ") {
+				reportArg(allowed, "tag '%s' should not contain spaces", tag)
+			}
+			addTag(allowed, tag)
+			s = s[end+1:]
+		}
 	}
 }
 
