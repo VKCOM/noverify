@@ -352,6 +352,9 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.ClosureUse != nil {
 			clone.ClosureUse = NodeClone(x.ClosureUse).(*ir.ClosureUsesExpr)
 		}
+		if x.ReturnType != nil {
+			clone.ReturnType = NodeClone(x.ReturnType)
+		}
 		clone.Stmts = NodeSliceClone(x.Stmts)
 		return &clone
 	case *ir.ClosureUsesExpr:
@@ -990,9 +993,7 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Cond != nil {
 			clone.Cond = NodeClone(x.Cond)
 		}
-		if x.Cases != nil {
-			clone.Cases = NodeSliceClone(x.Cases)
-		}
+		clone.Cases = NodeSliceClone(x.Cases)
 		return &clone
 	case *ir.TernaryExpr:
 		clone := *x

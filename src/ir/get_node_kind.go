@@ -48,7 +48,7 @@ const (
 	KindClassStmt
 	KindCloneExpr
 	KindClosureExpr
-	KindClosureUseExpr
+	KindClosureUsesExpr
 	KindCoalesceExpr
 	KindConcatExpr
 	KindConstFetchExpr
@@ -246,7 +246,7 @@ func GetNodeKind(x Node) NodeKind {
 	case *ClosureExpr:
 		return KindClosureExpr
 	case *ClosureUsesExpr:
-		return KindClosureUseExpr
+		return KindClosureUsesExpr
 	case *CoalesceExpr:
 		return KindCoalesceExpr
 	case *ConcatExpr:

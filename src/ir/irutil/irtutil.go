@@ -67,23 +67,31 @@ func FmtNode(n ir.Node) string {
 }
 
 // FindPhpDoc searches for phpdoc by traversing all subtree and all tokens.
-func FindPhpDoc(n ir.Node) (string, bool) {
-	var doc string
-
-	Inspect(n, func(n ir.Node) bool {
-		n.IterateTokens(func(t *token.Token) bool {
+func FindPhpDoc(n ir.Node) (doc string, found bool) {
+	Inspect(n, func(n ir.Node) (continueTraverse bool) {
+		n.IterateTokens(func(t *token.Token) (continueTraverse bool) {
 			if t.ID == token.T_DOC_COMMENT {
 				doc = string(t.Value)
 				return false
 			}
 
-			return doc == ""
+			return true
 		})
 
-		return doc == ""
+		// If phpdoc was already found in the tokens of the current node,
+		// then there is no point in continuing further.
+		if doc != "" {
+			return false
+		}
+
+		return true
 	})
 
-	return doc, doc != ""
+	if doc != "" {
+		return doc, true
+	}
+
+	return doc, false
 }
 
 func classEqual(x, y ir.Class) bool {

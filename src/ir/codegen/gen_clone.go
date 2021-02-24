@@ -65,6 +65,8 @@ func (g *genClone) writeCloneCase(w *bytes.Buffer, pkg *packageData, typ *typeDa
 			// Do nothing.
 		case "string", "bool":
 			// Do nothing.
+		case "ir.Doc":
+			// Do nothing.
 		case "ir.Class":
 			fmt.Fprintf(w, "    clone.%[1]s = classClone(x.%[1]s)\n", field.Name())
 		default:

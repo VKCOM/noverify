@@ -1053,9 +1053,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.PhpDocComment != y.PhpDocComment {
-			return false
-		}
 		if !NodeEqual(x.InterfaceName, y.InterfaceName) {
 			return false
 		}
@@ -1063,6 +1060,9 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
+			return false
+		}
+		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
 		return true
