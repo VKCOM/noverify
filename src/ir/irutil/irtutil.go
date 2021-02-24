@@ -78,13 +78,7 @@ func FindPhpDoc(n ir.Node) (doc string, found bool) {
 			return true
 		})
 
-		// If phpdoc was already found in the tokens of the current node,
-		// then there is no point in continuing further.
-		if doc != "" {
-			return false
-		}
-
-		return true
+		return doc == ""
 	})
 
 	if doc != "" {
