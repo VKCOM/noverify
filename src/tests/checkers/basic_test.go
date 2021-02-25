@@ -1851,9 +1851,9 @@ func TestClassSpecialNameCase(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 class B {
-	const B = 100;
+    const B = 100;
 
-	public static $name = "";
+    public static $name = "";
 
     public static function g() {}
 }
@@ -1861,7 +1861,7 @@ class B {
 class A extends B {
     const B = 100;
 
-	public static $id = 0;
+    public static $id = 0;
 
     function f() {
         echo SELF::B;
@@ -1876,29 +1876,29 @@ class A extends B {
         echo parEnt::B;
         echo parent::B;
 
-		SELF::f();
-		sElf::f();
-		self::f();
+        SELF::f();
+        sElf::f();
+        self::f();
 
-		STATIC::f();
-		stAtic::f();
-		static::f();
+        STATIC::f();
+        stAtic::f();
+        static::f();
 
         PARENT::g();
         paREnt::g();
         parent::g();
 
-		PARENT::$name;
-		paREnt::$name;
-		parent::$name;
+        PARENT::$name;
+        paREnt::$name;
+        parent::$name;
 
-		SELF::$id;
-		sElf::$id;
-		self::$id;
+        SELF::$id;
+        sElf::$id;
+        self::$id;
 
-		STATIC::$id;
-		stAtic::$id;
-		static::$id;
+        STATIC::$id;
+        stAtic::$id;
+        static::$id;
     }
 }
 `)
