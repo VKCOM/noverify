@@ -1003,15 +1003,23 @@ func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
 }
 
 func (b *blockLinter) checkClassSpecialNameCase(n ir.Node, className string) {
+	// Since for resolving class names we use the solver.GetClassName function,
+	// which resolves unknown classes as '\' + the passed class name, then for
+	// misspelled special class names (self, static, parent) we get something
+	// like '\SELF'. For correctly spelled ones, we get the specific class name.
+	// Therefore, to catch this case, we compare the resolved class name with
+	// '\' + the correct spelling of the special name, case insensitive.
+	// If there is a match, it means that the name was originally spelled in the wrong case.
+
 	names := []string{
-		"self",
-		"static",
-		"parent",
+		`\self`,
+		`\static`,
+		`\parent`,
 	}
 
 	for _, name := range names {
-		if strings.EqualFold(className, `\`+name) {
-			b.walker.r.Report(n, LevelNotice, "nameCase", "%s should be spelled as %s", strings.TrimPrefix(className, `\`), name)
+		if strings.EqualFold(className, name) {
+			b.walker.r.Report(n, LevelNotice, "nameCase", "%s should be spelled as %s", strings.TrimPrefix(className, `\`), strings.TrimPrefix(name, `\`))
 		}
 	}
 }
