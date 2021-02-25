@@ -924,6 +924,8 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 		return
 	}
 
+	b.checkClassSpecialNameCase(e, call.className)
+
 	if !call.isMagic {
 		b.checkCallArgs(e.Call, e.Args, call.methodInfo.Info)
 	}
@@ -972,6 +974,8 @@ func (b *blockLinter) checkStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) {
 		return
 	}
 
+	b.checkClassSpecialNameCase(e, fetch.className)
+
 	if !fetch.isFound && !b.classParseState().IsTrait {
 		b.report(e.Property, LevelError, "undefined", "Property %s::$%s does not exist", fetch.className, fetch.propertyName)
 	}
@@ -987,12 +991,28 @@ func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
 		return
 	}
 
+	b.checkClassSpecialNameCase(e, fetch.className)
+
 	if !fetch.isFound && !b.classParseState().IsTrait {
 		b.walker.r.Report(e.ConstantName, LevelError, "undefined", "Class constant %s::%s does not exist", fetch.className, fetch.constName)
 	}
 
 	if fetch.isFound && !canAccess(b.classParseState(), fetch.implClassName, fetch.info.AccessLevel) {
 		b.walker.r.Report(e.ConstantName, LevelError, "accessLevel", "Cannot access %s constant %s::%s", fetch.info.AccessLevel, fetch.implClassName, fetch.constName)
+	}
+}
+
+func (b *blockLinter) checkClassSpecialNameCase(n ir.Node, className string) {
+	names := []string{
+		"self",
+		"static",
+		"parent",
+	}
+
+	for _, name := range names {
+		if strings.EqualFold(className, `\`+name) {
+			b.walker.r.Report(n, LevelNotice, "nameCase", "%s should be spelled as %s", strings.TrimPrefix(className, `\`), name)
+		}
 	}
 }
 

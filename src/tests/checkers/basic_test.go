@@ -1847,6 +1847,84 @@ func_A();
 	linttest.RunFilterMatch(test, `nameCase`)
 }
 
+func TestClassSpecialNameCase(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class B {
+	const B = 100;
+
+	public static $name = "";
+
+    public static function g() {}
+}
+
+class A extends B {
+    const B = 100;
+
+	public static $id = 0;
+
+    function f() {
+        echo SELF::B;
+        echo seLf::B;
+        echo self::B;
+
+        echo STATIC::B;
+        echo stAtic::B;
+        echo static::B;
+
+        echo PARENT::B;
+        echo parEnt::B;
+        echo parent::B;
+
+		SELF::f();
+		sElf::f();
+		self::f();
+
+		STATIC::f();
+		stAtic::f();
+		static::f();
+
+        PARENT::g();
+        paREnt::g();
+        parent::g();
+
+		PARENT::$name;
+		paREnt::$name;
+		parent::$name;
+
+		SELF::$id;
+		sElf::$id;
+		self::$id;
+
+		STATIC::$id;
+		stAtic::$id;
+		static::$id;
+    }
+}
+`)
+	test.Expect = []string{
+		`SELF should be spelled as self`,
+		`seLf should be spelled as self`,
+		`STATIC should be spelled as static`,
+		`stAtic should be spelled as static`,
+		`PARENT should be spelled as parent`,
+		`parEnt should be spelled as parent`,
+		`SELF should be spelled as self`,
+		`sElf should be spelled as self`,
+		`STATIC should be spelled as static`,
+		`stAtic should be spelled as static`,
+		`PARENT should be spelled as parent`,
+		`paREnt should be spelled as parent`,
+		`PARENT should be spelled as parent`,
+		`paREnt should be spelled as parent`,
+		`SELF should be spelled as self`,
+		`sElf should be spelled as self`,
+		`STATIC should be spelled as static`,
+		`stAtic should be spelled as static`,
+	}
+	linttest.RunFilterMatch(test, `nameCase`)
+}
+
 func TestClassNotFound(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
