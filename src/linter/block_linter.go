@@ -924,6 +924,8 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 		return
 	}
 
+	b.checkClassSpecialNameCase(e, call.className)
+
 	if !call.isMagic {
 		b.checkCallArgs(e.Call, e.Args, call.methodInfo.Info)
 	}
@@ -972,6 +974,8 @@ func (b *blockLinter) checkStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) {
 		return
 	}
 
+	b.checkClassSpecialNameCase(e, fetch.className)
+
 	if !fetch.isFound && !b.classParseState().IsTrait {
 		b.report(e.Property, LevelError, "undefined", "Property %s::$%s does not exist", fetch.className, fetch.propertyName)
 	}
@@ -987,12 +991,36 @@ func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
 		return
 	}
 
+	b.checkClassSpecialNameCase(e, fetch.className)
+
 	if !fetch.isFound && !b.classParseState().IsTrait {
 		b.walker.r.Report(e.ConstantName, LevelError, "undefined", "Class constant %s::%s does not exist", fetch.className, fetch.constName)
 	}
 
 	if fetch.isFound && !canAccess(b.classParseState(), fetch.implClassName, fetch.info.AccessLevel) {
 		b.walker.r.Report(e.ConstantName, LevelError, "accessLevel", "Cannot access %s constant %s::%s", fetch.info.AccessLevel, fetch.implClassName, fetch.constName)
+	}
+}
+
+func (b *blockLinter) checkClassSpecialNameCase(n ir.Node, className string) {
+	// Since for resolving class names we use the solver.GetClassName function,
+	// which resolves unknown classes as '\' + the passed class name, then for
+	// misspelled special class names (self, static, parent) we get something
+	// like '\SELF'. For correctly spelled ones, we get the specific class name.
+	// Therefore, to catch this case, we compare the resolved class name with
+	// '\' + the correct spelling of the special name, case insensitive.
+	// If there is a match, it means that the name was originally spelled in the wrong case.
+
+	names := []string{
+		`\self`,
+		`\static`,
+		`\parent`,
+	}
+
+	for _, name := range names {
+		if strings.EqualFold(className, name) {
+			b.walker.r.Report(n, LevelNotice, "nameCase", "%s should be spelled as %s", strings.TrimPrefix(className, `\`), strings.TrimPrefix(name, `\`))
+		}
 	}
 }
 
