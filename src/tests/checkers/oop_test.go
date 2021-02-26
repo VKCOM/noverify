@@ -1421,8 +1421,8 @@ func TestGroupUse(t *testing.T) {
 	test.AddFile(`<?php
 namespace Test;
 
-class TestClass {};
-class TestClass2 {};
+class TestClass {}
+class TestClass2 {}
 
 function testFunction() {}
 function testFunction2() {}
@@ -1431,8 +1431,8 @@ function testFunction2() {}
 	test.AddFile(`<?php
 namespace Test\Something;
 
-class TestSomethingClass {};
-class TestSomethingClass2 {};
+class TestSomethingClass {}
+class TestSomethingClass2 {}
 
 function testSomethingFunction() {}
 function testSomethingFunction2() {}

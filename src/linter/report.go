@@ -17,6 +17,24 @@ const (
 func addBuiltinCheckers(reg *CheckersRegistry) {
 	allChecks := []CheckerInfo{
 		{
+			Name:     "stripTags",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report invalid strip_tags function usage.`,
+			Before:   `$s = strip_tags($s, '<br/>')`,
+			After:    `$s = strip_tags($s, '<br>')`,
+		},
+
+		{
+			Name:     "emptyStmt",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report redundant empty statements that can be safely removed.`,
+			Before:   `echo $foo;;`,
+			After:    `echo $foo;`,
+		},
+
+		{
 			Name:     "intOverflow",
 			Default:  true,
 			Quickfix: false,
