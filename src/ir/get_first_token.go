@@ -16,7 +16,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.OpenParenthesisTkn
 		}
 		if len(n.Args) != 0 {
-			return GetFirstToken(n.Args[0])
+			if n.Args[0] != nil {
+				return GetFirstToken(n.Args[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -37,13 +39,19 @@ func GetFirstToken(n Node) *token.Token {
 		if n.AmpersandTkn != nil {
 			return n.AmpersandTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 	case *ArrayDimFetchExpr:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.OpenBracketTkn != nil {
 			return n.OpenBracketTkn
 		}
-		return GetFirstToken(n.Dim)
+		if n.Dim != nil {
+			return GetFirstToken(n.Dim)
+		}
 		if n.CloseBracketTkn != nil {
 			return n.CloseBracketTkn
 		}
@@ -53,6 +61,9 @@ func GetFirstToken(n Node) *token.Token {
 		}
 		if n.OpenBracketTkn != nil {
 			return n.OpenBracketTkn
+		}
+		if n.Items[0] != nil {
+			return GetFirstToken(n.Items[0])
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -64,14 +75,18 @@ func GetFirstToken(n Node) *token.Token {
 		if n.EllipsisTkn != nil {
 			return n.EllipsisTkn
 		}
-		return GetFirstToken(n.Key)
+		if n.Key != nil {
+			return GetFirstToken(n.Key)
+		}
 		if n.DoubleArrowTkn != nil {
 			return n.DoubleArrowTkn
 		}
 		if n.AmpersandTkn != nil {
 			return n.AmpersandTkn
 		}
-		return GetFirstToken(n.Val)
+		if n.Val != nil {
+			return GetFirstToken(n.Val)
+		}
 	case *ArrowFunctionExpr:
 		if n.StaticTkn != nil {
 			return n.StaticTkn
@@ -86,7 +101,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.OpenParenthesisTkn
 		}
 		if len(n.Params) != 0 {
-			return GetFirstToken(n.Params[0])
+			if n.Params[0] != nil {
+				return GetFirstToken(n.Params[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -97,101 +114,165 @@ func GetFirstToken(n Node) *token.Token {
 		if n.ColonTkn != nil {
 			return n.ColonTkn
 		}
-		return GetFirstToken(n.ReturnType)
+		if n.ReturnType != nil {
+			return GetFirstToken(n.ReturnType)
+		}
 		if n.DoubleArrowTkn != nil {
 			return n.DoubleArrowTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 	case *Assign:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.Expression)
+		if n.Expression != nil {
+			return GetFirstToken(n.Expression)
+		}
 	case *AssignBitwiseAnd:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.Expression)
+		if n.Expression != nil {
+			return GetFirstToken(n.Expression)
+		}
 	case *AssignBitwiseOr:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.Expression)
+		if n.Expression != nil {
+			return GetFirstToken(n.Expression)
+		}
 	case *AssignBitwiseXor:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.Expression)
+		if n.Expression != nil {
+			return GetFirstToken(n.Expression)
+		}
 	case *AssignCoalesce:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.Expression)
+		if n.Expression != nil {
+			return GetFirstToken(n.Expression)
+		}
 	case *AssignConcat:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.Expression)
+		if n.Expression != nil {
+			return GetFirstToken(n.Expression)
+		}
 	case *AssignDiv:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.Expression)
+		if n.Expression != nil {
+			return GetFirstToken(n.Expression)
+		}
 	case *AssignMinus:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.Expression)
+		if n.Expression != nil {
+			return GetFirstToken(n.Expression)
+		}
 	case *AssignMod:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.Expression)
+		if n.Expression != nil {
+			return GetFirstToken(n.Expression)
+		}
 	case *AssignMul:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.Expression)
+		if n.Expression != nil {
+			return GetFirstToken(n.Expression)
+		}
 	case *AssignPlus:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.Expression)
+		if n.Expression != nil {
+			return GetFirstToken(n.Expression)
+		}
 	case *AssignPow:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.Expression)
+		if n.Expression != nil {
+			return GetFirstToken(n.Expression)
+		}
 	case *AssignReference:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.Expression)
+		if n.Expression != nil {
+			return GetFirstToken(n.Expression)
+		}
 	case *AssignShiftLeft:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.Expression)
+		if n.Expression != nil {
+			return GetFirstToken(n.Expression)
+		}
 	case *AssignShiftRight:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.Expression)
+		if n.Expression != nil {
+			return GetFirstToken(n.Expression)
+		}
 	case *BadString:
 		if n.MinusTkn != nil {
 			return n.MinusTkn
@@ -200,50 +281,76 @@ func GetFirstToken(n Node) *token.Token {
 			return n.StringTkn
 		}
 	case *BitwiseAndExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *BitwiseNotExpr:
 		if n.TildaTkn != nil {
 			return n.TildaTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 	case *BitwiseOrExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *BitwiseXorExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *BooleanAndExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *BooleanNotExpr:
 		if n.ExclamationTkn != nil {
 			return n.ExclamationTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 	case *BooleanOrExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *BreakStmt:
 		if n.BreakTkn != nil {
 			return n.BreakTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 		if n.SemiColonTkn != nil {
 			return n.SemiColonTkn
 		}
@@ -251,12 +358,16 @@ func GetFirstToken(n Node) *token.Token {
 		if n.CaseTkn != nil {
 			return n.CaseTkn
 		}
-		return GetFirstToken(n.Cond)
+		if n.Cond != nil {
+			return GetFirstToken(n.Cond)
+		}
 		if n.CaseSeparatorTkn != nil {
 			return n.CaseSeparatorTkn
 		}
 		if len(n.Stmts) != 0 {
-			return GetFirstToken(n.Stmts[0])
+			if n.Stmts[0] != nil {
+				return GetFirstToken(n.Stmts[0])
+			}
 		}
 	case *CatchStmt:
 		if n.CatchTkn != nil {
@@ -266,10 +377,15 @@ func GetFirstToken(n Node) *token.Token {
 			return n.OpenParenthesisTkn
 		}
 		if len(n.Types) != 0 {
-			return GetFirstToken(n.Types[0])
+			if n.Types[0] != nil {
+				return GetFirstToken(n.Types[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
+		}
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
 		}
 		if n.CloseParenthesisTkn != nil {
 			return n.CloseParenthesisTkn
@@ -278,22 +394,34 @@ func GetFirstToken(n Node) *token.Token {
 			return n.OpenCurlyBracketTkn
 		}
 		if len(n.Stmts) != 0 {
-			return GetFirstToken(n.Stmts[0])
+			if n.Stmts[0] != nil {
+				return GetFirstToken(n.Stmts[0])
+			}
 		}
 		if n.CloseCurlyBracketTkn != nil {
 			return n.CloseCurlyBracketTkn
 		}
 	case *ClassConstFetchExpr:
-		return GetFirstToken(n.Class)
+		if n.Class != nil {
+			return GetFirstToken(n.Class)
+		}
 		if n.DoubleColonTkn != nil {
 			return n.DoubleColonTkn
 		}
+		if n.ConstantName != nil {
+			return GetFirstToken(n.ConstantName)
+		}
 	case *ClassConstListStmt:
+		if n.Modifiers[0] != nil {
+			return GetFirstToken(n.Modifiers[0])
+		}
 		if n.ConstTkn != nil {
 			return n.ConstTkn
 		}
 		if len(n.Consts) != 0 {
-			return GetFirstToken(n.Consts[0])
+			if n.Consts[0] != nil {
+				return GetFirstToken(n.Consts[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -305,6 +433,9 @@ func GetFirstToken(n Node) *token.Token {
 		if n.ExtendsTkn != nil {
 			return n.ExtendsTkn
 		}
+		if n.ClassName != nil {
+			return GetFirstToken(n.ClassName)
+		}
 	case *ClassImplementsStmt:
 		if n.ImplementsTkn != nil {
 			return n.ImplementsTkn
@@ -313,20 +444,30 @@ func GetFirstToken(n Node) *token.Token {
 			return n.ImplementsSeparatorTkns[0]
 		}
 		if len(n.InterfaceNames) != 0 {
-			return GetFirstToken(n.InterfaceNames[0])
+			if n.InterfaceNames[0] != nil {
+				return GetFirstToken(n.InterfaceNames[0])
+			}
 		}
 	case *ClassMethodStmt:
+		if n.Modifiers[0] != nil {
+			return GetFirstToken(n.Modifiers[0])
+		}
 		if n.FunctionTkn != nil {
 			return n.FunctionTkn
 		}
 		if n.AmpersandTkn != nil {
 			return n.AmpersandTkn
 		}
+		if n.MethodName != nil {
+			return GetFirstToken(n.MethodName)
+		}
 		if n.OpenParenthesisTkn != nil {
 			return n.OpenParenthesisTkn
 		}
 		if len(n.Params) != 0 {
-			return GetFirstToken(n.Params[0])
+			if n.Params[0] != nil {
+				return GetFirstToken(n.Params[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -337,11 +478,21 @@ func GetFirstToken(n Node) *token.Token {
 		if n.ColonTkn != nil {
 			return n.ColonTkn
 		}
-		return GetFirstToken(n.ReturnType)
-		return GetFirstToken(n.Stmt)
+		if n.ReturnType != nil {
+			return GetFirstToken(n.ReturnType)
+		}
+		if n.Stmt != nil {
+			return GetFirstToken(n.Stmt)
+		}
 	case *ClassStmt:
+		if n.Modifiers[0] != nil {
+			return GetFirstToken(n.Modifiers[0])
+		}
 		if n.ClassTkn != nil {
 			return n.ClassTkn
+		}
+		if n.ClassName != nil {
+			return GetFirstToken(n.ClassName)
 		}
 		if n.OpenCurlyBracketTkn != nil {
 			return n.OpenCurlyBracketTkn
@@ -353,7 +504,9 @@ func GetFirstToken(n Node) *token.Token {
 		if n.CloneTkn != nil {
 			return n.CloneTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 	case *ClosureExpr:
 		if n.StaticTkn != nil {
 			return n.StaticTkn
@@ -368,7 +521,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.OpenParenthesisTkn
 		}
 		if len(n.Params) != 0 {
-			return GetFirstToken(n.Params[0])
+			if n.Params[0] != nil {
+				return GetFirstToken(n.Params[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -376,15 +531,22 @@ func GetFirstToken(n Node) *token.Token {
 		if n.CloseParenthesisTkn != nil {
 			return n.CloseParenthesisTkn
 		}
+		if n.ClosureUse != nil {
+			return GetFirstToken(n.ClosureUse)
+		}
 		if n.ColonTkn != nil {
 			return n.ColonTkn
 		}
-		return GetFirstToken(n.ReturnType)
+		if n.ReturnType != nil {
+			return GetFirstToken(n.ReturnType)
+		}
 		if n.OpenCurlyBracketTkn != nil {
 			return n.OpenCurlyBracketTkn
 		}
 		if len(n.Stmts) != 0 {
-			return GetFirstToken(n.Stmts[0])
+			if n.Stmts[0] != nil {
+				return GetFirstToken(n.Stmts[0])
+			}
 		}
 		if n.CloseCurlyBracketTkn != nil {
 			return n.CloseCurlyBracketTkn
@@ -397,7 +559,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.UseOpenParenthesisTkn
 		}
 		if len(n.Uses) != 0 {
-			return GetFirstToken(n.Uses[0])
+			if n.Uses[0] != nil {
+				return GetFirstToken(n.Uses[0])
+			}
 		}
 		if len(n.UseSeparatorTkns) != 0 {
 			return n.UseSeparatorTkns[0]
@@ -406,24 +570,37 @@ func GetFirstToken(n Node) *token.Token {
 			return n.UseCloseParenthesisTkn
 		}
 	case *CoalesceExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *ConcatExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *ConstFetchExpr:
+		if n.Constant != nil {
+			return GetFirstToken(n.Constant)
+		}
 	case *ConstListStmt:
 		if n.ConstTkn != nil {
 			return n.ConstTkn
 		}
 		if len(n.Consts) != 0 {
-			return GetFirstToken(n.Consts[0])
+			if n.Consts[0] != nil {
+				return GetFirstToken(n.Consts[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -432,15 +609,22 @@ func GetFirstToken(n Node) *token.Token {
 			return n.SemiColonTkn
 		}
 	case *ConstantStmt:
+		if n.ConstantName != nil {
+			return GetFirstToken(n.ConstantName)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 	case *ContinueStmt:
 		if n.ContinueTkn != nil {
 			return n.ContinueTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 		if n.SemiColonTkn != nil {
 			return n.SemiColonTkn
 		}
@@ -452,7 +636,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.OpenParenthesisTkn
 		}
 		if len(n.Consts) != 0 {
-			return GetFirstToken(n.Consts[0])
+			if n.Consts[0] != nil {
+				return GetFirstToken(n.Consts[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -463,7 +649,9 @@ func GetFirstToken(n Node) *token.Token {
 		if n.ColonTkn != nil {
 			return n.ColonTkn
 		}
-		return GetFirstToken(n.Stmt)
+		if n.Stmt != nil {
+			return GetFirstToken(n.Stmt)
+		}
 		if n.EndDeclareTkn != nil {
 			return n.EndDeclareTkn
 		}
@@ -478,14 +666,20 @@ func GetFirstToken(n Node) *token.Token {
 			return n.CaseSeparatorTkn
 		}
 		if len(n.Stmts) != 0 {
-			return GetFirstToken(n.Stmts[0])
+			if n.Stmts[0] != nil {
+				return GetFirstToken(n.Stmts[0])
+			}
 		}
 	case *DivExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *Dnumber:
 		if n.NumberTkn != nil {
 			return n.NumberTkn
@@ -494,14 +688,18 @@ func GetFirstToken(n Node) *token.Token {
 		if n.DoTkn != nil {
 			return n.DoTkn
 		}
-		return GetFirstToken(n.Stmt)
+		if n.Stmt != nil {
+			return GetFirstToken(n.Stmt)
+		}
 		if n.WhileTkn != nil {
 			return n.WhileTkn
 		}
 		if n.OpenParenthesisTkn != nil {
 			return n.OpenParenthesisTkn
 		}
-		return GetFirstToken(n.Cond)
+		if n.Cond != nil {
+			return GetFirstToken(n.Cond)
+		}
 		if n.CloseParenthesisTkn != nil {
 			return n.CloseParenthesisTkn
 		}
@@ -513,7 +711,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.EchoTkn
 		}
 		if len(n.Exprs) != 0 {
-			return GetFirstToken(n.Exprs[0])
+			if n.Exprs[0] != nil {
+				return GetFirstToken(n.Exprs[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -534,14 +734,18 @@ func GetFirstToken(n Node) *token.Token {
 		if n.OpenParenthesisTkn != nil {
 			return n.OpenParenthesisTkn
 		}
-		return GetFirstToken(n.Cond)
+		if n.Cond != nil {
+			return GetFirstToken(n.Cond)
+		}
 		if n.CloseParenthesisTkn != nil {
 			return n.CloseParenthesisTkn
 		}
 		if n.ColonTkn != nil {
 			return n.ColonTkn
 		}
-		return GetFirstToken(n.Stmt)
+		if n.Stmt != nil {
+			return GetFirstToken(n.Stmt)
+		}
 	case *ElseStmt:
 		if n.ElseTkn != nil {
 			return n.ElseTkn
@@ -549,7 +753,9 @@ func GetFirstToken(n Node) *token.Token {
 		if n.ColonTkn != nil {
 			return n.ColonTkn
 		}
-		return GetFirstToken(n.Stmt)
+		if n.Stmt != nil {
+			return GetFirstToken(n.Stmt)
+		}
 	case *EmptyExpr:
 		if n.EmptyTkn != nil {
 			return n.EmptyTkn
@@ -557,7 +763,9 @@ func GetFirstToken(n Node) *token.Token {
 		if n.OpenParenthesisTkn != nil {
 			return n.OpenParenthesisTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 		if n.CloseParenthesisTkn != nil {
 			return n.CloseParenthesisTkn
 		}
@@ -566,7 +774,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.OpenQuoteTkn
 		}
 		if len(n.Parts) != 0 {
-			return GetFirstToken(n.Parts[0])
+			if n.Parts[0] != nil {
+				return GetFirstToken(n.Parts[0])
+			}
 		}
 		if n.CloseQuoteTkn != nil {
 			return n.CloseQuoteTkn
@@ -576,16 +786,22 @@ func GetFirstToken(n Node) *token.Token {
 			return n.EncapsedStrTkn
 		}
 	case *EqualExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *ErrorSuppressExpr:
 		if n.AtTkn != nil {
 			return n.AtTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 	case *EvalExpr:
 		if n.EvalTkn != nil {
 			return n.EvalTkn
@@ -593,7 +809,9 @@ func GetFirstToken(n Node) *token.Token {
 		if n.OpenParenthesisTkn != nil {
 			return n.OpenParenthesisTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 		if n.CloseParenthesisTkn != nil {
 			return n.CloseParenthesisTkn
 		}
@@ -604,12 +822,16 @@ func GetFirstToken(n Node) *token.Token {
 		if n.OpenParenthesisTkn != nil {
 			return n.OpenParenthesisTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 		if n.CloseParenthesisTkn != nil {
 			return n.CloseParenthesisTkn
 		}
 	case *ExpressionStmt:
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 		if n.SemiColonTkn != nil {
 			return n.SemiColonTkn
 		}
@@ -621,7 +843,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.OpenCurlyBracketTkn
 		}
 		if len(n.Stmts) != 0 {
-			return GetFirstToken(n.Stmts[0])
+			if n.Stmts[0] != nil {
+				return GetFirstToken(n.Stmts[0])
+			}
 		}
 		if n.CloseCurlyBracketTkn != nil {
 			return n.CloseCurlyBracketTkn
@@ -634,7 +858,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.OpenParenthesisTkn
 		}
 		if len(n.Init) != 0 {
-			return GetFirstToken(n.Init[0])
+			if n.Init[0] != nil {
+				return GetFirstToken(n.Init[0])
+			}
 		}
 		if len(n.InitSeparatorTkns) != 0 {
 			return n.InitSeparatorTkns[0]
@@ -643,7 +869,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.InitSemiColonTkn
 		}
 		if len(n.Cond) != 0 {
-			return GetFirstToken(n.Cond[0])
+			if n.Cond[0] != nil {
+				return GetFirstToken(n.Cond[0])
+			}
 		}
 		if len(n.CondSeparatorTkns) != 0 {
 			return n.CondSeparatorTkns[0]
@@ -652,7 +880,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.CondSemiColonTkn
 		}
 		if len(n.Loop) != 0 {
-			return GetFirstToken(n.Loop[0])
+			if n.Loop[0] != nil {
+				return GetFirstToken(n.Loop[0])
+			}
 		}
 		if len(n.LoopSeparatorTkns) != 0 {
 			return n.LoopSeparatorTkns[0]
@@ -663,7 +893,9 @@ func GetFirstToken(n Node) *token.Token {
 		if n.ColonTkn != nil {
 			return n.ColonTkn
 		}
-		return GetFirstToken(n.Stmt)
+		if n.Stmt != nil {
+			return GetFirstToken(n.Stmt)
+		}
 		if n.EndForTkn != nil {
 			return n.EndForTkn
 		}
@@ -677,25 +909,33 @@ func GetFirstToken(n Node) *token.Token {
 		if n.OpenParenthesisTkn != nil {
 			return n.OpenParenthesisTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 		if n.AsTkn != nil {
 			return n.AsTkn
 		}
-		return GetFirstToken(n.Key)
+		if n.Key != nil {
+			return GetFirstToken(n.Key)
+		}
 		if n.DoubleArrowTkn != nil {
 			return n.DoubleArrowTkn
 		}
 		if n.AmpersandTkn != nil {
 			return n.AmpersandTkn
 		}
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.CloseParenthesisTkn != nil {
 			return n.CloseParenthesisTkn
 		}
 		if n.ColonTkn != nil {
 			return n.ColonTkn
 		}
-		return GetFirstToken(n.Stmt)
+		if n.Stmt != nil {
+			return GetFirstToken(n.Stmt)
+		}
 		if n.EndForeachTkn != nil {
 			return n.EndForeachTkn
 		}
@@ -703,12 +943,16 @@ func GetFirstToken(n Node) *token.Token {
 			return n.SemiColonTkn
 		}
 	case *FunctionCallExpr:
-		return GetFirstToken(n.Function)
+		if n.Function != nil {
+			return GetFirstToken(n.Function)
+		}
 		if n.OpenParenthesisTkn != nil {
 			return n.OpenParenthesisTkn
 		}
 		if len(n.Args) != 0 {
-			return GetFirstToken(n.Args[0])
+			if n.Args[0] != nil {
+				return GetFirstToken(n.Args[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -723,11 +967,16 @@ func GetFirstToken(n Node) *token.Token {
 		if n.AmpersandTkn != nil {
 			return n.AmpersandTkn
 		}
+		if n.FunctionName != nil {
+			return GetFirstToken(n.FunctionName)
+		}
 		if n.OpenParenthesisTkn != nil {
 			return n.OpenParenthesisTkn
 		}
 		if len(n.Params) != 0 {
-			return GetFirstToken(n.Params[0])
+			if n.Params[0] != nil {
+				return GetFirstToken(n.Params[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -738,12 +987,16 @@ func GetFirstToken(n Node) *token.Token {
 		if n.ColonTkn != nil {
 			return n.ColonTkn
 		}
-		return GetFirstToken(n.ReturnType)
+		if n.ReturnType != nil {
+			return GetFirstToken(n.ReturnType)
+		}
 		if n.OpenCurlyBracketTkn != nil {
 			return n.OpenCurlyBracketTkn
 		}
 		if len(n.Stmts) != 0 {
-			return GetFirstToken(n.Stmts[0])
+			if n.Stmts[0] != nil {
+				return GetFirstToken(n.Stmts[0])
+			}
 		}
 		if n.CloseCurlyBracketTkn != nil {
 			return n.CloseCurlyBracketTkn
@@ -753,7 +1006,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.GlobalTkn
 		}
 		if len(n.Vars) != 0 {
-			return GetFirstToken(n.Vars[0])
+			if n.Vars[0] != nil {
+				return GetFirstToken(n.Vars[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -765,27 +1020,44 @@ func GetFirstToken(n Node) *token.Token {
 		if n.GotoTkn != nil {
 			return n.GotoTkn
 		}
+		if n.Label != nil {
+			return GetFirstToken(n.Label)
+		}
 		if n.SemiColonTkn != nil {
 			return n.SemiColonTkn
 		}
 	case *GreaterExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *GreaterOrEqualExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *GroupUseStmt:
 		if n.UseTkn != nil {
 			return n.UseTkn
 		}
+		if n.UseType != nil {
+			return GetFirstToken(n.UseType)
+		}
 		if n.LeadingNsSeparatorTkn != nil {
 			return n.LeadingNsSeparatorTkn
+		}
+		if n.Prefix != nil {
+			return GetFirstToken(n.Prefix)
 		}
 		if n.NsSeparatorTkn != nil {
 			return n.NsSeparatorTkn
@@ -794,7 +1066,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.OpenCurlyBracketTkn
 		}
 		if len(n.UseList) != 0 {
-			return GetFirstToken(n.UseList[0])
+			if n.UseList[0] != nil {
+				return GetFirstToken(n.UseList[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -823,17 +1097,23 @@ func GetFirstToken(n Node) *token.Token {
 			return n.OpenHeredocTkn
 		}
 		if len(n.Parts) != 0 {
-			return GetFirstToken(n.Parts[0])
+			if n.Parts[0] != nil {
+				return GetFirstToken(n.Parts[0])
+			}
 		}
 		if n.CloseHeredocTkn != nil {
 			return n.CloseHeredocTkn
 		}
 	case *IdenticalExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *Identifier:
 		if n.IdentifierTkn != nil {
 			return n.IdentifierTkn
@@ -845,18 +1125,26 @@ func GetFirstToken(n Node) *token.Token {
 		if n.OpenParenthesisTkn != nil {
 			return n.OpenParenthesisTkn
 		}
-		return GetFirstToken(n.Cond)
+		if n.Cond != nil {
+			return GetFirstToken(n.Cond)
+		}
 		if n.CloseParenthesisTkn != nil {
 			return n.CloseParenthesisTkn
 		}
 		if n.ColonTkn != nil {
 			return n.ColonTkn
 		}
-		return GetFirstToken(n.Stmt)
-		if len(n.ElseIf) != 0 {
-			return GetFirstToken(n.ElseIf[0])
+		if n.Stmt != nil {
+			return GetFirstToken(n.Stmt)
 		}
-		return GetFirstToken(n.Else)
+		if len(n.ElseIf) != 0 {
+			if n.ElseIf[0] != nil {
+				return GetFirstToken(n.ElseIf[0])
+			}
+		}
+		if n.Else != nil {
+			return GetFirstToken(n.Else)
+		}
 		if n.EndIfTkn != nil {
 			return n.EndIfTkn
 		}
@@ -870,23 +1158,31 @@ func GetFirstToken(n Node) *token.Token {
 		if n.ImportTkn != nil {
 			return n.ImportTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 	case *InlineHTMLStmt:
 		if n.InlineHTMLTkn != nil {
 			return n.InlineHTMLTkn
 		}
 	case *InstanceOfExpr:
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 		if n.InstanceOfTkn != nil {
 			return n.InstanceOfTkn
 		}
-		return GetFirstToken(n.Class)
+		if n.Class != nil {
+			return GetFirstToken(n.Class)
+		}
 	case *InterfaceExtendsStmt:
 		if n.ExtendsTkn != nil {
 			return n.ExtendsTkn
 		}
 		if len(n.InterfaceNames) != 0 {
-			return GetFirstToken(n.InterfaceNames[0])
+			if n.InterfaceNames[0] != nil {
+				return GetFirstToken(n.InterfaceNames[0])
+			}
 		}
 		if len(n.ExtendsSeparatorTkns) != 0 {
 			return n.ExtendsSeparatorTkns[0]
@@ -895,11 +1191,19 @@ func GetFirstToken(n Node) *token.Token {
 		if n.InterfaceTkn != nil {
 			return n.InterfaceTkn
 		}
+		if n.InterfaceName != nil {
+			return GetFirstToken(n.InterfaceName)
+		}
+		if n.Extends != nil {
+			return GetFirstToken(n.Extends)
+		}
 		if n.OpenCurlyBracketTkn != nil {
 			return n.OpenCurlyBracketTkn
 		}
 		if len(n.Stmts) != 0 {
-			return GetFirstToken(n.Stmts[0])
+			if n.Stmts[0] != nil {
+				return GetFirstToken(n.Stmts[0])
+			}
 		}
 		if n.CloseCurlyBracketTkn != nil {
 			return n.CloseCurlyBracketTkn
@@ -912,7 +1216,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.OpenParenthesisTkn
 		}
 		if len(n.Variables) != 0 {
-			return GetFirstToken(n.Variables[0])
+			if n.Variables[0] != nil {
+				return GetFirstToken(n.Variables[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -921,6 +1227,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.CloseParenthesisTkn
 		}
 	case *LabelStmt:
+		if n.LabelName != nil {
+			return GetFirstToken(n.LabelName)
+		}
 		if n.ColonTkn != nil {
 			return n.ColonTkn
 		}
@@ -930,6 +1239,9 @@ func GetFirstToken(n Node) *token.Token {
 		}
 		if n.OpenBracketTkn != nil {
 			return n.OpenBracketTkn
+		}
+		if n.Items[0] != nil {
+			return GetFirstToken(n.Items[0])
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -942,36 +1254,52 @@ func GetFirstToken(n Node) *token.Token {
 			return n.NumberTkn
 		}
 	case *LogicalAndExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *LogicalOrExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *LogicalXorExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *MagicConstant:
 		if n.MagicConstTkn != nil {
 			return n.MagicConstTkn
 		}
 	case *MethodCallExpr:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.ObjectOperatorTkn != nil {
 			return n.ObjectOperatorTkn
 		}
 		if n.OpenCurlyBracketTkn != nil {
 			return n.OpenCurlyBracketTkn
 		}
-		return GetFirstToken(n.Method)
+		if n.Method != nil {
+			return GetFirstToken(n.Method)
+		}
 		if n.CloseCurlyBracketTkn != nil {
 			return n.CloseCurlyBracketTkn
 		}
@@ -979,7 +1307,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.OpenParenthesisTkn
 		}
 		if len(n.Args) != 0 {
-			return GetFirstToken(n.Args[0])
+			if n.Args[0] != nil {
+				return GetFirstToken(n.Args[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -988,23 +1318,35 @@ func GetFirstToken(n Node) *token.Token {
 			return n.CloseParenthesisTkn
 		}
 	case *MinusExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *ModExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *MulExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *Name:
 		if n.NameTkn != nil {
 			return n.NameTkn
@@ -1013,11 +1355,16 @@ func GetFirstToken(n Node) *token.Token {
 		if n.NsTkn != nil {
 			return n.NsTkn
 		}
+		if n.NamespaceName != nil {
+			return GetFirstToken(n.NamespaceName)
+		}
 		if n.OpenCurlyBracketTkn != nil {
 			return n.OpenCurlyBracketTkn
 		}
 		if len(n.Stmts) != 0 {
-			return GetFirstToken(n.Stmts[0])
+			if n.Stmts[0] != nil {
+				return GetFirstToken(n.Stmts[0])
+			}
 		}
 		if n.CloseCurlyBracketTkn != nil {
 			return n.CloseCurlyBracketTkn
@@ -1029,12 +1376,16 @@ func GetFirstToken(n Node) *token.Token {
 		if n.NewTkn != nil {
 			return n.NewTkn
 		}
-		return GetFirstToken(n.Class)
+		if n.Class != nil {
+			return GetFirstToken(n.Class)
+		}
 		if n.OpenParenthesisTkn != nil {
 			return n.OpenParenthesisTkn
 		}
 		if len(n.Args) != 0 {
-			return GetFirstToken(n.Args[0])
+			if n.Args[0] != nil {
+				return GetFirstToken(n.Args[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -1047,95 +1398,143 @@ func GetFirstToken(n Node) *token.Token {
 			return n.SemiColonTkn
 		}
 	case *NotEqualExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *NotIdenticalExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *Nullable:
 		if n.QuestionTkn != nil {
 			return n.QuestionTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 	case *Parameter:
-		return GetFirstToken(n.VariableType)
+		if n.VariableType != nil {
+			return GetFirstToken(n.VariableType)
+		}
 		if n.AmpersandTkn != nil {
 			return n.AmpersandTkn
 		}
 		if n.VariadicTkn != nil {
 			return n.VariadicTkn
 		}
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.DefaultValue)
+		if n.DefaultValue != nil {
+			return GetFirstToken(n.DefaultValue)
+		}
 	case *ParenExpr:
 		if n.OpenParenthesisTkn != nil {
 			return n.OpenParenthesisTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 		if n.CloseParenthesisTkn != nil {
 			return n.CloseParenthesisTkn
 		}
 	case *PlusExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *PostDecExpr:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.DecTkn != nil {
 			return n.DecTkn
 		}
 	case *PostIncExpr:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.IncTkn != nil {
 			return n.IncTkn
 		}
 	case *PowExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *PreDecExpr:
 		if n.DecTkn != nil {
 			return n.DecTkn
 		}
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 	case *PreIncExpr:
 		if n.IncTkn != nil {
 			return n.IncTkn
 		}
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 	case *PrintExpr:
 		if n.PrintTkn != nil {
 			return n.PrintTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 	case *PropertyFetchExpr:
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.ObjectOperatorTkn != nil {
 			return n.ObjectOperatorTkn
 		}
 		if n.OpenCurlyBracketTkn != nil {
 			return n.OpenCurlyBracketTkn
 		}
-		return GetFirstToken(n.Property)
+		if n.Property != nil {
+			return GetFirstToken(n.Property)
+		}
 		if n.CloseCurlyBracketTkn != nil {
 			return n.CloseCurlyBracketTkn
 		}
 	case *PropertyListStmt:
-		return GetFirstToken(n.Type)
+		if n.Modifiers[0] != nil {
+			return GetFirstToken(n.Modifiers[0])
+		}
+		if n.Type != nil {
+			return GetFirstToken(n.Type)
+		}
 		if len(n.Properties) != 0 {
-			return GetFirstToken(n.Properties[0])
+			if n.Properties[0] != nil {
+				return GetFirstToken(n.Properties[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -1144,26 +1543,37 @@ func GetFirstToken(n Node) *token.Token {
 			return n.SemiColonTkn
 		}
 	case *PropertyStmt:
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 	case *ReferenceExpr:
 		if n.AmpersandTkn != nil {
 			return n.AmpersandTkn
 		}
-		return GetFirstToken(n.Variable)
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 	case *ReturnStmt:
 		if n.ReturnTkn != nil {
 			return n.ReturnTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 		if n.SemiColonTkn != nil {
 			return n.SemiColonTkn
 		}
 	case *Root:
 		if len(n.Stmts) != 0 {
-			return GetFirstToken(n.Stmts[0])
+			if n.Stmts[0] != nil {
+				return GetFirstToken(n.Stmts[0])
+			}
 		}
 		if n.EndTkn != nil {
 			return n.EndTkn
@@ -1173,23 +1583,33 @@ func GetFirstToken(n Node) *token.Token {
 			return n.OpenBacktickTkn
 		}
 		if len(n.Parts) != 0 {
-			return GetFirstToken(n.Parts[0])
+			if n.Parts[0] != nil {
+				return GetFirstToken(n.Parts[0])
+			}
 		}
 		if n.CloseBacktickTkn != nil {
 			return n.CloseBacktickTkn
 		}
 	case *ShiftLeftExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *ShiftRightExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *SimpleVar:
 		if n.DollarTkn != nil {
 			return n.DollarTkn
@@ -1198,32 +1618,48 @@ func GetFirstToken(n Node) *token.Token {
 			return n.IdentifierTkn
 		}
 	case *SmallerExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *SmallerOrEqualExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *SpaceshipExpr:
-		return GetFirstToken(n.Left)
+		if n.Left != nil {
+			return GetFirstToken(n.Left)
+		}
 		if n.OpTkn != nil {
 			return n.OpTkn
 		}
-		return GetFirstToken(n.Right)
+		if n.Right != nil {
+			return GetFirstToken(n.Right)
+		}
 	case *StaticCallExpr:
-		return GetFirstToken(n.Class)
+		if n.Class != nil {
+			return GetFirstToken(n.Class)
+		}
 		if n.DoubleColonTkn != nil {
 			return n.DoubleColonTkn
 		}
 		if n.OpenCurlyBracketTkn != nil {
 			return n.OpenCurlyBracketTkn
 		}
-		return GetFirstToken(n.Call)
+		if n.Call != nil {
+			return GetFirstToken(n.Call)
+		}
 		if n.CloseCurlyBracketTkn != nil {
 			return n.CloseCurlyBracketTkn
 		}
@@ -1231,7 +1667,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.OpenParenthesisTkn
 		}
 		if len(n.Args) != 0 {
-			return GetFirstToken(n.Args[0])
+			if n.Args[0] != nil {
+				return GetFirstToken(n.Args[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -1240,17 +1678,23 @@ func GetFirstToken(n Node) *token.Token {
 			return n.CloseParenthesisTkn
 		}
 	case *StaticPropertyFetchExpr:
-		return GetFirstToken(n.Class)
+		if n.Class != nil {
+			return GetFirstToken(n.Class)
+		}
 		if n.DoubleColonTkn != nil {
 			return n.DoubleColonTkn
 		}
-		return GetFirstToken(n.Property)
+		if n.Property != nil {
+			return GetFirstToken(n.Property)
+		}
 	case *StaticStmt:
 		if n.StaticTkn != nil {
 			return n.StaticTkn
 		}
 		if len(n.Vars) != 0 {
-			return GetFirstToken(n.Vars[0])
+			if n.Vars[0] != nil {
+				return GetFirstToken(n.Vars[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -1259,16 +1703,23 @@ func GetFirstToken(n Node) *token.Token {
 			return n.SemiColonTkn
 		}
 	case *StaticVarStmt:
+		if n.Variable != nil {
+			return GetFirstToken(n.Variable)
+		}
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 	case *StmtList:
 		if n.OpenCurlyBracketTkn != nil {
 			return n.OpenCurlyBracketTkn
 		}
 		if len(n.Stmts) != 0 {
-			return GetFirstToken(n.Stmts[0])
+			if n.Stmts[0] != nil {
+				return GetFirstToken(n.Stmts[0])
+			}
 		}
 		if n.CloseCurlyBracketTkn != nil {
 			return n.CloseCurlyBracketTkn
@@ -1287,7 +1738,9 @@ func GetFirstToken(n Node) *token.Token {
 		if n.OpenParenthesisTkn != nil {
 			return n.OpenParenthesisTkn
 		}
-		return GetFirstToken(n.Cond)
+		if n.Cond != nil {
+			return GetFirstToken(n.Cond)
+		}
 		if n.CloseParenthesisTkn != nil {
 			return n.CloseParenthesisTkn
 		}
@@ -1301,7 +1754,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.CaseSeparatorTkn
 		}
 		if len(n.Cases) != 0 {
-			return GetFirstToken(n.Cases[0])
+			if n.Cases[0] != nil {
+				return GetFirstToken(n.Cases[0])
+			}
 		}
 		if n.CloseCurlyBracketTkn != nil {
 			return n.CloseCurlyBracketTkn
@@ -1313,38 +1768,58 @@ func GetFirstToken(n Node) *token.Token {
 			return n.SemiColonTkn
 		}
 	case *TernaryExpr:
-		return GetFirstToken(n.Condition)
+		if n.Condition != nil {
+			return GetFirstToken(n.Condition)
+		}
 		if n.QuestionTkn != nil {
 			return n.QuestionTkn
 		}
-		return GetFirstToken(n.IfTrue)
+		if n.IfTrue != nil {
+			return GetFirstToken(n.IfTrue)
+		}
 		if n.ColonTkn != nil {
 			return n.ColonTkn
 		}
-		return GetFirstToken(n.IfFalse)
+		if n.IfFalse != nil {
+			return GetFirstToken(n.IfFalse)
+		}
 	case *ThrowStmt:
 		if n.ThrowTkn != nil {
 			return n.ThrowTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 		if n.SemiColonTkn != nil {
 			return n.SemiColonTkn
 		}
 	case *TraitAdaptationListStmt:
 		if len(n.Adaptations) != 0 {
-			return GetFirstToken(n.Adaptations[0])
+			if n.Adaptations[0] != nil {
+				return GetFirstToken(n.Adaptations[0])
+			}
 		}
 	case *TraitMethodRefStmt:
-		return GetFirstToken(n.Trait)
+		if n.Trait != nil {
+			return GetFirstToken(n.Trait)
+		}
+		if n.Method != nil {
+			return GetFirstToken(n.Method)
+		}
 	case *TraitStmt:
 		if n.TraitTkn != nil {
 			return n.TraitTkn
+		}
+		if n.TraitName != nil {
+			return GetFirstToken(n.TraitName)
 		}
 		if n.OpenCurlyBracketTkn != nil {
 			return n.OpenCurlyBracketTkn
 		}
 		if len(n.Stmts) != 0 {
-			return GetFirstToken(n.Stmts[0])
+			if n.Stmts[0] != nil {
+				return GetFirstToken(n.Stmts[0])
+			}
 		}
 		if n.CloseCurlyBracketTkn != nil {
 			return n.CloseCurlyBracketTkn
@@ -1353,11 +1828,18 @@ func GetFirstToken(n Node) *token.Token {
 		if n.DoubleColonTkn != nil {
 			return n.DoubleColonTkn
 		}
-		return GetFirstToken(n.Ref)
+		if n.Ref != nil {
+			return GetFirstToken(n.Ref)
+		}
 		if n.AsTkn != nil {
 			return n.AsTkn
 		}
-		return GetFirstToken(n.Modifier)
+		if n.Modifier != nil {
+			return GetFirstToken(n.Modifier)
+		}
+		if n.Alias != nil {
+			return GetFirstToken(n.Alias)
+		}
 		if n.SemiColonTkn != nil {
 			return n.SemiColonTkn
 		}
@@ -1365,12 +1847,16 @@ func GetFirstToken(n Node) *token.Token {
 		if n.DoubleColonTkn != nil {
 			return n.DoubleColonTkn
 		}
-		return GetFirstToken(n.Ref)
+		if n.Ref != nil {
+			return GetFirstToken(n.Ref)
+		}
 		if n.InsteadofTkn != nil {
 			return n.InsteadofTkn
 		}
 		if len(n.Insteadof) != 0 {
-			return GetFirstToken(n.Insteadof[0])
+			if n.Insteadof[0] != nil {
+				return GetFirstToken(n.Insteadof[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -1383,7 +1869,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.UseTkn
 		}
 		if len(n.Traits) != 0 {
-			return GetFirstToken(n.Traits[0])
+			if n.Traits[0] != nil {
+				return GetFirstToken(n.Traits[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -1391,7 +1879,9 @@ func GetFirstToken(n Node) *token.Token {
 		if n.OpenCurlyBracketTkn != nil {
 			return n.OpenCurlyBracketTkn
 		}
-		return GetFirstToken(n.TraitAdaptationList)
+		if n.TraitAdaptationList != nil {
+			return GetFirstToken(n.TraitAdaptationList)
+		}
 		if n.CloseCurlyBracketTkn != nil {
 			return n.CloseCurlyBracketTkn
 		}
@@ -1406,35 +1896,49 @@ func GetFirstToken(n Node) *token.Token {
 			return n.OpenCurlyBracketTkn
 		}
 		if len(n.Stmts) != 0 {
-			return GetFirstToken(n.Stmts[0])
+			if n.Stmts[0] != nil {
+				return GetFirstToken(n.Stmts[0])
+			}
 		}
 		if n.CloseCurlyBracketTkn != nil {
 			return n.CloseCurlyBracketTkn
 		}
 		if len(n.Catches) != 0 {
-			return GetFirstToken(n.Catches[0])
+			if n.Catches[0] != nil {
+				return GetFirstToken(n.Catches[0])
+			}
 		}
-		return GetFirstToken(n.Finally)
+		if n.Finally != nil {
+			return GetFirstToken(n.Finally)
+		}
 	case *TypeCastExpr:
 		if n.CastTkn != nil {
 			return n.CastTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 	case *UnaryMinusExpr:
 		if n.MinusTkn != nil {
 			return n.MinusTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 	case *UnaryPlusExpr:
 		if n.PlusTkn != nil {
 			return n.PlusTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 	case *UnsetCastExpr:
 		if n.CastTkn != nil {
 			return n.CastTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 	case *UnsetStmt:
 		if n.UnsetTkn != nil {
 			return n.UnsetTkn
@@ -1443,7 +1947,9 @@ func GetFirstToken(n Node) *token.Token {
 			return n.OpenParenthesisTkn
 		}
 		if len(n.Vars) != 0 {
-			return GetFirstToken(n.Vars[0])
+			if n.Vars[0] != nil {
+				return GetFirstToken(n.Vars[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -1458,8 +1964,13 @@ func GetFirstToken(n Node) *token.Token {
 		if n.UseTkn != nil {
 			return n.UseTkn
 		}
+		if n.UseType != nil {
+			return GetFirstToken(n.UseType)
+		}
 		if len(n.Uses) != 0 {
-			return GetFirstToken(n.Uses[0])
+			if n.Uses[0] != nil {
+				return GetFirstToken(n.Uses[0])
+			}
 		}
 		if len(n.SeparatorTkns) != 0 {
 			return n.SeparatorTkns[0]
@@ -1468,11 +1979,20 @@ func GetFirstToken(n Node) *token.Token {
 			return n.SemiColonTkn
 		}
 	case *UseStmt:
+		if n.UseType != nil {
+			return GetFirstToken(n.UseType)
+		}
 		if n.NsSeparatorTkn != nil {
 			return n.NsSeparatorTkn
 		}
+		if n.Use != nil {
+			return GetFirstToken(n.Use)
+		}
 		if n.AsTkn != nil {
 			return n.AsTkn
+		}
+		if n.Alias != nil {
+			return GetFirstToken(n.Alias)
 		}
 	case *Var:
 		if n.DollarTkn != nil {
@@ -1481,7 +2001,9 @@ func GetFirstToken(n Node) *token.Token {
 		if n.OpenCurlyBracketTkn != nil {
 			return n.OpenCurlyBracketTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 		if n.CloseCurlyBracketTkn != nil {
 			return n.CloseCurlyBracketTkn
 		}
@@ -1492,14 +2014,18 @@ func GetFirstToken(n Node) *token.Token {
 		if n.OpenParenthesisTkn != nil {
 			return n.OpenParenthesisTkn
 		}
-		return GetFirstToken(n.Cond)
+		if n.Cond != nil {
+			return GetFirstToken(n.Cond)
+		}
 		if n.CloseParenthesisTkn != nil {
 			return n.CloseParenthesisTkn
 		}
 		if n.ColonTkn != nil {
 			return n.ColonTkn
 		}
-		return GetFirstToken(n.Stmt)
+		if n.Stmt != nil {
+			return GetFirstToken(n.Stmt)
+		}
 		if n.EndWhileTkn != nil {
 			return n.EndWhileTkn
 		}
@@ -1510,16 +2036,22 @@ func GetFirstToken(n Node) *token.Token {
 		if n.YieldTkn != nil {
 			return n.YieldTkn
 		}
-		return GetFirstToken(n.Key)
+		if n.Key != nil {
+			return GetFirstToken(n.Key)
+		}
 		if n.DoubleArrowTkn != nil {
 			return n.DoubleArrowTkn
 		}
-		return GetFirstToken(n.Value)
+		if n.Value != nil {
+			return GetFirstToken(n.Value)
+		}
 	case *YieldFromExpr:
 		if n.YieldFromTkn != nil {
 			return n.YieldFromTkn
 		}
-		return GetFirstToken(n.Expr)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
+		}
 	default:
 		panic(fmt.Sprintf(`unhandled type %T`, n))
 	}

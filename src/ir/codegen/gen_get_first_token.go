@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"strings"
 )
 
 type genGetFirstToken struct {
@@ -50,10 +51,35 @@ func (g *genGetFirstToken) writeGet(w *bytes.Buffer, pkg *packageData, typ *type
 			fmt.Fprintf(w, "    }\n")
 		case "[]ir.Node":
 			fmt.Fprintf(w, "    if len(n.%s) != 0 {\n", field.Name())
-			fmt.Fprintf(w, "        return GetFirstToken(n.%s[0])\n", field.Name())
+			fmt.Fprintf(w, "        if n.%s[0] != nil {\n", field.Name())
+			fmt.Fprintf(w, "            return GetFirstToken(n.%s[0])\n", field.Name())
+			fmt.Fprintf(w, "        }\n")
 			fmt.Fprintf(w, "    }\n")
 		case "ir.Node":
-			fmt.Fprintf(w, "    return GetFirstToken(n.%s)\n", field.Name())
+			fmt.Fprintf(w, "    if n.%s != nil {\n", field.Name())
+			fmt.Fprintf(w, "        return GetFirstToken(n.%s)\n", field.Name())
+			fmt.Fprintf(w, "    }\n")
+		case "*github.com/z7zmey/php-parser/pkg/position.Position":
+			// Do nothing.
+		case "[]github.com/VKCOM/noverify/src/phpdoc.CommentPart":
+			// Do nothing.
+		case "string", "bool":
+			// Do nothing.
+		case "ir.Doc":
+			// Do nothing.
+		case "ir.Class":
+			// Do nothing.
+		default:
+			if strings.HasPrefix(typeString, "[]") {
+				fmt.Fprintf(w, "    if n.%s[0] != nil {\n", field.Name())
+				fmt.Fprintf(w, "        return GetFirstToken(n.%s[0])\n", field.Name())
+				fmt.Fprintf(w, "    }\n")
+				continue
+			}
+
+			fmt.Fprintf(w, "    if n.%s != nil {\n", field.Name())
+			fmt.Fprintf(w, "        return GetFirstToken(n.%s)\n", field.Name())
+			fmt.Fprintf(w, "    }\n")
 		}
 	}
 }
