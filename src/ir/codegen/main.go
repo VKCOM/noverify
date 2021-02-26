@@ -40,6 +40,7 @@ func main() {
 		{"generate get node kind", doGenerateGetNodeKind},
 		{"generate get position", doGenerateGetPosition},
 		{"generate iterate tokens", doGenerateIterateTokens},
+		{"generate get first token", doGenerateGetFirstToken},
 	}
 
 	for _, step := range steps {
@@ -114,5 +115,10 @@ func doGenerateGetPosition(ctx *context) error {
 
 func doGenerateIterateTokens(ctx *context) error {
 	g := &genIterate{ctx: ctx}
+	return g.Run()
+}
+
+func doGenerateGetFirstToken(ctx *context) error {
+	g := &genGetFirstToken{ctx: ctx}
 	return g.Run()
 }
