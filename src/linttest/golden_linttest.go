@@ -184,6 +184,8 @@ func (s *GoldenTestSuite) formatReportLines(reports []*linter.Report) []string {
 }
 
 type CommandE2ETestSuite struct {
+	parent *GoldenE2ETestSuite
+
 	Name string
 	Args []string
 }
@@ -195,21 +197,25 @@ func (s *CommandE2ETestSuite) run(t *testing.T) {
 }
 
 func (s *CommandE2ETestSuite) execHelpCommand(t *testing.T, args []string) {
-	data, err := exec.Command("./phplinter.exe", args...).CombinedOutput()
+	data, err := exec.Command(s.parent.execPath, args...).CombinedOutput()
 	if err != nil {
 		t.Errorf("Error running command '%s': %v\nOutput:\n%s", strings.Join(args, " "), err, string(data))
 	}
 }
 
 type GoldenE2ETestSuite struct {
-	t            *testing.T
+	t *testing.T
+
+	execPath string
+
 	tests        []*GoldenTestSuite
 	commandTests []*CommandE2ETestSuite
 }
 
 func NewGoldenE2ETestSuite(t *testing.T) *GoldenE2ETestSuite {
 	return &GoldenE2ETestSuite{
-		t: t,
+		t:        t,
+		execPath: "./phplinter.exe",
 	}
 }
 
@@ -233,7 +239,7 @@ func (s *GoldenE2ETestSuite) Run() {
 func (s *GoldenE2ETestSuite) BuildNoVerify() {
 	goArgs := []string{
 		"build",
-		"-o", "phplinter.exe",
+		"-o", s.execPath,
 		"-race",
 		"../../../", // Using relative target to avoid problems with modules/vendor/GOPATH
 	}
@@ -244,7 +250,7 @@ func (s *GoldenE2ETestSuite) BuildNoVerify() {
 }
 
 func (s *GoldenE2ETestSuite) RemoveNoVerify() {
-	_ = os.Remove("phplinter.exe")
+	_ = os.Remove(s.execPath)
 }
 
 func (s *GoldenE2ETestSuite) RemoveTestsFiles() {
@@ -295,7 +301,7 @@ func (s *GoldenE2ETestSuite) RunOnlyTests() {
 
 				// Use GORACE=history_size to increase the stacktrace limit.
 				// See https://github.com/golang/go/issues/10661
-				phplinterCmd := exec.Command("./phplinter.exe", args...)
+				phplinterCmd := exec.Command(s.execPath, args...)
 				phplinterCmd.Env = append([]string{}, os.Environ()...)
 				phplinterCmd.Env = append(phplinterCmd.Env, "GORACE=history_size=7")
 				if len(test.Deps) != 0 {
@@ -326,6 +332,7 @@ func (s *GoldenE2ETestSuite) RunOnlyTests() {
 }
 
 func (s *GoldenE2ETestSuite) RegisterCommandTest(suite *CommandE2ETestSuite) {
+	suite.parent = s
 	s.commandTests = append(s.commandTests, suite)
 }
 
