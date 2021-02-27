@@ -79,6 +79,8 @@ type Suite struct {
 	Files  []TestFile
 	Expect []string
 
+	RuleFile string
+
 	AllowDisable *regexp.Regexp
 
 	defaultStubs map[string]struct{}
@@ -206,6 +208,43 @@ func (s *Suite) Match(reports []*linter.Report) {
 		}
 		t.Log("<<<")
 	}
+}
+
+// RunRulesTest starts testing using a file with the rules specified in RuleFile.
+func (s *Suite) RunRulesTest() {
+	s.t.Helper()
+
+	if s.RuleFile == "" {
+		s.t.Error("testing with rules started with an empty rule")
+		return
+	}
+
+	s.IgnoreUndeclaredChecks = true
+
+	rparser := rules.NewParser()
+	rset, err := rparser.Parse("<test>", strings.NewReader(s.RuleFile))
+	if err != nil {
+		s.t.Fatalf("parse rules: %v", err)
+	}
+
+	config := linter.NewConfig()
+	config.Rules = rset
+	s.Linter = linter.NewLinter(config)
+
+	ruleNamesSet := make(map[string]struct{}, len(rset.Names))
+	for _, name := range rset.Names {
+		ruleNamesSet[name] = struct{}{}
+	}
+
+	var filtered []*linter.Report
+	result := s.RunLinter()
+	for _, r := range result.Reports {
+		if _, ok := ruleNamesSet[r.CheckName]; ok {
+			filtered = append(filtered, r)
+		}
+	}
+
+	s.Match(filtered)
 }
 
 type RunResult struct {
