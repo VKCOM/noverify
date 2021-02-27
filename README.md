@@ -1,4 +1,7 @@
-## NoVerify ![Build Status](https://github.com/VKCOM/noverify/workflows/Go/badge.svg)
+## NoVerify 
+
+![Build Status](https://github.com/VKCOM/noverify/workflows/Go/badge.svg)
+[![Codecov](https://codecov.io/gh/i582/noverify/branch/master/graph/badge.svg)](https://codecov.io/gh/i582/noverify)
 
 ![](/docs/noverify_small.png)
 
