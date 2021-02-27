@@ -80,22 +80,20 @@ type Suite struct {
 	Expect []string
 
 	AllowDisable *regexp.Regexp
-
-	defaultStubs map[string]struct{}
-	LoadStubs    []string
-
 	MisspellList string
 
-	IgnoreUndeclaredChecks bool
+	LoadStubs    []string
+	defaultStubs map[string]struct{}
 
-	// Linter is nil by default and will be created automatically
-	// during Run(), but it can be assigned directly to
-	// have a specific linter instance during the test execution.
-	Linter *linter.Linter
+	ignoreUndeclaredChecks bool
+
+	config *linter.Config
+	linter *linter.Linter
 }
 
 // NewSuite returns a new linter test suite for t.
 func NewSuite(t testing.TB) *Suite {
+	conf := linter.NewConfig()
 	return &Suite{
 		t: t,
 		defaultStubs: map[string]struct{}{
@@ -103,6 +101,9 @@ func NewSuite(t testing.TB) *Suite {
 			`stubs/phpstorm-stubs/Core/Core_c.php`: {},
 			`stubs/phpstorm-stubs/Core/Core_d.php`: {},
 		},
+		ignoreUndeclaredChecks: false,
+		config:                 conf,
+		linter:                 linter.NewLinter(conf),
 	}
 }
 
@@ -218,11 +219,6 @@ type RunResult struct {
 func (s *Suite) RunLinter() RunResult {
 	s.t.Helper()
 
-	l := s.Linter
-	if l == nil {
-		l = linter.NewLinter(linter.NewConfig())
-	}
-
 	for _, stub := range s.LoadStubs {
 		s.defaultStubs[stub] = struct{}{}
 	}
@@ -230,18 +226,18 @@ func (s *Suite) RunLinter() RunResult {
 	for stub := range s.defaultStubs {
 		stubs = append(stubs, stub)
 	}
-	if err := cmd.LoadEmbeddedStubs(l, stubs); err != nil {
+	if err := cmd.LoadEmbeddedStubs(s.linter, stubs); err != nil {
 		s.t.Fatalf("load stubs: %v", err)
 	}
 
 	if s.MisspellList != "" {
-		err := cmd.LoadMisspellDicts(l.Config(), strings.Split(s.MisspellList, ","))
+		err := cmd.LoadMisspellDicts(s.linter.Config(), strings.Split(s.MisspellList, ","))
 		if err != nil {
 			s.t.Fatalf("load misspell dicts: %v", err)
 		}
 	}
 
-	indexing := l.NewIndexingWorker(0)
+	indexing := s.linter.NewIndexingWorker(0)
 	indexing.AllowDisable = s.AllowDisable
 
 	shuffleFiles(s.Files)
@@ -249,9 +245,9 @@ func (s *Suite) RunLinter() RunResult {
 		parseTestFile(s.t, indexing, f)
 	}
 
-	l.MetaInfo().SetIndexingComplete(true)
+	s.linter.MetaInfo().SetIndexingComplete(true)
 
-	linting := l.NewLintingWorker(0)
+	linting := s.linter.NewLintingWorker(0)
 	linting.AllowDisable = s.AllowDisable
 
 	shuffleFiles(s.Files)
@@ -269,10 +265,10 @@ func (s *Suite) RunLinter() RunResult {
 	}
 
 	declared := make(map[string]struct{})
-	for _, info := range l.Config().Checkers.ListDeclared() {
+	for _, info := range s.linter.Config().Checkers.ListDeclared() {
 		declared[info.Name] = struct{}{}
 	}
-	if !s.IgnoreUndeclaredChecks {
+	if !s.ignoreUndeclaredChecks {
 		for _, r := range reports {
 			_, ok := declared[r.CheckName]
 			if !ok {
@@ -283,7 +279,7 @@ func (s *Suite) RunLinter() RunResult {
 
 	return RunResult{
 		Reports: reports,
-		Info:    l.MetaInfo(),
+		Info:    s.linter.MetaInfo(),
 	}
 }
 
@@ -355,6 +351,28 @@ func InitEmbeddedRules(config *linter.Config) error {
 	}
 
 	return nil
+}
+
+func (s *Suite) UseConfig(config *linter.Config) {
+	s.config = config
+	s.linter = linter.NewLinter(config)
+}
+
+func (s *Suite) UseLinter(lint *linter.Linter) {
+	s.linter = lint
+	s.config = lint.Config()
+}
+
+func (s *Suite) Linter() *linter.Linter {
+	return s.linter
+}
+
+func (s *Suite) Config() *linter.Config {
+	return s.config
+}
+
+func (s *Suite) IgnoreUndeclaredChecks() {
+	s.ignoreUndeclaredChecks = true
 }
 
 func filterReports(names []string, reports []*linter.Report) []*linter.Report {

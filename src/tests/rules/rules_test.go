@@ -416,16 +416,13 @@ function bad(string $x) {
 func runRulesTest(t *testing.T, test *linttest.Suite, rfile string) {
 	t.Helper()
 
-	test.IgnoreUndeclaredChecks = true
-
 	rparser := rules.NewParser()
 	rset, err := rparser.Parse("<test>", strings.NewReader(rfile))
 	if err != nil {
 		t.Fatalf("parse rules: %v", err)
 	}
-	config := linter.NewConfig()
-	config.Rules = rset
-	test.Linter = linter.NewLinter(config)
+	test.Config().Rules = rset
+	test.IgnoreUndeclaredChecks()
 
 	ruleNamesSet := make(map[string]struct{}, len(rset.Names))
 	for _, name := range rset.Names {
