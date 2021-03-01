@@ -1,12 +1,9 @@
 package rules_test
 
 import (
-	"strings"
 	"testing"
 
-	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
-	"github.com/VKCOM/noverify/src/rules"
 )
 
 func TestRuleBlock(t *testing.T) {
@@ -17,7 +14,7 @@ function blockEndsWithExit() {
 }
 `
 	test := linttest.NewSuite(t)
-
+	test.RuleFile = rfile
 	test.AddFile(`<?php
 {
   exit(0); // 1
@@ -41,7 +38,7 @@ function blockEndsWithExit() {
 		`block ends with exit`,
 	}
 
-	runRulesTest(t, test, rfile)
+	test.RunRulesTest()
 }
 
 func TestRuleIfElseif(t *testing.T) {
@@ -52,6 +49,7 @@ function testrule() {
 }
 `
 	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
 
 	test.AddFile(`<?php
 function bad() { return 0; }
@@ -77,7 +75,7 @@ if (good()) {
 		`bad function called at /elseif_cond2`,
 		`bad function called at /if_cond.php`,
 	}
-	runRulesTest(t, test, rfile)
+	test.RunRulesTest()
 }
 
 func TestRulePathFilter(t *testing.T) {
@@ -90,6 +88,7 @@ func TestRulePathFilter(t *testing.T) {
 eval(${"var"});
 `
 	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
 	code := `<?php
           $hello = 'echo 123;';
           eval($hello);
@@ -98,11 +97,12 @@ eval(${"var"});
 	test.AddNamedFile("/home/john/my/site/foo.php", code)
 	test.AddNamedFile("/home/john/my/site/ads_foo.php", code)
 	test.AddNamedFile("/home/john/my/site/ads_bar.php", code)
+
 	test.Expect = []string{
 		`don't eval from variable`,
 		`don't eval from variable`,
 	}
-	runRulesTest(t, test, rfile)
+	test.RunRulesTest()
 }
 
 func TestAnyRules(t *testing.T) {
@@ -166,6 +166,7 @@ $x === false;
 `
 
 	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
 	test.AddFile(`<?php
 function stripos($haystack, $needle, $offset = 0) { return 0; }
 function explode($delimeter, $s, $limit = 0) { return []; }
@@ -272,7 +273,7 @@ $_ = implode($s, $i); // BAD: string, int
 		`implode() first arg must be a string and second should be an array`,
 		`implode() first arg must be a string and second should be an array`,
 	}
-	runRulesTest(t, test, rfile)
+	test.RunRulesTest()
 }
 
 func TestLocalRules(t *testing.T) {
@@ -286,6 +287,7 @@ if ($_);
 `
 
 	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
 	test.AddFile(`<?php
 if (123); // No warning
 
@@ -297,7 +299,7 @@ function f() {
 	test.Expect = []string{
 		`suspicious empty body of the if statement`,
 	}
-	runRulesTest(t, test, rfile)
+	test.RunRulesTest()
 }
 
 func TestRootRules(t *testing.T) {
@@ -325,6 +327,7 @@ $_ ? $x : $x;
 `
 
 	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
 	test.AddFile(`<?php
 function f1() {
   $xs = [];
@@ -351,7 +354,7 @@ $name = "NoVerify"; // No warning
 		`duplicated then/else parts in ternary expression`,
 		`use require_once instead of require`,
 	}
-	runRulesTest(t, test, rfile)
+	test.RunRulesTest()
 }
 
 func TestRulesIfCond(t *testing.T) {
@@ -364,6 +367,7 @@ func TestRulesIfCond(t *testing.T) {
 if (${"x:var"}) $_;
 `
 	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
 	test.AddFile(`<?php
 function concat($x, $y) { return $x . $y; }
 
@@ -410,31 +414,5 @@ function bad(string $x) {
 		`used string-typed value inside if condition`,
 		`used string-typed value inside if condition`,
 	}
-	runRulesTest(t, test, rfile)
-}
-
-func runRulesTest(t *testing.T, test *linttest.Suite, rfile string) {
-	t.Helper()
-
-	rparser := rules.NewParser()
-	rset, err := rparser.Parse("<test>", strings.NewReader(rfile))
-	if err != nil {
-		t.Fatalf("parse rules: %v", err)
-	}
-	test.Config().Rules = rset
-	test.IgnoreUndeclaredChecks()
-
-	ruleNamesSet := make(map[string]struct{}, len(rset.Names))
-	for _, name := range rset.Names {
-		ruleNamesSet[name] = struct{}{}
-	}
-
-	var filtered []*linter.Report
-	result := test.RunLinter()
-	for _, r := range result.Reports {
-		if _, ok := ruleNamesSet[r.CheckName]; ok {
-			filtered = append(filtered, r)
-		}
-	}
-	test.Match(filtered)
+	test.RunRulesTest()
 }

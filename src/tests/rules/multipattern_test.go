@@ -37,6 +37,7 @@ function typecheckOp() {
 }
 `
 	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
 	test.AddFile(`<?php
 class Foo {}
 
@@ -92,5 +93,5 @@ function good_arraycmp(array $a, array $a2) {
 		`don't compare arrays with numeric types`,
 	}
 
-	runRulesTest(t, test, rfile)
+	test.RunRulesTest()
 }
