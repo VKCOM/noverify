@@ -117,7 +117,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -129,7 +129,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -141,7 +141,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -153,7 +153,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -165,7 +165,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -177,7 +177,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -189,7 +189,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -201,7 +201,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -213,7 +213,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -225,7 +225,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -237,7 +237,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -249,7 +249,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -261,7 +261,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -273,7 +273,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -285,7 +285,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true

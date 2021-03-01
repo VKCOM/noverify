@@ -9,122 +9,122 @@ import (
 
 // Assign is a `$Variable = $Expression` expression.
 type Assign struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignBitwiseAnd is a `$Variable &= $Expression` expression.
 type AssignBitwiseAnd struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignBitwiseOr is a `$Variable |= $Expression` expression.
 type AssignBitwiseOr struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignBitwiseXor is a `$Variable ^= $Expression` expression.
 type AssignBitwiseXor struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignCoalesce is a `$Variable ??= $Expression` expression.
 type AssignCoalesce struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignConcat is a `$Variable .= $Expression` expression.
 type AssignConcat struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignDiv is a `$Variable /= $Expression` expression.
 type AssignDiv struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignMinus is a `$Variable -= $Expression` expression.
 type AssignMinus struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignMod is a `$Variable %= $Expression` expression.
 type AssignMod struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignMul is a `$Variable *= $Expression` expression.
 type AssignMul struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignPlus is a `$Variable += $Expression` expression.
 type AssignPlus struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignPow is a `$Variable **= $Expression` expression.
 type AssignPow struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignReference is a `$Variable &= $Expression` expression.
 type AssignReference struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignShiftLeft is a `$Variable <<= $Expression` expression.
 type AssignShiftLeft struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignShiftRight is a `$Variable >>= $Expression` expression.
 type AssignShiftRight struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AnonClassExpr is an anonymous class expression.
