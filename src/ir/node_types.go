@@ -1007,7 +1007,7 @@ type ConstantStmt struct {
 	Expr         Node
 }
 
-// ContinueStmt is a `continue $Expe` statement.
+// ContinueStmt is a `continue $Expr` statement.
 type ContinueStmt struct {
 	Position     *position.Position
 	ContinueTkn  *token.Token
