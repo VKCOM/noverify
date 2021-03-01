@@ -1138,7 +1138,7 @@ func (d *rootWalker) checkPHPDocVar(n ir.Node, doc []phpdoc.CommentPart) {
 
 		_, warning := typesFromPHPDoc(&d.ctx, part.Type)
 		if warning != "" {
-			d.Report(n, LevelInformation, "phpdocType", "%s on line %d", warning, part.Line())
+			d.Report(n, LevelNotice, "phpdocType", "%s on line %d", warning, part.Line())
 		}
 	}
 }

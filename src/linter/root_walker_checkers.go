@@ -124,7 +124,7 @@ func (d *rootWalker) checkClassMethodOldStyleConstructor(meth *ir.ClassMethodStm
 	if strings.EqualFold(d.ctx.st.CurrentClass[lastDelim+1:], nm) {
 		_, isClass := d.currentClassNode.(*ir.ClassStmt)
 		if isClass {
-			d.Report(meth.MethodName, LevelDoNotReject, "oldStyleConstructor", "Old-style constructor usage, use __construct instead")
+			d.Report(meth.MethodName, LevelNotice, "oldStyleConstructor", "Old-style constructor usage, use __construct instead")
 		}
 	}
 }
@@ -133,7 +133,7 @@ func (d *rootWalker) checkClassMethodPhpDoc(m *ir.ClassMethodStmt, name string, 
 	if m.PhpDocComment == "" && modif.accessLevel == meta.Public {
 		// Permit having "__call" and other magic method without comments.
 		if !insideInterface && !strings.HasPrefix(name, "_") {
-			d.Report(m.MethodName, LevelDoNotReject, "phpdoc", "Missing PHPDoc for %q public method", name)
+			d.Report(m.MethodName, LevelNotice, "phpdoc", "Missing PHPDoc for %q public method", name)
 		}
 	}
 
@@ -144,7 +144,7 @@ func (d *rootWalker) checkClassMethodPhpDoc(m *ir.ClassMethodStmt, name string, 
 func (d *rootWalker) checkClassMethodComplexity(m *ir.ClassMethodStmt) {
 	pos := ir.GetPosition(m)
 	if funcSize := pos.EndLine - pos.StartLine; funcSize > maxFunctionLines {
-		d.Report(m.MethodName, LevelDoNotReject, "complexity", "Too big method: more than %d lines", maxFunctionLines)
+		d.Report(m.MethodName, LevelNotice, "complexity", "Too big method: more than %d lines", maxFunctionLines)
 	}
 }
 
