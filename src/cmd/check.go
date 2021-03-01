@@ -12,29 +12,34 @@ func Check(cfg *MainConfig) (int, error) {
 		cfg = &MainConfig{}
 	}
 
+	config := cfg.LinterConfig
+	if config == nil {
+		config = linter.NewConfig()
+	}
+	l := linter.NewLinter(config)
+
 	ruleSets, err := parseRules()
 	if err != nil {
 		return 1, fmt.Errorf("preload rules: %v", err)
 	}
 	for _, rset := range ruleSets {
-		linter.DeclareRules(rset)
+		config.Checkers.DeclareRules(rset)
 	}
 
-	config := cfg.LinterConfig
-	if config == nil {
-		config = linter.NewConfig()
-	}
 	var args cmdlineArguments
 	bindFlags(config, ruleSets, &args)
 	flag.Parse()
+
 	if args.disableCache {
 		config.CacheDir = ""
 	}
+
 	if cfg.AfterFlagParse != nil {
 		cfg.AfterFlagParse(InitEnvironment{
 			RuleSets: ruleSets,
+			MetaInfo: l.MetaInfo(),
 		})
 	}
 
-	return mainNoExit(config, ruleSets, &args, cfg)
+	return mainNoExit(l, ruleSets, &args, cfg)
 }

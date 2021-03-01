@@ -55,6 +55,10 @@ func (g *genClone) writeCloneCase(w *bytes.Buffer, pkg *packageData, typ *typeDa
 		switch typeString := field.Type().String(); typeString {
 		case "[]ir.Node":
 			fmt.Fprintf(w, "    clone.%[1]s = NodeSliceClone(x.%[1]s)\n", field.Name())
+		case "*ir.Token": // replace later with *github.com/z7zmey/php-parser/pkg/token.Token
+			// Do nothing.
+		case "[]*ir.Token": // replace later with []*github.com/z7zmey/php-parser/pkg/token.Token
+			// Do nothing.
 		case "github.com/VKCOM/noverify/src/php/parser/freefloating.Collection":
 			// Do nothing.
 		case "*github.com/VKCOM/noverify/src/php/parser/position.Position":

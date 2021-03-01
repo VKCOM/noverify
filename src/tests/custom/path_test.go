@@ -9,15 +9,14 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
-func init() {
-	linter.RegisterBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker {
-		return &pathTester{ctx: ctx}
-	})
-}
-
 func runPathTest(t *testing.T, suite *linttest.Suite) {
 	t.Helper()
+	config := linter.NewConfig()
+	config.Checkers.AddBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker {
+		return &pathTester{ctx: ctx}
+	})
 	suite.IgnoreUndeclaredChecks = true
+	suite.Linter = linter.NewLinter(config)
 	linttest.RunFilterMatch(suite, "pathTest")
 }
 
@@ -177,5 +176,5 @@ func (b *pathTester) AfterEnterNode(n ir.Node) {
 	}
 
 	path := b.ctx.NodePath()
-	b.ctx.Report(x, linter.LevelInformation, "pathTest", "$%s (cond=%v) : %s", x.Name, path.Conditional(), path.String())
+	b.ctx.Report(x, linter.LevelWarning, "pathTest", "$%s (cond=%v) : %s", x.Name, path.Conditional(), path.String())
 }

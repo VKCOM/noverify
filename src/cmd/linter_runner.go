@@ -33,13 +33,6 @@ type linterRunner struct {
 	reportsCriticalSet      map[string]bool
 }
 
-func (l *linterRunner) getLinter() *linter.Linter {
-	if l.linter == nil {
-		l.linter = linter.NewLinter(l.config)
-	}
-	return l.linter
-}
-
 func (l *linterRunner) IsEnabledByFlags(checkName string) bool {
 	if !l.args.allowAll && !l.reportsIncludeChecksSet[checkName] {
 		return false // Not enabled by -allow-checks
@@ -110,6 +103,10 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, args *cmdlineArguments) error
 	if err := l.compileRegexes(); err != nil {
 		return err
 	}
+
+	l.config.PhpExtensions = strings.Split(args.phpExtensionsArg, ",")
+
+	l.config.ComputeBaselineHashes = l.args.baseline != "" || l.args.outputBaseline
 
 	if args.misspellList != "" {
 		err := LoadMisspellDicts(l.config, strings.Split(args.misspellList, ","))
@@ -196,7 +193,7 @@ func (l *linterRunner) initCheckMappings() {
 
 	l.reportsExcludeChecksSet = stringToSet(l.args.reportsExcludeChecks)
 	l.reportsIncludeChecksSet = stringToSet(l.args.allowChecks)
-	if l.args.reportsCritical != allNonMaybe {
+	if l.args.reportsCritical != allNonNotice {
 		l.reportsCriticalSet = stringToSet(l.args.reportsCritical)
 	}
 }
@@ -206,9 +203,8 @@ func (l *linterRunner) initRules(ruleSets []*rules.Set) error {
 		return l.IsEnabledByFlags(r.Name)
 	}
 
-	l.config.Rules = rules.NewSet()
 	for _, rset := range ruleSets {
-		appendRuleSet(l.config, rset, ruleFilter)
+		appendRuleSet(l.config.Rules, rset, ruleFilter)
 	}
 
 	return nil

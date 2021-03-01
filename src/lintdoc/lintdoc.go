@@ -8,7 +8,7 @@ import (
 )
 
 // RenderCheckDocumentation pretty-prints info to the provided writer.
-func RenderCheckDocumentation(w io.Writer, info linter.CheckInfo) error {
+func RenderCheckDocumentation(w io.Writer, info linter.CheckerInfo) error {
 	if info.Before == "" {
 		return templateShort.Execute(w, info)
 	}

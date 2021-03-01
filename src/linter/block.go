@@ -163,7 +163,7 @@ func (b *blockWalker) reportDeadCode(n ir.Node) {
 	}
 
 	b.ctx.deadCodeReported = true
-	b.r.Report(n, LevelInformation, "deadCode", "Unreachable code")
+	b.r.Report(n, LevelWarning, "deadCode", "Unreachable code")
 }
 
 // EnterNode is called before walking to inner nodes.
@@ -329,11 +329,12 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 	if b.isIndexingComplete() {
 		b.linter.enterNode(n)
 	}
-	if b.isIndexingComplete() && b.r.anyRset != nil {
+	if b.isIndexingComplete() {
 		// Note: no need to check localRset for nil.
 		kind := ir.GetNodeKind(n)
-		b.r.runRules(n, b.ctx.sc, b.r.anyRset.RulesByKind[kind])
-		if !b.rootLevel {
+		if b.r.anyRset != nil {
+			b.r.runRules(n, b.ctx.sc, b.r.anyRset.RulesByKind[kind])
+		} else if !b.rootLevel && b.r.localRset != nil {
 			b.r.runRules(n, b.ctx.sc, b.r.localRset.RulesByKind[kind])
 		}
 	}
@@ -360,7 +361,7 @@ func (b *blockWalker) checkDupGlobal(s *ir.GlobalStmt) {
 		} else {
 			vars[nm] = struct{}{}
 			if b.nonLocalVars[nm] == varGlobal {
-				b.r.Report(v, LevelDoNotReject, "dupGlobal", "$%s already global'ed above", nm)
+				b.r.Report(v, LevelNotice, "dupGlobal", "$%s already global'ed above", nm)
 			}
 		}
 	}
@@ -500,7 +501,7 @@ func (b *blockWalker) walkComments(n ir.Node, c freefloating.String) {
 
 		types, warning := typesFromPHPDoc(&b.r.ctx, p.Type)
 		if warning != "" {
-			b.r.Report(n, LevelInformation, "phpdocType", "%s on line %d", warning, p.Line())
+			b.r.Report(n, LevelNotice, "phpdocType", "%s on line %d", warning, p.Line())
 		}
 		m := newTypesMap(&b.r.ctx, types)
 		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(p.Var, "$"), m, "@var")
@@ -582,6 +583,9 @@ func (b *blockWalker) withNewContext(action func()) *blockContext {
 }
 
 func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
+	var linksCount int
+	var finallyCtx *blockContext
+
 	contexts := make([]*blockContext, 0, len(s.Catches)+1)
 
 	// Assume that no code in try{} block has executed because exceptions can be thrown from anywhere.
@@ -596,11 +600,14 @@ func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
 			cc.Walk(b)
 		})
 		contexts = append(contexts, ctx)
+
+		if ctx.exitFlags == 0 {
+			linksCount++
+		}
 	}
 
 	if s.Finally != nil {
-		b.withNewContext(func() {
-			contexts = append(contexts, b.ctx)
+		finallyCtx = b.withNewContext(func() {
 			cc := s.Finally.(*ir.FinallyStmt)
 			for _, s := range cc.Stmts {
 				b.addStatement(s)
@@ -629,13 +636,40 @@ func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
 			s.Walk(b)
 		}
 	})
+	if ctx.exitFlags == 0 {
+		linksCount++
+	}
 
-	ctx.sc.Iterate(func(varName string, typ meta.TypesMap, flags meta.VarFlags) {
-		if !othersExit {
-			flags &^= meta.VarAlwaysDefined
+	contexts = append(contexts, ctx)
+
+	varTypes := make(map[string]meta.TypesMap, b.ctx.sc.Len())
+	defCounts := make(map[string]int, b.ctx.sc.Len())
+
+	for _, ctx := range contexts {
+		if ctx.exitFlags != 0 {
+			continue
 		}
-		b.ctx.sc.AddVarName(varName, typ, "try var", flags)
-	})
+
+		ctx.sc.Iterate(func(nm string, typ meta.TypesMap, flags meta.VarFlags) {
+			varTypes[nm] = varTypes[nm].Append(typ)
+			if flags.IsAlwaysDefined() {
+				defCounts[nm]++
+			}
+		})
+	}
+
+	for nm, types := range varTypes {
+		var flags meta.VarFlags
+		flags.SetAlwaysDefined(defCounts[nm] == linksCount)
+		b.ctx.sc.AddVarName(nm, types, "all branches try catch", flags)
+	}
+
+	if finallyCtx != nil {
+		finallyCtx.sc.Iterate(func(nm string, typ meta.TypesMap, flags meta.VarFlags) {
+			flags.SetAlwaysDefined(finallyCtx.exitFlags == 0)
+			b.ctx.sc.AddVarName(nm, typ, "finally", flags)
+		})
+	}
 
 	if othersExit && ctx.exitFlags != 0 {
 		b.ctx.exitFlags |= prematureExitFlags
@@ -804,7 +838,9 @@ func (b *blockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
 
 func (b *blockWalker) handleStaticCall(e *ir.StaticCallExpr) bool {
 	call := resolveStaticMethodCall(b.r.ctx.st, e)
-	b.callsParentConstructor = call.isCallsParentConstructor
+	if !b.callsParentConstructor {
+		b.callsParentConstructor = call.isCallsParentConstructor
+	}
 
 	e.Class.Walk(b)
 	e.Call.Walk(b)
@@ -1361,7 +1397,7 @@ func (b *blockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 				// allow the fallthrough if appropriate comment is present
 				nextCase := s.CaseList.Cases[idx+1]
 				if !caseHasFallthroughComment(nextCase) {
-					b.r.Report(c, LevelInformation, "caseBreak", "Add break or '// fallthrough' to the end of the case")
+					b.r.Report(c, LevelWarning, "caseBreak", "Add break or '// fallthrough' to the end of the case")
 				}
 			}
 
@@ -1478,7 +1514,7 @@ func (b *blockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
 	})
 
 	if maybeHaveClasses && !haveArrayAccess {
-		b.r.Report(s.Variable, LevelDoNotReject, "arrayAccess", "Array access to non-array type %s", typ)
+		b.r.Report(s.Variable, LevelNotice, "arrayAccess", "Array access to non-array type %s", typ)
 	}
 }
 
@@ -1763,7 +1799,7 @@ func (b *blockWalker) flushUnused() {
 			}
 
 			visitedMap[n] = struct{}{}
-			b.r.Report(n, LevelUnused, "unused", `Variable %s is unused (use $_ to ignore this inspection)`, name)
+			b.r.Report(n, LevelWarning, "unused", `Variable %s is unused (use $_ to ignore this inspection)`, name)
 		}
 	}
 }
@@ -1795,27 +1831,53 @@ func (b *blockWalker) LeaveNode(w ir.Node) {
 	b.path.Pop()
 
 	if b.ctx.exitFlags == 0 {
-		switch w.(type) {
-		case *ir.ReturnStmt:
-			b.ctx.exitFlags |= FlagReturn
-			b.ctx.containsExitFlags |= FlagReturn
-		case *ir.ExitExpr:
-			b.ctx.exitFlags |= FlagDie
-			b.ctx.containsExitFlags |= FlagDie
-		case *ir.ThrowStmt:
-			b.ctx.exitFlags |= FlagThrow
-			b.ctx.containsExitFlags |= FlagThrow
-		case *ir.ContinueStmt:
-			b.ctx.exitFlags |= FlagContinue
-			b.ctx.containsExitFlags |= FlagContinue
-		case *ir.BreakStmt:
-			b.ctx.exitFlags |= FlagBreak
-			b.ctx.containsExitFlags |= FlagBreak
-		}
+		b.updateExitFlags(w)
 	}
 
 	for _, c := range b.custom {
 		c.AfterLeaveNode(w)
+	}
+}
+
+func (b *blockWalker) updateExitFlags(n ir.Node) {
+	switch n := n.(type) {
+	case *ir.ReturnStmt:
+		b.ctx.exitFlags |= FlagReturn
+		b.ctx.containsExitFlags |= FlagReturn
+	case *ir.ExitExpr:
+		b.ctx.exitFlags |= FlagDie
+		b.ctx.containsExitFlags |= FlagDie
+	case *ir.ThrowStmt:
+		b.ctx.exitFlags |= FlagThrow
+		b.ctx.containsExitFlags |= FlagThrow
+	case *ir.ContinueStmt:
+		b.ctx.exitFlags |= FlagContinue
+		b.ctx.containsExitFlags |= FlagContinue
+	case *ir.BreakStmt:
+		b.ctx.exitFlags |= FlagBreak
+		b.ctx.containsExitFlags |= FlagBreak
+	case *ir.ExpressionStmt:
+		b.updateExitFlags(n.Expr)
+	case *ir.FunctionCallExpr:
+		if b.r.config.IgnoreTriggerError {
+			return
+		}
+		nm, ok := n.Function.(*ir.Name)
+		if !ok {
+			return
+		}
+		// We can't use solver.GetFuncName here as PHP function names
+		// lookup requires full symbol table information => we can't use
+		// it during the indexing.
+		funcName := strings.TrimPrefix(nm.Value, `\`)
+		if (funcName != `trigger_error` && funcName != `user_error`) || len(n.Args) != 2 {
+			return
+		}
+		errorLevel, ok := n.Arg(1).Expr.(*ir.ConstFetchExpr)
+		// TODO: add meta.GetConstName() func and use it here.
+		if ok && errorLevel.Constant.Value == `E_USER_ERROR` {
+			b.ctx.exitFlags |= FlagDie
+		}
 	}
 }
 

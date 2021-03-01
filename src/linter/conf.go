@@ -15,8 +15,9 @@ import (
 type Config struct {
 	// BaselineProfile is a suppression database for warnings.
 	// Nil profile is an empty suppression profile.
-	BaselineProfile      *baseline.Profile
-	ConservativeBaseline bool
+	BaselineProfile       *baseline.Profile
+	ComputeBaselineHashes bool // Whether we need to compute report hashes
+	ConservativeBaseline  bool
 
 	ApplyQuickFixes bool
 
@@ -54,13 +55,24 @@ type Config struct {
 	ExcludeRegex *regexp.Regexp
 
 	AllowDisable *regexp.Regexp
+
+	PhpExtensions []string
+
+	Checkers *CheckersRegistry
+
+	IgnoreTriggerError bool
 }
 
 func NewConfig() *Config {
+	reg := &CheckersRegistry{
+		info: map[string]CheckerInfo{},
+	}
+	addBuiltinCheckers(reg)
 	return &Config{
 		SrcInput:       inputs.NewDefaultSourceInput(),
-		Rules:          &rules.Set{},
+		Rules:          rules.NewSet(),
 		MaxConcurrency: runtime.NumCPU(),
 		IsDiscardVar:   isUnderscore,
+		Checkers:       reg,
 	}
 }

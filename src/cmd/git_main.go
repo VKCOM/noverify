@@ -21,7 +21,7 @@ func gitParseUntracked(l *linterRunner) []*linter.Report {
 		log.Fatalf("get untracked files: %v", err)
 	}
 
-	return l.getLinter().AnalyzeFiles(workspace.ReadFilenames(filenames, nil))
+	return l.linter.AnalyzeFiles(workspace.ReadFilenames(filenames, nil, l.config.PhpExtensions))
 }
 
 func parseIndexOnlyFiles(l *linterRunner) {
@@ -29,7 +29,7 @@ func parseIndexOnlyFiles(l *linterRunner) {
 		return
 	}
 	filenames := strings.Split(l.args.indexOnlyFiles, ",")
-	l.getLinter().AnalyzeFiles(workspace.ReadFilenames(filenames, nil))
+	l.linter.AnalyzeFiles(workspace.ReadFilenames(filenames, nil, l.config.PhpExtensions))
 }
 
 // Not the best name, and not the best function signature.
@@ -53,57 +53,57 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 
 	if l.args.gitFullDiff {
 		resetMetaInfo(l)
-		if err := loadEmbeddedStubs(l.getLinter()); err != nil {
+		if err := loadEmbeddedStubs(l.linter); err != nil {
 			log.Panicf("Load embedded stubs: %v", err)
 		}
 
 		start := time.Now()
-		l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil))
+		l.linter.AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil, l.config.PhpExtensions))
 		parseIndexOnlyFiles(l)
 		log.Printf("Indexed old commit in %s", time.Since(start))
 
-		l.getLinter().MetaInfo().SetIndexingComplete(true)
+		l.linter.MetaInfo().SetIndexingComplete(true)
 
 		start = time.Now()
-		oldReports = l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, l.config.ExcludeRegex))
+		oldReports = l.linter.AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, l.config.ExcludeRegex, l.config.PhpExtensions))
 		log.Printf("Parsed old commit for %s (%d reports)", time.Since(start), len(oldReports))
 
 		resetMetaInfo(l)
-		if err := loadEmbeddedStubs(l.getLinter()); err != nil {
+		if err := loadEmbeddedStubs(l.linter); err != nil {
 			log.Panicf("Load embedded stubs: %v", err)
 		}
 
 		start = time.Now()
 		parseIndexOnlyFiles(l)
-		l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil))
+		l.linter.AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil, l.config.PhpExtensions))
 		log.Printf("Indexed new commit in %s", time.Since(start))
 
-		l.getLinter().MetaInfo().SetIndexingComplete(true)
+		l.linter.MetaInfo().SetIndexingComplete(true)
 
 		start = time.Now()
-		reports = l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, l.config.ExcludeRegex))
+		reports = l.linter.AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, l.config.ExcludeRegex, l.config.PhpExtensions))
 		log.Printf("Parsed new commit in %s (%d reports)", time.Since(start), len(reports))
 	} else {
 		start := time.Now()
-		l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil))
+		l.linter.AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitTo, nil, l.config.PhpExtensions))
 		parseIndexOnlyFiles(l)
 		log.Printf("Indexing complete in %s", time.Since(start))
 
-		l.getLinter().MetaInfo().SetIndexingComplete(true)
+		l.linter.MetaInfo().SetIndexingComplete(true)
 
 		start = time.Now()
-		oldReports = l.getLinter().AnalyzeFiles(workspace.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes))
+		oldReports = l.linter.AnalyzeFiles(workspace.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes, l.config.PhpExtensions))
 		log.Printf("Parsed old files versions for %s", time.Since(start))
 
 		start = time.Now()
-		l.getLinter().MetaInfo().SetIndexingComplete(false)
+		l.linter.MetaInfo().SetIndexingComplete(false)
 		parseIndexOnlyFiles(l)
-		l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes))
-		l.getLinter().MetaInfo().SetIndexingComplete(true)
+		l.linter.AnalyzeFiles(workspace.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes, l.config.PhpExtensions))
+		l.linter.MetaInfo().SetIndexingComplete(true)
 		log.Printf("Indexed files versions for %s", time.Since(start))
 
 		start = time.Now()
-		reports = l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes))
+		reports = l.linter.AnalyzeFiles(workspace.ReadFilesFromGitWithChanges(l.args.gitRepo, l.args.mutable.gitCommitTo, changes, l.config.PhpExtensions))
 		log.Printf("Parsed new file versions in %s", time.Since(start))
 	}
 
@@ -130,26 +130,26 @@ func gitRepoComputeReportsFromLocalChanges(l *linterRunner) (oldReports, reports
 	log.Printf("You have changes in your work tree, showing diff between %s and work tree", l.args.mutable.gitCommitFrom)
 
 	start := time.Now()
-	l.getLinter().AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil))
+	l.linter.AnalyzeFiles(workspace.ReadFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, nil, l.config.PhpExtensions))
 	parseIndexOnlyFiles(l)
 	log.Printf("Indexing complete in %s", time.Since(start))
 
-	l.getLinter().MetaInfo().SetIndexingComplete(true)
+	l.linter.MetaInfo().SetIndexingComplete(true)
 
 	start = time.Now()
-	oldReports = l.getLinter().AnalyzeFiles(workspace.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes))
+	oldReports = l.linter.AnalyzeFiles(workspace.ReadOldFilesFromGit(l.args.gitRepo, l.args.mutable.gitCommitFrom, changes, l.config.PhpExtensions))
 	log.Printf("Parsed old files versions for %s", time.Since(start))
 
 	start = time.Now()
-	l.getLinter().MetaInfo().SetIndexingComplete(false)
-	l.getLinter().AnalyzeFiles(workspace.ReadChangesFromWorkTree(l.args.gitWorkTree, changes))
+	l.linter.MetaInfo().SetIndexingComplete(false)
+	l.linter.AnalyzeFiles(workspace.ReadChangesFromWorkTree(l.args.gitWorkTree, changes, l.config.PhpExtensions))
 	parseIndexOnlyFiles(l)
 	gitParseUntracked(l)
-	l.getLinter().MetaInfo().SetIndexingComplete(true)
+	l.linter.MetaInfo().SetIndexingComplete(true)
 	log.Printf("Indexed new files versions for %s", time.Since(start))
 
 	start = time.Now()
-	reports = l.getLinter().AnalyzeFiles(workspace.ReadChangesFromWorkTree(l.args.gitWorkTree, changes))
+	reports = l.linter.AnalyzeFiles(workspace.ReadChangesFromWorkTree(l.args.gitWorkTree, changes, l.config.PhpExtensions))
 	reports = append(reports, gitParseUntracked(l)...)
 	log.Printf("Parsed new file versions in %s", time.Since(start))
 

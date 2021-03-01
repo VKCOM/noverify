@@ -180,13 +180,34 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.InterfaceStmt:
 		b.checkInterfaceStmt(n)
 
+	case *ir.NopStmt:
+		b.checkNopStmt(n)
+
 	case *ir.BadString:
-		b.report(n, LevelSyntax, "syntax", "%s", n.Error)
+		b.report(n, LevelError, "syntax", "%s", n.Error)
 	}
 }
 
 func (b *blockLinter) report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
 	b.walker.r.Report(n, level, checkName, msg, args...)
+}
+
+func (b *blockLinter) checkNopStmt(n *ir.NopStmt) {
+	switch b.walker.path.Parent().(type) {
+	case *ir.DeclareStmt, *ir.IfStmt, *ir.ForStmt, *ir.ForeachStmt, *ir.WhileStmt, *ir.DoStmt:
+		return
+	}
+
+	// Check whether it's `?>`; it it is, ignore it.
+	if ffs := n.GetFreeFloating(); ffs != nil {
+		for _, tok := range (*ffs)[freefloating.SemiColon] {
+			if tok.StringType == freefloating.TokenType && strings.HasPrefix(tok.Value, "?>") {
+				return
+			}
+		}
+	}
+
+	b.report(n, LevelNotice, "emptyStmt", "semicolon (;) is not needed here, it can be safely removed")
 }
 
 func (b *blockLinter) checkCoalesceExpr(n *ir.CoalesceExpr) {
@@ -196,7 +217,7 @@ func (b *blockLinter) checkCoalesceExpr(n *ir.CoalesceExpr) {
 	}
 
 	if !lhsType.Contains("null") {
-		b.report(n.Right, LevelInformation, "deadCode", "%s is not nullable, right side of the expression is unreachable", irutil.FmtNode(n.Left))
+		b.report(n.Right, LevelWarning, "deadCode", "%s is not nullable, right side of the expression is unreachable", irutil.FmtNode(n.Left))
 	}
 }
 
@@ -297,14 +318,14 @@ func (b *blockLinter) checkBinaryDupArgs(n, left, right ir.Node) {
 // checkVoidType reports if node has void type
 func (b *blockLinter) checkVoidType(n ir.Node) {
 	if b.walker.exprType(n).Is("void") {
-		b.report(n, LevelDoNotReject, "voidResultUsed", "void function result used")
+		b.report(n, LevelNotice, "voidResultUsed", "void function result used")
 	}
 }
 
 func (b *blockLinter) checkRedundantCastArray(e ir.Node) {
 	typ := b.walker.exprType(e)
 	if typ.Len() == 1 && typ.Is("mixed[]") {
-		b.report(e, LevelDoNotReject, "redundantCast", "expression already has array type")
+		b.report(e, LevelNotice, "redundantCast", "expression already has array type")
 	}
 }
 
@@ -315,7 +336,7 @@ func (b *blockLinter) checkRedundantCast(e ir.Node, dstType string) {
 	}
 	typ.Iterate(func(x string) {
 		if x == dstType {
-			b.report(e, LevelDoNotReject, "redundantCast",
+			b.report(e, LevelNotice, "redundantCast",
 				"expression already has %s type", dstType)
 		}
 	})
@@ -590,18 +611,27 @@ func (b *blockLinter) addFixForArray(arr *ir.ArrayExpr) {
 
 func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 	if !arr.ShortSyntax {
-		b.report(arr, LevelDoNotReject, "arraySyntax", "Use of old array syntax (use short form instead)")
+		b.report(arr, LevelNotice, "arraySyntax", "Use of old array syntax (use short form instead)")
 		b.addFixForArray(arr)
 	}
 
+	multiline := false
 	items := arr.Items
 	haveKeys := false
 	haveImplicitKeys := false
 	keys := make(map[string]ir.Node, len(items))
 
-	for _, item := range items {
+	if arr.Position.EndLine != arr.Position.StartLine {
+		multiline = true
+	}
+
+	for index, item := range items {
 		if item.Val == nil {
 			continue
+		}
+
+		if multiline && index == len(items)-1 {
+			b.checkMultilineArrayTrailingComma(item)
 		}
 
 		if item.Key == nil {
@@ -676,17 +706,49 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 	}
 }
 
+func (b *blockLinter) addFixForMultilineArrayTrailingComma(item *ir.ArrayItemExpr) {
+	if !b.walker.r.config.ApplyQuickFixes {
+		return
+	}
+
+	from := item.Position.StartPos
+	to := item.Position.EndPos
+	have := b.walker.r.file.Contents()[from:to]
+
+	b.walker.r.ctx.fixes = append(b.walker.r.ctx.fixes, quickfix.TextEdit{
+		StartPos:    item.Position.StartPos,
+		EndPos:      item.Position.EndPos,
+		Replacement: string(have) + ",",
+	})
+}
+
+func (b *blockLinter) checkMultilineArrayTrailingComma(item *ir.ArrayItemExpr) {
+	from := item.Position.StartPos
+	to := item.Position.EndPos
+	src := b.walker.r.file.Contents()
+
+	if to+1 >= len(src) {
+		return
+	}
+
+	itemText := src[from : to+1]
+	if itemText[len(itemText)-1] != ',' && itemText[len(itemText)-1] != ']' {
+		b.report(item, LevelNotice, "trailingComma", "last element in a multi-line array must have a trailing comma")
+		b.addFixForMultilineArrayTrailingComma(item)
+	}
+}
+
 func (b *blockLinter) checkDeprecatedFunctionCall(e *ir.FunctionCallExpr, call *funcCallInfo) {
 	if !call.info.Doc.Deprecated {
 		return
 	}
 
 	if call.info.Doc.DeprecationNote != "" {
-		b.report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s (%s)", meta.NameNodeToString(e.Function), call.info.Doc.DeprecationNote)
+		b.report(e.Function, LevelNotice, "deprecated", "Call to deprecated function %s (%s)", meta.NameNodeToString(e.Function), call.info.Doc.DeprecationNote)
 		return
 	}
 
-	b.report(e.Function, LevelDoNotReject, "deprecated", "Call to deprecated function %s", meta.NameNodeToString(e.Function))
+	b.report(e.Function, LevelNotice, "deprecated", "Call to deprecated function %s", meta.NameNodeToString(e.Function))
 }
 
 func (b *blockLinter) checkFunctionAvailability(e *ir.FunctionCallExpr, call *funcCallInfo) {
@@ -729,6 +791,11 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 	}
 
 	switch fqName {
+	case `\strip_tags`:
+		if len(e.Args) < 2 {
+			break
+		}
+		b.checkStripTags(e)
 	case `\preg_match`, `\preg_match_all`, `\preg_replace`, `\preg_split`:
 		if len(e.Args) < 1 {
 			break
@@ -740,6 +807,74 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 		}
 		// TODO: handle fprintf as well?
 		b.checkFormatString(e, e.Arg(0))
+	}
+}
+
+func (b *blockLinter) checkStripTags(e *ir.FunctionCallExpr) {
+	reportArg := func(n ir.Node, format string, args ...interface{}) {
+		message := fmt.Sprintf(format, args...)
+		b.report(n, LevelWarning, "stripTags", "$allowed_tags argument: "+message)
+	}
+
+	normalizeTag := func(s string) string {
+		s = strings.ReplaceAll(s, " ", "")
+		if strings.HasSuffix(s, "/>") {
+			s = strings.TrimSuffix(s, "/>") + ">"
+		}
+		s = strings.ToLower(s)
+		return s
+	}
+
+	set := make(map[string]string)
+	addTag := func(n ir.Node, tag string) {
+		normalized := normalizeTag(tag)
+		if prev := set[normalized]; prev != "" {
+			if prev == tag {
+				reportArg(n, "tag '%s' is duplicated", tag)
+			} else {
+				reportArg(n, "tag '%s' is duplicated, previously spelled as '%s'", tag, prev)
+			}
+		} else {
+			set[normalized] = tag
+		}
+	}
+
+	switch allowed := e.Arg(1).Expr.(type) {
+	case *ir.ArrayExpr:
+		for _, item := range allowed.Items {
+			literal, ok := item.Val.(*ir.String)
+			if !ok {
+				continue
+			}
+			s := strings.TrimSpace(literal.Value)
+			if strings.HasPrefix(s, "<") {
+				reportArg(item.Val, "'<' and '>' are not needed for tags when using array argument")
+			}
+			addTag(literal, literal.Value)
+		}
+	case *ir.String:
+		s := allowed.Value
+		if strings.ContainsAny(s, `'"`) {
+			reportArg(allowed, "using values/attrs is an error; they make matching always fail")
+			break
+		}
+		for {
+			s = strings.TrimLeft(s, " \n\r\t")
+			end := strings.IndexByte(s, '>')
+			if end == -1 {
+				break
+			}
+			tag := s[:end+1]
+			if strings.HasSuffix(tag, "/>") {
+				fixed := strings.TrimSuffix(tag, "/>") + ">"
+				reportArg(allowed, "'%s' should be written as '%s'", tag, fixed)
+			}
+			if strings.Contains(tag, " ") {
+				reportArg(allowed, "tag '%s' should not contain spaces", tag)
+			}
+			addTag(allowed, tag)
+			s = s[end+1:]
+		}
 	}
 }
 
@@ -771,10 +906,10 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 
 	if call.info.Doc.Deprecated {
 		if call.info.Doc.DeprecationNote != "" {
-			b.report(e.Method, LevelDoNotReject, "deprecated", "Call to deprecated method {%s}->%s() (%s)",
+			b.report(e.Method, LevelNotice, "deprecated", "Call to deprecated method {%s}->%s() (%s)",
 				call.methodCallerType, call.methodName, call.info.Doc.DeprecationNote)
 		} else {
-			b.report(e.Method, LevelDoNotReject, "deprecated", "Call to deprecated method {%s}->%s()",
+			b.report(e.Method, LevelNotice, "deprecated", "Call to deprecated method {%s}->%s()",
 				call.methodCallerType, call.methodName)
 		}
 	}
@@ -790,6 +925,8 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 		return
 	}
 
+	b.checkClassSpecialNameCase(e, call.className)
+
 	if !call.isMagic {
 		b.checkCallArgs(e.Call, e.Args, call.methodInfo.Info)
 	}
@@ -804,10 +941,10 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 
 	if call.methodInfo.Info.Doc.Deprecated {
 		if call.methodInfo.Info.Doc.DeprecationNote != "" {
-			b.report(e.Call, LevelDoNotReject, "deprecated", "Call to deprecated static method %s::%s() (%s)",
+			b.report(e.Call, LevelNotice, "deprecated", "Call to deprecated static method %s::%s() (%s)",
 				call.className, call.methodName, call.methodInfo.Info.Doc.DeprecationNote)
 		} else {
-			b.report(e.Call, LevelDoNotReject, "deprecated", "Call to deprecated static method %s::%s()",
+			b.report(e.Call, LevelNotice, "deprecated", "Call to deprecated static method %s::%s()",
 				call.className, call.methodName)
 		}
 	}
@@ -838,6 +975,8 @@ func (b *blockLinter) checkStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) {
 		return
 	}
 
+	b.checkClassSpecialNameCase(e, fetch.className)
+
 	if !fetch.isFound && !b.classParseState().IsTrait {
 		b.report(e.Property, LevelError, "undefined", "Property %s::$%s does not exist", fetch.className, fetch.propertyName)
 	}
@@ -853,12 +992,36 @@ func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
 		return
 	}
 
+	b.checkClassSpecialNameCase(e, fetch.className)
+
 	if !fetch.isFound && !b.classParseState().IsTrait {
 		b.walker.r.Report(e.ConstantName, LevelError, "undefined", "Class constant %s::%s does not exist", fetch.className, fetch.constName)
 	}
 
 	if fetch.isFound && !canAccess(b.classParseState(), fetch.implClassName, fetch.info.AccessLevel) {
 		b.walker.r.Report(e.ConstantName, LevelError, "accessLevel", "Cannot access %s constant %s::%s", fetch.info.AccessLevel, fetch.implClassName, fetch.constName)
+	}
+}
+
+func (b *blockLinter) checkClassSpecialNameCase(n ir.Node, className string) {
+	// Since for resolving class names we use the solver.GetClassName function,
+	// which resolves unknown classes as '\' + the passed class name, then for
+	// misspelled special class names (self, static, parent) we get something
+	// like '\SELF'. For correctly spelled ones, we get the specific class name.
+	// Therefore, to catch this case, we compare the resolved class name with
+	// '\' + the correct spelling of the special name, case insensitive.
+	// If there is a match, it means that the name was originally spelled in the wrong case.
+
+	names := []string{
+		`\self`,
+		`\static`,
+		`\parent`,
+	}
+
+	for _, name := range names {
+		if strings.EqualFold(className, name) {
+			b.walker.r.Report(n, LevelNotice, "nameCase", "%s should be spelled as %s", strings.TrimPrefix(className, `\`), strings.TrimPrefix(name, `\`))
+		}
 	}
 }
 
@@ -894,7 +1057,7 @@ func (b *blockLinter) checkRegexp(e *ir.FunctionCallExpr, arg *ir.Argument) {
 	simplified := b.walker.r.reSimplifier.simplifyRegexp(pat)
 	if simplified != "" {
 		rawPattern := b.walker.r.nodeText(s)
-		b.report(arg, LevelDoNotReject, "regexpSimplify", "May re-write %s as '%s'",
+		b.report(arg, LevelNotice, "regexpSimplify", "May re-write %s as '%s'",
 			rawPattern, simplified)
 	}
 	issues, err := b.walker.r.reVet.CheckRegexp(pat)

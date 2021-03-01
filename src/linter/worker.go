@@ -139,7 +139,6 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 		return err
 	}
 
-	var contents []byte
 	h := md5.New()
 
 	if file.Contents == nil {
@@ -153,7 +152,7 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 			return err
 		}
 		atomic.AddInt64(&initFileReadTime, int64(time.Since(start)))
-	} else if _, err := h.Write(contents); err != nil {
+	} else if _, err := h.Write(file.Contents); err != nil {
 		return err
 	}
 
@@ -183,7 +182,7 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 	}
 	defer fp.Close()
 
-	if err := restoreMetaFromCache(w.info, file.Name, fp); err != nil {
+	if err := restoreMetaFromCache(w.info, w.config.Checkers.cachers, file.Name, fp); err != nil {
 		// do not really care about why exactly reading from cache failed
 		os.Remove(cacheFile)
 

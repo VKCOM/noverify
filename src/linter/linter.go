@@ -23,6 +23,10 @@ func NewLinter(config *Config) *Linter {
 	}
 }
 
+func (l *Linter) Config() *Config {
+	return l.config
+}
+
 func (l *Linter) MetaInfo() *meta.Info {
 	return l.info
 }
@@ -111,5 +115,5 @@ func (l *Linter) InitStubs(readFileNamesFunc workspace.ReadCallback) {
 
 // InitStubsFromDir parses directory with PHPStorm stubs which has all internal PHP classes and functions declared.
 func (l *Linter) InitStubsFromDir(dir string) {
-	l.InitStubs(workspace.ReadFilenames([]string{dir}, nil))
+	l.InitStubs(workspace.ReadFilenames([]string{dir}, nil, l.config.PhpExtensions))
 }

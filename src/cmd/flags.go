@@ -12,7 +12,7 @@ import (
 	"github.com/VKCOM/noverify/src/rules"
 )
 
-const allNonMaybe = "<all-non-maybe>"
+const allNonNotice = "<all-non-notice>"
 
 type cmdlineArguments struct {
 	version bool
@@ -84,7 +84,7 @@ func DefaultCacheDir() string {
 
 func bindFlags(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArguments) {
 	var enabledByDefault []string
-	declaredChecks := linter.GetDeclaredChecks()
+	declaredChecks := config.Checkers.ListDeclared()
 	for _, info := range declaredChecks {
 		if info.Default {
 			enabledByDefault = append(enabledByDefault, info.Name)
@@ -125,8 +125,8 @@ func bindFlags(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgume
 	flag.BoolVar(&config.ConservativeBaseline, "conservative-baseline", false,
 		"If enabled, baseline mode will have less false positive, but more false negatives")
 
-	flag.StringVar(&args.reportsCritical, "critical", allNonMaybe,
-		"Comma-separated list of check names that are considered critical (all non-maybe checks by default)")
+	flag.StringVar(&args.reportsCritical, "critical", allNonNotice,
+		"Comma-separated list of check names that are considered critical (all non-notice checks by default)")
 
 	flag.StringVar(&args.rulesList, "rules", "",
 		"Comma-separated list of rules files")
@@ -179,10 +179,10 @@ func bindFlags(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgume
 	flag.StringVar(&config.StubsDir, "stubs-dir", "", "Directory with phpstorm-stubs")
 	flag.StringVar(&config.CacheDir, "cache-dir", DefaultCacheDir(), "Directory for linter cache (greatly improves indexing speed)")
 	flag.BoolVar(&args.disableCache, "disable-cache", false, "If set, cache is not used and cache-dir is ignored")
+	flag.BoolVar(&config.IgnoreTriggerError, "ignore-trigger-error", false, "If set, trigger_error control flow will be ignored")
 
 	flag.StringVar(&args.unusedVarPattern, "unused-var-regex", `^_$`,
 		"Variables that match such regexp are marked as discarded; not reported as unused, but should not be used as values")
-
 	flag.BoolVar(&args.version, "version", false, "Show version info and exit")
 
 	flag.StringVar(&args.cpuProfile, "cpuprofile", "", "Write cpu profile to `file`")

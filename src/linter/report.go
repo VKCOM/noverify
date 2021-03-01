@@ -14,8 +14,26 @@ const (
 	IgnoreLinterMessage = "@linter disable"
 )
 
-func init() {
-	allChecks := []CheckInfo{
+func addBuiltinCheckers(reg *CheckersRegistry) {
+	allChecks := []CheckerInfo{
+		{
+			Name:     "stripTags",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report invalid strip_tags function usage.`,
+			Before:   `$s = strip_tags($s, '<br/>')`,
+			After:    `$s = strip_tags($s, '<br>')`,
+		},
+
+		{
+			Name:     "emptyStmt",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report redundant empty statements that can be safely removed.`,
+			Before:   `echo $foo;;`,
+			After:    `echo $foo;`,
+		},
+
 		{
 			Name:     "intOverflow",
 			Default:  true,
@@ -595,10 +613,25 @@ echo $someVal;`,
   // good: it will catch everything else
 }`,
 		},
+
+		{
+			Name:     "trailingComma",
+			Default:  false,
+			Quickfix: true,
+			Comment:  `Report the absence of a comma for the last element in a multi-line array.`,
+			Before: `$_ = [
+	10,
+	20
+]`,
+			After: `$_ = [
+	10,
+	20,
+]`,
+		},
 	}
 
 	for _, info := range allChecks {
-		DeclareCheck(info)
+		reg.DeclareChecker(info)
 	}
 }
 
@@ -616,14 +649,10 @@ type Report struct {
 }
 
 var severityNames = map[int]string{
-	LevelError:       "ERROR",
-	LevelWarning:     "WARNING",
-	LevelInformation: "INFO",
-	LevelHint:        "HINT",
-	LevelUnused:      "UNUSED",
-	LevelDoNotReject: "MAYBE",
-	LevelSyntax:      "SYNTAX",
-	LevelSecurity:    "WARNING",
+	LevelError:    "ERROR",
+	LevelWarning:  "WARNING",
+	LevelNotice:   "MAYBE",
+	LevelSecurity: "WARNING",
 }
 
 func (r *Report) Severity() string {
@@ -632,7 +661,7 @@ func (r *Report) Severity() string {
 
 // IsCritical returns whether or not we need to reject whole commit when found this kind of report.
 func (r *Report) IsCritical() bool {
-	return r.Level != LevelDoNotReject
+	return r.Level != LevelNotice
 }
 
 // DiffReports returns only reports that are new.

@@ -538,20 +538,20 @@ func binaryOpString(n ir.Node) string {
 }
 
 func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedSet {
-	if ruleSet == nil {
+	if ruleSet.CountRules == 0 {
 		return nil
 	}
 
 	var clone rules.ScopedSet
-	for i, list := range &ruleSet.RulesByKind {
-		res := make([]rules.Rule, 0, len(list))
-		for _, rule := range list {
+	for kind, ruleByKind := range &ruleSet.RulesByKind {
+		res := make([]rules.Rule, 0, len(ruleByKind))
+		for _, rule := range ruleByKind {
 			if !strings.Contains(filename, rule.Path) {
 				continue
 			}
 			res = append(res, rule)
 		}
-		clone.RulesByKind[i] = res
+		clone.Set(ir.NodeKind(kind), res)
 	}
 	return &clone
 }

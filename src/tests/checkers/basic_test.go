@@ -273,6 +273,7 @@ $_ = array(1);
 		`You are not allowed to disable linter`,
 		`Use of old array syntax (use short form instead)`,
 		`Duplicate array key 1`,
+		`last element in a multi-line array must have a trailing comma`,
 		`Use of old array syntax (use short form instead)`,
 	}
 	test.RunAndMatch()
@@ -791,8 +792,11 @@ func TestCustomUnusedVarRegex(t *testing.T) {
 		return strings.HasPrefix(s, "_")
 	}
 
+	config := linter.NewConfig()
+	config.IsDiscardVar = isDiscardVar
+
 	test := linttest.NewSuite(t)
-	test.Config.IsDiscardVar = isDiscardVar
+	test.Linter = linter.NewLinter(config)
 	test.AddFile(`<?php
 class Foo {
   public $_;
@@ -808,7 +812,7 @@ $_ = __FILE__;
 	test.RunAndMatch()
 
 	test = linttest.NewSuite(t)
-	test.Config.IsDiscardVar = isDiscardVar
+	test.Linter = linter.NewLinter(config)
 	test.AddFile(`<?php
 $_unused = 10;
 
@@ -824,7 +828,7 @@ function f() {
 `)
 
 	test = linttest.NewSuite(t)
-	test.Config.IsDiscardVar = isDiscardVar
+	test.Linter = linter.NewLinter(config)
 	test.AddFile(`<?php
 function var_dump($v) {}
 $_global = 120;
@@ -1843,6 +1847,84 @@ func_A();
 	linttest.RunFilterMatch(test, `nameCase`)
 }
 
+func TestClassSpecialNameCase(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class B {
+    const B = 100;
+
+    public static $name = "";
+
+    public static function g() {}
+}
+
+class A extends B {
+    const B = 100;
+
+    public static $id = 0;
+
+    function f() {
+        echo SELF::B;
+        echo seLf::B;
+        echo self::B;
+
+        echo STATIC::B;
+        echo stAtic::B;
+        echo static::B;
+
+        echo PARENT::B;
+        echo parEnt::B;
+        echo parent::B;
+
+        SELF::f();
+        sElf::f();
+        self::f();
+
+        STATIC::f();
+        stAtic::f();
+        static::f();
+
+        PARENT::g();
+        paREnt::g();
+        parent::g();
+
+        PARENT::$name;
+        paREnt::$name;
+        parent::$name;
+
+        SELF::$id;
+        sElf::$id;
+        self::$id;
+
+        STATIC::$id;
+        stAtic::$id;
+        static::$id;
+    }
+}
+`)
+	test.Expect = []string{
+		`SELF should be spelled as self`,
+		`seLf should be spelled as self`,
+		`STATIC should be spelled as static`,
+		`stAtic should be spelled as static`,
+		`PARENT should be spelled as parent`,
+		`parEnt should be spelled as parent`,
+		`SELF should be spelled as self`,
+		`sElf should be spelled as self`,
+		`STATIC should be spelled as static`,
+		`stAtic should be spelled as static`,
+		`PARENT should be spelled as parent`,
+		`paREnt should be spelled as parent`,
+		`PARENT should be spelled as parent`,
+		`paREnt should be spelled as parent`,
+		`SELF should be spelled as self`,
+		`sElf should be spelled as self`,
+		`STATIC should be spelled as static`,
+		`stAtic should be spelled as static`,
+	}
+	linttest.RunFilterMatch(test, `nameCase`)
+}
+
 func TestClassNotFound(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -1998,5 +2080,48 @@ func TestUndefinedConst(t *testing.T) {
 echo UNDEFINED_CONST;
 `)
 	test.Expect = []string{`Undefined constant UNDEFINED_CONST`}
+	test.RunAndMatch()
+}
+
+func TestTrailingCommaForArray(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f() {
+    $_ = [10, 20, 30]; // ok
+
+    $_ = [10, 20,
+    30]; // ok
+
+	$_ = [10,
+		20,
+		30 // need comma
+	];
+
+	$_ = [10,
+		20,
+		30]; // ok
+
+	$_ = [
+		10,
+		20,
+		30]; // ok
+	
+	$_ = [
+        10,
+        20,
+        30,  // ok
+    ];
+
+    $_ = [
+        10,
+        20,
+        30  // need comma
+    ];
+}
+`)
+	test.Expect = []string{
+		`last element in a multi-line array must have a trailing comma`,
+		`last element in a multi-line array must have a trailing comma`,
+	}
 	test.RunAndMatch()
 }

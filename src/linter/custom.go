@@ -42,11 +42,11 @@ type MetaCacher interface {
 	Decode(r io.Reader, filename string) error
 }
 
-// CheckInfo provides a single check (diagnostic) metadata.
+// CheckerInfo provides a single checker (diagnostic) metadata.
 //
 // This structure may change with different revisions of noverify
 // and get new fields that may be used by the linter.
-type CheckInfo struct {
+type CheckerInfo struct {
 	// Name is a diagnostic short name.
 	// If several words are needed, prefer camelCase.
 	Name string
@@ -250,63 +250,59 @@ type BlockCheckerCreateFunc func(*BlockContext) BlockChecker
 type RootCheckerCreateFunc func(*RootContext) RootChecker
 
 const (
-	LevelError       = lintapi.LevelError
-	LevelWarning     = lintapi.LevelWarning
-	LevelInformation = lintapi.LevelInformation
-	LevelHint        = lintapi.LevelHint
-	LevelUnused      = lintapi.LevelUnused
-	LevelDoNotReject = lintapi.LevelMaybe
-	LevelSyntax      = lintapi.LevelSyntax
-	LevelSecurity    = lintapi.LevelSecurity // Like warning, but reported without a context line
+	LevelError    = lintapi.LevelError
+	LevelWarning  = lintapi.LevelWarning
+	LevelNotice   = lintapi.LevelNotice
+	LevelSecurity = lintapi.LevelSecurity // Like warning, but reported without a context line
 )
 
-var (
-	customBlockLinters []BlockCheckerCreateFunc
-	customRootLinters  []RootCheckerCreateFunc
-	metaCachers        []MetaCacher
-	checksInfoRegistry = map[string]CheckInfo{}
-)
-
-// RegisterBlockChecker registers a custom block linter that will be used on block level.
-func RegisterBlockChecker(c BlockCheckerCreateFunc) {
-	customBlockLinters = append(customBlockLinters, c)
+type CheckersRegistry struct {
+	blockCheckers []BlockCheckerCreateFunc
+	rootCheckers  []RootCheckerCreateFunc
+	cachers       []MetaCacher
+	info          map[string]CheckerInfo
 }
 
-// RegisterRootChecker registers a custom root linter that will be used on root level.
+// AddBlockChecker registers a custom block linter that will be used on block level.
+func (reg *CheckersRegistry) AddBlockChecker(c BlockCheckerCreateFunc) {
+	reg.blockCheckers = append(reg.blockCheckers, c)
+}
+
+// AddRootChecker registers a custom root linter that will be used on root level.
 //
 // Root checker indexing phase is expected to be stateless.
 // If indexing results need to be saved (and cached), use RegisterRootCheckerWithCacher.
-func RegisterRootChecker(c RootCheckerCreateFunc) {
-	RegisterRootCheckerWithCacher(nil, c)
+func (reg *CheckersRegistry) AddRootChecker(c RootCheckerCreateFunc) {
+	reg.AddRootCheckerWithCacher(nil, c)
 }
 
-// RegisterRootCheckerWithCacher registers a custom root linter that will be used on root level.
+// AddRootCheckerWithCacher registers a custom root linter that will be used on root level.
 // Specified cacher is used to save (and load) indexing phase results.
-func RegisterRootCheckerWithCacher(cacher MetaCacher, c RootCheckerCreateFunc) {
-	customRootLinters = append(customRootLinters, c)
+func (reg *CheckersRegistry) AddRootCheckerWithCacher(cacher MetaCacher, c RootCheckerCreateFunc) {
+	reg.rootCheckers = append(reg.rootCheckers, c)
 	if cacher != nil {
 		// Validate cacher version string.
 		ver := cacher.Version()
 		if len(ver) > 256 {
 			panic(fmt.Sprintf("register cacher %q: can't handle strings longer that 256 bytes", ver))
 		}
-		for _, cacher := range metaCachers {
+		for _, cacher := range reg.cachers {
 			if cacher.Version() == ver {
 				panic(fmt.Sprintf("register cacher %q: already registered", ver))
 			}
 		}
 	}
-	metaCachers = append(metaCachers, cacher)
+	reg.cachers = append(reg.cachers, cacher)
 }
 
-func DeclareRules(rset *rules.Set) {
+func (reg *CheckersRegistry) DeclareRules(rset *rules.Set) {
 	for _, ruleName := range rset.Names {
 		doc := rset.DocByName[ruleName]
 		comment := doc.Comment
 		if comment == "" {
 			comment = fmt.Sprintf("%s is a dynamic rule", ruleName)
 		}
-		DeclareCheck(CheckInfo{
+		reg.DeclareChecker(CheckerInfo{
 			Name:     ruleName,
 			Comment:  comment,
 			Default:  true,
@@ -317,17 +313,17 @@ func DeclareRules(rset *rules.Set) {
 	}
 }
 
-// DeclareCheck declares a check described by an info.
+// DeclareChecker declares a checker described by an info.
 // It's a good practice to declare *all* provided checks.
 //
-// If check is not declared, for example, there is no way to
+// If checker is not declared, for example, there is no way to
 // make it enabled by default.
-func DeclareCheck(info CheckInfo) {
+func (reg *CheckersRegistry) DeclareChecker(info CheckerInfo) {
 	if info.Name == "" {
-		panic("can't declare a check with an empty name")
+		panic("can't declare a checker with an empty name")
 	}
-	if _, ok := checksInfoRegistry[info.Name]; ok {
-		panic(fmt.Sprintf("check %q already declared", info.Name))
+	if _, ok := reg.info[info.Name]; ok {
+		panic(fmt.Sprintf("checker %q already declared", info.Name))
 	}
 	if info.Before != "" && info.After == "" {
 		panic(fmt.Sprintf("%s: Before is set, but After is empty", info.Name))
@@ -335,14 +331,14 @@ func DeclareCheck(info CheckInfo) {
 	if info.After != "" && info.Before == "" {
 		panic(fmt.Sprintf("%s: After is set, but Before is empty", info.Name))
 	}
-	checksInfoRegistry[info.Name] = info
+	reg.info[info.Name] = info
 }
 
-// GetDeclaredChecks returns a list of all checks that were declared.
-// Slice is sorted by check names.
-func GetDeclaredChecks() []CheckInfo {
-	checks := make([]CheckInfo, 0, len(checksInfoRegistry))
-	for _, c := range checksInfoRegistry {
+// ListDeclared returns a list of all checkers that were declared.
+// Slice is sorted by checker names.
+func (reg *CheckersRegistry) ListDeclared() []CheckerInfo {
+	checks := make([]CheckerInfo, 0, len(reg.info))
+	for _, c := range reg.info {
 		checks = append(checks, c)
 	}
 	sort.Slice(checks, func(i, j int) bool {

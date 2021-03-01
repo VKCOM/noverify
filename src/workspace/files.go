@@ -11,15 +11,15 @@ import (
 type ReadCallback func(ch chan FileInfo)
 
 // ReadFilenames returns callback that reads filenames into channel
-func ReadFilenames(filenames []string, filter *FilenameFilter) ReadCallback {
+func ReadFilenames(filenames []string, filter *FilenameFilter, phpExtensions []string) ReadCallback {
 	return func(ch chan FileInfo) {
 		for _, filename := range filenames {
-			readFilenames(ch, filename, filter)
+			readFilenames(ch, filename, filter, phpExtensions)
 		}
 	}
 }
 
-func readFilenames(ch chan<- FileInfo, filename string, filter *FilenameFilter) {
+func readFilenames(ch chan<- FileInfo, filename string, filter *FilenameFilter, phpExtensions []string) {
 	absFilename, err := filepath.Abs(filename)
 	if err == nil {
 		filename = absFilename
@@ -53,7 +53,7 @@ func readFilenames(ch chan<- FileInfo, filename string, filter *FilenameFilter) 
 			return
 		}
 
-		if !isPHPExtension(filename) {
+		if !isPHPExtension(filename, phpExtensions) {
 			return
 		}
 
@@ -92,7 +92,7 @@ func readFilenames(ch chan<- FileInfo, filename string, filter *FilenameFilter) 
 				return nil
 			}
 
-			if !isPHPExtension(path) {
+			if !isPHPExtension(path, phpExtensions) {
 				return nil
 			}
 			if filter.IgnoreFile(path) {
@@ -122,9 +122,7 @@ func readFilenames(ch chan<- FileInfo, filename string, filter *FilenameFilter) 
 	}
 }
 
-var PHPExtensions = []string{"php", "inc", "php5", "phtml"}
-
-func isPHPExtension(filename string) bool {
+func isPHPExtension(filename string, phpExtensions []string) bool {
 	fileExt := filepath.Ext(filename)
 	if fileExt == "" {
 		return false
@@ -132,7 +130,7 @@ func isPHPExtension(filename string) bool {
 
 	fileExt = fileExt[len("."):]
 
-	for _, ext := range PHPExtensions {
+	for _, ext := range phpExtensions {
 		if fileExt == ext {
 			return true
 		}

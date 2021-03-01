@@ -42,8 +42,9 @@ import (
 //     44 - rename ConstantInfo => ConstInfo
 //     45 - added Mixins field to meta.ClassInfo
 //     46 - changed the way of inferring the return type of functions and methods
-//     47 - interfaces and traits are now created without allocating memory for some unnecessary fields
-const cacheVersion = 47
+//     47 - forced cache version invalidation due to the #921
+//     48 - interfaces and traits are now created without allocating memory for some unnecessary fields
+const cacheVersion = 48
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")
@@ -113,9 +114,9 @@ func createMetaCacheFile(filename, cacheFile string, root *rootWalker) error {
 	return nil
 }
 
-func readMetaCache(r io.Reader, filename string, dst *fileMeta) error {
+func readMetaCache(r io.Reader, cachers []MetaCacher, filename string, dst *fileMeta) error {
 	bufrd := bufio.NewReader(r)
-	if err := readMetaCacheHeader(bufrd); err != nil {
+	if err := readMetaCacheHeader(cachers, bufrd); err != nil {
 		return err
 	}
 
@@ -123,15 +124,15 @@ func readMetaCache(r io.Reader, filename string, dst *fileMeta) error {
 	if err := dec.Decode(dst); err != nil {
 		return err
 	}
-	if err := customCachersDecode(filename, bufrd); err != nil {
+	if err := customCachersDecode(cachers, filename, bufrd); err != nil {
 		return err
 	}
 	return nil
 }
 
-func restoreMetaFromCache(info *meta.Info, filename string, rd io.Reader) error {
+func restoreMetaFromCache(info *meta.Info, cachers []MetaCacher, filename string, rd io.Reader) error {
 	var m fileMeta
-	if err := readMetaCache(rd, filename, &m); err != nil {
+	if err := readMetaCache(rd, cachers, filename, &m); err != nil {
 		return err
 	}
 
@@ -167,7 +168,7 @@ func writeMetaCacheHeader(wr *bufio.Writer, root *rootWalker) error {
 	}
 
 	for i := range root.custom {
-		cacher := metaCachers[i]
+		cacher := root.config.Checkers.cachers[i]
 		if cacher == nil {
 			continue
 		}
@@ -188,7 +189,7 @@ func writeMetaCacheHeader(wr *bufio.Writer, root *rootWalker) error {
 
 func customCachersEncode(wr *bufio.Writer, root *rootWalker) error {
 	for i, c := range root.custom {
-		cacher := metaCachers[i]
+		cacher := root.config.Checkers.cachers[i]
 		if cacher == nil {
 			continue
 		}
@@ -200,7 +201,7 @@ func customCachersEncode(wr *bufio.Writer, root *rootWalker) error {
 	return nil
 }
 
-func readMetaCacheHeader(rd *bufio.Reader) error {
+func readMetaCacheHeader(cachers []MetaCacher, rd *bufio.Reader) error {
 	ver, err := rd.ReadByte()
 	if err != nil {
 		return err
@@ -211,7 +212,7 @@ func readMetaCacheHeader(rd *bufio.Reader) error {
 	}
 
 	var versionBuf [256]byte
-	for _, cacher := range metaCachers {
+	for _, cacher := range cachers {
 		if cacher == nil {
 			continue
 		}
@@ -233,8 +234,8 @@ func readMetaCacheHeader(rd *bufio.Reader) error {
 	return nil
 }
 
-func customCachersDecode(filename string, rd *bufio.Reader) error {
-	for _, cacher := range metaCachers {
+func customCachersDecode(cachers []MetaCacher, filename string, rd *bufio.Reader) error {
+	for _, cacher := range cachers {
 		if cacher == nil {
 			continue
 		}

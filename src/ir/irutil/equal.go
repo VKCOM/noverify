@@ -16,10 +16,10 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !classEqual(x.Class, y.Class) {
+		if !NodeSliceEqual(x.Args, y.Args) {
 			return false
 		}
-		if !NodeSliceEqual(x.Args, y.Args) {
+		if !classEqual(x.Class, y.Class) {
 			return false
 		}
 		return true
@@ -28,13 +28,13 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
 		if x.Variadic != y.Variadic {
 			return false
 		}
 		if x.IsReference != y.IsReference {
-			return false
-		}
-		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -87,15 +87,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.ReturnsRef != y.ReturnsRef {
-			return false
-		}
-		if x.Static != y.Static {
-			return false
-		}
-		if x.PhpDocComment != y.PhpDocComment {
-			return false
-		}
 		if !NodeSliceEqual(x.Params, y.Params) {
 			return false
 		}
@@ -103,6 +94,15 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		if x.ReturnsRef != y.ReturnsRef {
+			return false
+		}
+		if x.Static != y.Static {
+			return false
+		}
+		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
 		return true
@@ -476,15 +476,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.ReturnsRef != y.ReturnsRef {
-			return false
-		}
-		if x.PhpDocComment != y.PhpDocComment {
-			return false
-		}
-		if !NodeEqual(x.MethodName, y.MethodName) {
-			return false
-		}
 		if len(x.Modifiers) != len(y.Modifiers) {
 			return false
 		}
@@ -492,6 +483,9 @@ func NodeEqual(x, y ir.Node) bool {
 			if !NodeEqual(x.Modifiers[i], y.Modifiers[i]) {
 				return false
 			}
+		}
+		if !NodeEqual(x.MethodName, y.MethodName) {
+			return false
 		}
 		if !NodeSliceEqual(x.Params, y.Params) {
 			return false
@@ -502,14 +496,17 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Stmt, y.Stmt) {
 			return false
 		}
+		if x.ReturnsRef != y.ReturnsRef {
+			return false
+		}
+		if x.PhpDocComment != y.PhpDocComment {
+			return false
+		}
 		return true
 	case *ir.ClassStmt:
 		y, ok := y.(*ir.ClassStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if !NodeEqual(x.ClassName, y.ClassName) {
-			return false
 		}
 		if len(x.Modifiers) != len(y.Modifiers) {
 			return false
@@ -518,6 +515,9 @@ func NodeEqual(x, y ir.Node) bool {
 			if !NodeEqual(x.Modifiers[i], y.Modifiers[i]) {
 				return false
 			}
+		}
+		if !NodeEqual(x.ClassName, y.ClassName) {
+			return false
 		}
 		if !classEqual(x.Class, y.Class) {
 			return false
@@ -537,15 +537,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.ReturnsRef != y.ReturnsRef {
-			return false
-		}
-		if x.Static != y.Static {
-			return false
-		}
-		if x.PhpDocComment != y.PhpDocComment {
-			return false
-		}
 		if !NodeSliceEqual(x.Params, y.Params) {
 			return false
 		}
@@ -556,6 +547,15 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
+			return false
+		}
+		if x.ReturnsRef != y.ReturnsRef {
+			return false
+		}
+		if x.Static != y.Static {
+			return false
+		}
+		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
 		return true
@@ -615,13 +615,13 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.PhpDocComment != y.PhpDocComment {
-			return false
-		}
 		if !NodeEqual(x.ConstantName, y.ConstantName) {
 			return false
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
 		return true
@@ -792,10 +792,10 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.Die != y.Die {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
-		if !NodeEqual(x.Expr, y.Expr) {
+		if x.Die != y.Die {
 			return false
 		}
 		return true
@@ -876,12 +876,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.ReturnsRef != y.ReturnsRef {
-			return false
-		}
-		if x.PhpDocComment != y.PhpDocComment {
-			return false
-		}
 		if !NodeEqual(x.FunctionName, y.FunctionName) {
 			return false
 		}
@@ -892,6 +886,12 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
+			return false
+		}
+		if x.ReturnsRef != y.ReturnsRef {
+			return false
+		}
+		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
 		return true
@@ -1289,12 +1289,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.ByRef != y.ByRef {
-			return false
-		}
-		if x.Variadic != y.Variadic {
-			return false
-		}
 		if !NodeEqual(x.VariableType, y.VariableType) {
 			return false
 		}
@@ -1302,6 +1296,12 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		if !NodeEqual(x.DefaultValue, y.DefaultValue) {
+			return false
+		}
+		if x.ByRef != y.ByRef {
+			return false
+		}
+		if x.Variadic != y.Variadic {
 			return false
 		}
 		return true
@@ -1420,13 +1420,13 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.PhpDocComment != y.PhpDocComment {
-			return false
-		}
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
 		return true
@@ -1669,13 +1669,13 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.PhpDocComment != y.PhpDocComment {
-			return false
-		}
 		if !NodeEqual(x.TraitName, y.TraitName) {
 			return false
 		}
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
+			return false
+		}
+		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
 		return true

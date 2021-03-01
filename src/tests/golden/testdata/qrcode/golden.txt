@@ -13,36 +13,39 @@ MAYBE   phpdoc: Missing PHPDoc for "render_image" public method at testdata/qrco
 INFO    deadCode: Unreachable code at testdata/qrcode/qrcode.php:155
     return null;
            ^^^^
-INFO    unused: Variable mode is unused (use $_ to ignore this inspection) at testdata/qrcode/qrcode.php:177
+MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/qrcode/qrcode.php:185
+      'b' => $mtx
+      ^^^^^^^^^^^
+WARNING unused: Variable mode is unused (use $_ to ignore this inspection) at testdata/qrcode/qrcode.php:177
     list($mode, $vers, $ec, $data) = $this->qr_encode_data($data, $ecl);
          ^^^^^
-INFO    undefined: Variable might have not been defined: code at testdata/qrcode/qrcode.php:221
+WARNING undefined: Variable might have not been defined: code at testdata/qrcode/qrcode.php:221
     while (count($code) % 8) {
                  ^^^^^
-INFO    caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:297
+WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:297
       case 2:  /* 27 - 40 */
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-INFO    caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:300
+WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:300
       case 1:  /* 10 - 26 */
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-INFO    caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:318
+WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:318
         case 3:
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-INFO    caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:322
+WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:322
         case 2:
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-INFO    caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:341
+WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:341
       case 2:  /* 27 - 40 */
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-INFO    caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:344
+WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:344
       case 1:  /* 10 - 26 */
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-INFO    caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:393
+WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:393
       case 1:  /* 10 - 26 */
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-INFO    caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:430
+WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:430
       case 2:  /* 27 - 40 */
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-INFO    caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:433
+WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:433
       case 1:  /* 10 - 26 */
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
