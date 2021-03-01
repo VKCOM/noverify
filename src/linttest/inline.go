@@ -179,7 +179,7 @@ func (c *commentParser) parsePartComment(parts []string, first bool) (string, er
 }
 
 func splitComment(comment string) []string {
-	if len(comment) == 0 {
+	if comment == "" {
 		return nil
 	}
 
