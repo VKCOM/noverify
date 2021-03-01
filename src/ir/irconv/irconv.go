@@ -1831,6 +1831,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		if n == nil {
 			return (*ir.NopStmt)(nil)
 		}
+
+		if bytes.Contains(n.SemiColonTkn.Value, []byte("?>")) {
+			return &ir.CloseTagStmt{
+				Position: n.Position,
+				TagTkn:   n.SemiColonTkn,
+			}
+		}
+
 		out := &ir.NopStmt{}
 		out.Position = n.Position
 		out.SemiColonTkn = n.SemiColonTkn

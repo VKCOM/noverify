@@ -508,6 +508,13 @@ func (n *CloneExpr) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
+func (n *CloseTagStmt) Walk(v Visitor) {
+	if !v.EnterNode(n) {
+		return
+	}
+	v.LeaveNode(n)
+}
+
 func (n *ClosureExpr) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
