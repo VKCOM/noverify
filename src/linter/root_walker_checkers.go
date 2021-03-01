@@ -279,12 +279,11 @@ func (d *rootWalker) checkTraitUse(n *ir.TraitUseStmt) {
 
 func (d *rootWalker) checkPropertyList(pl *ir.PropertyListStmt) {
 	d.checkPropertyModifiers(pl)
+	d.checkCommentMisspellings(pl, pl.PhpDocComment)
 
 	for _, pNode := range pl.Properties {
 		prop := pNode.(*ir.PropertyStmt)
-
-		d.checkCommentMisspellings(prop, prop.PhpDocComment)
-		d.checkPHPDocVar(prop, prop.PhpDoc)
+		d.checkPHPDocVar(prop, pl.PhpDoc)
 	}
 }
 
@@ -296,10 +295,10 @@ func (d *rootWalker) checkPropertyModifiers(pl *ir.PropertyListStmt) {
 
 func (d *rootWalker) checkClassConstList(s *ir.ClassConstListStmt) {
 	d.checkConstantAccessLevel(s)
-
-	for _, constant := range s.Consts {
-		d.checkCommentMisspellings(constant, constant.(*ir.ConstantStmt).PhpDocComment)
-	}
+	d.checkCommentMisspellings(s, s.PhpDocComment)
+	//for _, constant := range s.Consts {
+	//	d.checkCommentMisspellings(constant, constant.(*ir.ConstantStmt).PhpDocComment)
+	//}
 }
 
 func (d *rootWalker) checkConstantAccessLevel(s *ir.ClassConstListStmt) {

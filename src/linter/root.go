@@ -895,13 +895,12 @@ func (d *rootWalker) handlePropertyList(pl *ir.PropertyListStmt) {
 	hintType := d.handleTypeHint(pl.Type)
 
 	d.checkCommentMisspellings(pl, pl.PhpDocComment)
-	typ := d.parsePHPDocVar(pl, pl.PhpDoc)
+	typ := d.parsePHPDocVar(pl.PhpDoc)
 
 	for _, pNode := range pl.Properties {
 		prop := pNode.(*ir.PropertyStmt)
 		propName := prop.Variable.Name
 
-		typ := d.parsePHPDocVar(prop.PhpDoc)
 		if prop.Expr != nil {
 			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, prop.Expr))
 		}
@@ -2032,12 +2031,6 @@ func (d *rootWalker) compareKeywordWithTokenCase(n ir.Node, tok *token.Token, ke
 		d.Report(n, LevelWarning, "keywordCase", "Use %s instead of %s",
 			wantKwd, haveKwd)
 	}
-}
-
-func (d *rootWalker) checkKeywordCase(n ir.Node, keyword string) {
-	// Only works for nodes that have a keyword of interest
-	// as the leftmost token.
-	d.checkKeywordCasePos(n, ir.GetPosition(n).StartPos, keyword)
 }
 
 func (d *rootWalker) beforeEnterFile() {
