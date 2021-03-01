@@ -3,15 +3,12 @@ package main
 import (
 	"testing"
 
-	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
 func TestAssignmentAsExpression(t *testing.T) {
 	test := linttest.NewSuite(t)
-	config := linter.NewConfig()
-	addCheckers(config)
-	test.Linter = linter.NewLinter(config)
+	addCheckers(test.Config())
 
 	test.AddFile(`<?php
 	// phpdoc annotations are not required for NoVerify in simple cases
