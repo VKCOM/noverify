@@ -890,15 +890,9 @@ type String struct {
 // BadString is a string that we couldn't interpret correctly.
 // The $Value contains uninterpreted (raw) string bytes.
 // $Error contains the reason why this string is "bad".
-//
-// TODO: Maybe make String + Error field
 type BadString struct {
-	Position     *position.Position
-	MinusTkn     *token.Token
-	StringTkn    *token.Token
-	Value        string
-	DoubleQuotes bool
-	Error        string
+	String
+	Error string
 }
 
 // BreakStmt is a `break $Expr` statement.

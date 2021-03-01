@@ -2267,12 +2267,14 @@ func convString(n *ast.ScalarString) ir.Node {
 	s, err := interpretString(unquoted, quote)
 	if err != nil {
 		return &ir.BadString{
-			MinusTkn:     n.MinusTkn,
-			StringTkn:    n.StringTkn,
-			Position:     n.Position,
-			Value:        string(unquoted),
-			Error:        err.Error(),
-			DoubleQuotes: out.DoubleQuotes,
+			String: ir.String{
+				MinusTkn:     n.MinusTkn,
+				StringTkn:    n.StringTkn,
+				Position:     n.Position,
+				Value:        string(unquoted),
+				DoubleQuotes: out.DoubleQuotes,
+			},
+			Error: err.Error(),
 		}
 	}
 	out.Value = s
