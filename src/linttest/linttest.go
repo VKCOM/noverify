@@ -220,17 +220,14 @@ func (s *Suite) RunRulesTest() {
 		return
 	}
 
-	s.IgnoreUndeclaredChecks = true
-
 	rparser := rules.NewParser()
 	rset, err := rparser.Parse("<test>", strings.NewReader(s.RuleFile))
 	if err != nil {
 		s.t.Fatalf("parse rules: %v", err)
 	}
 
-	config := linter.NewConfig()
-	config.Rules = rset
-	s.Linter = linter.NewLinter(config)
+	s.Config().Rules = rset
+	s.IgnoreUndeclaredChecks()
 
 	ruleNamesSet := make(map[string]struct{}, len(rset.Names))
 	for _, name := range rset.Names {
