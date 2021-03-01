@@ -10,11 +10,16 @@ import (
 // In other words, structs defined in this file do not implement the Node interface.
 
 // Class is a common shape between the ClassStmt and AnonClassExpr.
-// It doesn't include positions/freefloating info.
+// It doesn't include positions info.
 type Class struct {
+	Extends    *ClassExtendsStmt
+	Implements *ClassImplementsStmt
+	Stmts      []Node
+
+	Doc
+}
+
+type Doc struct {
 	PhpDocComment string
 	PhpDoc        []phpdoc.CommentPart
-	Extends       *ClassExtendsStmt
-	Implements    *ClassImplementsStmt
-	Stmts         []Node
 }

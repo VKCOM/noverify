@@ -379,16 +379,6 @@ func (n *BreakStmt) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
-func (n *CaseListStmt) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	for _, nn := range n.Cases {
-		nn.Walk(v)
-	}
-	v.LeaveNode(n)
-}
-
 func (n *CaseStmt) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
@@ -518,6 +508,13 @@ func (n *CloneExpr) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
+func (n *CloseTagStmt) Walk(v Visitor) {
+	if !v.EnterNode(n) {
+		return
+	}
+	v.LeaveNode(n)
+}
+
 func (n *ClosureExpr) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
@@ -537,7 +534,7 @@ func (n *ClosureExpr) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
-func (n *ClosureUseExpr) Walk(v Visitor) {
+func (n *ClosureUsesExpr) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
 	}
@@ -1585,8 +1582,8 @@ func (n *SwitchStmt) Walk(v Visitor) {
 	if n.Cond != nil {
 		n.Cond.Walk(v)
 	}
-	if n.CaseList != nil {
-		n.CaseList.Walk(v)
+	for _, nn := range n.Cases {
+		nn.Walk(v)
 	}
 	v.LeaveNode(n)
 }

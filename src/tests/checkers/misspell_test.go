@@ -5,16 +5,13 @@ import (
 
 	"github.com/client9/misspell"
 
-	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
 //nolint:misspell // misspelled on purpose
 func TestMisspellPhpdocPositive(t *testing.T) {
-	config := linter.NewConfig()
-	config.TypoFixer = misspell.New()
 	test := linttest.NewSuite(t)
-	test.Linter = linter.NewLinter(config)
+	test.Config().TypoFixer = misspell.New()
 	test.AddFile(`<?php
 /**
  * This function is a pure perfektion.
@@ -53,10 +50,8 @@ class c1 {
 
 //nolint:misspell // misspelled on purpose
 func TestMisspellPhpdocNegative(t *testing.T) {
-	config := linter.NewConfig()
-	config.TypoFixer = misspell.New()
 	test := linttest.NewSuite(t)
-	test.Linter = linter.NewLinter(config)
+	test.Config().TypoFixer = misspell.New()
 	test.AddFile(`<?php
 interface Responsable {}
 
@@ -90,10 +85,8 @@ class c1 {
 
 //nolint:misspell // misspelled on purpose
 func TestMisspellNamePositive(t *testing.T) {
-	config := linter.NewConfig()
-	config.TypoFixer = misspell.New()
 	test := linttest.NewSuite(t)
-	test.Linter = linter.NewLinter(config)
+	test.Config().TypoFixer = misspell.New()
 	test.AddFile(`<?php
 function unconditionnally_rollback() {}
 
@@ -127,10 +120,8 @@ class d {
 
 //nolint:misspell // misspelled on purpose
 func TestMisspellNameNegative(t *testing.T) {
-	config := linter.NewConfig()
-	config.TypoFixer = misspell.New()
 	test := linttest.NewSuite(t)
-	test.Linter = linter.NewLinter(config)
+	test.Config().TypoFixer = misspell.New()
 	test.AddFile(`<?php
 function includ() {
 }

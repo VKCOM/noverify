@@ -1,6 +1,7 @@
 package irconv
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"strconv"
@@ -8,25 +9,57 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/name"
+	"github.com/z7zmey/php-parser/pkg/ast"
+	"github.com/z7zmey/php-parser/pkg/position"
+	"github.com/z7zmey/php-parser/pkg/token"
 )
 
-func fullyQualifiedToString(n *name.FullyQualified) string {
+func fullyQualifiedToString(n *ast.NameFullyQualified) string {
 	s := make([]string, 1, len(n.Parts)+1)
 	for _, v := range n.Parts {
-		s = append(s, v.(*name.NamePart).Value)
+		s = append(s, string(v.(*ast.NamePart).Value))
 	}
 	return strings.Join(s, `\`)
 }
 
 // namePartsToString converts slice of *name.NamePart to string
-func namePartsToString(parts []node.Node) string {
+func namePartsToString(parts []ast.Vertex) string {
 	s := make([]string, 0, len(parts))
 	for _, v := range parts {
-		s = append(s, v.(*name.NamePart).Value)
+		s = append(s, string(v.(*ast.NamePart).Value))
 	}
 	return strings.Join(s, `\`)
+}
+
+// namePartsToToken converts slice of *name.NamePart tokens to single token
+func namePartsToToken(parts []ast.Vertex) *token.Token {
+	if len(parts) == 0 {
+		return &token.Token{}
+	}
+
+	ff := make([]*token.Token, 0, len(parts))
+	valueParts := make([][]byte, 0, len(parts))
+
+	for _, v := range parts {
+		switch v := v.(type) {
+		case *ast.NamePart:
+			ff = append(ff, v.StringTkn)
+			valueParts = append(valueParts, v.Value)
+		case *ast.ScalarEncapsedStringPart:
+			ff = append(ff, v.EncapsedStrTkn)
+			valueParts = append(valueParts, v.Value)
+		}
+	}
+
+	startPos := parts[0].GetPosition()
+	endPos := parts[len(parts)-1].GetPosition()
+
+	return &token.Token{
+		ID:           token.T_STRING,
+		Value:        bytes.Join(valueParts, []byte(`\`)),
+		Position:     position.NewPosition(startPos.StartLine, endPos.EndLine, startPos.StartPos, endPos.EndPos),
+		FreeFloating: ff,
+	}
 }
 
 // interpretString returns s with all escape sequences replaced.
@@ -34,9 +67,9 @@ func namePartsToString(parts []node.Node) string {
 // It tries to follow PHP rules as close are possible, but also
 // expects strings to be valid and parseable by the compliant PHP-parser.
 //
-// If, for whatever reason, a bad strign escape was encountered,
+// If, for whatever reason, a bad string escape was encountered,
 // second returned value will be false.
-func interpretString(s string, quote byte) (string, error) {
+func interpretString(s []byte, quote byte) (string, error) {
 	switch quote {
 	case '\'', '"':
 		// OK
@@ -44,18 +77,18 @@ func interpretString(s string, quote byte) (string, error) {
 		panic("invalid quote type")
 	}
 
-	if !strings.Contains(s, `\`) {
+	if !bytes.ContainsRune(s, '\\') {
 		// Fast path: nothing to replace.
-		return s, nil
+		return string(s), nil
 	}
 
 	// To understand what's going on, consult the manual:
 	// https://www.php.net/manual/en/language.types.string.php#language.types.string.syntax.double
 
 	if quote == '"' {
-		return interpretStringQ2(s)
+		return interpretStringQ2(string(s))
 	}
-	return interpretStringQ1(s)
+	return interpretStringQ1(string(s))
 }
 
 // interpretStringQ1 returns s interpreted value as a single-quoted PHP string.

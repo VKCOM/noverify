@@ -228,7 +228,7 @@ func (p *PrettyPrinter) printNode(n ir.Node) {
 		p.printExprClassConstFetch(n)
 	case *ir.CloneExpr:
 		p.printExprClone(n)
-	case *ir.ClosureUseExpr:
+	case *ir.ClosureUsesExpr:
 		p.printExprClosureUse(n)
 	case *ir.ClosureExpr:
 		p.printExprClosure(n)
@@ -351,6 +351,8 @@ func (p *PrettyPrinter) printNode(n ir.Node) {
 		p.printStmtNamespace(n)
 	case *ir.NopStmt:
 		p.printStmtNop(n)
+	case *ir.CloseTagStmt:
+		p.printStmtCloseTag(n)
 	case *ir.PropertyListStmt:
 		p.printStmtPropertyList(n)
 	case *ir.PropertyStmt:
@@ -884,7 +886,7 @@ func (p *PrettyPrinter) printExprClone(n *ir.CloneExpr) {
 	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printExprClosureUse(n *ir.ClosureUseExpr) {
+func (p *PrettyPrinter) printExprClosureUse(n *ir.ClosureUsesExpr) {
 	writeString(p.w, "use (")
 	p.joinPrint(", ", n.Uses)
 	writeString(p.w, ")")
@@ -1606,6 +1608,10 @@ func (p *PrettyPrinter) printStmtNop(n *ir.NopStmt) {
 	writeString(p.w, ";")
 }
 
+func (p *PrettyPrinter) printStmtCloseTag(n *ir.CloseTagStmt) {
+	writeString(p.w, "?>")
+}
+
 func (p *PrettyPrinter) printStmtPropertyList(n *ir.PropertyListStmt) {
 	p.joinPrintIdents(" ", n.Modifiers)
 	writeString(p.w, " ")
@@ -1657,8 +1663,7 @@ func (p *PrettyPrinter) printStmtSwitch(n *ir.SwitchStmt) {
 
 	if n.AltSyntax {
 		writeString(p.w, ") :\n")
-		s := n.CaseList.Cases
-		p.printNodes(s)
+		p.printNodes(n.Cases)
 
 		writeString(p.w, "\n")
 		p.printIndent()
@@ -1667,7 +1672,7 @@ func (p *PrettyPrinter) printStmtSwitch(n *ir.SwitchStmt) {
 		writeString(p.w, ")")
 
 		writeString(p.w, " {\n")
-		p.printNodes(n.CaseList.Cases)
+		p.printNodes(n.Cases)
 		writeString(p.w, "\n")
 		p.printIndent()
 		writeString(p.w, "}")

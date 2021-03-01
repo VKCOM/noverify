@@ -10,9 +10,9 @@ import (
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/linter/lintapi"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parseutil"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/phpgrep"
@@ -387,15 +387,16 @@ func (p *parser) parseFuncComment(fn *ir.FunctionStmt) error {
 }
 
 func (p *parser) commentText(n ir.Node) string {
-	for _, ff := range (*n.GetFreeFloating())[freefloating.Start] {
-		if ff.StringType != freefloating.CommentType {
-			continue
-		}
-		if strings.HasPrefix(ff.Value, "/**") && magicComment.MatchString(ff.Value) {
-			return ff.Value
-		}
+	doc, found := irutil.FindPhpDoc(n)
+	if !found {
+		return ""
 	}
-	return ""
+
+	if !magicComment.MatchString(doc) {
+		return ""
+	}
+
+	return doc
 }
 
 func (p *parser) errorf(n ir.Node, format string, args ...interface{}) *parseError {
