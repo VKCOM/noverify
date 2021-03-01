@@ -507,6 +507,10 @@ func GetFirstToken(n Node) *token.Token {
 		if n.Expr != nil {
 			return GetFirstToken(n.Expr)
 		}
+	case *CloseTagStmt:
+		if n.TagTkn != nil {
+			return n.TagTkn
+		}
 	case *ClosureExpr:
 		if n.StaticTkn != nil {
 			return n.StaticTkn

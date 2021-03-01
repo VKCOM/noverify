@@ -529,6 +529,12 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		return true
+	case *ir.CloseTagStmt:
+		y, ok := y.(*ir.CloseTagStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		return true
 	case *ir.ClosureExpr:
 		y, ok := y.(*ir.ClosureExpr)
 		if !ok || x == nil || y == nil {

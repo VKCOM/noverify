@@ -197,11 +197,6 @@ func (b *blockLinter) checkNopStmt(n *ir.NopStmt) {
 		return
 	}
 
-	// Check whether it's `?>`; it it is, ignore it.
-	if bytes.HasPrefix(n.SemiColonTkn.Value, []byte("?>")) {
-		return
-	}
-
 	b.report(n, LevelNotice, "emptyStmt", "semicolon (;) is not needed here, it can be safely removed")
 }
 

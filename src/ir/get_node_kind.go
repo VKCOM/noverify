@@ -47,6 +47,7 @@ const (
 	KindClassMethodStmt
 	KindClassStmt
 	KindCloneExpr
+	KindCloseTagStmt
 	KindClosureExpr
 	KindClosureUsesExpr
 	KindCoalesceExpr
@@ -243,6 +244,8 @@ func GetNodeKind(x Node) NodeKind {
 		return KindClassStmt
 	case *CloneExpr:
 		return KindCloneExpr
+	case *CloseTagStmt:
+		return KindCloseTagStmt
 	case *ClosureExpr:
 		return KindClosureExpr
 	case *ClosureUsesExpr:

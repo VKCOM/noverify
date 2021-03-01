@@ -346,6 +346,9 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
+	case *ir.CloseTagStmt:
+		clone := *x
+		return &clone
 	case *ir.ClosureExpr:
 		clone := *x
 		clone.Params = NodeSliceClone(x.Params)

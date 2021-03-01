@@ -364,6 +364,12 @@ func (n *CloneExpr) IterateTokens(cb func(*token.Token) bool) {
 	}
 }
 
+func (n *CloseTagStmt) IterateTokens(cb func(*token.Token) bool) {
+	if !traverseToken(n.TagTkn, cb) {
+		return
+	}
+}
+
 func (n *ClosureExpr) IterateTokens(cb func(*token.Token) bool) {
 	if !traverseToken(n.StaticTkn, cb) {
 		return

@@ -351,6 +351,8 @@ func (p *PrettyPrinter) printNode(n ir.Node) {
 		p.printStmtNamespace(n)
 	case *ir.NopStmt:
 		p.printStmtNop(n)
+	case *ir.CloseTagStmt:
+		p.printStmtCloseTag(n)
 	case *ir.PropertyListStmt:
 		p.printStmtPropertyList(n)
 	case *ir.PropertyStmt:
@@ -1604,6 +1606,10 @@ func (p *PrettyPrinter) printStmtNamespace(n *ir.NamespaceStmt) {
 
 func (p *PrettyPrinter) printStmtNop(n *ir.NopStmt) {
 	writeString(p.w, ";")
+}
+
+func (p *PrettyPrinter) printStmtCloseTag(n *ir.CloseTagStmt) {
+	writeString(p.w, "?>")
 }
 
 func (p *PrettyPrinter) printStmtPropertyList(n *ir.PropertyListStmt) {

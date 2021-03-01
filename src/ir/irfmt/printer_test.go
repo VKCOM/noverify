@@ -448,11 +448,9 @@ endswitch;
 
 `,
 
-		`;
-?>test
-<?php
+		`echo 100;
+?>test<?php
 `,
-
 		`namespace {
     interface Foo extends Bar, Baz
     {
