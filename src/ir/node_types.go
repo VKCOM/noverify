@@ -867,7 +867,6 @@ type Lnumber struct {
 }
 
 // MagicConstant is a special PHP constant like __FILE__ or __CLASS__.
-// TODO: do we really need a separate node for these constants?
 type MagicConstant struct {
 	Position      *position.Position
 	MagicConstTkn *token.Token
