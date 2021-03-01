@@ -303,6 +303,9 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 	case *ir.NopStmt:
 		_, ok := y.(*ir.NopStmt)
 		return ok
+	case *ir.CloseTagStmt:
+		_, ok := y.(*ir.CloseTagStmt)
+		return ok
 	case *ir.DoStmt:
 		y, ok := y.(*ir.DoStmt)
 		return ok && m.eqNode(state, x.Cond, y.Cond) && m.eqNode(state, x.Stmt, y.Stmt)
