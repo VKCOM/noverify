@@ -1189,7 +1189,6 @@ type GotoStmt struct {
 
 // GroupUseStmt is a `use $UseType $Prefix\{ $UseList }` statement.
 // $UseType is a "function" or "const".
-// TODO: change $UseType type to *Identifier?
 type GroupUseStmt struct {
 	Position              *position.Position
 	UseTkn                *token.Token
