@@ -296,9 +296,6 @@ func (d *rootWalker) checkPropertyModifiers(pl *ir.PropertyListStmt) {
 func (d *rootWalker) checkClassConstList(s *ir.ClassConstListStmt) {
 	d.checkConstantAccessLevel(s)
 	d.checkCommentMisspellings(s, s.PhpDocComment)
-	//for _, constant := range s.Consts {
-	//	d.checkCommentMisspellings(constant, constant.(*ir.ConstantStmt).PhpDocComment)
-	//}
 }
 
 func (d *rootWalker) checkConstantAccessLevel(s *ir.ClassConstListStmt) {
