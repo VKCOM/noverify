@@ -776,6 +776,11 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 	}
 
 	switch fqName {
+	case `\strip_tags`:
+		if len(e.Args) < 2 {
+			break
+		}
+		b.checkStripTags(e)
 	case `\preg_match`, `\preg_match_all`, `\preg_replace`, `\preg_split`:
 		if len(e.Args) < 1 {
 			break
@@ -787,6 +792,74 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 		}
 		// TODO: handle fprintf as well?
 		b.checkFormatString(e, e.Arg(0))
+	}
+}
+
+func (b *blockLinter) checkStripTags(e *ir.FunctionCallExpr) {
+	reportArg := func(n ir.Node, format string, args ...interface{}) {
+		message := fmt.Sprintf(format, args...)
+		b.report(n, LevelWarning, "stripTags", "$allowed_tags argument: "+message)
+	}
+
+	normalizeTag := func(s string) string {
+		s = strings.ReplaceAll(s, " ", "")
+		if strings.HasSuffix(s, "/>") {
+			s = strings.TrimSuffix(s, "/>") + ">"
+		}
+		s = strings.ToLower(s)
+		return s
+	}
+
+	set := make(map[string]string)
+	addTag := func(n ir.Node, tag string) {
+		normalized := normalizeTag(tag)
+		if prev := set[normalized]; prev != "" {
+			if prev == tag {
+				reportArg(n, "tag '%s' is duplicated", tag)
+			} else {
+				reportArg(n, "tag '%s' is duplicated, previously spelled as '%s'", tag, prev)
+			}
+		} else {
+			set[normalized] = tag
+		}
+	}
+
+	switch allowed := e.Arg(1).Expr.(type) {
+	case *ir.ArrayExpr:
+		for _, item := range allowed.Items {
+			literal, ok := item.Val.(*ir.String)
+			if !ok {
+				continue
+			}
+			s := strings.TrimSpace(literal.Value)
+			if strings.HasPrefix(s, "<") {
+				reportArg(item.Val, "'<' and '>' are not needed for tags when using array argument")
+			}
+			addTag(literal, literal.Value)
+		}
+	case *ir.String:
+		s := allowed.Value
+		if strings.ContainsAny(s, `'"`) {
+			reportArg(allowed, "using values/attrs is an error; they make matching always fail")
+			break
+		}
+		for {
+			s = strings.TrimLeft(s, " \n\r\t")
+			end := strings.IndexByte(s, '>')
+			if end == -1 {
+				break
+			}
+			tag := s[:end+1]
+			if strings.HasSuffix(tag, "/>") {
+				fixed := strings.TrimSuffix(tag, "/>") + ">"
+				reportArg(allowed, "'%s' should be written as '%s'", tag, fixed)
+			}
+			if strings.Contains(tag, " ") {
+				reportArg(allowed, "tag '%s' should not contain spaces", tag)
+			}
+			addTag(allowed, tag)
+			s = s[end+1:]
+		}
 	}
 }
 
@@ -837,6 +910,8 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 		return
 	}
 
+	b.checkClassSpecialNameCase(e, call.className)
+
 	if !call.isMagic {
 		b.checkCallArgs(e.Call, e.Args, call.methodInfo.Info)
 	}
@@ -885,6 +960,8 @@ func (b *blockLinter) checkStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) {
 		return
 	}
 
+	b.checkClassSpecialNameCase(e, fetch.className)
+
 	if !fetch.isFound && !b.classParseState().IsTrait {
 		b.report(e.Property, LevelError, "undefined", "Property %s::$%s does not exist", fetch.className, fetch.propertyName)
 	}
@@ -900,12 +977,36 @@ func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
 		return
 	}
 
+	b.checkClassSpecialNameCase(e, fetch.className)
+
 	if !fetch.isFound && !b.classParseState().IsTrait {
 		b.walker.r.Report(e.ConstantName, LevelError, "undefined", "Class constant %s::%s does not exist", fetch.className, fetch.constName)
 	}
 
 	if fetch.isFound && !canAccess(b.classParseState(), fetch.implClassName, fetch.info.AccessLevel) {
 		b.walker.r.Report(e.ConstantName, LevelError, "accessLevel", "Cannot access %s constant %s::%s", fetch.info.AccessLevel, fetch.implClassName, fetch.constName)
+	}
+}
+
+func (b *blockLinter) checkClassSpecialNameCase(n ir.Node, className string) {
+	// Since for resolving class names we use the solver.GetClassName function,
+	// which resolves unknown classes as '\' + the passed class name, then for
+	// misspelled special class names (self, static, parent) we get something
+	// like '\SELF'. For correctly spelled ones, we get the specific class name.
+	// Therefore, to catch this case, we compare the resolved class name with
+	// '\' + the correct spelling of the special name, case insensitive.
+	// If there is a match, it means that the name was originally spelled in the wrong case.
+
+	names := []string{
+		`\self`,
+		`\static`,
+		`\parent`,
+	}
+
+	for _, name := range names {
+		if strings.EqualFold(className, name) {
+			b.walker.r.Report(n, LevelNotice, "nameCase", "%s should be spelled as %s", strings.TrimPrefix(className, `\`), strings.TrimPrefix(name, `\`))
+		}
 	}
 }
 

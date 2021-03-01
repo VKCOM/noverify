@@ -797,7 +797,7 @@ func TestCustomUnusedVarRegex(t *testing.T) {
 	config.IsDiscardVar = isDiscardVar
 
 	test := linttest.NewSuite(t)
-	test.Linter = linter.NewLinter(config)
+	test.UseConfig(config)
 	test.AddFile(`<?php
 class Foo {
   public $_;
@@ -813,7 +813,7 @@ $_ = __FILE__;
 	test.RunAndMatch()
 
 	test = linttest.NewSuite(t)
-	test.Linter = linter.NewLinter(config)
+	test.UseConfig(config)
 	test.AddFile(`<?php
 $_unused = 10;
 
@@ -829,7 +829,7 @@ function f() {
 `)
 
 	test = linttest.NewSuite(t)
-	test.Linter = linter.NewLinter(config)
+	test.UseConfig(config)
 	test.AddFile(`<?php
 function var_dump($v) {}
 $_global = 120;
@@ -1844,6 +1844,84 @@ func_A();
 		`\foobar should be spelled \FooBar`,
 		`Method_a should be spelled method_a`,
 		`\func_A should be spelled \func_a`,
+	}
+	linttest.RunFilterMatch(test, `nameCase`)
+}
+
+func TestClassSpecialNameCase(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class B {
+    const B = 100;
+
+    public static $name = "";
+
+    public static function g() {}
+}
+
+class A extends B {
+    const B = 100;
+
+    public static $id = 0;
+
+    function f() {
+        echo SELF::B;
+        echo seLf::B;
+        echo self::B;
+
+        echo STATIC::B;
+        echo stAtic::B;
+        echo static::B;
+
+        echo PARENT::B;
+        echo parEnt::B;
+        echo parent::B;
+
+        SELF::f();
+        sElf::f();
+        self::f();
+
+        STATIC::f();
+        stAtic::f();
+        static::f();
+
+        PARENT::g();
+        paREnt::g();
+        parent::g();
+
+        PARENT::$name;
+        paREnt::$name;
+        parent::$name;
+
+        SELF::$id;
+        sElf::$id;
+        self::$id;
+
+        STATIC::$id;
+        stAtic::$id;
+        static::$id;
+    }
+}
+`)
+	test.Expect = []string{
+		`SELF should be spelled as self`,
+		`seLf should be spelled as self`,
+		`STATIC should be spelled as static`,
+		`stAtic should be spelled as static`,
+		`PARENT should be spelled as parent`,
+		`parEnt should be spelled as parent`,
+		`SELF should be spelled as self`,
+		`sElf should be spelled as self`,
+		`STATIC should be spelled as static`,
+		`stAtic should be spelled as static`,
+		`PARENT should be spelled as parent`,
+		`paREnt should be spelled as parent`,
+		`PARENT should be spelled as parent`,
+		`paREnt should be spelled as parent`,
+		`SELF should be spelled as self`,
+		`sElf should be spelled as self`,
+		`STATIC should be spelled as static`,
+		`stAtic should be spelled as static`,
 	}
 	linttest.RunFilterMatch(test, `nameCase`)
 }
