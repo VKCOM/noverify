@@ -98,7 +98,7 @@ func (t *quickFixTest) runQuickFixTest() {
 			}
 
 			test := linttest.NewSuite(t)
-			test.Linter = linter.NewLinter(linterConfig)
+			test.UseConfig(linterConfig)
 			test.AddNamedFile(fixedFileName, string(testFileContent))
 			_ = test.RunLinter()
 

@@ -796,7 +796,7 @@ func TestCustomUnusedVarRegex(t *testing.T) {
 	config.IsDiscardVar = isDiscardVar
 
 	test := linttest.NewSuite(t)
-	test.Linter = linter.NewLinter(config)
+	test.UseConfig(config)
 	test.AddFile(`<?php
 class Foo {
   public $_;
@@ -812,7 +812,7 @@ $_ = __FILE__;
 	test.RunAndMatch()
 
 	test = linttest.NewSuite(t)
-	test.Linter = linter.NewLinter(config)
+	test.UseConfig(config)
 	test.AddFile(`<?php
 $_unused = 10;
 
@@ -828,7 +828,7 @@ function f() {
 `)
 
 	test = linttest.NewSuite(t)
-	test.Linter = linter.NewLinter(config)
+	test.UseConfig(config)
 	test.AddFile(`<?php
 function var_dump($v) {}
 $_global = 120;

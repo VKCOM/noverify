@@ -78,7 +78,7 @@ func NewGoldenTestSuite(t *testing.T, name, baseDir, goldenFileName string) *Gol
 func PrepareGoldenTestSuite(s *GoldenTestSuite, t *testing.T, l *linter.Linter, baseDir, goldenFileName string) {
 	s.suite = NewSuite(t)
 	if l != nil {
-		s.suite.Linter = l
+		s.suite.UseLinter(l)
 	}
 	s.BaseDir = baseDir
 	s.prepared = true
