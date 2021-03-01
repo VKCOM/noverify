@@ -202,6 +202,8 @@ $xs ??= $a; // Ok
 		`expression evaluated but not used`,
 		`expression evaluated but not used`,
 		`expression evaluated but not used`,
+		`expression evaluated but not used`,
+		`expression evaluated but not used`,
 	}
 	test.RunAndMatch()
 }

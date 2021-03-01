@@ -9,13 +9,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/z7zmey/php-parser/pkg/position"
+	"github.com/z7zmey/php-parser/pkg/token"
+
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/constfold"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/freefloating"
-	"github.com/VKCOM/noverify/src/php/parser/position"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/phpgrep"
 	"github.com/VKCOM/noverify/src/quickfix"
@@ -105,6 +106,44 @@ func (d *rootWalker) File() *workspace.File {
 	return d.file
 }
 
+func (d *rootWalker) handleCommentToken(t *token.Token) bool {
+	if !phpdoc.IsPHPDocToken(t) {
+		return true
+	}
+
+	for _, ln := range phpdoc.Parse(d.ctx.phpdocTypeParser, string(t.Value)) {
+		if ln.Name() != "linter" {
+			continue
+		}
+
+		for _, p := range ln.(*phpdoc.RawCommentPart).Params {
+			if p != "disable" {
+				continue
+			}
+			if d.linterDisabled {
+				needleLine := ln.Line() + t.Position.StartLine - 1
+				d.ReportByLine(needleLine, LevelWarning, "linterError", "Linter is already disabled for this file")
+				continue
+			}
+			canDisable := false
+			if d.allowDisabledRegexp != nil {
+				canDisable = d.allowDisabledRegexp.MatchString(d.ctx.st.CurrentFile)
+			}
+			d.linterDisabled = canDisable
+			if !canDisable {
+				needleLine := ln.Line() + t.Position.StartLine - 1
+				d.ReportByLine(needleLine, LevelWarning, "linterError", "You are not allowed to disable linter")
+			}
+		}
+	}
+
+	return true
+}
+
+func (d *rootWalker) handleComments(n ir.Node) {
+	n.IterateTokens(d.handleCommentToken)
+}
+
 // EnterNode is invoked at every node in hierarchy
 func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 	res = true
@@ -113,15 +152,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		c.BeforeEnterNode(n)
 	}
 
-	if ffs := n.GetFreeFloating(); ffs != nil {
-		for _, cs := range *ffs {
-			for _, c := range cs {
-				if c.StringType == freefloating.CommentType {
-					d.handleComment(c)
-				}
-			}
-		}
-	}
+	d.handleComments(n)
 
 	if _, ok := n.(*ir.AnonClassExpr); ok {
 		// TODO: remove when #62 and anon class support in general is ready.
@@ -478,43 +509,6 @@ func (d *rootWalker) reportUndefinedVariable(v ir.Node, maybeHave bool) {
 	}
 }
 
-func (d *rootWalker) handleComment(c freefloating.String) {
-	if c.StringType != freefloating.CommentType {
-		return
-	}
-	str := c.Value
-
-	if !phpdoc.IsPHPDoc(str) {
-		return
-	}
-
-	for _, ln := range phpdoc.Parse(d.ctx.phpdocTypeParser, str) {
-		if ln.Name() != "linter" {
-			continue
-		}
-
-		for _, p := range ln.(*phpdoc.RawCommentPart).Params {
-			if p != "disable" {
-				continue
-			}
-			if d.linterDisabled {
-				needleLine := ln.Line() + c.Position.StartLine - 1
-				d.ReportByLine(needleLine, LevelWarning, "linterError", "Linter is already disabled for this file")
-				continue
-			}
-			canDisable := false
-			if d.allowDisabledRegexp != nil {
-				canDisable = d.allowDisabledRegexp.MatchString(d.ctx.st.CurrentFile)
-			}
-			d.linterDisabled = canDisable
-			if !canDisable {
-				needleLine := ln.Line() + c.Position.StartLine - 1
-				d.ReportByLine(needleLine, LevelWarning, "linterError", "You are not allowed to disable linter")
-			}
-		}
-	}
-}
-
 type handleFuncResult struct {
 	returnTypes            meta.TypesMap
 	prematureExitFlags     int
@@ -558,6 +552,8 @@ func (d *rootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.N
 			byRef = true
 		case *ir.SimpleVar:
 			v = u
+		default:
+			return handleFuncResult{}
 		}
 
 		typ, ok := sc.GetVarNameType(v.Name)
@@ -828,13 +824,14 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 		specifiedType = typ
 	}
 
+	d.checkCommentMisspellings(pl, pl.PhpDocComment)
+	typ := d.parsePHPDocVar(pl, pl.PhpDoc)
+
 	for _, pNode := range pl.Properties {
 		p := pNode.(*ir.PropertyStmt)
 
 		nm := p.Variable.Name
 
-		d.checkCommentMisspellings(p, p.PhpDocComment)
-		typ := d.parsePHPDocVar(p, p.PhpDoc)
 		if p.Expr != nil {
 			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, p.Expr))
 		}
@@ -855,11 +852,11 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 	return true
 }
 
-func (d *rootWalker) enterClassConstList(s *ir.ClassConstListStmt) bool {
+func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
 	cl := d.getClass()
 	accessLevel := meta.Public
 
-	for _, m := range s.Modifiers {
+	for _, m := range list.Modifiers {
 		switch d.lowerCaseModifier(m) {
 		case "public":
 			accessLevel = meta.Public
@@ -870,11 +867,11 @@ func (d *rootWalker) enterClassConstList(s *ir.ClassConstListStmt) bool {
 		}
 	}
 
-	for _, cNode := range s.Consts {
+	for _, cNode := range list.Consts {
 		c := cNode.(*ir.ConstantStmt)
 
 		nm := c.ConstantName.Value
-		d.checkCommentMisspellings(c, c.PhpDocComment)
+		d.checkCommentMisspellings(c, list.PhpDocComment)
 		typ := solver.ExprTypeLocal(d.scope(), d.ctx.st, c.Expr)
 
 		value := constfold.Eval(d.ctx.st, c.Expr)
@@ -1921,22 +1918,39 @@ func (d *rootWalker) checkNameCase(n ir.Node, nameUsed, nameExpected string) {
 	}
 }
 
-func (d *rootWalker) checkKeywordCasePos(n ir.Node, begin int, keyword string) {
-	from := begin
-	to := from + len(keyword)
+func (d *rootWalker) checkKeywordCase(n ir.Node, keyword string) {
+	toks := irutil.Keywords(n)
+	if toks == nil {
+		return
+	}
 
+	tok := toks[0]
+
+	switch n := n.(type) {
+	case *ir.YieldFromExpr:
+		d.compareKeywordWithTokenCase(n, toks[0], "yield")
+		d.compareKeywordWithTokenCase(n, toks[1], "from")
+
+	case *ir.ElseIfStmt:
+		if !n.Merged {
+			d.compareKeywordWithTokenCase(n, toks[0], "if")
+			d.compareKeywordWithTokenCase(n, toks[1], "else")
+		} else {
+			d.compareKeywordWithTokenCase(n, tok, "elseif")
+		}
+
+	default:
+		d.compareKeywordWithTokenCase(n, tok, keyword)
+	}
+}
+
+func (d *rootWalker) compareKeywordWithTokenCase(n ir.Node, tok *token.Token, keyword string) {
 	wantKwd := keyword
-	haveKwd := d.file.Contents()[from:to]
+	haveKwd := tok.Value
 	if wantKwd != string(haveKwd) {
 		d.Report(n, LevelWarning, "keywordCase", "Use %s instead of %s",
 			wantKwd, haveKwd)
 	}
-}
-
-func (d *rootWalker) checkKeywordCase(n ir.Node, keyword string) {
-	// Only works for nodes that have a keyword of interest
-	// as the leftmost token.
-	d.checkKeywordCasePos(n, ir.GetPosition(n).StartPos, keyword)
 }
 
 func (d *rootWalker) parseClassPHPDoc(n ir.Node, doc []phpdoc.CommentPart) classPhpDocParseResult {

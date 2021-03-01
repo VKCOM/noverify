@@ -38,7 +38,6 @@ const (
 	KindBooleanNotExpr
 	KindBooleanOrExpr
 	KindBreakStmt
-	KindCaseListStmt
 	KindCaseStmt
 	KindCatchStmt
 	KindClassConstFetchExpr
@@ -49,7 +48,7 @@ const (
 	KindClassStmt
 	KindCloneExpr
 	KindClosureExpr
-	KindClosureUseExpr
+	KindClosureUsesExpr
 	KindCoalesceExpr
 	KindConcatExpr
 	KindConstFetchExpr
@@ -226,8 +225,6 @@ func GetNodeKind(x Node) NodeKind {
 		return KindBooleanOrExpr
 	case *BreakStmt:
 		return KindBreakStmt
-	case *CaseListStmt:
-		return KindCaseListStmt
 	case *CaseStmt:
 		return KindCaseStmt
 	case *CatchStmt:
@@ -248,8 +245,8 @@ func GetNodeKind(x Node) NodeKind {
 		return KindCloneExpr
 	case *ClosureExpr:
 		return KindClosureExpr
-	case *ClosureUseExpr:
-		return KindClosureUseExpr
+	case *ClosureUsesExpr:
+		return KindClosureUsesExpr
 	case *CoalesceExpr:
 		return KindCoalesceExpr
 	case *ConcatExpr:

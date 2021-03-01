@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/client9/misspell"
+	"github.com/z7zmey/php-parser/pkg/version"
 
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/inputs"
@@ -61,12 +62,15 @@ type Config struct {
 	Checkers *CheckersRegistry
 
 	IgnoreTriggerError bool
+
+	PhpVersion *version.Version
 }
 
 func NewConfig() *Config {
 	reg := &CheckersRegistry{
 		info: map[string]CheckerInfo{},
 	}
+	phpVersion, _ := version.New("7.4")
 	addBuiltinCheckers(reg)
 	return &Config{
 		SrcInput:       inputs.NewDefaultSourceInput(),
@@ -74,5 +78,6 @@ func NewConfig() *Config {
 		MaxConcurrency: runtime.NumCPU(),
 		IsDiscardVar:   isUnderscore,
 		Checkers:       reg,
+		PhpVersion:     phpVersion,
 	}
 }

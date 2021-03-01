@@ -1,7 +1,10 @@
 package phpdoc
 
 import (
+	"bytes"
 	"strings"
+
+	"github.com/z7zmey/php-parser/pkg/token"
 )
 
 type CommentPart interface {
@@ -46,6 +49,19 @@ func IsPHPDoc(doc string) bool {
 	// See #289.
 	return strings.HasPrefix(doc, "/* @var ") ||
 		strings.HasPrefix(doc, "/**")
+}
+
+// IsPHPDocToken checks if the token is a doc comment
+func IsPHPDocToken(t *token.Token) bool {
+	if t.ID != token.T_DOC_COMMENT && t.ID != token.T_COMMENT {
+		return false
+	}
+
+	if t.ID == token.T_COMMENT {
+		return bytes.HasPrefix(t.Value, []byte("/* @var "))
+	}
+
+	return true
 }
 
 // Parse returns parsed doc comment with interesting parts (ones that start "* @")

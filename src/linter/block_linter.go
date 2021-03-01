@@ -9,7 +9,6 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/solver"
 )
@@ -199,12 +198,8 @@ func (b *blockLinter) checkNopStmt(n *ir.NopStmt) {
 	}
 
 	// Check whether it's `?>`; it it is, ignore it.
-	if ffs := n.GetFreeFloating(); ffs != nil {
-		for _, tok := range (*ffs)[freefloating.SemiColon] {
-			if tok.StringType == freefloating.TokenType && strings.HasPrefix(tok.Value, "?>") {
-				return
-			}
-		}
+	if bytes.HasPrefix(n.SemiColonTkn.Value, []byte("?>")) {
+		return
 	}
 
 	b.report(n, LevelNotice, "emptyStmt", "semicolon (;) is not needed here, it can be safely removed")
@@ -416,15 +411,6 @@ func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 	}
 
 	if report {
-		ff := s.GetFreeFloating()
-		if ff != nil {
-			for _, tok := range (*ff)[freefloating.Expr] {
-				if tok.StringType == freefloating.CommentType {
-					return
-				}
-			}
-		}
-
 		b.report(s.Expr, LevelWarning, "discardExpr", "expression evaluated but not used")
 	}
 }
@@ -477,7 +463,7 @@ func (b *blockLinter) checkSwitch(s *ir.SwitchStmt) {
 	nodeSet := &b.walker.r.nodeSet
 	nodeSet.Reset()
 	wasAdded := false
-	for i, c := range s.CaseList.Cases {
+	for i, c := range s.Cases {
 		c, ok := c.(*ir.CaseStmt)
 		if !ok {
 			continue
