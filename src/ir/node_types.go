@@ -1309,8 +1309,6 @@ type PropertyStmt struct {
 	Variable *SimpleVar
 	EqualTkn *token.Token
 	Expr     Node
-
-	Doc
 }
 
 // PropertyListStmt is a `$Modifiers $Type $Properties` statement.

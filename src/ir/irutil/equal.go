@@ -1429,9 +1429,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
-		if x.PhpDocComment != y.PhpDocComment {
-			return false
-		}
 		return true
 	case *ir.ReferenceExpr:
 		y, ok := y.(*ir.ReferenceExpr)
