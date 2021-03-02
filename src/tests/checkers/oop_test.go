@@ -1264,7 +1264,7 @@ trait AbstractTraitAB {
 
 		`Class \T6\Bad must implement \T6\TraitAbstractA::a method`,
 	}
-	linttest.RunFilterMatch(test, `unimplemented`, `nameCase`, `undefined`)
+	linttest.RunFilterMatch(test, `unimplemented`, `nameMismatch`, `undefined`)
 }
 
 func TestInterfaceRules(t *testing.T) {

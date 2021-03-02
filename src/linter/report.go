@@ -533,7 +533,7 @@ function performance_test() {}`,
 		},
 
 		{
-			Name:     "nameCase",
+			Name:     "nameMismatch",
 			Default:  true,
 			Quickfix: false,
 			Comment:  `Report symbol case mismatches.`,
