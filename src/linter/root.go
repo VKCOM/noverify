@@ -1886,7 +1886,7 @@ func (d *rootWalker) checkImplementedStep(n ir.Node, className string, otherClas
 			continue
 		}
 		if m.Info.Name != ifaceMethod.Name {
-			d.Report(n, LevelNotice, "nameCase", "%s::%s should be spelled as %s::%s",
+			d.Report(n, LevelNotice, "nameMismatch", "%s::%s should be spelled as %s::%s",
 				d.ctx.st.CurrentClass, m.Info.Name, className, ifaceMethod.Name)
 		}
 	}
@@ -1913,7 +1913,7 @@ func (d *rootWalker) checkNameCase(n ir.Node, nameUsed, nameExpected string) {
 		return
 	}
 	if nameUsed != nameExpected {
-		d.Report(n, LevelWarning, "nameCase", "%s should be spelled %s",
+		d.Report(n, LevelWarning, "nameMismatch", "%s should be spelled %s",
 			nameUsed, nameExpected)
 	}
 }
