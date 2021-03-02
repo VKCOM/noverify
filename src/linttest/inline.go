@@ -88,7 +88,7 @@ func (s *inlineTestSuite) compare(expects []string, reports []string) (unmatched
 		var found bool
 
 		for _, report := range reports {
-			if expect == report {
+			if strings.Contains(report, expect) {
 				found = true
 				break
 			}
