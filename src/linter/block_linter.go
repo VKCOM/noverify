@@ -212,7 +212,7 @@ func (b *blockLinter) checkCoalesceExpr(n *ir.CoalesceExpr) {
 }
 
 func (b *blockLinter) checkAssign(a *ir.Assign) {
-	b.checkVoidType(a.Expression)
+	b.checkVoidType(a.Expr)
 }
 
 func (b *blockLinter) checkTryStmt(s *ir.TryStmt) {
