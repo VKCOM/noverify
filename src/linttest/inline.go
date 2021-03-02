@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"testing"
+	"text/scanner"
 
 	"github.com/VKCOM/noverify/src/linter"
 )
@@ -154,96 +155,65 @@ func (c *commentParser) parseExpectation() (wants []string, err error) {
 	c.comment = strings.TrimLeft(c.comment, " ")
 	c.comment = strings.TrimRight(c.comment, " ")
 
-	parts := splitExpectation(c.comment)
-	if len(parts) == 0 {
-		return nil, fmt.Errorf("empty comment on line %d", c.line)
+	sc := new(scanner.Scanner).Init(strings.NewReader(c.comment))
+	sc.Mode = scanner.ScanIdents | scanner.ScanStrings | scanner.ScanRawStrings
+	sc.Error = func(s *scanner.Scanner, msg string) {
+		err = fmt.Errorf(msg)
 	}
 
 	first := true
-	for len(parts) != 0 {
-		message, err := c.parsePartExpectation(parts, first)
-		if err != nil {
-			return nil, err
+
+scan:
+	for {
+		tok := sc.Scan()
+
+		switch tok {
+		case scanner.Ident: // 'want' or 'and'
+			keyword := sc.TokenText()
+			err = c.checkKeyword(keyword, first)
+			if err != nil {
+				return nil, err
+			}
+
+			tok = sc.Scan()
+			if tok != scanner.RawString {
+				return nil, fmt.Errorf("expected value after '%s' in '// %s', line: %d", keyword, c.comment, c.line)
+			}
+
+			value := sc.TokenText()
+			if len(value) <= 2 {
+				return nil, fmt.Errorf("empty value after '%s' in '// %s', line: %d", keyword, c.comment, c.line)
+			}
+
+			value = value[1 : len(value)-1]
+
+			wants = append(wants, value)
+			first = false
+
+		case scanner.EOF:
+			break scan
+
+		default:
+			return nil, fmt.Errorf("unexpected token '%s' in '// %s', line: %d", scanner.TokenString(tok), c.comment, c.line)
 		}
+	}
 
-		wants = append(wants, message)
-
-		parts = parts[2:]
-		first = false
+	if len(wants) == 0 {
+		return nil, fmt.Errorf("empty comment on line %d", c.line)
 	}
 
 	return wants, nil
 }
 
-// parsePartExpectation parses one part of the template and returns a value.
-// For example, for 'want `error1`' it will return 'error1'.
-func (c *commentParser) parsePartExpectation(parts []string, first bool) (string, error) {
-	key := parts[0]
-
+func (c *commentParser) checkKeyword(keyword string, first bool) error {
 	wantKey := "and"
 	if first {
 		wantKey = "want"
 	}
 
-	if key != wantKey {
-		return "", fmt.Errorf("expected '%s' keyword in '// %s', line: %d", wantKey, c.comment, c.line)
+	if keyword != wantKey {
+		return fmt.Errorf("expected '%s' keyword, got '%s' in '// %s', line: %d", wantKey, keyword, c.comment, c.line)
 	}
 
-	if len(parts) == 1 {
-		return "", fmt.Errorf("expected value after '%s' in '// %s', line: %d", wantKey, c.comment, c.line)
-	}
-
-	value := parts[1]
-	if value == "" {
-		return "", fmt.Errorf("empty value after '%s' in '// %s', line: %d", wantKey, c.comment, c.line)
-	}
-
-	return value, nil
-}
-
-// splitExpectation splits a string into tokens.
-// There are two types of tokens, these are
-// keywords ('want', 'and') and strings enclosed in '`'.
-func splitExpectation(text string) (parts []string) {
-	if text == "" {
-		return nil
-	}
-
-	var start int
-	var inString bool
-
-	for i := 0; i < len(text); i++ {
-		if text[i] == '`' {
-			if inString {
-				parts = append(parts, text[start+1:i])
-				start = i + 1
-			}
-
-			inString = !inString
-			continue
-		}
-
-		if inString {
-			continue
-		}
-
-		if text[i] == ' ' {
-			// If the string is not empty.
-			// Since if i - start == 0, then the string will be empty.
-			if i-start > 0 {
-				parts = append(parts, text[start:i])
-			}
-			start = i + 1
-		}
-	}
-
-	// For cases where the string does not end with a string wrapped in '`',
-	// we need to add the last token in order to correctly display an error
-	// about incorrect syntax.
-	last := len(text) - 1
-	if last-start > 0 {
-		parts = append(parts, text[start:])
-	}
-
-	return parts
+	return nil
 }
