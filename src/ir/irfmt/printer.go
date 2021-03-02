@@ -564,85 +564,85 @@ func (p *PrettyPrinter) printScalarMagicConstant(n *ir.MagicConstant) {
 func (p *PrettyPrinter) printAssign(n *ir.Assign) {
 	p.Print(n.Variable)
 	writeString(p.w, " = ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printReference(n *ir.AssignReference) {
 	p.Print(n.Variable)
 	writeString(p.w, " =& ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignBitwiseAnd(n *ir.AssignBitwiseAnd) {
 	p.Print(n.Variable)
 	writeString(p.w, " &= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignBitwiseOr(n *ir.AssignBitwiseOr) {
 	p.Print(n.Variable)
 	writeString(p.w, " |= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignBitwiseXor(n *ir.AssignBitwiseXor) {
 	p.Print(n.Variable)
 	writeString(p.w, " ^= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignConcat(n *ir.AssignConcat) {
 	p.Print(n.Variable)
 	writeString(p.w, " .= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignDiv(n *ir.AssignDiv) {
 	p.Print(n.Variable)
 	writeString(p.w, " /= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignMinus(n *ir.AssignMinus) {
 	p.Print(n.Variable)
 	writeString(p.w, " -= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignMod(n *ir.AssignMod) {
 	p.Print(n.Variable)
 	writeString(p.w, " %= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignMul(n *ir.AssignMul) {
 	p.Print(n.Variable)
 	writeString(p.w, " *= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignPlus(n *ir.AssignPlus) {
 	p.Print(n.Variable)
 	writeString(p.w, " += ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignPow(n *ir.AssignPow) {
 	p.Print(n.Variable)
 	writeString(p.w, " **= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignShiftLeft(n *ir.AssignShiftLeft) {
 	p.Print(n.Variable)
 	writeString(p.w, " <<= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignShiftRight(n *ir.AssignShiftRight) {
 	p.Print(n.Variable)
 	writeString(p.w, " >>= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 // binary
