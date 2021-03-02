@@ -26,7 +26,7 @@ linters:
     - unconvert
     - unused
     - varcheck
-    - scopelint
+    - exportloopref
   disable:
     - depguard
     - dupl
