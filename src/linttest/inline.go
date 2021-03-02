@@ -156,7 +156,9 @@ func (c *commentParser) parseExpectation() (wants []string, err error) {
 	c.comment = strings.TrimRight(c.comment, " ")
 
 	var scanErr string
-	sc := new(scanner.Scanner).Init(strings.NewReader(c.comment))
+	var sc scanner.Scanner
+
+	sc.Init(strings.NewReader(c.comment))
 	sc.Mode = scanner.ScanIdents | scanner.ScanStrings | scanner.ScanRawStrings
 	sc.Error = func(s *scanner.Scanner, msg string) {
 		scanErr = msg + fmt.Sprintf(" in '// %s', line: %d", c.comment, c.line)
