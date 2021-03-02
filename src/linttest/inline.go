@@ -41,10 +41,8 @@ func (s *inlineTestSuite) handleFile(file string) {
 
 	for line, reports := range reportsByLine {
 		errs := s.handleReportsByLine(line, reports, lines)
-		if errs != nil {
-			for _, err = range errs {
-				s.t.Errorf("check comments: %v", err)
-			}
+		for _, err = range errs {
+			s.t.Errorf("check comments: %v", err)
 		}
 	}
 }
