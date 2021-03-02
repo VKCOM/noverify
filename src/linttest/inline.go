@@ -155,10 +155,11 @@ func (c *commentParser) parseExpectation() (wants []string, err error) {
 	c.comment = strings.TrimLeft(c.comment, " ")
 	c.comment = strings.TrimRight(c.comment, " ")
 
+	var scanErr string
 	sc := new(scanner.Scanner).Init(strings.NewReader(c.comment))
 	sc.Mode = scanner.ScanIdents | scanner.ScanStrings | scanner.ScanRawStrings
 	sc.Error = func(s *scanner.Scanner, msg string) {
-		err = fmt.Errorf(msg)
+		scanErr = msg + fmt.Sprintf(" in '// %s', line: %d", c.comment, c.line)
 	}
 
 	first := true
@@ -191,6 +192,10 @@ scan:
 			first = false
 
 		case scanner.EOF:
+			if scanErr != "" {
+				return nil, fmt.Errorf("%s", scanErr)
+			}
+
 			break scan
 
 		default:
