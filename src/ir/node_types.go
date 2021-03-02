@@ -9,122 +9,122 @@ import (
 
 // Assign is a `$Variable = $Expression` expression.
 type Assign struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignBitwiseAnd is a `$Variable &= $Expression` expression.
 type AssignBitwiseAnd struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignBitwiseOr is a `$Variable |= $Expression` expression.
 type AssignBitwiseOr struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignBitwiseXor is a `$Variable ^= $Expression` expression.
 type AssignBitwiseXor struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignCoalesce is a `$Variable ??= $Expression` expression.
 type AssignCoalesce struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignConcat is a `$Variable .= $Expression` expression.
 type AssignConcat struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignDiv is a `$Variable /= $Expression` expression.
 type AssignDiv struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignMinus is a `$Variable -= $Expression` expression.
 type AssignMinus struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignMod is a `$Variable %= $Expression` expression.
 type AssignMod struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignMul is a `$Variable *= $Expression` expression.
 type AssignMul struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignPlus is a `$Variable += $Expression` expression.
 type AssignPlus struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignPow is a `$Variable **= $Expression` expression.
 type AssignPow struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignReference is a `$Variable &= $Expression` expression.
 type AssignReference struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignShiftLeft is a `$Variable <<= $Expression` expression.
 type AssignShiftLeft struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AssignShiftRight is a `$Variable >>= $Expression` expression.
 type AssignShiftRight struct {
-	Position   *position.Position
-	Variable   Node
-	EqualTkn   *token.Token
-	Expression Node
+	Position *position.Position
+	Variable Node
+	EqualTkn *token.Token
+	Expr     Node
 }
 
 // AnonClassExpr is an anonymous class expression.
@@ -867,7 +867,6 @@ type Lnumber struct {
 }
 
 // MagicConstant is a special PHP constant like __FILE__ or __CLASS__.
-// TODO: do we really need a separate node for these constants?
 type MagicConstant struct {
 	Position      *position.Position
 	MagicConstTkn *token.Token
@@ -891,15 +890,9 @@ type String struct {
 // BadString is a string that we couldn't interpret correctly.
 // The $Value contains uninterpreted (raw) string bytes.
 // $Error contains the reason why this string is "bad".
-//
-// TODO: Maybe make String + Error field
 type BadString struct {
-	Position     *position.Position
-	MinusTkn     *token.Token
-	StringTkn    *token.Token
-	Value        string
-	DoubleQuotes bool
-	Error        string
+	String
+	Error string
 }
 
 // BreakStmt is a `break $Expr` statement.
@@ -1014,7 +1007,7 @@ type ConstantStmt struct {
 	Expr         Node
 }
 
-// ContinueStmt is a `continue $Expe` statement.
+// ContinueStmt is a `continue $Expr` statement.
 type ContinueStmt struct {
 	Position     *position.Position
 	ContinueTkn  *token.Token
@@ -1196,7 +1189,6 @@ type GotoStmt struct {
 
 // GroupUseStmt is a `use $UseType $Prefix\{ $UseList }` statement.
 // $UseType is a "function" or "const".
-// TODO: change $UseType type to *Identifier?
 type GroupUseStmt struct {
 	Position              *position.Position
 	UseTkn                *token.Token
@@ -1309,8 +1301,6 @@ type PropertyStmt struct {
 	Variable *SimpleVar
 	EqualTkn *token.Token
 	Expr     Node
-
-	Doc
 }
 
 // PropertyListStmt is a `$Modifiers $Type $Properties` statement.

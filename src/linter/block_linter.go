@@ -212,7 +212,7 @@ func (b *blockLinter) checkCoalesceExpr(n *ir.CoalesceExpr) {
 }
 
 func (b *blockLinter) checkAssign(a *ir.Assign) {
-	b.checkVoidType(a.Expression)
+	b.checkVoidType(a.Expr)
 }
 
 func (b *blockLinter) checkTryStmt(s *ir.TryStmt) {
@@ -1000,7 +1000,7 @@ func (b *blockLinter) checkClassSpecialNameCase(n ir.Node, className string) {
 
 	for _, name := range names {
 		if strings.EqualFold(className, name) {
-			b.walker.r.Report(n, LevelNotice, "nameCase", "%s should be spelled as %s", strings.TrimPrefix(className, `\`), strings.TrimPrefix(name, `\`))
+			b.walker.r.Report(n, LevelNotice, "nameMismatch", "%s should be spelled as %s", strings.TrimPrefix(className, `\`), strings.TrimPrefix(name, `\`))
 		}
 	}
 }
