@@ -30,6 +30,7 @@ func RunInlineTest(t *testing.T, dir string) {
 	}
 }
 
+// handleFile processes a file from the list of php files found in the directory.
 func (s *inlineTestSuite) handleFile(file string) {
 	lines, reports, err := s.handleFileContents(file)
 	if err != nil {
@@ -38,54 +39,71 @@ func (s *inlineTestSuite) handleFile(file string) {
 
 	reportsByLine := s.createReportsByLine(reports)
 
-	for line, expectedReports := range reportsByLine {
-		err := s.handleReportsByLine(line, lines, expectedReports)
-		if err != nil {
-			s.t.Error(err)
+	for line, reports := range reportsByLine {
+		errs := s.handleReportsByLine(line, reports, lines)
+		if errs != nil {
+			for _, err = range errs {
+				s.t.Errorf("check comments: %v", err)
+			}
 		}
 	}
 }
 
-func (s *inlineTestSuite) handleReportsByLine(line int, lines []string, expectedReports []string) error {
-	if line >= len(lines) {
+// handleReportsByLine handle one line from the resulting report map for each line.
+func (s *inlineTestSuite) handleReportsByLine(line int, reports []string, lines []string) (errs []error) {
+	if line-1 >= len(lines) {
 		return nil
 	}
 
 	lineContent := lines[line-1]
-	startCommentIndex := strings.Index(lineContent, "//")
+	commIndex := strings.Index(lineContent, "//")
 
-	if startCommentIndex == -1 {
-		expectedReportsStr := strings.Join(expectedReports, ", ")
-		return fmt.Errorf("unhandled errors for line %d: [%s]", line, expectedReportsStr)
+	// If there is no comment in the line.
+	if commIndex == -1 {
+		return []error{
+			fmt.Errorf("unhandled errors for line %d: [%s]", line, strings.Join(reports, ", ")),
+		}
 	}
 
-	comment := lineContent[startCommentIndex+2:] // get all after //
-
+	// get all after //
+	comment := lineContent[commIndex+2:]
 	p := commentParser{comment: comment, line: line}
 
-	foundErrors, err := p.parseComment()
+	expects, err := p.parseExpectation()
 	if err != nil {
-		return fmt.Errorf("check comments: %v", err)
+		return []error{err}
 	}
 
-	for _, foundError := range foundErrors {
+	unmatched := s.compare(expects, reports)
+
+	for _, report := range unmatched {
+		errs = append(errs, fmt.Errorf("unexpected report: '%s' on line %d\nexpected: [%s]", report, p.line, strings.Join(reports, ", ")))
+	}
+
+	return errs
+}
+
+// compare compares expected and received reports and returns a list of unmatched errors.
+func (s *inlineTestSuite) compare(expects []string, reports []string) (unmatched []string) {
+	for _, expect := range expects {
 		var found bool
 
-		for _, expectedMessage := range expectedReports {
-			if foundError == expectedMessage {
+		for _, report := range reports {
+			if expect == report {
 				found = true
 				break
 			}
 		}
 
 		if !found {
-			expectedReportsStr := strings.Join(expectedReports, ", ")
-			return fmt.Errorf("unexpected report: '%s' on line %d\nexpected: [%s]", foundError, p.line, expectedReportsStr)
+			unmatched = append(unmatched, expect)
 		}
 	}
-	return nil
+
+	return unmatched
 }
 
+// handleFileContents reads, parses the resulting file, and splits it into lines.
 func (s *inlineTestSuite) handleFileContents(file string) (lines []string, reports []*linter.Report, err error) {
 	lint := linter.NewLinter(linter.NewConfig())
 
@@ -97,7 +115,7 @@ func (s *inlineTestSuite) handleFileContents(file string) (lines []string, repor
 	content := string(data)
 
 	// indexing
-	_ = ParseTestFile(s.t, lint, file, content)
+	ParseTestFile(s.t, lint, file, content)
 	lint.MetaInfo().SetIndexingComplete(true)
 	// analyzing
 	res := ParseTestFile(s.t, lint, file, content)
@@ -107,6 +125,9 @@ func (s *inlineTestSuite) handleFileContents(file string) (lines []string, repor
 	return lines, res.Reports, nil
 }
 
+// createReportsByLine creates a map with a set of reports for each of the lines
+// from the reports. This is necessary because there can be more than one report
+// for one line.
 func (s *inlineTestSuite) createReportsByLine(reports []*linter.Report) map[int][]string {
 	reportsByLine := make(map[int][]string)
 
@@ -127,24 +148,26 @@ type commentParser struct {
 	line    int
 }
 
-func (c *commentParser) parseComment() ([]string, error) {
-	var wants []string
-
+// parseExpectation parses a string describing expected errors like
+//     want `error description 1` [and` error description 2` and `error 3` ...]
+func (c *commentParser) parseExpectation() (wants []string, err error) {
+	// It is necessary to remove \r, since in windows the lines are separated by \r\n.
 	c.comment = strings.TrimSuffix(c.comment, "\r")
 	c.comment = strings.TrimLeft(c.comment, " ")
 	c.comment = strings.TrimRight(c.comment, " ")
 
-	parts := splitComment(c.comment)
+	parts := splitExpectation(c.comment)
 	if len(parts) == 0 {
 		return nil, fmt.Errorf("empty comment on line %d", c.line)
 	}
 
 	first := true
 	for len(parts) != 0 {
-		message, err := c.parsePartComment(parts, first)
+		message, err := c.parsePartExpectation(parts, first)
 		if err != nil {
 			return nil, err
 		}
+
 		wants = append(wants, message)
 
 		parts = parts[2:]
@@ -154,7 +177,9 @@ func (c *commentParser) parseComment() ([]string, error) {
 	return wants, nil
 }
 
-func (c *commentParser) parsePartComment(parts []string, first bool) (string, error) {
+// parsePartExpectation parses one part of the template and returns a value.
+// For example, for 'want `error1`' it will return 'error1'.
+func (c *commentParser) parsePartExpectation(parts []string, first bool) (string, error) {
 	key := parts[0]
 
 	wantKey := "and"
@@ -178,20 +203,22 @@ func (c *commentParser) parsePartComment(parts []string, first bool) (string, er
 	return value, nil
 }
 
-func splitComment(comment string) []string {
-	if comment == "" {
+// splitExpectation splits a string into tokens.
+// There are two types of tokens, these are
+// keywords ('want', 'and') and strings enclosed in '`'.
+func splitExpectation(text string) (parts []string) {
+	if text == "" {
 		return nil
 	}
 
-	var parts []string
-	var startIndex int
+	var start int
 	var inString bool
 
-	for i := 0; i < len(comment); i++ {
-		if comment[i] == '`' {
+	for i := 0; i < len(text); i++ {
+		if text[i] == '`' {
 			if inString {
-				parts = append(parts, comment[startIndex+1:i])
-				startIndex = i + 1
+				parts = append(parts, text[start+1:i])
+				start = i + 1
 			}
 
 			inString = !inString
@@ -202,17 +229,22 @@ func splitComment(comment string) []string {
 			continue
 		}
 
-		if comment[i] == ' ' {
-			if i-startIndex > 0 {
-				parts = append(parts, comment[startIndex:i])
+		if text[i] == ' ' {
+			// If the string is not empty.
+			// Since if i - start == 0, then the string will be empty.
+			if i-start > 0 {
+				parts = append(parts, text[start:i])
 			}
-			startIndex = i + 1
+			start = i + 1
 		}
 	}
 
-	lastIndex := len(comment) - 1
-	if lastIndex-startIndex > 0 {
-		parts = append(parts, comment[startIndex:])
+	// For cases where the string does not end with a string wrapped in '`',
+	// we need to add the last token in order to correctly display an error
+	// about incorrect syntax.
+	last := len(text) - 1
+	if last-start > 0 {
+		parts = append(parts, text[start:])
 	}
 
 	return parts
