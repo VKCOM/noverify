@@ -368,3 +368,26 @@ function indexingSyntax() {
      */
     $x{$y};
 }
+
+/**
+ * @comment Report using an integer for needle.
+ * @before  strpos("hello", 10)
+ * @after   strpos("hello", chr(10))
+ */
+function intNeedle() {
+    /**
+     * @warning since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call
+     * @type int $x
+     * @fix     strpos($_, chr($x));
+     */
+    any: {
+        strpos($_, $x);
+        strrpos($_, $x);
+        stripos($_, $x);
+        strripos($_, $x);
+        strstr($_, $x);
+        strchr($_, $x);
+        strrchr($_, $x);
+        stristr($_, $x);
+    }
+}
