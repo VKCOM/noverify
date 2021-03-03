@@ -67,6 +67,12 @@ WARNING bitwiseOps: Used | bitwise operator over bool operands, perhaps || is in
 MAYBE   callSimplify: Could simplify to array_key_exists('abc', $array) at testdata/embeddedrules/callSimplify.php:4
     $_ = in_array('abc', array_keys($array)); // bad
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING defineCase: since PHP 7.3.0, the definition of case insensitive constants has been deprecated at testdata/embeddedrules/defineConst.php:3
+define("Z_CONST", 1, true);
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING defineCase: define defaults to a case sensitive constant, the third argument can be removed at testdata/embeddedrules/defineConst.php:4
+define("Z_CONST1", 2, false);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING indexingSyntax: a{i} indexing is deprecated since PHP 7.4, use a[i] instead at testdata/embeddedrules/indexingSyntax.php:14
     $_ = $a{0};
          ^^^^^
