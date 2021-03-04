@@ -194,7 +194,7 @@ func (b *blockLinter) checkTypeCaseExpr(n *ir.TypeCastExpr) {
 	// so we have to use the token value.
 	if bytes.EqualFold(n.CastTkn.Value, []byte("(real)")) {
 		b.report(n, LevelNotice, "langDeprecated",
-			"do not cast to type real, use cast to float")
+			"use float cast instead of real")
 	}
 }
 

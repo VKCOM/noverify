@@ -2169,7 +2169,7 @@ function f() {
 }
 `)
 	test.Expect = []string{
-		`do not cast to type real, use cast to float`,
+		`use float cast instead of real`,
 		`use is_float function instead of is_real`,
 	}
 	test.RunAndMatch()
