@@ -633,7 +633,7 @@ echo $someVal;`,
 			Name:     "langDeprecated",
 			Default:  false,
 			Quickfix: true,
-			Comment:  `Report the use of deprecated (per language spec) symbols.`,
+			Comment:  `Report the use of deprecated (per language spec) features.`,
 			Before: `$a = (real)100;
 $_ = is_real($a);`,
 			After: `$a = (float)100;

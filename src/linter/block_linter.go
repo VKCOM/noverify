@@ -799,7 +799,7 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 		// TODO: handle fprintf as well?
 		b.checkFormatString(e, e.Arg(0))
 	case `\is_real`:
-		b.report(e, LevelNotice, "langDeprecated", "don't use is_real function, use is_float")
+		b.report(e, LevelNotice, "langDeprecated", "use is_float function instead of is_real")
 	}
 }
 
