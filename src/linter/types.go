@@ -159,6 +159,12 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []meta.T
 				continue
 			}
 
+			if typ.Elem == "array" {
+				types[i].Elem = "mixed"
+				types[i].Dims = 1
+				continue
+			}
+
 			className, ok := solver.GetClassName(conv.ctx.st, &ir.Name{Value: typ.Elem})
 			if !ok {
 				continue
@@ -318,7 +324,6 @@ var trivialTypes = map[string]bool{
 	"string":   true,
 	"void":     true,
 	"iterable": true,
-	"array":    true,
 
 	"null":  true,
 	"true":  true,

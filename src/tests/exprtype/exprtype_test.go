@@ -2844,8 +2844,8 @@ function f() {
     return [[],[]];
 }
 
-exprtype(f()[0], "array");
-exprtype(f()[1], "array");
+exprtype(f()[0], "mixed[]");
+exprtype(f()[1], "mixed[]");
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
