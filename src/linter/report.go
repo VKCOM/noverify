@@ -630,7 +630,7 @@ echo $someVal;`,
 		},
 
 		{
-			Name:     "ternaryOrder",
+			Name:     "nestedTernary",
 			Default:  false,
 			Quickfix: true,
 			Comment:  `Report an unspecified order in a nested ternary operator.`,

@@ -450,7 +450,7 @@ func (b *blockLinter) checkTernary(e *ir.TernaryExpr) {
 
 	containsTernary, hasBracket := containsParenTernary(e.Condition)
 	if !hasBracket && containsTernary {
-		b.report(e.Condition, LevelWarning, "ternaryOrder", "in ternary operators, you must explicitly use parentheses to specify the order of operations")
+		b.report(e.Condition, LevelWarning, "nestedTernary", "in ternary operators, you must explicitly use parentheses to specify the order of operations")
 	}
 
 	// Check for `$cond ? $x : $x` which makes no sense.

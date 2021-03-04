@@ -2127,7 +2127,7 @@ function f() {
 	test.RunAndMatch()
 }
 
-func TestTernaryOrder(t *testing.T) {
+func TestNestedTernary(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 function f() {
