@@ -160,8 +160,6 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []meta.T
 			}
 
 			if typ.Elem == "array" {
-				types[i].Elem = "mixed"
-				types[i].Dims = 1
 				continue
 			}
 
