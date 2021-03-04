@@ -2155,3 +2155,22 @@ function f() {
 	}
 	test.RunAndMatch()
 }
+
+func TestRealCastingAndIsRealCall(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function is_real($a): bool { return true; }
+
+function f() {
+    $a = (real)100;
+    if (is_real($a)) {
+        echo 1;
+    }
+}
+`)
+	test.Expect = []string{
+		`use float cast instead of real`,
+		`use is_float function instead of is_real`,
+	}
+	test.RunAndMatch()
+}
