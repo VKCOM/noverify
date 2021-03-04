@@ -628,6 +628,17 @@ echo $someVal;`,
 	20,
 ]`,
 		},
+
+		{
+			Name:     "ternaryOrder",
+			Default:  false,
+			Quickfix: true,
+			Comment:  `Report an unspecified order in a nested ternary operator.`,
+			Before:   `$_ = 1 ? 2 : 3 ? 4 : 5;`,
+			After: `$_ = (1 ? 2 : 3) ? 4 : 5;
+// or
+$_ = 1 ? 2 : (3 ? 4 : 5);`,
+		},
 	}
 
 	for _, info := range allChecks {
