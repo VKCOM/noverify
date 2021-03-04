@@ -792,6 +792,24 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 		}
 		// TODO: handle fprintf as well?
 		b.checkFormatString(e, e.Arg(0))
+	case `\array_key_exists`:
+		b.checkArrayKeyExistsCall(e)
+	}
+}
+
+func (b *blockLinter) checkArrayKeyExistsCall(e *ir.FunctionCallExpr) {
+	if len(e.Args) < 2 {
+		return
+	}
+
+	typ := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, e.Arg(1).Expr)
+
+	onlyObjects := !typ.Find(func(typ string) bool {
+		return !meta.IsClassType(typ)
+	})
+
+	if onlyObjects {
+		b.report(e, LevelWarning, "langDeprecated", "since PHP 7.4, using array_key_exists() with an object has been deprecated, use isset() or property_exists() instead")
 	}
 }
 

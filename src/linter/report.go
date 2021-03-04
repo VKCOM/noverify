@@ -639,6 +639,17 @@ echo $someVal;`,
 // or
 $_ = 1 ? 2 : (3 ? 4 : 5);`,
 		},
+
+		{
+			Name:     "langDeprecated",
+			Default:  false,
+			Quickfix: true,
+			Comment:  `Report the use of deprecated (per language spec) features.`,
+			Before: `$a = (real)100;
+$_ = is_real($a);`,
+			After: `$a = (float)100;
+$_ = is_float($a);`,
+		},
 	}
 
 	for _, info := range allChecks {

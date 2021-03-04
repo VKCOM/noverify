@@ -2155,3 +2155,40 @@ function f() {
 	}
 	test.RunAndMatch()
 }
+
+func TestArrayKeyExistCallWithObject(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function array_key_exists($a, $b): bool { return true; }
+
+class Foo {}
+
+function returnObject(): Foo {
+	return new Foo;
+}
+
+function returnObjectAndNull(): ?Foo {
+	if (1) {
+		return null;
+	}
+	return new Foo;
+}
+
+function f() {
+    $foo = new Foo;
+	$arr = ["a" => 100];
+
+    echo array_key_exists("param", $foo); // error
+    echo array_key_exists("param", returnObject()); // error
+    echo array_key_exists("param", returnObjectAndNull()); // ok
+
+    echo array_key_exists("a", $arr); // ok
+}
+
+`)
+	test.Expect = []string{
+		`since PHP 7.4, using array_key_exists() with an object has been deprecated, use isset() or property_exists() instead`,
+		`since PHP 7.4, using array_key_exists() with an object has been deprecated, use isset() or property_exists() instead`,
+	}
+	test.RunAndMatch()
+}
