@@ -193,7 +193,7 @@ func (b *blockLinter) checkTypeCaseExpr(n *ir.TypeCastExpr) {
 	// We cannot use the value directly, since for real it is equal to float,
 	// so we have to use the token value.
 	if bytes.EqualFold(n.CastTkn.Value, []byte("(real)")) {
-		b.report(n, LevelNotice, "real",
+		b.report(n, LevelNotice, "langDeprecated",
 			"do not cast to type real, use cast to float")
 	}
 }
@@ -799,7 +799,7 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 		// TODO: handle fprintf as well?
 		b.checkFormatString(e, e.Arg(0))
 	case `\is_real`:
-		b.report(e, LevelNotice, "real", "don't use is_real function, use is_float")
+		b.report(e, LevelNotice, "langDeprecated", "don't use is_real function, use is_float")
 	}
 }
 

@@ -630,10 +630,10 @@ echo $someVal;`,
 		},
 
 		{
-			Name:     "real",
+			Name:     "langDeprecated",
 			Default:  false,
 			Quickfix: true,
-			Comment:  `Report using a cast to real type or using the is_real function.`,
+			Comment:  `Report the use of deprecated (per language spec) symbols.`,
 			Before: `$a = (real)100;
 $_ = is_real($a);`,
 			After: `$a = (float)100;
