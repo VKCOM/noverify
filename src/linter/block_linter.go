@@ -434,22 +434,8 @@ func (b *blockLinter) checkTernary(e *ir.TernaryExpr) {
 		return // Skip `$x ?: $y` expressions
 	}
 
-	// containsParenTernary checks if a node is a parenthesized ternary operator.
-	containsParenTernary := func(n ir.Node) (containsTernary, hasBracket bool) {
-		switch n := n.(type) {
-		case *ir.ParenExpr:
-			_, containsTernary = n.Expr.(*ir.TernaryExpr)
-			return containsTernary, true
-
-		case *ir.TernaryExpr:
-			return true, false
-		}
-
-		return false, false
-	}
-
-	containsTernary, hasBracket := containsParenTernary(e.Condition)
-	if !hasBracket && containsTernary {
+	_, nestedTernary := e.Condition.(*ir.TernaryExpr)
+	if nestedTernary {
 		b.report(e.Condition, LevelWarning, "nestedTernary", "in ternary operators, you must explicitly use parentheses to specify the order of operations")
 	}
 
