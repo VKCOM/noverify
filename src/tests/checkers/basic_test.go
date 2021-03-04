@@ -2174,4 +2174,3 @@ function f() {
 	}
 	test.RunAndMatch()
 }
-
