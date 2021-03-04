@@ -370,7 +370,7 @@ function indexingSyntax() {
 }
 
 /**
- * @comment Report using an integer for needle.
+ * @comment Report using an integer for $needle argument of str* functions.
  * @before  strpos("hello", 10)
  * @after   strpos("hello", chr(10))
  */
