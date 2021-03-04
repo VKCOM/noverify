@@ -322,8 +322,13 @@ func (reg *CheckersRegistry) DeclareChecker(info CheckerInfo) {
 	if info.Name == "" {
 		panic("can't declare a checker with an empty name")
 	}
-	if _, ok := reg.info[info.Name]; ok {
-		panic(fmt.Sprintf("checker %q already declared", info.Name))
+	if rule, ok := reg.info[info.Name]; ok {
+		// Perhaps this is a situation when the checker is present
+		// both in the code and in dynamic rules.
+		// If the comments do not match, then this is most likely an error.
+		if rule.Comment != info.Comment {
+			panic(fmt.Sprintf("the checker %q is already declared, if you want to set the checker both in the dynamic rule and in the code, then their comments must be equal", info.Name))
+		}
 	}
 	if info.Before != "" && info.After == "" {
 		panic(fmt.Sprintf("%s: Before is set, but After is empty", info.Name))
