@@ -159,6 +159,10 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []meta.T
 				continue
 			}
 
+			if typ.Elem == "array" {
+				continue
+			}
+
 			className, ok := solver.GetClassName(conv.ctx.st, &ir.Name{Value: typ.Elem})
 			if !ok {
 				continue
