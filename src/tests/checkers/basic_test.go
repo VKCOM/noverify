@@ -2194,7 +2194,7 @@ function returnObjectAndNull(): ?Foo {
 }
 
 function f() {
-    $foo = new Foo;
+	$foo = new Foo;
 	$arr = ["a" => 100];
 
     echo array_key_exists("param", $foo); // error
