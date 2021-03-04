@@ -318,6 +318,7 @@ var trivialTypes = map[string]bool{
 	"string":   true,
 	"void":     true,
 	"iterable": true,
+	"array":    true,
 
 	"null":  true,
 	"true":  true,
