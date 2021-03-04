@@ -378,7 +378,6 @@ function intNeedle() {
     /**
      * @warning since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call
      * @type int $x
-     * @fix     strpos($_, chr($x));
      */
     any: {
         strpos($_, $x);

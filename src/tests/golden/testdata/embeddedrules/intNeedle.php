@@ -13,7 +13,6 @@ function getIntOrString(bool $a) {
     if ($a) {
         return "Hello";
     }
-
     return 0;
 }
 
