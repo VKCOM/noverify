@@ -70,6 +70,10 @@ type CheckerInfo struct {
 	// After is a compliant code example (after the fix).
 	// Optional, but if present, Before should also be non-empty.
 	After string
+
+	// Extends tells the check is created by a dynamic rule that
+	// extends the internal linter rule.
+	Extends bool
 }
 
 // BlockChecker is a custom linter that is called on block level
@@ -309,6 +313,7 @@ func (reg *CheckersRegistry) DeclareRules(rset *rules.Set) {
 			Quickfix: doc.Fix,
 			Before:   doc.Before,
 			After:    doc.After,
+			Extends:  doc.Extends,
 		})
 	}
 }
@@ -322,13 +327,11 @@ func (reg *CheckersRegistry) DeclareChecker(info CheckerInfo) {
 	if info.Name == "" {
 		panic("can't declare a checker with an empty name")
 	}
-	if rule, ok := reg.info[info.Name]; ok {
-		// Perhaps this is a situation when the checker is present
-		// both in the code and in dynamic rules.
-		// If the comments do not match, then this is most likely an error.
-		if rule.Comment != info.Comment {
-			panic(fmt.Sprintf("the checker %q is already declared, if you want to set the checker both in the dynamic rule and in the code, then their comments must be equal", info.Name))
+	if _, ok := reg.info[info.Name]; ok {
+		if !info.Extends {
+			panic(fmt.Sprintf("the checker %q is already declared, if you want to set the checker both in the dynamic rule and in the code, then use @extends annotation", info.Name))
 		}
+		return
 	}
 	if info.Before != "" && info.After == "" {
 		panic(fmt.Sprintf("%s: Before is set, but After is empty", info.Name))

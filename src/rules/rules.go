@@ -62,6 +62,7 @@ type RuleDoc struct {
 	Before  string
 	After   string
 	Fix     bool
+	Extends bool
 }
 
 // Rule is a dynamically-loaded linter rule.
