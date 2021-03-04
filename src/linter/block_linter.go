@@ -131,11 +131,7 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.CoalesceExpr:
 		b.checkCoalesceExpr(n)
 	case *ir.TypeCastExpr:
-		if n.Type == "array" {
-			b.checkRedundantCastArray(n.Expr)
-		} else {
-			b.checkRedundantCast(n.Expr, n.Type)
-		}
+		b.checkTypeCaseExpr(n)
 
 	case *ir.CloneExpr:
 		b.walker.r.checkKeywordCase(n, "clone")
@@ -184,6 +180,21 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 	case *ir.BadString:
 		b.report(n, LevelError, "syntax", "%s", n.Error)
+	}
+}
+
+func (b *blockLinter) checkTypeCaseExpr(n *ir.TypeCastExpr) {
+	if n.Type == "array" {
+		b.checkRedundantCastArray(n.Expr)
+	} else {
+		b.checkRedundantCast(n.Expr, n.Type)
+	}
+
+	// We cannot use the value directly, since for real it is equal to float,
+	// so we have to use the token value.
+	if bytes.EqualFold(n.CastTkn.Value, []byte("(real)")) {
+		b.report(n, LevelNotice, "langDeprecated",
+			"use float cast instead of real")
 	}
 }
 
@@ -792,6 +803,8 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 		}
 		// TODO: handle fprintf as well?
 		b.checkFormatString(e, e.Arg(0))
+	case `\is_real`:
+		b.report(e, LevelNotice, "langDeprecated", "use is_float function instead of is_real")
 	case `\array_key_exists`:
 		b.checkArrayKeyExistsCall(e)
 	}
