@@ -2126,3 +2126,32 @@ function f() {
 	}
 	test.RunAndMatch()
 }
+
+func TestNestedTernary(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f() {
+    $_ = 1 ? 2 : 3 ? 4 : 5; // error
+	//   |_______|
+
+    $_ = 1 ? 2 : 3 ? 4 : 1 ? 2 : 3; // error
+	//   |_______|       |
+	//   |_______________|
+
+	$_ = (1 ? 2 : 3) ? 4 : 5; // ok
+	//   |_________|
+
+	$_ = 1 ? 2 : (3 ? 4 : 5); // ok
+	//           |_________|
+
+	$_ = 1 ? 2 ? 3 : 4 : 5; // ok, ternary in middle
+	//       |_______|
+}
+`)
+	test.Expect = []string{
+		`in ternary operators, you must explicitly use parentheses to specify the order of operations`,
+		`in ternary operators, you must explicitly use parentheses to specify the order of operations`,
+		`in ternary operators, you must explicitly use parentheses to specify the order of operations`,
+	}
+	test.RunAndMatch()
+}

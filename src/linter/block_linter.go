@@ -434,6 +434,11 @@ func (b *blockLinter) checkTernary(e *ir.TernaryExpr) {
 		return // Skip `$x ?: $y` expressions
 	}
 
+	_, nestedTernary := e.Condition.(*ir.TernaryExpr)
+	if nestedTernary {
+		b.report(e.Condition, LevelWarning, "nestedTernary", "in ternary operators, you must explicitly use parentheses to specify the order of operations")
+	}
+
 	// Check for `$cond ? $x : $x` which makes no sense.
 	if irutil.NodeEqual(e.IfTrue, e.IfFalse) {
 		b.report(e, LevelWarning, "dupBranchBody", "then/else operands are identical")
