@@ -628,6 +628,17 @@ echo $someVal;`,
 	20,
 ]`,
 		},
+
+		{
+			Name:     "real",
+			Default:  false,
+			Quickfix: true,
+			Comment:  `Report using a cast to real type or using the is_real function.`,
+			Before: `$a = (real)100;
+$_ = is_real($a);`,
+			After: `$a = (float)100;
+$_ = is_float($a);`,
+		},
 	}
 
 	for _, info := range allChecks {
