@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/i582/cfmt"
+
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/rules"
 )
@@ -96,26 +98,12 @@ func bindFlags(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgume
 
 	flag.Usage = func() {
 		out := flag.CommandLine.Output()
-		fmt.Fprintf(out, "Usage of noverify:\n")
-		fmt.Fprintf(out, "  $ noverify [command] [-stubs-dir=/path/to/phpstorm-stubs] [-cache-dir=$TMPDIR/noverify] /project/root\n")
+		cfmt.Fprintln(out, "{{Usage:}}::yellow")
+		cfmt.Fprintln(out, "  {{$}}::gray noverify {{check}}::green {{[options]}}::yellow /project/root")
 		fmt.Fprintln(out)
-		fmt.Fprintln(out, "\tThe cache directory is optional, by default it is already set to $TMPDIR/noverify.")
-		fmt.Fprintln(out, "\tThe phpstorm-stubs directory is optional, the built-in ones are used by default.")
+		cfmt.Fprintln(out, "{{Options:}}::yellow")
+		fmt.Print(formatFlags())
 		fmt.Fprintln(out)
-		GlobalCmds.WriteHelpPage(out)
-		fmt.Fprintln(out)
-		fmt.Fprintf(out, "Flags:\n")
-		flag.PrintDefaults()
-		fmt.Fprintln(out)
-		fmt.Fprintf(out, "Diagnostics (checks):\n")
-		for _, info := range declaredChecks {
-			extra := " (disabled by default)"
-			if info.Default {
-				extra = ""
-			}
-			fmt.Fprintf(out, "  %s%s\n", info.Name, extra)
-			fmt.Fprintf(out, "    \t%s\n", info.Comment)
-		}
 	}
 
 	flag.StringVar(&args.pprofHost, "pprof", "", "HTTP pprof endpoint (e.g. localhost:8080)")
@@ -141,7 +129,7 @@ func bindFlags(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgume
 
 	flag.StringVar(&args.gitRepo, "git", "", "Path to git repository to analyze")
 	flag.StringVar(&args.mutable.gitCommitFrom, "git-commit-from", "", "Analyze changes between commits <git-commit-from> and <git-commit-to>")
-	flag.StringVar(&args.mutable.gitCommitTo, "git-commit-to", "", "")
+	flag.StringVar(&args.mutable.gitCommitTo, "git-commit-to", "", "Analyze changes between commits <git-commit-from> and <git-commit-to>")
 	flag.StringVar(&args.gitRef, "git-ref", "", "Ref (e.g. branch) that is being pushed")
 	flag.StringVar(&args.gitPushArg, "git-push-arg", "", "In {pre,post}-receive hooks a whole line from stdin can be passed")
 	flag.StringVar(&args.gitAuthorsWhitelist, "git-author-whitelist", "", "Whitelist (comma-separated) for commit authors, if needed")
@@ -190,4 +178,15 @@ func bindFlags(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgume
 
 	var encodingUnused string
 	flag.StringVar(&encodingUnused, "encoding", "", "Deprecated and unused")
+}
+
+func formatFlags() (res string) {
+	flag.VisitAll(func(f *flag.Flag) {
+		defaultVal := f.DefValue
+		if f.DefValue != "" {
+			defaultVal = fmt.Sprintf("(default: %s)", f.DefValue)
+		}
+		res += cfmt.Sprintf("  {{--%s}}::green {{%s}}::gray\n      %s\n", f.Name, defaultVal, f.Usage)
+	})
+	return res
 }

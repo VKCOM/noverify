@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gookit/color"
+	"github.com/gosuri/uitable"
+	"github.com/i582/cfmt"
+
 	"github.com/VKCOM/noverify/src/lintdoc"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/rules"
@@ -12,36 +16,39 @@ import (
 
 func Help(*MainConfig) (int, error) {
 	flag.Parse()
-
 	args := flag.Args()
 
 	if len(args) == 0 {
-		fmt.Printf("Usage of noverify:\n")
-		fmt.Printf("  $ noverify [command] -stubs-dir=/path/to/phpstorm-stubs -cache-dir=/cache/dir /project/root\n\n")
 		GlobalCmds.PrintHelpPage()
 		return 0, nil
 	}
 
 	mainSubject := args[0]
-	switch mainSubject {
-	case "checkers":
-		config := declareRules()
-		var subSubject string
-		if len(args) > 1 {
-			subSubject = args[1]
-		}
-		if subSubject == "" {
-			helpAllCheckers(config)
-			return 0, nil
-		}
-		err := helpChecker(config, subSubject)
-		if err != nil {
-			return 1, err
-		}
-		return 0, err
-	default:
-		return 1, fmt.Errorf("unknown subject: %s", mainSubject)
+	if mainSubject == "checkers" {
+		return handleCheckersHelp(args[1:])
 	}
+
+	return 1, fmt.Errorf("unknown subject: %s", mainSubject)
+}
+
+func handleCheckersHelp(args []string) (int, error) {
+	config := declareRules()
+
+	// `help checkers`
+	if len(args) == 0 {
+		showHelpAllCheckers(config)
+		return 0, nil
+	}
+
+	checkerName := args[0]
+
+	// `help checkers <name>`
+	err := showHelpChecker(config, checkerName)
+	if err != nil {
+		return 1, err
+	}
+
+	return 0, err
 }
 
 func declareRules() *linter.Config {
@@ -56,16 +63,33 @@ func declareRules() *linter.Config {
 	for _, rset := range ruleSets {
 		config.Checkers.DeclareRules(rset)
 	}
+
 	return config
 }
 
-func helpAllCheckers(config *linter.Config) {
+func showHelpAllCheckers(config *linter.Config) {
+	table := uitable.New()
 	for _, info := range config.Checkers.ListDeclared() {
-		fmt.Printf("%s: %s\n", info.Name, info.Comment)
+		table.AddRow(color.Green.Sprintf("  %s", info.Name), info.Comment)
 	}
+
+	cfmt.Println("{{Usage:}}::yellow")
+	cfmt.Println("  {{$}}::gray noverify {{check}}::green {{-allow-checks}}::yellow='{{<list-checks>}}::underline' /project/root")
+	fmt.Println()
+
+	cfmt.Println("  {{NOTE:}}::gray In order to run the linter with only some checks, the {{-allow-checks}}::yellow")
+	cfmt.Println("  flag is used which accepts a comma-separated list of checks that are allowed.")
+	cfmt.Println()
+	cfmt.Println("  For other possible options run")
+	cfmt.Println("     {{$}}::gray noverify {{check}}::green -help")
+
+	fmt.Println()
+
+	cfmt.Println("{{Checkers:}}::yellow")
+	fmt.Println(table.String())
 }
 
-func helpChecker(config *linter.Config, checkerName string) error {
+func showHelpChecker(config *linter.Config, checkerName string) error {
 	var info linter.CheckerInfo
 	checks := config.Checkers.ListDeclared()
 	for i := range checks {

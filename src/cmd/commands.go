@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"io"
 	"sort"
+
+	"github.com/gosuri/uitable"
+	"github.com/i582/cfmt"
 )
 
 type Commands struct {
@@ -47,6 +50,14 @@ func (c *Commands) OverrideCommands(commands *Commands) {
 	}
 }
 
+func (c *Commands) PrintHelpPage() {
+	fmt.Print(c.HelpPage())
+}
+
+func (c *Commands) WriteHelpPage(w io.Writer) {
+	fmt.Fprint(w, c.HelpPage())
+}
+
 func (c *Commands) HelpPage() string {
 	var res string
 
@@ -59,18 +70,39 @@ func (c *Commands) HelpPage() string {
 		return commands[i].Name < commands[j].Name
 	})
 
-	res += "Supported sub-commands:\n"
-	for _, cmd := range commands {
-		res += cmd.String()
-	}
+	res += cfmt.Sprintln("{{Usage:}}::yellow")
+	res += cfmt.Sprintln("  {{$}}::gray noverify {{[command]}}::green {{[options]}}::gray /project/root")
+	res += fmt.Sprintln()
+
+	res += cfmt.Sprintln("{{Commands:}}::yellow")
+	res += c.printAlign(commands)
 
 	return res
 }
 
-func (c *Commands) PrintHelpPage() {
-	fmt.Print(c.HelpPage())
-}
+func (c *Commands) printAlign(commands []*SubCommand) string {
+	table := uitable.New()
+	table.Wrap = true
+	table.MaxColWidth = 65
 
-func (c *Commands) WriteHelpPage(w io.Writer) {
-	fmt.Fprint(w, c.HelpPage())
+	for _, cmd := range commands {
+		var left string
+		left += cfmt.Sprintf("  {{%s}}::green\n", cmd.Name)
+		left += fmt.Sprintln("    Recipes:")
+		for _, ex := range cmd.Examples {
+			left += cfmt.Sprintf("      $ noverify %s %s\n", cmd.Name, ex.Line)
+		}
+
+		var right string
+		right += fmt.Sprintln(cmd.Description)
+		right += fmt.Sprintln()
+		for _, ex := range cmd.Examples {
+			right += fmt.Sprintln(ex.Description)
+		}
+
+		table.AddRow(left, right)
+		table.Rows[len(table.Rows)-1].Cells[0].Width = 145
+	}
+
+	return table.String()
 }
