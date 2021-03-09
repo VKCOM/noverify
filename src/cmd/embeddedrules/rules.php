@@ -392,11 +392,9 @@ function intNeedle() {
 }
 
 /**
- * @comment Report a call define function with third arguments true or false to define case (in)sensitive constants.
- * @before  define("Z_CONST", 1, true);
- * @after   define("Z_CONST", 1);
+ * @extends
  */
-function defineConst() {
+function langDeprecated() {
     /**
      * @warning since PHP 7.3.0, the definition of case insensitive constants has been deprecated
      */
