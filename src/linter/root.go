@@ -925,6 +925,10 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		hintReturnType = typ
 	}
 
+	for _, param := range meth.Params {
+		d.checkFuncParam(param.(*ir.Parameter))
+	}
+
 	if meth.PhpDocComment == "" && modif.accessLevel == meta.Public {
 		// Permit having "__call" and other magic method without comments.
 		if !insideInterface && !strings.HasPrefix(nm, "_") {
@@ -1540,6 +1544,32 @@ func (d *rootWalker) checkFuncParam(p *ir.Parameter) {
 			d.Report(n, LevelNotice, "arraySyntax", "Use of old array syntax (use short form instead)")
 		}
 		return true
+	})
+
+	d.checkTypeHintClassCaseFunctionParam(p)
+}
+
+func (d *rootWalker) checkTypeHintClassCaseFunctionParam(p *ir.Parameter) {
+	if !d.metaInfo().IsIndexingComplete() {
+		return
+	}
+
+	typ, ok := d.parseTypeNode(p.VariableType)
+	if !ok {
+		return
+	}
+
+	typ.Iterate(func(typ string) {
+		if meta.IsClassType(typ) {
+			className := typ
+
+			class, ok := d.metaInfo().GetClass(className)
+			if !ok {
+				return
+			}
+
+			d.checkNameCase(p.VariableType, className, class.Name)
+		}
 	})
 }
 

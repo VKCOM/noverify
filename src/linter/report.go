@@ -628,6 +628,28 @@ echo $someVal;`,
 	20,
 ]`,
 		},
+
+		{
+			Name:     "nestedTernary",
+			Default:  false,
+			Quickfix: true,
+			Comment:  `Report an unspecified order in a nested ternary operator.`,
+			Before:   `$_ = 1 ? 2 : 3 ? 4 : 5;`,
+			After: `$_ = (1 ? 2 : 3) ? 4 : 5;
+// or
+$_ = 1 ? 2 : (3 ? 4 : 5);`,
+		},
+
+		{
+			Name:     "langDeprecated",
+			Default:  false,
+			Quickfix: true,
+			Comment:  `Report the use of deprecated (per language spec) features.`,
+			Before: `$a = (real)100;
+$_ = is_real($a);`,
+			After: `$a = (float)100;
+$_ = is_float($a);`,
+		},
 	}
 
 	for _, info := range allChecks {

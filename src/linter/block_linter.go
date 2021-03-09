@@ -131,11 +131,7 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.CoalesceExpr:
 		b.checkCoalesceExpr(n)
 	case *ir.TypeCastExpr:
-		if n.Type == "array" {
-			b.checkRedundantCastArray(n.Expr)
-		} else {
-			b.checkRedundantCast(n.Expr, n.Type)
-		}
+		b.checkTypeCaseExpr(n)
 
 	case *ir.CloneExpr:
 		b.walker.r.checkKeywordCase(n, "clone")
@@ -184,6 +180,21 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 	case *ir.BadString:
 		b.report(n, LevelError, "syntax", "%s", n.Error)
+	}
+}
+
+func (b *blockLinter) checkTypeCaseExpr(n *ir.TypeCastExpr) {
+	if n.Type == "array" {
+		b.checkRedundantCastArray(n.Expr)
+	} else {
+		b.checkRedundantCast(n.Expr, n.Type)
+	}
+
+	// We cannot use the value directly, since for real it is equal to float,
+	// so we have to use the token value.
+	if bytes.EqualFold(n.CastTkn.Value, []byte("(real)")) {
+		b.report(n, LevelNotice, "langDeprecated",
+			"use float cast instead of real")
 	}
 }
 
@@ -432,6 +443,11 @@ func (b *blockLinter) checkConstFetch(e *ir.ConstFetchExpr) {
 func (b *blockLinter) checkTernary(e *ir.TernaryExpr) {
 	if e.IfTrue == nil {
 		return // Skip `$x ?: $y` expressions
+	}
+
+	_, nestedTernary := e.Condition.(*ir.TernaryExpr)
+	if nestedTernary {
+		b.report(e.Condition, LevelWarning, "nestedTernary", "in ternary operators, you must explicitly use parentheses to specify the order of operations")
 	}
 
 	// Check for `$cond ? $x : $x` which makes no sense.
@@ -787,6 +803,26 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 		}
 		// TODO: handle fprintf as well?
 		b.checkFormatString(e, e.Arg(0))
+	case `\is_real`:
+		b.report(e, LevelNotice, "langDeprecated", "use is_float function instead of is_real")
+	case `\array_key_exists`:
+		b.checkArrayKeyExistsCall(e)
+	}
+}
+
+func (b *blockLinter) checkArrayKeyExistsCall(e *ir.FunctionCallExpr) {
+	if len(e.Args) < 2 {
+		return
+	}
+
+	typ := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, e.Arg(1).Expr)
+
+	onlyObjects := !typ.Find(func(typ string) bool {
+		return !meta.IsClassType(typ)
+	})
+
+	if onlyObjects {
+		b.report(e, LevelWarning, "langDeprecated", "since PHP 7.4, using array_key_exists() with an object has been deprecated, use isset() or property_exists() instead")
 	}
 }
 
