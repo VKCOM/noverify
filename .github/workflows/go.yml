@@ -18,6 +18,10 @@
           uses: "actions/checkout@v1",
         },
         {
+          name: "Tests and lints",
+          run: "make check",
+        },
+        {
           name: "Clone master branch",
           run: "git clone https://github.com/VKCOM/noverify.git ./noverify-master",
         },
@@ -48,10 +52,6 @@
           "with": {
             body: "${{ steps.get-comment-body.outputs.body }}",
           },
-        },
-        {
-          name: "Tests and lints",
-          run: "make check",
         },
       ],
     },
