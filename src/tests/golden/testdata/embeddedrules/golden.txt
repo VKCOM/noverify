@@ -127,6 +127,12 @@ $_ = stristr($str, 10);
 WARNING intNeedle: since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:64
 $_ = stristr($str, getInt());
      ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING langDeprecated: since PHP 7.3.0, the definition of case insensitive constants has been deprecated at testdata/embeddedrules/langDeprecated.php:3
+define("Z_CONST", 1, true);
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING langDeprecated: define defaults to a case sensitive constant, the third argument can be removed at testdata/embeddedrules/langDeprecated.php:4
+define("Z_CONST1", 2, false);
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING offBy1: probably intended to use count-1 as an index at testdata/embeddedrules/offBy1.php:7
   $_ = $xs[count($xs)];
        ^^^^^^^^^^^^^^^

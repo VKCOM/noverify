@@ -390,3 +390,19 @@ function intNeedle() {
         stristr($_, $x);
     }
 }
+
+/**
+ * @extends
+ */
+function langDeprecated() {
+    /**
+     * @warning since PHP 7.3.0, the definition of case insensitive constants has been deprecated
+     */
+    define($_, $_, true);
+
+    /**
+     * @warning define defaults to a case sensitive constant, the third argument can be removed
+     * @fix     define($_, $_);
+     */
+    define($_, $_, false);
+}
