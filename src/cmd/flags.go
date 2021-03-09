@@ -99,7 +99,7 @@ func bindFlags(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgume
 	flag.Usage = func() {
 		out := flag.CommandLine.Output()
 		cfmt.Fprintln(out, "{{Usage:}}::yellow")
-		cfmt.Fprintln(out, "  {{$}}::gray noverify {{check}}::green {{[options]}}::yellow /project/root")
+		cfmt.Fprintln(out, "  {{$}}::gray noverify check {{[options]}}::green /project/root")
 		fmt.Fprintln(out)
 		cfmt.Fprintln(out, "{{Options:}}::yellow")
 		fmt.Print(formatFlags())
