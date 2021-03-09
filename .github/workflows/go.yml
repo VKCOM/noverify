@@ -1,7 +1,7 @@
 # This file adheres to the YAML5 style.
 {
   name: "Go",
-  on: ["push", "pull_request"],
+  on: [ "push", "pull_request" ],
   jobs: {
     build: {
       name: "Build",
@@ -10,11 +10,49 @@
         {
           name: "Set up Go 1.13",
           uses: "actions/setup-go@v1",
-          "with": {"go-version": 1.13},
+          "with": { "go-version": 1.13 },
           id: "go",
         },
-        {name: "Check out code into the Go module directory", uses: "actions/checkout@v1"},
-        {name: "Tests and lints", run: "make check"},
+        {
+          name: "Check out code into the Go module directory",
+          uses: "actions/checkout@v1",
+        },
+        {
+          name: "Clone master branch",
+          run: "git clone https://github.com/VKCOM/noverify.git ./noverify-master",
+        },
+        {
+          name: "Run linter over test (master branch)",
+          run: "go run . check -output=../reports-master.json -output-json ./src/tests/golden/testdata",
+          continue-on-error: true,
+          working-directory: ./noverify-master,
+        },
+        {
+          name: "Run linter over test (current branch)",
+          run: "go run . check -output=reports.json -output-json ./src/tests/golden/testdata",
+          continue-on-error: true,
+        },
+        {
+          id: get-comment-body,
+          run: "body=$(go run ./src/cmd/stat -m);\
+          body=\"${body//'%'/'%25'}\";\
+          body=\"${body//$'\n'/'%0A'}\";\
+          body=\"${body//$'\r'/'%0D'}\";\
+          echo ::set-output name=body::$body",
+          shell: "bash",
+        },
+        {
+          name: "Create commit comment",
+          uses: "peter-evans/commit-comment@v1",
+          "if": "${{ github.event_name == 'pull_request' }}",
+          "with": {
+            body: "${{ steps.get-comment-body.outputs.body }}",
+          },
+        },
+        {
+          name: "Tests and lints",
+          run: "make check",
+        },
       ],
     },
   },
