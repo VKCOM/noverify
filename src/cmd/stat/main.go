@@ -93,9 +93,7 @@ func main() {
 
 		fmt.Println("Changes in reports with the current master.")
 		fmt.Println()
-
 		fmt.Println(table)
-
 		fmt.Println()
 		fmt.Println(strDiff)
 	}
