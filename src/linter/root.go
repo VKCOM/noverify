@@ -238,7 +238,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			break
 		}
 
-		d.scope().AddVar(v, solver.ExprTypeLocal(d.scope(), d.ctx.st, n.Expression), "global variable", meta.VarAlwaysDefined)
+		d.scope().AddVar(v, solver.ExprTypeLocal(d.scope(), d.ctx.st, n.Expr), "global variable", meta.VarAlwaysDefined)
 	case *ir.FunctionStmt:
 		res = d.enterFunction(n)
 		d.checkKeywordCase(n, "function")

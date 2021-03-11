@@ -2835,6 +2835,21 @@ namespace Foo {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestTupleWithArray(t *testing.T) {
+	code := `<?php
+/**
+ * @return tuple(array, array)
+ */
+function f() {
+    return [[],[]];
+}
+
+exprtype(f()[0], "mixed[]");
+exprtype(f()[1], "mixed[]");
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	exprTypeTestImpl(t, params, false)
 }

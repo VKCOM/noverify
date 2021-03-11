@@ -143,7 +143,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 	case *ir.ParenExpr:
 		return ExprTypeLocalCustom(sc, cs, n.Expr, custom)
 	case *ir.Assign:
-		return ExprTypeLocalCustom(sc, cs, n.Expression, custom)
+		return ExprTypeLocalCustom(sc, cs, n.Expr, custom)
 	case *ir.AssignConcat:
 		return meta.PreciseStringType
 	case *ir.AssignShiftLeft, *ir.AssignShiftRight:

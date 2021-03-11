@@ -1472,3 +1472,24 @@ function f() {
 	test.Expect = []string{}
 	test.RunAndMatch()
 }
+
+func TestTypeHintClassCaseFunctionParam(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {}
+
+class Boo {
+	/** */
+	public function a2(foo $b) {}
+}
+
+function a1(Foo $a, foo $b, boo $c) {}
+`)
+
+	test.Expect = []string{
+		`\foo should be spelled \Foo`,
+		`\foo should be spelled \Foo`,
+		`\boo should be spelled \Boo`,
+	}
+	test.RunAndMatch()
+}

@@ -65,8 +65,8 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Variable != nil {
 			clone.Variable = NodeClone(x.Variable)
 		}
-		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression)
+		if x.Expr != nil {
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.AssignBitwiseAnd:
@@ -74,8 +74,8 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Variable != nil {
 			clone.Variable = NodeClone(x.Variable)
 		}
-		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression)
+		if x.Expr != nil {
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.AssignBitwiseOr:
@@ -83,8 +83,8 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Variable != nil {
 			clone.Variable = NodeClone(x.Variable)
 		}
-		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression)
+		if x.Expr != nil {
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.AssignBitwiseXor:
@@ -92,8 +92,8 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Variable != nil {
 			clone.Variable = NodeClone(x.Variable)
 		}
-		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression)
+		if x.Expr != nil {
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.AssignCoalesce:
@@ -101,8 +101,8 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Variable != nil {
 			clone.Variable = NodeClone(x.Variable)
 		}
-		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression)
+		if x.Expr != nil {
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.AssignConcat:
@@ -110,8 +110,8 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Variable != nil {
 			clone.Variable = NodeClone(x.Variable)
 		}
-		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression)
+		if x.Expr != nil {
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.AssignDiv:
@@ -119,8 +119,8 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Variable != nil {
 			clone.Variable = NodeClone(x.Variable)
 		}
-		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression)
+		if x.Expr != nil {
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.AssignMinus:
@@ -128,8 +128,8 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Variable != nil {
 			clone.Variable = NodeClone(x.Variable)
 		}
-		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression)
+		if x.Expr != nil {
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.AssignMod:
@@ -137,8 +137,8 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Variable != nil {
 			clone.Variable = NodeClone(x.Variable)
 		}
-		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression)
+		if x.Expr != nil {
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.AssignMul:
@@ -146,8 +146,8 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Variable != nil {
 			clone.Variable = NodeClone(x.Variable)
 		}
-		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression)
+		if x.Expr != nil {
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.AssignPlus:
@@ -155,8 +155,8 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Variable != nil {
 			clone.Variable = NodeClone(x.Variable)
 		}
-		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression)
+		if x.Expr != nil {
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.AssignPow:
@@ -164,8 +164,8 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Variable != nil {
 			clone.Variable = NodeClone(x.Variable)
 		}
-		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression)
+		if x.Expr != nil {
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.AssignReference:
@@ -173,8 +173,8 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Variable != nil {
 			clone.Variable = NodeClone(x.Variable)
 		}
-		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression)
+		if x.Expr != nil {
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.AssignShiftLeft:
@@ -182,8 +182,8 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Variable != nil {
 			clone.Variable = NodeClone(x.Variable)
 		}
-		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression)
+		if x.Expr != nil {
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.AssignShiftRight:
@@ -191,8 +191,8 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Variable != nil {
 			clone.Variable = NodeClone(x.Variable)
 		}
-		if x.Expression != nil {
-			clone.Expression = NodeClone(x.Expression)
+		if x.Expr != nil {
+			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
 	case *ir.BadString:

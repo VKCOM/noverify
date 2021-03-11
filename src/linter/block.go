@@ -1519,10 +1519,10 @@ func (b *blockWalker) handleAssignReference(a *ir.AssignReference) bool {
 	switch v := a.Variable.(type) {
 	case *ir.ArrayDimFetchExpr:
 		b.handleAndCheckDimFetchLValue(v, "assign_array", meta.MixedType)
-		a.Expression.Walk(b)
+		a.Expr.Walk(b)
 		return false
 	case *ir.Var, *ir.SimpleVar:
-		b.addVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
+		b.addVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expr), "assign", meta.VarAlwaysDefined)
 		b.addNonLocalVar(v, varRef)
 	case *ir.ListExpr:
 		// TODO: figure out whether this case is reachable.
@@ -1533,7 +1533,7 @@ func (b *blockWalker) handleAssignReference(a *ir.AssignReference) bool {
 		a.Variable.Walk(b)
 	}
 
-	a.Expression.Walk(b)
+	a.Expr.Walk(b)
 	return false
 }
 
@@ -1631,24 +1631,24 @@ func (b *blockWalker) paramClobberCheck(v *ir.SimpleVar) {
 func (b *blockWalker) handleAssign(a *ir.Assign) bool {
 	b.handleComments(a.Variable)
 
-	a.Expression.Walk(b)
+	a.Expr.Walk(b)
 
 	switch v := a.Variable.(type) {
 	case *ir.ArrayDimFetchExpr:
-		typ := solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression)
+		typ := solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expr)
 		b.handleAndCheckDimFetchLValue(v, "assign_array", typ)
 		return false
 	case *ir.SimpleVar:
 		b.paramClobberCheck(v)
-		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
+		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expr), "assign", meta.VarAlwaysDefined)
 	case *ir.Var:
-		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
+		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expr), "assign", meta.VarAlwaysDefined)
 	case *ir.ListExpr:
 		if !b.isIndexingComplete() {
 			return true
 		}
 
-		b.handleAssignList(v, a.Expression)
+		b.handleAssignList(v, a.Expr)
 	case *ir.PropertyFetchExpr:
 		v.Property.Walk(b)
 		sv, ok := v.Variable.(*ir.SimpleVar)
@@ -1682,7 +1682,6 @@ func (b *blockWalker) handleAssign(a *ir.Assign) bool {
 			p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, a.Expression, b.ctx.customTypes))
 			class.Properties[propertyName.Value] = p
 		}
-
 	case *ir.StaticPropertyFetchExpr:
 		sv, ok := v.Property.(*ir.SimpleVar)
 		if !ok {
@@ -1725,28 +1724,28 @@ func (b *blockWalker) handleAssignOp(assign ir.Node) {
 	case *ir.AssignPlus:
 		e := &ir.PlusExpr{
 			Left:  assign.Variable,
-			Right: assign.Expression,
+			Right: assign.Expr,
 		}
 		v = assign.Variable
 		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
 	case *ir.AssignMinus:
 		e := &ir.MinusExpr{
 			Left:  assign.Variable,
-			Right: assign.Expression,
+			Right: assign.Expr,
 		}
 		v = assign.Variable
 		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
 	case *ir.AssignMul:
 		e := &ir.MulExpr{
 			Left:  assign.Variable,
-			Right: assign.Expression,
+			Right: assign.Expr,
 		}
 		v = assign.Variable
 		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
 	case *ir.AssignDiv:
 		e := &ir.DivExpr{
 			Left:  assign.Variable,
-			Right: assign.Expression,
+			Right: assign.Expr,
 		}
 		v = assign.Variable
 		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
@@ -1763,7 +1762,7 @@ func (b *blockWalker) handleAssignOp(assign ir.Node) {
 	case *ir.AssignCoalesce:
 		e := &ir.CoalesceExpr{
 			Left:  assign.Variable,
-			Right: assign.Expression,
+			Right: assign.Expr,
 		}
 		v = assign.Variable
 		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)

@@ -97,8 +97,8 @@ func (norm *normalizer) sortStatements(statements []ir.Node) []ir.Node {
 			return sortKey(n.Expr)
 		case *ir.Assign:
 			_, ok := n.Variable.(*ir.SimpleVar)
-			if ok && simpleExpr(n.Expression) {
-				return irfmt.Node(n.Expression)
+			if ok && simpleExpr(n.Expr) {
+				return irfmt.Node(n.Expr)
 			}
 		}
 		return ""
@@ -165,13 +165,13 @@ func (norm *normalizer) EnterNode(n ir.Node) bool {
 		n.Expr = norm.normalizedStmtExpr(n.Expr)
 
 	case *ir.Assign:
-		n.Expression = norm.normalizedExpr(n.Expression)
+		n.Expr = norm.normalizedExpr(n.Expr)
 		n.Variable = norm.normalizedExpr(n.Variable)
 	case *ir.AssignPlus:
-		n.Expression = norm.normalizedExpr(n.Expression)
+		n.Expr = norm.normalizedExpr(n.Expr)
 		n.Variable = norm.normalizedExpr(n.Variable)
 	case *ir.AssignConcat:
-		n.Expression = norm.normalizedExpr(n.Expression)
+		n.Expr = norm.normalizedExpr(n.Expr)
 		n.Variable = norm.normalizedExpr(n.Variable)
 
 	case *ir.StaticPropertyFetchExpr:
@@ -238,7 +238,7 @@ func (norm *normalizer) normalizedStmtExpr(e ir.Node) ir.Node {
 				Variable: &ir.ArrayDimFetchExpr{
 					Variable: norm.normalizedExpr(a),
 				},
-				Expression: norm.normalizedExpr(e),
+				Expr: norm.normalizedExpr(e),
 			}
 		}
 	}
@@ -364,29 +364,29 @@ func (norm *normalizer) normalizedExpr(e ir.Node) ir.Node {
 			break
 		}
 		// `$x = $x <op> $y` => `$x <op>= $y`
-		switch rhs := e.Expression.(type) {
+		switch rhs := e.Expr.(type) {
 		case *ir.PlusExpr:
 			if irutil.NodeEqual(e.Variable, rhs.Left) {
-				return &ir.AssignPlus{Variable: e.Variable, Expression: rhs.Right}
+				return &ir.AssignPlus{Variable: e.Variable, Expr: rhs.Right}
 			}
 		case *ir.MinusExpr:
 			if irutil.NodeEqual(e.Variable, rhs.Left) {
-				return &ir.AssignMinus{Variable: e.Variable, Expression: rhs.Right}
+				return &ir.AssignMinus{Variable: e.Variable, Expr: rhs.Right}
 			}
 		case *ir.ConcatExpr:
 			if irutil.NodeEqual(e.Variable, rhs.Left) {
-				return &ir.AssignConcat{Variable: e.Variable, Expression: rhs.Right}
+				return &ir.AssignConcat{Variable: e.Variable, Expr: rhs.Right}
 			}
 		}
 
 	case *ir.AssignPlus:
 		// `$x += 1` => `++$x`
-		if literalValue(e.Expression) == `1` {
+		if literalValue(e.Expr) == `1` {
 			return &ir.PreIncExpr{Variable: e.Variable}
 		}
 	case *ir.AssignMinus:
 		// `$x -= 1` => `--$x`
-		if literalValue(e.Expression) == `1` {
+		if literalValue(e.Expr) == `1` {
 			return &ir.PreDecExpr{Variable: e.Variable}
 		}
 

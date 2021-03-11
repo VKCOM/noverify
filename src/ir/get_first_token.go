@@ -130,8 +130,8 @@ func GetFirstToken(n Node) *token.Token {
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		if n.Expression != nil {
-			return GetFirstToken(n.Expression)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
 		}
 	case *AssignBitwiseAnd:
 		if n.Variable != nil {
@@ -140,8 +140,8 @@ func GetFirstToken(n Node) *token.Token {
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		if n.Expression != nil {
-			return GetFirstToken(n.Expression)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
 		}
 	case *AssignBitwiseOr:
 		if n.Variable != nil {
@@ -150,8 +150,8 @@ func GetFirstToken(n Node) *token.Token {
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		if n.Expression != nil {
-			return GetFirstToken(n.Expression)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
 		}
 	case *AssignBitwiseXor:
 		if n.Variable != nil {
@@ -160,8 +160,8 @@ func GetFirstToken(n Node) *token.Token {
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		if n.Expression != nil {
-			return GetFirstToken(n.Expression)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
 		}
 	case *AssignCoalesce:
 		if n.Variable != nil {
@@ -170,8 +170,8 @@ func GetFirstToken(n Node) *token.Token {
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		if n.Expression != nil {
-			return GetFirstToken(n.Expression)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
 		}
 	case *AssignConcat:
 		if n.Variable != nil {
@@ -180,8 +180,8 @@ func GetFirstToken(n Node) *token.Token {
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		if n.Expression != nil {
-			return GetFirstToken(n.Expression)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
 		}
 	case *AssignDiv:
 		if n.Variable != nil {
@@ -190,8 +190,8 @@ func GetFirstToken(n Node) *token.Token {
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		if n.Expression != nil {
-			return GetFirstToken(n.Expression)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
 		}
 	case *AssignMinus:
 		if n.Variable != nil {
@@ -200,8 +200,8 @@ func GetFirstToken(n Node) *token.Token {
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		if n.Expression != nil {
-			return GetFirstToken(n.Expression)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
 		}
 	case *AssignMod:
 		if n.Variable != nil {
@@ -210,8 +210,8 @@ func GetFirstToken(n Node) *token.Token {
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		if n.Expression != nil {
-			return GetFirstToken(n.Expression)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
 		}
 	case *AssignMul:
 		if n.Variable != nil {
@@ -220,8 +220,8 @@ func GetFirstToken(n Node) *token.Token {
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		if n.Expression != nil {
-			return GetFirstToken(n.Expression)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
 		}
 	case *AssignPlus:
 		if n.Variable != nil {
@@ -230,8 +230,8 @@ func GetFirstToken(n Node) *token.Token {
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		if n.Expression != nil {
-			return GetFirstToken(n.Expression)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
 		}
 	case *AssignPow:
 		if n.Variable != nil {
@@ -240,8 +240,8 @@ func GetFirstToken(n Node) *token.Token {
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		if n.Expression != nil {
-			return GetFirstToken(n.Expression)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
 		}
 	case *AssignReference:
 		if n.Variable != nil {
@@ -250,8 +250,8 @@ func GetFirstToken(n Node) *token.Token {
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		if n.Expression != nil {
-			return GetFirstToken(n.Expression)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
 		}
 	case *AssignShiftLeft:
 		if n.Variable != nil {
@@ -260,8 +260,8 @@ func GetFirstToken(n Node) *token.Token {
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		if n.Expression != nil {
-			return GetFirstToken(n.Expression)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
 		}
 	case *AssignShiftRight:
 		if n.Variable != nil {
@@ -270,8 +270,8 @@ func GetFirstToken(n Node) *token.Token {
 		if n.EqualTkn != nil {
 			return n.EqualTkn
 		}
-		if n.Expression != nil {
-			return GetFirstToken(n.Expression)
+		if n.Expr != nil {
+			return GetFirstToken(n.Expr)
 		}
 	case *BadString:
 		if n.MinusTkn != nil {

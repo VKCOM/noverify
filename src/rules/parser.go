@@ -380,6 +380,8 @@ func (p *parser) parseFuncComment(fn *ir.FunctionStmt) error {
 			doc.Before = part.ParamsText
 		case "after":
 			doc.After = part.ParamsText
+		case "extends":
+			doc.Extends = true
 		}
 	}
 	p.res.DocByName[p.funcName] = doc

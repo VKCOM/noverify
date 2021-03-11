@@ -70,14 +70,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
-		out.Expression = c.convNode(n.Expr)
+		out.Expr = c.convNode(n.Expr)
 
 		// hack for expressions like:
 		// /**
 		//  * @param Boo $x
 		//  */
 		// $_ = fn($x) => $x->b();
-		if arrowFn, ok := out.Expression.(*ir.ArrowFunctionExpr); ok {
+		if arrowFn, ok := out.Expr.(*ir.ArrowFunctionExpr); ok {
 			doc, found := irutil.FindPhpDoc(out.Variable)
 			if found {
 				arrowFn.PhpDocComment = doc
@@ -95,7 +95,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
-		out.Expression = c.convNode(n.Expr)
+		out.Expr = c.convNode(n.Expr)
 		return out
 
 	case *ast.ExprAssignBitwiseOr:
@@ -106,7 +106,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
-		out.Expression = c.convNode(n.Expr)
+		out.Expr = c.convNode(n.Expr)
 		return out
 
 	case *ast.ExprAssignBitwiseXor:
@@ -117,7 +117,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
-		out.Expression = c.convNode(n.Expr)
+		out.Expr = c.convNode(n.Expr)
 		return out
 
 	case *ast.ExprAssignCoalesce:
@@ -128,7 +128,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
-		out.Expression = c.convNode(n.Expr)
+		out.Expr = c.convNode(n.Expr)
 		return out
 
 	case *ast.ExprAssignConcat:
@@ -139,7 +139,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
-		out.Expression = c.convNode(n.Expr)
+		out.Expr = c.convNode(n.Expr)
 		return out
 
 	case *ast.ExprAssignDiv:
@@ -150,7 +150,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
-		out.Expression = c.convNode(n.Expr)
+		out.Expr = c.convNode(n.Expr)
 		return out
 
 	case *ast.ExprAssignMinus:
@@ -161,7 +161,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
-		out.Expression = c.convNode(n.Expr)
+		out.Expr = c.convNode(n.Expr)
 		return out
 
 	case *ast.ExprAssignMod:
@@ -172,7 +172,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
-		out.Expression = c.convNode(n.Expr)
+		out.Expr = c.convNode(n.Expr)
 		return out
 
 	case *ast.ExprAssignMul:
@@ -183,7 +183,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
-		out.Expression = c.convNode(n.Expr)
+		out.Expr = c.convNode(n.Expr)
 		return out
 
 	case *ast.ExprAssignPlus:
@@ -194,7 +194,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
-		out.Expression = c.convNode(n.Expr)
+		out.Expr = c.convNode(n.Expr)
 		return out
 
 	case *ast.ExprAssignPow:
@@ -205,7 +205,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
-		out.Expression = c.convNode(n.Expr)
+		out.Expr = c.convNode(n.Expr)
 		return out
 
 	case *ast.ExprAssignReference:
@@ -216,7 +216,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
-		out.Expression = c.convNode(n.Expr)
+		out.Expr = c.convNode(n.Expr)
 		return out
 
 	case *ast.ExprAssignShiftLeft:
@@ -227,7 +227,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
-		out.Expression = c.convNode(n.Expr)
+		out.Expr = c.convNode(n.Expr)
 		return out
 
 	case *ast.ExprAssignShiftRight:
@@ -238,7 +238,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
-		out.Expression = c.convNode(n.Expr)
+		out.Expr = c.convNode(n.Expr)
 		return out
 
 	case *ast.ExprBinaryBitwiseAnd:
@@ -2267,12 +2267,14 @@ func convString(n *ast.ScalarString) ir.Node {
 	s, err := interpretString(unquoted, quote)
 	if err != nil {
 		return &ir.BadString{
-			MinusTkn:     n.MinusTkn,
-			StringTkn:    n.StringTkn,
-			Position:     n.Position,
-			Value:        string(unquoted),
-			Error:        err.Error(),
-			DoubleQuotes: out.DoubleQuotes,
+			String: ir.String{
+				MinusTkn:     n.MinusTkn,
+				StringTkn:    n.StringTkn,
+				Position:     n.Position,
+				Value:        string(unquoted),
+				DoubleQuotes: out.DoubleQuotes,
+			},
+			Error: err.Error(),
 		}
 	}
 	out.Value = s
