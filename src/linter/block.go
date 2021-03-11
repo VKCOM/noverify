@@ -1679,7 +1679,7 @@ func (b *blockWalker) handleAssign(a *ir.Assign) bool {
 			}
 
 			p := class.Properties[propertyName.Value]
-			p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, a.Expression, b.ctx.customTypes))
+			p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, a.Expr, b.ctx.customTypes))
 			class.Properties[propertyName.Value] = p
 		}
 	case *ir.StaticPropertyFetchExpr:
@@ -1706,7 +1706,7 @@ func (b *blockWalker) handleAssign(a *ir.Assign) bool {
 			}
 
 			p := class.Properties["$"+sv.Name]
-			p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, a.Expression, b.ctx.customTypes))
+			p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, a.Expr, b.ctx.customTypes))
 			class.Properties["$"+sv.Name] = p
 		}
 	default:
