@@ -1537,7 +1537,7 @@ func (b *blockWalker) handleAssignReference(a *ir.AssignReference) bool {
 	return false
 }
 
-func (b *blockWalker) handleAssignShapeToList(items []*ir.ArrayItemExpr, info meta.ClassInfo) {
+func (b *blockWalker) handleAssignShapeToList(items []*ir.ArrayItemExpr, info *meta.ClassInfo) {
 	for i, item := range items {
 		var prop meta.PropertyInfo
 		var ok bool

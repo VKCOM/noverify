@@ -279,7 +279,7 @@ func (d *rootWalker) handleTrait(n *ir.TraitStmt) {
 	namespace := d.ctx.st.Namespace
 	fullName := namespace + `\` + name
 
-	trait := meta.ClassInfo{
+	trait := &meta.ClassInfo{
 		Pos:              d.getElementPos(d.currentClassNode),
 		Name:             fullName,
 		Parent:           "",
@@ -321,7 +321,7 @@ func (d *rootWalker) handleInterface(n *ir.InterfaceStmt) {
 
 	extends := d.handleInterfaceExtends(n)
 
-	iface := meta.ClassInfo{
+	iface := &meta.ClassInfo{
 		Pos:              d.getElementPos(d.currentClassNode),
 		Name:             fullName,
 		Parent:           "",
@@ -367,7 +367,7 @@ func (d *rootWalker) handleClass(classNode *ir.ClassStmt) {
 	doc := d.parseClassPHPDoc(classNode, classNode.PhpDoc)
 	docProps, docMethods, mixins := d.handleClassPhpDoc(doc)
 
-	class := meta.ClassInfo{
+	class := &meta.ClassInfo{
 		Pos:              d.getElementPos(classNode),
 		Flags:            flags,
 		Name:             fullName,
@@ -850,7 +850,7 @@ func (d *rootWalker) parseMethodModifiers(meth *ir.ClassMethodStmt) (res methodM
 	return res
 }
 
-func (d *rootWalker) getCurrentClass() (meta.ClassInfo, bool) {
+func (d *rootWalker) getCurrentClass() (*meta.ClassInfo, bool) {
 	var classes meta.ClassesMap
 
 	if d.ctx.st.IsTrait {
@@ -1039,7 +1039,7 @@ func (d *rootWalker) handleClassMethod(m *ir.ClassMethodStmt) {
 	})
 }
 
-func (d *rootWalker) handleClassInterfacesForMethod(class meta.ClassInfo, params []meta.FuncParam, name string, sc *meta.Scope) {
+func (d *rootWalker) handleClassInterfacesForMethod(class *meta.ClassInfo, params []meta.FuncParam, name string, sc *meta.Scope) {
 	// If we implement interfaces, methods that take a part in this
 	// can borrow types information from them.
 	// Programmers sometimes leave implementing methods without a
@@ -1625,6 +1625,32 @@ func (d *rootWalker) checkFuncParam(p *ir.Parameter) {
 		}
 		return true
 	})
+
+	d.checkTypeHintClassCaseFunctionParam(p)
+}
+
+func (d *rootWalker) checkTypeHintClassCaseFunctionParam(p *ir.Parameter) {
+	if !d.metaInfo().IsIndexingComplete() {
+		return
+	}
+
+	typ, ok := d.parseTypeNode(p.VariableType)
+	if !ok {
+		return
+	}
+
+	typ.Iterate(func(typ string) {
+		if meta.IsClassType(typ) {
+			className := typ
+
+			class, ok := d.metaInfo().GetClass(className)
+			if !ok {
+				return
+			}
+
+			d.checkNameCase(p.VariableType, className, class.Name)
+		}
+	})
 }
 
 func (d *rootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {
@@ -1938,7 +1964,7 @@ func (d *rootWalker) checkIfaceImplemented(n ir.Node, nameUsed string) {
 	d.checkClassImplemented(n, nameUsed)
 }
 
-func (d *rootWalker) checkImplemented(n ir.Node, nameUsed string, otherClass meta.ClassInfo) {
+func (d *rootWalker) checkImplemented(n ir.Node, nameUsed string, otherClass *meta.ClassInfo) {
 	class, ok := d.getCurrentClass()
 	if !ok {
 		return
@@ -1952,7 +1978,7 @@ func (d *rootWalker) checkImplemented(n ir.Node, nameUsed string, otherClass met
 	d.checkImplementedStep(n, nameUsed, otherClass, visited)
 }
 
-func (d *rootWalker) checkImplementedStep(n ir.Node, className string, otherClass meta.ClassInfo, visited map[string]struct{}) {
+func (d *rootWalker) checkImplementedStep(n ir.Node, className string, otherClass *meta.ClassInfo, visited map[string]struct{}) {
 	// TODO: check that method signatures are compatible?
 	if _, ok := visited[className]; ok {
 		return
@@ -1966,7 +1992,7 @@ func (d *rootWalker) checkImplementedStep(n ir.Node, className string, otherClas
 			continue
 		}
 		if m.Info.Name != ifaceMethod.Name {
-			d.Report(n, LevelNotice, "nameCase", "%s::%s should be spelled as %s::%s",
+			d.Report(n, LevelNotice, "nameMismatch", "%s::%s should be spelled as %s::%s",
 				d.ctx.st.CurrentClass, m.Info.Name, className, ifaceMethod.Name)
 		}
 	}
@@ -1993,7 +2019,7 @@ func (d *rootWalker) checkNameCase(n ir.Node, nameUsed, nameExpected string) {
 		return
 	}
 	if nameUsed != nameExpected {
-		d.Report(n, LevelWarning, "nameCase", "%s should be spelled %s",
+		d.Report(n, LevelWarning, "nameMismatch", "%s should be spelled %s",
 			nameUsed, nameExpected)
 	}
 }
@@ -2053,7 +2079,7 @@ func (d *rootWalker) afterLeaveFile() {
 					AccessLevel: meta.Public,
 				}
 			}
-			cl := meta.ClassInfo{
+			cl := &meta.ClassInfo{
 				Name:       shape.name,
 				Properties: props,
 				Flags:      meta.ClassShape,

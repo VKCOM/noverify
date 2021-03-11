@@ -1845,7 +1845,7 @@ func_A();
 		`Method_a should be spelled method_a`,
 		`\func_A should be spelled \func_a`,
 	}
-	linttest.RunFilterMatch(test, `nameCase`)
+	linttest.RunFilterMatch(test, "nameMismatch")
 }
 
 func TestClassSpecialNameCase(t *testing.T) {
@@ -1923,7 +1923,7 @@ class A extends B {
 		`STATIC should be spelled as static`,
 		`stAtic should be spelled as static`,
 	}
-	linttest.RunFilterMatch(test, `nameCase`)
+	linttest.RunFilterMatch(test, "nameMismatch")
 }
 
 func TestClassNotFound(t *testing.T) {

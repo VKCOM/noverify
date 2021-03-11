@@ -38,7 +38,7 @@ func TestSolver(t *testing.T) {
 	cmfm.Set(`do_something`, meta.FuncInfo{Typ: tm(`string`)})
 
 	cm := meta.NewClassesMap()
-	cm.Set(`\Test`, meta.ClassInfo{
+	cm.Set(`\Test`, &meta.ClassInfo{
 		Methods: cmfm,
 		Properties: meta.PropertiesMap{
 			`$instance`: {Typ: tm(`\Test`)},

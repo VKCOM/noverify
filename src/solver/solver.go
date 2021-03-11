@@ -604,7 +604,7 @@ func identityType(typ string) map[string]struct{} {
 	return res
 }
 
-func getClassOrTrait(info *meta.Info, typeName string) (meta.ClassInfo, bool) {
+func getClassOrTrait(info *meta.Info, typeName string) (*meta.ClassInfo, bool) {
 	class, ok := info.GetClass(typeName)
 	if ok {
 		return class, true

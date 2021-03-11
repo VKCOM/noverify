@@ -151,6 +151,7 @@ func (d *rootWalker) checkClassMethodComplexity(m *ir.ClassMethodStmt) {
 func (d *rootWalker) checkClassMethodParams(m *ir.ClassMethodStmt) {
 	for _, p := range m.Params {
 		d.checkVarnameMisspellings(p, p.(*ir.Parameter).Variable.Name)
+		d.checkFuncParam(p.(*ir.Parameter))
 	}
 }
 

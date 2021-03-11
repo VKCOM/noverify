@@ -87,15 +87,15 @@ func (i *Info) NumConstants() int {
 	return len(i.allConstants)
 }
 
-func (i *Info) GetClass(nm string) (res ClassInfo, ok bool) {
+func (i *Info) GetClass(nm string) (res *ClassInfo, ok bool) {
 	return i.allClasses.Get(nm)
 }
 
-func (i *Info) GetTrait(nm string) (res ClassInfo, ok bool) {
+func (i *Info) GetTrait(nm string) (res *ClassInfo, ok bool) {
 	return i.allTraits.Get(nm)
 }
 
-func (i *Info) GetClassOrTrait(nm string) (res ClassInfo, ok bool) {
+func (i *Info) GetClassOrTrait(nm string) (res *ClassInfo, ok bool) {
 	res, ok = i.allClasses.Get(nm)
 	if ok {
 		return res, true
@@ -193,7 +193,7 @@ func (i *Info) InitStubs() {
 
 	{
 		i.internalClasses = NewClassesMap()
-		h := make(map[lowercaseString]ClassInfo, len(i.allClasses.H))
+		h := make(map[lowercaseString]*ClassInfo, len(i.allClasses.H))
 		for k, v := range i.allClasses.H {
 			h[k] = v
 		}

@@ -9,22 +9,22 @@ import (
 type lowercaseString string
 
 type ClassesMap struct {
-	H map[lowercaseString]ClassInfo
+	H map[lowercaseString]*ClassInfo
 }
 
 func NewClassesMap() ClassesMap {
-	return ClassesMap{H: make(map[lowercaseString]ClassInfo)}
+	return ClassesMap{H: make(map[lowercaseString]*ClassInfo)}
 }
 
 func (m ClassesMap) Len() int           { return len(m.H) }
 func (m ClassesMap) Delete(name string) { delete(m.H, toLower(name)) }
 
-func (m ClassesMap) Get(name string) (ClassInfo, bool) {
+func (m ClassesMap) Get(name string) (*ClassInfo, bool) {
 	res, ok := m.H[toLower(name)]
 	return res, ok
 }
 
-func (m ClassesMap) Set(name string, class ClassInfo) {
+func (m ClassesMap) Set(name string, class *ClassInfo) {
 	m.H[toLower(name)] = class
 }
 
