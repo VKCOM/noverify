@@ -425,3 +425,41 @@ func TestPHPDocIncorrectSyntaxOptionalTypesType(t *testing.T) {
 	}
 	test.RunAndMatch()
 }
+
+func TestPHPDocInvalidBeginning(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {
+  /*
+   * @var int
+   */
+  public $item = 10;
+
+  /*
+   * @return int
+   */
+  public function f() { return 1; }
+}
+
+/*
+ * @param int $a
+ */
+function f($a) {
+  /*
+   * @var $b float
+   */
+  $b = 100;
+
+  // TODO: @var string $a (ok)
+  echo $a, $b;
+}
+`)
+	test.Expect = []string{
+		`phpdoc comment should start with /**, not /*`,
+		`phpdoc comment should start with /**, not /*`,
+		`phpdoc comment should start with /**, not /*`,
+		`phpdoc comment should start with /**, not /*`,
+		`phpdoc comment should start with /**, not /*`,
+	}
+	test.RunAndMatch()
+}

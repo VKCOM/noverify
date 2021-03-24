@@ -80,7 +80,6 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		if arrowFn, ok := out.Expr.(*ir.ArrowFunctionExpr); ok {
 			doc, found := irutil.FindPhpDoc(out.Variable)
 			if found {
-				arrowFn.PhpDocComment = doc
 				arrowFn.PhpDoc = c.parsePHPDoc(doc)
 			}
 		}
@@ -644,7 +643,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			tokenWithDoc = n.FnTkn
 		}
 
-		out.PhpDocComment, out.PhpDoc = c.getPhpDoc(tokenWithDoc)
+		out.PhpDoc = c.getPhpDoc(tokenWithDoc)
 
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
@@ -724,7 +723,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			tokenWithDoc = n.FunctionTkn
 		}
 
-		out.PhpDocComment, out.PhpDoc = c.getPhpDoc(tokenWithDoc)
+		out.PhpDoc = c.getPhpDoc(tokenWithDoc)
 
 		out.Params = c.convNodeSlice(n.Params)
 
@@ -1366,7 +1365,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			out.Modifiers = slice
 		}
 
-		out.PhpDocComment, out.PhpDoc = c.getPhpDoc(n.ConstTkn)
+		out.PhpDoc = c.getPhpDoc(n.ConstTkn)
 
 		out.Consts = c.convNodeSlice(n.Consts)
 		return out
@@ -1391,7 +1390,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			tokenWithDoc = n.FunctionTkn
 		}
 
-		out.PhpDocComment, out.PhpDoc = c.getPhpDoc(tokenWithDoc)
+		out.PhpDoc = c.getPhpDoc(tokenWithDoc)
 
 		out.MethodName = c.convNode(n.Name).(*ir.Identifier)
 		{
@@ -1645,7 +1644,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 
-		out.PhpDocComment, out.PhpDoc = c.getPhpDoc(n.FunctionTkn)
+		out.PhpDoc = c.getPhpDoc(n.FunctionTkn)
 
 		out.FunctionName = c.convNode(n.Name).(*ir.Identifier)
 		out.Params = c.convNodeSlice(n.Params)
@@ -1785,7 +1784,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 
-		out.PhpDocComment, out.PhpDoc = c.getPhpDoc(n.InterfaceTkn)
+		out.PhpDoc = c.getPhpDoc(n.InterfaceTkn)
 
 		out.InterfaceName = c.convNode(n.Name).(*ir.Identifier)
 
@@ -1875,7 +1874,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		if len(n.Modifiers) != 0 {
 			tokenWithDoc = n.Modifiers[0].(*ast.Identifier).IdentifierTkn
 		}
-		out.PhpDocComment, out.PhpDoc = c.getPhpDoc(tokenWithDoc)
+		out.PhpDoc = c.getPhpDoc(tokenWithDoc)
 
 		out.Type = c.convNode(n.Type)
 		out.Properties = c.convNodeSlice(n.Props)
@@ -1969,7 +1968,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 
-		out.PhpDocComment, out.PhpDoc = c.getPhpDoc(out.TraitTkn)
+		out.PhpDoc = c.getPhpDoc(out.TraitTkn)
 
 		out.TraitName = c.convNode(n.Name).(*ir.Identifier)
 		out.Stmts = c.convNodeSlice(n.Stmts)
@@ -2129,19 +2128,31 @@ func hasValue(tok *token.Token) bool {
 	return tok != nil
 }
 
-func (c *Converter) getPhpDoc(tok *token.Token) (doc string, parsed []phpdoc.CommentPart) {
+func (c *Converter) getPhpDoc(tok *token.Token) (doc phpdoc.PhpDoc) {
 	if tok == nil {
-		return doc, parsed
+		return doc
 	}
 
+	var foundDoc string
+
+Loop:
 	for _, ff := range tok.FreeFloating {
-		if ff.ID == token.T_DOC_COMMENT {
-			doc = string(ff.Value)
-			parsed = c.parsePHPDoc(doc)
+		switch ff.ID {
+		case token.T_DOC_COMMENT:
+			foundDoc = string(ff.Value)
+			break Loop
+		case token.T_COMMENT:
+			possiblePhpDoc := phpdoc.IsPossiblePhpDoc(ff.Value)
+			if !possiblePhpDoc {
+				continue
+			}
+
+			foundDoc = string(ff.Value)
+			break Loop
 		}
 	}
 
-	return doc, parsed
+	return c.parsePHPDoc(foundDoc)
 }
 
 func (c *Converter) convRelativeName(n *ast.NameRelative) *ir.Name {
@@ -2200,7 +2211,7 @@ func (c *Converter) convClass(n *ast.StmtClass) ir.Node {
 		}
 	}
 
-	class.PhpDocComment, class.PhpDoc = c.getPhpDoc(n.ClassTkn)
+	class.PhpDoc = c.getPhpDoc(n.ClassTkn)
 
 	if n.Name == nil {
 		// Anonymous class expression.
@@ -2238,11 +2249,11 @@ func (c *Converter) convClass(n *ast.StmtClass) ir.Node {
 	return out
 }
 
-func (c *Converter) parsePHPDoc(doc string) []phpdoc.CommentPart {
+func (c *Converter) parsePHPDoc(doc string) phpdoc.PhpDoc {
 	if c.phpdocTypeParser != nil {
 		return phpdoc.Parse(c.phpdocTypeParser, doc)
 	}
-	return nil
+	return phpdoc.PhpDoc{}
 }
 
 func convString(n *ast.ScalarString) ir.Node {

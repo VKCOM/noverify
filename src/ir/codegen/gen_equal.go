@@ -49,7 +49,7 @@ func (g *genEqual) writeCompare(w *bytes.Buffer, pkg *packageData, typ *typeData
 		case "[]ir.Node":
 			fmt.Fprintf(w, "    if !NodeSliceEqual(x.%[1]s, y.%[1]s) { return false }\n", field.Name())
 		case "ir.Doc":
-			fmt.Fprintf(w, "    if x.PhpDocComment != y.PhpDocComment { return false }\n")
+			fmt.Fprintf(w, "    if x.PhpDoc.Raw != y.PhpDoc.Raw { return false }\n")
 		case "*github.com/z7zmey/php-parser/pkg/token.Token":
 			// Do nothing.
 		case "[]*github.com/z7zmey/php-parser/pkg/token.Token":

@@ -186,7 +186,13 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 		return
 	}
 
-	for _, p := range phpdoc.Parse(b.r.ctx.phpdocTypeParser, string(t.Value)) {
+	doc := phpdoc.Parse(b.r.ctx.phpdocTypeParser, string(t.Value))
+
+	if doc.Suspicious {
+		b.r.Report(n, LevelWarning, "phpdocLint", "phpdoc comment should start with /**, not /*")
+	}
+
+	for _, p := range doc.Parsed {
 		p, ok := p.(*phpdoc.TypeVarCommentPart)
 		if !ok || p.Name() != "var" {
 			continue

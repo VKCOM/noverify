@@ -105,7 +105,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if x.Static != y.Static {
 			return false
 		}
-		if x.PhpDocComment != y.PhpDocComment {
+		if x.PhpDoc.Raw != y.PhpDoc.Raw {
 			return false
 		}
 		return true
@@ -446,7 +446,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeSliceEqual(x.Consts, y.Consts) {
 			return false
 		}
-		if x.PhpDocComment != y.PhpDocComment {
+		if x.PhpDoc.Raw != y.PhpDoc.Raw {
 			return false
 		}
 		return true
@@ -496,7 +496,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if x.ReturnsRef != y.ReturnsRef {
 			return false
 		}
-		if x.PhpDocComment != y.PhpDocComment {
+		if x.PhpDoc.Raw != y.PhpDoc.Raw {
 			return false
 		}
 		return true
@@ -558,7 +558,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if x.Static != y.Static {
 			return false
 		}
-		if x.PhpDocComment != y.PhpDocComment {
+		if x.PhpDoc.Raw != y.PhpDoc.Raw {
 			return false
 		}
 		return true
@@ -891,7 +891,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if x.ReturnsRef != y.ReturnsRef {
 			return false
 		}
-		if x.PhpDocComment != y.PhpDocComment {
+		if x.PhpDoc.Raw != y.PhpDoc.Raw {
 			return false
 		}
 		return true
@@ -1068,7 +1068,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
 		}
-		if x.PhpDocComment != y.PhpDocComment {
+		if x.PhpDoc.Raw != y.PhpDoc.Raw {
 			return false
 		}
 		return true
@@ -1414,7 +1414,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeSliceEqual(x.Properties, y.Properties) {
 			return false
 		}
-		if x.PhpDocComment != y.PhpDocComment {
+		if x.PhpDoc.Raw != y.PhpDoc.Raw {
 			return false
 		}
 		return true
@@ -1675,7 +1675,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
 		}
-		if x.PhpDocComment != y.PhpDocComment {
+		if x.PhpDoc.Raw != y.PhpDoc.Raw {
 			return false
 		}
 		return true

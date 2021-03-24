@@ -111,11 +111,11 @@ func TestParseSimple(t *testing.T) {
 	 * @property-read int $readonly
 	*/`)
 
-	if len(got) != len(want) {
-		t.Fatalf("len(got) != len(want): %d != %d", len(got), len(want))
+	if len(got.Parsed) != len(want) {
+		t.Fatalf("len(got) != len(want): %d != %d", len(got.Parsed), len(want))
 	}
 
-	for i, g := range got {
+	for i, g := range got.Parsed {
 		w := want[i]
 
 		if diff := cmp.Diff(g, w, cmp.Exporter(func(reflect.Type) bool { return true })); diff != "" {

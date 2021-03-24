@@ -20,6 +20,5 @@ type Class struct {
 }
 
 type Doc struct {
-	PhpDocComment string
-	PhpDoc        []phpdoc.CommentPart
+	phpdoc.PhpDoc
 }
