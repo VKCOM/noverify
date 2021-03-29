@@ -1,12 +1,11 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"sort"
-
-	"github.com/gosuri/uitable"
-	"github.com/i582/cfmt"
+	"text/tabwriter"
 )
 
 type Commands struct {
@@ -70,39 +69,30 @@ func (c *Commands) HelpPage() string {
 		return commands[i].Name < commands[j].Name
 	})
 
-	res += cfmt.Sprintln("{{Usage:}}::yellow")
-	res += cfmt.Sprintln("  {{$}}::gray noverify {{[command]}}::green {{[options]}}::gray /project/root")
+	res += fmt.Sprintln("Usage:")
+	res += fmt.Sprintln("  $ noverify [command] [options] /project/root")
 	res += fmt.Sprintln()
 
-	res += cfmt.Sprintln("{{Commands:}}::yellow")
+	res += fmt.Sprintln("Commands:")
 	res += c.printAlign(commands)
 
 	return res
 }
 
 func (c *Commands) printAlign(commands []*SubCommand) string {
-	table := uitable.New()
-	table.Wrap = true
-	table.MaxColWidth = 65
+	buf := bytes.NewBuffer(nil)
+	w := tabwriter.NewWriter(buf, 50, 0, 1, ' ', 0)
 
 	for _, cmd := range commands {
-		var left string
-		left += cfmt.Sprintf("  {{%s}}::green\n", cmd.Name)
-		left += fmt.Sprintln("    Recipes:")
+		fmt.Fprintf(w, "  %s\t%s\n", cmd.Name, cmd.Description)
+		fmt.Fprintf(w, "    Recipes:\n")
 		for _, ex := range cmd.Examples {
-			left += cfmt.Sprintf("      $ noverify %s %s\n", cmd.Name, ex.Line)
+			command := fmt.Sprintf("      $ noverify %s %s", cmd.Name, ex.Line)
+			fmt.Fprintf(w, "%s\t%s\t\n", command, ex.Description)
 		}
-
-		var right string
-		right += fmt.Sprintln(cmd.Description)
-		right += fmt.Sprintln()
-		for _, ex := range cmd.Examples {
-			right += fmt.Sprintln(ex.Description)
-		}
-
-		table.AddRow(left, right)
-		table.Rows[len(table.Rows)-1].Cells[0].Width = 145
 	}
 
-	return table.String()
+	w.Flush()
+
+	return buf.String()
 }

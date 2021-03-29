@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"fmt"
-
-	"github.com/i582/cfmt"
 )
 
 type SubCommand struct {
@@ -20,10 +18,10 @@ type SubCommandExample struct {
 
 func (s *SubCommand) String() string {
 	var res string
-	res += cfmt.Sprintf("  {{%s}}::green                %s\n", s.Name, s.Description)
+	res += fmt.Sprintf("  %s                %s\n", s.Name, s.Description)
 	res += fmt.Sprintln("    Recipes:")
 	for _, ex := range s.Examples {
-		res += cfmt.Sprintf("      {{$}}::gray noverify %s %s      %s\n", s.Name, ex.Line, ex.Description)
+		res += fmt.Sprintf("      $ noverify %s %s      %s\n", s.Name, ex.Line, ex.Description)
 	}
 	res += "\n"
 	return res

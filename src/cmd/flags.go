@@ -8,8 +8,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/i582/cfmt"
-
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/rules"
 )
@@ -98,10 +96,10 @@ func bindFlags(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgume
 
 	flag.Usage = func() {
 		out := flag.CommandLine.Output()
-		cfmt.Fprintln(out, "{{Usage:}}::yellow")
-		cfmt.Fprintln(out, "  {{$}}::gray noverify check {{[options]}}::green /project/root")
+		fmt.Fprintln(out, "Usage:")
+		fmt.Fprintln(out, "  $ noverify check [options] /project/root")
 		fmt.Fprintln(out)
-		cfmt.Fprintln(out, "{{Options:}}::yellow")
+		fmt.Fprintln(out, "Options:")
 		fmt.Print(formatFlags())
 		fmt.Fprintln(out)
 	}
@@ -186,7 +184,7 @@ func formatFlags() (res string) {
 		if f.DefValue != "" {
 			defaultVal = fmt.Sprintf("(default: %s)", f.DefValue)
 		}
-		res += cfmt.Sprintf("  {{--%s}}::green {{%s}}::gray\n      %s\n", f.Name, defaultVal, f.Usage)
+		res += fmt.Sprintf("  -%s %s\n      %s\n", f.Name, defaultVal, f.Usage)
 	})
 	return res
 }

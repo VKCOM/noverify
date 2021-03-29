@@ -3,11 +3,9 @@ package cmd
 import (
 	"flag"
 	"fmt"
+	"os"
 	"strings"
-
-	"github.com/gookit/color"
-	"github.com/gosuri/uitable"
-	"github.com/i582/cfmt"
+	"text/tabwriter"
 
 	"github.com/VKCOM/noverify/src/lintdoc"
 	"github.com/VKCOM/noverify/src/linter"
@@ -68,25 +66,22 @@ func declareRules() *linter.Config {
 }
 
 func showHelpAllCheckers(config *linter.Config) {
-	table := uitable.New()
+	fmt.Println("Usage:")
+	fmt.Println("  $ noverify check -allow-checks='<list-checks>' /project/root")
+	fmt.Println()
+	fmt.Println("  NOTE: In order to run the linter with only some checks, the -allow-checks")
+	fmt.Println("  flag is used which accepts a comma-separated list of checks that are allowed.")
+	fmt.Println()
+	fmt.Println("  For other possible options run")
+	fmt.Println("     $ noverify check -help")
+	fmt.Println()
+	fmt.Println("Checkers:")
+
+	w := tabwriter.NewWriter(os.Stdout, 15, 0, 1, ' ', 0)
 	for _, info := range config.Checkers.ListDeclared() {
-		table.AddRow(color.Green.Sprintf("  %s", info.Name), info.Comment)
+		fmt.Fprintf(w, "  %s\t%s\t\n", info.Name, info.Comment)
 	}
-
-	cfmt.Println("{{Usage:}}::yellow")
-	cfmt.Println("  {{$}}::gray noverify {{check}}::green {{-allow-checks}}::yellow='{{<list-checks>}}::underline' /project/root")
-	fmt.Println()
-
-	cfmt.Println("  {{NOTE:}}::gray In order to run the linter with only some checks, the {{-allow-checks}}::yellow")
-	cfmt.Println("  flag is used which accepts a comma-separated list of checks that are allowed.")
-	cfmt.Println()
-	cfmt.Println("  For other possible options run")
-	cfmt.Println("     {{$}}::gray noverify {{check}}::green -help")
-
-	fmt.Println()
-
-	cfmt.Println("{{Checkers:}}::yellow")
-	fmt.Println(table.String())
+	w.Flush()
 }
 
 func showHelpChecker(config *linter.Config, checkerName string) error {
