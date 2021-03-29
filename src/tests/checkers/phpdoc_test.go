@@ -435,10 +435,16 @@ class Foo {
    */
   public $item = 10;
 
+  /* @var int */
+  public $item2 = 10;
+
   /*
    * @return int
    */
   public function f() { return 1; }
+
+  /* @return int */
+  public function f2() { return 1; }
 }
 
 /*
@@ -453,13 +459,22 @@ function f($a) {
   // TODO: @var string $a (ok)
   echo $a, $b;
 }
+
+/* @param int $a */
+function f2($a) {
+  /* @var $b float */
+  $b = 100;
+
+  // TODO: @var string $a (ok)
+  echo $a, $b;
+}
 `)
 	test.Expect = []string{
-		`phpdoc comment should start with /**, not /*`,
-		`phpdoc comment should start with /**, not /*`,
-		`phpdoc comment should start with /**, not /*`,
-		`phpdoc comment should start with /**, not /*`,
-		`phpdoc comment should start with /**, not /*`,
+		`multiline phpdoc comment should start with /**, not /*`,
+		`multiline phpdoc comment should start with /**, not /*`,
+		`multiline phpdoc comment should start with /**, not /*`,
+		`multiline phpdoc comment should start with /**, not /*`,
+		`multiline phpdoc comment should start with /**, not /*`,
 	}
 	test.RunAndMatch()
 }

@@ -89,7 +89,7 @@ func FindPhpDoc(n ir.Node) (doc string, found bool) {
 }
 
 func classEqual(x, y ir.Class) bool {
-	return x.PhpDoc.Raw == y.PhpDoc.Raw &&
+	return x.Comment.Raw == y.Comment.Raw &&
 		NodeEqual(x.Extends, y.Extends) &&
 		NodeEqual(x.Implements, y.Implements) &&
 		NodeSliceEqual(x.Stmts, y.Stmts)
@@ -98,7 +98,7 @@ func classEqual(x, y ir.Class) bool {
 func classClone(x ir.Class) ir.Class {
 	return ir.Class{
 		Doc: ir.Doc{
-			PhpDoc: x.PhpDoc,
+			Comment: x.Comment,
 		},
 		Extends:    NodeClone(x.Extends).(*ir.ClassExtendsStmt),
 		Implements: NodeClone(x.Implements).(*ir.ClassImplementsStmt),

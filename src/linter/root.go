@@ -179,7 +179,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 	case *ir.InterfaceStmt:
 		d.currentClassNode = n
 		d.checkKeywordCase(n, "interface")
-		d.checkCommentMisspellings(n.InterfaceName, n.PhpDoc.Raw)
+		d.checkCommentMisspellings(n.InterfaceName, n.Comment.Raw)
 		if !strings.HasSuffix(n.InterfaceName.Value, "able") {
 			d.checkIdentMisspellings(n.InterfaceName)
 		}
@@ -212,9 +212,9 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 				}
 			}
 		}
-		d.checkCommentMisspellings(n.ClassName, n.PhpDoc.Raw)
+		d.checkCommentMisspellings(n.ClassName, n.Comment.Raw)
 		d.checkIdentMisspellings(n.ClassName)
-		doc := d.parseClassPHPDoc(n.ClassName, n.PhpDoc)
+		doc := d.parseClassPHPDoc(n.ClassName, n.Comment)
 		d.reportPhpdocErrors(n.ClassName, doc.errs)
 		// If we ever need to distinguish @property-annotated and real properties,
 		// more work will be required here.
@@ -243,7 +243,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 	case *ir.TraitStmt:
 		d.currentClassNode = n
 		d.checkKeywordCase(n, "trait")
-		d.checkCommentMisspellings(n.TraitName, n.PhpDoc.Raw)
+		d.checkCommentMisspellings(n.TraitName, n.Comment.Raw)
 		d.checkIdentMisspellings(n.TraitName)
 	case *ir.TraitUseStmt:
 		d.checkKeywordCase(n, "use")
@@ -824,8 +824,8 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 		specifiedType = typ
 	}
 
-	d.checkCommentMisspellings(pl, pl.PhpDoc.Raw)
-	typ := d.parsePHPDocVar(pl, pl.PhpDoc)
+	d.checkCommentMisspellings(pl, pl.Comment.Raw)
+	typ := d.parsePHPDocVar(pl, pl.Comment)
 
 	for _, pNode := range pl.Properties {
 		p := pNode.(*ir.PropertyStmt)
@@ -871,7 +871,7 @@ func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
 		c := cNode.(*ir.ConstantStmt)
 
 		nm := c.ConstantName.Value
-		d.checkCommentMisspellings(c, list.PhpDoc.Raw)
+		d.checkCommentMisspellings(c, list.Comment.Raw)
 		typ := solver.ExprTypeLocal(d.scope(), d.ctx.st, c.Expr)
 
 		value := constfold.Eval(d.ctx.st, c.Expr)
@@ -929,18 +929,18 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		d.checkFuncParam(param.(*ir.Parameter))
 	}
 
-	if meth.PhpDoc.Raw == "" && modif.accessLevel == meta.Public {
+	if meth.Comment.Raw == "" && modif.accessLevel == meta.Public {
 		// Permit having "__call" and other magic method without comments.
 		if !insideInterface && !strings.HasPrefix(nm, "_") {
 			d.Report(meth.MethodName, LevelNotice, "phpdoc", "Missing PHPDoc for %q public method", nm)
 		}
 	}
-	d.checkCommentMisspellings(meth.MethodName, meth.PhpDoc.Raw)
+	d.checkCommentMisspellings(meth.MethodName, meth.Comment.Raw)
 	d.checkIdentMisspellings(meth.MethodName)
 	for _, p := range meth.Params {
 		d.checkVarnameMisspellings(p, p.(*ir.Parameter).Variable.Name)
 	}
-	doc := d.parsePHPDoc(meth.MethodName, meth.PhpDoc, meth.Params)
+	doc := d.parsePHPDoc(meth.MethodName, meth.Comment, meth.Params)
 	d.reportPhpdocErrors(meth.MethodName, doc.errs)
 	phpdocReturnType := doc.returnType
 	phpDocParamTypes := doc.types
@@ -1043,9 +1043,9 @@ func (d *rootWalker) reportPhpdocErrors(n ir.Node, errs phpdocErrors) {
 	}
 }
 
-func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.PhpDoc) (m meta.TypesMap) {
+func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.Comment) (m meta.TypesMap) {
 	if doc.Suspicious {
-		d.Report(n, LevelWarning, "phpdocLint", "phpdoc comment should start with /**, not /*")
+		d.Report(n, LevelWarning, "phpdocLint", "multiline phpdoc comment should start with /**, not /*")
 	}
 
 	for _, part := range doc.Parsed {
@@ -1226,7 +1226,7 @@ func (d *rootWalker) checkPHPDocMixinRef(n ir.Node, part phpdoc.CommentPart) {
 	}
 }
 
-func (d *rootWalker) parsePHPDoc(n ir.Node, doc phpdoc.PhpDoc, actualParams []ir.Node) phpDocParseResult {
+func (d *rootWalker) parsePHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []ir.Node) phpDocParseResult {
 	var result phpDocParseResult
 
 	if doc.Raw == "" {
@@ -1234,7 +1234,7 @@ func (d *rootWalker) parsePHPDoc(n ir.Node, doc phpdoc.PhpDoc, actualParams []ir
 	}
 
 	if doc.Suspicious {
-		result.errs.pushLint("phpdoc comment should start with /**, not /*")
+		result.errs.pushLint("multiline phpdoc comment should start with /**, not /*")
 	}
 
 	actualParamNames := make(map[string]struct{}, len(actualParams))
@@ -1498,12 +1498,12 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 		hintReturnType = typ
 	}
 
-	d.checkCommentMisspellings(fun.FunctionName, fun.PhpDoc.Raw)
+	d.checkCommentMisspellings(fun.FunctionName, fun.Comment.Raw)
 	d.checkIdentMisspellings(fun.FunctionName)
 	for _, p := range fun.Params {
 		d.checkVarnameMisspellings(p, p.(*ir.Parameter).Variable.Name)
 	}
-	doc := d.parsePHPDoc(fun.FunctionName, fun.PhpDoc, fun.Params)
+	doc := d.parsePHPDoc(fun.FunctionName, fun.Comment, fun.Params)
 	d.reportPhpdocErrors(fun.FunctionName, doc.errs)
 	phpdocReturnType := doc.returnType
 	phpDocParamTypes := doc.types
@@ -1991,7 +1991,7 @@ func (d *rootWalker) compareKeywordWithTokenCase(n ir.Node, tok *token.Token, ke
 	}
 }
 
-func (d *rootWalker) parseClassPHPDoc(n ir.Node, doc phpdoc.PhpDoc) classPhpDocParseResult {
+func (d *rootWalker) parseClassPHPDoc(n ir.Node, doc phpdoc.Comment) classPhpDocParseResult {
 	var result classPhpDocParseResult
 
 	if doc.Raw == "" {

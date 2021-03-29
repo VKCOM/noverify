@@ -20,5 +20,5 @@ type Class struct {
 }
 
 type Doc struct {
-	phpdoc.PhpDoc
+	phpdoc.Comment
 }

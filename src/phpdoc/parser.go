@@ -2,12 +2,13 @@ package phpdoc
 
 import (
 	"bytes"
+	"regexp"
 	"strings"
 
 	"github.com/z7zmey/php-parser/pkg/token"
 )
 
-type PhpDoc struct {
+type Comment struct {
 	Raw        string
 	Parsed     []CommentPart
 	Suspicious bool
@@ -64,48 +65,46 @@ func IsPHPDocToken(t *token.Token) bool {
 	}
 
 	if t.ID == token.T_COMMENT {
-		return IsPossiblePhpDoc(t.Value)
+		return ContainsTag(t.Value)
 	}
 
 	return true
 }
 
-// IsPossiblePhpDoc checks if /* */ comments contain annotations, which may mean that
+var tagRegexp = regexp.MustCompile("\\* +@\\w+")
+
+// ContainsTag checks if /* */ comments contain annotations, which may mean that
 // it is phpdoc, but there is a mistake when there is one asterisk instead of two at
 // the beginning of a comment.
-func IsPossiblePhpDoc(value []byte) bool {
+func ContainsTag(value []byte) bool {
 	if !bytes.HasPrefix(value, []byte("/*")) {
 		return false
 	}
 
-	if bytes.Contains(value, []byte("@param")) ||
-		bytes.Contains(value, []byte("@return")) ||
-		bytes.Contains(value, []byte("@see")) ||
-		bytes.Contains(value, []byte("@var")) ||
-		bytes.HasPrefix(value, []byte("/* @var ")) {
-		return true
-	}
-
-	return false
+	return tagRegexp.Match(value)
 }
 
 // Parse returns parsed doc comment with interesting parts (ones that start "* @")
-func Parse(parser *TypeParser, doc string) PhpDoc {
-	if !IsPHPDoc(doc) && !IsPossiblePhpDoc([]byte(doc)) {
-		return PhpDoc{}
+func Parse(parser *TypeParser, doc string) Comment {
+	if !IsPHPDoc(doc) && !ContainsTag([]byte(doc)) {
+		return Comment{}
 	}
 
 	var parts []CommentPart
 	var lines []string
 	var suspicious bool
 
-	if strings.HasPrefix(doc, "/* @var ") && strings.Count(doc, "\n") == 0 {
-		lines = []string{doc}
-	} else if strings.HasPrefix(doc, "/**") {
+	var countLines = strings.Count(doc, "\n") + 1
+
+	if strings.HasPrefix(doc, "/**") {
 		lines = strings.Split(doc, "\n")
 	} else if strings.HasPrefix(doc, "/*") {
-		suspicious = true
-		lines = strings.Split(doc, "\n")
+		if countLines == 1 {
+			lines = []string{doc}
+		} else {
+			suspicious = true
+			lines = strings.Split(doc, "\n")
+		}
 	}
 
 	for i, ln := range lines {
@@ -149,7 +148,7 @@ func Parse(parser *TypeParser, doc string) PhpDoc {
 		parts = append(parts, part)
 	}
 
-	return PhpDoc{
+	return Comment{
 		Raw:        doc,
 		Parsed:     parts,
 		Suspicious: suspicious,
