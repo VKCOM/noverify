@@ -53,8 +53,8 @@ func (c *TypeVarCommentPart) Name() string { return c.name }
 // IsPHPDoc checks if the string is a doc comment
 func IsPHPDoc(doc string) bool {
 	// See #289.
-	return strings.HasPrefix(doc, "/* @var ") ||
-		strings.HasPrefix(doc, "/**")
+	return strings.HasPrefix(doc, "/**") ||
+		(strings.HasPrefix(doc, "/*") && ContainsTag([]byte(doc)))
 }
 
 // IsPHPDocToken checks if the token is a doc comment
@@ -84,15 +84,12 @@ var tagRegexp = regexp.MustCompile(`\* +@\w+`)
 // it is phpdoc, but there is a mistake when there is one asterisk instead of two at
 // the beginning of a comment.
 func ContainsTag(value []byte) bool {
-	if !bytes.HasPrefix(value, []byte("/*")) {
-		return false
-	}
 	return tagRegexp.Match(value)
 }
 
 // Parse returns parsed doc comment with interesting parts (ones that start "* @")
 func Parse(parser *TypeParser, doc string) Comment {
-	if !IsPHPDoc(doc) && !ContainsTag([]byte(doc)) {
+	if !IsPHPDoc(doc) {
 		return Comment{}
 	}
 

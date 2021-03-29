@@ -2142,8 +2142,12 @@ Loop:
 			foundDoc = string(ff.Value)
 			break Loop
 		case token.T_COMMENT:
-			possiblePhpDoc := phpdoc.ContainsTag(ff.Value)
-			if !possiblePhpDoc {
+			if !bytes.HasPrefix(ff.Value, []byte("/*")) {
+				continue
+			}
+
+			containsTag := phpdoc.ContainsTag(ff.Value)
+			if !containsTag {
 				continue
 			}
 
