@@ -70,6 +70,7 @@ func IsPHPDocToken(t *token.Token) bool {
 	return true
 }
 
+// IsSuspicious checks that phpdoc starts with /* but has tags inside it.
 func IsSuspicious(value []byte) bool {
 	if bytes.HasPrefix(value, []byte("/**")) || bytes.Count(value, []byte("\n")) == 0 {
 		return false
