@@ -71,7 +71,7 @@ func IsPHPDocToken(t *token.Token) bool {
 	return true
 }
 
-var tagRegexp = regexp.MustCompile("\\* +@\\w+")
+var tagRegexp = regexp.MustCompile(`\* +@\w+`)
 
 // ContainsTag checks if /* */ comments contain annotations, which may mean that
 // it is phpdoc, but there is a mistake when there is one asterisk instead of two at
