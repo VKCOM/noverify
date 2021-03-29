@@ -9,9 +9,8 @@ import (
 )
 
 type Comment struct {
-	Raw        string
-	Parsed     []CommentPart
-	Suspicious bool
+	Raw    string
+	Parsed []CommentPart
 }
 
 type CommentPart interface {
@@ -71,6 +70,14 @@ func IsPHPDocToken(t *token.Token) bool {
 	return true
 }
 
+func IsSuspicious(value []byte) bool {
+	if bytes.HasPrefix(value, []byte("/**")) || bytes.Count(value, []byte("\n")) == 0 {
+		return false
+	}
+
+	return ContainsTag(value)
+}
+
 var tagRegexp = regexp.MustCompile(`\* +@\w+`)
 
 // ContainsTag checks if /* */ comments contain annotations, which may mean that
@@ -80,7 +87,6 @@ func ContainsTag(value []byte) bool {
 	if !bytes.HasPrefix(value, []byte("/*")) {
 		return false
 	}
-
 	return tagRegexp.Match(value)
 }
 
@@ -92,19 +98,13 @@ func Parse(parser *TypeParser, doc string) Comment {
 
 	var parts []CommentPart
 	var lines []string
-	var suspicious bool
 
 	var countLines = strings.Count(doc, "\n") + 1
 
-	if strings.HasPrefix(doc, "/**") {
+	if countLines == 1 {
+		lines = []string{doc}
+	} else {
 		lines = strings.Split(doc, "\n")
-	} else if strings.HasPrefix(doc, "/*") {
-		if countLines == 1 {
-			lines = []string{doc}
-		} else {
-			suspicious = true
-			lines = strings.Split(doc, "\n")
-		}
 	}
 
 	for i, ln := range lines {
@@ -149,9 +149,8 @@ func Parse(parser *TypeParser, doc string) Comment {
 	}
 
 	return Comment{
-		Raw:        doc,
-		Parsed:     parts,
-		Suspicious: suspicious,
+		Raw:    doc,
+		Parsed: parts,
 	}
 }
 

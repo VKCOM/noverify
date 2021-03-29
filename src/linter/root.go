@@ -1044,7 +1044,7 @@ func (d *rootWalker) reportPhpdocErrors(n ir.Node, errs phpdocErrors) {
 }
 
 func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.Comment) (m meta.TypesMap) {
-	if doc.Suspicious {
+	if phpdoc.IsSuspicious([]byte(doc.Raw)) {
 		d.Report(n, LevelWarning, "phpdocLint", "multiline phpdoc comment should start with /**, not /*")
 	}
 
@@ -1233,7 +1233,7 @@ func (d *rootWalker) parsePHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 		return result
 	}
 
-	if doc.Suspicious {
+	if phpdoc.IsSuspicious([]byte(doc.Raw)) {
 		result.errs.pushLint("multiline phpdoc comment should start with /**, not /*")
 	}
 
