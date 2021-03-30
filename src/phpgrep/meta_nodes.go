@@ -1,17 +1,17 @@
 package phpgrep
 
 import (
+	"github.com/z7zmey/php-parser/pkg/token"
+
 	"github.com/VKCOM/noverify/src/ir"
-	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 )
 
 type metaNode struct {
 	name string
 }
 
-func (metaNode) Walk(v ir.Visitor)                         {}
-func (metaNode) GetFreeFloating() *freefloating.Collection { return nil }
-func (metaNode) IterateTokens(func(token *ir.Token) bool)  {}
+func (metaNode) Walk(v ir.Visitor)                           {}
+func (metaNode) IterateTokens(func(token *token.Token) bool) {}
 
 type (
 	anyConst struct{ metaNode }

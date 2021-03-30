@@ -23,10 +23,8 @@ func EnterNode(st *meta.ClassParseState, n ir.Node) {
 
 	case *ir.GroupUseStmt:
 		list := &ir.UseListStmt{
-			FreeFloating: nil,
-			Position:     nil,
-			UseType:      n.UseType,
-			Uses:         n.UseList,
+			UseType: n.UseType,
+			Uses:    n.UseList,
 		}
 		handleUseList(`\`+n.Prefix.Value, st, list)
 

@@ -228,7 +228,7 @@ func (p *PrettyPrinter) printNode(n ir.Node) {
 		p.printExprClassConstFetch(n)
 	case *ir.CloneExpr:
 		p.printExprClone(n)
-	case *ir.ClosureUseExpr:
+	case *ir.ClosureUsesExpr:
 		p.printExprClosureUse(n)
 	case *ir.ClosureExpr:
 		p.printExprClosure(n)
@@ -351,6 +351,8 @@ func (p *PrettyPrinter) printNode(n ir.Node) {
 		p.printStmtNamespace(n)
 	case *ir.NopStmt:
 		p.printStmtNop(n)
+	case *ir.CloseTagStmt:
+		p.printStmtCloseTag(n)
 	case *ir.PropertyListStmt:
 		p.printStmtPropertyList(n)
 	case *ir.PropertyStmt:
@@ -562,85 +564,85 @@ func (p *PrettyPrinter) printScalarMagicConstant(n *ir.MagicConstant) {
 func (p *PrettyPrinter) printAssign(n *ir.Assign) {
 	p.Print(n.Variable)
 	writeString(p.w, " = ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printReference(n *ir.AssignReference) {
 	p.Print(n.Variable)
 	writeString(p.w, " =& ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignBitwiseAnd(n *ir.AssignBitwiseAnd) {
 	p.Print(n.Variable)
 	writeString(p.w, " &= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignBitwiseOr(n *ir.AssignBitwiseOr) {
 	p.Print(n.Variable)
 	writeString(p.w, " |= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignBitwiseXor(n *ir.AssignBitwiseXor) {
 	p.Print(n.Variable)
 	writeString(p.w, " ^= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignConcat(n *ir.AssignConcat) {
 	p.Print(n.Variable)
 	writeString(p.w, " .= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignDiv(n *ir.AssignDiv) {
 	p.Print(n.Variable)
 	writeString(p.w, " /= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignMinus(n *ir.AssignMinus) {
 	p.Print(n.Variable)
 	writeString(p.w, " -= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignMod(n *ir.AssignMod) {
 	p.Print(n.Variable)
 	writeString(p.w, " %= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignMul(n *ir.AssignMul) {
 	p.Print(n.Variable)
 	writeString(p.w, " *= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignPlus(n *ir.AssignPlus) {
 	p.Print(n.Variable)
 	writeString(p.w, " += ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignPow(n *ir.AssignPow) {
 	p.Print(n.Variable)
 	writeString(p.w, " **= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignShiftLeft(n *ir.AssignShiftLeft) {
 	p.Print(n.Variable)
 	writeString(p.w, " <<= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignShiftRight(n *ir.AssignShiftRight) {
 	p.Print(n.Variable)
 	writeString(p.w, " >>= ")
-	p.Print(n.Expression)
+	p.Print(n.Expr)
 }
 
 // binary
@@ -884,7 +886,7 @@ func (p *PrettyPrinter) printExprClone(n *ir.CloneExpr) {
 	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printExprClosureUse(n *ir.ClosureUseExpr) {
+func (p *PrettyPrinter) printExprClosureUse(n *ir.ClosureUsesExpr) {
 	writeString(p.w, "use (")
 	p.joinPrint(", ", n.Uses)
 	writeString(p.w, ")")
@@ -1606,6 +1608,10 @@ func (p *PrettyPrinter) printStmtNop(n *ir.NopStmt) {
 	writeString(p.w, ";")
 }
 
+func (p *PrettyPrinter) printStmtCloseTag(n *ir.CloseTagStmt) {
+	writeString(p.w, "?>")
+}
+
 func (p *PrettyPrinter) printStmtPropertyList(n *ir.PropertyListStmt) {
 	p.joinPrintIdents(" ", n.Modifiers)
 	writeString(p.w, " ")
@@ -1657,8 +1663,7 @@ func (p *PrettyPrinter) printStmtSwitch(n *ir.SwitchStmt) {
 
 	if n.AltSyntax {
 		writeString(p.w, ") :\n")
-		s := n.CaseList.Cases
-		p.printNodes(s)
+		p.printNodes(n.Cases)
 
 		writeString(p.w, "\n")
 		p.printIndent()
@@ -1667,7 +1672,7 @@ func (p *PrettyPrinter) printStmtSwitch(n *ir.SwitchStmt) {
 		writeString(p.w, ")")
 
 		writeString(p.w, " {\n")
-		p.printNodes(n.CaseList.Cases)
+		p.printNodes(n.Cases)
 		writeString(p.w, "\n")
 		p.printIndent()
 		writeString(p.w, "}")

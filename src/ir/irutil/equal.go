@@ -49,6 +49,9 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Dim, y.Dim) {
 			return false
 		}
+		if x.CurlyBrace != y.CurlyBrace {
+			return false
+		}
 		return true
 	case *ir.ArrayExpr:
 		y, ok := y.(*ir.ArrayExpr)
@@ -114,7 +117,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -126,7 +129,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -138,7 +141,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -150,7 +153,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -162,7 +165,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -174,7 +177,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -186,7 +189,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -198,7 +201,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -210,7 +213,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -222,7 +225,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -234,7 +237,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -246,7 +249,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -258,7 +261,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -270,7 +273,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -282,7 +285,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Variable, y.Variable) {
 			return false
 		}
-		if !NodeEqual(x.Expression, y.Expression) {
+		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
 		return true
@@ -388,15 +391,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		return true
-	case *ir.CaseListStmt:
-		y, ok := y.(*ir.CaseListStmt)
-		if !ok || x == nil || y == nil {
-			return x == y
-		}
-		if !NodeSliceEqual(x.Cases, y.Cases) {
-			return false
-		}
-		return true
 	case *ir.CaseStmt:
 		y, ok := y.(*ir.CaseStmt)
 		if !ok || x == nil || y == nil {
@@ -450,6 +444,9 @@ func NodeEqual(x, y ir.Node) bool {
 			}
 		}
 		if !NodeSliceEqual(x.Consts, y.Consts) {
+			return false
+		}
+		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
 		return true
@@ -532,6 +529,12 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		return true
+	case *ir.CloseTagStmt:
+		y, ok := y.(*ir.CloseTagStmt)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		return true
 	case *ir.ClosureExpr:
 		y, ok := y.(*ir.ClosureExpr)
 		if !ok || x == nil || y == nil {
@@ -559,8 +562,8 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		return true
-	case *ir.ClosureUseExpr:
-		y, ok := y.(*ir.ClosureUseExpr)
+	case *ir.ClosureUsesExpr:
+		y, ok := y.(*ir.ClosureUsesExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
@@ -619,9 +622,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
 		return true
@@ -1059,9 +1059,6 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.PhpDocComment != y.PhpDocComment {
-			return false
-		}
 		if !NodeEqual(x.InterfaceName, y.InterfaceName) {
 			return false
 		}
@@ -1069,6 +1066,9 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
+			return false
+		}
+		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
 		return true
@@ -1414,6 +1414,9 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeSliceEqual(x.Properties, y.Properties) {
 			return false
 		}
+		if x.PhpDocComment != y.PhpDocComment {
+			return false
+		}
 		return true
 	case *ir.PropertyStmt:
 		y, ok := y.(*ir.PropertyStmt)
@@ -1424,9 +1427,6 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
-			return false
-		}
-		if x.PhpDocComment != y.PhpDocComment {
 			return false
 		}
 		return true
@@ -1612,7 +1612,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeEqual(x.Cond, y.Cond) {
 			return false
 		}
-		if !NodeEqual(x.CaseList, y.CaseList) {
+		if !NodeSliceEqual(x.Cases, y.Cases) {
 			return false
 		}
 		if x.AltSyntax != y.AltSyntax {

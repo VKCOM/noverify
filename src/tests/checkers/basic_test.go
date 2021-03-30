@@ -354,7 +354,7 @@ FUNCTION f() {
   Goto label;
   label:
   YIELD 'yelling!';
-  yielD FROM 'blah!';
+  yielD  FROM 'blah!';
   FOR (;;) {}
   for (;;):
   EndFor;
@@ -439,6 +439,7 @@ function good() {
 		`Use while instead of whilE`,
 		`Use yield instead of YIELD`,
 		`Use yield instead of yielD`,
+		`Use from instead of FROM`,
 		`Use public instead of PubliC`,
 	}
 
@@ -796,7 +797,7 @@ func TestCustomUnusedVarRegex(t *testing.T) {
 	config.IsDiscardVar = isDiscardVar
 
 	test := linttest.NewSuite(t)
-	test.Linter = linter.NewLinter(config)
+	test.UseConfig(config)
 	test.AddFile(`<?php
 class Foo {
   public $_;
@@ -812,7 +813,7 @@ $_ = __FILE__;
 	test.RunAndMatch()
 
 	test = linttest.NewSuite(t)
-	test.Linter = linter.NewLinter(config)
+	test.UseConfig(config)
 	test.AddFile(`<?php
 $_unused = 10;
 
@@ -828,7 +829,7 @@ function f() {
 `)
 
 	test = linttest.NewSuite(t)
-	test.Linter = linter.NewLinter(config)
+	test.UseConfig(config)
 	test.AddFile(`<?php
 function var_dump($v) {}
 $_global = 120;
@@ -1844,7 +1845,85 @@ func_A();
 		`Method_a should be spelled method_a`,
 		`\func_A should be spelled \func_a`,
 	}
-	linttest.RunFilterMatch(test, `nameCase`)
+	linttest.RunFilterMatch(test, `nameMismatch`)
+}
+
+func TestClassSpecialNameCase(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class B {
+    const B = 100;
+
+    public static $name = "";
+
+    public static function g() {}
+}
+
+class A extends B {
+    const B = 100;
+
+    public static $id = 0;
+
+    function f() {
+        echo SELF::B;
+        echo seLf::B;
+        echo self::B;
+
+        echo STATIC::B;
+        echo stAtic::B;
+        echo static::B;
+
+        echo PARENT::B;
+        echo parEnt::B;
+        echo parent::B;
+
+        SELF::f();
+        sElf::f();
+        self::f();
+
+        STATIC::f();
+        stAtic::f();
+        static::f();
+
+        PARENT::g();
+        paREnt::g();
+        parent::g();
+
+        PARENT::$name;
+        paREnt::$name;
+        parent::$name;
+
+        SELF::$id;
+        sElf::$id;
+        self::$id;
+
+        STATIC::$id;
+        stAtic::$id;
+        static::$id;
+    }
+}
+`)
+	test.Expect = []string{
+		`SELF should be spelled as self`,
+		`seLf should be spelled as self`,
+		`STATIC should be spelled as static`,
+		`stAtic should be spelled as static`,
+		`PARENT should be spelled as parent`,
+		`parEnt should be spelled as parent`,
+		`SELF should be spelled as self`,
+		`sElf should be spelled as self`,
+		`STATIC should be spelled as static`,
+		`stAtic should be spelled as static`,
+		`PARENT should be spelled as parent`,
+		`paREnt should be spelled as parent`,
+		`PARENT should be spelled as parent`,
+		`paREnt should be spelled as parent`,
+		`SELF should be spelled as self`,
+		`sElf should be spelled as self`,
+		`STATIC should be spelled as static`,
+		`stAtic should be spelled as static`,
+	}
+	linttest.RunFilterMatch(test, `nameMismatch`)
 }
 
 func TestClassNotFound(t *testing.T) {
@@ -2044,6 +2123,91 @@ function f() {
 	test.Expect = []string{
 		`last element in a multi-line array must have a trailing comma`,
 		`last element in a multi-line array must have a trailing comma`,
+	}
+	test.RunAndMatch()
+}
+
+func TestNestedTernary(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f() {
+    $_ = 1 ? 2 : 3 ? 4 : 5; // error
+	//   |_______|
+
+    $_ = 1 ? 2 : 3 ? 4 : 1 ? 2 : 3; // error
+	//   |_______|       |
+	//   |_______________|
+
+	$_ = (1 ? 2 : 3) ? 4 : 5; // ok
+	//   |_________|
+
+	$_ = 1 ? 2 : (3 ? 4 : 5); // ok
+	//           |_________|
+
+	$_ = 1 ? 2 ? 3 : 4 : 5; // ok, ternary in middle
+	//       |_______|
+}
+`)
+	test.Expect = []string{
+		`in ternary operators, you must explicitly use parentheses to specify the order of operations`,
+		`in ternary operators, you must explicitly use parentheses to specify the order of operations`,
+		`in ternary operators, you must explicitly use parentheses to specify the order of operations`,
+	}
+	test.RunAndMatch()
+}
+
+func TestRealCastingAndIsRealCall(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function is_real($a): bool { return true; }
+
+function f() {
+    $a = (real)100;
+    if (is_real($a)) {
+        echo 1;
+    }
+}
+`)
+	test.Expect = []string{
+		`use float cast instead of real`,
+		`use is_float function instead of is_real`,
+	}
+	test.RunAndMatch()
+}
+
+func TestArrayKeyExistCallWithObject(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function array_key_exists($a, $b): bool { return true; }
+
+class Foo {}
+
+function returnObject(): Foo {
+	return new Foo;
+}
+
+function returnObjectAndNull(): ?Foo {
+	if (1) {
+		return null;
+	}
+	return new Foo;
+}
+
+function f() {
+	$foo = new Foo;
+	$arr = ["a" => 100];
+
+    echo array_key_exists("param", $foo); // error
+    echo array_key_exists("param", returnObject()); // error
+    echo array_key_exists("param", returnObjectAndNull()); // ok
+
+    echo array_key_exists("a", $arr); // ok
+}
+
+`)
+	test.Expect = []string{
+		`since PHP 7.4, using array_key_exists() with an object has been deprecated, use isset() or property_exists() instead`,
+		`since PHP 7.4, using array_key_exists() with an object has been deprecated, use isset() or property_exists() instead`,
 	}
 	test.RunAndMatch()
 }

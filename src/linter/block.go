@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/z7zmey/php-parser/pkg/token"
+
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/solver"
 )
@@ -166,6 +167,40 @@ func (b *blockWalker) reportDeadCode(n ir.Node) {
 	b.r.Report(n, LevelWarning, "deadCode", "Unreachable code")
 }
 
+func (b *blockWalker) handleComments(n ir.Node) {
+	switch node := n.(type) {
+	case *ir.ArrayDimFetchExpr:
+		n = node.Variable
+	default:
+		n = node
+	}
+
+	n.IterateTokens(func(t *token.Token) bool {
+		b.handleCommentToken(n, t)
+		return true
+	})
+}
+
+func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
+	if !phpdoc.IsPHPDocToken(t) {
+		return
+	}
+
+	for _, p := range phpdoc.Parse(b.r.ctx.phpdocTypeParser, string(t.Value)) {
+		p, ok := p.(*phpdoc.TypeVarCommentPart)
+		if !ok || p.Name() != "var" {
+			continue
+		}
+
+		types, warning := typesFromPHPDoc(&b.r.ctx, p.Type)
+		if warning != "" {
+			b.r.Report(n, LevelWarning, "phpdocType", "%s on line %d", warning, p.Line())
+		}
+		m := newTypesMap(&b.r.ctx, types)
+		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(p.Var, "$"), m, "@var")
+	}
+}
+
 // EnterNode is called before walking to inner nodes.
 func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 	res = true
@@ -180,13 +215,7 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 		b.reportDeadCode(n)
 	}
 
-	if ffs := n.GetFreeFloating(); ffs != nil {
-		for _, cs := range *ffs {
-			for _, c := range cs {
-				b.walkComments(n, c)
-			}
-		}
-	}
+	b.handleComments(n)
 
 	switch s := n.(type) {
 	case *ir.LogicalOrExpr:
@@ -481,31 +510,6 @@ func (b *blockWalker) addVar(v ir.Node, typ meta.TypesMap, reason string, flags 
 		return
 	}
 	b.trackVarName(v, sv.Name)
-}
-
-func (b *blockWalker) walkComments(n ir.Node, c freefloating.String) {
-	if c.StringType != freefloating.CommentType {
-		return
-	}
-	str := c.Value
-
-	if !phpdoc.IsPHPDoc(str) {
-		return
-	}
-
-	for _, p := range phpdoc.Parse(b.r.ctx.phpdocTypeParser, str) {
-		p, ok := p.(*phpdoc.TypeVarCommentPart)
-		if !ok || p.Name() != "var" {
-			continue
-		}
-
-		types, warning := typesFromPHPDoc(&b.r.ctx, p.Type)
-		if warning != "" {
-			b.r.Report(n, LevelNotice, "phpdocType", "%s on line %d", warning, p.Line())
-		}
-		m := newTypesMap(&b.r.ctx, types)
-		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(p.Var, "$"), m, "@var")
-	}
 }
 
 func (b *blockWalker) handleUnset(s *ir.UnsetStmt) bool {
@@ -1321,15 +1325,7 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 }
 
 func (b *blockWalker) handleElseIf(s *ir.ElseIfStmt) {
-	if s.Merged {
-		b.r.checkKeywordCase(s, "else")
-		if ff := (*s.GetFreeFloating())[freefloating.Else]; len(ff) != 0 {
-			rightmostPos := ff[len(ff)-1].Position
-			b.r.checkKeywordCasePos(s, rightmostPos.EndPos, "if")
-		}
-	} else {
-		b.r.checkKeywordCase(s, "elseif")
-	}
+	b.r.checkKeywordCase(s, "elseif")
 }
 
 func (b *blockWalker) iterateNextCases(cases []ir.Node, startIdx int) {
@@ -1363,9 +1359,9 @@ func (b *blockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 	haveDefault := false
 	breakFlags := FlagBreak | FlagContinue
 
-	for i := range s.CaseList.Cases {
+	for i := range s.Cases {
 		idx := i
-		c := s.CaseList.Cases[i]
+		c := s.Cases[i]
 		var list []ir.Node
 
 		cond, list := getCaseStmts(c)
@@ -1393,9 +1389,9 @@ func (b *blockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 			}
 
 			// allow to omit "break;" in the final statement
-			if idx != len(s.CaseList.Cases)-1 && b.ctx.exitFlags == 0 {
+			if idx != len(s.Cases)-1 && b.ctx.exitFlags == 0 {
 				// allow the fallthrough if appropriate comment is present
-				nextCase := s.CaseList.Cases[idx+1]
+				nextCase := s.Cases[idx+1]
 				if !caseHasFallthroughComment(nextCase) {
 					b.r.Report(c, LevelWarning, "caseBreak", "Add break or '// fallthrough' to the end of the case")
 				}
@@ -1405,7 +1401,7 @@ func (b *blockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 				linksCount++
 
 				if b.ctx.exitFlags == 0 {
-					b.iterateNextCases(s.CaseList.Cases, idx+1)
+					b.iterateNextCases(s.Cases, idx+1)
 				}
 			}
 		})
@@ -1523,10 +1519,10 @@ func (b *blockWalker) handleAssignReference(a *ir.AssignReference) bool {
 	switch v := a.Variable.(type) {
 	case *ir.ArrayDimFetchExpr:
 		b.handleAndCheckDimFetchLValue(v, "assign_array", meta.MixedType)
-		a.Expression.Walk(b)
+		a.Expr.Walk(b)
 		return false
 	case *ir.Var, *ir.SimpleVar:
-		b.addVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
+		b.addVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expr), "assign", meta.VarAlwaysDefined)
 		b.addNonLocalVar(v, varRef)
 	case *ir.ListExpr:
 		// TODO: figure out whether this case is reachable.
@@ -1537,7 +1533,7 @@ func (b *blockWalker) handleAssignReference(a *ir.AssignReference) bool {
 		a.Variable.Walk(b)
 	}
 
-	a.Expression.Walk(b)
+	a.Expr.Walk(b)
 	return false
 }
 
@@ -1633,24 +1629,26 @@ func (b *blockWalker) paramClobberCheck(v *ir.SimpleVar) {
 }
 
 func (b *blockWalker) handleAssign(a *ir.Assign) bool {
-	a.Expression.Walk(b)
+	b.handleComments(a.Variable)
+
+	a.Expr.Walk(b)
 
 	switch v := a.Variable.(type) {
 	case *ir.ArrayDimFetchExpr:
-		typ := solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression)
+		typ := solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expr)
 		b.handleAndCheckDimFetchLValue(v, "assign_array", typ)
 		return false
 	case *ir.SimpleVar:
 		b.paramClobberCheck(v)
-		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
+		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expr), "assign", meta.VarAlwaysDefined)
 	case *ir.Var:
-		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expression), "assign", meta.VarAlwaysDefined)
+		b.replaceVar(v, solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expr), "assign", meta.VarAlwaysDefined)
 	case *ir.ListExpr:
 		if !b.isIndexingComplete() {
 			return true
 		}
 
-		b.handleAssignList(v, a.Expression)
+		b.handleAssignList(v, a.Expr)
 	case *ir.PropertyFetchExpr:
 		v.Property.Walk(b)
 		sv, ok := v.Variable.(*ir.SimpleVar)
@@ -1677,7 +1675,7 @@ func (b *blockWalker) handleAssign(a *ir.Assign) bool {
 		cls := b.r.getClass()
 
 		p := cls.Properties[propertyName.Value]
-		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, a.Expression, b.ctx.customTypes))
+		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, a.Expr, b.ctx.customTypes))
 		cls.Properties[propertyName.Value] = p
 	case *ir.StaticPropertyFetchExpr:
 		sv, ok := v.Property.(*ir.SimpleVar)
@@ -1699,7 +1697,7 @@ func (b *blockWalker) handleAssign(a *ir.Assign) bool {
 		cls := b.r.getClass()
 
 		p := cls.Properties["$"+sv.Name]
-		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, a.Expression, b.ctx.customTypes))
+		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, a.Expr, b.ctx.customTypes))
 		cls.Properties["$"+sv.Name] = p
 	default:
 		a.Variable.Walk(b)
@@ -1716,28 +1714,28 @@ func (b *blockWalker) handleAssignOp(assign ir.Node) {
 	case *ir.AssignPlus:
 		e := &ir.PlusExpr{
 			Left:  assign.Variable,
-			Right: assign.Expression,
+			Right: assign.Expr,
 		}
 		v = assign.Variable
 		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
 	case *ir.AssignMinus:
 		e := &ir.MinusExpr{
 			Left:  assign.Variable,
-			Right: assign.Expression,
+			Right: assign.Expr,
 		}
 		v = assign.Variable
 		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
 	case *ir.AssignMul:
 		e := &ir.MulExpr{
 			Left:  assign.Variable,
-			Right: assign.Expression,
+			Right: assign.Expr,
 		}
 		v = assign.Variable
 		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
 	case *ir.AssignDiv:
 		e := &ir.DivExpr{
 			Left:  assign.Variable,
-			Right: assign.Expression,
+			Right: assign.Expr,
 		}
 		v = assign.Variable
 		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
@@ -1754,7 +1752,7 @@ func (b *blockWalker) handleAssignOp(assign ir.Node) {
 	case *ir.AssignCoalesce:
 		e := &ir.CoalesceExpr{
 			Left:  assign.Variable,
-			Right: assign.Expression,
+			Right: assign.Expr,
 		}
 		v = assign.Variable
 		typ = solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, e)
@@ -1820,27 +1818,53 @@ func (b *blockWalker) LeaveNode(w ir.Node) {
 	b.path.Pop()
 
 	if b.ctx.exitFlags == 0 {
-		switch w.(type) {
-		case *ir.ReturnStmt:
-			b.ctx.exitFlags |= FlagReturn
-			b.ctx.containsExitFlags |= FlagReturn
-		case *ir.ExitExpr:
-			b.ctx.exitFlags |= FlagDie
-			b.ctx.containsExitFlags |= FlagDie
-		case *ir.ThrowStmt:
-			b.ctx.exitFlags |= FlagThrow
-			b.ctx.containsExitFlags |= FlagThrow
-		case *ir.ContinueStmt:
-			b.ctx.exitFlags |= FlagContinue
-			b.ctx.containsExitFlags |= FlagContinue
-		case *ir.BreakStmt:
-			b.ctx.exitFlags |= FlagBreak
-			b.ctx.containsExitFlags |= FlagBreak
-		}
+		b.updateExitFlags(w)
 	}
 
 	for _, c := range b.custom {
 		c.AfterLeaveNode(w)
+	}
+}
+
+func (b *blockWalker) updateExitFlags(n ir.Node) {
+	switch n := n.(type) {
+	case *ir.ReturnStmt:
+		b.ctx.exitFlags |= FlagReturn
+		b.ctx.containsExitFlags |= FlagReturn
+	case *ir.ExitExpr:
+		b.ctx.exitFlags |= FlagDie
+		b.ctx.containsExitFlags |= FlagDie
+	case *ir.ThrowStmt:
+		b.ctx.exitFlags |= FlagThrow
+		b.ctx.containsExitFlags |= FlagThrow
+	case *ir.ContinueStmt:
+		b.ctx.exitFlags |= FlagContinue
+		b.ctx.containsExitFlags |= FlagContinue
+	case *ir.BreakStmt:
+		b.ctx.exitFlags |= FlagBreak
+		b.ctx.containsExitFlags |= FlagBreak
+	case *ir.ExpressionStmt:
+		b.updateExitFlags(n.Expr)
+	case *ir.FunctionCallExpr:
+		if b.r.config.IgnoreTriggerError {
+			return
+		}
+		nm, ok := n.Function.(*ir.Name)
+		if !ok {
+			return
+		}
+		// We can't use solver.GetFuncName here as PHP function names
+		// lookup requires full symbol table information => we can't use
+		// it during the indexing.
+		funcName := strings.TrimPrefix(nm.Value, `\`)
+		if (funcName != `trigger_error` && funcName != `user_error`) || len(n.Args) != 2 {
+			return
+		}
+		errorLevel, ok := n.Arg(1).Expr.(*ir.ConstFetchExpr)
+		// TODO: add meta.GetConstName() func and use it here.
+		if ok && errorLevel.Constant.Value == `E_USER_ERROR` {
+			b.ctx.exitFlags |= FlagDie
+		}
 	}
 }
 

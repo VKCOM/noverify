@@ -29,7 +29,7 @@ func (g *genGetPosition) Run() error {
 		pkgPath:  "ir",
 		deps: []string{
 			"fmt",
-			"github.com/VKCOM/noverify/src/php/parser/position",
+			"github.com/z7zmey/php-parser/pkg/position",
 		},
 		contents: buf.Bytes(),
 	})

@@ -1,17 +1,11 @@
 package irutil
 
 import (
+	"github.com/z7zmey/php-parser/pkg/token"
+
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irfmt"
 )
-
-// Unquote returns unquoted version of s, if there are any quotes.
-func Unquote(s string) string {
-	if len(s) >= 2 && s[0] == '\'' || s[0] == '"' {
-		return s[1 : len(s)-1]
-	}
-	return s
-}
 
 func NodeSliceClone(xs []ir.Node) []ir.Node {
 	cloned := make([]ir.Node, len(xs))
@@ -95,6 +89,28 @@ func FindWithPredicate(what ir.Node, where ir.Node, pred findPredicate) bool {
 	return w.found
 }
 
+// FindPhpDoc searches for phpdoc by traversing all subtree and all tokens.
+func FindPhpDoc(n ir.Node) (doc string, found bool) {
+	Inspect(n, func(n ir.Node) (continueTraverse bool) {
+		n.IterateTokens(func(t *token.Token) (continueTraverse bool) {
+			if t.ID == token.T_DOC_COMMENT {
+				doc = string(t.Value)
+				return false
+			}
+
+			return true
+		})
+
+		return doc == ""
+	})
+
+	if doc != "" {
+		return doc, true
+	}
+
+	return doc, false
+}
+
 func classEqual(x, y ir.Class) bool {
 	return x.PhpDocComment == y.PhpDocComment &&
 		NodeEqual(x.Extends, y.Extends) &&
@@ -104,9 +120,11 @@ func classEqual(x, y ir.Class) bool {
 
 func classClone(x ir.Class) ir.Class {
 	return ir.Class{
-		PhpDocComment: x.PhpDocComment,
-		Extends:       NodeClone(x.Extends).(*ir.ClassExtendsStmt),
-		Implements:    NodeClone(x.Implements).(*ir.ClassImplementsStmt),
-		Stmts:         NodeSliceClone(x.Stmts),
+		Doc: ir.Doc{
+			PhpDocComment: x.PhpDocComment,
+		},
+		Extends:    NodeClone(x.Extends).(*ir.ClassExtendsStmt),
+		Implements: NodeClone(x.Implements).(*ir.ClassImplementsStmt),
+		Stmts:      NodeSliceClone(x.Stmts),
 	}
 }

@@ -89,8 +89,8 @@ func (n *Assign) Walk(v Visitor) {
 	if n.Variable != nil {
 		n.Variable.Walk(v)
 	}
-	if n.Expression != nil {
-		n.Expression.Walk(v)
+	if n.Expr != nil {
+		n.Expr.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -102,8 +102,8 @@ func (n *AssignBitwiseAnd) Walk(v Visitor) {
 	if n.Variable != nil {
 		n.Variable.Walk(v)
 	}
-	if n.Expression != nil {
-		n.Expression.Walk(v)
+	if n.Expr != nil {
+		n.Expr.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -115,8 +115,8 @@ func (n *AssignBitwiseOr) Walk(v Visitor) {
 	if n.Variable != nil {
 		n.Variable.Walk(v)
 	}
-	if n.Expression != nil {
-		n.Expression.Walk(v)
+	if n.Expr != nil {
+		n.Expr.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -128,8 +128,8 @@ func (n *AssignBitwiseXor) Walk(v Visitor) {
 	if n.Variable != nil {
 		n.Variable.Walk(v)
 	}
-	if n.Expression != nil {
-		n.Expression.Walk(v)
+	if n.Expr != nil {
+		n.Expr.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -141,8 +141,8 @@ func (n *AssignCoalesce) Walk(v Visitor) {
 	if n.Variable != nil {
 		n.Variable.Walk(v)
 	}
-	if n.Expression != nil {
-		n.Expression.Walk(v)
+	if n.Expr != nil {
+		n.Expr.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -154,8 +154,8 @@ func (n *AssignConcat) Walk(v Visitor) {
 	if n.Variable != nil {
 		n.Variable.Walk(v)
 	}
-	if n.Expression != nil {
-		n.Expression.Walk(v)
+	if n.Expr != nil {
+		n.Expr.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -167,8 +167,8 @@ func (n *AssignDiv) Walk(v Visitor) {
 	if n.Variable != nil {
 		n.Variable.Walk(v)
 	}
-	if n.Expression != nil {
-		n.Expression.Walk(v)
+	if n.Expr != nil {
+		n.Expr.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -180,8 +180,8 @@ func (n *AssignMinus) Walk(v Visitor) {
 	if n.Variable != nil {
 		n.Variable.Walk(v)
 	}
-	if n.Expression != nil {
-		n.Expression.Walk(v)
+	if n.Expr != nil {
+		n.Expr.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -193,8 +193,8 @@ func (n *AssignMod) Walk(v Visitor) {
 	if n.Variable != nil {
 		n.Variable.Walk(v)
 	}
-	if n.Expression != nil {
-		n.Expression.Walk(v)
+	if n.Expr != nil {
+		n.Expr.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -206,8 +206,8 @@ func (n *AssignMul) Walk(v Visitor) {
 	if n.Variable != nil {
 		n.Variable.Walk(v)
 	}
-	if n.Expression != nil {
-		n.Expression.Walk(v)
+	if n.Expr != nil {
+		n.Expr.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -219,8 +219,8 @@ func (n *AssignPlus) Walk(v Visitor) {
 	if n.Variable != nil {
 		n.Variable.Walk(v)
 	}
-	if n.Expression != nil {
-		n.Expression.Walk(v)
+	if n.Expr != nil {
+		n.Expr.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -232,8 +232,8 @@ func (n *AssignPow) Walk(v Visitor) {
 	if n.Variable != nil {
 		n.Variable.Walk(v)
 	}
-	if n.Expression != nil {
-		n.Expression.Walk(v)
+	if n.Expr != nil {
+		n.Expr.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -245,8 +245,8 @@ func (n *AssignReference) Walk(v Visitor) {
 	if n.Variable != nil {
 		n.Variable.Walk(v)
 	}
-	if n.Expression != nil {
-		n.Expression.Walk(v)
+	if n.Expr != nil {
+		n.Expr.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -258,8 +258,8 @@ func (n *AssignShiftLeft) Walk(v Visitor) {
 	if n.Variable != nil {
 		n.Variable.Walk(v)
 	}
-	if n.Expression != nil {
-		n.Expression.Walk(v)
+	if n.Expr != nil {
+		n.Expr.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -271,8 +271,8 @@ func (n *AssignShiftRight) Walk(v Visitor) {
 	if n.Variable != nil {
 		n.Variable.Walk(v)
 	}
-	if n.Expression != nil {
-		n.Expression.Walk(v)
+	if n.Expr != nil {
+		n.Expr.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -375,16 +375,6 @@ func (n *BreakStmt) Walk(v Visitor) {
 	}
 	if n.Expr != nil {
 		n.Expr.Walk(v)
-	}
-	v.LeaveNode(n)
-}
-
-func (n *CaseListStmt) Walk(v Visitor) {
-	if !v.EnterNode(n) {
-		return
-	}
-	for _, nn := range n.Cases {
-		nn.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -518,6 +508,13 @@ func (n *CloneExpr) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
+func (n *CloseTagStmt) Walk(v Visitor) {
+	if !v.EnterNode(n) {
+		return
+	}
+	v.LeaveNode(n)
+}
+
 func (n *ClosureExpr) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
@@ -537,7 +534,7 @@ func (n *ClosureExpr) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
-func (n *ClosureUseExpr) Walk(v Visitor) {
+func (n *ClosureUsesExpr) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
 	}
@@ -1585,8 +1582,8 @@ func (n *SwitchStmt) Walk(v Visitor) {
 	if n.Cond != nil {
 		n.Cond.Walk(v)
 	}
-	if n.CaseList != nil {
-		n.CaseList.Walk(v)
+	for _, nn := range n.Cases {
+		nn.Walk(v)
 	}
 	v.LeaveNode(n)
 }
