@@ -1,7 +1,6 @@
 package solver
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
@@ -29,39 +28,28 @@ type ClosureCallerInfo struct {
 	ArgTypes []meta.TypesMap // types for each arg for call caller function
 }
 
-func GetClosureName(fun *ir.ClosureExpr, curFunction, curFile string) string {
-	pos := ir.GetPosition(fun)
-	if curFunction != "" {
-		curFunction = "," + curFunction
-	}
-	name := `\Closure(` + curFile + curFunction + "):" + fmt.Sprint(pos.StartLine)
-	return name
-}
-
 func GetClosure(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState) (meta.FuncInfo, bool) {
-	if !cs.Info.IsIndexingComplete() {
-		return meta.FuncInfo{}, false
-	}
-
 	nmf, ok := name.(*ir.SimpleVar)
 	if !ok {
 		return meta.FuncInfo{}, false
 	}
 
 	var fi meta.FuncInfo
-	var found bool
-	var sv = &ir.SimpleVar{Name: nmf.Name}
+	sv := &ir.SimpleVar{Name: nmf.Name}
 
-	tp := ExprTypeLocal(sc, cs, sv)
-	tp.Iterate(func(typ string) {
-		if strings.HasPrefix(typ, `\Closure`) {
-			funcInfo, ok := cs.Info.GetFunction(typ)
-			if !ok {
-				return
-			}
-			fi = funcInfo
-			found = true
+	tp := ExprType(sc, cs, sv)
+	found := tp.Find(func(typ string) bool {
+		if !strings.HasPrefix(typ, `\Closure$`) {
+			return false
 		}
+
+		funcInfo, ok := cs.Info.GetFunction(typ)
+		if !ok {
+			return false
+		}
+
+		fi = funcInfo
+		return true
 	})
 
 	if found {

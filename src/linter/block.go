@@ -6,6 +6,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
+	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/phpdoc"
@@ -1030,7 +1031,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		b.r.checkFuncParam(param.(*ir.Parameter))
 	}
 
-	name := solver.GetClosureName(fun, b.r.ctx.st.CurrentFunction, b.r.ctx.st.CurrentFile)
+	name := autogen.GenerateClosureName(fun, b.r.ctx.st)
 
 	if b.r.meta.Functions.H == nil {
 		b.r.meta.Functions = meta.NewFunctionsMap()

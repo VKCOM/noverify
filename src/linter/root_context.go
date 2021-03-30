@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/VKCOM/noverify/src/baseline"
+	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/quickfix"
 )
@@ -17,7 +18,7 @@ type rootContext struct {
 	typeNormalizer typeNormalizer
 
 	// shapes is a list of generated shape types for the current file.
-	shapes []shapeTypeInfo
+	shapes map[string]autogen.ShapeTypeInfo
 
 	baseline     baseline.FileProfile
 	hashCounters map[uint64]int // Allocated lazily
@@ -37,6 +38,7 @@ func newRootContext(config *Config, workerCtx *WorkerContext, st *meta.ClassPars
 		typeNormalizer: typeNormalizer{st: st, kphp: config.KPHP},
 		st:             st,
 		baseline:       p,
+		shapes:         map[string]autogen.ShapeTypeInfo{},
 	}
 }
 

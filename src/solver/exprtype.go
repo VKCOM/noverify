@@ -6,6 +6,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
+	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/meta"
 )
 
@@ -151,7 +152,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 	case *ir.CloneExpr:
 		return ExprTypeLocalCustom(sc, cs, n.Expr, custom)
 	case *ir.ClosureExpr:
-		name := GetClosureName(n, cs.CurrentFunction, cs.CurrentFile)
+		name := autogen.GenerateClosureName(n, cs)
 		return meta.NewTypesMap(name)
 	case *ir.MagicConstant:
 		return magicConstantType(n)
@@ -506,6 +507,10 @@ func magicConstantType(n *ir.MagicConstant) meta.TypesMap {
 }
 
 func closureTypeByNameNode(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState) (meta.TypesMap, bool) {
+	if !cs.Info.IsIndexingComplete() {
+		return meta.TypesMap{}, false
+	}
+
 	fi, ok := GetClosure(name, sc, cs)
 	if !ok {
 		return meta.TypesMap{}, false

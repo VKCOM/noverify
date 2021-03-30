@@ -720,12 +720,12 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 	call := resolveFunctionCall(b.walker.ctx.sc, b.classParseState(), b.walker.ctx.customTypes, e)
 	fqName := call.funcName
 
-	if !call.isClosure {
-		b.checkFunctionAvailability(e, &call)
-		b.walker.r.checkNameCase(e.Function, call.funcName, call.info.Name)
-	} else {
+	if call.isClosure {
 		varName := strings.TrimPrefix(fqName, `\`)
 		b.walker.untrackVarName(varName)
+	} else {
+		b.checkFunctionAvailability(e, &call)
+		b.walker.r.checkNameCase(e.Function, call.funcName, call.info.Name)
 	}
 
 	if call.isFound {

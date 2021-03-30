@@ -170,13 +170,14 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 		res.funcName = fqName
 		res.info, res.isFound = st.Info.GetFunction(fqName)
 	} else {
-		solver.ExprTypeCustom(sc, st, call.Function, customTypes).Iterate(func(typ string) {
-			if res.isFound {
-				return
-			}
+		res.isFound = solver.ExprTypeCustom(sc, st, call.Function, customTypes).Find(func(typ string) bool {
 			m, ok := solver.FindMethod(st.Info, typ, `__invoke`)
+			if !ok {
+				return false
+			}
+
 			res.info = m.Info
-			res.isFound = ok
+			return true
 		})
 		if res.isFound {
 			return res
