@@ -186,7 +186,13 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 		return
 	}
 
-	for _, p := range phpdoc.Parse(b.r.ctx.phpdocTypeParser, string(t.Value)) {
+	doc := phpdoc.Parse(b.r.ctx.phpdocTypeParser, string(t.Value))
+
+	if phpdoc.IsSuspicious(t.Value) {
+		b.r.Report(n, LevelWarning, "phpdocLint", "multiline phpdoc comment should start with /**, not /*")
+	}
+
+	for _, p := range doc.Parsed {
 		p, ok := p.(*phpdoc.TypeVarCommentPart)
 		if !ok || p.Name() != "var" {
 			continue
@@ -997,7 +1003,7 @@ func (b *blockWalker) handleFor(s *ir.ForStmt) bool {
 func (b *blockWalker) enterArrowFunction(fun *ir.ArrowFunctionExpr) bool {
 	sc := meta.NewScope()
 
-	doc := b.r.parsePHPDoc(fun, fun.PhpDoc, fun.Params)
+	doc := b.r.parsePHPDoc(fun, fun.Doc, fun.Params)
 	b.r.reportPhpdocErrors(fun, doc.errs)
 	phpDocParamTypes := doc.types
 
@@ -1017,7 +1023,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		sc.AddVarName("this", meta.NewTypesMap("possibly_late_bound"), "possibly late bound $this", meta.VarAlwaysDefined)
 	}
 
-	doc := b.r.parsePHPDoc(fun, fun.PhpDoc, fun.Params)
+	doc := b.r.parsePHPDoc(fun, fun.Doc, fun.Params)
 	b.r.reportPhpdocErrors(fun, doc.errs)
 	phpDocParamTypes := doc.types
 

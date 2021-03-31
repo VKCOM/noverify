@@ -133,7 +133,7 @@ type RootContext struct {
 }
 
 // ParsePHPDoc returns parsed phpdoc comment parts.
-func (ctx *RootContext) ParsePHPDoc(doc string) []phpdoc.CommentPart {
+func (ctx *RootContext) ParsePHPDoc(doc string) phpdoc.Comment {
 	return phpdoc.Parse(ctx.w.ctx.phpdocTypeParser, doc)
 }
 

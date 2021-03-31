@@ -65,7 +65,7 @@ func (g *genGetFirstToken) writeGet(w *bytes.Buffer, pkg *packageData, typ *type
 			// Do nothing.
 		case "string", "bool":
 			// Do nothing.
-		case "ir.Doc":
+		case "github.com/VKCOM/noverify/src/phpdoc.Comment":
 			// Do nothing.
 		case "ir.Class":
 			// Do nothing.
