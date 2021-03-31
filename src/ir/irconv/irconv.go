@@ -2133,14 +2133,10 @@ func (c *Converter) getPhpDoc(tok *token.Token) (doc phpdoc.Comment) {
 		return doc
 	}
 
-	var foundDoc string
-
-Loop:
 	for _, ff := range tok.FreeFloating {
 		switch ff.ID {
 		case token.T_DOC_COMMENT:
-			foundDoc = string(ff.Value)
-			break Loop
+			return c.parsePHPDoc(string(ff.Value))
 		case token.T_COMMENT:
 			if !bytes.HasPrefix(ff.Value, []byte("/*")) {
 				continue
@@ -2151,12 +2147,11 @@ Loop:
 				continue
 			}
 
-			foundDoc = string(ff.Value)
-			break Loop
+			return c.parsePHPDoc(string(ff.Value))
 		}
 	}
 
-	return c.parsePHPDoc(foundDoc)
+	return phpdoc.Comment{}
 }
 
 func (c *Converter) convRelativeName(n *ast.NameRelative) *ir.Name {
