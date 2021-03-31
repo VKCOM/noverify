@@ -105,7 +105,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if x.Static != y.Static {
 			return false
 		}
-		if x.Comment.Raw != y.Comment.Raw {
+		if x.Doc.Raw != y.Doc.Raw {
 			return false
 		}
 		return true
@@ -294,10 +294,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if x.Value != y.Value {
-			return false
-		}
-		if x.DoubleQuotes != y.DoubleQuotes {
+		if !NodeEqual(&x.String, &y.String) {
 			return false
 		}
 		if x.Error != y.Error {
@@ -446,7 +443,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeSliceEqual(x.Consts, y.Consts) {
 			return false
 		}
-		if x.Comment.Raw != y.Comment.Raw {
+		if x.Doc.Raw != y.Doc.Raw {
 			return false
 		}
 		return true
@@ -496,7 +493,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if x.ReturnsRef != y.ReturnsRef {
 			return false
 		}
-		if x.Comment.Raw != y.Comment.Raw {
+		if x.Doc.Raw != y.Doc.Raw {
 			return false
 		}
 		return true
@@ -558,7 +555,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if x.Static != y.Static {
 			return false
 		}
-		if x.Comment.Raw != y.Comment.Raw {
+		if x.Doc.Raw != y.Doc.Raw {
 			return false
 		}
 		return true
@@ -891,7 +888,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if x.ReturnsRef != y.ReturnsRef {
 			return false
 		}
-		if x.Comment.Raw != y.Comment.Raw {
+		if x.Doc.Raw != y.Doc.Raw {
 			return false
 		}
 		return true
@@ -1068,7 +1065,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
 		}
-		if x.Comment.Raw != y.Comment.Raw {
+		if x.Doc.Raw != y.Doc.Raw {
 			return false
 		}
 		return true
@@ -1414,7 +1411,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeSliceEqual(x.Properties, y.Properties) {
 			return false
 		}
-		if x.Comment.Raw != y.Comment.Raw {
+		if x.Doc.Raw != y.Doc.Raw {
 			return false
 		}
 		return true
@@ -1675,7 +1672,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !NodeSliceEqual(x.Stmts, y.Stmts) {
 			return false
 		}
-		if x.Comment.Raw != y.Comment.Raw {
+		if x.Doc.Raw != y.Doc.Raw {
 			return false
 		}
 		return true

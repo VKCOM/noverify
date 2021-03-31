@@ -274,12 +274,8 @@ func GetFirstToken(n Node) *token.Token {
 			return GetFirstToken(n.Expr)
 		}
 	case *BadString:
-		if n.MinusTkn != nil {
-			return n.MinusTkn
-		}
-		if n.StringTkn != nil {
-			return n.StringTkn
-		}
+		return GetFirstToken(&n.String)
+
 	case *BitwiseAndExpr:
 		if n.Left != nil {
 			return GetFirstToken(n.Left)

@@ -367,12 +367,12 @@ func (p *parser) parseRule(st ir.Node, proto *Rule) error {
 }
 
 func (p *parser) parseFuncComment(fn *ir.FunctionStmt) error {
-	if fn.Comment.Raw == "" {
+	if fn.Doc.Raw == "" {
 		return nil
 	}
 
 	var doc RuleDoc
-	for _, part := range fn.Comment.Parsed {
+	for _, part := range fn.Doc.Parsed {
 		part := part.(*phpdoc.RawCommentPart)
 		switch part.Name() {
 		case "comment":
