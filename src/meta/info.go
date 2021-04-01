@@ -3,6 +3,8 @@ package meta
 import (
 	"strings"
 	"sync"
+
+	"github.com/VKCOM/noverify/src/types"
 )
 
 // Info contains meta information for all classes, functions, etc.
@@ -149,19 +151,19 @@ func (i *Info) InitKphpStubs() {
 		Name:         `\array_first_element`,
 		Params:       []FuncParam{{Name: "el"}},
 		MinParamsCnt: 1,
-		Typ:          NewTypesMap("mixed"),
+		Typ:          types.NewMap("mixed"),
 	}
 	i.internalFunctions.H[`\array_last_element`] = FuncInfo{
 		Name:         `\array_last_element`,
 		Params:       []FuncParam{{Name: "el"}},
 		MinParamsCnt: 1,
-		Typ:          NewTypesMap("mixed"),
+		Typ:          types.NewMap("mixed"),
 	}
 	i.internalFunctions.H[`\instance_deserialize`] = FuncInfo{
 		Name:         `\instance_deserialize`,
 		Params:       []FuncParam{{Name: "packed_str"}, {Name: "type_of_instance"}},
 		MinParamsCnt: 2,
-		Typ:          NewTypesMap("object|null"),
+		Typ:          types.NewMap("object|null"),
 	}
 
 	i.internalFunctionOverrides[`\array_first_element`] = FuncInfoOverride{
@@ -329,7 +331,7 @@ func (i *Info) AddConstantsNonLocked(filename string, m ConstantsMap) {
 }
 
 func (i *Info) AddToGlobalScopeNonLocked(filename string, sc *Scope) {
-	sc.Iterate(func(nm string, typ TypesMap, flags VarFlags) {
+	sc.Iterate(func(nm string, typ types.Map, flags VarFlags) {
 		i.AddVarName(nm, typ, "global", flags)
 	})
 }

@@ -23,6 +23,7 @@ import (
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/state"
+	"github.com/VKCOM/noverify/src/types"
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
@@ -71,7 +72,7 @@ type rootWalker struct {
 
 type phpDocParamEl struct {
 	optional bool
-	typ      meta.TypesMap
+	typ      types.Map
 }
 
 type phpDocParamsMap map[string]phpDocParamEl
@@ -510,7 +511,7 @@ func (d *rootWalker) reportUndefinedVariable(v ir.Node, maybeHave bool) {
 }
 
 type handleFuncResult struct {
-	returnTypes            meta.TypesMap
+	returnTypes            types.Map
 	prematureExitFlags     int
 	callsParentConstructor bool
 }
@@ -558,7 +559,7 @@ func (d *rootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.N
 
 		typ, ok := sc.GetVarNameType(v.Name)
 		if !ok {
-			typ = meta.NewTypesMap("TODO_use_var")
+			typ = types.NewMap("TODO_use_var")
 		}
 
 		sc.AddVar(v, typ, "use", meta.VarAlwaysDefined)
@@ -601,9 +602,9 @@ func (d *rootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.N
 
 	switch {
 	case b.bareReturn && b.returnsValue:
-		b.returnTypes = meta.MergeTypeMaps(b.returnTypes, meta.NullType)
+		b.returnTypes = types.MergeMaps(b.returnTypes, types.NullType)
 	case b.returnTypes.IsEmpty() && b.returnsValue:
-		b.returnTypes = meta.MixedType
+		b.returnTypes = types.MixedType
 	}
 
 	return handleFuncResult{
@@ -819,7 +820,7 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 		}
 	}
 
-	var specifiedType meta.TypesMap
+	var specifiedType types.Map
 	if typ, ok := d.parseTypeNode(pl.Type); ok {
 		specifiedType = typ
 	}
@@ -916,11 +917,11 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 
 	sc := meta.NewScope()
 	if !modif.static {
-		sc.AddVarName("this", meta.NewTypesMap(d.ctx.st.CurrentClass).Immutable(), "instance method", meta.VarAlwaysDefined)
+		sc.AddVarName("this", types.NewMap(d.ctx.st.CurrentClass).Immutable(), "instance method", meta.VarAlwaysDefined)
 		sc.SetInInstanceMethod(true)
 	}
 
-	var hintReturnType meta.TypesMap
+	var hintReturnType types.Map
 	if typ, ok := d.parseTypeNode(meth.ReturnType); ok {
 		hintReturnType = typ
 	}
@@ -976,8 +977,8 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 			}
 
 			res := make(map[string]struct{})
-			res[meta.WrapBaseMethodParam(i, d.ctx.st.CurrentClass, nm)] = struct{}{}
-			params[i].Typ = meta.NewTypesMapFromMap(res)
+			res[types.WrapBaseMethodParam(i, d.ctx.st.CurrentClass, nm)] = struct{}{}
+			params[i].Typ = types.NewMapFromMap(res)
 			sc.AddVarName(p.Name, params[i].Typ, "param", meta.VarAlwaysDefined)
 		}
 	}
@@ -1043,7 +1044,7 @@ func (d *rootWalker) reportPhpdocErrors(n ir.Node, errs phpdocErrors) {
 	}
 }
 
-func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.Comment) (m meta.TypesMap) {
+func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.Comment) (m types.Map) {
 	if phpdoc.IsSuspicious([]byte(doc.Raw)) {
 		d.Report(n, LevelWarning, "phpdocLint", "multiline phpdoc comment should start with /**, not /*")
 	}
@@ -1052,11 +1053,11 @@ func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.Comment) (m meta.Types
 		d.checkPHPDocRef(n, part)
 		part, ok := part.(*phpdoc.TypeVarCommentPart)
 		if ok && part.Name() == "var" {
-			types, warning := typesFromPHPDoc(&d.ctx, part.Type)
+			typeList, warning := typesFromPHPDoc(&d.ctx, part.Type)
 			if warning != "" {
 				d.Report(n, LevelNotice, "phpdocType", "%s on line %d", warning, part.Line())
 			}
-			m = newTypesMap(&d.ctx, types)
+			m = newTypesMap(&d.ctx, typeList)
 		}
 	}
 
@@ -1064,7 +1065,7 @@ func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.Comment) (m meta.Types
 }
 
 type phpDocParseResult struct {
-	returnType meta.TypesMap
+	returnType types.Map
 	types      phpDocParamsMap
 	info       meta.PhpDocInfo
 	errs       phpdocErrors
@@ -1259,11 +1260,11 @@ func (d *rootWalker) parsePHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 
 		if part.Name() == "return" {
 			part := part.(*phpdoc.TypeCommentPart)
-			types, warning := typesFromPHPDoc(&d.ctx, part.Type)
+			typeList, warning := typesFromPHPDoc(&d.ctx, part.Type)
 			if warning != "" {
 				result.errs.pushType("%s on line %d", warning, part.Line())
 			}
-			result.returnType = newTypesMap(&d.ctx, types)
+			result.returnType = newTypesMap(&d.ctx, typeList)
 			continue
 		}
 
@@ -1303,11 +1304,11 @@ func (d *rootWalker) parsePHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 		curParam++
 
 		var param phpDocParamEl
-		types, warning := typesFromPHPDoc(&d.ctx, part.Type)
+		typeList, warning := typesFromPHPDoc(&d.ctx, part.Type)
 		if warning != "" {
 			result.errs.pushType("%s on line %d", warning, part.Line())
 		}
-		param.typ = newTypesMap(&d.ctx, types)
+		param.typ = newTypesMap(&d.ctx, typeList)
 		param.typ.Iterate(func(t string) {
 			if t == "void" {
 				result.errs.pushType("void is not a valid type for input parameter")
@@ -1324,27 +1325,27 @@ func (d *rootWalker) parsePHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 }
 
 // parse type info, e.g. "string" in "someFunc() : string { ... }"
-func (d *rootWalker) parseTypeNode(n ir.Node) (typ meta.TypesMap, ok bool) {
+func (d *rootWalker) parseTypeNode(n ir.Node) (typ types.Map, ok bool) {
 	if n == nil {
-		return meta.TypesMap{}, false
+		return types.Map{}, false
 	}
 
-	types := typesFromNode(n)
-	tm := newTypesMap(&d.ctx, types)
+	typeList := typesFromNode(n)
+	tm := newTypesMap(&d.ctx, typeList)
 	return tm, !tm.IsEmpty()
 }
 
 // callbackParamByIndex returns the description of the parameter for the function by its index.
-func (d *rootWalker) callbackParamByIndex(param ir.Node, argType meta.TypesMap) meta.FuncParam {
+func (d *rootWalker) callbackParamByIndex(param ir.Node, argType types.Map) meta.FuncParam {
 	p := param.(*ir.Parameter)
 	v := p.Variable
 
-	var typ meta.TypesMap
+	var typ types.Map
 	tp, ok := d.parseTypeNode(p.VariableType)
 	if ok {
 		typ = tp
 	} else {
-		typ = argType.Map(meta.WrapElemOf)
+		typ = argType.Map(types.WrapElemOf)
 	}
 
 	arg := meta.FuncParam{
@@ -1378,11 +1379,11 @@ func (d *rootWalker) parseFuncArgsForCallback(params []ir.Node, sc *meta.Scope, 
 	for i, param := range params {
 		p := param.(*ir.Parameter)
 		v := p.Variable
-		var typ meta.TypesMap
+		var typ types.Map
 		if i < len(args) {
 			typ = args[i].Typ
 		} else {
-			typ = meta.MixedType
+			typ = types.MixedType
 		}
 
 		sc.AddVarName(v.Name, typ, "param", meta.VarAlwaysDefined)
@@ -1432,7 +1433,7 @@ func (d *rootWalker) parseFuncArgs(params []ir.Node, parTypes phpDocParamsMap, s
 		}
 
 		if p.Variadic {
-			typ = typ.Map(meta.WrapArrayOf)
+			typ = typ.Map(types.WrapArrayOf)
 		}
 
 		sc.AddVarName(v.Name, typ, "param", meta.VarAlwaysDefined)
@@ -1493,7 +1494,7 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 		d.Report(fun.FunctionName, LevelNotice, "complexity", "Too big function: more than %d lines", maxFunctionLines)
 	}
 
-	var hintReturnType meta.TypesMap
+	var hintReturnType types.Map
 	if typ, ok := d.parseTypeNode(fun.ReturnType); ok {
 		hintReturnType = typ
 	}
@@ -1568,7 +1569,7 @@ func (d *rootWalker) checkTypeHintClassCaseFunctionParam(p *ir.Parameter) {
 	}
 
 	typ.Iterate(func(typ string) {
-		if meta.IsClassType(typ) {
+		if types.IsClassType(typ) {
 			className := typ
 
 			class, ok := d.metaInfo().GetClass(className)
