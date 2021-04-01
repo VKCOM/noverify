@@ -146,6 +146,14 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult,
 	return result, nil
 }
 
+func (w *Worker) parseWithCache(cacheFileme string, file workspace.FileInfo) error {
+	result, err := w.ParseContents(file)
+	if err != nil {
+		return err
+	}
+	return createMetaCacheFile(file.Name, cacheFileme, result.walker)
+}
+
 // IndexFile parses the file and fills in the meta info. Can use cache.
 func (w *Worker) IndexFile(file workspace.FileInfo) error {
 	if w.config.CacheDir == "" {
@@ -188,27 +196,17 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 	cacheFile := filepath.Join(w.config.CacheDir, cacheFilenamePart+"."+contentsHash)
 
 	start := time.Now()
+
 	fp, err := os.Open(cacheFile)
 	if err != nil {
-		result, err := w.ParseContents(file)
-		if err != nil {
-			return err
-		}
-
-		return createMetaCacheFile(file.Name, cacheFile, result.walker)
+		return w.parseWithCache(cacheFile, file)
 	}
 	defer fp.Close()
 
 	if err := restoreMetaFromCache(w.info, w.config.Checkers.cachers, file.Name, fp); err != nil {
 		// do not really care about why exactly reading from cache failed
 		os.Remove(cacheFile)
-
-		result, err := w.ParseContents(file)
-		if err != nil {
-			return err
-		}
-
-		return createMetaCacheFile(file.Name, cacheFile, result.walker)
+		return w.parseWithCache(cacheFile, file)
 	}
 
 	atomic.AddInt64(&initCacheReadTime, int64(time.Since(start)))
