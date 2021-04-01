@@ -146,12 +146,12 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult,
 	return result, nil
 }
 
-func (w *Worker) parseWithCache(cacheFileme string, file workspace.FileInfo) error {
+func (w *Worker) parseWithCache(cacheFilename string, file workspace.FileInfo) error {
 	result, err := w.ParseContents(file)
 	if err != nil {
 		return err
 	}
-	return createMetaCacheFile(file.Name, cacheFileme, result.walker)
+	return createMetaCacheFile(file.Name, cacheFilename, result.walker)
 }
 
 // IndexFile parses the file and fills in the meta info. Can use cache.
