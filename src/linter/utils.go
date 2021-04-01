@@ -12,6 +12,7 @@ import (
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/solver"
+	"github.com/VKCOM/noverify/src/types"
 )
 
 // FlagsToString is designed for debugging flags.
@@ -86,21 +87,21 @@ func varToString(v ir.Node) string {
 	}
 }
 
-func typesMapToTypeExpr(p *phpdoc.TypeParser, m meta.TypesMap) phpdoc.Type {
+func typesMapToTypeExpr(p *phpdoc.TypeParser, m types.Map) phpdoc.Type {
 	typeString := m.String()
 	return p.Parse(typeString)
 }
 
 // mergeTypeMaps merges two typesmaps without losing information.
 // So merging int[] and array will give int[], and Foo and object will give Foo.
-func mergeTypeMaps(left meta.TypesMap, right meta.TypesMap) meta.TypesMap {
+func mergeTypeMaps(left types.Map, right types.Map) types.Map {
 	var hasAtLeastOneArray bool
 	var hasAtLeastOneClass bool
 
 	merged := make(map[string]struct{}, left.Len()+right.Len())
 
 	left.Iterate(func(typ string) {
-		if typ[0] == meta.WArrayOf {
+		if typ[0] == types.WArrayOf {
 			hasAtLeastOneArray = true
 		}
 		if typ[0] == '\\' {
@@ -110,7 +111,7 @@ func mergeTypeMaps(left meta.TypesMap, right meta.TypesMap) meta.TypesMap {
 	})
 
 	right.Iterate(func(typ string) {
-		if typ[0] == meta.WArrayOf && meta.UnwrapArrayOf(typ) == "mixed" && hasAtLeastOneArray {
+		if typ[0] == types.WArrayOf && types.UnwrapArrayOf(typ) == "mixed" && hasAtLeastOneArray {
 			return
 		}
 		if typ == "object" && hasAtLeastOneClass {
@@ -119,7 +120,7 @@ func mergeTypeMaps(left meta.TypesMap, right meta.TypesMap) meta.TypesMap {
 		merged[typ] = struct{}{}
 	})
 
-	return meta.NewTypesMapFromMap(merged)
+	return types.NewMapFromMap(merged)
 }
 
 // functionReturnType returns the return type of a function over computed types
@@ -133,8 +134,8 @@ func mergeTypeMaps(left meta.TypesMap, right meta.TypesMap) meta.TypesMap {
 //
 // 3. If there is no @return annotation and type hint, then the return type is equal to
 //    the union of the types that are returned from the function by return.
-func functionReturnType(phpdocReturnType meta.TypesMap, hintReturnType meta.TypesMap, actualReturnTypes meta.TypesMap) meta.TypesMap {
-	var returnTypes meta.TypesMap
+func functionReturnType(phpdocReturnType types.Map, hintReturnType types.Map, actualReturnTypes types.Map) types.Map {
+	var returnTypes types.Map
 	if !phpdocReturnType.IsEmpty() || !hintReturnType.IsEmpty() {
 		returnTypes = mergeTypeMaps(phpdocReturnType, hintReturnType)
 	} else {
@@ -142,7 +143,7 @@ func functionReturnType(phpdocReturnType meta.TypesMap, hintReturnType meta.Type
 	}
 
 	if returnTypes.IsEmpty() {
-		returnTypes = meta.VoidType
+		returnTypes = types.VoidType
 	}
 
 	return returnTypes
@@ -189,7 +190,7 @@ type methodCallInfo struct {
 	methodName       string
 	className        string
 	info             meta.FuncInfo
-	methodCallerType meta.TypesMap
+	methodCallerType types.Map
 	isFound          bool
 	isMagic          bool
 	canAnalyze       bool
@@ -300,7 +301,7 @@ func resolveStaticMethodCall(st *meta.ClassParseState, e *ir.StaticCallExpr) sta
 type propertyFetchInfo struct {
 	className         string
 	info              meta.PropertyInfo
-	propertyFetchType meta.TypesMap
+	propertyFetchType types.Map
 	propertyNode      *ir.Identifier
 	isFound           bool
 	isMagic           bool

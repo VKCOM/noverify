@@ -26,6 +26,7 @@ import (
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/quickfix"
+	"github.com/VKCOM/noverify/src/types"
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
@@ -297,8 +298,8 @@ func (w *Worker) analyzeFile(file *workspace.File, rootNode *ir.Root) (*rootWalk
 // do not need to call it yourself.
 func analyzeFileRootLevel(rootNode ir.Node, d *rootWalker) {
 	sc := meta.NewScope()
-	sc.AddVarName("argv", meta.NewTypesMap("string[]"), "predefined", meta.VarAlwaysDefined)
-	sc.AddVarName("argc", meta.NewTypesMap("int"), "predefined", meta.VarAlwaysDefined)
+	sc.AddVarName("argv", types.NewMap("string[]"), "predefined", meta.VarAlwaysDefined)
+	sc.AddVarName("argc", types.NewMap("int"), "predefined", meta.VarAlwaysDefined)
 
 	b := newBlockWalker(d, sc)
 	b.ignoreFunctionBodies = true

@@ -7,6 +7,7 @@ import (
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/quickfix"
+	"github.com/VKCOM/noverify/src/types"
 )
 
 type rootContext struct {
@@ -48,7 +49,7 @@ func (ctx *rootContext) generateShapeName() string {
 	return fmt.Sprintf(`\shape$%s$%d$`, ctx.st.CurrentFile, len(ctx.shapes))
 }
 
-func newTypesMap(ctx *rootContext, types []meta.Type) meta.TypesMap {
-	ctx.typeNormalizer.NormalizeTypes(types)
-	return meta.NewTypesMapFromTypes(types)
+func newTypesMap(ctx *rootContext, typeList []types.Type) types.Map {
+	ctx.typeNormalizer.NormalizeTypes(typeList)
+	return types.NewMapFromTypes(typeList)
 }

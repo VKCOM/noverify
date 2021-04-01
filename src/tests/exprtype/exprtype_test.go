@@ -12,6 +12,7 @@ import (
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/types"
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
@@ -37,7 +38,7 @@ import (
 
 var (
 	exprTypeResultMu sync.Mutex
-	exprTypeResult   map[ir.Node]meta.TypesMap
+	exprTypeResult   map[ir.Node]types.Map
 )
 
 func TestExprTypeListOverArray(t *testing.T) {
@@ -2874,7 +2875,7 @@ func exprTypeTestImpl(t *testing.T, params *exprTypeTestParams, kphp bool) {
 	l.MetaInfo().SetIndexingComplete(true)
 
 	// Reset results map and run expr type collector.
-	exprTypeResult = map[ir.Node]meta.TypesMap{}
+	exprTypeResult = map[ir.Node]types.Map{}
 	result := linttest.ParseTestFile(t, l, "exprtype.php", params.code)
 
 	// Check that collected types are identical to the expected types.

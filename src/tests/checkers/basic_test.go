@@ -9,7 +9,7 @@ import (
 	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
-	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/types"
 )
 
 func TestBadString(t *testing.T) {
@@ -2020,7 +2020,7 @@ func TestArrayUnion(t *testing.T) {
 		t.Errorf("Unexpected number of types: %d, excepted 2", l)
 	}
 
-	if !fnMixedArr.Typ.Equals(meta.NewTypesMap("int[]|string[]")) {
+	if !fnMixedArr.Typ.Equals(types.NewMap("int[]|string[]")) {
 		// NOTE: this is how code works right now. It currently treat a[]|b[] as (a|b)[]
 		t.Errorf("Wrong type: %s, expected int[]|string[]", fnMixedArr.Typ)
 	}
