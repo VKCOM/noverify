@@ -1,12 +1,30 @@
+WARNING typeHint: specify the type for the parameter $lines in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:162
+    protected function lines(array $lines)
+                             ^^^^^^^^^^^^
+WARNING typeHint: specify the type for the parameter $lines in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:167
+    protected function linesElements(array $lines)
+                                     ^^^^^^^^^^^^
+WARNING typeHint: specify the type for the parameter $Component in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:319
+    protected function extractElement(array $Component)
+                                      ^^^^^^^^^^^^^^^^
+WARNING typeHint: specify the type for the parameter $Block in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:428
+    protected function blockCommentContinue($Line, array $Block)
+                                                   ^^^^^^^^^^^^
 MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:560
                 'handler' => array(
                 ^
+WARNING typeHint: specify the type for the parameter $CurrentBlock in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:574
+    protected function blockList($Line, array $CurrentBlock = null)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:633
                     'destination' => 'elements'
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:630
                 'handler' => array(
                 ^
+WARNING typeHint: specify the type for the parameter $Block in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:643
+    protected function blockListContinue($Line, array $Block)
+                                                ^^^^^^^^^^^^
 MAYBE   ternarySimplify: could rewrite as `$matches[1] ?? ''` at testdata/parsedown/parsedown.php:674
             $text = isset($matches[1]) ? $matches[1] : '';
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -16,30 +34,51 @@ MAYBE   trailingComma: last element in a multi-line array must have a trailing c
 MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:680
                 'handler' => array(
                 ^
+WARNING typeHint: specify the type for the parameter $Block in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:729
+    protected function blockListComplete(array $Block)
+                                         ^^^^^^^^^^^^
 MAYBE   regexpSimplify: May re-write '/^>[ ]?+(.*+)/' as '/^> ?+(.*+)/' at testdata/parsedown/parsedown.php:750
         if (preg_match('/^>[ ]?+(.*+)/', $Line['text'], $matches))
                        ^^^^^^^^^^^^^^^^
 MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:755
                     'handler' => array(
                     ^
+WARNING typeHint: specify the type for the parameter $Block in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:767
+    protected function blockQuoteContinue($Line, array $Block)
+                                                 ^^^^^^^^^^^^
 MAYBE   regexpSimplify: May re-write '/^>[ ]?+(.*+)/' as '/^> ?+(.*+)/' at testdata/parsedown/parsedown.php:774
         if ($Line['text'][0] === '>' and preg_match('/^>[ ]?+(.*+)/', $Line['text'], $matches))
                                                     ^^^^^^^^^^^^^^^^
+WARNING typeHint: specify the type for the parameter $Block in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:811
+    protected function blockSetextHeader($Line, array $Block = null)
+                                                ^^^^^^^^^^^^^^^^^^^
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/parsedown/parsedown.php:840
             if (in_array($element, $this->textLevelElements))
                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING typeHint: specify the type for the parameter $Block in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:857
+    protected function blockMarkupContinue($Line, array $Block)
+                                                  ^^^^^^^^^^^^
 MAYBE   regexpSimplify: May re-write '/^\[(.+?)\]:[ ]*+<?(\S+?)>?(?:[ ]+["\'(](.+)["\')])?[ ]*+$/' as '/^\[(.+?)\]: *+<?(\S+?)>?(?: +["'(](.+)["')])? *+$/' at testdata/parsedown/parsedown.php:875
             and preg_match('/^\[(.+?)\]:[ ]*+<?(\S+?)>?(?:[ ]+["\'(](.+)["\')])?[ ]*+$/', $Line['text'], $matches)
                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: could rewrite as `$matches[3] ?? null` at testdata/parsedown/parsedown.php:881
                 'title' => isset($matches[3]) ? $matches[3] : null,
                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING typeHint: specify the type for the parameter $Block in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:897
+    protected function blockTable($Line, array $Block = null)
+                                         ^^^^^^^^^^^^^^^^^^^
 MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:973
                 'handler' => array(
                 ^
+WARNING typeHint: specify the type for the parameter $Block in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:1020
+    protected function blockTableContinue($Line, array $Block)
+                                                 ^^^^^^^^^^^^
 MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:1046
                     'handler' => array(
                     ^
+WARNING typeHint: specify the type for the parameter $Block in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:1093
+    protected function paragraphContinue($Line, array $Block)
+                                                ^^^^^^^^^^^^
 MAYBE   regexpSimplify: May re-write '/[ ]*+\n/' as '/ *+\n/' at testdata/parsedown/parsedown.php:1265
             $text = preg_replace('/[ ]*+\n/', ' ', $text);
                                  ^^^^^^^^^^^
@@ -58,18 +97,51 @@ MAYBE   trailingComma: last element in a multi-line array must have a trailing c
 MAYBE   regexpSimplify: May re-write '/\bhttps?+:[\/]{2}[^\s<]+\b\/*+/ui' as '~\bhttps?+:/{2}[^\s<]+\b/*+~ui' at testdata/parsedown/parsedown.php:1540
             and preg_match('/\bhttps?+:[\/]{2}[^\s<]+\b\/*+/ui', $Excerpt['context'], $matches, PREG_OFFSET_CAPTURE)
                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING typeHint: specify the type for the parameter $Element in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:1591
+    protected function handle(array $Element)
+                              ^^^^^^^^^^^^^^
+WARNING typeHint: specify the type for the parameter $Element in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:1627
+    protected function handleElementRecursive(array $Element)
+                                              ^^^^^^^^^^^^^^
+WARNING typeHint: specify the type for the parameter $Elements in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:1632
+    protected function handleElementsRecursive(array $Elements)
+                                               ^^^^^^^^^^^^^^^
+WARNING typeHint: specify the type for the parameter $Element in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:1637
+    protected function elementApplyRecursive($closure, array $Element)
+                                                       ^^^^^^^^^^^^^^
+WARNING typeHint: specify the type for the parameter $Element in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:1653
+    protected function elementApplyRecursiveDepthFirst($closure, array $Element)
+                                                                 ^^^^^^^^^^^^^^
+WARNING typeHint: specify the type for the parameter $Elements in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:1669
+    protected function elementsApplyRecursive($closure, array $Elements)
+                                                        ^^^^^^^^^^^^^^^
+WARNING typeHint: specify the type for the parameter $Elements in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:1679
+    protected function elementsApplyRecursiveDepthFirst($closure, array $Elements)
+                                                                  ^^^^^^^^^^^^^^^
+WARNING typeHint: specify the type for the parameter $Element in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:1689
+    protected function element(array $Element)
+                               ^^^^^^^^^^^^^^
 WARNING undefined: Variable might have not been defined: text at testdata/parsedown/parsedown.php:1755
                     $markup .= self::escape($text, true);
                                             ^^^^^
 WARNING undefined: Variable might have not been defined: text at testdata/parsedown/parsedown.php:1759
                     $markup .= $text;
                                ^^^^^
+WARNING typeHint: specify the type for the parameter $Elements in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:1773
+    protected function elements(array $Elements)
+                                ^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: could rewrite as `$Element['autobreak'] ?? isset($Element['name'])` at testdata/parsedown/parsedown.php:1786
             $autoBreakNext = (isset($Element['autobreak'])
                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/parsedown/parsedown.php:1807
         if ( ! in_array('', $lines)
                ^^^^^^^^^^^^^^^^^^^^
+WARNING typeHint: specify the type for the parameter $Element in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:1861
+    protected function sanitiseElement(array $Element)
+                                       ^^^^^^^^^^^^^^
 WARNING unused: Variable val is unused (use $_ to ignore this inspection) at testdata/parsedown/parsedown.php:1882
             foreach ($Element['attributes'] as $att => $val)
                                                        ^^^^
+WARNING typeHint: specify the type for the parameter $Element in phpdoc, 'array' type hint is not precise enough at testdata/parsedown/parsedown.php:1900
+    protected function filterUnsafeUrlInAttribute(array $Element, $attribute)
+                                                  ^^^^^^^^^^^^^^

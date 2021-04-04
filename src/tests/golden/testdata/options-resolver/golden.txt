@@ -1,3 +1,9 @@
+WARNING typeHint: specify the return type for the function getNormalizers in phpdoc, 'array' type hint is not precise enough at testdata/options-resolver/Debug/OptionsResolverIntrospector.php:94
+    public function getNormalizers(string $option): array
+                    ^^^^^^^^^^^^^^
+WARNING typeHint: specify the return type for the function getDeprecation in phpdoc, 'array' type hint is not precise enough at testdata/options-resolver/Debug/OptionsResolverIntrospector.php:116
+    public function getDeprecation(string $option): array
+                    ^^^^^^^^^^^^^^
 MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (7.4) at testdata/options-resolver/OptionsResolver.php:188
             if (isset($params[0]) && null !== ($class = $params[0]->getClass()) && Options::class === $class->name) {
                                                                     ^^^^^^^^
@@ -19,3 +25,12 @@ WARNING phpdocLint: @param for non-existing argument $message at testdata/option
 MAYBE   complexity: Too big method: more than 150 lines at testdata/options-resolver/OptionsResolver.php:917
     public function offsetGet($option, bool $triggerDeprecation = true)
                     ^^^^^^^^^
+WARNING typeHint: specify the type for the parameter $invalidTypes in phpdoc, 'array' type hint is not precise enough at testdata/options-resolver/OptionsResolver.php:1123
+    private function verifyTypes(string $type, $value, array &$invalidTypes, int $level = 0): bool
+                                                       ^^^^^^^^^^^^^^^^^^^^
+WARNING typeHint: specify the type for the parameter $values in phpdoc, 'array' type hint is not precise enough at testdata/options-resolver/OptionsResolver.php:1259
+    private function formatValues(array $values): string
+                                  ^^^^^^^^^^^^^
+WARNING typeHint: specify the type for the parameter $options in phpdoc, 'array' type hint is not precise enough at testdata/options-resolver/OptionsResolver.php:1268
+    private function formatOptions(array $options): string
+                                   ^^^^^^^^^^^^^^

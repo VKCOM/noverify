@@ -9,8 +9,9 @@ import (
 )
 
 type Comment struct {
-	Raw    string
-	Parsed []CommentPart
+	Raw     string
+	Parsed  []CommentPart
+	Inherit bool
 }
 
 type CommentPart interface {
@@ -96,6 +97,7 @@ func Parse(parser *TypeParser, doc string) Comment {
 
 	var parts []CommentPart
 	var lines []string
+	var inherit bool
 
 	var countLines = strings.Count(doc, "\n") + 1
 
@@ -116,6 +118,11 @@ func Parse(parser *TypeParser, doc string) Comment {
 		ln = strings.TrimPrefix(ln, "*")
 		ln = strings.TrimSuffix(ln, "*/")
 		ln = strings.TrimSpace(ln)
+
+		if strings.Contains(ln, "inheritdoc") {
+			inherit = true
+			continue
+		}
 
 		if !strings.HasPrefix(ln, "@") {
 			continue
@@ -147,8 +154,9 @@ func Parse(parser *TypeParser, doc string) Comment {
 	}
 
 	return Comment{
-		Raw:    doc,
-		Parsed: parts,
+		Raw:     doc,
+		Parsed:  parts,
+		Inherit: inherit,
 	}
 }
 

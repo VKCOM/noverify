@@ -19,6 +19,9 @@ function f($x, $y) {
 
 func TestParamClobberReferenced(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+/**
+ * @param mixed[] $x
+ */
 function f(array $x) {
   $x = $x['foo'];
   return $x;

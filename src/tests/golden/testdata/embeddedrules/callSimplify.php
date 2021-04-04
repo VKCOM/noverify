@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * @param  mixed[]  $array
+ */
 function in_array_over_array_keys(array $array) {
     $_ = in_array('abc', array_keys($array)); // bad
     $_ = array_keys('abc', $array); // good
