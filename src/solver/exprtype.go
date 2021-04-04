@@ -266,7 +266,12 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 		if !ok {
 			return types.NewMap("mixed"), true
 		}
-		return types.NewMap(className + "|null"), true
+
+		if override.WithNull {
+			return types.NewMap(className + "|null"), true
+		}
+
+		return types.NewMap(className), true
 	}
 
 	log.Printf("Internal error: unexpected override type %d for function %s", override.OverrideType, nm)

@@ -85,6 +85,7 @@ const (
 // For example, \array_slice($arr) returns type of element (OverrideElementType) of the ArgNum=0
 type FuncInfoOverride struct {
 	OverrideType OverrideType
+	WithNull     bool // whenever we need to add null type (usually for OverrideClassType)
 	ArgNum       int
 }
 
