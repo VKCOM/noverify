@@ -1,33 +1,33 @@
 package golden_test
 
 import (
-	"os"
 	"testing"
 
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
-	"github.com/VKCOM/noverify/src/rules"
 )
 
-func TestMain(t *testing.M) {
-	err := linttest.InitEmbeddedRules()
-	if err != nil {
-		panic(err)
-	}
-
-	exitCode := t.Run()
-
-	os.Exit(exitCode)
-}
-
 func TestGolden(t *testing.T) {
-	defer func(rset *rules.Set) {
-		linter.Rules = rset
-	}(linter.Rules)
-
+	commandTests := []*linttest.CommandE2ETestSuite{
+		{
+			Name: "help",
+			Args: []string{"help"},
+		},
+		{
+			Name: "help",
+			Args: []string{"help", "checkers"},
+		},
+		{
+			Name: "help",
+			Args: []string{"help", "checkers", "arraySyntax"},
+		},
+	}
 	targets := []*linttest.GoldenTestSuite{
 		{
 			Name: "embeddedrules",
+			Disable: []string{
+				`deadCode`,
+			},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 			},
@@ -181,10 +181,20 @@ func TestGolden(t *testing.T) {
 
 	e2eSuite := linttest.NewGoldenE2ETestSuite(t)
 
+	var linterConfig = linter.NewConfig()
+	err := linttest.InitEmbeddedRules(linterConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	for _, target := range targets {
-		linttest.PrepareGoldenTestSuite(target, t, "testdata", "golden.txt")
+		l := linter.NewLinter(linterConfig)
+		linttest.PrepareGoldenTestSuite(target, t, l, "testdata", "golden.txt")
 		target.Run()
-		e2eSuite.AddTest(target)
+		e2eSuite.RegisterTest(target)
+	}
+	for _, test := range commandTests {
+		e2eSuite.RegisterCommandTest(test)
 	}
 
 	// Second pass only happens if none of the tests above have failed.

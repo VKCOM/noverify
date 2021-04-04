@@ -12,6 +12,7 @@ import (
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/types"
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
@@ -37,14 +38,8 @@ import (
 
 var (
 	exprTypeResultMu sync.Mutex
-	exprTypeResult   map[ir.Node]meta.TypesMap
+	exprTypeResult   map[ir.Node]types.Map
 )
-
-func init() {
-	linter.RegisterBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker {
-		return &exprTypeCollector{ctx: ctx}
-	})
-}
 
 func TestExprTypeListOverArray(t *testing.T) {
 	code := `<?php
@@ -100,6 +95,49 @@ function not_an_array($xs) {
   list ($a, $b) = $xs;
   exprtype($a, 'unknown_from_list');
   exprtype($b, 'unknown_from_list');
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestExprTypeCatch(t *testing.T) {
+	code := `<?php
+try {
+} catch (Foo $x) {
+  exprtype($x, '\Foo');
+} catch (Exception $e) {
+  exprtype($e, '\Exception');
+} catch (A|B $ab) {
+  exprtype($ab, '\A|\B');
+} catch (\A\B\C $abc) {
+  exprtype($abc, '\A\B\C');
+  exprtype($ab, 'undefined');
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestExprTypeVariadicParam(t *testing.T) {
+	code := `<?php
+function scalar_int(int ...$xs) {
+  exprtype($xs, 'int[]');
+}
+
+function no_typehint(...$xs) {
+  exprtype($xs, 'mixed'); // TODO: mixed[]?
+}
+
+function foo_array(Foo ...$xs) {
+  exprtype($xs, '\Foo[]');
+}
+
+function mixed_array2(array ...$xs) {
+  exprtype($xs, 'mixed[][]');
+}
+
+/** @param $xs Foo */
+function scalar_int(int ...$xs) {
+  exprtype($xs, '\Foo|int[]');
 }
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
@@ -1537,6 +1575,13 @@ function bare_ret2($cond) {
 }
 exprtype(bare_ret2(false), 'int|null');
 
+function bare_ret3($cond) {
+  if ($cond == 1) { return 10; }
+  if ($cond == 2) { return ""; }
+  return;
+}
+exprtype(bare_ret3(10), 'int|null|string');
+
 function untyped_param($x) { return $x; }
 exprtype(untyped_param(0), 'mixed');
 
@@ -1694,11 +1739,11 @@ exprtype(get_array(), 'mixed[]');
 
 /** @return array */
 function get_array_or_null() { return null; }
-exprtype(get_array_or_null(), 'mixed[]|null');
+exprtype(get_array_or_null(), 'mixed[]');
 
 /** @return null */
 function get_null_or_array() { return []; }
-exprtype(get_null_or_array(), 'mixed[]|null');
+exprtype(get_null_or_array(), 'null');
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
@@ -2617,29 +2662,227 @@ function f() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestNewFunctionReturnExprType(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+/** @return int */
+function f1() {
+	return 5;
+}
+exprtype(f1(), "int");
+
+
+/** @return int */
+function f2(): float {
+	return 5;
+}
+exprtype(f2(), "float|int");
+
+
+/** Without @return */
+function f3(): float {
+	if (1) {
+		return new Foo;
+	}
+	return 5;
+}
+exprtype(f3(), "float");
+
+
+/** Without @return and type hint */
+function f4() {
+	if (1) {
+		return 10;
+	}
+	return new Foo;
+}
+exprtype(f4(), "\Foo|int");
+
+
+/** Without @return and type hint and return */
+function f5() {
+	
+}
+exprtype(f5(), "void");
+
+
+/** @return int[] */
+function f6(): array {
+	return [1,2,4];
+}
+exprtype(f6(), "int[]");
+
+
+/** @return int[] */
+function f7(): array {
+	return f6();
+}
+exprtype(f7(), "int[]");
+
+
+/** @return Foo */
+function f8(): object {
+	return new Foo;
+}
+exprtype(f8(), "\Foo");
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestNullableInTupleExprType(t *testing.T) {
+	code := `<?php
+class Boo {}
+
+class Foo {
+	/**
+	 * @return tuple(?Foo, int)
+	 */
+	public static function staticMethodNullable() {}
+
+	/**
+	 * @return tuple(?Boo, int)
+	 */
+	public static function staticMethodNullableBoo() {}
+
+	/**
+	 * @return tuple(?self, int)
+	 */
+	public static function staticMethodSelfNullable() {}
+}
+
+function f1() {
+	list($a, $_) = Foo::staticMethodNullable();
+	list($b, $_) = Foo::staticMethodNullableBoo();
+	list($c, $_) = Foo::staticMethodSelfNullable();
+	exprtype($a, "\Foo|null");
+	exprtype($b, "\Boo|null");
+	exprtype($c, "\Foo|null");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestSelfStaticInTupleExprType(t *testing.T) {
+	code := `<?php
+class Foo {
+	/**
+	 * @return tuple(static, int)
+	 */
+	public static function staticMethodStatic() {}
+	
+	/**
+	 * @return tuple($this, int)
+	 */
+	public static function staticMethodThis() {}
+	
+	/**
+	 * @return tuple(self, int)
+	 */
+	public static function staticMethodSelf() {}
+}
+
+function f1() {
+    list($a, $_) = Foo::staticMethodStatic();
+    list($b, $_) = Foo::staticMethodThis();
+    list($c, $_) = Foo::staticMethodSelf();
+    exprtype($a, "\Foo");
+    exprtype($b, "\Foo");
+    exprtype($c, "\Foo");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestClassesInTupleExprType(t *testing.T) {
+	code := `<?php
+namespace Boo {
+	class B {}
+	class C {}
+}
+
+namespace Foo {
+	use Boo\B;
+	use Boo\C as ClassFromBoo;
+
+	class F extends ClassFromBoo {
+		/**
+		 * @return tuple(parent, int)
+		 */
+		public static function method() {}
+	}
+	
+	/**
+	 * @return tuple(?B, integer)
+	 */
+	function f() {}
+
+	/**
+	 * @return tuple(ClassFromBoo, int)
+	 */
+	function f1() {}
+	
+	function f2() {
+		list($a, $_) = f();
+		list($b, $_) = f1();
+		list($c, $_) = F::method();
+		
+		exprtype($a, "\Boo\B|null");
+		exprtype($b, "\Boo\C");
+		exprtype($c, "\Boo\C");
+	}
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestTupleWithArray(t *testing.T) {
+	code := `<?php
+/**
+ * @return tuple(array, array)
+ */
+function f() {
+    return [[],[]];
+}
+
+exprtype(f()[0], "mixed[]");
+exprtype(f()[1], "mixed[]");
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
-	meta.ResetInfo()
+	exprTypeTestImpl(t, params, false)
+}
+
+func exprTypeTestImpl(t *testing.T, params *exprTypeTestParams, kphp bool) {
+	config := linter.NewConfig()
+	config.Checkers.AddBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker {
+		return &exprTypeCollector{ctx: ctx}
+	})
+	config.KPHP = kphp
+	l := linter.NewLinter(config)
 	if params.stubs != "" {
-		linter.InitStubs(func(ch chan workspace.FileInfo) {
+		l.InitStubs(func(ch chan workspace.FileInfo) {
 			ch <- workspace.FileInfo{
-				Filename: "stubs.php",
+				Name:     "stubs.php",
 				Contents: []byte(params.stubs),
 			}
 		})
 	}
-	linttest.ParseTestFile(t, "exprtype.php", params.code)
+	linttest.ParseTestFile(t, l, "exprtype.php", params.code)
 
-	meta.SetIndexingComplete(true)
+	l.MetaInfo().SetIndexingComplete(true)
 
 	// Reset results map and run expr type collector.
-	exprTypeResult = map[ir.Node]meta.TypesMap{}
-	root, _ := linttest.ParseTestFile(t, "exprtype.php", params.code)
+	exprTypeResult = map[ir.Node]types.Map{}
+	result := linttest.ParseTestFile(t, l, "exprtype.php", params.code)
 
 	// Check that collected types are identical to the expected types.
 	// We need the second walker to pass *testing.T parameter to
 	// the walker that does the comparison.
 	walker := exprTypeWalker{t: t}
-	root.Walk(&walker)
+	result.RootNode.Walk(&walker)
 }
 
 type testTypesMap struct {
@@ -2702,7 +2945,7 @@ type exprTypeCollector struct {
 }
 
 func (c *exprTypeCollector) AfterEnterNode(n ir.Node) {
-	if !meta.IsIndexingComplete() {
+	if !c.ctx.ClassParseState().Info.IsIndexingComplete() {
 		return
 	}
 

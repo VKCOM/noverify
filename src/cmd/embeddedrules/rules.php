@@ -92,6 +92,30 @@ function precedence() {
     $_ !== $_ | $_;
     $_ | $_ !== $_;
   }
+
+  /** @warning === has higher precedence than ?? */
+  $_ === $_ ?? $_;
+
+  /** @warning !== has higher precedence than ?? */
+  $_ !== $_ ?? $_;
+
+  /** @warning == has higher precedence than ?? */
+  $_ == $_ ?? $_;
+
+  /** @warning != has higher precedence than ?? */
+  $_ != $_ ?? $_;
+
+  /** @warning > has higher precedence than ?? */
+  $_ > $_ ?? $_;
+
+  /** @warning >= has higher precedence than ?? */
+  $_ >= $_ ?? $_;
+
+  /** @warning < has higher precedence than ?? */
+  $_ < $_ ?? $_;
+
+  /** @warning <= has higher precedence than ?? */
+  $_ <= $_ ?? $_;
 }
 
 /**
@@ -273,4 +297,112 @@ function callSimplify() {
    * @fix   array_key_exists($key, $a)
    */
   in_array($key, array_keys($a));
+}
+
+/**
+ * @comment Report not-strict-enough comparisons.
+ * @before  in_array("what", $s)
+ * @after   in_array("what", $s, true)
+ */
+function strictCmp() {
+    /**
+     * @warning non-strict comparison (use ===)
+     */
+    any_equal: {
+        $_ == true;
+        true == $_;
+        $_ == false;
+        false == $_;
+        $_ == null;
+        null == $_;
+    }
+
+    /**
+     * @warning non-strict string comparison (use ===)
+     * @type string $x
+     * @type string $y
+     */
+     $x == $y;
+
+    /**
+     * @warning non-strict comparison (use !==)
+     */
+    any_not_equal: {
+        $_ != true;
+        true != $_;
+        $_ != false;
+        false != $_;
+        $_ != null;
+        null != $_;
+    }
+
+    /**
+     * @warning non-strict string comparison (use !==)
+     * @type string $x
+     * @type string $y
+     */
+    $x != $y;
+
+    /**
+     * @warning 3rd argument of in_array must be true when comparing strings
+     * @type string $b
+     */
+    in_array($b, $_);
+
+    /**
+     * @warning 3rd argument of array_search must be true when comparing strings
+     * @type string $b
+     */
+    array_search($b, $_);
+}
+
+/**
+ * @comment Report the use of curly braces for indexing.
+ * @before  $x{0}
+ * @after   $x[0]
+ */
+function indexingSyntax() {
+    /**
+     * @warning a{i} indexing is deprecated since PHP 7.4, use a[i] instead
+     * @fix $x[$y]
+     */
+    $x{$y};
+}
+
+/**
+ * @comment Report using an integer for $needle argument of str* functions.
+ * @before  strpos("hello", 10)
+ * @after   strpos("hello", chr(10))
+ */
+function intNeedle() {
+    /**
+     * @warning since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call
+     * @type int $x
+     */
+    any: {
+        strpos($_, $x);
+        strrpos($_, $x);
+        stripos($_, $x);
+        strripos($_, $x);
+        strstr($_, $x);
+        strchr($_, $x);
+        strrchr($_, $x);
+        stristr($_, $x);
+    }
+}
+
+/**
+ * @extends
+ */
+function langDeprecated() {
+    /**
+     * @warning since PHP 7.3.0, the definition of case insensitive constants has been deprecated
+     */
+    define($_, $_, true);
+
+    /**
+     * @warning define defaults to a case sensitive constant, the third argument can be removed
+     * @fix     define($_, $_);
+     */
+    define($_, $_, false);
 }

@@ -64,6 +64,7 @@ func TestPrinterSingleLine(t *testing.T) {
 		`(string)$var`,
 		`(unset)$var`,
 		`$var[1]`,
+		`$var{1}`,
 		`['Hello' => $world]`,
 		`array('Hello' => $world, 2 => &$var, $var)`,
 		`[...$x, $y, ...$z]`,
@@ -447,11 +448,9 @@ endswitch;
 
 `,
 
-		`;
-?>test
-<?php
+		`echo 100;
+?>test<?php
 `,
-
 		`namespace {
     interface Foo extends Bar, Baz
     {
@@ -595,7 +594,7 @@ endswitch;
 		want := code
 		have := buf.String()
 		if have != want {
-			t.Errorf("results mismatch (-have +want): %s", cmp.Diff(have, want))
+			t.Errorf("results mismatch (-have +want): %s", cmp.Diff(want, have))
 		}
 	}
 }

@@ -1,5 +1,10 @@
 package linter
 
+func isSuperGlobal(name string) bool {
+	_, ok := superGlobals[name]
+	return ok
+}
+
 var superGlobals = map[string]struct{}{
 	"GLOBALS":  {},
 	"_SERVER":  {},

@@ -7,6 +7,7 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/solver"
+	"github.com/VKCOM/noverify/src/types"
 )
 
 // TODO: reflect source line in shape names.
@@ -15,7 +16,7 @@ type warningString string
 
 type shapeTypeProp struct {
 	key   string
-	types []meta.Type
+	types []types.Type
 }
 
 type shapeTypeInfo struct {
@@ -27,13 +28,13 @@ type shapeTypeInfo struct {
 //
 // No normalization is performed, but some PHPDoc-specific types
 // are simplified to be compatible with our type system.
-func typesFromPHPDoc(ctx *rootContext, typ phpdoc.Type) ([]meta.Type, warningString) {
+func typesFromPHPDoc(ctx *rootContext, typ phpdoc.Type) ([]types.Type, warningString) {
 	conv := phpdocTypeConverter{ctx: ctx}
-	types := conv.mapType(typ.Expr)
+	result := conv.mapType(typ.Expr)
 	if conv.nullable {
-		types = append(types, meta.Type{Elem: "null"})
+		result = append(result, types.Type{Elem: "null"})
 	}
-	return types, conv.warning
+	return result, conv.warning
 }
 
 type phpdocTypeConverter struct {
@@ -42,12 +43,12 @@ type phpdocTypeConverter struct {
 	nullable bool
 }
 
-func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []meta.Type {
+func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
 	switch e.Kind {
 	case phpdoc.ExprInvalid, phpdoc.ExprUnknown:
 		if e.Value == "-" {
 			conv.warn(`expected a type, found '-'; if you want to express 'any' type, use 'mixed'`)
-			return []meta.Type{{Elem: "mixed"}}
+			return []types.Type{{Elem: "mixed"}}
 		}
 
 	case phpdoc.ExprParen:
@@ -57,10 +58,10 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []meta.Type {
 		if suggest, ok := typeAliases[e.Value]; ok {
 			conv.warn(fmt.Sprintf("use %s type instead of %s", suggest, e.Value))
 		}
-		return []meta.Type{{Elem: e.Value}}
+		return []types.Type{{Elem: e.Value}}
 
 	case phpdoc.ExprMemberType:
-		return []meta.Type{{Elem: "mixed"}}
+		return []types.Type{{Elem: "mixed"}}
 
 	case phpdoc.ExprGeneric:
 		typ := e.Args[0]
@@ -96,11 +97,11 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []meta.Type {
 		return conv.mapArrayType(e.Args[0])
 
 	case phpdoc.ExprUnion:
-		types := make([]meta.Type, 0, len(e.Args))
+		typeList := make([]types.Type, 0, len(e.Args))
 		for _, a := range e.Args {
-			types = append(types, conv.mapType(a)...)
+			typeList = append(typeList, conv.mapType(a)...)
 		}
-		return types
+		return typeList
 
 	case phpdoc.ExprOptional:
 		// Due to the fact that the optional keys for shape are processed in the mapShapeType
@@ -113,18 +114,18 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []meta.Type {
 	return nil
 }
 
-func (conv *phpdocTypeConverter) mapArrayType(elem phpdoc.TypeExpr) []meta.Type {
-	types := conv.mapType(elem)
-	if len(types) == 0 {
-		return []meta.Type{{Elem: "mixed", Dims: 1}}
+func (conv *phpdocTypeConverter) mapArrayType(elem phpdoc.TypeExpr) []types.Type {
+	typeList := conv.mapType(elem)
+	if len(typeList) == 0 {
+		return []types.Type{{Elem: "mixed", Dims: 1}}
 	}
-	for i := range types {
-		types[i].Dims++
+	for i := range typeList {
+		typeList[i].Dims++
 	}
-	return types
+	return typeList
 }
 
-func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []meta.Type {
+func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []types.Type {
 	props := make([]shapeTypeProp, 0, len(params))
 	for i, p := range params {
 		if p.Value == "*" || p.Value == "..." {
@@ -146,10 +147,40 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []meta.T
 			conv.warn(fmt.Sprintf("invalid shape key: %s", key.Value))
 			continue
 		}
-		types := conv.mapType(typeExpr)
+		typeList := conv.mapType(typeExpr)
+
+		// We need to resolve the class names as well as static,
+		// self and $this here for it to work properly.
+		for i, typ := range typeList {
+			if _, ok := typeAliases[typ.Elem]; ok {
+				continue
+			}
+
+			if trivialTypes[typ.Elem] {
+				continue
+			}
+
+			if typ.Elem == "array" {
+				continue
+			}
+
+			className, ok := solver.GetClassName(conv.ctx.st, &ir.Name{Value: typ.Elem})
+			if !ok {
+				continue
+			}
+
+			typeList[i].Elem = className
+		}
+		if conv.nullable {
+			typeList = append(typeList, types.Type{
+				Elem: "null",
+				Dims: 0,
+			})
+		}
+
 		props = append(props, shapeTypeProp{
 			key:   key.Value,
-			types: types,
+			types: typeList,
 		})
 	}
 
@@ -159,11 +190,11 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []meta.T
 	}
 	conv.ctx.shapes = append(conv.ctx.shapes, shape)
 
-	return []meta.Type{{Elem: shape.name}}
+	return []types.Type{{Elem: shape.name}}
 }
 
-func (conv *phpdocTypeConverter) mapTupleType(params []phpdoc.TypeExpr) []meta.Type {
-	types := make([]phpdoc.TypeExpr, 0, len(params))
+func (conv *phpdocTypeConverter) mapTupleType(params []phpdoc.TypeExpr) []types.Type {
+	typeList := make([]phpdoc.TypeExpr, 0, len(params))
 	for i, p := range params {
 		if p.Value == "*" || p.Value == "..." {
 			continue
@@ -180,10 +211,10 @@ func (conv *phpdocTypeConverter) mapTupleType(params []phpdoc.TypeExpr) []meta.T
 			Kind: phpdoc.ExprKeyVal,
 			Args: args,
 		}
-		types = append(types, typeExpr)
+		typeList = append(typeList, typeExpr)
 	}
 
-	return conv.mapShapeType(types)
+	return conv.mapShapeType(typeList)
 }
 
 func (conv *phpdocTypeConverter) warn(msg string) {
@@ -195,23 +226,23 @@ func (conv *phpdocTypeConverter) warn(msg string) {
 // typesFromNode converts type hint node to meta types.
 //
 // No normalization is performed.
-func typesFromNode(typeNode ir.Node) []meta.Type {
+func typesFromNode(typeNode ir.Node) []types.Type {
 	n := typeNode
 
-	var results []meta.Type
+	var results []types.Type
 	if nullable, ok := typeNode.(*ir.Nullable); ok {
 		n = nullable.Expr
-		results = make([]meta.Type, 0, 2)
-		results = append(results, meta.Type{Elem: "null"})
+		results = make([]types.Type, 0, 2)
+		results = append(results, types.Type{Elem: "null"})
 	} else {
-		results = make([]meta.Type, 0, 1)
+		results = make([]types.Type, 0, 1)
 	}
 
 	// There is a trick here.
 	// Unlike with phpdoc types, having `integer` here
 	// means that we need to force it to be interpreted as
 	// `\integer`, not as `int`. This is why we prepend `\`.
-	typ := meta.Type{Elem: meta.NameNodeToString(n)}
+	typ := types.Type{Elem: meta.NameNodeToString(n)}
 	if _, isAlias := typeAliases[typ.Elem]; isAlias {
 		typ.Elem = `\` + typ.Elem
 	}
@@ -222,12 +253,13 @@ func typesFromNode(typeNode ir.Node) []meta.Type {
 }
 
 type typeNormalizer struct {
-	st *meta.ClassParseState
+	st   *meta.ClassParseState
+	kphp bool
 }
 
-func (n typeNormalizer) NormalizeTypes(types []meta.Type) {
-	for i := range types {
-		n.normalizeType(&types[i])
+func (n typeNormalizer) NormalizeTypes(typeList []types.Type) {
+	for i := range typeList {
+		n.normalizeType(&typeList[i])
 	}
 }
 
@@ -237,7 +269,7 @@ func (n typeNormalizer) string2name(s string) *ir.Name {
 	return &ir.Name{Value: s}
 }
 
-func (n typeNormalizer) normalizeType(typ *meta.Type) {
+func (n typeNormalizer) normalizeType(typ *types.Type) {
 	if trivialTypes[typ.Elem] {
 		return
 	}
@@ -247,7 +279,7 @@ func (n typeNormalizer) normalizeType(typ *meta.Type) {
 		return
 	}
 
-	if typ.Elem == "any" && KPHP {
+	if typ.Elem == "any" && n.kphp {
 		// `any` is a special KPHP type that is more-or-less
 		// identical to `mixed|object`. In PHP, `mixed` already covers
 		// objects, so there is no need to add `object`.

@@ -4,6 +4,11 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+
+	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/php/parseutil"
 )
 
 func BenchmarkInterpretString(b *testing.B) {
@@ -16,15 +21,16 @@ func BenchmarkInterpretString(b *testing.B) {
 		{name: "HarderInput", input: `\u{1f575} Hell\151, \x57orld! 💔`},
 	}
 
-	for _, test := range tests {
+	for i := range tests {
+		test := tests[i]
 		b.Run(test.name+"Q1", func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				_, _ = interpretString(test.input, '\'')
+				_, _ = interpretString([]byte(test.input), '\'')
 			}
 		})
 		b.Run(test.name+"Q2", func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				_, _ = interpretString(test.input, '"')
+				_, _ = interpretString([]byte(test.input), '"')
 			}
 		})
 	}
@@ -280,7 +286,7 @@ func TestInterpretString(t *testing.T) {
 
 	runTest := func(t *testing.T, raw string, quote byte, want []byte) {
 		t.Helper()
-		have, err := interpretString(raw, quote)
+		have, err := interpretString([]byte(raw), quote)
 
 		if wantString := string(want); strings.HasPrefix(wantString, "FAIL: ") {
 			wantString = strings.TrimPrefix(wantString, "FAIL: ")
@@ -303,12 +309,64 @@ func TestInterpretString(t *testing.T) {
 		haveBytes := []byte(have)
 		if !bytes.Equal(haveBytes, want) {
 			t.Errorf("%s bytes mismatch (quote=%c):\nhave: %[3]v\nwant: %[4]v\nhave-string: %[3]s\nwant-string: %[4]s",
-				raw, quote, haveBytes, want)
+				raw, quote, have, want)
 		}
 	}
 
 	for _, test := range tests {
 		runTest(t, test.raw, '\'', test.singleQuote)
 		runTest(t, test.raw, '"', test.doubleQuote)
+	}
+}
+
+func TestCurlyBraceArrayDimFetch(t *testing.T) {
+	tests := []struct {
+		code       string
+		curlyBrace bool
+	}{
+		{
+			code:       `$arr{'x'}`,
+			curlyBrace: true,
+		},
+		{
+			code:       `$arr['x']`,
+			curlyBrace: false,
+		},
+		{
+			code:       `$arr  [  'x'   ]   `,
+			curlyBrace: false,
+		},
+		{
+			code:       `$arr  {  'x'   }   `,
+			curlyBrace: true,
+		},
+		{
+			code:       `$arr{  'x'   }`,
+			curlyBrace: true,
+		},
+		{
+			code:       `$arr[  'x'   ]`,
+			curlyBrace: false,
+		},
+		{
+			code:       `$arr{'x'   }`,
+			curlyBrace: true,
+		},
+		{
+			code:       `$arr['x'   ]`,
+			curlyBrace: false,
+		},
+	}
+
+	for _, test := range tests {
+		root, _, _ := parseutil.ParseStmt([]byte(test.code))
+		exprNode := ConvertNode(root).(*ir.ExpressionStmt)
+		fetchNode := exprNode.Expr.(*ir.ArrayDimFetchExpr)
+
+		want := test.curlyBrace
+		have := fetchNode.CurlyBrace
+		if have != want {
+			t.Errorf("results mismatch (-have +want): %s", cmp.Diff(have, want))
+		}
 	}
 }

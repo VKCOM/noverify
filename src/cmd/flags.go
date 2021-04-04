@@ -12,7 +12,7 @@ import (
 	"github.com/VKCOM/noverify/src/rules"
 )
 
-const allNonMaybe = "<all-non-maybe>"
+const allNonNotice = "<all-non-notice>"
 
 type cmdlineArguments struct {
 	version bool
@@ -22,7 +22,7 @@ type cmdlineArguments struct {
 	cpuProfile string
 	memProfile string
 
-	fix bool
+	maxFileSize int
 
 	fullAnalysisFiles string
 	indexOnlyFiles    string
@@ -33,8 +33,7 @@ type cmdlineArguments struct {
 	outputJSON     bool
 	outputBaseline bool
 
-	baseline             string
-	conservativeBaseline bool
+	baseline string
 
 	misspellList string
 
@@ -51,7 +50,6 @@ type cmdlineArguments struct {
 	phpExtensionsArg string
 
 	gitignore bool
-	kphp      bool
 
 	gitPushArg                 string
 	gitAuthorsWhitelist        string
@@ -84,9 +82,9 @@ func DefaultCacheDir() string {
 	return defaultCacheDir
 }
 
-func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
+func bindFlags(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArguments) {
 	var enabledByDefault []string
-	declaredChecks := linter.GetDeclaredChecks()
+	declaredChecks := config.Checkers.ListDeclared()
 	for _, info := range declaredChecks {
 		if info.Default {
 			enabledByDefault = append(enabledByDefault, info.Name)
@@ -99,7 +97,10 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 	flag.Usage = func() {
 		out := flag.CommandLine.Output()
 		fmt.Fprintf(out, "Usage of noverify:\n")
-		fmt.Fprintf(out, "  $ noverify [command] -stubs-dir=/path/to/phpstorm-stubs -cache-dir=/cache/dir /project/root\n")
+		fmt.Fprintf(out, "  $ noverify [command] [-stubs-dir=/path/to/phpstorm-stubs] [-cache-dir=$TMPDIR/noverify] /project/root\n")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "\tThe cache directory is optional, by default it is already set to $TMPDIR/noverify.")
+		fmt.Fprintln(out, "\tThe phpstorm-stubs directory is optional, the built-in ones are used by default.")
 		fmt.Fprintln(out)
 		GlobalCmds.WriteHelpPage(out)
 		fmt.Fprintln(out)
@@ -121,21 +122,21 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 
 	flag.StringVar(&args.baseline, "baseline", "",
 		"Path to a suppress profile created by -output-baseline")
-	flag.BoolVar(&args.conservativeBaseline, "conservative-baseline", false,
+	flag.BoolVar(&config.ConservativeBaseline, "conservative-baseline", false,
 		"If enabled, baseline mode will have less false positive, but more false negatives")
 
-	flag.StringVar(&args.reportsCritical, "critical", allNonMaybe,
-		"Comma-separated list of check names that are considered critical (all non-maybe checks by default)")
+	flag.StringVar(&args.reportsCritical, "critical", allNonNotice,
+		"Comma-separated list of check names that are considered critical (all non-notice checks by default)")
 
 	flag.StringVar(&args.rulesList, "rules", "",
 		"Comma-separated list of rules files")
 
-	flag.BoolVar(&args.fix, "fix", false,
+	flag.BoolVar(&config.ApplyQuickFixes, "fix", false,
 		"Apply a quickfix where possible (updates source files)")
 
 	flag.BoolVar(&args.gitignore, "gitignore", false,
 		"If enabled, noverify tries to use .gitignore files to exclude matched ignored files from the analysis")
-	flag.BoolVar(&args.kphp, "kphp", false,
+	flag.BoolVar(&config.KPHP, "kphp", false,
 		"If enabled, treat the code as KPHP")
 
 	flag.StringVar(&args.gitRepo, "git", "", "Path to git repository to analyze")
@@ -144,7 +145,7 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 	flag.StringVar(&args.gitRef, "git-ref", "", "Ref (e.g. branch) that is being pushed")
 	flag.StringVar(&args.gitPushArg, "git-push-arg", "", "In {pre,post}-receive hooks a whole line from stdin can be passed")
 	flag.StringVar(&args.gitAuthorsWhitelist, "git-author-whitelist", "", "Whitelist (comma-separated) for commit authors, if needed")
-	flag.StringVar(&args.gitWorkTree, "git-work-tree", "", "Work tree. If specified, local changes will also be examined.")
+	flag.StringVar(&args.gitWorkTree, "git-work-tree", "", "Work tree. If specified, local changes will also be examined")
 	flag.BoolVar(&args.gitSkipFetch, "git-skip-fetch", false, "Do not fetch ORIGIN_MASTER (use this option if you already fetch to ORIGIN_MASTER before that)")
 	flag.BoolVar(&args.gitDisableCompensateMaster, "git-disable-compensate-master", false, "Do not try to compensate for changes in ORIGIN_MASTER after branch point")
 	flag.BoolVar(&args.gitFullDiff, "git-full-diff", false, "Compute full diff: analyze all files, not just changed ones")
@@ -156,7 +157,7 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 	flag.StringVar(&args.allowChecks, "allow-checks", strings.Join(enabledByDefault, ","),
 		"Comma-separated list of check names to be enabled")
 	flag.BoolVar(&args.allowAll, "allow-all-checks", false,
-		"Has the same effect as passing all check names to the -allow-checks parameter")
+		"Enables all checks. Has the same effect as passing all check names to the -allow-checks parameter")
 	flag.StringVar(&args.misspellList, "misspell-list", "Eng",
 		"Comma-separated list of misspelling dicts; predefined sets are Eng, Eng/US and Eng/UK")
 
@@ -169,25 +170,24 @@ func bindFlags(ruleSets []*rules.Set, args *cmdlineArguments) {
 	flag.BoolVar(&args.outputJSON, "output-json", false, "Format output as JSON")
 	flag.BoolVar(&args.outputBaseline, "output-baseline", false, "Output a suppression profile instead of reports")
 
-	flag.BoolVar(&linter.CheckAutoGenerated, `check-auto-generated`, false, "whether to lint auto-generated PHP file")
-	flag.BoolVar(&linter.Debug, "debug", false, "Enable debug output")
-	flag.DurationVar(&linter.DebugParseDuration, "debug-parse-duration", 0, "Print files that took longer than the specified time to analyse")
-	flag.IntVar(&linter.MaxFileSize, "max-sum-filesize", 20*1024*1024, "max total file size to be parsed concurrently in bytes (limits max memory consumption)")
-	flag.IntVar(&linter.MaxConcurrency, "cores", runtime.NumCPU(), "max cores")
-	flag.BoolVar(&linter.LangServer, "lang-server", false, "Run language server for VS Code")
+	flag.BoolVar(&config.CheckAutoGenerated, `check-auto-generated`, false, "Whether to lint auto-generated PHP file")
+	flag.BoolVar(&config.Debug, "debug", false, "Enable debug output")
+	flag.DurationVar(&config.DebugParseDuration, "debug-parse-duration", 0, "Print files that took longer than the specified time to analyse")
+	flag.IntVar(&args.maxFileSize, "max-sum-filesize", 20*1024*1024, "Max total file size to be parsed concurrently in bytes (limits max memory consumption)")
+	flag.IntVar(&config.MaxConcurrency, "cores", runtime.NumCPU(), "Max cores")
 
-	flag.StringVar(&linter.StubsDir, "stubs-dir", "", "phpstorm-stubs directory")
-	flag.StringVar(&linter.CacheDir, "cache-dir", DefaultCacheDir(), "Directory for linter cache (greatly improves indexing speed)")
+	flag.StringVar(&config.StubsDir, "stubs-dir", "", "Directory with phpstorm-stubs")
+	flag.StringVar(&config.CacheDir, "cache-dir", DefaultCacheDir(), "Directory for linter cache (greatly improves indexing speed)")
 	flag.BoolVar(&args.disableCache, "disable-cache", false, "If set, cache is not used and cache-dir is ignored")
+	flag.BoolVar(&config.IgnoreTriggerError, "ignore-trigger-error", false, "If set, trigger_error control flow will be ignored")
 
 	flag.StringVar(&args.unusedVarPattern, "unused-var-regex", `^_$`,
 		"Variables that match such regexp are marked as discarded; not reported as unused, but should not be used as values")
-
 	flag.BoolVar(&args.version, "version", false, "Show version info and exit")
 
-	flag.StringVar(&args.cpuProfile, "cpuprofile", "", "write cpu profile to `file`")
-	flag.StringVar(&args.memProfile, "memprofile", "", "write memory profile to `file`")
+	flag.StringVar(&args.cpuProfile, "cpuprofile", "", "Write cpu profile to `file`")
+	flag.StringVar(&args.memProfile, "memprofile", "", "Write memory profile to `file`")
 
 	var encodingUnused string
-	flag.StringVar(&encodingUnused, "encoding", "", "deprecated and unused")
+	flag.StringVar(&encodingUnused, "encoding", "", "Deprecated and unused")
 }

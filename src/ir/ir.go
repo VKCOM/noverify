@@ -4,7 +4,7 @@
 package ir
 
 import (
-	"github.com/VKCOM/noverify/src/php/parser/freefloating"
+	"github.com/z7zmey/php-parser/pkg/token"
 )
 
 //go:generate go run ./codegen
@@ -13,7 +13,7 @@ import (
 // node_types.go contains all implementations.
 type Node interface {
 	Walk(Visitor)
-	GetFreeFloating() *freefloating.Collection
+	IterateTokens(func(*token.Token) bool)
 }
 
 // Visitor is an interface for basic IR nodes traversal.

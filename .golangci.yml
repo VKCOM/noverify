@@ -26,6 +26,7 @@ linters:
     - unconvert
     - unused
     - varcheck
+    - exportloopref
   disable:
     - depguard
     - dupl
@@ -35,12 +36,86 @@ linters:
     - maligned
     - prealloc
     - gosec
-    - errcheck # TODO: enabled it some day
   fast: false
+
+linters-settings:
+  gocritic:
+    enabled-checks:
+      - appendAssign
+      - appendCombine
+      - argOrder
+      - assignOp
+      - badCall
+      - badCond
+      - badRegexp
+      - boolExprSimplify
+      - captLocal
+      - caseOrder
+      - codegenComment
+      - commentFormatting
+      - commentedOutCode
+      - commentedOutImport
+      - defaultCaseOrder
+      - deferUnlambda
+      - deprecatedComment
+      - dupArg
+      - dupBranchBody
+      - dupCase
+      - dupImport
+      - dupSubExpr
+      - elseif
+      - emptyFallthrough
+      - emptyStringTest
+      - equalFold
+      - evalOrder
+      - exitAfterDefer
+      - filepathJoin
+      - flagDeref
+      - flagName
+      - ifElseChain
+      - importShadow
+      - indexAlloc
+      - initClause
+      - mapKey
+      - methodExprCall
+      - nestingReduce
+      - newDeref
+      - nilValReturn
+      - offBy1
+      - rangeExprCopy
+      - regexpMust
+      - regexpPattern
+      - regexpSimplify
+      - ruleguard
+      - singleCaseSwitch
+      - sloppyLen
+      - sloppyReassign
+      - sloppyTypeAssert
+      - sortSlice
+      - stringXbytes
+      - switchTrue
+      - truncateCmp
+      - typeAssertChain
+      - typeSwitchVar
+      - typeUnparen
+      - underef
+      - unlabelStmt
+      - unlambda
+      - unnamedResult
+      - unnecessaryBlock
+      - unslice
+      - valSwap
+      - weakCond
+      - whyNoLint
+      - wrapperFunc
+      - yodaStyleExpr
+    settings:
+      ruleguard:
+        rules: "rules.go"
 
 issues:
   exclude-rules:
-    - path: php/parser/node
+    - path: php/parser
       linters:
         - gocritic
         - golint

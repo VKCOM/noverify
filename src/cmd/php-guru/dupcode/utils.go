@@ -6,7 +6,6 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/linter"
-	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
@@ -41,19 +40,23 @@ func hasModifier(list []*ir.Identifier, key string) bool {
 	return false
 }
 
-func runIndexing(cacheDir string, targets []string, filter *workspace.FilenameFilter) {
-	linter.CacheDir = cacheDir
-	linter.AnalysisFiles = targets
+func runIndexing(cacheDir string, targets []string, filter *workspace.FilenameFilter) error {
+	config := linter.NewConfig()
+	l := linter.NewLinter(config)
+	config.CacheDir = cacheDir
 
 	// If we don't do this, the program will hang.
-	go linter.MemoryLimiterThread()
+	go linter.MemoryLimiterThread(0)
 
 	// Handle stubs.
 	filenames := stubs.AssetNames()
-	cmd.LoadEmbeddedStubs(filenames)
+	if err := cmd.LoadEmbeddedStubs(l, filenames); err != nil {
+		return err
+	}
 
 	// Handle workspace files.
-	linter.ParseFilenames(workspace.ReadFilenames(targets, filter), nil)
+	l.AnalyzeFiles(workspace.ReadFilenames(targets, filter, []string{"php", "inc", "php5", "phtml"}))
 
-	meta.SetIndexingComplete(true)
+	l.MetaInfo().SetIndexingComplete(true)
+	return nil
 }

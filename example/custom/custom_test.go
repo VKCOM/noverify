@@ -8,6 +8,7 @@ import (
 
 func TestAssignmentAsExpression(t *testing.T) {
 	test := linttest.NewSuite(t)
+	addCheckers(test.Config())
 
 	test.AddFile(`<?php
 	// phpdoc annotations are not required for NoVerify in simple cases

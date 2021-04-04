@@ -6,12 +6,14 @@ import (
 	"sort"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/linter/lintapi"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/rules"
-	"github.com/VKCOM/noverify/src/vscode"
+	"github.com/VKCOM/noverify/src/types"
+	"github.com/VKCOM/noverify/src/workspace"
 )
 
 // MetaCacher is an interface for integrating checker-specific
@@ -41,11 +43,11 @@ type MetaCacher interface {
 	Decode(r io.Reader, filename string) error
 }
 
-// CheckInfo provides a single check (diagnostic) metadata.
+// CheckerInfo provides a single checker (diagnostic) metadata.
 //
 // This structure may change with different revisions of noverify
 // and get new fields that may be used by the linter.
-type CheckInfo struct {
+type CheckerInfo struct {
 	// Name is a diagnostic short name.
 	// If several words are needed, prefer camelCase.
 	Name string
@@ -69,6 +71,10 @@ type CheckInfo struct {
 	// After is a compliant code example (after the fix).
 	// Optional, but if present, Before should also be non-empty.
 	After string
+
+	// Extends tells the check is created by a dynamic rule that
+	// extends the internal linter rule.
+	Extends bool
 }
 
 // BlockChecker is a custom linter that is called on block level
@@ -124,11 +130,11 @@ func (RootCheckerDefaults) AfterLeaveNode(ir.Node)  {}
 
 // RootContext is the context for root checker to run on.
 type RootContext struct {
-	w *RootWalker
+	w *rootWalker
 }
 
 // ParsePHPDoc returns parsed phpdoc comment parts.
-func (ctx *RootContext) ParsePHPDoc(doc string) []phpdoc.CommentPart {
+func (ctx *RootContext) ParsePHPDoc(doc string) phpdoc.Comment {
 	return phpdoc.Parse(ctx.w.ctx.phpdocTypeParser, doc)
 }
 
@@ -163,27 +169,26 @@ func (ctx *RootContext) Filename() string {
 	return ctx.w.ctx.st.CurrentFile
 }
 
-// FileContents returns analyzed file source code.
-// Caller should not modify the returned slice.
+// File returns analyzed file.
 //
 // Experimental API.
-func (ctx *RootContext) FileContents() []byte {
-	return ctx.w.fileContents
+func (ctx *RootContext) File() *workspace.File {
+	return ctx.w.file
 }
 
 // BlockContext is the context for block checker.
 type BlockContext struct {
-	w *BlockWalker
+	w *blockWalker
 }
 
 // NodePath returns a node path up to the current traversal position.
 // The path includes the node that is being traversed as well.
-func (ctx *BlockContext) NodePath() NodePath {
+func (ctx *BlockContext) NodePath() irutil.NodePath {
 	return ctx.w.path
 }
 
 // ExprType resolves the type of e expression node.
-func (ctx *BlockContext) ExprType(e ir.Node) meta.TypesMap {
+func (ctx *BlockContext) ExprType(e ir.Node) types.Map {
 	return ctx.w.exprType(e)
 }
 
@@ -233,9 +238,9 @@ func (ctx *BlockContext) Filename() string {
 	return ctx.w.r.ctx.st.CurrentFile
 }
 
-// FileContents returns the content of the file being analyzed.
-func (ctx *BlockContext) FileContents() []byte {
-	return ctx.w.r.fileContents
+// File returns the file being analyzed.
+func (ctx *BlockContext) File() *workspace.File {
+	return ctx.w.r.file
 }
 
 // AddQuickfix adds a new quick fix.
@@ -250,95 +255,84 @@ type BlockCheckerCreateFunc func(*BlockContext) BlockChecker
 type RootCheckerCreateFunc func(*RootContext) RootChecker
 
 const (
-	LevelError       = lintapi.LevelError
-	LevelWarning     = lintapi.LevelWarning
-	LevelInformation = lintapi.LevelInformation
-	LevelHint        = lintapi.LevelHint
-	LevelUnused      = lintapi.LevelUnused
-	LevelDoNotReject = lintapi.LevelMaybe
-	LevelSyntax      = lintapi.LevelSyntax
-	LevelSecurity    = lintapi.LevelSecurity // Like warning, but reported without a context line
+	LevelError    = lintapi.LevelError
+	LevelWarning  = lintapi.LevelWarning
+	LevelNotice   = lintapi.LevelNotice
+	LevelSecurity = lintapi.LevelSecurity // Like warning, but reported without a context line
 )
 
-var vscodeLevelMap = map[int]int{
-	LevelError:       vscode.Error,
-	LevelWarning:     vscode.Warning,
-	LevelInformation: vscode.Information,
-	LevelHint:        vscode.Hint,
-	LevelUnused:      vscode.Information,
-	LevelDoNotReject: vscode.Warning,
-	LevelSecurity:    vscode.Warning,
-	// LevelSyntax is intentionally not included here
+type CheckersRegistry struct {
+	blockCheckers []BlockCheckerCreateFunc
+	rootCheckers  []RootCheckerCreateFunc
+	cachers       []MetaCacher
+	info          map[string]CheckerInfo
 }
 
-var (
-	customBlockLinters []BlockCheckerCreateFunc
-	customRootLinters  []RootCheckerCreateFunc
-	metaCachers        []MetaCacher
-	checksInfoRegistry = map[string]CheckInfo{}
-)
-
-// RegisterBlockChecker registers a custom block linter that will be used on block level.
-func RegisterBlockChecker(c BlockCheckerCreateFunc) {
-	customBlockLinters = append(customBlockLinters, c)
+// AddBlockChecker registers a custom block linter that will be used on block level.
+func (reg *CheckersRegistry) AddBlockChecker(c BlockCheckerCreateFunc) {
+	reg.blockCheckers = append(reg.blockCheckers, c)
 }
 
-// RegisterRootChecker registers a custom root linter that will be used on root level.
+// AddRootChecker registers a custom root linter that will be used on root level.
 //
 // Root checker indexing phase is expected to be stateless.
 // If indexing results need to be saved (and cached), use RegisterRootCheckerWithCacher.
-func RegisterRootChecker(c RootCheckerCreateFunc) {
-	RegisterRootCheckerWithCacher(nil, c)
+func (reg *CheckersRegistry) AddRootChecker(c RootCheckerCreateFunc) {
+	reg.AddRootCheckerWithCacher(nil, c)
 }
 
-// RegisterRootCheckerWithCacher registers a custom root linter that will be used on root level.
+// AddRootCheckerWithCacher registers a custom root linter that will be used on root level.
 // Specified cacher is used to save (and load) indexing phase results.
-func RegisterRootCheckerWithCacher(cacher MetaCacher, c RootCheckerCreateFunc) {
-	customRootLinters = append(customRootLinters, c)
+func (reg *CheckersRegistry) AddRootCheckerWithCacher(cacher MetaCacher, c RootCheckerCreateFunc) {
+	reg.rootCheckers = append(reg.rootCheckers, c)
 	if cacher != nil {
 		// Validate cacher version string.
 		ver := cacher.Version()
 		if len(ver) > 256 {
 			panic(fmt.Sprintf("register cacher %q: can't handle strings longer that 256 bytes", ver))
 		}
-		for _, cacher := range metaCachers {
+		for _, cacher := range reg.cachers {
 			if cacher.Version() == ver {
 				panic(fmt.Sprintf("register cacher %q: already registered", ver))
 			}
 		}
 	}
-	metaCachers = append(metaCachers, cacher)
+	reg.cachers = append(reg.cachers, cacher)
 }
 
-func DeclareRules(rset *rules.Set) {
+func (reg *CheckersRegistry) DeclareRules(rset *rules.Set) {
 	for _, ruleName := range rset.Names {
 		doc := rset.DocByName[ruleName]
 		comment := doc.Comment
 		if comment == "" {
 			comment = fmt.Sprintf("%s is a dynamic rule", ruleName)
 		}
-		DeclareCheck(CheckInfo{
+		reg.DeclareChecker(CheckerInfo{
 			Name:     ruleName,
 			Comment:  comment,
 			Default:  true,
 			Quickfix: doc.Fix,
 			Before:   doc.Before,
 			After:    doc.After,
+			Extends:  doc.Extends,
 		})
 	}
 }
 
-// DeclareCheck declares a check described by an info.
+// DeclareChecker declares a checker described by an info.
 // It's a good practice to declare *all* provided checks.
 //
-// If check is not declared, for example, there is no way to
+// If checker is not declared, for example, there is no way to
 // make it enabled by default.
-func DeclareCheck(info CheckInfo) {
+func (reg *CheckersRegistry) DeclareChecker(info CheckerInfo) {
 	if info.Name == "" {
-		panic("can't declare a check with an empty name")
+		panic("can't declare a checker with an empty name")
 	}
-	if _, ok := checksInfoRegistry[info.Name]; ok {
-		panic(fmt.Sprintf("check %q already declared", info.Name))
+	if _, ok := reg.info[info.Name]; ok {
+		if !info.Extends {
+			panic(fmt.Sprintf("the checker %q is already declared, if you want to set the checker both in the dynamic rule and in the code, then use @extends annotation", info.Name))
+		}
+		return
 	}
 	if info.Before != "" && info.After == "" {
 		panic(fmt.Sprintf("%s: Before is set, but After is empty", info.Name))
@@ -346,14 +340,14 @@ func DeclareCheck(info CheckInfo) {
 	if info.After != "" && info.Before == "" {
 		panic(fmt.Sprintf("%s: After is set, but Before is empty", info.Name))
 	}
-	checksInfoRegistry[info.Name] = info
+	reg.info[info.Name] = info
 }
 
-// GetDeclaredChecks returns a list of all checks that were declared.
-// Slice is sorted by check names.
-func GetDeclaredChecks() []CheckInfo {
-	checks := make([]CheckInfo, 0, len(checksInfoRegistry))
-	for _, c := range checksInfoRegistry {
+// ListDeclared returns a list of all checkers that were declared.
+// Slice is sorted by checker names.
+func (reg *CheckersRegistry) ListDeclared() []CheckerInfo {
+	checks := make([]CheckerInfo, 0, len(reg.info))
+	for _, c := range reg.info {
 		checks = append(checks, c)
 	}
 	sort.Slice(checks, func(i, j int) bool {

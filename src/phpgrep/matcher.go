@@ -65,6 +65,20 @@ func (m *matcher) eqArrayItemSlice(state *matcherState, xs, ys []*ir.ArrayItemEx
 
 	matchAny := false
 
+	var backXS []*ir.ArrayItemExpr
+	var backYS []*ir.ArrayItemExpr
+
+	maybeBacktrack := func(matched bool) bool {
+		if !matched && backXS != nil {
+			if tracingEnabled && m.tracingBuf != nil {
+				pad := strings.Repeat(" • ", m.tracingDepth)
+				fmt.Fprintf(m.tracingBuf, "%sbacktrack!\n", pad)
+			}
+			return m.eqArrayItemSlice(state, backXS, backYS)
+		}
+		return matched
+	}
+
 	i := 0
 	for i < len(xs) {
 		x := xs[i]
@@ -81,6 +95,8 @@ func (m *matcher) eqArrayItemSlice(state *matcherState, xs, ys []*ir.ArrayItemEx
 				i++
 			// Lookahead for non-greedy matching.
 			case i+1 < len(xs) && m.eqNode(state, xs[i+1], ys[0]):
+				backXS = xs
+				backYS = ys[1:]
 				matchAny = false
 				i += 2
 				ys = ys[1:]
@@ -91,13 +107,13 @@ func (m *matcher) eqArrayItemSlice(state *matcherState, xs, ys []*ir.ArrayItemEx
 		}
 
 		if len(ys) == 0 || !m.eqNode(state, x, ys[0]) {
-			return false
+			return maybeBacktrack(false)
 		}
 		i++
 		ys = ys[1:]
 	}
 
-	return len(ys) == 0
+	return maybeBacktrack(len(ys) == 0)
 }
 
 func (m *matcher) eqNodeSlice(state *matcherState, xs, ys []ir.Node) bool {
@@ -107,6 +123,20 @@ func (m *matcher) eqNodeSlice(state *matcherState, xs, ys []ir.Node) bool {
 
 	matchAny := false
 
+	var backXS []ir.Node
+	var backYS []ir.Node
+
+	maybeBacktrack := func(matched bool) bool {
+		if !matched && backXS != nil {
+			if tracingEnabled && m.tracingBuf != nil {
+				pad := strings.Repeat(" • ", m.tracingDepth)
+				fmt.Fprintf(m.tracingBuf, "%sbacktrack!\n", pad)
+			}
+			return m.eqNodeSlice(state, backXS, backYS)
+		}
+		return matched
+	}
+
 	i := 0
 	for i < len(xs) {
 		x := xs[i]
@@ -123,6 +153,8 @@ func (m *matcher) eqNodeSlice(state *matcherState, xs, ys []ir.Node) bool {
 				i++
 			// Lookahead for non-greedy matching.
 			case i+1 < len(xs) && m.eqNode(state, xs[i+1], ys[0]):
+				backXS = xs
+				backYS = ys[1:]
 				matchAny = false
 				i += 2
 				ys = ys[1:]
@@ -133,13 +165,13 @@ func (m *matcher) eqNodeSlice(state *matcherState, xs, ys []ir.Node) bool {
 		}
 
 		if len(ys) == 0 || !m.eqNode(state, x, ys[0]) {
-			return false
+			return maybeBacktrack(false)
 		}
 		i++
 		ys = ys[1:]
 	}
 
-	return len(ys) == 0
+	return maybeBacktrack(len(ys) == 0)
 }
 
 func (m *matcher) eqEncapsedStringPartSlice(state *matcherState, xs, ys []ir.Node) bool {
@@ -271,6 +303,9 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 	case *ir.NopStmt:
 		_, ok := y.(*ir.NopStmt)
 		return ok
+	case *ir.CloseTagStmt:
+		_, ok := y.(*ir.CloseTagStmt)
+		return ok
 	case *ir.DoStmt:
 		y, ok := y.(*ir.DoStmt)
 		return ok && m.eqNode(state, x.Cond, y.Cond) && m.eqNode(state, x.Stmt, y.Stmt)
@@ -311,6 +346,11 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 	case *ir.ThrowStmt:
 		y, ok := y.(*ir.ThrowStmt)
 		return ok && m.eqNode(state, x.Expr, y.Expr)
+	case *ir.CatchStmt:
+		y, ok := y.(*ir.CatchStmt)
+		return ok && m.eqSimpleVar(state, x.Variable, y.Variable) &&
+			m.eqNodeSlice(state, x.Types, y.Types) &&
+			m.eqNodeSlice(state, x.Stmts, y.Stmts)
 	case *ir.TryStmt:
 		y, ok := y.(*ir.TryStmt)
 		return ok && m.eqNodeSlice(state, x.Stmts, y.Stmts) &&
@@ -357,7 +397,7 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 		y, ok := y.(*ir.SwitchStmt)
 		return ok && x.AltSyntax == y.AltSyntax &&
 			m.eqNode(state, x.Cond, y.Cond) &&
-			m.eqNodeSlice(state, x.CaseList.Cases, y.CaseList.Cases)
+			m.eqNodeSlice(state, x.Cases, y.Cases)
 
 	case *ir.ReturnStmt:
 		y, ok := y.(*ir.ReturnStmt)
@@ -365,53 +405,53 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 
 	case *ir.Assign:
 		y, ok := y.(*ir.Assign)
-		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expression, y.Expression)
+		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expr, y.Expr)
 	case *ir.AssignPlus:
 		y, ok := y.(*ir.AssignPlus)
-		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expression, y.Expression)
+		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expr, y.Expr)
 	case *ir.AssignReference:
 		y, ok := y.(*ir.AssignReference)
-		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expression, y.Expression)
+		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expr, y.Expr)
 	case *ir.AssignBitwiseAnd:
 		y, ok := y.(*ir.AssignBitwiseAnd)
-		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expression, y.Expression)
+		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expr, y.Expr)
 	case *ir.AssignBitwiseOr:
 		y, ok := y.(*ir.AssignBitwiseOr)
-		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expression, y.Expression)
+		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expr, y.Expr)
 	case *ir.AssignBitwiseXor:
 		y, ok := y.(*ir.AssignBitwiseXor)
-		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expression, y.Expression)
+		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expr, y.Expr)
 	case *ir.AssignConcat:
 		y, ok := y.(*ir.AssignConcat)
-		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expression, y.Expression)
+		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expr, y.Expr)
 	case *ir.AssignCoalesce:
 		y, ok := y.(*ir.AssignCoalesce)
-		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expression, y.Expression)
+		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expr, y.Expr)
 	case *ir.AssignDiv:
 		y, ok := y.(*ir.AssignDiv)
-		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expression, y.Expression)
+		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expr, y.Expr)
 	case *ir.AssignMinus:
 		y, ok := y.(*ir.AssignMinus)
-		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expression, y.Expression)
+		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expr, y.Expr)
 	case *ir.AssignMod:
 		y, ok := y.(*ir.AssignMod)
-		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expression, y.Expression)
+		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expr, y.Expr)
 	case *ir.AssignMul:
 		y, ok := y.(*ir.AssignMul)
-		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expression, y.Expression)
+		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expr, y.Expr)
 	case *ir.AssignPow:
 		y, ok := y.(*ir.AssignPow)
-		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expression, y.Expression)
+		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expr, y.Expr)
 	case *ir.AssignShiftLeft:
 		y, ok := y.(*ir.AssignShiftLeft)
-		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expression, y.Expression)
+		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expr, y.Expr)
 	case *ir.AssignShiftRight:
 		y, ok := y.(*ir.AssignShiftRight)
-		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expression, y.Expression)
+		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Expr, y.Expr)
 
 	case *ir.ArrayDimFetchExpr:
 		y, ok := y.(*ir.ArrayDimFetchExpr)
-		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Dim, y.Dim)
+		return ok && m.eqNode(state, x.Variable, y.Variable) && m.eqNode(state, x.Dim, y.Dim) && x.CurlyBrace == y.CurlyBrace
 	case *ir.ArrayItemExpr:
 		y, ok := y.(*ir.ArrayItemExpr)
 		if !ok {

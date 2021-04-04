@@ -189,6 +189,33 @@ function f() {
 	test.RunAndMatch()
 }
 
+func TestDeprecatedStaticMethod(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {
+  /**
+   * @deprecated use newMethod instead
+   */
+  public static function legacyMethod1() {}
+
+  /**
+   * @deprecated
+   */
+  public static function legacyMethod2() {}
+}
+
+Foo::legacyMethod1();
+function f() {
+  Foo::legacyMethod2();
+}
+`)
+	test.Expect = []string{
+		`Call to deprecated static method \Foo::legacyMethod1() (use newMethod instead)`,
+		`Call to deprecated static method \Foo::legacyMethod2()`,
+	}
+	test.RunAndMatch()
+}
+
 func TestDeprecatedFunction(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -395,6 +422,59 @@ func TestPHPDocIncorrectSyntaxOptionalTypesType(t *testing.T) {
 		`int?: nullable syntax is ?T, not T?`,
 		`Foo?: nullable syntax is ?T, not T?`,
 		`string[]?: nullable syntax is ?T, not T?`,
+	}
+	test.RunAndMatch()
+}
+
+func TestPHPDocInvalidBeginning(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {
+  /*
+   * @var int
+   */
+  public $item = 10;
+
+  /* @var int */
+  public $item2 = 10;
+
+  /*
+   * @return int
+   */
+  public function f() { return 1; }
+
+  /* @return int */
+  public function f2() { return 1; }
+}
+
+/*
+ * @param int $a
+ */
+function f($a) {
+  /*
+   * @var $b float
+   */
+  $b = 100;
+
+  // TODO: @var string $a (ok)
+  echo $a, $b;
+}
+
+/* @param int $a */
+function f2($a) {
+  /* @var $b float */
+  $b = 100;
+
+  // TODO: @var string $a (ok)
+  echo $a, $b;
+}
+`)
+	test.Expect = []string{
+		`multiline phpdoc comment should start with /**, not /*`,
+		`multiline phpdoc comment should start with /**, not /*`,
+		`multiline phpdoc comment should start with /**, not /*`,
+		`multiline phpdoc comment should start with /**, not /*`,
+		`multiline phpdoc comment should start with /**, not /*`,
 	}
 	test.RunAndMatch()
 }

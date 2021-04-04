@@ -30,7 +30,7 @@ func (p *PrettyPrinter) Print(n ir.Node) {
 func (p *PrettyPrinter) joinPrintIdents(glue string, items []*ir.Identifier) {
 	for k, n := range items {
 		if k > 0 {
-			io.WriteString(p.w, glue)
+			writeString(p.w, glue)
 		}
 
 		p.Print(n)
@@ -40,7 +40,7 @@ func (p *PrettyPrinter) joinPrintIdents(glue string, items []*ir.Identifier) {
 func (p *PrettyPrinter) joinPrintArrayItems(glue string, items []*ir.ArrayItemExpr) {
 	for k, n := range items {
 		if k > 0 {
-			io.WriteString(p.w, glue)
+			writeString(p.w, glue)
 		}
 
 		p.Print(n)
@@ -50,7 +50,7 @@ func (p *PrettyPrinter) joinPrintArrayItems(glue string, items []*ir.ArrayItemEx
 func (p *PrettyPrinter) joinPrint(glue string, nn []ir.Node) {
 	for k, n := range nn {
 		if k > 0 {
-			io.WriteString(p.w, glue)
+			writeString(p.w, glue)
 		}
 
 		p.Print(n)
@@ -64,7 +64,7 @@ func (p *PrettyPrinter) printNodes(nn []ir.Node) {
 		p.printIndent()
 		p.Print(n)
 		if k < l {
-			io.WriteString(p.w, "\n")
+			writeString(p.w, "\n")
 		}
 	}
 	p.indentDepth--
@@ -72,7 +72,7 @@ func (p *PrettyPrinter) printNodes(nn []ir.Node) {
 
 func (p *PrettyPrinter) printIndent() {
 	for i := 0; i < p.indentDepth; i++ {
-		io.WriteString(p.w, p.indentStr)
+		writeString(p.w, p.indentStr)
 	}
 }
 
@@ -228,7 +228,7 @@ func (p *PrettyPrinter) printNode(n ir.Node) {
 		p.printExprClassConstFetch(n)
 	case *ir.CloneExpr:
 		p.printExprClone(n)
-	case *ir.ClosureUseExpr:
+	case *ir.ClosureUsesExpr:
 		p.printExprClosureUse(n)
 	case *ir.ClosureExpr:
 		p.printExprClosure(n)
@@ -351,6 +351,8 @@ func (p *PrettyPrinter) printNode(n ir.Node) {
 		p.printStmtNamespace(n)
 	case *ir.NopStmt:
 		p.printStmtNop(n)
+	case *ir.CloseTagStmt:
+		p.printStmtCloseTag(n)
 	case *ir.PropertyListStmt:
 		p.printStmtPropertyList(n)
 	case *ir.PropertyStmt:
@@ -392,31 +394,31 @@ func (p *PrettyPrinter) printNode(n ir.Node) {
 
 func (p *PrettyPrinter) printClass(class ir.Class) {
 	if class.Extends != nil {
-		io.WriteString(p.w, " extends ")
+		writeString(p.w, " extends ")
 		p.Print(class.Extends.ClassName)
 	}
 
 	if class.Implements != nil {
-		io.WriteString(p.w, " implements ")
+		writeString(p.w, " implements ")
 		p.joinPrint(", ", class.Implements.InterfaceNames)
 	}
 
-	io.WriteString(p.w, "\n")
+	writeString(p.w, "\n")
 	p.printIndent()
-	io.WriteString(p.w, "{\n")
+	writeString(p.w, "{\n")
 	p.printNodes(class.Stmts)
-	io.WriteString(p.w, "\n")
+	writeString(p.w, "\n")
 	p.printIndent()
-	io.WriteString(p.w, "}")
+	writeString(p.w, "}")
 }
 
 func (p *PrettyPrinter) printExprAnonClass(n *ir.AnonClassExpr) {
-	io.WriteString(p.w, "class")
+	writeString(p.w, "class")
 
 	if len(n.Args) != 0 {
-		io.WriteString(p.w, "(")
+		writeString(p.w, "(")
 		p.joinPrint(", ", n.Args)
-		io.WriteString(p.w, ")")
+		writeString(p.w, ")")
 	}
 
 	p.printClass(n.Class)
@@ -432,58 +434,58 @@ func (p *PrettyPrinter) printNodeRoot(n *ir.Root) {
 
 		switch fs := firstStmt.(type) {
 		case *ir.InlineHTMLStmt:
-			io.WriteString(p.w, fs.Value)
-			io.WriteString(p.w, "<?php\n")
+			writeString(p.w, fs.Value)
+			writeString(p.w, "<?php\n")
 		default:
-			io.WriteString(p.w, "<?php\n")
+			writeString(p.w, "<?php\n")
 			p.printIndent()
 			p.Print(fs)
-			io.WriteString(p.w, "\n")
+			writeString(p.w, "\n")
 		}
 	}
 	p.indentDepth--
 	p.printNodes(stmts)
-	io.WriteString(p.w, "\n")
+	writeString(p.w, "\n")
 }
 
 func (p *PrettyPrinter) printNodeIdentifier(n *ir.Identifier) {
-	io.WriteString(p.w, n.Value)
+	writeString(p.w, n.Value)
 }
 
 func (p *PrettyPrinter) printNodeParameter(n *ir.Parameter) {
 	if n.VariableType != nil {
 		p.Print(n.VariableType)
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 	}
 
 	if n.ByRef {
-		io.WriteString(p.w, "&")
+		writeString(p.w, "&")
 	}
 
 	if n.Variadic {
-		io.WriteString(p.w, "...")
+		writeString(p.w, "...")
 	}
 
 	p.Print(n.Variable)
 
 	if n.DefaultValue != nil {
-		io.WriteString(p.w, " = ")
+		writeString(p.w, " = ")
 		p.Print(n.DefaultValue)
 	}
 }
 
 func (p *PrettyPrinter) printNodeNullable(n *ir.Nullable) {
-	io.WriteString(p.w, "?")
+	writeString(p.w, "?")
 	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printNodeArgument(n *ir.Argument) {
 	if n.IsReference {
-		io.WriteString(p.w, "&")
+		writeString(p.w, "&")
 	}
 
 	if n.Variadic {
-		io.WriteString(p.w, "...")
+		writeString(p.w, "...")
 	}
 
 	p.Print(n.Expr)
@@ -492,17 +494,17 @@ func (p *PrettyPrinter) printNodeArgument(n *ir.Argument) {
 // name
 
 func (p *PrettyPrinter) printNameName(n *ir.Name) {
-	io.WriteString(p.w, n.Value)
+	writeString(p.w, n.Value)
 }
 
 // scalar
 
 func (p *PrettyPrinter) printScalarLNumber(n *ir.Lnumber) {
-	io.WriteString(p.w, n.Value)
+	writeString(p.w, n.Value)
 }
 
 func (p *PrettyPrinter) printScalarDNumber(n *ir.Dnumber) {
-	io.WriteString(p.w, n.Value)
+	writeString(p.w, n.Value)
 }
 
 func (p *PrettyPrinter) printScalarString(n *ir.String) {
@@ -512,298 +514,298 @@ func (p *PrettyPrinter) printScalarString(n *ir.String) {
 	} else {
 		s = "'" + n.Value + "'"
 	}
-	io.WriteString(p.w, s)
+	writeString(p.w, s)
 }
 
 func (p *PrettyPrinter) printScalarEncapsedStringPart(n *ir.EncapsedStringPart) {
-	io.WriteString(p.w, n.Value)
+	writeString(p.w, n.Value)
 }
 
 func (p *PrettyPrinter) printScalarEncapsed(n *ir.Encapsed) {
-	io.WriteString(p.w, "\"")
+	writeString(p.w, "\"")
 
 	for _, part := range n.Parts {
 		switch part.(type) {
 		case *ir.EncapsedStringPart:
 			p.Print(part)
 		default:
-			io.WriteString(p.w, "{")
+			writeString(p.w, "{")
 			p.Print(part)
-			io.WriteString(p.w, "}")
+			writeString(p.w, "}")
 		}
 	}
 
-	io.WriteString(p.w, "\"")
+	writeString(p.w, "\"")
 }
 
 func (p *PrettyPrinter) printScalarHeredoc(n *ir.Heredoc) {
-	io.WriteString(p.w, n.Label)
+	writeString(p.w, n.Label)
 
 	for _, part := range n.Parts {
 		switch part.(type) {
 		case *ir.EncapsedStringPart:
 			p.Print(part)
 		default:
-			io.WriteString(p.w, "{")
+			writeString(p.w, "{")
 			p.Print(part)
-			io.WriteString(p.w, "}")
+			writeString(p.w, "}")
 		}
 	}
 
-	io.WriteString(p.w, strings.Trim(n.Label, "<\"'\n"))
+	writeString(p.w, strings.Trim(n.Label, "<\"'\n"))
 }
 
 func (p *PrettyPrinter) printScalarMagicConstant(n *ir.MagicConstant) {
-	io.WriteString(p.w, n.Value)
+	writeString(p.w, n.Value)
 }
 
 // Assign
 
 func (p *PrettyPrinter) printAssign(n *ir.Assign) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, " = ")
-	p.Print(n.Expression)
+	writeString(p.w, " = ")
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printReference(n *ir.AssignReference) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, " =& ")
-	p.Print(n.Expression)
+	writeString(p.w, " =& ")
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignBitwiseAnd(n *ir.AssignBitwiseAnd) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, " &= ")
-	p.Print(n.Expression)
+	writeString(p.w, " &= ")
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignBitwiseOr(n *ir.AssignBitwiseOr) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, " |= ")
-	p.Print(n.Expression)
+	writeString(p.w, " |= ")
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignBitwiseXor(n *ir.AssignBitwiseXor) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, " ^= ")
-	p.Print(n.Expression)
+	writeString(p.w, " ^= ")
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignConcat(n *ir.AssignConcat) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, " .= ")
-	p.Print(n.Expression)
+	writeString(p.w, " .= ")
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignDiv(n *ir.AssignDiv) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, " /= ")
-	p.Print(n.Expression)
+	writeString(p.w, " /= ")
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignMinus(n *ir.AssignMinus) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, " -= ")
-	p.Print(n.Expression)
+	writeString(p.w, " -= ")
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignMod(n *ir.AssignMod) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, " %= ")
-	p.Print(n.Expression)
+	writeString(p.w, " %= ")
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignMul(n *ir.AssignMul) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, " *= ")
-	p.Print(n.Expression)
+	writeString(p.w, " *= ")
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignPlus(n *ir.AssignPlus) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, " += ")
-	p.Print(n.Expression)
+	writeString(p.w, " += ")
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignPow(n *ir.AssignPow) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, " **= ")
-	p.Print(n.Expression)
+	writeString(p.w, " **= ")
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignShiftLeft(n *ir.AssignShiftLeft) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, " <<= ")
-	p.Print(n.Expression)
+	writeString(p.w, " <<= ")
+	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printAssignShiftRight(n *ir.AssignShiftRight) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, " >>= ")
-	p.Print(n.Expression)
+	writeString(p.w, " >>= ")
+	p.Print(n.Expr)
 }
 
 // binary
 
 func (p *PrettyPrinter) printBinaryBitwiseAnd(n *ir.BitwiseAndExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " & ")
+	writeString(p.w, " & ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryBitwiseOr(n *ir.BitwiseOrExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " | ")
+	writeString(p.w, " | ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryBitwiseXor(n *ir.BitwiseXorExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " ^ ")
+	writeString(p.w, " ^ ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryBooleanAnd(n *ir.BooleanAndExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " && ")
+	writeString(p.w, " && ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryBooleanOr(n *ir.BooleanOrExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " || ")
+	writeString(p.w, " || ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryCoalesce(n *ir.CoalesceExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " ?? ")
+	writeString(p.w, " ?? ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryConcat(n *ir.ConcatExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " . ")
+	writeString(p.w, " . ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryDiv(n *ir.DivExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " / ")
+	writeString(p.w, " / ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryEqual(n *ir.EqualExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " == ")
+	writeString(p.w, " == ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryGreaterOrEqual(n *ir.GreaterOrEqualExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " >= ")
+	writeString(p.w, " >= ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryGreater(n *ir.GreaterExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " > ")
+	writeString(p.w, " > ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryIdentical(n *ir.IdenticalExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " === ")
+	writeString(p.w, " === ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryLogicalAnd(n *ir.LogicalAndExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " and ")
+	writeString(p.w, " and ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryLogicalOr(n *ir.LogicalOrExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " or ")
+	writeString(p.w, " or ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryLogicalXor(n *ir.LogicalXorExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " xor ")
+	writeString(p.w, " xor ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryMinus(n *ir.MinusExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " - ")
+	writeString(p.w, " - ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryMod(n *ir.ModExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " % ")
+	writeString(p.w, " % ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryMul(n *ir.MulExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " * ")
+	writeString(p.w, " * ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryNotEqual(n *ir.NotEqualExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " != ")
+	writeString(p.w, " != ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryNotIdentical(n *ir.NotIdenticalExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " !== ")
+	writeString(p.w, " !== ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryPlus(n *ir.PlusExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " + ")
+	writeString(p.w, " + ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryPow(n *ir.PowExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " ** ")
+	writeString(p.w, " ** ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryShiftLeft(n *ir.ShiftLeftExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " << ")
+	writeString(p.w, " << ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinaryShiftRight(n *ir.ShiftRightExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " >> ")
+	writeString(p.w, " >> ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinarySmallerOrEqual(n *ir.SmallerOrEqualExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " <= ")
+	writeString(p.w, " <= ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinarySmaller(n *ir.SmallerExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " < ")
+	writeString(p.w, " < ")
 	p.Print(n.Right)
 }
 
 func (p *PrettyPrinter) printBinarySpaceship(n *ir.SpaceshipExpr) {
 	p.Print(n.Left)
-	io.WriteString(p.w, " <=> ")
+	writeString(p.w, " <=> ")
 	p.Print(n.Right)
 }
 
@@ -815,33 +817,37 @@ func (p *PrettyPrinter) printTypeCastExpr(n *ir.TypeCastExpr) {
 }
 
 func (p *PrettyPrinter) printUnset(n *ir.UnsetCastExpr) {
-	io.WriteString(p.w, "(unset)")
+	writeString(p.w, "(unset)")
 	p.Print(n.Expr)
 }
 
 // expr
 
 func (p *PrettyPrinter) printExprParen(n *ir.ParenExpr) {
-	io.WriteString(p.w, "(")
+	writeString(p.w, "(")
 	p.Print(n.Expr)
-	io.WriteString(p.w, ")")
+	writeString(p.w, ")")
 }
 
 func (p *PrettyPrinter) printExprArrayDimFetch(n *ir.ArrayDimFetchExpr) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, "[")
+	openBrace, closeBrace := "[", "]"
+	if n.CurlyBrace {
+		openBrace, closeBrace = "{", "}"
+	}
+	writeString(p.w, openBrace)
 	p.Print(n.Dim)
-	io.WriteString(p.w, "]")
+	writeString(p.w, closeBrace)
 }
 
 func (p *PrettyPrinter) printExprArrayItem(n *ir.ArrayItemExpr) {
 	if n.Unpack {
-		io.WriteString(p.w, "...")
+		writeString(p.w, "...")
 	}
 
 	if n.Key != nil {
 		p.Print(n.Key)
-		io.WriteString(p.w, " => ")
+		writeString(p.w, " => ")
 	}
 
 	p.Print(n.Val)
@@ -849,73 +855,73 @@ func (p *PrettyPrinter) printExprArrayItem(n *ir.ArrayItemExpr) {
 
 func (p *PrettyPrinter) printExprArray(n *ir.ArrayExpr) {
 	if n.ShortSyntax {
-		io.WriteString(p.w, "[")
+		writeString(p.w, "[")
 		p.joinPrintArrayItems(", ", n.Items)
-		io.WriteString(p.w, "]")
+		writeString(p.w, "]")
 	} else {
-		io.WriteString(p.w, "array(")
+		writeString(p.w, "array(")
 		p.joinPrintArrayItems(", ", n.Items)
-		io.WriteString(p.w, ")")
+		writeString(p.w, ")")
 	}
 }
 
 func (p *PrettyPrinter) printExprBitwiseNot(n *ir.BitwiseNotExpr) {
-	io.WriteString(p.w, "~")
+	writeString(p.w, "~")
 	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printExprBooleanNot(n *ir.BooleanNotExpr) {
-	io.WriteString(p.w, "!")
+	writeString(p.w, "!")
 	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printExprClassConstFetch(n *ir.ClassConstFetchExpr) {
 	p.Print(n.Class)
-	io.WriteString(p.w, "::")
-	io.WriteString(p.w, n.ConstantName.Value)
+	writeString(p.w, "::")
+	writeString(p.w, n.ConstantName.Value)
 }
 
 func (p *PrettyPrinter) printExprClone(n *ir.CloneExpr) {
-	io.WriteString(p.w, "clone ")
+	writeString(p.w, "clone ")
 	p.Print(n.Expr)
 }
 
-func (p *PrettyPrinter) printExprClosureUse(n *ir.ClosureUseExpr) {
-	io.WriteString(p.w, "use (")
+func (p *PrettyPrinter) printExprClosureUse(n *ir.ClosureUsesExpr) {
+	writeString(p.w, "use (")
 	p.joinPrint(", ", n.Uses)
-	io.WriteString(p.w, ")")
+	writeString(p.w, ")")
 }
 
 func (p *PrettyPrinter) printExprClosure(n *ir.ClosureExpr) {
 	if n.Static {
-		io.WriteString(p.w, "static ")
+		writeString(p.w, "static ")
 	}
 
-	io.WriteString(p.w, "function ")
+	writeString(p.w, "function ")
 
 	if n.ReturnsRef {
-		io.WriteString(p.w, "&")
+		writeString(p.w, "&")
 	}
 
-	io.WriteString(p.w, "(")
+	writeString(p.w, "(")
 	p.joinPrint(", ", n.Params)
-	io.WriteString(p.w, ")")
+	writeString(p.w, ")")
 
 	if n.ClosureUse != nil {
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 		p.Print(n.ClosureUse)
 	}
 
 	if n.ReturnType != nil {
-		io.WriteString(p.w, ": ")
+		writeString(p.w, ": ")
 		p.Print(n.ReturnType)
 	}
 
-	io.WriteString(p.w, " {\n")
+	writeString(p.w, " {\n")
 	p.printNodes(n.Stmts)
-	io.WriteString(p.w, "\n")
+	writeString(p.w, "\n")
 	p.printIndent()
-	io.WriteString(p.w, "}")
+	writeString(p.w, "}")
 }
 
 func (p *PrettyPrinter) printExprConstFetch(n *ir.ConstFetchExpr) {
@@ -923,199 +929,199 @@ func (p *PrettyPrinter) printExprConstFetch(n *ir.ConstFetchExpr) {
 }
 
 func (p *PrettyPrinter) printExprEmpty(n *ir.EmptyExpr) {
-	io.WriteString(p.w, "empty(")
+	writeString(p.w, "empty(")
 	p.Print(n.Expr)
-	io.WriteString(p.w, ")")
+	writeString(p.w, ")")
 }
 
 func (p *PrettyPrinter) printExprErrorSuppress(n *ir.ErrorSuppressExpr) {
-	io.WriteString(p.w, "@")
+	writeString(p.w, "@")
 	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printExprEval(n *ir.EvalExpr) {
-	io.WriteString(p.w, "eval(")
+	writeString(p.w, "eval(")
 	p.Print(n.Expr)
-	io.WriteString(p.w, ")")
+	writeString(p.w, ")")
 }
 
 func (p *PrettyPrinter) printExprExit(n *ir.ExitExpr) {
 	if n.Die {
-		io.WriteString(p.w, "die(")
+		writeString(p.w, "die(")
 	} else {
-		io.WriteString(p.w, "exit(")
+		writeString(p.w, "exit(")
 	}
 	p.Print(n.Expr)
-	io.WriteString(p.w, ")")
+	writeString(p.w, ")")
 }
 
 func (p *PrettyPrinter) printExprFunctionCall(n *ir.FunctionCallExpr) {
 	p.Print(n.Function)
-	io.WriteString(p.w, "(")
+	writeString(p.w, "(")
 	p.joinPrint(", ", n.Args)
-	io.WriteString(p.w, ")")
+	writeString(p.w, ")")
 }
 
 func (p *PrettyPrinter) printExprInstanceOf(n *ir.InstanceOfExpr) {
 	p.Print(n.Expr)
-	io.WriteString(p.w, " instanceof ")
+	writeString(p.w, " instanceof ")
 	p.Print(n.Class)
 }
 
 func (p *PrettyPrinter) printExprIsset(n *ir.IssetExpr) {
-	io.WriteString(p.w, "isset(")
+	writeString(p.w, "isset(")
 	p.joinPrint(", ", n.Variables)
-	io.WriteString(p.w, ")")
+	writeString(p.w, ")")
 }
 
 func (p *PrettyPrinter) printExprList(n *ir.ListExpr) {
 	if n.ShortSyntax {
-		io.WriteString(p.w, "[")
+		writeString(p.w, "[")
 		p.joinPrintArrayItems(", ", n.Items)
-		io.WriteString(p.w, "]")
+		writeString(p.w, "]")
 	} else {
-		io.WriteString(p.w, "list(")
+		writeString(p.w, "list(")
 		p.joinPrintArrayItems(", ", n.Items)
-		io.WriteString(p.w, ")")
+		writeString(p.w, ")")
 	}
 }
 
 func (p *PrettyPrinter) printExprMethodCall(n *ir.MethodCallExpr) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, "->")
+	writeString(p.w, "->")
 	p.Print(n.Method)
-	io.WriteString(p.w, "(")
+	writeString(p.w, "(")
 	p.joinPrint(", ", n.Args)
-	io.WriteString(p.w, ")")
+	writeString(p.w, ")")
 }
 
 func (p *PrettyPrinter) printExprNew(n *ir.NewExpr) {
-	io.WriteString(p.w, "new ")
+	writeString(p.w, "new ")
 	p.Print(n.Class)
 
 	if n.Args != nil {
-		io.WriteString(p.w, "(")
+		writeString(p.w, "(")
 		p.joinPrint(", ", n.Args)
-		io.WriteString(p.w, ")")
+		writeString(p.w, ")")
 	}
 }
 
 func (p *PrettyPrinter) printExprPostDec(n *ir.PostDecExpr) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, "--")
+	writeString(p.w, "--")
 }
 
 func (p *PrettyPrinter) printExprPostInc(n *ir.PostIncExpr) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, "++")
+	writeString(p.w, "++")
 }
 
 func (p *PrettyPrinter) printExprPreDec(n *ir.PreDecExpr) {
-	io.WriteString(p.w, "--")
+	writeString(p.w, "--")
 	p.Print(n.Variable)
 }
 
 func (p *PrettyPrinter) printExprPreInc(n *ir.PreIncExpr) {
-	io.WriteString(p.w, "++")
+	writeString(p.w, "++")
 	p.Print(n.Variable)
 }
 
 func (p *PrettyPrinter) printExprPrint(n *ir.PrintExpr) {
-	io.WriteString(p.w, "print(")
+	writeString(p.w, "print(")
 	p.Print(n.Expr)
-	io.WriteString(p.w, ")")
+	writeString(p.w, ")")
 }
 
 func (p *PrettyPrinter) printExprPropertyFetch(n *ir.PropertyFetchExpr) {
 	p.Print(n.Variable)
-	io.WriteString(p.w, "->")
+	writeString(p.w, "->")
 	p.Print(n.Property)
 }
 
 func (p *PrettyPrinter) printExprReference(n *ir.ReferenceExpr) {
-	io.WriteString(p.w, "&")
+	writeString(p.w, "&")
 	p.Print(n.Variable)
 }
 
 func (p *PrettyPrinter) printExprImport(n *ir.ImportExpr) {
-	io.WriteString(p.w, n.Func+" ")
+	writeString(p.w, n.Func+" ")
 	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printExprShellExec(n *ir.ShellExecExpr) {
-	io.WriteString(p.w, "`")
+	writeString(p.w, "`")
 	for _, part := range n.Parts {
 		switch part.(type) {
 		case *ir.EncapsedStringPart:
 			p.Print(part)
 		default:
-			io.WriteString(p.w, "{")
+			writeString(p.w, "{")
 			p.Print(part)
-			io.WriteString(p.w, "}")
+			writeString(p.w, "}")
 		}
 	}
-	io.WriteString(p.w, "`")
+	writeString(p.w, "`")
 }
 
 func (p *PrettyPrinter) printExprStaticCall(n *ir.StaticCallExpr) {
 	p.Print(n.Class)
-	io.WriteString(p.w, "::")
+	writeString(p.w, "::")
 	p.Print(n.Call)
-	io.WriteString(p.w, "(")
+	writeString(p.w, "(")
 	p.joinPrint(", ", n.Args)
-	io.WriteString(p.w, ")")
+	writeString(p.w, ")")
 }
 
 func (p *PrettyPrinter) printExprStaticPropertyFetch(n *ir.StaticPropertyFetchExpr) {
 	p.Print(n.Class)
-	io.WriteString(p.w, "::")
+	writeString(p.w, "::")
 	p.Print(n.Property)
 }
 
 func (p *PrettyPrinter) printExprTernary(n *ir.TernaryExpr) {
 	p.Print(n.Condition)
-	io.WriteString(p.w, " ?")
+	writeString(p.w, " ?")
 
 	if n.IfTrue != nil {
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 		p.Print(n.IfTrue)
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 	}
 
-	io.WriteString(p.w, ": ")
+	writeString(p.w, ": ")
 	p.Print(n.IfFalse)
 }
 
 func (p *PrettyPrinter) printExprUnaryMinus(n *ir.UnaryMinusExpr) {
-	io.WriteString(p.w, "-")
+	writeString(p.w, "-")
 	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printExprUnaryPlus(n *ir.UnaryPlusExpr) {
-	io.WriteString(p.w, "+")
+	writeString(p.w, "+")
 	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printExprSimpleVar(n *ir.SimpleVar) {
-	io.WriteString(p.w, "$"+n.Name)
+	writeString(p.w, "$"+n.Name)
 }
 
 func (p *PrettyPrinter) printExprVar(n *ir.Var) {
-	io.WriteString(p.w, "$")
+	writeString(p.w, "$")
 	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printExprYieldFrom(n *ir.YieldFromExpr) {
-	io.WriteString(p.w, "yield from ")
+	writeString(p.w, "yield from ")
 	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printExprYield(n *ir.YieldExpr) {
-	io.WriteString(p.w, "yield ")
+	writeString(p.w, "yield ")
 
 	if n.Key != nil {
 		p.Print(n.Key)
-		io.WriteString(p.w, " => ")
+		writeString(p.w, " => ")
 	}
 
 	p.Print(n.Value)
@@ -1124,68 +1130,68 @@ func (p *PrettyPrinter) printExprYield(n *ir.YieldExpr) {
 // smtm
 
 func (p *PrettyPrinter) printStmtBreak(n *ir.BreakStmt) {
-	io.WriteString(p.w, "break")
+	writeString(p.w, "break")
 	if n.Expr != nil {
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 		p.Print(n.Expr)
 	}
 
-	io.WriteString(p.w, ";")
+	writeString(p.w, ";")
 }
 
 func (p *PrettyPrinter) printStmtCase(n *ir.CaseStmt) {
-	io.WriteString(p.w, "case ")
+	writeString(p.w, "case ")
 	p.Print(n.Cond)
-	io.WriteString(p.w, ":")
+	writeString(p.w, ":")
 
 	if len(n.Stmts) > 0 {
-		io.WriteString(p.w, "\n")
+		writeString(p.w, "\n")
 		p.printNodes(n.Stmts)
 	}
 }
 
 func (p *PrettyPrinter) printStmtCatch(n *ir.CatchStmt) {
-	io.WriteString(p.w, "catch (")
+	writeString(p.w, "catch (")
 	p.joinPrint(" | ", n.Types)
-	io.WriteString(p.w, " ")
+	writeString(p.w, " ")
 	p.Print(n.Variable)
-	io.WriteString(p.w, ") {\n")
+	writeString(p.w, ") {\n")
 	p.printNodes(n.Stmts)
-	io.WriteString(p.w, "\n")
+	writeString(p.w, "\n")
 	p.printIndent()
-	io.WriteString(p.w, "}")
+	writeString(p.w, "}")
 }
 
 func (p *PrettyPrinter) printStmtClassMethod(n *ir.ClassMethodStmt) {
 	if n.Modifiers != nil {
 		p.joinPrintIdents(" ", n.Modifiers)
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 	}
-	io.WriteString(p.w, "function ")
+	writeString(p.w, "function ")
 
 	if n.ReturnsRef {
-		io.WriteString(p.w, "&")
+		writeString(p.w, "&")
 	}
 
 	p.Print(n.MethodName)
-	io.WriteString(p.w, "(")
+	writeString(p.w, "(")
 	p.joinPrint(", ", n.Params)
-	io.WriteString(p.w, ")")
+	writeString(p.w, ")")
 
 	if n.ReturnType != nil {
-		io.WriteString(p.w, ": ")
+		writeString(p.w, ": ")
 		p.Print(n.ReturnType)
 	}
 
 	switch s := n.Stmt.(type) {
 	case *ir.StmtList:
-		io.WriteString(p.w, "\n")
+		writeString(p.w, "\n")
 		p.printIndent()
-		io.WriteString(p.w, "{\n")
+		writeString(p.w, "{\n")
 		p.printNodes(s.Stmts)
-		io.WriteString(p.w, "\n")
+		writeString(p.w, "\n")
 		p.printIndent()
-		io.WriteString(p.w, "}")
+		writeString(p.w, "}")
 	default:
 		p.Print(s)
 	}
@@ -1194,11 +1200,11 @@ func (p *PrettyPrinter) printStmtClassMethod(n *ir.ClassMethodStmt) {
 func (p *PrettyPrinter) printStmtClass(n *ir.ClassStmt) {
 	if n.Modifiers != nil {
 		p.joinPrintIdents(" ", n.Modifiers)
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 	}
-	io.WriteString(p.w, "class")
+	writeString(p.w, "class")
 
-	io.WriteString(p.w, " ")
+	writeString(p.w, " ")
 	p.Print(n.ClassName)
 
 	p.printClass(n.Class)
@@ -1207,44 +1213,44 @@ func (p *PrettyPrinter) printStmtClass(n *ir.ClassStmt) {
 func (p *PrettyPrinter) printStmtClassConstList(n *ir.ClassConstListStmt) {
 	if n.Modifiers != nil {
 		p.joinPrintIdents(" ", n.Modifiers)
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 	}
-	io.WriteString(p.w, "const ")
+	writeString(p.w, "const ")
 
 	p.joinPrint(", ", n.Consts)
 
-	io.WriteString(p.w, ";")
+	writeString(p.w, ";")
 }
 
 func (p *PrettyPrinter) printStmtConstant(n *ir.ConstantStmt) {
 	p.Print(n.ConstantName)
-	io.WriteString(p.w, " = ")
+	writeString(p.w, " = ")
 	p.Print(n.Expr)
 }
 
 func (p *PrettyPrinter) printStmtContinue(n *ir.ContinueStmt) {
-	io.WriteString(p.w, "continue")
+	writeString(p.w, "continue")
 	if n.Expr != nil {
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 		p.Print(n.Expr)
 	}
 
-	io.WriteString(p.w, ";")
+	writeString(p.w, ";")
 }
 
 func (p *PrettyPrinter) printStmtDeclare(n *ir.DeclareStmt) {
-	io.WriteString(p.w, "declare(")
+	writeString(p.w, "declare(")
 	p.joinPrint(", ", n.Consts)
-	io.WriteString(p.w, ")")
+	writeString(p.w, ")")
 
 	switch s := n.Stmt.(type) {
 	case *ir.NopStmt:
 		p.Print(s)
 	case *ir.StmtList:
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 		p.Print(s)
 	default:
-		io.WriteString(p.w, "\n")
+		writeString(p.w, "\n")
 		p.indentDepth++
 		p.printIndent()
 		p.Print(s)
@@ -1253,65 +1259,65 @@ func (p *PrettyPrinter) printStmtDeclare(n *ir.DeclareStmt) {
 }
 
 func (p *PrettyPrinter) printStmtDefault(n *ir.DefaultStmt) {
-	io.WriteString(p.w, "default:")
+	writeString(p.w, "default:")
 
 	if len(n.Stmts) > 0 {
-		io.WriteString(p.w, "\n")
+		writeString(p.w, "\n")
 		p.printNodes(n.Stmts)
 	}
 }
 
 func (p *PrettyPrinter) printStmtDo(n *ir.DoStmt) {
-	io.WriteString(p.w, "do")
+	writeString(p.w, "do")
 
 	switch s := n.Stmt.(type) {
 	case *ir.StmtList:
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 		p.Print(s)
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 	default:
-		io.WriteString(p.w, "\n")
+		writeString(p.w, "\n")
 		p.indentDepth++
 		p.printIndent()
 		p.Print(s)
 		p.indentDepth--
-		io.WriteString(p.w, "\n")
+		writeString(p.w, "\n")
 		p.printIndent()
 	}
 
-	io.WriteString(p.w, "while (")
+	writeString(p.w, "while (")
 	p.Print(n.Cond)
-	io.WriteString(p.w, ");")
+	writeString(p.w, ");")
 }
 
 func (p *PrettyPrinter) printStmtEcho(n *ir.EchoStmt) {
-	io.WriteString(p.w, "echo ")
+	writeString(p.w, "echo ")
 	p.joinPrint(", ", n.Exprs)
-	io.WriteString(p.w, ";")
+	writeString(p.w, ";")
 }
 
 func (p *PrettyPrinter) printStmtElseif(n *ir.ElseIfStmt) {
-	io.WriteString(p.w, "elseif (")
+	writeString(p.w, "elseif (")
 	p.Print(n.Cond)
 
 	if n.AltSyntax {
-		io.WriteString(p.w, ") :")
+		writeString(p.w, ") :")
 
 		if s := n.Stmt.(*ir.StmtList).Stmts; len(s) > 0 {
-			io.WriteString(p.w, "\n")
+			writeString(p.w, "\n")
 			p.printNodes(s)
 		}
 	} else {
-		io.WriteString(p.w, ")")
+		writeString(p.w, ")")
 
 		switch s := n.Stmt.(type) {
 		case *ir.NopStmt:
 			p.Print(s)
 		case *ir.StmtList:
-			io.WriteString(p.w, " ")
+			writeString(p.w, " ")
 			p.Print(s)
 		default:
-			io.WriteString(p.w, "\n")
+			writeString(p.w, "\n")
 			p.indentDepth++
 			p.printIndent()
 			p.Print(s)
@@ -1322,23 +1328,23 @@ func (p *PrettyPrinter) printStmtElseif(n *ir.ElseIfStmt) {
 
 func (p *PrettyPrinter) printStmtElse(n *ir.ElseStmt) {
 	if n.AltSyntax {
-		io.WriteString(p.w, "else :")
+		writeString(p.w, "else :")
 
 		if s := n.Stmt.(*ir.StmtList).Stmts; len(s) > 0 {
-			io.WriteString(p.w, "\n")
+			writeString(p.w, "\n")
 			p.printNodes(s)
 		}
 	} else {
-		io.WriteString(p.w, "else")
+		writeString(p.w, "else")
 
 		switch s := n.Stmt.(type) {
 		case *ir.NopStmt:
 			p.Print(s)
 		case *ir.StmtList:
-			io.WriteString(p.w, " ")
+			writeString(p.w, " ")
 			p.Print(s)
 		default:
-			io.WriteString(p.w, "\n")
+			writeString(p.w, "\n")
 			p.indentDepth++
 			p.printIndent()
 			p.Print(s)
@@ -1349,45 +1355,45 @@ func (p *PrettyPrinter) printStmtElse(n *ir.ElseStmt) {
 
 func (p *PrettyPrinter) printStmtExpression(n *ir.ExpressionStmt) {
 	p.Print(n.Expr)
-	io.WriteString(p.w, ";")
+	writeString(p.w, ";")
 }
 
 func (p *PrettyPrinter) printStmtFinally(n *ir.FinallyStmt) {
-	io.WriteString(p.w, "finally {\n")
+	writeString(p.w, "finally {\n")
 	p.printNodes(n.Stmts)
-	io.WriteString(p.w, "\n")
+	writeString(p.w, "\n")
 	p.printIndent()
-	io.WriteString(p.w, "}")
+	writeString(p.w, "}")
 }
 
 func (p *PrettyPrinter) printStmtFor(n *ir.ForStmt) {
-	io.WriteString(p.w, "for (")
+	writeString(p.w, "for (")
 	p.joinPrint(", ", n.Init)
-	io.WriteString(p.w, "; ")
+	writeString(p.w, "; ")
 	p.joinPrint(", ", n.Cond)
-	io.WriteString(p.w, "; ")
+	writeString(p.w, "; ")
 	p.joinPrint(", ", n.Loop)
 
 	if n.AltSyntax {
-		io.WriteString(p.w, ") :\n")
+		writeString(p.w, ") :\n")
 
 		s := n.Stmt.(*ir.StmtList)
 		p.printNodes(s.Stmts)
-		io.WriteString(p.w, "\n")
+		writeString(p.w, "\n")
 		p.printIndent()
 
-		io.WriteString(p.w, "endfor;")
+		writeString(p.w, "endfor;")
 	} else {
-		io.WriteString(p.w, ")")
+		writeString(p.w, ")")
 
 		switch s := n.Stmt.(type) {
 		case *ir.NopStmt:
 			p.Print(s)
 		case *ir.StmtList:
-			io.WriteString(p.w, " ")
+			writeString(p.w, " ")
 			p.Print(s)
 		default:
-			io.WriteString(p.w, "\n")
+			writeString(p.w, "\n")
 			p.indentDepth++
 			p.printIndent()
 			p.Print(s)
@@ -1397,36 +1403,36 @@ func (p *PrettyPrinter) printStmtFor(n *ir.ForStmt) {
 }
 
 func (p *PrettyPrinter) printStmtForeach(n *ir.ForeachStmt) {
-	io.WriteString(p.w, "foreach (")
+	writeString(p.w, "foreach (")
 	p.Print(n.Expr)
-	io.WriteString(p.w, " as ")
+	writeString(p.w, " as ")
 
 	if n.Key != nil {
 		p.Print(n.Key)
-		io.WriteString(p.w, " => ")
+		writeString(p.w, " => ")
 	}
 
 	p.Print(n.Variable)
-	io.WriteString(p.w, ")")
+	writeString(p.w, ")")
 
 	if n.AltSyntax {
-		io.WriteString(p.w, " :\n")
+		writeString(p.w, " :\n")
 
 		s := n.Stmt.(*ir.StmtList)
 		p.printNodes(s.Stmts)
 
-		io.WriteString(p.w, "\n")
+		writeString(p.w, "\n")
 		p.printIndent()
-		io.WriteString(p.w, "endforeach;")
+		writeString(p.w, "endforeach;")
 	} else {
 		switch s := n.Stmt.(type) {
 		case *ir.NopStmt:
 			p.Print(s)
 		case *ir.StmtList:
-			io.WriteString(p.w, " ")
+			writeString(p.w, " ")
 			p.Print(s)
 		default:
-			io.WriteString(p.w, "\n")
+			writeString(p.w, "\n")
 			p.indentDepth++
 			p.printIndent()
 			p.Print(s)
@@ -1436,95 +1442,95 @@ func (p *PrettyPrinter) printStmtForeach(n *ir.ForeachStmt) {
 }
 
 func (p *PrettyPrinter) printStmtFunction(n *ir.FunctionStmt) {
-	io.WriteString(p.w, "function ")
+	writeString(p.w, "function ")
 
 	if n.ReturnsRef {
-		io.WriteString(p.w, "&")
+		writeString(p.w, "&")
 	}
 
 	p.Print(n.FunctionName)
 
-	io.WriteString(p.w, "(")
+	writeString(p.w, "(")
 	p.joinPrint(", ", n.Params)
-	io.WriteString(p.w, ")")
+	writeString(p.w, ")")
 
 	if n.ReturnType != nil {
-		io.WriteString(p.w, ": ")
+		writeString(p.w, ": ")
 		p.Print(n.ReturnType)
 	}
 
-	io.WriteString(p.w, " {\n")
+	writeString(p.w, " {\n")
 	p.printNodes(n.Stmts)
-	io.WriteString(p.w, "\n")
+	writeString(p.w, "\n")
 	p.printIndent()
-	io.WriteString(p.w, "}")
+	writeString(p.w, "}")
 }
 
 func (p *PrettyPrinter) printStmtGlobal(n *ir.GlobalStmt) {
-	io.WriteString(p.w, "global ")
+	writeString(p.w, "global ")
 	p.joinPrint(", ", n.Vars)
-	io.WriteString(p.w, ";")
+	writeString(p.w, ";")
 }
 
 func (p *PrettyPrinter) printStmtGoto(n *ir.GotoStmt) {
-	io.WriteString(p.w, "goto ")
+	writeString(p.w, "goto ")
 	p.Print(n.Label)
-	io.WriteString(p.w, ";")
+	writeString(p.w, ";")
 }
 
 func (p *PrettyPrinter) printStmtGroupUse(n *ir.GroupUseStmt) {
-	io.WriteString(p.w, "use ")
+	writeString(p.w, "use ")
 
 	if n.UseType != nil {
 		p.Print(n.UseType)
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 	}
 
 	p.Print(n.Prefix)
-	io.WriteString(p.w, "\\{")
+	writeString(p.w, "\\{")
 	p.joinPrint(", ", n.UseList)
-	io.WriteString(p.w, "};")
+	writeString(p.w, "};")
 }
 
 func (p *PrettyPrinter) printStmtHaltCompiler(n ir.Node) {
-	io.WriteString(p.w, "__halt_compiler();")
+	writeString(p.w, "__halt_compiler();")
 }
 
 func (p *PrettyPrinter) printStmtIf(n *ir.IfStmt) {
-	io.WriteString(p.w, "if (")
+	writeString(p.w, "if (")
 	p.Print(n.Cond)
-	io.WriteString(p.w, ")")
+	writeString(p.w, ")")
 
 	if n.AltSyntax {
-		io.WriteString(p.w, " :\n")
+		writeString(p.w, " :\n")
 
 		s := n.Stmt.(*ir.StmtList)
 		p.printNodes(s.Stmts)
 
 		for _, elseif := range n.ElseIf {
-			io.WriteString(p.w, "\n")
+			writeString(p.w, "\n")
 			p.printIndent()
 			p.Print(elseif)
 		}
 
 		if n.Else != nil {
-			io.WriteString(p.w, "\n")
+			writeString(p.w, "\n")
 			p.printIndent()
 			p.Print(n.Else)
 		}
 
-		io.WriteString(p.w, "\n")
+		writeString(p.w, "\n")
 		p.printIndent()
-		io.WriteString(p.w, "endif;")
+		writeString(p.w, "endif;")
 	} else {
 		switch s := n.Stmt.(type) {
 		case *ir.NopStmt:
 			p.Print(s)
 		case *ir.StmtList:
-			io.WriteString(p.w, " ")
+			writeString(p.w, " ")
 			p.Print(s)
 		default:
-			io.WriteString(p.w, "\n")
+			writeString(p.w, "\n")
 			p.indentDepth++
 			p.printIndent()
 			p.Print(s)
@@ -1532,14 +1538,14 @@ func (p *PrettyPrinter) printStmtIf(n *ir.IfStmt) {
 		}
 
 		if n.ElseIf != nil {
-			io.WriteString(p.w, "\n")
+			writeString(p.w, "\n")
 			p.indentDepth--
 			p.printNodes(n.ElseIf)
 			p.indentDepth++
 		}
 
 		if n.Else != nil {
-			io.WriteString(p.w, "\n")
+			writeString(p.w, "\n")
 			p.printIndent()
 			p.Print(n.Else)
 		}
@@ -1547,274 +1553,281 @@ func (p *PrettyPrinter) printStmtIf(n *ir.IfStmt) {
 }
 
 func (p *PrettyPrinter) printStmtInlineHTML(n *ir.InlineHTMLStmt) {
-	io.WriteString(p.w, "?>")
-	io.WriteString(p.w, n.Value)
-	io.WriteString(p.w, "<?php")
+	writeString(p.w, "?>")
+	writeString(p.w, n.Value)
+	writeString(p.w, "<?php")
 }
 
 func (p *PrettyPrinter) printStmtInterface(n *ir.InterfaceStmt) {
-	io.WriteString(p.w, "interface")
+	writeString(p.w, "interface")
 
 	if n.InterfaceName != nil {
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 		p.Print(n.InterfaceName)
 	}
 
 	if n.Extends != nil {
-		io.WriteString(p.w, " extends ")
+		writeString(p.w, " extends ")
 		p.joinPrint(", ", n.Extends.InterfaceNames)
 	}
 
-	io.WriteString(p.w, "\n")
+	writeString(p.w, "\n")
 	p.printIndent()
-	io.WriteString(p.w, "{\n")
+	writeString(p.w, "{\n")
 	p.printNodes(n.Stmts)
-	io.WriteString(p.w, "\n")
+	writeString(p.w, "\n")
 	p.printIndent()
-	io.WriteString(p.w, "}")
+	writeString(p.w, "}")
 }
 
 func (p *PrettyPrinter) printStmtLabel(n *ir.LabelStmt) {
 	p.Print(n.LabelName)
-	io.WriteString(p.w, ":")
+	writeString(p.w, ":")
 }
 
 func (p *PrettyPrinter) printStmtNamespace(n *ir.NamespaceStmt) {
-	io.WriteString(p.w, "namespace")
+	writeString(p.w, "namespace")
 
 	if n.NamespaceName != nil {
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 		p.Print(n.NamespaceName)
 	}
 
 	if n.Stmts != nil {
-		io.WriteString(p.w, " {\n")
+		writeString(p.w, " {\n")
 		p.printNodes(n.Stmts)
-		io.WriteString(p.w, "\n")
+		writeString(p.w, "\n")
 		p.printIndent()
-		io.WriteString(p.w, "}")
+		writeString(p.w, "}")
 	} else {
-		io.WriteString(p.w, ";")
+		writeString(p.w, ";")
 	}
 }
 
 func (p *PrettyPrinter) printStmtNop(n *ir.NopStmt) {
-	io.WriteString(p.w, ";")
+	writeString(p.w, ";")
+}
+
+func (p *PrettyPrinter) printStmtCloseTag(n *ir.CloseTagStmt) {
+	writeString(p.w, "?>")
 }
 
 func (p *PrettyPrinter) printStmtPropertyList(n *ir.PropertyListStmt) {
 	p.joinPrintIdents(" ", n.Modifiers)
-	io.WriteString(p.w, " ")
+	writeString(p.w, " ")
 	p.joinPrint(", ", n.Properties)
-	io.WriteString(p.w, ";")
+	writeString(p.w, ";")
 }
 
 func (p *PrettyPrinter) printStmtProperty(n *ir.PropertyStmt) {
 	p.Print(n.Variable)
 
 	if n.Expr != nil {
-		io.WriteString(p.w, " = ")
+		writeString(p.w, " = ")
 		p.Print(n.Expr)
 	}
 }
 
 func (p *PrettyPrinter) printStmtReturn(n *ir.ReturnStmt) {
-	io.WriteString(p.w, "return ")
+	writeString(p.w, "return ")
 	p.Print(n.Expr)
-	io.WriteString(p.w, ";")
+	writeString(p.w, ";")
 }
 
 func (p *PrettyPrinter) printStmtStaticVar(n *ir.StaticVarStmt) {
 	p.Print(n.Variable)
 
 	if n.Expr != nil {
-		io.WriteString(p.w, " = ")
+		writeString(p.w, " = ")
 		p.Print(n.Expr)
 	}
 }
 
 func (p *PrettyPrinter) printStmtStatic(n *ir.StaticStmt) {
-	io.WriteString(p.w, "static ")
+	writeString(p.w, "static ")
 	p.joinPrint(", ", n.Vars)
-	io.WriteString(p.w, ";")
+	writeString(p.w, ";")
 }
 
 func (p *PrettyPrinter) printStmtStmtList(n *ir.StmtList) {
-	io.WriteString(p.w, "{\n")
+	writeString(p.w, "{\n")
 	p.printNodes(n.Stmts)
-	io.WriteString(p.w, "\n")
+	writeString(p.w, "\n")
 	p.printIndent()
-	io.WriteString(p.w, "}")
+	writeString(p.w, "}")
 }
 
 func (p *PrettyPrinter) printStmtSwitch(n *ir.SwitchStmt) {
-	io.WriteString(p.w, "switch (")
+	writeString(p.w, "switch (")
 	p.Print(n.Cond)
 
 	if n.AltSyntax {
-		io.WriteString(p.w, ") :\n")
-		s := n.CaseList.Cases
-		p.printNodes(s)
+		writeString(p.w, ") :\n")
+		p.printNodes(n.Cases)
 
-		io.WriteString(p.w, "\n")
+		writeString(p.w, "\n")
 		p.printIndent()
-		io.WriteString(p.w, "endswitch;")
+		writeString(p.w, "endswitch;")
 	} else {
-		io.WriteString(p.w, ")")
+		writeString(p.w, ")")
 
-		io.WriteString(p.w, " {\n")
-		p.printNodes(n.CaseList.Cases)
-		io.WriteString(p.w, "\n")
+		writeString(p.w, " {\n")
+		p.printNodes(n.Cases)
+		writeString(p.w, "\n")
 		p.printIndent()
-		io.WriteString(p.w, "}")
+		writeString(p.w, "}")
 	}
 }
 
 func (p *PrettyPrinter) printStmtThrow(n *ir.ThrowStmt) {
-	io.WriteString(p.w, "throw ")
+	writeString(p.w, "throw ")
 	p.Print(n.Expr)
-	io.WriteString(p.w, ";")
+	writeString(p.w, ";")
 }
 
 func (p *PrettyPrinter) printStmtTraitMethodRef(n *ir.TraitMethodRefStmt) {
 	p.Print(n.Trait)
-	io.WriteString(p.w, "::")
+	writeString(p.w, "::")
 	p.Print(n.Method)
 }
 
 func (p *PrettyPrinter) printStmtTraitUseAlias(n *ir.TraitUseAliasStmt) {
 	p.Print(n.Ref)
-	io.WriteString(p.w, " as")
+	writeString(p.w, " as")
 
 	if n.Modifier != nil {
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 		p.Print(n.Modifier)
 	}
 
 	if n.Alias != nil {
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 		p.Print(n.Alias)
 	}
 
-	io.WriteString(p.w, ";")
+	writeString(p.w, ";")
 }
 
 func (p *PrettyPrinter) printStmtTraitUsePrecedence(n *ir.TraitUsePrecedenceStmt) {
 	p.Print(n.Ref)
-	io.WriteString(p.w, " insteadof ")
+	writeString(p.w, " insteadof ")
 	p.joinPrint(", ", n.Insteadof)
-	io.WriteString(p.w, ";")
+	writeString(p.w, ";")
 }
 
 func (p *PrettyPrinter) printStmtTraitUse(n *ir.TraitUseStmt) {
-	io.WriteString(p.w, "use ")
+	writeString(p.w, "use ")
 	p.joinPrint(", ", n.Traits)
 
 	if adaptationList, ok := n.TraitAdaptationList.(*ir.TraitAdaptationListStmt); ok {
 		adaptations := adaptationList.Adaptations
-		io.WriteString(p.w, " {\n")
+		writeString(p.w, " {\n")
 		p.printNodes(adaptations)
-		io.WriteString(p.w, "\n")
+		writeString(p.w, "\n")
 		p.printIndent()
-		io.WriteString(p.w, "}")
+		writeString(p.w, "}")
 	} else {
-		io.WriteString(p.w, ";")
+		writeString(p.w, ";")
 	}
 }
 
 func (p *PrettyPrinter) printStmtTrait(n *ir.TraitStmt) {
-	io.WriteString(p.w, "trait ")
+	writeString(p.w, "trait ")
 	p.Print(n.TraitName)
-	io.WriteString(p.w, "\n")
+	writeString(p.w, "\n")
 	p.printIndent()
-	io.WriteString(p.w, "{\n")
+	writeString(p.w, "{\n")
 	p.printNodes(n.Stmts)
-	io.WriteString(p.w, "\n")
+	writeString(p.w, "\n")
 	p.printIndent()
-	io.WriteString(p.w, "}")
+	writeString(p.w, "}")
 }
 
 func (p *PrettyPrinter) printStmtTry(n *ir.TryStmt) {
-	io.WriteString(p.w, "try {\n")
+	writeString(p.w, "try {\n")
 	p.printNodes(n.Stmts)
-	io.WriteString(p.w, "\n")
+	writeString(p.w, "\n")
 	p.printIndent()
-	io.WriteString(p.w, "}")
+	writeString(p.w, "}")
 
 	if n.Catches != nil {
-		io.WriteString(p.w, "\n")
+		writeString(p.w, "\n")
 		p.indentDepth--
 		p.printNodes(n.Catches)
 		p.indentDepth++
 	}
 
 	if n.Finally != nil {
-		io.WriteString(p.w, "\n")
+		writeString(p.w, "\n")
 		p.printIndent()
 		p.Print(n.Finally)
 	}
 }
 
 func (p *PrettyPrinter) printStmtUnset(n *ir.UnsetStmt) {
-	io.WriteString(p.w, "unset(")
+	writeString(p.w, "unset(")
 	p.joinPrint(", ", n.Vars)
-	io.WriteString(p.w, ");")
+	writeString(p.w, ");")
 }
 
 func (p *PrettyPrinter) printStmtUseList(n *ir.UseListStmt) {
-	io.WriteString(p.w, "use ")
+	writeString(p.w, "use ")
 
 	if n.UseType != nil {
 		p.Print(n.UseType)
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 	}
 
 	p.joinPrint(", ", n.Uses)
-	io.WriteString(p.w, ";")
+	writeString(p.w, ";")
 }
 
 func (p *PrettyPrinter) printStmtUse(n *ir.UseStmt) {
 	if n.UseType != nil {
 		p.Print(n.UseType)
-		io.WriteString(p.w, " ")
+		writeString(p.w, " ")
 	}
 
 	p.Print(n.Use)
 
 	if n.Alias != nil {
-		io.WriteString(p.w, " as ")
+		writeString(p.w, " as ")
 		p.Print(n.Alias)
 	}
 }
 
 func (p *PrettyPrinter) printStmtWhile(n *ir.WhileStmt) {
-	io.WriteString(p.w, "while (")
+	writeString(p.w, "while (")
 	p.Print(n.Cond)
 
 	if n.AltSyntax {
-		io.WriteString(p.w, ") :\n")
+		writeString(p.w, ") :\n")
 
 		s := n.Stmt.(*ir.StmtList)
 		p.printNodes(s.Stmts)
 
-		io.WriteString(p.w, "\n")
+		writeString(p.w, "\n")
 		p.printIndent()
-		io.WriteString(p.w, "endwhile;")
+		writeString(p.w, "endwhile;")
 	} else {
-		io.WriteString(p.w, ")")
+		writeString(p.w, ")")
 
 		switch s := n.Stmt.(type) {
 		case *ir.NopStmt:
 			p.Print(s)
 		case *ir.StmtList:
-			io.WriteString(p.w, " ")
+			writeString(p.w, " ")
 			p.Print(s)
 		default:
-			io.WriteString(p.w, "\n")
+			writeString(p.w, "\n")
 			p.indentDepth++
 			p.printIndent()
 			p.Print(s)
 			p.indentDepth--
 		}
 	}
+}
+
+func writeString(w io.Writer, s string) {
+	_, _ = io.WriteString(w, s)
 }

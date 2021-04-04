@@ -21,14 +21,14 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 		return Eval(st, e.Expr)
 
 	case *ir.ClassConstFetchExpr:
-		if !meta.IsIndexingComplete() {
+		if !st.Info.IsIndexingComplete() {
 			return meta.UnknownValue
 		}
 		className, ok := solver.GetClassName(st, e.Class)
 		if !ok {
 			return meta.UnknownValue
 		}
-		info, _, ok := solver.FindConstant(className, e.ConstantName.Value)
+		info, _, ok := solver.FindConstant(st.Info, className, e.ConstantName.Value)
 		if !ok {
 			return meta.UnknownValue
 		}
@@ -41,7 +41,7 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 		case `false`:
 			return meta.FalseValue
 		}
-		if !meta.IsIndexingComplete() {
+		if !st.Info.IsIndexingComplete() {
 			return meta.UnknownValue
 		}
 		_, info, ok := solver.GetConstant(st, e.Constant)
@@ -96,7 +96,7 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 		return meta.NewStringConst(e.Value)
 
 	case *ir.FunctionCallExpr:
-		// dirname(__FILE__)
+		// Only dirname(__FILE__) is const-folded right now.
 		if !meta.NameNodeEquals(e.Function, `dirname`) {
 			return meta.UnknownValue
 		}

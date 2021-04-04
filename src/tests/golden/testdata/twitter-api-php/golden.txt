@@ -1,9 +1,27 @@
-INFO    unused: Variable key is unused (use $_ to ignore this inspection) at testdata/twitter-api-php/TwitterAPIExchange.php:122
+WARNING unused: Variable key is unused (use $_ to ignore this inspection) at testdata/twitter-api-php/TwitterAPIExchange.php:122
         foreach ($array as $key => &$value)
                            ^^^^
-INFO    phpdocType: use bool type instead of boolean on line 4 at testdata/twitter-api-php/TwitterAPIExchange.php:274
+WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/twitter-api-php/TwitterAPIExchange.php:207
+        if (!in_array(strtolower($requestMethod), array('post', 'get', 'put', 'delete')))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/twitter-api-php/TwitterAPIExchange.php:223
+            'oauth_version' => '1.0'
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   phpdocType: use bool type instead of boolean on line 4 at testdata/twitter-api-php/TwitterAPIExchange.php:274
     public function performRequest($return = true, $curlOptions = array())
                     ^^^^^^^^^^^^^^
-INFO    phpdocType: use int type instead of integer on line 4 at testdata/twitter-api-php/TwitterAPIExchange.php:406
+WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/twitter-api-php/TwitterAPIExchange.php:286
+        if (in_array(strtolower($this->requestMethod), array('put', 'delete')))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/twitter-api-php/TwitterAPIExchange.php:366
+                'oauth_signature_method', 'oauth_timestamp', 'oauth_token', 'oauth_version'))) {
+                                                                            ^^^^^^^^^^^^^^^
+MAYBE   phpdocType: use int type instead of integer on line 4 at testdata/twitter-api-php/TwitterAPIExchange.php:406
     public function getHttpStatusCode()
                     ^^^^^^^^^^^^^^^^^
+MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/twitter-api-php/index.php:10
+    'consumer_secret' => ""
+    ^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/twitter-api-php/index.php:20
+    'skip_status' => '1'
+    ^^^^^^^^^^^^^^^^^^^^

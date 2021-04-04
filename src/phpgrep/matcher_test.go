@@ -42,7 +42,8 @@ func mustCompile(t testing.TB, c *Compiler, code string) *Matcher {
 }
 
 func runMatchTest(t *testing.T, c *Compiler, want bool, tests []*matcherTest) {
-	for i, test := range tests {
+	for i := range tests {
+		test := tests[i]
 		t.Run(fmt.Sprintf("%d_%v", i, want), func(t *testing.T) {
 			matcher := mustCompile(t, c, test.pattern)
 			have := matchInText(t, matcher, test.input)
@@ -394,6 +395,22 @@ func TestMatch(t *testing.T) {
 
 		{`$_ ?: $_`, `1 ?: 2`},
 
+		{`[${"*"}, $_]`, `[1]`},
+		{`[${"*"}, $_]`, `[1, 2]`},
+		{`[${"*"}, $_]`, `[1, 2, 3]`},
+		{`[${"*"}, 1, 1, ${"*"}]`, `[0, 1, 0, 1, 0, 1, 1, 0, 1, 0]`},
+		{`[${"*"}, $_]`, `[1,]`},
+		{`[${"*"}, $_]`, `[1, 2,]`},
+		{`f(${"*"}, $_)`, `f(1)`},
+		{`f(${"*"}, $_)`, `f(1, 2)`},
+		{`f(${"*"}, $_)`, `f(1, 2, 3)`},
+		{`f(${"*"}, 1, 1, ${"*"})`, `f(1, 1, 1)`},
+		{`f(${"*"}, 1, 1, ${"*"})`, `f(1, 1)`},
+		{`f(${"*"}, 1, 1, ${"*"})`, `f(0, 1, 0, 1, 1, 0)`},
+		{`f(${"*"}, 1, 1, ${"*"})`, `f(1, 0, 1, 0, 1, 0, 1, 1, 0, 1)`},
+		{`f(${"*"}, $_)`, `f(1,)`},
+		{`f(${"*"}, $_)`, `f(1, 2,)`},
+
 		{`isset($x)`, `isset($v)`},
 		{`isset($x, $y)`, `isset($k, $v[$k])`},
 		{`empty($x)`, `empty($v)`},
@@ -405,6 +422,8 @@ func TestMatch(t *testing.T) {
 		{`$x->ff(1, 2)`, `$this->ff(1, 2)`},
 
 		{`$_[0]`, `$v[0]`},
+		{`$_{0}`, `$v{0}`},
+		{`$_{0}`, `$v[0]{0}`},
 
 		{`$c::$prop`, `C::$foo`},
 		{`$c::$prop`, `C::constant`},
@@ -459,6 +478,9 @@ func TestMatch(t *testing.T) {
 		{`f((1))`, `f((1))`},
 		{`($foo)()`, `($foo)()`},
 		{`($foo)->x`, `($foo)->x`},
+
+		{`try { ${"*"}; } catch (Exception $_) { ${"*"}; }`, `try {} catch (Exception $e) {}`},
+		{`try { ${"*"}; } catch (Exception $_) { ${"*"}; }`, `try {} catch (Exception $ex) { var_dump($ex); }`},
 	})
 }
 
@@ -544,9 +566,18 @@ func TestMatchNegative(t *testing.T) {
 		{`$x ? $x : $y`, `1 ?: 2`},
 		{`$x ? $y : $z`, `1 ?: 2`},
 
+		{`[${"*"}, $_]`, `[]`},
+
+		{`[${"*"}, 1, 1, ${"*"}]`, `[0, 1, 0, 1, 0, 1, 0, 1, 0]`},
+		{`f(${"*"}, 1, 1, ${"*"})`, `f(1, 2, 1, 2)`},
+		{`f(${"*"}, 1, 1, ${"*"})`, `f(1)`},
+		{`f(${"*"}, 1, 1, ${"*"})`, `f(0, 1, 0, 1, 0)`},
+
 		{`$x->$_ = $x`, `$this->self = $y`},
 
 		{`$_[0]`, `$v[1]`},
+		{`$_[0]`, `$v{0}`},
+		{`$_{0}`, `$v[0]`},
 
 		{`@$_`, `f()`},
 
@@ -620,6 +651,9 @@ func TestMatchNegative(t *testing.T) {
 		{`($foo)->x`, `$foo->x`},
 		{`(($foo))()`, `($foo)()`},
 		{`(($foo))->x`, `($foo)->x`},
+
+		{`try { ${"*"}; } catch (Exception $_) { ${"*"}; }`, `try {} catch (MyException $e) {}`},
+		{`try { ${"*"}; } catch (Exception $_) { ${"*"}; }`, `try {} catch (Exception $_) {} catch (Exception $_) {}`},
 	})
 }
 
@@ -659,6 +693,10 @@ func BenchmarkMatch(b *testing.B) {
 		{"positive/with-1-named", `$x + 1 * $x`, `$a[0] + 1 * $a[0]`},
 		{"negative/with-1-named", `$x + 1 * $x`, `$a[0] + 1 * $a[1]`},
 		{"positive/with-5-named", `$x1 + $x2 + $x3 + $x4 + $x5`, `1 + 2 + 3 + 4 + 5`},
+
+		{"positive/backtrack-ys", `f(${"*"}, 1, 1, ${"*"})`, `f(1, 0, 1, 0, 1, 0, 1, 1, 0, 1)`},
+		{"positive/backtrack-xs", `f(${"*"}, 1, 2)`, `f(1, 1)`},
+		{"negative/backtrack-ys", `f(${"*"}, 1, 1, ${"*"})`, `f(1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1)`},
 	}
 
 	for _, bench := range benchmarks {

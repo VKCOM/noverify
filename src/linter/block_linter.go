@@ -9,13 +9,13 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/solver"
+	"github.com/VKCOM/noverify/src/types"
 )
 
 type blockLinter struct {
-	walker *BlockWalker
+	walker *blockWalker
 }
 
 func (b *blockLinter) enterNode(n ir.Node) {
@@ -28,6 +28,21 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 	case *ir.FunctionCallExpr:
 		b.checkFunctionCall(n)
+
+	case *ir.MethodCallExpr:
+		b.checkMethodCall(n)
+
+	case *ir.StaticCallExpr:
+		b.checkStaticCall(n)
+
+	case *ir.PropertyFetchExpr:
+		b.checkPropertyFetch(n)
+
+	case *ir.StaticPropertyFetchExpr:
+		b.checkStaticPropertyFetch(n)
+
+	case *ir.ClassConstFetchExpr:
+		b.checkClassConstFetch(n)
 
 	case *ir.NewExpr:
 		b.checkNew(n)
@@ -88,11 +103,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.PowExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 	case *ir.EqualExpr:
-		b.checkStrictCmp(n, n.Left, n.Right)
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
 	case *ir.NotEqualExpr:
-		b.checkStrictCmp(n, n.Left, n.Right)
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
 	case *ir.IdenticalExpr:
@@ -116,13 +129,10 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.SpaceshipExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
-
+	case *ir.CoalesceExpr:
+		b.checkCoalesceExpr(n)
 	case *ir.TypeCastExpr:
-		if n.Type == "array" {
-			b.checkRedundantCastArray(n.Expr)
-		} else {
-			b.checkRedundantCast(n.Expr, n.Type)
-		}
+		b.checkTypeCaseExpr(n)
 
 	case *ir.CloneExpr:
 		b.walker.r.checkKeywordCase(n, "clone")
@@ -166,8 +176,26 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.InterfaceStmt:
 		b.checkInterfaceStmt(n)
 
+	case *ir.NopStmt:
+		b.checkNopStmt(n)
+
 	case *ir.BadString:
-		b.report(n, LevelSyntax, "syntax", "%s", n.Error)
+		b.report(n, LevelError, "syntax", "%s", n.Error)
+	}
+}
+
+func (b *blockLinter) checkTypeCaseExpr(n *ir.TypeCastExpr) {
+	if n.Type == "array" {
+		b.checkRedundantCastArray(n.Expr)
+	} else {
+		b.checkRedundantCast(n.Expr, n.Type)
+	}
+
+	// We cannot use the value directly, since for real it is equal to float,
+	// so we have to use the token value.
+	if bytes.EqualFold(n.CastTkn.Value, []byte("(real)")) {
+		b.report(n, LevelNotice, "langDeprecated",
+			"use float cast instead of real")
 	}
 }
 
@@ -175,8 +203,28 @@ func (b *blockLinter) report(n ir.Node, level int, checkName, msg string, args .
 	b.walker.r.Report(n, level, checkName, msg, args...)
 }
 
+func (b *blockLinter) checkNopStmt(n *ir.NopStmt) {
+	switch b.walker.path.Parent().(type) {
+	case *ir.DeclareStmt, *ir.IfStmt, *ir.ForStmt, *ir.ForeachStmt, *ir.WhileStmt, *ir.DoStmt:
+		return
+	}
+
+	b.report(n, LevelNotice, "emptyStmt", "semicolon (;) is not needed here, it can be safely removed")
+}
+
+func (b *blockLinter) checkCoalesceExpr(n *ir.CoalesceExpr) {
+	lhsType := solver.ExprType(b.walker.ctx.sc, b.classParseState(), n.Left)
+	if !lhsType.IsPrecise() {
+		return
+	}
+
+	if !lhsType.Contains("null") {
+		b.report(n.Right, LevelWarning, "deadCode", "%s is not nullable, right side of the expression is unreachable", irutil.FmtNode(n.Left))
+	}
+}
+
 func (b *blockLinter) checkAssign(a *ir.Assign) {
-	b.checkVoidType(a.Expression)
+	b.checkVoidType(a.Expr)
 }
 
 func (b *blockLinter) checkTryStmt(s *ir.TryStmt) {
@@ -192,6 +240,52 @@ func (b *blockLinter) checkTryStmt(s *ir.TryStmt) {
 
 	if s.Finally != nil {
 		b.walker.r.checkKeywordCase(s.Finally, "finally")
+	}
+
+	if len(s.Catches) > 1 {
+		b.checkCatchOrder(s)
+	}
+}
+
+func (b *blockLinter) checkCatchOrder(s *ir.TryStmt) {
+	// This code has O(n^2) complexity, but there are usually no more than 3-4 catch clauses in the code.
+	// We could avoid some extra work if we would not add leaf types to the classes list,
+	// but we don't have that information available.
+
+	classes := make([]string, 0, len(s.Catches))
+
+	for _, c := range s.Catches {
+		c := c.(*ir.CatchStmt)
+		if len(c.Types) > 1 {
+			return // give up on A|B catch
+		}
+
+		class, ok := solver.GetClassName(b.classParseState(), c.Types[0])
+		if !ok {
+			continue
+		}
+
+		add := true
+		for _, otherClass := range classes {
+			if class == otherClass {
+				b.report(c.Types[0], LevelWarning, "dupCatch", "duplicated catch on %s", class)
+				add = false
+				break
+			}
+			if solver.Extends(b.metaInfo(), class, otherClass) {
+				b.report(c.Types[0], LevelWarning, "catchOrder", "catch %s block will never run as it extends %s which is caught above", class, otherClass)
+				add = false
+				break
+			}
+			if solver.Implements(b.metaInfo(), class, otherClass) {
+				b.report(c.Types[0], LevelWarning, "catchOrder", "catch %s block will never run as it implements %s which is caught above", class, otherClass)
+				add = false
+				break
+			}
+		}
+		if add {
+			classes = append(classes, class)
+		}
 	}
 }
 
@@ -218,49 +312,22 @@ func (b *blockLinter) checkBinaryDupArgs(n, left, right ir.Node) {
 	if !b.walker.sideEffectFree(left) || !b.walker.sideEffectFree(right) {
 		return
 	}
-	if nodeEqual(b.walker.r.ctx.st, left, right) {
+	if nodeEqual(b.classParseState(), left, right) {
 		b.report(n, LevelWarning, "dupSubExpr", "duplicated operands value in %s expression", binaryOpString(n))
-	}
-}
-
-func (b *blockLinter) checkStrictCmp(n ir.Node, left, right ir.Node) {
-	needsStrictCmp := func(n ir.Node) bool {
-		c, ok := n.(*ir.ConstFetchExpr)
-		if !ok {
-			return false
-		}
-		nm := c.Constant
-		return nm.Value == "true" || nm.Value == "false" || nm.Value == "null"
-	}
-
-	var badNode ir.Node
-	switch {
-	case needsStrictCmp(left):
-		badNode = left
-	case needsStrictCmp(right):
-		badNode = right
-	}
-	if badNode != nil {
-		suggest := "==="
-		if _, ok := n.(*ir.NotEqualExpr); ok {
-			suggest = "!=="
-		}
-		b.report(n, LevelWarning, "strictCmp", "non-strict comparison with %s (use %s)",
-			irutil.FmtNode(badNode), suggest)
 	}
 }
 
 // checkVoidType reports if node has void type
 func (b *blockLinter) checkVoidType(n ir.Node) {
 	if b.walker.exprType(n).Is("void") {
-		b.report(n, LevelDoNotReject, "voidResultUsed", "void function result used")
+		b.report(n, LevelNotice, "voidResultUsed", "void function result used")
 	}
 }
 
 func (b *blockLinter) checkRedundantCastArray(e ir.Node) {
 	typ := b.walker.exprType(e)
 	if typ.Len() == 1 && typ.Is("mixed[]") {
-		b.report(e, LevelDoNotReject, "redundantCast", "expression already has array type")
+		b.report(e, LevelNotice, "redundantCast", "expression already has array type")
 	}
 }
 
@@ -271,7 +338,7 @@ func (b *blockLinter) checkRedundantCast(e ir.Node, dstType string) {
 	}
 	typ.Iterate(func(x string) {
 		if x == dstType {
-			b.report(e, LevelDoNotReject, "redundantCast",
+			b.report(e, LevelNotice, "redundantCast",
 				"expression already has %s type", dstType)
 		}
 	})
@@ -285,7 +352,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 		return
 	}
 
-	if b.walker.r.ctx.st.IsTrait {
+	if b.classParseState().IsTrait {
 		switch {
 		case meta.NameNodeEquals(e.Class, "self"):
 			// Don't try to resolve "self" inside trait context.
@@ -296,13 +363,13 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 		}
 	}
 
-	className, ok := solver.GetClassName(b.walker.r.ctx.st, e.Class)
+	className, ok := solver.GetClassName(b.classParseState(), e.Class)
 	if !ok {
 		// perhaps something like 'new $class', cannot check this.
 		return
 	}
 
-	class, ok := meta.Info.GetClass(className)
+	class, ok := b.metaInfo().GetClass(className)
 	if !ok {
 		b.walker.r.reportUndefinedType(e.Class, className)
 	} else {
@@ -317,7 +384,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 	}
 
 	// Check implicitly invoked constructor method arguments count.
-	m, ok := solver.FindMethod(className, "__construct")
+	m, ok := solver.FindMethod(b.metaInfo(), className, "__construct")
 	if !ok {
 		return
 	}
@@ -351,21 +418,12 @@ func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 	}
 
 	if report {
-		ff := s.GetFreeFloating()
-		if ff != nil {
-			for _, tok := range (*ff)[freefloating.Expr] {
-				if tok.StringType == freefloating.CommentType {
-					return
-				}
-			}
-		}
-
 		b.report(s.Expr, LevelWarning, "discardExpr", "expression evaluated but not used")
 	}
 }
 
 func (b *blockLinter) checkConstFetch(e *ir.ConstFetchExpr) {
-	_, _, defined := solver.GetConstant(b.walker.r.ctx.st, e.Constant)
+	_, _, defined := solver.GetConstant(b.classParseState(), e.Constant)
 
 	if !defined {
 		// If it's builtin constant, give a more precise report message.
@@ -386,6 +444,11 @@ func (b *blockLinter) checkConstFetch(e *ir.ConstFetchExpr) {
 func (b *blockLinter) checkTernary(e *ir.TernaryExpr) {
 	if e.IfTrue == nil {
 		return // Skip `$x ?: $y` expressions
+	}
+
+	_, nestedTernary := e.Condition.(*ir.TernaryExpr)
+	if nestedTernary {
+		b.report(e.Condition, LevelWarning, "nestedTernary", "in ternary operators, you must explicitly use parentheses to specify the order of operations")
 	}
 
 	// Check for `$cond ? $x : $x` which makes no sense.
@@ -412,7 +475,7 @@ func (b *blockLinter) checkSwitch(s *ir.SwitchStmt) {
 	nodeSet := &b.walker.r.nodeSet
 	nodeSet.Reset()
 	wasAdded := false
-	for i, c := range s.CaseList.Cases {
+	for i, c := range s.Cases {
 		c, ok := c.(*ir.CaseStmt)
 		if !ok {
 			continue
@@ -424,7 +487,7 @@ func (b *blockLinter) checkSwitch(s *ir.SwitchStmt) {
 		var v meta.ConstValue
 		var isConstKey bool
 		if k, ok := c.Cond.(*ir.ConstFetchExpr); ok {
-			v = constfold.Eval(b.walker.r.ctx.st, k)
+			v = constfold.Eval(b.classParseState(), k)
 			if !v.IsValid() {
 				continue
 			}
@@ -526,13 +589,13 @@ func (b *blockLinter) checkContinueStmt(c *ir.ContinueStmt) {
 }
 
 func (b *blockLinter) addFixForArray(arr *ir.ArrayExpr) {
-	if !ApplyQuickFixes {
+	if !b.walker.r.config.ApplyQuickFixes {
 		return
 	}
 
 	from := arr.Position.StartPos
 	to := arr.Position.EndPos
-	have := b.walker.r.fileContents[from:to]
+	have := b.walker.r.file.Contents()[from:to]
 	have = bytes.TrimPrefix(have, []byte("array("))
 	have = bytes.TrimSuffix(have, []byte(")"))
 
@@ -545,18 +608,27 @@ func (b *blockLinter) addFixForArray(arr *ir.ArrayExpr) {
 
 func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 	if !arr.ShortSyntax {
-		b.report(arr, LevelDoNotReject, "arraySyntax", "Use of old array syntax (use short form instead)")
+		b.report(arr, LevelNotice, "arraySyntax", "Use of old array syntax (use short form instead)")
 		b.addFixForArray(arr)
 	}
 
+	multiline := false
 	items := arr.Items
 	haveKeys := false
 	haveImplicitKeys := false
 	keys := make(map[string]ir.Node, len(items))
 
-	for _, item := range items {
+	if arr.Position.EndLine != arr.Position.StartLine {
+		multiline = true
+	}
+
+	for index, item := range items {
 		if item.Val == nil {
 			continue
+		}
+
+		if multiline && index == len(items)-1 {
+			b.checkMultilineArrayTrailingComma(item)
 		}
 
 		if item.Key == nil {
@@ -577,7 +649,7 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 			key = k.Value
 			constKey = true
 		case *ir.ConstFetchExpr:
-			v := constfold.Eval(b.walker.r.ctx.st, k)
+			v := constfold.Eval(b.classParseState(), k)
 			if !v.IsValid() {
 				continue
 			}
@@ -614,7 +686,7 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 		}
 
 		if n, ok := keys[key]; ok {
-			origKey := string(b.walker.r.nodeText(n))
+			origKey := b.walker.r.nodeText(n)
 			dupKey := fmt.Sprintf("%#q", key)
 			msg := fmt.Sprintf("Duplicate array key %s", origKey)
 			if origKey != dupKey && origKey != key {
@@ -631,13 +703,96 @@ func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 	}
 }
 
-func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
-	fqName, ok := solver.GetFuncName(b.walker.r.ctx.st, e.Function)
-	if !ok {
+func (b *blockLinter) addFixForMultilineArrayTrailingComma(item *ir.ArrayItemExpr) {
+	if !b.walker.r.config.ApplyQuickFixes {
 		return
 	}
 
+	from := item.Position.StartPos
+	to := item.Position.EndPos
+	have := b.walker.r.file.Contents()[from:to]
+
+	b.walker.r.ctx.fixes = append(b.walker.r.ctx.fixes, quickfix.TextEdit{
+		StartPos:    item.Position.StartPos,
+		EndPos:      item.Position.EndPos,
+		Replacement: string(have) + ",",
+	})
+}
+
+func (b *blockLinter) checkMultilineArrayTrailingComma(item *ir.ArrayItemExpr) {
+	from := item.Position.StartPos
+	to := item.Position.EndPos
+	src := b.walker.r.file.Contents()
+
+	if to+1 >= len(src) {
+		return
+	}
+
+	itemText := src[from : to+1]
+	if itemText[len(itemText)-1] != ',' && itemText[len(itemText)-1] != ']' {
+		b.report(item, LevelNotice, "trailingComma", "last element in a multi-line array must have a trailing comma")
+		b.addFixForMultilineArrayTrailingComma(item)
+	}
+}
+
+func (b *blockLinter) checkDeprecatedFunctionCall(e *ir.FunctionCallExpr, call *funcCallInfo) {
+	if !call.info.Doc.Deprecated {
+		return
+	}
+
+	if call.info.Doc.DeprecationNote != "" {
+		b.report(e.Function, LevelNotice, "deprecated", "Call to deprecated function %s (%s)", meta.NameNodeToString(e.Function), call.info.Doc.DeprecationNote)
+		return
+	}
+
+	b.report(e.Function, LevelNotice, "deprecated", "Call to deprecated function %s", meta.NameNodeToString(e.Function))
+}
+
+func (b *blockLinter) checkFunctionAvailability(e *ir.FunctionCallExpr, call *funcCallInfo) {
+	if !call.isFound && !b.walker.ctx.customFunctionExists(e.Function) {
+		b.report(e.Function, LevelError, "undefined", "Call to undefined function %s", meta.NameNodeToString(e.Function))
+	}
+}
+
+func (b *blockLinter) checkCallArgs(n ir.Node, args []ir.Node, fn meta.FuncInfo) {
+	b.checkCallArgsCount(n, args, fn)
+}
+
+func (b *blockLinter) checkCallArgsCount(n ir.Node, args []ir.Node, fn meta.FuncInfo) {
+	if fn.Name == `\mt_rand` {
+		if len(args) != 0 && len(args) != 2 {
+			b.report(n, LevelWarning, "argCount", "mt_rand expects 0 or 2 args")
+		}
+		return
+	}
+
+	if fn.Name == `\compact` || fn.Name == `\func_get_args` {
+		// there is no need to check the number of arguments for these functions.
+		return
+	}
+
+	if !enoughArgs(args, fn) {
+		b.report(n, LevelWarning, "argCount", "Too few arguments for %s", meta.NameNodeToString(n))
+	}
+}
+
+func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
+	call := resolveFunctionCall(b.walker.ctx.sc, b.classParseState(), b.walker.ctx.customTypes, e)
+	fqName := call.funcName
+
+	if call.canAnalyze {
+		b.checkCallArgs(e.Function, e.Args, call.info)
+		b.checkDeprecatedFunctionCall(e, &call)
+		b.checkFunctionAvailability(e, &call)
+		b.walker.r.checkNameCase(e.Function, call.funcName, call.info.Name)
+	}
+
 	switch fqName {
+	case `\strip_tags`:
+		if len(e.Args) < 2 {
+			break
+		}
+		b.checkStripTags(e)
 	case `\preg_match`, `\preg_match_all`, `\preg_replace`, `\preg_split`:
 		if len(e.Args) < 1 {
 			break
@@ -649,6 +804,241 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 		}
 		// TODO: handle fprintf as well?
 		b.checkFormatString(e, e.Arg(0))
+	case `\is_real`:
+		b.report(e, LevelNotice, "langDeprecated", "use is_float function instead of is_real")
+	case `\array_key_exists`:
+		b.checkArrayKeyExistsCall(e)
+	}
+}
+
+func (b *blockLinter) checkArrayKeyExistsCall(e *ir.FunctionCallExpr) {
+	if len(e.Args) < 2 {
+		return
+	}
+
+	typ := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, e.Arg(1).Expr)
+
+	onlyObjects := !typ.Find(func(typ string) bool {
+		return !types.IsClassType(typ)
+	})
+
+	if onlyObjects {
+		b.report(e, LevelWarning, "langDeprecated", "since PHP 7.4, using array_key_exists() with an object has been deprecated, use isset() or property_exists() instead")
+	}
+}
+
+func (b *blockLinter) checkStripTags(e *ir.FunctionCallExpr) {
+	reportArg := func(n ir.Node, format string, args ...interface{}) {
+		message := fmt.Sprintf(format, args...)
+		b.report(n, LevelWarning, "stripTags", "$allowed_tags argument: "+message)
+	}
+
+	normalizeTag := func(s string) string {
+		s = strings.ReplaceAll(s, " ", "")
+		if strings.HasSuffix(s, "/>") {
+			s = strings.TrimSuffix(s, "/>") + ">"
+		}
+		s = strings.ToLower(s)
+		return s
+	}
+
+	set := make(map[string]string)
+	addTag := func(n ir.Node, tag string) {
+		normalized := normalizeTag(tag)
+		if prev := set[normalized]; prev != "" {
+			if prev == tag {
+				reportArg(n, "tag '%s' is duplicated", tag)
+			} else {
+				reportArg(n, "tag '%s' is duplicated, previously spelled as '%s'", tag, prev)
+			}
+		} else {
+			set[normalized] = tag
+		}
+	}
+
+	switch allowed := e.Arg(1).Expr.(type) {
+	case *ir.ArrayExpr:
+		for _, item := range allowed.Items {
+			literal, ok := item.Val.(*ir.String)
+			if !ok {
+				continue
+			}
+			s := strings.TrimSpace(literal.Value)
+			if strings.HasPrefix(s, "<") {
+				reportArg(item.Val, "'<' and '>' are not needed for tags when using array argument")
+			}
+			addTag(literal, literal.Value)
+		}
+	case *ir.String:
+		s := allowed.Value
+		if strings.ContainsAny(s, `'"`) {
+			reportArg(allowed, "using values/attrs is an error; they make matching always fail")
+			break
+		}
+		for {
+			s = strings.TrimLeft(s, " \n\r\t")
+			end := strings.IndexByte(s, '>')
+			if end == -1 {
+				break
+			}
+			tag := s[:end+1]
+			if strings.HasSuffix(tag, "/>") {
+				fixed := strings.TrimSuffix(tag, "/>") + ">"
+				reportArg(allowed, "'%s' should be written as '%s'", tag, fixed)
+			}
+			if strings.Contains(tag, " ") {
+				reportArg(allowed, "tag '%s' should not contain spaces", tag)
+			}
+			addTag(allowed, tag)
+			s = s[end+1:]
+		}
+	}
+}
+
+func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
+	parseState := b.classParseState()
+
+	call := resolveMethodCall(b.walker.ctx.sc, parseState, b.walker.ctx.customTypes, e)
+	if !call.canAnalyze {
+		return
+	}
+
+	if !call.isMagic {
+		b.checkCallArgs(e.Method, e.Args, call.info)
+	}
+
+	if !call.isFound && !call.isMagic && !parseState.IsTrait && !b.walker.isThisInsideClosure(e.Variable) {
+		// The method is undefined but we permit calling it if `method_exists`
+		// was called prior to that call.
+		if !b.walker.ctx.customMethodExists(e.Variable, call.methodName) {
+			b.report(e.Method, LevelError, "undefined", "Call to undefined method {%s}->%s()", call.methodCallerType, call.methodName)
+		}
+	} else if !call.isMagic && !parseState.IsTrait {
+		// Method is defined.
+		b.walker.r.checkNameCase(e.Method, call.methodName, call.info.Name)
+		if call.info.IsStatic() {
+			b.report(e.Method, LevelWarning, "callStatic", "Calling static method as instance method")
+		}
+	}
+
+	if call.info.Doc.Deprecated {
+		if call.info.Doc.DeprecationNote != "" {
+			b.report(e.Method, LevelNotice, "deprecated", "Call to deprecated method {%s}->%s() (%s)",
+				call.methodCallerType, call.methodName, call.info.Doc.DeprecationNote)
+		} else {
+			b.report(e.Method, LevelNotice, "deprecated", "Call to deprecated method {%s}->%s()",
+				call.methodCallerType, call.methodName)
+		}
+	}
+
+	if call.isFound && !call.isMagic && !canAccess(parseState, call.className, call.info.AccessLevel) {
+		b.report(e.Method, LevelError, "accessLevel", "Cannot access %s method %s->%s()", call.info.AccessLevel, call.className, call.methodName)
+	}
+}
+
+func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
+	call := resolveStaticMethodCall(b.classParseState(), e)
+	if !call.canAnalyze {
+		return
+	}
+
+	b.checkClassSpecialNameCase(e, call.className)
+
+	if !call.isMagic {
+		b.checkCallArgs(e.Call, e.Args, call.methodInfo.Info)
+	}
+
+	if !call.isFound && !call.isMagic && !b.classParseState().IsTrait {
+		b.report(e.Call, LevelError, "undefined", "Call to undefined method %s::%s()", call.className, call.methodName)
+	} else if !call.isParentCall && !call.methodInfo.Info.IsStatic() && !call.isMagic && !b.classParseState().IsTrait {
+		// Method is defined.
+		// parent::f() is permitted.
+		b.report(e.Call, LevelWarning, "callStatic", "Calling instance method as static method")
+	}
+
+	if call.methodInfo.Info.Doc.Deprecated {
+		if call.methodInfo.Info.Doc.DeprecationNote != "" {
+			b.report(e.Call, LevelNotice, "deprecated", "Call to deprecated static method %s::%s() (%s)",
+				call.className, call.methodName, call.methodInfo.Info.Doc.DeprecationNote)
+		} else {
+			b.report(e.Call, LevelNotice, "deprecated", "Call to deprecated static method %s::%s()",
+				call.className, call.methodName)
+		}
+	}
+
+	if call.isFound && !canAccess(b.classParseState(), call.methodInfo.ClassName, call.methodInfo.Info.AccessLevel) {
+		b.report(e.Call, LevelError, "accessLevel", "Cannot access %s method %s::%s()", call.methodInfo.Info.AccessLevel, call.methodInfo.ClassName, call.methodName)
+	}
+}
+
+func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
+	fetch := resolvePropertyFetch(b.walker.ctx.sc, b.classParseState(), b.walker.ctx.customTypes, e)
+	if !fetch.canAnalyze {
+		return
+	}
+
+	if !fetch.isFound && !fetch.isMagic && !b.classParseState().IsTrait && !b.walker.isThisInsideClosure(e.Variable) {
+		b.report(e.Property, LevelError, "undefined", "Property {%s}->%s does not exist", fetch.propertyFetchType, fetch.propertyNode.Value)
+	}
+
+	if fetch.isFound && !fetch.isMagic && !canAccess(b.classParseState(), fetch.className, fetch.info.AccessLevel) {
+		b.report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s->%s", fetch.info.AccessLevel, fetch.className, fetch.propertyNode.Value)
+	}
+}
+
+func (b *blockLinter) checkStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) {
+	fetch := resolveStaticPropertyFetch(b.classParseState(), e)
+	if !fetch.canAnalyze {
+		return
+	}
+
+	b.checkClassSpecialNameCase(e, fetch.className)
+
+	if !fetch.isFound && !b.classParseState().IsTrait {
+		b.report(e.Property, LevelError, "undefined", "Property %s::$%s does not exist", fetch.className, fetch.propertyName)
+	}
+
+	if fetch.isFound && !canAccess(b.classParseState(), fetch.info.ClassName, fetch.info.Info.AccessLevel) {
+		b.report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s::$%s", fetch.info.Info.AccessLevel, fetch.info.ClassName, fetch.propertyName)
+	}
+}
+
+func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
+	fetch := resolveClassConstFetch(b.classParseState(), e)
+	if !fetch.canAnalyze {
+		return
+	}
+
+	b.checkClassSpecialNameCase(e, fetch.className)
+
+	if !fetch.isFound && !b.classParseState().IsTrait {
+		b.walker.r.Report(e.ConstantName, LevelError, "undefined", "Class constant %s::%s does not exist", fetch.className, fetch.constName)
+	}
+
+	if fetch.isFound && !canAccess(b.classParseState(), fetch.implClassName, fetch.info.AccessLevel) {
+		b.walker.r.Report(e.ConstantName, LevelError, "accessLevel", "Cannot access %s constant %s::%s", fetch.info.AccessLevel, fetch.implClassName, fetch.constName)
+	}
+}
+
+func (b *blockLinter) checkClassSpecialNameCase(n ir.Node, className string) {
+	// Since for resolving class names we use the solver.GetClassName function,
+	// which resolves unknown classes as '\' + the passed class name, then for
+	// misspelled special class names (self, static, parent) we get something
+	// like '\SELF'. For correctly spelled ones, we get the specific class name.
+	// Therefore, to catch this case, we compare the resolved class name with
+	// '\' + the correct spelling of the special name, case insensitive.
+	// If there is a match, it means that the name was originally spelled in the wrong case.
+
+	names := []string{
+		`\self`,
+		`\static`,
+		`\parent`,
+	}
+
+	for _, name := range names {
+		if strings.EqualFold(className, name) {
+			b.walker.r.Report(n, LevelNotice, "nameMismatch", "%s should be spelled as %s", strings.TrimPrefix(className, `\`), strings.TrimPrefix(name, `\`))
+		}
 	}
 }
 
@@ -684,7 +1074,7 @@ func (b *blockLinter) checkRegexp(e *ir.FunctionCallExpr, arg *ir.Argument) {
 	simplified := b.walker.r.reSimplifier.simplifyRegexp(pat)
 	if simplified != "" {
 		rawPattern := b.walker.r.nodeText(s)
-		b.report(arg, LevelDoNotReject, "regexpSimplify", "May re-write %s as '%s'",
+		b.report(arg, LevelNotice, "regexpSimplify", "May re-write %s as '%s'",
 			rawPattern, simplified)
 	}
 	issues, err := b.walker.r.reVet.CheckRegexp(pat)
@@ -755,6 +1145,14 @@ func (b *blockLinter) checkFormatString(e *ir.FunctionCallExpr, arg *ir.Argument
 	}
 }
 
-func (b *blockLinter) isArrayType(typ meta.TypesMap) bool {
-	return typ.Len() == 1 && typ.Find(meta.IsArrayType)
+func (b *blockLinter) isArrayType(typ types.Map) bool {
+	return typ.Len() == 1 && typ.Find(types.IsArrayType)
+}
+
+func (b *blockLinter) classParseState() *meta.ClassParseState {
+	return b.walker.r.ctx.st
+}
+
+func (b *blockLinter) metaInfo() *meta.Info {
+	return b.walker.r.ctx.st.Info
 }

@@ -12,24 +12,29 @@ import (
 	"github.com/VKCOM/noverify/src/solver"
 )
 
-func init() {
-	linter.RegisterBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker { return &block{ctx: ctx} })
+var customFlag = flag.String("custom-flag", "", "An example of the additional linter flag")
 
-	linter.DeclareCheck(linter.CheckInfo{
+func addCheckers(config *linter.Config) {
+	config.Checkers.AddBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker {
+		return &block{ctx: ctx}
+	})
+	config.Checkers.DeclareChecker(linter.CheckerInfo{
 		Name:    "exampleStrictCmp",
 		Default: true,
 		Comment: "Report not-strict-enough comparisons.",
 	})
 }
 
-var customFlag = flag.String("custom-flag", "", "An example of the additional linter flag")
-
 func main() {
-	log.SetFlags(log.Flags() | log.Lmicroseconds)
+	log.SetFlags(log.Flags() | log.Ltime)
+
+	config := linter.NewConfig()
+	addCheckers(config)
 
 	// Config argument can be nil to use "all default" behavior.
 	cmd.Main(&cmd.MainConfig{
 		AfterFlagParse: useCustomFlags,
+		LinterConfig:   config,
 	})
 }
 

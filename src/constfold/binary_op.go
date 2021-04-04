@@ -8,11 +8,17 @@ import (
 func Plus(x, y meta.ConstValue) meta.ConstValue {
 	switch x.Type {
 	case meta.Integer:
-		if y.Type == meta.Integer {
+		switch y.Type {
+		case meta.Integer:
 			return meta.NewIntConst(x.GetInt() + y.GetInt())
+		case meta.Float:
+			return meta.NewFloatConst(float64(x.GetInt()) + y.GetFloat())
 		}
 	case meta.Float:
-		if y.Type == meta.Float {
+		switch y.Type {
+		case meta.Integer:
+			return meta.NewFloatConst(x.GetFloat() + float64(y.GetInt()))
+		case meta.Float:
 			return meta.NewFloatConst(x.GetFloat() + y.GetFloat())
 		}
 	}
@@ -23,11 +29,17 @@ func Plus(x, y meta.ConstValue) meta.ConstValue {
 func Minus(x, y meta.ConstValue) meta.ConstValue {
 	switch x.Type {
 	case meta.Integer:
-		if y.Type == meta.Integer {
+		switch y.Type {
+		case meta.Integer:
 			return meta.NewIntConst(x.GetInt() - y.GetInt())
+		case meta.Float:
+			return meta.NewFloatConst(float64(x.GetInt()) - y.GetFloat())
 		}
 	case meta.Float:
-		if y.Type == meta.Float {
+		switch y.Type {
+		case meta.Integer:
+			return meta.NewFloatConst(x.GetFloat() - float64(y.GetInt()))
+		case meta.Float:
 			return meta.NewFloatConst(x.GetFloat() - y.GetFloat())
 		}
 	}
@@ -38,11 +50,17 @@ func Minus(x, y meta.ConstValue) meta.ConstValue {
 func Mul(x, y meta.ConstValue) meta.ConstValue {
 	switch x.Type {
 	case meta.Integer:
-		if y.Type == meta.Integer {
+		switch y.Type {
+		case meta.Integer:
 			return meta.NewIntConst(x.GetInt() * y.GetInt())
+		case meta.Float:
+			return meta.NewFloatConst(float64(x.GetInt()) * y.GetFloat())
 		}
 	case meta.Float:
-		if y.Type == meta.Float {
+		switch y.Type {
+		case meta.Integer:
+			return meta.NewFloatConst(x.GetFloat() * float64(y.GetInt()))
+		case meta.Float:
 			return meta.NewFloatConst(x.GetFloat() * y.GetFloat())
 		}
 	}

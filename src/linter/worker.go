@@ -15,17 +15,27 @@ import (
 	"time"
 
 	"github.com/quasilyte/regex/syntax"
+	"github.com/z7zmey/php-parser/pkg/ast"
+	"github.com/z7zmey/php-parser/pkg/conf"
+	phperrors "github.com/z7zmey/php-parser/pkg/errors"
+	"github.com/z7zmey/php-parser/pkg/parser"
 
-	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/quickfix"
+	"github.com/VKCOM/noverify/src/types"
 	"github.com/VKCOM/noverify/src/workspace"
 )
+
+type ParseResult struct {
+	RootNode *ir.Root
+	Reports  []*Report
+
+	walker *rootWalker
+}
 
 // Worker is a linter handle that is expected to be executed in a single goroutine context.
 //
@@ -44,24 +54,17 @@ type Worker struct {
 	needReports bool
 
 	AllowDisable *regexp.Regexp
+
+	config *Config
+	info   *meta.Info
 }
 
-func NewLintingWorker(id int) *Worker {
-	w := newWorker(id)
-	w.needReports = true
-	return w
-}
-
-func NewIndexingWorker(id int) *Worker {
-	w := newWorker(id)
-	w.needReports = false
-	return w
-}
-
-func newWorker(id int) *Worker {
+func newWorker(config *Config, info *meta.Info, id int) *Worker {
 	ctx := NewWorkerContext()
 	irConverter := irconv.NewConverter(ctx.phpdocTypeParser)
 	return &Worker{
+		config: config,
+		info:   info,
 		id:     id,
 		ctx:    ctx,
 		irconv: irConverter,
@@ -76,27 +79,27 @@ func newWorker(id int) *Worker {
 
 func (w *Worker) ID() int { return w.id }
 
+func (w *Worker) MetaInfo() *meta.Info { return w.info }
+
 // ParseContents parses specified contents (or file) and returns *RootWalker.
 // Function does not update global meta.
-func (w *Worker) ParseContents(filename string, contents []byte, lineRanges []git.LineRange) (root *ir.Root, walker *RootWalker, err error) {
+func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			s := fmt.Sprintf("Panic while parsing %s: %s\n\nStack trace: %s", filename, r, dbg.Stack())
+			s := fmt.Sprintf("Panic while parsing %s: %s\n\nStack trace: %s", fileInfo.Name, r, dbg.Stack())
 			log.Print(s)
 			err = errors.New(s)
 		}
 	}()
 
-	start := time.Now()
-
 	// TODO: Ragel lexer can handle non-UTF8 input.
 	// We can simplify code below and read from files directly.
 
 	var rd inputs.ReadCloseSizer
-	if contents == nil {
-		rd, err = SrcInput.NewReader(filename)
+	if fileInfo.Contents == nil {
+		rd, err = w.config.SrcInput.NewReader(fileInfo.Name)
 	} else {
-		rd, err = SrcInput.NewBytesReader(filename, contents)
+		rd, err = w.config.SrcInput.NewBytesReader(fileInfo.Name, fileInfo.Contents)
 	}
 	if err != nil {
 		log.Panicf("open source input: %v", err)
@@ -105,36 +108,68 @@ func (w *Worker) ParseContents(filename string, contents []byte, lineRanges []gi
 
 	b := w.ctx.scratchBuf
 	b.Reset()
-	b.ReadFrom(rd)
-	contents = append(make([]byte, 0, b.Len()), b.Bytes()...)
+	if _, err := b.ReadFrom(rd); err != nil {
+		return result, err
+	}
+	contents := append(make([]byte, 0, b.Len()), b.Bytes()...)
 
-	waiter := BeforeParse(len(contents), filename)
+	waiter := beforeParse(len(contents), fileInfo.Name)
 	defer waiter.Finish()
 
-	parser := php7.NewParser(contents)
-	parser.WithFreeFloating()
-	parser.Parse()
+	var parserErrors []*phperrors.Error
+	rootNode, err := parser.Parse(contents, conf.Config{
+		Version: w.config.PhpVersion,
+		ErrorHandlerFunc: func(e *phperrors.Error) {
+			parserErrors = append(parserErrors, e)
+		},
+	})
+	if err != nil {
+		return ParseResult{}, fmt.Errorf("parse error: %v", err.Error())
+	}
 
-	atomic.AddInt64(&initParseTime, int64(time.Since(start)))
+	rootIR := w.irconv.ConvertRoot(rootNode.(*ast.Root))
 
-	return w.analyzeFile(filename, contents, parser, lineRanges)
+	file := workspace.NewFile(fileInfo.Name, contents)
+	walker, err := w.analyzeFile(file, rootIR)
+	if err != nil {
+		return result, err
+	}
+
+	for _, e := range parserErrors {
+		walker.Report(nil, LevelError, "syntax", "Syntax error: "+e.String())
+	}
+
+	result = ParseResult{
+		RootNode: rootIR,
+		Reports:  walker.reports,
+		walker:   walker,
+	}
+	return result, nil
+}
+
+func (w *Worker) parseWithCache(cacheFilename string, file workspace.FileInfo) error {
+	result, err := w.ParseContents(file)
+	if err != nil {
+		return err
+	}
+	return createMetaCacheFile(file.Name, cacheFilename, result.walker)
 }
 
 // IndexFile parses the file and fills in the meta info. Can use cache.
-func (w *Worker) IndexFile(filename string, contents []byte) error {
-	if CacheDir == "" {
-		_, w, err := w.ParseContents(filename, contents, nil)
+func (w *Worker) IndexFile(file workspace.FileInfo) error {
+	if w.config.CacheDir == "" {
+		result, err := w.ParseContents(file)
 		if w != nil {
-			updateMetaInfo(filename, &w.meta)
+			updateMetaInfo(w.info, file.Name, &result.walker.meta)
 		}
 		return err
 	}
 
 	h := md5.New()
 
-	if contents == nil {
+	if file.Contents == nil {
 		start := time.Now()
-		fp, err := os.Open(filename)
+		fp, err := os.Open(file.Name)
 		if err != nil {
 			return err
 		}
@@ -143,46 +178,36 @@ func (w *Worker) IndexFile(filename string, contents []byte) error {
 			return err
 		}
 		atomic.AddInt64(&initFileReadTime, int64(time.Since(start)))
-	} else {
-		h.Write(contents)
+	} else if _, err := h.Write(file.Contents); err != nil {
+		return err
 	}
 
 	contentsHash := fmt.Sprintf("%x", h.Sum(nil))
 
-	cacheFilenamePart := filename
+	cacheFilenamePart := file.Name
 
-	volumeName := filepath.VolumeName(filename)
+	volumeName := filepath.VolumeName(file.Name)
 
 	// windows user supplied full path to directory to be analyzed,
 	// but windows paths does not support ":" in the middle
 	if len(volumeName) == 2 && volumeName[1] == ':' {
-		cacheFilenamePart = filename[0:1] + "_" + filename[2:]
+		cacheFilenamePart = file.Name[0:1] + "_" + file.Name[2:]
 	}
 
-	cacheFile := filepath.Join(CacheDir, cacheFilenamePart+"."+contentsHash)
+	cacheFile := filepath.Join(w.config.CacheDir, cacheFilenamePart+"."+contentsHash)
 
 	start := time.Now()
+
 	fp, err := os.Open(cacheFile)
 	if err != nil {
-		_, w, err := w.ParseContents(filename, contents, nil)
-		if err != nil {
-			return err
-		}
-
-		return createMetaCacheFile(filename, cacheFile, w)
+		return w.parseWithCache(cacheFile, file)
 	}
 	defer fp.Close()
 
-	if err := restoreMetaFromCache(filename, fp); err != nil {
+	if err := restoreMetaFromCache(w.info, w.config.Checkers.cachers, file.Name, fp); err != nil {
 		// do not really care about why exactly reading from cache failed
 		os.Remove(cacheFile)
-
-		_, w, err := w.ParseContents(filename, contents, nil)
-		if err != nil {
-			return err
-		}
-
-		return createMetaCacheFile(filename, cacheFile, w)
+		return w.parseWithCache(cacheFile, file)
 	}
 
 	atomic.AddInt64(&initCacheReadTime, int64(time.Since(start)))
@@ -192,11 +217,11 @@ func (w *Worker) IndexFile(filename string, contents []byte) error {
 func (w *Worker) doParseFile(f workspace.FileInfo) []*Report {
 	var err error
 
-	if DebugParseDuration > 0 {
+	if w.config.DebugParseDuration > 0 {
 		start := time.Now()
 		defer func() {
-			if dur := time.Since(start); dur > DebugParseDuration {
-				log.Printf("Parsing of %s took %s", f.Filename, dur)
+			if dur := time.Since(start); dur > w.config.DebugParseDuration {
+				log.Printf("Parsing of %s took %s", f.Name, dur)
 			}
 		}()
 	}
@@ -204,44 +229,40 @@ func (w *Worker) doParseFile(f workspace.FileInfo) []*Report {
 	var reports []*Report
 
 	if w.needReports {
-		var walker *RootWalker
-		_, walker, err = w.ParseContents(f.Filename, f.Contents, f.LineRanges)
+		var result ParseResult
+		result, err = w.ParseContents(f)
 		if err == nil {
-			reports = walker.GetReports()
+			reports = result.Reports
 		}
 	} else {
-		err = w.IndexFile(f.Filename, f.Contents)
+		err = w.IndexFile(f)
 	}
 
 	if err != nil {
-		log.Printf("Failed parsing %s: %s", f.Filename, err.Error())
-		lintdebug.Send("Failed parsing %s: %s", f.Filename, err.Error())
+		log.Printf("Failed parsing %s: %s", f.Name, err.Error())
+		lintdebug.Send("Failed parsing %s: %s", f.Name, err.Error())
 	}
 
 	return reports
 }
 
-func (w *Worker) analyzeFile(filename string, contents []byte, parser *php7.Parser, lineRanges []git.LineRange) (*ir.Root, *RootWalker, error) {
-	start := time.Now()
-	rootNode := parser.GetRootNode()
-
+func (w *Worker) analyzeFile(file *workspace.File, rootNode *ir.Root) (*rootWalker, error) {
 	if rootNode == nil {
-		lintdebug.Send("Could not parse %s at all due to errors", filename)
-		return nil, nil, errors.New("Empty root node")
+		lintdebug.Send("Could not parse %s at all due to errors", file.Name())
+		return nil, errors.New("empty root node")
 	}
 
-	rootIR := w.irconv.ConvertRoot(rootNode)
-
-	st := &meta.ClassParseState{CurrentFile: filename}
-	walker := &RootWalker{
-		lineRanges: lineRanges,
-		ctx:        newRootContext(w.ctx, st),
+	st := &meta.ClassParseState{Info: w.info, CurrentFile: file.Name()}
+	walker := &rootWalker{
+		config: w.config,
+		file:   file,
+		ctx:    newRootContext(w.config, w.ctx, st),
 
 		// We clone rules sets to remove all rules that
 		// should not be applied to this file because of the @path.
-		anyRset:   cloneRulesForFile(filename, Rules.Any),
-		rootRset:  cloneRulesForFile(filename, Rules.Root),
-		localRset: cloneRulesForFile(filename, Rules.Local),
+		anyRset:   cloneRulesForFile(file.Name(), w.config.Rules.Any),
+		rootRset:  cloneRulesForFile(file.Name(), w.config.Rules.Root),
+		localRset: cloneRulesForFile(file.Name(), w.config.Rules.Local),
 
 		reVet: &regexpVet{
 			parser: w.reParser,
@@ -254,27 +275,39 @@ func (w *Worker) analyzeFile(filename string, contents []byte, parser *php7.Pars
 		allowDisabledRegexp: w.AllowDisable,
 	}
 
-	walker.InitFromParser(contents, parser)
 	walker.InitCustom()
 
 	walker.beforeEnterFile()
-	rootIR.Walk(walker)
-	if meta.IsIndexingComplete() {
-		AnalyzeFileRootLevel(rootIR, walker)
+	rootNode.Walk(walker)
+	if w.info.IsIndexingComplete() {
+		analyzeFileRootLevel(rootNode, walker)
 	}
 	walker.afterLeaveFile()
 
 	if len(walker.ctx.fixes) != 0 {
-		if err := quickfix.Apply(filename, contents, walker.ctx.fixes); err != nil {
-			linterError(filename, "apply quickfix: %v", err)
+		if err := quickfix.Apply(file.Name(), file.Contents(), walker.ctx.fixes); err != nil {
+			linterError(file.Name(), "apply quickfix: %v", err)
 		}
 	}
 
-	for _, e := range parser.GetErrors() {
-		walker.Report(nil, LevelError, "syntax", "Syntax error: "+e.String())
+	return walker, nil
+}
+
+// analyzeFileRootLevel does analyze file top-level code.
+// This method is exposed for language server use, you usually
+// do not need to call it yourself.
+func analyzeFileRootLevel(rootNode ir.Node, d *rootWalker) {
+	sc := meta.NewScope()
+	sc.AddVarName("argv", types.NewMap("string[]"), "predefined", meta.VarAlwaysDefined)
+	sc.AddVarName("argc", types.NewMap("int"), "predefined", meta.VarAlwaysDefined)
+
+	b := newBlockWalker(d, sc)
+	b.ignoreFunctionBodies = true
+	b.rootLevel = true
+
+	for _, createFn := range d.customBlock {
+		b.custom = append(b.custom, createFn(&BlockContext{w: b}))
 	}
 
-	atomic.AddInt64(&initWalkTime, int64(time.Since(start)))
-
-	return rootIR, walker, nil
+	rootNode.Walk(b)
 }

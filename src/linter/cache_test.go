@@ -13,11 +13,13 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
+	"github.com/VKCOM/noverify/src/git"
 	"github.com/VKCOM/noverify/src/linttest/assert"
+	"github.com/VKCOM/noverify/src/workspace"
 )
 
 func TestCache(t *testing.T) {
-	go MemoryLimiterThread()
+	go MemoryLimiterThread(0)
 
 	// If this test is failing, you haven't broken anything (unless the decoding is failing),
 	// but meta cache probably needs to be invalidated.
@@ -101,17 +103,30 @@ function as_shape($x) {
   return $x;
 }
 
+/** @param int|null */
+function return_null() {
+  return null;
+}
+
+class ByNull {
+  /** @param int|null */
+  public function return_null() {
+    return null;
+  }
+}
+
 main();
 `
 
+	l := NewLinter(NewConfig())
 	runTest := func(iteration int) {
-		_, root, err := ParseContents("cachetest.php", []byte(code), nil, nil)
+		result, err := parseContents(l, "cachetest.php", []byte(code), nil)
 		if err != nil {
 			t.Fatalf("parse error: %v", err)
 		}
 		var buf bytes.Buffer
 		wr := bufio.NewWriter(&buf)
-		if err := writeMetaCache(wr, root); err != nil {
+		if err := writeMetaCache(wr, result.walker); err != nil {
 			t.Fatalf("write cache: %v", err)
 		}
 		wr.Flush()
@@ -126,7 +141,7 @@ main();
 		//
 		// If cache encoding changes, there is a very high chance that
 		// encoded data lengh will change as well.
-		wantLen := 5030
+		wantLen := 5316
 		haveLen := buf.Len()
 		if haveLen != wantLen {
 			t.Errorf("cache len mismatch:\nhave: %d\nwant: %d", haveLen, wantLen)
@@ -135,7 +150,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "62321eae8ac6f753221d367a0a0e2a3190202ef49c608ceef6e03dd6b09906c64bf20a1470abef9e26b917836a68415a5459491208fb692d8773524cdbe6d239"
+		wantStrings := "63e0138101dfef86e5fa6c4ba977e34846d92999f6f4248050f3f84bca820970dcbd447a0f044ede1f32ef1f4a04b4acb5c2fb4f13caf50de6220c05e7c1e1ef"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)
@@ -144,9 +159,9 @@ main();
 		// 3. Check meta decoding.
 		//
 		// If it fails, encoding and/or decoding is broken.
-		encodedMeta := &root.meta
+		encodedMeta := &result.walker.meta
 		decodedMeta := &fileMeta{}
-		if err := readMetaCache(bytes.NewReader(buf.Bytes()), "", decodedMeta); err != nil {
+		if err := readMetaCache(bytes.NewReader(buf.Bytes()), nil, "", decodedMeta); err != nil {
 			t.Errorf("decoding failed: %v", err)
 		} else {
 			// TODO: due to lots of important unexported fields,
@@ -173,6 +188,17 @@ func collectCacheStrings(data string) string {
 	sort.Strings(parts)
 
 	enc := sha512.New()
-	enc.Write([]byte(strings.Join(parts, ",")))
+	_, _ = enc.Write([]byte(strings.Join(parts, ","))) // sha512.Write always returns nil error
 	return hex.EncodeToString(enc.Sum(nil))
+}
+
+func parseContents(l *Linter, filename string, contents []byte, lineRanges []git.LineRange) (ParseResult, error) {
+	w := l.NewLintingWorker(0)
+	w.AllowDisable = l.config.AllowDisable
+	file := workspace.FileInfo{
+		Name:       filename,
+		Contents:   contents,
+		LineRanges: lineRanges,
+	}
+	return w.ParseContents(file)
 }

@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"errors"
 
-	"github.com/VKCOM/noverify/src/php/parser/node"
-	"github.com/VKCOM/noverify/src/php/parser/node/stmt"
-	"github.com/VKCOM/noverify/src/php/parser/php7"
+	"github.com/z7zmey/php-parser/pkg/ast"
+	"github.com/z7zmey/php-parser/pkg/conf"
+	phperrors "github.com/z7zmey/php-parser/pkg/errors"
+	"github.com/z7zmey/php-parser/pkg/parser"
+	"github.com/z7zmey/php-parser/pkg/version"
 )
 
 // Parse combines ParseFile and ParseStmt.
@@ -15,7 +17,7 @@ import (
 // Otherwise it parsed with ParseStmt.
 //
 // Useful for testing.
-func Parse(code []byte) (node.Node, []byte, error) {
+func Parse(code []byte) (ast.Vertex, []byte, error) {
 	if bytes.HasPrefix(code, []byte("<?")) || bytes.HasPrefix(code, []byte("<?php")) {
 		n, err := ParseFile(code)
 		return n, code, err
@@ -26,14 +28,27 @@ func Parse(code []byte) (node.Node, []byte, error) {
 // ParseFile parses PHP file sources and returns its AST root.
 //
 // Useful for testing.
-func ParseFile(code []byte) (*node.Root, error) {
-	p := php7.NewParser(code)
-	p.WithFreeFloating()
-	p.Parse()
-	if len(p.GetErrors()) != 0 {
-		return nil, errors.New(p.GetErrors()[0].String())
+func ParseFile(code []byte) (*ast.Root, error) {
+	phpVersion, err := version.New("7.4")
+	if err != nil {
+		return nil, err
 	}
-	return p.GetRootNode(), nil
+
+	var parserErrors []*phperrors.Error
+	rootNode, err := parser.Parse(code, conf.Config{
+		Version: phpVersion,
+		ErrorHandlerFunc: func(e *phperrors.Error) {
+			parserErrors = append(parserErrors, e)
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(parserErrors) != 0 {
+		return nil, errors.New(parserErrors[0].String())
+	}
+
+	return rootNode.(*ast.Root), nil
 }
 
 // ParseStmt parses a single PHP statement (which can be an expression).
@@ -43,7 +58,7 @@ func ParseFile(code []byte) (*node.Root, error) {
 // Result node source positions are precise only for that updated slice.
 //
 // Useful for testing.
-func ParseStmt(code []byte) (node.Node, []byte, error) {
+func ParseStmt(code []byte) (ast.Vertex, []byte, error) {
 	code = append([]byte("<?php "), code...)
 	code = append(code, ';')
 	root, err := ParseFile(code)
@@ -52,7 +67,19 @@ func ParseStmt(code []byte) (node.Node, []byte, error) {
 	}
 	stmts := root.Stmts
 	if len(stmts) == 0 {
-		return &stmt.Nop{}, code, nil
+		return &ast.StmtNop{}, code, nil
 	}
 	return root.Stmts[0], code, nil
+}
+
+// ParseStmtList parses a list of PHP statement (which can be an expression).
+//
+// Useful for testing.
+func ParseStmtList(code []byte) (*ast.Root, error) {
+	code = append([]byte("<?php "), code...)
+	root, err := ParseFile(code)
+	if err != nil {
+		return nil, err
+	}
+	return root, nil
 }

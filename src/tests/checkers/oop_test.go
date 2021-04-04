@@ -74,6 +74,33 @@ class Bad2 extends WithTwoParams {
 	test.RunAndMatch()
 }
 
+func TestParentConstructorCallWithOtherStaticCall(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class Foo {
+	public function __construct(int $a) {}
+}
+
+class Boo extends Foo {
+  /** doc */
+  public static function getId(): int {}
+
+  public function __construct() {
+    parent::__construct(self::getId());
+  }
+}
+
+class Goo extends Foo {
+  /** doc */
+  public static function getId(): int {}
+
+  public function __construct() {
+    parent::__construct(100);
+    $_ = self::getId();
+  }
+}
+`)
+}
+
 func TestNewAbstract(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -695,7 +722,7 @@ func TestClosureLateBinding(t *testing.T) {
 	`)
 	test.Expect = []string{
 		"Undefined variable: a",
-		"Call to undefined method {mixed}->method()",
+		"Call to undefined method {undefined}->method()",
 	}
 	linttest.RunFilterMatch(test, "undefined")
 }
@@ -1237,7 +1264,7 @@ trait AbstractTraitAB {
 
 		`Class \T6\Bad must implement \T6\TraitAbstractA::a method`,
 	}
-	linttest.RunFilterMatch(test, `unimplemented`, `nameCase`, `undefined`)
+	linttest.RunFilterMatch(test, `unimplemented`, `nameMismatch`, `undefined`)
 }
 
 func TestInterfaceRules(t *testing.T) {
@@ -1436,6 +1463,84 @@ function f($arg) {
 `)
 	test.Expect = []string{
 		`Call to undefined method \Foo::non_existing_method()`,
+	}
+	test.RunAndMatch()
+}
+
+func TestGroupUse(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+namespace Test;
+
+class TestClass {}
+class TestClass2 {}
+
+function testFunction() {}
+function testFunction2() {}
+`)
+
+	test.AddFile(`<?php
+namespace Test\Something;
+
+class TestSomethingClass {}
+class TestSomethingClass2 {}
+
+function testSomethingFunction() {}
+function testSomethingFunction2() {}
+`)
+
+	test.AddFile(`<?php
+namespace Foo;
+
+use Test\{
+	TestClass, 
+	TestClass2 as SomeClass,
+
+	Something\TestSomethingClass, 
+	Something\TestSomethingClass2 as SomethingClass
+};
+
+use function Test\{
+	testFunction, 
+	testFunction2 as someFunc,
+
+	Something\testSomethingFunction,
+	Something\testSomethingFunction2 as somethingFunc
+};
+
+function f() {
+    $_ = new TestClass();
+    $_ = new SomeClass();
+    $_ = new TestSomethingClass();
+    $_ = new SomethingClass();
+
+    $_ = testFunction();
+    $_ = someFunc();
+    $_ = testSomethingFunction();
+    $_ = somethingFunc();
+}
+`)
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
+func TestTypeHintClassCaseFunctionParam(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {}
+
+class Boo {
+	/** */
+	public function a2(foo $b) {}
+}
+
+function a1(Foo $a, foo $b, boo $c) {}
+`)
+
+	test.Expect = []string{
+		`\foo should be spelled \Foo`,
+		`\foo should be spelled \Foo`,
+		`\boo should be spelled \Boo`,
 	}
 	test.RunAndMatch()
 }

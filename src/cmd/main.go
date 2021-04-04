@@ -17,11 +17,9 @@ import (
 
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/cmd/stubs"
-	"github.com/VKCOM/noverify/src/langsrv"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linter/lintapi"
-	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/workspace"
 )
@@ -87,12 +85,12 @@ func isEnabled(l *linterRunner, r *linter.Report) bool {
 		return false
 	}
 
-	if linter.ExcludeRegex == nil {
+	if l.config.ExcludeRegex == nil {
 		return true
 	}
 
 	// Disabled by a file comment.
-	return !linter.ExcludeRegex.MatchString(r.Filename)
+	return !l.config.ExcludeRegex.MatchString(r.Filename)
 }
 
 // Run executes linter main function.
@@ -121,21 +119,16 @@ func Run(cfg *MainConfig) (int, error) {
 			// Erase sub-command argument (index=1) to make it invisible for
 			// sub commands themselves.
 			os.Args = append(os.Args[:subIdx], os.Args[subIdx+1:]...)
-		} else if looksLikeCommandName(commandName) {
-			fmt.Printf("Sub-command %s doesn't exist\n\n", commandName)
+		} else {
+			fmt.Printf("Sub-command '%s' doesn't exist\n\n", commandName)
 			GlobalCmds.PrintHelpPage()
 			return 0, nil
 		}
 
 	}
 	if subcmd == nil {
-		log.Print(`
-
-NoVerify migrates to the new CLI using commands, launching in this way is still possible, but is already deprecated.
-Use 'noverify help' for more information.
-
-`)
-		subcmd, _ = GlobalCmds.GetCommand("check")
+		GlobalCmds.PrintHelpPage()
+		return 0, nil
 	}
 
 	status, err := subcmd.Main(cfg)
@@ -159,14 +152,19 @@ func Main(cfg *MainConfig) {
 // Note that if error is not nil, integer code will be discarded, so it can be 0.
 //
 // We don't want os.Exit to be inserted randomly to avoid defer cancellation.
-func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) (int, error) {
+func mainNoExit(l *linter.Linter, ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) (int, error) {
 	if args.version {
 		// Version is already printed. Can exit here.
 		return 0, nil
 	}
 
 	if args.pprofHost != "" {
-		go http.ListenAndServe(args.pprofHost, nil)
+		go func() {
+			err := http.ListenAndServe(args.pprofHost, nil)
+			if err != nil {
+				log.Printf("pprof listen and serve: %v", err)
+			}
+		}()
 	}
 
 	// Since this function is expected to be exit-free, it's OK
@@ -197,38 +195,35 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 		}()
 	}
 
-	workspace.PHPExtensions = strings.Split(args.phpExtensionsArg, ",")
-
-	var l linterRunner
-	if err := l.Init(ruleSets, args); err != nil {
+	runner := linterRunner{
+		config: l.Config(),
+		linter: l,
+	}
+	if err := runner.Init(ruleSets, args); err != nil {
 		return 1, fmt.Errorf("init: %v", err)
 	}
 
-	lintdebug.Register(func(msg string) { linter.DebugMessage("%s", msg) })
-	go linter.MemoryLimiterThread()
-
-	if linter.LangServer {
-		langsrv.RegisterDebug()
-		langsrv.Start()
-		return 0, nil
-	}
+	lintdebug.Register(func(msg string) {
+		if l.Config().Debug {
+			log.Print(msg)
+		}
+	})
+	go linter.MemoryLimiterThread(args.maxFileSize)
 
 	log.Printf("Started")
 
-	if err := initStubs(); err != nil {
+	if err := initStubs(runner.linter); err != nil {
 		return 0, fmt.Errorf("Init stubs: %v", err)
 	}
 
 	if args.gitRepo != "" {
-		return gitMain(&l, cfg)
+		return gitMain(&runner, cfg)
 	}
 
-	linter.AnalysisFiles = flag.Args()
-
 	log.Printf("Indexing %+v", flag.Args())
-	linter.ParseFilenames(workspace.ReadFilenames(flag.Args(), nil), l.allowDisableRegex)
-	parseIndexOnlyFiles(&l)
-	meta.SetIndexingComplete(true)
+	runner.linter.AnalyzeFiles(workspace.ReadFilenames(flag.Args(), nil, l.Config().PhpExtensions))
+	parseIndexOnlyFiles(&runner)
+	runner.linter.MetaInfo().SetIndexingComplete(true)
 
 	filenames := flag.Args()
 	if args.fullAnalysisFiles != "" {
@@ -236,19 +231,24 @@ func mainNoExit(ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) 
 	}
 
 	log.Printf("Linting")
-	reports := linter.ParseFilenames(workspace.ReadFilenames(filenames, l.filenameFilter), l.allowDisableRegex)
+	reports := runner.linter.AnalyzeFiles(workspace.ReadFilenames(filenames, runner.filenameFilter, l.Config().PhpExtensions))
 	if args.outputBaseline {
-		if err := createBaseline(&l, cfg, reports); err != nil {
+		if err := createBaseline(&runner, cfg, reports); err != nil {
 			return 1, fmt.Errorf("write baseline: %v", err)
 		}
 		return 0, nil
 	}
-	criticalReports := analyzeReports(&l, cfg, reports)
+	criticalReports, containsAutofixableReports := analyzeReports(&runner, cfg, reports)
+
+	if containsAutofixableReports {
+		log.Println("Some issues are autofixable (try using the `-fix` flag)")
+	}
 
 	if criticalReports > 0 {
 		log.Printf("Found %d critical reports", criticalReports)
 		return 2, nil
 	}
+	log.Printf("No critical issues found. Your code is perfect.")
 	return 0, nil
 }
 
@@ -319,7 +319,32 @@ func FormatReport(r *linter.Report) string {
 		r.Severity(), msg, r.Filename, r.Line, r.Context, cursor.String())
 }
 
-func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (criticalReports int) {
+func haveAutofixableReports(config *linter.Config, reports []*linter.Report) bool {
+	if len(reports) == 0 {
+		return false
+	}
+
+	declaredChecks := config.Checkers.ListDeclared()
+	checksWithQuickfix := make(map[string]struct{})
+
+	for _, check := range declaredChecks {
+		if !check.Quickfix {
+			continue
+		}
+
+		checksWithQuickfix[check.Name] = struct{}{}
+	}
+
+	for _, r := range reports {
+		if _, ok := checksWithQuickfix[r.CheckName]; ok {
+			return true
+		}
+	}
+
+	return false
+}
+
+func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (criticalReports int, containsAutofixableReports bool) {
 	filtered := make([]*linter.Report, 0, len(diff))
 
 	for _, r := range diff {
@@ -336,6 +361,8 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 			criticalReports++
 		}
 	}
+
+	containsAutofixableReports = haveAutofixableReports(l.config, filtered)
 
 	if l.args.outputJSON {
 		type reportList struct {
@@ -360,42 +387,42 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 		}
 	}
 
-	return criticalReports
+	return criticalReports, containsAutofixableReports
 }
 
-func initStubs() error {
-	if linter.StubsDir != "" {
-		linter.InitStubsFromDir(linter.StubsDir)
+func initStubs(l *linter.Linter) error {
+	if l.Config().StubsDir != "" {
+		l.InitStubsFromDir(l.Config().StubsDir)
 		return nil
 	}
 
 	// Try to use embedded stubs (from stubs/phpstorm_stubs.go).
-	if err := loadEmbeddedStubs(); err != nil {
+	if err := loadEmbeddedStubs(l); err != nil {
 		return fmt.Errorf("failed to load embedded stubs: %v", err)
 	}
 
 	return nil
 }
 
-func LoadEmbeddedStubs(filenames []string) error {
+func LoadEmbeddedStubs(l *linter.Linter, filenames []string) error {
 	var errorsCount int64
 
 	readStubs := func(ch chan workspace.FileInfo) {
 		for _, filename := range filenames {
-			data, err := stubs.Asset(filename)
+			contents, err := stubs.Asset(filename)
 			if err != nil {
 				log.Printf("Failed to read embedded %q file: %v", filename, err)
 				atomic.AddInt64(&errorsCount, 1)
 				continue
 			}
 			ch <- workspace.FileInfo{
-				Filename: filename,
-				Contents: data,
+				Name:     filename,
+				Contents: contents,
 			}
 		}
 	}
 
-	linter.InitStubs(readStubs)
+	l.InitStubs(readStubs)
 
 	// Using atomic here for consistency.
 	if atomic.LoadInt64(&errorsCount) != 0 {
@@ -405,7 +432,7 @@ func LoadEmbeddedStubs(filenames []string) error {
 	return nil
 }
 
-func loadEmbeddedStubs() error {
+func loadEmbeddedStubs(l *linter.Linter) error {
 	var filenames []string
 	// NOVERIFYDEBUG_LOAD_STUBS is used in golden tests to specify
 	// the test dependencies that need to be loaded.
@@ -417,5 +444,5 @@ func loadEmbeddedStubs() error {
 	if len(filenames) == 0 {
 		return fmt.Errorf("empty file list")
 	}
-	return LoadEmbeddedStubs(filenames)
+	return LoadEmbeddedStubs(l, filenames)
 }

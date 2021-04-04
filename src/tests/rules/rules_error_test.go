@@ -259,7 +259,8 @@ ${"boo"} = $_;
 func runRulesErrorTest(t *testing.T, rulesTest []ruleErrorTest) {
 	t.Helper()
 
-	for _, test := range rulesTest {
+	for i := range rulesTest {
+		test := rulesTest[i]
 		t.Run(test.name, func(t *testing.T) {
 			rparser := rules.NewParser()
 			_, err := rparser.Parse("<test>", strings.NewReader(test.rule))

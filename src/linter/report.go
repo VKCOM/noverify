@@ -14,8 +14,26 @@ const (
 	IgnoreLinterMessage = "@linter disable"
 )
 
-func init() {
-	allChecks := []CheckInfo{
+func addBuiltinCheckers(reg *CheckersRegistry) {
+	allChecks := []CheckerInfo{
+		{
+			Name:     "stripTags",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report invalid strip_tags function usage.`,
+			Before:   `$s = strip_tags($s, '<br/>')`,
+			After:    `$s = strip_tags($s, '<br>')`,
+		},
+
+		{
+			Name:     "emptyStmt",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report redundant empty statements that can be safely removed.`,
+			Before:   `echo $foo;;`,
+			After:    `echo $foo;`,
+		},
+
 		{
 			Name:     "intOverflow",
 			Default:  true,
@@ -150,7 +168,7 @@ func init() {
 		},
 
 		{
-			Name:     "dupSubExpr",
+			Name:     `dupSubExpr`,
 			Default:  true,
 			Quickfix: false,
 			Comment:  `Report suspicious duplicated operands in expressions.`,
@@ -457,11 +475,11 @@ case INC:
 			Default:  true,
 			Quickfix: false,
 			Comment:  `Report commonly misspelled words in symbol names.`,
-			Before:   `function performace_test() ...`, //nolint:misspell
+			Before:   `function performace_test() ...`, //nolint:misspell // misspelled on purpose
 			After:    `function performance_test() ...`,
 		},
 
-		//nolint:misspell
+		//nolint:misspell // misspelled on purpose
 		{
 			Name:     "misspellComment",
 			Default:  true,
@@ -515,7 +533,7 @@ function performance_test() {}`,
 		},
 
 		{
-			Name:     "nameCase",
+			Name:     "nameMismatch",
 			Default:  true,
 			Quickfix: false,
 			Comment:  `Report symbol case mismatches.`,
@@ -523,15 +541,6 @@ function performance_test() {}`,
 $foo = new foo();`,
 			After: `class Foo {}
 $foo = new Foo();`,
-		},
-
-		{
-			Name:     "strictCmp",
-			Default:  true,
-			Quickfix: false,
-			Comment:  `Report non-strict comparison with false/true/null.`,
-			Before:   `$result == null`,
-			After:    `$result === null`,
 		},
 
 		{
@@ -557,10 +566,94 @@ $foo = new Foo();`,
 			Before:   `sprintf("id=%d")`,
 			After:    `sprintf("id=%d", $id)`,
 		},
+
+		{
+			Name:     "discardVar",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report the use of variables that were supposed to be unused, like $_.`,
+			Before: `$_ = some();
+echo $_;`,
+			After: `$someVal = some();
+echo $someVal;`,
+		},
+
+		{
+			Name:     "dupCatch",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report duplicated catch clauses.`,
+			Before: `try {
+  // some code
+} catch (Exception1 $e) {
+} catch (Exception1 $e) {} // <- note the typo`,
+			After: `try {
+  // some code
+} catch (Exception1 $e) {
+} catch (Exception2 $e) {}`,
+		},
+
+		{
+			Name:     "catchOrder",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report erroneous catch order in try statements.`,
+			Before: `try {
+  // some code
+} catch (Exception $e) {
+  // bad: this will catch both Exception and TimeoutException
+} catch (TimeoutException $e) {
+  // bad: this is a dead code
+}`,
+			After: `try {
+  // some code
+} catch (TimeoutException $e) {
+  // good: it can catch TimeoutException
+} catch (Exception $e) {
+  // good: it will catch everything else
+}`,
+		},
+
+		{
+			Name:     "trailingComma",
+			Default:  false,
+			Quickfix: true,
+			Comment:  `Report the absence of a comma for the last element in a multi-line array.`,
+			Before: `$_ = [
+	10,
+	20
+]`,
+			After: `$_ = [
+	10,
+	20,
+]`,
+		},
+
+		{
+			Name:     "nestedTernary",
+			Default:  false,
+			Quickfix: true,
+			Comment:  `Report an unspecified order in a nested ternary operator.`,
+			Before:   `$_ = 1 ? 2 : 3 ? 4 : 5;`,
+			After: `$_ = (1 ? 2 : 3) ? 4 : 5;
+// or
+$_ = 1 ? 2 : (3 ? 4 : 5);`,
+		},
+
+		{
+			Name:     "langDeprecated",
+			Default:  false,
+			Quickfix: true,
+			Comment:  `Report the use of deprecated (per language spec) features.`,
+			Before: `$a = (real)100;
+$_ = is_real($a);`,
+			After: `$a = (float)100;
+$_ = is_float($a);`,
+		},
 	}
 
 	for _, info := range allChecks {
-		DeclareCheck(info)
+		reg.DeclareChecker(info)
 	}
 }
 
@@ -578,14 +671,10 @@ type Report struct {
 }
 
 var severityNames = map[int]string{
-	LevelError:       "ERROR",
-	LevelWarning:     "WARNING",
-	LevelInformation: "INFO",
-	LevelHint:        "HINT",
-	LevelUnused:      "UNUSED",
-	LevelDoNotReject: "MAYBE",
-	LevelSyntax:      "SYNTAX",
-	LevelSecurity:    "WARNING",
+	LevelError:    "ERROR",
+	LevelWarning:  "WARNING",
+	LevelNotice:   "MAYBE",
+	LevelSecurity: "WARNING",
 }
 
 func (r *Report) Severity() string {
@@ -594,7 +683,7 @@ func (r *Report) Severity() string {
 
 // IsCritical returns whether or not we need to reject whole commit when found this kind of report.
 func (r *Report) IsCritical() bool {
-	return r.Level != LevelDoNotReject
+	return r.Level != LevelNotice
 }
 
 // DiffReports returns only reports that are new.
@@ -773,7 +862,8 @@ func reportListToMap(list []*Report) map[string][]*Report {
 		res[r.Filename] = append(res[r.Filename], r)
 	}
 
-	for _, l := range res {
+	for i := range res {
+		l := res[i]
 		sort.Slice(l, func(i, j int) bool {
 			return l[i].Line < l[j].Line
 		})

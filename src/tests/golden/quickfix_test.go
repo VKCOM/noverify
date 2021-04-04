@@ -49,12 +49,20 @@ func openFile(filename string) (f *os.File, found bool, err error) {
 }
 
 func (t *quickFixTest) runQuickFixTest() {
+	var linterConfig = linter.NewConfig()
+	linterConfig.ApplyQuickFixes = true
+	err := linttest.InitEmbeddedRules(linterConfig)
+	if err != nil {
+		t.t.Fatal(err)
+	}
+
 	files, err := linttest.FindPHPFiles(t.folder)
 	if err != nil {
 		t.t.Fatalf("Error while searching for files in the %s folder: %s", t.folder, err)
 	}
 
-	for _, file := range files {
+	for i := range files {
+		file := files[i]
 		t.t.Run(strings.TrimSuffix(filepath.Base(file), ".php"), func(t *testing.T) {
 			testFileName := file
 			expectedFileName := file + expectedExtension
@@ -90,11 +98,8 @@ func (t *quickFixTest) runQuickFixTest() {
 			}
 
 			test := linttest.NewSuite(t)
+			test.UseConfig(linterConfig)
 			test.AddNamedFile(fixedFileName, string(testFileContent))
-			linter.ApplyQuickFixes = true
-			defer func() {
-				linter.ApplyQuickFixes = false
-			}()
 			_ = test.RunLinter()
 
 			fixedFileContent, err := ioutil.ReadFile(fixedFileName)

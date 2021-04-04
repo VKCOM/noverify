@@ -48,9 +48,15 @@ func (g *genEqual) writeCompare(w *bytes.Buffer, pkg *packageData, typ *typeData
 			fmt.Fprintf(w, "    if x.%[1]s != y.%[1]s { return false }\n", field.Name())
 		case "[]ir.Node":
 			fmt.Fprintf(w, "    if !NodeSliceEqual(x.%[1]s, y.%[1]s) { return false }\n", field.Name())
-		case "github.com/VKCOM/noverify/src/php/parser/freefloating.Collection":
+		case "github.com/VKCOM/noverify/src/phpdoc.Comment":
+			fmt.Fprintf(w, "    if x.Doc.Raw != y.Doc.Raw { return false }\n")
+		case "*github.com/z7zmey/php-parser/pkg/token.Token":
 			// Do nothing.
-		case "*github.com/VKCOM/noverify/src/php/parser/position.Position":
+		case "[]*github.com/z7zmey/php-parser/pkg/token.Token":
+			// Do nothing.
+		case "*github.com/z7zmey/php-parser/pkg/position.Position":
+			// Do nothing.
+		case "[]github.com/VKCOM/noverify/src/phpdoc.CommentPart":
 			// Do nothing.
 		case "ir.Class":
 			fmt.Fprintf(w, "    if !classEqual(x.%[1]s, y.%[1]s) { return false }\n", field.Name())

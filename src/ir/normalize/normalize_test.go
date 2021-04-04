@@ -1,16 +1,15 @@
 package normalize
 
 import (
-	"errors"
 	"strings"
 	"testing"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/ir/irfmt"
+	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/php/parseutil"
 )
 
@@ -74,21 +73,26 @@ func TestNormalizeStmtList(t *testing.T) {
 	}
 
 	conf := Config{}
-	st := &meta.ClassParseState{CurrentClass: `\Foo`}
-	for _, test := range tests {
+	l := linter.NewLinter(linter.NewConfig())
+	st := &meta.ClassParseState{Info: l.MetaInfo(), CurrentClass: `\Foo`}
 
-		list, err := parseStmtList(test.orig)
+	for _, test := range tests {
+		root, err := parseutil.ParseStmtList([]byte(test.orig))
 		if err != nil {
 			t.Errorf("parse `%s`: %v", test.orig, err)
 			continue
 		}
-		normalized := FuncBody(st, conf, nil, list)
+
+		rootIR := irconv.ConvertNode(root).(*ir.Root)
+		normalized := FuncBody(st, conf, nil, rootIR.Stmts)
+
 		have := strings.ReplaceAll(irfmt.Node(&ir.StmtList{Stmts: normalized}), "\n", "")
 		have = strings.ReplaceAll(have, "  ", " ")
+
 		want := `{ ` + test.want + `}`
+
 		if have != want {
-			t.Errorf("normalize `%s`:\nhave: %s\nwant: %s",
-				test.orig, have, want)
+			t.Errorf("normalize `%s`:\nhave: %s\nwant: %s", test.orig, have, want)
 			continue
 		}
 	}
@@ -99,26 +103,30 @@ type normalizationTest struct {
 	want string
 }
 
-func runNormalizeTests(t *testing.T, tests []normalizationTest) {
+func runNormalizeTests(t *testing.T, l *linter.Linter, tests []normalizationTest) {
 	t.Helper()
 
 	conf := Config{}
-	st := &meta.ClassParseState{CurrentClass: `\Foo`}
+	st := &meta.ClassParseState{Info: l.MetaInfo(), CurrentClass: `\Foo`}
 	irConverter := irconv.NewConverter(nil)
+
 	for _, test := range tests {
 		n, _, err := parseutil.ParseStmt([]byte(test.orig))
 		if err != nil {
 			t.Errorf("parse `%s`: %v", test.orig, err)
 			return
 		}
+
 		irNode := irConverter.ConvertNode(n)
 		normalized := FuncBody(st, conf, nil, []ir.Node{irNode})
+
 		have := strings.TrimSuffix(irfmt.Node(normalized[0]), ";")
 		if have != test.want {
 			t.Errorf("normalize `%s`:\nhave: %s\nwant: %s",
 				test.orig, have, test.want)
 			return
 		}
+
 		n2, _, err := parseutil.ParseStmt([]byte(have))
 		if err != nil {
 			t.Errorf("parse normalized `%s`: %v", test.orig, err)
@@ -126,7 +134,9 @@ func runNormalizeTests(t *testing.T, tests []normalizationTest) {
 		}
 		irNode2 := irConverter.ConvertNode(n2)
 		normalized2 := FuncBody(st, conf, nil, []ir.Node{irNode2})
+
 		have2 := strings.TrimSuffix(irfmt.Node(normalized2[0]), ";")
+
 		if have != have2 {
 			t.Errorf("second normalization of `%s`:\nhave: %s\nwant: %s",
 				test.orig, have2, have)
@@ -135,7 +145,8 @@ func runNormalizeTests(t *testing.T, tests []normalizationTest) {
 }
 
 func TestNormalizeExpr(t *testing.T) {
-	runNormalizeTests(t, []normalizationTest{
+	l := linter.NewLinter(linter.NewConfig())
+	runNormalizeTests(t, l, []normalizationTest{
 		{`new T`, `new T()`},
 
 		{`"$x"`, `'' . $v0`},
@@ -177,6 +188,15 @@ func TestNormalizeExpr(t *testing.T) {
 		{`(1 + 2) * 4`, `12`},
 		{`5 - 6`, `-1`},
 		{`(5 - 6) * 8 + 6`, `-2`},
+		{`5.5 + 3`, `8.5`},
+		{`3 + 5.5`, `8.5`},
+		{`5.5 + 3.5`, `9`},
+		{`5.5 - 3`, `2.5`},
+		{`8 - 5.5`, `2.5`},
+		{`5.5 - 3.5`, `2`},
+		{`5.5 * 3`, `16.5`},
+		{`3 * 5.5`, `16.5`},
+		{`1.5 * 1.5`, `2.25`},
 		{`!true`, `false`},
 		{`!false`, `true`},
 		{`!!false`, `false`},
@@ -201,7 +221,8 @@ func TestNormalizeExpr(t *testing.T) {
 }
 
 func TestNormalizeExprAfterIndexing(t *testing.T) {
-	linttest.ParseTestFile(t, "defs.php", `<?php
+	l := linter.NewLinter(linter.NewConfig())
+	linttest.ParseTestFile(t, l, "defs.php", `<?php
 const ZERO = 0;
 const HELLO_WORLD = 'hello, world';
 const LOCALHOST = "127.0.0.1";
@@ -210,10 +231,9 @@ class Foo {
   const FOO_VALUE = 53.001122334455665;
 }
 `)
-	meta.SetIndexingComplete(true)
-	defer meta.SetIndexingComplete(false)
+	l.MetaInfo().SetIndexingComplete(true)
 
-	runNormalizeTests(t, []normalizationTest{
+	runNormalizeTests(t, l, []normalizationTest{
 		{`ZERO`, `0`},
 		{`HELLO_WORLD`, `'hello, world'`},
 		{`LOCALHOST`, `'127.0.0.1'`},
@@ -222,7 +242,8 @@ class Foo {
 }
 
 func TestMagicConstFold(t *testing.T) {
-	linttest.ParseTestFile(t, "files/file.php", `<?php
+	l := linter.NewLinter(linter.NewConfig())
+	linttest.ParseTestFile(t, l, "files/file.php", `<?php
 namespace Boo;
 
 const NAMESPACE_NAME = __NAMESPACE__;
@@ -238,10 +259,9 @@ class Foo {
   const LINE = __LINE__;
 }
 `)
-	meta.SetIndexingComplete(true)
-	defer meta.SetIndexingComplete(false)
+	l.MetaInfo().SetIndexingComplete(true)
 
-	runNormalizeTests(t, []normalizationTest{
+	runNormalizeTests(t, l, []normalizationTest{
 		{`\Boo\NAMESPACE_NAME`, `'\Boo'`},
 		{`\Boo\FILENAME`, `'files/file.php'`},
 		{`\Boo\DIR`, `'files'`},
@@ -251,15 +271,4 @@ class Foo {
 		{`\Boo\Foo::CLASSNAME`, `'\Boo\Foo'`},
 		{`\Boo\Foo::LINE`, `14`},
 	})
-}
-
-func parseStmtList(s string) ([]ir.Node, error) {
-	source := "<?php " + s
-	p := php7.NewParser([]byte(source))
-	p.Parse()
-	if len(p.GetErrors()) != 0 {
-		return nil, errors.New(p.GetErrors()[0].String())
-	}
-	rootIR := irconv.ConvertNode(p.GetRootNode()).(*ir.Root)
-	return rootIR.Stmts, nil
 }

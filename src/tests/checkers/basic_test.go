@@ -9,7 +9,7 @@ import (
 	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
-	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/types"
 )
 
 func TestBadString(t *testing.T) {
@@ -123,43 +123,6 @@ function f3() {
 		`global statement mentions $x1 more than once`,
 		`$x2 already global'ed above`,
 		`$x3 already global'ed above`,
-	}
-	test.RunAndMatch()
-}
-
-func TestStrictCmp(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-function f($x) {
-  $_ = ($x == false);
-  $_ = (false == $x);
-  $_ = ($x == true);
-  $_ = (true == $x);
-  $_ = ($x == null);
-  $_ = (null == $x);
-  return true;
-}
-
-$_ = (f(0) != false);
-$_ = (false != f(0));
-$_ = (f(0) != true);
-$_ = (true != f(0));
-$_ = (f(0) != null);
-$_ = (null != f(0));
-`)
-	test.Expect = []string{
-		`non-strict comparison with false (use ===)`,
-		`non-strict comparison with false (use ===)`,
-		`non-strict comparison with false (use !==)`,
-		`non-strict comparison with false (use !==)`,
-		`non-strict comparison with true (use ===)`,
-		`non-strict comparison with true (use ===)`,
-		`non-strict comparison with true (use !==)`,
-		`non-strict comparison with true (use !==)`,
-		`non-strict comparison with null (use ===)`,
-		`non-strict comparison with null (use ===)`,
-		`non-strict comparison with null (use !==)`,
-		`non-strict comparison with null (use !==)`,
 	}
 	test.RunAndMatch()
 }
@@ -310,6 +273,7 @@ $_ = array(1);
 		`You are not allowed to disable linter`,
 		`Use of old array syntax (use short form instead)`,
 		`Duplicate array key 1`,
+		`last element in a multi-line array must have a trailing comma`,
 		`Use of old array syntax (use short form instead)`,
 	}
 	test.RunAndMatch()
@@ -390,7 +354,7 @@ FUNCTION f() {
   Goto label;
   label:
   YIELD 'yelling!';
-  yielD FROM 'blah!';
+  yielD  FROM 'blah!';
   FOR (;;) {}
   for (;;):
   EndFor;
@@ -475,6 +439,7 @@ function good() {
 		`Use while instead of whilE`,
 		`Use yield instead of YIELD`,
 		`Use yield instead of yielD`,
+		`Use from instead of FROM`,
 		`Use public instead of PubliC`,
 	}
 
@@ -824,21 +789,113 @@ for ($i = 0; $i == 0; $i = $i++) {}
 }
 
 func TestCustomUnusedVarRegex(t *testing.T) {
-	defer func(isDiscardVar func(string) bool) {
-		linter.IsDiscardVar = isDiscardVar
-	}(linter.IsDiscardVar)
-
-	linter.IsDiscardVar = func(s string) bool {
+	isDiscardVar := func(s string) bool {
 		return strings.HasPrefix(s, "_")
 	}
 
-	linttest.SimpleNegativeTest(t, `<?php
+	config := linter.NewConfig()
+	config.IsDiscardVar = isDiscardVar
+
+	test := linttest.NewSuite(t)
+	test.UseConfig(config)
+	test.AddFile(`<?php
+class Foo {
+  public $_;
+  private $_foo;
+  public static $_bar;
+  private function f1() { return $this->_; }
+  protected function f2() { return $this->_foo; }
+  private function f3() { return self::$_bar; }
+  private function f4() { return __CLASS__; }
+}
+$_ = __FILE__;
+`)
+	test.RunAndMatch()
+
+	test = linttest.NewSuite(t)
+	test.UseConfig(config)
+	test.AddFile(`<?php
 $_unused = 10;
 
 function f() {
   $_unused2 = 20;
   $_ = 30;
   foreach ([1] as $_ => $_user) {}
+
+  $_POST = ["foo" => 123];
+  $_ = $_POST["foo"];
+  $_ = $_ENV["GOPATH"];
+}
+`)
+
+	test = linttest.NewSuite(t)
+	test.UseConfig(config)
+	test.AddFile(`<?php
+function var_dump($v) {}
+$_global = 120;
+function f() {
+  global $_global;
+  $_a = 1;
+  $_FOO = 2;
+  var_dump($_a);
+  $xs = [$_global];
+  $xs = $_FOO;
+  if ($_POST) {} // No warning
+  if (0 == $_GET["a"]) {} // No warning
+  $_ = $xs;
+}
+var_dump($_global);
+`)
+
+	test.Expect = []string{
+		`Used var $_a that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_global that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_FOO that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_global that is supposed to be unused (rename variable if it's intended)`,
+	}
+
+	test.RunAndMatch()
+}
+
+func TestDiscardVarUsage(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function var_dump($v) {}
+function f() {
+  $_ = 1;
+  var_dump($_); // 1. Used as argument
+  $xs = [$_]; // 2. Used as array element
+  $xs = $_; // 3. Used in assignment RHS
+  if ($_) {} // 4. Used inside if condition
+  if (0 == $_) {} // 5. Used inside binary operator
+  $_ = $xs;
+}
+$_ = 1; // Global var
+var_dump($_); // 6. Also forbidden in global scope
+`)
+
+	test.Expect = []string{
+		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
+	}
+
+	test.RunAndMatch()
+}
+
+func TestDiscardVarNotUsage(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+function foo(): int { return 0; }
+
+function f() {
+  list($_, $b) = foo(); // $_ is not used.
+  echo $b;
+  $_ = function($_, $x) {}; // $_ is not used.
+  $_ = fn($_, $x) => $x; // $_ is not used.
+  try {} catch(Exception $_) {} // $_ is not used.
 }
 `)
 }
@@ -1460,14 +1517,14 @@ func TestUnused(t *testing.T) {
 
 func TestAtVar(t *testing.T) {
 	// variables declared using @var should not be overridden
-	_ = linttest.GetFileReports(t, `<?php
+	result := linttest.CheckFile(t, `<?php
 	function test() {
 		/** @var string $a */
 		$a = true;
 		return $a;
 	}`)
 
-	fi, ok := meta.Info.GetFunction(`\test`)
+	fi, ok := result.Info.GetFunction(`\test`)
 	if !ok {
 		t.Errorf("Could not get function test")
 	}
@@ -1661,7 +1718,7 @@ func TestSwitchFallthrough(t *testing.T) {
 }
 
 func TestFunctionThrowsExceptionsAndReturns(t *testing.T) {
-	reports := linttest.GetFileReports(t, `<?php
+	result := linttest.CheckFile(t, `<?php
 	class Exception {}
 
 	function handle($b) {
@@ -1683,17 +1740,17 @@ func TestFunctionThrowsExceptionsAndReturns(t *testing.T) {
 		echo "This code is reachable\n";
 	}`)
 
-	if len(reports) != 0 {
-		t.Errorf("Unexpected number of reports: expected 0, got %d", len(reports))
+	if len(result.Reports) != 0 {
+		t.Errorf("Unexpected number of reports: expected 0, got %d", len(result.Reports))
 	}
 
-	fi, ok := meta.Info.GetFunction(`\handle`)
+	fi, ok := result.Info.GetFunction(`\handle`)
 
 	if ok {
 		log.Printf("handle exitFlags: %d (%s)", fi.ExitFlags, linter.FlagsToString(fi.ExitFlags))
 	}
 
-	for _, r := range reports {
+	for _, r := range result.Reports {
 		log.Printf("%s", cmd.FormatReport(r))
 	}
 }
@@ -1788,7 +1845,85 @@ func_A();
 		`Method_a should be spelled method_a`,
 		`\func_A should be spelled \func_a`,
 	}
-	linttest.RunFilterMatch(test, `nameCase`)
+	linttest.RunFilterMatch(test, `nameMismatch`)
+}
+
+func TestClassSpecialNameCase(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class B {
+    const B = 100;
+
+    public static $name = "";
+
+    public static function g() {}
+}
+
+class A extends B {
+    const B = 100;
+
+    public static $id = 0;
+
+    function f() {
+        echo SELF::B;
+        echo seLf::B;
+        echo self::B;
+
+        echo STATIC::B;
+        echo stAtic::B;
+        echo static::B;
+
+        echo PARENT::B;
+        echo parEnt::B;
+        echo parent::B;
+
+        SELF::f();
+        sElf::f();
+        self::f();
+
+        STATIC::f();
+        stAtic::f();
+        static::f();
+
+        PARENT::g();
+        paREnt::g();
+        parent::g();
+
+        PARENT::$name;
+        paREnt::$name;
+        parent::$name;
+
+        SELF::$id;
+        sElf::$id;
+        self::$id;
+
+        STATIC::$id;
+        stAtic::$id;
+        static::$id;
+    }
+}
+`)
+	test.Expect = []string{
+		`SELF should be spelled as self`,
+		`seLf should be spelled as self`,
+		`STATIC should be spelled as static`,
+		`stAtic should be spelled as static`,
+		`PARENT should be spelled as parent`,
+		`parEnt should be spelled as parent`,
+		`SELF should be spelled as self`,
+		`sElf should be spelled as self`,
+		`STATIC should be spelled as static`,
+		`stAtic should be spelled as static`,
+		`PARENT should be spelled as parent`,
+		`paREnt should be spelled as parent`,
+		`PARENT should be spelled as parent`,
+		`paREnt should be spelled as parent`,
+		`SELF should be spelled as self`,
+		`sElf should be spelled as self`,
+		`STATIC should be spelled as static`,
+		`stAtic should be spelled as static`,
+	}
+	linttest.RunFilterMatch(test, `nameMismatch`)
 }
 
 func TestClassNotFound(t *testing.T) {
@@ -1812,16 +1947,14 @@ interface Iface extends IfaceBase {}
 }
 
 func TestCorrectArrayTypes(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
+	result := linttest.CheckFile(t, `<?php
 	function test() {
 		$a = [ 'a' => 123, 'b' => 3456 ];
 		return $a['a'];
 	}
 	`)
-	test.RunLinter()
 
-	fn, ok := meta.Info.GetFunction(`\test`)
+	fn, ok := result.Info.GetFunction(`\test`)
 	if !ok {
 		t.Errorf("Could not find function test")
 		t.Fail()
@@ -1837,8 +1970,7 @@ func TestCorrectArrayTypes(t *testing.T) {
 }
 
 func TestArrayUnion(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
+	result := linttest.CheckFile(t, `<?php
 	function testInt() {
 		return 1 + 1;
 	}
@@ -1849,9 +1981,8 @@ func TestArrayUnion(t *testing.T) {
 		return [1] + ['foo'];
 	}
 	`)
-	test.RunLinter()
 
-	fnInt, ok := meta.Info.GetFunction(`\testInt`)
+	fnInt, ok := result.Info.GetFunction(`\testInt`)
 	if !ok {
 		t.Errorf("Could not find function testInt")
 		t.Fail()
@@ -1865,7 +1996,7 @@ func TestArrayUnion(t *testing.T) {
 		t.Errorf("Wrong type: %s, expected int", fnInt.Typ)
 	}
 
-	fnIntArr, ok := meta.Info.GetFunction(`\testIntArr`)
+	fnIntArr, ok := result.Info.GetFunction(`\testIntArr`)
 	if !ok {
 		t.Errorf("Could not find function testIntArr")
 		t.Fail()
@@ -1879,7 +2010,7 @@ func TestArrayUnion(t *testing.T) {
 		t.Errorf("Wrong type: %s, expected int[]", fnIntArr.Typ)
 	}
 
-	fnMixedArr, ok := meta.Info.GetFunction(`\testMixedArr`)
+	fnMixedArr, ok := result.Info.GetFunction(`\testMixedArr`)
 	if !ok {
 		t.Errorf("Could not find function testMixedArr")
 		t.Fail()
@@ -1889,7 +2020,7 @@ func TestArrayUnion(t *testing.T) {
 		t.Errorf("Unexpected number of types: %d, excepted 2", l)
 	}
 
-	if !fnMixedArr.Typ.Equals(meta.NewTypesMap("int[]|string[]")) {
+	if !fnMixedArr.Typ.Equals(types.NewMap("int[]|string[]")) {
 		// NOTE: this is how code works right now. It currently treat a[]|b[] as (a|b)[]
 		t.Errorf("Wrong type: %s, expected int[]|string[]", fnMixedArr.Typ)
 	}
@@ -1950,5 +2081,133 @@ func TestUndefinedConst(t *testing.T) {
 echo UNDEFINED_CONST;
 `)
 	test.Expect = []string{`Undefined constant UNDEFINED_CONST`}
+	test.RunAndMatch()
+}
+
+func TestTrailingCommaForArray(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f() {
+    $_ = [10, 20, 30]; // ok
+
+    $_ = [10, 20,
+    30]; // ok
+
+	$_ = [10,
+		20,
+		30 // need comma
+	];
+
+	$_ = [10,
+		20,
+		30]; // ok
+
+	$_ = [
+		10,
+		20,
+		30]; // ok
+	
+	$_ = [
+        10,
+        20,
+        30,  // ok
+    ];
+
+    $_ = [
+        10,
+        20,
+        30  // need comma
+    ];
+}
+`)
+	test.Expect = []string{
+		`last element in a multi-line array must have a trailing comma`,
+		`last element in a multi-line array must have a trailing comma`,
+	}
+	test.RunAndMatch()
+}
+
+func TestNestedTernary(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f() {
+    $_ = 1 ? 2 : 3 ? 4 : 5; // error
+	//   |_______|
+
+    $_ = 1 ? 2 : 3 ? 4 : 1 ? 2 : 3; // error
+	//   |_______|       |
+	//   |_______________|
+
+	$_ = (1 ? 2 : 3) ? 4 : 5; // ok
+	//   |_________|
+
+	$_ = 1 ? 2 : (3 ? 4 : 5); // ok
+	//           |_________|
+
+	$_ = 1 ? 2 ? 3 : 4 : 5; // ok, ternary in middle
+	//       |_______|
+}
+`)
+	test.Expect = []string{
+		`in ternary operators, you must explicitly use parentheses to specify the order of operations`,
+		`in ternary operators, you must explicitly use parentheses to specify the order of operations`,
+		`in ternary operators, you must explicitly use parentheses to specify the order of operations`,
+	}
+	test.RunAndMatch()
+}
+
+func TestRealCastingAndIsRealCall(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function is_real($a): bool { return true; }
+
+function f() {
+    $a = (real)100;
+    if (is_real($a)) {
+        echo 1;
+    }
+}
+`)
+	test.Expect = []string{
+		`use float cast instead of real`,
+		`use is_float function instead of is_real`,
+	}
+	test.RunAndMatch()
+}
+
+func TestArrayKeyExistCallWithObject(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function array_key_exists($a, $b): bool { return true; }
+
+class Foo {}
+
+function returnObject(): Foo {
+	return new Foo;
+}
+
+function returnObjectAndNull(): ?Foo {
+	if (1) {
+		return null;
+	}
+	return new Foo;
+}
+
+function f() {
+	$foo = new Foo;
+	$arr = ["a" => 100];
+
+    echo array_key_exists("param", $foo); // error
+    echo array_key_exists("param", returnObject()); // error
+    echo array_key_exists("param", returnObjectAndNull()); // ok
+
+    echo array_key_exists("a", $arr); // ok
+}
+
+`)
+	test.Expect = []string{
+		`since PHP 7.4, using array_key_exists() with an object has been deprecated, use isset() or property_exists() instead`,
+		`since PHP 7.4, using array_key_exists() with an object has been deprecated, use isset() or property_exists() instead`,
+	}
 	test.RunAndMatch()
 }

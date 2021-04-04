@@ -5,34 +5,35 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/z7zmey/php-parser/pkg/token"
+
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/solver"
 )
 
 // This file contains methods that were defined inside BlockWalker
 // but in fact they can be separated and used in other contexts.
 
-func findMethod(className, methodName string) (res solver.FindMethodResult, magic, ok bool) {
-	m, ok := solver.FindMethod(className, methodName)
+func findMethod(info *meta.Info, className, methodName string) (res solver.FindMethodResult, magic, ok bool) {
+	m, ok := solver.FindMethod(info, className, methodName)
 	if ok {
 		return m, false, true
 	}
-	m, ok = solver.FindMethod(className, `__call`)
+	m, ok = solver.FindMethod(info, className, `__call`)
 	if ok {
 		return m, true, true
 	}
 	return m, false, false
 }
 
-func findProperty(className, propName string) (res solver.FindPropertyResult, magic, ok bool) {
-	p, ok := solver.FindProperty(className, propName)
+func findProperty(info *meta.Info, className, propName string) (res solver.FindPropertyResult, magic, ok bool) {
+	p, ok := solver.FindProperty(info, className, propName)
 	if ok {
 		return p, false, true
 	}
-	m, ok := solver.FindMethod(className, `__get`)
+	m, ok := solver.FindMethod(info, className, `__get`)
 	if ok {
 		// Construct a dummy property from the magic method.
 		p.ClassName = m.ClassName
@@ -96,7 +97,7 @@ func canAccess(st *meta.ClassParseState, className string, accessLevel meta.Acce
 				return true
 			}
 
-			class, ok := meta.Info.GetClass(parent)
+			class, ok := st.Info.GetClass(parent)
 			if !ok {
 				return false
 			}
@@ -165,18 +166,20 @@ var fallthroughMarkerRegex = func() *regexp.Regexp {
 }()
 
 func caseHasFallthroughComment(n ir.Node) bool {
-	ffs := n.GetFreeFloating()
-	if ffs == nil {
-		return false
-	}
-	for _, cs := range *ffs {
-		for _, c := range cs {
-			if c.StringType == freefloating.CommentType {
-				if fallthroughMarkerRegex.MatchString(c.Value) {
-					return true
-				}
-			}
+	var hasFallthroughComment bool
+
+	n.IterateTokens(func(t *token.Token) bool {
+		if t.ID != token.T_DOC_COMMENT && t.ID != token.T_COMMENT {
+			return true
 		}
-	}
-	return false
+
+		if fallthroughMarkerRegex.Match(t.Value) {
+			hasFallthroughComment = true
+			return false
+		}
+
+		return true
+	})
+
+	return hasFallthroughComment
 }

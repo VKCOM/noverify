@@ -37,9 +37,10 @@ func main() {
 		{"generate equal", doGenerateEqual},
 		{"generate clone", doGenerateClone},
 		{"generate walk", doGenerateWalk},
-		{"generate get freefloating", doGenerateGetFreeFloating},
 		{"generate get node kind", doGenerateGetNodeKind},
 		{"generate get position", doGenerateGetPosition},
+		{"generate iterate tokens", doGenerateIterateTokens},
+		{"generate get first token", doGenerateGetFirstToken},
 	}
 
 	for _, step := range steps {
@@ -102,11 +103,6 @@ func doGenerateWalk(ctx *context) error {
 	return g.Run()
 }
 
-func doGenerateGetFreeFloating(ctx *context) error {
-	g := &genGetFreeFloating{ctx: ctx}
-	return g.Run()
-}
-
 func doGenerateGetNodeKind(ctx *context) error {
 	g := &genGetNodeKind{ctx: ctx}
 	return g.Run()
@@ -114,5 +110,15 @@ func doGenerateGetNodeKind(ctx *context) error {
 
 func doGenerateGetPosition(ctx *context) error {
 	g := &genGetPosition{ctx: ctx}
+	return g.Run()
+}
+
+func doGenerateIterateTokens(ctx *context) error {
+	g := &genIterate{ctx: ctx}
+	return g.Run()
+}
+
+func doGenerateGetFirstToken(ctx *context) error {
+	g := &genGetFirstToken{ctx: ctx}
 	return g.Run()
 }
