@@ -1555,10 +1555,10 @@ func (d *rootWalker) checkFuncParam(p *ir.Parameter) {
 		return true
 	})
 
-	d.checkTypeHintClassCaseFunctionParam(p)
+	d.checkTypeHintFunctionParam(p)
 }
 
-func (d *rootWalker) checkTypeHintClassCaseFunctionParam(p *ir.Parameter) {
+func (d *rootWalker) checkTypeHintFunctionParam(p *ir.Parameter) {
 	if !d.metaInfo().IsIndexingComplete() {
 		return
 	}
@@ -1571,6 +1571,11 @@ func (d *rootWalker) checkTypeHintClassCaseFunctionParam(p *ir.Parameter) {
 	typ.Iterate(func(typ string) {
 		if types.IsClassType(typ) {
 			className := typ
+
+			_, ok = d.metaInfo().GetTrait(className)
+			if ok {
+				d.Report(p, LevelWarning, "badTraitUse", "forbidden to use a trait %s as a type hint for function parameter", strings.TrimPrefix(className, `\`))
+			}
 
 			class, ok := d.metaInfo().GetClass(className)
 			if !ok {

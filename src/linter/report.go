@@ -650,6 +650,17 @@ $_ = is_real($a);`,
 			After: `$a = (float)100;
 $_ = is_float($a);`,
 		},
+
+		{
+			Name:     "badTraitUse",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report misuse of traits.`,
+			Before: `trait A {}
+function f(A $a) {}`,
+			After: `class A {}
+function f(A $a) {}`,
+		},
 	}
 
 	for _, info := range allChecks {
