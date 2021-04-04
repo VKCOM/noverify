@@ -825,7 +825,7 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 
 	typeHintType, has := d.parseTypeNode(pl.Type)
 	if has && !d.typeHintHasMoreAccurateType(typeHintType, phpDocType) {
-		d.Report(pl, LevelWarning, "typeHint", "specify the type for the property in phpdoc, 'array' type hint is not precise enough")
+		d.Report(pl, LevelNotice, "typeHint", "specify the type for the property in phpdoc, 'array' type hint is not precise enough")
 	}
 
 	for _, pNode := range pl.Properties {
@@ -1425,7 +1425,7 @@ func (d *rootWalker) parseFuncArgs(params []ir.Node, phpDocParamsTypes phpDocPar
 			typeHintType, has := d.parseTypeNode(p.VariableType)
 			if has {
 				if !isClosure && !d.typeHintHasMoreAccurateType(typeHintType, phpDocType.typ) {
-					d.Report(p, LevelWarning, "typeHint", "specify the type for the parameter $%s in phpdoc, 'array' type hint is not precise enough", p.Variable.Name)
+					d.Report(p, LevelNotice, "typeHint", "specify the type for the parameter $%s in phpdoc, 'array' type hint is not precise enough", p.Variable.Name)
 				}
 
 				paramTyp = typeHintType
@@ -1569,7 +1569,7 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 
 func (d *rootWalker) checkFuncReturnType(fun ir.Node, funcName string, hintReturnType, phpDocReturnType types.Map) {
 	if !d.typeHintHasMoreAccurateType(hintReturnType, phpDocReturnType) {
-		d.Report(fun, LevelWarning, "typeHint", "specify the return type for the function %s in phpdoc, 'array' type hint is not precise enough", funcName)
+		d.Report(fun, LevelNotice, "typeHint", "specify the return type for the function %s in phpdoc, 'array' type hint is not precise enough", funcName)
 	}
 }
 
