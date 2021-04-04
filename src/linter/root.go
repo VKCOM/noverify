@@ -1398,7 +1398,7 @@ func (d *rootWalker) parseFuncArgsForCallback(params []ir.Node, sc *meta.Scope, 
 	return args, minArgs
 }
 
-func (d *rootWalker) parseFuncArgs(params []ir.Node, parTypes phpDocParamsMap, sc *meta.Scope, isClosure bool, closureSolver *solver.ClosureCallerInfo) (args []meta.FuncParam, minArgs int) {
+func (d *rootWalker) parseFuncArgs(params []ir.Node, phpDocParamsTypes phpDocParamsMap, sc *meta.Scope, isClosure bool, closureSolver *solver.ClosureCallerInfo) (args []meta.FuncParam, minArgs int) {
 	if len(params) == 0 {
 		return nil, 0
 	}
@@ -1412,7 +1412,7 @@ func (d *rootWalker) parseFuncArgs(params []ir.Node, parTypes phpDocParamsMap, s
 	for _, param := range params {
 		p := param.(*ir.Parameter)
 		v := p.Variable
-		phpDocType := parTypes[v.Name]
+		phpDocType := phpDocParamsTypes[v.Name]
 
 		if !phpDocType.typ.IsEmpty() {
 			sc.AddVarName(v.Name, phpDocType.typ, "param", meta.VarAlwaysDefined)

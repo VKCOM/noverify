@@ -119,7 +119,8 @@ func Parse(parser *TypeParser, doc string) Comment {
 		ln = strings.TrimSuffix(ln, "*/")
 		ln = strings.TrimSpace(ln)
 
-		if strings.Contains(ln, "inheritdoc") {
+		// works both {@inheritdoc} and @inheritdoc comments.
+		if strings.Contains(ln, "@inheritdoc") {
 			inherit = true
 			continue
 		}
