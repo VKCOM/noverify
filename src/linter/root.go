@@ -820,13 +820,15 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 		}
 	}
 
-	var specifiedType types.Map
-	if typ, ok := d.parseTypeNode(pl.Type); ok {
-		specifiedType = typ
-	}
-
 	d.checkCommentMisspellings(pl, pl.Doc.Raw)
-	typ := d.parsePHPDocVar(pl, pl.Doc)
+	phpDocType := d.parsePHPDocVar(pl, pl.Doc)
+
+	typeHintType, ok := d.parseTypeNode(pl.Type)
+	if ok {
+		if !d.typeHintHasMoreAccurateType(typeHintType, phpDocType) {
+			d.Report(pl, LevelWarning, "typeHint", "specify the type for the property in phpdoc, 'array' type hint is not precise enough")
+		}
+	}
 
 	for _, pNode := range pl.Properties {
 		p := pNode.(*ir.PropertyStmt)
@@ -834,9 +836,9 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 		nm := p.Variable.Name
 
 		if p.Expr != nil {
-			typ = typ.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, p.Expr))
+			phpDocType = phpDocType.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, p.Expr))
 		}
-		typ = typ.Append(specifiedType)
+		phpDocType = phpDocType.Append(typeHintType)
 
 		if isStatic {
 			nm = "$" + nm
@@ -845,7 +847,7 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 		// TODO: handle duplicate property
 		cl.Properties[nm] = meta.PropertyInfo{
 			Pos:         d.getElementPos(p),
-			Typ:         typ.Immutable(),
+			Typ:         phpDocType.Immutable(),
 			AccessLevel: accessLevel,
 		}
 	}

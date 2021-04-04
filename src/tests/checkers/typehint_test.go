@@ -36,6 +36,15 @@ class Foo2 extends FooAbstract {
 
 class A {
   /**
+   * @var int[]
+   */
+  public array $a = [];
+  /**
+   * @var int[]
+   */
+  public array $b, $c = [];
+
+  /**
    * @param int[] $a
    */
   function f(array $a) {}
@@ -94,6 +103,9 @@ func TestTypeHintBad(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 class A {
+  public array $a = [];
+  public array $b, $c = [];
+
   function f(array $a) {}
   function f1(): array {}
 }
@@ -112,6 +124,8 @@ function f2() {
 }
 `)
 	test.Expect = []string{
+		`specify the type for the property in phpdoc, 'array' type hint is not precise enough`,
+		`specify the type for the property in phpdoc, 'array' type hint is not precise enough`,
 		`specify the type for the parameter $a in phpdoc, 'array' type hint is not precise enough`,
 		`specify the return type for the function f1 in phpdoc, 'array' type hint is not precise enough`,
 		`specify the type for the parameter $a in phpdoc, 'array' type hint is not precise enough`,
