@@ -808,6 +808,38 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 		b.report(e, LevelNotice, "langDeprecated", "use is_float function instead of is_real")
 	case `\array_key_exists`:
 		b.checkArrayKeyExistsCall(e)
+	case `\random_int`:
+		b.checkRandomIntCall(e)
+	}
+}
+
+func (b *blockLinter) checkRandomIntCall(e *ir.FunctionCallExpr) {
+	if len(e.Args) < 2 {
+		return
+	}
+
+	arg1 := constfold.Eval(b.walker.r.ctx.st, e.Arg(0))
+	if !arg1.IsValid() {
+		return
+	}
+
+	arg2 := constfold.Eval(b.walker.r.ctx.st, e.Arg(1))
+	if !arg2.IsValid() {
+		return
+	}
+
+	min, ok := arg1.ToInt()
+	if !ok {
+		return
+	}
+
+	max, ok := arg2.ToInt()
+	if !ok {
+		return
+	}
+
+	if min > max {
+		b.report(e, LevelNotice, "argsOrder", "possibly wrong order of arguments, min = %d, max = %d", min, max)
 	}
 }
 
