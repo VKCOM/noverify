@@ -1427,8 +1427,8 @@ func (d *rootWalker) parseFuncArgs(params []ir.Node, phpDocParamsTypes phpDocPar
 		}
 
 		if p.VariableType != nil {
-			typeHintType, ok := d.parseTypeNode(p.VariableType)
-			if ok {
+			typeHintType, has := d.parseTypeNode(p.VariableType)
+			if has {
 				if !isClosure && !d.typeHintHasMoreAccurateType(typeHintType, phpDocType.typ) {
 					d.Report(p, LevelWarning, "typeHint", "specify the type for the parameter $%s in phpdoc, 'array' type hint is not precise enough", p.Variable.Name)
 				}
@@ -1537,12 +1537,9 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 
 	sc := meta.NewScope()
 
-	var hintReturnType types.Map
-	if typ, ok := d.parseTypeNode(fun.ReturnType); ok {
-		hintReturnType = typ
-		if !doc.inherit {
-			d.checkFuncReturnType(fun.FunctionName, fun.FunctionName.Value, hintReturnType, phpDocReturnType)
-		}
+	hintReturnType, has := d.parseTypeNode(fun.ReturnType)
+	if has && !doc.inherit {
+		d.checkFuncReturnType(fun.FunctionName, fun.FunctionName.Value, hintReturnType, phpDocReturnType)
 	}
 
 	params, minParamsCnt := d.parseFuncArgs(fun.Params, phpDocParamTypes, sc, false, nil)
