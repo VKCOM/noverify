@@ -181,8 +181,7 @@ func (i *Info) InitKphpStubs() {
 		ArgNum:       0,
 	}
 	i.internalFunctionOverrides[`\instance_deserialize`] = FuncInfoOverride{
-		OverrideType: OverrideClassType,
-		WithNull:     true,
+		OverrideType: OverrideNullableClassType,
 		ArgNum:       1,
 	}
 	i.internalFunctionOverrides[`\instance_cast`] = FuncInfoOverride{

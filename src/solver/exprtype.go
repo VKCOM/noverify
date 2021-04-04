@@ -258,7 +258,7 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 		newTyp := typ.Map(types.WrapElemOf)
 		return newTyp, true
 
-	case meta.OverrideClassType:
+	case meta.OverrideClassType, meta.OverrideNullableClassType:
 		// due to the fact that it is impossible for us to use constfold
 		// here, we have to process only a part of the possible options,
 		// although the most popular ones.
@@ -267,7 +267,7 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 			return types.NewMap("mixed"), true
 		}
 
-		if override.WithNull {
+		if override.OverrideType == meta.OverrideNullableClassType {
 			return types.NewMap(className + "|null"), true
 		}
 

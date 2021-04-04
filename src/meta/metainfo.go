@@ -79,13 +79,14 @@ const (
 	OverrideElementType
 	// OverrideClassType means that return type of a function is the same as the type represented by the class name.
 	OverrideClassType
+	// OverrideNullableClassType means that return type of a function is the same as the type represented by the class name, and is also nullable.
+	OverrideNullableClassType
 )
 
 // FuncInfoOverride defines return type overrides based on their parameter types.
 // For example, \array_slice($arr) returns type of element (OverrideElementType) of the ArgNum=0
 type FuncInfoOverride struct {
 	OverrideType OverrideType
-	WithNull     bool // whenever we need to add null type (usually for OverrideClassType)
 	ArgNum       int
 }
 
