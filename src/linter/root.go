@@ -823,11 +823,9 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 	d.checkCommentMisspellings(pl, pl.Doc.Raw)
 	phpDocType := d.parsePHPDocVar(pl, pl.Doc)
 
-	typeHintType, ok := d.parseTypeNode(pl.Type)
-	if ok {
-		if !d.typeHintHasMoreAccurateType(typeHintType, phpDocType) {
-			d.Report(pl, LevelWarning, "typeHint", "specify the type for the property in phpdoc, 'array' type hint is not precise enough")
-		}
+	typeHintType, has := d.parseTypeNode(pl.Type)
+	if has && !d.typeHintHasMoreAccurateType(typeHintType, phpDocType) {
+		d.Report(pl, LevelWarning, "typeHint", "specify the type for the property in phpdoc, 'array' type hint is not precise enough")
 	}
 
 	for _, pNode := range pl.Properties {
@@ -945,12 +943,9 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 
 	class := d.getClass()
 
-	var hintReturnType types.Map
-	if typ, ok := d.parseTypeNode(meth.ReturnType); ok {
-		hintReturnType = typ
-		if !doc.inherit {
-			d.checkFuncReturnType(meth.MethodName, meth.MethodName.Value, hintReturnType, phpDocReturnType)
-		}
+	hintReturnType, has := d.parseTypeNode(meth.ReturnType)
+	if has && !doc.inherit {
+		d.checkFuncReturnType(meth.MethodName, meth.MethodName.Value, hintReturnType, phpDocReturnType)
 	}
 
 	params, minParamsCnt := d.parseFuncArgs(meth.Params, phpDocParamTypes, sc, false, nil)
@@ -1596,8 +1591,8 @@ func (d *rootWalker) checkTypeHintClassCaseFunctionParam(p *ir.Parameter) {
 		return
 	}
 
-	typ, ok := d.parseTypeNode(p.VariableType)
-	if !ok {
+	typ, has := d.parseTypeNode(p.VariableType)
+	if !has {
 		return
 	}
 
