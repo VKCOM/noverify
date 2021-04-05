@@ -1,20 +1,18 @@
-package checkers_test
+package types
 
 import (
 	"testing"
-
-	"github.com/VKCOM/noverify/src/meta"
 )
 
 func TestEqualsMatching(t *testing.T) {
-	testCases := [][]meta.TypesMap{
+	testCases := [][]Map{
 		{
-			meta.NewEmptyTypesMap(1),
-			meta.NewEmptyTypesMap(1),
+			NewEmptyMap(1),
+			NewEmptyMap(1),
 		},
 		{
-			meta.NewTypesMapFromMap(map[string]struct{}{"string": {}, "int": {}}),
-			meta.NewTypesMapFromMap(map[string]struct{}{"string": {}, "int": {}}),
+			NewMapFromMap(map[string]struct{}{"string": {}, "int": {}}),
+			NewMapFromMap(map[string]struct{}{"string": {}, "int": {}}),
 		},
 	}
 
@@ -29,14 +27,14 @@ func TestEqualsMatching(t *testing.T) {
 }
 
 func TestEqualNonMatching(t *testing.T) {
-	testCases := [][]meta.TypesMap{
+	testCases := [][]Map{
 		{
-			meta.NewEmptyTypesMap(1),
-			meta.NewTypesMapFromMap(map[string]struct{}{"int": {}}),
+			NewEmptyMap(1),
+			NewMapFromMap(map[string]struct{}{"int": {}}),
 		},
 		{
-			meta.NewTypesMapFromMap(map[string]struct{}{"string": {}}),
-			meta.NewTypesMapFromMap(map[string]struct{}{"int": {}}),
+			NewMapFromMap(map[string]struct{}{"string": {}}),
+			NewMapFromMap(map[string]struct{}{"int": {}}),
 		},
 	}
 

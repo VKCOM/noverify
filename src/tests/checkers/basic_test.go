@@ -9,7 +9,7 @@ import (
 	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
-	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/types"
 )
 
 func TestBadString(t *testing.T) {
@@ -2020,7 +2020,7 @@ func TestArrayUnion(t *testing.T) {
 		t.Errorf("Unexpected number of types: %d, excepted 2", l)
 	}
 
-	if !fnMixedArr.Typ.Equals(meta.NewTypesMap("int[]|string[]")) {
+	if !fnMixedArr.Typ.Equals(types.NewMap("int[]|string[]")) {
 		// NOTE: this is how code works right now. It currently treat a[]|b[] as (a|b)[]
 		t.Errorf("Wrong type: %s, expected int[]|string[]", fnMixedArr.Typ)
 	}
@@ -2123,6 +2123,91 @@ function f() {
 	test.Expect = []string{
 		`last element in a multi-line array must have a trailing comma`,
 		`last element in a multi-line array must have a trailing comma`,
+	}
+	test.RunAndMatch()
+}
+
+func TestNestedTernary(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f() {
+    $_ = 1 ? 2 : 3 ? 4 : 5; // error
+	//   |_______|
+
+    $_ = 1 ? 2 : 3 ? 4 : 1 ? 2 : 3; // error
+	//   |_______|       |
+	//   |_______________|
+
+	$_ = (1 ? 2 : 3) ? 4 : 5; // ok
+	//   |_________|
+
+	$_ = 1 ? 2 : (3 ? 4 : 5); // ok
+	//           |_________|
+
+	$_ = 1 ? 2 ? 3 : 4 : 5; // ok, ternary in middle
+	//       |_______|
+}
+`)
+	test.Expect = []string{
+		`in ternary operators, you must explicitly use parentheses to specify the order of operations`,
+		`in ternary operators, you must explicitly use parentheses to specify the order of operations`,
+		`in ternary operators, you must explicitly use parentheses to specify the order of operations`,
+	}
+	test.RunAndMatch()
+}
+
+func TestRealCastingAndIsRealCall(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function is_real($a): bool { return true; }
+
+function f() {
+    $a = (real)100;
+    if (is_real($a)) {
+        echo 1;
+    }
+}
+`)
+	test.Expect = []string{
+		`use float cast instead of real`,
+		`use is_float function instead of is_real`,
+	}
+	test.RunAndMatch()
+}
+
+func TestArrayKeyExistCallWithObject(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function array_key_exists($a, $b): bool { return true; }
+
+class Foo {}
+
+function returnObject(): Foo {
+	return new Foo;
+}
+
+function returnObjectAndNull(): ?Foo {
+	if (1) {
+		return null;
+	}
+	return new Foo;
+}
+
+function f() {
+	$foo = new Foo;
+	$arr = ["a" => 100];
+
+    echo array_key_exists("param", $foo); // error
+    echo array_key_exists("param", returnObject()); // error
+    echo array_key_exists("param", returnObjectAndNull()); // ok
+
+    echo array_key_exists("a", $arr); // ok
+}
+
+`)
+	test.Expect = []string{
+		`since PHP 7.4, using array_key_exists() with an object has been deprecated, use isset() or property_exists() instead`,
+		`since PHP 7.4, using array_key_exists() with an object has been deprecated, use isset() or property_exists() instead`,
 	}
 	test.RunAndMatch()
 }
