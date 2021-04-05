@@ -4,7 +4,6 @@ $a = 5;
 function f(): int {
     global $a;
     $a++;
-
     return $a;
 }
 
