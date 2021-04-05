@@ -305,8 +305,8 @@ MAYBE   ternarySimplify: could rewrite as `$x_arr[10] ?? null` at testdata/embed
     sink(array_key_exists(10, $x_arr) ? $x_arr[10] : null);
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: could rewrite as `$x_arr[10] ?? null` at testdata/embeddedrules/ternarySimplify.php:28
-    sink(!array_key_exists(10, $x_arr) ? null : $x_arr[10]);
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    sink(! array_key_exists(10, $x_arr) ? null : $x_arr[10]);
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: could rewrite as `(bool)($flags & SOME_MASK)` at testdata/embeddedrules/ternarySimplify.php:46
     sink(($flags & SOME_MASK) ? true : false);
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
