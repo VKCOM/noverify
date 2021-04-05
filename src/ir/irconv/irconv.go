@@ -1382,6 +1382,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenParenthesisTkn = n.OpenParenthesisTkn
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
+		out.ColonTkn = n.ColonTkn
 
 		var tokenWithDoc *token.Token
 		if len(n.Modifiers) != 0 {
