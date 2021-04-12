@@ -406,3 +406,32 @@ function langDeprecated() {
      */
     define($_, $_, false);
 }
+
+/**
+ * @comment Report a strange way of casting.
+ * @before  $x.""
+ * @after   (string)$x
+ */
+function strangeCast() {
+    /**
+     * @warning use explicit cast to string instead of concatenate with empty string
+     */
+    any_string_cast: {
+        $x."";
+        $x.'';
+    }
+
+    /**
+     * @warning use an explicit cast to int or float instead of zero addition
+     */
+    any_number_cast: {
+        $x+0;
+        $x+0;
+        $x+0.0;
+    }
+
+    /**
+     * @warning use an explicit cast to int or float instead of using the unary plus
+     */
+    +$x;
+}
