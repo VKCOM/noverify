@@ -143,12 +143,12 @@ class t3 {
 }
 
 class ClassWithBackCompatibleConstructor {
-    public function __construct() {}
-	
-	/** back compatible constructor */
-    public function ClassWithBackCompatibleConstructor() {
-        $this->__construct();
-    }
+  public function __construct() {}
+
+  /** back compatible constructor */
+  public function ClassWithBackCompatibleConstructor() {
+    $this->__construct();
+  }
 }
 `)
 	test.Expect = []string{
