@@ -406,3 +406,27 @@ function langDeprecated() {
      */
     define($_, $_, false);
 }
+
+/**
+ * @comment Report string emptyness checking using strlen.
+ * @before  if (strlen($string)) { ... }
+ * @after   if ($string !== "") { ... }
+ */
+function emptyStringCheck() {
+    /**
+     * @warning use '$x !== ""' instead
+     */
+    any_not_equal: {
+        if (strlen($x)) { $_; }
+        if (mb_strlen($x)) { $_; }
+        if ($x || strlen($x)) { $_; }
+    }
+
+    /**
+     * @warning use '$x === ""' instead
+     */
+    any_equal: {
+        if (!strlen($x)) { $_; }
+        if (!mb_strlen($x)) { $_; }
+    }
+}
