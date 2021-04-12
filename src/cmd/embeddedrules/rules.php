@@ -408,7 +408,7 @@ function langDeprecated() {
 }
 
 /**
- * @comment Report a strange way of casting.
+ * @comment Report a strange way of type cast.
  * @before  $x.""
  * @after   (string)$x
  */
