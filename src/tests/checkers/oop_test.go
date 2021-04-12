@@ -151,6 +151,16 @@ class ClassWithBackCompatibleConstructor {
   }
 }
 
+trait TraitWithNameMatchingMethod {
+  /** ok */
+  public function TraitWithNameMatchingMethod() {}
+}
+
+interface InterfaceWithNameMatchingMethod {
+  /** ok */
+  public function InterfaceWithNameMatchingMethod();
+}
+
 namespace SameWithNamespace {
   class T1 {
     /** simple constructor */
@@ -174,6 +184,16 @@ namespace SameWithNamespace {
     public function ClassWithBackCompatibleConstructor() {
       $this->__construct();
     }
+  }
+
+  trait TraitWithNameMatchingMethod {
+    /** ok */
+    public function TraitWithNameMatchingMethod() {}
+  }
+  
+  interface InterfaceWithNameMatchingMethod {
+    /** ok */
+    public function InterfaceWithNameMatchingMethod();
   }
 }
 `)
