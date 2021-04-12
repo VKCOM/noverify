@@ -414,7 +414,7 @@ function langDeprecated() {
  */
 function strangeCast() {
     /**
-     * @warning use explicit cast to string instead of concatenate with empty string
+     * @warning concatenation with empty string, possible type cast, use explicit cast to string instead of concatenate with empty string
      */
     any_string_cast: {
         $x."";
@@ -422,16 +422,15 @@ function strangeCast() {
     }
 
     /**
-     * @warning use an explicit cast to int or float instead of zero addition
+     * @warning addition with zero, possible type cast, use an explicit cast to int or float instead of zero addition
      */
     any_number_cast: {
-        $x+0;
         $x+0;
         $x+0.0;
     }
 
     /**
-     * @warning use an explicit cast to int or float instead of using the unary plus
+     * @warning unary plus, possible type cast, use an explicit cast to int or float instead of using the unary plus
      */
     +$x;
 }

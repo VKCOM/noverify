@@ -22,6 +22,9 @@ WARNING unused: Variable mode is unused (use $_ to ignore this inspection) at te
 WARNING undefined: Variable might have not been defined: code at testdata/qrcode/qrcode.php:221
     while (count($code) % 8) {
                  ^^^^^
+WARNING strangeCast: addition with zero, possible type cast, use an explicit cast to int or float instead of zero addition at testdata/qrcode/qrcode.php:229
+      if ($code[$i + 0]) {
+                ^^^^^^
 WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:297
       case 2:  /* 27 - 40 */
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
