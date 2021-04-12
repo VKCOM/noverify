@@ -7,6 +7,7 @@ import (
 	"testing"
 	"text/scanner"
 
+	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/linter"
 )
 
@@ -105,6 +106,16 @@ func (s *inlineTestSuite) compare(expects []string, reports []string) (unmatched
 // handleFileContents reads, parses the resulting file, and splits it into lines.
 func (s *inlineTestSuite) handleFileContents(file string) (lines []string, reports []*linter.Report, err error) {
 	lint := linter.NewLinter(linter.NewConfig())
+
+	err = cmd.LoadEmbeddedStubs(lint, defaultStubs)
+	if err != nil {
+		return nil, nil, fmt.Errorf("load stubs: %v", err)
+	}
+
+	err = InitEmbeddedRules(lint.Config())
+	if err != nil {
+		return nil, nil, err
+	}
 
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
