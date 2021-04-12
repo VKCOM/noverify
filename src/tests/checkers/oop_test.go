@@ -141,6 +141,15 @@ class t3 {
   /** inverse of the T2 test case */
   public function T3() {}
 }
+
+class ClassWithBackCompatibleConstructor {
+    public function __construct() {}
+	
+	/** back compatible constructor */
+    public function ClassWithBackCompatibleConstructor() {
+        $this->__construct();
+    }
+}
 `)
 	test.Expect = []string{
 		`Old-style constructor usage, use __construct instead`,

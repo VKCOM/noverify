@@ -889,21 +889,32 @@ func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
 	return true
 }
 
-func (d *rootWalker) checkOldStyleConstructor(meth *ir.ClassMethodStmt, nm string) {
+func (d *rootWalker) checkOldStyleConstructor(meth *ir.ClassMethodStmt) {
 	lastDelim := strings.IndexByte(d.ctx.st.CurrentClass, '\\')
-	if strings.EqualFold(d.ctx.st.CurrentClass[lastDelim+1:], nm) {
-		_, isClass := d.currentClassNode.(*ir.ClassStmt)
-		if isClass {
-			d.Report(meth.MethodName, LevelNotice, "oldStyleConstructor", "Old-style constructor usage, use __construct instead")
-		}
+	methodName := meth.MethodName.Value
+	className := d.ctx.st.CurrentClass[lastDelim+1:]
+
+	if !strings.EqualFold(className, methodName) {
+		return
 	}
+
+	_, inClass := d.currentClassNode.(*ir.ClassStmt)
+	if !inClass {
+		return
+	}
+	_, containsConstruct := d.getClass().Methods.Get(`__construct`)
+	if containsConstruct {
+		return
+	}
+
+	d.Report(meth.MethodName, LevelNotice, "oldStyleConstructor", "Old-style constructor usage, use __construct instead")
 }
 
 func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	nm := meth.MethodName.Value
 	_, insideInterface := d.currentClassNode.(*ir.InterfaceStmt)
 
-	d.checkOldStyleConstructor(meth, nm)
+	d.checkOldStyleConstructor(meth)
 
 	pos := ir.GetPosition(meth)
 
