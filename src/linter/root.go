@@ -890,7 +890,7 @@ func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
 }
 
 func (d *rootWalker) checkOldStyleConstructor(meth *ir.ClassMethodStmt) {
-	lastDelim := strings.IndexByte(d.ctx.st.CurrentClass, '\\')
+	lastDelim := strings.LastIndexByte(d.ctx.st.CurrentClass, '\\')
 	methodName := meth.MethodName.Value
 	className := d.ctx.st.CurrentClass[lastDelim+1:]
 
