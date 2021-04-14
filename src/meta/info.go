@@ -147,14 +147,14 @@ func (i *Info) FindConstants(substr string) (res []string) {
 }
 
 func (i *Info) InitKphpStubs() {
-	i.internalFunctions.H[`\array_first_element`] = FuncInfo{
-		Name:         `\array_first_element`,
+	i.internalFunctions.H[`\array_first_value`] = FuncInfo{
+		Name:         `\array_first_value`,
 		Params:       []FuncParam{{Name: "el"}},
 		MinParamsCnt: 1,
 		Typ:          types.NewMap("mixed"),
 	}
-	i.internalFunctions.H[`\array_last_element`] = FuncInfo{
-		Name:         `\array_last_element`,
+	i.internalFunctions.H[`\array_last_value`] = FuncInfo{
+		Name:         `\array_last_value`,
 		Params:       []FuncParam{{Name: "el"}},
 		MinParamsCnt: 1,
 		Typ:          types.NewMap("mixed"),
@@ -166,11 +166,11 @@ func (i *Info) InitKphpStubs() {
 		Typ:          types.NewMap("object|null"),
 	}
 
-	i.internalFunctionOverrides[`\array_first_element`] = FuncInfoOverride{
+	i.internalFunctionOverrides[`\array_first_value`] = FuncInfoOverride{
 		OverrideType: OverrideElementType,
 		ArgNum:       0,
 	}
-	i.internalFunctionOverrides[`\array_last_element`] = FuncInfoOverride{
+	i.internalFunctionOverrides[`\array_last_value`] = FuncInfoOverride{
 		OverrideType: OverrideElementType,
 		ArgNum:       0,
 	}
