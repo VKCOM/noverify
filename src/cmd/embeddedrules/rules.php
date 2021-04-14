@@ -406,3 +406,29 @@ function langDeprecated() {
      */
     define($_, $_, false);
 }
+
+/**
+ * @comment Report the use of assignment in the return statement.
+ * @before  return $a = 100;
+ * @after   return $a;
+ */
+function returnAssign() {
+    /**
+     * @warning don't use assignment in the return statement
+     */
+    any: {
+        return $_ = $_;
+        return $_ += $_;
+        return $_ -= $_;
+        return $_ *= $_;
+        return $_ /= $_;
+        return $_ %= $_;
+        return $_ &= $_;
+        return $_ |= $_;
+        return $_ ^= $_;
+        return $_ <<= $_;
+        return $_ >>= $_;
+        return $_ .= $_;
+        return $_ ??= $_;
+    }
+}
