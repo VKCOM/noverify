@@ -636,7 +636,7 @@ echo $someVal;`,
   } finally {
     if (someCondition()) {
       return 1;
-	}
+    }
   }
 }`,
 		},
