@@ -9,8 +9,8 @@ function finallyReturnBadReturnInCatch(): int {
     try {
         throwException();
     } catch (Exception $_) {
-        return 2;
-    } finally { // want `finally block contains a return`
+        return 2; // want `return is unreachable (because finally block contains a return on line 14)`
+    } finally {
         return 1;
     }
 }
@@ -19,8 +19,8 @@ function finallyReturnBadThrowInCatch(): int {
     try {
         throwException();
     } catch (Exception $_) {
-        throw new Exception();
-    } finally { // want `finally block contains a return`
+        throw new Exception(); // want `throw is unreachable (because finally block contains a return on line 24)`
+    } finally {
         return 1;
     }
 }
@@ -29,8 +29,8 @@ function finallyReturnBadDieInCatch(): int {
     try {
         throwException();
     } catch (Exception $_) {
-        die();
-    } finally { // want `finally block contains a return`
+        die(); // want `die is unreachable (because finally block contains a return on line 34)`
+    } finally {
         return 1;
     }
 }
@@ -40,11 +40,11 @@ function finallyReturnBadMultiplyExitPointInCatch(): int {
         throwException();
     } catch (Exception $_) {
         if (0) {
-            die();
+            die(); // want `die is unreachable (because finally block contains a return on line 48)`
         } else {
-            return 2;
+            return 2; // want `return is unreachable (because finally block contains a return on line 48)`
         }
-    } finally { // want `finally block contains a return`
+    } finally {
         return 1;
     }
 }
@@ -54,10 +54,10 @@ function finallyReturnBadMultiplyExitPointInTry(): int {
         if (0) {
             throwException();
         } else {
-            return 1;
+            return 1; // want `return is unreachable (because finally block contains a return on line 61)`
         }
     } catch (Exception $_) {
-    } finally { // want `finally block contains a return`
+    } finally {
         return 1;
     }
 }
@@ -66,10 +66,10 @@ function finallyReturnBadMultiplyCatch(): int {
     try {
         throwException();
     } catch (RuntimeException $_) {
-        return 2;
+        return 2; // want `return is unreachable (because finally block contains a return on line 73)`
     } catch (Exception $_) {
-        die();
-    } finally { // want `finally block contains a return`
+        die(); // want `die is unreachable (because finally block contains a return on line 73)`
+    } finally {
         return 1;
     }
 }

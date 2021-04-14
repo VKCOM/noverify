@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/z7zmey/php-parser/pkg/position"
 	"github.com/z7zmey/php-parser/pkg/token"
 
 	"github.com/VKCOM/noverify/src/ir"
@@ -699,23 +700,77 @@ func (b *blockWalker) checkForFinallyReturn(s *ir.TryStmt, tryCtx *blockContext,
 		return
 	}
 
-	lostReturn := false
+	var exitPoints []exitPoint
 
 	// if try contains some other return/die/etc statement
 	if tryCtx.containsExitFlags != 0 && tryCtx.containsExitFlags^FlagThrow != 0 {
-		lostReturn = true
+		points := b.findExitPointsByFlags(&ir.StmtList{Stmts: s.Stmts}, tryCtx.containsExitFlags^FlagThrow)
+		exitPoints = append(exitPoints, points...)
 	}
 
-	for _, context := range catchContexts {
+	for i, context := range catchContexts {
 		if context.exitFlags != 0 || context.containsExitFlags != 0 {
-			lostReturn = true
-			break
+			points := b.findExitPointsByFlags(s.Catches[i], context.exitFlags)
+			exitPoints = append(exitPoints, points...)
 		}
 	}
 
-	if lostReturn {
-		b.r.Report(s.Finally, LevelError, "finallyReturn", "finally block contains a return, because of this other return or exceptions from try-catch block will always be ignored")
+	var finallyReturnPos position.Position
+	finallyReturns := b.findExitPointsByFlags(s.Finally, FlagReturn)
+	if len(finallyReturns) > 0 {
+		finallyReturnPos = *ir.GetPosition(finallyReturns[0].n)
 	}
+
+	for _, point := range exitPoints {
+		b.r.Report(point.n, LevelError, "unreachable", "%s is unreachable (because finally block contains a return on line %d)", point.typ, finallyReturnPos.StartLine)
+	}
+}
+
+type exitPoint struct {
+	n   ir.Node
+	typ string
+}
+
+func (b *blockWalker) findExitPointsByFlags(where ir.Node, exitFlags int) (points []exitPoint) {
+	irutil.Inspect(where, func(n ir.Node) bool {
+		if exitFlags&FlagReturn == FlagReturn {
+			ret, ok := n.(*ir.ReturnStmt)
+			if ok {
+				points = append(points, exitPoint{
+					n:   ret,
+					typ: "return",
+				})
+			}
+		}
+
+		if exitFlags&FlagThrow == FlagThrow {
+			thr, ok := n.(*ir.ThrowStmt)
+			if ok {
+				points = append(points, exitPoint{
+					n:   thr,
+					typ: "throw",
+				})
+			}
+		}
+
+		if exitFlags&FlagDie == FlagDie {
+			exit, ok := n.(*ir.ExitExpr)
+			if ok {
+				typ := "exit"
+				if exit.Die {
+					typ = "die"
+				}
+
+				points = append(points, exitPoint{
+					n:   exit,
+					typ: typ,
+				})
+			}
+		}
+		return true
+	})
+
+	return points
 }
 
 func (b *blockWalker) handleCatch(s *ir.CatchStmt) {
