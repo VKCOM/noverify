@@ -641,17 +641,19 @@ func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
 		b.ctx.containsExitFlags |= ctx.containsExitFlags
 	}
 
-	ctx := b.withNewContext(func() {
+	tryCtx := b.withNewContext(func() {
 		for _, s := range s.Stmts {
 			b.addStatement(s)
 			s.Walk(b)
 		}
 	})
-	if ctx.exitFlags == 0 {
+	if tryCtx.exitFlags == 0 {
 		linksCount++
 	}
 
-	contexts = append(contexts, ctx)
+	b.checkForFinallyReturn(s, tryCtx, finallyCtx, contexts)
+
+	contexts = append(contexts, tryCtx)
 
 	varTypes := make(map[string]types.Map, b.ctx.sc.Len())
 	defCounts := make(map[string]int, b.ctx.sc.Len())
@@ -682,14 +684,38 @@ func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
 		})
 	}
 
-	if othersExit && ctx.exitFlags != 0 {
+	if othersExit && tryCtx.exitFlags != 0 {
 		b.ctx.exitFlags |= prematureExitFlags
-		b.ctx.exitFlags |= ctx.exitFlags
+		b.ctx.exitFlags |= tryCtx.exitFlags
 	}
 
-	b.ctx.containsExitFlags |= ctx.containsExitFlags
+	b.ctx.containsExitFlags |= tryCtx.containsExitFlags
 
 	return false
+}
+
+func (b *blockWalker) checkForFinallyReturn(s *ir.TryStmt, tryCtx *blockContext, finallyCtx *blockContext, catchContexts []*blockContext) {
+	if finallyCtx == nil || finallyCtx.exitFlags != FlagReturn {
+		return
+	}
+
+	lostReturn := false
+
+	// if try contains some other return/die/etc statement
+	if tryCtx.containsExitFlags != 0 && tryCtx.containsExitFlags^FlagThrow != 0 {
+		lostReturn = true
+	}
+
+	for _, context := range catchContexts {
+		if context.exitFlags != 0 || context.containsExitFlags != 0 {
+			lostReturn = true
+			break
+		}
+	}
+
+	if lostReturn {
+		b.r.Report(s.Finally, LevelError, "finallyReturn", "finally block contains a return, because of this other return or exceptions from try-catch block will always be ignored")
+	}
 }
 
 func (b *blockWalker) handleCatch(s *ir.CatchStmt) {

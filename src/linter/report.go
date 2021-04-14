@@ -615,6 +615,33 @@ echo $someVal;`,
 		},
 
 		{
+			Name:     "finallyReturn",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report the use of return in finally when there are other return, throw, die, etc. in the try-catch.`,
+			Before: `function f(): int {
+  try {
+    throwException();
+  } catch (Exception $_) {
+    return 2;
+  } finally {
+    return 1;
+  }
+}`,
+			After: `function f(): int {
+  try {
+    throwException();
+  } catch (Exception $_) {
+    return 2;
+  } finally {
+    if (someCondition()) {
+      return 1;
+	}
+  }
+}`,
+		},
+
+		{
 			Name:     "trailingComma",
 			Default:  false,
 			Quickfix: true,
