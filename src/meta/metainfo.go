@@ -86,7 +86,7 @@ type AdditionalProperty int
 const (
 	// NotNull means that the null type will be removed from the resulting type.
 	NotNull AdditionalProperty = (iota + 1) << 1
-	// NotFalse means that the null type will be removed from the resulting type.
+	// NotFalse means that the false type will be removed from the resulting type.
 	NotFalse
 )
 
