@@ -652,7 +652,7 @@ func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
 		linksCount++
 	}
 
-	b.checkForFinallyReturn(s, tryCtx, finallyCtx, contexts)
+	b.checkUnreachableForFinallyReturn(s, tryCtx, finallyCtx, contexts)
 
 	contexts = append(contexts, tryCtx)
 
@@ -695,8 +695,8 @@ func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
 	return false
 }
 
-func (b *blockWalker) checkForFinallyReturn(s *ir.TryStmt, tryCtx *blockContext, finallyCtx *blockContext, catchContexts []*blockContext) {
-	if finallyCtx == nil || finallyCtx.exitFlags != FlagReturn {
+func (b *blockWalker) checkUnreachableForFinallyReturn(tryStmt *ir.TryStmt, tryCtx *blockContext, finallyCtx *blockContext, catchContexts []*blockContext) {
+	if finallyCtx == nil {
 		return
 	}
 
@@ -704,25 +704,43 @@ func (b *blockWalker) checkForFinallyReturn(s *ir.TryStmt, tryCtx *blockContext,
 
 	// if try contains some other return/die/etc statement
 	if tryCtx.containsExitFlags != 0 && tryCtx.containsExitFlags^FlagThrow != 0 {
-		points := b.findExitPointsByFlags(&ir.StmtList{Stmts: s.Stmts}, tryCtx.containsExitFlags^FlagThrow)
+		points := b.findExitPointsByFlags(&ir.StmtList{Stmts: tryStmt.Stmts}, tryCtx.containsExitFlags^FlagThrow)
 		exitPoints = append(exitPoints, points...)
 	}
 
+	var catchContainsDie bool
+	var catchWithDieIndex int
+
 	for i, context := range catchContexts {
 		if context.exitFlags != 0 || context.containsExitFlags != 0 {
-			points := b.findExitPointsByFlags(s.Catches[i], context.exitFlags)
+			points := b.findExitPointsByFlags(tryStmt.Catches[i], context.exitFlags^FlagDie)
 			exitPoints = append(exitPoints, points...)
+		}
+
+		if context.exitFlags&FlagDie == FlagDie {
+			catchContainsDie = true
+			catchWithDieIndex = i + 1
 		}
 	}
 
-	var finallyReturnPos position.Position
-	finallyReturns := b.findExitPointsByFlags(s.Finally, FlagReturn)
-	if len(finallyReturns) > 0 {
-		finallyReturnPos = *ir.GetPosition(finallyReturns[0].n)
+	if catchContainsDie {
+		b.r.Report(tryStmt.Finally, LevelError, "unreachable", "block finally is unreachable (because %d catch block contains a exit/die)", catchWithDieIndex)
+
+		// If there is an error when the finally block is unreachable,
+		// then errors due to return in finally are skipped.
+		return
 	}
 
-	for _, point := range exitPoints {
-		b.r.Report(point.n, LevelError, "unreachable", "%s is unreachable (because finally block contains a return on line %d)", point.typ, finallyReturnPos.StartLine)
+	if finallyCtx.exitFlags == FlagReturn {
+		var finallyReturnPos position.Position
+		finallyReturns := b.findExitPointsByFlags(tryStmt.Finally, FlagReturn)
+		if len(finallyReturns) > 0 {
+			finallyReturnPos = *ir.GetPosition(finallyReturns[0].n)
+		}
+
+		for _, point := range exitPoints {
+			b.r.Report(point.n, LevelError, "unreachable", "%s is unreachable (because finally block contains a return on line %d)", point.typ, finallyReturnPos.StartLine)
+		}
 	}
 }
 

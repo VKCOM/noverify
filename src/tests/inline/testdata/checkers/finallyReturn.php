@@ -29,8 +29,8 @@ function finallyReturnBadDieInCatch(): int {
     try {
         throwException();
     } catch (Exception $_) {
-        die(); // want `die is unreachable (because finally block contains a return on line 34)`
-    } finally {
+        die();
+    } finally { // want `block finally is unreachable (because 1 catch block contains a exit/die)`
         return 1;
     }
 }
@@ -39,12 +39,12 @@ function finallyReturnBadMultiplyExitPointInCatch(): int {
     try {
         throwException();
     } catch (Exception $_) {
-        if (0) {
-            die(); // want `die is unreachable (because finally block contains a return on line 48)`
+        if (1) {
+            die();
         } else {
-            return 2; // want `return is unreachable (because finally block contains a return on line 48)`
+            return 2;
         }
-    } finally {
+    } finally { // want `block finally is unreachable (because 1 catch block contains a exit/die)`
         return 1;
     }
 }
@@ -68,8 +68,32 @@ function finallyReturnBadMultiplyCatch(): int {
     } catch (RuntimeException $_) {
         return 2; // want `return is unreachable (because finally block contains a return on line 73)`
     } catch (Exception $_) {
-        die(); // want `die is unreachable (because finally block contains a return on line 73)`
+       return 3; // want `return is unreachable (because finally block contains a return on line 73)`
     } finally {
+        return 1;
+    }
+}
+
+function finallyReturnBadMultiplyCatchWithDie(): int {
+    try {
+        throwException();
+    } catch (RuntimeException $_) {
+        return 2;
+    } catch (Exception $_) {
+        die();
+    } finally { // want `block finally is unreachable (because 2 catch block contains a exit/die)`
+        return 1;
+    }
+}
+
+function finallyReturnBadMultiplyCatchWithExit(): int {
+    try {
+        throwException();
+    } catch (RuntimeException $_) {
+        return 2;
+    } catch (Exception $_) {
+        exit();
+    } finally { // want `block finally is unreachable (because 2 catch block contains a exit/die)`
         return 1;
     }
 }
