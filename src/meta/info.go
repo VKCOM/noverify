@@ -177,6 +177,12 @@ func (i *Info) InitKphpStubs() {
 		MinParamsCnt: 1,
 		Typ:          types.NewMap("mixed"),
 	}
+	i.internalFunctions.H[`\create_vector`] = FuncInfo{
+		Name:         `\create_vector`,
+		Params:       []FuncParam{{Name: "count"}, {Name: "el"}},
+		MinParamsCnt: 2,
+		Typ:          types.NewMap("mixed[]"),
+	}
 
 	i.internalFunctionOverrides[`\array_first_element`] = FuncInfoOverride{
 		OverrideType: OverrideElementType,
@@ -199,6 +205,11 @@ func (i *Info) InitKphpStubs() {
 		OverrideType:       OverrideArgType,
 		AdditionalProperty: NotFalse,
 		ArgNum:             0,
+	}
+	i.internalFunctionOverrides[`\create_vector`] = FuncInfoOverride{
+		OverrideType:       OverrideArgType,
+		AdditionalProperty: ArrayOf,
+		ArgNum:             1,
 	}
 }
 

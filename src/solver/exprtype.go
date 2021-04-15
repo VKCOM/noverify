@@ -280,6 +280,8 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 		typ = typ.Filter(func(s string) bool {
 			return s != "false"
 		})
+	case meta.ArrayOf:
+		typ = typ.Map(types.WrapArrayOf)
 	default:
 		return typ, true
 	}

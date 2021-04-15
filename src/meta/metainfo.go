@@ -88,6 +88,8 @@ const (
 	NotNull AdditionalProperty = (iota + 1) << 1
 	// NotFalse means that the false type will be removed from the resulting type.
 	NotFalse
+	// ArrayOf means that the type will be converted to an array of elements of that type.
+	ArrayOf
 )
 
 // FuncInfoOverride defines return type overrides based on their parameter types.
