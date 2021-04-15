@@ -81,11 +81,21 @@ const (
 	OverrideClassType
 )
 
+type AdditionalProperty int
+
+const (
+	// NotNull means that the null type will be removed from the resulting type.
+	NotNull AdditionalProperty = (iota + 1) << 1
+	// NotFalse means that the null type will be removed from the resulting type.
+	NotFalse
+)
+
 // FuncInfoOverride defines return type overrides based on their parameter types.
 // For example, \array_slice($arr) returns type of element (OverrideElementType) of the ArgNum=0
 type FuncInfoOverride struct {
-	OverrideType OverrideType
-	ArgNum       int
+	OverrideType       OverrideType
+	AdditionalProperty AdditionalProperty
+	ArgNum             int
 }
 
 type PropertyInfo struct {

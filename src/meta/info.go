@@ -165,6 +165,18 @@ func (i *Info) InitKphpStubs() {
 		MinParamsCnt: 2,
 		Typ:          types.NewMap("object|null"),
 	}
+	i.internalFunctions.H[`\not_null`] = FuncInfo{
+		Name:         `\not_null`,
+		Params:       []FuncParam{{Name: "any_value"}},
+		MinParamsCnt: 1,
+		Typ:          types.NewMap("mixed"),
+	}
+	i.internalFunctions.H[`\not_false`] = FuncInfo{
+		Name:         `\not_false`,
+		Params:       []FuncParam{{Name: "any_value"}},
+		MinParamsCnt: 1,
+		Typ:          types.NewMap("mixed"),
+	}
 
 	i.internalFunctionOverrides[`\array_first_element`] = FuncInfoOverride{
 		OverrideType: OverrideElementType,
@@ -177,6 +189,16 @@ func (i *Info) InitKphpStubs() {
 	i.internalFunctionOverrides[`\instance_deserialize`] = FuncInfoOverride{
 		OverrideType: OverrideClassType,
 		ArgNum:       1,
+	}
+	i.internalFunctionOverrides[`\not_null`] = FuncInfoOverride{
+		OverrideType:       OverrideArgType,
+		AdditionalProperty: NotNull,
+		ArgNum:             0,
+	}
+	i.internalFunctionOverrides[`\not_false`] = FuncInfoOverride{
+		OverrideType:       OverrideArgType,
+		AdditionalProperty: NotFalse,
+		ArgNum:             0,
 	}
 }
 
