@@ -5,7 +5,7 @@ import (
 )
 
 func IsClass(s string) bool {
-	return strings.HasPrefix(s, `\`) && !IsShape(s) && !IsArray(s) && !IsClass(s)
+	return strings.HasPrefix(s, `\`) && !IsShape(s) && !IsArray(s) && !IsClosure(s)
 }
 
 func IsShape(s string) bool {
