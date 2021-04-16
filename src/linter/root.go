@@ -1330,9 +1330,26 @@ func (d *rootWalker) parseTypeNode(n ir.Node) (typ types.Map, ok bool) {
 		return types.Map{}, false
 	}
 
+	d.checkTypeNode(n)
+
 	typeList := typesFromNode(n)
 	tm := newTypesMap(&d.ctx, typeList)
 	return tm, !tm.IsEmpty()
+}
+
+func (d *rootWalker) checkTypeNode(n ir.Node) {
+	if n == nil {
+		return
+	}
+
+	typeList := typesFromNode(n)
+	for _, typ := range typeList {
+		if typ.Elem == "parent" && d.ctx.st.CurrentClass != "" {
+			if d.ctx.st.CurrentParentClass == "" {
+				d.Report(n, LevelError, "typeHint", "cannot use 'parent' typehint when current class has no parent")
+			}
+		}
+	}
 }
 
 // callbackParamByIndex returns the description of the parameter for the function by its index.
