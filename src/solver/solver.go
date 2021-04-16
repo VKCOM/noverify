@@ -105,7 +105,7 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 	case types.WElemOfKey:
 		arrayType, key := types.UnwrapElemOfKey(typ)
 		for tt := range r.resolveType(class, arrayType) {
-			if types.IsShapeType(tt) {
+			if types.IsShape(tt) {
 				res = r.solveElemOfShape(class, tt, key, res)
 			} else {
 				res = r.solveElemOf(tt, res)
@@ -235,8 +235,8 @@ func (r *resolver) solveElemOfShape(class, shapeName, key string, res map[string
 
 func (r *resolver) solveElemOf(tt string, res map[string]struct{}) map[string]struct{} {
 	switch {
-	case types.IsArrayType(tt):
-		res[strings.TrimSuffix(tt, "[]")] = struct{}{}
+	case types.IsArray(tt):
+		res[types.ArrayType(tt)] = struct{}{}
 	case tt == "mixed":
 		res["mixed"] = struct{}{}
 	case Implements(r.info, tt, `\ArrayAccess`):
@@ -281,7 +281,7 @@ func (r *resolver) resolveTypes(class string, m types.Map) map[string]struct{} {
 		delete(res, "empty_array")
 		specialized := false
 		for tt := range res {
-			if types.IsArrayType(tt) {
+			if types.IsArray(tt) {
 				specialized = true
 				break
 			}

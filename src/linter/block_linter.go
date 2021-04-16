@@ -851,7 +851,7 @@ func (b *blockLinter) checkArrayKeyExistsCall(e *ir.FunctionCallExpr) {
 	typ := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, e.Arg(1).Expr)
 
 	onlyObjects := !typ.Find(func(typ string) bool {
-		return !types.IsClassType(typ)
+		return !types.IsClass(typ)
 	})
 
 	if onlyObjects {
@@ -1165,7 +1165,7 @@ func (b *blockLinter) checkFormatString(e *ir.FunctionCallExpr, arg *ir.Argument
 		}
 
 		arg := e.Arg(d.argNum)
-		if d.specifier == 's' && b.isArrayType(b.walker.exprType(arg.Expr)) {
+		if d.specifier == 's' && b.walker.exprType(arg.Expr).IsArray() {
 			b.report(arg, LevelWarning, "printf", "potential array to string conversion")
 		}
 	}
@@ -1175,10 +1175,6 @@ func (b *blockLinter) checkFormatString(e *ir.FunctionCallExpr, arg *ir.Argument
 			b.report(e.Arg(i), LevelWarning, "printf", "argument is not referenced from the formatting string")
 		}
 	}
-}
-
-func (b *blockLinter) isArrayType(typ types.Map) bool {
-	return typ.Len() == 1 && typ.Find(types.IsArrayType)
 }
 
 func (b *blockLinter) classParseState() *meta.ClassParseState {
