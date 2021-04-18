@@ -11,50 +11,50 @@
  * @after   $x ?: $y
  */
 function ternarySimplify() {
-    /**
-     * @maybe could replace the ternary with just $cond
-     * @type bool $cond
-     */
-    $cond ? true : false;
+  /**
+   * @maybe could replace the ternary with just $cond
+   * @type bool $cond
+   */
+  $cond ? true : false;
 
-    /**
-     * @maybe could rewrite as `(bool)$cond`
-     * @type  !bool $cond
-     */
-    $cond ? true : false;
+  /**
+   * @maybe could rewrite as `(bool)$cond`
+   * @type  !bool $cond
+   */
+  $cond ? true : false;
 
-    /**
-     * @maybe could rewrite as `$x ?: $y`
-     * @fix $x ?: $y
-     * @pure $x
-     */
-    $x ? $x : $y;
+  /**
+   * @maybe could rewrite as `$x ?: $y`
+   * @fix $x ?: $y
+   * @pure $x
+   */
+  $x ? $x : $y;
 
-    /**
-     * @maybe could rewrite as `$x ?? $y`
-     * @fix $x ?? $y
-     */
-    isset($x) ? $x : $y;
+  /**
+   * @maybe could rewrite as `$x ?? $y`
+   * @fix $x ?? $y
+   */
+  isset($x) ? $x : $y;
 
-    /**
-     * @maybe could rewrite as `$x[$i] ?? $y`
-     * @pure $i
-     */
-    any_indexing: {
-        $x[$i] !== null ? $x[$i] : $y;
-        null !== $x[$i] ? $x[$i] : $y;
-        $x[$i] === null ? $y : $x[$i];
-        null === $x[$i] ? $y : $x[$i];
-    }
+  /**
+   * @maybe could rewrite as `$x[$i] ?? $y`
+   * @pure $i
+   */
+  any_indexing: {
+    $x[$i] !== null ? $x[$i] : $y;
+    null !== $x[$i] ? $x[$i] : $y;
+    $x[$i] === null ? $y : $x[$i];
+    null === $x[$i] ? $y : $x[$i];
+  }
 
-    /**
-     * @maybe could rewrite as `$x[$i] ?? $y`
-     * @pure $i
-     */
-    any_array_key_exists: {
-        array_key_exists($i, $x) ? $x[$i] : $y;
-        ! array_key_exists($i, $x) ? $y : $x[$i];
-    }
+  /**
+   * @maybe could rewrite as `$x[$i] ?? $y`
+   * @pure $i
+   */
+  any_array_key_exists: {
+    array_key_exists($i, $x) ? $x[$i] : $y;
+    !array_key_exists($i, $x) ? $y : $x[$i];
+  }
 }
 
 /**
@@ -63,79 +63,79 @@ function ternarySimplify() {
  * @after   ($x & $mask) == 0
  */
 function precedence() {
-    // Note: we report `$x & $mask != $y` as a precedence issue even
-    // if it can be caught with `typecheckOp` that checks both operand
-    // types (bool is not a good operand for bitwise operation).
-    //
-    // Reporting `invalid types, expected number found bool` is
-    // not that helpful, because the root of the problem is precedence.
-    // Invalid types are a result of that.
+  // Note: we report `$x & $mask != $y` as a precedence issue even
+  // if it can be caught with `typecheckOp` that checks both operand
+  // types (bool is not a good operand for bitwise operation).
+  //
+  // Reporting `invalid types, expected number found bool` is
+  // not that helpful, because the root of the problem is precedence.
+  // Invalid types are a result of that.
 
-    /** @warning == has higher precedence than & */
-    any_eq_bitand: {
-        $_ == $_ & $_;
-        $_ & $_ == $_;
-    }
-    /** @warning != has higher precedence than & */
-    any_neq_bitand: {
-        $_ != $_ & $_;
-        $_ & $_ != $_;
-    }
-    /** @warning === has higher precedence than & */
-    any_eq3_bitand: {
-        $_ === $_ & $_;
-        $_ & $_ === $_;
-    }
-    /** @warning !== has higher precedence than & */
-    any_neq3_bitand: {
-        $_ !== $_ & $_;
-        $_ & $_ !== $_;
-    }
+  /** @warning == has higher precedence than & */
+  any_eq_bitand: {
+    $_ == $_ & $_;
+    $_ & $_ == $_;
+  }
+  /** @warning != has higher precedence than & */
+  any_neq_bitand: {
+    $_ != $_ & $_;
+    $_ & $_ != $_;
+  }
+  /** @warning === has higher precedence than & */
+  any_eq3_bitand: {
+    $_ === $_ & $_;
+    $_ & $_ === $_;
+  }
+  /** @warning !== has higher precedence than & */
+  any_neq3_bitand: {
+    $_ !== $_ & $_;
+    $_ & $_ !== $_;
+  }
 
-    /** @warning == has higher precedence than | */
-    any_eq_bitor: {
-        $_ == $_ | $_;
-        $_ | $_ == $_;
-    }
-    /** @warning != has higher precedence than | */
-    any_neq_bitor: {
-        $_ != $_ | $_;
-        $_ | $_ != $_;
-    }
-    /** @warning === has higher precedence than | */
-    any_eq3_bitor: {
-        $_ === $_ | $_;
-        $_ | $_ === $_;
-    }
-    /** @warning !== has higher precedence than | */
-    any_neq3_bitor: {
-        $_ !== $_ | $_;
-        $_ | $_ !== $_;
-    }
+  /** @warning == has higher precedence than | */
+  any_eq_bitor: {
+    $_ == $_ | $_;
+    $_ | $_ == $_;
+  }
+  /** @warning != has higher precedence than | */
+  any_neq_bitor: {
+    $_ != $_ | $_;
+    $_ | $_ != $_;
+  }
+  /** @warning === has higher precedence than | */
+  any_eq3_bitor: {
+    $_ === $_ | $_;
+    $_ | $_ === $_;
+  }
+  /** @warning !== has higher precedence than | */
+  any_neq3_bitor: {
+    $_ !== $_ | $_;
+    $_ | $_ !== $_;
+  }
 
-    /** @warning === has higher precedence than ?? */
-    $_ === $_ ?? $_;
+  /** @warning === has higher precedence than ?? */
+  $_ === $_ ?? $_;
 
-    /** @warning !== has higher precedence than ?? */
-    $_ !== $_ ?? $_;
+  /** @warning !== has higher precedence than ?? */
+  $_ !== $_ ?? $_;
 
-    /** @warning == has higher precedence than ?? */
-    $_ == $_ ?? $_;
+  /** @warning == has higher precedence than ?? */
+  $_ == $_ ?? $_;
 
-    /** @warning != has higher precedence than ?? */
-    $_ != $_ ?? $_;
+  /** @warning != has higher precedence than ?? */
+  $_ != $_ ?? $_;
 
-    /** @warning > has higher precedence than ?? */
-    $_ > $_ ?? $_;
+  /** @warning > has higher precedence than ?? */
+  $_ > $_ ?? $_;
 
-    /** @warning >= has higher precedence than ?? */
-    $_ >= $_ ?? $_;
+  /** @warning >= has higher precedence than ?? */
+  $_ >= $_ ?? $_;
 
-    /** @warning < has higher precedence than ?? */
-    $_ < $_ ?? $_;
+  /** @warning < has higher precedence than ?? */
+  $_ < $_ ?? $_;
 
-    /** @warning <= has higher precedence than ?? */
-    $_ <= $_ ?? $_;
+  /** @warning <= has higher precedence than ?? */
+  $_ <= $_ ?? $_;
 }
 
 /**
@@ -144,89 +144,89 @@ function precedence() {
  * @after   $x += $y;
  */
 function assignOp() {
-    /**
-     * @maybe could rewrite as `$x += $y`
-     * @fix $x += $y
-     * @pure $x
-     */
-    $x = $x + $y;
+  /**
+   * @maybe could rewrite as `$x += $y`
+   * @fix $x += $y
+   * @pure $x
+   */
+  $x = $x + $y;
 
-    /**
-     * @maybe could rewrite as `$x -= $y`
-     * @fix $x -= $y
-     * @pure $x
-     */
-    $x = $x - $y;
+  /**
+   * @maybe could rewrite as `$x -= $y`
+   * @fix $x -= $y
+   * @pure $x
+   */
+  $x = $x - $y;
 
-    /**
-     * @maybe could rewrite as `$x *= $y`
-     * @fix $x *= $y
-     * @pure $x
-     */
-    $x = $x * $y;
+  /**
+   * @maybe could rewrite as `$x *= $y`
+   * @fix $x *= $y
+   * @pure $x
+   */
+  $x = $x * $y;
 
-    /**
-     * @maybe could rewrite as `$x /= $y`
-     * @fix $x /= $y
-     * @pure $x
-     */
-    $x = $x / $y;
+  /**
+   * @maybe could rewrite as `$x /= $y`
+   * @fix $x /= $y
+   * @pure $x
+   */
+  $x = $x / $y;
 
-    /**
-     * @maybe could rewrite as `$x %= $y`
-     * @fix $x %= $y
-     * @pure $x
-     */
-    $x = $x % $y;
+  /**
+   * @maybe could rewrite as `$x %= $y`
+   * @fix $x %= $y
+   * @pure $x
+   */
+  $x = $x % $y;
 
-    /**
-     * @maybe could rewrite as `$x &= $y`
-     * @fix $x &= $y
-     * @pure $x
-     */
-    $x = $x & $y;
+  /**
+   * @maybe could rewrite as `$x &= $y`
+   * @fix $x &= $y
+   * @pure $x
+   */
+  $x = $x & $y;
 
-    /**
-     * @maybe could rewrite as `$x |= $y`
-     * @fix $x |= $y
-     * @pure $x
-     */
-    $x = $x | $y;
+  /**
+   * @maybe could rewrite as `$x |= $y`
+   * @fix $x |= $y
+   * @pure $x
+   */
+  $x = $x | $y;
 
-    /**
-     * @maybe could rewrite as `$x ^= $y`
-     * @fix $x ^= $y
-     * @pure $x
-     */
-    $x = $x ^ $y;
+  /**
+   * @maybe could rewrite as `$x ^= $y`
+   * @fix $x ^= $y
+   * @pure $x
+   */
+  $x = $x ^ $y;
 
-    /**
-     * @maybe could rewrite as `$x <<= $y`
-     * @fix $x <<= $y
-     * @pure $x
-     */
-    $x = $x << $y;
+  /**
+   * @maybe could rewrite as `$x <<= $y`
+   * @fix $x <<= $y
+   * @pure $x
+   */
+  $x = $x << $y;
 
-    /**
-     * @maybe could rewrite as `$x >>= $y`
-     * @fix $x >>= $y
-     * @pure $x
-     */
-    $x = $x >> $y;
+  /**
+   * @maybe could rewrite as `$x >>= $y`
+   * @fix $x >>= $y
+   * @pure $x
+   */
+  $x = $x >> $y;
 
-    /**
-     * @maybe could rewrite as `$x .= $y`
-     * @fix $x .= $y
-     * @pure $x
-     */
-    $x = $x.$y;
+  /**
+   * @maybe could rewrite as `$x .= $y`
+   * @fix $x .= $y
+   * @pure $x
+   */
+  $x = $x . $y;
 
-    /**
-     * @maybe could rewrite as `$x ??= $y`
-     * @fix $x ??= $y
-     * @pure $x
-     */
-    $x = $x ?? $y;
+  /**
+   * @maybe could rewrite as `$x ??= $y`
+   * @fix $x ??= $y
+   * @pure $x
+   */
+  $x = $x ?? $y;
 }
 
 /**
@@ -235,17 +235,17 @@ function assignOp() {
  * @after   $a[count($a)-1]
  */
 function offBy1() {
-    /**
-     * @warning probably intended to use count-1 as an index
-     * @fix     $a[count($a) - 1]
-     */
-    $a[count($a)];
+  /**
+   * @warning probably intended to use count-1 as an index
+   * @fix     $a[count($a) - 1]
+   */
+  $a[count($a)];
 
-    /**
-     * @warning probably intended to use sizeof-1 as an index
-     * @fix     $a[sizeof($a) - 1]
-     */
-    $a[sizeof($a)];
+  /**
+   * @warning probably intended to use sizeof-1 as an index
+   * @fix     $a[sizeof($a) - 1]
+   */
+  $a[sizeof($a)];
 }
 
 /**
@@ -254,33 +254,33 @@ function offBy1() {
  * @after   strpos($s, '/')
  */
 function argsOrder() {
-    /**
-     * @warning potentially incorrect haystack and needle arguments order
-     */
-    any_haystack_needle: {
-        strpos(${"char"}, ${"*"});
-        stripos(${"char"}, ${"*"});
-        strrpos(${"char"}, ${"*"});
-        substr_count(${"str"}, ${"*"});
-    }
+  /**
+   * @warning potentially incorrect haystack and needle arguments order
+   */
+  any_haystack_needle: {
+    strpos(${"char"}, ${"*"});
+    stripos(${"char"}, ${"*"});
+    strrpos(${"char"}, ${"*"});
+    substr_count(${"str"}, ${"*"});
+  }
 
-    /**
-     * @warning potentially incorrect replacement and subject arguments order
-     */
-    preg_replace($_, $_, ${"str"}, ${"*"});
+  /**
+   * @warning potentially incorrect replacement and subject arguments order
+   */
+  preg_replace($_, $_, ${"str"}, ${"*"});
 
-    /**
-     * @warning potentially incorrect replace and string arguments order
-     */
-    any_str_replace: {
-        str_replace($_, $_, ${"char"}, ${"*"});
-        str_replace($_, $_, "", ${"*"});
-    }
+  /**
+   * @warning potentially incorrect replace and string arguments order
+   */
+  any_str_replace: {
+    str_replace($_, $_, ${"char"}, ${"*"});
+    str_replace($_, $_, "", ${"*"});
+  }
 
-    /**
-     * @warning potentially incorrect delimiter and string arguments order
-     */
-    explode($_, ${"char"}, ${"*"});
+  /**
+   * @warning potentially incorrect delimiter and string arguments order
+   */
+  explode($_, ${"char"}, ${"*"});
 }
 
 /**
@@ -289,21 +289,21 @@ function argsOrder() {
  * @after   if ($isURL && $verify) ...
  */
 function bitwiseOps() {
-    /**
-     * @warning Used & bitwise operator over bool operands, perhaps && is intended?
-     * @fix $x && $y
-     * @type bool $x
-     * @type bool $y
-     */
-    $x & $y;
+  /**
+   * @warning Used & bitwise operator over bool operands, perhaps && is intended?
+   * @fix $x && $y
+   * @type bool $x
+   * @type bool $y
+   */
+  $x & $y;
 
-    /**
-     * @warning Used | bitwise operator over bool operands, perhaps || is intended?
-     * @fix $x || $y
-     * @type bool $x
-     * @type bool $y
-     */
-    $x | $y;
+  /**
+   * @warning Used | bitwise operator over bool operands, perhaps || is intended?
+   * @fix $x || $y
+   * @type bool $x
+   * @type bool $y
+   */
+  $x | $y;
 }
 
 /**
@@ -312,21 +312,21 @@ function bitwiseOps() {
  * @after   array_key_exists($k, $this->data)
  */
 function callSimplify() {
-    /**
-     * @maybe Could simplify to array_key_exists($key, $a)
-     * @fix   array_key_exists($key, $a)
-     */
-    in_array($key, array_keys($a));
+  /**
+   * @maybe Could simplify to array_key_exists($key, $a)
+   * @fix   array_key_exists($key, $a)
+   */
+  in_array($key, array_keys($a));
 
-    /**
-     * @maybe Could simplify to $x[$y]
-     */
-    substr($x, $y, 1);
+  /**
+   * @maybe Could simplify to $x[$y]
+   */
+  substr($x, $y, 1);
 
-    /**
-     * @maybe Could simplify to $a[] = $v
-     */
-    array_push($a, $v);
+  /**
+   * @maybe Could simplify to $a[] = $v
+   */
+  array_push($a, $v);
 }
 
 /**
@@ -352,7 +352,7 @@ function strictCmp() {
      * @type string $x
      * @type string $y
      */
-    $x == $y;
+     $x == $y;
 
     /**
      * @warning non-strict comparison (use !==)
