@@ -78,63 +78,63 @@ function returnMixedArray() {}
 
 function f() {
 	$a = [10, 20, 30];
-	$b = array_last_element($a);
+	$b = array_last_value($a);
 	exprtype($b, "int");
 	
 	$c = [new Foo, new Foo, new Foo];
-	$d = array_last_element($c);
+	$d = array_last_value($c);
 	exprtype($d, "\Foo");
 
 	$e = returnFooArray();
-	$f = array_last_element($e);
+	$f = array_last_value($e);
 	exprtype($f, "\Foo");
 
 	$g = returnMixed();
-	$h = array_last_element($g);
+	$h = array_last_value($g);
 	exprtype($h, "mixed");
 
 	$i = returnMixedArray();
-	$j = array_last_element($i);
+	$j = array_last_value($i);
 	exprtype($j, "mixed");
 
-	$k = array_last_element([10, 20]);
+	$k = array_last_value([10, 20]);
 	exprtype($k, "int");
 
-	$l = array_last_element(20);
+	$l = array_last_value(20);
 	exprtype($l, "mixed");
 
-	$m = array_last_element();
+	$m = array_last_value();
 	exprtype($m, "mixed");
 }
 
 function f1() {
 	$a = [10, 20, 30];
-	$b = array_first_element($a);
+	$b = array_first_value($a);
 	exprtype($b, "int");
 	
 	$c = [new Foo, new Foo, new Foo];
-	$d = array_first_element($c);
+	$d = array_first_value($c);
 	exprtype($d, "\Foo");
 
 	$e = returnFooArray();
-	$f = array_first_element($e);
+	$f = array_first_value($e);
 	exprtype($f, "\Foo");
 
 	$g = returnMixed();
-	$h = array_first_element($g);
+	$h = array_first_value($g);
 	exprtype($h, "mixed");
 
 	$i = returnMixedArray();
-	$j = array_first_element($i);
+	$j = array_first_value($i);
 	exprtype($j, "mixed");
 
-	$k = array_first_element([10, 20]);
+	$k = array_first_value([10, 20]);
 	exprtype($k, "int");
 
-	$l = array_first_element(20);
+	$l = array_first_value(20);
 	exprtype($l, "mixed");
 
-	$m = array_first_element();
+	$m = array_first_value();
 	exprtype($m, "mixed");
 }
 `
