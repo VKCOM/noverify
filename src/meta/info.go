@@ -171,8 +171,8 @@ func (i *Info) InitKphpStubs() {
 		MinParamsCnt: 2,
 		Typ:          types.NewMap("object"),
 	}
-  
-  i.internalFunctions.H[`\not_null`] = FuncInfo{
+
+	i.internalFunctions.H[`\not_null`] = FuncInfo{
 		Name:         `\not_null`,
 		Params:       []FuncParam{{Name: "any_value"}},
 		MinParamsCnt: 1,
