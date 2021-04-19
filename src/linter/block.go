@@ -1515,11 +1515,12 @@ func (b *blockWalker) handleAndCheckDimFetchLValue(e *ir.ArrayDimFetchExpr, reas
 
 	switch v := e.Variable.(type) {
 	case *ir.Var, *ir.SimpleVar:
-		arrTyp := typ.Map(types.WrapArrayOf)
-		b.addVar(v, arrTyp, reason, meta.VarAlwaysDefined)
+		arrayOfType := typ.Map(types.WrapArrayOf)
+		b.addVar(v, arrayOfType, reason, meta.VarAlwaysDefined)
 		b.handleVariable(v)
 	case *ir.ArrayDimFetchExpr:
-		b.handleAndCheckDimFetchLValue(v, reason, types.MixedType)
+		arrayOfType := typ.Map(types.WrapArrayOf)
+		b.handleAndCheckDimFetchLValue(v, reason, arrayOfType)
 	default:
 		// probably not assignable?
 		v.Walk(b)
@@ -1562,7 +1563,8 @@ func (b *blockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
 func (b *blockWalker) handleAssignReference(a *ir.AssignReference) bool {
 	switch v := a.Variable.(type) {
 	case *ir.ArrayDimFetchExpr:
-		b.handleAndCheckDimFetchLValue(v, "assign_array", types.MixedType)
+		typ := solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expr)
+		b.handleAndCheckDimFetchLValue(v, "assign_array", typ)
 		a.Expr.Walk(b)
 		return false
 	case *ir.Var, *ir.SimpleVar:
