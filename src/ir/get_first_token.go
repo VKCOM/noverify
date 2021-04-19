@@ -408,8 +408,10 @@ func GetFirstToken(n Node) *token.Token {
 			return GetFirstToken(n.ConstantName)
 		}
 	case *ClassConstListStmt:
-		if n.Modifiers[0] != nil {
-			return GetFirstToken(n.Modifiers[0])
+		if len(n.Modifiers) != 0 {
+			if n.Modifiers[0] != nil {
+				return GetFirstToken(n.Modifiers[0])
+			}
 		}
 		if n.ConstTkn != nil {
 			return n.ConstTkn
