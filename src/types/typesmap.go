@@ -84,13 +84,13 @@ func (m Map) Map(fn func(string) string) Map {
 // Filter returns a new types map with the types of m for which fn returns true.
 // The result type map is never marked as precise.
 func (m Map) Filter(fn func(string) bool) Map {
-	mapped := make(map[string]struct{}, len(m.m))
+	filtered := make(map[string]struct{}, len(m.m))
 	for typ := range m.m {
 		if fn(typ) {
-			mapped[typ] = struct{}{}
+			filtered[typ] = struct{}{}
 		}
 	}
-	return NewMapFromMap(mapped)
+	return NewMapFromMap(filtered)
 }
 
 // NewEmptyMap creates new type map that has no types in it
