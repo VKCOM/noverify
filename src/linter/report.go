@@ -652,6 +652,15 @@ $_ = is_float($a);`,
 		},
 
 		{
+			Name:     "argsOrder",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report suspicious arguments order`,
+			Before:   `strpos('/', $s);`,
+			After:    `strpos($s, '/');`,
+		},
+    
+		{
 			Name:     "typeHint",
 			Default:  true,
 			Quickfix: false,
