@@ -3,7 +3,9 @@ package cmd
 import (
 	"flag"
 	"fmt"
+	"os"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/VKCOM/noverify/src/lintdoc"
 	"github.com/VKCOM/noverify/src/linter"
@@ -12,36 +14,39 @@ import (
 
 func Help(*MainConfig) (int, error) {
 	flag.Parse()
-
 	args := flag.Args()
 
 	if len(args) == 0 {
-		fmt.Printf("Usage of noverify:\n")
-		fmt.Printf("  $ noverify [command] -stubs-dir=/path/to/phpstorm-stubs -cache-dir=/cache/dir /project/root\n\n")
 		GlobalCmds.PrintHelpPage()
 		return 0, nil
 	}
 
 	mainSubject := args[0]
-	switch mainSubject {
-	case "checkers":
-		config := declareRules()
-		var subSubject string
-		if len(args) > 1 {
-			subSubject = args[1]
-		}
-		if subSubject == "" {
-			helpAllCheckers(config)
-			return 0, nil
-		}
-		err := helpChecker(config, subSubject)
-		if err != nil {
-			return 1, err
-		}
-		return 0, err
-	default:
-		return 1, fmt.Errorf("unknown subject: %s", mainSubject)
+	if mainSubject == "checkers" {
+		return handleCheckersHelp(args[1:])
 	}
+
+	return 1, fmt.Errorf("unknown subject: %s", mainSubject)
+}
+
+func handleCheckersHelp(args []string) (int, error) {
+	config := declareRules()
+
+	// `help checkers`
+	if len(args) == 0 {
+		showHelpAllCheckers(config)
+		return 0, nil
+	}
+
+	checkerName := args[0]
+
+	// `help checkers <name>`
+	err := showHelpChecker(config, checkerName)
+	if err != nil {
+		return 1, err
+	}
+
+	return 0, err
 }
 
 func declareRules() *linter.Config {
@@ -56,16 +61,30 @@ func declareRules() *linter.Config {
 	for _, rset := range ruleSets {
 		config.Checkers.DeclareRules(rset)
 	}
+
 	return config
 }
 
-func helpAllCheckers(config *linter.Config) {
+func showHelpAllCheckers(config *linter.Config) {
+	fmt.Println("Usage:")
+	fmt.Println("  $ noverify check -allow-checks='<list-checks>' /project/root")
+	fmt.Println()
+	fmt.Println("  NOTE: In order to run the linter with only some checks, the -allow-checks")
+	fmt.Println("  flag is used which accepts a comma-separated list of checks that are allowed.")
+	fmt.Println()
+	fmt.Println("  For other possible options run")
+	fmt.Println("     $ noverify check -help")
+	fmt.Println()
+	fmt.Println("Checkers:")
+
+	w := tabwriter.NewWriter(os.Stdout, 15, 0, 1, ' ', 0)
 	for _, info := range config.Checkers.ListDeclared() {
-		fmt.Printf("%s: %s\n", info.Name, info.Comment)
+		fmt.Fprintf(w, "  %s\t%s\t\n", info.Name, info.Comment)
 	}
+	w.Flush()
 }
 
-func helpChecker(config *linter.Config, checkerName string) error {
+func showHelpChecker(config *linter.Config, checkerName string) error {
 	var info linter.CheckerInfo
 	checks := config.Checkers.ListDeclared()
 	for i := range checks {

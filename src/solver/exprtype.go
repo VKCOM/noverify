@@ -252,13 +252,12 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 
 	switch override.OverrideType {
 	case meta.OverrideArgType:
-		return typ, true
+		// do nothing
 
 	case meta.OverrideElementType:
-		newTyp := typ.Map(types.WrapElemOf)
-		return newTyp, true
+		typ = typ.Map(types.WrapElemOf)
 
-	case meta.OverrideClassType:
+	case meta.OverrideClassType, meta.OverrideNullableClassType:
 		// due to the fact that it is impossible for us to use constfold
 		// here, we have to process only a part of the possible options,
 		// although the most popular ones.
@@ -266,11 +265,31 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 		if !ok {
 			return types.NewMap("mixed"), true
 		}
-		return types.NewMap(className + "|null"), true
+
+		if override.OverrideType == meta.OverrideNullableClassType {
+			typ = types.NewMap(className + "|null")
+		} else {
+			typ = types.NewMap(className)
+		}
+
+	default:
+		log.Printf("Internal error: unexpected override type %d for function %s", override.OverrideType, nm)
 	}
 
-	log.Printf("Internal error: unexpected override type %d for function %s", override.OverrideType, nm)
-	return types.Map{}, false
+	switch override.Properties {
+	case meta.NotNull:
+		typ = typ.Filter(func(s string) bool {
+			return s != "null"
+		})
+	case meta.NotFalse:
+		typ = typ.Filter(func(s string) bool {
+			return s != "false"
+		})
+	case meta.ArrayOf:
+		typ = typ.Map(types.WrapArrayOf)
+	}
+
+	return typ, !typ.IsEmpty()
 }
 
 func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*ir.ArrayItemExpr) types.Map {
