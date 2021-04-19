@@ -67,19 +67,22 @@ WARNING bitwiseOps: Used | bitwise operator over bool operands, perhaps || is in
 MAYBE   callSimplify: Could simplify to array_key_exists('abc', $array) at testdata/embeddedrules/callSimplify.php:7
     $_ = in_array('abc', array_keys($array)); // bad
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   callSimplify: Could simplify to $str[$index] at testdata/embeddedrules/callSimplify.php:11
+MAYBE   callSimplify: Could simplify to $str[$index] at testdata/embeddedrules/callSimplify.php:14
     $_ = substr($str, $index, 1);
          ^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   callSimplify: Could simplify to "hello"[$index] at testdata/embeddedrules/callSimplify.php:12
+MAYBE   callSimplify: Could simplify to "hello"[$index] at testdata/embeddedrules/callSimplify.php:15
     $_ = substr("hello", $index, 1);
          ^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   callSimplify: Could simplify to "hello"[2] at testdata/embeddedrules/callSimplify.php:13
+MAYBE   callSimplify: Could simplify to "hello"[2] at testdata/embeddedrules/callSimplify.php:16
     $_ = substr("hello", 2, 1);
          ^^^^^^^^^^^^^^^^^^^^^
-MAYBE   callSimplify: Could simplify to $array[] = $val at testdata/embeddedrules/callSimplify.php:20
+MAYBE   typeHint: specify the type for the parameter $array in phpdoc, 'array' type hint is not precise enough at testdata/embeddedrules/callSimplify.php:22
+function some_array_push(array $array, int $val) {
+                         ^^^^^^^^^^^^
+MAYBE   callSimplify: Could simplify to $array[] = $val at testdata/embeddedrules/callSimplify.php:23
     array_push($array, $val);
     ^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   callSimplify: Could simplify to $array[] = 10 at testdata/embeddedrules/callSimplify.php:21
+MAYBE   callSimplify: Could simplify to $array[] = 10 at testdata/embeddedrules/callSimplify.php:24
     array_push($array, 10);
     ^^^^^^^^^^^^^^^^^^^^^^
 WARNING indexingSyntax: a{i} indexing is deprecated since PHP 7.4, use a[i] instead at testdata/embeddedrules/indexingSyntax.php:14
