@@ -417,16 +417,18 @@ function strangeCast() {
      * @warning concatenation with empty string, possible type cast, use explicit cast to string instead of concatenate with empty string
      */
     any_string_cast: {
-        $x."";
-        $x.'';
+        $x . "";
+        "" . $x;
+        $x . '';
+        '' . $x;
     }
 
     /**
      * @warning addition with zero, possible type cast, use an explicit cast to int or float instead of zero addition
      */
     any_number_cast: {
-        $x+0;
-        $x+0.0;
+        0 + $x;
+        0.0 + $x;
     }
 
     /**
