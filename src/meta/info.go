@@ -147,16 +147,22 @@ func (i *Info) FindConstants(substr string) (res []string) {
 }
 
 func (i *Info) InitKphpStubs() {
-	i.internalFunctions.H[`\array_first_element`] = FuncInfo{
-		Name:         `\array_first_element`,
+	i.internalFunctions.H[`\array_first_value`] = FuncInfo{
+		Name:         `\array_first_value`,
 		Params:       []FuncParam{{Name: "el"}},
 		MinParamsCnt: 1,
 		Typ:          types.NewMap("mixed"),
 	}
-	i.internalFunctions.H[`\array_last_element`] = FuncInfo{
-		Name:         `\array_last_element`,
+	i.internalFunctions.H[`\array_last_value`] = FuncInfo{
+		Name:         `\array_last_value`,
 		Params:       []FuncParam{{Name: "el"}},
 		MinParamsCnt: 1,
+		Typ:          types.NewMap("mixed"),
+	}
+	i.internalFunctions.H[`\array_filter_by_key`] = FuncInfo{
+		Name:         `\array_filter_by_key`,
+		Params:       []FuncParam{{Name: "array"}, {Name: "callback"}},
+		MinParamsCnt: 2,
 		Typ:          types.NewMap("mixed"),
 	}
 	i.internalFunctions.H[`\instance_deserialize`] = FuncInfo{
@@ -165,17 +171,76 @@ func (i *Info) InitKphpStubs() {
 		MinParamsCnt: 2,
 		Typ:          types.NewMap("object|null"),
 	}
+	i.internalFunctions.H[`\instance_cache_fetch`] = FuncInfo{
+		Name:         `\instance_cache_fetch`,
+		Params:       []FuncParam{{Name: "type"}, {Name: "key"}},
+		MinParamsCnt: 2,
+		Typ:          types.NewMap("object|null"),
+	}
+	i.internalFunctions.H[`\instance_cast`] = FuncInfo{
+		Name:         `\instance_cast`,
+		Params:       []FuncParam{{Name: "instance"}, {Name: "class_name"}},
+		MinParamsCnt: 2,
+		Typ:          types.NewMap("object"),
+	}
 
-	i.internalFunctionOverrides[`\array_first_element`] = FuncInfoOverride{
+	i.internalFunctions.H[`\not_null`] = FuncInfo{
+		Name:         `\not_null`,
+		Params:       []FuncParam{{Name: "any_value"}},
+		MinParamsCnt: 1,
+		Typ:          types.NewMap("mixed"),
+	}
+	i.internalFunctions.H[`\not_false`] = FuncInfo{
+		Name:         `\not_false`,
+		Params:       []FuncParam{{Name: "any_value"}},
+		MinParamsCnt: 1,
+		Typ:          types.NewMap("mixed"),
+	}
+	i.internalFunctions.H[`\create_vector`] = FuncInfo{
+		Name:         `\create_vector`,
+		Params:       []FuncParam{{Name: "count"}, {Name: "el"}},
+		MinParamsCnt: 2,
+		Typ:          types.NewMap("mixed[]"),
+	}
+
+	i.internalFunctionOverrides[`\array_first_value`] = FuncInfoOverride{
 		OverrideType: OverrideElementType,
 		ArgNum:       0,
 	}
-	i.internalFunctionOverrides[`\array_last_element`] = FuncInfoOverride{
+	i.internalFunctionOverrides[`\array_last_value`] = FuncInfoOverride{
 		OverrideType: OverrideElementType,
+		ArgNum:       0,
+	}
+	i.internalFunctionOverrides[`\array_filter_by_key`] = FuncInfoOverride{
+		OverrideType: OverrideArgType,
 		ArgNum:       0,
 	}
 	i.internalFunctionOverrides[`\instance_deserialize`] = FuncInfoOverride{
+		OverrideType: OverrideNullableClassType,
+		ArgNum:       1,
+	}
+	i.internalFunctionOverrides[`\instance_cast`] = FuncInfoOverride{
 		OverrideType: OverrideClassType,
+		ArgNum:       1,
+	}
+	i.internalFunctionOverrides[`\instance_cache_fetch`] = FuncInfoOverride{
+		OverrideType: OverrideNullableClassType,
+		ArgNum:       0,
+	}
+
+	i.internalFunctionOverrides[`\not_null`] = FuncInfoOverride{
+		OverrideType: OverrideArgType,
+		Properties:   NotNull,
+		ArgNum:       0,
+	}
+	i.internalFunctionOverrides[`\not_false`] = FuncInfoOverride{
+		OverrideType: OverrideArgType,
+		Properties:   NotFalse,
+		ArgNum:       0,
+	}
+	i.internalFunctionOverrides[`\create_vector`] = FuncInfoOverride{
+		OverrideType: OverrideArgType,
+		Properties:   ArrayOf,
 		ArgNum:       1,
 	}
 }
