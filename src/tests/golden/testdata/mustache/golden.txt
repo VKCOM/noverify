@@ -22,6 +22,15 @@ MAYBE   ternarySimplify: could rewrite as `$node[Mustache_Tokenizer::FILTERS] ??
 WARNING unused: Variable keystr is unused (use $_ to ignore this inspection) at testdata/mustache/src/Mustache/Compiler.php:289
         $keystr = var_export($key, true);
         ^^^^^^^
+MAYBE   callSimplify: Could simplify to $id[0] at testdata/mustache/src/Mustache/Compiler.php:646
+            if (substr($id, 0, 1) === '.') {
+                ^^^^^^^^^^^^^^^^^
+MAYBE   callSimplify: Could simplify to $this->stack[] = $value at testdata/mustache/src/Mustache/Context.php:39
+        array_push($this->stack, $value);
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   callSimplify: Could simplify to $this->blockStack[] = $value at testdata/mustache/src/Mustache/Context.php:49
+        array_push($this->blockStack, $value);
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: could rewrite as `$options['cache_file_mode'] ?? null` at testdata/mustache/src/Mustache/Engine.php:156
                 $mode  = isset($options['cache_file_mode']) ? $options['cache_file_mode'] : null;
                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
