@@ -17,14 +17,6 @@ type findWalker struct {
 	predicate     findPredicate
 }
 
-// newFindWalker returns a default search walker.
-func newFindWalker(what ir.Node, where ir.Node) *findWalker {
-	return &findWalker{
-		what:  what,
-		where: where,
-	}
-}
-
 // newFindWalker returns a walker with a predicate.
 //
 // If the predicate returns true, the search stops.
