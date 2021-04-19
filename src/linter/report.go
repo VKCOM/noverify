@@ -659,7 +659,7 @@ $_ = is_float($a);`,
 			Before:   `strpos('/', $s);`,
 			After:    `strpos($s, '/');`,
 		},
-    
+
 		{
 			Name:     "typeHint",
 			Default:  true,
