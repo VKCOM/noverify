@@ -258,7 +258,7 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 		newTyp := typ.Map(types.WrapElemOf)
 		return newTyp, true
 
-	case meta.OverrideClassType:
+	case meta.OverrideClassType, meta.OverrideNullableClassType:
 		// due to the fact that it is impossible for us to use constfold
 		// here, we have to process only a part of the possible options,
 		// although the most popular ones.
@@ -266,7 +266,12 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 		if !ok {
 			return types.NewMap("mixed"), true
 		}
-		return types.NewMap(className + "|null"), true
+
+		if override.OverrideType == meta.OverrideNullableClassType {
+			return types.NewMap(className + "|null"), true
+		}
+
+		return types.NewMap(className), true
 	}
 
 	log.Printf("Internal error: unexpected override type %d for function %s", override.OverrideType, nm)

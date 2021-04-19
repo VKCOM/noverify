@@ -1,6 +1,7 @@
 package linter
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
@@ -148,6 +149,11 @@ func (b *blockWalker) reportDeadCode(n ir.Node) {
 		return
 	}
 
+	if b.containsDisableInspection(n, "PhpUnreachableStatementInspection") {
+		b.ctx.deadCodeReported = true
+		return
+	}
+
 	switch n.(type) {
 	case *ir.BreakStmt, *ir.ReturnStmt, *ir.ExitExpr, *ir.ThrowStmt:
 		// Allow to break code flow more than once.
@@ -166,6 +172,37 @@ func (b *blockWalker) reportDeadCode(n ir.Node) {
 
 	b.ctx.deadCodeReported = true
 	b.r.Report(n, LevelWarning, "deadCode", "Unreachable code")
+}
+
+func (b *blockWalker) containsDisableInspection(n ir.Node, needInspection string) bool {
+	firstTkn := ir.GetFirstToken(n)
+	for _, tkn := range firstTkn.FreeFloating {
+		if !phpdoc.IsPHPDocToken(tkn) {
+			continue
+		}
+
+		if !bytes.Contains(tkn.Value, []byte("@noinspection")) {
+			continue
+		}
+
+		parsed := phpdoc.Parse(b.r.ctx.phpdocTypeParser, string(tkn.Value))
+		for _, p := range parsed.Parsed {
+			part, ok := p.(*phpdoc.RawCommentPart)
+			if !ok {
+				continue
+			}
+
+			if part.Name() == "noinspection" {
+				inspection := part.Params[0]
+
+				if inspection == needInspection {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
 }
 
 func (b *blockWalker) handleComments(n ir.Node) {
@@ -1542,11 +1579,12 @@ func (b *blockWalker) handleAndCheckDimFetchLValue(e *ir.ArrayDimFetchExpr, reas
 
 	switch v := e.Variable.(type) {
 	case *ir.Var, *ir.SimpleVar:
-		arrTyp := typ.Map(types.WrapArrayOf)
-		b.addVar(v, arrTyp, reason, meta.VarAlwaysDefined)
+		arrayOfType := typ.Map(types.WrapArrayOf)
+		b.addVar(v, arrayOfType, reason, meta.VarAlwaysDefined)
 		b.handleVariable(v)
 	case *ir.ArrayDimFetchExpr:
-		b.handleAndCheckDimFetchLValue(v, reason, types.MixedType)
+		arrayOfType := typ.Map(types.WrapArrayOf)
+		b.handleAndCheckDimFetchLValue(v, reason, arrayOfType)
 	default:
 		// probably not assignable?
 		v.Walk(b)
@@ -1589,7 +1627,8 @@ func (b *blockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
 func (b *blockWalker) handleAssignReference(a *ir.AssignReference) bool {
 	switch v := a.Variable.(type) {
 	case *ir.ArrayDimFetchExpr:
-		b.handleAndCheckDimFetchLValue(v, "assign_array", types.MixedType)
+		typ := solver.ExprTypeLocal(b.ctx.sc, b.r.ctx.st, a.Expr)
+		b.handleAndCheckDimFetchLValue(v, "assign_array", typ)
 		a.Expr.Walk(b)
 		return false
 	case *ir.Var, *ir.SimpleVar:

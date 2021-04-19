@@ -141,8 +141,48 @@ class t3 {
   /** inverse of the T2 test case */
   public function T3() {}
 }
+
+trait TraitWithNameMatchingMethod {
+  /** ok */
+  public function TraitWithNameMatchingMethod() {}
+}
+
+interface InterfaceWithNameMatchingMethod {
+  /** ok */
+  public function InterfaceWithNameMatchingMethod();
+}
+
+namespace SameWithNamespace {
+  class T1 {
+    /** simple constructor */
+    public function T1() {}
+  }
+  
+  class T2 {
+    /** constructor name is in lower case */
+    public function t2() {}
+  }
+  
+  class t3 {
+    /** inverse of the T2 test case */
+    public function T3() {}
+  }
+
+  trait TraitWithNameMatchingMethod {
+    /** ok */
+    public function TraitWithNameMatchingMethod() {}
+  }
+  
+  interface InterfaceWithNameMatchingMethod {
+    /** ok */
+    public function InterfaceWithNameMatchingMethod();
+  }
+}
 `)
 	test.Expect = []string{
+		`Old-style constructor usage, use __construct instead`,
+		`Old-style constructor usage, use __construct instead`,
+		`Old-style constructor usage, use __construct instead`,
 		`Old-style constructor usage, use __construct instead`,
 		`Old-style constructor usage, use __construct instead`,
 		`Old-style constructor usage, use __construct instead`,

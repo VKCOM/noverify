@@ -24,6 +24,11 @@ import (
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
+// Line below implies that we have `https://github.com/VKCOM/phpstorm-stubs.git` cloned
+// to the `./src/cmd/stubs/phpstorm-stubs`.
+//
+//go:generate go-bindata -pkg stubs -nometadata -o ./stubs/phpstorm_stubs.go -ignore=\.idea -ignore=\.git ./stubs/phpstorm-stubs/...
+
 // GlobalCmds is a global map of commands.
 var GlobalCmds = NewCommands()
 
@@ -32,15 +37,15 @@ func RegisterDefaultCommands() {
 	GlobalCmds.RegisterCommand(&SubCommand{
 		Name:        "check",
 		Main:        Check,
-		Description: "lint the entire project",
+		Description: "Lint the entire project",
 		Examples: []SubCommandExample{
 			{
-				Description: "show subcommand usage",
+				Description: "Show command usage",
 				Line:        "-help",
 			},
 			{
-				Description: "run linter with default options",
-				Line:        "<analyze-path>",
+				Description: "Run linter with default options",
+				Line:        "[options] <analyze-path>",
 			},
 		},
 	})
@@ -48,30 +53,23 @@ func RegisterDefaultCommands() {
 	GlobalCmds.RegisterCommand(&SubCommand{
 		Name:        "help",
 		Main:        Help,
-		Description: "print linter documentation based on the subject",
+		Description: "Print linter documentation based on the subject",
 		Examples: []SubCommandExample{
 			{
-				Description: "show supported sub-subCommands",
+				Description: "Show usage help",
 				Line:        "",
 			},
 			{
-				Description: "print all supported checkers short summary",
+				Description: "Show all supported checkers short summary",
 				Line:        "checkers",
 			},
 			{
-				Description: "print dupSubExpr checker detailed documentation",
-				Line:        "checkers dupSubExpr",
+				Description: "Show <name> checker detailed documentation",
+				Line:        "checkers <name>",
 			},
 		},
 	})
 }
-
-// Line below implies that we have `https://github.com/VKCOM/phpstorm-stubs.git` cloned
-// to the `./src/cmd/stubs/phpstorm-stubs`.
-//
-//go:generate go-bindata -pkg stubs -nometadata -o ./stubs/phpstorm_stubs.go -ignore=\.idea -ignore=\.git ./stubs/phpstorm-stubs/...
-
-//go:generate go-bindata -pkg embeddedrules -nometadata -o ./embeddedrules/rules.go ./embeddedrules/rules.php
 
 func isCritical(l *linterRunner, r *linter.Report) bool {
 	if len(l.reportsCriticalSet) != 0 {
