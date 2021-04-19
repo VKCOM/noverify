@@ -249,9 +249,7 @@ function offBy1() {
 }
 
 /**
- * @comment Report suspicious arguments order.
- * @before  strpos('/', $s)
- * @after   strpos($s, '/')
+ * @extends
  */
 function argsOrder() {
   /**
