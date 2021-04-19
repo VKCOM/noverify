@@ -76,6 +76,9 @@ MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdat
 MAYBE   arrayAccess: Array access to non-array type \__|mixed at testdata/underscore/underscore.php:480
       if(!is_array($return_arrays[$k])) $return_arrays[$k] = array();
                                         ^^^^^^^^^^^^^^
+MAYBE   ternarySimplify: could rewrite as `$array[$k] ?? null` at testdata/underscore/underscore.php:483
+        $return_arrays[$k][$a] = array_key_exists($k, $array) ? $array[$k] : null;
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   arrayAccess: Array access to non-array type \__|empty_array[]|mixed at testdata/underscore/underscore.php:483
         $return_arrays[$k][$a] = array_key_exists($k, $array) ? $array[$k] : null;
         ^^^^^^^^^^^^^^
