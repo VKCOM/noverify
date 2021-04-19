@@ -483,8 +483,10 @@ func GetFirstToken(n Node) *token.Token {
 			return GetFirstToken(n.Stmt)
 		}
 	case *ClassStmt:
-		if n.Modifiers[0] != nil {
-			return GetFirstToken(n.Modifiers[0])
+		if len(n.Modifiers) != 0 {
+			if n.Modifiers[0] != nil {
+				return GetFirstToken(n.Modifiers[0])
+			}
 		}
 		if n.ClassTkn != nil {
 			return n.ClassTkn
