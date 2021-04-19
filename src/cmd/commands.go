@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"sort"
+	"text/tabwriter"
 )
 
 type Commands struct {
@@ -47,6 +49,14 @@ func (c *Commands) OverrideCommands(commands *Commands) {
 	}
 }
 
+func (c *Commands) PrintHelpPage() {
+	fmt.Print(c.HelpPage())
+}
+
+func (c *Commands) WriteHelpPage(w io.Writer) {
+	fmt.Fprint(w, c.HelpPage())
+}
+
 func (c *Commands) HelpPage() string {
 	var res string
 
@@ -59,18 +69,30 @@ func (c *Commands) HelpPage() string {
 		return commands[i].Name < commands[j].Name
 	})
 
-	res += "Supported sub-commands:\n"
-	for _, cmd := range commands {
-		res += cmd.String()
-	}
+	res += fmt.Sprintln("Usage:")
+	res += fmt.Sprintln("  $ noverify [command] [options] /project/root")
+	res += fmt.Sprintln()
+
+	res += fmt.Sprintln("Commands:")
+	res += c.printAlign(commands)
 
 	return res
 }
 
-func (c *Commands) PrintHelpPage() {
-	fmt.Print(c.HelpPage())
-}
+func (c *Commands) printAlign(commands []*SubCommand) string {
+	buf := bytes.NewBuffer(nil)
+	w := tabwriter.NewWriter(buf, 50, 0, 1, ' ', 0)
 
-func (c *Commands) WriteHelpPage(w io.Writer) {
-	fmt.Fprint(w, c.HelpPage())
+	for _, cmd := range commands {
+		fmt.Fprintf(w, "  %s\t%s\n", cmd.Name, cmd.Description)
+		fmt.Fprintf(w, "    Recipes:\n")
+		for _, ex := range cmd.Examples {
+			command := fmt.Sprintf("      $ noverify %s %s", cmd.Name, ex.Line)
+			fmt.Fprintf(w, "%s\t%s\t\n", command, ex.Description)
+		}
+	}
+
+	w.Flush()
+
+	return buf.String()
 }

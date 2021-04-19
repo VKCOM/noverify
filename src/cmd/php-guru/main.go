@@ -63,7 +63,7 @@ func main() {
 	subcmdName := os.Args[1]
 	subcmd := findSubCommand(commands, subcmdName)
 	if subcmd == nil {
-		log.Printf("Sub-command %s doesn't exist\n\n", subcmdName)
+		log.Printf("Sub-command  %s doesn't exist\n\n", subcmdName)
 		printSupportedCommands(commands)
 		os.Exit(1)
 	}
