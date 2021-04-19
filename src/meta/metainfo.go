@@ -79,6 +79,8 @@ const (
 	OverrideElementType
 	// OverrideClassType means that return type of a function is the same as the type represented by the class name.
 	OverrideClassType
+	// OverrideNullableClassType means that return type of a function is the same as the type represented by the class name, and is also nullable.
+	OverrideNullableClassType
 )
 
 // FuncInfoOverride defines return type overrides based on their parameter types.
