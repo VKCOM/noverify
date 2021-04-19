@@ -684,9 +684,9 @@ function assign_ref_dim_fetch3() {
 }
 
 exprtype($v =& $ints[0], 'mixed');
-exprtype(assign_ref_dim_fetch1(), 'mixed[]');
-exprtype(assign_ref_dim_fetch2(), 'mixed[]');
-exprtype(assign_ref_dim_fetch3(), 'mixed[]');
+exprtype(assign_ref_dim_fetch1(), 'int[][]');
+exprtype(assign_ref_dim_fetch2(), 'int[]');
+exprtype(assign_ref_dim_fetch3(), 'int[][]');
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
@@ -2847,6 +2847,41 @@ function f() {
 
 exprtype(f()[0], "mixed[]");
 exprtype(f()[1], "mixed[]");
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestMultiDimensionalArray(t *testing.T) {
+	code := `<?php
+class Foo {
+	public function f(): self {}
+}
+
+function f() {
+	$a = [];    
+	
+	$a[] = [1,2,3];
+	$a[] = ["1","2","3"];
+	exprtype($a, "int[][]|string[][]");
+
+	foreach ($a as $val) {
+		exprtype($val, "int[]|string[]");
+		foreach ($val as $val2) {
+			exprtype($val2, "int|string");
+		}
+	}
+
+	$a[1][2] = new Foo;
+
+	foreach ($a as $val) {
+		exprtype($val, "\Foo[]|int[]|string[]");
+		foreach ($val as $val2) {
+			exprtype($val2, "\Foo|int|string");
+			$a = $val2->f();
+			exprtype($a, "\Foo");
+		}
+	}
+}
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
