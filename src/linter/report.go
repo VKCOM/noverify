@@ -662,7 +662,7 @@ $_ = is_float($a);`,
  */
 function f(array $a) {}`,
 		},
-    
+
 		{
 			Name:     "argsOrder",
 			Default:  true,
