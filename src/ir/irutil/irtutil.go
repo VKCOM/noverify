@@ -5,6 +5,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irfmt"
+	"github.com/VKCOM/noverify/src/phpdoc"
 )
 
 func NodeSliceClone(xs []ir.Node) []ir.Node {
@@ -112,7 +113,7 @@ func FindPhpDoc(n ir.Node) (doc string, found bool) {
 }
 
 func classEqual(x, y ir.Class) bool {
-	return x.PhpDocComment == y.PhpDocComment &&
+	return x.Doc.Raw == y.Doc.Raw &&
 		NodeEqual(x.Extends, y.Extends) &&
 		NodeEqual(x.Implements, y.Implements) &&
 		NodeSliceEqual(x.Stmts, y.Stmts)
@@ -120,8 +121,8 @@ func classEqual(x, y ir.Class) bool {
 
 func classClone(x ir.Class) ir.Class {
 	return ir.Class{
-		Doc: ir.Doc{
-			PhpDocComment: x.PhpDocComment,
+		Doc: phpdoc.Comment{
+			Raw: x.Doc.Raw,
 		},
 		Extends:    NodeClone(x.Extends).(*ir.ClassExtendsStmt),
 		Implements: NodeClone(x.Implements).(*ir.ClassImplementsStmt),

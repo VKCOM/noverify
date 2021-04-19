@@ -43,6 +43,7 @@ import (
 //     45 - added Mixins field to meta.ClassInfo
 //     46 - changed the way of inferring the return type of functions and methods
 //     47 - forced cache version invalidation due to the #921
+//     48 - renamed meta.TypesMap to types.Map; this affects gob encoding
 const cacheVersion = 47
 
 var (

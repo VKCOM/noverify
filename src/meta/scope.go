@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/types"
 )
 
 var debugScope = false
@@ -20,7 +22,7 @@ const (
 )
 
 type scopeVar struct {
-	typesMap TypesMap
+	typesMap types.Map
 	flags    VarFlags
 }
 
@@ -47,20 +49,27 @@ func NewScope() *Scope {
 	return &Scope{vars: make(map[string]*scopeVar)}
 }
 
-// GobEncode is a custom gob marshaller
-func (s *Scope) GobEncode() ([]byte, error) {
-	w := new(bytes.Buffer)
+func (s *Scope) GobWrite(w io.Writer) error {
 	encoder := gob.NewEncoder(w)
 	err := encoder.Encode(s.vars)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	err = encoder.Encode(s.inInstanceMethod)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	err = encoder.Encode(s.inClosure)
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// GobEncode is a custom gob marshaller
+func (s *Scope) GobEncode() ([]byte, error) {
+	w := new(bytes.Buffer)
+	if err := s.GobWrite(w); err != nil {
 		return nil, err
 	}
 	return w.Bytes(), nil
@@ -129,7 +138,7 @@ func (s *Scope) SetInClosure(v bool) {
 	s.inClosure = v
 }
 
-func (s *Scope) Iterate(cb func(varName string, typ TypesMap, flags VarFlags)) {
+func (s *Scope) Iterate(cb func(varName string, typ types.Map, flags VarFlags)) {
 	for varName, v := range s.vars {
 		cb(varName, v.typesMap, v.flags)
 	}
@@ -140,7 +149,7 @@ func (s *Scope) Len() int {
 }
 
 // AddVar adds variable with specified types to scope
-func (s *Scope) AddVar(v ir.Node, typ TypesMap, reason string, flags VarFlags) {
+func (s *Scope) AddVar(v ir.Node, typ types.Map, reason string, flags VarFlags) {
 	name, ok := scopeVarName(v)
 	if !ok {
 		return
@@ -149,7 +158,7 @@ func (s *Scope) AddVar(v ir.Node, typ TypesMap, reason string, flags VarFlags) {
 }
 
 // ReplaceVar replaces variable with specified types to scope
-func (s *Scope) ReplaceVar(v ir.Node, typ TypesMap, reason string, flags VarFlags) {
+func (s *Scope) ReplaceVar(v ir.Node, typ types.Map, reason string, flags VarFlags) {
 	name, ok := scopeVarName(v)
 	if !ok {
 		return
@@ -177,7 +186,7 @@ func (s *Scope) DelVarName(name, reason string) {
 }
 
 // ReplaceVarName replaces variable with specified types to the scope
-func (s *Scope) ReplaceVarName(name string, typ TypesMap, reason string, flags VarFlags) {
+func (s *Scope) ReplaceVarName(name string, typ types.Map, reason string, flags VarFlags) {
 	oldVar, ok := s.vars[name]
 	if ok && oldVar.flags.IsNoReplace() {
 		oldVar.typesMap = oldVar.typesMap.Append(typ)
@@ -191,7 +200,7 @@ func (s *Scope) ReplaceVarName(name string, typ TypesMap, reason string, flags V
 }
 
 // AddVarName adds variable with specified types to the scope
-func (s *Scope) addVarName(name string, typ TypesMap, reason string, flags VarFlags) {
+func (s *Scope) addVarName(name string, typ types.Map, reason string, flags VarFlags) {
 	v, ok := s.vars[name]
 
 	if !ok {
@@ -215,12 +224,12 @@ func (s *Scope) addVarName(name string, typ TypesMap, reason string, flags VarFl
 }
 
 // AddVarName adds variable with specified types to the scope
-func (s *Scope) AddVarName(name string, typ TypesMap, reason string, flags VarFlags) {
+func (s *Scope) AddVarName(name string, typ types.Map, reason string, flags VarFlags) {
 	s.addVarName(name, typ, reason, flags)
 }
 
 // AddVarFromPHPDoc adds variable with specified types to the scope
-func (s *Scope) AddVarFromPHPDoc(name string, typ TypesMap, reason string) {
+func (s *Scope) AddVarFromPHPDoc(name string, typ types.Map, reason string) {
 	s.addVarName(name, typ, reason, varNoReplace|VarAlwaysDefined)
 }
 
@@ -254,10 +263,10 @@ func (s *Scope) HaveVarName(name string) bool {
 }
 
 // GetVarNameType returns type map for variable if it exists
-func (s *Scope) GetVarNameType(name string) (m TypesMap, ok bool) {
+func (s *Scope) GetVarNameType(name string) (m types.Map, ok bool) {
 	res, ok := s.vars[name]
 	if !ok {
-		return TypesMap{}, false
+		return types.Map{}, false
 	}
 	return res.typesMap, ok
 }

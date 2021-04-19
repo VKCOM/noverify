@@ -164,7 +164,7 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 		patternStmt = labelStmt
 	}
 
-	for _, part := range phpdoc.Parse(p.typeParser, comment) {
+	for _, part := range phpdoc.Parse(p.typeParser, comment).Parsed {
 		part := part.(*phpdoc.RawCommentPart)
 		switch part.Name() {
 		case "name":
@@ -385,11 +385,12 @@ func (p *parser) parseRule(st ir.Node, proto *Rule) error {
 }
 
 func (p *parser) parseFuncComment(fn *ir.FunctionStmt) error {
-	if len(fn.PhpDoc) == 0 {
+	if fn.Doc.Raw == "" {
 		return nil
 	}
+
 	var doc RuleDoc
-	for _, part := range fn.PhpDoc {
+	for _, part := range fn.Doc.Parsed {
 		part := part.(*phpdoc.RawCommentPart)
 		switch part.Name() {
 		case "comment":

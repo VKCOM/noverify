@@ -3,6 +3,8 @@ package ir
 import (
 	"github.com/z7zmey/php-parser/pkg/position"
 	"github.com/z7zmey/php-parser/pkg/token"
+
+	"github.com/VKCOM/noverify/src/phpdoc"
 )
 
 // TODO: make Alt and AltSyntax field names consistent.
@@ -429,7 +431,7 @@ type ArrowFunctionExpr struct {
 	ReturnsRef          bool
 	Static              bool
 
-	Doc
+	Doc phpdoc.Comment
 }
 
 // BitwiseNotExpr is a `~$Expr` expression.
@@ -484,7 +486,7 @@ type ClosureExpr struct {
 	ReturnsRef           bool
 	Static               bool
 
-	Doc
+	Doc phpdoc.Comment
 }
 
 // ClosureUsesExpr is a `use ($Uses...)` expression.
@@ -950,7 +952,7 @@ type ClassConstListStmt struct {
 	SeparatorTkns []*token.Token
 	SemiColonTkn  *token.Token
 
-	Doc
+	Doc phpdoc.Comment
 }
 
 // ClassExtendsStmt is a `extends $ClassName` statement.
@@ -985,7 +987,7 @@ type ClassMethodStmt struct {
 	Stmt                Node
 	ReturnsRef          bool
 
-	Doc
+	Doc phpdoc.Comment
 }
 
 // ConstListStmt is a `const $Consts` statement.
@@ -1167,7 +1169,7 @@ type FunctionStmt struct {
 	CloseCurlyBracketTkn *token.Token
 	ReturnsRef           bool
 
-	Doc
+	Doc phpdoc.Comment
 }
 
 // GlobalStmt is a `global $Vars` statement.
@@ -1250,7 +1252,7 @@ type InterfaceStmt struct {
 	Stmts                []Node
 	CloseCurlyBracketTkn *token.Token
 
-	Doc
+	Doc phpdoc.Comment
 }
 
 // InterfaceExtendsStmt is a `extends $InterfaceNames...` statement.
@@ -1313,7 +1315,7 @@ type PropertyListStmt struct {
 	SeparatorTkns []*token.Token
 	SemiColonTkn  *token.Token
 
-	Doc
+	Doc phpdoc.Comment
 }
 
 // ReturnStmt is a `return $Expr` statement.
@@ -1387,7 +1389,7 @@ type TraitStmt struct {
 	Stmts                []Node
 	CloseCurlyBracketTkn *token.Token
 
-	Doc
+	Doc phpdoc.Comment
 }
 
 // TraitAdaptationListStmt is a block inside a *TraitUseStmt.

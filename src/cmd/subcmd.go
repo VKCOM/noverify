@@ -18,11 +18,11 @@ type SubCommandExample struct {
 
 func (s *SubCommand) String() string {
 	var res string
-	res += fmt.Sprintf("\n\tnoverify %s\n", s.Name)
-	res += fmt.Sprintf("\tDescription: %s.\n", s.Description)
+	res += fmt.Sprintf("  %s                %s\n", s.Name, s.Description)
+	res += fmt.Sprintln("    Recipes:")
 	for _, ex := range s.Examples {
-		res += fmt.Sprintf("\t%s:\n", ex.Description)
-		res += fmt.Sprintf("\t\t$ noverify %s %s\n", s.Name, ex.Line)
+		res += fmt.Sprintf("      $ noverify %s %s      %s\n", s.Name, ex.Line, ex.Description)
 	}
+	res += "\n"
 	return res
 }

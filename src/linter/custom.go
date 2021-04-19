@@ -12,6 +12,7 @@ import (
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/rules"
+	"github.com/VKCOM/noverify/src/types"
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
@@ -133,7 +134,7 @@ type RootContext struct {
 }
 
 // ParsePHPDoc returns parsed phpdoc comment parts.
-func (ctx *RootContext) ParsePHPDoc(doc string) []phpdoc.CommentPart {
+func (ctx *RootContext) ParsePHPDoc(doc string) phpdoc.Comment {
 	return phpdoc.Parse(ctx.w.ctx.phpdocTypeParser, doc)
 }
 
@@ -187,7 +188,7 @@ func (ctx *BlockContext) NodePath() irutil.NodePath {
 }
 
 // ExprType resolves the type of e expression node.
-func (ctx *BlockContext) ExprType(e ir.Node) meta.TypesMap {
+func (ctx *BlockContext) ExprType(e ir.Node) types.Map {
 	return ctx.w.exprType(e)
 }
 
