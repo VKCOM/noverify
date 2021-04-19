@@ -35,6 +35,26 @@ function ternarySimplify() {
    * @fix $x ?? $y
    */
   isset($x) ? $x : $y;
+
+  /**
+   * @maybe could rewrite as `$x[$i] ?? $y`
+   * @pure $i
+   */
+  any_indexing: {
+    $x[$i] !== null ? $x[$i] : $y;
+    null !== $x[$i] ? $x[$i] : $y;
+    $x[$i] === null ? $y : $x[$i];
+    null === $x[$i] ? $y : $x[$i];
+  }
+
+  /**
+   * @maybe could rewrite as `$x[$i] ?? $y`
+   * @pure $i
+   */
+  any_array_key_exists: {
+    array_key_exists($i, $x) ? $x[$i] : $y;
+    !array_key_exists($i, $x) ? $y : $x[$i];
+  }
 }
 
 /**
@@ -295,6 +315,16 @@ function callSimplify() {
    * @fix   array_key_exists($key, $a)
    */
   in_array($key, array_keys($a));
+
+  /**
+   * @maybe Could simplify to $x[$y]
+   */
+  substr($x, $y, 1);
+
+  /**
+   * @maybe Could simplify to $a[] = $v
+   */
+  array_push($a, $v);
 }
 
 /**

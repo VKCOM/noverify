@@ -1,3 +1,6 @@
+MAYBE   callSimplify: Could simplify to $array['status'][0] at testdata/twitter-api-php/TwitterAPIExchange.php:117
+        if (isset($array['status']) && substr($array['status'], 0, 1) === '@')
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING unused: Variable key is unused (use $_ to ignore this inspection) at testdata/twitter-api-php/TwitterAPIExchange.php:122
         foreach ($array as $key => &$value)
                            ^^^^
