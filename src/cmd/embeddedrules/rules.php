@@ -436,6 +436,36 @@ function langDeprecated() {
 }
 
 /**
+ * @comment Report a strange way of type cast.
+ * @before  $x.""
+ * @after   (string)$x
+ */
+function strangeCast() {
+    /**
+     * @warning concatenation with empty string, possible type cast, use explicit cast to string instead of concatenate with empty string
+     */
+    any_string_cast: {
+        $x . "";
+        "" . $x;
+        $x . '';
+        '' . $x;
+    }
+
+    /**
+     * @warning addition with zero, possible type cast, use an explicit cast to int or float instead of zero addition
+     */
+    any_number_cast: {
+        0 + $x;
+        0.0 + $x;
+    }
+
+    /**
+     * @warning unary plus, possible type cast, use an explicit cast to int or float instead of using the unary plus
+     */
+    +$x;
+}
+
+/**
  * @comment Report string emptyness checking using strlen.
  * @before  if (strlen($string)) { ... }
  * @after   if ($string !== "") { ... }
