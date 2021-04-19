@@ -147,14 +147,14 @@ func (i *Info) FindConstants(substr string) (res []string) {
 }
 
 func (i *Info) InitKphpStubs() {
-	i.internalFunctions.H[`\array_first_element`] = FuncInfo{
-		Name:         `\array_first_element`,
+	i.internalFunctions.H[`\array_first_value`] = FuncInfo{
+		Name:         `\array_first_value`,
 		Params:       []FuncParam{{Name: "el"}},
 		MinParamsCnt: 1,
 		Typ:          types.NewMap("mixed"),
 	}
-	i.internalFunctions.H[`\array_last_element`] = FuncInfo{
-		Name:         `\array_last_element`,
+	i.internalFunctions.H[`\array_last_value`] = FuncInfo{
+		Name:         `\array_last_value`,
 		Params:       []FuncParam{{Name: "el"}},
 		MinParamsCnt: 1,
 		Typ:          types.NewMap("mixed"),
@@ -177,12 +177,18 @@ func (i *Info) InitKphpStubs() {
 		MinParamsCnt: 2,
 		Typ:          types.NewMap("object|null"),
 	}
+	i.internalFunctions.H[`\instance_cast`] = FuncInfo{
+		Name:         `\instance_cast`,
+		Params:       []FuncParam{{Name: "instance"}, {Name: "class_name"}},
+		MinParamsCnt: 2,
+		Typ:          types.NewMap("object"),
+	}
 
-	i.internalFunctionOverrides[`\array_first_element`] = FuncInfoOverride{
+	i.internalFunctionOverrides[`\array_first_value`] = FuncInfoOverride{
 		OverrideType: OverrideElementType,
 		ArgNum:       0,
 	}
-	i.internalFunctionOverrides[`\array_last_element`] = FuncInfoOverride{
+	i.internalFunctionOverrides[`\array_last_value`] = FuncInfoOverride{
 		OverrideType: OverrideElementType,
 		ArgNum:       0,
 	}
@@ -191,6 +197,10 @@ func (i *Info) InitKphpStubs() {
 		ArgNum:       0,
 	}
 	i.internalFunctionOverrides[`\instance_deserialize`] = FuncInfoOverride{
+		OverrideType: OverrideNullableClassType,
+		ArgNum:       1,
+	}
+	i.internalFunctionOverrides[`\instance_cast`] = FuncInfoOverride{
 		OverrideType: OverrideClassType,
 		ArgNum:       1,
 	}
