@@ -1,6 +1,6 @@
 module github.com/VKCOM/noverify
 
-go 1.12
+go 1.16
 
 require (
 	github.com/client9/misspell v0.3.4

@@ -11,6 +11,7 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/solver"
+	"github.com/VKCOM/noverify/src/types"
 )
 
 type blockLinter struct {
@@ -818,7 +819,7 @@ func (b *blockLinter) checkArrayKeyExistsCall(e *ir.FunctionCallExpr) {
 	typ := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, e.Arg(1).Expr)
 
 	onlyObjects := !typ.Find(func(typ string) bool {
-		return !meta.IsClassType(typ)
+		return !types.IsClassType(typ)
 	})
 
 	if onlyObjects {
@@ -1144,8 +1145,8 @@ func (b *blockLinter) checkFormatString(e *ir.FunctionCallExpr, arg *ir.Argument
 	}
 }
 
-func (b *blockLinter) isArrayType(typ meta.TypesMap) bool {
-	return typ.Len() == 1 && typ.Find(meta.IsArrayType)
+func (b *blockLinter) isArrayType(typ types.Map) bool {
+	return typ.Len() == 1 && typ.Find(types.IsArrayType)
 }
 
 func (b *blockLinter) classParseState() *meta.ClassParseState {

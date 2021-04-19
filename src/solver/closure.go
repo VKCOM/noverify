@@ -1,8 +1,6 @@
 package solver
 
-import (
-	"github.com/VKCOM/noverify/src/meta"
-)
+import "github.com/VKCOM/noverify/src/types"
 
 var supportedFunctions = map[string]struct{}{
 	`\array_map`:            {},
@@ -21,6 +19,6 @@ func IsSupportedFunction(name string) bool {
 
 // Struct containing information about the function that called the closure.
 type ClosureCallerInfo struct {
-	Name     string          // caller function name
-	ArgTypes []meta.TypesMap // types for each arg for call caller function
+	Name     string      // caller function name
+	ArgTypes []types.Map // types for each arg for call caller function
 }

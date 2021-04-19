@@ -26,6 +26,7 @@ import (
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/quickfix"
+	"github.com/VKCOM/noverify/src/types"
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
@@ -146,6 +147,14 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult,
 	return result, nil
 }
 
+func (w *Worker) parseWithCache(cacheFilename string, file workspace.FileInfo) error {
+	result, err := w.ParseContents(file)
+	if err != nil {
+		return err
+	}
+	return createMetaCacheFile(file.Name, cacheFilename, result.walker)
+}
+
 // IndexFile parses the file and fills in the meta info. Can use cache.
 func (w *Worker) IndexFile(file workspace.FileInfo) error {
 	if w.config.CacheDir == "" {
@@ -188,27 +197,17 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 	cacheFile := filepath.Join(w.config.CacheDir, cacheFilenamePart+"."+contentsHash)
 
 	start := time.Now()
+
 	fp, err := os.Open(cacheFile)
 	if err != nil {
-		result, err := w.ParseContents(file)
-		if err != nil {
-			return err
-		}
-
-		return createMetaCacheFile(file.Name, cacheFile, result.walker)
+		return w.parseWithCache(cacheFile, file)
 	}
 	defer fp.Close()
 
 	if err := restoreMetaFromCache(w.info, w.config.Checkers.cachers, file.Name, fp); err != nil {
 		// do not really care about why exactly reading from cache failed
 		os.Remove(cacheFile)
-
-		result, err := w.ParseContents(file)
-		if err != nil {
-			return err
-		}
-
-		return createMetaCacheFile(file.Name, cacheFile, result.walker)
+		return w.parseWithCache(cacheFile, file)
 	}
 
 	atomic.AddInt64(&initCacheReadTime, int64(time.Since(start)))
@@ -299,8 +298,8 @@ func (w *Worker) analyzeFile(file *workspace.File, rootNode *ir.Root) (*rootWalk
 // do not need to call it yourself.
 func analyzeFileRootLevel(rootNode ir.Node, d *rootWalker) {
 	sc := meta.NewScope()
-	sc.AddVarName("argv", meta.NewTypesMap("string[]"), "predefined", meta.VarAlwaysDefined)
-	sc.AddVarName("argc", meta.NewTypesMap("int"), "predefined", meta.VarAlwaysDefined)
+	sc.AddVarName("argv", types.NewMap("string[]"), "predefined", meta.VarAlwaysDefined)
+	sc.AddVarName("argc", types.NewMap("int"), "predefined", meta.VarAlwaysDefined)
 
 	b := newBlockWalker(d, sc)
 	b.ignoreFunctionBodies = true

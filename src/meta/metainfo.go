@@ -1,29 +1,9 @@
 package meta
 
 import (
-	"strings"
-
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/types"
 )
-
-// PerFile contains all meta information about the specified file
-type PerFile struct {
-	Traits    ClassesMap
-	Classes   ClassesMap
-	Functions FunctionsMap
-	Constants ConstantsMap
-}
-
-type FuncParam struct {
-	IsRef bool
-	Name  string
-	Typ   TypesMap
-}
-
-type PhpDocInfo struct {
-	Deprecated      bool
-	DeprecationNote string
-}
 
 type FuncFlags uint8
 
@@ -34,32 +14,10 @@ const (
 	FuncFinal
 )
 
-type FuncInfo struct {
-	Pos          ElementPosition
-	Name         string
-	Params       []FuncParam
-	MinParamsCnt int
-	Typ          TypesMap
-	AccessLevel  AccessLevel
-	Flags        FuncFlags
-	ExitFlags    int // if function has exit/die/throw, then ExitFlags will be <> 0
-	Doc          PhpDocInfo
+type PhpDocInfo struct {
+	Deprecated      bool
+	DeprecationNote string
 }
-
-func (info *FuncInfo) IsStatic() bool   { return info.Flags&FuncStatic != 0 }
-func (info *FuncInfo) IsAbstract() bool { return info.Flags&FuncAbstract != 0 }
-func (info *FuncInfo) IsPure() bool     { return info.Flags&FuncPure != 0 }
-
-type OverrideType int
-
-const (
-	// OverrideArgType means that return type of a function is the same as the type of the argument
-	OverrideArgType OverrideType = iota
-	// OverrideElementType means that return type of a function is the same as the type of an element of the argument
-	OverrideElementType
-	// OverrideClassType means that return type of a function is the same as the type represented by the class name.
-	OverrideClassType
-)
 
 type AccessLevel int
 
@@ -82,6 +40,49 @@ func (l AccessLevel) String() string {
 	panic("Invalid access level")
 }
 
+// PerFile contains all meta information about the specified file
+type PerFile struct {
+	Traits    ClassesMap
+	Classes   ClassesMap
+	Functions FunctionsMap
+	Constants ConstantsMap
+}
+
+type FuncParam struct {
+	IsRef bool
+	Name  string
+	Typ   types.Map
+}
+
+type FuncInfo struct {
+	Pos          ElementPosition
+	Name         string
+	Params       []FuncParam
+	MinParamsCnt int
+	Typ          types.Map
+	AccessLevel  AccessLevel
+	Flags        FuncFlags
+	ExitFlags    int // if function has exit/die/throw, then ExitFlags will be <> 0
+	Doc          PhpDocInfo
+}
+
+func (info *FuncInfo) IsStatic() bool   { return info.Flags&FuncStatic != 0 }
+func (info *FuncInfo) IsAbstract() bool { return info.Flags&FuncAbstract != 0 }
+func (info *FuncInfo) IsPure() bool     { return info.Flags&FuncPure != 0 }
+
+type OverrideType int
+
+const (
+	// OverrideArgType means that return type of a function is the same as the type of the argument
+	OverrideArgType OverrideType = iota
+	// OverrideElementType means that return type of a function is the same as the type of an element of the argument
+	OverrideElementType
+	// OverrideClassType means that return type of a function is the same as the type represented by the class name.
+	OverrideClassType
+	// OverrideNullableClassType means that return type of a function is the same as the type represented by the class name, and is also nullable.
+	OverrideNullableClassType
+)
+
 // FuncInfoOverride defines return type overrides based on their parameter types.
 // For example, \array_slice($arr) returns type of element (OverrideElementType) of the ArgNum=0
 type FuncInfoOverride struct {
@@ -91,13 +92,13 @@ type FuncInfoOverride struct {
 
 type PropertyInfo struct {
 	Pos         ElementPosition
-	Typ         TypesMap
+	Typ         types.Map
 	AccessLevel AccessLevel
 }
 
 type ConstInfo struct {
 	Pos         ElementPosition
-	Typ         TypesMap
+	Typ         types.Map
 	AccessLevel AccessLevel
 	Value       ConstValue
 }
@@ -182,11 +183,3 @@ func NameNodeEquals(n ir.Node, s string) bool {
 		return false
 	}
 }
-
-func IsClassType(s string) bool {
-	return strings.HasPrefix(s, `\`) && !IsShapeType(s) && !IsArrayType(s)
-}
-
-func IsShapeType(s string) bool { return strings.HasPrefix(s, `\shape$`) }
-
-func IsArrayType(s string) bool { return strings.HasSuffix(s, `[]`) }
