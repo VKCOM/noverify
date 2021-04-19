@@ -141,6 +141,38 @@ function f1() {
 	runKPHPExprTypeTest(t, &exprTypeTestParams{code: code, stubs: "<?php /* no code */"})
 }
 
+func TestInstanceCastType(t *testing.T) {
+	code := `<?php
+class Foo {
+	/** Method */
+	public function method() {}
+}
+
+const CLASS_NAME = "Foo";
+
+class Boo {
+	/** Method */
+	public function method() {
+		$foo = new Foo;
+		exprtype(instance_cast($foo, self::class), "\Boo");
+		exprtype(instance_cast($foo, static::class), "\Boo");
+		exprtype(instance_cast($foo, $this::class), "\Boo");
+	}
+}
+
+function f() {
+	$foo = new Foo;
+	$className = "";
+
+	exprtype(instance_cast($foo, Foo::class), "\Foo");
+	exprtype(instance_cast($foo, "Foo"), "\Foo");
+	exprtype(instance_cast($foo, 10), "mixed");
+	exprtype(instance_cast($foo, $className), "mixed");
+	exprtype(instance_cast($foo, CLASS_NAME), "mixed");
+`
+	runKPHPExprTypeTest(t, &exprTypeTestParams{code: code, stubs: "<?php /* no code */"})
+}
+
 func TestNotNull(t *testing.T) {
 	code := `<?php
 class Foo {}

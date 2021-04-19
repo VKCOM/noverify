@@ -257,7 +257,7 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 	case meta.OverrideElementType:
 		typ = typ.Map(types.WrapElemOf)
 
-	case meta.OverrideClassType:
+	case meta.OverrideClassType, meta.OverrideNullableClassType:
 		// due to the fact that it is impossible for us to use constfold
 		// here, we have to process only a part of the possible options,
 		// although the most popular ones.

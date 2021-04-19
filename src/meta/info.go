@@ -165,7 +165,14 @@ func (i *Info) InitKphpStubs() {
 		MinParamsCnt: 2,
 		Typ:          types.NewMap("object|null"),
 	}
-	i.internalFunctions.H[`\not_null`] = FuncInfo{
+	i.internalFunctions.H[`\instance_cast`] = FuncInfo{
+		Name:         `\instance_cast`,
+		Params:       []FuncParam{{Name: "instance"}, {Name: "class_name"}},
+		MinParamsCnt: 2,
+		Typ:          types.NewMap("object"),
+	}
+  
+  i.internalFunctions.H[`\not_null`] = FuncInfo{
 		Name:         `\not_null`,
 		Params:       []FuncParam{{Name: "any_value"}},
 		MinParamsCnt: 1,
@@ -193,6 +200,10 @@ func (i *Info) InitKphpStubs() {
 		ArgNum:       0,
 	}
 	i.internalFunctionOverrides[`\instance_deserialize`] = FuncInfoOverride{
+		OverrideType: OverrideNullableClassType,
+		ArgNum:       1,
+	}
+	i.internalFunctionOverrides[`\instance_cast`] = FuncInfoOverride{
 		OverrideType: OverrideClassType,
 		ArgNum:       1,
 	}
