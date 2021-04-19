@@ -287,8 +287,6 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 		})
 	case meta.ArrayOf:
 		typ = typ.Map(types.WrapArrayOf)
-	default:
-		return typ, true
 	}
 
 	return typ, !typ.IsEmpty()
