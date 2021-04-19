@@ -176,6 +176,10 @@ func (b *blockWalker) reportDeadCode(n ir.Node) {
 
 func (b *blockWalker) containsDisableInspection(n ir.Node, needInspection string) bool {
 	firstTkn := ir.GetFirstToken(n)
+	if firstTkn == nil {
+		return false
+	}
+
 	for _, tkn := range firstTkn.FreeFloating {
 		if !phpdoc.IsPHPDocToken(tkn) {
 			continue
