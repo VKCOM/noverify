@@ -205,7 +205,7 @@ func (i *Info) InitKphpStubs() {
 		ArgNum:       1,
 	}
 	i.internalFunctionOverrides[`\instance_cache_fetch`] = FuncInfoOverride{
-		OverrideType: OverrideClassType,
+		OverrideType: OverrideNullableClassType,
 		ArgNum:       0,
 	}
 }
