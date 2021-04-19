@@ -650,6 +650,15 @@ $_ = is_real($a);`,
 			After: `$a = (float)100;
 $_ = is_float($a);`,
 		},
+
+		{
+			Name:     "argsOrder",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report suspicious arguments order`,
+			Before:   `strpos('/', $s);`,
+			After:    `strpos($s, '/');`,
+		},
 	}
 
 	for _, info := range allChecks {
