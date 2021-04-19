@@ -228,7 +228,7 @@ func (i *Info) InitKphpStubs() {
 		ArgNum:       0,
 	}
 
-  i.internalFunctionOverrides[`\not_null`] = FuncInfoOverride{
+	i.internalFunctionOverrides[`\not_null`] = FuncInfoOverride{
 		OverrideType: OverrideArgType,
 		Properties:   NotNull,
 		ArgNum:       0,
