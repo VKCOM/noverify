@@ -208,19 +208,19 @@ func (i *Info) InitKphpStubs() {
 		ArgNum:       1,
 	}
 	i.internalFunctionOverrides[`\not_null`] = FuncInfoOverride{
-		OverrideType:       OverrideArgType,
-		AdditionalProperty: NotNull,
-		ArgNum:             0,
+		OverrideType: OverrideArgType,
+		Properties:   NotNull,
+		ArgNum:       0,
 	}
 	i.internalFunctionOverrides[`\not_false`] = FuncInfoOverride{
-		OverrideType:       OverrideArgType,
-		AdditionalProperty: NotFalse,
-		ArgNum:             0,
+		OverrideType: OverrideArgType,
+		Properties:   NotFalse,
+		ArgNum:       0,
 	}
 	i.internalFunctionOverrides[`\create_vector`] = FuncInfoOverride{
-		OverrideType:       OverrideArgType,
-		AdditionalProperty: ArrayOf,
-		ArgNum:             1,
+		OverrideType: OverrideArgType,
+		Properties:   ArrayOf,
+		ArgNum:       1,
 	}
 }
 

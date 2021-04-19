@@ -169,6 +169,7 @@ function f() {
 	exprtype(instance_cast($foo, 10), "mixed");
 	exprtype(instance_cast($foo, $className), "mixed");
 	exprtype(instance_cast($foo, CLASS_NAME), "mixed");
+}
 `
 	runKPHPExprTypeTest(t, &exprTypeTestParams{code: code, stubs: "<?php /* no code */"})
 }

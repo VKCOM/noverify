@@ -265,13 +265,18 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 		if !ok {
 			return types.NewMap("mixed"), true
 		}
-		typ = types.NewMap(className + "|null")
+
+		if override.OverrideType == meta.OverrideNullableClassType {
+			typ = types.NewMap(className + "|null")
+		} else {
+			typ = types.NewMap(className)
+		}
 
 	default:
 		log.Printf("Internal error: unexpected override type %d for function %s", override.OverrideType, nm)
 	}
 
-	switch override.AdditionalProperty {
+	switch override.Properties {
 	case meta.NotNull:
 		typ = typ.Filter(func(s string) bool {
 			return s != "null"
