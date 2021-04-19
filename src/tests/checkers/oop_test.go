@@ -142,15 +142,6 @@ class t3 {
   public function T3() {}
 }
 
-class ClassWithBackCompatibleConstructor {
-  public function __construct() {}
-
-  /** back compatible constructor */
-  public function ClassWithBackCompatibleConstructor() {
-    $this->__construct();
-  }
-}
-
 trait TraitWithNameMatchingMethod {
   /** ok */
   public function TraitWithNameMatchingMethod() {}
@@ -175,15 +166,6 @@ namespace SameWithNamespace {
   class t3 {
     /** inverse of the T2 test case */
     public function T3() {}
-  }
-  
-  class ClassWithBackCompatibleConstructor {
-    public function __construct() {}
-  
-    /** back compatible constructor */
-    public function ClassWithBackCompatibleConstructor() {
-      $this->__construct();
-    }
   }
 
   trait TraitWithNameMatchingMethod {

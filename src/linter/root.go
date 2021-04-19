@@ -902,10 +902,6 @@ func (d *rootWalker) checkOldStyleConstructor(meth *ir.ClassMethodStmt) {
 	if !inClass {
 		return
 	}
-	_, containsConstruct := d.getClass().Methods.Get(`__construct`)
-	if containsConstruct {
-		return
-	}
 
 	d.Report(meth.MethodName, LevelNotice, "oldStyleConstructor", "Old-style constructor usage, use __construct instead")
 }
