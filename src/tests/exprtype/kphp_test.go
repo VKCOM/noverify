@@ -262,6 +262,115 @@ function f() {
 	runKPHPExprTypeTest(t, &exprTypeTestParams{code: code, stubs: "<?php /* no code */"})
 }
 
+func TestNotNull(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+/**
+ * @return int|null
+ */
+function f1(): int {
+	return 0;
+}
+
+function f() {
+	$a = new Foo;
+	if (1) {
+		$a = null;
+	}
+
+	exprtype(not_null($a), "\Foo");
+
+	$b = 100;
+	exprtype(not_null($b), "int");
+
+	$c = [1,2,3];
+	exprtype(not_null($c), "int[]");
+
+	$d = [1,2,3];
+	if (1) {
+		$d = null;
+	}
+	exprtype(not_null($d), "int[]");
+
+	$e = f1();
+	exprtype(not_null($e), "int|null"); // not work properly with function call type
+}
+`
+	runKPHPExprTypeTest(t, &exprTypeTestParams{code: code, stubs: "<?php /* no code */"})
+}
+
+func TestNotFalse(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+/**
+ * @return int|false
+ */
+function f1(): int {
+	return 0;
+}
+
+function f() {
+	$a = new Foo;
+	if (1) {
+		$a = false;
+	}
+
+	exprtype(not_false($a), "\Foo|bool");
+
+	$b = 100;
+	exprtype(not_false($b), "int");
+
+	$c = [1,2,3];
+	exprtype(not_false($c), "int[]");
+
+	$d = [1,2,3];
+	if (1) {
+		$d = false;
+	}
+	exprtype(not_false($d), "bool|int[]");
+
+	$e = f1();
+	exprtype(not_false($e), "false|int"); // not work properly with function call type
+}
+`
+	runKPHPExprTypeTest(t, &exprTypeTestParams{code: code, stubs: "<?php /* no code */"})
+}
+
+func TestCreateVector(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+/**
+ * @return int
+ */ 
+function retInt() { return 0; }
+
+/**
+ * @return int|string
+ */ 
+function retIntAndString() { return 0; }
+
+/**
+ * @return Foo
+ */ 
+function retFoo() { return 0; }
+
+function f() {
+	exprtype(create_vector(10, new Foo), "\Foo[]");
+	exprtype(create_vector(10, 1), "int[]");
+	exprtype(create_vector(10, 1.5), "float[]");
+	exprtype(create_vector(10, "22"), "string[]");
+	exprtype(create_vector(10, true ? 1 : "22"), "int[]|string[]");
+	exprtype(create_vector(10, retInt()), "int[]");
+	exprtype(create_vector(10, retIntAndString()), "int[]|string[]");
+	exprtype(create_vector(10, retFoo()), "\Foo[]");
+}
+`
+	runKPHPExprTypeTest(t, &exprTypeTestParams{code: code, stubs: "<?php /* no code */"})
+}
+
 func runKPHPExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	exprTypeTestImpl(t, params, true)
 }

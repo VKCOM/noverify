@@ -184,6 +184,25 @@ func (i *Info) InitKphpStubs() {
 		Typ:          types.NewMap("object"),
 	}
 
+	i.internalFunctions.H[`\not_null`] = FuncInfo{
+		Name:         `\not_null`,
+		Params:       []FuncParam{{Name: "any_value"}},
+		MinParamsCnt: 1,
+		Typ:          types.NewMap("mixed"),
+	}
+	i.internalFunctions.H[`\not_false`] = FuncInfo{
+		Name:         `\not_false`,
+		Params:       []FuncParam{{Name: "any_value"}},
+		MinParamsCnt: 1,
+		Typ:          types.NewMap("mixed"),
+	}
+	i.internalFunctions.H[`\create_vector`] = FuncInfo{
+		Name:         `\create_vector`,
+		Params:       []FuncParam{{Name: "count"}, {Name: "el"}},
+		MinParamsCnt: 2,
+		Typ:          types.NewMap("mixed[]"),
+	}
+
 	i.internalFunctionOverrides[`\array_first_value`] = FuncInfoOverride{
 		OverrideType: OverrideElementType,
 		ArgNum:       0,
@@ -207,6 +226,22 @@ func (i *Info) InitKphpStubs() {
 	i.internalFunctionOverrides[`\instance_cache_fetch`] = FuncInfoOverride{
 		OverrideType: OverrideNullableClassType,
 		ArgNum:       0,
+	}
+
+	i.internalFunctionOverrides[`\not_null`] = FuncInfoOverride{
+		OverrideType: OverrideArgType,
+		Properties:   NotNull,
+		ArgNum:       0,
+	}
+	i.internalFunctionOverrides[`\not_false`] = FuncInfoOverride{
+		OverrideType: OverrideArgType,
+		Properties:   NotFalse,
+		ArgNum:       0,
+	}
+	i.internalFunctionOverrides[`\create_vector`] = FuncInfoOverride{
+		OverrideType: OverrideArgType,
+		Properties:   ArrayOf,
+		ArgNum:       1,
 	}
 }
 
