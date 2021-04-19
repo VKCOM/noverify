@@ -67,16 +67,6 @@ func FmtNode(n ir.Node) string {
 	return irfmt.Node(n)
 }
 
-// Find searches for a node in the passed subtree.
-func Find(what ir.Node, where ir.Node) bool {
-	if what == nil || where == nil {
-		return false
-	}
-	w := newFindWalker(what, where)
-	where.Walk(w)
-	return w.found
-}
-
 // FindWithPredicate searches for a node in the passed
 // subtree using a predicate.
 //
