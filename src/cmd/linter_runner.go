@@ -115,7 +115,7 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, args *cmdlineArguments) error
 		}
 	}
 
-	l.initCheckMappings()
+	l.initCheckMappings(ruleSets)
 	if err := l.initRules(ruleSets); err != nil {
 		return fmt.Errorf("rules: %v", err)
 	}
@@ -182,7 +182,7 @@ func (l *linterRunner) compileRegexes() error {
 	return nil
 }
 
-func (l *linterRunner) initCheckMappings() {
+func (l *linterRunner) initCheckMappings(ruleSets []*rules.Set) {
 	stringToSet := func(s string) map[string]bool {
 		set := make(map[string]bool)
 		for _, name := range strings.Split(s, ",") {
@@ -192,8 +192,28 @@ func (l *linterRunner) initCheckMappings() {
 	}
 
 	l.reportsExcludeChecksSet = stringToSet(l.args.reportsExcludeChecks)
-	l.reportsIncludeChecksSet = stringToSet(l.args.allowChecks)
-	if l.args.reportsCritical != allNonNotice {
+
+	if l.args.allowChecks == allChecks {
+		set := make(map[string]bool)
+
+		declaredChecks := l.config.Checkers.ListDeclared()
+		for _, info := range declaredChecks {
+			if info.Default {
+				set[info.Name] = true
+			}
+		}
+		for _, ruleSet := range ruleSets {
+			for _, name := range ruleSet.Names {
+				set[name] = true
+			}
+		}
+
+		l.reportsIncludeChecksSet = set
+	} else {
+		l.reportsIncludeChecksSet = stringToSet(l.args.allowChecks)
+	}
+
+	if l.args.reportsCritical != allNonNoticeChecks {
 		l.reportsCriticalSet = stringToSet(l.args.reportsCritical)
 	}
 }
