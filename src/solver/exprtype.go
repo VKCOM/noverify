@@ -289,7 +289,7 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 		typ = typ.Map(types.WrapArrayOf)
 	}
 
-	return typ, !typ.IsEmpty()
+	return typ, !typ.Empty()
 }
 
 func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*ir.ArrayItemExpr) types.Map {
