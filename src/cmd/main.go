@@ -49,16 +49,14 @@ func isEnabled(l *linterRunner, r *linter.Report) bool {
 	return !l.config.ExcludeRegex.MatchString(r.Filename)
 }
 
-var app *App
-
-func registerMainApp() {
-	app = &App{
+func registerMainApp() *App {
+	return &App{
 		Name:        "noverify",
 		Description: "Pretty fast linter (static analysis tool) for PHP",
 		Commands: []*Command{
 			{
 				Name:        "check",
-				Description: "Lint the entire project",
+				Description: "The command to lint files",
 				Action:      Check,
 				Arguments: []*Argument{
 					{
@@ -76,18 +74,18 @@ func registerMainApp() {
 			},
 			{
 				Name:        "checkers",
-				Description: "show help for checkers",
+				Description: "The command to show list of checkers",
 				Arguments: []*Argument{
 					{
 						Name:        "checker-name",
-						Description: "info for checker-name",
+						Description: "Show info for a certain <checker-name> checker ",
 					},
 				},
 				Action: Checkers,
 			},
 			{
 				Name:        "check-rules",
-				Description: "check dynamic rules",
+				Description: "The command to check dynamic rules",
 				Action: func(ctx *AppContext) (int, error) {
 
 					return 0, nil
@@ -95,12 +93,12 @@ func registerMainApp() {
 				Arguments: []*Argument{
 					{
 						Name:        "dir",
-						Description: "dir with rules",
+						Description: "Directory with rules for check",
 					},
 				},
 				RegisterFlags: func(ctx *AppContext) *flag.FlagSet {
 					fs := flag.NewFlagSet("check-rules", flag.ContinueOnError)
-					fs.StringVar(&ctx.ParsedFlags.rulesTestDir, "testdata-folder", "", "folder with testdata")
+					fs.StringVar(&ctx.ParsedFlags.rulesTestDir, "testdata-folder", "", "Folder with testdata for rules")
 					return fs
 				},
 			},
@@ -118,7 +116,7 @@ func registerMainApp() {
 //
 // Optionally, non-nil config can be passed to customize function behavior.
 func Run(cfg *MainConfig) (int, error) {
-	registerMainApp()
+	app := registerMainApp()
 	if cfg.ModifyApp != nil {
 		cfg.ModifyApp(app)
 	}

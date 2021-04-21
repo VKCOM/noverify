@@ -3,7 +3,10 @@ package cmd
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
+	"strings"
+	"text/tabwriter"
 )
 
 type AppContext struct {
@@ -75,7 +78,7 @@ func (a *App) prepareCommands() {
 func (a *App) addDefaultHelpCommand(command *Command) {
 	a.commands[command.Name].Commands = append(a.commands[command.Name].Commands, &Command{
 		Name:        "help",
-		Description: "show help for " + command.Name,
+		Description: "The command to show help for " + command.Name + " command",
 		Action: func(ctx *AppContext) (int, error) {
 			if command.RegisterFlags != nil {
 				fs := command.RegisterFlags(ctx)
@@ -131,23 +134,43 @@ func (a *App) addDefaultHelpCommand(command *Command) {
 func (a *App) showHelp() {
 	var res string
 
+	res += fmt.Sprintf("%s - %s\n", a.Name, a.Description)
+	res += fmt.Sprintln()
 	res += fmt.Sprintln("Usage:")
 	res += fmt.Sprintf("  $ %s [command]\n", a.Name)
 	res += fmt.Sprintln()
 
 	res += fmt.Sprintln("Commands:")
 
-	for _, command := range a.commands {
-		res += fmt.Sprintf("  %s - %s\n", command.Name, command.Description)
+	w := tabwriter.NewWriter(os.Stdout, 15, 0, 3, ' ', 0)
+	printCommands(w, 1, a.commands)
 
-		if len(command.Commands) != 0 {
-			for _, command = range command.Commands {
-				res += fmt.Sprintf("    %s - %s\n", command.Name, command.Description)
-			}
-		}
-	}
+	fmt.Print(res)
+
+	w.Flush()
+
+	res = fmt.Sprintln()
+	res += fmt.Sprintln("Help:")
+
+	res += fmt.Sprintln("  To get help for command, use the help subcommand:")
+	res += fmt.Sprintf("    $ %s check help\n", a.Name)
+	res += fmt.Sprintf("    $ %s checkers help\n", a.Name)
 
 	fmt.Println(res)
+}
+
+func printCommands(w io.Writer, level int, commands map[string]*Command) {
+	for _, command := range commands {
+		if command.Name == "help" {
+			continue
+		}
+
+		fmt.Fprintf(w, "%s%s\t%s\n", strings.Repeat("  ", level), command.Name, command.Description)
+
+		if len(command.Commands) != 0 {
+			printCommands(w, level+1, command.commands)
+		}
+	}
 }
 
 func (a *App) getCommandByArgs(args []string, commands map[string]*Command) (*Command, bool) {
