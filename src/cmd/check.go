@@ -1,28 +1,23 @@
 package cmd
 
 import (
-	"flag"
 	"fmt"
 
 	"github.com/VKCOM/noverify/src/linter"
 )
 
-func Check(cfg *MainConfig) (int, error) {
-	if cfg == nil {
-		cfg = &MainConfig{}
+func Check(ctx *AppContext) (int, error) {
+	if ctx.MainConfig == nil {
+		ctx.MainConfig = &MainConfig{}
 	}
 
-	config := cfg.LinterConfig
+	config := ctx.MainConfig.LinterConfig
 	if config == nil {
 		config = linter.NewConfig()
 	}
 	l := linter.NewLinter(config)
 
-	var args cmdlineArguments
-	bindFlags(config, &args)
-	flag.Parse()
-
-	ruleSets, err := parseRules(args.rulesList)
+	ruleSets, err := parseRules(ctx.ParsedFlags.rulesList)
 	if err != nil {
 		return 1, fmt.Errorf("preload rules: %v", err)
 	}
@@ -30,16 +25,16 @@ func Check(cfg *MainConfig) (int, error) {
 		config.Checkers.DeclareRules(rset)
 	}
 
-	if args.disableCache {
+	if ctx.ParsedFlags.disableCache {
 		config.CacheDir = ""
 	}
 
-	if cfg.AfterFlagParse != nil {
-		cfg.AfterFlagParse(InitEnvironment{
+	if ctx.MainConfig.AfterFlagParse != nil {
+		ctx.MainConfig.AfterFlagParse(InitEnvironment{
 			RuleSets: ruleSets,
 			MetaInfo: l.MetaInfo(),
 		})
 	}
 
-	return mainNoExit(l, ruleSets, &args, cfg)
+	return mainNoExit(l, ruleSets, ctx)
 }

@@ -32,7 +32,7 @@ type MainConfig struct {
 
 	LinterConfig *linter.Config
 
-	// OverriddenCommands is a list of new commands and
-	// commands that override existing commands.
-	OverriddenCommands *Commands
+	// ModifyApp is a callback function into which a standard
+	// application is passed to modify a command, name or description.
+	ModifyApp func(app *App)
 }

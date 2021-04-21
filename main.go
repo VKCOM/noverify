@@ -29,5 +29,20 @@ func main() {
 	printVersion()
 	cmd.Main(&cmd.MainConfig{
 		LinterVersion: BuildCommit,
+
+		// example of modify
+		// TODO: remove before PR merge
+		ModifyApp: func(app *cmd.App) {
+			app.Name = "phplinter"
+
+			app.Commands = append(app.Commands, &cmd.Command{
+				Name:        "version",
+				Description: "print phplinter version and exit",
+				Action: func(ctx *cmd.AppContext) (int, error) {
+					printVersion()
+					return 0, nil
+				},
+			})
+		},
 	})
 }

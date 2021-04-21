@@ -29,48 +29,6 @@ import (
 //
 //go:generate go-bindata -pkg stubs -nometadata -o ./stubs/phpstorm_stubs.go -ignore=\.idea -ignore=\.git ./stubs/phpstorm-stubs/...
 
-// GlobalCmds is a global map of commands.
-var GlobalCmds = NewCommands()
-
-// RegisterDefaultCommands registers default commands for NoVerify.
-func RegisterDefaultCommands() {
-	GlobalCmds.RegisterCommand(&SubCommand{
-		Name:        "check",
-		Main:        Check,
-		Description: "Lint the entire project",
-		Examples: []SubCommandExample{
-			{
-				Description: "Show command usage",
-				Line:        "-help",
-			},
-			{
-				Description: "Run linter with default options",
-				Line:        "[options] <analyze-path>",
-			},
-		},
-	})
-
-	GlobalCmds.RegisterCommand(&SubCommand{
-		Name:        "help",
-		Main:        Help,
-		Description: "Print linter documentation based on the subject",
-		Examples: []SubCommandExample{
-			{
-				Description: "Show usage help",
-				Line:        "",
-			},
-			{
-				Description: "Show all supported checkers short summary",
-				Line:        "checkers",
-			},
-			{
-				Description: "Show <name> checker detailed documentation",
-				Line:        "checkers <name>",
-			},
-		},
-	})
-}
-
 func isCritical(l *linterRunner, r *linter.Report) bool {
 	if len(l.reportsCriticalSet) != 0 {
 		return l.reportsCriticalSet[r.CheckName]
@@ -91,6 +49,65 @@ func isEnabled(l *linterRunner, r *linter.Report) bool {
 	return !l.config.ExcludeRegex.MatchString(r.Filename)
 }
 
+var app *App
+
+func registerMainApp() {
+	app = &App{
+		Name:        "noverify",
+		Description: "Pretty fast linter (static analysis tool) for PHP",
+		Commands: []*Command{
+			{
+				Name:        "check",
+				Description: "Lint the entire project",
+				Action:      Check,
+				Arguments: []*Argument{
+					{
+						Name:        "check-dir/file",
+						Description: "dir or file for check",
+					},
+				},
+				RegisterFlags: func(ctx *AppContext) *flag.FlagSet {
+					if ctx.MainConfig.LinterConfig == nil {
+						ctx.MainConfig.LinterConfig = linter.NewConfig()
+					}
+
+					return registerCheckFlags(ctx.MainConfig.LinterConfig, &ctx.ParsedFlags)
+				},
+			},
+			{
+				Name:        "checkers",
+				Description: "show help for checkers",
+				Arguments: []*Argument{
+					{
+						Name:        "checker-name",
+						Description: "info for checker-name",
+					},
+				},
+				Action: Checkers,
+			},
+			{
+				Name:        "check-rules",
+				Description: "check dynamic rules",
+				Action: func(ctx *AppContext) (int, error) {
+
+					return 0, nil
+				},
+				Arguments: []*Argument{
+					{
+						Name:        "dir",
+						Description: "dir with rules",
+					},
+				},
+				RegisterFlags: func(ctx *AppContext) *flag.FlagSet {
+					fs := flag.NewFlagSet("check-rules", flag.ContinueOnError)
+					fs.StringVar(&ctx.ParsedFlags.rulesTestDir, "testdata-folder", "", "folder with testdata")
+					return fs
+				},
+			},
+		},
+	}
+}
+
 // Run executes linter main function.
 //
 // It is separate from linter so that you can insert your own hooks
@@ -101,39 +118,11 @@ func isEnabled(l *linterRunner, r *linter.Report) bool {
 //
 // Optionally, non-nil config can be passed to customize function behavior.
 func Run(cfg *MainConfig) (int, error) {
-	RegisterDefaultCommands()
-
-	if cfg.OverriddenCommands != nil {
-		GlobalCmds.OverrideCommands(cfg.OverriddenCommands)
+	registerMainApp()
+	if cfg.ModifyApp != nil {
+		cfg.ModifyApp(app)
 	}
-
-	var subcmd *SubCommand
-	var found bool
-	if len(os.Args) >= 2 {
-		commandName := os.Args[1]
-		subcmd, found = GlobalCmds.GetCommand(commandName)
-		if found {
-			subIdx := 1 // [0] is program name
-			// Erase sub-command argument (index=1) to make it invisible for
-			// sub commands themselves.
-			os.Args = append(os.Args[:subIdx], os.Args[subIdx+1:]...)
-		} else {
-			fmt.Printf("Sub-command '%s' doesn't exist\n\n", commandName)
-			GlobalCmds.PrintHelpPage()
-			return 0, nil
-		}
-
-	}
-	if subcmd == nil {
-		GlobalCmds.PrintHelpPage()
-		return 0, nil
-	}
-
-	status, err := subcmd.Main(cfg)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return status, nil
+	return app.Run(cfg)
 }
 
 // Main is like Run(), but it calls os.Exit() and does not return.
@@ -150,15 +139,15 @@ func Main(cfg *MainConfig) {
 // Note that if error is not nil, integer code will be discarded, so it can be 0.
 //
 // We don't want os.Exit to be inserted randomly to avoid defer cancellation.
-func mainNoExit(l *linter.Linter, ruleSets []*rules.Set, args *cmdlineArguments, cfg *MainConfig) (int, error) {
-	if args.version {
+func mainNoExit(l *linter.Linter, ruleSets []*rules.Set, ctx *AppContext) (int, error) {
+	if ctx.ParsedFlags.version {
 		// Version is already printed. Can exit here.
 		return 0, nil
 	}
 
-	if args.pprofHost != "" {
+	if ctx.ParsedFlags.pprofHost != "" {
 		go func() {
-			err := http.ListenAndServe(args.pprofHost, nil)
+			err := http.ListenAndServe(ctx.ParsedFlags.pprofHost, nil)
 			if err != nil {
 				log.Printf("pprof listen and serve: %v", err)
 			}
@@ -167,8 +156,8 @@ func mainNoExit(l *linter.Linter, ruleSets []*rules.Set, args *cmdlineArguments,
 
 	// Since this function is expected to be exit-free, it's OK
 	// to defer calls here to make required flushes/cleanup.
-	if args.cpuProfile != "" {
-		f, err := os.Create(args.cpuProfile)
+	if ctx.ParsedFlags.cpuProfile != "" {
+		f, err := os.Create(ctx.ParsedFlags.cpuProfile)
 		if err != nil {
 			return 0, fmt.Errorf("Could not create CPU profile: %v", err)
 		}
@@ -178,9 +167,9 @@ func mainNoExit(l *linter.Linter, ruleSets []*rules.Set, args *cmdlineArguments,
 		}
 		defer pprof.StopCPUProfile()
 	}
-	if args.memProfile != "" {
+	if ctx.ParsedFlags.memProfile != "" {
 		defer func() {
-			f, err := os.Create(args.memProfile)
+			f, err := os.Create(ctx.ParsedFlags.memProfile)
 			if err != nil {
 				log.Printf("could not create memory profile: %v", err)
 				return
@@ -197,7 +186,7 @@ func mainNoExit(l *linter.Linter, ruleSets []*rules.Set, args *cmdlineArguments,
 		config: l.Config(),
 		linter: l,
 	}
-	if err := runner.Init(ruleSets, args); err != nil {
+	if err := runner.Init(ruleSets, &ctx.ParsedFlags); err != nil {
 		return 1, fmt.Errorf("init: %v", err)
 	}
 
@@ -206,7 +195,7 @@ func mainNoExit(l *linter.Linter, ruleSets []*rules.Set, args *cmdlineArguments,
 			log.Print(msg)
 		}
 	})
-	go linter.MemoryLimiterThread(args.maxFileSize)
+	go linter.MemoryLimiterThread(ctx.ParsedFlags.maxFileSize)
 
 	log.Printf("Started")
 
@@ -214,8 +203,8 @@ func mainNoExit(l *linter.Linter, ruleSets []*rules.Set, args *cmdlineArguments,
 		return 0, fmt.Errorf("Init stubs: %v", err)
 	}
 
-	if args.gitRepo != "" {
-		return gitMain(&runner, cfg)
+	if ctx.ParsedFlags.gitRepo != "" {
+		return gitMain(&runner, ctx.MainConfig)
 	}
 
 	log.Printf("Indexing %+v", flag.Args())
@@ -223,20 +212,20 @@ func mainNoExit(l *linter.Linter, ruleSets []*rules.Set, args *cmdlineArguments,
 	parseIndexOnlyFiles(&runner)
 	runner.linter.MetaInfo().SetIndexingComplete(true)
 
-	filenames := flag.Args()
-	if args.fullAnalysisFiles != "" {
-		filenames = strings.Split(args.fullAnalysisFiles, ",")
+	filenames := ctx.ParsedArgs
+	if ctx.ParsedFlags.fullAnalysisFiles != "" {
+		filenames = strings.Split(ctx.ParsedFlags.fullAnalysisFiles, ",")
 	}
 
 	log.Printf("Linting")
 	reports := runner.linter.AnalyzeFiles(workspace.ReadFilenames(filenames, runner.filenameFilter, l.Config().PhpExtensions))
-	if args.outputBaseline {
-		if err := createBaseline(&runner, cfg, reports); err != nil {
+	if ctx.ParsedFlags.outputBaseline {
+		if err := createBaseline(&runner, ctx.MainConfig, reports); err != nil {
 			return 1, fmt.Errorf("write baseline: %v", err)
 		}
 		return 0, nil
 	}
-	criticalReports, containsAutofixableReports := analyzeReports(&runner, cfg, reports)
+	criticalReports, containsAutofixableReports := analyzeReports(&runner, ctx.MainConfig, reports)
 
 	if containsAutofixableReports {
 		log.Println("Some issues are autofixable (try using the `-fix` flag)")
@@ -362,7 +351,7 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 
 	containsAutofixableReports = haveAutofixableReports(l.config, filtered)
 
-	if l.args.outputJSON {
+	if l.flags.outputJSON {
 		type reportList struct {
 			Reports []*linter.Report
 			Errors  []string

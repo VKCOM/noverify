@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -12,36 +11,21 @@ import (
 	"github.com/VKCOM/noverify/src/rules"
 )
 
-func Help(*MainConfig) (int, error) {
-	flag.Parse()
-	args := flag.Args()
+func Checkers(ctx *AppContext) (int, error) {
+	if ctx.MainConfig.LinterConfig == nil {
+		ctx.MainConfig.LinterConfig = linter.NewConfig()
+	}
 
-	if len(args) == 0 {
-		GlobalCmds.PrintHelpPage()
+	// `checkers`
+	if len(ctx.ParsedArgs) == 0 {
+		showAllCheckers(ctx)
 		return 0, nil
 	}
 
-	mainSubject := args[0]
-	if mainSubject == "checkers" {
-		return handleCheckersHelp(args[1:])
-	}
+	checkerName := ctx.ParsedArgs[0]
 
-	return 1, fmt.Errorf("unknown subject: %s", mainSubject)
-}
-
-func handleCheckersHelp(args []string) (int, error) {
-	config := declareRules()
-
-	// `help checkers`
-	if len(args) == 0 {
-		showHelpAllCheckers(config)
-		return 0, nil
-	}
-
-	checkerName := args[0]
-
-	// `help checkers <name>`
-	err := showHelpChecker(config, checkerName)
+	// `checkers <name>`
+	err := showChecker(ctx.MainConfig.LinterConfig, checkerName)
 	if err != nil {
 		return 1, err
 	}
@@ -49,11 +33,10 @@ func handleCheckersHelp(args []string) (int, error) {
 	return 0, err
 }
 
-func declareRules() *linter.Config {
-	p := rules.NewParser()
-	config := linter.NewConfig()
+func showAllCheckers(ctx *AppContext) {
+	config := ctx.MainConfig.LinterConfig
 
-	ruleSets, err := AddEmbeddedRules(config.Rules, p, func(r rules.Rule) bool { return true })
+	ruleSets, err := AddEmbeddedRules(config.Rules, rules.NewParser(), func(r rules.Rule) bool { return true })
 	if err != nil {
 		panic(err)
 	}
@@ -62,18 +45,14 @@ func declareRules() *linter.Config {
 		config.Checkers.DeclareRules(rset)
 	}
 
-	return config
-}
-
-func showHelpAllCheckers(config *linter.Config) {
 	fmt.Println("Usage:")
-	fmt.Println("  $ noverify check -allow-checks='<list-checks>' /project/root")
+	fmt.Printf("  $ %s check -allow-checks='<list-checks>' /project/root\n", ctx.App.Name)
 	fmt.Println()
 	fmt.Println("  NOTE: In order to run the linter with only some checks, the -allow-checks")
 	fmt.Println("  flag is used which accepts a comma-separated list of checks that are allowed.")
 	fmt.Println()
 	fmt.Println("  For other possible options run")
-	fmt.Println("     $ noverify check -help")
+	fmt.Printf("     $ %s check help\n", ctx.App.Name)
 	fmt.Println()
 	fmt.Println("Checkers:")
 
@@ -84,7 +63,7 @@ func showHelpAllCheckers(config *linter.Config) {
 	w.Flush()
 }
 
-func showHelpChecker(config *linter.Config, checkerName string) error {
+func showChecker(config *linter.Config, checkerName string) error {
 	var info linter.CheckerInfo
 	checks := config.Checkers.ListDeclared()
 	for i := range checks {
