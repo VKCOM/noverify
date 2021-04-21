@@ -44,11 +44,6 @@ type App struct {
 	commands map[string]*Command
 }
 
-func (a *App) getCommand(name string) (*Command, bool) {
-	cmd, found := a.commands[name]
-	return cmd, found
-}
-
 func (a *App) prepareCommands() {
 	if a.commands == nil {
 		a.commands = map[string]*Command{}
