@@ -87,6 +87,88 @@ const (
 	WMax
 )
 
+func slice(typ byte, byteFields []uint8, args ...string) []byte {
+	bufLen := 1 // hold type info
+	bufLen += len(byteFields) * 2
+	for _, a := range args {
+		bufLen += stringLenBytes // string len
+		bufLen += len(a)
+	}
+	res := make([]byte, 1, bufLen)
+	res[0] = typ
+	return res
+}
+
+const stringLenBytes = 4
+const uint8fieldBytes = 2
+
+func wrap(typ byte, byteFields []uint8, args ...string) string {
+	var rawBuf [stringLenBytes / 2]byte
+	var b [stringLenBytes]byte
+
+	buf := slice(typ, byteFields, args...)
+	for _, field := range byteFields {
+		rawBuf[0] = field
+		hex.Encode(b[:], rawBuf[:1])
+		buf = append(buf, b[:uint8fieldBytes]...)
+	}
+	for _, s := range args {
+		binary.LittleEndian.PutUint16(rawBuf[:], uint16(len(s)))
+		hex.Encode(b[:], rawBuf[:])
+		buf = append(buf, b[:]...)
+		buf = append(buf, s...)
+	}
+	return string(buf)
+}
+
+func unwrap1(s string) (one string) {
+	return s[stringLenBytes+1:] // do not care about length, there is only 1 param
+}
+
+func unwrap2(s string) (one, two string) {
+	var l int
+	var b [stringLenBytes]byte
+	var rawBuf [stringLenBytes / 2]byte
+
+	pos := 1
+	copy(b[:], s[pos:pos+stringLenBytes])
+	if _, err := hex.Decode(rawBuf[:], b[:]); err != nil {
+		log.Printf("decode type string error: unwrap2: %v", err)
+	}
+	l = int(binary.LittleEndian.Uint16(rawBuf[:]))
+	pos += stringLenBytes
+	one = s[pos : pos+l]
+	pos += l
+	two = s[pos+stringLenBytes:] // do not care about length of last param
+
+	return one, two
+}
+
+func unwrap3(s string) (b1 uint8, one, two string) {
+	var l int
+	var b [stringLenBytes]byte
+	var rawBuf [stringLenBytes / 2]byte
+
+	pos := 1
+	copy(b[:], s[pos:pos+uint8fieldBytes])
+	if _, err := hex.Decode(rawBuf[:], b[:uint8fieldBytes]); err != nil {
+		log.Printf("decode type string error: unwrap3: %v", err)
+	}
+	b1 = rawBuf[0]
+	pos += uint8fieldBytes
+	copy(b[:], s[pos:pos+stringLenBytes])
+	if _, err := hex.Decode(rawBuf[:], b[:]); err != nil {
+		log.Printf("decode type string error: unwrap3: %v", err)
+	}
+	l = int(binary.LittleEndian.Uint16(rawBuf[:]))
+	pos += stringLenBytes
+	one = s[pos : pos+l]
+	pos += l
+	two = s[pos+stringLenBytes:] // do not care about length of last param
+
+	return b1, one, two
+}
+
 func WrapBaseMethodParam(paramIndex int, className, methodName string) string {
 	return wrap(WBaseMethodParam, []uint8{uint8(paramIndex)}, className, methodName)
 }
@@ -245,86 +327,4 @@ func FormatType(s string) (res string) {
 	}
 
 	return "unknown(" + s + ")"
-}
-
-func slice(typ byte, byteFields []uint8, args ...string) []byte {
-	bufLen := 1 // hold type info
-	bufLen += len(byteFields) * 2
-	for _, a := range args {
-		bufLen += stringLenBytes // string len
-		bufLen += len(a)
-	}
-	res := make([]byte, 1, bufLen)
-	res[0] = typ
-	return res
-}
-
-const stringLenBytes = 4
-const uint8fieldBytes = 2
-
-func wrap(typ byte, byteFields []uint8, args ...string) string {
-	var rawBuf [stringLenBytes / 2]byte
-	var b [stringLenBytes]byte
-
-	buf := slice(typ, byteFields, args...)
-	for _, field := range byteFields {
-		rawBuf[0] = field
-		hex.Encode(b[:], rawBuf[:1])
-		buf = append(buf, b[:uint8fieldBytes]...)
-	}
-	for _, s := range args {
-		binary.LittleEndian.PutUint16(rawBuf[:], uint16(len(s)))
-		hex.Encode(b[:], rawBuf[:])
-		buf = append(buf, b[:]...)
-		buf = append(buf, s...)
-	}
-	return string(buf)
-}
-
-func unwrap1(s string) (one string) {
-	return s[stringLenBytes+1:] // do not care about length, there is only 1 param
-}
-
-func unwrap2(s string) (one, two string) {
-	var l int
-	var b [stringLenBytes]byte
-	var rawBuf [stringLenBytes / 2]byte
-
-	pos := 1
-	copy(b[:], s[pos:pos+stringLenBytes])
-	if _, err := hex.Decode(rawBuf[:], b[:]); err != nil {
-		log.Printf("decode type string error: unwrap2: %v", err)
-	}
-	l = int(binary.LittleEndian.Uint16(rawBuf[:]))
-	pos += stringLenBytes
-	one = s[pos : pos+l]
-	pos += l
-	two = s[pos+stringLenBytes:] // do not care about length of last param
-
-	return one, two
-}
-
-func unwrap3(s string) (b1 uint8, one, two string) {
-	var l int
-	var b [stringLenBytes]byte
-	var rawBuf [stringLenBytes / 2]byte
-
-	pos := 1
-	copy(b[:], s[pos:pos+uint8fieldBytes])
-	if _, err := hex.Decode(rawBuf[:], b[:uint8fieldBytes]); err != nil {
-		log.Printf("decode type string error: unwrap3: %v", err)
-	}
-	b1 = rawBuf[0]
-	pos += uint8fieldBytes
-	copy(b[:], s[pos:pos+stringLenBytes])
-	if _, err := hex.Decode(rawBuf[:], b[:]); err != nil {
-		log.Printf("decode type string error: unwrap3: %v", err)
-	}
-	l = int(binary.LittleEndian.Uint16(rawBuf[:]))
-	pos += stringLenBytes
-	one = s[pos : pos+l]
-	pos += l
-	two = s[pos+stringLenBytes:] // do not care about length of last param
-
-	return b1, one, two
 }
