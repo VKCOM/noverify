@@ -1,4 +1,4 @@
-package meta
+package types
 
 import (
 	"strings"
@@ -47,7 +47,7 @@ func TestTypeEncoding(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		stringified := formatType(test.wrapped)
+		stringified := FormatType(test.wrapped)
 		if stringified != test.stringified {
 			t.Errorf("formatType %q:\nhave: %q\nwant: %q",
 				test.stringified, stringified, test.stringified)
@@ -60,7 +60,7 @@ func TestTypeEncoding(t *testing.T) {
 		}
 
 		const typeSuffix = "|zzz|zzz[]"
-		m := NewTypesMap(test.stringified + typeSuffix)
+		m := NewMap(test.stringified + typeSuffix)
 		if m.String() != test.stringified+typeSuffix {
 			t.Errorf("type map string mismatched for %q:\nhave: %q\nwant: %q",
 				test.stringified, m.String(), test.stringified+typeSuffix)
@@ -72,7 +72,7 @@ func TestTypeEncoding(t *testing.T) {
 			t.Errorf("failed to gob-encode %q: %v", test.stringified, err)
 			continue
 		}
-		decoded := NewEmptyTypesMap(m.Len())
+		decoded := NewEmptyMap(m.Len())
 		if err := decoded.GobDecode(encoded); err != nil {
 			t.Errorf("failed to gob-decode %q: %v", test.stringified, err)
 			continue
@@ -91,37 +91,6 @@ func TestTypeEncoding(t *testing.T) {
 				test.stringified,
 				len(strings.Split(test.wrapped, `|`)),
 				len(strings.Split(test.stringified, `|`)))
-		}
-	}
-}
-
-func TestConstantValueDecodeEncode(t *testing.T) {
-	testCases := []ConstValue{
-		{Type: String, Value: "world"},
-		{Type: Integer, Value: int64(5)},
-		{Type: Float, Value: 5.56},
-		{Type: String, Value: "hello"},
-		{Type: Float, Value: 124.67},
-		{Type: Integer, Value: int64(50000000)},
-	}
-
-	for _, testCase := range testCases {
-		// encode this
-		encoded, err := testCase.GobEncode()
-		if err != nil {
-			t.Errorf("unexpected error \"%s\"", err)
-		}
-
-		// decode this
-		decoded := ConstValue{}
-		err = decoded.GobDecode(encoded)
-		if err != nil {
-			t.Errorf("unexpected error \"%s\"", err)
-		}
-
-		// compare
-		if decoded.Type != testCase.Type || decoded.Value != testCase.Value {
-			t.Error("error decode, objects not equal")
 		}
 	}
 }

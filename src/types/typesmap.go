@@ -1,4 +1,4 @@
-package meta
+package types
 
 import (
 	"bytes"
@@ -9,14 +9,14 @@ import (
 
 // Preallocated and shared immutable type maps.
 var (
-	MixedType = NewTypesMap("mixed").Immutable()
-	VoidType  = NewTypesMap("void").Immutable()
-	NullType  = NewTypesMap("null").Immutable()
+	MixedType = NewMap("mixed").Immutable()
+	VoidType  = NewMap("void").Immutable()
+	NullType  = NewMap("null").Immutable()
 
-	PreciseIntType    = NewPreciseTypesMap("int").Immutable()
-	PreciseFloatType  = NewPreciseTypesMap("float").Immutable()
-	PreciseBoolType   = NewPreciseTypesMap("bool").Immutable()
-	PreciseStringType = NewPreciseTypesMap("string").Immutable()
+	PreciseIntType    = NewPreciseMap("int").Immutable()
+	PreciseFloatType  = NewPreciseMap("float").Immutable()
+	PreciseBoolType   = NewPreciseMap("bool").Immutable()
+	PreciseStringType = NewPreciseMap("string").Immutable()
 )
 
 type Type struct {
@@ -31,8 +31,8 @@ const (
 	mapPrecise
 )
 
-// TypesMap holds a set of types and can be made immutable to prevent unexpected changes.
-type TypesMap struct {
+// Map holds a set of types and can be made immutable to prevent unexpected changes.
+type Map struct {
 	flags mapFlags
 	m     map[string]struct{}
 }
@@ -47,20 +47,20 @@ type TypesMap struct {
 // Adding an imprecise type to a types map makes the entire type map imprecise.
 //
 // Important invariant: a precise map contains no lazy types.
-func (m TypesMap) IsPrecise() bool { return m.flags&mapPrecise != 0 }
+func (m Map) IsPrecise() bool { return m.flags&mapPrecise != 0 }
 
-func (m *TypesMap) MarkAsImprecise() {
+func (m *Map) MarkAsImprecise() {
 	m.flags &^= mapPrecise
 }
 
-func (m TypesMap) isImmutable() bool { return m.flags&mapImmutable != 0 }
+func (m Map) isImmutable() bool { return m.flags&mapImmutable != 0 }
 
 // IsResolved reports whether all types inside types map are resolved.
 //
 // Users should not depend on the "false" result meaning.
-// If "true" is returned, TypesMap is guaranteed to be free of lazy types.
-func (m TypesMap) IsResolved() bool {
-	// TODO: could do a `s[0] >= meta.WMax` check over map keys
+// If "true" is returned, Map is guaranteed to be free of lazy types.
+func (m Map) IsResolved() bool {
+	// TODO: could do a `s[0] >= types.WMax` check over map keys
 	// to check if it contains any lazy types.
 	// It can be safe to start with maps of size 1.
 	//
@@ -73,20 +73,32 @@ func (m TypesMap) IsResolved() bool {
 
 // Map returns a new types map with the results of calling fn for every type contained inside m.
 // The result type map is never marked as precise.
-func (m TypesMap) Map(fn func(string) string) TypesMap {
+func (m Map) Map(fn func(string) string) Map {
 	mapped := make(map[string]struct{}, len(m.m))
 	for typ := range m.m {
 		mapped[fn(typ)] = struct{}{}
 	}
-	return NewTypesMapFromMap(mapped)
+	return NewMapFromMap(mapped)
 }
 
-// NewEmptyTypesMap creates new type map that has no types in it
-func NewEmptyTypesMap(cap int) TypesMap {
-	return TypesMap{m: make(map[string]struct{}, cap)}
+// Filter returns a new types map with the types of m for which fn returns true.
+// The result type map is never marked as precise.
+func (m Map) Filter(fn func(string) bool) Map {
+	filtered := make(map[string]struct{}, len(m.m))
+	for typ := range m.m {
+		if fn(typ) {
+			filtered[typ] = struct{}{}
+		}
+	}
+	return NewMapFromMap(filtered)
 }
 
-func NewTypesMapFromTypes(types []Type) TypesMap {
+// NewEmptyMap creates new type map that has no types in it
+func NewEmptyMap(cap int) Map {
+	return Map{m: make(map[string]struct{}, cap)}
+}
+
+func NewMapFromTypes(types []Type) Map {
 	m := make(map[string]struct{}, len(types))
 	for _, typ := range types {
 		s := typ.Elem
@@ -95,11 +107,11 @@ func NewTypesMapFromTypes(types []Type) TypesMap {
 		}
 		m[s] = struct{}{}
 	}
-	return TypesMap{m: m}
+	return Map{m: m}
 }
 
-// NewTypesMap returns new TypesMap that is initialized with the provided types (separated by "|" symbol)
-func NewTypesMap(str string) TypesMap {
+// NewMap returns new Map that is initialized with the provided types (separated by "|" symbol)
+func NewMap(str string) Map {
 	m := make(map[string]struct{}, strings.Count(str, "|")+1)
 	for _, s := range strings.Split(str, "|") {
 		if IsArrayType(s) {
@@ -107,23 +119,23 @@ func NewTypesMap(str string) TypesMap {
 		}
 		m[s] = struct{}{}
 	}
-	return TypesMap{m: m}
+	return Map{m: m}
 }
 
-func NewPreciseTypesMap(str string) TypesMap {
-	m := NewTypesMap(str)
+func NewPreciseMap(str string) Map {
+	m := NewMap(str)
 	m.flags |= mapPrecise
 	return m
 }
 
-// MergeTypeMaps creates a new types map from union of specified type maps
-func MergeTypeMaps(maps ...TypesMap) TypesMap {
+// MergeMaps creates a new types map from union of specified type maps
+func MergeMaps(maps ...Map) Map {
 	totalLen := 0
 	for _, m := range maps {
 		totalLen += m.Len()
 	}
 
-	t := NewEmptyTypesMap(totalLen)
+	t := NewEmptyMap(totalLen)
 	for _, m := range maps {
 		t = t.Append(m)
 	}
@@ -131,26 +143,26 @@ func MergeTypeMaps(maps ...TypesMap) TypesMap {
 	return t
 }
 
-// NewTypesMapFromMap creates TypesMap from provided map[string]struct{}
-func NewTypesMapFromMap(m map[string]struct{}) TypesMap {
-	return TypesMap{m: m}
+// NewMapFromMap creates Map from provided map[string]struct{}
+func NewMapFromMap(m map[string]struct{}) Map {
+	return Map{m: m}
 }
 
-// Immutable returns immutable view of TypesMap
-func (m TypesMap) Immutable() TypesMap {
-	return TypesMap{
+// Immutable returns immutable view of Map
+func (m Map) Immutable() Map {
+	return Map{
 		flags: m.flags | mapImmutable,
 		m:     m.m,
 	}
 }
 
 // IsEmpty checks if map has no types at all
-func (m TypesMap) IsEmpty() bool {
+func (m Map) IsEmpty() bool {
 	return len(m.m) == 0
 }
 
 // Equals check if two typesmaps are the same
-func (m TypesMap) Equals(m2 TypesMap) bool {
+func (m Map) Equals(m2 Map) bool {
 	if len(m.m) != len(m2.m) {
 		return false
 	}
@@ -164,14 +176,14 @@ func (m TypesMap) Equals(m2 TypesMap) bool {
 }
 
 // Len returns number of different types in map
-func (m TypesMap) Len() int {
+func (m Map) Len() int {
 	return len(m.m)
 }
 
 // IsArray checks if map contains only array of any type
 //
 // Warning: use only for *lazy* types!
-func (m TypesMap) IsArray() bool {
+func (m Map) IsArray() bool {
 	if len(m.m) != 1 {
 		return false
 	}
@@ -187,7 +199,7 @@ func (m TypesMap) IsArray() bool {
 // IsArrayOf checks if map contains only array of given type
 //
 // Warning: use only for *lazy* types!
-func (m TypesMap) IsArrayOf(typ string) bool {
+func (m Map) IsArrayOf(typ string) bool {
 	if len(m.m) != 1 {
 		return false
 	}
@@ -199,7 +211,7 @@ func (m TypesMap) IsArrayOf(typ string) bool {
 // Is reports whether m contains exactly one specified type.
 //
 // Warning: typ must be a proper *lazy* or *solved* type.
-func (m TypesMap) Is(typ string) bool {
+func (m Map) Is(typ string) bool {
 	if m.Len() != 1 {
 		return false
 	}
@@ -208,7 +220,7 @@ func (m TypesMap) Is(typ string) bool {
 	return ok
 }
 
-func (m TypesMap) Clone() TypesMap {
+func (m Map) Clone() Map {
 	if m.Len() == 0 || m.isImmutable() {
 		return m
 	}
@@ -217,11 +229,11 @@ func (m TypesMap) Clone() TypesMap {
 	for typ := range m.m {
 		mm[typ] = struct{}{}
 	}
-	return TypesMap{m: mm, flags: m.flags}
+	return Map{m: mm, flags: m.flags}
 }
 
 // Append adds provided types to current map and returns new one (immutable maps are always copied)
-func (m TypesMap) Append(n TypesMap) TypesMap {
+func (m Map) Append(n Map) Map {
 	if m.Len() == 0 {
 		return n
 	}
@@ -259,11 +271,11 @@ func (m TypesMap) Append(n TypesMap) TypesMap {
 		flags |= mapPrecise
 	}
 
-	return TypesMap{m: mm, flags: flags}
+	return Map{m: mm, flags: flags}
 }
 
 // String returns string representation of a map
-func (m TypesMap) String() string {
+func (m Map) String() string {
 	if len(m.m) == 1 {
 		for k := range m.m {
 			return k
@@ -272,14 +284,14 @@ func (m TypesMap) String() string {
 
 	types := make([]string, 0, len(m.m))
 	for k := range m.m {
-		types = append(types, formatType(k))
+		types = append(types, FormatType(k))
 	}
 	sort.Strings(types)
 	return strings.Join(types, "|")
 }
 
 // GobEncode is a custom gob marshaller
-func (m TypesMap) GobEncode() ([]byte, error) {
+func (m Map) GobEncode() ([]byte, error) {
 	w := new(bytes.Buffer)
 	encoder := gob.NewEncoder(w)
 	err := encoder.Encode(m.flags)
@@ -294,7 +306,7 @@ func (m TypesMap) GobEncode() ([]byte, error) {
 }
 
 // GobDecode is custom gob unmarshaller
-func (m *TypesMap) GobDecode(buf []byte) error {
+func (m *Map) GobDecode(buf []byte) error {
 	r := bytes.NewBuffer(buf)
 	decoder := gob.NewDecoder(r)
 	err := decoder.Decode(&m.flags)
@@ -304,7 +316,7 @@ func (m *TypesMap) GobDecode(buf []byte) error {
 	return decoder.Decode(&m.m)
 }
 
-func (m TypesMap) Contains(typ string) bool {
+func (m Map) Contains(typ string) bool {
 	if m.Len() == 0 {
 		return false
 	}
@@ -319,7 +331,7 @@ func (m TypesMap) Contains(typ string) bool {
 // Find applies a predicate function to every contained type.
 // If callback returns true for any of them, this is a result of Find call.
 // False is returned if none of the contained types made pred function return true.
-func (m TypesMap) Find(pred func(typ string) bool) bool {
+func (m Map) Find(pred func(typ string) bool) bool {
 	if m.Len() == 0 {
 		return false
 	}
@@ -339,7 +351,7 @@ func (m TypesMap) Find(pred func(typ string) bool) bool {
 }
 
 // Iterate applies cb to all contained types
-func (m TypesMap) Iterate(cb func(typ string)) {
+func (m Map) Iterate(cb func(typ string)) {
 	if m.Len() == 0 {
 		return
 	}
@@ -359,7 +371,7 @@ func (m TypesMap) Iterate(cb func(typ string)) {
 
 // ArrayElemLazyType returns type of array element. T[] -> T, T[][] -> T[].
 // For *Lazy* type.
-func (m TypesMap) ArrayElemLazyType() TypesMap {
+func (m Map) ArrayElemLazyType() Map {
 	if m.Len() == 0 {
 		return MixedType
 	}
@@ -368,5 +380,5 @@ func (m TypesMap) ArrayElemLazyType() TypesMap {
 	for typ := range m.m {
 		mm[UnwrapArrayOf(typ)] = struct{}{}
 	}
-	return TypesMap{m: mm, flags: m.flags}
+	return Map{m: mm, flags: m.flags}
 }

@@ -1,4 +1,4 @@
-package meta
+package types
 
 import (
 	"encoding/binary"
@@ -281,7 +281,7 @@ func UnwrapConstant(s string) (constName string) {
 	return unwrap1(s)
 }
 
-func formatType(s string) (res string) {
+func FormatType(s string) (res string) {
 	if s == "" || s[0] >= WMax {
 		return s
 	}
@@ -294,24 +294,24 @@ func formatType(s string) (res string) {
 
 	switch s[0] {
 	case WGlobal:
-		return "global_$" + formatType(UnwrapGlobal(s))
+		return "global_$" + FormatType(UnwrapGlobal(s))
 	case WConstant:
 		return "constant(" + UnwrapConstant(s) + ")"
 	case WArrayOf:
-		return formatType(UnwrapArrayOf(s)) + "[]"
+		return FormatType(UnwrapArrayOf(s)) + "[]"
 	case WElemOf:
-		return "elem(" + formatType(UnwrapElemOf(s)) + ")"
+		return "elem(" + FormatType(UnwrapElemOf(s)) + ")"
 	case WElemOfKey:
 		typ, key := UnwrapElemOfKey(s)
-		return fmt.Sprintf("elem(%s)[%s]", formatType(typ), key)
+		return fmt.Sprintf("elem(%s)[%s]", FormatType(typ), key)
 	case WFunctionCall:
 		return UnwrapFunctionCall(s) + "()"
 	case WInstanceMethodCall:
 		expr, methodName := UnwrapInstanceMethodCall(s)
-		return "(" + formatType(expr) + ")->" + methodName + "()"
+		return "(" + FormatType(expr) + ")->" + methodName + "()"
 	case WInstancePropertyFetch:
 		expr, propertyName := UnwrapInstancePropertyFetch(s)
-		return "(" + formatType(expr) + ")->" + propertyName
+		return "(" + FormatType(expr) + ")->" + propertyName
 	case WBaseMethodParam:
 		index, className, methodName := unwrap3(s)
 		return fmt.Sprintf("param(%s)::%s[%d]", className, methodName, index)
@@ -328,3 +328,11 @@ func formatType(s string) (res string) {
 
 	return "unknown(" + s + ")"
 }
+
+func IsClassType(s string) bool {
+	return strings.HasPrefix(s, `\`) && !IsShapeType(s) && !IsArrayType(s)
+}
+
+func IsShapeType(s string) bool { return strings.HasPrefix(s, `\shape$`) }
+
+func IsArrayType(s string) bool { return strings.HasSuffix(s, `[]`) }

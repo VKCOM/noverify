@@ -8,6 +8,7 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/solver"
+	"github.com/VKCOM/noverify/src/types"
 )
 
 func BenchmarkExprType(b *testing.B) {
@@ -53,7 +54,7 @@ func BenchmarkExprType(b *testing.B) {
 	st := &meta.ClassParseState{Info: l.MetaInfo()}
 	sc := meta.NewScope()
 
-	sc.AddVarName("foo", meta.NewTypesMap(`\Foo|int|null`), "test", meta.VarAlwaysDefined)
+	sc.AddVarName("foo", types.NewMap(`\Foo|int|null`), "test", meta.VarAlwaysDefined)
 
 	b.Run("simplevar", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {

@@ -2,15 +2,19 @@ package cmd
 
 import (
 	"bytes"
+	"embed"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
-	"github.com/VKCOM/noverify/src/cmd/embeddedrules"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/rules"
 )
+
+//go:embed embeddedrules
+var embeddedRulesData embed.FS
 
 func AddEmbeddedRules(rset *rules.Set, p *rules.Parser, filter func(r rules.Rule) bool) ([]*rules.Set, error) {
 	embeddedRuleSets, err := parseEmbeddedRules(p)
@@ -72,18 +76,27 @@ func findRulesFlag() (string, bool) {
 
 func parseEmbeddedRules(p *rules.Parser) ([]*rules.Set, error) {
 	var ruleSets []*rules.Set
-	for _, filename := range embeddedrules.AssetNames() {
-		data, err := embeddedrules.Asset(filename)
+
+	entries, err := embeddedRulesData.ReadDir("embeddedrules")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		filename := filepath.ToSlash(filepath.Join("embeddedrules", entry.Name()))
+		data, err := embeddedRulesData.ReadFile(filename)
 		if err != nil {
 			return nil, err
 		}
-		rset, err := p.Parse(filename, bytes.NewReader(data))
+
+		rset, err := p.Parse(entry.Name(), bytes.NewReader(data))
 		if err != nil {
 			return nil, err
 		}
 		rset.Builtin = true
 		ruleSets = append(ruleSets, rset)
 	}
+
 	return ruleSets, nil
 }
 

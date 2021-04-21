@@ -63,9 +63,9 @@ func (g *genClone) writeCloneCase(w *bytes.Buffer, pkg *packageData, typ *typeDa
 			// Do nothing.
 		case "[]github.com/VKCOM/noverify/src/phpdoc.CommentPart":
 			// Do nothing.
-		case "string", "bool":
+		case "github.com/VKCOM/noverify/src/phpdoc.Comment":
 			// Do nothing.
-		case "ir.Doc":
+		case "string", "bool":
 			// Do nothing.
 		case "ir.Class":
 			fmt.Fprintf(w, "    clone.%[1]s = classClone(x.%[1]s)\n", field.Name())
