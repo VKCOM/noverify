@@ -27,10 +27,10 @@ MAYBE   complexity: Too big method: more than 150 lines at testdata/options-reso
                     ^^^^^^^^^
 MAYBE   typeHint: specify the type for the parameter $invalidTypes in phpdoc, 'array' type hint too generic at testdata/options-resolver/OptionsResolver.php:1123
     private function verifyTypes(string $type, $value, array &$invalidTypes, int $level = 0): bool
-                                                       ^^^^^^^^^^^^^^^^^^^^
+                     ^^^^^^^^^^^
 MAYBE   typeHint: specify the type for the parameter $values in phpdoc, 'array' type hint too generic at testdata/options-resolver/OptionsResolver.php:1259
     private function formatValues(array $values): string
-                                  ^^^^^^^^^^^^^
+                     ^^^^^^^^^^^^
 MAYBE   typeHint: specify the type for the parameter $options in phpdoc, 'array' type hint too generic at testdata/options-resolver/OptionsResolver.php:1268
     private function formatOptions(array $options): string
-                                   ^^^^^^^^^^^^^^
+                     ^^^^^^^^^^^^^

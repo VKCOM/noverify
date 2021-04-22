@@ -27,25 +27,25 @@ MAYBE   phpdoc: Missing PHPDoc for "update" public method at testdata/flysystem/
                              ^^^^^^
 MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:63
     public function write($path, $contents, array $config = [])
-                                            ^^^^^^^^^^^^^^^^^^
+                    ^^^^^
 MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:75
     public function writeStream($path, $resource, array $config = [])
-                                                  ^^^^^^^^^^^^^^^^^^
+                    ^^^^^^^^^^^
 MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:93
     public function put($path, $contents, array $config = [])
-                                          ^^^^^^^^^^^^^^^^^^
+                    ^^^
 MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:108
     public function putStream($path, $resource, array $config = [])
-                                                ^^^^^^^^^^^^^^^^^^
+                    ^^^^^^^^^
 MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:146
     public function update($path, $contents, array $config = [])
-                                             ^^^^^^^^^^^^^^^^^^
+                    ^^^^^^
 MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:159
     public function updateStream($path, $resource, array $config = [])
-                                                   ^^^^^^^^^^^^^^^^^^
+                    ^^^^^^^^^^^^
 MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:257
     public function createDir($dirname, array $config = [])
-                                        ^^^^^^^^^^^^^^^^^^
+                    ^^^^^^^^^
 WARNING unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Handler.php:129
         } catch (BadMethodCallException $e) {
                                         ^^
@@ -84,7 +84,7 @@ MAYBE   regexpSimplify: May re-write '#^[a-zA-Z]{1}:$#' as '#^[a-zA-Z]:$#' at te
                        ^^^^^^^^^^^^^^^^^^
 MAYBE   typeHint: specify the type for the parameter $entry in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Util/ContentListingFormatter.php:52
     private function addPathInfo(array $entry)
-                                 ^^^^^^^^^^^^
+                     ^^^^^^^^^^^
 WARNING unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Util/MimeType.php:208
         } catch (ErrorException $e) {
                                 ^^

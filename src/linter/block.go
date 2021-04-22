@@ -1045,8 +1045,8 @@ func (b *blockWalker) enterArrowFunction(fun *ir.ArrowFunctionExpr) bool {
 	b.r.reportPhpdocErrors(fun, doc.errs)
 	phpDocParamTypes := doc.types
 
-	params, _ := b.r.parseFuncArgs(fun.Params, phpDocParamTypes, sc, false, nil)
-	b.r.handleArrowFuncExpr(params, fun.Expr, sc, b)
+	funcParams := b.r.parseFuncParams(fun.Params, phpDocParamTypes, sc, nil)
+	b.r.handleArrowFuncExpr(funcParams.params, fun.Expr, sc, b)
 
 	return false
 }
@@ -1094,9 +1094,9 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		b.untrackVarName(v.Name)
 	}
 
-	params, _ := b.r.parseFuncArgs(fun.Params, phpDocParamTypes, sc, true, closureSolver)
+	funcParams := b.r.parseFuncParams(fun.Params, phpDocParamTypes, sc, closureSolver)
 
-	b.r.handleFuncStmts(params, closureUses, fun.Stmts, sc)
+	b.r.handleFuncStmts(funcParams.params, closureUses, fun.Stmts, sc)
 
 	return false
 }

@@ -76,13 +76,10 @@ MAYBE   callSimplify: Could simplify to "hello"[$index] at testdata/embeddedrule
 MAYBE   callSimplify: Could simplify to "hello"[2] at testdata/embeddedrules/callSimplify.php:16
     $_ = substr("hello", 2, 1);
          ^^^^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $array in phpdoc, 'array' type hint too generic at testdata/embeddedrules/callSimplify.php:22
-function some_array_push(array $array, int $val) {
-                         ^^^^^^^^^^^^
-MAYBE   callSimplify: Could simplify to $array[] = $val at testdata/embeddedrules/callSimplify.php:23
+MAYBE   callSimplify: Could simplify to $array[] = $val at testdata/embeddedrules/callSimplify.php:27
     array_push($array, $val);
     ^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   callSimplify: Could simplify to $array[] = 10 at testdata/embeddedrules/callSimplify.php:24
+MAYBE   callSimplify: Could simplify to $array[] = 10 at testdata/embeddedrules/callSimplify.php:28
     array_push($array, 10);
     ^^^^^^^^^^^^^^^^^^^^^^
 WARNING indexingSyntax: a{i} indexing is deprecated since PHP 7.4, use a[i] instead at testdata/embeddedrules/indexingSyntax.php:14

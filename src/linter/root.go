@@ -928,10 +928,6 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		sc.SetInInstanceMethod(true)
 	}
 
-	for _, param := range meth.Params {
-		d.checkFuncParam(param.(*ir.Parameter))
-	}
-
 	if meth.Doc.Raw == "" && modif.accessLevel == meta.Public {
 		// Permit having "__call" and other magic method without comments.
 		if !insideInterface && !strings.HasPrefix(nm, "_") {
@@ -940,9 +936,7 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	}
 	d.checkCommentMisspellings(meth.MethodName, meth.Doc.Raw)
 	d.checkIdentMisspellings(meth.MethodName)
-	for _, p := range meth.Params {
-		d.checkVarnameMisspellings(p, p.(*ir.Parameter).Variable.Name)
-	}
+
 	doc := d.parsePHPDoc(meth.MethodName, meth.Doc, meth.Params)
 	d.reportPhpdocErrors(meth.MethodName, doc.errs)
 	phpDocReturnType := doc.returnType
@@ -955,7 +949,9 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		d.checkFuncReturnType(meth.MethodName, meth.MethodName.Value, returnTypeHint, phpDocReturnType)
 	}
 
-	params, minParamsCnt := d.parseFuncArgs(meth.Params, phpDocParamTypes, sc, false, nil)
+	funcParams := d.parseFuncParams(meth.Params, phpDocParamTypes, sc, nil)
+
+	d.checkFuncParams(meth.MethodName, meth.Params, funcParams, phpDocParamTypes)
 
 	if len(class.Interfaces) != 0 {
 		// If we implement interfaces, methods that take a part in this
@@ -975,7 +971,7 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		// Find params without type and annotate them with special
 		// type that will force solver to walk interface types that
 		// current class implements to have a chance of finding relevant type info.
-		for i, p := range params {
+		for i, p := range funcParams.params {
 			if !p.Typ.IsEmpty() {
 				continue // Already has a type
 			}
@@ -986,8 +982,8 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 
 			res := make(map[string]struct{})
 			res[types.WrapBaseMethodParam(i, d.ctx.st.CurrentClass, nm)] = struct{}{}
-			params[i].Typ = types.NewMapFromMap(res)
-			sc.AddVarName(p.Name, params[i].Typ, "param", meta.VarAlwaysDefined)
+			funcParams.params[i].Typ = types.NewMapFromMap(res)
+			sc.AddVarName(p.Name, funcParams.params[i].Typ, "param", meta.VarAlwaysDefined)
 		}
 	}
 
@@ -995,7 +991,7 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	if stmtList, ok := meth.Stmt.(*ir.StmtList); ok {
 		stmts = stmtList.Stmts
 	}
-	funcInfo := d.handleFuncStmts(params, nil, stmts, sc)
+	funcInfo := d.handleFuncStmts(funcParams.params, nil, stmts, sc)
 	actualReturnTypes := funcInfo.returnTypes
 	exitFlags := funcInfo.prematureExitFlags
 	if nm == `__construct` {
@@ -1019,11 +1015,11 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		funcFlags |= meta.FuncPure
 	}
 	class.Methods.Set(nm, meta.FuncInfo{
-		Params:       params,
+		Params:       funcParams.params,
 		Name:         nm,
 		Pos:          d.getElementPos(meth),
 		Typ:          returnTypes.Immutable(),
-		MinParamsCnt: minParamsCnt,
+		MinParamsCnt: funcParams.minParamsCount,
 		AccessLevel:  modif.accessLevel,
 		Flags:        funcFlags,
 		ExitFlags:    exitFlags,
@@ -1366,13 +1362,13 @@ func (d *rootWalker) callbackParamByIndex(param ir.Node, argType types.Map) meta
 	return arg
 }
 
-func (d *rootWalker) parseFuncArgsForCallback(params []ir.Node, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (args []meta.FuncParam, minArgs int) {
+func (d *rootWalker) parseFuncArgsForCallback(params []ir.Node, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (res parseFuncParamsResult) {
 	countParams := len(params)
-	minArgs = countParams
+	minArgs := countParams
 	if countParams == 0 {
-		return nil, 0
+		return res
 	}
-	args = make([]meta.FuncParam, countParams)
+	args := make([]meta.FuncParam, countParams)
 
 	switch closureSolver.Name {
 	case `\usort`, `\uasort`, `\array_reduce`:
@@ -1399,15 +1395,26 @@ func (d *rootWalker) parseFuncArgsForCallback(params []ir.Node, sc *meta.Scope, 
 		sc.AddVarName(v.Name, typ, "param", meta.VarAlwaysDefined)
 	}
 
-	return args, minArgs
+	return parseFuncParamsResult{
+		params:         args,
+		minParamsCount: minArgs,
+	}
 }
 
-func (d *rootWalker) parseFuncArgs(params []ir.Node, phpDocParamsTypes phpDocParamsMap, sc *meta.Scope, isClosure bool, closureSolver *solver.ClosureCallerInfo) (args []meta.FuncParam, minArgs int) {
+type parseFuncParamsResult struct {
+	params         []meta.FuncParam
+	paramsTypeHint map[string]types.Map
+	minParamsCount int
+}
+
+func (d *rootWalker) parseFuncParams(params []ir.Node, phpDocParamsTypes phpDocParamsMap, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (res parseFuncParamsResult) {
 	if len(params) == 0 {
-		return nil, 0
+		return res
 	}
 
-	args = make([]meta.FuncParam, 0, len(params))
+	minArgs := 0
+	args := make([]meta.FuncParam, 0, len(params))
+	typeHints := make(map[string]types.Map, len(params))
 
 	if closureSolver != nil && solver.IsSupportedFunction(closureSolver.Name) {
 		return d.parseFuncArgsForCallback(params, sc, closureSolver)
@@ -1431,12 +1438,10 @@ func (d *rootWalker) parseFuncArgs(params []ir.Node, phpDocParamsTypes phpDocPar
 		if p.VariableType != nil {
 			typeHintType, ok := d.parseTypeNode(p.VariableType)
 			if ok {
-				if !isClosure && !d.typeHintHasMoreAccurateType(typeHintType, phpDocType.typ) {
-					d.Report(p, LevelNotice, "typeHint", "specify the type for the parameter $%s in phpdoc, 'array' type hint too generic", p.Variable.Name)
-				}
-
 				paramTyp = typeHintType
 			}
+
+			typeHints[v.Name] = typeHintType
 		} else if paramTyp.IsEmpty() && p.DefaultValue != nil {
 			paramTyp = solver.ExprTypeLocal(sc, d.ctx.st, p.DefaultValue)
 			// For the type resolver default value can look like a
@@ -1461,7 +1466,12 @@ func (d *rootWalker) parseFuncArgs(params []ir.Node, phpDocParamsTypes phpDocPar
 		par.Name = v.Name
 		args = append(args, par)
 	}
-	return args, minArgs
+
+	return parseFuncParamsResult{
+		params:         args,
+		paramsTypeHint: typeHints,
+		minParamsCount: minArgs,
+	}
 }
 
 func (d *rootWalker) typeHintHasMoreAccurateType(typeHintType, phpDocType types.Map) bool {
@@ -1525,9 +1535,7 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 
 	d.checkCommentMisspellings(fun.FunctionName, fun.Doc.Raw)
 	d.checkIdentMisspellings(fun.FunctionName)
-	for _, p := range fun.Params {
-		d.checkVarnameMisspellings(p, p.(*ir.Parameter).Variable.Name)
-	}
+
 	doc := d.parsePHPDoc(fun.FunctionName, fun.Doc, fun.Params)
 	d.reportPhpdocErrors(fun.FunctionName, doc.errs)
 	phpDocReturnType := doc.returnType
@@ -1544,34 +1552,54 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 		d.checkFuncReturnType(fun.FunctionName, fun.FunctionName.Value, returnTypeHint, phpDocReturnType)
 	}
 
-	params, minParamsCnt := d.parseFuncArgs(fun.Params, phpDocParamTypes, sc, false, nil)
+	funcParams := d.parseFuncParams(fun.Params, phpDocParamTypes, sc, nil)
 
-	funcInfo := d.handleFuncStmts(params, nil, fun.Stmts, sc)
+	d.checkFuncParams(fun.FunctionName, fun.Params, funcParams, phpDocParamTypes)
+
+	funcInfo := d.handleFuncStmts(funcParams.params, nil, fun.Stmts, sc)
 	actualReturnTypes := funcInfo.returnTypes
 	exitFlags := funcInfo.prematureExitFlags
 
 	returnTypes := functionReturnType(phpDocReturnType, returnTypeHint, actualReturnTypes)
-
-	for _, param := range fun.Params {
-		d.checkFuncParam(param.(*ir.Parameter))
-	}
 
 	var funcFlags meta.FuncFlags
 	if solver.SideEffectFreeFunc(d.scope(), d.ctx.st, nil, fun.Stmts) {
 		funcFlags |= meta.FuncPure
 	}
 	d.meta.Functions.Set(nm, meta.FuncInfo{
-		Params:       params,
+		Params:       funcParams.params,
 		Name:         nm,
 		Pos:          d.getElementPos(fun),
 		Typ:          returnTypes.Immutable(),
-		MinParamsCnt: minParamsCnt,
+		MinParamsCnt: funcParams.minParamsCount,
 		Flags:        funcFlags,
 		ExitFlags:    exitFlags,
 		Doc:          doc.info,
 	})
 
 	return false
+}
+
+func (d *rootWalker) checkFuncParams(funcName *ir.Identifier, params []ir.Node, funcParams parseFuncParamsResult, phpDocParamTypes phpDocParamsMap) {
+	for _, param := range params {
+		d.checkFuncParam(param.(*ir.Parameter))
+	}
+
+	d.checkParamsTypeHint(funcName, funcParams, phpDocParamTypes)
+}
+
+func (d *rootWalker) checkParamsTypeHint(funcName *ir.Identifier, funcParams parseFuncParamsResult, phpDocParamTypes phpDocParamsMap) {
+	for param, typeHintType := range funcParams.paramsTypeHint {
+		var phpDocType types.Map
+
+		if phpDocParamType, ok := phpDocParamTypes[param]; ok {
+			phpDocType = phpDocParamType.typ
+		}
+
+		if !d.typeHintHasMoreAccurateType(typeHintType, phpDocType) {
+			d.Report(funcName, LevelNotice, "typeHint", "specify the type for the parameter $%s in phpdoc, 'array' type hint too generic", param)
+		}
+	}
 }
 
 func (d *rootWalker) checkFuncReturnType(fun ir.Node, funcName string, returnTypeHint, phpDocReturnType types.Map) {
@@ -1581,6 +1609,8 @@ func (d *rootWalker) checkFuncReturnType(fun ir.Node, funcName string, returnTyp
 }
 
 func (d *rootWalker) checkFuncParam(p *ir.Parameter) {
+	d.checkVarnameMisspellings(p, p.Variable.Name)
+
 	// TODO(quasilyte): DefaultValue can only contain constant expressions.
 	// Could run special check over them to detect the potential fatal errors.
 	walkNode(p.DefaultValue, func(w ir.Node) bool {
