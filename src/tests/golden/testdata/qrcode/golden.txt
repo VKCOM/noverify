@@ -13,6 +13,9 @@ MAYBE   ternarySimplify: could rewrite as `$this->options['fc'] ?? '000000'` at 
 WARNING deadCode: Unreachable code at testdata/qrcode/qrcode.php:155
     return null;
            ^^^^
+MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/qrcode/qrcode.php:185
+      'b' => $mtx
+      ^^^^^^^^^^^
 WARNING unused: Variable mode is unused (use $_ to ignore this inspection) at testdata/qrcode/qrcode.php:177
     list($mode, $vers, $ec, $data) = $this->qr_encode_data($data, $ecl);
          ^^^^^
@@ -37,12 +40,27 @@ WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testd
 WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:344
       case 1:  /* 10 - 26 */
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   callSimplify: Could simplify to $group[0] at testdata/qrcode/qrcode.php:361
+        $c1     = strpos($alphabet, substr($group, 0, 1));
+                                    ^^^^^^^^^^^^^^^^^^^^
+MAYBE   callSimplify: Could simplify to $group[1] at testdata/qrcode/qrcode.php:362
+        $c2     = strpos($alphabet, substr($group, 1, 1));
+                                    ^^^^^^^^^^^^^^^^^^^^
 WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:393
       case 1:  /* 10 - 26 */
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   callSimplify: Could simplify to $data[$i] at testdata/qrcode/qrcode.php:413
+      $ch     = ord(substr($data, $i, 1));
+                    ^^^^^^^^^^^^^^^^^^^^
 WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:430
       case 2:  /* 27 - 40 */
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:433
       case 1:  /* 10 - 26 */
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   callSimplify: Could simplify to $group[0] at testdata/qrcode/qrcode.php:448
+      $c1    = ord(substr($group, 0, 1));
+                   ^^^^^^^^^^^^^^^^^^^^
+MAYBE   callSimplify: Could simplify to $group[1] at testdata/qrcode/qrcode.php:449
+      $c2    = ord(substr($group, 1, 1));
+                   ^^^^^^^^^^^^^^^^^^^^

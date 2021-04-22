@@ -229,6 +229,7 @@ Function related attributes:
 | `@comment text...` | Rule documentation text, usually a short one sentence summary. |
 | `@before text...` | Non-compliant code example, "before the fix". |
 | `@after text...` | Compliant code example, "after the fix". |
+| `@extends` | Specifies that this rule extends internal linter check. Note: when used, there is no need to set `@comment`, `@before`, `@after`. |
 
 ### Creating a new rule + debugging it
 

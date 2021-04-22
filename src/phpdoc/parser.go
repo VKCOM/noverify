@@ -1,8 +1,17 @@
 package phpdoc
 
 import (
+	"bytes"
+	"regexp"
 	"strings"
+
+	"github.com/z7zmey/php-parser/pkg/token"
 )
+
+type Comment struct {
+	Raw    string
+	Parsed []CommentPart
+}
 
 type CommentPart interface {
 	Line() int
@@ -44,18 +53,53 @@ func (c *TypeVarCommentPart) Name() string { return c.name }
 // IsPHPDoc checks if the string is a doc comment
 func IsPHPDoc(doc string) bool {
 	// See #289.
-	return strings.HasPrefix(doc, "/* @var ") ||
-		strings.HasPrefix(doc, "/**")
+	return strings.HasPrefix(doc, "/**") ||
+		(strings.HasPrefix(doc, "/*") && ContainsTag([]byte(doc)))
+}
+
+// IsPHPDocToken checks if the token is a doc comment
+func IsPHPDocToken(t *token.Token) bool {
+	if t.ID != token.T_DOC_COMMENT && t.ID != token.T_COMMENT {
+		return false
+	}
+
+	if t.ID == token.T_COMMENT {
+		return ContainsTag(t.Value)
+	}
+
+	return true
+}
+
+// IsSuspicious checks that phpdoc starts with /* but has tags inside it.
+func IsSuspicious(value []byte) bool {
+	if bytes.HasPrefix(value, []byte("/**")) || bytes.Count(value, []byte("\n")) == 0 {
+		return false
+	}
+
+	return ContainsTag(value)
+}
+
+var tagRegexp = regexp.MustCompile(`\* +@\w+`)
+
+// ContainsTag checks if /* */ comments contain annotations, which may mean that
+// it is phpdoc, but there is a mistake when there is one asterisk instead of two at
+// the beginning of a comment.
+func ContainsTag(value []byte) bool {
+	return tagRegexp.Match(value)
 }
 
 // Parse returns parsed doc comment with interesting parts (ones that start "* @")
-func Parse(parser *TypeParser, doc string) (res []CommentPart) {
+func Parse(parser *TypeParser, doc string) Comment {
 	if !IsPHPDoc(doc) {
-		return nil
+		return Comment{}
 	}
 
+	var parts []CommentPart
 	var lines []string
-	if strings.HasPrefix(doc, "/* @var ") && strings.Count(doc, "\n") == 0 {
+
+	var countLines = strings.Count(doc, "\n") + 1
+
+	if countLines == 1 {
 		lines = []string{doc}
 	} else {
 		lines = strings.Split(doc, "\n")
@@ -99,10 +143,13 @@ func Parse(parser *TypeParser, doc string) (res []CommentPart) {
 			part = parseRawComment(line, name, text)
 		}
 
-		res = append(res, part)
+		parts = append(parts, part)
 	}
 
-	return res
+	return Comment{
+		Raw:    doc,
+		Parsed: parts,
+	}
 }
 
 func parseRawComment(line int, name, text string) *RawCommentPart {

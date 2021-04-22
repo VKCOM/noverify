@@ -9,7 +9,7 @@ import (
 	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
-	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/types"
 )
 
 func TestBadString(t *testing.T) {
@@ -273,6 +273,7 @@ $_ = array(1);
 		`You are not allowed to disable linter`,
 		`Use of old array syntax (use short form instead)`,
 		`Duplicate array key 1`,
+		`last element in a multi-line array must have a trailing comma`,
 		`Use of old array syntax (use short form instead)`,
 	}
 	test.RunAndMatch()
@@ -353,7 +354,7 @@ FUNCTION f() {
   Goto label;
   label:
   YIELD 'yelling!';
-  yielD FROM 'blah!';
+  yielD  FROM 'blah!';
   FOR (;;) {}
   for (;;):
   EndFor;
@@ -438,6 +439,7 @@ function good() {
 		`Use while instead of whilE`,
 		`Use yield instead of YIELD`,
 		`Use yield instead of yielD`,
+		`Use from instead of FROM`,
 		`Use public instead of PubliC`,
 	}
 
@@ -795,7 +797,7 @@ func TestCustomUnusedVarRegex(t *testing.T) {
 	config.IsDiscardVar = isDiscardVar
 
 	test := linttest.NewSuite(t)
-	test.Linter = linter.NewLinter(config)
+	test.UseConfig(config)
 	test.AddFile(`<?php
 class Foo {
   public $_;
@@ -811,7 +813,7 @@ $_ = __FILE__;
 	test.RunAndMatch()
 
 	test = linttest.NewSuite(t)
-	test.Linter = linter.NewLinter(config)
+	test.UseConfig(config)
 	test.AddFile(`<?php
 $_unused = 10;
 
@@ -827,7 +829,7 @@ function f() {
 `)
 
 	test = linttest.NewSuite(t)
-	test.Linter = linter.NewLinter(config)
+	test.UseConfig(config)
 	test.AddFile(`<?php
 function var_dump($v) {}
 $_global = 120;
@@ -1843,7 +1845,85 @@ func_A();
 		`Method_a should be spelled method_a`,
 		`\func_A should be spelled \func_a`,
 	}
-	linttest.RunFilterMatch(test, `nameCase`)
+	linttest.RunFilterMatch(test, `nameMismatch`)
+}
+
+func TestClassSpecialNameCase(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class B {
+    const B = 100;
+
+    public static $name = "";
+
+    public static function g() {}
+}
+
+class A extends B {
+    const B = 100;
+
+    public static $id = 0;
+
+    function f() {
+        echo SELF::B;
+        echo seLf::B;
+        echo self::B;
+
+        echo STATIC::B;
+        echo stAtic::B;
+        echo static::B;
+
+        echo PARENT::B;
+        echo parEnt::B;
+        echo parent::B;
+
+        SELF::f();
+        sElf::f();
+        self::f();
+
+        STATIC::f();
+        stAtic::f();
+        static::f();
+
+        PARENT::g();
+        paREnt::g();
+        parent::g();
+
+        PARENT::$name;
+        paREnt::$name;
+        parent::$name;
+
+        SELF::$id;
+        sElf::$id;
+        self::$id;
+
+        STATIC::$id;
+        stAtic::$id;
+        static::$id;
+    }
+}
+`)
+	test.Expect = []string{
+		`SELF should be spelled as self`,
+		`seLf should be spelled as self`,
+		`STATIC should be spelled as static`,
+		`stAtic should be spelled as static`,
+		`PARENT should be spelled as parent`,
+		`parEnt should be spelled as parent`,
+		`SELF should be spelled as self`,
+		`sElf should be spelled as self`,
+		`STATIC should be spelled as static`,
+		`stAtic should be spelled as static`,
+		`PARENT should be spelled as parent`,
+		`paREnt should be spelled as parent`,
+		`PARENT should be spelled as parent`,
+		`paREnt should be spelled as parent`,
+		`SELF should be spelled as self`,
+		`sElf should be spelled as self`,
+		`STATIC should be spelled as static`,
+		`stAtic should be spelled as static`,
+	}
+	linttest.RunFilterMatch(test, `nameMismatch`)
 }
 
 func TestClassNotFound(t *testing.T) {
@@ -1940,7 +2020,7 @@ func TestArrayUnion(t *testing.T) {
 		t.Errorf("Unexpected number of types: %d, excepted 2", l)
 	}
 
-	if !fnMixedArr.Typ.Equals(meta.NewTypesMap("int[]|string[]")) {
+	if !fnMixedArr.Typ.Equals(types.NewMap("int[]|string[]")) {
 		// NOTE: this is how code works right now. It currently treat a[]|b[] as (a|b)[]
 		t.Errorf("Wrong type: %s, expected int[]|string[]", fnMixedArr.Typ)
 	}
@@ -2001,5 +2081,166 @@ func TestUndefinedConst(t *testing.T) {
 echo UNDEFINED_CONST;
 `)
 	test.Expect = []string{`Undefined constant UNDEFINED_CONST`}
+	test.RunAndMatch()
+}
+
+func TestTrailingCommaForArray(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f() {
+    $_ = [10, 20, 30]; // ok
+
+    $_ = [10, 20,
+    30]; // ok
+
+	$_ = [10,
+		20,
+		30 // need comma
+	];
+
+	$_ = [10,
+		20,
+		30]; // ok
+
+	$_ = [
+		10,
+		20,
+		30]; // ok
+	
+	$_ = [
+        10,
+        20,
+        30,  // ok
+    ];
+
+    $_ = [
+        10,
+        20,
+        30  // need comma
+    ];
+}
+`)
+	test.Expect = []string{
+		`last element in a multi-line array must have a trailing comma`,
+		`last element in a multi-line array must have a trailing comma`,
+	}
+	test.RunAndMatch()
+}
+
+func TestNestedTernary(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f() {
+    $_ = 1 ? 2 : 3 ? 4 : 5; // error
+	//   |_______|
+
+    $_ = 1 ? 2 : 3 ? 4 : 1 ? 2 : 3; // error
+	//   |_______|       |
+	//   |_______________|
+
+	$_ = (1 ? 2 : 3) ? 4 : 5; // ok
+	//   |_________|
+
+	$_ = 1 ? 2 : (3 ? 4 : 5); // ok
+	//           |_________|
+
+	$_ = 1 ? 2 ? 3 : 4 : 5; // ok, ternary in middle
+	//       |_______|
+}
+`)
+	test.Expect = []string{
+		`in ternary operators, you must explicitly use parentheses to specify the order of operations`,
+		`in ternary operators, you must explicitly use parentheses to specify the order of operations`,
+		`in ternary operators, you must explicitly use parentheses to specify the order of operations`,
+	}
+	test.RunAndMatch()
+}
+
+func TestRealCastingAndIsRealCall(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function is_real($a): bool { return true; }
+
+function f() {
+    $a = (real)100;
+    if (is_real($a)) {
+        echo 1;
+    }
+}
+`)
+	test.Expect = []string{
+		`use float cast instead of real`,
+		`use is_float function instead of is_real`,
+	}
+	test.RunAndMatch()
+}
+
+func TestArrayKeyExistCallWithObject(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function array_key_exists($a, $b): bool { return true; }
+
+class Foo {}
+
+function returnObject(): Foo {
+	return new Foo;
+}
+
+function returnObjectAndNull(): ?Foo {
+	if (1) {
+		return null;
+	}
+	return new Foo;
+}
+
+function f() {
+	$foo = new Foo;
+	$arr = ["a" => 100];
+
+    echo array_key_exists("param", $foo); // error
+    echo array_key_exists("param", returnObject()); // error
+    echo array_key_exists("param", returnObjectAndNull()); // ok
+
+    echo array_key_exists("a", $arr); // ok
+}
+
+`)
+	test.Expect = []string{
+		`since PHP 7.4, using array_key_exists() with an object has been deprecated, use isset() or property_exists() instead`,
+		`since PHP 7.4, using array_key_exists() with an object has been deprecated, use isset() or property_exists() instead`,
+	}
+	test.RunAndMatch()
+}
+
+func TestRandomIntWrongArgsOrder(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function random_int($min, $max) { return 0; }
+
+const AA = 99;
+
+function f() {
+    $_ = random_int(PHP_INT_MAX, PHP_INT_MIN);
+    $_ = random_int(100, 10);
+    $_ = random_int(100, 10 + 5);
+    $_ = random_int(100, AA);
+    $_ = random_int(true, false);
+    $_ = random_int(156.46, 119.45);
+
+    $_ = random_int(100 - AA, 10); // ok, min = 1, max = 10
+    $_ = random_int(100, AA + 5); // ok, min = 100, max = 104
+	$a = 10;
+    $_ = random_int(100, 10 + $a); // skipped, not constant
+    $_ = random_int("100", "10"); // skipped, string args
+}
+`)
+	test.Expect = []string{
+		`possibly wrong order of arguments, min = 9223372036854775807, max = -9223372036854775808`,
+		`possibly wrong order of arguments, min = 100, max = 10`,
+		`possibly wrong order of arguments, min = 100, max = 15`,
+		`possibly wrong order of arguments, min = 100, max = 99`,
+		`possibly wrong order of arguments, min = 1, max = 0`,
+		`possibly wrong order of arguments, min = 156, max = 119`,
+	}
 	test.RunAndMatch()
 }

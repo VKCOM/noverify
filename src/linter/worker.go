@@ -15,14 +15,18 @@ import (
 	"time"
 
 	"github.com/quasilyte/regex/syntax"
+	"github.com/z7zmey/php-parser/pkg/ast"
+	"github.com/z7zmey/php-parser/pkg/conf"
+	phperrors "github.com/z7zmey/php-parser/pkg/errors"
+	"github.com/z7zmey/php-parser/pkg/parser"
 
 	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/php7"
 	"github.com/VKCOM/noverify/src/quickfix"
+	"github.com/VKCOM/noverify/src/types"
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
@@ -112,21 +116,43 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult,
 	waiter := beforeParse(len(contents), fileInfo.Name)
 	defer waiter.Finish()
 
-	parser := php7.NewParser(contents)
-	parser.WithFreeFloating()
-	parser.Parse()
+	var parserErrors []*phperrors.Error
+	rootNode, err := parser.Parse(contents, conf.Config{
+		Version: w.config.PhpVersion,
+		ErrorHandlerFunc: func(e *phperrors.Error) {
+			parserErrors = append(parserErrors, e)
+		},
+	})
+	if err != nil {
+		return ParseResult{}, fmt.Errorf("parse error: %v", err.Error())
+	}
+
+	rootIR := w.irconv.ConvertRoot(rootNode.(*ast.Root))
 
 	file := workspace.NewFile(fileInfo.Name, contents)
-	rootNode, walker, err := w.analyzeFile(file, parser)
+	walker, err := w.analyzeFile(file, rootIR)
 	if err != nil {
 		return result, err
 	}
+
+	for _, e := range parserErrors {
+		walker.Report(nil, LevelError, "syntax", "Syntax error: "+e.String())
+	}
+
 	result = ParseResult{
-		RootNode: rootNode,
+		RootNode: rootIR,
 		Reports:  walker.reports,
 		walker:   walker,
 	}
 	return result, nil
+}
+
+func (w *Worker) parseWithCache(cacheFilename string, file workspace.FileInfo) error {
+	result, err := w.ParseContents(file)
+	if err != nil {
+		return err
+	}
+	return createMetaCacheFile(file.Name, cacheFilename, result.walker)
 }
 
 // IndexFile parses the file and fills in the meta info. Can use cache.
@@ -139,7 +165,6 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 		return err
 	}
 
-	var contents []byte
 	h := md5.New()
 
 	if file.Contents == nil {
@@ -153,7 +178,7 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 			return err
 		}
 		atomic.AddInt64(&initFileReadTime, int64(time.Since(start)))
-	} else if _, err := h.Write(contents); err != nil {
+	} else if _, err := h.Write(file.Contents); err != nil {
 		return err
 	}
 
@@ -172,27 +197,17 @@ func (w *Worker) IndexFile(file workspace.FileInfo) error {
 	cacheFile := filepath.Join(w.config.CacheDir, cacheFilenamePart+"."+contentsHash)
 
 	start := time.Now()
+
 	fp, err := os.Open(cacheFile)
 	if err != nil {
-		result, err := w.ParseContents(file)
-		if err != nil {
-			return err
-		}
-
-		return createMetaCacheFile(file.Name, cacheFile, result.walker)
+		return w.parseWithCache(cacheFile, file)
 	}
 	defer fp.Close()
 
 	if err := restoreMetaFromCache(w.info, w.config.Checkers.cachers, file.Name, fp); err != nil {
 		// do not really care about why exactly reading from cache failed
 		os.Remove(cacheFile)
-
-		result, err := w.ParseContents(file)
-		if err != nil {
-			return err
-		}
-
-		return createMetaCacheFile(file.Name, cacheFile, result.walker)
+		return w.parseWithCache(cacheFile, file)
 	}
 
 	atomic.AddInt64(&initCacheReadTime, int64(time.Since(start)))
@@ -231,15 +246,11 @@ func (w *Worker) doParseFile(f workspace.FileInfo) []*Report {
 	return reports
 }
 
-func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Root, *rootWalker, error) {
-	rootNode := parser.GetRootNode()
-
+func (w *Worker) analyzeFile(file *workspace.File, rootNode *ir.Root) (*rootWalker, error) {
 	if rootNode == nil {
 		lintdebug.Send("Could not parse %s at all due to errors", file.Name())
-		return nil, nil, errors.New("empty root node")
+		return nil, errors.New("empty root node")
 	}
-
-	rootIR := w.irconv.ConvertRoot(rootNode)
 
 	st := &meta.ClassParseState{Info: w.info, CurrentFile: file.Name()}
 	walker := &rootWalker{
@@ -267,9 +278,9 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 	walker.InitCustom()
 
 	walker.beforeEnterFile()
-	rootIR.Walk(walker)
+	rootNode.Walk(walker)
 	if w.info.IsIndexingComplete() {
-		analyzeFileRootLevel(rootIR, walker)
+		analyzeFileRootLevel(rootNode, walker)
 	}
 	walker.afterLeaveFile()
 
@@ -279,11 +290,7 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 		}
 	}
 
-	for _, e := range parser.GetErrors() {
-		walker.Report(nil, LevelError, "syntax", "Syntax error: "+e.String())
-	}
-
-	return rootIR, walker, nil
+	return walker, nil
 }
 
 // analyzeFileRootLevel does analyze file top-level code.
@@ -291,8 +298,8 @@ func (w *Worker) analyzeFile(file *workspace.File, parser *php7.Parser) (*ir.Roo
 // do not need to call it yourself.
 func analyzeFileRootLevel(rootNode ir.Node, d *rootWalker) {
 	sc := meta.NewScope()
-	sc.AddVarName("argv", meta.NewTypesMap("string[]"), "predefined", meta.VarAlwaysDefined)
-	sc.AddVarName("argc", meta.NewTypesMap("int"), "predefined", meta.VarAlwaysDefined)
+	sc.AddVarName("argv", types.NewMap("string[]"), "predefined", meta.VarAlwaysDefined)
+	sc.AddVarName("argc", types.NewMap("int"), "predefined", meta.VarAlwaysDefined)
 
 	b := newBlockWalker(d, sc)
 	b.ignoreFunctionBodies = true

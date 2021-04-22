@@ -3,7 +3,7 @@ package ir
 
 import (
 	"fmt"
-	"github.com/VKCOM/noverify/src/php/parser/position"
+	"github.com/z7zmey/php-parser/pkg/position"
 )
 
 func GetPosition(n Node) *position.Position {
@@ -68,8 +68,6 @@ func GetPosition(n Node) *position.Position {
 		return n.Position
 	case *BreakStmt:
 		return n.Position
-	case *CaseListStmt:
-		return n.Position
 	case *CaseStmt:
 		return n.Position
 	case *CatchStmt:
@@ -88,9 +86,11 @@ func GetPosition(n Node) *position.Position {
 		return n.Position
 	case *CloneExpr:
 		return n.Position
+	case *CloseTagStmt:
+		return n.Position
 	case *ClosureExpr:
 		return n.Position
-	case *ClosureUseExpr:
+	case *ClosureUsesExpr:
 		return n.Position
 	case *CoalesceExpr:
 		return n.Position

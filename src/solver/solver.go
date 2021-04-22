@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/types"
 )
 
 var sharedMixedType = map[string]struct{}{"mixed": {}}
@@ -27,7 +28,7 @@ func resolveType(info *meta.Info, curStaticClass, typ string, visitedMap Resolve
 
 // ResolveTypes resolves function calls, method calls and global variables.
 //   curStaticClass is current class name (if inside the class, otherwise "")
-func ResolveTypes(info *meta.Info, curStaticClass string, m meta.TypesMap, visitedMap ResolverMap) map[string]struct{} {
+func ResolveTypes(info *meta.Info, curStaticClass string, m types.Map, visitedMap ResolverMap) map[string]struct{} {
 	r := resolver{info: info, visited: visitedMap}
 	return r.resolveTypes(curStaticClass, m)
 }
@@ -75,7 +76,7 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 		return result
 	}
 
-	if typ == "" || typ[0] >= meta.WMax {
+	if typ == "" || typ[0] >= types.WMax {
 		return identityType(typ)
 	}
 
@@ -83,39 +84,39 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 	visitedMap[typ] = nil // Nil guards against unbound recursion
 
 	switch typ[0] {
-	case meta.WGlobal:
-		varTyp, ok := r.info.GetVarNameType(meta.UnwrapGlobal(typ))
+	case types.WGlobal:
+		varTyp, ok := r.info.GetVarNameType(types.UnwrapGlobal(typ))
 		if ok {
 			for tt := range r.resolveTypes(class, varTyp) {
 				res[tt] = struct{}{}
 			}
 		}
-	case meta.WConstant:
-		ci, ok := r.info.GetConstant(meta.UnwrapConstant(typ))
+	case types.WConstant:
+		ci, ok := r.info.GetConstant(types.UnwrapConstant(typ))
 		if ok {
 			for tt := range r.resolveTypes(class, ci.Typ) {
 				res[tt] = struct{}{}
 			}
 		}
-	case meta.WArrayOf:
-		for tt := range r.resolveType(class, meta.UnwrapArrayOf(typ)) {
+	case types.WArrayOf:
+		for tt := range r.resolveType(class, types.UnwrapArrayOf(typ)) {
 			res[tt+"[]"] = struct{}{}
 		}
-	case meta.WElemOfKey:
-		arrayType, key := meta.UnwrapElemOfKey(typ)
+	case types.WElemOfKey:
+		arrayType, key := types.UnwrapElemOfKey(typ)
 		for tt := range r.resolveType(class, arrayType) {
-			if meta.IsShapeType(tt) {
+			if types.IsShapeType(tt) {
 				res = r.solveElemOfShape(class, tt, key, res)
 			} else {
 				res = r.solveElemOf(tt, res)
 			}
 		}
-	case meta.WElemOf:
-		for tt := range r.resolveType(class, meta.UnwrapElemOf(typ)) {
+	case types.WElemOf:
+		for tt := range r.resolveType(class, types.UnwrapElemOf(typ)) {
 			res = r.solveElemOf(tt, res)
 		}
-	case meta.WFunctionCall:
-		nm := meta.UnwrapFunctionCall(typ)
+	case types.WFunctionCall:
+		nm := types.UnwrapFunctionCall(typ)
 		fn, ok := r.info.GetFunction(nm)
 		// functions can fall back to root namespace
 		if !ok && strings.Count(nm, `\`) > 1 {
@@ -125,8 +126,8 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 		if ok {
 			return r.resolveTypes(class, fn.Typ)
 		}
-	case meta.WInstanceMethodCall:
-		expr, methodName := meta.UnwrapInstanceMethodCall(typ)
+	case types.WInstanceMethodCall:
+		expr, methodName := types.UnwrapInstanceMethodCall(typ)
 
 		instanceTypes := r.resolveType(class, expr)
 		res = r.collectMethodCallTypes(res, instanceTypes, methodName)
@@ -134,8 +135,8 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 			res = r.collectMethodCallTypes(res, instanceTypes, "__call")
 		}
 
-	case meta.WInstancePropertyFetch:
-		expr, propertyName := meta.UnwrapInstancePropertyFetch(typ)
+	case types.WInstancePropertyFetch:
+		expr, propertyName := types.UnwrapInstancePropertyFetch(typ)
 
 		for className := range r.resolveType(class, expr) {
 			p, ok := FindProperty(r.info, className, propertyName)
@@ -153,10 +154,10 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 				}
 			}
 		}
-	case meta.WBaseMethodParam:
+	case types.WBaseMethodParam:
 		return r.solveBaseMethodParam(class, typ, visitedMap, res)
-	case meta.WStaticMethodCall:
-		className, methodName := meta.UnwrapStaticMethodCall(typ)
+	case types.WStaticMethodCall:
+		className, methodName := types.UnwrapStaticMethodCall(typ)
 		m, ok := FindMethod(r.info, className, methodName)
 		if ok {
 			res = r.resolveTypes(className, m.Info.Typ)
@@ -173,8 +174,8 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 			return r.resolveTypes(className, m.Info.Typ)
 		}
 
-	case meta.WStaticPropertyFetch:
-		className, propertyName := meta.UnwrapStaticPropertyFetch(typ)
+	case types.WStaticPropertyFetch:
+		className, propertyName := types.UnwrapStaticPropertyFetch(typ)
 		p, ok := FindProperty(r.info, className, propertyName)
 		if ok {
 			res = r.resolveTypes(className, p.Info.Typ)
@@ -183,8 +184,8 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 			}
 			return res
 		}
-	case meta.WClassConstFetch:
-		className, constName := meta.UnwrapClassConstFetch(typ)
+	case types.WClassConstFetch:
+		className, constName := types.UnwrapClassConstFetch(typ)
 		info, _, ok := FindConstant(r.info, className, constName)
 		if ok {
 			return r.resolveTypes(class, info.Typ)
@@ -197,7 +198,7 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 }
 
 func (r *resolver) solveBaseMethodParam(curStaticClass, typ string, visitedMap ResolverMap, res map[string]struct{}) map[string]struct{} {
-	index, className, methodName := meta.UnwrapBaseMethodParam(typ)
+	index, className, methodName := types.UnwrapBaseMethodParam(typ)
 	class, ok := r.info.GetClass(className)
 	if ok {
 		// TODO(quasilyte): walk parent interfaces as well?
@@ -234,7 +235,7 @@ func (r *resolver) solveElemOfShape(class, shapeName, key string, res map[string
 
 func (r *resolver) solveElemOf(tt string, res map[string]struct{}) map[string]struct{} {
 	switch {
-	case meta.IsArrayType(tt):
+	case types.IsArrayType(tt):
 		res[strings.TrimSuffix(tt, "[]")] = struct{}{}
 	case tt == "mixed":
 		res["mixed"] = struct{}{}
@@ -256,13 +257,13 @@ func (r *resolver) solveElemOf(tt string, res map[string]struct{}) map[string]st
 	return res
 }
 
-func (r *resolver) resolveTypes(class string, m meta.TypesMap) map[string]struct{} {
+func (r *resolver) resolveTypes(class string, m types.Map) map[string]struct{} {
 	res := make(map[string]struct{}, m.Len())
 
 	m.Iterate(func(t string) {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Printf("Panic during parsing '%s'", meta.NewTypesMap(t))
+				log.Printf("Panic during parsing '%s'", types.NewMap(t))
 				panic(r)
 			}
 		}()
@@ -280,7 +281,7 @@ func (r *resolver) resolveTypes(class string, m meta.TypesMap) map[string]struct
 		delete(res, "empty_array")
 		specialized := false
 		for tt := range res {
-			if meta.IsArrayType(tt) {
+			if types.IsArrayType(tt) {
 				specialized = true
 				break
 			}

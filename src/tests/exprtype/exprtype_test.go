@@ -12,6 +12,7 @@ import (
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/types"
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
@@ -37,7 +38,7 @@ import (
 
 var (
 	exprTypeResultMu sync.Mutex
-	exprTypeResult   map[ir.Node]meta.TypesMap
+	exprTypeResult   map[ir.Node]types.Map
 )
 
 func TestExprTypeListOverArray(t *testing.T) {
@@ -683,9 +684,9 @@ function assign_ref_dim_fetch3() {
 }
 
 exprtype($v =& $ints[0], 'mixed');
-exprtype(assign_ref_dim_fetch1(), 'mixed[]');
-exprtype(assign_ref_dim_fetch2(), 'mixed[]');
-exprtype(assign_ref_dim_fetch3(), 'mixed[]');
+exprtype(assign_ref_dim_fetch1(), 'int[][]');
+exprtype(assign_ref_dim_fetch2(), 'int[]');
+exprtype(assign_ref_dim_fetch3(), 'int[][]');
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
@@ -2866,6 +2867,56 @@ namespace Foo {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestTupleWithArray(t *testing.T) {
+	code := `<?php
+/**
+ * @return tuple(array, array)
+ */
+function f() {
+    return [[],[]];
+}
+
+exprtype(f()[0], "mixed[]");
+exprtype(f()[1], "mixed[]");
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestMultiDimensionalArray(t *testing.T) {
+	code := `<?php
+class Foo {
+	public function f(): self {}
+}
+
+function f() {
+	$a = [];    
+	
+	$a[] = [1,2,3];
+	$a[] = ["1","2","3"];
+	exprtype($a, "int[][]|string[][]");
+
+	foreach ($a as $val) {
+		exprtype($val, "int[]|string[]");
+		foreach ($val as $val2) {
+			exprtype($val2, "int|string");
+		}
+	}
+
+	$a[1][2] = new Foo;
+
+	foreach ($a as $val) {
+		exprtype($val, "\Foo[]|int[]|string[]");
+		foreach ($val as $val2) {
+			exprtype($val2, "\Foo|int|string");
+			$a = $val2->f();
+			exprtype($a, "\Foo");
+		}
+	}
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	exprTypeTestImpl(t, params, false)
 }
@@ -2890,7 +2941,7 @@ func exprTypeTestImpl(t *testing.T, params *exprTypeTestParams, kphp bool) {
 	l.MetaInfo().SetIndexingComplete(true)
 
 	// Reset results map and run expr type collector.
-	exprTypeResult = map[ir.Node]meta.TypesMap{}
+	exprTypeResult = map[ir.Node]types.Map{}
 	result := linttest.ParseTestFile(t, l, "exprtype.php", params.code)
 
 	// Check that collected types are identical to the expected types.

@@ -15,8 +15,8 @@ func runPathTest(t *testing.T, suite *linttest.Suite) {
 	config.Checkers.AddBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker {
 		return &pathTester{ctx: ctx}
 	})
-	suite.IgnoreUndeclaredChecks = true
-	suite.Linter = linter.NewLinter(config)
+	suite.IgnoreUndeclaredChecks()
+	suite.UseConfig(config)
 	linttest.RunFilterMatch(suite, "pathTest")
 }
 

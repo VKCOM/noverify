@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
-	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/types"
 )
 
 var supportedFunctions = map[string]struct{}{
@@ -24,8 +24,8 @@ func IsSupportedFunction(name string) bool {
 
 // ClosureCallerInfo containing information about the function that called the closure.
 type ClosureCallerInfo struct {
-	Name     string          // caller function name
-	ArgTypes []meta.TypesMap // types for each arg for call caller function
+	Name     string      // caller function name
+	ArgTypes []types.Map // types for each arg for call caller function
 }
 
 func GetClosure(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState) (meta.FuncInfo, bool) {

@@ -141,8 +141,48 @@ class t3 {
   /** inverse of the T2 test case */
   public function T3() {}
 }
+
+trait TraitWithNameMatchingMethod {
+  /** ok */
+  public function TraitWithNameMatchingMethod() {}
+}
+
+interface InterfaceWithNameMatchingMethod {
+  /** ok */
+  public function InterfaceWithNameMatchingMethod();
+}
+
+namespace SameWithNamespace {
+  class T1 {
+    /** simple constructor */
+    public function T1() {}
+  }
+  
+  class T2 {
+    /** constructor name is in lower case */
+    public function t2() {}
+  }
+  
+  class t3 {
+    /** inverse of the T2 test case */
+    public function T3() {}
+  }
+
+  trait TraitWithNameMatchingMethod {
+    /** ok */
+    public function TraitWithNameMatchingMethod() {}
+  }
+  
+  interface InterfaceWithNameMatchingMethod {
+    /** ok */
+    public function InterfaceWithNameMatchingMethod();
+  }
+}
 `)
 	test.Expect = []string{
+		`Old-style constructor usage, use __construct instead`,
+		`Old-style constructor usage, use __construct instead`,
+		`Old-style constructor usage, use __construct instead`,
 		`Old-style constructor usage, use __construct instead`,
 		`Old-style constructor usage, use __construct instead`,
 		`Old-style constructor usage, use __construct instead`,
@@ -1260,7 +1300,7 @@ trait AbstractTraitAB {
 
 		`Class \T6\Bad must implement \T6\TraitAbstractA::a method`,
 	}
-	linttest.RunFilterMatch(test, `unimplemented`, `nameCase`, `undefined`)
+	linttest.RunFilterMatch(test, `unimplemented`, `nameMismatch`, `undefined`)
 }
 
 func TestInterfaceRules(t *testing.T) {
@@ -1417,8 +1457,8 @@ func TestGroupUse(t *testing.T) {
 	test.AddFile(`<?php
 namespace Test;
 
-class TestClass {};
-class TestClass2 {};
+class TestClass {}
+class TestClass2 {}
 
 function testFunction() {}
 function testFunction2() {}
@@ -1427,8 +1467,8 @@ function testFunction2() {}
 	test.AddFile(`<?php
 namespace Test\Something;
 
-class TestSomethingClass {};
-class TestSomethingClass2 {};
+class TestSomethingClass {}
+class TestSomethingClass2 {}
 
 function testSomethingFunction() {}
 function testSomethingFunction2() {}
@@ -1466,5 +1506,26 @@ function f() {
 }
 `)
 	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
+func TestTypeHintClassCaseFunctionParam(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {}
+
+class Boo {
+	/** */
+	public function a2(foo $b) {}
+}
+
+function a1(Foo $a, foo $b, boo $c) {}
+`)
+
+	test.Expect = []string{
+		`\foo should be spelled \Foo`,
+		`\foo should be spelled \Foo`,
+		`\boo should be spelled \Boo`,
+	}
 	test.RunAndMatch()
 }

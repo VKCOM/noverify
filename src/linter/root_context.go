@@ -7,6 +7,7 @@ import (
 	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/quickfix"
+	"github.com/VKCOM/noverify/src/types"
 )
 
 type rootContext struct {

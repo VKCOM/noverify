@@ -8,23 +8,24 @@ import (
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/types"
 )
 
 // CustomType specifies a mapping between some AST structure
 // and concrete type (e.g. for <expr> instanceof <something>).
 type CustomType struct {
 	Node ir.Node
-	Typ  meta.TypesMap
+	Typ  types.Map
 }
 
 // ExprType returns type of expression. Depending on whether or not is it "full mode",
 // it will also recursively resolve all nested types.
-func ExprType(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node) meta.TypesMap {
+func ExprType(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node) types.Map {
 	return ExprTypeCustom(sc, cs, n, nil)
 }
 
 // ExprTypeCustom is ExprType that allows to specify custom types overrides.
-func ExprTypeCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, custom []CustomType) meta.TypesMap {
+func ExprTypeCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, custom []CustomType) types.Map {
 	m := ExprTypeLocalCustom(sc, cs, n, custom)
 
 	if !cs.Info.IsIndexingComplete() {
@@ -36,26 +37,26 @@ func ExprTypeCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, custom 
 
 	visitedMap := make(ResolverMap)
 	resolvedTypes := ResolveTypes(cs.Info, cs.CurrentClass, m, visitedMap)
-	return meta.NewTypesMapFromMap(resolvedTypes)
+	return types.NewMapFromMap(resolvedTypes)
 }
 
 // ExprTypeLocal is basic expression type that does not resolve cross-file function calls and such.
-func ExprTypeLocal(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node) meta.TypesMap {
+func ExprTypeLocal(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node) types.Map {
 	return ExprTypeLocalCustom(sc, cs, n, nil)
 }
 
 // ExprTypeLocalCustom is ExprTypeLocal that allows to specify custom types.
-func ExprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, custom []CustomType) meta.TypesMap {
+func ExprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, custom []CustomType) types.Map {
 	res := exprTypeLocalCustom(sc, cs, n, custom)
 	if res.Len() == 0 {
-		return meta.MixedType
+		return types.MixedType
 	}
 	return res
 }
 
-func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, custom []CustomType) meta.TypesMap {
+func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, custom []CustomType) types.Map {
 	if n == nil || sc == nil {
-		return meta.TypesMap{}
+		return types.Map{}
 	}
 
 	for _, c := range custom {
@@ -88,7 +89,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 	case *ir.BitwiseXorExpr:
 		return bitwiseOpType(sc, cs, n.Left, n.Right, custom)
 	case *ir.ConcatExpr:
-		return meta.PreciseStringType
+		return types.PreciseStringType
 	case *ir.ArrayExpr:
 		return arrayType(sc, cs, n.Items)
 	case *ir.ArrayItemExpr:
@@ -98,7 +99,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 		*ir.GreaterExpr, *ir.GreaterOrEqualExpr,
 		*ir.SmallerExpr, *ir.SmallerOrEqualExpr,
 		*ir.EmptyExpr, *ir.IssetExpr:
-		return meta.PreciseBoolType
+		return types.PreciseBoolType
 	case *ir.UnaryMinusExpr:
 		return unaryMathOpType(sc, cs, n.Expr, custom)
 	case *ir.UnaryPlusExpr:
@@ -124,17 +125,17 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 	case *ir.TypeCastExpr:
 		return typeCastType(n)
 	case *ir.ShiftLeftExpr, *ir.ShiftRightExpr:
-		return meta.PreciseIntType
+		return types.PreciseIntType
 	case *ir.ClassConstFetchExpr:
 		return classConstFetchType(n, cs)
 	case *ir.ConstFetchExpr:
 		return constFetchType(n)
 	case *ir.String, *ir.Encapsed, *ir.Heredoc:
-		return meta.PreciseStringType
+		return types.PreciseStringType
 	case *ir.Lnumber:
-		return meta.PreciseIntType
+		return types.PreciseIntType
 	case *ir.Dnumber:
-		return meta.PreciseFloatType
+		return types.PreciseFloatType
 	case *ir.TernaryExpr:
 		return ternaryExprType(n, sc, cs, custom)
 	case *ir.CoalesceExpr:
@@ -144,11 +145,11 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 	case *ir.ParenExpr:
 		return ExprTypeLocalCustom(sc, cs, n.Expr, custom)
 	case *ir.Assign:
-		return ExprTypeLocalCustom(sc, cs, n.Expression, custom)
+		return ExprTypeLocalCustom(sc, cs, n.Expr, custom)
 	case *ir.AssignConcat:
-		return meta.PreciseStringType
+		return types.PreciseStringType
 	case *ir.AssignShiftLeft, *ir.AssignShiftRight:
-		return meta.PreciseIntType
+		return types.PreciseIntType
 	case *ir.CloneExpr:
 		return ExprTypeLocalCustom(sc, cs, n.Expr, custom)
 	case *ir.ClosureExpr:
@@ -158,48 +159,48 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 		return magicConstantType(n)
 	}
 
-	return meta.TypesMap{}
+	return types.Map{}
 }
 
 // unaryBitwiseOpType is used for unary bitwise operations.
-func unaryBitwiseOpType(sc *meta.Scope, cs *meta.ClassParseState, x ir.Node, custom []CustomType) meta.TypesMap {
+func unaryBitwiseOpType(sc *meta.Scope, cs *meta.ClassParseState, x ir.Node, custom []CustomType) types.Map {
 	if ExprTypeLocalCustom(sc, cs, x, custom).Is("string") {
-		return meta.NewTypesMap("string")
+		return types.NewMap("string")
 	}
-	return meta.NewTypesMap("int")
+	return types.NewMap("int")
 }
 
 // bitwiseOpType is used for binary bitwise operations.
-func bitwiseOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right ir.Node, custom []CustomType) meta.TypesMap {
+func bitwiseOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right ir.Node, custom []CustomType) types.Map {
 	if ExprTypeLocalCustom(sc, cs, left, custom).Is("string") && ExprTypeLocalCustom(sc, cs, right, custom).Is("string") {
-		return meta.NewTypesMap("string")
+		return types.NewMap("string")
 	}
-	return meta.NewTypesMap("int")
+	return types.NewMap("int")
 }
 
 // unaryMathOpType is used for unary arithmetic operations.
-func unaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, x ir.Node, custom []CustomType) meta.TypesMap {
+func unaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, x ir.Node, custom []CustomType) types.Map {
 	if ExprTypeLocalCustom(sc, cs, x, custom).Is("int") {
-		return meta.NewTypesMap("int")
+		return types.NewMap("int")
 	}
-	return meta.NewTypesMap("float")
+	return types.NewMap("float")
 }
 
 // binaryMathOpType is used for binary arithmetic operations.
-func binaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right ir.Node, custom []CustomType) meta.TypesMap {
+func binaryMathOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right ir.Node, custom []CustomType) types.Map {
 	if ExprTypeLocalCustom(sc, cs, left, custom).Is("int") && ExprTypeLocalCustom(sc, cs, right, custom).Is("int") {
-		return meta.NewTypesMap("int")
+		return types.NewMap("int")
 	}
-	return meta.NewTypesMap("float")
+	return types.NewMap("float")
 }
 
 // binaryPlusOpType is a special case as "plus" is also used for array union operation.
-func binaryPlusOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right ir.Node, custom []CustomType) meta.TypesMap {
+func binaryPlusOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right ir.Node, custom []CustomType) types.Map {
 	// TODO: PHP will raise fatal error if one operand is array and other is not, so we may check it too
 	leftType := ExprTypeLocalCustom(sc, cs, left, custom)
 	rightType := ExprTypeLocalCustom(sc, cs, right, custom)
 	if leftType.IsArray() && rightType.IsArray() {
-		return meta.MergeTypeMaps(leftType, rightType)
+		return types.MergeMaps(leftType, rightType)
 	}
 	return binaryMathOpType(sc, cs, left, right, custom)
 }
@@ -237,10 +238,10 @@ func classNameToString(cs *meta.ClassParseState, n ir.Node) (string, bool) {
 	return className, true
 }
 
-func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir.FunctionCallExpr, custom []CustomType) (typ meta.TypesMap, ok bool) {
+func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir.FunctionCallExpr, custom []CustomType) (typ types.Map, ok bool) {
 	fn, ok := cs.Info.GetInternalFunctionInfo(nm)
 	if !ok || fn.Typ.IsEmpty() {
-		return meta.TypesMap{}, false
+		return types.Map{}, false
 	}
 
 	override, ok := cs.Info.GetInternalFunctionOverrideInfo(nm)
@@ -253,28 +254,47 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 
 	switch override.OverrideType {
 	case meta.OverrideArgType:
-		return typ, true
+		// do nothing
 
 	case meta.OverrideElementType:
-		newTyp := typ.Map(meta.WrapElemOf)
-		return newTyp, true
+		typ = typ.Map(types.WrapElemOf)
 
-	case meta.OverrideClassType:
+	case meta.OverrideClassType, meta.OverrideNullableClassType:
 		// due to the fact that it is impossible for us to use constfold
 		// here, we have to process only a part of the possible options,
 		// although the most popular ones.
 		className, ok := classNameToString(cs, arg.Expr)
 		if !ok {
-			return meta.NewTypesMap("mixed"), true
+			return types.NewMap("mixed"), true
 		}
-		return meta.NewTypesMap(className + "|null"), true
+
+		if override.OverrideType == meta.OverrideNullableClassType {
+			typ = types.NewMap(className + "|null")
+		} else {
+			typ = types.NewMap(className)
+		}
+
+	default:
+		log.Printf("Internal error: unexpected override type %d for function %s", override.OverrideType, nm)
 	}
 
-	log.Printf("Internal error: unexpected override type %d for function %s", override.OverrideType, nm)
-	return meta.TypesMap{}, false
+	switch override.Properties {
+	case meta.NotNull:
+		typ = typ.Filter(func(s string) bool {
+			return s != "null"
+		})
+	case meta.NotFalse:
+		typ = typ.Filter(func(s string) bool {
+			return s != "false"
+		})
+	case meta.ArrayOf:
+		typ = typ.Map(types.WrapArrayOf)
+	}
+
+	return typ, !typ.IsEmpty()
 }
 
-func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*ir.ArrayItemExpr) meta.TypesMap {
+func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*ir.ArrayItemExpr) types.Map {
 	if len(items) == 0 {
 		// Used as a placeholder until more specific type is discovered.
 		//
@@ -285,7 +305,7 @@ func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*ir.ArrayItemEx
 		// for any mono-typed array, so we can just throw away "empty_array"
 		// in that case. If element type is unknown, "empty_array" is
 		// resolved into "mixed[]".
-		return meta.NewTypesMap("empty_array")
+		return types.NewMap("empty_array")
 	}
 
 	firstElementType := ExprTypeLocal(sc, cs, items[0])
@@ -300,83 +320,83 @@ func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*ir.ArrayItemEx
 		}
 
 		if !firstElementType.Equals(itemType) {
-			return meta.NewTypesMap("mixed[]")
+			return types.NewMap("mixed[]")
 		}
 	}
 
-	return firstElementType.Map(meta.WrapArrayOf)
+	return firstElementType.Map(types.WrapArrayOf)
 }
 
-func newExprType(n *ir.NewExpr, cs *meta.ClassParseState) meta.TypesMap {
+func newExprType(n *ir.NewExpr, cs *meta.ClassParseState) types.Map {
 	if meta.NameNodeToString(n.Class) == "static" {
-		return meta.NewTypesMap("static")
+		return types.NewMap("static")
 	}
 	nm, ok := GetClassName(cs, n.Class)
 	if ok {
-		return meta.NewPreciseTypesMap(nm)
+		return types.NewPreciseMap(nm)
 	}
-	return meta.TypesMap{}
+	return types.Map{}
 }
 
-func ternaryExprType(n *ir.TernaryExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) meta.TypesMap {
+func ternaryExprType(n *ir.TernaryExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) types.Map {
 	t := ExprTypeLocalCustom(sc, cs, n.IfTrue, custom)
 	f := ExprTypeLocalCustom(sc, cs, n.IfFalse, custom)
-	return meta.NewEmptyTypesMap(t.Len() + f.Len()).Append(t).Append(f)
+	return types.NewEmptyMap(t.Len() + f.Len()).Append(t).Append(f)
 }
 
-func coalesceExprType(n *ir.CoalesceExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) meta.TypesMap {
+func coalesceExprType(n *ir.CoalesceExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) types.Map {
 	l := ExprTypeLocalCustom(sc, cs, n.Left, custom)
 	r := ExprTypeLocalCustom(sc, cs, n.Right, custom)
-	return meta.NewEmptyTypesMap(l.Len() + r.Len()).Append(l).Append(r)
+	return types.NewEmptyMap(l.Len() + r.Len()).Append(l).Append(r)
 }
 
-func constFetchType(n *ir.ConstFetchExpr) meta.TypesMap {
+func constFetchType(n *ir.ConstFetchExpr) types.Map {
 	// TODO: handle namespaces
 	nm := n.Constant
 	switch nm.Value {
 	case "false", "true":
-		return meta.PreciseBoolType
+		return types.PreciseBoolType
 	case "null":
-		return meta.NewTypesMap("null")
+		return types.NewMap("null")
 	default:
 		if nm.NumParts() == 0 {
-			return meta.NewTypesMap(meta.WrapConstant(nm.Value))
+			return types.NewMap(types.WrapConstant(nm.Value))
 		}
 	}
-	return meta.TypesMap{}
+	return types.Map{}
 }
 
-func classConstFetchType(n *ir.ClassConstFetchExpr, cs *meta.ClassParseState) meta.TypesMap {
+func classConstFetchType(n *ir.ClassConstFetchExpr, cs *meta.ClassParseState) types.Map {
 	if n.ConstantName.Value == "class" {
-		return meta.PreciseStringType
+		return types.PreciseStringType
 	}
 	className, ok := GetClassName(cs, n.Class)
 	if !ok {
-		return meta.TypesMap{}
+		return types.Map{}
 	}
-	return meta.NewTypesMap(meta.WrapClassConstFetch(className, n.ConstantName.Value))
+	return types.NewMap(types.WrapClassConstFetch(className, n.ConstantName.Value))
 }
 
-func typeCastType(n *ir.TypeCastExpr) meta.TypesMap {
+func typeCastType(n *ir.TypeCastExpr) types.Map {
 	switch n.Type {
 	case "array":
-		return meta.NewTypesMap("mixed[]")
+		return types.NewMap("mixed[]")
 	case "int":
-		return meta.PreciseIntType
+		return types.PreciseIntType
 	case "string":
-		return meta.PreciseStringType
+		return types.PreciseStringType
 	case "float":
-		return meta.PreciseFloatType
+		return types.PreciseFloatType
 	case "bool":
-		return meta.PreciseBoolType
+		return types.PreciseBoolType
 	}
-	return meta.TypesMap{}
+	return types.Map{}
 }
 
-func arrayDimFetchType(n *ir.ArrayDimFetchExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) meta.TypesMap {
+func arrayDimFetchType(n *ir.ArrayDimFetchExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) types.Map {
 	m := ExprTypeLocalCustom(sc, cs, n.Variable, custom)
 	if m.IsEmpty() {
-		return meta.TypesMap{}
+		return types.Map{}
 	}
 
 	res := make(map[string]struct{}, m.Len())
@@ -384,95 +404,95 @@ func arrayDimFetchType(n *ir.ArrayDimFetchExpr, sc *meta.Scope, cs *meta.ClassPa
 	m.Iterate(func(className string) {
 		switch dim := n.Dim.(type) {
 		case *ir.String:
-			res[meta.WrapElemOfKey(className, dim.Value)] = struct{}{}
+			res[types.WrapElemOfKey(className, dim.Value)] = struct{}{}
 		case *ir.Lnumber:
-			res[meta.WrapElemOfKey(className, dim.Value)] = struct{}{}
+			res[types.WrapElemOfKey(className, dim.Value)] = struct{}{}
 		default:
-			res[meta.WrapElemOf(className)] = struct{}{}
+			res[types.WrapElemOf(className)] = struct{}{}
 		}
 	})
 
-	return meta.NewTypesMapFromMap(res)
+	return types.NewMapFromMap(res)
 }
 
-func propertyFetchType(n *ir.PropertyFetchExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) meta.TypesMap {
+func propertyFetchType(n *ir.PropertyFetchExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) types.Map {
 	// Support only $obj->some_prop.
 	// Do not support $obj->$some_prop.
 	id, ok := n.Property.(*ir.Identifier)
 	if !ok {
-		return meta.TypesMap{}
+		return types.Map{}
 	}
 
 	m := ExprTypeLocalCustom(sc, cs, n.Variable, custom)
 	if m.IsEmpty() {
-		return meta.TypesMap{}
+		return types.Map{}
 	}
 
 	res := make(map[string]struct{}, m.Len())
 
 	m.Iterate(func(className string) {
-		res[meta.WrapInstancePropertyFetch(className, id.Value)] = struct{}{}
+		res[types.WrapInstancePropertyFetch(className, id.Value)] = struct{}{}
 	})
 
-	return meta.NewTypesMapFromMap(res)
+	return types.NewMapFromMap(res)
 }
 
-func methodCallType(n *ir.MethodCallExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) meta.TypesMap {
+func methodCallType(n *ir.MethodCallExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) types.Map {
 	// Support only $obj->callSomething().
 	// Do not support $obj->$method().
 	id, ok := n.Method.(*ir.Identifier)
 	if !ok {
-		return meta.TypesMap{}
+		return types.Map{}
 	}
 
 	m := ExprTypeLocalCustom(sc, cs, n.Variable, custom)
 	if m.IsEmpty() {
-		return meta.TypesMap{}
+		return types.Map{}
 	}
 
 	res := make(map[string]struct{}, m.Len())
 
 	m.Iterate(func(className string) {
-		res[meta.WrapInstanceMethodCall(className, id.Value)] = struct{}{}
+		res[types.WrapInstanceMethodCall(className, id.Value)] = struct{}{}
 	})
 
-	return meta.NewTypesMapFromMap(res)
+	return types.NewMapFromMap(res)
 }
 
-func simpleVarType(n *ir.SimpleVar, sc *meta.Scope) meta.TypesMap {
+func simpleVarType(n *ir.SimpleVar, sc *meta.Scope) types.Map {
 	typ, _ := sc.GetVarNameType(n.Name)
 	return typ
 }
 
-func staticPropertyFetchType(n *ir.StaticPropertyFetchExpr, cs *meta.ClassParseState) meta.TypesMap {
+func staticPropertyFetchType(n *ir.StaticPropertyFetchExpr, cs *meta.ClassParseState) types.Map {
 	v, ok := n.Property.(*ir.SimpleVar)
 	if !ok {
-		return meta.TypesMap{}
+		return types.Map{}
 	}
 
 	nm, ok := GetClassName(cs, n.Class)
 	if !ok {
-		return meta.TypesMap{}
+		return types.Map{}
 	}
 
-	return meta.NewTypesMap(meta.WrapStaticPropertyFetch(nm, "$"+v.Name))
+	return types.NewMap(types.WrapStaticPropertyFetch(nm, "$"+v.Name))
 }
 
-func staticFunctionCallType(n *ir.StaticCallExpr, cs *meta.ClassParseState) meta.TypesMap {
+func staticFunctionCallType(n *ir.StaticCallExpr, cs *meta.ClassParseState) types.Map {
 	id, ok := n.Call.(*ir.Identifier)
 	if !ok {
-		return meta.TypesMap{}
+		return types.Map{}
 	}
 
 	nm, ok := GetClassName(cs, n.Class)
 	if !ok {
-		return meta.TypesMap{}
+		return types.Map{}
 	}
 
-	return meta.NewTypesMap(meta.WrapStaticMethodCall(nm, id.Value))
+	return types.NewMap(types.WrapStaticMethodCall(nm, id.Value))
 }
 
-func functionCallType(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) meta.TypesMap {
+func functionCallType(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) types.Map {
 	switch nm := n.Function.(type) {
 	case *ir.Name:
 		if nm.IsFullyQualified() {
@@ -499,11 +519,11 @@ func functionCallType(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassPars
 	return meta.MixedType
 }
 
-func magicConstantType(n *ir.MagicConstant) meta.TypesMap {
+func magicConstantType(n *ir.MagicConstant) types.Map {
 	if n.Value == "__LINE__" {
-		return meta.PreciseIntType
+		return types.PreciseIntType
 	}
-	return meta.PreciseStringType
+	return types.PreciseStringType
 }
 
 func closureTypeByNameNode(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState) (meta.TypesMap, bool) {

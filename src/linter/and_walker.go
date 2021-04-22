@@ -4,6 +4,7 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/solver"
+	"github.com/VKCOM/noverify/src/types"
 )
 
 // andWalker walks if conditions and adds isset/!empty/instanceof variables
@@ -55,7 +56,7 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 
 			switch v := varNode.(type) {
 			case *ir.SimpleVar:
-				a.b.addVar(v, meta.NewTypesMap("isset_$"+v.Name), "isset", meta.VarAlwaysDefined)
+				a.b.addVar(v, types.NewMap("isset_$"+v.Name), "isset", meta.VarAlwaysDefined)
 				a.varsToDelete = append(a.varsToDelete, v)
 			case *ir.Var:
 				a.b.handleVariable(v.Expr)
@@ -63,7 +64,7 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 				if !ok {
 					continue
 				}
-				a.b.addVar(v, meta.NewTypesMap("isset_$$"+vv.Name), "isset", meta.VarAlwaysDefined)
+				a.b.addVar(v, types.NewMap("isset_$$"+vv.Name), "isset", meta.VarAlwaysDefined)
 				a.varsToDelete = append(a.varsToDelete, v)
 			}
 		}
@@ -72,11 +73,11 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 		if className, ok := solver.GetClassName(a.b.r.ctx.st, n.Class); ok {
 			switch v := n.Expr.(type) {
 			case *ir.Var, *ir.SimpleVar:
-				a.b.ctx.sc.AddVar(v, meta.NewTypesMap(className), "instanceof", 0)
+				a.b.ctx.sc.AddVar(v, types.NewMap(className), "instanceof", 0)
 			default:
 				a.b.ctx.customTypes = append(a.b.ctx.customTypes, solver.CustomType{
 					Node: n.Expr,
-					Typ:  meta.NewTypesMap(className),
+					Typ:  types.NewMap(className),
 				})
 			}
 			// TODO: actually this needs to be present inside if body only
@@ -99,7 +100,7 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 		if a.b.ctx.sc.HaveVar(v) {
 			break
 		}
-		a.b.addVar(v, meta.NewTypesMap("isset_$"+v.Name), "!empty", meta.VarAlwaysDefined)
+		a.b.addVar(v, types.NewMap("isset_$"+v.Name), "!empty", meta.VarAlwaysDefined)
 		a.varsToDelete = append(a.varsToDelete, v)
 	}
 

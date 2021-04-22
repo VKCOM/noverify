@@ -12,6 +12,7 @@ import (
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/rules"
+	"github.com/VKCOM/noverify/src/types"
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
@@ -70,6 +71,10 @@ type CheckerInfo struct {
 	// After is a compliant code example (after the fix).
 	// Optional, but if present, Before should also be non-empty.
 	After string
+
+	// Extends tells the check is created by a dynamic rule that
+	// extends the internal linter rule.
+	Extends bool
 }
 
 // BlockChecker is a custom linter that is called on block level
@@ -129,7 +134,7 @@ type RootContext struct {
 }
 
 // ParsePHPDoc returns parsed phpdoc comment parts.
-func (ctx *RootContext) ParsePHPDoc(doc string) []phpdoc.CommentPart {
+func (ctx *RootContext) ParsePHPDoc(doc string) phpdoc.Comment {
 	return phpdoc.Parse(ctx.w.ctx.phpdocTypeParser, doc)
 }
 
@@ -183,7 +188,7 @@ func (ctx *BlockContext) NodePath() irutil.NodePath {
 }
 
 // ExprType resolves the type of e expression node.
-func (ctx *BlockContext) ExprType(e ir.Node) meta.TypesMap {
+func (ctx *BlockContext) ExprType(e ir.Node) types.Map {
 	return ctx.w.exprType(e)
 }
 
@@ -309,6 +314,7 @@ func (reg *CheckersRegistry) DeclareRules(rset *rules.Set) {
 			Quickfix: doc.Fix,
 			Before:   doc.Before,
 			After:    doc.After,
+			Extends:  doc.Extends,
 		})
 	}
 }
@@ -323,7 +329,10 @@ func (reg *CheckersRegistry) DeclareChecker(info CheckerInfo) {
 		panic("can't declare a checker with an empty name")
 	}
 	if _, ok := reg.info[info.Name]; ok {
-		panic(fmt.Sprintf("checker %q already declared", info.Name))
+		if !info.Extends {
+			panic(fmt.Sprintf("the checker %q is already declared, if you want to set the checker both in the dynamic rule and in the code, then use @extends annotation", info.Name))
+		}
+		return
 	}
 	if info.Before != "" && info.After == "" {
 		panic(fmt.Sprintf("%s: Before is set, but After is empty", info.Name))

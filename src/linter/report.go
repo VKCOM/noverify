@@ -17,6 +17,24 @@ const (
 func addBuiltinCheckers(reg *CheckersRegistry) {
 	allChecks := []CheckerInfo{
 		{
+			Name:     "stripTags",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report invalid strip_tags function usage.`,
+			Before:   `$s = strip_tags($s, '<br/>')`,
+			After:    `$s = strip_tags($s, '<br>')`,
+		},
+
+		{
+			Name:     "emptyStmt",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report redundant empty statements that can be safely removed.`,
+			Before:   `echo $foo;;`,
+			After:    `echo $foo;`,
+		},
+
+		{
 			Name:     "intOverflow",
 			Default:  true,
 			Quickfix: false,
@@ -150,7 +168,7 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 		},
 
 		{
-			Name:     "dupSubExpr",
+			Name:     `dupSubExpr`,
 			Default:  true,
 			Quickfix: false,
 			Comment:  `Report suspicious duplicated operands in expressions.`,
@@ -515,7 +533,7 @@ function performance_test() {}`,
 		},
 
 		{
-			Name:     "nameCase",
+			Name:     "nameMismatch",
 			Default:  true,
 			Quickfix: false,
 			Comment:  `Report symbol case mismatches.`,
@@ -594,6 +612,52 @@ echo $someVal;`,
 } catch (Exception $e) {
   // good: it will catch everything else
 }`,
+		},
+
+		{
+			Name:     "trailingComma",
+			Default:  false,
+			Quickfix: true,
+			Comment:  `Report the absence of a comma for the last element in a multi-line array.`,
+			Before: `$_ = [
+	10,
+	20
+]`,
+			After: `$_ = [
+	10,
+	20,
+]`,
+		},
+
+		{
+			Name:     "nestedTernary",
+			Default:  false,
+			Quickfix: true,
+			Comment:  `Report an unspecified order in a nested ternary operator.`,
+			Before:   `$_ = 1 ? 2 : 3 ? 4 : 5;`,
+			After: `$_ = (1 ? 2 : 3) ? 4 : 5;
+// or
+$_ = 1 ? 2 : (3 ? 4 : 5);`,
+		},
+
+		{
+			Name:     "langDeprecated",
+			Default:  false,
+			Quickfix: true,
+			Comment:  `Report the use of deprecated (per language spec) features.`,
+			Before: `$a = (real)100;
+$_ = is_real($a);`,
+			After: `$a = (float)100;
+$_ = is_float($a);`,
+		},
+
+		{
+			Name:     "argsOrder",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report suspicious arguments order`,
+			Before:   `strpos('/', $s);`,
+			After:    `strpos($s, '/');`,
 		},
 	}
 

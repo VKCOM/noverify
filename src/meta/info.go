@@ -3,6 +3,8 @@ package meta
 import (
 	"strings"
 	"sync"
+
+	"github.com/VKCOM/noverify/src/types"
 )
 
 // Info contains meta information for all classes, functions, etc.
@@ -145,35 +147,100 @@ func (i *Info) FindConstants(substr string) (res []string) {
 }
 
 func (i *Info) InitKphpStubs() {
-	i.internalFunctions.H[`\array_first_element`] = FuncInfo{
-		Name:         `\array_first_element`,
+	i.internalFunctions.H[`\array_first_value`] = FuncInfo{
+		Name:         `\array_first_value`,
 		Params:       []FuncParam{{Name: "el"}},
 		MinParamsCnt: 1,
-		Typ:          NewTypesMap("mixed"),
+		Typ:          types.NewMap("mixed"),
 	}
-	i.internalFunctions.H[`\array_last_element`] = FuncInfo{
-		Name:         `\array_last_element`,
+	i.internalFunctions.H[`\array_last_value`] = FuncInfo{
+		Name:         `\array_last_value`,
 		Params:       []FuncParam{{Name: "el"}},
 		MinParamsCnt: 1,
-		Typ:          NewTypesMap("mixed"),
+		Typ:          types.NewMap("mixed"),
+	}
+	i.internalFunctions.H[`\array_filter_by_key`] = FuncInfo{
+		Name:         `\array_filter_by_key`,
+		Params:       []FuncParam{{Name: "array"}, {Name: "callback"}},
+		MinParamsCnt: 2,
+		Typ:          types.NewMap("mixed"),
 	}
 	i.internalFunctions.H[`\instance_deserialize`] = FuncInfo{
 		Name:         `\instance_deserialize`,
 		Params:       []FuncParam{{Name: "packed_str"}, {Name: "type_of_instance"}},
 		MinParamsCnt: 2,
-		Typ:          NewTypesMap("object|null"),
+		Typ:          types.NewMap("object|null"),
+	}
+	i.internalFunctions.H[`\instance_cache_fetch`] = FuncInfo{
+		Name:         `\instance_cache_fetch`,
+		Params:       []FuncParam{{Name: "type"}, {Name: "key"}},
+		MinParamsCnt: 2,
+		Typ:          types.NewMap("object|null"),
+	}
+	i.internalFunctions.H[`\instance_cast`] = FuncInfo{
+		Name:         `\instance_cast`,
+		Params:       []FuncParam{{Name: "instance"}, {Name: "class_name"}},
+		MinParamsCnt: 2,
+		Typ:          types.NewMap("object"),
 	}
 
-	i.internalFunctionOverrides[`\array_first_element`] = FuncInfoOverride{
+	i.internalFunctions.H[`\not_null`] = FuncInfo{
+		Name:         `\not_null`,
+		Params:       []FuncParam{{Name: "any_value"}},
+		MinParamsCnt: 1,
+		Typ:          types.NewMap("mixed"),
+	}
+	i.internalFunctions.H[`\not_false`] = FuncInfo{
+		Name:         `\not_false`,
+		Params:       []FuncParam{{Name: "any_value"}},
+		MinParamsCnt: 1,
+		Typ:          types.NewMap("mixed"),
+	}
+	i.internalFunctions.H[`\create_vector`] = FuncInfo{
+		Name:         `\create_vector`,
+		Params:       []FuncParam{{Name: "count"}, {Name: "el"}},
+		MinParamsCnt: 2,
+		Typ:          types.NewMap("mixed[]"),
+	}
+
+	i.internalFunctionOverrides[`\array_first_value`] = FuncInfoOverride{
 		OverrideType: OverrideElementType,
 		ArgNum:       0,
 	}
-	i.internalFunctionOverrides[`\array_last_element`] = FuncInfoOverride{
+	i.internalFunctionOverrides[`\array_last_value`] = FuncInfoOverride{
 		OverrideType: OverrideElementType,
+		ArgNum:       0,
+	}
+	i.internalFunctionOverrides[`\array_filter_by_key`] = FuncInfoOverride{
+		OverrideType: OverrideArgType,
 		ArgNum:       0,
 	}
 	i.internalFunctionOverrides[`\instance_deserialize`] = FuncInfoOverride{
+		OverrideType: OverrideNullableClassType,
+		ArgNum:       1,
+	}
+	i.internalFunctionOverrides[`\instance_cast`] = FuncInfoOverride{
 		OverrideType: OverrideClassType,
+		ArgNum:       1,
+	}
+	i.internalFunctionOverrides[`\instance_cache_fetch`] = FuncInfoOverride{
+		OverrideType: OverrideNullableClassType,
+		ArgNum:       0,
+	}
+
+	i.internalFunctionOverrides[`\not_null`] = FuncInfoOverride{
+		OverrideType: OverrideArgType,
+		Properties:   NotNull,
+		ArgNum:       0,
+	}
+	i.internalFunctionOverrides[`\not_false`] = FuncInfoOverride{
+		OverrideType: OverrideArgType,
+		Properties:   NotFalse,
+		ArgNum:       0,
+	}
+	i.internalFunctionOverrides[`\create_vector`] = FuncInfoOverride{
+		OverrideType: OverrideArgType,
+		Properties:   ArrayOf,
 		ArgNum:       1,
 	}
 }
@@ -329,7 +396,7 @@ func (i *Info) AddConstantsNonLocked(filename string, m ConstantsMap) {
 }
 
 func (i *Info) AddToGlobalScopeNonLocked(filename string, sc *Scope) {
-	sc.Iterate(func(nm string, typ TypesMap, flags VarFlags) {
+	sc.Iterate(func(nm string, typ types.Map, flags VarFlags) {
 		i.AddVarName(nm, typ, "global", flags)
 	})
 }

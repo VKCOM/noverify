@@ -10,9 +10,9 @@ import (
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irconv"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/linter/lintapi"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php/parser/freefloating"
 	"github.com/VKCOM/noverify/src/php/parseutil"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/phpgrep"
@@ -158,7 +158,7 @@ func (p *parser) parseRuleInfo(st ir.Node, proto *Rule) (Rule, error) {
 
 	var filterSet map[string]Filter
 
-	for _, part := range phpdoc.Parse(p.typeParser, comment) {
+	for _, part := range phpdoc.Parse(p.typeParser, comment).Parsed {
 		part := part.(*phpdoc.RawCommentPart)
 		switch part.Name() {
 		case "name":
@@ -367,11 +367,12 @@ func (p *parser) parseRule(st ir.Node, proto *Rule) error {
 }
 
 func (p *parser) parseFuncComment(fn *ir.FunctionStmt) error {
-	if len(fn.PhpDoc) == 0 {
+	if fn.Doc.Raw == "" {
 		return nil
 	}
+
 	var doc RuleDoc
-	for _, part := range fn.PhpDoc {
+	for _, part := range fn.Doc.Parsed {
 		part := part.(*phpdoc.RawCommentPart)
 		switch part.Name() {
 		case "comment":
@@ -380,6 +381,8 @@ func (p *parser) parseFuncComment(fn *ir.FunctionStmt) error {
 			doc.Before = part.ParamsText
 		case "after":
 			doc.After = part.ParamsText
+		case "extends":
+			doc.Extends = true
 		}
 	}
 	p.res.DocByName[p.funcName] = doc
@@ -387,15 +390,16 @@ func (p *parser) parseFuncComment(fn *ir.FunctionStmt) error {
 }
 
 func (p *parser) commentText(n ir.Node) string {
-	for _, ff := range (*n.GetFreeFloating())[freefloating.Start] {
-		if ff.StringType != freefloating.CommentType {
-			continue
-		}
-		if strings.HasPrefix(ff.Value, "/**") && magicComment.MatchString(ff.Value) {
-			return ff.Value
-		}
+	doc, found := irutil.FindPhpDoc(n)
+	if !found {
+		return ""
 	}
-	return ""
+
+	if !magicComment.MatchString(doc) {
+		return ""
+	}
+
+	return doc
 }
 
 func (p *parser) errorf(n ir.Node, format string, args ...interface{}) *parseError {

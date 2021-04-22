@@ -1,6 +1,9 @@
 MAYBE   regexpSimplify: May re-write '/^[0-9]{2,4}-[0-9]{2}-[0-9]{2}/' as '/^\d{2,4}-\d{2}-\d{2}/' at testdata/flysystem/src/Adapter/AbstractFtpAdapter.php:536
         return preg_match('/^[0-9]{2,4}-[0-9]{2}-[0-9]{2}/', $item) ? 'windows' : 'unix';
                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   callSimplify: Could simplify to $permissions[0] at testdata/flysystem/src/Adapter/AbstractFtpAdapter.php:548
+        return substr($permissions, 0, 1) === 'd' ? 'dir' : 'file';
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   regexpSimplify: May re-write '/^total [0-9]*$/' as '/^total \d*$/' at testdata/flysystem/src/Adapter/Ftp.php:407
         if (preg_match('/^total [0-9]*$/', $listing[0])) {
                        ^^^^^^^^^^^^^^^^^^
@@ -31,15 +34,9 @@ WARNING unused: Variable e is unused (use $_ to ignore this inspection) at testd
 MAYBE   deprecated: Call to deprecated method {\League\Flysystem\FilesystemInterface}->get() at testdata/flysystem/src/MountManager.php:646
         return $this->getFilesystem($prefix)->get($path);
                                               ^^^
-WARNING undefined: Variable might have not been defined: deleted at testdata/flysystem/src/Plugin/ForcedCopy.php:38
-        if ($deleted) {
-            ^^^^^^^^
 WARNING unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Plugin/ForcedCopy.php:33
         } catch (FileNotFoundException $e) {
                                        ^^
-WARNING undefined: Variable might have not been defined: deleted at testdata/flysystem/src/Plugin/ForcedRename.php:38
-        if ($deleted) {
-            ^^^^^^^^
 WARNING unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Plugin/ForcedRename.php:33
         } catch (FileNotFoundException $e) {
                                        ^^

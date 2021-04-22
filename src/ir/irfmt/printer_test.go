@@ -448,11 +448,9 @@ endswitch;
 
 `,
 
-		`;
-?>test
-<?php
+		`echo 100;
+?>test<?php
 `,
-
 		`namespace {
     interface Foo extends Bar, Baz
     {
@@ -596,7 +594,7 @@ endswitch;
 		want := code
 		have := buf.String()
 		if have != want {
-			t.Errorf("results mismatch (-have +want): %s", cmp.Diff(have, want))
+			t.Errorf("results mismatch (-have +want): %s", cmp.Diff(want, have))
 		}
 	}
 }
