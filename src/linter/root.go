@@ -1465,12 +1465,12 @@ func (d *rootWalker) parseFuncArgs(params []ir.Node, phpDocParamsTypes phpDocPar
 }
 
 func (d *rootWalker) typeHintHasMoreAccurateType(typeHintType, phpDocType types.Map) bool {
-	// if is not array typehint
+	// If is not array typehint.
 	if !typeHintType.IsArrayOf("mixed") {
 		return true
 	}
 
-	// if has more accurate type
+	// If has more accurate type.
 	if !phpDocType.IsEmpty() {
 		return true
 	}
