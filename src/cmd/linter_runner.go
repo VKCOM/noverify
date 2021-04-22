@@ -45,6 +45,26 @@ func (l *linterRunner) IsEnabledByFlags(checkName string) bool {
 	return true
 }
 
+func (l *linterRunner) IsCriticalReport(r *linter.Report) bool {
+	if len(l.reportsCriticalSet) != 0 {
+		return l.reportsCriticalSet[r.CheckName]
+	}
+	return r.IsCritical()
+}
+
+func (l *linterRunner) IsEnabledReport(r *linter.Report) bool {
+	if !l.IsEnabledByFlags(r.CheckName) {
+		return false
+	}
+
+	if l.config.ExcludeRegex == nil {
+		return true
+	}
+
+	// Disabled by a file comment.
+	return !l.config.ExcludeRegex.MatchString(r.Filename)
+}
+
 func (l *linterRunner) collectGitIgnoreFiles() error {
 	l.filenameFilter = workspace.NewFilenameFilter(l.config.ExcludeRegex)
 
