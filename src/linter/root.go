@@ -823,8 +823,8 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 	d.checkCommentMisspellings(pl, pl.Doc.Raw)
 	phpDocType := d.parsePHPDocVar(pl, pl.Doc)
 
-	typeHintType, has := d.parseTypeNode(pl.Type)
-	if has && !d.typeHintHasMoreAccurateType(typeHintType, phpDocType) {
+	typeHintType, ok := d.parseTypeNode(pl.Type)
+	if ok && !d.typeHintHasMoreAccurateType(typeHintType, phpDocType) {
 		d.Report(pl, LevelNotice, "typeHint", "specify the type for the property in phpdoc, 'array' type hint is not precise enough")
 	}
 
@@ -950,8 +950,8 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 
 	class := d.getClass()
 
-	hintReturnType, has := d.parseTypeNode(meth.ReturnType)
-	if has && !doc.inherit {
+	hintReturnType, ok := d.parseTypeNode(meth.ReturnType)
+	if ok && !doc.inherit {
 		d.checkFuncReturnType(meth.MethodName, meth.MethodName.Value, hintReturnType, phpDocReturnType)
 	}
 
@@ -1429,8 +1429,8 @@ func (d *rootWalker) parseFuncArgs(params []ir.Node, phpDocParamsTypes phpDocPar
 		}
 
 		if p.VariableType != nil {
-			typeHintType, has := d.parseTypeNode(p.VariableType)
-			if has {
+			typeHintType, ok := d.parseTypeNode(p.VariableType)
+			if ok {
 				if !isClosure && !d.typeHintHasMoreAccurateType(typeHintType, phpDocType.typ) {
 					d.Report(p, LevelNotice, "typeHint", "specify the type for the parameter $%s in phpdoc, 'array' type hint is not precise enough", p.Variable.Name)
 				}
@@ -1539,8 +1539,8 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 
 	sc := meta.NewScope()
 
-	hintReturnType, has := d.parseTypeNode(fun.ReturnType)
-	if has && !doc.inherit {
+	hintReturnType, ok := d.parseTypeNode(fun.ReturnType)
+	if ok && !doc.inherit {
 		d.checkFuncReturnType(fun.FunctionName, fun.FunctionName.Value, hintReturnType, phpDocReturnType)
 	}
 
@@ -1598,8 +1598,8 @@ func (d *rootWalker) checkTypeHintClassCaseFunctionParam(p *ir.Parameter) {
 		return
 	}
 
-	typ, has := d.parseTypeNode(p.VariableType)
-	if !has {
+	typ, ok := d.parseTypeNode(p.VariableType)
+	if !ok {
 		return
 	}
 
