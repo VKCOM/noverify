@@ -1,8 +1,8 @@
 <?php
 
 /**
- * @param  mixed[]  $xs
- * @param  mixed[]  $tabs
+ * @param mixed[] $xs
+ * @param mixed[] $tabs
  */
 function test_countindex_bad(array $xs, array $tabs) {
   // Potentially results in undefined index access.
@@ -19,7 +19,7 @@ function test_countindex_bad(array $xs, array $tabs) {
 }
 
 /**
- * @param  mixed[]  $xs
+ * @param mixed[] $xs
  */
 function test_countindex_good(array $xs) {
   $_ = $xs[count($xs)-1];

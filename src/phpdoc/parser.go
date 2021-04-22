@@ -11,7 +11,7 @@ import (
 type Comment struct {
 	Raw     string
 	Parsed  []CommentPart
-	Inherit bool
+	Inherit bool // Comment contains @inheritdoc marker.
 }
 
 type CommentPart interface {

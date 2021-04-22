@@ -825,7 +825,7 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 
 	typeHintType, ok := d.parseTypeNode(pl.Type)
 	if ok && !d.typeHintHasMoreAccurateType(typeHintType, phpDocType) {
-		d.Report(pl, LevelNotice, "typeHint", "specify the type for the property in phpdoc, 'array' type hint is not precise enough")
+		d.Report(pl, LevelNotice, "typeHint", "specify the type for the property in phpdoc, 'array' type hint too generic")
 	}
 
 	for _, pNode := range pl.Properties {
@@ -950,9 +950,9 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 
 	class := d.getClass()
 
-	hintReturnType, ok := d.parseTypeNode(meth.ReturnType)
+	returnTypeHint, ok := d.parseTypeNode(meth.ReturnType)
 	if ok && !doc.inherit {
-		d.checkFuncReturnType(meth.MethodName, meth.MethodName.Value, hintReturnType, phpDocReturnType)
+		d.checkFuncReturnType(meth.MethodName, meth.MethodName.Value, returnTypeHint, phpDocReturnType)
 	}
 
 	params, minParamsCnt := d.parseFuncArgs(meth.Params, phpDocParamTypes, sc, false, nil)
@@ -1002,7 +1002,7 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		d.checkParentConstructorCall(meth.MethodName, funcInfo.callsParentConstructor)
 	}
 
-	returnTypes := functionReturnType(phpDocReturnType, hintReturnType, actualReturnTypes)
+	returnTypes := functionReturnType(phpDocReturnType, returnTypeHint, actualReturnTypes)
 
 	// TODO: handle duplicate method
 	var funcFlags meta.FuncFlags
@@ -1539,9 +1539,9 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 
 	sc := meta.NewScope()
 
-	hintReturnType, ok := d.parseTypeNode(fun.ReturnType)
+	returnTypeHint, ok := d.parseTypeNode(fun.ReturnType)
 	if ok && !doc.inherit {
-		d.checkFuncReturnType(fun.FunctionName, fun.FunctionName.Value, hintReturnType, phpDocReturnType)
+		d.checkFuncReturnType(fun.FunctionName, fun.FunctionName.Value, returnTypeHint, phpDocReturnType)
 	}
 
 	params, minParamsCnt := d.parseFuncArgs(fun.Params, phpDocParamTypes, sc, false, nil)
@@ -1550,7 +1550,7 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	actualReturnTypes := funcInfo.returnTypes
 	exitFlags := funcInfo.prematureExitFlags
 
-	returnTypes := functionReturnType(phpDocReturnType, hintReturnType, actualReturnTypes)
+	returnTypes := functionReturnType(phpDocReturnType, returnTypeHint, actualReturnTypes)
 
 	for _, param := range fun.Params {
 		d.checkFuncParam(param.(*ir.Parameter))
@@ -1574,8 +1574,8 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	return false
 }
 
-func (d *rootWalker) checkFuncReturnType(fun ir.Node, funcName string, hintReturnType, phpDocReturnType types.Map) {
-	if !d.typeHintHasMoreAccurateType(hintReturnType, phpDocReturnType) {
+func (d *rootWalker) checkFuncReturnType(fun ir.Node, funcName string, returnTypeHint, phpDocReturnType types.Map) {
+	if !d.typeHintHasMoreAccurateType(returnTypeHint, phpDocReturnType) {
 		d.Report(fun, LevelNotice, "typeHint", "specify the return type for the function %s in phpdoc, 'array' type hint is not precise enough", funcName)
 	}
 }
