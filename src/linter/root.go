@@ -1432,7 +1432,7 @@ func (d *rootWalker) parseFuncArgs(params []ir.Node, phpDocParamsTypes phpDocPar
 			typeHintType, ok := d.parseTypeNode(p.VariableType)
 			if ok {
 				if !isClosure && !d.typeHintHasMoreAccurateType(typeHintType, phpDocType.typ) {
-					d.Report(p, LevelNotice, "typeHint", "specify the type for the parameter $%s in phpdoc, 'array' type hint is not precise enough", p.Variable.Name)
+					d.Report(p, LevelNotice, "typeHint", "specify the type for the parameter $%s in phpdoc, 'array' type hint too generic", p.Variable.Name)
 				}
 
 				paramTyp = typeHintType
