@@ -76,7 +76,7 @@ MAYBE   callSimplify: Could simplify to "hello"[$index] at testdata/embeddedrule
 MAYBE   callSimplify: Could simplify to "hello"[2] at testdata/embeddedrules/callSimplify.php:16
     $_ = substr("hello", 2, 1);
          ^^^^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $array in phpdoc, 'array' type hint is not precise enough at testdata/embeddedrules/callSimplify.php:22
+MAYBE   typeHint: specify the type for the parameter $array in phpdoc, 'array' type hint too generic at testdata/embeddedrules/callSimplify.php:22
 function some_array_push(array $array, int $val) {
                          ^^^^^^^^^^^^
 MAYBE   callSimplify: Could simplify to $array[] = $val at testdata/embeddedrules/callSimplify.php:23

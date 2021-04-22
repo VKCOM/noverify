@@ -1576,7 +1576,7 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 
 func (d *rootWalker) checkFuncReturnType(fun ir.Node, funcName string, returnTypeHint, phpDocReturnType types.Map) {
 	if !d.typeHintHasMoreAccurateType(returnTypeHint, phpDocReturnType) {
-		d.Report(fun, LevelNotice, "typeHint", "specify the return type for the function %s in phpdoc, 'array' type hint is not precise enough", funcName)
+		d.Report(fun, LevelNotice, "typeHint", "specify the return type for the function %s in phpdoc, 'array' type hint too generic", funcName)
 	}
 }
 

@@ -25,25 +25,25 @@ MAYBE   phpdoc: Missing PHPDoc for "write" public method at testdata/flysystem/s
 MAYBE   phpdoc: Missing PHPDoc for "update" public method at testdata/flysystem/src/Adapter/Polyfill/StreamedWritingTrait.php:59
     abstract public function update($pash, $contents, Config $config);
                              ^^^^^^
-MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint is not precise enough at testdata/flysystem/src/Filesystem.php:63
+MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:63
     public function write($path, $contents, array $config = [])
                                             ^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint is not precise enough at testdata/flysystem/src/Filesystem.php:75
+MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:75
     public function writeStream($path, $resource, array $config = [])
                                                   ^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint is not precise enough at testdata/flysystem/src/Filesystem.php:93
+MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:93
     public function put($path, $contents, array $config = [])
                                           ^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint is not precise enough at testdata/flysystem/src/Filesystem.php:108
+MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:108
     public function putStream($path, $resource, array $config = [])
                                                 ^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint is not precise enough at testdata/flysystem/src/Filesystem.php:146
+MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:146
     public function update($path, $contents, array $config = [])
                                              ^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint is not precise enough at testdata/flysystem/src/Filesystem.php:159
+MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:159
     public function updateStream($path, $resource, array $config = [])
                                                    ^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint is not precise enough at testdata/flysystem/src/Filesystem.php:257
+MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:257
     public function createDir($dirname, array $config = [])
                                         ^^^^^^^^^^^^^^^^^^
 WARNING unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Handler.php:129
@@ -82,7 +82,7 @@ MAYBE   regexpSimplify: May re-write '#^[a-zA-Z]{1}:[^\\\/]#' as '#^[a-zA-Z]:[^\
 MAYBE   regexpSimplify: May re-write '#^[a-zA-Z]{1}:$#' as '#^[a-zA-Z]:$#' at testdata/flysystem/src/Util.php:346
         if (preg_match('#^[a-zA-Z]{1}:$#', $basename)) {
                        ^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $entry in phpdoc, 'array' type hint is not precise enough at testdata/flysystem/src/Util/ContentListingFormatter.php:52
+MAYBE   typeHint: specify the type for the parameter $entry in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Util/ContentListingFormatter.php:52
     private function addPathInfo(array $entry)
                                  ^^^^^^^^^^^^
 WARNING unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Util/MimeType.php:208
