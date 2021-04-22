@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/types"
 )
 

@@ -42,7 +42,7 @@ func newRootContext(config *Config, workerCtx *WorkerContext, st *meta.ClassPars
 	}
 }
 
-func newTypesMap(ctx *rootContext, types []meta.Type) meta.TypesMap {
-	ctx.typeNormalizer.NormalizeTypes(types)
-	return meta.NewTypesMapFromTypes(types)
+func newTypesMap(ctx *rootContext, typs []types.Type) types.Map {
+	ctx.typeNormalizer.NormalizeTypes(typs)
+	return types.NewMapFromTypes(typs)
 }

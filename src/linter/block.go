@@ -1070,7 +1070,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 	b.r.reportPhpdocErrors(fun, doc.errs)
 	phpDocParamTypes := doc.types
 
-	var hintReturnType meta.TypesMap
+	var hintReturnType types.Map
 	if typ, ok := b.r.parseTypeNode(fun.ReturnType); ok {
 		hintReturnType = typ
 	}
@@ -1110,7 +1110,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 	actualReturnTypes := funcInfo.returnTypes
 	exitFlags := funcInfo.prematureExitFlags
 
-	returnTypes := functionReturnType(meta.NewEmptyTypesMap(0), hintReturnType, actualReturnTypes)
+	returnTypes := functionReturnType(types.NewEmptyMap(0), hintReturnType, actualReturnTypes)
 
 	for _, param := range fun.Params {
 		b.r.checkFuncParam(param.(*ir.Parameter))

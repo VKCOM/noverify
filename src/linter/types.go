@@ -171,7 +171,7 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []types.
 
 		props = append(props, autogen.ShapeTypeProp{
 			Key:   key.Value,
-			Types: types,
+			Types: typeList,
 		})
 	}
 
@@ -181,7 +181,7 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []types.
 	}
 	conv.ctx.shapes[shape.Name] = shape
 
-	return []meta.Type{{Elem: shape.Name}}
+	return []types.Type{{Elem: shape.Name}}
 }
 
 func (conv *phpdocTypeConverter) mapTupleType(params []phpdoc.TypeExpr) []types.Type {

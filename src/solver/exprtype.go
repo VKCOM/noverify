@@ -154,7 +154,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 		return ExprTypeLocalCustom(sc, cs, n.Expr, custom)
 	case *ir.ClosureExpr:
 		name := autogen.GenerateClosureName(n, cs)
-		return meta.NewTypesMap(name)
+		return types.NewMap(name)
 	case *ir.MagicConstant:
 		return magicConstantType(n)
 	}
@@ -502,13 +502,13 @@ func functionCallType(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassPars
 					return typ
 				}
 			}
-			return meta.NewTypesMap(meta.WrapFunctionCall(nm.Value))
+			return types.NewMap(types.WrapFunctionCall(nm.Value))
 		}
 		typ, ok := internalFuncType(`\`+nm.Value, sc, cs, n, custom)
 		if ok {
 			return typ
 		}
-		return meta.NewTypesMap(meta.WrapFunctionCall(cs.Namespace + `\` + nm.Value))
+		return types.NewMap(types.WrapFunctionCall(cs.Namespace + `\` + nm.Value))
 	case *ir.SimpleVar:
 		cl, ok := closureTypeByNameNode(n.Function, sc, cs)
 		if ok {
@@ -516,7 +516,7 @@ func functionCallType(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassPars
 		}
 	}
 
-	return meta.MixedType
+	return types.MixedType
 }
 
 func magicConstantType(n *ir.MagicConstant) types.Map {
@@ -526,15 +526,15 @@ func magicConstantType(n *ir.MagicConstant) types.Map {
 	return types.PreciseStringType
 }
 
-func closureTypeByNameNode(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState) (meta.TypesMap, bool) {
+func closureTypeByNameNode(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState) (types.Map, bool) {
 	if !cs.Info.IsIndexingComplete() {
-		return meta.TypesMap{}, false
+		return types.Map{}, false
 	}
 
 	fi, ok := GetClosure(name, sc, cs)
 	if !ok {
-		return meta.TypesMap{}, false
+		return types.Map{}, false
 	}
 
-	return meta.NewTypesMap(meta.WrapFunctionCall(fi.Name)), true
+	return types.NewMap(types.WrapFunctionCall(fi.Name)), true
 }

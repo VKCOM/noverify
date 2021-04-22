@@ -1,12 +1,12 @@
 package autogen
 
 import (
-	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/types"
 )
 
 type ShapeTypeProp struct {
 	Key   string
-	Types []meta.Type
+	Types []types.Type
 }
 
 type ShapeTypeInfo struct {
