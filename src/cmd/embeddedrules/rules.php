@@ -35,6 +35,26 @@ function ternarySimplify() {
    * @fix $x ?? $y
    */
   isset($x) ? $x : $y;
+
+  /**
+   * @maybe could rewrite as `$x[$i] ?? $y`
+   * @pure $i
+   */
+  any_indexing: {
+    $x[$i] !== null ? $x[$i] : $y;
+    null !== $x[$i] ? $x[$i] : $y;
+    $x[$i] === null ? $y : $x[$i];
+    null === $x[$i] ? $y : $x[$i];
+  }
+
+  /**
+   * @maybe could rewrite as `$x[$i] ?? $y`
+   * @pure $i
+   */
+  any_array_key_exists: {
+    array_key_exists($i, $x) ? $x[$i] : $y;
+    !array_key_exists($i, $x) ? $y : $x[$i];
+  }
 }
 
 /**
@@ -229,9 +249,7 @@ function offBy1() {
 }
 
 /**
- * @comment Report suspicious arguments order.
- * @before  strpos('/', $s)
- * @after   strpos($s, '/')
+ * @extends
  */
 function argsOrder() {
   /**
@@ -297,6 +315,16 @@ function callSimplify() {
    * @fix   array_key_exists($key, $a)
    */
   in_array($key, array_keys($a));
+
+  /**
+   * @maybe Could simplify to $x[$y]
+   */
+  substr($x, $y, 1);
+
+  /**
+   * @maybe Could simplify to $a[] = $v
+   */
+  array_push($a, $v);
 }
 
 /**
@@ -405,4 +433,84 @@ function langDeprecated() {
      * @fix     define($_, $_);
      */
     define($_, $_, false);
+}
+
+/**
+ * @comment Report a strange way of type cast.
+ * @before  $x.""
+ * @after   (string)$x
+ */
+function strangeCast() {
+    /**
+     * @warning concatenation with empty string, possible type cast, use explicit cast to string instead of concatenate with empty string
+     */
+    any_string_cast: {
+        $x . "";
+        "" . $x;
+        $x . '';
+        '' . $x;
+    }
+
+    /**
+     * @warning addition with zero, possible type cast, use an explicit cast to int or float instead of zero addition
+     */
+    any_number_cast: {
+        0 + $x;
+        0.0 + $x;
+    }
+
+    /**
+     * @warning unary plus, possible type cast, use an explicit cast to int or float instead of using the unary plus
+     */
+    +$x;
+}
+
+/**
+ * @comment Report string emptyness checking using strlen.
+ * @before  if (strlen($string)) { ... }
+ * @after   if ($string !== "") { ... }
+ */
+function emptyStringCheck() {
+    /**
+     * @warning use '$x !== ""' instead
+     */
+    any_not_equal: {
+        if (strlen($x)) { $_; }
+        if (mb_strlen($x)) { $_; }
+        if ($x || strlen($x)) { $_; }
+    }
+
+    /**
+     * @warning use '$x === ""' instead
+     */
+    any_equal: {
+        if (!strlen($x)) { $_; }
+        if (!mb_strlen($x)) { $_; }
+    }
+}
+
+/**
+ * @comment Report the use of assignment in the return statement.
+ * @before  return $a = 100;
+ * @after   return $a;
+ */
+function returnAssign() {
+    /**
+     * @warning don't use assignment in the return statement
+     */
+    any: {
+        return $_ = $_;
+        return $_ += $_;
+        return $_ -= $_;
+        return $_ *= $_;
+        return $_ /= $_;
+        return $_ %= $_;
+        return $_ &= $_;
+        return $_ |= $_;
+        return $_ ^= $_;
+        return $_ <<= $_;
+        return $_ >>= $_;
+        return $_ .= $_;
+        return $_ ??= $_;
+    }
 }

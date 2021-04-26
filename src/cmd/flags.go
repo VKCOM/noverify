@@ -6,13 +6,12 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 
 	"github.com/VKCOM/noverify/src/linter"
-	"github.com/VKCOM/noverify/src/rules"
 )
 
-const allNonNotice = "<all-non-notice>"
+const allNonNoticeChecks = "<all-non-notice>"
+const allChecks = "<all>"
 
 type cmdlineArguments struct {
 	version bool
@@ -82,40 +81,15 @@ func DefaultCacheDir() string {
 	return defaultCacheDir
 }
 
-func bindFlags(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArguments) {
-	var enabledByDefault []string
-	declaredChecks := config.Checkers.ListDeclared()
-	for _, info := range declaredChecks {
-		if info.Default {
-			enabledByDefault = append(enabledByDefault, info.Name)
-		}
-	}
-	for _, rset := range ruleSets {
-		enabledByDefault = append(enabledByDefault, rset.Names...)
-	}
-
+func bindFlags(config *linter.Config, args *cmdlineArguments) {
 	flag.Usage = func() {
 		out := flag.CommandLine.Output()
-		fmt.Fprintf(out, "Usage of noverify:\n")
-		fmt.Fprintf(out, "  $ noverify [command] [-stubs-dir=/path/to/phpstorm-stubs] [-cache-dir=$TMPDIR/noverify] /project/root\n")
+		fmt.Fprintln(out, "Usage:")
+		fmt.Fprintln(out, "  $ noverify check [options] /project/root")
 		fmt.Fprintln(out)
-		fmt.Fprintln(out, "\tThe cache directory is optional, by default it is already set to $TMPDIR/noverify.")
-		fmt.Fprintln(out, "\tThe phpstorm-stubs directory is optional, the built-in ones are used by default.")
+		fmt.Fprintln(out, "Options:")
+		fmt.Print(formatFlags())
 		fmt.Fprintln(out)
-		GlobalCmds.WriteHelpPage(out)
-		fmt.Fprintln(out)
-		fmt.Fprintf(out, "Flags:\n")
-		flag.PrintDefaults()
-		fmt.Fprintln(out)
-		fmt.Fprintf(out, "Diagnostics (checks):\n")
-		for _, info := range declaredChecks {
-			extra := " (disabled by default)"
-			if info.Default {
-				extra = ""
-			}
-			fmt.Fprintf(out, "  %s%s\n", info.Name, extra)
-			fmt.Fprintf(out, "    \t%s\n", info.Comment)
-		}
 	}
 
 	flag.StringVar(&args.pprofHost, "pprof", "", "HTTP pprof endpoint (e.g. localhost:8080)")
@@ -125,7 +99,7 @@ func bindFlags(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgume
 	flag.BoolVar(&config.ConservativeBaseline, "conservative-baseline", false,
 		"If enabled, baseline mode will have less false positive, but more false negatives")
 
-	flag.StringVar(&args.reportsCritical, "critical", allNonNotice,
+	flag.StringVar(&args.reportsCritical, "critical", allNonNoticeChecks,
 		"Comma-separated list of check names that are considered critical (all non-notice checks by default)")
 
 	flag.StringVar(&args.rulesList, "rules", "",
@@ -141,7 +115,7 @@ func bindFlags(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgume
 
 	flag.StringVar(&args.gitRepo, "git", "", "Path to git repository to analyze")
 	flag.StringVar(&args.mutable.gitCommitFrom, "git-commit-from", "", "Analyze changes between commits <git-commit-from> and <git-commit-to>")
-	flag.StringVar(&args.mutable.gitCommitTo, "git-commit-to", "", "")
+	flag.StringVar(&args.mutable.gitCommitTo, "git-commit-to", "", "Analyze changes between commits <git-commit-from> and <git-commit-to>")
 	flag.StringVar(&args.gitRef, "git-ref", "", "Ref (e.g. branch) that is being pushed")
 	flag.StringVar(&args.gitPushArg, "git-push-arg", "", "In {pre,post}-receive hooks a whole line from stdin can be passed")
 	flag.StringVar(&args.gitAuthorsWhitelist, "git-author-whitelist", "", "Whitelist (comma-separated) for commit authors, if needed")
@@ -154,10 +128,10 @@ func bindFlags(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgume
 	flag.StringVar(&args.reportsExclude, "exclude", "", "Exclude regexp for filenames in reports list")
 	flag.StringVar(&args.reportsExcludeChecks, "exclude-checks", "", "Comma-separated list of check names to be excluded")
 	flag.StringVar(&args.allowDisable, "allow-disable", "", "Regexp for filenames where '@linter disable' is allowed")
-	flag.StringVar(&args.allowChecks, "allow-checks", strings.Join(enabledByDefault, ","),
+	flag.StringVar(&args.allowChecks, "allow-checks", allChecks,
 		"Comma-separated list of check names to be enabled")
 	flag.BoolVar(&args.allowAll, "allow-all-checks", false,
-		"Enables all checks. Has the same effect as passing all check names to the -allow-checks parameter")
+		"Enables all checks. Has the same effect as passing '<all>' to the -allow-checks parameter")
 	flag.StringVar(&args.misspellList, "misspell-list", "Eng",
 		"Comma-separated list of misspelling dicts; predefined sets are Eng, Eng/US and Eng/UK")
 
@@ -190,4 +164,15 @@ func bindFlags(config *linter.Config, ruleSets []*rules.Set, args *cmdlineArgume
 
 	var encodingUnused string
 	flag.StringVar(&encodingUnused, "encoding", "", "Deprecated and unused")
+}
+
+func formatFlags() (res string) {
+	flag.VisitAll(func(f *flag.Flag) {
+		defaultVal := f.DefValue
+		if f.DefValue != "" {
+			defaultVal = fmt.Sprintf("(default: %s)", f.DefValue)
+		}
+		res += fmt.Sprintf("  -%s %s\n      %s\n", f.Name, defaultVal, f.Usage)
+	})
+	return res
 }
