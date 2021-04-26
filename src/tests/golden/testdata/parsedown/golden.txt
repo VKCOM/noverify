@@ -52,6 +52,9 @@ MAYBE   regexpSimplify: May re-write '/^[(]\s*+((?:[^ ()]++|[(][^ )]+[)])++)(?:[
 MAYBE   regexpSimplify: May re-write '/^<\/\w[\w-]*+[ ]*+>/s' as '/^<\/\w[\w-]*+ *+>/s' at testdata/parsedown/parsedown.php:1470
         if ($Excerpt['text'][1] === '/' and preg_match('/^<\/\w[\w-]*+[ ]*+>/s', $Excerpt['text'], $matches))
                                                        ^^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   callSimplify: Could simplify to $Excerpt['text'][1] at testdata/parsedown/parsedown.php:1497
+        if (substr($Excerpt['text'], 1, 1) !== ' ' and strpos($Excerpt['text'], ';') !== false
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:1522
                     'handler' => array(
                     ^

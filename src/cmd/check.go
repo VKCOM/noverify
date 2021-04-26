@@ -18,17 +18,17 @@ func Check(cfg *MainConfig) (int, error) {
 	}
 	l := linter.NewLinter(config)
 
-	ruleSets, err := parseRules()
+	var args cmdlineArguments
+	bindFlags(config, &args)
+	flag.Parse()
+
+	ruleSets, err := parseRules(args.rulesList)
 	if err != nil {
 		return 1, fmt.Errorf("preload rules: %v", err)
 	}
 	for _, rset := range ruleSets {
 		config.Checkers.DeclareRules(rset)
 	}
-
-	var args cmdlineArguments
-	bindFlags(config, ruleSets, &args)
-	flag.Parse()
 
 	if args.disableCache {
 		config.CacheDir = ""

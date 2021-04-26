@@ -55,7 +55,7 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
 		return conv.mapType(e.Args[0])
 
 	case phpdoc.ExprName:
-		if suggest, ok := typeAliases[e.Value]; ok {
+		if suggest, has := types.Alias(e.Value); has {
 			conv.warn(fmt.Sprintf("use %s type instead of %s", suggest, e.Value))
 		}
 		return []types.Type{{Elem: e.Value}}
@@ -152,11 +152,11 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []types.
 		// We need to resolve the class names as well as static,
 		// self and $this here for it to work properly.
 		for i, typ := range typeList {
-			if _, ok := typeAliases[typ.Elem]; ok {
+			if types.IsAlias(typ.Elem) {
 				continue
 			}
 
-			if trivialTypes[typ.Elem] {
+			if types.IsTrivial(typ.Elem) {
 				continue
 			}
 
@@ -243,7 +243,7 @@ func typesFromNode(typeNode ir.Node) []types.Type {
 	// means that we need to force it to be interpreted as
 	// `\integer`, not as `int`. This is why we prepend `\`.
 	typ := types.Type{Elem: meta.NameNodeToString(n)}
-	if _, isAlias := typeAliases[typ.Elem]; isAlias {
+	if types.IsAlias(typ.Elem) {
 		typ.Elem = `\` + typ.Elem
 	}
 
@@ -263,18 +263,12 @@ func (n typeNormalizer) NormalizeTypes(typeList []types.Type) {
 	}
 }
 
-func (n typeNormalizer) string2name(s string) *ir.Name {
-	// TODO: Can avoid extra work by holding 1 tmp name inside
-	// typeNormalizer, since we never need more than one at the time.
-	return &ir.Name{Value: s}
-}
-
 func (n typeNormalizer) normalizeType(typ *types.Type) {
-	if trivialTypes[typ.Elem] {
+	if types.IsTrivial(typ.Elem) {
 		return
 	}
 
-	if typename, ok := typeAliases[typ.Elem]; ok {
+	if typename, has := types.Alias(typ.Elem); has {
 		typ.Elem = typename
 		return
 	}
@@ -304,39 +298,10 @@ func (n typeNormalizer) normalizeType(typ *types.Type) {
 		if typ.Elem[0] == '\\' {
 			return // Already FQN?
 		}
-		fullClassName, ok := solver.GetClassName(n.st, n.string2name(typ.Elem))
+		fullClassName, ok := solver.GetClassName(n.st, &ir.Name{Value: typ.Elem})
 		if !ok {
 			panic(fmt.Sprintf("can't expand type name: '%s'", typ.Elem))
 		}
 		typ.Elem = fullClassName
 	}
-}
-
-var trivialTypes = map[string]bool{
-	"bool":     true,
-	"callable": true,
-	"float":    true,
-	"int":      true,
-	"mixed":    true,
-	"object":   true,
-	"resource": true,
-	"string":   true,
-	"void":     true,
-	"iterable": true,
-
-	"null":  true,
-	"true":  true,
-	"false": true,
-}
-
-var typeAliases = map[string]string{
-	"integer": "int",
-	"long":    "int",
-
-	"boolean": "bool",
-
-	"real":   "float",
-	"double": "float",
-
-	"callback": "callable",
 }

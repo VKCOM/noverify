@@ -37,15 +37,15 @@ func RegisterDefaultCommands() {
 	GlobalCmds.RegisterCommand(&SubCommand{
 		Name:        "check",
 		Main:        Check,
-		Description: "lint the entire project",
+		Description: "Lint the entire project",
 		Examples: []SubCommandExample{
 			{
-				Description: "show subcommand usage",
+				Description: "Show command usage",
 				Line:        "-help",
 			},
 			{
-				Description: "run linter with default options",
-				Line:        "<analyze-path>",
+				Description: "Run linter with default options",
+				Line:        "[options] <analyze-path>",
 			},
 		},
 	})
@@ -53,42 +53,22 @@ func RegisterDefaultCommands() {
 	GlobalCmds.RegisterCommand(&SubCommand{
 		Name:        "help",
 		Main:        Help,
-		Description: "print linter documentation based on the subject",
+		Description: "Print linter documentation based on the subject",
 		Examples: []SubCommandExample{
 			{
-				Description: "show supported sub-subCommands",
+				Description: "Show usage help",
 				Line:        "",
 			},
 			{
-				Description: "print all supported checkers short summary",
+				Description: "Show all supported checkers short summary",
 				Line:        "checkers",
 			},
 			{
-				Description: "print dupSubExpr checker detailed documentation",
-				Line:        "checkers dupSubExpr",
+				Description: "Show <name> checker detailed documentation",
+				Line:        "checkers <name>",
 			},
 		},
 	})
-}
-
-func isCritical(l *linterRunner, r *linter.Report) bool {
-	if len(l.reportsCriticalSet) != 0 {
-		return l.reportsCriticalSet[r.CheckName]
-	}
-	return r.IsCritical()
-}
-
-func isEnabled(l *linterRunner, r *linter.Report) bool {
-	if !l.IsEnabledByFlags(r.CheckName) {
-		return false
-	}
-
-	if l.config.ExcludeRegex == nil {
-		return true
-	}
-
-	// Disabled by a file comment.
-	return !l.config.ExcludeRegex.MatchString(r.Filename)
 }
 
 // Run executes linter main function.
@@ -259,7 +239,7 @@ func createBaseline(l *linterRunner, cfg *MainConfig, reports []*linter.Report) 
 		if cfg.BeforeReport != nil && !cfg.BeforeReport(r) {
 			continue
 		}
-		if !isEnabled(l, r) {
+		if !l.IsEnabledReport(r) {
 			continue
 		}
 
@@ -349,13 +329,13 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 		if cfg.BeforeReport != nil && !cfg.BeforeReport(r) {
 			continue
 		}
-		if !isEnabled(l, r) {
+		if !l.IsEnabledReport(r) {
 			continue
 		}
 
 		filtered = append(filtered, r)
 
-		if isCritical(l, r) {
+		if l.IsCriticalReport(r) {
 			criticalReports++
 		}
 	}
@@ -377,7 +357,7 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 		}
 	} else {
 		for _, r := range filtered {
-			if isCritical(l, r) {
+			if l.IsCriticalReport(r) {
 				fmt.Fprintf(l.outputFp, "<critical> %s\n", FormatReport(r))
 			} else {
 				fmt.Fprintf(l.outputFp, "%s\n", FormatReport(r))

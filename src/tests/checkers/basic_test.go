@@ -2006,7 +2006,7 @@ func TestArrayUnion(t *testing.T) {
 		t.Errorf("Unexpected number of types: %d, excepted 1", l)
 	}
 
-	if !fnIntArr.Typ.IsArrayOf("int") {
+	if !fnIntArr.Typ.IsLazyArrayOf("int") {
 		t.Errorf("Wrong type: %s, expected int[]", fnIntArr.Typ)
 	}
 
@@ -2208,6 +2208,39 @@ function f() {
 	test.Expect = []string{
 		`since PHP 7.4, using array_key_exists() with an object has been deprecated, use isset() or property_exists() instead`,
 		`since PHP 7.4, using array_key_exists() with an object has been deprecated, use isset() or property_exists() instead`,
+	}
+	test.RunAndMatch()
+}
+
+func TestRandomIntWrongArgsOrder(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function random_int($min, $max) { return 0; }
+
+const AA = 99;
+
+function f() {
+    $_ = random_int(PHP_INT_MAX, PHP_INT_MIN);
+    $_ = random_int(100, 10);
+    $_ = random_int(100, 10 + 5);
+    $_ = random_int(100, AA);
+    $_ = random_int(true, false);
+    $_ = random_int(156.46, 119.45);
+
+    $_ = random_int(100 - AA, 10); // ok, min = 1, max = 10
+    $_ = random_int(100, AA + 5); // ok, min = 100, max = 104
+	$a = 10;
+    $_ = random_int(100, 10 + $a); // skipped, not constant
+    $_ = random_int("100", "10"); // skipped, string args
+}
+`)
+	test.Expect = []string{
+		`possibly wrong order of arguments, min = 9223372036854775807, max = -9223372036854775808`,
+		`possibly wrong order of arguments, min = 100, max = 10`,
+		`possibly wrong order of arguments, min = 100, max = 15`,
+		`possibly wrong order of arguments, min = 100, max = 99`,
+		`possibly wrong order of arguments, min = 1, max = 0`,
+		`possibly wrong order of arguments, min = 156, max = 119`,
 	}
 	test.RunAndMatch()
 }

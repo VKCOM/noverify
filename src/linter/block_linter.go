@@ -808,6 +808,38 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 		b.report(e, LevelNotice, "langDeprecated", "use is_float function instead of is_real")
 	case `\array_key_exists`:
 		b.checkArrayKeyExistsCall(e)
+	case `\random_int`:
+		b.checkRandomIntCall(e)
+	}
+}
+
+func (b *blockLinter) checkRandomIntCall(e *ir.FunctionCallExpr) {
+	if len(e.Args) < 2 {
+		return
+	}
+
+	arg1 := constfold.Eval(b.walker.r.ctx.st, e.Arg(0))
+	if !arg1.IsValid() {
+		return
+	}
+
+	arg2 := constfold.Eval(b.walker.r.ctx.st, e.Arg(1))
+	if !arg2.IsValid() {
+		return
+	}
+
+	min, ok := arg1.ToInt()
+	if !ok {
+		return
+	}
+
+	max, ok := arg2.ToInt()
+	if !ok {
+		return
+	}
+
+	if min > max {
+		b.report(e, LevelNotice, "argsOrder", "possibly wrong order of arguments, min = %d, max = %d", min, max)
 	}
 }
 
@@ -819,7 +851,7 @@ func (b *blockLinter) checkArrayKeyExistsCall(e *ir.FunctionCallExpr) {
 	typ := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, e.Arg(1).Expr)
 
 	onlyObjects := !typ.Find(func(typ string) bool {
-		return !types.IsClassType(typ)
+		return !types.IsClass(typ)
 	})
 
 	if onlyObjects {
@@ -1133,7 +1165,7 @@ func (b *blockLinter) checkFormatString(e *ir.FunctionCallExpr, arg *ir.Argument
 		}
 
 		arg := e.Arg(d.argNum)
-		if d.specifier == 's' && b.isArrayType(b.walker.exprType(arg.Expr)) {
+		if d.specifier == 's' && b.walker.exprType(arg.Expr).IsArray() {
 			b.report(arg, LevelWarning, "printf", "potential array to string conversion")
 		}
 	}
@@ -1143,10 +1175,6 @@ func (b *blockLinter) checkFormatString(e *ir.FunctionCallExpr, arg *ir.Argument
 			b.report(e.Arg(i), LevelWarning, "printf", "argument is not referenced from the formatting string")
 		}
 	}
-}
-
-func (b *blockLinter) isArrayType(typ types.Map) bool {
-	return typ.Len() == 1 && typ.Find(types.IsArrayType)
 }
 
 func (b *blockLinter) classParseState() *meta.ClassParseState {
