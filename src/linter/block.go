@@ -743,9 +743,13 @@ func (b *blockWalker) checkUnreachableForFinallyReturn(tryStmt *ir.TryStmt, tryC
 
 	var exitPoints []exitPoint
 
-	// If try contains some other return/die/etc statement.
-	if tryCtx.containsExitFlags != 0 && tryCtx.containsExitFlags^FlagThrow != 0 {
-		points := b.findExitPointsByFlags(&ir.StmtList{Stmts: tryStmt.Stmts}, tryCtx.containsExitFlags^FlagThrow)
+	// If try block contains some other return/die statements.
+	containsOtherNoThrowExitPoints := tryCtx.containsExitFlags&FlagReturn != 0 ||
+		tryCtx.containsExitFlags&FlagDie != 0
+
+	if containsOtherNoThrowExitPoints {
+		exitFlagsWithoutThrow := tryCtx.containsExitFlags ^ FlagThrow
+		points := b.findExitPointsByFlags(&ir.StmtList{Stmts: tryStmt.Stmts}, exitFlagsWithoutThrow)
 		exitPoints = append(exitPoints, points...)
 	}
 
@@ -754,11 +758,12 @@ func (b *blockWalker) checkUnreachableForFinallyReturn(tryStmt *ir.TryStmt, tryC
 
 	for i, context := range catchContexts {
 		if context.exitFlags != 0 || context.containsExitFlags != 0 {
-			points := b.findExitPointsByFlags(tryStmt.Catches[i], context.exitFlags^FlagDie)
+			exitFlagsWithoutDie := context.exitFlags ^ FlagDie
+			points := b.findExitPointsByFlags(tryStmt.Catches[i], exitFlagsWithoutDie)
 			exitPoints = append(exitPoints, points...)
 		}
 
-		if context.exitFlags&FlagDie == FlagDie {
+		if context.exitFlags&FlagDie != 0 {
 			catchContainsDie = true
 			catchWithDieIndex = i + 1
 		}
@@ -792,7 +797,7 @@ type exitPoint struct {
 
 func (b *blockWalker) findExitPointsByFlags(where ir.Node, exitFlags int) (points []exitPoint) {
 	irutil.Inspect(where, func(n ir.Node) bool {
-		if exitFlags&FlagReturn == FlagReturn {
+		if exitFlags&FlagReturn != 0 {
 			ret, ok := n.(*ir.ReturnStmt)
 			if ok {
 				points = append(points, exitPoint{
@@ -802,7 +807,7 @@ func (b *blockWalker) findExitPointsByFlags(where ir.Node, exitFlags int) (point
 			}
 		}
 
-		if exitFlags&FlagThrow == FlagThrow {
+		if exitFlags&FlagThrow != 0 {
 			thr, ok := n.(*ir.ThrowStmt)
 			if ok {
 				points = append(points, exitPoint{
@@ -812,7 +817,7 @@ func (b *blockWalker) findExitPointsByFlags(where ir.Node, exitFlags int) (point
 			}
 		}
 
-		if exitFlags&FlagDie == FlagDie {
+		if exitFlags&FlagDie != 0 {
 			exit, ok := n.(*ir.ExitExpr)
 			if ok {
 				typ := "exit"
