@@ -702,7 +702,7 @@ func (b *blockWalker) checkUnreachableForFinallyReturn(tryStmt *ir.TryStmt, tryC
 
 	var exitPoints []exitPoint
 
-	// if try contains some other return/die/etc statement
+	// If try contains some other return/die/etc statement.
 	if tryCtx.containsExitFlags != 0 && tryCtx.containsExitFlags^FlagThrow != 0 {
 		points := b.findExitPointsByFlags(&ir.StmtList{Stmts: tryStmt.Stmts}, tryCtx.containsExitFlags^FlagThrow)
 		exitPoints = append(exitPoints, points...)
