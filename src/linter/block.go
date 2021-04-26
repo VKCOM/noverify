@@ -1549,7 +1549,7 @@ func (b *blockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
 
 	typ.Iterate(func(t string) {
 		// FullyQualified class name will have "\" in the beginning
-		if types.IsClassType(t) {
+		if types.IsClass(t) {
 			maybeHaveClasses = true
 
 			if !haveArrayAccess && solver.Implements(b.r.ctx.st.Info, t, `\ArrayAccess`) {
@@ -1634,10 +1634,10 @@ func (b *blockWalker) handleAssignList(list *ir.ListExpr, rhs ir.Node) {
 	var shapeType string
 	typ.Iterate(func(typ string) {
 		switch {
-		case types.IsShapeType(typ):
+		case types.IsShape(typ):
 			shapeType = typ
-		case types.IsArrayType(typ):
-			elemType := strings.TrimSuffix(typ, "[]")
+		case types.IsArray(typ):
+			elemType := types.ArrayType(typ)
 			elemTypes = append(elemTypes, types.Type{Elem: elemType})
 		}
 	})
