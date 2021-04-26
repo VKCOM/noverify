@@ -18,6 +18,7 @@ func Check(ctx *AppContext) (int, error) {
 	l := linter.NewLinter(config)
 
 	ruleSets, err := parseRules(ctx.ParsedFlags.rulesList)
+
 	if err != nil {
 		return 1, fmt.Errorf("preload rules: %v", err)
 	}
