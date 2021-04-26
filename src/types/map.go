@@ -114,7 +114,7 @@ func NewMapFromTypes(types []Type) Map {
 func NewMap(str string) Map {
 	m := make(map[string]struct{}, strings.Count(str, "|")+1)
 	for _, s := range strings.Split(str, "|") {
-		if IsArrayType(s) {
+		if IsArray(s) {
 			s = WrapArrayOf(strings.TrimSuffix(s, "[]"))
 		}
 		m[s] = struct{}{}
@@ -156,8 +156,8 @@ func (m Map) Immutable() Map {
 	}
 }
 
-// IsEmpty checks if map has no types at all
-func (m Map) IsEmpty() bool {
+// Empty checks if map has no types at all
+func (m Map) Empty() bool {
 	return len(m.m) == 0
 }
 
@@ -180,10 +180,8 @@ func (m Map) Len() int {
 	return len(m.m)
 }
 
-// IsArray checks if map contains only array of any type
-//
-// Warning: use only for *lazy* types!
-func (m Map) IsArray() bool {
+// IsLazyArray checks if map contains only array of any type
+func (m Map) IsLazyArray() bool {
 	if len(m.m) != 1 {
 		return false
 	}
@@ -196,16 +194,29 @@ func (m Map) IsArray() bool {
 	return false
 }
 
-// IsArrayOf checks if map contains only array of given type
-//
-// Warning: use only for *lazy* types!
-func (m Map) IsArrayOf(typ string) bool {
+// IsLazyArrayOf checks if map contains only array of given type
+func (m Map) IsLazyArrayOf(typ string) bool {
 	if len(m.m) != 1 {
 		return false
 	}
 
 	_, ok := m.m[WrapArrayOf(typ)]
 	return ok
+}
+
+// IsArray checks if map contains only array of any type
+func (m Map) IsArray() bool {
+	if len(m.m) != 1 {
+		return false
+	}
+
+	for typ := range m.m {
+		if IsArray(typ) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Is reports whether m contains exactly one specified type.
@@ -369,9 +380,9 @@ func (m Map) Iterate(cb func(typ string)) {
 	}
 }
 
-// ArrayElemLazyType returns type of array element. T[] -> T, T[][] -> T[].
+// LazyArrayElemType returns type of array element. T[] -> T, T[][] -> T[].
 // For *Lazy* type.
-func (m Map) ArrayElemLazyType() Map {
+func (m Map) LazyArrayElemType() Map {
 	if m.Len() == 0 {
 		return MixedType
 	}

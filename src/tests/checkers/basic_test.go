@@ -2006,7 +2006,7 @@ func TestArrayUnion(t *testing.T) {
 		t.Errorf("Unexpected number of types: %d, excepted 1", l)
 	}
 
-	if !fnIntArr.Typ.IsArrayOf("int") {
+	if !fnIntArr.Typ.IsLazyArrayOf("int") {
 		t.Errorf("Wrong type: %s, expected int[]", fnIntArr.Typ)
 	}
 
