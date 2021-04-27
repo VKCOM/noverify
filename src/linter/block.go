@@ -757,20 +757,23 @@ func (b *blockWalker) checkUnreachableForFinallyReturn(tryStmt *ir.TryStmt, tryC
 	var catchWithDieIndex int
 
 	for i, context := range catchContexts {
-		if context.exitFlags != 0 || context.containsExitFlags != 0 {
-			exitFlagsWithoutDie := context.exitFlags ^ FlagDie
+		containsDie := context.exitFlags&FlagDie != 0
+		exitFlagsWithoutDie := context.exitFlags ^ FlagDie
+		containsOtherNoDieExitPoints := exitFlagsWithoutDie != 0
+
+		if containsOtherNoDieExitPoints {
 			points := b.findExitPointsByFlags(tryStmt.Catches[i], exitFlagsWithoutDie)
 			exitPoints = append(exitPoints, points...)
 		}
 
-		if context.exitFlags&FlagDie != 0 {
+		if containsDie {
 			catchContainsDie = true
 			catchWithDieIndex = i + 1
 		}
 	}
 
 	if catchContainsDie {
-		b.r.Report(tryStmt.Finally, LevelError, "unreachable", "block finally is unreachable (because %d catch block contains a exit/die)", catchWithDieIndex)
+		b.r.Report(tryStmt.Finally, LevelError, "unreachable", "block finally is unreachable (because catch block %d contains a exit/die)", catchWithDieIndex)
 
 		// If there is an error when the finally block is unreachable,
 		// then errors due to return in finally are skipped.
@@ -785,14 +788,14 @@ func (b *blockWalker) checkUnreachableForFinallyReturn(tryStmt *ir.TryStmt, tryC
 		}
 
 		for _, point := range exitPoints {
-			b.r.Report(point.n, LevelError, "unreachable", "%s is unreachable (because finally block contains a return on line %d)", point.typ, finallyReturnPos.StartLine)
+			b.r.Report(point.n, LevelError, "unreachable", "%s is unreachable (because finally block contains a return on line %d)", point.kind, finallyReturnPos.StartLine)
 		}
 	}
 }
 
 type exitPoint struct {
-	n   ir.Node
-	typ string
+	n    ir.Node
+	kind string
 }
 
 func (b *blockWalker) findExitPointsByFlags(where ir.Node, exitFlags int) (points []exitPoint) {
@@ -801,8 +804,8 @@ func (b *blockWalker) findExitPointsByFlags(where ir.Node, exitFlags int) (point
 			ret, ok := n.(*ir.ReturnStmt)
 			if ok {
 				points = append(points, exitPoint{
-					n:   ret,
-					typ: "return",
+					n:    ret,
+					kind: "return",
 				})
 			}
 		}
@@ -811,8 +814,8 @@ func (b *blockWalker) findExitPointsByFlags(where ir.Node, exitFlags int) (point
 			thr, ok := n.(*ir.ThrowStmt)
 			if ok {
 				points = append(points, exitPoint{
-					n:   thr,
-					typ: "throw",
+					n:    thr,
+					kind: "throw",
 				})
 			}
 		}
@@ -826,8 +829,8 @@ func (b *blockWalker) findExitPointsByFlags(where ir.Node, exitFlags int) (point
 				}
 
 				points = append(points, exitPoint{
-					n:   exit,
-					typ: typ,
+					n:    exit,
+					kind: typ,
 				})
 			}
 		}

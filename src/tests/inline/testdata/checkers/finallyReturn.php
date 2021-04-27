@@ -30,7 +30,7 @@ function finallyReturnBadDieInCatch(): int {
         throwException();
     } catch (Exception $_) {
         die();
-    } finally { // want `block finally is unreachable (because 1 catch block contains a exit/die)`
+    } finally { // want `block finally is unreachable (because catch block 1 contains a exit/die)`
         return 1;
     }
 }
@@ -44,7 +44,7 @@ function finallyReturnBadMultiplyExitPointInCatch(): int {
         } else {
             return 2;
         }
-    } finally { // want `block finally is unreachable (because 1 catch block contains a exit/die)`
+    } finally { // want `block finally is unreachable (because catch block 1 contains a exit/die)`
         return 1;
     }
 }
@@ -81,7 +81,7 @@ function finallyReturnBadMultiplyCatchWithDie(): int {
         return 2;
     } catch (Exception $_) {
         die();
-    } finally { // want `block finally is unreachable (because 2 catch block contains a exit/die)`
+    } finally { // want `block finally is unreachable (because catch block 2 contains a exit/die)`
         return 1;
     }
 }
@@ -93,7 +93,7 @@ function finallyReturnBadMultiplyCatchWithExit(): int {
         return 2;
     } catch (Exception $_) {
         exit();
-    } finally { // want `block finally is unreachable (because 2 catch block contains a exit/die)`
+    } finally { // want `block finally is unreachable (because catch block 2 contains a exit/die)`
         return 1;
     }
 }
@@ -103,7 +103,7 @@ function finallyReturnOkWithoutReturnInTryCatch(): int {
         throwException();
     } catch (Exception $_) {
     } finally {
-        return 1; /* ok, catch and try blocks don't contain return/exceptions/die/etc */
+        return 1; // ok, catch and try blocks don't contain return/exceptions/die/etc
     }
 }
 
