@@ -603,7 +603,7 @@ func (d *rootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.N
 	switch {
 	case b.bareReturn && b.returnsValue:
 		b.returnTypes = types.MergeMaps(b.returnTypes, types.NullType)
-	case b.returnTypes.IsEmpty() && b.returnsValue:
+	case b.returnTypes.Empty() && b.returnsValue:
 		b.returnTypes = types.MixedType
 	}
 
@@ -972,7 +972,7 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		// type that will force solver to walk interface types that
 		// current class implements to have a chance of finding relevant type info.
 		for i, p := range funcParams.params {
-			if !p.Typ.IsEmpty() {
+			if !p.Typ.Empty() {
 				continue // Already has a type
 			}
 
@@ -1338,7 +1338,7 @@ func (d *rootWalker) parseTypeNode(n ir.Node) (typ types.Map, ok bool) {
 
 	typeList := typesFromNode(n)
 	tm := newTypesMap(&d.ctx, typeList)
-	return tm, !tm.IsEmpty()
+	return tm, !tm.Empty()
 }
 
 // callbackParamByIndex returns the description of the parameter for the function by its index.
@@ -1425,7 +1425,7 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, phpDocParamsTypes phpDocP
 		v := p.Variable
 		phpDocType := phpDocParamsTypes[v.Name]
 
-		if !phpDocType.typ.IsEmpty() {
+		if !phpDocType.typ.Empty() {
 			sc.AddVarName(v.Name, phpDocType.typ, "param", meta.VarAlwaysDefined)
 		}
 
@@ -1442,7 +1442,7 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, phpDocParamsTypes phpDocP
 			}
 
 			typeHints[v.Name] = typeHintType
-		} else if paramTyp.IsEmpty() && p.DefaultValue != nil {
+		} else if paramTyp.Empty() && p.DefaultValue != nil {
 			paramTyp = solver.ExprTypeLocal(sc, d.ctx.st, p.DefaultValue)
 			// For the type resolver default value can look like a
 			// precise source of information (e.g. "false" is a precise bool),
@@ -1476,12 +1476,12 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, phpDocParamsTypes phpDocP
 
 func (d *rootWalker) typeHintHasMoreAccurateType(typeHintType, phpDocType types.Map) bool {
 	// If is not array typehint.
-	if !typeHintType.IsArrayOf("mixed") {
+	if !typeHintType.IsLazyArrayOf("mixed") {
 		return true
 	}
 
 	// If has more accurate type.
-	if !phpDocType.IsEmpty() {
+	if !phpDocType.Empty() {
 		return true
 	}
 
@@ -1634,7 +1634,7 @@ func (d *rootWalker) checkTypeHintClassCaseFunctionParam(p *ir.Parameter) {
 	}
 
 	typ.Iterate(func(typ string) {
-		if types.IsClassType(typ) {
+		if types.IsClass(typ) {
 			className := typ
 
 			class, ok := d.metaInfo().GetClass(className)
