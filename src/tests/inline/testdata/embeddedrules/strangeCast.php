@@ -17,5 +17,5 @@ function strangeCast() {
     $string = "10";
 
     $_ = +$string; // want `unary plus, possible type cast, use an explicit cast to int or float instead of using the unary plus`
-    $_ = -$string; // ok
+    $_ = -$string; // ok, unary minus
 }
