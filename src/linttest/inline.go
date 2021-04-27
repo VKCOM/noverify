@@ -3,6 +3,7 @@ package linttest
 import (
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"strings"
 	"testing"
 	"text/scanner"
@@ -28,59 +29,72 @@ func RunInlineTest(t *testing.T, dir string) {
 	}
 
 	for _, file := range files {
-		suite.handleFile(file)
+		errs := suite.handleFile(file)
+		for _, err = range errs {
+			filename := filepath.Base(file)
+			t.Errorf("%s: %v", filename, err)
+		}
 	}
 }
 
 // handleFile processes a file from the list of php files found in the directory.
-func (s *inlineTestSuite) handleFile(file string) {
+func (s *inlineTestSuite) handleFile(file string) (errs []error) {
 	lines, reports, err := s.handleFileContents(file)
-	if err != nil {
-		s.t.Error(err)
-	}
-
-	reportsByLine := s.createReportsByLine(reports)
-
-	for line, reports := range reportsByLine {
-		errs := s.handleReportsByLine(line, reports, lines)
-		for _, err = range errs {
-			s.t.Errorf("check comments: %v", err)
-		}
-	}
-}
-
-// handleReportsByLine handle one line from the resulting report map for each line.
-func (s *inlineTestSuite) handleReportsByLine(line int, reports []string, lines []string) (errs []error) {
-	if line-1 >= len(lines) {
-		return nil
-	}
-
-	lineContent := lines[line-1]
-	commIndex := strings.Index(lineContent, "//")
-
-	// If there is no comment in the line.
-	if commIndex == -1 {
-		return []error{
-			fmt.Errorf("unhandled errors for line %d: [%s]", line, strings.Join(reports, ", ")),
-		}
-	}
-
-	// get all after //
-	comment := lineContent[commIndex+2:]
-	p := commentParser{comment: comment, line: line}
-
-	expects, err := p.parseExpectation()
 	if err != nil {
 		return []error{err}
 	}
 
-	unmatched := s.compare(expects, reports)
+	reportsByLine := s.createReportsByLine(reports)
 
-	for _, report := range unmatched {
-		errs = append(errs, fmt.Errorf("unexpected report: '%s' on line %d\nexpected: [%s]", report, p.line, strings.Join(reports, ", ")))
+	return s.handleLines(lines, reportsByLine)
+}
+
+func (s *inlineTestSuite) handleLines(lines []string, reportsByLine map[int][]string) (errs []error) {
+	for index, line := range lines {
+		lineIndex := index + 1
+		reportByLine, hasReports := reportsByLine[lineIndex]
+		expects, err := s.getExpectationForLine(line, index)
+		if err != nil {
+			return []error{err}
+		}
+
+		if expects == nil && hasReports {
+			return []error{
+				fmt.Errorf("unhandled errors for line %d: [%s]", lineIndex, strings.Join(reportByLine, ", ")),
+			}
+		}
+
+		if len(expects) > 0 && !hasReports {
+			return []error{
+				fmt.Errorf("unexpected reports: [%s] on line %d\nexpected: no reports", strings.Join(expects, ", "), lineIndex),
+			}
+		}
+
+		unmatched := s.compare(expects, reportByLine)
+
+		for _, report := range unmatched {
+			errs = append(errs, fmt.Errorf("unexpected report: '%s' on line %d\nexpected: [%s]", report, lineIndex, strings.Join(reportByLine, ", ")))
+		}
 	}
 
 	return errs
+}
+
+func (s *inlineTestSuite) getExpectationForLine(line string, lineIndex int) ([]string, error) {
+	commIndex := strings.Index(line, "//")
+	if commIndex == -1 {
+		return nil, nil
+	}
+
+	comment := line[commIndex+2:]
+	p := commentParser{comment: comment, line: lineIndex}
+
+	expects, err := p.parseExpectation()
+	if err != nil {
+		return nil, err
+	}
+
+	return expects, nil
 }
 
 // compare compares expected and received reports and returns a list of unmatched errors.
@@ -184,6 +198,10 @@ scan:
 		switch tok {
 		case scanner.Ident: // 'want' or 'and'
 			keyword := sc.TokenText()
+			if keyword != `want` && keyword != `and` {
+				return nil, nil
+			}
+
 			err = c.checkKeyword(keyword, first)
 			if err != nil {
 				return nil, err

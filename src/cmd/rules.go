@@ -5,7 +5,6 @@ import (
 	"embed"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -29,7 +28,7 @@ func AddEmbeddedRules(rset *rules.Set, p *rules.Parser, filter func(r rules.Rule
 	return embeddedRuleSets, nil
 }
 
-func parseRules() ([]*rules.Set, error) {
+func parseRules(externalRules string) ([]*rules.Set, error) {
 	p := rules.NewParser()
 
 	ruleSets, err := parseEmbeddedRules(p)
@@ -37,9 +36,8 @@ func parseRules() ([]*rules.Set, error) {
 		return nil, fmt.Errorf("embedded rules: %v", err)
 	}
 
-	rulesFlag, ok := findRulesFlag()
-	if ok && rulesFlag != "" {
-		for _, filename := range strings.Split(rulesFlag, ",") {
+	if externalRules != "" {
+		for _, filename := range strings.Split(externalRules, ",") {
 			data, err := ioutil.ReadFile(filename)
 			if err != nil {
 				return nil, err
@@ -53,25 +51,6 @@ func parseRules() ([]*rules.Set, error) {
 	}
 
 	return ruleSets, nil
-}
-
-func findRulesFlag() (string, bool) {
-	// Prefix can be "-" or "--".
-	// Value can be "=" or " " separated.
-	// If value is " " separated, then it's located in the next argument.
-	for i, arg := range os.Args {
-		arg = strings.TrimLeft(arg, "-")
-		switch {
-		case strings.HasPrefix(arg, "rules="):
-			parts := strings.Split(arg, "=")
-			return parts[1], true
-		case arg == "rules":
-			if i+1 < len(os.Args) {
-				return os.Args[i+1], true
-			}
-		}
-	}
-	return "", false
 }
 
 func parseEmbeddedRules(p *rules.Parser) ([]*rules.Set, error) {

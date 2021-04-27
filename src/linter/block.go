@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/z7zmey/php-parser/pkg/position"
 	"github.com/z7zmey/php-parser/pkg/token"
 
 	"github.com/VKCOM/noverify/src/ir"
@@ -176,6 +177,10 @@ func (b *blockWalker) reportDeadCode(n ir.Node) {
 
 func (b *blockWalker) containsDisableInspection(n ir.Node, needInspection string) bool {
 	firstTkn := ir.GetFirstToken(n)
+	if firstTkn == nil {
+		return false
+	}
+
 	for _, tkn := range firstTkn.FreeFloating {
 		if !phpdoc.IsPHPDocToken(tkn) {
 			continue
@@ -678,17 +683,19 @@ func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
 		b.ctx.containsExitFlags |= ctx.containsExitFlags
 	}
 
-	ctx := b.withNewContext(func() {
+	tryCtx := b.withNewContext(func() {
 		for _, s := range s.Stmts {
 			b.addStatement(s)
 			s.Walk(b)
 		}
 	})
-	if ctx.exitFlags == 0 {
+	if tryCtx.exitFlags == 0 {
 		linksCount++
 	}
 
-	contexts = append(contexts, ctx)
+	b.checkUnreachableForFinallyReturn(s, tryCtx, finallyCtx, contexts)
+
+	contexts = append(contexts, tryCtx)
 
 	varTypes := make(map[string]types.Map, b.ctx.sc.Len())
 	defCounts := make(map[string]int, b.ctx.sc.Len())
@@ -719,14 +726,118 @@ func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
 		})
 	}
 
-	if othersExit && ctx.exitFlags != 0 {
+	if othersExit && tryCtx.exitFlags != 0 {
 		b.ctx.exitFlags |= prematureExitFlags
-		b.ctx.exitFlags |= ctx.exitFlags
+		b.ctx.exitFlags |= tryCtx.exitFlags
 	}
 
-	b.ctx.containsExitFlags |= ctx.containsExitFlags
+	b.ctx.containsExitFlags |= tryCtx.containsExitFlags
 
 	return false
+}
+
+func (b *blockWalker) checkUnreachableForFinallyReturn(tryStmt *ir.TryStmt, tryCtx *blockContext, finallyCtx *blockContext, catchContexts []*blockContext) {
+	if finallyCtx == nil {
+		return
+	}
+
+	var exitPoints []exitPoint
+
+	// If try block contains some other return/die statements.
+	containsOtherNoThrowExitPoints := tryCtx.containsExitFlags&FlagReturn != 0 ||
+		tryCtx.containsExitFlags&FlagDie != 0
+
+	if containsOtherNoThrowExitPoints {
+		exitFlagsWithoutThrow := tryCtx.containsExitFlags ^ FlagThrow
+		points := b.findExitPointsByFlags(&ir.StmtList{Stmts: tryStmt.Stmts}, exitFlagsWithoutThrow)
+		exitPoints = append(exitPoints, points...)
+	}
+
+	var catchContainsDie bool
+	var catchWithDieIndex int
+
+	for i, context := range catchContexts {
+		containsDie := context.exitFlags&FlagDie != 0
+		exitFlagsWithoutDie := context.exitFlags ^ FlagDie
+		containsOtherNoDieExitPoints := exitFlagsWithoutDie != 0
+
+		if containsOtherNoDieExitPoints {
+			points := b.findExitPointsByFlags(tryStmt.Catches[i], exitFlagsWithoutDie)
+			exitPoints = append(exitPoints, points...)
+		}
+
+		if containsDie {
+			catchContainsDie = true
+			catchWithDieIndex = i + 1
+		}
+	}
+
+	if catchContainsDie {
+		b.r.Report(tryStmt.Finally, LevelError, "unreachable", "block finally is unreachable (because catch block %d contains a exit/die)", catchWithDieIndex)
+
+		// If there is an error when the finally block is unreachable,
+		// then errors due to return in finally are skipped.
+		return
+	}
+
+	if finallyCtx.exitFlags == FlagReturn {
+		var finallyReturnPos position.Position
+		finallyReturns := b.findExitPointsByFlags(tryStmt.Finally, FlagReturn)
+		if len(finallyReturns) > 0 {
+			finallyReturnPos = *ir.GetPosition(finallyReturns[0].n)
+		}
+
+		for _, point := range exitPoints {
+			b.r.Report(point.n, LevelError, "unreachable", "%s is unreachable (because finally block contains a return on line %d)", point.kind, finallyReturnPos.StartLine)
+		}
+	}
+}
+
+type exitPoint struct {
+	n    ir.Node
+	kind string
+}
+
+func (b *blockWalker) findExitPointsByFlags(where ir.Node, exitFlags int) (points []exitPoint) {
+	irutil.Inspect(where, func(n ir.Node) bool {
+		if exitFlags&FlagReturn != 0 {
+			ret, ok := n.(*ir.ReturnStmt)
+			if ok {
+				points = append(points, exitPoint{
+					n:    ret,
+					kind: "return",
+				})
+			}
+		}
+
+		if exitFlags&FlagThrow != 0 {
+			thr, ok := n.(*ir.ThrowStmt)
+			if ok {
+				points = append(points, exitPoint{
+					n:    thr,
+					kind: "throw",
+				})
+			}
+		}
+
+		if exitFlags&FlagDie != 0 {
+			exit, ok := n.(*ir.ExitExpr)
+			if ok {
+				typ := "exit"
+				if exit.Die {
+					typ = "die"
+				}
+
+				points = append(points, exitPoint{
+					n:    exit,
+					kind: typ,
+				})
+			}
+		}
+		return true
+	})
+
+	return points
 }
 
 func (b *blockWalker) handleCatch(s *ir.CatchStmt) {
@@ -1545,7 +1656,7 @@ func (b *blockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
 
 	typ.Iterate(func(t string) {
 		// FullyQualified class name will have "\" in the beginning
-		if types.IsClassType(t) {
+		if types.IsClass(t) {
 			maybeHaveClasses = true
 
 			if !haveArrayAccess && solver.Implements(b.r.ctx.st.Info, t, `\ArrayAccess`) {
@@ -1630,10 +1741,10 @@ func (b *blockWalker) handleAssignList(list *ir.ListExpr, rhs ir.Node) {
 	var shapeType string
 	typ.Iterate(func(typ string) {
 		switch {
-		case types.IsShapeType(typ):
+		case types.IsShape(typ):
 			shapeType = typ
-		case types.IsArrayType(typ):
-			elemType := strings.TrimSuffix(typ, "[]")
+		case types.IsArray(typ):
+			elemType := types.ArrayType(typ)
 			elemTypes = append(elemTypes, types.Type{Elem: elemType})
 		}
 	})

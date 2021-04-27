@@ -18,5 +18,5 @@ function returnAssignOk(): int {
     $a = 100;
     echo $a;
 
-    return $a; // ok
+    return $a; // ok, no assign
 }
