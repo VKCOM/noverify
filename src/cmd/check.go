@@ -2,40 +2,30 @@ package cmd
 
 import (
 	"fmt"
-
-	"github.com/VKCOM/noverify/src/linter"
 )
 
 func Check(ctx *AppContext) (int, error) {
-	if ctx.MainConfig == nil {
-		ctx.MainConfig = &MainConfig{}
-	}
-
-	config := ctx.MainConfig.LinterConfig
-	if config == nil {
-		config = linter.NewConfig()
-	}
-	l := linter.NewLinter(config)
-
-	ruleSets, err := parseRules(ctx.ParsedFlags.rulesList)
-
+	ruleSets, err := parseExternalRules(ctx.ParsedFlags.rulesList)
 	if err != nil {
-		return 1, fmt.Errorf("preload rules: %v", err)
+		return 1, fmt.Errorf("preload external rules: %v", err)
 	}
+
 	for _, rset := range ruleSets {
-		config.Checkers.DeclareRules(rset)
+		ctx.MainConfig.linter.Config().Checkers.DeclareRules(rset)
 	}
+
+	ctx.MainConfig.rulesSets = append(ctx.MainConfig.rulesSets, ruleSets...)
 
 	if ctx.ParsedFlags.disableCache {
-		config.CacheDir = ""
+		ctx.MainConfig.linter.Config().CacheDir = ""
 	}
 
 	if ctx.MainConfig.AfterFlagParse != nil {
 		ctx.MainConfig.AfterFlagParse(InitEnvironment{
-			RuleSets: ruleSets,
-			MetaInfo: l.MetaInfo(),
+			RuleSets: ctx.MainConfig.rulesSets,
+			MetaInfo: ctx.MainConfig.linter.MetaInfo(),
 		})
 	}
 
-	return mainNoExit(l, ruleSets, ctx)
+	return mainNoExit(ctx)
 }

@@ -31,6 +31,10 @@ type MainConfig struct {
 	LinterVersion string
 
 	LinterConfig *linter.Config
+	linter       *linter.Linter
+	rulesSets    []*rules.Set
+
+	RegisterCheckers func() []linter.CheckerInfo
 
 	// ModifyApp is a callback function into which a standard
 	// application is passed to modify a command, name or description.

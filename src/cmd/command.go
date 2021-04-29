@@ -9,10 +9,17 @@ type Argument struct {
 	Description string
 }
 
+type Example struct {
+	Line        string
+	Description string
+}
+
 type Command struct {
 	Name        string
 	Description string
 	Action      func(*AppContext) (int, error)
+
+	Examples []Example
 
 	Arguments     []*Argument
 	RegisterFlags func(*AppContext) *flag.FlagSet

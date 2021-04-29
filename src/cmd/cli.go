@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 	"text/tabwriter"
 )
@@ -16,6 +17,8 @@ type AppContext struct {
 	ParsedFlags ParsedFlags
 	ParsedArgs  []string
 	FlagSet     *flag.FlagSet
+
+	CustomFlags interface{}
 }
 
 func (ctx *AppContext) FormatFlags() (res string) {
@@ -44,18 +47,37 @@ type App struct {
 	commands map[string]*Command
 }
 
+func (a *App) GetRawCommandByName(name string) *Command {
+	for _, command := range a.Commands {
+		if command.Name == name {
+			return command
+		}
+	}
+
+	return nil
+}
+
+func (a *App) addHelpCommands(commands []*Command) {
+	for _, command := range commands {
+		if command.Name != "help" {
+			a.addDefaultHelpCommand(command)
+		}
+
+		if len(command.Commands) > 0 {
+			a.addHelpCommands(command.Commands)
+		}
+	}
+}
+
 func (a *App) prepareCommands() {
 	if a.commands == nil {
 		a.commands = map[string]*Command{}
 	}
 
+	a.addHelpCommands(a.Commands)
+
 	for _, command := range a.Commands {
 		a.commands[command.Name] = command
-
-		if command.Name != "help" {
-			a.addDefaultHelpCommand(command)
-		}
-
 		command.prepareCommands()
 	}
 
@@ -71,7 +93,7 @@ func (a *App) prepareCommands() {
 }
 
 func (a *App) addDefaultHelpCommand(command *Command) {
-	a.commands[command.Name].Commands = append(a.commands[command.Name].Commands, &Command{
+	command.Commands = append(command.Commands, &Command{
 		Name:        "help",
 		Description: "The command to show help for " + command.Name + " command",
 		Action: func(ctx *AppContext) (int, error) {
@@ -101,9 +123,18 @@ func (a *App) addDefaultHelpCommand(command *Command) {
 
 			res += fmt.Sprintln("Usage:")
 			res += fmt.Sprintf("  $ %s %s%s%s - %s\n", a.Name, command.Name, options, args, command.Description)
-			res += fmt.Sprintln()
+
+			if len(command.Examples) > 0 {
+				res += fmt.Sprintln()
+				res += fmt.Sprintln("Examples:")
+
+				for _, example := range command.Examples {
+					res += fmt.Sprintf("  $ %s %s %s - %s\n", a.Name, command.Name, example.Line, example.Description)
+				}
+			}
 
 			if withArgs {
+				res += fmt.Sprintln()
 				res += fmt.Sprintln("Arguments:")
 
 				for _, arg := range command.Arguments {
@@ -111,9 +142,8 @@ func (a *App) addDefaultHelpCommand(command *Command) {
 				}
 			}
 
-			res += fmt.Sprintln()
-
 			if withFlags {
+				res += fmt.Sprintln()
 				res += fmt.Sprintln("Options:")
 
 				res += ctx.FormatFlags()
@@ -155,7 +185,15 @@ func (a *App) showHelp() {
 }
 
 func printCommands(w io.Writer, level int, commands map[string]*Command) {
+	commandSlice := make([]*Command, 0, len(commands))
 	for _, command := range commands {
+		commandSlice = append(commandSlice, command)
+	}
+	sort.Slice(commandSlice, func(i, j int) bool {
+		return commandSlice[i].Name < commandSlice[j].Name
+	})
+
+	for _, command := range commandSlice {
 		if command.Name == "help" {
 			continue
 		}
@@ -179,8 +217,6 @@ func (a *App) getCommandByArgs(args []string, commands map[string]*Command) (*Co
 		return nil, false
 	}
 
-	os.Args = os.Args[1:]
-
 	if len(command.commands) == 0 {
 		return command, true
 	}
@@ -194,13 +230,16 @@ func (a *App) getCommandByArgs(args []string, commands map[string]*Command) (*Co
 }
 
 func (a *App) Run(cfg *MainConfig) (int, error) {
-	if len(os.Args) == 1 {
-		a.showHelp()
-	}
-
 	os.Args = os.Args[1:]
 
 	a.prepareCommands()
+
+	// replace -help with help command
+	for i := range os.Args {
+		if strings.HasSuffix(os.Args[i], "help") && strings.HasPrefix(os.Args[i], "-") {
+			os.Args[i] = "help"
+		}
+	}
 
 	command, found := a.getCommandByArgs(os.Args, a.commands)
 	if !found {
@@ -218,11 +257,12 @@ func (a *App) Run(cfg *MainConfig) (int, error) {
 
 	if command.RegisterFlags != nil {
 		fs = command.RegisterFlags(ctx)
+		fs.Usage = nil
 	} else {
 		fs = flag.NewFlagSet("empty", flag.ContinueOnError)
 	}
 
-	err := fs.Parse(os.Args)
+	err := fs.Parse(os.Args[1:])
 	if err != nil {
 		return 2, err
 	}

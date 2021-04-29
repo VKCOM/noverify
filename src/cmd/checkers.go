@@ -8,24 +8,19 @@ import (
 
 	"github.com/VKCOM/noverify/src/lintdoc"
 	"github.com/VKCOM/noverify/src/linter"
-	"github.com/VKCOM/noverify/src/rules"
 )
 
 func Checkers(ctx *AppContext) (int, error) {
-	if ctx.MainConfig.LinterConfig == nil {
-		ctx.MainConfig.LinterConfig = linter.NewConfig()
-	}
-
 	// `checkers`
 	if len(ctx.ParsedArgs) == 0 {
-		showAllCheckers(ctx)
+		showCheckersList(ctx)
 		return 0, nil
 	}
 
-	checkerName := ctx.ParsedArgs[0]
+	checkerName := ctx.ParsedArgs[1]
 
 	// `checkers <name>`
-	err := showChecker(ctx.MainConfig.LinterConfig, checkerName)
+	err := showCheckerInfo(ctx.MainConfig.linter.Config(), checkerName)
 	if err != nil {
 		return 1, err
 	}
@@ -33,26 +28,14 @@ func Checkers(ctx *AppContext) (int, error) {
 	return 0, err
 }
 
-func showAllCheckers(ctx *AppContext) {
-	config := ctx.MainConfig.LinterConfig
-
-	ruleSets, err := AddEmbeddedRules(config.Rules, rules.NewParser(), func(r rules.Rule) bool { return true })
-	if err != nil {
-		panic(err)
-	}
-
-	for _, rset := range ruleSets {
-		config.Checkers.DeclareRules(rset)
-	}
+func showCheckersList(ctx *AppContext) {
+	config := ctx.MainConfig.linter.Config()
 
 	fmt.Println("Usage:")
 	fmt.Printf("  $ %s check -allow-checks='<list-checks>' /project/root\n", ctx.App.Name)
 	fmt.Println()
 	fmt.Println("  NOTE: In order to run the linter with only some checks, the -allow-checks")
 	fmt.Println("  flag is used which accepts a comma-separated list of checks that are allowed.")
-	fmt.Println()
-	fmt.Println("  For other possible options run")
-	fmt.Printf("     $ %s check help\n", ctx.App.Name)
 	fmt.Println()
 	fmt.Println("Checkers:")
 
@@ -63,7 +46,7 @@ func showAllCheckers(ctx *AppContext) {
 	w.Flush()
 }
 
-func showChecker(config *linter.Config, checkerName string) error {
+func showCheckerInfo(config *linter.Config, checkerName string) error {
 	var info linter.CheckerInfo
 	checks := config.Checkers.ListDeclared()
 	for i := range checks {

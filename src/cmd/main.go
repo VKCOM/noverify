@@ -20,7 +20,6 @@ import (
 	"github.com/VKCOM/noverify/src/lintdebug"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linter/lintapi"
-	"github.com/VKCOM/noverify/src/rules"
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
@@ -38,6 +37,12 @@ func registerMainApp() *App {
 				Name:        "check",
 				Description: "The command to lint files",
 				Action:      Check,
+				Examples: []Example{
+					{
+						Description: "merge without linter version combining, overwrites old baseline",
+						Line:        "-old baseline.json -new new-baseline.json",
+					},
+				},
 				Arguments: []*Argument{
 					{
 						Name:        "check-dir/file",
@@ -45,11 +50,7 @@ func registerMainApp() *App {
 					},
 				},
 				RegisterFlags: func(ctx *AppContext) *flag.FlagSet {
-					if ctx.MainConfig.LinterConfig == nil {
-						ctx.MainConfig.LinterConfig = linter.NewConfig()
-					}
-
-					return registerCheckFlags(ctx.MainConfig.LinterConfig, &ctx.ParsedFlags)
+					return RegisterCheckFlags(ctx.MainConfig.linter.Config(), &ctx.ParsedFlags)
 				},
 			},
 			{
@@ -62,25 +63,6 @@ func registerMainApp() *App {
 					},
 				},
 				Action: Checkers,
-			},
-			{
-				Name:        "check-rules",
-				Description: "The command to check dynamic rules",
-				Action: func(ctx *AppContext) (int, error) {
-
-					return 0, nil
-				},
-				Arguments: []*Argument{
-					{
-						Name:        "dir",
-						Description: "Directory with rules for check",
-					},
-				},
-				RegisterFlags: func(ctx *AppContext) *flag.FlagSet {
-					fs := flag.NewFlagSet("check-rules", flag.ContinueOnError)
-					fs.StringVar(&ctx.ParsedFlags.rulesTestDir, "testdata-folder", "", "Folder with testdata for rules")
-					return fs
-				},
 			},
 		},
 	}
@@ -96,6 +78,35 @@ func registerMainApp() *App {
 //
 // Optionally, non-nil config can be passed to customize function behavior.
 func Run(cfg *MainConfig) (int, error) {
+	if cfg == nil {
+		cfg = &MainConfig{}
+	}
+
+	config := cfg.LinterConfig
+	if config == nil {
+		config = linter.NewConfig()
+		cfg.LinterConfig = config
+	}
+
+	cfg.linter = linter.NewLinter(config)
+
+	ruleSets, err := parseEmbeddedRules()
+	if err != nil {
+		return 1, fmt.Errorf("preload embedded rules: %v", err)
+	}
+
+	for _, rset := range ruleSets {
+		config.Checkers.DeclareRules(rset)
+	}
+
+	cfg.rulesSets = append(cfg.rulesSets, ruleSets...)
+
+	if cfg.RegisterCheckers != nil {
+		for _, checker := range cfg.RegisterCheckers() {
+			cfg.linter.Config().Checkers.DeclareChecker(checker)
+		}
+	}
+
 	app := registerMainApp()
 	if cfg.ModifyApp != nil {
 		cfg.ModifyApp(app)
@@ -117,7 +128,7 @@ func Main(cfg *MainConfig) {
 // Note that if error is not nil, integer code will be discarded, so it can be 0.
 //
 // We don't want os.Exit to be inserted randomly to avoid defer cancellation.
-func mainNoExit(l *linter.Linter, ruleSets []*rules.Set, ctx *AppContext) (int, error) {
+func mainNoExit(ctx *AppContext) (int, error) {
 	if ctx.ParsedFlags.version {
 		// Version is already printed. Can exit here.
 		return 0, nil
@@ -160,16 +171,19 @@ func mainNoExit(l *linter.Linter, ruleSets []*rules.Set, ctx *AppContext) (int, 
 		}()
 	}
 
+	lint := ctx.MainConfig.linter
+	ruleSets := ctx.MainConfig.rulesSets
+
 	runner := linterRunner{
-		config: l.Config(),
-		linter: l,
+		config: lint.Config(),
+		linter: lint,
 	}
 	if err := runner.Init(ruleSets, &ctx.ParsedFlags); err != nil {
 		return 1, fmt.Errorf("init: %v", err)
 	}
 
 	lintdebug.Register(func(msg string) {
-		if l.Config().Debug {
+		if lint.Config().Debug {
 			log.Print(msg)
 		}
 	})
@@ -185,18 +199,19 @@ func mainNoExit(l *linter.Linter, ruleSets []*rules.Set, ctx *AppContext) (int, 
 		return gitMain(&runner, ctx.MainConfig)
 	}
 
-	log.Printf("Indexing %+v", flag.Args())
-	runner.linter.AnalyzeFiles(workspace.ReadFilenames(flag.Args(), nil, l.Config().PhpExtensions))
+	filenames := ctx.ParsedArgs
+
+	log.Printf("Indexing %+v", filenames)
+	runner.linter.AnalyzeFiles(workspace.ReadFilenames(filenames, nil, lint.Config().PhpExtensions))
 	parseIndexOnlyFiles(&runner)
 	runner.linter.MetaInfo().SetIndexingComplete(true)
 
-	filenames := ctx.ParsedArgs
 	if ctx.ParsedFlags.fullAnalysisFiles != "" {
 		filenames = strings.Split(ctx.ParsedFlags.fullAnalysisFiles, ",")
 	}
 
 	log.Printf("Linting")
-	reports := runner.linter.AnalyzeFiles(workspace.ReadFilenames(filenames, runner.filenameFilter, l.Config().PhpExtensions))
+	reports := runner.linter.AnalyzeFiles(workspace.ReadFilenames(filenames, runner.filenameFilter, lint.Config().PhpExtensions))
 	if ctx.ParsedFlags.outputBaseline {
 		if err := createBaseline(&runner, ctx.MainConfig, reports); err != nil {
 			return 1, fmt.Errorf("write baseline: %v", err)

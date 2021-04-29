@@ -68,8 +68,6 @@ type ParsedFlags struct {
 	}
 
 	disableCache bool
-
-	rulesTestDir string
 }
 
 func DefaultCacheDir() string {
@@ -82,7 +80,7 @@ func DefaultCacheDir() string {
 	return defaultCacheDir
 }
 
-func registerCheckFlags(config *linter.Config, parsedFlags *ParsedFlags) *flag.FlagSet {
+func RegisterCheckFlags(config *linter.Config, parsedFlags *ParsedFlags) *flag.FlagSet {
 	fs := flag.NewFlagSet("check", flag.ContinueOnError)
 
 	fs.StringVar(&parsedFlags.pprofHost, "pprof", "", "HTTP pprof endpoint (e.g. localhost:8080)")
