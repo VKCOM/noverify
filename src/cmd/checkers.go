@@ -39,9 +39,9 @@ func showCheckersList(ctx *AppContext) {
 	fmt.Println()
 	fmt.Println("Checkers:")
 
-	w := tabwriter.NewWriter(os.Stdout, 15, 0, 1, ' ', 0)
+	w := tabwriter.NewWriter(os.Stdout, 15, 0, 2, ' ', 0)
 	for _, info := range config.Checkers.ListDeclared() {
-		fmt.Fprintf(w, "  %s\t%s\t\n", info.Name, info.Comment)
+		fmt.Fprintf(w, "  %s\t%s\t\n", info.Name, strings.ReplaceAll(info.Comment, "\n", " "))
 	}
 	w.Flush()
 }

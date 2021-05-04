@@ -34,6 +34,7 @@ type MainConfig struct {
 	linter       *linter.Linter
 	rulesSets    []*rules.Set
 
+	// RegisterCheckers is used to register additional checkers.
 	RegisterCheckers func() []linter.CheckerInfo
 
 	// ModifyApp is a callback function into which a standard

@@ -50,7 +50,7 @@ func registerMainApp() *App {
 					},
 				},
 				RegisterFlags: func(ctx *AppContext) *flag.FlagSet {
-					return RegisterCheckFlags(ctx.MainConfig.linter.Config(), &ctx.ParsedFlags)
+					return RegisterCheckFlags(ctx)
 				},
 			},
 			{
