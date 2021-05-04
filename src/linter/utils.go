@@ -104,6 +104,7 @@ func mergeTypeMaps(left types.Map, right types.Map) types.Map {
 		if typ == "" {
 			return
 		}
+
 		if typ[0] == types.WArrayOf {
 			hasAtLeastOneArray = true
 		}
@@ -117,6 +118,7 @@ func mergeTypeMaps(left types.Map, right types.Map) types.Map {
 		if typ == "" {
 			return
 		}
+
 		if typ[0] == types.WArrayOf && types.UnwrapArrayOf(typ) == "mixed" && hasAtLeastOneArray {
 			return
 		}
