@@ -34,7 +34,7 @@ type linterRunner struct {
 }
 
 func (l *linterRunner) IsEnabledByFlags(checkName string) bool {
-	if !l.flags.allowAll && !l.reportsIncludeChecksSet[checkName] {
+	if !l.flags.AllowAll && !l.reportsIncludeChecksSet[checkName] {
 		return false // Not enabled by -allow-checks
 	}
 
@@ -68,7 +68,7 @@ func (l *linterRunner) IsEnabledReport(r *linter.Report) bool {
 func (l *linterRunner) collectGitIgnoreFiles() error {
 	l.filenameFilter = workspace.NewFilenameFilter(l.config.ExcludeRegex)
 
-	if !l.flags.gitignore {
+	if !l.flags.Gitignore {
 		return nil
 	}
 
@@ -112,10 +112,10 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, flags *ParsedFlags) error {
 	}
 
 	l.outputFp = os.Stderr
-	if flags.output != "" {
-		outputFp, err := os.OpenFile(flags.output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	if flags.Output != "" {
+		outputFp, err := os.OpenFile(flags.Output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 		if err != nil {
-			return fmt.Errorf("-output=%s: %v", flags.output, err)
+			return fmt.Errorf("-output=%s: %v", flags.Output, err)
 		}
 		l.outputFp = outputFp
 	}
@@ -124,12 +124,12 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, flags *ParsedFlags) error {
 		return err
 	}
 
-	l.config.PhpExtensions = strings.Split(flags.phpExtensionsArg, ",")
+	l.config.PhpExtensions = strings.Split(flags.PhpExtensionsArg, ",")
 
-	l.config.ComputeBaselineHashes = l.flags.baseline != "" || l.flags.outputBaseline
+	l.config.ComputeBaselineHashes = l.flags.Baseline != "" || l.flags.OutputBaseline
 
-	if flags.misspellList != "" {
-		err := LoadMisspellDicts(l.config, strings.Split(flags.misspellList, ","))
+	if flags.MisspellList != "" {
+		err := LoadMisspellDicts(l.config, strings.Split(flags.MisspellList, ","))
 		if err != nil {
 			return err
 		}
@@ -147,11 +147,11 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, flags *ParsedFlags) error {
 }
 
 func (l *linterRunner) initBaseline() error {
-	if l.flags.baseline == "" {
+	if l.flags.Baseline == "" {
 		return nil
 	}
 
-	f, err := os.Open(l.flags.baseline)
+	f, err := os.Open(l.flags.Baseline)
 	if err != nil {
 		return err
 	}
@@ -165,23 +165,23 @@ func (l *linterRunner) initBaseline() error {
 }
 
 func (l *linterRunner) compileRegexes() error {
-	if l.flags.reportsExclude != "" {
+	if l.flags.ReportsExclude != "" {
 		var err error
-		l.config.ExcludeRegex, err = regexp.Compile(l.flags.reportsExclude)
+		l.config.ExcludeRegex, err = regexp.Compile(l.flags.ReportsExclude)
 		if err != nil {
 			return fmt.Errorf("incorrect exclude regex: %v", err)
 		}
 	}
 
-	if l.flags.allowDisable != "" {
-		allowDisableRegex, err := regexp.Compile(l.flags.allowDisable)
+	if l.flags.AllowDisable != "" {
+		allowDisableRegex, err := regexp.Compile(l.flags.AllowDisable)
 		if err != nil {
 			return fmt.Errorf("incorrect 'allow disable' regex: %v", err)
 		}
 		l.config.AllowDisable = allowDisableRegex
 	}
 
-	switch l.flags.unusedVarPattern {
+	switch l.flags.UnusedVarPattern {
 	case "^_$":
 		// Default pattern, only $_ is allowed.
 		// Don't change anything.
@@ -192,7 +192,7 @@ func (l *linterRunner) compileRegexes() error {
 			return strings.HasPrefix(s, "_")
 		}
 	default:
-		re, err := regexp.Compile(l.flags.unusedVarPattern)
+		re, err := regexp.Compile(l.flags.UnusedVarPattern)
 		if err != nil {
 			return fmt.Errorf("incorrect unused-var-regex regex: %v", err)
 		}
@@ -211,9 +211,9 @@ func (l *linterRunner) initCheckMappings(ruleSets []*rules.Set) {
 		return set
 	}
 
-	l.reportsExcludeChecksSet = stringToSet(l.flags.reportsExcludeChecks)
+	l.reportsExcludeChecksSet = stringToSet(l.flags.ReportsExcludeChecks)
 
-	if l.flags.allowChecks == allChecks {
+	if l.flags.AllowChecks == allChecks {
 		set := make(map[string]bool)
 
 		declaredChecks := l.config.Checkers.ListDeclared()
@@ -230,11 +230,11 @@ func (l *linterRunner) initCheckMappings(ruleSets []*rules.Set) {
 
 		l.reportsIncludeChecksSet = set
 	} else {
-		l.reportsIncludeChecksSet = stringToSet(l.flags.allowChecks)
+		l.reportsIncludeChecksSet = stringToSet(l.flags.AllowChecks)
 	}
 
-	if l.flags.reportsCritical != allNonNoticeChecks {
-		l.reportsCriticalSet = stringToSet(l.flags.reportsCritical)
+	if l.flags.ReportsCritical != allNonNoticeChecks {
+		l.reportsCriticalSet = stringToSet(l.flags.ReportsCritical)
 	}
 }
 

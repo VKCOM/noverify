@@ -179,7 +179,6 @@ func (a *App) showHelp() {
 
 	res += fmt.Sprintln("  To get help for command, use the help subcommand:")
 	res += fmt.Sprintf("    $ %s check help\n", a.Name)
-	res += fmt.Sprintf("    $ %s checkers help\n", a.Name)
 
 	fmt.Println(res)
 }

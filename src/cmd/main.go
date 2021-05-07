@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -49,9 +48,7 @@ func registerMainApp() *App {
 						Description: "dir or file for check",
 					},
 				},
-				RegisterFlags: func(ctx *AppContext) *flag.FlagSet {
-					return RegisterCheckFlags(ctx)
-				},
+				RegisterFlags: RegisterCheckFlags,
 			},
 			{
 				Name:        "checkers",
@@ -129,14 +126,14 @@ func Main(cfg *MainConfig) {
 //
 // We don't want os.Exit to be inserted randomly to avoid defer cancellation.
 func mainNoExit(ctx *AppContext) (int, error) {
-	if ctx.ParsedFlags.version {
+	if ctx.ParsedFlags.Version {
 		// Version is already printed. Can exit here.
 		return 0, nil
 	}
 
-	if ctx.ParsedFlags.pprofHost != "" {
+	if ctx.ParsedFlags.PprofHost != "" {
 		go func() {
-			err := http.ListenAndServe(ctx.ParsedFlags.pprofHost, nil)
+			err := http.ListenAndServe(ctx.ParsedFlags.PprofHost, nil)
 			if err != nil {
 				log.Printf("pprof listen and serve: %v", err)
 			}
@@ -145,8 +142,8 @@ func mainNoExit(ctx *AppContext) (int, error) {
 
 	// Since this function is expected to be exit-free, it's OK
 	// to defer calls here to make required flushes/cleanup.
-	if ctx.ParsedFlags.cpuProfile != "" {
-		f, err := os.Create(ctx.ParsedFlags.cpuProfile)
+	if ctx.ParsedFlags.CpuProfile != "" {
+		f, err := os.Create(ctx.ParsedFlags.CpuProfile)
 		if err != nil {
 			return 0, fmt.Errorf("Could not create CPU profile: %v", err)
 		}
@@ -156,9 +153,9 @@ func mainNoExit(ctx *AppContext) (int, error) {
 		}
 		defer pprof.StopCPUProfile()
 	}
-	if ctx.ParsedFlags.memProfile != "" {
+	if ctx.ParsedFlags.MemProfile != "" {
 		defer func() {
-			f, err := os.Create(ctx.ParsedFlags.memProfile)
+			f, err := os.Create(ctx.ParsedFlags.MemProfile)
 			if err != nil {
 				log.Printf("could not create memory profile: %v", err)
 				return
@@ -187,7 +184,7 @@ func mainNoExit(ctx *AppContext) (int, error) {
 			log.Print(msg)
 		}
 	})
-	go linter.MemoryLimiterThread(ctx.ParsedFlags.maxFileSize)
+	go linter.MemoryLimiterThread(ctx.ParsedFlags.MaxFileSize)
 
 	log.Printf("Started")
 
@@ -195,7 +192,7 @@ func mainNoExit(ctx *AppContext) (int, error) {
 		return 0, fmt.Errorf("Init stubs: %v", err)
 	}
 
-	if ctx.ParsedFlags.gitRepo != "" {
+	if ctx.ParsedFlags.GitRepo != "" {
 		return gitMain(&runner, ctx.MainConfig)
 	}
 
@@ -206,13 +203,13 @@ func mainNoExit(ctx *AppContext) (int, error) {
 	parseIndexOnlyFiles(&runner)
 	runner.linter.MetaInfo().SetIndexingComplete(true)
 
-	if ctx.ParsedFlags.fullAnalysisFiles != "" {
-		filenames = strings.Split(ctx.ParsedFlags.fullAnalysisFiles, ",")
+	if ctx.ParsedFlags.FullAnalysisFiles != "" {
+		filenames = strings.Split(ctx.ParsedFlags.FullAnalysisFiles, ",")
 	}
 
 	log.Printf("Linting")
 	reports := runner.linter.AnalyzeFiles(workspace.ReadFilenames(filenames, runner.filenameFilter, lint.Config().PhpExtensions))
-	if ctx.ParsedFlags.outputBaseline {
+	if ctx.ParsedFlags.OutputBaseline {
 		if err := createBaseline(&runner, ctx.MainConfig, reports); err != nil {
 			return 1, fmt.Errorf("write baseline: %v", err)
 		}
@@ -344,7 +341,7 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 
 	containsAutofixableReports = haveAutofixableReports(l.config, filtered)
 
-	if l.flags.outputJSON {
+	if l.flags.OutputJSON {
 		type reportList struct {
 			Reports []*linter.Report
 			Errors  []string
