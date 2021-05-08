@@ -225,7 +225,9 @@ func mainNoExit(ctx *AppContext) (int, error) {
 		log.Printf("Found %d critical reports", criticalReports)
 		return 2, nil
 	}
-	log.Printf("No critical issues found. Your code is perfect.")
+	if !ctx.MainConfig.DisableCriticalIssuesLog {
+		log.Printf("No critical issues found. Your code is perfect.")
+	}
 	return 0, nil
 }
 

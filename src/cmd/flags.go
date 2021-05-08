@@ -8,8 +8,8 @@ import (
 	"time"
 )
 
-const allNonNoticeChecks = "<all-non-notice>"
-const allChecks = "<all>"
+const AllNonNoticeChecks = "<all-non-notice>"
+const AllChecks = "<all>"
 
 type ParsedFlags struct {
 	Version bool
@@ -103,7 +103,7 @@ func RegisterCheckFlags(ctx *AppContext) *flag.FlagSet {
 	fs.BoolVar(&ctx.ParsedFlags.ConservativeBaseline, "conservative-baseline", false,
 		"If enabled, baseline mode will have less false positive, but more false negatives")
 
-	fs.StringVar(&ctx.ParsedFlags.ReportsCritical, "critical", allNonNoticeChecks,
+	fs.StringVar(&ctx.ParsedFlags.ReportsCritical, "critical", AllNonNoticeChecks,
 		"Comma-separated list of check names that are considered critical (all non-notice checks by default)")
 
 	fs.StringVar(&ctx.ParsedFlags.RulesList, "rules", "",
@@ -131,7 +131,7 @@ func RegisterCheckFlags(ctx *AppContext) *flag.FlagSet {
 	fs.StringVar(&ctx.ParsedFlags.ReportsExclude, "exclude", "", "Exclude regexp for filenames in reports list")
 	fs.StringVar(&ctx.ParsedFlags.ReportsExcludeChecks, "exclude-checks", "", "Comma-separated list of check names to be excluded")
 	fs.StringVar(&ctx.ParsedFlags.AllowDisable, "allow-disable", "", "Regexp for filenames where '@linter disable' is allowed")
-	fs.StringVar(&ctx.ParsedFlags.AllowChecks, "allow-checks", allChecks,
+	fs.StringVar(&ctx.ParsedFlags.AllowChecks, "allow-checks", AllChecks,
 		"Comma-separated list of check names to be enabled")
 	fs.BoolVar(&ctx.ParsedFlags.AllowAll, "allow-all-checks", false,
 		"Enables all checks. Has the same effect as passing '<all>' to the -allow-checks parameter")

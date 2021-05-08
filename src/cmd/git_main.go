@@ -196,7 +196,10 @@ func gitMain(l *linterRunner, cfg *MainConfig) (int, error) {
 		log.Printf("Found %d critical issues, please fix them.", criticalReports)
 		return 2, nil
 	}
-	log.Printf("No critical issues found. Your code is perfect.")
+
+	if !cfg.DisableCriticalIssuesLog {
+		log.Printf("No critical issues found. Your code is perfect.")
+	}
 	return 0, nil
 }
 

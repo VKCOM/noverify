@@ -40,4 +40,7 @@ type MainConfig struct {
 	// ModifyApp is a callback function into which a standard
 	// application is passed to modify a command, name or description.
 	ModifyApp func(app *App)
+
+	// If true, then the message "No critical issues found. Your code is perfect." is not displayed.
+	DisableCriticalIssuesLog bool
 }

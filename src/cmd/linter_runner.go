@@ -213,7 +213,7 @@ func (l *linterRunner) initCheckMappings(ruleSets []*rules.Set) {
 
 	l.reportsExcludeChecksSet = stringToSet(l.flags.ReportsExcludeChecks)
 
-	if l.flags.AllowChecks == allChecks {
+	if l.flags.AllowChecks == AllChecks {
 		set := make(map[string]bool)
 
 		declaredChecks := l.config.Checkers.ListDeclared()
@@ -233,7 +233,7 @@ func (l *linterRunner) initCheckMappings(ruleSets []*rules.Set) {
 		l.reportsIncludeChecksSet = stringToSet(l.flags.AllowChecks)
 	}
 
-	if l.flags.ReportsCritical != allNonNoticeChecks {
+	if l.flags.ReportsCritical != AllNonNoticeChecks {
 		l.reportsCriticalSet = stringToSet(l.flags.ReportsCritical)
 	}
 }
