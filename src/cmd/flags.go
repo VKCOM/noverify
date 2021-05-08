@@ -16,7 +16,7 @@ type ParsedFlags struct {
 
 	PprofHost string
 
-	CpuProfile string
+	CPUProfile string
 	MemProfile string
 
 	MaxFileSize int
@@ -162,7 +162,7 @@ func RegisterCheckFlags(ctx *AppContext) *flag.FlagSet {
 		"Variables that match such regexp are marked as discarded; not reported as unused, but should not be used as values")
 	fs.BoolVar(&ctx.ParsedFlags.Version, "version", false, "Show version info and exit")
 
-	fs.StringVar(&ctx.ParsedFlags.CpuProfile, "cpuprofile", "", "Write cpu profile to `file`")
+	fs.StringVar(&ctx.ParsedFlags.CPUProfile, "cpuprofile", "", "Write cpu profile to `file`")
 	fs.StringVar(&ctx.ParsedFlags.MemProfile, "memprofile", "", "Write memory profile to `file`")
 
 	var encodingUnused string

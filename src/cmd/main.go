@@ -142,8 +142,8 @@ func mainNoExit(ctx *AppContext) (int, error) {
 
 	// Since this function is expected to be exit-free, it's OK
 	// to defer calls here to make required flushes/cleanup.
-	if ctx.ParsedFlags.CpuProfile != "" {
-		f, err := os.Create(ctx.ParsedFlags.CpuProfile)
+	if ctx.ParsedFlags.CPUProfile != "" {
+		f, err := os.Create(ctx.ParsedFlags.CPUProfile)
 		if err != nil {
 			return 0, fmt.Errorf("Could not create CPU profile: %v", err)
 		}
