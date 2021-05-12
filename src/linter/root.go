@@ -2099,21 +2099,21 @@ func (d *rootWalker) afterLeaveFile() {
 	if !d.metaInfo().IsIndexingComplete() {
 		for _, shape := range d.ctx.shapes {
 			props := make(meta.PropertiesMap)
-			for _, p := range shape.props {
-				props[p.key] = meta.PropertyInfo{
-					Typ:         newTypesMap(&d.ctx, p.types).Immutable(),
+			for _, p := range shape.Props {
+				props[p.Key] = meta.PropertyInfo{
+					Typ:         newTypesMap(&d.ctx, p.Types).Immutable(),
 					AccessLevel: meta.Public,
 				}
 			}
 			cl := meta.ClassInfo{
-				Name:       shape.name,
+				Name:       shape.Name,
 				Properties: props,
 				Flags:      meta.ClassShape,
 			}
 			if d.meta.Classes.H == nil {
 				d.meta.Classes = meta.NewClassesMap()
 			}
-			d.meta.Classes.Set(shape.name, cl)
+			d.meta.Classes.Set(shape.Name, cl)
 		}
 	}
 }
