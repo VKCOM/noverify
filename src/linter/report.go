@@ -653,7 +653,7 @@ $_ = is_float($a);`,
 
 		{
 			Name:     "typeHint",
-			Default:  false,
+			Default:  true,
 			Quickfix: false,
 			Comment:  `Report misuse of type hints.`,
 			Before:   `function f(array $a) {}`,
@@ -670,18 +670,6 @@ function f(array $a) {}`,
 			Comment:  `Report suspicious arguments order`,
 			Before:   `strpos('/', $s);`,
 			After:    `strpos($s, '/');`,
-		},
-
-		{
-			Name:     "typeHint",
-			Default:  true,
-			Quickfix: false,
-			Comment:  `Report misuse of type hints.`,
-			Before:   `function f(array $a) {}`,
-			After: `/**
- * @param mixed[] $a
- */
-function f(array $a) {}`,
 		},
 	}
 
