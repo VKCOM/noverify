@@ -3,7 +3,6 @@ package cmd
 import (
 	"bytes"
 	"embed"
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -15,8 +14,8 @@ import (
 //go:embed embeddedrules
 var embeddedRulesData embed.FS
 
-func AddEmbeddedRules(rset *rules.Set, p *rules.Parser, filter func(r rules.Rule) bool) ([]*rules.Set, error) {
-	embeddedRuleSets, err := parseEmbeddedRules(p)
+func AddEmbeddedRules(rset *rules.Set, filter func(r rules.Rule) bool) ([]*rules.Set, error) {
+	embeddedRuleSets, err := parseEmbeddedRules()
 	if err != nil {
 		return nil, err
 	}
@@ -28,33 +27,34 @@ func AddEmbeddedRules(rset *rules.Set, p *rules.Parser, filter func(r rules.Rule
 	return embeddedRuleSets, nil
 }
 
-func parseRules(externalRules string) ([]*rules.Set, error) {
-	p := rules.NewParser()
-
-	ruleSets, err := parseEmbeddedRules(p)
-	if err != nil {
-		return nil, fmt.Errorf("embedded rules: %v", err)
+func parseExternalRules(externalRules string) ([]*rules.Set, error) {
+	if externalRules == "" {
+		return nil, nil
 	}
 
-	if externalRules != "" {
-		for _, filename := range strings.Split(externalRules, ",") {
-			data, err := ioutil.ReadFile(filename)
-			if err != nil {
-				return nil, err
-			}
-			rset, err := p.Parse(filename, bytes.NewReader(data))
-			if err != nil {
-				return nil, err
-			}
-			ruleSets = append(ruleSets, rset)
+	p := rules.NewParser()
+
+	var ruleSets []*rules.Set
+
+	for _, filename := range strings.Split(externalRules, ",") {
+		data, err := ioutil.ReadFile(filename)
+		if err != nil {
+			return nil, err
 		}
+
+		ruleSet, err := p.Parse(filename, bytes.NewReader(data))
+		if err != nil {
+			return nil, err
+		}
+		ruleSets = append(ruleSets, ruleSet)
 	}
 
 	return ruleSets, nil
 }
 
-func parseEmbeddedRules(p *rules.Parser) ([]*rules.Set, error) {
+func parseEmbeddedRules() ([]*rules.Set, error) {
 	var ruleSets []*rules.Set
+	p := rules.NewParser()
 
 	entries, err := embeddedRulesData.ReadDir("embeddedrules")
 	if err != nil {

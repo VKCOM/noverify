@@ -6,6 +6,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
+	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/types"
 )
@@ -152,7 +153,8 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 	case *ir.CloneExpr:
 		return ExprTypeLocalCustom(sc, cs, n.Expr, custom)
 	case *ir.ClosureExpr:
-		return types.NewMap(`\Closure`)
+		name := autogen.GenerateClosureName(n, cs)
+		return types.NewMap(name)
 	case *ir.MagicConstant:
 		return magicConstantType(n)
 	}
@@ -491,24 +493,30 @@ func staticFunctionCallType(n *ir.StaticCallExpr, cs *meta.ClassParseState) type
 }
 
 func functionCallType(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) types.Map {
-	nm, ok := n.Function.(*ir.Name)
-	if !ok {
-		return types.Map{}
-	}
-	if nm.IsFullyQualified() {
-		if nm.NumParts() == 1 {
-			typ, ok := internalFuncType(strings.TrimPrefix(nm.Value, `\`), sc, cs, n, custom)
-			if ok {
-				return typ
+	switch nm := n.Function.(type) {
+	case *ir.Name:
+		if nm.IsFullyQualified() {
+			if nm.NumParts() == 1 {
+				typ, ok := internalFuncType(strings.TrimPrefix(nm.Value, `\`), sc, cs, n, custom)
+				if ok {
+					return typ
+				}
 			}
+			return types.NewMap(types.WrapFunctionCall(nm.Value))
 		}
-		return types.NewMap(types.WrapFunctionCall(nm.Value))
+		typ, ok := internalFuncType(`\`+nm.Value, sc, cs, n, custom)
+		if ok {
+			return typ
+		}
+		return types.NewMap(types.WrapFunctionCall(cs.Namespace + `\` + nm.Value))
+	case *ir.SimpleVar:
+		cl, ok := closureTypeByNameNode(n.Function, sc, cs)
+		if ok {
+			return cl
+		}
 	}
-	typ, ok := internalFuncType(`\`+nm.Value, sc, cs, n, custom)
-	if ok {
-		return typ
-	}
-	return types.NewMap(types.WrapFunctionCall(cs.Namespace + `\` + nm.Value))
+
+	return types.MixedType
 }
 
 func magicConstantType(n *ir.MagicConstant) types.Map {
@@ -516,4 +524,17 @@ func magicConstantType(n *ir.MagicConstant) types.Map {
 		return types.PreciseIntType
 	}
 	return types.PreciseStringType
+}
+
+func closureTypeByNameNode(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState) (types.Map, bool) {
+	if !cs.Info.IsIndexingComplete() {
+		return types.Map{}, false
+	}
+
+	fi, ok := GetClosure(name, sc, cs)
+	if !ok {
+		return types.Map{}, false
+	}
+
+	return types.NewMap(types.WrapFunctionCall(fi.Name)), true
 }

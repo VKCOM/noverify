@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/solver"
@@ -13,16 +14,6 @@ import (
 // TODO: reflect source line in shape names.
 
 type warningString string
-
-type shapeTypeProp struct {
-	key   string
-	types []types.Type
-}
-
-type shapeTypeInfo struct {
-	name  string
-	props []shapeTypeProp
-}
 
 // typesFromPHPDoc extracts types out of the PHPDoc type string.
 //
@@ -126,7 +117,7 @@ func (conv *phpdocTypeConverter) mapArrayType(elem phpdoc.TypeExpr) []types.Type
 }
 
 func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []types.Type {
-	props := make([]shapeTypeProp, 0, len(params))
+	props := make([]autogen.ShapeTypeProp, 0, len(params))
 	for i, p := range params {
 		if p.Value == "*" || p.Value == "..." {
 			continue
@@ -178,19 +169,19 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []types.
 			})
 		}
 
-		props = append(props, shapeTypeProp{
-			key:   key.Value,
-			types: typeList,
+		props = append(props, autogen.ShapeTypeProp{
+			Key:   key.Value,
+			Types: typeList,
 		})
 	}
 
-	shape := shapeTypeInfo{
-		name:  conv.ctx.generateShapeName(),
-		props: props,
+	shape := autogen.ShapeTypeInfo{
+		Name:  autogen.GenerateShapeName(props, conv.ctx.st),
+		Props: props,
 	}
-	conv.ctx.shapes = append(conv.ctx.shapes, shape)
+	conv.ctx.shapes[shape.Name] = shape
 
-	return []types.Type{{Elem: shape.name}}
+	return []types.Type{{Elem: shape.Name}}
 }
 
 func (conv *phpdocTypeConverter) mapTupleType(params []phpdoc.TypeExpr) []types.Type {

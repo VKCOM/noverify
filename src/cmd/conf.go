@@ -31,8 +31,16 @@ type MainConfig struct {
 	LinterVersion string
 
 	LinterConfig *linter.Config
+	linter       *linter.Linter
+	rulesSets    []*rules.Set
 
-	// OverriddenCommands is a list of new commands and
-	// commands that override existing commands.
-	OverriddenCommands *Commands
+	// RegisterCheckers is used to register additional checkers.
+	RegisterCheckers func() []linter.CheckerInfo
+
+	// ModifyApp is a callback function into which a standard
+	// application is passed to modify a command, name or description.
+	ModifyApp func(app *App)
+
+	// If true, then the message "No critical issues found. Your code is perfect." is not displayed.
+	DisableCriticalIssuesLog bool
 }

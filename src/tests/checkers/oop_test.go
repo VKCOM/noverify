@@ -751,14 +751,10 @@ func TestClosureLateBinding(t *testing.T) {
 		}
 	}
 
-	class Closure {
-		public function call();
-	}
-
 	(function() {
 		$this->method();
 		$a->method();
-	})->call(new Example());
+	})();
 	`)
 	test.Expect = []string{
 		"Undefined variable: a",

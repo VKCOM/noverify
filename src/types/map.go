@@ -42,7 +42,7 @@ type Map struct {
 //
 // Type precision determined by a type information source.
 // For example, Int literal has a precise type of `int`, while having
-// a phpdoc that promises some variable to have type `T` is not precise enough.
+// a phpdoc that promises some variable to have type `T` too generic.
 //
 // Adding an imprecise type to a types map makes the entire type map imprecise.
 //
