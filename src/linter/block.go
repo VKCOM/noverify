@@ -1211,9 +1211,9 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		b.untrackVarName(v.Name)
 	}
 
-	params, minParamsCnt := b.r.parseFuncArgs(fun.Params, phpDocParamTypes, sc, closureSolver)
+	params := b.r.parseFuncParams(fun.Params, phpDocParamTypes, sc, closureSolver)
 
-	funcInfo := b.r.handleFuncStmts(params, closureUses, fun.Stmts, sc)
+	funcInfo := b.r.handleFuncStmts(params.params, closureUses, fun.Stmts, sc)
 	actualReturnTypes := funcInfo.returnTypes
 	exitFlags := funcInfo.prematureExitFlags
 
@@ -1230,11 +1230,11 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 	}
 
 	b.r.meta.Functions.Set(name, meta.FuncInfo{
-		Params:       params,
+		Params:       params.params,
 		Name:         name,
 		Pos:          b.r.getElementPos(fun),
 		Typ:          returnTypes.Immutable(),
-		MinParamsCnt: minParamsCnt,
+		MinParamsCnt: params.minParamsCount,
 		Flags:        0,
 		ExitFlags:    exitFlags,
 		Doc:          doc.info,
