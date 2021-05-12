@@ -282,6 +282,20 @@ func TestInterpretString(t *testing.T) {
 			singleQuote: []byte(`FAIL: illegal trailing \`),
 			doubleQuote: []byte(`FAIL: illegal trailing \`),
 		},
+
+		// With leading zeros.
+		{
+			raw:         `\u{00000000000000000000aA19}`,
+			singleQuote: []byte(`\u{00000000000000000000aA19}`),
+			doubleQuote: []byte(`ꨙ`),
+		},
+
+		// Too large codepoint
+		{
+			raw:         `\u{241234aA19}`,
+			singleQuote: []byte(`\u{241234aA19}`),
+			doubleQuote: []byte(`FAIL: decode UTF-8 codepoints: invalid UTF-8 codepoint escape sequence: codepoint too large`),
+		},
 	}
 
 	runTest := func(t *testing.T, raw string, quote byte, want []byte) {
