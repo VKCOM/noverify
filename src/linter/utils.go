@@ -144,13 +144,13 @@ func mergeTypeMaps(left types.Map, right types.Map) types.Map {
 //    the union of the types that are returned from the function by return.
 func functionReturnType(phpdocReturnType types.Map, hintReturnType types.Map, actualReturnTypes types.Map) types.Map {
 	var returnTypes types.Map
-	if !phpdocReturnType.IsEmpty() || !hintReturnType.IsEmpty() {
+	if !phpdocReturnType.Empty() || !hintReturnType.Empty() {
 		returnTypes = mergeTypeMaps(phpdocReturnType, hintReturnType)
 	} else {
 		returnTypes = actualReturnTypes
 	}
 
-	if returnTypes.IsEmpty() {
+	if returnTypes.Empty() {
 		returnTypes = types.VoidType
 	}
 

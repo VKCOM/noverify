@@ -197,7 +197,7 @@ func binaryPlusOpType(sc *meta.Scope, cs *meta.ClassParseState, left, right ir.N
 	// TODO: PHP will raise fatal error if one operand is array and other is not, so we may check it too
 	leftType := ExprTypeLocalCustom(sc, cs, left, custom)
 	rightType := ExprTypeLocalCustom(sc, cs, right, custom)
-	if leftType.IsArray() && rightType.IsArray() {
+	if leftType.IsLazyArray() && rightType.IsLazyArray() {
 		return types.MergeMaps(leftType, rightType)
 	}
 	return binaryMathOpType(sc, cs, left, right, custom)
@@ -238,7 +238,7 @@ func classNameToString(cs *meta.ClassParseState, n ir.Node) (string, bool) {
 
 func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir.FunctionCallExpr, custom []CustomType) (typ types.Map, ok bool) {
 	fn, ok := cs.Info.GetInternalFunctionInfo(nm)
-	if !ok || fn.Typ.IsEmpty() {
+	if !ok || fn.Typ.Empty() {
 		return types.Map{}, false
 	}
 
@@ -252,11 +252,10 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 
 	switch override.OverrideType {
 	case meta.OverrideArgType:
-		return typ, true
+		// do nothing
 
 	case meta.OverrideElementType:
-		newTyp := typ.Map(types.WrapElemOf)
-		return newTyp, true
+		typ = typ.Map(types.WrapElemOf)
 
 	case meta.OverrideClassType, meta.OverrideNullableClassType:
 		// due to the fact that it is impossible for us to use constfold
@@ -268,14 +267,29 @@ func internalFuncType(nm string, sc *meta.Scope, cs *meta.ClassParseState, c *ir
 		}
 
 		if override.OverrideType == meta.OverrideNullableClassType {
-			return types.NewMap(className + "|null"), true
+			typ = types.NewMap(className + "|null")
+		} else {
+			typ = types.NewMap(className)
 		}
 
-		return types.NewMap(className), true
+	default:
+		log.Printf("Internal error: unexpected override type %d for function %s", override.OverrideType, nm)
 	}
 
-	log.Printf("Internal error: unexpected override type %d for function %s", override.OverrideType, nm)
-	return types.Map{}, false
+	switch override.Properties {
+	case meta.NotNull:
+		typ = typ.Filter(func(s string) bool {
+			return s != "null"
+		})
+	case meta.NotFalse:
+		typ = typ.Filter(func(s string) bool {
+			return s != "false"
+		})
+	case meta.ArrayOf:
+		typ = typ.Map(types.WrapArrayOf)
+	}
+
+	return typ, !typ.Empty()
 }
 
 func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*ir.ArrayItemExpr) types.Map {
@@ -294,13 +308,13 @@ func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*ir.ArrayItemEx
 
 	firstElementType := ExprTypeLocal(sc, cs, items[0])
 	if items[0].Unpack {
-		firstElementType = firstElementType.ArrayElemLazyType()
+		firstElementType = firstElementType.LazyArrayElemType()
 	}
 
 	for _, item := range items[1:] {
 		itemType := ExprTypeLocal(sc, cs, item)
 		if item.Unpack {
-			itemType = itemType.ArrayElemLazyType()
+			itemType = itemType.LazyArrayElemType()
 		}
 
 		if !firstElementType.Equals(itemType) {
@@ -379,7 +393,7 @@ func typeCastType(n *ir.TypeCastExpr) types.Map {
 
 func arrayDimFetchType(n *ir.ArrayDimFetchExpr, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) types.Map {
 	m := ExprTypeLocalCustom(sc, cs, n.Variable, custom)
-	if m.IsEmpty() {
+	if m.Empty() {
 		return types.Map{}
 	}
 
@@ -408,7 +422,7 @@ func propertyFetchType(n *ir.PropertyFetchExpr, sc *meta.Scope, cs *meta.ClassPa
 	}
 
 	m := ExprTypeLocalCustom(sc, cs, n.Variable, custom)
-	if m.IsEmpty() {
+	if m.Empty() {
 		return types.Map{}
 	}
 
@@ -430,7 +444,7 @@ func methodCallType(n *ir.MethodCallExpr, sc *meta.Scope, cs *meta.ClassParseSta
 	}
 
 	m := ExprTypeLocalCustom(sc, cs, n.Variable, custom)
-	if m.IsEmpty() {
+	if m.Empty() {
 		return types.Map{}
 	}
 
