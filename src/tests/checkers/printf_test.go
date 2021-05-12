@@ -10,6 +10,9 @@ func TestSprintf(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{`stubs/phpstorm-stubs/standard/standard_2.php`}
 	test.AddFile(`<?php
+/**
+ * @param mixed[] $a
+ */
 function f($s, array $a) {
   $_ = sprintf('%d');
   $_ = sprintf('%2$d', 10); // arg not referenced
@@ -42,6 +45,9 @@ func TestPrintf(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{`stubs/phpstorm-stubs/standard/standard_2.php`}
 	test.AddFile(`<?php
+/**
+ * @param mixed[] $a
+ */
 function f($s, array $a) {
   printf('%d');
   printf('%2$d', 10); // arg not referenced

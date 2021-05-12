@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * @param mixed[] $array
+ */
 function in_array_over_array_keys(array $array) {
     $_ = in_array('abc', array_keys($array)); // bad
     $_ = array_keys('abc', $array); // good
@@ -16,6 +19,10 @@ function some_substr(string $str, int $index) {
     $_ = substr($str, $index, 10);
 }
 
+/**
+ * @param mixed[] $array
+ * @param int   $val
+ */
 function some_array_push(array $array, int $val) {
     array_push($array, $val);
     array_push($array, 10);
