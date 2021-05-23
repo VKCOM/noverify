@@ -205,6 +205,9 @@ func (p *parser) parseRuleInfo(st ir.Node, proto *Rule) (Rule, error) {
 			rule.Level = lintapi.LevelNotice
 			rule.Message = part.ParamsText
 
+		case "strict-syntax":
+			rule.StrictSyntax = true
+
 		case "fix":
 			if rule.Fix != "" {
 				return rule, p.errorf(st, "duplicated @fix")
@@ -352,6 +355,7 @@ func (p *parser) parseRule(st ir.Node, proto *Rule) error {
 	}
 
 	pos := ir.GetPosition(st)
+	p.compiler.FuzzyMatching = !rule.StrictSyntax
 	m, err := p.compiler.Compile(p.sources[pos.StartPos-1 : pos.EndPos])
 	if err != nil {
 		return p.errorf(st, "pattern compilation error: %v", err)

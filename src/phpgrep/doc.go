@@ -17,8 +17,6 @@ package phpgrep
 //
 // - Replace functionality.
 //
-// - Handle case sensitivity carefully (provide an option?).
-//
 // - stmt.Expression vs normal expressions named captures (should they match?).
 //
 // - Multi-statements matching.
