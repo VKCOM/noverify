@@ -1,10 +1,28 @@
 package phpgrep
 
 import (
+	"strconv"
+
 	"github.com/z7zmey/php-parser/pkg/position"
 
 	"github.com/VKCOM/noverify/src/ir"
 )
+
+func normalizedIntValue(s string) string {
+	v, err := strconv.ParseInt(s, 0, 64)
+	if err != nil {
+		return s
+	}
+	return strconv.FormatInt(v, 10)
+}
+
+func normalizedFloatValue(s string) string {
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return s
+	}
+	return strconv.FormatFloat(v, 'f', -1, 64)
+}
 
 func findNamed(capture []CapturedNode, name string) (ir.Node, bool) {
 	for _, c := range capture {

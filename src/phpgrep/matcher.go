@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
+	"github.com/VKCOM/noverify/src/ir/phpcore"
 )
 
 type matcherState struct {
@@ -22,6 +24,7 @@ type matcher struct {
 	numVars int
 
 	caseSensitive bool
+	fuzzyMatching bool
 
 	// Used only when -tracing build tag is specified.
 	tracingBuf   *bytes.Buffer
@@ -227,6 +230,12 @@ func (m *matcher) eqNodeWithCase(state *matcherState, x, y ir.Node) bool {
 	}
 }
 
+func (m *matcher) eqBinaryExpr(state *matcherState, xlhs, xrhs, ylhs, yrhs ir.Node) bool {
+	// TODO: if it's safe, ignore parens here too.
+	// Hint: it's not always safe to do so.
+	return m.eqNode(state, xlhs, ylhs) && m.eqNode(state, xrhs, yrhs)
+}
+
 func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 	if tracingEnabled && m.tracingBuf != nil {
 		pad := strings.Repeat(" • ", m.tracingDepth)
@@ -371,19 +380,32 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 
 	case *ir.ListExpr:
 		y, ok := y.(*ir.ListExpr)
-		return ok && x.ShortSyntax == y.ShortSyntax &&
-			m.eqArrayItemSlice(state, x.Items, y.Items)
+		if !ok {
+			return false
+		}
+		if !m.fuzzyMatching {
+			if x.ShortSyntax != y.ShortSyntax {
+				return false
+			}
+		}
+		return m.eqArrayItemSlice(state, x.Items, y.Items)
 
 	case *ir.NewExpr:
 		y, ok := y.(*ir.NewExpr)
 		if !ok || !m.eqNodeWithCase(state, x.Class, y.Class) {
 			return false
 		}
-		if x.Args == nil {
-			return y.Args == nil
-		}
-		if y.Args == nil {
-			return x.Args == nil
+		if m.fuzzyMatching {
+			if len(x.Args) != len(y.Args) {
+				return false
+			}
+		} else {
+			if x.Args == nil {
+				return y.Args == nil
+			}
+			if y.Args == nil {
+				return x.Args == nil
+			}
 		}
 		return m.eqNodeSlice(state, x.Args, y.Args)
 
@@ -457,23 +479,58 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 		if !ok {
 			return false
 		}
-		if x.Key == nil || y.Key == nil {
-			return x.Key == y.Key && m.eqNode(state, x.Val, y.Val)
+		xVal := x.Val
+		yVal := y.Val
+		if m.fuzzyMatching {
+			xVal = irutil.Unparen(xVal)
+			yVal = irutil.Unparen(yVal)
 		}
-		return m.eqNode(state, x.Key, y.Key) && m.eqNode(state, x.Val, y.Val)
+		if x.Key == nil || y.Key == nil {
+			return x.Key == y.Key && m.eqNode(state, xVal, yVal)
+		}
+		xKey := x.Key
+		yKey := y.Key
+		if m.fuzzyMatching {
+			xKey = irutil.Unparen(xKey)
+			yKey = irutil.Unparen(yKey)
+		}
+		return m.eqNode(state, xKey, yKey) && m.eqNode(state, xVal, yVal)
 	case *ir.ArrayExpr:
 		y, ok := y.(*ir.ArrayExpr)
-		return ok && x.ShortSyntax == y.ShortSyntax &&
-			m.eqArrayItemSlice(state, x.Items, y.Items)
+		if !ok {
+			return false
+		}
+		if !m.fuzzyMatching {
+			if x.ShortSyntax != y.ShortSyntax {
+				return false
+			}
+		}
+		return m.eqArrayItemSlice(state, x.Items, y.Items)
 
 	case *ir.Argument:
 		y, ok := y.(*ir.Argument)
-		return ok && x.IsReference == y.IsReference &&
-			x.Variadic == y.Variadic &&
-			m.eqNode(state, x.Expr, y.Expr)
+		if !ok || x.IsReference != y.IsReference || x.Variadic != y.Variadic {
+			return false
+		}
+		xExpr := x.Expr
+		yExpr := y.Expr
+		if m.fuzzyMatching {
+			xExpr = irutil.Unparen(xExpr)
+			yExpr = irutil.Unparen(yExpr)
+		}
+		return m.eqNode(state, xExpr, yExpr)
 	case *ir.FunctionCallExpr:
 		y, ok := y.(*ir.FunctionCallExpr)
-		if !ok || !m.eqNodeWithCase(state, x.Function, y.Function) {
+		if !ok {
+			return false
+		}
+		xFunc := x.Function
+		yFunc := y.Function
+		if m.fuzzyMatching {
+			xFunc = phpcore.ResolveAlias(xFunc)
+			yFunc = phpcore.ResolveAlias(yFunc)
+		}
+		if !m.eqNodeWithCase(state, xFunc, yFunc) {
 			return false
 		}
 		return m.eqNodeSlice(state, x.Args, y.Args)
@@ -561,95 +618,115 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 		return ok && y.Value == x.Value
 	case *ir.Lnumber:
 		y, ok := y.(*ir.Lnumber)
-		return ok && y.Value == x.Value
+		if !ok {
+			return false
+		}
+		if m.fuzzyMatching {
+			return normalizedIntValue(y.Value) == x.Value
+		}
+		return y.Value == x.Value
 	case *ir.Dnumber:
 		y, ok := y.(*ir.Dnumber)
-		return ok && y.Value == x.Value
+		if !ok {
+			return false
+		}
+		if m.fuzzyMatching {
+			return normalizedFloatValue(y.Value) == x.Value
+		}
+		return y.Value == x.Value
 	case *ir.String:
 		y, ok := y.(*ir.String)
-		return ok && y.Value == x.Value
+		if !ok {
+			return false
+		}
+		if !m.fuzzyMatching {
+			if y.DoubleQuotes != x.DoubleQuotes {
+				return false
+			}
+		}
+		return y.Value == x.Value
 
 	case *ir.CoalesceExpr:
 		y, ok := y.(*ir.CoalesceExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.ConcatExpr:
 		y, ok := y.(*ir.ConcatExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.DivExpr:
 		y, ok := y.(*ir.DivExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.ModExpr:
 		y, ok := y.(*ir.ModExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.MulExpr:
 		y, ok := y.(*ir.MulExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.PowExpr:
 		y, ok := y.(*ir.PowExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.BitwiseAndExpr:
 		y, ok := y.(*ir.BitwiseAndExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.BitwiseOrExpr:
 		y, ok := y.(*ir.BitwiseOrExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.BitwiseXorExpr:
 		y, ok := y.(*ir.BitwiseXorExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.ShiftLeftExpr:
 		y, ok := y.(*ir.ShiftLeftExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.ShiftRightExpr:
 		y, ok := y.(*ir.ShiftRightExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.LogicalAndExpr:
 		y, ok := y.(*ir.LogicalAndExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.LogicalOrExpr:
 		y, ok := y.(*ir.LogicalOrExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.LogicalXorExpr:
 		y, ok := y.(*ir.LogicalXorExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.BooleanAndExpr:
 		y, ok := y.(*ir.BooleanAndExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.BooleanOrExpr:
 		y, ok := y.(*ir.BooleanOrExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.NotEqualExpr:
 		y, ok := y.(*ir.NotEqualExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.NotIdenticalExpr:
 		y, ok := y.(*ir.NotIdenticalExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.EqualExpr:
 		y, ok := y.(*ir.EqualExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.IdenticalExpr:
 		y, ok := y.(*ir.IdenticalExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.GreaterExpr:
 		y, ok := y.(*ir.GreaterExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.GreaterOrEqualExpr:
 		y, ok := y.(*ir.GreaterOrEqualExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.SmallerExpr:
 		y, ok := y.(*ir.SmallerExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.SmallerOrEqualExpr:
 		y, ok := y.(*ir.SmallerOrEqualExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.SpaceshipExpr:
 		y, ok := y.(*ir.SpaceshipExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.PlusExpr:
 		y, ok := y.(*ir.PlusExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 	case *ir.MinusExpr:
 		y, ok := y.(*ir.MinusExpr)
-		return ok && m.eqNode(state, x.Left, y.Left) && m.eqNode(state, x.Right, y.Right)
+		return ok && m.eqBinaryExpr(state, x.Left, x.Right, y.Left, y.Right)
 
 	case *ir.ConstFetchExpr:
 		y, ok := y.(*ir.ConstFetchExpr)

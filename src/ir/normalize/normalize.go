@@ -10,6 +10,7 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irfmt"
 	"github.com/VKCOM/noverify/src/ir/irutil"
+	"github.com/VKCOM/noverify/src/ir/phpcore"
 	"github.com/VKCOM/noverify/src/meta"
 )
 
@@ -354,10 +355,7 @@ func (norm *normalizer) normalizedExpr(e ir.Node) ir.Node {
 		}
 
 		// Replace aliased functions.
-		alias, ok := funcAliases[funcName.Value]
-		if ok {
-			e.Function = alias
-		}
+		e.Function = phpcore.ResolveAlias(funcName)
 
 	case *ir.Assign:
 		if !sideEffectFree(e.Variable) {
@@ -445,31 +443,6 @@ var (
 	nullConstNode   = &ir.ConstFetchExpr{Constant: &ir.Name{Value: "null"}}
 	emptyStringNode = &ir.String{}
 )
-
-var funcAliases = map[string]*ir.Name{
-	// See https://www.php.net/manual/ru/aliases.php
-
-	`doubleval`: {Value: `floatval`},
-
-	`ini_alter`:    {Value: `ini_set`},
-	`is_integer`:   {Value: `is_int`},
-	`is_long`:      {Value: `is_int`},
-	`is_real`:      {Value: `is_float`},
-	`is_double`:    {Value: `is_float`},
-	`is_writeable`: {Value: `is_writable`},
-
-	`join`:       {Value: `implode`},
-	`chop`:       {Value: `rtrim`},
-	`strchr`:     {Value: `strstr`},
-	`pos`:        {Value: `current`},
-	`key_exists`: {Value: `array_key_exists`},
-	`sizeof`:     {Value: `count`},
-
-	`close`:                {Value: `closedir`},
-	`fputs`:                {Value: `fwrite`},
-	`magic_quotes_runtime`: {Value: `set_magic_quotes_runtime`},
-	`show_source`:          {Value: `highlight_file`},
-}
 
 func literalValue(e ir.Node) string {
 	switch e := e.(type) {

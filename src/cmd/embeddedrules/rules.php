@@ -238,12 +238,14 @@ function offBy1() {
   /**
    * @warning probably intended to use count-1 as an index
    * @fix     $a[count($a) - 1]
+   * @strict-syntax
    */
   $a[count($a)];
 
   /**
    * @warning probably intended to use sizeof-1 as an index
    * @fix     $a[sizeof($a) - 1]
+   * @strict-syntax
    */
   $a[sizeof($a)];
 }
