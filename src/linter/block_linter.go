@@ -156,7 +156,7 @@ func (b *blockLinter) enterNode(n ir.Node) {
 		b.walker.r.checkKeywordCase(n, "else")
 
 	case *ir.ForeachStmt:
-		b.walker.r.checkKeywordCase(n, "foreach")
+		b.checkForeach(n)
 	case *ir.ForStmt:
 		b.walker.r.checkKeywordCase(n, "for")
 	case *ir.WhileStmt:
@@ -181,6 +181,39 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 	case *ir.BadString:
 		b.report(n, LevelError, "syntax", "%s", n.Error)
+	}
+}
+
+func (b *blockLinter) checkForeach(n *ir.ForeachStmt) {
+	b.walker.r.checkKeywordCase(n, "foreach")
+
+	var vars []*ir.SimpleVar
+
+	findAllVars := func(n ir.Node) bool {
+		if vr, ok := n.(*ir.SimpleVar); ok {
+			vars = append(vars, vr)
+		}
+		return true
+	}
+
+	if n.Variable != nil {
+		irutil.Inspect(n.Variable, findAllVars)
+	}
+	if n.Key != nil {
+		irutil.Inspect(n.Key, findAllVars)
+	}
+
+	fun, ok := b.walker.r.currentFunction()
+	if !ok {
+		return
+	}
+
+	for _, v := range vars {
+		for _, param := range fun.Params {
+			if v.Name == param.Name {
+				b.report(v, LevelError, "varShadow", "Variable $%s shadow existing variable $%s from current function params", v.Name, param.Name)
+			}
+		}
 	}
 }
 
