@@ -16,3 +16,33 @@ MAYBE   trailingComma: last element in a multi-line array must have a trailing c
 MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/math/src/Internal/Calculator/NativeCalculator.php:187
                     (string) $r
                     ^^^^^^^^^^^
+ERROR   classCompOrder: Constant UNNECESSARY must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:33
+    public const UNNECESSARY = 0;
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classCompOrder: Constant UP must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:41
+    public const UP = 1;
+    ^^^^^^^^^^^^^^^^^^^^
+ERROR   classCompOrder: Constant DOWN must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:49
+    public const DOWN = 2;
+    ^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classCompOrder: Constant CEILING must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:57
+    public const CEILING = 3;
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classCompOrder: Constant FLOOR must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:65
+    public const FLOOR = 4;
+    ^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classCompOrder: Constant HALF_UP must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:73
+    public const HALF_UP = 5;
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classCompOrder: Constant HALF_DOWN must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:80
+    public const HALF_DOWN = 6;
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classCompOrder: Constant HALF_CEILING must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:87
+    public const HALF_CEILING = 7;
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classCompOrder: Constant HALF_FLOOR must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:94
+    public const HALF_FLOOR = 8;
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classCompOrder: Constant HALF_EVEN must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:106
+    public const HALF_EVEN = 9;
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^

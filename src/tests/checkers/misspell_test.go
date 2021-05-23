@@ -28,14 +28,14 @@ class c1 {
   const Foo = 0;
 
   /**
-   * This method is never called, this is why it's inexpencive.
-   */
-  private static function secret() {}
-
-  /**
    * This property is not inefficeint.
    */
   private $prop = 1;
+
+  /**
+   * This method is never called, this is why it's inexpencive.
+   */
+  private static function secret() {}
 }
 `)
 	test.Expect = []string{

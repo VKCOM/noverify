@@ -671,6 +671,23 @@ function f(array $a) {}`,
 			Before:   `strpos('/', $s);`,
 			After:    `strpos($s, '/');`,
 		},
+
+		{
+			Name:     "classCompOrder",
+			Default:  false,
+			Quickfix: false,
+			Comment:  `Report the wrong order of the class component.`,
+			Before: `class A {
+  public function func() {}
+  const B = 1;
+  public $c = 2;
+}`,
+			After: `class A {
+  const B = 1;
+  public $c = 2;
+  public function func() {}
+}`,
+		},
 	}
 
 	for _, info := range allChecks {

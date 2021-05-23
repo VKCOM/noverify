@@ -1529,3 +1529,98 @@ function a1(Foo $a, foo $b, boo $c) {}
 	}
 	test.RunAndMatch()
 }
+
+func TestClassComponentsOrder(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {
+  public function f() {}
+
+  const A = 10;
+  public string $a = "";
+}
+
+class Foo1 {
+  const A = 10;
+
+  public function f() {}
+
+  public string $a = "";
+}
+
+class Foo2 {
+  const A = 10;
+
+  public function f() {}
+
+  public static string $a = "";
+
+  public function f1() {}
+}
+
+class Foo3 {
+  public function f() {}
+
+  public string $a = "";
+
+  public static function f1() {}
+
+  const A = 10;
+}
+`)
+
+	test.Expect = []string{
+		`Constant A must go before methods in the class Foo`,
+		`Property $a must go before methods in the class Foo`,
+		`Property $a must go before methods in the class Foo1`,
+		`Property $a must go before methods in the class Foo2`,
+		`Property $a must go before methods in the class Foo3`,
+		`Constant A must go before methods in the class Foo3`,
+	}
+	linttest.RunFilterMatch(test, "classCompOrder")
+}
+
+func TestClassComponentsOrderGood(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class Foo {
+  const A = 10;
+  public string $a = "";
+
+  /** */
+  public function f() {}
+}
+
+class Foo1 {
+  const A = 10;
+  public string $a = "";
+}
+
+class Foo2 {}
+
+class Foo3 {
+  const A = 10;
+
+  /** */
+  public function f() {}
+}
+
+class Foo4 {
+  public string $a = "";
+
+  /** */
+  public function f() {}
+}
+
+class Foo5 {
+  const A = 10, B = 100;
+  public string $a = "", $b = "1";
+  public string $c = "", $d = "1";
+
+  /** */
+  public function f() {}
+
+  /** */
+  public function f1() {}
+}
+`)
+}
