@@ -25,73 +25,73 @@ WARNING unused: Variable keystr is unused (use $_ to ignore this inspection) at 
 MAYBE   callSimplify: Could simplify to $id[0] at testdata/mustache/src/Mustache/Compiler.php:646
             if (substr($id, 0, 1) === '.') {
                 ^^^^^^^^^^^^^^^^^
-ERROR   classCompOrder: Constant KLASS must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:184
+ERROR   classMembersOrder: Constant KLASS must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:184
     const KLASS = '<?php
     ^^^^^^^
-ERROR   classCompOrder: Constant KLASS_NO_LAMBDAS must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:202
+ERROR   classMembersOrder: Constant KLASS_NO_LAMBDAS must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:202
     const KLASS_NO_LAMBDAS = '<?php
     ^^^^^^^
-ERROR   classCompOrder: Constant STRICT_CALLABLE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:215
+ERROR   classMembersOrder: Constant STRICT_CALLABLE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:215
     const STRICT_CALLABLE = 'protected $strictCallables = true;';
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR   classCompOrder: Constant BLOCK_VAR must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:237
+ERROR   classMembersOrder: Constant BLOCK_VAR must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:237
     const BLOCK_VAR = '
     ^^
-ERROR   classCompOrder: Constant BLOCK_VAR_ELSE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:244
+ERROR   classMembersOrder: Constant BLOCK_VAR_ELSE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:244
     const BLOCK_VAR_ELSE = '} else {%s';
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR   classCompOrder: Constant BLOCK_ARG must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:271
+ERROR   classMembersOrder: Constant BLOCK_ARG must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:271
     const BLOCK_ARG = '%s => array($this, \'block%s\'),';
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR   classCompOrder: Constant BLOCK_FUNCTION must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:295
+ERROR   classMembersOrder: Constant BLOCK_FUNCTION must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:295
     const BLOCK_FUNCTION = '
     ^^
-ERROR   classCompOrder: Constant SECTION_CALL must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:323
+ERROR   classMembersOrder: Constant SECTION_CALL must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:323
     const SECTION_CALL = '
     ^^
-ERROR   classCompOrder: Constant SECTION must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:329
+ERROR   classMembersOrder: Constant SECTION must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:329
     const SECTION = '
     ^^
-ERROR   classCompOrder: Constant INVERTED_SECTION must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:398
+ERROR   classMembersOrder: Constant INVERTED_SECTION must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:398
     const INVERTED_SECTION = '
     ^^
-ERROR   classCompOrder: Constant PARTIAL_INDENT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:425
+ERROR   classMembersOrder: Constant PARTIAL_INDENT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:425
     const PARTIAL_INDENT = ', $indent . %s';
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR   classCompOrder: Constant PARTIAL must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:426
+ERROR   classMembersOrder: Constant PARTIAL must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:426
     const PARTIAL = '
     ^^
-ERROR   classCompOrder: Constant PARENT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:456
+ERROR   classMembersOrder: Constant PARENT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:456
     const PARENT = '
     ^^
-ERROR   classCompOrder: Constant PARENT_NO_CONTEXT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:465
+ERROR   classMembersOrder: Constant PARENT_NO_CONTEXT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:465
     const PARENT_NO_CONTEXT = '
     ^^
-ERROR   classCompOrder: Constant VARIABLE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:508
+ERROR   classMembersOrder: Constant VARIABLE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:508
     const VARIABLE = '
     ^^
-ERROR   classCompOrder: Constant FILTER must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:533
+ERROR   classMembersOrder: Constant FILTER must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:533
     const FILTER = '
     ^^
-ERROR   classCompOrder: Constant LINE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:564
+ERROR   classMembersOrder: Constant LINE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:564
     const LINE = '$buffer .= "\n";';
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR   classCompOrder: Constant TEXT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:565
+ERROR   classMembersOrder: Constant TEXT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:565
     const TEXT = '$buffer .= %s%s;';
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR   classCompOrder: Constant DEFAULT_ESCAPE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:607
+ERROR   classMembersOrder: Constant DEFAULT_ESCAPE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:607
     const DEFAULT_ESCAPE = 'htmlspecialchars(%s, %s, %s)';
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR   classCompOrder: Constant CUSTOM_ESCAPE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:608
+ERROR   classMembersOrder: Constant CUSTOM_ESCAPE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:608
     const CUSTOM_ESCAPE  = 'call_user_func($this->mustache->getEscape(), %s)';
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR   classCompOrder: Constant IS_CALLABLE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:658
+ERROR   classMembersOrder: Constant IS_CALLABLE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:658
     const IS_CALLABLE        = '!is_string(%s) && is_callable(%s)';
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR   classCompOrder: Constant STRICT_IS_CALLABLE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:659
+ERROR   classMembersOrder: Constant STRICT_IS_CALLABLE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:659
     const STRICT_IS_CALLABLE = 'is_object(%s) && is_callable(%s)';
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR   classCompOrder: Constant LINE_INDENT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:675
+ERROR   classMembersOrder: Constant LINE_INDENT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:675
     const LINE_INDENT = '$indent . ';
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   callSimplify: Could simplify to $this->stack[] = $value at testdata/mustache/src/Mustache/Context.php:39

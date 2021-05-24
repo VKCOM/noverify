@@ -189,37 +189,37 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 func (b *blockLinter) checkClass(class *ir.ClassStmt) {
 	const classMethod = 0
-	const classOtherComp = 1
+	const classOtherMember = 1
 
-	var components = make([]int, 0, len(class.Stmts))
+	var members = make([]int, 0, len(class.Stmts))
 	for _, stmt := range class.Stmts {
 		switch stmt.(type) {
 		case *ir.ClassMethodStmt:
-			components = append(components, classMethod)
+			members = append(members, classMethod)
 		default:
-			components = append(components, classOtherComp)
+			members = append(members, classOtherMember)
 		}
 	}
 
 	var methodsBegin bool
-	for index, component := range components {
-		if component == classMethod {
+	for index, member := range members {
+		if member == classMethod {
 			methodsBegin = true
 		} else if methodsBegin {
-			comp := class.Stmts[index]
-			compType := ""
-			compName := ""
-			switch comp := comp.(type) {
+			stmt := class.Stmts[index]
+			memberType := ""
+			memberName := ""
+			switch stmt := stmt.(type) {
 			case *ir.ClassConstListStmt:
-				compType = "Constant"
-				compName = comp.Consts[0].(*ir.ConstantStmt).ConstantName.Value
+				memberType = "Constant"
+				memberName = stmt.Consts[0].(*ir.ConstantStmt).ConstantName.Value
 			case *ir.PropertyListStmt:
-				compType = "Property"
-				compName = "$" + comp.Properties[0].(*ir.PropertyStmt).Variable.Name
+				memberType = "Property"
+				memberName = "$" + stmt.Properties[0].(*ir.PropertyStmt).Variable.Name
 			default:
 				continue
 			}
-			b.report(comp, LevelError, "classCompOrder", "%s %s must go before methods in the class %s", compType, compName, class.ClassName.Value)
+			b.report(stmt, LevelError, "classMembersOrder", "%s %s must go before methods in the class %s", memberType, memberName, class.ClassName.Value)
 		}
 	}
 }

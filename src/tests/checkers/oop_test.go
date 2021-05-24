@@ -1577,7 +1577,7 @@ class Foo3 {
 		`Property $a must go before methods in the class Foo3`,
 		`Constant A must go before methods in the class Foo3`,
 	}
-	linttest.RunFilterMatch(test, "classCompOrder")
+	linttest.RunFilterMatch(test, "classMembersOrder")
 }
 
 func TestClassComponentsOrderGood(t *testing.T) {

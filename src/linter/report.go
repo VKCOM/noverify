@@ -673,10 +673,10 @@ function f(array $a) {}`,
 		},
 
 		{
-			Name:     "classCompOrder",
+			Name:     "classMembersOrder",
 			Default:  false,
 			Quickfix: false,
-			Comment:  `Report the wrong order of the class component.`,
+			Comment:  `Report the wrong order of the class members.`,
 			Before: `class A {
   public function func() {}
   const B = 1;
