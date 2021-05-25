@@ -67,9 +67,10 @@ type FuncInfo struct {
 	Doc          PhpDocInfo
 }
 
-func (info *FuncInfo) IsStatic() bool   { return info.Flags&FuncStatic != 0 }
-func (info *FuncInfo) IsAbstract() bool { return info.Flags&FuncAbstract != 0 }
-func (info *FuncInfo) IsPure() bool     { return info.Flags&FuncPure != 0 }
+func (info *FuncInfo) IsStatic() bool      { return info.Flags&FuncStatic != 0 }
+func (info *FuncInfo) IsAbstract() bool    { return info.Flags&FuncAbstract != 0 }
+func (info *FuncInfo) IsPure() bool        { return info.Flags&FuncPure != 0 }
+func (info *FuncInfo) HasDuplicates() bool { return info.Flags&FuncHasDuplicates != 0 }
 
 type OverrideType int
 

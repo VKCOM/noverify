@@ -2013,7 +2013,7 @@ func (d *rootWalker) reportUndefinedType(n ir.Node, name string) {
 }
 
 func (d *rootWalker) checkFunctionNameCase(n ir.Node, nameUsed string, info meta.FuncInfo) {
-	if info.Flags&meta.FuncHasDuplicates != 0 {
+	if info.HasDuplicates() {
 		return
 	}
 
