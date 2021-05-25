@@ -367,10 +367,14 @@ func (i *Info) AddFunctionsNonLocked(filename string, m FunctionsMap) {
 	i.perFileFunctions[filename] = m
 
 	allFuncs := i.allFunctions.H
-	for k, v := range m.H {
-		prevFn, ok := allFuncs[k]
-		if !ok || v.Pos.Length > prevFn.Pos.Length {
-			allFuncs[k] = v
+	for name, info := range m.H {
+		prevFn, ok := allFuncs[name]
+
+		if ok {
+			prevFn.Duplicates.Set(info.Name, info)
+			info.Duplicates.Set(prevFn.Name, prevFn)
+		} else {
+			allFuncs[name] = info
 		}
 	}
 }

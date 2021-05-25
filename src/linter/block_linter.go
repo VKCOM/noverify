@@ -785,7 +785,7 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 		b.walker.untrackVarName(varName)
 	} else {
 		b.checkFunctionAvailability(e, &call)
-		b.walker.r.checkNameCase(e.Function, call.funcName, call.info.Name)
+		b.walker.r.checkFunctionNameCase(e.Function, call.funcName, call.info)
 	}
 
 	if call.isFound {

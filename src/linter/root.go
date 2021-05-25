@@ -1575,6 +1575,7 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 		Flags:        funcFlags,
 		ExitFlags:    exitFlags,
 		Doc:          doc.info,
+		Duplicates:   meta.NewFunctionsMap(),
 	})
 
 	return false
@@ -2010,6 +2011,14 @@ func (d *rootWalker) checkImplementedStep(n ir.Node, className string, otherClas
 
 func (d *rootWalker) reportUndefinedType(n ir.Node, name string) {
 	d.Report(n, LevelError, "undefined", "Type %s not found", name)
+}
+
+func (d *rootWalker) checkFunctionNameCase(n ir.Node, nameUsed string, info meta.FuncInfo) {
+	if info.Duplicates.Len() != 0 {
+		return
+	}
+
+	d.checkNameCase(n, nameUsed, info.Name)
 }
 
 func (d *rootWalker) checkNameCase(n ir.Node, nameUsed, nameExpected string) {

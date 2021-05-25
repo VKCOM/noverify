@@ -45,7 +45,8 @@ import (
 //     47 - forced cache version invalidation due to the #921
 //     48 - renamed meta.TypesMap to types.Map; this affects gob encoding
 //     49 - for shape, names are now generated using the keys that make up this shape
-const cacheVersion = 49
+//     50 - added the FuncInfo.Duplicates field, which stores all duplicate functions
+const cacheVersion = 50
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")
