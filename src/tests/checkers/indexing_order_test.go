@@ -89,6 +89,8 @@ a(1);
 	// TODO: this test should give no warnings.
 	// Right now we ensure that the linter output doesn't depend
 	// on the file traversal order, but this warnings is still out of place.
-	test.Expect = []string{}
+	test.Expect = []string{
+		`Too few arguments for a`,
+	}
 	test.RunAndMatch()
 }
