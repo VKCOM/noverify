@@ -1575,7 +1575,6 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 		Flags:        funcFlags,
 		ExitFlags:    exitFlags,
 		Doc:          doc.info,
-		Duplicates:   meta.NewFunctionsMap(),
 	})
 
 	return false
@@ -2014,7 +2013,7 @@ func (d *rootWalker) reportUndefinedType(n ir.Node, name string) {
 }
 
 func (d *rootWalker) checkFunctionNameCase(n ir.Node, nameUsed string, info meta.FuncInfo) {
-	if info.Duplicates.Len() != 0 {
+	if info.Flags&meta.FuncHasDuplicates != 0 {
 		return
 	}
 

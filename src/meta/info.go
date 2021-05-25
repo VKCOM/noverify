@@ -369,10 +369,9 @@ func (i *Info) AddFunctionsNonLocked(filename string, m FunctionsMap) {
 	allFuncs := i.allFunctions.H
 	for name, info := range m.H {
 		prevFn, ok := allFuncs[name]
-
 		if ok {
-			prevFn.Duplicates.Set(info.Name, info)
-			info.Duplicates.Set(prevFn.Name, prevFn)
+			prevFn.Flags |= FuncHasDuplicates
+			allFuncs[name] = prevFn
 		} else {
 			allFuncs[name] = info
 		}
