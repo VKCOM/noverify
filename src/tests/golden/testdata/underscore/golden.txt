@@ -82,6 +82,9 @@ MAYBE   ternarySimplify: could rewrite as `$array[$k] ?? null` at testdata/under
 MAYBE   arrayAccess: Array access to non-array type \__|empty_array[]|mixed at testdata/underscore/underscore.php:483
         $return_arrays[$k][$a] = array_key_exists($k, $array) ? $array[$k] : null;
         ^^^^^^^^^^^^^^
+ERROR   varShadow: Variable $array shadow existing variable $array from current function params at testdata/underscore/underscore.php:482
+      foreach($arrays as $a=>$array) {
+                             ^^^^^^
 WARNING unused: Variable v is unused (use $_ to ignore this inspection) at testdata/underscore/underscore.php:479
     foreach($return_arrays as $k=>$v) {
                                   ^^

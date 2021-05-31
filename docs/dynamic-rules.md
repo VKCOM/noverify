@@ -41,7 +41,7 @@ The **rule file** is a set of rules or, technically speaking, a sequence of PHP 
 
 Because a rule file is a valid PHP file, you can use IDE like [PhpStorm](https://www.jetbrains.com/phpstorm/) to work with them.
 
-NoVerify accepts such files with `-rules` command-line argument. If several files are specified, they are merged.
+NoVerify accepts such files with `-rules` command-line argument. If several files are specified, they are merged. If a folder is specified, all rules from it will be added (not recursive, only the rules that are directly in the folder are added).
 
 A single rules file can look like this:
 

@@ -2121,3 +2121,36 @@ func (d *rootWalker) afterLeaveFile() {
 func (d *rootWalker) metaInfo() *meta.Info {
 	return d.ctx.st.Info
 }
+
+func (d *rootWalker) currentFunction() (meta.FuncInfo, bool) {
+	name := d.ctx.st.CurrentFunction
+	if name == "" {
+		return meta.FuncInfo{}, false
+	}
+
+	if d.ctx.st.CurrentClass != "" {
+		className, ok := solver.GetClassName(d.ctx.st, &ir.Name{Value: d.ctx.st.CurrentClass})
+		if !ok {
+			return meta.FuncInfo{}, false
+		}
+
+		method, ok := solver.FindMethod(d.ctx.st.Info, className, name)
+		if !ok {
+			return meta.FuncInfo{}, false
+		}
+
+		return method.Info, true
+	}
+
+	funcName, ok := solver.GetFuncName(d.ctx.st, &ir.Name{Value: name})
+	if !ok {
+		return meta.FuncInfo{}, false
+	}
+
+	fun, ok := d.ctx.st.Info.GetFunction(funcName)
+	if !ok {
+		return meta.FuncInfo{}, false
+	}
+
+	return fun, true
+}

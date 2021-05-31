@@ -667,7 +667,7 @@ function f(array $a) {}`,
 			Name:     "argsOrder",
 			Default:  true,
 			Quickfix: false,
-			Comment:  `Report suspicious arguments order`,
+			Comment:  `Report suspicious arguments order.`,
 			Before:   `strpos('/', $s);`,
 			After:    `strpos($s, '/');`,
 		},
@@ -686,6 +686,23 @@ function f(array $a) {}`,
   const B = 1;
   public $c = 2;
   public function func() {}
+}`,
+		},
+
+		{
+			Name:     "varShadow",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report the shadow of an existing variable.`,
+			Before: `function f(int $a) {
+  foreach ([1, 2] as $a) {
+    echo $a;
+  }
+}`,
+			After: `function f(int $a) {
+  foreach ([1, 2] as $b) {
+    echo $b;
+  }
 }`,
 		},
 	}
