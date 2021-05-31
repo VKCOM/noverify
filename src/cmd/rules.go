@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -32,22 +33,56 @@ func parseExternalRules(externalRules string) ([]*rules.Set, error) {
 		return nil, nil
 	}
 
-	p := rules.NewParser()
-
 	var ruleSets []*rules.Set
 
 	for _, filename := range strings.Split(externalRules, ",") {
-		data, err := ioutil.ReadFile(filename)
+		stat, err := os.Stat(filename)
 		if err != nil {
 			return nil, err
 		}
 
-		ruleSet, err := p.Parse(filename, bytes.NewReader(data))
-		if err != nil {
-			return nil, err
+		if stat.IsDir() {
+			dir := filename
+			files, err := ioutil.ReadDir(dir)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, file := range files {
+				if file.IsDir() {
+					continue
+				}
+
+				ruleSets, err = readAndParseRuleFile(filepath.Join(dir, file.Name()), ruleSets)
+				if err != nil {
+					return nil, err
+				}
+			}
+		} else {
+			ruleSets, err = readAndParseRuleFile(filename, ruleSets)
+			if err != nil {
+				return nil, err
+			}
 		}
-		ruleSets = append(ruleSets, ruleSet)
 	}
+
+	return ruleSets, nil
+}
+
+func readAndParseRuleFile(filename string, ruleSets []*rules.Set) ([]*rules.Set, error) {
+	p := rules.NewParser()
+
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	ruleSet, err := p.Parse(filename, bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+
+	ruleSets = append(ruleSets, ruleSet)
 
 	return ruleSets, nil
 }
