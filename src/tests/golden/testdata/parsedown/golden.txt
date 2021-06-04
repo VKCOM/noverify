@@ -148,3 +148,57 @@ WARNING unused: Variable val is unused (use $_ to ignore this inspection) at tes
 MAYBE   typeHint: specify the type for the parameter $Element in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1900
     protected function filterUnsafeUrlInAttribute(array $Element, $attribute)
                        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Property $breaksEnabled must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:66
+    protected $breaksEnabled;
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Property $markupEscaped must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:75
+    protected $markupEscaped;
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Property $urlsLinked must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:84
+    protected $urlsLinked = true;
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Property $safeMode must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:93
+    protected $safeMode;
+    ^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Property $strictMode must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:102
+    protected $strictMode;
+    ^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Property $safeLinksWhitelist must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:104
+    protected $safeLinksWhitelist = array(
+    ^^
+ERROR   classMembersOrder: Property $BlockTypes must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:126
+    protected $BlockTypes = array(
+    ^^
+ERROR   classMembersOrder: Property $unmarkedBlockTypes must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:154
+    protected $unmarkedBlockTypes = array(
+    ^^
+ERROR   classMembersOrder: Property $InlineTypes must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1109
+    protected $InlineTypes = array(
+    ^^
+ERROR   classMembersOrder: Property $inlineMarkerList must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1124
+    protected $inlineMarkerList = '!*_&[:<`~\\';
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Property $instances must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1952
+    private static $instances = array();
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Property $DefinitionData must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1958
+    protected $DefinitionData;
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Property $specialCharacters must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1963
+    protected $specialCharacters = array(
+    ^^
+ERROR   classMembersOrder: Property $StrongRegex must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1967
+    protected $StrongRegex = array(
+    ^^
+ERROR   classMembersOrder: Property $EmRegex must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1972
+    protected $EmRegex = array(
+    ^^
+ERROR   classMembersOrder: Property $regexHtmlAttribute must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1977
+    protected $regexHtmlAttribute = '[a-zA-Z_:][\w:.-]*+(?:\s*+=\s*+(?:[^"\'=<>`\s]+|"[^"]*+"|\'[^\']*+\'))?+';
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Property $voidElements must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1979
+    protected $voidElements = array(
+    ^^
+ERROR   classMembersOrder: Property $textLevelElements must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1983
+    protected $textLevelElements = array(
+    ^^

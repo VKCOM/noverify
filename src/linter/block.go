@@ -10,6 +10,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
+	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/solver"
@@ -1176,6 +1177,11 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 	b.r.reportPhpdocErrors(fun, doc.errs)
 	phpDocParamTypes := doc.types
 
+	var hintReturnType types.Map
+	if typ, ok := b.r.parseTypeNode(fun.ReturnType); ok {
+		hintReturnType = typ
+	}
+
 	var closureUses []ir.Node
 	if fun.ClosureUse != nil {
 		closureUses = fun.ClosureUse.Uses
@@ -1205,9 +1211,34 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		b.untrackVarName(v.Name)
 	}
 
-	funcParams := b.r.parseFuncParams(fun.Params, phpDocParamTypes, sc, closureSolver)
+	params := b.r.parseFuncParams(fun.Params, phpDocParamTypes, sc, closureSolver)
 
-	b.r.handleFuncStmts(funcParams.params, closureUses, fun.Stmts, sc)
+	funcInfo := b.r.handleFuncStmts(params.params, closureUses, fun.Stmts, sc)
+	actualReturnTypes := funcInfo.returnTypes
+	exitFlags := funcInfo.prematureExitFlags
+
+	returnTypes := functionReturnType(types.NewEmptyMap(0), hintReturnType, actualReturnTypes)
+
+	for _, param := range fun.Params {
+		b.r.checkFuncParam(param.(*ir.Parameter))
+	}
+
+	name := autogen.GenerateClosureName(fun, b.r.ctx.st)
+
+	if b.r.meta.Functions.H == nil {
+		b.r.meta.Functions = meta.NewFunctionsMap()
+	}
+
+	b.r.meta.Functions.Set(name, meta.FuncInfo{
+		Params:       params.params,
+		Name:         name,
+		Pos:          b.r.getElementPos(fun),
+		Typ:          returnTypes.Immutable(),
+		MinParamsCnt: params.minParamsCount,
+		Flags:        0,
+		ExitFlags:    exitFlags,
+		Doc:          doc.info,
+	})
 
 	return false
 }

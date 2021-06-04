@@ -13,6 +13,8 @@ type compiler struct {
 	src  []byte
 	vars map[string]struct{}
 
+	fuzzyMatching bool
+
 	err error
 }
 
@@ -28,8 +30,9 @@ func compile(opts *Compiler, pattern []byte) (*Matcher, error) {
 	}
 
 	c := compiler{
-		src:  src,
-		vars: make(map[string]struct{}),
+		src:           src,
+		vars:          make(map[string]struct{}),
+		fuzzyMatching: opts.FuzzyMatching,
 	}
 	rootIR.Walk(&c)
 
@@ -42,6 +45,7 @@ func compile(opts *Compiler, pattern []byte) (*Matcher, error) {
 			root:          rootIR,
 			numVars:       len(c.vars),
 			caseSensitive: opts.CaseSensitive,
+			fuzzyMatching: opts.FuzzyMatching,
 		},
 	}
 
@@ -52,6 +56,15 @@ func (c *compiler) EnterNode(n ir.Node) bool {
 	if v, ok := n.(*ir.SimpleVar); ok {
 		c.vars[v.Name] = struct{}{}
 		return true
+	}
+
+	if c.fuzzyMatching {
+		switch v := n.(type) {
+		case *ir.Lnumber:
+			v.Value = normalizedIntValue(v.Value)
+		case *ir.Dnumber:
+			v.Value = normalizedFloatValue(v.Value)
+		}
 	}
 
 	v, ok := n.(*ir.Var)

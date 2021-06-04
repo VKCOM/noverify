@@ -4,8 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/VKCOM/noverify/src/linter"
 	"github.com/google/go-cmp/cmp"
+
+	"github.com/VKCOM/noverify/src/linter"
 )
 
 func TestRenderCheckDocumentation(t *testing.T) {

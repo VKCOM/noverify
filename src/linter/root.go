@@ -2116,25 +2116,58 @@ func (d *rootWalker) afterLeaveFile() {
 	if !d.metaInfo().IsIndexingComplete() {
 		for _, shape := range d.ctx.shapes {
 			props := make(meta.PropertiesMap)
-			for _, p := range shape.props {
-				props[p.key] = meta.PropertyInfo{
-					Typ:         newTypesMap(&d.ctx, p.types).Immutable(),
+			for _, p := range shape.Props {
+				props[p.Key] = meta.PropertyInfo{
+					Typ:         newTypesMap(&d.ctx, p.Types).Immutable(),
 					AccessLevel: meta.Public,
 				}
 			}
 			cl := meta.ClassInfo{
-				Name:       shape.name,
+				Name:       shape.Name,
 				Properties: props,
 				Flags:      meta.ClassShape,
 			}
 			if d.meta.Classes.H == nil {
 				d.meta.Classes = meta.NewClassesMap()
 			}
-			d.meta.Classes.Set(shape.name, cl)
+			d.meta.Classes.Set(shape.Name, cl)
 		}
 	}
 }
 
 func (d *rootWalker) metaInfo() *meta.Info {
 	return d.ctx.st.Info
+}
+
+func (d *rootWalker) currentFunction() (meta.FuncInfo, bool) {
+	name := d.ctx.st.CurrentFunction
+	if name == "" {
+		return meta.FuncInfo{}, false
+	}
+
+	if d.ctx.st.CurrentClass != "" {
+		className, ok := solver.GetClassName(d.ctx.st, &ir.Name{Value: d.ctx.st.CurrentClass})
+		if !ok {
+			return meta.FuncInfo{}, false
+		}
+
+		method, ok := solver.FindMethod(d.ctx.st.Info, className, name)
+		if !ok {
+			return meta.FuncInfo{}, false
+		}
+
+		return method.Info, true
+	}
+
+	funcName, ok := solver.GetFuncName(d.ctx.st, &ir.Name{Value: name})
+	if !ok {
+		return meta.FuncInfo{}, false
+	}
+
+	fun, ok := d.ctx.st.Info.GetFunction(funcName)
+	if !ok {
+		return meta.FuncInfo{}, false
+	}
+
+	return fun, true
 }
