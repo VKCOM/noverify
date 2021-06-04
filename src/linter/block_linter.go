@@ -26,6 +26,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.ArrayExpr:
 		b.checkArray(n)
 
+	case *ir.ClassStmt:
+		b.checkClass(n)
+
 	case *ir.FunctionCallExpr:
 		b.checkFunctionCall(n)
 
@@ -181,6 +184,43 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 	case *ir.BadString:
 		b.report(n, LevelError, "syntax", "%s", n.Error)
+	}
+}
+
+func (b *blockLinter) checkClass(class *ir.ClassStmt) {
+	const classMethod = 0
+	const classOtherMember = 1
+
+	var members = make([]int, 0, len(class.Stmts))
+	for _, stmt := range class.Stmts {
+		switch stmt.(type) {
+		case *ir.ClassMethodStmt:
+			members = append(members, classMethod)
+		default:
+			members = append(members, classOtherMember)
+		}
+	}
+
+	var methodsBegin bool
+	for index, member := range members {
+		if member == classMethod {
+			methodsBegin = true
+		} else if methodsBegin {
+			stmt := class.Stmts[index]
+			memberType := ""
+			memberName := ""
+			switch stmt := stmt.(type) {
+			case *ir.ClassConstListStmt:
+				memberType = "Constant"
+				memberName = stmt.Consts[0].(*ir.ConstantStmt).ConstantName.Value
+			case *ir.PropertyListStmt:
+				memberType = "Property"
+				memberName = "$" + stmt.Properties[0].(*ir.PropertyStmt).Variable.Name
+			default:
+				continue
+			}
+			b.report(stmt, LevelError, "classMembersOrder", "%s %s must go before methods in the class %s", memberType, memberName, class.ClassName.Value)
+		}
 	}
 }
 

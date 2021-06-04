@@ -178,3 +178,45 @@ MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdat
 ERROR   unused: foreach key $k is unused, can simplify $k => $v to just $v at testdata/underscore/underscore.php:1107
       foreach($caller_args as $k=>$v) {
                               ^^
+ERROR   classMembersOrder: Property $_uniqueId must go before methods in the class __ at testdata/underscore/underscore.php:817
+  public $_uniqueId = -1;
+  ^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Property $_mixins must go before methods in the class __ at testdata/underscore/underscore.php:839
+  private $_mixins = array();
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Constant TEMPLATE_OPEN_TAG must go before methods in the class __ at testdata/underscore/underscore.php:868
+  const TEMPLATE_OPEN_TAG = '760e7dab2836853c63805033e514668301fa9c47';
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Constant TEMPLATE_CLOSE_TAG must go before methods in the class __ at testdata/underscore/underscore.php:869
+  const TEMPLATE_CLOSE_TAG= 'd228a8fa36bd7db108b01eddfb03a30899987a2b';
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Constant TEMPLATE_DEFAULT_EVALUATE must go before methods in the class __ at testdata/underscore/underscore.php:871
+  const TEMPLATE_DEFAULT_EVALUATE   = '/<%([\s\S]+?)%>/';
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Constant TEMPLATE_DEFAULT_INTERPOLATE must go before methods in the class __ at testdata/underscore/underscore.php:872
+  const TEMPLATE_DEFAULT_INTERPOLATE= '/<%=([\s\S]+?)%>/';
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Constant TEMPLATE_DEFAULT_ESCAPE must go before methods in the class __ at testdata/underscore/underscore.php:873
+  const TEMPLATE_DEFAULT_ESCAPE     = '/<%-([\s\S]+?)%>/';
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Property $_template_settings must go before methods in the class __ at testdata/underscore/underscore.php:874
+  public $_template_settings = array(
+  ^^
+ERROR   classMembersOrder: Property $_memoized must go before methods in the class __ at testdata/underscore/underscore.php:957
+  public $_memoized = array();
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Property $_throttled must go before methods in the class __ at testdata/underscore/underscore.php:986
+  public $_throttled = array();
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Property $_onced must go before methods in the class __ at testdata/underscore/underscore.php:1012
+  public $_onced = array();
+  ^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Property $_aftered must go before methods in the class __ at testdata/underscore/underscore.php:1057
+  public $_aftered = array();
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Property $_instance must go before methods in the class __ at testdata/underscore/underscore.php:1075
+  private static $_instance;
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Property $_wrapped must go before methods in the class __ at testdata/underscore/underscore.php:1087
+  public $_wrapped; // Value passed from one chained method to the next
+  ^^^^^^^^^^^^^^^^^

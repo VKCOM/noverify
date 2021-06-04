@@ -64,3 +64,30 @@ MAYBE   callSimplify: Could simplify to $group[0] at testdata/qrcode/qrcode.php:
 MAYBE   callSimplify: Could simplify to $group[1] at testdata/qrcode/qrcode.php:449
       $c2    = ord(substr($group, 1, 1));
                    ^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Property $qr_capacity must go before methods in the class QRCode at testdata/qrcode/qrcode.php:890
+  private $qr_capacity = [
+  ^^
+ERROR   classMembersOrder: Property $qr_ec_params must go before methods in the class QRCode at testdata/qrcode/qrcode.php:943
+  private $qr_ec_params = [
+  ^^
+ERROR   classMembersOrder: Property $qr_ec_polynomials must go before methods in the class QRCode at testdata/qrcode/qrcode.php:1106
+  private $qr_ec_polynomials = [
+  ^^
+ERROR   classMembersOrder: Property $qr_log must go before methods in the class QRCode at testdata/qrcode/qrcode.php:1162
+  private $qr_log = [
+  ^^
+ERROR   classMembersOrder: Property $qr_exp must go before methods in the class QRCode at testdata/qrcode/qrcode.php:1197
+  private $qr_exp = [
+  ^^
+ERROR   classMembersOrder: Property $qr_remainder_bits must go before methods in the class QRCode at testdata/qrcode/qrcode.php:1232
+  private $qr_remainder_bits = [
+  ^^
+ERROR   classMembersOrder: Property $qr_alignment_patterns must go before methods in the class QRCode at testdata/qrcode/qrcode.php:1237
+  private $qr_alignment_patterns = [
+  ^^
+ERROR   classMembersOrder: Property $qr_format_info must go before methods in the class QRCode at testdata/qrcode/qrcode.php:1282
+  private $qr_format_info = [
+  ^^
+ERROR   classMembersOrder: Property $qr_version_info must go before methods in the class QRCode at testdata/qrcode/qrcode.php:1318
+  private $qr_version_info = [
+  ^^
