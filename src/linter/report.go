@@ -653,7 +653,7 @@ $_ = is_float($a);`,
 
 		{
 			Name:     "typeHint",
-			Default:  false,
+			Default:  true,
 			Quickfix: false,
 			Comment:  `Report misuse of type hints.`,
 			Before:   `function f(array $a) {}`,
