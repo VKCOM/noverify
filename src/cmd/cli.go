@@ -22,6 +22,9 @@ type AppContext struct {
 }
 
 func (ctx *AppContext) FormatFlags() (res string) {
+	if ctx.FlagSet == nil {
+		return ""
+	}
 	ctx.FlagSet.VisitAll(func(f *flag.Flag) {
 		defaultVal := f.DefValue
 		if f.DefValue != "" {
@@ -33,6 +36,9 @@ func (ctx *AppContext) FormatFlags() (res string) {
 }
 
 func (ctx *AppContext) CountDefinedFlags() int {
+	if ctx.FlagSet == nil {
+		return 0
+	}
 	var res int
 	ctx.FlagSet.VisitAll(func(*flag.Flag) { res++ })
 	return res
@@ -93,6 +99,10 @@ func (a *App) prepareCommands() {
 }
 
 func (a *App) addDefaultHelpCommand(command *Command) {
+	if command.Pure {
+		return
+	}
+
 	command.Commands = append(command.Commands, &Command{
 		Name:        "help",
 		Description: "The command to show help for " + command.Name + " command",
@@ -233,14 +243,25 @@ func (a *App) Run(cfg *MainConfig) (int, error) {
 
 	a.prepareCommands()
 
-	// replace -help with help command
-	for i := range os.Args {
-		if strings.HasSuffix(os.Args[i], "help") && strings.HasPrefix(os.Args[i], "-") {
-			os.Args[i] = "help"
+	// We do a pre-check by receiving the command only for the first argument.
+	command, found := a.getCommandByArgs(os.Args[:1], a.commands)
+	if !found {
+		a.showHelp()
+		return 0, nil
+	}
+
+	// And if this command is not pure, then only then do
+	// we turn the help flags into subcommand.
+	if !command.Pure {
+		// replace -help or --help with help subcommand
+		for i := range os.Args {
+			if strings.HasSuffix(os.Args[i], "help") && strings.HasPrefix(os.Args[i], "-") {
+				os.Args[i] = "help"
+			}
 		}
 	}
 
-	command, found := a.getCommandByArgs(os.Args, a.commands)
+	command, found = a.getCommandByArgs(os.Args, a.commands)
 	if !found {
 		a.showHelp()
 		return 0, nil
@@ -252,11 +273,26 @@ func (a *App) Run(cfg *MainConfig) (int, error) {
 		ParsedFlags: ParsedFlags{},
 	}
 
+	if command.Pure {
+		if command.RegisterFlags != nil {
+			return 0, fmt.Errorf("for a pure commands, flags are expected to be registered inside Action")
+		}
+		return command.Action(ctx)
+	}
+
 	var fs *flag.FlagSet
 
 	if command.RegisterFlags != nil {
 		fs = command.RegisterFlags(ctx)
 		fs.Usage = nil
+
+		err := fs.Parse(os.Args[1:])
+		if err != nil {
+			return 2, err
+		}
+		command.flagSet = fs
+		ctx.ParsedArgs = fs.Args()
+		ctx.FlagSet = fs
 	} else {
 		fs = flag.NewFlagSet("empty", flag.ContinueOnError)
 	}
@@ -265,6 +301,7 @@ func (a *App) Run(cfg *MainConfig) (int, error) {
 	if err != nil {
 		return 2, err
 	}
+
 	command.flagSet = fs
 	ctx.ParsedArgs = fs.Args()
 	ctx.FlagSet = fs

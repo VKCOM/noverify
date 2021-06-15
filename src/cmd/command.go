@@ -25,6 +25,11 @@ type Command struct {
 	RegisterFlags func(*AppContext) *flag.FlagSet
 	flagSet       *flag.FlagSet
 
+	// Pure flag defines the command, which itself is responsible
+	// for registering flags and arguments.
+	// For such a command, help subcommand is not automatically generated.
+	Pure bool
+
 	Commands []*Command
 	commands map[string]*Command
 }
