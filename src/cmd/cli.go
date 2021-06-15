@@ -22,6 +22,9 @@ type AppContext struct {
 }
 
 func (ctx *AppContext) FormatFlags() (res string) {
+	if ctx.FlagSet == nil {
+		return ""
+	}
 	ctx.FlagSet.VisitAll(func(f *flag.Flag) {
 		defaultVal := f.DefValue
 		if f.DefValue != "" {
@@ -33,6 +36,9 @@ func (ctx *AppContext) FormatFlags() (res string) {
 }
 
 func (ctx *AppContext) CountDefinedFlags() int {
+	if ctx.FlagSet == nil {
+		return 0
+	}
 	var res int
 	ctx.FlagSet.VisitAll(func(*flag.Flag) { res++ })
 	return res
@@ -257,17 +263,15 @@ func (a *App) Run(cfg *MainConfig) (int, error) {
 	if command.RegisterFlags != nil {
 		fs = command.RegisterFlags(ctx)
 		fs.Usage = nil
-	} else {
-		fs = flag.NewFlagSet("empty", flag.ContinueOnError)
-	}
 
-	err := fs.Parse(os.Args[1:])
-	if err != nil {
-		return 2, err
+		err := fs.Parse(os.Args[1:])
+		if err != nil {
+			return 2, err
+		}
+		command.flagSet = fs
+		ctx.ParsedArgs = fs.Args()
+		ctx.FlagSet = fs
 	}
-	command.flagSet = fs
-	ctx.ParsedArgs = fs.Args()
-	ctx.FlagSet = fs
 
 	return command.Action(ctx)
 }
