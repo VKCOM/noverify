@@ -28,7 +28,7 @@ func typesFromPHPDoc(ctx *rootContext, typ phpdoc.Type) ([]types.Type, warningSt
 		for _, tp := range result {
 			if tp.Elem == "null" {
 				alreadyHasNull = true
-				conv.warning = "twice nullable doesn't make sense"
+				conv.warning = "repeated nullable doesn't make sense"
 				break
 			}
 		}
