@@ -23,7 +23,19 @@ func typesFromPHPDoc(ctx *rootContext, typ phpdoc.Type) ([]types.Type, warningSt
 	conv := phpdocTypeConverter{ctx: ctx}
 	result := conv.mapType(typ.Expr)
 	if conv.nullable {
-		result = append(result, types.Type{Elem: "null"})
+		alreadyHasNull := false
+
+		for _, tp := range result {
+			if tp.Elem == "null" {
+				alreadyHasNull = true
+				conv.warning = "twice nullable doesn't make sense"
+				break
+			}
+		}
+
+		if !alreadyHasNull {
+			result = append(result, types.Type{Elem: "null"})
+		}
 	}
 	return result, conv.warning
 }
@@ -167,6 +179,7 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []types.
 				Elem: "null",
 				Dims: 0,
 			})
+			conv.nullable = false
 		}
 
 		props = append(props, autogen.ShapeTypeProp{
