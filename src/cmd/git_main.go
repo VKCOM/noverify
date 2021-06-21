@@ -188,7 +188,7 @@ func gitMain(l *linterRunner, cfg *MainConfig) (int, error) {
 
 	criticalReports, containsAutofixableReports := analyzeReports(l, cfg, diff)
 
-	if containsAutofixableReports {
+	if containsAutofixableReports && !l.config.ApplyQuickFixes {
 		log.Println("Some issues are autofixable (try using the `-fix` flag)")
 	}
 
