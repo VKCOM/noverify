@@ -217,7 +217,7 @@ func mainNoExit(ctx *AppContext) (int, error) {
 	}
 	criticalReports, containsAutofixableReports := analyzeReports(&runner, ctx.MainConfig, reports)
 
-	if containsAutofixableReports {
+	if containsAutofixableReports && !runner.config.ApplyQuickFixes {
 		log.Println("Some issues are autofixable (try using the `-fix` flag)")
 	}
 
