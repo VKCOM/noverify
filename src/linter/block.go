@@ -774,7 +774,7 @@ func (b *blockWalker) checkUnreachableForFinallyReturn(tryStmt *ir.TryStmt, tryC
 	}
 
 	if catchContainsDie {
-		b.r.Report(tryStmt.Finally, LevelError, "unreachable", "block finally is unreachable (because catch block %d contains a exit/die)", catchWithDieIndex)
+		b.r.Report(tryStmt.Finally, LevelError, "deadCode", "block finally is unreachable (because catch block %d contains a exit/die)", catchWithDieIndex)
 
 		// If there is an error when the finally block is unreachable,
 		// then errors due to return in finally are skipped.
@@ -789,7 +789,7 @@ func (b *blockWalker) checkUnreachableForFinallyReturn(tryStmt *ir.TryStmt, tryC
 		}
 
 		for _, point := range exitPoints {
-			b.r.Report(point.n, LevelError, "unreachable", "%s is unreachable (because finally block contains a return on line %d)", point.kind, finallyReturnPos.StartLine)
+			b.r.Report(point.n, LevelError, "deadCode", "%s is unreachable (because finally block contains a return on line %d)", point.kind, finallyReturnPos.StartLine)
 		}
 	}
 }

@@ -66,7 +66,7 @@ func (s *inlineTestSuite) handleLines(lines []string, reportsByLine map[int][]st
 
 		if len(expects) > 0 && !hasReports {
 			return []error{
-				fmt.Errorf("unexpected reports: [%s] on line %d\nexpected: no reports", strings.Join(expects, ", "), lineIndex),
+				fmt.Errorf("no reports matched for line %d", lineIndex),
 			}
 		}
 
@@ -146,7 +146,13 @@ func (s *inlineTestSuite) handleFileContents(file string) (lines []string, repor
 
 	lines = strings.Split(content, "\n")
 
-	return lines, res.Reports, nil
+	fileName := filepath.Base(file)
+	checkerName := fileName[:len(fileName)-len(filepath.Ext(file))]
+	if !lint.Config().Checkers.Contains(checkerName) {
+		return nil, nil, fmt.Errorf("file name must be the name of the checker that is tested. Checker %s does not exist", checkerName)
+	}
+
+	return lines, filterReports([]string{checkerName}, res.Reports), nil
 }
 
 // createReportsByLine creates a map with a set of reports for each of the lines
