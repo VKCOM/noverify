@@ -150,7 +150,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "da6be70c8ce8a5df3c063b9768859727f1648d516f33fd39f0c52bb91dfee858120cbca279d9a8b9664d48c543ee98b490de2ab12b4c46ab168c459f0aaab897"
+		wantStrings := "c81e9d2cfd86aa07f20857ca81ee2cac0b31d4a5717273827f85c26b23e658060fa5f1715f2a2ecb37981b3b3ac98c056f53852539b61c8a2b20d0be92d92b9f"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)
@@ -160,7 +160,7 @@ main();
 		//
 		// If it fails, encoding and/or decoding is broken.
 		encodedMeta := &result.walker.meta
-		decodedMeta := &fileMeta{}
+		decodedMeta := &FileMeta{}
 		if err := readMetaCache(bytes.NewReader(buf.Bytes()), nil, "", decodedMeta); err != nil {
 			t.Errorf("decoding failed: %v", err)
 		} else {

@@ -54,7 +54,7 @@ type rootWalker struct {
 	reVet        *regexpVet
 
 	// internal state
-	meta fileMeta
+	meta FileMeta
 
 	currentClassNode ir.Node
 

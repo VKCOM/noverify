@@ -54,7 +54,7 @@ var (
 	initCacheReadTime int64
 )
 
-type fileMeta struct {
+type FileMeta struct {
 	Scope             *meta.Scope
 	Classes           meta.ClassesMap
 	Traits            meta.ClassesMap
@@ -115,7 +115,7 @@ func createMetaCacheFile(filename, cacheFile string, root *rootWalker) error {
 	return nil
 }
 
-func readMetaCache(r io.Reader, cachers []MetaCacher, filename string, dst *fileMeta) error {
+func readMetaCache(r io.Reader, cachers []MetaCacher, filename string, dst *FileMeta) error {
 	bufrd := bufio.NewReader(r)
 	if err := readMetaCacheHeader(cachers, bufrd); err != nil {
 		return err
@@ -132,7 +132,7 @@ func readMetaCache(r io.Reader, cachers []MetaCacher, filename string, dst *file
 }
 
 func restoreMetaFromCache(info *meta.Info, cachers []MetaCacher, filename string, rd io.Reader) error {
-	var m fileMeta
+	var m FileMeta
 	if err := readMetaCache(rd, cachers, filename, &m); err != nil {
 		return err
 	}
@@ -141,7 +141,7 @@ func restoreMetaFromCache(info *meta.Info, cachers []MetaCacher, filename string
 	return nil
 }
 
-func updateMetaInfo(info *meta.Info, filename string, m *fileMeta) {
+func updateMetaInfo(info *meta.Info, filename string, m *FileMeta) {
 	if info.IsIndexingComplete() {
 		panic("Trying to update meta info when not indexing")
 	}

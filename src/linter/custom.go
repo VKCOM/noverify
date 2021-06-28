@@ -154,6 +154,11 @@ func (ctx *RootContext) Scope() *meta.Scope {
 	return ctx.w.scope()
 }
 
+// Meta returns current meta data.
+func (ctx *RootContext) Meta() *FileMeta {
+	return &ctx.w.meta
+}
+
 // ClassParseState returns class parse state (namespace, class, etc).
 func (ctx *RootContext) ClassParseState() *meta.ClassParseState {
 	return ctx.w.ctx.st
