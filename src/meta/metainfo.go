@@ -75,10 +75,10 @@ type FuncInfo struct {
 	Doc          PhpDocInfo
 }
 
-func (info *FuncInfo) IsStatic() bool       { return info.Flags&FuncStatic != 0 }
-func (info *FuncInfo) IsAbstract() bool     { return info.Flags&FuncAbstract != 0 }
-func (info *FuncInfo) IsPure() bool         { return info.Flags&FuncPure != 0 }
-func (info *FuncInfo) FromAnnotation() bool { return info.Flags&FuncFromAnnotation != 0 }
+func (info *FuncInfo) IsStatic() bool         { return info.Flags&FuncStatic != 0 }
+func (info *FuncInfo) IsAbstract() bool       { return info.Flags&FuncAbstract != 0 }
+func (info *FuncInfo) IsPure() bool           { return info.Flags&FuncPure != 0 }
+func (info *FuncInfo) IsFromAnnotation() bool { return info.Flags&FuncFromAnnotation != 0 }
 
 type OverrideType int
 
@@ -119,7 +119,7 @@ type PropertyInfo struct {
 	Flags       PropertyFlags
 }
 
-func (info *PropertyInfo) FromAnnotation() bool { return info.Flags&PropFromAnnotation != 0 }
+func (info *PropertyInfo) IsFromAnnotation() bool { return info.Flags&PropFromAnnotation != 0 }
 
 type ConstInfo struct {
 	Pos         ElementPosition
