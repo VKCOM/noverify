@@ -55,15 +55,16 @@ type FuncParam struct {
 }
 
 type FuncInfo struct {
-	Pos          ElementPosition
-	Name         string
-	Params       []FuncParam
-	MinParamsCnt int
-	Typ          types.Map
-	AccessLevel  AccessLevel
-	Flags        FuncFlags
-	ExitFlags    int // if function has exit/die/throw, then ExitFlags will be <> 0
-	Doc          PhpDocInfo
+	Pos            ElementPosition
+	Name           string
+	Params         []FuncParam
+	MinParamsCnt   int
+	Typ            types.Map
+	AccessLevel    AccessLevel
+	Flags          FuncFlags
+	ExitFlags      int  // if function has exit/die/throw, then ExitFlags will be <> 0
+	FromAnnotation bool // if the method is described in the annotation for the class
+	Doc            PhpDocInfo
 }
 
 func (info *FuncInfo) IsStatic() bool   { return info.Flags&FuncStatic != 0 }
@@ -103,9 +104,10 @@ type FuncInfoOverride struct {
 }
 
 type PropertyInfo struct {
-	Pos         ElementPosition
-	Typ         types.Map
-	AccessLevel AccessLevel
+	Pos            ElementPosition
+	Typ            types.Map
+	AccessLevel    AccessLevel
+	FromAnnotation bool // if the property is described in the annotation for the class
 }
 
 type ConstInfo struct {

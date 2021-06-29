@@ -66,11 +66,12 @@ func parseClassPHPDocMethod(ctx *rootContext, result *classPhpDocParseResult, pa
 		funcFlags |= meta.FuncStatic
 	}
 	result.methods.Set(methodName, meta.FuncInfo{
-		Typ:          newTypesMap(ctx, types),
-		Name:         methodName,
-		Flags:        funcFlags,
-		MinParamsCnt: 0, // TODO: parse signature and assign a proper value
-		AccessLevel:  meta.Public,
+		Typ:            newTypesMap(ctx, types),
+		Name:           methodName,
+		Flags:          funcFlags,
+		MinParamsCnt:   0, // TODO: parse signature and assign a proper value
+		AccessLevel:    meta.Public,
+		FromAnnotation: true,
 	})
 }
 
@@ -99,8 +100,9 @@ func parseClassPHPDocProperty(ctx *rootContext, result *classPhpDocParseResult, 
 	}
 
 	result.properties[part.Var[len("$"):]] = meta.PropertyInfo{
-		Typ:         newTypesMap(ctx, types),
-		AccessLevel: meta.Public,
+		Typ:            newTypesMap(ctx, types),
+		AccessLevel:    meta.Public,
+		FromAnnotation: true,
 	}
 }
 
