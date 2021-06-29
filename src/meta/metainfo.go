@@ -12,6 +12,15 @@ const (
 	FuncPure
 	FuncAbstract
 	FuncFinal
+	// FuncFromAnnotation is set if the function is described in the class annotation.
+	FuncFromAnnotation
+)
+
+type PropertyFlags uint8
+
+const (
+	// PropFromAnnotation is set if the property is described in the class annotation.
+	PropFromAnnotation PropertyFlags = 1 << iota
 )
 
 type PhpDocInfo struct {
@@ -55,16 +64,15 @@ type FuncParam struct {
 }
 
 type FuncInfo struct {
-	Pos            ElementPosition
-	Name           string
-	Params         []FuncParam
-	MinParamsCnt   int
-	Typ            types.Map
-	AccessLevel    AccessLevel
-	Flags          FuncFlags
-	ExitFlags      int  // if function has exit/die/throw, then ExitFlags will be <> 0
-	FromAnnotation bool // if the method is described in the annotation for the class
-	Doc            PhpDocInfo
+	Pos          ElementPosition
+	Name         string
+	Params       []FuncParam
+	MinParamsCnt int
+	Typ          types.Map
+	AccessLevel  AccessLevel
+	Flags        FuncFlags
+	ExitFlags    int // if function has exit/die/throw, then ExitFlags will be <> 0
+	Doc          PhpDocInfo
 }
 
 func (info *FuncInfo) IsStatic() bool   { return info.Flags&FuncStatic != 0 }
@@ -104,10 +112,10 @@ type FuncInfoOverride struct {
 }
 
 type PropertyInfo struct {
-	Pos            ElementPosition
-	Typ            types.Map
-	AccessLevel    AccessLevel
-	FromAnnotation bool // if the property is described in the annotation for the class
+	Pos         ElementPosition
+	Typ         types.Map
+	AccessLevel AccessLevel
+	Flags       PropertyFlags
 }
 
 type ConstInfo struct {

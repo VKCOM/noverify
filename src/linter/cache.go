@@ -45,7 +45,7 @@ import (
 //     47 - forced cache version invalidation due to the #921
 //     48 - renamed meta.TypesMap to types.Map; this affects gob encoding
 //     49 - for shape, names are now generated using the keys that make up this shape
-//     50 - added FromAnnotation field for meta.FuncInfo and meta.PropertyInfo
+//     50 - added Flags field for meta.PropertyInfo
 const cacheVersion = 50
 
 var (
