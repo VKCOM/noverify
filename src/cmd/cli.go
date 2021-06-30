@@ -241,13 +241,13 @@ func (a *App) getCommandByArgs(args []string, commands map[string]*Command) (*Co
 func (a *App) Run(cfg *MainConfig) (int, error) {
 	os.Args = os.Args[1:]
 
-	// Show help when no commandline arguments
+	a.prepareCommands()
+
+	// Show help when no commandline arguments.
 	if len(os.Args) < 1 {
 		a.showHelp()
 		return 0, nil
 	}
-
-	a.prepareCommands()
 
 	// We do a pre-check by receiving the command only for the first argument.
 	command, found := a.getCommandByArgs(os.Args[:1], a.commands)
