@@ -355,3 +355,9 @@ func (reg *CheckersRegistry) ListDeclared() []CheckerInfo {
 	})
 	return checks
 }
+
+// Contains checks the presence of a checker with the given name.
+func (reg *CheckersRegistry) Contains(name string) bool {
+	_, ok := reg.info[name]
+	return ok
+}

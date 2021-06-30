@@ -13,6 +13,10 @@ type Compiler struct {
 	// case sensitivity is set to true, compiled matcher will reject
 	// any spelling mismatches.
 	CaseSensitive bool
+
+	// FuzzyMatching enables some forms of normalization to the
+	// pattern so `[$x]` matches `array($x)` too.
+	FuzzyMatching bool
 }
 
 // Compile compiler a given pattern into a matcher.

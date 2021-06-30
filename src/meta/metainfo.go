@@ -12,6 +12,15 @@ const (
 	FuncPure
 	FuncAbstract
 	FuncFinal
+	// FuncFromAnnotation is set if the function is described in the class annotation.
+	FuncFromAnnotation
+)
+
+type PropertyFlags uint8
+
+const (
+	// PropFromAnnotation is set if the property is described in the class annotation.
+	PropFromAnnotation PropertyFlags = 1 << iota
 )
 
 type PhpDocInfo struct {
@@ -66,9 +75,10 @@ type FuncInfo struct {
 	Doc          PhpDocInfo
 }
 
-func (info *FuncInfo) IsStatic() bool   { return info.Flags&FuncStatic != 0 }
-func (info *FuncInfo) IsAbstract() bool { return info.Flags&FuncAbstract != 0 }
-func (info *FuncInfo) IsPure() bool     { return info.Flags&FuncPure != 0 }
+func (info *FuncInfo) IsStatic() bool         { return info.Flags&FuncStatic != 0 }
+func (info *FuncInfo) IsAbstract() bool       { return info.Flags&FuncAbstract != 0 }
+func (info *FuncInfo) IsPure() bool           { return info.Flags&FuncPure != 0 }
+func (info *FuncInfo) IsFromAnnotation() bool { return info.Flags&FuncFromAnnotation != 0 }
 
 type OverrideType int
 
@@ -106,7 +116,10 @@ type PropertyInfo struct {
 	Pos         ElementPosition
 	Typ         types.Map
 	AccessLevel AccessLevel
+	Flags       PropertyFlags
 }
+
+func (info *PropertyInfo) IsFromAnnotation() bool { return info.Flags&PropFromAnnotation != 0 }
 
 type ConstInfo struct {
 	Pos         ElementPosition

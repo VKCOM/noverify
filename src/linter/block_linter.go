@@ -26,6 +26,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.ArrayExpr:
 		b.checkArray(n)
 
+	case *ir.ClassStmt:
+		b.checkClass(n)
+
 	case *ir.FunctionCallExpr:
 		b.checkFunctionCall(n)
 
@@ -156,7 +159,7 @@ func (b *blockLinter) enterNode(n ir.Node) {
 		b.walker.r.checkKeywordCase(n, "else")
 
 	case *ir.ForeachStmt:
-		b.walker.r.checkKeywordCase(n, "foreach")
+		b.checkForeach(n)
 	case *ir.ForStmt:
 		b.walker.r.checkKeywordCase(n, "for")
 	case *ir.WhileStmt:
@@ -181,6 +184,76 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 	case *ir.BadString:
 		b.report(n, LevelError, "syntax", "%s", n.Error)
+	}
+}
+
+func (b *blockLinter) checkClass(class *ir.ClassStmt) {
+	const classMethod = 0
+	const classOtherMember = 1
+
+	var members = make([]int, 0, len(class.Stmts))
+	for _, stmt := range class.Stmts {
+		switch stmt.(type) {
+		case *ir.ClassMethodStmt:
+			members = append(members, classMethod)
+		default:
+			members = append(members, classOtherMember)
+		}
+	}
+
+	var methodsBegin bool
+	for index, member := range members {
+		if member == classMethod {
+			methodsBegin = true
+		} else if methodsBegin {
+			stmt := class.Stmts[index]
+			memberType := ""
+			memberName := ""
+			switch stmt := stmt.(type) {
+			case *ir.ClassConstListStmt:
+				memberType = "Constant"
+				memberName = stmt.Consts[0].(*ir.ConstantStmt).ConstantName.Value
+			case *ir.PropertyListStmt:
+				memberType = "Property"
+				memberName = "$" + stmt.Properties[0].(*ir.PropertyStmt).Variable.Name
+			default:
+				continue
+			}
+			b.report(stmt, LevelError, "classMembersOrder", "%s %s must go before methods in the class %s", memberType, memberName, class.ClassName.Value)
+		}
+	}
+}
+
+func (b *blockLinter) checkForeach(n *ir.ForeachStmt) {
+	b.walker.r.checkKeywordCase(n, "foreach")
+
+	var vars []*ir.SimpleVar
+
+	findAllVars := func(n ir.Node) bool {
+		if vr, ok := n.(*ir.SimpleVar); ok {
+			vars = append(vars, vr)
+		}
+		return true
+	}
+
+	if n.Variable != nil {
+		irutil.Inspect(n.Variable, findAllVars)
+	}
+	if n.Key != nil {
+		irutil.Inspect(n.Key, findAllVars)
+	}
+
+	fun, ok := b.walker.r.currentFunction()
+	if !ok {
+		return
+	}
+
+	for _, v := range vars {
+		for _, param := range fun.Params {
+			if v.Name == param.Name {
+				b.report(v, LevelError, "varShadow", "Variable $%s shadow existing variable $%s from current function params", v.Name, param.Name)
+			}
+		}
 	}
 }
 
@@ -780,11 +853,17 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 	call := resolveFunctionCall(b.walker.ctx.sc, b.classParseState(), b.walker.ctx.customTypes, e)
 	fqName := call.funcName
 
-	if call.canAnalyze {
-		b.checkCallArgs(e.Function, e.Args, call.info)
-		b.checkDeprecatedFunctionCall(e, &call)
+	if call.isClosure {
+		varName := strings.TrimPrefix(fqName, `\`)
+		b.walker.untrackVarName(varName)
+	} else {
 		b.checkFunctionAvailability(e, &call)
 		b.walker.r.checkNameCase(e.Function, call.funcName, call.info.Name)
+	}
+
+	if call.isFound {
+		b.checkCallArgs(e.Function, e.Args, call.info)
+		b.checkDeprecatedFunctionCall(e, &call)
 	}
 
 	switch fqName {
@@ -851,7 +930,7 @@ func (b *blockLinter) checkArrayKeyExistsCall(e *ir.FunctionCallExpr) {
 	typ := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, e.Arg(1).Expr)
 
 	onlyObjects := !typ.Find(func(typ string) bool {
-		return !types.IsClassType(typ)
+		return !types.IsClass(typ)
 	})
 
 	if onlyObjects {
@@ -1165,7 +1244,7 @@ func (b *blockLinter) checkFormatString(e *ir.FunctionCallExpr, arg *ir.Argument
 		}
 
 		arg := e.Arg(d.argNum)
-		if d.specifier == 's' && b.isArrayType(b.walker.exprType(arg.Expr)) {
+		if d.specifier == 's' && b.walker.exprType(arg.Expr).IsArray() {
 			b.report(arg, LevelWarning, "printf", "potential array to string conversion")
 		}
 	}
@@ -1175,10 +1254,6 @@ func (b *blockLinter) checkFormatString(e *ir.FunctionCallExpr, arg *ir.Argument
 			b.report(e.Arg(i), LevelWarning, "printf", "argument is not referenced from the formatting string")
 		}
 	}
-}
-
-func (b *blockLinter) isArrayType(typ types.Map) bool {
-	return typ.Len() == 1 && typ.Find(types.IsArrayType)
 }
 
 func (b *blockLinter) classParseState() *meta.ClassParseState {

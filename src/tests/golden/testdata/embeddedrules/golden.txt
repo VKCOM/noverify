@@ -64,22 +64,22 @@ WARNING bitwiseOps: Used & bitwise operator over bool operands, perhaps && is in
 WARNING bitwiseOps: Used | bitwise operator over bool operands, perhaps || is intended? at testdata/embeddedrules/bitwiseOps.php:9
   $_ = (($x == 1) | ($x == 2)); // Bad 2
         ^^^^^^^^^^^^^^^^^^^^^
-MAYBE   callSimplify: Could simplify to array_key_exists('abc', $array) at testdata/embeddedrules/callSimplify.php:4
+MAYBE   callSimplify: Could simplify to array_key_exists('abc', $array) at testdata/embeddedrules/callSimplify.php:7
     $_ = in_array('abc', array_keys($array)); // bad
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   callSimplify: Could simplify to $str[$index] at testdata/embeddedrules/callSimplify.php:11
+MAYBE   callSimplify: Could simplify to $str[$index] at testdata/embeddedrules/callSimplify.php:14
     $_ = substr($str, $index, 1);
          ^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   callSimplify: Could simplify to "hello"[$index] at testdata/embeddedrules/callSimplify.php:12
+MAYBE   callSimplify: Could simplify to "hello"[$index] at testdata/embeddedrules/callSimplify.php:15
     $_ = substr("hello", $index, 1);
          ^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   callSimplify: Could simplify to "hello"[2] at testdata/embeddedrules/callSimplify.php:13
+MAYBE   callSimplify: Could simplify to "hello"[2] at testdata/embeddedrules/callSimplify.php:16
     $_ = substr("hello", 2, 1);
          ^^^^^^^^^^^^^^^^^^^^^
-MAYBE   callSimplify: Could simplify to $array[] = $val at testdata/embeddedrules/callSimplify.php:20
+MAYBE   callSimplify: Could simplify to $array[] = $val at testdata/embeddedrules/callSimplify.php:27
     array_push($array, $val);
     ^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   callSimplify: Could simplify to $array[] = 10 at testdata/embeddedrules/callSimplify.php:21
+MAYBE   callSimplify: Could simplify to $array[] = 10 at testdata/embeddedrules/callSimplify.php:28
     array_push($array, 10);
     ^^^^^^^^^^^^^^^^^^^^^^
 WARNING indexingSyntax: a{i} indexing is deprecated since PHP 7.4, use a[i] instead at testdata/embeddedrules/indexingSyntax.php:14
@@ -148,13 +148,13 @@ define("Z_CONST", 1, true);
 WARNING langDeprecated: define defaults to a case sensitive constant, the third argument can be removed at testdata/embeddedrules/langDeprecated.php:4
 define("Z_CONST1", 2, false);
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING offBy1: probably intended to use count-1 as an index at testdata/embeddedrules/offBy1.php:7
+WARNING offBy1: probably intended to use count-1 as an index at testdata/embeddedrules/offBy1.php:11
   $_ = $xs[count($xs)];
        ^^^^^^^^^^^^^^^
-WARNING offBy1: probably intended to use sizeof-1 as an index at testdata/embeddedrules/offBy1.php:8
+WARNING offBy1: probably intended to use sizeof-1 as an index at testdata/embeddedrules/offBy1.php:12
   $_ = $xs[sizeof($xs)];
        ^^^^^^^^^^^^^^^^
-WARNING offBy1: probably intended to use count-1 as an index at testdata/embeddedrules/offBy1.php:10
+WARNING offBy1: probably intended to use count-1 as an index at testdata/embeddedrules/offBy1.php:14
   if ($tabs[count($tabs)] == "") {
       ^^^^^^^^^^^^^^^^^^^
 WARNING precedence: == has higher precedence than & at testdata/embeddedrules/precedence.php:4

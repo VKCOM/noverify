@@ -101,6 +101,10 @@ func mergeTypeMaps(left types.Map, right types.Map) types.Map {
 	merged := make(map[string]struct{}, left.Len()+right.Len())
 
 	left.Iterate(func(typ string) {
+		if typ == "" {
+			return
+		}
+
 		if typ[0] == types.WArrayOf {
 			hasAtLeastOneArray = true
 		}
@@ -111,6 +115,10 @@ func mergeTypeMaps(left types.Map, right types.Map) types.Map {
 	})
 
 	right.Iterate(func(typ string) {
+		if typ == "" {
+			return
+		}
+
 		if typ[0] == types.WArrayOf && types.UnwrapArrayOf(typ) == "mixed" && hasAtLeastOneArray {
 			return
 		}
@@ -136,13 +144,13 @@ func mergeTypeMaps(left types.Map, right types.Map) types.Map {
 //    the union of the types that are returned from the function by return.
 func functionReturnType(phpdocReturnType types.Map, hintReturnType types.Map, actualReturnTypes types.Map) types.Map {
 	var returnTypes types.Map
-	if !phpdocReturnType.IsEmpty() || !hintReturnType.IsEmpty() {
+	if !phpdocReturnType.Empty() || !hintReturnType.Empty() {
 		returnTypes = mergeTypeMaps(phpdocReturnType, hintReturnType)
 	} else {
 		returnTypes = actualReturnTypes
 	}
 
-	if returnTypes.IsEmpty() {
+	if returnTypes.Empty() {
 		returnTypes = types.VoidType
 	}
 
@@ -153,6 +161,7 @@ type funcCallInfo struct {
 	funcName   string
 	info       meta.FuncInfo
 	isFound    bool
+	isClosure  bool
 	canAnalyze bool
 }
 
@@ -170,16 +179,31 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 		res.funcName = fqName
 		res.info, res.isFound = st.Info.GetFunction(fqName)
 	} else {
-		solver.ExprTypeCustom(sc, st, call.Function, customTypes).Iterate(func(typ string) {
-			if res.isFound {
-				return
-			}
+		res.isFound = solver.ExprTypeCustom(sc, st, call.Function, customTypes).Find(func(typ string) bool {
 			m, ok := solver.FindMethod(st.Info, typ, `__invoke`)
+			if !ok {
+				return false
+			}
+
 			res.info = m.Info
-			res.isFound = ok
+			return true
 		})
-		if !res.isFound {
-			res.canAnalyze = false
+		if res.isFound {
+			return res
+		}
+		// we think of a function as a closure,
+		// since we don't know where it came from.
+		res.isClosure = true
+	}
+
+	res.funcName = fqName
+	res.info, res.isFound = st.Info.GetFunction(fqName)
+	if !res.isFound {
+		// If the function has not been found up to this point,
+		// we try to check if the function is a variable with the closure type.
+		res.info, res.isFound = solver.GetClosure(call.Function, sc, st)
+		if res.isFound {
+			res.isClosure = true
 		}
 	}
 

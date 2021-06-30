@@ -353,7 +353,7 @@ func TestExprTypeIssue497(t *testing.T) {
  * @return T<int>
  */
 function f($x) {
-  exprtype($x, '\shape$exprtype.php$0$');
+  exprtype($x, '\shape$a:int$');
   return [$v];
 }
 `
@@ -561,11 +561,11 @@ function test() {
   $t0 = tuple_self0(tuple([]));
   $t1 = tuple_self1(tuple([]));
 
-  exprtype(shape_self0(), '\shape$exprtype.php$0$');
-  exprtype(shape_self1(), '\shape$exprtype.php$1$');
+  exprtype(shape_self0(), '\shape$x:int,y:float$');
+  exprtype(shape_self1(), '\shape$key:string$');
   exprtype(shape_index(), 'int');
 
-  exprtype($s0, '\shape$exprtype.php$0$');
+  exprtype($s0, '\shape$x:int,y:float$');
   exprtype($s0['x'], 'int');
   exprtype($s0['y'], 'float');
 
@@ -2726,6 +2726,37 @@ function f8(): object {
 	return new Foo;
 }
 exprtype(f8(), "\Foo");
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestClosureExprType(t *testing.T) {
+	code := `<?php
+class Foo {
+  public function method() {}
+}
+
+function func() {
+  $f = function(): Foo { return new Foo; };
+  $foo = $f();
+  
+  exprtype($f, "\Closure$(exprtype.php,func):7$");
+  exprtype($foo, "\Foo");
+}
+
+function func1() {
+  $f1 = function(): float {
+    if (1) {
+	  return new Foo;
+	}
+    return 10; 
+  };
+
+  $foo1 = $f1();
+
+  exprtype($f1, "\Closure$(exprtype.php,func1):15$");
+  exprtype($foo1, "float");
+}
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }

@@ -478,3 +478,30 @@ function f2($a) {
 	}
 	test.RunAndMatch()
 }
+
+func TestPhpdocTwiceNullableTypes(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+/**
+ * @param ?int|null $a
+ * @param ?string[]|null $b
+ * @param ?Foo|null $c
+ * @param shape(name: ?string, age: int)|null $d
+ * @return ?int|null
+ */
+function f($a, $b, $c, $d) {
+  echo $a;
+  echo $b;
+  echo $c;
+  echo $d;
+  return null;
+}
+`)
+	test.Expect = []string{
+		`repeated nullable doesn't make sense`,
+		`repeated nullable doesn't make sense`,
+		`repeated nullable doesn't make sense`,
+		`repeated nullable doesn't make sense`,
+	}
+	test.RunAndMatch()
+}
