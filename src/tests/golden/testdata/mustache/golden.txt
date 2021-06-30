@@ -22,6 +22,84 @@ MAYBE   ternarySimplify: could rewrite as `$node[Mustache_Tokenizer::FILTERS] ??
 WARNING unused: Variable keystr is unused (use $_ to ignore this inspection) at testdata/mustache/src/Mustache/Compiler.php:289
         $keystr = var_export($key, true);
         ^^^^^^^
+MAYBE   callSimplify: Could simplify to $id[0] at testdata/mustache/src/Mustache/Compiler.php:646
+            if (substr($id, 0, 1) === '.') {
+                ^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Constant KLASS must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:184
+    const KLASS = '<?php
+    ^^^^^^^
+ERROR   classMembersOrder: Constant KLASS_NO_LAMBDAS must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:202
+    const KLASS_NO_LAMBDAS = '<?php
+    ^^^^^^^
+ERROR   classMembersOrder: Constant STRICT_CALLABLE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:215
+    const STRICT_CALLABLE = 'protected $strictCallables = true;';
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Constant BLOCK_VAR must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:237
+    const BLOCK_VAR = '
+    ^^
+ERROR   classMembersOrder: Constant BLOCK_VAR_ELSE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:244
+    const BLOCK_VAR_ELSE = '} else {%s';
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Constant BLOCK_ARG must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:271
+    const BLOCK_ARG = '%s => array($this, \'block%s\'),';
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Constant BLOCK_FUNCTION must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:295
+    const BLOCK_FUNCTION = '
+    ^^
+ERROR   classMembersOrder: Constant SECTION_CALL must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:323
+    const SECTION_CALL = '
+    ^^
+ERROR   classMembersOrder: Constant SECTION must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:329
+    const SECTION = '
+    ^^
+ERROR   classMembersOrder: Constant INVERTED_SECTION must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:398
+    const INVERTED_SECTION = '
+    ^^
+ERROR   classMembersOrder: Constant PARTIAL_INDENT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:425
+    const PARTIAL_INDENT = ', $indent . %s';
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Constant PARTIAL must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:426
+    const PARTIAL = '
+    ^^
+ERROR   classMembersOrder: Constant PARENT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:456
+    const PARENT = '
+    ^^
+ERROR   classMembersOrder: Constant PARENT_NO_CONTEXT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:465
+    const PARENT_NO_CONTEXT = '
+    ^^
+ERROR   classMembersOrder: Constant VARIABLE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:508
+    const VARIABLE = '
+    ^^
+ERROR   classMembersOrder: Constant FILTER must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:533
+    const FILTER = '
+    ^^
+ERROR   classMembersOrder: Constant LINE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:564
+    const LINE = '$buffer .= "\n";';
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Constant TEXT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:565
+    const TEXT = '$buffer .= %s%s;';
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Constant DEFAULT_ESCAPE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:607
+    const DEFAULT_ESCAPE = 'htmlspecialchars(%s, %s, %s)';
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Constant CUSTOM_ESCAPE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:608
+    const CUSTOM_ESCAPE  = 'call_user_func($this->mustache->getEscape(), %s)';
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Constant IS_CALLABLE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:658
+    const IS_CALLABLE        = '!is_string(%s) && is_callable(%s)';
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Constant STRICT_IS_CALLABLE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:659
+    const STRICT_IS_CALLABLE = 'is_object(%s) && is_callable(%s)';
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   classMembersOrder: Constant LINE_INDENT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:675
+    const LINE_INDENT = '$indent . ';
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   callSimplify: Could simplify to $this->stack[] = $value at testdata/mustache/src/Mustache/Context.php:39
+        array_push($this->stack, $value);
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   callSimplify: Could simplify to $this->blockStack[] = $value at testdata/mustache/src/Mustache/Context.php:49
+        array_push($this->blockStack, $value);
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: could rewrite as `$options['cache_file_mode'] ?? null` at testdata/mustache/src/Mustache/Engine.php:156
                 $mode  = isset($options['cache_file_mode']) ? $options['cache_file_mode'] : null;
                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

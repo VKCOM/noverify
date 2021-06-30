@@ -1247,12 +1247,19 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			}
 		}
 
-		nameNode := c.ConvertNode(n.Name).(*ir.Identifier)
+		nameNode := c.ConvertNode(n.Name)
 
-		return &ir.SimpleVar{
-			Position:      n.Position,
-			IdentifierTkn: nameNode.IdentifierTkn,
-			Name:          nameNode.Value,
+		switch n := nameNode.(type) {
+		case *ir.SimpleVar:
+			return n
+		case *ir.Identifier:
+			return &ir.SimpleVar{
+				Position:      n.Position,
+				IdentifierTkn: n.IdentifierTkn,
+				Name:          n.Value,
+			}
+		default:
+			return nil
 		}
 
 	case *ast.ScalarEncapsedStringPart:
@@ -1382,6 +1389,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenParenthesisTkn = n.OpenParenthesisTkn
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
+		out.ColonTkn = n.ColonTkn
 
 		var tokenWithDoc *token.Token
 		if len(n.Modifiers) != 0 {
@@ -2006,7 +2014,9 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.SemiColonTkn = n.SemiColonTkn
 		out.Ref = c.convNode(n.Method)
 		out.Modifier = c.convNode(n.Modifier)
-		out.Alias = c.convNode(n.Alias).(*ir.Identifier)
+		if n.Alias != nil {
+			out.Alias = c.convNode(n.Alias).(*ir.Identifier)
+		}
 		return out
 
 	case *ast.StmtTraitUsePrecedence:

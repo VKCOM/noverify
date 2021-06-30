@@ -42,7 +42,7 @@ type Map struct {
 //
 // Type precision determined by a type information source.
 // For example, Int literal has a precise type of `int`, while having
-// a phpdoc that promises some variable to have type `T` is not precise enough.
+// a phpdoc that promises some variable to have type `T` too generic.
 //
 // Adding an imprecise type to a types map makes the entire type map imprecise.
 //
@@ -81,6 +81,18 @@ func (m Map) Map(fn func(string) string) Map {
 	return NewMapFromMap(mapped)
 }
 
+// Filter returns a new types map with the types of m for which fn returns true.
+// The result type map is never marked as precise.
+func (m Map) Filter(fn func(string) bool) Map {
+	filtered := make(map[string]struct{}, len(m.m))
+	for typ := range m.m {
+		if fn(typ) {
+			filtered[typ] = struct{}{}
+		}
+	}
+	return NewMapFromMap(filtered)
+}
+
 // NewEmptyMap creates new type map that has no types in it
 func NewEmptyMap(cap int) Map {
 	return Map{m: make(map[string]struct{}, cap)}
@@ -102,7 +114,7 @@ func NewMapFromTypes(types []Type) Map {
 func NewMap(str string) Map {
 	m := make(map[string]struct{}, strings.Count(str, "|")+1)
 	for _, s := range strings.Split(str, "|") {
-		if IsArrayType(s) {
+		if IsArray(s) {
 			s = WrapArrayOf(strings.TrimSuffix(s, "[]"))
 		}
 		m[s] = struct{}{}
@@ -144,8 +156,8 @@ func (m Map) Immutable() Map {
 	}
 }
 
-// IsEmpty checks if map has no types at all
-func (m Map) IsEmpty() bool {
+// Empty checks if map has no types at all
+func (m Map) Empty() bool {
 	return len(m.m) == 0
 }
 
@@ -168,10 +180,8 @@ func (m Map) Len() int {
 	return len(m.m)
 }
 
-// IsArray checks if map contains only array of any type
-//
-// Warning: use only for *lazy* types!
-func (m Map) IsArray() bool {
+// IsLazyArray checks if map contains only array of any type
+func (m Map) IsLazyArray() bool {
 	if len(m.m) != 1 {
 		return false
 	}
@@ -184,16 +194,29 @@ func (m Map) IsArray() bool {
 	return false
 }
 
-// IsArrayOf checks if map contains only array of given type
-//
-// Warning: use only for *lazy* types!
-func (m Map) IsArrayOf(typ string) bool {
+// IsLazyArrayOf checks if map contains only array of given type
+func (m Map) IsLazyArrayOf(typ string) bool {
 	if len(m.m) != 1 {
 		return false
 	}
 
 	_, ok := m.m[WrapArrayOf(typ)]
 	return ok
+}
+
+// IsArray checks if map contains only array of any type
+func (m Map) IsArray() bool {
+	if len(m.m) != 1 {
+		return false
+	}
+
+	for typ := range m.m {
+		if IsArray(typ) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Is reports whether m contains exactly one specified type.
@@ -357,9 +380,9 @@ func (m Map) Iterate(cb func(typ string)) {
 	}
 }
 
-// ArrayElemLazyType returns type of array element. T[] -> T, T[][] -> T[].
+// LazyArrayElemType returns type of array element. T[] -> T, T[][] -> T[].
 // For *Lazy* type.
-func (m Map) ArrayElemLazyType() Map {
+func (m Map) LazyArrayElemType() Map {
 	if m.Len() == 0 {
 		return MixedType
 	}

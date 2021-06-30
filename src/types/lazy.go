@@ -328,11 +328,3 @@ func FormatType(s string) (res string) {
 
 	return "unknown(" + s + ")"
 }
-
-func IsClassType(s string) bool {
-	return strings.HasPrefix(s, `\`) && !IsShapeType(s) && !IsArrayType(s)
-}
-
-func IsShapeType(s string) bool { return strings.HasPrefix(s, `\shape$`) }
-
-func IsArrayType(s string) bool { return strings.HasSuffix(s, `[]`) }

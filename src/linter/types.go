@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/solver"
@@ -14,16 +15,6 @@ import (
 
 type warningString string
 
-type shapeTypeProp struct {
-	key   string
-	types []types.Type
-}
-
-type shapeTypeInfo struct {
-	name  string
-	props []shapeTypeProp
-}
-
 // typesFromPHPDoc extracts types out of the PHPDoc type string.
 //
 // No normalization is performed, but some PHPDoc-specific types
@@ -32,7 +23,19 @@ func typesFromPHPDoc(ctx *rootContext, typ phpdoc.Type) ([]types.Type, warningSt
 	conv := phpdocTypeConverter{ctx: ctx}
 	result := conv.mapType(typ.Expr)
 	if conv.nullable {
-		result = append(result, types.Type{Elem: "null"})
+		alreadyHasNull := false
+
+		for _, tp := range result {
+			if tp.Elem == "null" {
+				alreadyHasNull = true
+				conv.warning = "repeated nullable doesn't make sense"
+				break
+			}
+		}
+
+		if !alreadyHasNull {
+			result = append(result, types.Type{Elem: "null"})
+		}
 	}
 	return result, conv.warning
 }
@@ -55,7 +58,7 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
 		return conv.mapType(e.Args[0])
 
 	case phpdoc.ExprName:
-		if suggest, ok := typeAliases[e.Value]; ok {
+		if suggest, has := types.Alias(e.Value); has {
 			conv.warn(fmt.Sprintf("use %s type instead of %s", suggest, e.Value))
 		}
 		return []types.Type{{Elem: e.Value}}
@@ -126,7 +129,7 @@ func (conv *phpdocTypeConverter) mapArrayType(elem phpdoc.TypeExpr) []types.Type
 }
 
 func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []types.Type {
-	props := make([]shapeTypeProp, 0, len(params))
+	props := make([]autogen.ShapeTypeProp, 0, len(params))
 	for i, p := range params {
 		if p.Value == "*" || p.Value == "..." {
 			continue
@@ -152,11 +155,11 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []types.
 		// We need to resolve the class names as well as static,
 		// self and $this here for it to work properly.
 		for i, typ := range typeList {
-			if _, ok := typeAliases[typ.Elem]; ok {
+			if types.IsAlias(typ.Elem) {
 				continue
 			}
 
-			if trivialTypes[typ.Elem] {
+			if types.IsTrivial(typ.Elem) {
 				continue
 			}
 
@@ -176,21 +179,22 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []types.
 				Elem: "null",
 				Dims: 0,
 			})
+			conv.nullable = false
 		}
 
-		props = append(props, shapeTypeProp{
-			key:   key.Value,
-			types: typeList,
+		props = append(props, autogen.ShapeTypeProp{
+			Key:   key.Value,
+			Types: typeList,
 		})
 	}
 
-	shape := shapeTypeInfo{
-		name:  conv.ctx.generateShapeName(),
-		props: props,
+	shape := autogen.ShapeTypeInfo{
+		Name:  autogen.GenerateShapeName(props, conv.ctx.st),
+		Props: props,
 	}
-	conv.ctx.shapes = append(conv.ctx.shapes, shape)
+	conv.ctx.shapes[shape.Name] = shape
 
-	return []types.Type{{Elem: shape.name}}
+	return []types.Type{{Elem: shape.Name}}
 }
 
 func (conv *phpdocTypeConverter) mapTupleType(params []phpdoc.TypeExpr) []types.Type {
@@ -243,7 +247,7 @@ func typesFromNode(typeNode ir.Node) []types.Type {
 	// means that we need to force it to be interpreted as
 	// `\integer`, not as `int`. This is why we prepend `\`.
 	typ := types.Type{Elem: meta.NameNodeToString(n)}
-	if _, isAlias := typeAliases[typ.Elem]; isAlias {
+	if types.IsAlias(typ.Elem) {
 		typ.Elem = `\` + typ.Elem
 	}
 
@@ -263,18 +267,12 @@ func (n typeNormalizer) NormalizeTypes(typeList []types.Type) {
 	}
 }
 
-func (n typeNormalizer) string2name(s string) *ir.Name {
-	// TODO: Can avoid extra work by holding 1 tmp name inside
-	// typeNormalizer, since we never need more than one at the time.
-	return &ir.Name{Value: s}
-}
-
 func (n typeNormalizer) normalizeType(typ *types.Type) {
-	if trivialTypes[typ.Elem] {
+	if types.IsTrivial(typ.Elem) {
 		return
 	}
 
-	if typename, ok := typeAliases[typ.Elem]; ok {
+	if typename, has := types.Alias(typ.Elem); has {
 		typ.Elem = typename
 		return
 	}
@@ -304,39 +302,10 @@ func (n typeNormalizer) normalizeType(typ *types.Type) {
 		if typ.Elem[0] == '\\' {
 			return // Already FQN?
 		}
-		fullClassName, ok := solver.GetClassName(n.st, n.string2name(typ.Elem))
+		fullClassName, ok := solver.GetClassName(n.st, &ir.Name{Value: typ.Elem})
 		if !ok {
 			panic(fmt.Sprintf("can't expand type name: '%s'", typ.Elem))
 		}
 		typ.Elem = fullClassName
 	}
-}
-
-var trivialTypes = map[string]bool{
-	"bool":     true,
-	"callable": true,
-	"float":    true,
-	"int":      true,
-	"mixed":    true,
-	"object":   true,
-	"resource": true,
-	"string":   true,
-	"void":     true,
-	"iterable": true,
-
-	"null":  true,
-	"true":  true,
-	"false": true,
-}
-
-var typeAliases = map[string]string{
-	"integer": "int",
-	"long":    "int",
-
-	"boolean": "bool",
-
-	"real":   "float",
-	"double": "float",
-
-	"callback": "callable",
 }

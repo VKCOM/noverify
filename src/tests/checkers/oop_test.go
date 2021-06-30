@@ -141,8 +141,48 @@ class t3 {
   /** inverse of the T2 test case */
   public function T3() {}
 }
+
+trait TraitWithNameMatchingMethod {
+  /** ok */
+  public function TraitWithNameMatchingMethod() {}
+}
+
+interface InterfaceWithNameMatchingMethod {
+  /** ok */
+  public function InterfaceWithNameMatchingMethod();
+}
+
+namespace SameWithNamespace {
+  class T1 {
+    /** simple constructor */
+    public function T1() {}
+  }
+  
+  class T2 {
+    /** constructor name is in lower case */
+    public function t2() {}
+  }
+  
+  class t3 {
+    /** inverse of the T2 test case */
+    public function T3() {}
+  }
+
+  trait TraitWithNameMatchingMethod {
+    /** ok */
+    public function TraitWithNameMatchingMethod() {}
+  }
+  
+  interface InterfaceWithNameMatchingMethod {
+    /** ok */
+    public function InterfaceWithNameMatchingMethod();
+  }
+}
 `)
 	test.Expect = []string{
+		`Old-style constructor usage, use __construct instead`,
+		`Old-style constructor usage, use __construct instead`,
+		`Old-style constructor usage, use __construct instead`,
 		`Old-style constructor usage, use __construct instead`,
 		`Old-style constructor usage, use __construct instead`,
 		`Old-style constructor usage, use __construct instead`,
@@ -711,14 +751,10 @@ func TestClosureLateBinding(t *testing.T) {
 		}
 	}
 
-	class Closure {
-		public function call();
-	}
-
 	(function() {
 		$this->method();
 		$a->method();
-	})->call(new Example());
+	})();
 	`)
 	test.Expect = []string{
 		"Undefined variable: a",
@@ -1492,4 +1528,99 @@ function a1(Foo $a, foo $b, boo $c) {}
 		`\boo should be spelled \Boo`,
 	}
 	test.RunAndMatch()
+}
+
+func TestClassComponentsOrder(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {
+  public function f() {}
+
+  const A = 10;
+  public string $a = "";
+}
+
+class Foo1 {
+  const A = 10;
+
+  public function f() {}
+
+  public string $a = "";
+}
+
+class Foo2 {
+  const A = 10;
+
+  public function f() {}
+
+  public static string $a = "";
+
+  public function f1() {}
+}
+
+class Foo3 {
+  public function f() {}
+
+  public string $a = "";
+
+  public static function f1() {}
+
+  const A = 10;
+}
+`)
+
+	test.Expect = []string{
+		`Constant A must go before methods in the class Foo`,
+		`Property $a must go before methods in the class Foo`,
+		`Property $a must go before methods in the class Foo1`,
+		`Property $a must go before methods in the class Foo2`,
+		`Property $a must go before methods in the class Foo3`,
+		`Constant A must go before methods in the class Foo3`,
+	}
+	linttest.RunFilterMatch(test, "classMembersOrder")
+}
+
+func TestClassComponentsOrderGood(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+class Foo {
+  const A = 10;
+  public string $a = "";
+
+  /** */
+  public function f() {}
+}
+
+class Foo1 {
+  const A = 10;
+  public string $a = "";
+}
+
+class Foo2 {}
+
+class Foo3 {
+  const A = 10;
+
+  /** */
+  public function f() {}
+}
+
+class Foo4 {
+  public string $a = "";
+
+  /** */
+  public function f() {}
+}
+
+class Foo5 {
+  const A = 10, B = 100;
+  public string $a = "", $b = "1";
+  public string $c = "", $d = "1";
+
+  /** */
+  public function f() {}
+
+  /** */
+  public function f1() {}
+}
+`)
 }

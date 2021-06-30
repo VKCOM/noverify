@@ -1,15 +1,19 @@
 <?php
 
 $a = 5;
-function f() {
+function f(): int {
+    global $a;
     $a++;
     return $a;
 }
 
 function ternarySimplify() {
-    $z = $x ?: 5;
-    // f not pure
-    $z = f() ? f() : 5;
+    $x = 0;
+    $y = 0;
 
-    $z = $x ?? $y;
+    $_ = $x ?: 5;
+    // ok, f not pure
+    $_ = f() ? f() : 5;
+
+    $_ = $x ?? $y;
 }

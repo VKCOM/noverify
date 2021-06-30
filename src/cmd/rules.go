@@ -2,18 +2,21 @@ package cmd
 
 import (
 	"bytes"
-	"fmt"
+	"embed"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
-	"github.com/VKCOM/noverify/src/cmd/embeddedrules"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/rules"
 )
 
-func AddEmbeddedRules(rset *rules.Set, p *rules.Parser, filter func(r rules.Rule) bool) ([]*rules.Set, error) {
-	embeddedRuleSets, err := parseEmbeddedRules(p)
+//go:embed embeddedrules
+var embeddedRulesData embed.FS
+
+func AddEmbeddedRules(rset *rules.Set, filter func(r rules.Rule) bool) ([]*rules.Set, error) {
+	embeddedRuleSets, err := parseEmbeddedRules()
 	if err != nil {
 		return nil, err
 	}
@@ -25,65 +28,89 @@ func AddEmbeddedRules(rset *rules.Set, p *rules.Parser, filter func(r rules.Rule
 	return embeddedRuleSets, nil
 }
 
-func parseRules() ([]*rules.Set, error) {
-	p := rules.NewParser()
-
-	ruleSets, err := parseEmbeddedRules(p)
-	if err != nil {
-		return nil, fmt.Errorf("embedded rules: %v", err)
+func parseExternalRules(externalRules string) ([]*rules.Set, error) {
+	if externalRules == "" {
+		return nil, nil
 	}
 
-	rulesFlag, ok := findRulesFlag()
-	if ok && rulesFlag != "" {
-		for _, filename := range strings.Split(rulesFlag, ",") {
-			data, err := ioutil.ReadFile(filename)
+	var ruleSets []*rules.Set
+
+	for _, filename := range strings.Split(externalRules, ",") {
+		stat, err := os.Stat(filename)
+		if err != nil {
+			return nil, err
+		}
+
+		if stat.IsDir() {
+			dir := filename
+			files, err := ioutil.ReadDir(dir)
 			if err != nil {
 				return nil, err
 			}
-			rset, err := p.Parse(filename, bytes.NewReader(data))
+
+			for _, file := range files {
+				if file.IsDir() {
+					continue
+				}
+
+				ruleSets, err = readAndParseRuleFile(filepath.Join(dir, file.Name()), ruleSets)
+				if err != nil {
+					return nil, err
+				}
+			}
+		} else {
+			ruleSets, err = readAndParseRuleFile(filename, ruleSets)
 			if err != nil {
 				return nil, err
 			}
-			ruleSets = append(ruleSets, rset)
 		}
 	}
 
 	return ruleSets, nil
 }
 
-func findRulesFlag() (string, bool) {
-	// Prefix can be "-" or "--".
-	// Value can be "=" or " " separated.
-	// If value is " " separated, then it's located in the next argument.
-	for i, arg := range os.Args {
-		arg = strings.TrimLeft(arg, "-")
-		switch {
-		case strings.HasPrefix(arg, "rules="):
-			parts := strings.Split(arg, "=")
-			return parts[1], true
-		case arg == "rules":
-			if i+1 < len(os.Args) {
-				return os.Args[i+1], true
-			}
-		}
+func readAndParseRuleFile(filename string, ruleSets []*rules.Set) ([]*rules.Set, error) {
+	p := rules.NewParser()
+
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
 	}
-	return "", false
+
+	ruleSet, err := p.Parse(filename, bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+
+	ruleSets = append(ruleSets, ruleSet)
+
+	return ruleSets, nil
 }
 
-func parseEmbeddedRules(p *rules.Parser) ([]*rules.Set, error) {
+func parseEmbeddedRules() ([]*rules.Set, error) {
 	var ruleSets []*rules.Set
-	for _, filename := range embeddedrules.AssetNames() {
-		data, err := embeddedrules.Asset(filename)
+	p := rules.NewParser()
+
+	entries, err := embeddedRulesData.ReadDir("embeddedrules")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		filename := filepath.ToSlash(filepath.Join("embeddedrules", entry.Name()))
+		data, err := embeddedRulesData.ReadFile(filename)
 		if err != nil {
 			return nil, err
 		}
-		rset, err := p.Parse(filename, bytes.NewReader(data))
+
+		rset, err := p.Parse(entry.Name(), bytes.NewReader(data))
 		if err != nil {
 			return nil, err
 		}
 		rset.Builtin = true
 		ruleSets = append(ruleSets, rset)
 	}
+
 	return ruleSets, nil
 }
 

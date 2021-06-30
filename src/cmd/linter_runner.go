@@ -18,7 +18,7 @@ import (
 )
 
 type linterRunner struct {
-	args *cmdlineArguments
+	flags *ParsedFlags
 
 	linter *linter.Linter
 
@@ -34,7 +34,7 @@ type linterRunner struct {
 }
 
 func (l *linterRunner) IsEnabledByFlags(checkName string) bool {
-	if !l.args.allowAll && !l.reportsIncludeChecksSet[checkName] {
+	if !l.flags.AllowAll && !l.reportsIncludeChecksSet[checkName] {
 		return false // Not enabled by -allow-checks
 	}
 
@@ -45,10 +45,30 @@ func (l *linterRunner) IsEnabledByFlags(checkName string) bool {
 	return true
 }
 
+func (l *linterRunner) IsCriticalReport(r *linter.Report) bool {
+	if len(l.reportsCriticalSet) != 0 {
+		return l.reportsCriticalSet[r.CheckName]
+	}
+	return r.IsCritical()
+}
+
+func (l *linterRunner) IsEnabledReport(r *linter.Report) bool {
+	if !l.IsEnabledByFlags(r.CheckName) {
+		return false
+	}
+
+	if l.config.ExcludeRegex == nil {
+		return true
+	}
+
+	// Disabled by a file comment.
+	return !l.config.ExcludeRegex.MatchString(r.Filename)
+}
+
 func (l *linterRunner) collectGitIgnoreFiles() error {
 	l.filenameFilter = workspace.NewFilenameFilter(l.config.ExcludeRegex)
 
-	if !l.args.gitignore {
+	if !l.flags.Gitignore {
 		return nil
 	}
 
@@ -84,18 +104,18 @@ func (l *linterRunner) collectGitIgnoreFiles() error {
 	return nil
 }
 
-func (l *linterRunner) Init(ruleSets []*rules.Set, args *cmdlineArguments) error {
-	l.args = args
+func (l *linterRunner) Init(ruleSets []*rules.Set, flags *ParsedFlags) error {
+	l.flags = flags
 
 	if err := l.collectGitIgnoreFiles(); err != nil {
 		return fmt.Errorf("collect gitignore files: %v", err)
 	}
 
 	l.outputFp = os.Stderr
-	if args.output != "" {
-		outputFp, err := os.OpenFile(args.output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	if flags.Output != "" {
+		outputFp, err := os.OpenFile(flags.Output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 		if err != nil {
-			return fmt.Errorf("-output=%s: %v", args.output, err)
+			return fmt.Errorf("-output=%s: %v", flags.Output, err)
 		}
 		l.outputFp = outputFp
 	}
@@ -104,18 +124,18 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, args *cmdlineArguments) error
 		return err
 	}
 
-	l.config.PhpExtensions = strings.Split(args.phpExtensionsArg, ",")
+	l.config.PhpExtensions = strings.Split(flags.PhpExtensionsArg, ",")
 
-	l.config.ComputeBaselineHashes = l.args.baseline != "" || l.args.outputBaseline
+	l.config.ComputeBaselineHashes = l.flags.Baseline != "" || l.flags.OutputBaseline
 
-	if args.misspellList != "" {
-		err := LoadMisspellDicts(l.config, strings.Split(args.misspellList, ","))
+	if flags.MisspellList != "" {
+		err := LoadMisspellDicts(l.config, strings.Split(flags.MisspellList, ","))
 		if err != nil {
 			return err
 		}
 	}
 
-	l.initCheckMappings()
+	l.initCheckMappings(ruleSets)
 	if err := l.initRules(ruleSets); err != nil {
 		return fmt.Errorf("rules: %v", err)
 	}
@@ -127,11 +147,11 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, args *cmdlineArguments) error
 }
 
 func (l *linterRunner) initBaseline() error {
-	if l.args.baseline == "" {
+	if l.flags.Baseline == "" {
 		return nil
 	}
 
-	f, err := os.Open(l.args.baseline)
+	f, err := os.Open(l.flags.Baseline)
 	if err != nil {
 		return err
 	}
@@ -145,23 +165,23 @@ func (l *linterRunner) initBaseline() error {
 }
 
 func (l *linterRunner) compileRegexes() error {
-	if l.args.reportsExclude != "" {
+	if l.flags.ReportsExclude != "" {
 		var err error
-		l.config.ExcludeRegex, err = regexp.Compile(l.args.reportsExclude)
+		l.config.ExcludeRegex, err = regexp.Compile(l.flags.ReportsExclude)
 		if err != nil {
 			return fmt.Errorf("incorrect exclude regex: %v", err)
 		}
 	}
 
-	if l.args.allowDisable != "" {
-		allowDisableRegex, err := regexp.Compile(l.args.allowDisable)
+	if l.flags.AllowDisable != "" {
+		allowDisableRegex, err := regexp.Compile(l.flags.AllowDisable)
 		if err != nil {
 			return fmt.Errorf("incorrect 'allow disable' regex: %v", err)
 		}
 		l.config.AllowDisable = allowDisableRegex
 	}
 
-	switch l.args.unusedVarPattern {
+	switch l.flags.UnusedVarPattern {
 	case "^_$":
 		// Default pattern, only $_ is allowed.
 		// Don't change anything.
@@ -172,7 +192,7 @@ func (l *linterRunner) compileRegexes() error {
 			return strings.HasPrefix(s, "_")
 		}
 	default:
-		re, err := regexp.Compile(l.args.unusedVarPattern)
+		re, err := regexp.Compile(l.flags.UnusedVarPattern)
 		if err != nil {
 			return fmt.Errorf("incorrect unused-var-regex regex: %v", err)
 		}
@@ -182,7 +202,7 @@ func (l *linterRunner) compileRegexes() error {
 	return nil
 }
 
-func (l *linterRunner) initCheckMappings() {
+func (l *linterRunner) initCheckMappings(ruleSets []*rules.Set) {
 	stringToSet := func(s string) map[string]bool {
 		set := make(map[string]bool)
 		for _, name := range strings.Split(s, ",") {
@@ -191,10 +211,30 @@ func (l *linterRunner) initCheckMappings() {
 		return set
 	}
 
-	l.reportsExcludeChecksSet = stringToSet(l.args.reportsExcludeChecks)
-	l.reportsIncludeChecksSet = stringToSet(l.args.allowChecks)
-	if l.args.reportsCritical != allNonNotice {
-		l.reportsCriticalSet = stringToSet(l.args.reportsCritical)
+	l.reportsExcludeChecksSet = stringToSet(l.flags.ReportsExcludeChecks)
+
+	if l.flags.AllowChecks == AllChecks {
+		set := make(map[string]bool)
+
+		declaredChecks := l.config.Checkers.ListDeclared()
+		for _, info := range declaredChecks {
+			if info.Default {
+				set[info.Name] = true
+			}
+		}
+		for _, ruleSet := range ruleSets {
+			for _, name := range ruleSet.Names {
+				set[name] = true
+			}
+		}
+
+		l.reportsIncludeChecksSet = set
+	} else {
+		l.reportsIncludeChecksSet = stringToSet(l.flags.AllowChecks)
+	}
+
+	if l.flags.ReportsCritical != AllNonNoticeChecks {
+		l.reportsCriticalSet = stringToSet(l.flags.ReportsCritical)
 	}
 }
 

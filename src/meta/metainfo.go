@@ -12,6 +12,15 @@ const (
 	FuncPure
 	FuncAbstract
 	FuncFinal
+	// FuncFromAnnotation is set if the function is described in the class annotation.
+	FuncFromAnnotation
+)
+
+type PropertyFlags uint8
+
+const (
+	// PropFromAnnotation is set if the property is described in the class annotation.
+	PropFromAnnotation PropertyFlags = 1 << iota
 )
 
 type PhpDocInfo struct {
@@ -66,9 +75,10 @@ type FuncInfo struct {
 	Doc          PhpDocInfo
 }
 
-func (info *FuncInfo) IsStatic() bool   { return info.Flags&FuncStatic != 0 }
-func (info *FuncInfo) IsAbstract() bool { return info.Flags&FuncAbstract != 0 }
-func (info *FuncInfo) IsPure() bool     { return info.Flags&FuncPure != 0 }
+func (info *FuncInfo) IsStatic() bool         { return info.Flags&FuncStatic != 0 }
+func (info *FuncInfo) IsAbstract() bool       { return info.Flags&FuncAbstract != 0 }
+func (info *FuncInfo) IsPure() bool           { return info.Flags&FuncPure != 0 }
+func (info *FuncInfo) IsFromAnnotation() bool { return info.Flags&FuncFromAnnotation != 0 }
 
 type OverrideType int
 
@@ -79,12 +89,26 @@ const (
 	OverrideElementType
 	// OverrideClassType means that return type of a function is the same as the type represented by the class name.
 	OverrideClassType
+	// OverrideNullableClassType means that return type of a function is the same as the type represented by the class name, and is also nullable.
+	OverrideNullableClassType
+)
+
+type OverrideProperties int
+
+const (
+	// NotNull means that the null type will be removed from the resulting type.
+	NotNull OverrideProperties = 1 << iota
+	// NotFalse means that the false type will be removed from the resulting type.
+	NotFalse
+	// ArrayOf means that the type will be converted to an array of elements of that type.
+	ArrayOf
 )
 
 // FuncInfoOverride defines return type overrides based on their parameter types.
 // For example, \array_slice($arr) returns type of element (OverrideElementType) of the ArgNum=0
 type FuncInfoOverride struct {
 	OverrideType OverrideType
+	Properties   OverrideProperties
 	ArgNum       int
 }
 
@@ -92,7 +116,10 @@ type PropertyInfo struct {
 	Pos         ElementPosition
 	Typ         types.Map
 	AccessLevel AccessLevel
+	Flags       PropertyFlags
 }
+
+func (info *PropertyInfo) IsFromAnnotation() bool { return info.Flags&PropFromAnnotation != 0 }
 
 type ConstInfo struct {
 	Pos         ElementPosition

@@ -81,6 +81,9 @@ type Rule struct {
 	// Level is a severity level that is used during report generation.
 	Level int
 
+	// StrictSyntax determines whether phpgrep fuzzy search should not be used.
+	StrictSyntax bool
+
 	// Message is a report text that is printed when this rule matches.
 	Message string
 

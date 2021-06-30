@@ -157,13 +157,29 @@ func interpretStringQ2(s string) (string, error) {
 					return "", errors.New("missing closing '}' for UTF-8 sequence")
 				}
 				codepoints := s[i+len(`\u{`) : i+len(`\u{`)+end-len(`}`)]
+
+				countLeadingZeros := 0
+				for _, codepoint := range codepoints {
+					if codepoint != '0' {
+						break
+					}
+					countLeadingZeros++
+				}
+
+				rawCodepoints := codepoints
+				codepoints = codepoints[countLeadingZeros:]
+
+				if len(codepoints) > 8 {
+					return "", fmt.Errorf("decode UTF-8 codepoints: invalid UTF-8 codepoint escape sequence: codepoint too large")
+				}
+
 				goLiteral := `\U` + zeros[:8-len(codepoints)] + codepoints
 				ch, _, _, err := strconv.UnquoteChar(goLiteral, '"')
 				if err != nil {
 					return "", fmt.Errorf("decode UTF-8 codepoints: %v", err)
 				}
 				out.WriteRune(ch)
-				i += len(`\u{`) + len(codepoints) + len(`}`)
+				i += len(`\u{`) + len(rawCodepoints) + len(`}`)
 			case '\'':
 				out.WriteString(`\'`)
 				i += 2

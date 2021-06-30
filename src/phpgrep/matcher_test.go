@@ -117,6 +117,111 @@ func TestMatchConcurrent(t *testing.T) {
 	}
 }
 
+func TestMatchFuzzy(t *testing.T) {
+	var c Compiler
+	c.FuzzyMatching = true
+
+	runMatchTest(t, &c, true, []*matcherTest{
+		// NewExpr: nil args list -vs- empty argument list.
+		{`new C`, `new C()`},
+		{`new C`, `new C`},
+		{`new C()`, `new C`},
+		{`new C()`, `new C()`},
+
+		// ArrayExpr: [] -vs- array() syntax.
+		{`[]`, `[]`},
+		{`[]`, `array()`},
+		{`[$x]`, `array(10)`},
+		{`array()`, `[]`},
+		{`array($x)`, `[10]`},
+
+		// ListExpr: [] -vs- list() syntax.
+		{`list($_) = $_`, `list($x) = $a`},
+		{`[$_] = $_`, `list($x) = $a`},
+		{`list($_) = $_`, `[$x] = $a`},
+
+		// Numerical literals are normalized.
+		{`1`, `1`},
+		{`0x1`, `1`},
+		{`0b1`, `1`},
+		{`0.01`, `.01`},
+		{`0.10`, `0.1`},
+		{`0.00`, `0.0`},
+
+		// Builtin function aliases are replaced.
+		{`doubleval($_)`, `floatval($_)`},
+		{`floatval($_)`, `doubleval($_)`},
+		{`is_long($x)`, `is_long($v)`},
+		{`is_long($x)`, `is_int($v)`},
+		{`is_long($x)`, `is_integer($v)`},
+		{`is_integer($x)`, `is_long($v)`},
+		{`is_integer($x)`, `is_int($v)`},
+		{`is_integer($x)`, `is_integer($v)`},
+
+		// Double quotes are as good as single quotes
+		{`"a"`, `'a'`},
+
+		// String literals are interpreted by the IR generator.
+		{`"\n"`, `"\x0a"`},
+
+		// Parens are ignored, when sensible.
+		{`f($x, $x)`, `f((1), 1)`},
+		{`f($x, $x)`, `f(1, (1))`},
+		{`[$x, $x]`, `[(1), 1]`},
+		{`[$x, $x]`, `[1, (1)]`},
+		{`[$_ => $x, $_ => $x]`, `['a' => (1), 'b' => 1]`},
+		{`[$_ => $x, $_ => $x]`, `['a' => 1, 'b' => (1)]`},
+		{`[$x => $_, $x => $_]`, `[(1) => "a", 1 => "b"]`},
+		{`[$x => $_, $x => $_]`, `[1 => "a", (1) => "b"]`},
+
+		// TODO: some binary expr could be normalized, but
+		// it could lead to different parsing results when
+		// LHS and RHS operands have different precedence.
+		//
+		// {`$x == $x`, `$v == $v`},
+		// {`$x == $x`, `$v == ($v)`},
+		// {`$x == $x`, `($v) == $v`},
+		// {`$x == $x`, `($v) == ($v)`},
+		// {`($x) == $x`, `(1) == 1`},
+		// {`($x) == $x`, `(1) == (1)`},
+		// {`($x) == $x`, `((1)) == (1)`},
+	})
+}
+
+func TestMatchFuzzyNegative(t *testing.T) {
+	var c Compiler
+	c.FuzzyMatching = true
+
+	runMatchTest(t, &c, false, []*matcherTest{
+		{`new C`, `new C(1)`},
+
+		{`[]`, `[1]`},
+		{`[1]`, `array()`},
+
+		{`list($_) = $_`, `list($x, $y) = $a`},
+
+		{`1`, `2`},
+		{`0x2`, `1`},
+		{`0b10`, `1`},
+		{`0.011`, `.01`},
+
+		{`f($_)`, `floatval($_)`},
+		{`floatval($_)`, `f($_)`},
+
+		{`"a"`, `'b'`},
+
+		{`"\n"`, `"\x0f"`},
+
+		{`$x == $x`, `$v == $v2`},
+		{`$x == $x`, `$v == ($v2)`},
+		{`$x == $x`, `($v) == $v2`},
+		{`$x == $x`, `($v) == ($v2)`},
+		{`($x) == $x`, `(1) == 2`},
+		{`($x) == $x`, `(1) == (2)`},
+		{`($x) == $x`, `((1)) == (2)`},
+	})
+}
+
 func TestMatchCaseSensitive(t *testing.T) {
 	var c Compiler
 	c.CaseSensitive = true
@@ -129,6 +234,8 @@ func TestMatchCaseSensitive(t *testing.T) {
 		{`$x instanceof c`, `$x instanceof c`},
 		{`c::value`, `c::value`},
 		{`c::$value`, `c::$value`},
+		{`TRUE`, `TRUE`},
+		{`true`, `true`},
 	})
 }
 
@@ -153,6 +260,8 @@ func TestMatchCaseSensitiveNegative(t *testing.T) {
 		{`C::value`, `c::value`},
 		{`c::$value`, `C::$value`},
 		{`C::$value`, `c::$value`},
+		{`TRUE`, `true`},
+		{`true`, `TRUE`},
 	})
 }
 
@@ -478,6 +587,11 @@ func TestMatch(t *testing.T) {
 		{`f((1))`, `f((1))`},
 		{`($foo)()`, `($foo)()`},
 		{`($foo)->x`, `($foo)->x`},
+		{`($x) == $x`, `(1) == 1`},
+		{`($x) == $x`, `((1)) == (1)`},
+		{`f(($x), ($x))`, `f((1), (1))`},
+		{`[$_ => ($x), $_ => ($x)]`, `['a' => (1), 'b' => (1)]`},
+		{`[($x) => $_, ($x) => $_]`, `[(1) => "a", (1) => "b"]`},
 
 		{`try { ${"*"}; } catch (Exception $_) { ${"*"}; }`, `try {} catch (Exception $e) {}`},
 		{`try { ${"*"}; } catch (Exception $_) { ${"*"}; }`, `try {} catch (Exception $ex) { var_dump($ex); }`},
@@ -599,6 +713,8 @@ func TestMatchNegative(t *testing.T) {
 
 		{`"$x$x"`, `"11"`},
 		{`"$x$x"`, `'$x$x'`},
+		{`"a"`, `'a'`},
+		{`'a'`, `"a"`},
 
 		{`int($x)`, `$v`},
 		{`array($x)`, `$v`},
@@ -651,6 +767,15 @@ func TestMatchNegative(t *testing.T) {
 		{`($foo)->x`, `$foo->x`},
 		{`(($foo))()`, `($foo)()`},
 		{`(($foo))->x`, `($foo)->x`},
+		{`$x == $x`, `$v == ($v)`},
+		{`$x == $x`, `($v) == $v`},
+		{`($x) == $x`, `(1) == (1)`},
+		{`f($x, $x)`, `f((1), 1)`},
+		{`f($x, $x)`, `f(1, (1))`},
+		{`[$_ => $x, $_ => $x]`, `['a' => (1), 'b' => 1]`},
+		{`[$_ => $x, $_ => $x]`, `['a' => 1, 'b' => (1)]`},
+		{`[$x => $_, $x => $_]`, `[(1) => "a", 1 => "b"]`},
+		{`[$x => $_, $x => $_]`, `[1 => "a", (1) => "b"]`},
 
 		{`try { ${"*"}; } catch (Exception $_) { ${"*"}; }`, `try {} catch (MyException $e) {}`},
 		{`try { ${"*"}; } catch (Exception $_) { ${"*"}; }`, `try {} catch (Exception $_) {} catch (Exception $_) {}`},

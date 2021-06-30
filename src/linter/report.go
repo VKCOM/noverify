@@ -661,6 +661,61 @@ function f(A $a) {}`,
 			After: `class A {}
 function f(A $a) {}`,
 		},
+
+    {
+			Name:     "typeHint",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report misuse of type hints.`,
+			Before:   `function f(array $a) {}`,
+			After: `/**
+ * @param mixed[] $a
+ */
+function f(array $a) {}`,
+		},
+
+		{
+			Name:     "argsOrder",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report suspicious arguments order.`,
+			Before:   `strpos('/', $s);`,
+			After:    `strpos($s, '/');`,
+		},
+
+		{
+			Name:     "classMembersOrder",
+			Default:  false,
+			Quickfix: false,
+			Comment:  `Report the wrong order of the class members.`,
+			Before: `class A {
+  public function func() {}
+  const B = 1;
+  public $c = 2;
+}`,
+			After: `class A {
+  const B = 1;
+  public $c = 2;
+  public function func() {}
+}`,
+		},
+
+		{
+			Name:     "varShadow",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report the shadow of an existing variable.`,
+			Before: `function f(int $a) {
+  foreach ([1, 2] as $a) {
+    echo $a;
+  }
+}`,
+			After: `function f(int $a) {
+  foreach ([1, 2] as $b) {
+    echo $b;
+  }
+}`,
+		},
 	}
 
 	for _, info := range allChecks {
