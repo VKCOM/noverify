@@ -331,6 +331,15 @@ public function process($acts, $config) {
 		},
 
 		{
+			Name:     "emptyForObject",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report syntax errors.`,
+			Before:   `foo(1]`,
+			After:    `foo(1)`,
+		},
+
+		{
 			Name:     "undefined",
 			Default:  true,
 			Quickfix: false,
@@ -703,6 +712,25 @@ function f(array $a) {}`,
   foreach ([1, 2] as $b) {
     echo $b;
   }
+}`,
+		},
+
+		{
+			Name:     "nullProp",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report a null assignment for a not nullable property.`,
+			Before: `class Foo {
+  /**
+   * @var Boo $item
+   */
+  public $item = null;
+}`,
+			After: `class Foo {
+  /**
+   * @var Boo $item
+   */
+  public $item;
 }`,
 		},
 	}
