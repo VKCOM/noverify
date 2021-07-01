@@ -895,7 +895,7 @@ func (d *rootWalker) addFixForNullForNotNullableProperty(prop *ir.PropertyStmt) 
 		return
 	}
 	if have[start-1] == ' ' {
-		start -= 1
+		start--
 	}
 	withoutAssign := have[:start]
 
