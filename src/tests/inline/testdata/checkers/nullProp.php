@@ -4,6 +4,8 @@ class Boo {}
 class Zoo {}
 
 class Foo {
+  private const A = null;
+
   /**
    * @var Boo $item
    */
@@ -34,4 +36,7 @@ class Foo {
   public ?Boo $item6 = null, $item7 = null; // ok
 
   public ?int $item8 = null; // ok
+
+  public ?Boo $item9 = self::A; // ok
+  public ?int $item10 = 10; // ok
 }
