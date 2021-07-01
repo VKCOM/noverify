@@ -27,6 +27,16 @@ class Foo {
   public $item12 = null; // want `assigning null to a not nullable property`
 
   /**
+   * @var mixed
+   */
+  public $item13 = null; // ok
+
+  /**
+   * @var int
+   */
+  public $item14 = null; // ok
+
+  /**
    * @var Boo $item2
    * @var Boo $item3
    */
