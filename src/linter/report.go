@@ -708,8 +708,8 @@ function f(array $a) {}`,
 
 		{
 			Name:     "nullProp",
-			Default:  true,
-			Quickfix: false,
+			Default:  false,
+			Quickfix: true,
 			Comment:  `Report a null assignment for a not nullable property.`,
 			Before: `class Foo {
   /**
