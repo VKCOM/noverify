@@ -25,10 +25,26 @@ class Foo {
   public $item12;
 
   /**
+   * @var Boo|Zoo $item13
+   */
+  public $item13;
+
+  /**
+   * @var Boo|Zoo $item14
+   */
+  public $item14;
+
+  /**
    * @var Boo $item2
    * @var Boo $item3
    */
   public $item2, $item3;
+
+  /**
+   * @var Boo $item21
+   * @var Boo $item31
+   */
+  public $item21, $item31;
 
   public ?Boo $item5 = null;
   public ?Boo $item6 = null, $item7 = null;
