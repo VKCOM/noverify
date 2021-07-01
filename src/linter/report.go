@@ -331,15 +331,6 @@ public function process($acts, $config) {
 		},
 
 		{
-			Name:     "emptyForObject",
-			Default:  true,
-			Quickfix: false,
-			Comment:  `Report syntax errors.`,
-			Before:   `foo(1]`,
-			After:    `foo(1)`,
-		},
-
-		{
 			Name:     "undefined",
 			Default:  true,
 			Quickfix: false,

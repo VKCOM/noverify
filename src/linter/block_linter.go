@@ -188,10 +188,6 @@ func (b *blockLinter) enterNode(n ir.Node) {
 }
 
 func (b *blockLinter) checkClass(class *ir.ClassStmt) {
-	b.checkClassMembersOrder(class)
-}
-
-func (b *blockLinter) checkClassMembersOrder(class *ir.ClassStmt) {
 	const classMethod = 0
 	const classOtherMember = 1
 
