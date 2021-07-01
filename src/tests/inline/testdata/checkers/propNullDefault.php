@@ -9,7 +9,7 @@ class Foo {
   /**
    * @var Boo $item
    */
-  public $item = null; // want `assigning null to a not nullable property`
+  private $item = null; // want `assigning null to a not nullable property`
 
   /**
    * @var ?Boo $item1
@@ -19,7 +19,7 @@ class Foo {
   /**
    * @var ?Boo|Zoo $item11
    */
-  public $item11 = null; // ok
+  public static $item11 = null; // ok
 
   /**
    * @var Boo|Zoo $item12
@@ -29,7 +29,7 @@ class Foo {
   /**
    * @var mixed
    */
-  public $item13 = null; // ok
+  public static $item13 = null; // ok
 
   /**
    * @var int
@@ -37,16 +37,22 @@ class Foo {
   public $item14 = null; // ok
 
   /**
+   * @var Boo|int
+   */
+  public $item15 = null; // ok
+
+  /**
    * @var Boo $item2
    * @var Boo $item3
    */
   public $item2 = null, $item3 = null; // want `assigning null to a not nullable property` and `assigning null to a not nullable property`
 
-  public ?Boo $item5 = null; // ok
+  public static ?Boo $item5 = null; // ok
   public ?Boo $item6 = null, $item7 = null; // ok
 
-  public ?int $item8 = null; // ok
+  public static ?int $item8 = null; // ok
+  public ?int $item9 = null; // ok
 
-  public ?Boo $item9 = self::A; // ok
-  public ?int $item10 = 10; // ok
+  public static ?Boo $item10 = self::A; // ok
+  public ?int $item101 = 10; // ok
 }

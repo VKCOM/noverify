@@ -707,7 +707,7 @@ function f(array $a) {}`,
 		},
 
 		{
-			Name:     "nullProp",
+			Name:     "propNullDefault",
 			Default:  false,
 			Quickfix: true,
 			Comment:  `Report a null assignment for a not nullable property.`,

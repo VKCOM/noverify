@@ -863,7 +863,7 @@ func (d *rootWalker) checkAssignNullToNotNullableProperty(prop *ir.PropertyStmt,
 	assignNull := false
 
 	if expr, ok := prop.Expr.(*ir.ConstFetchExpr); ok {
-		assignNull = expr.Constant.Value == "null"
+		assignNull = strings.EqualFold(expr.Constant.Value, "null")
 	}
 
 	if assignNull && !propTypes.Empty() {
@@ -876,7 +876,7 @@ func (d *rootWalker) checkAssignNullToNotNullableProperty(prop *ir.PropertyStmt,
 		})
 
 		if !nullable && onlyClasses {
-			d.Report(prop, LevelNotice, "nullProp", "assigning null to a not nullable property may soon cause a KPHP compilation error")
+			d.Report(prop, LevelNotice, "propNullDefault", "assigning null to a not nullable property may soon cause a KPHP compilation error")
 			d.addFixForNullForNotNullableProperty(prop)
 		}
 	}
@@ -888,16 +888,9 @@ func (d *rootWalker) addFixForNullForNotNullableProperty(prop *ir.PropertyStmt) 
 	}
 
 	from := prop.Position.StartPos
-	to := prop.Position.EndPos
-	have := d.file.Contents()[from:to]
-	start := bytes.IndexByte(have, '=')
-	if start == -1 {
-		return
-	}
-	if have[start-1] == ' ' {
-		start--
-	}
-	withoutAssign := have[:start]
+	to := prop.Variable.Position.EndPos
+
+	withoutAssign := d.file.Contents()[from:to]
 
 	d.ctx.fixes = append(d.ctx.fixes, quickfix.TextEdit{
 		StartPos:    prop.Position.StartPos,

@@ -7,7 +7,7 @@ class Foo {
   /**
    * @var Boo $item
    */
-  public $item = null;
+  public static $item = null;
 
   /**
    * @var ?Boo $item1
@@ -22,17 +22,22 @@ class Foo {
   /**
    * @var Boo|Zoo $item12
    */
-  public $item12 = null;
+  private static $item12 = null;
 
   /**
    * @var Boo|Zoo $item13
    */
-  public $item13=null;
+  public $item13=NULL;
 
   /**
    * @var Boo|Zoo $item14
    */
-  public $item14= null;
+  public static $item14= null;
+
+  /**
+   * @var Boo|Zoo $item14
+   */
+  public $item15 /** bla bla */= null;
 
   /**
    * @var Boo $item2
@@ -46,8 +51,8 @@ class Foo {
    */
   public $item21=null, $item31= null;
 
-  public ?Boo $item5 = null;
+  public static ?Boo $item5 = null;
   public ?Boo $item6 = null, $item7 = null;
 
-  public ?int $item8 = null;
+  public static ?int $item8 = null;
 }
