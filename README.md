@@ -1,12 +1,14 @@
-## NoVerify ![Build Status](https://github.com/VKCOM/noverify/workflows/Go/badge.svg)
+![](docs/noverify_small.png)
 
-![](/docs/noverify_small.png)
+![Build Status](https://github.com/VKCOM/noverify/workflows/Go/badge.svg)[![Go Report Card](https://goreportcard.com/badge/github.com/VKCOM/noverify)](https://goreportcard.com/report/github.com/vkcom/noverify) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
+
+## NoVerify
 
 NoVerify is a PHP linter: it finds possible bugs and style violations in your code.
 
-* NoVerify has no config: any reported issue in your PHPDoc or PHP code must be fixed.
-* NoVerify aims to understand PHP code at least as well as PHPStorm does. If it behaves incorrectly or suboptimally, please [report issue](https://github.com/VKCOM/noverify/issues/new).
-* This tool is written in [Go](https://golang.org/) and uses [z7zmey/php-parser](https://github.com/z7zmey/php-parser).
+- NoVerify has no config: any reported issue in your PHPDoc or PHP code must be fixed.
+- NoVerify aims to understand PHP code at least as well as PHPStorm does. If it behaves incorrectly or suboptimally, please [report issue](https://github.com/VKCOM/noverify/issues/new).
+- This tool is written in [Go](https://golang.org/) and uses [z7zmey/php-parser](https://github.com/z7zmey/php-parser).
 
 ## Features
 
@@ -41,7 +43,7 @@ NoVerify by default has the following checks:
 - [How to install NoVerify](docs/install.md)
 
 Using NoVerify as linter:
-- [Using NoVerify as linter / static analyser](docs/linter-usage.md)
+- [Using NoVerify as linter / static analyser](docs/getting_started.md)
 
 Extending NoVerify:
 - [Writing own rules quickly with PHP](docs/dynamic-rules.md)

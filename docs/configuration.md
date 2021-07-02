@@ -1,0 +1,226 @@
+# NoVerify options
+
+This page is dedicated to some technical details.
+
+
+## Console options
+
+A full launch command line is
+```bash
+noverify check --option1=xxx --option2=yyy ... [folder_or_file] [folder_or_file] ...
+```
+
+When no options are specified, their default values are used.
+
+When no folders and files are specified, the current directory `.` is assumed.
+
+To see all the options, run the following command:
+
+```bash
+noverify check help
+```
+
+Below we will discuss the main options.
+
+### How to disable some checks
+
+It looks like this:
+
+```shell
+noverify check --exclude-checks='undefined, arraySyntax' ./
+```
+
+Now there will be **no** `undefined` and `arraySyntax` errors in the output.
+
+### How to enable all checks
+
+It looks like this:
+
+```shell
+noverify check --allow-all-checks ./
+```
+
+NoVerify has checks that are disabled, you can enable them with the `--allow-all-checks` flag.
+
+### How to run only with certain checks
+
+It looks like this:
+
+```shell
+noverify check --allow-checks='undefined, arraySyntax' ./
+```
+
+Now the output will **only** contain `undefined` and `arraySyntax` errors.
+
+### How to exclude some files and folders from checking
+
+It looks like this:
+
+```bash
+noverify check --index-only-files='./tests' ./
+```
+
+The `--index-only-files` option sets paths that won't be analyzed, they will be just indexed (from there the definitions of functions and classes for type inference will be taken).
+
+### How to exclude some files and folders from reports
+
+It looks like this:
+
+```bash
+noverify check --exclude='./src/1.php' ./
+```
+
+The `exclude` flag accepts a regular expression based on which to exclude files or folders.
+
+Unlike `--index-only-files`, excluded files will be analyzed and errors may be found for them, but they will not be shown.
+
+Use this flag if you do not want to see errors for some files or directories and it is convenient to use a regular expression to express the name.
+
+### How to disable file checking without changing the launch command
+
+It looks like this:
+
+```php
+<?php
+    
+/** @linter disable */
+
+function f() {
+    ...
+}
+
+...
+```
+
+It is necessary to add the comment `/** @linter disable */` to the file.
+
+However, to prevent developers from doing this permanently, there is the `--allow-disable` flag, which determines the files in which this annotation can be used.
+
+It looks like this:
+
+```shell
+nocolor check --allow-disable="dev_*" ./src
+```
+
+The flag sets a regular expression to determine which files are allowed.
+
+This is usually needed if you use NoVerify in a pipeline, where changing launch commands many times in a row is not effective, but you need to give the ability to disable the linter for certain files.
+
+### How to exclude the `vendor` folder
+
+It looks like this:
+
+```shell
+nocolor check --ignore-vendor ./src
+```
+
+By default, if NoVerify finds a `vendor` folder, then it includes it in the index to correctly deduce types and not give errors for undefined classes and functions.
+
+If you need to disable this behavior, then use the `--ignore-vendor` flag.
+
+### How to define a list of file extensions to be interpreted as PHP extensions
+
+It looks like this:
+
+```shell
+nocolor check --php-extensions='php, phtml' ./src
+```
+
+By default, NoVerify analyzes the following extensions: ` php, inc, php5, phtml`.
+
+### How to set regexp for unused variables
+
+It looks like this:
+
+```shell
+nocolor check --unused-var-regex='^_*' ./src
+```
+
+By default, the regexp is `^_$`. 
+
+Sometimes variables are not used for some reason, for this they can be called `$_`, in which case NoVerify will not give a warning. However, perhaps you want NoVerify to ignore the `$_name` variables too, for example, then you need to specify the regular expression `$_*`.
+
+### How to output all errors to a file
+
+It looks like this:
+
+```shell
+nocolor check --output='reports.txt' ./src
+```
+
+All errors will be written to the `reports.txt` file.
+
+### How to output all errors to a `json` file
+
+It looks like this:
+
+```shell
+nocolor check --output-json --output='reports.json' ./src
+```
+
+All errors will be written to the `reports.json` file.
+
+### How to fix some errors in automatic mode
+
+It looks like this:
+
+```shell
+nocolor check --fix ./src
+```
+
+All errors that NoVerify can fix will be fixed.
+
+### How to change the cache directory
+
+It looks like this:
+
+```shell
+nocolor check --cache-dir='./cache' ./src
+```
+
+By default, the directory is `$TMPDIR/noverify`. 
+
+The cache is used to reduce the time it takes to collect information about function classes, etc. during the next launches.
+
+### How to disable caching
+
+It looks like this:
+
+```shell
+nocolor check --disable-cache ./src
+```
+
+<p><br></p>
+
+## Hard level options
+
+Here we will look at a list of options, for the use of which you need to delve a little deeper into the topic and read the attached materials.
+
+### How can use dynamic rules
+
+It looks like this:
+
+```shell
+nocolor check --rules='./rules' ./src
+# or
+nocolor check --rules='./rules/rule-1.php,./rules/rule-2.php' ./src
+```
+
+Dynamic rules are a way to add new checks to NoVerify without having to write Go code. Such rules are written in PHP. You can read more in the article [Dynamic rules](/docs/dynamic_rules.md).
+
+### How to use `baseline` mode
+
+Baseline mode is necessary if you have a large codebase on which NoVerify finds a huge number of errors. Of course, it is impossible to fix them right away, so you need a way to ignore all found errors and analyze only errors found after.
+
+The baseline mode is used for this.
+
+You can read more about the mode in the article [Baseline mode](/docs/baseline.md).
+
+### How to use `git diff` mode (e.g. in pre-push hook)
+
+Another way to use NoVerify for a large codebase, if NoVerify finds a large number of errors, is to run the linter only on new code. This mode uses `git`.
+
+The changes are taken from the comparison with the previous commit, excluding changes made to `master` branch that is fetched to `ORIGIN_MASTER`.
+
+You can read more about the mode in the article [Diff mode](/docs/diff.md).
+
