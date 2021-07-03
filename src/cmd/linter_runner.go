@@ -178,7 +178,11 @@ func (l *linterRunner) addVendorFolderToIndex(flags *ParsedFlags) {
 		return
 	}
 
-	flags.IndexOnlyFiles += ",./vendor"
+	if flags.IndexOnlyFiles == "" {
+		flags.IndexOnlyFiles = "./vendor"
+	} else {
+		flags.IndexOnlyFiles += ",./vendor"
+	}
 }
 
 func (l *linterRunner) initBaseline() error {
