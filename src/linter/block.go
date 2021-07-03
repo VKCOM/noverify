@@ -1200,7 +1200,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		}
 
 		if !b.ctx.sc.HaveVar(v) && !byRef {
-			b.r.Report(v, LevelWarning, "undefined", "Undefined variable %s", v.Name)
+			b.r.Report(v, LevelWarning, "undefined", "Undefined variable $%s", v.Name)
 		}
 
 		typ, ok := b.ctx.sc.GetVarNameType(v.Name)
@@ -1340,7 +1340,7 @@ func (b *blockWalker) handleVariable(v ir.Node) bool {
 			}
 		}
 		if b.r.config.IsDiscardVar(varName) && !isSuperGlobal(varName) {
-			b.r.Report(v, LevelError, "discardVar", "Used var $%s that is supposed to be unused (rename variable if it's intended)", varName)
+			b.r.Report(v, LevelError, "discardVar", "Used var $%s that is supposed to be unused (rename variable if it's intended or respecify --unused-var-regex flag)", varName)
 		}
 
 		b.untrackVarName(varName)
@@ -1974,7 +1974,7 @@ func (b *blockWalker) flushUnused() {
 			}
 
 			visitedMap[n] = struct{}{}
-			b.r.Report(n, LevelWarning, "unused", `Variable %s is unused (use $_ to ignore this inspection)`, name)
+			b.r.Report(n, LevelWarning, "unused", `Variable $%s is unused (use $_ to ignore this inspection or specify --unused-var-regex flag)`, name)
 		}
 	}
 }

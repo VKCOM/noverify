@@ -12,32 +12,32 @@
  */
 function ternarySimplify() {
   /**
-   * @maybe could replace the ternary with just $cond
+   * @maybe Could replace the ternary with just $cond
    * @type bool $cond
    */
   $cond ? true : false;
 
   /**
-   * @maybe could rewrite as `(bool)$cond`
+   * @maybe Could rewrite as `(bool)$cond`
    * @type  !bool $cond
    */
   $cond ? true : false;
 
   /**
-   * @maybe could rewrite as `$x ?: $y`
+   * @maybe Could rewrite as `$x ?: $y`
    * @fix $x ?: $y
    * @pure $x
    */
   $x ? $x : $y;
 
   /**
-   * @maybe could rewrite as `$x ?? $y`
+   * @maybe Could rewrite as `$x ?? $y`
    * @fix $x ?? $y
    */
   isset($x) ? $x : $y;
 
   /**
-   * @maybe could rewrite as `$x[$i] ?? $y`
+   * @maybe Could rewrite as `$x[$i] ?? $y`
    * @pure $i
    */
   any_indexing: {
@@ -48,7 +48,7 @@ function ternarySimplify() {
   }
 
   /**
-   * @maybe could rewrite as `$x[$i] ?? $y`
+   * @maybe Could rewrite as `$x[$i] ?? $y`
    * @pure $i
    */
   any_array_key_exists: {
@@ -145,84 +145,84 @@ function precedence() {
  */
 function assignOp() {
   /**
-   * @maybe could rewrite as `$x += $y`
+   * @maybe Could rewrite as `$x += $y`
    * @fix $x += $y
    * @pure $x
    */
   $x = $x + $y;
 
   /**
-   * @maybe could rewrite as `$x -= $y`
+   * @maybe Could rewrite as `$x -= $y`
    * @fix $x -= $y
    * @pure $x
    */
   $x = $x - $y;
 
   /**
-   * @maybe could rewrite as `$x *= $y`
+   * @maybe Could rewrite as `$x *= $y`
    * @fix $x *= $y
    * @pure $x
    */
   $x = $x * $y;
 
   /**
-   * @maybe could rewrite as `$x /= $y`
+   * @maybe Could rewrite as `$x /= $y`
    * @fix $x /= $y
    * @pure $x
    */
   $x = $x / $y;
 
   /**
-   * @maybe could rewrite as `$x %= $y`
+   * @maybe Could rewrite as `$x %= $y`
    * @fix $x %= $y
    * @pure $x
    */
   $x = $x % $y;
 
   /**
-   * @maybe could rewrite as `$x &= $y`
+   * @maybe Could rewrite as `$x &= $y`
    * @fix $x &= $y
    * @pure $x
    */
   $x = $x & $y;
 
   /**
-   * @maybe could rewrite as `$x |= $y`
+   * @maybe Could rewrite as `$x |= $y`
    * @fix $x |= $y
    * @pure $x
    */
   $x = $x | $y;
 
   /**
-   * @maybe could rewrite as `$x ^= $y`
+   * @maybe Could rewrite as `$x ^= $y`
    * @fix $x ^= $y
    * @pure $x
    */
   $x = $x ^ $y;
 
   /**
-   * @maybe could rewrite as `$x <<= $y`
+   * @maybe Could rewrite as `$x <<= $y`
    * @fix $x <<= $y
    * @pure $x
    */
   $x = $x << $y;
 
   /**
-   * @maybe could rewrite as `$x >>= $y`
+   * @maybe Could rewrite as `$x >>= $y`
    * @fix $x >>= $y
    * @pure $x
    */
   $x = $x >> $y;
 
   /**
-   * @maybe could rewrite as `$x .= $y`
+   * @maybe Could rewrite as `$x .= $y`
    * @fix $x .= $y
    * @pure $x
    */
   $x = $x . $y;
 
   /**
-   * @maybe could rewrite as `$x ??= $y`
+   * @maybe Could rewrite as `$x ??= $y`
    * @fix $x ??= $y
    * @pure $x
    */
@@ -236,14 +236,14 @@ function assignOp() {
  */
 function offBy1() {
   /**
-   * @warning probably intended to use count-1 as an index
+   * @warning Probably intended to use count-1 as an index
    * @fix     $a[count($a) - 1]
    * @strict-syntax
    */
   $a[count($a)];
 
   /**
-   * @warning probably intended to use sizeof-1 as an index
+   * @warning Probably intended to use sizeof-1 as an index
    * @fix     $a[sizeof($a) - 1]
    * @strict-syntax
    */
@@ -255,7 +255,7 @@ function offBy1() {
  */
 function argsOrder() {
   /**
-   * @warning potentially incorrect haystack and needle arguments order
+   * @warning Potentially incorrect haystack and needle arguments order
    */
   any_haystack_needle: {
     strpos(${"char"}, ${"*"});
@@ -265,12 +265,12 @@ function argsOrder() {
   }
 
   /**
-   * @warning potentially incorrect replacement and subject arguments order
+   * @warning Potentially incorrect replacement and subject arguments order
    */
   preg_replace($_, $_, ${"str"}, ${"*"});
 
   /**
-   * @warning potentially incorrect replace and string arguments order
+   * @warning Potentially incorrect replace and string arguments order
    */
   any_str_replace: {
     str_replace($_, $_, ${"char"}, ${"*"});
@@ -278,7 +278,7 @@ function argsOrder() {
   }
 
   /**
-   * @warning potentially incorrect delimiter and string arguments order
+   * @warning Potentially incorrect delimiter and string arguments order
    */
   explode($_, ${"char"}, ${"*"});
 }
@@ -336,7 +336,7 @@ function callSimplify() {
  */
 function strictCmp() {
     /**
-     * @warning non-strict comparison (use ===)
+     * @warning Non-strict comparison (use ===)
      */
     any_equal: {
         $_ == true;
@@ -348,14 +348,14 @@ function strictCmp() {
     }
 
     /**
-     * @warning non-strict string comparison (use ===)
+     * @warning Non-strict string comparison (use ===)
      * @type string $x
      * @type string $y
      */
      $x == $y;
 
     /**
-     * @warning non-strict comparison (use !==)
+     * @warning Non-strict comparison (use !==)
      */
     any_not_equal: {
         $_ != true;
@@ -367,7 +367,7 @@ function strictCmp() {
     }
 
     /**
-     * @warning non-strict string comparison (use !==)
+     * @warning Non-strict string comparison (use !==)
      * @type string $x
      * @type string $y
      */
@@ -406,7 +406,7 @@ function indexingSyntax() {
  */
 function intNeedle() {
     /**
-     * @warning since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call
+     * @warning Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call
      * @type int $x
      */
     any: {
@@ -426,12 +426,12 @@ function intNeedle() {
  */
 function langDeprecated() {
     /**
-     * @warning since PHP 7.3.0, the definition of case insensitive constants has been deprecated
+     * @warning Since PHP 7.3, the definition of case insensitive constants has been deprecated
      */
     define($_, $_, true);
 
     /**
-     * @warning define defaults to a case sensitive constant, the third argument can be removed
+     * @warning Define defaults to a case sensitive constant, the third argument can be removed
      * @fix     define($_, $_);
      */
     define($_, $_, false);
@@ -444,7 +444,7 @@ function langDeprecated() {
  */
 function strangeCast() {
     /**
-     * @warning concatenation with empty string, possible type cast, use explicit cast to string instead of concatenate with empty string
+     * @warning Concatenation with empty string, possible type cast, use explicit cast to string instead of concatenate with empty string
      */
     any_string_cast: {
         $x . "";
@@ -454,7 +454,7 @@ function strangeCast() {
     }
 
     /**
-     * @warning addition with zero, possible type cast, use an explicit cast to int or float instead of zero addition
+     * @warning Addition with zero, possible type cast, use an explicit cast to int or float instead of zero addition
      */
     any_number_cast: {
         0 + $x;
@@ -462,7 +462,7 @@ function strangeCast() {
     }
 
     /**
-     * @warning unary plus, possible type cast, use an explicit cast to int or float instead of using the unary plus
+     * @warning Unary plus, possible type cast, use an explicit cast to int or float instead of using the unary plus
      */
     +$x;
 }
@@ -474,7 +474,7 @@ function strangeCast() {
  */
 function emptyStringCheck() {
     /**
-     * @warning use '$x !== ""' instead
+     * @warning Use '$x !== ""' instead
      */
     any_not_equal: {
         if (strlen($x)) { $_; }
@@ -483,7 +483,7 @@ function emptyStringCheck() {
     }
 
     /**
-     * @warning use '$x === ""' instead
+     * @warning Use '$x === ""' instead
      */
     any_equal: {
         if (!strlen($x)) { $_; }
@@ -498,7 +498,7 @@ function emptyStringCheck() {
  */
 function returnAssign() {
     /**
-     * @warning don't use assignment in the return statement
+     * @warning Don't use assignment in the return statement
      */
     any: {
         return $_ = $_;

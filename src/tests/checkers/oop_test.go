@@ -757,7 +757,7 @@ func TestClosureLateBinding(t *testing.T) {
 	})();
 	`)
 	test.Expect = []string{
-		"Undefined variable: a",
+		"Undefined variable $a",
 		"Call to undefined method {undefined}->method()",
 	}
 	linttest.RunFilterMatch(test, "undefined")

@@ -1,25 +1,25 @@
-MAYBE   ternarySimplify: could rewrite as `$baseDir ?: 0` at testdata/mustache/src/Mustache/Autoloader.php:56
+MAYBE   ternarySimplify: Could rewrite as `$baseDir ?: 0` at testdata/mustache/src/Mustache/Autoloader.php:56
         $key = $baseDir ? $baseDir : 0;
                ^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$this->fileMode ?? (0666 & ~umask())` at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:142
+MAYBE   ternarySimplify: Could rewrite as `$this->fileMode ?? (0666 & ~umask())` at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:142
                 $mode = isset($this->fileMode) ? $this->fileMode : (0666 & ~umask());
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$node[Mustache_Tokenizer::FILTERS] ?? array()` at testdata/mustache/src/Mustache/Compiler.php:99
+MAYBE   ternarySimplify: Could rewrite as `$node[Mustache_Tokenizer::FILTERS] ?? array()` at testdata/mustache/src/Mustache/Compiler.php:99
                         isset($node[Mustache_Tokenizer::FILTERS]) ? $node[Mustache_Tokenizer::FILTERS] : array(),
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$node[Mustache_Tokenizer::FILTERS] ?? array()` at testdata/mustache/src/Mustache/Compiler.php:112
+MAYBE   ternarySimplify: Could rewrite as `$node[Mustache_Tokenizer::FILTERS] ?? array()` at testdata/mustache/src/Mustache/Compiler.php:112
                         isset($node[Mustache_Tokenizer::FILTERS]) ? $node[Mustache_Tokenizer::FILTERS] : array(),
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$node[Mustache_Tokenizer::INDENT] ?? ''` at testdata/mustache/src/Mustache/Compiler.php:120
+MAYBE   ternarySimplify: Could rewrite as `$node[Mustache_Tokenizer::INDENT] ?? ''` at testdata/mustache/src/Mustache/Compiler.php:120
                         isset($node[Mustache_Tokenizer::INDENT]) ? $node[Mustache_Tokenizer::INDENT] : '',
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$node[Mustache_Tokenizer::INDENT] ?? ''` at testdata/mustache/src/Mustache/Compiler.php:128
+MAYBE   ternarySimplify: Could rewrite as `$node[Mustache_Tokenizer::INDENT] ?? ''` at testdata/mustache/src/Mustache/Compiler.php:128
                         isset($node[Mustache_Tokenizer::INDENT]) ? $node[Mustache_Tokenizer::INDENT] : '',
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$node[Mustache_Tokenizer::FILTERS] ?? array()` at testdata/mustache/src/Mustache/Compiler.php:166
+MAYBE   ternarySimplify: Could rewrite as `$node[Mustache_Tokenizer::FILTERS] ?? array()` at testdata/mustache/src/Mustache/Compiler.php:166
                         isset($node[Mustache_Tokenizer::FILTERS]) ? $node[Mustache_Tokenizer::FILTERS] : array(),
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING unused: Variable keystr is unused (use $_ to ignore this inspection) at testdata/mustache/src/Mustache/Compiler.php:289
+WARNING unused: Variable $keystr is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/mustache/src/Mustache/Compiler.php:289
         $keystr = var_export($key, true);
         ^^^^^^^
 MAYBE   callSimplify: Could simplify to $id[0] at testdata/mustache/src/Mustache/Compiler.php:646
@@ -100,7 +100,7 @@ MAYBE   callSimplify: Could simplify to $this->stack[] = $value at testdata/must
 MAYBE   callSimplify: Could simplify to $this->blockStack[] = $value at testdata/mustache/src/Mustache/Context.php:49
         array_push($this->blockStack, $value);
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$options['cache_file_mode'] ?? null` at testdata/mustache/src/Mustache/Engine.php:156
+MAYBE   ternarySimplify: Could rewrite as `$options['cache_file_mode'] ?? null` at testdata/mustache/src/Mustache/Engine.php:156
                 $mode  = isset($options['cache_file_mode']) ? $options['cache_file_mode'] : null;
                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   misspellComment: "entitity" is a misspelling of "entity" at testdata/mustache/src/Mustache/Engine.php:254
@@ -118,7 +118,7 @@ ERROR   undefined: Call to undefined method {\Mustache_Cache}->getLogger() at te
 ERROR   undefined: Call to undefined method {\Mustache_Cache}->setLogger() at testdata/mustache/src/Mustache/Engine.php:562
             $cache->setLogger($this->getLogger());
                     ^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$this->delimiters ?: '{{ }}'` at testdata/mustache/src/Mustache/Engine.php:628
+MAYBE   ternarySimplify: Could rewrite as `$this->delimiters ?: '{{ }}'` at testdata/mustache/src/Mustache/Engine.php:628
             'delimiters'      => $this->delimiters ? $this->delimiters : '{{ }}',
                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   phpdoc: Missing PHPDoc for "getFilterName" public method at testdata/mustache/src/Mustache/Exception/UnknownFilterException.php:34
@@ -133,6 +133,6 @@ MAYBE   phpdoc: Missing PHPDoc for "getTemplateName" public method at testdata/m
 WARNING regexpVet: '\w' intersects with '\d' in [\w\d\.] at testdata/mustache/src/Mustache/Loader/InlineLoader.php:115
             foreach (preg_split("/^@@(?= [\w\d\.]+$)/m", $data, -1) as $chunk) {
                                 ^^^^^^^^^^^^^^^^^^^^^^^
-WARNING unused: Variable v is unused (use $_ to ignore this inspection) at testdata/mustache/src/Mustache/Template.php:122
+WARNING unused: Variable $v is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/mustache/src/Mustache/Template.php:122
                 foreach ($value as $k => $v) {
                                          ^^

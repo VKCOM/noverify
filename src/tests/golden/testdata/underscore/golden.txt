@@ -31,7 +31,7 @@ MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdat
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/underscore/underscore.php:363
     $calculated = array();
                   ^^^^^^^
-WARNING unused: Variable is_sorted is unused (use $_ to ignore this inspection) at testdata/underscore/underscore.php:356
+WARNING unused: Variable $is_sorted is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/underscore/underscore.php:356
     list($collection, $is_sorted, $iterator) = self::_wrapArgs(func_get_args(), 3);
                       ^^^^^^^^^^
 MAYBE   arrayAccess: Array access to non-array type \__|mixed at testdata/underscore/underscore.php:448
@@ -76,7 +76,7 @@ MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdat
 MAYBE   arrayAccess: Array access to non-array type \__|mixed at testdata/underscore/underscore.php:480
       if(!is_array($return_arrays[$k])) $return_arrays[$k] = array();
                                         ^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$array[$k] ?? null` at testdata/underscore/underscore.php:483
+MAYBE   ternarySimplify: Could rewrite as `$array[$k] ?? null` at testdata/underscore/underscore.php:483
         $return_arrays[$k][$a] = array_key_exists($k, $array) ? $array[$k] : null;
                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   arrayAccess: Array access to non-array type \__|empty_array[]|mixed at testdata/underscore/underscore.php:483
@@ -85,7 +85,7 @@ MAYBE   arrayAccess: Array access to non-array type \__|empty_array[]|mixed at t
 ERROR   varShadow: Variable $array shadow existing variable $array from current function params at testdata/underscore/underscore.php:482
       foreach($arrays as $a=>$array) {
                              ^^^^^^
-WARNING unused: Variable v is unused (use $_ to ignore this inspection) at testdata/underscore/underscore.php:479
+WARNING unused: Variable $v is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/underscore/underscore.php:479
     foreach($return_arrays as $k=>$v) {
                                   ^^
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/underscore/underscore.php:497
@@ -97,7 +97,7 @@ MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdat
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/underscore/underscore.php:529
     $results = array();
                ^^^^^^^
-WARNING unused: Variable v is unused (use $_ to ignore this inspection) at testdata/underscore/underscore.php:534
+WARNING unused: Variable $v is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/underscore/underscore.php:534
     foreach($results as $k=>$v) {
                             ^^
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/underscore/underscore.php:545
@@ -106,10 +106,10 @@ MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdat
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/underscore/underscore.php:549
       if(!array_key_exists($key, $result)) $result[$key] = array();
                                                            ^^^^^^^
-WARNING unused: Variable __ is unused (use $_ to ignore this inspection) at testdata/underscore/underscore.php:561
+WARNING unused: Variable $__ is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/underscore/underscore.php:561
     $__ = new self;
     ^^^
-WARNING unused: Variable args is unused (use $_ to ignore this inspection) at testdata/underscore/underscore.php:615
+WARNING unused: Variable $args is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/underscore/underscore.php:615
     $args = self::_wrapArgs(func_get_args(), 1);
     ^^^^^
 ERROR   undefined: Property {\__|mixed|null}->isEqual does not exist at testdata/underscore/underscore.php:723
