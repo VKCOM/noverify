@@ -220,7 +220,7 @@ nocolor check --disable-cache ./src
 
 Here we will look at a list of options, for the use of which you need to delve a little deeper into the topic and read the attached materials.
 
-### How can use dynamic rules
+### How to use dynamic rules
 
 It looks like this:
 
@@ -230,15 +230,15 @@ nocolor check --rules='./rules' ./src
 nocolor check --rules='./rules/rule-1.php,./rules/rule-2.php' ./src
 ```
 
-Dynamic rules are a way to add new checks to NoVerify without having to write Go code. Such rules are written in PHP. You can read more in the article [Dynamic rules](/docs/dynamic_rules.md).
+Dynamic rules are a way to add new checks to NoVerify without having to write Go code. Such rules are written in PHP. 
+
+You can read more in the article [Dynamic rules](/docs/dynamic_rules.md).
 
 ### How to use `baseline` mode
 
 Baseline mode is necessary if you have a large codebase on which NoVerify finds a huge number of errors. Of course, it is impossible to fix them right away, so you need a way to ignore all found errors and analyze only errors found after.
 
-The baseline mode is used for this.
-
-You can read more about the mode in the article [Baseline mode](/docs/baseline.md).
+You can read more in the article [Baseline mode](/docs/baseline.md).
 
 ### How to use `git diff` mode (e.g. in pre-push hook)
 
@@ -246,7 +246,7 @@ Another way to use NoVerify for a large codebase, if NoVerify finds a large numb
 
 The changes are taken from the comparison with the previous commit, excluding changes made to `master` branch that is fetched to `ORIGIN_MASTER`.
 
-You can read more about the mode in the article [Diff mode](/docs/diff.md).
+You can read more in the article [Diff mode](/docs/diff.md).
 
 <p><br></p>
 
