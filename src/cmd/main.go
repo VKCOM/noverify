@@ -36,16 +36,10 @@ func registerMainApp() *App {
 				Name:        "check",
 				Description: "The command to lint files",
 				Action:      Check,
-				Examples: []Example{
-					{
-						Description: "merge without linter version combining, overwrites old baseline",
-						Line:        "-old baseline.json -new new-baseline.json",
-					},
-				},
 				Arguments: []*Argument{
 					{
-						Name:        "check-dir/file",
-						Description: "dir or file for check",
+						Name:        "folders/files",
+						Description: "Folders and/or files for check",
 					},
 				},
 				RegisterFlags: RegisterCheckFlags,
