@@ -156,7 +156,7 @@ func (l *linterRunner) addVendorFolderToIndex(flags *ParsedFlags) {
 	alreadyContainsVendor := false
 	parts := strings.Split(flags.IndexOnlyFiles, ",")
 	for _, part := range parts {
-		part = strings.TrimLeft(filepath.ToSlash(part), "./")
+		part = strings.TrimLeft(filepath.ToSlash(part), " ./")
 		if part == "vendor" || strings.HasSuffix(part, "/vendor") {
 			alreadyContainsVendor = true
 			break
