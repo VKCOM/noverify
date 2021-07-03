@@ -1129,10 +1129,14 @@ func (d *rootWalker) isValidPHPDocRef(n ir.Node, ref string) bool {
 	isValidSymbol := func(ref string) bool {
 		if !strings.HasPrefix(ref, `\`) {
 			if d.currentClassNode != nil {
-				if _, ok := solver.FindMethod(d.metaInfo(), d.ctx.st.CurrentClass, ref); ok {
+				className := d.ctx.st.CurrentClass
+				if _, ok := solver.FindMethod(d.metaInfo(), className, ref); ok {
 					return true // OK: class method reference
 				}
-				if classHasProp(d.ctx.st, d.ctx.st.CurrentClass, ref) {
+				if _, _, ok := solver.FindConstant(d.metaInfo(), className, ref); ok {
+					return true // OK: class constant reference
+				}
+				if classHasProp(d.ctx.st, className, ref) {
 					return true // OK: class prop reference
 				}
 			}
