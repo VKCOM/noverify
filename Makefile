@@ -12,7 +12,7 @@ install:
 build: clear
 	go build -ldflags "-X '$(PKG).BuildVersion=$(VERSION)' -X '$(PKG).BuildTime=$(NOW)' -X '$(PKG).BuildOSUname=$(OS)' -X '$(PKG).BuildCommit=$(AFTER_COMMIT)'" -o build/$(BIN_NAME)
 
-build-release:
+release:
 	go run ./_script/release.go -build-version="$(VERSION)" -build-time="$(NOW)" -build-uname="$(OS)" -build-commit="$(AFTER_COMMIT)"
 
 check:
@@ -27,4 +27,4 @@ check:
 clear:
 	if [ -d build ]; then rm -r build; fi
 
-.PHONY: check build-release
+.PHONY: check release
