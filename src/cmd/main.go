@@ -61,6 +61,15 @@ func registerMainApp() *App {
 				},
 				Action: Checkers,
 			},
+
+			{
+				Name:        "version",
+				Description: "The command to output the tool version",
+				Action: func(ctx *AppContext) (int, error) {
+					printVersion()
+					return 0, nil
+				},
+			},
 		},
 	}
 }
@@ -77,6 +86,10 @@ func registerMainApp() *App {
 func Run(cfg *MainConfig) (int, error) {
 	if cfg == nil {
 		cfg = &MainConfig{}
+	}
+
+	if cfg.LinterVersion == "" {
+		cfg.LinterVersion = BuildCommit
 	}
 
 	config := cfg.LinterConfig
@@ -126,11 +139,6 @@ func Main(cfg *MainConfig) {
 //
 // We don't want os.Exit to be inserted randomly to avoid defer cancellation.
 func mainNoExit(ctx *AppContext) (int, error) {
-	if ctx.ParsedFlags.Version {
-		// Version is already printed. Can exit here.
-		return 0, nil
-	}
-
 	if ctx.ParsedFlags.PprofHost != "" {
 		go func() {
 			err := http.ListenAndServe(ctx.ParsedFlags.PprofHost, nil)
