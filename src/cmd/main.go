@@ -218,17 +218,24 @@ func mainNoExit(ctx *AppContext) (int, error) {
 		return 0, nil
 	}
 	criticalReports, containsAutofixableReports := analyzeReports(&runner, ctx.MainConfig, reports)
+	minorReports := len(reports) - criticalReports
 
 	if containsAutofixableReports && !runner.config.ApplyQuickFixes {
 		log.Println("Some issues are autofixable (try using the `-fix` flag)")
 	}
 
 	if criticalReports > 0 {
-		log.Printf("Found %d critical reports", criticalReports)
+		log.Printf("Found %d critical and %d minor reports", criticalReports, minorReports)
 		return 2, nil
 	}
 	if !ctx.MainConfig.DisableCriticalIssuesLog {
-		log.Printf("No critical issues found. Your code is perfect.")
+		if minorReports == 0 {
+			log.Printf("No critical issues found. Your code is perfect.")
+		} else if !ctx.ParsedFlags.AllowAll {
+			log.Printf("Found %d minor issues. Add --allow-all-checks flag to show them.", minorReports)
+		} else {
+			log.Printf("Found %d minor issues.", minorReports)
+		}
 	}
 	return 0, nil
 }
