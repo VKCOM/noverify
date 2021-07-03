@@ -1,13 +1,15 @@
-NOW=`date +%Y%m%d%H%M%S`
+NOW=`date '+%Y.%m.%d %H:%M:%S'`
 OS=`uname -n -m`
 AFTER_COMMIT=`git rev-parse HEAD`
 GOPATH_DIR=`go env GOPATH`
+PKG=github.com/VKCOM/noverify/src/cmd
+VERSION=0.3.0
 
 install:
-	go install -ldflags "-X 'main.BuildTime=$(NOW)' -X 'main.BuildOSUname=$(OS)' -X 'main.BuildCommit=$(AFTER_COMMIT)'" .
+	go install -ldflags "-X '$(PKG).BuildVersion=$(VERSION)' -X '$(PKG).BuildTime=$(NOW)' -X '$(PKG).BuildOSUname=$(OS)' -X '$(PKG).BuildCommit=$(AFTER_COMMIT)'" .
 
 build-release:
-	go run ./_script/release.go -build-time="$(NOW)" -build-uname="$(OS)" -build-commit="$(AFTER_COMMIT)"
+	go run ./_script/release.go -build-version="$(VERSION)" -build-time="$(NOW)" -build-uname="$(OS)" -build-commit="$(AFTER_COMMIT)"
 
 check:
 	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH_DIR)/bin v1.39.0

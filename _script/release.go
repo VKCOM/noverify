@@ -10,9 +10,10 @@ import (
 )
 
 type arguments struct {
-	commit string
-	uname  string
-	time   string
+	commit  string
+	uname   string
+	time    string
+	version string
 }
 
 type platformInfo struct {
@@ -29,6 +30,7 @@ func main() {
 	flag.StringVar(&args.commit, "build-commit", "", "build commit hash")
 	flag.StringVar(&args.uname, "build-uname", "", "build uname information")
 	flag.StringVar(&args.time, "build-time", "", "build time information string")
+	flag.StringVar(&args.version, "build-version", "", "Build version information string")
 	flag.Parse()
 
 	platforms := []platformInfo{
@@ -51,8 +53,11 @@ func prepareArchive(args arguments, platform platformInfo) error {
 	if platform.goos == "windows" {
 		binaryExt = ".exe"
 	}
-	ldFlags := fmt.Sprintf(`-X 'main.BuildTime=%s' -X 'main.BuildOSUname=%s' -X 'main.BuildCommit=%s'`,
-		args.time, args.uname, args.commit)
+
+	pack := "github.com/VKCOM/noverify/src/cmd"
+
+	ldFlags := fmt.Sprintf(`-X '%[1]s.BuildVersion=%[2]s' -X '%[1]s.BuildTime=%[3]s' -X '%[1]s.BuildOSUname=%[4]s' -X '%[1]s.BuildCommit=%[5]s'`,
+		pack, args.version, args.time, args.uname, args.commit)
 	binaryName := filepath.Join("build", "noverify"+binaryExt)
 	buildCmd := exec.Command("go", "build",
 		"-o", binaryName,
