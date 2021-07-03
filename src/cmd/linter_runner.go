@@ -135,6 +135,8 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, flags *ParsedFlags) error {
 		}
 	}
 
+	l.addVendorFolderToIndex(flags)
+
 	l.initCheckMappings(ruleSets)
 	if err := l.initRules(ruleSets); err != nil {
 		return fmt.Errorf("rules: %v", err)
@@ -144,6 +146,39 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, flags *ParsedFlags) error {
 	}
 
 	return nil
+}
+
+func (l *linterRunner) addVendorFolderToIndex(flags *ParsedFlags) {
+	if flags.IgnoreVendor {
+		return
+	}
+
+	alreadyContainsVendor := false
+	parts := strings.Split(flags.IndexOnlyFiles, ",")
+	for _, part := range parts {
+		part = strings.TrimLeft(filepath.ToSlash(part), "./")
+		if part == "vendor" || strings.HasSuffix(part, "/vendor") {
+			alreadyContainsVendor = true
+			break
+		}
+	}
+	if alreadyContainsVendor {
+		return
+	}
+
+	workingDir, err := os.Getwd()
+	if err != nil {
+		return
+	}
+
+	vendorPath := filepath.Join(workingDir, "vendor")
+	_, err = os.Stat(vendorPath)
+	if os.IsNotExist(err) {
+		// If such a folder does not exist, then nothing needs to be done.
+		return
+	}
+
+	flags.IndexOnlyFiles += ",./vendor"
 }
 
 func (l *linterRunner) initBaseline() error {
