@@ -3,6 +3,7 @@ package parseutil
 import (
 	"bytes"
 	"errors"
+	"fmt"
 
 	"github.com/z7zmey/php-parser/pkg/ast"
 	"github.com/z7zmey/php-parser/pkg/conf"
@@ -46,6 +47,10 @@ func ParseFile(code []byte) (*ast.Root, error) {
 	}
 	if len(parserErrors) != 0 {
 		return nil, errors.New(parserErrors[0].String())
+	}
+
+	if rootNode == nil {
+		return nil, fmt.Errorf("file has incorrect syntax and cannot be parsed")
 	}
 
 	return rootNode.(*ast.Root), nil
