@@ -1674,20 +1674,29 @@ func (d *rootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {
 		return true
 	}
 
-	if d.ctx.st.Namespace == `\PHPSTORM_META` && nm.Value == `override` {
+	name := strings.TrimPrefix(nm.Value, `\`)
+
+	if d.ctx.st.Namespace == `\PHPSTORM_META` && name == `override` {
 		return d.handleOverride(s)
 	}
 
-	if nm.Value != `define` || len(s.Args) < 2 {
-		// TODO: actually we could warn about bogus defines
-		return true
+	if name == "define" {
+		d.handleDefineCall(s)
+	}
+
+	return true
+}
+
+func (d *rootWalker) handleDefineCall(s *ir.FunctionCallExpr) {
+	if len(s.Args) < 2 {
+		return
 	}
 
 	arg := s.Arg(0)
 
 	str, ok := arg.Expr.(*ir.String)
 	if !ok {
-		return true
+		return
 	}
 
 	valueArg := s.Arg(1)
@@ -1703,7 +1712,6 @@ func (d *rootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {
 		Typ:   solver.ExprTypeLocal(d.scope(), d.ctx.st, valueArg.Expr),
 		Value: value,
 	}
-	return true
 }
 
 // Handle e.g. "override(\array_shift(0), elementType(0));"
