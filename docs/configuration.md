@@ -2,8 +2,32 @@
 
 This page is dedicated to some technical details.
 
+- [Console options for `check` command](#console-options-for--check--command)
+  * [How to disable some checks](#how-to-disable-some-checks)
+  * [How to enable all checks](#how-to-enable-all-checks)
+  * [How to run only with certain checks](#how-to-run-only-with-certain-checks)
+  * [How to exclude some files and folders from checking](#how-to-exclude-some-files-and-folders-from-checking)
+  * [How to exclude some files and folders from reports](#how-to-exclude-some-files-and-folders-from-reports)
+  * [How to disable file checking without changing the launch command](#how-to-disable-file-checking-without-changing-the-launch-command)
+  * [How to exclude the `vendor` folder](#how-to-exclude-the--vendor--folder)
+  * [How to define a list of file extensions to be interpreted as PHP extensions](#how-to-define-a-list-of-file-extensions-to-be-interpreted-as-php-extensions)
+  * [How to set regexp for unused variables](#how-to-set-regexp-for-unused-variables)
+  * [How to output all errors to a file](#how-to-output-all-errors-to-a-file)
+  * [How to output all errors to a `json` file](#how-to-output-all-errors-to-a--json--file)
+  * [How to fix some errors in automatic mode](#how-to-fix-some-errors-in-automatic-mode)
+  * [How to change the cache directory](#how-to-change-the-cache-directory)
+  * [How to disable caching](#how-to-disable-caching)
+- [Hard level options](#hard-level-options)
+  * [How can use dynamic rules](#how-can-use-dynamic-rules)
+  * [How to use `baseline` mode](#how-to-use--baseline--mode)
+  * [How to use `git diff` mode (e.g. in pre-push hook)](#how-to-use--git-diff--mode--eg-in-pre-push-hook-)
+- [Other commands](#other-commands)
+  * [`checkers` command](#-checkers--command)
+  * [`version` command](#-version--command)
 
-## Console options
+<p><br></p>
+
+## Console options for `check` command
 
 A full launch command line is
 ```bash
@@ -223,4 +247,16 @@ Another way to use NoVerify for a large codebase, if NoVerify finds a large numb
 The changes are taken from the comparison with the previous commit, excluding changes made to `master` branch that is fetched to `ORIGIN_MASTER`.
 
 You can read more about the mode in the article [Diff mode](/docs/diff.md).
+
+<p><br></p>
+
+## Other commands
+
+### `checkers` command
+
+Shows a list of checks performed by NoVerify.
+
+### `version` command
+
+Shows the version of NoVerify.
 
