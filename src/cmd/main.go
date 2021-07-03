@@ -231,8 +231,6 @@ func mainNoExit(ctx *AppContext) (int, error) {
 	if !ctx.MainConfig.DisableCriticalIssuesLog {
 		if minorReports == 0 {
 			log.Printf("No issues found. Your code is perfect.")
-		} else if !ctx.ParsedFlags.AllowAll {
-			log.Printf("Found %d minor issues. Add --allow-all-checks flag to show them.", minorReports)
 		} else {
 			log.Printf("Found %d minor issues.", minorReports)
 		}
