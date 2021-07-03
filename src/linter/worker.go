@@ -127,6 +127,10 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult,
 		return ParseResult{}, fmt.Errorf("parse error: %v", err.Error())
 	}
 
+	if rootNode == nil {
+		return result, fmt.Errorf("file has incorrect syntax and cannot be parsed")
+	}
+
 	rootIR := w.irconv.ConvertRoot(rootNode.(*ast.Root))
 
 	file := workspace.NewFile(fileInfo.Name, contents)
