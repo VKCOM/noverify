@@ -140,6 +140,49 @@ class BadClass {
 	linttest.RunFilterMatch(test, "phpdocRef")
 }
 
+func TestPHPDocRefForConstantInClass(t *testing.T) {
+	test := linttest.NewSuite(t)
+
+	test.AddFile(`<?php
+const TYPE_TEXT_GLOBAL = 0;
+
+class FooAbstract {
+  /** Text headers */
+  const TYPE_TEXT_PARENT = 2;
+}
+
+class Foo extends FooAbstract {
+  const TYPE_TEXT = 2;
+
+  /**
+   * Get the type of Header that this instance represents.
+   *
+   * @see TYPE_TEXT
+   * @see TYPE_TEXT_PARENT
+   * @see TYPE_TEXT_UNDEFINED
+   * @see TYPE_TEXT_GLOBAL
+   *
+   * @return int
+   */
+  public function getFieldType()
+  {
+    return self::TYPE_TEXT;
+  }
+}
+
+/**
+ * @see TYPE_TEXT
+ * @see TYPE_TEXT_GLOBAL
+ */
+function f() {}
+`)
+	test.Expect = []string{
+		`line 6: @see tag refers to unknown symbol TYPE_TEXT_UNDEFINED`,
+		`line 2: @see tag refers to unknown symbol TYPE_TEXT`,
+	}
+	linttest.RunFilterMatch(test, "phpdocRef")
+}
+
 func TestBadParamName(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

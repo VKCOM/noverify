@@ -2244,3 +2244,13 @@ function f() {
 	}
 	test.RunAndMatch()
 }
+
+func TestDefineWithTrailingSlash(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+\define('ONE', 1);
+define('TWO', 1);
+
+echo ONE;
+echo TWO;
+`)
+}
