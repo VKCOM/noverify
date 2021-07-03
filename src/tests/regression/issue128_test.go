@@ -38,13 +38,13 @@ function bad1($v) {
 $_ = $bad1;
 `)
 	test.Expect = []string{
-		`Undefined variable: bad0`,
-		`Undefined variable: bad1`, // At local scope
-		`Undefined variable: bad1`, // At global scope
-		`Undefined variable: bad2`,
-		`Undefined variable: bad3`,
+		`Undefined variable $bad0`,
+		`Undefined variable $bad1`, // At local scope
+		`Undefined variable $bad1`, // At global scope
+		`Undefined variable $bad2`,
+		`Undefined variable $bad3`,
 		`Property {mixed}->x does not exist`,
-		`Variable might have not been defined: y1`,
+		`Variable $y1 might have not been defined`,
 	}
 	test.RunAndMatch()
 }
