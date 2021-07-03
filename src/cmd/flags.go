@@ -12,8 +12,6 @@ const AllNonNoticeChecks = "<all-non-notice>"
 const AllChecks = "<all>"
 
 type ParsedFlags struct {
-	Version bool
-
 	PprofHost string
 
 	CPUProfile string
@@ -160,7 +158,6 @@ func RegisterCheckFlags(ctx *AppContext) *flag.FlagSet {
 
 	fs.StringVar(&ctx.ParsedFlags.UnusedVarPattern, "unused-var-regex", `^_$`,
 		"Variables that match such regexp are marked as discarded; not reported as unused, but should not be used as values")
-	fs.BoolVar(&ctx.ParsedFlags.Version, "version", false, "Show version info and exit")
 
 	fs.StringVar(&ctx.ParsedFlags.CPUProfile, "cpuprofile", "", "Write cpu profile to `file`")
 	fs.StringVar(&ctx.ParsedFlags.MemProfile, "memprofile", "", "Write memory profile to `file`")
