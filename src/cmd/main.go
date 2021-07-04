@@ -36,16 +36,10 @@ func registerMainApp() *App {
 				Name:        "check",
 				Description: "The command to lint files",
 				Action:      Check,
-				Examples: []Example{
-					{
-						Description: "merge without linter version combining, overwrites old baseline",
-						Line:        "-old baseline.json -new new-baseline.json",
-					},
-				},
 				Arguments: []*Argument{
 					{
-						Name:        "check-dir/file",
-						Description: "dir or file for check",
+						Name:        "folders/files",
+						Description: "Folders and/or files for check",
 					},
 				},
 				RegisterFlags: RegisterCheckFlags,
@@ -224,17 +218,22 @@ func mainNoExit(ctx *AppContext) (int, error) {
 		return 0, nil
 	}
 	criticalReports, containsAutofixableReports := analyzeReports(&runner, ctx.MainConfig, reports)
+	minorReports := len(reports) - criticalReports
 
 	if containsAutofixableReports && !runner.config.ApplyQuickFixes {
 		log.Println("Some issues are autofixable (try using the `-fix` flag)")
 	}
 
 	if criticalReports > 0 {
-		log.Printf("Found %d critical reports", criticalReports)
+		log.Printf("Found %d critical and %d minor reports", criticalReports, minorReports)
 		return 2, nil
 	}
 	if !ctx.MainConfig.DisableCriticalIssuesLog {
-		log.Printf("No critical issues found. Your code is perfect.")
+		if minorReports == 0 {
+			log.Printf("No issues found. Your code is perfect.")
+		} else {
+			log.Printf("Found %d minor issues.", minorReports)
+		}
 	}
 	return 0, nil
 }

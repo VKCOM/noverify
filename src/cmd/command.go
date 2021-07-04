@@ -22,7 +22,7 @@ type Command struct {
 	Examples []Example
 
 	Arguments     []*Argument
-	RegisterFlags func(*AppContext) *flag.FlagSet
+	RegisterFlags func(*AppContext) (fs *flag.FlagSet, groups *FlagsGroups)
 	flagSet       *flag.FlagSet
 
 	// Pure flag defines the command, which itself is responsible

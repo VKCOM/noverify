@@ -17,7 +17,7 @@ func Checkers(ctx *AppContext) (int, error) {
 		return 0, nil
 	}
 
-	checkerName := ctx.ParsedArgs[1]
+	checkerName := ctx.ParsedArgs[0]
 
 	// `checkers <name>`
 	err := showCheckerInfo(ctx.MainConfig.linter.Config(), checkerName)

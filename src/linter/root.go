@@ -504,9 +504,9 @@ func (d *rootWalker) reportUndefinedVariable(v ir.Node, maybeHave bool) {
 	}
 
 	if maybeHave {
-		d.Report(sv, LevelWarning, "undefined", "Variable might have not been defined: %s", sv.Name)
+		d.Report(sv, LevelWarning, "undefined", "Variable $%s might have not been defined", sv.Name)
 	} else {
-		d.Report(sv, LevelError, "undefined", "Undefined variable: %s", sv.Name)
+		d.Report(sv, LevelError, "undefined", "Undefined variable $%s", sv.Name)
 	}
 }
 
