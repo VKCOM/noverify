@@ -1,4 +1,4 @@
-MAYBE   phpdoc: Missing PHPDoc for "idn_to_ascii" public method at testdata/idn/idn.php:64
+MAYBE   phpdoc: Missing PHPDoc for \Symfony\Polyfill\Intl\Idn\Idn::idn_to_ascii public method at testdata/idn/idn.php:64
     public static function idn_to_ascii($domain, $options, $variant, &$idna_info = array())
                            ^^^^^^^^^^^^
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/idn/idn.php:64
@@ -7,7 +7,7 @@ MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdat
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/idn/idn.php:87
         $idna_info = array(
                      
-MAYBE   phpdoc: Missing PHPDoc for "idn_to_utf8" public method at testdata/idn/idn.php:96
+MAYBE   phpdoc: Missing PHPDoc for \Symfony\Polyfill\Intl\Idn\Idn::idn_to_utf8 public method at testdata/idn/idn.php:96
     public static function idn_to_utf8($domain, $options, $variant, &$idna_info = array())
                            ^^^^^^^^^^^
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/idn/idn.php:96

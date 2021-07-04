@@ -3,13 +3,13 @@
 class Boo {}
 
 class FooBad {
-    public parent $a; // want `cannot use 'parent' typehint when current class has no parent`
+    public parent $a; // want `Cannot use 'parent' typehint when current class has no parent`
 
-    public function f1(): parent { // want `cannot use 'parent' typehint when current class has no parent`
+    public function f1(): parent { // want `Cannot use 'parent' typehint when current class has no parent`
         return new Boo;
     }
 
-    public function f2(parent $a) { // want `cannot use 'parent' typehint when current class has no parent`
+    public function f2(parent $a) { // want `Cannot use 'parent' typehint when current class has no parent`
         return new Boo;
     }
 }

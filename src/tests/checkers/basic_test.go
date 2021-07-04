@@ -94,7 +94,7 @@ function f1($cond) {
   }
 }
 `)
-	test.Expect = []string{`global statement mentions $x more than once`}
+	test.Expect = []string{`Global statement mentions $x more than once`}
 	test.RunAndMatch()
 }
 
@@ -120,7 +120,7 @@ function f3() {
 }
 `)
 	test.Expect = []string{
-		`global statement mentions $x1 more than once`,
+		`Global statement mentions $x1 more than once`,
 		`$x2 already global'ed above`,
 		`$x3 already global'ed above`,
 	}
@@ -191,8 +191,8 @@ function f() {
 }
 `)
 	test.Expect = []string{
-		`foreach key $i is unused, can simplify $i => $v to just $v`,
-		`foreach key $i is unused, can simplify $i => $v to just $v`,
+		`Foreach key $i is unused, can simplify $i => $v to just $v`,
+		`Foreach key $i is unused, can simplify $i => $v to just $v`,
 	}
 	test.RunAndMatch()
 }
