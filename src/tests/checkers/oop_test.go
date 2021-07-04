@@ -1447,7 +1447,7 @@ class Bar {
 `)
 	test.Expect = []string{
 		`Call to undefined method {\BarWithSomeMixin}->method3()`,
-		`line 4: @mixin tag refers to unknown class \Boo`,
+		`Line 4: @mixin tag refers to unknown class \Boo`,
 	}
 	test.RunAndMatch()
 }

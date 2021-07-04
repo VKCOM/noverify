@@ -1051,7 +1051,7 @@ func (d *rootWalker) reportPhpdocErrors(n ir.Node, errs phpdocErrors) {
 
 func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.Comment) (m types.Map) {
 	if phpdoc.IsSuspicious([]byte(doc.Raw)) {
-		d.Report(n, LevelWarning, "phpdocLint", "multiline PHPDoc comment should start with /**, not /*")
+		d.Report(n, LevelWarning, "phpdocLint", "Multiline PHPDoc comment should start with /**, not /*")
 	}
 
 	for _, part := range doc.Parsed {
@@ -1233,7 +1233,7 @@ func (d *rootWalker) checkPHPDocMixinRef(n ir.Node, part phpdoc.CommentPart) {
 	}
 
 	if _, ok := d.metaInfo().GetClass(name); !ok {
-		d.Report(n, LevelWarning, "phpdocRef", "line %d: @mixin tag refers to unknown class %s", part.Line(), name)
+		d.Report(n, LevelWarning, "phpdocRef", "Line %d: @mixin tag refers to unknown class %s", part.Line(), name)
 	}
 }
 
@@ -1245,7 +1245,7 @@ func (d *rootWalker) parsePHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 	}
 
 	if phpdoc.IsSuspicious([]byte(doc.Raw)) {
-		result.errs.pushLint("multiline PHPDoc comment should start with /**, not /*")
+		result.errs.pushLint("Multiline PHPDoc comment should start with /**, not /*")
 	}
 
 	actualParamNames := make(map[string]struct{}, len(actualParams))
@@ -1357,7 +1357,7 @@ func (d *rootWalker) checkTypeNode(n ir.Node) {
 	for _, typ := range typeList {
 		if typ.Elem == "parent" && d.ctx.st.CurrentClass != "" {
 			if d.ctx.st.CurrentParentClass == "" {
-				d.Report(n, LevelError, "typeHint", "cannot use 'parent' typehint when current class has no parent")
+				d.Report(n, LevelError, "typeHint", "Cannot use 'parent' typehint when current class has no parent")
 			}
 		}
 	}

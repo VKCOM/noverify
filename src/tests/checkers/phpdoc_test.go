@@ -513,11 +513,11 @@ function f2($a) {
 }
 `)
 	test.Expect = []string{
-		`multiline PHPDoc comment should start with /**, not /*`,
-		`multiline PHPDoc comment should start with /**, not /*`,
-		`multiline PHPDoc comment should start with /**, not /*`,
-		`multiline PHPDoc comment should start with /**, not /*`,
-		`multiline PHPDoc comment should start with /**, not /*`,
+		`Multiline PHPDoc comment should start with /**, not /*`,
+		`Multiline PHPDoc comment should start with /**, not /*`,
+		`Multiline PHPDoc comment should start with /**, not /*`,
+		`Multiline PHPDoc comment should start with /**, not /*`,
+		`Multiline PHPDoc comment should start with /**, not /*`,
 	}
 	test.RunAndMatch()
 }
