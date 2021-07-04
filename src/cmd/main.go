@@ -176,6 +176,7 @@ func mainNoExit(ctx *AppContext) (int, error) {
 	runner := linterRunner{
 		config: lint.Config(),
 		linter: lint,
+		checks: linter.NewChecks(),
 	}
 	if err := runner.Init(ruleSets, &ctx.ParsedFlags); err != nil {
 		return 1, fmt.Errorf("init: %v", err)
@@ -217,8 +218,7 @@ func mainNoExit(ctx *AppContext) (int, error) {
 		}
 		return 0, nil
 	}
-	criticalReports, containsAutofixableReports := analyzeReports(&runner, ctx.MainConfig, reports)
-	minorReports := len(reports) - criticalReports
+	criticalReports, minorReports, containsAutofixableReports := analyzeReports(&runner, ctx.MainConfig, reports)
 
 	if containsAutofixableReports && !runner.config.ApplyQuickFixes {
 		log.Println("Some issues are autofixable (try using the `-fix` flag)")
@@ -247,7 +247,7 @@ func createBaseline(l *linterRunner, cfg *MainConfig, reports []*linter.Report) 
 		if cfg.BeforeReport != nil && !cfg.BeforeReport(r) {
 			continue
 		}
-		if !l.IsEnabledReport(r) {
+		if !l.checks.IsEnabledReport(r) {
 			continue
 		}
 
@@ -330,21 +330,23 @@ func haveAutofixableReports(config *linter.Config, reports []*linter.Report) boo
 	return false
 }
 
-func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (criticalReports int, containsAutofixableReports bool) {
+func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (criticalReports, minorReports int, containsAutofixableReports bool) {
 	filtered := make([]*linter.Report, 0, len(diff))
 
 	for _, r := range diff {
 		if cfg.BeforeReport != nil && !cfg.BeforeReport(r) {
 			continue
 		}
-		if !l.IsEnabledReport(r) {
+		if !l.checks.IsEnabledReport(r) {
 			continue
 		}
 
 		filtered = append(filtered, r)
 
-		if l.IsCriticalReport(r) {
+		if l.checks.IsCriticalReport(r) {
 			criticalReports++
+		} else {
+			minorReports++
 		}
 	}
 
@@ -365,7 +367,7 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 		}
 	} else {
 		for _, r := range filtered {
-			if l.IsCriticalReport(r) {
+			if l.checks.IsCriticalReport(r) {
 				fmt.Fprintf(l.outputFp, "<critical> %s\n", FormatReport(r))
 			} else {
 				fmt.Fprintf(l.outputFp, "%s\n", FormatReport(r))
@@ -373,7 +375,7 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 		}
 	}
 
-	return criticalReports, containsAutofixableReports
+	return criticalReports, minorReports, containsAutofixableReports
 }
 
 func initStubs(l *linter.Linter) error {

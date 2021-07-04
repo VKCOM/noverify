@@ -13,7 +13,8 @@ import (
 type Linter struct {
 	config *Config
 
-	info *meta.Info
+	info   *meta.Info
+	checks *Checks
 }
 
 func NewLinter(config *Config) *Linter {
@@ -31,14 +32,18 @@ func (l *Linter) MetaInfo() *meta.Info {
 	return l.info
 }
 
+func (l *Linter) UseChecks(checks *Checks) {
+	l.checks = checks
+}
+
 func (l *Linter) NewLintingWorker(id int) *Worker {
-	w := newWorker(l.config, l.info, id)
+	w := newWorker(l.config, l.info, id, l.checks)
 	w.needReports = true
 	return w
 }
 
 func (l *Linter) NewIndexingWorker(id int) *Worker {
-	w := newWorker(l.config, l.info, id)
+	w := newWorker(l.config, l.info, id, l.checks)
 	w.needReports = false
 	return w
 }

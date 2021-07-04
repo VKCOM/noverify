@@ -68,6 +68,7 @@ type rootWalker struct {
 	reports []*Report
 
 	config *Config
+	checks *Checks
 }
 
 type phpDocParamEl struct {
@@ -322,6 +323,10 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, level int, checkName, msg
 	// We don't report anything if linter was disabled by a
 	// successful @linter disable, unless it's the linterError.
 	if d.linterDisabled && checkName != "linterError" {
+		return
+	}
+
+	if !d.checks.IsEnabledCheck(checkName) {
 		return
 	}
 
