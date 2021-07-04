@@ -321,7 +321,7 @@ func TestPHPDocPresence(t *testing.T) {
 	class TheClass {
 		/**
 		 * This function is a good example.
-		 * It's public and has a phpdoc comment.
+		 * It's public and has a PHPDoc comment.
 		 */
 		public function documentedPub() {}
 
@@ -335,8 +335,8 @@ func TestPHPDocPresence(t *testing.T) {
 		protected function prot() {}
 	}`)
 	test.Expect = []string{
-		`Missing PHPDoc for "pub" public method`,
-		`Missing PHPDoc for "traitPub" public method`,
+		`Missing PHPDoc for \TheClass::pub public method`,
+		`Missing PHPDoc for \TheTrait::traitPub public method`,
 	}
 	test.RunAndMatch()
 }
@@ -513,11 +513,11 @@ function f2($a) {
 }
 `)
 	test.Expect = []string{
-		`multiline phpdoc comment should start with /**, not /*`,
-		`multiline phpdoc comment should start with /**, not /*`,
-		`multiline phpdoc comment should start with /**, not /*`,
-		`multiline phpdoc comment should start with /**, not /*`,
-		`multiline phpdoc comment should start with /**, not /*`,
+		`multiline PHPDoc comment should start with /**, not /*`,
+		`multiline PHPDoc comment should start with /**, not /*`,
+		`multiline PHPDoc comment should start with /**, not /*`,
+		`multiline PHPDoc comment should start with /**, not /*`,
+		`multiline PHPDoc comment should start with /**, not /*`,
 	}
 	test.RunAndMatch()
 }

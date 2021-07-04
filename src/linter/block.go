@@ -233,7 +233,7 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 	doc := phpdoc.Parse(b.r.ctx.phpdocTypeParser, string(t.Value))
 
 	if phpdoc.IsSuspicious(t.Value) {
-		b.r.Report(n, LevelWarning, "phpdocLint", "multiline phpdoc comment should start with /**, not /*")
+		b.r.Report(n, LevelWarning, "phpdocLint", "multiline PHPDoc comment should start with /**, not /*")
 	}
 
 	for _, p := range doc.Parsed {
@@ -1812,7 +1812,7 @@ func (b *blockWalker) paramClobberCheck(v *ir.SimpleVar) {
 		return
 	}
 	if _, ok := b.unusedParams[v.Name]; ok && !b.path.Conditional() {
-		b.r.Report(v, LevelWarning, "paramClobber", "$%s param re-assigned before being used", v.Name)
+		b.r.Report(v, LevelWarning, "paramClobber", "Param $%s re-assigned before being used", v.Name)
 	}
 }
 
