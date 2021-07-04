@@ -337,9 +337,6 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 		if cfg.BeforeReport != nil && !cfg.BeforeReport(r) {
 			continue
 		}
-		if !l.checks.IsEnabledReport(r) {
-			continue
-		}
 
 		filtered = append(filtered, r)
 
