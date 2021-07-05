@@ -68,7 +68,8 @@ type rootWalker struct {
 	reports []*Report
 
 	config *Config
-	checks *Checks
+
+	checkersFilter *CheckersFilter
 }
 
 type phpDocParamEl struct {
@@ -326,7 +327,7 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, level int, checkName, msg
 		return
 	}
 
-	if !d.checks.IsEnabledCheck(checkName) {
+	if !d.checkersFilter.IsEnabledCheck(checkName) {
 		return
 	}
 

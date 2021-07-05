@@ -14,7 +14,7 @@ type Linter struct {
 	config *Config
 
 	info   *meta.Info
-	checks *Checks
+	checks *CheckersFilter
 }
 
 func NewLinter(config *Config) *Linter {
@@ -32,7 +32,7 @@ func (l *Linter) MetaInfo() *meta.Info {
 	return l.info
 }
 
-func (l *Linter) UseChecks(checks *Checks) {
+func (l *Linter) UseChecks(checks *CheckersFilter) {
 	l.checks = checks
 }
 

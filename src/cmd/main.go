@@ -176,7 +176,7 @@ func mainNoExit(ctx *AppContext) (int, error) {
 	runner := linterRunner{
 		config: lint.Config(),
 		linter: lint,
-		checks: linter.NewChecks(),
+		checks: linter.NewCheckersFilter(),
 	}
 	if err := runner.Init(ruleSets, &ctx.ParsedFlags); err != nil {
 		return 1, fmt.Errorf("init: %v", err)

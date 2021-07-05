@@ -273,7 +273,7 @@ func (s *Suite) RunLinter() RunResult {
 		}
 	}
 
-	s.linter.UseChecks(linter.NewEnabledAllChecks())
+	s.linter.UseChecks(linter.NewCheckersFilterWithEnabledAll())
 
 	indexing := s.linter.NewIndexingWorker(0)
 	indexing.AllowDisable = s.AllowDisable

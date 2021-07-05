@@ -4,7 +4,7 @@ import (
 	"regexp"
 )
 
-type Checks struct {
+type CheckersFilter struct {
 	All []CheckerInfo
 
 	EnableAll bool
@@ -15,21 +15,21 @@ type Checks struct {
 	ExcludeFileRegexp *regexp.Regexp
 }
 
-func NewChecks() *Checks {
-	return &Checks{
+func NewCheckersFilter() *CheckersFilter {
+	return &CheckersFilter{
 		Allowed:  map[string]bool{},
 		Excluded: map[string]bool{},
 		Critical: map[string]bool{},
 	}
 }
 
-func NewEnabledAllChecks() *Checks {
-	c := NewChecks()
+func NewCheckersFilterWithEnabledAll() *CheckersFilter {
+	c := NewCheckersFilter()
 	c.EnableAll = true
 	return c
 }
 
-func (c *Checks) IsEnabledCheck(checkName string) bool {
+func (c *CheckersFilter) IsEnabledCheck(checkName string) bool {
 	if !c.EnableAll && !c.Allowed[checkName] {
 		return false // Not enabled by --allow-checks.
 	}
@@ -41,14 +41,14 @@ func (c *Checks) IsEnabledCheck(checkName string) bool {
 	return true
 }
 
-func (c *Checks) IsCriticalReport(r *Report) bool {
+func (c *CheckersFilter) IsCriticalReport(r *Report) bool {
 	if len(c.Critical) != 0 {
 		return c.Critical[r.CheckName]
 	}
 	return r.IsCritical()
 }
 
-func (c *Checks) IsEnabledReport(r *Report) bool {
+func (c *CheckersFilter) IsEnabledReport(r *Report) bool {
 	if !c.IsEnabledCheck(r.CheckName) {
 		return false
 	}

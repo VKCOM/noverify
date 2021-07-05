@@ -22,7 +22,7 @@ type linterRunner struct {
 
 	linter *linter.Linter
 	config *linter.Config
-	checks *linter.Checks
+	checks *linter.CheckersFilter
 
 	outputFp io.Writer
 
@@ -208,7 +208,7 @@ func (l *linterRunner) compileRegexes() error {
 	return nil
 }
 
-func (l *linterRunner) initCheckMappings(ruleSets []*rules.Set) *linter.Checks {
+func (l *linterRunner) initCheckMappings(ruleSets []*rules.Set) *linter.CheckersFilter {
 	stringToSet := func(s string) map[string]bool {
 		set := make(map[string]bool)
 		for _, name := range strings.Split(s, ",") {
