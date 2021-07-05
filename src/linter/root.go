@@ -835,14 +835,20 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 	}
 
 	for _, pNode := range pl.Properties {
-		p := pNode.(*ir.PropertyStmt)
+		prop := pNode.(*ir.PropertyStmt)
 
-		nm := p.Variable.Name
+		nm := prop.Variable.Name
 
-		if p.Expr != nil {
-			phpDocType = phpDocType.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, p.Expr))
+		// We need to clone the types, because otherwise, if several
+		// properties are written in one definition, and null was
+		// assigned to the first, then all properties become nullable.
+		propTypes := phpDocType.Clone().Append(typeHintType)
+
+		d.checkAssignNullToNotNullableProperty(prop, propTypes)
+
+		if prop.Expr != nil {
+			propTypes = propTypes.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, prop.Expr))
 		}
-		phpDocType = phpDocType.Append(typeHintType)
 
 		if isStatic {
 			nm = "$" + nm
@@ -850,13 +856,53 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 
 		// TODO: handle duplicate property
 		cl.Properties[nm] = meta.PropertyInfo{
-			Pos:         d.getElementPos(p),
-			Typ:         phpDocType.Immutable(),
+			Pos:         d.getElementPos(prop),
+			Typ:         propTypes.Immutable(),
 			AccessLevel: accessLevel,
 		}
 	}
 
 	return true
+}
+
+func (d *rootWalker) checkAssignNullToNotNullableProperty(prop *ir.PropertyStmt, propTypes types.Map) {
+	assignNull := false
+
+	if expr, ok := prop.Expr.(*ir.ConstFetchExpr); ok {
+		assignNull = strings.EqualFold(expr.Constant.Value, "null")
+	}
+
+	if assignNull && !propTypes.Empty() {
+		onlyClasses := true
+		nullable := propTypes.Find(func(typ string) bool {
+			if !types.IsClass(typ) && typ != "null" {
+				onlyClasses = false
+			}
+			return typ == "null"
+		})
+
+		if !nullable && onlyClasses {
+			d.Report(prop, LevelNotice, "propNullDefault", "assigning null to a not nullable property may soon cause a KPHP compilation error")
+			d.addFixForNullForNotNullableProperty(prop)
+		}
+	}
+}
+
+func (d *rootWalker) addFixForNullForNotNullableProperty(prop *ir.PropertyStmt) {
+	if !d.config.ApplyQuickFixes {
+		return
+	}
+
+	from := prop.Position.StartPos
+	to := prop.Variable.Position.EndPos
+
+	withoutAssign := d.file.Contents()[from:to]
+
+	d.ctx.fixes = append(d.ctx.fixes, quickfix.TextEdit{
+		StartPos:    prop.Position.StartPos,
+		EndPos:      prop.Position.EndPos,
+		Replacement: string(withoutAssign),
+	})
 }
 
 func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {

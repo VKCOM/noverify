@@ -9,7 +9,7 @@ import (
 func TestIssue182(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 trait SingletonSelf {
-    /** @var self */
+    /** @var ?self */
     private static $instance = null;
 
     /** @return self */

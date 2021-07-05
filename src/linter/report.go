@@ -705,6 +705,25 @@ function f(array $a) {}`,
   }
 }`,
 		},
+
+		{
+			Name:     "propNullDefault",
+			Default:  false,
+			Quickfix: true,
+			Comment:  `Report a null assignment for a not nullable property.`,
+			Before: `class Foo {
+  /**
+   * @var Boo $item
+   */
+  public $item = null;
+}`,
+			After: `class Foo {
+  /**
+   * @var Boo $item
+   */
+  public $item;
+}`,
+		},
 	}
 
 	for _, info := range allChecks {
