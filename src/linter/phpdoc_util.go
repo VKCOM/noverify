@@ -7,7 +7,9 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
+	"github.com/VKCOM/noverify/src/phpdocTypes"
 	"github.com/VKCOM/noverify/src/solver"
+	"github.com/VKCOM/noverify/src/types"
 )
 
 type phpdocErrors struct {
@@ -47,8 +49,10 @@ func parseClassPHPDocMethod(ctx *rootContext, result *classPhpDocParseResult, pa
 		return
 	}
 
-	types, warning := typesFromPHPDoc(ctx, ctx.phpdocTypeParser.Parse(params[0]))
-	if warning != "" {
+	typ := ctx.phpdocTypeParser.Parse(params[0])
+	converted := phpdocTypes.ToRealType(ctx.typeNormalizer.ClassFQNProvider(), typ)
+	moveShapesToContext(ctx, converted.Shapes)
+	for _, warning := range converted.Warnings {
 		result.errs.pushType("%s on line %d", warning, part.Line())
 	}
 
@@ -67,12 +71,18 @@ func parseClassPHPDocMethod(ctx *rootContext, result *classPhpDocParseResult, pa
 	}
 	funcFlags |= meta.FuncFromAnnotation
 	result.methods.Set(methodName, meta.FuncInfo{
-		Typ:          newTypesMap(ctx, types),
+		Typ:          types.NewMapWithNormalization(ctx.typeNormalizer, converted.Types),
 		Name:         methodName,
 		Flags:        funcFlags,
 		MinParamsCnt: 0, // TODO: parse signature and assign a proper value
 		AccessLevel:  meta.Public,
 	})
+}
+
+func moveShapesToContext(ctx *rootContext, shapes types.ShapesMap) {
+	for name, shape := range shapes {
+		ctx.shapes[name] = shape
+	}
 }
 
 func parseClassPHPDocProperty(ctx *rootContext, result *classPhpDocParseResult, part *phpdoc.TypeVarCommentPart) {
@@ -89,8 +99,9 @@ func parseClassPHPDocProperty(ctx *rootContext, result *classPhpDocParseResult, 
 		result.errs.pushLint("non-canonical order of name and type on line %d", part.Line())
 	}
 
-	types, warning := typesFromPHPDoc(ctx, part.Type)
-	if warning != "" {
+	converted := phpdocTypes.ToRealType(ctx.typeNormalizer.ClassFQNProvider(), part.Type)
+	moveShapesToContext(ctx, converted.Shapes)
+	for _, warning := range converted.Warnings {
 		result.errs.pushType("%s on line %d", warning, part.Line())
 	}
 
@@ -100,7 +111,7 @@ func parseClassPHPDocProperty(ctx *rootContext, result *classPhpDocParseResult, 
 	}
 
 	result.properties[part.Var[len("$"):]] = meta.PropertyInfo{
-		Typ:         newTypesMap(ctx, types),
+		Typ:         types.NewMapWithNormalization(ctx.typeNormalizer, converted.Types),
 		AccessLevel: meta.Public,
 		Flags:       meta.PropFromAnnotation,
 	}

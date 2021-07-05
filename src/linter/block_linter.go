@@ -12,6 +12,7 @@ import (
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/types"
+	"github.com/VKCOM/noverify/src/utils"
 )
 
 type blockLinter struct {
@@ -427,10 +428,10 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 
 	if b.classParseState().IsTrait {
 		switch {
-		case meta.NameNodeEquals(e.Class, "self"):
+		case utils.NameNodeEquals(e.Class, "self"):
 			// Don't try to resolve "self" inside trait context.
 			return
-		case meta.NameNodeEquals(e.Class, "static"):
+		case utils.NameNodeEquals(e.Class, "static"):
 			// More or less identical to the "self" case.
 			return
 		}
@@ -452,7 +453,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 	// It's illegal to instantiate abstract class, but `static` can
 	// resolve to something else due to the late static binding,
 	// so it's the only exception to that rule.
-	if class.IsAbstract() && !meta.NameNodeEquals(e.Class, "static") {
+	if class.IsAbstract() && !utils.NameNodeEquals(e.Class, "static") {
 		b.report(e.Class, LevelError, "newAbstract", "Cannot instantiate abstract class")
 	}
 
@@ -500,7 +501,7 @@ func (b *blockLinter) checkConstFetch(e *ir.ConstFetchExpr) {
 
 	if !defined {
 		// If it's builtin constant, give a more precise report message.
-		switch nm := meta.NameNodeToString(e.Constant); strings.ToLower(nm) {
+		switch nm := utils.NameNodeToString(e.Constant); strings.ToLower(nm) {
 		case "null", "true", "false":
 			// TODO(quasilyte): should probably issue not "undefined" warning
 			// here, but something else, like "constCase" or something.
@@ -816,16 +817,16 @@ func (b *blockLinter) checkDeprecatedFunctionCall(e *ir.FunctionCallExpr, call *
 	}
 
 	if call.info.Doc.DeprecationNote != "" {
-		b.report(e.Function, LevelNotice, "deprecated", "Call to deprecated function %s (%s)", meta.NameNodeToString(e.Function), call.info.Doc.DeprecationNote)
+		b.report(e.Function, LevelNotice, "deprecated", "Call to deprecated function %s (%s)", utils.NameNodeToString(e.Function), call.info.Doc.DeprecationNote)
 		return
 	}
 
-	b.report(e.Function, LevelNotice, "deprecated", "Call to deprecated function %s", meta.NameNodeToString(e.Function))
+	b.report(e.Function, LevelNotice, "deprecated", "Call to deprecated function %s", utils.NameNodeToString(e.Function))
 }
 
 func (b *blockLinter) checkFunctionAvailability(e *ir.FunctionCallExpr, call *funcCallInfo) {
 	if !call.isFound && !b.walker.ctx.customFunctionExists(e.Function) {
-		b.report(e.Function, LevelError, "undefined", "Call to undefined function %s", meta.NameNodeToString(e.Function))
+		b.report(e.Function, LevelError, "undefined", "Call to undefined function %s", utils.NameNodeToString(e.Function))
 	}
 }
 
@@ -847,7 +848,7 @@ func (b *blockLinter) checkCallArgsCount(n ir.Node, args []ir.Node, fn meta.Func
 	}
 
 	if !enoughArgs(args, fn) {
-		b.report(n, LevelWarning, "argCount", "Too few arguments for %s", meta.NameNodeToString(n))
+		b.report(n, LevelWarning, "argCount", "Too few arguments for %s", utils.NameNodeToString(n))
 	}
 }
 

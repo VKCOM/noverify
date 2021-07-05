@@ -1,26 +1,30 @@
-package linter
+package phpdocTypes
 
 import (
 	"fmt"
 
-	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/linter/autogen"
-	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
-	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/types"
 )
 
-// TODO: reflect source line in shape names.
+type RealPHPDocTypes struct {
+	Types    []types.Type
+	Shapes   types.ShapesMap
+	Warnings []string
+}
 
-type warningString string
-
-// typesFromPHPDoc extracts types out of the PHPDoc type string.
+// ToRealType extracts types out of the PHPDoc type string.
 //
 // No normalization is performed, but some PHPDoc-specific types
 // are simplified to be compatible with our type system.
-func typesFromPHPDoc(ctx *rootContext, typ phpdoc.Type) ([]types.Type, warningString) {
-	conv := phpdocTypeConverter{ctx: ctx}
+func ToRealType(classFQNProvider func(string) (string, bool), typ phpdoc.Type) *RealPHPDocTypes {
+	conv := TypeConverter{
+		classFQNProvider:   classFQNProvider,
+		shapeNameGenerator: autogen.GenerateShapeName,
+		shapes:             make(types.ShapesMap),
+	}
+
 	result := conv.mapType(typ.Expr)
 	if conv.nullable {
 		alreadyHasNull := false
@@ -28,7 +32,7 @@ func typesFromPHPDoc(ctx *rootContext, typ phpdoc.Type) ([]types.Type, warningSt
 		for _, tp := range result {
 			if tp.Elem == "null" {
 				alreadyHasNull = true
-				conv.warning = "repeated nullable doesn't make sense"
+				conv.warnings = append(conv.warnings, "repeated nullable doesn't make sense")
 				break
 			}
 		}
@@ -37,16 +41,23 @@ func typesFromPHPDoc(ctx *rootContext, typ phpdoc.Type) ([]types.Type, warningSt
 			result = append(result, types.Type{Elem: "null"})
 		}
 	}
-	return result, conv.warning
+
+	return &RealPHPDocTypes{
+		Types:    result,
+		Shapes:   conv.shapes,
+		Warnings: conv.warnings,
+	}
 }
 
-type phpdocTypeConverter struct {
-	ctx      *rootContext
-	warning  warningString
-	nullable bool
+type TypeConverter struct {
+	classFQNProvider   func(string) (string, bool)
+	shapeNameGenerator func([]types.ShapeProp) string
+	warnings           []string
+	nullable           bool
+	shapes             types.ShapesMap
 }
 
-func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
+func (conv *TypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
 	switch e.Kind {
 	case phpdoc.ExprInvalid, phpdoc.ExprUnknown:
 		if e.Value == "-" {
@@ -109,7 +120,7 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
 	case phpdoc.ExprOptional:
 		// Due to the fact that the optional keys for shape are processed in the mapShapeType
 		// function, while the optionality for the key is cleared, and the key itself is not
-		// processed by the mapType function, then in the mapType function the phpdoc.ExprOptional
+		// processed by the mapType function, then in the mapType function the ExprOptional
 		// type can only be in one case, if it is an incorrect syntax of the optional type.
 		conv.warn(e.Value + ": nullable syntax is ?T, not T?")
 	}
@@ -117,7 +128,7 @@ func (conv *phpdocTypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
 	return nil
 }
 
-func (conv *phpdocTypeConverter) mapArrayType(elem phpdoc.TypeExpr) []types.Type {
+func (conv *TypeConverter) mapArrayType(elem phpdoc.TypeExpr) []types.Type {
 	typeList := conv.mapType(elem)
 	if len(typeList) == 0 {
 		return []types.Type{{Elem: "mixed", Dims: 1}}
@@ -128,8 +139,8 @@ func (conv *phpdocTypeConverter) mapArrayType(elem phpdoc.TypeExpr) []types.Type
 	return typeList
 }
 
-func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []types.Type {
-	props := make([]autogen.ShapeTypeProp, 0, len(params))
+func (conv *TypeConverter) mapShapeType(params []phpdoc.TypeExpr) []types.Type {
+	props := make([]types.ShapeProp, 0, len(params))
 	for i, p := range params {
 		if p.Value == "*" || p.Value == "..." {
 			continue
@@ -167,7 +178,11 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []types.
 				continue
 			}
 
-			className, ok := solver.GetClassName(conv.ctx.st, &ir.Name{Value: typ.Elem})
+			if conv.classFQNProvider == nil {
+				continue
+			}
+
+			className, ok := conv.classFQNProvider(typ.Elem)
 			if !ok {
 				continue
 			}
@@ -182,22 +197,22 @@ func (conv *phpdocTypeConverter) mapShapeType(params []phpdoc.TypeExpr) []types.
 			conv.nullable = false
 		}
 
-		props = append(props, autogen.ShapeTypeProp{
+		props = append(props, types.ShapeProp{
 			Key:   key.Value,
 			Types: typeList,
 		})
 	}
 
-	shape := autogen.ShapeTypeInfo{
-		Name:  autogen.GenerateShapeName(props, conv.ctx.st),
+	shape := types.ShapeInfo{
+		Name:  conv.shapeNameGenerator(props),
 		Props: props,
 	}
-	conv.ctx.shapes[shape.Name] = shape
+	conv.shapes[shape.Name] = shape
 
 	return []types.Type{{Elem: shape.Name}}
 }
 
-func (conv *phpdocTypeConverter) mapTupleType(params []phpdoc.TypeExpr) []types.Type {
+func (conv *TypeConverter) mapTupleType(params []phpdoc.TypeExpr) []types.Type {
 	typeList := make([]phpdoc.TypeExpr, 0, len(params))
 	for i, p := range params {
 		if p.Value == "*" || p.Value == "..." {
@@ -221,91 +236,6 @@ func (conv *phpdocTypeConverter) mapTupleType(params []phpdoc.TypeExpr) []types.
 	return conv.mapShapeType(typeList)
 }
 
-func (conv *phpdocTypeConverter) warn(msg string) {
-	if conv.warning == "" {
-		conv.warning = warningString(msg)
-	}
-}
-
-// typesFromNode converts type hint node to meta types.
-//
-// No normalization is performed.
-func typesFromNode(typeNode ir.Node) []types.Type {
-	n := typeNode
-
-	var results []types.Type
-	if nullable, ok := typeNode.(*ir.Nullable); ok {
-		n = nullable.Expr
-		results = make([]types.Type, 0, 2)
-		results = append(results, types.Type{Elem: "null"})
-	} else {
-		results = make([]types.Type, 0, 1)
-	}
-
-	// There is a trick here.
-	// Unlike with phpdoc types, having `integer` here
-	// means that we need to force it to be interpreted as
-	// `\integer`, not as `int`. This is why we prepend `\`.
-	typ := types.Type{Elem: meta.NameNodeToString(n)}
-	if types.IsAlias(typ.Elem) {
-		typ.Elem = `\` + typ.Elem
-	}
-
-	results = append(results, typ)
-
-	return results
-}
-
-type typeNormalizer struct {
-	st   *meta.ClassParseState
-	kphp bool
-}
-
-func (n typeNormalizer) NormalizeTypes(typeList []types.Type) {
-	for i := range typeList {
-		n.normalizeType(&typeList[i])
-	}
-}
-
-func (n typeNormalizer) normalizeType(typ *types.Type) {
-	if types.IsTrivial(typ.Elem) {
-		return
-	}
-
-	if typename, has := types.Alias(typ.Elem); has {
-		typ.Elem = typename
-		return
-	}
-
-	if typ.Elem == "any" && n.kphp {
-		// `any` is a special KPHP type that is more-or-less
-		// identical to `mixed|object`. In PHP, `mixed` already covers
-		// objects, so there is no need to add `object`.
-		// See https://php.watch/versions/8.0/mixed-type
-		typ.Elem = "mixed"
-		return
-	}
-
-	switch typ.Elem {
-	case "array":
-		// Rewrite `array` to `mixed[]`.
-		// If it's `array[]`, it'll become `mixed[][]`.
-		typ.Dims++
-		typ.Elem = "mixed"
-	case "$this":
-		// Handle `$this` as `static` alias in phpdoc context.
-		typ.Elem = "static"
-	case "static":
-		// Don't replace `static` phpdoc type annotation too early
-		// to make it possible to handle late static binding.
-	default:
-		if typ.Elem[0] == '\\' {
-			return // Already FQN?
-		}
-		fullClassName, ok := solver.GetClassName(n.st, &ir.Name{Value: typ.Elem})
-		if !ok {
-			panic(fmt.Sprintf("can't expand type name: '%s'", typ.Elem))
-		}
-		typ.Elem = fullClassName
-	}
+func (conv *TypeConverter) warn(msg string) {
+	conv.warnings = append(conv.warnings, msg)
 }

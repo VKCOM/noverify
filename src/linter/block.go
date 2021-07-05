@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/VKCOM/noverify/src/phpdocTypes"
 	"github.com/z7zmey/php-parser/pkg/position"
 	"github.com/z7zmey/php-parser/pkg/token"
 
@@ -237,17 +238,19 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 	}
 
 	for _, p := range doc.Parsed {
-		p, ok := p.(*phpdoc.TypeVarCommentPart)
+		part, ok := p.(*phpdoc.TypeVarCommentPart)
 		if !ok || p.Name() != "var" {
 			continue
 		}
 
-		typeList, warning := typesFromPHPDoc(&b.r.ctx, p.Type)
-		if warning != "" {
-			b.r.Report(n, LevelWarning, "phpdocType", "%s on line %d", warning, p.Line())
+		converted := phpdocTypes.ToRealType(b.r.ctx.typeNormalizer.ClassFQNProvider(), part.Type)
+		moveShapesToContext(&b.r.ctx, converted.Shapes)
+		for _, warning := range converted.Warnings {
+			b.r.Report(n, LevelNotice, "phpdocType", "%s on line %d", warning, part.Line())
 		}
-		m := newTypesMap(&b.r.ctx, typeList)
-		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(p.Var, "$"), m, "@var")
+
+		typesMap := types.NewMapWithNormalization(b.r.ctx.typeNormalizer, converted.Types)
+		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(part.Var, "$"), typesMap, "@var")
 	}
 }
 
@@ -1153,11 +1156,15 @@ func (b *blockWalker) handleFor(s *ir.ForStmt) bool {
 func (b *blockWalker) enterArrowFunction(fun *ir.ArrowFunctionExpr) bool {
 	sc := meta.NewScope()
 
-	doc := b.r.parsePHPDoc(fun, fun.Doc, fun.Params)
-	b.r.reportPhpdocErrors(fun, doc.errs)
-	phpDocParamTypes := doc.types
+	// Indexing stage.
+	doc := phpdocTypes.Parse(fun.Doc, fun.Params, b.r.ctx.typeNormalizer)
+	moveShapesToContext(&b.r.ctx, doc.Shapes)
 
-	funcParams := b.r.parseFuncParams(fun.Params, phpDocParamTypes, sc, nil)
+	// Check stage.
+	errors := b.r.checkPHPDoc(fun, fun.Doc, fun.Params)
+	b.r.reportPHPDocErrors(fun, errors)
+
+	funcParams := b.r.parseFuncParams(fun.Params, doc.ParamTypes, sc, nil)
 	b.r.handleArrowFuncExpr(funcParams.params, fun.Expr, sc, b)
 
 	return false
@@ -1173,9 +1180,13 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		sc.AddVarName("this", types.NewMap("possibly_late_bound"), "possibly late bound $this", meta.VarAlwaysDefined)
 	}
 
-	doc := b.r.parsePHPDoc(fun, fun.Doc, fun.Params)
-	b.r.reportPhpdocErrors(fun, doc.errs)
-	phpDocParamTypes := doc.types
+	// Indexing stage.
+	doc := phpdocTypes.Parse(fun.Doc, fun.Params, b.r.ctx.typeNormalizer)
+	moveShapesToContext(&b.r.ctx, doc.Shapes)
+
+	// Check stage.
+	errors := b.r.checkPHPDoc(fun, fun.Doc, fun.Params)
+	b.r.reportPHPDocErrors(fun, errors)
 
 	var hintReturnType types.Map
 	if typ, ok := b.r.parseTypeNode(fun.ReturnType); ok {
@@ -1211,7 +1222,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		b.untrackVarName(v.Name)
 	}
 
-	params := b.r.parseFuncParams(fun.Params, phpDocParamTypes, sc, closureSolver)
+	params := b.r.parseFuncParams(fun.Params, doc.ParamTypes, sc, closureSolver)
 
 	funcInfo := b.r.handleFuncStmts(params.params, closureUses, fun.Stmts, sc)
 	actualReturnTypes := funcInfo.returnTypes
@@ -1223,7 +1234,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		b.r.checkFuncParam(param.(*ir.Parameter))
 	}
 
-	name := autogen.GenerateClosureName(fun, b.r.ctx.st)
+	name := autogen.GenerateClosureName(fun, b.r.ctx.st.CurrentFunction, b.r.ctx.st.CurrentFile)
 
 	if b.r.meta.Functions.H == nil {
 		b.r.meta.Functions = meta.NewFunctionsMap()
@@ -1237,7 +1248,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		MinParamsCnt: params.minParamsCount,
 		Flags:        0,
 		ExitFlags:    exitFlags,
-		Doc:          doc.info,
+		Doc:          doc.AdditionalInfo,
 	})
 
 	return false

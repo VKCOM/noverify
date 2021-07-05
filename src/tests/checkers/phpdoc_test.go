@@ -435,6 +435,7 @@ func TestPHPDocType(t *testing.T) {
 `)
 	test.Expect = []string{
 		`[][]string: array syntax is T[], not []T on line 2`,
+		`[]string: array syntax is T[], not []T on line 2`,
 		`use float type instead of double`,
 		`use float type instead of real`,
 		`use int type instead of integer`,
