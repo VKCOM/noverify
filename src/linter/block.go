@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/VKCOM/noverify/src/phpdocTypes"
+	"github.com/VKCOM/noverify/src/phpdoctypes"
 	"github.com/z7zmey/php-parser/pkg/position"
 	"github.com/z7zmey/php-parser/pkg/token"
 
@@ -243,7 +243,7 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 			continue
 		}
 
-		converted := phpdocTypes.ToRealType(b.r.ctx.typeNormalizer.ClassFQNProvider(), part.Type)
+		converted := phpdoctypes.ToRealType(b.r.ctx.typeNormalizer.ClassFQNProvider(), part.Type)
 		moveShapesToContext(&b.r.ctx, converted.Shapes)
 		for _, warning := range converted.Warnings {
 			b.r.Report(n, LevelNotice, "phpdocType", "%s on line %d", warning, part.Line())
@@ -1157,7 +1157,7 @@ func (b *blockWalker) enterArrowFunction(fun *ir.ArrowFunctionExpr) bool {
 	sc := meta.NewScope()
 
 	// Indexing stage.
-	doc := phpdocTypes.Parse(fun.Doc, fun.Params, b.r.ctx.typeNormalizer)
+	doc := phpdoctypes.Parse(fun.Doc, fun.Params, b.r.ctx.typeNormalizer)
 	moveShapesToContext(&b.r.ctx, doc.Shapes)
 
 	// Check stage.
@@ -1181,7 +1181,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 	}
 
 	// Indexing stage.
-	doc := phpdocTypes.Parse(fun.Doc, fun.Params, b.r.ctx.typeNormalizer)
+	doc := phpdoctypes.Parse(fun.Doc, fun.Params, b.r.ctx.typeNormalizer)
 	moveShapesToContext(&b.r.ctx, doc.Shapes)
 
 	// Check stage.

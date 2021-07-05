@@ -7,7 +7,7 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
-	"github.com/VKCOM/noverify/src/phpdocTypes"
+	"github.com/VKCOM/noverify/src/phpdoctypes"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/types"
 )
@@ -50,7 +50,7 @@ func parseClassPHPDocMethod(ctx *rootContext, result *classPhpDocParseResult, pa
 	}
 
 	typ := ctx.phpdocTypeParser.Parse(params[0])
-	converted := phpdocTypes.ToRealType(ctx.typeNormalizer.ClassFQNProvider(), typ)
+	converted := phpdoctypes.ToRealType(ctx.typeNormalizer.ClassFQNProvider(), typ)
 	moveShapesToContext(ctx, converted.Shapes)
 	for _, warning := range converted.Warnings {
 		result.errs.pushType("%s on line %d", warning, part.Line())
@@ -99,7 +99,7 @@ func parseClassPHPDocProperty(ctx *rootContext, result *classPhpDocParseResult, 
 		result.errs.pushLint("non-canonical order of name and type on line %d", part.Line())
 	}
 
-	converted := phpdocTypes.ToRealType(ctx.typeNormalizer.ClassFQNProvider(), part.Type)
+	converted := phpdoctypes.ToRealType(ctx.typeNormalizer.ClassFQNProvider(), part.Type)
 	moveShapesToContext(ctx, converted.Shapes)
 	for _, warning := range converted.Warnings {
 		result.errs.pushType("%s on line %d", warning, part.Line())

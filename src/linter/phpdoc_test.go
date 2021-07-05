@@ -6,7 +6,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/phpdoc"
-	"github.com/VKCOM/noverify/src/phpdocTypes"
+	"github.com/VKCOM/noverify/src/phpdoctypes"
 	"github.com/VKCOM/noverify/src/types"
 )
 
@@ -121,7 +121,7 @@ func BenchmarkParseTypes(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		parsedType := ctx.phpdocTypeParser.Parse(typeString)
 
-		converted := phpdocTypes.ToRealType(ctx.typeNormalizer.ClassFQNProvider(), parsedType)
+		converted := phpdoctypes.ToRealType(ctx.typeNormalizer.ClassFQNProvider(), parsedType)
 		moveShapesToContext(&ctx, converted.Shapes)
 
 		_ = types.NewMapWithNormalization(ctx.typeNormalizer, converted.Types)

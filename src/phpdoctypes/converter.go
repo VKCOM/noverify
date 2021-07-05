@@ -1,4 +1,4 @@
-package phpdocTypes
+package phpdoctypes
 
 import (
 	"fmt"
