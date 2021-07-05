@@ -124,12 +124,12 @@ function f2() {
 }
 `)
 	test.Expect = []string{
-		`specify the type for the property in phpdoc, 'array' type hint too generic`,
-		`specify the type for the property in phpdoc, 'array' type hint too generic`,
-		`specify the type for the parameter $a in phpdoc, 'array' type hint too generic`,
-		`specify the return type for the function f1 in phpdoc, 'array' type hint too generic`,
-		`specify the type for the parameter $a in phpdoc, 'array' type hint too generic`,
-		`specify the return type for the function f in phpdoc, 'array' type hint too generic`,
+		`Specify the type for the property in PHPDoc, 'array' type hint too generic`,
+		`Specify the type for the property in PHPDoc, 'array' type hint too generic`,
+		`Specify the type for the parameter $a in PHPDoc, 'array' type hint too generic`,
+		`Specify the return type for the function f1 in PHPDoc, 'array' type hint too generic`,
+		`Specify the type for the parameter $a in PHPDoc, 'array' type hint too generic`,
+		`Specify the return type for the function f in PHPDoc, 'array' type hint too generic`,
 	}
 	linttest.RunFilterMatch(test, "typeHint")
 }

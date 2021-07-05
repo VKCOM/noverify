@@ -17,7 +17,7 @@ func Checkers(ctx *AppContext) (int, error) {
 		return 0, nil
 	}
 
-	checkerName := ctx.ParsedArgs[1]
+	checkerName := ctx.ParsedArgs[0]
 
 	// `checkers <name>`
 	err := showCheckerInfo(ctx.MainConfig.linter.Config(), checkerName)
@@ -31,19 +31,32 @@ func Checkers(ctx *AppContext) (int, error) {
 func showCheckersList(ctx *AppContext) {
 	config := ctx.MainConfig.linter.Config()
 
-	fmt.Println("Usage:")
-	fmt.Printf("  $ %s check -allow-checks='<list-checks>' /project/root\n", ctx.App.Name)
-	fmt.Println()
-	fmt.Println("  NOTE: In order to run the linter with only some checks, the -allow-checks")
-	fmt.Println("  flag is used which accepts a comma-separated list of checks that are allowed.")
-	fmt.Println()
 	fmt.Println("Checkers:")
+	fmt.Println(" Enabled:")
 
 	w := tabwriter.NewWriter(os.Stdout, 15, 0, 2, ' ', 0)
 	for _, info := range config.Checkers.ListDeclared() {
-		fmt.Fprintf(w, "  %s\t%s\t\n", info.Name, strings.ReplaceAll(info.Comment, "\n", " "))
+		if !info.Default {
+			continue
+		}
+		fmt.Fprintf(w, "   %s\t%s\n", info.Name, strings.ReplaceAll(info.Comment, "\n", " "))
 	}
 	w.Flush()
+
+	fmt.Println()
+	fmt.Println(" Disabled:")
+
+	for _, info := range config.Checkers.ListDeclared() {
+		if info.Default {
+			continue
+		}
+		fmt.Fprintf(w, "   %s\t%s\n", info.Name, strings.ReplaceAll(info.Comment, "\n", " "))
+	}
+	w.Flush()
+
+	fmt.Println()
+	fmt.Println("Use the following command to view information for a specific checker:")
+	fmt.Println("   $ noverify checkers <checker-name>")
 }
 
 func showCheckerInfo(config *linter.Config, checkerName string) error {

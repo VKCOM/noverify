@@ -233,7 +233,7 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 	doc := phpdoc.Parse(b.r.ctx.phpdocTypeParser, string(t.Value))
 
 	if phpdoc.IsSuspicious(t.Value) {
-		b.r.Report(n, LevelWarning, "phpdocLint", "multiline phpdoc comment should start with /**, not /*")
+		b.r.Report(n, LevelWarning, "phpdocLint", "Multiline PHPDoc comment should start with /**, not /*")
 	}
 
 	for _, p := range doc.Parsed {
@@ -436,7 +436,7 @@ func (b *blockWalker) checkDupGlobal(s *ir.GlobalStmt) {
 		// Check whether this var was already global'ed.
 		// We use nonLocalVars for function-wide analysis and vars for local analysis.
 		if _, ok := vars[nm]; ok {
-			b.r.Report(v, LevelWarning, "dupGlobal", "global statement mentions $%s more than once", nm)
+			b.r.Report(v, LevelWarning, "dupGlobal", "Global statement mentions $%s more than once", nm)
 		} else {
 			vars[nm] = struct{}{}
 			if b.nonLocalVars[nm] == varGlobal {
@@ -774,7 +774,7 @@ func (b *blockWalker) checkUnreachableForFinallyReturn(tryStmt *ir.TryStmt, tryC
 	}
 
 	if catchContainsDie {
-		b.r.Report(tryStmt.Finally, LevelError, "deadCode", "block finally is unreachable (because catch block %d contains a exit/die)", catchWithDieIndex)
+		b.r.Report(tryStmt.Finally, LevelError, "deadCode", "Block finally is unreachable (because catch block %d contains a exit/die)", catchWithDieIndex)
 
 		// If there is an error when the finally block is unreachable,
 		// then errors due to return in finally are skipped.
@@ -1114,7 +1114,7 @@ func (b *blockWalker) handleForeach(s *ir.ForeachStmt) bool {
 
 		b.untrackVarName(key.Name)
 
-		b.r.Report(s.Key, LevelError, "unused", "foreach key $%s is unused, can simplify $%s => $%s to just $%s", key.Name, key.Name, variable.Name, variable.Name)
+		b.r.Report(s.Key, LevelError, "unused", "Foreach key $%s is unused, can simplify $%s => $%s to just $%s", key.Name, key.Name, variable.Name, variable.Name)
 	}
 
 	return false
@@ -1200,7 +1200,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		}
 
 		if !b.ctx.sc.HaveVar(v) && !byRef {
-			b.r.Report(v, LevelWarning, "undefined", "Undefined variable %s", v.Name)
+			b.r.Report(v, LevelWarning, "undefined", "Undefined variable $%s", v.Name)
 		}
 
 		typ, ok := b.ctx.sc.GetVarNameType(v.Name)
@@ -1340,7 +1340,7 @@ func (b *blockWalker) handleVariable(v ir.Node) bool {
 			}
 		}
 		if b.r.config.IsDiscardVar(varName) && !isSuperGlobal(varName) {
-			b.r.Report(v, LevelError, "discardVar", "Used var $%s that is supposed to be unused (rename variable if it's intended)", varName)
+			b.r.Report(v, LevelError, "discardVar", "Used var $%s that is supposed to be unused (rename variable if it's intended or respecify --unused-var-regex flag)", varName)
 		}
 
 		b.untrackVarName(varName)
@@ -1812,7 +1812,7 @@ func (b *blockWalker) paramClobberCheck(v *ir.SimpleVar) {
 		return
 	}
 	if _, ok := b.unusedParams[v.Name]; ok && !b.path.Conditional() {
-		b.r.Report(v, LevelWarning, "paramClobber", "$%s param re-assigned before being used", v.Name)
+		b.r.Report(v, LevelWarning, "paramClobber", "Param $%s re-assigned before being used", v.Name)
 	}
 }
 
@@ -1974,7 +1974,7 @@ func (b *blockWalker) flushUnused() {
 			}
 
 			visitedMap[n] = struct{}{}
-			b.r.Report(n, LevelWarning, "unused", `Variable %s is unused (use $_ to ignore this inspection)`, name)
+			b.r.Report(n, LevelWarning, "unused", `Variable $%s is unused (use $_ to ignore this inspection or specify --unused-var-regex flag)`, name)
 		}
 	}
 }

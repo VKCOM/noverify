@@ -99,7 +99,7 @@ $ noverify check hello.php
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at /home/quasilyte/CODE/php/hello.php:3
 $x = array($v, 2);
      ^^^^^^^^^^^^
-ERROR   undefined: Undefined variable: v at /home/quasilyte/CODE/php/hello.php:3
+ERROR   undefined: Undefined variable $v at /home/quasilyte/CODE/php/hello.php:3
 $x = array($v, 2);
            ^^
 ```

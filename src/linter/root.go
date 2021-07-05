@@ -68,6 +68,8 @@ type rootWalker struct {
 	reports []*Report
 
 	config *Config
+
+	checkersFilter *CheckersFilter
 }
 
 type phpDocParamEl struct {
@@ -325,6 +327,10 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, level int, checkName, msg
 		return
 	}
 
+	if !d.checkersFilter.IsEnabledReport(checkName, d.ctx.st.CurrentFile) {
+		return
+	}
+
 	isReportForNode := lineNumber == 0
 	isReportForLine := !isReportForNode
 
@@ -504,9 +510,9 @@ func (d *rootWalker) reportUndefinedVariable(v ir.Node, maybeHave bool) {
 	}
 
 	if maybeHave {
-		d.Report(sv, LevelWarning, "undefined", "Variable might have not been defined: %s", sv.Name)
+		d.Report(sv, LevelWarning, "undefined", "Variable $%s might have not been defined", sv.Name)
 	} else {
-		d.Report(sv, LevelError, "undefined", "Undefined variable: %s", sv.Name)
+		d.Report(sv, LevelError, "undefined", "Undefined variable $%s", sv.Name)
 	}
 }
 
@@ -825,7 +831,7 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 
 	typeHintType, ok := d.parseTypeNode(pl.Type)
 	if ok && !d.typeHintHasMoreAccurateType(typeHintType, phpDocType) {
-		d.Report(pl, LevelNotice, "typeHint", "specify the type for the property in phpdoc, 'array' type hint too generic")
+		d.Report(pl, LevelNotice, "typeHint", "Specify the type for the property in PHPDoc, 'array' type hint too generic")
 	}
 
 	for _, pNode := range pl.Properties {
@@ -974,10 +980,13 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		sc.SetInInstanceMethod(true)
 	}
 
+	class := d.getClass()
+
 	if meth.Doc.Raw == "" && modif.accessLevel == meta.Public {
 		// Permit having "__call" and other magic method without comments.
 		if !insideInterface && !strings.HasPrefix(nm, "_") {
-			d.Report(meth.MethodName, LevelNotice, "phpdoc", "Missing PHPDoc for %q public method", nm)
+			methodFQN := class.Name + "::" + nm
+			d.Report(meth.MethodName, LevelNotice, "phpdoc", "Missing PHPDoc for %s public method", methodFQN)
 		}
 	}
 	d.checkCommentMisspellings(meth.MethodName, meth.Doc.Raw)
@@ -987,8 +996,6 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	d.reportPhpdocErrors(meth.MethodName, doc.errs)
 	phpDocReturnType := doc.returnType
 	phpDocParamTypes := doc.types
-
-	class := d.getClass()
 
 	returnTypeHint, ok := d.parseTypeNode(meth.ReturnType)
 	if ok && !doc.inherit {
@@ -1096,7 +1103,7 @@ func (d *rootWalker) reportPhpdocErrors(n ir.Node, errs phpdocErrors) {
 
 func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.Comment) (m types.Map) {
 	if phpdoc.IsSuspicious([]byte(doc.Raw)) {
-		d.Report(n, LevelWarning, "phpdocLint", "multiline phpdoc comment should start with /**, not /*")
+		d.Report(n, LevelWarning, "phpdocLint", "Multiline PHPDoc comment should start with /**, not /*")
 	}
 
 	for _, part := range doc.Parsed {
@@ -1175,10 +1182,14 @@ func (d *rootWalker) isValidPHPDocRef(n ir.Node, ref string) bool {
 	isValidSymbol := func(ref string) bool {
 		if !strings.HasPrefix(ref, `\`) {
 			if d.currentClassNode != nil {
-				if _, ok := solver.FindMethod(d.metaInfo(), d.ctx.st.CurrentClass, ref); ok {
+				className := d.ctx.st.CurrentClass
+				if _, ok := solver.FindMethod(d.metaInfo(), className, ref); ok {
 					return true // OK: class method reference
 				}
-				if classHasProp(d.ctx.st, d.ctx.st.CurrentClass, ref) {
+				if _, _, ok := solver.FindConstant(d.metaInfo(), className, ref); ok {
+					return true // OK: class constant reference
+				}
+				if classHasProp(d.ctx.st, className, ref) {
 					return true // OK: class prop reference
 				}
 			}
@@ -1274,7 +1285,7 @@ func (d *rootWalker) checkPHPDocMixinRef(n ir.Node, part phpdoc.CommentPart) {
 	}
 
 	if _, ok := d.metaInfo().GetClass(name); !ok {
-		d.Report(n, LevelWarning, "phpdocRef", "line %d: @mixin tag refers to unknown class %s", part.Line(), name)
+		d.Report(n, LevelWarning, "phpdocRef", "Line %d: @mixin tag refers to unknown class %s", part.Line(), name)
 	}
 }
 
@@ -1286,7 +1297,7 @@ func (d *rootWalker) parsePHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 	}
 
 	if phpdoc.IsSuspicious([]byte(doc.Raw)) {
-		result.errs.pushLint("multiline phpdoc comment should start with /**, not /*")
+		result.errs.pushLint("Multiline PHPDoc comment should start with /**, not /*")
 	}
 
 	actualParamNames := make(map[string]struct{}, len(actualParams))
@@ -1398,7 +1409,7 @@ func (d *rootWalker) checkTypeNode(n ir.Node) {
 	for _, typ := range typeList {
 		if typ.Elem == "parent" && d.ctx.st.CurrentClass != "" {
 			if d.ctx.st.CurrentParentClass == "" {
-				d.Report(n, LevelError, "typeHint", "cannot use 'parent' typehint when current class has no parent")
+				d.Report(n, LevelError, "typeHint", "Cannot use 'parent' typehint when current class has no parent")
 			}
 		}
 	}
@@ -1660,14 +1671,14 @@ func (d *rootWalker) checkParamsTypeHint(funcName *ir.Identifier, funcParams par
 		}
 
 		if !d.typeHintHasMoreAccurateType(typeHintType, phpDocType) {
-			d.Report(funcName, LevelNotice, "typeHint", "specify the type for the parameter $%s in phpdoc, 'array' type hint too generic", param)
+			d.Report(funcName, LevelNotice, "typeHint", "Specify the type for the parameter $%s in PHPDoc, 'array' type hint too generic", param)
 		}
 	}
 }
 
 func (d *rootWalker) checkFuncReturnType(fun ir.Node, funcName string, returnTypeHint, phpDocReturnType types.Map) {
 	if !d.typeHintHasMoreAccurateType(returnTypeHint, phpDocReturnType) {
-		d.Report(fun, LevelNotice, "typeHint", "specify the return type for the function %s in phpdoc, 'array' type hint too generic", funcName)
+		d.Report(fun, LevelNotice, "typeHint", "Specify the return type for the function %s in PHPDoc, 'array' type hint too generic", funcName)
 	}
 }
 
@@ -1716,20 +1727,29 @@ func (d *rootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {
 		return true
 	}
 
-	if d.ctx.st.Namespace == `\PHPSTORM_META` && nm.Value == `override` {
+	name := strings.TrimPrefix(nm.Value, `\`)
+
+	if d.ctx.st.Namespace == `\PHPSTORM_META` && name == `override` {
 		return d.handleOverride(s)
 	}
 
-	if nm.Value != `define` || len(s.Args) < 2 {
-		// TODO: actually we could warn about bogus defines
-		return true
+	if name == "define" {
+		d.handleDefineCall(s)
+	}
+
+	return true
+}
+
+func (d *rootWalker) handleDefineCall(s *ir.FunctionCallExpr) {
+	if len(s.Args) < 2 {
+		return
 	}
 
 	arg := s.Arg(0)
 
 	str, ok := arg.Expr.(*ir.String)
 	if !ok {
-		return true
+		return
 	}
 
 	valueArg := s.Arg(1)
@@ -1745,7 +1765,6 @@ func (d *rootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {
 		Typ:   solver.ExprTypeLocal(d.scope(), d.ctx.st, valueArg.Expr),
 		Value: value,
 	}
-	return true
 }
 
 // Handle e.g. "override(\array_shift(0), elementType(0));"
@@ -1861,6 +1880,14 @@ func (d *rootWalker) LeaveNode(n ir.Node) {
 	}
 }
 
+func (d *rootWalker) addQuickFix(checkName string, fix quickfix.TextEdit) {
+	if !d.checkersFilter.IsEnabledReport(checkName, d.ctx.st.CurrentFile) {
+		return
+	}
+
+	d.ctx.fixes = append(d.ctx.fixes, fix)
+}
+
 func (d *rootWalker) runRules(n ir.Node, sc *meta.Scope, rlist []rules.Rule) {
 	for i := range rlist {
 		rule := &rlist[i]
@@ -1958,7 +1985,7 @@ func (d *rootWalker) runRule(n ir.Node, sc *meta.Scope, rule *rules.Rule) bool {
 		// As rule sets contain only enabled rules,
 		// we should be OK without any filtering here.
 		pos := ir.GetPosition(n)
-		d.ctx.fixes = append(d.ctx.fixes, quickfix.TextEdit{
+		d.addQuickFix(rule.Name, quickfix.TextEdit{
 			StartPos:    pos.StartPos,
 			EndPos:      pos.EndPos,
 			Replacement: d.renderRuleMessage(rule.Fix, n, m, false),

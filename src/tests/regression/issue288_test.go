@@ -35,10 +35,10 @@ $_ = isset($x) && isset($y) ? $x : 0;
 $_ = $x instanceof Box ? 0 : 1;
 `)
 	test.Expect = []string{
-		`Undefined variable: badvar`,
-		`Undefined variable: b1`,
-		`Undefined variable: b2`,
-		`Undefined variable: b3`,
+		`Undefined variable $badvar`,
+		`Undefined variable $b1`,
+		`Undefined variable $b2`,
+		`Undefined variable $b3`,
 		`undefined: Property {mixed}->item2 does not exist`,
 	}
 	test.RunAndMatch()

@@ -1,4 +1,4 @@
-MAYBE   phpdoc: Missing PHPDoc for "idn_to_ascii" public method at testdata/idn/idn.php:64
+MAYBE   phpdoc: Missing PHPDoc for \Symfony\Polyfill\Intl\Idn\Idn::idn_to_ascii public method at testdata/idn/idn.php:64
     public static function idn_to_ascii($domain, $options, $variant, &$idna_info = array())
                            ^^^^^^^^^^^^
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/idn/idn.php:64
@@ -7,7 +7,7 @@ MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdat
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/idn/idn.php:87
         $idna_info = array(
                      
-MAYBE   phpdoc: Missing PHPDoc for "idn_to_utf8" public method at testdata/idn/idn.php:96
+MAYBE   phpdoc: Missing PHPDoc for \Symfony\Polyfill\Intl\Idn\Idn::idn_to_utf8 public method at testdata/idn/idn.php:96
     public static function idn_to_utf8($domain, $options, $variant, &$idna_info = array())
                            ^^^^^^^^^^^
 MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdata/idn/idn.php:96
@@ -31,15 +31,15 @@ MAYBE   arraySyntax: Use of old array syntax (use short form instead) at testdat
 MAYBE   redundantCast: expression already has int type at testdata/idn/idn.php:233
             $delta = (int) ($delta / 35);
                            ^^^^^^^^^^^^^
-MAYBE   assignOp: could rewrite as `$k += 36` at testdata/idn/idn.php:234
+MAYBE   assignOp: Could rewrite as `$k += 36` at testdata/idn/idn.php:234
             $k = $k + 36;
             ^^^^^^^^^^^^
 MAYBE   redundantCast: expression already has int type at testdata/idn/idn.php:237
         return $k + (int) (36 * $delta / ($delta + 38));
                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   assignOp: could rewrite as `$n += (int) ($i / $outputLength)` at testdata/idn/idn.php:274
+MAYBE   assignOp: Could rewrite as `$n += (int) ($i / $outputLength)` at testdata/idn/idn.php:274
             $n = $n + (int) ($i / $outputLength);
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   assignOp: could rewrite as `$i %= $outputLength` at testdata/idn/idn.php:275
+MAYBE   assignOp: Could rewrite as `$i %= $outputLength` at testdata/idn/idn.php:275
             $i = $i % $outputLength;
             ^^^^^^^^^^^^^^^^^^^^^^^

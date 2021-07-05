@@ -12,6 +12,8 @@ function f() {
     $_ = array();
     $_ = array(1,2,);
     $_ = array(1,2,3);
+    $_ = array  (  1,   2, 3  )   ;
+    $_ =   array  (  1,   2, 3  )   ;
     $_ = array(new Foo, new Foo);
     $_ = array("info" => new Foo, new Foo);
     $_ = array("info" => new Foo, "for" => 2, "home" => function() {});

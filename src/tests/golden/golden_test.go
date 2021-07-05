@@ -14,12 +14,24 @@ func TestGolden(t *testing.T) {
 			Args: []string{"help"},
 		},
 		{
-			Name: "help",
-			Args: []string{"help", "checkers"},
+			Name: "check help",
+			Args: []string{"check", "help"},
 		},
 		{
-			Name: "help",
-			Args: []string{"help", "checkers", "arraySyntax"},
+			Name: "version",
+			Args: []string{"version"},
+		},
+		{
+			Name: "checkers",
+			Args: []string{"checkers"},
+		},
+		{
+			Name: "checkers help",
+			Args: []string{"checkers", "help"},
+		},
+		{
+			Name: "checkers name",
+			Args: []string{"checkers", "arraySyntax"},
 		},
 	}
 	targets := []*linttest.GoldenTestSuite{

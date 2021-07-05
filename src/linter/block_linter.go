@@ -669,10 +669,12 @@ func (b *blockLinter) addFixForArray(arr *ir.ArrayExpr) {
 	from := arr.Position.StartPos
 	to := arr.Position.EndPos
 	have := b.walker.r.file.Contents()[from:to]
-	have = bytes.TrimPrefix(have, []byte("array("))
+	have = bytes.TrimPrefix(have, []byte("array"))
+	have = bytes.TrimSpace(have)
+	have = bytes.TrimPrefix(have, []byte("("))
 	have = bytes.TrimSuffix(have, []byte(")"))
 
-	b.walker.r.ctx.fixes = append(b.walker.r.ctx.fixes, quickfix.TextEdit{
+	b.walker.r.addQuickFix("arraySyntax", quickfix.TextEdit{
 		StartPos:    arr.Position.StartPos,
 		EndPos:      arr.Position.EndPos,
 		Replacement: fmt.Sprintf("[%s]", string(have)),
@@ -785,7 +787,7 @@ func (b *blockLinter) addFixForMultilineArrayTrailingComma(item *ir.ArrayItemExp
 	to := item.Position.EndPos
 	have := b.walker.r.file.Contents()[from:to]
 
-	b.walker.r.ctx.fixes = append(b.walker.r.ctx.fixes, quickfix.TextEdit{
+	b.walker.r.addQuickFix("trailingComma", quickfix.TextEdit{
 		StartPos:    item.Position.StartPos,
 		EndPos:      item.Position.EndPos,
 		Replacement: string(have) + ",",
