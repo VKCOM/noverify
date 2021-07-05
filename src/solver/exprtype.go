@@ -9,6 +9,7 @@ import (
 	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/types"
+	"github.com/VKCOM/noverify/src/utils"
 )
 
 // CustomType specifies a mapping between some AST structure
@@ -153,7 +154,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 	case *ir.CloneExpr:
 		return ExprTypeLocalCustom(sc, cs, n.Expr, custom)
 	case *ir.ClosureExpr:
-		name := autogen.GenerateClosureName(n, cs)
+		name := autogen.GenerateClosureName(n, cs.CurrentFunction, cs.CurrentFile)
 		return types.NewMap(name)
 	case *ir.MagicConstant:
 		return magicConstantType(n)
@@ -328,7 +329,7 @@ func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*ir.ArrayItemEx
 }
 
 func newExprType(n *ir.NewExpr, cs *meta.ClassParseState) types.Map {
-	if meta.NameNodeToString(n.Class) == "static" {
+	if utils.NameNodeToString(n.Class) == "static" {
 		return types.NewMap("static")
 	}
 	nm, ok := GetClassName(cs, n.Class)

@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/VKCOM/noverify/src/phpdoctypes"
+	"github.com/VKCOM/noverify/src/utils"
 	"github.com/z7zmey/php-parser/pkg/position"
 	"github.com/z7zmey/php-parser/pkg/token"
 
@@ -71,13 +73,6 @@ type rootWalker struct {
 
 	checkersFilter *CheckersFilter
 }
-
-type phpDocParamEl struct {
-	optional bool
-	typ      types.Map
-}
-
-type phpDocParamsMap map[string]phpDocParamEl
 
 // InitCustom is needed to initialize walker state
 func (d *rootWalker) InitCustom() {
@@ -218,7 +213,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		d.checkCommentMisspellings(n.ClassName, n.Doc.Raw)
 		d.checkIdentMisspellings(n.ClassName)
 		doc := d.parseClassPHPDoc(n.ClassName, n.Doc)
-		d.reportPhpdocErrors(n.ClassName, doc.errs)
+		d.reportPHPDocErrors(n.ClassName, doc.errs)
 		// If we ever need to distinguish @property-annotated and real properties,
 		// more work will be required here.
 		for name, p := range doc.properties {
@@ -501,7 +496,7 @@ func (d *rootWalker) reportUndefinedVariable(v ir.Node, maybeHave bool) {
 	sv, ok := v.(*ir.SimpleVar)
 	if !ok {
 		d.Report(v, LevelWarning, "undefined", "Unknown variable variable %s used",
-			meta.NameNodeToString(v))
+			utils.NameNodeToString(v))
 		return
 	}
 
@@ -992,13 +987,19 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	d.checkCommentMisspellings(meth.MethodName, meth.Doc.Raw)
 	d.checkIdentMisspellings(meth.MethodName)
 
-	doc := d.parsePHPDoc(meth.MethodName, meth.Doc, meth.Params)
-	d.reportPhpdocErrors(meth.MethodName, doc.errs)
-	phpDocReturnType := doc.returnType
-	phpDocParamTypes := doc.types
+	// Indexing stage.
+	doc := phpdoctypes.Parse(meth.Doc, meth.Params, d.ctx.typeNormalizer)
+	moveShapesToContext(&d.ctx, doc.Shapes)
+
+	// Check stage.
+	errors := d.checkPHPDoc(meth.MethodName, meth.Doc, meth.Params)
+	d.reportPHPDocErrors(meth.MethodName, errors)
+
+	phpDocReturnType := doc.ReturnType
+	phpDocParamTypes := doc.ParamTypes
 
 	returnTypeHint, ok := d.parseTypeNode(meth.ReturnType)
-	if ok && !doc.inherit {
+	if ok && !doc.Inherit {
 		d.checkFuncReturnType(meth.MethodName, meth.MethodName.Value, returnTypeHint, phpDocReturnType)
 	}
 
@@ -1076,7 +1077,7 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		AccessLevel:  modif.accessLevel,
 		Flags:        funcFlags,
 		ExitFlags:    exitFlags,
-		Doc:          doc.info,
+		Doc:          doc.AdditionalInfo,
 	})
 
 	if nm == "getIterator" && d.metaInfo().IsIndexingComplete() && solver.Implements(d.metaInfo(), d.ctx.st.CurrentClass, `\IteratorAggregate`) {
@@ -1092,7 +1093,7 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	return false
 }
 
-func (d *rootWalker) reportPhpdocErrors(n ir.Node, errs phpdocErrors) {
+func (d *rootWalker) reportPHPDocErrors(n ir.Node, errs phpdocErrors) {
 	for _, err := range errs.phpdocLint {
 		d.Report(n, LevelWarning, "phpdocLint", "%s", err)
 	}
@@ -1101,7 +1102,7 @@ func (d *rootWalker) reportPhpdocErrors(n ir.Node, errs phpdocErrors) {
 	}
 }
 
-func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.Comment) (m types.Map) {
+func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.Comment) (typesMap types.Map) {
 	if phpdoc.IsSuspicious([]byte(doc.Raw)) {
 		d.Report(n, LevelWarning, "phpdocLint", "Multiline PHPDoc comment should start with /**, not /*")
 	}
@@ -1110,23 +1111,18 @@ func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.Comment) (m types.Map)
 		d.checkPHPDocRef(n, part)
 		part, ok := part.(*phpdoc.TypeVarCommentPart)
 		if ok && part.Name() == "var" {
-			typeList, warning := typesFromPHPDoc(&d.ctx, part.Type)
-			if warning != "" {
+
+			converted := phpdoctypes.ToRealType(d.ctx.typeNormalizer.ClassFQNProvider(), part.Type)
+			moveShapesToContext(&d.ctx, converted.Shapes)
+			for _, warning := range converted.Warnings {
 				d.Report(n, LevelNotice, "phpdocType", "%s on line %d", warning, part.Line())
 			}
-			m = newTypesMap(&d.ctx, typeList)
+
+			typesMap = types.NewMapWithNormalization(d.ctx.typeNormalizer, converted.Types)
 		}
 	}
 
-	return m
-}
-
-type phpDocParseResult struct {
-	returnType types.Map
-	types      phpDocParamsMap
-	info       meta.PhpDocInfo
-	errs       phpdocErrors
-	inherit    bool
+	return typesMap
 }
 
 func (d *rootWalker) isValidPHPDocRef(n ir.Node, ref string) bool {
@@ -1289,15 +1285,13 @@ func (d *rootWalker) checkPHPDocMixinRef(n ir.Node, part phpdoc.CommentPart) {
 	}
 }
 
-func (d *rootWalker) parsePHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []ir.Node) phpDocParseResult {
-	var result phpDocParseResult
-
+func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []ir.Node) (errors phpdocErrors) {
 	if doc.Raw == "" {
-		return result
+		return errors
 	}
 
 	if phpdoc.IsSuspicious([]byte(doc.Raw)) {
-		result.errs.pushLint("Multiline PHPDoc comment should start with /**, not /*")
+		errors.pushLint("Multiline PHPDoc comment should start with /**, not /*")
 	}
 
 	actualParamNames := make(map[string]struct{}, len(actualParams))
@@ -1306,50 +1300,41 @@ func (d *rootWalker) parsePHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 		actualParamNames[p.Variable.Name] = struct{}{}
 	}
 
-	result.types = make(phpDocParamsMap, len(actualParams))
-
 	var curParam int
 
-	for _, part := range doc.Parsed {
-		d.checkPHPDocRef(n, part)
+	for _, rawPart := range doc.Parsed {
+		d.checkPHPDocRef(n, rawPart)
 
-		if part.Name() == "deprecated" {
-			part := part.(*phpdoc.RawCommentPart)
-			result.info.Deprecated = true
-			result.info.DeprecationNote = part.ParamsText
-			continue
-		}
+		if rawPart.Name() == "return" {
+			part := rawPart.(*phpdoc.TypeCommentPart)
 
-		if part.Name() == "return" {
-			part := part.(*phpdoc.TypeCommentPart)
-			typeList, warning := typesFromPHPDoc(&d.ctx, part.Type)
-			if warning != "" {
-				result.errs.pushType("%s on line %d", warning, part.Line())
+			converted := phpdoctypes.ToRealType(d.ctx.typeNormalizer.ClassFQNProvider(), part.Type)
+			for _, warning := range converted.Warnings {
+				errors.pushType("%s on line %d", warning, part.Line())
 			}
-			result.returnType = newTypesMap(&d.ctx, typeList)
 			continue
 		}
 
 		// Rest is for @param handling.
 
-		if part.Name() != "param" {
+		if rawPart.Name() != "param" {
 			continue
 		}
 
-		part := part.(*phpdoc.TypeVarCommentPart)
+		part := rawPart.(*phpdoc.TypeVarCommentPart)
 		optional := strings.Contains(part.Rest, "[optional]")
 		switch {
 		case part.Var == "":
-			result.errs.pushLint("malformed @param tag (maybe var is missing?) on line %d", part.Line())
+			errors.pushLint("malformed @param tag (maybe var is missing?) on line %d", part.Line())
 		case part.Type.IsEmpty():
-			result.errs.pushLint("malformed @param %s tag (maybe type is missing?) on line %d",
+			errors.pushLint("malformed @param %s tag (maybe type is missing?) on line %d",
 				part.Var, part.Line())
 			continue
 		}
 
 		if part.VarIsFirst {
 			// Phpstorm gives the same message.
-			result.errs.pushLint("non-canonical order of variable and type on line %d", part.Line())
+			errors.pushLint("non-canonical order of variable and type on line %d", part.Line())
 		}
 
 		variable := part.Var
@@ -1359,35 +1344,31 @@ func (d *rootWalker) parsePHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 			}
 		}
 		if _, ok := actualParamNames[strings.TrimPrefix(variable, "$")]; !ok {
-			result.errs.pushLint("@param for non-existing argument %s", variable)
+			errors.pushLint("@param for non-existing argument %s", variable)
 			continue
 		}
 
 		curParam++
 
-		var param phpDocParamEl
-		typeList, warning := typesFromPHPDoc(&d.ctx, part.Type)
-		if warning != "" {
-			result.errs.pushType("%s on line %d", warning, part.Line())
+		converted := phpdoctypes.ToRealType(d.ctx.typeNormalizer.ClassFQNProvider(), part.Type)
+		for _, warning := range converted.Warnings {
+			errors.pushType("%s on line %d", warning, part.Line())
 		}
-		param.typ = newTypesMap(&d.ctx, typeList)
-		param.typ.Iterate(func(t string) {
+
+		var param phpdoctypes.Param
+		param.Typ = types.NewMapWithNormalization(d.ctx.typeNormalizer, converted.Types)
+		param.Typ.Iterate(func(t string) {
 			if t == "void" {
-				result.errs.pushType("void is not a valid type for input parameter")
+				errors.pushType("void is not a valid type for input parameter")
 			}
 		})
-		param.optional = optional
-
-		variable = strings.TrimPrefix(variable, "$")
-		result.types[variable] = param
+		param.Optional = optional
 	}
 
-	result.returnType = result.returnType.Immutable()
-	result.inherit = doc.Inherit
-	return result
+	return errors
 }
 
-// parse type info, e.g. "string" in "someFunc() : string { ... }"
+// Parse type info, e.g. "string" in "someFunc() : string { ... }".
 func (d *rootWalker) parseTypeNode(n ir.Node) (typ types.Map, ok bool) {
 	if n == nil {
 		return types.Map{}, false
@@ -1395,9 +1376,9 @@ func (d *rootWalker) parseTypeNode(n ir.Node) (typ types.Map, ok bool) {
 
 	d.checkTypeNode(n)
 
-	typeList := typesFromNode(n)
-	tm := newTypesMap(&d.ctx, typeList)
-	return tm, !tm.Empty()
+	typesMap := types.NormalizedTypeHintTypes(d.ctx.typeNormalizer, n)
+
+	return typesMap, !typesMap.Empty()
 }
 
 func (d *rootWalker) checkTypeNode(n ir.Node) {
@@ -1405,7 +1386,7 @@ func (d *rootWalker) checkTypeNode(n ir.Node) {
 		return
 	}
 
-	typeList := typesFromNode(n)
+	typeList := types.TypeHintTypes(n)
 	for _, typ := range typeList {
 		if typ.Elem == "parent" && d.ctx.st.CurrentClass != "" {
 			if d.ctx.st.CurrentParentClass == "" {
@@ -1481,7 +1462,7 @@ type parseFuncParamsResult struct {
 	minParamsCount int
 }
 
-func (d *rootWalker) parseFuncParams(params []ir.Node, phpDocParamsTypes phpDocParamsMap, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (res parseFuncParamsResult) {
+func (d *rootWalker) parseFuncParams(params []ir.Node, phpDocParamsTypes phpdoctypes.ParamsMap, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (res parseFuncParamsResult) {
 	if len(params) == 0 {
 		return res
 	}
@@ -1499,13 +1480,13 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, phpDocParamsTypes phpDocP
 		v := p.Variable
 		phpDocType := phpDocParamsTypes[v.Name]
 
-		if !phpDocType.typ.Empty() {
-			sc.AddVarName(v.Name, phpDocType.typ, "param", meta.VarAlwaysDefined)
+		if !phpDocType.Typ.Empty() {
+			sc.AddVarName(v.Name, phpDocType.Typ, "param", meta.VarAlwaysDefined)
 		}
 
-		paramTyp := phpDocType.typ
+		paramTyp := phpDocType.Typ
 
-		if p.DefaultValue == nil && !phpDocType.optional && !p.Variadic {
+		if p.DefaultValue == nil && !phpDocType.Optional && !p.Variadic {
 			minArgs++
 		}
 
@@ -1610,10 +1591,16 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	d.checkCommentMisspellings(fun.FunctionName, fun.Doc.Raw)
 	d.checkIdentMisspellings(fun.FunctionName)
 
-	doc := d.parsePHPDoc(fun.FunctionName, fun.Doc, fun.Params)
-	d.reportPhpdocErrors(fun.FunctionName, doc.errs)
-	phpDocReturnType := doc.returnType
-	phpDocParamTypes := doc.types
+	// Indexing stage.
+	doc := phpdoctypes.Parse(fun.Doc, fun.Params, d.ctx.typeNormalizer)
+	moveShapesToContext(&d.ctx, doc.Shapes)
+
+	// Check stage.
+	errors := d.checkPHPDoc(fun, fun.Doc, fun.Params)
+	d.reportPHPDocErrors(fun, errors)
+
+	phpDocReturnType := doc.ReturnType
+	phpDocParamTypes := doc.ParamTypes
 
 	if d.meta.Functions.H == nil {
 		d.meta.Functions = meta.NewFunctionsMap()
@@ -1622,7 +1609,7 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	sc := meta.NewScope()
 
 	returnTypeHint, ok := d.parseTypeNode(fun.ReturnType)
-	if ok && !doc.inherit {
+	if ok && !doc.Inherit {
 		d.checkFuncReturnType(fun.FunctionName, fun.FunctionName.Value, returnTypeHint, phpDocReturnType)
 	}
 
@@ -1648,13 +1635,13 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 		MinParamsCnt: funcParams.minParamsCount,
 		Flags:        funcFlags,
 		ExitFlags:    exitFlags,
-		Doc:          doc.info,
+		Doc:          doc.AdditionalInfo,
 	})
 
 	return false
 }
 
-func (d *rootWalker) checkFuncParams(funcName *ir.Identifier, params []ir.Node, funcParams parseFuncParamsResult, phpDocParamTypes phpDocParamsMap) {
+func (d *rootWalker) checkFuncParams(funcName *ir.Identifier, params []ir.Node, funcParams parseFuncParamsResult, phpDocParamTypes phpdoctypes.ParamsMap) {
 	for _, param := range params {
 		d.checkFuncParam(param.(*ir.Parameter))
 	}
@@ -1662,12 +1649,12 @@ func (d *rootWalker) checkFuncParams(funcName *ir.Identifier, params []ir.Node, 
 	d.checkParamsTypeHint(funcName, funcParams, phpDocParamTypes)
 }
 
-func (d *rootWalker) checkParamsTypeHint(funcName *ir.Identifier, funcParams parseFuncParamsResult, phpDocParamTypes phpDocParamsMap) {
+func (d *rootWalker) checkParamsTypeHint(funcName *ir.Identifier, funcParams parseFuncParamsResult, phpDocParamTypes phpdoctypes.ParamsMap) {
 	for param, typeHintType := range funcParams.paramsTypeHint {
 		var phpDocType types.Map
 
 		if phpDocParamType, ok := phpDocParamTypes[param]; ok {
-			phpDocType = phpDocParamType.typ
+			phpDocType = phpDocParamType.Typ
 		}
 
 		if !d.typeHintHasMoreAccurateType(typeHintType, phpDocType) {
@@ -2191,7 +2178,7 @@ func (d *rootWalker) afterLeaveFile() {
 			props := make(meta.PropertiesMap)
 			for _, p := range shape.Props {
 				props[p.Key] = meta.PropertyInfo{
-					Typ:         newTypesMap(&d.ctx, p.Types).Immutable(),
+					Typ:         types.NewMapWithNormalization(d.ctx.typeNormalizer, p.Types).Immutable(),
 					AccessLevel: meta.Public,
 				}
 			}

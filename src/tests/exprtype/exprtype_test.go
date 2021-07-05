@@ -5,13 +5,13 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/VKCOM/noverify/src/utils"
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
-	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/types"
 	"github.com/VKCOM/noverify/src/workspace"
 )
@@ -2983,7 +2983,7 @@ func (w *exprTypeWalker) LeaveNode(n ir.Node) {}
 
 func (w *exprTypeWalker) EnterNode(n ir.Node) bool {
 	call, ok := n.(*ir.FunctionCallExpr)
-	if ok && meta.NameNodeEquals(call.Function, `exprtype`) {
+	if ok && utils.NameNodeEquals(call.Function, `exprtype`) {
 		checkedExpr := call.Arg(0).Expr
 		expectedType := call.Arg(1).Expr.(*ir.String).Value
 		actualType, ok := exprTypeResult[checkedExpr]
@@ -3017,7 +3017,7 @@ func (c *exprTypeCollector) AfterEnterNode(n ir.Node) {
 	}
 
 	call, ok := n.(*ir.FunctionCallExpr)
-	if !ok || !meta.NameNodeEquals(call.Function, `exprtype`) {
+	if !ok || !utils.NameNodeEquals(call.Function, `exprtype`) {
 		return
 	}
 	checkedExpr := call.Arg(0).Expr

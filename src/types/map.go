@@ -128,6 +128,11 @@ func NewPreciseMap(str string) Map {
 	return m
 }
 
+func NewMapWithNormalization(norm Normalizer, types []Type) Map {
+	norm.NormalizeTypes(types)
+	return NewMapFromTypes(types)
+}
+
 // MergeMaps creates a new types map from union of specified type maps
 func MergeMaps(maps ...Map) Map {
 	totalLen := 0

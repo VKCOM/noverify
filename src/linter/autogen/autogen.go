@@ -5,26 +5,26 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/ir"
-	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/types"
 )
 
-func GenerateShapeName(props []ShapeTypeProp, cs *meta.ClassParseState) string {
+func GenerateShapeName(props []types.ShapeProp) string {
 	var body string
 	for i, prop := range props {
 		body += prop.Key
-		types := ":"
+		typesList := ":"
 		for i, typ := range prop.Types {
-			types += typ.Elem + strings.Repeat("[]", typ.Dims)
+			typesList += typ.Elem + strings.Repeat("[]", typ.Dims)
 			if i != len(prop.Types)-1 {
-				types += ","
+				typesList += ","
 			}
 		}
 
 		if i != len(props)-1 {
-			types += ","
+			typesList += ","
 		}
 
-		body += types
+		body += typesList
 	}
 	// We'll probably generate names for anonymous classes in the
 	// same way in future. All auto-generated names should end with "$".
@@ -33,11 +33,11 @@ func GenerateShapeName(props []ShapeTypeProp, cs *meta.ClassParseState) string {
 	return fmt.Sprintf(`\shape$%s$`, body)
 }
 
-func GenerateClosureName(fun *ir.ClosureExpr, cs *meta.ClassParseState) string {
+func GenerateClosureName(fun *ir.ClosureExpr, currentFunction, currentFile string) string {
 	pos := ir.GetPosition(fun)
-	curFunction := cs.CurrentFunction
+	curFunction := currentFunction
 	if curFunction != "" {
 		curFunction = "," + curFunction
 	}
-	return fmt.Sprintf("\\Closure$(%s%s):%d$", cs.CurrentFile, curFunction, pos.StartLine)
+	return fmt.Sprintf("\\Closure$(%s%s):%d$", currentFile, curFunction, pos.StartLine)
 }
