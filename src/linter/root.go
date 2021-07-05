@@ -1646,6 +1646,10 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 }
 
 func (d *rootWalker) handleClosuresFromDoc(closures types.ClosureMap) {
+	if d.meta.Functions.H == nil {
+		d.meta.Functions = meta.NewFunctionsMap()
+	}
+
 	for name, closureInfo := range closures {
 		var params []meta.FuncParam
 		for i, paramType := range closureInfo.ParamTypes {
