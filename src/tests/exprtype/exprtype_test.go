@@ -2928,6 +2928,10 @@ func exprTypeTestImpl(t *testing.T, params *exprTypeTestParams, kphp bool) {
 	})
 	config.KPHP = kphp
 	l := linter.NewLinter(config)
+	checks := linter.NewChecks()
+	checks.EnableAll = true
+	l.UseChecks(checks)
+
 	if params.stubs != "" {
 		l.InitStubs(func(ch chan workspace.FileInfo) {
 			ch <- workspace.FileInfo{

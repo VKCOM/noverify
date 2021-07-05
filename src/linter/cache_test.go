@@ -119,6 +119,7 @@ main();
 `
 
 	l := NewLinter(NewConfig())
+	l.UseChecks(NewChecks())
 	runTest := func(iteration int) {
 		result, err := parseContents(l, "cachetest.php", []byte(code), nil)
 		if err != nil {
