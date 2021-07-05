@@ -23,6 +23,12 @@ func NewChecks() *Checks {
 	}
 }
 
+func NewEnabledAllChecks() *Checks {
+	c := NewChecks()
+	c.EnableAll = true
+	return c
+}
+
 func (c *Checks) IsEnabledCheck(checkName string) bool {
 	if !c.EnableAll && !c.Allowed[checkName] {
 		return false // Not enabled by --allow-checks.
