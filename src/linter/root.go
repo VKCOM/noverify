@@ -1834,6 +1834,14 @@ func (d *rootWalker) LeaveNode(n ir.Node) {
 	}
 }
 
+func (d *rootWalker) addQuickFix(checkName string, fix quickfix.TextEdit) {
+	if !d.checkersFilter.IsEnabledReport(checkName, d.ctx.st.CurrentFile) {
+		return
+	}
+
+	d.ctx.fixes = append(d.ctx.fixes, fix)
+}
+
 func (d *rootWalker) runRules(n ir.Node, sc *meta.Scope, rlist []rules.Rule) {
 	for i := range rlist {
 		rule := &rlist[i]
@@ -1931,7 +1939,7 @@ func (d *rootWalker) runRule(n ir.Node, sc *meta.Scope, rule *rules.Rule) bool {
 		// As rule sets contain only enabled rules,
 		// we should be OK without any filtering here.
 		pos := ir.GetPosition(n)
-		d.ctx.fixes = append(d.ctx.fixes, quickfix.TextEdit{
+		d.addQuickFix(rule.Name, quickfix.TextEdit{
 			StartPos:    pos.StartPos,
 			EndPos:      pos.EndPos,
 			Replacement: d.renderRuleMessage(rule.Fix, n, m, false),
