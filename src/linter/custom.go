@@ -244,8 +244,8 @@ func (ctx *BlockContext) File() *workspace.File {
 }
 
 // AddQuickfix adds a new quick fix.
-func (ctx *BlockContext) AddQuickfix(fix quickfix.TextEdit) {
-	ctx.w.r.ctx.fixes = append(ctx.w.r.ctx.fixes, fix)
+func (ctx *BlockContext) AddQuickfix(checkName string, fix quickfix.TextEdit) {
+	ctx.w.r.addQuickFix(checkName, fix)
 }
 
 // BlockCheckerCreateFunc is a factory function for BlockChecker
