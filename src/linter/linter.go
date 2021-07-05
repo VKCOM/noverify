@@ -36,6 +36,10 @@ func (l *Linter) UseChecks(checks *CheckersFilter) {
 	l.checks = checks
 }
 
+func (l *Linter) UseAllChecks() {
+	l.checks = NewCheckersFilterWithEnabledAll()
+}
+
 func (l *Linter) NewLintingWorker(id int) *Worker {
 	w := newWorker(l.config, l.info, id, l.checks)
 	w.needReports = true

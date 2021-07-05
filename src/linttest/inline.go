@@ -120,7 +120,7 @@ func (s *inlineTestSuite) compare(expects []string, reports []string) (unmatched
 // handleFileContents reads, parses the resulting file, and splits it into lines.
 func (s *inlineTestSuite) handleFileContents(file string) (lines []string, reports []*linter.Report, err error) {
 	lint := linter.NewLinter(linter.NewConfig())
-	lint.UseChecks(linter.NewCheckersFilterWithEnabledAll())
+	lint.UseAllChecks()
 
 	err = cmd.LoadEmbeddedStubs(lint, defaultStubs)
 	if err != nil {
