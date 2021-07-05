@@ -174,9 +174,9 @@ func mainNoExit(ctx *AppContext) (int, error) {
 	ruleSets := ctx.MainConfig.rulesSets
 
 	runner := linterRunner{
-		config: lint.Config(),
-		linter: lint,
-		checks: linter.NewCheckersFilter(),
+		config:         lint.Config(),
+		linter:         lint,
+		checkersFilter: linter.NewCheckersFilter(),
 	}
 	if err := runner.Init(ruleSets, &ctx.ParsedFlags); err != nil {
 		return 1, fmt.Errorf("init: %v", err)
@@ -247,7 +247,7 @@ func createBaseline(l *linterRunner, cfg *MainConfig, reports []*linter.Report) 
 		if cfg.BeforeReport != nil && !cfg.BeforeReport(r) {
 			continue
 		}
-		if !l.checks.IsEnabledReport(r) {
+		if !l.checkersFilter.IsEnabledReport(r) {
 			continue
 		}
 
@@ -340,7 +340,7 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 
 		filtered = append(filtered, r)
 
-		if l.checks.IsCriticalReport(r) {
+		if l.checkersFilter.IsCriticalReport(r) {
 			criticalReports++
 		} else {
 			minorReports++
@@ -364,7 +364,7 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 		}
 	} else {
 		for _, r := range filtered {
-			if l.checks.IsCriticalReport(r) {
+			if l.checkersFilter.IsCriticalReport(r) {
 				fmt.Fprintf(l.outputFp, "<critical> %s\n", FormatReport(r))
 			} else {
 				fmt.Fprintf(l.outputFp, "%s\n", FormatReport(r))

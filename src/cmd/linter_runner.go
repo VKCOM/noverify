@@ -20,9 +20,9 @@ import (
 type linterRunner struct {
 	flags *ParsedFlags
 
-	linter *linter.Linter
-	config *linter.Config
-	checks *linter.CheckersFilter
+	linter         *linter.Linter
+	config         *linter.Config
+	checkersFilter *linter.CheckersFilter
 
 	outputFp io.Writer
 
@@ -101,7 +101,7 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, flags *ParsedFlags) error {
 
 	l.addVendorFolderToIndex(flags)
 
-	l.checks = l.initCheckMappings(ruleSets)
+	l.checkersFilter = l.initCheckMappings(ruleSets)
 
 	if err := l.initRules(ruleSets); err != nil {
 		return fmt.Errorf("rules: %v", err)
@@ -110,7 +110,7 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, flags *ParsedFlags) error {
 		return fmt.Errorf("baseline: %v", err)
 	}
 
-	l.linter.UseChecks(l.checks)
+	l.linter.UseCheckersFilter(l.checkersFilter)
 
 	return nil
 }
@@ -217,11 +217,11 @@ func (l *linterRunner) initCheckMappings(ruleSets []*rules.Set) *linter.Checkers
 		return set
 	}
 
-	l.checks.All = l.config.Checkers.ListDeclared()
-	l.checks.EnableAll = l.flags.AllowAll
-	l.checks.ExcludeFileRegexp = l.config.ExcludeRegex
+	l.checkersFilter.All = l.config.Checkers.ListDeclared()
+	l.checkersFilter.EnableAll = l.flags.AllowAll
+	l.checkersFilter.ExcludeFileRegexp = l.config.ExcludeRegex
 
-	l.checks.Excluded = stringToSet(l.flags.ReportsExcludeChecks)
+	l.checkersFilter.Excluded = stringToSet(l.flags.ReportsExcludeChecks)
 
 	if l.flags.AllowChecks == AllChecks {
 		set := make(map[string]bool)
@@ -238,21 +238,21 @@ func (l *linterRunner) initCheckMappings(ruleSets []*rules.Set) *linter.Checkers
 			}
 		}
 
-		l.checks.Allowed = set
+		l.checkersFilter.Allowed = set
 	} else {
-		l.checks.Allowed = stringToSet(l.flags.AllowChecks)
+		l.checkersFilter.Allowed = stringToSet(l.flags.AllowChecks)
 	}
 
 	if l.flags.ReportsCritical != AllNonNoticeChecks {
-		l.checks.Critical = stringToSet(l.flags.ReportsCritical)
+		l.checkersFilter.Critical = stringToSet(l.flags.ReportsCritical)
 	}
 
-	return l.checks
+	return l.checkersFilter
 }
 
 func (l *linterRunner) initRules(ruleSets []*rules.Set) error {
 	ruleFilter := func(r rules.Rule) bool {
-		return l.checks.IsEnabledCheck(r.Name)
+		return l.checkersFilter.IsEnabledCheck(r.Name)
 	}
 
 	for _, rset := range ruleSets {

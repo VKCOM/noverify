@@ -21,6 +21,7 @@ func NewLinter(config *Config) *Linter {
 	return &Linter{
 		config: config,
 		info:   meta.NewInfo(),
+		checks: NewCheckersFilterWithEnabledAll(),
 	}
 }
 
@@ -32,12 +33,8 @@ func (l *Linter) MetaInfo() *meta.Info {
 	return l.info
 }
 
-func (l *Linter) UseChecks(checks *CheckersFilter) {
+func (l *Linter) UseCheckersFilter(checks *CheckersFilter) {
 	l.checks = checks
-}
-
-func (l *Linter) UseAllChecks() {
-	l.checks = NewCheckersFilterWithEnabledAll()
 }
 
 func (l *Linter) NewLintingWorker(id int) *Worker {
