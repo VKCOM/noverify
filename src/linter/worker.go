@@ -55,11 +55,12 @@ type Worker struct {
 
 	AllowDisable *regexp.Regexp
 
-	config *Config
-	info   *meta.Info
+	config         *Config
+	checkersFilter *CheckersFilter
+	info           *meta.Info
 }
 
-func newWorker(config *Config, info *meta.Info, id int) *Worker {
+func newWorker(config *Config, info *meta.Info, id int, checkersFilter *CheckersFilter) *Worker {
 	ctx := NewWorkerContext()
 	irConverter := irconv.NewConverter(ctx.phpdocTypeParser)
 	return &Worker{
@@ -74,6 +75,7 @@ func newWorker(config *Config, info *meta.Info, id int) *Worker {
 		reParser: syntax.NewParser(&syntax.ParserOptions{
 			NoLiterals: false,
 		}),
+		checkersFilter: checkersFilter,
 	}
 }
 
@@ -277,6 +279,7 @@ func (w *Worker) analyzeFile(file *workspace.File, rootNode *ir.Root) (*rootWalk
 		},
 
 		allowDisabledRegexp: w.AllowDisable,
+		checkersFilter:      w.checkersFilter,
 	}
 
 	walker.InitCustom()

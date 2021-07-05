@@ -20,49 +20,13 @@ import (
 type linterRunner struct {
 	flags *ParsedFlags
 
-	linter *linter.Linter
-
-	config *linter.Config
+	linter         *linter.Linter
+	config         *linter.Config
+	checkersFilter *linter.CheckersFilter
 
 	outputFp io.Writer
 
 	filenameFilter *workspace.FilenameFilter
-
-	reportsExcludeChecksSet map[string]bool
-	reportsIncludeChecksSet map[string]bool
-	reportsCriticalSet      map[string]bool
-}
-
-func (l *linterRunner) IsEnabledByFlags(checkName string) bool {
-	if !l.flags.AllowAll && !l.reportsIncludeChecksSet[checkName] {
-		return false // Not enabled by -allow-checks
-	}
-
-	if l.reportsExcludeChecksSet[checkName] {
-		return false // Disabled by -exclude-checks
-	}
-
-	return true
-}
-
-func (l *linterRunner) IsCriticalReport(r *linter.Report) bool {
-	if len(l.reportsCriticalSet) != 0 {
-		return l.reportsCriticalSet[r.CheckName]
-	}
-	return r.IsCritical()
-}
-
-func (l *linterRunner) IsEnabledReport(r *linter.Report) bool {
-	if !l.IsEnabledByFlags(r.CheckName) {
-		return false
-	}
-
-	if l.config.ExcludeRegex == nil {
-		return true
-	}
-
-	// Disabled by a file comment.
-	return !l.config.ExcludeRegex.MatchString(r.Filename)
 }
 
 func (l *linterRunner) collectGitIgnoreFiles() error {
@@ -137,13 +101,16 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, flags *ParsedFlags) error {
 
 	l.addVendorFolderToIndex(flags)
 
-	l.initCheckMappings(ruleSets)
+	l.checkersFilter = l.initCheckMappings(ruleSets)
+
 	if err := l.initRules(ruleSets); err != nil {
 		return fmt.Errorf("rules: %v", err)
 	}
 	if err := l.initBaseline(); err != nil {
 		return fmt.Errorf("baseline: %v", err)
 	}
+
+	l.linter.UseCheckersFilter(l.checkersFilter)
 
 	return nil
 }
@@ -241,7 +208,7 @@ func (l *linterRunner) compileRegexes() error {
 	return nil
 }
 
-func (l *linterRunner) initCheckMappings(ruleSets []*rules.Set) {
+func (l *linterRunner) initCheckMappings(ruleSets []*rules.Set) *linter.CheckersFilter {
 	stringToSet := func(s string) map[string]bool {
 		set := make(map[string]bool)
 		for _, name := range strings.Split(s, ",") {
@@ -250,7 +217,11 @@ func (l *linterRunner) initCheckMappings(ruleSets []*rules.Set) {
 		return set
 	}
 
-	l.reportsExcludeChecksSet = stringToSet(l.flags.ReportsExcludeChecks)
+	l.checkersFilter.All = l.config.Checkers.ListDeclared()
+	l.checkersFilter.EnableAll = l.flags.AllowAll
+	l.checkersFilter.ExcludeFileRegexp = l.config.ExcludeRegex
+
+	l.checkersFilter.Excluded = stringToSet(l.flags.ReportsExcludeChecks)
 
 	if l.flags.AllowChecks == AllChecks {
 		set := make(map[string]bool)
@@ -267,19 +238,21 @@ func (l *linterRunner) initCheckMappings(ruleSets []*rules.Set) {
 			}
 		}
 
-		l.reportsIncludeChecksSet = set
+		l.checkersFilter.Allowed = set
 	} else {
-		l.reportsIncludeChecksSet = stringToSet(l.flags.AllowChecks)
+		l.checkersFilter.Allowed = stringToSet(l.flags.AllowChecks)
 	}
 
 	if l.flags.ReportsCritical != AllNonNoticeChecks {
-		l.reportsCriticalSet = stringToSet(l.flags.ReportsCritical)
+		l.checkersFilter.Critical = stringToSet(l.flags.ReportsCritical)
 	}
+
+	return l.checkersFilter
 }
 
 func (l *linterRunner) initRules(ruleSets []*rules.Set) error {
 	ruleFilter := func(r rules.Rule) bool {
-		return l.IsEnabledByFlags(r.Name)
+		return l.checkersFilter.IsEnabledCheck(r.Name)
 	}
 
 	for _, rset := range ruleSets {
