@@ -22,7 +22,8 @@ type ParseResult struct {
 	AdditionalInfo meta.PhpDocInfo
 	Inherit        bool
 
-	Shapes types.ShapesMap
+	Shapes   types.ShapesMap
+	Closures types.ClosureMap
 }
 
 func Parse(doc phpdoc.Comment, actualParams []ir.Node, normalizer types.Normalizer) (result ParseResult) {
@@ -31,6 +32,7 @@ func Parse(doc phpdoc.Comment, actualParams []ir.Node, normalizer types.Normaliz
 	}
 
 	result.Shapes = make(types.ShapesMap)
+	result.Closures = make(types.ClosureMap)
 	result.ParamTypes = make(ParamsMap)
 
 	var curParam int
@@ -50,6 +52,9 @@ func Parse(doc phpdoc.Comment, actualParams []ir.Node, normalizer types.Normaliz
 			converted := ToRealType(normalizer.ClassFQNProvider(), part.Type)
 			for name, shape := range converted.Shapes {
 				result.Shapes[name] = shape
+			}
+			for name, closure := range converted.Closures {
+				result.Closures[name] = closure
 			}
 
 			result.ReturnType = types.NewMapWithNormalization(normalizer, converted.Types)
@@ -77,6 +82,9 @@ func Parse(doc phpdoc.Comment, actualParams []ir.Node, normalizer types.Normaliz
 		converted := ToRealType(normalizer.ClassFQNProvider(), part.Type)
 		for name, shape := range converted.Shapes {
 			result.Shapes[name] = shape
+		}
+		for name, closure := range converted.Closures {
+			result.Closures[name] = closure
 		}
 
 		var param Param

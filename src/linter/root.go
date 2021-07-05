@@ -990,6 +990,7 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	// Indexing stage.
 	doc := phpdoctypes.Parse(meth.Doc, meth.Params, d.ctx.typeNormalizer)
 	moveShapesToContext(&d.ctx, doc.Shapes)
+	d.handleClosuresFromDoc(doc.Closures)
 
 	// Check stage.
 	errors := d.checkPHPDoc(meth.MethodName, meth.Doc, meth.Params)
@@ -1114,6 +1115,8 @@ func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.Comment) (typesMap typ
 
 			converted := phpdoctypes.ToRealType(d.ctx.typeNormalizer.ClassFQNProvider(), part.Type)
 			moveShapesToContext(&d.ctx, converted.Shapes)
+			d.handleClosuresFromDoc(converted.Closures)
+
 			for _, warning := range converted.Warnings {
 				d.Report(n, LevelNotice, "phpdocType", "%s on line %d", warning, part.Line())
 			}
@@ -1588,12 +1591,17 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 		d.Report(fun.FunctionName, LevelNotice, "complexity", "Too big function: more than %d lines", maxFunctionLines)
 	}
 
+	if d.meta.Functions.H == nil {
+		d.meta.Functions = meta.NewFunctionsMap()
+	}
+
 	d.checkCommentMisspellings(fun.FunctionName, fun.Doc.Raw)
 	d.checkIdentMisspellings(fun.FunctionName)
 
 	// Indexing stage.
 	doc := phpdoctypes.Parse(fun.Doc, fun.Params, d.ctx.typeNormalizer)
 	moveShapesToContext(&d.ctx, doc.Shapes)
+	d.handleClosuresFromDoc(doc.Closures)
 
 	// Check stage.
 	errors := d.checkPHPDoc(fun, fun.Doc, fun.Params)
@@ -1601,10 +1609,6 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 
 	phpDocReturnType := doc.ReturnType
 	phpDocParamTypes := doc.ParamTypes
-
-	if d.meta.Functions.H == nil {
-		d.meta.Functions = meta.NewFunctionsMap()
-	}
 
 	sc := meta.NewScope()
 
@@ -1639,6 +1643,25 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	})
 
 	return false
+}
+
+func (d *rootWalker) handleClosuresFromDoc(closures types.ClosureMap) {
+	for name, closureInfo := range closures {
+		var params []meta.FuncParam
+		for i, paramType := range closureInfo.ParamTypes {
+			params = append(params, meta.FuncParam{
+				Name: fmt.Sprintf("closure param #%d", i),
+				Typ:  types.NewMapWithNormalization(d.ctx.typeNormalizer, paramType),
+			})
+		}
+
+		d.meta.Functions.Set(name, meta.FuncInfo{
+			Params:       params,
+			Name:         name,
+			Typ:          types.NewMapWithNormalization(d.ctx.typeNormalizer, closureInfo.ReturnType),
+			MinParamsCnt: len(closureInfo.ParamTypes),
+		})
+	}
 }
 
 func (d *rootWalker) checkFuncParams(funcName *ir.Identifier, params []ir.Node, funcParams parseFuncParamsResult, phpDocParamTypes phpdoctypes.ParamsMap) {

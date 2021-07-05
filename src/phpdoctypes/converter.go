@@ -2,6 +2,7 @@ package phpdoctypes
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/phpdoc"
@@ -11,6 +12,7 @@ import (
 type RealPHPDocTypes struct {
 	Types    []types.Type
 	Shapes   types.ShapesMap
+	Closures types.ClosureMap
 	Warnings []string
 }
 
@@ -23,6 +25,7 @@ func ToRealType(classFQNProvider func(string) (string, bool), typ phpdoc.Type) *
 		classFQNProvider:   classFQNProvider,
 		shapeNameGenerator: autogen.GenerateShapeName,
 		shapes:             make(types.ShapesMap),
+		closures:           make(types.ClosureMap),
 	}
 
 	result := conv.mapType(typ.Expr)
@@ -45,6 +48,7 @@ func ToRealType(classFQNProvider func(string) (string, bool), typ phpdoc.Type) *
 	return &RealPHPDocTypes{
 		Types:    result,
 		Shapes:   conv.shapes,
+		Closures: conv.closures,
 		Warnings: conv.warnings,
 	}
 }
@@ -55,6 +59,7 @@ type TypeConverter struct {
 	warnings           []string
 	nullable           bool
 	shapes             types.ShapesMap
+	closures           types.ClosureMap
 }
 
 func (conv *TypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
@@ -123,6 +128,46 @@ func (conv *TypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
 		// processed by the mapType function, then in the mapType function the ExprOptional
 		// type can only be in one case, if it is an incorrect syntax of the optional type.
 		conv.warn(e.Value + ": nullable syntax is ?T, not T?")
+
+	case phpdoc.ExprTypedCallable:
+		closureName := `\Closure$(`
+		argsStart := 0
+		var returnType phpdoc.TypeExpr
+		if strings.IndexByte(e.Value, ':') != -1 {
+			returnType = e.Args[0]
+			argsStart = 1
+		}
+
+		for i := argsStart; i < len(e.Args); i++ {
+			closureName += e.Args[i].Value
+			if i != len(e.Args)-1 {
+				closureName += ","
+			}
+		}
+
+		closureName += ")"
+		if returnType.Value != "" {
+			closureName += ":" + strings.ReplaceAll(returnType.Value, "|", "/")
+		} else {
+			returnType = phpdoc.TypeExpr{
+				Kind:  phpdoc.ExprName,
+				Value: "void",
+			}
+		}
+
+		var argsTypes [][]types.Type
+		for _, arg := range e.Args[argsStart:] {
+			argsTypes = append(argsTypes, conv.mapType(arg))
+		}
+
+		closure := types.ClosureInfo{
+			Name:       closureName,
+			ReturnType: conv.mapType(returnType),
+			ParamTypes: argsTypes,
+		}
+		conv.closures[closure.Name] = closure
+
+		return []types.Type{{Elem: closureName}}
 	}
 
 	return nil
