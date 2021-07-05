@@ -2917,6 +2917,113 @@ function f() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestCallableDoc(t *testing.T) {
+	code := `<?php
+class Foo {
+  /**
+   * @return int
+   */
+  public function method(): int { return 0; }
+}
+
+class Boo {
+  /**
+   * @return int
+   */
+  public function method(): int { return 0; }
+}
+
+/**
+ * @param callable(): Foo $s
+ */
+function f1(callable $s) {
+  $a = $s();
+  exprtype($a, "\Foo");
+}
+
+/**
+ * @param callable(Foo): Foo $s
+ */
+function f2(callable $s) {
+  $a = $s(new Foo);
+  exprtype($a, "\Foo");
+}
+
+/**
+ * @param callable(int): Foo $s
+ */
+function f3(callable $s) {
+  $a = $s(10);
+  exprtype($a, "\Foo");
+}
+
+/**
+ * @param callable(int, string): Foo|Boo $s
+ */
+function f4(callable $s) {
+  $a = $s(10, "ss");
+  exprtype($a, "\Boo|\Foo");
+}
+
+/**
+ * @param callable(): callable(): Foo $s
+ * @param callable(): callable(): Foo|Boo $s1
+ */
+function f5(callable $s, callable $s1) {
+  $a = $s();
+  $a1 = $s1();
+  exprtype($a, "\Closure$():Foo");
+  exprtype($a1, "\Closure$():Foo/Boo");
+  $b = $a();
+  $b1 = $a1();
+  exprtype($b, "\Foo");
+  exprtype($b1, "\Boo|\Foo");
+}
+
+/**
+ * @return callable(): callable(): Foo
+ */
+function f6(): callable {
+  return function() { return function() { return new Foo; }; };
+}
+
+function f7() {
+  $a = f6();
+  exprtype($a, "\Closure$():callable(): Foo|callable");
+  $b = $a();
+  exprtype($b, "\Closure$():Foo");
+  $c = $b();
+  exprtype($c, "\Foo");
+}
+
+function f8() {
+  /**
+   * @var callable(): Foo $a
+   */
+  $a = null;
+
+  $b = $a();
+  exprtype($b, "\Foo");
+}
+
+/**
+* @var callable(): Foo $a
+*/
+$a = null;
+$b = $a();
+exprtype($b, "\Foo");
+
+/**
+ * @param callable(int, string) $s
+ */
+function f9(callable $s) {
+  $a = $s(10, "ss");
+  exprtype($a, "mixed");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	exprTypeTestImpl(t, params, false)
 }

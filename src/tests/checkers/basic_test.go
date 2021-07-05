@@ -2254,3 +2254,26 @@ echo ONE;
 echo TWO;
 `)
 }
+
+func TestClosureDoc(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {
+  /**
+   * @return int
+   */
+  public function method(): int { return 0; }
+}
+
+/**
+ * @param callable(int, string): Boo|Foo $s
+ */
+function f(callable $s) {
+  $a = $s(10);
+  echo $a->method();
+}
+`,
+	)
+	test.Expect = []string{"Too few arguments for $s"}
+	test.RunAndMatch()
+}

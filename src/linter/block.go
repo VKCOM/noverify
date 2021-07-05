@@ -245,6 +245,8 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 
 		converted := phpdoctypes.ToRealType(b.r.ctx.typeNormalizer.ClassFQNProvider(), part.Type)
 		moveShapesToContext(&b.r.ctx, converted.Shapes)
+		b.r.handleClosuresFromDoc(converted.Closures)
+
 		for _, warning := range converted.Warnings {
 			b.r.Report(n, LevelNotice, "phpdocType", "%s on line %d", warning, part.Line())
 		}
@@ -1159,6 +1161,7 @@ func (b *blockWalker) enterArrowFunction(fun *ir.ArrowFunctionExpr) bool {
 	// Indexing stage.
 	doc := phpdoctypes.Parse(fun.Doc, fun.Params, b.r.ctx.typeNormalizer)
 	moveShapesToContext(&b.r.ctx, doc.Shapes)
+	b.r.handleClosuresFromDoc(doc.Closures)
 
 	// Check stage.
 	errors := b.r.checkPHPDoc(fun, fun.Doc, fun.Params)
@@ -1183,6 +1186,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 	// Indexing stage.
 	doc := phpdoctypes.Parse(fun.Doc, fun.Params, b.r.ctx.typeNormalizer)
 	moveShapesToContext(&b.r.ctx, doc.Shapes)
+	b.r.handleClosuresFromDoc(doc.Closures)
 
 	// Check stage.
 	errors := b.r.checkPHPDoc(fun, fun.Doc, fun.Params)
