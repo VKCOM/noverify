@@ -247,7 +247,7 @@ func createBaseline(l *linterRunner, cfg *MainConfig, reports []*linter.Report) 
 		if cfg.BeforeReport != nil && !cfg.BeforeReport(r) {
 			continue
 		}
-		if !l.checkersFilter.IsEnabledReport(r) {
+		if !l.checkersFilter.IsEnabledReport(r.CheckName, r.Filename) {
 			continue
 		}
 

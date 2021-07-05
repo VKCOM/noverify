@@ -48,8 +48,8 @@ func (c *CheckersFilter) IsCriticalReport(r *Report) bool {
 	return r.IsCritical()
 }
 
-func (c *CheckersFilter) IsEnabledReport(r *Report) bool {
-	if !c.IsEnabledCheck(r.CheckName) {
+func (c *CheckersFilter) IsEnabledReport(checkName, fileName string) bool {
+	if !c.IsEnabledCheck(checkName) {
 		return false
 	}
 
@@ -58,5 +58,5 @@ func (c *CheckersFilter) IsEnabledReport(r *Report) bool {
 	}
 
 	// Disabled by a file comment.
-	return !c.ExcludeFileRegexp.MatchString(r.Filename)
+	return !c.ExcludeFileRegexp.MatchString(fileName)
 }

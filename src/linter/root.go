@@ -327,7 +327,7 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, level int, checkName, msg
 		return
 	}
 
-	if !d.checkersFilter.IsEnabledCheck(checkName) {
+	if !d.checkersFilter.IsEnabledReport(checkName, d.ctx.st.CurrentFile) {
 		return
 	}
 
