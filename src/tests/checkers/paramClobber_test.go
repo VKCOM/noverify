@@ -58,7 +58,7 @@ function f($x) {
 }
 `)
 	test.Expect = []string{
-		`$x param re-assigned before being used`,
+		`Param $x re-assigned before being used`,
 	}
 	test.RunAndMatch()
 }
@@ -75,7 +75,7 @@ class C {
 }
 `)
 	test.Expect = []string{
-		`$x param re-assigned before being used`,
+		`Param $x re-assigned before being used`,
 	}
 	test.RunAndMatch()
 }
@@ -91,7 +91,7 @@ function f() {
 }
 `)
 	test.Expect = []string{
-		`$x param re-assigned before being used`,
+		`Param $x re-assigned before being used`,
 	}
 	test.RunAndMatch()
 }

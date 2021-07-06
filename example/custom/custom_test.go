@@ -11,7 +11,7 @@ func TestAssignmentAsExpression(t *testing.T) {
 	addCheckers(test.Config())
 
 	test.AddFile(`<?php
-	// phpdoc annotations are not required for NoVerify in simple cases
+	// PHPDoc annotations are not required for NoVerify in simple cases.
 	function something() {
 		$a = "test";
 		return $a;

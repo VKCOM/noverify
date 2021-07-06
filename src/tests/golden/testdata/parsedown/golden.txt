@@ -1,19 +1,19 @@
-MAYBE   typeHint: specify the type for the parameter $lines in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:162
+MAYBE   typeHint: Specify the type for the parameter $lines in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:162
     protected function lines(array $lines)
                        ^^^^^
-MAYBE   typeHint: specify the type for the parameter $lines in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:167
+MAYBE   typeHint: Specify the type for the parameter $lines in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:167
     protected function linesElements(array $lines)
                        ^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $Component in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:319
+MAYBE   typeHint: Specify the type for the parameter $Component in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:319
     protected function extractElement(array $Component)
                        ^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $Block in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:428
+MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:428
     protected function blockCommentContinue($Line, array $Block)
                        ^^^^^^^^^^^^^^^^^^^^
 MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:560
                 'handler' => array(
                 ^
-MAYBE   typeHint: specify the type for the parameter $CurrentBlock in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:574
+MAYBE   typeHint: Specify the type for the parameter $CurrentBlock in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:574
     protected function blockList($Line, array $CurrentBlock = null)
                        ^^^^^^^^^
 MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:633
@@ -22,10 +22,10 @@ MAYBE   trailingComma: last element in a multi-line array must have a trailing c
 MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:630
                 'handler' => array(
                 ^
-MAYBE   typeHint: specify the type for the parameter $Block in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:643
+MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:643
     protected function blockListContinue($Line, array $Block)
                        ^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$matches[1] ?? ''` at testdata/parsedown/parsedown.php:674
+MAYBE   ternarySimplify: Could rewrite as `$matches[1] ?? ''` at testdata/parsedown/parsedown.php:674
             $text = isset($matches[1]) ? $matches[1] : '';
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:683
@@ -34,7 +34,7 @@ MAYBE   trailingComma: last element in a multi-line array must have a trailing c
 MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:680
                 'handler' => array(
                 ^
-MAYBE   typeHint: specify the type for the parameter $Block in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:729
+MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:729
     protected function blockListComplete(array $Block)
                        ^^^^^^^^^^^^^^^^^
 MAYBE   regexpSimplify: May re-write '/^>[ ]?+(.*+)/' as '/^> ?+(.*+)/' at testdata/parsedown/parsedown.php:750
@@ -43,40 +43,40 @@ MAYBE   regexpSimplify: May re-write '/^>[ ]?+(.*+)/' as '/^> ?+(.*+)/' at testd
 MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:755
                     'handler' => array(
                     ^
-MAYBE   typeHint: specify the type for the parameter $Block in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:767
+MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:767
     protected function blockQuoteContinue($Line, array $Block)
                        ^^^^^^^^^^^^^^^^^^
 MAYBE   regexpSimplify: May re-write '/^>[ ]?+(.*+)/' as '/^> ?+(.*+)/' at testdata/parsedown/parsedown.php:774
         if ($Line['text'][0] === '>' and preg_match('/^>[ ]?+(.*+)/', $Line['text'], $matches))
                                                     ^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $Block in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:811
+MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:811
     protected function blockSetextHeader($Line, array $Block = null)
                        ^^^^^^^^^^^^^^^^^
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/parsedown/parsedown.php:840
             if (in_array($element, $this->textLevelElements))
                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $Block in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:857
+MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:857
     protected function blockMarkupContinue($Line, array $Block)
                        ^^^^^^^^^^^^^^^^^^^
 MAYBE   regexpSimplify: May re-write '/^\[(.+?)\]:[ ]*+<?(\S+?)>?(?:[ ]+["\'(](.+)["\')])?[ ]*+$/' as '/^\[(.+?)\]: *+<?(\S+?)>?(?: +["'(](.+)["')])? *+$/' at testdata/parsedown/parsedown.php:875
             and preg_match('/^\[(.+?)\]:[ ]*+<?(\S+?)>?(?:[ ]+["\'(](.+)["\')])?[ ]*+$/', $Line['text'], $matches)
                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$matches[3] ?? null` at testdata/parsedown/parsedown.php:881
+MAYBE   ternarySimplify: Could rewrite as `$matches[3] ?? null` at testdata/parsedown/parsedown.php:881
                 'title' => isset($matches[3]) ? $matches[3] : null,
                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $Block in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:897
+MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:897
     protected function blockTable($Line, array $Block = null)
                        ^^^^^^^^^^
 MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:973
                 'handler' => array(
                 ^
-MAYBE   typeHint: specify the type for the parameter $Block in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1020
+MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1020
     protected function blockTableContinue($Line, array $Block)
                        ^^^^^^^^^^^^^^^^^^
 MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:1046
                     'handler' => array(
                     ^
-MAYBE   typeHint: specify the type for the parameter $Block in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1093
+MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1093
     protected function paragraphContinue($Line, array $Block)
                        ^^^^^^^^^^^^^^^^^
 MAYBE   regexpSimplify: May re-write '/[ ]*+\n/' as '/ *+\n/' at testdata/parsedown/parsedown.php:1265
@@ -100,52 +100,52 @@ MAYBE   trailingComma: last element in a multi-line array must have a trailing c
 MAYBE   regexpSimplify: May re-write '/\bhttps?+:[\/]{2}[^\s<]+\b\/*+/ui' as '~\bhttps?+:/{2}[^\s<]+\b/*+~ui' at testdata/parsedown/parsedown.php:1540
             and preg_match('/\bhttps?+:[\/]{2}[^\s<]+\b\/*+/ui', $Excerpt['context'], $matches, PREG_OFFSET_CAPTURE)
                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $Element in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1591
+MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1591
     protected function handle(array $Element)
                        ^^^^^^
-MAYBE   typeHint: specify the type for the parameter $Element in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1627
+MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1627
     protected function handleElementRecursive(array $Element)
                        ^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $Elements in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1632
+MAYBE   typeHint: Specify the type for the parameter $Elements in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1632
     protected function handleElementsRecursive(array $Elements)
                        ^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $Element in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1637
+MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1637
     protected function elementApplyRecursive($closure, array $Element)
                        ^^^^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $Element in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1653
+MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1653
     protected function elementApplyRecursiveDepthFirst($closure, array $Element)
                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $Elements in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1669
+MAYBE   typeHint: Specify the type for the parameter $Elements in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1669
     protected function elementsApplyRecursive($closure, array $Elements)
                        ^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $Elements in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1679
+MAYBE   typeHint: Specify the type for the parameter $Elements in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1679
     protected function elementsApplyRecursiveDepthFirst($closure, array $Elements)
                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $Element in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1689
+MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1689
     protected function element(array $Element)
                        ^^^^^^^
-WARNING undefined: Variable might have not been defined: text at testdata/parsedown/parsedown.php:1755
+WARNING undefined: Variable $text might have not been defined at testdata/parsedown/parsedown.php:1755
                     $markup .= self::escape($text, true);
                                             ^^^^^
-WARNING undefined: Variable might have not been defined: text at testdata/parsedown/parsedown.php:1759
+WARNING undefined: Variable $text might have not been defined at testdata/parsedown/parsedown.php:1759
                     $markup .= $text;
                                ^^^^^
-MAYBE   typeHint: specify the type for the parameter $Elements in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1773
+MAYBE   typeHint: Specify the type for the parameter $Elements in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1773
     protected function elements(array $Elements)
                        ^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$Element['autobreak'] ?? isset($Element['name'])` at testdata/parsedown/parsedown.php:1786
+MAYBE   ternarySimplify: Could rewrite as `$Element['autobreak'] ?? isset($Element['name'])` at testdata/parsedown/parsedown.php:1786
             $autoBreakNext = (isset($Element['autobreak'])
                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/parsedown/parsedown.php:1807
         if ( ! in_array('', $lines)
                ^^^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $Element in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1861
+MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1861
     protected function sanitiseElement(array $Element)
                        ^^^^^^^^^^^^^^^
-WARNING unused: Variable val is unused (use $_ to ignore this inspection) at testdata/parsedown/parsedown.php:1882
+WARNING unused: Variable $val is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/parsedown/parsedown.php:1882
             foreach ($Element['attributes'] as $att => $val)
                                                        ^^^^
-MAYBE   typeHint: specify the type for the parameter $Element in phpdoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1900
+MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1900
     protected function filterUnsafeUrlInAttribute(array $Element, $attribute)
                        ^^^^^^^^^^^^^^^^^^^^^^^^^^
 ERROR   classMembersOrder: Property $breaksEnabled must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:66

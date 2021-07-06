@@ -7,6 +7,7 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/solver"
+	"github.com/VKCOM/noverify/src/utils"
 )
 
 // Eval tries to compute the e using the constant expressions folding.
@@ -97,7 +98,7 @@ func Eval(st *meta.ClassParseState, e ir.Node) meta.ConstValue {
 
 	case *ir.FunctionCallExpr:
 		// Only dirname(__FILE__) is const-folded right now.
-		if !meta.NameNodeEquals(e.Function, `dirname`) {
+		if !utils.NameNodeEquals(e.Function, `dirname`) {
 			return meta.UnknownValue
 		}
 		if len(e.Args) == 0 {

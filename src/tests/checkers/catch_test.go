@@ -157,9 +157,9 @@ function f() {
 }
 `)
 	test.Expect = []string{
-		`Variable might have not been defined: c`,
-		`Variable might have not been defined: d`,
-		`Variable might have not been defined: f`,
+		`Variable $c might have not been defined`,
+		`Variable $d might have not been defined`,
+		`Variable $f might have not been defined`,
 	}
 	test.RunAndMatch()
 }
@@ -214,11 +214,11 @@ function f() {
 }
 `)
 	test.Expect = []string{
-		`Variable might have not been defined: b`,
+		`Variable $b might have not been defined`,
 		`Unreachable code`,
-		`Undefined variable: d`,
-		`Undefined variable: e`,
-		`Variable might have not been defined: g`,
+		`Undefined variable $d`,
+		`Undefined variable $e`,
+		`Variable $g might have not been defined`,
 	}
 	test.RunAndMatch()
 }

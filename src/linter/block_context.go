@@ -5,6 +5,7 @@ import (
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/solver"
+	"github.com/VKCOM/noverify/src/utils"
 )
 
 type customMethod struct {
@@ -43,7 +44,7 @@ func (ctx *blockContext) addCustomFunction(functionName string) {
 
 func (ctx *blockContext) customFunctionExists(nm ir.Node) bool {
 	for _, functionName := range ctx.customFunctions {
-		if meta.NameNodeEquals(nm, functionName) {
+		if utils.NameNodeEquals(nm, functionName) {
 			return true
 		}
 	}

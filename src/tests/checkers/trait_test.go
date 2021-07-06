@@ -11,7 +11,7 @@ func TestTraitSingleton(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 trait Singleton {
   /**
-   * @var self
+   * @var ?self
    */
   private static $instance = null;
 

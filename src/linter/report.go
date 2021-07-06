@@ -256,7 +256,7 @@ thisFunctionExits();`,
 			Name:     "phpdocLint",
 			Default:  true,
 			Quickfix: false,
-			Comment:  `Report malformed phpdoc comments.`,
+			Comment:  `Report malformed PHPDoc comments.`,
 			Before:   `@property $foo`,
 			After:    `@property Foo $foo`,
 		},
@@ -265,7 +265,7 @@ thisFunctionExits();`,
 			Name:     "phpdocType",
 			Default:  true,
 			Quickfix: false,
-			Comment:  `Report potential issues in phpdoc types.`,
+			Comment:  `Report potential issues in PHPDoc types.`,
 			Before:   `@var []int $xs`,
 			After:    `@var int[] $xs`,
 		},
@@ -274,7 +274,7 @@ thisFunctionExits();`,
 			Name:     "phpdocRef",
 			Default:  true,
 			Quickfix: false,
-			Comment:  `Report invalid symbol references inside phpdoc.`,
+			Comment:  `Report invalid symbol references inside PHPDoc.`,
 			Before:   `@see MyClass`,
 			After:    `@see \Foo\MyClass`,
 		},
@@ -283,7 +283,7 @@ thisFunctionExits();`,
 			Name:     "phpdoc",
 			Default:  false,
 			Quickfix: false,
-			Comment:  `Report missing phpdoc on public methods.`,
+			Comment:  `Report missing PHPDoc on public methods.`,
 			Before: `public function process($acts, $config) {
   // Does something very complicated.
 }`,
@@ -714,6 +714,25 @@ function f(array $a) {}`,
   foreach ([1, 2] as $b) {
     echo $b;
   }
+}`,
+		},
+
+		{
+			Name:     "propNullDefault",
+			Default:  false,
+			Quickfix: true,
+			Comment:  `Report a null assignment for a not nullable property.`,
+			Before: `class Foo {
+  /**
+   * @var Boo $item
+   */
+  public $item = null;
+}`,
+			After: `class Foo {
+  /**
+   * @var Boo $item
+   */
+  public $item;
 }`,
 		},
 	}
