@@ -49,26 +49,26 @@ function f($x) {
 }
 `)
 	test.Expect = []string{
-		`duplicated operands value in & expression`,
-		`duplicated operands value in | expression`,
-		`duplicated operands value in ^ expression`,
-		`duplicated operands value in and expression`,
-		`duplicated operands value in && expression`,
-		`duplicated operands value in or expression`,
-		`duplicated operands value in || expression`,
-		`duplicated operands value in xor expression`,
-		`duplicated operands value in - expression`,
-		`duplicated operands value in / expression`,
-		`duplicated operands value in % expression`,
-		`duplicated operands value in == expression`,
-		`duplicated operands value in === expression`,
-		`duplicated operands value in != expression`,
-		`duplicated operands value in !== expression`,
-		`duplicated operands value in < expression`,
-		`duplicated operands value in <= expression`,
-		`duplicated operands value in > expression`,
-		`duplicated operands value in >= expression`,
-		`duplicated operands value in <=> expression`,
+		`Duplicated operands value in & expression`,
+		`Duplicated operands value in | expression`,
+		`Duplicated operands value in ^ expression`,
+		`Duplicated operands value in and expression`,
+		`Duplicated operands value in && expression`,
+		`Duplicated operands value in or expression`,
+		`Duplicated operands value in || expression`,
+		`Duplicated operands value in xor expression`,
+		`Duplicated operands value in - expression`,
+		`Duplicated operands value in / expression`,
+		`Duplicated operands value in % expression`,
+		`Duplicated operands value in == expression`,
+		`Duplicated operands value in === expression`,
+		`Duplicated operands value in != expression`,
+		`Duplicated operands value in !== expression`,
+		`Duplicated operands value in < expression`,
+		`Duplicated operands value in <= expression`,
+		`Duplicated operands value in > expression`,
+		`Duplicated operands value in >= expression`,
+		`Duplicated operands value in <=> expression`,
 	}
 	test.RunAndMatch()
 }
@@ -104,17 +104,17 @@ function f() {
 }
 `)
 	test.Expect = []string{
-		`duplicated operands value in & expression`,
-		`duplicated operands value in | expression`,
-		`duplicated operands value in ^ expression`,
-		`duplicated operands value in and expression`,
-		`duplicated operands value in && expression`,
-		`duplicated operands value in or expression`,
-		`duplicated operands value in || expression`,
-		`duplicated operands value in xor expression`,
-		`duplicated operands value in % expression`,
-		`duplicated operands value in < expression`,
-		`duplicated operands value in > expression`,
+		`Duplicated operands value in & expression`,
+		`Duplicated operands value in | expression`,
+		`Duplicated operands value in ^ expression`,
+		`Duplicated operands value in and expression`,
+		`Duplicated operands value in && expression`,
+		`Duplicated operands value in or expression`,
+		`Duplicated operands value in || expression`,
+		`Duplicated operands value in xor expression`,
+		`Duplicated operands value in % expression`,
+		`Duplicated operands value in < expression`,
+		`Duplicated operands value in > expression`,
 	}
 	test.RunAndMatch()
 }
@@ -133,8 +133,8 @@ function f2($cond) {
 }
 `)
 	test.Expect = []string{
-		`then/else operands are identical`,
-		`then/else operands are identical`,
+		`Branches for true and false have the same operands, ternary operator is meaningless`,
+		`Branches for true and false have the same operands, ternary operator is meaningless`,
 	}
 	test.RunAndMatch()
 }
@@ -186,10 +186,10 @@ function f2($cond) {
 }
 `)
 	test.Expect = []string{
-		`duplicated if/else actions`,
-		`duplicated if/else actions`,
-		`duplicated if/else actions`,
-		`duplicated if/else actions`,
+		`Duplicated if/else actions`,
+		`Duplicated if/else actions`,
+		`Duplicated if/else actions`,
+		`Duplicated if/else actions`,
 	}
 	test.RunAndMatch()
 }

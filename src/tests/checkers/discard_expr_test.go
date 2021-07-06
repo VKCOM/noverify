@@ -152,10 +152,10 @@ C::create(); // warn 3
 pure_fn1(1, 2); // warn 4
 `)
 	test.Expect = []string{
-		`expression evaluated but not used`,
-		`expression evaluated but not used`,
-		`expression evaluated but not used`,
-		`expression evaluated but not used`,
+		`Expression evaluated but not used`,
+		`Expression evaluated but not used`,
+		`Expression evaluated but not used`,
+		`Expression evaluated but not used`,
 	}
 	linttest.RunFilterMatch(test, "discardExpr")
 }
@@ -196,14 +196,14 @@ $a = 10;
 $xs ??= $a; // Ok
 `)
 	test.Expect = []string{
-		`expression evaluated but not used`,
-		`expression evaluated but not used`,
-		`expression evaluated but not used`,
-		`expression evaluated but not used`,
-		`expression evaluated but not used`,
-		`expression evaluated but not used`,
-		`expression evaluated but not used`,
-		`expression evaluated but not used`,
+		`Expression evaluated but not used`,
+		`Expression evaluated but not used`,
+		`Expression evaluated but not used`,
+		`Expression evaluated but not used`,
+		`Expression evaluated but not used`,
+		`Expression evaluated but not used`,
+		`Expression evaluated but not used`,
+		`Expression evaluated but not used`,
 	}
 	test.RunAndMatch()
 }

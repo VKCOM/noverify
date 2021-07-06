@@ -877,7 +877,7 @@ func (d *rootWalker) checkAssignNullToNotNullableProperty(prop *ir.PropertyStmt,
 		})
 
 		if !nullable && onlyClasses {
-			d.Report(prop, LevelNotice, "propNullDefault", "assigning null to a not nullable property may soon cause a KPHP compilation error")
+			d.Report(prop, LevelNotice, "propNullDefault", "Assigning null to a not nullable property may soon cause a KPHP compilation error")
 			d.addFixForNullForNotNullableProperty(prop)
 		}
 	}
@@ -1134,8 +1134,12 @@ func (d *rootWalker) isValidPHPDocRef(n ir.Node, ref string) bool {
 	// - Things that can be a filename (e.g. "foo.php")
 	// - Wildcards (e.g. "self::FOO*")
 	// - Issue references (e.g. "#1393" "BACK-103")
+	// - RFCs
 	if strings.Contains(ref, "http:") || strings.Contains(ref, "https:") {
 		return true // OK: URL?
+	}
+	if strings.Contains(ref, "RFC") {
+		return true
 	}
 	if strings.ContainsAny(ref, ".*-#") {
 		return true
@@ -1258,7 +1262,7 @@ func (d *rootWalker) checkPHPDocSeeRef(n ir.Node, part phpdoc.CommentPart) {
 		// Sometimes people write references like `foo()` `foo...` `foo@`.
 		ref = strings.TrimRight(ref, "().;@")
 		if !d.isValidPHPDocRef(n, ref) {
-			d.Report(n, LevelWarning, "phpdocRef", "line %d: @see tag refers to unknown symbol %s",
+			d.Report(n, LevelWarning, "phpdocRef", "Line %d: @see tag refers to unknown symbol %s",
 				part.Line(), ref)
 		}
 	}
@@ -1703,7 +1707,7 @@ func (d *rootWalker) checkFuncParam(p *ir.Parameter) {
 	// Could run special check over them to detect the potential fatal errors.
 	walkNode(p.DefaultValue, func(w ir.Node) bool {
 		if n, ok := w.(*ir.ArrayExpr); ok && !n.ShortSyntax {
-			d.Report(n, LevelNotice, "arraySyntax", "Use of old array syntax (use short form instead)")
+			d.Report(n, LevelNotice, "arraySyntax", "Use the short form '[]' instead of the old 'array()'")
 		}
 		return true
 	})
