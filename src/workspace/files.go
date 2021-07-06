@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type ReadCallback func(ch chan FileInfo)
@@ -66,30 +67,17 @@ func readFilenames(ch chan<- FileInfo, filename string, filter *FilenameFilter, 
 	// without a length check.
 	gitignorePaths := []string{""}
 
-	isTraversedFiles := false
-	lastDir := ""
+	var dirStack []string
 
 	err = fs.WalkDir(os.DirFS(filename), ".", func(path string, d fs.DirEntry, err error) error {
 		path = filepath.Join(filename, path)
 
 		if d.IsDir() {
-			if isTraversedFiles {
-				// Invoke for every file system directory it encounters
-				// after its children have been processed.
-				if filter.GitignoreIsEnabled() {
-					topGitignorePath := gitignorePaths[len(gitignorePaths)-1]
-					if topGitignorePath == lastDir {
-						gitignorePaths = gitignorePaths[:len(gitignorePaths)-1]
-						filter.GitignorePop(lastDir)
-					}
-				}
-
-				isTraversedFiles = false
-			}
-			lastDir = path
+			dirStack, gitignorePaths = checkLeaveDir(path, dirStack, gitignorePaths, filter)
+			dirStack = append(dirStack, path)
 
 			if filter.IgnoreDir(path) {
-				return filepath.SkipDir
+				return fs.SkipDir
 			}
 			// During indexing phase and with --gitignore=false
 			// we don't want to do extra FS operations.
@@ -108,7 +96,7 @@ func readFilenames(ch chan<- FileInfo, filename string, filter *FilenameFilter, 
 			return nil
 		}
 
-		isTraversedFiles = true
+		dirStack, gitignorePaths = checkLeaveDir(path, dirStack, gitignorePaths, filter)
 
 		if !isPHPExtension(path, phpExtensions) {
 			return nil
@@ -125,6 +113,34 @@ func readFilenames(ch chan<- FileInfo, filename string, filter *FilenameFilter, 
 	if err != nil {
 		log.Fatalf("Could not walk filepath %s (%v)", filename, err)
 	}
+}
+
+func checkLeaveDir(path string, dirStack []string, gitignorePaths []string, filter *FilenameFilter) ([]string, []string) {
+	if len(dirStack) == 0 {
+		return dirStack, gitignorePaths
+	}
+
+	last := dirStack[len(dirStack)-1]
+	if !strings.HasPrefix(path, last) {
+		for len(dirStack) != 0 {
+			dirStack = dirStack[:len(dirStack)-1]
+			newLast := dirStack[len(dirStack)-1]
+			if strings.HasPrefix(path, newLast) {
+				break
+			}
+		}
+
+		// Invoke for every file system directory it encounters
+		// after its children have been processed.
+		if filter.GitignoreIsEnabled() {
+			topGitignorePath := gitignorePaths[len(gitignorePaths)-1]
+			if topGitignorePath == last {
+				gitignorePaths = gitignorePaths[:len(gitignorePaths)-1]
+				filter.GitignorePop(last)
+			}
+		}
+	}
+	return dirStack, gitignorePaths
 }
 
 func isPHPExtension(filename string, phpExtensions []string) bool {
