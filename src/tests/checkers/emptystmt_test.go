@@ -13,7 +13,7 @@ func TestEmptyStmtBadComment(t *testing.T) {
 global $foo;
 `)
 	test.Expect = []string{
-		`semicolon (;) is not needed here, it can be safely removed`,
+		`Semicolon (;) is not needed here, it can be safely removed`,
 	}
 	test.RunAndMatch()
 }
@@ -28,9 +28,9 @@ while ($argv) {
 class Foo {};
 `)
 	test.Expect = []string{
-		`semicolon (;) is not needed here, it can be safely removed`,
-		`semicolon (;) is not needed here, it can be safely removed`,
-		`semicolon (;) is not needed here, it can be safely removed`,
+		`Semicolon (;) is not needed here, it can be safely removed`,
+		`Semicolon (;) is not needed here, it can be safely removed`,
+		`Semicolon (;) is not needed here, it can be safely removed`,
 	}
 	test.RunAndMatch()
 }
@@ -41,7 +41,7 @@ func TestEmptyStmtBadRequire1(t *testing.T) {
 require_once 'foo.php';;
 `)
 	test.Expect = []string{
-		`semicolon (;) is not needed here, it can be safely removed`,
+		`Semicolon (;) is not needed here, it can be safely removed`,
 	}
 	test.RunAndMatch()
 }
@@ -52,8 +52,8 @@ func TestEmptyStmtBadRequire2(t *testing.T) {
 require_once 'foo.php'; ; ;
 `)
 	test.Expect = []string{
-		`semicolon (;) is not needed here, it can be safely removed`,
-		`semicolon (;) is not needed here, it can be safely removed`,
+		`Semicolon (;) is not needed here, it can be safely removed`,
+		`Semicolon (;) is not needed here, it can be safely removed`,
 	}
 	test.RunAndMatch()
 }
@@ -66,8 +66,8 @@ echo 1;
 echo 3; ;
 `)
 	test.Expect = []string{
-		`semicolon (;) is not needed here, it can be safely removed`,
-		`semicolon (;) is not needed here, it can be safely removed`,
+		`Semicolon (;) is not needed here, it can be safely removed`,
+		`Semicolon (;) is not needed here, it can be safely removed`,
 	}
 	test.RunAndMatch()
 }

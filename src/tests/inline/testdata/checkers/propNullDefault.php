@@ -9,7 +9,7 @@ class Foo {
   /**
    * @var Boo $item
    */
-  private $item = null; // want `assigning null to a not nullable property`
+  private $item = null; // want `Assigning null to a not nullable property`
 
   /**
    * @var ?Boo $item1
@@ -24,7 +24,7 @@ class Foo {
   /**
    * @var Boo|Zoo $item12
    */
-  public $item12 = null; // want `assigning null to a not nullable property`
+  public $item12 = null; // want `Assigning null to a not nullable property`
 
   /**
    * @var mixed
@@ -45,7 +45,7 @@ class Foo {
    * @var Boo $item2
    * @var Boo $item3
    */
-  public $item2 = null, $item3 = null; // want `assigning null to a not nullable property` and `assigning null to a not nullable property`
+  public $item2 = null, $item3 = null; // want `Assigning null to a not nullable property` and `Assigning null to a not nullable property`
 
   public static ?Boo $item5 = null; // ok
   public ?Boo $item6 = null, $item7 = null; // ok

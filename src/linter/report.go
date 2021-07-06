@@ -632,7 +632,7 @@ echo $someVal;`,
 		{
 			Name:     "nestedTernary",
 			Default:  false,
-			Quickfix: true,
+			Quickfix: false,
 			Comment:  `Report an unspecified order in a nested ternary operator.`,
 			Before:   `$_ = 1 ? 2 : 3 ? 4 : 5;`,
 			After: `$_ = (1 ? 2 : 3) ? 4 : 5;
@@ -643,7 +643,7 @@ $_ = 1 ? 2 : (3 ? 4 : 5);`,
 		{
 			Name:     "langDeprecated",
 			Default:  false,
-			Quickfix: true,
+			Quickfix: false,
 			Comment:  `Report the use of deprecated (per language spec) features.`,
 			Before: `$a = (real)100;
 $_ = is_real($a);`,
@@ -664,7 +664,7 @@ function f(A $a) {}`,
 
 		{
 			Name:     "typeHint",
-			Default:  true,
+			Default:  false,
 			Quickfix: false,
 			Comment:  `Report misuse of type hints.`,
 			Before:   `function f(array $a) {}`,
