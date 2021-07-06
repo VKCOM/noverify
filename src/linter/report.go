@@ -652,6 +652,17 @@ $_ = is_float($a);`,
 		},
 
 		{
+			Name:     "badTraitUse",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report misuse of traits.`,
+			Before: `trait A {}
+function f(A $a) {}`,
+			After: `class A {}
+function f(A $a) {}`,
+		},
+
+		{
 			Name:     "typeHint",
 			Default:  true,
 			Quickfix: false,
