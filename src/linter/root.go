@@ -824,10 +824,11 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 	d.checkCommentMisspellings(pl, pl.Doc.Raw)
 	phpDocType := d.parsePHPDocVar(pl, pl.Doc)
 
-	typeHintType, ok := d.parseTypeNode(pl.Type)
+	typeHintType, ok := d.parseTypeHintNode(pl.Type)
 	if ok && !d.typeHintHasMoreAccurateType(typeHintType, phpDocType) {
 		d.Report(pl, LevelNotice, "typeHint", "Specify the type for the property in PHPDoc, 'array' type hint too generic")
 	}
+	d.checkTypeHintNode(pl.Type, "property type")
 
 	for _, pNode := range pl.Properties {
 		prop := pNode.(*ir.PropertyStmt)
@@ -999,10 +1000,11 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	phpDocReturnType := doc.ReturnType
 	phpDocParamTypes := doc.ParamTypes
 
-	returnTypeHint, ok := d.parseTypeNode(meth.ReturnType)
+	returnTypeHint, ok := d.parseTypeHintNode(meth.ReturnType)
 	if ok && !doc.Inherit {
 		d.checkFuncReturnType(meth.MethodName, meth.MethodName.Value, returnTypeHint, phpDocReturnType)
 	}
+	d.checkTypeHintNode(meth.ReturnType, "return type")
 
 	funcParams := d.parseFuncParams(meth.Params, phpDocParamTypes, sc, nil)
 
@@ -1372,23 +1374,23 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 }
 
 // Parse type info, e.g. "string" in "someFunc() : string { ... }".
-func (d *rootWalker) parseTypeNode(n ir.Node) (typ types.Map, ok bool) {
+func (d *rootWalker) parseTypeHintNode(n ir.Node) (typ types.Map, ok bool) {
 	if n == nil {
 		return types.Map{}, false
 	}
-
-	d.checkTypeNode(n)
 
 	typesMap := types.NormalizedTypeHintTypes(d.ctx.typeNormalizer, n)
 
 	return typesMap, !typesMap.Empty()
 }
 
-func (d *rootWalker) checkTypeNode(n ir.Node) {
-	if n == nil {
+func (d *rootWalker) checkTypeHintNode(n ir.Node, place string) {
+	if !d.metaInfo().IsIndexingComplete() || n == nil {
 		return
 	}
 
+	// We need to check this part without normalization, since
+	// otherwise parent will be replaced with the class name.
 	typeList := types.TypeHintTypes(n)
 	for _, typ := range typeList {
 		if typ.Elem == "parent" && d.ctx.st.CurrentClass != "" {
@@ -1397,6 +1399,26 @@ func (d *rootWalker) checkTypeNode(n ir.Node) {
 			}
 		}
 	}
+
+	typesMap := types.NewMapWithNormalization(d.ctx.typeNormalizer, typeList)
+
+	typesMap.Iterate(func(typ string) {
+		if types.IsClass(typ) {
+			className := typ
+
+			_, ok := d.metaInfo().GetTrait(className)
+			if ok {
+				d.Report(n, LevelWarning, "badTraitUse", "Cannot use trait %s as a typehint for %s", strings.TrimPrefix(className, `\`), place)
+			}
+
+			class, ok := d.metaInfo().GetClass(className)
+			if !ok {
+				return
+			}
+
+			d.checkNameCase(n, className, class.Name)
+		}
+	})
 }
 
 // callbackParamByIndex returns the description of the parameter for the function by its index.
@@ -1405,7 +1427,7 @@ func (d *rootWalker) callbackParamByIndex(param ir.Node, argType types.Map) meta
 	v := p.Variable
 
 	var typ types.Map
-	tp, ok := d.parseTypeNode(p.VariableType)
+	tp, ok := d.parseTypeHintNode(p.VariableType)
 	if ok {
 		typ = tp
 	} else {
@@ -1494,7 +1516,7 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, phpDocParamsTypes phpdoct
 		}
 
 		if p.VariableType != nil {
-			typeHintType, ok := d.parseTypeNode(p.VariableType)
+			typeHintType, ok := d.parseTypeHintNode(p.VariableType)
 			if ok {
 				paramTyp = typeHintType
 			}
@@ -1612,10 +1634,11 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 
 	sc := meta.NewScope()
 
-	returnTypeHint, ok := d.parseTypeNode(fun.ReturnType)
+	returnTypeHint, ok := d.parseTypeHintNode(fun.ReturnType)
 	if ok && !doc.Inherit {
 		d.checkFuncReturnType(fun.FunctionName, fun.FunctionName.Value, returnTypeHint, phpDocReturnType)
 	}
+	d.checkTypeHintNode(fun.ReturnType, "return type")
 
 	funcParams := d.parseFuncParams(fun.Params, phpDocParamTypes, sc, nil)
 
@@ -1716,28 +1739,7 @@ func (d *rootWalker) checkTypeHintFunctionParam(p *ir.Parameter) {
 		return
 	}
 
-	typ, ok := d.parseTypeNode(p.VariableType)
-	if !ok {
-		return
-	}
-
-	typ.Iterate(func(typ string) {
-		if types.IsClass(typ) {
-			className := typ
-
-			_, ok = d.metaInfo().GetTrait(className)
-			if ok {
-				d.Report(p, LevelWarning, "badTraitUse", "forbidden to use a trait %s as a type hint for function parameter", strings.TrimPrefix(className, `\`))
-			}
-
-			class, ok := d.metaInfo().GetClass(className)
-			if !ok {
-				return
-			}
-
-			d.checkNameCase(p.VariableType, className, class.Name)
-		}
-	})
+	d.checkTypeHintNode(p.VariableType, "parameter type")
 }
 
 func (d *rootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {

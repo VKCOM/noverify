@@ -662,7 +662,7 @@ function f(A $a) {}`,
 function f(A $a) {}`,
 		},
 
-    {
+		{
 			Name:     "typeHint",
 			Default:  true,
 			Quickfix: false,
