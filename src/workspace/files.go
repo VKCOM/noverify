@@ -1,11 +1,10 @@
 package workspace
 
 import (
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
-
-	"github.com/karrick/godirwalk"
 )
 
 type ReadCallback func(ch chan FileInfo)
@@ -67,57 +66,63 @@ func readFilenames(ch chan<- FileInfo, filename string, filter *FilenameFilter, 
 	// without a length check.
 	gitignorePaths := []string{""}
 
-	walkOptions := &godirwalk.Options{
-		Unsorted: true,
+	isTraversedFiles := false
+	lastDir := ""
 
-		Callback: func(path string, de *godirwalk.Dirent) error {
-			if de.IsDir() {
-				if filter.IgnoreDir(path) {
-					return filepath.SkipDir
-				}
-				// During indexing phase and with -gitignore=false
-				// we don't want to do extra FS operations.
-				if !filter.GitignoreIsEnabled() {
-					return nil
+	err = fs.WalkDir(os.DirFS(filename), ".", func(path string, d fs.DirEntry, err error) error {
+		path = filepath.Join(filename, path)
+
+		if d.IsDir() {
+			if isTraversedFiles {
+				// Invoke for every file system directory it encounters
+				// after its children have been processed.
+				if filter.GitignoreIsEnabled() {
+					topGitignorePath := gitignorePaths[len(gitignorePaths)-1]
+					if topGitignorePath == lastDir {
+						gitignorePaths = gitignorePaths[:len(gitignorePaths)-1]
+						filter.GitignorePop(lastDir)
+					}
 				}
 
-				matcher, err := ParseGitignoreFromDir(path)
-				if err != nil {
-					log.Printf("read .gitignore: %v", err)
-				}
-				if matcher != nil {
-					gitignorePaths = append(gitignorePaths, path)
-					filter.GitignorePush(path, matcher)
-				}
+				isTraversedFiles = false
+			}
+			lastDir = path
+
+			if filter.IgnoreDir(path) {
+				return filepath.SkipDir
+			}
+			// During indexing phase and with --gitignore=false
+			// we don't want to do extra FS operations.
+			if !filter.GitignoreIsEnabled() {
 				return nil
 			}
 
-			if !isPHPExtension(path, phpExtensions) {
-				return nil
+			matcher, err := ParseGitignoreFromDir(path)
+			if err != nil {
+				log.Printf("read .gitignore: %v", err)
 			}
-			if filter.IgnoreFile(path) {
-				return nil
-			}
-
-			ch <- FileInfo{
-				Name: path,
-			}
-			return nil
-		},
-	}
-
-	if filter.GitignoreIsEnabled() {
-		walkOptions.PostChildrenCallback = func(path string, de *godirwalk.Dirent) error {
-			topGitignorePath := gitignorePaths[len(gitignorePaths)-1]
-			if topGitignorePath == path {
-				gitignorePaths = gitignorePaths[:len(gitignorePaths)-1]
-				filter.GitignorePop(path)
+			if matcher != nil {
+				gitignorePaths = append(gitignorePaths, path)
+				filter.GitignorePush(path, matcher)
 			}
 			return nil
 		}
-	}
 
-	if err := godirwalk.Walk(filename, walkOptions); err != nil {
+		isTraversedFiles = true
+
+		if !isPHPExtension(path, phpExtensions) {
+			return nil
+		}
+		if filter.IgnoreFile(path) {
+			return nil
+		}
+
+		ch <- FileInfo{
+			Name: path,
+		}
+		return nil
+	})
+	if err != nil {
 		log.Fatalf("Could not walk filepath %s (%v)", filename, err)
 	}
 }
