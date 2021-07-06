@@ -443,8 +443,16 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 
 	class, ok := b.metaInfo().GetClass(className)
 	if !ok {
-		b.walker.r.reportUndefinedType(e.Class, className)
+		class, ok = b.metaInfo().GetTrait(className)
+		if ok {
+			b.report(e.Class, LevelError, "invalidNew", "Cannot instantiate trait %s", class.Name)
+		} else {
+			b.walker.r.reportUndefinedType(e.Class, className)
+		}
 	} else {
+		if class.IsInterface() {
+			b.report(e.Class, LevelError, "invalidNew", "Cannot instantiate interface %s", class.Name)
+		}
 		b.walker.r.checkNameCase(e.Class, className, class.Name)
 	}
 
@@ -452,7 +460,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 	// resolve to something else due to the late static binding,
 	// so it's the only exception to that rule.
 	if class.IsAbstract() && !utils.NameNodeEquals(e.Class, "static") {
-		b.report(e.Class, LevelError, "newAbstract", "Cannot instantiate abstract class")
+		b.report(e.Class, LevelError, "newAbstract", "Cannot instantiate abstract class %s", class.Name)
 	}
 
 	// Check implicitly invoked constructor method arguments count.

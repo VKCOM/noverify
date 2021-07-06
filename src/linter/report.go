@@ -376,6 +376,15 @@ return [$result, $err];`,
 		},
 
 		{
+			Name:     "invalidNew",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report trait or interface usages in new expressions.`,
+			Before:   `return new SomeTrait();`,
+			After:    `return new SomeClass();`,
+		},
+
+		{
 			Name:     "regexpSimplify",
 			Default:  true,
 			Quickfix: false,
