@@ -1193,9 +1193,10 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 	b.r.reportPHPDocErrors(fun, errors)
 
 	var hintReturnType types.Map
-	if typ, ok := b.r.parseTypeNode(fun.ReturnType); ok {
+	if typ, ok := b.r.parseTypeHintNode(fun.ReturnType); ok {
 		hintReturnType = typ
 	}
+	b.r.checkTypeHintNode(fun.ReturnType, "closure return type")
 
 	var closureUses []ir.Node
 	if fun.ClosureUse != nil {
