@@ -115,7 +115,7 @@ func readFilenames(ch chan<- FileInfo, filename string, filter *FilenameFilter, 
 	}
 }
 
-func checkLeaveDir(path string, dirStack []string, gitignorePaths []string, filter *FilenameFilter) ([]string, []string) {
+func checkLeaveDir(path string, dirStack []string, gitignorePaths []string, filter *FilenameFilter) (newDirStack []string, newGitignorePaths []string) {
 	if len(dirStack) == 0 {
 		return dirStack, gitignorePaths
 	}
