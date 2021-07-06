@@ -3024,6 +3024,26 @@ function f9(callable $s) {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestDifferentArraySyntax(t *testing.T) {
+	code := `<?php
+/**
+ * @param array<Foo> $arr
+ * @param list<Foo> $arr1
+ * @param non-empty-array<Foo> $arr2
+ * @param non-empty-list<Foo> $arr3
+ * @param unknown-type-list<Foo> $arr4
+ */
+function f($arr, $arr1, $arr2, $arr3, $arr4) {
+  exprtype($arr, "\Foo[]");
+  exprtype($arr1, "\Foo[]");
+  exprtype($arr2, "\Foo[]");
+  exprtype($arr3, "\Foo[]");
+  exprtype($arr4, "\Foo[]");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	exprTypeTestImpl(t, params, false)
 }
