@@ -118,8 +118,32 @@ abstract class AC {
 $x = new AC();
 `)
 	test.Expect = []string{
-		`Cannot instantiate abstract class`,
-		`Cannot instantiate abstract class`,
+		`Cannot instantiate abstract class \AC`,
+		`Cannot instantiate abstract class \AC`,
+	}
+	test.RunAndMatch()
+}
+
+func TestNewInterface(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+interface IElement {}
+$x = new IElement;
+`)
+	test.Expect = []string{
+		`Cannot instantiate interface \IElement`,
+	}
+	test.RunAndMatch()
+}
+
+func TestNewTrait(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+trait Element {}
+$x = new Element;
+`)
+	test.Expect = []string{
+		`Cannot instantiate trait \Element`,
 	}
 	test.RunAndMatch()
 }

@@ -775,9 +775,15 @@ func (d *rootWalker) getClass() meta.ClassInfo {
 
 	cl, ok := m.Get(d.ctx.st.CurrentClass)
 	if !ok {
+		var flags meta.ClassFlags
+		if d.ctx.st.IsInterface {
+			flags = meta.ClassInterface
+		}
+
 		cl = meta.ClassInfo{
 			Pos:              d.getElementPos(d.currentClassNode),
 			Name:             d.ctx.st.CurrentClass,
+			Flags:            flags,
 			Parent:           d.ctx.st.CurrentParentClass,
 			ParentInterfaces: d.ctx.st.CurrentParentInterfaces,
 			Interfaces:       make(map[string]struct{}),
