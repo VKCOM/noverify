@@ -309,7 +309,7 @@ func (d *rootWalker) parseStartPos(pos *position.Position) (startLn []byte, star
 	return startLn, startChar
 }
 
-func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace phpDocPlace, level int, checkName, msg string, args ...interface{}) {
+func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace PHPDocPlace, level int, checkName, msg string, args ...interface{}) {
 	if !d.metaInfo().IsIndexingComplete() {
 		return
 	}
@@ -336,7 +336,8 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace phpDocPlace, 
 	var endLn []byte
 	var endChar int
 
-	if isReportForNode {
+	switch {
+	case isReportForNode:
 		if n == nil {
 			// Hack to parse syntax error message from php-parser.
 			if strings.Contains(msg, "syntax error") && strings.Contains(msg, " at line ") {
@@ -371,7 +372,7 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace phpDocPlace, 
 		if endChar == 0 {
 			endChar = len(endLn)
 		}
-	} else if isReportForLine {
+	case isReportForLine:
 		if lineNumber < 1 || lineNumber > d.file.NumLines() {
 			return
 		}
@@ -389,7 +390,8 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace phpDocPlace, 
 			StartLine: lineNumber,
 			EndLine:   lineNumber,
 		}
-	} else if isReportForPHPDoc {
+
+	case isReportForPHPDoc:
 		countLines := 0
 		doc, ok := irutil.FindPhpDoc(phpDocPlace.Node)
 		if ok {
@@ -407,7 +409,6 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace phpDocPlace, 
 		}
 
 		startLn = d.file.Line(phpDocPlace.Line - 1)
-		startChar = 0
 
 		lineWithoutBeginning := bytes.TrimLeft(startLn, " *")
 		shift := len(startLn) - len(lineWithoutBeginning)
@@ -471,16 +472,16 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace phpDocPlace, 
 
 // Report registers a single report message about some found problem.
 func (d *rootWalker) Report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
-	d.report(n, 0, phpDocPlace{}, level, checkName, msg, args...)
+	d.report(n, 0, PHPDocPlace{}, level, checkName, msg, args...)
 }
 
 // ReportByLine registers a single report message about some found problem in lineNumber code line.
 func (d *rootWalker) ReportByLine(lineNumber int, level int, checkName, msg string, args ...interface{}) {
-	d.report(nil, lineNumber, phpDocPlace{}, level, checkName, msg, args...)
+	d.report(nil, lineNumber, PHPDocPlace{}, level, checkName, msg, args...)
 }
 
 // ReportPHPDoc registers a single report message about some found problem in PHPDoc.
-func (d *rootWalker) ReportPHPDoc(place phpDocPlace, level int, checkName, msg string, args ...interface{}) {
+func (d *rootWalker) ReportPHPDoc(place PHPDocPlace, level int, checkName, msg string, args ...interface{}) {
 	d.report(nil, 0, place, level, checkName, msg, args...)
 }
 
@@ -1158,11 +1159,11 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	return false
 }
 
-func (d *rootWalker) reportPHPDocErrors(errs phpdocErrors) {
-	for _, err := range errs.phpdocType {
+func (d *rootWalker) reportPHPDocErrors(errs PHPDocErrors) {
+	for _, err := range errs.types {
 		d.ReportPHPDoc(err.Place, LevelNotice, "phpdocType", err.Message)
 	}
-	for _, err := range errs.phpdocLint {
+	for _, err := range errs.lint {
 		d.ReportPHPDoc(err.Place, LevelWarning, "phpdocLint", err.Message)
 	}
 }
@@ -1327,7 +1328,7 @@ func (d *rootWalker) checkPHPDocSeeRef(n ir.Node, part phpdoc.CommentPart) {
 		ref = strings.TrimRight(ref, "().;@")
 		if !d.isValidPHPDocRef(n, ref) {
 			d.ReportPHPDoc(
-				phpDocPlace{Node: n, Line: part.Line(), Part: 1},
+				PHPDocPlace{Node: n, Line: part.Line(), Part: 1},
 				LevelWarning, "phpdocRef", "@see tag refers to unknown symbol %s", ref,
 			)
 		}
@@ -1358,7 +1359,7 @@ func (d *rootWalker) checkPHPDocMixinRef(n ir.Node, part phpdoc.CommentPart) {
 	}
 }
 
-func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []ir.Node) (errors phpdocErrors) {
+func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []ir.Node) (errors PHPDocErrors) {
 	if doc.Raw == "" {
 		return errors
 	}
@@ -1366,7 +1367,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 	if phpdoc.IsSuspicious([]byte(doc.Raw)) {
 		errors.pushLint(
 			NewPHPDocError(
-				phpDocPlace{Node: n, Line: 0, All: true},
+				PHPDocPlace{Node: n, Line: 0, All: true},
 				"Multiline PHPDoc comment should start with /**, not /*",
 			),
 		)
@@ -1391,7 +1392,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 			if converted.Warning != "" {
 				errors.pushType(
 					NewPHPDocError(
-						phpDocPlace{Node: n, Line: part.Line(), Part: 1},
+						PHPDocPlace{Node: n, Line: part.Line(), Part: 1},
 						converted.Warning,
 					),
 				)
@@ -1402,7 +1403,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 			if returnType.Contains("void") && returnType.Len() > 1 {
 				errors.pushType(
 					NewPHPDocError(
-						phpDocPlace{Node: n, Line: rawPart.Line(), Part: 1},
+						PHPDocPlace{Node: n, Line: rawPart.Line(), Part: 1},
 						"Void type can only be used as a standalone type for the return type",
 					),
 				)
@@ -1421,7 +1422,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 		case part.Var == "":
 			errors.pushLint(
 				NewPHPDocError(
-					phpDocPlace{Node: n, Line: part.Line(), Part: 1},
+					PHPDocPlace{Node: n, Line: part.Line(), Part: 1},
 					"Malformed @param tag (maybe var is missing?)",
 				),
 			)
@@ -1429,7 +1430,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 		case part.Type.IsEmpty():
 			errors.pushLint(
 				NewPHPDocError(
-					phpDocPlace{Node: n, Line: part.Line(), Part: 1},
+					PHPDocPlace{Node: n, Line: part.Line(), Part: 1},
 					"Malformed @param %s tag (maybe type is missing?)", part.Var,
 				),
 			)
@@ -1441,7 +1442,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 			// Phpstorm gives the same message.
 			errors.pushLint(
 				NewPHPDocError(
-					phpDocPlace{Node: n, Line: part.Line(), All: true},
+					PHPDocPlace{Node: n, Line: part.Line(), All: true},
 					"Non-canonical order of variable and type",
 				),
 			)
@@ -1456,7 +1457,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 		if _, ok := actualParamNames[strings.TrimPrefix(variable, "$")]; !ok {
 			errors.pushLint(
 				NewPHPDocError(
-					phpDocPlace{Node: n, Line: part.Line(), Part: 2},
+					PHPDocPlace{Node: n, Line: part.Line(), Part: 2},
 					"@param for non-existing argument %s", variable,
 				),
 			)
@@ -1470,7 +1471,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 		if converted.Warning != "" {
 			errors.pushType(
 				NewPHPDocError(
-					phpDocPlace{Node: n, Line: part.Line(), Part: 1},
+					PHPDocPlace{Node: n, Line: part.Line(), Part: 1},
 					converted.Warning,
 				),
 			)
@@ -1482,7 +1483,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 		if param.Typ.Contains("void") {
 			errors.pushType(
 				NewPHPDocError(
-					phpDocPlace{Node: n, Line: rawPart.Line(), Part: 1},
+					PHPDocPlace{Node: n, Line: rawPart.Line(), Part: 1},
 					"Void type can only be used as a standalone type for the return type",
 				),
 			)

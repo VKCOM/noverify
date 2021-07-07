@@ -12,42 +12,42 @@ import (
 	"github.com/VKCOM/noverify/src/types"
 )
 
-type phpDocPlace struct {
+type PHPDocPlace struct {
 	Node ir.Node
 	Line int
 	Part int
 	All  bool
 }
 
-type phpDocError struct {
-	Place   phpDocPlace
+type PHPDocError struct {
+	Place   PHPDocPlace
 	Message string
 }
 
-func NewPHPDocError(place phpDocPlace, format string, args ...interface{}) *phpDocError {
-	return &phpDocError{
+func NewPHPDocError(place PHPDocPlace, format string, args ...interface{}) *PHPDocError {
+	return &PHPDocError{
 		Place:   place,
 		Message: fmt.Sprintf(format, args...),
 	}
 }
 
-type phpdocErrors struct {
-	phpdocType []*phpDocError
-	phpdocLint []*phpDocError
+type PHPDocErrors struct {
+	types []*PHPDocError
+	lint  []*PHPDocError
 }
 
-func (e *phpdocErrors) pushType(err *phpDocError) {
-	e.phpdocType = append(e.phpdocType, err)
+func (e *PHPDocErrors) pushType(err *PHPDocError) {
+	e.types = append(e.types, err)
 }
 
-func (e *phpdocErrors) pushLint(err *phpDocError) {
-	e.phpdocLint = append(e.phpdocLint, err)
+func (e *PHPDocErrors) pushLint(err *PHPDocError) {
+	e.lint = append(e.lint, err)
 }
 
 type classPhpDocParseResult struct {
 	properties meta.PropertiesMap
 	methods    meta.FunctionsMap
-	errs       phpdocErrors
+	errs       PHPDocErrors
 	mixins     []string
 }
 
@@ -66,7 +66,7 @@ func parseClassPHPDocMethod(classNode ir.Node, ctx *rootContext, result *classPh
 	if len(params) < 2 {
 		result.errs.pushLint(
 			NewPHPDocError(
-				phpDocPlace{Node: classNode, Line: part.Line(), All: true},
+				PHPDocPlace{Node: classNode, Line: part.Line(), All: true},
 				"@method requires return type and method name fields",
 			),
 		)
@@ -80,7 +80,7 @@ func parseClassPHPDocMethod(classNode ir.Node, ctx *rootContext, result *classPh
 	if converted.Warning != "" {
 		result.errs.pushType(
 			NewPHPDocError(
-				phpDocPlace{Node: classNode, Line: part.Line(), Part: 1},
+				PHPDocPlace{Node: classNode, Line: part.Line(), Part: 1},
 				converted.Warning,
 			),
 		)
@@ -95,7 +95,7 @@ func parseClassPHPDocMethod(classNode ir.Node, ctx *rootContext, result *classPh
 
 		result.errs.pushLint(
 			NewPHPDocError(
-				phpDocPlace{Node: classNode, Line: part.Line(), All: true},
+				PHPDocPlace{Node: classNode, Line: part.Line(), All: true},
 				"@method '(' is not found near the method name",
 			),
 		)
@@ -129,7 +129,7 @@ func parseClassPHPDocProperty(classNode ir.Node, ctx *rootContext, result *class
 	if part.Type.IsEmpty() || part.Var == "" {
 		result.errs.pushLint(
 			NewPHPDocError(
-				phpDocPlace{Node: classNode, Line: part.Line(), All: true},
+				PHPDocPlace{Node: classNode, Line: part.Line(), All: true},
 				"@property requires type and property name fields",
 			),
 		)
@@ -139,7 +139,7 @@ func parseClassPHPDocProperty(classNode ir.Node, ctx *rootContext, result *class
 	if part.VarIsFirst {
 		result.errs.pushLint(
 			NewPHPDocError(
-				phpDocPlace{Node: classNode, Line: part.Line(), All: true},
+				PHPDocPlace{Node: classNode, Line: part.Line(), All: true},
 				"Non-canonical order of name and type",
 			),
 		)
@@ -151,7 +151,7 @@ func parseClassPHPDocProperty(classNode ir.Node, ctx *rootContext, result *class
 	if converted.Warning != "" {
 		result.errs.pushType(
 			NewPHPDocError(
-				phpDocPlace{Node: classNode, Line: part.Line(), Part: 1},
+				PHPDocPlace{Node: classNode, Line: part.Line(), Part: 1},
 				converted.Warning,
 			),
 		)
@@ -160,7 +160,7 @@ func parseClassPHPDocProperty(classNode ir.Node, ctx *rootContext, result *class
 	if !strings.HasPrefix(part.Var, "$") {
 		result.errs.pushLint(
 			NewPHPDocError(
-				phpDocPlace{Node: classNode, Line: part.Line(), All: true},
+				PHPDocPlace{Node: classNode, Line: part.Line(), All: true},
 				"@property %s field name must start with '$'", part.Var,
 			),
 		)

@@ -249,7 +249,7 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 
 		if converted.Warning != "" {
 			b.r.ReportPHPDoc(
-				phpDocPlace{Node: n, Line: part.Line(), Part: 1},
+				PHPDocPlace{Node: n, Line: part.Line(), Part: 1},
 				LevelNotice, "phpdocType", converted.Warning,
 			)
 		}
