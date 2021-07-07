@@ -3184,6 +3184,8 @@ function ifElseWithNegation($a) {
   } else {
     exprtype($a, "\Foo");
   }
+
+  exprtype($a, "mixed");
 }
 
 /**
@@ -3195,6 +3197,8 @@ function ifElseWithNegationWithUnion($a) {
   } else {
     exprtype($a, "\Foo");
   }
+
+  exprtype($a, "\Boo|\Foo");
 }
 
 /**
@@ -3208,6 +3212,8 @@ function ifElseWithNegationWithUnion2($a) {
   } else {
     exprtype($a, "mixed");
   }
+
+  exprtype($a, "\Boo|\Foo|\Zoo");
 }
 
 /**
@@ -3221,6 +3227,8 @@ function ifElseWithTwoNegationWithUnion2($a) {
   } else {
     exprtype($a, "\Foo");
   }
+
+  exprtype($a, "\Boo|\Foo|\Zoo");
 }
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
@@ -3309,6 +3317,8 @@ function ifElseWithNegation($a) {
   } else {
     exprtype($a(), "\Foo");
   }
+
+  exprtype($a(), "mixed");
 }
 
 /**
@@ -3320,6 +3330,8 @@ function ifElseWithNegationWithUnion($a) {
   } else {
     exprtype($a(), "\Foo");
   }
+
+  exprtype($a(), "\Boo|\Foo");
 }
 
 /**
@@ -3333,6 +3345,8 @@ function ifElseWithNegationWithUnion2($a) {
   } else {
     exprtype($a(), "mixed");
   }
+
+  exprtype($a(), "\Boo|\Foo|\Zoo");
 }
 
 /**
@@ -3346,6 +3360,8 @@ function ifElseWithTwoNegationWithUnion2($a) {
   } else {
     exprtype($a(), "\Foo");
   }
+
+  exprtype($a(), "\Boo|\Foo|\Zoo");
 }
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
