@@ -425,13 +425,13 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace PHPDocPlace, 
 		} else {
 			part := parts[phpDocPlace.Part]
 			shiftStart := bytes.Index(lineWithoutBeginning, part)
-			shiftEnd := shiftStart + len(part) + 1
+			shiftEnd := shiftStart + len(part)
 
 			startChar = shift + shiftStart
 			endChar = shift + shiftEnd
 		}
 
-		if strings.HasSuffix(string(startLn), "\r") {
+		if endChar == len(startLn) && strings.HasSuffix(string(startLn), "\r") {
 			endChar--
 		}
 
