@@ -1461,8 +1461,11 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 	var linksCount int
 	var contexts []*blockContext
 
+	// A list of type reversals for variables from the if body.
+	// Also used for the else body.
 	var trueVarsToReplace []varToReplace
 
+	// Add all new variables from the condition to the current scope.
 	irutil.Inspect(s.Cond, func(n ir.Node) bool {
 		assign, ok := n.(*ir.Assign)
 		if !ok {
@@ -1473,6 +1476,9 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 		return false
 	})
 
+	// First of all, we need to traverse the main condition.
+	//   trueContext  will store the state of the variables in the **if** block.
+	//   falseContext will store the state of the variables in the **else** block.
 	falseContext := copyBlockContext(b.ctx)
 	trueContext := b.withNewContext(func() {
 		a := &andWalker{
