@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io"
@@ -17,6 +18,7 @@ type AppContext struct {
 	ParsedFlags ParsedFlags
 	ParsedArgs  []string
 	FlagSet     *flag.FlagSet
+	flagGroups  *FlagsGroups
 
 	CustomFlags interface{}
 }
@@ -25,13 +27,36 @@ func (ctx *AppContext) FormatFlags() (res string) {
 	if ctx.FlagSet == nil {
 		return ""
 	}
-	ctx.FlagSet.VisitAll(func(f *flag.Flag) {
-		defaultVal := f.DefValue
-		if f.DefValue != "" {
-			defaultVal = fmt.Sprintf("(default: %s)", f.DefValue)
+
+	first := true
+
+	for _, group := range ctx.flagGroups.Groups {
+		name := group
+		flags, ok := ctx.flagGroups.Map[group]
+		if !ok {
+			continue
 		}
-		res += fmt.Sprintf("  -%s %s\n      %s\n", f.Name, defaultVal, f.Usage)
-	})
+
+		if !first {
+			res += "\n"
+		}
+		first = false
+
+		res += fmt.Sprintf(" %s:\n", name)
+		for _, flagName := range flags {
+			f := ctx.FlagSet.Lookup(flagName)
+			if f == nil {
+				continue
+			}
+
+			defaultVal := f.DefValue
+			if f.DefValue != "" {
+				defaultVal = fmt.Sprintf("(default: %s)", f.DefValue)
+			}
+			res += fmt.Sprintf("   --%s %s\n      %s\n", f.Name, defaultVal, f.Usage)
+		}
+	}
+
 	return res
 }
 
@@ -108,13 +133,14 @@ func (a *App) addDefaultHelpCommand(command *Command) {
 		Description: "The command to show help for " + command.Name + " command",
 		Action: func(ctx *AppContext) (int, error) {
 			if command.RegisterFlags != nil {
-				fs := command.RegisterFlags(ctx)
+				fs, groups := command.RegisterFlags(ctx)
 				err := fs.Parse(os.Args)
 				if err != nil {
 					return 2, err
 				}
 				command.flagSet = fs
 				ctx.FlagSet = fs
+				ctx.flagGroups = groups
 			}
 
 			withFlags := ctx.CountDefinedFlags() != 0
@@ -147,9 +173,13 @@ func (a *App) addDefaultHelpCommand(command *Command) {
 				res += fmt.Sprintln()
 				res += fmt.Sprintln("Arguments:")
 
+				buf := bytes.NewBuffer(nil)
+				w := tabwriter.NewWriter(buf, 15, 0, 5, ' ', 0)
 				for _, arg := range command.Arguments {
-					res += fmt.Sprintf("  %s - %s\n", arg.Name, arg.Description)
+					fmt.Fprintf(w, "  %s\t%s\n", arg.Name, arg.Description)
 				}
+				w.Flush()
+				res += buf.String()
 			}
 
 			if withFlags {
@@ -241,13 +271,13 @@ func (a *App) getCommandByArgs(args []string, commands map[string]*Command) (*Co
 func (a *App) Run(cfg *MainConfig) (int, error) {
 	os.Args = os.Args[1:]
 
-	// Show help when no commandline arguments
+	a.prepareCommands()
+
+	// Show help when no commandline arguments.
 	if len(os.Args) < 1 {
 		a.showHelp()
 		return 0, nil
 	}
-
-	a.prepareCommands()
 
 	// We do a pre-check by receiving the command only for the first argument.
 	command, found := a.getCommandByArgs(os.Args[:1], a.commands)
@@ -287,9 +317,10 @@ func (a *App) Run(cfg *MainConfig) (int, error) {
 	}
 
 	var fs *flag.FlagSet
+	var groups *FlagsGroups
 
 	if command.RegisterFlags != nil {
-		fs = command.RegisterFlags(ctx)
+		fs, groups = command.RegisterFlags(ctx)
 		fs.Usage = nil
 
 		err := fs.Parse(os.Args[1:])
@@ -299,6 +330,7 @@ func (a *App) Run(cfg *MainConfig) (int, error) {
 		command.flagSet = fs
 		ctx.ParsedArgs = fs.Args()
 		ctx.FlagSet = fs
+		ctx.flagGroups = groups
 	} else {
 		fs = flag.NewFlagSet("empty", flag.ContinueOnError)
 	}

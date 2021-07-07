@@ -7,73 +7,76 @@ MAYBE   callSimplify: Could simplify to $permissions[0] at testdata/flysystem/sr
 MAYBE   regexpSimplify: May re-write '/^total [0-9]*$/' as '/^total \d*$/' at testdata/flysystem/src/Adapter/Ftp.php:407
         if (preg_match('/^total [0-9]*$/', $listing[0])) {
                        ^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$mkdirError['message'] ?? ''` at testdata/flysystem/src/Adapter/Local.php:111
+MAYBE   ternarySimplify: Could rewrite as `$mkdirError['message'] ?? ''` at testdata/flysystem/src/Adapter/Local.php:111
                 $errorMessage = isset($mkdirError['message']) ? $mkdirError['message'] : '';
                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/flysystem/src/Adapter/Local.php:324
         if (in_array($mimetype, ['application/octet-stream', 'inode/x-empty', 'application/x-empty'])) {
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING phpdocRef: line 8: @see tag refers to unknown symbol League\Flysystem\ReadInterface::readStream at testdata/flysystem/src/Adapter/Polyfill/StreamedReadingTrait.php:19
+MAYBE   phpdocType: Void type can only be used as a standalone type for the return type at testdata/flysystem/src/Adapter/Local.php:448
+    protected function normalizeFileInfo(SplFileInfo $file)
+                       ^^^^^^^^^^^^^^^^^
+WARNING phpdocRef: Line 8: @see tag refers to unknown symbol League\Flysystem\ReadInterface::readStream at testdata/flysystem/src/Adapter/Polyfill/StreamedReadingTrait.php:19
     public function readStream($path)
                     ^^^^^^^^^^
-WARNING phpdocRef: line 8: @see tag refers to unknown symbol League\Flysystem\ReadInterface::read at testdata/flysystem/src/Adapter/Polyfill/StreamedReadingTrait.php:43
+WARNING phpdocRef: Line 8: @see tag refers to unknown symbol League\Flysystem\ReadInterface::read at testdata/flysystem/src/Adapter/Polyfill/StreamedReadingTrait.php:43
     abstract public function read($path);
                              ^^^^
-MAYBE   phpdoc: Missing PHPDoc for "write" public method at testdata/flysystem/src/Adapter/Polyfill/StreamedWritingTrait.php:58
+MAYBE   phpdoc: Missing PHPDoc for \League\Flysystem\Adapter\Polyfill\StreamedWritingTrait::write public method at testdata/flysystem/src/Adapter/Polyfill/StreamedWritingTrait.php:58
     abstract public function write($pash, $contents, Config $config);
                              ^^^^^
-MAYBE   phpdoc: Missing PHPDoc for "update" public method at testdata/flysystem/src/Adapter/Polyfill/StreamedWritingTrait.php:59
+MAYBE   phpdoc: Missing PHPDoc for \League\Flysystem\Adapter\Polyfill\StreamedWritingTrait::update public method at testdata/flysystem/src/Adapter/Polyfill/StreamedWritingTrait.php:59
     abstract public function update($pash, $contents, Config $config);
                              ^^^^^^
-MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:63
+MAYBE   typeHint: Specify the type for the parameter $config in PHPDoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:63
     public function write($path, $contents, array $config = [])
                     ^^^^^
-MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:75
+MAYBE   typeHint: Specify the type for the parameter $config in PHPDoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:75
     public function writeStream($path, $resource, array $config = [])
                     ^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:93
+MAYBE   typeHint: Specify the type for the parameter $config in PHPDoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:93
     public function put($path, $contents, array $config = [])
                     ^^^
-MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:108
+MAYBE   typeHint: Specify the type for the parameter $config in PHPDoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:108
     public function putStream($path, $resource, array $config = [])
                     ^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:146
+MAYBE   typeHint: Specify the type for the parameter $config in PHPDoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:146
     public function update($path, $contents, array $config = [])
                     ^^^^^^
-MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:159
+MAYBE   typeHint: Specify the type for the parameter $config in PHPDoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:159
     public function updateStream($path, $resource, array $config = [])
                     ^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $config in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:257
+MAYBE   typeHint: Specify the type for the parameter $config in PHPDoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:257
     public function createDir($dirname, array $config = [])
                     ^^^^^^^^^
-WARNING unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Handler.php:129
+WARNING unused: Variable $e is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/flysystem/src/Handler.php:129
         } catch (BadMethodCallException $e) {
                                         ^^
-WARNING unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/MountManager.php:275
+WARNING unused: Variable $e is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/flysystem/src/MountManager.php:275
         } catch (PluginNotFoundException $e) {
                                          ^^
 MAYBE   deprecated: Call to deprecated method {\League\Flysystem\FilesystemInterface}->get() at testdata/flysystem/src/MountManager.php:646
         return $this->getFilesystem($prefix)->get($path);
                                               ^^^
-WARNING unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Plugin/ForcedCopy.php:33
+WARNING unused: Variable $e is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/flysystem/src/Plugin/ForcedCopy.php:33
         } catch (FileNotFoundException $e) {
                                        ^^
-WARNING unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Plugin/ForcedRename.php:33
+WARNING unused: Variable $e is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/flysystem/src/Plugin/ForcedRename.php:33
         } catch (FileNotFoundException $e) {
                                        ^^
-WARNING unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Plugin/PluggableTrait.php:89
+WARNING unused: Variable $e is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/flysystem/src/Plugin/PluggableTrait.php:89
         } catch (PluginNotFoundException $e) {
                                          ^^
-MAYBE   phpdoc: Missing PHPDoc for "storeSafely" public method at testdata/flysystem/src/SafeStorage.php:23
+MAYBE   phpdoc: Missing PHPDoc for \League\Flysystem\SafeStorage::storeSafely public method at testdata/flysystem/src/SafeStorage.php:23
     public function storeSafely($key, $value)
                     ^^^^^^^^^^^
-MAYBE   phpdoc: Missing PHPDoc for "retrieveSafely" public method at testdata/flysystem/src/SafeStorage.php:28
+MAYBE   phpdoc: Missing PHPDoc for \League\Flysystem\SafeStorage::retrieveSafely public method at testdata/flysystem/src/SafeStorage.php:28
     public function retrieveSafely($key)
                     ^^^^^^^^^^^^^^
-MAYBE   phpdoc: Missing PHPDoc for "forFileInfo" public method at testdata/flysystem/src/UnreadableFileException.php:9
+MAYBE   phpdoc: Missing PHPDoc for \League\Flysystem\UnreadableFileException::forFileInfo public method at testdata/flysystem/src/UnreadableFileException.php:9
     public static function forFileInfo(SplFileInfo $fileInfo)
                            ^^^^^^^^^^^
-MAYBE   phpdoc: Missing PHPDoc for "isSeekableStream" public method at testdata/flysystem/src/Util.php:258
+MAYBE   phpdoc: Missing PHPDoc for \League\Flysystem\Util::isSeekableStream public method at testdata/flysystem/src/Util.php:258
     public static function isSeekableStream($resource)
                            ^^^^^^^^^^^^^^^^
 MAYBE   regexpSimplify: May re-write '#^[a-zA-Z]{1}:[^\\\/]#' as '#^[a-zA-Z]:[^\\/]#' at testdata/flysystem/src/Util.php:341
@@ -82,12 +85,12 @@ MAYBE   regexpSimplify: May re-write '#^[a-zA-Z]{1}:[^\\\/]#' as '#^[a-zA-Z]:[^\
 MAYBE   regexpSimplify: May re-write '#^[a-zA-Z]{1}:$#' as '#^[a-zA-Z]:$#' at testdata/flysystem/src/Util.php:346
         if (preg_match('#^[a-zA-Z]{1}:$#', $basename)) {
                        ^^^^^^^^^^^^^^^^^^
-MAYBE   typeHint: specify the type for the parameter $entry in phpdoc, 'array' type hint too generic at testdata/flysystem/src/Util/ContentListingFormatter.php:52
+MAYBE   typeHint: Specify the type for the parameter $entry in PHPDoc, 'array' type hint too generic at testdata/flysystem/src/Util/ContentListingFormatter.php:52
     private function addPathInfo(array $entry)
                      ^^^^^^^^^^^
-WARNING unused: Variable e is unused (use $_ to ignore this inspection) at testdata/flysystem/src/Util/MimeType.php:208
+WARNING unused: Variable $e is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/flysystem/src/Util/MimeType.php:208
         } catch (ErrorException $e) {
                                 ^^
-MAYBE   ternarySimplify: could rewrite as `static::$extensionToMimeTypeMap[$extension] ?? 'text/plain'` at testdata/flysystem/src/Util/MimeType.php:222
+MAYBE   ternarySimplify: Could rewrite as `static::$extensionToMimeTypeMap[$extension] ?? 'text/plain'` at testdata/flysystem/src/Util/MimeType.php:222
         return isset(static::$extensionToMimeTypeMap[$extension])
                ^^^^^^^^^^^

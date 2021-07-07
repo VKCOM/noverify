@@ -94,7 +94,7 @@ function f1($cond) {
   }
 }
 `)
-	test.Expect = []string{`global statement mentions $x more than once`}
+	test.Expect = []string{`Global statement mentions $x more than once`}
 	test.RunAndMatch()
 }
 
@@ -120,7 +120,7 @@ function f3() {
 }
 `)
 	test.Expect = []string{
-		`global statement mentions $x1 more than once`,
+		`Global statement mentions $x1 more than once`,
 		`$x2 already global'ed above`,
 		`$x3 already global'ed above`,
 	}
@@ -168,9 +168,9 @@ foreach ($xs as $x) {
 $_ = [$x]; // Bad
 `)
 	test.Expect = []string{
-		`Variable might have not been defined: k`,
-		`Variable might have not been defined: v`,
-		`Variable might have not been defined: x`,
+		`Variable $k might have not been defined`,
+		`Variable $v might have not been defined`,
+		`Variable $x might have not been defined`,
 	}
 	test.RunAndMatch()
 }
@@ -191,8 +191,8 @@ function f() {
 }
 `)
 	test.Expect = []string{
-		`foreach key $i is unused, can simplify $i => $v to just $v`,
-		`foreach key $i is unused, can simplify $i => $v to just $v`,
+		`Foreach key $i is unused, can simplify $i => $v to just $v`,
+		`Foreach key $i is unused, can simplify $i => $v to just $v`,
 	}
 	test.RunAndMatch()
 }
@@ -219,7 +219,7 @@ $_ = array(1);
 `)
 	test.Expect = []string{
 		`You are not allowed to disable linter`,
-		`Use of old array syntax`,
+		`Use the short form '[]' instead of the old 'array()'`,
 	}
 	test.RunAndMatch()
 }
@@ -271,10 +271,10 @@ $_ = array(1);
 		`You are not allowed to disable linter`,
 		`You are not allowed to disable linter`,
 		`You are not allowed to disable linter`,
-		`Use of old array syntax (use short form instead)`,
+		`Use the short form '[]' instead of the old 'array()'`,
 		`Duplicate array key 1`,
-		`last element in a multi-line array must have a trailing comma`,
-		`Use of old array syntax (use short form instead)`,
+		`Last element in a multi-line array should have a trailing comma`,
+		`Use the short form '[]' instead of the old 'array()'`,
 	}
 	test.RunAndMatch()
 }
@@ -469,7 +469,7 @@ func TestVoidResultUsedInAssignment(t *testing.T) {
 	$_ = f();
 `)
 	test.Expect = []string{
-		`void function result used`,
+		`Void function result used`,
 	}
 	test.RunAndMatch()
 }
@@ -505,48 +505,56 @@ func TestVoidResultUsedInBinary(t *testing.T) {
 	$_ = f() >= 1;
 `)
 	test.Expect = []string{
-		`void function result used`,
-		`void function result used`,
-		`void function result used`,
-		`void function result used`,
-		`void function result used`,
-		`void function result used`,
-		`void function result used`,
-		`void function result used`,
-		`void function result used`,
-		`void function result used`,
-		`void function result used`,
-		`void function result used`,
-		`void function result used`,
-		`void function result used`,
-		`void function result used`,
-		`void function result used`,
-		`void function result used`,
-		`void function result used`,
-		`void function result used`,
+		`Void function result used`,
+		`Void function result used`,
+		`Void function result used`,
+		`Void function result used`,
+		`Void function result used`,
+		`Void function result used`,
+		`Void function result used`,
+		`Void function result used`,
+		`Void function result used`,
+		`Void function result used`,
+		`Void function result used`,
+		`Void function result used`,
+		`Void function result used`,
+		`Void function result used`,
+		`Void function result used`,
+		`Void function result used`,
+		`Void function result used`,
+		`Void function result used`,
+		`Void function result used`,
 
 		// $x = void() xor $y;
 		//      ^^^^^^ 1st void warning
 		// ^^^^^^^^^^^ 2nd void warning
 		// TODO: do we want to reduce these 2 warnings into a single warning?
-		`void function result used`,
-		`void function result used`, // 1 extra warning is tolerated for now...
+		`Void function result used`,
+		`Void function result used`, // 1 extra warning is tolerated for now...
 	}
 	test.RunAndMatch()
 }
 
-func TestVoidParam(t *testing.T) {
+func TestVoidForParamAndReturn(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	/**
-	* @param void $x
-	* @param int $y
-	* @return void
-	*/
-	function f($x, $y) {}
+/**
+* @param void $x
+* @param int $y
+* @param int|void $z
+* @return void
+*/
+function f($x, $y, $z) {}
+
+/**
+* @return int|void
+*/
+function f1() {}
 `)
 	test.Expect = []string{
-		`void is not a valid type for input parameter`,
+		`Void type can only be used as a standalone type for the return type`,
+		`Void type can only be used as a standalone type for the return type`,
+		`Void type can only be used as a standalone type for the return type`,
 	}
 	test.RunAndMatch()
 }
@@ -607,7 +615,7 @@ function bad($a = array()) {}
 function good($a = []) {}
 `)
 	test.Expect = []string{
-		`Use of old array syntax (use short form instead)`,
+		`Use the short form '[]' instead of the old 'array()'`,
 	}
 	test.RunAndMatch()
 }
@@ -704,8 +712,8 @@ class Foo {
 `)
 
 	test.Expect = []string{
-		"Undefined variable: argv",
-		"Undefined variable: argc",
+		"Undefined variable $argv",
+		"Undefined variable $argc",
 	}
 
 	linttest.RunFilterMatch(test, "undefined")
@@ -771,7 +779,7 @@ $_ = "autogenerated; do not edit";
 
 $_ = array();`)
 	test.Expect = []string{
-		`Use of old array syntax (use short form instead)`,
+		`Use the short form '[]' instead of the old 'array()'`,
 	}
 	test.RunAndMatch()
 }
@@ -848,10 +856,10 @@ var_dump($_global);
 `)
 
 	test.Expect = []string{
-		`Used var $_a that is supposed to be unused (rename variable if it's intended)`,
-		`Used var $_global that is supposed to be unused (rename variable if it's intended)`,
-		`Used var $_FOO that is supposed to be unused (rename variable if it's intended)`,
-		`Used var $_global that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_a that is supposed to be unused (rename variable if it's intended or respecify --unused-var-regex flag)`,
+		`Used var $_global that is supposed to be unused (rename variable if it's intended or respecify --unused-var-regex flag)`,
+		`Used var $_FOO that is supposed to be unused (rename variable if it's intended or respecify --unused-var-regex flag)`,
+		`Used var $_global that is supposed to be unused (rename variable if it's intended or respecify --unused-var-regex flag)`,
 	}
 
 	test.RunAndMatch()
@@ -875,12 +883,12 @@ var_dump($_); // 6. Also forbidden in global scope
 `)
 
 	test.Expect = []string{
-		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
-		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
-		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
-		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
-		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
-		`Used var $_ that is supposed to be unused (rename variable if it's intended)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended or respecify --unused-var-regex flag)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended or respecify --unused-var-regex flag)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended or respecify --unused-var-regex flag)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended or respecify --unused-var-regex flag)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended or respecify --unused-var-regex flag)`,
+		`Used var $_ that is supposed to be unused (rename variable if it's intended or respecify --unused-var-regex flag)`,
 	}
 
 	test.RunAndMatch()
@@ -932,8 +940,8 @@ func TestOrDie2(t *testing.T) {
 $undef1 or die($undef2);
 `)
 	test.Expect = []string{
-		"Undefined variable: undef1",
-		"Undefined variable: undef2",
+		"Undefined variable $undef1",
+		"Undefined variable $undef2",
 	}
 	test.RunAndMatch()
 }
@@ -1009,8 +1017,8 @@ function foo() {
 }
 `)
 	test.Expect = []string{
-		`Variable x is unused`,
-		`Undefined variable: y`,
+		`Variable $x is unused`,
+		`Undefined variable $y`,
 	}
 	test.RunAndMatch()
 }
@@ -1071,7 +1079,7 @@ func TestUnusedInSwitch(t *testing.T) {
 		}
 		return 20;
 	}`)
-	test.Expect = []string{`Variable x is unused`}
+	test.Expect = []string{`Variable $x is unused`}
 	linttest.RunFilterMatch(test, "unused")
 }
 
@@ -1098,11 +1106,36 @@ func TestSwitchContinue1(t *testing.T) {
 		case 5:
 			continue;
 		}
-	}`)
+	}
+
+	while (true) {
+		switch ($i) {
+		case 5:
+			continue;
+		}
+	}
+
+	do {
+		switch ($i) {
+		case 5:
+			continue;
+		}
+	} while (true);
+
+	foreach([] as $_) {
+		switch ($i) {
+		case 5:
+			continue;
+		}
+	}
+`)
 	test.Expect = []string{
-		`'continue' inside switch is 'break'`,
-		`'continue' inside switch is 'break'`,
-		`'continue' inside switch is 'break'`,
+		`Use 'break' instead of 'continue' in switch`,
+		`Use 'break' instead of 'continue' in switch`,
+		`Use 'break' instead of 'continue' or 'continue 2' to continue the loop around switch`,
+		`Use 'break' instead of 'continue' or 'continue 2' to continue the loop around switch`,
+		`Use 'break' instead of 'continue' or 'continue 2' to continue the loop around switch`,
+		`Use 'break' instead of 'continue' or 'continue 2' to continue the loop around switch`,
 	}
 	test.RunAndMatch()
 }
@@ -1231,7 +1264,7 @@ func TestFunctionReferenceParamsInAnonymousFunction(t *testing.T) {
 			$result = 1;
 		};
 	}`)
-	test.Expect = []string{"Undefined variable a"}
+	test.Expect = []string{"Undefined variable $a"}
 	test.RunAndMatch()
 }
 
@@ -1424,7 +1457,7 @@ func TestArrayLiteral(t *testing.T) {
 	function traditional_array_literal() {
 		return array(1, 2);
 	}`)
-	test.Expect = []string{"Use of old array syntax"}
+	test.Expect = []string{"Use the short form '[]' instead of the old 'array()'"}
 	test.RunAndMatch()
 }
 
@@ -1461,8 +1494,8 @@ func TestEmptyVar(t *testing.T) {
 		return $x2;
 	}`)
 	test.Expect = []string{
-		`Undefined variable: x1`,
-		`Undefined variable: x2`,
+		`Undefined variable $x1`,
+		`Undefined variable $x2`,
 	}
 	test.RunAndMatch()
 }
@@ -1479,7 +1512,7 @@ function f() {
   echo $y; // But should be undefined here.
 }
 `)
-	test.Expect = []string{`Undefined variable: y`}
+	test.Expect = []string{`Undefined variable $y`}
 	test.RunAndMatch()
 }
 
@@ -1508,9 +1541,9 @@ func TestUnused(t *testing.T) {
 		}
 	}`)
 	test.Expect = []string{
-		"Variable g is unused",
-		"Variable a is unused",
-		"Variable v is unused",
+		"Variable $g is unused",
+		"Variable $a is unused",
+		"Variable $v is unused",
 	}
 	test.RunAndMatch()
 }
@@ -1679,17 +1712,17 @@ func TestArrowFunction(t *testing.T) {
 		echo $w; // Undefined $w
 	}`)
 	test.Expect = []string{
-		`Undefined variable: undefined_variable`,
-		`Variable might have not been defined: maybe_defined`,
-		`Variable a is unused (use $_ to ignore this inspection)`,
-		`Variable a is unused (use $_ to ignore this inspection)`,
-		`Variable a is unused (use $_ to ignore this inspection)`,
-		`Variable a is unused (use $_ to ignore this inspection)`,
-		`Undefined variable: a`,
-		`Undefined variable: x`,
-		`Undefined variable: y`,
-		`Undefined variable: w`,
-		`Variable might have not been defined: maybe_defined`,
+		`Undefined variable $undefined_variable`,
+		`Variable $maybe_defined might have not been defined`,
+		`Variable $a is unused (use $_ to ignore this inspection or specify --unused-var-regex flag)`,
+		`Variable $a is unused (use $_ to ignore this inspection or specify --unused-var-regex flag)`,
+		`Variable $a is unused (use $_ to ignore this inspection or specify --unused-var-regex flag)`,
+		`Variable $a is unused (use $_ to ignore this inspection or specify --unused-var-regex flag)`,
+		`Undefined variable $a`,
+		`Undefined variable $x`,
+		`Undefined variable $y`,
+		`Undefined variable $w`,
+		`Variable $maybe_defined might have not been defined`,
 	}
 	test.RunAndMatch()
 }
@@ -1786,11 +1819,11 @@ func TestRedundantCast(t *testing.T) {
 		$_ = $a;
 	}`)
 	test.Expect = []string{
-		`expression already has array type`,
-		`expression already has float type`,
-		`expression already has int type`,
-		`expression already has string type`,
-		`expression already has bool type`,
+		`Expression already has array type`,
+		`Expression already has float type`,
+		`Expression already has int type`,
+		`Expression already has string type`,
+		`Expression already has bool type`,
 	}
 	test.RunAndMatch()
 }
@@ -2057,8 +2090,8 @@ function f() {
 	`)
 
 	test.Expect = []string{
-		"Undefined variable: x",
-		"Undefined variable: y",
+		"Undefined variable $x",
+		"Undefined variable $y",
 	}
 	linttest.RunFilterMatch(test, "undefined")
 }
@@ -2121,8 +2154,8 @@ function f() {
 }
 `)
 	test.Expect = []string{
-		`last element in a multi-line array must have a trailing comma`,
-		`last element in a multi-line array must have a trailing comma`,
+		`Last element in a multi-line array should have a trailing comma`,
+		`Last element in a multi-line array should have a trailing comma`,
 	}
 	test.RunAndMatch()
 }
@@ -2149,9 +2182,9 @@ function f() {
 }
 `)
 	test.Expect = []string{
-		`in ternary operators, you must explicitly use parentheses to specify the order of operations`,
-		`in ternary operators, you must explicitly use parentheses to specify the order of operations`,
-		`in ternary operators, you must explicitly use parentheses to specify the order of operations`,
+		`Explicitly specify the order of operations for the ternary operator using parentheses`,
+		`Explicitly specify the order of operations for the ternary operator using parentheses`,
+		`Explicitly specify the order of operations for the ternary operator using parentheses`,
 	}
 	test.RunAndMatch()
 }
@@ -2169,8 +2202,8 @@ function f() {
 }
 `)
 	test.Expect = []string{
-		`use float cast instead of real`,
-		`use is_float function instead of is_real`,
+		`Use float cast instead of real`,
+		`Use is_float function instead of is_real`,
 	}
 	test.RunAndMatch()
 }
@@ -2242,5 +2275,38 @@ function f() {
 		`possibly wrong order of arguments, min = 1, max = 0`,
 		`possibly wrong order of arguments, min = 156, max = 119`,
 	}
+	test.RunAndMatch()
+}
+
+func TestDefineWithTrailingSlash(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+\define('ONE', 1);
+define('TWO', 1);
+
+echo ONE;
+echo TWO;
+`)
+}
+
+func TestClosureDoc(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {
+  /**
+   * @return int
+   */
+  public function method(): int { return 0; }
+}
+
+/**
+ * @param callable(int, string): Boo|Foo $s
+ */
+function f(callable $s) {
+  $a = $s(10);
+  echo $a->method();
+}
+`,
+	)
+	test.Expect = []string{"Too few arguments for $s"}
 	test.RunAndMatch()
 }

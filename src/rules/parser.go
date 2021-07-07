@@ -12,10 +12,10 @@ import (
 	"github.com/VKCOM/noverify/src/ir/irconv"
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/linter/lintapi"
-	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/php/parseutil"
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/phpgrep"
+	"github.com/VKCOM/noverify/src/utils"
 )
 
 var magicComment = regexp.MustCompile(`\* @(?:warning|error|info|maybe) `)
@@ -343,7 +343,7 @@ func (p *parser) parseRule(st ir.Node, proto *Rule) error {
 		if len(st.Stmts) != 0 {
 			return p.errorf(st, "namespace with body is not supported")
 		}
-		p.namespace = meta.NameNodeToString(st.NamespaceName)
+		p.namespace = utils.NameNodeToString(st.NamespaceName)
 		if strings.Contains(p.namespace, `\`) {
 			return p.errorf(st, "multi-part namespace names are not supported")
 		}

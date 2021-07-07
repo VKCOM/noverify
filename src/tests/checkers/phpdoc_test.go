@@ -17,6 +17,7 @@ namespace A;
  * @see B\ABClass;
  * @see BACK-134
  * @see #4393
+ * @see RFC: Generic Types and Functions
  */
 function f() {
 }
@@ -131,11 +132,54 @@ class BadClass {
 `)
 
 	test.Expect = []string{
-		`line 2: @see tag refers to unknown symbol \NonExisting::class`,
-		`line 2: @see tag refers to unknown symbol HolyHandGrenade::hallelujah`,
-		`line 2: @see tag refers to unknown symbol CONST43`,
-		`line 2: @see tag refers to unknown symbol invalid1`,
-		`line 2: @see tag refers to unknown symbol invalid2`,
+		`Line 2: @see tag refers to unknown symbol \NonExisting::class`,
+		`Line 2: @see tag refers to unknown symbol HolyHandGrenade::hallelujah`,
+		`Line 2: @see tag refers to unknown symbol CONST43`,
+		`Line 2: @see tag refers to unknown symbol invalid1`,
+		`Line 2: @see tag refers to unknown symbol invalid2`,
+	}
+	linttest.RunFilterMatch(test, "phpdocRef")
+}
+
+func TestPHPDocRefForConstantInClass(t *testing.T) {
+	test := linttest.NewSuite(t)
+
+	test.AddFile(`<?php
+const TYPE_TEXT_GLOBAL = 0;
+
+class FooAbstract {
+  /** Text headers */
+  const TYPE_TEXT_PARENT = 2;
+}
+
+class Foo extends FooAbstract {
+  const TYPE_TEXT = 2;
+
+  /**
+   * Get the type of Header that this instance represents.
+   *
+   * @see TYPE_TEXT
+   * @see TYPE_TEXT_PARENT
+   * @see TYPE_TEXT_UNDEFINED
+   * @see TYPE_TEXT_GLOBAL
+   *
+   * @return int
+   */
+  public function getFieldType()
+  {
+    return self::TYPE_TEXT;
+  }
+}
+
+/**
+ * @see TYPE_TEXT
+ * @see TYPE_TEXT_GLOBAL
+ */
+function f() {}
+`)
+	test.Expect = []string{
+		`Line 6: @see tag refers to unknown symbol TYPE_TEXT_UNDEFINED`,
+		`Line 2: @see tag refers to unknown symbol TYPE_TEXT`,
 	}
 	linttest.RunFilterMatch(test, "phpdocRef")
 }
@@ -278,7 +322,7 @@ func TestPHPDocPresence(t *testing.T) {
 	class TheClass {
 		/**
 		 * This function is a good example.
-		 * It's public and has a phpdoc comment.
+		 * It's public and has a PHPDoc comment.
 		 */
 		public function documentedPub() {}
 
@@ -292,8 +336,8 @@ func TestPHPDocPresence(t *testing.T) {
 		protected function prot() {}
 	}`)
 	test.Expect = []string{
-		`Missing PHPDoc for "pub" public method`,
-		`Missing PHPDoc for "traitPub" public method`,
+		`Missing PHPDoc for \TheClass::pub public method`,
+		`Missing PHPDoc for \TheTrait::traitPub public method`,
 	}
 	test.RunAndMatch()
 }
@@ -392,6 +436,7 @@ func TestPHPDocType(t *testing.T) {
 `)
 	test.Expect = []string{
 		`[][]string: array syntax is T[], not []T on line 2`,
+		`[]string: array syntax is T[], not []T on line 2`,
 		`use float type instead of double`,
 		`use float type instead of real`,
 		`use int type instead of integer`,
@@ -470,11 +515,11 @@ function f2($a) {
 }
 `)
 	test.Expect = []string{
-		`multiline phpdoc comment should start with /**, not /*`,
-		`multiline phpdoc comment should start with /**, not /*`,
-		`multiline phpdoc comment should start with /**, not /*`,
-		`multiline phpdoc comment should start with /**, not /*`,
-		`multiline phpdoc comment should start with /**, not /*`,
+		`Multiline PHPDoc comment should start with /**, not /*`,
+		`Multiline PHPDoc comment should start with /**, not /*`,
+		`Multiline PHPDoc comment should start with /**, not /*`,
+		`Multiline PHPDoc comment should start with /**, not /*`,
+		`Multiline PHPDoc comment should start with /**, not /*`,
 	}
 	test.RunAndMatch()
 }

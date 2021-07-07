@@ -5,13 +5,13 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/VKCOM/noverify/src/utils"
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
-	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/types"
 	"github.com/VKCOM/noverify/src/workspace"
 )
@@ -2917,6 +2917,170 @@ function f() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestCallableDoc(t *testing.T) {
+	code := `<?php
+class Foo {
+  /**
+   * @return int
+   */
+  public function method(): int { return 0; }
+}
+
+class Boo {
+  /**
+   * @return int
+   */
+  public function method(): int { return 0; }
+}
+
+/**
+ * @param callable(): Foo $s
+ */
+function f1(callable $s) {
+  $a = $s();
+  exprtype($a, "\Foo");
+}
+
+/**
+ * @param callable(Foo): Foo $s
+ */
+function f2(callable $s) {
+  $a = $s(new Foo);
+  exprtype($a, "\Foo");
+}
+
+/**
+ * @param callable(int): Foo $s
+ */
+function f3(callable $s) {
+  $a = $s(10);
+  exprtype($a, "\Foo");
+}
+
+/**
+ * @param callable(int, string): Foo|Boo $s
+ */
+function f4(callable $s) {
+  $a = $s(10, "ss");
+  exprtype($a, "\Boo|\Foo");
+}
+
+/**
+ * @param callable(): callable(): Foo $s
+ * @param callable(): callable(): Foo|Boo $s1
+ */
+function f5(callable $s, callable $s1) {
+  $a = $s();
+  $a1 = $s1();
+  exprtype($a, "\Closure$():Foo");
+  exprtype($a1, "\Closure$():Foo/Boo");
+  $b = $a();
+  $b1 = $a1();
+  exprtype($b, "\Foo");
+  exprtype($b1, "\Boo|\Foo");
+}
+
+/**
+ * @return callable(): callable(): Foo
+ */
+function f6(): callable {
+  return function() { return function() { return new Foo; }; };
+}
+
+function f7() {
+  $a = f6();
+  exprtype($a, "\Closure$():callable(): Foo|callable");
+  $b = $a();
+  exprtype($b, "\Closure$():Foo");
+  $c = $b();
+  exprtype($c, "\Foo");
+}
+
+function f8() {
+  /**
+   * @var callable(): Foo $a
+   */
+  $a = null;
+
+  $b = $a();
+  exprtype($b, "\Foo");
+}
+
+/**
+* @var callable(): Foo $a
+*/
+$a = null;
+$b = $a();
+exprtype($b, "\Foo");
+
+/**
+ * @param callable(int, string) $s
+ */
+function f9(callable $s) {
+  $a = $s(10, "ss");
+  exprtype($a, "mixed");
+}
+
+/**
+ * @param callable(int, string): Foo $s
+ */
+function f10(callable $s) {
+  if ($s() instanceof Boo) {
+    exprtype($s(), "\Boo");
+  }
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestDifferentArraySyntax(t *testing.T) {
+	code := `<?php
+/**
+ * @param array<Foo> $arr
+ * @param list<Foo> $arr1
+ * @param non-empty-array<Foo> $arr2
+ * @param non-empty-list<Foo> $arr3
+ * @param unknown-type-list<Foo> $arr4
+ * @param iterable<Foo> $arr5
+ */
+function f($arr, $arr1, $arr2, $arr3, $arr4, $arr5) {
+  exprtype($arr, "\Foo[]");
+  exprtype($arr1, "\Foo[]");
+  exprtype($arr2, "\Foo[]");
+  exprtype($arr3, "\Foo[]");
+  exprtype($arr4, "\Foo[]");
+  exprtype($arr5, "\Foo[]");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestArrayTypeCast(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+/**
+ * @return Foo[]
+ */
+function f() {
+  return [];
+}
+
+function f1() {
+  $a = (array) f();
+  exprtype($a, "\Foo[]|mixed[]");
+  exprtype($a[0], "\Foo|mixed");
+
+  $b = (array) 10;
+  exprtype($b, "int|mixed[]");
+
+  $c = (array) [1, "s"];
+  exprtype($c, "mixed[]");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	exprTypeTestImpl(t, params, false)
 }
@@ -2928,6 +3092,7 @@ func exprTypeTestImpl(t *testing.T, params *exprTypeTestParams, kphp bool) {
 	})
 	config.KPHP = kphp
 	l := linter.NewLinter(config)
+
 	if params.stubs != "" {
 		l.InitStubs(func(ch chan workspace.FileInfo) {
 			ch <- workspace.FileInfo{
@@ -2982,7 +3147,7 @@ func (w *exprTypeWalker) LeaveNode(n ir.Node) {}
 
 func (w *exprTypeWalker) EnterNode(n ir.Node) bool {
 	call, ok := n.(*ir.FunctionCallExpr)
-	if ok && meta.NameNodeEquals(call.Function, `exprtype`) {
+	if ok && utils.NameNodeEquals(call.Function, `exprtype`) {
 		checkedExpr := call.Arg(0).Expr
 		expectedType := call.Arg(1).Expr.(*ir.String).Value
 		actualType, ok := exprTypeResult[checkedExpr]
@@ -3016,7 +3181,7 @@ func (c *exprTypeCollector) AfterEnterNode(n ir.Node) {
 	}
 
 	call, ok := n.(*ir.FunctionCallExpr)
-	if !ok || !meta.NameNodeEquals(call.Function, `exprtype`) {
+	if !ok || !utils.NameNodeEquals(call.Function, `exprtype`) {
 		return
 	}
 	checkedExpr := call.Arg(0).Expr

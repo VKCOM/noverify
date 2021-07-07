@@ -4,9 +4,10 @@ import (
 	"path/filepath"
 
 	"github.com/VKCOM/noverify/src/baseline"
-	"github.com/VKCOM/noverify/src/linter/autogen"
+	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/quickfix"
+	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/types"
 )
 
@@ -15,10 +16,10 @@ type rootContext struct {
 
 	st *meta.ClassParseState
 
-	typeNormalizer typeNormalizer
+	typeNormalizer types.Normalizer
 
 	// shapes is a list of generated shape types for the current file.
-	shapes map[string]autogen.ShapeTypeInfo
+	shapes types.ShapesMap
 
 	baseline     baseline.FileProfile
 	hashCounters map[uint64]int // Allocated lazily
@@ -32,17 +33,17 @@ func newRootContext(config *Config, workerCtx *WorkerContext, st *meta.ClassPars
 		filename := filepath.Base(st.CurrentFile)
 		p = config.BaselineProfile.Files[filename]
 	}
+
+	classFQNProvider := func(name string) (string, bool) {
+		return solver.GetClassName(st, &ir.Name{Value: name})
+	}
+
 	return rootContext{
 		WorkerContext: workerCtx,
 
-		typeNormalizer: typeNormalizer{st: st, kphp: config.KPHP},
+		typeNormalizer: types.NewNormalizer(classFQNProvider, config.KPHP),
 		st:             st,
 		baseline:       p,
-		shapes:         map[string]autogen.ShapeTypeInfo{},
+		shapes:         types.ShapesMap{},
 	}
-}
-
-func newTypesMap(ctx *rootContext, typs []types.Type) types.Map {
-	ctx.typeNormalizer.NormalizeTypes(typs)
-	return types.NewMapFromTypes(typs)
 }

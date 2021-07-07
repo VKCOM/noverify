@@ -9,6 +9,7 @@ import (
 	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/types"
+	"github.com/VKCOM/noverify/src/utils"
 )
 
 // CustomType specifies a mapping between some AST structure
@@ -123,7 +124,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 	case *ir.PreDecExpr:
 		return unaryMathOpType(sc, cs, n.Variable, custom)
 	case *ir.TypeCastExpr:
-		return typeCastType(n)
+		return typeCastType(sc, cs, n, custom)
 	case *ir.ShiftLeftExpr, *ir.ShiftRightExpr:
 		return types.PreciseIntType
 	case *ir.ClassConstFetchExpr:
@@ -153,7 +154,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 	case *ir.CloneExpr:
 		return ExprTypeLocalCustom(sc, cs, n.Expr, custom)
 	case *ir.ClosureExpr:
-		name := autogen.GenerateClosureName(n, cs)
+		name := autogen.GenerateClosureName(n, cs.CurrentFunction, cs.CurrentFile)
 		return types.NewMap(name)
 	case *ir.MagicConstant:
 		return magicConstantType(n)
@@ -328,7 +329,7 @@ func arrayType(sc *meta.Scope, cs *meta.ClassParseState, items []*ir.ArrayItemEx
 }
 
 func newExprType(n *ir.NewExpr, cs *meta.ClassParseState) types.Map {
-	if meta.NameNodeToString(n.Class) == "static" {
+	if utils.NameNodeToString(n.Class) == "static" {
 		return types.NewMap("static")
 	}
 	nm, ok := GetClassName(cs, n.Class)
@@ -377,10 +378,11 @@ func classConstFetchType(n *ir.ClassConstFetchExpr, cs *meta.ClassParseState) ty
 	return types.NewMap(types.WrapClassConstFetch(className, n.ConstantName.Value))
 }
 
-func typeCastType(n *ir.TypeCastExpr) types.Map {
+func typeCastType(sc *meta.Scope, cs *meta.ClassParseState, n *ir.TypeCastExpr, custom []CustomType) types.Map {
 	switch n.Type {
 	case "array":
-		return types.NewMap("mixed[]")
+		typ := exprTypeLocalCustom(sc, cs, n.Expr, custom)
+		return typ.Append(types.NewMap("mixed[]"))
 	case "int":
 		return types.PreciseIntType
 	case "string":
@@ -510,7 +512,7 @@ func functionCallType(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassPars
 		}
 		return types.NewMap(types.WrapFunctionCall(cs.Namespace + `\` + nm.Value))
 	case *ir.SimpleVar:
-		cl, ok := closureTypeByNameNode(n.Function, sc, cs)
+		cl, ok := closureTypeByNameNode(n.Function, sc, cs, custom)
 		if ok {
 			return cl
 		}
@@ -526,12 +528,12 @@ func magicConstantType(n *ir.MagicConstant) types.Map {
 	return types.PreciseStringType
 }
 
-func closureTypeByNameNode(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState) (types.Map, bool) {
+func closureTypeByNameNode(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) (types.Map, bool) {
 	if !cs.Info.IsIndexingComplete() {
 		return types.Map{}, false
 	}
 
-	fi, ok := GetClosure(name, sc, cs)
+	fi, ok := GetClosure(name, sc, cs, custom)
 	if !ok {
 		return types.Map{}, false
 	}

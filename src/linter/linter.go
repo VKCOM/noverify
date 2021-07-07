@@ -13,13 +13,15 @@ import (
 type Linter struct {
 	config *Config
 
-	info *meta.Info
+	info   *meta.Info
+	checks *CheckersFilter
 }
 
 func NewLinter(config *Config) *Linter {
 	return &Linter{
 		config: config,
 		info:   meta.NewInfo(),
+		checks: NewCheckersFilterWithEnabledAll(),
 	}
 }
 
@@ -31,14 +33,18 @@ func (l *Linter) MetaInfo() *meta.Info {
 	return l.info
 }
 
+func (l *Linter) UseCheckersFilter(checks *CheckersFilter) {
+	l.checks = checks
+}
+
 func (l *Linter) NewLintingWorker(id int) *Worker {
-	w := newWorker(l.config, l.info, id)
+	w := newWorker(l.config, l.info, id, l.checks)
 	w.needReports = true
 	return w
 }
 
 func (l *Linter) NewIndexingWorker(id int) *Worker {
-	w := newWorker(l.config, l.info, id)
+	w := newWorker(l.config, l.info, id, l.checks)
 	w.needReports = false
 	return w
 }

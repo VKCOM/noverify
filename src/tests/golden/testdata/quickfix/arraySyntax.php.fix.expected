@@ -12,6 +12,8 @@ function f() {
     $_ = [];
     $_ = [1,2,];
     $_ = [1,2,3];
+    $_ = [  1,   2, 3  ]   ;
+    $_ =   [  1,   2, 3  ]   ;
     $_ = [new Foo, new Foo];
     $_ = ["info" => new Foo, new Foo];
     $_ = ["info" => new Foo, "for" => 2, "home" => function() {}];

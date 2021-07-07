@@ -1,61 +1,61 @@
-WARNING argsOrder: potentially incorrect haystack and needle arguments order at testdata/embeddedrules/argsOrder.php:5
+WARNING argsOrder: Potentially incorrect haystack and needle arguments order at testdata/embeddedrules/argsOrder.php:5
   $_ = strpos('/', $s);
        ^^^^^^^^^^^^^^^
-WARNING argsOrder: potentially incorrect haystack and needle arguments order at testdata/embeddedrules/argsOrder.php:6
+WARNING argsOrder: Potentially incorrect haystack and needle arguments order at testdata/embeddedrules/argsOrder.php:6
   $_ = strpos("/", $s);
        ^^^^^^^^^^^^^^^
-WARNING argsOrder: potentially incorrect haystack and needle arguments order at testdata/embeddedrules/argsOrder.php:21
+WARNING argsOrder: Potentially incorrect haystack and needle arguments order at testdata/embeddedrules/argsOrder.php:21
   $_ = stripos('/', $s);
        ^^^^^^^^^^^^^^^^
-WARNING argsOrder: potentially incorrect haystack and needle arguments order at testdata/embeddedrules/argsOrder.php:22
+WARNING argsOrder: Potentially incorrect haystack and needle arguments order at testdata/embeddedrules/argsOrder.php:22
   $_ = stripos("/", $s);
        ^^^^^^^^^^^^^^^^
-WARNING argsOrder: potentially incorrect replacement and subject arguments order at testdata/embeddedrules/argsOrder.php:32
+WARNING argsOrder: Potentially incorrect replacement and subject arguments order at testdata/embeddedrules/argsOrder.php:32
   $_ = preg_replace($pat, $subj, 'replacement');
        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING argsOrder: potentially incorrect delimiter and string arguments order at testdata/embeddedrules/argsOrder.php:41
+WARNING argsOrder: Potentially incorrect delimiter and string arguments order at testdata/embeddedrules/argsOrder.php:41
   $_ = explode($s, '/');
        ^^^^^^^^^^^^^^^^
-WARNING argsOrder: potentially incorrect replace and string arguments order at testdata/embeddedrules/argsOrder.php:50
+WARNING argsOrder: Potentially incorrect replace and string arguments order at testdata/embeddedrules/argsOrder.php:50
   $_ = str_replace($search, $subj, ' ');
        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING argsOrder: potentially incorrect replace and string arguments order at testdata/embeddedrules/argsOrder.php:51
+WARNING argsOrder: Potentially incorrect replace and string arguments order at testdata/embeddedrules/argsOrder.php:51
   $_ = str_replace($search, $subj, '');
        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   assignOp: could rewrite as `$a += $b` at testdata/embeddedrules/assignOp.php:6
+MAYBE   assignOp: Could rewrite as `$a += $b` at testdata/embeddedrules/assignOp.php:6
   $a = $a + $b; // Could rewrite
   ^^^^^^^^^^^^
-MAYBE   assignOp: could rewrite as `$a -= $b` at testdata/embeddedrules/assignOp.php:13
+MAYBE   assignOp: Could rewrite as `$a -= $b` at testdata/embeddedrules/assignOp.php:13
   $a = $a - $b; // Could rewrite
   ^^^^^^^^^^^^
-MAYBE   assignOp: could rewrite as `$a *= $b` at testdata/embeddedrules/assignOp.php:20
+MAYBE   assignOp: Could rewrite as `$a *= $b` at testdata/embeddedrules/assignOp.php:20
   $a = $a * $b; // Could rewrite
   ^^^^^^^^^^^^
-MAYBE   assignOp: could rewrite as `$a /= $b` at testdata/embeddedrules/assignOp.php:27
+MAYBE   assignOp: Could rewrite as `$a /= $b` at testdata/embeddedrules/assignOp.php:27
   $a = $a / $b; // Could rewrite
   ^^^^^^^^^^^^
-MAYBE   assignOp: could rewrite as `$a %= $b` at testdata/embeddedrules/assignOp.php:34
+MAYBE   assignOp: Could rewrite as `$a %= $b` at testdata/embeddedrules/assignOp.php:34
   $a = $a % $b; // Could rewrite
   ^^^^^^^^^^^^
-MAYBE   assignOp: could rewrite as `$a .= $b` at testdata/embeddedrules/assignOp.php:41
+MAYBE   assignOp: Could rewrite as `$a .= $b` at testdata/embeddedrules/assignOp.php:41
   $a = $a . $b; // Could rewrite
   ^^^^^^^^^^^^
-MAYBE   assignOp: could rewrite as `$a &= $b` at testdata/embeddedrules/assignOp.php:48
+MAYBE   assignOp: Could rewrite as `$a &= $b` at testdata/embeddedrules/assignOp.php:48
   $a = $a & $b; // Could rewrite
   ^^^^^^^^^^^^
-MAYBE   assignOp: could rewrite as `$a |= $b` at testdata/embeddedrules/assignOp.php:55
+MAYBE   assignOp: Could rewrite as `$a |= $b` at testdata/embeddedrules/assignOp.php:55
   $a = $a | $b; // Could rewrite
   ^^^^^^^^^^^^
-MAYBE   assignOp: could rewrite as `$a ^= $b` at testdata/embeddedrules/assignOp.php:62
+MAYBE   assignOp: Could rewrite as `$a ^= $b` at testdata/embeddedrules/assignOp.php:62
   $a = $a ^ $b; // Could rewrite
   ^^^^^^^^^^^^
-MAYBE   assignOp: could rewrite as `$a <<= $b` at testdata/embeddedrules/assignOp.php:69
+MAYBE   assignOp: Could rewrite as `$a <<= $b` at testdata/embeddedrules/assignOp.php:69
   $a = $a << $b; // Could rewrite
   ^^^^^^^^^^^^^
-MAYBE   assignOp: could rewrite as `$a >>= $b` at testdata/embeddedrules/assignOp.php:76
+MAYBE   assignOp: Could rewrite as `$a >>= $b` at testdata/embeddedrules/assignOp.php:76
   $a = $a >> $b; // Could rewrite
   ^^^^^^^^^^^^^
-MAYBE   assignOp: could rewrite as `$a ??= $b` at testdata/embeddedrules/assignOp.php:83
+MAYBE   assignOp: Could rewrite as `$a ??= $b` at testdata/embeddedrules/assignOp.php:83
   $a = $a ?? $b; // Could rewrite
   ^^^^^^^^^^^^^
 WARNING bitwiseOps: Used & bitwise operator over bool operands, perhaps && is intended? at testdata/embeddedrules/bitwiseOps.php:8
@@ -94,67 +94,67 @@ $_ = $b{0};
 WARNING indexingSyntax: a{i} indexing is deprecated since PHP 7.4, use a[i] instead at testdata/embeddedrules/indexingSyntax.php:7
 $_ = $b[0]{0};
      ^^^^^^^^
-WARNING intNeedle: since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:21
+WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:21
 $_ = strpos($str, 10);
      ^^^^^^^^^^^^^^^^
-WARNING intNeedle: since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:22
+WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:22
 $_ = strpos($str, getInt());
      ^^^^^^^^^^^^^^^^^^^^^^
-WARNING intNeedle: since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:27
+WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:27
 $_ = strrpos($str, 10);
      ^^^^^^^^^^^^^^^^^
-WARNING intNeedle: since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:28
+WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:28
 $_ = strrpos($str, getInt());
      ^^^^^^^^^^^^^^^^^^^^^^^
-WARNING intNeedle: since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:33
+WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:33
 $_ = stripos($str, 10);
      ^^^^^^^^^^^^^^^^^
-WARNING intNeedle: since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:34
+WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:34
 $_ = stripos($str, getInt());
      ^^^^^^^^^^^^^^^^^^^^^^^
-WARNING intNeedle: since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:39
+WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:39
 $_ = strripos($str, 10);
      ^^^^^^^^^^^^^^^^^^
-WARNING intNeedle: since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:40
+WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:40
 $_ = strripos($str, getInt());
      ^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING intNeedle: since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:45
+WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:45
 $_ = strstr($str, 10);
      ^^^^^^^^^^^^^^^^
-WARNING intNeedle: since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:46
+WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:46
 $_ = strstr($str, getInt());
      ^^^^^^^^^^^^^^^^^^^^^^
-WARNING intNeedle: since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:51
+WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:51
 $_ = strchr($str, 10);
      ^^^^^^^^^^^^^^^^
-WARNING intNeedle: since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:52
+WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:52
 $_ = strchr($str, getInt());
      ^^^^^^^^^^^^^^^^^^^^^^
-WARNING intNeedle: since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:57
+WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:57
 $_ = strrchr($str, 10);
      ^^^^^^^^^^^^^^^^^
-WARNING intNeedle: since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:58
+WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:58
 $_ = strrchr($str, getInt());
      ^^^^^^^^^^^^^^^^^^^^^^^
-WARNING intNeedle: since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:63
+WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:63
 $_ = stristr($str, 10);
      ^^^^^^^^^^^^^^^^^
-WARNING intNeedle: since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:64
+WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:64
 $_ = stristr($str, getInt());
      ^^^^^^^^^^^^^^^^^^^^^^^
-WARNING langDeprecated: since PHP 7.3.0, the definition of case insensitive constants has been deprecated at testdata/embeddedrules/langDeprecated.php:3
+WARNING langDeprecated: Since PHP 7.3, the definition of case insensitive constants has been deprecated at testdata/embeddedrules/langDeprecated.php:3
 define("Z_CONST", 1, true);
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING langDeprecated: define defaults to a case sensitive constant, the third argument can be removed at testdata/embeddedrules/langDeprecated.php:4
+WARNING langDeprecated: Define defaults to a case sensitive constant, the third argument can be removed at testdata/embeddedrules/langDeprecated.php:4
 define("Z_CONST1", 2, false);
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING offBy1: probably intended to use count-1 as an index at testdata/embeddedrules/offBy1.php:11
+WARNING offBy1: Probably intended to use count-1 as an index at testdata/embeddedrules/offBy1.php:11
   $_ = $xs[count($xs)];
        ^^^^^^^^^^^^^^^
-WARNING offBy1: probably intended to use sizeof-1 as an index at testdata/embeddedrules/offBy1.php:12
+WARNING offBy1: Probably intended to use sizeof-1 as an index at testdata/embeddedrules/offBy1.php:12
   $_ = $xs[sizeof($xs)];
        ^^^^^^^^^^^^^^^^
-WARNING offBy1: probably intended to use count-1 as an index at testdata/embeddedrules/offBy1.php:14
+WARNING offBy1: Probably intended to use count-1 as an index at testdata/embeddedrules/offBy1.php:14
   if ($tabs[count($tabs)] == "") {
       ^^^^^^^^^^^^^^^^^^^
 WARNING precedence: == has higher precedence than & at testdata/embeddedrules/precedence.php:4
@@ -229,22 +229,22 @@ WARNING precedence: === has higher precedence than | at testdata/embeddedrules/p
 WARNING precedence: !== has higher precedence than | at testdata/embeddedrules/precedence.php:33
   $_ = $x | $mask !== 0;
        ^^^^^^^^^^^^^^^^
-WARNING strictCmp: non-strict comparison (use ===) at testdata/embeddedrules/strictCmp.php:6
+WARNING strictCmp: Non-strict comparison (use ===) at testdata/embeddedrules/strictCmp.php:6
   $_ = ($x == false);
         ^^^^^^^^^^^
-WARNING strictCmp: non-strict comparison (use ===) at testdata/embeddedrules/strictCmp.php:7
+WARNING strictCmp: Non-strict comparison (use ===) at testdata/embeddedrules/strictCmp.php:7
   $_ = (false == $x);
         ^^^^^^^^^^^
-WARNING strictCmp: non-strict comparison (use ===) at testdata/embeddedrules/strictCmp.php:8
+WARNING strictCmp: Non-strict comparison (use ===) at testdata/embeddedrules/strictCmp.php:8
   $_ = ($x == true);
         ^^^^^^^^^^
-WARNING strictCmp: non-strict comparison (use ===) at testdata/embeddedrules/strictCmp.php:9
+WARNING strictCmp: Non-strict comparison (use ===) at testdata/embeddedrules/strictCmp.php:9
   $_ = (true == $x);
         ^^^^^^^^^^
-WARNING strictCmp: non-strict comparison (use ===) at testdata/embeddedrules/strictCmp.php:10
+WARNING strictCmp: Non-strict comparison (use ===) at testdata/embeddedrules/strictCmp.php:10
   $_ = ($x == null);
         ^^^^^^^^^^
-WARNING strictCmp: non-strict comparison (use ===) at testdata/embeddedrules/strictCmp.php:11
+WARNING strictCmp: Non-strict comparison (use ===) at testdata/embeddedrules/strictCmp.php:11
   $_ = (null == $x);
         ^^^^^^^^^^
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/embeddedrules/strictCmp.php:25
@@ -259,54 +259,54 @@ WARNING strictCmp: 3rd argument of array_search must be true when comparing stri
 WARNING strictCmp: 3rd argument of array_search must be true when comparing strings at testdata/embeddedrules/strictCmp.php:28
   $_ = array_search(retString(), $a);
        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING strictCmp: non-strict comparison (use !==) at testdata/embeddedrules/strictCmp.php:15
+WARNING strictCmp: Non-strict comparison (use !==) at testdata/embeddedrules/strictCmp.php:15
 $_ = (nonStrictComparison(0) != false);
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING strictCmp: non-strict comparison (use !==) at testdata/embeddedrules/strictCmp.php:16
+WARNING strictCmp: Non-strict comparison (use !==) at testdata/embeddedrules/strictCmp.php:16
 $_ = (false != nonStrictComparison(0));
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING strictCmp: non-strict comparison (use !==) at testdata/embeddedrules/strictCmp.php:17
+WARNING strictCmp: Non-strict comparison (use !==) at testdata/embeddedrules/strictCmp.php:17
 $_ = (nonStrictComparison(0) != true);
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING strictCmp: non-strict comparison (use !==) at testdata/embeddedrules/strictCmp.php:18
+WARNING strictCmp: Non-strict comparison (use !==) at testdata/embeddedrules/strictCmp.php:18
 $_ = (true != nonStrictComparison(0));
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING strictCmp: non-strict comparison (use !==) at testdata/embeddedrules/strictCmp.php:19
+WARNING strictCmp: Non-strict comparison (use !==) at testdata/embeddedrules/strictCmp.php:19
 $_ = (nonStrictComparison(0) != null);
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING strictCmp: non-strict comparison (use !==) at testdata/embeddedrules/strictCmp.php:20
+WARNING strictCmp: Non-strict comparison (use !==) at testdata/embeddedrules/strictCmp.php:20
 $_ = (null != nonStrictComparison(0));
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `(bool)$x` at testdata/embeddedrules/ternarySimplify.php:6
+MAYBE   ternarySimplify: Could rewrite as `(bool)$x` at testdata/embeddedrules/ternarySimplify.php:6
     sink($x ? true : false);
          ^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could replace the ternary with just $x > $y at testdata/embeddedrules/ternarySimplify.php:9
+MAYBE   ternarySimplify: Could replace the ternary with just $x > $y at testdata/embeddedrules/ternarySimplify.php:9
     sink($x > $y ? true : false);
          ^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$x ?: $y` at testdata/embeddedrules/ternarySimplify.php:12
+MAYBE   ternarySimplify: Could rewrite as `$x ?: $y` at testdata/embeddedrules/ternarySimplify.php:12
     sink($x ? $x : $y);
          ^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$x[1] ?? $y` at testdata/embeddedrules/ternarySimplify.php:15
+MAYBE   ternarySimplify: Could rewrite as `$x[1] ?? $y` at testdata/embeddedrules/ternarySimplify.php:15
     sink(isset($x[1]) ? $x[1] : $y);
          ^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$x_arr[10] ?? $y` at testdata/embeddedrules/ternarySimplify.php:22
+MAYBE   ternarySimplify: Could rewrite as `$x_arr[10] ?? $y` at testdata/embeddedrules/ternarySimplify.php:22
     sink($x_arr[10] !== null ? $x_arr[10] : $y);
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$x_arr[10] ?? $y` at testdata/embeddedrules/ternarySimplify.php:23
+MAYBE   ternarySimplify: Could rewrite as `$x_arr[10] ?? $y` at testdata/embeddedrules/ternarySimplify.php:23
     sink(null !== $x_arr[10] ? $x_arr[10] : $y);
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$x_arr[10] ?? $y` at testdata/embeddedrules/ternarySimplify.php:24
+MAYBE   ternarySimplify: Could rewrite as `$x_arr[10] ?? $y` at testdata/embeddedrules/ternarySimplify.php:24
     sink($x_arr[10] === null ? $y : $x_arr[10]);
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$x_arr[10] ?? $y` at testdata/embeddedrules/ternarySimplify.php:25
+MAYBE   ternarySimplify: Could rewrite as `$x_arr[10] ?? $y` at testdata/embeddedrules/ternarySimplify.php:25
     sink(null === $x_arr[10] ? $y : $x_arr[10]);
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$x_arr[10] ?? null` at testdata/embeddedrules/ternarySimplify.php:27
+MAYBE   ternarySimplify: Could rewrite as `$x_arr[10] ?? null` at testdata/embeddedrules/ternarySimplify.php:27
     sink(array_key_exists(10, $x_arr) ? $x_arr[10] : null);
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `$x_arr[10] ?? null` at testdata/embeddedrules/ternarySimplify.php:28
+MAYBE   ternarySimplify: Could rewrite as `$x_arr[10] ?? null` at testdata/embeddedrules/ternarySimplify.php:28
     sink(! array_key_exists(10, $x_arr) ? null : $x_arr[10]);
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   ternarySimplify: could rewrite as `(bool)($flags & SOME_MASK)` at testdata/embeddedrules/ternarySimplify.php:46
+MAYBE   ternarySimplify: Could rewrite as `(bool)($flags & SOME_MASK)` at testdata/embeddedrules/ternarySimplify.php:46
     sink(($flags & SOME_MASK) ? true : false);
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

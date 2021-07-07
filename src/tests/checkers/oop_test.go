@@ -118,8 +118,32 @@ abstract class AC {
 $x = new AC();
 `)
 	test.Expect = []string{
-		`Cannot instantiate abstract class`,
-		`Cannot instantiate abstract class`,
+		`Cannot instantiate abstract class \AC`,
+		`Cannot instantiate abstract class \AC`,
+	}
+	test.RunAndMatch()
+}
+
+func TestNewInterface(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+interface IElement {}
+$x = new IElement;
+`)
+	test.Expect = []string{
+		`Cannot instantiate interface \IElement`,
+	}
+	test.RunAndMatch()
+}
+
+func TestNewTrait(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+trait Element {}
+$x = new Element;
+`)
+	test.Expect = []string{
+		`Cannot instantiate trait \Element`,
 	}
 	test.RunAndMatch()
 }
@@ -757,7 +781,7 @@ func TestClosureLateBinding(t *testing.T) {
 	})();
 	`)
 	test.Expect = []string{
-		"Undefined variable: a",
+		"Undefined variable $a",
 		"Call to undefined method {undefined}->method()",
 	}
 	linttest.RunFilterMatch(test, "undefined")
@@ -1447,7 +1471,7 @@ class Bar {
 `)
 	test.Expect = []string{
 		`Call to undefined method {\BarWithSomeMixin}->method3()`,
-		`line 4: @mixin tag refers to unknown class \Boo`,
+		`Line 4: @mixin tag refers to unknown class \Boo`,
 	}
 	test.RunAndMatch()
 }
