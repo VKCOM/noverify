@@ -10,7 +10,6 @@ import (
 
 type varToReplace struct {
 	Node          ir.Node
-	Type          types.Map
 	TypesToDelete []string
 }
 
@@ -121,7 +120,6 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 
 				a.varsToReplace = append(a.varsToReplace, varToReplace{
 					Node:          varNode,
-					Type:          currentType,
 					TypesToDelete: []string{className},
 				})
 
