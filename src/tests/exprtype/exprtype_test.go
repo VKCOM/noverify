@@ -3046,6 +3046,32 @@ function f($arr, $arr1, $arr2, $arr3, $arr4, $arr5) {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestArrayTypeCast(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+/**
+ * @return Foo[]
+ */
+function f() {
+  return [];
+}
+
+function f1() {
+  $a = (array) f();
+  exprtype($a, "\Foo[]|mixed[]");
+  exprtype($a[0], "\Foo|mixed");
+
+  $b = (array) 10;
+  exprtype($b, "int|mixed[]");
+
+  $c = (array) [1, "s"];
+  exprtype($c, "mixed[]");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	exprTypeTestImpl(t, params, false)
 }
