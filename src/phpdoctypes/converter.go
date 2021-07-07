@@ -88,6 +88,7 @@ func (conv *TypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
 
 		isArray := typ.Value == "array" ||
 			typ.Value == "list" ||
+			typ.Value == "iterable" ||
 			strings.Contains(typ.Value, "-")
 
 		if isArray {
