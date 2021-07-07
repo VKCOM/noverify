@@ -165,10 +165,13 @@ func (w *Worker) parseWithCache(cacheFilename string, file workspace.FileInfo) e
 func (w *Worker) IndexFile(file workspace.FileInfo) error {
 	if w.config.CacheDir == "" {
 		result, err := w.ParseContents(file)
+		if err != nil {
+			return err
+		}
 		if w != nil {
 			updateMetaInfo(w.info, file.Name, &result.walker.meta)
 		}
-		return err
+		return nil
 	}
 
 	h := md5.New()

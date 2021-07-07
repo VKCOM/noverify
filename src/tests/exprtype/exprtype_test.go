@@ -3020,6 +3020,15 @@ function f9(callable $s) {
   $a = $s(10, "ss");
   exprtype($a, "mixed");
 }
+
+/**
+ * @param callable(int, string): Foo $s
+ */
+function f10(callable $s) {
+  if ($s() instanceof Boo) {
+    exprtype($s(), "\Boo");
+  }
+}
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
