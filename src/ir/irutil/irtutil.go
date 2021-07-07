@@ -39,6 +39,16 @@ func NodeSliceEqual(xs, ys []ir.Node) bool {
 	return true
 }
 
+func InLoop(path NodePath) bool {
+	for i := 0; path.NthParent(i) != nil; i++ {
+		cur := path.NthParent(i)
+		if IsLoop(cur) {
+			return true
+		}
+	}
+	return false
+}
+
 func IsAssign(n ir.Node) bool {
 	switch n.(type) {
 	case *ir.Assign,
@@ -56,6 +66,18 @@ func IsAssign(n ir.Node) bool {
 		*ir.AssignMod,
 		*ir.AssignMul,
 		*ir.AssignCoalesce:
+		return true
+	default:
+		return false
+	}
+}
+
+func IsLoop(n ir.Node) bool {
+	switch n.(type) {
+	case *ir.ForStmt,
+		*ir.ForeachStmt,
+		*ir.WhileStmt,
+		*ir.DoStmt:
 		return true
 	default:
 		return false

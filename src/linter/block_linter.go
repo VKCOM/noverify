@@ -268,8 +268,7 @@ func (b *blockLinter) checkTypeCaseExpr(n *ir.TypeCastExpr) {
 	// We cannot use the value directly, since for real it is equal to float,
 	// so we have to use the token value.
 	if bytes.EqualFold(n.CastTkn.Value, []byte("(real)")) {
-		b.report(n, LevelNotice, "langDeprecated",
-			"use float cast instead of real")
+		b.report(n, LevelNotice, "langDeprecated", "Use float cast instead of real")
 	}
 }
 
@@ -283,7 +282,7 @@ func (b *blockLinter) checkNopStmt(n *ir.NopStmt) {
 		return
 	}
 
-	b.report(n, LevelNotice, "emptyStmt", "semicolon (;) is not needed here, it can be safely removed")
+	b.report(n, LevelNotice, "emptyStmt", "Semicolon (;) is not needed here, it can be safely removed")
 }
 
 func (b *blockLinter) checkCoalesceExpr(n *ir.CoalesceExpr) {
@@ -342,17 +341,17 @@ func (b *blockLinter) checkCatchOrder(s *ir.TryStmt) {
 		add := true
 		for _, otherClass := range classes {
 			if class == otherClass {
-				b.report(c.Types[0], LevelWarning, "dupCatch", "duplicated catch on %s", class)
+				b.report(c.Types[0], LevelWarning, "dupCatch", "Duplicated catch on %s", class)
 				add = false
 				break
 			}
 			if solver.Extends(b.metaInfo(), class, otherClass) {
-				b.report(c.Types[0], LevelWarning, "catchOrder", "catch %s block will never run as it extends %s which is caught above", class, otherClass)
+				b.report(c.Types[0], LevelWarning, "catchOrder", "Catch %s block will never run as it extends %s which is caught above", class, otherClass)
 				add = false
 				break
 			}
 			if solver.Implements(b.metaInfo(), class, otherClass) {
-				b.report(c.Types[0], LevelWarning, "catchOrder", "catch %s block will never run as it implements %s which is caught above", class, otherClass)
+				b.report(c.Types[0], LevelWarning, "catchOrder", "Catch %s block will never run as it implements %s which is caught above", class, otherClass)
 				add = false
 				break
 			}
@@ -387,21 +386,21 @@ func (b *blockLinter) checkBinaryDupArgs(n, left, right ir.Node) {
 		return
 	}
 	if nodeEqual(b.classParseState(), left, right) {
-		b.report(n, LevelWarning, "dupSubExpr", "duplicated operands value in %s expression", binaryOpString(n))
+		b.report(n, LevelWarning, "dupSubExpr", "Duplicated operands value in %s expression", binaryOpString(n))
 	}
 }
 
 // checkVoidType reports if node has void type
 func (b *blockLinter) checkVoidType(n ir.Node) {
 	if b.walker.exprType(n).Is("void") {
-		b.report(n, LevelNotice, "voidResultUsed", "void function result used")
+		b.report(n, LevelNotice, "voidResultUsed", "Void function result used")
 	}
 }
 
 func (b *blockLinter) checkRedundantCastArray(e ir.Node) {
 	typ := b.walker.exprType(e)
 	if typ.Len() == 1 && typ.Is("mixed[]") {
-		b.report(e, LevelNotice, "redundantCast", "expression already has array type")
+		b.report(e, LevelNotice, "redundantCast", "Expression already has array type")
 	}
 }
 
@@ -412,8 +411,7 @@ func (b *blockLinter) checkRedundantCast(e ir.Node, dstType string) {
 	}
 	typ.Iterate(func(x string) {
 		if x == dstType {
-			b.report(e, LevelNotice, "redundantCast",
-				"expression already has %s type", dstType)
+			b.report(e, LevelNotice, "redundantCast", "Expression already has %s type", dstType)
 		}
 	})
 }
@@ -445,8 +443,16 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 
 	class, ok := b.metaInfo().GetClass(className)
 	if !ok {
-		b.walker.r.reportUndefinedType(e.Class, className)
+		class, ok = b.metaInfo().GetTrait(className)
+		if ok {
+			b.report(e.Class, LevelError, "invalidNew", "Cannot instantiate trait %s", class.Name)
+		} else {
+			b.walker.r.reportUndefinedType(e.Class, className)
+		}
 	} else {
+		if class.IsInterface() {
+			b.report(e.Class, LevelError, "invalidNew", "Cannot instantiate interface %s", class.Name)
+		}
 		b.walker.r.checkNameCase(e.Class, className, class.Name)
 	}
 
@@ -454,7 +460,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 	// resolve to something else due to the late static binding,
 	// so it's the only exception to that rule.
 	if class.IsAbstract() && !utils.NameNodeEquals(e.Class, "static") {
-		b.report(e.Class, LevelError, "newAbstract", "Cannot instantiate abstract class")
+		b.report(e.Class, LevelError, "newAbstract", "Cannot instantiate abstract class %s", class.Name)
 	}
 
 	// Check implicitly invoked constructor method arguments count.
@@ -492,7 +498,7 @@ func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 	}
 
 	if report {
-		b.report(s.Expr, LevelWarning, "discardExpr", "expression evaluated but not used")
+		b.report(s.Expr, LevelWarning, "discardExpr", "Expression evaluated but not used")
 	}
 }
 
@@ -522,12 +528,12 @@ func (b *blockLinter) checkTernary(e *ir.TernaryExpr) {
 
 	_, nestedTernary := e.Condition.(*ir.TernaryExpr)
 	if nestedTernary {
-		b.report(e.Condition, LevelWarning, "nestedTernary", "in ternary operators, you must explicitly use parentheses to specify the order of operations")
+		b.report(e.Condition, LevelWarning, "nestedTernary", "Explicitly specify the order of operations for the ternary operator using parentheses")
 	}
 
 	// Check for `$cond ? $x : $x` which makes no sense.
 	if irutil.NodeEqual(e.IfTrue, e.IfFalse) {
-		b.report(e, LevelWarning, "dupBranchBody", "then/else operands are identical")
+		b.report(e, LevelWarning, "dupBranchBody", "Branches for true and false have the same operands, ternary operator is meaningless")
 	}
 }
 
@@ -623,7 +629,7 @@ func (b *blockLinter) checkIfStmt(s *ir.IfStmt) {
 		x := s.Stmt
 		y := s.Else.(*ir.ElseStmt).Stmt
 		if irutil.NodeEqual(x, y) {
-			b.report(s, LevelWarning, "dupBranchBody", "duplicated if/else actions")
+			b.report(s, LevelWarning, "dupBranchBody", "Duplicated if/else actions")
 		}
 	}
 
@@ -658,7 +664,13 @@ func (b *blockLinter) checkIntOverflow(num *ir.Dnumber) {
 func (b *blockLinter) checkContinueStmt(c *ir.ContinueStmt) {
 	b.walker.r.checkKeywordCase(c, "continue")
 	if c.Expr == nil && b.walker.ctx.innermostLoop == loopSwitch {
-		b.report(c, LevelError, "caseContinue", "'continue' inside switch is 'break'")
+		inLoop := irutil.InLoop(b.walker.path)
+		msg := "Use 'break' instead of 'continue' in switch"
+		if inLoop {
+			msg = "Use 'break' instead of 'continue' or 'continue 2' to continue the loop around switch"
+		}
+
+		b.report(c, LevelError, "caseContinue", msg)
 	}
 }
 
@@ -684,7 +696,7 @@ func (b *blockLinter) addFixForArray(arr *ir.ArrayExpr) {
 
 func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 	if !arr.ShortSyntax {
-		b.report(arr, LevelNotice, "arraySyntax", "Use of old array syntax (use short form instead)")
+		b.report(arr, LevelNotice, "arraySyntax", "Use the short form '[]' instead of the old 'array()'")
 		b.addFixForArray(arr)
 	}
 
@@ -806,7 +818,7 @@ func (b *blockLinter) checkMultilineArrayTrailingComma(item *ir.ArrayItemExpr) {
 
 	itemText := src[from : to+1]
 	if itemText[len(itemText)-1] != ',' && itemText[len(itemText)-1] != ']' {
-		b.report(item, LevelNotice, "trailingComma", "last element in a multi-line array must have a trailing comma")
+		b.report(item, LevelNotice, "trailingComma", "Last element in a multi-line array should have a trailing comma")
 		b.addFixForMultilineArrayTrailingComma(item)
 	}
 }
@@ -887,7 +899,7 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 		// TODO: handle fprintf as well?
 		b.checkFormatString(e, e.Arg(0))
 	case `\is_real`:
-		b.report(e, LevelNotice, "langDeprecated", "use is_float function instead of is_real")
+		b.report(e, LevelNotice, "langDeprecated", "Use is_float function instead of is_real")
 	case `\array_key_exists`:
 		b.checkArrayKeyExistsCall(e)
 	case `\random_int`:

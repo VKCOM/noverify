@@ -10,16 +10,16 @@ MAYBE   typeHint: Specify the type for the parameter $Component in PHPDoc, 'arra
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:428
     protected function blockCommentContinue($Line, array $Block)
                        ^^^^^^^^^^^^^^^^^^^^
-MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:560
+MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:560
                 'handler' => array(
                 ^
 MAYBE   typeHint: Specify the type for the parameter $CurrentBlock in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:574
     protected function blockList($Line, array $CurrentBlock = null)
                        ^^^^^^^^^
-MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:633
+MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:633
                     'destination' => 'elements'
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:630
+MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:630
                 'handler' => array(
                 ^
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:643
@@ -28,10 +28,10 @@ MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' t
 MAYBE   ternarySimplify: Could rewrite as `$matches[1] ?? ''` at testdata/parsedown/parsedown.php:674
             $text = isset($matches[1]) ? $matches[1] : '';
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:683
+MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:683
                     'destination' => 'elements'
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:680
+MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:680
                 'handler' => array(
                 ^
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:729
@@ -40,7 +40,7 @@ MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' t
 MAYBE   regexpSimplify: May re-write '/^>[ ]?+(.*+)/' as '/^> ?+(.*+)/' at testdata/parsedown/parsedown.php:750
         if (preg_match('/^>[ ]?+(.*+)/', $Line['text'], $matches))
                        ^^^^^^^^^^^^^^^^
-MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:755
+MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:755
                     'handler' => array(
                     ^
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:767
@@ -67,13 +67,13 @@ MAYBE   ternarySimplify: Could rewrite as `$matches[3] ?? null` at testdata/pars
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:897
     protected function blockTable($Line, array $Block = null)
                        ^^^^^^^^^^
-MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:973
+MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:973
                 'handler' => array(
                 ^
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1020
     protected function blockTableContinue($Line, array $Block)
                        ^^^^^^^^^^^^^^^^^^
-MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:1046
+MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:1046
                     'handler' => array(
                     ^
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1093
@@ -82,7 +82,7 @@ MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' t
 MAYBE   regexpSimplify: May re-write '/[ ]*+\n/' as '/ *+\n/' at testdata/parsedown/parsedown.php:1265
             $text = preg_replace('/[ ]*+\n/', ' ', $text);
                                  ^^^^^^^^^^^
-MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:1333
+MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:1333
                 'handler' => array(
                 ^
 MAYBE   regexpSimplify: May re-write '/^[(]\s*+((?:[^ ()]++|[(][^ )]+[)])++)(?:[ ]+("[^"]*+"|\'[^\']*+\'))?\s*+[)]/' as '/^[(]\s*+((?:[^ ()]++|[(][^ )]+[)])++)(?: +("[^"]*+"|'[^']*+'))?\s*+[)]/' at testdata/parsedown/parsedown.php:1421
@@ -94,7 +94,7 @@ MAYBE   regexpSimplify: May re-write '/^<\/\w[\w-]*+[ ]*+>/s' as '/^<\/\w[\w-]*+
 MAYBE   callSimplify: Could simplify to $Excerpt['text'][1] at testdata/parsedown/parsedown.php:1497
         if (substr($Excerpt['text'], 1, 1) !== ' ' and strpos($Excerpt['text'], ';') !== false
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   trailingComma: last element in a multi-line array must have a trailing comma at testdata/parsedown/parsedown.php:1522
+MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:1522
                     'handler' => array(
                     ^
 MAYBE   regexpSimplify: May re-write '/\bhttps?+:[\/]{2}[^\s<]+\b\/*+/ui' as '~\bhttps?+:/{2}[^\s<]+\b/*+~ui' at testdata/parsedown/parsedown.php:1540

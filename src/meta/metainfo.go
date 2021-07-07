@@ -133,6 +133,7 @@ const (
 	ClassAbstract ClassFlags = 1 << iota
 	ClassFinal
 	ClassShape
+	ClassInterface
 )
 
 type ClassInfo struct {
@@ -149,14 +150,16 @@ type ClassInfo struct {
 	Mixins           []string
 }
 
-func (info *ClassInfo) IsAbstract() bool { return info.Flags&ClassAbstract != 0 }
-func (info *ClassInfo) IsShape() bool    { return info.Flags&ClassShape != 0 }
+func (info *ClassInfo) IsAbstract() bool  { return info.Flags&ClassAbstract != 0 }
+func (info *ClassInfo) IsShape() bool     { return info.Flags&ClassShape != 0 }
+func (info *ClassInfo) IsInterface() bool { return info.Flags&ClassInterface != 0 }
 
 // TODO: rename it; it's not only class-related.
 type ClassParseState struct {
 	Info *Info
 
 	IsTrait                 bool
+	IsInterface             bool
 	Namespace               string
 	FunctionUses            map[string]string
 	Uses                    map[string]string

@@ -17,6 +17,7 @@ namespace A;
  * @see B\ABClass;
  * @see BACK-134
  * @see #4393
+ * @see RFC: Generic Types and Functions
  */
 function f() {
 }
@@ -131,11 +132,11 @@ class BadClass {
 `)
 
 	test.Expect = []string{
-		`line 2: @see tag refers to unknown symbol \NonExisting::class`,
-		`line 2: @see tag refers to unknown symbol HolyHandGrenade::hallelujah`,
-		`line 2: @see tag refers to unknown symbol CONST43`,
-		`line 2: @see tag refers to unknown symbol invalid1`,
-		`line 2: @see tag refers to unknown symbol invalid2`,
+		`Line 2: @see tag refers to unknown symbol \NonExisting::class`,
+		`Line 2: @see tag refers to unknown symbol HolyHandGrenade::hallelujah`,
+		`Line 2: @see tag refers to unknown symbol CONST43`,
+		`Line 2: @see tag refers to unknown symbol invalid1`,
+		`Line 2: @see tag refers to unknown symbol invalid2`,
 	}
 	linttest.RunFilterMatch(test, "phpdocRef")
 }
@@ -177,8 +178,8 @@ class Foo extends FooAbstract {
 function f() {}
 `)
 	test.Expect = []string{
-		`line 6: @see tag refers to unknown symbol TYPE_TEXT_UNDEFINED`,
-		`line 2: @see tag refers to unknown symbol TYPE_TEXT`,
+		`Line 6: @see tag refers to unknown symbol TYPE_TEXT_UNDEFINED`,
+		`Line 2: @see tag refers to unknown symbol TYPE_TEXT`,
 	}
 	linttest.RunFilterMatch(test, "phpdocRef")
 }

@@ -85,7 +85,13 @@ func (conv *TypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
 	case phpdoc.ExprGeneric:
 		typ := e.Args[0]
 		params := e.Args[1:]
-		if typ.Value == "array" {
+
+		isArray := typ.Value == "array" ||
+			typ.Value == "list" ||
+			typ.Value == "iterable" ||
+			strings.Contains(typ.Value, "-")
+
+		if isArray {
 			if e.Shape == phpdoc.ShapeGenericBrace {
 				return conv.mapShapeType(params)
 			}
