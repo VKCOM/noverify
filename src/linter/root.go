@@ -1327,6 +1327,12 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 			for _, warning := range converted.Warnings {
 				errors.pushType("%s on line %d", warning, part.Line())
 			}
+
+			returnType := types.NewMapWithNormalization(d.ctx.typeNormalizer, converted.Types)
+
+			if returnType.Contains("void") && returnType.Len() > 1 {
+				errors.pushType("Void type can only be used as a standalone type for the return type")
+			}
 			continue
 		}
 
@@ -1372,11 +1378,11 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 
 		var param phpdoctypes.Param
 		param.Typ = types.NewMapWithNormalization(d.ctx.typeNormalizer, converted.Types)
-		param.Typ.Iterate(func(t string) {
-			if t == "void" {
-				errors.pushType("void is not a valid type for input parameter")
-			}
-		})
+
+		if param.Typ.Contains("void") {
+			errors.pushType("Void type can only be used as a standalone type for the return type")
+		}
+
 		param.Optional = optional
 	}
 
