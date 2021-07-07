@@ -632,13 +632,22 @@ func (b *blockWalker) handleEmpty(s *ir.EmptyExpr) bool {
 // so it can be examined at the call site.
 func (b *blockWalker) withNewContext(action func()) *blockContext {
 	oldCtx := b.ctx
-	newCtx := copyBlockContext(b.ctx)
+	newCtx := CopyBlockContext(b.ctx)
 
 	b.ctx = newCtx
 	action()
 	b.ctx = oldCtx
 
 	return newCtx
+}
+
+func (b *blockWalker) withSpecificContext(ctx *blockContext, action func()) {
+	oldCtx := b.ctx
+	newCtx := ctx
+
+	b.ctx = newCtx
+	action()
+	b.ctx = oldCtx
 }
 
 func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
@@ -1415,19 +1424,29 @@ func (b *blockWalker) handleTernary(e *ir.TernaryExpr) bool {
 		return true // Skip `$x ?: $y` expressions
 	}
 
-	b.withNewContext(func() {
-		// No need to delete vars here as we run andWalker
-		// only inside a new context.
-		a := &andWalker{b: b}
+	falseContext := CopyBlockContext(b.ctx)
+	trueContext := b.withNewContext(func() {
+		a := &andWalker{
+			b:            b,
+			trueContext:  b.ctx,
+			falseContext: falseContext,
+		}
 		e.Condition.Walk(a)
+	})
+
+	b.withSpecificContext(trueContext, func() {
 		e.IfTrue.Walk(b)
 	})
-	e.IfFalse.Walk(b)
+
+	b.withSpecificContext(falseContext, func() {
+		e.IfFalse.Walk(b)
+	})
 	return false
 }
 
 func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 	var varsToDelete []ir.Node
+	var varsToReplace [][]varToReplace
 	customMethods := len(b.ctx.customMethods)
 	customFunctions := len(b.ctx.customFunctions)
 	// Remove all isset'ed variables after we're finished with this if statement.
@@ -1438,66 +1457,168 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 		b.ctx.customMethods = b.ctx.customMethods[:customMethods]
 		b.ctx.customFunctions = b.ctx.customFunctions[:customFunctions]
 	}()
-	walkCond := func(cond ir.Node) {
-		a := &andWalker{b: b}
-		cond.Walk(a)
-		varsToDelete = append(varsToDelete, a.varsToDelete...)
-	}
 
-	// first condition is always executed, so run it in base context
-	if s.Cond != nil {
-		walkCond(s.Cond)
-	}
-
+	var linksCount int
 	var contexts []*blockContext
 
-	walk := func(n ir.Node) (links int) {
-		// handle if (...) smth(); else other_thing(); // without braces
-		switch n := n.(type) {
-		case *ir.ElseStmt:
-			b.addStatement(n.Stmt)
-		case *ir.ElseIfStmt:
-			b.addStatement(n.Stmt)
-		default:
-			b.addStatement(n)
+	var trueVarToReplace []varToReplace
+
+	irutil.Inspect(s.Cond, func(n ir.Node) bool {
+		assign, ok := n.(*ir.Assign)
+		if !ok {
+			return true
 		}
 
-		ctx := b.withNewContext(func() {
-			if elsif, ok := n.(*ir.ElseIfStmt); ok {
-				walkCond(elsif.Cond)
-				b.handleElseIf(elsif)
-				elsif.Stmt.Walk(b)
-			} else {
-				n.Walk(b)
-			}
-		})
+		b.handleAssign(assign)
+		return false
+	})
 
-		contexts = append(contexts, ctx)
-
-		if ctx.exitFlags != 0 {
-			return 0
+	falseContext := CopyBlockContext(b.ctx)
+	trueContext := b.withNewContext(func() {
+		a := &andWalker{
+			b:            b,
+			trueContext:  b.ctx,
+			falseContext: falseContext,
 		}
 
-		return 1
+		s.Cond.Walk(a)
+		trueVarToReplace = a.varsToReplace
+		varsToDelete = append(varsToDelete, a.varsToDelete...)
+	})
+	contexts = append(contexts, trueContext)
+	varsToReplace = append(varsToReplace, trueVarToReplace)
+
+	nonLocalToDelete := make([]string, 0, len(b.nonLocalVars))
+	for name, kind := range b.nonLocalVars {
+		if kind != varRef {
+			continue
+		}
+
+		typesMap, ok := trueContext.sc.GetVarNameType(name)
+		if !ok {
+			continue
+		}
+		b.ctx.sc.AddVarName(name, typesMap, "ref", meta.VarAlwaysDefined)
+		nonLocalToDelete = append(nonLocalToDelete, name)
+	}
+	for _, name := range nonLocalToDelete {
+		delete(b.nonLocalVars, name)
 	}
 
-	linksCount := 0
-
 	if s.Stmt != nil {
-		linksCount += walk(s.Stmt)
+		// We process the if body with a context if the condition is **true**.
+		b.withSpecificContext(trueContext, func() {
+			s.Stmt.Walk(b)
+		})
+
+		if trueContext.exitFlags == 0 {
+			linksCount += 1
+		}
 	} else {
 		linksCount++
 	}
 
 	for _, n := range s.ElseIf {
-		linksCount += walk(n)
+		if elseif, ok := n.(*ir.ElseIfStmt); ok {
+			elseifTrueContext := CopyBlockContext(falseContext)
+			elseifFalseContext := CopyBlockContext(falseContext)
+
+			b.withSpecificContext(elseifTrueContext, func() {
+				a := &andWalker{
+					b:            b,
+					trueContext:  b.ctx,
+					falseContext: elseifFalseContext,
+				}
+				elseif.Cond.Walk(a)
+				varsToReplace = append(varsToReplace, a.varsToReplace)
+				varsToDelete = append(varsToDelete, a.varsToDelete...)
+			})
+
+			b.withSpecificContext(elseifTrueContext, func() {
+				b.handleElseIf(elseif)
+				elseif.Stmt.Walk(b)
+			})
+
+			contexts = append(contexts, elseifTrueContext)
+			if elseifTrueContext.exitFlags == 0 {
+				linksCount += 1
+			}
+
+			// Every elseif changes variables in else.
+			falseContext = elseifFalseContext
+		} else {
+			n.Walk(b)
+		}
 	}
 
 	if s.Else != nil {
-		linksCount += walk(s.Else)
+		// We process the else body with a context if the condition is **false**.
+		b.withSpecificContext(falseContext, func() {
+			s.Else.Walk(b)
+		})
+
+		if falseContext.exitFlags == 0 {
+			linksCount += 1
+		}
+
+		contexts = append(contexts, falseContext)
+		varsToReplace = append(varsToReplace, trueVarToReplace)
 	} else {
 		linksCount++
 	}
+
+	for i := 0; i < len(contexts); i++ {
+		for _, variable := range varsToReplace[i] {
+			contexts[i].sc.ReplaceVar(variable.Node, variable.Type, "", meta.VarAlwaysDefined)
+		}
+	}
+
+	// walk := func(n ir.Node) (links int) {
+	// 	// handle if (...) smth(); else other_thing(); // without braces
+	// 	switch n := n.(type) {
+	// 	case *ir.ElseStmt:
+	// 		b.addStatement(n.Stmt)
+	// 	case *ir.ElseIfStmt:
+	// 		b.addStatement(n.Stmt)
+	// 	default:
+	// 		b.addStatement(n)
+	// 	}
+	//
+	// 	ctx := b.withNewContext(func() {
+	// 		if elsif, ok := n.(*ir.ElseIfStmt); ok {
+	// 			walkCond(elsif.Cond)
+	// 			b.handleElseIf(elsif)
+	// 			elsif.Stmt.Walk(b)
+	// 		} else {
+	// 			n.Walk(b)
+	// 		}
+	// 	})
+	//
+	// 	contexts = append(contexts, ctx)
+	//
+	// 	if ctx.exitFlags != 0 {
+	// 		return 0
+	// 	}
+	//
+	// 	return 1
+	// }
+	//
+	//
+	// if s.Stmt != nil {
+	// 	linksCount += walk(s.Stmt)
+	// } else {
+	// 	linksCount++
+	// }
+	//
+	// for _, n := range s.ElseIf {
+	// 	linksCount += walk(n)
+	// }
+	//
+	// if s.Else != nil {
+	// 	linksCount += walk(s.Else)
+	// } else {
+	// 	linksCount++
+	// }
 
 	b.propagateFlagsFromBranches(contexts, linksCount)
 
@@ -1517,10 +1638,13 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 		})
 	}
 
-	for nm, types := range varTypes {
+	for nm, typeMap := range varTypes {
 		var flags meta.VarFlags
-		flags.SetAlwaysDefined(defCounts[nm] == linksCount)
-		b.ctx.sc.AddVarName(nm, types, "all branches", flags)
+		if defCounts[nm] == linksCount {
+			flags = meta.VarAlwaysDefined
+		}
+
+		b.ctx.sc.AddVarName(nm, typeMap, "all branches", flags)
 	}
 
 	return false

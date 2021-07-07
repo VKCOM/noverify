@@ -2302,3 +2302,23 @@ function f(callable $s) {
 	test.Expect = []string{"Too few arguments for $s"}
 	test.RunAndMatch()
 }
+
+func TestComplexInstanceOf(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Boo {
+  /** @return int */
+  function b() { return 0; }
+}
+
+function f($a) {
+  if ($y1 instanceof Boo && isset($y1) && $y1->b()) {} // error
+  if (isset($y1) && $y1 instanceof Boo && $y1->b()) {} // ok
+}
+`,
+	)
+	test.Expect = []string{
+		"Undefined variable $y1",
+	}
+	test.RunAndMatch()
+}

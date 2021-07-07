@@ -344,6 +344,14 @@ func (m Map) Contains(typ string) bool {
 	return false
 }
 
+func (m Map) Erase(typ string) Map {
+	if m.Len() == 0 {
+		return m
+	}
+	delete(m.m, typ)
+	return m
+}
+
 // Find applies a predicate function to every contained type.
 // If callback returns true for any of them, this is a result of Find call.
 // False is returned if none of the contained types made pred function return true.

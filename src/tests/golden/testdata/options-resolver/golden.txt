@@ -7,6 +7,15 @@ MAYBE   typeHint: Specify the return type for the function getDeprecation in PHP
 MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (7.4) at testdata/options-resolver/OptionsResolver.php:188
             if (isset($params[0]) && null !== ($class = $params[0]->getClass()) && Options::class === $class->name) {
                                                                     ^^^^^^^^
+MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (7.4) at testdata/options-resolver/OptionsResolver.php:188
+            if (isset($params[0]) && null !== ($class = $params[0]->getClass()) && Options::class === $class->name) {
+                                                                    ^^^^^^^^
+MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (7.4) at testdata/options-resolver/OptionsResolver.php:209
+            if (isset($params[0]) && null !== ($class = $params[0]->getClass()) && self::class === $class->name && (!isset($params[1]) || (null !== ($class = $params[1]->getClass()) && Options::class === $class->name))) {
+                                                                    ^^^^^^^^
+MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (7.4) at testdata/options-resolver/OptionsResolver.php:209
+            if (isset($params[0]) && null !== ($class = $params[0]->getClass()) && self::class === $class->name && (!isset($params[1]) || (null !== ($class = $params[1]->getClass()) && Options::class === $class->name))) {
+                                                                                                                                                                          ^^^^^^^^
 MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (7.4) at testdata/options-resolver/OptionsResolver.php:209
             if (isset($params[0]) && null !== ($class = $params[0]->getClass()) && self::class === $class->name && (!isset($params[1]) || (null !== ($class = $params[1]->getClass()) && Options::class === $class->name))) {
                                                                     ^^^^^^^^

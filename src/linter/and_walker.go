@@ -7,6 +7,11 @@ import (
 	"github.com/VKCOM/noverify/src/types"
 )
 
+type varToReplace struct {
+	Node ir.Node
+	Type types.Map
+}
+
 // andWalker walks if conditions and adds isset/!empty/instanceof variables
 // to the associated block walker.
 //
@@ -15,7 +20,17 @@ import (
 type andWalker struct {
 	b *blockWalker
 
-	varsToDelete []ir.Node
+	// The context inside the if body if the condition is true.
+	trueContext *blockContext
+	// The context inside the else body if the condition is false.
+	falseContext *blockContext
+
+	varsToDelete  []ir.Node
+	varsToReplace []varToReplace
+}
+
+func (a *andWalker) exprType(n ir.Node) types.Map {
+	return solver.ExprType(a.b.ctx.sc, a.b.r.ctx.st, n)
 }
 
 func (a *andWalker) EnterNode(w ir.Node) (res bool) {
@@ -73,7 +88,21 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 		if className, ok := solver.GetClassName(a.b.r.ctx.st, n.Class); ok {
 			switch v := n.Expr.(type) {
 			case *ir.Var, *ir.SimpleVar:
-				a.b.ctx.sc.AddVar(v, types.NewMap(className), "instanceof", 0)
+				varNode := v
+				a.b.handleVariable(varNode)
+
+				currentType := a.exprType(varNode)
+				trueType := types.NewMap(className)
+				falseType := currentType.Clone().Erase(className)
+
+				a.trueContext.sc.ReplaceVar(varNode, trueType, "instanceof true", meta.VarAlwaysDefined)
+				a.falseContext.sc.ReplaceVar(varNode, falseType, "instanceof false", meta.VarAlwaysDefined)
+
+				a.varsToReplace = append(a.varsToReplace, varToReplace{
+					Node: varNode,
+					Type: currentType,
+				})
+
 			default:
 				a.b.ctx.customTypes = append(a.b.ctx.customTypes, solver.CustomType{
 					Node: n.Expr,
