@@ -546,7 +546,7 @@ func TestVoidParam(t *testing.T) {
 	function f($x, $y) {}
 `)
 	test.Expect = []string{
-		`void is not a valid type for input parameter`,
+		`Void type can only be used as a standalone type for the return type`,
 	}
 	test.RunAndMatch()
 }

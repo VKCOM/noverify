@@ -13,7 +13,7 @@ type RealPHPDocTypes struct {
 	Types    []types.Type
 	Shapes   types.ShapesMap
 	Closures types.ClosureMap
-	Warnings []string
+	Warning  string
 }
 
 // ToRealType extracts types out of the PHPDoc type string.
@@ -35,7 +35,7 @@ func ToRealType(classFQNProvider func(string) (string, bool), typ phpdoc.Type) *
 		for _, tp := range result {
 			if tp.Elem == "null" {
 				alreadyHasNull = true
-				conv.warnings = append(conv.warnings, "repeated nullable doesn't make sense")
+				conv.warning = "repeated nullable doesn't make sense"
 				break
 			}
 		}
@@ -49,14 +49,14 @@ func ToRealType(classFQNProvider func(string) (string, bool), typ phpdoc.Type) *
 		Types:    result,
 		Shapes:   conv.shapes,
 		Closures: conv.closures,
-		Warnings: conv.warnings,
+		Warning:  conv.warning,
 	}
 }
 
 type TypeConverter struct {
 	classFQNProvider   func(string) (string, bool)
 	shapeNameGenerator func([]types.ShapeProp) string
-	warnings           []string
+	warning            string
 	nullable           bool
 	shapes             types.ShapesMap
 	closures           types.ClosureMap
@@ -66,7 +66,7 @@ func (conv *TypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
 	switch e.Kind {
 	case phpdoc.ExprInvalid, phpdoc.ExprUnknown:
 		if e.Value == "-" {
-			conv.warn(`expected a type, found '-'; if you want to express 'any' type, use 'mixed'`)
+			conv.warn(`Expected a type, found '-'; if you want to express 'any' type, use 'mixed'`)
 			return []types.Type{{Elem: "mixed"}}
 		}
 
@@ -75,7 +75,7 @@ func (conv *TypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
 
 	case phpdoc.ExprName:
 		if suggest, has := types.Alias(e.Value); has {
-			conv.warn(fmt.Sprintf("use %s type instead of %s", suggest, e.Value))
+			conv.warn(fmt.Sprintf("Use %s type instead of %s", suggest, e.Value))
 		}
 		return []types.Type{{Elem: e.Value}}
 
@@ -117,7 +117,7 @@ func (conv *TypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
 
 	case phpdoc.ExprArray:
 		if e.Shape == phpdoc.ShapeArrayPrefix {
-			conv.warn(e.Value + ": array syntax is T[], not []T")
+			conv.warn("Array syntax is T[], not []T")
 		}
 		return conv.mapArrayType(e.Args[0])
 
@@ -133,7 +133,7 @@ func (conv *TypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
 		// function, while the optionality for the key is cleared, and the key itself is not
 		// processed by the mapType function, then in the mapType function the ExprOptional
 		// type can only be in one case, if it is an incorrect syntax of the optional type.
-		conv.warn(e.Value + ": nullable syntax is ?T, not T?")
+		conv.warn("Nullable syntax is ?T, not T?")
 
 	case phpdoc.ExprTypedCallable:
 		closureName := `\Closure$(`
@@ -197,7 +197,7 @@ func (conv *TypeConverter) mapShapeType(params []phpdoc.TypeExpr) []types.Type {
 			continue
 		}
 		if p.Kind != phpdoc.ExprKeyVal {
-			conv.warn(fmt.Sprintf("shape param #%d: want key:type, found %s", i+1, p.Value))
+			conv.warn(fmt.Sprintf("Shape param #%d: want key:type, found %s", i+1, p.Value))
 			continue
 		}
 		key := p.Args[0]
@@ -209,7 +209,7 @@ func (conv *TypeConverter) mapShapeType(params []phpdoc.TypeExpr) []types.Type {
 		case phpdoc.ExprName, phpdoc.ExprInt:
 			// OK.
 		default:
-			conv.warn(fmt.Sprintf("invalid shape key: %s", key.Value))
+			conv.warn(fmt.Sprintf("Invalid shape key: %s", key.Value))
 			continue
 		}
 		typeList := conv.mapType(typeExpr)
@@ -288,5 +288,7 @@ func (conv *TypeConverter) mapTupleType(params []phpdoc.TypeExpr) []types.Type {
 }
 
 func (conv *TypeConverter) warn(msg string) {
-	conv.warnings = append(conv.warnings, msg)
+	if conv.warning == "" {
+		conv.warning = msg
+	}
 }

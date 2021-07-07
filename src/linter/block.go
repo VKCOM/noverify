@@ -247,8 +247,11 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 		moveShapesToContext(&b.r.ctx, converted.Shapes)
 		b.r.handleClosuresFromDoc(converted.Closures)
 
-		for _, warning := range converted.Warnings {
-			b.r.Report(n, LevelNotice, "phpdocType", "%s on line %d", warning, part.Line())
+		if converted.Warning != "" {
+			b.r.ReportPHPDoc(
+				phpDocPlace{Node: n, Line: part.Line(), Part: 1},
+				LevelNotice, "phpdocType", converted.Warning,
+			)
 		}
 
 		typesMap := types.NewMapWithNormalization(b.r.ctx.typeNormalizer, converted.Types)
@@ -1165,7 +1168,7 @@ func (b *blockWalker) enterArrowFunction(fun *ir.ArrowFunctionExpr) bool {
 
 	// Check stage.
 	errors := b.r.checkPHPDoc(fun, fun.Doc, fun.Params)
-	b.r.reportPHPDocErrors(fun, errors)
+	b.r.reportPHPDocErrors(errors)
 
 	funcParams := b.r.parseFuncParams(fun.Params, doc.ParamTypes, sc, nil)
 	b.r.handleArrowFuncExpr(funcParams.params, fun.Expr, sc, b)
@@ -1190,7 +1193,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 
 	// Check stage.
 	errors := b.r.checkPHPDoc(fun, fun.Doc, fun.Params)
-	b.r.reportPHPDocErrors(fun, errors)
+	b.r.reportPHPDocErrors(errors)
 
 	var hintReturnType types.Map
 	if typ, ok := b.r.parseTypeHintNode(fun.ReturnType); ok {
