@@ -68,10 +68,10 @@ func (ctx *blockContext) customMethodExists(obj ir.Node, methodName string) bool
 	return false
 }
 
-// CopyBlockContext returns a copy of the context.
+// copyBlockContext returns a copy of the context.
 //
 // The copy does not inherit some properties, like deadCodeReported.
-func CopyBlockContext(ctx *blockContext) *blockContext {
+func copyBlockContext(ctx *blockContext) *blockContext {
 	return &blockContext{
 		sc:              ctx.sc.Clone(),
 		customTypes:     append([]solver.CustomType{}, ctx.customTypes...),

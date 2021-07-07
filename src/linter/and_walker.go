@@ -89,9 +89,14 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 			switch v := n.Expr.(type) {
 			case *ir.Var, *ir.SimpleVar:
 				varNode := v
+
+				// We need to traverse the variable here to check that
+				// it exists, since this variable will be added to the
+				// context later.
 				a.b.handleVariable(varNode)
 
 				currentType := a.exprType(varNode)
+
 				trueType := types.NewMap(className)
 				falseType := currentType.Clone().Erase(className)
 
