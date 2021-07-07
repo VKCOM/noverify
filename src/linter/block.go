@@ -1568,6 +1568,8 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 		linksCount++
 	}
 
+	// Before we move the shared variables into the external scope,
+	// we need to remove the types that we added inside the if.
 	for i := 0; i < len(contexts); i++ {
 		for _, variable := range varsToReplace[i] {
 			varType, ok := contexts[i].sc.GetVarType(variable.Node)
@@ -1580,7 +1582,7 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 				varType = varType.Erase(typeToDelete)
 			}
 
-			contexts[i].sc.ReplaceVar(variable.Node, varType, "", meta.VarAlwaysDefined)
+			contexts[i].sc.ReplaceVar(variable.Node, varType, "replace back", meta.VarAlwaysDefined)
 		}
 	}
 
