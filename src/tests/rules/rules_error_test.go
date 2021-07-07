@@ -312,10 +312,11 @@ ${"x:var"} = 1;
  * @warning Some
  * @type int $y
  * @pure $x
+ * @pure $y
  */
 $_ = $y;
 `,
-			expect: "<test>:8: @pure contains a reference to a variable x that is not present in the pattern",
+			expect: "<test>:9: @pure contains a reference to a variable x that is not present in the pattern",
 		},
 		{
 			name: `VariableFromLocationNotPresentInPattern`,
@@ -324,10 +325,29 @@ $_ = $y;
  * @name Some
  * @warning Some
  * @location $y
+ * @location $x
  */
 (string)$x;
 `,
-			expect: "<test>:7: @location contains a reference to a variable y that is not present in the pattern",
+			expect: "<test>:8: @location contains a reference to a variable y that is not present in the pattern",
+		},
+		{
+			name: `VariableFromLocationNotPresentInPattern`,
+			rule: `<?php
+/**
+ * @name Some
+ * @warning Some
+ * @location $x
+ * @location $y
+ * @location $z
+ * @location $e
+ * @location $q
+ */
+for ($x = $y; $x < $z; $x++) {
+  $e = 10;
+}
+`,
+			expect: "<test>:11: @location contains a reference to a variable q that is not present in the pattern",
 		},
 	}
 
