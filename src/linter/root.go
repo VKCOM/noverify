@@ -1050,13 +1050,6 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		}
 	}
 
-	if nm == "getAuthenticatorsForAgent" {
-		fmt.Println(1)
-	}
-	if nm == "afterEhlo" {
-		fmt.Println(1)
-	}
-
 	var stmts []ir.Node
 	if stmtList, ok := meth.Stmt.(*ir.StmtList); ok {
 		stmts = stmtList.Stmts
