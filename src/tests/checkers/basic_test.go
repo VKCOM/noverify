@@ -535,17 +535,25 @@ func TestVoidResultUsedInBinary(t *testing.T) {
 	test.RunAndMatch()
 }
 
-func TestVoidParam(t *testing.T) {
+func TestVoidForParamAndReturn(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	/**
-	* @param void $x
-	* @param int $y
-	* @return void
-	*/
-	function f($x, $y) {}
+/**
+* @param void $x
+* @param int $y
+* @param int|void $z
+* @return void
+*/
+function f($x, $y, $z) {}
+
+/**
+* @return int|void
+*/
+function f1() {}
 `)
 	test.Expect = []string{
+		`Void type can only be used as a standalone type for the return type`,
+		`Void type can only be used as a standalone type for the return type`,
 		`Void type can only be used as a standalone type for the return type`,
 	}
 	test.RunAndMatch()

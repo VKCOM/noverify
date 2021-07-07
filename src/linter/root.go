@@ -1408,6 +1408,12 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 					),
 				)
 			}
+
+			returnType := types.NewMapWithNormalization(d.ctx.typeNormalizer, converted.Types)
+
+			if returnType.Contains("void") && returnType.Len() > 1 {
+				errors.pushType("Void type can only be used as a standalone type for the return type")
+			}
 			continue
 		}
 
