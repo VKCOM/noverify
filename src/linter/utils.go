@@ -201,7 +201,7 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 	if !res.isFound {
 		// If the function has not been found up to this point,
 		// we try to check if the function is a variable with the closure type.
-		res.info, res.isFound = solver.GetClosure(call.Function, sc, st)
+		res.info, res.isFound = solver.GetClosure(call.Function, sc, st, customTypes)
 		if res.isFound {
 			res.isClosure = true
 		}

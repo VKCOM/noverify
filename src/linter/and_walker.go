@@ -2,6 +2,7 @@ package linter
 
 import (
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/types"
@@ -33,12 +34,20 @@ type andWalker struct {
 }
 
 func (a *andWalker) exprType(n ir.Node) types.Map {
-	return solver.ExprType(a.b.ctx.sc, a.b.r.ctx.st, n)
+	return solver.ExprTypeCustom(a.b.ctx.sc, a.b.r.ctx.st, n, a.b.ctx.customTypes)
 }
 
 func (a *andWalker) EnterNode(w ir.Node) (res bool) {
+	res = false
+
 	switch n := w.(type) {
 	case *ir.FunctionCallExpr:
+		// If the absence of a function or method is being
+		// checked, then nothing needs to be done.
+		if a.negation {
+			return res
+		}
+
 		nm, ok := n.Function.(*ir.Name)
 		if !ok {
 			break
@@ -117,10 +126,26 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 				})
 
 			default:
-				a.b.ctx.customTypes = append(a.b.ctx.customTypes, solver.CustomType{
+				currentType := a.exprType(v)
+
+				trueType := types.NewMap(className)
+				falseType := currentType.Clone().Erase(className)
+
+				if a.negation {
+					trueType, falseType = falseType, trueType
+				}
+
+				customTrueType := solver.CustomType{
 					Node: n.Expr,
-					Typ:  types.NewMap(className),
-				})
+					Typ:  trueType,
+				}
+				customFalseType := solver.CustomType{
+					Node: n.Expr,
+					Typ:  falseType,
+				}
+
+				a.trueContext.customTypes = addCustomType(a.trueContext.customTypes, customTrueType)
+				a.falseContext.customTypes = addCustomType(a.falseContext.customTypes, customFalseType)
 			}
 			// TODO: actually this needs to be present inside if body only
 		}
@@ -151,6 +176,21 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 
 	w.Walk(a.b)
 	return res
+}
+
+func addCustomType(types []solver.CustomType, typ solver.CustomType) []solver.CustomType {
+	if len(types) == 0 {
+		return append(types, typ)
+	}
+
+	// If a type has already been created for a node,
+	// then the new type should replace it.
+	if irutil.NodeEqual(types[len(types)-1].Node, typ.Node) {
+		types[len(types)-1] = typ
+		return types
+	}
+
+	return append(types, typ)
 }
 
 func (a *andWalker) LeaveNode(w ir.Node) {

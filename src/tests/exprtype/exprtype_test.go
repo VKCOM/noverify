@@ -3198,6 +3198,131 @@ function ifElseWithTwoNegationWithUnion2($a) {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestInstanceOfForExpr(t *testing.T) {
+	code := `<?php
+function exprtype(...$a) {}
+
+interface ISome {}
+
+class Foo implements ISome{
+  function f() {}
+}
+
+class Boo implements ISome {
+  function b() {}
+}
+
+class Zoo implements ISome {
+  function z() {}
+}
+
+/**
+ * @param callable(): Foo|Boo $a
+ */
+function ifElseForClassUnion($a) {
+  if ($a() instanceof Foo) {
+    exprtype($a(), "\Foo");
+  } else {
+    exprtype($a(), "\Boo");
+  }
+
+  exprtype($a(), "\Boo|\Foo");
+}
+
+/**
+ * @param callable(): Foo|Boo|Zoo $a
+ */
+function ifElseForClassUnion3($a) {
+  if ($a() instanceof Foo) {
+    exprtype($a(), "\Foo");
+  } else if ($a() instanceof Boo) {
+    exprtype($a(), "\Boo");
+  } else {
+    exprtype($a(), "\Zoo");
+  }
+
+  exprtype($a(), "\Boo|\Foo|\Zoo");
+}
+
+/**
+ * @param callable(): mixed $a
+ */
+function ifElseForMixed($a) {
+  if ($a() instanceof Foo) {
+    exprtype($a(), "\Foo");
+  } else {
+    exprtype($a(), "mixed");
+  }
+
+  exprtype($a(), "mixed");
+}
+
+/**
+ * @param callable(): mixed $a
+ */
+function ifElseForMixed3($a) {
+  if ($a() instanceof Foo) {
+    exprtype($a(), "\Foo");
+  } else if ($a() instanceof Boo) {
+    exprtype($a(), "\Boo");
+  } else {
+    exprtype($a(), "mixed");
+  }
+
+  exprtype($a(), "mixed");
+}
+
+/**
+ * @param callable(): mixed $a
+ */
+function ifElseWithNegation($a) {
+  if (!$a() instanceof Foo) {
+	exprtype($a(), "mixed");
+  } else {
+    exprtype($a(), "\Foo");
+  }
+}
+
+/**
+ * @param callable(): Foo|Boo $a
+ */
+function ifElseWithNegationWithUnion($a) {
+  if (!$a() instanceof Foo) {
+	exprtype($a(), "\Boo");
+  } else {
+    exprtype($a(), "\Foo");
+  }
+}
+
+/**
+ * @param callable(): Foo|Boo|Zoo $a
+ */
+function ifElseWithNegationWithUnion2($a) {
+  if (!$a() instanceof Foo) {
+	exprtype($a(), "\Boo|\Zoo");
+  } else if ($a() instanceof Foo) {
+    exprtype($a(), "\Foo");
+  } else {
+    exprtype($a(), "mixed");
+  }
+}
+
+/**
+ * @param callable(): Foo|Boo|Zoo $a
+ */
+function ifElseWithTwoNegationWithUnion2($a) {
+  if (!$a() instanceof Foo) {
+	exprtype($a(), "\Boo|\Zoo");
+  } else if (!$a() instanceof Foo) {
+    exprtype($a(), "mixed");
+  } else {
+    exprtype($a(), "\Foo");
+  }
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestTernaryWithInstanceOf(t *testing.T) {
 	code := `<?php
 function exprtype(...$a): bool { return false; }

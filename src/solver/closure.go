@@ -29,7 +29,7 @@ type ClosureCallerInfo struct {
 	ArgTypes []types.Map // types for each arg for call caller function
 }
 
-func GetClosure(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState) (meta.FuncInfo, bool) {
+func GetClosure(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) (meta.FuncInfo, bool) {
 	nmf, ok := name.(*ir.SimpleVar)
 	if !ok {
 		return meta.FuncInfo{}, false
@@ -38,7 +38,7 @@ func GetClosure(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState) (meta.Fu
 	var fi meta.FuncInfo
 	sv := &ir.SimpleVar{Name: nmf.Name}
 
-	tp := ExprType(sc, cs, sv)
+	tp := ExprTypeCustom(sc, cs, sv, custom)
 	found := tp.Find(func(typ string) bool {
 		if !strings.HasPrefix(typ, `\Closure$`) {
 			return false
