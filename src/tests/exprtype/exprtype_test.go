@@ -3032,13 +3032,15 @@ func TestDifferentArraySyntax(t *testing.T) {
  * @param non-empty-array<Foo> $arr2
  * @param non-empty-list<Foo> $arr3
  * @param unknown-type-list<Foo> $arr4
+ * @param iterable<Foo> $arr5
  */
-function f($arr, $arr1, $arr2, $arr3, $arr4) {
+function f($arr, $arr1, $arr2, $arr3, $arr4, $arr5) {
   exprtype($arr, "\Foo[]");
   exprtype($arr1, "\Foo[]");
   exprtype($arr2, "\Foo[]");
   exprtype($arr3, "\Foo[]");
   exprtype($arr4, "\Foo[]");
+  exprtype($arr5, "\Foo[]");
 }
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
