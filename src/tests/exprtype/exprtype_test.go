@@ -3386,6 +3386,22 @@ function withClassUnion($a) {
 			exprtype($a->aaa, "mixed");
 }
 
+/**
+ * @param Foo|Boo $a
+ */
+function withNegationClassUnion($a) {
+  $_ = !$a instanceof Foo ? 
+  			0 : 
+  			exprtype($a, "\Foo");
+
+  $_ = !$a instanceof Foo ? 
+			exprtype($a, "\Boo") : 
+			exprtype($a, "\Foo");
+
+  $_ = isset($a->aaa) && !$a->aaa instanceof Foo ? 
+			exprtype($a->aaa, "mixed") : 
+			exprtype($a->aaa, "\Foo");
+}
 
 /**
  * @param mixed $a
@@ -3401,6 +3417,19 @@ function withMixed($a) {
   				exprtype($a, "mixed"));
 }
 
+/**
+ * @param mixed $a
+ */
+function withNegationMixed($a) {
+  $_ = !$a instanceof Foo ? 
+  			exprtype($a, "mixed") : 
+  			exprtype($a, "\Foo");
+  $_ = !$a instanceof Foo ?
+  			(!$a instanceof Boo ? 
+  				exprtype($a, "mixed") : 
+  				exprtype($a, "\Boo")) :
+			exprtype($a, "\Foo");
+}
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
