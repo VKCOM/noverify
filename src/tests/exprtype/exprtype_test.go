@@ -3410,16 +3410,17 @@ func TestRefVariable(t *testing.T) {
 function exprtype(...$a): bool { return false; }
 
 function f($a) {
-  if (!preg_match('/^\s*(\S+)\s+(\S+)\s*$/', "ss", $matches)) {
-    throw new \http\Exception\BadHeaderException(sprintf('Invalid delimiters: %s', "s"));
-  }
+  preg_match('/^\s*(\S+)\s+(\S+)\s*$/', "ss", $matches0);
 
   if (!preg_match('/^\s*(\S+)\s+(\S+)\s*$/', "ss", $matches1)) {
     throw new \http\Exception\BadHeaderException(sprintf('Invalid delimiters: %s', "s"));
+  } else if (!preg_match('/^\s*(\S+)\s+(\S+)\s*$/', "ss", $matches2)) {
+    throw new \http\Exception\BadHeaderException(sprintf('Invalid delimiters: %s', "s"));
   }
 
+  exprtype($matches0, "mixed[]")
   exprtype($matches1, "mixed[]")
-  exprtype($matches, "mixed[]")
+  exprtype($matches2, "mixed[]")
 }
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})

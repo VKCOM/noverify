@@ -1461,7 +1461,7 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 	var linksCount int
 	var contexts []*blockContext
 
-	var trueVarToReplace []varToReplace
+	var trueVarsToReplace []varToReplace
 
 	irutil.Inspect(s.Cond, func(n ir.Node) bool {
 		assign, ok := n.(*ir.Assign)
@@ -1482,28 +1482,15 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 		}
 
 		s.Cond.Walk(a)
-		trueVarToReplace = a.varsToReplace
+		trueVarsToReplace = a.varsToReplace
 		varsToDelete = append(varsToDelete, a.varsToDelete...)
 	})
 	contexts = append(contexts, trueContext)
-	varsToReplace = append(varsToReplace, trueVarToReplace)
+	varsToReplace = append(varsToReplace, trueVarsToReplace)
 
-	nonLocalToDelete := make([]string, 0, len(b.nonLocalVars))
-	for name, kind := range b.nonLocalVars {
-		if kind != varRef {
-			continue
-		}
-
-		typesMap, ok := trueContext.sc.GetVarNameType(name)
-		if !ok {
-			continue
-		}
-		b.ctx.sc.AddVarName(name, typesMap, "ref", meta.VarAlwaysDefined)
-		nonLocalToDelete = append(nonLocalToDelete, name)
-	}
-	for _, name := range nonLocalToDelete {
-		delete(b.nonLocalVars, name)
-	}
+	// New reference variables can be created in the condition,
+	// which should be moved outside the if block.
+	moveNonLocalVariables(trueContext, b.ctx, b.nonLocalVars)
 
 	if s.Stmt != nil {
 		// We process the if body with a context if the condition is **true**.
@@ -1533,6 +1520,10 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 				varsToReplace = append(varsToReplace, a.varsToReplace)
 				varsToDelete = append(varsToDelete, a.varsToDelete...)
 			})
+
+			// New reference variables can be created in the condition,
+			// which should be moved outside the if block.
+			moveNonLocalVariables(elseifTrueContext, b.ctx, b.nonLocalVars)
 
 			// Handle if (...) smth(); else other_thing(); // without braces.
 			switch n := n.(type) {
@@ -1572,7 +1563,7 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 		}
 
 		contexts = append(contexts, falseContext)
-		varsToReplace = append(varsToReplace, trueVarToReplace)
+		varsToReplace = append(varsToReplace, trueVarsToReplace)
 	} else {
 		linksCount++
 	}
@@ -1621,6 +1612,25 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 	}
 
 	return false
+}
+
+func moveNonLocalVariables(trueContext, toContext *blockContext, nonLocalVars map[string]variableKind) {
+	nonLocalToDelete := make([]string, 0, len(nonLocalVars))
+	for name, kind := range nonLocalVars {
+		if kind != varRef {
+			continue
+		}
+
+		typesMap, ok := trueContext.sc.GetVarNameType(name)
+		if !ok {
+			continue
+		}
+		toContext.sc.AddVarName(name, typesMap, "ref", meta.VarAlwaysDefined)
+		nonLocalToDelete = append(nonLocalToDelete, name)
+	}
+	for _, name := range nonLocalToDelete {
+		delete(nonLocalVars, name)
+	}
 }
 
 func (b *blockWalker) handleElseIf(s *ir.ElseIfStmt) {
