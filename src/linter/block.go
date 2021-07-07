@@ -1680,6 +1680,11 @@ func (b *blockWalker) handleAndCheckDimFetchLValue(e *ir.ArrayDimFetchExpr, reas
 		// necessary to replace this type with a new, more precise one.
 		if ok && varType.Len() == 1 && varType.Contains("empty_array") {
 			b.replaceVar(v, arrayOfType, reason, meta.VarAlwaysDefined)
+			sv, ok := v.(*ir.SimpleVar)
+			if !ok {
+				return
+			}
+			b.untrackVarName(sv.Name)
 		} else {
 			b.addVar(v, arrayOfType, reason, meta.VarAlwaysDefined)
 			b.handleVariable(v)

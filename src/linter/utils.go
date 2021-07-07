@@ -157,7 +157,8 @@ func functionReturnType(phpdocReturnType types.Map, hintReturnType types.Map, ac
 	if returnTypes.IsLazyArrayOf("mixed") {
 		if actualReturnTypes.IsLazyArray() && !actualReturnTypes.IsLazyArrayOf("mixed") {
 			returnTypes = actualReturnTypes
-		} else if !actualReturnTypes.Contains(types.WrapArrayOf("mixed")) {
+		} else if !actualReturnTypes.Contains(types.WrapArrayOf("mixed")) &&
+			!actualReturnTypes.Contains("null") {
 			returnTypes.Append(actualReturnTypes)
 		}
 	}
