@@ -262,6 +262,15 @@ func (s *Scope) HaveVarName(name string) bool {
 	return v.flags.IsAlwaysDefined()
 }
 
+// GetVarType returns type map for variable if it exists
+func (s *Scope) GetVarType(v ir.Node) (m types.Map, ok bool) {
+	name, ok := scopeVarName(v)
+	if !ok {
+		return types.Map{}, false
+	}
+	return s.GetVarNameType(name)
+}
+
 // GetVarNameType returns type map for variable if it exists
 func (s *Scope) GetVarNameType(name string) (m types.Map, ok bool) {
 	res, ok := s.vars[name]
