@@ -178,24 +178,25 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 	return res
 }
 
-func addCustomType(types []solver.CustomType, typ solver.CustomType) []solver.CustomType {
-	if len(types) == 0 {
-		return append(types, typ)
+func addCustomType(customTypes []solver.CustomType, typ solver.CustomType) []solver.CustomType {
+	if len(customTypes) == 0 {
+		return append(customTypes, typ)
 	}
 
 	// If a type has already been created for a node,
 	// then the new type should replace it.
-	if irutil.NodeEqual(types[len(types)-1].Node, typ.Node) {
-		types[len(types)-1] = typ
-		return types
+	if irutil.NodeEqual(customTypes[len(customTypes)-1].Node, typ.Node) {
+		customTypes[len(customTypes)-1] = typ
+		return customTypes
 	}
 
-	return append(types, typ)
+	return append(customTypes, typ)
 }
 
 func (a *andWalker) LeaveNode(w ir.Node) {
 	switch w.(type) {
 	case *ir.BooleanNotExpr:
 		a.negation = false
+	default:
 	}
 }
