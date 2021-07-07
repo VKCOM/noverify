@@ -1579,7 +1579,17 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 
 	for i := 0; i < len(contexts); i++ {
 		for _, variable := range varsToReplace[i] {
-			contexts[i].sc.ReplaceVar(variable.Node, variable.Type, "", meta.VarAlwaysDefined)
+			varType, ok := contexts[i].sc.GetVarType(variable.Node)
+			if !ok {
+				continue
+			}
+			varType = varType.Clone()
+
+			for _, typeToDelete := range variable.TypesToDelete {
+				varType = varType.Erase(typeToDelete)
+			}
+
+			contexts[i].sc.ReplaceVar(variable.Node, varType, "", meta.VarAlwaysDefined)
 		}
 	}
 

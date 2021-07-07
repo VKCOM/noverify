@@ -3106,6 +3106,35 @@ function ifElseForMixed($a) {
 /**
  * @param mixed $a
  */
+function ifElseForMixedAssign($a) {
+  if ($a instanceof Foo) {
+    exprtype($a, "\Foo");
+	$a = 100;
+  } else {
+    exprtype($a, "mixed");
+  }
+
+  exprtype($a, "int|mixed");
+}
+
+/**
+ * @param mixed $a
+ */
+function ifElseForMixedAssign2($a) {
+  if ($a instanceof Foo) {
+    exprtype($a, "\Foo");
+	$a = 100;
+  } else {
+    exprtype($a, "mixed");
+	$a = 100;
+  }
+
+  exprtype($a, "int|mixed");
+}
+
+/**
+ * @param mixed $a
+ */
 function ifElseForMixed3($a) {
   if ($a instanceof Foo) {
     exprtype($a, "\Foo");
@@ -3116,6 +3145,54 @@ function ifElseForMixed3($a) {
   }
 
   exprtype($a, "mixed");
+}
+
+/**
+ * @param mixed $a
+ */
+function ifElseWithNegation($a) {
+  if (!$a instanceof Foo) {
+	exprtype($a, "mixed");
+  } else {
+    exprtype($a, "\Foo");
+  }
+}
+
+/**
+ * @param Foo|Boo $a
+ */
+function ifElseWithNegationWithUnion($a) {
+  if (!$a instanceof Foo) {
+	exprtype($a, "\Boo");
+  } else {
+    exprtype($a, "\Foo");
+  }
+}
+
+/**
+ * @param Foo|Boo|Zoo $a
+ */
+function ifElseWithNegationWithUnion2($a) {
+  if (!$a instanceof Foo) {
+	exprtype($a, "\Boo|\Zoo");
+  } else if ($a instanceof Foo) {
+    exprtype($a, "\Foo");
+  } else {
+    exprtype($a, "mixed");
+  }
+}
+
+/**
+ * @param Foo|Boo|Zoo $a
+ */
+function ifElseWithTwoNegationWithUnion2($a) {
+  if (!$a instanceof Foo) {
+	exprtype($a, "\Boo|\Zoo");
+  } else if (!$a instanceof Foo) {
+    exprtype($a, "mixed");
+  } else {
+    exprtype($a, "\Foo");
+  }
 }
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
@@ -3146,9 +3223,14 @@ function withClassUnion($a) {
   $_ = $a instanceof Foo ? 
   			exprtype($a, "\Foo") : 
   			0;
+
   $_ = $a instanceof Foo ? 
 			exprtype($a, "\Foo") : 
 			exprtype($a, "\Boo");
+
+  $_ = isset($a->aaa) && $a->aaa instanceof Foo ? 
+			exprtype($a->aaa, "\Foo") : 
+			exprtype($a->aaa, "mixed");
 }
 
 

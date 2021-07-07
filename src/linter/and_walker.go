@@ -8,8 +8,9 @@ import (
 )
 
 type varToReplace struct {
-	Node ir.Node
-	Type types.Map
+	Node          ir.Node
+	Type          types.Map
+	TypesToDelete []string
 }
 
 // andWalker walks if conditions and adds isset/!empty/instanceof variables
@@ -27,6 +28,8 @@ type andWalker struct {
 
 	varsToDelete  []ir.Node
 	varsToReplace []varToReplace
+
+	negation bool
 }
 
 func (a *andWalker) exprType(n ir.Node) types.Map {
@@ -100,12 +103,17 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 				trueType := types.NewMap(className)
 				falseType := currentType.Clone().Erase(className)
 
+				if a.negation {
+					trueType, falseType = falseType, trueType
+				}
+
 				a.trueContext.sc.ReplaceVar(varNode, trueType, "instanceof true", meta.VarAlwaysDefined)
 				a.falseContext.sc.ReplaceVar(varNode, falseType, "instanceof false", meta.VarAlwaysDefined)
 
 				a.varsToReplace = append(a.varsToReplace, varToReplace{
-					Node: varNode,
-					Type: currentType,
+					Node:          varNode,
+					Type:          currentType,
+					TypesToDelete: []string{className},
 				})
 
 			default:
@@ -118,6 +126,9 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 		}
 
 	case *ir.BooleanNotExpr:
+		a.negation = true
+
+		res = true
 		// TODO: consolidate with issets handling?
 		// Probably could collect *expr.Variable instead of
 		// isset and empty nodes and handle them in a single loop.
@@ -139,7 +150,12 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 	}
 
 	w.Walk(a.b)
-	return false
+	return res
 }
 
-func (a *andWalker) LeaveNode(w ir.Node) {}
+func (a *andWalker) LeaveNode(w ir.Node) {
+	switch w.(type) {
+	case *ir.BooleanNotExpr:
+		a.negation = false
+	}
+}
