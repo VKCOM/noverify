@@ -124,7 +124,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 	case *ir.PreDecExpr:
 		return unaryMathOpType(sc, cs, n.Variable, custom)
 	case *ir.TypeCastExpr:
-		return typeCastType(n)
+		return typeCastType(sc, cs, n, custom)
 	case *ir.ShiftLeftExpr, *ir.ShiftRightExpr:
 		return types.PreciseIntType
 	case *ir.ClassConstFetchExpr:
@@ -378,10 +378,11 @@ func classConstFetchType(n *ir.ClassConstFetchExpr, cs *meta.ClassParseState) ty
 	return types.NewMap(types.WrapClassConstFetch(className, n.ConstantName.Value))
 }
 
-func typeCastType(n *ir.TypeCastExpr) types.Map {
+func typeCastType(sc *meta.Scope, cs *meta.ClassParseState, n *ir.TypeCastExpr, custom []CustomType) types.Map {
 	switch n.Type {
 	case "array":
-		return types.NewMap("mixed[]")
+		typ := exprTypeLocalCustom(sc, cs, n.Expr, custom)
+		return typ.Append(types.NewMap("mixed[]"))
 	case "int":
 		return types.PreciseIntType
 	case "string":
