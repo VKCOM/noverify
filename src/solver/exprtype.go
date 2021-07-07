@@ -512,7 +512,7 @@ func functionCallType(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassPars
 		}
 		return types.NewMap(types.WrapFunctionCall(cs.Namespace + `\` + nm.Value))
 	case *ir.SimpleVar:
-		cl, ok := closureTypeByNameNode(n.Function, sc, cs)
+		cl, ok := closureTypeByNameNode(n.Function, sc, cs, custom)
 		if ok {
 			return cl
 		}
@@ -528,12 +528,12 @@ func magicConstantType(n *ir.MagicConstant) types.Map {
 	return types.PreciseStringType
 }
 
-func closureTypeByNameNode(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState) (types.Map, bool) {
+func closureTypeByNameNode(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) (types.Map, bool) {
 	if !cs.Info.IsIndexingComplete() {
 		return types.Map{}, false
 	}
 
-	fi, ok := GetClosure(name, sc, cs)
+	fi, ok := GetClosure(name, sc, cs, custom)
 	if !ok {
 		return types.Map{}, false
 	}
