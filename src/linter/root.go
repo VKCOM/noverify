@@ -410,7 +410,11 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace PHPDocPlace, 
 
 		startLn = d.file.Line(phpDocPlace.Line - 1)
 
-		lineWithoutBeginning := bytes.TrimLeft(startLn, " *")
+		lineWithoutBeginning := startLn
+		if !bytes.Contains(startLn, []byte("/*")) {
+			lineWithoutBeginning = bytes.TrimLeft(startLn, "/ *")
+		}
+
 		shift := len(startLn) - len(lineWithoutBeginning)
 
 		parts := bytes.Fields(lineWithoutBeginning)
@@ -1373,7 +1377,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 	if phpdoc.IsSuspicious([]byte(doc.Raw)) {
 		errors.pushLint(
 			NewPHPDocError(
-				PHPDocPlace{Node: n, Line: 0, All: true},
+				PHPDocPlace{Node: n, Line: 1, All: true},
 				"Multiline PHPDoc comment should start with /**, not /*",
 			),
 		)

@@ -35,7 +35,7 @@ func ToRealType(classFQNProvider func(string) (string, bool), typ phpdoc.Type) *
 		for _, tp := range result {
 			if tp.Elem == "null" {
 				alreadyHasNull = true
-				conv.warning = "repeated nullable doesn't make sense"
+				conv.warning = "Repeated nullable doesn't make sense"
 				break
 			}
 		}

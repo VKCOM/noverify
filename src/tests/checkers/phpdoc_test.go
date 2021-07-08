@@ -542,10 +542,10 @@ function f($a, $b, $c, $d) {
 }
 `)
 	test.Expect = []string{
-		`repeated nullable doesn't make sense`,
-		`repeated nullable doesn't make sense`,
-		`repeated nullable doesn't make sense`,
-		`repeated nullable doesn't make sense`,
+		`Repeated nullable doesn't make sense`,
+		`Repeated nullable doesn't make sense`,
+		`Repeated nullable doesn't make sense`,
+		`Repeated nullable doesn't make sense`,
 	}
 	test.RunAndMatch()
 }

@@ -77,7 +77,7 @@ func IsSuspicious(value []byte) bool {
 		return false
 	}
 
-	return ContainsTag(value)
+	return bytes.HasPrefix(value, []byte("/*")) && ContainsTag(value)
 }
 
 var tagRegexp = regexp.MustCompile(`\* +@\w+`)
