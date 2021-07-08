@@ -5,11 +5,11 @@ WARNING phpdocLint: @method requires return type and method name fields at testd
  * @method int
    ^^^^^^^^^^^
 WARNING phpdocLint: @method missing parentheses after method name at testdata/phpdoc/phpdoc.php:6
- * @method int    method
-   ^^^^^^^^^^^^^^^^^^^^^
+ * @method int    method1
+                  ^^^^^^^
 WARNING phpdocLint: @method missing parentheses after method name at testdata/phpdoc/phpdoc.php:7
- * @method ?string  method1
-   ^^^^^^^^^^^^^^^^^^^^^^^^
+ * @method ?string  method2
+                    ^^^^^^^
 WARNING phpdocLint: @property requires type and property name fields at testdata/phpdoc/phpdoc.php:11
  * @property
    ^^^^^^^^^

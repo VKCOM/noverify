@@ -95,7 +95,7 @@ func parseClassPHPDocMethod(classNode ir.Node, ctx *rootContext, result *classPh
 
 		result.errs.pushLint(
 			NewPHPDocError(
-				PHPDocPlace{Node: classNode, Line: part.Line(), All: true},
+				PHPDocPlace{Node: classNode, Line: part.Line(), Part: 2},
 				"@method missing parentheses after method name",
 			),
 		)

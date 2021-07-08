@@ -3,10 +3,10 @@
 /**
  * @method
  * @method int
- * @method int    method
- * @method ?string  method1
- * @method  int  method2()          <- ok
- * @method static   int   method3() <- ok
+ * @method int    method1
+ * @method ?string  method2
+ * @method  int  method3()          <- ok
+ * @method static   int   method4() <- ok
  *
  * @property
  * @property   int
