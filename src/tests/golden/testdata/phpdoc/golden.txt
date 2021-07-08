@@ -69,10 +69,10 @@ WARNING phpdocLint: Non-canonical order of variable and type at testdata/phpdoc/
    ^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   phpdocType: Invalid shape key: x[] at testdata/phpdoc/phpdoc.php:55
   /** @var    shape(x[]:a) */
-      ^^^^
+              ^^^^^^^^^^^^
 MAYBE   phpdocType: Shape param #1: want key:type, found x at testdata/phpdoc/phpdoc.php:59
   /** @var shape(x)    $a */
-      ^^^^
+           ^^^^^^^^
 WARNING phpdocLint: Multiline PHPDoc comment should start with /**, not /* at testdata/phpdoc/phpdoc.php:63
   /*
 ^^^^

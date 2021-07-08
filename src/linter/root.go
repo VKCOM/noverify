@@ -411,7 +411,7 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace PHPDocPlace, 
 		startLn = d.file.Line(phpDocPlace.Line - 1)
 
 		lineWithoutBeginning := startLn
-		if !bytes.Contains(startLn, []byte("/*")) {
+		if !bytes.Contains(startLn, []byte("/*")) || bytes.Contains(startLn, []byte("/**")) {
 			lineWithoutBeginning = bytes.TrimLeft(startLn, "/ *")
 		}
 
