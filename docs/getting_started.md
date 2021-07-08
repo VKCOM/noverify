@@ -61,7 +61,7 @@ This run will analyze all files from the `./lib` folder, and it will also index 
 
 As you can see NoVerify found quite a few bugs.
 
-#### Disable or enable checks
+### Disable or enable checks
 
 We have quite a few `unused` errors, let's disable them.
 
@@ -77,7 +77,7 @@ noverify check --allow-checks='strictCmp' ./lib
 
 Now we only see `strictCmp` errors.
 
-#### Autofixes
+### Autofixes
 
 NoVerify found a single place to rewrite, let's run just the `assignOp` check to see only those.
 
@@ -109,7 +109,7 @@ noverify check --allow-checks='assignOp' ./lib
 
 No errors will be found.
 
-#### Enable all checks
+### Enable all checks
 
 Some of the checks are disabled by default, let's run NoVerify with them. The `undefined` check can give a lot of errors, so let's turn it off.
 
@@ -117,7 +117,7 @@ Some of the checks are disabled by default, let's run NoVerify with them. The `u
 noverify check --allow-all-checks --exclude-checks='undefined' ./lib
 ```
 
-#### Specify unused variable regexp
+### Specify unused variable regexp
 
 If you run a check for `unused`, you will see quite a few errors. 
 
