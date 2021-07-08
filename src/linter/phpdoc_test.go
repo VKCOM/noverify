@@ -66,7 +66,7 @@ func TestParseClassPHPDoc(t *testing.T) {
 	for _, test := range tests {
 		docString := fmt.Sprintf(`/** %s */`, test.line)
 		doc := phpdoc.Parse(walker.ctx.phpdocTypeParser, docString)
-		result := walker.parseClassPHPDoc(nil, nil, doc)
+		result := walker.parseClassPHPDoc(nil, doc)
 
 		switch {
 		case test.method != "":

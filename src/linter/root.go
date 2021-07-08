@@ -212,7 +212,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		}
 		d.checkCommentMisspellings(n.ClassName, n.Doc.Raw)
 		d.checkIdentMisspellings(n.ClassName)
-		doc := d.parseClassPHPDoc(n, n.ClassName, n.Doc)
+		doc := d.parseClassPHPDoc(n, n.Doc)
 		d.reportPHPDocErrors(doc.errs)
 		// If we ever need to distinguish @property-annotated and real properties,
 		// more work will be required here.
@@ -1170,7 +1170,10 @@ func (d *rootWalker) reportPHPDocErrors(errs PHPDocErrors) {
 
 func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.Comment) (typesMap types.Map) {
 	if phpdoc.IsSuspicious([]byte(doc.Raw)) {
-		d.Report(n, LevelWarning, "phpdocLint", "Multiline PHPDoc comment should start with /**, not /*")
+		d.ReportPHPDoc(PHPDocPlace{Node: n, Line: 0, All: true},
+			LevelWarning, "phpdocLint",
+			"Multiline PHPDoc comment should start with /**, not /*",
+		)
 	}
 
 	for _, part := range doc.Parsed {
@@ -1355,7 +1358,10 @@ func (d *rootWalker) checkPHPDocMixinRef(n ir.Node, part phpdoc.CommentPart) {
 	}
 
 	if _, ok := d.metaInfo().GetClass(name); !ok {
-		d.Report(n, LevelWarning, "phpdocRef", "Line %d: @mixin tag refers to unknown class %s", part.Line(), name)
+		d.ReportPHPDoc(
+			PHPDocPlace{Node: n, Line: part.Line(), Part: 1},
+			LevelWarning, "phpdocRef", "@mixin tag refers to unknown class %s", name,
+		)
 	}
 }
 
@@ -2288,7 +2294,7 @@ func (d *rootWalker) compareKeywordWithTokenCase(n ir.Node, tok *token.Token, ke
 	}
 }
 
-func (d *rootWalker) parseClassPHPDoc(class ir.Node, className ir.Node, doc phpdoc.Comment) classPhpDocParseResult {
+func (d *rootWalker) parseClassPHPDoc(class ir.Node, doc phpdoc.Comment) classPhpDocParseResult {
 	var result classPhpDocParseResult
 
 	if doc.Raw == "" {
@@ -2302,7 +2308,7 @@ func (d *rootWalker) parseClassPHPDoc(class ir.Node, className ir.Node, doc phpd
 	result.methods = meta.NewFunctionsMap()
 
 	for _, part := range doc.Parsed {
-		d.checkPHPDocRef(className, part)
+		d.checkPHPDocRef(class, part)
 		switch part.Name() {
 		case "property", "property-read", "property-write":
 			parseClassPHPDocProperty(class, &d.ctx, &result, part.(*phpdoc.TypeVarCommentPart))

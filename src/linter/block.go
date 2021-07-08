@@ -234,7 +234,10 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 	doc := phpdoc.Parse(b.r.ctx.phpdocTypeParser, string(t.Value))
 
 	if phpdoc.IsSuspicious(t.Value) {
-		b.r.Report(n, LevelWarning, "phpdocLint", "Multiline PHPDoc comment should start with /**, not /*")
+		b.r.ReportPHPDoc(PHPDocPlace{Node: n, Line: 0, All: true},
+			LevelWarning, "phpdocLint",
+			"Multiline PHPDoc comment should start with /**, not /*",
+		)
 	}
 
 	for _, p := range doc.Parsed {
