@@ -85,7 +85,7 @@ NoVerify found a single place to rewrite, let's run just the `assignOp` check to
 noverify check --allow-checks='assignOp' ./lib
 ```
 
-Only two errors were found.
+Only one error were found.
 
 ```
 MAYBE   assignOp: Could rewrite as `$compoundLevel ??= $this->getCompoundLevel($children)` at swiftmailer/lib/classes/Swift/Mime/SimpleMimeEntity.php:301
@@ -127,8 +127,6 @@ noverify check --allow-checks='unused' ./lib
 
 But if you look at them, you can see that most of them are variables named `$null`. Perhaps this is a way to show that the variable is not being used.
 
-Let's set up a regex to identify unused variables.
-
 We need to match the name `null`, so a simple `^null$` regex will suffice.
 
 Let's redefine the regex and run the analysis.
@@ -147,7 +145,7 @@ If we run a check:
 noverify check --unused-var-regex='^null$|^e$' --allow-checks='unused' ./lib
 ```
 
-Then a single place will be found where the declared variable is not really used.
+Then only a single place will be found where the declared variable is not really used.
 
 ```
 <critical> WARNING unused: Variable $name is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at swiftmailer/lib/classes/Swift/Mailer.php:73
