@@ -1063,7 +1063,7 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 }
 
 func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
-	call := resolveStaticMethodCall(b.classParseState(), e)
+	call := resolveStaticMethodCall(b.walker.ctx.sc, b.classParseState(), e)
 	if !call.canAnalyze {
 		return
 	}
@@ -1136,6 +1136,13 @@ func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
 	}
 
 	b.checkClassSpecialNameCase(e, fetch.className)
+
+	if !utils.IsSpecialClassName(e.Class) {
+		usedClassName, ok := solver.GetClassName(b.classParseState(), e.Class)
+		if ok {
+			b.walker.r.checkNameCase(e.Class, usedClassName, fetch.implClassName)
+		}
+	}
 
 	if !fetch.isFound && !b.classParseState().IsTrait {
 		b.walker.r.Report(e.ConstantName, LevelError, "undefined", "Class constant %s::%s does not exist", fetch.className, fetch.constName)

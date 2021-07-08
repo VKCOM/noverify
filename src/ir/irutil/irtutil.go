@@ -89,6 +89,19 @@ func FmtNode(n ir.Node) string {
 	return irfmt.Node(n)
 }
 
+// FindWithPredicate searches for a node in the passed
+// subtree using a predicate.
+//
+// If the predicate returns true, the search ends.
+func FindWithPredicate(what ir.Node, where ir.Node, pred findPredicate) bool {
+	if what == nil || where == nil {
+		return false
+	}
+	w := newFindWalkerWithPredicate(what, where, pred)
+	where.Walk(w)
+	return w.found
+}
+
 // FindPhpDoc searches for phpdoc by traversing all subtree and all tokens.
 func FindPhpDoc(n ir.Node, withSuspicious bool) (doc string, found bool) {
 	Inspect(n, func(n ir.Node) (continueTraverse bool) {

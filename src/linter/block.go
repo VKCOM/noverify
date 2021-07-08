@@ -1008,7 +1008,7 @@ func (b *blockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
 }
 
 func (b *blockWalker) handleStaticCall(e *ir.StaticCallExpr) bool {
-	call := resolveStaticMethodCall(b.r.ctx.st, e)
+	call := resolveStaticMethodCall(b.ctx.sc, b.r.ctx.st, e)
 	if !b.callsParentConstructor {
 		b.callsParentConstructor = call.isCallsParentConstructor
 	}

@@ -1859,8 +1859,20 @@ func TestSwitchBreak(t *testing.T) {
 func TestNameCase(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-class FooBar {
-  public function method_a() {}
+class Bar {
+  const TheConst2 = 10;
+}
+
+class FooBar extends Bar {
+  const TheConst = 10;
+
+  public function method_a() {
+    echo self::TheConst;
+    echo static::TheConst;
+    echo parent::TheConst2;
+
+    $_ = FOObar::TheConst;
+  }
 }
 
 class Baz extends foobar {}
@@ -1871,12 +1883,16 @@ $foo->Method_a();
 function func_a() {}
 
 func_A();
+
+$_ = FOObar::TheConst;
 `)
 	test.Expect = []string{
 		`\Foobar should be spelled \FooBar`,
 		`\foobar should be spelled \FooBar`,
 		`Method_a should be spelled method_a`,
 		`\func_A should be spelled \func_a`,
+		`\FOObar should be spelled \FooBar`,
+		`\FOObar should be spelled \FooBar`,
 	}
 	linttest.RunFilterMatch(test, `nameMismatch`)
 }
