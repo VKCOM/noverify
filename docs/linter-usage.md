@@ -96,7 +96,7 @@ By default, NoVerify would report 2 issues:
 
 ```sh
 $ noverify check hello.php
-MAYBE   arraySyntax: Use of old array syntax (use short form instead) at /home/quasilyte/CODE/php/hello.php:3
+MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at /home/quasilyte/CODE/php/hello.php:3
 $x = array($v, 2);
      ^^^^^^^^^^^^
 ERROR   undefined: Undefined variable $v at /home/quasilyte/CODE/php/hello.php:3

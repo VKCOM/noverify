@@ -129,7 +129,7 @@ func RegisterCheckFlags(ctx *AppContext) (*flag.FlagSet, *FlagsGroups) {
 	fs.StringVar(&ctx.ParsedFlags.AllowChecks, "allow-checks", AllChecks,
 		"Comma-separated list of check names to be enabled")
 	fs.BoolVar(&ctx.ParsedFlags.AllowAll, "allow-all-checks", false,
-		"Enables all checks. Has the same effect as passing '<all>' to the -allow-checks parameter")
+		"Enable all checks, including those disabled by default")
 	fs.StringVar(&ctx.ParsedFlags.ReportsExcludeChecks, "exclude-checks", "",
 		"Comma-separated list of check names to be excluded")
 	fs.StringVar(&ctx.ParsedFlags.ReportsCritical, "critical", AllNonNoticeChecks,

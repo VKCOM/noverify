@@ -256,7 +256,7 @@ thisFunctionExits();`,
 			Name:     "phpdocLint",
 			Default:  true,
 			Quickfix: false,
-			Comment:  `Report malformed phpdoc comments.`,
+			Comment:  `Report malformed PHPDoc comments.`,
 			Before:   `@property $foo`,
 			After:    `@property Foo $foo`,
 		},
@@ -265,7 +265,7 @@ thisFunctionExits();`,
 			Name:     "phpdocType",
 			Default:  true,
 			Quickfix: false,
-			Comment:  `Report potential issues in phpdoc types.`,
+			Comment:  `Report potential issues in PHPDoc types.`,
 			Before:   `@var []int $xs`,
 			After:    `@var int[] $xs`,
 		},
@@ -274,7 +274,7 @@ thisFunctionExits();`,
 			Name:     "phpdocRef",
 			Default:  true,
 			Quickfix: false,
-			Comment:  `Report invalid symbol references inside phpdoc.`,
+			Comment:  `Report invalid symbol references inside PHPDoc.`,
 			Before:   `@see MyClass`,
 			After:    `@see \Foo\MyClass`,
 		},
@@ -283,7 +283,7 @@ thisFunctionExits();`,
 			Name:     "phpdoc",
 			Default:  false,
 			Quickfix: false,
-			Comment:  `Report missing phpdoc on public methods.`,
+			Comment:  `Report missing PHPDoc on public methods.`,
 			Before: `public function process($acts, $config) {
   // Does something very complicated.
 }`,
@@ -373,6 +373,15 @@ return [$result, $err];`,
 			Comment:  `Report abstract classes usages in new expressions.`,
 			Before:   `return new AbstractFactory();`,
 			After:    `return new NonAbstractFactory();`,
+		},
+
+		{
+			Name:     "invalidNew",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report trait or interface usages in new expressions.`,
+			Before:   `return new SomeTrait();`,
+			After:    `return new SomeClass();`,
 		},
 
 		{
@@ -632,7 +641,7 @@ echo $someVal;`,
 		{
 			Name:     "nestedTernary",
 			Default:  false,
-			Quickfix: true,
+			Quickfix: false,
 			Comment:  `Report an unspecified order in a nested ternary operator.`,
 			Before:   `$_ = 1 ? 2 : 3 ? 4 : 5;`,
 			After: `$_ = (1 ? 2 : 3) ? 4 : 5;
@@ -643,7 +652,7 @@ $_ = 1 ? 2 : (3 ? 4 : 5);`,
 		{
 			Name:     "langDeprecated",
 			Default:  false,
-			Quickfix: true,
+			Quickfix: false,
 			Comment:  `Report the use of deprecated (per language spec) features.`,
 			Before: `$a = (real)100;
 $_ = is_real($a);`,
@@ -652,8 +661,19 @@ $_ = is_float($a);`,
 		},
 
 		{
-			Name:     "typeHint",
+			Name:     "badTraitUse",
 			Default:  true,
+			Quickfix: false,
+			Comment:  `Report misuse of traits.`,
+			Before: `trait A {}
+function f(A $a) {}`,
+			After: `class A {}
+function f(A $a) {}`,
+		},
+
+		{
+			Name:     "typeHint",
+			Default:  false,
 			Quickfix: false,
 			Comment:  `Report misuse of type hints.`,
 			Before:   `function f(array $a) {}`,
@@ -703,6 +723,25 @@ function f(array $a) {}`,
   foreach ([1, 2] as $b) {
     echo $b;
   }
+}`,
+		},
+
+		{
+			Name:     "propNullDefault",
+			Default:  false,
+			Quickfix: true,
+			Comment:  `Report a null assignment for a not nullable property.`,
+			Before: `class Foo {
+  /**
+   * @var Boo $item
+   */
+  public $item = null;
+}`,
+			After: `class Foo {
+  /**
+   * @var Boo $item
+   */
+  public $item;
 }`,
 		},
 	}

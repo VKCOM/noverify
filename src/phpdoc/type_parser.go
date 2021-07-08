@@ -49,7 +49,7 @@ const (
 	// Examples: `int` `\Foo\Bar` `$this`
 	ExprName
 
-	// ExprKeyword is a special name-like type node.
+	// ExprSpecialName is a special name-like type node.
 	// Examples: `*` `...`
 	ExprSpecialName
 

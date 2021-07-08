@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/VKCOM/noverify/src/phpdoctypes"
 	"github.com/z7zmey/php-parser/pkg/position"
 	"github.com/z7zmey/php-parser/pkg/token"
 
@@ -233,21 +234,25 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 	doc := phpdoc.Parse(b.r.ctx.phpdocTypeParser, string(t.Value))
 
 	if phpdoc.IsSuspicious(t.Value) {
-		b.r.Report(n, LevelWarning, "phpdocLint", "multiline phpdoc comment should start with /**, not /*")
+		b.r.Report(n, LevelWarning, "phpdocLint", "Multiline PHPDoc comment should start with /**, not /*")
 	}
 
 	for _, p := range doc.Parsed {
-		p, ok := p.(*phpdoc.TypeVarCommentPart)
+		part, ok := p.(*phpdoc.TypeVarCommentPart)
 		if !ok || p.Name() != "var" {
 			continue
 		}
 
-		typeList, warning := typesFromPHPDoc(&b.r.ctx, p.Type)
-		if warning != "" {
-			b.r.Report(n, LevelWarning, "phpdocType", "%s on line %d", warning, p.Line())
+		converted := phpdoctypes.ToRealType(b.r.ctx.typeNormalizer.ClassFQNProvider(), part.Type)
+		moveShapesToContext(&b.r.ctx, converted.Shapes)
+		b.r.handleClosuresFromDoc(converted.Closures)
+
+		for _, warning := range converted.Warnings {
+			b.r.Report(n, LevelNotice, "phpdocType", "%s on line %d", warning, part.Line())
 		}
-		m := newTypesMap(&b.r.ctx, typeList)
-		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(p.Var, "$"), m, "@var")
+
+		typesMap := types.NewMapWithNormalization(b.r.ctx.typeNormalizer, converted.Types)
+		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(part.Var, "$"), typesMap, "@var")
 	}
 }
 
@@ -436,7 +441,7 @@ func (b *blockWalker) checkDupGlobal(s *ir.GlobalStmt) {
 		// Check whether this var was already global'ed.
 		// We use nonLocalVars for function-wide analysis and vars for local analysis.
 		if _, ok := vars[nm]; ok {
-			b.r.Report(v, LevelWarning, "dupGlobal", "global statement mentions $%s more than once", nm)
+			b.r.Report(v, LevelWarning, "dupGlobal", "Global statement mentions $%s more than once", nm)
 		} else {
 			vars[nm] = struct{}{}
 			if b.nonLocalVars[nm] == varGlobal {
@@ -774,7 +779,7 @@ func (b *blockWalker) checkUnreachableForFinallyReturn(tryStmt *ir.TryStmt, tryC
 	}
 
 	if catchContainsDie {
-		b.r.Report(tryStmt.Finally, LevelError, "deadCode", "block finally is unreachable (because catch block %d contains a exit/die)", catchWithDieIndex)
+		b.r.Report(tryStmt.Finally, LevelError, "deadCode", "Block finally is unreachable (because catch block %d contains a exit/die)", catchWithDieIndex)
 
 		// If there is an error when the finally block is unreachable,
 		// then errors due to return in finally are skipped.
@@ -997,7 +1002,7 @@ func (b *blockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
 }
 
 func (b *blockWalker) handleStaticCall(e *ir.StaticCallExpr) bool {
-	call := resolveStaticMethodCall(b.r.ctx.st, e)
+	call := resolveStaticMethodCall(b.ctx.sc, b.r.ctx.st, e)
 	if !b.callsParentConstructor {
 		b.callsParentConstructor = call.isCallsParentConstructor
 	}
@@ -1114,7 +1119,7 @@ func (b *blockWalker) handleForeach(s *ir.ForeachStmt) bool {
 
 		b.untrackVarName(key.Name)
 
-		b.r.Report(s.Key, LevelError, "unused", "foreach key $%s is unused, can simplify $%s => $%s to just $%s", key.Name, key.Name, variable.Name, variable.Name)
+		b.r.Report(s.Key, LevelError, "unused", "Foreach key $%s is unused, can simplify $%s => $%s to just $%s", key.Name, key.Name, variable.Name, variable.Name)
 	}
 
 	return false
@@ -1153,11 +1158,16 @@ func (b *blockWalker) handleFor(s *ir.ForStmt) bool {
 func (b *blockWalker) enterArrowFunction(fun *ir.ArrowFunctionExpr) bool {
 	sc := meta.NewScope()
 
-	doc := b.r.parsePHPDoc(fun, fun.Doc, fun.Params)
-	b.r.reportPhpdocErrors(fun, doc.errs)
-	phpDocParamTypes := doc.types
+	// Indexing stage.
+	doc := phpdoctypes.Parse(fun.Doc, fun.Params, b.r.ctx.typeNormalizer)
+	moveShapesToContext(&b.r.ctx, doc.Shapes)
+	b.r.handleClosuresFromDoc(doc.Closures)
 
-	funcParams := b.r.parseFuncParams(fun.Params, phpDocParamTypes, sc, nil)
+	// Check stage.
+	errors := b.r.checkPHPDoc(fun, fun.Doc, fun.Params)
+	b.r.reportPHPDocErrors(fun, errors)
+
+	funcParams := b.r.parseFuncParams(fun.Params, doc.ParamTypes, sc, nil)
 	b.r.handleArrowFuncExpr(funcParams.params, fun.Expr, sc, b)
 
 	return false
@@ -1173,14 +1183,20 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		sc.AddVarName("this", types.NewMap("possibly_late_bound"), "possibly late bound $this", meta.VarAlwaysDefined)
 	}
 
-	doc := b.r.parsePHPDoc(fun, fun.Doc, fun.Params)
-	b.r.reportPhpdocErrors(fun, doc.errs)
-	phpDocParamTypes := doc.types
+	// Indexing stage.
+	doc := phpdoctypes.Parse(fun.Doc, fun.Params, b.r.ctx.typeNormalizer)
+	moveShapesToContext(&b.r.ctx, doc.Shapes)
+	b.r.handleClosuresFromDoc(doc.Closures)
+
+	// Check stage.
+	errors := b.r.checkPHPDoc(fun, fun.Doc, fun.Params)
+	b.r.reportPHPDocErrors(fun, errors)
 
 	var hintReturnType types.Map
-	if typ, ok := b.r.parseTypeNode(fun.ReturnType); ok {
+	if typ, ok := b.r.parseTypeHintNode(fun.ReturnType); ok {
 		hintReturnType = typ
 	}
+	b.r.checkTypeHintNode(fun.ReturnType, "closure return type")
 
 	var closureUses []ir.Node
 	if fun.ClosureUse != nil {
@@ -1211,7 +1227,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		b.untrackVarName(v.Name)
 	}
 
-	params := b.r.parseFuncParams(fun.Params, phpDocParamTypes, sc, closureSolver)
+	params := b.r.parseFuncParams(fun.Params, doc.ParamTypes, sc, closureSolver)
 
 	funcInfo := b.r.handleFuncStmts(params.params, closureUses, fun.Stmts, sc)
 	actualReturnTypes := funcInfo.returnTypes
@@ -1223,7 +1239,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		b.r.checkFuncParam(param.(*ir.Parameter))
 	}
 
-	name := autogen.GenerateClosureName(fun, b.r.ctx.st)
+	name := autogen.GenerateClosureName(fun, b.r.ctx.st.CurrentFunction, b.r.ctx.st.CurrentFile)
 
 	if b.r.meta.Functions.H == nil {
 		b.r.meta.Functions = meta.NewFunctionsMap()
@@ -1237,7 +1253,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		MinParamsCnt: params.minParamsCount,
 		Flags:        0,
 		ExitFlags:    exitFlags,
-		Doc:          doc.info,
+		Doc:          doc.AdditionalInfo,
 	})
 
 	return false
@@ -1658,8 +1674,21 @@ func (b *blockWalker) handleAndCheckDimFetchLValue(e *ir.ArrayDimFetchExpr, reas
 	switch v := e.Variable.(type) {
 	case *ir.Var, *ir.SimpleVar:
 		arrayOfType := typ.Map(types.WrapArrayOf)
-		b.addVar(v, arrayOfType, reason, meta.VarAlwaysDefined)
-		b.handleVariable(v)
+
+		varType, ok := b.ctx.sc.GetVarType(v)
+		// If the variable contains the type of an empty array, then it is
+		// necessary to replace this type with a new, more precise one.
+		if ok && varType.Len() == 1 && varType.Contains("empty_array") {
+			b.replaceVar(v, arrayOfType, reason, meta.VarAlwaysDefined)
+			sv, ok := v.(*ir.SimpleVar)
+			if !ok {
+				return
+			}
+			b.untrackVarName(sv.Name)
+		} else {
+			b.addVar(v, arrayOfType, reason, meta.VarAlwaysDefined)
+			b.handleVariable(v)
+		}
 	case *ir.ArrayDimFetchExpr:
 		arrayOfType := typ.Map(types.WrapArrayOf)
 		b.handleAndCheckDimFetchLValue(v, reason, arrayOfType)
@@ -1812,7 +1841,7 @@ func (b *blockWalker) paramClobberCheck(v *ir.SimpleVar) {
 		return
 	}
 	if _, ok := b.unusedParams[v.Name]; ok && !b.path.Conditional() {
-		b.r.Report(v, LevelWarning, "paramClobber", "$%s param re-assigned before being used", v.Name)
+		b.r.Report(v, LevelWarning, "paramClobber", "Param $%s re-assigned before being used", v.Name)
 	}
 }
 

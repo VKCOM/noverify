@@ -39,6 +39,16 @@ func NodeSliceEqual(xs, ys []ir.Node) bool {
 	return true
 }
 
+func InLoop(path NodePath) bool {
+	for i := 0; path.NthParent(i) != nil; i++ {
+		cur := path.NthParent(i)
+		if IsLoop(cur) {
+			return true
+		}
+	}
+	return false
+}
+
 func IsAssign(n ir.Node) bool {
 	switch n.(type) {
 	case *ir.Assign,
@@ -62,9 +72,34 @@ func IsAssign(n ir.Node) bool {
 	}
 }
 
+func IsLoop(n ir.Node) bool {
+	switch n.(type) {
+	case *ir.ForStmt,
+		*ir.ForeachStmt,
+		*ir.WhileStmt,
+		*ir.DoStmt:
+		return true
+	default:
+		return false
+	}
+}
+
 // FmtNode returns string representation of n.
 func FmtNode(n ir.Node) string {
 	return irfmt.Node(n)
+}
+
+// FindWithPredicate searches for a node in the passed
+// subtree using a predicate.
+//
+// If the predicate returns true, the search ends.
+func FindWithPredicate(what ir.Node, where ir.Node, pred findPredicate) bool {
+	if what == nil || where == nil {
+		return false
+	}
+	w := newFindWalkerWithPredicate(what, where, pred)
+	where.Walk(w)
+	return w.found
 }
 
 // FindPhpDoc searches for phpdoc by traversing all subtree and all tokens.

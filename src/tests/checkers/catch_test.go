@@ -18,7 +18,7 @@ try {
 } catch (MyException1 $e) {
 }
 `)
-	test.Expect = []string{`duplicated catch on \MyException1`}
+	test.Expect = []string{`Duplicated catch on \MyException1`}
 	test.RunAndMatch()
 }
 
@@ -30,7 +30,7 @@ try {
 } catch (Exception $e) {
 }
 `)
-	test.Expect = []string{`catch \Exception block will never run as it implements \Throwable which is caught above`}
+	test.Expect = []string{`Catch \Exception block will never run as it implements \Throwable which is caught above`}
 	test.RunAndMatch()
 }
 
@@ -44,7 +44,9 @@ try {
 } catch (MyException $e) {
 }
 `)
-	test.Expect = []string{`catch \MyException block will never run as it extends \Exception which is caught above`}
+	test.Expect = []string{
+		`Catch \MyException block will never run as it extends \Exception which is caught above`,
+	}
 	test.RunAndMatch()
 }
 
@@ -59,7 +61,9 @@ try {
 } catch (ExceptionDerived $e) {
 }
 `)
-	test.Expect = []string{`catch \ExceptionDerived block will never run as it extends \ExceptionBase which is caught above`}
+	test.Expect = []string{
+		`Catch \ExceptionDerived block will never run as it extends \ExceptionBase which is caught above`,
+	}
 	test.RunAndMatch()
 }
 
@@ -90,8 +94,8 @@ try {
 }
 `)
 	test.Expect = []string{
-		`catch \ExceptionBase block will never run as it implements \CustomException which is caught above`,
-		`catch \ExceptionDerived block will never run as it implements \CustomException which is caught above`,
+		`Catch \ExceptionBase block will never run as it implements \CustomException which is caught above`,
+		`Catch \ExceptionDerived block will never run as it implements \CustomException which is caught above`,
 	}
 	test.RunAndMatch()
 }

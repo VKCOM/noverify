@@ -140,7 +140,11 @@ func mergeTypeMaps(left types.Map, right types.Map) types.Map {
 // 2. If there is a type hint, then it is added to the types from the @return.
 //    If the @return is empty, then the type matches the type hint itself;
 //
-// 3. If there is no @return annotation and type hint, then the return type is equal to
+// 3. If the resulting type is mixed[], then if the actual type is a specific
+//    array type, then we use it, otherwise we combine this type with the
+//    resulting mixed[] type.
+//
+// 4. If there is no @return annotation and type hint, then the return type is equal to
 //    the union of the types that are returned from the function by return.
 func functionReturnType(phpdocReturnType types.Map, hintReturnType types.Map, actualReturnTypes types.Map) types.Map {
 	var returnTypes types.Map
@@ -148,6 +152,15 @@ func functionReturnType(phpdocReturnType types.Map, hintReturnType types.Map, ac
 		returnTypes = mergeTypeMaps(phpdocReturnType, hintReturnType)
 	} else {
 		returnTypes = actualReturnTypes
+	}
+
+	if returnTypes.IsLazyArrayOf("mixed") {
+		if actualReturnTypes.IsLazyArray() && !actualReturnTypes.IsLazyArrayOf("mixed") {
+			returnTypes = actualReturnTypes
+		} else if !actualReturnTypes.Contains(types.WrapArrayOf("mixed")) &&
+			!actualReturnTypes.Contains("null") {
+			returnTypes.Append(actualReturnTypes)
+		}
 	}
 
 	if returnTypes.Empty() {
@@ -201,7 +214,7 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 	if !res.isFound {
 		// If the function has not been found up to this point,
 		// we try to check if the function is a variable with the closure type.
-		res.info, res.isFound = solver.GetClosure(call.Function, sc, st)
+		res.info, res.isFound = solver.GetClosure(call.Function, sc, st, customTypes)
 		if res.isFound {
 			res.isClosure = true
 		}
@@ -281,7 +294,7 @@ type staticMethodCallInfo struct {
 	canAnalyze               bool
 }
 
-func resolveStaticMethodCall(st *meta.ClassParseState, e *ir.StaticCallExpr) staticMethodCallInfo {
+func resolveStaticMethodCall(scope *meta.Scope, st *meta.ClassParseState, e *ir.StaticCallExpr) staticMethodCallInfo {
 	if !st.Info.IsIndexingComplete() {
 		return staticMethodCallInfo{canAnalyze: false}
 	}
@@ -295,15 +308,61 @@ func resolveStaticMethodCall(st *meta.ClassParseState, e *ir.StaticCallExpr) sta
 		return staticMethodCallInfo{canAnalyze: false}
 	}
 
-	classNameNode, ok := e.Class.(*ir.Name)
-	parentCall := ok && classNameNode.Value == "parent"
+	var ok bool
+	var className string
+	var parentCall bool
 	var callsParentConstructor bool
-	if parentCall && methodName == "__construct" {
-		callsParentConstructor = true
-	}
 
-	className, ok := solver.GetClassName(st, e.Class)
-	if !ok {
+	switch n := e.Class.(type) {
+	case *ir.Name:
+		parentCall = n.Value == "parent"
+		if parentCall && methodName == "__construct" {
+			callsParentConstructor = true
+		}
+
+		className, ok = solver.GetClassName(st, e.Class)
+		if !ok {
+			return staticMethodCallInfo{canAnalyze: false}
+		}
+	case *ir.Identifier:
+		className, ok = solver.GetClassName(st, e.Class)
+		if !ok {
+			return staticMethodCallInfo{canAnalyze: false}
+		}
+	case *ir.SimpleVar:
+		tp, ok := scope.GetVarNameType(n.Name)
+		if !ok {
+			return staticMethodCallInfo{canAnalyze: false}
+		}
+
+		// We need to resolve the types here, as the function
+		// may return a class or a string with the class name.
+		if !tp.IsResolved() {
+			resolvedTypes := solver.ResolveTypes(st.Info, st.CurrentClass, tp, solver.ResolverMap{})
+			tp = types.NewMapFromMap(resolvedTypes)
+		}
+
+		var isClass bool
+		var isString bool
+		var isMixed bool
+		tp.Iterate(func(typ string) {
+			isString = typ == "string"
+			isMixed = typ == "mixed"
+			if !isString && !isMixed {
+				_, isClass = st.Info.GetClass(typ)
+			}
+		})
+
+		if !isClass && !isString && !isMixed {
+			return staticMethodCallInfo{canAnalyze: false}
+		}
+
+		if !isClass || tp.Len() != 1 {
+			return staticMethodCallInfo{canAnalyze: false}
+		}
+
+		className = tp.String()
+	default:
 		return staticMethodCallInfo{canAnalyze: false}
 	}
 

@@ -118,8 +118,32 @@ abstract class AC {
 $x = new AC();
 `)
 	test.Expect = []string{
-		`Cannot instantiate abstract class`,
-		`Cannot instantiate abstract class`,
+		`Cannot instantiate abstract class \AC`,
+		`Cannot instantiate abstract class \AC`,
+	}
+	test.RunAndMatch()
+}
+
+func TestNewInterface(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+interface IElement {}
+$x = new IElement;
+`)
+	test.Expect = []string{
+		`Cannot instantiate interface \IElement`,
+	}
+	test.RunAndMatch()
+}
+
+func TestNewTrait(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+trait Element {}
+$x = new Element;
+`)
+	test.Expect = []string{
+		`Cannot instantiate trait \Element`,
 	}
 	test.RunAndMatch()
 }
@@ -1447,7 +1471,7 @@ class Bar {
 `)
 	test.Expect = []string{
 		`Call to undefined method {\BarWithSomeMixin}->method3()`,
-		`line 4: @mixin tag refers to unknown class \Boo`,
+		`Line 4: @mixin tag refers to unknown class \Boo`,
 	}
 	test.RunAndMatch()
 }
@@ -1623,4 +1647,55 @@ class Foo5 {
   public function f1() {}
 }
 `)
+}
+
+func TestCallStaticWithVariable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {
+  /** */
+  public static function some_method() {}
+}
+function ret_int() {
+  return 12;
+}
+function ret_string() {
+  return "Foo";
+}
+function ret_object() {
+  return new Foo();
+}
+function f($arg) {
+  $foo = new Foo();
+  $foo::some_method(); // Ok
+  $foo::non_existing_method(); // Error
+
+  $a = 10;
+  $a::some_method(); // invalid class name
+
+  $foo2 = new Foo();
+  $foo3 = new Foo();
+  $foo4 = $arg;
+
+  $foo5 = ret_string();
+  $foo6 = ret_object();
+  $foo7 = ret_int();
+
+  if ($a > 100) {
+    $foo2 = "Foo";
+    $foo3 = 10;
+  }
+
+  $foo2::some_method(); // Skip, via \Foo|string type (both is correct for class name)
+  $foo3::some_method(); // Error, int type is invalid class name
+  $foo4::some_method(); // Skip, via mixed type
+  $foo5::some_method(); // Ok ret_string returns the string
+  $foo6::some_method(); // Ok ret_object returns the Foo object
+  $foo7::some_method(); // Error, ret_int returns the int
+}
+`)
+	test.Expect = []string{
+		`Call to undefined method \Foo::non_existing_method()`,
+	}
+	test.RunAndMatch()
 }
