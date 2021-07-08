@@ -90,10 +90,15 @@ func FmtNode(n ir.Node) string {
 }
 
 // FindPhpDoc searches for phpdoc by traversing all subtree and all tokens.
-func FindPhpDoc(n ir.Node) (doc string, found bool) {
+func FindPhpDoc(n ir.Node, withSuspicious bool) (doc string, found bool) {
 	Inspect(n, func(n ir.Node) (continueTraverse bool) {
 		n.IterateTokens(func(t *token.Token) (continueTraverse bool) {
 			if t.ID == token.T_DOC_COMMENT {
+				doc = string(t.Value)
+				return false
+			}
+
+			if withSuspicious && t.ID == token.T_COMMENT && phpdoc.IsSuspicious(t.Value) {
 				doc = string(t.Value)
 				return false
 			}

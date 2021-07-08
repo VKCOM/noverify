@@ -393,7 +393,7 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace PHPDocPlace, 
 
 	case isReportForPHPDoc:
 		countLines := 0
-		doc, ok := irutil.FindPhpDoc(phpDocPlace.Node)
+		doc, ok := irutil.FindPhpDoc(phpDocPlace.Node, true)
 		if ok {
 			countLines = strings.Count(doc, "\n") + 1
 		}
@@ -1170,7 +1170,7 @@ func (d *rootWalker) reportPHPDocErrors(errs PHPDocErrors) {
 
 func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.Comment) (typesMap types.Map) {
 	if phpdoc.IsSuspicious([]byte(doc.Raw)) {
-		d.ReportPHPDoc(PHPDocPlace{Node: n, Line: 0, All: true},
+		d.ReportPHPDoc(PHPDocPlace{Node: n, Line: 1, All: true},
 			LevelWarning, "phpdocLint",
 			"Multiline PHPDoc comment should start with /**, not /*",
 		)
