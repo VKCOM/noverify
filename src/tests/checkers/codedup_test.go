@@ -329,12 +329,12 @@ function f($cond) {
 }
 `)
 	test.Expect = []string{
-		`duplicated switch case #2`,
-		`duplicated switch case #4`,
-		`duplicated switch case #5 (value 2)`,
-		`duplicated switch case #2`,
-		`duplicated switch case #3 (value 1)`,
-		`duplicated switch case #4 (value 3)`,
+		`Duplicated switch case for expression 'abc'`,
+		`Duplicated switch case for expression 1`,
+		`Duplicated switch case for expression C2 (value: 2)`,
+		`Duplicated switch case for expression purefunc(1)`,
+		`Duplicated switch case for expression C1 (value: 1)`,
+		`Duplicated switch case for expression C3 (value: 3)`,
 	}
-	test.RunAndMatch()
+	linttest.RunFilterMatch(test, "dupCond")
 }

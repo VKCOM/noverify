@@ -555,25 +555,50 @@ func (b *blockLinter) checkSwitch(s *ir.SwitchStmt) {
 	nodeSet := &b.walker.r.nodeSet
 	nodeSet.Reset()
 	wasAdded := false
-	for i, c := range s.Cases {
-		c, ok := c.(*ir.CaseStmt)
+
+	for _, c := range s.Cases {
+		caseNode, ok := c.(*ir.CaseStmt)
 		if !ok {
 			continue
 		}
-		if !b.walker.sideEffectFree(c.Cond) {
+
+		// Probably the case:
+		// case 1: case 2: case 3:
+		if len(caseNode.Stmts) == 0 {
 			continue
 		}
 
-		var v meta.ConstValue
+		isDupBody := !nodeSet.Add(&ir.StmtList{Stmts: caseNode.Stmts})
+
+		if isDupBody {
+			msg := fmt.Sprintf("Branch 'case %s' in 'switch' is a duplicate, combine cases with the same body into one", irutil.FmtNode(caseNode.Cond))
+			b.report(caseNode.Cond, LevelWarning, "dupBranchBody", "%s", msg)
+		}
+	}
+
+	nodeSet.Reset()
+
+	for _, c := range s.Cases {
+		caseNode, ok := c.(*ir.CaseStmt)
+		if !ok {
+			continue
+		}
+
+		if !b.walker.sideEffectFree(caseNode.Cond) {
+			continue
+		}
+
+		var constValue meta.ConstValue
 		var isConstKey bool
-		if k, ok := c.Cond.(*ir.ConstFetchExpr); ok {
-			v = constfold.Eval(b.classParseState(), k)
-			if !v.IsValid() {
+		constFetchExpr, ok := caseNode.Cond.(*ir.ConstFetchExpr)
+		if ok {
+			constValue = constfold.Eval(b.classParseState(), constFetchExpr)
+			if !constValue.IsValid() {
 				continue
 			}
-			value := v.Value
+			value := constValue.Value
 
-			switch v.Type {
+			switch constValue.Type {
 			case meta.Float:
 				val, ok := value.(float64)
 				if !ok {
@@ -606,16 +631,16 @@ func (b *blockLinter) checkSwitch(s *ir.SwitchStmt) {
 
 		isDupKey := isConstKey && !wasAdded
 		if !isDupKey {
-			isDupKey = !nodeSet.Add(c.Cond)
+			isDupKey = !nodeSet.Add(caseNode.Cond)
 		}
 
 		if isDupKey {
-			msg := fmt.Sprintf("duplicated switch case #%d", i+1)
+			msg := fmt.Sprintf("Duplicated switch case for expression %s", irutil.FmtNode(caseNode.Cond))
 			if isConstKey {
-				dupKey := getConstValue(v)
-				msg += " (value " + dupKey + ")"
+				dupKey := getConstValue(constValue)
+				msg += " (value: " + dupKey + ")"
 			}
-			b.report(c.Cond, LevelWarning, "dupCond", "%s", msg)
+			b.report(caseNode.Cond, LevelWarning, "dupCond", "%s", msg)
 		}
 	}
 }
