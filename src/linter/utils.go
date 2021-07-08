@@ -489,6 +489,11 @@ func resolveClassConstFetch(st *meta.ClassParseState, e *ir.ClassConstFetchExpr)
 		return classPropertyFetchInfo{canAnalyze: false}
 	}
 
+	class, ok := st.Info.GetClass(className)
+	if ok {
+		className = class.Name
+	}
+
 	info, implClass, found := solver.FindConstant(st.Info, className, constName.Value)
 
 	return classPropertyFetchInfo{
