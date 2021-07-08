@@ -612,3 +612,28 @@ function forLoop() {
     for ($i = $start; $i >= $length; $i += $addition) { ${"*"};}
   }
 }
+
+/**
+ * @comment Report when use to always null object.
+ * @before  if ($obj == null && $obj->method()) { ... }
+ * @after   if ($obj != null && $obj->method()) { ... }
+ */
+function alwaysNull() {
+  /**
+   * @warning '$obj' is always 'null', maybe you meant '$obj != null && ...' or '$obj == null || ...'
+   * @location $obj
+   */
+  any_equal: {
+    if ($obj == null && $obj->$method(${"*"})) { ${"*"}; }
+    if ($obj == null && $obj->$prop) { ${"*"}; }
+  }
+
+  /**
+   * @warning '$obj' is always 'null', maybe you meant '$obj == null || ...' or '$obj != null && ...'
+   * @location $obj
+   */
+  any_not_equal: {
+    if ($obj != null || $obj->$method(${"*"})) { ${"*"}; }
+    if ($obj != null || $obj->$prop) { ${"*"}; }
+  }
+}
