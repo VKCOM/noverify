@@ -516,3 +516,38 @@ function returnAssign() {
         return $_ ??= $_;
     }
 }
+
+/**
+ * @comment Report comparisons count(...) which are always false or true.
+ * @before  if (count($arr) >= 0) { ... }
+ * @after   if (count($arr) != 0) { ... }
+ */
+function countUse() {
+  /**
+   * @warning Count of elements is always greater than or equal to zero, this expression is always true
+   */
+  any_greater_or_equal: {
+    count($arr) >= 0;
+    0 <= count($arr);
+  }
+
+  /**
+   * @warning Count of elements is always greater than or equal to zero, this expression is always false
+   */
+  any_less: {
+    count($arr) < 0;
+    0 > count($arr);
+  }
+
+  /**
+   * @warning Count of elements is always greater than or equal to zero, use count($arr) == 0 instead.
+   * @fix count($arr) == 0
+   */
+  count($arr) <= 0;
+
+  /**
+   * @warning Count of elements is always greater than or equal to zero, use 0 == count($arr) instead.
+   * @fix 0 == count($arr)
+   */
+  0 >= count($arr);
+}
