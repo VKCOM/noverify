@@ -649,3 +649,15 @@ function selfAssign() {
    */
   ${'x:var'} = ${'x:var'};
 }
+
+/**
+ * @comment Report using @.
+ * @before  $f();
+ * @after   f();
+ */
+function errorSilence() {
+  /**
+   * @warning Don't use @, silencing errors is bad practice
+   */
+  @$_;
+}

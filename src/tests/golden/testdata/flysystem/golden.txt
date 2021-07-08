@@ -4,15 +4,45 @@ MAYBE   regexpSimplify: May re-write '/^[0-9]{2,4}-[0-9]{2}-[0-9]{2}/' as '/^\d{
 MAYBE   callSimplify: Could simplify to $permissions[0] at testdata/flysystem/src/Adapter/AbstractFtpAdapter.php:548
         return substr($permissions, 0, 1) === 'd' ? 'dir' : 'file';
                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/flysystem/src/Adapter/Ftp.php:134
+            $this->connection = @ftp_ssl_connect($this->getHost(), $this->getPort(), $this->getTimeout());
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/flysystem/src/Adapter/Ftp.php:136
+            $this->connection = @ftp_connect($this->getHost(), $this->getPort(), $this->getTimeout());
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/flysystem/src/Adapter/Ftp.php:233
+            @ftp_close($this->connection);
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/flysystem/src/Adapter/Ftp.php:391
+        if (@ftp_chdir($this->getConnection(), $path) === true) {
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   regexpSimplify: May re-write '/^total [0-9]*$/' as '/^total \d*$/' at testdata/flysystem/src/Adapter/Ftp.php:407
         if (preg_match('/^total [0-9]*$/', $listing[0])) {
                        ^^^^^^^^^^^^^^^^^^
+WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/flysystem/src/Adapter/Ftp.php:570
+        $response = @ftp_raw($this->connection, trim($command));
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/flysystem/src/Adapter/Ftpd.php:15
+        if (@ftp_chdir($this->getConnection(), $path) === true) {
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/flysystem/src/Adapter/Local.php:103
+            if ( ! @mkdir($root, $this->permissionMap['dir']['public'], true)) {
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$mkdirError['message'] ?? ''` at testdata/flysystem/src/Adapter/Local.php:111
                 $errorMessage = isset($mkdirError['message']) ? $mkdirError['message'] : '';
                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/flysystem/src/Adapter/Local.php:222
+        $contents = @file_get_contents($location);
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/flysystem/src/Adapter/Local.php:263
+        return @unlink($location);
+               ^^^^^^^^^^^^^^^^^^
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/flysystem/src/Adapter/Local.php:324
         if (in_array($mimetype, ['application/octet-stream', 'inode/x-empty', 'application/x-empty'])) {
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/flysystem/src/Adapter/Local.php:387
+            if (false === @mkdir($location, $this->permissionMap['dir'][$visibility], true)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   phpdocType: Void type can only be used as a standalone type for the return type at testdata/flysystem/src/Adapter/Local.php:448
     protected function normalizeFileInfo(SplFileInfo $file)
                        ^^^^^^^^^^^^^^^^^
