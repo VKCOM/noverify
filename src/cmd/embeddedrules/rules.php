@@ -585,3 +585,30 @@ function unaryRepeat() {
    */
   ~~$a;
 }
+
+/**
+ * @comment Report potentially erroneous 'for' loops.
+ * @before  for ($i = 0; $i < 100; $i--) { ... }
+ * @after   for ($i = 0; $i < 100; $i++) { ... }
+ */
+function forLoop() {
+  /**
+   * @warning Potentially infinite 'for' loop, because $i decreases and is always less than initial value $start and, accordingly, $length
+   */
+  any_for_loop_decrease: {
+    for ($i = $start; $i < $length; $i--) { ${"*"};}
+    for ($i = $start; $i <= $length; $i--) { ${"*"};}
+    for ($i = $start; $i < $length; $i -= $subtraction) { ${"*"};}
+    for ($i = $start; $i <= $length; $i -= $subtraction) { ${"*"};}
+  }
+
+  /**
+   * @warning Potentially infinite 'for' loop, because $i increases and is always greater than initial value $start and, accordingly, $length
+   */
+  any_for_loop_increase: {
+    for ($i = $start; $i > $length; $i++) { ${"*"};}
+    for ($i = $start; $i >= $length; $i++) { ${"*"};}
+    for ($i = $start; $i > $length; $i += $addition) { ${"*"};}
+    for ($i = $start; $i >= $length; $i += $addition) { ${"*"};}
+  }
+}
