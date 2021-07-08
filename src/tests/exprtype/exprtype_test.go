@@ -3020,6 +3020,15 @@ function f9(callable $s) {
   $a = $s(10, "ss");
   exprtype($a, "mixed");
 }
+
+/**
+ * @param callable(int, string): Foo $s
+ */
+function f10(callable $s) {
+  if ($s() instanceof Boo) {
+    exprtype($s(), "\Boo");
+  }
+}
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
@@ -3032,13 +3041,41 @@ func TestDifferentArraySyntax(t *testing.T) {
  * @param non-empty-array<Foo> $arr2
  * @param non-empty-list<Foo> $arr3
  * @param unknown-type-list<Foo> $arr4
+ * @param iterable<Foo> $arr5
  */
-function f($arr, $arr1, $arr2, $arr3, $arr4) {
+function f($arr, $arr1, $arr2, $arr3, $arr4, $arr5) {
   exprtype($arr, "\Foo[]");
   exprtype($arr1, "\Foo[]");
   exprtype($arr2, "\Foo[]");
   exprtype($arr3, "\Foo[]");
   exprtype($arr4, "\Foo[]");
+  exprtype($arr5, "\Foo[]");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestArrayTypeCast(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+/**
+ * @return Foo[]
+ */
+function f() {
+  return [];
+}
+
+function f1() {
+  $a = (array) f();
+  exprtype($a, "\Foo[]|mixed[]");
+  exprtype($a[0], "\Foo|mixed");
+
+  $b = (array) 10;
+  exprtype($b, "int|mixed[]");
+
+  $c = (array) [1, "s"];
+  exprtype($c, "mixed[]");
 }
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})

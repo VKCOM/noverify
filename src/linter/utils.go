@@ -140,7 +140,11 @@ func mergeTypeMaps(left types.Map, right types.Map) types.Map {
 // 2. If there is a type hint, then it is added to the types from the @return.
 //    If the @return is empty, then the type matches the type hint itself;
 //
-// 3. If there is no @return annotation and type hint, then the return type is equal to
+// 3. If the resulting type is mixed[], then if the actual type is a specific
+//    array type, then we use it, otherwise we combine this type with the
+//    resulting mixed[] type.
+//
+// 4. If there is no @return annotation and type hint, then the return type is equal to
 //    the union of the types that are returned from the function by return.
 func functionReturnType(phpdocReturnType types.Map, hintReturnType types.Map, actualReturnTypes types.Map) types.Map {
 	var returnTypes types.Map
@@ -148,6 +152,15 @@ func functionReturnType(phpdocReturnType types.Map, hintReturnType types.Map, ac
 		returnTypes = mergeTypeMaps(phpdocReturnType, hintReturnType)
 	} else {
 		returnTypes = actualReturnTypes
+	}
+
+	if returnTypes.IsLazyArrayOf("mixed") {
+		if actualReturnTypes.IsLazyArray() && !actualReturnTypes.IsLazyArrayOf("mixed") {
+			returnTypes = actualReturnTypes
+		} else if !actualReturnTypes.Contains(types.WrapArrayOf("mixed")) &&
+			!actualReturnTypes.Contains("null") {
+			returnTypes.Append(actualReturnTypes)
+		}
 	}
 
 	if returnTypes.Empty() {
@@ -201,7 +214,7 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 	if !res.isFound {
 		// If the function has not been found up to this point,
 		// we try to check if the function is a variable with the closure type.
-		res.info, res.isFound = solver.GetClosure(call.Function, sc, st)
+		res.info, res.isFound = solver.GetClosure(call.Function, sc, st, customTypes)
 		if res.isFound {
 			res.isClosure = true
 		}

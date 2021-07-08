@@ -124,7 +124,7 @@ func exprTypeLocalCustom(sc *meta.Scope, cs *meta.ClassParseState, n ir.Node, cu
 	case *ir.PreDecExpr:
 		return unaryMathOpType(sc, cs, n.Variable, custom)
 	case *ir.TypeCastExpr:
-		return typeCastType(n)
+		return typeCastType(sc, cs, n, custom)
 	case *ir.ShiftLeftExpr, *ir.ShiftRightExpr:
 		return types.PreciseIntType
 	case *ir.ClassConstFetchExpr:
@@ -378,10 +378,11 @@ func classConstFetchType(n *ir.ClassConstFetchExpr, cs *meta.ClassParseState) ty
 	return types.NewMap(types.WrapClassConstFetch(className, n.ConstantName.Value))
 }
 
-func typeCastType(n *ir.TypeCastExpr) types.Map {
+func typeCastType(sc *meta.Scope, cs *meta.ClassParseState, n *ir.TypeCastExpr, custom []CustomType) types.Map {
 	switch n.Type {
 	case "array":
-		return types.NewMap("mixed[]")
+		typ := exprTypeLocalCustom(sc, cs, n.Expr, custom)
+		return typ.Append(types.NewMap("mixed[]"))
 	case "int":
 		return types.PreciseIntType
 	case "string":
@@ -511,7 +512,7 @@ func functionCallType(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassPars
 		}
 		return types.NewMap(types.WrapFunctionCall(cs.Namespace + `\` + nm.Value))
 	case *ir.SimpleVar:
-		cl, ok := closureTypeByNameNode(n.Function, sc, cs)
+		cl, ok := closureTypeByNameNode(n.Function, sc, cs, custom)
 		if ok {
 			return cl
 		}
@@ -527,12 +528,12 @@ func magicConstantType(n *ir.MagicConstant) types.Map {
 	return types.PreciseStringType
 }
 
-func closureTypeByNameNode(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState) (types.Map, bool) {
+func closureTypeByNameNode(name ir.Node, sc *meta.Scope, cs *meta.ClassParseState, custom []CustomType) (types.Map, bool) {
 	if !cs.Info.IsIndexingComplete() {
 		return types.Map{}, false
 	}
 
-	fi, ok := GetClosure(name, sc, cs)
+	fi, ok := GetClosure(name, sc, cs, custom)
 	if !ok {
 		return types.Map{}, false
 	}
