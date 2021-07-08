@@ -32,3 +32,9 @@ func NameNodeEquals(n ir.Node, s string) bool {
 		return false
 	}
 }
+
+// IsSpecialClassName checks if the passed node is a special class name.
+func IsSpecialClassName(n ir.Node) bool {
+	name := NameNodeToString(n)
+	return name == "static" || name == "self" || name == "parent"
+}

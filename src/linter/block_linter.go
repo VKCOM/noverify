@@ -1137,6 +1137,13 @@ func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
 
 	b.checkClassSpecialNameCase(e, fetch.className)
 
+	if !utils.IsSpecialClassName(e.Class) {
+		usedClassName, ok := solver.GetClassName(b.classParseState(), e.Class)
+		if ok {
+			b.walker.r.checkNameCase(e.Class, usedClassName, fetch.implClassName)
+		}
+	}
+
 	if !fetch.isFound && !b.classParseState().IsTrait {
 		b.walker.r.Report(e.ConstantName, LevelError, "undefined", "Class constant %s::%s does not exist", fetch.className, fetch.constName)
 	}
