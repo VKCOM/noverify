@@ -40,24 +40,23 @@ type PHPDocError struct {
 	Message string
 }
 
-func NewPHPDocError(place PHPDocPlace, format string, args ...interface{}) *PHPDocError {
-	return &PHPDocError{
+type PHPDocErrors struct {
+	types []PHPDocError
+	lint  []PHPDocError
+}
+
+func (e *PHPDocErrors) pushType(place PHPDocPlace, format string, args ...interface{}) {
+	e.types = append(e.types, PHPDocError{
 		Place:   place,
 		Message: fmt.Sprintf(format, args...),
-	}
+	})
 }
 
-type PHPDocErrors struct {
-	types []*PHPDocError
-	lint  []*PHPDocError
-}
-
-func (e *PHPDocErrors) pushType(err *PHPDocError) {
-	e.types = append(e.types, err)
-}
-
-func (e *PHPDocErrors) pushLint(err *PHPDocError) {
-	e.lint = append(e.lint, err)
+func (e *PHPDocErrors) pushLint(place PHPDocPlace, format string, args ...interface{}) {
+	e.lint = append(e.lint, PHPDocError{
+		Place:   place,
+		Message: fmt.Sprintf(format, args...),
+	})
 }
 
 type classPhpDocParseResult struct {
@@ -81,10 +80,8 @@ func parseClassPHPDocMethod(classNode ir.Node, ctx *rootContext, result *classPh
 
 	if len(params) < 2 {
 		result.errs.pushLint(
-			NewPHPDocError(
-				PHPDocLine(classNode, part.Line()),
-				"@method requires return type and method name fields",
-			),
+			PHPDocLine(classNode, part.Line()),
+			"@method requires return type and method name fields",
 		)
 		return
 	}
@@ -95,10 +92,8 @@ func parseClassPHPDocMethod(classNode ir.Node, ctx *rootContext, result *classPh
 
 	if converted.Warning != "" {
 		result.errs.pushType(
-			NewPHPDocError(
-				PHPDocLineField(classNode, part.Line(), 1),
-				converted.Warning,
-			),
+			PHPDocLineField(classNode, part.Line(), 1),
+			converted.Warning,
 		)
 	}
 
@@ -110,10 +105,8 @@ func parseClassPHPDocMethod(classNode ir.Node, ctx *rootContext, result *classPh
 		methodName = params[1] // Could be a method name without `()`.
 
 		result.errs.pushLint(
-			NewPHPDocError(
-				PHPDocLineField(classNode, part.Line(), 2),
-				"@method missing parentheses after method name",
-			),
+			PHPDocLineField(classNode, part.Line(), 2),
+			"@method missing parentheses after method name",
 		)
 	}
 
@@ -144,20 +137,16 @@ func parseClassPHPDocProperty(classNode ir.Node, ctx *rootContext, result *class
 
 	if part.Type.IsEmpty() || part.Var == "" {
 		result.errs.pushLint(
-			NewPHPDocError(
-				PHPDocLine(classNode, part.Line()),
-				"@property requires type and property name fields",
-			),
+			PHPDocLine(classNode, part.Line()),
+			"@property requires type and property name fields",
 		)
 		return
 	}
 
 	if part.VarIsFirst {
 		result.errs.pushLint(
-			NewPHPDocError(
-				PHPDocLine(classNode, part.Line()),
-				"Non-canonical order of name and type",
-			),
+			PHPDocLine(classNode, part.Line()),
+			"Non-canonical order of name and type",
 		)
 	}
 
@@ -166,19 +155,15 @@ func parseClassPHPDocProperty(classNode ir.Node, ctx *rootContext, result *class
 
 	if converted.Warning != "" {
 		result.errs.pushType(
-			NewPHPDocError(
-				PHPDocLineField(classNode, part.Line(), 2),
-				converted.Warning,
-			),
+			PHPDocLineField(classNode, part.Line(), 2),
+			converted.Warning,
 		)
 	}
 
 	if !strings.HasPrefix(part.Var, "$") {
 		result.errs.pushLint(
-			NewPHPDocError(
-				PHPDocLineField(classNode, part.Line(), 2),
-				"@property %s field name must start with '$'", part.Var,
-			),
+			PHPDocLineField(classNode, part.Line(), 2),
+			"@property %s field name must start with '$'", part.Var,
 		)
 		return
 	}

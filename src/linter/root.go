@@ -1376,10 +1376,8 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 
 	if phpdoc.IsSuspicious([]byte(doc.Raw)) {
 		errors.pushLint(
-			NewPHPDocError(
-				PHPDocLine(n, 1),
-				"Multiline PHPDoc comment should start with /**, not /*",
-			),
+			PHPDocLine(n, 1),
+			"Multiline PHPDoc comment should start with /**, not /*",
 		)
 	}
 
@@ -1401,10 +1399,8 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 
 			if converted.Warning != "" {
 				errors.pushType(
-					NewPHPDocError(
-						PHPDocLineField(n, part.Line(), 1),
-						converted.Warning,
-					),
+					PHPDocLineField(n, part.Line(), 1),
+					converted.Warning,
 				)
 			}
 
@@ -1412,10 +1408,8 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 
 			if returnType.Contains("void") && returnType.Len() > 1 {
 				errors.pushType(
-					NewPHPDocError(
-						PHPDocLineField(n, part.Line(), 1),
-						"Void type can only be used as a standalone type for the return type",
-					),
+					PHPDocLineField(n, part.Line(), 1),
+					"Void type can only be used as a standalone type for the return type",
 				)
 			}
 			continue
@@ -1431,18 +1425,14 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 		switch {
 		case part.Var == "":
 			errors.pushLint(
-				NewPHPDocError(
-					PHPDocLineField(n, part.Line(), 1),
-					"Malformed @param tag (maybe var is missing?)",
-				),
+				PHPDocLineField(n, part.Line(), 1),
+				"Malformed @param tag (maybe var is missing?)",
 			)
 
 		case part.Type.IsEmpty():
 			errors.pushLint(
-				NewPHPDocError(
-					PHPDocLineField(n, part.Line(), 1),
-					"Malformed @param %s tag (maybe type is missing?)", part.Var,
-				),
+				PHPDocLineField(n, part.Line(), 1),
+				"Malformed @param %s tag (maybe type is missing?)", part.Var,
 			)
 
 			continue
@@ -1451,10 +1441,8 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 		if part.VarIsFirst {
 			// Phpstorm gives the same message.
 			errors.pushLint(
-				NewPHPDocError(
-					PHPDocLine(n, part.Line()),
-					"Non-canonical order of variable and type",
-				),
+				PHPDocLine(n, part.Line()),
+				"Non-canonical order of variable and type",
 			)
 		}
 
@@ -1466,10 +1454,8 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 		}
 		if _, ok := actualParamNames[strings.TrimPrefix(variable, "$")]; !ok {
 			errors.pushLint(
-				NewPHPDocError(
-					PHPDocLineField(n, part.Line(), 2),
-					"@param for non-existing argument %s", variable,
-				),
+				PHPDocLineField(n, part.Line(), 2),
+				"@param for non-existing argument %s", variable,
 			)
 			continue
 		}
@@ -1480,10 +1466,8 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 
 		if converted.Warning != "" {
 			errors.pushType(
-				NewPHPDocError(
-					PHPDocLineField(n, part.Line(), 1),
-					converted.Warning,
-				),
+				PHPDocLineField(n, part.Line(), 1),
+				converted.Warning,
 			)
 		}
 
@@ -1492,10 +1476,8 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 
 		if param.Typ.Contains("void") {
 			errors.pushType(
-				NewPHPDocError(
-					PHPDocLineField(n, part.Line(), 1),
-					"Void type can only be used as a standalone type for the return type",
-				),
+				PHPDocLineField(n, part.Line(), 1),
+				"Void type can only be used as a standalone type for the return type",
 			)
 		}
 	}
