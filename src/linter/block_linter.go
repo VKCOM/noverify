@@ -1063,7 +1063,7 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 }
 
 func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
-	call := resolveStaticMethodCall(b.classParseState(), e)
+	call := resolveStaticMethodCall(b.walker.ctx.sc, b.classParseState(), e)
 	if !call.canAnalyze {
 		return
 	}
