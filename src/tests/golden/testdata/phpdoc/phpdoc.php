@@ -19,6 +19,13 @@ class Foo {
    * @var   int
    */
   public $a = 100;
+
+  /**
+   * @var ?int|null
+   * @var $b ?int|null
+   * @var ?int|null $b
+   */
+  public $b = 100;
 }
 
 /*

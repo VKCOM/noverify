@@ -1190,7 +1190,14 @@ func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.Comment) (typesMap typ
 			d.handleClosuresFromDoc(converted.Closures)
 
 			if converted.Warning != "" {
-				d.Report(n, LevelNotice, "phpdocType", converted.Warning)
+				field := 1
+				if part.VarIsFirst {
+					field = 2
+				}
+				d.ReportPHPDoc(PHPDocLineField(n, part.Line(), field),
+					LevelNotice, "phpdocType",
+					converted.Warning,
+				)
 			}
 
 			typesMap = types.NewMapWithNormalization(d.ctx.typeNormalizer, converted.Types)
