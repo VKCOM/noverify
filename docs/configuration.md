@@ -5,7 +5,7 @@ This page is dedicated to some technical details.
 - [Console options for `check` command](#console-options-for--check--command)
   * [How to disable some checks](#how-to-disable-some-checks)
   * [How to enable all checks](#how-to-enable-all-checks)
-  * [How to run only with certain checks](#how-to-run-only-with-certain-checks)
+  * [How to enable only certain checks](#how-to-enable-only-certain-checks)
   * [How to exclude some files and folders from checking](#how-to-exclude-some-files-and-folders-from-checking)
   * [How to exclude some files and folders from reports](#how-to-exclude-some-files-and-folders-from-reports)
   * [How to disable file checking without changing the launch command](#how-to-disable-file-checking-without-changing-the-launch-command)
@@ -15,10 +15,11 @@ This page is dedicated to some technical details.
   * [How to output all errors to a file](#how-to-output-all-errors-to-a-file)
   * [How to output all errors to a `json` file](#how-to-output-all-errors-to-a--json--file)
   * [How to fix some errors in automatic mode](#how-to-fix-some-errors-in-automatic-mode)
+  * [How to make a check critical](#how-to-make-a-check-critical)
   * [How to change the cache directory](#how-to-change-the-cache-directory)
   * [How to disable caching](#how-to-disable-caching)
 - [Hard level options](#hard-level-options)
-  * [How can use dynamic rules](#how-can-use-dynamic-rules)
+  * [How to use dynamic rules](#how-to-use-dynamic-rules)
   * [How to use `baseline` mode](#how-to-use--baseline--mode)
   * [How to use `git diff` mode (e.g. in pre-push hook)](#how-to-use--git-diff--mode--eg-in-pre-push-hook-)
 - [Other commands](#other-commands)
@@ -64,9 +65,9 @@ It looks like this:
 noverify check --allow-all-checks ./
 ```
 
-NoVerify has checks that are disabled, you can enable them with the `--allow-all-checks` flag.
+NoVerify has checks that are disabled by default, you can enable them with the `--allow-all-checks` flag.
 
-### How to run only with certain checks
+### How to enable only certain checks
 
 It looks like this:
 
@@ -194,6 +195,22 @@ nocolor check --fix ./src
 
 All errors that NoVerify can fix will be fixed.
 
+If you want to fix only certain errors, then specify the `--allow-checks` flag. See [How to enable only certain checks](#how-to-enable-only-certain-checks)
+
+### How to make a check critical
+
+It looks like this:
+
+```shell
+nocolor check --critical='redundantCast' ./src
+```
+
+Now the appearance of the `redundantCast` error will cause NoVerify to exit with non-zero status.
+
+By default, not all errors lead to a non-zero status, that is, if there are only `redundantCast` errors in reports, then NoVerify will exit with a zero status, since the `redundantCast` check is not critical.
+
+If you need to make some check critical, then use the `--critical flag`, which accepts a comma-separated list of checks.
+
 ### How to change the cache directory
 
 It looks like this:
@@ -218,27 +235,19 @@ nocolor check --disable-cache ./src
 
 ## Hard level options
 
-Here we will look at a list of options, for the use of which you need to delve a little deeper into the topic and read the attached materials.
+Next are the options for which you need to read the articles attached to them to understand how to use them.
 
 ### How to use dynamic rules
 
-It looks like this:
-
-```shell
-nocolor check --rules='./rules' ./src
-# or
-nocolor check --rules='./rules/rule-1.php,./rules/rule-2.php' ./src
-```
-
 Dynamic rules are a way to add new checks to NoVerify without having to write Go code. Such rules are written in PHP. 
 
-You can read more in the article [Dynamic rules](/docs/dynamic_rules.md).
+Read more in the article [Dynamic rules](/docs/dynamic_rules.md).
 
 ### How to use `baseline` mode
 
 Baseline mode is necessary if you have a large codebase on which NoVerify finds a huge number of errors. Of course, it is impossible to fix them right away, so you need a way to ignore all found errors and analyze only errors found after.
 
-You can read more in the article [Baseline mode](/docs/baseline.md).
+Read more in the article [Baseline mode](/docs/baseline.md).
 
 ### How to use `git diff` mode (e.g. in pre-push hook)
 
@@ -246,7 +255,7 @@ Another way to use NoVerify for a large codebase, if NoVerify finds a large numb
 
 The changes are taken from the comparison with the previous commit, excluding changes made to `master` branch that is fetched to `ORIGIN_MASTER`.
 
-You can read more in the article [Diff mode](/docs/diff.md).
+Read more in the article [Diff mode](/docs/diff.md).
 
 <p><br></p>
 
