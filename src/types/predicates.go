@@ -16,6 +16,10 @@ func IsClosure(s string) bool {
 	return strings.HasPrefix(s, `\Closure`)
 }
 
+func IsAnonClass(s string) bool {
+	return strings.HasPrefix(s, `\anon$`)
+}
+
 func IsArray(s string) bool {
 	return strings.HasSuffix(s, `[]`)
 }

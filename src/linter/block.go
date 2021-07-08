@@ -273,6 +273,11 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 	b.handleComments(n)
 
 	switch s := n.(type) {
+	case *ir.AnonClassExpr:
+		s.Walk(b.r)
+
+		res = !b.ignoreFunctionBodies
+
 	case *ir.LogicalOrExpr:
 		res = b.handleLogicalOr(s)
 	case *ir.ArrayDimFetchExpr:
@@ -376,8 +381,6 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 		res = b.handleFunction(s)
 	case *ir.ArrowFunctionExpr:
 		res = b.handleArrowFunction(s)
-	case *ir.AnonClassExpr:
-		res = !b.ignoreFunctionBodies
 	case *ir.ClassStmt:
 		if b.ignoreFunctionBodies {
 			res = false

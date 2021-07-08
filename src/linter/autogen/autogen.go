@@ -41,3 +41,12 @@ func GenerateClosureName(fun *ir.ClosureExpr, currentFunction, currentFile strin
 	}
 	return fmt.Sprintf("\\Closure$(%s%s):%d$", currentFile, curFunction, pos.StartLine)
 }
+
+func GenerateAnonClassName(class *ir.AnonClassExpr, currentFunction, currentFile string) string {
+	pos := ir.GetPosition(class)
+	curFunction := currentFunction
+	if curFunction != "" {
+		curFunction = "," + curFunction
+	}
+	return fmt.Sprintf(`\anon$(%s%s):%d$`, currentFile, curFunction, pos.StartLine)
+}

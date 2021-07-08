@@ -152,10 +152,10 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 
 	d.handleComments(n)
 
-	if _, ok := n.(*ir.AnonClassExpr); ok {
-		// TODO: remove when #62 and anon class support in general is ready.
-		return false // Don't walk nor enter anon classes
-	}
+	// if _, ok := n.(*ir.AnonClassExpr); ok {
+	// 	// TODO: remove when #62 and anon class support in general is ready.
+	// 	return false // Don't walk nor enter anon classes
+	// }
 
 	state.EnterNode(d.ctx.st, n)
 
@@ -173,6 +173,45 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 				}
 			}
 		}
+
+	case *ir.AnonClassExpr:
+		d.currentClassNode = n
+		cl := d.getClass()
+		className := &ir.Identifier{Value: cl.Name}
+		if n.Implements != nil {
+			d.checkKeywordCase(n.Implements, "implements")
+			for _, tr := range n.Implements.InterfaceNames {
+				interfaceName, ok := solver.GetClassName(d.ctx.st, tr)
+				if ok {
+					cl.Interfaces[interfaceName] = struct{}{}
+					d.checkIfaceImplemented(tr, interfaceName)
+				}
+			}
+		}
+		d.checkCommentMisspellings(className, n.Doc.Raw)
+		d.checkIdentMisspellings(className)
+		doc := d.parseClassPHPDoc(className, n.Doc)
+		d.reportPHPDocErrors(className, doc.errs)
+		// If we ever need to distinguish @property-annotated and real properties,
+		// more work will be required here.
+		for name, p := range doc.properties {
+			p.Pos = cl.Pos
+			cl.Properties[name] = p
+		}
+		for name, m := range doc.methods.H {
+			m.Pos = cl.Pos
+			cl.Methods.H[name] = m
+		}
+		if n.Extends != nil {
+			d.checkKeywordCase(n.Extends, "extends")
+			className, ok := solver.GetClassName(d.ctx.st, n.Extends.ClassName)
+			if ok {
+				d.checkClassImplemented(n.Extends.ClassName, className)
+			}
+		}
+
+		cl.Mixins = doc.mixins
+		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
 
 	case *ir.InterfaceStmt:
 		d.currentClassNode = n
@@ -1904,7 +1943,7 @@ func (d *rootWalker) LeaveNode(n ir.Node) {
 	}
 
 	switch n.(type) {
-	case *ir.ClassStmt, *ir.InterfaceStmt, *ir.TraitStmt:
+	case *ir.ClassStmt, *ir.InterfaceStmt, *ir.TraitStmt, *ir.AnonClassExpr:
 		d.getClass() // populate classes map
 
 		d.currentClassNode = nil
