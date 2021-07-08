@@ -637,3 +637,15 @@ function alwaysNull() {
     if ($obj != null || $obj->$prop) { ${"*"}; }
   }
 }
+
+/**
+ * @comment Report self-assignment of variables.
+ * @before  $x = $x;
+ * @after   $x = $y;
+ */
+function selfAssign() {
+  /**
+   * @warning Assignment to $x itself does not make sense
+   */
+  ${'x:var'} = ${'x:var'};
+}
