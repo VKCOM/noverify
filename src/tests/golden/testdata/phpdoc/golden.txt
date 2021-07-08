@@ -21,19 +21,19 @@ WARNING phpdocLint: Non-canonical order of name and type at testdata/phpdoc/phpd
    ^^^^^^^^^^^^^^^^^^^^^^^
 WARNING phpdocLint: @property c field name must start with '$' at testdata/phpdoc/phpdoc.php:15
  * @property int c
-   ^^^^^^^^^^^^^^^
+                 ^
 WARNING phpdocLint: Multiline PHPDoc comment should start with /**, not /* at testdata/phpdoc/phpdoc.php:18
   /*
 ^^^^
 WARNING phpdocLint: Multiline PHPDoc comment should start with /**, not /* at testdata/phpdoc/phpdoc.php:24
 /*
 ^^
-WARNING phpdocRef: @see tag refers to unknown symbol FooUnExisiting at testdata/phpdoc/phpdoc.php:47
- * @see  FooUnExisiting
-         ^^^^^^^^^^^^^^
-WARNING phpdocRef: @see tag refers to unknown symbol FooUnExisiting at testdata/phpdoc/phpdoc.php:48
- * @see       FooUnExisiting
-              ^^^^^^^^^^^^^^
+WARNING phpdocRef: @see tag refers to unknown symbol FooUnExisting at testdata/phpdoc/phpdoc.php:47
+ * @see  FooUnExisting
+         ^^^^^^^^^^^^^
+WARNING phpdocRef: @see tag refers to unknown symbol FooUnExisting at testdata/phpdoc/phpdoc.php:48
+ * @see       FooUnExisting
+              ^^^^^^^^^^^^^
 MAYBE   phpdocType: Repeated nullable doesn't make sense at testdata/phpdoc/phpdoc.php:37
  * @param    ?int|null $d
              ^^^^^^^^^

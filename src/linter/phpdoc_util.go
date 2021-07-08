@@ -160,7 +160,7 @@ func parseClassPHPDocProperty(classNode ir.Node, ctx *rootContext, result *class
 	if !strings.HasPrefix(part.Var, "$") {
 		result.errs.pushLint(
 			NewPHPDocError(
-				PHPDocPlace{Node: classNode, Line: part.Line(), All: true},
+				PHPDocPlace{Node: classNode, Line: part.Line(), Part: 2},
 				"@property %s field name must start with '$'", part.Var,
 			),
 		)

@@ -44,8 +44,8 @@ function g($a) {
  * @param   int? $a1
  *
  * @see   Foo <- ok
- * @see  FooUnExisiting
- * @see       FooUnExisiting
+ * @see  FooUnExisting
+ * @see       FooUnExisting
  */
 function f($a, $b, $c, $d, $e, $f, $g, $h, $a1, $b1, $c1, $d1, $e1, $f1, $g1, $h1) {
   /** @var shape(foo: int) $a <- ok */
