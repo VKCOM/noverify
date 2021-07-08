@@ -551,3 +551,37 @@ function countUse() {
    */
   0 >= count($arr);
 }
+
+/**
+ * @comment Report the repetition of unary (! and ~) operators in a row.
+ * @before  echo !!$a;
+ * @after   echo (bool) $a;
+ */
+function unaryRepeat() {
+  /**
+   * @warning Several negations in a row does not make sense, if you want to cast a value to a boolean type, use an explicit cast
+   */
+  any_repeat_negation: {
+    !!$a;
+    !!!$a;
+    !!!!$a;
+  }
+
+  /**
+   * @warning Several bitwise not (~) in a row does not make sense
+   * @fix     $a
+   */
+  ~~~~$a;
+
+  /**
+   * @warning Several bitwise not (~) in a row does not make sense
+   * @fix     ~$a
+   */
+  ~~~$a;
+
+  /**
+   * @warning Several bitwise not (~) in a row does not make sense
+   * @fix $a
+   */
+  ~~$a;
+}
