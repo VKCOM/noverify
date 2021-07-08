@@ -1859,12 +1859,18 @@ func TestSwitchBreak(t *testing.T) {
 func TestNameCase(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-class Bar {
-  const TheConst2 = 10;
+interface BarAble {
+  const TheConst4 = 10;
 }
 
-class FooBar extends Bar {
+class Bar {
+  const TheConst2 = 10;
+  const TheConst3 = 10;
+}
+
+class FooBar extends Bar implements BarAble {
   const TheConst = 10;
+  const TheConst3 = 10;
 
   public function method_a() {
     echo self::TheConst;
@@ -1872,6 +1878,8 @@ class FooBar extends Bar {
     echo parent::TheConst2;
 
     $_ = FOObar::TheConst;
+    $_ = FOObar::TheConst3;
+    $_ = FOObar::TheConst4;
   }
 }
 
@@ -1891,6 +1899,8 @@ $_ = FOObar::TheConst;
 		`\foobar should be spelled \FooBar`,
 		`Method_a should be spelled method_a`,
 		`\func_A should be spelled \func_a`,
+		`\FOObar should be spelled \FooBar`,
+		`\FOObar should be spelled \FooBar`,
 		`\FOObar should be spelled \FooBar`,
 		`\FOObar should be spelled \FooBar`,
 	}
