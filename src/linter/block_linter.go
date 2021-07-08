@@ -1140,7 +1140,7 @@ func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
 	if !utils.IsSpecialClassName(e.Class) {
 		usedClassName, ok := solver.GetClassName(b.classParseState(), e.Class)
 		if ok {
-			b.walker.r.checkNameCase(e.Class, usedClassName, fetch.implClassName)
+			b.walker.r.checkNameCase(e.Class, usedClassName, fetch.className)
 		}
 	}
 
