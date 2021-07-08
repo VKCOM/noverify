@@ -418,8 +418,8 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace PHPDocPlace, 
 		shift := len(startLn) - len(lineWithoutBeginning)
 
 		parts := bytes.Fields(lineWithoutBeginning)
-		if phpDocPlace.Part >= len(parts) {
-			phpDocPlace.Part = 0
+		if phpDocPlace.Field >= len(parts) {
+			phpDocPlace.Field = 0
 			phpDocPlace.All = true
 		}
 
@@ -427,7 +427,7 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace PHPDocPlace, 
 			startChar = shift
 			endChar = shift + len(lineWithoutBeginning)
 		} else {
-			part := parts[phpDocPlace.Part]
+			part := parts[phpDocPlace.Field]
 			shiftStart := bytes.Index(lineWithoutBeginning, part)
 			shiftEnd := shiftStart + len(part)
 
@@ -1174,7 +1174,7 @@ func (d *rootWalker) reportPHPDocErrors(errs PHPDocErrors) {
 
 func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.Comment) (typesMap types.Map) {
 	if phpdoc.IsSuspicious([]byte(doc.Raw)) {
-		d.ReportPHPDoc(PHPDocPlace{Node: n, Line: 1, All: true},
+		d.ReportPHPDoc(PHPDocLine(n, 1),
 			LevelWarning, "phpdocLint",
 			"Multiline PHPDoc comment should start with /**, not /*",
 		)
@@ -1335,7 +1335,7 @@ func (d *rootWalker) checkPHPDocSeeRef(n ir.Node, part phpdoc.CommentPart) {
 		ref = strings.TrimRight(ref, "().;@")
 		if !d.isValidPHPDocRef(n, ref) {
 			d.ReportPHPDoc(
-				PHPDocPlace{Node: n, Line: part.Line(), Part: 1},
+				PHPDocLineField(n, part.Line(), 1),
 				LevelWarning, "phpdocRef", "@see tag refers to unknown symbol %s", ref,
 			)
 		}
@@ -1363,7 +1363,7 @@ func (d *rootWalker) checkPHPDocMixinRef(n ir.Node, part phpdoc.CommentPart) {
 
 	if _, ok := d.metaInfo().GetClass(name); !ok {
 		d.ReportPHPDoc(
-			PHPDocPlace{Node: n, Line: part.Line(), Part: 1},
+			PHPDocLineField(n, part.Line(), 1),
 			LevelWarning, "phpdocRef", "@mixin tag refers to unknown class %s", name,
 		)
 	}
@@ -1377,7 +1377,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 	if phpdoc.IsSuspicious([]byte(doc.Raw)) {
 		errors.pushLint(
 			NewPHPDocError(
-				PHPDocPlace{Node: n, Line: 1, All: true},
+				PHPDocLine(n, 1),
 				"Multiline PHPDoc comment should start with /**, not /*",
 			),
 		)
@@ -1402,7 +1402,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 			if converted.Warning != "" {
 				errors.pushType(
 					NewPHPDocError(
-						PHPDocPlace{Node: n, Line: part.Line(), Part: 1},
+						PHPDocLineField(n, part.Line(), 1),
 						converted.Warning,
 					),
 				)
@@ -1413,7 +1413,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 			if returnType.Contains("void") && returnType.Len() > 1 {
 				errors.pushType(
 					NewPHPDocError(
-						PHPDocPlace{Node: n, Line: rawPart.Line(), Part: 1},
+						PHPDocLineField(n, part.Line(), 1),
 						"Void type can only be used as a standalone type for the return type",
 					),
 				)
@@ -1432,7 +1432,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 		case part.Var == "":
 			errors.pushLint(
 				NewPHPDocError(
-					PHPDocPlace{Node: n, Line: part.Line(), Part: 1},
+					PHPDocLineField(n, part.Line(), 1),
 					"Malformed @param tag (maybe var is missing?)",
 				),
 			)
@@ -1440,7 +1440,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 		case part.Type.IsEmpty():
 			errors.pushLint(
 				NewPHPDocError(
-					PHPDocPlace{Node: n, Line: part.Line(), Part: 1},
+					PHPDocLineField(n, part.Line(), 1),
 					"Malformed @param %s tag (maybe type is missing?)", part.Var,
 				),
 			)
@@ -1452,7 +1452,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 			// Phpstorm gives the same message.
 			errors.pushLint(
 				NewPHPDocError(
-					PHPDocPlace{Node: n, Line: part.Line(), All: true},
+					PHPDocLine(n, part.Line()),
 					"Non-canonical order of variable and type",
 				),
 			)
@@ -1467,7 +1467,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 		if _, ok := actualParamNames[strings.TrimPrefix(variable, "$")]; !ok {
 			errors.pushLint(
 				NewPHPDocError(
-					PHPDocPlace{Node: n, Line: part.Line(), Part: 2},
+					PHPDocLineField(n, part.Line(), 2),
 					"@param for non-existing argument %s", variable,
 				),
 			)
@@ -1481,7 +1481,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 		if converted.Warning != "" {
 			errors.pushType(
 				NewPHPDocError(
-					PHPDocPlace{Node: n, Line: part.Line(), Part: 1},
+					PHPDocLineField(n, part.Line(), 1),
 					converted.Warning,
 				),
 			)
@@ -1493,7 +1493,7 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 		if param.Typ.Contains("void") {
 			errors.pushType(
 				NewPHPDocError(
-					PHPDocPlace{Node: n, Line: rawPart.Line(), Part: 1},
+					PHPDocLineField(n, part.Line(), 1),
 					"Void type can only be used as a standalone type for the return type",
 				),
 			)
