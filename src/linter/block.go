@@ -1804,7 +1804,7 @@ func (b *blockWalker) handleAssignList(list *ir.ListExpr, rhs ir.Node) {
 		case types.IsShape(typ):
 			shapeType = typ
 		case types.IsArray(typ):
-			elemType := types.ArrayType(typ)
+			elemType := types.ArrayElementType(typ)
 			elemTypes = append(elemTypes, types.Type{Elem: elemType})
 		}
 	})

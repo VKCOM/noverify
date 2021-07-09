@@ -236,7 +236,7 @@ func (r *resolver) solveElemOfShape(class, shapeName, key string, res map[string
 func (r *resolver) solveElemOf(tt string, res map[string]struct{}) map[string]struct{} {
 	switch {
 	case types.IsArray(tt):
-		res[types.ArrayType(tt)] = struct{}{}
+		res[types.ArrayElementType(tt)] = struct{}{}
 	case tt == "mixed":
 		res["mixed"] = struct{}{}
 	case Implements(r.info, tt, `\ArrayAccess`):
