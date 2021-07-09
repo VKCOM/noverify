@@ -578,7 +578,17 @@ func (b *blockLinter) checkSwitch(s *ir.SwitchStmt) {
 
 	nodeSet.Reset()
 
-	for _, c := range s.Cases {
+	containsDefault := false
+
+	for i, c := range s.Cases {
+		defaultNode, ok := c.(*ir.DefaultStmt)
+		if ok {
+			containsDefault = true
+			if i != 0 && i != len(s.Cases)-1 {
+				b.report(defaultNode, LevelWarning, "switchDefault", "'default' should be first or last to improve readability")
+			}
+		}
+
 		caseNode, ok := c.(*ir.CaseStmt)
 		if !ok {
 			continue
@@ -642,6 +652,18 @@ func (b *blockLinter) checkSwitch(s *ir.SwitchStmt) {
 			}
 			b.report(caseNode.Cond, LevelWarning, "dupCond", "%s", msg)
 		}
+	}
+
+	if len(s.Cases) == 2 && containsDefault || len(s.Cases) == 1 {
+		b.report(s, LevelWarning, "switchSimplify", "Switch can be rewritten into an 'if' statement to increase readability")
+	}
+
+	if len(s.Cases) == 0 {
+		b.report(s, LevelWarning, "switchEmpty", "Switch has empty body")
+	}
+
+	if len(s.Cases) != 0 && !containsDefault {
+		b.report(s, LevelWarning, "switchDefault", "Add 'default' branch to avoid unexpected unhandled condition values")
 	}
 }
 

@@ -112,6 +112,9 @@ MAYBE   callSimplify: Could simplify to $this->stack[] = $value at testdata/must
 MAYBE   callSimplify: Could simplify to $this->blockStack[] = $value at testdata/mustache/src/Mustache/Context.php:49
         array_push($this->blockStack, $value);
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/mustache/src/Mustache/Context.php:213
+            switch (gettype($frame)) {
+            ^
 MAYBE   ternarySimplify: Could rewrite as `$options['cache_file_mode'] ?? null` at testdata/mustache/src/Mustache/Engine.php:156
                 $mode  = isset($options['cache_file_mode']) ? $options['cache_file_mode'] : null;
                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -145,6 +148,9 @@ MAYBE   phpdoc: Missing PHPDoc for \Mustache_Exception_UnknownTemplateException:
 WARNING regexpVet: '\w' intersects with '\d' in [\w\d\.] at testdata/mustache/src/Mustache/Loader/InlineLoader.php:115
             foreach (preg_split("/^@@(?= [\w\d\.]+$)/m", $data, -1) as $chunk) {
                                 ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/mustache/src/Mustache/Parser.php:307
+        switch ($name) {
+        ^
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/mustache/src/Mustache/Source/FilesystemSource.php:53
                 $this->stat = @stat($this->fileName);
                               ^^^^^^^^^^^^^^^^^^^^^^
