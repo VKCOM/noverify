@@ -309,7 +309,7 @@ func (d *rootWalker) parseStartPos(pos *position.Position) (startLn []byte, star
 	return startLn, startChar
 }
 
-func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace PHPDocPlace, level int, checkName, msg string, args ...interface{}) {
+func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocLocation PHPDocLocation, level int, checkName, msg string, args ...interface{}) {
 	if !d.metaInfo().IsIndexingComplete() {
 		return
 	}
@@ -326,9 +326,9 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace PHPDocPlace, 
 		return
 	}
 
-	isReportForNode := phpDocPlace.Line == 0 && lineNumber == 0
+	isReportForNode := phpDocLocation.Line == 0 && lineNumber == 0
 	isReportForLine := lineNumber != 0
-	isReportForPHPDoc := phpDocPlace.Line != 0
+	isReportForPHPDoc := phpDocLocation.Line != 0
 
 	var pos position.Position
 	var startLn []byte
@@ -393,22 +393,22 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace PHPDocPlace, 
 
 	case isReportForPHPDoc:
 		countLines := 0
-		doc, ok := irutil.FindPhpDoc(phpDocPlace.Node, true)
+		doc, ok := irutil.FindPhpDoc(phpDocLocation.Node, true)
 		if ok {
 			countLines = strings.Count(doc, "\n") + 1
 		}
 
-		nodePos := ir.GetPosition(phpDocPlace.Node)
+		nodePos := ir.GetPosition(phpDocLocation.Node)
 		if nodePos == nil {
 			nodePos = &position.Position{}
 		}
-		phpDocPlace.Line = nodePos.StartLine - (countLines - phpDocPlace.Line) - 1
+		phpDocLocation.Line = nodePos.StartLine - (countLines - phpDocLocation.Line) - 1
 
-		if phpDocPlace.Line < 1 || phpDocPlace.Line > d.file.NumLines() {
+		if phpDocLocation.Line < 1 || phpDocLocation.Line > d.file.NumLines() {
 			return
 		}
 
-		startLn = d.file.Line(phpDocPlace.Line - 1)
+		startLn = d.file.Line(phpDocLocation.Line - 1)
 
 		lineWithoutBeginning := startLn
 		if !bytes.Contains(startLn, []byte("/*")) || bytes.Contains(startLn, []byte("/**")) {
@@ -418,16 +418,16 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace PHPDocPlace, 
 		shift := len(startLn) - len(lineWithoutBeginning)
 
 		parts := bytes.Fields(lineWithoutBeginning)
-		if phpDocPlace.Field >= len(parts) {
-			phpDocPlace.Field = 0
-			phpDocPlace.All = true
+		if phpDocLocation.Field >= len(parts) {
+			phpDocLocation.Field = 0
+			phpDocLocation.WholeLine = true
 		}
 
-		if phpDocPlace.All {
+		if phpDocLocation.WholeLine {
 			startChar = shift
 			endChar = shift + len(lineWithoutBeginning)
 		} else {
-			part := parts[phpDocPlace.Field]
+			part := parts[phpDocLocation.Field]
 			shiftStart := bytes.Index(lineWithoutBeginning, part)
 			shiftEnd := shiftStart + len(part)
 
@@ -440,8 +440,8 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace PHPDocPlace, 
 		}
 
 		pos = position.Position{
-			StartLine: phpDocPlace.Line,
-			EndLine:   phpDocPlace.Line,
+			StartLine: phpDocLocation.Line,
+			EndLine:   phpDocLocation.Line,
 		}
 	}
 
@@ -476,17 +476,17 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocPlace PHPDocPlace, 
 
 // Report registers a single report message about some found problem.
 func (d *rootWalker) Report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
-	d.report(n, 0, PHPDocPlace{}, level, checkName, msg, args...)
+	d.report(n, 0, PHPDocLocation{}, level, checkName, msg, args...)
 }
 
 // ReportByLine registers a single report message about some found problem in lineNumber code line.
 func (d *rootWalker) ReportByLine(lineNumber int, level int, checkName, msg string, args ...interface{}) {
-	d.report(nil, lineNumber, PHPDocPlace{}, level, checkName, msg, args...)
+	d.report(nil, lineNumber, PHPDocLocation{}, level, checkName, msg, args...)
 }
 
 // ReportPHPDoc registers a single report message about some found problem in PHPDoc.
-func (d *rootWalker) ReportPHPDoc(place PHPDocPlace, level int, checkName, msg string, args ...interface{}) {
-	d.report(nil, 0, place, level, checkName, msg, args...)
+func (d *rootWalker) ReportPHPDoc(location PHPDocLocation, level int, checkName, msg string, args ...interface{}) {
+	d.report(nil, 0, location, level, checkName, msg, args...)
 }
 
 // reportHash computes the report signature hash for the baseline.
@@ -1165,10 +1165,10 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 
 func (d *rootWalker) reportPHPDocErrors(errs PHPDocErrors) {
 	for _, err := range errs.types {
-		d.ReportPHPDoc(err.Place, LevelNotice, "phpdocType", err.Message)
+		d.ReportPHPDoc(err.Location, LevelNotice, "phpdocType", err.Message)
 	}
 	for _, err := range errs.lint {
-		d.ReportPHPDoc(err.Place, LevelWarning, "phpdocLint", err.Message)
+		d.ReportPHPDoc(err.Location, LevelWarning, "phpdocLint", err.Message)
 	}
 }
 

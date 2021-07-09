@@ -12,23 +12,23 @@ import (
 	"github.com/VKCOM/noverify/src/types"
 )
 
-type PHPDocPlace struct {
-	Node  ir.Node
-	Line  int
-	Field int
-	All   bool
+type PHPDocLocation struct {
+	Node      ir.Node
+	Line      int
+	Field     int
+	WholeLine bool
 }
 
-func PHPDocLine(n ir.Node, line int) PHPDocPlace {
-	return PHPDocPlace{
-		Node: n,
-		Line: line,
-		All:  true,
+func PHPDocLine(n ir.Node, line int) PHPDocLocation {
+	return PHPDocLocation{
+		Node:      n,
+		Line:      line,
+		WholeLine: true,
 	}
 }
 
-func PHPDocLineField(n ir.Node, line int, field int) PHPDocPlace {
-	return PHPDocPlace{
+func PHPDocLineField(n ir.Node, line int, field int) PHPDocLocation {
+	return PHPDocLocation{
 		Node:  n,
 		Line:  line,
 		Field: field,
@@ -36,8 +36,8 @@ func PHPDocLineField(n ir.Node, line int, field int) PHPDocPlace {
 }
 
 type PHPDocError struct {
-	Place   PHPDocPlace
-	Message string
+	Location PHPDocLocation
+	Message  string
 }
 
 type PHPDocErrors struct {
@@ -45,17 +45,17 @@ type PHPDocErrors struct {
 	lint  []PHPDocError
 }
 
-func (e *PHPDocErrors) pushType(place PHPDocPlace, format string, args ...interface{}) {
+func (e *PHPDocErrors) pushType(place PHPDocLocation, format string, args ...interface{}) {
 	e.types = append(e.types, PHPDocError{
-		Place:   place,
-		Message: fmt.Sprintf(format, args...),
+		Location: place,
+		Message:  fmt.Sprintf(format, args...),
 	})
 }
 
-func (e *PHPDocErrors) pushLint(place PHPDocPlace, format string, args ...interface{}) {
+func (e *PHPDocErrors) pushLint(place PHPDocLocation, format string, args ...interface{}) {
 	e.lint = append(e.lint, PHPDocError{
-		Place:   place,
-		Message: fmt.Sprintf(format, args...),
+		Location: place,
+		Message:  fmt.Sprintf(format, args...),
 	})
 }
 
