@@ -93,7 +93,7 @@ func (conv *TypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
 
 		if isArray {
 			if e.Shape == phpdoc.ShapeGenericBrace {
-				return conv.mapShapeType(params)
+				return conv.mapShapeType(params, true)
 			}
 			switch len(params) {
 			case 1:
@@ -103,7 +103,7 @@ func (conv *TypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
 			}
 		}
 		if typ.Value == "shape" || typ.Value == `\shape` {
-			return conv.mapShapeType(params)
+			return conv.mapShapeType(params, false)
 		}
 		if typ.Value == "tuple" || typ.Value == `\tuple` {
 			return conv.mapTupleType(params)
@@ -190,14 +190,25 @@ func (conv *TypeConverter) mapArrayType(elem phpdoc.TypeExpr) []types.Type {
 	return typeList
 }
 
-func (conv *TypeConverter) mapShapeType(params []phpdoc.TypeExpr) []types.Type {
+func (conv *TypeConverter) mapShapeType(params []phpdoc.TypeExpr, allowedMixing bool) []types.Type {
 	props := make([]types.ShapeProp, 0, len(params))
 	for i, p := range params {
 		if p.Value == "*" || p.Value == "..." {
 			continue
 		}
 		if p.Kind != phpdoc.ExprKeyVal {
-			conv.warn(fmt.Sprintf("shape param #%d: want key:type, found %s", i+1, p.Value))
+			if !allowedMixing {
+				conv.warn(fmt.Sprintf("shape param #%d: want key:type, found %s", i+1, p.Value))
+				continue
+			}
+
+			typeList := conv.mapType(p)
+
+			props = append(props, types.ShapeProp{
+				Key:   fmt.Sprintf("%d", i),
+				Types: typeList,
+			})
+
 			continue
 		}
 		key := p.Args[0]
@@ -284,7 +295,7 @@ func (conv *TypeConverter) mapTupleType(params []phpdoc.TypeExpr) []types.Type {
 		typeList = append(typeList, typeExpr)
 	}
 
-	return conv.mapShapeType(typeList)
+	return conv.mapShapeType(typeList, false)
 }
 
 func (conv *TypeConverter) warn(msg string) {
