@@ -2323,6 +2323,34 @@ function f($a) {
 	test.RunAndMatch()
 }
 
+func TestVarsInTernary(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Boo {}
+
+function f($a) {
+  $_ = $a instanceof Boo ? $b = 100 : 100;
+  echo $b; // might have not been defined
+
+  $_ = $a instanceof Boo ? 100 : $c = 100;
+  echo $c; // might have not been defined
+
+  $_ = $a instanceof Boo ? $d = 100 : $d = 10;
+  echo $d; // ok
+
+  $e = 100;
+  $_ = $a instanceof Boo ? $e = 100 : $e = 10;
+  echo $e; // ok
+}
+`,
+	)
+	test.Expect = []string{
+		"Variable $b might have not been defined",
+		"Variable $c might have not been defined",
+	}
+	test.RunAndMatch()
+}
+
 func TestIfCondAssign(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 function f1($v) {

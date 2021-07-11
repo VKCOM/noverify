@@ -1424,11 +1424,17 @@ func (b *blockWalker) handleTernary(e *ir.TernaryExpr) bool {
 		return true // Skip `$x ?: $y` expressions
 	}
 
-	falseContext := copyBlockContext(b.ctx)
-	trueContext := b.withNewContext(func() {
+	contexts := make([]*blockContext, 0, 2)
+
+	initialContext := b.ctx
+	falseContext := copyBlockContext(initialContext)
+	trueContext := copyBlockContext(initialContext)
+	contexts = append(contexts, trueContext, falseContext)
+
+	b.withSpecificContext(trueContext, func() {
 		a := &andWalker{
 			b:            b,
-			trueContext:  b.ctx,
+			trueContext:  trueContext,
 			falseContext: falseContext,
 		}
 		e.Condition.Walk(a)
@@ -1437,11 +1443,48 @@ func (b *blockWalker) handleTernary(e *ir.TernaryExpr) bool {
 	b.withSpecificContext(trueContext, func() {
 		e.IfTrue.Walk(b)
 	})
+	b.replaceAllImplicitVars(trueContext, initialContext)
 
 	b.withSpecificContext(falseContext, func() {
 		e.IfFalse.Walk(b)
 	})
+	b.replaceAllImplicitVars(trueContext, initialContext)
+
+	b.extractVariablesTo(b.ctx, contexts, 2)
+
 	return false
+}
+
+// extractVariablesTo extracts all variables from contexts and creates
+// new ones in the passed context, taking into account the number of
+// places where the variable is defined, if the number is less than
+// requiredCountToAlwaysDefined, then the variable will be designated
+// as "not always defined".
+func (b *blockWalker) extractVariablesTo(targetContext *blockContext, contexts []*blockContext, requiredCountToAlwaysDefined int) {
+	varTypes := make(map[string]types.Map, targetContext.sc.Len())
+	defCounts := make(map[string]int, targetContext.sc.Len())
+
+	for _, ctx := range contexts {
+		if ctx.exitFlags != 0 {
+			continue
+		}
+
+		ctx.sc.Iterate(func(nm string, typ types.Map, flags meta.VarFlags) {
+			varTypes[nm] = varTypes[nm].Append(typ)
+			if flags.IsAlwaysDefined() {
+				defCounts[nm]++
+			}
+		})
+	}
+
+	for nm, typeMap := range varTypes {
+		var flags meta.VarFlags
+		if defCounts[nm] == requiredCountToAlwaysDefined {
+			flags = meta.VarAlwaysDefined
+		}
+
+		targetContext.sc.AddVarName(nm, typeMap, "all branches", flags)
+	}
 }
 
 func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
@@ -1575,31 +1618,7 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 	}
 
 	b.propagateFlagsFromBranches(contexts, linksCount)
-
-	varTypes := make(map[string]types.Map, b.ctx.sc.Len())
-	defCounts := make(map[string]int, b.ctx.sc.Len())
-
-	for _, ctx := range contexts {
-		if ctx.exitFlags != 0 {
-			continue
-		}
-
-		ctx.sc.Iterate(func(nm string, typ types.Map, flags meta.VarFlags) {
-			varTypes[nm] = varTypes[nm].Append(typ)
-			if flags.IsAlwaysDefined() {
-				defCounts[nm]++
-			}
-		})
-	}
-
-	for nm, typeMap := range varTypes {
-		var flags meta.VarFlags
-		if defCounts[nm] == linksCount {
-			flags = meta.VarAlwaysDefined
-		}
-
-		b.ctx.sc.AddVarName(nm, typeMap, "all branches", flags)
-	}
+	b.extractVariablesTo(b.ctx, contexts, linksCount)
 
 	return false
 }
