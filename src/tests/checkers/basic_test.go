@@ -535,18 +535,26 @@ func TestVoidResultUsedInBinary(t *testing.T) {
 	test.RunAndMatch()
 }
 
-func TestVoidParam(t *testing.T) {
+func TestVoidForParamAndReturn(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	/**
-	* @param void $x
-	* @param int $y
-	* @return void
-	*/
-	function f($x, $y) {}
+/**
+* @param void $x
+* @param int $y
+* @param int|void $z
+* @return void
+*/
+function f($x, $y, $z) {}
+
+/**
+* @return int|void
+*/
+function f1() {}
 `)
 	test.Expect = []string{
-		`void is not a valid type for input parameter`,
+		`Void type can only be used as a standalone type for the return type`,
+		`Void type can only be used as a standalone type for the return type`,
+		`Void type can only be used as a standalone type for the return type`,
 	}
 	test.RunAndMatch()
 }
@@ -1851,8 +1859,28 @@ func TestSwitchBreak(t *testing.T) {
 func TestNameCase(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-class FooBar {
-  public function method_a() {}
+interface BarAble {
+  const TheConst4 = 10;
+}
+
+class Bar {
+  const TheConst2 = 10;
+  const TheConst3 = 10;
+}
+
+class FooBar extends Bar implements BarAble {
+  const TheConst = 10;
+  const TheConst3 = 10;
+
+  public function method_a() {
+    echo self::TheConst;
+    echo static::TheConst;
+    echo parent::TheConst2;
+
+    $_ = FOObar::TheConst;
+    $_ = FOObar::TheConst3;
+    $_ = FOObar::TheConst4;
+  }
 }
 
 class Baz extends foobar {}
@@ -1863,12 +1891,18 @@ $foo->Method_a();
 function func_a() {}
 
 func_A();
+
+$_ = FOObar::TheConst;
 `)
 	test.Expect = []string{
 		`\Foobar should be spelled \FooBar`,
 		`\foobar should be spelled \FooBar`,
 		`Method_a should be spelled method_a`,
 		`\func_A should be spelled \func_a`,
+		`\FOObar should be spelled \FooBar`,
+		`\FOObar should be spelled \FooBar`,
+		`\FOObar should be spelled \FooBar`,
+		`\FOObar should be spelled \FooBar`,
 	}
 	linttest.RunFilterMatch(test, `nameMismatch`)
 }

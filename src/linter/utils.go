@@ -294,7 +294,7 @@ type staticMethodCallInfo struct {
 	canAnalyze               bool
 }
 
-func resolveStaticMethodCall(st *meta.ClassParseState, e *ir.StaticCallExpr) staticMethodCallInfo {
+func resolveStaticMethodCall(scope *meta.Scope, st *meta.ClassParseState, e *ir.StaticCallExpr) staticMethodCallInfo {
 	if !st.Info.IsIndexingComplete() {
 		return staticMethodCallInfo{canAnalyze: false}
 	}
@@ -308,15 +308,61 @@ func resolveStaticMethodCall(st *meta.ClassParseState, e *ir.StaticCallExpr) sta
 		return staticMethodCallInfo{canAnalyze: false}
 	}
 
-	classNameNode, ok := e.Class.(*ir.Name)
-	parentCall := ok && classNameNode.Value == "parent"
+	var ok bool
+	var className string
+	var parentCall bool
 	var callsParentConstructor bool
-	if parentCall && methodName == "__construct" {
-		callsParentConstructor = true
-	}
 
-	className, ok := solver.GetClassName(st, e.Class)
-	if !ok {
+	switch n := e.Class.(type) {
+	case *ir.Name:
+		parentCall = n.Value == "parent"
+		if parentCall && methodName == "__construct" {
+			callsParentConstructor = true
+		}
+
+		className, ok = solver.GetClassName(st, e.Class)
+		if !ok {
+			return staticMethodCallInfo{canAnalyze: false}
+		}
+	case *ir.Identifier:
+		className, ok = solver.GetClassName(st, e.Class)
+		if !ok {
+			return staticMethodCallInfo{canAnalyze: false}
+		}
+	case *ir.SimpleVar:
+		tp, ok := scope.GetVarNameType(n.Name)
+		if !ok {
+			return staticMethodCallInfo{canAnalyze: false}
+		}
+
+		// We need to resolve the types here, as the function
+		// may return a class or a string with the class name.
+		if !tp.IsResolved() {
+			resolvedTypes := solver.ResolveTypes(st.Info, st.CurrentClass, tp, solver.ResolverMap{})
+			tp = types.NewMapFromMap(resolvedTypes)
+		}
+
+		var isClass bool
+		var isString bool
+		var isMixed bool
+		tp.Iterate(func(typ string) {
+			isString = typ == "string"
+			isMixed = typ == "mixed"
+			if !isString && !isMixed {
+				_, isClass = st.Info.GetClass(typ)
+			}
+		})
+
+		if !isClass && !isString && !isMixed {
+			return staticMethodCallInfo{canAnalyze: false}
+		}
+
+		if !isClass || tp.Len() != 1 {
+			return staticMethodCallInfo{canAnalyze: false}
+		}
+
+		className = tp.String()
+	default:
 		return staticMethodCallInfo{canAnalyze: false}
 	}
 
@@ -441,6 +487,11 @@ func resolveClassConstFetch(st *meta.ClassParseState, e *ir.ClassConstFetchExpr)
 	className, ok := solver.GetClassName(st, e.Class)
 	if !ok {
 		return classPropertyFetchInfo{canAnalyze: false}
+	}
+
+	class, ok := st.Info.GetClass(className)
+	if ok {
+		className = class.Name
 	}
 
 	info, implClass, found := solver.FindConstant(st.Info, className, constName.Value)

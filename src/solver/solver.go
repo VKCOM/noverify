@@ -580,7 +580,7 @@ func findConstant(info *meta.Info, className, constName string, visitedClasses m
 
 		res, ok = class.Constants[constName]
 		if ok {
-			return res, className, ok
+			return res, class.Name, ok
 		}
 
 		// interfaces support multiple inheritance and I use a separate property for that for now
