@@ -8,11 +8,6 @@ import (
 	"github.com/VKCOM/noverify/src/types"
 )
 
-type varToReplace struct {
-	Node          ir.Node
-	TypesToDelete []string
-}
-
 // andWalker walks if conditions and adds isset/!empty/instanceof variables
 // to the associated block walker.
 //
