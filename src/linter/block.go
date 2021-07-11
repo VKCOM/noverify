@@ -1446,7 +1446,6 @@ func (b *blockWalker) handleTernary(e *ir.TernaryExpr) bool {
 
 func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 	var varsToDelete []ir.Node
-	var varsToReplace [][]varToReplace
 	customMethods := len(b.ctx.customMethods)
 	customFunctions := len(b.ctx.customFunctions)
 	// Remove all isset'ed variables after we're finished with this if statement.
@@ -1461,10 +1460,6 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 	var linksCount int
 	var contexts []*blockContext
 
-	// A list of type reversals for variables from the if body.
-	// Also used for the else body.
-	var trueVarsToReplace []varToReplace
-
 	// Add all new variables from the condition to the current scope.
 	irutil.Inspect(s.Cond, func(n ir.Node) bool {
 		assign, ok := n.(*ir.Assign)
@@ -1476,23 +1471,24 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 		return false
 	})
 
+	// initialContext is the context of the block in which the if-else is located.
+	initialContext := b.ctx
 	// First of all, we need to traverse the main condition.
 	//   trueContext  will store the state of the variables in the **if** block.
 	//   falseContext will store the state of the variables in the **else** block.
-	falseContext := copyBlockContext(b.ctx)
-	trueContext := b.withNewContext(func() {
+	falseContext := copyBlockContext(initialContext)
+	trueContext := copyBlockContext(initialContext)
+	b.withSpecificContext(trueContext, func() {
 		a := &andWalker{
 			b:            b,
-			trueContext:  b.ctx,
+			trueContext:  trueContext,
 			falseContext: falseContext,
 		}
 
 		s.Cond.Walk(a)
-		trueVarsToReplace = a.varsToReplace
 		varsToDelete = append(varsToDelete, a.varsToDelete...)
 	})
 	contexts = append(contexts, trueContext)
-	varsToReplace = append(varsToReplace, trueVarsToReplace)
 
 	// New reference variables can be created in the condition,
 	// which should be moved outside the if block.
@@ -1507,6 +1503,8 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 		if trueContext.exitFlags == 0 {
 			linksCount++
 		}
+
+		b.replaceAllImplicitVars(trueContext, initialContext)
 	} else {
 		linksCount++
 	}
@@ -1519,11 +1517,10 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 			b.withSpecificContext(elseifTrueContext, func() {
 				a := &andWalker{
 					b:            b,
-					trueContext:  b.ctx,
+					trueContext:  elseifTrueContext,
 					falseContext: elseifFalseContext,
 				}
 				elseif.Cond.Walk(a)
-				varsToReplace = append(varsToReplace, a.varsToReplace)
 				varsToDelete = append(varsToDelete, a.varsToDelete...)
 			})
 
@@ -1545,6 +1542,8 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 				b.handleElseIf(elseif)
 				elseif.Stmt.Walk(b)
 			})
+
+			b.replaceAllImplicitVars(elseifTrueContext, initialContext)
 
 			contexts = append(contexts, elseifTrueContext)
 			if elseifTrueContext.exitFlags == 0 {
@@ -1568,28 +1567,11 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 			linksCount++
 		}
 
+		b.replaceAllImplicitVars(falseContext, initialContext)
+
 		contexts = append(contexts, falseContext)
-		varsToReplace = append(varsToReplace, trueVarsToReplace)
 	} else {
 		linksCount++
-	}
-
-	// Before we move the shared variables into the external scope,
-	// we need to remove the types that we added inside the if.
-	for i := 0; i < len(contexts); i++ {
-		for _, variable := range varsToReplace[i] {
-			varType, ok := contexts[i].sc.GetVarType(variable.Node)
-			if !ok {
-				continue
-			}
-			varType = varType.Clone()
-
-			for _, typeToDelete := range variable.TypesToDelete {
-				varType = varType.Erase(typeToDelete)
-			}
-
-			contexts[i].sc.ReplaceVar(variable.Node, varType, "replace back", meta.VarAlwaysDefined)
-		}
 	}
 
 	b.propagateFlagsFromBranches(contexts, linksCount)
@@ -1620,6 +1602,23 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 	}
 
 	return false
+}
+
+// replaceAllImplicitVars replaces any implicit variables that were added by
+// instanceof, isset, etc. with their original versions from initialContext.
+func (b *blockWalker) replaceAllImplicitVars(targetContext *blockContext, initialContext *blockContext) {
+	targetContext.sc.Iterate(func(name string, typ types.Map, flags meta.VarFlags) {
+		if !flags.IsImplicit() {
+			return
+		}
+
+		oldVar, ok := initialContext.sc.GetVar(name)
+		if !ok {
+			return
+		}
+
+		targetContext.sc.ReplaceVarName(name, oldVar.Type, "fallback", oldVar.Flags)
+	})
 }
 
 func moveNonLocalVariables(trueContext, toContext *blockContext, nonLocalVars map[string]variableKind) {

@@ -26,8 +26,7 @@ type andWalker struct {
 	// The context inside the else body if the condition is false.
 	falseContext *blockContext
 
-	varsToDelete  []ir.Node
-	varsToReplace []varToReplace
+	varsToDelete []ir.Node
 
 	negation bool
 }
@@ -115,13 +114,9 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 					trueType, falseType = falseType, trueType
 				}
 
-				a.trueContext.sc.ReplaceVar(varNode, trueType, "instanceof true", meta.VarAlwaysDefined)
-				a.falseContext.sc.ReplaceVar(varNode, falseType, "instanceof false", meta.VarAlwaysDefined)
-
-				a.varsToReplace = append(a.varsToReplace, varToReplace{
-					Node:          varNode,
-					TypesToDelete: []string{className},
-				})
+				flags := meta.VarAlwaysDefined | meta.VarImplicit
+				a.trueContext.sc.ReplaceVar(varNode, trueType, "instanceof true", flags)
+				a.falseContext.sc.ReplaceVar(varNode, falseType, "instanceof false", flags)
 
 			default:
 				currentType := a.exprType(v)

@@ -3459,6 +3459,59 @@ function withNegationMixed($a) {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestAssignInsideBodyInstanceOf(t *testing.T) {
+	code := `<?php
+class Boo {
+  /** @return int */
+  function b() { return 0; }
+}
+
+function f($a) {
+  if ($a instanceof Boo) {
+    exprtype($a, "\Boo");
+    $a = 100;
+  }
+
+  exprtype($a, "precise int");
+}
+
+function f1($a) {
+  if ($a instanceof Boo) {
+    exprtype($a, "\Boo");
+    $a = new Boo;
+  }
+
+  exprtype($a, "precise \Boo");
+}
+
+function f2($a) {
+  if ($a instanceof Boo) {
+    exprtype($a, "\Boo");
+    $a = new Boo;
+  } else {
+    $a = 100;
+  }
+
+  exprtype($a, "\Boo|int");
+}
+
+function f3($a) {
+  if ($a instanceof Boo) {
+    exprtype($a, "\Boo");
+    $a = new Boo;
+  } else if ($a instanceof Foo) {
+    $a = new Foo;
+  } else {
+    $a = 100;
+  }
+
+  exprtype($a, "\Boo|\Foo|int");
+}
+`
+
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestRefVariable(t *testing.T) {
 	code := `<?php
 function exprtype(...$a): bool { return false; }
