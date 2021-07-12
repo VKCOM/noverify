@@ -13,15 +13,15 @@ MAYBE   ternarySimplify: Could rewrite as `$mkdirError['message'] ?? ''` at test
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/flysystem/src/Adapter/Local.php:324
         if (in_array($mimetype, ['application/octet-stream', 'inode/x-empty', 'application/x-empty'])) {
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   phpdocType: Void type can only be used as a standalone type for the return type at testdata/flysystem/src/Adapter/Local.php:448
-    protected function normalizeFileInfo(SplFileInfo $file)
-                       ^^^^^^^^^^^^^^^^^
-WARNING phpdocRef: Line 8: @see tag refers to unknown symbol League\Flysystem\ReadInterface::readStream at testdata/flysystem/src/Adapter/Polyfill/StreamedReadingTrait.php:19
-    public function readStream($path)
-                    ^^^^^^^^^^
-WARNING phpdocRef: Line 8: @see tag refers to unknown symbol League\Flysystem\ReadInterface::read at testdata/flysystem/src/Adapter/Polyfill/StreamedReadingTrait.php:43
-    abstract public function read($path);
-                             ^^^^
+MAYBE   phpdocType: Void type can only be used as a standalone type for the return type at testdata/flysystem/src/Adapter/Local.php:444
+     * @return array|void
+               ^^^^^^^^^^
+WARNING phpdocRef: @see tag refers to unknown symbol League\Flysystem\ReadInterface::readStream at testdata/flysystem/src/Adapter/Polyfill/StreamedReadingTrait.php:17
+     * @see League\Flysystem\ReadInterface::readStream()
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING phpdocRef: @see tag refers to unknown symbol League\Flysystem\ReadInterface::read at testdata/flysystem/src/Adapter/Polyfill/StreamedReadingTrait.php:41
+     * @see League\Flysystem\ReadInterface::read()
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   phpdoc: Missing PHPDoc for \League\Flysystem\Adapter\Polyfill\StreamedWritingTrait::write public method at testdata/flysystem/src/Adapter/Polyfill/StreamedWritingTrait.php:58
     abstract public function write($pash, $contents, Config $config);
                              ^^^^^

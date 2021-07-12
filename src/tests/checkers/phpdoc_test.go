@@ -132,11 +132,11 @@ class BadClass {
 `)
 
 	test.Expect = []string{
-		`Line 2: @see tag refers to unknown symbol \NonExisting::class`,
-		`Line 2: @see tag refers to unknown symbol HolyHandGrenade::hallelujah`,
-		`Line 2: @see tag refers to unknown symbol CONST43`,
-		`Line 2: @see tag refers to unknown symbol invalid1`,
-		`Line 2: @see tag refers to unknown symbol invalid2`,
+		`@see tag refers to unknown symbol \NonExisting::class`,
+		`@see tag refers to unknown symbol HolyHandGrenade::hallelujah`,
+		`@see tag refers to unknown symbol CONST43`,
+		`@see tag refers to unknown symbol invalid1`,
+		`@see tag refers to unknown symbol invalid2`,
 	}
 	linttest.RunFilterMatch(test, "phpdocRef")
 }
@@ -178,8 +178,8 @@ class Foo extends FooAbstract {
 function f() {}
 `)
 	test.Expect = []string{
-		`Line 6: @see tag refers to unknown symbol TYPE_TEXT_UNDEFINED`,
-		`Line 2: @see tag refers to unknown symbol TYPE_TEXT`,
+		`@see tag refers to unknown symbol TYPE_TEXT_UNDEFINED`,
+		`@see tag refers to unknown symbol TYPE_TEXT`,
 	}
 	linttest.RunFilterMatch(test, "phpdocRef")
 }
@@ -307,8 +307,8 @@ function fav_func($a, $b) {
 }
 `)
 	test.Expect = []string{
-		`malformed @param $a tag (maybe type is missing?)`,
-		`malformed @param $b tag (maybe type is missing?)`,
+		`Malformed @param $a tag (maybe type is missing?)`,
+		`Malformed @param $b tag (maybe type is missing?)`,
 	}
 	test.RunAndMatch()
 }
@@ -358,12 +358,12 @@ func TestPHPDocSyntax(t *testing.T) {
 		$_ = $z;
 	}`)
 	test.Expect = []string{
-		`non-canonical order of variable and type on line 2`,
-		`expected a type, found '-'; if you want to express 'any' type, use 'mixed' on line 3`,
-		`non-canonical order of variable and type on line 4`,
-		`expected a type, found '-'; if you want to express 'any' type, use 'mixed' on line 4`,
-		`malformed @param $a tag (maybe type is missing?) on line 5`,
-		`malformed @param tag (maybe var is missing?) on line 6`,
+		`Non-canonical order of variable and type`,
+		`Expected a type, found '-'; if you want to express 'any' type, use 'mixed'`,
+		`Non-canonical order of variable and type`,
+		`Expected a type, found '-'; if you want to express 'any' type, use 'mixed'`,
+		`Malformed @param $a tag (maybe type is missing?)`,
+		`Malformed @param tag (maybe var is missing?)`,
 	}
 	test.RunAndMatch()
 }
@@ -383,9 +383,9 @@ class Foo {
 }
 `)
 	test.Expect = []string{
-		`use int type instead of integer`,
-		`use float type instead of real`,
-		`int?: nullable syntax is ?T, not T?`,
+		`Use int type instead of integer`,
+		`Use float type instead of real`,
+		`Nullable syntax is ?T, not T?`,
 	}
 	test.RunAndMatch()
 }
@@ -405,14 +405,14 @@ func TestPHPDocProperty(t *testing.T) {
 class Foo {}
 `)
 	test.Expect = []string{
-		`use int type instead of integer on line 2`,
-		`[]t: array syntax is T[], not []T`,
-		`@property ts field name must start with '$' on line 3`,
-		`non-canonical order of name and type on line 6`,
-		`line 4: @property requires type and property name fields`,
-		`line 5: @property requires type and property name fields`,
-		`use bool type instead of boolean on line 7`,
-		`int?: nullable syntax is ?T, not T?`,
+		`Use int type instead of integer`,
+		`Array syntax is T[], not []T`,
+		`@property ts field name must start with '$'`,
+		`Non-canonical order of name and type`,
+		`@property requires type and property name fields`,
+		`@property requires type and property name fields`,
+		`Use bool type instead of boolean`,
+		`Nullable syntax is ?T, not T?`,
 	}
 	test.RunAndMatch()
 }
@@ -435,14 +435,13 @@ func TestPHPDocType(t *testing.T) {
 	}
 `)
 	test.Expect = []string{
-		`[][]string: array syntax is T[], not []T on line 2`,
-		`[]string: array syntax is T[], not []T on line 2`,
-		`use float type instead of double`,
-		`use float type instead of real`,
-		`use int type instead of integer`,
-		`use bool type instead of boolean`,
-		`int?: nullable syntax is ?T, not T?`,
-		`[]int: array syntax is T[], not []T on line 8`,
+		`Array syntax is T[], not []T`,
+		`Use float type instead of double`,
+		`Use float type instead of real`,
+		`Use int type instead of integer`,
+		`Use bool type instead of boolean`,
+		`Nullable syntax is ?T, not T?`,
+		`Array syntax is T[], not []T`,
 	}
 	test.RunAndMatch()
 }
@@ -464,9 +463,9 @@ func TestPHPDocIncorrectSyntaxOptionalTypesType(t *testing.T) {
 	}
 `)
 	test.Expect = []string{
-		`int?: nullable syntax is ?T, not T?`,
-		`Foo?: nullable syntax is ?T, not T?`,
-		`string[]?: nullable syntax is ?T, not T?`,
+		`Nullable syntax is ?T, not T?`,
+		`Nullable syntax is ?T, not T?`,
+		`Nullable syntax is ?T, not T?`,
 	}
 	test.RunAndMatch()
 }
@@ -543,10 +542,10 @@ function f($a, $b, $c, $d) {
 }
 `)
 	test.Expect = []string{
-		`repeated nullable doesn't make sense`,
-		`repeated nullable doesn't make sense`,
-		`repeated nullable doesn't make sense`,
-		`repeated nullable doesn't make sense`,
+		`Repeated nullable doesn't make sense`,
+		`Repeated nullable doesn't make sense`,
+		`Repeated nullable doesn't make sense`,
+		`Repeated nullable doesn't make sense`,
 	}
 	test.RunAndMatch()
 }

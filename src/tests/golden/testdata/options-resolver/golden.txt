@@ -13,15 +13,15 @@ MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass()
 MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (7.4) at testdata/options-resolver/OptionsResolver.php:209
             if (isset($params[0]) && null !== ($class = $params[0]->getClass()) && self::class === $class->name && (!isset($params[1]) || (null !== ($class = $params[1]->getClass()) && Options::class === $class->name))) {
                                                                                                                                                                           ^^^^^^^^
-WARNING phpdocLint: @param for non-existing argument $package at testdata/options-resolver/OptionsResolver.php:428
-    public function setDeprecated(string $option/*, string $package, string $version, $message = 'The option "%name%" is deprecated.' */): self
-                    ^^^^^^^^^^^^^
-WARNING phpdocLint: @param for non-existing argument $version at testdata/options-resolver/OptionsResolver.php:428
-    public function setDeprecated(string $option/*, string $package, string $version, $message = 'The option "%name%" is deprecated.' */): self
-                    ^^^^^^^^^^^^^
-WARNING phpdocLint: @param for non-existing argument $message at testdata/options-resolver/OptionsResolver.php:428
-    public function setDeprecated(string $option/*, string $package, string $version, $message = 'The option "%name%" is deprecated.' */): self
-                    ^^^^^^^^^^^^^
+WARNING phpdocLint: @param for non-existing argument $package at testdata/options-resolver/OptionsResolver.php:424
+     * @param string          $package The name of the composer package that is triggering the deprecation
+                              ^^^^^^^^
+WARNING phpdocLint: @param for non-existing argument $version at testdata/options-resolver/OptionsResolver.php:425
+     * @param string          $version The version of the package that introduced the deprecation
+                              ^^^^^^^^
+WARNING phpdocLint: @param for non-existing argument $message at testdata/options-resolver/OptionsResolver.php:426
+     * @param string|\Closure $message The deprecation message to use
+                              ^^^^^^^^
 MAYBE   complexity: Too big method: more than 150 lines at testdata/options-resolver/OptionsResolver.php:917
     public function offsetGet($option, bool $triggerDeprecation = true)
                     ^^^^^^^^^
