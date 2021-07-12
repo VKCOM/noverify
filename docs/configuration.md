@@ -19,7 +19,7 @@ This page is dedicated to some technical details.
   * [How to change the cache directory](#how-to-change-the-cache-directory)
   * [How to disable caching](#how-to-disable-caching)
 - [Hard level options](#hard-level-options)
-  * [How to use dynamic rules](#how-to-use-dynamic-rules)
+  * [How to use dynamic rules](#how-to-use-dynamic_rules)
   * [How to use `baseline` mode](#how-to-use--baseline--mode)
   * [How to use `git diff` mode (e.g. in pre-push hook)](#how-to-use--git-diff--mode--eg-in-pre-push-hook-)
 - [Other commands](#other-commands)
