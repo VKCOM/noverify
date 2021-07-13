@@ -699,7 +699,7 @@ Report using @.
 
 #### Non-compliant code:
 ```php
-$f();
+@f();
 ```
 
 #### Compliant code:
