@@ -28,6 +28,9 @@ WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/flysystem/src/Adapter/Local.php:103
             if ( ! @mkdir($root, $this->permissionMap['dir']['public'], true)) {
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/flysystem/src/Adapter/Local.php:103
+            if ( ! @mkdir($root, $this->permissionMap['dir']['public'], true)) {
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$mkdirError['message'] ?? ''` at testdata/flysystem/src/Adapter/Local.php:111
                 $errorMessage = isset($mkdirError['message']) ? $mkdirError['message'] : '';
                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

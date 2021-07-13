@@ -139,14 +139,24 @@ func (ctx *RootContext) ParsePHPDoc(doc string) phpdoc.Comment {
 }
 
 // Report records linter warning of specified level.
-// chechName is a key that identifies the "checker" (diagnostic name) that found
+// checkName is a key that identifies the "checker" (diagnostic name) that found
 // issue being reported.
 func (ctx *RootContext) Report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
 	ctx.w.Report(n, level, checkName, msg, args...)
 }
 
-func (ctx *RootContext) ReportByLine(lineNumber, level int, checkName, msg string, args ...interface{}) {
-	ctx.w.ReportByLine(lineNumber, level, checkName, msg, args...)
+// ReportPHPDoc records linter warning in PHPDoc of specified level.
+// checkName is a key that identifies the "checker" (diagnostic name) that found
+// issue being reported.
+func (ctx *RootContext) ReportPHPDoc(phpDocLocation PHPDocLocation, level int, checkName, msg string, args ...interface{}) {
+	ctx.w.ReportPHPDoc(phpDocLocation, level, checkName, msg, args...)
+}
+
+// ReportLocation records linter warning in specified location of specified level.
+// checkName is a key that identifies the "checker" (diagnostic name) that found
+// issue being reported.
+func (ctx *RootContext) ReportLocation(location ir.Location, level int, checkName, msg string, args ...interface{}) {
+	ctx.w.ReportLocation(location, level, checkName, msg, args...)
 }
 
 // Scope returns variables declared at root level.
@@ -199,8 +209,18 @@ func (ctx *BlockContext) Report(n ir.Node, level int, checkName, msg string, arg
 	ctx.w.r.Report(n, level, checkName, msg, args...)
 }
 
-func (ctx *BlockContext) ReportByLine(lineNumber, level int, checkName, msg string, args ...interface{}) {
-	ctx.w.r.ReportByLine(lineNumber, level, checkName, msg, args...)
+// ReportPHPDoc records linter warning in PHPDoc of specified level.
+// checkName is a key that identifies the "checker" (diagnostic name) that found
+// issue being reported.
+func (ctx *BlockContext) ReportPHPDoc(phpDocLocation PHPDocLocation, level int, checkName, msg string, args ...interface{}) {
+	ctx.w.r.ReportPHPDoc(phpDocLocation, level, checkName, msg, args...)
+}
+
+// ReportLocation records linter warning in specified location of specified level.
+// checkName is a key that identifies the "checker" (diagnostic name) that found
+// issue being reported.
+func (ctx *BlockContext) ReportLocation(location ir.Location, level int, checkName, msg string, args ...interface{}) {
+	ctx.w.r.ReportLocation(location, level, checkName, msg, args...)
 }
 
 // Scope returns variables declared in this block.

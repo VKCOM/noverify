@@ -3132,6 +3132,507 @@ function f1() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestInstanceOf(t *testing.T) {
+	code := `<?php
+function exprtype(...$a) {}
+
+interface ISome {}
+
+class Foo implements ISome{
+  function f() {}
+}
+
+class Boo implements ISome {
+  function b() {}
+}
+
+class Zoo implements ISome {
+  function z() {}
+}
+
+/**
+ * @param Foo|Boo $a
+ */
+function ifElseForClassUnion($a) {
+  if ($a instanceof Foo) {
+    exprtype($a, "\Foo");
+  } else {
+    exprtype($a, "\Boo");
+  }
+
+  exprtype($a, "\Boo|\Foo");
+}
+
+/**
+ * @param Foo|Boo|Zoo $a
+ */
+function ifElseForClassUnion3($a) {
+  if ($a instanceof Foo) {
+    exprtype($a, "\Foo");
+  } else if ($a instanceof Boo) {
+    exprtype($a, "\Boo");
+  } else {
+    exprtype($a, "\Zoo");
+  }
+
+  exprtype($a, "\Boo|\Foo|\Zoo");
+}
+
+/**
+ * @param mixed $a
+ */
+function ifElseForMixed($a) {
+  if ($a instanceof Foo) {
+    exprtype($a, "\Foo");
+  } else {
+    exprtype($a, "mixed");
+  }
+
+  exprtype($a, "mixed");
+}
+
+/**
+ * @param mixed $a
+ */
+function ifElseForMixedAssign($a) {
+  if ($a instanceof Foo) {
+    exprtype($a, "\Foo");
+	$a = 100;
+  } else {
+    exprtype($a, "mixed");
+  }
+
+  exprtype($a, "int|mixed");
+}
+
+/**
+ * @param mixed $a
+ */
+function ifElseForMixedAssign2($a) {
+  if ($a instanceof Foo) {
+    exprtype($a, "\Foo");
+	$a = 100;
+  } else {
+    exprtype($a, "mixed");
+	$a = 100;
+  }
+
+  exprtype($a, "int|mixed");
+}
+
+/**
+ * @param mixed $a
+ */
+function ifElseForMixed3($a) {
+  if ($a instanceof Foo) {
+    exprtype($a, "\Foo");
+  } else if ($a instanceof Boo) {
+    exprtype($a, "\Boo");
+  } else {
+    exprtype($a, "mixed");
+  }
+
+  exprtype($a, "mixed");
+}
+
+/**
+ * @param mixed $a
+ */
+function ifElseWithNegation($a) {
+  if (!$a instanceof Foo) {
+	exprtype($a, "mixed");
+  } else {
+    exprtype($a, "\Foo");
+  }
+
+  exprtype($a, "mixed");
+}
+
+/**
+ * @param Foo|Boo $a
+ */
+function ifElseWithNegationWithUnion($a) {
+  if (!$a instanceof Foo) {
+	exprtype($a, "\Boo");
+  } else {
+    exprtype($a, "\Foo");
+  }
+
+  exprtype($a, "\Boo|\Foo");
+}
+
+/**
+ * @param Foo|Boo|Zoo $a
+ */
+function ifElseWithNegationWithUnion2($a) {
+  if (!$a instanceof Foo) {
+	exprtype($a, "\Boo|\Zoo");
+  } else if ($a instanceof Foo) {
+    exprtype($a, "\Foo");
+  } else {
+    exprtype($a, "mixed");
+  }
+
+  exprtype($a, "\Boo|\Foo|\Zoo");
+}
+
+/**
+ * @param Foo|Boo|Zoo $a
+ */
+function ifElseWithTwoNegationWithUnion2($a) {
+  if (!$a instanceof Foo) {
+	exprtype($a, "\Boo|\Zoo");
+  } else if (!$a instanceof Foo) {
+    exprtype($a, "mixed");
+  } else {
+    exprtype($a, "\Foo");
+  }
+
+  exprtype($a, "\Boo|\Foo|\Zoo");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestInstanceOfForExpr(t *testing.T) {
+	code := `<?php
+function exprtype(...$a) {}
+
+interface ISome {}
+
+class Foo implements ISome{
+  function f() {}
+}
+
+class Boo implements ISome {
+  function b() {}
+}
+
+class Zoo implements ISome {
+  function z() {}
+}
+
+/**
+ * @param callable(): Foo|Boo $a
+ */
+function ifElseForClassUnion($a) {
+  if ($a() instanceof Foo) {
+    exprtype($a(), "\Foo");
+  } else {
+    exprtype($a(), "\Boo");
+  }
+
+  exprtype($a(), "\Boo|\Foo");
+}
+
+/**
+ * @param callable(): Foo|Boo|Zoo $a
+ */
+function ifElseForClassUnion3($a) {
+  if ($a() instanceof Foo) {
+    exprtype($a(), "\Foo");
+  } else if ($a() instanceof Boo) {
+    exprtype($a(), "\Boo");
+  } else {
+    exprtype($a(), "\Zoo");
+  }
+
+  exprtype($a(), "\Boo|\Foo|\Zoo");
+}
+
+/**
+ * @param callable(): mixed $a
+ */
+function ifElseForMixed($a) {
+  if ($a() instanceof Foo) {
+    exprtype($a(), "\Foo");
+  } else {
+    exprtype($a(), "mixed");
+  }
+
+  exprtype($a(), "mixed");
+}
+
+/**
+ * @param callable(): mixed $a
+ */
+function ifElseForMixed3($a) {
+  if ($a() instanceof Foo) {
+    exprtype($a(), "\Foo");
+  } else if ($a() instanceof Boo) {
+    exprtype($a(), "\Boo");
+  } else {
+    exprtype($a(), "mixed");
+  }
+
+  exprtype($a(), "mixed");
+}
+
+/**
+ * @param callable(): mixed $a
+ */
+function ifElseWithNegation($a) {
+  if (!$a() instanceof Foo) {
+	exprtype($a(), "mixed");
+  } else {
+    exprtype($a(), "\Foo");
+  }
+
+  exprtype($a(), "mixed");
+}
+
+/**
+ * @param callable(): Foo|Boo $a
+ */
+function ifElseWithNegationWithUnion($a) {
+  if (!$a() instanceof Foo) {
+	exprtype($a(), "\Boo");
+  } else {
+    exprtype($a(), "\Foo");
+  }
+
+  exprtype($a(), "\Boo|\Foo");
+}
+
+/**
+ * @param callable(): Foo|Boo|Zoo $a
+ */
+function ifElseWithNegationWithUnion2($a) {
+  if (!$a() instanceof Foo) {
+	exprtype($a(), "\Boo|\Zoo");
+  } else if ($a() instanceof Foo) {
+    exprtype($a(), "\Foo");
+  } else {
+    exprtype($a(), "mixed");
+  }
+
+  exprtype($a(), "\Boo|\Foo|\Zoo");
+}
+
+/**
+ * @param callable(): Foo|Boo|Zoo $a
+ */
+function ifElseWithTwoNegationWithUnion2($a) {
+  if (!$a() instanceof Foo) {
+	exprtype($a(), "\Boo|\Zoo");
+  } else if (!$a() instanceof Foo) {
+    exprtype($a(), "mixed");
+  } else {
+    exprtype($a(), "\Foo");
+  }
+
+  exprtype($a(), "\Boo|\Foo|\Zoo");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestTernaryWithInstanceOf(t *testing.T) {
+	code := `<?php
+function exprtype(...$a): bool { return false; }
+
+interface ISome {}
+
+class Foo implements ISome{
+  function f() { return 0; }
+}
+
+class Boo implements ISome {
+  function b() { return 0; }
+}
+
+class Zoo implements ISome {
+  function z() { return 0; }
+}
+
+/**
+ * @param Foo|Boo $a
+ */
+function withClassUnion($a) {
+  $_ = $a instanceof Foo ? 
+  			exprtype($a, "\Foo") : 
+  			0;
+
+  $_ = $a instanceof Foo ? 
+			exprtype($a, "\Foo") : 
+			exprtype($a, "\Boo");
+
+  $_ = isset($a->aaa) && $a->aaa instanceof Foo ? 
+			exprtype($a->aaa, "\Foo") : 
+			exprtype($a->aaa, "mixed");
+}
+
+/**
+ * @param Foo|Boo $a
+ */
+function withNegationClassUnion($a) {
+  $_ = !$a instanceof Foo ? 
+  			0 : 
+  			exprtype($a, "\Foo");
+
+  $_ = !$a instanceof Foo ? 
+			exprtype($a, "\Boo") : 
+			exprtype($a, "\Foo");
+
+  $_ = isset($a->aaa) && !$a->aaa instanceof Foo ? 
+			exprtype($a->aaa, "mixed") : 
+			exprtype($a->aaa, "\Foo");
+}
+
+/**
+ * @param mixed $a
+ */
+function withMixed($a) {
+  $_ = $a instanceof Foo ? 
+  			exprtype($a, "\Foo") : 
+  			exprtype($a, "mixed");
+  $_ = $a instanceof Foo ? 
+  			exprtype($a, "\Foo") : 
+  			($a instanceof Boo ? 
+  				exprtype($a, "\Boo") : 
+  				exprtype($a, "mixed"));
+}
+
+/**
+ * @param mixed $a
+ */
+function withNegationMixed($a) {
+  $_ = !$a instanceof Foo ? 
+  			exprtype($a, "mixed") : 
+  			exprtype($a, "\Foo");
+  $_ = !$a instanceof Foo ?
+  			(!$a instanceof Boo ? 
+  				exprtype($a, "mixed") : 
+  				exprtype($a, "\Boo")) :
+			exprtype($a, "\Foo");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestAssignInsideBodyInstanceOf(t *testing.T) {
+	code := `<?php
+class Boo {
+  /** @return int */
+  function b() { return 0; }
+}
+
+function f($a) {
+  if ($a instanceof Boo) {
+    exprtype($a, "\Boo");
+    $a = 100;
+  }
+
+  exprtype($a, "precise int");
+}
+
+function f1($a) {
+  if ($a instanceof Boo) {
+    exprtype($a, "\Boo");
+    $a = new Boo;
+  }
+
+  exprtype($a, "precise \Boo");
+}
+
+function f2($a) {
+  if ($a instanceof Boo) {
+    exprtype($a, "\Boo");
+    $a = new Boo;
+  } else {
+    $a = 100;
+  }
+
+  exprtype($a, "\Boo|int");
+}
+
+function f3($a) {
+  if ($a instanceof Boo) {
+    exprtype($a, "\Boo");
+    $a = new Boo;
+  } else if ($a instanceof Foo) {
+    $a = new Foo;
+  } else {
+    $a = 100;
+  }
+
+  exprtype($a, "\Boo|\Foo|int");
+}
+`
+
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestRefVariable(t *testing.T) {
+	code := `<?php
+function exprtype(...$a): bool { return false; }
+
+function f($a) {
+  preg_match('/^\s*(\S+)\s+(\S+)\s*$/', "ss", $matches0);
+
+  if (!preg_match('/^\s*(\S+)\s+(\S+)\s*$/', "ss", $matches1)) {
+    throw new \http\Exception\BadHeaderException(sprintf('Invalid delimiters: %s', "s"));
+  } else if (!preg_match('/^\s*(\S+)\s+(\S+)\s*$/', "ss", $matches2)) {
+    throw new \http\Exception\BadHeaderException(sprintf('Invalid delimiters: %s', "s"));
+  }
+
+  exprtype($matches0, "mixed[]")
+  exprtype($matches1, "mixed[]")
+  exprtype($matches2, "mixed[]")
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestAssignInCondition(t *testing.T) {
+	code := `<?php
+function exprtype(...$a): bool { return false; }
+
+class Foo {}
+class Boo {}
+
+function f($a) {
+  $res = 100;
+
+  if (!$add_res = 10) {
+    fwrite(STDERR, "Could not get restart FD data, exiting, graceful restart is not supported\n");
+    exit(0);
+  }
+
+  exprtype($add_res, "int")
+}
+
+function f2($a) {
+  $res = 100;
+
+  if (!($add_res = 10) && $add_res2 = "1100") {
+    fwrite(STDERR, "Could not get restart FD data, exiting, graceful restart is not supported\n");
+  }
+
+  
+  if (($a = new Foo) && $a instanceof Foo) {
+    exprtype($a, "\Foo");
+  }
+
+  if ((($a = new Foo) || ($a = new Boo)) && $a instanceof Foo) {
+    exprtype($a, "\Foo");
+  } else {
+    exprtype($a, "precise \Boo");
+  }
+
+  if ((($a = new Foo) || ($a = 10)) && $a instanceof Foo) {
+    exprtype($a, "\Foo");
+  } else {
+    exprtype($a, "precise int");
+  }
+
+  exprtype($add_res, "int");
+  exprtype($add_res2, "string");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	exprTypeTestImpl(t, params, false)
 }

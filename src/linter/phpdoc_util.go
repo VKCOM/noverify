@@ -17,11 +17,24 @@ type PHPDocLocation struct {
 	Line      int
 	Field     int
 	WholeLine bool
+	// RelativeLine is set if the line number is relative to the
+	// given node; otherwise, the line number is considered to be
+	// absolute and can be used directly.
+	RelativeLine bool
 }
 
 func PHPDocLine(n ir.Node, line int) PHPDocLocation {
 	return PHPDocLocation{
-		Node:      n,
+		Node:         n,
+		Line:         line,
+		WholeLine:    true,
+		RelativeLine: true,
+	}
+}
+
+func PHPDocAbsoluteLine(line int) PHPDocLocation {
+	return PHPDocLocation{
+		Node:      nil,
 		Line:      line,
 		WholeLine: true,
 	}
@@ -29,7 +42,16 @@ func PHPDocLine(n ir.Node, line int) PHPDocLocation {
 
 func PHPDocLineField(n ir.Node, line int, field int) PHPDocLocation {
 	return PHPDocLocation{
-		Node:  n,
+		Node:         n,
+		Line:         line,
+		Field:        field,
+		RelativeLine: true,
+	}
+}
+
+func PHPDocAbsoluteLineField(line int, field int) PHPDocLocation {
+	return PHPDocLocation{
+		Node:  nil,
 		Line:  line,
 		Field: field,
 	}

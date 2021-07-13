@@ -934,9 +934,9 @@ function fn4($f4) {
 }`)
 	test.Expect = []string{
 		`Call to undefined method {\File}->name()`,
-		`Call to undefined method {\File|\Video}->filename()`,
+		`Call to undefined method {\Video}->filename()`,
 		`Call to undefined method {\File}->name()`,
-		`Call to undefined method {\File|\Video}->filename()`,
+		`Call to undefined method {\Video}->filename()`,
 	}
 	test.RunAndMatch()
 }

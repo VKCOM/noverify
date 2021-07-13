@@ -2349,3 +2349,117 @@ function f(callable $s) {
 	test.Expect = []string{"Too few arguments for $s"}
 	test.RunAndMatch()
 }
+
+func TestComplexInstanceOf(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Boo {
+  /** @return int */
+  function b() { return 0; }
+}
+
+function f($a) {
+  if ($y1 instanceof Boo && isset($y1) && $y1->b()) {} // error
+  if (isset($y1) && $y1 instanceof Boo && $y1->b()) {} // ok
+}
+`,
+	)
+	test.Expect = []string{
+		"Undefined variable $y1",
+	}
+	test.RunAndMatch()
+}
+
+func TestVarsInTernary(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Boo {}
+
+function f($a) {
+  $_ = $a instanceof Boo ? $b = 100 : 100;
+  echo $b; // might have not been defined
+
+  $_ = $a instanceof Boo ? 100 : $c = 100;
+  echo $c; // might have not been defined
+
+  $_ = $a instanceof Boo ? $d = 100 : $d = 10;
+  echo $d; // ok
+
+  $e = 100;
+  $_ = $a instanceof Boo ? $e = 100 : $e = 10;
+  echo $e; // ok
+}
+`,
+	)
+	test.Expect = []string{
+		"Variable $b might have not been defined",
+		"Variable $c might have not been defined",
+	}
+	test.RunAndMatch()
+}
+
+func TestIfCondAssign(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+function f1($v) {
+  if ($x = $v) {}
+  echo $x;
+}
+
+function f2($v) {
+  if ($x = $v) {
+    exit(0);
+  }
+  echo $x;
+}
+`)
+}
+
+func TestElseIf1CondAssign(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f1($v) {
+  if ($v) {
+  } elseif ($x = 10) {}
+  echo $x;
+}
+
+function f2($v) {
+  if ($v) {
+  } elseif ($x = 10) {
+    exit(0);
+  }
+  echo $x;
+}
+`)
+	// It could be more precise to report 2 "might have not been defined",
+	// but at least we report both usages. Can be improved in future.
+	test.Expect = []string{
+		`Undefined variable $x`,
+		`Variable $x might have not been defined`,
+	}
+	test.RunAndMatch()
+}
+
+func TestElseIf2CondAssign(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f1($v) {
+  if ($v) {
+  } else if ($x = 10) {}
+  echo $x;
+}
+
+function f2($v) {
+  if ($v) {
+  } else if ($x = 10) {
+    exit(0);
+  }
+  echo $x;
+}
+`)
+	test.Expect = []string{
+		`Variable $x might have not been defined`,
+		`Undefined variable $x`,
+	}
+	test.RunAndMatch()
+}
