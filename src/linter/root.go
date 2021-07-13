@@ -226,6 +226,11 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			p.Pos = cl.Pos
 			cl.Properties[name] = p
 		}
+
+		if cl.Name == "\\PhpParser\\Node\\Stmt\\ClassLike" {
+			fmt.Println()
+		}
+
 		for name, m := range doc.methods.H {
 			m.Pos = cl.Pos
 			cl.Methods.H[name] = m

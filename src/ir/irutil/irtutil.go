@@ -84,6 +84,16 @@ func IsLoop(n ir.Node) bool {
 	}
 }
 
+func IsBoolAnd(n ir.Node) bool {
+	_, ok := n.(*ir.BooleanAndExpr)
+	return ok
+}
+
+func IsBoolOr(n ir.Node) bool {
+	_, ok := n.(*ir.BooleanOrExpr)
+	return ok
+}
+
 // FmtNode returns string representation of n.
 func FmtNode(n ir.Node) string {
 	return irfmt.Node(n)
