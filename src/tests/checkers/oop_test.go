@@ -294,6 +294,64 @@ $_ = WithProps::$int;
 	test.RunAndMatch()
 }
 
+func TestPhpdocPropertyForClassWithModifiers(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+/**
+ * @property int $int
+ * @property string $string - optional description.
+ * @property-read string $name Name of the class
+ */
+abstract class WithPropsBase {
+  /***/
+  public function getInt() {
+    return $this->int;
+  }
+  /***/
+  public function getString() {
+    return $this->string;
+  }
+}
+
+/**
+ * @property int $int1
+ * @property string $string1 - optional description.
+ * @property-read string $name1 Name of the class
+ */
+final class WithProps extends WithPropsBase {}
+
+$_ = (new WithProps())->int;
+$_ = (new WithProps())->string;
+
+function f(WithProps $x) {
+  return $x->int + $x->int1;
+}
+
+/**
+ * @param WithProps|null $y
+ */
+function f2($y = null) {
+  echo $y->name;
+  echo $y->string1;
+}
+
+// Can't access them as static props/constants.
+$_ = WithProps::int;
+$_ = WithProps::int1;
+$_ = WithProps::$int;
+$_ = WithProps::$int1;
+`)
+
+	test.Expect = []string{
+		`Class constant \WithProps::int does not exist`,
+		`Class constant \WithProps::int1 does not exist`,
+		`Property \WithProps::$int does not exist`,
+		`Property \WithProps::$int1 does not exist`,
+	}
+
+	test.RunAndMatch()
+}
+
 func TestInheritDoc(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
