@@ -60,6 +60,8 @@ case 11:
   trailing_exit_switch($xs);
   echo "unreachable";
   break;
+default:
+  break;
 }
 
 class Exception {}
@@ -68,6 +70,10 @@ function trailing_exit_switch($xs) {
   switch($xs[0]) {
   case 1:
     die("ok");
+  case 2:
+    break;
+  default:
+    break;
   }
   exit;
 }
@@ -247,12 +253,18 @@ case 11:
   trailing_exit_switch($xs);
   echo "unreachable";
   break;
+default:
+  break;
 }
 
 class Exception {}
 
 function trailing_exit_switch($xs) {
   switch($xs[0]) {
+  default:
+    break;
+  case 2:
+    break;
   case 1:
     $_ = $xs[0];
   }
@@ -391,6 +403,10 @@ function trailing_exit_switch($xs) {
   switch($xs[0]) {
   case 1:
     return "ok";
+  case 2:
+    break;
+  default:
+    break;
   }
   exit;
 }

@@ -34,3 +34,6 @@ MAYBE   typeHint: Specify the type for the parameter $values in PHPDoc, 'array' 
 MAYBE   typeHint: Specify the type for the parameter $options in PHPDoc, 'array' type hint too generic at testdata/options-resolver/OptionsResolver.php:1268
     private function formatOptions(array $options): string
                      ^^^^^^^^^^^^^
+WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/options-resolver/function.php:25
+        @trigger_error(($package || $version ? "Since $package $version: " : '').($args ? vsprintf($message, $args) : $message), E_USER_DEPRECATED);
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

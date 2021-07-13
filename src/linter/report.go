@@ -744,6 +744,54 @@ function f(array $a) {}`,
   public $item;
 }`,
 		},
+
+		{
+			Name:     "switchDefault",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report the lack or wrong position of default.`,
+			Before: `switch ($a) {
+  case 1:
+    echo 1;
+    break;
+}`,
+			After: `switch ($a) {
+  case 1:
+    echo 1;
+    break;
+  default:
+    echo 2;
+    break;
+}`,
+		},
+
+		{
+			Name:     "switchSimplify",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report possibility to rewrite 'switch' with the 'if'.`,
+			Before: `switch ($a) {
+  case 1:
+    echo 1;
+    break;
+}`,
+			After: `if ($a == 1) {
+  echo 1;
+}`,
+		},
+
+		{
+			Name:     "switchEmpty",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report switch with empty body.`,
+			Before:   `switch ($a) {}`,
+			After: `switch ($a) {
+  case 1:
+    // do something
+    break;
+}`,
+		},
 	}
 
 	for _, info := range allChecks {

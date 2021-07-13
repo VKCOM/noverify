@@ -1,9 +1,21 @@
 MAYBE   ternarySimplify: Could rewrite as `$baseDir ?: 0` at testdata/mustache/src/Mustache/Autoloader.php:56
         $key = $baseDir ? $baseDir : 0;
                ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:110
+            @mkdir($dirName, 0777, true);
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:140
+        if (false !== @file_put_contents($tempFile, $value)) {
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:141
+            if (@rename($tempFile, $fileName)) {
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$this->fileMode ?? (0666 & ~umask())` at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:142
                 $mode = isset($this->fileMode) ? $this->fileMode : (0666 & ~umask());
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:143
+                @chmod($fileName, $mode);
+                ^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$node[Mustache_Tokenizer::FILTERS] ?? array()` at testdata/mustache/src/Mustache/Compiler.php:99
                         isset($node[Mustache_Tokenizer::FILTERS]) ? $node[Mustache_Tokenizer::FILTERS] : array(),
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -100,6 +112,9 @@ MAYBE   callSimplify: Could simplify to $this->stack[] = $value at testdata/must
 MAYBE   callSimplify: Could simplify to $this->blockStack[] = $value at testdata/mustache/src/Mustache/Context.php:49
         array_push($this->blockStack, $value);
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/mustache/src/Mustache/Context.php:213
+            switch (gettype($frame)) {
+            ^
 MAYBE   ternarySimplify: Could rewrite as `$options['cache_file_mode'] ?? null` at testdata/mustache/src/Mustache/Engine.php:156
                 $mode  = isset($options['cache_file_mode']) ? $options['cache_file_mode'] : null;
                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -133,6 +148,12 @@ MAYBE   phpdoc: Missing PHPDoc for \Mustache_Exception_UnknownTemplateException:
 WARNING regexpVet: '\w' intersects with '\d' in [\w\d\.] at testdata/mustache/src/Mustache/Loader/InlineLoader.php:115
             foreach (preg_split("/^@@(?= [\w\d\.]+$)/m", $data, -1) as $chunk) {
                                 ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/mustache/src/Mustache/Parser.php:307
+        switch ($name) {
+        ^
+WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/mustache/src/Mustache/Source/FilesystemSource.php:53
+                $this->stat = @stat($this->fileName);
+                              ^^^^^^^^^^^^^^^^^^^^^^
 WARNING unused: Variable $v is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/mustache/src/Mustache/Template.php:122
                 foreach ($value as $k => $v) {
                                          ^^
