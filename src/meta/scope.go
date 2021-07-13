@@ -244,7 +244,8 @@ func (s *Scope) AddVarFromPHPDoc(name string, typ types.Map, reason string) {
 	s.addVarName(name, typ, reason, varNoReplace|VarAlwaysDefined)
 }
 
-// HaveVar checks whether or not specified variable is present in the scope and that it is always defined
+// HaveVar checks whether or not specified variable is present in the scope
+// and that it is always defined
 func (s *Scope) HaveVar(v ir.Node) bool {
 	name, ok := scopeVarName(v)
 	if !ok {
@@ -252,6 +253,17 @@ func (s *Scope) HaveVar(v ir.Node) bool {
 	}
 
 	return s.HaveVarName(name)
+}
+
+// HaveImplicitVar checks whether or not specified implicit variable is present
+// in the scope and that it is always defined
+func (s *Scope) HaveImplicitVar(v ir.Node) bool {
+	name, ok := scopeVarName(v)
+	if !ok {
+		return false
+	}
+
+	return s.HaveImplicitVarName(name)
 }
 
 // MaybeHaveVar checks that variable is present in the scope (it may be not always defined)
@@ -273,10 +285,28 @@ func (s *Scope) HaveVarName(name string) bool {
 	return v.Flags.IsAlwaysDefined()
 }
 
-// GetVar returns type map for variable if it exists
-func (s *Scope) GetVar(name string) (m *ScopeVar, ok bool) {
+// HaveImplicitVarName checks whether or not specified implicit variable is present in the scope and that it is always defined
+func (s *Scope) HaveImplicitVarName(name string) bool {
+	v, ok := s.vars[name]
+	if !ok {
+		return false
+	}
+	return v.Flags.IsImplicit()
+}
+
+// GetVarName returns variable if it exists
+func (s *Scope) GetVarName(name string) (m *ScopeVar, ok bool) {
 	res, ok := s.vars[name]
 	return res, ok
+}
+
+// GetVar returns variable if it exists
+func (s *Scope) GetVar(v ir.Node) (m *ScopeVar, ok bool) {
+	name, ok := scopeVarName(v)
+	if !ok {
+		return nil, false
+	}
+	return s.GetVarName(name)
 }
 
 // GetVarType returns type map for variable if it exists

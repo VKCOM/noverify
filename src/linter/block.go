@@ -1444,9 +1444,10 @@ func (b *blockWalker) handleTernary(e *ir.TernaryExpr) bool {
 
 	b.withSpecificContext(trueContext, func() {
 		a := &andWalker{
-			b:            b,
-			trueContext:  trueContext,
-			falseContext: falseContext,
+			b:              b,
+			initialContext: initialContext,
+			trueContext:    trueContext,
+			falseContext:   falseContext,
 		}
 		e.Condition.Walk(a)
 	})
@@ -1534,9 +1535,10 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 	trueContext := copyBlockContext(initialContext)
 	b.withSpecificContext(trueContext, func() {
 		a := &andWalker{
-			b:            b,
-			trueContext:  trueContext,
-			falseContext: falseContext,
+			b:              b,
+			initialContext: initialContext,
+			trueContext:    trueContext,
+			falseContext:   falseContext,
 		}
 
 		s.Cond.Walk(a)
@@ -1558,6 +1560,10 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 			linksCount++
 		}
 
+		// if trueContext.exitFlags != 0 {
+		// 	b.ctx = falseContext
+		// }
+
 		b.replaceAllImplicitVars(trueContext, initialContext)
 	} else {
 		linksCount++
@@ -1570,9 +1576,10 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 
 			b.withSpecificContext(elseifTrueContext, func() {
 				a := &andWalker{
-					b:            b,
-					trueContext:  elseifTrueContext,
-					falseContext: elseifFalseContext,
+					b:              b,
+					initialContext: initialContext,
+					trueContext:    elseifTrueContext,
+					falseContext:   elseifFalseContext,
 				}
 				elseif.Cond.Walk(a)
 				varsToDelete = append(varsToDelete, a.varsToDelete...)
@@ -1642,7 +1649,7 @@ func (b *blockWalker) replaceAllImplicitVars(targetContext *blockContext, initia
 			return
 		}
 
-		oldVar, ok := initialContext.sc.GetVar(name)
+		oldVar, ok := initialContext.sc.GetVarName(name)
 		if !ok {
 			return
 		}
