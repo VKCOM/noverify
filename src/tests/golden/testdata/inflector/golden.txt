@@ -13,12 +13,12 @@ WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/inflector/lib/Doctrine/Common/Inflector/Inflector.php:123
         @trigger_error(sprintf('The "%s" method is deprecated and will be dropped in Doctrine Inflector 3.0. Please update to the new Inflector API.', __METHOD__), E_USER_DEPRECATED);
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   phpdocType: Use bool type instead of boolean at testdata/inflector/lib/Doctrine/Common/Inflector/Inflector.php:142
+     * @param boolean $reset        If true, will unset default inflections for all
+              ^^^^^^^
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/inflector/lib/Doctrine/Common/Inflector/Inflector.php:165
         @trigger_error(sprintf('The "%s" method is deprecated and will be dropped in Doctrine Inflector 3.0. Please update to the new Inflector API.', __METHOD__), E_USER_DEPRECATED);
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/inflector/lib/Doctrine/Common/Inflector/Inflector.php:181
         @trigger_error(sprintf('The "%s" method is deprecated and will be dropped in Doctrine Inflector 3.0. Please update to the new Inflector API.', __METHOD__), E_USER_DEPRECATED);
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   phpdocType: Use bool type instead of boolean at testdata/inflector/lib/Doctrine/Common/Inflector/Inflector.php:142
-     * @param boolean $reset        If true, will unset default inflections for all
-              ^^^^^^^

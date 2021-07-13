@@ -40,6 +40,9 @@ WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/flysystem/src/Adapter/Local.php:324
         if (in_array($mimetype, ['application/octet-stream', 'inode/x-empty', 'application/x-empty'])) {
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/flysystem/src/Adapter/Local.php:387
+            if (false === @mkdir($location, $this->permissionMap['dir'][$visibility], true)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   phpdocType: Void type can only be used as a standalone type for the return type at testdata/flysystem/src/Adapter/Local.php:444
      * @return array|void
                ^^^^^^^^^^
