@@ -127,8 +127,8 @@ Each rule file consists of rule groups, where each group can have any number of 
 For each group, you can set the following attributes:
 
 - `@comment` — description of the checks in the group, usually a short one sentence summary, used in the documentation of the checks;
-- `@before` — an example of a code that will generate an warning, used in the documentation of the check;
-- `@after` — an example of a code, in which the warning is fixed and for which no warning will be issued, used in the documentation of the check.
+- `@before` — an example of a code that will generate an warning, used in the documentation of the checks;
+- `@after` — an example of a code, in which the warning is fixed and for which no warning will be issued, used in the documentation of the checks.
 
 Each group contains a set of rules.
 
@@ -175,19 +175,23 @@ The `error` and `warning` severity levels make the rule **critical**, that is, i
 An example of a minimal rule with an expression:
 
 ```php
-/**
- * @warning Non-strict string comparison (use ===)
- */
-$x == $y;
+function strictCmp() {
+  /**
+   * @warning Non-strict string comparison (use ===)
+   */
+  $x == $y;
+}
 ```
 
 An example of a minimal rule with a statement:
 
 ```php
-/**
- * @warning Potentially infinite 'for' loop
- */
-for ($i = $start; $i < $length; $i--) { ${"*"};}
+function forLoop() {
+  /**
+   * @warning Potentially infinite 'for' loop
+   */
+  for ($i = $start; $i < $length; $i--) { ${"*"};}
+}
 ```
 
 Also, each rule can have other attributes, which we will talk about bellow.
@@ -201,12 +205,13 @@ The `@fix` pattern uses variables from the rule.
 For example:
 
 ```php
-/**
- * @name countUse
- * @warning Count of elements is always greater than or equal to zero, use count($arr) == 0 instead.
- * @fix count($arr) == 0
- */
-count($arr) <= 0;
+function countUse() {
+  /**
+   * @warning Count of elements is always greater than or equal to zero, use count($arr) == 0   instead.
+   * @fix count($arr) == 0
+   */
+  count($arr) <= 0;
+}
 ```
 
 As you can see, `$arr` here is a variable that matches any expression inside `count`, so if we want this expression to appear in the fix, then we just need to write `$arr` in the `@fix` template.
@@ -222,12 +227,13 @@ The `@type` constraint allows you to restrict a rule by the type of an expressio
 Let's take a closer look at the previous example:
 
 ```php
-/**
- * @name strictCmp
- * @warning 3rd argument of in_array must be true when comparing strings
- * @type string $needle
- */
-in_array($needle, $_);
+function strictCmp() {
+  /**
+   * @warning 3rd argument of in_array must be true when comparing strings
+   * @type string $needle
+   */
+  in_array($needle, $_);
+}
 ```
 
 As you can see, we are setting a constraint on the type of `$needle`, now if `$needle` is other than `string` then the rule will not be matched. 
@@ -237,12 +243,13 @@ As you can see, we are setting a constraint on the type of `$needle`, now if `$n
 You can also use union types:
 
 ```php
-/**
- * @name strictCmp
- * @warning 3rd argument of in_array must be true when comparing strings
- * @type string|int $needle
- */
-in_array($needle, $_);
+function strictCmp() {
+  /**
+   * @warning 3rd argument of in_array must be true when comparing strings
+   * @type string|int $needle
+   */
+  in_array($needle, $_);
+}
 ```
 
 Sometimes it may be necessary to check that an expression has the type `not int`, for this you need to add  `!` before the type name.
@@ -250,33 +257,35 @@ Sometimes it may be necessary to check that an expression has the type `not int`
 For example:
 
 ```php
-/**
- * @name strictCmp
- * @warning 3rd argument of in_array must be true when comparing strings
- * @type !string $needle
- */
-in_array($needle, $_);
+function strictCmp() {
+  /**
+   * @warning 3rd argument of in_array must be true when comparing strings
+   * @type !string $needle
+   */
+  in_array($needle, $_);
+}
 ```
 
 Now if  `@needle` is of type` string`, the rule will not be applied.
 
 > The previous rule is for example only.
 
-Sometimes it may be necessary to use several types. There is a special attribute `@or` for this.
+Sometimes you might want to set constraints on multiple variables.. There is a special attribute `@or` for this.
 
 > This attribute is used to create sets of constraints, below we will look at usage with other constraints.
 
 Let's take an example:
 
 ```php
-/**
- * @name strictCmp
- * @warning strings must be compared using '===' operator
- * @type string $x
- * @or
- * @type string $y
- */
-$x == $y;
+function strictCmp() {
+  /**
+   * @warning strings must be compared using '===' operator
+   * @type string $x
+   * @or
+   * @type string $y
+   */
+  $x == $y;
+}
 ```
 
 In this example, the rule will be applied if `$x` or `$y` is of type `string`.
@@ -294,15 +303,16 @@ There are 3 types of contexts:
 Let's take an example:
 
 ```php
-/**
- * @name requireOnce
- * @maybe use 'require_once' instead of require
- * @scope root
- */
-require($_);
+function requireOnce() {
+  /**
+   * @maybe use 'require_once' instead of require
+   * @scope root
+   */
+  require($_);
+}
 ```
 
-Here the rule will be applied only for `require` in the file, if `require` is in a function or method, then it will not be applied.
+Here the rule will be applied only for `require` in the top-level in file, if `require` is in a function or method, then it will not be applied.
 
 ##### `@pure`
 
@@ -313,12 +323,13 @@ Thus, if the filter says `@pure $x`, then the rule will be applied only if the e
 Let's take an example:
 
 ```php
-/**
- * @name ternarySimplify
- * @maybe Could rewrite as '$x ?: $y'
- * @pure $x
- */
-$x ? $x : $y;
+function ternarySimplify() {
+  /**
+   * @maybe Could rewrite as '$x ?: $y'
+   * @pure $x
+   */
+  $x ? $x : $y;
+}
 ```
 
 In case the expression `$x` is, for example, a call to a function that changes a global variable, then we do not want to change it to `$x ?: $y`, as this will lead to different behavior. The rule above takes this into account and if `$x` has side effects, then the rule will not be applied.
@@ -326,14 +337,15 @@ In case the expression `$x` is, for example, a call to a function that changes a
 As with `@type`, you can use `@or`:
 
 ```php
-/**
- * @name ternarySimplify
- * @maybe Could rewrite as '$x ?: $y'
- * @pure $x
- * @or
- * @pure $y
- */
-$x ? $x : $y;
+function ternarySimplify() {
+  /**
+   * @maybe Could rewrite as '$x ?: $y'
+   * @pure $x
+   * @or
+   * @pure $y
+   */
+  $x ? $x : $y;
+}
 ```
 
 In this case, it will be sufficient that either `@x` or `@y` have no side effects.
@@ -349,16 +361,17 @@ Each `@or` closes the previous set of constraints and opens a new one, that is, 
 For example:
 
 ```php
-/**
- * @name ternarySimplify
- * @maybe Could rewrite as '$x ?: $y'
- * @pure $x
- * @type string $x
- * @or
- * @pure $y
- * @type int $y
- */
-$x ? $x : $y;
+function ternarySimplify() {
+  /**
+   * @maybe Could rewrite as '$x ?: $y'
+   * @pure $x
+   * @type string $x
+   * @or
+   * @pure $y
+   * @type int $y
+   */
+  $x ? $x : $y;
+}
 ```
 
 In this case, it is necessary that `$x` has no side effects and has the `string` type, or that `$y` has no side effects and has the `int` type.
@@ -376,16 +389,17 @@ Thus, the rule will be applied only if there is a substring from `@path` in the 
 For example:
 
 ```php
-/**
- * @name ternarySimplify
- * @maybe Could rewrite as '$x ?: $y'
- * @pure $x
- * @path common/
- */
-$x ? $x : $y;
+function ternarySimplify() {
+  /**
+   * @maybe Could rewrite as '$x ?: $y'
+   * @pure $x
+   * @path common/
+   */
+  $x ? $x : $y;
+}
 ```
 
-This rule will now apply only to files in the path of which the `common/` folder will be.
+This rule will now only apply to files with the `common/` folder in the path.
 
 #### Underline location (`@location`)
 
@@ -394,11 +408,12 @@ For every warning that NoVerify finds, it underlines the location. However, for 
 For example, if there is a rule:
 
 ```php
-/**
- * @name countCallCond
- * @warning count is called on every loop iteration
- */
-for ($i = 0; $i < count($a); $i++) $_;
+function countCallCond() {
+  /**
+   * @warning count is called on every loop iteration
+   */
+  for ($i = 0; $i < count($a); $i++) $_;
+}
 ```
 
 Which finds the loops, where the `count` function is called at each iteration.
@@ -421,12 +436,13 @@ To do this, there is an attribute `@location`, which takes a variable to be poin
 Let's change our rule:
 
 ```php
-/**
- * @name countCallCond
- * @warning count is called on every loop iteration
- * @location $a
- */
-for ($i = 0; $i < count($a); $i++) $_;
+function countCallCond() {
+  /**
+   * @warning count is called on every loop iteration
+   * @location $a
+   */
+  for ($i = 0; $i < count($a); $i++) $_;
+}
 ```
 
 Now the errors will look like this:
