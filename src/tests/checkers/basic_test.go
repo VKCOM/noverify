@@ -443,7 +443,7 @@ function good() {
 		`Use public instead of PubliC`,
 	}
 
-	test.RunAndMatch()
+	linttest.RunFilterMatch(test, "keywordCase")
 }
 
 func TestCallStaticParent(t *testing.T) {
@@ -1137,7 +1137,7 @@ func TestSwitchContinue1(t *testing.T) {
 		`Use 'break' instead of 'continue' or 'continue 2' to continue the loop around switch`,
 		`Use 'break' instead of 'continue' or 'continue 2' to continue the loop around switch`,
 	}
-	test.RunAndMatch()
+	linttest.RunFilterMatch(test, "caseContinue")
 }
 
 func TestSwitchContinue2(t *testing.T) {
@@ -1151,6 +1151,11 @@ func TestSwitchContinue2(t *testing.T) {
 				continue; // OK, bound to 'for'
 			}
 		}
+		break;
+	case 2:
+		break;
+	default:
+		break;
 	}
 
 	// OK, "continue 2" does the right thing.
@@ -1160,6 +1165,10 @@ func TestSwitchContinue2(t *testing.T) {
 		switch ($x) {
 		case 10:
 			continue 2;
+		case 1:
+			break;
+		default:
+			break;
 		}
 	}`)
 	test.RunAndMatch()
@@ -1762,7 +1771,8 @@ func TestFunctionThrowsExceptionsAndReturns(t *testing.T) {
 		switch ($b) {
 			case "a":
 				throw new \Exception("a");
-
+			case "b":
+				break;
 			default:
 				throw new \Exception("default");
 		}
@@ -1833,6 +1843,7 @@ func TestSwitchBreak(t *testing.T) {
 	test.AddFile(`<?php
 	function bad($a) {
 		switch ($a) {
+		case 2:
 		case 1:
 			echo "One\n"; // Bad, no break.
 		default:
@@ -1842,6 +1853,8 @@ func TestSwitchBreak(t *testing.T) {
 
 	function good($a) {
 		switch ($a) {
+		default:
+			break;
 		case 1:
 			echo "One\n";
 			break;

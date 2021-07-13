@@ -78,7 +78,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		//  */
 		// $_ = fn($x) => $x->b();
 		if arrowFn, ok := out.Expr.(*ir.ArrowFunctionExpr); ok {
-			doc, found := irutil.FindPhpDoc(out.Variable)
+			doc, found := irutil.FindPhpDoc(out.Variable, false)
 			if found {
 				arrowFn.Doc = c.parsePHPDoc(doc)
 			}
