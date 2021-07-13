@@ -53,7 +53,6 @@ func CheckersDocumentation(ctx *AppContext) (int, error) {
 		}
 	}
 
-	fmt.Println("<p><br></p>")
 	fmt.Println("## Disabled")
 
 	for _, info := range config.Checkers.ListDeclared() {
