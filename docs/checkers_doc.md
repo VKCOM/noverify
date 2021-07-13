@@ -2,9 +2,9 @@
 
 ## Brief statistics
 
-| Total checks | Checks enabled by default | Disabled checks by default | Autofix checks |
-| ------------ | ------------------------- | -------------------------- | -------------- |
-| 82           | 73                        | 9                         | 11             |
+| Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
+| ------------ | ------------------------- | -------------------------- | ------------------ |
+| 82           | 73                        | 9                         | 11                 |
 ## Table of contents
  - Enabled by default
    - [`accessLevel` checker](#accesslevel-checker)

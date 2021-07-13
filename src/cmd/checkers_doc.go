@@ -17,9 +17,9 @@ func CheckersDocumentation(ctx *AppContext) (int, error) {
 	fmt.Println()
 	fmt.Println("## Brief statistics")
 	fmt.Printf(`
-| Total checks | Checks enabled by default | Disabled checks by default | Autofix checks |
-| ------------ | ------------------------- | -------------------------- | -------------- |
-| %d           | %d                        | %d                         | %d             |
+| Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
+| ------------ | ------------------------- | -------------------------- | ------------------ |
+| %d           | %d                        | %d                         | %d                 |
 `, len(config.Checkers.ListDeclared()), countEnabledDefault, countDisabledDefault, countAutofixable)
 
 	fmt.Println("## Table of contents")
