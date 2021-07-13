@@ -29,7 +29,7 @@ func CheckersDocumentation(ctx *AppContext) (int, error) {
 		if !info.Default {
 			continue
 		}
-		fmt.Printf("   - [`%[1]s` checker](#-%[1]s--checker)\n", info.Name)
+		fmt.Printf("   - [`%s` checker](#%s-checker)\n", info.Name, strings.ToLower(info.Name))
 	}
 
 	fmt.Println(" - Disabled by default")
@@ -37,7 +37,7 @@ func CheckersDocumentation(ctx *AppContext) (int, error) {
 		if info.Default {
 			continue
 		}
-		fmt.Printf("   - [`%[1]s` checker](#-%[1]s--checker)\n", info.Name)
+		fmt.Printf("   - [`%s` checker](#%s-checker)\n", info.Name, strings.ToLower(info.Name))
 	}
 
 	fmt.Println("## Enabled")
