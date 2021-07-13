@@ -4,10 +4,11 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofix checks |
 | ------------ | ------------------------- | -------------------------- | -------------- |
-| 73           | 64                        | 9                         | 9             |
+| 82           | 73                        | 9                         | 11             |
 ## Table of contents
  - Enabled by default
    - [`accessLevel` checker](#accesslevel-checker)
+   - [`alwaysNull` checker](#alwaysnull-checker)
    - [`argCount` checker](#argcount-checker)
    - [`argsOrder` checker](#argsorder-checker)
    - [`arrayAccess` checker](#arrayaccess-checker)
@@ -22,6 +23,7 @@
    - [`caseContinue` checker](#casecontinue-checker)
    - [`catchOrder` checker](#catchorder-checker)
    - [`complexity` checker](#complexity-checker)
+   - [`countUse` checker](#countuse-checker)
    - [`deadCode` checker](#deadcode-checker)
    - [`discardExpr` checker](#discardexpr-checker)
    - [`discardVar` checker](#discardvar-checker)
@@ -33,6 +35,8 @@
    - [`dupSubExpr` checker](#dupsubexpr-checker)
    - [`emptyStmt` checker](#emptystmt-checker)
    - [`emptyStringCheck` checker](#emptystringcheck-checker)
+   - [`errorSilence` checker](#errorsilence-checker)
+   - [`forLoop` checker](#forloop-checker)
    - [`indexingSyntax` checker](#indexingsyntax-checker)
    - [`intNeedle` checker](#intneedle-checker)
    - [`intOverflow` checker](#intoverflow-checker)
@@ -60,12 +64,17 @@
    - [`regexpSyntax` checker](#regexpsyntax-checker)
    - [`regexpVet` checker](#regexpvet-checker)
    - [`returnAssign` checker](#returnassign-checker)
+   - [`selfAssign` checker](#selfassign-checker)
    - [`stdInterface` checker](#stdinterface-checker)
    - [`strangeCast` checker](#strangecast-checker)
    - [`strictCmp` checker](#strictcmp-checker)
    - [`stripTags` checker](#striptags-checker)
+   - [`switchDefault` checker](#switchdefault-checker)
+   - [`switchEmpty` checker](#switchempty-checker)
+   - [`switchSimplify` checker](#switchsimplify-checker)
    - [`syntax` checker](#syntax-checker)
    - [`ternarySimplify` checker](#ternarysimplify-checker)
+   - [`unaryRepeat` checker](#unaryrepeat-checker)
    - [`undefined` checker](#undefined-checker)
    - [`unimplemented` checker](#unimplemented-checker)
    - [`unused` checker](#unused-checker)
@@ -97,6 +106,24 @@ $x->privateMethod(); // privateMethod is private and can't be accessed.
 #### Compliant code:
 ```php
 $x->publicMethod();
+```
+<p><br></p>
+
+
+### `alwaysNull` checker
+
+#### Description
+
+Report when use to always null object.
+
+#### Non-compliant code:
+```php
+if ($obj == null && $obj->method()) { ... }
+```
+
+#### Compliant code:
+```php
+if ($obj != null && $obj->method()) { ... }
 ```
 <p><br></p>
 
@@ -419,6 +446,26 @@ function checkRights() {
 <p><br></p>
 
 
+### `countUse` checker
+
+> Auto fix available
+
+#### Description
+
+Report comparisons count(...) which are always false or true.
+
+#### Non-compliant code:
+```php
+if (count($arr) >= 0) { ... }
+```
+
+#### Compliant code:
+```php
+if (count($arr) != 0) { ... }
+```
+<p><br></p>
+
+
 ### `deadCode` checker
 
 #### Description
@@ -640,6 +687,42 @@ if (strlen($string)) { ... }
 #### Compliant code:
 ```php
 if ($string !== "") { ... }
+```
+<p><br></p>
+
+
+### `errorSilence` checker
+
+#### Description
+
+Report using @.
+
+#### Non-compliant code:
+```php
+$f();
+```
+
+#### Compliant code:
+```php
+f();
+```
+<p><br></p>
+
+
+### `forLoop` checker
+
+#### Description
+
+Report potentially erroneous 'for' loops.
+
+#### Non-compliant code:
+```php
+for ($i = 0; $i < 100; $i--) { ... }
+```
+
+#### Compliant code:
+```php
+for ($i = 0; $i < 100; $i++) { ... }
 ```
 <p><br></p>
 
@@ -1160,6 +1243,24 @@ return $a;
 <p><br></p>
 
 
+### `selfAssign` checker
+
+#### Description
+
+Report self-assignment of variables.
+
+#### Non-compliant code:
+```php
+$x = $x;
+```
+
+#### Compliant code:
+```php
+$x = $y;
+```
+<p><br></p>
+
+
 ### `stdInterface` checker
 
 #### Description
@@ -1222,6 +1323,81 @@ $s = strip_tags($s, '<br>')
 <p><br></p>
 
 
+### `switchDefault` checker
+
+#### Description
+
+Report the lack or wrong position of default.
+
+#### Non-compliant code:
+```php
+switch ($a) {
+  case 1:
+    echo 1;
+    break;
+}
+```
+
+#### Compliant code:
+```php
+switch ($a) {
+  case 1:
+    echo 1;
+    break;
+  default:
+    echo 2;
+    break;
+}
+```
+<p><br></p>
+
+
+### `switchEmpty` checker
+
+#### Description
+
+Report switch with empty body.
+
+#### Non-compliant code:
+```php
+switch ($a) {}
+```
+
+#### Compliant code:
+```php
+switch ($a) {
+  case 1:
+    // do something
+    break;
+}
+```
+<p><br></p>
+
+
+### `switchSimplify` checker
+
+#### Description
+
+Report possibility to rewrite 'switch' with the 'if'.
+
+#### Non-compliant code:
+```php
+switch ($a) {
+  case 1:
+    echo 1;
+    break;
+}
+```
+
+#### Compliant code:
+```php
+if ($a == 1) {
+  echo 1;
+}
+```
+<p><br></p>
+
+
 ### `syntax` checker
 
 #### Description
@@ -1256,6 +1432,26 @@ $x ? $x : $y
 #### Compliant code:
 ```php
 $x ?: $y
+```
+<p><br></p>
+
+
+### `unaryRepeat` checker
+
+> Auto fix available
+
+#### Description
+
+Report the repetition of unary (! and ~) operators in a row.
+
+#### Non-compliant code:
+```php
+echo !!$a;
+```
+
+#### Compliant code:
+```php
+echo (bool) $a;
 ```
 <p><br></p>
 
