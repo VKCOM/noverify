@@ -652,7 +652,7 @@ function selfAssign() {
 
 /**
  * @comment Report using @.
- * @before  $f();
+ * @before  @f();
  * @after   f();
  */
 function errorSilence() {
