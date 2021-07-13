@@ -3599,7 +3599,7 @@ function f($a) {
     exit(0);
   }
 
-  exprtype($add_res, "int")
+  exprtype($add_res, "precise int");
 }
 
 function f2($a) {
@@ -3628,6 +3628,48 @@ function f2($a) {
 
   exprtype($add_res, "int");
   exprtype($add_res2, "string");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestVarAnnotationWithoutVariable(t *testing.T) {
+	code := `<?php
+function exprtype(...$a): bool { return false; }
+
+class Foo {
+  public $prop = 0;
+
+  function f() {}
+}
+
+class Boo  {
+  function b() {}
+}
+
+function f($a) {
+  /**
+   * Ok 
+   * @var Foo
+   */
+  $b = $a;
+  exprtype($b, "\Foo|mixed");
+
+  /**
+   * Not working 
+   * @var Boo
+   */
+  $b->prop = $a;
+  exprtype($b->prop, "int");
+
+  /**
+   * Not working  
+   * @var Foo
+   */
+  [$c, $d] = $a;
+
+  exprtype($c, "unknown_from_list");
+  exprtype($d, "unknown_from_list");
 }
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
