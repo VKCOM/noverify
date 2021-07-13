@@ -540,13 +540,13 @@ function countUse() {
   }
 
   /**
-   * @warning Count of elements is always greater than or equal to zero, use count($arr) == 0 instead.
+   * @warning Count of elements is always greater than or equal to zero, use count($arr) == 0 instead
    * @fix count($arr) == 0
    */
   count($arr) <= 0;
 
   /**
-   * @warning Count of elements is always greater than or equal to zero, use 0 == count($arr) instead.
+   * @warning Count of elements is always greater than or equal to zero, use 0 == count($arr) instead
    * @fix 0 == count($arr)
    */
   0 >= count($arr);
