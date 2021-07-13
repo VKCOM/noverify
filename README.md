@@ -45,7 +45,7 @@ Using NoVerify as linter:
 - [Using NoVerify as linter / static analyser](docs/getting_started.md)
 
 Extending NoVerify:
-- [Writing own rules quickly with PHP](docs/dynamic-rules.md)
+- [Writing own rules quickly with PHP](docs/dynamic_rules.md)
 - [Writing new checks in Go](docs/writing-checks-in-go.md)
 
 Using NoVerify as PHP [language server](https://langserver.org) (version **0.3.0** and bellow):
