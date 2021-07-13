@@ -15,6 +15,9 @@ build: clear
 release:
 	go run ./_script/release.go -build-version="$(VERSION)" -build-time="$(NOW)" -build-uname="$(OS)" -build-commit="$(AFTER_COMMIT)"
 
+generate_checkers_doc: build
+	./build/noverify checkers-doc > docs/checkers_doc.md
+
 check: lint test
 
 lint:

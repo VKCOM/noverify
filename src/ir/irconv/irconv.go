@@ -2143,7 +2143,8 @@ func (c *Converter) getPhpDoc(tok *token.Token) (doc phpdoc.Comment) {
 		return doc
 	}
 
-	for _, ff := range tok.FreeFloating {
+	for i := len(tok.FreeFloating) - 1; i >= 0; i-- {
+		ff := tok.FreeFloating[i]
 		switch ff.ID {
 		case token.T_DOC_COMMENT:
 			return c.parsePHPDoc(string(ff.Value))

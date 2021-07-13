@@ -285,8 +285,8 @@ function argsOrder() {
 
 /**
  * @comment Report suspicious usage of bitwise operations.
- * @before  if ($isURL & $verify) ...
- * @after   if ($isURL && $verify) ...
+ * @before  if ($isURL & $verify) { ... }
+ * @after   if ($isURL && $verify) { ... }
  */
 function bitwiseOps() {
   /**
@@ -652,7 +652,7 @@ function selfAssign() {
 
 /**
  * @comment Report using @.
- * @before  $f();
+ * @before  @f();
  * @after   f();
  */
 function errorSilence() {

@@ -55,7 +55,17 @@ func registerMainApp() *App {
 				},
 				Action: Checkers,
 			},
-
+			{
+				Name:        "checkers-doc",
+				Description: "The command to generate markdown checkers documentation",
+				Action:      CheckersDocumentation,
+				Examples: []Example{
+					{
+						Line:        "noverify checkers-doc > checkers.md",
+						Description: "Creates a 'checkers.md' file with documentation for all checkers.",
+					},
+				},
+			},
 			{
 				Name:        "version",
 				Description: "The command to output the tool version",
