@@ -119,8 +119,11 @@ func (d *rootWalker) handleCommentToken(t *token.Token) bool {
 				continue
 			}
 			if d.linterDisabled {
-				needleLine := ln.Line() + t.Position.StartLine - 1
-				d.ReportByLine(needleLine, LevelWarning, "linterError", "Linter is already disabled for this file")
+				needleLine := ln.Line() + t.Position.StartLine - 1 - 1
+				d.ReportPHPDoc(
+					PHPDocAbsoluteLineField(needleLine, 1),
+					LevelWarning, "linterError", "Linter is already disabled for this file",
+				)
 				continue
 			}
 			canDisable := false
@@ -129,8 +132,11 @@ func (d *rootWalker) handleCommentToken(t *token.Token) bool {
 			}
 			d.linterDisabled = canDisable
 			if !canDisable {
-				needleLine := ln.Line() + t.Position.StartLine - 1
-				d.ReportByLine(needleLine, LevelWarning, "linterError", "You are not allowed to disable linter")
+				needleLine := ln.Line() + t.Position.StartLine - 1 - 1
+				d.ReportPHPDoc(
+					PHPDocAbsoluteLineField(needleLine, 1),
+					LevelWarning, "linterError", "You are not allowed to disable linter",
+				)
 			}
 		}
 	}
@@ -309,7 +315,142 @@ func (d *rootWalker) parseStartPos(pos *position.Position) (startLn []byte, star
 	return startLn, startChar
 }
 
-func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocLocation PHPDocLocation, level int, checkName, msg string, args ...interface{}) {
+// ReportPHPDoc registers a single report message about some found problem in PHPDoc.
+func (d *rootWalker) ReportPHPDoc(phpDocLocation PHPDocLocation, level int, checkName, msg string, args ...interface{}) {
+	if phpDocLocation.RelativeLine {
+		doc, ok := irutil.FindPhpDoc(phpDocLocation.Node, true)
+		if !ok {
+			// If PHPDoc for some reason was not found, give a warning to the node.
+			d.Report(phpDocLocation.Node, level, checkName, msg, args...)
+			return
+		}
+
+		countPHPDocLines := strings.Count(doc, "\n") + 1
+
+		nodePos := ir.GetPosition(phpDocLocation.Node)
+		if nodePos == nil {
+			// If position for some reason was not found, give a warning to the node.
+			d.Report(phpDocLocation.Node, level, checkName, msg, args...)
+			return
+		}
+
+		// 1| <?php
+		// 2|
+		// 3| /**
+		// 4|  * Comment
+		// 5|  * @param int $a    <- phpDocLocation.Line == 3
+		// 6|  */                 <- countPHPDocLines == 4
+		// 7| function f($a) {}   <- nodePos.StartLine == 7
+		//
+		// countPHPDocLines - phpDocLocation.Line = 1
+		// nodePos.StartLine - 1 = 6
+		// 6 - 1 = 5 (number of the required line relative to one)
+		// 5 - 1 = 4 (number of the required line relative to zero)
+		phpDocLocation.Line = nodePos.StartLine - (countPHPDocLines - phpDocLocation.Line) - 1 - 1
+	}
+
+	if phpDocLocation.Line < 0 || phpDocLocation.Line >= d.file.NumLines() {
+		d.Report(phpDocLocation.Node, level, checkName, msg, args...)
+		return
+	}
+
+	contextLine := d.file.Line(phpDocLocation.Line)
+
+	lineWithoutBeginning := contextLine
+	// For the case when we give a warning about the wrong start
+	// of PHPDoc (/* instead /**), it is not necessary to delete characters.
+	if !bytes.Contains(contextLine, []byte("/*")) || bytes.Contains(contextLine, []byte("/**")) {
+		lineWithoutBeginning = bytes.TrimLeft(contextLine, "/ *")
+	}
+
+	shiftFromStart := len(contextLine) - len(lineWithoutBeginning)
+
+	parts := bytes.Fields(lineWithoutBeginning)
+	if phpDocLocation.Field >= len(parts) {
+		phpDocLocation.Field = 0
+		phpDocLocation.WholeLine = true
+	}
+
+	var startChar int
+	var endChar int
+
+	if phpDocLocation.WholeLine {
+		startChar = shiftFromStart
+		endChar = len(contextLine)
+	} else {
+		part := parts[phpDocLocation.Field]
+		shiftStart := bytes.Index(lineWithoutBeginning, part)
+		shiftEnd := shiftStart + len(part)
+
+		startChar = shiftFromStart + shiftStart
+		endChar = shiftFromStart + shiftEnd
+	}
+
+	if endChar == len(contextLine) && bytes.HasSuffix(contextLine, []byte("\r")) {
+		endChar--
+	}
+
+	loc := ir.Location{
+		StartLine: phpDocLocation.Line,
+		EndLine:   phpDocLocation.Line,
+		StartChar: startChar,
+		EndChar:   endChar,
+	}
+
+	d.ReportLocation(loc, level, checkName, msg, args...)
+}
+
+func (d *rootWalker) Report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
+	var pos position.Position
+
+	if n == nil {
+		// Hack to parse syntax error message from php-parser.
+		if strings.Contains(msg, "syntax error") && strings.Contains(msg, " at line ") {
+			// it is in form "Syntax error: syntax error: unexpected '*' at line 4"
+			if lastIdx := strings.LastIndexByte(msg, ' '); lastIdx > 0 {
+				lineNumStr := msg[lastIdx+1:]
+				lineNum, err := strconv.Atoi(lineNumStr)
+				if err == nil {
+					pos.StartLine = lineNum
+					pos.EndLine = lineNum
+					msg = msg[0:lastIdx]
+					msg = strings.TrimSuffix(msg, " at line")
+				}
+			}
+		}
+	} else {
+		nodePos := ir.GetPosition(n)
+		if nodePos == nil {
+			return
+		}
+		pos = *nodePos
+	}
+
+	var loc ir.Location
+
+	loc.StartLine = pos.StartLine - 1
+	loc.EndLine = pos.EndLine - 1
+	loc.StartChar = pos.StartPos
+	loc.EndChar = pos.EndPos
+
+	if pos.StartLine >= 1 && d.file.NumLines() >= pos.StartLine {
+		p := d.file.LinePosition(pos.StartLine - 1)
+		if pos.StartPos >= p {
+			loc.StartChar = pos.StartPos - p
+		}
+	}
+
+	if pos.EndLine >= 1 && d.file.NumLines() >= pos.EndLine {
+		p := d.file.LinePosition(pos.EndLine - 1)
+		if pos.EndPos >= p {
+			loc.EndChar = pos.EndPos - p
+		}
+	}
+
+	d.ReportLocation(loc, level, checkName, msg, args...)
+}
+
+func (d *rootWalker) ReportLocation(loc ir.Location, level int, checkName, msg string, args ...interface{}) {
 	if !d.metaInfo().IsIndexingComplete() {
 		return
 	}
@@ -326,130 +467,16 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocLocation PHPDocLoca
 		return
 	}
 
-	isReportForNode := phpDocLocation.Line == 0 && lineNumber == 0
-	isReportForLine := lineNumber != 0
-	isReportForPHPDoc := phpDocLocation.Line != 0
-
-	var pos position.Position
-	var startLn []byte
-	var startChar int
-	var endLn []byte
-	var endChar int
-
-	switch {
-	case isReportForNode:
-		if n == nil {
-			// Hack to parse syntax error message from php-parser.
-			if strings.Contains(msg, "syntax error") && strings.Contains(msg, " at line ") {
-				// it is in form "Syntax error: syntax error: unexpected '*' at line 4"
-				if lastIdx := strings.LastIndexByte(msg, ' '); lastIdx > 0 {
-					lineNumStr := msg[lastIdx+1:]
-					lineNum, err := strconv.Atoi(lineNumStr)
-					if err == nil {
-						pos.StartLine = lineNum
-						pos.EndLine = lineNum
-						msg = msg[0:lastIdx]
-						msg = strings.TrimSuffix(msg, " at line")
-					}
-				}
-			}
-		} else {
-			pos = *ir.GetPosition(n)
-		}
-
-		startLn, startChar = d.parseStartPos(&pos)
-
-		if pos.EndLine >= 1 && d.file.NumLines() > pos.EndLine {
-			endLn = d.file.Line(pos.EndLine - 1)
-			p := d.file.LinePosition(pos.EndLine - 1)
-			if pos.EndPos > p {
-				endChar = pos.EndPos - p
-			}
-		} else {
-			endLn = startLn
-		}
-
-		if endChar == 0 {
-			endChar = len(endLn)
-		}
-	case isReportForLine:
-		if lineNumber < 1 || lineNumber > d.file.NumLines() {
-			return
-		}
-
-		startLn = d.file.Line(lineNumber - 1)
-		startChar = 0
-
-		endChar = len(startLn)
-
-		if strings.HasSuffix(string(startLn), "\r") {
-			endChar--
-		}
-
-		pos = position.Position{
-			StartLine: lineNumber,
-			EndLine:   lineNumber,
-		}
-
-	case isReportForPHPDoc:
-		countLines := 0
-		doc, ok := irutil.FindPhpDoc(phpDocLocation.Node, true)
-		if ok {
-			countLines = strings.Count(doc, "\n") + 1
-		}
-
-		nodePos := ir.GetPosition(phpDocLocation.Node)
-		if nodePos == nil {
-			nodePos = &position.Position{}
-		}
-		phpDocLocation.Line = nodePos.StartLine - (countLines - phpDocLocation.Line) - 1
-
-		if phpDocLocation.Line < 1 || phpDocLocation.Line > d.file.NumLines() {
-			return
-		}
-
-		startLn = d.file.Line(phpDocLocation.Line - 1)
-
-		lineWithoutBeginning := startLn
-		if !bytes.Contains(startLn, []byte("/*")) || bytes.Contains(startLn, []byte("/**")) {
-			lineWithoutBeginning = bytes.TrimLeft(startLn, "/ *")
-		}
-
-		shift := len(startLn) - len(lineWithoutBeginning)
-
-		parts := bytes.Fields(lineWithoutBeginning)
-		if phpDocLocation.Field >= len(parts) {
-			phpDocLocation.Field = 0
-			phpDocLocation.WholeLine = true
-		}
-
-		if phpDocLocation.WholeLine {
-			startChar = shift
-			endChar = shift + len(lineWithoutBeginning)
-		} else {
-			part := parts[phpDocLocation.Field]
-			shiftStart := bytes.Index(lineWithoutBeginning, part)
-			shiftEnd := shiftStart + len(part)
-
-			startChar = shift + shiftStart
-			endChar = shift + shiftEnd
-		}
-
-		if endChar == len(startLn) && strings.HasSuffix(string(startLn), "\r") {
-			endChar--
-		}
-
-		pos = position.Position{
-			StartLine: phpDocLocation.Line,
-			EndLine:   phpDocLocation.Line,
-		}
+	if loc.StartLine < 0 || loc.StartLine >= d.file.NumLines() {
+		return
 	}
 
-	msg = fmt.Sprintf(msg, args...)
+	contextLine := d.file.Line(loc.StartLine)
+
 	var hash uint64
 	// If baseline is not enabled, don't waste time on hash computations.
 	if d.config.ComputeBaselineHashes {
-		hash = d.reportHash(&pos, startLn, checkName, msg)
+		hash = d.reportHash(&loc, contextLine, checkName, msg)
 		if count := d.ctx.baseline.Count(hash); count >= 1 {
 			if d.ctx.hashCounters == nil {
 				d.ctx.hashCounters = make(map[uint64]int)
@@ -463,34 +490,19 @@ func (d *rootWalker) report(n ir.Node, lineNumber int, phpDocLocation PHPDocLoca
 
 	d.reports = append(d.reports, &Report{
 		CheckName: checkName,
-		Context:   string(startLn),
-		StartChar: startChar,
-		EndChar:   endChar,
-		Line:      pos.StartLine,
+		Context:   string(contextLine),
+		StartChar: loc.StartChar,
+		EndChar:   loc.EndChar,
+		Line:      loc.StartLine + 1,
 		Level:     level,
 		Filename:  strings.ReplaceAll(d.ctx.st.CurrentFile, "\\", "/"), // To make output stable between platforms, see #572
-		Message:   msg,
+		Message:   fmt.Sprintf(msg, args...),
 		Hash:      hash,
 	})
 }
 
-// Report registers a single report message about some found problem.
-func (d *rootWalker) Report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
-	d.report(n, 0, PHPDocLocation{}, level, checkName, msg, args...)
-}
-
-// ReportByLine registers a single report message about some found problem in lineNumber code line.
-func (d *rootWalker) ReportByLine(lineNumber int, level int, checkName, msg string, args ...interface{}) {
-	d.report(nil, lineNumber, PHPDocLocation{}, level, checkName, msg, args...)
-}
-
-// ReportPHPDoc registers a single report message about some found problem in PHPDoc.
-func (d *rootWalker) ReportPHPDoc(location PHPDocLocation, level int, checkName, msg string, args ...interface{}) {
-	d.report(nil, 0, location, level, checkName, msg, args...)
-}
-
-// reportHash computes the report signature hash for the baseline.
-func (d *rootWalker) reportHash(pos *position.Position, startLine []byte, checkName, msg string) uint64 {
+// reportHash computes the ReportLocation signature hash for the baseline.
+func (d *rootWalker) reportHash(loc *ir.Location, contextLine []byte, checkName, msg string) uint64 {
 	// Since we store class::method scope, renaming a class would cause baseline
 	// invalidation for the entire class. But this is not an issue, since in
 	// a modern PHP class name always should map to a filename.
@@ -514,7 +526,7 @@ func (d *rootWalker) reportHash(pos *position.Position, startLine []byte, checkN
 	if !d.config.ConservativeBaseline {
 		// Lines are 1-based, indexes are 0-based.
 		// If this function is called, we expect that lines[index] exists.
-		index := pos.StartLine - 1
+		index := loc.StartLine - 1
 		if index >= 1 {
 			prevLine = d.file.Line(index - 1)
 		}
@@ -545,7 +557,7 @@ func (d *rootWalker) reportHash(pos *position.Position, startLine []byte, checkN
 	return baseline.ReportHash(&d.ctx.scratchBuf, baseline.HashFields{
 		Filename:  filename,
 		PrevLine:  bytes.TrimSuffix(prevLine, []byte("\r")),
-		StartLine: bytes.TrimSuffix(startLine, []byte("\r")),
+		StartLine: bytes.TrimSuffix(contextLine, []byte("\r")),
 		NextLine:  bytes.TrimSuffix(nextLine, []byte("\r")),
 		CheckName: checkName,
 		Message:   msg,
