@@ -12,27 +12,61 @@ import (
 	"github.com/VKCOM/noverify/src/types"
 )
 
-type phpdocErrors struct {
-	phpdocLint []string
-	phpdocType []string
+type PHPDocLocation struct {
+	Node      ir.Node
+	Line      int
+	Field     int
+	WholeLine bool
 }
 
-func (e *phpdocErrors) pushLint(format string, args ...interface{}) {
-	e.phpdocLint = append(e.phpdocLint, fmt.Sprintf(format, args...))
+func PHPDocLine(n ir.Node, line int) PHPDocLocation {
+	return PHPDocLocation{
+		Node:      n,
+		Line:      line,
+		WholeLine: true,
+	}
 }
 
-func (e *phpdocErrors) pushType(format string, args ...interface{}) {
-	e.phpdocType = append(e.phpdocType, fmt.Sprintf(format, args...))
+func PHPDocLineField(n ir.Node, line int, field int) PHPDocLocation {
+	return PHPDocLocation{
+		Node:  n,
+		Line:  line,
+		Field: field,
+	}
+}
+
+type PHPDocError struct {
+	Location PHPDocLocation
+	Message  string
+}
+
+type PHPDocErrors struct {
+	types []PHPDocError
+	lint  []PHPDocError
+}
+
+func (e *PHPDocErrors) pushType(place PHPDocLocation, format string, args ...interface{}) {
+	e.types = append(e.types, PHPDocError{
+		Location: place,
+		Message:  fmt.Sprintf(format, args...),
+	})
+}
+
+func (e *PHPDocErrors) pushLint(place PHPDocLocation, format string, args ...interface{}) {
+	e.lint = append(e.lint, PHPDocError{
+		Location: place,
+		Message:  fmt.Sprintf(format, args...),
+	})
 }
 
 type classPhpDocParseResult struct {
 	properties meta.PropertiesMap
 	methods    meta.FunctionsMap
-	errs       phpdocErrors
+	errs       PHPDocErrors
 	mixins     []string
 }
 
-func parseClassPHPDocMethod(ctx *rootContext, result *classPhpDocParseResult, part *phpdoc.RawCommentPart) {
+func parseClassPHPDocMethod(classNode ir.Node, ctx *rootContext, result *classPhpDocParseResult, part *phpdoc.RawCommentPart) {
 	// The syntax is:
 	//	@method [[static] return type] [name]([[type] [parameter]<, ...>]) [<description>]
 	// Return type and method name are mandatory.
@@ -45,15 +79,22 @@ func parseClassPHPDocMethod(ctx *rootContext, result *classPhpDocParseResult, pa
 	}
 
 	if len(params) < 2 {
-		result.errs.pushLint("line %d: @method requires return type and method name fields", part.Line())
+		result.errs.pushLint(
+			PHPDocLine(classNode, part.Line()),
+			"@method requires return type and method name fields",
+		)
 		return
 	}
 
 	typ := ctx.phpdocTypeParser.Parse(params[0])
 	converted := phpdoctypes.ToRealType(ctx.typeNormalizer.ClassFQNProvider(), typ)
 	moveShapesToContext(ctx, converted.Shapes)
-	for _, warning := range converted.Warnings {
-		result.errs.pushType("%s on line %d", warning, part.Line())
+
+	if converted.Warning != "" {
+		result.errs.pushType(
+			PHPDocLineField(classNode, part.Line(), 1),
+			converted.Warning,
+		)
 	}
 
 	var methodName string
@@ -62,7 +103,11 @@ func parseClassPHPDocMethod(ctx *rootContext, result *classPhpDocParseResult, pa
 		methodName = params[1][:nameEnd]
 	} else {
 		methodName = params[1] // Could be a method name without `()`.
-		result.errs.pushLint("line %d: @method '(' is not found near the method name", part.Line())
+
+		result.errs.pushLint(
+			PHPDocLineField(classNode, part.Line(), 2),
+			"@method missing parentheses after method name",
+		)
 	}
 
 	var funcFlags meta.FuncFlags
@@ -85,28 +130,41 @@ func moveShapesToContext(ctx *rootContext, shapes types.ShapesMap) {
 	}
 }
 
-func parseClassPHPDocProperty(ctx *rootContext, result *classPhpDocParseResult, part *phpdoc.TypeVarCommentPart) {
+func parseClassPHPDocProperty(classNode ir.Node, ctx *rootContext, result *classPhpDocParseResult, part *phpdoc.TypeVarCommentPart) {
 	// The syntax is:
 	//	@property [Type] [name] [<description>]
 	// Type and name are mandatory.
 
 	if part.Type.IsEmpty() || part.Var == "" {
-		result.errs.pushLint("line %d: @property requires type and property name fields", part.Line())
+		result.errs.pushLint(
+			PHPDocLine(classNode, part.Line()),
+			"@property requires type and property name fields",
+		)
 		return
 	}
 
 	if part.VarIsFirst {
-		result.errs.pushLint("non-canonical order of name and type on line %d", part.Line())
+		result.errs.pushLint(
+			PHPDocLine(classNode, part.Line()),
+			"Non-canonical order of name and type",
+		)
 	}
 
 	converted := phpdoctypes.ToRealType(ctx.typeNormalizer.ClassFQNProvider(), part.Type)
 	moveShapesToContext(ctx, converted.Shapes)
-	for _, warning := range converted.Warnings {
-		result.errs.pushType("%s on line %d", warning, part.Line())
+
+	if converted.Warning != "" {
+		result.errs.pushType(
+			PHPDocLineField(classNode, part.Line(), 2),
+			converted.Warning,
+		)
 	}
 
 	if !strings.HasPrefix(part.Var, "$") {
-		result.errs.pushLint("@property %s field name must start with '$' on line %d", part.Var, part.Line())
+		result.errs.pushLint(
+			PHPDocLineField(classNode, part.Line(), 2),
+			"@property %s field name must start with '$'", part.Var,
+		)
 		return
 	}
 
@@ -117,7 +175,7 @@ func parseClassPHPDocProperty(ctx *rootContext, result *classPhpDocParseResult, 
 	}
 }
 
-func parseClassPHPDocMixin(cs *meta.ClassParseState, result *classPhpDocParseResult, part *phpdoc.RawCommentPart) {
+func parseClassPHPDocMixin(classNode ir.Node, cs *meta.ClassParseState, result *classPhpDocParseResult, part *phpdoc.RawCommentPart) {
 	params := part.Params
 	if len(params) == 0 {
 		return

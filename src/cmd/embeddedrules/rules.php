@@ -432,9 +432,9 @@ function langDeprecated() {
 
     /**
      * @warning Define defaults to a case sensitive constant, the third argument can be removed
-     * @fix     define($_, $_);
+     * @fix     define($x, $y)
      */
-    define($_, $_, false);
+    define($x, $y, false);
 }
 
 /**

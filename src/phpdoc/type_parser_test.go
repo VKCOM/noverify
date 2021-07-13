@@ -116,6 +116,9 @@ func TestParser(t *testing.T) {
 		{`array{0: int}`, `GenericBrace="array{0: int}"{Name="array" KeyVal="0: int"{Int="0" Name="int"}}`},
 		{`shape{s?: string}`, `GenericBrace="shape{s?: string}"{Name="shape" KeyVal="s?: string"{Optional="s?"{Name="s"} Name="string"}}`},
 		{`foo(A):B`, `KeyVal="foo(A):B"{GenericParen="foo(A)"{Name="foo" Name="A"} Name="B"}`},
+		{`array{int}`, `GenericBrace="array{int}"{Name="array" Name="int"}`},
+		{`array{int, string}`, `GenericBrace="array{int, string}"{Name="array" Name="int" Name="string"}`},
+		{`array{int, foo: string}`, `GenericBrace="array{int, foo: string}"{Name="array" Name="int" KeyVal="foo: string"{Name="foo" Name="string"}}`},
 
 		// MemberType.
 		{`\Foo::CONST`, `MemberType="\Foo::CONST"{Name="\Foo" Name="CONST"}`},

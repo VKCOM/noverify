@@ -3055,6 +3055,57 @@ function f($arr, $arr1, $arr2, $arr3, $arr4, $arr5) {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestArrayLikeShapeSyntax(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+/**
+ * @param array{int, Foo} $a
+ */
+function f($a) {
+  exprtype($a[0], "int");
+  exprtype($a[1], "\Foo");
+}
+
+/**
+ * @param array{id: int, Foo} $a
+ */
+function f($a) {
+  exprtype($a["id"], "int");
+  exprtype($a[1], "\Foo");
+}
+
+/**
+ * @param array{Foo, id: int} $a
+ */
+function f($a) {
+  exprtype($a[0], "\Foo");
+  exprtype($a["id"], "int");
+}
+
+/**
+ * @param array{foo: Foo, int, id: int} $a
+ */
+function f($a) {
+  exprtype($a["foo"], "\Foo");
+  exprtype($a[1], "int");
+  exprtype($a["id"], "int");
+}
+
+/**
+ * @param array{foo: Foo, int, string, id: int, Foo} $a
+ */
+function f($a) {
+  exprtype($a["foo"], "\Foo");
+  exprtype($a[1], "int");
+  exprtype($a[2], "string");
+  exprtype($a["id"], "int");
+  exprtype($a[4], "\Foo");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestArrayTypeCast(t *testing.T) {
 	code := `<?php
 class Foo {}

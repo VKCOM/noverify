@@ -189,6 +189,10 @@ func TestGolden(t *testing.T) {
 			OnlyE2E:  true,
 			Baseline: true,
 		},
+
+		{
+			Name: "phpdoc",
+		},
 	}
 
 	e2eSuite := linttest.NewGoldenE2ETestSuite(t)
