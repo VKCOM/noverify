@@ -257,6 +257,11 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 			)
 		}
 
+		simpleVar, isSimpleVar := n.(*ir.SimpleVar)
+		if isSimpleVar && part.Var == "" {
+			part.Var = simpleVar.Name
+		}
+
 		typesMap := types.NewMapWithNormalization(b.r.ctx.typeNormalizer, converted.Types)
 		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(part.Var, "$"), typesMap, "@var")
 	}
