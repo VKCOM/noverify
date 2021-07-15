@@ -1388,7 +1388,6 @@ trait AbstractTraitAB {
 func TestInterfaceRules(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-
 interface WithConstants {
   const r = 10000; // ok
   public const v = 1; // ok
@@ -1423,7 +1422,7 @@ interface WithoutAnyModifier {
 		`'bad1' can't be private`,
 		`'bad2' can't be protected`,
 	}
-	test.RunAndMatch()
+	linttest.RunFilterMatch(test, "nonPublicInterfaceMember")
 }
 
 func TestMixinAnnotation(t *testing.T) {
@@ -1756,4 +1755,43 @@ function f($arg) {
 		`Call to undefined method \Foo::non_existing_method()`,
 	}
 	test.RunAndMatch()
+}
+
+func TestImplicitAccessModifiers(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {
+  const FOO = 100; // ok
+  public const FOO1 = 100; // ok
+  private const FOO2 = 100; // ok
+  protected const FOO3 = 100; // ok
+  
+  var int $prop = 100;
+  public int $prop1 = 100;
+  private int $prop2 = 100;
+  protected int $prop3 = 100;
+
+  var int $prop4, $prop5 = 100;
+  public int $prop6, $prop7 = 100;
+  private int $prop8, $prop9 = 100;
+  protected int $prop10, $prop11 = 100;
+  
+  function f1() {}
+  public function f2() {}
+  private function f3() {}
+  protected function f4() {}
+
+  static function f5() {}
+  public static function f6() {}
+  private static function f7() {}
+  protected static function f8() {}
+}
+`)
+	test.Expect = []string{
+		`Specify the access modifier for property explicitly`,
+		`Specify the access modifier for properties explicitly`,
+		`Specify the access modifier for \Foo::f1 method explicitly`,
+		`Specify the access modifier for \Foo::f5 method explicitly`,
+	}
+	linttest.RunFilterMatch(test, "implicitModifiers")
 }
