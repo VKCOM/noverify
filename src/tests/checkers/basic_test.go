@@ -908,23 +908,6 @@ function f() {
 `)
 }
 
-func TestClosureCapture(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-	class omg {
-		public $some_property;
-	}
-
-	function doSomething($a, omg $b) {
-		return function() use($b) {
-			echo $b->some_property;
-			echo $b->other_property;
-		};
-	}`)
-	test.Expect = []string{"other_property does not exist"}
-	test.RunAndMatch()
-}
-
 func TestOrDie1(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 global $ok;
@@ -2325,31 +2308,6 @@ define('TWO', 1);
 echo ONE;
 echo TWO;
 `)
-}
-
-func TestClosureDoc(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-class Foo {
-  /**
-   * @return int
-   */
-  public function method(): int { return 0; }
-}
-
-/**
- * @param callable(int, string): Boo|Foo $s
- */
-function f(callable $s) {
-  $a = $s(10);
-  echo $a->method();
-}
-`,
-	)
-	test.Expect = []string{
-		"Too few arguments for anonymous(int,string): Boo|Foo defined in PHPDoc, expecting 2, saw 1",
-	}
-	test.RunAndMatch()
 }
 
 func TestComplexInstanceOf(t *testing.T) {
