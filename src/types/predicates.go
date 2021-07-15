@@ -16,6 +16,10 @@ func IsClosure(s string) bool {
 	return strings.HasPrefix(s, `\Closure`)
 }
 
+func IsClosureFromPHPDoc(s string) bool {
+	return strings.HasPrefix(s, `\Closure`) && !strings.ContainsRune(s, '.')
+}
+
 func IsArray(s string) bool {
 	return strings.HasSuffix(s, `[]`)
 }

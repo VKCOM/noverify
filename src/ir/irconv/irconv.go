@@ -84,6 +84,18 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			}
 		}
 
+		// hack for expressions like:
+		// /**
+		//  * @param Boo $x
+		//  */
+		// $_ = function($x) { $x->b(); };
+		if closure, ok := out.Expr.(*ir.ClosureExpr); ok {
+			doc, found := irutil.FindPhpDoc(out.Variable, false)
+			if found {
+				closure.Doc = c.parsePHPDoc(doc)
+			}
+		}
+
 		return out
 
 	case *ast.ExprAssignBitwiseAnd:

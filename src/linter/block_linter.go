@@ -8,6 +8,7 @@ import (
 	"github.com/VKCOM/noverify/src/constfold"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
+	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/solver"
@@ -472,7 +473,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 	// If new expression is written without (), ArgumentList will be nil.
 	// It's equivalent of 0 arguments constructor call.
 	if ok && !enoughArgs(e.Args, ctor) {
-		b.report(e, LevelError, "argCount", "Too few arguments for %s constructor", className)
+		b.report(e, LevelError, "argCount", "Too few arguments for %s constructor, expecting %d, saw %d", className, ctor.MinParamsCnt, len(e.Args))
 	}
 }
 
@@ -889,14 +890,14 @@ func (b *blockLinter) checkFunctionAvailability(e *ir.FunctionCallExpr, call *fu
 	}
 }
 
-func (b *blockLinter) checkCallArgs(n ir.Node, args []ir.Node, fn meta.FuncInfo) {
-	b.checkCallArgsCount(n, args, fn)
+func (b *blockLinter) checkCallArgs(fun ir.Node, args []ir.Node, fn meta.FuncInfo, callerClass string) {
+	b.checkCallArgsCount(fun, args, fn, callerClass)
 }
 
-func (b *blockLinter) checkCallArgsCount(n ir.Node, args []ir.Node, fn meta.FuncInfo) {
+func (b *blockLinter) checkCallArgsCount(fun ir.Node, args []ir.Node, fn meta.FuncInfo, callerClass string) {
 	if fn.Name == `\mt_rand` {
 		if len(args) != 0 && len(args) != 2 {
-			b.report(n, LevelWarning, "argCount", "mt_rand expects 0 or 2 args")
+			b.report(fun, LevelWarning, "argCount", "mt_rand expects 0 or 2 args")
 		}
 		return
 	}
@@ -907,7 +908,15 @@ func (b *blockLinter) checkCallArgsCount(n ir.Node, args []ir.Node, fn meta.Func
 	}
 
 	if !enoughArgs(args, fn) {
-		b.report(n, LevelWarning, "argCount", "Too few arguments for %s", utils.NameNodeToString(n))
+		name := strings.TrimPrefix(fn.Name, `\`)
+		if callerClass != "" {
+			name = fmt.Sprintf("%s::%s", strings.TrimPrefix(callerClass, `\`), name)
+		} else if types.IsClosure(fn.Name) {
+			name = autogen.TransformClosureToReadableName(fn.Name)
+		}
+
+		b.report(fun, LevelWarning, "argCount",
+			"Too few arguments for %s, expecting %d, saw %d", name, fn.MinParamsCnt, len(args))
 	}
 }
 
@@ -924,7 +933,7 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 	}
 
 	if call.isFound {
-		b.checkCallArgs(e.Function, e.Args, call.info)
+		b.checkCallArgs(e.Function, e.Args, call.info, "")
 		b.checkDeprecatedFunctionCall(e, &call)
 	}
 
@@ -1077,7 +1086,7 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 	}
 
 	if !call.isMagic {
-		b.checkCallArgs(e.Method, e.Args, call.info)
+		b.checkCallArgs(e.Method, e.Args, call.info, call.methodCallerType.String())
 	}
 
 	if !call.isFound && !call.isMagic && !parseState.IsTrait && !b.walker.isThisInsideClosure(e.Variable) {
@@ -1118,7 +1127,7 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 	b.checkClassSpecialNameCase(e, call.className)
 
 	if !call.isMagic {
-		b.checkCallArgs(e.Call, e.Args, call.methodInfo.Info)
+		b.checkCallArgs(e.Call, e.Args, call.methodInfo.Info, call.className)
 	}
 
 	if !call.isFound && !call.isMagic && !b.classParseState().IsTrait {

@@ -2346,7 +2346,9 @@ function f(callable $s) {
 }
 `,
 	)
-	test.Expect = []string{"Too few arguments for $s"}
+	test.Expect = []string{
+		"Too few arguments for anonymous(int,string): Boo|Foo defined in PHPDoc, expecting 2, saw 1",
+	}
 	test.RunAndMatch()
 }
 
