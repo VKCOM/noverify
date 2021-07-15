@@ -86,6 +86,11 @@ func (conv *TypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
 		typ := e.Args[0]
 		params := e.Args[1:]
 
+		isCallable := strings.Contains(typ.Value, "callable")
+		if isCallable {
+			conv.warn("Lost return type for callable(...), if the function returns nothing, specify void explicitly")
+		}
+
 		isArray := typ.Value == "array" ||
 			typ.Value == "list" ||
 			typ.Value == "iterable" ||
