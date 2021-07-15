@@ -240,10 +240,10 @@ class TwoArgs {
 }
 `)
 	test.Expect = []string{
-		`Too few arguments for \OneArg constructor`,
-		`Too few arguments for \A\B\TwoArgs constructor`,
-		`Too few arguments for \A\B\TwoArgs constructor`,
-		`Too few arguments for \OneArgDerived constructor`,
+		`Too few arguments for \OneArg constructor, expecting 1, saw 0`,
+		`Too few arguments for \A\B\TwoArgs constructor, expecting 2, saw 0`,
+		`Too few arguments for \A\B\TwoArgs constructor, expecting 2, saw 0`,
+		`Too few arguments for \OneArgDerived constructor, expecting 1, saw 0`,
 	}
 	test.RunAndMatch()
 }
@@ -923,7 +923,7 @@ func TestInvoke(t *testing.T) {
 
 	(new Example())();
 	`)
-	test.Expect = []string{"Too few arguments"}
+	test.Expect = []string{"Too few arguments for __invoke, expecting 1, saw 0"}
 	linttest.RunFilterMatch(test, "argCount")
 }
 

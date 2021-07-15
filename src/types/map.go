@@ -294,7 +294,7 @@ func (m Map) Append(n Map) Map {
 func (m Map) String() string {
 	if len(m.m) == 1 {
 		for k := range m.m {
-			return k
+			return FormatType(k)
 		}
 	}
 

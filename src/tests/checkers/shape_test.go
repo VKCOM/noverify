@@ -21,8 +21,8 @@ function f($s) {
 }
 `)
 	test.Expect = []string{
-		`Property {\shape$x:int,y:float$}->x does not exist`,
-		`Property {\shape$x:int,y:float$}->y does not exist`,
+		`Property {shape{x:int,y:float}}->x does not exist`,
+		`Property {shape{x:int,y:float}}->y does not exist`,
 	}
 	test.RunAndMatch()
 }

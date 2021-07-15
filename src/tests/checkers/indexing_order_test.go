@@ -36,7 +36,7 @@ echo $v->field;
 	// Right now we ensure that the linter output doesn't depend
 	// on the file traversal order, but this warnings is still out of place.
 	test.Expect = []string{
-		`argCount: Too few arguments for \A constructor`,
+		`argCount: Too few arguments for \A constructor, expecting 1, saw 0`,
 	}
 	test.RunAndMatch()
 }
@@ -68,7 +68,7 @@ echo $v->field;
 	// Right now we ensure that the linter output doesn't depend
 	// on the file traversal order, but this warnings is still out of place.
 	test.Expect = []string{
-		`argCount: Too few arguments for \A constructor`,
+		`argCount: Too few arguments for \A constructor, expecting 1, saw 0`,
 	}
 	test.RunAndMatch()
 }
@@ -90,7 +90,7 @@ a(1);
 	// Right now we ensure that the linter output doesn't depend
 	// on the file traversal order, but this warnings is still out of place.
 	test.Expect = []string{
-		`Too few arguments for a`,
+		`Too few arguments for a, expecting 1, saw 0`,
 	}
 	test.RunAndMatch()
 }
