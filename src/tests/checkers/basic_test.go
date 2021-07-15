@@ -2357,7 +2357,7 @@ func TestComplexInstanceOf(t *testing.T) {
 	test.AddFile(`<?php
 class Boo {
   /** @return int */
-  function b() { return 0; }
+  public function b() { return 0; }
 }
 
 function f($a) {

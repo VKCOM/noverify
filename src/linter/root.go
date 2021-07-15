@@ -721,14 +721,16 @@ func (d *rootWalker) getElementPos(n ir.Node) meta.ElementPosition {
 }
 
 type methodModifiers struct {
-	abstract    bool
-	static      bool
-	accessLevel meta.AccessLevel
-	final       bool
+	abstract       bool
+	static         bool
+	accessLevel    meta.AccessLevel
+	final          bool
+	accessImplicit bool
 }
 
 func (d *rootWalker) parseMethodModifiers(meth *ir.ClassMethodStmt) (res methodModifiers) {
 	res.accessLevel = meta.Public
+	res.accessImplicit = true
 
 	for _, m := range meth.Modifiers {
 		switch d.lowerCaseModifier(m) {
@@ -738,10 +740,13 @@ func (d *rootWalker) parseMethodModifiers(meth *ir.ClassMethodStmt) (res methodM
 			res.static = true
 		case "public":
 			res.accessLevel = meta.Public
+			res.accessImplicit = false
 		case "private":
 			res.accessLevel = meta.Private
+			res.accessImplicit = false
 		case "protected":
 			res.accessLevel = meta.Protected
+			res.accessImplicit = false
 		case "final":
 			res.final = true
 		default:
@@ -886,18 +891,30 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 
 	isStatic := false
 	accessLevel := meta.Public
+	accessImplicit := true
 
 	for _, m := range pl.Modifiers {
 		switch d.lowerCaseModifier(m) {
 		case "public":
 			accessLevel = meta.Public
+			accessImplicit = false
 		case "protected":
 			accessLevel = meta.Protected
+			accessImplicit = false
 		case "private":
 			accessLevel = meta.Private
+			accessImplicit = false
 		case "static":
 			isStatic = true
 		}
+	}
+
+	if accessImplicit {
+		target := "property"
+		if len(pl.Properties) > 1 {
+			target = "properties"
+		}
+		d.Report(pl, LevelNotice, "implicitModifiers", "Specify the access modifier for %s explicitly", target)
 	}
 
 	d.checkCommentMisspellings(pl, pl.Doc.Raw)
@@ -1045,7 +1062,14 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		d.Report(meth.MethodName, LevelNotice, "complexity", "Too big method: more than %d lines", maxFunctionLines)
 	}
 
+	class := d.getClass()
+
 	modif := d.parseMethodModifiers(meth)
+
+	if modif.accessImplicit {
+		methodFQN := class.Name + "::" + nm
+		d.Report(meth.MethodName, LevelNotice, "implicitModifiers", "Specify the access modifier for %s method explicitly", methodFQN)
+	}
 
 	d.checkMagicMethod(meth.MethodName, nm, modif, len(meth.Params))
 
@@ -1054,8 +1078,6 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		sc.AddVarName("this", types.NewMap(d.ctx.st.CurrentClass).Immutable(), "instance method", meta.VarAlwaysDefined)
 		sc.SetInInstanceMethod(true)
 	}
-
-	class := d.getClass()
 
 	if meth.Doc.Raw == "" && modif.accessLevel == meta.Public {
 		// Permit having "__call" and other magic method without comments.

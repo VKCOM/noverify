@@ -792,6 +792,19 @@ function f(array $a) {}`,
     break;
 }`,
 		},
+
+		{
+			Name:     "implicitModifiers",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report implicit modifiers.`,
+			Before: `class Foo {
+  function f() {} // The access modifier is implicit.
+}`,
+			After: `class Foo {
+  public function f() {}
+}`,
+		},
 	}
 
 	for _, info := range allChecks {
