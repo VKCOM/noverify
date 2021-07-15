@@ -59,8 +59,9 @@ class Foo {}
 /**
  * @param callable(int, string) $s
  * @param callable(int, string): Foo $s1
+ * @param callable(int, string): void $s2
  */
-function f(callable $s, callable $s1) {}
+function f(callable $s, callable $s1, callable $s2) {}
 `,
 	)
 	test.Expect = []string{
