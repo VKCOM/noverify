@@ -837,6 +837,34 @@ class Boo extends Foo {
   public function f() {}
 }`,
 		},
+
+		{
+			// Checker can give many false positives, however it is
+			// useful for periodic checking when you can choose what
+			// appears to be a real error.
+			Name:     "argsReverse",
+			Default:  false,
+			Quickfix: false,
+			Comment:  `Report using variables as arguments in reverse order.`,
+			Before: `function makeHello(string $name, int $age) {
+  echo "Hello ${$name}-${$age}";
+}
+
+function main(): void {
+  $name = "John";
+  $age = 18;
+  makeHello($age, $name); // The name should come first, and then the age.
+}`,
+			After: `function makeHello(string $name, int $age) {
+  echo "Hello ${$name}-${$age}";
+}
+
+function main(): void {
+  $name = "John";
+  $age = 18;
+  makeHello($name, $age);
+}`,
+		},
 	}
 
 	for _, info := range allChecks {
