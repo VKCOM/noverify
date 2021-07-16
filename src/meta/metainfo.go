@@ -151,6 +151,7 @@ type ClassInfo struct {
 }
 
 func (info *ClassInfo) IsAbstract() bool  { return info.Flags&ClassAbstract != 0 }
+func (info *ClassInfo) IsFinal() bool     { return info.Flags&ClassFinal != 0 }
 func (info *ClassInfo) IsShape() bool     { return info.Flags&ClassShape != 0 }
 func (info *ClassInfo) IsInterface() bool { return info.Flags&ClassInterface != 0 }
 

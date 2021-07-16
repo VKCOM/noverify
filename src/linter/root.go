@@ -237,7 +237,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			d.checkKeywordCase(n.Extends, "extends")
 			className, ok := solver.GetClassName(d.ctx.st, n.Extends.ClassName)
 			if ok {
-				d.checkClassImplemented(n.Extends.ClassName, className)
+				d.checkClassInherit(n.Extends.ClassName, className)
 			}
 		}
 
@@ -2214,16 +2214,38 @@ func (d *rootWalker) checkTraitImplemented(n ir.Node, nameUsed string) {
 	d.checkImplemented(n, nameUsed, trait)
 }
 
-func (d *rootWalker) checkClassImplemented(n ir.Node, nameUsed string) {
+func (d *rootWalker) checkClassInherit(extendsClassNameNode ir.Node, nameUsed string) {
+	if !d.metaInfo().IsIndexingComplete() {
+		return
+	}
+
+	class, ok := d.metaInfo().GetClass(nameUsed)
+	if !ok {
+		d.reportUndefinedType(extendsClassNameNode, nameUsed)
+		return
+	}
+
+	d.checkClassExtends(extendsClassNameNode, class)
+	d.checkImplemented(extendsClassNameNode, nameUsed, class)
+}
+
+func (d *rootWalker) checkClassExtends(extendsClassNameNode ir.Node, otherClass meta.ClassInfo) {
+	if otherClass.IsFinal() {
+		currentClass := d.getClass()
+		d.Report(extendsClassNameNode, LevelError, "invalidExtendClass", "Class %s may not inherit from final class %s", currentClass.Name, otherClass.Name)
+	}
+}
+
+func (d *rootWalker) checkClassImplemented(extendsClassNameNode ir.Node, nameUsed string) {
 	if !d.metaInfo().IsIndexingComplete() {
 		return
 	}
 	class, ok := d.metaInfo().GetClass(nameUsed)
 	if !ok {
-		d.reportUndefinedType(n, nameUsed)
+		d.reportUndefinedType(extendsClassNameNode, nameUsed)
 		return
 	}
-	d.checkImplemented(n, nameUsed, class)
+	d.checkImplemented(extendsClassNameNode, nameUsed, class)
 }
 
 func (d *rootWalker) checkIfaceImplemented(n ir.Node, nameUsed string) {
