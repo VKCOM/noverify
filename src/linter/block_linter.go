@@ -914,7 +914,7 @@ func (b *blockLinter) checkArgsOrder(fun ir.Node, args []ir.Node, fn meta.FuncIn
 	}
 
 	if firstVar.Name == fn.Params[1].Name && secondVar.Name == fn.Params[0].Name {
-		b.report(fun, LevelWarning, "argsMessedUp", "Perhaps the order of the arguments is messed up, $%[1]s is passed to the $%[2]s parameter, and $%[2]s is passed to the $%[1]s parameter", firstVar.Name, secondVar.Name)
+		b.report(fun, LevelWarning, "argsReverse", "Perhaps the order of the arguments is messed up, $%[1]s is passed to the $%[2]s parameter, and $%[2]s is passed to the $%[1]s parameter", firstVar.Name, secondVar.Name)
 	}
 }
 

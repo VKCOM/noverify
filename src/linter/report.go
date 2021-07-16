@@ -842,7 +842,7 @@ class Boo extends Foo {
 			// Checker can give many false positives, however it is
 			// useful for periodic checking when you can choose what
 			// appears to be a real error.
-			Name:     "argsMessedUp",
+			Name:     "argsReverse",
 			Default:  false,
 			Quickfix: false,
 			Comment:  `Report using variables as arguments in reverse order.`,

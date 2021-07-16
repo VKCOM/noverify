@@ -110,5 +110,5 @@ function main(): void {
 	test.Expect = []string{
 		`Perhaps the order of the arguments is messed up, $age is passed to the $name parameter, and $name is passed to the $age parameter`,
 	}
-	linttest.RunFilterMatch(test, "argsMessedUp")
+	linttest.RunFilterMatch(test, "argsReverse")
 }
