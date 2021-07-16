@@ -805,6 +805,17 @@ function f(array $a) {}`,
   public function f() {}
 }`,
 		},
+
+		{
+			Name:     "invalidExtendClass",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report inheritance from the final class.`,
+			Before: `final class Foo {}
+class Boo extends Foo {}`,
+			After: `class Foo {}
+class Boo extends Foo {}`,
+		},
 	}
 
 	for _, info := range allChecks {
