@@ -84,6 +84,18 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			}
 		}
 
+		// hack for expressions like:
+		// /**
+		//  * @param Boo $x
+		//  */
+		// $_ = function($x) { $x->b(); };
+		if closure, ok := out.Expr.(*ir.ClosureExpr); ok {
+			doc, found := irutil.FindPhpDoc(out.Variable, false)
+			if found {
+				closure.Doc = c.parsePHPDoc(doc)
+			}
+		}
+
 		return out
 
 	case *ast.ExprAssignBitwiseAnd:
@@ -2221,7 +2233,13 @@ func (c *Converter) convClass(n *ast.StmtClass) ir.Node {
 		}
 	}
 
-	class.Doc = c.getPhpDoc(n.ClassTkn)
+	// If there are modifiers, then PHPDoc will be bound to the
+	// first one, otherwise to the class token.
+	if len(n.Modifiers) != 0 {
+		class.Doc = c.getPhpDoc(ir.GetFirstToken(c.convNode(n.Modifiers[0])))
+	} else {
+		class.Doc = c.getPhpDoc(n.ClassTkn)
+	}
 
 	if n.Name == nil {
 		// Anonymous class expression.

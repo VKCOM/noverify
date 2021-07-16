@@ -257,6 +257,11 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 			)
 		}
 
+		simpleVar, isSimpleVar := n.(*ir.SimpleVar)
+		if isSimpleVar && part.Var == "" {
+			part.Var = simpleVar.Name
+		}
+
 		typesMap := types.NewMapWithNormalization(b.r.ctx.typeNormalizer, converted.Types)
 		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(part.Var, "$"), typesMap, "@var")
 	}
@@ -1245,10 +1250,11 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 	params := b.r.parseFuncParams(fun.Params, doc.ParamTypes, sc, closureSolver)
 
 	funcInfo := b.r.handleFuncStmts(params.params, closureUses, fun.Stmts, sc)
+	phpDocReturnTypes := doc.ReturnType
 	actualReturnTypes := funcInfo.returnTypes
 	exitFlags := funcInfo.prematureExitFlags
 
-	returnTypes := functionReturnType(types.NewEmptyMap(0), hintReturnType, actualReturnTypes)
+	returnTypes := functionReturnType(phpDocReturnTypes, hintReturnType, actualReturnTypes)
 
 	for _, param := range fun.Params {
 		b.r.checkFuncParam(param.(*ir.Parameter))

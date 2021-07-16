@@ -212,7 +212,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 				interfaceName, ok := solver.GetClassName(d.ctx.st, tr)
 				if ok {
 					cl.Interfaces[interfaceName] = struct{}{}
-					d.checkIfaceImplemented(tr, interfaceName)
+					d.checkIfaceImplemented(n, tr, interfaceName)
 				}
 			}
 		}
@@ -237,7 +237,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			d.checkKeywordCase(n.Extends, "extends")
 			className, ok := solver.GetClassName(d.ctx.st, n.Extends.ClassName)
 			if ok {
-				d.checkClassImplemented(n.Extends.ClassName, className)
+				d.checkClassInherit(n, n.Extends.ClassName, className)
 			}
 		}
 
@@ -256,7 +256,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			traitName, ok := solver.GetClassName(d.ctx.st, tr)
 			if ok {
 				cl.Traits[traitName] = struct{}{}
-				d.checkTraitImplemented(tr, traitName)
+				d.checkTraitImplemented(d.currentClassNode, tr, traitName)
 			}
 		}
 	case *ir.Assign:
@@ -721,14 +721,16 @@ func (d *rootWalker) getElementPos(n ir.Node) meta.ElementPosition {
 }
 
 type methodModifiers struct {
-	abstract    bool
-	static      bool
-	accessLevel meta.AccessLevel
-	final       bool
+	abstract       bool
+	static         bool
+	accessLevel    meta.AccessLevel
+	final          bool
+	accessImplicit bool
 }
 
 func (d *rootWalker) parseMethodModifiers(meth *ir.ClassMethodStmt) (res methodModifiers) {
 	res.accessLevel = meta.Public
+	res.accessImplicit = true
 
 	for _, m := range meth.Modifiers {
 		switch d.lowerCaseModifier(m) {
@@ -738,10 +740,13 @@ func (d *rootWalker) parseMethodModifiers(meth *ir.ClassMethodStmt) (res methodM
 			res.static = true
 		case "public":
 			res.accessLevel = meta.Public
+			res.accessImplicit = false
 		case "private":
 			res.accessLevel = meta.Private
+			res.accessImplicit = false
 		case "protected":
 			res.accessLevel = meta.Protected
+			res.accessImplicit = false
 		case "final":
 			res.final = true
 		default:
@@ -886,18 +891,30 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 
 	isStatic := false
 	accessLevel := meta.Public
+	accessImplicit := true
 
 	for _, m := range pl.Modifiers {
 		switch d.lowerCaseModifier(m) {
 		case "public":
 			accessLevel = meta.Public
+			accessImplicit = false
 		case "protected":
 			accessLevel = meta.Protected
+			accessImplicit = false
 		case "private":
 			accessLevel = meta.Private
+			accessImplicit = false
 		case "static":
 			isStatic = true
 		}
+	}
+
+	if accessImplicit {
+		target := "property"
+		if len(pl.Properties) > 1 {
+			target = "properties"
+		}
+		d.Report(pl, LevelNotice, "implicitModifiers", "Specify the access modifier for %s explicitly", target)
 	}
 
 	d.checkCommentMisspellings(pl, pl.Doc.Raw)
@@ -1045,7 +1062,14 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		d.Report(meth.MethodName, LevelNotice, "complexity", "Too big method: more than %d lines", maxFunctionLines)
 	}
 
+	class := d.getClass()
+
 	modif := d.parseMethodModifiers(meth)
+
+	if modif.accessImplicit {
+		methodFQN := class.Name + "::" + nm
+		d.Report(meth.MethodName, LevelNotice, "implicitModifiers", "Specify the access modifier for %s method explicitly", methodFQN)
+	}
 
 	d.checkMagicMethod(meth.MethodName, nm, modif, len(meth.Params))
 
@@ -1054,8 +1078,6 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		sc.AddVarName("this", types.NewMap(d.ctx.st.CurrentClass).Immutable(), "instance method", meta.VarAlwaysDefined)
 		sc.SetInInstanceMethod(true)
 	}
-
-	class := d.getClass()
 
 	if meth.Doc.Raw == "" && modif.accessLevel == meta.Public {
 		// Permit having "__call" and other magic method without comments.
@@ -2180,45 +2202,67 @@ func (d *rootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filter
 	return true
 }
 
-func (d *rootWalker) checkTraitImplemented(n ir.Node, nameUsed string) {
+func (d *rootWalker) checkTraitImplemented(classNode, name ir.Node, nameUsed string) {
 	if !d.metaInfo().IsIndexingComplete() {
 		return
 	}
 	trait, ok := d.metaInfo().GetTrait(nameUsed)
 	if !ok {
-		d.reportUndefinedType(n, nameUsed)
+		d.reportUndefinedType(name, nameUsed)
 		return
 	}
-	d.checkImplemented(n, nameUsed, trait)
+	d.checkImplemented(classNode, name, nameUsed, trait)
 }
 
-func (d *rootWalker) checkClassImplemented(n ir.Node, nameUsed string) {
+func (d *rootWalker) checkClassInherit(classNode, extendsClassNameNode ir.Node, nameUsed string) {
+	if !d.metaInfo().IsIndexingComplete() {
+		return
+	}
+
+	class, ok := d.metaInfo().GetClass(nameUsed)
+	if !ok {
+		d.reportUndefinedType(extendsClassNameNode, nameUsed)
+		return
+	}
+
+	d.checkClassExtends(extendsClassNameNode, class)
+	d.checkImplemented(classNode, extendsClassNameNode, nameUsed, class)
+}
+
+func (d *rootWalker) checkClassExtends(extendsClassNameNode ir.Node, otherClass meta.ClassInfo) {
+	if otherClass.IsFinal() {
+		currentClass := d.getClass()
+		d.Report(extendsClassNameNode, LevelError, "invalidExtendClass", "Class %s may not inherit from final class %s", currentClass.Name, otherClass.Name)
+	}
+}
+
+func (d *rootWalker) checkClassImplemented(classNode, extendsClassNameNode ir.Node, nameUsed string) {
 	if !d.metaInfo().IsIndexingComplete() {
 		return
 	}
 	class, ok := d.metaInfo().GetClass(nameUsed)
 	if !ok {
-		d.reportUndefinedType(n, nameUsed)
+		d.reportUndefinedType(extendsClassNameNode, nameUsed)
 		return
 	}
-	d.checkImplemented(n, nameUsed, class)
+	d.checkImplemented(classNode, extendsClassNameNode, nameUsed, class)
 }
 
-func (d *rootWalker) checkIfaceImplemented(n ir.Node, nameUsed string) {
-	d.checkClassImplemented(n, nameUsed)
+func (d *rootWalker) checkIfaceImplemented(classNode, name ir.Node, nameUsed string) {
+	d.checkClassImplemented(classNode, name, nameUsed)
 }
 
-func (d *rootWalker) checkImplemented(n ir.Node, nameUsed string, otherClass meta.ClassInfo) {
+func (d *rootWalker) checkImplemented(classNode, name ir.Node, nameUsed string, otherClass meta.ClassInfo) {
 	cl := d.getClass()
 	if d.ctx.st.IsTrait || cl.IsAbstract() {
 		return
 	}
-	d.checkNameCase(n, nameUsed, otherClass.Name)
+	d.checkNameCase(name, nameUsed, otherClass.Name)
 	visited := make(map[string]struct{}, 4)
-	d.checkImplementedStep(n, nameUsed, otherClass, visited)
+	d.checkImplementedStep(classNode, name, nameUsed, otherClass, visited)
 }
 
-func (d *rootWalker) checkImplementedStep(n ir.Node, className string, otherClass meta.ClassInfo, visited map[string]struct{}) {
+func (d *rootWalker) checkImplementedStep(classNode, name ir.Node, className string, otherClass meta.ClassInfo, visited map[string]struct{}) {
 	// TODO: check that method signatures are compatible?
 	if _, ok := visited[className]; ok {
 		return
@@ -2227,25 +2271,34 @@ func (d *rootWalker) checkImplementedStep(n ir.Node, className string, otherClas
 	for _, ifaceMethod := range otherClass.Methods.H {
 		m, ok := solver.FindMethod(d.metaInfo(), d.ctx.st.CurrentClass, ifaceMethod.Name)
 		if !ok || !m.Implemented {
-			d.Report(n, LevelError, "unimplemented", "Class %s must implement %s::%s method",
+			d.Report(name, LevelError, "unimplemented", "Class %s must implement %s::%s method",
 				d.ctx.st.CurrentClass, className, ifaceMethod.Name)
 			continue
 		}
 		if m.Info.Name != ifaceMethod.Name {
-			d.Report(n, LevelNotice, "nameMismatch", "%s::%s should be spelled as %s::%s",
+			d.Report(name, LevelNotice, "nameMismatch", "%s::%s should be spelled as %s::%s",
 				d.ctx.st.CurrentClass, m.Info.Name, className, ifaceMethod.Name)
+
+		}
+		if ifaceMethod.IsFinal() && ifaceMethod.AccessLevel != meta.Private {
+			methodNode := irutil.FindClassMethodNode(classNode, ifaceMethod.Name)
+			if methodNode != nil {
+				d.Report(methodNode, LevelError, "methodSignatureMismatch",
+					"Method %s::%s is declared final and cannot be overridden",
+					otherClass.Name, ifaceMethod.Name)
+			}
 		}
 	}
 	for _, ifaceName := range otherClass.ParentInterfaces {
 		iface, ok := d.metaInfo().GetClass(ifaceName)
 		if ok {
-			d.checkImplementedStep(n, ifaceName, iface, visited)
+			d.checkImplementedStep(classNode, name, ifaceName, iface, visited)
 		}
 	}
 	if otherClass.Parent != "" {
 		class, ok := d.metaInfo().GetClass(otherClass.Parent)
 		if ok {
-			d.checkImplementedStep(n, otherClass.Parent, class, visited)
+			d.checkImplementedStep(classNode, name, otherClass.Parent, class, visited)
 		}
 	}
 }

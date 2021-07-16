@@ -809,6 +809,51 @@ strpos('/', $s);`,
     break;
 }`,
 		},
+
+		{
+			Name:     "implicitModifiers",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report implicit modifiers.`,
+			Before: `class Foo {
+  function f() {} // The access modifier is implicit.
+}`,
+			After: `class Foo {
+  public function f() {}
+}`,
+		},
+
+		{
+			Name:     "invalidExtendClass",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report inheritance from the final class.`,
+			Before: `final class Foo {}
+class Boo extends Foo {}`,
+			After: `class Foo {}
+class Boo extends Foo {}`,
+		},
+
+		{
+			Name:     "methodSignatureMismatch",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report a method signature mismatch in inheritance.`,
+			Before: `class Foo {
+  final public function f() {}
+}
+
+class Boo extends Foo {
+  public function f() {} // Foo::f is final.
+}`,
+			After: `class Foo {
+  public function f() {}
+}
+
+class Boo extends Foo {
+  public function f() {}
+}`,
+		},
 	}
 
 	for _, info := range allChecks {
