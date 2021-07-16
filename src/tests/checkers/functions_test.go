@@ -67,3 +67,48 @@ function main(callable $a) {
 	}
 	linttest.RunFilterMatch(test, "argCount")
 }
+
+func TestArgsMessedUp(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function makeHello(string $name, int $age) {
+  echo "Hello ${$name}-${$age}";
+}
+
+function makeHello3(string $name, int $age, bool $gender) {
+  echo "Hello ${$name}-${$age}-${$gender}";
+}
+
+function makeHello1(string $name) {
+  echo "Hello ${$name}";
+}
+
+function getAge(): int {
+  return 18;
+}
+
+function main(): void {
+  $name = "John";
+  $age = 18;
+  $gender = true;
+  makeHello($age, $name); // The name should come first, and then the age.
+  makeHello($name, $age); // ok
+  makeHello("John", $age); // ok
+  makeHello("Anna", 18); // ok
+  makeHello("John", getAge()); // ok
+  makeHello("John"); // ok
+
+  makeHello3($age, $name, $gender); // ok, 3 args
+  makeHello3($age, "Anna", $gender); // ok, 3 args
+  makeHello3($name, $age, true); // ok, 3 args
+
+  makeHello1($name); // ok, < 2 args
+  makeHello1("Anna"); // ok, < 2 args
+  makeHello1("Anna", 18); // ok
+}
+`)
+	test.Expect = []string{
+		`Perhaps the order of the arguments is messed up, $age is passed to the $name parameter, and $name is passed to the $age parameter`,
+	}
+	linttest.RunFilterMatch(test, "argsMessedUp")
+}

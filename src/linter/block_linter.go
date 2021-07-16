@@ -892,6 +892,30 @@ func (b *blockLinter) checkFunctionAvailability(e *ir.FunctionCallExpr, call *fu
 
 func (b *blockLinter) checkCallArgs(fun ir.Node, args []ir.Node, fn meta.FuncInfo, callerClass string) {
 	b.checkCallArgsCount(fun, args, fn, callerClass)
+	b.checkArgsOrder(fun, args, fn)
+}
+
+func (b *blockLinter) checkArgsOrder(fun ir.Node, args []ir.Node, fn meta.FuncInfo) {
+	if len(args) != 2 || len(fn.Params) < 2 {
+		return
+	}
+
+	firstArg := args[0].(*ir.Argument)
+	secondArg := args[1].(*ir.Argument)
+
+	firstVar, ok := firstArg.Expr.(*ir.SimpleVar)
+	if !ok {
+		return
+	}
+
+	secondVar, ok := secondArg.Expr.(*ir.SimpleVar)
+	if !ok {
+		return
+	}
+
+	if firstVar.Name == fn.Params[1].Name && secondVar.Name == fn.Params[0].Name {
+		b.report(fun, LevelWarning, "argsMessedUp", "Perhaps the order of the arguments is messed up, $%[1]s is passed to the $%[2]s parameter, and $%[2]s is passed to the $%[1]s parameter", firstVar.Name, secondVar.Name)
+	}
 }
 
 func (b *blockLinter) checkCallArgsCount(fun ir.Node, args []ir.Node, fn meta.FuncInfo, callerClass string) {
