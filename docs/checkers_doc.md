@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 82           | 73                        | 9                         | 11                 |
+| 85           | 76                        | 9                         | 11                 |
 ## Table of contents
  - Enabled by default
    - [`accessLevel` checker](#accesslevel-checker)
@@ -37,13 +37,16 @@
    - [`emptyStringCheck` checker](#emptystringcheck-checker)
    - [`errorSilence` checker](#errorsilence-checker)
    - [`forLoop` checker](#forloop-checker)
+   - [`implicitModifiers` checker](#implicitmodifiers-checker)
    - [`indexingSyntax` checker (autofixable)](#indexingsyntax-checker)
    - [`intNeedle` checker](#intneedle-checker)
    - [`intOverflow` checker](#intoverflow-checker)
+   - [`invalidExtendClass` checker](#invalidextendclass-checker)
    - [`invalidNew` checker](#invalidnew-checker)
    - [`keywordCase` checker](#keywordcase-checker)
    - [`linterError` checker](#lintererror-checker)
    - [`magicMethodDecl` checker](#magicmethoddecl-checker)
+   - [`methodSignatureMismatch` checker](#methodsignaturemismatch-checker)
    - [`misspellComment` checker](#misspellcomment-checker)
    - [`misspellName` checker](#misspellname-checker)
    - [`mixedArrayKeys` checker](#mixedarraykeys-checker)
@@ -727,6 +730,28 @@ for ($i = 0; $i < 100; $i++) { ... }
 <p><br></p>
 
 
+### `implicitModifiers` checker
+
+#### Description
+
+Report implicit modifiers.
+
+#### Non-compliant code:
+```php
+class Foo {
+  function f() {} // The access modifier is implicit.
+}
+```
+
+#### Compliant code:
+```php
+class Foo {
+  public function f() {}
+}
+```
+<p><br></p>
+
+
 ### `indexingSyntax` checker
 
 > Auto fix available
@@ -780,6 +805,26 @@ return -9223372036854775808;
 #### Compliant code:
 ```php
 return PHP_INT_MIN;
+```
+<p><br></p>
+
+
+### `invalidExtendClass` checker
+
+#### Description
+
+Report inheritance from the final class.
+
+#### Non-compliant code:
+```php
+final class Foo {}
+class Boo extends Foo {}
+```
+
+#### Compliant code:
+```php
+class Foo {}
+class Boo extends Foo {}
 ```
 <p><br></p>
 
@@ -848,6 +893,36 @@ class Foo {
 class Foo {
   public function __call($method, $args) {}
   public function __set($name, $value) {}
+}
+```
+<p><br></p>
+
+
+### `methodSignatureMismatch` checker
+
+#### Description
+
+Report a method signature mismatch in inheritance.
+
+#### Non-compliant code:
+```php
+class Foo {
+  final public function f() {}
+}
+
+class Boo extends Foo {
+  public function f() {} // Foo::f is final.
+}
+```
+
+#### Compliant code:
+```php
+class Foo {
+  public function f() {}
+}
+
+class Boo extends Foo {
+  public function f() {}
 }
 ```
 <p><br></p>
