@@ -212,7 +212,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 				interfaceName, ok := solver.GetClassName(d.ctx.st, tr)
 				if ok {
 					cl.Interfaces[interfaceName] = struct{}{}
-					d.checkIfaceImplemented(tr, interfaceName)
+					d.checkIfaceImplemented(n, tr, interfaceName)
 				}
 			}
 		}
@@ -237,7 +237,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			d.checkKeywordCase(n.Extends, "extends")
 			className, ok := solver.GetClassName(d.ctx.st, n.Extends.ClassName)
 			if ok {
-				d.checkClassInherit(n.Extends.ClassName, className)
+				d.checkClassInherit(n, n.Extends.ClassName, className)
 			}
 		}
 
@@ -256,7 +256,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			traitName, ok := solver.GetClassName(d.ctx.st, tr)
 			if ok {
 				cl.Traits[traitName] = struct{}{}
-				d.checkTraitImplemented(tr, traitName)
+				d.checkTraitImplemented(d.currentClassNode, tr, traitName)
 			}
 		}
 	case *ir.Assign:
@@ -2202,19 +2202,19 @@ func (d *rootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filter
 	return true
 }
 
-func (d *rootWalker) checkTraitImplemented(n ir.Node, nameUsed string) {
+func (d *rootWalker) checkTraitImplemented(classNode, name ir.Node, nameUsed string) {
 	if !d.metaInfo().IsIndexingComplete() {
 		return
 	}
 	trait, ok := d.metaInfo().GetTrait(nameUsed)
 	if !ok {
-		d.reportUndefinedType(n, nameUsed)
+		d.reportUndefinedType(name, nameUsed)
 		return
 	}
-	d.checkImplemented(n, nameUsed, trait)
+	d.checkImplemented(classNode, name, nameUsed, trait)
 }
 
-func (d *rootWalker) checkClassInherit(extendsClassNameNode ir.Node, nameUsed string) {
+func (d *rootWalker) checkClassInherit(classNode, extendsClassNameNode ir.Node, nameUsed string) {
 	if !d.metaInfo().IsIndexingComplete() {
 		return
 	}
@@ -2226,7 +2226,7 @@ func (d *rootWalker) checkClassInherit(extendsClassNameNode ir.Node, nameUsed st
 	}
 
 	d.checkClassExtends(extendsClassNameNode, class)
-	d.checkImplemented(extendsClassNameNode, nameUsed, class)
+	d.checkImplemented(classNode, extendsClassNameNode, nameUsed, class)
 }
 
 func (d *rootWalker) checkClassExtends(extendsClassNameNode ir.Node, otherClass meta.ClassInfo) {
@@ -2236,7 +2236,7 @@ func (d *rootWalker) checkClassExtends(extendsClassNameNode ir.Node, otherClass 
 	}
 }
 
-func (d *rootWalker) checkClassImplemented(extendsClassNameNode ir.Node, nameUsed string) {
+func (d *rootWalker) checkClassImplemented(classNode, extendsClassNameNode ir.Node, nameUsed string) {
 	if !d.metaInfo().IsIndexingComplete() {
 		return
 	}
@@ -2245,24 +2245,24 @@ func (d *rootWalker) checkClassImplemented(extendsClassNameNode ir.Node, nameUse
 		d.reportUndefinedType(extendsClassNameNode, nameUsed)
 		return
 	}
-	d.checkImplemented(extendsClassNameNode, nameUsed, class)
+	d.checkImplemented(classNode, extendsClassNameNode, nameUsed, class)
 }
 
-func (d *rootWalker) checkIfaceImplemented(n ir.Node, nameUsed string) {
-	d.checkClassImplemented(n, nameUsed)
+func (d *rootWalker) checkIfaceImplemented(classNode, name ir.Node, nameUsed string) {
+	d.checkClassImplemented(classNode, name, nameUsed)
 }
 
-func (d *rootWalker) checkImplemented(n ir.Node, nameUsed string, otherClass meta.ClassInfo) {
+func (d *rootWalker) checkImplemented(classNode, name ir.Node, nameUsed string, otherClass meta.ClassInfo) {
 	cl := d.getClass()
 	if d.ctx.st.IsTrait || cl.IsAbstract() {
 		return
 	}
-	d.checkNameCase(n, nameUsed, otherClass.Name)
+	d.checkNameCase(name, nameUsed, otherClass.Name)
 	visited := make(map[string]struct{}, 4)
-	d.checkImplementedStep(n, nameUsed, otherClass, visited)
+	d.checkImplementedStep(classNode, name, nameUsed, otherClass, visited)
 }
 
-func (d *rootWalker) checkImplementedStep(n ir.Node, className string, otherClass meta.ClassInfo, visited map[string]struct{}) {
+func (d *rootWalker) checkImplementedStep(classNode, name ir.Node, className string, otherClass meta.ClassInfo, visited map[string]struct{}) {
 	// TODO: check that method signatures are compatible?
 	if _, ok := visited[className]; ok {
 		return
@@ -2271,25 +2271,34 @@ func (d *rootWalker) checkImplementedStep(n ir.Node, className string, otherClas
 	for _, ifaceMethod := range otherClass.Methods.H {
 		m, ok := solver.FindMethod(d.metaInfo(), d.ctx.st.CurrentClass, ifaceMethod.Name)
 		if !ok || !m.Implemented {
-			d.Report(n, LevelError, "unimplemented", "Class %s must implement %s::%s method",
+			d.Report(name, LevelError, "unimplemented", "Class %s must implement %s::%s method",
 				d.ctx.st.CurrentClass, className, ifaceMethod.Name)
 			continue
 		}
 		if m.Info.Name != ifaceMethod.Name {
-			d.Report(n, LevelNotice, "nameMismatch", "%s::%s should be spelled as %s::%s",
+			d.Report(name, LevelNotice, "nameMismatch", "%s::%s should be spelled as %s::%s",
 				d.ctx.st.CurrentClass, m.Info.Name, className, ifaceMethod.Name)
+
+		}
+		if ifaceMethod.IsFinal() && ifaceMethod.AccessLevel != meta.Private {
+			methodNode := irutil.FindClassMethodNode(classNode, ifaceMethod.Name)
+			if methodNode != nil {
+				d.Report(methodNode, LevelError, "methodSignatureMismatch",
+					"Method %s::%s is declared final and cannot be overridden",
+					otherClass.Name, ifaceMethod.Name)
+			}
 		}
 	}
 	for _, ifaceName := range otherClass.ParentInterfaces {
 		iface, ok := d.metaInfo().GetClass(ifaceName)
 		if ok {
-			d.checkImplementedStep(n, ifaceName, iface, visited)
+			d.checkImplementedStep(classNode, name, ifaceName, iface, visited)
 		}
 	}
 	if otherClass.Parent != "" {
 		class, ok := d.metaInfo().GetClass(otherClass.Parent)
 		if ok {
-			d.checkImplementedStep(n, otherClass.Parent, class, visited)
+			d.checkImplementedStep(classNode, name, otherClass.Parent, class, visited)
 		}
 	}
 }
