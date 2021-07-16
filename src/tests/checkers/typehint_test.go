@@ -13,14 +13,14 @@ abstract class FooAbstract {
     /**
      * @return string[]
      */
-    abstract function f(): array;
+    public abstract function f(): array;
 }
 
 class Foo extends FooAbstract {
     /**
      * @inheritdoc
      */
-    function f(): array { // skipped
+    public function f(): array { // skipped
         return [];
     }
 }
@@ -29,7 +29,7 @@ class Foo2 extends FooAbstract {
     /**
      * {@inheritdoc}
      */
-    function f(): array { // skipped
+    public function f(): array { // skipped
         return [];
     }
 }
@@ -47,24 +47,24 @@ class A {
   /**
    * @param int[] $a
    */
-  function f(array $a) {}
+  public function f(array $a) {}
 
   /**
    * @param mixed[] $a
    */
-  function f1(array $a) {}
+  public function f1(array $a) {}
 
   /**
    * @param mixed[] $a
    * @return mixed[]
    */
-  function f2(array $a): array {}
+  public function f2(array $a): array {}
 
   /**
    * @param mixed[] $a
    * @return int[]
    */
-  function f3(array $a): array {}
+  public function f3(array $a): array {}
 }
 
 /**
@@ -106,8 +106,8 @@ class A {
   public array $a = [];
   public array $b, $c = [];
 
-  function f(array $a) {}
-  function f1(): array {}
+  public function f(array $a) {}
+  public function f1(): array {}
 }
 
 function f(array $a) {}

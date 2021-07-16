@@ -353,7 +353,7 @@ func TestExprTypeIssue497(t *testing.T) {
  * @return T<int>
  */
 function f($x) {
-  exprtype($x, '\shape$a:int$');
+  exprtype($x, 'shape{a:int}');
   return [$v];
 }
 `
@@ -561,11 +561,11 @@ function test() {
   $t0 = tuple_self0(tuple([]));
   $t1 = tuple_self1(tuple([]));
 
-  exprtype(shape_self0(), '\shape$x:int,y:float$');
-  exprtype(shape_self1(), '\shape$key:string$');
+  exprtype(shape_self0(), 'shape{x:int,y:float}');
+  exprtype(shape_self1(), 'shape{key:string}');
   exprtype(shape_index(), 'int');
 
-  exprtype($s0, '\shape$x:int,y:float$');
+  exprtype($s0, 'shape{x:int,y:float}');
   exprtype($s0['x'], 'int');
   exprtype($s0['y'], 'float');
 
@@ -2297,237 +2297,6 @@ function f() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
-func TestClosureCallbackArgumentsTypes(t *testing.T) {
-	code := `<?php
-function usort($array, $callback) {}
-function uasort($array, $callback) {}
-function array_map($callback, $array, $_ = null) {}
-function array_walk($callback, $array) {}
-function array_walk_recursive($callback, $array) {}
-function array_filter($array, $callback) {}
-function array_reduce($array, $callback) {}
-function some_function_without_model($callback, $array) {}
-
-class Foo { public function f() {} }
-class Boo { public function b() {} }
-
-/** @return Foo[] */
-function return_foo() { return []; }
-
-/** @return Boo[] */
-function return_boo() { return []; }
-
-$foo_array = return_foo();
-$boo_array = return_boo();
-
-usort($foo_array, function($a, $b) {
-  exprtype($a, "\Foo");
-  exprtype($b, "\Foo");
-});
-
-uasort($foo_array, function($a, $b) {
-  exprtype($a, "\Foo");
-  exprtype($b, "\Foo");
-});
-
-array_map(function($a) {
-  exprtype($a, "\Foo");
-}, $foo_array);
-
-array_walk($foo_array, function($a, $b) {
-  exprtype($a, "\Foo");
-  exprtype($b, "mixed");
-});
-
-// wrong number of args
-array_walk($foo_array, function($a, $b, $c) {
-  exprtype($a, "\Foo");
-  exprtype($b, "mixed");
-  exprtype($c, "mixed");
-});
-
-array_walk_recursive($foo_array, function($a, $b) {
-  exprtype($a, "\Foo");
-  exprtype($b, "mixed");
-});
-
-array_filter($foo_array, function($a) {
-  exprtype($a, "\Foo");
-});
-
-array_reduce($foo_array, function($carry, $item) {
-  exprtype($carry, "\Foo");
-  exprtype($item, "\Foo");
-});
-
-// mixed array, but function args with type hints
-$mixed_arr = [];
-usort($mixed_arr, function(Foo $a, Foo $b) {
-  exprtype($a, "\Foo");
-  exprtype($b, "\Foo");
-});
-
-$mixed_arr_2 = [];
-usort($mixed_arr_2, function(int $a, int $b) {
-  exprtype($a, "int");
-  exprtype($b, "int");
-});
-
-// mixed array, but not all function args have type hints
-$mixed_arr_3 = [];
-usort($mixed_arr_3, function(Foo $a, $b) {
-  exprtype($a, "\Foo");
-  exprtype($b, "mixed");
-});
-
-// non mixed array, but function args with type hints
-$non_mixed_arr = [1, 2, 3];
-usort($non_mixed_arr, function(int $a, int $b) {
-  exprtype($a, "int");
-  exprtype($b, "int");
-});
-
-// non mixed array, but not all function args have type hints
-$non_mixed_arr_2 = [new Foo, new Foo, new Foo];
-usort($non_mixed_arr_2, function(Foo $a, $b) {
-  exprtype($a, "\Foo");
-  exprtype($b, "\Foo");
-});
-
-some_function_without_model(function($b) {
-  exprtype($b, "mixed");
-}, $d);
-
-// Not supported
-function callback($a) {
-  exprtype($a, "mixed");
-}
-
-// Not supported
-$callback = function($a) {
-  exprtype($a, "mixed");
-};
-
-array_map($callback, $d);
-array_map('callback', $d);
-`
-	runExprTypeTest(t, &exprTypeTestParams{code: code})
-}
-
-func TestClosureCallbackArgumentsPossibleErrorVariations(t *testing.T) {
-	code := `<?php
-function usort($array, $callback) {}
-function uasort($array, $callback) {}
-function array_map($callback, $array, $_ = null) {}
-function array_walk($callback, $array) {}
-function array_walk_recursive($callback, $array) {}
-function array_filter($array, $callback) {}
-function array_reduce($array, $callback) {}
-
-class Foo { public function f() {} }
-
-/** @return Foo[] */
-function return_foo() { return []; }
-
-$foo_array = return_foo();
-
-// more arguments than necessary
-usort($foo_array, function($a, $b, $c) {
-  exprtype($a, "\Foo");
-  exprtype($b, "\Foo");
-  exprtype($c, "mixed");
-});
-
-// less arguments than necessary
-uasort($foo_array, function($a) {
-  exprtype($a, "\Foo");
-});
-
-// more arguments than necessary
-array_map(function($a, $b) {
-  exprtype($a, "\Foo");
-  exprtype($b, "mixed");
-}, $foo_array);
-
-// less arguments than necessary
-array_map(function() {
-
-}, $foo_array);
-
-// more arguments than necessary
-array_walk($foo_array, function($a, $b, $c) {
-  exprtype($a, "\Foo");
-  exprtype($b, "mixed");
-  exprtype($c, "mixed");
-});
-
-// less arguments than necessary
-array_walk($foo_array, function() {
-});
-
-// more arguments than necessary
-array_filter($foo_array, function($a, $b) {
-  exprtype($a, "\Foo");
-  exprtype($b, "mixed");
-});
-
-// less arguments than necessary
-array_filter($foo_array, function() {
-});
-
-// more arguments than necessary
-array_reduce($foo_array, function($carry, $item, $c) {
-  exprtype($carry, "\Foo");
-  exprtype($item, "\Foo");
-  exprtype($c, "mixed");
-});
-
-// less arguments than necessary
-array_reduce($foo_array, function() {
-});
-`
-	runExprTypeTest(t, &exprTypeTestParams{code: code})
-}
-
-func TestNestedClosureCallback(t *testing.T) {
-	code := `<?php
-function array_map($callback, array $arr1, array $_ = null) {}
-function usort($array, $callback) {}
-
-class Foo { public function f() {} }
-/** @return Foo[][] */
-
-function return_foo() { return []; }
-
-$foo_array = return_foo();
-
-array_map(function($a) {
-  exprtype($a, "\Foo[]");
-  array_map(function($a) {
-    exprtype($a, "\Foo");
-  }, $a);
-  exprtype($a, "\Foo[]");
-}, $foo_array);
-
-usort($foo_array, function($a, $b) {
-  exprtype($a, "\Foo[]");
-  exprtype($b, "\Foo[]");
-
-  array_map(function($a) {
-    exprtype($a, "\Foo");
-  }, $a);
-
-  array_map(function($b) {
-    exprtype($b, "\Foo");
-  }, $b);
-
-  exprtype($a, "\Foo[]");
-  exprtype($b, "\Foo[]");
-});
-`
-	runExprTypeTest(t, &exprTypeTestParams{code: code})
-}
-
 func TestMemberTypeInPHPDoc(t *testing.T) {
 	code := `<?php
 class Foo {
@@ -2730,37 +2499,6 @@ exprtype(f8(), "\Foo");
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
-func TestClosureExprType(t *testing.T) {
-	code := `<?php
-class Foo {
-  public function method() {}
-}
-
-function func() {
-  $f = function(): Foo { return new Foo; };
-  $foo = $f();
-  
-  exprtype($f, "\Closure$(exprtype.php,func):7$");
-  exprtype($foo, "\Foo");
-}
-
-function func1() {
-  $f1 = function(): float {
-    if (1) {
-	  return new Foo;
-	}
-    return 10; 
-  };
-
-  $foo1 = $f1();
-
-  exprtype($f1, "\Closure$(exprtype.php,func1):15$");
-  exprtype($foo1, "float");
-}
-`
-	runExprTypeTest(t, &exprTypeTestParams{code: code})
-}
-
 func TestNullableInTupleExprType(t *testing.T) {
 	code := `<?php
 class Boo {}
@@ -2917,122 +2655,6 @@ function f() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
-func TestCallableDoc(t *testing.T) {
-	code := `<?php
-class Foo {
-  /**
-   * @return int
-   */
-  public function method(): int { return 0; }
-}
-
-class Boo {
-  /**
-   * @return int
-   */
-  public function method(): int { return 0; }
-}
-
-/**
- * @param callable(): Foo $s
- */
-function f1(callable $s) {
-  $a = $s();
-  exprtype($a, "\Foo");
-}
-
-/**
- * @param callable(Foo): Foo $s
- */
-function f2(callable $s) {
-  $a = $s(new Foo);
-  exprtype($a, "\Foo");
-}
-
-/**
- * @param callable(int): Foo $s
- */
-function f3(callable $s) {
-  $a = $s(10);
-  exprtype($a, "\Foo");
-}
-
-/**
- * @param callable(int, string): Foo|Boo $s
- */
-function f4(callable $s) {
-  $a = $s(10, "ss");
-  exprtype($a, "\Boo|\Foo");
-}
-
-/**
- * @param callable(): callable(): Foo $s
- * @param callable(): callable(): Foo|Boo $s1
- */
-function f5(callable $s, callable $s1) {
-  $a = $s();
-  $a1 = $s1();
-  exprtype($a, "\Closure$():Foo");
-  exprtype($a1, "\Closure$():Foo/Boo");
-  $b = $a();
-  $b1 = $a1();
-  exprtype($b, "\Foo");
-  exprtype($b1, "\Boo|\Foo");
-}
-
-/**
- * @return callable(): callable(): Foo
- */
-function f6(): callable {
-  return function() { return function() { return new Foo; }; };
-}
-
-function f7() {
-  $a = f6();
-  exprtype($a, "\Closure$():callable(): Foo|callable");
-  $b = $a();
-  exprtype($b, "\Closure$():Foo");
-  $c = $b();
-  exprtype($c, "\Foo");
-}
-
-function f8() {
-  /**
-   * @var callable(): Foo $a
-   */
-  $a = null;
-
-  $b = $a();
-  exprtype($b, "\Foo");
-}
-
-/**
-* @var callable(): Foo $a
-*/
-$a = null;
-$b = $a();
-exprtype($b, "\Foo");
-
-/**
- * @param callable(int, string) $s
- */
-function f9(callable $s) {
-  $a = $s(10, "ss");
-  exprtype($a, "mixed");
-}
-
-/**
- * @param callable(int, string): Foo $s
- */
-function f10(callable $s) {
-  if ($s() instanceof Boo) {
-    exprtype($s(), "\Boo");
-  }
-}
-`
-	runExprTypeTest(t, &exprTypeTestParams{code: code})
-}
-
 func TestDifferentArraySyntax(t *testing.T) {
 	code := `<?php
 /**
@@ -3050,6 +2672,57 @@ function f($arr, $arr1, $arr2, $arr3, $arr4, $arr5) {
   exprtype($arr3, "\Foo[]");
   exprtype($arr4, "\Foo[]");
   exprtype($arr5, "\Foo[]");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestArrayLikeShapeSyntax(t *testing.T) {
+	code := `<?php
+class Foo {}
+
+/**
+ * @param array{int, Foo} $a
+ */
+function f($a) {
+  exprtype($a[0], "int");
+  exprtype($a[1], "\Foo");
+}
+
+/**
+ * @param array{id: int, Foo} $a
+ */
+function f($a) {
+  exprtype($a["id"], "int");
+  exprtype($a[1], "\Foo");
+}
+
+/**
+ * @param array{Foo, id: int} $a
+ */
+function f($a) {
+  exprtype($a[0], "\Foo");
+  exprtype($a["id"], "int");
+}
+
+/**
+ * @param array{foo: Foo, int, id: int} $a
+ */
+function f($a) {
+  exprtype($a["foo"], "\Foo");
+  exprtype($a[1], "int");
+  exprtype($a["id"], "int");
+}
+
+/**
+ * @param array{foo: Foo, int, string, id: int, Foo} $a
+ */
+function f($a) {
+  exprtype($a["foo"], "\Foo");
+  exprtype($a[1], "int");
+  exprtype($a[2], "string");
+  exprtype($a["id"], "int");
+  exprtype($a[4], "\Foo");
 }
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
@@ -3076,6 +2749,549 @@ function f1() {
 
   $c = (array) [1, "s"];
   exprtype($c, "mixed[]");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestInstanceOf(t *testing.T) {
+	code := `<?php
+function exprtype(...$a) {}
+
+interface ISome {}
+
+class Foo implements ISome{
+  function f() {}
+}
+
+class Boo implements ISome {
+  function b() {}
+}
+
+class Zoo implements ISome {
+  function z() {}
+}
+
+/**
+ * @param Foo|Boo $a
+ */
+function ifElseForClassUnion($a) {
+  if ($a instanceof Foo) {
+    exprtype($a, "\Foo");
+  } else {
+    exprtype($a, "\Boo");
+  }
+
+  exprtype($a, "\Boo|\Foo");
+}
+
+/**
+ * @param Foo|Boo|Zoo $a
+ */
+function ifElseForClassUnion3($a) {
+  if ($a instanceof Foo) {
+    exprtype($a, "\Foo");
+  } else if ($a instanceof Boo) {
+    exprtype($a, "\Boo");
+  } else {
+    exprtype($a, "\Zoo");
+  }
+
+  exprtype($a, "\Boo|\Foo|\Zoo");
+}
+
+/**
+ * @param mixed $a
+ */
+function ifElseForMixed($a) {
+  if ($a instanceof Foo) {
+    exprtype($a, "\Foo");
+  } else {
+    exprtype($a, "mixed");
+  }
+
+  exprtype($a, "mixed");
+}
+
+/**
+ * @param mixed $a
+ */
+function ifElseForMixedAssign($a) {
+  if ($a instanceof Foo) {
+    exprtype($a, "\Foo");
+	$a = 100;
+  } else {
+    exprtype($a, "mixed");
+  }
+
+  exprtype($a, "int|mixed");
+}
+
+/**
+ * @param mixed $a
+ */
+function ifElseForMixedAssign2($a) {
+  if ($a instanceof Foo) {
+    exprtype($a, "\Foo");
+	$a = 100;
+  } else {
+    exprtype($a, "mixed");
+	$a = 100;
+  }
+
+  exprtype($a, "int|mixed");
+}
+
+/**
+ * @param mixed $a
+ */
+function ifElseForMixed3($a) {
+  if ($a instanceof Foo) {
+    exprtype($a, "\Foo");
+  } else if ($a instanceof Boo) {
+    exprtype($a, "\Boo");
+  } else {
+    exprtype($a, "mixed");
+  }
+
+  exprtype($a, "mixed");
+}
+
+/**
+ * @param mixed $a
+ */
+function ifElseWithNegation($a) {
+  if (!$a instanceof Foo) {
+	exprtype($a, "mixed");
+  } else {
+    exprtype($a, "\Foo");
+  }
+
+  exprtype($a, "mixed");
+}
+
+/**
+ * @param Foo|Boo $a
+ */
+function ifElseWithNegationWithUnion($a) {
+  if (!$a instanceof Foo) {
+	exprtype($a, "\Boo");
+  } else {
+    exprtype($a, "\Foo");
+  }
+
+  exprtype($a, "\Boo|\Foo");
+}
+
+/**
+ * @param Foo|Boo|Zoo $a
+ */
+function ifElseWithNegationWithUnion2($a) {
+  if (!$a instanceof Foo) {
+	exprtype($a, "\Boo|\Zoo");
+  } else if ($a instanceof Foo) {
+    exprtype($a, "\Foo");
+  } else {
+    exprtype($a, "mixed");
+  }
+
+  exprtype($a, "\Boo|\Foo|\Zoo");
+}
+
+/**
+ * @param Foo|Boo|Zoo $a
+ */
+function ifElseWithTwoNegationWithUnion2($a) {
+  if (!$a instanceof Foo) {
+	exprtype($a, "\Boo|\Zoo");
+  } else if (!$a instanceof Foo) {
+    exprtype($a, "mixed");
+  } else {
+    exprtype($a, "\Foo");
+  }
+
+  exprtype($a, "\Boo|\Foo|\Zoo");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestInstanceOfForExpr(t *testing.T) {
+	code := `<?php
+function exprtype(...$a) {}
+
+interface ISome {}
+
+class Foo implements ISome{
+  function f() {}
+}
+
+class Boo implements ISome {
+  function b() {}
+}
+
+class Zoo implements ISome {
+  function z() {}
+}
+
+/**
+ * @param callable(): Foo|Boo $a
+ */
+function ifElseForClassUnion($a) {
+  if ($a() instanceof Foo) {
+    exprtype($a(), "\Foo");
+  } else {
+    exprtype($a(), "\Boo");
+  }
+
+  exprtype($a(), "\Boo|\Foo");
+}
+
+/**
+ * @param callable(): Foo|Boo|Zoo $a
+ */
+function ifElseForClassUnion3($a) {
+  if ($a() instanceof Foo) {
+    exprtype($a(), "\Foo");
+  } else if ($a() instanceof Boo) {
+    exprtype($a(), "\Boo");
+  } else {
+    exprtype($a(), "\Zoo");
+  }
+
+  exprtype($a(), "\Boo|\Foo|\Zoo");
+}
+
+/**
+ * @param callable(): mixed $a
+ */
+function ifElseForMixed($a) {
+  if ($a() instanceof Foo) {
+    exprtype($a(), "\Foo");
+  } else {
+    exprtype($a(), "mixed");
+  }
+
+  exprtype($a(), "mixed");
+}
+
+/**
+ * @param callable(): mixed $a
+ */
+function ifElseForMixed3($a) {
+  if ($a() instanceof Foo) {
+    exprtype($a(), "\Foo");
+  } else if ($a() instanceof Boo) {
+    exprtype($a(), "\Boo");
+  } else {
+    exprtype($a(), "mixed");
+  }
+
+  exprtype($a(), "mixed");
+}
+
+/**
+ * @param callable(): mixed $a
+ */
+function ifElseWithNegation($a) {
+  if (!$a() instanceof Foo) {
+	exprtype($a(), "mixed");
+  } else {
+    exprtype($a(), "\Foo");
+  }
+
+  exprtype($a(), "mixed");
+}
+
+/**
+ * @param callable(): Foo|Boo $a
+ */
+function ifElseWithNegationWithUnion($a) {
+  if (!$a() instanceof Foo) {
+	exprtype($a(), "\Boo");
+  } else {
+    exprtype($a(), "\Foo");
+  }
+
+  exprtype($a(), "\Boo|\Foo");
+}
+
+/**
+ * @param callable(): Foo|Boo|Zoo $a
+ */
+function ifElseWithNegationWithUnion2($a) {
+  if (!$a() instanceof Foo) {
+	exprtype($a(), "\Boo|\Zoo");
+  } else if ($a() instanceof Foo) {
+    exprtype($a(), "\Foo");
+  } else {
+    exprtype($a(), "mixed");
+  }
+
+  exprtype($a(), "\Boo|\Foo|\Zoo");
+}
+
+/**
+ * @param callable(): Foo|Boo|Zoo $a
+ */
+function ifElseWithTwoNegationWithUnion2($a) {
+  if (!$a() instanceof Foo) {
+	exprtype($a(), "\Boo|\Zoo");
+  } else if (!$a() instanceof Foo) {
+    exprtype($a(), "mixed");
+  } else {
+    exprtype($a(), "\Foo");
+  }
+
+  exprtype($a(), "\Boo|\Foo|\Zoo");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestTernaryWithInstanceOf(t *testing.T) {
+	code := `<?php
+function exprtype(...$a): bool { return false; }
+
+interface ISome {}
+
+class Foo implements ISome{
+  function f() { return 0; }
+}
+
+class Boo implements ISome {
+  function b() { return 0; }
+}
+
+class Zoo implements ISome {
+  function z() { return 0; }
+}
+
+/**
+ * @param Foo|Boo $a
+ */
+function withClassUnion($a) {
+  $_ = $a instanceof Foo ? 
+  			exprtype($a, "\Foo") : 
+  			0;
+
+  $_ = $a instanceof Foo ? 
+			exprtype($a, "\Foo") : 
+			exprtype($a, "\Boo");
+
+  $_ = isset($a->aaa) && $a->aaa instanceof Foo ? 
+			exprtype($a->aaa, "\Foo") : 
+			exprtype($a->aaa, "mixed");
+}
+
+/**
+ * @param Foo|Boo $a
+ */
+function withNegationClassUnion($a) {
+  $_ = !$a instanceof Foo ? 
+  			0 : 
+  			exprtype($a, "\Foo");
+
+  $_ = !$a instanceof Foo ? 
+			exprtype($a, "\Boo") : 
+			exprtype($a, "\Foo");
+
+  $_ = isset($a->aaa) && !$a->aaa instanceof Foo ? 
+			exprtype($a->aaa, "mixed") : 
+			exprtype($a->aaa, "\Foo");
+}
+
+/**
+ * @param mixed $a
+ */
+function withMixed($a) {
+  $_ = $a instanceof Foo ? 
+  			exprtype($a, "\Foo") : 
+  			exprtype($a, "mixed");
+  $_ = $a instanceof Foo ? 
+  			exprtype($a, "\Foo") : 
+  			($a instanceof Boo ? 
+  				exprtype($a, "\Boo") : 
+  				exprtype($a, "mixed"));
+}
+
+/**
+ * @param mixed $a
+ */
+function withNegationMixed($a) {
+  $_ = !$a instanceof Foo ? 
+  			exprtype($a, "mixed") : 
+  			exprtype($a, "\Foo");
+  $_ = !$a instanceof Foo ?
+  			(!$a instanceof Boo ? 
+  				exprtype($a, "mixed") : 
+  				exprtype($a, "\Boo")) :
+			exprtype($a, "\Foo");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestAssignInsideBodyInstanceOf(t *testing.T) {
+	code := `<?php
+class Boo {
+  /** @return int */
+  function b() { return 0; }
+}
+
+function f($a) {
+  if ($a instanceof Boo) {
+    exprtype($a, "\Boo");
+    $a = 100;
+  }
+
+  exprtype($a, "precise int");
+}
+
+function f1($a) {
+  if ($a instanceof Boo) {
+    exprtype($a, "\Boo");
+    $a = new Boo;
+  }
+
+  exprtype($a, "precise \Boo");
+}
+
+function f2($a) {
+  if ($a instanceof Boo) {
+    exprtype($a, "\Boo");
+    $a = new Boo;
+  } else {
+    $a = 100;
+  }
+
+  exprtype($a, "\Boo|int");
+}
+
+function f3($a) {
+  if ($a instanceof Boo) {
+    exprtype($a, "\Boo");
+    $a = new Boo;
+  } else if ($a instanceof Foo) {
+    $a = new Foo;
+  } else {
+    $a = 100;
+  }
+
+  exprtype($a, "\Boo|\Foo|int");
+}
+`
+
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestRefVariable(t *testing.T) {
+	code := `<?php
+function exprtype(...$a): bool { return false; }
+
+function f($a) {
+  preg_match('/^\s*(\S+)\s+(\S+)\s*$/', "ss", $matches0);
+
+  if (!preg_match('/^\s*(\S+)\s+(\S+)\s*$/', "ss", $matches1)) {
+    throw new \http\Exception\BadHeaderException(sprintf('Invalid delimiters: %s', "s"));
+  } else if (!preg_match('/^\s*(\S+)\s+(\S+)\s*$/', "ss", $matches2)) {
+    throw new \http\Exception\BadHeaderException(sprintf('Invalid delimiters: %s', "s"));
+  }
+
+  exprtype($matches0, "mixed[]")
+  exprtype($matches1, "mixed[]")
+  exprtype($matches2, "mixed[]")
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestAssignInCondition(t *testing.T) {
+	code := `<?php
+function exprtype(...$a): bool { return false; }
+
+class Foo {}
+class Boo {}
+
+function f($a) {
+  $res = 100;
+
+  if (!$add_res = 10) {
+    fwrite(STDERR, "Could not get restart FD data, exiting, graceful restart is not supported\n");
+    exit(0);
+  }
+
+  exprtype($add_res, "precise int");
+}
+
+function f2($a) {
+  $res = 100;
+
+  if (!($add_res = 10) && $add_res2 = "1100") {
+    fwrite(STDERR, "Could not get restart FD data, exiting, graceful restart is not supported\n");
+  }
+
+  
+  if (($a = new Foo) && $a instanceof Foo) {
+    exprtype($a, "\Foo");
+  }
+
+  if ((($a = new Foo) || ($a = new Boo)) && $a instanceof Foo) {
+    exprtype($a, "\Foo");
+  } else {
+    exprtype($a, "precise \Boo");
+  }
+
+  if ((($a = new Foo) || ($a = 10)) && $a instanceof Foo) {
+    exprtype($a, "\Foo");
+  } else {
+    exprtype($a, "precise int");
+  }
+
+  exprtype($add_res, "int");
+  exprtype($add_res2, "string");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+func TestVarAnnotationWithoutVariable(t *testing.T) {
+	code := `<?php
+function exprtype(...$a): bool { return false; }
+
+class Foo {
+  public $prop = 0;
+
+  function f() {}
+}
+
+class Boo  {
+  function b() {}
+}
+
+function f($a) {
+  /**
+   * Ok 
+   * @var Foo
+   */
+  $b = $a;
+  exprtype($b, "\Foo|mixed");
+
+  /**
+   * Not working 
+   * @var Boo
+   */
+  $b->prop = $a;
+  exprtype($b->prop, "int");
+
+  /**
+   * Not working  
+   * @var Foo
+   */
+  [$c, $d] = $a;
+
+  exprtype($c, "unknown_from_list");
+  exprtype($d, "unknown_from_list");
 }
 `
 	runExprTypeTest(t, &exprTypeTestParams{code: code})

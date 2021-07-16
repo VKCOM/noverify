@@ -42,6 +42,8 @@ function alt_switch($v) {
     $v = 3;
   case 2:
     return $v;
+  default:
+    break;
   endswitch;
 }`)
 	test.Expect = []string{

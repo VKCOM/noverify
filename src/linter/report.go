@@ -744,6 +744,127 @@ function f(array $a) {}`,
   public $item;
 }`,
 		},
+
+		{
+			Name:     "switchDefault",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report the lack or wrong position of default.`,
+			Before: `switch ($a) {
+  case 1:
+    echo 1;
+    break;
+}`,
+			After: `switch ($a) {
+  case 1:
+    echo 1;
+    break;
+  default:
+    echo 2;
+    break;
+}`,
+		},
+
+		{
+			Name:     "switchSimplify",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report possibility to rewrite 'switch' with the 'if'.`,
+			Before: `switch ($a) {
+  case 1:
+    echo 1;
+    break;
+}`,
+			After: `if ($a == 1) {
+  echo 1;
+}`,
+		},
+
+		{
+			Name:     "switchEmpty",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report switch with empty body.`,
+			Before:   `switch ($a) {}`,
+			After: `switch ($a) {
+  case 1:
+    // do something
+    break;
+}`,
+		},
+
+		{
+			Name:     "implicitModifiers",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report implicit modifiers.`,
+			Before: `class Foo {
+  function f() {} // The access modifier is implicit.
+}`,
+			After: `class Foo {
+  public function f() {}
+}`,
+		},
+
+		{
+			Name:     "invalidExtendClass",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report inheritance from the final class.`,
+			Before: `final class Foo {}
+class Boo extends Foo {}`,
+			After: `class Foo {}
+class Boo extends Foo {}`,
+		},
+
+		{
+			Name:     "methodSignatureMismatch",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report a method signature mismatch in inheritance.`,
+			Before: `class Foo {
+  final public function f() {}
+}
+
+class Boo extends Foo {
+  public function f() {} // Foo::f is final.
+}`,
+			After: `class Foo {
+  public function f() {}
+}
+
+class Boo extends Foo {
+  public function f() {}
+}`,
+		},
+
+		{
+			// Checker can give many false positives, however it is
+			// useful for periodic checking when you can choose what
+			// appears to be a real error.
+			Name:     "argsReverse",
+			Default:  false,
+			Quickfix: false,
+			Comment:  `Report using variables as arguments in reverse order.`,
+			Before: `function makeHello(string $name, int $age) {
+  echo "Hello ${$name}-${$age}";
+}
+
+function main(): void {
+  $name = "John";
+  $age = 18;
+  makeHello($age, $name); // The name should come first, and then the age.
+}`,
+			After: `function makeHello(string $name, int $age) {
+  echo "Hello ${$name}-${$age}";
+}
+
+function main(): void {
+  $name = "John";
+  $age = 18;
+  makeHello($name, $age);
+}`,
+		},
 	}
 
 	for _, info := range allChecks {

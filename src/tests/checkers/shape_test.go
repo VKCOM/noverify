@@ -21,8 +21,8 @@ function f($s) {
 }
 `)
 	test.Expect = []string{
-		`Property {\shape$x:int,y:float$}->x does not exist`,
-		`Property {\shape$x:int,y:float$}->y does not exist`,
+		`Property {shape{x:int,y:float}}->x does not exist`,
+		`Property {shape{x:int,y:float}}->y does not exist`,
 	}
 	test.RunAndMatch()
 }
@@ -121,11 +121,11 @@ echo $t->good6['x']->value;
 echo $t->good6['y']->value;
 `)
 	test.Expect = []string{
-		`invalid shape key: x[]`,
-		`shape param #1: want key:type, found x`,
+		`Invalid shape key: x[]`,
+		`Shape param #1: want key:type, found x`,
 		`Property {mixed}->bad1 does not exist`,
 		`Property {mixed}->bad2 does not exist`,
-		`shape param #1: want key:type, found int on line 1`,
+		`Shape param #1: want key:type, found int`,
 	}
 	test.RunAndMatch()
 }

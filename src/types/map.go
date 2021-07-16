@@ -294,7 +294,7 @@ func (m Map) Append(n Map) Map {
 func (m Map) String() string {
 	if len(m.m) == 1 {
 		for k := range m.m {
-			return k
+			return FormatType(k)
 		}
 	}
 
@@ -342,6 +342,14 @@ func (m Map) Contains(typ string) bool {
 		}
 	}
 	return false
+}
+
+func (m Map) Erase(typ string) Map {
+	if m.Len() == 0 {
+		return m
+	}
+	delete(m.m, typ)
+	return m
 }
 
 // Find applies a predicate function to every contained type.
