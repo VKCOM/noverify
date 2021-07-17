@@ -94,7 +94,7 @@ func Run(cfg *MainConfig) (int, error) {
 
 	cfg.linter = linter.NewLinter(config)
 
-	ruleSets, err := parseEmbeddedRules()
+	ruleSets, err := ParseEmbeddedRules()
 	if err != nil {
 		return 1, fmt.Errorf("preload embedded rules: %v", err)
 	}

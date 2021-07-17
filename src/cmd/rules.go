@@ -16,7 +16,7 @@ import (
 var embeddedRulesData embed.FS
 
 func AddEmbeddedRules(rset *rules.Set, filter func(r rules.Rule) bool) ([]*rules.Set, error) {
-	embeddedRuleSets, err := parseEmbeddedRules()
+	embeddedRuleSets, err := ParseEmbeddedRules()
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +28,34 @@ func AddEmbeddedRules(rset *rules.Set, filter func(r rules.Rule) bool) ([]*rules
 	return embeddedRuleSets, nil
 }
 
-func parseExternalRules(externalRules string) ([]*rules.Set, error) {
+func ParseEmbeddedRules() ([]*rules.Set, error) {
+	var ruleSets []*rules.Set
+	p := rules.NewParser()
+
+	entries, err := embeddedRulesData.ReadDir("embeddedrules")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range entries {
+		filename := filepath.ToSlash(filepath.Join("embeddedrules", entry.Name()))
+		data, err := embeddedRulesData.ReadFile(filename)
+		if err != nil {
+			return nil, err
+		}
+
+		rset, err := p.Parse(entry.Name(), bytes.NewReader(data))
+		if err != nil {
+			return nil, err
+		}
+		rset.Builtin = true
+		ruleSets = append(ruleSets, rset)
+	}
+
+	return ruleSets, nil
+}
+
+func ParseExternalRules(externalRules string) ([]*rules.Set, error) {
 	if externalRules == "" {
 		return nil, nil
 	}
@@ -83,33 +110,6 @@ func readAndParseRuleFile(filename string, ruleSets []*rules.Set) ([]*rules.Set,
 	}
 
 	ruleSets = append(ruleSets, ruleSet)
-
-	return ruleSets, nil
-}
-
-func parseEmbeddedRules() ([]*rules.Set, error) {
-	var ruleSets []*rules.Set
-	p := rules.NewParser()
-
-	entries, err := embeddedRulesData.ReadDir("embeddedrules")
-	if err != nil {
-		return nil, err
-	}
-
-	for _, entry := range entries {
-		filename := filepath.ToSlash(filepath.Join("embeddedrules", entry.Name()))
-		data, err := embeddedRulesData.ReadFile(filename)
-		if err != nil {
-			return nil, err
-		}
-
-		rset, err := p.Parse(entry.Name(), bytes.NewReader(data))
-		if err != nil {
-			return nil, err
-		}
-		rset.Builtin = true
-		ruleSets = append(ruleSets, rset)
-	}
 
 	return ruleSets, nil
 }
