@@ -46,6 +46,53 @@ func NewInfo() *Info {
 	}
 }
 
+func (i *Info) Clone() *Info {
+	info := NewInfo()
+
+	info.internalFunctions = NewFunctionsMap()
+	info.internalFunctionOverrides = make(FunctionsOverrideMap)
+	info.internalClasses = NewClassesMap()
+
+	for key, value := range i.allFiles {
+		info.allFiles[key] = value
+	}
+	for key, value := range i.allTraits.H {
+		info.allTraits.H[key] = value
+	}
+	for key, value := range i.allClasses.H {
+		info.allClasses.H[key] = value
+	}
+	for key, value := range i.allFunctions.H {
+		info.allFunctions.H[key] = value
+	}
+	for key, value := range i.allFunctionsOverrides {
+		info.allFunctionsOverrides[key] = value
+	}
+	for key, value := range i.perFileTraits {
+		info.perFileTraits[key] = value
+	}
+	for key, value := range i.perFileClasses {
+		info.perFileClasses[key] = value
+	}
+	for key, value := range i.perFileFunctions {
+		info.perFileFunctions[key] = value
+	}
+	for key, value := range i.perFileConstants {
+		info.perFileConstants[key] = value
+	}
+	for key, value := range i.internalFunctions.H {
+		info.internalFunctions.H[key] = value
+	}
+	for key, value := range i.internalFunctionOverrides {
+		info.internalFunctionOverrides[key] = value
+	}
+	for key, value := range i.internalClasses.H {
+		info.internalClasses.H[key] = value
+	}
+
+	return info
+}
+
 func (i *Info) OnIndexingComplete(cb func(*Info)) {
 	if i.indexingComplete {
 		cb(i)
