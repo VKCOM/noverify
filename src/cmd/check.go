@@ -11,7 +11,7 @@ func Check(ctx *AppContext) (int, error) {
 
 	bindConfigValuesWithFlags(ctx, config)
 
-	ruleSets, err := parseExternalRules(ctx.ParsedFlags.RulesList)
+	ruleSets, err := ParseExternalRules(ctx.ParsedFlags.RulesList)
 	if err != nil {
 		return 1, fmt.Errorf("preload external rules: %v", err)
 	}
