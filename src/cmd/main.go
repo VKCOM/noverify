@@ -173,12 +173,10 @@ func mainNoExit(ctx *AppContext) (int, error) {
 	lint := ctx.MainConfig.linter
 	ruleSets := ctx.MainConfig.rulesSets
 
-	runner := LinterRunner{
-		config:         lint.Config(),
-		linter:         lint,
-		checkersFilter: linter.NewCheckersFilter(),
-	}
-	if err := runner.Init(ruleSets, &ctx.ParsedFlags); err != nil {
+	runner := NewLinterRunner(lint, linter.NewCheckersFilter())
+
+	err := runner.Init(ruleSets, &ctx.ParsedFlags)
+	if err != nil {
 		return 1, fmt.Errorf("init: %v", err)
 	}
 
@@ -196,14 +194,14 @@ func mainNoExit(ctx *AppContext) (int, error) {
 	}
 
 	if ctx.ParsedFlags.GitRepo != "" {
-		return gitMain(&runner, ctx.MainConfig)
+		return gitMain(runner, ctx.MainConfig)
 	}
 
 	filenames := ctx.ParsedArgs
 
 	log.Printf("Indexing %+v", filenames)
 	runner.linter.AnalyzeFiles(workspace.ReadFilenames(filenames, nil, lint.Config().PhpExtensions))
-	parseIndexOnlyFiles(&runner)
+	parseIndexOnlyFiles(runner)
 	runner.linter.MetaInfo().SetIndexingComplete(true)
 
 	if ctx.ParsedFlags.FullAnalysisFiles != "" {
@@ -213,12 +211,12 @@ func mainNoExit(ctx *AppContext) (int, error) {
 	log.Printf("Linting")
 	reports := runner.linter.AnalyzeFiles(workspace.ReadFilenames(filenames, runner.filenameFilter, lint.Config().PhpExtensions))
 	if ctx.ParsedFlags.OutputBaseline {
-		if err := createBaseline(&runner, ctx.MainConfig, reports); err != nil {
+		if err := createBaseline(runner, ctx.MainConfig, reports); err != nil {
 			return 1, fmt.Errorf("write baseline: %v", err)
 		}
 		return 0, nil
 	}
-	criticalReports, minorReports, containsAutofixableReports := analyzeReports(&runner, ctx.MainConfig, reports)
+	criticalReports, minorReports, containsAutofixableReports := analyzeReports(runner, ctx.MainConfig, reports)
 
 	if containsAutofixableReports && !runner.config.ApplyQuickFixes {
 		log.Println("Some issues are autofixable (try using the `-fix` flag)")
