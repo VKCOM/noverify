@@ -29,10 +29,10 @@ type LinterRunner struct {
 	filenameFilter *workspace.FilenameFilter
 }
 
-func NewLinterRunner(linter *linter.Linter, checkersFilter *linter.CheckersFilter) *LinterRunner {
+func NewLinterRunner(lint *linter.Linter, checkersFilter *linter.CheckersFilter) *LinterRunner {
 	return &LinterRunner{
-		linter:         linter,
-		config:         linter.Config(),
+		linter:         lint,
+		config:         lint.Config(),
 		checkersFilter: checkersFilter,
 	}
 }
