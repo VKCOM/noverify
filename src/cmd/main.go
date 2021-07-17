@@ -94,7 +94,7 @@ func Run(cfg *MainConfig) (int, error) {
 
 	cfg.linter = linter.NewLinter(config)
 
-	ruleSets, err := parseEmbeddedRules()
+	ruleSets, err := ParseEmbeddedRules()
 	if err != nil {
 		return 1, fmt.Errorf("preload embedded rules: %v", err)
 	}
@@ -173,12 +173,10 @@ func mainNoExit(ctx *AppContext) (int, error) {
 	lint := ctx.MainConfig.linter
 	ruleSets := ctx.MainConfig.rulesSets
 
-	runner := linterRunner{
-		config:         lint.Config(),
-		linter:         lint,
-		checkersFilter: linter.NewCheckersFilter(),
-	}
-	if err := runner.Init(ruleSets, &ctx.ParsedFlags); err != nil {
+	runner := NewLinterRunner(lint, linter.NewCheckersFilter())
+
+	err := runner.Init(ruleSets, &ctx.ParsedFlags)
+	if err != nil {
 		return 1, fmt.Errorf("init: %v", err)
 	}
 
@@ -191,19 +189,19 @@ func mainNoExit(ctx *AppContext) (int, error) {
 
 	log.Printf("Started")
 
-	if err := initStubs(runner.linter); err != nil {
+	if err := InitStubs(runner.linter); err != nil {
 		return 0, fmt.Errorf("Init stubs: %v", err)
 	}
 
 	if ctx.ParsedFlags.GitRepo != "" {
-		return gitMain(&runner, ctx.MainConfig)
+		return gitMain(runner, ctx.MainConfig)
 	}
 
 	filenames := ctx.ParsedArgs
 
 	log.Printf("Indexing %+v", filenames)
 	runner.linter.AnalyzeFiles(workspace.ReadFilenames(filenames, nil, lint.Config().PhpExtensions))
-	parseIndexOnlyFiles(&runner)
+	parseIndexOnlyFiles(runner)
 	runner.linter.MetaInfo().SetIndexingComplete(true)
 
 	if ctx.ParsedFlags.FullAnalysisFiles != "" {
@@ -213,12 +211,12 @@ func mainNoExit(ctx *AppContext) (int, error) {
 	log.Printf("Linting")
 	reports := runner.linter.AnalyzeFiles(workspace.ReadFilenames(filenames, runner.filenameFilter, lint.Config().PhpExtensions))
 	if ctx.ParsedFlags.OutputBaseline {
-		if err := createBaseline(&runner, ctx.MainConfig, reports); err != nil {
+		if err := createBaseline(runner, ctx.MainConfig, reports); err != nil {
 			return 1, fmt.Errorf("write baseline: %v", err)
 		}
 		return 0, nil
 	}
-	criticalReports, minorReports, containsAutofixableReports := analyzeReports(&runner, ctx.MainConfig, reports)
+	criticalReports, minorReports, containsAutofixableReports := analyzeReports(runner, ctx.MainConfig, reports)
 
 	if containsAutofixableReports && !runner.config.ApplyQuickFixes {
 		log.Println("Some issues are autofixable (try using the `-fix` flag)")
@@ -238,7 +236,7 @@ func mainNoExit(ctx *AppContext) (int, error) {
 	return 0, nil
 }
 
-func createBaseline(l *linterRunner, cfg *MainConfig, reports []*linter.Report) error {
+func createBaseline(l *LinterRunner, cfg *MainConfig, reports []*linter.Report) error {
 	var stats baseline.Stats
 	stats.CountPerCheck = make(map[string]int)
 
@@ -330,7 +328,7 @@ func haveAutofixableReports(config *linter.Config, reports []*linter.Report) boo
 	return false
 }
 
-func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (criticalReports, minorReports int, containsAutofixableReports bool) {
+func analyzeReports(l *LinterRunner, cfg *MainConfig, diff []*linter.Report) (criticalReports, minorReports int, containsAutofixableReports bool) {
 	filtered := make([]*linter.Report, 0, len(diff))
 
 	for _, r := range diff {
@@ -375,7 +373,7 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 	return criticalReports, minorReports, containsAutofixableReports
 }
 
-func initStubs(l *linter.Linter) error {
+func InitStubs(l *linter.Linter) error {
 	if l.Config().StubsDir != "" {
 		l.InitStubsFromDir(l.Config().StubsDir)
 		return nil
