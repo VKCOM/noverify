@@ -29,6 +29,14 @@ type LinterRunner struct {
 	filenameFilter *workspace.FilenameFilter
 }
 
+func NewLinterRunner(lint *linter.Linter, checkersFilter *linter.CheckersFilter) *LinterRunner {
+	return &LinterRunner{
+		linter:         lint,
+		config:         lint.Config(),
+		checkersFilter: checkersFilter,
+	}
+}
+
 func (l *LinterRunner) collectGitIgnoreFiles() error {
 	l.filenameFilter = workspace.NewFilenameFilter(l.config.ExcludeRegex)
 
