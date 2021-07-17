@@ -191,7 +191,7 @@ func mainNoExit(ctx *AppContext) (int, error) {
 
 	log.Printf("Started")
 
-	if err := initStubs(runner.linter); err != nil {
+	if err := InitStubs(runner.linter); err != nil {
 		return 0, fmt.Errorf("Init stubs: %v", err)
 	}
 
@@ -375,7 +375,7 @@ func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 	return criticalReports, minorReports, containsAutofixableReports
 }
 
-func initStubs(l *linter.Linter) error {
+func InitStubs(l *linter.Linter) error {
 	if l.Config().StubsDir != "" {
 		l.InitStubsFromDir(l.Config().StubsDir)
 		return nil
