@@ -6,328 +6,529 @@ import (
 )
 
 type ClassData struct {
-	Name       string
-	Parent     string
-	Interfaces map[string]struct{}
+	Name        string
+	Parent      string
+	Interfaces  map[string]struct{}
+	IsInterface bool
 }
 
 type Compatible struct {
-	classDataProvider func(name string) (ClassData, bool)
+	// Checks that T2 is compatible with at least one type of T1.
+	// Otherwise, the union types must match strictly.
+	OneInMany bool
+
+	ClassDataProvider func(name string) (ClassData, bool)
 }
 
-func (c *Compatible) CompatibleTypes(t1, t2 Map) (ok bool, desc string) {
-	return compatibleTypes(t1, t2, c)
+type CompatibleResult struct {
+	T1 Map
+	T2 Map
+
+	IsCompatible bool
+
+	// If T1 is ?Foo, and T2 is Foo
+	MoreGeneralType bool
+	// If T1 is Foo, and T2 is ?Foo
+	MoreSpecificType bool
+
+	// If T1 is ?int, and T2 is int
+	ExtraNullable bool
+	// If T1 is int, and T2 is ?int
+	LostNullable bool
+
+	// If T1 is float, and T2 is int
+	FloatInt bool
+	// If T1 is int, and T2 is float
+	IntFloat bool
+
+	// If T1 is bool, and T2 is false
+	BoolFalse bool
+	// If T1 is false, and T2 is bool
+	FalseBool bool
+
+	// If T1 is some T, and T2 is array<P>
+	TypeAndArray bool
+	// If T1 is array<P>, and T2 is some T
+	ArrayAndType bool
+
+	// If T1 is array<T>, and T2 is array<P>
+	ArraysTypeMismatch bool
+	ArrayCheckResult   *CompatibleResult
+
+	// If T1 is T implements I, and T2 is I
+	ClassAndInterface bool
+	// If T1 is I, and T2 is T implements I
+	InterfaceAndClass bool
+
+	// If T1 is T extends P, and T2 is P
+	ClassAndParent bool
+	// If T1 is P, and T2 is T extends P
+	ParentAndClass bool
+
+	// If T1 is Class, and T2 is Not Class
+	ClassAndNotClass bool
+	// If T1 is Not Class, and T2 is Class
+	NotClassAndClass bool
+
+	// All relationships from T1 to T2.
+	Description string
 }
 
-func (c *Compatible) CompatibleType(t1, t2 string) (ok bool, desc string) {
-	return compatibleType(t1, t2, c)
+func (c *Compatible) CompatibleTypes(t1, t2 Map) CompatibleResult {
+	res := compatibleTypes(t1, t2, c)
+	res.T1 = t1
+	res.T2 = t2
+	return res
 }
 
-func compatibleTypes(t1, t2 Map, c *Compatible) (ok bool, desc string) {
+func (c *Compatible) CompatibleType(t1, t2 string) CompatibleResult {
+	res := compatibleType(t1, t2, c)
+	res.T1 = NewMap(t1)
+	res.T2 = NewMap(t2)
+	return res
+}
+
+func compatibleTypes(t1, t2 Map, c *Compatible) (res CompatibleResult) {
 	if t1.Empty() || t2.Empty() {
-		return true, ""
+		return CompatibleResult{IsCompatible: true}
 	}
 
-	ok, desc = compatibleOneWithMany(t1, t2, c)
-	if !ok {
-		return false, desc
+	var needNext bool
+	res, needNext = compatibleOneWithOne(t1, t2, c)
+	if !needNext {
+		return res
 	}
 
-	ok, desc = compatibleOneWithMany(t2, t1, c)
-	if !ok {
-		return false, desc
+	// res = compatibleOneWithMany(t1, t2, c)
+	// if !res.IsCompatible {
+	// 	return res
+	// }
+	//
+	// res = compatibleOneWithMany(t2, t1, c)
+	// if !res.IsCompatible {
+	// 	return res
+	// }
+
+	res = compatibleManyWithMany(t1, t2, c)
+	if !res.IsCompatible {
+		return res
 	}
 
-	ok, desc = compatibleManyWithMany(t1, t2, c)
-	if !ok {
-		return false, desc
-	}
-
-	return true, ""
+	return res
 }
 
-func compatibleManyWithMany(t1 Map, t2 Map, c *Compatible) (ok bool, desc string) {
-	if t1.Len() == 1 || t2.Len() == 1 {
-		return true, ""
-	}
-
+func compatibleManyWithMany(t1 Map, t2 Map, c *Compatible) (res CompatibleResult) {
 	if t1.Contains("null") && !t2.Contains("null") {
-		return false, fmt.Sprintf("cannot use nullable %s as %s", t1, t2)
+		return CompatibleResult{
+			ExtraNullable: true,
+			Description:   fmt.Sprintf("cannot use nullable %s as %s", t1, t2),
+		}
 	}
 	if !t1.Contains("null") && t2.Contains("null") {
-		return false, fmt.Sprintf("cannot use %s as nullable %s", t1, t2)
+		return CompatibleResult{
+			LostNullable: true,
+			Description:  fmt.Sprintf("cannot use %s as nullable %s", t1, t2),
+		}
 	}
 
-	var compatibleWithOne bool
+	if c.OneInMany {
+		var compatibleWithOne bool
 
-	t1.Iterate(func(T1Typ string) {
-		t2.Iterate(func(T2Typ string) {
-			ok, _ = compatibleType(T1Typ, T2Typ, c)
-			if ok {
-				compatibleWithOne = true
+		t1.Iterate(func(T1Typ string) {
+			if compatibleWithOne {
+				return
 			}
+			t2.Iterate(func(T2Typ string) {
+				if compatibleWithOne {
+					return
+				}
+				res = compatibleType(T1Typ, T2Typ, c)
+				if res.IsCompatible {
+					compatibleWithOne = true
+				}
+			})
 		})
-	})
 
-	return compatibleWithOne, ""
+		return CompatibleResult{
+			IsCompatible: compatibleWithOne,
+		}
+	}
+
+	if t1.Len() != t2.Len() {
+		return CompatibleResult{
+			Description: fmt.Sprintf("cannot use %s as %s", t1, t2),
+		}
+	}
+
+	return CompatibleResult{
+		IsCompatible: true,
+	}
 }
 
-func compatibleOneWithMany(t1 Map, t2 Map, c *Compatible) (ok bool, desc string) {
-	if t1.Len() == 1 {
-		if t2.Len() == 1 {
-			return compatibleType(t1.String(), t2.String(), c)
-		}
+func compatibleOneWithOne(t1 Map, t2 Map, c *Compatible) (res CompatibleResult, needNext bool) {
+	if t1.Len() != 1 || t2.Len() != 1 {
+		return CompatibleResult{}, true
+	}
 
+	return compatibleType(t1.String(), t2.String(), c), false
+}
+
+func compatibleOneWithMany(t1 Map, t2 Map, c *Compatible) (res CompatibleResult) {
+	if t1.Len() == 1 {
 		T1S := t1.String()
 
 		if strings.Contains(T1S, "mixed") {
-			return true, ""
+			return CompatibleResult{IsCompatible: true}
 		}
 
 		T2IsNullable := t2.Find(func(typ string) bool {
 			return typ == "null"
 		})
 		if T2IsNullable {
-			return false, fmt.Sprintf("cannot use type %s as nullable type %s", T1S, t2.String())
+			return CompatibleResult{
+				Description: fmt.Sprintf("cannot use type %s as nullable type %s", T1S, t2.String()),
+			}
 		}
 
 		var compatibleWithOne bool
 
 		t2.Iterate(func(typ string) {
-			ok, desc = compatibleType(T1S, typ, c)
-			if ok {
+			res = compatibleType(T1S, typ, c)
+			if res.IsCompatible {
 				compatibleWithOne = true
 			}
 		})
 
 		if !compatibleWithOne {
-			return false, fmt.Sprintf("none of the possible types (%s) are compatible with %s", t2.String(), T1S)
+			return CompatibleResult{
+				Description: fmt.Sprintf("none of the possible types (%s) are compatible with %s", t2.String(), T1S),
+			}
 		}
 	}
 
-	return true, ""
+	return CompatibleResult{IsCompatible: true}
 }
 
-func CompatibleType(t1, t2 string) (ok bool, desc string) {
-	return compatibleType(t1, t2, nil)
+func CompatibleType(t1, t2 string) CompatibleResult {
+	res := compatibleType(t1, t2, nil)
+	res.T1 = NewMap(t1)
+	res.T2 = NewMap(t2)
+	return res
 }
 
-func compatibleType(t1, t2 string, c *Compatible) (ok bool, desc string) {
+func compatibleType(t1, t2 string, c *Compatible) (res CompatibleResult) {
 	if t1 == "mixed" || t2 == "mixed" {
-		return true, ""
-	}
-
-	if IsPOD(t1) && IsPOD(t2) {
-		if compatibleBoolean(t1, t2) {
-			return true, ""
-		}
-
-		if t1 != t2 {
-			return false, fmt.Sprintf("cannot use %s as %s", t1, t2)
-		}
+		return CompatibleResult{IsCompatible: true}
 	}
 
 	T1A, ok := Alias(t1)
 	if ok {
 		t1 = T1A
 	}
-	T2A, ok := Alias(t1)
+	T2A, ok := Alias(t2)
 	if ok {
 		t2 = T2A
 	}
 
-	ok, desc = compatibleClass(t1, t2, c)
-	if !ok {
-		return false, desc
-	}
-
-	ok, desc = compatibleArray(t1, t2, c)
-	if !ok {
-		return false, desc
-	}
-
-	ok, desc = compatibleCallable(t1, t2)
-	if !ok {
-		return false, desc
-	}
-
-	ok, desc = compatibleCallable(t2, t1)
-	if !ok {
-		return false, desc
-	}
-
-	return true, ""
-}
-
-func (c *Compatible) compatibleClassWithInheritance(t1, t2 ClassData) (ok bool, desc string) {
-	if t1.Name == t2.Name {
-		return true, ""
-	}
-
-	if t1.Parent != "" {
-		T1Parent, ok := c.classDataProvider(t1.Parent)
-		if ok {
-			ok, desc = c.compatibleClassWithInheritance(T1Parent, t2)
-			if ok {
-				return true, ""
-			} else {
-				return false, desc
+	if IsPOD(t1) && IsPOD(t2) {
+		if t1 == "int" && t2 == "float" {
+			return CompatibleResult{
+				IntFloat: true,
 			}
 		}
-	}
-
-	if len(t1.Interfaces) > 0 {
-		for iface := range t1.Interfaces {
-			T1Iface, ok := c.classDataProvider(iface)
-			if ok {
-				ok, desc = c.compatibleClassWithInheritance(T1Iface, t2)
-				if ok {
-					return true, ""
-				} else {
-					return false, desc
-				}
+		if t1 == "float" && t2 == "int" {
+			return CompatibleResult{
+				FloatInt: true,
 			}
 		}
-	}
 
-	return false, fmt.Sprintf("cannot use class %s as class %s", t1.Name, t2.Name)
-}
+		var needNext bool
+		res, needNext = compatibleBoolean(t1, t2)
+		if !needNext {
+			return res
+		}
 
-func compatibleClass(t1 string, t2 string, c *Compatible) (ok bool, desc string) {
-	namesEquals := func(t1, t2 string) (ok bool, desc string) {
 		if t1 != t2 {
-			return false, fmt.Sprintf("cannot use class %s as class %s", t1, t2)
+			return CompatibleResult{IsCompatible: false}
 		}
 
-		return true, ""
+		return CompatibleResult{IsCompatible: true}
+	}
+
+	var needNext bool
+	res, needNext = compatibleClass(t1, t2, c)
+	if !needNext {
+		return res
+	}
+
+	res = compatibleArray(t1, t2, c)
+	if !res.IsCompatible {
+		return res
+	}
+
+	// res = compatibleCallable(t1, t2)
+	// if !res.IsCompatible {
+	// 	return res
+	// }
+	//
+	// res = compatibleCallable(t2, t1)
+	// if !res.IsCompatible {
+	// 	return res
+	// }
+
+	return CompatibleResult{IsCompatible: true}
+}
+
+func (c *Compatible) classExtendsClass(class, parent ClassData) bool {
+	if class.Name == parent.Name {
+		return true
+	}
+
+	if class.Parent == "" {
+		return false
+	}
+
+	classParent, ok := c.ClassDataProvider(class.Parent)
+	if ok {
+		return c.classExtendsClass(classParent, parent)
+	}
+
+	return true
+}
+
+func (c *Compatible) classImplementInterface(class, iface ClassData) bool {
+	if class.Parent != "" {
+		parent, ok := c.ClassDataProvider(class.Parent)
+		if ok {
+			return c.classImplementInterface(parent, iface)
+		}
+	}
+
+	for classInterface := range class.Interfaces {
+		if classInterface == iface.Name {
+			return true
+		}
+
+		parentInterface, ok := c.ClassDataProvider(classInterface)
+		if ok {
+			return c.classImplementInterface(parentInterface, iface)
+		}
+	}
+
+	return false
+}
+
+func (c *Compatible) compatibleClassWithInheritance(t1, t2 ClassData) (res CompatibleResult) {
+	if t1.Name == t2.Name {
+		return CompatibleResult{IsCompatible: true}
+	}
+
+	if t1.IsInterface {
+		implements := c.classImplementInterface(t2, t1)
+		return CompatibleResult{
+			IsCompatible:      implements,
+			InterfaceAndClass: true,
+		}
+	}
+	if t2.IsInterface {
+		implements := c.classImplementInterface(t1, t2)
+		return CompatibleResult{
+			IsCompatible:      implements,
+			ClassAndInterface: true,
+		}
+	}
+
+	extendsTo := c.classExtendsClass(t1, t2)
+	extendsFrom := c.classExtendsClass(t2, t1)
+
+	if extendsTo {
+		return CompatibleResult{
+			IsCompatible:   true,
+			ClassAndParent: true,
+		}
+	} else if extendsFrom {
+		return CompatibleResult{
+			IsCompatible:   true,
+			ParentAndClass: true,
+		}
+	}
+
+	return CompatibleResult{IsCompatible: false}
+}
+
+func compatibleClass(t1 string, t2 string, c *Compatible) (res CompatibleResult, needNext bool) {
+	namesEquals := func(t1, t2 string) CompatibleResult {
+		if t1 != t2 {
+			return CompatibleResult{
+				Description: fmt.Sprintf("cannot use class %s as class %s", t1, t2),
+			}
+		}
+
+		return CompatibleResult{IsCompatible: true}
 	}
 
 	if IsClass(t1) && IsClass(t2) {
 		if c == nil {
-			return namesEquals(t1, t2)
+			equal := namesEquals(t1, t2)
+			return equal, !equal.IsCompatible
 		}
 
-		T1Class, ok := c.classDataProvider(t1)
+		T1Class, ok := c.ClassDataProvider(t1)
 		if !ok {
-			return namesEquals(t1, t2)
+			equal := namesEquals(t1, t2)
+			return equal, !equal.IsCompatible
 		}
-		T2Class, ok := c.classDataProvider(t2)
+		T2Class, ok := c.ClassDataProvider(t2)
 		if !ok {
-			return namesEquals(t1, t2)
+			equal := namesEquals(t1, t2)
+			return equal, !equal.IsCompatible
 		}
 
-		ok, _ = c.compatibleClassWithInheritance(T1Class, T2Class)
-		if ok {
-			return true, ""
+		res = c.compatibleClassWithInheritance(T1Class, T2Class)
+		if res.IsCompatible {
+			return res, false
 		}
 
-		ok, _ = c.compatibleClassWithInheritance(T2Class, T1Class)
-		if ok {
-			return true, ""
-		}
-
-		return false, fmt.Sprintf("cannot use class %s as class %s", t1, t2)
+		return res, false
 	}
 
 	if IsClass(t1) {
 		if t2 == "object" {
-			return true, ""
+			return CompatibleResult{IsCompatible: true}, false
 		}
 
-		return false, fmt.Sprintf("cannot use class %s as %s", t1, t2)
+		return CompatibleResult{
+			ClassAndNotClass: true,
+		}, false
 	}
 
 	if IsClass(t2) {
 		if t1 == "object" {
-			return true, ""
+			return CompatibleResult{IsCompatible: true}, false
 		}
 
-		return false, fmt.Sprintf("cannot use %s as class %s", t1, t2)
+		return CompatibleResult{
+			NotClassAndClass: true,
+		}, false
 	}
 
-	return true, ""
+	return CompatibleResult{IsCompatible: true}, true
 }
 
-func compatibleArray(t1 string, t2 string, c *Compatible) (ok bool, desc string) {
+func compatibleArray(t1 string, t2 string, c *Compatible) (res CompatibleResult) {
 	if IsArray(t1) && IsArray(t2) {
 		T1El := ArrayElementType(t1)
 		T2El := ArrayElementType(t2)
 
-		comp, des := compatibleType(T1El, T2El, c)
-		if !comp {
-			return false, fmt.Sprintf("cannot use array of %s as array of %s: %s", T1El, T2El, des)
+		resElement := compatibleType(T1El, T2El, c)
+		if !resElement.IsCompatible {
+			return CompatibleResult{
+				ArraysTypeMismatch: true,
+				ArrayCheckResult:   &resElement,
+			}
 		}
 
-		return true, ""
+		return CompatibleResult{IsCompatible: true}
 	}
 
 	if IsArray(t1) {
 		if t2 == "iterable" {
-			return true, ""
+			return CompatibleResult{IsCompatible: true}
 		}
 
-		return false, fmt.Sprintf("cannot use array of %s as %s", t1, t2)
+		return CompatibleResult{
+			ArrayAndType: true,
+		}
 	}
 
 	if IsArray(t2) {
 		if t1 == "iterable" {
-			return true, ""
+			return CompatibleResult{IsCompatible: true}
 		}
 
-		return false, fmt.Sprintf("cannot use %s as array of %s", t1, t2)
+		return CompatibleResult{
+			TypeAndArray: true,
+		}
 	}
 
-	ok, desc = compatibleIterable(t1, t2)
-	if !ok {
-		return false, desc
+	res = compatibleIterable(t1, t2)
+	if !res.IsCompatible {
+		return res
 	}
 
-	ok, desc = compatibleIterable(t2, t1)
-	if !ok {
-		return false, desc
+	res = compatibleIterable(t2, t1)
+	if !res.IsCompatible {
+		return res
 	}
 
-	return true, ""
+	return CompatibleResult{IsCompatible: true}
 }
 
-func compatibleIterable(t1 string, t2 string) (ok bool, desc string) {
+func compatibleIterable(t1 string, t2 string) CompatibleResult {
 	if t1 == "iterable" {
 		if t2 == "iterable" {
-			return true, ""
+			return CompatibleResult{IsCompatible: true}
 		}
 
 		if IsClass(t2) {
-			return true, ""
+			return CompatibleResult{IsCompatible: true}
 		}
 
-		return false, fmt.Sprintf("cannot use %s as %s", t1, t2)
+		return CompatibleResult{
+			Description: fmt.Sprintf("cannot use %s as %s", t1, t2),
+		}
 	}
 
-	return true, ""
+	return CompatibleResult{IsCompatible: true}
 }
 
-func compatibleCallable(t1, t2 string) (ok bool, desc string) {
+func compatibleCallable(t1, t2 string) (res CompatibleResult) {
 	if t1 == "callable" {
 		if t2 == "string" {
-			return true, ""
+			return CompatibleResult{IsCompatible: true}
 		}
 
 		if t2 == "callable" || IsClosure(t2) || IsClass(t2) {
-			return true, ""
+			return CompatibleResult{IsCompatible: true}
 		}
 
-		return false, fmt.Sprintf("cannot use %s as %s", t1, t2)
+		return CompatibleResult{
+			Description: fmt.Sprintf("cannot use %s as %s", t1, t2),
+		}
 	}
 
-	return true, ""
+	return CompatibleResult{IsCompatible: true}
 }
 
-func compatibleBoolean(t1, t2 string) bool {
+func compatibleBoolean(t1, t2 string) (res CompatibleResult, needNext bool) {
 	if t1 == "bool" {
-		return t2 == "bool" || t2 == "true" || t2 == "false"
+		if t2 == "bool" || t2 == "true" {
+			return CompatibleResult{IsCompatible: true}, false
+		}
+		if t2 == "false" {
+			return CompatibleResult{
+				IsCompatible: false,
+				BoolFalse:    true,
+			}, false
+		}
+		return CompatibleResult{
+			IsCompatible: false,
+		}, false
 	}
 	if t2 == "bool" {
-		return t1 == "bool" || t1 == "true" || t1 == "false"
+		if t1 == "bool" || t1 == "true" {
+			return CompatibleResult{IsCompatible: true}, false
+		}
+		if t1 == "false" {
+			return CompatibleResult{
+				IsCompatible: false,
+				FalseBool:    true,
+			}, false
+		}
+		return CompatibleResult{
+			IsCompatible: false,
+		}, false
 	}
-	return false
+
+	return CompatibleResult{}, true
 }

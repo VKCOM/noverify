@@ -684,6 +684,18 @@ function f(array $a) {}`,
 		},
 
 		{
+			Name:     "phpdocTypeMismatch",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report misuse of type hints.`,
+			Before:   `function f(array $a) {}`,
+			After: `/**
+ * @param mixed[] $a
+ */
+function f(array $a) {}`,
+		},
+
+		{
 			Name:     "argsOrder",
 			Default:  true,
 			Quickfix: false,

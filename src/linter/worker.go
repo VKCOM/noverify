@@ -14,6 +14,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/VKCOM/noverify/src/solver"
 	"github.com/quasilyte/regex/syntax"
 	"github.com/z7zmey/php-parser/pkg/ast"
 	"github.com/z7zmey/php-parser/pkg/conf"
@@ -283,6 +284,26 @@ func (w *Worker) analyzeFile(file *workspace.File, rootNode *ir.Root) (*rootWalk
 
 		allowDisabledRegexp: w.AllowDisable,
 		checkersFilter:      w.checkersFilter,
+	}
+
+	walker.compatible = types.Compatible{
+		ClassDataProvider: func(name string) (types.ClassData, bool) {
+			fqn, ok := solver.GetClassName(walker.ctx.st, &ir.Name{Value: name})
+			if !ok {
+				return types.ClassData{}, false
+			}
+
+			info, ok := walker.metaInfo().GetClass(fqn)
+			if !ok {
+				return types.ClassData{}, false
+			}
+
+			return types.ClassData{
+				Name:       info.Name,
+				Parent:     info.Parent,
+				Interfaces: info.Interfaces,
+			}, true
+		},
 	}
 
 	walker.InitCustom()

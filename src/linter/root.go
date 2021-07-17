@@ -72,6 +72,8 @@ type rootWalker struct {
 	config *Config
 
 	checkersFilter *CheckersFilter
+
+	compatible types.Compatible
 }
 
 // InitCustom is needed to initialize walker state
@@ -1801,6 +1803,21 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	actualReturnTypes := funcInfo.returnTypes
 	exitFlags := funcInfo.prematureExitFlags
 
+	if !phpDocReturnType.Empty() && !returnTypeHint.Empty() {
+		line := 0
+		for _, part := range fun.Doc.Parsed {
+			if part.Name() == "return" {
+				line = part.Line()
+			}
+		}
+		res := d.compatible.CompatibleTypes(phpDocReturnType, returnTypeHint)
+		if !res.IsCompatible {
+			d.ReportPHPDoc(
+				PHPDocLineField(fun, line, 1), LevelError,
+				"phpdocTypeMismatch", "Type '%s' from @return is incompatible with the type '%s' from native typehint", phpDocReturnType, returnTypeHint)
+		}
+	}
+
 	returnTypes := functionReturnType(phpDocReturnType, returnTypeHint, actualReturnTypes)
 
 	var funcFlags meta.FuncFlags
@@ -1858,6 +1875,11 @@ func (d *rootWalker) checkParamsTypeHint(funcName *ir.Identifier, funcParams par
 
 		if phpDocParamType, ok := phpDocParamTypes[param]; ok {
 			phpDocType = phpDocParamType.Typ
+		}
+
+		res := d.compatible.CompatibleTypes(typeHintType, phpDocType)
+		if !res.IsCompatible {
+			d.Report(funcName, LevelError, "phpdocTypeMismatch", res.Description)
 		}
 
 		if !d.typeHintHasMoreAccurateType(typeHintType, phpDocType) {
