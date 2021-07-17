@@ -11,7 +11,7 @@ import (
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
-func gitParseUntracked(l *linterRunner) []*linter.Report {
+func gitParseUntracked(l *LinterRunner) []*linter.Report {
 	if !l.flags.GitIncludeUntracked {
 		return nil
 	}
@@ -24,7 +24,7 @@ func gitParseUntracked(l *linterRunner) []*linter.Report {
 	return l.linter.AnalyzeFiles(workspace.ReadFilenames(filenames, nil, l.config.PhpExtensions))
 }
 
-func parseIndexOnlyFiles(l *linterRunner) {
+func parseIndexOnlyFiles(l *LinterRunner) {
 	if l.flags.IndexOnlyFiles == "" {
 		return
 	}
@@ -34,7 +34,7 @@ func parseIndexOnlyFiles(l *linterRunner) {
 
 // Not the best name, and not the best function signature.
 // Refactor this function whenever you get the idea how to separate logic better.
-func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []string) (oldReports, reports []*linter.Report, changes []git.Change, changeLog []git.Commit, ok bool) {
+func gitRepoComputeReportsFromCommits(l *LinterRunner, logArgs, diffArgs []string) (oldReports, reports []*linter.Report, changes []git.Change, changeLog []git.Commit, ok bool) {
 	// TODO(quasilyte): hard to replace fatalf with error return here. Use panicf for now.
 
 	changeLog, err := git.Log(l.flags.GitRepo, logArgs)
@@ -110,7 +110,7 @@ func gitRepoComputeReportsFromCommits(l *linterRunner, logArgs, diffArgs []strin
 	return oldReports, reports, changes, changeLog, true
 }
 
-func gitRepoComputeReportsFromLocalChanges(l *linterRunner) (oldReports, reports []*linter.Report, changes []git.Change, ok bool) {
+func gitRepoComputeReportsFromLocalChanges(l *LinterRunner) (oldReports, reports []*linter.Report, changes []git.Change, ok bool) {
 	// TODO(quasilyte): hard to replace fatalf with error return here. Use panicf for now.
 
 	if l.flags.GitWorkTree == "" {
@@ -156,7 +156,7 @@ func gitRepoComputeReportsFromLocalChanges(l *linterRunner) (oldReports, reports
 	return oldReports, reports, changes, true
 }
 
-func gitMain(l *linterRunner, cfg *MainConfig) (int, error) {
+func gitMain(l *LinterRunner, cfg *MainConfig) (int, error) {
 	var (
 		oldReports, reports []*linter.Report
 		diffArgs            []string
@@ -207,7 +207,7 @@ func gitMain(l *linterRunner, cfg *MainConfig) (int, error) {
 	return 0, nil
 }
 
-func analyzeGitAuthorsWhiteList(l *linterRunner, changeLog []git.Commit) (shouldRun bool) {
+func analyzeGitAuthorsWhiteList(l *LinterRunner, changeLog []git.Commit) (shouldRun bool) {
 	if l.flags.GitAuthorsWhitelist != "" {
 		whiteList := make(map[string]bool)
 		for _, name := range strings.Split(l.flags.GitAuthorsWhitelist, ",") {
@@ -225,7 +225,7 @@ func analyzeGitAuthorsWhiteList(l *linterRunner, changeLog []git.Commit) (should
 	return true
 }
 
-func prepareGitArgs(l *linterRunner) (logArgs, diffArgs []string, err error) {
+func prepareGitArgs(l *LinterRunner) (logArgs, diffArgs []string, err error) {
 	if l.flags.GitPushArg != "" {
 		args := strings.Fields(l.flags.GitPushArg)
 		if len(args) != 3 {
@@ -271,6 +271,6 @@ func prepareGitArgs(l *linterRunner) (logArgs, diffArgs []string, err error) {
 }
 
 // This function is a kludge to make old git-related code work without many modifications.
-func resetMetaInfo(l *linterRunner) {
+func resetMetaInfo(l *LinterRunner) {
 	l.linter = linter.NewLinter(l.config)
 }
