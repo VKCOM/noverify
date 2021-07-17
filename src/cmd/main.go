@@ -173,7 +173,7 @@ func mainNoExit(ctx *AppContext) (int, error) {
 	lint := ctx.MainConfig.linter
 	ruleSets := ctx.MainConfig.rulesSets
 
-	runner := linterRunner{
+	runner := LinterRunner{
 		config:         lint.Config(),
 		linter:         lint,
 		checkersFilter: linter.NewCheckersFilter(),
@@ -238,7 +238,7 @@ func mainNoExit(ctx *AppContext) (int, error) {
 	return 0, nil
 }
 
-func createBaseline(l *linterRunner, cfg *MainConfig, reports []*linter.Report) error {
+func createBaseline(l *LinterRunner, cfg *MainConfig, reports []*linter.Report) error {
 	var stats baseline.Stats
 	stats.CountPerCheck = make(map[string]int)
 
@@ -330,7 +330,7 @@ func haveAutofixableReports(config *linter.Config, reports []*linter.Report) boo
 	return false
 }
 
-func analyzeReports(l *linterRunner, cfg *MainConfig, diff []*linter.Report) (criticalReports, minorReports int, containsAutofixableReports bool) {
+func analyzeReports(l *LinterRunner, cfg *MainConfig, diff []*linter.Report) (criticalReports, minorReports int, containsAutofixableReports bool) {
 	filtered := make([]*linter.Report, 0, len(diff))
 
 	for _, r := range diff {

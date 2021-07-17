@@ -17,7 +17,7 @@ import (
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
-type linterRunner struct {
+type LinterRunner struct {
 	flags *ParsedFlags
 
 	linter         *linter.Linter
@@ -29,7 +29,7 @@ type linterRunner struct {
 	filenameFilter *workspace.FilenameFilter
 }
 
-func (l *linterRunner) collectGitIgnoreFiles() error {
+func (l *LinterRunner) collectGitIgnoreFiles() error {
 	l.filenameFilter = workspace.NewFilenameFilter(l.config.ExcludeRegex)
 
 	if !l.flags.Gitignore {
@@ -68,7 +68,7 @@ func (l *linterRunner) collectGitIgnoreFiles() error {
 	return nil
 }
 
-func (l *linterRunner) Init(ruleSets []*rules.Set, flags *ParsedFlags) error {
+func (l *LinterRunner) Init(ruleSets []*rules.Set, flags *ParsedFlags) error {
 	l.flags = flags
 
 	if err := l.collectGitIgnoreFiles(); err != nil {
@@ -115,7 +115,7 @@ func (l *linterRunner) Init(ruleSets []*rules.Set, flags *ParsedFlags) error {
 	return nil
 }
 
-func (l *linterRunner) addVendorFolderToIndex(flags *ParsedFlags) {
+func (l *LinterRunner) addVendorFolderToIndex(flags *ParsedFlags) {
 	if flags.IgnoreVendor {
 		return
 	}
@@ -152,7 +152,7 @@ func (l *linterRunner) addVendorFolderToIndex(flags *ParsedFlags) {
 	}
 }
 
-func (l *linterRunner) initBaseline() error {
+func (l *LinterRunner) initBaseline() error {
 	if l.flags.Baseline == "" {
 		return nil
 	}
@@ -170,7 +170,7 @@ func (l *linterRunner) initBaseline() error {
 	return nil
 }
 
-func (l *linterRunner) compileRegexes() error {
+func (l *LinterRunner) compileRegexes() error {
 	if l.flags.ReportsExclude != "" {
 		var err error
 		l.config.ExcludeRegex, err = regexp.Compile(l.flags.ReportsExclude)
@@ -208,7 +208,7 @@ func (l *linterRunner) compileRegexes() error {
 	return nil
 }
 
-func (l *linterRunner) initCheckMappings(ruleSets []*rules.Set) *linter.CheckersFilter {
+func (l *LinterRunner) initCheckMappings(ruleSets []*rules.Set) *linter.CheckersFilter {
 	stringToSet := func(s string) map[string]bool {
 		set := make(map[string]bool)
 		for _, name := range strings.Split(s, ",") {
@@ -250,7 +250,7 @@ func (l *linterRunner) initCheckMappings(ruleSets []*rules.Set) *linter.Checkers
 	return l.checkersFilter
 }
 
-func (l *linterRunner) initRules(ruleSets []*rules.Set) error {
+func (l *LinterRunner) initRules(ruleSets []*rules.Set) error {
 	ruleFilter := func(r rules.Rule) bool {
 		return l.checkersFilter.IsEnabledCheck(r.Name)
 	}
