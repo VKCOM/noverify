@@ -83,6 +83,17 @@ type CompatibleResult struct {
 	Description string
 }
 
+func (cr CompatibleResult) ToMessageForPHPDoc(from string) string {
+	message := "%s type '%s' is incompatible with type '%s' from typehint"
+
+	T2String := cr.T2.String()
+	if cr.T2.Is("mixed[]") {
+		T2String = "array"
+	}
+
+	return fmt.Sprintf(message, from, cr.T1, T2String)
+}
+
 func (c *Compatible) CompatibleTypes(t1, t2 Map) CompatibleResult {
 	res := compatibleTypes(t1, t2, c)
 	res.T1 = t1
@@ -208,7 +219,19 @@ func compatibleOneWithMany(t1 Map, t2 Map, c *Compatible) (res CompatibleResult,
 			}, false
 		}
 
-		return CompatibleResult{IsCompatible: false}, false
+		// If type T1 is compatible with all types from T2.
+		compatibleWithAll := true
+		T1Typ := t1.String()
+		t2.Iterate(func(T2Typ string) {
+			res = compatibleType(T1Typ, T2Typ, c)
+			if !res.IsCompatible {
+				compatibleWithAll = false
+			}
+		})
+
+		return CompatibleResult{
+			IsCompatible: compatibleWithAll,
+		}, false
 	}
 
 	var compatibleWithOne bool
@@ -422,8 +445,8 @@ func compatibleClass(t1 string, t2 string, c *Compatible) (res CompatibleResult,
 		return res, false
 	}
 
-	if IsClass(t1) {
-		if t2 == "object" {
+	if IsClass(t1) || t1 == "object" {
+		if t2 == "object" || IsClass(t2) {
 			return CompatibleResult{IsCompatible: true}, false
 		}
 
@@ -432,8 +455,8 @@ func compatibleClass(t1 string, t2 string, c *Compatible) (res CompatibleResult,
 		}, false
 	}
 
-	if IsClass(t2) {
-		if t1 == "object" {
+	if IsClass(t2) || t2 == "object" {
+		if t1 == "object" || IsClass(t1) {
 			return CompatibleResult{IsCompatible: true}, false
 		}
 

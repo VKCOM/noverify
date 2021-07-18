@@ -1803,21 +1803,34 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	actualReturnTypes := funcInfo.returnTypes
 	exitFlags := funcInfo.prematureExitFlags
 
-	if !phpDocReturnType.Empty() && !returnTypeHint.Empty() {
-		line := 0
-		for _, part := range fun.Doc.Parsed {
-			if part.Name() == "return" {
-				line = part.Line()
+	if d.metaInfo().IsIndexingComplete() {
+		if !phpDocReturnType.IsResolved() {
+			phpDocReturnType = types.NewMapFromMap(
+				solver.ResolveTypes(d.metaInfo(), d.ctx.st.CurrentClass, phpDocReturnType, solver.ResolverMap{}),
+			)
+		}
+		if !returnTypeHint.IsResolved() {
+			returnTypeHint = types.NewMapFromMap(
+				solver.ResolveTypes(d.metaInfo(), d.ctx.st.CurrentClass, returnTypeHint, solver.ResolverMap{}),
+			)
+		}
+
+		if !phpDocReturnType.Empty() && !returnTypeHint.Empty() {
+			line := 0
+			for _, part := range fun.Doc.Parsed {
+				if part.Name() == "return" {
+					line = part.Line()
+				}
 			}
+			d.typeComparator.UnionStrict = true
+			res := d.typeComparator.CompatibleTypes(phpDocReturnType, returnTypeHint)
+			if !res.IsCompatible {
+				d.ReportPHPDoc(
+					PHPDocLineField(fun, line, 1), LevelError,
+					"phpdocTypeMismatch", res.ToMessageForPHPDoc("@return"))
+			}
+			d.typeComparator.UnionStrict = false
 		}
-		d.typeComparator.UnionStrict = true
-		res := d.typeComparator.CompatibleTypes(phpDocReturnType, returnTypeHint)
-		if !res.IsCompatible {
-			d.ReportPHPDoc(
-				PHPDocLineField(fun, line, 1), LevelError,
-				"phpdocTypeMismatch", "Type '%s' from @return is incompatible with the type '%s' from native typehint", phpDocReturnType, returnTypeHint)
-		}
-		d.typeComparator.UnionStrict = false
 	}
 
 	returnTypes := functionReturnType(phpDocReturnType, returnTypeHint, actualReturnTypes)

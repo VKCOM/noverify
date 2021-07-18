@@ -255,6 +255,14 @@ func TestCompatible(t *testing.T) {
 			Ok: true,
 		},
 		{
+			T1: `object`,
+			T2: `int`,
+			Ok: false,
+			Result: CompatibleResult{
+				ClassAndNotClass: true,
+			},
+		},
+		{
 			T1: `\SimpleClassWithSimpleIface`,
 			T2: `\SimpleIface`,
 			Ok: true,
@@ -463,6 +471,14 @@ func TestCompatible(t *testing.T) {
 			UnionStrict:  true,
 			MaxUnionSize: 3,
 		},
+		{
+			T1: `mixed[]`,
+			T2: `mixed[]|mixed`,
+			Ok: true,
+
+			UnionStrict: true,
+		},
+
 		// Nullable.
 		{
 			T1: `int`,
@@ -590,6 +606,9 @@ func TestCompatible(t *testing.T) {
 		map1 := NewMap(testCase.T1)
 		map2 := NewMap(testCase.T2)
 
+		resolveArray(&map1)
+		resolveArray(&map2)
+
 		testCase.Result.IsCompatible = testCase.Ok
 
 		comparator.UnionStrict = testCase.UnionStrict
@@ -602,6 +621,25 @@ func TestCompatible(t *testing.T) {
 		if !cmp.Equal(result, testCase.Result, cmpopts.IgnoreTypes(NewMap(""))) {
 			log.Printf("Case #%d:\nT1: %s\nT2: %s\n", i, map1, map2)
 			assert.DeepEqual(t, result, testCase.Result, cmpopts.IgnoreTypes(NewMap("")))
+		}
+	}
+}
+
+func resolveArray(map1 *Map) {
+	for typ := range map1.m {
+		if typ == "" {
+			continue
+		}
+		if typ[0] == WArrayOf {
+			map1.m[UnwrapArrayOf(typ)+"[]"] = struct{}{}
+		}
+	}
+	for typ := range map1.m {
+		if typ == "" {
+			continue
+		}
+		if typ[0] == WArrayOf {
+			delete(map1.m, typ)
 		}
 	}
 }
