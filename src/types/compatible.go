@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"strings"
 )
 
 type ClassData struct {
@@ -13,9 +12,13 @@ type ClassData struct {
 }
 
 type Compatible struct {
-	// Checks that T2 is compatible with at least one type of T1.
-	// Otherwise, the union types must match strictly.
-	OneInMany bool
+	// Since our type system cannot yet accurately express complex types,
+	// it can be dangerous to check for large unions.
+	// This field sets the maximum size for the union to be checked.
+	// If the union is greater, then by default the types are considered compatible.
+	MaxUnionSize int
+	// Checks that the T1 type union is completely equal to the T2 type union.
+	UnionStrict bool
 
 	ClassDataProvider func(name string) (ClassData, bool)
 }
@@ -35,6 +38,9 @@ type CompatibleResult struct {
 	ExtraNullable bool
 	// If T1 is int, and T2 is ?int
 	LostNullable bool
+
+	// If T1 is null, and T2 is not nullable
+	NullToNotNullable bool
 
 	// If T1 is float, and T2 is int
 	FloatInt bool
@@ -70,6 +76,9 @@ type CompatibleResult struct {
 	// If T1 is Not Class, and T2 is Class
 	NotClassAndClass bool
 
+	// If T1 is Union<P, P1>, and T2 is union<Z, Z1>
+	UnionNotInOtherUnion bool
+
 	// All relationships from T1 to T2.
 	Description string
 }
@@ -99,15 +108,10 @@ func compatibleTypes(t1, t2 Map, c *Compatible) (res CompatibleResult) {
 		return res
 	}
 
-	// res = compatibleOneWithMany(t1, t2, c)
-	// if !res.IsCompatible {
-	// 	return res
-	// }
-	//
-	// res = compatibleOneWithMany(t2, t1, c)
-	// if !res.IsCompatible {
-	// 	return res
-	// }
+	res, needNext = compatibleOneWithMany(t1, t2, c)
+	if !needNext {
+		return res
+	}
 
 	res = compatibleManyWithMany(t1, t2, c)
 	if !res.IsCompatible {
@@ -118,45 +122,48 @@ func compatibleTypes(t1, t2 Map, c *Compatible) (res CompatibleResult) {
 }
 
 func compatibleManyWithMany(t1 Map, t2 Map, c *Compatible) (res CompatibleResult) {
-	if t1.Contains("null") && !t2.Contains("null") {
-		return CompatibleResult{
-			ExtraNullable: true,
-			Description:   fmt.Sprintf("cannot use nullable %s as %s", t1, t2),
-		}
+	if t1.Len() > c.MaxUnionSize || t2.Len() > c.MaxUnionSize {
+		return CompatibleResult{IsCompatible: true}
 	}
-	if !t1.Contains("null") && t2.Contains("null") {
-		return CompatibleResult{
-			LostNullable: true,
-			Description:  fmt.Sprintf("cannot use %s as nullable %s", t1, t2),
+
+	if c.UnionStrict {
+		if t1.Contains("null") && !t2.Contains("null") {
+			return CompatibleResult{
+				ExtraNullable: true,
+			}
+		}
+		if !t1.Contains("null") && t2.Contains("null") {
+			return CompatibleResult{
+				LostNullable: true,
+			}
+		}
+
+		if t1.String() != t2.String() {
+			return CompatibleResult{
+				IsCompatible: false,
+			}
 		}
 	}
 
-	if c.OneInMany {
-		var compatibleWithOne bool
+	// Each T2 type must have a compatible T1 type.
+	compatibleAll := true
+	t2.Iterate(func(T2Typ string) {
+		compatible := false
 
 		t1.Iterate(func(T1Typ string) {
-			if compatibleWithOne {
-				return
+			res := c.CompatibleType(T2Typ, T1Typ)
+			if res.IsCompatible {
+				compatible = true
 			}
-			t2.Iterate(func(T2Typ string) {
-				if compatibleWithOne {
-					return
-				}
-				res = compatibleType(T1Typ, T2Typ, c)
-				if res.IsCompatible {
-					compatibleWithOne = true
-				}
-			})
 		})
 
-		return CompatibleResult{
-			IsCompatible: compatibleWithOne,
-		}
-	}
+		compatibleAll = compatibleAll && compatible
+	})
 
-	if t1.Len() != t2.Len() {
+	if !compatibleAll {
 		return CompatibleResult{
-			Description: fmt.Sprintf("cannot use %s as %s", t1, t2),
+			UnionNotInOtherUnion: true,
+			IsCompatible:         false,
 		}
 	}
 
@@ -173,40 +180,57 @@ func compatibleOneWithOne(t1 Map, t2 Map, c *Compatible) (res CompatibleResult, 
 	return compatibleType(t1.String(), t2.String(), c), false
 }
 
-func compatibleOneWithMany(t1 Map, t2 Map, c *Compatible) (res CompatibleResult) {
-	if t1.Len() == 1 {
-		T1S := t1.String()
+func compatibleOneWithMany(t1 Map, t2 Map, c *Compatible) (res CompatibleResult, needNext bool) {
+	if t1.Len() != 1 {
+		return CompatibleResult{}, true
+	}
+	if t2.Len() > c.MaxUnionSize {
+		return CompatibleResult{IsCompatible: true}, false
+	}
 
-		if strings.Contains(T1S, "mixed") {
-			return CompatibleResult{IsCompatible: true}
+	if c.UnionStrict {
+		// If T1 is null and T2 is T|null
+		if t1.Is("null") && t2.Contains("null") {
+			return CompatibleResult{IsCompatible: true}, false
 		}
 
-		T2IsNullable := t2.Find(func(typ string) bool {
-			return typ == "null"
-		})
-		if T2IsNullable {
+		// If T1 is null and T2 is T|T... without null
+		if t1.Is("null") && !t2.Contains("null") {
 			return CompatibleResult{
-				Description: fmt.Sprintf("cannot use type %s as nullable type %s", T1S, t2.String()),
-			}
+				NullToNotNullable: true,
+			}, false
 		}
 
-		var compatibleWithOne bool
+		// T1 is not null and T2 is nullable
+		if t2.Contains("null") {
+			return CompatibleResult{
+				LostNullable: true,
+			}, false
+		}
 
-		t2.Iterate(func(typ string) {
-			res = compatibleType(T1S, typ, c)
+		return CompatibleResult{IsCompatible: false}, false
+	}
+
+	var compatibleWithOne bool
+
+	t1.Iterate(func(T1Typ string) {
+		if compatibleWithOne {
+			return
+		}
+		t2.Iterate(func(T2Typ string) {
+			if compatibleWithOne {
+				return
+			}
+			res = compatibleType(T1Typ, T2Typ, c)
 			if res.IsCompatible {
 				compatibleWithOne = true
 			}
 		})
+	})
 
-		if !compatibleWithOne {
-			return CompatibleResult{
-				Description: fmt.Sprintf("none of the possible types (%s) are compatible with %s", t2.String(), T1S),
-			}
-		}
-	}
-
-	return CompatibleResult{IsCompatible: true}
+	return CompatibleResult{
+		IsCompatible: compatibleWithOne,
+	}, false
 }
 
 func CompatibleType(t1, t2 string) CompatibleResult {
@@ -276,7 +300,7 @@ func compatibleType(t1, t2 string, c *Compatible) (res CompatibleResult) {
 	// 	return res
 	// }
 
-	return CompatibleResult{IsCompatible: true}
+	return res
 }
 
 func (c *Compatible) classExtendsClass(class, parent ClassData) bool {
@@ -296,11 +320,14 @@ func (c *Compatible) classExtendsClass(class, parent ClassData) bool {
 	return true
 }
 
-func (c *Compatible) classImplementInterface(class, iface ClassData) bool {
+func (c *Compatible) classImplementInterface(class, iface ClassData) (implement bool) {
 	if class.Parent != "" {
 		parent, ok := c.ClassDataProvider(class.Parent)
 		if ok {
-			return c.classImplementInterface(parent, iface)
+			implement = implement || c.classImplementInterface(parent, iface)
+			if implement {
+				return true
+			}
 		}
 	}
 
@@ -311,7 +338,10 @@ func (c *Compatible) classImplementInterface(class, iface ClassData) bool {
 
 		parentInterface, ok := c.ClassDataProvider(classInterface)
 		if ok {
-			return c.classImplementInterface(parentInterface, iface)
+			implement = implement || c.classImplementInterface(parentInterface, iface)
+			if implement {
+				return true
+			}
 		}
 	}
 

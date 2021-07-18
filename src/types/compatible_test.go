@@ -13,6 +13,9 @@ type TestCase struct {
 	T1, T2 string
 	Result CompatibleResult
 	Ok     bool
+
+	MaxUnionSize int
+	UnionStrict  bool
 }
 
 func TestCompatible(t *testing.T) {
@@ -229,6 +232,11 @@ func TestCompatible(t *testing.T) {
 			T2: "mixed",
 			Ok: true,
 		},
+		{
+			T1: `\DerivedClassFromBaseClass[]`,
+			T2: `\BaseClass[]`,
+			Ok: true,
+		},
 
 		// Classes.
 		{
@@ -311,6 +319,22 @@ func TestCompatible(t *testing.T) {
 				ClassAndInterface: true,
 			},
 		},
+		{
+			T1: `\DerivedClassWithSimpleAndIfaceClassWithDerivedIface`,
+			T2: `\SimpleIface`,
+			Ok: true,
+			Result: CompatibleResult{
+				ClassAndInterface: true,
+			},
+		},
+		{
+			T1: `\SimpleIface`,
+			T2: `\DerivedClassWithSimpleAndIfaceClassWithDerivedIface`,
+			Ok: true,
+			Result: CompatibleResult{
+				InterfaceAndClass: true,
+			},
+		},
 
 		// Extends.
 		{
@@ -351,6 +375,138 @@ func TestCompatible(t *testing.T) {
 			Result: CompatibleResult{
 				NotClassAndClass: true,
 			},
+		},
+
+		// Unions;
+		// The T2 type must be part of the T1 type.
+		{
+			T1: `int|string`,
+			T2: `int`,
+			Ok: true,
+		},
+		{
+			T1: `int|string`,
+			T2: `int|string`,
+			Ok: true,
+		},
+		{
+			T1: `int|string`,
+			T2: `float|string`,
+			Ok: false,
+			Result: CompatibleResult{
+				UnionNotInOtherUnion: true,
+			},
+		},
+		// See Compatible.UnionStrict
+		{
+			T1: `int|null`,
+			T2: `int`,
+			Ok: true,
+		},
+
+		// Type T1 has a size of 3, so we do not check, as with
+		// the current type system this can lead to a large number
+		// of false positives.
+		{
+			T1:           `int|null|string`,
+			T2:           `float|string`,
+			Ok:           true,
+			MaxUnionSize: 2,
+		},
+		{
+			T1: `int|bool|string`,
+			T2: `float|string`,
+			Ok: false,
+			Result: CompatibleResult{
+				UnionNotInOtherUnion: true,
+			},
+			MaxUnionSize: 3,
+		},
+
+		// Union strict.
+		// Union types T1 and T2 must match exactly.
+		{
+			T1: `int|string`,
+			T2: `int|string`,
+			Ok: true,
+
+			UnionStrict: true,
+		},
+		{
+			T1: `\Foo|string`,
+			T2: `\Foo|string`,
+			Ok: true,
+
+			UnionStrict: true,
+		},
+		// See MaxUnionSize.
+		{
+			T1: `\Foo|string|bool`,
+			T2: `\Foo|string`,
+			Ok: true,
+
+			UnionStrict: true,
+		},
+		{
+			T1: `\Foo|string|bool`,
+			T2: `\Foo|string|bool`,
+			Ok: true,
+
+			UnionStrict:  true,
+			MaxUnionSize: 3,
+		},
+		{
+			T1: `\Foo|string|bool`,
+			T2: `\Foo|string`,
+			Ok: false,
+
+			UnionStrict:  true,
+			MaxUnionSize: 3,
+		},
+		// Nullable.
+		{
+			T1: `int`,
+			T2: `int|string`,
+			Ok: false,
+
+			UnionStrict: true,
+		},
+
+		{
+			T1: `int|null`,
+			T2: `int`,
+			Ok: false,
+			Result: CompatibleResult{
+				ExtraNullable: true,
+			},
+			UnionStrict: true,
+		},
+		{
+			T2: `int|null`,
+			T1: `int`,
+			Ok: false,
+			Result: CompatibleResult{
+				LostNullable: true,
+			},
+			UnionStrict: true,
+		},
+
+		// Complex union.
+		{
+			T1: `\DerivedClassFromBaseClass|\BaseClass`,
+			T2: `\BaseClass`,
+			Ok: true,
+		},
+		{
+			T1: `\DerivedClassFromBaseClass|\BaseClass2`,
+			T2: `\BaseClass`,
+			Ok: true,
+		},
+		{
+			T1:          `\DerivedClassFromBaseClass|\BaseClass2`,
+			T2:          `\DerivedClassFromBaseClass|\BaseClass`,
+			Ok:          false,
+			UnionStrict: true,
 		},
 	}
 
@@ -410,6 +566,12 @@ func TestCompatible(t *testing.T) {
 			Name:   `\DerivedClassWithClassWithDerivedIface`,
 			Parent: `\BaseClassWithDerivedIface`,
 		},
+
+		{
+			Name:       `\DerivedClassWithSimpleAndIfaceClassWithDerivedIface`,
+			Parent:     `\BaseClassWithDerivedIface`,
+			Interfaces: map[string]struct{}{`\SimpleIface`: {}},
+		},
 	}
 
 	comparator := Compatible{
@@ -429,6 +591,12 @@ func TestCompatible(t *testing.T) {
 		map2 := NewMap(testCase.T2)
 
 		testCase.Result.IsCompatible = testCase.Ok
+
+		comparator.UnionStrict = testCase.UnionStrict
+		comparator.MaxUnionSize = testCase.MaxUnionSize
+		if comparator.MaxUnionSize == 0 {
+			comparator.MaxUnionSize = 2
+		}
 
 		result := comparator.CompatibleTypes(map1, map2)
 		if !cmp.Equal(result, testCase.Result, cmpopts.IgnoreTypes(NewMap(""))) {

@@ -73,7 +73,7 @@ type rootWalker struct {
 
 	checkersFilter *CheckersFilter
 
-	compatible types.Compatible
+	typeComparator types.Compatible
 }
 
 // InitCustom is needed to initialize walker state
@@ -1810,12 +1810,14 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 				line = part.Line()
 			}
 		}
-		res := d.compatible.CompatibleTypes(phpDocReturnType, returnTypeHint)
+		d.typeComparator.UnionStrict = true
+		res := d.typeComparator.CompatibleTypes(phpDocReturnType, returnTypeHint)
 		if !res.IsCompatible {
 			d.ReportPHPDoc(
 				PHPDocLineField(fun, line, 1), LevelError,
 				"phpdocTypeMismatch", "Type '%s' from @return is incompatible with the type '%s' from native typehint", phpDocReturnType, returnTypeHint)
 		}
+		d.typeComparator.UnionStrict = false
 	}
 
 	returnTypes := functionReturnType(phpDocReturnType, returnTypeHint, actualReturnTypes)
@@ -1877,10 +1879,10 @@ func (d *rootWalker) checkParamsTypeHint(funcName *ir.Identifier, funcParams par
 			phpDocType = phpDocParamType.Typ
 		}
 
-		res := d.compatible.CompatibleTypes(typeHintType, phpDocType)
-		if !res.IsCompatible {
-			d.Report(funcName, LevelError, "phpdocTypeMismatch", res.Description)
-		}
+		// res := d.typeComparator.CompatibleTypes(typeHintType, phpDocType)
+		// if !res.IsCompatible {
+		// 	d.Report(funcName, LevelError, "phpdocTypeMismatch", res.Description)
+		// }
 
 		if !d.typeHintHasMoreAccurateType(typeHintType, phpDocType) {
 			d.Report(funcName, LevelNotice, "typeHint", "Specify the type for the parameter $%s in PHPDoc, 'array' type hint too generic", param)

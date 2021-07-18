@@ -286,7 +286,8 @@ func (w *Worker) analyzeFile(file *workspace.File, rootNode *ir.Root) (*rootWalk
 		checkersFilter:      w.checkersFilter,
 	}
 
-	walker.compatible = types.Compatible{
+	walker.typeComparator = types.Compatible{
+		MaxUnionSize: 3,
 		ClassDataProvider: func(name string) (types.ClassData, bool) {
 			fqn, ok := solver.GetClassName(walker.ctx.st, &ir.Name{Value: name})
 			if !ok {
