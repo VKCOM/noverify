@@ -65,6 +65,9 @@ func (i *Info) Clone() *Info {
 	for key, value := range i.allFunctions.H {
 		info.allFunctions.H[key] = value
 	}
+	for key, value := range i.allConstants {
+		info.allConstants[key] = value
+	}
 	for key, value := range i.allFunctionsOverrides {
 		info.allFunctionsOverrides[key] = value
 	}
