@@ -2255,9 +2255,11 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 
-		out.Arms = make([]*ir.MatchArm, 0, len(n.Arms))
-		for _, arm := range n.Arms {
-			out.Arms = append(out.Arms, c.convNode(arm).(*ir.MatchArm))
+		if n.Arms != nil {
+			out.Arms = make([]*ir.MatchArm, 0, len(n.Arms))
+			for _, arm := range n.Arms {
+				out.Arms = append(out.Arms, c.convNode(arm).(*ir.MatchArm))
+			}
 		}
 
 		out.SeparatorTkns = n.SeparatorTkns
@@ -2274,8 +2276,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 		out.DefaultTkn = n.DefaultTkn
 		out.DefaultCommaTkn = n.DefaultCommaTkn
-		for _, expr := range n.Exprs {
-			out.Exprs = append(out.Exprs, c.convNode(expr))
+
+		if n.Exprs != nil {
+			out.Exprs = make([]ir.Node, 0, len(n.Exprs))
+			for _, expr := range n.Exprs {
+				out.Exprs = append(out.Exprs, c.convNode(expr))
+			}
 		}
 		out.SeparatorTkns = n.SeparatorTkns
 		out.DoubleArrowTkn = n.DoubleArrowTkn

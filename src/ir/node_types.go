@@ -795,7 +795,7 @@ type Nullable struct {
 
 // Parameter is a function param declaration.
 // Possible syntax's:
-//   #[$AttrGroups] $Modifiers $VariableType $Variable = $DefaultValue
+//   #[$AttrGroups] $Modifiers  $VariableType $Variable = $DefaultValue
 //   #[$AttrGroups]             $VariableType $Variable = $DefaultValue
 //                              $VariableType $Variable = $DefaultValue
 //                              $VariableType $Variable
@@ -953,7 +953,7 @@ type ClassStmt struct {
 	Class
 }
 
-// ClassConstListStmt is a `#[AttrGroups] $Modifiers... const $Consts...` statement.
+// ClassConstListStmt is a `#[$AttrGroups] $Modifiers... const $Consts...` statement.
 // $Modifiers may specify the constant access level.
 // Every element in $Consts is a *ConstantStmt.
 type ClassConstListStmt struct {
