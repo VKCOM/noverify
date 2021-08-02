@@ -1,7 +1,7 @@
 package irutil
 
 import (
-	"github.com/z7zmey/php-parser/pkg/token"
+	"github.com/VKCOM/php-parser/pkg/token"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irfmt"
