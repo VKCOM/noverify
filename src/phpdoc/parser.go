@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/z7zmey/php-parser/pkg/token"
+	"github.com/VKCOM/php-parser/pkg/token"
 )
 
 type Comment struct {

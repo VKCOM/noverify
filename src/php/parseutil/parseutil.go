@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/z7zmey/php-parser/pkg/ast"
-	"github.com/z7zmey/php-parser/pkg/conf"
-	phperrors "github.com/z7zmey/php-parser/pkg/errors"
-	"github.com/z7zmey/php-parser/pkg/parser"
-	"github.com/z7zmey/php-parser/pkg/version"
+	"github.com/VKCOM/php-parser/pkg/ast"
+	"github.com/VKCOM/php-parser/pkg/conf"
+	phperrors "github.com/VKCOM/php-parser/pkg/errors"
+	"github.com/VKCOM/php-parser/pkg/parser"
+	"github.com/VKCOM/php-parser/pkg/version"
 )
 
 // Parse combines ParseFile and ParseStmt.

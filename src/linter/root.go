@@ -11,8 +11,8 @@ import (
 
 	"github.com/VKCOM/noverify/src/phpdoctypes"
 	"github.com/VKCOM/noverify/src/utils"
-	"github.com/z7zmey/php-parser/pkg/position"
-	"github.com/z7zmey/php-parser/pkg/token"
+	"github.com/VKCOM/php-parser/pkg/position"
+	"github.com/VKCOM/php-parser/pkg/token"
 
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/constfold"
