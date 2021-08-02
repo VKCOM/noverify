@@ -3,7 +3,7 @@ package ir
 
 import (
 	"fmt"
-	"github.com/z7zmey/php-parser/pkg/position"
+	"github.com/VKCOM/php-parser/pkg/position"
 )
 
 func GetPosition(n Node) *position.Position {
@@ -49,6 +49,8 @@ func GetPosition(n Node) *position.Position {
 	case *AssignShiftLeft:
 		return n.Position
 	case *AssignShiftRight:
+		return n.Position
+	case *Attribute:
 		return n.Position
 	case *BadString:
 		return n.Position
@@ -192,6 +194,10 @@ func GetPosition(n Node) *position.Position {
 		return n.Position
 	case *MagicConstant:
 		return n.Position
+	case *MatchArm:
+		return n.Position
+	case *MatchExpr:
+		return n.Position
 	case *MethodCallExpr:
 		return n.Position
 	case *MinusExpr:
@@ -213,6 +219,10 @@ func GetPosition(n Node) *position.Position {
 	case *NotIdenticalExpr:
 		return n.Position
 	case *Nullable:
+		return n.Position
+	case *NullsafeMethodCallExpr:
+		return n.Position
+	case *NullsafePropertyFetchExpr:
 		return n.Position
 	case *Parameter:
 		return n.Position
@@ -274,6 +284,8 @@ func GetPosition(n Node) *position.Position {
 		return n.Position
 	case *TernaryExpr:
 		return n.Position
+	case *ThrowExpr:
+		return n.Position
 	case *ThrowStmt:
 		return n.Position
 	case *TraitAdaptationListStmt:
@@ -295,6 +307,8 @@ func GetPosition(n Node) *position.Position {
 	case *UnaryMinusExpr:
 		return n.Position
 	case *UnaryPlusExpr:
+		return n.Position
+	case *Union:
 		return n.Position
 	case *UnsetCastExpr:
 		return n.Position
