@@ -67,12 +67,14 @@ func (g *genGetFirstToken) writeGet(w *bytes.Buffer, pkg *packageData, typ *type
 			// Do nothing.
 		case "github.com/VKCOM/noverify/src/phpdoc.Comment":
 			// Do nothing.
-		case "ir.Class":
+		case "ir.String", "ir.Class":
 			// Do nothing.
 		default:
 			if strings.HasPrefix(typeString, "[]") {
-				fmt.Fprintf(w, "    if n.%s[0] != nil {\n", field.Name())
-				fmt.Fprintf(w, "        return GetFirstToken(n.%s[0])\n", field.Name())
+				fmt.Fprintf(w, "    if n.%s != nil {\n", field.Name())
+				fmt.Fprintf(w, "        if n.%s[0] != nil {\n", field.Name())
+				fmt.Fprintf(w, "            return GetFirstToken(n.%s[0])\n", field.Name())
+				fmt.Fprintf(w, "        }\n")
 				fmt.Fprintf(w, "    }\n")
 				continue
 			}
