@@ -583,6 +583,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenBracketTkn = n.OpenBracketTkn
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseBracketTkn = n.CloseBracketTkn
+
 		{
 			slice := make([]*ir.ArrayItemExpr, len(n.Items))
 			for i := range n.Items {
@@ -590,6 +591,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			}
 			out.Items = slice
 		}
+
 		out.ShortSyntax = !hasValue(n.ArrayTkn)
 		return out
 
@@ -901,6 +903,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenBracketTkn = n.OpenBracketTkn
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseBracketTkn = n.CloseBracketTkn
+
 		{
 			slice := make([]*ir.ArrayItemExpr, len(n.Items))
 			for i := range n.Items {
@@ -908,6 +911,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			}
 			out.Items = slice
 		}
+
 		out.ShortSyntax = !hasValue(n.ListTkn)
 		return out
 
@@ -1220,7 +1224,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			out.AttrGroups = slice
 		}
 
-		{
+		if n.Modifiers != nil {
 			slice := make([]*ir.Identifier, len(n.Modifiers))
 			for i := range n.Modifiers {
 				slice[i] = c.convNode(n.Modifiers[i]).(*ir.Identifier)
@@ -1450,7 +1454,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.ConstTkn = n.ConstTkn
 		out.SeparatorTkns = n.SeparatorTkns
 		out.SemiColonTkn = n.SemiColonTkn
-		{
+
+		if n.Modifiers != nil {
 			slice := make([]*ir.Identifier, len(n.Modifiers))
 			for i := range n.Modifiers {
 				slice[i] = c.convNode(n.Modifiers[i]).(*ir.Identifier)
@@ -1493,13 +1498,15 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Doc = c.getPhpDoc(tokenWithDoc)
 
 		out.MethodName = c.convNode(n.Name).(*ir.Identifier)
-		{
+
+		if n.Modifiers != nil {
 			slice := make([]*ir.Identifier, len(n.Modifiers))
 			for i := range n.Modifiers {
 				slice[i] = c.convNode(n.Modifiers[i]).(*ir.Identifier)
 			}
 			out.Modifiers = slice
 		}
+
 		out.Params = c.convNodeSlice(n.Params)
 		out.ReturnType = c.convNode(n.ReturnType)
 		out.Stmt = c.convNode(n.Stmt)
@@ -1974,7 +1981,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 		out.SeparatorTkns = n.SeparatorTkns
 		out.SemiColonTkn = n.SemiColonTkn
-		{
+
+		if n.Modifiers != nil {
 			slice := make([]*ir.Identifier, len(n.Modifiers))
 			for i := range n.Modifiers {
 				slice[i] = c.convNode(n.Modifiers[i]).(*ir.Identifier)
@@ -2462,6 +2470,7 @@ func (c *Converter) convClass(n *ast.StmtClass) ir.Node {
 		}
 		out.AttrGroups = slice
 	}
+
 	if n.Modifiers != nil {
 		slice := make([]*ir.Identifier, len(n.Modifiers))
 		for i := range n.Modifiers {
