@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/VKCOM/php-parser/pkg/version"
 
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/php-parser/pkg/version"
 )
 
 func Check(ctx *AppContext) (int, error) {
