@@ -14,13 +14,13 @@ noverify version
 
 You're done! Proceed to the [Getting started](/docs/getting_started.md) page.
 
-## With `go get`
+## With `go install`
 
 Make sure you have [Go](https://golang.org/dl/) version 1.16 or higher installed.  
 Run the following command:
 
 ```sh
-$ go install -u github.com/VKCOM/noverify
+$ go install github.com/VKCOM/noverify
 ```
 
 NoVerify will be installed to `$GOPATH/bin/noverify`, which usually expands to `$HOME/go/bin/noverify`.
