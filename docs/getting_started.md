@@ -50,14 +50,14 @@ This will lead to an errors:
 <critical> WARNING parentConstructor: Missing parent::__construct() call at swiftmailer/lib/classes/Swift/Attachment.php:27
     public function __construct($data = null, $filename = null, $contentType = null)
                     ^^^^^^^^^^^
-2021/07/08 16:13:19 Found 119 critical and 10 minor reports
+2021/07/08 16:13:19 Found 140 critical and 10 minor reports
 ```
 
 From the errors, you can understand on which lines NoVerify gives errors, and also understand what kind of error it is. Also, you may notice that the errors occurred in different files.
 
 This run will analyze all files from the `./lib` folder, and it will also index the `./vendor` folder and take function and class definitions from it for analyze.
 
-## Step 5 — let's try something
+## Step 4 — let's try something
 
 As you can see NoVerify found quite a few bugs.
 

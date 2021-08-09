@@ -56,9 +56,9 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.ArrowFunctionExpr:
 		clone := *x
 		{
-			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			sliceClone := make([]*ir.AttributeGroup, len(x.AttrGroups))
 			for i := range x.AttrGroups {
-				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			clone.AttrGroups = sliceClone
 		}
@@ -208,9 +208,19 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.Attribute:
 		clone := *x
 		if x.Name != nil {
-			clone.Name = NodeClone(x.Name).(*ir.Identifier)
+			clone.Name = NodeClone(x.Name)
 		}
 		clone.Args = NodeSliceClone(x.Args)
+		return &clone
+	case *ir.AttributeGroup:
+		clone := *x
+		{
+			sliceClone := make([]*ir.Attribute, len(x.Attrs))
+			for i := range x.Attrs {
+				sliceClone[i] = NodeClone(x.Attrs[i]).(*ir.Attribute)
+			}
+			clone.Attrs = sliceClone
+		}
 		return &clone
 	case *ir.BadString:
 		clone := *x
@@ -305,9 +315,9 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.ClassConstListStmt:
 		clone := *x
 		{
-			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			sliceClone := make([]*ir.AttributeGroup, len(x.AttrGroups))
 			for i := range x.AttrGroups {
-				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			clone.AttrGroups = sliceClone
 		}
@@ -333,9 +343,9 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.ClassMethodStmt:
 		clone := *x
 		{
-			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			sliceClone := make([]*ir.AttributeGroup, len(x.AttrGroups))
 			for i := range x.AttrGroups {
-				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			clone.AttrGroups = sliceClone
 		}
@@ -360,9 +370,9 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.ClassStmt:
 		clone := *x
 		{
-			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			sliceClone := make([]*ir.AttributeGroup, len(x.AttrGroups))
 			for i := range x.AttrGroups {
-				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			clone.AttrGroups = sliceClone
 		}
@@ -390,9 +400,9 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.ClosureExpr:
 		clone := *x
 		{
-			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			sliceClone := make([]*ir.AttributeGroup, len(x.AttrGroups))
 			for i := range x.AttrGroups {
-				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			clone.AttrGroups = sliceClone
 		}
@@ -587,9 +597,9 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.FunctionStmt:
 		clone := *x
 		{
-			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			sliceClone := make([]*ir.AttributeGroup, len(x.AttrGroups))
 			for i := range x.AttrGroups {
-				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			clone.AttrGroups = sliceClone
 		}
@@ -697,9 +707,9 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.InterfaceStmt:
 		clone := *x
 		{
-			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			sliceClone := make([]*ir.AttributeGroup, len(x.AttrGroups))
 			for i := range x.AttrGroups {
-				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			clone.AttrGroups = sliceClone
 		}
@@ -887,9 +897,9 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.Parameter:
 		clone := *x
 		{
-			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			sliceClone := make([]*ir.AttributeGroup, len(x.AttrGroups))
 			for i := range x.AttrGroups {
-				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			clone.AttrGroups = sliceClone
 		}
@@ -976,9 +986,9 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.PropertyListStmt:
 		clone := *x
 		{
-			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			sliceClone := make([]*ir.AttributeGroup, len(x.AttrGroups))
 			for i := range x.AttrGroups {
-				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			clone.AttrGroups = sliceClone
 		}
@@ -1157,9 +1167,9 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.TraitStmt:
 		clone := *x
 		{
-			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			sliceClone := make([]*ir.AttributeGroup, len(x.AttrGroups))
 			for i := range x.AttrGroups {
-				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			clone.AttrGroups = sliceClone
 		}

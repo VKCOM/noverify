@@ -73,7 +73,7 @@ func TestNormalizeStmtList(t *testing.T) {
 	}
 
 	conf := Config{}
-	l := linter.NewLinter(linter.NewConfig())
+	l := linter.NewLinter(linter.NewConfig("8.1"))
 	st := &meta.ClassParseState{Info: l.MetaInfo(), CurrentClass: `\Foo`}
 
 	for _, test := range tests {
@@ -145,7 +145,7 @@ func runNormalizeTests(t *testing.T, l *linter.Linter, tests []normalizationTest
 }
 
 func TestNormalizeExpr(t *testing.T) {
-	l := linter.NewLinter(linter.NewConfig())
+	l := linter.NewLinter(linter.NewConfig("8.1"))
 	runNormalizeTests(t, l, []normalizationTest{
 		{`new T`, `new T()`},
 
@@ -221,7 +221,7 @@ func TestNormalizeExpr(t *testing.T) {
 }
 
 func TestNormalizeExprAfterIndexing(t *testing.T) {
-	l := linter.NewLinter(linter.NewConfig())
+	l := linter.NewLinter(linter.NewConfig("8.1"))
 	linttest.ParseTestFile(t, l, "defs.php", `<?php
 const ZERO = 0;
 const HELLO_WORLD = 'hello, world';
@@ -242,7 +242,7 @@ class Foo {
 }
 
 func TestMagicConstFold(t *testing.T) {
-	l := linter.NewLinter(linter.NewConfig())
+	l := linter.NewLinter(linter.NewConfig("8.1"))
 	linttest.ParseTestFile(t, l, "files/file.php", `<?php
 namespace Boo;
 

@@ -304,6 +304,21 @@ func GetFirstToken(n Node) *token.Token {
 		if n.CloseParenthesisTkn != nil {
 			return n.CloseParenthesisTkn
 		}
+	case *AttributeGroup:
+		if n.OpenAttributeTkn != nil {
+			return n.OpenAttributeTkn
+		}
+		if n.Attrs != nil {
+			if n.Attrs[0] != nil {
+				return GetFirstToken(n.Attrs[0])
+			}
+		}
+		if len(n.SeparatorTkns) != 0 {
+			return n.SeparatorTkns[0]
+		}
+		if n.CloseAttributeTkn != nil {
+			return n.CloseAttributeTkn
+		}
 	case *BadString:
 	case *BitwiseAndExpr:
 		if n.Left != nil {

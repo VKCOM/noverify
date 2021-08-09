@@ -197,7 +197,7 @@ func TestGolden(t *testing.T) {
 
 	e2eSuite := linttest.NewGoldenE2ETestSuite(t)
 
-	var linterConfig = linter.NewConfig()
+	linterConfig := linter.NewConfig("8.1")
 	err := linttest.InitEmbeddedRules(linterConfig)
 	if err != nil {
 		t.Fatal(err)

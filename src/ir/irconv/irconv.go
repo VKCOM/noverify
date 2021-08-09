@@ -643,9 +643,9 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 
 		if n.AttrGroups != nil {
-			slice := make([]*ir.Attribute, len(n.AttrGroups))
+			slice := make([]*ir.AttributeGroup, len(n.AttrGroups))
 			for i := range n.AttrGroups {
-				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			out.AttrGroups = slice
 		}
@@ -728,9 +728,9 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 
 		if n.AttrGroups != nil {
-			slice := make([]*ir.Attribute, len(n.AttrGroups))
+			slice := make([]*ir.AttributeGroup, len(n.AttrGroups))
 			for i := range n.AttrGroups {
-				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			out.AttrGroups = slice
 		}
@@ -1217,9 +1217,9 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 
 		if n.AttrGroups != nil {
-			slice := make([]*ir.Attribute, len(n.AttrGroups))
+			slice := make([]*ir.AttributeGroup, len(n.AttrGroups))
 			for i := range n.AttrGroups {
-				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			out.AttrGroups = slice
 		}
@@ -1444,9 +1444,9 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 
 		if n.AttrGroups != nil {
-			slice := make([]*ir.Attribute, len(n.AttrGroups))
+			slice := make([]*ir.AttributeGroup, len(n.AttrGroups))
 			for i := range n.AttrGroups {
-				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			out.AttrGroups = slice
 		}
@@ -1475,9 +1475,9 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out := &ir.ClassMethodStmt{}
 		out.Position = n.Position
 		if n.AttrGroups != nil {
-			slice := make([]*ir.Attribute, len(n.AttrGroups))
+			slice := make([]*ir.AttributeGroup, len(n.AttrGroups))
 			for i := range n.AttrGroups {
-				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			out.AttrGroups = slice
 		}
@@ -1742,9 +1742,9 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out := &ir.FunctionStmt{}
 		out.Position = n.Position
 		if n.AttrGroups != nil {
-			slice := make([]*ir.Attribute, len(n.AttrGroups))
+			slice := make([]*ir.AttributeGroup, len(n.AttrGroups))
 			for i := range n.AttrGroups {
-				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			out.AttrGroups = slice
 		}
@@ -1893,9 +1893,9 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out := &ir.InterfaceStmt{}
 		out.Position = n.Position
 		if n.AttrGroups != nil {
-			slice := make([]*ir.Attribute, len(n.AttrGroups))
+			slice := make([]*ir.AttributeGroup, len(n.AttrGroups))
 			for i := range n.AttrGroups {
-				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			out.AttrGroups = slice
 		}
@@ -1997,9 +1997,9 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Doc = c.getPhpDoc(tokenWithDoc)
 
 		if n.AttrGroups != nil {
-			slice := make([]*ir.Attribute, len(n.AttrGroups))
+			slice := make([]*ir.AttributeGroup, len(n.AttrGroups))
 			for i := range n.AttrGroups {
-				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			out.AttrGroups = slice
 		}
@@ -2103,9 +2103,9 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out := &ir.TraitStmt{}
 		out.Position = n.Position
 		if n.AttrGroups != nil {
-			slice := make([]*ir.Attribute, len(n.AttrGroups))
+			slice := make([]*ir.AttributeGroup, len(n.AttrGroups))
 			for i := range n.AttrGroups {
-				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.AttributeGroup)
 			}
 			out.AttrGroups = slice
 		}
@@ -2315,11 +2315,31 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out := &ir.Attribute{}
 
 		out.Position = n.Position
-		out.Name = c.convNode(n.Name).(*ir.Identifier)
+		out.Name = c.convNode(n.Name)
 		out.OpenParenthesisTkn = n.OpenParenthesisTkn
 		out.Args = c.convNodeSlice(n.Args)
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
+		return out
+
+	case *ast.AttributeGroup:
+		if n == nil {
+			return (*ir.AttributeGroup)(nil)
+		}
+		out := &ir.AttributeGroup{}
+
+		out.Position = n.Position
+		out.OpenAttributeTkn = n.OpenAttributeTkn
+
+		if n.Attrs != nil {
+			out.Attrs = make([]*ir.Attribute, 0, len(n.Attrs))
+			for _, attr := range n.Attrs {
+				out.Attrs = append(out.Attrs, c.convNode(attr).(*ir.Attribute))
+			}
+		}
+
+		out.SeparatorTkns = n.SeparatorTkns
+		out.CloseAttributeTkn = n.CloseAttributeTkn
 		return out
 	}
 
@@ -2465,9 +2485,9 @@ func (c *Converter) convClass(n *ast.StmtClass) ir.Node {
 		ClassName:            c.convNode(n.Name).(*ir.Identifier),
 	}
 	if n.AttrGroups != nil {
-		slice := make([]*ir.Attribute, len(n.AttrGroups))
+		slice := make([]*ir.AttributeGroup, len(n.AttrGroups))
 		for i := range n.AttrGroups {
-			slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+			slice[i] = c.convNode(n.AttrGroups[i]).(*ir.AttributeGroup)
 		}
 		out.AttrGroups = slice
 	}

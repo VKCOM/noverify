@@ -66,11 +66,13 @@ type Config struct {
 	PhpVersion *version.Version
 }
 
-func NewConfig() *Config {
+func NewConfig(ver string) *Config {
 	reg := &CheckersRegistry{
 		info: map[string]CheckerInfo{},
 	}
-	phpVersion, _ := version.New("7.4")
+
+	phpVersion, _ := version.New(ver)
+
 	addBuiltinCheckers(reg)
 	return &Config{
 		SrcInput:       inputs.NewDefaultSourceInput(),

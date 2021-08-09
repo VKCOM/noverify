@@ -296,6 +296,16 @@ func (n *Attribute) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
+func (n *AttributeGroup) Walk(v Visitor) {
+	if !v.EnterNode(n) {
+		return
+	}
+	for _, nn := range n.Attrs {
+		nn.Walk(v)
+	}
+	v.LeaveNode(n)
+}
+
 func (n *BadString) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return

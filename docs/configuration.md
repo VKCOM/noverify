@@ -18,6 +18,7 @@ This page is dedicated to some technical details.
   * [How to make a check critical](#how-to-make-a-check-critical)
   * [How to change the cache directory](#how-to-change-the-cache-directory)
   * [How to disable caching](#how-to-disable-caching)
+  * [How to use PHP 7](#how-to-use-php-7)
 - [Hard level options](#hard-level-options)
   * [How to use dynamic rules](#how-to-use-dynamic_rules)
   * [How to use `baseline` mode](#how-to-use--baseline--mode)
@@ -230,6 +231,16 @@ It looks like this:
 ```shell
 nocolor check --disable-cache ./src
 ```
+
+### How to use PHP 7
+
+It looks like this:
+
+```shell
+nocolor check --php7 ./src
+```
+
+By default, all code is parsed as 8.1, however, some projects use names that have become reserved in PHP 8, so they need to be parsed as PHP 7.
 
 <p><br></p>
 
