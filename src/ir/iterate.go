@@ -2,7 +2,7 @@
 package ir
 
 import (
-	"github.com/z7zmey/php-parser/pkg/token"
+	"github.com/VKCOM/php-parser/pkg/token"
 )
 
 func (n *AnonClassExpr) IterateTokens(cb func(*token.Token) bool) {
@@ -29,6 +29,9 @@ func (n *AnonClassExpr) IterateTokens(cb func(*token.Token) bool) {
 }
 
 func (n *Argument) IterateTokens(cb func(*token.Token) bool) {
+	if !traverseToken(n.ColonTkn, cb) {
+		return
+	}
 	if !traverseToken(n.VariadicTkn, cb) {
 		return
 	}
@@ -194,13 +197,21 @@ func (n *AssignShiftRight) IterateTokens(cb func(*token.Token) bool) {
 	}
 }
 
+func (n *Attribute) IterateTokens(cb func(*token.Token) bool) {
+	if !traverseToken(n.OpenParenthesisTkn, cb) {
+		return
+	}
+	for _, tk := range n.SeparatorTkns {
+		if !traverseToken(tk, cb) {
+			return
+		}
+	}
+	if !traverseToken(n.CloseParenthesisTkn, cb) {
+		return
+	}
+}
+
 func (n *BadString) IterateTokens(cb func(*token.Token) bool) {
-	if !traverseToken(n.MinusTkn, cb) {
-		return
-	}
-	if !traverseToken(n.StringTkn, cb) {
-		return
-	}
 }
 
 func (n *BitwiseAndExpr) IterateTokens(cb func(*token.Token) bool) {
@@ -1000,6 +1011,46 @@ func (n *MagicConstant) IterateTokens(cb func(*token.Token) bool) {
 	}
 }
 
+func (n *MatchArm) IterateTokens(cb func(*token.Token) bool) {
+	if !traverseToken(n.DefaultTkn, cb) {
+		return
+	}
+	if !traverseToken(n.DefaultCommaTkn, cb) {
+		return
+	}
+	for _, tk := range n.SeparatorTkns {
+		if !traverseToken(tk, cb) {
+			return
+		}
+	}
+	if !traverseToken(n.DoubleArrowTkn, cb) {
+		return
+	}
+}
+
+func (n *MatchExpr) IterateTokens(cb func(*token.Token) bool) {
+	if !traverseToken(n.MatchTkn, cb) {
+		return
+	}
+	if !traverseToken(n.OpenParenthesisTkn, cb) {
+		return
+	}
+	if !traverseToken(n.CloseParenthesisTkn, cb) {
+		return
+	}
+	if !traverseToken(n.OpenCurlyBracketTkn, cb) {
+		return
+	}
+	for _, tk := range n.SeparatorTkns {
+		if !traverseToken(tk, cb) {
+			return
+		}
+	}
+	if !traverseToken(n.CloseCurlyBracketTkn, cb) {
+		return
+	}
+}
+
 func (n *MethodCallExpr) IterateTokens(cb func(*token.Token) bool) {
 	if !traverseToken(n.ObjectOperatorTkn, cb) {
 		return
@@ -1099,6 +1150,41 @@ func (n *NotIdenticalExpr) IterateTokens(cb func(*token.Token) bool) {
 
 func (n *Nullable) IterateTokens(cb func(*token.Token) bool) {
 	if !traverseToken(n.QuestionTkn, cb) {
+		return
+	}
+}
+
+func (n *NullsafeMethodCallExpr) IterateTokens(cb func(*token.Token) bool) {
+	if !traverseToken(n.ObjectOperatorTkn, cb) {
+		return
+	}
+	if !traverseToken(n.OpenCurlyBracketTkn, cb) {
+		return
+	}
+	if !traverseToken(n.CloseCurlyBracketTkn, cb) {
+		return
+	}
+	if !traverseToken(n.OpenParenthesisTkn, cb) {
+		return
+	}
+	for _, tk := range n.SeparatorTkns {
+		if !traverseToken(tk, cb) {
+			return
+		}
+	}
+	if !traverseToken(n.CloseParenthesisTkn, cb) {
+		return
+	}
+}
+
+func (n *NullsafePropertyFetchExpr) IterateTokens(cb func(*token.Token) bool) {
+	if !traverseToken(n.ObjectOperatorTkn, cb) {
+		return
+	}
+	if !traverseToken(n.OpenCurlyBracketTkn, cb) {
+		return
+	}
+	if !traverseToken(n.CloseCurlyBracketTkn, cb) {
 		return
 	}
 }
@@ -1370,6 +1456,15 @@ func (n *TernaryExpr) IterateTokens(cb func(*token.Token) bool) {
 	}
 }
 
+func (n *ThrowExpr) IterateTokens(cb func(*token.Token) bool) {
+	if !traverseToken(n.ThrowTkn, cb) {
+		return
+	}
+	if !traverseToken(n.SemiColonTkn, cb) {
+		return
+	}
+}
+
 func (n *ThrowStmt) IterateTokens(cb func(*token.Token) bool) {
 	if !traverseToken(n.ThrowTkn, cb) {
 		return
@@ -1473,6 +1568,14 @@ func (n *UnaryMinusExpr) IterateTokens(cb func(*token.Token) bool) {
 func (n *UnaryPlusExpr) IterateTokens(cb func(*token.Token) bool) {
 	if !traverseToken(n.PlusTkn, cb) {
 		return
+	}
+}
+
+func (n *Union) IterateTokens(cb func(*token.Token) bool) {
+	for _, tk := range n.SeparatorTkns {
+		if !traverseToken(tk, cb) {
+			return
+		}
 	}
 }
 

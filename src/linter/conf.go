@@ -5,8 +5,8 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/VKCOM/php-parser/pkg/version"
 	"github.com/client9/misspell"
-	"github.com/z7zmey/php-parser/pkg/version"
 
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/inputs"

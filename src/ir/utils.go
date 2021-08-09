@@ -1,6 +1,6 @@
 package ir
 
-import "github.com/z7zmey/php-parser/pkg/token"
+import "github.com/VKCOM/php-parser/pkg/token"
 
 // traverseToken calls the passed function with the passed token and
 // recursively traverse all FreeFloating of the passed token.

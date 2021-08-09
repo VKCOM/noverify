@@ -11,8 +11,8 @@ import (
 
 	"github.com/VKCOM/noverify/src/phpdoctypes"
 	"github.com/VKCOM/noverify/src/utils"
-	"github.com/z7zmey/php-parser/pkg/position"
-	"github.com/z7zmey/php-parser/pkg/token"
+	"github.com/VKCOM/php-parser/pkg/position"
+	"github.com/VKCOM/php-parser/pkg/token"
 
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/constfold"
@@ -592,6 +592,10 @@ type handleFuncResult struct {
 
 func (d *rootWalker) handleArrowFuncExpr(params []meta.FuncParam, expr ir.Node, sc *meta.Scope, parentBlockWalker *blockWalker) handleFuncResult {
 	b := newBlockWalker(d, sc)
+	for _, createFn := range d.customBlock {
+		b.custom = append(b.custom, createFn(&BlockContext{w: b}))
+	}
+
 	b.inArrowFunction = true
 	parentBlockWalker.parentBlockWalkers = append(parentBlockWalker.parentBlockWalkers, parentBlockWalker)
 	b.parentBlockWalkers = parentBlockWalker.parentBlockWalkers
