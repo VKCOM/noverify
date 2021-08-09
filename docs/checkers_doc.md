@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 85           | 76                        | 9                         | 11                 |
+| 86           | 76                        | 10                         | 11                 |
 ## Table of contents
  - Enabled by default
    - [`accessLevel` checker](#accesslevel-checker)
@@ -84,6 +84,7 @@
    - [`varShadow` checker](#varshadow-checker)
    - [`voidResultUsed` checker](#voidresultused-checker)
  - Disabled by default
+   - [`argsReverse` checker](#argsreverse-checker)
    - [`classMembersOrder` checker](#classmembersorder-checker)
    - [`deprecated` checker](#deprecated-checker)
    - [`langDeprecated` checker](#langdeprecated-checker)
@@ -1647,6 +1648,40 @@ $x = print_r($v, true);
 <p><br></p>
 
 ## Disabled
+
+### `argsReverse` checker
+
+#### Description
+
+Report using variables as arguments in reverse order.
+
+#### Non-compliant code:
+```php
+function makeHello(string $name, int $age) {
+  echo "Hello ${$name}-${$age}";
+}
+
+function main(): void {
+  $name = "John";
+  $age = 18;
+  makeHello($age, $name); // The name should come first, and then the age.
+}
+```
+
+#### Compliant code:
+```php
+function makeHello(string $name, int $age) {
+  echo "Hello ${$name}-${$age}";
+}
+
+function main(): void {
+  $name = "John";
+  $age = 18;
+  makeHello($name, $age);
+}
+```
+<p><br></p>
+
 
 ### `classMembersOrder` checker
 
