@@ -417,7 +417,7 @@ type ArrayItemExpr struct {
 // $ReturnType is optional, without it we have `fn($Params...) => $Expr` syntax.
 type ArrowFunctionExpr struct {
 	Position            *position.Position
-	AttrGroups          []*Attribute
+	AttrGroups          []*AttributeGroup
 	StaticTkn           *token.Token
 	FnTkn               *token.Token
 	AmpersandTkn        *token.Token
@@ -471,7 +471,7 @@ type CloneExpr struct {
 // $ClosureUse is optional, without it we have `function($Params...) : $ReturnType { $Stmts... }` syntax.
 type ClosureExpr struct {
 	Position             *position.Position
-	AttrGroups           []*Attribute
+	AttrGroups           []*AttributeGroup
 	StaticTkn            *token.Token
 	FunctionTkn          *token.Token
 	AmpersandTkn         *token.Token
@@ -804,7 +804,7 @@ type Nullable struct {
 // If $Variadic is true, it's `...$Variable`.
 type Parameter struct {
 	Position     *position.Position
-	AttrGroups   []*Attribute
+	AttrGroups   []*AttributeGroup
 	Modifiers    []*Identifier
 	VariableType Node
 	AmpersandTkn *token.Token
@@ -944,7 +944,7 @@ type CatchStmt struct {
 // $Modifiers consist of identifiers like `final` and `abstract`.
 type ClassStmt struct {
 	Position             *position.Position
-	AttrGroups           []*Attribute
+	AttrGroups           []*AttributeGroup
 	Modifiers            []*Identifier
 	ClassTkn             *token.Token
 	ClassName            *Identifier
@@ -958,7 +958,7 @@ type ClassStmt struct {
 // Every element in $Consts is a *ConstantStmt.
 type ClassConstListStmt struct {
 	Position      *position.Position
-	AttrGroups    []*Attribute
+	AttrGroups    []*AttributeGroup
 	Modifiers     []*Identifier
 	ConstTkn      *token.Token
 	Consts        []Node
@@ -987,7 +987,7 @@ type ClassImplementsStmt struct {
 // ClassMethodStmt is a class method declaration.
 type ClassMethodStmt struct {
 	Position            *position.Position
-	AttrGroups          []*Attribute
+	AttrGroups          []*AttributeGroup
 	Modifiers           []*Identifier
 	FunctionTkn         *token.Token
 	AmpersandTkn        *token.Token
@@ -1169,7 +1169,7 @@ type ForeachStmt struct {
 // FunctionStmt is a named function declaration.
 type FunctionStmt struct {
 	Position             *position.Position
-	AttrGroups           []*Attribute
+	AttrGroups           []*AttributeGroup
 	FunctionTkn          *token.Token
 	AmpersandTkn         *token.Token
 	FunctionName         *Identifier
@@ -1260,7 +1260,7 @@ type InlineHTMLStmt struct {
 // InterfaceStmt is an interface declaration.
 type InterfaceStmt struct {
 	Position             *position.Position
-	AttrGroups           []*Attribute
+	AttrGroups           []*AttributeGroup
 	InterfaceTkn         *token.Token
 	InterfaceName        *Identifier
 	Extends              *InterfaceExtendsStmt
@@ -1325,7 +1325,7 @@ type PropertyStmt struct {
 // Every element in $Properties is a *PropertyStmt.
 type PropertyListStmt struct {
 	Position      *position.Position
-	AttrGroups    []*Attribute
+	AttrGroups    []*AttributeGroup
 	Modifiers     []*Identifier
 	Type          Node
 	Properties    []Node
@@ -1400,7 +1400,7 @@ type ThrowStmt struct {
 // TraitStmt is a trait declaration.
 type TraitStmt struct {
 	Position             *position.Position
-	AttrGroups           []*Attribute
+	AttrGroups           []*AttributeGroup
 	TraitTkn             *token.Token
 	TraitName            *Identifier
 	OpenCurlyBracketTkn  *token.Token
@@ -1516,14 +1516,23 @@ type Union struct {
 	SeparatorTkns []*token.Token
 }
 
-// Attribute node is a `#[$Name($Args)]`
+// Attribute node is a `$Name($Args)` inside `#[...]`
 type Attribute struct {
 	Position            *position.Position
-	Name                *Identifier
+	Name                Node
 	OpenParenthesisTkn  *token.Token
 	Args                []Node
 	SeparatorTkns       []*token.Token
 	CloseParenthesisTkn *token.Token
+}
+
+// AttributeGroup node is #[$Attrs]
+type AttributeGroup struct {
+	Position          *position.Position
+	OpenAttributeTkn  *token.Token
+	Attrs             []*Attribute
+	SeparatorTkns     []*token.Token
+	CloseAttributeTkn *token.Token
 }
 
 // NullsafeMethodCallExpr node is a `$Var?->$Method($Args)`

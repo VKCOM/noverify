@@ -52,6 +52,8 @@ func GetPosition(n Node) *position.Position {
 		return n.Position
 	case *Attribute:
 		return n.Position
+	case *AttributeGroup:
+		return n.Position
 	case *BadString:
 		return n.Position
 	case *BitwiseAndExpr:

@@ -801,7 +801,7 @@ func TestCustomUnusedVarRegex(t *testing.T) {
 		return strings.HasPrefix(s, "_")
 	}
 
-	config := linter.NewConfig()
+	config := linter.NewConfig("8.1")
 	config.IsDiscardVar = isDiscardVar
 
 	test := linttest.NewSuite(t)
@@ -2212,7 +2212,7 @@ function f() {
 }
 
 func TestRealCastingAndIsRealCall(t *testing.T) {
-	test := linttest.NewSuite(t)
+	test := linttest.NewPHP7Suite(t)
 	test.AddFile(`<?php
 function is_real($a): bool { return true; }
 

@@ -95,7 +95,23 @@ type Suite struct {
 
 // NewSuite returns a new linter test suite for t.
 func NewSuite(t testing.TB) *Suite {
-	conf := linter.NewConfig()
+	conf := linter.NewConfig("8.1")
+	return &Suite{
+		t: t,
+		defaultStubs: map[string]struct{}{
+			`stubs/phpstorm-stubs/Core/Core.php`:   {},
+			`stubs/phpstorm-stubs/Core/Core_c.php`: {},
+			`stubs/phpstorm-stubs/Core/Core_d.php`: {},
+		},
+		ignoreUndeclaredChecks: false,
+		config:                 conf,
+		linter:                 linter.NewLinter(conf),
+	}
+}
+
+// NewPHP7Suite returns a new linter test suite for t with PHP 7.4.
+func NewPHP7Suite(t testing.TB) *Suite {
+	conf := linter.NewConfig("7.4")
 	return &Suite{
 		t: t,
 		defaultStubs: map[string]struct{}{

@@ -118,7 +118,7 @@ class ByNull {
 main();
 `
 
-	l := NewLinter(NewConfig())
+	l := NewLinter(NewConfig("8.1"))
 
 	runTest := func(iteration int) {
 		result, err := parseContents(l, "cachetest.php", []byte(code), nil)

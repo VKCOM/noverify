@@ -1356,7 +1356,7 @@ function test() {
   exprtype(1 > 4, 'precise bool');
 }
 `
-	runExprTypeTest(t, &exprTypeTestParams{code: code})
+	runExprTypeTest(t, &exprTypeTestParams{code: code, php7: true})
 }
 
 func TestExprTypeKeyword(t *testing.T) {
@@ -3302,7 +3302,10 @@ func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 }
 
 func exprTypeTestImpl(t *testing.T, params *exprTypeTestParams, kphp bool) {
-	config := linter.NewConfig()
+	config := linter.NewConfig("8.1")
+	if params.php7 {
+		config = linter.NewConfig("7.4")
+	}
 	config.Checkers.AddBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker {
 		return &exprTypeCollector{ctx: ctx}
 	})
@@ -3353,6 +3356,7 @@ func makeType(typ string) testTypesMap {
 type exprTypeTestParams struct {
 	code  string
 	stubs string
+	php7  bool
 }
 
 type exprTypeWalker struct {

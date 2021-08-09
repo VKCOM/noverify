@@ -211,6 +211,20 @@ func (n *Attribute) IterateTokens(cb func(*token.Token) bool) {
 	}
 }
 
+func (n *AttributeGroup) IterateTokens(cb func(*token.Token) bool) {
+	if !traverseToken(n.OpenAttributeTkn, cb) {
+		return
+	}
+	for _, tk := range n.SeparatorTkns {
+		if !traverseToken(tk, cb) {
+			return
+		}
+	}
+	if !traverseToken(n.CloseAttributeTkn, cb) {
+		return
+	}
+}
+
 func (n *BadString) IterateTokens(cb func(*token.Token) bool) {
 }
 

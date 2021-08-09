@@ -30,6 +30,7 @@ const (
 	KindAssignShiftLeft
 	KindAssignShiftRight
 	KindAttribute
+	KindAttributeGroup
 	KindBadString
 	KindBitwiseAndExpr
 	KindBitwiseNotExpr
@@ -217,6 +218,8 @@ func GetNodeKind(x Node) NodeKind {
 		return KindAssignShiftRight
 	case *Attribute:
 		return KindAttribute
+	case *AttributeGroup:
+		return KindAttributeGroup
 	case *BadString:
 		return KindBadString
 	case *BitwiseAndExpr:

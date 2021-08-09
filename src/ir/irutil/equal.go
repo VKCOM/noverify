@@ -312,6 +312,20 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		return true
+	case *ir.AttributeGroup:
+		y, ok := y.(*ir.AttributeGroup)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if len(x.Attrs) != len(y.Attrs) {
+			return false
+		}
+		for i := range x.Attrs {
+			if !NodeEqual(x.Attrs[i], y.Attrs[i]) {
+				return false
+			}
+		}
+		return true
 	case *ir.BadString:
 		y, ok := y.(*ir.BadString)
 		if !ok || x == nil || y == nil {
