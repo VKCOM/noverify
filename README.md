@@ -1,6 +1,6 @@
 ![](docs/noverify_small.png)
 
-![Build Status](https://github.com/VKCOM/noverify/workflows/Go/badge.svg)[![Go Report Card](https://goreportcard.com/badge/github.com/VKCOM/noverify)](https://goreportcard.com/report/github.com/vkcom/noverify) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
+![Build Status](https://github.com/VKCOM/noverify/workflows/Go/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/VKCOM/noverify)](https://goreportcard.com/report/github.com/vkcom/noverify) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
 
 ## NoVerify
 

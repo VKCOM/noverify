@@ -20,7 +20,7 @@ Make sure you have [Go](https://golang.org/dl/) version 1.16 or higher installed
 Run the following command:
 
 ```sh
-$ go get -u github.com/VKCOM/noverify
+$ go install -u github.com/VKCOM/noverify
 ```
 
 NoVerify will be installed to `$GOPATH/bin/noverify`, which usually expands to `$HOME/go/bin/noverify`.
