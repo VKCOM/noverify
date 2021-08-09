@@ -499,7 +499,7 @@ func functionCallType(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassPars
 	case *ir.Name:
 		if nm.IsFullyQualified() {
 			if nm.NumParts() == 1 {
-				typ, ok := internalFuncType(strings.TrimPrefix(nm.Value, `\`), sc, cs, n, custom)
+				typ, ok := internalFuncType(nm.Value, sc, cs, n, custom)
 				if ok {
 					return typ
 				}

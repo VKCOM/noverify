@@ -28,6 +28,9 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
+		if !NodeEqual(x.Name, y.Name) {
+			return false
+		}
 		if !NodeEqual(x.Expr, y.Expr) {
 			return false
 		}
@@ -89,6 +92,14 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.ArrowFunctionExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
+		}
+		if len(x.AttrGroups) != len(y.AttrGroups) {
+			return false
+		}
+		for i := range x.AttrGroups {
+			if !NodeEqual(x.AttrGroups[i], y.AttrGroups[i]) {
+				return false
+			}
 		}
 		if !NodeSliceEqual(x.Params, y.Params) {
 			return false
@@ -289,13 +300,22 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		return true
+	case *ir.Attribute:
+		y, ok := y.(*ir.Attribute)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Name, y.Name) {
+			return false
+		}
+		if !NodeSliceEqual(x.Args, y.Args) {
+			return false
+		}
+		return true
 	case *ir.BadString:
 		y, ok := y.(*ir.BadString)
 		if !ok || x == nil || y == nil {
 			return x == y
-		}
-		if !NodeEqual(&x.String, &y.String) {
-			return false
 		}
 		if x.Error != y.Error {
 			return false
@@ -432,6 +452,14 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
+		if len(x.AttrGroups) != len(y.AttrGroups) {
+			return false
+		}
+		for i := range x.AttrGroups {
+			if !NodeEqual(x.AttrGroups[i], y.AttrGroups[i]) {
+				return false
+			}
+		}
 		if len(x.Modifiers) != len(y.Modifiers) {
 			return false
 		}
@@ -470,6 +498,14 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
+		if len(x.AttrGroups) != len(y.AttrGroups) {
+			return false
+		}
+		for i := range x.AttrGroups {
+			if !NodeEqual(x.AttrGroups[i], y.AttrGroups[i]) {
+				return false
+			}
+		}
 		if len(x.Modifiers) != len(y.Modifiers) {
 			return false
 		}
@@ -501,6 +537,14 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.ClassStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
+		}
+		if len(x.AttrGroups) != len(y.AttrGroups) {
+			return false
+		}
+		for i := range x.AttrGroups {
+			if !NodeEqual(x.AttrGroups[i], y.AttrGroups[i]) {
+				return false
+			}
 		}
 		if len(x.Modifiers) != len(y.Modifiers) {
 			return false
@@ -536,6 +580,14 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.ClosureExpr)
 		if !ok || x == nil || y == nil {
 			return x == y
+		}
+		if len(x.AttrGroups) != len(y.AttrGroups) {
+			return false
+		}
+		for i := range x.AttrGroups {
+			if !NodeEqual(x.AttrGroups[i], y.AttrGroups[i]) {
+				return false
+			}
 		}
 		if !NodeSliceEqual(x.Params, y.Params) {
 			return false
@@ -873,6 +925,14 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
+		if len(x.AttrGroups) != len(y.AttrGroups) {
+			return false
+		}
+		for i := range x.AttrGroups {
+			if !NodeEqual(x.AttrGroups[i], y.AttrGroups[i]) {
+				return false
+			}
+		}
 		if !NodeEqual(x.FunctionName, y.FunctionName) {
 			return false
 		}
@@ -1056,6 +1116,14 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
+		if len(x.AttrGroups) != len(y.AttrGroups) {
+			return false
+		}
+		for i := range x.AttrGroups {
+			if !NodeEqual(x.AttrGroups[i], y.AttrGroups[i]) {
+				return false
+			}
+		}
 		if !NodeEqual(x.InterfaceName, y.InterfaceName) {
 			return false
 		}
@@ -1156,6 +1224,38 @@ func NodeEqual(x, y ir.Node) bool {
 		}
 		if x.Value != y.Value {
 			return false
+		}
+		return true
+	case *ir.MatchArm:
+		y, ok := y.(*ir.MatchArm)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeSliceEqual(x.Exprs, y.Exprs) {
+			return false
+		}
+		if !NodeEqual(x.ReturnExpr, y.ReturnExpr) {
+			return false
+		}
+		if x.IsDefault != y.IsDefault {
+			return false
+		}
+		return true
+	case *ir.MatchExpr:
+		y, ok := y.(*ir.MatchExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		if len(x.Arms) != len(y.Arms) {
+			return false
+		}
+		for i := range x.Arms {
+			if !NodeEqual(x.Arms[i], y.Arms[i]) {
+				return false
+			}
 		}
 		return true
 	case *ir.MethodCallExpr:
@@ -1281,10 +1381,53 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		return true
+	case *ir.NullsafeMethodCallExpr:
+		y, ok := y.(*ir.NullsafeMethodCallExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Method, y.Method) {
+			return false
+		}
+		if !NodeSliceEqual(x.Args, y.Args) {
+			return false
+		}
+		return true
+	case *ir.NullsafePropertyFetchExpr:
+		y, ok := y.(*ir.NullsafePropertyFetchExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Variable, y.Variable) {
+			return false
+		}
+		if !NodeEqual(x.Property, y.Property) {
+			return false
+		}
+		return true
 	case *ir.Parameter:
 		y, ok := y.(*ir.Parameter)
 		if !ok || x == nil || y == nil {
 			return x == y
+		}
+		if len(x.AttrGroups) != len(y.AttrGroups) {
+			return false
+		}
+		for i := range x.AttrGroups {
+			if !NodeEqual(x.AttrGroups[i], y.AttrGroups[i]) {
+				return false
+			}
+		}
+		if len(x.Modifiers) != len(y.Modifiers) {
+			return false
+		}
+		for i := range x.Modifiers {
+			if !NodeEqual(x.Modifiers[i], y.Modifiers[i]) {
+				return false
+			}
 		}
 		if !NodeEqual(x.VariableType, y.VariableType) {
 			return false
@@ -1396,6 +1539,14 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.PropertyListStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
+		}
+		if len(x.AttrGroups) != len(y.AttrGroups) {
+			return false
+		}
+		for i := range x.AttrGroups {
+			if !NodeEqual(x.AttrGroups[i], y.AttrGroups[i]) {
+				return false
+			}
 		}
 		if len(x.Modifiers) != len(y.Modifiers) {
 			return false
@@ -1631,6 +1782,15 @@ func NodeEqual(x, y ir.Node) bool {
 			return false
 		}
 		return true
+	case *ir.ThrowExpr:
+		y, ok := y.(*ir.ThrowExpr)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
 	case *ir.ThrowStmt:
 		y, ok := y.(*ir.ThrowStmt)
 		if !ok || x == nil || y == nil {
@@ -1665,6 +1825,14 @@ func NodeEqual(x, y ir.Node) bool {
 		y, ok := y.(*ir.TraitStmt)
 		if !ok || x == nil || y == nil {
 			return x == y
+		}
+		if len(x.AttrGroups) != len(y.AttrGroups) {
+			return false
+		}
+		for i := range x.AttrGroups {
+			if !NodeEqual(x.AttrGroups[i], y.AttrGroups[i]) {
+				return false
+			}
 		}
 		if !NodeEqual(x.TraitName, y.TraitName) {
 			return false
@@ -1757,6 +1925,15 @@ func NodeEqual(x, y ir.Node) bool {
 			return x == y
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
+			return false
+		}
+		return true
+	case *ir.Union:
+		y, ok := y.(*ir.Union)
+		if !ok || x == nil || y == nil {
+			return x == y
+		}
+		if !NodeSliceEqual(x.Types, y.Types) {
 			return false
 		}
 		return true

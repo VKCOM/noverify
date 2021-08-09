@@ -29,6 +29,7 @@ const (
 	KindAssignReference
 	KindAssignShiftLeft
 	KindAssignShiftRight
+	KindAttribute
 	KindBadString
 	KindBitwiseAndExpr
 	KindBitwiseNotExpr
@@ -100,6 +101,8 @@ const (
 	KindLogicalOrExpr
 	KindLogicalXorExpr
 	KindMagicConstant
+	KindMatchArm
+	KindMatchExpr
 	KindMethodCallExpr
 	KindMinusExpr
 	KindModExpr
@@ -111,6 +114,8 @@ const (
 	KindNotEqualExpr
 	KindNotIdenticalExpr
 	KindNullable
+	KindNullsafeMethodCallExpr
+	KindNullsafePropertyFetchExpr
 	KindParameter
 	KindParenExpr
 	KindPlusExpr
@@ -141,6 +146,7 @@ const (
 	KindString
 	KindSwitchStmt
 	KindTernaryExpr
+	KindThrowExpr
 	KindThrowStmt
 	KindTraitAdaptationListStmt
 	KindTraitMethodRefStmt
@@ -152,6 +158,7 @@ const (
 	KindTypeCastExpr
 	KindUnaryMinusExpr
 	KindUnaryPlusExpr
+	KindUnion
 	KindUnsetCastExpr
 	KindUnsetStmt
 	KindUseListStmt
@@ -208,6 +215,8 @@ func GetNodeKind(x Node) NodeKind {
 		return KindAssignShiftLeft
 	case *AssignShiftRight:
 		return KindAssignShiftRight
+	case *Attribute:
+		return KindAttribute
 	case *BadString:
 		return KindBadString
 	case *BitwiseAndExpr:
@@ -350,6 +359,10 @@ func GetNodeKind(x Node) NodeKind {
 		return KindLogicalXorExpr
 	case *MagicConstant:
 		return KindMagicConstant
+	case *MatchArm:
+		return KindMatchArm
+	case *MatchExpr:
+		return KindMatchExpr
 	case *MethodCallExpr:
 		return KindMethodCallExpr
 	case *MinusExpr:
@@ -372,6 +385,10 @@ func GetNodeKind(x Node) NodeKind {
 		return KindNotIdenticalExpr
 	case *Nullable:
 		return KindNullable
+	case *NullsafeMethodCallExpr:
+		return KindNullsafeMethodCallExpr
+	case *NullsafePropertyFetchExpr:
+		return KindNullsafePropertyFetchExpr
 	case *Parameter:
 		return KindParameter
 	case *ParenExpr:
@@ -432,6 +449,8 @@ func GetNodeKind(x Node) NodeKind {
 		return KindSwitchStmt
 	case *TernaryExpr:
 		return KindTernaryExpr
+	case *ThrowExpr:
+		return KindThrowExpr
 	case *ThrowStmt:
 		return KindThrowStmt
 	case *TraitAdaptationListStmt:
@@ -454,6 +473,8 @@ func GetNodeKind(x Node) NodeKind {
 		return KindUnaryMinusExpr
 	case *UnaryPlusExpr:
 		return KindUnaryPlusExpr
+	case *Union:
+		return KindUnion
 	case *UnsetCastExpr:
 		return KindUnsetCastExpr
 	case *UnsetStmt:

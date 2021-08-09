@@ -281,9 +281,19 @@ func UnwrapConstant(s string) (constName string) {
 	return unwrap1(s)
 }
 
+func FormatSimpleType(s string) (res string) {
+	if IsShape(s) {
+		s = strings.TrimPrefix(s, `\shape$`)
+		s = strings.TrimSuffix(s, `$`)
+		return "shape{" + s + "}"
+	}
+
+	return s
+}
+
 func FormatType(s string) (res string) {
 	if s == "" || s[0] >= WMax {
-		return s
+		return FormatSimpleType(s)
 	}
 
 	defer func() {

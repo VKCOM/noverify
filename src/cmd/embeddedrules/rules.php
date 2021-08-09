@@ -285,8 +285,8 @@ function argsOrder() {
 
 /**
  * @comment Report suspicious usage of bitwise operations.
- * @before  if ($isURL & $verify) ...
- * @after   if ($isURL && $verify) ...
+ * @before  if ($isURL & $verify) { ... }
+ * @after   if ($isURL && $verify) { ... }
  */
 function bitwiseOps() {
   /**
@@ -432,9 +432,9 @@ function langDeprecated() {
 
     /**
      * @warning Define defaults to a case sensitive constant, the third argument can be removed
-     * @fix     define($_, $_);
+     * @fix     define($x, $y)
      */
-    define($_, $_, false);
+    define($x, $y, false);
 }
 
 /**
@@ -515,4 +515,149 @@ function returnAssign() {
         return $_ .= $_;
         return $_ ??= $_;
     }
+}
+
+/**
+ * @comment Report comparisons count(...) which are always false or true.
+ * @before  if (count($arr) >= 0) { ... }
+ * @after   if (count($arr) != 0) { ... }
+ */
+function countUse() {
+  /**
+   * @warning Count of elements is always greater than or equal to zero, this expression is always true
+   */
+  any_greater_or_equal: {
+    count($arr) >= 0;
+    0 <= count($arr);
+  }
+
+  /**
+   * @warning Count of elements is always greater than or equal to zero, this expression is always false
+   */
+  any_less: {
+    count($arr) < 0;
+    0 > count($arr);
+  }
+
+  /**
+   * @warning Count of elements is always greater than or equal to zero, use count($arr) == 0 instead
+   * @fix count($arr) == 0
+   */
+  count($arr) <= 0;
+
+  /**
+   * @warning Count of elements is always greater than or equal to zero, use 0 == count($arr) instead
+   * @fix 0 == count($arr)
+   */
+  0 >= count($arr);
+}
+
+/**
+ * @comment Report the repetition of unary (! and ~) operators in a row.
+ * @before  echo !!$a;
+ * @after   echo (bool) $a;
+ */
+function unaryRepeat() {
+  /**
+   * @warning Several negations in a row does not make sense, if you want to cast a value to a boolean type, use an explicit cast
+   */
+  any_repeat_negation: {
+    !!$a;
+    !!!$a;
+    !!!!$a;
+  }
+
+  /**
+   * @warning Several bitwise not (~) in a row does not make sense
+   * @fix     $a
+   */
+  ~~~~$a;
+
+  /**
+   * @warning Several bitwise not (~) in a row does not make sense
+   * @fix     ~$a
+   */
+  ~~~$a;
+
+  /**
+   * @warning Several bitwise not (~) in a row does not make sense
+   * @fix $a
+   */
+  ~~$a;
+}
+
+/**
+ * @comment Report potentially erroneous 'for' loops.
+ * @before  for ($i = 0; $i < 100; $i--) { ... }
+ * @after   for ($i = 0; $i < 100; $i++) { ... }
+ */
+function forLoop() {
+  /**
+   * @warning Potentially infinite 'for' loop, because $i decreases and is always less than initial value $start and, accordingly, $length
+   */
+  any_for_loop_decrease: {
+    for ($i = $start; $i < $length; $i--) { ${"*"};}
+    for ($i = $start; $i <= $length; $i--) { ${"*"};}
+    for ($i = $start; $i < $length; $i -= $subtraction) { ${"*"};}
+    for ($i = $start; $i <= $length; $i -= $subtraction) { ${"*"};}
+  }
+
+  /**
+   * @warning Potentially infinite 'for' loop, because $i increases and is always greater than initial value $start and, accordingly, $length
+   */
+  any_for_loop_increase: {
+    for ($i = $start; $i > $length; $i++) { ${"*"};}
+    for ($i = $start; $i >= $length; $i++) { ${"*"};}
+    for ($i = $start; $i > $length; $i += $addition) { ${"*"};}
+    for ($i = $start; $i >= $length; $i += $addition) { ${"*"};}
+  }
+}
+
+/**
+ * @comment Report when use to always null object.
+ * @before  if ($obj == null && $obj->method()) { ... }
+ * @after   if ($obj != null && $obj->method()) { ... }
+ */
+function alwaysNull() {
+  /**
+   * @warning '$obj' is always 'null', maybe you meant '$obj != null && ...' or '$obj == null || ...'
+   * @location $obj
+   */
+  any_equal: {
+    if ($obj == null && $obj->$method(${"*"})) { ${"*"}; }
+    if ($obj == null && $obj->$prop) { ${"*"}; }
+  }
+
+  /**
+   * @warning '$obj' is always 'null', maybe you meant '$obj == null || ...' or '$obj != null && ...'
+   * @location $obj
+   */
+  any_not_equal: {
+    if ($obj != null || $obj->$method(${"*"})) { ${"*"}; }
+    if ($obj != null || $obj->$prop) { ${"*"}; }
+  }
+}
+
+/**
+ * @comment Report self-assignment of variables.
+ * @before  $x = $x;
+ * @after   $x = $y;
+ */
+function selfAssign() {
+  /**
+   * @warning Assignment to $x itself does not make sense
+   */
+  ${'x:var'} = ${'x:var'};
+}
+
+/**
+ * @comment Report using @.
+ * @before  @f();
+ * @after   f();
+ */
+function errorSilence() {
+  /**
+   * @warning Don't use @, silencing errors is bad practice
+   */
+  @$_;
 }

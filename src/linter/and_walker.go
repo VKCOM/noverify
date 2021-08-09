@@ -2,6 +2,7 @@ package linter
 
 import (
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/types"
@@ -15,12 +16,31 @@ import (
 type andWalker struct {
 	b *blockWalker
 
+	// The context inside the if body if the condition is true.
+	trueContext *blockContext
+	// The context inside the else body if the condition is false.
+	falseContext *blockContext
+
 	varsToDelete []ir.Node
+
+	negation bool
+}
+
+func (a *andWalker) exprType(n ir.Node) types.Map {
+	return solver.ExprTypeCustom(a.b.ctx.sc, a.b.r.ctx.st, n, a.b.ctx.customTypes)
 }
 
 func (a *andWalker) EnterNode(w ir.Node) (res bool) {
+	res = false
+
 	switch n := w.(type) {
 	case *ir.FunctionCallExpr:
+		// If the absence of a function or method is being
+		// checked, then nothing needs to be done.
+		if a.negation {
+			return res
+		}
+
 		nm, ok := n.Function.(*ir.Name)
 		if !ok {
 			break
@@ -73,17 +93,55 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 		if className, ok := solver.GetClassName(a.b.r.ctx.st, n.Class); ok {
 			switch v := n.Expr.(type) {
 			case *ir.Var, *ir.SimpleVar:
-				a.b.ctx.sc.AddVar(v, types.NewMap(className), "instanceof", 0)
+				varNode := v
+
+				// We need to traverse the variable here to check that
+				// it exists, since this variable will be added to the
+				// context later.
+				a.b.handleVariable(varNode)
+
+				currentType := a.exprType(varNode)
+
+				trueType := types.NewMap(className)
+				falseType := currentType.Clone().Erase(className)
+
+				if a.negation {
+					trueType, falseType = falseType, trueType
+				}
+
+				flags := meta.VarAlwaysDefined | meta.VarImplicit
+				a.trueContext.sc.ReplaceVar(varNode, trueType, "instanceof true", flags)
+				a.falseContext.sc.ReplaceVar(varNode, falseType, "instanceof false", flags)
+
 			default:
-				a.b.ctx.customTypes = append(a.b.ctx.customTypes, solver.CustomType{
+				currentType := a.exprType(v)
+
+				trueType := types.NewMap(className)
+				falseType := currentType.Clone().Erase(className)
+
+				if a.negation {
+					trueType, falseType = falseType, trueType
+				}
+
+				customTrueType := solver.CustomType{
 					Node: n.Expr,
-					Typ:  types.NewMap(className),
-				})
+					Typ:  trueType,
+				}
+				customFalseType := solver.CustomType{
+					Node: n.Expr,
+					Typ:  falseType,
+				}
+
+				a.trueContext.customTypes = addCustomType(a.trueContext.customTypes, customTrueType)
+				a.falseContext.customTypes = addCustomType(a.falseContext.customTypes, customFalseType)
 			}
 			// TODO: actually this needs to be present inside if body only
 		}
 
 	case *ir.BooleanNotExpr:
+		a.negation = true
+
+		res = true
 		// TODO: consolidate with issets handling?
 		// Probably could collect *expr.Variable instead of
 		// isset and empty nodes and handle them in a single loop.
@@ -105,7 +163,28 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 	}
 
 	w.Walk(a.b)
-	return false
+	return res
 }
 
-func (a *andWalker) LeaveNode(w ir.Node) {}
+func addCustomType(customTypes []solver.CustomType, typ solver.CustomType) []solver.CustomType {
+	if len(customTypes) == 0 {
+		return append(customTypes, typ)
+	}
+
+	// If a type has already been created for a node,
+	// then the new type should replace it.
+	if irutil.NodeEqual(customTypes[len(customTypes)-1].Node, typ.Node) {
+		customTypes[len(customTypes)-1] = typ
+		return customTypes
+	}
+
+	return append(customTypes, typ)
+}
+
+func (a *andWalker) LeaveNode(w ir.Node) {
+	switch w.(type) {
+	case *ir.BooleanNotExpr:
+		a.negation = false
+	default:
+	}
+}

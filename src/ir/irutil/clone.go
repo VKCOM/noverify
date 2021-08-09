@@ -18,6 +18,9 @@ func NodeClone(x ir.Node) ir.Node {
 		return &clone
 	case *ir.Argument:
 		clone := *x
+		if x.Name != nil {
+			clone.Name = NodeClone(x.Name).(*ir.Identifier)
+		}
 		if x.Expr != nil {
 			clone.Expr = NodeClone(x.Expr)
 		}
@@ -52,6 +55,13 @@ func NodeClone(x ir.Node) ir.Node {
 		return &clone
 	case *ir.ArrowFunctionExpr:
 		clone := *x
+		{
+			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			for i := range x.AttrGroups {
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+			}
+			clone.AttrGroups = sliceClone
+		}
 		clone.Params = NodeSliceClone(x.Params)
 		if x.ReturnType != nil {
 			clone.ReturnType = NodeClone(x.ReturnType)
@@ -195,6 +205,13 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
+	case *ir.Attribute:
+		clone := *x
+		if x.Name != nil {
+			clone.Name = NodeClone(x.Name).(*ir.Identifier)
+		}
+		clone.Args = NodeSliceClone(x.Args)
+		return &clone
 	case *ir.BadString:
 		clone := *x
 		return &clone
@@ -288,6 +305,13 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.ClassConstListStmt:
 		clone := *x
 		{
+			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			for i := range x.AttrGroups {
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+			}
+			clone.AttrGroups = sliceClone
+		}
+		{
 			sliceClone := make([]*ir.Identifier, len(x.Modifiers))
 			for i := range x.Modifiers {
 				sliceClone[i] = NodeClone(x.Modifiers[i]).(*ir.Identifier)
@@ -309,6 +333,13 @@ func NodeClone(x ir.Node) ir.Node {
 	case *ir.ClassMethodStmt:
 		clone := *x
 		{
+			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			for i := range x.AttrGroups {
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+			}
+			clone.AttrGroups = sliceClone
+		}
+		{
 			sliceClone := make([]*ir.Identifier, len(x.Modifiers))
 			for i := range x.Modifiers {
 				sliceClone[i] = NodeClone(x.Modifiers[i]).(*ir.Identifier)
@@ -328,6 +359,13 @@ func NodeClone(x ir.Node) ir.Node {
 		return &clone
 	case *ir.ClassStmt:
 		clone := *x
+		{
+			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			for i := range x.AttrGroups {
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+			}
+			clone.AttrGroups = sliceClone
+		}
 		{
 			sliceClone := make([]*ir.Identifier, len(x.Modifiers))
 			for i := range x.Modifiers {
@@ -351,6 +389,13 @@ func NodeClone(x ir.Node) ir.Node {
 		return &clone
 	case *ir.ClosureExpr:
 		clone := *x
+		{
+			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			for i := range x.AttrGroups {
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+			}
+			clone.AttrGroups = sliceClone
+		}
 		clone.Params = NodeSliceClone(x.Params)
 		if x.ClosureUse != nil {
 			clone.ClosureUse = NodeClone(x.ClosureUse).(*ir.ClosureUsesExpr)
@@ -541,6 +586,13 @@ func NodeClone(x ir.Node) ir.Node {
 		return &clone
 	case *ir.FunctionStmt:
 		clone := *x
+		{
+			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			for i := range x.AttrGroups {
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+			}
+			clone.AttrGroups = sliceClone
+		}
 		if x.FunctionName != nil {
 			clone.FunctionName = NodeClone(x.FunctionName).(*ir.Identifier)
 		}
@@ -644,6 +696,13 @@ func NodeClone(x ir.Node) ir.Node {
 		return &clone
 	case *ir.InterfaceStmt:
 		clone := *x
+		{
+			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			for i := range x.AttrGroups {
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+			}
+			clone.AttrGroups = sliceClone
+		}
 		if x.InterfaceName != nil {
 			clone.InterfaceName = NodeClone(x.InterfaceName).(*ir.Identifier)
 		}
@@ -704,6 +763,26 @@ func NodeClone(x ir.Node) ir.Node {
 		return &clone
 	case *ir.MagicConstant:
 		clone := *x
+		return &clone
+	case *ir.MatchArm:
+		clone := *x
+		clone.Exprs = NodeSliceClone(x.Exprs)
+		if x.ReturnExpr != nil {
+			clone.ReturnExpr = NodeClone(x.ReturnExpr)
+		}
+		return &clone
+	case *ir.MatchExpr:
+		clone := *x
+		if x.Expr != nil {
+			clone.Expr = NodeClone(x.Expr)
+		}
+		{
+			sliceClone := make([]*ir.MatchArm, len(x.Arms))
+			for i := range x.Arms {
+				sliceClone[i] = NodeClone(x.Arms[i]).(*ir.MatchArm)
+			}
+			clone.Arms = sliceClone
+		}
 		return &clone
 	case *ir.MethodCallExpr:
 		clone := *x
@@ -786,8 +865,41 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.Expr = NodeClone(x.Expr)
 		}
 		return &clone
+	case *ir.NullsafeMethodCallExpr:
+		clone := *x
+		if x.Variable != nil {
+			clone.Variable = NodeClone(x.Variable)
+		}
+		if x.Method != nil {
+			clone.Method = NodeClone(x.Method)
+		}
+		clone.Args = NodeSliceClone(x.Args)
+		return &clone
+	case *ir.NullsafePropertyFetchExpr:
+		clone := *x
+		if x.Variable != nil {
+			clone.Variable = NodeClone(x.Variable)
+		}
+		if x.Property != nil {
+			clone.Property = NodeClone(x.Property)
+		}
+		return &clone
 	case *ir.Parameter:
 		clone := *x
+		{
+			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			for i := range x.AttrGroups {
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+			}
+			clone.AttrGroups = sliceClone
+		}
+		{
+			sliceClone := make([]*ir.Identifier, len(x.Modifiers))
+			for i := range x.Modifiers {
+				sliceClone[i] = NodeClone(x.Modifiers[i]).(*ir.Identifier)
+			}
+			clone.Modifiers = sliceClone
+		}
 		if x.VariableType != nil {
 			clone.VariableType = NodeClone(x.VariableType)
 		}
@@ -863,6 +975,13 @@ func NodeClone(x ir.Node) ir.Node {
 		return &clone
 	case *ir.PropertyListStmt:
 		clone := *x
+		{
+			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			for i := range x.AttrGroups {
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+			}
+			clone.AttrGroups = sliceClone
+		}
 		{
 			sliceClone := make([]*ir.Identifier, len(x.Modifiers))
 			for i := range x.Modifiers {
@@ -1010,6 +1129,12 @@ func NodeClone(x ir.Node) ir.Node {
 			clone.IfFalse = NodeClone(x.IfFalse)
 		}
 		return &clone
+	case *ir.ThrowExpr:
+		clone := *x
+		if x.Expr != nil {
+			clone.Expr = NodeClone(x.Expr)
+		}
+		return &clone
 	case *ir.ThrowStmt:
 		clone := *x
 		if x.Expr != nil {
@@ -1031,6 +1156,13 @@ func NodeClone(x ir.Node) ir.Node {
 		return &clone
 	case *ir.TraitStmt:
 		clone := *x
+		{
+			sliceClone := make([]*ir.Attribute, len(x.AttrGroups))
+			for i := range x.AttrGroups {
+				sliceClone[i] = NodeClone(x.AttrGroups[i]).(*ir.Attribute)
+			}
+			clone.AttrGroups = sliceClone
+		}
 		if x.TraitName != nil {
 			clone.TraitName = NodeClone(x.TraitName).(*ir.Identifier)
 		}
@@ -1087,6 +1219,10 @@ func NodeClone(x ir.Node) ir.Node {
 		if x.Expr != nil {
 			clone.Expr = NodeClone(x.Expr)
 		}
+		return &clone
+	case *ir.Union:
+		clone := *x
+		clone.Types = NodeSliceClone(x.Types)
 		return &clone
 	case *ir.UnsetCastExpr:
 		clone := *x

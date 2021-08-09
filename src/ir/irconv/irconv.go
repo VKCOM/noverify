@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/z7zmey/php-parser/pkg/ast"
-	"github.com/z7zmey/php-parser/pkg/position"
-	"github.com/z7zmey/php-parser/pkg/token"
+	"github.com/VKCOM/php-parser/pkg/ast"
+	"github.com/VKCOM/php-parser/pkg/position"
+	"github.com/VKCOM/php-parser/pkg/token"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
@@ -78,9 +78,21 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		//  */
 		// $_ = fn($x) => $x->b();
 		if arrowFn, ok := out.Expr.(*ir.ArrowFunctionExpr); ok {
-			doc, found := irutil.FindPhpDoc(out.Variable)
+			doc, found := irutil.FindPhpDoc(out.Variable, false)
 			if found {
 				arrowFn.Doc = c.parsePHPDoc(doc)
+			}
+		}
+
+		// hack for expressions like:
+		// /**
+		//  * @param Boo $x
+		//  */
+		// $_ = function($x) { $x->b(); };
+		if closure, ok := out.Expr.(*ir.ClosureExpr); ok {
+			doc, found := irutil.FindPhpDoc(out.Variable, false)
+			if found {
+				closure.Doc = c.parsePHPDoc(doc)
 			}
 		}
 
@@ -571,6 +583,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenBracketTkn = n.OpenBracketTkn
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseBracketTkn = n.CloseBracketTkn
+
 		{
 			slice := make([]*ir.ArrayItemExpr, len(n.Items))
 			for i := range n.Items {
@@ -578,6 +591,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			}
 			out.Items = slice
 		}
+
 		out.ShortSyntax = !hasValue(n.ArrayTkn)
 		return out
 
@@ -627,6 +641,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		}
 		out := &ir.ArrowFunctionExpr{}
 		out.Position = n.Position
+
+		if n.AttrGroups != nil {
+			slice := make([]*ir.Attribute, len(n.AttrGroups))
+			for i := range n.AttrGroups {
+				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+			}
+			out.AttrGroups = slice
+		}
 
 		out.StaticTkn = n.StaticTkn
 		out.FnTkn = n.FnTkn
@@ -704,6 +726,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		}
 		out := &ir.ClosureExpr{}
 		out.Position = n.Position
+
+		if n.AttrGroups != nil {
+			slice := make([]*ir.Attribute, len(n.AttrGroups))
+			for i := range n.AttrGroups {
+				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+			}
+			out.AttrGroups = slice
+		}
 
 		out.StaticTkn = n.StaticTkn
 		out.FunctionTkn = n.FunctionTkn
@@ -873,6 +903,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenBracketTkn = n.OpenBracketTkn
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseBracketTkn = n.CloseBracketTkn
+
 		{
 			slice := make([]*ir.ArrayItemExpr, len(n.Items))
 			for i := range n.Items {
@@ -880,6 +911,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			}
 			out.Items = slice
 		}
+
 		out.ShortSyntax = !hasValue(n.ListTkn)
 		return out
 
@@ -888,6 +920,21 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.MethodCallExpr)(nil)
 		}
 		out := &ir.MethodCallExpr{}
+		out.Position = n.Position
+		out.ObjectOperatorTkn = n.ObjectOperatorTkn
+		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
+		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
+		out.OpenParenthesisTkn = n.OpenParenthesisTkn
+		out.Variable = c.convNode(n.Var)
+		out.Method = c.convNode(n.Method)
+		out.Args = c.convNodeSlice(n.Args)
+		return out
+
+	case *ast.ExprNullsafeMethodCall:
+		if n == nil {
+			return (*ir.NullsafeMethodCallExpr)(nil)
+		}
+		out := &ir.NullsafeMethodCallExpr{}
 		out.Position = n.Position
 		out.ObjectOperatorTkn = n.ObjectOperatorTkn
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
@@ -985,6 +1032,19 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.PropertyFetchExpr)(nil)
 		}
 		out := &ir.PropertyFetchExpr{}
+		out.Position = n.Position
+		out.ObjectOperatorTkn = n.ObjectOperatorTkn
+		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
+		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
+		out.Variable = c.convNode(n.Var)
+		out.Property = c.convNode(n.Prop)
+		return out
+
+	case *ast.ExprNullsafePropertyFetch:
+		if n == nil {
+			return (*ir.NullsafePropertyFetchExpr)(nil)
+		}
+		out := &ir.NullsafePropertyFetchExpr{}
 		out.Position = n.Position
 		out.ObjectOperatorTkn = n.ObjectOperatorTkn
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
@@ -1118,6 +1178,10 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		}
 		out := &ir.Argument{}
 		out.Position = n.Position
+		if n.Name != nil {
+			out.Name = c.convNode(n.Name).(*ir.Identifier)
+		}
+		out.ColonTkn = n.ColonTkn
 		out.VariadicTkn = n.VariadicTkn
 		out.AmpersandTkn = n.AmpersandTkn
 		out.Expr = c.convNode(n.Expr)
@@ -1151,6 +1215,23 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		}
 		out := &ir.Parameter{}
 		out.Position = n.Position
+
+		if n.AttrGroups != nil {
+			slice := make([]*ir.Attribute, len(n.AttrGroups))
+			for i := range n.AttrGroups {
+				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+			}
+			out.AttrGroups = slice
+		}
+
+		if n.Modifiers != nil {
+			slice := make([]*ir.Identifier, len(n.Modifiers))
+			for i := range n.Modifiers {
+				slice[i] = c.convNode(n.Modifiers[i]).(*ir.Identifier)
+			}
+			out.Modifiers = slice
+		}
+
 		out.AmpersandTkn = n.AmpersandTkn
 		out.VariadicTkn = n.VariadicTkn
 		out.EqualTkn = n.EqualTkn
@@ -1361,10 +1442,20 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		}
 		out := &ir.ClassConstListStmt{}
 		out.Position = n.Position
+
+		if n.AttrGroups != nil {
+			slice := make([]*ir.Attribute, len(n.AttrGroups))
+			for i := range n.AttrGroups {
+				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+			}
+			out.AttrGroups = slice
+		}
+
 		out.ConstTkn = n.ConstTkn
 		out.SeparatorTkns = n.SeparatorTkns
 		out.SemiColonTkn = n.SemiColonTkn
-		{
+
+		if n.Modifiers != nil {
 			slice := make([]*ir.Identifier, len(n.Modifiers))
 			for i := range n.Modifiers {
 				slice[i] = c.convNode(n.Modifiers[i]).(*ir.Identifier)
@@ -1383,7 +1474,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		}
 		out := &ir.ClassMethodStmt{}
 		out.Position = n.Position
-
+		if n.AttrGroups != nil {
+			slice := make([]*ir.Attribute, len(n.AttrGroups))
+			for i := range n.AttrGroups {
+				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+			}
+			out.AttrGroups = slice
+		}
 		out.FunctionTkn = n.FunctionTkn
 		out.AmpersandTkn = n.AmpersandTkn
 		out.OpenParenthesisTkn = n.OpenParenthesisTkn
@@ -1401,13 +1498,15 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Doc = c.getPhpDoc(tokenWithDoc)
 
 		out.MethodName = c.convNode(n.Name).(*ir.Identifier)
-		{
+
+		if n.Modifiers != nil {
 			slice := make([]*ir.Identifier, len(n.Modifiers))
 			for i := range n.Modifiers {
 				slice[i] = c.convNode(n.Modifiers[i]).(*ir.Identifier)
 			}
 			out.Modifiers = slice
 		}
+
 		out.Params = c.convNodeSlice(n.Params)
 		out.ReturnType = c.convNode(n.ReturnType)
 		out.Stmt = c.convNode(n.Stmt)
@@ -1642,7 +1741,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		}
 		out := &ir.FunctionStmt{}
 		out.Position = n.Position
-
+		if n.AttrGroups != nil {
+			slice := make([]*ir.Attribute, len(n.AttrGroups))
+			for i := range n.AttrGroups {
+				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+			}
+			out.AttrGroups = slice
+		}
 		out.FunctionTkn = n.FunctionTkn
 		out.AmpersandTkn = n.AmpersandTkn
 		out.OpenParenthesisTkn = n.OpenParenthesisTkn
@@ -1787,7 +1892,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		}
 		out := &ir.InterfaceStmt{}
 		out.Position = n.Position
-
+		if n.AttrGroups != nil {
+			slice := make([]*ir.Attribute, len(n.AttrGroups))
+			for i := range n.AttrGroups {
+				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+			}
+			out.AttrGroups = slice
+		}
 		out.InterfaceTkn = n.InterfaceTkn
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
@@ -1870,7 +1981,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Position = n.Position
 		out.SeparatorTkns = n.SeparatorTkns
 		out.SemiColonTkn = n.SemiColonTkn
-		{
+
+		if n.Modifiers != nil {
 			slice := make([]*ir.Identifier, len(n.Modifiers))
 			for i := range n.Modifiers {
 				slice[i] = c.convNode(n.Modifiers[i]).(*ir.Identifier)
@@ -1883,6 +1995,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			tokenWithDoc = n.Modifiers[0].(*ast.Identifier).IdentifierTkn
 		}
 		out.Doc = c.getPhpDoc(tokenWithDoc)
+
+		if n.AttrGroups != nil {
+			slice := make([]*ir.Attribute, len(n.AttrGroups))
+			for i := range n.AttrGroups {
+				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+			}
+			out.AttrGroups = slice
+		}
 
 		out.Type = c.convNode(n.Type)
 		out.Properties = c.convNodeSlice(n.Props)
@@ -1965,13 +2085,30 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Expr = c.convNode(n.Expr)
 		return out
 
+	case *ast.ExprThrow:
+		if n == nil {
+			return (*ir.ThrowExpr)(nil)
+		}
+		out := &ir.ThrowExpr{}
+		out.Position = n.Position
+		out.ThrowTkn = n.ThrowTkn
+		out.SemiColonTkn = n.SemiColonTkn
+		out.Expr = c.convNode(n.Expr)
+		return out
+
 	case *ast.StmtTrait:
 		if n == nil {
 			return (*ir.TraitStmt)(nil)
 		}
 		out := &ir.TraitStmt{}
 		out.Position = n.Position
-
+		if n.AttrGroups != nil {
+			slice := make([]*ir.Attribute, len(n.AttrGroups))
+			for i := range n.AttrGroups {
+				slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+			}
+			out.AttrGroups = slice
+		}
 		out.TraitTkn = n.TraitTkn
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
@@ -2112,6 +2249,78 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Stmt = c.convNode(n.Stmt)
 		out.AltSyntax = hasValue(n.EndWhileTkn)
 		return out
+
+	case *ast.ExprMatch:
+		if n == nil {
+			return (*ir.MatchExpr)(nil)
+		}
+		out := &ir.MatchExpr{}
+
+		out.Position = n.Position
+		out.MatchTkn = n.MatchTkn
+		out.OpenParenthesisTkn = n.OpenParenthesisTkn
+		out.Expr = c.convNode(n.Expr)
+		out.CloseParenthesisTkn = n.CloseParenthesisTkn
+		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
+
+		if n.Arms != nil {
+			out.Arms = make([]*ir.MatchArm, 0, len(n.Arms))
+			for _, arm := range n.Arms {
+				out.Arms = append(out.Arms, c.convNode(arm).(*ir.MatchArm))
+			}
+		}
+
+		out.SeparatorTkns = n.SeparatorTkns
+		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
+
+		return out
+
+	case *ast.MatchArm:
+		if n == nil {
+			return (*ir.MatchArm)(nil)
+		}
+		out := &ir.MatchArm{}
+
+		out.Position = n.Position
+		out.DefaultTkn = n.DefaultTkn
+		out.DefaultCommaTkn = n.DefaultCommaTkn
+
+		if n.Exprs != nil {
+			out.Exprs = make([]ir.Node, 0, len(n.Exprs))
+			for _, expr := range n.Exprs {
+				out.Exprs = append(out.Exprs, c.convNode(expr))
+			}
+		}
+		out.SeparatorTkns = n.SeparatorTkns
+		out.DoubleArrowTkn = n.DoubleArrowTkn
+		out.ReturnExpr = c.convNode(n.ReturnExpr)
+		out.IsDefault = out.DefaultTkn != nil
+		return out
+
+	case *ast.Union:
+		if n == nil {
+			return (*ir.MatchArm)(nil)
+		}
+		out := &ir.Union{}
+
+		out.Position = n.Position
+		out.Types = c.convNodeSlice(n.Types)
+		out.SeparatorTkns = n.SeparatorTkns
+		return out
+
+	case *ast.Attribute:
+		if n == nil {
+			return (*ir.MatchArm)(nil)
+		}
+		out := &ir.Attribute{}
+
+		out.Position = n.Position
+		out.Name = c.convNode(n.Name).(*ir.Identifier)
+		out.OpenParenthesisTkn = n.OpenParenthesisTkn
+		out.Args = c.convNodeSlice(n.Args)
+		out.SeparatorTkns = n.SeparatorTkns
+		out.CloseParenthesisTkn = n.CloseParenthesisTkn
+		return out
 	}
 
 	panic(fmt.Sprintf("unhandled type %T", n))
@@ -2143,7 +2352,8 @@ func (c *Converter) getPhpDoc(tok *token.Token) (doc phpdoc.Comment) {
 		return doc
 	}
 
-	for _, ff := range tok.FreeFloating {
+	for i := len(tok.FreeFloating) - 1; i >= 0; i-- {
+		ff := tok.FreeFloating[i]
 		switch ff.ID {
 		case token.T_DOC_COMMENT:
 			return c.parsePHPDoc(string(ff.Value))
@@ -2220,7 +2430,13 @@ func (c *Converter) convClass(n *ast.StmtClass) ir.Node {
 		}
 	}
 
-	class.Doc = c.getPhpDoc(n.ClassTkn)
+	// If there are modifiers, then PHPDoc will be bound to the
+	// first one, otherwise to the class token.
+	if len(n.Modifiers) != 0 {
+		class.Doc = c.getPhpDoc(ir.GetFirstToken(c.convNode(n.Modifiers[0])))
+	} else {
+		class.Doc = c.getPhpDoc(n.ClassTkn)
+	}
 
 	if n.Name == nil {
 		// Anonymous class expression.
@@ -2248,6 +2464,14 @@ func (c *Converter) convClass(n *ast.StmtClass) ir.Node {
 		Class:                class,
 		ClassName:            c.convNode(n.Name).(*ir.Identifier),
 	}
+	if n.AttrGroups != nil {
+		slice := make([]*ir.Attribute, len(n.AttrGroups))
+		for i := range n.AttrGroups {
+			slice[i] = c.convNode(n.AttrGroups[i]).(*ir.Attribute)
+		}
+		out.AttrGroups = slice
+	}
+
 	if n.Modifiers != nil {
 		slice := make([]*ir.Identifier, len(n.Modifiers))
 		for i := range n.Modifiers {

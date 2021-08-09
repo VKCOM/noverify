@@ -1,7 +1,7 @@
 package irutil
 
 import (
-	"github.com/z7zmey/php-parser/pkg/token"
+	"github.com/VKCOM/php-parser/pkg/token"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irfmt"
@@ -103,10 +103,15 @@ func FindWithPredicate(what ir.Node, where ir.Node, pred findPredicate) bool {
 }
 
 // FindPhpDoc searches for phpdoc by traversing all subtree and all tokens.
-func FindPhpDoc(n ir.Node) (doc string, found bool) {
+func FindPhpDoc(n ir.Node, withSuspicious bool) (doc string, found bool) {
 	Inspect(n, func(n ir.Node) (continueTraverse bool) {
 		n.IterateTokens(func(t *token.Token) (continueTraverse bool) {
 			if t.ID == token.T_DOC_COMMENT {
+				doc = string(t.Value)
+				return false
+			}
+
+			if withSuspicious && t.ID == token.T_COMMENT && phpdoc.IsSuspicious(t.Value) {
 				doc = string(t.Value)
 				return false
 			}
@@ -140,4 +145,24 @@ func classClone(x ir.Class) ir.Class {
 		Implements: NodeClone(x.Implements).(*ir.ClassImplementsStmt),
 		Stmts:      NodeSliceClone(x.Stmts),
 	}
+}
+
+func FindClassMethodNode(n ir.Node, name string) *ir.ClassMethodStmt {
+	class, ok := n.(*ir.ClassStmt)
+	if !ok {
+		return nil
+	}
+
+	for _, stmt := range class.Stmts {
+		method, ok := stmt.(*ir.ClassMethodStmt)
+		if !ok {
+			continue
+		}
+
+		if method.MethodName.Value == name {
+			return method
+		}
+	}
+
+	return nil
 }
