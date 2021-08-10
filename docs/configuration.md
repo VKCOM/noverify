@@ -125,7 +125,7 @@ However, to prevent developers from doing this permanently, there is the `--allo
 It looks like this:
 
 ```shell
-nocolor check --allow-disable="dev_*" ./src
+noverify check --allow-disable="dev_*" ./src
 ```
 
 The flag sets a regular expression to determine which files are allowed.
@@ -137,7 +137,7 @@ This is usually needed if you use NoVerify in a pipeline, where changing launch 
 It looks like this:
 
 ```shell
-nocolor check --ignore-vendor ./src
+noverify check --ignore-vendor ./src
 ```
 
 By default, if NoVerify finds a `vendor` folder, then it includes it in the index to correctly deduce types and not give errors for undefined classes and functions.
@@ -149,7 +149,7 @@ If you need to disable this behavior, then use the `--ignore-vendor` flag.
 It looks like this:
 
 ```shell
-nocolor check --php-extensions='php, phtml' ./src
+noverify check --php-extensions='php, phtml' ./src
 ```
 
 By default, NoVerify analyzes the following extensions: ` php, inc, php5, phtml`.
@@ -159,7 +159,7 @@ By default, NoVerify analyzes the following extensions: ` php, inc, php5, phtml`
 It looks like this:
 
 ```shell
-nocolor check --unused-var-regex='^_*' ./src
+noverify check --unused-var-regex='^_*' ./src
 ```
 
 By default, the regexp is `^_$`. 
@@ -171,7 +171,7 @@ Sometimes variables are not used for some reason, for this they can be called `$
 It looks like this:
 
 ```shell
-nocolor check --output='reports.txt' ./src
+noverify check --output='reports.txt' ./src
 ```
 
 All errors will be written to the `reports.txt` file.
@@ -181,7 +181,7 @@ All errors will be written to the `reports.txt` file.
 It looks like this:
 
 ```shell
-nocolor check --output-json --output='reports.json' ./src
+noverify check --output-json --output='reports.json' ./src
 ```
 
 All errors will be written to the `reports.json` file.
@@ -191,7 +191,7 @@ All errors will be written to the `reports.json` file.
 It looks like this:
 
 ```shell
-nocolor check --fix ./src
+noverify check --fix ./src
 ```
 
 All errors that NoVerify can fix will be fixed.
@@ -203,7 +203,7 @@ If you want to fix only certain errors, then specify the `--allow-checks` flag. 
 It looks like this:
 
 ```shell
-nocolor check --critical='redundantCast' ./src
+noverify check --critical='redundantCast' ./src
 ```
 
 Now the appearance of the `redundantCast` error will cause NoVerify to exit with non-zero status.
@@ -217,7 +217,7 @@ If you need to make some check critical, then use the `--critical flag`, which a
 It looks like this:
 
 ```shell
-nocolor check --cache-dir='./cache' ./src
+noverify check --cache-dir='./cache' ./src
 ```
 
 By default, the directory is `$TMPDIR/noverify`. 
@@ -229,7 +229,7 @@ The cache is used to reduce the time it takes to collect information about funct
 It looks like this:
 
 ```shell
-nocolor check --disable-cache ./src
+noverify check --disable-cache ./src
 ```
 
 ### How to use PHP 7
@@ -237,7 +237,7 @@ nocolor check --disable-cache ./src
 It looks like this:
 
 ```shell
-nocolor check --php7 ./src
+noverify check --php7 ./src
 ```
 
 By default, all code is parsed as 8.1, however, some projects use names that have become reserved in PHP 8, so they need to be parsed as PHP 7.
