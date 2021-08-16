@@ -438,9 +438,7 @@ function langDeprecated() {
 }
 
 /**
- * @comment Report a strange way of type cast.
- * @before  $x.""
- * @after   (string)$x
+ * @extends
  */
 function strangeCast() {
     /**
@@ -460,11 +458,6 @@ function strangeCast() {
         0 + $x;
         0.0 + $x;
     }
-
-    /**
-     * @warning Unary plus, possible type cast, use an explicit cast to int or float instead of using the unary plus
-     */
-    +$x;
 }
 
 /**
