@@ -311,6 +311,41 @@ func (b *blockLinter) checkCoalesceExpr(n *ir.CoalesceExpr) {
 
 func (b *blockLinter) checkAssign(a *ir.Assign) {
 	b.checkVoidType(a.Expr)
+
+	var sign byte
+	switch a.Expr.(type) {
+	case *ir.UnaryPlusExpr:
+		sign = '+'
+	case *ir.UnaryMinusExpr:
+		sign = '-'
+	default:
+		return
+	}
+
+	// Get sign token.
+	signTkn := ir.GetFirstToken(a.Expr)
+
+	// $a= 100;
+	//   |
+	//   - Free floating empty.
+	//
+	// $a = 100;
+	//    |
+	//    - Free floating contain space.
+	containsSpaceBeforeAssign := len(a.EqualTkn.FreeFloating) != 0
+
+	// $a =+ 100;
+	//     |
+	//     - Free floating empty.
+	//
+	// $a = +100;
+	//      |
+	//      - Free floating contain space.
+	containsSpaceBeforeSign := len(signTkn.FreeFloating) != 0
+
+	if !containsSpaceBeforeSign && containsSpaceBeforeAssign {
+		b.report(a, LevelWarning, "reverseAssign", "Possible there should be '%c='", sign)
+	}
 }
 
 func (b *blockLinter) checkTryStmt(s *ir.TryStmt) {

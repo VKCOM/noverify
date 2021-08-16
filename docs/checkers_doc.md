@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 87           | 77                        | 10                         | 12                 |
+| 88           | 78                        | 10                         | 12                 |
 ## Table of contents
  - Enabled by default
    - [`accessLevel` checker](#accesslevel-checker)
@@ -68,6 +68,7 @@
    - [`regexpSyntax` checker](#regexpsyntax-checker)
    - [`regexpVet` checker](#regexpvet-checker)
    - [`returnAssign` checker](#returnassign-checker)
+   - [`reverseAssign` checker](#reverseassign-checker)
    - [`selfAssign` checker](#selfassign-checker)
    - [`stdInterface` checker](#stdinterface-checker)
    - [`strangeCast` checker](#strangecast-checker)
@@ -1336,6 +1337,24 @@ return $a = 100;
 #### Compliant code:
 ```php
 return $a;
+```
+<p><br></p>
+
+
+### `reverseAssign` checker
+
+#### Description
+
+Report a reverse assign with unary plus or minus.
+
+#### Non-compliant code:
+```php
+$a =+ 100;
+```
+
+#### Compliant code:
+```php
+$a += 100;
 ```
 <p><br></p>
 

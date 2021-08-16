@@ -900,6 +900,15 @@ function main(): void {
 			Before:   `$x.""`,
 			After:    `(string)$x`,
 		},
+
+		{
+			Name:     "reverseAssign",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report a reverse assign with unary plus or minus.`,
+			Before:   `$a =+ 100;`,
+			After:    `$a += 100;`,
+		},
 	}
 
 	for _, info := range allChecks {
