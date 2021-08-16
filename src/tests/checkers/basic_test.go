@@ -1169,9 +1169,9 @@ func TestBuiltinConstant(t *testing.T) {
 		$_ = null;
 	}`)
 	test.Expect = []string{
-		"Use null instead of NULL",
-		"Use true instead of True",
-		"Use false instead of FaLsE",
+		"Constant 'NULL' should be used in lower case as 'null'",
+		"Constant 'True' should be used in lower case as 'true'",
+		"Constant 'FaLsE' should be used in lower case as 'false'",
 	}
 	test.RunAndMatch()
 }

@@ -76,6 +76,15 @@ return -9223372036854775808;`,
 		},
 
 		{
+			Name:     "constCase",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report built-in constants that are not in the lower case.`,
+			Before:   `return TRUE;`,
+			After:    `return true;`,
+		},
+
+		{
 			Name:     "accessLevel",
 			Default:  true,
 			Quickfix: false,

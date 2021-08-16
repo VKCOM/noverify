@@ -1,7 +1,7 @@
 MAYBE   deprecated: Call to deprecated function dl (5.3) at testdata/phprocksyd/Phprocksyd.php:73
             if (!extension_loaded($ext) && !dl($ext . '.so')) {
                                             ^^
-ERROR   undefined: Use null instead of NULL at testdata/phprocksyd/Phprocksyd.php:321
+ERROR   constCase: Constant 'NULL' should be used in lower case as 'null' at testdata/phprocksyd/Phprocksyd.php:321
             $n = stream_select($read, $write, $except, NULL);
                                                        ^^^^
 WARNING phpdocLint: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:364
@@ -34,6 +34,6 @@ WARNING phpdocLint: Malformed @param $req tag (maybe type is missing?) at testda
 ERROR   undefined: Call to undefined method {mixed}->run() at testdata/phprocksyd/Phprocksyd.php:479
                 $instance->run($req['params']);
                            ^^^
-ERROR   undefined: Use null instead of NULL at testdata/phprocksyd/Simple.php:158
+ERROR   constCase: Constant 'NULL' should be used in lower case as 'null' at testdata/phprocksyd/Simple.php:158
             $n = stream_select($read, $write, $except, NULL);
                                                        ^^^^

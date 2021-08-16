@@ -522,12 +522,8 @@ func (b *blockLinter) checkConstFetch(e *ir.ConstFetchExpr) {
 		// If it's builtin constant, give a more precise report message.
 		switch nm := utils.NameNodeToString(e.Constant); strings.ToLower(nm) {
 		case "null", "true", "false":
-			// TODO(quasilyte): should probably issue not "undefined" warning
-			// here, but something else, like "constCase" or something.
-			// Since it *was* "undefined" before, leave it as is for now,
-			// only make error message more user-friendly.
-			lcName := strings.ToLower(nm)
-			b.report(e.Constant, LevelError, "undefined", "Use %s instead of %s", lcName, nm)
+			expected := strings.ToLower(nm)
+			b.report(e.Constant, LevelError, "constCase", "Constant '%s' should be used in lower case as '%s'", nm, expected)
 		default:
 			b.report(e.Constant, LevelError, "undefined", "Undefined constant %s", nm)
 		}
