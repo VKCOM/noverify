@@ -882,6 +882,15 @@ function main(): void {
   makeHello($name, $age);
 }`,
 		},
+
+		{
+			Name:     "strangeCast",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report a strange way of type cast.`,
+			Before:   `$x.""`,
+			After:    `(string)$x`,
+		},
 	}
 
 	for _, info := range allChecks {
