@@ -900,6 +900,15 @@ function main(): void {
 			Before:   `$x.""`,
 			After:    `(string)$x`,
 		},
+
+		{
+			Name:     "reverseAssign",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report a strange way of type cast.`,
+			Before:   `$x.""`,
+			After:    `(string)$x`,
+		},
 	}
 
 	for _, info := range allChecks {
