@@ -905,9 +905,9 @@ function main(): void {
 			Name:     "reverseAssign",
 			Default:  true,
 			Quickfix: false,
-			Comment:  `Report a strange way of type cast.`,
-			Before:   `$x.""`,
-			After:    `(string)$x`,
+			Comment:  `Report a reverse assign with unary plus or minus.`,
+			Before:   `$a =+ 100;`,
+			After:    `$a += 100;`,
 		},
 	}
 
