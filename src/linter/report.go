@@ -78,7 +78,7 @@ return -9223372036854775808;`,
 		{
 			Name:     "constCase",
 			Default:  true,
-			Quickfix: false,
+			Quickfix: true,
 			Comment:  `Report built-in constants that are not in the lower case.`,
 			Before:   `return TRUE;`,
 			After:    `return true;`,

@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 87           | 77                        | 10                         | 11                 |
+| 87           | 77                        | 10                         | 12                 |
 ## Table of contents
  - Enabled by default
    - [`accessLevel` checker](#accesslevel-checker)
@@ -23,7 +23,7 @@
    - [`caseContinue` checker](#casecontinue-checker)
    - [`catchOrder` checker](#catchorder-checker)
    - [`complexity` checker](#complexity-checker)
-   - [`constCase` checker](#constcase-checker)
+   - [`constCase` checker (autofixable)](#constcase-checker)
    - [`countUse` checker (autofixable)](#countuse-checker)
    - [`deadCode` checker](#deadcode-checker)
    - [`discardExpr` checker](#discardexpr-checker)
@@ -453,9 +453,11 @@ function checkRights() {
 
 ### `constCase` checker
 
+> Auto fix available
+
 #### Description
 
-Report constants that are not in the lower case.
+Report built-in constants that are not in the lower case.
 
 #### Non-compliant code:
 ```php

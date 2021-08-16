@@ -524,10 +524,23 @@ func (b *blockLinter) checkConstFetch(e *ir.ConstFetchExpr) {
 		case "null", "true", "false":
 			expected := strings.ToLower(nm)
 			b.report(e.Constant, LevelError, "constCase", "Constant '%s' should be used in lower case as '%s'", nm, expected)
+			b.addFixForBuiltInConstantCase(e.Constant, expected)
 		default:
 			b.report(e.Constant, LevelError, "undefined", "Undefined constant %s", nm)
 		}
 	}
+}
+
+func (b *blockLinter) addFixForBuiltInConstantCase(constant *ir.Name, expected string) {
+	if !b.walker.r.config.ApplyQuickFixes {
+		return
+	}
+
+	b.walker.r.addQuickFix("constCase", quickfix.TextEdit{
+		StartPos:    constant.Position.StartPos,
+		EndPos:      constant.Position.EndPos,
+		Replacement: expected,
+	})
 }
 
 func (b *blockLinter) checkTernary(e *ir.TernaryExpr) {
