@@ -71,11 +71,7 @@ func (b *blockLinter) enterNode(n ir.Node) {
 		b.checkGlobalStmt(n)
 
 	case *ir.UnaryPlusExpr:
-		val := constfold.Eval(b.classParseState(), n.Expr)
-		if val.IsValid() {
-			return
-		}
-		b.report(n, LevelWarning, "strangeCast", "Unary plus with non-constant expression, possible type cast, use an explicit cast to int or float instead of using the unary plus")
+		b.checkUnaryPlus(n)
 
 	case *ir.BitwiseAndExpr:
 		b.checkBitwiseOp(n, n.Left, n.Right)
@@ -194,6 +190,15 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.BadString:
 		b.report(n, LevelError, "syntax", "%s", n.Error)
 	}
+}
+
+func (b *blockLinter) checkUnaryPlus(n *ir.UnaryPlusExpr) {
+	val := constfold.Eval(b.classParseState(), n.Expr)
+	if val.IsValid() {
+		return
+	}
+
+	b.report(n, LevelWarning, "strangeCast", "Unary plus with non-constant expression, possible type cast, use an explicit cast to int or float instead of using the unary plus")
 }
 
 func (b *blockLinter) checkClass(class *ir.ClassStmt) {
