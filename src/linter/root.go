@@ -66,6 +66,7 @@ type rootWalker struct {
 
 	// strictTypes is true if file contains `declare(strict_types=1)`.
 	strictTypes bool
+	strictMixed bool
 
 	reports []*Report
 

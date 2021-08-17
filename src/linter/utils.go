@@ -224,16 +224,17 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 }
 
 type methodCallInfo struct {
-	methodName       string
-	className        string
-	info             meta.FuncInfo
-	methodCallerType types.Map
-	isFound          bool
-	isMagic          bool
-	canAnalyze       bool
+	methodName        string
+	className         string
+	info              meta.FuncInfo
+	methodCallerType  types.Map
+	isFound           bool
+	isMagic           bool
+	canAnalyze        bool
+	callerTypeIsMixed bool
 }
 
-func resolveMethodCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, e *ir.MethodCallExpr) methodCallInfo {
+func resolveMethodCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, e *ir.MethodCallExpr, strictMixed bool) methodCallInfo {
 	if !st.Info.IsIndexingComplete() {
 		return methodCallInfo{canAnalyze: false}
 	}
@@ -256,6 +257,12 @@ func resolveMethodCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []s
 	)
 
 	methodCallerType := solver.ExprTypeCustom(sc, st, e.Variable, customTypes)
+	if !strictMixed && isMixedLikeType(methodCallerType) {
+		return methodCallInfo{
+			canAnalyze:        true,
+			callerTypeIsMixed: true,
+		}
+	}
 
 	methodCallerType.Find(func(typ string) bool {
 		m, isMagic, ok := findMethod(st.Info, typ, methodName)
@@ -389,9 +396,10 @@ type propertyFetchInfo struct {
 	isFound           bool
 	isMagic           bool
 	canAnalyze        bool
+	callerTypeIsMixed bool
 }
 
-func resolvePropertyFetch(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, e *ir.PropertyFetchExpr) propertyFetchInfo {
+func resolvePropertyFetch(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, e *ir.PropertyFetchExpr, strictMixed bool) propertyFetchInfo {
 	propertyNode, ok := e.Property.(*ir.Identifier)
 	if !ok {
 		return propertyFetchInfo{canAnalyze: false}
@@ -404,6 +412,13 @@ func resolvePropertyFetch(sc *meta.Scope, st *meta.ClassParseState, customTypes 
 	var info meta.PropertyInfo
 
 	propertyFetchType := solver.ExprTypeCustom(sc, st, e.Variable, customTypes)
+	if !strictMixed && isMixedLikeType(propertyFetchType) {
+		return propertyFetchInfo{
+			canAnalyze:        true,
+			callerTypeIsMixed: true,
+		}
+	}
+
 	propertyFetchType.Find(func(typ string) bool {
 		p, isMagic, ok := findProperty(st.Info, typ, propertyNode.Value)
 		if !ok {
@@ -625,6 +640,16 @@ func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedS
 		clone.Set(ir.NodeKind(kind), res)
 	}
 	return &clone
+}
+
+func isMixedLikeType(typ types.Map) bool {
+	return typ.Find(func(typ string) bool {
+		if typ == "mixed" || typ == "object" || typ == "undefined" || typ == "unknown_from_list" {
+			return true
+		}
+
+		return false
+	})
 }
 
 // List taken from https://wiki.php.net/rfc/context_sensitive_lexer

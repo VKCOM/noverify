@@ -51,6 +51,8 @@ type Worker struct {
 	reParserNoLiterals *syntax.Parser
 	reParser           *syntax.Parser
 
+	strictMixed bool
+
 	needReports bool
 
 	AllowDisable *regexp.Regexp
@@ -76,6 +78,7 @@ func newWorker(config *Config, info *meta.Info, id int, checkersFilter *Checkers
 			NoLiterals: false,
 		}),
 		checkersFilter: checkersFilter,
+		strictMixed:    config.StrictMixed,
 	}
 }
 
@@ -280,6 +283,7 @@ func (w *Worker) analyzeFile(file *workspace.File, rootNode *ir.Root) (*rootWalk
 			parser: w.reParserNoLiterals,
 			out:    &strings.Builder{},
 		},
+		strictMixed: w.strictMixed,
 
 		allowDisabledRegexp: w.AllowDisable,
 		checkersFilter:      w.checkersFilter,

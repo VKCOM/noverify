@@ -54,4 +54,5 @@ func bindConfigValuesWithFlags(ctx *AppContext, config *linter.Config) {
 	config.ConservativeBaseline = ctx.ParsedFlags.ConservativeBaseline
 	config.ApplyQuickFixes = ctx.ParsedFlags.ApplyQuickFixes
 	config.KPHP = ctx.ParsedFlags.KPHP
+	config.StrictMixed = ctx.ParsedFlags.StrictMixed
 }

@@ -50,7 +50,7 @@ This will lead to an errors:
 <critical> WARNING parentConstructor: Missing parent::__construct() call at swiftmailer/lib/classes/Swift/Attachment.php:27
     public function __construct($data = null, $filename = null, $contentType = null)
                     ^^^^^^^^^^^
-2021/07/08 16:13:19 Found 140 critical and 10 minor reports
+2021/07/08 16:13:19 Found 113 critical and 10 minor reports
 ```
 
 From the errors, you can understand on which lines NoVerify gives errors, and also understand what kind of error it is. Also, you may notice that the errors occurred in different files.

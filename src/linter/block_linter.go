@@ -1160,7 +1160,7 @@ func (b *blockLinter) checkStripTags(e *ir.FunctionCallExpr) {
 func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 	parseState := b.classParseState()
 
-	call := resolveMethodCall(b.walker.ctx.sc, parseState, b.walker.ctx.customTypes, e)
+	call := resolveMethodCall(b.walker.ctx.sc, parseState, b.walker.ctx.customTypes, e, b.walker.r.strictMixed)
 	if !call.canAnalyze {
 		return
 	}
@@ -1170,9 +1170,11 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 	}
 
 	if !call.isFound && !call.isMagic && !parseState.IsTrait && !b.walker.isThisInsideClosure(e.Variable) {
-		// The method is undefined but we permit calling it if `method_exists`
+		needShowUndefinedMethod := !call.callerTypeIsMixed || b.walker.r.strictMixed
+
+		// The method is undefined, but we permit calling it if `method_exists`
 		// was called prior to that call.
-		if !b.walker.ctx.customMethodExists(e.Variable, call.methodName) {
+		if !b.walker.ctx.customMethodExists(e.Variable, call.methodName) && needShowUndefinedMethod {
 			b.report(e.Method, LevelError, "undefined", "Call to undefined method {%s}->%s()", call.methodCallerType, call.methodName)
 		}
 	} else if !call.isMagic && !parseState.IsTrait {
@@ -1234,12 +1236,17 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 }
 
 func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
-	fetch := resolvePropertyFetch(b.walker.ctx.sc, b.classParseState(), b.walker.ctx.customTypes, e)
+	fetch := resolvePropertyFetch(b.walker.ctx.sc, b.classParseState(), b.walker.ctx.customTypes, e, b.walker.r.strictMixed)
 	if !fetch.canAnalyze {
 		return
 	}
 
-	if !fetch.isFound && !fetch.isMagic && !b.classParseState().IsTrait && !b.walker.isThisInsideClosure(e.Variable) {
+	needShowUndefinedProperty := !fetch.callerTypeIsMixed || b.walker.r.strictMixed
+
+	if !fetch.isFound && !fetch.isMagic &&
+		!b.classParseState().IsTrait &&
+		!b.walker.isThisInsideClosure(e.Variable) &&
+		needShowUndefinedProperty {
 		b.report(e.Property, LevelError, "undefined", "Property {%s}->%s does not exist", fetch.propertyFetchType, fetch.propertyNode.Value)
 	}
 
