@@ -29,6 +29,7 @@ function f($s) {
 
 func TestShapeDimFetch(t *testing.T) {
 	test := linttest.NewSuite(t)
+	test.Config().StrictMixed = true
 	test.AddFile(`<?php
 class Foo {
   public $x = 10;
@@ -52,6 +53,7 @@ function f() {
 
 func TestShapeIntKey(t *testing.T) {
 	test := linttest.NewSuite(t)
+	test.Config().StrictMixed = true
 	test.AddFile(`<?php
 class Box { public $value; }
 
@@ -74,6 +76,7 @@ function f() {
 
 func TestShapeSyntax(t *testing.T) {
 	test := linttest.NewSuite(t)
+	test.Config().StrictMixed = true
 	test.AddFile(`<?php
 class Box { public $value; }
 

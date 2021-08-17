@@ -8,6 +8,7 @@ import (
 
 func TestIssue16(t *testing.T) {
 	test := linttest.NewSuite(t)
+	test.Config().StrictMixed = true
 	test.AddFile(`<?php
 	interface DateTimeInterface {
 		public function format($fmt);

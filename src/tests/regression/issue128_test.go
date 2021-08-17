@@ -8,6 +8,7 @@ import (
 
 func TestIssue128(t *testing.T) {
 	test := linttest.NewSuite(t)
+	test.Config().StrictMixed = true
 	test.AddFile(`<?php
 class Value {
   public $x;

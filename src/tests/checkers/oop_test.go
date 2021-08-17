@@ -824,6 +824,7 @@ func TestInheritanceLoop(t *testing.T) {
 
 func TestClosureLateBinding(t *testing.T) {
 	test := linttest.NewSuite(t)
+	test.Config().StrictMixed = true
 	test.AddFile(`<?php
 	class Example
 	{
