@@ -119,7 +119,12 @@ func (s *inlineTestSuite) compare(expects []string, reports []string) (unmatched
 
 // handleFileContents reads, parses the resulting file, and splits it into lines.
 func (s *inlineTestSuite) handleFileContents(file string) (lines []string, reports []*linter.Report, err error) {
+	rawCheckerName := file
 	lint := linter.NewLinter(linter.NewConfig("8.1"))
+	if strings.Contains(file, "_7.4") {
+		lint = linter.NewLinter(linter.NewConfig("7.4"))
+		rawCheckerName = strings.ReplaceAll(file, "_7.4", "")
+	}
 
 	err = cmd.LoadEmbeddedStubs(lint, defaultStubs)
 	if err != nil {
@@ -146,8 +151,8 @@ func (s *inlineTestSuite) handleFileContents(file string) (lines []string, repor
 
 	lines = strings.Split(content, "\n")
 
-	fileName := filepath.Base(file)
-	checkerName := fileName[:len(fileName)-len(filepath.Ext(file))]
+	checkerName := filepath.Base(rawCheckerName)
+	checkerName = checkerName[:len(checkerName)-len(filepath.Ext(file))]
 	if !lint.Config().Checkers.Contains(checkerName) {
 		return nil, nil, fmt.Errorf("file name must be the name of the checker that is tested. Checker %s does not exist", checkerName)
 	}

@@ -654,3 +654,21 @@ function errorSilence() {
    */
   @$_;
 }
+
+
+/**
+ * @comment Report when use unparenthesized expression containing both '.' and binary operator.
+ * @before  "id: " . $id - 10
+ * @after   "id: " . ($id - 10)
+ */
+function concatenationPrecedence() {
+    /**
+     * @warning Unparenthesized expression containing both '.' and binary operator may produce unexpected results
+     */
+    any_concat: {
+        $_ . $_ - $_;
+        $_ . $_ + $_;
+        $_ . $_ << $_;
+        $_ . $_ >> $_;
+    }
+}
