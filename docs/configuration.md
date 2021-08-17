@@ -251,17 +251,19 @@ It looks like this:
 noverify check --strict-mixed ./src
 ```
 
-By default, if a method is called using a variable with the `mixed` or  `object` type, then the linter does not give a warning about an undefined method.
+By default, if a method is called using a variable with the `mixed` or  `object` type (or ptoperty fetched), then the linter does not give a warning about an undefined method or property.
 
 ```php
 // noverify check ./src
 function f($a) {
   $a->foo(); // ok
+  $a->boo;   // ok
 }
 
 // noverify check --strict-mixed ./src
 function f1($a) {
   $a->foo(); // error: undefined method 'foo'
+  $a->boo;   // error: undefined property 'boo'
 }
 ```
 
