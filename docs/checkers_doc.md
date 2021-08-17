@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 88           | 78                        | 10                         | 12                 |
+| 89           | 79                        | 10                         | 12                 |
 ## Table of contents
  - Enabled by default
    - [`accessLevel` checker](#accesslevel-checker)
@@ -23,6 +23,7 @@
    - [`caseContinue` checker](#casecontinue-checker)
    - [`catchOrder` checker](#catchorder-checker)
    - [`complexity` checker](#complexity-checker)
+   - [`concatenationPrecedence` checker](#concatenationprecedence-checker)
    - [`constCase` checker (autofixable)](#constcase-checker)
    - [`countUse` checker (autofixable)](#countuse-checker)
    - [`deadCode` checker](#deadcode-checker)
@@ -448,6 +449,24 @@ function checkRights() {
 function checkRights() {
   return true; // Or 42 if you need int-typed result.
 }
+```
+<p><br></p>
+
+
+### `concatenationPrecedence` checker
+
+#### Description
+
+Report when use unparenthesized expression containing both '.' and binary operator.
+
+#### Non-compliant code:
+```php
+"id: " . $id - 10
+```
+
+#### Compliant code:
+```php
+"id: " . ($id - 10)
 ```
 <p><br></p>
 
