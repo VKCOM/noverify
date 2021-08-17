@@ -286,6 +286,7 @@ func (s *GoldenE2ETestSuite) RunOnlyTests() {
 					"--output-json",
 					"--disable-cache", // TODO: test with cache as well
 					"--allow-all-checks",
+					"--strict-mixed",
 					"--output", outputFilename,
 				}
 				if len(test.Disable) != 0 {
