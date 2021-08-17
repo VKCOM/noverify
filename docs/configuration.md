@@ -19,6 +19,7 @@ This page is dedicated to some technical details.
   * [How to change the cache directory](#how-to-change-the-cache-directory)
   * [How to disable caching](#how-to-disable-caching)
   * [How to use PHP 7](#how-to-use-php-7)
+  * [How to use strict-mixed mode](#how-to-use-strict-mixed-mode)
 - [Hard level options](#hard-level-options)
   * [How to use dynamic rules](#how-to-use-dynamic_rules)
   * [How to use `baseline` mode](#how-to-use--baseline--mode)
@@ -241,6 +242,28 @@ noverify check --php7 ./src
 ```
 
 By default, all code is parsed as 8.1, however, some projects use names that have become reserved in PHP 8, so they need to be parsed as PHP 7.
+
+### How to use strict-mixed mode
+
+It looks like this:
+
+```shell
+noverify check --strict-mixed ./src
+```
+
+By default, if a method is called using a variable with the `mixed` or  `object` type, then the linter does not give a warning about an undefined method.
+
+```php
+// noverify check ./src
+function f($a) {
+  $a->foo(); // ok
+}
+
+// noverify check --strict-mixed ./src
+function f1($a) {
+  $a->foo(); // error: undefined method 'foo'
+}
+```
 
 <p><br></p>
 
