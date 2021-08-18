@@ -18,6 +18,12 @@ release:
 generate_checkers_doc: build
 	./build/noverify checkers-doc > docs/checkers_doc.md
 
+playground_build:
+	cd ./playground && $(MAKE) build
+
+playground:
+	cd ./playground && $(MAKE) run
+
 check: lint test
 
 lint:
