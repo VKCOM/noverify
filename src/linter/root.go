@@ -1088,7 +1088,7 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		// Permit having "__call" and other magic method without comments.
 		if !insideInterface && !strings.HasPrefix(nm, "_") {
 			methodFQN := class.Name + "::" + nm
-			d.Report(meth.MethodName, LevelNotice, "phpdoc", "Missing PHPDoc for %s public method", methodFQN)
+			d.Report(meth.MethodName, LevelNotice, "missingPhpdoc", "Missing PHPDoc for %s public method", methodFQN)
 		}
 	}
 	d.checkCommentMisspellings(meth.MethodName, meth.Doc.Raw)

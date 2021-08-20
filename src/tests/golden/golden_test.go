@@ -38,7 +38,7 @@ func TestGolden(t *testing.T) {
 		{
 			Name: "embeddedrules",
 			Disable: []string{
-				`deadCode`,
+				"deadCode",
 			},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
@@ -48,8 +48,8 @@ func TestGolden(t *testing.T) {
 		{
 			Name: "mustache",
 			Disable: []string{
-				`arraySyntax`,
-				`redundantCast`,
+				"arraySyntax",
+				"redundantCast",
 			},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
@@ -95,7 +95,7 @@ func TestGolden(t *testing.T) {
 
 		{
 			Name:    "parsedown",
-			Disable: []string{`phpdoc`, `arraySyntax`},
+			Disable: []string{"missingPhpdoc", "arraySyntax"},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/mbstring/mbstring.php`,
@@ -104,7 +104,7 @@ func TestGolden(t *testing.T) {
 
 		{
 			Name:    "underscore",
-			Disable: []string{`phpdoc`},
+			Disable: []string{"missingPhpdoc"},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 			},
@@ -112,7 +112,7 @@ func TestGolden(t *testing.T) {
 
 		{
 			Name:    "phprocksyd",
-			Disable: []string{`phpdoc`},
+			Disable: []string{"missingPhpdoc"},
 			Deps: []string{
 				`stubs/phpstorm-stubs/standard/basic.php`,
 				`stubs/phpstorm-stubs/pcntl/pcntl.php`,
@@ -123,7 +123,7 @@ func TestGolden(t *testing.T) {
 
 		{
 			Name:    "flysystem",
-			Disable: []string{`redundantCast`},
+			Disable: []string{"redundantCast"},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
@@ -140,7 +140,7 @@ func TestGolden(t *testing.T) {
 
 		{
 			Name:    "inflector",
-			Disable: []string{"phpdoc"},
+			Disable: []string{"missingPhpdoc"},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
@@ -150,7 +150,7 @@ func TestGolden(t *testing.T) {
 
 		{
 			Name:    "options-resolver",
-			Disable: []string{"phpdoc"},
+			Disable: []string{"missingPhpdoc"},
 			Deps: []string{
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
 				`stubs/phpstorm-stubs/Reflection/Reflection.php`,
@@ -163,7 +163,7 @@ func TestGolden(t *testing.T) {
 
 		{
 			Name:    "twitter-api-php",
-			Disable: []string{"phpdoc", "arraySyntax"},
+			Disable: []string{"missingPhpdoc", "arraySyntax"},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
