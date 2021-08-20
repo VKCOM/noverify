@@ -91,8 +91,8 @@
    - [`classMembersOrder` checker](#classmembersorder-checker)
    - [`deprecated` checker](#deprecated-checker)
    - [`langDeprecated` checker](#langdeprecated-checker)
+   - [`missingPhpdoc` checker](#missingphpdoc-checker)
    - [`nestedTernary` checker](#nestedternary-checker)
-   - [`phpdoc` checker](#phpdoc-checker)
    - [`propNullDefault` checker (autofixable)](#propnulldefault-checker)
    - [`redundantCast` checker](#redundantcast-checker)
    - [`trailingComma` checker (autofixable)](#trailingcomma-checker)
@@ -1807,27 +1807,7 @@ $_ = is_float($a);
 <p><br></p>
 
 
-### `nestedTernary` checker
-
-#### Description
-
-Report an unspecified order in a nested ternary operator.
-
-#### Non-compliant code:
-```php
-$_ = 1 ? 2 : 3 ? 4 : 5; // There is no clear order of execution.
-```
-
-#### Compliant code:
-```php
-$_ = (1 ? 2 : 3) ? 4 : 5;
-// or
-$_ = 1 ? 2 : (3 ? 4 : 5);
-```
-<p><br></p>
-
-
-### `phpdoc` checker
+### `missingPhpdoc` checker
 
 #### Description
 
@@ -1853,6 +1833,26 @@ public function process($acts, $config) {
 public function process($acts, $config) {
   // Does something very complicated.
 }
+```
+<p><br></p>
+
+
+### `nestedTernary` checker
+
+#### Description
+
+Report an unspecified order in a nested ternary operator.
+
+#### Non-compliant code:
+```php
+$_ = 1 ? 2 : 3 ? 4 : 5; // There is no clear order of execution.
+```
+
+#### Compliant code:
+```php
+$_ = (1 ? 2 : 3) ? 4 : 5;
+// or
+$_ = 1 ? 2 : (3 ? 4 : 5);
 ```
 <p><br></p>
 

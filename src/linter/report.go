@@ -292,7 +292,7 @@ thisFunctionAlwaysExits();`,
 		},
 
 		{
-			Name:     "phpdoc",
+			Name:     "missingPhpdoc",
 			Default:  false,
 			Quickfix: false,
 			Comment:  `Report missing PHPDoc on public methods.`,

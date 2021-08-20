@@ -55,10 +55,10 @@ WARNING phpdocRef: @see tag refers to unknown symbol League\Flysystem\ReadInterf
 WARNING phpdocRef: @see tag refers to unknown symbol League\Flysystem\ReadInterface::read at testdata/flysystem/src/Adapter/Polyfill/StreamedReadingTrait.php:41
      * @see League\Flysystem\ReadInterface::read()
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   phpdoc: Missing PHPDoc for \League\Flysystem\Adapter\Polyfill\StreamedWritingTrait::write public method at testdata/flysystem/src/Adapter/Polyfill/StreamedWritingTrait.php:58
+MAYBE   missingPhpdoc: Missing PHPDoc for \League\Flysystem\Adapter\Polyfill\StreamedWritingTrait::write public method at testdata/flysystem/src/Adapter/Polyfill/StreamedWritingTrait.php:58
     abstract public function write($pash, $contents, Config $config);
                              ^^^^^
-MAYBE   phpdoc: Missing PHPDoc for \League\Flysystem\Adapter\Polyfill\StreamedWritingTrait::update public method at testdata/flysystem/src/Adapter/Polyfill/StreamedWritingTrait.php:59
+MAYBE   missingPhpdoc: Missing PHPDoc for \League\Flysystem\Adapter\Polyfill\StreamedWritingTrait::update public method at testdata/flysystem/src/Adapter/Polyfill/StreamedWritingTrait.php:59
     abstract public function update($pash, $contents, Config $config);
                              ^^^^^^
 MAYBE   typeHint: Specify the type for the parameter $config in PHPDoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:63
@@ -100,16 +100,16 @@ WARNING unused: Variable $e is unused (use $_ to ignore this inspection or speci
 WARNING unused: Variable $e is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/flysystem/src/Plugin/PluggableTrait.php:89
         } catch (PluginNotFoundException $e) {
                                          ^^
-MAYBE   phpdoc: Missing PHPDoc for \League\Flysystem\SafeStorage::storeSafely public method at testdata/flysystem/src/SafeStorage.php:23
+MAYBE   missingPhpdoc: Missing PHPDoc for \League\Flysystem\SafeStorage::storeSafely public method at testdata/flysystem/src/SafeStorage.php:23
     public function storeSafely($key, $value)
                     ^^^^^^^^^^^
-MAYBE   phpdoc: Missing PHPDoc for \League\Flysystem\SafeStorage::retrieveSafely public method at testdata/flysystem/src/SafeStorage.php:28
+MAYBE   missingPhpdoc: Missing PHPDoc for \League\Flysystem\SafeStorage::retrieveSafely public method at testdata/flysystem/src/SafeStorage.php:28
     public function retrieveSafely($key)
                     ^^^^^^^^^^^^^^
-MAYBE   phpdoc: Missing PHPDoc for \League\Flysystem\UnreadableFileException::forFileInfo public method at testdata/flysystem/src/UnreadableFileException.php:9
+MAYBE   missingPhpdoc: Missing PHPDoc for \League\Flysystem\UnreadableFileException::forFileInfo public method at testdata/flysystem/src/UnreadableFileException.php:9
     public static function forFileInfo(SplFileInfo $fileInfo)
                            ^^^^^^^^^^^
-MAYBE   phpdoc: Missing PHPDoc for \League\Flysystem\Util::isSeekableStream public method at testdata/flysystem/src/Util.php:258
+MAYBE   missingPhpdoc: Missing PHPDoc for \League\Flysystem\Util::isSeekableStream public method at testdata/flysystem/src/Util.php:258
     public static function isSeekableStream($resource)
                            ^^^^^^^^^^^^^^^^
 MAYBE   regexpSimplify: May re-write '#^[a-zA-Z]{1}:[^\\\/]#' as '#^[a-zA-Z]:[^\\/]#' at testdata/flysystem/src/Util.php:341

@@ -1,7 +1,7 @@
-MAYBE   phpdoc: Missing PHPDoc for \QRCode::output_image public method at testdata/qrcode/qrcode.php:45
+MAYBE   missingPhpdoc: Missing PHPDoc for \QRCode::output_image public method at testdata/qrcode/qrcode.php:45
   public function output_image() {
                   ^^^^^^^^^^^^
-MAYBE   phpdoc: Missing PHPDoc for \QRCode::render_image public method at testdata/qrcode/qrcode.php:53
+MAYBE   missingPhpdoc: Missing PHPDoc for \QRCode::render_image public method at testdata/qrcode/qrcode.php:53
   public function render_image() {
                   ^^^^^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$this->options['bc'] ?? 'FFFFFF'` at testdata/qrcode/qrcode.php:59
