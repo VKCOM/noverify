@@ -14,11 +14,11 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/VKCOM/php-parser/pkg/ast"
+	"github.com/VKCOM/php-parser/pkg/conf"
+	phperrors "github.com/VKCOM/php-parser/pkg/errors"
+	"github.com/VKCOM/php-parser/pkg/parser"
 	"github.com/quasilyte/regex/syntax"
-	"github.com/z7zmey/php-parser/pkg/ast"
-	"github.com/z7zmey/php-parser/pkg/conf"
-	phperrors "github.com/z7zmey/php-parser/pkg/errors"
-	"github.com/z7zmey/php-parser/pkg/parser"
 
 	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/ir"
@@ -51,6 +51,8 @@ type Worker struct {
 	reParserNoLiterals *syntax.Parser
 	reParser           *syntax.Parser
 
+	strictMixed bool
+
 	needReports bool
 
 	AllowDisable *regexp.Regexp
@@ -76,6 +78,7 @@ func newWorker(config *Config, info *meta.Info, id int, checkersFilter *Checkers
 			NoLiterals: false,
 		}),
 		checkersFilter: checkersFilter,
+		strictMixed:    config.StrictMixed,
 	}
 }
 
@@ -280,6 +283,7 @@ func (w *Worker) analyzeFile(file *workspace.File, rootNode *ir.Root) (*rootWalk
 			parser: w.reParserNoLiterals,
 			out:    &strings.Builder{},
 		},
+		strictMixed: w.strictMixed,
 
 		allowDisabledRegexp: w.AllowDisable,
 		checkersFilter:      w.checkersFilter,

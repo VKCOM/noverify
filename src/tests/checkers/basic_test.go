@@ -716,7 +716,7 @@ class Foo {
 		"Undefined variable $argc",
 	}
 
-	linttest.RunFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefinedVariable")
 }
 
 func TestAutogenSkip(t *testing.T) {
@@ -801,7 +801,7 @@ func TestCustomUnusedVarRegex(t *testing.T) {
 		return strings.HasPrefix(s, "_")
 	}
 
-	config := linter.NewConfig()
+	config := linter.NewConfig("8.1")
 	config.IsDiscardVar = isDiscardVar
 
 	test := linttest.NewSuite(t)
@@ -906,23 +906,6 @@ function f() {
   try {} catch(Exception $_) {} // $_ is not used.
 }
 `)
-}
-
-func TestClosureCapture(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-	class omg {
-		public $some_property;
-	}
-
-	function doSomething($a, omg $b) {
-		return function() use($b) {
-			echo $b->some_property;
-			echo $b->other_property;
-		};
-	}`)
-	test.Expect = []string{"other_property does not exist"}
-	test.RunAndMatch()
 }
 
 func TestOrDie1(t *testing.T) {
@@ -1186,9 +1169,9 @@ func TestBuiltinConstant(t *testing.T) {
 		$_ = null;
 	}`)
 	test.Expect = []string{
-		"Use null instead of NULL",
-		"Use true instead of True",
-		"Use false instead of FaLsE",
+		"Constant 'NULL' should be used in lower case as 'null'",
+		"Constant 'True' should be used in lower case as 'true'",
+		"Constant 'FaLsE' should be used in lower case as 'false'",
 	}
 	test.RunAndMatch()
 }
@@ -2132,7 +2115,7 @@ function f() {
 		"Undefined variable $x",
 		"Undefined variable $y",
 	}
-	linttest.RunFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefinedVariable")
 }
 
 func TestAssignByRef(t *testing.T) {
@@ -2229,7 +2212,7 @@ function f() {
 }
 
 func TestRealCastingAndIsRealCall(t *testing.T) {
-	test := linttest.NewSuite(t)
+	test := linttest.NewPHP7Suite(t)
 	test.AddFile(`<?php
 function is_real($a): bool { return true; }
 
@@ -2327,35 +2310,12 @@ echo TWO;
 `)
 }
 
-func TestClosureDoc(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-class Foo {
-  /**
-   * @return int
-   */
-  public function method(): int { return 0; }
-}
-
-/**
- * @param callable(int, string): Boo|Foo $s
- */
-function f(callable $s) {
-  $a = $s(10);
-  echo $a->method();
-}
-`,
-	)
-	test.Expect = []string{"Too few arguments for $s"}
-	test.RunAndMatch()
-}
-
 func TestComplexInstanceOf(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 class Boo {
   /** @return int */
-  function b() { return 0; }
+  public function b() { return 0; }
 }
 
 function f($a) {

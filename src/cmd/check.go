@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/php-parser/pkg/version"
 )
 
 func Check(ctx *AppContext) (int, error) {
@@ -11,7 +12,13 @@ func Check(ctx *AppContext) (int, error) {
 
 	bindConfigValuesWithFlags(ctx, config)
 
-	ruleSets, err := parseExternalRules(ctx.ParsedFlags.RulesList)
+	// We need to set a new version here, since it is created
+	// before the arguments are parsed.
+	if ctx.ParsedFlags.PHP7 {
+		config.PhpVersion, _ = version.New("7.4")
+	}
+
+	ruleSets, err := ParseExternalRules(ctx.ParsedFlags.RulesList)
 	if err != nil {
 		return 1, fmt.Errorf("preload external rules: %v", err)
 	}
@@ -47,4 +54,5 @@ func bindConfigValuesWithFlags(ctx *AppContext, config *linter.Config) {
 	config.ConservativeBaseline = ctx.ParsedFlags.ConservativeBaseline
 	config.ApplyQuickFixes = ctx.ParsedFlags.ApplyQuickFixes
 	config.KPHP = ctx.ParsedFlags.KPHP
+	config.StrictMixed = ctx.ParsedFlags.StrictMixed
 }

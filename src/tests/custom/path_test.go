@@ -11,7 +11,7 @@ import (
 
 func runPathTest(t *testing.T, suite *linttest.Suite) {
 	t.Helper()
-	config := linter.NewConfig()
+	config := linter.NewConfig("8.1")
 	config.Checkers.AddBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker {
 		return &pathTester{ctx: ctx}
 	})

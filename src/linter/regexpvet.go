@@ -17,6 +17,9 @@ type regexpVet struct {
 	issues      []string
 	flagStates  []regexpFlagState
 	goodAnchors []syntax.Position
+
+	// Whether we want to skip all modifiers-related analysis.
+	skipModifiers bool
 }
 
 type regexpFlagState [utf8.RuneSelf]bool // 128 bytes per group context
@@ -25,6 +28,7 @@ func (c *regexpVet) CheckRegexp(pat string) ([]string, error) {
 	c.issues = c.issues[:0]
 	c.flagStates = c.flagStates[:0]
 	c.goodAnchors = c.goodAnchors[:0]
+	c.skipModifiers = false
 
 	re, err := c.parser.ParsePCRE(pat)
 	if err != nil {
@@ -35,8 +39,21 @@ func (c *regexpVet) CheckRegexp(pat string) ([]string, error) {
 		return nil, err
 	}
 
-	c.flagStates = append(c.flagStates, regexpFlagState{})
-	c.updateFlagState(c.currentFlagState(), re.Expr, re.Modifiers)
+	// validModifierChars should include '-' for nested modifier groups,
+	// but for the top-level it's not acceptable.
+	const validModifierChars = "imsxADSUXJu"
+	for _, ch := range re.Modifiers {
+		if !strings.ContainsRune(validModifierChars, ch) {
+			c.warn("invalid modifier %c", ch)
+			c.skipModifiers = true
+			break
+		}
+	}
+
+	if !c.skipModifiers {
+		c.flagStates = append(c.flagStates, regexpFlagState{})
+		c.updateFlagState(c.currentFlagState(), re.Expr, re.Modifiers)
+	}
 
 	c.markGoodCarets(re.Expr)
 	c.walk(re.Expr)
@@ -93,16 +110,22 @@ func (c *regexpVet) walk(e syntax.Expr) {
 		c.walk(e.Args[0])
 
 	case syntax.OpFlagOnlyGroup:
-		c.updateFlagState(c.currentFlagState(), e, e.Args[0].Value)
+		if !c.skipModifiers {
+			c.updateFlagState(c.currentFlagState(), e, e.Args[0].Value)
+		}
 	case syntax.OpGroupWithFlags:
 		// Creates a new context using the current context copy.
 		// New flags are evaluated inside a new context.
 		// After nested expressions are processed, previous context is restored.
 		nflags := len(c.flagStates)
-		c.flagStates = append(c.flagStates, *c.currentFlagState())
-		c.updateFlagState(c.currentFlagState(), e, e.Args[1].Value)
+		if !c.skipModifiers {
+			c.flagStates = append(c.flagStates, *c.currentFlagState())
+			c.updateFlagState(c.currentFlagState(), e, e.Args[1].Value)
+		}
 		c.walk(e.Args[0])
-		c.flagStates = c.flagStates[:nflags]
+		if !c.skipModifiers {
+			c.flagStates = c.flagStates[:nflags]
+		}
 	case syntax.OpGroup, syntax.OpCapture, syntax.OpNamedCapture:
 		// Like with OpGroupWithFlags, but doesn't evaluate any new flags.
 		nflags := len(c.flagStates)

@@ -1,7 +1,7 @@
 package irutil
 
 import (
-	"github.com/z7zmey/php-parser/pkg/token"
+	"github.com/VKCOM/php-parser/pkg/token"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irfmt"
@@ -155,4 +155,24 @@ func classClone(x ir.Class) ir.Class {
 		Implements: NodeClone(x.Implements).(*ir.ClassImplementsStmt),
 		Stmts:      NodeSliceClone(x.Stmts),
 	}
+}
+
+func FindClassMethodNode(n ir.Node, name string) *ir.ClassMethodStmt {
+	class, ok := n.(*ir.ClassStmt)
+	if !ok {
+		return nil
+	}
+
+	for _, stmt := range class.Stmts {
+		method, ok := stmt.(*ir.ClassMethodStmt)
+		if !ok {
+			continue
+		}
+
+		if method.MethodName.Value == name {
+			return method
+		}
+	}
+
+	return nil
 }

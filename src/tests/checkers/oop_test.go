@@ -240,10 +240,10 @@ class TwoArgs {
 }
 `)
 	test.Expect = []string{
-		`Too few arguments for \OneArg constructor`,
-		`Too few arguments for \A\B\TwoArgs constructor`,
-		`Too few arguments for \A\B\TwoArgs constructor`,
-		`Too few arguments for \OneArgDerived constructor`,
+		`Too few arguments for \OneArg constructor, expecting 1, saw 0`,
+		`Too few arguments for \A\B\TwoArgs constructor, expecting 2, saw 0`,
+		`Too few arguments for \A\B\TwoArgs constructor, expecting 2, saw 0`,
+		`Too few arguments for \OneArgDerived constructor, expecting 1, saw 0`,
 	}
 	test.RunAndMatch()
 }
@@ -824,6 +824,7 @@ func TestInheritanceLoop(t *testing.T) {
 
 func TestClosureLateBinding(t *testing.T) {
 	test := linttest.NewSuite(t)
+	test.Config().StrictMixed = true
 	test.AddFile(`<?php
 	class Example
 	{
@@ -842,7 +843,7 @@ func TestClosureLateBinding(t *testing.T) {
 		"Undefined variable $a",
 		"Call to undefined method {undefined}->method()",
 	}
-	linttest.RunFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefinedVariable", "undefinedMethod")
 }
 
 func TestProtected(t *testing.T) {
@@ -923,7 +924,7 @@ func TestInvoke(t *testing.T) {
 
 	(new Example())();
 	`)
-	test.Expect = []string{"Too few arguments"}
+	test.Expect = []string{"Too few arguments for __invoke, expecting 1, saw 0"}
 	linttest.RunFilterMatch(test, "argCount")
 }
 
@@ -1082,7 +1083,7 @@ func TestInstanceOf(t *testing.T) {
 		`Call to undefined method {void}->get2()`,
 		`Call to undefined method {\Element}->callUndefinedMethod()`,
 	}
-	linttest.RunFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefinedMethod")
 }
 
 func TestNullableTypes(t *testing.T) {
@@ -1382,13 +1383,12 @@ trait AbstractTraitAB {
 
 		`Class \T6\Bad must implement \T6\TraitAbstractA::a method`,
 	}
-	linttest.RunFilterMatch(test, `unimplemented`, `nameMismatch`, `undefined`)
+	linttest.RunFilterMatch(test, `unimplemented`, `nameMismatch`, `undefinedType`)
 }
 
 func TestInterfaceRules(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-
 interface WithConstants {
   const r = 10000; // ok
   public const v = 1; // ok
@@ -1423,7 +1423,7 @@ interface WithoutAnyModifier {
 		`'bad1' can't be private`,
 		`'bad2' can't be protected`,
 	}
-	test.RunAndMatch()
+	linttest.RunFilterMatch(test, "nonPublicInterfaceMember")
 }
 
 func TestMixinAnnotation(t *testing.T) {
@@ -1756,4 +1756,43 @@ function f($arg) {
 		`Call to undefined method \Foo::non_existing_method()`,
 	}
 	test.RunAndMatch()
+}
+
+func TestImplicitAccessModifiers(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {
+  const FOO = 100; // ok
+  public const FOO1 = 100; // ok
+  private const FOO2 = 100; // ok
+  protected const FOO3 = 100; // ok
+  
+  var int $prop = 100;
+  public int $prop1 = 100;
+  private int $prop2 = 100;
+  protected int $prop3 = 100;
+
+  var int $prop4, $prop5 = 100;
+  public int $prop6, $prop7 = 100;
+  private int $prop8, $prop9 = 100;
+  protected int $prop10, $prop11 = 100;
+  
+  function f1() {}
+  public function f2() {}
+  private function f3() {}
+  protected function f4() {}
+
+  static function f5() {}
+  public static function f6() {}
+  private static function f7() {}
+  protected static function f8() {}
+}
+`)
+	test.Expect = []string{
+		`Specify the access modifier for property explicitly`,
+		`Specify the access modifier for properties explicitly`,
+		`Specify the access modifier for \Foo::f1 method explicitly`,
+		`Specify the access modifier for \Foo::f5 method explicitly`,
+	}
+	linttest.RunFilterMatch(test, "implicitModifiers")
 }

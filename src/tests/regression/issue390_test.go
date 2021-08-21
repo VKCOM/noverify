@@ -8,6 +8,7 @@ import (
 
 func TestIssue390(t *testing.T) {
 	test := linttest.NewSuite(t)
+	test.Config().StrictMixed = true
 	test.AddFile(`<?php
 $cond = 1;
 if ($cond && isset($a1[0])) {

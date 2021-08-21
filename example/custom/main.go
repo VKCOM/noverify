@@ -28,7 +28,7 @@ func addCheckers(config *linter.Config) {
 func main() {
 	log.SetFlags(log.Flags() | log.Ltime)
 
-	config := linter.NewConfig()
+	config := linter.NewConfig("8.1")
 	addCheckers(config)
 
 	// Config argument can be nil to use "all default" behavior.

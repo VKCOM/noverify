@@ -24,6 +24,9 @@ func (n *Argument) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
 	}
+	if n.Name != nil {
+		n.Name.Walk(v)
+	}
 	if n.Expr != nil {
 		n.Expr.Walk(v)
 	}
@@ -69,6 +72,9 @@ func (n *ArrayItemExpr) Walk(v Visitor) {
 func (n *ArrowFunctionExpr) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
+	}
+	for _, nn := range n.AttrGroups {
+		nn.Walk(v)
 	}
 	for _, nn := range n.Params {
 		nn.Walk(v)
@@ -277,6 +283,29 @@ func (n *AssignShiftRight) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
+func (n *Attribute) Walk(v Visitor) {
+	if !v.EnterNode(n) {
+		return
+	}
+	if n.Name != nil {
+		n.Name.Walk(v)
+	}
+	for _, nn := range n.Args {
+		nn.Walk(v)
+	}
+	v.LeaveNode(n)
+}
+
+func (n *AttributeGroup) Walk(v Visitor) {
+	if !v.EnterNode(n) {
+		return
+	}
+	for _, nn := range n.Attrs {
+		nn.Walk(v)
+	}
+	v.LeaveNode(n)
+}
+
 func (n *BadString) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
@@ -425,6 +454,9 @@ func (n *ClassConstListStmt) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
 	}
+	for _, nn := range n.AttrGroups {
+		nn.Walk(v)
+	}
 	for _, nn := range n.Modifiers {
 		nn.Walk(v)
 	}
@@ -458,6 +490,9 @@ func (n *ClassMethodStmt) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
 	}
+	for _, nn := range n.AttrGroups {
+		nn.Walk(v)
+	}
 	for _, nn := range n.Modifiers {
 		nn.Walk(v)
 	}
@@ -479,6 +514,9 @@ func (n *ClassMethodStmt) Walk(v Visitor) {
 func (n *ClassStmt) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
+	}
+	for _, nn := range n.AttrGroups {
+		nn.Walk(v)
 	}
 	for _, nn := range n.Modifiers {
 		nn.Walk(v)
@@ -518,6 +556,9 @@ func (n *CloseTagStmt) Walk(v Visitor) {
 func (n *ClosureExpr) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
+	}
+	for _, nn := range n.AttrGroups {
+		nn.Walk(v)
 	}
 	for _, nn := range n.Params {
 		nn.Walk(v)
@@ -847,6 +888,9 @@ func (n *FunctionStmt) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
 	}
+	for _, nn := range n.AttrGroups {
+		nn.Walk(v)
+	}
 	if n.FunctionName != nil {
 		n.FunctionName.Walk(v)
 	}
@@ -1024,6 +1068,9 @@ func (n *InterfaceStmt) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
 	}
+	for _, nn := range n.AttrGroups {
+		nn.Walk(v)
+	}
 	if n.InterfaceName != nil {
 		n.InterfaceName.Walk(v)
 	}
@@ -1115,6 +1162,32 @@ func (n *LogicalXorExpr) Walk(v Visitor) {
 func (n *MagicConstant) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
+	}
+	v.LeaveNode(n)
+}
+
+func (n *MatchArm) Walk(v Visitor) {
+	if !v.EnterNode(n) {
+		return
+	}
+	for _, nn := range n.Exprs {
+		nn.Walk(v)
+	}
+	if n.ReturnExpr != nil {
+		n.ReturnExpr.Walk(v)
+	}
+	v.LeaveNode(n)
+}
+
+func (n *MatchExpr) Walk(v Visitor) {
+	if !v.EnterNode(n) {
+		return
+	}
+	if n.Expr != nil {
+		n.Expr.Walk(v)
+	}
+	for _, nn := range n.Arms {
+		nn.Walk(v)
 	}
 	v.LeaveNode(n)
 }
@@ -1250,9 +1323,44 @@ func (n *Nullable) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
+func (n *NullsafeMethodCallExpr) Walk(v Visitor) {
+	if !v.EnterNode(n) {
+		return
+	}
+	if n.Variable != nil {
+		n.Variable.Walk(v)
+	}
+	if n.Method != nil {
+		n.Method.Walk(v)
+	}
+	for _, nn := range n.Args {
+		nn.Walk(v)
+	}
+	v.LeaveNode(n)
+}
+
+func (n *NullsafePropertyFetchExpr) Walk(v Visitor) {
+	if !v.EnterNode(n) {
+		return
+	}
+	if n.Variable != nil {
+		n.Variable.Walk(v)
+	}
+	if n.Property != nil {
+		n.Property.Walk(v)
+	}
+	v.LeaveNode(n)
+}
+
 func (n *Parameter) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
+	}
+	for _, nn := range n.AttrGroups {
+		nn.Walk(v)
+	}
+	for _, nn := range n.Modifiers {
+		nn.Walk(v)
 	}
 	if n.VariableType != nil {
 		n.VariableType.Walk(v)
@@ -1368,6 +1476,9 @@ func (n *PropertyFetchExpr) Walk(v Visitor) {
 func (n *PropertyListStmt) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
+	}
+	for _, nn := range n.AttrGroups {
+		nn.Walk(v)
 	}
 	for _, nn := range n.Modifiers {
 		nn.Walk(v)
@@ -1604,6 +1715,16 @@ func (n *TernaryExpr) Walk(v Visitor) {
 	v.LeaveNode(n)
 }
 
+func (n *ThrowExpr) Walk(v Visitor) {
+	if !v.EnterNode(n) {
+		return
+	}
+	if n.Expr != nil {
+		n.Expr.Walk(v)
+	}
+	v.LeaveNode(n)
+}
+
 func (n *ThrowStmt) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
@@ -1640,6 +1761,9 @@ func (n *TraitMethodRefStmt) Walk(v Visitor) {
 func (n *TraitStmt) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
+	}
+	for _, nn := range n.AttrGroups {
+		nn.Walk(v)
 	}
 	if n.TraitName != nil {
 		n.TraitName.Walk(v)
@@ -1734,6 +1858,16 @@ func (n *UnaryPlusExpr) Walk(v Visitor) {
 	}
 	if n.Expr != nil {
 		n.Expr.Walk(v)
+	}
+	v.LeaveNode(n)
+}
+
+func (n *Union) Walk(v Visitor) {
+	if !v.EnterNode(n) {
+		return
+	}
+	for _, nn := range n.Types {
+		nn.Walk(v)
 	}
 	v.LeaveNode(n)
 }

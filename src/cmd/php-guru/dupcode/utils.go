@@ -41,7 +41,7 @@ func hasModifier(list []*ir.Identifier, key string) bool {
 }
 
 func runIndexing(cacheDir string, targets []string, filter *workspace.FilenameFilter) error {
-	config := linter.NewConfig()
+	config := linter.NewConfig("8.1")
 	l := linter.NewLinter(config)
 	config.CacheDir = cacheDir
 

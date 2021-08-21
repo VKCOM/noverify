@@ -1,3 +1,21 @@
+MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::text method explicitly at testdata/parsedown/parsedown.php:24
+    function text($text)
+             ^^^^
+MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::setBreaksEnabled method explicitly at testdata/parsedown/parsedown.php:59
+    function setBreaksEnabled($breaksEnabled)
+             ^^^^^^^^^^^^^^^^
+MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::setMarkupEscaped method explicitly at testdata/parsedown/parsedown.php:68
+    function setMarkupEscaped($markupEscaped)
+             ^^^^^^^^^^^^^^^^
+MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::setUrlsLinked method explicitly at testdata/parsedown/parsedown.php:77
+    function setUrlsLinked($urlsLinked)
+             ^^^^^^^^^^^^^
+MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::setSafeMode method explicitly at testdata/parsedown/parsedown.php:86
+    function setSafeMode($safeMode)
+             ^^^^^^^^^^^
+MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::setStrictMode method explicitly at testdata/parsedown/parsedown.php:95
+    function setStrictMode($strictMode)
+             ^^^^^^^^^^^^^
 MAYBE   typeHint: Specify the type for the parameter $lines in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:162
     protected function lines(array $lines)
                        ^^^^^
@@ -124,10 +142,10 @@ MAYBE   typeHint: Specify the type for the parameter $Elements in PHPDoc, 'array
 MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1689
     protected function element(array $Element)
                        ^^^^^^^
-WARNING undefined: Variable $text might have not been defined at testdata/parsedown/parsedown.php:1755
+WARNING maybeUndefined: Variable $text might have not been defined at testdata/parsedown/parsedown.php:1755
                     $markup .= self::escape($text, true);
                                             ^^^^^
-WARNING undefined: Variable $text might have not been defined at testdata/parsedown/parsedown.php:1759
+WARNING maybeUndefined: Variable $text might have not been defined at testdata/parsedown/parsedown.php:1759
                     $markup .= $text;
                                ^^^^^
 MAYBE   typeHint: Specify the type for the parameter $Elements in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1773
@@ -139,6 +157,9 @@ MAYBE   ternarySimplify: Could rewrite as `$Element['autobreak'] ?? isset($Eleme
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/parsedown/parsedown.php:1807
         if ( ! in_array('', $lines)
                ^^^^^^^^^^^^^^^^^^^^
+MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::parse method explicitly at testdata/parsedown/parsedown.php:1854
+    function parse($text)
+             ^^^^^
 MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1861
     protected function sanitiseElement(array $Element)
                        ^^^^^^^^^^^^^^^
@@ -148,6 +169,9 @@ WARNING unused: Variable $val is unused (use $_ to ignore this inspection or spe
 MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1900
     protected function filterUnsafeUrlInAttribute(array $Element, $attribute)
                        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::instance method explicitly at testdata/parsedown/parsedown.php:1938
+    static function instance($name = 'default')
+                    ^^^^^^^^
 ERROR   classMembersOrder: Property $breaksEnabled must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:66
     protected $breaksEnabled;
     ^^^^^^^^^^^^^^^^^^^^^^^^^

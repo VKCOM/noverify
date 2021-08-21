@@ -78,6 +78,7 @@ func (info *FuncInfo) IsStatic() bool         { return info.Flags&FuncStatic != 
 func (info *FuncInfo) IsAbstract() bool       { return info.Flags&FuncAbstract != 0 }
 func (info *FuncInfo) IsPure() bool           { return info.Flags&FuncPure != 0 }
 func (info *FuncInfo) IsFromAnnotation() bool { return info.Flags&FuncFromAnnotation != 0 }
+func (info *FuncInfo) IsFinal() bool          { return info.Flags&FuncFinal != 0 }
 
 type OverrideType int
 
@@ -151,6 +152,7 @@ type ClassInfo struct {
 }
 
 func (info *ClassInfo) IsAbstract() bool  { return info.Flags&ClassAbstract != 0 }
+func (info *ClassInfo) IsFinal() bool     { return info.Flags&ClassFinal != 0 }
 func (info *ClassInfo) IsShape() bool     { return info.Flags&ClassShape != 0 }
 func (info *ClassInfo) IsInterface() bool { return info.Flags&ClassInterface != 0 }
 

@@ -285,8 +285,8 @@ function argsOrder() {
 
 /**
  * @comment Report suspicious usage of bitwise operations.
- * @before  if ($isURL & $verify) ...
- * @after   if ($isURL && $verify) ...
+ * @before  if ($isURL & $verify) { ... }
+ * @after   if ($isURL && $verify) { ... }
  */
 function bitwiseOps() {
   /**
@@ -438,9 +438,7 @@ function langDeprecated() {
 }
 
 /**
- * @comment Report a strange way of type cast.
- * @before  $x.""
- * @after   (string)$x
+ * @extends
  */
 function strangeCast() {
     /**
@@ -460,11 +458,6 @@ function strangeCast() {
         0 + $x;
         0.0 + $x;
     }
-
-    /**
-     * @warning Unary plus, possible type cast, use an explicit cast to int or float instead of using the unary plus
-     */
-    +$x;
 }
 
 /**
@@ -652,7 +645,7 @@ function selfAssign() {
 
 /**
  * @comment Report using @.
- * @before  $f();
+ * @before  @f();
  * @after   f();
  */
 function errorSilence() {
@@ -660,4 +653,22 @@ function errorSilence() {
    * @warning Don't use @, silencing errors is bad practice
    */
   @$_;
+}
+
+
+/**
+ * @comment Report when use unparenthesized expression containing both '.' and binary operator.
+ * @before  "id: " . $id - 10
+ * @after   "id: " . ($id - 10)
+ */
+function concatenationPrecedence() {
+    /**
+     * @warning Unparenthesized expression containing both '.' and binary operator may produce unexpected results
+     */
+    any_concat: {
+        $_ . $_ - $_;
+        $_ . $_ + $_;
+        $_ . $_ << $_;
+        $_ . $_ >> $_;
+    }
 }

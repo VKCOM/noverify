@@ -1,7 +1,7 @@
-MAYBE   phpdoc: Missing PHPDoc for \QRCode::output_image public method at testdata/qrcode/qrcode.php:45
+MAYBE   missingPhpdoc: Missing PHPDoc for \QRCode::output_image public method at testdata/qrcode/qrcode.php:45
   public function output_image() {
                   ^^^^^^^^^^^^
-MAYBE   phpdoc: Missing PHPDoc for \QRCode::render_image public method at testdata/qrcode/qrcode.php:53
+MAYBE   missingPhpdoc: Missing PHPDoc for \QRCode::render_image public method at testdata/qrcode/qrcode.php:53
   public function render_image() {
                   ^^^^^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$this->options['bc'] ?? 'FFFFFF'` at testdata/qrcode/qrcode.php:59
@@ -22,7 +22,7 @@ WARNING unused: Variable $mode is unused (use $_ to ignore this inspection or sp
 WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/qrcode/qrcode.php:203
     switch ($mode) {
     ^
-WARNING undefined: Variable $code might have not been defined at testdata/qrcode/qrcode.php:221
+WARNING maybeUndefined: Variable $code might have not been defined at testdata/qrcode/qrcode.php:221
     while (count($code) % 8) {
                  ^^^^^
 WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:297

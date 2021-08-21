@@ -8,6 +8,7 @@ import (
 	"github.com/VKCOM/noverify/src/constfold"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
+	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/solver"
@@ -68,6 +69,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 	case *ir.GlobalStmt:
 		b.checkGlobalStmt(n)
+
+	case *ir.UnaryPlusExpr:
+		b.checkUnaryPlus(n)
 
 	case *ir.BitwiseAndExpr:
 		b.checkBitwiseOp(n, n.Left, n.Right)
@@ -188,6 +192,15 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	}
 }
 
+func (b *blockLinter) checkUnaryPlus(n *ir.UnaryPlusExpr) {
+	val := constfold.Eval(b.classParseState(), n.Expr)
+	if val.IsValid() {
+		return
+	}
+
+	b.report(n, LevelWarning, "strangeCast", "Unary plus with non-constant expression, possible type cast, use an explicit cast to int or float instead of using the unary plus")
+}
+
 func (b *blockLinter) checkClass(class *ir.ClassStmt) {
 	const classMethod = 0
 	const classOtherMember = 1
@@ -298,6 +311,41 @@ func (b *blockLinter) checkCoalesceExpr(n *ir.CoalesceExpr) {
 
 func (b *blockLinter) checkAssign(a *ir.Assign) {
 	b.checkVoidType(a.Expr)
+
+	var sign byte
+	switch a.Expr.(type) {
+	case *ir.UnaryPlusExpr:
+		sign = '+'
+	case *ir.UnaryMinusExpr:
+		sign = '-'
+	default:
+		return
+	}
+
+	// Get sign token.
+	signTkn := ir.GetFirstToken(a.Expr)
+
+	// $a= 100;
+	//   |
+	//   - Free floating empty.
+	//
+	// $a = 100;
+	//    |
+	//    - Free floating contain space.
+	containsSpaceBeforeAssign := len(a.EqualTkn.FreeFloating) != 0
+
+	// $a =+ 100;
+	//     |
+	//     - Free floating empty.
+	//
+	// $a = +100;
+	//      |
+	//      - Free floating contain space.
+	containsSpaceBeforeSign := len(signTkn.FreeFloating) != 0
+
+	if !containsSpaceBeforeSign && containsSpaceBeforeAssign {
+		b.report(a, LevelWarning, "reverseAssign", "Possible there should be '%c='", sign)
+	}
 }
 
 func (b *blockLinter) checkTryStmt(s *ir.TryStmt) {
@@ -472,7 +520,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 	// If new expression is written without (), ArgumentList will be nil.
 	// It's equivalent of 0 arguments constructor call.
 	if ok && !enoughArgs(e.Args, ctor) {
-		b.report(e, LevelError, "argCount", "Too few arguments for %s constructor", className)
+		b.report(e, LevelError, "argCount", "Too few arguments for %s constructor, expecting %d, saw %d", className, ctor.MinParamsCnt, len(e.Args))
 	}
 }
 
@@ -509,16 +557,25 @@ func (b *blockLinter) checkConstFetch(e *ir.ConstFetchExpr) {
 		// If it's builtin constant, give a more precise report message.
 		switch nm := utils.NameNodeToString(e.Constant); strings.ToLower(nm) {
 		case "null", "true", "false":
-			// TODO(quasilyte): should probably issue not "undefined" warning
-			// here, but something else, like "constCase" or something.
-			// Since it *was* "undefined" before, leave it as is for now,
-			// only make error message more user-friendly.
-			lcName := strings.ToLower(nm)
-			b.report(e.Constant, LevelError, "undefined", "Use %s instead of %s", lcName, nm)
+			expected := strings.ToLower(nm)
+			b.report(e.Constant, LevelError, "constCase", "Constant '%s' should be used in lower case as '%s'", nm, expected)
+			b.addFixForBuiltInConstantCase(e.Constant, expected)
 		default:
-			b.report(e.Constant, LevelError, "undefined", "Undefined constant %s", nm)
+			b.report(e.Constant, LevelError, "undefinedConstant", "Undefined constant %s", nm)
 		}
 	}
+}
+
+func (b *blockLinter) addFixForBuiltInConstantCase(constant *ir.Name, expected string) {
+	if !b.walker.r.config.ApplyQuickFixes {
+		return
+	}
+
+	b.walker.r.addQuickFix("constCase", quickfix.TextEdit{
+		StartPos:    constant.Position.StartPos,
+		EndPos:      constant.Position.EndPos,
+		Replacement: expected,
+	})
 }
 
 func (b *blockLinter) checkTernary(e *ir.TernaryExpr) {
@@ -885,18 +942,42 @@ func (b *blockLinter) checkDeprecatedFunctionCall(e *ir.FunctionCallExpr, call *
 
 func (b *blockLinter) checkFunctionAvailability(e *ir.FunctionCallExpr, call *funcCallInfo) {
 	if !call.isFound && !b.walker.ctx.customFunctionExists(e.Function) {
-		b.report(e.Function, LevelError, "undefined", "Call to undefined function %s", utils.NameNodeToString(e.Function))
+		b.report(e.Function, LevelError, "undefinedFunction", "Call to undefined function %s", utils.NameNodeToString(e.Function))
 	}
 }
 
-func (b *blockLinter) checkCallArgs(n ir.Node, args []ir.Node, fn meta.FuncInfo) {
-	b.checkCallArgsCount(n, args, fn)
+func (b *blockLinter) checkCallArgs(fun ir.Node, args []ir.Node, fn meta.FuncInfo, callerClass string) {
+	b.checkCallArgsCount(fun, args, fn, callerClass)
+	b.checkArgsOrder(fun, args, fn)
 }
 
-func (b *blockLinter) checkCallArgsCount(n ir.Node, args []ir.Node, fn meta.FuncInfo) {
+func (b *blockLinter) checkArgsOrder(fun ir.Node, args []ir.Node, fn meta.FuncInfo) {
+	if len(args) != 2 || len(fn.Params) < 2 {
+		return
+	}
+
+	firstArg := args[0].(*ir.Argument)
+	secondArg := args[1].(*ir.Argument)
+
+	firstVar, ok := firstArg.Expr.(*ir.SimpleVar)
+	if !ok {
+		return
+	}
+
+	secondVar, ok := secondArg.Expr.(*ir.SimpleVar)
+	if !ok {
+		return
+	}
+
+	if firstVar.Name == fn.Params[1].Name && secondVar.Name == fn.Params[0].Name {
+		b.report(fun, LevelWarning, "argsReverse", "Perhaps the order of the arguments is messed up, $%[1]s is passed to the $%[2]s parameter, and $%[2]s is passed to the $%[1]s parameter", firstVar.Name, secondVar.Name)
+	}
+}
+
+func (b *blockLinter) checkCallArgsCount(fun ir.Node, args []ir.Node, fn meta.FuncInfo, callerClass string) {
 	if fn.Name == `\mt_rand` {
 		if len(args) != 0 && len(args) != 2 {
-			b.report(n, LevelWarning, "argCount", "mt_rand expects 0 or 2 args")
+			b.report(fun, LevelWarning, "argCount", "mt_rand expects 0 or 2 args")
 		}
 		return
 	}
@@ -907,7 +988,15 @@ func (b *blockLinter) checkCallArgsCount(n ir.Node, args []ir.Node, fn meta.Func
 	}
 
 	if !enoughArgs(args, fn) {
-		b.report(n, LevelWarning, "argCount", "Too few arguments for %s", utils.NameNodeToString(n))
+		name := strings.TrimPrefix(fn.Name, `\`)
+		if callerClass != "" {
+			name = fmt.Sprintf("%s::%s", strings.TrimPrefix(callerClass, `\`), name)
+		} else if types.IsClosure(fn.Name) {
+			name = autogen.TransformClosureToReadableName(fn.Name)
+		}
+
+		b.report(fun, LevelWarning, "argCount",
+			"Too few arguments for %s, expecting %d, saw %d", name, fn.MinParamsCnt, len(args))
 	}
 }
 
@@ -924,7 +1013,7 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 	}
 
 	if call.isFound {
-		b.checkCallArgs(e.Function, e.Args, call.info)
+		b.checkCallArgs(e.Function, e.Args, call.info, "")
 		b.checkDeprecatedFunctionCall(e, &call)
 	}
 
@@ -1071,20 +1160,22 @@ func (b *blockLinter) checkStripTags(e *ir.FunctionCallExpr) {
 func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 	parseState := b.classParseState()
 
-	call := resolveMethodCall(b.walker.ctx.sc, parseState, b.walker.ctx.customTypes, e)
+	call := resolveMethodCall(b.walker.ctx.sc, parseState, b.walker.ctx.customTypes, e, b.walker.r.strictMixed)
 	if !call.canAnalyze {
 		return
 	}
 
 	if !call.isMagic {
-		b.checkCallArgs(e.Method, e.Args, call.info)
+		b.checkCallArgs(e.Method, e.Args, call.info, call.methodCallerType.String())
 	}
 
 	if !call.isFound && !call.isMagic && !parseState.IsTrait && !b.walker.isThisInsideClosure(e.Variable) {
-		// The method is undefined but we permit calling it if `method_exists`
+		needShowUndefinedMethod := !call.callerTypeIsMixed || b.walker.r.strictMixed
+
+		// The method is undefined, but we permit calling it if `method_exists`
 		// was called prior to that call.
-		if !b.walker.ctx.customMethodExists(e.Variable, call.methodName) {
-			b.report(e.Method, LevelError, "undefined", "Call to undefined method {%s}->%s()", call.methodCallerType, call.methodName)
+		if !b.walker.ctx.customMethodExists(e.Variable, call.methodName) && needShowUndefinedMethod {
+			b.report(e.Method, LevelError, "undefinedMethod", "Call to undefined method {%s}->%s()", call.methodCallerType, call.methodName)
 		}
 	} else if !call.isMagic && !parseState.IsTrait {
 		// Method is defined.
@@ -1118,11 +1209,11 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 	b.checkClassSpecialNameCase(e, call.className)
 
 	if !call.isMagic {
-		b.checkCallArgs(e.Call, e.Args, call.methodInfo.Info)
+		b.checkCallArgs(e.Call, e.Args, call.methodInfo.Info, call.className)
 	}
 
 	if !call.isFound && !call.isMagic && !b.classParseState().IsTrait {
-		b.report(e.Call, LevelError, "undefined", "Call to undefined method %s::%s()", call.className, call.methodName)
+		b.report(e.Call, LevelError, "undefinedMethod", "Call to undefined method %s::%s()", call.className, call.methodName)
 	} else if !call.isParentCall && !call.methodInfo.Info.IsStatic() && !call.isMagic && !b.classParseState().IsTrait {
 		// Method is defined.
 		// parent::f() is permitted.
@@ -1145,13 +1236,18 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 }
 
 func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
-	fetch := resolvePropertyFetch(b.walker.ctx.sc, b.classParseState(), b.walker.ctx.customTypes, e)
+	fetch := resolvePropertyFetch(b.walker.ctx.sc, b.classParseState(), b.walker.ctx.customTypes, e, b.walker.r.strictMixed)
 	if !fetch.canAnalyze {
 		return
 	}
 
-	if !fetch.isFound && !fetch.isMagic && !b.classParseState().IsTrait && !b.walker.isThisInsideClosure(e.Variable) {
-		b.report(e.Property, LevelError, "undefined", "Property {%s}->%s does not exist", fetch.propertyFetchType, fetch.propertyNode.Value)
+	needShowUndefinedProperty := !fetch.callerTypeIsMixed || b.walker.r.strictMixed
+
+	if !fetch.isFound && !fetch.isMagic &&
+		!b.classParseState().IsTrait &&
+		!b.walker.isThisInsideClosure(e.Variable) &&
+		needShowUndefinedProperty {
+		b.report(e.Property, LevelError, "undefinedProperty", "Property {%s}->%s does not exist", fetch.propertyFetchType, fetch.propertyNode.Value)
 	}
 
 	if fetch.isFound && !fetch.isMagic && !canAccess(b.classParseState(), fetch.className, fetch.info.AccessLevel) {
@@ -1168,7 +1264,7 @@ func (b *blockLinter) checkStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) {
 	b.checkClassSpecialNameCase(e, fetch.className)
 
 	if !fetch.isFound && !b.classParseState().IsTrait {
-		b.report(e.Property, LevelError, "undefined", "Property %s::$%s does not exist", fetch.className, fetch.propertyName)
+		b.report(e.Property, LevelError, "undefinedProperty", "Property %s::$%s does not exist", fetch.className, fetch.propertyName)
 	}
 
 	if fetch.isFound && !canAccess(b.classParseState(), fetch.info.ClassName, fetch.info.Info.AccessLevel) {
@@ -1192,7 +1288,7 @@ func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
 	}
 
 	if !fetch.isFound && !b.classParseState().IsTrait {
-		b.walker.r.Report(e.ConstantName, LevelError, "undefined", "Class constant %s::%s does not exist", fetch.className, fetch.constName)
+		b.walker.r.Report(e.ConstantName, LevelError, "undefinedConstant", "Class constant %s::%s does not exist", fetch.className, fetch.constName)
 	}
 
 	if fetch.isFound && !canAccess(b.classParseState(), fetch.implClassName, fetch.info.AccessLevel) {

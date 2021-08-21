@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/phpdoctypes"
-	"github.com/z7zmey/php-parser/pkg/position"
-	"github.com/z7zmey/php-parser/pkg/token"
+	"github.com/VKCOM/php-parser/pkg/position"
+	"github.com/VKCOM/php-parser/pkg/token"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
@@ -1008,7 +1008,7 @@ func (b *blockWalker) handleCompactCallArgs(args []ir.Node) {
 }
 
 func (b *blockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
-	call := resolveMethodCall(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, e)
+	call := resolveMethodCall(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, e, b.r.strictMixed)
 
 	e.Variable.Walk(b)
 	e.Method.Walk(b)
@@ -1236,7 +1236,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		}
 
 		if !b.ctx.sc.HaveVar(v) && !byRef {
-			b.r.Report(v, LevelWarning, "undefined", "Undefined variable $%s", v.Name)
+			b.r.Report(v, LevelWarning, "undefinedVariable", "Undefined variable $%s", v.Name)
 		}
 
 		typ, ok := b.ctx.sc.GetVarNameType(v.Name)
@@ -1250,10 +1250,11 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 	params := b.r.parseFuncParams(fun.Params, doc.ParamTypes, sc, closureSolver)
 
 	funcInfo := b.r.handleFuncStmts(params.params, closureUses, fun.Stmts, sc)
+	phpDocReturnTypes := doc.ReturnType
 	actualReturnTypes := funcInfo.returnTypes
 	exitFlags := funcInfo.prematureExitFlags
 
-	returnTypes := functionReturnType(types.NewEmptyMap(0), hintReturnType, actualReturnTypes)
+	returnTypes := functionReturnType(phpDocReturnTypes, hintReturnType, actualReturnTypes)
 
 	for _, param := range fun.Params {
 		b.r.checkFuncParam(param.(*ir.Parameter))
