@@ -40,7 +40,7 @@ $_ = $x instanceof Box ? 0 : 1;
 		`Undefined variable $b1`,
 		`Undefined variable $b2`,
 		`Undefined variable $b3`,
-		`undefined: Property {mixed}->item2 does not exist`,
+		`Property {mixed}->item2 does not exist`,
 	}
 	test.RunAndMatch()
 }

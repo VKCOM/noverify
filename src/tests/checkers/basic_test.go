@@ -716,7 +716,7 @@ class Foo {
 		"Undefined variable $argc",
 	}
 
-	linttest.RunFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefinedVariable")
 }
 
 func TestAutogenSkip(t *testing.T) {
@@ -2115,7 +2115,7 @@ function f() {
 		"Undefined variable $x",
 		"Undefined variable $y",
 	}
-	linttest.RunFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefinedVariable")
 }
 
 func TestAssignByRef(t *testing.T) {

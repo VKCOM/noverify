@@ -121,16 +121,16 @@ MAYBE   ternarySimplify: Could rewrite as `$options['cache_file_mode'] ?? null` 
 MAYBE   misspellComment: "entitity" is a misspelling of "entity" at testdata/mustache/src/Mustache/Engine.php:254
     public function getEntityFlags()
                     ^^^^^^^^^^^^^^
-ERROR   undefined: Call to undefined method {\Mustache_Cache}->getLogger() at testdata/mustache/src/Mustache/Engine.php:459
+ERROR   undefinedMethod: Call to undefined method {\Mustache_Cache}->getLogger() at testdata/mustache/src/Mustache/Engine.php:459
         if ($this->getCache()->getLogger() === null) {
                                ^^^^^^^^^
-ERROR   undefined: Call to undefined method {\Mustache_Cache}->setLogger() at testdata/mustache/src/Mustache/Engine.php:460
+ERROR   undefinedMethod: Call to undefined method {\Mustache_Cache}->setLogger() at testdata/mustache/src/Mustache/Engine.php:460
             $this->getCache()->setLogger($logger);
                                ^^^^^^^^^
-ERROR   undefined: Call to undefined method {\Mustache_Cache}->getLogger() at testdata/mustache/src/Mustache/Engine.php:561
+ERROR   undefinedMethod: Call to undefined method {\Mustache_Cache}->getLogger() at testdata/mustache/src/Mustache/Engine.php:561
         if (isset($this->logger) && $cache->getLogger() === null) {
                                             ^^^^^^^^^
-ERROR   undefined: Call to undefined method {\Mustache_Cache}->setLogger() at testdata/mustache/src/Mustache/Engine.php:562
+ERROR   undefinedMethod: Call to undefined method {\Mustache_Cache}->setLogger() at testdata/mustache/src/Mustache/Engine.php:562
             $cache->setLogger($this->getLogger());
                     ^^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$this->delimiters ?: '{{ }}'` at testdata/mustache/src/Mustache/Engine.php:628

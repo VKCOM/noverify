@@ -561,7 +561,7 @@ func (b *blockLinter) checkConstFetch(e *ir.ConstFetchExpr) {
 			b.report(e.Constant, LevelError, "constCase", "Constant '%s' should be used in lower case as '%s'", nm, expected)
 			b.addFixForBuiltInConstantCase(e.Constant, expected)
 		default:
-			b.report(e.Constant, LevelError, "undefined", "Undefined constant %s", nm)
+			b.report(e.Constant, LevelError, "undefinedConstant", "Undefined constant %s", nm)
 		}
 	}
 }
@@ -942,7 +942,7 @@ func (b *blockLinter) checkDeprecatedFunctionCall(e *ir.FunctionCallExpr, call *
 
 func (b *blockLinter) checkFunctionAvailability(e *ir.FunctionCallExpr, call *funcCallInfo) {
 	if !call.isFound && !b.walker.ctx.customFunctionExists(e.Function) {
-		b.report(e.Function, LevelError, "undefined", "Call to undefined function %s", utils.NameNodeToString(e.Function))
+		b.report(e.Function, LevelError, "undefinedFunction", "Call to undefined function %s", utils.NameNodeToString(e.Function))
 	}
 }
 
@@ -1175,7 +1175,7 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 		// The method is undefined, but we permit calling it if `method_exists`
 		// was called prior to that call.
 		if !b.walker.ctx.customMethodExists(e.Variable, call.methodName) && needShowUndefinedMethod {
-			b.report(e.Method, LevelError, "undefined", "Call to undefined method {%s}->%s()", call.methodCallerType, call.methodName)
+			b.report(e.Method, LevelError, "undefinedMethod", "Call to undefined method {%s}->%s()", call.methodCallerType, call.methodName)
 		}
 	} else if !call.isMagic && !parseState.IsTrait {
 		// Method is defined.
@@ -1213,7 +1213,7 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 	}
 
 	if !call.isFound && !call.isMagic && !b.classParseState().IsTrait {
-		b.report(e.Call, LevelError, "undefined", "Call to undefined method %s::%s()", call.className, call.methodName)
+		b.report(e.Call, LevelError, "undefinedMethod", "Call to undefined method %s::%s()", call.className, call.methodName)
 	} else if !call.isParentCall && !call.methodInfo.Info.IsStatic() && !call.isMagic && !b.classParseState().IsTrait {
 		// Method is defined.
 		// parent::f() is permitted.
@@ -1247,7 +1247,7 @@ func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
 		!b.classParseState().IsTrait &&
 		!b.walker.isThisInsideClosure(e.Variable) &&
 		needShowUndefinedProperty {
-		b.report(e.Property, LevelError, "undefined", "Property {%s}->%s does not exist", fetch.propertyFetchType, fetch.propertyNode.Value)
+		b.report(e.Property, LevelError, "undefinedProperty", "Property {%s}->%s does not exist", fetch.propertyFetchType, fetch.propertyNode.Value)
 	}
 
 	if fetch.isFound && !fetch.isMagic && !canAccess(b.classParseState(), fetch.className, fetch.info.AccessLevel) {
@@ -1264,7 +1264,7 @@ func (b *blockLinter) checkStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) {
 	b.checkClassSpecialNameCase(e, fetch.className)
 
 	if !fetch.isFound && !b.classParseState().IsTrait {
-		b.report(e.Property, LevelError, "undefined", "Property %s::$%s does not exist", fetch.className, fetch.propertyName)
+		b.report(e.Property, LevelError, "undefinedProperty", "Property %s::$%s does not exist", fetch.className, fetch.propertyName)
 	}
 
 	if fetch.isFound && !canAccess(b.classParseState(), fetch.info.ClassName, fetch.info.Info.AccessLevel) {
@@ -1288,7 +1288,7 @@ func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
 	}
 
 	if !fetch.isFound && !b.classParseState().IsTrait {
-		b.walker.r.Report(e.ConstantName, LevelError, "undefined", "Class constant %s::%s does not exist", fetch.className, fetch.constName)
+		b.walker.r.Report(e.ConstantName, LevelError, "undefinedConstant", "Class constant %s::%s does not exist", fetch.className, fetch.constName)
 	}
 
 	if fetch.isFound && !canAccess(b.classParseState(), fetch.implClassName, fetch.info.AccessLevel) {

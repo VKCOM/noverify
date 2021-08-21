@@ -344,21 +344,90 @@ public function process($acts, $config) {
 		},
 
 		{
-			Name:     "undefined",
+			Name:     "undefinedProperty",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report usages of undefined property.`,
+			Before: `class Foo {
+  public string $prop;
+}
+
+(new Foo)->prop2; // prop2 is undefined.`,
+			After: `class Foo {
+  public string $prop;
+}
+
+(new Foo)->prop;`,
+		},
+
+		{
+			Name:     "undefinedMethod",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report usages of undefined method.`,
+			Before: `class Foo {
+  public function method() {};
+}
+
+(new Foo)->method2(); // method2 is undefined.`,
+			After: `class Foo {
+  public function method() {}
+}
+
+(new Foo)->method();`,
+		},
+
+		{
+			Name:     "undefinedConstant",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report usages of undefined constant.`,
+			Before:   `echo PI;`,
+			After:    `echo M_PI;`,
+		},
+
+		{
+			Name:     "undefinedFunction",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report usages of undefined function.`,
+			Before:   `undefinedFunc();`,
+			After:    `definedFunc();`,
+		},
+
+		{
+			Name:     "undefinedVariable",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report usages of undefined variable.`,
+			Before:   `echo $undefinedVar;`,
+			After: `$definedVar = 100;
+echo $definedVar;`,
+		},
+
+		{
+			Name:     "maybeUndefined",
 			Default:  true,
 			Quickfix: false,
 			Comment:  `Report usages of potentially undefined symbols.`,
 			Before: `if ($cond) {
   $v = 10;
 }
-return $v; // $v may be undefined.
-`,
+return $v; // $v may be undefined.`,
 			After: `$v = 0; // Default value.
 if ($cond) {
   $v = 10;
 }
-return $v;
-`,
+return $v;`,
+		},
+
+		{
+			Name:     "undefinedType",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report usages of undefined type.`,
+			Before:   `class Foo extends UndefinedClass {}`,
+			After:    `class Foo extends DefinedClass {}`,
 		},
 
 		{

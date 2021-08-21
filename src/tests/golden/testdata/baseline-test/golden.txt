@@ -1,6 +1,6 @@
 WARNING discardExpr: Expression evaluated but not used at testdata/baseline-test/src/file1.php:10
   "this line is not suppressed";
   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR   undefined: Type \NonExisting not found at testdata/baseline-test/src/file2.php:5
+ERROR   undefinedType: Type \NonExisting not found at testdata/baseline-test/src/file2.php:5
 $bad = new NonExisting();
            ^^^^^^^^^^^

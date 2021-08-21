@@ -843,7 +843,7 @@ func TestClosureLateBinding(t *testing.T) {
 		"Undefined variable $a",
 		"Call to undefined method {undefined}->method()",
 	}
-	linttest.RunFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefinedVariable", "undefinedMethod")
 }
 
 func TestProtected(t *testing.T) {
@@ -1083,7 +1083,7 @@ func TestInstanceOf(t *testing.T) {
 		`Call to undefined method {void}->get2()`,
 		`Call to undefined method {\Element}->callUndefinedMethod()`,
 	}
-	linttest.RunFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefinedMethod")
 }
 
 func TestNullableTypes(t *testing.T) {
@@ -1383,7 +1383,7 @@ trait AbstractTraitAB {
 
 		`Class \T6\Bad must implement \T6\TraitAbstractA::a method`,
 	}
-	linttest.RunFilterMatch(test, `unimplemented`, `nameMismatch`, `undefined`)
+	linttest.RunFilterMatch(test, `unimplemented`, `nameMismatch`, `undefinedType`)
 }
 
 func TestInterfaceRules(t *testing.T) {

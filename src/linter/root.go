@@ -569,7 +569,7 @@ func (d *rootWalker) reportHash(loc *ir.Location, contextLine []byte, checkName,
 func (d *rootWalker) reportUndefinedVariable(v ir.Node, maybeHave bool) {
 	sv, ok := v.(*ir.SimpleVar)
 	if !ok {
-		d.Report(v, LevelWarning, "undefined", "Unknown variable variable %s used",
+		d.Report(v, LevelWarning, "undefinedVariable", "Unknown variable variable %s used",
 			utils.NameNodeToString(v))
 		return
 	}
@@ -579,9 +579,9 @@ func (d *rootWalker) reportUndefinedVariable(v ir.Node, maybeHave bool) {
 	}
 
 	if maybeHave {
-		d.Report(sv, LevelWarning, "undefined", "Variable $%s might have not been defined", sv.Name)
+		d.Report(sv, LevelWarning, "maybeUndefined", "Variable $%s might have not been defined", sv.Name)
 	} else {
-		d.Report(sv, LevelError, "undefined", "Undefined variable $%s", sv.Name)
+		d.Report(sv, LevelError, "undefinedVariable", "Undefined variable $%s", sv.Name)
 	}
 }
 
@@ -2309,7 +2309,7 @@ func (d *rootWalker) checkImplementedStep(classNode, name ir.Node, className str
 }
 
 func (d *rootWalker) reportUndefinedType(n ir.Node, name string) {
-	d.Report(n, LevelError, "undefined", "Type %s not found", name)
+	d.Report(n, LevelError, "undefinedType", "Type %s not found", name)
 }
 
 func (d *rootWalker) checkNameCase(n ir.Node, nameUsed, nameExpected string) {
