@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 89           | 79                        | 10                         | 12                 |
+| 95           | 85                        | 10                         | 12                 |
 ## Table of contents
  - Enabled by default
    - [`accessLevel` checker](#accesslevel-checker)
@@ -48,6 +48,7 @@
    - [`keywordCase` checker](#keywordcase-checker)
    - [`linterError` checker](#lintererror-checker)
    - [`magicMethodDecl` checker](#magicmethoddecl-checker)
+   - [`maybeUndefined` checker](#maybeundefined-checker)
    - [`methodSignatureMismatch` checker](#methodsignaturemismatch-checker)
    - [`misspellComment` checker](#misspellcomment-checker)
    - [`misspellName` checker](#misspellname-checker)
@@ -81,7 +82,12 @@
    - [`syntax` checker](#syntax-checker)
    - [`ternarySimplify` checker (autofixable)](#ternarysimplify-checker)
    - [`unaryRepeat` checker (autofixable)](#unaryrepeat-checker)
-   - [`undefined` checker](#undefined-checker)
+   - [`undefinedConstant` checker](#undefinedconstant-checker)
+   - [`undefinedFunction` checker](#undefinedfunction-checker)
+   - [`undefinedMethod` checker](#undefinedmethod-checker)
+   - [`undefinedProperty` checker](#undefinedproperty-checker)
+   - [`undefinedType` checker](#undefinedtype-checker)
+   - [`undefinedVariable` checker](#undefinedvariable-checker)
    - [`unimplemented` checker](#unimplemented-checker)
    - [`unused` checker](#unused-checker)
    - [`varShadow` checker](#varshadow-checker)
@@ -940,6 +946,31 @@ class Foo {
 <p><br></p>
 
 
+### `maybeUndefined` checker
+
+#### Description
+
+Report usages of potentially undefined symbols.
+
+#### Non-compliant code:
+```php
+if ($cond) {
+  $v = 10;
+}
+return $v; // $v may be undefined.
+```
+
+#### Compliant code:
+```php
+$v = 0; // Default value.
+if ($cond) {
+  $v = 10;
+}
+return $v;
+```
+<p><br></p>
+
+
 ### `methodSignatureMismatch` checker
 
 #### Description
@@ -1591,29 +1622,127 @@ echo (bool) $a;
 <p><br></p>
 
 
-### `undefined` checker
+### `undefinedConstant` checker
 
 #### Description
 
-Report usages of potentially undefined symbols.
+Report usages of undefined constant.
 
 #### Non-compliant code:
 ```php
-if ($cond) {
-  $v = 10;
-}
-return $v; // $v may be undefined.
-
+echo PI;
 ```
 
 #### Compliant code:
 ```php
-$v = 0; // Default value.
-if ($cond) {
-  $v = 10;
-}
-return $v;
+echo M_PI;
+```
+<p><br></p>
 
+
+### `undefinedFunction` checker
+
+#### Description
+
+Report usages of undefined function.
+
+#### Non-compliant code:
+```php
+undefinedFunc();
+```
+
+#### Compliant code:
+```php
+definedFunc();
+```
+<p><br></p>
+
+
+### `undefinedMethod` checker
+
+#### Description
+
+Report usages of undefined method.
+
+#### Non-compliant code:
+```php
+class Foo {
+  public function method() {};
+}
+
+(new Foo)->method2(); // method2 is undefined.
+```
+
+#### Compliant code:
+```php
+class Foo {
+  public function method() {}
+}
+
+(new Foo)->method();
+```
+<p><br></p>
+
+
+### `undefinedProperty` checker
+
+#### Description
+
+Report usages of undefined property.
+
+#### Non-compliant code:
+```php
+class Foo {
+  public string $prop;
+}
+
+(new Foo)->prop2; // prop2 is undefined.
+```
+
+#### Compliant code:
+```php
+class Foo {
+  public string $prop;
+}
+
+(new Foo)->prop;
+```
+<p><br></p>
+
+
+### `undefinedType` checker
+
+#### Description
+
+Report usages of undefined type.
+
+#### Non-compliant code:
+```php
+class Foo extends UndefinedClass {}
+```
+
+#### Compliant code:
+```php
+class Foo extends DefinedClass {}
+```
+<p><br></p>
+
+
+### `undefinedVariable` checker
+
+#### Description
+
+Report usages of undefined variable.
+
+#### Non-compliant code:
+```php
+echo $undefinedVar;
+```
+
+#### Compliant code:
+```php
+$definedVar = 100;
+echo $definedVar;
 ```
 <p><br></p>
 

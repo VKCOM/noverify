@@ -31,7 +31,7 @@ WARNING phpdocLint: Malformed @param $stream_id tag (maybe type is missing?) at 
 WARNING phpdocLint: Malformed @param $req tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:444
      * @param $req
               ^^^^
-ERROR   undefined: Call to undefined method {mixed}->run() at testdata/phprocksyd/Phprocksyd.php:479
+ERROR   undefinedMethod: Call to undefined method {mixed}->run() at testdata/phprocksyd/Phprocksyd.php:479
                 $instance->run($req['params']);
                            ^^^
 ERROR   constCase: Constant 'NULL' should be used in lower case as 'null' at testdata/phprocksyd/Simple.php:158

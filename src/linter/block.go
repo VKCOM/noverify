@@ -1236,7 +1236,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		}
 
 		if !b.ctx.sc.HaveVar(v) && !byRef {
-			b.r.Report(v, LevelWarning, "undefined", "Undefined variable $%s", v.Name)
+			b.r.Report(v, LevelWarning, "undefinedVariable", "Undefined variable $%s", v.Name)
 		}
 
 		typ, ok := b.ctx.sc.GetVarNameType(v.Name)
