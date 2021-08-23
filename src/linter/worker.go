@@ -14,6 +14,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/VKCOM/noverify/src/utils"
 	"github.com/VKCOM/php-parser/pkg/ast"
 	"github.com/VKCOM/php-parser/pkg/conf"
 	phperrors "github.com/VKCOM/php-parser/pkg/errors"
@@ -251,7 +252,11 @@ func (w *Worker) doParseFile(f workspace.FileInfo) []*Report {
 	}
 
 	if err != nil {
-		log.Printf("Failed parsing %s: %s", f.Name, err.Error())
+		// Don't give an error that the file cannot be parsed if it is in the
+		// vendor, as it may be test data that is incorrect by definition.
+		if !utils.InVendor(f.Name) {
+			log.Printf("Failed parsing %s: %s", f.Name, err.Error())
+		}
 		lintdebug.Send("Failed parsing %s: %s", f.Name, err.Error())
 	}
 
