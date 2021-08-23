@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	log.SetFlags(log.Flags() | log.Ltime)
+	log.SetFlags(log.Ltime)
 
 	// You can register your own rules here, see src/linter/custom.go
 
