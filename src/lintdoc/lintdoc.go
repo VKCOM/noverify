@@ -52,7 +52,7 @@ var templateMarkdownShort = template.Must(template.New("markdown-short").Parse(
 
 {{.Comment}}
 
-`, "'", "`"),
+<p><br></p>`, "'", "`"),
 ))
 
 var templateMarkdownFull = template.Must(template.New("markdown").Parse(
@@ -75,6 +75,7 @@ var templateMarkdownFull = template.Must(template.New("markdown").Parse(
 """php
 {{.After}}
 """
+<p><br></p>
 `, `"""`, "```"),
 		"'", "`"),
 ))

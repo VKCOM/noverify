@@ -121,6 +121,7 @@ $x->privateMethod(); // privateMethod is private and can't be accessed.
 ```php
 $x->publicMethod();
 ```
+<p><br></p>
 
 
 ### `alwaysNull` checker
@@ -138,6 +139,7 @@ if ($obj == null && $obj->method()) { ... }
 ```php
 if ($obj != null && $obj->method()) { ... }
 ```
+<p><br></p>
 
 
 ### `argCount` checker
@@ -155,6 +157,7 @@ array_combine($keys) // The function takes at least two arguments.
 ```php
 array_combine($keys, $values)
 ```
+<p><br></p>
 
 
 ### `argsOrder` checker
@@ -174,6 +177,7 @@ strpos('/', $s);
 ```php
 strpos($s, '/');
 ```
+<p><br></p>
 
 
 ### `arrayAccess` checker
@@ -193,6 +197,7 @@ if ($foo instanceof ArrayAccess) {
   return $foo[0];
 }
 ```
+<p><br></p>
 
 
 ### `arraySyntax` checker
@@ -212,6 +217,7 @@ array(1, 2)
 ```php
 [1, 2]
 ```
+<p><br></p>
 
 
 ### `assignOp` checker
@@ -231,6 +237,7 @@ $x = $x + $y;
 ```php
 $x += $y;
 ```
+<p><br></p>
 
 
 ### `badTraitUse` checker
@@ -250,6 +257,7 @@ function f(A $a) {} // Traits cannot be used as type hints.
 class A {}
 function f(A $a) {}
 ```
+<p><br></p>
 
 
 ### `bareTry` checker
@@ -274,6 +282,7 @@ try {
   // Handle $e.
 }
 ```
+<p><br></p>
 
 
 ### `bitwiseOps` checker
@@ -293,6 +302,7 @@ if ($isURL & $verify) { ... } // Bitwise AND on two bool looks suspicious,
 ```php
 if ($isURL && $verify) { ... }
 ```
+<p><br></p>
 
 
 ### `callSimplify` checker
@@ -312,6 +322,7 @@ in_array($k, array_keys($this->data))
 ```php
 array_key_exists($k, $this->data)
 ```
+<p><br></p>
 
 
 ### `callStatic` checker
@@ -329,6 +340,7 @@ $object::instance_method() // instance_method is not a static method.
 ```php
 $object->instance_method()
 ```
+<p><br></p>
 
 
 ### `caseBreak` checker
@@ -363,6 +375,7 @@ case 3:
   echo "two or three";
 }
 ```
+<p><br></p>
 
 
 ### `caseContinue` checker
@@ -392,6 +405,7 @@ case INC:
   break;
 }
 ```
+<p><br></p>
 
 
 ### `catchOrder` checker
@@ -421,6 +435,7 @@ try {
   // Ok, it will catch everything else.
 }
 ```
+<p><br></p>
 
 
 ### `complexity` checker
@@ -442,6 +457,7 @@ function checkRights() {
   return true; // Or 42 if you need int-typed result.
 }
 ```
+<p><br></p>
 
 
 ### `concatenationPrecedence` checker
@@ -459,6 +475,7 @@ Report when use unparenthesized expression containing both `.` and binary operat
 ```php
 "id: " . ($id - 10)
 ```
+<p><br></p>
 
 
 ### `constCase` checker
@@ -478,6 +495,7 @@ return TRUE;
 ```php
 return true;
 ```
+<p><br></p>
 
 
 ### `countUse` checker
@@ -497,6 +515,7 @@ if (count($arr) >= 0) { ... }
 ```php
 if (count($arr) != 0) { ... }
 ```
+<p><br></p>
 
 
 ### `deadCode` checker
@@ -516,6 +535,7 @@ foo(); // Dead code.
 foo();
 thisFunctionAlwaysExits();
 ```
+<p><br></p>
 
 
 ### `discardExpr` checker
@@ -537,6 +557,7 @@ if ($cond) {
   return [$v, $err];
 }
 ```
+<p><br></p>
 
 
 ### `discardVar` checker
@@ -556,6 +577,7 @@ echo $_;
 $someVal = some();
 echo $someVal;
 ```
+<p><br></p>
 
 
 ### `dupArrayKeys` checker
@@ -573,6 +595,7 @@ Report duplicated keys in array literals.
 ```php
 [A => 1, B => 2, C => 3]
 ```
+<p><br></p>
 
 
 ### `dupBranchBody` checker
@@ -591,6 +614,7 @@ $pickLeft ? foo($left) : foo($left)
 ```php
 $pickLeft ? foo($left) : foo($right)
 ```
+<p><br></p>
 
 
 ### `dupCatch` checker
@@ -614,6 +638,7 @@ try {
 } catch (Exception1 $e) {
 } catch (Exception2 $e) {}
 ```
+<p><br></p>
 
 
 ### `dupCond` checker
@@ -643,6 +668,7 @@ if ($status == OK) {
   return "UNKNOWN";
 }
 ```
+<p><br></p>
 
 
 ### `dupGlobal` checker
@@ -660,6 +686,7 @@ global $x, $y, $x; // $x was already mentioned in global.
 ```php
 global $x, $y;
 ```
+<p><br></p>
 
 
 ### `dupSubExpr` checker
@@ -677,6 +704,7 @@ return $x[$i] < $x[$i]; // The left and right expressions are the same.
 ```php
 return $x[$i] < $x[$j];
 ```
+<p><br></p>
 
 
 ### `emptyStmt` checker
@@ -694,6 +722,7 @@ echo $foo;; // Second semicolon is unnecessary here.
 ```php
 echo $foo;
 ```
+<p><br></p>
 
 
 ### `emptyStringCheck` checker
@@ -711,6 +740,7 @@ if (strlen($string)) { ... }
 ```php
 if ($string !== "") { ... }
 ```
+<p><br></p>
 
 
 ### `errorSilence` checker
@@ -728,6 +758,7 @@ Report using `@`.
 ```php
 f();
 ```
+<p><br></p>
 
 
 ### `forLoop` checker
@@ -745,6 +776,7 @@ for ($i = 0; $i < 100; $i--) { ... }
 ```php
 for ($i = 0; $i < 100; $i++) { ... }
 ```
+<p><br></p>
 
 
 ### `implicitModifiers` checker
@@ -766,6 +798,7 @@ class Foo {
   public function f() {}
 }
 ```
+<p><br></p>
 
 
 ### `indexingSyntax` checker
@@ -785,6 +818,7 @@ $x{0}
 ```php
 $x[0]
 ```
+<p><br></p>
 
 
 ### `intNeedle` checker
@@ -802,6 +836,7 @@ strpos("hello", 10)
 ```php
 strpos("hello", chr(10))
 ```
+<p><br></p>
 
 
 ### `intOverflow` checker
@@ -820,6 +855,7 @@ return -9223372036854775808;
 ```php
 return PHP_INT_MIN;
 ```
+<p><br></p>
 
 
 ### `invalidExtendClass` checker
@@ -839,6 +875,7 @@ class Boo extends Foo {}
 class Foo {}
 class Boo extends Foo {}
 ```
+<p><br></p>
 
 
 ### `invalidNew` checker
@@ -857,6 +894,7 @@ return new SomeTrait();
 ```php
 return new SomeClass();
 ```
+<p><br></p>
 
 
 ### `keywordCase` checker
@@ -874,6 +912,7 @@ RETURN $x;
 ```php
 return $x;
 ```
+<p><br></p>
 
 
 ### `linterError` checker
@@ -882,7 +921,7 @@ return $x;
 
 Report internal linter error.
 
-
+<p><br></p>
 
 ### `magicMethodDecl` checker
 
@@ -905,6 +944,7 @@ class Foo {
   public function __set($name, $value) {}
 }
 ```
+<p><br></p>
 
 
 ### `maybeUndefined` checker
@@ -929,6 +969,7 @@ if ($cond) {
 }
 return $v;
 ```
+<p><br></p>
 
 
 ### `methodSignatureMismatch` checker
@@ -958,6 +999,7 @@ class Boo extends Foo {
   public function f() {}
 }
 ```
+<p><br></p>
 
 
 ### `misspellComment` checker
@@ -977,6 +1019,7 @@ function performance_test() {}
 /** This is our performance test. */
 function performance_test() {}
 ```
+<p><br></p>
 
 
 ### `misspellName` checker
@@ -994,6 +1037,7 @@ function performace_test() ...
 ```php
 function performance_test() ...
 ```
+<p><br></p>
 
 
 ### `mixedArrayKeys` checker
@@ -1011,6 +1055,7 @@ Report array literals that have both implicit and explicit keys.
 ```php
 [0 => 'a', 5 => 'b']
 ```
+<p><br></p>
 
 
 ### `nameMismatch` checker
@@ -1031,6 +1076,7 @@ $foo = new foo();
 class Foo {}
 $foo = new Foo();
 ```
+<p><br></p>
 
 
 ### `nestedTernary` checker
@@ -1050,6 +1096,7 @@ $_ = (1 ? 2 : 3) ? 4 : 5;
 // or
 $_ = 1 ? 2 : (3 ? 4 : 5);
 ```
+<p><br></p>
 
 
 ### `newAbstract` checker
@@ -1068,6 +1115,7 @@ return new AbstractFactory();
 ```php
 return new NonAbstractFactory();
 ```
+<p><br></p>
 
 
 ### `nonPublicInterfaceMember` checker
@@ -1095,6 +1143,7 @@ interface Iface {
   public function d();
 }
 ```
+<p><br></p>
 
 
 ### `offBy1` checker
@@ -1114,6 +1163,7 @@ $a[count($a)]
 ```php
 $a[count($a)-1]
 ```
+<p><br></p>
 
 
 ### `oldStyleConstructor` checker
@@ -1136,6 +1186,7 @@ class Foo {
   public function __construct($v) { $this->v = $v; }
 }
 ```
+<p><br></p>
 
 
 ### `paramClobber` checker
@@ -1160,6 +1211,7 @@ function api_get_video($user_id) {
   return get_video($user_id);
 }
 ```
+<p><br></p>
 
 
 ### `parentConstructor` checker
@@ -1187,6 +1239,7 @@ class Foo extends Bar {
   }
 }
 ```
+<p><br></p>
 
 
 ### `phpdocLint` checker
@@ -1204,6 +1257,7 @@ Report malformed PHPDoc comments.
 ```php
 @property Foo $foo
 ```
+<p><br></p>
 
 
 ### `phpdocRef` checker
@@ -1221,6 +1275,7 @@ Report invalid symbol references inside PHPDoc.
 ```php
 @see \Foo\MyClass
 ```
+<p><br></p>
 
 
 ### `phpdocType` checker
@@ -1238,6 +1293,7 @@ Report potential issues in PHPDoc types.
 ```php
 @var int[] $xs
 ```
+<p><br></p>
 
 
 ### `precedence` checker
@@ -1255,6 +1311,7 @@ $x & $mask == 0; // == has higher precedence than &
 ```php
 ($x & $mask) == 0
 ```
+<p><br></p>
 
 
 ### `printf` checker
@@ -1272,6 +1329,7 @@ sprintf("id=%d") // Lost argument for '%d' specifier.
 ```php
 sprintf("id=%d", $id)
 ```
+<p><br></p>
 
 
 ### `redundantGlobal` checker
@@ -1289,6 +1347,7 @@ global $Foo, $_GET; // $_GET is superglobal.
 ```php
 global $Foo;
 ```
+<p><br></p>
 
 
 ### `regexpSimplify` checker
@@ -1306,6 +1365,7 @@ preg_match('/x(?:a|b|c){0,}/', $s) // The regex can be simplified.
 ```php
 preg_match('/x[abc]*/', $s)
 ```
+<p><br></p>
 
 
 ### `regexpSyntax` checker
@@ -1314,7 +1374,7 @@ preg_match('/x[abc]*/', $s)
 
 Report regexp syntax errors.
 
-
+<p><br></p>
 
 ### `regexpVet` checker
 
@@ -1331,6 +1391,7 @@ preg_match('a\d+a', $s); // 'a' is not a valid delimiter.
 ```php
 preg_match('/\d+/', $s);
 ```
+<p><br></p>
 
 
 ### `returnAssign` checker
@@ -1348,6 +1409,7 @@ return $a = 100;
 ```php
 return $a;
 ```
+<p><br></p>
 
 
 ### `reverseAssign` checker
@@ -1365,6 +1427,7 @@ $a =+ 100;
 ```php
 $a += 100;
 ```
+<p><br></p>
 
 
 ### `selfAssign` checker
@@ -1382,6 +1445,7 @@ $x = $x;
 ```php
 $x = $y;
 ```
+<p><br></p>
 
 
 ### `stdInterface` checker
@@ -1390,7 +1454,7 @@ $x = $y;
 
 Report issues related to std PHP interfaces.
 
-
+<p><br></p>
 
 ### `strangeCast` checker
 
@@ -1407,6 +1471,7 @@ $x.""
 ```php
 (string)$x
 ```
+<p><br></p>
 
 
 ### `strictCmp` checker
@@ -1424,6 +1489,7 @@ in_array("what", $s)
 ```php
 in_array("what", $s, true)
 ```
+<p><br></p>
 
 
 ### `stripTags` checker
@@ -1441,6 +1507,7 @@ $s = strip_tags($s, '<br/>') // Error, self-closing tags are ignored.
 ```php
 $s = strip_tags($s, '<br>')
 ```
+<p><br></p>
 
 
 ### `switchDefault` checker
@@ -1469,6 +1536,7 @@ switch ($a) {
     break;
 }
 ```
+<p><br></p>
 
 
 ### `switchEmpty` checker
@@ -1490,6 +1558,7 @@ switch ($a) {
     break;
 }
 ```
+<p><br></p>
 
 
 ### `switchSimplify` checker
@@ -1513,6 +1582,7 @@ if ($a == 1) {
   echo 1;
 }
 ```
+<p><br></p>
 
 
 ### `syntax` checker
@@ -1530,6 +1600,7 @@ foo(1]
 ```php
 foo(1)
 ```
+<p><br></p>
 
 
 ### `ternarySimplify` checker
@@ -1549,6 +1620,7 @@ $x ? $x : $y
 ```php
 $x ?: $y
 ```
+<p><br></p>
 
 
 ### `unaryRepeat` checker
@@ -1568,6 +1640,7 @@ echo !!$a;
 ```php
 echo (bool) $a;
 ```
+<p><br></p>
 
 
 ### `undefinedConstant` checker
@@ -1585,6 +1658,7 @@ echo PI;
 ```php
 echo M_PI;
 ```
+<p><br></p>
 
 
 ### `undefinedFunction` checker
@@ -1602,6 +1676,7 @@ undefinedFunc();
 ```php
 definedFunc();
 ```
+<p><br></p>
 
 
 ### `undefinedMethod` checker
@@ -1627,6 +1702,7 @@ class Foo {
 
 (new Foo)->method();
 ```
+<p><br></p>
 
 
 ### `undefinedProperty` checker
@@ -1652,6 +1728,7 @@ class Foo {
 
 (new Foo)->prop;
 ```
+<p><br></p>
 
 
 ### `undefinedType` checker
@@ -1669,6 +1746,7 @@ class Foo extends UndefinedClass {}
 ```php
 class Foo extends DefinedClass {}
 ```
+<p><br></p>
 
 
 ### `undefinedVariable` checker
@@ -1687,6 +1765,7 @@ echo $undefinedVar;
 $definedVar = 100;
 echo $definedVar;
 ```
+<p><br></p>
 
 
 ### `unimplemented` checker
@@ -1710,6 +1789,7 @@ class MyObj implements Serializable {
   public function unserialize(string $s) { /* ... */ }
 }
 ```
+<p><br></p>
 
 
 ### `unused` checker
@@ -1729,6 +1809,7 @@ return [$err];
 $result = calculateResult();
 return [$result, $err];
 ```
+<p><br></p>
 
 
 ### `varShadow` checker
@@ -1755,6 +1836,7 @@ function f(int $a) {
   }
 }
 ```
+<p><br></p>
 
 
 ### `voidResultUsed` checker
@@ -1772,6 +1854,7 @@ $x = var_dump($v); // var_dump returns void.
 ```php
 $x = print_r($v, true);
 ```
+<p><br></p>
 
 ## Disabled
 
@@ -1806,6 +1889,7 @@ function main(): void {
   makeHello($name, $age);
 }
 ```
+<p><br></p>
 
 
 ### `classMembersOrder` checker
@@ -1832,6 +1916,7 @@ class A {
   public function func() {}
 }
 ```
+<p><br></p>
 
 
 ### `deprecated` checker
@@ -1849,6 +1934,7 @@ ereg($pat, $s) // The ereg function has been deprecated.
 ```php
 preg_match($pat, $s)
 ```
+<p><br></p>
 
 
 ### `langDeprecated` checker
@@ -1868,6 +1954,7 @@ $_ = is_real($a);
 $a = (float)100;
 $_ = is_float($a);
 ```
+<p><br></p>
 
 
 ### `missingPhpdoc` checker
@@ -1897,6 +1984,7 @@ public function process($acts, $config) {
   // Does something very complicated.
 }
 ```
+<p><br></p>
 
 
 ### `propNullDefault` checker
@@ -1926,6 +2014,7 @@ class Foo {
   public $item;
 }
 ```
+<p><br></p>
 
 
 ### `redundantCast` checker
@@ -1943,6 +2032,7 @@ return (int)10; // The expression is already of type int.
 ```php
 return 10;
 ```
+<p><br></p>
 
 
 ### `trailingComma` checker
@@ -1968,6 +2058,7 @@ $_ = [
   20,
 ]
 ```
+<p><br></p>
 
 
 ### `typeHint` checker
@@ -1989,4 +2080,5 @@ function f(array $a) {}
  */
 function f(array $a) {}
 ```
+<p><br></p>
 
