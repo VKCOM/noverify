@@ -1516,15 +1516,25 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 	var linksCount int
 	var contexts []*blockContext
 
+	onlyInstanceof := true
 	// Add all new variables from the condition to the current scope.
 	irutil.Inspect(s.Cond, func(n ir.Node) bool {
-		assign, ok := n.(*ir.Assign)
-		if !ok {
+		switch n := n.(type) {
+		case *ir.BooleanAndExpr:
+		case *ir.BooleanOrExpr:
+		case *ir.BooleanNotExpr:
 			return true
+		case *ir.InstanceOfExpr:
+			return false
+
+		case *ir.Assign:
+			b.handleAssign(n)
+			return false
+		default:
+			onlyInstanceof = false
 		}
 
-		b.handleAssign(assign)
-		return false
+		return true
 	})
 
 	// initialContext is the context of the block in which the if-else is located.
@@ -1559,6 +1569,16 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 
 		if trueContext.exitFlags == 0 {
 			linksCount++
+		}
+
+		// Case:
+		// if (!$a instanceof Boo) {
+		//   return
+		// }
+		//
+		// $a has Boo type
+		if trueContext.exitFlags != 0 && onlyInstanceof && len(s.ElseIf) == 0 && s.Else == nil {
+			b.ctx = falseContext
 		}
 
 		b.replaceAllImplicitVars(trueContext, initialContext)
