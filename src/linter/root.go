@@ -159,11 +159,6 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 
 	d.handleComments(n)
 
-	// if _, ok := n.(*ir.AnonClassExpr); ok {
-	// 	// TODO: remove when #62 and anon class support in general is ready.
-	// 	return false // Don't walk nor enter anon classes
-	// }
-
 	state.EnterNode(d.ctx.st, n)
 
 	switch n := n.(type) {
@@ -191,14 +186,14 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 				interfaceName, ok := solver.GetClassName(d.ctx.st, tr)
 				if ok {
 					cl.Interfaces[interfaceName] = struct{}{}
-					d.checkIfaceImplemented(tr, interfaceName)
+					d.checkIfaceImplemented(n, tr, interfaceName)
 				}
 			}
 		}
 		d.checkCommentMisspellings(className, n.Doc.Raw)
 		d.checkIdentMisspellings(className)
 		doc := d.parseClassPHPDoc(className, n.Doc)
-		d.reportPHPDocErrors(className, doc.errs)
+		d.reportPHPDocErrors(doc.errs)
 		// If we ever need to distinguish @property-annotated and real properties,
 		// more work will be required here.
 		for name, p := range doc.properties {
@@ -213,7 +208,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			d.checkKeywordCase(n.Extends, "extends")
 			className, ok := solver.GetClassName(d.ctx.st, n.Extends.ClassName)
 			if ok {
-				d.checkClassImplemented(n.Extends.ClassName, className)
+				d.checkClassImplemented(n, n.Extends.ClassName, className)
 			}
 		}
 
