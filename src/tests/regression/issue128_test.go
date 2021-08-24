@@ -7,7 +7,9 @@ import (
 )
 
 func TestIssue128(t *testing.T) {
+	t.Skip()
 	test := linttest.NewSuite(t)
+	test.Config().StrictMixed = true
 	test.AddFile(`<?php
 class Value {
   public $x;
@@ -44,7 +46,7 @@ $_ = $bad1;
 		`Undefined variable $bad2`,
 		`Undefined variable $bad3`,
 		`Property {mixed}->x does not exist`,
-		`Variable $y1 might have not been defined`,
+		`Undefined variable $y1`,
 	}
 	test.RunAndMatch()
 }

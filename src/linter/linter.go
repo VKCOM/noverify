@@ -25,6 +25,14 @@ func NewLinter(config *Config) *Linter {
 	}
 }
 
+func NewLinterWithInfo(config *Config, info *meta.Info) *Linter {
+	return &Linter{
+		config: config,
+		info:   info,
+		checks: NewCheckersFilterWithEnabledAll(),
+	}
+}
+
 func (l *Linter) Config() *Config {
 	return l.config
 }

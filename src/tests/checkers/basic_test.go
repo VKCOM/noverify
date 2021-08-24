@@ -443,7 +443,7 @@ function good() {
 		`Use public instead of PubliC`,
 	}
 
-	test.RunAndMatch()
+	linttest.RunFilterMatch(test, "keywordCase")
 }
 
 func TestCallStaticParent(t *testing.T) {
@@ -716,7 +716,7 @@ class Foo {
 		"Undefined variable $argc",
 	}
 
-	linttest.RunFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefinedVariable")
 }
 
 func TestAutogenSkip(t *testing.T) {
@@ -801,7 +801,7 @@ func TestCustomUnusedVarRegex(t *testing.T) {
 		return strings.HasPrefix(s, "_")
 	}
 
-	config := linter.NewConfig()
+	config := linter.NewConfig("8.1")
 	config.IsDiscardVar = isDiscardVar
 
 	test := linttest.NewSuite(t)
@@ -906,23 +906,6 @@ function f() {
   try {} catch(Exception $_) {} // $_ is not used.
 }
 `)
-}
-
-func TestClosureCapture(t *testing.T) {
-	test := linttest.NewSuite(t)
-	test.AddFile(`<?php
-	class omg {
-		public $some_property;
-	}
-
-	function doSomething($a, omg $b) {
-		return function() use($b) {
-			echo $b->some_property;
-			echo $b->other_property;
-		};
-	}`)
-	test.Expect = []string{"other_property does not exist"}
-	test.RunAndMatch()
 }
 
 func TestOrDie1(t *testing.T) {
@@ -1137,7 +1120,7 @@ func TestSwitchContinue1(t *testing.T) {
 		`Use 'break' instead of 'continue' or 'continue 2' to continue the loop around switch`,
 		`Use 'break' instead of 'continue' or 'continue 2' to continue the loop around switch`,
 	}
-	test.RunAndMatch()
+	linttest.RunFilterMatch(test, "caseContinue")
 }
 
 func TestSwitchContinue2(t *testing.T) {
@@ -1151,6 +1134,11 @@ func TestSwitchContinue2(t *testing.T) {
 				continue; // OK, bound to 'for'
 			}
 		}
+		break;
+	case 2:
+		break;
+	default:
+		break;
 	}
 
 	// OK, "continue 2" does the right thing.
@@ -1160,6 +1148,10 @@ func TestSwitchContinue2(t *testing.T) {
 		switch ($x) {
 		case 10:
 			continue 2;
+		case 1:
+			break;
+		default:
+			break;
 		}
 	}`)
 	test.RunAndMatch()
@@ -1177,9 +1169,9 @@ func TestBuiltinConstant(t *testing.T) {
 		$_ = null;
 	}`)
 	test.Expect = []string{
-		"Use null instead of NULL",
-		"Use true instead of True",
-		"Use false instead of FaLsE",
+		"Constant 'NULL' should be used in lower case as 'null'",
+		"Constant 'True' should be used in lower case as 'true'",
+		"Constant 'FaLsE' should be used in lower case as 'false'",
 	}
 	test.RunAndMatch()
 }
@@ -1762,7 +1754,8 @@ func TestFunctionThrowsExceptionsAndReturns(t *testing.T) {
 		switch ($b) {
 			case "a":
 				throw new \Exception("a");
-
+			case "b":
+				break;
 			default:
 				throw new \Exception("default");
 		}
@@ -1833,6 +1826,7 @@ func TestSwitchBreak(t *testing.T) {
 	test.AddFile(`<?php
 	function bad($a) {
 		switch ($a) {
+		case 2:
 		case 1:
 			echo "One\n"; // Bad, no break.
 		default:
@@ -1842,6 +1836,8 @@ func TestSwitchBreak(t *testing.T) {
 
 	function good($a) {
 		switch ($a) {
+		default:
+			break;
 		case 1:
 			echo "One\n";
 			break;
@@ -1859,8 +1855,28 @@ func TestSwitchBreak(t *testing.T) {
 func TestNameCase(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-class FooBar {
-  public function method_a() {}
+interface BarAble {
+  const TheConst4 = 10;
+}
+
+class Bar {
+  const TheConst2 = 10;
+  const TheConst3 = 10;
+}
+
+class FooBar extends Bar implements BarAble {
+  const TheConst = 10;
+  const TheConst3 = 10;
+
+  public function method_a() {
+    echo self::TheConst;
+    echo static::TheConst;
+    echo parent::TheConst2;
+
+    $_ = FOObar::TheConst;
+    $_ = FOObar::TheConst3;
+    $_ = FOObar::TheConst4;
+  }
 }
 
 class Baz extends foobar {}
@@ -1871,12 +1887,18 @@ $foo->Method_a();
 function func_a() {}
 
 func_A();
+
+$_ = FOObar::TheConst;
 `)
 	test.Expect = []string{
 		`\Foobar should be spelled \FooBar`,
 		`\foobar should be spelled \FooBar`,
 		`Method_a should be spelled method_a`,
 		`\func_A should be spelled \func_a`,
+		`\FOObar should be spelled \FooBar`,
+		`\FOObar should be spelled \FooBar`,
+		`\FOObar should be spelled \FooBar`,
+		`\FOObar should be spelled \FooBar`,
 	}
 	linttest.RunFilterMatch(test, `nameMismatch`)
 }
@@ -2093,7 +2115,7 @@ function f() {
 		"Undefined variable $x",
 		"Undefined variable $y",
 	}
-	linttest.RunFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefinedVariable")
 }
 
 func TestAssignByRef(t *testing.T) {
@@ -2190,7 +2212,7 @@ function f() {
 }
 
 func TestRealCastingAndIsRealCall(t *testing.T) {
-	test := linttest.NewSuite(t)
+	test := linttest.NewPHP7Suite(t)
 	test.AddFile(`<?php
 function is_real($a): bool { return true; }
 
@@ -2288,25 +2310,116 @@ echo TWO;
 `)
 }
 
-func TestClosureDoc(t *testing.T) {
+func TestComplexInstanceOf(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-class Foo {
-  /**
-   * @return int
-   */
-  public function method(): int { return 0; }
+class Boo {
+  /** @return int */
+  public function b() { return 0; }
 }
 
-/**
- * @param callable(int, string): Boo|Foo $s
- */
-function f(callable $s) {
-  $a = $s(10);
-  echo $a->method();
+function f($a) {
+  if ($y1 instanceof Boo && isset($y1) && $y1->b()) {} // error
+  if (isset($y1) && $y1 instanceof Boo && $y1->b()) {} // ok
 }
 `,
 	)
-	test.Expect = []string{"Too few arguments for $s"}
+	test.Expect = []string{
+		"Undefined variable $y1",
+	}
+	test.RunAndMatch()
+}
+
+func TestVarsInTernary(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Boo {}
+
+function f($a) {
+  $_ = $a instanceof Boo ? $b = 100 : 100;
+  echo $b; // might have not been defined
+
+  $_ = $a instanceof Boo ? 100 : $c = 100;
+  echo $c; // might have not been defined
+
+  $_ = $a instanceof Boo ? $d = 100 : $d = 10;
+  echo $d; // ok
+
+  $e = 100;
+  $_ = $a instanceof Boo ? $e = 100 : $e = 10;
+  echo $e; // ok
+}
+`,
+	)
+	test.Expect = []string{
+		"Variable $b might have not been defined",
+		"Variable $c might have not been defined",
+	}
+	test.RunAndMatch()
+}
+
+func TestIfCondAssign(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+function f1($v) {
+  if ($x = $v) {}
+  echo $x;
+}
+
+function f2($v) {
+  if ($x = $v) {
+    exit(0);
+  }
+  echo $x;
+}
+`)
+}
+
+func TestElseIf1CondAssign(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f1($v) {
+  if ($v) {
+  } elseif ($x = 10) {}
+  echo $x;
+}
+
+function f2($v) {
+  if ($v) {
+  } elseif ($x = 10) {
+    exit(0);
+  }
+  echo $x;
+}
+`)
+	// It could be more precise to report 2 "might have not been defined",
+	// but at least we report both usages. Can be improved in future.
+	test.Expect = []string{
+		`Undefined variable $x`,
+		`Variable $x might have not been defined`,
+	}
+	test.RunAndMatch()
+}
+
+func TestElseIf2CondAssign(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f1($v) {
+  if ($v) {
+  } else if ($x = 10) {}
+  echo $x;
+}
+
+function f2($v) {
+  if ($v) {
+  } else if ($x = 10) {
+    exit(0);
+  }
+  echo $x;
+}
+`)
+	test.Expect = []string{
+		`Variable $x might have not been defined`,
+		`Undefined variable $x`,
+	}
 	test.RunAndMatch()
 }

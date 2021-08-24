@@ -5,8 +5,8 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/VKCOM/php-parser/pkg/version"
 	"github.com/client9/misspell"
-	"github.com/z7zmey/php-parser/pkg/version"
 
 	"github.com/VKCOM/noverify/src/baseline"
 	"github.com/VKCOM/noverify/src/inputs"
@@ -64,13 +64,17 @@ type Config struct {
 	IgnoreTriggerError bool
 
 	PhpVersion *version.Version
+
+	StrictMixed bool
 }
 
-func NewConfig() *Config {
+func NewConfig(ver string) *Config {
 	reg := &CheckersRegistry{
 		info: map[string]CheckerInfo{},
 	}
-	phpVersion, _ := version.New("7.4")
+
+	phpVersion, _ := version.New(ver)
+
 	addBuiltinCheckers(reg)
 	return &Config{
 		SrcInput:       inputs.NewDefaultSourceInput(),

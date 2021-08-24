@@ -17,6 +17,8 @@ case 1:
 case 2:
   $_ = $v;
   break;
+default:
+  break;
 }
 
 function error() {}

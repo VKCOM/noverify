@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/z7zmey/php-parser/pkg/token"
+	"github.com/VKCOM/php-parser/pkg/token"
 )
 
 type Comment struct {
@@ -77,7 +77,7 @@ func IsSuspicious(value []byte) bool {
 		return false
 	}
 
-	return ContainsTag(value)
+	return bytes.HasPrefix(value, []byte("/*")) && ContainsTag(value)
 }
 
 var tagRegexp = regexp.MustCompile(`\* +@\w+`)

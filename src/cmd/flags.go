@@ -12,10 +12,14 @@ const AllNonNoticeChecks = "<all-non-notice>"
 const AllChecks = "<all>"
 
 type ParsedFlags struct {
+	PHP7 bool
+
 	PprofHost string
 
 	CPUProfile string
 	MemProfile string
+
+	StrictMixed bool
 
 	IgnoreVendor bool
 
@@ -163,7 +167,11 @@ func RegisterCheckFlags(ctx *AppContext) (*flag.FlagSet, *FlagsGroups) {
 		"Comma-separated list of misspelling dicts; predefined sets are Eng, Eng/US and Eng/UK")
 	fs.BoolVar(&ctx.ParsedFlags.IgnoreVendor, "ignore-vendor", false,
 		"Do not use the vendor folder to get information about functions and classes (not recommended as type inference will work much worse)")
+	fs.BoolVar(&ctx.ParsedFlags.PHP7, "php7", false, "Analyze as PHP 7")
+	fs.BoolVar(&ctx.ParsedFlags.StrictMixed, "strict-mixed", false, "Use strict mixed mode")
 
+	groups.Add("Analyze setting", "strict-mixed")
+	groups.Add("Analyze setting", "php7")
 	groups.Add("Analyze setting", "cores")
 	groups.Add("Analyze setting", "cache-dir")
 	groups.Add("Analyze setting", "disable-cache")

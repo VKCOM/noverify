@@ -31,7 +31,7 @@ func (g *genGetFirstToken) Run() error {
 		pkgPath:  "ir",
 		deps: []string{
 			"fmt",
-			"github.com/z7zmey/php-parser/pkg/token",
+			"github.com/VKCOM/php-parser/pkg/token",
 		},
 		contents: buf.Bytes(),
 	})
@@ -41,11 +41,11 @@ func (g *genGetFirstToken) writeGet(w *bytes.Buffer, pkg *packageData, typ *type
 	for i := 0; i < typ.info.NumFields(); i++ {
 		field := typ.info.Field(i)
 		switch typeString := field.Type().String(); typeString {
-		case "*github.com/z7zmey/php-parser/pkg/token.Token":
+		case "*github.com/VKCOM/php-parser/pkg/token.Token":
 			fmt.Fprintf(w, "    if n.%s != nil {\n", field.Name())
 			fmt.Fprintf(w, "        return n.%s\n", field.Name())
 			fmt.Fprintf(w, "    }\n")
-		case "[]*github.com/z7zmey/php-parser/pkg/token.Token":
+		case "[]*github.com/VKCOM/php-parser/pkg/token.Token":
 			fmt.Fprintf(w, "    if len(n.%s) != 0 {\n", field.Name())
 			fmt.Fprintf(w, "        return n.%s[0]\n", field.Name())
 			fmt.Fprintf(w, "    }\n")
@@ -59,7 +59,7 @@ func (g *genGetFirstToken) writeGet(w *bytes.Buffer, pkg *packageData, typ *type
 			fmt.Fprintf(w, "    if n.%s != nil {\n", field.Name())
 			fmt.Fprintf(w, "        return GetFirstToken(n.%s)\n", field.Name())
 			fmt.Fprintf(w, "    }\n")
-		case "*github.com/z7zmey/php-parser/pkg/position.Position":
+		case "*github.com/VKCOM/php-parser/pkg/position.Position":
 			// Do nothing.
 		case "[]github.com/VKCOM/noverify/src/phpdoc.CommentPart":
 			// Do nothing.
@@ -67,12 +67,14 @@ func (g *genGetFirstToken) writeGet(w *bytes.Buffer, pkg *packageData, typ *type
 			// Do nothing.
 		case "github.com/VKCOM/noverify/src/phpdoc.Comment":
 			// Do nothing.
-		case "ir.Class":
+		case "ir.String", "ir.Class":
 			// Do nothing.
 		default:
 			if strings.HasPrefix(typeString, "[]") {
-				fmt.Fprintf(w, "    if n.%s[0] != nil {\n", field.Name())
-				fmt.Fprintf(w, "        return GetFirstToken(n.%s[0])\n", field.Name())
+				fmt.Fprintf(w, "    if n.%s != nil {\n", field.Name())
+				fmt.Fprintf(w, "        if n.%s[0] != nil {\n", field.Name())
+				fmt.Fprintf(w, "            return GetFirstToken(n.%s[0])\n", field.Name())
+				fmt.Fprintf(w, "        }\n")
 				fmt.Fprintf(w, "    }\n")
 				continue
 			}

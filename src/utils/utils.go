@@ -1,6 +1,9 @@
 package utils
 
 import (
+	"path/filepath"
+	"strings"
+
 	"github.com/VKCOM/noverify/src/ir"
 )
 
@@ -31,4 +34,14 @@ func NameNodeEquals(n ir.Node, s string) bool {
 	default:
 		return false
 	}
+}
+
+// IsSpecialClassName checks if the passed node is a special class name.
+func IsSpecialClassName(n ir.Node) bool {
+	name := NameNodeToString(n)
+	return name == "static" || name == "self" || name == "parent"
+}
+
+func InVendor(path string) bool {
+	return strings.Contains(filepath.ToSlash(path), "/vendor/")
 }

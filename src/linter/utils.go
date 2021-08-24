@@ -224,16 +224,17 @@ func resolveFunctionCall(sc *meta.Scope, st *meta.ClassParseState, customTypes [
 }
 
 type methodCallInfo struct {
-	methodName       string
-	className        string
-	info             meta.FuncInfo
-	methodCallerType types.Map
-	isFound          bool
-	isMagic          bool
-	canAnalyze       bool
+	methodName        string
+	className         string
+	info              meta.FuncInfo
+	methodCallerType  types.Map
+	isFound           bool
+	isMagic           bool
+	canAnalyze        bool
+	callerTypeIsMixed bool
 }
 
-func resolveMethodCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, e *ir.MethodCallExpr) methodCallInfo {
+func resolveMethodCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, e *ir.MethodCallExpr, strictMixed bool) methodCallInfo {
 	if !st.Info.IsIndexingComplete() {
 		return methodCallInfo{canAnalyze: false}
 	}
@@ -256,6 +257,12 @@ func resolveMethodCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []s
 	)
 
 	methodCallerType := solver.ExprTypeCustom(sc, st, e.Variable, customTypes)
+	if !strictMixed && isMixedLikeType(methodCallerType) {
+		return methodCallInfo{
+			canAnalyze:        true,
+			callerTypeIsMixed: true,
+		}
+	}
 
 	methodCallerType.Find(func(typ string) bool {
 		m, isMagic, ok := findMethod(st.Info, typ, methodName)
@@ -294,7 +301,7 @@ type staticMethodCallInfo struct {
 	canAnalyze               bool
 }
 
-func resolveStaticMethodCall(st *meta.ClassParseState, e *ir.StaticCallExpr) staticMethodCallInfo {
+func resolveStaticMethodCall(scope *meta.Scope, st *meta.ClassParseState, e *ir.StaticCallExpr) staticMethodCallInfo {
 	if !st.Info.IsIndexingComplete() {
 		return staticMethodCallInfo{canAnalyze: false}
 	}
@@ -308,15 +315,61 @@ func resolveStaticMethodCall(st *meta.ClassParseState, e *ir.StaticCallExpr) sta
 		return staticMethodCallInfo{canAnalyze: false}
 	}
 
-	classNameNode, ok := e.Class.(*ir.Name)
-	parentCall := ok && classNameNode.Value == "parent"
+	var ok bool
+	var className string
+	var parentCall bool
 	var callsParentConstructor bool
-	if parentCall && methodName == "__construct" {
-		callsParentConstructor = true
-	}
 
-	className, ok := solver.GetClassName(st, e.Class)
-	if !ok {
+	switch n := e.Class.(type) {
+	case *ir.Name:
+		parentCall = n.Value == "parent"
+		if parentCall && methodName == "__construct" {
+			callsParentConstructor = true
+		}
+
+		className, ok = solver.GetClassName(st, e.Class)
+		if !ok {
+			return staticMethodCallInfo{canAnalyze: false}
+		}
+	case *ir.Identifier:
+		className, ok = solver.GetClassName(st, e.Class)
+		if !ok {
+			return staticMethodCallInfo{canAnalyze: false}
+		}
+	case *ir.SimpleVar:
+		tp, ok := scope.GetVarNameType(n.Name)
+		if !ok {
+			return staticMethodCallInfo{canAnalyze: false}
+		}
+
+		// We need to resolve the types here, as the function
+		// may return a class or a string with the class name.
+		if !tp.IsResolved() {
+			resolvedTypes := solver.ResolveTypes(st.Info, st.CurrentClass, tp, solver.ResolverMap{})
+			tp = types.NewMapFromMap(resolvedTypes)
+		}
+
+		var isClass bool
+		var isString bool
+		var isMixed bool
+		tp.Iterate(func(typ string) {
+			isString = typ == "string"
+			isMixed = typ == "mixed"
+			if !isString && !isMixed {
+				_, isClass = st.Info.GetClass(typ)
+			}
+		})
+
+		if !isClass && !isString && !isMixed {
+			return staticMethodCallInfo{canAnalyze: false}
+		}
+
+		if !isClass || tp.Len() != 1 {
+			return staticMethodCallInfo{canAnalyze: false}
+		}
+
+		className = tp.String()
+	default:
 		return staticMethodCallInfo{canAnalyze: false}
 	}
 
@@ -343,9 +396,10 @@ type propertyFetchInfo struct {
 	isFound           bool
 	isMagic           bool
 	canAnalyze        bool
+	callerTypeIsMixed bool
 }
 
-func resolvePropertyFetch(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, e *ir.PropertyFetchExpr) propertyFetchInfo {
+func resolvePropertyFetch(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, e *ir.PropertyFetchExpr, strictMixed bool) propertyFetchInfo {
 	propertyNode, ok := e.Property.(*ir.Identifier)
 	if !ok {
 		return propertyFetchInfo{canAnalyze: false}
@@ -358,6 +412,13 @@ func resolvePropertyFetch(sc *meta.Scope, st *meta.ClassParseState, customTypes 
 	var info meta.PropertyInfo
 
 	propertyFetchType := solver.ExprTypeCustom(sc, st, e.Variable, customTypes)
+	if !strictMixed && isMixedLikeType(propertyFetchType) {
+		return propertyFetchInfo{
+			canAnalyze:        true,
+			callerTypeIsMixed: true,
+		}
+	}
+
 	propertyFetchType.Find(func(typ string) bool {
 		p, isMagic, ok := findProperty(st.Info, typ, propertyNode.Value)
 		if !ok {
@@ -441,6 +502,11 @@ func resolveClassConstFetch(st *meta.ClassParseState, e *ir.ClassConstFetchExpr)
 	className, ok := solver.GetClassName(st, e.Class)
 	if !ok {
 		return classPropertyFetchInfo{canAnalyze: false}
+	}
+
+	class, ok := st.Info.GetClass(className)
+	if ok {
+		className = class.Name
 	}
 
 	info, implClass, found := solver.FindConstant(st.Info, className, constName.Value)
@@ -574,6 +640,16 @@ func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedS
 		clone.Set(ir.NodeKind(kind), res)
 	}
 	return &clone
+}
+
+func isMixedLikeType(typ types.Map) bool {
+	return typ.Find(func(typ string) bool {
+		if typ == "mixed" || typ == "object" || typ == "undefined" || typ == "unknown_from_list" {
+			return true
+		}
+
+		return false
+	})
 }
 
 // List taken from https://wiki.php.net/rfc/context_sensitive_lexer

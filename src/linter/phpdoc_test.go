@@ -60,7 +60,7 @@ func TestParseClassPHPDoc(t *testing.T) {
 		},
 	}
 
-	l := NewLinter(NewConfig())
+	l := NewLinter(NewConfig("8.1"))
 	st := &meta.ClassParseState{Info: l.MetaInfo()}
 	walker := rootWalker{ctx: newRootContext(l.config, NewWorkerContext(), st)}
 	for _, test := range tests {
@@ -113,7 +113,7 @@ func TestParseClassPHPDoc(t *testing.T) {
 }
 
 func BenchmarkParseTypes(b *testing.B) {
-	l := NewLinter(NewConfig())
+	l := NewLinter(NewConfig("8.1"))
 	st := &meta.ClassParseState{}
 	ctx := newRootContext(l.config, NewWorkerContext(), st)
 	typeString := `?x|array<int>|T[]`

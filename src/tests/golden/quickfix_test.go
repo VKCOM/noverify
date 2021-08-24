@@ -49,7 +49,7 @@ func openFile(filename string) (f *os.File, found bool, err error) {
 }
 
 func (t *quickFixTest) runQuickFixTest() {
-	var linterConfig = linter.NewConfig()
+	linterConfig := linter.NewConfig("8.1")
 	linterConfig.ApplyQuickFixes = true
 	err := linttest.InitEmbeddedRules(linterConfig)
 	if err != nil {

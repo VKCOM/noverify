@@ -46,3 +46,24 @@ func GenerateAnonClassName(class *ir.AnonClassExpr, currentFile string) string {
 	pos := ir.GetPosition(class)
 	return fmt.Sprintf(`\anon$(%s):%d$`, currentFile, pos.StartLine)
 }
+
+func TransformClosureToReadableName(name string) string {
+	name = strings.TrimSuffix(name, "$")
+	if types.IsClosureFromPHPDoc(name) {
+		name = strings.TrimPrefix(name, `\Closure$(`)
+		parts := strings.Split(name, ")")
+		args := parts[0]
+		returnType := strings.ReplaceAll(parts[1], "/", "|")
+		returnType = strings.TrimPrefix(returnType, ":")
+		if returnType == "" {
+			returnType = "void"
+		}
+		return fmt.Sprintf("anonymous(%s): %s defined in PHPDoc", args, returnType)
+	}
+
+	index := strings.LastIndexByte(name, ':')
+	if index == -1 {
+		return name
+	}
+	return fmt.Sprintf("anonymous(...) defined on line %s", name[index+1:])
+}

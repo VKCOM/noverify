@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/phpdoctypes"
-	"github.com/z7zmey/php-parser/pkg/position"
-	"github.com/z7zmey/php-parser/pkg/token"
+	"github.com/VKCOM/php-parser/pkg/position"
+	"github.com/VKCOM/php-parser/pkg/token"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
@@ -234,7 +234,10 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 	doc := phpdoc.Parse(b.r.ctx.phpdocTypeParser, string(t.Value))
 
 	if phpdoc.IsSuspicious(t.Value) {
-		b.r.Report(n, LevelWarning, "phpdocLint", "Multiline PHPDoc comment should start with /**, not /*")
+		b.r.ReportPHPDoc(PHPDocLine(n, 1),
+			LevelWarning, "phpdocLint",
+			"Multiline PHPDoc comment should start with /**, not /*",
+		)
 	}
 
 	for _, p := range doc.Parsed {
@@ -247,8 +250,16 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 		moveShapesToContext(&b.r.ctx, converted.Shapes)
 		b.r.handleClosuresFromDoc(converted.Closures)
 
-		for _, warning := range converted.Warnings {
-			b.r.Report(n, LevelNotice, "phpdocType", "%s on line %d", warning, part.Line())
+		if converted.Warning != "" {
+			b.r.ReportPHPDoc(
+				PHPDocLineField(n, part.Line(), 1),
+				LevelNotice, "phpdocType", converted.Warning,
+			)
+		}
+
+		simpleVar, isSimpleVar := n.(*ir.SimpleVar)
+		if isSimpleVar && part.Var == "" {
+			part.Var = simpleVar.Name
 		}
 
 		typesMap := types.NewMapWithNormalization(b.r.ctx.typeNormalizer, converted.Types)
@@ -644,6 +655,15 @@ func (b *blockWalker) withNewContext(action func()) *blockContext {
 	return newCtx
 }
 
+func (b *blockWalker) withSpecificContext(ctx *blockContext, action func()) {
+	oldCtx := b.ctx
+	newCtx := ctx
+
+	b.ctx = newCtx
+	action()
+	b.ctx = oldCtx
+}
+
 func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
 	var linksCount int
 	var finallyCtx *blockContext
@@ -991,7 +1011,7 @@ func (b *blockWalker) handleCompactCallArgs(args []ir.Node) {
 }
 
 func (b *blockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
-	call := resolveMethodCall(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, e)
+	call := resolveMethodCall(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, e, b.r.strictMixed)
 
 	e.Variable.Walk(b)
 	e.Method.Walk(b)
@@ -1005,7 +1025,7 @@ func (b *blockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
 }
 
 func (b *blockWalker) handleStaticCall(e *ir.StaticCallExpr) bool {
-	call := resolveStaticMethodCall(b.r.ctx.st, e)
+	call := resolveStaticMethodCall(b.ctx.sc, b.r.ctx.st, e)
 	if !b.callsParentConstructor {
 		b.callsParentConstructor = call.isCallsParentConstructor
 	}
@@ -1168,7 +1188,7 @@ func (b *blockWalker) enterArrowFunction(fun *ir.ArrowFunctionExpr) bool {
 
 	// Check stage.
 	errors := b.r.checkPHPDoc(fun, fun.Doc, fun.Params)
-	b.r.reportPHPDocErrors(fun, errors)
+	b.r.reportPHPDocErrors(errors)
 
 	funcParams := b.r.parseFuncParams(fun.Params, doc.ParamTypes, sc, nil)
 	b.r.handleArrowFuncExpr(funcParams.params, fun.Expr, sc, b)
@@ -1193,7 +1213,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 
 	// Check stage.
 	errors := b.r.checkPHPDoc(fun, fun.Doc, fun.Params)
-	b.r.reportPHPDocErrors(fun, errors)
+	b.r.reportPHPDocErrors(errors)
 
 	var hintReturnType types.Map
 	if typ, ok := b.r.parseTypeHintNode(fun.ReturnType); ok {
@@ -1219,7 +1239,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		}
 
 		if !b.ctx.sc.HaveVar(v) && !byRef {
-			b.r.Report(v, LevelWarning, "undefined", "Undefined variable $%s", v.Name)
+			b.r.Report(v, LevelWarning, "undefinedVariable", "Undefined variable $%s", v.Name)
 		}
 
 		typ, ok := b.ctx.sc.GetVarNameType(v.Name)
@@ -1233,10 +1253,11 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 	params := b.r.parseFuncParams(fun.Params, doc.ParamTypes, sc, closureSolver)
 
 	funcInfo := b.r.handleFuncStmts(params.params, closureUses, fun.Stmts, sc)
+	phpDocReturnTypes := doc.ReturnType
 	actualReturnTypes := funcInfo.returnTypes
 	exitFlags := funcInfo.prematureExitFlags
 
-	returnTypes := functionReturnType(types.NewEmptyMap(0), hintReturnType, actualReturnTypes)
+	returnTypes := functionReturnType(phpDocReturnTypes, hintReturnType, actualReturnTypes)
 
 	for _, param := range fun.Params {
 		b.r.checkFuncParam(param.(*ir.Parameter))
@@ -1418,94 +1439,46 @@ func (b *blockWalker) handleTernary(e *ir.TernaryExpr) bool {
 		return true // Skip `$x ?: $y` expressions
 	}
 
-	b.withNewContext(func() {
-		// No need to delete vars here as we run andWalker
-		// only inside a new context.
-		a := &andWalker{b: b}
+	contexts := make([]*blockContext, 0, 2)
+
+	initialContext := b.ctx
+	falseContext := copyBlockContext(initialContext)
+	trueContext := copyBlockContext(initialContext)
+	contexts = append(contexts, trueContext, falseContext)
+
+	b.withSpecificContext(trueContext, func() {
+		a := &andWalker{
+			b:              b,
+			initialContext: initialContext,
+			trueContext:    trueContext,
+			falseContext:   falseContext,
+		}
 		e.Condition.Walk(a)
+	})
+
+	b.withSpecificContext(trueContext, func() {
 		e.IfTrue.Walk(b)
 	})
-	e.IfFalse.Walk(b)
+	b.replaceAllImplicitVars(trueContext, initialContext)
+
+	b.withSpecificContext(falseContext, func() {
+		e.IfFalse.Walk(b)
+	})
+	b.replaceAllImplicitVars(trueContext, initialContext)
+
+	b.extractVariablesTo(b.ctx, contexts, 2)
+
 	return false
 }
 
-func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
-	var varsToDelete []ir.Node
-	customMethods := len(b.ctx.customMethods)
-	customFunctions := len(b.ctx.customFunctions)
-	// Remove all isset'ed variables after we're finished with this if statement.
-	defer func() {
-		for _, v := range varsToDelete {
-			b.ctx.sc.DelVar(v, "isset/!empty")
-		}
-		b.ctx.customMethods = b.ctx.customMethods[:customMethods]
-		b.ctx.customFunctions = b.ctx.customFunctions[:customFunctions]
-	}()
-	walkCond := func(cond ir.Node) {
-		a := &andWalker{b: b}
-		cond.Walk(a)
-		varsToDelete = append(varsToDelete, a.varsToDelete...)
-	}
-
-	// first condition is always executed, so run it in base context
-	if s.Cond != nil {
-		walkCond(s.Cond)
-	}
-
-	var contexts []*blockContext
-
-	walk := func(n ir.Node) (links int) {
-		// handle if (...) smth(); else other_thing(); // without braces
-		switch n := n.(type) {
-		case *ir.ElseStmt:
-			b.addStatement(n.Stmt)
-		case *ir.ElseIfStmt:
-			b.addStatement(n.Stmt)
-		default:
-			b.addStatement(n)
-		}
-
-		ctx := b.withNewContext(func() {
-			if elsif, ok := n.(*ir.ElseIfStmt); ok {
-				walkCond(elsif.Cond)
-				b.handleElseIf(elsif)
-				elsif.Stmt.Walk(b)
-			} else {
-				n.Walk(b)
-			}
-		})
-
-		contexts = append(contexts, ctx)
-
-		if ctx.exitFlags != 0 {
-			return 0
-		}
-
-		return 1
-	}
-
-	linksCount := 0
-
-	if s.Stmt != nil {
-		linksCount += walk(s.Stmt)
-	} else {
-		linksCount++
-	}
-
-	for _, n := range s.ElseIf {
-		linksCount += walk(n)
-	}
-
-	if s.Else != nil {
-		linksCount += walk(s.Else)
-	} else {
-		linksCount++
-	}
-
-	b.propagateFlagsFromBranches(contexts, linksCount)
-
-	varTypes := make(map[string]types.Map, b.ctx.sc.Len())
-	defCounts := make(map[string]int, b.ctx.sc.Len())
+// extractVariablesTo extracts all variables from contexts and creates
+// new ones in the passed context, taking into account the number of
+// places where the variable is defined, if the number is less than
+// requiredCountToAlwaysDefined, then the variable will be designated
+// as "not always defined".
+func (b *blockWalker) extractVariablesTo(targetContext *blockContext, contexts []*blockContext, requiredCountToAlwaysDefined int) {
+	varTypes := make(map[string]types.Map, targetContext.sc.Len())
+	defCounts := make(map[string]int, targetContext.sc.Len())
 
 	for _, ctx := range contexts {
 		if ctx.exitFlags != 0 {
@@ -1520,13 +1493,208 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 		})
 	}
 
-	for nm, types := range varTypes {
+	for nm, typeMap := range varTypes {
 		var flags meta.VarFlags
-		flags.SetAlwaysDefined(defCounts[nm] == linksCount)
-		b.ctx.sc.AddVarName(nm, types, "all branches", flags)
+		if defCounts[nm] == requiredCountToAlwaysDefined {
+			flags = meta.VarAlwaysDefined
+		}
+
+		targetContext.sc.AddVarName(nm, typeMap, "all branches", flags)
+	}
+}
+
+func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
+	var varsToDelete []ir.Node
+	customMethods := len(b.ctx.customMethods)
+	customFunctions := len(b.ctx.customFunctions)
+	// Remove all isset'ed variables after we're finished with this if statement.
+	defer func() {
+		for _, v := range varsToDelete {
+			b.ctx.sc.DelVar(v, "isset/!empty")
+		}
+		b.ctx.customMethods = b.ctx.customMethods[:customMethods]
+		b.ctx.customFunctions = b.ctx.customFunctions[:customFunctions]
+	}()
+
+	var linksCount int
+	var contexts []*blockContext
+
+	onlyInstanceof := true
+	// Add all new variables from the condition to the current scope.
+	irutil.Inspect(s.Cond, func(n ir.Node) bool {
+		switch n := n.(type) {
+		case *ir.BooleanAndExpr:
+		case *ir.BooleanOrExpr:
+		case *ir.BooleanNotExpr:
+			return true
+		case *ir.InstanceOfExpr:
+			return false
+
+		case *ir.Assign:
+			b.handleAssign(n)
+			return false
+		default:
+			onlyInstanceof = false
+		}
+
+		return true
+	})
+
+	// initialContext is the context of the block in which the if-else is located.
+	initialContext := b.ctx
+	// First, we need to traverse the main condition.
+	//   trueContext  will store the state of the variables in the **if** block.
+	//   falseContext will store the state of the variables in the **else** block.
+	falseContext := copyBlockContext(initialContext)
+	trueContext := copyBlockContext(initialContext)
+	b.withSpecificContext(trueContext, func() {
+		a := &andWalker{
+			b:              b,
+			initialContext: initialContext,
+			trueContext:    trueContext,
+			falseContext:   falseContext,
+		}
+
+		s.Cond.Walk(a)
+		varsToDelete = append(varsToDelete, a.varsToDelete...)
+	})
+	contexts = append(contexts, trueContext)
+
+	// New reference variables can be created in the condition,
+	// which should be moved outside the if block.
+	moveNonLocalVariables(trueContext, b.ctx, b.nonLocalVars)
+
+	if s.Stmt != nil {
+		// We process the if body with a context if the condition is **true**.
+		b.withSpecificContext(trueContext, func() {
+			s.Stmt.Walk(b)
+		})
+
+		if trueContext.exitFlags == 0 {
+			linksCount++
+		}
+
+		// Case:
+		// if (!$a instanceof Boo) {
+		//   return
+		// }
+		//
+		// $a has Boo type
+		if trueContext.exitFlags != 0 && onlyInstanceof && len(s.ElseIf) == 0 && s.Else == nil {
+			b.ctx = falseContext
+		}
+
+		b.replaceAllImplicitVars(trueContext, initialContext)
+	} else {
+		linksCount++
 	}
 
+	for _, n := range s.ElseIf {
+		if elseif, ok := n.(*ir.ElseIfStmt); ok {
+			elseifTrueContext := copyBlockContext(falseContext)
+			elseifFalseContext := copyBlockContext(falseContext)
+
+			b.withSpecificContext(elseifTrueContext, func() {
+				a := &andWalker{
+					b:              b,
+					initialContext: initialContext,
+					trueContext:    elseifTrueContext,
+					falseContext:   elseifFalseContext,
+				}
+				elseif.Cond.Walk(a)
+				varsToDelete = append(varsToDelete, a.varsToDelete...)
+			})
+
+			// New reference variables can be created in the condition,
+			// which should be moved outside the if block.
+			moveNonLocalVariables(elseifTrueContext, b.ctx, b.nonLocalVars)
+
+			// Handle if (...) smth(); else other_thing(); // without braces.
+			switch n := n.(type) {
+			case *ir.ElseStmt:
+				b.addStatement(n.Stmt)
+			case *ir.ElseIfStmt:
+				b.addStatement(n.Stmt)
+			default:
+				b.addStatement(n)
+			}
+
+			b.withSpecificContext(elseifTrueContext, func() {
+				b.handleElseIf(elseif)
+				elseif.Stmt.Walk(b)
+			})
+
+			b.replaceAllImplicitVars(elseifTrueContext, initialContext)
+
+			contexts = append(contexts, elseifTrueContext)
+			if elseifTrueContext.exitFlags == 0 {
+				linksCount++
+			}
+
+			// Every elseif changes variables in else.
+			falseContext = elseifFalseContext
+		} else {
+			n.Walk(b)
+		}
+	}
+
+	if s.Else != nil {
+		// We process the else body with a context if the condition is **false**.
+		b.withSpecificContext(falseContext, func() {
+			s.Else.Walk(b)
+		})
+
+		if falseContext.exitFlags == 0 {
+			linksCount++
+		}
+
+		b.replaceAllImplicitVars(falseContext, initialContext)
+
+		contexts = append(contexts, falseContext)
+	} else {
+		linksCount++
+	}
+
+	b.propagateFlagsFromBranches(contexts, linksCount)
+	b.extractVariablesTo(b.ctx, contexts, linksCount)
+
 	return false
+}
+
+// replaceAllImplicitVars replaces any implicit variables that were added by
+// instanceof, isset, etc. with their original versions from initialContext.
+func (b *blockWalker) replaceAllImplicitVars(targetContext *blockContext, initialContext *blockContext) {
+	targetContext.sc.Iterate(func(name string, typ types.Map, flags meta.VarFlags) {
+		if !flags.IsImplicit() {
+			return
+		}
+
+		oldVar, ok := initialContext.sc.GetVarName(name)
+		if !ok {
+			return
+		}
+
+		targetContext.sc.ReplaceVarName(name, oldVar.Type, "fallback", oldVar.Flags)
+	})
+}
+
+func moveNonLocalVariables(trueContext, toContext *blockContext, nonLocalVars map[string]variableKind) {
+	nonLocalToDelete := make([]string, 0, len(nonLocalVars))
+	for name, kind := range nonLocalVars {
+		if kind != varRef {
+			continue
+		}
+
+		typesMap, ok := trueContext.sc.GetVarNameType(name)
+		if !ok {
+			continue
+		}
+		toContext.sc.AddVarName(name, typesMap, "ref", meta.VarAlwaysDefined)
+		nonLocalToDelete = append(nonLocalToDelete, name)
+	}
+	for _, name := range nonLocalToDelete {
+		delete(nonLocalVars, name)
+	}
 }
 
 func (b *blockWalker) handleElseIf(s *ir.ElseIfStmt) {

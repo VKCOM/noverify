@@ -1,27 +1,53 @@
-# How to install NoVerify
+# Installation
 
-First you will need the Go toolchain (https://golang.org/).
+## Ready binaries — the easiest way
 
-Once Go installed, do the following command:
+Go to the [Releases](https://github.com/vkcom/noverify/releases) page and download the latest version for your OS.
 
-```sh
-$ go get -u github.com/VKCOM/noverify
+Check that it launches correctly:
+
+```bash
+noverify version
 ```
 
-This command installs `noverify` into `$GOPATH/bin/noverify` (which expands into `$HOME/go/bin/noverify` by default).
+*(here and then, we suppose that the `noverify` binary is available by name)*
 
-Alternatively, you can build `noverify` with version info:
+You're done! Proceed to the [Getting started](/docs/getting_started.md) page.
+
+## With `go get`
+
+Make sure you have [Go](https://golang.org/dl/) version 1.16 or higher installed.  
+Run the following command:
 
 ```sh
-mkdir -p $GOPATH/src/github.com/VKCOM
-git clone https://github.com/VKCOM/noverify.git $GOPATH/src/github.com/VKCOM
-
-cd $GOPATH/src/github.com/VKCOM/noverify
-make install
+$ go get github.com/VKCOM/noverify
 ```
+
+NoVerify will be installed to `$GOPATH/bin/noverify`, which usually expands to `$HOME/go/bin/noverify`.
+
+For convenience, you can add this folder to the **PATH**.
+
+## Build from source
+
+Make sure you have [Go](https://golang.org/dl/) version 1.16 or higher installed.  
+Clone this repository and run `make build`:
+
+```bash
+git clone https://github.com/vkcom/noverify
+cd noverify
+make build
+```
+
+Optionally, you can pass a name of the binary:
+
+```bash
+make build BIN_NAME=noverify.bin
+```
+
+A resulting binary will be placed in the `./build` folder.
 
 ## Next steps
 
-- [Using NoVerify as linter / static analyser](linter-usage.md)
+- [Using NoVerify as linter / static analyser](/docs/getting_started.md)
 - [Using NoVerify as language server for Sublime Text](sublime-plugin.md)
 - [Using NoVerify as language server for VSCode](vscode-plugin.md)

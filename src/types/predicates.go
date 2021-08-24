@@ -20,6 +20,10 @@ func IsAnonClass(s string) bool {
 	return strings.HasPrefix(s, `\anon$`)
 }
 
+func IsClosureFromPHPDoc(s string) bool {
+	return strings.HasPrefix(s, `\Closure`) && !strings.ContainsRune(s, '.')
+}
+
 func IsArray(s string) bool {
 	return strings.HasSuffix(s, `[]`)
 }

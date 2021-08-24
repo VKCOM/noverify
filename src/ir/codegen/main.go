@@ -70,7 +70,7 @@ func doInitContext(ctx *context) error {
 	if err != nil {
 		return fmt.Errorf("getwd: %v", err)
 	}
-	ctx.rootDir = wd
+	ctx.rootDir = wd + "/src/ir"
 
 	typechecker := &types.Config{
 		Importer: importer.ForCompiler(ctx.fset, "source", nil),

@@ -1,0 +1,90 @@
+WARNING phpdocLint: @method requires return type and method name fields at testdata/phpdoc/phpdoc.php:4
+ * @method
+   ^^^^^^^
+WARNING phpdocLint: @method requires return type and method name fields at testdata/phpdoc/phpdoc.php:5
+ * @method int
+   ^^^^^^^^^^^
+WARNING phpdocLint: @method missing parentheses after method name at testdata/phpdoc/phpdoc.php:6
+ * @method int    method1
+                  ^^^^^^^
+WARNING phpdocLint: @method missing parentheses after method name at testdata/phpdoc/phpdoc.php:7
+ * @method ?string  method2
+                    ^^^^^^^
+WARNING phpdocLint: @property requires type and property name fields at testdata/phpdoc/phpdoc.php:11
+ * @property
+   ^^^^^^^^^
+WARNING phpdocLint: @property requires type and property name fields at testdata/phpdoc/phpdoc.php:12
+ * @property   int
+   ^^^^^^^^^^^^^^^
+WARNING phpdocLint: Non-canonical order of name and type at testdata/phpdoc/phpdoc.php:14
+ * @property       $b  int
+   ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING phpdocLint: @property c field name must start with '$' at testdata/phpdoc/phpdoc.php:15
+ * @property int c
+                 ^
+WARNING phpdocLint: Multiline PHPDoc comment should start with /**, not /* at testdata/phpdoc/phpdoc.php:18
+  /*
+^^^^
+MAYBE   phpdocType: Repeated nullable doesn't make sense at testdata/phpdoc/phpdoc.php:24
+   * @var ?int|null
+          ^^^^^^^^^
+MAYBE   phpdocType: Repeated nullable doesn't make sense at testdata/phpdoc/phpdoc.php:25
+   * @var $b ?int|null
+             ^^^^^^^^^
+MAYBE   phpdocType: Repeated nullable doesn't make sense at testdata/phpdoc/phpdoc.php:26
+   * @var ?int|null $b
+          ^^^^^^^^^
+WARNING phpdocLint: Multiline PHPDoc comment should start with /**, not /* at testdata/phpdoc/phpdoc.php:31
+/*
+^^
+WARNING phpdocRef: @see tag refers to unknown symbol FooUnExisting at testdata/phpdoc/phpdoc.php:54
+ * @see  FooUnExisting
+         ^^^^^^^^^^^^^
+WARNING phpdocRef: @see tag refers to unknown symbol FooUnExisting at testdata/phpdoc/phpdoc.php:55
+ * @see       FooUnExisting
+              ^^^^^^^^^^^^^
+MAYBE   phpdocType: Repeated nullable doesn't make sense at testdata/phpdoc/phpdoc.php:44
+ * @param    ?int|null $d
+             ^^^^^^^^^
+MAYBE   phpdocType: Expected a type, found '-'; if you want to express 'any' type, use 'mixed' at testdata/phpdoc/phpdoc.php:46
+ * @param - $e the y param
+          ^
+MAYBE   phpdocType: Expected a type, found '-'; if you want to express 'any' type, use 'mixed' at testdata/phpdoc/phpdoc.php:47
+ * @param    $f - the z param
+             ^^
+MAYBE   phpdocType: Use int type instead of integer at testdata/phpdoc/phpdoc.php:49
+ * @param integer   $g
+          ^^^^^^^
+MAYBE   phpdocType: Array syntax is T[], not []T at testdata/phpdoc/phpdoc.php:50
+ * @param  []int   $h
+           ^^^^^
+MAYBE   phpdocType: Nullable syntax is ?T, not T? at testdata/phpdoc/phpdoc.php:51
+ * @param   int? $a1
+            ^^^^
+WARNING phpdocLint: @param for non-existing argument $unexisting at testdata/phpdoc/phpdoc.php:40
+ * @param    int    $unexisting
+                    ^^^^^^^^^^^
+WARNING phpdocLint: Malformed @param tag (maybe var is missing?) at testdata/phpdoc/phpdoc.php:41
+ * @param int
+          ^^^
+WARNING phpdocLint: Non-canonical order of variable and type at testdata/phpdoc/phpdoc.php:42
+ * @param $b       int
+   ^^^^^^^^^^^^^^^^^^^
+WARNING phpdocLint: Malformed @param $c tag (maybe type is missing?) at testdata/phpdoc/phpdoc.php:43
+ * @param $c
+          ^^
+WARNING phpdocLint: Non-canonical order of variable and type at testdata/phpdoc/phpdoc.php:47
+ * @param    $f - the z param
+   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   phpdocType: Invalid shape key: x[] at testdata/phpdoc/phpdoc.php:62
+  /** @var    shape(x[]:a) */
+              ^^^^^^^^^^^^
+MAYBE   phpdocType: Shape param #1: want key:type, found x at testdata/phpdoc/phpdoc.php:66
+  /** @var shape(x)    $a */
+           ^^^^^^^^
+WARNING phpdocLint: Multiline PHPDoc comment should start with /**, not /* at testdata/phpdoc/phpdoc.php:70
+  /*
+^^^^
+WARNING phpdocLint: Multiline PHPDoc comment should start with /**, not /* at testdata/phpdoc/phpdoc.php:31
+/*
+^^

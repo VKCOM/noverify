@@ -412,7 +412,7 @@ func (p *parser) parseFuncComment(fn *ir.FunctionStmt) error {
 }
 
 func (p *parser) commentText(n ir.Node) string {
-	doc, found := irutil.FindPhpDoc(n)
+	doc, found := irutil.FindPhpDoc(n, false)
 	if !found {
 		return ""
 	}

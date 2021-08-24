@@ -1,26 +1,27 @@
 {
-  "LinterVersion": "",
-  "CreatedAt": 1595281530,
-  "Version": 3,
-  "Stats": {
-    "CountTotal": 3,
-    "CountPerCheck": {
-      "discardExpr": 1,
-      "undefined": 2
-    }
-  },
-  "Files": [
-    {
-      "File": "file1.php",
-      "Hashes": [
-        "oh8k7otr41kw,t3ecg0on789h"
-      ]
-    },
-    {
-      "File": "file2.php",
-      "Hashes": [
-        "2bbim48w63elq"
-      ]
-    }
-  ]
+	"LinterVersion": "e605ebd8f04e03e74712fb4d8cb3fdcf459f2e7c",
+	"CreatedAt": 1629561919,
+	"Version": 3,
+	"Stats": {
+		"CountTotal": 3,
+		"CountPerCheck": {
+			"discardExpr": 1,
+			"undefinedFunction": 1,
+			"undefinedProperty": 1
+		}
+	},
+	"Files": [
+		{
+			"File": "file1.php",
+			"Hashes": [
+				"33xto60mohiss,m3krbhb78pqm"
+			]
+		},
+		{
+			"File": "file2.php",
+			"Hashes": [
+				"28uq3iyzkgyeb"
+			]
+		}
+	]
 }

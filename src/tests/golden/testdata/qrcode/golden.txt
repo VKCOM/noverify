@@ -1,7 +1,7 @@
-MAYBE   phpdoc: Missing PHPDoc for \QRCode::output_image public method at testdata/qrcode/qrcode.php:45
+MAYBE   missingPhpdoc: Missing PHPDoc for \QRCode::output_image public method at testdata/qrcode/qrcode.php:45
   public function output_image() {
                   ^^^^^^^^^^^^
-MAYBE   phpdoc: Missing PHPDoc for \QRCode::render_image public method at testdata/qrcode/qrcode.php:53
+MAYBE   missingPhpdoc: Missing PHPDoc for \QRCode::render_image public method at testdata/qrcode/qrcode.php:53
   public function render_image() {
                   ^^^^^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$this->options['bc'] ?? 'FFFFFF'` at testdata/qrcode/qrcode.php:59
@@ -19,7 +19,10 @@ MAYBE   trailingComma: Last element in a multi-line array should have a trailing
 WARNING unused: Variable $mode is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/qrcode/qrcode.php:177
     list($mode, $vers, $ec, $data) = $this->qr_encode_data($data, $ecl);
          ^^^^^
-WARNING undefined: Variable $code might have not been defined at testdata/qrcode/qrcode.php:221
+WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/qrcode/qrcode.php:203
+    switch ($mode) {
+    ^
+WARNING maybeUndefined: Variable $code might have not been defined at testdata/qrcode/qrcode.php:221
     while (count($code) % 8) {
                  ^^^^^
 WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:297
@@ -28,18 +31,27 @@ WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testd
 WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:300
       case 1:  /* 10 - 26 */
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/qrcode/qrcode.php:296
+    switch ($version_group) {
+    ^
 WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:318
         case 3:
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:322
         case 2:
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/qrcode/qrcode.php:317
+      switch (strlen($group)) {
+      ^
 WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:341
       case 2:  /* 27 - 40 */
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:344
       case 1:  /* 10 - 26 */
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/qrcode/qrcode.php:340
+    switch ($version_group) {
+    ^
 MAYBE   callSimplify: Could simplify to $group[0] at testdata/qrcode/qrcode.php:361
         $c1     = strpos($alphabet, substr($group, 0, 1));
                                     ^^^^^^^^^^^^^^^^^^^^
@@ -49,6 +61,9 @@ MAYBE   callSimplify: Could simplify to $group[1] at testdata/qrcode/qrcode.php:
 WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:393
       case 1:  /* 10 - 26 */
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/qrcode/qrcode.php:391
+    switch ($version_group) {
+    ^
 MAYBE   callSimplify: Could simplify to $data[$i] at testdata/qrcode/qrcode.php:413
       $ch     = ord(substr($data, $i, 1));
                     ^^^^^^^^^^^^^^^^^^^^
@@ -58,12 +73,18 @@ WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testd
 WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:433
       case 1:  /* 10 - 26 */
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/qrcode/qrcode.php:429
+    switch ($version_group) {
+    ^
 MAYBE   callSimplify: Could simplify to $group[0] at testdata/qrcode/qrcode.php:448
       $c1    = ord(substr($group, 0, 1));
                    ^^^^^^^^^^^^^^^^^^^^
 MAYBE   callSimplify: Could simplify to $group[1] at testdata/qrcode/qrcode.php:449
       $c2    = ord(substr($group, 1, 1));
                    ^^^^^^^^^^^^^^^^^^^^
+WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/qrcode/qrcode.php:697
+    switch ($mask) {
+    ^
 ERROR   classMembersOrder: Property $qr_capacity must go before methods in the class QRCode at testdata/qrcode/qrcode.php:890
   private $qr_capacity = [
   ^^

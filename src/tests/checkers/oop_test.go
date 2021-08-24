@@ -240,10 +240,10 @@ class TwoArgs {
 }
 `)
 	test.Expect = []string{
-		`Too few arguments for \OneArg constructor`,
-		`Too few arguments for \A\B\TwoArgs constructor`,
-		`Too few arguments for \A\B\TwoArgs constructor`,
-		`Too few arguments for \OneArgDerived constructor`,
+		`Too few arguments for \OneArg constructor, expecting 1, saw 0`,
+		`Too few arguments for \A\B\TwoArgs constructor, expecting 2, saw 0`,
+		`Too few arguments for \A\B\TwoArgs constructor, expecting 2, saw 0`,
+		`Too few arguments for \OneArgDerived constructor, expecting 1, saw 0`,
 	}
 	test.RunAndMatch()
 }
@@ -289,6 +289,64 @@ $_ = WithProps::$int;
 	test.Expect = []string{
 		`Class constant \WithProps::int does not exist`,
 		`Property \WithProps::$int does not exist`,
+	}
+
+	test.RunAndMatch()
+}
+
+func TestPhpdocPropertyForClassWithModifiers(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+/**
+ * @property int $int
+ * @property string $string - optional description.
+ * @property-read string $name Name of the class
+ */
+abstract class WithPropsBase {
+  /***/
+  public function getInt() {
+    return $this->int;
+  }
+  /***/
+  public function getString() {
+    return $this->string;
+  }
+}
+
+/**
+ * @property int $int1
+ * @property string $string1 - optional description.
+ * @property-read string $name1 Name of the class
+ */
+final class WithProps extends WithPropsBase {}
+
+$_ = (new WithProps())->int;
+$_ = (new WithProps())->string;
+
+function f(WithProps $x) {
+  return $x->int + $x->int1;
+}
+
+/**
+ * @param WithProps|null $y
+ */
+function f2($y = null) {
+  echo $y->name;
+  echo $y->string1;
+}
+
+// Can't access them as static props/constants.
+$_ = WithProps::int;
+$_ = WithProps::int1;
+$_ = WithProps::$int;
+$_ = WithProps::$int1;
+`)
+
+	test.Expect = []string{
+		`Class constant \WithProps::int does not exist`,
+		`Class constant \WithProps::int1 does not exist`,
+		`Property \WithProps::$int does not exist`,
+		`Property \WithProps::$int1 does not exist`,
 	}
 
 	test.RunAndMatch()
@@ -766,6 +824,7 @@ func TestInheritanceLoop(t *testing.T) {
 
 func TestClosureLateBinding(t *testing.T) {
 	test := linttest.NewSuite(t)
+	test.Config().StrictMixed = true
 	test.AddFile(`<?php
 	class Example
 	{
@@ -784,7 +843,7 @@ func TestClosureLateBinding(t *testing.T) {
 		"Undefined variable $a",
 		"Call to undefined method {undefined}->method()",
 	}
-	linttest.RunFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefinedVariable", "undefinedMethod")
 }
 
 func TestProtected(t *testing.T) {
@@ -865,7 +924,7 @@ func TestInvoke(t *testing.T) {
 
 	(new Example())();
 	`)
-	test.Expect = []string{"Too few arguments"}
+	test.Expect = []string{"Too few arguments for __invoke, expecting 1, saw 0"}
 	linttest.RunFilterMatch(test, "argCount")
 }
 
@@ -934,9 +993,9 @@ function fn4($f4) {
 }`)
 	test.Expect = []string{
 		`Call to undefined method {\File}->name()`,
-		`Call to undefined method {\File|\Video}->filename()`,
+		`Call to undefined method {\Video}->filename()`,
 		`Call to undefined method {\File}->name()`,
-		`Call to undefined method {\File|\Video}->filename()`,
+		`Call to undefined method {\Video}->filename()`,
 	}
 	test.RunAndMatch()
 }
@@ -1024,7 +1083,7 @@ func TestInstanceOf(t *testing.T) {
 		`Call to undefined method {void}->get2()`,
 		`Call to undefined method {\Element}->callUndefinedMethod()`,
 	}
-	linttest.RunFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefinedMethod")
 }
 
 func TestNullableTypes(t *testing.T) {
@@ -1324,13 +1383,12 @@ trait AbstractTraitAB {
 
 		`Class \T6\Bad must implement \T6\TraitAbstractA::a method`,
 	}
-	linttest.RunFilterMatch(test, `unimplemented`, `nameMismatch`, `undefined`)
+	linttest.RunFilterMatch(test, `unimplemented`, `nameMismatch`, `undefinedType`)
 }
 
 func TestInterfaceRules(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-
 interface WithConstants {
   const r = 10000; // ok
   public const v = 1; // ok
@@ -1365,7 +1423,7 @@ interface WithoutAnyModifier {
 		`'bad1' can't be private`,
 		`'bad2' can't be protected`,
 	}
-	test.RunAndMatch()
+	linttest.RunFilterMatch(test, "nonPublicInterfaceMember")
 }
 
 func TestMixinAnnotation(t *testing.T) {
@@ -1471,7 +1529,7 @@ class Bar {
 `)
 	test.Expect = []string{
 		`Call to undefined method {\BarWithSomeMixin}->method3()`,
-		`Line 4: @mixin tag refers to unknown class \Boo`,
+		`@mixin tag refers to unknown class \Boo`,
 	}
 	test.RunAndMatch()
 }
@@ -1647,4 +1705,94 @@ class Foo5 {
   public function f1() {}
 }
 `)
+}
+
+func TestCallStaticWithVariable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {
+  /** */
+  public static function some_method() {}
+}
+function ret_int() {
+  return 12;
+}
+function ret_string() {
+  return "Foo";
+}
+function ret_object() {
+  return new Foo();
+}
+function f($arg) {
+  $foo = new Foo();
+  $foo::some_method(); // Ok
+  $foo::non_existing_method(); // Error
+
+  $a = 10;
+  $a::some_method(); // invalid class name
+
+  $foo2 = new Foo();
+  $foo3 = new Foo();
+  $foo4 = $arg;
+
+  $foo5 = ret_string();
+  $foo6 = ret_object();
+  $foo7 = ret_int();
+
+  if ($a > 100) {
+    $foo2 = "Foo";
+    $foo3 = 10;
+  }
+
+  $foo2::some_method(); // Skip, via \Foo|string type (both is correct for class name)
+  $foo3::some_method(); // Error, int type is invalid class name
+  $foo4::some_method(); // Skip, via mixed type
+  $foo5::some_method(); // Ok ret_string returns the string
+  $foo6::some_method(); // Ok ret_object returns the Foo object
+  $foo7::some_method(); // Error, ret_int returns the int
+}
+`)
+	test.Expect = []string{
+		`Call to undefined method \Foo::non_existing_method()`,
+	}
+	test.RunAndMatch()
+}
+
+func TestImplicitAccessModifiers(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {
+  const FOO = 100; // ok
+  public const FOO1 = 100; // ok
+  private const FOO2 = 100; // ok
+  protected const FOO3 = 100; // ok
+  
+  var int $prop = 100;
+  public int $prop1 = 100;
+  private int $prop2 = 100;
+  protected int $prop3 = 100;
+
+  var int $prop4, $prop5 = 100;
+  public int $prop6, $prop7 = 100;
+  private int $prop8, $prop9 = 100;
+  protected int $prop10, $prop11 = 100;
+  
+  function f1() {}
+  public function f2() {}
+  private function f3() {}
+  protected function f4() {}
+
+  static function f5() {}
+  public static function f6() {}
+  private static function f7() {}
+  protected static function f8() {}
+}
+`)
+	test.Expect = []string{
+		`Specify the access modifier for property explicitly`,
+		`Specify the access modifier for properties explicitly`,
+		`Specify the access modifier for \Foo::f1 method explicitly`,
+		`Specify the access modifier for \Foo::f5 method explicitly`,
+	}
+	linttest.RunFilterMatch(test, "implicitModifiers")
 }

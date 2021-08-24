@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"sort"
 	"strings"
@@ -323,9 +324,12 @@ func (a *App) Run(cfg *MainConfig) (int, error) {
 		fs, groups = command.RegisterFlags(ctx)
 		fs.Usage = nil
 
+		// We don't need any standard output, so we disable it.
+		a.disableDefaultFlagsOutput(fs)
+
 		err := fs.Parse(os.Args[1:])
 		if err != nil {
-			return 2, err
+			return a.flagNotFound(command.Name, err, ctx)
 		}
 		command.flagSet = fs
 		ctx.ParsedArgs = fs.Args()
@@ -333,11 +337,14 @@ func (a *App) Run(cfg *MainConfig) (int, error) {
 		ctx.flagGroups = groups
 	} else {
 		fs = flag.NewFlagSet("empty", flag.ContinueOnError)
+		// We don't need any standard output, so we disable it.
+		a.disableDefaultFlagsOutput(fs)
 	}
 
 	err := fs.Parse(os.Args[1:])
 	if err != nil {
-		return 2, err
+
+		return a.flagNotFound(command.Name, err, ctx)
 	}
 
 	command.flagSet = fs
@@ -345,4 +352,24 @@ func (a *App) Run(cfg *MainConfig) (int, error) {
 	ctx.FlagSet = fs
 
 	return command.Action(ctx)
+}
+
+func (a *App) disableDefaultFlagsOutput(fs *flag.FlagSet) {
+	dummy := bytes.NewBuffer(nil)
+	fs.SetOutput(dummy)
+	fs.Usage = func() {}
+}
+
+func (a *App) flagNotFound(commandName string, err error, ctx *AppContext) (int, error) {
+	if strings.HasPrefix(err.Error(), "flag provided but not defined: ") {
+		flagName := strings.TrimPrefix(err.Error(), "flag provided but not defined: ")
+		log.Printf("Flag -%s not found for '%s' command\n", flagName, commandName)
+
+		command, found := a.getCommandByArgs([]string{commandName, "help"}, a.commands)
+		if found {
+			_, _ = command.Action(ctx)
+		}
+		return 2, nil
+	}
+	return 2, err
 }

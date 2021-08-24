@@ -8,6 +8,7 @@ import (
 
 func TestIssue16(t *testing.T) {
 	test := linttest.NewSuite(t)
+	test.Config().StrictMixed = true
 	test.AddFile(`<?php
 	interface DateTimeInterface {
 		public function format($fmt);
@@ -43,5 +44,5 @@ func TestIssue16(t *testing.T) {
 		"Call to undefined method {mixed}->format()",
 		"Class constant \\TestExInterface::TEST2 does not exist",
 	}
-	linttest.RunFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefinedMethod", "undefinedConstant")
 }
