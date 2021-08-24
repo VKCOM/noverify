@@ -3428,8 +3428,9 @@ function f2($a) {
 
 /**
  * @param mixed $a
+ * @param mixed $b
  */
-function f3($a) {
+function f3($a, $b) {
   if (!$a instanceof Foo && !$a instanceof Boo) {
     exprtype($a, "mixed");
   } else {
@@ -3454,6 +3455,11 @@ function f3($a) {
 
   if (!$a instanceof Foo && $a instanceof Zoo) {
     exprtype($a, "\Zoo|mixed");
+  }
+
+  if ($a instanceof Foo || $b instanceof Zoo) {
+    exprtype($a, "\Foo");
+    exprtype($b, "\Zoo");
   }
 }
 

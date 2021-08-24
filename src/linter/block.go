@@ -1561,10 +1561,6 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 			linksCount++
 		}
 
-		// if trueContext.exitFlags != 0 {
-		// 	b.ctx = falseContext
-		// }
-
 		b.replaceAllImplicitVars(trueContext, initialContext)
 	} else {
 		linksCount++

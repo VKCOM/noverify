@@ -29,10 +29,6 @@ func findMethod(info *meta.Info, className, methodName string) (res solver.FindM
 }
 
 func findProperty(info *meta.Info, className, propName string) (res solver.FindPropertyResult, magic, ok bool) {
-	if className == "\\PhpParser\\Node\\Stmt\\ClassLike" {
-		fmt.Println()
-	}
-
 	p, ok := solver.FindProperty(info, className, propName)
 	if ok {
 		return p, false, true
