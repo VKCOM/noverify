@@ -22,6 +22,7 @@ func CheckersDocumentation(ctx *AppContext) (int, error) {
 | %d           | %d                        | %d                         | %d                 |
 `, len(config.Checkers.ListDeclared()), countEnabledDefault, countDisabledDefault, countAutofixable)
 
+	fmt.Println()
 	fmt.Println("## Table of contents")
 
 	fmt.Println(" - Enabled by default")
