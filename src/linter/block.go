@@ -1445,9 +1445,10 @@ func (b *blockWalker) handleTernary(e *ir.TernaryExpr) bool {
 
 	b.withSpecificContext(trueContext, func() {
 		a := &andWalker{
-			b:            b,
-			trueContext:  trueContext,
-			falseContext: falseContext,
+			b:              b,
+			initialContext: initialContext,
+			trueContext:    trueContext,
+			falseContext:   falseContext,
 		}
 		e.Condition.Walk(a)
 	})
@@ -1515,29 +1516,40 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 	var linksCount int
 	var contexts []*blockContext
 
+	onlyInstanceof := true
 	// Add all new variables from the condition to the current scope.
 	irutil.Inspect(s.Cond, func(n ir.Node) bool {
-		assign, ok := n.(*ir.Assign)
-		if !ok {
+		switch n := n.(type) {
+		case *ir.BooleanAndExpr:
+		case *ir.BooleanOrExpr:
+		case *ir.BooleanNotExpr:
 			return true
+		case *ir.InstanceOfExpr:
+			return false
+
+		case *ir.Assign:
+			b.handleAssign(n)
+			return false
+		default:
+			onlyInstanceof = false
 		}
 
-		b.handleAssign(assign)
-		return false
+		return true
 	})
 
 	// initialContext is the context of the block in which the if-else is located.
 	initialContext := b.ctx
-	// First of all, we need to traverse the main condition.
+	// First, we need to traverse the main condition.
 	//   trueContext  will store the state of the variables in the **if** block.
 	//   falseContext will store the state of the variables in the **else** block.
 	falseContext := copyBlockContext(initialContext)
 	trueContext := copyBlockContext(initialContext)
 	b.withSpecificContext(trueContext, func() {
 		a := &andWalker{
-			b:            b,
-			trueContext:  trueContext,
-			falseContext: falseContext,
+			b:              b,
+			initialContext: initialContext,
+			trueContext:    trueContext,
+			falseContext:   falseContext,
 		}
 
 		s.Cond.Walk(a)
@@ -1559,6 +1571,16 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 			linksCount++
 		}
 
+		// Case:
+		// if (!$a instanceof Boo) {
+		//   return
+		// }
+		//
+		// $a has Boo type
+		if trueContext.exitFlags != 0 && onlyInstanceof && len(s.ElseIf) == 0 && s.Else == nil {
+			b.ctx = falseContext
+		}
+
 		b.replaceAllImplicitVars(trueContext, initialContext)
 	} else {
 		linksCount++
@@ -1571,9 +1593,10 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 
 			b.withSpecificContext(elseifTrueContext, func() {
 				a := &andWalker{
-					b:            b,
-					trueContext:  elseifTrueContext,
-					falseContext: elseifFalseContext,
+					b:              b,
+					initialContext: initialContext,
+					trueContext:    elseifTrueContext,
+					falseContext:   elseifFalseContext,
 				}
 				elseif.Cond.Walk(a)
 				varsToDelete = append(varsToDelete, a.varsToDelete...)
@@ -1643,7 +1666,7 @@ func (b *blockWalker) replaceAllImplicitVars(targetContext *blockContext, initia
 			return
 		}
 
-		oldVar, ok := initialContext.sc.GetVar(name)
+		oldVar, ok := initialContext.sc.GetVarName(name)
 		if !ok {
 			return
 		}

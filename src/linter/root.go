@@ -227,6 +227,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			p.Pos = cl.Pos
 			cl.Properties[name] = p
 		}
+
 		for name, m := range doc.methods.H {
 			m.Pos = cl.Pos
 			cl.Methods.H[name] = m

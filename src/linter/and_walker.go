@@ -16,6 +16,7 @@ import (
 type andWalker struct {
 	b *blockWalker
 
+	initialContext *blockContext
 	// The context inside the if body if the condition is true.
 	trueContext *blockContext
 	// The context inside the else body if the condition is false.
@@ -23,21 +24,30 @@ type andWalker struct {
 
 	varsToDelete []ir.Node
 
-	negation bool
+	path irutil.NodePath
+
+	inNot bool
 }
 
 func (a *andWalker) exprType(n ir.Node) types.Map {
 	return solver.ExprTypeCustom(a.b.ctx.sc, a.b.r.ctx.st, n, a.b.ctx.customTypes)
 }
 
+func (a *andWalker) exprTypeInContext(context *blockContext, n ir.Node) types.Map {
+	return solver.ExprTypeCustom(context.sc, a.b.r.ctx.st, n, a.b.ctx.customTypes)
+}
+
 func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 	res = false
 
 	switch n := w.(type) {
+	case *ir.ParenExpr:
+		return true
+
 	case *ir.FunctionCallExpr:
 		// If the absence of a function or method is being
 		// checked, then nothing needs to be done.
-		if a.negation {
+		if a.inNot {
 			return res
 		}
 
@@ -62,7 +72,21 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 		}
 
 	case *ir.BooleanAndExpr:
-		return true
+		a.path.Push(n)
+		n.Left.Walk(a)
+		n.Right.Walk(a)
+		a.path.Pop()
+
+		a.runRules(w)
+		return false
+	case *ir.BooleanOrExpr:
+		a.path.Push(n)
+		n.Left.Walk(a)
+		n.Right.Walk(a)
+		a.path.Pop()
+
+		a.runRules(w)
+		return false
 
 	case *ir.IssetExpr:
 		for _, v := range n.Variables {
@@ -100,18 +124,46 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 				// context later.
 				a.b.handleVariable(varNode)
 
-				currentType := a.exprType(varNode)
+				var currentType types.Map
+				if a.inNot {
+					currentType = a.exprTypeInContext(a.trueContext, varNode)
+				} else {
+					currentType = a.exprTypeInContext(a.falseContext, varNode)
+				}
 
 				trueType := types.NewMap(className)
 				falseType := currentType.Clone().Erase(className)
 
-				if a.negation {
+				if a.inNot {
 					trueType, falseType = falseType, trueType
 				}
 
-				flags := meta.VarAlwaysDefined | meta.VarImplicit
-				a.trueContext.sc.ReplaceVar(varNode, trueType, "instanceof true", flags)
-				a.falseContext.sc.ReplaceVar(varNode, falseType, "instanceof false", flags)
+				// If the variable has already been created, then we analyze the next instanceof.
+				if (irutil.IsBoolAnd(a.path.Current()) || irutil.IsBoolOr(a.path.Current())) &&
+					a.trueContext.sc.HaveImplicitVar(varNode) {
+
+					if a.inNot {
+						flags := meta.VarAlwaysDefined | meta.VarImplicit
+						a.trueContext.sc.ReplaceVar(varNode, trueType, "instanceof true", flags)
+
+						varInFalse, _ := a.falseContext.sc.GetVar(varNode)
+						varInFalse.Type = varInFalse.Type.Append(falseType)
+					} else {
+						// The types in trueContext must be concatenated.
+						varInTrue, _ := a.trueContext.sc.GetVar(varNode)
+						varInTrue.Type = varInTrue.Type.Append(trueType)
+
+						// And in falseContext, on the contrary, they are replaced,
+						// since there are only types that are not in trueContext.
+						flags := meta.VarAlwaysDefined | meta.VarImplicit
+						a.falseContext.sc.ReplaceVar(varNode, falseType, "instanceof false", flags)
+					}
+
+				} else {
+					flags := meta.VarAlwaysDefined | meta.VarImplicit
+					a.trueContext.sc.ReplaceVar(varNode, trueType, "instanceof true", flags)
+					a.falseContext.sc.ReplaceVar(varNode, falseType, "instanceof false", flags)
+				}
 
 			default:
 				currentType := a.exprType(v)
@@ -119,7 +171,7 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 				trueType := types.NewMap(className)
 				falseType := currentType.Clone().Erase(className)
 
-				if a.negation {
+				if a.inNot {
 					trueType, falseType = falseType, trueType
 				}
 
@@ -139,7 +191,7 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 		}
 
 	case *ir.BooleanNotExpr:
-		a.negation = true
+		a.inNot = true
 
 		res = true
 		// TODO: consolidate with issets handling?
@@ -166,6 +218,15 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 	return res
 }
 
+func (a *andWalker) runRules(w ir.Node) {
+	kind := ir.GetNodeKind(w)
+	if a.b.r.anyRset != nil {
+		a.b.r.runRules(w, a.b.ctx.sc, a.b.r.anyRset.RulesByKind[kind])
+	} else if !a.b.rootLevel && a.b.r.localRset != nil {
+		a.b.r.runRules(w, a.b.ctx.sc, a.b.r.localRset.RulesByKind[kind])
+	}
+}
+
 func addCustomType(customTypes []solver.CustomType, typ solver.CustomType) []solver.CustomType {
 	if len(customTypes) == 0 {
 		return append(customTypes, typ)
@@ -184,7 +245,7 @@ func addCustomType(customTypes []solver.CustomType, typ solver.CustomType) []sol
 func (a *andWalker) LeaveNode(w ir.Node) {
 	switch w.(type) {
 	case *ir.BooleanNotExpr:
-		a.negation = false
+		a.inNot = false
 	default:
 	}
 }
