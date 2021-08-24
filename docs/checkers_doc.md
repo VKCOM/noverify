@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 95           | 85                        | 10                         | 12                 |
+| 95           | 86                        | 9                         | 12                 |
 ## Table of contents
  - Enabled by default
    - [`accessLevel` checker](#accesslevel-checker)
@@ -54,6 +54,7 @@
    - [`misspellName` checker](#misspellname-checker)
    - [`mixedArrayKeys` checker](#mixedarraykeys-checker)
    - [`nameMismatch` checker](#namemismatch-checker)
+   - [`nestedTernary` checker](#nestedternary-checker)
    - [`newAbstract` checker](#newabstract-checker)
    - [`nonPublicInterfaceMember` checker](#nonpublicinterfacemember-checker)
    - [`offBy1` checker (autofixable)](#offby1-checker)
@@ -98,7 +99,6 @@
    - [`deprecated` checker](#deprecated-checker)
    - [`langDeprecated` checker](#langdeprecated-checker)
    - [`missingPhpdoc` checker](#missingphpdoc-checker)
-   - [`nestedTernary` checker](#nestedternary-checker)
    - [`propNullDefault` checker (autofixable)](#propnulldefault-checker)
    - [`redundantCast` checker](#redundantcast-checker)
    - [`trailingComma` checker (autofixable)](#trailingcomma-checker)
@@ -411,7 +411,7 @@ case INC:
 
 #### Description
 
-Report erroneous catch order in try statements.
+Report erroneous `catch` order in `try` statements.
 
 #### Non-compliant code:
 ```php
@@ -463,7 +463,7 @@ function checkRights() {
 
 #### Description
 
-Report when use unparenthesized expression containing both '.' and binary operator.
+Report when use unparenthesized expression containing both `.` and binary operator.
 
 #### Non-compliant code:
 ```php
@@ -503,7 +503,7 @@ return true;
 
 #### Description
 
-Report comparisons count(...) which are always false or true.
+Report comparisons `count(...)` which are always `false` or `true`.
 
 #### Non-compliant code:
 ```php
@@ -620,7 +620,7 @@ $pickLeft ? foo($left) : foo($right)
 
 #### Description
 
-Report duplicated catch clauses.
+Report duplicated `catch` clauses.
 
 #### Non-compliant code:
 ```php
@@ -728,7 +728,7 @@ echo $foo;
 
 #### Description
 
-Report string emptyness checking using strlen.
+Report string emptyness checking using `strlen(...)`.
 
 #### Non-compliant code:
 ```php
@@ -746,7 +746,7 @@ if ($string !== "") { ... }
 
 #### Description
 
-Report using @.
+Report using `@`.
 
 #### Non-compliant code:
 ```php
@@ -764,7 +764,7 @@ f();
 
 #### Description
 
-Report potentially erroneous 'for' loops.
+Report potentially erroneous `for` loops.
 
 #### Non-compliant code:
 ```php
@@ -824,7 +824,7 @@ $x[0]
 
 #### Description
 
-Report using an integer for $needle argument of str* functions.
+Report using an integer for `$needle` argument of `str*` functions.
 
 #### Non-compliant code:
 ```php
@@ -918,7 +918,7 @@ return $x;
 
 #### Description
 
-Report linter error.
+Report internal linter error.
 
 <p><br></p>
 
@@ -1074,6 +1074,26 @@ $foo = new foo();
 ```php
 class Foo {}
 $foo = new Foo();
+```
+<p><br></p>
+
+
+### `nestedTernary` checker
+
+#### Description
+
+Report an unspecified order in a nested ternary operator.
+
+#### Non-compliant code:
+```php
+$_ = 1 ? 2 : 3 ? 4 : 5; // There is no clear order of execution.
+```
+
+#### Compliant code:
+```php
+$_ = (1 ? 2 : 3) ? 4 : 5;
+// or
+$_ = 1 ? 2 : (3 ? 4 : 5);
 ```
 <p><br></p>
 
@@ -1377,7 +1397,7 @@ preg_match('/\d+/', $s);
 
 #### Description
 
-Report the use of assignment in the return statement.
+Report the use of assignment in the `return` statement.
 
 #### Non-compliant code:
 ```php
@@ -1493,7 +1513,7 @@ $s = strip_tags($s, '<br>')
 
 #### Description
 
-Report the lack or wrong position of default.
+Report the lack or wrong position of `default`.
 
 #### Non-compliant code:
 ```php
@@ -1522,7 +1542,7 @@ switch ($a) {
 
 #### Description
 
-Report switch with empty body.
+Report `switch` with empty body.
 
 #### Non-compliant code:
 ```php
@@ -1544,7 +1564,7 @@ switch ($a) {
 
 #### Description
 
-Report possibility to rewrite 'switch' with the 'if'.
+Report possibility to rewrite `switch` with the `if`.
 
 #### Non-compliant code:
 ```php
@@ -1608,7 +1628,7 @@ $x ?: $y
 
 #### Description
 
-Report the repetition of unary (! and ~) operators in a row.
+Report the repetition of unary (`!` or `~`) operators in a row.
 
 #### Non-compliant code:
 ```php
@@ -1924,7 +1944,7 @@ Report the use of deprecated (per language spec) features.
 
 #### Non-compliant code:
 ```php
-$a = (real)100 // 'real' has been deprecated.;
+$a = (real)100; // 'real' has been deprecated.
 $_ = is_real($a);
 ```
 
@@ -1962,26 +1982,6 @@ public function process($acts, $config) {
 public function process($acts, $config) {
   // Does something very complicated.
 }
-```
-<p><br></p>
-
-
-### `nestedTernary` checker
-
-#### Description
-
-Report an unspecified order in a nested ternary operator.
-
-#### Non-compliant code:
-```php
-$_ = 1 ? 2 : 3 ? 4 : 5; // There is no clear order of execution.
-```
-
-#### Compliant code:
-```php
-$_ = (1 ? 2 : 3) ? 4 : 5;
-// or
-$_ = 1 ? 2 : (3 ? 4 : 5);
 ```
 <p><br></p>
 
@@ -2045,16 +2045,16 @@ Report the absence of a comma for the last element in a multi-line array.
 #### Non-compliant code:
 ```php
 $_ = [
-	10,
-	20 // Lost comma at the end for a multi-line array.
+  10,
+  20 // Lost comma at the end for a multi-line array.
 ]
 ```
 
 #### Compliant code:
 ```php
 $_ = [
-	10,
-	20,
+  10,
+  20,
 ]
 ```
 <p><br></p>
