@@ -611,7 +611,7 @@ function performance_test() {}`,
 			Name:     "linterError",
 			Default:  true,
 			Quickfix: false,
-			Comment:  `Report linter error.`,
+			Comment:  `Report internal linter error.`,
 		},
 
 		{
@@ -681,7 +681,7 @@ echo $someVal;`,
 			Name:     "dupCatch",
 			Default:  true,
 			Quickfix: false,
-			Comment:  `Report duplicated catch clauses.`,
+			Comment:  "Report duplicated `catch` clauses.",
 			Before: `try {
   // some code
 } catch (Exception1 $e) {
@@ -696,7 +696,7 @@ echo $someVal;`,
 			Name:     "catchOrder",
 			Default:  true,
 			Quickfix: false,
-			Comment:  `Report erroneous catch order in try statements.`,
+			Comment:  "Report erroneous `catch` order in `try` statements.",
 			Before: `try {
   // Some code.
 } catch (Exception $e) {
@@ -719,18 +719,18 @@ echo $someVal;`,
 			Quickfix: true,
 			Comment:  `Report the absence of a comma for the last element in a multi-line array.`,
 			Before: `$_ = [
-	10,
-	20 // Lost comma at the end for a multi-line array.
+  10,
+  20 // Lost comma at the end for a multi-line array.
 ]`,
 			After: `$_ = [
-	10,
-	20,
+  10,
+  20,
 ]`,
 		},
 
 		{
 			Name:     "nestedTernary",
-			Default:  false,
+			Default:  true,
 			Quickfix: false,
 			Comment:  `Report an unspecified order in a nested ternary operator.`,
 			Before:   `$_ = 1 ? 2 : 3 ? 4 : 5; // There is no clear order of execution.`,
@@ -744,7 +744,7 @@ $_ = 1 ? 2 : (3 ? 4 : 5);`,
 			Default:  false,
 			Quickfix: false,
 			Comment:  `Report the use of deprecated (per language spec) features.`,
-			Before: `$a = (real)100 // 'real' has been deprecated.;
+			Before: `$a = (real)100; // 'real' has been deprecated.
 $_ = is_real($a);`,
 			After: `$a = (float)100;
 $_ = is_float($a);`,
@@ -844,7 +844,7 @@ strpos('/', $s);`,
 			Name:     "switchDefault",
 			Default:  true,
 			Quickfix: false,
-			Comment:  `Report the lack or wrong position of default.`,
+			Comment:  "Report the lack or wrong position of `default`.",
 			Before: `switch ($a) {
   case 1:
     echo 1;
@@ -864,7 +864,7 @@ strpos('/', $s);`,
 			Name:     "switchSimplify",
 			Default:  true,
 			Quickfix: false,
-			Comment:  `Report possibility to rewrite 'switch' with the 'if'.`,
+			Comment:  "Report possibility to rewrite `switch` with the `if`.",
 			Before: `switch ($a) {
   case 1:
     echo 1;
@@ -879,7 +879,7 @@ strpos('/', $s);`,
 			Name:     "switchEmpty",
 			Default:  true,
 			Quickfix: false,
-			Comment:  `Report switch with empty body.`,
+			Comment:  "Report `switch` with empty body.",
 			Before:   `switch ($a) {}`,
 			After: `switch ($a) {
   case 1:

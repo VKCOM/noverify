@@ -5,7 +5,7 @@ The Playground is a web page where you can look at the warnings that NoVerify fi
 To run it locally run the following commands from the root of the project.
 
 ```shell
-make playground
+make playground -B
 ```
 
 Then open http://localhost:8080/ in your browser and enjoy!
