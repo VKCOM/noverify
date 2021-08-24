@@ -36,7 +36,7 @@ func EnterNode(st *meta.ClassParseState, n ir.Node) {
 		st.IsTrait = false
 		st.IsInterface = false
 
-		name := autogen.GenerateAnonClassName(n, st.CurrentFunction, st.CurrentFile)
+		name := autogen.GenerateAnonClassName(n, st.CurrentFile)
 
 		st.CurrentClass = st.Namespace + name
 		st.CurrentParentClass = ""
