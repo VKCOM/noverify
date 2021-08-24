@@ -1539,7 +1539,7 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 
 	// initialContext is the context of the block in which the if-else is located.
 	initialContext := b.ctx
-	// First of all, we need to traverse the main condition.
+	// First, we need to traverse the main condition.
 	//   trueContext  will store the state of the variables in the **if** block.
 	//   falseContext will store the state of the variables in the **else** block.
 	falseContext := copyBlockContext(initialContext)

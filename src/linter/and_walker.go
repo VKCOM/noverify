@@ -72,9 +72,21 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 		}
 
 	case *ir.BooleanAndExpr:
-		return true
+		a.path.Push(n)
+		n.Left.Walk(a)
+		n.Right.Walk(a)
+		a.path.Pop()
+
+		a.runRules(w)
+		return false
 	case *ir.BooleanOrExpr:
-		return true
+		a.path.Push(n)
+		n.Left.Walk(a)
+		n.Right.Walk(a)
+		a.path.Pop()
+
+		a.runRules(w)
+		return false
 
 	case *ir.IssetExpr:
 		for _, v := range n.Variables {
@@ -204,6 +216,15 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 
 	w.Walk(a.b)
 	return res
+}
+
+func (a *andWalker) runRules(w ir.Node) {
+	kind := ir.GetNodeKind(w)
+	if a.b.r.anyRset != nil {
+		a.b.r.runRules(w, a.b.ctx.sc, a.b.r.anyRset.RulesByKind[kind])
+	} else if !a.b.rootLevel && a.b.r.localRset != nil {
+		a.b.r.runRules(w, a.b.ctx.sc, a.b.r.localRset.RulesByKind[kind])
+	}
 }
 
 func addCustomType(customTypes []solver.CustomType, typ solver.CustomType) []solver.CustomType {
