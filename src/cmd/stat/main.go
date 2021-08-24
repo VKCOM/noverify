@@ -9,8 +9,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gosuri/uitable"
-
 	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/linter"
 )
@@ -46,10 +44,8 @@ func loadReportsFile(filename string) *linterOutput {
 }
 
 func main() {
-	var markdown bool
 	var newReportsPath string
 	var oldReportsPath string
-	flag.BoolVar(&markdown, "m", false, "print with markdown table")
 	flag.StringVar(&newReportsPath, "new", "reports.json", "reports from current branch")
 	flag.StringVar(&oldReportsPath, "old", "reports-master.json", "reports from master branch")
 	flag.Parse()
@@ -63,41 +59,21 @@ func main() {
 	masterCountByType := getReportsByType(reportsMaster)
 	diffSorted := getSortedDiffSlice(diffByType)
 
-	if markdown {
-		markdownDiff := getMarkdownReportDiff(diff)
+	markdownDiff := getMarkdownReportDiff(diff)
 
-		fmt.Println("## Changes in reports")
+	fmt.Println("## Changes in reports")
 
-		if len(diffSorted) == 0 {
-			fmt.Println("No changes.")
-		} else {
-			fmt.Println("Name | Count | New | Deleted")
-			fmt.Println("---- | :---: | :-: | :-----:")
-
-			for _, info := range diffSorted {
-				fmt.Printf("[`%s`](#%[1]s) | %d | %d | %d\n", info.CheckName, masterCountByType[info.CheckName], info.Added, info.Deleted)
-			}
-
-			fmt.Println(markdownDiff)
-		}
+	if len(diffSorted) == 0 {
+		fmt.Println("No changes.")
 	} else {
-		strDiff := getReportDiff(diff)
-
-		table := uitable.New()
-
-		table.AddRow("Name", "Count", "Added", "Deleted")
+		fmt.Println("Name | Count | New | Deleted")
+		fmt.Println("---- | :---: | :-: | :-----:")
 
 		for _, info := range diffSorted {
-			table.AddRow(info.CheckName, masterCountByType[info.CheckName], info.Added, info.Deleted)
+			fmt.Printf("[`%s`](#%[1]s) | %d | %d | %d\n", info.CheckName, masterCountByType[info.CheckName], info.Added, info.Deleted)
 		}
 
-		fmt.Println("Changes in reports with the current master.")
-		fmt.Println()
-
-		fmt.Println(table)
-
-		fmt.Println()
-		fmt.Println(strDiff)
+		fmt.Println(markdownDiff)
 	}
 }
 

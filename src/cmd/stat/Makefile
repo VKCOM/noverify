@@ -14,4 +14,4 @@ compare: build_master
 	cd ../../../ && make build
 	cd $(WORKING_DIR) && $(NOVERIFY_CURRENT_EXE) check --output-json --output='$(PWD)/new.json' $(COMMAND)
 	cd $(WORKING_DIR) && $(NOVERIFY_MASTER_EXE) check --output-json --output='$(PWD)/old.json' $(COMMAND)
-	./stat -m --new new.json --old old.json > reports.md
+	./stat -new new.json --old old.json > reports.md
