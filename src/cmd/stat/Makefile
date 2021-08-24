@@ -1,10 +1,10 @@
-WORKING_DIR=/Users/petrmakhnev/psalm/
-COMMAND=--index-only-files="./stubs" ./src
+PROJECT_DIR=./
+NOVERIFY_ARGS=./src
 NOVERIFY_MASTER_EXE=$(PWD)/noverify_master/build/noverify
 NOVERIFY_CURRENT_EXE=$(PWD)/../../../build/noverify
 
 clone_master:
-	if [ ! -d noverify_master ]; then mkdir noverify_master && git clone https://github.com/VKCOM/noverify ./noverify_master; fi
+	if [ ! -d noverify_master ]; then mkdir noverify_master && git clone https://github.com/VKCOM/noverify ./noverify_master; else git pull; fi
 
 build_master: clone_master
 	cd ./noverify_master && make build
@@ -12,6 +12,6 @@ build_master: clone_master
 compare: build_master
 	go build
 	cd ../../../ && make build
-	cd $(WORKING_DIR) && $(NOVERIFY_CURRENT_EXE) check --output-json --output='$(PWD)/new.json' $(COMMAND)
-	cd $(WORKING_DIR) && $(NOVERIFY_MASTER_EXE) check --output-json --output='$(PWD)/old.json' $(COMMAND)
+	cd $(PROJECT_DIR) && $(NOVERIFY_CURRENT_EXE) check --output-json --output='$(PWD)/new.json' $(NOVERIFY_ARGS)
+	cd $(PROJECT_DIR) && $(NOVERIFY_MASTER_EXE) check --output-json --output='$(PWD)/old.json' $(NOVERIFY_ARGS)
 	./stat -new new.json --old old.json > reports.md
