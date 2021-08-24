@@ -26,9 +26,6 @@ type andWalker struct {
 
 	path irutil.NodePath
 
-	inLeft  bool
-	inRight bool
-
 	inNot bool
 }
 
@@ -75,29 +72,9 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 		}
 
 	case *ir.BooleanAndExpr:
-		a.path.Push(n)
-		a.inLeft = true
-		a.inRight = false
-		n.Left.Walk(a)
-		a.inLeft = false
-		a.inRight = true
-		n.Right.Walk(a)
-		a.inLeft = false
-		a.inRight = false
-		a.path.Pop()
-		return false
+		return true
 	case *ir.BooleanOrExpr:
-		a.path.Push(n)
-		a.inLeft = true
-		a.inRight = false
-		n.Left.Walk(a)
-		a.inLeft = false
-		a.inRight = true
-		n.Right.Walk(a)
-		a.inLeft = false
-		a.inRight = false
-		a.path.Pop()
-		return false
+		return true
 
 	case *ir.IssetExpr:
 		for _, v := range n.Variables {
