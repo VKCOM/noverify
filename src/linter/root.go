@@ -58,7 +58,9 @@ type rootWalker struct {
 	// internal state
 	meta fileMeta
 
-	currentClassNode ir.Node
+	// We need a stack here, since anonymous classes can be
+	// inside common classes and anonymous.
+	currentClassNodeStack irutil.NodePath
 
 	allowDisabledRegexp *regexp.Regexp // user-defined flag that files suitable for this regular expression should not be linted
 	linterDisabled      bool           // flag indicating whether linter is disabled. Flag is set to true only if the file
@@ -159,11 +161,6 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 
 	d.handleComments(n)
 
-	if _, ok := n.(*ir.AnonClassExpr); ok {
-		// TODO: remove when #62 and anon class support in general is ready.
-		return false // Don't walk nor enter anon classes
-	}
-
 	state.EnterNode(d.ctx.st, n)
 
 	switch n := n.(type) {
@@ -181,73 +178,63 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			}
 		}
 
+	case *ir.AnonClassExpr:
+		d.currentClassNodeStack.Push(n)
+
+		cl := d.getClass()
+		className := &ir.Identifier{Value: cl.Name}
+
+		d.checkImplements(n, n.Implements, cl)
+		d.checkExtends(n, n.Extends)
+
+		d.checkCommentMisspellings(className, n.Doc.Raw)
+		d.checkIdentMisspellings(className)
+
+		doc := d.parseClassPHPDoc(className, n.Doc)
+		d.reportPHPDocErrors(doc.errs)
+		d.handleClassDoc(doc, &cl)
+
+		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
+
 	case *ir.InterfaceStmt:
-		d.currentClassNode = n
+		d.currentClassNodeStack.Push(n)
 		d.checkKeywordCase(n, "interface")
 		d.checkCommentMisspellings(n.InterfaceName, n.Doc.Raw)
 		if !strings.HasSuffix(n.InterfaceName.Value, "able") {
 			d.checkIdentMisspellings(n.InterfaceName)
 		}
 	case *ir.ClassStmt:
-		d.currentClassNode = n
+		d.currentClassNodeStack.Push(n)
+
 		cl := d.getClass()
-		var classFlags meta.ClassFlags
-		for _, m := range n.Modifiers {
-			switch {
-			case strings.EqualFold("abstract", m.Value):
-				classFlags |= meta.ClassAbstract
-			case strings.EqualFold("final", m.Value):
-				classFlags |= meta.ClassFinal
-			}
-		}
+		classFlags := d.getClassModifiers(n)
+
 		if classFlags != 0 {
-			// Since cl is not a pointer and it's illegal to update
+			// Since cl is not a pointer, and it's illegal to update
 			// individual fields through map, we update cl and
 			// then assign it back to the map.
 			cl.Flags = classFlags
 			d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
 		}
-		if n.Implements != nil {
-			d.checkKeywordCase(n.Implements, "implements")
-			for _, tr := range n.Implements.InterfaceNames {
-				interfaceName, ok := solver.GetClassName(d.ctx.st, tr)
-				if ok {
-					cl.Interfaces[interfaceName] = struct{}{}
-					d.checkIfaceImplemented(n, tr, interfaceName)
-				}
-			}
-		}
-		d.checkCommentMisspellings(n.ClassName, n.Doc.Raw)
-		d.checkIdentMisspellings(n.ClassName)
-		doc := d.parseClassPHPDoc(n, n.Doc)
-		d.reportPHPDocErrors(doc.errs)
-		// If we ever need to distinguish @property-annotated and real properties,
-		// more work will be required here.
-		for name, p := range doc.properties {
-			p.Pos = cl.Pos
-			cl.Properties[name] = p
-		}
 
-		for name, m := range doc.methods.H {
-			m.Pos = cl.Pos
-			cl.Methods.H[name] = m
-		}
 		for _, m := range n.Modifiers {
 			d.lowerCaseModifier(m)
 		}
-		if n.Extends != nil {
-			d.checkKeywordCase(n.Extends, "extends")
-			className, ok := solver.GetClassName(d.ctx.st, n.Extends.ClassName)
-			if ok {
-				d.checkClassInherit(n, n.Extends.ClassName, className)
-			}
-		}
 
-		cl.Mixins = doc.mixins
+		d.checkImplements(n, n.Implements, cl)
+		d.checkExtends(n, n.Extends)
+
+		d.checkCommentMisspellings(n.ClassName, n.Doc.Raw)
+		d.checkIdentMisspellings(n.ClassName)
+
+		doc := d.parseClassPHPDoc(n, n.Doc)
+		d.reportPHPDocErrors(doc.errs)
+		d.handleClassDoc(doc, &cl)
+
 		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
 
 	case *ir.TraitStmt:
-		d.currentClassNode = n
+		d.currentClassNodeStack.Push(n)
 		d.checkKeywordCase(n, "trait")
 		d.checkCommentMisspellings(n.TraitName, n.Doc.Raw)
 		d.checkIdentMisspellings(n.TraitName)
@@ -258,7 +245,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			traitName, ok := solver.GetClassName(d.ctx.st, tr)
 			if ok {
 				cl.Traits[traitName] = struct{}{}
-				d.checkTraitImplemented(d.currentClassNode, tr, traitName)
+				d.checkTraitImplemented(d.currentClassNodeStack.Current(), tr, traitName)
 			}
 		}
 	case *ir.Assign:
@@ -303,6 +290,64 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		state.LeaveNode(d.ctx.st, n)
 	}
 	return res
+}
+
+func (d *rootWalker) handleClassDoc(doc classPhpDocParseResult, cl *meta.ClassInfo) {
+	// If we ever need to distinguish @property-annotated and real properties,
+	// more work will be required here.
+	for name, p := range doc.properties {
+		p.Pos = cl.Pos
+		cl.Properties[name] = p
+	}
+
+	for name, m := range doc.methods.H {
+		m.Pos = cl.Pos
+		cl.Methods.H[name] = m
+	}
+
+	cl.Mixins = doc.mixins
+}
+
+func (d *rootWalker) checkExtends(class ir.Node, extends *ir.ClassExtendsStmt) {
+	if extends == nil {
+		return
+	}
+
+	d.checkKeywordCase(extends, "extends")
+
+	className, ok := solver.GetClassName(d.ctx.st, extends.ClassName)
+	if ok {
+		d.checkClassInherit(class, extends.ClassName, className)
+	}
+}
+
+func (d *rootWalker) checkImplements(class ir.Node, implements *ir.ClassImplementsStmt, cl meta.ClassInfo) {
+	if implements == nil {
+		return
+	}
+
+	d.checkKeywordCase(implements, "implements")
+
+	for _, tr := range implements.InterfaceNames {
+		interfaceName, ok := solver.GetClassName(d.ctx.st, tr)
+		if ok {
+			cl.Interfaces[interfaceName] = struct{}{}
+			d.checkIfaceImplemented(class, tr, interfaceName)
+		}
+	}
+}
+
+func (d *rootWalker) getClassModifiers(n *ir.ClassStmt) meta.ClassFlags {
+	var classFlags meta.ClassFlags
+	for _, m := range n.Modifiers {
+		switch {
+		case strings.EqualFold("abstract", m.Value):
+			classFlags |= meta.ClassAbstract
+		case strings.EqualFold("final", m.Value):
+			classFlags |= meta.ClassFinal
+		}
+	}
+	return classFlags
 }
 
 func (d *rootWalker) parseStartPos(pos *position.Position) (startLn []byte, startChar int) {
@@ -699,7 +744,7 @@ func (d *rootWalker) checkParentConstructorCall(n ir.Node, parentConstructorCall
 		return
 	}
 
-	class, ok := d.currentClassNode.(*ir.ClassStmt)
+	class, ok := d.currentClassNodeStack.Current().(*ir.ClassStmt)
 	if !ok || class.Extends == nil {
 		return
 	}
@@ -865,7 +910,7 @@ func (d *rootWalker) getClass() meta.ClassInfo {
 		}
 
 		cl = meta.ClassInfo{
-			Pos:              d.getElementPos(d.currentClassNode),
+			Pos:              d.getElementPos(d.currentClassNodeStack.Current()),
 			Name:             d.ctx.st.CurrentClass,
 			Flags:            flags,
 			Parent:           d.ctx.st.CurrentParentClass,
@@ -1048,7 +1093,7 @@ func (d *rootWalker) checkOldStyleConstructor(meth *ir.ClassMethodStmt) {
 		return
 	}
 
-	_, inClass := d.currentClassNode.(*ir.ClassStmt)
+	_, inClass := d.currentClassNodeStack.Current().(*ir.ClassStmt)
 	if !inClass {
 		return
 	}
@@ -1058,7 +1103,7 @@ func (d *rootWalker) checkOldStyleConstructor(meth *ir.ClassMethodStmt) {
 
 func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	nm := meth.MethodName.Value
-	_, insideInterface := d.currentClassNode.(*ir.InterfaceStmt)
+	_, insideInterface := d.currentClassNodeStack.Current().(*ir.InterfaceStmt)
 
 	d.checkOldStyleConstructor(meth)
 
@@ -1303,7 +1348,7 @@ func (d *rootWalker) isValidPHPDocRef(n ir.Node, ref string) bool {
 
 	isValidSymbol := func(ref string) bool {
 		if !strings.HasPrefix(ref, `\`) {
-			if d.currentClassNode != nil {
+			if d.currentClassNodeStack.Current() != nil {
 				className := d.ctx.st.CurrentClass
 				if _, ok := solver.FindMethod(d.metaInfo(), className, ref); ok {
 					return true // OK: class method reference
@@ -2047,10 +2092,10 @@ func (d *rootWalker) LeaveNode(n ir.Node) {
 	}
 
 	switch n.(type) {
-	case *ir.ClassStmt, *ir.InterfaceStmt, *ir.TraitStmt:
+	case *ir.ClassStmt, *ir.InterfaceStmt, *ir.TraitStmt, *ir.AnonClassExpr:
 		d.getClass() // populate classes map
 
-		d.currentClassNode = nil
+		d.currentClassNodeStack.Pop()
 	}
 
 	state.LeaveNode(d.ctx.st, n)

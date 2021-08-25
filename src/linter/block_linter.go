@@ -467,11 +467,6 @@ func (b *blockLinter) checkRedundantCast(e ir.Node, dstType string) {
 func (b *blockLinter) checkNew(e *ir.NewExpr) {
 	b.walker.r.checkKeywordCase(e, "new")
 
-	// Can't handle `new class() ...` yet.
-	if _, ok := e.Class.(*ir.AnonClassExpr); ok {
-		return
-	}
-
 	if b.classParseState().IsTrait {
 		switch {
 		case utils.NameNodeEquals(e.Class, "self"):
@@ -483,10 +478,20 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 		}
 	}
 
-	className, ok := solver.GetClassName(b.classParseState(), e.Class)
-	if !ok {
-		// perhaps something like 'new $class', cannot check this.
-		return
+	var className string
+	var args []ir.Node
+
+	if anon, ok := e.Class.(*ir.AnonClassExpr); ok {
+		className = autogen.GenerateAnonClassName(anon, b.walker.r.ctx.st.CurrentFile)
+		className = b.classParseState().Namespace + className
+		args = anon.Args
+	} else {
+		className, ok = solver.GetClassName(b.classParseState(), e.Class)
+		if !ok {
+			// perhaps something like 'new $class', cannot check this.
+			return
+		}
+		args = e.Args
 	}
 
 	class, ok := b.metaInfo().GetClass(className)
@@ -516,11 +521,12 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 	if !ok {
 		return
 	}
+
 	ctor := m.Info
 	// If new expression is written without (), ArgumentList will be nil.
 	// It's equivalent of 0 arguments constructor call.
-	if ok && !enoughArgs(e.Args, ctor) {
-		b.report(e, LevelError, "argCount", "Too few arguments for %s constructor, expecting %d, saw %d", className, ctor.MinParamsCnt, len(e.Args))
+	if ok && !enoughArgs(args, ctor) {
+		b.report(e, LevelError, "argCount", "Too few arguments for %s constructor, expecting %d, saw %d", className, ctor.MinParamsCnt, len(args))
 	}
 }
 

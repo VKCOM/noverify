@@ -388,7 +388,8 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 	case *ir.ArrowFunctionExpr:
 		res = b.handleArrowFunction(s)
 	case *ir.AnonClassExpr:
-		res = !b.ignoreFunctionBodies
+		s.Walk(b.r)
+		res = false
 	case *ir.ClassStmt:
 		if b.ignoreFunctionBodies {
 			res = false
