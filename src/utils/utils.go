@@ -45,3 +45,25 @@ func IsSpecialClassName(n ir.Node) bool {
 func InVendor(path string) bool {
 	return strings.Contains(filepath.ToSlash(path), "/vendor/")
 }
+
+var typeCheckFunctions = map[string]bool{
+	"is_bool":    true,
+	"is_double":  true,
+	"is_float":   true,
+	"is_real":    true,
+	"is_int":     true,
+	"is_integer": true,
+	"is_long":    true,
+	"is_object":  true,
+	"is_string":  true,
+	"is_null":    true,
+}
+
+func IsTypeCheckFunctions(n *ir.FunctionCallExpr) bool {
+	name, ok := n.Function.(*ir.Name)
+	if !ok {
+		return false
+	}
+
+	return typeCheckFunctions[name.Value]
+}

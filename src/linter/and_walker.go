@@ -45,17 +45,25 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 		return true
 
 	case *ir.FunctionCallExpr:
-		// If the absence of a function or method is being
-		// checked, then nothing needs to be done.
-		if a.inNot {
-			return res
-		}
-
 		nm, ok := n.Function.(*ir.Name)
 		if !ok {
 			break
 		}
+
 		switch {
+		case nm.Value == "is_bool" && len(n.Args) == 1:
+			a.handleIsTypeSmartcast(n.Arg(0).Expr, "bool")
+		case (nm.Value == "is_double" || nm.Value == "is_float" || nm.Value == "is_real") && len(n.Args) == 1:
+			a.handleIsTypeSmartcast(n.Arg(0).Expr, "float")
+		case (nm.Value == "is_int" || nm.Value == "is_integer" || nm.Value == "is_long") && len(n.Args) == 1:
+			a.handleIsTypeSmartcast(n.Arg(0).Expr, "int")
+		case nm.Value == "is_object" && len(n.Args) == 1:
+			a.handleIsTypeSmartcast(n.Arg(0).Expr, "object")
+		case nm.Value == "is_string" && len(n.Args) == 1:
+			a.handleIsTypeSmartcast(n.Arg(0).Expr, "string")
+		case nm.Value == "is_null" && len(n.Args) == 1:
+			a.handleIsTypeSmartcast(n.Arg(0).Expr, "null")
+
 		case len(n.Args) == 2 && nm.Value == `method_exists`:
 			obj := n.Arg(0).Expr
 			methodName := n.Arg(1).Expr
@@ -216,6 +224,48 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 
 	w.Walk(a.b)
 	return res
+}
+
+func (a *andWalker) handleIsTypeSmartcast(n ir.Node, typ string) {
+	varNode, ok := n.(*ir.SimpleVar)
+	if !ok {
+		return
+	}
+
+	currentType := a.exprType(varNode)
+
+	trueType := types.NewMap(typ)
+	falseType := currentType.Clone().Erase(typ)
+
+	if a.inNot {
+		trueType, falseType = falseType, trueType
+	}
+
+	// If the variable has already been created, then we analyze the next instanceof.
+	if (irutil.IsBoolAnd(a.path.Current()) || irutil.IsBoolOr(a.path.Current())) &&
+		a.trueContext.sc.HaveImplicitVar(varNode) {
+
+		if a.inNot {
+			flags := meta.VarAlwaysDefined | meta.VarImplicit
+			a.trueContext.sc.ReplaceVar(varNode, trueType, "smartcast true", flags)
+
+			varInFalse, _ := a.falseContext.sc.GetVar(varNode)
+			varInFalse.Type = varInFalse.Type.Append(falseType)
+		} else {
+			// The types in trueContext must be concatenated.
+			varInTrue, _ := a.trueContext.sc.GetVar(varNode)
+			varInTrue.Type = varInTrue.Type.Append(trueType)
+
+			// And in falseContext, on the contrary, they are replaced,
+			// since there are only types that are not in trueContext.
+			flags := meta.VarAlwaysDefined | meta.VarImplicit
+			a.falseContext.sc.ReplaceVar(varNode, falseType, "smartcast false", flags)
+		}
+	} else {
+		flags := meta.VarAlwaysDefined | meta.VarImplicit
+		a.trueContext.sc.ReplaceVar(varNode, trueType, "smartcast true", flags)
+		a.falseContext.sc.ReplaceVar(varNode, falseType, "smartcast false", flags)
+	}
 }
 
 func (a *andWalker) runRules(w ir.Node) {

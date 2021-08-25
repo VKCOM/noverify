@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/phpdoctypes"
+	"github.com/VKCOM/noverify/src/utils"
 	"github.com/VKCOM/php-parser/pkg/position"
 	"github.com/VKCOM/php-parser/pkg/token"
 
@@ -1517,7 +1518,8 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 	var linksCount int
 	var contexts []*blockContext
 
-	onlyInstanceof := true
+	applyReturnTypeConstriction := true
+
 	// Add all new variables from the condition to the current scope.
 	irutil.Inspect(s.Cond, func(n ir.Node) bool {
 		switch n := n.(type) {
@@ -1527,12 +1529,17 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 			return true
 		case *ir.InstanceOfExpr:
 			return false
+		case *ir.FunctionCallExpr:
+			if !utils.IsTypeCheckFunctions(n) {
+				applyReturnTypeConstriction = false
+			}
+			return false
 
 		case *ir.Assign:
 			b.handleAssign(n)
 			return false
 		default:
-			onlyInstanceof = false
+			applyReturnTypeConstriction = false
 		}
 
 		return true
@@ -1578,7 +1585,7 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 		// }
 		//
 		// $a has Boo type
-		if trueContext.exitFlags != 0 && onlyInstanceof && len(s.ElseIf) == 0 && s.Else == nil {
+		if trueContext.exitFlags != 0 && applyReturnTypeConstriction && len(s.ElseIf) == 0 && s.Else == nil {
 			b.ctx = falseContext
 		}
 
