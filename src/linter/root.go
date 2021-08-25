@@ -58,6 +58,8 @@ type rootWalker struct {
 	// internal state
 	meta fileMeta
 
+	// We need a stack here, since anonymous classes can be
+	// inside common classes and anonymous.
 	currentClassNodeStack irutil.NodePath
 
 	allowDisabledRegexp *regexp.Regexp // user-defined flag that files suitable for this regular expression should not be linted
@@ -178,41 +180,20 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 
 	case *ir.AnonClassExpr:
 		d.currentClassNodeStack.Push(n)
+
 		cl := d.getClass()
 		className := &ir.Identifier{Value: cl.Name}
-		if n.Implements != nil {
-			d.checkKeywordCase(n.Implements, "implements")
-			for _, tr := range n.Implements.InterfaceNames {
-				interfaceName, ok := solver.GetClassName(d.ctx.st, tr)
-				if ok {
-					cl.Interfaces[interfaceName] = struct{}{}
-					d.checkIfaceImplemented(n, tr, interfaceName)
-				}
-			}
-		}
+
+		d.checkImplements(n, n.Implements, cl)
+		d.checkExtends(n, n.Extends)
+
 		d.checkCommentMisspellings(className, n.Doc.Raw)
 		d.checkIdentMisspellings(className)
+
 		doc := d.parseClassPHPDoc(className, n.Doc)
 		d.reportPHPDocErrors(doc.errs)
-		// If we ever need to distinguish @property-annotated and real properties,
-		// more work will be required here.
-		for name, p := range doc.properties {
-			p.Pos = cl.Pos
-			cl.Properties[name] = p
-		}
-		for name, m := range doc.methods.H {
-			m.Pos = cl.Pos
-			cl.Methods.H[name] = m
-		}
-		if n.Extends != nil {
-			d.checkKeywordCase(n.Extends, "extends")
-			className, ok := solver.GetClassName(d.ctx.st, n.Extends.ClassName)
-			if ok {
-				d.checkClassImplemented(n, n.Extends.ClassName, className)
-			}
-		}
+		d.handleClassDoc(doc, &cl)
 
-		cl.Mixins = doc.mixins
 		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
 
 	case *ir.InterfaceStmt:
@@ -224,16 +205,10 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		}
 	case *ir.ClassStmt:
 		d.currentClassNodeStack.Push(n)
+
 		cl := d.getClass()
-		var classFlags meta.ClassFlags
-		for _, m := range n.Modifiers {
-			switch {
-			case strings.EqualFold("abstract", m.Value):
-				classFlags |= meta.ClassAbstract
-			case strings.EqualFold("final", m.Value):
-				classFlags |= meta.ClassFinal
-			}
-		}
+		classFlags := d.getClassModifiers(n)
+
 		if classFlags != 0 {
 			// Since cl is not a pointer, and it's illegal to update
 			// individual fields through map, we update cl and
@@ -241,43 +216,21 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			cl.Flags = classFlags
 			d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
 		}
-		if n.Implements != nil {
-			d.checkKeywordCase(n.Implements, "implements")
-			for _, tr := range n.Implements.InterfaceNames {
-				interfaceName, ok := solver.GetClassName(d.ctx.st, tr)
-				if ok {
-					cl.Interfaces[interfaceName] = struct{}{}
-					d.checkIfaceImplemented(n, tr, interfaceName)
-				}
-			}
-		}
-		d.checkCommentMisspellings(n.ClassName, n.Doc.Raw)
-		d.checkIdentMisspellings(n.ClassName)
-		doc := d.parseClassPHPDoc(n, n.Doc)
-		d.reportPHPDocErrors(doc.errs)
-		// If we ever need to distinguish @property-annotated and real properties,
-		// more work will be required here.
-		for name, p := range doc.properties {
-			p.Pos = cl.Pos
-			cl.Properties[name] = p
-		}
 
-		for name, m := range doc.methods.H {
-			m.Pos = cl.Pos
-			cl.Methods.H[name] = m
-		}
 		for _, m := range n.Modifiers {
 			d.lowerCaseModifier(m)
 		}
-		if n.Extends != nil {
-			d.checkKeywordCase(n.Extends, "extends")
-			className, ok := solver.GetClassName(d.ctx.st, n.Extends.ClassName)
-			if ok {
-				d.checkClassInherit(n, n.Extends.ClassName, className)
-			}
-		}
 
-		cl.Mixins = doc.mixins
+		d.checkImplements(n, n.Implements, cl)
+		d.checkExtends(n, n.Extends)
+
+		d.checkCommentMisspellings(n.ClassName, n.Doc.Raw)
+		d.checkIdentMisspellings(n.ClassName)
+
+		doc := d.parseClassPHPDoc(n, n.Doc)
+		d.reportPHPDocErrors(doc.errs)
+		d.handleClassDoc(doc, &cl)
+
 		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
 
 	case *ir.TraitStmt:
@@ -337,6 +290,64 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		state.LeaveNode(d.ctx.st, n)
 	}
 	return res
+}
+
+func (d *rootWalker) handleClassDoc(doc classPhpDocParseResult, cl *meta.ClassInfo) {
+	// If we ever need to distinguish @property-annotated and real properties,
+	// more work will be required here.
+	for name, p := range doc.properties {
+		p.Pos = cl.Pos
+		cl.Properties[name] = p
+	}
+
+	for name, m := range doc.methods.H {
+		m.Pos = cl.Pos
+		cl.Methods.H[name] = m
+	}
+
+	cl.Mixins = doc.mixins
+}
+
+func (d *rootWalker) checkExtends(class ir.Node, extends *ir.ClassExtendsStmt) {
+	if extends == nil {
+		return
+	}
+
+	d.checkKeywordCase(extends, "extends")
+
+	className, ok := solver.GetClassName(d.ctx.st, extends.ClassName)
+	if ok {
+		d.checkClassInherit(class, extends.ClassName, className)
+	}
+}
+
+func (d *rootWalker) checkImplements(class ir.Node, implements *ir.ClassImplementsStmt, cl meta.ClassInfo) {
+	if implements == nil {
+		return
+	}
+
+	d.checkKeywordCase(implements, "implements")
+
+	for _, tr := range implements.InterfaceNames {
+		interfaceName, ok := solver.GetClassName(d.ctx.st, tr)
+		if ok {
+			cl.Interfaces[interfaceName] = struct{}{}
+			d.checkIfaceImplemented(class, tr, interfaceName)
+		}
+	}
+}
+
+func (d *rootWalker) getClassModifiers(n *ir.ClassStmt) meta.ClassFlags {
+	var classFlags meta.ClassFlags
+	for _, m := range n.Modifiers {
+		switch {
+		case strings.EqualFold("abstract", m.Value):
+			classFlags |= meta.ClassAbstract
+		case strings.EqualFold("final", m.Value):
+			classFlags |= meta.ClassFinal
+		}
+	}
+	return classFlags
 }
 
 func (d *rootWalker) parseStartPos(pos *position.Position) (startLn []byte, startChar int) {

@@ -301,3 +301,28 @@ Foo::f()->f()->g1();
 	}
 	linttest.RunFilterMatch(test, "undefinedMethod")
 }
+
+func TestAnonClassWithTrait(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+trait A {
+  public function traitMethod() {}
+}
+
+function f() {
+  return new class {
+    use A;
+
+    public function f() {}
+  };
+}
+
+f()->f();
+f()->traitMethod();
+f()->f1();
+`)
+	test.Expect = []string{
+		`Call to undefined method {\anon$(_file0.php):7$}->f1()`,
+	}
+	linttest.RunFilterMatch(test, "undefinedMethod")
+}
