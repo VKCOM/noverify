@@ -96,6 +96,13 @@ function main() {
   $p3 = new Point3D();
   $_ = $p3->toArray();
   var_dump(to_array($p3));
+
+  $anon = new class(10) extends Point implements Arrayable {
+    public function __construct(int $a) {}
+    public function f() {}
+  }
+
+  $anon->f();
 }
 
 /** @param shape(a:integer,b:shape(c:real)) */

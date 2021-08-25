@@ -58,7 +58,7 @@ type rootWalker struct {
 	// internal state
 	meta fileMeta
 
-	currentClassNode ir.Node
+	currentClassNodeStack irutil.NodePath
 
 	allowDisabledRegexp *regexp.Regexp // user-defined flag that files suitable for this regular expression should not be linted
 	linterDisabled      bool           // flag indicating whether linter is disabled. Flag is set to true only if the file
@@ -177,7 +177,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		}
 
 	case *ir.AnonClassExpr:
-		d.currentClassNode = n
+		d.currentClassNodeStack.Push(n)
 		cl := d.getClass()
 		className := &ir.Identifier{Value: cl.Name}
 		if n.Implements != nil {
@@ -216,14 +216,14 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
 
 	case *ir.InterfaceStmt:
-		d.currentClassNode = n
+		d.currentClassNodeStack.Push(n)
 		d.checkKeywordCase(n, "interface")
 		d.checkCommentMisspellings(n.InterfaceName, n.Doc.Raw)
 		if !strings.HasSuffix(n.InterfaceName.Value, "able") {
 			d.checkIdentMisspellings(n.InterfaceName)
 		}
 	case *ir.ClassStmt:
-		d.currentClassNode = n
+		d.currentClassNodeStack.Push(n)
 		cl := d.getClass()
 		var classFlags meta.ClassFlags
 		for _, m := range n.Modifiers {
@@ -281,7 +281,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
 
 	case *ir.TraitStmt:
-		d.currentClassNode = n
+		d.currentClassNodeStack.Push(n)
 		d.checkKeywordCase(n, "trait")
 		d.checkCommentMisspellings(n.TraitName, n.Doc.Raw)
 		d.checkIdentMisspellings(n.TraitName)
@@ -292,7 +292,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			traitName, ok := solver.GetClassName(d.ctx.st, tr)
 			if ok {
 				cl.Traits[traitName] = struct{}{}
-				d.checkTraitImplemented(d.currentClassNode, tr, traitName)
+				d.checkTraitImplemented(d.currentClassNodeStack.Current(), tr, traitName)
 			}
 		}
 	case *ir.Assign:
@@ -733,7 +733,7 @@ func (d *rootWalker) checkParentConstructorCall(n ir.Node, parentConstructorCall
 		return
 	}
 
-	class, ok := d.currentClassNode.(*ir.ClassStmt)
+	class, ok := d.currentClassNodeStack.Current().(*ir.ClassStmt)
 	if !ok || class.Extends == nil {
 		return
 	}
@@ -899,7 +899,7 @@ func (d *rootWalker) getClass() meta.ClassInfo {
 		}
 
 		cl = meta.ClassInfo{
-			Pos:              d.getElementPos(d.currentClassNode),
+			Pos:              d.getElementPos(d.currentClassNodeStack.Current()),
 			Name:             d.ctx.st.CurrentClass,
 			Flags:            flags,
 			Parent:           d.ctx.st.CurrentParentClass,
@@ -1082,7 +1082,7 @@ func (d *rootWalker) checkOldStyleConstructor(meth *ir.ClassMethodStmt) {
 		return
 	}
 
-	_, inClass := d.currentClassNode.(*ir.ClassStmt)
+	_, inClass := d.currentClassNodeStack.Current().(*ir.ClassStmt)
 	if !inClass {
 		return
 	}
@@ -1092,7 +1092,7 @@ func (d *rootWalker) checkOldStyleConstructor(meth *ir.ClassMethodStmt) {
 
 func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	nm := meth.MethodName.Value
-	_, insideInterface := d.currentClassNode.(*ir.InterfaceStmt)
+	_, insideInterface := d.currentClassNodeStack.Current().(*ir.InterfaceStmt)
 
 	d.checkOldStyleConstructor(meth)
 
@@ -1337,7 +1337,7 @@ func (d *rootWalker) isValidPHPDocRef(n ir.Node, ref string) bool {
 
 	isValidSymbol := func(ref string) bool {
 		if !strings.HasPrefix(ref, `\`) {
-			if d.currentClassNode != nil {
+			if d.currentClassNodeStack.Current() != nil {
 				className := d.ctx.st.CurrentClass
 				if _, ok := solver.FindMethod(d.metaInfo(), className, ref); ok {
 					return true // OK: class method reference
@@ -2084,7 +2084,7 @@ func (d *rootWalker) LeaveNode(n ir.Node) {
 	case *ir.ClassStmt, *ir.InterfaceStmt, *ir.TraitStmt, *ir.AnonClassExpr:
 		d.getClass() // populate classes map
 
-		d.currentClassNode = nil
+		d.currentClassNodeStack.Pop()
 	}
 
 	state.LeaveNode(d.ctx.st, n)
