@@ -235,7 +235,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			}
 		}
 		if classFlags != 0 {
-			// Since cl is not a pointer and it's illegal to update
+			// Since cl is not a pointer, and it's illegal to update
 			// individual fields through map, we update cl and
 			// then assign it back to the map.
 			cl.Flags = classFlags

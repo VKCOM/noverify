@@ -483,6 +483,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 
 	if anon, ok := e.Class.(*ir.AnonClassExpr); ok {
 		className = autogen.GenerateAnonClassName(anon, b.walker.r.ctx.st.CurrentFile)
+		className = b.classParseState().Namespace + className
 		args = anon.Args
 	} else {
 		className, ok = solver.GetClassName(b.classParseState(), e.Class)

@@ -340,6 +340,7 @@ func newExprType(n *ir.NewExpr, cs *meta.ClassParseState) types.Map {
 	anonClass, ok := n.Class.(*ir.AnonClassExpr)
 	if ok {
 		anonName := autogen.GenerateAnonClassName(anonClass, cs.CurrentFile)
+		anonName = cs.Namespace + anonName
 		return types.NewPreciseMap(anonName)
 	}
 

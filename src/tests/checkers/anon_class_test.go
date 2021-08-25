@@ -272,6 +272,8 @@ f()->f()->g1();
 func TestAnonClassInsideOtherInsideClass(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+namespace Test;
+
 class Foo {
   public static function f() {
     return new class {
@@ -294,8 +296,8 @@ Foo::f()->f()->g();
 Foo::f()->f()->g1();
 `)
 	test.Expect = []string{
-		`Call to undefined method {\anon$(_file0.php):4$}->f1()`,
-		`Call to undefined method {\anon$(_file0.php):6$}->g1()`,
+		`Call to undefined method {\Test\anon$(_file0.php):6$}->f1()`,
+		`Call to undefined method {\Test\anon$(_file0.php):8$}->g1()`,
 	}
 	linttest.RunFilterMatch(test, "undefinedMethod")
 }
