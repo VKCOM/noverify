@@ -202,8 +202,6 @@ master
 
 This will analyze the `master` at commit 9 and the branch at commit 11.
 
-Along with flags specifically for diff mode, you can use all other flags as in normal mode.
-
 ## Diff mode flags
 
 ### `--git-include-untracked` (enabled by default)
@@ -246,3 +244,4 @@ Thus, if this list contains a specific user, then the linter will be launched on
 
 This flag turns off the standard behavior and allows you to parse changes directly between commits in `--git-commit-from` and `--git-commit-to`.
 
+> Along with flags specifically for diff mode, you can use all other flags as in normal mode.
