@@ -113,7 +113,7 @@ return -9223372036854775808;`,
 
 		{
 			Name:     "arrayAccess",
-			Default:  true,
+			Default:  false,
 			Quickfix: false,
 			Comment:  `Report array access to non-array objects.`,
 			Before:   `return $foo[0]; // $foo value may not implement ArrayAccess`,
@@ -242,7 +242,7 @@ case 3:
 
 		{
 			Name:     "complexity",
-			Default:  true,
+			Default:  false,
 			Quickfix: false,
 			Comment:  `Report funcs/methods that are too complex.`,
 			Before: `function checkRights() {
@@ -842,7 +842,7 @@ strpos('/', $s);`,
 
 		{
 			Name:     "switchDefault",
-			Default:  true,
+			Default:  false,
 			Quickfix: false,
 			Comment:  "Report the lack or wrong position of `default`.",
 			Before: `switch ($a) {
