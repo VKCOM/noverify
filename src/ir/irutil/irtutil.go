@@ -112,8 +112,8 @@ func FindWithPredicate(what ir.Node, where ir.Node, pred findPredicate) bool {
 	return w.found
 }
 
-// FindPhpDoc searches for phpdoc by traversing all subtree and all tokens.
-func FindPhpDoc(n ir.Node, withSuspicious bool) (doc string, found bool) {
+// FindPHPDoc searches for phpdoc by traversing all subtree and all tokens.
+func FindPHPDoc(n ir.Node, withSuspicious bool) (doc string, found bool) {
 	Inspect(n, func(n ir.Node) (continueTraverse bool) {
 		n.IterateTokens(func(t *token.Token) (continueTraverse bool) {
 			if t.ID == token.T_DOC_COMMENT {

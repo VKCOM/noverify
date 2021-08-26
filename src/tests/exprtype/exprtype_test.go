@@ -958,7 +958,7 @@ exprtype(localvar(), 'int');
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
-func TestExprTypeMalformedPhpdoc(t *testing.T) {
+func TestExprTypeMalformedPHPDoc(t *testing.T) {
 	code := `<?php
 /**
  * @param int &$x

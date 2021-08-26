@@ -285,7 +285,7 @@ function f() {
 	test.RunAndMatch()
 }
 
-func TestBadPhpdocTypes(t *testing.T) {
+func TestBadPHPDocTypes(t *testing.T) {
 	// If there is an incorrect phpdoc annotation,
 	// don't use it as a type info.
 	//
@@ -390,7 +390,7 @@ class Foo {
 	test.RunAndMatch()
 }
 
-func TestPHPDocProperty(t *testing.T) {
+func TestPHPDocProperty2(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 /**
@@ -523,7 +523,7 @@ function f2($a) {
 	test.RunAndMatch()
 }
 
-func TestPhpdocTwiceNullableTypes(t *testing.T) {
+func TestPHPDocTwiceNullableTypes(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 /**

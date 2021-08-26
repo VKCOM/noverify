@@ -292,7 +292,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 	return res
 }
 
-func (d *rootWalker) handleClassDoc(doc classPhpDocParseResult, cl *meta.ClassInfo) {
+func (d *rootWalker) handleClassDoc(doc classPHPDocParseResult, cl *meta.ClassInfo) {
 	// If we ever need to distinguish @property-annotated and real properties,
 	// more work will be required here.
 	for name, p := range doc.properties {
@@ -365,7 +365,7 @@ func (d *rootWalker) parseStartPos(pos *position.Position) (startLn []byte, star
 // ReportPHPDoc registers a single report message about some found problem in PHPDoc.
 func (d *rootWalker) ReportPHPDoc(phpDocLocation PHPDocLocation, level int, checkName, msg string, args ...interface{}) {
 	if phpDocLocation.RelativeLine {
-		doc, ok := irutil.FindPhpDoc(phpDocLocation.Node, true)
+		doc, ok := irutil.FindPHPDoc(phpDocLocation.Node, true)
 		if !ok {
 			// If PHPDoc for some reason was not found, give a warning to the node.
 			d.Report(phpDocLocation.Node, level, checkName, msg, args...)
@@ -2403,8 +2403,8 @@ func (d *rootWalker) compareKeywordWithTokenCase(n ir.Node, tok *token.Token, ke
 	}
 }
 
-func (d *rootWalker) parseClassPHPDoc(class ir.Node, doc phpdoc.Comment) classPhpDocParseResult {
-	var result classPhpDocParseResult
+func (d *rootWalker) parseClassPHPDoc(class ir.Node, doc phpdoc.Comment) classPHPDocParseResult {
+	var result classPHPDocParseResult
 
 	if doc.Raw == "" {
 		return result
