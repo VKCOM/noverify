@@ -1,6 +1,6 @@
 # Diff mode
 
-Just like [baseline](/docs/baseline.md), diff mode is used to analyze not the whole project at once, but only new code. Diff mode works based on `git` capabilities, which means that if you are using a different version control system, then you will not be able to use this mode.
+Like [baseline](/docs/baseline.md) mode, diff mode is used to analyze not the whole project at once, but only new code. Diff mode works based on `git` capabilities, which means that if you are using a different version control system, then you will not be able to use this mode.
 
 ## How it works
 
@@ -11,7 +11,7 @@ The principle of mode is as follows:
 - When you create a new branch from the `master` and make changes to it and then run the analysis, the linter does the following:
   - Analyzes the `master` in the state from which the branch was created and collects all reports
   - Analyzes the current state of the branch and collects all reports
-  - Finds reports that are not in the reports of the master and gives only them
+  - Finds reports that are not in the reports of the `master` and gives only them
 
 Thus, the linter will display only those reports that appeared in the new or changed code from the branch.
 
