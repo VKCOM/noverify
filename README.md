@@ -16,7 +16,7 @@ NoVerify is a PHP linter: it finds possible bugs and style violations in your co
 2. Incremental: can analyze changes in git and show only new reports. Indexing speed is ~1M LOC/s;
 3. Auto fixes for some warnings;
 4. PHP 7 and PHP 8 support;
-5. Supports diff and baseline modes.
+5. Diff and baseline modes support.
 
 ## Default lints
 
