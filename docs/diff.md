@@ -255,7 +255,18 @@ Which returns the closest `merge base`.
 So, for example, in the example above:
 
 ```shell
-# Current state:
+master
+--- 0 ---- 1
+           |
+           2 ---- 3
+           fix_important_bug 
+```
+
+The closest `merge base` will be in 1st commit, since a branch was created from it, so the analysis will be done between the 1st and 3rd commits.
+
+In an other example:
+
+```shell
 master
 --- 0 ---- 1 ---- 5 ---- 6
            |             | <- merge
