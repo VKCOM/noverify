@@ -643,8 +643,14 @@ func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedS
 }
 
 func isMixedLikeType(typ types.Map) bool {
+	if typ.Is("null") {
+		return true
+	}
+
 	return typ.Find(func(typ string) bool {
-		if typ == "mixed" || typ == "object" || typ == "undefined" || typ == "unknown_from_list" {
+		if typ == "mixed" || typ == "object" ||
+			typ == "undefined" || typ == "unknown_from_list" ||
+			typ == "\\stdClass" {
 			return true
 		}
 
