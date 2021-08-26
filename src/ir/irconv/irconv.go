@@ -78,7 +78,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		//  */
 		// $_ = fn($x) => $x->b();
 		if arrowFn, ok := out.Expr.(*ir.ArrowFunctionExpr); ok {
-			doc, found := irutil.FindPhpDoc(out.Variable, false)
+			doc, found := irutil.FindPHPDoc(out.Variable, false)
 			if found {
 				arrowFn.Doc = c.parsePHPDoc(doc)
 			}
@@ -90,7 +90,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		//  */
 		// $_ = function($x) { $x->b(); };
 		if closure, ok := out.Expr.(*ir.ClosureExpr); ok {
-			doc, found := irutil.FindPhpDoc(out.Variable, false)
+			doc, found := irutil.FindPHPDoc(out.Variable, false)
 			if found {
 				closure.Doc = c.parsePHPDoc(doc)
 			}
@@ -665,7 +665,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			tokenWithDoc = n.FnTkn
 		}
 
-		out.Doc = c.getPhpDoc(tokenWithDoc)
+		out.Doc = c.getPHPDoc(tokenWithDoc)
 
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
@@ -753,7 +753,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			tokenWithDoc = n.FunctionTkn
 		}
 
-		out.Doc = c.getPhpDoc(tokenWithDoc)
+		out.Doc = c.getPHPDoc(tokenWithDoc)
 
 		out.Params = c.convNodeSlice(n.Params)
 
@@ -1463,7 +1463,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			out.Modifiers = slice
 		}
 
-		out.Doc = c.getPhpDoc(n.ConstTkn)
+		out.Doc = c.getPHPDoc(n.ConstTkn)
 
 		out.Consts = c.convNodeSlice(n.Consts)
 		return out
@@ -1495,7 +1495,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			tokenWithDoc = n.FunctionTkn
 		}
 
-		out.Doc = c.getPhpDoc(tokenWithDoc)
+		out.Doc = c.getPHPDoc(tokenWithDoc)
 
 		out.MethodName = c.convNode(n.Name).(*ir.Identifier)
 
@@ -1757,7 +1757,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 
-		out.Doc = c.getPhpDoc(n.FunctionTkn)
+		out.Doc = c.getPHPDoc(n.FunctionTkn)
 
 		out.FunctionName = c.convNode(n.Name).(*ir.Identifier)
 		out.Params = c.convNodeSlice(n.Params)
@@ -1903,7 +1903,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 
-		out.Doc = c.getPhpDoc(n.InterfaceTkn)
+		out.Doc = c.getPHPDoc(n.InterfaceTkn)
 
 		out.InterfaceName = c.convNode(n.Name).(*ir.Identifier)
 
@@ -1994,7 +1994,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		if len(n.Modifiers) != 0 {
 			tokenWithDoc = n.Modifiers[0].(*ast.Identifier).IdentifierTkn
 		}
-		out.Doc = c.getPhpDoc(tokenWithDoc)
+		out.Doc = c.getPHPDoc(tokenWithDoc)
 
 		if n.AttrGroups != nil {
 			slice := make([]*ir.AttributeGroup, len(n.AttrGroups))
@@ -2113,7 +2113,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 
-		out.Doc = c.getPhpDoc(out.TraitTkn)
+		out.Doc = c.getPHPDoc(out.TraitTkn)
 
 		out.TraitName = c.convNode(n.Name).(*ir.Identifier)
 		out.Stmts = c.convNodeSlice(n.Stmts)
@@ -2367,7 +2367,7 @@ func hasValue(tok *token.Token) bool {
 	return tok != nil
 }
 
-func (c *Converter) getPhpDoc(tok *token.Token) (doc phpdoc.Comment) {
+func (c *Converter) getPHPDoc(tok *token.Token) (doc phpdoc.Comment) {
 	if tok == nil {
 		return doc
 	}
@@ -2453,9 +2453,9 @@ func (c *Converter) convClass(n *ast.StmtClass) ir.Node {
 	// If there are modifiers, then PHPDoc will be bound to the
 	// first one, otherwise to the class token.
 	if len(n.Modifiers) != 0 {
-		class.Doc = c.getPhpDoc(ir.GetFirstToken(c.convNode(n.Modifiers[0])))
+		class.Doc = c.getPHPDoc(ir.GetFirstToken(c.convNode(n.Modifiers[0])))
 	} else {
-		class.Doc = c.getPhpDoc(n.ClassTkn)
+		class.Doc = c.getPHPDoc(n.ClassTkn)
 	}
 
 	if n.Name == nil {

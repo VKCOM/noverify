@@ -22,7 +22,7 @@ const (
 	PropFromAnnotation PropertyFlags = 1 << iota
 )
 
-type PhpDocInfo struct {
+type PHPDocInfo struct {
 	Deprecated      bool
 	DeprecationNote string
 }
@@ -71,7 +71,7 @@ type FuncInfo struct {
 	AccessLevel  AccessLevel
 	Flags        FuncFlags
 	ExitFlags    int // if function has exit/die/throw, then ExitFlags will be <> 0
-	Doc          PhpDocInfo
+	Doc          PHPDocInfo
 }
 
 func (info *FuncInfo) IsStatic() bool         { return info.Flags&FuncStatic != 0 }

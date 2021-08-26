@@ -15,14 +15,14 @@ NoVerify is a PHP linter: it finds possible bugs and style violations in your co
 1. Fast: analyze ~100k LOC/s (lines of code per second) on Core i7;
 2. Incremental: can analyze changes in git and show only new reports. Indexing speed is ~1M LOC/s;
 3. Auto fixes for some warnings;
-4. Support PHP 7 and PHP 8.
+4. PHP 7 and PHP 8 support;
+5. Diff and baseline modes support.
 
 ## Default lints
 
 NoVerify by default has the following checks:
 
 - Unreachable code
-- Array access to non-array type 
 - Too few arguments when calling a function/method
 - Call to undefined function/method
 - Fetching of undefined constant/class property
@@ -36,7 +36,7 @@ NoVerify by default has the following checks:
 - Incorrect access to private/protected elements
 - Incorrect implementation of `IteratorAggregate` interface
 - Incorrect array definition, e.g. duplicate keys
-- And others. You can see the entire list [here](/docs/checkers_doc.md)
+- And others, you can see the entire list [here](/docs/checkers_doc.md)
 
 ## User Guide
 
@@ -54,6 +54,10 @@ Using NoVerify as PHP [language server](https://langserver.org) (version **0.3.0
 - [Using NoVerify as language server for Sublime Text](docs/sublime-plugin.md)
 - [Writing new IDE/editor plugin](docs/writing-new-ide-plugin.md)
 
-## Contribute
+## Contributing
 
-Just find [good first issue](https://github.com/VKCOM/noverify/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22), fix it and make pull request.
+Feel free to contribute to this project. See [CONTRIBUTING.md](https://github.com/VKCOM/noverify/blob/master/CONTRIBUTING.md) for more information.
+
+## The License
+
+NoVerify is distributed under the MIT License, on behalf of VK.com (V Kontakte LLC).

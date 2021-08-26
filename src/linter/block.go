@@ -1185,6 +1185,10 @@ func (b *blockWalker) enterArrowFunction(fun *ir.ArrowFunctionExpr) bool {
 	moveShapesToContext(&b.r.ctx, doc.Shapes)
 	b.r.handleClosuresFromDoc(doc.Closures)
 
+	for _, param := range fun.Params {
+		b.r.checkFuncParam(param.(*ir.Parameter))
+	}
+
 	// Check stage.
 	errors := b.r.checkPHPDoc(fun, fun.Doc, fun.Params)
 	b.r.reportPHPDocErrors(errors)

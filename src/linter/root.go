@@ -292,7 +292,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 	return res
 }
 
-func (d *rootWalker) handleClassDoc(doc classPhpDocParseResult, cl *meta.ClassInfo) {
+func (d *rootWalker) handleClassDoc(doc classPHPDocParseResult, cl *meta.ClassInfo) {
 	// If we ever need to distinguish @property-annotated and real properties,
 	// more work will be required here.
 	for name, p := range doc.properties {
@@ -365,7 +365,7 @@ func (d *rootWalker) parseStartPos(pos *position.Position) (startLn []byte, star
 // ReportPHPDoc registers a single report message about some found problem in PHPDoc.
 func (d *rootWalker) ReportPHPDoc(phpDocLocation PHPDocLocation, level int, checkName, msg string, args ...interface{}) {
 	if phpDocLocation.RelativeLine {
-		doc, ok := irutil.FindPhpDoc(phpDocLocation.Node, true)
+		doc, ok := irutil.FindPHPDoc(phpDocLocation.Node, true)
 		if !ok {
 			// If PHPDoc for some reason was not found, give a warning to the node.
 			d.Report(phpDocLocation.Node, level, checkName, msg, args...)
@@ -1041,7 +1041,7 @@ func (d *rootWalker) addFixForNullForNotNullableProperty(prop *ir.PropertyStmt) 
 
 	withoutAssign := d.file.Contents()[from:to]
 
-	d.ctx.fixes = append(d.ctx.fixes, quickfix.TextEdit{
+	d.addQuickFix("propNullDefault", quickfix.TextEdit{
 		StartPos:    prop.Position.StartPos,
 		EndPos:      prop.Position.EndPos,
 		Replacement: string(withoutAssign),
@@ -1931,11 +1931,32 @@ func (d *rootWalker) checkFuncParam(p *ir.Parameter) {
 	walkNode(p.DefaultValue, func(w ir.Node) bool {
 		if n, ok := w.(*ir.ArrayExpr); ok && !n.ShortSyntax {
 			d.Report(n, LevelNotice, "arraySyntax", "Use the short form '[]' instead of the old 'array()'")
+			d.addFixForArray(n)
 		}
 		return true
 	})
 
 	d.checkTypeHintFunctionParam(p)
+}
+
+func (d *rootWalker) addFixForArray(arr *ir.ArrayExpr) {
+	if !d.config.ApplyQuickFixes {
+		return
+	}
+
+	from := arr.Position.StartPos
+	to := arr.Position.EndPos
+	have := d.file.Contents()[from:to]
+	have = bytes.TrimPrefix(have, []byte("array"))
+	have = bytes.TrimSpace(have)
+	have = bytes.TrimPrefix(have, []byte("("))
+	have = bytes.TrimSuffix(have, []byte(")"))
+
+	d.addQuickFix("arraySyntax", quickfix.TextEdit{
+		StartPos:    arr.Position.StartPos,
+		EndPos:      arr.Position.EndPos,
+		Replacement: fmt.Sprintf("[%s]", string(have)),
+	})
 }
 
 func (d *rootWalker) checkTypeHintFunctionParam(p *ir.Parameter) {
@@ -2403,8 +2424,8 @@ func (d *rootWalker) compareKeywordWithTokenCase(n ir.Node, tok *token.Token, ke
 	}
 }
 
-func (d *rootWalker) parseClassPHPDoc(class ir.Node, doc phpdoc.Comment) classPhpDocParseResult {
-	var result classPhpDocParseResult
+func (d *rootWalker) parseClassPHPDoc(class ir.Node, doc phpdoc.Comment) classPHPDocParseResult {
+	var result classPHPDocParseResult
 
 	if doc.Raw == "" {
 		return result

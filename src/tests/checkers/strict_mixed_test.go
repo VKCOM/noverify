@@ -32,6 +32,15 @@ function f($b) {
 function f(Foo $a) {
   $a->f();
 }
+
+function f() {
+  $a = null;
+  $a->f();
+}
+
+function f(stdClass $a) {
+  $a->f();
+}
 `,
 	)
 	test.Expect = []string{
@@ -41,6 +50,8 @@ function f(Foo $a) {
 		"Call to undefined method {undefined}->f()",
 		"Call to undefined method {unknown_from_list}->f()",
 		"Call to undefined method {\\Foo}->f()",
+		"Call to undefined method {null}->f()",
+		"Call to undefined method {\\stdClass}->f()",
 	}
 	test.RunAndMatch()
 }
@@ -68,6 +79,15 @@ function f($b) {
 }
 
 function f(Foo $a) {
+  $a->f();
+}
+
+function f() {
+  $a = null;
+  $a->f();
+}
+
+function f(stdClass $a) {
   $a->f();
 }
 `,

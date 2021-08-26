@@ -784,30 +784,10 @@ func (b *blockLinter) checkContinueStmt(c *ir.ContinueStmt) {
 	}
 }
 
-func (b *blockLinter) addFixForArray(arr *ir.ArrayExpr) {
-	if !b.walker.r.config.ApplyQuickFixes {
-		return
-	}
-
-	from := arr.Position.StartPos
-	to := arr.Position.EndPos
-	have := b.walker.r.file.Contents()[from:to]
-	have = bytes.TrimPrefix(have, []byte("array"))
-	have = bytes.TrimSpace(have)
-	have = bytes.TrimPrefix(have, []byte("("))
-	have = bytes.TrimSuffix(have, []byte(")"))
-
-	b.walker.r.addQuickFix("arraySyntax", quickfix.TextEdit{
-		StartPos:    arr.Position.StartPos,
-		EndPos:      arr.Position.EndPos,
-		Replacement: fmt.Sprintf("[%s]", string(have)),
-	})
-}
-
 func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 	if !arr.ShortSyntax {
 		b.report(arr, LevelNotice, "arraySyntax", "Use the short form '[]' instead of the old 'array()'")
-		b.addFixForArray(arr)
+		b.walker.r.addFixForArray(arr)
 	}
 
 	multiline := false
