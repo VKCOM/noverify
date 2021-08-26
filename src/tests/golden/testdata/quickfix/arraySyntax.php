@@ -47,3 +47,12 @@ function b($a) {
         return array("info" => new Foo, "for" => 2, "home" => function() {});
     }
 }
+
+function f1($b, $a = array()) {}
+
+class Boo {
+  public function f($b, $a = array()) {
+    $_ = function($b, $a = array()) {};
+    $_ = fn($b, $a = array()) => 1;
+  }
+}

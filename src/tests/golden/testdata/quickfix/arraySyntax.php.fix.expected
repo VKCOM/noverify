@@ -47,3 +47,12 @@ function b($a) {
         return ["info" => new Foo, "for" => 2, "home" => function() {}];
     }
 }
+
+function f1($b, $a = []) {}
+
+class Boo {
+  public function f($b, $a = []) {
+    $_ = function($b, $a = []) {};
+    $_ = fn($b, $a = []) => 1;
+  }
+}
