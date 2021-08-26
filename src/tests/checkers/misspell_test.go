@@ -9,7 +9,7 @@ import (
 )
 
 //nolint:misspell // misspelled on purpose
-func TestMisspellPhpdocPositive(t *testing.T) {
+func TestMisspellPHPDocPositive(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.Config().TypoFixer = misspell.New()
 	test.AddFile(`<?php
@@ -49,7 +49,7 @@ class c1 {
 }
 
 //nolint:misspell // misspelled on purpose
-func TestMisspellPhpdocNegative(t *testing.T) {
+func TestMisspellPHPDocNegative(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.Config().TypoFixer = misspell.New()
 	test.AddFile(`<?php

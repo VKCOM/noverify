@@ -248,7 +248,7 @@ class TwoArgs {
 	test.RunAndMatch()
 }
 
-func TestPhpdocProperty(t *testing.T) {
+func TestPHPDocProperty(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 /**
@@ -294,7 +294,7 @@ $_ = WithProps::$int;
 	test.RunAndMatch()
 }
 
-func TestPhpdocPropertyForClassWithModifiers(t *testing.T) {
+func TestPHPDocPropertyForClassWithModifiers(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 /**
