@@ -1931,11 +1931,32 @@ func (d *rootWalker) checkFuncParam(p *ir.Parameter) {
 	walkNode(p.DefaultValue, func(w ir.Node) bool {
 		if n, ok := w.(*ir.ArrayExpr); ok && !n.ShortSyntax {
 			d.Report(n, LevelNotice, "arraySyntax", "Use the short form '[]' instead of the old 'array()'")
+			d.addFixForArray(n)
 		}
 		return true
 	})
 
 	d.checkTypeHintFunctionParam(p)
+}
+
+func (d *rootWalker) addFixForArray(arr *ir.ArrayExpr) {
+	if !d.config.ApplyQuickFixes {
+		return
+	}
+
+	from := arr.Position.StartPos
+	to := arr.Position.EndPos
+	have := d.file.Contents()[from:to]
+	have = bytes.TrimPrefix(have, []byte("array"))
+	have = bytes.TrimSpace(have)
+	have = bytes.TrimPrefix(have, []byte("("))
+	have = bytes.TrimSuffix(have, []byte(")"))
+
+	d.addQuickFix("arraySyntax", quickfix.TextEdit{
+		StartPos:    arr.Position.StartPos,
+		EndPos:      arr.Position.EndPos,
+		Replacement: fmt.Sprintf("[%s]", string(have)),
+	})
 }
 
 func (d *rootWalker) checkTypeHintFunctionParam(p *ir.Parameter) {
