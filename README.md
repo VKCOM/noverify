@@ -54,6 +54,6 @@ Using NoVerify as PHP [language server](https://langserver.org) (version **0.3.0
 - [Using NoVerify as language server for Sublime Text](docs/sublime-plugin.md)
 - [Writing new IDE/editor plugin](docs/writing-new-ide-plugin.md)
 
-## Contribute
+## Contributing
 
-Just find [good first issue](https://github.com/VKCOM/noverify/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22), fix it and make pull request.
+Feel free to contribute to this project. See [CONTRIBUTING.md](https://github.com/VKCOM/noverify/blob/master/CONTRIBUTING.md) for more information.
