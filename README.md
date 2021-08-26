@@ -57,3 +57,7 @@ Using NoVerify as PHP [language server](https://langserver.org) (version **0.3.0
 ## Contributing
 
 Feel free to contribute to this project. See [CONTRIBUTING.md](https://github.com/VKCOM/noverify/blob/master/CONTRIBUTING.md) for more information.
+
+## The License
+
+NoVerify is distributed under the MIT License, on behalf of VK.com (V Kontakte LLC).
