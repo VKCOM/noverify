@@ -50,20 +50,24 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 			break
 		}
 
-		switch {
-		case nm.Value == "is_bool" && len(n.Args) == 1:
-			a.handleIsTypeSmartcast(n.Arg(0).Expr, "bool")
-		case (nm.Value == "is_double" || nm.Value == "is_float" || nm.Value == "is_real") && len(n.Args) == 1:
-			a.handleIsTypeSmartcast(n.Arg(0).Expr, "float")
-		case (nm.Value == "is_int" || nm.Value == "is_integer" || nm.Value == "is_long") && len(n.Args) == 1:
-			a.handleIsTypeSmartcast(n.Arg(0).Expr, "int")
-		case nm.Value == "is_object" && len(n.Args) == 1:
-			a.handleIsTypeSmartcast(n.Arg(0).Expr, "object")
-		case nm.Value == "is_string" && len(n.Args) == 1:
-			a.handleIsTypeSmartcast(n.Arg(0).Expr, "string")
-		case nm.Value == "is_null" && len(n.Args) == 1:
-			a.handleIsTypeSmartcast(n.Arg(0).Expr, "null")
+		if len(n.Args) == 1 {
+			switch {
+			case nm.Value == "is_bool":
+				a.handleIsTypeSmartcast(n.Arg(0).Expr, "bool")
+			case nm.Value == "is_double" || nm.Value == "is_float" || nm.Value == "is_real":
+				a.handleIsTypeSmartcast(n.Arg(0).Expr, "float")
+			case nm.Value == "is_int" || nm.Value == "is_integer" || nm.Value == "is_long":
+				a.handleIsTypeSmartcast(n.Arg(0).Expr, "int")
+			case nm.Value == "is_object":
+				a.handleIsTypeSmartcast(n.Arg(0).Expr, "object")
+			case nm.Value == "is_string":
+				a.handleIsTypeSmartcast(n.Arg(0).Expr, "string")
+			case nm.Value == "is_null":
+				a.handleIsTypeSmartcast(n.Arg(0).Expr, "null")
+			}
+		}
 
+		switch {
 		case len(n.Args) == 2 && nm.Value == `method_exists`:
 			obj := n.Arg(0).Expr
 			methodName := n.Arg(1).Expr
@@ -241,7 +245,7 @@ func (a *andWalker) handleIsTypeSmartcast(n ir.Node, typ string) {
 		trueType, falseType = falseType, trueType
 	}
 
-	// If the variable has already been created, then we analyze the next instanceof.
+	// If the variable has already been created, then we analyze the next smartcast.
 	if (irutil.IsBoolAnd(a.path.Current()) || irutil.IsBoolOr(a.path.Current())) &&
 		a.trueContext.sc.HaveImplicitVar(varNode) {
 
