@@ -560,3 +560,4 @@ Function related attributes:
 | `@before text...` | Non-compliant code example, "before the fix". |
 | `@after text...` | Compliant code example, "after the fix". |
 | `@extends` | Specifies that this rule extends internal linter check. Note: when used, there is no need to set `@comment`, `@before`, `@after`. |
+| `@disabled` | Disables checker by default. |

@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 95           | 83                        | 12                         | 12                 |
+| 95           | 82                        | 13                         | 12                 |
 
 ## Table of contents
  - Enabled by default
@@ -36,7 +36,6 @@
    - [`dupSubExpr` checker](#dupsubexpr-checker)
    - [`emptyStmt` checker](#emptystmt-checker)
    - [`emptyStringCheck` checker](#emptystringcheck-checker)
-   - [`errorSilence` checker](#errorsilence-checker)
    - [`forLoop` checker](#forloop-checker)
    - [`implicitModifiers` checker](#implicitmodifiers-checker)
    - [`indexingSyntax` checker (autofixable)](#indexingsyntax-checker)
@@ -97,6 +96,7 @@
    - [`classMembersOrder` checker](#classmembersorder-checker)
    - [`complexity` checker](#complexity-checker)
    - [`deprecated` checker](#deprecated-checker)
+   - [`errorSilence` checker](#errorsilence-checker)
    - [`langDeprecated` checker](#langdeprecated-checker)
    - [`missingPhpdoc` checker](#missingphpdoc-checker)
    - [`propNullDefault` checker (autofixable)](#propnulldefault-checker)
@@ -697,24 +697,6 @@ if (strlen($string)) { ... }
 #### Compliant code:
 ```php
 if ($string !== "") { ... }
-```
-<p><br></p>
-
-
-### `errorSilence` checker
-
-#### Description
-
-Report using `@`.
-
-#### Non-compliant code:
-```php
-@f();
-```
-
-#### Compliant code:
-```php
-f();
 ```
 <p><br></p>
 
@@ -1904,6 +1886,24 @@ ereg($pat, $s) // The ereg function has been deprecated.
 #### Compliant code:
 ```php
 preg_match($pat, $s)
+```
+<p><br></p>
+
+
+### `errorSilence` checker
+
+#### Description
+
+Report using `@`.
+
+#### Non-compliant code:
+```php
+@f();
+```
+
+#### Compliant code:
+```php
+f();
 ```
 <p><br></p>
 

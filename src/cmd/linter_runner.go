@@ -254,7 +254,10 @@ func (l *LinterRunner) initCheckMappings(ruleSets []*rules.Set) *linter.Checkers
 		}
 		for _, ruleSet := range ruleSets {
 			for _, name := range ruleSet.Names {
-				set[name] = true
+				doc, ok := ruleSet.DocByName[name]
+				if ok && !doc.Disabled {
+					set[name] = true
+				}
 			}
 		}
 
