@@ -204,6 +204,30 @@ This will analyze the `master` at commit 9 and the branch at commit 11.
 
 ## Diff mode flags
 
+### `--git-full-diff`
+
+The flag turns on the analysis of not only changed files, but all the rest.
+
+For example, we have two files:
+
+```php
+// 1.php
+class Foo {
+  public static function f() { echo 1; }
+}
+```
+
+```php
+// 2.php
+Foo::f();
+```
+
+And we change the class name from `Foo` to `Boo`. In normal diff mode, the error in the `2.php` file will not be found, since this file will not be analyzed since there were no actual changes in it.
+
+This flag enables full scan, which analyzes not only the changed files, but all the others as well. In this mode, the above errors will be caught, but this mode is longer, since we need to analyze all files, not just changed ones.
+
+It assumes that CI uses `--git-full-diff`, but local machines don't. This achieves sufficient speed on local machines with an acceptable level of checks.
+
 ### `--git-include-untracked` (enabled by default)
 
 This flag enables the analysis of new and uncommitted files.
