@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 95           | 86                        | 9                         | 12                 |
+| 95           | 83                        | 12                         | 12                 |
 
 ## Table of contents
  - Enabled by default
@@ -12,7 +12,6 @@
    - [`alwaysNull` checker](#alwaysnull-checker)
    - [`argCount` checker](#argcount-checker)
    - [`argsOrder` checker](#argsorder-checker)
-   - [`arrayAccess` checker](#arrayaccess-checker)
    - [`arraySyntax` checker (autofixable)](#arraysyntax-checker)
    - [`assignOp` checker (autofixable)](#assignop-checker)
    - [`badTraitUse` checker](#badtraituse-checker)
@@ -23,7 +22,6 @@
    - [`caseBreak` checker](#casebreak-checker)
    - [`caseContinue` checker](#casecontinue-checker)
    - [`catchOrder` checker](#catchorder-checker)
-   - [`complexity` checker](#complexity-checker)
    - [`concatenationPrecedence` checker](#concatenationprecedence-checker)
    - [`constCase` checker (autofixable)](#constcase-checker)
    - [`countUse` checker (autofixable)](#countuse-checker)
@@ -78,7 +76,6 @@
    - [`strangeCast` checker](#strangecast-checker)
    - [`strictCmp` checker](#strictcmp-checker)
    - [`stripTags` checker](#striptags-checker)
-   - [`switchDefault` checker](#switchdefault-checker)
    - [`switchEmpty` checker](#switchempty-checker)
    - [`switchSimplify` checker](#switchsimplify-checker)
    - [`syntax` checker](#syntax-checker)
@@ -96,12 +93,15 @@
    - [`voidResultUsed` checker](#voidresultused-checker)
  - Disabled by default
    - [`argsReverse` checker](#argsreverse-checker)
+   - [`arrayAccess` checker](#arrayaccess-checker)
    - [`classMembersOrder` checker](#classmembersorder-checker)
+   - [`complexity` checker](#complexity-checker)
    - [`deprecated` checker](#deprecated-checker)
    - [`langDeprecated` checker](#langdeprecated-checker)
    - [`missingPhpdoc` checker](#missingphpdoc-checker)
    - [`propNullDefault` checker (autofixable)](#propnulldefault-checker)
    - [`redundantCast` checker](#redundantcast-checker)
+   - [`switchDefault` checker](#switchdefault-checker)
    - [`trailingComma` checker (autofixable)](#trailingcomma-checker)
    - [`typeHint` checker](#typehint-checker)
 ## Enabled
@@ -176,26 +176,6 @@ strpos('/', $s);
 #### Compliant code:
 ```php
 strpos($s, '/');
-```
-<p><br></p>
-
-
-### `arrayAccess` checker
-
-#### Description
-
-Report array access to non-array objects.
-
-#### Non-compliant code:
-```php
-return $foo[0]; // $foo value may not implement ArrayAccess
-```
-
-#### Compliant code:
-```php
-if ($foo instanceof ArrayAccess) { 
-  return $foo[0];
-}
 ```
 <p><br></p>
 
@@ -433,28 +413,6 @@ try {
   // Ok, it can catch TimeoutException.
 } catch (Exception $e) {
   // Ok, it will catch everything else.
-}
-```
-<p><br></p>
-
-
-### `complexity` checker
-
-#### Description
-
-Report funcs/methods that are too complex.
-
-#### Non-compliant code:
-```php
-function checkRights() {
-  // Super big function.
-}
-```
-
-#### Compliant code:
-```php
-function checkRights() {
-  return true; // Or 42 if you need int-typed result.
 }
 ```
 <p><br></p>
@@ -1510,35 +1468,6 @@ $s = strip_tags($s, '<br>')
 <p><br></p>
 
 
-### `switchDefault` checker
-
-#### Description
-
-Report the lack or wrong position of `default`.
-
-#### Non-compliant code:
-```php
-switch ($a) {
-  case 1:
-    echo 1;
-    break;
-}
-```
-
-#### Compliant code:
-```php
-switch ($a) {
-  case 1:
-    echo 1;
-    break;
-  default:
-    echo 2;
-    break;
-}
-```
-<p><br></p>
-
-
 ### `switchEmpty` checker
 
 #### Description
@@ -1892,6 +1821,26 @@ function main(): void {
 <p><br></p>
 
 
+### `arrayAccess` checker
+
+#### Description
+
+Report array access to non-array objects.
+
+#### Non-compliant code:
+```php
+return $foo[0]; // $foo value may not implement ArrayAccess
+```
+
+#### Compliant code:
+```php
+if ($foo instanceof ArrayAccess) { 
+  return $foo[0];
+}
+```
+<p><br></p>
+
+
 ### `classMembersOrder` checker
 
 #### Description
@@ -1914,6 +1863,28 @@ class A {
   const B = 1;
   public $c = 2;
   public function func() {}
+}
+```
+<p><br></p>
+
+
+### `complexity` checker
+
+#### Description
+
+Report funcs/methods that are too complex.
+
+#### Non-compliant code:
+```php
+function checkRights() {
+  // Super big function.
+}
+```
+
+#### Compliant code:
+```php
+function checkRights() {
+  return true; // Or 42 if you need int-typed result.
 }
 ```
 <p><br></p>
@@ -2031,6 +2002,35 @@ return (int)10; // The expression is already of type int.
 #### Compliant code:
 ```php
 return 10;
+```
+<p><br></p>
+
+
+### `switchDefault` checker
+
+#### Description
+
+Report the lack or wrong position of `default`.
+
+#### Non-compliant code:
+```php
+switch ($a) {
+  case 1:
+    echo 1;
+    break;
+}
+```
+
+#### Compliant code:
+```php
+switch ($a) {
+  case 1:
+    echo 1;
+    break;
+  default:
+    echo 2;
+    break;
+}
 ```
 <p><br></p>
 
