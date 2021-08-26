@@ -643,19 +643,13 @@ func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedS
 }
 
 func isMixedLikeType(typ types.Map) bool {
-	if typ.Is("null") {
+	if typ.Is("null") || typ.Is("mixed") ||
+		typ.Is("object") || typ.Is("unknown_from_list") ||
+		typ.Is("undefined") || typ.Is("\\stdClass") {
 		return true
 	}
 
-	return typ.Find(func(typ string) bool {
-		if typ == "mixed" || typ == "object" ||
-			typ == "undefined" || typ == "unknown_from_list" ||
-			typ == "\\stdClass" {
-			return true
-		}
-
-		return false
-	})
+	return false
 }
 
 // List taken from https://wiki.php.net/rfc/context_sensitive_lexer
