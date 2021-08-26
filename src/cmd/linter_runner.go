@@ -129,7 +129,7 @@ func (l *LinterRunner) Init(ruleSets []*rules.Set, flags *ParsedFlags) error {
 	return nil
 }
 
-func (l *LinterRunner) addVendorFolderToFlag(flag string, regexp bool) string {
+func (l *LinterRunner) addVendorFolderToFlag(flag string, regex bool) string {
 	alreadyContainsVendor := false
 	parts := strings.Split(flag, ",")
 	for _, part := range parts {
@@ -156,13 +156,13 @@ func (l *LinterRunner) addVendorFolderToFlag(flag string, regexp bool) string {
 	}
 
 	if flag == "" {
-		if regexp {
+		if regex {
 			flag = "vendor/"
 		} else {
 			flag = "./vendor"
 		}
 	} else {
-		if regexp {
+		if regex {
 			flag += "|vendor/"
 		} else {
 			flag += ",./vendor"
