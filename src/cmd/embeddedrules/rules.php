@@ -644,9 +644,10 @@ function selfAssign() {
 }
 
 /**
- * @comment Report using `@`.
- * @before  @f();
- * @after   f();
+ * @comment  Report using `@`.
+ * @before   @f();
+ * @after    f();
+ * @disabled
  */
 function errorSilence() {
   /**

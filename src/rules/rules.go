@@ -58,11 +58,12 @@ func (s *ScopedSet) Set(kind ir.NodeKind, rules []Rule) {
 }
 
 type RuleDoc struct {
-	Comment string
-	Before  string
-	After   string
-	Fix     bool
-	Extends bool
+	Comment  string
+	Before   string
+	After    string
+	Fix      bool
+	Extends  bool
+	Disabled bool
 }
 
 // Rule is a dynamically-loaded linter rule.

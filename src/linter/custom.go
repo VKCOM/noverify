@@ -330,7 +330,7 @@ func (reg *CheckersRegistry) DeclareRules(rset *rules.Set) {
 		reg.DeclareChecker(CheckerInfo{
 			Name:     ruleName,
 			Comment:  comment,
-			Default:  true,
+			Default:  !doc.Disabled,
 			Quickfix: doc.Fix,
 			Before:   doc.Before,
 			After:    doc.After,
