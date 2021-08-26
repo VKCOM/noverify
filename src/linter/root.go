@@ -1041,7 +1041,7 @@ func (d *rootWalker) addFixForNullForNotNullableProperty(prop *ir.PropertyStmt) 
 
 	withoutAssign := d.file.Contents()[from:to]
 
-	d.ctx.fixes = append(d.ctx.fixes, quickfix.TextEdit{
+	d.addQuickFix("propNullDefault", quickfix.TextEdit{
 		StartPos:    prop.Position.StartPos,
 		EndPos:      prop.Position.EndPos,
 		Replacement: string(withoutAssign),
