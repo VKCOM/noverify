@@ -232,16 +232,39 @@ git fetch --no-tags -q origin master:ORIGIN_MASTER
 
 ### `--gitignore`
 
-This flag enables the use of  .gitignore` files to parse files that were not excluded by them.
+This flag enables the use of  `.gitignore` files.
+
+Thus, if a folder or file is added to `.gitignore`, it will be ignored by the linter.
 
 ### `--git-author-whitelist`
 
 This flag sets a comma-separated list of authors for which the linter will run.
 
-Thus, if this list contains a specific user, then the linter will be launched only on the changes made by him.
+Thus, if this list contains a specific user, then the linter will be launched only on the changes made by them.
 
 ### `--git-disable-compensate-master`
 
-This flag turns off the standard behavior and allows you to parse changes directly between commits in `--git-commit-from` and `--git-commit-to`.
+By default, `--git-commit-from` is not used directly. The results of the following command are used:
+
+```shell
+git merge-base ORIGIN_MASTER from_commit
+```
+
+Which returns the closest `merge base`.
+
+So, for example, in the example above:
+
+```shell
+# Current state:
+master
+--- 0 ---- 1 ---- 5 ---- 6
+           |             | <- merge
+           2 ---- 3 ---- 4 ---- 5
+           fix_important_bug 
+```
+
+The closest `merge base` will be in the 6th commit, since the `git merge` happened here and the analysis will be done between the 6th and 5th commits.
+
+This flag turns off the this standard behavior and allows you to analyze changes directly between commits in `--git-commit-from` and `--git-commit-to`.
 
 > Along with flags specifically for diff mode, you can use all other flags as in normal mode.
