@@ -4,7 +4,7 @@ When launching a linter for the first time on a large project where the linter h
 
 For this, the **Baseline mode** is used. It creates a map of errors and suppresses them, showing only new ones.
 
-In [Getting started](/docs/baseline.md), we already ran NoVerify on a test project. There were about 130 errors in there, so let's create a baseline file to suppress them.
+In [Getting started](/docs/getting_started.md), we already ran NoVerify on a test project. There were about 130 errors in there, so let's create a baseline file to suppress them.
 
 Run the following command:
 
