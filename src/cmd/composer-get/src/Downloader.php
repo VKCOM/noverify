@@ -83,6 +83,8 @@ class Downloader {
     $os   = self::osName();
     $arch = self::osArch();
 
+    echo "Search version for OS: $os and Arch: $arch\n";
+
     $abs_path = self::BASE_PATH . "/v$version/noverify-$os-$arch.zip";
 
     $contents = @file_get_contents($abs_path);
