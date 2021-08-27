@@ -1,6 +1,34 @@
 # Installation
 
-## Ready binaries — the easiest way
+## Composer — the easiest way
+
+Run the following command:
+
+```shell
+composer require --dev vkcom/noverify
+```
+
+After NoVerify is installed as a dependency, run the following command to download the binary.
+
+```shell
+./vendor/bin/noverify-get
+```
+
+The ready-to-run binary will be placed in the same folder and can be launched with the next command:
+
+```shell
+./vendor/bin/noverify
+```
+
+By default, the latest available version is downloaded, but you can install other versions, see help command for details.
+
+For example:
+
+```shell
+./vendor/bin/noverify-get --version 0.3.0
+```
+
+## Ready binaries
 
 Go to the [Releases](https://github.com/vkcom/noverify/releases) page and download the latest version for your OS.
 
@@ -19,7 +47,7 @@ You're done! Proceed to the [Getting started](/docs/getting_started.md) page.
 Make sure you have [Go](https://golang.org/dl/) version 1.16 or higher installed.  
 Run the following command:
 
-```sh
+```shell
 $ go get github.com/VKCOM/noverify
 ```
 
@@ -32,7 +60,7 @@ For convenience, you can add this folder to the **PATH**.
 Make sure you have [Go](https://golang.org/dl/) version 1.16 or higher installed.  
 Clone this repository and run `make build`:
 
-```bash
+```shell
 git clone https://github.com/vkcom/noverify
 cd noverify
 make build
@@ -40,7 +68,7 @@ make build
 
 Optionally, you can pass a name of the binary:
 
-```bash
+```shell
 make build BIN_NAME=noverify.bin
 ```
 
