@@ -62,5 +62,6 @@ This command will install the `golangci-lint` linter and run the analysis.
 We do not use complicated methods for releases. Each release is created manually:
 
 - update the version the `Makefile`
+- add new version the `src/cmd/composer-get/src/Downloader.php`
 - run the `make release` command, it will create archives with executable files in `./build`
 - create a new release in GitHub with description, and upload the archives
