@@ -1,0 +1,90 @@
+#!/usr/bin/env php
+<?php
+
+$composerAutoloadPaths = [
+  // Install as dependency
+  __DIR__ . '/../../../../../../../autoload.php',
+  __DIR__ . '/../../../../../../autoload.php',
+  __DIR__ . '/../../../../../autoload.php',
+  __DIR__ . '/../../../../autoload.php',
+  __DIR__ . '/../../../autoload.php',
+  __DIR__ . '/../../autoload.php',
+  __DIR__ . '/../autoload.php',
+
+  // Install as root package
+  __DIR__ . '/../vendor/autoload.php',
+  __DIR__ . '/../../../../vendor/autoload.php',
+];
+
+foreach ($composerAutoloadPaths as $file) {
+  if (is_file($file)) {
+    define('RR_COMPOSER_INSTALL', $file);
+    break;
+  }
+}
+
+if (!defined('RR_COMPOSER_INSTALL')) {
+  fwrite(STDERR, <<<'RR_CLI_ERROR'
+    File autoload.php not found.
+    
+    Possible you need to set up the project dependencies using Composer:
+
+        composer install
+
+    If this does not help, then create an issue:
+      https://github.com/VKCOM/noverify/issues/new
+    RR_CLI_ERROR
+  );
+
+  die(1);
+}
+
+require RR_COMPOSER_INSTALL;
+
+use NoVerify\Downloader;
+
+function main() {
+  $opts = getopt("h", ["version:", "versions", "help"]);
+  if ($opts === false) {
+    echo "Internal CLI error";
+    die(1);
+  }
+
+  if (isset($opts["h"]) || isset($opts["help"])) {
+    echo "NoVerify Downloader
+
+Usage:
+  $ ./vendor/bin/noverify-get [options]
+  
+Options:
+  --version   Set download version of NoVerify. By default 'latest', the latest available version
+  --versions  Show available download versions
+  -h, --help  Show this help
+  
+Found some inappropriate behavior? Write to us at issue.
+  https://github.com/VKCOM/noverify/issues/new
+";
+    return;
+  }
+
+  if (isset($opts["versions"])) {
+    echo "Available version for download:\n  ";
+    echo join(",\n  ", Downloader::VERSIONS) . "\n";
+    return;
+  }
+
+  if (!isset($opts["version"])) {
+    $opts["version"] = "latest";
+  }
+
+  $version = $opts["version"];
+  $version = trim($version);
+  if ($version === "") {
+    echo "Error: empty version\n";
+    die(1);
+  }
+
+  Downloader::process($version);
+}
+
+main();
