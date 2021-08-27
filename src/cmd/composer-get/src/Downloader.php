@@ -21,7 +21,8 @@ class Downloader {
 
   /**
    * Returns the name of the current OS for choosing the correct binary.
-   * @throws Exception
+   * @return string
+   * @throws Exception If not supported OS.
    */
   private static function osName(): string {
     $name = php_uname('s');
@@ -40,7 +41,8 @@ class Downloader {
 
   /**
    * Returns the architecture of the current processor for choosing the correct binary.
-   * @throws Exception
+   * @return string
+   * @throws Exception If not supported Arch.
    */
   private static function osArch(): string {
     $name = php_uname('m');
@@ -56,23 +58,28 @@ class Downloader {
 
   /**
    * Begins the process of downloading and unpacking the binary to the required folder.
-   * @throws Exception
+   * @param string $version Version to process.
    */
   public static function process(string $version) {
     if ($version === "latest") {
       $version = self::VERSIONS[count(self::VERSIONS) - 1];
     }
 
-    echo "Start download v$version version...\n";
-    self::download($version);
-    echo "Successful download v$version version\n";
-    echo "Start extract v$version version...\n";
-    self::extract($version);
-    echo "Successful extracted v$version version\n";
+    try {
+      echo "Start download v$version version...\n";
+      self::download($version);
+      echo "Successful download v$version version\n";
+      echo "Start extract v$version version...\n";
+      self::extract($version);
+      echo "Successful extracted v$version version\n";
+    } catch (Exception $e) {
+      echo $e->getMessage() . "\n";
+    }
   }
 
   /**
    * Downloads the archive with the required version.
+   * @param string $version Version to download
    * @throws Exception
    */
   public static function download(string $version) {
@@ -112,9 +119,10 @@ class Downloader {
   /**
    * Unpacks the previously downloaded archive into the ./vendor/bin folder.
    * And it makes the unpacked file executable.
+   * @param string $version Version to extract
    * @throws Exception
    */
-  public static function extract(string $version): bool {
+  public static function extract(string $version) {
     $archive_name = "./vendor/bin/noverify-$version.zip";
 
     $zip = new ZipArchive;
@@ -125,6 +133,5 @@ class Downloader {
 
     $zip->extractTo("./vendor/bin");
     system("chmod +x ./vendor/bin/noverify");
-    return true;
   }
 }

@@ -44,15 +44,14 @@ require RR_COMPOSER_INSTALL;
 use NoVerify\Downloader;
 
 function main() {
-  try {
-    $opts = getopt("h", ["version:", "versions", "help"]);
-    if ($opts === false) {
-      echo "Internal CLI error";
-      die(1);
-    }
+  $opts = getopt("h", ["version:", "versions", "help"]);
+  if ($opts === false) {
+    echo "Internal CLI error";
+    die(1);
+  }
 
-    if (isset($opts["h"]) || isset($opts["help"])) {
-      echo "NoVerify Downloader
+  if (isset($opts["h"]) || isset($opts["help"])) {
+    echo "NoVerify Downloader
 
 Usage:
   $ ./vendor/bin/noverify-get [options]
@@ -65,31 +64,27 @@ Options:
 Found some inappropriate behavior? Write to us at issue.
   https://github.com/VKCOM/noverify/issues/new
 ";
-      return;
-    }
+    return;
+  }
 
-    if (isset($opts["versions"])) {
-      echo "Available version for download:\n  ";
-      echo join(",\n  ", Downloader::VERSIONS) . "\n";
-      return;
-    }
+  if (isset($opts["versions"])) {
+    echo "Available version for download:\n  ";
+    echo join(",\n  ", Downloader::VERSIONS) . "\n";
+    return;
+  }
 
-    if (!isset($opts["version"])) {
-      $opts["version"] = "latest";
-    }
+  if (!isset($opts["version"])) {
+    $opts["version"] = "latest";
+  }
 
-    $version = $opts["version"];
-    $version = trim($version);
-    if ($version === "") {
-      echo "Error: empty version\n";
-      die(1);
-    }
-
-    Downloader::process($version);
-  } catch (Exception $e) {
-    echo $e->getMessage() . "\n";
+  $version = $opts["version"];
+  $version = trim($version);
+  if ($version === "") {
+    echo "Error: empty version\n";
     die(1);
   }
+
+  Downloader::process($version);
 }
 
 main();
