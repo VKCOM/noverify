@@ -1,10 +1,14 @@
 {
-  "name": "i582/noverify",
+  "name": "vkcom/noverify",
   "description": "Pretty fast linter (code static analysis utility) for PHP",
   "type": "library",
   "homepage": "https://github.com/VKCOM/noverify",
   "license": "MIT",
   "authors": [
+    {
+      "name": "Yuriy Nasretdinov",
+      "email": "nasretdinov@gmail.com"
+    },
     {
       "name": "Iskander Sharipov",
       "email": "quasilyte@gmail.com"
