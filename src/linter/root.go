@@ -1635,23 +1635,25 @@ func (d *rootWalker) checkTypeHintNode(n ir.Node, place string) {
 		}
 	}
 
+	_, inTrait := d.currentClassNodeStack.Current().(*ir.TraitStmt)
+
 	typesMap := types.NewMapWithNormalization(d.ctx.typeNormalizer, typeList)
 
 	typesMap.Iterate(func(typ string) {
 		if types.IsClass(typ) {
 			className := typ
 
-			_, ok := d.metaInfo().GetTrait(className)
-			if ok {
+			_, hasTrait := d.metaInfo().GetTrait(className)
+			if hasTrait && !inTrait {
 				d.Report(n, LevelWarning, "badTraitUse", "Cannot use trait %s as a typehint for %s", strings.TrimPrefix(className, `\`), place)
 			}
 
-			class, ok := d.metaInfo().GetClass(className)
-			if !ok {
+			class, hasClass := d.metaInfo().GetClass(className)
+
+			if !hasClass && !hasTrait {
 				d.Report(n, LevelError, "undefinedClass",
 					"Class or interface named %s does not exist", className,
 				)
-				return
 			}
 
 			d.checkNameCase(n, className, class.Name)

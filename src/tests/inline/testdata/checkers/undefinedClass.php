@@ -1,6 +1,20 @@
 <?php
 
+namespace GlobalClasses {
+  class Boo {}
+  class IBoo {}
+}
+
 namespace ErrorsInTypehint {
+  use GlobalClasses\Boo;
+  use GlobalClasses\IBoo;
+
+  use GlobalClasses\Boo as BooG;
+  use GlobalClasses\IBoo as IBooG;
+
+  function definedClassWithUse(Boo $a, IBoo $b) {}
+  function definedClassWithUseAlias(BooG $a, IBooG $b) {}
+
   class Foo {}
   interface IFoo {}
 
@@ -46,6 +60,11 @@ namespace ErrorsInTypehint {
     public Foo|IFoo1 $f; // want `Class or interface named \ErrorsInTypehint\IFoo1 does not exist`
 
     public Foo1|IFoo1 $g;  // want `Class or interface named \ErrorsInTypehint\Foo1 does not exist` and `Class or interface named \ErrorsInTypehint\IFoo1 does not exist`
+  }
+
+  trait SingletonSelf {
+    private static ?self $instance = null;
+    public static function instance(): self {}
   }
 }
 

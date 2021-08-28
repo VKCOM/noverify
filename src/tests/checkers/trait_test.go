@@ -56,6 +56,11 @@ function f(A $a): A {}
 function f1(A $a, B $b): A {
   $_ = function(A $a): B {};
 }
+
+trait Test {
+  private static ?self $instance = null;     // ok, in trait
+  public static function instance(): self {} // ok, in trait
+}
 `)
 	test.Expect = []string{
 		`Cannot use trait A as a typehint for property type`,
