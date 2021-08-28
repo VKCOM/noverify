@@ -2443,7 +2443,7 @@ function f() {
 }
 `)
 	test.Expect = []string{
-		`Undefined variable $e`,
+		`Cannot find referenced variable $e`,
 	}
 	test.RunAndMatch()
 }
