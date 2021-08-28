@@ -1,9 +1,10 @@
 package utils
 
 import (
-	"github.com/VKCOM/noverify/src/ir/irutil"
 	"path/filepath"
 	"strings"
+
+	"github.com/VKCOM/noverify/src/ir/irutil"
 
 	"github.com/VKCOM/noverify/src/ir"
 )
