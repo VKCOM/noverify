@@ -22,7 +22,7 @@ WARNING unused: Variable $mode is unused (use $_ to ignore this inspection or sp
 WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/qrcode/qrcode.php:203
     switch ($mode) {
     ^
-WARNING maybeUndefined: Variable $code might have not been defined at testdata/qrcode/qrcode.php:221
+WARNING maybeUndefined: Possibly undefined variable $code at testdata/qrcode/qrcode.php:221
     while (count($code) % 8) {
                  ^^^^^
 WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:297
