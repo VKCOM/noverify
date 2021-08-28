@@ -1298,25 +1298,61 @@ func (d *rootWalker) checkUndefinedClassesInPHPDoc(n ir.Node, typesMap types.Map
 		return
 	}
 
+	resolved := solver.ResolveTypes(d.metaInfo(), d.ctx.st.CurrentClass, typesMap, solver.ResolverMap{})
+	typesMap = types.NewMapFromMap(resolved)
+
 	typesMap.Iterate(func(className string) {
+		if types.IsShape(className) {
+			shape, ok := d.metaInfo().GetClass(className)
+			if ok {
+				for _, info := range shape.Properties {
+					info.Typ.Iterate(func(typ string) {
+						if !types.IsClass(typ) {
+							return
+						}
+
+						d.checkUndefinedClass(typ, part, n)
+					})
+				}
+			}
+			return
+		}
+
+		if types.IsArray(className) {
+			arrayType := types.ArrayType(className)
+			if types.IsClass(arrayType) {
+				d.checkUndefinedClass(arrayType, part, n)
+			}
+			return
+		}
+
 		if !types.IsClass(className) {
 			return
 		}
 
-		_, ok := d.metaInfo().GetClassOrTrait(className)
-		if !ok {
-			partNum := 1
-			if varPart, ok := part.(*phpdoc.TypeVarCommentPart); ok && varPart.VarIsFirst {
-				partNum = 2
-			}
-
-			d.ReportPHPDoc(PHPDocLineField(n, part.Line(), partNum),
-				LevelError, "undefinedClass",
-				"Class or interface named %s does not exist", className,
-			)
-			return
-		}
+		d.checkUndefinedClass(className, part, n)
 	})
+}
+
+func (d *rootWalker) checkUndefinedClass(className string, part phpdoc.CommentPart, n ir.Node) {
+	// While there is no template support, this hack saves you unnecessary bugs.
+	if strings.HasSuffix(className, `\T`) {
+		return
+	}
+
+	_, ok := d.metaInfo().GetClassOrTrait(className)
+	if ok {
+		return
+	}
+	partNum := 1
+	if varPart, ok := part.(*phpdoc.TypeVarCommentPart); ok && varPart.VarIsFirst {
+		partNum = 2
+	}
+
+	d.ReportPHPDoc(PHPDocLineField(n, part.Line(), partNum),
+		LevelError, "undefinedClass",
+		"Class or interface named %s does not exist", className,
+	)
 }
 
 func (d *rootWalker) isValidPHPDocRef(n ir.Node, ref string) bool {

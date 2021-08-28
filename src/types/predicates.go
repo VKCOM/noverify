@@ -57,6 +57,7 @@ var trivial = map[string]bool{
 	"string":   true,
 	"void":     true,
 	"iterable": true,
+	"never":    true,
 
 	"null":  true,
 	"true":  true,

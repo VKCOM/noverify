@@ -69,6 +69,23 @@ namespace ErrorsInTypehint {
 }
 
 namespace ErrorsInPHPDoc {
+  use GlobalClasses\Boo;
+  use GlobalClasses\IBoo;
+
+  use GlobalClasses\Boo as BooG;
+  use GlobalClasses\IBoo as IBooG;
+
+  /**
+   * @param BooG  $a
+   * @param IBooG $b
+   */
+  function definedClassWithUse($a, $b) {}
+  /**
+   * @param BooG  $a
+   * @param IBooG $b
+   */
+  function definedClassWithUseAlias($a, $b) {}
+
   class Foo {}
   interface IFoo {}
 
@@ -232,4 +249,65 @@ namespace ErrorsInPHPDoc {
     /** @return static */
     public static function instance() {}
   }
+}
+
+namespace ErrorInComplexTypes {
+  use GlobalClasses\Boo;
+  use GlobalClasses\IBoo;
+
+  use GlobalClasses\Boo as BooG;
+  use GlobalClasses\IBoo as IBooG;
+
+  class Foo {}
+  interface IFoo {}
+
+  /**
+   * @param shape(key: int, val: string) $a
+   */
+  function shapeTrivial($a) {}
+
+  /**
+   * @param shape(key: Foo, val: IFoo) $a
+   */
+  function definedClass($a) {}
+
+  /**
+   * @param shape(key: Foo1, val: IFoo1) $a // want `Class or interface named \ErrorInComplexTypes\Foo1 does not exist` and `Class or interface named \ErrorInComplexTypes\IFoo1 does not exist`
+   */
+  function undefinedClass($a) {}
+
+  /**
+   * @param shape(key: Boo, val: IBoo) $a
+   */
+  function definedClassWithUse($a) {}
+
+  /**
+   * @param shape(key: Boo1) $a // want `Class or interface named \ErrorInComplexTypes\Boo1 does not exist`
+   */
+  function undefinedClassWithUse($a) {}
+
+  /**
+   * @param shape(key: BooG, val: IBooG) $a
+   */
+  function definedClassWithUseAlias($a) {}
+
+  /**
+   * @param shape(key: BooG1) $a // want `Class or interface named \ErrorInComplexTypes\BooG1 does not exist`
+   */
+  function undefinedClassWithUseAlias($a) {}
+
+  /**
+   * @param Foo[]
+   */
+  function definedClassWithArray($a) {}
+
+  /**
+   * @param Foo1[] $a // want `Class or interface named \ErrorInComplexTypes\Foo1 does not exist`
+   */
+  function undefinedClassWithArray($a) {}
+
+  /**
+   * @param string[] $a
+   */
+  function arrayWithTrivial($a) {}
 }

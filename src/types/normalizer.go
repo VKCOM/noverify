@@ -42,6 +42,22 @@ func (n Normalizer) normalizeType(typ *Type) {
 		return
 	}
 
+	// Psalm types.
+	// See https://psalm.dev/docs/annotating_code/type_syntax/scalar_types/
+	switch typ.Elem {
+	case "class-string", "interface-string", "trait-string", "callable-string", "numeric-string",
+		"literal-string", "lowercase-string", "non-empty-string", "non-empty-lowercase-string",
+		"html-escaped-string", "array-key":
+		typ.Elem = "string"
+		return
+	case "positive-int":
+		typ.Elem = "int"
+		return
+	case "numeric":
+		typ.Elem = "float"
+		return
+	}
+
 	switch typ.Elem {
 	case "array":
 		// Rewrite `array` to `mixed[]`.
