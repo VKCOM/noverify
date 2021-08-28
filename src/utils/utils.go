@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"github.com/VKCOM/noverify/src/ir/irutil"
 	"path/filepath"
 	"strings"
 
@@ -44,4 +45,18 @@ func IsSpecialClassName(n ir.Node) bool {
 
 func InVendor(path string) bool {
 	return strings.Contains(filepath.ToSlash(path), "/vendor/")
+}
+
+func InCoalesceOrIsset(path irutil.NodePath) bool {
+	inIsset := false
+	_, inCoalesce := path.NthParent(1).(*ir.CoalesceExpr)
+	call, inFuncCall := path.NthParent(1).(*ir.FunctionCallExpr)
+	if inFuncCall {
+		name, ok := call.Function.(*ir.Name)
+		if ok {
+			inIsset = name.Value == "isset"
+		}
+	}
+
+	return inCoalesce || inIsset
 }
