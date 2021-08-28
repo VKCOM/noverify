@@ -1,80 +1,84 @@
 const defaultCode = `<?php
 
-class FooWithFinalMethod {
-    final function f() {}
-}
+namespace NoVerify;
 
-class BooWithSameMethod extends FooWithFinalMethod {
-    function f() {}
+class PlaygroundBase {
+    public abstract function analyze();
 }
-
-abstract class AbstractClass {
-    abstract public function abstractMethod() {}
-}
-
-class SomeClass extends AbstractClass {}
 
 /**
- * @method int a
+ * @property $a
  */
-class Boo {}
-
-/**
- * @method void check()
- */
-final class Foo {
-    var $prop, $prop2;
-  
-    /**
-     * @var Boo
-     */
-    var $p = null;
-
-    /**
-     * Instance method
-     */
-    function instanceMethod(int $x) {}
+class Playground extends PlaygroundBase {
+    use PlaygroundTrait;
     
-    final public static function staticMethod(int $x) { 
-        echo $this->p;
-    }
-
-    public function __call($name) {}
-}
-
-/**
- * @param  array{int,Foo} $x1
- * @return array{int,Foo}
- */
-function getArray(array $x) { return [0, new Foo]; }
-
-/**
- * @param callable(int) $a
- * @param callable(int): Foo $b
- */
-function mainCheck(callable $a, callable $b) {
-    echo getArray();
-    (new Foo)->instanceMethod();
-
-    echo getArray(10)[1]->p->f;
-
-    echo (new Foo)->check();
-
+    /** @var Analyzer */
+    var $analyzer = null;
+    /** @var callable(string): void */
+    var $cb = null;
+    
+    
     /**
-     * @return callable(int, string): Foo
+     * @param Analyzer               $a
+     * @param callable(string): void $cb
+     * @param int                    $id
      */
-    $b = function (int $a) { };
-    $c = $b(10);
-    $c();
+    function __construct(Analyzer $a, callable $cb) {
+        $this->cb = $cb;
+        $analyzer = $analyzer;
+    }
+    
+    /** 
+     * @see Plauground
+     * @return Reports[]
+     */
+    public function getReports(): array {
+        $callback = $this->cb;
+        
+        $warnings_count = 0;
+        $errors_count = 0;
+        $reports = array("");
+        foreach ($reports as $index => $report) {
+            $hasReports = true;
+            
+            switch ($report[0]) {
+                case 'w':
+                    $warnings_count++;
+                    break;
+                case 'e':
+                    $warnings_count++;
+                    break;
+            }
+            $callback($report);
+        }
+       
+        $last_report = $reports[count($reports)];
+        
+        if (DEBUG) {
+            printf("Log: %s, time: %d, has %d", (string)$last_report, $hasReports ?? false);
+        }
+        
+        return [$reports, $errors_count, $warnings_count];
+    }
+    
+    private function __set($name) {}
+    private function __get($name) {}
 }
 
-function makeHello(string $name, int $age) {
-    echo "Hello \${$name}-\${$age1}";
+/**
+ * @param array{obj:?Analyzer,id:int} $analyzers
+ * @param callable(string): void      $cb
+ */
+#[Pure]
+function runAnalyzers($analyzers, $cb) {
+    $analyzers["obj"]->analyze();
+    $cb();
 }
 
-function main(): void {
-    $name = "John";
-    $age = 18;
-    echo makeHello($age, $name);
+function main() {
+    $analyzers = ["obj" => new Analyzer(), "id" => 1];
+    $cb = function(string $v): void {};
+    
+    runAnalyzers($cb, $analyzers);
 }
 `
