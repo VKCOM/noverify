@@ -1617,6 +1617,7 @@ func (d *rootWalker) checkTypeHintNode(n ir.Node, place string) {
 
 			class, ok := d.metaInfo().GetClass(className)
 			if !ok {
+				d.reportUndefinedType(n, className)
 				return
 			}
 
