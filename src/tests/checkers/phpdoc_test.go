@@ -187,6 +187,9 @@ function f() {}
 func TestBadParamName(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+class B1 {}
+class B2 {}
+
 /**
  * @param B1 $v2
  * @param B2 $v3
@@ -526,6 +529,8 @@ function f2($a) {
 func TestPHPDocTwiceNullableTypes(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+class Foo {}
+
 /**
  * @param ?int|null $a
  * @param ?string[]|null $b
