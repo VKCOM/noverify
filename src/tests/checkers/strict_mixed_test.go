@@ -46,7 +46,7 @@ function f(stdClass $a) {
 	test.Expect = []string{
 		"Call to undefined method {mixed}->f()",
 		"Call to undefined method {object}->f()",
-		"Undefined variable $a",
+		"Cannot find referenced variable $a",
 		"Call to undefined method {undefined}->f()",
 		"Call to undefined method {unknown_from_list}->f()",
 		"Call to undefined method {\\Foo}->f()",
@@ -93,7 +93,7 @@ function f(stdClass $a) {
 `,
 	)
 	test.Expect = []string{
-		"Undefined variable $a",
+		"Cannot find referenced variable $a",
 		"Call to undefined method {\\Foo}->f()",
 	}
 	test.RunAndMatch()

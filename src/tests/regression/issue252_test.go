@@ -47,7 +47,7 @@ function alt_switch($v) {
   endswitch;
 }`)
 	test.Expect = []string{
-		`Variable $x1 might have not been defined`,
+		`Possibly undefined variable $x1`,
 		`Add break or '// fallthrough' to the end of the case`,
 	}
 	test.RunAndMatch()
