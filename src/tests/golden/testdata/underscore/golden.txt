@@ -175,7 +175,7 @@ MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at tes
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:1102
     $filled_args = array();
                    ^^^^^^^
-ERROR   unused: Foreach key $k is unused, can simplify $k => $v to just $v at testdata/underscore/underscore.php:1107
+WARNING unused: Foreach key $k is unused, can simplify $k => $v to just $v at testdata/underscore/underscore.php:1107
       foreach($caller_args as $k=>$v) {
                               ^^
 ERROR   classMembersOrder: Property $_uniqueId must go before methods in the class __ at testdata/underscore/underscore.php:817
