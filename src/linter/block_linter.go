@@ -304,7 +304,16 @@ func (b *blockLinter) checkCoalesceExpr(n *ir.CoalesceExpr) {
 		return
 	}
 
-	if !lhsType.Contains("null") {
+	rhsVariableUndefined := false
+	variable, ok := n.Left.(*ir.SimpleVar)
+	if ok {
+		have := b.walker.ctx.sc.HaveVar(variable)
+		rhsVariableUndefined = !have
+	}
+
+	// If the variable is not defined, then ?? can be a test
+	// for this, so we do not need to give this warning
+	if !lhsType.Contains("null") && !rhsVariableUndefined {
 		b.report(n.Right, LevelWarning, "deadCode", "%s is not nullable, right side of the expression is unreachable", irutil.FmtNode(n.Left))
 	}
 }

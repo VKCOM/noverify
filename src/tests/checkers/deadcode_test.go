@@ -37,6 +37,16 @@ function f() {
   $_ = $x ?? 10; // ok
 }
 
+function f1() {
+  if (1) {
+    $a = 100;
+  }
+
+  $b = $a ?? 100; // ok, $a maybe undefined
+  $b = $c ?? 100; // ok, $c undefined
+  echo $bl
+}
+
 `)
 	test.Expect = []string{
 		`$a is not nullable, right side of the expression is unreachable`,

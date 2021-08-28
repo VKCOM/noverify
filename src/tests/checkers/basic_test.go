@@ -2423,3 +2423,27 @@ function f2($v) {
 	}
 	test.RunAndMatch()
 }
+
+func TestUndefinedVariableInCoalesceOrIsset(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f() {
+  if (1) {
+    $a = 100;
+  }
+
+  echo $a ?? 100;
+  echo isset($a) ? $a : 100;
+
+  if (isset($a)) {
+    echo $a;
+  }
+
+  echo $e; // variable undefined
+}
+`)
+	test.Expect = []string{
+		`Undefined variable $e`,
+	}
+	test.RunAndMatch()
+}

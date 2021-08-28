@@ -612,7 +612,7 @@ func (d *rootWalker) reportHash(loc *ir.Location, contextLine []byte, checkName,
 	})
 }
 
-func (d *rootWalker) reportUndefinedVariable(v ir.Node, maybeHave bool) {
+func (d *rootWalker) reportUndefinedVariable(v ir.Node, maybeHave bool, path irutil.NodePath) {
 	sv, ok := v.(*ir.SimpleVar)
 	if !ok {
 		d.Report(v, LevelWarning, "undefinedVariable", "Unknown variable variable %s used",
@@ -621,6 +621,15 @@ func (d *rootWalker) reportUndefinedVariable(v ir.Node, maybeHave bool) {
 	}
 
 	if _, ok := superGlobals[sv.Name]; ok {
+		return
+	}
+
+	// For the following cases, we do not give warnings,
+	// as they check for the presence of this variable.
+	// $b = $a ?? 100;
+	// $b = isset($a) ? $a : 100;
+	needWarn := !utils.InCoalesceOrIsset(path)
+	if !needWarn {
 		return
 	}
 
