@@ -1,6 +1,6 @@
 ![](docs/noverify_small.png)
 
-![Build Status](https://github.com/VKCOM/noverify/workflows/Go/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/VKCOM/noverify)](https://goreportcard.com/report/github.com/vkcom/noverify) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
+![Build Status](https://github.com/VKCOM/noverify/workflows/Go/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/VKCOM/noverify)](https://goreportcard.com/report/github.com/vkcom/noverify) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE) [![Telegram chat](https://img.shields.io/badge/chat-join-brightgreen?logo=telegram)](https://t.me/noverify_linter)
 
 ## NoVerify
 
@@ -56,7 +56,7 @@ Using NoVerify as PHP [language server](https://langserver.org) (version **0.3.0
 
 ## Contributing
 
-Feel free to contribute to this project. See [CONTRIBUTING.md](https://github.com/VKCOM/noverify/blob/master/CONTRIBUTING.md) for more information.
+Feel free to contribute to this project. See [CONTRIBUTING.md](https://github.com/VKCOM/noverify/blob/master/CONTRIBUTING.md) for more information. Join [our chat <sup>ru</sup>](https://t.me/noverify_linter) in a telegram if you want to discuss something.
 
 ## The License
 
