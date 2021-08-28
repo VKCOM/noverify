@@ -2,10 +2,12 @@
 
 ## Composer — the easiest way
 
+> Can only be installed via Composer 2. See https://blog.packagist.com/composer-2-0-is-now-available/
+
 Run the following command:
 
 ```shell
-composer require --dev vkcom/noverify
+composer require --dev vkcom/noverify:dev-master
 ```
 
 After NoVerify is installed as a dependency, run the following command to download the binary.
