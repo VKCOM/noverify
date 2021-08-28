@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 95           | 82                        | 13                         | 12                 |
+| 96           | 83                        | 13                         | 12                 |
 
 ## Table of contents
  - Enabled by default
@@ -80,11 +80,12 @@
    - [`syntax` checker](#syntax-checker)
    - [`ternarySimplify` checker (autofixable)](#ternarysimplify-checker)
    - [`unaryRepeat` checker (autofixable)](#unaryrepeat-checker)
+   - [`undefinedClass` checker](#undefinedclass-checker)
    - [`undefinedConstant` checker](#undefinedconstant-checker)
    - [`undefinedFunction` checker](#undefinedfunction-checker)
    - [`undefinedMethod` checker](#undefinedmethod-checker)
    - [`undefinedProperty` checker](#undefinedproperty-checker)
-   - [`undefinedType` checker](#undefinedtype-checker)
+   - [`undefinedTrait` checker](#undefinedtrait-checker)
    - [`undefinedVariable` checker](#undefinedvariable-checker)
    - [`unimplemented` checker](#unimplemented-checker)
    - [`unused` checker](#unused-checker)
@@ -1554,6 +1555,24 @@ echo (bool) $a;
 <p><br></p>
 
 
+### `undefinedClass` checker
+
+#### Description
+
+Report usages of undefined class or interface.
+
+#### Non-compliant code:
+```php
+$foo = new UndefinedClass;
+```
+
+#### Compliant code:
+```php
+$foo = new DefinedClass;
+```
+<p><br></p>
+
+
 ### `undefinedConstant` checker
 
 #### Description
@@ -1642,20 +1661,24 @@ class Foo {
 <p><br></p>
 
 
-### `undefinedType` checker
+### `undefinedTrait` checker
 
 #### Description
 
-Report usages of undefined type.
+Report usages of undefined trait.
 
 #### Non-compliant code:
 ```php
-class Foo extends UndefinedClass {}
+class Foo {
+  use UndefinedTrait;
+}
 ```
 
 #### Compliant code:
 ```php
-class Foo extends DefinedClass {}
+class Foo {
+  use DefinedTrait;
+}
 ```
 <p><br></p>
 
