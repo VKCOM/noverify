@@ -1393,7 +1393,7 @@ func (b *blockWalker) handleVariable(v ir.Node) bool {
 	have := b.ctx.sc.HaveVar(v)
 
 	if !have && !b.inArrowFunction {
-		b.r.reportUndefinedVariable(v, b.ctx.sc.MaybeHaveVar(v))
+		b.r.reportUndefinedVariable(v, b.ctx.sc.MaybeHaveVar(v), b.path)
 		b.ctx.sc.AddVar(v, types.NewMap("undefined"), "undefined", meta.VarAlwaysDefined)
 	}
 
@@ -1430,7 +1430,7 @@ func (b *blockWalker) handleVariable(v ir.Node) bool {
 		}
 
 		if varNotFound {
-			b.r.reportUndefinedVariable(v, varMaybeNotDefined)
+			b.r.reportUndefinedVariable(v, varMaybeNotDefined, b.path)
 			b.ctx.sc.AddVar(v, types.NewMap("undefined"), "undefined", meta.VarAlwaysDefined)
 		}
 	}
