@@ -1,6 +1,12 @@
 MAYBE   ternarySimplify: Could rewrite as `$baseDir ?: 0` at testdata/mustache/src/Mustache/Autoloader.php:56
         $key = $baseDir ? $baseDir : 0;
                ^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   undefinedClass: Class or interface named \Psr\Log\LoggerInterface does not exist at testdata/mustache/src/Mustache/Cache/AbstractCache.php:26
+     * @return Mustache_Logger|Psr\Log\LoggerInterface
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR   undefinedClass: Class or interface named \Psr\Log\LoggerInterface does not exist at testdata/mustache/src/Mustache/Cache/AbstractCache.php:36
+     * @param Mustache_Logger|Psr\Log\LoggerInterface $logger
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:110
             @mkdir($dirName, 0777, true);
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -121,12 +127,18 @@ MAYBE   ternarySimplify: Could rewrite as `$options['cache_file_mode'] ?? null` 
 MAYBE   misspellComment: "entitity" is a misspelling of "entity" at testdata/mustache/src/Mustache/Engine.php:254
     public function getEntityFlags()
                     ^^^^^^^^^^^^^^
+ERROR   undefinedClass: Class or interface named \Psr\Log\LoggerInterface does not exist at testdata/mustache/src/Mustache/Engine.php:451
+     * @param Mustache_Logger|Psr\Log\LoggerInterface $logger
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ERROR   undefinedMethod: Call to undefined method {\Mustache_Cache}->getLogger() at testdata/mustache/src/Mustache/Engine.php:459
         if ($this->getCache()->getLogger() === null) {
                                ^^^^^^^^^
 ERROR   undefinedMethod: Call to undefined method {\Mustache_Cache}->setLogger() at testdata/mustache/src/Mustache/Engine.php:460
             $this->getCache()->setLogger($logger);
                                ^^^^^^^^^
+ERROR   undefinedClass: Class or interface named \Psr\Log\LoggerInterface does not exist at testdata/mustache/src/Mustache/Engine.php:469
+     * @return Mustache_Logger|Psr\Log\LoggerInterface
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ERROR   undefinedMethod: Call to undefined method {\Mustache_Cache}->getLogger() at testdata/mustache/src/Mustache/Engine.php:561
         if (isset($this->logger) && $cache->getLogger() === null) {
                                             ^^^^^^^^^

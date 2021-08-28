@@ -500,7 +500,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 		if ok {
 			b.report(e.Class, LevelError, "invalidNew", "Cannot instantiate trait %s", class.Name)
 		} else {
-			b.walker.r.reportUndefinedType(e.Class, className)
+			b.walker.r.reportUndefinedClass(e.Class, className)
 		}
 	} else {
 		if class.IsInterface() {

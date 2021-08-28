@@ -344,6 +344,28 @@ public function process($acts, $config) {
 		},
 
 		{
+			Name:     "undefinedClass",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report usages of undefined class or interface.`,
+			Before:   `$foo = new UndefinedClass;`,
+			After:    `$foo = new DefinedClass;`,
+		},
+
+		{
+			Name:     "undefinedTrait",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report usages of undefined trait.`,
+			Before: `class Foo {
+  use UndefinedTrait;
+}`,
+			After: `class Foo {
+  use DefinedTrait;
+}`,
+		},
+
+		{
 			Name:     "undefinedProperty",
 			Default:  true,
 			Quickfix: false,
@@ -419,15 +441,6 @@ if ($cond) {
   $v = 10;
 }
 return $v;`,
-		},
-
-		{
-			Name:     "undefinedType",
-			Default:  true,
-			Quickfix: false,
-			Comment:  `Report usages of undefined type.`,
-			Before:   `class Foo extends UndefinedClass {}`,
-			After:    `class Foo extends DefinedClass {}`,
 		},
 
 		{

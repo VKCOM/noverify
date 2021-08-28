@@ -1269,7 +1269,6 @@ func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.Comment) (typesMap typ
 		d.checkPHPDocRef(n, part)
 		part, ok := part.(*phpdoc.TypeVarCommentPart)
 		if ok && part.Name() == "var" {
-
 			converted := phpdoctypes.ToRealType(d.ctx.typeNormalizer.ClassFQNProvider(), part.Type)
 			moveShapesToContext(&d.ctx, converted.Shapes)
 			d.handleClosuresFromDoc(converted.Closures)
@@ -1286,10 +1285,74 @@ func (d *rootWalker) parsePHPDocVar(n ir.Node, doc phpdoc.Comment) (typesMap typ
 			}
 
 			typesMap = types.NewMapWithNormalization(d.ctx.typeNormalizer, converted.Types)
+
+			d.checkUndefinedClassesInPHPDoc(n, typesMap, part)
 		}
 	}
 
 	return typesMap
+}
+
+func (d *rootWalker) checkUndefinedClassesInPHPDoc(n ir.Node, typesMap types.Map, part phpdoc.CommentPart) {
+	if !d.metaInfo().IsIndexingComplete() {
+		return
+	}
+
+	resolved := solver.ResolveTypes(d.metaInfo(), d.ctx.st.CurrentClass, typesMap, solver.ResolverMap{})
+	typesMap = types.NewMapFromMap(resolved)
+
+	typesMap.Iterate(func(className string) {
+		if types.IsShape(className) {
+			shape, ok := d.metaInfo().GetClass(className)
+			if ok {
+				for _, info := range shape.Properties {
+					info.Typ.Iterate(func(typ string) {
+						if !types.IsClass(typ) {
+							return
+						}
+
+						d.checkUndefinedClass(typ, part, n)
+					})
+				}
+			}
+			return
+		}
+
+		if types.IsArray(className) {
+			arrayType := types.ArrayType(className)
+			if types.IsClass(arrayType) {
+				d.checkUndefinedClass(arrayType, part, n)
+			}
+			return
+		}
+
+		if !types.IsClass(className) {
+			return
+		}
+
+		d.checkUndefinedClass(className, part, n)
+	})
+}
+
+func (d *rootWalker) checkUndefinedClass(className string, part phpdoc.CommentPart, n ir.Node) {
+	// While there is no template support, this hack saves you unnecessary bugs.
+	if strings.HasSuffix(className, `\T`) {
+		return
+	}
+
+	_, ok := d.metaInfo().GetClassOrTrait(className)
+	if ok {
+		return
+	}
+	partNum := 1
+	if varPart, ok := part.(*phpdoc.TypeVarCommentPart); ok && varPart.VarIsFirst {
+		partNum = 2
+	}
+
+	d.ReportPHPDoc(PHPDocLineField(n, part.Line(), partNum),
+		LevelError, "undefinedClass",
+		"Class or interface named %s does not exist", className,
+	)
 }
 
 func (d *rootWalker) isValidPHPDocRef(n ir.Node, ref string) bool {
@@ -1504,6 +1567,8 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 					"Void type can only be used as a standalone type for the return type",
 				)
 			}
+
+			d.checkUndefinedClassesInPHPDoc(n, returnType, part)
 			continue
 		}
 
@@ -1572,6 +1637,8 @@ func (d *rootWalker) checkPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []i
 				"Void type can only be used as a standalone type for the return type",
 			)
 		}
+
+		d.checkUndefinedClassesInPHPDoc(n, param.Typ, part)
 	}
 
 	return errors
@@ -1604,20 +1671,25 @@ func (d *rootWalker) checkTypeHintNode(n ir.Node, place string) {
 		}
 	}
 
+	_, inTrait := d.currentClassNodeStack.Current().(*ir.TraitStmt)
+
 	typesMap := types.NewMapWithNormalization(d.ctx.typeNormalizer, typeList)
 
 	typesMap.Iterate(func(typ string) {
 		if types.IsClass(typ) {
 			className := typ
 
-			_, ok := d.metaInfo().GetTrait(className)
-			if ok {
+			_, hasTrait := d.metaInfo().GetTrait(className)
+			if hasTrait && !inTrait {
 				d.Report(n, LevelWarning, "badTraitUse", "Cannot use trait %s as a typehint for %s", strings.TrimPrefix(className, `\`), place)
 			}
 
-			class, ok := d.metaInfo().GetClass(className)
-			if !ok {
-				return
+			class, hasClass := d.metaInfo().GetClass(className)
+
+			if !hasClass && !hasTrait {
+				d.Report(n, LevelError, "undefinedClass",
+					"Class or interface named %s does not exist", className,
+				)
 			}
 
 			d.checkNameCase(n, className, class.Name)
@@ -2280,7 +2352,7 @@ func (d *rootWalker) checkTraitImplemented(classNode, name ir.Node, nameUsed str
 	}
 	trait, ok := d.metaInfo().GetTrait(nameUsed)
 	if !ok {
-		d.reportUndefinedType(name, nameUsed)
+		d.reportUndefinedTrait(name, nameUsed)
 		return
 	}
 	d.checkImplemented(classNode, name, nameUsed, trait)
@@ -2293,7 +2365,7 @@ func (d *rootWalker) checkClassInherit(classNode, extendsClassNameNode ir.Node, 
 
 	class, ok := d.metaInfo().GetClass(nameUsed)
 	if !ok {
-		d.reportUndefinedType(extendsClassNameNode, nameUsed)
+		d.reportUndefinedClass(extendsClassNameNode, nameUsed)
 		return
 	}
 
@@ -2314,7 +2386,7 @@ func (d *rootWalker) checkClassImplemented(classNode, extendsClassNameNode ir.No
 	}
 	class, ok := d.metaInfo().GetClass(nameUsed)
 	if !ok {
-		d.reportUndefinedType(extendsClassNameNode, nameUsed)
+		d.reportUndefinedClass(extendsClassNameNode, nameUsed)
 		return
 	}
 	d.checkImplemented(classNode, extendsClassNameNode, nameUsed, class)
@@ -2375,8 +2447,12 @@ func (d *rootWalker) checkImplementedStep(classNode, name ir.Node, className str
 	}
 }
 
-func (d *rootWalker) reportUndefinedType(n ir.Node, name string) {
-	d.Report(n, LevelError, "undefinedType", "Type %s not found", name)
+func (d *rootWalker) reportUndefinedClass(n ir.Node, name string) {
+	d.Report(n, LevelError, "undefinedClass", "Class or interface named %s does not exist", name)
+}
+
+func (d *rootWalker) reportUndefinedTrait(n ir.Node, name string) {
+	d.Report(n, LevelError, "undefinedTrait", "Trait named %s does not exist", name)
 }
 
 func (d *rootWalker) checkNameCase(n ir.Node, nameUsed, nameExpected string) {

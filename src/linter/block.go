@@ -264,6 +264,8 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 
 		typesMap := types.NewMapWithNormalization(b.r.ctx.typeNormalizer, converted.Types)
 		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(part.Var, "$"), typesMap, "@var")
+
+		b.r.checkUndefinedClassesInPHPDoc(n, typesMap, part)
 	}
 }
 

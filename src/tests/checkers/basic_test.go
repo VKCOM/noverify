@@ -1993,10 +1993,10 @@ class Impl implements Iface1, Iface2 {}
 interface Iface extends IfaceBase {}
 `)
 	test.Expect = []string{
-		`Type \Base not found`,
-		`Type \Iface1 not found`,
-		`Type \Iface2 not found`,
-		`Type \Foo not found`,
+		`Class or interface named \Base does not exist`,
+		`Class or interface named \Iface1 does not exist`,
+		`Class or interface named \Iface2 does not exist`,
+		`Class or interface named \Foo does not exist`,
 	}
 	test.RunAndMatch()
 }

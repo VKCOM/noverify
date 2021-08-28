@@ -1358,9 +1358,9 @@ trait AbstractTraitAB {
 `)
 
 	test.Expect = []string{
-		`Type \T7\UnknownClass not found`,
-		`Type \T8\UnknownTrait not found`,
-		`Type \T6\UnknownIface not found`,
+		`Class or interface named \T7\UnknownClass does not exist`,
+		`Class or interface named \T6\UnknownIface does not exist`,
+		`Trait named \T8\UnknownTrait does not exist`,
 
 		`\t1\AB should be spelled \T1\AB`,
 		`\T5\BadCase1::Foo should be spelled as \T5\IfaceFoo::foo`,
@@ -1383,7 +1383,7 @@ trait AbstractTraitAB {
 
 		`Class \T6\Bad must implement \T6\TraitAbstractA::a method`,
 	}
-	linttest.RunFilterMatch(test, `unimplemented`, `nameMismatch`, `undefinedType`)
+	linttest.RunFilterMatch(test, "unimplemented", "nameMismatch", "undefinedClass", "undefinedTrait")
 }
 
 func TestInterfaceRules(t *testing.T) {
