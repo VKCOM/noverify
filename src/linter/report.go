@@ -991,6 +991,23 @@ function main(): void {
 			Before:   `$a =+ 100;`,
 			After:    `$a += 100;`,
 		},
+
+		{
+			Name:     "parentNotFound",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report using `parent::` in a class without a parent class.",
+			Before: `class Foo {
+  public function f() {
+    parent::b(); // Class Foo has no parent.
+  }
+}`,
+			After: `class Foo extends Boo {
+  public function f() {
+    parent::b(); // Ok.
+  }
+}`,
+		},
 	}
 
 	for _, info := range allChecks {

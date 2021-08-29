@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 96           | 83                        | 13                         | 12                 |
+| 97           | 84                        | 13                         | 12                 |
 
 ## Table of contents
  - Enabled by default
@@ -59,6 +59,7 @@
    - [`oldStyleConstructor` checker](#oldstyleconstructor-checker)
    - [`paramClobber` checker](#paramclobber-checker)
    - [`parentConstructor` checker](#parentconstructor-checker)
+   - [`parentNotFound` checker](#parentnotfound-checker)
    - [`phpdocLint` checker](#phpdoclint-checker)
    - [`phpdocRef` checker](#phpdocref-checker)
    - [`phpdocType` checker](#phpdoctype-checker)
@@ -1177,6 +1178,32 @@ class Foo extends Bar {
   public function __construct($x, $y) {
     parent::__construct($x);
     $this->y = $y;
+  }
+}
+```
+<p><br></p>
+
+
+### `parentNotFound` checker
+
+#### Description
+
+Report using `parent::` in a class without a parent class.
+
+#### Non-compliant code:
+```php
+class Foo {
+  public function f() {
+    parent::b(); // Class Foo has no parent.
+  }
+}
+```
+
+#### Compliant code:
+```php
+class Foo extends Boo {
+  public function f() {
+    parent::b(); // Ok.
   }
 }
 ```
