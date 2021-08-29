@@ -4,31 +4,31 @@ MAYBE   deprecated: Call to deprecated function dl (5.3) at testdata/phprocksyd/
 ERROR   constCase: Constant 'NULL' should be used in lower case as 'null' at testdata/phprocksyd/Phprocksyd.php:321
             $n = stream_select($read, $write, $except, NULL);
                                                        ^^^^
-WARNING phpdocLint: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:364
+WARNING invalidDocblock: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:364
      * @param $stream_id
               ^^^^^^^^^^
-WARNING phpdocLint: Malformed @param $req tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:365
+WARNING invalidDocblock: Malformed @param $req tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:365
      * @param $req
               ^^^^
-WARNING phpdocLint: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:389
+WARNING invalidDocblock: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:389
      * @param $stream_id
               ^^^^^^^^^^
-WARNING phpdocLint: Malformed @param $req tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:390
+WARNING invalidDocblock: Malformed @param $req tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:390
      * @param $req
               ^^^^
 WARNING unused: Variable $status is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/phprocksyd/Phprocksyd.php:394
         $status = null;
         ^^^^^^^
-WARNING phpdocLint: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:421
+WARNING invalidDocblock: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:421
      * @param $stream_id
               ^^^^^^^^^^
-WARNING phpdocLint: Malformed @param $req tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:422
+WARNING invalidDocblock: Malformed @param $req tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:422
      * @param $req
               ^^^^
-WARNING phpdocLint: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:443
+WARNING invalidDocblock: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:443
      * @param $stream_id
               ^^^^^^^^^^
-WARNING phpdocLint: Malformed @param $req tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:444
+WARNING invalidDocblock: Malformed @param $req tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:444
      * @param $req
               ^^^^
 ERROR   undefinedMethod: Call to undefined method {mixed}->run() at testdata/phprocksyd/Phprocksyd.php:479

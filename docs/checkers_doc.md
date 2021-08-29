@@ -41,6 +41,9 @@
    - [`indexingSyntax` checker (autofixable)](#indexingsyntax-checker)
    - [`intNeedle` checker](#intneedle-checker)
    - [`intOverflow` checker](#intoverflow-checker)
+   - [`invalidDocblock` checker](#invaliddocblock-checker)
+   - [`invalidDocblockRef` checker](#invaliddocblockref-checker)
+   - [`invalidDocblockType` checker](#invaliddocblocktype-checker)
    - [`invalidExtendClass` checker](#invalidextendclass-checker)
    - [`invalidNew` checker](#invalidnew-checker)
    - [`keywordCase` checker](#keywordcase-checker)
@@ -800,6 +803,60 @@ return PHP_INT_MIN;
 <p><br></p>
 
 
+### `invalidDocblock` checker
+
+#### Description
+
+Report malformed PHPDoc comments.
+
+#### Non-compliant code:
+```php
+@property $foo // Property type is missing.
+```
+
+#### Compliant code:
+```php
+@property Foo $foo
+```
+<p><br></p>
+
+
+### `invalidDocblockRef` checker
+
+#### Description
+
+Report invalid symbol references inside PHPDoc.
+
+#### Non-compliant code:
+```php
+@see MyClass
+```
+
+#### Compliant code:
+```php
+@see \Foo\MyClass
+```
+<p><br></p>
+
+
+### `invalidDocblockType` checker
+
+#### Description
+
+Report potential issues in PHPDoc types.
+
+#### Non-compliant code:
+```php
+@var []int $xs
+```
+
+#### Compliant code:
+```php
+@var int[] $xs
+```
+<p><br></p>
+
+
 ### `invalidExtendClass` checker
 
 #### Description
@@ -1183,7 +1240,6 @@ class Foo extends Bar {
 ```
 <p><br></p>
 
-
 ### `parentNotFound` checker
 
 #### Description
@@ -1262,7 +1318,6 @@ Report potential issues in PHPDoc types.
 @var int[] $xs
 ```
 <p><br></p>
-
 
 ### `precedence` checker
 

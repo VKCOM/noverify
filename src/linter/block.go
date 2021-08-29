@@ -236,7 +236,7 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 
 	if phpdoc.IsSuspicious(t.Value) {
 		b.r.ReportPHPDoc(PHPDocLine(n, 1),
-			LevelWarning, "phpdocLint",
+			LevelWarning, "invalidDocblock",
 			"Multiline PHPDoc comment should start with /**, not /*",
 		)
 	}
@@ -254,7 +254,7 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 		if converted.Warning != "" {
 			b.r.ReportPHPDoc(
 				PHPDocLineField(n, part.Line(), 1),
-				LevelNotice, "phpdocType", converted.Warning,
+				LevelNotice, "invalidDocblockType", converted.Warning,
 			)
 		}
 

@@ -10,7 +10,7 @@ WARNING strictCmp: 3rd argument of in_array must be true when comparing strings 
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/twitter-api-php/TwitterAPIExchange.php:223
             'oauth_version' => '1.0'
             ^^^^^^^^^^^^^^^^^^^^^^^^
-MAYBE   phpdocType: Use bool type instead of boolean at testdata/twitter-api-php/TwitterAPIExchange.php:267
+MAYBE   invalidDocblockType: Use bool type instead of boolean at testdata/twitter-api-php/TwitterAPIExchange.php:267
      * @param boolean $return      If true, returns data. This is left in for backward compatibility reasons
               ^^^^^^^
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/twitter-api-php/TwitterAPIExchange.php:286
@@ -19,7 +19,7 @@ WARNING strictCmp: 3rd argument of in_array must be true when comparing strings 
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/twitter-api-php/TwitterAPIExchange.php:366
                 'oauth_signature_method', 'oauth_timestamp', 'oauth_token', 'oauth_version'))) {
                                                                             ^^^^^^^^^^^^^^^
-MAYBE   phpdocType: Use int type instead of integer at testdata/twitter-api-php/TwitterAPIExchange.php:404
+MAYBE   invalidDocblockType: Use int type instead of integer at testdata/twitter-api-php/TwitterAPIExchange.php:404
      * @return integer
                ^^^^^^^
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/twitter-api-php/index.php:10

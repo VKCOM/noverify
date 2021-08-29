@@ -138,7 +138,7 @@ class BadClass {
 		`@see tag refers to unknown symbol invalid1`,
 		`@see tag refers to unknown symbol invalid2`,
 	}
-	linttest.RunFilterMatch(test, "phpdocRef")
+	linttest.RunFilterMatch(test, "invalidDocblockRef")
 }
 
 func TestPHPDocRefForConstantInClass(t *testing.T) {
@@ -181,7 +181,7 @@ function f() {}
 		`@see tag refers to unknown symbol TYPE_TEXT_UNDEFINED`,
 		`@see tag refers to unknown symbol TYPE_TEXT`,
 	}
-	linttest.RunFilterMatch(test, "phpdocRef")
+	linttest.RunFilterMatch(test, "invalidDocblockRef")
 }
 
 func TestBadParamName(t *testing.T) {
