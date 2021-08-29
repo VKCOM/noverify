@@ -92,10 +92,10 @@ func (r *rootChecker) CheckFunction(fun *ir.FunctionStmt) bool {
 
 func (r *rootChecker) reportPHPDocErrors(errs PHPDocErrors) {
 	for _, err := range errs.types {
-		r.walker.ReportPHPDoc(err.Location, LevelNotice, "phpdocType", err.Message)
+		r.walker.ReportPHPDoc(err.Location, LevelNotice, "invalidDocblockType", err.Message)
 	}
 	for _, err := range errs.lint {
-		r.walker.ReportPHPDoc(err.Location, LevelWarning, "phpdocLint", err.Message)
+		r.walker.ReportPHPDoc(err.Location, LevelWarning, "invalidDocblock", err.Message)
 	}
 }
 
@@ -253,7 +253,7 @@ func (r *rootChecker) checkPHPDocSeeRef(n ir.Node, part phpdoc.CommentPart) {
 		if !r.isValidPHPDocRef(ref) {
 			r.walker.ReportPHPDoc(
 				PHPDocLineField(n, part.Line(), 1),
-				LevelWarning, "phpdocRef", "@see tag refers to unknown symbol %s", ref,
+				LevelWarning, "invalidDocblockRef", "@see tag refers to unknown symbol %s", ref,
 			)
 		}
 	}
@@ -281,7 +281,7 @@ func (r *rootChecker) checkPHPDocMixinRef(n ir.Node, part phpdoc.CommentPart) {
 	if _, ok := r.info.GetClass(name); !ok {
 		r.walker.ReportPHPDoc(
 			PHPDocLineField(n, part.Line(), 1),
-			LevelWarning, "phpdocRef", "@mixin tag refers to unknown class %s", name,
+			LevelWarning, "invalidDocblockRef", "@mixin tag refers to unknown class %s", name,
 		)
 	}
 }
@@ -676,7 +676,7 @@ func (r *rootChecker) CheckOldStyleConstructor(meth *ir.ClassMethodStmt) {
 func (r *rootChecker) CheckPHPDocVar(n ir.Node, doc phpdoc.Comment, typ types.Map) {
 	if phpdoc.IsSuspicious([]byte(doc.Raw)) {
 		r.walker.ReportPHPDoc(PHPDocLine(n, 1),
-			LevelWarning, "phpdocLint",
+			LevelWarning, "invalidDocblock",
 			"Multiline PHPDoc comment should start with /**, not /*",
 		)
 	}
@@ -693,7 +693,7 @@ func (r *rootChecker) CheckPHPDocVar(n ir.Node, doc phpdoc.Comment, typ types.Ma
 					field = 2
 				}
 				r.walker.ReportPHPDoc(PHPDocLineField(n, part.Line(), field),
-					LevelNotice, "phpdocType",
+					LevelNotice, "invalidDocblockType",
 					converted.Warning,
 				)
 			}

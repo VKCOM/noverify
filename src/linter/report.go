@@ -265,7 +265,7 @@ thisFunctionAlwaysExits();`,
 		},
 
 		{
-			Name:     "phpdocLint",
+			Name:     "invalidDocblock",
 			Default:  true,
 			Quickfix: false,
 			Comment:  `Report malformed PHPDoc comments.`,
@@ -274,7 +274,7 @@ thisFunctionAlwaysExits();`,
 		},
 
 		{
-			Name:     "phpdocType",
+			Name:     "invalidDocblockType",
 			Default:  true,
 			Quickfix: false,
 			Comment:  `Report potential issues in PHPDoc types.`,
@@ -283,7 +283,7 @@ thisFunctionAlwaysExits();`,
 		},
 
 		{
-			Name:     "phpdocRef",
+			Name:     "invalidDocblockRef",
 			Default:  true,
 			Quickfix: false,
 			Comment:  `Report invalid symbol references inside PHPDoc.`,

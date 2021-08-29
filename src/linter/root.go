@@ -1196,10 +1196,10 @@ func (d *rootWalker) parseTypeHintNode(n ir.Node) (typ types.Map, ok bool) {
 
 func (d *rootWalker) reportPHPDocErrors(errs PHPDocErrors) {
 	for _, err := range errs.types {
-		d.ReportPHPDoc(err.Location, LevelNotice, "phpdocType", err.Message)
+		d.ReportPHPDoc(err.Location, LevelNotice, "invalidDocblockType", err.Message)
 	}
 	for _, err := range errs.lint {
-		d.ReportPHPDoc(err.Location, LevelWarning, "phpdocLint", err.Message)
+		d.ReportPHPDoc(err.Location, LevelWarning, "invalidDocblock", err.Message)
 	}
 }
 
