@@ -41,6 +41,22 @@ function f() {
 function f(stdClass $a) {
   $a->f();
 }
+
+function f(mixed|object $a) {
+  $a->f();
+}
+
+function f(mixed|null $a) {
+  $a->f();
+}
+
+function f(?mixed $a) {
+  $a->f();
+}
+
+function f(stdClass|null $a) {
+  $a->f();
+}
 `,
 	)
 	test.Expect = []string{
@@ -52,6 +68,10 @@ function f(stdClass $a) {
 		"Call to undefined method {\\Foo}->f()",
 		"Call to undefined method {null}->f()",
 		"Call to undefined method {\\stdClass}->f()",
+		"Call to undefined method {mixed|object}->f()",
+		"Call to undefined method {mixed|null}->f()",
+		"Call to undefined method {mixed|null}->f()",
+		"Call to undefined method {\\stdClass|null}->f()",
 	}
 	test.RunAndMatch()
 }
@@ -88,6 +108,22 @@ function f() {
 }
 
 function f(stdClass $a) {
+  $a->f();
+}
+
+function f(mixed|object $a) {
+  $a->f();
+}
+
+function f(mixed|null $a) {
+  $a->f();
+}
+
+function f(?mixed $a) {
+  $a->f();
+}
+
+function f(stdClass|null $a) {
   $a->f();
 }
 `,
