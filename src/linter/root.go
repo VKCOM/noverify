@@ -88,6 +88,8 @@ func (d *rootWalker) InitCustom() {
 	d.customBlock = append(d.customBlock, d.config.Checkers.blockCheckers...)
 }
 
+// Getters part.
+
 // scope returns root-level variable scope if applicable.
 func (d *rootWalker) scope() *meta.Scope {
 	if d.meta.Scope == nil {
@@ -114,7 +116,9 @@ func (d *rootWalker) File() *workspace.File {
 	return d.file
 }
 
-// EnterNode is invoked at every node in hierarchy
+// Visitor part.
+
+// EnterNode is invoked at every node in hierarchy.
 func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 	res = true
 
@@ -255,6 +259,63 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 	return res
 }
 
+// LeaveNode is invoked after node process.
+func (d *rootWalker) LeaveNode(n ir.Node) {
+	for _, c := range d.custom {
+		c.BeforeLeaveNode(n)
+	}
+
+	switch n.(type) {
+	case *ir.ClassStmt, *ir.InterfaceStmt, *ir.TraitStmt, *ir.AnonClassExpr:
+		d.getClass() // populate classes map
+
+		d.currentClassNodeStack.Pop()
+	}
+
+	state.LeaveNode(d.ctx.st, n)
+
+	for _, c := range d.custom {
+		c.AfterLeaveNode(n)
+	}
+}
+
+// beforeEnterFile is invoked before file process.
+func (d *rootWalker) beforeEnterFile() {
+	for _, c := range d.custom {
+		c.BeforeEnterFile()
+	}
+}
+
+// afterLeaveFile is invoked after file process.
+func (d *rootWalker) afterLeaveFile() {
+	for _, c := range d.custom {
+		c.AfterLeaveFile()
+	}
+
+	if !d.metaInfo().IsIndexingComplete() {
+		for _, shape := range d.ctx.shapes {
+			props := make(meta.PropertiesMap)
+			for _, p := range shape.Props {
+				props[p.Key] = meta.PropertyInfo{
+					Typ:         types.NewMapWithNormalization(d.ctx.typeNormalizer, p.Types).Immutable(),
+					AccessLevel: meta.Public,
+				}
+			}
+			cl := meta.ClassInfo{
+				Name:       shape.Name,
+				Properties: props,
+				Flags:      meta.ClassShape,
+			}
+			if d.meta.Classes.H == nil {
+				d.meta.Classes = meta.NewClassesMap()
+			}
+			d.meta.Classes.Set(shape.Name, cl)
+		}
+	}
+}
+
+// Handle comments part.
+
 func (d *rootWalker) handleCommentToken(t *token.Token) bool {
 	if !phpdoc.IsPHPDocToken(t) {
 		return true
@@ -299,283 +360,7 @@ func (d *rootWalker) handleComments(n ir.Node) {
 	n.IterateTokens(d.handleCommentToken)
 }
 
-// ReportPHPDoc registers a single report message about some found problem in PHPDoc.
-func (d *rootWalker) ReportPHPDoc(phpDocLocation PHPDocLocation, level int, checkName, msg string, args ...interface{}) {
-	if phpDocLocation.RelativeLine {
-		doc, ok := irutil.FindPHPDoc(phpDocLocation.Node, true)
-		if !ok {
-			// If PHPDoc for some reason was not found, give a warning to the node.
-			d.Report(phpDocLocation.Node, level, checkName, msg, args...)
-			return
-		}
-
-		countPHPDocLines := strings.Count(doc, "\n") + 1
-
-		nodePos := ir.GetPosition(phpDocLocation.Node)
-		if nodePos == nil {
-			// If position for some reason was not found, give a warning to the node.
-			d.Report(phpDocLocation.Node, level, checkName, msg, args...)
-			return
-		}
-
-		// 1| <?php
-		// 2|
-		// 3| /**
-		// 4|  * Comment
-		// 5|  * @param int $a    <- phpDocLocation.Line == 3
-		// 6|  */                 <- countPHPDocLines == 4
-		// 7| function f($a) {}   <- nodePos.StartLine == 7
-		//
-		// countPHPDocLines - phpDocLocation.Line = 1
-		// nodePos.StartLine - 1 = 6
-		// 6 - 1 = 5 (number of the required line relative to one)
-		// 5 - 1 = 4 (number of the required line relative to zero)
-		phpDocLocation.Line = nodePos.StartLine - (countPHPDocLines - phpDocLocation.Line) - 1 - 1
-	}
-
-	if phpDocLocation.Line < 0 || phpDocLocation.Line >= d.file.NumLines() {
-		d.Report(phpDocLocation.Node, level, checkName, msg, args...)
-		return
-	}
-
-	contextLine := d.file.Line(phpDocLocation.Line)
-
-	lineWithoutBeginning := contextLine
-	// For the case when we give a warning about the wrong start
-	// of PHPDoc (/* instead /**), it is not necessary to delete characters.
-	if !bytes.Contains(contextLine, []byte("/*")) || bytes.Contains(contextLine, []byte("/**")) {
-		lineWithoutBeginning = bytes.TrimLeft(contextLine, "/ *")
-	}
-
-	shiftFromStart := len(contextLine) - len(lineWithoutBeginning)
-
-	parts := bytes.Fields(lineWithoutBeginning)
-	if phpDocLocation.Field >= len(parts) {
-		phpDocLocation.Field = 0
-		phpDocLocation.WholeLine = true
-	}
-
-	var startChar int
-	var endChar int
-
-	if phpDocLocation.WholeLine {
-		startChar = shiftFromStart
-		endChar = len(contextLine)
-	} else {
-		part := parts[phpDocLocation.Field]
-		shiftStart := bytes.Index(lineWithoutBeginning, part)
-		shiftEnd := shiftStart + len(part)
-
-		startChar = shiftFromStart + shiftStart
-		endChar = shiftFromStart + shiftEnd
-	}
-
-	if endChar == len(contextLine) && bytes.HasSuffix(contextLine, []byte("\r")) {
-		endChar--
-	}
-
-	loc := ir.Location{
-		StartLine: phpDocLocation.Line,
-		EndLine:   phpDocLocation.Line,
-		StartChar: startChar,
-		EndChar:   endChar,
-	}
-
-	d.ReportLocation(loc, level, checkName, msg, args...)
-}
-
-func (d *rootWalker) Report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
-	var pos position.Position
-
-	if n == nil {
-		// Hack to parse syntax error message from php-parser.
-		if strings.Contains(msg, "syntax error") && strings.Contains(msg, " at line ") {
-			// it is in form "Syntax error: syntax error: unexpected '*' at line 4"
-			if lastIdx := strings.LastIndexByte(msg, ' '); lastIdx > 0 {
-				lineNumStr := msg[lastIdx+1:]
-				lineNum, err := strconv.Atoi(lineNumStr)
-				if err == nil {
-					pos.StartLine = lineNum
-					pos.EndLine = lineNum
-					msg = msg[0:lastIdx]
-					msg = strings.TrimSuffix(msg, " at line")
-				}
-			}
-		}
-	} else {
-		nodePos := ir.GetPosition(n)
-		if nodePos == nil {
-			return
-		}
-		pos = *nodePos
-	}
-
-	var loc ir.Location
-
-	loc.StartLine = pos.StartLine - 1
-	loc.EndLine = pos.EndLine - 1
-	loc.StartChar = pos.StartPos
-	loc.EndChar = pos.EndPos
-
-	if pos.StartLine >= 1 && d.file.NumLines() >= pos.StartLine {
-		p := d.file.LinePosition(pos.StartLine - 1)
-		if pos.StartPos >= p {
-			loc.StartChar = pos.StartPos - p
-		}
-	}
-
-	if pos.EndLine >= 1 && d.file.NumLines() >= pos.EndLine {
-		p := d.file.LinePosition(pos.EndLine - 1)
-		if pos.EndPos >= p {
-			loc.EndChar = pos.EndPos - p
-		}
-	}
-
-	d.ReportLocation(loc, level, checkName, msg, args...)
-}
-
-func (d *rootWalker) ReportLocation(loc ir.Location, level int, checkName, msg string, args ...interface{}) {
-	if !d.metaInfo().IsIndexingComplete() {
-		return
-	}
-	if d.file.AutoGenerated() && !d.config.CheckAutoGenerated {
-		return
-	}
-	// We don't report anything if linter was disabled by a
-	// successful @linter disable, unless it's the linterError.
-	if d.linterDisabled && checkName != "linterError" {
-		return
-	}
-
-	if !d.checkersFilter.IsEnabledReport(checkName, d.ctx.st.CurrentFile) {
-		return
-	}
-
-	if loc.StartLine < 0 || loc.StartLine >= d.file.NumLines() {
-		return
-	}
-
-	contextLine := d.file.Line(loc.StartLine)
-
-	var hash uint64
-	// If baseline is not enabled, don't waste time on hash computations.
-	if d.config.ComputeBaselineHashes {
-		hash = d.reportHash(&loc, contextLine, checkName, msg)
-		if count := d.ctx.baseline.Count(hash); count >= 1 {
-			if d.ctx.hashCounters == nil {
-				d.ctx.hashCounters = make(map[uint64]int)
-			}
-			d.ctx.hashCounters[hash]++
-			if d.ctx.hashCounters[hash] <= count {
-				return
-			}
-		}
-	}
-
-	d.reports = append(d.reports, &Report{
-		CheckName: checkName,
-		Context:   string(contextLine),
-		StartChar: loc.StartChar,
-		EndChar:   loc.EndChar,
-		Line:      loc.StartLine + 1,
-		Level:     level,
-		Filename:  strings.ReplaceAll(d.ctx.st.CurrentFile, "\\", "/"), // To make output stable between platforms, see #572
-		Message:   fmt.Sprintf(msg, args...),
-		Hash:      hash,
-	})
-}
-
-// reportHash computes the ReportLocation signature hash for the baseline.
-func (d *rootWalker) reportHash(loc *ir.Location, contextLine []byte, checkName, msg string) uint64 {
-	// Since we store class::method scope, renaming a class would cause baseline
-	// invalidation for the entire class. But this is not an issue, since in
-	// a modern PHP class name always should map to a filename.
-	// If we renamed a class, we probably renamed the file as well, so
-	// the baseline would be invalidated anyway.
-	//
-	// We still get all the benefits by using method prefix: it's common
-	// for different classes to have methods with similar name. We don't
-	// want such methods to be considered as a single "scope".
-	scope := "file"
-	switch {
-	case d.ctx.st.CurrentClass != "" && d.ctx.st.CurrentFunction != "":
-		scope = d.ctx.st.CurrentClass + "::" + d.ctx.st.CurrentFunction
-	case d.ctx.st.CurrentFunction != "":
-		scope = d.ctx.st.CurrentFunction
-	}
-
-	var prevLine []byte
-	var nextLine []byte
-	// Adjacent lines are only included when using non-conservative baseline.
-	if !d.config.ConservativeBaseline {
-		// Lines are 1-based, indexes are 0-based.
-		// If this function is called, we expect that lines[index] exists.
-		index := loc.StartLine - 1
-		if index >= 1 {
-			prevLine = d.file.Line(index - 1)
-		}
-		if d.file.NumLines() > index+1 {
-			nextLine = d.file.Line(index + 1)
-		}
-	}
-
-	// Observation: using a base file name instead of its full name does not
-	// introduce any "bad collisions", because we have a "scope" part
-	// that cuts the risk by a big margin.
-	//
-	// One benefit is that it makes the baseline contents more position-independent.
-	// We don't need to know a source root folder to truncate it.
-	//
-	// Moves like Foo/Bar/User.php -> Common/User.php do not invalidate the
-	// suppress base. This is not an obvious win, but it may be a good
-	// compromise to solve a use case where a class file is being moved.
-	// For classes, filename is unlikely to be changed during this file move operation.
-	//
-	// It can't handle file duplication when Foo/Bar/User.php is *copied* to a new location.
-	// It may be useful to give warnings to both *old* and *new* copies of the duplicated
-	// code since some bugs should be fixed in both places.
-	// We'll see how it goes.
-	filename := filepath.Base(d.ctx.st.CurrentFile)
-
-	d.ctx.scratchBuf.Reset()
-	return baseline.ReportHash(&d.ctx.scratchBuf, baseline.HashFields{
-		Filename:  filename,
-		PrevLine:  bytes.TrimSuffix(prevLine, []byte("\r")),
-		StartLine: bytes.TrimSuffix(contextLine, []byte("\r")),
-		NextLine:  bytes.TrimSuffix(nextLine, []byte("\r")),
-		CheckName: checkName,
-		Message:   msg,
-		Scope:     scope,
-	})
-}
-
-func (d *rootWalker) reportUndefinedVariable(v ir.Node, maybeHave bool, path irutil.NodePath) {
-	sv, ok := v.(*ir.SimpleVar)
-	if !ok {
-		d.Report(v, LevelWarning, "undefinedVariable", "Unknown variable variable %s used",
-			utils.NameNodeToString(v))
-		return
-	}
-
-	if _, ok := superGlobals[sv.Name]; ok {
-		return
-	}
-
-	// For the following cases, we do not give warnings,
-	// as they check for the presence of this variable.
-	// $b = $a ?? 100;
-	// $b = isset($a) ? $a : 100;
-	needWarn := !utils.InCoalesceOrIsset(path)
-	if !needWarn {
-		return
-	}
-
-	if maybeHave {
-		d.Report(sv, LevelWarning, "maybeUndefined", "Possibly undefined variable $%s", sv.Name)
-	} else {
-		d.Report(sv, LevelError, "undefinedVariable", "Cannot find referenced variable $%s", sv.Name)
-	}
-}
+// Handle functions part.
 
 type handleFuncResult struct {
 	returnTypes            types.Map
@@ -685,6 +470,322 @@ func (d *rootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.N
 	}
 }
 
+type parseFuncParamsResult struct {
+	params         []meta.FuncParam
+	paramsTypeHint map[string]types.Map
+	minParamsCount int
+}
+
+func (d *rootWalker) parseFuncParams(params []ir.Node, phpDocParamsTypes phpdoctypes.ParamsMap, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (res parseFuncParamsResult) {
+	if len(params) == 0 {
+		return res
+	}
+
+	minArgs := 0
+	args := make([]meta.FuncParam, 0, len(params))
+	typeHints := make(map[string]types.Map, len(params))
+
+	if closureSolver != nil && solver.IsSupportedFunction(closureSolver.Name) {
+		return d.parseFuncArgsForCallback(params, sc, closureSolver)
+	}
+
+	for _, param := range params {
+		p := param.(*ir.Parameter)
+		v := p.Variable
+		phpDocType := phpDocParamsTypes[v.Name]
+
+		if !phpDocType.Typ.Empty() {
+			sc.AddVarName(v.Name, phpDocType.Typ, "param", meta.VarAlwaysDefined)
+		}
+
+		paramTyp := phpDocType.Typ
+
+		if p.DefaultValue == nil && !phpDocType.Optional && !p.Variadic {
+			minArgs++
+		}
+
+		if p.VariableType != nil {
+			typeHintType, ok := d.parseTypeHintNode(p.VariableType)
+			if ok {
+				paramTyp = typeHintType
+			}
+
+			typeHints[v.Name] = typeHintType
+		} else if paramTyp.Empty() && p.DefaultValue != nil {
+			paramTyp = solver.ExprTypeLocal(sc, d.ctx.st, p.DefaultValue)
+			// For the type resolver default value can look like a
+			// precise source of information (e.g. "false" is a precise bool),
+			// but it's not assigned unconditionally.
+			// If explicit argument is provided, that parameter can have
+			// almost any type possible.
+			paramTyp.MarkAsImprecise()
+		}
+
+		if p.Variadic {
+			paramTyp = paramTyp.Map(types.WrapArrayOf)
+		}
+
+		sc.AddVarName(v.Name, paramTyp, "param", meta.VarAlwaysDefined)
+
+		par := meta.FuncParam{
+			Typ:   paramTyp.Immutable(),
+			IsRef: p.ByRef,
+		}
+
+		par.Name = v.Name
+		args = append(args, par)
+	}
+
+	return parseFuncParamsResult{
+		params:         args,
+		paramsTypeHint: typeHints,
+		minParamsCount: minArgs,
+	}
+}
+
+// callbackParamByIndex returns the description of the parameter for the function by its index.
+func (d *rootWalker) callbackParamByIndex(param ir.Node, argType types.Map) meta.FuncParam {
+	p := param.(*ir.Parameter)
+	v := p.Variable
+
+	var typ types.Map
+	tp, ok := d.parseTypeHintNode(p.VariableType)
+	if ok {
+		typ = tp
+	} else {
+		typ = argType.Map(types.WrapElemOf)
+	}
+
+	arg := meta.FuncParam{
+		IsRef: p.ByRef,
+		Name:  v.Name,
+		Typ:   typ,
+	}
+	return arg
+}
+
+func (d *rootWalker) parseFuncArgsForCallback(params []ir.Node, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (res parseFuncParamsResult) {
+	countParams := len(params)
+	minArgs := countParams
+	if countParams == 0 {
+		return res
+	}
+	args := make([]meta.FuncParam, countParams)
+
+	switch closureSolver.Name {
+	case `\usort`, `\uasort`, `\array_reduce`:
+		args[0] = d.callbackParamByIndex(params[0], closureSolver.ArgTypes[0])
+		if countParams > 1 {
+			args[1] = d.callbackParamByIndex(params[1], closureSolver.ArgTypes[0])
+		}
+	case `\array_walk`, `\array_walk_recursive`, `\array_filter`:
+		args[0] = d.callbackParamByIndex(params[0], closureSolver.ArgTypes[0])
+	case `\array_map`:
+		args[0] = d.callbackParamByIndex(params[0], closureSolver.ArgTypes[1])
+	}
+
+	for i, param := range params {
+		p := param.(*ir.Parameter)
+		v := p.Variable
+		var typ types.Map
+		if i < len(args) {
+			typ = args[i].Typ
+		} else {
+			typ = types.MixedType
+		}
+
+		sc.AddVarName(v.Name, typ, "param", meta.VarAlwaysDefined)
+	}
+
+	return parseFuncParamsResult{
+		params:         args,
+		minParamsCount: minArgs,
+	}
+}
+
+func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
+	nm := d.ctx.st.Namespace + `\` + fun.FunctionName.Value
+	pos := ir.GetPosition(fun)
+
+	if funcSize := pos.EndLine - pos.StartLine; funcSize > maxFunctionLines {
+		d.Report(fun.FunctionName, LevelNotice, "complexity", "Too big function: more than %d lines", maxFunctionLines)
+	}
+
+	if d.meta.Functions.H == nil {
+		d.meta.Functions = meta.NewFunctionsMap()
+	}
+
+	d.checker.CheckCommentMisspellings(fun.FunctionName, fun.Doc.Raw)
+	d.checker.CheckIdentMisspellings(fun.FunctionName)
+
+	// Indexing stage.
+	doc := phpdoctypes.Parse(fun.Doc, fun.Params, d.ctx.typeNormalizer)
+	moveShapesToContext(&d.ctx, doc.Shapes)
+	d.handleClosuresFromDoc(doc.Closures)
+
+	// Check stage.
+	errors := d.checker.CheckPHPDoc(fun, fun.Doc, fun.Params)
+	d.reportPHPDocErrors(errors)
+
+	phpDocReturnType := doc.ReturnType
+	phpDocParamTypes := doc.ParamTypes
+
+	sc := meta.NewScope()
+
+	returnTypeHint, ok := d.parseTypeHintNode(fun.ReturnType)
+	if ok && !doc.Inherit {
+		d.checker.CheckFuncReturnType(fun.FunctionName, fun.FunctionName.Value, returnTypeHint, phpDocReturnType)
+	}
+	d.checker.CheckTypeHintNode(fun.ReturnType, "return type")
+
+	funcParams := d.parseFuncParams(fun.Params, phpDocParamTypes, sc, nil)
+
+	d.checker.CheckFuncParams(fun.FunctionName, fun.Params, funcParams, phpDocParamTypes)
+
+	funcInfo := d.handleFuncStmts(funcParams.params, nil, fun.Stmts, sc)
+	actualReturnTypes := funcInfo.returnTypes
+	exitFlags := funcInfo.prematureExitFlags
+
+	returnTypes := functionReturnType(phpDocReturnType, returnTypeHint, actualReturnTypes)
+
+	var funcFlags meta.FuncFlags
+	if solver.SideEffectFreeFunc(d.scope(), d.ctx.st, nil, fun.Stmts) {
+		funcFlags |= meta.FuncPure
+	}
+	d.meta.Functions.Set(nm, meta.FuncInfo{
+		Params:       funcParams.params,
+		Name:         nm,
+		Pos:          d.getElementPos(fun),
+		Typ:          returnTypes.Immutable(),
+		MinParamsCnt: funcParams.minParamsCount,
+		Flags:        funcFlags,
+		ExitFlags:    exitFlags,
+		Doc:          doc.AdditionalInfo,
+	})
+
+	return false
+}
+
+// Handle functions call part.
+
+func (d *rootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {
+	nm, ok := s.Function.(*ir.Name)
+	if !ok {
+		return true
+	}
+
+	name := strings.TrimPrefix(nm.Value, `\`)
+
+	if d.ctx.st.Namespace == `\PHPSTORM_META` && name == `override` {
+		return d.handleOverride(s)
+	}
+
+	if name == "define" {
+		d.handleDefineCall(s)
+	}
+
+	return true
+}
+
+func (d *rootWalker) handleDefineCall(s *ir.FunctionCallExpr) {
+	if len(s.Args) < 2 {
+		return
+	}
+
+	arg := s.Arg(0)
+
+	str, ok := arg.Expr.(*ir.String)
+	if !ok {
+		return
+	}
+
+	valueArg := s.Arg(1)
+
+	if d.meta.Constants == nil {
+		d.meta.Constants = make(meta.ConstantsMap)
+	}
+
+	value := constfold.Eval(d.ctx.st, valueArg)
+
+	d.meta.Constants[`\`+strings.TrimFunc(str.Value, utils.IsQuote)] = meta.ConstInfo{
+		Pos:   d.getElementPos(s),
+		Typ:   solver.ExprTypeLocal(d.scope(), d.ctx.st, valueArg.Expr),
+		Value: value,
+	}
+}
+
+// handleOverride handle e.g. "override(\array_shift(0), elementType(0));"
+// which means "return type of array_shift() is the type of element of first function parameter"
+func (d *rootWalker) handleOverride(s *ir.FunctionCallExpr) bool {
+	if len(s.Args) != 2 {
+		return true
+	}
+
+	arg0 := s.Arg(0)
+	arg1 := s.Arg(1)
+
+	fc0, ok := arg0.Expr.(*ir.FunctionCallExpr)
+	if !ok {
+		return true
+	}
+
+	fc1, ok := arg1.Expr.(*ir.FunctionCallExpr)
+	if !ok {
+		return true
+	}
+
+	fnNameNode, ok := fc0.Function.(*ir.Name)
+	if !ok || !fnNameNode.IsFullyQualified() {
+		return true
+	}
+
+	overrideNameNode, ok := fc1.Function.(*ir.Name)
+	if !ok {
+		return true
+	}
+
+	if len(fc1.Args) != 1 {
+		return true
+	}
+
+	fc1Arg0 := fc1.Arg(0)
+
+	argNumNode, ok := fc1Arg0.Expr.(*ir.Lnumber)
+	if !ok {
+		return true
+	}
+
+	argNum, err := strconv.Atoi(argNumNode.Value)
+	if err != nil {
+		return true
+	}
+
+	var overrideTyp meta.OverrideType
+	switch {
+	case overrideNameNode.Value == `type`:
+		overrideTyp = meta.OverrideArgType
+	case overrideNameNode.Value == `elementType`:
+		overrideTyp = meta.OverrideElementType
+	default:
+		return true
+	}
+
+	fnName := fnNameNode.Value
+
+	if d.meta.FunctionOverrides == nil {
+		d.meta.FunctionOverrides = make(meta.FunctionsOverrideMap)
+	}
+
+	d.meta.FunctionOverrides[fnName] = meta.FuncInfoOverride{
+		OverrideType: overrideTyp,
+		ArgNum:       argNum,
+	}
+
+	return true
+}
+
+// Handle class part.
+
 func (d *rootWalker) getClassModifiers(n *ir.ClassStmt) meta.ClassFlags {
 	var classFlags meta.ClassFlags
 	for _, m := range n.Modifiers {
@@ -696,6 +797,34 @@ func (d *rootWalker) getClassModifiers(n *ir.ClassStmt) meta.ClassFlags {
 		}
 	}
 	return classFlags
+}
+
+func (d *rootWalker) parseClassPHPDoc(class ir.Node, doc phpdoc.Comment) classPHPDocParseResult {
+	var result classPHPDocParseResult
+
+	if doc.Raw == "" {
+		return result
+	}
+
+	// TODO: allocate maps lazily.
+	// Class may not have any @property or @method annotations.
+	// In that case we can handle avoid map allocations.
+	result.properties = make(meta.PropertiesMap)
+	result.methods = meta.NewFunctionsMap()
+
+	for _, part := range doc.Parsed {
+		d.checker.checkPHPDocRef(class, part)
+		switch part.Name() {
+		case "property", "property-read", "property-write":
+			parseClassPHPDocProperty(class, &d.ctx, &result, part.(*phpdoc.TypeVarCommentPart))
+		case "method":
+			parseClassPHPDocMethod(class, &d.ctx, &result, part.(*phpdoc.RawCommentPart))
+		case "mixin":
+			parseClassPHPDocMixin(class, d.ctx.st, &result, part.(*phpdoc.RawCommentPart))
+		}
+	}
+
+	return result
 }
 
 func (d *rootWalker) handleClassDoc(doc classPHPDocParseResult, cl *meta.ClassInfo) {
@@ -712,6 +841,21 @@ func (d *rootWalker) handleClassDoc(doc classPHPDocParseResult, cl *meta.ClassIn
 	}
 
 	cl.Mixins = doc.mixins
+}
+
+func (d *rootWalker) parsePHPDocVar(doc phpdoc.Comment) (typesMap types.Map) {
+	for _, part := range doc.Parsed {
+		part, ok := part.(*phpdoc.TypeVarCommentPart)
+		if ok && part.Name() == "var" {
+			converted := phpdoctypes.ToRealType(d.ctx.typeNormalizer.ClassFQNProvider(), part.Type)
+			moveShapesToContext(&d.ctx, converted.Shapes)
+			d.handleClosuresFromDoc(converted.Closures)
+
+			typesMap = types.NewMapWithNormalization(d.ctx.typeNormalizer, converted.Types)
+		}
+	}
+
+	return typesMap
 }
 
 func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
@@ -1009,403 +1153,7 @@ func (d *rootWalker) parseMethodModifiers(meth *ir.ClassMethodStmt) (res methodM
 	return res
 }
 
-func (d *rootWalker) parsePHPDocVar(doc phpdoc.Comment) (typesMap types.Map) {
-	for _, part := range doc.Parsed {
-		part, ok := part.(*phpdoc.TypeVarCommentPart)
-		if ok && part.Name() == "var" {
-			converted := phpdoctypes.ToRealType(d.ctx.typeNormalizer.ClassFQNProvider(), part.Type)
-			moveShapesToContext(&d.ctx, converted.Shapes)
-			d.handleClosuresFromDoc(converted.Closures)
-
-			typesMap = types.NewMapWithNormalization(d.ctx.typeNormalizer, converted.Types)
-		}
-	}
-
-	return typesMap
-}
-
-func (d *rootWalker) parseClassPHPDoc(class ir.Node, doc phpdoc.Comment) classPHPDocParseResult {
-	var result classPHPDocParseResult
-
-	if doc.Raw == "" {
-		return result
-	}
-
-	// TODO: allocate maps lazily.
-	// Class may not have any @property or @method annotations.
-	// In that case we can handle avoid map allocations.
-	result.properties = make(meta.PropertiesMap)
-	result.methods = meta.NewFunctionsMap()
-
-	for _, part := range doc.Parsed {
-		d.checker.checkPHPDocRef(class, part)
-		switch part.Name() {
-		case "property", "property-read", "property-write":
-			parseClassPHPDocProperty(class, &d.ctx, &result, part.(*phpdoc.TypeVarCommentPart))
-		case "method":
-			parseClassPHPDocMethod(class, &d.ctx, &result, part.(*phpdoc.RawCommentPart))
-		case "mixin":
-			parseClassPHPDocMixin(class, d.ctx.st, &result, part.(*phpdoc.RawCommentPart))
-		}
-	}
-
-	return result
-}
-
-func (d *rootWalker) reportPHPDocErrors(errs PHPDocErrors) {
-	for _, err := range errs.types {
-		d.ReportPHPDoc(err.Location, LevelNotice, "phpdocType", err.Message)
-	}
-	for _, err := range errs.lint {
-		d.ReportPHPDoc(err.Location, LevelWarning, "phpdocLint", err.Message)
-	}
-}
-
-// Parse type info, e.g. "string" in "someFunc() : string { ... }".
-func (d *rootWalker) parseTypeHintNode(n ir.Node) (typ types.Map, ok bool) {
-	if n == nil {
-		return types.Map{}, false
-	}
-
-	typesMap := types.NormalizedTypeHintTypes(d.ctx.typeNormalizer, n)
-
-	return typesMap, !typesMap.Empty()
-}
-
-// callbackParamByIndex returns the description of the parameter for the function by its index.
-func (d *rootWalker) callbackParamByIndex(param ir.Node, argType types.Map) meta.FuncParam {
-	p := param.(*ir.Parameter)
-	v := p.Variable
-
-	var typ types.Map
-	tp, ok := d.parseTypeHintNode(p.VariableType)
-	if ok {
-		typ = tp
-	} else {
-		typ = argType.Map(types.WrapElemOf)
-	}
-
-	arg := meta.FuncParam{
-		IsRef: p.ByRef,
-		Name:  v.Name,
-		Typ:   typ,
-	}
-	return arg
-}
-
-func (d *rootWalker) parseFuncArgsForCallback(params []ir.Node, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (res parseFuncParamsResult) {
-	countParams := len(params)
-	minArgs := countParams
-	if countParams == 0 {
-		return res
-	}
-	args := make([]meta.FuncParam, countParams)
-
-	switch closureSolver.Name {
-	case `\usort`, `\uasort`, `\array_reduce`:
-		args[0] = d.callbackParamByIndex(params[0], closureSolver.ArgTypes[0])
-		if countParams > 1 {
-			args[1] = d.callbackParamByIndex(params[1], closureSolver.ArgTypes[0])
-		}
-	case `\array_walk`, `\array_walk_recursive`, `\array_filter`:
-		args[0] = d.callbackParamByIndex(params[0], closureSolver.ArgTypes[0])
-	case `\array_map`:
-		args[0] = d.callbackParamByIndex(params[0], closureSolver.ArgTypes[1])
-	}
-
-	for i, param := range params {
-		p := param.(*ir.Parameter)
-		v := p.Variable
-		var typ types.Map
-		if i < len(args) {
-			typ = args[i].Typ
-		} else {
-			typ = types.MixedType
-		}
-
-		sc.AddVarName(v.Name, typ, "param", meta.VarAlwaysDefined)
-	}
-
-	return parseFuncParamsResult{
-		params:         args,
-		minParamsCount: minArgs,
-	}
-}
-
-type parseFuncParamsResult struct {
-	params         []meta.FuncParam
-	paramsTypeHint map[string]types.Map
-	minParamsCount int
-}
-
-func (d *rootWalker) parseFuncParams(params []ir.Node, phpDocParamsTypes phpdoctypes.ParamsMap, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (res parseFuncParamsResult) {
-	if len(params) == 0 {
-		return res
-	}
-
-	minArgs := 0
-	args := make([]meta.FuncParam, 0, len(params))
-	typeHints := make(map[string]types.Map, len(params))
-
-	if closureSolver != nil && solver.IsSupportedFunction(closureSolver.Name) {
-		return d.parseFuncArgsForCallback(params, sc, closureSolver)
-	}
-
-	for _, param := range params {
-		p := param.(*ir.Parameter)
-		v := p.Variable
-		phpDocType := phpDocParamsTypes[v.Name]
-
-		if !phpDocType.Typ.Empty() {
-			sc.AddVarName(v.Name, phpDocType.Typ, "param", meta.VarAlwaysDefined)
-		}
-
-		paramTyp := phpDocType.Typ
-
-		if p.DefaultValue == nil && !phpDocType.Optional && !p.Variadic {
-			minArgs++
-		}
-
-		if p.VariableType != nil {
-			typeHintType, ok := d.parseTypeHintNode(p.VariableType)
-			if ok {
-				paramTyp = typeHintType
-			}
-
-			typeHints[v.Name] = typeHintType
-		} else if paramTyp.Empty() && p.DefaultValue != nil {
-			paramTyp = solver.ExprTypeLocal(sc, d.ctx.st, p.DefaultValue)
-			// For the type resolver default value can look like a
-			// precise source of information (e.g. "false" is a precise bool),
-			// but it's not assigned unconditionally.
-			// If explicit argument is provided, that parameter can have
-			// almost any type possible.
-			paramTyp.MarkAsImprecise()
-		}
-
-		if p.Variadic {
-			paramTyp = paramTyp.Map(types.WrapArrayOf)
-		}
-
-		sc.AddVarName(v.Name, paramTyp, "param", meta.VarAlwaysDefined)
-
-		par := meta.FuncParam{
-			Typ:   paramTyp.Immutable(),
-			IsRef: p.ByRef,
-		}
-
-		par.Name = v.Name
-		args = append(args, par)
-	}
-
-	return parseFuncParamsResult{
-		params:         args,
-		paramsTypeHint: typeHints,
-		minParamsCount: minArgs,
-	}
-}
-
-func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
-	nm := d.ctx.st.Namespace + `\` + fun.FunctionName.Value
-	pos := ir.GetPosition(fun)
-
-	if funcSize := pos.EndLine - pos.StartLine; funcSize > maxFunctionLines {
-		d.Report(fun.FunctionName, LevelNotice, "complexity", "Too big function: more than %d lines", maxFunctionLines)
-	}
-
-	if d.meta.Functions.H == nil {
-		d.meta.Functions = meta.NewFunctionsMap()
-	}
-
-	d.checker.CheckCommentMisspellings(fun.FunctionName, fun.Doc.Raw)
-	d.checker.CheckIdentMisspellings(fun.FunctionName)
-
-	// Indexing stage.
-	doc := phpdoctypes.Parse(fun.Doc, fun.Params, d.ctx.typeNormalizer)
-	moveShapesToContext(&d.ctx, doc.Shapes)
-	d.handleClosuresFromDoc(doc.Closures)
-
-	// Check stage.
-	errors := d.checker.CheckPHPDoc(fun, fun.Doc, fun.Params)
-	d.reportPHPDocErrors(errors)
-
-	phpDocReturnType := doc.ReturnType
-	phpDocParamTypes := doc.ParamTypes
-
-	sc := meta.NewScope()
-
-	returnTypeHint, ok := d.parseTypeHintNode(fun.ReturnType)
-	if ok && !doc.Inherit {
-		d.checker.CheckFuncReturnType(fun.FunctionName, fun.FunctionName.Value, returnTypeHint, phpDocReturnType)
-	}
-	d.checker.CheckTypeHintNode(fun.ReturnType, "return type")
-
-	funcParams := d.parseFuncParams(fun.Params, phpDocParamTypes, sc, nil)
-
-	d.checker.CheckFuncParams(fun.FunctionName, fun.Params, funcParams, phpDocParamTypes)
-
-	funcInfo := d.handleFuncStmts(funcParams.params, nil, fun.Stmts, sc)
-	actualReturnTypes := funcInfo.returnTypes
-	exitFlags := funcInfo.prematureExitFlags
-
-	returnTypes := functionReturnType(phpDocReturnType, returnTypeHint, actualReturnTypes)
-
-	var funcFlags meta.FuncFlags
-	if solver.SideEffectFreeFunc(d.scope(), d.ctx.st, nil, fun.Stmts) {
-		funcFlags |= meta.FuncPure
-	}
-	d.meta.Functions.Set(nm, meta.FuncInfo{
-		Params:       funcParams.params,
-		Name:         nm,
-		Pos:          d.getElementPos(fun),
-		Typ:          returnTypes.Immutable(),
-		MinParamsCnt: funcParams.minParamsCount,
-		Flags:        funcFlags,
-		ExitFlags:    exitFlags,
-		Doc:          doc.AdditionalInfo,
-	})
-
-	return false
-}
-
-func (d *rootWalker) handleClosuresFromDoc(closures types.ClosureMap) {
-	if d.meta.Functions.H == nil {
-		d.meta.Functions = meta.NewFunctionsMap()
-	}
-
-	for name, closureInfo := range closures {
-		var params []meta.FuncParam
-		for i, paramType := range closureInfo.ParamTypes {
-			params = append(params, meta.FuncParam{
-				Name: fmt.Sprintf("closure param #%d", i),
-				Typ:  types.NewMapWithNormalization(d.ctx.typeNormalizer, paramType),
-			})
-		}
-
-		d.meta.Functions.Set(name, meta.FuncInfo{
-			Params:       params,
-			Name:         name,
-			Typ:          types.NewMapWithNormalization(d.ctx.typeNormalizer, closureInfo.ReturnType),
-			MinParamsCnt: len(closureInfo.ParamTypes),
-		})
-	}
-}
-
-func (d *rootWalker) enterFunctionCall(s *ir.FunctionCallExpr) bool {
-	nm, ok := s.Function.(*ir.Name)
-	if !ok {
-		return true
-	}
-
-	name := strings.TrimPrefix(nm.Value, `\`)
-
-	if d.ctx.st.Namespace == `\PHPSTORM_META` && name == `override` {
-		return d.handleOverride(s)
-	}
-
-	if name == "define" {
-		d.handleDefineCall(s)
-	}
-
-	return true
-}
-
-func (d *rootWalker) handleDefineCall(s *ir.FunctionCallExpr) {
-	if len(s.Args) < 2 {
-		return
-	}
-
-	arg := s.Arg(0)
-
-	str, ok := arg.Expr.(*ir.String)
-	if !ok {
-		return
-	}
-
-	valueArg := s.Arg(1)
-
-	if d.meta.Constants == nil {
-		d.meta.Constants = make(meta.ConstantsMap)
-	}
-
-	value := constfold.Eval(d.ctx.st, valueArg)
-
-	d.meta.Constants[`\`+strings.TrimFunc(str.Value, utils.IsQuote)] = meta.ConstInfo{
-		Pos:   d.getElementPos(s),
-		Typ:   solver.ExprTypeLocal(d.scope(), d.ctx.st, valueArg.Expr),
-		Value: value,
-	}
-}
-
-// Handle e.g. "override(\array_shift(0), elementType(0));"
-// which means "return type of array_shift() is the type of element of first function parameter"
-func (d *rootWalker) handleOverride(s *ir.FunctionCallExpr) bool {
-	if len(s.Args) != 2 {
-		return true
-	}
-
-	arg0 := s.Arg(0)
-	arg1 := s.Arg(1)
-
-	fc0, ok := arg0.Expr.(*ir.FunctionCallExpr)
-	if !ok {
-		return true
-	}
-
-	fc1, ok := arg1.Expr.(*ir.FunctionCallExpr)
-	if !ok {
-		return true
-	}
-
-	fnNameNode, ok := fc0.Function.(*ir.Name)
-	if !ok || !fnNameNode.IsFullyQualified() {
-		return true
-	}
-
-	overrideNameNode, ok := fc1.Function.(*ir.Name)
-	if !ok {
-		return true
-	}
-
-	if len(fc1.Args) != 1 {
-		return true
-	}
-
-	fc1Arg0 := fc1.Arg(0)
-
-	argNumNode, ok := fc1Arg0.Expr.(*ir.Lnumber)
-	if !ok {
-		return true
-	}
-
-	argNum, err := strconv.Atoi(argNumNode.Value)
-	if err != nil {
-		return true
-	}
-
-	var overrideTyp meta.OverrideType
-	switch {
-	case overrideNameNode.Value == `type`:
-		overrideTyp = meta.OverrideArgType
-	case overrideNameNode.Value == `elementType`:
-		overrideTyp = meta.OverrideElementType
-	default:
-		return true
-	}
-
-	fnName := fnNameNode.Value
-
-	if d.meta.FunctionOverrides == nil {
-		d.meta.FunctionOverrides = make(meta.FunctionsOverrideMap)
-	}
-
-	d.meta.FunctionOverrides[fnName] = meta.FuncInfoOverride{
-		OverrideType: overrideTyp,
-		ArgNum:       argNum,
-	}
-
-	return true
-}
+// Handle const list part.
 
 func (d *rootWalker) enterConstList(lst *ir.ConstListStmt) bool {
 	if d.meta.Constants == nil {
@@ -1430,23 +1178,48 @@ func (d *rootWalker) enterConstList(lst *ir.ConstListStmt) bool {
 	return false
 }
 
-// LeaveNode is invoked after node process
-func (d *rootWalker) LeaveNode(n ir.Node) {
-	for _, c := range d.custom {
-		c.BeforeLeaveNode(n)
+// Utils part.
+
+func (d *rootWalker) handleClosuresFromDoc(closures types.ClosureMap) {
+	if d.meta.Functions.H == nil {
+		d.meta.Functions = meta.NewFunctionsMap()
 	}
 
-	switch n.(type) {
-	case *ir.ClassStmt, *ir.InterfaceStmt, *ir.TraitStmt, *ir.AnonClassExpr:
-		d.getClass() // populate classes map
+	for name, closureInfo := range closures {
+		var params []meta.FuncParam
+		for i, paramType := range closureInfo.ParamTypes {
+			params = append(params, meta.FuncParam{
+				Name: fmt.Sprintf("closure param #%d", i),
+				Typ:  types.NewMapWithNormalization(d.ctx.typeNormalizer, paramType),
+			})
+		}
 
-		d.currentClassNodeStack.Pop()
+		d.meta.Functions.Set(name, meta.FuncInfo{
+			Params:       params,
+			Name:         name,
+			Typ:          types.NewMapWithNormalization(d.ctx.typeNormalizer, closureInfo.ReturnType),
+			MinParamsCnt: len(closureInfo.ParamTypes),
+		})
+	}
+}
+
+// parseTypeHintNode parse type info, e.g. "string" in "someFunc() : string { ... }".
+func (d *rootWalker) parseTypeHintNode(n ir.Node) (typ types.Map, ok bool) {
+	if n == nil {
+		return types.Map{}, false
 	}
 
-	state.LeaveNode(d.ctx.st, n)
+	typesMap := types.NormalizedTypeHintTypes(d.ctx.typeNormalizer, n)
 
-	for _, c := range d.custom {
-		c.AfterLeaveNode(n)
+	return typesMap, !typesMap.Empty()
+}
+
+func (d *rootWalker) reportPHPDocErrors(errs PHPDocErrors) {
+	for _, err := range errs.types {
+		d.ReportPHPDoc(err.Location, LevelNotice, "phpdocType", err.Message)
+	}
+	for _, err := range errs.lint {
+		d.ReportPHPDoc(err.Location, LevelWarning, "phpdocLint", err.Message)
 	}
 }
 
@@ -1461,6 +1234,402 @@ func (d *rootWalker) addQuickFix(checkName string, fix quickfix.TextEdit) {
 
 	d.ctx.fixes = append(d.ctx.fixes, fix)
 }
+
+func (d *rootWalker) currentFunction() (meta.FuncInfo, bool) {
+	name := d.ctx.st.CurrentFunction
+	if name == "" {
+		return meta.FuncInfo{}, false
+	}
+
+	if d.ctx.st.CurrentClass != "" {
+		className, ok := solver.GetClassName(d.ctx.st, &ir.Name{Value: d.ctx.st.CurrentClass})
+		if !ok {
+			return meta.FuncInfo{}, false
+		}
+
+		method, ok := solver.FindMethod(d.ctx.st.Info, className, name)
+		if !ok {
+			return meta.FuncInfo{}, false
+		}
+
+		return method.Info, true
+	}
+
+	funcName, ok := solver.GetFuncName(d.ctx.st, &ir.Name{Value: name})
+	if !ok {
+		return meta.FuncInfo{}, false
+	}
+
+	fun, ok := d.ctx.st.Info.GetFunction(funcName)
+	if !ok {
+		return meta.FuncInfo{}, false
+	}
+
+	return fun, true
+}
+
+func (d *rootWalker) getClass() meta.ClassInfo {
+	var m meta.ClassesMap
+
+	if d.ctx.st.IsTrait {
+		if d.meta.Traits.H == nil {
+			d.meta.Traits = meta.NewClassesMap()
+		}
+		m = d.meta.Traits
+	} else {
+		if d.meta.Classes.H == nil {
+			d.meta.Classes = meta.NewClassesMap()
+		}
+		m = d.meta.Classes
+	}
+
+	cl, ok := m.Get(d.ctx.st.CurrentClass)
+	if !ok {
+		var flags meta.ClassFlags
+		if d.ctx.st.IsInterface {
+			flags = meta.ClassInterface
+		}
+
+		cl = meta.ClassInfo{
+			Pos:              d.getElementPos(d.currentClassNodeStack.Current()),
+			Name:             d.ctx.st.CurrentClass,
+			Flags:            flags,
+			Parent:           d.ctx.st.CurrentParentClass,
+			ParentInterfaces: d.ctx.st.CurrentParentInterfaces,
+			Interfaces:       make(map[string]struct{}),
+			Traits:           make(map[string]struct{}),
+			Methods:          meta.NewFunctionsMap(),
+			Properties:       make(meta.PropertiesMap),
+			Constants:        make(meta.ConstantsMap),
+		}
+
+		m.Set(d.ctx.st.CurrentClass, cl)
+	}
+
+	return cl
+}
+
+func (d *rootWalker) parseStartPos(pos *position.Position) (startLn []byte, startChar int) {
+	if pos.StartLine >= 1 && d.file.NumLines() > pos.StartLine {
+		startLn = d.file.Line(pos.StartLine - 1)
+		p := d.file.LinePosition(pos.StartLine - 1)
+		if pos.StartPos > p {
+			startChar = pos.StartPos - p
+		}
+	}
+
+	return startLn, startChar
+}
+
+func (d *rootWalker) getElementPos(n ir.Node) meta.ElementPosition {
+	pos := ir.GetPosition(n)
+	_, startChar := d.parseStartPos(pos)
+
+	return meta.ElementPosition{
+		Filename:  d.ctx.st.CurrentFile,
+		Character: int32(startChar),
+		Line:      int32(pos.StartLine),
+		EndLine:   int32(pos.EndLine),
+		Length:    int32(pos.EndPos - pos.StartPos),
+	}
+}
+
+// nodeText is used to get the string that represents the
+// passed node more efficiently than irutil.FmtNode.
+func (d *rootWalker) nodeText(n ir.Node) string {
+	pos := ir.GetPosition(n)
+	from, to := pos.StartPos, pos.EndPos
+	src := d.file.Contents()
+	// Taking a node from the source code preserves the original formatting
+	// and is more efficient than printing it.
+	if (from >= 0 && from < len(src)) && (to >= 0 && to < len(src)) {
+		return string(src[from:to])
+	}
+	// If we can't take node out of the source text, print it.
+	return irutil.FmtNode(n)
+}
+
+// Report part.
+
+// ReportPHPDoc registers a single report message about some found problem in PHPDoc.
+func (d *rootWalker) ReportPHPDoc(phpDocLocation PHPDocLocation, level int, checkName, msg string, args ...interface{}) {
+	if phpDocLocation.RelativeLine {
+		doc, ok := irutil.FindPHPDoc(phpDocLocation.Node, true)
+		if !ok {
+			// If PHPDoc for some reason was not found, give a warning to the node.
+			d.Report(phpDocLocation.Node, level, checkName, msg, args...)
+			return
+		}
+
+		countPHPDocLines := strings.Count(doc, "\n") + 1
+
+		nodePos := ir.GetPosition(phpDocLocation.Node)
+		if nodePos == nil {
+			// If position for some reason was not found, give a warning to the node.
+			d.Report(phpDocLocation.Node, level, checkName, msg, args...)
+			return
+		}
+
+		// 1| <?php
+		// 2|
+		// 3| /**
+		// 4|  * Comment
+		// 5|  * @param int $a    <- phpDocLocation.Line == 3
+		// 6|  */                 <- countPHPDocLines == 4
+		// 7| function f($a) {}   <- nodePos.StartLine == 7
+		//
+		// countPHPDocLines - phpDocLocation.Line = 1
+		// nodePos.StartLine - 1 = 6
+		// 6 - 1 = 5 (number of the required line relative to one)
+		// 5 - 1 = 4 (number of the required line relative to zero)
+		phpDocLocation.Line = nodePos.StartLine - (countPHPDocLines - phpDocLocation.Line) - 1 - 1
+	}
+
+	if phpDocLocation.Line < 0 || phpDocLocation.Line >= d.file.NumLines() {
+		d.Report(phpDocLocation.Node, level, checkName, msg, args...)
+		return
+	}
+
+	contextLine := d.file.Line(phpDocLocation.Line)
+
+	lineWithoutBeginning := contextLine
+	// For the case when we give a warning about the wrong start
+	// of PHPDoc (/* instead /**), it is not necessary to delete characters.
+	if !bytes.Contains(contextLine, []byte("/*")) || bytes.Contains(contextLine, []byte("/**")) {
+		lineWithoutBeginning = bytes.TrimLeft(contextLine, "/ *")
+	}
+
+	shiftFromStart := len(contextLine) - len(lineWithoutBeginning)
+
+	parts := bytes.Fields(lineWithoutBeginning)
+	if phpDocLocation.Field >= len(parts) {
+		phpDocLocation.Field = 0
+		phpDocLocation.WholeLine = true
+	}
+
+	var startChar int
+	var endChar int
+
+	if phpDocLocation.WholeLine {
+		startChar = shiftFromStart
+		endChar = len(contextLine)
+	} else {
+		part := parts[phpDocLocation.Field]
+		shiftStart := bytes.Index(lineWithoutBeginning, part)
+		shiftEnd := shiftStart + len(part)
+
+		startChar = shiftFromStart + shiftStart
+		endChar = shiftFromStart + shiftEnd
+	}
+
+	if endChar == len(contextLine) && bytes.HasSuffix(contextLine, []byte("\r")) {
+		endChar--
+	}
+
+	loc := ir.Location{
+		StartLine: phpDocLocation.Line,
+		EndLine:   phpDocLocation.Line,
+		StartChar: startChar,
+		EndChar:   endChar,
+	}
+
+	d.ReportLocation(loc, level, checkName, msg, args...)
+}
+
+func (d *rootWalker) Report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
+	var pos position.Position
+
+	if n == nil {
+		// Hack to parse syntax error message from php-parser.
+		if strings.Contains(msg, "syntax error") && strings.Contains(msg, " at line ") {
+			// it is in form "Syntax error: syntax error: unexpected '*' at line 4"
+			if lastIdx := strings.LastIndexByte(msg, ' '); lastIdx > 0 {
+				lineNumStr := msg[lastIdx+1:]
+				lineNum, err := strconv.Atoi(lineNumStr)
+				if err == nil {
+					pos.StartLine = lineNum
+					pos.EndLine = lineNum
+					msg = msg[0:lastIdx]
+					msg = strings.TrimSuffix(msg, " at line")
+				}
+			}
+		}
+	} else {
+		nodePos := ir.GetPosition(n)
+		if nodePos == nil {
+			return
+		}
+		pos = *nodePos
+	}
+
+	var loc ir.Location
+
+	loc.StartLine = pos.StartLine - 1
+	loc.EndLine = pos.EndLine - 1
+	loc.StartChar = pos.StartPos
+	loc.EndChar = pos.EndPos
+
+	if pos.StartLine >= 1 && d.file.NumLines() >= pos.StartLine {
+		p := d.file.LinePosition(pos.StartLine - 1)
+		if pos.StartPos >= p {
+			loc.StartChar = pos.StartPos - p
+		}
+	}
+
+	if pos.EndLine >= 1 && d.file.NumLines() >= pos.EndLine {
+		p := d.file.LinePosition(pos.EndLine - 1)
+		if pos.EndPos >= p {
+			loc.EndChar = pos.EndPos - p
+		}
+	}
+
+	d.ReportLocation(loc, level, checkName, msg, args...)
+}
+
+func (d *rootWalker) ReportLocation(loc ir.Location, level int, checkName, msg string, args ...interface{}) {
+	if !d.metaInfo().IsIndexingComplete() {
+		return
+	}
+	if d.file.AutoGenerated() && !d.config.CheckAutoGenerated {
+		return
+	}
+	// We don't report anything if linter was disabled by a
+	// successful @linter disable, unless it's the linterError.
+	if d.linterDisabled && checkName != "linterError" {
+		return
+	}
+
+	if !d.checkersFilter.IsEnabledReport(checkName, d.ctx.st.CurrentFile) {
+		return
+	}
+
+	if loc.StartLine < 0 || loc.StartLine >= d.file.NumLines() {
+		return
+	}
+
+	contextLine := d.file.Line(loc.StartLine)
+
+	var hash uint64
+	// If baseline is not enabled, don't waste time on hash computations.
+	if d.config.ComputeBaselineHashes {
+		hash = d.reportHash(&loc, contextLine, checkName, msg)
+		if count := d.ctx.baseline.Count(hash); count >= 1 {
+			if d.ctx.hashCounters == nil {
+				d.ctx.hashCounters = make(map[uint64]int)
+			}
+			d.ctx.hashCounters[hash]++
+			if d.ctx.hashCounters[hash] <= count {
+				return
+			}
+		}
+	}
+
+	d.reports = append(d.reports, &Report{
+		CheckName: checkName,
+		Context:   string(contextLine),
+		StartChar: loc.StartChar,
+		EndChar:   loc.EndChar,
+		Line:      loc.StartLine + 1,
+		Level:     level,
+		Filename:  strings.ReplaceAll(d.ctx.st.CurrentFile, "\\", "/"), // To make output stable between platforms, see #572
+		Message:   fmt.Sprintf(msg, args...),
+		Hash:      hash,
+	})
+}
+
+// reportHash computes the ReportLocation signature hash for the baseline.
+func (d *rootWalker) reportHash(loc *ir.Location, contextLine []byte, checkName, msg string) uint64 {
+	// Since we store class::method scope, renaming a class would cause baseline
+	// invalidation for the entire class. But this is not an issue, since in
+	// a modern PHP class name always should map to a filename.
+	// If we renamed a class, we probably renamed the file as well, so
+	// the baseline would be invalidated anyway.
+	//
+	// We still get all the benefits by using method prefix: it's common
+	// for different classes to have methods with similar name. We don't
+	// want such methods to be considered as a single "scope".
+	scope := "file"
+	switch {
+	case d.ctx.st.CurrentClass != "" && d.ctx.st.CurrentFunction != "":
+		scope = d.ctx.st.CurrentClass + "::" + d.ctx.st.CurrentFunction
+	case d.ctx.st.CurrentFunction != "":
+		scope = d.ctx.st.CurrentFunction
+	}
+
+	var prevLine []byte
+	var nextLine []byte
+	// Adjacent lines are only included when using non-conservative baseline.
+	if !d.config.ConservativeBaseline {
+		// Lines are 1-based, indexes are 0-based.
+		// If this function is called, we expect that lines[index] exists.
+		index := loc.StartLine - 1
+		if index >= 1 {
+			prevLine = d.file.Line(index - 1)
+		}
+		if d.file.NumLines() > index+1 {
+			nextLine = d.file.Line(index + 1)
+		}
+	}
+
+	// Observation: using a base file name instead of its full name does not
+	// introduce any "bad collisions", because we have a "scope" part
+	// that cuts the risk by a big margin.
+	//
+	// One benefit is that it makes the baseline contents more position-independent.
+	// We don't need to know a source root folder to truncate it.
+	//
+	// Moves like Foo/Bar/User.php -> Common/User.php do not invalidate the
+	// suppress base. This is not an obvious win, but it may be a good
+	// compromise to solve a use case where a class file is being moved.
+	// For classes, filename is unlikely to be changed during this file move operation.
+	//
+	// It can't handle file duplication when Foo/Bar/User.php is *copied* to a new location.
+	// It may be useful to give warnings to both *old* and *new* copies of the duplicated
+	// code since some bugs should be fixed in both places.
+	// We'll see how it goes.
+	filename := filepath.Base(d.ctx.st.CurrentFile)
+
+	d.ctx.scratchBuf.Reset()
+	return baseline.ReportHash(&d.ctx.scratchBuf, baseline.HashFields{
+		Filename:  filename,
+		PrevLine:  bytes.TrimSuffix(prevLine, []byte("\r")),
+		StartLine: bytes.TrimSuffix(contextLine, []byte("\r")),
+		NextLine:  bytes.TrimSuffix(nextLine, []byte("\r")),
+		CheckName: checkName,
+		Message:   msg,
+		Scope:     scope,
+	})
+}
+
+func (d *rootWalker) reportUndefinedVariable(v ir.Node, maybeHave bool, path irutil.NodePath) {
+	sv, ok := v.(*ir.SimpleVar)
+	if !ok {
+		d.Report(v, LevelWarning, "undefinedVariable", "Unknown variable variable %s used",
+			utils.NameNodeToString(v))
+		return
+	}
+
+	if _, ok := superGlobals[sv.Name]; ok {
+		return
+	}
+
+	// For the following cases, we do not give warnings,
+	// as they check for the presence of this variable.
+	// $b = $a ?? 100;
+	// $b = isset($a) ? $a : 100;
+	needWarn := !utils.InCoalesceOrIsset(path)
+	if !needWarn {
+		return
+	}
+
+	if maybeHave {
+		d.Report(sv, LevelWarning, "maybeUndefined", "Possibly undefined variable $%s", sv.Name)
+	} else {
+		d.Report(sv, LevelError, "undefinedVariable", "Cannot find referenced variable $%s", sv.Name)
+	}
+}
+
+// Rules part.
 
 func (d *rootWalker) runRules(n ir.Node, sc *meta.Scope, rlist []rules.Rule) {
 	for i := range rlist {
@@ -1585,151 +1754,4 @@ func (d *rootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filter
 	}
 
 	return true
-}
-
-func (d *rootWalker) beforeEnterFile() {
-	for _, c := range d.custom {
-		c.BeforeEnterFile()
-	}
-}
-
-func (d *rootWalker) afterLeaveFile() {
-	for _, c := range d.custom {
-		c.AfterLeaveFile()
-	}
-
-	if !d.metaInfo().IsIndexingComplete() {
-		for _, shape := range d.ctx.shapes {
-			props := make(meta.PropertiesMap)
-			for _, p := range shape.Props {
-				props[p.Key] = meta.PropertyInfo{
-					Typ:         types.NewMapWithNormalization(d.ctx.typeNormalizer, p.Types).Immutable(),
-					AccessLevel: meta.Public,
-				}
-			}
-			cl := meta.ClassInfo{
-				Name:       shape.Name,
-				Properties: props,
-				Flags:      meta.ClassShape,
-			}
-			if d.meta.Classes.H == nil {
-				d.meta.Classes = meta.NewClassesMap()
-			}
-			d.meta.Classes.Set(shape.Name, cl)
-		}
-	}
-}
-
-func (d *rootWalker) currentFunction() (meta.FuncInfo, bool) {
-	name := d.ctx.st.CurrentFunction
-	if name == "" {
-		return meta.FuncInfo{}, false
-	}
-
-	if d.ctx.st.CurrentClass != "" {
-		className, ok := solver.GetClassName(d.ctx.st, &ir.Name{Value: d.ctx.st.CurrentClass})
-		if !ok {
-			return meta.FuncInfo{}, false
-		}
-
-		method, ok := solver.FindMethod(d.ctx.st.Info, className, name)
-		if !ok {
-			return meta.FuncInfo{}, false
-		}
-
-		return method.Info, true
-	}
-
-	funcName, ok := solver.GetFuncName(d.ctx.st, &ir.Name{Value: name})
-	if !ok {
-		return meta.FuncInfo{}, false
-	}
-
-	fun, ok := d.ctx.st.Info.GetFunction(funcName)
-	if !ok {
-		return meta.FuncInfo{}, false
-	}
-
-	return fun, true
-}
-
-func (d *rootWalker) getClass() meta.ClassInfo {
-	var m meta.ClassesMap
-
-	if d.ctx.st.IsTrait {
-		if d.meta.Traits.H == nil {
-			d.meta.Traits = meta.NewClassesMap()
-		}
-		m = d.meta.Traits
-	} else {
-		if d.meta.Classes.H == nil {
-			d.meta.Classes = meta.NewClassesMap()
-		}
-		m = d.meta.Classes
-	}
-
-	cl, ok := m.Get(d.ctx.st.CurrentClass)
-	if !ok {
-		var flags meta.ClassFlags
-		if d.ctx.st.IsInterface {
-			flags = meta.ClassInterface
-		}
-
-		cl = meta.ClassInfo{
-			Pos:              d.getElementPos(d.currentClassNodeStack.Current()),
-			Name:             d.ctx.st.CurrentClass,
-			Flags:            flags,
-			Parent:           d.ctx.st.CurrentParentClass,
-			ParentInterfaces: d.ctx.st.CurrentParentInterfaces,
-			Interfaces:       make(map[string]struct{}),
-			Traits:           make(map[string]struct{}),
-			Methods:          meta.NewFunctionsMap(),
-			Properties:       make(meta.PropertiesMap),
-			Constants:        make(meta.ConstantsMap),
-		}
-
-		m.Set(d.ctx.st.CurrentClass, cl)
-	}
-
-	return cl
-}
-
-func (d *rootWalker) parseStartPos(pos *position.Position) (startLn []byte, startChar int) {
-	if pos.StartLine >= 1 && d.file.NumLines() > pos.StartLine {
-		startLn = d.file.Line(pos.StartLine - 1)
-		p := d.file.LinePosition(pos.StartLine - 1)
-		if pos.StartPos > p {
-			startChar = pos.StartPos - p
-		}
-	}
-
-	return startLn, startChar
-}
-
-func (d *rootWalker) getElementPos(n ir.Node) meta.ElementPosition {
-	pos := ir.GetPosition(n)
-	_, startChar := d.parseStartPos(pos)
-
-	return meta.ElementPosition{
-		Filename:  d.ctx.st.CurrentFile,
-		Character: int32(startChar),
-		Line:      int32(pos.StartLine),
-		EndLine:   int32(pos.EndLine),
-		Length:    int32(pos.EndPos - pos.StartPos),
-	}
-}
-
-// nodeText is used to get the string that represents the
-// passed node more efficiently than irutil.FmtNode.
-func (d *rootWalker) nodeText(n ir.Node) string {
-	pos := ir.GetPosition(n)
-	from, to := pos.StartPos, pos.EndPos
-	src := d.file.Contents()
-	// Taking a node from the source code preserves the original formatting
-	// and is more efficient than printing it.
-	if (from >= 0 && from < len(src)) && (to >= 0 && to < len(src)) {
-		return string(src[from:to])
-	}
-	// If we can't take node out of the source text, print it.
-	return irutil.FmtNode(n)
 }
