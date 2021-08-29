@@ -2341,6 +2341,9 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseAttributeTkn = n.CloseAttributeTkn
 		return out
+
+	case *ast.StmtEnum, *ast.EnumCase:
+		return &ir.NopStmt{}
 	}
 
 	panic(fmt.Sprintf("unhandled type %T", n))
