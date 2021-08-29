@@ -6,6 +6,7 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/types"
+	"github.com/VKCOM/noverify/src/utils"
 )
 
 // andWalker walks if conditions and adds isset/!empty/instanceof variables
@@ -90,7 +91,7 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 
 	case *ir.IssetExpr:
 		for _, v := range n.Variables {
-			varNode := findVarNode(v)
+			varNode := utils.FindVarNode(v)
 			if varNode == nil {
 				continue
 			}

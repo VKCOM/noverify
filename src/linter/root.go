@@ -1855,7 +1855,7 @@ func (d *rootWalker) typeHintHasMoreAccurateType(typeHintType, phpDocType types.
 
 func (d *rootWalker) checkCommentMisspellings(n ir.Node, s string) {
 	// Try to avoid checking for symbol names and references.
-	d.checkMisspellings(n, s, "misspellComment", isCapitalized)
+	d.checkMisspellings(n, s, "misspellComment", utils.IsCapitalized)
 }
 
 func (d *rootWalker) checkVarnameMisspellings(n ir.Node, s string) {
@@ -1865,13 +1865,11 @@ func (d *rootWalker) checkVarnameMisspellings(n ir.Node, s string) {
 }
 
 func (d *rootWalker) checkIdentMisspellings(n *ir.Identifier) {
-	d.checkMisspellings(n, n.Value, "misspellName", func(s string) bool {
-		// Before PHP got context-sensitive lexer, it was common to use
-		// method names to avoid parsing errors.
-		// We can't suggest a fix that leads to a parsing error.
-		// To avoid false positives, skip PHP keywords.
-		return phpKeywords[s]
-	})
+	// Before PHP got context-sensitive lexer, it was common to use
+	// method names to avoid parsing errors.
+	// We can't suggest a fix that leads to a parsing error.
+	// To avoid false positives, skip PHP keywords.
+	d.checkMisspellings(n, n.Value, "misspellName", utils.IsPHPKeyword)
 }
 
 func (d *rootWalker) checkMisspellings(n ir.Node, s string, label string, skip func(string) bool) {
@@ -2009,7 +2007,7 @@ func (d *rootWalker) checkFuncParam(p *ir.Parameter) {
 
 	// TODO(quasilyte): DefaultValue can only contain constant expressions.
 	// Could run special check over them to detect the potential fatal errors.
-	walkNode(p.DefaultValue, func(w ir.Node) bool {
+	irutil.Inspect(p.DefaultValue, func(w ir.Node) bool {
 		if n, ok := w.(*ir.ArrayExpr); ok && !n.ShortSyntax {
 			d.Report(n, LevelNotice, "arraySyntax", "Use the short form '[]' instead of the old 'array()'")
 			d.addFixForArray(n)
@@ -2087,7 +2085,7 @@ func (d *rootWalker) handleDefineCall(s *ir.FunctionCallExpr) {
 
 	value := constfold.Eval(d.ctx.st, valueArg)
 
-	d.meta.Constants[`\`+strings.TrimFunc(str.Value, isQuote)] = meta.ConstInfo{
+	d.meta.Constants[`\`+strings.TrimFunc(str.Value, utils.IsQuote)] = meta.ConstInfo{
 		Pos:   d.getElementPos(s),
 		Typ:   solver.ExprTypeLocal(d.scope(), d.ctx.st, valueArg.Expr),
 		Value: value,

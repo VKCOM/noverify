@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/phpdoctypes"
+	"github.com/VKCOM/noverify/src/utils"
 	"github.com/VKCOM/php-parser/pkg/position"
 	"github.com/VKCOM/php-parser/pkg/token"
 
@@ -471,7 +472,7 @@ func (b *blockWalker) handleAndCheckGlobalStmt(s *ir.GlobalStmt) {
 	}
 
 	for _, v := range s.Vars {
-		nm := varToString(v)
+		nm := utils.VarToString(v)
 		if nm == "" {
 			continue
 		}

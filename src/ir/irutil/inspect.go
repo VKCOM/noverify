@@ -5,6 +5,9 @@ import (
 )
 
 func Inspect(root ir.Node, visit func(ir.Node) bool) {
+	if root == nil {
+		return
+	}
 	w := inspectWalker{visit: visit}
 	root.Walk(w)
 }
