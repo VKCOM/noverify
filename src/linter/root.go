@@ -223,8 +223,11 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 
 		d.scope().AddVar(v, solver.ExprTypeLocal(d.scope(), d.ctx.st, n.Expr), "global variable", meta.VarAlwaysDefined)
 	case *ir.FunctionStmt:
-		res = d.enterFunction(n)
-		d.checker.CheckKeywordCase(n, "function")
+		if d.metaInfo().IsIndexingComplete() {
+			res = d.checker.CheckFunction(n)
+		} else {
+			res = d.enterFunction(n)
+		}
 	case *ir.PropertyListStmt:
 		res = d.enterPropertyList(n)
 	case *ir.ClassConstListStmt:
@@ -601,42 +604,23 @@ func (d *rootWalker) parseFuncArgsForCallback(params []ir.Node, sc *meta.Scope, 
 
 func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	nm := d.ctx.st.Namespace + `\` + fun.FunctionName.Value
-	pos := ir.GetPosition(fun)
-
-	if funcSize := pos.EndLine - pos.StartLine; funcSize > maxFunctionLines {
-		d.Report(fun.FunctionName, LevelNotice, "complexity", "Too big function: more than %d lines", maxFunctionLines)
-	}
 
 	if d.meta.Functions.H == nil {
 		d.meta.Functions = meta.NewFunctionsMap()
 	}
-
-	d.checker.CheckCommentMisspellings(fun.FunctionName, fun.Doc.Raw)
-	d.checker.CheckIdentMisspellings(fun.FunctionName)
 
 	// Indexing stage.
 	doc := phpdoctypes.Parse(fun.Doc, fun.Params, d.ctx.typeNormalizer)
 	moveShapesToContext(&d.ctx, doc.Shapes)
 	d.handleClosuresFromDoc(doc.Closures)
 
-	// Check stage.
-	errors := d.checker.CheckPHPDoc(fun, fun.Doc, fun.Params)
-	d.reportPHPDocErrors(errors)
-
 	phpDocReturnType := doc.ReturnType
 	phpDocParamTypes := doc.ParamTypes
 
 	sc := meta.NewScope()
 
-	returnTypeHint, ok := d.parseTypeHintNode(fun.ReturnType)
-	if ok && !doc.Inherit {
-		d.checker.CheckFuncReturnType(fun.FunctionName, fun.FunctionName.Value, returnTypeHint, phpDocReturnType)
-	}
-	d.checker.CheckTypeHintNode(fun.ReturnType, "return type")
-
+	returnTypeHint, _ := d.parseTypeHintNode(fun.ReturnType)
 	funcParams := d.parseFuncParams(fun.Params, phpDocParamTypes, sc, nil)
-
-	d.checker.CheckFuncParams(fun.FunctionName, fun.Params, funcParams, phpDocParamTypes)
 
 	funcInfo := d.handleFuncStmts(funcParams.params, nil, fun.Stmts, sc)
 	actualReturnTypes := funcInfo.returnTypes

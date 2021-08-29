@@ -491,6 +491,10 @@ func (b *blockWalker) handleFunction(fun *ir.FunctionStmt) bool {
 		return false
 	}
 
+	if b.r.metaInfo().IsIndexingComplete() {
+		return b.r.checker.CheckFunction(fun)
+	}
+
 	return b.r.enterFunction(fun)
 }
 
