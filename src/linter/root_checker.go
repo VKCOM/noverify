@@ -23,6 +23,7 @@ type rootChecker struct {
 	normalizer types.Normalizer
 	info       *meta.Info
 
+	scope  *meta.Scope
 	state  *meta.ClassParseState
 	parser *phpdoc.TypeParser
 
@@ -43,6 +44,8 @@ func NewRootChecker(walker *rootWalker, quickfix *QuickFixGenerator) *rootChecke
 		normalizer:            walker.ctx.typeNormalizer,
 		info:                  walker.metaInfo(),
 		state:                 walker.ctx.st,
+		scope:                 walker.scope(),
+		parser:                walker.ctx.phpdocTypeParser,
 		currentClassNodeStack: &walker.currentClassNodeStack,
 		quickfix:              quickfix,
 	}
@@ -656,21 +659,242 @@ func (r *rootChecker) CheckPHPDocVar(n ir.Node, doc phpdoc.Comment, typ types.Ma
 	}
 }
 
-func (d *rootChecker) CheckParentConstructorCall(n ir.Node, parentConstructorCalled bool) {
-	if !d.info.IsIndexingComplete() {
+func (r *rootChecker) CheckParentConstructorCall(n ir.Node, parentConstructorCalled bool) {
+	if !r.info.IsIndexingComplete() {
 		return
 	}
 
-	class, ok := d.currentClassNodeStack.Current().(*ir.ClassStmt)
+	class, ok := r.currentClassNodeStack.Current().(*ir.ClassStmt)
 	if !ok || class.Extends == nil {
 		return
 	}
-	m, ok := solver.FindMethod(d.info, d.state.CurrentParentClass, `__construct`)
+	m, ok := solver.FindMethod(r.info, r.state.CurrentParentClass, `__construct`)
 	if !ok || m.Info.AccessLevel == meta.Private || m.Info.IsAbstract() {
 		return
 	}
 
 	if !parentConstructorCalled {
-		d.walker.Report(n, LevelWarning, "parentConstructor", "Missing parent::__construct() call")
+		r.walker.Report(n, LevelWarning, "parentConstructor", "Missing parent::__construct() call")
 	}
+}
+
+func (r *rootChecker) CheckMagicMethod(meth ir.Node, name string, modif methodModifiers, countArgs int) {
+	const Any = -1
+	var (
+		canBeStatic    bool
+		canBeNonPublic bool
+		mustBeStatic   bool
+
+		numArgsExpected int
+	)
+
+	switch name {
+	case "__call",
+		"__set":
+		canBeStatic = false
+		canBeNonPublic = false
+		numArgsExpected = 2
+
+	case "__get",
+		"__isset",
+		"__unset":
+		canBeStatic = false
+		canBeNonPublic = false
+		numArgsExpected = 1
+
+	case "__toString":
+		canBeStatic = false
+		canBeNonPublic = false
+		numArgsExpected = 0
+
+	case "__invoke",
+		"__debugInfo":
+		canBeStatic = false
+		canBeNonPublic = false
+		numArgsExpected = Any
+
+	case "__construct":
+		canBeStatic = false
+		canBeNonPublic = true
+		numArgsExpected = Any
+
+	case "__destruct", "__clone":
+		canBeStatic = false
+		canBeNonPublic = true
+		numArgsExpected = 0
+
+	case "__callStatic":
+		canBeStatic = true
+		canBeNonPublic = false
+		mustBeStatic = true
+		numArgsExpected = 2
+
+	case "__sleep",
+		"__wakeup",
+		"__serialize",
+		"__unserialize",
+		"__set_state":
+		canBeNonPublic = true
+		canBeStatic = true
+		numArgsExpected = Any
+
+	default:
+		return // Not a magic method
+	}
+
+	switch {
+	case mustBeStatic && !modif.static:
+		r.walker.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must be static", name)
+	case !canBeStatic && modif.static:
+		r.walker.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() cannot be static", name)
+	}
+	if !canBeNonPublic && modif.accessLevel != meta.Public {
+		r.walker.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must have public visibility", name)
+	}
+
+	if countArgs != numArgsExpected && numArgsExpected != Any {
+		r.walker.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must take exactly %d argument", name, numArgsExpected)
+	}
+}
+
+func (r *rootChecker) CheckExtends(class ir.Node, currentClass meta.ClassInfo, extends *ir.ClassExtendsStmt) {
+	if extends == nil {
+		return
+	}
+
+	r.CheckKeywordCase(extends, "extends")
+
+	className, ok := solver.GetClassName(r.state, extends.ClassName)
+	if ok {
+		r.CheckClassInherit(class, extends.ClassName, currentClass, className)
+	}
+}
+
+func (r *rootChecker) CheckImplements(class ir.Node, currentClass meta.ClassInfo, implements *ir.ClassImplementsStmt) {
+	if implements == nil {
+		return
+	}
+
+	r.CheckKeywordCase(implements, "implements")
+
+	for _, tr := range implements.InterfaceNames {
+		interfaceName, ok := solver.GetClassName(r.state, tr)
+		if ok {
+			currentClass.Interfaces[interfaceName] = struct{}{}
+			r.CheckInterfaceImplemented(class, tr, currentClass, interfaceName)
+		}
+	}
+}
+
+func (r *rootChecker) CheckTraitImplemented(classNode, name ir.Node, currentClass meta.ClassInfo, nameUsed string) {
+	if !r.info.IsIndexingComplete() {
+		return
+	}
+	trait, ok := r.info.GetTrait(nameUsed)
+	if !ok {
+		r.ReportUndefinedTrait(name, nameUsed)
+		return
+	}
+	r.checkImplemented(classNode, name, nameUsed, currentClass, trait)
+}
+
+func (r *rootChecker) CheckClassInherit(classNode, extendsClassNameNode ir.Node, currentClass meta.ClassInfo, nameUsed string) {
+	if !r.info.IsIndexingComplete() {
+		return
+	}
+
+	class, ok := r.info.GetClass(nameUsed)
+	if !ok {
+		r.ReportUndefinedClass(extendsClassNameNode, nameUsed)
+		return
+	}
+
+	r.checkClassExtends(extendsClassNameNode, currentClass, class)
+	r.checkImplemented(classNode, extendsClassNameNode, nameUsed, currentClass, class)
+}
+
+func (r *rootChecker) checkClassExtends(extendsClassNameNode ir.Node, currentClass, otherClass meta.ClassInfo) {
+	if otherClass.IsFinal() {
+		r.walker.Report(extendsClassNameNode, LevelError, "invalidExtendClass", "Class %s may not inherit from final class %s", currentClass.Name, otherClass.Name)
+	}
+}
+
+func (r *rootChecker) checkClassImplemented(classNode, extendsClassNameNode ir.Node, currentClass meta.ClassInfo, nameUsed string) {
+	if !r.info.IsIndexingComplete() {
+		return
+	}
+
+	class, ok := r.info.GetClass(nameUsed)
+	if !ok {
+		r.ReportUndefinedClass(extendsClassNameNode, nameUsed)
+		return
+	}
+
+	r.checkImplemented(classNode, extendsClassNameNode, nameUsed, currentClass, class)
+}
+
+func (r *rootChecker) CheckInterfaceImplemented(classNode, name ir.Node, currentClass meta.ClassInfo, nameUsed string) {
+	r.checkClassImplemented(classNode, name, currentClass, nameUsed)
+}
+
+func (r *rootChecker) checkImplemented(classNode, name ir.Node, nameUsed string, currentClass, otherClass meta.ClassInfo) {
+	if r.state.IsTrait || currentClass.IsAbstract() {
+		return
+	}
+
+	r.CheckNameCase(name, nameUsed, otherClass.Name)
+	visited := make(map[string]struct{}, 4)
+	r.checkImplementedStep(classNode, name, nameUsed, otherClass, visited)
+}
+
+func (r *rootChecker) checkImplementedStep(classNode, name ir.Node, className string, otherClass meta.ClassInfo, visited map[string]struct{}) {
+	// TODO: check that method signatures are compatible?
+	if _, ok := visited[className]; ok {
+		return
+	}
+	visited[className] = struct{}{}
+
+	for _, ifaceMethod := range otherClass.Methods.H {
+		m, ok := solver.FindMethod(r.info, r.state.CurrentClass, ifaceMethod.Name)
+		if !ok || !m.Implemented {
+			r.walker.Report(name, LevelError, "unimplemented", "Class %s must implement %s::%s method",
+				r.state.CurrentClass, className, ifaceMethod.Name)
+			continue
+		}
+		if m.Info.Name != ifaceMethod.Name {
+			r.walker.Report(name, LevelNotice, "nameMismatch", "%s::%s should be spelled as %s::%s",
+				r.state.CurrentClass, m.Info.Name, className, ifaceMethod.Name)
+
+		}
+		if ifaceMethod.IsFinal() && ifaceMethod.AccessLevel != meta.Private {
+			methodNode := irutil.FindClassMethodNode(classNode, ifaceMethod.Name)
+			if methodNode != nil {
+				r.walker.Report(methodNode, LevelError, "methodSignatureMismatch",
+					"Method %s::%s is declared final and cannot be overridden",
+					otherClass.Name, ifaceMethod.Name)
+			}
+		}
+	}
+
+	for _, ifaceName := range otherClass.ParentInterfaces {
+		iface, ok := r.info.GetClass(ifaceName)
+		if ok {
+			r.checkImplementedStep(classNode, name, ifaceName, iface, visited)
+		}
+	}
+
+	if otherClass.Parent != "" {
+		class, ok := r.info.GetClass(otherClass.Parent)
+		if ok {
+			r.checkImplementedStep(classNode, name, otherClass.Parent, class, visited)
+		}
+	}
+}
+
+func (r *rootChecker) ReportUndefinedClass(n ir.Node, name string) {
+	r.walker.Report(n, LevelError, "undefinedClass", "Class or interface named %s does not exist", name)
+}
+
+func (r *rootChecker) ReportUndefinedTrait(n ir.Node, name string) {
+	r.walker.Report(n, LevelError, "undefinedTrait", "Trait named %s does not exist", name)
 }

@@ -96,6 +96,11 @@ func (d *rootWalker) scope() *meta.Scope {
 	return d.meta.Scope
 }
 
+// metaInfo returns meta info.
+func (d *rootWalker) metaInfo() *meta.Info {
+	return d.ctx.st.Info
+}
+
 // state allows for custom hooks to store state between entering root context and block context.
 func (d *rootWalker) state() map[string]interface{} {
 	if d.customState == nil {
@@ -107,50 +112,6 @@ func (d *rootWalker) state() map[string]interface{} {
 // File returns file for current root walker.
 func (d *rootWalker) File() *workspace.File {
 	return d.file
-}
-
-func (d *rootWalker) handleCommentToken(t *token.Token) bool {
-	if !phpdoc.IsPHPDocToken(t) {
-		return true
-	}
-
-	for _, ln := range phpdoc.Parse(d.ctx.phpdocTypeParser, string(t.Value)).Parsed {
-		if ln.Name() != "linter" {
-			continue
-		}
-
-		for _, p := range ln.(*phpdoc.RawCommentPart).Params {
-			if p != "disable" {
-				continue
-			}
-			if d.linterDisabled {
-				needleLine := ln.Line() + t.Position.StartLine - 1 - 1
-				d.ReportPHPDoc(
-					PHPDocAbsoluteLineField(needleLine, 1),
-					LevelWarning, "linterError", "Linter is already disabled for this file",
-				)
-				continue
-			}
-			canDisable := false
-			if d.allowDisabledRegexp != nil {
-				canDisable = d.allowDisabledRegexp.MatchString(d.ctx.st.CurrentFile)
-			}
-			d.linterDisabled = canDisable
-			if !canDisable {
-				needleLine := ln.Line() + t.Position.StartLine - 1 - 1
-				d.ReportPHPDoc(
-					PHPDocAbsoluteLineField(needleLine, 1),
-					LevelWarning, "linterError", "You are not allowed to disable linter",
-				)
-			}
-		}
-	}
-
-	return true
-}
-
-func (d *rootWalker) handleComments(n ir.Node) {
-	n.IterateTokens(d.handleCommentToken)
 }
 
 // EnterNode is invoked at every node in hierarchy
@@ -186,8 +147,8 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		cl := d.getClass()
 		className := &ir.Identifier{Value: cl.Name}
 
-		d.checkImplements(n, n.Implements, cl)
-		d.checkExtends(n, n.Extends)
+		d.checker.CheckImplements(n, cl, n.Implements)
+		d.checker.CheckExtends(n, cl, n.Extends)
 
 		d.checker.CheckCommentMisspellings(className, n.Doc.Raw)
 		d.checker.CheckIdentMisspellings(className)
@@ -223,8 +184,8 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			d.checker.CheckModifierKeywordCase(m)
 		}
 
-		d.checkImplements(n, n.Implements, cl)
-		d.checkExtends(n, n.Extends)
+		d.checker.CheckImplements(n, cl, n.Implements)
+		d.checker.CheckExtends(n, cl, n.Extends)
 
 		d.checker.CheckCommentMisspellings(n.ClassName, n.Doc.Raw)
 		d.checker.CheckIdentMisspellings(n.ClassName)
@@ -247,7 +208,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			traitName, ok := solver.GetClassName(d.ctx.st, tr)
 			if ok {
 				cl.Traits[traitName] = struct{}{}
-				d.checkTraitImplemented(d.currentClassNodeStack.Current(), tr, traitName)
+				d.checker.CheckTraitImplemented(d.currentClassNodeStack.Current(), tr, d.getClass(), traitName)
 			}
 		}
 	case *ir.Assign:
@@ -294,74 +255,48 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 	return res
 }
 
-func (d *rootWalker) handleClassDoc(doc classPHPDocParseResult, cl *meta.ClassInfo) {
-	// If we ever need to distinguish @property-annotated and real properties,
-	// more work will be required here.
-	for name, p := range doc.properties {
-		p.Pos = cl.Pos
-		cl.Properties[name] = p
+func (d *rootWalker) handleCommentToken(t *token.Token) bool {
+	if !phpdoc.IsPHPDocToken(t) {
+		return true
 	}
 
-	for name, m := range doc.methods.H {
-		m.Pos = cl.Pos
-		cl.Methods.H[name] = m
-	}
-
-	cl.Mixins = doc.mixins
-}
-
-func (d *rootWalker) checkExtends(class ir.Node, extends *ir.ClassExtendsStmt) {
-	if extends == nil {
-		return
-	}
-
-	d.checker.CheckKeywordCase(extends, "extends")
-
-	className, ok := solver.GetClassName(d.ctx.st, extends.ClassName)
-	if ok {
-		d.checkClassInherit(class, extends.ClassName, className)
-	}
-}
-
-func (d *rootWalker) checkImplements(class ir.Node, implements *ir.ClassImplementsStmt, cl meta.ClassInfo) {
-	if implements == nil {
-		return
-	}
-
-	d.checker.CheckKeywordCase(implements, "implements")
-
-	for _, tr := range implements.InterfaceNames {
-		interfaceName, ok := solver.GetClassName(d.ctx.st, tr)
-		if ok {
-			cl.Interfaces[interfaceName] = struct{}{}
-			d.checkIfaceImplemented(class, tr, interfaceName)
+	for _, ln := range phpdoc.Parse(d.ctx.phpdocTypeParser, string(t.Value)).Parsed {
+		if ln.Name() != "linter" {
+			continue
 		}
-	}
-}
 
-func (d *rootWalker) getClassModifiers(n *ir.ClassStmt) meta.ClassFlags {
-	var classFlags meta.ClassFlags
-	for _, m := range n.Modifiers {
-		switch {
-		case strings.EqualFold("abstract", m.Value):
-			classFlags |= meta.ClassAbstract
-		case strings.EqualFold("final", m.Value):
-			classFlags |= meta.ClassFinal
-		}
-	}
-	return classFlags
-}
-
-func (d *rootWalker) parseStartPos(pos *position.Position) (startLn []byte, startChar int) {
-	if pos.StartLine >= 1 && d.file.NumLines() > pos.StartLine {
-		startLn = d.file.Line(pos.StartLine - 1)
-		p := d.file.LinePosition(pos.StartLine - 1)
-		if pos.StartPos > p {
-			startChar = pos.StartPos - p
+		for _, p := range ln.(*phpdoc.RawCommentPart).Params {
+			if p != "disable" {
+				continue
+			}
+			if d.linterDisabled {
+				needleLine := ln.Line() + t.Position.StartLine - 1 - 1
+				d.ReportPHPDoc(
+					PHPDocAbsoluteLineField(needleLine, 1),
+					LevelWarning, "linterError", "Linter is already disabled for this file",
+				)
+				continue
+			}
+			canDisable := false
+			if d.allowDisabledRegexp != nil {
+				canDisable = d.allowDisabledRegexp.MatchString(d.ctx.st.CurrentFile)
+			}
+			d.linterDisabled = canDisable
+			if !canDisable {
+				needleLine := ln.Line() + t.Position.StartLine - 1 - 1
+				d.ReportPHPDoc(
+					PHPDocAbsoluteLineField(needleLine, 1),
+					LevelWarning, "linterError", "You are not allowed to disable linter",
+				)
+			}
 		}
 	}
 
-	return startLn, startChar
+	return true
+}
+
+func (d *rootWalker) handleComments(n ir.Node) {
+	n.IterateTokens(d.handleCommentToken)
 }
 
 // ReportPHPDoc registers a single report message about some found problem in PHPDoc.
@@ -750,175 +685,33 @@ func (d *rootWalker) handleFuncStmts(params []meta.FuncParam, uses, stmts []ir.N
 	}
 }
 
-func (d *rootWalker) getElementPos(n ir.Node) meta.ElementPosition {
-	pos := ir.GetPosition(n)
-	_, startChar := d.parseStartPos(pos)
-
-	return meta.ElementPosition{
-		Filename:  d.ctx.st.CurrentFile,
-		Character: int32(startChar),
-		Line:      int32(pos.StartLine),
-		EndLine:   int32(pos.EndLine),
-		Length:    int32(pos.EndPos - pos.StartPos),
+func (d *rootWalker) getClassModifiers(n *ir.ClassStmt) meta.ClassFlags {
+	var classFlags meta.ClassFlags
+	for _, m := range n.Modifiers {
+		switch {
+		case strings.EqualFold("abstract", m.Value):
+			classFlags |= meta.ClassAbstract
+		case strings.EqualFold("final", m.Value):
+			classFlags |= meta.ClassFinal
+		}
 	}
+	return classFlags
 }
 
-type methodModifiers struct {
-	abstract       bool
-	static         bool
-	accessLevel    meta.AccessLevel
-	final          bool
-	accessImplicit bool
-}
-
-func (d *rootWalker) parseMethodModifiers(meth *ir.ClassMethodStmt) (res methodModifiers) {
-	res.accessLevel = meta.Public
-	res.accessImplicit = true
-
-	for _, m := range meth.Modifiers {
-		d.checker.CheckModifierKeywordCase(m)
-		switch strings.ToLower(m.Value) {
-		case "abstract":
-			res.abstract = true
-		case "static":
-			res.static = true
-		case "public":
-			res.accessLevel = meta.Public
-			res.accessImplicit = false
-		case "private":
-			res.accessLevel = meta.Private
-			res.accessImplicit = false
-		case "protected":
-			res.accessLevel = meta.Protected
-			res.accessImplicit = false
-		case "final":
-			res.final = true
-		default:
-			linterError(d.ctx.st.CurrentFile, "Unrecognized method modifier: %s", m.Value)
-		}
+func (d *rootWalker) handleClassDoc(doc classPHPDocParseResult, cl *meta.ClassInfo) {
+	// If we ever need to distinguish @property-annotated and real properties,
+	// more work will be required here.
+	for name, p := range doc.properties {
+		p.Pos = cl.Pos
+		cl.Properties[name] = p
 	}
 
-	return res
-}
-
-func (d *rootWalker) checkMagicMethod(meth ir.Node, name string, modif methodModifiers, countArgs int) {
-	const Any = -1
-	var (
-		canBeStatic    bool
-		canBeNonPublic bool
-		mustBeStatic   bool
-
-		numArgsExpected int
-	)
-
-	switch name {
-	case "__call",
-		"__set":
-		canBeStatic = false
-		canBeNonPublic = false
-		numArgsExpected = 2
-
-	case "__get",
-		"__isset",
-		"__unset":
-		canBeStatic = false
-		canBeNonPublic = false
-		numArgsExpected = 1
-
-	case "__toString":
-		canBeStatic = false
-		canBeNonPublic = false
-		numArgsExpected = 0
-
-	case "__invoke",
-		"__debugInfo":
-		canBeStatic = false
-		canBeNonPublic = false
-		numArgsExpected = Any
-
-	case "__construct":
-		canBeStatic = false
-		canBeNonPublic = true
-		numArgsExpected = Any
-
-	case "__destruct", "__clone":
-		canBeStatic = false
-		canBeNonPublic = true
-		numArgsExpected = 0
-
-	case "__callStatic":
-		canBeStatic = true
-		canBeNonPublic = false
-		mustBeStatic = true
-		numArgsExpected = 2
-
-	case "__sleep",
-		"__wakeup",
-		"__serialize",
-		"__unserialize",
-		"__set_state":
-		canBeNonPublic = true
-		canBeStatic = true
-		numArgsExpected = Any
-
-	default:
-		return // Not a magic method
+	for name, m := range doc.methods.H {
+		m.Pos = cl.Pos
+		cl.Methods.H[name] = m
 	}
 
-	switch {
-	case mustBeStatic && !modif.static:
-		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must be static", name)
-	case !canBeStatic && modif.static:
-		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() cannot be static", name)
-	}
-	if !canBeNonPublic && modif.accessLevel != meta.Public {
-		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must have public visibility", name)
-	}
-
-	if countArgs != numArgsExpected && numArgsExpected != Any {
-		d.Report(meth, LevelError, "magicMethodDecl", "The magic method %s() must take exactly %d argument", name, numArgsExpected)
-	}
-}
-
-func (d *rootWalker) getClass() meta.ClassInfo {
-	var m meta.ClassesMap
-
-	if d.ctx.st.IsTrait {
-		if d.meta.Traits.H == nil {
-			d.meta.Traits = meta.NewClassesMap()
-		}
-		m = d.meta.Traits
-	} else {
-		if d.meta.Classes.H == nil {
-			d.meta.Classes = meta.NewClassesMap()
-		}
-		m = d.meta.Classes
-	}
-
-	cl, ok := m.Get(d.ctx.st.CurrentClass)
-	if !ok {
-		var flags meta.ClassFlags
-		if d.ctx.st.IsInterface {
-			flags = meta.ClassInterface
-		}
-
-		cl = meta.ClassInfo{
-			Pos:              d.getElementPos(d.currentClassNodeStack.Current()),
-			Name:             d.ctx.st.CurrentClass,
-			Flags:            flags,
-			Parent:           d.ctx.st.CurrentParentClass,
-			ParentInterfaces: d.ctx.st.CurrentParentInterfaces,
-			Interfaces:       make(map[string]struct{}),
-			Traits:           make(map[string]struct{}),
-			Methods:          meta.NewFunctionsMap(),
-			Properties:       make(meta.PropertiesMap),
-			Constants:        make(meta.ConstantsMap),
-		}
-
-		m.Set(d.ctx.st.CurrentClass, cl)
-	}
-
-	return cl
+	cl.Mixins = doc.mixins
 }
 
 func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
@@ -1052,7 +845,7 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		d.Report(meth.MethodName, LevelNotice, "implicitModifiers", "Specify the access modifier for %s method explicitly", methodFQN)
 	}
 
-	d.checkMagicMethod(meth.MethodName, nm, modif, len(meth.Params))
+	d.checker.CheckMagicMethod(meth.MethodName, nm, modif, len(meth.Params))
 
 	sc := meta.NewScope()
 	if !modif.static {
@@ -1178,13 +971,42 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	return false
 }
 
-func (d *rootWalker) reportPHPDocErrors(errs PHPDocErrors) {
-	for _, err := range errs.types {
-		d.ReportPHPDoc(err.Location, LevelNotice, "phpdocType", err.Message)
+type methodModifiers struct {
+	abstract       bool
+	static         bool
+	accessLevel    meta.AccessLevel
+	final          bool
+	accessImplicit bool
+}
+
+func (d *rootWalker) parseMethodModifiers(meth *ir.ClassMethodStmt) (res methodModifiers) {
+	res.accessLevel = meta.Public
+	res.accessImplicit = true
+
+	for _, m := range meth.Modifiers {
+		d.checker.CheckModifierKeywordCase(m)
+		switch strings.ToLower(m.Value) {
+		case "abstract":
+			res.abstract = true
+		case "static":
+			res.static = true
+		case "public":
+			res.accessLevel = meta.Public
+			res.accessImplicit = false
+		case "private":
+			res.accessLevel = meta.Private
+			res.accessImplicit = false
+		case "protected":
+			res.accessLevel = meta.Protected
+			res.accessImplicit = false
+		case "final":
+			res.final = true
+		default:
+			linterError(d.ctx.st.CurrentFile, "Unrecognized method modifier: %s", m.Value)
+		}
 	}
-	for _, err := range errs.lint {
-		d.ReportPHPDoc(err.Location, LevelWarning, "phpdocLint", err.Message)
-	}
+
+	return res
 }
 
 func (d *rootWalker) parsePHPDocVar(doc phpdoc.Comment) (typesMap types.Map) {
@@ -1200,6 +1022,43 @@ func (d *rootWalker) parsePHPDocVar(doc phpdoc.Comment) (typesMap types.Map) {
 	}
 
 	return typesMap
+}
+
+func (d *rootWalker) parseClassPHPDoc(class ir.Node, doc phpdoc.Comment) classPHPDocParseResult {
+	var result classPHPDocParseResult
+
+	if doc.Raw == "" {
+		return result
+	}
+
+	// TODO: allocate maps lazily.
+	// Class may not have any @property or @method annotations.
+	// In that case we can handle avoid map allocations.
+	result.properties = make(meta.PropertiesMap)
+	result.methods = meta.NewFunctionsMap()
+
+	for _, part := range doc.Parsed {
+		d.checker.checkPHPDocRef(class, part)
+		switch part.Name() {
+		case "property", "property-read", "property-write":
+			parseClassPHPDocProperty(class, &d.ctx, &result, part.(*phpdoc.TypeVarCommentPart))
+		case "method":
+			parseClassPHPDocMethod(class, &d.ctx, &result, part.(*phpdoc.RawCommentPart))
+		case "mixin":
+			parseClassPHPDocMixin(class, d.ctx.st, &result, part.(*phpdoc.RawCommentPart))
+		}
+	}
+
+	return result
+}
+
+func (d *rootWalker) reportPHPDocErrors(errs PHPDocErrors) {
+	for _, err := range errs.types {
+		d.ReportPHPDoc(err.Location, LevelNotice, "phpdocType", err.Message)
+	}
+	for _, err := range errs.lint {
+		d.ReportPHPDoc(err.Location, LevelWarning, "phpdocLint", err.Message)
+	}
 }
 
 // Parse type info, e.g. "string" in "someFunc() : string { ... }".
@@ -1617,21 +1476,6 @@ func (d *rootWalker) runRules(n ir.Node, sc *meta.Scope, rlist []rules.Rule) {
 	}
 }
 
-// nodeText is used to get the string that represents the
-// passed node more efficiently than irutil.FmtNode.
-func (d *rootWalker) nodeText(n ir.Node) string {
-	pos := ir.GetPosition(n)
-	from, to := pos.StartPos, pos.EndPos
-	src := d.file.Contents()
-	// Taking a node from the source code preserves the original formatting
-	// and is more efficient than printing it.
-	if (from >= 0 && from < len(src)) && (to >= 0 && to < len(src)) {
-		return string(src[from:to])
-	}
-	// If we can't take node out of the source text, print it.
-	return irutil.FmtNode(n)
-}
-
 func (d *rootWalker) renderRuleMessage(msg string, n ir.Node, m phpgrep.MatchData, truncate bool) string {
 	// "$$" stands for the entire matched node, like $0 in regexp.
 	if strings.Contains(msg, "$$") {
@@ -1743,143 +1587,6 @@ func (d *rootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filter
 	return true
 }
 
-func (d *rootWalker) checkTraitImplemented(classNode, name ir.Node, nameUsed string) {
-	if !d.metaInfo().IsIndexingComplete() {
-		return
-	}
-	trait, ok := d.metaInfo().GetTrait(nameUsed)
-	if !ok {
-		d.reportUndefinedTrait(name, nameUsed)
-		return
-	}
-	d.checkImplemented(classNode, name, nameUsed, trait)
-}
-
-func (d *rootWalker) checkClassInherit(classNode, extendsClassNameNode ir.Node, nameUsed string) {
-	if !d.metaInfo().IsIndexingComplete() {
-		return
-	}
-
-	class, ok := d.metaInfo().GetClass(nameUsed)
-	if !ok {
-		d.reportUndefinedClass(extendsClassNameNode, nameUsed)
-		return
-	}
-
-	d.checkClassExtends(extendsClassNameNode, class)
-	d.checkImplemented(classNode, extendsClassNameNode, nameUsed, class)
-}
-
-func (d *rootWalker) checkClassExtends(extendsClassNameNode ir.Node, otherClass meta.ClassInfo) {
-	if otherClass.IsFinal() {
-		currentClass := d.getClass()
-		d.Report(extendsClassNameNode, LevelError, "invalidExtendClass", "Class %s may not inherit from final class %s", currentClass.Name, otherClass.Name)
-	}
-}
-
-func (d *rootWalker) checkClassImplemented(classNode, extendsClassNameNode ir.Node, nameUsed string) {
-	if !d.metaInfo().IsIndexingComplete() {
-		return
-	}
-	class, ok := d.metaInfo().GetClass(nameUsed)
-	if !ok {
-		d.reportUndefinedClass(extendsClassNameNode, nameUsed)
-		return
-	}
-	d.checkImplemented(classNode, extendsClassNameNode, nameUsed, class)
-}
-
-func (d *rootWalker) checkIfaceImplemented(classNode, name ir.Node, nameUsed string) {
-	d.checkClassImplemented(classNode, name, nameUsed)
-}
-
-func (d *rootWalker) checkImplemented(classNode, name ir.Node, nameUsed string, otherClass meta.ClassInfo) {
-	cl := d.getClass()
-	if d.ctx.st.IsTrait || cl.IsAbstract() {
-		return
-	}
-	d.checker.CheckNameCase(name, nameUsed, otherClass.Name)
-	visited := make(map[string]struct{}, 4)
-	d.checkImplementedStep(classNode, name, nameUsed, otherClass, visited)
-}
-
-func (d *rootWalker) checkImplementedStep(classNode, name ir.Node, className string, otherClass meta.ClassInfo, visited map[string]struct{}) {
-	// TODO: check that method signatures are compatible?
-	if _, ok := visited[className]; ok {
-		return
-	}
-	visited[className] = struct{}{}
-	for _, ifaceMethod := range otherClass.Methods.H {
-		m, ok := solver.FindMethod(d.metaInfo(), d.ctx.st.CurrentClass, ifaceMethod.Name)
-		if !ok || !m.Implemented {
-			d.Report(name, LevelError, "unimplemented", "Class %s must implement %s::%s method",
-				d.ctx.st.CurrentClass, className, ifaceMethod.Name)
-			continue
-		}
-		if m.Info.Name != ifaceMethod.Name {
-			d.Report(name, LevelNotice, "nameMismatch", "%s::%s should be spelled as %s::%s",
-				d.ctx.st.CurrentClass, m.Info.Name, className, ifaceMethod.Name)
-
-		}
-		if ifaceMethod.IsFinal() && ifaceMethod.AccessLevel != meta.Private {
-			methodNode := irutil.FindClassMethodNode(classNode, ifaceMethod.Name)
-			if methodNode != nil {
-				d.Report(methodNode, LevelError, "methodSignatureMismatch",
-					"Method %s::%s is declared final and cannot be overridden",
-					otherClass.Name, ifaceMethod.Name)
-			}
-		}
-	}
-	for _, ifaceName := range otherClass.ParentInterfaces {
-		iface, ok := d.metaInfo().GetClass(ifaceName)
-		if ok {
-			d.checkImplementedStep(classNode, name, ifaceName, iface, visited)
-		}
-	}
-	if otherClass.Parent != "" {
-		class, ok := d.metaInfo().GetClass(otherClass.Parent)
-		if ok {
-			d.checkImplementedStep(classNode, name, otherClass.Parent, class, visited)
-		}
-	}
-}
-
-func (d *rootWalker) reportUndefinedClass(n ir.Node, name string) {
-	d.Report(n, LevelError, "undefinedClass", "Class or interface named %s does not exist", name)
-}
-
-func (d *rootWalker) reportUndefinedTrait(n ir.Node, name string) {
-	d.Report(n, LevelError, "undefinedTrait", "Trait named %s does not exist", name)
-}
-
-func (d *rootWalker) parseClassPHPDoc(class ir.Node, doc phpdoc.Comment) classPHPDocParseResult {
-	var result classPHPDocParseResult
-
-	if doc.Raw == "" {
-		return result
-	}
-
-	// TODO: allocate maps lazily.
-	// Class may not have any @property or @method annotations.
-	// In that case we can handle avoid map allocations.
-	result.properties = make(meta.PropertiesMap)
-	result.methods = meta.NewFunctionsMap()
-
-	for _, part := range doc.Parsed {
-		d.checker.checkPHPDocRef(class, part)
-		switch part.Name() {
-		case "property", "property-read", "property-write":
-			parseClassPHPDocProperty(class, &d.ctx, &result, part.(*phpdoc.TypeVarCommentPart))
-		case "method":
-			parseClassPHPDocMethod(class, &d.ctx, &result, part.(*phpdoc.RawCommentPart))
-		case "mixin":
-			parseClassPHPDocMixin(class, d.ctx.st, &result, part.(*phpdoc.RawCommentPart))
-		}
-	}
-
-	return result
-}
-
 func (d *rootWalker) beforeEnterFile() {
 	for _, c := range d.custom {
 		c.BeforeEnterFile()
@@ -1913,10 +1620,6 @@ func (d *rootWalker) afterLeaveFile() {
 	}
 }
 
-func (d *rootWalker) metaInfo() *meta.Info {
-	return d.ctx.st.Info
-}
-
 func (d *rootWalker) currentFunction() (meta.FuncInfo, bool) {
 	name := d.ctx.st.CurrentFunction
 	if name == "" {
@@ -1948,4 +1651,85 @@ func (d *rootWalker) currentFunction() (meta.FuncInfo, bool) {
 	}
 
 	return fun, true
+}
+
+func (d *rootWalker) getClass() meta.ClassInfo {
+	var m meta.ClassesMap
+
+	if d.ctx.st.IsTrait {
+		if d.meta.Traits.H == nil {
+			d.meta.Traits = meta.NewClassesMap()
+		}
+		m = d.meta.Traits
+	} else {
+		if d.meta.Classes.H == nil {
+			d.meta.Classes = meta.NewClassesMap()
+		}
+		m = d.meta.Classes
+	}
+
+	cl, ok := m.Get(d.ctx.st.CurrentClass)
+	if !ok {
+		var flags meta.ClassFlags
+		if d.ctx.st.IsInterface {
+			flags = meta.ClassInterface
+		}
+
+		cl = meta.ClassInfo{
+			Pos:              d.getElementPos(d.currentClassNodeStack.Current()),
+			Name:             d.ctx.st.CurrentClass,
+			Flags:            flags,
+			Parent:           d.ctx.st.CurrentParentClass,
+			ParentInterfaces: d.ctx.st.CurrentParentInterfaces,
+			Interfaces:       make(map[string]struct{}),
+			Traits:           make(map[string]struct{}),
+			Methods:          meta.NewFunctionsMap(),
+			Properties:       make(meta.PropertiesMap),
+			Constants:        make(meta.ConstantsMap),
+		}
+
+		m.Set(d.ctx.st.CurrentClass, cl)
+	}
+
+	return cl
+}
+
+func (d *rootWalker) parseStartPos(pos *position.Position) (startLn []byte, startChar int) {
+	if pos.StartLine >= 1 && d.file.NumLines() > pos.StartLine {
+		startLn = d.file.Line(pos.StartLine - 1)
+		p := d.file.LinePosition(pos.StartLine - 1)
+		if pos.StartPos > p {
+			startChar = pos.StartPos - p
+		}
+	}
+
+	return startLn, startChar
+}
+
+func (d *rootWalker) getElementPos(n ir.Node) meta.ElementPosition {
+	pos := ir.GetPosition(n)
+	_, startChar := d.parseStartPos(pos)
+
+	return meta.ElementPosition{
+		Filename:  d.ctx.st.CurrentFile,
+		Character: int32(startChar),
+		Line:      int32(pos.StartLine),
+		EndLine:   int32(pos.EndLine),
+		Length:    int32(pos.EndPos - pos.StartPos),
+	}
+}
+
+// nodeText is used to get the string that represents the
+// passed node more efficiently than irutil.FmtNode.
+func (d *rootWalker) nodeText(n ir.Node) string {
+	pos := ir.GetPosition(n)
+	from, to := pos.StartPos, pos.EndPos
+	src := d.file.Contents()
+	// Taking a node from the source code preserves the original formatting
+	// and is more efficient than printing it.
+	if (from >= 0 && from < len(src)) && (to >= 0 && to < len(src)) {
+		return string(src[from:to])
+	}
+	// If we can't take node out of the source text, print it.
+	return irutil.FmtNode(n)
 }
