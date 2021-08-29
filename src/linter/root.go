@@ -126,7 +126,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		c.BeforeEnterNode(n)
 	}
 
-	d.handleComments(n)
+	n.IterateTokens(d.handleCommentToken)
 
 	state.EnterNode(d.ctx.st, n)
 
@@ -354,10 +354,6 @@ func (d *rootWalker) handleCommentToken(t *token.Token) bool {
 	}
 
 	return true
-}
-
-func (d *rootWalker) handleComments(n ir.Node) {
-	n.IterateTokens(d.handleCommentToken)
 }
 
 // Handle functions part.
