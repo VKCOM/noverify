@@ -443,7 +443,7 @@ func (b *blockLinter) checkBinaryDupArgs(n, left, right ir.Node) {
 		return
 	}
 	if nodeEqual(b.classParseState(), left, right) {
-		b.report(n, LevelWarning, "dupSubExpr", "Duplicated operands value in %s expression", binaryOpString(n))
+		b.report(n, LevelWarning, "dupSubExpr", "Duplicated operands value in %s expression", utils.BinaryOpString(n))
 	}
 }
 
@@ -719,7 +719,7 @@ func (b *blockLinter) checkSwitch(s *ir.SwitchStmt) {
 		if isDupKey {
 			msg := fmt.Sprintf("Duplicated switch case for expression %s", irutil.FmtNode(caseNode.Cond))
 			if isConstKey {
-				dupKey := getConstValue(constValue)
+				dupKey := meta.GetConstValue(constValue)
 				msg += " (value: " + dupKey + ")"
 			}
 			b.report(caseNode.Cond, LevelWarning, "dupCond", "%s", msg)

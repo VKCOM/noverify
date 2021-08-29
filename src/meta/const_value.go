@@ -24,7 +24,7 @@ var (
 )
 
 // ConstValue structure is used to store
-// the value and type of a constant.
+// the value and type of constant.
 type ConstValue struct {
 	Type  ConstValueType
 	Value interface{}
@@ -245,4 +245,12 @@ func (c *ConstValue) GobDecode(buf []byte) error {
 	c.Type = tp
 
 	return nil
+}
+
+func GetConstValue(c ConstValue) string {
+	if c.Type == Undefined {
+		return ""
+	}
+
+	return fmt.Sprintf("%v", c.Value)
 }
