@@ -55,6 +55,50 @@ func newRootChecker(walker *rootWalker, quickfix *QuickFixGenerator) *rootChecke
 	return c
 }
 
+func (r *rootChecker) CheckFunction(fun *ir.FunctionStmt) bool {
+	r.CheckKeywordCase(fun, "function")
+
+	sc := meta.NewScope()
+	pos := ir.GetPosition(fun)
+
+	if funcSize := pos.EndLine - pos.StartLine; funcSize > maxFunctionLines {
+		r.walker.Report(fun.FunctionName, LevelNotice, "complexity", "Too big function: more than %d lines", maxFunctionLines)
+	}
+
+	r.CheckCommentMisspellings(fun.FunctionName, fun.Doc.Raw)
+	r.CheckIdentMisspellings(fun.FunctionName)
+
+	// Check stage.
+	errors := r.CheckPHPDoc(fun, fun.Doc, fun.Params)
+	r.reportPHPDocErrors(errors)
+
+	doc := phpdoctypes.Parse(fun.Doc, fun.Params, r.normalizer)
+	phpDocReturnType := doc.ReturnType
+	phpDocParamTypes := doc.ParamTypes
+
+	returnTypeHint, ok := r.walker.parseTypeHintNode(fun.ReturnType)
+	if ok && !doc.Inherit {
+		r.CheckFuncReturnType(fun.FunctionName, fun.FunctionName.Value, returnTypeHint, phpDocReturnType)
+	}
+	r.CheckTypeHintNode(fun.ReturnType, "return type")
+
+	funcParams := r.walker.parseFuncParams(fun.Params, phpDocParamTypes, sc, nil)
+	r.CheckFuncParams(fun.FunctionName, fun.Params, funcParams, phpDocParamTypes)
+
+	r.walker.handleFuncStmts(funcParams.params, nil, fun.Stmts, sc)
+
+	return false
+}
+
+func (r *rootChecker) reportPHPDocErrors(errs PHPDocErrors) {
+	for _, err := range errs.types {
+		r.walker.ReportPHPDoc(err.Location, LevelNotice, "phpdocType", err.Message)
+	}
+	for _, err := range errs.lint {
+		r.walker.ReportPHPDoc(err.Location, LevelWarning, "phpdocLint", err.Message)
+	}
+}
+
 func (r *rootChecker) CheckPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []ir.Node) (errors PHPDocErrors) {
 	if doc.Raw == "" {
 		return errors
