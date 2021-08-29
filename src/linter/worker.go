@@ -294,7 +294,7 @@ func (w *Worker) analyzeFile(file *workspace.File, rootNode *ir.Root) (*rootWalk
 		checkersFilter:      w.checkersFilter,
 	}
 
-	walker.checker = NewRootChecker(walker, NewQuickFixGenerator(file))
+	walker.checker = newRootChecker(walker, NewQuickFixGenerator(file))
 
 	walker.InitCustom()
 

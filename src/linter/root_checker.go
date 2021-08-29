@@ -37,7 +37,7 @@ type rootChecker struct {
 	quickfix *QuickFixGenerator
 }
 
-func NewRootChecker(walker *rootWalker, quickfix *QuickFixGenerator) *rootChecker {
+func newRootChecker(walker *rootWalker, quickfix *QuickFixGenerator) *rootChecker {
 	c := &rootChecker{
 		file:                  walker.file,
 		walker:                walker,

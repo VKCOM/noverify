@@ -66,7 +66,7 @@ func TestParseClassPHPDoc(t *testing.T) {
 	walker := rootWalker{
 		ctx: newRootContext(l.config, NewWorkerContext(), st),
 	}
-	walker.checker = NewRootChecker(&walker, NewQuickFixGenerator(workspace.NewFile("test.php", []byte{})))
+	walker.checker = newRootChecker(&walker, NewQuickFixGenerator(workspace.NewFile("test.php", []byte{})))
 	for _, test := range tests {
 		docString := fmt.Sprintf(`/** %s */`, test.line)
 		doc := phpdoc.Parse(walker.ctx.phpdocTypeParser, docString)
