@@ -120,7 +120,7 @@ func newBlockWalker(r *rootWalker, sc *meta.Scope) *blockWalker {
 		nonLocalVars: make(map[string]variableKind),
 		path:         irutil.NewNodePath(),
 	}
-	b.linter = blockLinter{walker: b}
+	b.linter = blockLinter{walker: b, quickfix: r.checker.quickfix}
 	return b
 }
 
@@ -266,7 +266,7 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 		typesMap := types.NewMapWithNormalization(b.r.ctx.typeNormalizer, converted.Types)
 		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(part.Var, "$"), typesMap, "@var")
 
-		b.r.checkUndefinedClassesInPHPDoc(n, typesMap, part)
+		b.r.checker.checkUndefinedClassesInPHPDoc(n, typesMap, part)
 	}
 }
 
@@ -1187,16 +1187,15 @@ func (b *blockWalker) enterArrowFunction(fun *ir.ArrowFunctionExpr) bool {
 	moveShapesToContext(&b.r.ctx, doc.Shapes)
 	b.r.handleClosuresFromDoc(doc.Closures)
 
-	for _, param := range fun.Params {
-		b.r.checkFuncParam(param.(*ir.Parameter))
-	}
-
-	// Check stage.
-	errors := b.r.checkPHPDoc(fun, fun.Doc, fun.Params)
-	b.r.reportPHPDocErrors(errors)
-
 	funcParams := b.r.parseFuncParams(fun.Params, doc.ParamTypes, sc, nil)
 	b.r.handleArrowFuncExpr(funcParams.params, fun.Expr, sc, b)
+
+	name := &ir.Identifier{Value: "arrow function"}
+	b.r.checker.CheckFuncParams(name, fun.Params, funcParams, doc.ParamTypes)
+
+	// Check stage.
+	errors := b.r.checker.CheckPHPDoc(fun, fun.Doc, fun.Params)
+	b.r.reportPHPDocErrors(errors)
 
 	return false
 }
@@ -1217,14 +1216,14 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 	b.r.handleClosuresFromDoc(doc.Closures)
 
 	// Check stage.
-	errors := b.r.checkPHPDoc(fun, fun.Doc, fun.Params)
+	errors := b.r.checker.CheckPHPDoc(fun, fun.Doc, fun.Params)
 	b.r.reportPHPDocErrors(errors)
 
 	var hintReturnType types.Map
 	if typ, ok := b.r.parseTypeHintNode(fun.ReturnType); ok {
 		hintReturnType = typ
 	}
-	b.r.checkTypeHintNode(fun.ReturnType, "closure return type")
+	b.r.checker.CheckTypeHintNode(fun.ReturnType, "closure return type")
 
 	var closureUses []ir.Node
 	if fun.ClosureUse != nil {
@@ -1264,11 +1263,9 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 
 	returnTypes := functionReturnType(phpDocReturnTypes, hintReturnType, actualReturnTypes)
 
-	for _, param := range fun.Params {
-		b.r.checkFuncParam(param.(*ir.Parameter))
-	}
-
 	name := autogen.GenerateClosureName(fun, b.r.ctx.st.CurrentFunction, b.r.ctx.st.CurrentFile)
+
+	b.r.checker.CheckFuncParams(&ir.Identifier{Value: name}, fun.Params, params, doc.ParamTypes)
 
 	if b.r.meta.Functions.H == nil {
 		b.r.meta.Functions = meta.NewFunctionsMap()
@@ -1703,7 +1700,7 @@ func moveNonLocalVariables(trueContext, toContext *blockContext, nonLocalVars ma
 }
 
 func (b *blockWalker) handleElseIf(s *ir.ElseIfStmt) {
-	b.r.checkKeywordCase(s, "elseif")
+	b.r.checker.CheckKeywordCase(s, "elseif")
 }
 
 func (b *blockWalker) iterateNextCases(cases []ir.Node, startIdx int) {
@@ -1745,10 +1742,10 @@ func (b *blockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 		cond, list := getCaseStmts(c)
 		if cond == nil {
 			haveDefault = true
-			b.r.checkKeywordCase(c, "default")
+			b.r.checker.CheckKeywordCase(c, "default")
 		} else {
 			cond.Walk(b)
-			b.r.checkKeywordCase(c, "case")
+			b.r.checker.CheckKeywordCase(c, "case")
 		}
 
 		// allow empty case body without "break;"

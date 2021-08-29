@@ -17,7 +17,8 @@ import (
 )
 
 type blockLinter struct {
-	walker *blockWalker
+	walker   *blockWalker
+	quickfix *QuickFixGenerator
 }
 
 func (b *blockLinter) enterNode(n ir.Node) {
@@ -143,34 +144,34 @@ func (b *blockLinter) enterNode(n ir.Node) {
 		b.checkTypeCaseExpr(n)
 
 	case *ir.CloneExpr:
-		b.walker.r.checkKeywordCase(n, "clone")
+		b.walker.r.checker.CheckKeywordCase(n, "clone")
 	case *ir.ConstListStmt:
-		b.walker.r.checkKeywordCase(n, "const")
+		b.walker.r.checker.CheckKeywordCase(n, "const")
 	case *ir.GotoStmt:
-		b.walker.r.checkKeywordCase(n, "goto")
+		b.walker.r.checker.CheckKeywordCase(n, "goto")
 	case *ir.ThrowStmt:
-		b.walker.r.checkKeywordCase(n, "throw")
+		b.walker.r.checker.CheckKeywordCase(n, "throw")
 	case *ir.YieldExpr:
-		b.walker.r.checkKeywordCase(n, "yield")
+		b.walker.r.checker.CheckKeywordCase(n, "yield")
 	case *ir.YieldFromExpr:
-		b.walker.r.checkKeywordCase(n, "yield")
+		b.walker.r.checker.CheckKeywordCase(n, "yield")
 	case *ir.ImportExpr:
-		b.walker.r.checkKeywordCase(n, n.Func)
+		b.walker.r.checker.CheckKeywordCase(n, n.Func)
 	case *ir.BreakStmt:
-		b.walker.r.checkKeywordCase(n, "break")
+		b.walker.r.checker.CheckKeywordCase(n, "break")
 	case *ir.ReturnStmt:
-		b.walker.r.checkKeywordCase(n, "return")
+		b.walker.r.checker.CheckKeywordCase(n, "return")
 	case *ir.ElseStmt:
-		b.walker.r.checkKeywordCase(n, "else")
+		b.walker.r.checker.CheckKeywordCase(n, "else")
 
 	case *ir.ForeachStmt:
 		b.checkForeach(n)
 	case *ir.ForStmt:
-		b.walker.r.checkKeywordCase(n, "for")
+		b.walker.r.checker.CheckKeywordCase(n, "for")
 	case *ir.WhileStmt:
-		b.walker.r.checkKeywordCase(n, "while")
+		b.walker.r.checker.CheckKeywordCase(n, "while")
 	case *ir.DoStmt:
-		b.walker.r.checkKeywordCase(n, "do")
+		b.walker.r.checker.CheckKeywordCase(n, "do")
 
 	case *ir.ContinueStmt:
 		b.checkContinueStmt(n)
@@ -239,7 +240,7 @@ func (b *blockLinter) checkClass(class *ir.ClassStmt) {
 }
 
 func (b *blockLinter) checkForeach(n *ir.ForeachStmt) {
-	b.walker.r.checkKeywordCase(n, "foreach")
+	b.walker.r.checker.CheckKeywordCase(n, "foreach")
 
 	var vars []*ir.SimpleVar
 
@@ -362,14 +363,14 @@ func (b *blockLinter) checkTryStmt(s *ir.TryStmt) {
 		b.report(s, LevelError, "bareTry", "At least one catch or finally block must be present")
 	}
 
-	b.walker.r.checkKeywordCase(s, "try")
+	b.walker.r.checker.CheckKeywordCase(s, "try")
 
 	for _, c := range s.Catches {
-		b.walker.r.checkKeywordCase(c, "catch")
+		b.walker.r.checker.CheckKeywordCase(c, "catch")
 	}
 
 	if s.Finally != nil {
-		b.walker.r.checkKeywordCase(s.Finally, "finally")
+		b.walker.r.checker.CheckKeywordCase(s.Finally, "finally")
 	}
 
 	if len(s.Catches) > 1 {
@@ -474,7 +475,7 @@ func (b *blockLinter) checkRedundantCast(e ir.Node, dstType string) {
 }
 
 func (b *blockLinter) checkNew(e *ir.NewExpr) {
-	b.walker.r.checkKeywordCase(e, "new")
+	b.walker.r.checker.CheckKeywordCase(e, "new")
 
 	if b.classParseState().IsTrait {
 		switch {
@@ -515,7 +516,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 		if class.IsInterface() {
 			b.report(e.Class, LevelError, "invalidNew", "Cannot instantiate interface %s", class.Name)
 		}
-		b.walker.r.checkNameCase(e.Class, className, class.Name)
+		b.walker.r.checker.CheckNameCase(e.Class, className, class.Name)
 	}
 
 	// It's illegal to instantiate abstract class, but `static` can
@@ -610,7 +611,7 @@ func (b *blockLinter) checkTernary(e *ir.TernaryExpr) {
 }
 
 func (b *blockLinter) checkGlobalStmt(s *ir.GlobalStmt) {
-	b.walker.r.checkKeywordCase(s, "global")
+	b.walker.r.checker.CheckKeywordCase(s, "global")
 
 	for _, v := range s.Vars {
 		v, ok := v.(*ir.SimpleVar)
@@ -781,7 +782,7 @@ func (b *blockLinter) checkIntOverflow(num *ir.Dnumber) {
 }
 
 func (b *blockLinter) checkContinueStmt(c *ir.ContinueStmt) {
-	b.walker.r.checkKeywordCase(c, "continue")
+	b.walker.r.checker.CheckKeywordCase(c, "continue")
 	if c.Expr == nil && b.walker.ctx.innermostLoop == loopSwitch {
 		inLoop := irutil.InLoop(b.walker.path)
 		msg := "Use 'break' instead of 'continue' in switch"
@@ -796,7 +797,7 @@ func (b *blockLinter) checkContinueStmt(c *ir.ContinueStmt) {
 func (b *blockLinter) checkArray(arr *ir.ArrayExpr) {
 	if !arr.ShortSyntax {
 		b.report(arr, LevelNotice, "arraySyntax", "Use the short form '[]' instead of the old 'array()'")
-		b.walker.r.addFixForArray(arr)
+		b.walker.r.addQuickFix("arraySyntax", b.quickfix.Array(arr))
 	}
 
 	multiline := false
@@ -1004,7 +1005,7 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 		b.walker.untrackVarName(varName)
 	} else {
 		b.checkFunctionAvailability(e, &call)
-		b.walker.r.checkNameCase(e.Function, call.funcName, call.info.Name)
+		b.walker.r.checker.CheckNameCase(e.Function, call.funcName, call.info.Name)
 	}
 
 	if call.isFound {
@@ -1174,7 +1175,7 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 		}
 	} else if !call.isMagic && !parseState.IsTrait {
 		// Method is defined.
-		b.walker.r.checkNameCase(e.Method, call.methodName, call.info.Name)
+		b.walker.r.checker.CheckNameCase(e.Method, call.methodName, call.info.Name)
 		if call.info.IsStatic() {
 			b.report(e.Method, LevelWarning, "callStatic", "Calling static method as instance method")
 		}
@@ -1278,7 +1279,7 @@ func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
 	if !utils.IsSpecialClassName(e.Class) {
 		usedClassName, ok := solver.GetClassName(b.classParseState(), e.Class)
 		if ok {
-			b.walker.r.checkNameCase(e.Class, usedClassName, fetch.className)
+			b.walker.r.checker.CheckNameCase(e.Class, usedClassName, fetch.className)
 		}
 	}
 

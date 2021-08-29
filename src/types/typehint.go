@@ -10,6 +10,20 @@ func NormalizedTypeHintTypes(normalizer Normalizer, typeNode ir.Node) Map {
 	return NewMapWithNormalization(normalizer, typeList)
 }
 
+func TypeHintHasMoreAccurateType(typeHintType, phpDocType Map) bool {
+	// If is not array typehint.
+	if !typeHintType.IsLazyArrayOf("mixed") {
+		return true
+	}
+
+	// If it has more accurate type.
+	if !phpDocType.Empty() {
+		return true
+	}
+
+	return false
+}
+
 // TypeHintTypes converts type hint node to meta types.
 //
 // No normalization is performed.
