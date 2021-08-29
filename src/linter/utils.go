@@ -257,7 +257,7 @@ func resolveMethodCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []s
 	)
 
 	methodCallerType := solver.ExprTypeCustom(sc, st, e.Variable, customTypes)
-	if !strictMixed && isMixedLikeType(methodCallerType) {
+	if !strictMixed && isMixedLikeTypes(methodCallerType) {
 		return methodCallInfo{
 			canAnalyze:        true,
 			callerTypeIsMixed: true,
@@ -412,7 +412,7 @@ func resolvePropertyFetch(sc *meta.Scope, st *meta.ClassParseState, customTypes 
 	var info meta.PropertyInfo
 
 	propertyFetchType := solver.ExprTypeCustom(sc, st, e.Variable, customTypes)
-	if !strictMixed && isMixedLikeType(propertyFetchType) {
+	if !strictMixed && isMixedLikeTypes(propertyFetchType) {
 		return propertyFetchInfo{
 			canAnalyze:        true,
 			callerTypeIsMixed: true,
@@ -642,14 +642,18 @@ func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedS
 	return &clone
 }
 
-func isMixedLikeType(typ types.Map) bool {
-	if typ.Is("null") || typ.Is("mixed") ||
-		typ.Is("object") || typ.Is("unknown_from_list") ||
-		typ.Is("undefined") || typ.Is("\\stdClass") {
-		return true
-	}
+func isMixedLikeTypes(typ types.Map) bool {
+	containsNonMixedLike := typ.Find(func(singleType string) bool {
+		return !isMixedLikeType(singleType)
+	})
 
-	return false
+	return !containsNonMixedLike
+}
+
+func isMixedLikeType(typ string) bool {
+	return typ == "mixed" || typ == "object" ||
+		typ == "unknown_from_list" || typ == "undefined" ||
+		typ == "\\stdClass" || typ == "null" || typ == "void"
 }
 
 // List taken from https://wiki.php.net/rfc/context_sensitive_lexer

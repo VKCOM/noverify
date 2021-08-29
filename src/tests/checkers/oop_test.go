@@ -1080,7 +1080,6 @@ func TestInstanceOf(t *testing.T) {
 		}
 	}`)
 	test.Expect = []string{
-		`Call to undefined method {void}->get2()`,
 		`Call to undefined method {\Element}->callUndefinedMethod()`,
 	}
 	linttest.RunFilterMatch(test, "undefinedMethod")
