@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 96           | 83                        | 13                         | 12                 |
+| 97           | 84                        | 13                         | 12                 |
 
 ## Table of contents
  - Enabled by default
@@ -62,6 +62,10 @@
    - [`oldStyleConstructor` checker](#oldstyleconstructor-checker)
    - [`paramClobber` checker](#paramclobber-checker)
    - [`parentConstructor` checker](#parentconstructor-checker)
+   - [`parentNotFound` checker](#parentnotfound-checker)
+   - [`phpdocLint` checker](#phpdoclint-checker)
+   - [`phpdocRef` checker](#phpdocref-checker)
+   - [`phpdocType` checker](#phpdoctype-checker)
    - [`precedence` checker](#precedence-checker)
    - [`printf` checker](#printf-checker)
    - [`redundantGlobal` checker](#redundantglobal-checker)
@@ -1236,6 +1240,84 @@ class Foo extends Bar {
 ```
 <p><br></p>
 
+### `parentNotFound` checker
+
+#### Description
+
+Report using `parent::` in a class without a parent class.
+
+#### Non-compliant code:
+```php
+class Foo {
+  public function f() {
+    parent::b(); // Class Foo has no parent.
+  }
+}
+```
+
+#### Compliant code:
+```php
+class Foo extends Boo {
+  public function f() {
+    parent::b(); // Ok.
+  }
+}
+```
+<p><br></p>
+
+
+### `phpdocLint` checker
+
+#### Description
+
+Report malformed PHPDoc comments.
+
+#### Non-compliant code:
+```php
+@property $foo // Property type is missing.
+```
+
+#### Compliant code:
+```php
+@property Foo $foo
+```
+<p><br></p>
+
+
+### `phpdocRef` checker
+
+#### Description
+
+Report invalid symbol references inside PHPDoc.
+
+#### Non-compliant code:
+```php
+@see MyClass
+```
+
+#### Compliant code:
+```php
+@see \Foo\MyClass
+```
+<p><br></p>
+
+
+### `phpdocType` checker
+
+#### Description
+
+Report potential issues in PHPDoc types.
+
+#### Non-compliant code:
+```php
+@var []int $xs
+```
+
+#### Compliant code:
+```php
+@var int[] $xs
+```
+<p><br></p>
 
 ### `precedence` checker
 

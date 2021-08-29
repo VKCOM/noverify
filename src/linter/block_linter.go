@@ -1197,6 +1197,11 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 }
 
 func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
+	if utils.NameNodeToString(e.Class) == "parent" && b.classParseState().CurrentParentClass == "" {
+		b.report(e, LevelError, "parentNotFound", "Cannot call method on parent as this class does not extend another")
+		return
+	}
+
 	call := resolveStaticMethodCall(b.walker.ctx.sc, b.classParseState(), e)
 	if !call.canAnalyze {
 		return
