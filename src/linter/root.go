@@ -1865,13 +1865,11 @@ func (d *rootWalker) checkVarnameMisspellings(n ir.Node, s string) {
 }
 
 func (d *rootWalker) checkIdentMisspellings(n *ir.Identifier) {
-	d.checkMisspellings(n, n.Value, "misspellName", func(s string) bool {
-		// Before PHP got context-sensitive lexer, it was common to use
-		// method names to avoid parsing errors.
-		// We can't suggest a fix that leads to a parsing error.
-		// To avoid false positives, skip PHP keywords.
-		return utils.IsPHPKeyword(s)
-	})
+	// Before PHP got context-sensitive lexer, it was common to use
+	// method names to avoid parsing errors.
+	// We can't suggest a fix that leads to a parsing error.
+	// To avoid false positives, skip PHP keywords.
+	d.checkMisspellings(n, n.Value, "misspellName", utils.IsPHPKeyword)
 }
 
 func (d *rootWalker) checkMisspellings(n ir.Node, s string, label string, skip func(string) bool) {
