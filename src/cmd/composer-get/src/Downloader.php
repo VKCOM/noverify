@@ -47,7 +47,7 @@ class Downloader {
   private static function osArch(): string {
     $name = php_uname('m');
 
-    if (strpos($name, "x86_64") !== false) {
+    if (strpos($name, "x86_64") !== false || strpos($name, "AMD64") !== false) {
       return "amd64";
     } elseif (strpos($name, "arm64") !== false) {
       return "arm64";
