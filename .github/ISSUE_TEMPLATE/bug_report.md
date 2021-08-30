@@ -22,7 +22,6 @@ Thanks for helping us create a better tool, you're awesome!
 ```
 
 
-
 **The minimal code in which the bug appears:**
 
 ```php
@@ -36,7 +35,6 @@ Example of incorrect linter message or internal error
 **Expected Behavior:**
 
 Description of what you expected
-
 
 
 **[Optional] Details:**
