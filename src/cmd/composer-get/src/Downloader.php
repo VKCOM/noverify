@@ -123,6 +123,7 @@ class Downloader {
    * @throws Exception
    */
   public static function extract(string $version) {
+    $os           = self::osName();
     $archive_name = "./vendor/bin/noverify-$version.zip";
 
     $zip = new ZipArchive;
@@ -132,6 +133,8 @@ class Downloader {
     }
 
     $zip->extractTo("./vendor/bin");
-    system("chmod +x ./vendor/bin/noverify");
+    if ($os != "windows") {
+      system("chmod +x ./vendor/bin/noverify");
+    }
   }
 }
