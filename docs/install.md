@@ -30,9 +30,9 @@ For example:
 ./vendor/bin/noverify-get --version 0.3.0
 ```
 
-#### Troubleshooting
+### Troubleshooting
 
-##### Composer
+#### Composer
 
 `vkcom/noverify` package requires the `ext-zip` extension installed on the system, if you receive an error that it is not installed, then install it with the following command (replace the version with the PHP version you need):
 
@@ -51,11 +51,11 @@ brew link php@8.0
 brew link php@8.0 --force
 ```
 
-##### noverify-get
+#### noverify-get
 
 If you get an error "not supported arch" or "not supported os", then create a new [issue](https://github.com/VKCOM/noverify/issues/new) in which describe what values the script displayed and this version can be added to releases.
 
-##### Other
+#### Other
 
 Create an [issue](https://github.com/VKCOM/noverify/issues/new) if you have any problems with the installation.
 
