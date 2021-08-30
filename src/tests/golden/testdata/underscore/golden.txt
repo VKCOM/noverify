@@ -112,37 +112,37 @@ WARNING unused: Variable $__ is unused (use $_ to ignore this inspection or spec
 WARNING unused: Variable $args is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/underscore/underscore.php:615
     $args = self::_wrapArgs(func_get_args(), 1);
     ^^^^^
-ERROR   undefined: Property {\__|mixed|null}->isEqual does not exist at testdata/underscore/underscore.php:723
+ERROR   undefinedProperty: Property {\__|mixed|null}->isEqual does not exist at testdata/underscore/underscore.php:723
       if(is_object($a) && isset($a->isEqual)) return self::_wrap($a->isEqual($b));
                                     ^^^^^^^
-ERROR   undefined: Property {mixed|null}->isEqual does not exist at testdata/underscore/underscore.php:724
+ERROR   undefinedProperty: Property {mixed|null}->isEqual does not exist at testdata/underscore/underscore.php:724
       if(is_object($b) && isset($b->isEqual)) return self::_wrap($b->isEqual($a));
                                     ^^^^^^^
-ERROR   undefined: Call to undefined method {mixed|null}->isEqual() at testdata/underscore/underscore.php:724
+ERROR   undefinedMethod: Call to undefined method {mixed|null}->isEqual() at testdata/underscore/underscore.php:724
       if(is_object($b) && isset($b->isEqual)) return self::_wrap($b->isEqual($a));
                                                                      ^^^^^^^
 MAYBE   arrayAccess: Array access to non-array type \__|mixed|null at testdata/underscore/underscore.php:725
       if(is_array($a) && array_key_exists('isEqual', $a)) return self::_wrap($a['isEqual']($b));
                                                                              ^^
-ERROR   undefined: Property {mixed}->_uniqueId does not exist at testdata/underscore/underscore.php:822
+ERROR   undefinedProperty: Property {mixed}->_uniqueId does not exist at testdata/underscore/underscore.php:822
     $_instance->_uniqueId++;
                 ^^^^^^^^^
-ERROR   undefined: Property {mixed}->_uniqueId does not exist at testdata/underscore/underscore.php:824
+ERROR   undefinedProperty: Property {mixed}->_uniqueId does not exist at testdata/underscore/underscore.php:824
     return (is_null($prefix)) ? self::_wrap($_instance->_uniqueId) : self::_wrap($prefix . $_instance->_uniqueId);
                                                         ^^^^^^^^^
-ERROR   undefined: Property {mixed}->_uniqueId does not exist at testdata/underscore/underscore.php:824
+ERROR   undefinedProperty: Property {mixed}->_uniqueId does not exist at testdata/underscore/underscore.php:824
     return (is_null($prefix)) ? self::_wrap($_instance->_uniqueId) : self::_wrap($prefix . $_instance->_uniqueId);
                                                                                                        ^^^^^^^^^
-ERROR   undefined: Property {mixed}->_mixins does not exist at testdata/underscore/underscore.php:843
+ERROR   undefinedProperty: Property {mixed}->_mixins does not exist at testdata/underscore/underscore.php:843
     $mixins =& self::getInstance()->_mixins;
                                     ^^^^^^^
-ERROR   undefined: Property {mixed}->_mixins does not exist at testdata/underscore/underscore.php:853
+ERROR   undefinedProperty: Property {mixed}->_mixins does not exist at testdata/underscore/underscore.php:853
     $mixins =& self::getInstance()->_mixins;
                                     ^^^^^^^
-ERROR   undefined: Property {mixed}->_mixins does not exist at testdata/underscore/underscore.php:859
+ERROR   undefinedProperty: Property {mixed}->_mixins does not exist at testdata/underscore/underscore.php:859
     $mixins =& self::getInstance()->_mixins;
                                     ^^^^^^^
-ERROR   undefined: Property {mixed}->_template_settings does not exist at testdata/underscore/underscore.php:882
+ERROR   undefinedProperty: Property {mixed}->_template_settings does not exist at testdata/underscore/underscore.php:882
     $_template_settings =& self::getInstance()->_template_settings;
                                                 ^^^^^^^^^^^^^^^^^^
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:885
@@ -151,7 +151,7 @@ MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at tes
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/underscore/underscore.php:888
         'escape'      => self::TEMPLATE_DEFAULT_ESCAPE
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ERROR   undefined: Property {mixed}->_template_settings does not exist at testdata/underscore/underscore.php:909
+ERROR   undefinedProperty: Property {mixed}->_template_settings does not exist at testdata/underscore/underscore.php:909
       $ts = $class_name::getInstance()->_template_settings;
                                         ^^^^^^^^^^^^^^^^^^
 MAYBE   deprecated: Call to deprecated function create_function (7.2 Use anonymous functions instead.) at testdata/underscore/underscore.php:940
@@ -175,7 +175,7 @@ MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at tes
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:1102
     $filled_args = array();
                    ^^^^^^^
-ERROR   unused: Foreach key $k is unused, can simplify $k => $v to just $v at testdata/underscore/underscore.php:1107
+WARNING unused: Foreach key $k is unused, can simplify $k => $v to just $v at testdata/underscore/underscore.php:1107
       foreach($caller_args as $k=>$v) {
                               ^^
 ERROR   classMembersOrder: Property $_uniqueId must go before methods in the class __ at testdata/underscore/underscore.php:817

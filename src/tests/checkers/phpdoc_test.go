@@ -138,7 +138,7 @@ class BadClass {
 		`@see tag refers to unknown symbol invalid1`,
 		`@see tag refers to unknown symbol invalid2`,
 	}
-	linttest.RunFilterMatch(test, "phpdocRef")
+	linttest.RunFilterMatch(test, "invalidDocblockRef")
 }
 
 func TestPHPDocRefForConstantInClass(t *testing.T) {
@@ -181,12 +181,15 @@ function f() {}
 		`@see tag refers to unknown symbol TYPE_TEXT_UNDEFINED`,
 		`@see tag refers to unknown symbol TYPE_TEXT`,
 	}
-	linttest.RunFilterMatch(test, "phpdocRef")
+	linttest.RunFilterMatch(test, "invalidDocblockRef")
 }
 
 func TestBadParamName(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+class B1 {}
+class B2 {}
+
 /**
  * @param B1 $v2
  * @param B2 $v3
@@ -285,7 +288,7 @@ function f() {
 	test.RunAndMatch()
 }
 
-func TestBadPhpdocTypes(t *testing.T) {
+func TestBadPHPDocTypes(t *testing.T) {
 	// If there is an incorrect phpdoc annotation,
 	// don't use it as a type info.
 	//
@@ -390,7 +393,7 @@ class Foo {
 	test.RunAndMatch()
 }
 
-func TestPHPDocProperty(t *testing.T) {
+func TestPHPDocProperty2(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 /**
@@ -523,9 +526,11 @@ function f2($a) {
 	test.RunAndMatch()
 }
 
-func TestPhpdocTwiceNullableTypes(t *testing.T) {
+func TestPHPDocTwiceNullableTypes(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+class Foo {}
+
 /**
  * @param ?int|null $a
  * @param ?string[]|null $b

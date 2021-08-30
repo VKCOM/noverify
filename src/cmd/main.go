@@ -55,7 +55,17 @@ func registerMainApp() *App {
 				},
 				Action: Checkers,
 			},
-
+			{
+				Name:        "checkers-doc",
+				Description: "The command to generate markdown checkers documentation",
+				Action:      CheckersDocumentation,
+				Examples: []Example{
+					{
+						Line:        "noverify checkers-doc > checkers.md",
+						Description: "Creates a 'checkers.md' file with documentation for all checkers.",
+					},
+				},
+			},
 			{
 				Name:        "version",
 				Description: "The command to output the tool version",
@@ -88,7 +98,7 @@ func Run(cfg *MainConfig) (int, error) {
 
 	config := cfg.LinterConfig
 	if config == nil {
-		config = linter.NewConfig()
+		config = linter.NewConfig("8.1")
 		cfg.LinterConfig = config
 	}
 
@@ -219,7 +229,7 @@ func mainNoExit(ctx *AppContext) (int, error) {
 	criticalReports, minorReports, containsAutofixableReports := analyzeReports(runner, ctx.MainConfig, reports)
 
 	if containsAutofixableReports && !runner.config.ApplyQuickFixes {
-		log.Println("Some issues are autofixable (try using the `-fix` flag)")
+		log.Println("Some issues are autofixable (try using the '--fix' flag)")
 	}
 
 	if criticalReports > 0 {

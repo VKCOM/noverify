@@ -12,10 +12,14 @@ const AllNonNoticeChecks = "<all-non-notice>"
 const AllChecks = "<all>"
 
 type ParsedFlags struct {
+	PHP7 bool
+
 	PprofHost string
 
 	CPUProfile string
 	MemProfile string
+
+	StrictMixed bool
 
 	IgnoreVendor bool
 
@@ -119,7 +123,7 @@ func RegisterCheckFlags(ctx *AppContext) (*flag.FlagSet, *FlagsGroups) {
 	groups.AddGroup("Analyze setting")
 	groups.AddGroup("Additional")
 	groups.AddGroup("Output")
-	groups.AddGroup("Git")
+	groups.AddGroup("Diff mode")
 	groups.AddGroup("Baseline")
 	groups.AddGroup("Dynamic rules")
 	groups.AddGroup("Debug")
@@ -163,7 +167,11 @@ func RegisterCheckFlags(ctx *AppContext) (*flag.FlagSet, *FlagsGroups) {
 		"Comma-separated list of misspelling dicts; predefined sets are Eng, Eng/US and Eng/UK")
 	fs.BoolVar(&ctx.ParsedFlags.IgnoreVendor, "ignore-vendor", false,
 		"Do not use the vendor folder to get information about functions and classes (not recommended as type inference will work much worse)")
+	fs.BoolVar(&ctx.ParsedFlags.PHP7, "php7", false, "Analyze as PHP 7")
+	fs.BoolVar(&ctx.ParsedFlags.StrictMixed, "strict-mixed", false, "Use strict mixed mode")
 
+	groups.Add("Analyze setting", "strict-mixed")
+	groups.Add("Analyze setting", "php7")
 	groups.Add("Analyze setting", "cores")
 	groups.Add("Analyze setting", "cache-dir")
 	groups.Add("Analyze setting", "disable-cache")
@@ -196,28 +204,28 @@ func RegisterCheckFlags(ctx *AppContext) (*flag.FlagSet, *FlagsGroups) {
 	// Git group.
 	fs.BoolVar(&ctx.ParsedFlags.Gitignore, "gitignore", false,
 		"If enabled, noverify tries to use .gitignore files to exclude matched ignored files from the analysis")
-	fs.StringVar(&ctx.ParsedFlags.GitRepo, "git", "", "Path to git repository to analyze")
+	fs.StringVar(&ctx.ParsedFlags.GitRepo, "git", "", "Path to folder with git repository")
 	fs.StringVar(&ctx.ParsedFlags.Mutable.GitCommitFrom, "git-commit-from", "", "Analyze changes between commits <git-commit-from> and <git-commit-to>")
 	fs.StringVar(&ctx.ParsedFlags.Mutable.GitCommitTo, "git-commit-to", "", "Analyze changes between commits <git-commit-from> and <git-commit-to>")
 	fs.StringVar(&ctx.ParsedFlags.GitPushArg, "git-push-arg", "", "In {pre,post}-receive hooks a whole line from stdin can be passed")
-	fs.StringVar(&ctx.ParsedFlags.GitAuthorsWhitelist, "git-author-whitelist", "", "Whitelist (comma-separated) for commit authors, if needed")
-	fs.StringVar(&ctx.ParsedFlags.GitWorkTree, "git-work-tree", "", "Work tree. If specified, local changes will also be examined")
+	fs.StringVar(&ctx.ParsedFlags.GitAuthorsWhitelist, "git-author-whitelist", "", "Comma-separated whitelist for commit authors for which changes the linter will analyze")
+	fs.StringVar(&ctx.ParsedFlags.GitWorkTree, "git-work-tree", "", "Working directory in which the --git-include-untracked flag will be taken into account")
+	fs.BoolVar(&ctx.ParsedFlags.GitIncludeUntracked, "git-include-untracked", true, "Include untracked (new, uncommitted files) into analysis")
 	fs.BoolVar(&ctx.ParsedFlags.GitSkipFetch, "git-skip-fetch", false, "Do not fetch ORIGIN_MASTER (use this option if you already fetch to ORIGIN_MASTER before that)")
 	fs.BoolVar(&ctx.ParsedFlags.GitDisableCompensateMaster, "git-disable-compensate-master", false, "Do not try to compensate for changes in ORIGIN_MASTER after branch point")
-	fs.BoolVar(&ctx.ParsedFlags.GitFullDiff, "git-full-diff", false, "Compute full diff: analyze all files, not just changed ones")
-	fs.BoolVar(&ctx.ParsedFlags.GitIncludeUntracked, "git-include-untracked", true, "Include untracked (new, uncommitted files) into analysis")
+	fs.BoolVar(&ctx.ParsedFlags.GitFullDiff, "git-full-diff", false, "Compute full diff, in which linter analyzes all files, not just changed ones")
 
-	groups.Add("Git", "git")
-	groups.Add("Git", "git-author-whitelist")
-	groups.Add("Git", "git-commit-from")
-	groups.Add("Git", "git-commit-to")
-	groups.Add("Git", "git-disable-compensate-master")
-	groups.Add("Git", "git-full-diff")
-	groups.Add("Git", "git-include-untracked")
-	groups.Add("Git", "git-push-arg")
-	groups.Add("Git", "git-skip-fetch")
-	groups.Add("Git", "git-work-tree")
-	groups.Add("Git", "gitignore")
+	groups.Add("Diff mode", "git")
+	groups.Add("Diff mode", "git-full-diff")
+	groups.Add("Diff mode", "git-commit-from")
+	groups.Add("Diff mode", "git-commit-to")
+	groups.Add("Diff mode", "git-author-whitelist")
+	groups.Add("Diff mode", "git-disable-compensate-master")
+	groups.Add("Diff mode", "git-include-untracked")
+	groups.Add("Diff mode", "git-work-tree")
+	groups.Add("Diff mode", "git-skip-fetch")
+	groups.Add("Diff mode", "git-push-arg")
+	groups.Add("Diff mode", "gitignore")
 
 	// Baseline group.
 	fs.StringVar(&ctx.ParsedFlags.Baseline, "baseline", "",

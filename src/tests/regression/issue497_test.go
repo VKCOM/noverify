@@ -8,6 +8,8 @@ import (
 
 func TestIssue497(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+class T {}
+
 /**
  * @param shape(a:int) $x
  * @return T<int>

@@ -336,6 +336,14 @@ func newExprType(n *ir.NewExpr, cs *meta.ClassParseState) types.Map {
 	if ok {
 		return types.NewPreciseMap(nm)
 	}
+
+	anonClass, ok := n.Class.(*ir.AnonClassExpr)
+	if ok {
+		anonName := autogen.GenerateAnonClassName(anonClass, cs.CurrentFile)
+		anonName = cs.Namespace + anonName
+		return types.NewPreciseMap(anonName)
+	}
+
 	return types.Map{}
 }
 
@@ -499,7 +507,7 @@ func functionCallType(n *ir.FunctionCallExpr, sc *meta.Scope, cs *meta.ClassPars
 	case *ir.Name:
 		if nm.IsFullyQualified() {
 			if nm.NumParts() == 1 {
-				typ, ok := internalFuncType(strings.TrimPrefix(nm.Value, `\`), sc, cs, n, custom)
+				typ, ok := internalFuncType(nm.Value, sc, cs, n, custom)
 				if ok {
 					return typ
 				}

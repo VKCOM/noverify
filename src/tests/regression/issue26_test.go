@@ -20,7 +20,7 @@ func TestIssue26_1(t *testing.T) {
 		// After the block all vars are undefined again.
 		$_ = $x;
 	}`)
-	test.Expect = []string{"Undefined variable $y"}
+	test.Expect = []string{"Cannot find referenced variable $y"}
 	test.RunAndMatch()
 }
 
@@ -49,7 +49,7 @@ func TestIssue26_3(t *testing.T) {
 		}
 	}`)
 	test.Expect = []string{
-		"Undefined variable $x",
+		"Cannot find referenced variable $x",
 		"Unknown variable variable $$y used",
 	}
 	test.RunAndMatch()

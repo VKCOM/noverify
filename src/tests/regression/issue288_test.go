@@ -8,6 +8,7 @@ import (
 
 func TestIssue288(t *testing.T) {
 	test := linttest.NewSuite(t)
+	test.Config().StrictMixed = true
 	test.AddFile(`<?php
 class Box {
   public $item1;
@@ -35,11 +36,11 @@ $_ = isset($x) && isset($y) ? $x : 0;
 $_ = $x instanceof Box ? 0 : 1;
 `)
 	test.Expect = []string{
-		`Undefined variable $badvar`,
-		`Undefined variable $b1`,
-		`Undefined variable $b2`,
-		`Undefined variable $b3`,
-		`undefined: Property {mixed}->item2 does not exist`,
+		`Cannot find referenced variable $badvar`,
+		`Cannot find referenced variable $b1`,
+		`Cannot find referenced variable $b2`,
+		`Cannot find referenced variable $b3`,
+		`Property {mixed}->item2 does not exist`,
 	}
 	test.RunAndMatch()
 }

@@ -958,7 +958,7 @@ exprtype(localvar(), 'int');
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
-func TestExprTypeMalformedPhpdoc(t *testing.T) {
+func TestExprTypeMalformedPHPDoc(t *testing.T) {
 	code := `<?php
 /**
  * @param int &$x
@@ -1356,7 +1356,7 @@ function test() {
   exprtype(1 > 4, 'precise bool');
 }
 `
-	runExprTypeTest(t, &exprTypeTestParams{code: code})
+	runExprTypeTest(t, &exprTypeTestParams{code: code, php7: true})
 }
 
 func TestExprTypeKeyword(t *testing.T) {
@@ -2754,6 +2754,38 @@ function f1() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestInstanceOf1(t *testing.T) {
+	code := `<?php
+function exprtype(...$a) {}
+
+interface ISome {}
+
+class Foo implements ISome{
+  function f() {}
+}
+
+class Boo implements ISome {
+  function b() {}
+}
+
+class Zoo implements ISome {
+  function z() {}
+}
+
+/**
+ * @param Foo|Boo|Zoo $a
+ */
+function ifElseForClassUnion3($a) {
+  if ($a instanceof Foo && $a instanceof Boo && $a instanceof Zoo) {
+    exprtype($a, "\Boo|\Foo|\Zoo");
+  } else {
+    exprtype($a, "mixed");
+  }
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestInstanceOf(t *testing.T) {
 	code := `<?php
 function exprtype(...$a) {}
@@ -3297,12 +3329,153 @@ function f($a) {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestSeveralInstanceInChain(t *testing.T) {
+	code := `<?php
+function exprtype(...$a): bool { return false; }
+
+class Foo {
+  function f() {}
+}
+
+class Boo {
+  function b() {}
+}
+
+class Zoo {
+  function z() {}
+}
+
+class Doo {
+  function d() {}
+}
+
+/**
+ * @param mixed $a
+ */
+function f($a) {
+  if ($a instanceof Foo && $a instanceof Boo) {
+    exprtype($a, "\Boo|\Foo");
+  }
+
+  if ($a instanceof Foo && $a instanceof Boo && $a instanceof Zoo) {
+    exprtype($a, "\Boo|\Foo|\Zoo");
+  }
+
+  if ($a instanceof Foo || $a instanceof Boo) {
+    exprtype($a, "\Boo|\Foo");
+  }
+
+  if ($a instanceof Foo || $a instanceof Boo || $a instanceof Zoo) {
+    exprtype($a, "\Boo|\Foo|\Zoo");
+  }
+}
+
+/**
+ * @param Boo|Foo|Zoo $a
+ */
+function f1($a) {
+  if ($a instanceof Foo && $a instanceof Boo) {
+    exprtype($a, "\Boo|\Foo");
+  } else {
+    exprtype($a, "\Zoo");
+  }
+
+  if ($a instanceof Foo && $a instanceof Boo && $a instanceof Zoo) {
+    exprtype($a, "\Boo|\Foo|\Zoo");
+  } else {
+    exprtype($a, "mixed");
+  }
+
+  if ($a instanceof Foo || $a instanceof Boo) {
+    exprtype($a, "\Boo|\Foo");
+  } else {
+    exprtype($a, "\Zoo");
+  }
+
+  if ($a instanceof Foo || $a instanceof Boo || $a instanceof Zoo) {
+    exprtype($a, "\Boo|\Foo|\Zoo");
+  } else {
+    exprtype($a, "mixed");
+  }
+}
+
+/**
+ * @param Boo|Doo|Foo|Zoo $a
+ */
+function f2($a) {
+  if ($a instanceof Boo && $a instanceof Doo) {
+    exprtype($a, "\Boo|\Doo");
+  } else if ($a instanceof Foo && $a instanceof Zoo) {
+    exprtype($a, "\Foo|\Zoo");
+  } else {
+    exprtype($a, "mixed");
+  }
+
+  if ($a instanceof Boo || $a instanceof Doo) {
+    exprtype($a, "\Boo|\Doo");
+  } else if ($a instanceof Foo || $a instanceof Zoo) {
+    exprtype($a, "\Foo|\Zoo");
+  } else {
+    exprtype($a, "mixed");
+  }
+
+  if ($a instanceof Boo && $a instanceof Doo || $a instanceof Foo && $a instanceof Zoo) {
+    exprtype($a, "\Boo|\Doo|\Foo|\Zoo");
+  } else {
+    exprtype($a, "mixed");
+  }
+}
+
+/**
+ * @param mixed $a
+ * @param mixed $b
+ */
+function f3($a, $b) {
+  if (!$a instanceof Foo && !$a instanceof Boo) {
+    exprtype($a, "mixed");
+  } else {
+    exprtype($a, "\Boo|\Foo");
+  }
+
+  if (!$a instanceof Foo && !$a instanceof Boo) {
+    exprtype($a, "mixed");
+  } else if ($a instanceof Foo) {
+    exprtype($a, "\Foo");
+  } else {
+    exprtype($a, "\Boo");
+  }
+
+  if (!$a instanceof Foo && !$a instanceof Boo) {
+    exprtype($a, "mixed");
+  } else if (!$a instanceof Foo) {
+    exprtype($a, "\Boo");
+  } else {
+    exprtype($a, "\Foo");
+  }
+
+  if (!$a instanceof Foo && $a instanceof Zoo) {
+    exprtype($a, "\Zoo|mixed");
+  }
+
+  if ($a instanceof Foo || $b instanceof Zoo) {
+    exprtype($a, "\Foo");
+    exprtype($b, "\Zoo");
+  }
+}
+
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func runExprTypeTest(t *testing.T, params *exprTypeTestParams) {
 	exprTypeTestImpl(t, params, false)
 }
 
 func exprTypeTestImpl(t *testing.T, params *exprTypeTestParams, kphp bool) {
-	config := linter.NewConfig()
+	config := linter.NewConfig("8.1")
+	if params.php7 {
+		config = linter.NewConfig("7.4")
+	}
 	config.Checkers.AddBlockChecker(func(ctx *linter.BlockContext) linter.BlockChecker {
 		return &exprTypeCollector{ctx: ctx}
 	})
@@ -3353,6 +3526,7 @@ func makeType(typ string) testTypesMap {
 type exprTypeTestParams struct {
 	code  string
 	stubs string
+	php7  bool
 }
 
 type exprTypeWalker struct {

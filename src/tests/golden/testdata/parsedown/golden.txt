@@ -142,10 +142,10 @@ MAYBE   typeHint: Specify the type for the parameter $Elements in PHPDoc, 'array
 MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1689
     protected function element(array $Element)
                        ^^^^^^^
-WARNING undefined: Variable $text might have not been defined at testdata/parsedown/parsedown.php:1755
+WARNING maybeUndefined: Possibly undefined variable $text at testdata/parsedown/parsedown.php:1755
                     $markup .= self::escape($text, true);
                                             ^^^^^
-WARNING undefined: Variable $text might have not been defined at testdata/parsedown/parsedown.php:1759
+WARNING maybeUndefined: Possibly undefined variable $text at testdata/parsedown/parsedown.php:1759
                     $markup .= $text;
                                ^^^^^
 MAYBE   typeHint: Specify the type for the parameter $Elements in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1773

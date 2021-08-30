@@ -1,7 +1,7 @@
 package irutil
 
 import (
-	"github.com/z7zmey/php-parser/pkg/token"
+	"github.com/VKCOM/php-parser/pkg/token"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irfmt"
@@ -84,6 +84,16 @@ func IsLoop(n ir.Node) bool {
 	}
 }
 
+func IsBoolAnd(n ir.Node) bool {
+	_, ok := n.(*ir.BooleanAndExpr)
+	return ok
+}
+
+func IsBoolOr(n ir.Node) bool {
+	_, ok := n.(*ir.BooleanOrExpr)
+	return ok
+}
+
 // FmtNode returns string representation of n.
 func FmtNode(n ir.Node) string {
 	return irfmt.Node(n)
@@ -102,8 +112,8 @@ func FindWithPredicate(what ir.Node, where ir.Node, pred findPredicate) bool {
 	return w.found
 }
 
-// FindPhpDoc searches for phpdoc by traversing all subtree and all tokens.
-func FindPhpDoc(n ir.Node, withSuspicious bool) (doc string, found bool) {
+// FindPHPDoc searches for phpdoc by traversing all subtree and all tokens.
+func FindPHPDoc(n ir.Node, withSuspicious bool) (doc string, found bool) {
 	Inspect(n, func(n ir.Node) (continueTraverse bool) {
 		n.IterateTokens(func(t *token.Token) (continueTraverse bool) {
 			if t.ID == token.T_DOC_COMMENT {

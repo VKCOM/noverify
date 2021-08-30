@@ -19,7 +19,7 @@ type ParamsMap map[string]Param
 type ParseResult struct {
 	ReturnType     types.Map
 	ParamTypes     ParamsMap
-	AdditionalInfo meta.PhpDocInfo
+	AdditionalInfo meta.PHPDocInfo
 	Inherit        bool
 
 	Shapes   types.ShapesMap

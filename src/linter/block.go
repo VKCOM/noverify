@@ -6,8 +6,9 @@ import (
 	"strings"
 
 	"github.com/VKCOM/noverify/src/phpdoctypes"
-	"github.com/z7zmey/php-parser/pkg/position"
-	"github.com/z7zmey/php-parser/pkg/token"
+	"github.com/VKCOM/noverify/src/utils"
+	"github.com/VKCOM/php-parser/pkg/position"
+	"github.com/VKCOM/php-parser/pkg/token"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
@@ -119,7 +120,7 @@ func newBlockWalker(r *rootWalker, sc *meta.Scope) *blockWalker {
 		nonLocalVars: make(map[string]variableKind),
 		path:         irutil.NewNodePath(),
 	}
-	b.linter = blockLinter{walker: b}
+	b.linter = blockLinter{walker: b, quickfix: r.checker.quickfix}
 	return b
 }
 
@@ -235,7 +236,7 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 
 	if phpdoc.IsSuspicious(t.Value) {
 		b.r.ReportPHPDoc(PHPDocLine(n, 1),
-			LevelWarning, "phpdocLint",
+			LevelWarning, "invalidDocblock",
 			"Multiline PHPDoc comment should start with /**, not /*",
 		)
 	}
@@ -253,7 +254,7 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 		if converted.Warning != "" {
 			b.r.ReportPHPDoc(
 				PHPDocLineField(n, part.Line(), 1),
-				LevelNotice, "phpdocType", converted.Warning,
+				LevelNotice, "invalidDocblockType", converted.Warning,
 			)
 		}
 
@@ -264,6 +265,8 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 
 		typesMap := types.NewMapWithNormalization(b.r.ctx.typeNormalizer, converted.Types)
 		b.ctx.sc.AddVarFromPHPDoc(strings.TrimPrefix(part.Var, "$"), typesMap, "@var")
+
+		b.r.checker.checkUndefinedClassesInPHPDoc(n, typesMap, part)
 	}
 }
 
@@ -388,7 +391,8 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 	case *ir.ArrowFunctionExpr:
 		res = b.handleArrowFunction(s)
 	case *ir.AnonClassExpr:
-		res = !b.ignoreFunctionBodies
+		s.Walk(b.r)
+		res = false
 	case *ir.ClassStmt:
 		if b.ignoreFunctionBodies {
 			res = false
@@ -468,7 +472,7 @@ func (b *blockWalker) handleAndCheckGlobalStmt(s *ir.GlobalStmt) {
 	}
 
 	for _, v := range s.Vars {
-		nm := varToString(v)
+		nm := utils.VarToString(v)
 		if nm == "" {
 			continue
 		}
@@ -485,6 +489,10 @@ func (b *blockWalker) handleAndCheckGlobalStmt(s *ir.GlobalStmt) {
 func (b *blockWalker) handleFunction(fun *ir.FunctionStmt) bool {
 	if b.ignoreFunctionBodies {
 		return false
+	}
+
+	if b.r.metaInfo().IsIndexingComplete() {
+		return b.r.checker.CheckFunction(fun)
 	}
 
 	return b.r.enterFunction(fun)
@@ -1008,7 +1016,7 @@ func (b *blockWalker) handleCompactCallArgs(args []ir.Node) {
 }
 
 func (b *blockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
-	call := resolveMethodCall(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, e)
+	call := resolveMethodCall(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, e, b.r.strictMixed)
 
 	e.Variable.Walk(b)
 	e.Method.Walk(b)
@@ -1139,7 +1147,7 @@ func (b *blockWalker) handleForeach(s *ir.ForeachStmt) bool {
 
 		b.untrackVarName(key.Name)
 
-		b.r.Report(s.Key, LevelError, "unused", "Foreach key $%s is unused, can simplify $%s => $%s to just $%s", key.Name, key.Name, variable.Name, variable.Name)
+		b.r.Report(s.Key, LevelWarning, "unused", "Foreach key $%s is unused, can simplify $%s => $%s to just $%s", key.Name, key.Name, variable.Name, variable.Name)
 	}
 
 	return false
@@ -1183,12 +1191,15 @@ func (b *blockWalker) enterArrowFunction(fun *ir.ArrowFunctionExpr) bool {
 	moveShapesToContext(&b.r.ctx, doc.Shapes)
 	b.r.handleClosuresFromDoc(doc.Closures)
 
-	// Check stage.
-	errors := b.r.checkPHPDoc(fun, fun.Doc, fun.Params)
-	b.r.reportPHPDocErrors(errors)
-
 	funcParams := b.r.parseFuncParams(fun.Params, doc.ParamTypes, sc, nil)
 	b.r.handleArrowFuncExpr(funcParams.params, fun.Expr, sc, b)
+
+	name := &ir.Identifier{Value: "arrow function"}
+	b.r.checker.CheckFuncParams(name, fun.Params, funcParams, doc.ParamTypes)
+
+	// Check stage.
+	errors := b.r.checker.CheckPHPDoc(fun, fun.Doc, fun.Params)
+	b.r.reportPHPDocErrors(errors)
 
 	return false
 }
@@ -1209,14 +1220,14 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 	b.r.handleClosuresFromDoc(doc.Closures)
 
 	// Check stage.
-	errors := b.r.checkPHPDoc(fun, fun.Doc, fun.Params)
+	errors := b.r.checker.CheckPHPDoc(fun, fun.Doc, fun.Params)
 	b.r.reportPHPDocErrors(errors)
 
 	var hintReturnType types.Map
 	if typ, ok := b.r.parseTypeHintNode(fun.ReturnType); ok {
 		hintReturnType = typ
 	}
-	b.r.checkTypeHintNode(fun.ReturnType, "closure return type")
+	b.r.checker.CheckTypeHintNode(fun.ReturnType, "closure return type")
 
 	var closureUses []ir.Node
 	if fun.ClosureUse != nil {
@@ -1236,7 +1247,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		}
 
 		if !b.ctx.sc.HaveVar(v) && !byRef {
-			b.r.Report(v, LevelWarning, "undefined", "Undefined variable $%s", v.Name)
+			b.r.Report(v, LevelWarning, "undefinedVariable", "Cannot find referenced variable $%s", v.Name)
 		}
 
 		typ, ok := b.ctx.sc.GetVarNameType(v.Name)
@@ -1256,11 +1267,9 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 
 	returnTypes := functionReturnType(phpDocReturnTypes, hintReturnType, actualReturnTypes)
 
-	for _, param := range fun.Params {
-		b.r.checkFuncParam(param.(*ir.Parameter))
-	}
-
 	name := autogen.GenerateClosureName(fun, b.r.ctx.st.CurrentFunction, b.r.ctx.st.CurrentFile)
+
+	b.r.checker.CheckFuncParams(&ir.Identifier{Value: name}, fun.Params, params, doc.ParamTypes)
 
 	if b.r.meta.Functions.H == nil {
 		b.r.meta.Functions = meta.NewFunctionsMap()
@@ -1386,7 +1395,7 @@ func (b *blockWalker) handleVariable(v ir.Node) bool {
 	have := b.ctx.sc.HaveVar(v)
 
 	if !have && !b.inArrowFunction {
-		b.r.reportUndefinedVariable(v, b.ctx.sc.MaybeHaveVar(v))
+		b.r.reportUndefinedVariable(v, b.ctx.sc.MaybeHaveVar(v), b.path)
 		b.ctx.sc.AddVar(v, types.NewMap("undefined"), "undefined", meta.VarAlwaysDefined)
 	}
 
@@ -1423,7 +1432,7 @@ func (b *blockWalker) handleVariable(v ir.Node) bool {
 		}
 
 		if varNotFound {
-			b.r.reportUndefinedVariable(v, varMaybeNotDefined)
+			b.r.reportUndefinedVariable(v, varMaybeNotDefined, b.path)
 			b.ctx.sc.AddVar(v, types.NewMap("undefined"), "undefined", meta.VarAlwaysDefined)
 		}
 	}
@@ -1445,9 +1454,10 @@ func (b *blockWalker) handleTernary(e *ir.TernaryExpr) bool {
 
 	b.withSpecificContext(trueContext, func() {
 		a := &andWalker{
-			b:            b,
-			trueContext:  trueContext,
-			falseContext: falseContext,
+			b:              b,
+			initialContext: initialContext,
+			trueContext:    trueContext,
+			falseContext:   falseContext,
 		}
 		e.Condition.Walk(a)
 	})
@@ -1515,29 +1525,40 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 	var linksCount int
 	var contexts []*blockContext
 
+	onlyInstanceof := true
 	// Add all new variables from the condition to the current scope.
 	irutil.Inspect(s.Cond, func(n ir.Node) bool {
-		assign, ok := n.(*ir.Assign)
-		if !ok {
+		switch n := n.(type) {
+		case *ir.BooleanAndExpr:
+		case *ir.BooleanOrExpr:
+		case *ir.BooleanNotExpr:
 			return true
+		case *ir.InstanceOfExpr:
+			return false
+
+		case *ir.Assign:
+			b.handleAssign(n)
+			return false
+		default:
+			onlyInstanceof = false
 		}
 
-		b.handleAssign(assign)
-		return false
+		return true
 	})
 
 	// initialContext is the context of the block in which the if-else is located.
 	initialContext := b.ctx
-	// First of all, we need to traverse the main condition.
+	// First, we need to traverse the main condition.
 	//   trueContext  will store the state of the variables in the **if** block.
 	//   falseContext will store the state of the variables in the **else** block.
 	falseContext := copyBlockContext(initialContext)
 	trueContext := copyBlockContext(initialContext)
 	b.withSpecificContext(trueContext, func() {
 		a := &andWalker{
-			b:            b,
-			trueContext:  trueContext,
-			falseContext: falseContext,
+			b:              b,
+			initialContext: initialContext,
+			trueContext:    trueContext,
+			falseContext:   falseContext,
 		}
 
 		s.Cond.Walk(a)
@@ -1559,6 +1580,16 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 			linksCount++
 		}
 
+		// Case:
+		// if (!$a instanceof Boo) {
+		//   return
+		// }
+		//
+		// $a has Boo type
+		if trueContext.exitFlags != 0 && onlyInstanceof && len(s.ElseIf) == 0 && s.Else == nil {
+			b.ctx = falseContext
+		}
+
 		b.replaceAllImplicitVars(trueContext, initialContext)
 	} else {
 		linksCount++
@@ -1571,9 +1602,10 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 
 			b.withSpecificContext(elseifTrueContext, func() {
 				a := &andWalker{
-					b:            b,
-					trueContext:  elseifTrueContext,
-					falseContext: elseifFalseContext,
+					b:              b,
+					initialContext: initialContext,
+					trueContext:    elseifTrueContext,
+					falseContext:   elseifFalseContext,
 				}
 				elseif.Cond.Walk(a)
 				varsToDelete = append(varsToDelete, a.varsToDelete...)
@@ -1643,7 +1675,7 @@ func (b *blockWalker) replaceAllImplicitVars(targetContext *blockContext, initia
 			return
 		}
 
-		oldVar, ok := initialContext.sc.GetVar(name)
+		oldVar, ok := initialContext.sc.GetVarName(name)
 		if !ok {
 			return
 		}
@@ -1672,7 +1704,7 @@ func moveNonLocalVariables(trueContext, toContext *blockContext, nonLocalVars ma
 }
 
 func (b *blockWalker) handleElseIf(s *ir.ElseIfStmt) {
-	b.r.checkKeywordCase(s, "elseif")
+	b.r.checker.CheckKeywordCase(s, "elseif")
 }
 
 func (b *blockWalker) iterateNextCases(cases []ir.Node, startIdx int) {
@@ -1714,10 +1746,10 @@ func (b *blockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 		cond, list := getCaseStmts(c)
 		if cond == nil {
 			haveDefault = true
-			b.r.checkKeywordCase(c, "default")
+			b.r.checker.CheckKeywordCase(c, "default")
 		} else {
 			cond.Walk(b)
-			b.r.checkKeywordCase(c, "case")
+			b.r.checker.CheckKeywordCase(c, "case")
 		}
 
 		// allow empty case body without "break;"

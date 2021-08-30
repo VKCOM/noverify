@@ -248,7 +248,7 @@ class TwoArgs {
 	test.RunAndMatch()
 }
 
-func TestPhpdocProperty(t *testing.T) {
+func TestPHPDocProperty(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 /**
@@ -294,7 +294,7 @@ $_ = WithProps::$int;
 	test.RunAndMatch()
 }
 
-func TestPhpdocPropertyForClassWithModifiers(t *testing.T) {
+func TestPHPDocPropertyForClassWithModifiers(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 /**
@@ -824,6 +824,7 @@ func TestInheritanceLoop(t *testing.T) {
 
 func TestClosureLateBinding(t *testing.T) {
 	test := linttest.NewSuite(t)
+	test.Config().StrictMixed = true
 	test.AddFile(`<?php
 	class Example
 	{
@@ -839,10 +840,10 @@ func TestClosureLateBinding(t *testing.T) {
 	})();
 	`)
 	test.Expect = []string{
-		"Undefined variable $a",
+		"Cannot find referenced variable $a",
 		"Call to undefined method {undefined}->method()",
 	}
-	linttest.RunFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefinedVariable", "undefinedMethod")
 }
 
 func TestProtected(t *testing.T) {
@@ -1079,10 +1080,9 @@ func TestInstanceOf(t *testing.T) {
 		}
 	}`)
 	test.Expect = []string{
-		`Call to undefined method {void}->get2()`,
 		`Call to undefined method {\Element}->callUndefinedMethod()`,
 	}
-	linttest.RunFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefinedMethod")
 }
 
 func TestNullableTypes(t *testing.T) {
@@ -1357,9 +1357,9 @@ trait AbstractTraitAB {
 `)
 
 	test.Expect = []string{
-		`Type \T7\UnknownClass not found`,
-		`Type \T8\UnknownTrait not found`,
-		`Type \T6\UnknownIface not found`,
+		`Class or interface named \T7\UnknownClass does not exist`,
+		`Class or interface named \T6\UnknownIface does not exist`,
+		`Trait named \T8\UnknownTrait does not exist`,
 
 		`\t1\AB should be spelled \T1\AB`,
 		`\T5\BadCase1::Foo should be spelled as \T5\IfaceFoo::foo`,
@@ -1382,7 +1382,7 @@ trait AbstractTraitAB {
 
 		`Class \T6\Bad must implement \T6\TraitAbstractA::a method`,
 	}
-	linttest.RunFilterMatch(test, `unimplemented`, `nameMismatch`, `undefined`)
+	linttest.RunFilterMatch(test, "unimplemented", "nameMismatch", "undefinedClass", "undefinedTrait")
 }
 
 func TestInterfaceRules(t *testing.T) {

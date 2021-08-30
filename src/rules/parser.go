@@ -403,6 +403,8 @@ func (p *parser) parseFuncComment(fn *ir.FunctionStmt) error {
 			doc.Before = part.ParamsText
 		case "after":
 			doc.After = part.ParamsText
+		case "disabled":
+			doc.Disabled = true
 		case "extends":
 			doc.Extends = true
 		}
@@ -412,7 +414,7 @@ func (p *parser) parseFuncComment(fn *ir.FunctionStmt) error {
 }
 
 func (p *parser) commentText(n ir.Node) string {
-	doc, found := irutil.FindPhpDoc(n, false)
+	doc, found := irutil.FindPHPDoc(n, false)
 	if !found {
 		return ""
 	}

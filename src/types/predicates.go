@@ -16,6 +16,10 @@ func IsClosure(s string) bool {
 	return strings.HasPrefix(s, `\Closure`)
 }
 
+func IsAnonClass(s string) bool {
+	return strings.HasPrefix(s, `\anon$`)
+}
+
 func IsClosureFromPHPDoc(s string) bool {
 	return strings.HasPrefix(s, `\Closure`) && !strings.ContainsRune(s, '.')
 }
@@ -74,6 +78,7 @@ var trivial = map[string]bool{
 	"string":   true,
 	"void":     true,
 	"iterable": true,
+	"never":    true,
 
 	"null":  true,
 	"true":  true,

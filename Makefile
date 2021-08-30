@@ -4,7 +4,7 @@ AFTER_COMMIT=`git rev-parse HEAD`
 GOPATH_DIR=`go env GOPATH`
 BIN_NAME=noverify
 PKG=github.com/VKCOM/noverify/src/cmd
-VERSION=0.3.0
+VERSION=0.4.0
 
 install:
 	go install -ldflags "-X '$(PKG).BuildVersion=$(VERSION)' -X '$(PKG).BuildTime=$(NOW)' -X '$(PKG).BuildOSUname=$(OS)' -X '$(PKG).BuildCommit=$(AFTER_COMMIT)'" .
@@ -14,6 +14,15 @@ build: clear
 
 release:
 	go run ./_script/release.go -build-version="$(VERSION)" -build-time="$(NOW)" -build-uname="$(OS)" -build-commit="$(AFTER_COMMIT)"
+
+generate_checkers_doc: build
+	./build/noverify checkers-doc > docs/checkers_doc.md
+
+playground_build:
+	cd ./playground && $(MAKE) build
+
+playground:
+	cd ./playground && $(MAKE) run
 
 check: lint test
 

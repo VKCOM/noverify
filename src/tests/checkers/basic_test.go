@@ -168,9 +168,9 @@ foreach ($xs as $x) {
 $_ = [$x]; // Bad
 `)
 	test.Expect = []string{
-		`Variable $k might have not been defined`,
-		`Variable $v might have not been defined`,
-		`Variable $x might have not been defined`,
+		`Possibly undefined variable $k`,
+		`Possibly undefined variable $v`,
+		`Possibly undefined variable $x`,
 	}
 	test.RunAndMatch()
 }
@@ -712,11 +712,11 @@ class Foo {
 `)
 
 	test.Expect = []string{
-		"Undefined variable $argv",
-		"Undefined variable $argc",
+		"Cannot find referenced variable $argv",
+		"Cannot find referenced variable $argc",
 	}
 
-	linttest.RunFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefinedVariable")
 }
 
 func TestAutogenSkip(t *testing.T) {
@@ -801,7 +801,7 @@ func TestCustomUnusedVarRegex(t *testing.T) {
 		return strings.HasPrefix(s, "_")
 	}
 
-	config := linter.NewConfig()
+	config := linter.NewConfig("8.1")
 	config.IsDiscardVar = isDiscardVar
 
 	test := linttest.NewSuite(t)
@@ -923,8 +923,8 @@ func TestOrDie2(t *testing.T) {
 $undef1 or die($undef2);
 `)
 	test.Expect = []string{
-		"Undefined variable $undef1",
-		"Undefined variable $undef2",
+		"Cannot find referenced variable $undef1",
+		"Cannot find referenced variable $undef2",
 	}
 	test.RunAndMatch()
 }
@@ -1001,7 +1001,7 @@ function foo() {
 `)
 	test.Expect = []string{
 		`Variable $x is unused`,
-		`Undefined variable $y`,
+		`Cannot find referenced variable $y`,
 	}
 	test.RunAndMatch()
 }
@@ -1169,9 +1169,9 @@ func TestBuiltinConstant(t *testing.T) {
 		$_ = null;
 	}`)
 	test.Expect = []string{
-		"Use null instead of NULL",
-		"Use true instead of True",
-		"Use false instead of FaLsE",
+		"Constant 'NULL' should be used in lower case as 'null'",
+		"Constant 'True' should be used in lower case as 'true'",
+		"Constant 'FaLsE' should be used in lower case as 'false'",
 	}
 	test.RunAndMatch()
 }
@@ -1256,7 +1256,7 @@ func TestFunctionReferenceParamsInAnonymousFunction(t *testing.T) {
 			$result = 1;
 		};
 	}`)
-	test.Expect = []string{"Undefined variable $a"}
+	test.Expect = []string{"Cannot find referenced variable $a"}
 	test.RunAndMatch()
 }
 
@@ -1486,8 +1486,8 @@ func TestEmptyVar(t *testing.T) {
 		return $x2;
 	}`)
 	test.Expect = []string{
-		`Undefined variable $x1`,
-		`Undefined variable $x2`,
+		`Cannot find referenced variable $x1`,
+		`Cannot find referenced variable $x2`,
 	}
 	test.RunAndMatch()
 }
@@ -1504,7 +1504,7 @@ function f() {
   echo $y; // But should be undefined here.
 }
 `)
-	test.Expect = []string{`Undefined variable $y`}
+	test.Expect = []string{`Cannot find referenced variable $y`}
 	test.RunAndMatch()
 }
 
@@ -1704,17 +1704,17 @@ func TestArrowFunction(t *testing.T) {
 		echo $w; // Undefined $w
 	}`)
 	test.Expect = []string{
-		`Undefined variable $undefined_variable`,
-		`Variable $maybe_defined might have not been defined`,
+		`Cannot find referenced variable $undefined_variable`,
+		`Possibly undefined variable $maybe_defined`,
 		`Variable $a is unused (use $_ to ignore this inspection or specify --unused-var-regex flag)`,
 		`Variable $a is unused (use $_ to ignore this inspection or specify --unused-var-regex flag)`,
 		`Variable $a is unused (use $_ to ignore this inspection or specify --unused-var-regex flag)`,
 		`Variable $a is unused (use $_ to ignore this inspection or specify --unused-var-regex flag)`,
-		`Undefined variable $a`,
-		`Undefined variable $x`,
-		`Undefined variable $y`,
-		`Undefined variable $w`,
-		`Variable $maybe_defined might have not been defined`,
+		`Cannot find referenced variable $a`,
+		`Cannot find referenced variable $x`,
+		`Cannot find referenced variable $y`,
+		`Cannot find referenced variable $w`,
+		`Possibly undefined variable $maybe_defined`,
 	}
 	test.RunAndMatch()
 }
@@ -1993,10 +1993,10 @@ class Impl implements Iface1, Iface2 {}
 interface Iface extends IfaceBase {}
 `)
 	test.Expect = []string{
-		`Type \Base not found`,
-		`Type \Iface1 not found`,
-		`Type \Iface2 not found`,
-		`Type \Foo not found`,
+		`Class or interface named \Base does not exist`,
+		`Class or interface named \Iface1 does not exist`,
+		`Class or interface named \Iface2 does not exist`,
+		`Class or interface named \Foo does not exist`,
 	}
 	test.RunAndMatch()
 }
@@ -2112,10 +2112,10 @@ function f() {
 	`)
 
 	test.Expect = []string{
-		"Undefined variable $x",
-		"Undefined variable $y",
+		"Cannot find referenced variable $x",
+		"Cannot find referenced variable $y",
 	}
-	linttest.RunFilterMatch(test, "undefined")
+	linttest.RunFilterMatch(test, "undefinedVariable")
 }
 
 func TestAssignByRef(t *testing.T) {
@@ -2212,7 +2212,7 @@ function f() {
 }
 
 func TestRealCastingAndIsRealCall(t *testing.T) {
-	test := linttest.NewSuite(t)
+	test := linttest.NewPHP7Suite(t)
 	test.AddFile(`<?php
 function is_real($a): bool { return true; }
 
@@ -2325,7 +2325,7 @@ function f($a) {
 `,
 	)
 	test.Expect = []string{
-		"Undefined variable $y1",
+		"Cannot find referenced variable $y1",
 	}
 	test.RunAndMatch()
 }
@@ -2352,8 +2352,8 @@ function f($a) {
 `,
 	)
 	test.Expect = []string{
-		"Variable $b might have not been defined",
-		"Variable $c might have not been defined",
+		"Possibly undefined variable $b",
+		"Possibly undefined variable $c",
 	}
 	test.RunAndMatch()
 }
@@ -2394,8 +2394,8 @@ function f2($v) {
 	// It could be more precise to report 2 "might have not been defined",
 	// but at least we report both usages. Can be improved in future.
 	test.Expect = []string{
-		`Undefined variable $x`,
-		`Variable $x might have not been defined`,
+		`Cannot find referenced variable $x`,
+		`Possibly undefined variable $x`,
 	}
 	test.RunAndMatch()
 }
@@ -2418,8 +2418,32 @@ function f2($v) {
 }
 `)
 	test.Expect = []string{
-		`Variable $x might have not been defined`,
-		`Undefined variable $x`,
+		`Possibly undefined variable $x`,
+		`Cannot find referenced variable $x`,
+	}
+	test.RunAndMatch()
+}
+
+func TestUndefinedVariableInCoalesceOrIsset(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function f() {
+  if (1) {
+    $a = 100;
+  }
+
+  echo $a ?? 100;
+  echo isset($a) ? $a : 100;
+
+  if (isset($a)) {
+    echo $a;
+  }
+
+  echo $e; // variable undefined
+}
+`)
+	test.Expect = []string{
+		`Cannot find referenced variable $e`,
 	}
 	test.RunAndMatch()
 }

@@ -12,7 +12,7 @@ import (
 )
 
 func BenchmarkExprType(b *testing.B) {
-	l := linter.NewLinter(linter.NewConfig())
+	l := linter.NewLinter(linter.NewConfig("8.1"))
 	linttest.ParseTestFile(b, l, "file.php", `<?php
 	/** @var int[] $xs */
 	$xs = [1, 2, 3];

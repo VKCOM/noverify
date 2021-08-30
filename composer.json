@@ -1,0 +1,31 @@
+{
+  "name": "vkcom/noverify",
+  "description": "Pretty fast linter (code static analysis utility) for PHP",
+  "type": "library",
+  "homepage": "https://github.com/VKCOM/noverify",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Yuriy Nasretdinov",
+      "email": "nasretdinov@gmail.com"
+    },
+    {
+      "name": "Iskander Sharipov",
+      "email": "quasilyte@gmail.com"
+    },
+    {
+      "name": "Petr Makhnev",
+      "email": "mr.makhneff@gmail.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.0",
+    "ext-zip": "*"
+  },
+  "bin": [
+    "src/cmd/composer-get/bin/noverify-get"
+  ],
+  "autoload": {
+    "psr-4": {"NoVerify\\": "src/cmd/composer-get/src"}
+  }
+}

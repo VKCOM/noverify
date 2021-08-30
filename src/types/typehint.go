@@ -10,21 +10,48 @@ func NormalizedTypeHintTypes(normalizer Normalizer, typeNode ir.Node) Map {
 	return NewMapWithNormalization(normalizer, typeList)
 }
 
+func TypeHintHasMoreAccurateType(typeHintType, phpDocType Map) bool {
+	// If is not array typehint.
+	if !typeHintType.IsLazyArrayOf("mixed") {
+		return true
+	}
+
+	// If it has more accurate type.
+	if !phpDocType.Empty() {
+		return true
+	}
+
+	return false
+}
+
 // TypeHintTypes converts type hint node to meta types.
 //
 // No normalization is performed.
 func TypeHintTypes(typeNode ir.Node) []Type {
-	n := typeNode
-
 	var results []Type
-	if nullable, ok := typeNode.(*ir.Nullable); ok {
-		n = nullable.Expr
-		results = make([]Type, 0, 2)
-		results = append(results, Type{Elem: "null"})
-	} else {
-		results = make([]Type, 0, 1)
-	}
 
+	switch n := typeNode.(type) {
+	case *ir.Union:
+		results = make([]Type, 0, len(n.Types))
+
+		for _, unionTyp := range n.Types {
+			results = append(results, handleSingleType(unionTyp))
+		}
+
+		return results
+
+	case *ir.Nullable:
+		return []Type{
+			{Elem: "null"},
+			handleSingleType(n.Expr),
+		}
+
+	default:
+		return []Type{handleSingleType(n)}
+	}
+}
+
+func handleSingleType(n ir.Node) Type {
 	// There is a trick here.
 	// Unlike with phpdoc types, having `integer` here
 	// means that we need to force it to be interpreted as
@@ -33,8 +60,5 @@ func TypeHintTypes(typeNode ir.Node) []Type {
 	if IsAlias(typ.Elem) {
 		typ.Elem = `\` + typ.Elem
 	}
-
-	results = append(results, typ)
-
-	return results
+	return typ
 }

@@ -46,7 +46,9 @@ import (
 //     48 - renamed meta.TypesMap to types.Map; this affects gob encoding
 //     49 - for shape, names are now generated using the keys that make up this shape
 //     50 - added Flags field for meta.PropertyInfo
-const cacheVersion = 50
+//     51 - added anonymous classes
+//     52 - renamed all PhpDoc and Phpdoc with PHPDoc
+const cacheVersion = 52
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")

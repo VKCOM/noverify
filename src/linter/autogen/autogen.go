@@ -42,6 +42,11 @@ func GenerateClosureName(fun *ir.ClosureExpr, currentFunction, currentFile strin
 	return fmt.Sprintf("\\Closure$(%s%s):%d$", currentFile, curFunction, pos.StartLine)
 }
 
+func GenerateAnonClassName(class *ir.AnonClassExpr, currentFile string) string {
+	pos := ir.GetPosition(class)
+	return fmt.Sprintf(`\anon$(%s):%d$`, currentFile, pos.StartLine)
+}
+
 func TransformClosureToReadableName(name string) string {
 	name = strings.TrimSuffix(name, "$")
 	if types.IsClosureFromPHPDoc(name) {

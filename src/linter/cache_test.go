@@ -96,6 +96,13 @@ function main() {
   $p3 = new Point3D();
   $_ = $p3->toArray();
   var_dump(to_array($p3));
+
+  $anon = new class(10) extends Point implements Arrayable {
+    public function __construct(int $a) {}
+    public function f() {}
+  }
+
+  $anon->f();
 }
 
 /** @param shape(a:integer,b:shape(c:real)) */
@@ -118,7 +125,7 @@ class ByNull {
 main();
 `
 
-	l := NewLinter(NewConfig())
+	l := NewLinter(NewConfig("8.1"))
 
 	runTest := func(iteration int) {
 		result, err := parseContents(l, "cachetest.php", []byte(code), nil)
@@ -151,7 +158,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "5945d80b946009045beecee6752fe13ae365d9db2285c90ba0acd57c793f2e282d4f99738e1e9f1e78c00d93596e28a7dedcafc7feb32cdb90cfdd39a417d309"
+		wantStrings := "dca6b73961fb13308e2767c772441cc9817bd0bb7264bfbb6aa880dd25f37ec62f971d20d08507c091c95f59e1e92bcd796d4e2592be8ea021da500d4bc25b88"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)

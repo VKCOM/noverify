@@ -15,11 +15,12 @@ import (
 	"time"
 
 	"github.com/VKCOM/noverify/src/solver"
+	"github.com/VKCOM/noverify/src/utils"
+	"github.com/VKCOM/php-parser/pkg/ast"
+	"github.com/VKCOM/php-parser/pkg/conf"
+	phperrors "github.com/VKCOM/php-parser/pkg/errors"
+	"github.com/VKCOM/php-parser/pkg/parser"
 	"github.com/quasilyte/regex/syntax"
-	"github.com/z7zmey/php-parser/pkg/ast"
-	"github.com/z7zmey/php-parser/pkg/conf"
-	phperrors "github.com/z7zmey/php-parser/pkg/errors"
-	"github.com/z7zmey/php-parser/pkg/parser"
 
 	"github.com/VKCOM/noverify/src/inputs"
 	"github.com/VKCOM/noverify/src/ir"
@@ -52,6 +53,8 @@ type Worker struct {
 	reParserNoLiterals *syntax.Parser
 	reParser           *syntax.Parser
 
+	strictMixed bool
+
 	needReports bool
 
 	AllowDisable *regexp.Regexp
@@ -77,6 +80,7 @@ func newWorker(config *Config, info *meta.Info, id int, checkersFilter *Checkers
 			NoLiterals: false,
 		}),
 		checkersFilter: checkersFilter,
+		strictMixed:    config.StrictMixed,
 	}
 }
 
@@ -249,7 +253,11 @@ func (w *Worker) doParseFile(f workspace.FileInfo) []*Report {
 	}
 
 	if err != nil {
-		log.Printf("Failed parsing %s: %s", f.Name, err.Error())
+		// Don't give an error that the file cannot be parsed if it is in the
+		// vendor, as it may be test data that is incorrect by definition.
+		if !utils.InVendor(f.Name) {
+			log.Printf("Failed parsing %s: %s", f.Name, err.Error())
+		}
 		lintdebug.Send("Failed parsing %s: %s", f.Name, err.Error())
 	}
 
@@ -281,6 +289,7 @@ func (w *Worker) analyzeFile(file *workspace.File, rootNode *ir.Root) (*rootWalk
 			parser: w.reParserNoLiterals,
 			out:    &strings.Builder{},
 		},
+		strictMixed: w.strictMixed,
 
 		allowDisabledRegexp: w.AllowDisable,
 		checkersFilter:      w.checkersFilter,
@@ -306,6 +315,8 @@ func (w *Worker) analyzeFile(file *workspace.File, rootNode *ir.Root) (*rootWalk
 			}, true
 		},
 	}
+
+	walker.checker = newRootChecker(walker, NewQuickFixGenerator(file))
 
 	walker.InitCustom()
 

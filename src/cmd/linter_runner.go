@@ -92,6 +92,14 @@ func (l *LinterRunner) Init(ruleSets []*rules.Set, flags *ParsedFlags) error {
 		l.outputFp = outputFp
 	}
 
+	if !flags.IgnoreVendor {
+		flags.IndexOnlyFiles = l.addVendorFolderToFlag(flags.IndexOnlyFiles, false)
+	}
+
+	// It is necessary to add the vendor folder to exclude so that runs on
+	// the project root folder do not result vendor analysis.
+	flags.ReportsExclude = l.addVendorFolderToFlag(flags.ReportsExclude, true)
+
 	if err := l.compileRegexes(); err != nil {
 		return err
 	}
@@ -107,8 +115,6 @@ func (l *LinterRunner) Init(ruleSets []*rules.Set, flags *ParsedFlags) error {
 		}
 	}
 
-	l.addVendorFolderToIndex(flags)
-
 	l.checkersFilter = l.initCheckMappings(ruleSets)
 
 	if err := l.initRules(ruleSets); err != nil {
@@ -123,41 +129,47 @@ func (l *LinterRunner) Init(ruleSets []*rules.Set, flags *ParsedFlags) error {
 	return nil
 }
 
-func (l *LinterRunner) addVendorFolderToIndex(flags *ParsedFlags) {
-	if flags.IgnoreVendor {
-		return
-	}
-
+func (l *LinterRunner) addVendorFolderToFlag(flag string, regex bool) string {
 	alreadyContainsVendor := false
-	parts := strings.Split(flags.IndexOnlyFiles, ",")
+	parts := strings.Split(flag, ",")
 	for _, part := range parts {
 		part = strings.TrimLeft(filepath.ToSlash(part), " ./")
-		if part == "vendor" || strings.HasSuffix(part, "/vendor") {
+		if part == "vendor" || strings.HasSuffix(part, "/vendor") || strings.HasSuffix(part, "vendor/") {
 			alreadyContainsVendor = true
 			break
 		}
 	}
 	if alreadyContainsVendor {
-		return
+		return flag
 	}
 
 	workingDir, err := os.Getwd()
 	if err != nil {
-		return
+		return flag
 	}
 
 	vendorPath := filepath.Join(workingDir, "vendor")
 	_, err = os.Stat(vendorPath)
 	if os.IsNotExist(err) {
 		// If such a folder does not exist, then nothing needs to be done.
-		return
+		return flag
 	}
 
-	if flags.IndexOnlyFiles == "" {
-		flags.IndexOnlyFiles = "./vendor"
+	if flag == "" {
+		if regex {
+			flag = "vendor/"
+		} else {
+			flag = "./vendor"
+		}
 	} else {
-		flags.IndexOnlyFiles += ",./vendor"
+		if regex {
+			flag += "|vendor/"
+		} else {
+			flag += ",./vendor"
+		}
 	}
+
+	return flag
 }
 
 func (l *LinterRunner) initBaseline() error {
@@ -242,7 +254,10 @@ func (l *LinterRunner) initCheckMappings(ruleSets []*rules.Set) *linter.Checkers
 		}
 		for _, ruleSet := range ruleSets {
 			for _, name := range ruleSet.Names {
-				set[name] = true
+				doc, ok := ruleSet.DocByName[name]
+				if ok && !doc.Disabled {
+					set[name] = true
+				}
 			}
 		}
 

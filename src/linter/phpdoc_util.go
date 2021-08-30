@@ -81,14 +81,14 @@ func (e *PHPDocErrors) pushLint(place PHPDocLocation, format string, args ...int
 	})
 }
 
-type classPhpDocParseResult struct {
+type classPHPDocParseResult struct {
 	properties meta.PropertiesMap
 	methods    meta.FunctionsMap
 	errs       PHPDocErrors
 	mixins     []string
 }
 
-func parseClassPHPDocMethod(classNode ir.Node, ctx *rootContext, result *classPhpDocParseResult, part *phpdoc.RawCommentPart) {
+func parseClassPHPDocMethod(classNode ir.Node, ctx *rootContext, result *classPHPDocParseResult, part *phpdoc.RawCommentPart) {
 	// The syntax is:
 	//	@method [[static] return type] [name]([[type] [parameter]<, ...>]) [<description>]
 	// Return type and method name are mandatory.
@@ -152,7 +152,7 @@ func moveShapesToContext(ctx *rootContext, shapes types.ShapesMap) {
 	}
 }
 
-func parseClassPHPDocProperty(classNode ir.Node, ctx *rootContext, result *classPhpDocParseResult, part *phpdoc.TypeVarCommentPart) {
+func parseClassPHPDocProperty(classNode ir.Node, ctx *rootContext, result *classPHPDocParseResult, part *phpdoc.TypeVarCommentPart) {
 	// The syntax is:
 	//	@property [Type] [name] [<description>]
 	// Type and name are mandatory.
@@ -197,7 +197,7 @@ func parseClassPHPDocProperty(classNode ir.Node, ctx *rootContext, result *class
 	}
 }
 
-func parseClassPHPDocMixin(classNode ir.Node, cs *meta.ClassParseState, result *classPhpDocParseResult, part *phpdoc.RawCommentPart) {
+func parseClassPHPDocMixin(classNode ir.Node, cs *meta.ClassParseState, result *classPHPDocParseResult, part *phpdoc.RawCommentPart) {
 	params := part.Params
 	if len(params) == 0 {
 		return

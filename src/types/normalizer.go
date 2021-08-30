@@ -33,12 +33,28 @@ func (n Normalizer) normalizeType(typ *Type) {
 		return
 	}
 
-	if typ.Elem == "any" && n.kphp {
+	if n.kphp && (typ.Elem == "any" || typ.Elem == "kmixed" || typ.Elem == "future") {
 		// `any` is a special KPHP type that is more-or-less
 		// identical to `mixed|object`. In PHP, `mixed` already covers
 		// objects, so there is no need to add `object`.
 		// See https://php.watch/versions/8.0/mixed-type
 		typ.Elem = "mixed"
+		return
+	}
+
+	// Psalm types.
+	// See https://psalm.dev/docs/annotating_code/type_syntax/scalar_types/
+	switch typ.Elem {
+	case "class-string", "interface-string", "trait-string", "callable-string", "numeric-string",
+		"literal-string", "lowercase-string", "non-empty-string", "non-empty-lowercase-string",
+		"html-escaped-string", "array-key":
+		typ.Elem = "string"
+		return
+	case "positive-int":
+		typ.Elem = "int"
+		return
+	case "numeric":
+		typ.Elem = "float"
 		return
 	}
 

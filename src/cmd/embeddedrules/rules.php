@@ -285,8 +285,8 @@ function argsOrder() {
 
 /**
  * @comment Report suspicious usage of bitwise operations.
- * @before  if ($isURL & $verify) ...
- * @after   if ($isURL && $verify) ...
+ * @before  if ($isURL & $verify) { ... } // Bitwise AND on two bool looks suspicious,
+ * @after   if ($isURL && $verify) { ... }
  */
 function bitwiseOps() {
   /**
@@ -400,7 +400,7 @@ function indexingSyntax() {
 }
 
 /**
- * @comment Report using an integer for $needle argument of str* functions.
+ * @comment Report using an integer for `$needle` argument of `str*` functions.
  * @before  strpos("hello", 10)
  * @after   strpos("hello", chr(10))
  */
@@ -438,9 +438,7 @@ function langDeprecated() {
 }
 
 /**
- * @comment Report a strange way of type cast.
- * @before  $x.""
- * @after   (string)$x
+ * @extends
  */
 function strangeCast() {
     /**
@@ -460,15 +458,10 @@ function strangeCast() {
         0 + $x;
         0.0 + $x;
     }
-
-    /**
-     * @warning Unary plus, possible type cast, use an explicit cast to int or float instead of using the unary plus
-     */
-    +$x;
 }
 
 /**
- * @comment Report string emptyness checking using strlen.
+ * @comment Report string emptyness checking using `strlen(...)`.
  * @before  if (strlen($string)) { ... }
  * @after   if ($string !== "") { ... }
  */
@@ -492,7 +485,7 @@ function emptyStringCheck() {
 }
 
 /**
- * @comment Report the use of assignment in the return statement.
+ * @comment Report the use of assignment in the `return` statement.
  * @before  return $a = 100;
  * @after   return $a;
  */
@@ -518,7 +511,7 @@ function returnAssign() {
 }
 
 /**
- * @comment Report comparisons count(...) which are always false or true.
+ * @comment Report comparisons `count(...)` which are always `false` or `true`.
  * @before  if (count($arr) >= 0) { ... }
  * @after   if (count($arr) != 0) { ... }
  */
@@ -553,7 +546,7 @@ function countUse() {
 }
 
 /**
- * @comment Report the repetition of unary (! and ~) operators in a row.
+ * @comment Report the repetition of unary (`!` or `~`) operators in a row.
  * @before  echo !!$a;
  * @after   echo (bool) $a;
  */
@@ -587,7 +580,7 @@ function unaryRepeat() {
 }
 
 /**
- * @comment Report potentially erroneous 'for' loops.
+ * @comment Report potentially erroneous `for` loops.
  * @before  for ($i = 0; $i < 100; $i--) { ... }
  * @after   for ($i = 0; $i < 100; $i++) { ... }
  */
@@ -651,13 +644,32 @@ function selfAssign() {
 }
 
 /**
- * @comment Report using @.
- * @before  $f();
- * @after   f();
+ * @comment  Report using `@`.
+ * @before   @f();
+ * @after    f();
+ * @disabled
  */
 function errorSilence() {
   /**
    * @warning Don't use @, silencing errors is bad practice
    */
   @$_;
+}
+
+
+/**
+ * @comment Report when use unparenthesized expression containing both `.` and binary operator.
+ * @before  "id: " . $id - 10
+ * @after   "id: " . ($id - 10)
+ */
+function concatenationPrecedence() {
+    /**
+     * @warning Unparenthesized expression containing both '.' and binary operator may produce unexpected results
+     */
+    any_concat: {
+        $_ . $_ - $_;
+        $_ . $_ + $_;
+        $_ . $_ << $_;
+        $_ . $_ >> $_;
+    }
 }

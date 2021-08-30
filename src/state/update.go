@@ -2,6 +2,7 @@ package state
 
 import (
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/solver"
 )
@@ -30,6 +31,19 @@ func EnterNode(st *meta.ClassParseState, n ir.Node) {
 
 	case *ir.UseListStmt:
 		handleUseList("", st, n)
+
+	case *ir.AnonClassExpr:
+		st.IsTrait = false
+		st.IsInterface = false
+
+		name := autogen.GenerateAnonClassName(n, st.CurrentFile)
+
+		st.CurrentClass = st.Namespace + name
+		st.CurrentParentClass = ""
+		st.CurrentParentInterfaces = nil
+		if n.Extends != nil {
+			st.CurrentParentClass, _ = solver.GetClassName(st, n.Extends.ClassName)
+		}
 
 	case *ir.InterfaceStmt:
 		st.IsTrait = false
@@ -127,7 +141,7 @@ func LeaveNode(st *meta.ClassParseState, n ir.Node) {
 	case *ir.ClassMethodStmt, *ir.FunctionStmt:
 		st.CurrentFunction = ""
 
-	case *ir.ClassStmt, *ir.InterfaceStmt, *ir.TraitStmt:
+	case *ir.ClassStmt, *ir.InterfaceStmt, *ir.TraitStmt, *ir.AnonClassExpr:
 		st.IsTrait = false
 		st.IsInterface = false
 		st.CurrentClass = ""

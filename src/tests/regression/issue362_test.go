@@ -41,6 +41,7 @@ if (method_exists($x, 'x1')) {
 
 func TestIssue362_2(t *testing.T) {
 	test := linttest.NewSuite(t)
+	test.Config().StrictMixed = true
 	test.AddFile(`<?php
 function method_exists($object, $method_name) { return 1 != 0; }
 

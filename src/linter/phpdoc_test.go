@@ -8,6 +8,7 @@ import (
 	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/phpdoctypes"
 	"github.com/VKCOM/noverify/src/types"
+	"github.com/VKCOM/noverify/src/workspace"
 )
 
 func TestParseClassPHPDoc(t *testing.T) {
@@ -60,9 +61,12 @@ func TestParseClassPHPDoc(t *testing.T) {
 		},
 	}
 
-	l := NewLinter(NewConfig())
+	l := NewLinter(NewConfig("8.1"))
 	st := &meta.ClassParseState{Info: l.MetaInfo()}
-	walker := rootWalker{ctx: newRootContext(l.config, NewWorkerContext(), st)}
+	walker := rootWalker{
+		ctx: newRootContext(l.config, NewWorkerContext(), st),
+	}
+	walker.checker = newRootChecker(&walker, NewQuickFixGenerator(workspace.NewFile("test.php", []byte{})))
 	for _, test := range tests {
 		docString := fmt.Sprintf(`/** %s */`, test.line)
 		doc := phpdoc.Parse(walker.ctx.phpdocTypeParser, docString)
@@ -113,7 +117,7 @@ func TestParseClassPHPDoc(t *testing.T) {
 }
 
 func BenchmarkParseTypes(b *testing.B) {
-	l := NewLinter(NewConfig())
+	l := NewLinter(NewConfig("8.1"))
 	st := &meta.ClassParseState{}
 	ctx := newRootContext(l.config, NewWorkerContext(), st)
 	typeString := `?x|array<int>|T[]`
