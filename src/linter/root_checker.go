@@ -34,7 +34,8 @@ type rootChecker struct {
 	// See github.com/client9/misspell for details.
 	typoFixer *misspell.Replacer
 
-	quickfix *QuickFixGenerator
+	quickfix       *QuickFixGenerator
+	typeComparator types.Compatible
 }
 
 func newRootChecker(walker *rootWalker, quickfix *QuickFixGenerator) *rootChecker {
@@ -87,7 +88,34 @@ func (r *rootChecker) CheckFunction(fun *ir.FunctionStmt) bool {
 
 	r.walker.handleFuncStmts(funcParams.params, nil, fun.Stmts, sc)
 
+	r.checkPHPDocReturnTypeCompatibilityWithTypehint(fun, fun.Doc, phpDocReturnType, returnTypeHint)
+
 	return false
+}
+
+func (r *rootChecker) checkPHPDocReturnTypeCompatibilityWithTypehint(n ir.Node, doc phpdoc.Comment, phpDocReturnType types.Map, returnTypeHint types.Map) {
+	if phpDocReturnType.Empty() || returnTypeHint.Empty() {
+		return
+	}
+
+	line := 0
+	for _, part := range doc.Parsed {
+		if part.Name() == "return" {
+			line = part.Line()
+		}
+	}
+
+	phpDocReturnType = types.NewMapFromMap(solver.ResolveTypes(r.info, r.state.CurrentClass, phpDocReturnType, solver.ResolverMap{}))
+	returnTypeHint = types.NewMapFromMap(solver.ResolveTypes(r.info, r.state.CurrentClass, returnTypeHint, solver.ResolverMap{}))
+
+	res := r.typeComparator.ComparePHPDocAndTypehint(phpDocReturnType, returnTypeHint)
+	if !res.IsCompatible {
+		res.T1 = phpDocReturnType
+		res.T2 = returnTypeHint
+		r.walker.ReportPHPDoc(
+			PHPDocLineField(n, line, 1), LevelError,
+			"mismatchingDocblockReturnType", res.ToMessageForPHPDoc("@return"))
+	}
 }
 
 func (r *rootChecker) reportPHPDocErrors(errs PHPDocErrors) {
@@ -312,7 +340,7 @@ func (r *rootChecker) checkUndefinedClassesInPHPDoc(n ir.Node, typesMap types.Ma
 		}
 
 		if types.IsArray(className) {
-			arrayType := types.ArrayType(className)
+			arrayType := types.ArrayElementType(className)
 			if types.IsClass(arrayType) {
 				r.checkUndefinedClass(arrayType, part, n)
 			}

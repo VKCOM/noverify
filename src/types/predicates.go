@@ -9,7 +9,7 @@ func IsClass(s string) bool {
 }
 
 func IsShape(s string) bool {
-	return strings.HasPrefix(s, `\shape$`)
+	return strings.HasPrefix(s, `\shape$`) || strings.HasPrefix(s, `\shape{`)
 }
 
 func IsClosure(s string) bool {

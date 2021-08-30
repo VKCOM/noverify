@@ -236,6 +236,14 @@ func (m Map) Is(typ string) bool {
 	return ok
 }
 
+func (m Map) NullableOf(typ string) bool {
+	if m.Len() != 2 {
+		return false
+	}
+
+	return m.Contains("null") && m.Contains(typ)
+}
+
 func (m Map) Clone() Map {
 	if m.Len() == 0 || m.isImmutable() {
 		return m

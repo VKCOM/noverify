@@ -285,7 +285,7 @@ func FormatSimpleType(s string) (res string) {
 	if IsShape(s) {
 		s = strings.TrimPrefix(s, `\shape$`)
 		s = strings.TrimSuffix(s, `$`)
-		return "shape{" + s + "}"
+		return "\\shape{" + s + "}"
 	}
 
 	return s

@@ -294,8 +294,8 @@ func (w *Worker) analyzeFile(file *workspace.File, rootNode *ir.Root) (*rootWalk
 		allowDisabledRegexp: w.AllowDisable,
 		checkersFilter:      w.checkersFilter,
 	}
-
-	walker.typeComparator = types.Compatible{
+	walker.checker = newRootChecker(walker, NewQuickFixGenerator(file))
+	walker.checker.typeComparator = types.Compatible{
 		MaxUnionSize: 3,
 		ClassDataProvider: func(name string) (types.ClassData, bool) {
 			fqn, ok := solver.GetClassName(walker.ctx.st, &ir.Name{Value: name})
@@ -315,8 +315,6 @@ func (w *Worker) analyzeFile(file *workspace.File, rootNode *ir.Root) (*rootWalk
 			}, true
 		},
 	}
-
-	walker.checker = newRootChecker(walker, NewQuickFixGenerator(file))
 
 	walker.InitCustom()
 

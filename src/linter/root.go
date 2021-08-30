@@ -76,7 +76,6 @@ type rootWalker struct {
 
 	checkersFilter *CheckersFilter
 
-	typeComparator types.Compatible
 	checker *rootChecker
 }
 
@@ -1056,6 +1055,8 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	}
 
 	returnTypes := functionReturnType(phpDocReturnType, returnTypeHint, actualReturnTypes)
+
+	d.checker.checkPHPDocReturnTypeCompatibilityWithTypehint(meth, meth.Doc, phpDocReturnType, returnTypeHint)
 
 	// TODO: handle duplicate method
 	var funcFlags meta.FuncFlags

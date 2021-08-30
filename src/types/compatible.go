@@ -23,6 +23,9 @@ type Compatible struct {
 	ClassDataProvider func(name string) (ClassData, bool)
 }
 
+var compatible = CompatibleResult{IsCompatible: true}
+var incompatible = CompatibleResult{IsCompatible: false}
+
 type CompatibleResult struct {
 	T1 Map
 	T2 Map
@@ -84,7 +87,11 @@ type CompatibleResult struct {
 }
 
 func (cr CompatibleResult) ToMessageForPHPDoc(from string) string {
-	message := "%s type '%s' is incompatible with type '%s' from typehint"
+	message := "Docblock has incorrect %s type '%s', should be '%s'"
+
+	if cr.MoreGeneralType {
+		message = "The inferred %s type '%s' is more specific than the declared return type '%s'"
+	}
 
 	T2String := cr.T2.String()
 	if cr.T2.Is("mixed[]") {
@@ -94,178 +101,80 @@ func (cr CompatibleResult) ToMessageForPHPDoc(from string) string {
 	return fmt.Sprintf(message, from, cr.T1, T2String)
 }
 
-func (c *Compatible) CompatibleTypes(t1, t2 Map) CompatibleResult {
-	res := compatibleTypes(t1, t2, c)
-	res.T1 = t1
-	res.T2 = t2
-	return res
-}
-
-func (c *Compatible) CompatibleType(t1, t2 string) CompatibleResult {
-	res := compatibleType(t1, t2, c)
-	res.T1 = NewMap(t1)
-	res.T2 = NewMap(t2)
-	return res
-}
-
-func compatibleTypes(t1, t2 Map, c *Compatible) (res CompatibleResult) {
-	if t1.Empty() || t2.Empty() {
-		return CompatibleResult{IsCompatible: true}
+func (c *Compatible) ComparePHPDocAndTypehint(t1, t2 Map) CompatibleResult {
+	if t1.Len() == 1 && t2.Len() == 1 {
+		return compatibleType(t1.String(), t2.String(), c)
 	}
 
-	var needNext bool
-	res, needNext = compatibleOneWithOne(t1, t2, c)
-	if !needNext {
-		return res
-	}
+	if t1.Len() > 1 && t2.Len() == 1 {
+		tt2 := t2.String()
 
-	res, needNext = compatibleOneWithMany(t1, t2, c)
-	if !needNext {
-		return res
-	}
+		if t1.Len() == 2 && t1.Contains("null") {
+			compatibleRes := t1.Find(func(typ string) bool {
+				if typ == "null" {
+					return false
+				}
+				res := compatibleType(typ, tt2, c)
+				if res.IsCompatible {
+					return true
+				}
+				return false
+			})
 
-	res = compatibleManyWithMany(t1, t2, c)
-	if !res.IsCompatible {
-		return res
-	}
-
-	return res
-}
-
-func compatibleManyWithMany(t1 Map, t2 Map, c *Compatible) (res CompatibleResult) {
-	if t1.Len() > c.MaxUnionSize || t2.Len() > c.MaxUnionSize {
-		return CompatibleResult{IsCompatible: true}
-	}
-
-	if c.UnionStrict {
-		if t1.Contains("null") && !t2.Contains("null") {
-			return CompatibleResult{
-				ExtraNullable: true,
-			}
-		}
-		if !t1.Contains("null") && t2.Contains("null") {
-			return CompatibleResult{
-				LostNullable: true,
+			if compatibleRes {
+				return compatible
 			}
 		}
 
-		if t1.String() != t2.String() {
-			return CompatibleResult{
-				IsCompatible: false,
-			}
+		t1IsUnionArray := !t1.Find(func(typ string) bool {
+			return !IsArray(typ) && typ != "mixed"
+		})
+		if t1IsUnionArray && t2.Is("mixed[]") {
+			return compatible
 		}
 	}
 
-	// Each T2 type must have a compatible T1 type.
-	compatibleAll := true
-	t2.Iterate(func(T2Typ string) {
-		compatible := false
+	if t1.Len() == 1 && t2.Len() > 1 {
+		if t2.Contains(t1.String()) {
+			return compatible
+		}
+		return incompatible
+	}
 
-		t1.Iterate(func(T1Typ string) {
-			res := c.CompatibleType(T2Typ, T1Typ)
-			if res.IsCompatible {
-				compatible = true
-			}
+	if t1.Len() > 1 && t2.Len() > 1 {
+		if t1.Len() != t2.Len() {
+			return incompatible
+		}
+
+		if t1.Len() > c.MaxUnionSize || t2.Len() > c.MaxUnionSize {
+			return compatible
+		}
+
+		t2Used := make(map[string]bool, t2.Len())
+
+		t1.Iterate(func(tt1 string) {
+			t2.Iterate(func(tt2 string) {
+				if t2Used[tt2] {
+					return
+				}
+				res := compatibleType(tt1, tt2, c)
+				if res.IsCompatible {
+					t2Used[tt2] = true
+				}
+			})
 		})
 
-		compatibleAll = compatibleAll && compatible
-	})
-
-	if !compatibleAll {
-		return CompatibleResult{
-			UnionNotInOtherUnion: true,
-			IsCompatible:         false,
+		if len(t2Used) == t2.Len() {
+			return compatible
 		}
 	}
 
-	return CompatibleResult{
-		IsCompatible: true,
-	}
-}
-
-func compatibleOneWithOne(t1 Map, t2 Map, c *Compatible) (res CompatibleResult, needNext bool) {
-	if t1.Len() != 1 || t2.Len() != 1 {
-		return CompatibleResult{}, true
-	}
-
-	return compatibleType(t1.String(), t2.String(), c), false
-}
-
-func compatibleOneWithMany(t1 Map, t2 Map, c *Compatible) (res CompatibleResult, needNext bool) {
-	if t1.Len() != 1 {
-		return CompatibleResult{}, true
-	}
-	if t2.Len() > c.MaxUnionSize {
-		return CompatibleResult{IsCompatible: true}, false
-	}
-
-	if c.UnionStrict {
-		// If T1 is null and T2 is T|null
-		if t1.Is("null") && t2.Contains("null") {
-			return CompatibleResult{IsCompatible: true}, false
-		}
-
-		// If T1 is null and T2 is T|T... without null
-		if t1.Is("null") && !t2.Contains("null") {
-			return CompatibleResult{
-				NullToNotNullable: true,
-			}, false
-		}
-
-		// T1 is not null and T2 is nullable
-		if t2.Contains("null") {
-			return CompatibleResult{
-				LostNullable: true,
-			}, false
-		}
-
-		// If type T1 is compatible with all types from T2.
-		compatibleWithAll := true
-		T1Typ := t1.String()
-		t2.Iterate(func(T2Typ string) {
-			res = compatibleType(T1Typ, T2Typ, c)
-			if !res.IsCompatible {
-				compatibleWithAll = false
-			}
-		})
-
-		return CompatibleResult{
-			IsCompatible: compatibleWithAll,
-		}, false
-	}
-
-	var compatibleWithOne bool
-
-	t1.Iterate(func(T1Typ string) {
-		if compatibleWithOne {
-			return
-		}
-		t2.Iterate(func(T2Typ string) {
-			if compatibleWithOne {
-				return
-			}
-			res = compatibleType(T1Typ, T2Typ, c)
-			if res.IsCompatible {
-				compatibleWithOne = true
-			}
-		})
-	})
-
-	return CompatibleResult{
-		IsCompatible: compatibleWithOne,
-	}, false
-}
-
-func CompatibleType(t1, t2 string) CompatibleResult {
-	res := compatibleType(t1, t2, nil)
-	res.T1 = NewMap(t1)
-	res.T2 = NewMap(t2)
-	return res
+	return incompatible
 }
 
 func compatibleType(t1, t2 string, c *Compatible) (res CompatibleResult) {
 	if t1 == "mixed" || t2 == "mixed" {
-		return CompatibleResult{IsCompatible: true}
+		return compatible
 	}
 
 	T1A, ok := Alias(t1)
@@ -299,7 +208,11 @@ func compatibleType(t1, t2 string, c *Compatible) (res CompatibleResult) {
 			return CompatibleResult{IsCompatible: false}
 		}
 
-		return CompatibleResult{IsCompatible: true}
+		return compatible
+	}
+
+	if IsShape(t1) {
+		return compatible
 	}
 
 	var needNext bool
@@ -373,7 +286,7 @@ func (c *Compatible) classImplementInterface(class, iface ClassData) (implement 
 
 func (c *Compatible) compatibleClassWithInheritance(t1, t2 ClassData) (res CompatibleResult) {
 	if t1.Name == t2.Name {
-		return CompatibleResult{IsCompatible: true}
+		return compatible
 	}
 
 	if t1.IsInterface {
@@ -417,7 +330,7 @@ func compatibleClass(t1 string, t2 string, c *Compatible) (res CompatibleResult,
 			}
 		}
 
-		return CompatibleResult{IsCompatible: true}
+		return compatible
 	}
 
 	if IsClass(t1) && IsClass(t2) {
@@ -447,7 +360,7 @@ func compatibleClass(t1 string, t2 string, c *Compatible) (res CompatibleResult,
 
 	if IsClass(t1) || t1 == "object" {
 		if t2 == "object" || IsClass(t2) {
-			return CompatibleResult{IsCompatible: true}, false
+			return compatible, false
 		}
 
 		return CompatibleResult{
@@ -457,7 +370,7 @@ func compatibleClass(t1 string, t2 string, c *Compatible) (res CompatibleResult,
 
 	if IsClass(t2) || t2 == "object" {
 		if t1 == "object" || IsClass(t1) {
-			return CompatibleResult{IsCompatible: true}, false
+			return compatible, false
 		}
 
 		return CompatibleResult{
@@ -465,7 +378,7 @@ func compatibleClass(t1 string, t2 string, c *Compatible) (res CompatibleResult,
 		}, false
 	}
 
-	return CompatibleResult{IsCompatible: true}, true
+	return compatible, true
 }
 
 func compatibleArray(t1 string, t2 string, c *Compatible) (res CompatibleResult) {
@@ -481,12 +394,12 @@ func compatibleArray(t1 string, t2 string, c *Compatible) (res CompatibleResult)
 			}
 		}
 
-		return CompatibleResult{IsCompatible: true}
+		return compatible
 	}
 
 	if IsArray(t1) {
 		if t2 == "iterable" {
-			return CompatibleResult{IsCompatible: true}
+			return compatible
 		}
 
 		return CompatibleResult{
@@ -496,7 +409,7 @@ func compatibleArray(t1 string, t2 string, c *Compatible) (res CompatibleResult)
 
 	if IsArray(t2) {
 		if t1 == "iterable" {
-			return CompatibleResult{IsCompatible: true}
+			return compatible
 		}
 
 		return CompatibleResult{
@@ -514,17 +427,17 @@ func compatibleArray(t1 string, t2 string, c *Compatible) (res CompatibleResult)
 		return res
 	}
 
-	return CompatibleResult{IsCompatible: true}
+	return compatible
 }
 
 func compatibleIterable(t1 string, t2 string) CompatibleResult {
 	if t1 == "iterable" {
 		if t2 == "iterable" {
-			return CompatibleResult{IsCompatible: true}
+			return compatible
 		}
 
 		if IsClass(t2) {
-			return CompatibleResult{IsCompatible: true}
+			return compatible
 		}
 
 		return CompatibleResult{
@@ -532,17 +445,17 @@ func compatibleIterable(t1 string, t2 string) CompatibleResult {
 		}
 	}
 
-	return CompatibleResult{IsCompatible: true}
+	return compatible
 }
 
 func compatibleCallable(t1, t2 string) (res CompatibleResult) {
 	if t1 == "callable" {
 		if t2 == "string" {
-			return CompatibleResult{IsCompatible: true}
+			return compatible
 		}
 
 		if t2 == "callable" || IsClosure(t2) || IsClass(t2) {
-			return CompatibleResult{IsCompatible: true}
+			return compatible
 		}
 
 		return CompatibleResult{
@@ -550,13 +463,13 @@ func compatibleCallable(t1, t2 string) (res CompatibleResult) {
 		}
 	}
 
-	return CompatibleResult{IsCompatible: true}
+	return compatible
 }
 
 func compatibleBoolean(t1, t2 string) (res CompatibleResult, needNext bool) {
 	if t1 == "bool" {
 		if t2 == "bool" || t2 == "true" {
-			return CompatibleResult{IsCompatible: true}, false
+			return compatible, false
 		}
 		if t2 == "false" {
 			return CompatibleResult{
@@ -570,11 +483,11 @@ func compatibleBoolean(t1, t2 string) (res CompatibleResult, needNext bool) {
 	}
 	if t2 == "bool" {
 		if t1 == "bool" || t1 == "true" {
-			return CompatibleResult{IsCompatible: true}, false
+			return compatible, false
 		}
 		if t1 == "false" {
 			return CompatibleResult{
-				IsCompatible: false,
+				IsCompatible: true,
 				FalseBool:    true,
 			}, false
 		}

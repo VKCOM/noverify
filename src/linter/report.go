@@ -788,7 +788,7 @@ function f(array $a) {}`,
 		},
 
 		{
-			Name:     "phpdocTypeMismatch",
+			Name:     "mismatchingDocblockReturnType",
 			Default:  true,
 			Quickfix: false,
 			Comment:  `Report misuse of type hints.`,
