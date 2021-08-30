@@ -7,7 +7,7 @@
 Run the following command:
 
 ```shell
-composer require --dev vkcom/noverify:dev-master
+composer require --dev vkcom/noverify
 ```
 
 After NoVerify is installed as a dependency, run the following command to download the binary.
@@ -29,6 +29,35 @@ For example:
 ```shell
 ./vendor/bin/noverify-get --version 0.3.0
 ```
+
+#### Troubleshooting
+
+##### Composer
+
+`vkcom/noverify` package requires the `ext-zip` extension installed on the system, if you receive an error that it is not installed, then install it with the following command (replace the version with the PHP version you need):
+
+On Ubuntu:
+
+```
+sudo apt install php8.0-zip
+```
+
+On macOS:
+
+```
+brew update
+brew install php@8.0
+brew link php@8.0
+brew link php@8.0 --force
+```
+
+##### noverify-get
+
+If you get an error "not supported arch" or "not supported os", then create a new [issue](https://github.com/VKCOM/noverify/issues/new) in which describe what values the script displayed and this version can be added to releases.
+
+##### Other
+
+Create an [issue](https://github.com/VKCOM/noverify/issues/new) if you have any problems with the installation.
 
 ## Ready binaries
 
