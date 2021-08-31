@@ -319,7 +319,6 @@ code {
 .CodeMirror-linenumbers {
   border-right: 1px solid #e7e8ec;
   padding-right: 5px;
-  /*background-color: #fff;*/
 }
 
 .CodeMirror-lint-mark-error {
@@ -366,17 +365,17 @@ code {
   padding-left: 0
 }
 
-.CodeMirror-lint-message-error,.CodeMirror-lint-message-warning {
+.CodeMirror-lint-message-error, .CodeMirror-lint-message-warning {
   padding-left: 20px;
   background-repeat: no-repeat
 }
 
-.CodeMirror-lint-marker-error,.CodeMirror-lint-message-error {
-  background-size: 16px 16px;
+.CodeMirror-lint-marker-error, .CodeMirror-lint-message-error {
+  background-size: 15px 15px;
   background-image: url(data:image/svg+xml,%3Csvg%20width%3D%2224%22%20height%3D%2225%22%20viewBox%3D%22342%20152%2024%2025%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Ccircle%20fill%3D%22%23D51717%22%20fill-rule%3D%22evenodd%22%20cx%3D%22354%22%20cy%3D%22164.9775%22%20r%3D%2212%22/%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%20stroke-linecap%3D%22square%22%20stroke%3D%22%23FFF%22%20stroke-width%3D%223%22%3E%3Cpath%20d%3D%22M349.0328%20169.9503L359.2832%20159.7M359.5187%20169.9503L349.2684%20159.7%22/%3E%3C/g%3E%3C/svg%3E)
 }
 
-.CodeMirror-lint-marker-warning,.CodeMirror-lint-message-warning {
+.CodeMirror-lint-marker-warning, .CodeMirror-lint-message-warning {
   background-size: 16px 16px;
   background-image: url(data:image/svg+xml,%3Csvg%20width%3D%2228%22%20height%3D%2223%22%20viewBox%3D%22375%20153%2028%2023%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M389%20153.34c2.22%200%203.1%201.68%203.1%201.68l9.04%2015.37s1.55%202.54.5%203.94c-1.06%201.4-2.68%201.66-2.68%201.66h-19.53s-2.35-.32-3.2-1.66c-.85-1.35.8-3.95.8-3.95l8.9-15.38s.85-1.68%203.07-1.68z%22%20fill%3D%22%23F3CF00%22%20fill-rule%3D%22evenodd%22/%3E%3Cpath%20fill%3D%22%23544800%22%20fill-rule%3D%22evenodd%22%20d%3D%22M387%20159l.78%209%202.57.03.65-9.03%22/%3E%3Ccircle%20fill%3D%22%23544800%22%20fill-rule%3D%22evenodd%22%20cx%3D%22389%22%20cy%3D%22171.5%22%20r%3D%222%22/%3E%3C/svg%3E)
 }
@@ -390,18 +389,19 @@ code {
 }
 
 .CodeMirror-lint-tooltip {
-  background-color: #ffd;
-  border: 1px solid black;
-  border-radius: 4px 4px 4px 4px;
   color: black;
   font-family: 'Fira Mono', monospace;
   font-size: 13px;
+
   overflow: hidden;
+
   padding: 5px 5px;
   position: fixed;
-  z-index: 100;
+  z-index: 1000;
+
   max-width: 600px;
   opacity: 0;
+
   transition: opacity .4s;
   -moz-transition: opacity .4s;
   -webkit-transition: opacity .4s;
@@ -409,23 +409,18 @@ code {
   -ms-transition: opacity .4s
 }
 
-.CodeMirror-lint-mark-error,.CodeMirror-lint-mark-warning {
-  background-position: left bottom;
-  background-repeat: repeat-x
-}
-
-.CodeMirror-lint-marker-error,.CodeMirror-lint-marker-warning {
-  background-position: center center;
-  background-repeat: no-repeat;
-  cursor: pointer;
+.CodeMirror-lint-marker-error, .CodeMirror-lint-marker-warning {
   display: inline-block;
   height: 16px;
   width: 16px;
-  vertical-align: middle;
+
+  background-position: center center;
+  background-repeat: no-repeat;
+
   position: relative
 }
 
-.CodeMirror-lint-message-error,.CodeMirror-lint-message-warning {
+.CodeMirror-lint-message-error, .CodeMirror-lint-message-warning {
   padding-left: 25px;
   background-position: top left;
   background-repeat: no-repeat
