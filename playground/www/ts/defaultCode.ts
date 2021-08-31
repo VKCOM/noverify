@@ -69,7 +69,6 @@ class Playground extends PlaygroundBase {
  * @param array{obj:?Analyzer,id:int} $analyzers
  * @param callable(string): void      $cb
  */
-#[Pure]
 function runAnalyzers($analyzers, $cb) {
     $analyzers["obj"]->analyze();
     $cb();
