@@ -346,7 +346,7 @@ code {
   background-repeat: repeat-x;
   background-size: 7px 3px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 10'%3E%3Cpath fill='none' stroke='%23c42020' stroke-width='6' d='M0 8.5c8 0 8-7 16-7s8 7 16 7 8-7 16-7 8 7 16 7' class='st0'/%3E%3C/svg%3E") !important;
-  padding-bottom: 5px
+  padding-bottom: 3px
 }
 
 .CodeMirror-lint-mark-warning {
@@ -354,7 +354,7 @@ code {
   background-repeat: repeat-x;
   background-size: 7px 4px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='18' version='1' viewBox='0 0 32 18'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cpath stroke='%23A89542' stroke-width='5' d='M0 15c8 0 8-8 16-8s8 8 16 8'/%3E%3Cpath stroke='%23E0B72A' stroke-width='5' d='M0 11c8 0 8-8 16-8s8 8 16 8'/%3E%3C/g%3E%3C/svg%3E");
-  padding-bottom: 5px
+  padding-bottom: 3px
 }
 
 .CodeMirror pre.CodeMirror-line {
