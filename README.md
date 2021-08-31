@@ -38,6 +38,10 @@ NoVerify by default has the following checks:
 - Incorrect array definition, e.g. duplicate keys
 - And others, you can see the entire list [here](/docs/checkers_doc.md)
 
+## Playground
+
+Try NoVerify now in [Playground](https://vkcom.github.io/noverify/playground/) (not supported Safari yet).
+
 ## User Guide
 
 - [How to install NoVerify](docs/install.md)
