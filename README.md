@@ -40,7 +40,7 @@ NoVerify by default has the following checks:
 
 ## Playground
 
-Try NoVerify now in our [Playground](https://vkcom.github.io/noverify/playground/) (not supported Safari yet).
+Try NoVerify now in [Playground](https://vkcom.github.io/noverify/playground/) (not supported Safari yet).
 
 ## User Guide
 
