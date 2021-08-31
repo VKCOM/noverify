@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NoVerify Playground</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/addon/hint/show-hint.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/addon/lint/lint.min.css">
+
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+
+<header>
+    <div class="inner">
+        <div class="logo">
+            NoVerify
+        </div>
+        <div class="section">
+            Playground
+        </div>
+    </div>
+</header>
+
+<div class="playground">
+    <div class="editor">
+        <textarea id="editor"></textarea>
+    </div>
+    <div class="reports">
+        <div class="reports-output">
+            <div class="output-block">
+                <p class="reports-output-text"></p>
+            </div>
+        </div>
+        <div class="options-block">
+            <div class="options-list">
+                <div class="option-row">
+                    <input id="enable-notice" type="checkbox" checked>
+                    <label for="enable-notice" class="option">
+                        <text>
+                            Enable <code>Notice</code> checks
+                        </text>
+                    </label>
+                </div>
+                <div class="option-row">
+                    <input id="enable-warning" type="checkbox" checked>
+                    <label for="enable-warning" class="option">
+                        <text>
+                            Enable <code>Warning</code> checks
+                        </text>
+                    </label>
+                </div>
+                <div class="option-row">
+                    <input id="enable-error" type="checkbox" checked>
+                    <label for="enable-error" class="option">
+                        <text>
+                            Enable <code>Error</code> checks
+                        </text>
+                    </label>
+                </div>
+                <div class="option-row">
+                    <input id="strict-mixed" type="checkbox">
+                    <label for="strict-mixed" class="option">
+                        <text>
+                            Enable strict mixed mode
+                        </text>
+                    </label>
+                </div>
+                <div class="option-row">
+                    <input id="enable-php7" type="checkbox">
+                    <label for="enable-php7" class="option">
+                        <text>
+                            PHP 7
+                        </text>
+                    </label>
+                </div>
+                <div class="option-row">
+                    <label for="unused-var" class="option" title="Sets a regular expression that determines whether to throw a warning on an unused variable.">
+                        Unused var regexp:
+                        <input type="text" id="unused-var" value="^_$">
+                    </label>
+
+                </div>
+            </div>
+        </div>
+        <div class="options">
+            <ul>
+                <li class="minimize js-minimize-button" title="Minimize">
+                    <svg class="minimize-icon-body" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+                         width="18px" height="18px" viewBox="0 0 330 330">
+                        <g>
+                            <path class="minimize-icon" d="M325.607,79.393c-5.857-5.857-15.355-5.858-21.213,0.001l-139.39,139.393L25.607,79.393
+	c-5.857-5.857-15.355-5.858-21.213,0.001c-5.858,5.858-5.858,15.355,0,21.213l150.004,150c2.813,2.813,6.628,4.393,10.606,4.393
+	s7.794-1.581,10.606-4.394l149.996-150C331.465,94.749,331.465,85.251,325.607,79.393z"/>
+                        </g>
+                    </svg>
+                </li>
+                <li class="settings" title="Open settings">
+                    <svg class="settings-icon" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12.98 1.75c.37.06.72.2 1.03.45.5.4.75.92.94 1.67.05.2.13.42.23.63.24.1.48.22.7.34.23-.05.44-.13.61-.2 1.22-.57 2.23-.54 3.06.35l.2.24.55.67.3.41c.59.99.36 1.9-.4 2.9-.12.17-.25.39-.35.61.07.25.12.5.17.74.19.15.39.29.57.38.69.35 1.13.7 1.42 1.3.17.35.23.72.2 1.1-.01.19-.03.3-.09.54l-.19.83c-.06.25-.09.36-.16.54-.14.34-.35.65-.67.9-.5.4-1.06.52-1.84.54-.2 0-.43.03-.66.08-.15.2-.31.41-.48.6 0 .24.02.47.06.66.16.76.17 1.33-.1 1.92-.18.36-.43.63-.73.85-.16.11-.26.16-.49.27l-.77.38c-.22.1-.32.15-.51.21-.36.1-.73.13-1.12.05-.64-.15-1.08-.5-1.58-1.1a3.52 3.52 0 00-.5-.48 8.25 8.25 0 01-.76 0c-.2.16-.37.33-.5.48-.5.6-.94.95-1.58 1.1-.39.08-.76.06-1.12-.05-.19-.06-.29-.1-.51-.21l-.77-.38a6.05 6.05 0 01-.16-.08c-1.13-.58-1.46-1.58-1.16-2.96.04-.19.06-.42.06-.66-.17-.19-.33-.4-.48-.6a3.49 3.49 0 00-.66-.08c-.78-.02-1.33-.14-1.84-.54a2.16 2.16 0 01-.67-.9c-.07-.18-.1-.3-.16-.54l-.2-.83a2.9 2.9 0 01-.09-.58c-.02-.4.06-.79.26-1.16.29-.54.72-.87 1.37-1.2.18-.1.38-.23.57-.38.05-.25.1-.5.17-.74-.1-.22-.23-.44-.36-.6-.75-1-.98-1.92-.38-2.9.09-.16.15-.24.3-.42l.53-.67c.1-.1.14-.16.2-.24.84-.9 1.85-.92 3.07-.36.17.08.38.16.6.21.23-.12.47-.24.7-.34.11-.21.2-.44.24-.63.19-.75.43-1.26.94-1.67.31-.25.66-.4 1.03-.45.15-.03.25-.03.42-.04h.99c.25 0 .36 0 .55.04zm-.48 1.68h-.93c-.43 0-.64 0-.86.86a5.44 5.44 0 01-.71 1.6 6.4 6.4 0 00-1.54.75 5.44 5.44 0 01-1.68-.45c-.8-.38-.93-.21-1.2.12l-.54.67c-.27.33-.4.5.12 1.2.3.4.62.99.8 1.6a6.4 6.4 0 00-.36 1.62c-.43.46-.97.84-1.41 1.07-.79.4-.74.6-.64 1.02l.2.84c.09.42.14.63 1.02.64.49.01 1.13.12 1.72.34.3.49.65.94 1.06 1.33.09.62.04 1.27-.06 1.74-.18.87.01.96.4 1.15l.77.38c.38.18.58.28 1.14-.4.32-.38.82-.82 1.37-1.13a6.49 6.49 0 001.66 0c.55.31 1.05.75 1.37 1.13.56.68.76.58 1.14.4l.77-.38c.39-.19.58-.28.4-1.15a5.44 5.44 0 01-.06-1.74c.4-.4.77-.84 1.06-1.33a5.44 5.44 0 011.72-.34c.88-.01.93-.22 1.03-.64l.2-.84c.09-.41.14-.62-.65-1.02-.44-.23-.98-.61-1.4-1.07a6.4 6.4 0 00-.38-1.62c.19-.61.5-1.2.8-1.6.54-.7.4-.87.13-1.2l-.54-.67c-.27-.33-.4-.5-1.2-.12-.44.2-1.06.39-1.68.45A6.4 6.4 0 0014 5.89a5.44 5.44 0 01-.71-1.6c-.2-.81-.4-.86-.79-.86zM12 8.14a3.86 3.86 0 110 7.72 3.86 3.86 0 010-7.72zm0 1.72a2.14 2.14 0 100 4.28 2.14 2.14 0 000-4.28z"
+                        />
+                    </svg>
+                </li>
+                <li class="fix" title="Fix code (not implemented yet)">
+                    <svg class="fix-icon" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9.56 4.1h3.54a.9.9 0 110 1.8H9.6c-1 0-1.69 0-2.23.04-.52.05-.82.13-1.05.24a2.6 2.6 0 00-1.14 1.14c-.11.23-.2.53-.24 1.05-.04.54-.04 1.24-.04 2.23v3.8c0 1 0 1.69.04 2.23.05.52.13.82.24 1.05.25.49.65.89 1.14 1.14.23.11.53.2 1.05.24.54.04 1.24.04 2.23.04h3.8c1 0 1.69 0 2.23-.04.52-.05.82-.13 1.05-.24a2.6 2.6 0 001.14-1.14c.11-.23.2-.53.24-1.05.04-.54.04-1.24.04-2.23v-3.5a.9.9 0 111.8 0v3.54c0 .95 0 1.71-.05 2.33a4.5 4.5 0 01-.43 1.73 4.4 4.4 0 01-1.92 1.92 4.5 4.5 0 01-1.73.43c-.62.05-1.38.05-2.33.05H9.56c-.95 0-1.71 0-2.33-.05a4.5 4.5 0 01-1.73-.43 4.4 4.4 0 01-1.92-1.92 4.51 4.51 0 01-.43-1.73c-.05-.62-.05-1.38-.05-2.33v-3.88c0-.95 0-1.71.05-2.33.05-.64.16-1.2.43-1.73A4.4 4.4 0 015.5 4.58a4.51 4.51 0 011.73-.43c.62-.05 1.38-.05 2.33-.05z"/>
+                        <path d="M19.12 3.33a1.1 1.1 0 111.56 1.55l-.35.35a.4.4 0 01-.57 0l-.99-.99a.4.4 0 010-.56l.35-.35zm-.6 2.57l-.42-.42c-.44-.44-.72-.42-1.13 0l-5.13 5.12c-1.95 1.96-3.19 3.89-2.76 4.32.43.43 2.37-.8 4.32-2.76l5.12-5.13c.44-.44.42-.72 0-1.13z"/>
+                    </svg>
+                </li>
+                <li class="share js-share-button" title="Share (not implemented yet)">
+                    <svg height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+                        <g fill="none" fill-rule="evenodd">
+                            <path d="M0 0h24v24H0z"></path>
+                            <path class="share-icon"
+                                  d="M12 3.73c-1.12.07-2 1-2 2.14v2.12h-.02a9.9 9.9 0 00-7.83 10.72.9.9 0 001.61.46l.19-.24a9.08 9.08 0 015.84-3.26l.2-.03.01 2.5a2.15 2.15 0 003.48 1.69l7.82-6.14a2.15 2.15 0 000-3.38l-7.82-6.13c-.38-.3-.85-.46-1.33-.46zm.15 1.79c.08 0 .15.03.22.07l7.82 6.14a.35.35 0 010 .55l-7.82 6.13a.35.35 0 01-.57-.28V14.7a.9.9 0 00-.92-.9h-.23l-.34.02c-2.28.14-4.4.98-6.12 2.36l-.17.15.02-.14a8.1 8.1 0 016.97-6.53.9.9 0 00.79-.9V5.87c0-.2.16-.35.35-.35z"
+                                  fill-rule="nonzero"></path>
+                        </g>
+                    </svg>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/addon/hint/show-hint.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/addon/edit/matchbrackets.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/php/php.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/addon/lint/lint.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/addon/edit/closebrackets.min.js"></script>
+
+<script src="wasm_exec.js"></script>
+<script src="./js/playground.js"></script>
+
+</html>
