@@ -531,11 +531,40 @@ case INC:
 
 		{
 			Name:     "deprecated",
-			Default:  false, // Experimental
+			Default:  true,
 			Quickfix: false,
 			Comment:  `Report usages of deprecated symbols.`,
-			Before:   `ereg($pat, $s) // The ereg function has been deprecated.`,
-			After:    `preg_match($pat, $s)`,
+			Before: `/**
+ * @deprecated Use g() instead
+ */
+function f() {}
+
+f();`,
+			After: `/**
+ * @deprecated Use g() instead
+ */
+function f() {}
+
+g();`,
+		},
+
+		{
+			Name:     "deprecatedUntagged",
+			Default:  false,
+			Quickfix: false,
+			Comment:  "Report usages of deprecated symbols if the `@deprecated` tag has no description (see `deprecated` check).",
+			Before: `/**
+ * @deprecated
+ */
+function f() {}
+
+f();`,
+			After: `/**
+ * @deprecated
+ */
+function f() {}
+
+g();`,
 		},
 
 		{
