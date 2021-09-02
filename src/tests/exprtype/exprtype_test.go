@@ -3271,13 +3271,13 @@ function f2($a) {
   if ((($a = new Foo) || ($a = new Boo)) && $a instanceof Foo) {
     exprtype($a, "\Foo");
   } else {
-    exprtype($a, "precise \Boo");
+    exprtype($a, "\Boo");
   }
 
   if ((($a = new Foo) || ($a = 10)) && $a instanceof Foo) {
     exprtype($a, "\Foo");
   } else {
-    exprtype($a, "precise int");
+    exprtype($a, "int");
   }
 
   exprtype($add_res, "int");

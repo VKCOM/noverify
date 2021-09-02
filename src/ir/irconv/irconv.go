@@ -1426,7 +1426,9 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 
 		out.Types = c.convNodeSlice(n.Types)
-		out.Variable = c.convNode(n.Var).(*ir.SimpleVar)
+		if n.Var != nil {
+			out.Variable = c.convNode(n.Var).(*ir.SimpleVar)
+		}
 		out.Stmts = c.convNodeSlice(n.Stmts)
 		return out
 
