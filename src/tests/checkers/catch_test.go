@@ -226,3 +226,13 @@ function f() {
 	}
 	test.RunAndMatch()
 }
+
+func TestCatchWithoutVariable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+try {}
+catch (Exception) {}
+`)
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
