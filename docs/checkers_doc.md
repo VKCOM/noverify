@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 97           | 84                        | 13                         | 12                 |
+| 98           | 85                        | 13                         | 12                 |
 
 ## Table of contents
  - Enabled by default
@@ -26,6 +26,7 @@
    - [`constCase` checker (autofixable)](#constcase-checker)
    - [`countUse` checker (autofixable)](#countuse-checker)
    - [`deadCode` checker](#deadcode-checker)
+   - [`deprecated` checker](#deprecated-checker)
    - [`discardExpr` checker](#discardexpr-checker)
    - [`discardVar` checker](#discardvar-checker)
    - [`dupArrayKeys` checker](#duparraykeys-checker)
@@ -63,9 +64,6 @@
    - [`paramClobber` checker](#paramclobber-checker)
    - [`parentConstructor` checker](#parentconstructor-checker)
    - [`parentNotFound` checker](#parentnotfound-checker)
-   - [`phpdocLint` checker](#phpdoclint-checker)
-   - [`phpdocRef` checker](#phpdocref-checker)
-   - [`phpdocType` checker](#phpdoctype-checker)
    - [`precedence` checker](#precedence-checker)
    - [`printf` checker](#printf-checker)
    - [`redundantGlobal` checker](#redundantglobal-checker)
@@ -100,7 +98,7 @@
    - [`arrayAccess` checker](#arrayaccess-checker)
    - [`classMembersOrder` checker](#classmembersorder-checker)
    - [`complexity` checker](#complexity-checker)
-   - [`deprecated` checker](#deprecated-checker)
+   - [`deprecatedUntagged` checker](#deprecateduntagged-checker)
    - [`errorSilence` checker](#errorsilence-checker)
    - [`langDeprecated` checker](#langdeprecated-checker)
    - [`missingPhpdoc` checker](#missingphpdoc-checker)
@@ -497,6 +495,34 @@ foo(); // Dead code.
 ```php
 foo();
 thisFunctionAlwaysExits();
+```
+<p><br></p>
+
+
+### `deprecated` checker
+
+#### Description
+
+Report usages of deprecated symbols.
+
+#### Non-compliant code:
+```php
+/**
+ * @deprecated Use g() instead
+ */
+function f() {}
+
+f();
+```
+
+#### Compliant code:
+```php
+/**
+ * @deprecated Use g() instead
+ */
+function f() {}
+
+g();
 ```
 <p><br></p>
 
@@ -1240,6 +1266,7 @@ class Foo extends Bar {
 ```
 <p><br></p>
 
+
 ### `parentNotFound` checker
 
 #### Description
@@ -1265,59 +1292,6 @@ class Foo extends Boo {
 ```
 <p><br></p>
 
-
-### `phpdocLint` checker
-
-#### Description
-
-Report malformed PHPDoc comments.
-
-#### Non-compliant code:
-```php
-@property $foo // Property type is missing.
-```
-
-#### Compliant code:
-```php
-@property Foo $foo
-```
-<p><br></p>
-
-
-### `phpdocRef` checker
-
-#### Description
-
-Report invalid symbol references inside PHPDoc.
-
-#### Non-compliant code:
-```php
-@see MyClass
-```
-
-#### Compliant code:
-```php
-@see \Foo\MyClass
-```
-<p><br></p>
-
-
-### `phpdocType` checker
-
-#### Description
-
-Report potential issues in PHPDoc types.
-
-#### Non-compliant code:
-```php
-@var []int $xs
-```
-
-#### Compliant code:
-```php
-@var int[] $xs
-```
-<p><br></p>
 
 ### `precedence` checker
 
@@ -1977,20 +1951,30 @@ function checkRights() {
 <p><br></p>
 
 
-### `deprecated` checker
+### `deprecatedUntagged` checker
 
 #### Description
 
-Report usages of deprecated symbols.
+Report usages of deprecated symbols if the `@deprecated` tag has no description (see `deprecated` check).
 
 #### Non-compliant code:
 ```php
-ereg($pat, $s) // The ereg function has been deprecated.
+/**
+ * @deprecated
+ */
+function f() {}
+
+f();
 ```
 
 #### Compliant code:
 ```php
-preg_match($pat, $s)
+/**
+ * @deprecated
+ */
+function f() {}
+
+g();
 ```
 <p><br></p>
 

@@ -88,7 +88,7 @@ WARNING unused: Variable $e is unused (use $_ to ignore this inspection or speci
 WARNING unused: Variable $e is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/flysystem/src/MountManager.php:275
         } catch (PluginNotFoundException $e) {
                                          ^^
-MAYBE   deprecated: Call to deprecated method {\League\Flysystem\FilesystemInterface}->get() at testdata/flysystem/src/MountManager.php:646
+MAYBE   deprecatedUntagged: Call to deprecated method {\League\Flysystem\FilesystemInterface}->get() at testdata/flysystem/src/MountManager.php:646
         return $this->getFilesystem($prefix)->get($path);
                                               ^^^
 WARNING unused: Variable $e is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/flysystem/src/Plugin/ForcedCopy.php:33
