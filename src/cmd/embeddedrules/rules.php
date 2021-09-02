@@ -488,6 +488,7 @@ function emptyStringCheck() {
  * @comment Report the use of assignment in the `return` statement.
  * @before  return $a = 100;
  * @after   return $a;
+ * @disabled
  */
 function returnAssign() {
     /**

@@ -59,7 +59,7 @@ return -9223372036854775808;`,
 
 		{
 			Name:     "voidResultUsed",
-			Default:  true,
+			Default:  false,
 			Quickfix: false,
 			Comment:  `Report usages of the void-type expressions`,
 			Before:   `$x = var_dump($v); // var_dump returns void.`,
@@ -1023,7 +1023,7 @@ function main(): void {
 
 		{
 			Name:     "parentNotFound",
-			Default:  true,
+			Default:  false,
 			Quickfix: false,
 			Comment:  "Report using `parent::` in a class without a parent class.",
 			Before: `class Foo {
