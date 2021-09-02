@@ -348,8 +348,16 @@ func (m Map) Erase(typ string) Map {
 	if m.Len() == 0 {
 		return m
 	}
-	delete(m.m, typ)
-	return m
+
+	mm := make(map[string]struct{}, m.Len())
+	for k, v := range m.m {
+		if k == typ {
+			continue
+		}
+		mm[k] = v
+	}
+
+	return Map{m: mm}
 }
 
 // Find applies a predicate function to every contained type.

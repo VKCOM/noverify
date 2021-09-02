@@ -933,7 +933,7 @@ type CatchStmt struct {
 	OpenParenthesisTkn   *token.Token
 	Types                []Node
 	SeparatorTkns        []*token.Token
-	Variable             *SimpleVar
+	Variable             Node
 	CloseParenthesisTkn  *token.Token
 	OpenCurlyBracketTkn  *token.Token
 	Stmts                []Node

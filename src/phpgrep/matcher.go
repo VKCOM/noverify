@@ -357,7 +357,7 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 		return ok && m.eqNode(state, x.Expr, y.Expr)
 	case *ir.CatchStmt:
 		y, ok := y.(*ir.CatchStmt)
-		return ok && m.eqSimpleVar(state, x.Variable, y.Variable) &&
+		return ok && m.eqNode(state, x.Variable, y.Variable) &&
 			m.eqNodeSlice(state, x.Types, y.Types) &&
 			m.eqNodeSlice(state, x.Stmts, y.Stmts)
 	case *ir.TryStmt:
