@@ -17,10 +17,10 @@ type Param struct {
 type ParamsMap map[string]Param
 
 type ParseResult struct {
-	ReturnType     types.Map
-	ParamTypes     ParamsMap
-	AdditionalInfo meta.PHPDocInfo
-	Inherit        bool
+	ReturnType  types.Map
+	ParamTypes  ParamsMap
+	Deprecation meta.DeprecationInfo
+	Inherit     bool
 
 	Shapes   types.ShapesMap
 	Closures types.ClosureMap
@@ -41,8 +41,15 @@ func Parse(doc phpdoc.Comment, actualParams []ir.Node, normalizer types.Normaliz
 
 		if rawPart.Name() == "deprecated" {
 			part := rawPart.(*phpdoc.RawCommentPart)
-			result.AdditionalInfo.Deprecated = true
-			result.AdditionalInfo.DeprecationNote = part.ParamsText
+			result.Deprecation.Deprecated = true
+			result.Deprecation.Reason = part.ParamsText
+			continue
+		}
+
+		if rawPart.Name() == "removed" {
+			part := rawPart.(*phpdoc.RawCommentPart)
+			result.Deprecation.Removed = true
+			result.Deprecation.RemovedReason = part.ParamsText
 			continue
 		}
 

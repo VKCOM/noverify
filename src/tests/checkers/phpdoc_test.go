@@ -230,7 +230,7 @@ function f() {
 }
 `)
 	test.Expect = []string{
-		`Call to deprecated method {\Foo}->legacyMethod1() (use newMethod instead)`,
+		`Call to deprecated method {\Foo}->legacyMethod1() (reason: use newMethod instead)`,
 		`Call to deprecated method {\Foo}->legacyMethod2()`,
 	}
 	test.RunAndMatch()
@@ -257,7 +257,7 @@ function f() {
 }
 `)
 	test.Expect = []string{
-		`Call to deprecated static method \Foo::legacyMethod1() (use newMethod instead)`,
+		`Call to deprecated static method \Foo::legacyMethod1() (reason: use newMethod instead)`,
 		`Call to deprecated static method \Foo::legacyMethod2()`,
 	}
 	test.RunAndMatch()
@@ -282,7 +282,7 @@ function f() {
 }
 `)
 	test.Expect = []string{
-		`Call to deprecated function legacy_function1 (use new_function instead)`,
+		`Call to deprecated function legacy_function1 (reason: use new_function instead)`,
 		`Call to deprecated function legacy_function2`,
 	}
 	test.RunAndMatch()

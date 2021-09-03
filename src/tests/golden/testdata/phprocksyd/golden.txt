@@ -1,4 +1,4 @@
-MAYBE   deprecated: Call to deprecated function dl (5.3) at testdata/phprocksyd/Phprocksyd.php:73
+MAYBE   deprecated: Call to deprecated function dl (since: 5.3) at testdata/phprocksyd/Phprocksyd.php:73
             if (!extension_loaded($ext) && !dl($ext . '.so')) {
                                             ^^
 ERROR   constCase: Constant 'NULL' should be used in lower case as 'null' at testdata/phprocksyd/Phprocksyd.php:321

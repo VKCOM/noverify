@@ -924,12 +924,12 @@ func (b *blockLinter) checkMultilineArrayTrailingComma(item *ir.ArrayItemExpr) {
 }
 
 func (b *blockLinter) checkDeprecatedFunctionCall(e *ir.FunctionCallExpr, call *funcCallInfo) {
-	if !call.info.Doc.Deprecated {
+	if !call.info.Deprecated {
 		return
 	}
 
-	if call.info.Doc.DeprecationNote != "" {
-		b.report(e.Function, LevelNotice, "deprecated", "Call to deprecated function %s (%s)", utils.NameNodeToString(e.Function), call.info.Doc.DeprecationNote)
+	if !call.info.WithDeprecationNote() {
+		b.report(e.Function, LevelNotice, "deprecated", "Call to deprecated function %s (%s)", utils.NameNodeToString(e.Function), call.info.DeprecationInfo)
 		return
 	}
 
@@ -1181,10 +1181,12 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 		}
 	}
 
-	if call.info.Doc.Deprecated {
-		if call.info.Doc.DeprecationNote != "" {
+	if call.info.Deprecated {
+		deprecation := call.info.DeprecationInfo
+
+		if !deprecation.WithDeprecationNote() {
 			b.report(e.Method, LevelNotice, "deprecated", "Call to deprecated method {%s}->%s() (%s)",
-				call.methodCallerType, call.methodName, call.info.Doc.DeprecationNote)
+				call.methodCallerType, call.methodName, deprecation)
 		} else {
 			b.report(e.Method, LevelNotice, "deprecatedUntagged", "Call to deprecated method {%s}->%s()",
 				call.methodCallerType, call.methodName)
@@ -1221,10 +1223,12 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 		b.report(e.Call, LevelWarning, "callStatic", "Calling instance method as static method")
 	}
 
-	if call.methodInfo.Info.Doc.Deprecated {
-		if call.methodInfo.Info.Doc.DeprecationNote != "" {
+	if call.methodInfo.Info.Deprecated {
+		deprecation := call.methodInfo.Info.DeprecationInfo
+
+		if !deprecation.WithDeprecationNote() {
 			b.report(e.Call, LevelNotice, "deprecated", "Call to deprecated static method %s::%s() (%s)",
-				call.className, call.methodName, call.methodInfo.Info.Doc.DeprecationNote)
+				call.className, call.methodName, deprecation)
 		} else {
 			b.report(e.Call, LevelNotice, "deprecatedUntagged", "Call to deprecated static method %s::%s()",
 				call.className, call.methodName)

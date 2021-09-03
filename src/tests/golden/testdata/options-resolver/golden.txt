@@ -4,22 +4,22 @@ MAYBE   typeHint: Specify the return type for the function getNormalizers in PHP
 MAYBE   typeHint: Specify the return type for the function getDeprecation in PHPDoc, 'array' type hint too generic at testdata/options-resolver/Debug/OptionsResolverIntrospector.php:116
     public function getDeprecation(string $option): array
                     ^^^^^^^^^^^^^^
-MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (7.4) at testdata/options-resolver/OptionsResolver.php:188
+MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (since: 8.0, reason: Use ReflectionParameter::getType() and the ReflectionType APIs should be used instead) at testdata/options-resolver/OptionsResolver.php:188
             if (isset($params[0]) && null !== ($class = $params[0]->getClass()) && Options::class === $class->name) {
                                                                     ^^^^^^^^
-MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (7.4) at testdata/options-resolver/OptionsResolver.php:188
+MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (since: 8.0, reason: Use ReflectionParameter::getType() and the ReflectionType APIs should be used instead) at testdata/options-resolver/OptionsResolver.php:188
             if (isset($params[0]) && null !== ($class = $params[0]->getClass()) && Options::class === $class->name) {
                                                                     ^^^^^^^^
-MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (7.4) at testdata/options-resolver/OptionsResolver.php:209
+MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (since: 8.0, reason: Use ReflectionParameter::getType() and the ReflectionType APIs should be used instead) at testdata/options-resolver/OptionsResolver.php:209
             if (isset($params[0]) && null !== ($class = $params[0]->getClass()) && self::class === $class->name && (!isset($params[1]) || (null !== ($class = $params[1]->getClass()) && Options::class === $class->name))) {
                                                                     ^^^^^^^^
-MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (7.4) at testdata/options-resolver/OptionsResolver.php:209
+MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (since: 8.0, reason: Use ReflectionParameter::getType() and the ReflectionType APIs should be used instead) at testdata/options-resolver/OptionsResolver.php:209
             if (isset($params[0]) && null !== ($class = $params[0]->getClass()) && self::class === $class->name && (!isset($params[1]) || (null !== ($class = $params[1]->getClass()) && Options::class === $class->name))) {
                                                                                                                                                                           ^^^^^^^^
-MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (7.4) at testdata/options-resolver/OptionsResolver.php:209
+MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (since: 8.0, reason: Use ReflectionParameter::getType() and the ReflectionType APIs should be used instead) at testdata/options-resolver/OptionsResolver.php:209
             if (isset($params[0]) && null !== ($class = $params[0]->getClass()) && self::class === $class->name && (!isset($params[1]) || (null !== ($class = $params[1]->getClass()) && Options::class === $class->name))) {
                                                                     ^^^^^^^^
-MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (7.4) at testdata/options-resolver/OptionsResolver.php:209
+MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (since: 8.0, reason: Use ReflectionParameter::getType() and the ReflectionType APIs should be used instead) at testdata/options-resolver/OptionsResolver.php:209
             if (isset($params[0]) && null !== ($class = $params[0]->getClass()) && self::class === $class->name && (!isset($params[1]) || (null !== ($class = $params[1]->getClass()) && Options::class === $class->name))) {
                                                                                                                                                                           ^^^^^^^^
 WARNING invalidDocblock: @param for non-existing argument $package at testdata/options-resolver/OptionsResolver.php:424

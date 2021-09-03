@@ -153,11 +153,16 @@ func (s *inlineTestSuite) handleFileContents(file string) (lines []string, repor
 
 	checkerName := filepath.Base(rawCheckerName)
 	checkerName = checkerName[:len(checkerName)-len(filepath.Ext(file))]
-	if !lint.Config().Checkers.Contains(checkerName) {
-		return nil, nil, fmt.Errorf("file name must be the name of the checker that is tested. Checker %s does not exist", checkerName)
+
+	if !strings.HasSuffix(checkerName, "_any") {
+		if !lint.Config().Checkers.Contains(checkerName) {
+			return nil, nil, fmt.Errorf("file name must be the name of the checker that is tested. Checker %s does not exist", checkerName)
+		}
+
+		return lines, filterReports([]string{checkerName}, res.Reports), nil
 	}
 
-	return lines, filterReports([]string{checkerName}, res.Reports), nil
+	return lines, res.Reports, nil
 }
 
 // createReportsByLine creates a map with a set of reports for each of the lines
