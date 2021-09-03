@@ -56,7 +56,7 @@ func (i *DeprecationInfo) Append(other DeprecationInfo) {
 }
 
 func (i DeprecationInfo) WithDeprecationNote() bool {
-	return i.Reason == "" && i.Replacement == "" && i.Since == "" && i.RemovedReason == ""
+	return i.Reason != "" || i.Replacement != "" || i.Since != "" || i.RemovedReason != ""
 }
 
 func (i DeprecationInfo) String() (res string) {

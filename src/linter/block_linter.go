@@ -928,7 +928,7 @@ func (b *blockLinter) checkDeprecatedFunctionCall(e *ir.FunctionCallExpr, call *
 		return
 	}
 
-	if !call.info.WithDeprecationNote() {
+	if call.info.WithDeprecationNote() {
 		b.report(e.Function, LevelNotice, "deprecated", "Call to deprecated function %s (%s)", utils.NameNodeToString(e.Function), call.info.DeprecationInfo)
 		return
 	}
@@ -1184,7 +1184,7 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 	if call.info.Deprecated {
 		deprecation := call.info.DeprecationInfo
 
-		if !deprecation.WithDeprecationNote() {
+		if deprecation.WithDeprecationNote() {
 			b.report(e.Method, LevelNotice, "deprecated", "Call to deprecated method {%s}->%s() (%s)",
 				call.methodCallerType, call.methodName, deprecation)
 		} else {
@@ -1226,7 +1226,7 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 	if call.methodInfo.Info.Deprecated {
 		deprecation := call.methodInfo.Info.DeprecationInfo
 
-		if !deprecation.WithDeprecationNote() {
+		if deprecation.WithDeprecationNote() {
 			b.report(e.Call, LevelNotice, "deprecated", "Call to deprecated static method %s::%s() (%s)",
 				call.className, call.methodName, deprecation)
 		} else {
