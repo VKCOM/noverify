@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 98           | 85                        | 13                         | 12                 |
+| 98           | 82                        | 16                         | 12                 |
 
 ## Table of contents
  - Enabled by default
@@ -63,14 +63,12 @@
    - [`oldStyleConstructor` checker](#oldstyleconstructor-checker)
    - [`paramClobber` checker](#paramclobber-checker)
    - [`parentConstructor` checker](#parentconstructor-checker)
-   - [`parentNotFound` checker](#parentnotfound-checker)
    - [`precedence` checker](#precedence-checker)
    - [`printf` checker](#printf-checker)
    - [`redundantGlobal` checker](#redundantglobal-checker)
    - [`regexpSimplify` checker](#regexpsimplify-checker)
    - [`regexpSyntax` checker](#regexpsyntax-checker)
    - [`regexpVet` checker](#regexpvet-checker)
-   - [`returnAssign` checker](#returnassign-checker)
    - [`reverseAssign` checker](#reverseassign-checker)
    - [`selfAssign` checker](#selfassign-checker)
    - [`stdInterface` checker](#stdinterface-checker)
@@ -92,7 +90,6 @@
    - [`unimplemented` checker](#unimplemented-checker)
    - [`unused` checker](#unused-checker)
    - [`varShadow` checker](#varshadow-checker)
-   - [`voidResultUsed` checker](#voidresultused-checker)
  - Disabled by default
    - [`argsReverse` checker](#argsreverse-checker)
    - [`arrayAccess` checker](#arrayaccess-checker)
@@ -102,11 +99,14 @@
    - [`errorSilence` checker](#errorsilence-checker)
    - [`langDeprecated` checker](#langdeprecated-checker)
    - [`missingPhpdoc` checker](#missingphpdoc-checker)
+   - [`parentNotFound` checker](#parentnotfound-checker)
    - [`propNullDefault` checker (autofixable)](#propnulldefault-checker)
    - [`redundantCast` checker](#redundantcast-checker)
+   - [`returnAssign` checker](#returnassign-checker)
    - [`switchDefault` checker](#switchdefault-checker)
    - [`trailingComma` checker (autofixable)](#trailingcomma-checker)
    - [`typeHint` checker](#typehint-checker)
+   - [`voidResultUsed` checker](#voidresultused-checker)
 ## Enabled
 
 ### `accessLevel` checker
@@ -1267,32 +1267,6 @@ class Foo extends Bar {
 <p><br></p>
 
 
-### `parentNotFound` checker
-
-#### Description
-
-Report using `parent::` in a class without a parent class.
-
-#### Non-compliant code:
-```php
-class Foo {
-  public function f() {
-    parent::b(); // Class Foo has no parent.
-  }
-}
-```
-
-#### Compliant code:
-```php
-class Foo extends Boo {
-  public function f() {
-    parent::b(); // Ok.
-  }
-}
-```
-<p><br></p>
-
-
 ### `precedence` checker
 
 #### Description
@@ -1387,24 +1361,6 @@ preg_match('a\d+a', $s); // 'a' is not a valid delimiter.
 #### Compliant code:
 ```php
 preg_match('/\d+/', $s);
-```
-<p><br></p>
-
-
-### `returnAssign` checker
-
-#### Description
-
-Report the use of assignment in the `return` statement.
-
-#### Non-compliant code:
-```php
-return $a = 100;
-```
-
-#### Compliant code:
-```php
-return $a;
 ```
 <p><br></p>
 
@@ -1828,24 +1784,6 @@ function f(int $a) {
 ```
 <p><br></p>
 
-
-### `voidResultUsed` checker
-
-#### Description
-
-Report usages of the void-type expressions
-
-#### Non-compliant code:
-```php
-$x = var_dump($v); // var_dump returns void.
-```
-
-#### Compliant code:
-```php
-$x = print_r($v, true);
-```
-<p><br></p>
-
 ## Disabled
 
 ### `argsReverse` checker
@@ -2047,6 +1985,32 @@ public function process($acts, $config) {
 <p><br></p>
 
 
+### `parentNotFound` checker
+
+#### Description
+
+Report using `parent::` in a class without a parent class.
+
+#### Non-compliant code:
+```php
+class Foo {
+  public function f() {
+    parent::b(); // Class Foo has no parent.
+  }
+}
+```
+
+#### Compliant code:
+```php
+class Foo extends Boo {
+  public function f() {
+    parent::b(); // Ok.
+  }
+}
+```
+<p><br></p>
+
+
 ### `propNullDefault` checker
 
 > Auto fix available
@@ -2091,6 +2055,24 @@ return (int)10; // The expression is already of type int.
 #### Compliant code:
 ```php
 return 10;
+```
+<p><br></p>
+
+
+### `returnAssign` checker
+
+#### Description
+
+Report the use of assignment in the `return` statement.
+
+#### Non-compliant code:
+```php
+return $a = 100;
+```
+
+#### Compliant code:
+```php
+return $a;
 ```
 <p><br></p>
 
@@ -2168,6 +2150,24 @@ function f(array $a) {}
  * @param mixed[] $a
  */
 function f(array $a) {}
+```
+<p><br></p>
+
+
+### `voidResultUsed` checker
+
+#### Description
+
+Report usages of the void-type expressions
+
+#### Non-compliant code:
+```php
+$x = var_dump($v); // var_dump returns void.
+```
+
+#### Compliant code:
+```php
+$x = print_r($v, true);
 ```
 <p><br></p>
 
