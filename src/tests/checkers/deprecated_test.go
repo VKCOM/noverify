@@ -65,9 +65,9 @@ WithText::staticMethod();
 
 `)
 	test.Expect = []string{
-		"Call to deprecated function funcWithText (use funcWithText2() instead)",
-		"Call to deprecated method {\\WithText}->method() (use method2() instead)",
-		"Call to deprecated static method \\WithText::staticMethod() (use staticMethod2() instead)",
+		"Call to deprecated function funcWithText (reason: use funcWithText2() instead)",
+		"Call to deprecated method {\\WithText}->method() (reason: use method2() instead)",
+		"Call to deprecated static method \\WithText::staticMethod() (reason: use staticMethod2() instead)",
 	}
 	test.RunAndMatch()
 }

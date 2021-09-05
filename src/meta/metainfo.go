@@ -1,6 +1,8 @@
 package meta
 
 import (
+	"strings"
+
 	"github.com/VKCOM/noverify/src/types"
 )
 
@@ -22,9 +24,59 @@ const (
 	PropFromAnnotation PropertyFlags = 1 << iota
 )
 
-type PHPDocInfo struct {
-	Deprecated      bool
-	DeprecationNote string
+type DeprecationInfo struct {
+	Deprecated bool
+	Removed    bool
+
+	Reason        string
+	Replacement   string
+	Since         string
+	RemovedReason string
+}
+
+func (i *DeprecationInfo) Append(other DeprecationInfo) {
+	if !i.Deprecated {
+		i.Deprecated = other.Deprecated
+	}
+	if !i.Removed {
+		i.Removed = other.Removed
+	}
+
+	if i.Replacement == "" {
+		i.Replacement = other.Replacement
+	}
+	if i.Since == "" {
+		i.Since = other.Since
+	}
+	if i.RemovedReason == "" {
+		i.RemovedReason = other.RemovedReason
+	}
+
+	i.Reason = other.Reason
+}
+
+func (i DeprecationInfo) WithDeprecationNote() bool {
+	return i.Reason != "" || i.Replacement != "" || i.Since != "" || i.RemovedReason != ""
+}
+
+func (i DeprecationInfo) String() (res string) {
+	parts := make([]string, 0, 3)
+
+	if i.Since != "" {
+		parts = append(parts, "since: "+i.Since)
+	}
+	if i.Reason != "" {
+		reason := strings.TrimRight(i.Reason, ".!,")
+		parts = append(parts, "reason: "+reason)
+	}
+	if i.Replacement != "" {
+		parts = append(parts, "use "+i.Replacement+" instead")
+	}
+	if i.RemovedReason != "" {
+		parts = append(parts, "removed: "+i.RemovedReason)
+	}
+
+	return strings.Join(parts, ", ")
 }
 
 type AccessLevel int
@@ -71,7 +123,8 @@ type FuncInfo struct {
 	AccessLevel  AccessLevel
 	Flags        FuncFlags
 	ExitFlags    int // if function has exit/die/throw, then ExitFlags will be <> 0
-	Doc          PHPDocInfo
+
+	DeprecationInfo
 }
 
 func (info *FuncInfo) IsStatic() bool         { return info.Flags&FuncStatic != 0 }
@@ -79,6 +132,7 @@ func (info *FuncInfo) IsAbstract() bool       { return info.Flags&FuncAbstract !
 func (info *FuncInfo) IsPure() bool           { return info.Flags&FuncPure != 0 }
 func (info *FuncInfo) IsFromAnnotation() bool { return info.Flags&FuncFromAnnotation != 0 }
 func (info *FuncInfo) IsFinal() bool          { return info.Flags&FuncFinal != 0 }
+func (info *FuncInfo) IsDeprecated() bool     { return info.Deprecated }
 
 type OverrideType int
 

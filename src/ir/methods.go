@@ -88,3 +88,6 @@ func (n *StaticCallExpr) Arg(i int) *Argument { return n.Args[i].(*Argument) }
 
 // Arg returns the ith argument.
 func (n *AnonClassExpr) Arg(i int) *Argument { return n.Args[i].(*Argument) }
+
+// Arg returns the ith argument.
+func (n *Attribute) Arg(i int) *Argument { return n.Args[i].(*Argument) }

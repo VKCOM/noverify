@@ -92,7 +92,7 @@ type Rule struct {
 	Fix string
 
 	// Location is a phpgrep variable name that should be used as a warning location.
-	// Empty string selects the root node.
+	// WithDeprecationNote string selects the root node.
 	Location string
 
 	// Path is a filter-like rule switcher.
