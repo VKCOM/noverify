@@ -969,6 +969,20 @@ func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
 }
 
 func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
+	class := d.getClass()
+	doc := phpdoctypes.Parse(meth.Doc, meth.Params, d.ctx.typeNormalizer)
+
+	if meth.MethodName.Value == "__construct" {
+		for _, p := range meth.Params {
+			param := p.(*ir.Parameter)
+			propertyPromotion := len(param.Modifiers) != 0
+
+			if propertyPromotion {
+				d.handlePropertyPromotion(param, doc, class)
+			}
+		}
+	}
+
 	nm := meth.MethodName.Value
 	_, insideInterface := d.currentClassNodeStack.Current().(*ir.InterfaceStmt)
 
@@ -979,8 +993,6 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	if funcSize := pos.EndLine - pos.StartLine; funcSize > maxFunctionLines {
 		d.Report(meth.MethodName, LevelNotice, "complexity", "Too big method: more than %d lines", maxFunctionLines)
 	}
-
-	class := d.getClass()
 
 	modif := d.parseMethodModifiers(meth)
 
@@ -1008,7 +1020,6 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	d.checker.CheckIdentMisspellings(meth.MethodName)
 
 	// Indexing stage.
-	doc := phpdoctypes.Parse(meth.Doc, meth.Params, d.ctx.typeNormalizer)
 	moveShapesToContext(&d.ctx, doc.Shapes)
 	d.handleClosuresFromDoc(doc.Closures)
 
@@ -1119,6 +1130,42 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	}
 
 	return false
+}
+
+func (d *rootWalker) handlePropertyPromotion(param *ir.Parameter, doc phpdoctypes.ParseResult, class meta.ClassInfo) {
+	var accessLevel meta.AccessLevel
+	for _, m := range param.Modifiers {
+		d.checker.CheckModifierKeywordCase(m)
+		switch strings.ToLower(m.Value) {
+		case "public":
+			accessLevel = meta.Public
+		case "protected":
+			accessLevel = meta.Protected
+		case "private":
+			accessLevel = meta.Private
+		}
+	}
+
+	var propType types.Map
+
+	docType, ok := doc.ParamTypes[param.Variable.Name]
+	if ok {
+		propType.Append(docType.Typ)
+	}
+	hintType, ok := d.parseTypeHintNode(param.VariableType)
+	if ok {
+		propType = propType.Append(hintType)
+	}
+
+	if param.DefaultValue != nil {
+		propType = propType.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, param.DefaultValue))
+	}
+
+	class.Properties[param.Variable.Name] = meta.PropertyInfo{
+		Pos:         d.getElementPos(param),
+		Typ:         propType.Immutable(),
+		AccessLevel: accessLevel,
+	}
 }
 
 type methodModifiers struct {
