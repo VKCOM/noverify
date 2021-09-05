@@ -230,7 +230,11 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			res = d.enterFunction(n)
 		}
 	case *ir.PropertyListStmt:
-		res = d.enterPropertyList(n)
+		if d.metaInfo().IsIndexingComplete() {
+			res = d.checker.CheckPropertyList(n)
+		} else {
+			res = d.enterPropertyList(n)
+		}
 	case *ir.ClassConstListStmt:
 		res = d.enterClassConstList(n)
 	case *ir.ClassMethodStmt:
@@ -863,42 +867,22 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 
 	isStatic := false
 	accessLevel := meta.Public
-	accessImplicit := true
 
 	for _, m := range pl.Modifiers {
-		d.checker.CheckModifierKeywordCase(m)
 		switch strings.ToLower(m.Value) {
 		case "public":
 			accessLevel = meta.Public
-			accessImplicit = false
 		case "protected":
 			accessLevel = meta.Protected
-			accessImplicit = false
 		case "private":
 			accessLevel = meta.Private
-			accessImplicit = false
 		case "static":
 			isStatic = true
 		}
 	}
 
-	if accessImplicit {
-		target := "property"
-		if len(pl.Properties) > 1 {
-			target = "properties"
-		}
-		d.Report(pl, LevelNotice, "implicitModifiers", "Specify the access modifier for %s explicitly", target)
-	}
-
-	d.checker.CheckCommentMisspellings(pl, pl.Doc.Raw)
 	phpDocType := d.parsePHPDocVar(pl.Doc)
-	d.checker.CheckPHPDocVar(pl, pl.Doc, phpDocType)
-
-	typeHintType, ok := d.parseTypeHintNode(pl.Type)
-	if ok && !types.TypeHintHasMoreAccurateType(typeHintType, phpDocType) {
-		d.Report(pl, LevelNotice, "typeHint", "Specify the type for the property in PHPDoc, 'array' type hint too generic")
-	}
-	d.checker.CheckTypeHintNode(pl.Type, "property type")
+	typeHintType, _ := d.parseTypeHintNode(pl.Type)
 
 	for _, pNode := range pl.Properties {
 		prop := pNode.(*ir.PropertyStmt)
@@ -909,8 +893,6 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 		// properties are written in one definition, and null was
 		// assigned to the first, then all properties become nullable.
 		propTypes := phpDocType.Clone().Append(typeHintType)
-
-		d.checker.CheckAssignNullToNotNullableProperty(prop, propTypes)
 
 		if prop.Expr != nil {
 			propTypes = propTypes.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, prop.Expr))
