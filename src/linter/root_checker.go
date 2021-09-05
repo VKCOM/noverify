@@ -90,6 +90,52 @@ func (r *rootChecker) CheckFunction(fun *ir.FunctionStmt) bool {
 	return false
 }
 
+func (r *rootChecker) CheckPropertyList(pl *ir.PropertyListStmt) bool {
+	accessImplicit := true
+
+	for _, m := range pl.Modifiers {
+		r.CheckModifierKeywordCase(m)
+
+		switch strings.ToLower(m.Value) {
+		case "public", "protected", "private":
+			accessImplicit = false
+		}
+	}
+
+	if accessImplicit {
+		target := "property"
+		if len(pl.Properties) > 1 {
+			target = "properties"
+		}
+		r.walker.Report(pl, LevelNotice, "implicitModifiers", "Specify the access modifier for %s explicitly", target)
+	}
+
+	docblockType := r.walker.parsePHPDocVar(pl.Doc)
+
+	r.CheckCommentMisspellings(pl, pl.Doc.Raw)
+	r.CheckPHPDocVar(pl, pl.Doc, docblockType)
+
+	typeHintType, ok := r.walker.parseTypeHintNode(pl.Type)
+	if ok && !types.TypeHintHasMoreAccurateType(typeHintType, docblockType) {
+		r.walker.Report(pl, LevelNotice, "typeHint", "Specify the type for the property in PHPDoc, 'array' type hint too generic")
+	}
+
+	r.CheckTypeHintNode(pl.Type, "property type")
+
+	for _, p := range pl.Properties {
+		prop := p.(*ir.PropertyStmt)
+
+		// We need to clone the types, because otherwise, if several
+		// properties are written in one definition, and null was
+		// assigned to the first, then all properties become nullable.
+		propTypes := docblockType.Clone().Append(typeHintType)
+
+		r.CheckAssignNullToNotNullableProperty(prop, propTypes)
+	}
+
+	return true
+}
+
 func (r *rootChecker) reportPHPDocErrors(errs PHPDocErrors) {
 	for _, err := range errs.types {
 		r.walker.ReportPHPDoc(err.Location, LevelNotice, "invalidDocblockType", err.Message)
