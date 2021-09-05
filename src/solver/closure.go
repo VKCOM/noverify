@@ -18,7 +18,7 @@ var supportedFunctions = map[string]struct{}{
 	`\uasort`:               {},
 }
 
-func IsSupportedFunction(name string) bool {
+func IsClosureUseFunction(name string) bool {
 	_, ok := supportedFunctions[name]
 	return ok
 }

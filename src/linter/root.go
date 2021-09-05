@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/VKCOM/noverify/src/attributes"
 	"github.com/VKCOM/noverify/src/phpdoctypes"
 	"github.com/VKCOM/noverify/src/utils"
 	"github.com/VKCOM/php-parser/pkg/position"
@@ -475,69 +476,82 @@ type parseFuncParamsResult struct {
 	minParamsCount int
 }
 
-func (d *rootWalker) parseFuncParams(params []ir.Node, phpDocParamsTypes phpdoctypes.ParamsMap, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (res parseFuncParamsResult) {
+func (d *rootWalker) parseFuncParams(params []ir.Node, docblockParams phpdoctypes.ParamsMap, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (res parseFuncParamsResult) {
 	if len(params) == 0 {
 		return res
 	}
 
 	minArgs := 0
-	args := make([]meta.FuncParam, 0, len(params))
-	typeHints := make(map[string]types.Map, len(params))
+	parsedParams := make([]meta.FuncParam, 0, len(params))
+	paramHints := make(map[string]types.Map, len(params))
 
-	if closureSolver != nil && solver.IsSupportedFunction(closureSolver.Name) {
+	if closureSolver != nil && solver.IsClosureUseFunction(closureSolver.Name) {
 		return d.parseFuncArgsForCallback(params, sc, closureSolver)
 	}
 
-	for _, param := range params {
-		p := param.(*ir.Parameter)
-		v := p.Variable
-		phpDocType := phpDocParamsTypes[v.Name]
+	for _, p := range params {
+		param := p.(*ir.Parameter)
+		paramVar := param.Variable
+		paramType := types.Map{}
 
-		if !phpDocType.Typ.Empty() {
-			sc.AddVarName(v.Name, phpDocType.Typ, "param", meta.VarAlwaysDefined)
+		if !attributes.Available(param.AttrGroups, d.ctx.st) {
+			continue
 		}
 
-		paramTyp := phpDocType.Typ
+		docType := docblockParams[paramVar.Name]
 
-		if p.DefaultValue == nil && !phpDocType.Optional && !p.Variadic {
-			minArgs++
-		}
-
-		if p.VariableType != nil {
-			typeHintType, ok := d.parseTypeHintNode(p.VariableType)
+		// Handle type hint.
+		if param.VariableType != nil {
+			hintType, ok := d.parseTypeHintNode(param.VariableType)
 			if ok {
-				paramTyp = typeHintType
+				paramType = paramType.Append(hintType)
+				paramHints[paramVar.Name] = hintType
 			}
+		}
 
-			typeHints[v.Name] = typeHintType
-		} else if paramTyp.Empty() && p.DefaultValue != nil {
-			paramTyp = solver.ExprTypeLocal(sc, d.ctx.st, p.DefaultValue)
+		// Handle default value.
+		if paramType.Empty() && param.DefaultValue != nil {
+			paramType = solver.ExprTypeLocal(sc, d.ctx.st, param.DefaultValue)
 			// For the type resolver default value can look like a
 			// precise source of information (e.g. "false" is a precise bool),
 			// but it's not assigned unconditionally.
 			// If explicit argument is provided, that parameter can have
 			// almost any type possible.
-			paramTyp.MarkAsImprecise()
+			paramType.MarkAsImprecise()
 		}
 
-		if p.Variadic {
-			paramTyp = paramTyp.Map(types.WrapArrayOf)
+		// Handle variadic.
+		if param.Variadic {
+			paramType = paramType.Map(types.WrapArrayOf)
 		}
 
-		sc.AddVarName(v.Name, paramTyp, "param", meta.VarAlwaysDefined)
-
-		par := meta.FuncParam{
-			Typ:   paramTyp.Immutable(),
-			IsRef: p.ByRef,
+		// Append @param type.
+		if !docType.Typ.Empty() {
+			paramType = paramType.Append(docType.Typ)
 		}
 
-		par.Name = v.Name
-		args = append(args, par)
+		paramTypeAware := attributes.TypeAware(param.AttrGroups, d.ctx.st)
+		if !paramTypeAware.Empty() {
+			paramType = paramType.Append(paramTypeAware)
+		}
+
+		// Count min args count.
+		if param.DefaultValue == nil && !docType.Optional && !param.Variadic {
+			minArgs++
+		}
+
+		sc.AddVarName(paramVar.Name, paramType, "param", meta.VarAlwaysDefined)
+
+		parsedParams = append(parsedParams, meta.FuncParam{
+			Name:  paramVar.Name,
+			Typ:   paramType.Immutable(),
+			IsRef: param.ByRef,
+		})
 	}
 
 	return parseFuncParamsResult{
-		params:         args,
-		paramsTypeHint: typeHints,
+		params:         parsedParams,
+		paramsTypeHint: paramHints,
 		minParamsCount: minArgs,
 	}
 }
@@ -603,44 +617,50 @@ func (d *rootWalker) parseFuncArgsForCallback(params []ir.Node, sc *meta.Scope, 
 }
 
 func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
-	nm := d.ctx.st.Namespace + `\` + fun.FunctionName.Value
-
 	if d.meta.Functions.H == nil {
 		d.meta.Functions = meta.NewFunctionsMap()
 	}
+
+	nm := d.ctx.st.Namespace + `\` + fun.FunctionName.Value
+	sc := meta.NewScope()
 
 	// Indexing stage.
 	doc := phpdoctypes.Parse(fun.Doc, fun.Params, d.ctx.typeNormalizer)
 	moveShapesToContext(&d.ctx, doc.Shapes)
 	d.handleClosuresFromDoc(doc.Closures)
 
-	phpDocReturnType := doc.ReturnType
-	phpDocParamTypes := doc.ParamTypes
+	// Handle attributes if any.
+	deprecation, ok := attributes.Deprecated(fun.AttrGroups, d.ctx.st)
+	if ok {
+		doc.Deprecation.Append(deprecation)
+	}
 
-	sc := meta.NewScope()
+	returnTypeHint, ok := d.parseTypeHintNode(fun.ReturnType)
+	if !ok {
+		returnTypeHint = attributes.TypeAware(fun.AttrGroups, d.ctx.st)
+	}
 
-	returnTypeHint, _ := d.parseTypeHintNode(fun.ReturnType)
-	funcParams := d.parseFuncParams(fun.Params, phpDocParamTypes, sc, nil)
+	funcParams := d.parseFuncParams(fun.Params, doc.ParamTypes, sc, nil)
 
 	funcInfo := d.handleFuncStmts(funcParams.params, nil, fun.Stmts, sc)
 	actualReturnTypes := funcInfo.returnTypes
 	exitFlags := funcInfo.prematureExitFlags
 
-	returnTypes := functionReturnType(phpDocReturnType, returnTypeHint, actualReturnTypes)
+	returnTypes := functionReturnType(doc.ReturnType, returnTypeHint, actualReturnTypes)
 
 	var funcFlags meta.FuncFlags
 	if solver.SideEffectFreeFunc(d.scope(), d.ctx.st, nil, fun.Stmts) {
 		funcFlags |= meta.FuncPure
 	}
 	d.meta.Functions.Set(nm, meta.FuncInfo{
-		Params:       funcParams.params,
-		Name:         nm,
-		Pos:          d.getElementPos(fun),
-		Typ:          returnTypes.Immutable(),
-		MinParamsCnt: funcParams.minParamsCount,
-		Flags:        funcFlags,
-		ExitFlags:    exitFlags,
-		Doc:          doc.AdditionalInfo,
+		Params:          funcParams.params,
+		Name:            nm,
+		Pos:             d.getElementPos(fun),
+		Typ:             returnTypes.Immutable(),
+		MinParamsCnt:    funcParams.minParamsCount,
+		Flags:           funcFlags,
+		ExitFlags:       exitFlags,
+		DeprecationInfo: doc.Deprecation,
 	})
 
 	return false
@@ -1003,22 +1023,28 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	moveShapesToContext(&d.ctx, doc.Shapes)
 	d.handleClosuresFromDoc(doc.Closures)
 
+	// Handle attributes if any.
+	deprecation, ok := attributes.Deprecated(meth.AttrGroups, d.ctx.st)
+	if ok {
+		doc.Deprecation.Append(deprecation)
+	}
+
 	// Check stage.
 	errors := d.checker.CheckPHPDoc(meth, meth.Doc, meth.Params)
 	d.reportPHPDocErrors(errors)
 
-	phpDocReturnType := doc.ReturnType
-	phpDocParamTypes := doc.ParamTypes
-
 	returnTypeHint, ok := d.parseTypeHintNode(meth.ReturnType)
-	if ok && !doc.Inherit {
-		d.checker.CheckFuncReturnType(meth.MethodName, meth.MethodName.Value, returnTypeHint, phpDocReturnType)
+	if !ok {
+		returnTypeHint = attributes.TypeAware(meth.AttrGroups, d.ctx.st)
+	} else if !doc.Inherit {
+		d.checker.CheckFuncReturnType(meth.MethodName, meth.MethodName.Value, returnTypeHint, doc.ReturnType)
 	}
+
 	d.checker.CheckTypeHintNode(meth.ReturnType, "return type")
 
-	funcParams := d.parseFuncParams(meth.Params, phpDocParamTypes, sc, nil)
+	funcParams := d.parseFuncParams(meth.Params, doc.ParamTypes, sc, nil)
 
-	d.checker.CheckFuncParams(meth.MethodName, meth.Params, funcParams, phpDocParamTypes)
+	d.checker.CheckFuncParams(meth.MethodName, meth.Params, funcParams, doc.ParamTypes)
 
 	if len(class.Interfaces) != 0 {
 		// If we implement interfaces, methods that take a part in this
@@ -1065,7 +1091,7 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		d.checker.CheckParentConstructorCall(meth.MethodName, funcInfo.callsParentConstructor)
 	}
 
-	returnTypes := functionReturnType(phpDocReturnType, returnTypeHint, actualReturnTypes)
+	returnTypes := functionReturnType(doc.ReturnType, returnTypeHint, actualReturnTypes)
 
 	// TODO: handle duplicate method
 	var funcFlags meta.FuncFlags
@@ -1082,15 +1108,15 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		funcFlags |= meta.FuncPure
 	}
 	class.Methods.Set(nm, meta.FuncInfo{
-		Params:       funcParams.params,
-		Name:         nm,
-		Pos:          d.getElementPos(meth),
-		Typ:          returnTypes.Immutable(),
-		MinParamsCnt: funcParams.minParamsCount,
-		AccessLevel:  modif.accessLevel,
-		Flags:        funcFlags,
-		ExitFlags:    exitFlags,
-		Doc:          doc.AdditionalInfo,
+		Params:          funcParams.params,
+		Name:            nm,
+		Pos:             d.getElementPos(meth),
+		Typ:             returnTypes.Immutable(),
+		MinParamsCnt:    funcParams.minParamsCount,
+		AccessLevel:     modif.accessLevel,
+		Flags:           funcFlags,
+		ExitFlags:       exitFlags,
+		DeprecationInfo: doc.Deprecation,
 	})
 
 	if nm == "getIterator" && d.metaInfo().IsIndexingComplete() && solver.Implements(d.metaInfo(), d.ctx.st.CurrentClass, `\IteratorAggregate`) {

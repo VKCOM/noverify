@@ -1276,14 +1276,14 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 	}
 
 	b.r.meta.Functions.Set(name, meta.FuncInfo{
-		Params:       params.params,
-		Name:         name,
-		Pos:          b.r.getElementPos(fun),
-		Typ:          returnTypes.Immutable(),
-		MinParamsCnt: params.minParamsCount,
-		Flags:        0,
-		ExitFlags:    exitFlags,
-		Doc:          doc.AdditionalInfo,
+		Params:          params.params,
+		Name:            name,
+		Pos:             b.r.getElementPos(fun),
+		Typ:             returnTypes.Immutable(),
+		MinParamsCnt:    params.minParamsCount,
+		Flags:           0,
+		ExitFlags:       exitFlags,
+		DeprecationInfo: doc.Deprecation,
 	})
 
 	return false

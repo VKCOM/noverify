@@ -48,7 +48,8 @@ import (
 //     50 - added Flags field for meta.PropertyInfo
 //     51 - added anonymous classes
 //     52 - renamed all PhpDoc and Phpdoc with PHPDoc
-const cacheVersion = 52
+//     53 - added DeprecationInfo for functions and methods and support for some attributes
+const cacheVersion = 53
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")

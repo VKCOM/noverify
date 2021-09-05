@@ -6,9 +6,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/VKCOM/noverify/src/ir/irutil"
-
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/ir/irutil"
 )
 
 // NameNodeToString converts nodes of *name.Name, and *node.Identifier to string.

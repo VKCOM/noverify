@@ -658,15 +658,6 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.ReturnsRef = hasValue(n.AmpersandTkn)
 		out.Static = hasValue(n.StaticTkn)
 
-		var tokenWithDoc *token.Token
-		if n.StaticTkn != nil {
-			tokenWithDoc = n.StaticTkn
-		} else {
-			tokenWithDoc = n.FnTkn
-		}
-
-		out.Doc = c.getPHPDoc(tokenWithDoc)
-
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
 		out.ColonTkn = n.ColonTkn
@@ -677,6 +668,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.DoubleArrowTkn = n.DoubleArrowTkn
 
 		out.Expr = c.convNode(n.Expr)
+
+		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
 		return out
 
 	case *ast.ExprBitwiseNot:
@@ -746,15 +739,6 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 
-		var tokenWithDoc *token.Token
-		if n.StaticTkn != nil {
-			tokenWithDoc = n.StaticTkn
-		} else {
-			tokenWithDoc = n.FunctionTkn
-		}
-
-		out.Doc = c.getPHPDoc(tokenWithDoc)
-
 		out.Params = c.convNodeSlice(n.Params)
 
 		out.ClosureUse = &ir.ClosureUsesExpr{
@@ -771,6 +755,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 
 		out.ReturnsRef = hasValue(n.AmpersandTkn)
 		out.Static = hasValue(n.StaticTkn)
+
+		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
 		return out
 
 	case *ast.ExprClosureUse:
@@ -1465,9 +1451,9 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			out.Modifiers = slice
 		}
 
-		out.Doc = c.getPHPDoc(n.ConstTkn)
-
 		out.Consts = c.convNodeSlice(n.Consts)
+
+		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
 		return out
 
 	case *ast.StmtClassMethod:
@@ -1490,15 +1476,6 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
 		out.ColonTkn = n.ColonTkn
 
-		var tokenWithDoc *token.Token
-		if len(n.Modifiers) != 0 {
-			tokenWithDoc = n.Modifiers[0].(*ast.Identifier).IdentifierTkn
-		} else {
-			tokenWithDoc = n.FunctionTkn
-		}
-
-		out.Doc = c.getPHPDoc(tokenWithDoc)
-
 		out.MethodName = c.convNode(n.Name).(*ir.Identifier)
 
 		if n.Modifiers != nil {
@@ -1513,6 +1490,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.ReturnType = c.convNode(n.ReturnType)
 		out.Stmt = c.convNode(n.Stmt)
 		out.ReturnsRef = hasValue(n.AmpersandTkn)
+
+		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
 		return out
 
 	case *ast.StmtConstList:
@@ -1759,14 +1738,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 
-		out.Doc = c.getPHPDoc(n.FunctionTkn)
-
 		out.FunctionName = c.convNode(n.Name).(*ir.Identifier)
 		out.Params = c.convNodeSlice(n.Params)
 		out.ReturnType = c.convNode(n.ReturnType)
 		out.Stmts = c.convNodeSlice(n.Stmts)
 
 		out.ReturnsRef = hasValue(n.AmpersandTkn)
+
+		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
 		return out
 
 	case *ast.StmtGlobal:
@@ -1905,8 +1884,6 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 
-		out.Doc = c.getPHPDoc(n.InterfaceTkn)
-
 		out.InterfaceName = c.convNode(n.Name).(*ir.Identifier)
 
 		out.Extends = &ir.InterfaceExtendsStmt{
@@ -1917,6 +1894,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		}
 
 		out.Stmts = c.convNodeSlice(n.Stmts)
+
+		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
 		return out
 
 	case *ast.StmtLabel:
@@ -1992,12 +1971,6 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			out.Modifiers = slice
 		}
 
-		var tokenWithDoc *token.Token
-		if len(n.Modifiers) != 0 {
-			tokenWithDoc = n.Modifiers[0].(*ast.Identifier).IdentifierTkn
-		}
-		out.Doc = c.getPHPDoc(tokenWithDoc)
-
 		if n.AttrGroups != nil {
 			slice := make([]*ir.AttributeGroup, len(n.AttrGroups))
 			for i := range n.AttrGroups {
@@ -2008,6 +1981,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 
 		out.Type = c.convNode(n.Type)
 		out.Properties = c.convNodeSlice(n.Props)
+
+		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
 		return out
 
 	case *ast.StmtReturn:
@@ -2115,10 +2090,10 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 
-		out.Doc = c.getPHPDoc(out.TraitTkn)
-
 		out.TraitName = c.convNode(n.Name).(*ir.Identifier)
 		out.Stmts = c.convNodeSlice(n.Stmts)
+
+		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
 		return out
 
 	case *ast.StmtTraitUse:
@@ -2455,14 +2430,6 @@ func (c *Converter) convClass(n *ast.StmtClass) ir.Node {
 		}
 	}
 
-	// If there are modifiers, then PHPDoc will be bound to the
-	// first one, otherwise to the class token.
-	if len(n.Modifiers) != 0 {
-		class.Doc = c.getPHPDoc(ir.GetFirstToken(c.convNode(n.Modifiers[0])))
-	} else {
-		class.Doc = c.getPHPDoc(n.ClassTkn)
-	}
-
 	if n.Name == nil {
 		// Anonymous class expression.
 		out := &ir.AnonClassExpr{
@@ -2478,6 +2445,8 @@ func (c *Converter) convClass(n *ast.StmtClass) ir.Node {
 		if n.Args != nil {
 			out.Args = c.convNodeSlice(n.Args)
 		}
+
+		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
 		return out
 	}
 
@@ -2504,6 +2473,8 @@ func (c *Converter) convClass(n *ast.StmtClass) ir.Node {
 		}
 		out.Modifiers = slice
 	}
+
+	out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
 	return out
 }
 
