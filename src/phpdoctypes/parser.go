@@ -53,6 +53,17 @@ func Parse(doc phpdoc.Comment, actualParams []ir.Node, normalizer types.Normaliz
 			continue
 		}
 
+		if rawPart.Name() == "see" {
+			part := rawPart.(*phpdoc.RawCommentPart)
+			if result.Deprecation.Deprecated {
+				if result.Deprecation.Replacement != "" {
+					result.Deprecation.Replacement += " or " + part.ParamsText
+				} else {
+					result.Deprecation.Replacement = part.ParamsText
+				}
+			}
+		}
+
 		if rawPart.Name() == "return" {
 			part := rawPart.(*phpdoc.TypeCommentPart)
 

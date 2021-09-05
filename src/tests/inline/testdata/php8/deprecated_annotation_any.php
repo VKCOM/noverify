@@ -58,3 +58,24 @@ function f() {
   deprecatedReasonWithEmptyPHPDocRemoved(); // want `Call to deprecated function deprecatedReasonWithEmptyPHPDocRemoved (reason: use X instead, removed: 8.0)`
   deprecatedReasonWithPHPDocEmptyRemoved(); // want `Call to deprecated function deprecatedReasonWithPHPDocEmptyRemoved (reason: use X instead)`
 }
+
+function instead1() {}
+function instead2() {}
+
+/**
+ * @deprecated
+ * @see instead1()
+ */
+function deprecatedWithSee() {}
+
+/**
+ * @deprecated
+ * @see instead1()
+ * @see instead2()
+ */
+function deprecatedWithSeveralSee() {}
+
+function f1() {
+  deprecatedWithSee(); // want `Call to deprecated function deprecatedWithSee (use instead1() instead)`
+  deprecatedWithSeveralSee(); // want `Call to deprecated function deprecatedWithSeveralSee (use instead1() or instead2() instead)`
+}
