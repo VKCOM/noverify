@@ -67,7 +67,7 @@ func Parse(doc phpdoc.Comment, actualParams []ir.Node, normalizer types.Normaliz
 		if rawPart.Name() == "return" {
 			part := rawPart.(*phpdoc.TypeCommentPart)
 
-			converted := ToRealType(normalizer.ClassFQNProvider(), part.Type)
+			converted := ToRealType(normalizer.ClassFQNProvider(), normalizer.KPHP(), part.Type)
 			for name, shape := range converted.Shapes {
 				result.Shapes[name] = shape
 			}
@@ -97,7 +97,7 @@ func Parse(doc phpdoc.Comment, actualParams []ir.Node, normalizer types.Normaliz
 
 		curParam++
 
-		converted := ToRealType(normalizer.ClassFQNProvider(), part.Type)
+		converted := ToRealType(normalizer.ClassFQNProvider(), normalizer.KPHP(), part.Type)
 		for name, shape := range converted.Shapes {
 			result.Shapes[name] = shape
 		}

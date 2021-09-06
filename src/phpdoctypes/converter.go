@@ -20,12 +20,13 @@ type RealPHPDocTypes struct {
 //
 // No normalization is performed, but some PHPDoc-specific types
 // are simplified to be compatible with our type system.
-func ToRealType(classFQNProvider func(string) (string, bool), typ phpdoc.Type) *RealPHPDocTypes {
+func ToRealType(classFQNProvider func(string) (string, bool), kphp bool, typ phpdoc.Type) *RealPHPDocTypes {
 	conv := TypeConverter{
 		classFQNProvider:   classFQNProvider,
 		shapeNameGenerator: autogen.GenerateShapeName,
 		shapes:             make(types.ShapesMap),
 		closures:           make(types.ClosureMap),
+		kphp:               kphp,
 	}
 
 	result := conv.mapType(typ.Expr)
@@ -60,6 +61,7 @@ type TypeConverter struct {
 	nullable           bool
 	shapes             types.ShapesMap
 	closures           types.ClosureMap
+	kphp               bool
 }
 
 func (conv *TypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
@@ -242,6 +244,10 @@ func (conv *TypeConverter) mapShapeType(params []phpdoc.TypeExpr, allowedMixing 
 			}
 
 			if typ.Elem == "array" {
+				continue
+			}
+
+			if conv.kphp && (typ.Elem == "any" || typ.Elem == "kmixed" || typ.Elem == "future") {
 				continue
 			}
 

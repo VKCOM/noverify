@@ -29,8 +29,11 @@ func TestDifferentTypesAsUndefinedClass(t *testing.T) {
  * @param kmixed $c
  * @param any $d
  * @param future<int> $e
+ * @param tuple(?any) $f
+ * @param future<?any> $g
+ * @param shape(foo: ?any, boo: future<int>) $h
  */
-function f($a, $b, $c, $d, $e) {}
+function f($a, $b, $c, $d, $e, $f, $g, $h) {}
 `)
 	test.RunAndMatch()
 }
