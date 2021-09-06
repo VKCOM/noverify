@@ -118,6 +118,15 @@ func (l *Linter) analyzeFiles(readFileNamesFunc workspace.ReadCallback, allowDis
 }
 
 func (l *Linter) InitStubs(readFileNamesFunc workspace.ReadCallback) {
+	if l.Config().PhpVersion.Major == 7 {
+		l.Config().PhpVersion.Major = 8
+		l.Config().PhpVersion.Minor = 0
+
+		defer func() {
+			l.Config().PhpVersion.Major = 7
+			l.Config().PhpVersion.Minor = 4
+		}()
+	}
 	l.info.SetLoadingStubs(true)
 	l.analyzeFiles(readFileNamesFunc, nil)
 	l.info.InitStubs()
