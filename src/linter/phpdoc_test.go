@@ -125,7 +125,7 @@ func BenchmarkParseTypes(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		parsedType := ctx.phpdocTypeParser.Parse(typeString)
 
-		converted := phpdoctypes.ToRealType(ctx.typeNormalizer.ClassFQNProvider(), l.config.KPHP, parsedType)
+		converted := phpdoctypes.ToRealType(ctx.typeNormalizer.ClassFQNProvider(), ctx.typeNormalizer.KPHP(), parsedType)
 		moveShapesToContext(&ctx, converted.Shapes)
 
 		_ = types.NewMapWithNormalization(ctx.typeNormalizer, converted.Types)
