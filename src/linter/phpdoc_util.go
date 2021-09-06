@@ -109,7 +109,7 @@ func parseClassPHPDocMethod(classNode ir.Node, ctx *rootContext, result *classPH
 	}
 
 	typ := ctx.phpdocTypeParser.Parse(params[0])
-	converted := phpdoctypes.ToRealType(ctx.typeNormalizer.ClassFQNProvider(), typ)
+	converted := phpdoctypes.ToRealType(ctx.typeNormalizer.ClassFQNProvider(), ctx.typeNormalizer.KPHP(), typ)
 	moveShapesToContext(ctx, converted.Shapes)
 
 	if converted.Warning != "" {
@@ -172,7 +172,7 @@ func parseClassPHPDocProperty(classNode ir.Node, ctx *rootContext, result *class
 		)
 	}
 
-	converted := phpdoctypes.ToRealType(ctx.typeNormalizer.ClassFQNProvider(), part.Type)
+	converted := phpdoctypes.ToRealType(ctx.typeNormalizer.ClassFQNProvider(), ctx.typeNormalizer.KPHP(), part.Type)
 	moveShapesToContext(ctx, converted.Shapes)
 
 	if converted.Warning != "" {

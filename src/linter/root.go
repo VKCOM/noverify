@@ -851,7 +851,7 @@ func (d *rootWalker) parsePHPDocVar(doc phpdoc.Comment) (typesMap types.Map) {
 	for _, part := range doc.Parsed {
 		part, ok := part.(*phpdoc.TypeVarCommentPart)
 		if ok && part.Name() == "var" {
-			converted := phpdoctypes.ToRealType(d.ctx.typeNormalizer.ClassFQNProvider(), part.Type)
+			converted := phpdoctypes.ToRealType(d.ctx.typeNormalizer.ClassFQNProvider(), d.config.KPHP, part.Type)
 			moveShapesToContext(&d.ctx, converted.Shapes)
 			d.handleClosuresFromDoc(converted.Closures)
 

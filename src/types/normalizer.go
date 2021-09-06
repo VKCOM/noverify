@@ -9,6 +9,10 @@ type Normalizer struct {
 	kphp             bool
 }
 
+func (n Normalizer) KPHP() bool {
+	return n.kphp
+}
+
 func NewNormalizer(classFQNProvider func(string) (string, bool), kphp bool) Normalizer {
 	return Normalizer{classFQNProvider: classFQNProvider, kphp: kphp}
 }

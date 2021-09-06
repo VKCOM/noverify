@@ -247,7 +247,7 @@ func (b *blockWalker) handleCommentToken(n ir.Node, t *token.Token) {
 			continue
 		}
 
-		converted := phpdoctypes.ToRealType(b.r.ctx.typeNormalizer.ClassFQNProvider(), part.Type)
+		converted := phpdoctypes.ToRealType(b.r.ctx.typeNormalizer.ClassFQNProvider(), b.r.config.KPHP, part.Type)
 		moveShapesToContext(&b.r.ctx, converted.Shapes)
 		b.r.handleClosuresFromDoc(converted.Closures)
 

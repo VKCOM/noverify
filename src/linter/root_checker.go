@@ -171,7 +171,7 @@ func (r *rootChecker) CheckPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []
 		if rawPart.Name() == "return" {
 			part := rawPart.(*phpdoc.TypeCommentPart)
 
-			converted := phpdoctypes.ToRealType(r.normalizer.ClassFQNProvider(), part.Type)
+			converted := phpdoctypes.ToRealType(r.normalizer.ClassFQNProvider(), r.normalizer.KPHP(), part.Type)
 
 			if converted.Warning != "" {
 				errors.pushType(
@@ -240,7 +240,7 @@ func (r *rootChecker) CheckPHPDoc(n ir.Node, doc phpdoc.Comment, actualParams []
 
 		curParam++
 
-		converted := phpdoctypes.ToRealType(r.normalizer.ClassFQNProvider(), part.Type)
+		converted := phpdoctypes.ToRealType(r.normalizer.ClassFQNProvider(), r.normalizer.KPHP(), part.Type)
 
 		if converted.Warning != "" {
 			errors.pushType(
@@ -731,7 +731,7 @@ func (r *rootChecker) CheckPHPDocVar(n ir.Node, doc phpdoc.Comment, typ types.Ma
 		r.checkPHPDocRef(n, part)
 		part, ok := part.(*phpdoc.TypeVarCommentPart)
 		if ok && part.Name() == "var" {
-			converted := phpdoctypes.ToRealType(r.normalizer.ClassFQNProvider(), part.Type)
+			converted := phpdoctypes.ToRealType(r.normalizer.ClassFQNProvider(), r.normalizer.KPHP(), part.Type)
 
 			if converted.Warning != "" {
 				field := 1
