@@ -247,7 +247,7 @@ func (conv *TypeConverter) mapShapeType(params []phpdoc.TypeExpr, allowedMixing 
 				continue
 			}
 
-			if conv.kphp && (typ.Elem == "any" || typ.Elem == "kmixed" || typ.Elem == "future") {
+			if conv.kphp && (typ.Elem == "any" || typ.Elem == "kmixed" || typ.Elem == "future" || typ.Elem == "future_queue") {
 				continue
 			}
 

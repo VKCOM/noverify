@@ -31,9 +31,30 @@ func TestDifferentTypesAsUndefinedClass(t *testing.T) {
  * @param future<int> $e
  * @param tuple(?any) $f
  * @param future<?any> $g
- * @param shape(foo: ?any, boo: future<int>) $h
+ * @param future_queue<?any> $h
+ * @param shape(foo: ?any, boo: future<int>) $i
  */
-function f($a, $b, $c, $d, $e, $f, $g, $h) {}
+function f($a, $b, $c, $d, $e, $f, $g, $h, $i) {}
+
+/**
+ * @return any
+ */
+function f1() {}
+
+/**
+ * @return ?any
+ */
+function f2() {}
+
+/**
+ * @return future<any>
+ */
+function f3() {}
+
+/**
+ * @return shape(key: any)
+ */
+function f4() {}
 `)
 	test.RunAndMatch()
 }
