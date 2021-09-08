@@ -37,7 +37,7 @@ func (n Normalizer) normalizeType(typ *Type) {
 		return
 	}
 
-	if n.kphp && (typ.Elem == "any" || typ.Elem == "kmixed" || typ.Elem == "future") {
+	if n.kphp && (typ.Elem == "any" || typ.Elem == "kmixed" || typ.Elem == "future" || typ.Elem == "future_queue") {
 		// `any` is a special KPHP type that is more-or-less
 		// identical to `mixed|object`. In PHP, `mixed` already covers
 		// objects, so there is no need to add `object`.
