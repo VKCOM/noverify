@@ -566,9 +566,20 @@ func (b *blockWalker) trackVarName(n ir.Node, nm string) {
 	}
 }
 
-func (b *blockWalker) untrackVarName(nm string) {
+func (b *blockWalker) untrackVarNameImpl(nm string) {
 	delete(b.unusedVars, nm)
 	delete(b.unusedParams, nm)
+}
+
+func (b *blockWalker) untrackVarName(nm string) {
+	if b.inArrowFunction {
+		b.untrackVarNameImpl(nm)
+		for _, w := range b.parentBlockWalkers {
+			w.untrackVarNameImpl(nm)
+		}
+		return
+	}
+	b.untrackVarNameImpl(nm)
 }
 
 func (b *blockWalker) addVarName(n ir.Node, nm string, typ types.Map, reason string, flags meta.VarFlags) {
