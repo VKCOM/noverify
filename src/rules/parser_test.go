@@ -7,11 +7,11 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestParser(t *testing.T) {
+func TestParser_Parse(t *testing.T) {
 	p := NewParser()
 	rset, err := p.Parse("rules.php", strings.NewReader(`<?php
 /**
- * @comment This is an example of fully-docummented rule.
+ * @comment This is an example of fully-documented rule.
  * @before  array(1, 2)
  * @after   [1, 2]
  */
@@ -38,7 +38,7 @@ function arraySyntax() {
 		{
 			name: "arraySyntax",
 			doc: RuleDoc{
-				Comment: "This is an example of fully-docummented rule.",
+				Comment: "This is an example of fully-documented rule.",
 				Before:  "array(1, 2)",
 				After:   "[1, 2]",
 			},

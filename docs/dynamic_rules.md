@@ -401,6 +401,27 @@ function ternarySimplify() {
 
 This rule will now only apply to files with the `common/` folder in the path.
 
+##### `@path-exclude`
+
+The `@path-exclude` restriction allows you to restrict the rule by file path.
+
+Thus, the rule will be applied only if there is a substring from `@path-exclude` in the file path.
+
+For example:
+
+```php
+function ternarySimplify() {
+  /**
+   * @maybe Could rewrite as '$x ?: $y'
+   * @pure $x
+   * @path-exclude common/
+   */
+  $x ? $x : $y;
+}
+```
+
+This rule will now don't apply to files with the `common/` folder in the path.
+
 #### Underline location (`@location`)
 
 For every warning that NoVerify finds, it underlines the location. However, for dynamic rules, the right place is not always underlined.

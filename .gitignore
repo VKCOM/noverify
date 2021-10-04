@@ -4,3 +4,5 @@ phplinter-output-*.json
 err.log
 src/cmd/stubs/phpstorm-stubs/
 y.output
+.idea
+vendor

@@ -24,6 +24,12 @@ func formatRule(r *Rule) string {
 		buf.WriteString(" * @path " + r.Path + "\n")
 	}
 
+	if r.PathExcludes != nil {
+		for pathExclude := range r.PathExcludes {
+			buf.WriteString(" * @path-exclude " + pathExclude + "\n")
+		}
+	}
+
 	if r.Location != "" {
 		buf.WriteString(" * @location $" + r.Location + "\n")
 	}
