@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"text/scanner"
 
 	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/utils"
 )
 
 type inlineTestSuite struct {
@@ -19,7 +19,7 @@ type inlineTestSuite struct {
 func RunInlineTest(t *testing.T, dir string) {
 	suite := inlineTestSuite{t}
 
-	files, err := FindPHPFiles(dir)
+	files, err := utils.FindPHPFiles(dir)
 	if err != nil {
 		t.Fatalf("error find php files^ %v", err)
 	}
@@ -87,9 +87,9 @@ func (s *inlineTestSuite) getExpectationForLine(line string, lineIndex int) ([]s
 	}
 
 	comment := line[commIndex+2:]
-	p := commentParser{comment: comment, line: lineIndex}
+	p := utils.NewCommentParser(comment, lineIndex)
 
-	expects, err := p.parseExpectation()
+	expects, err := p.ParseExpectation()
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (s *inlineTestSuite) getExpectationForLine(line string, lineIndex int) ([]s
 	return expects, nil
 }
 
-// compare compares expected and received reports and returns a list of unmatched errors.
+// compare expected and received reports and returns a list of unmatched errors.
 func (s *inlineTestSuite) compare(expects []string, reports []string) (unmatched []string) {
 	for _, expect := range expects {
 		var found bool
@@ -159,7 +159,7 @@ func (s *inlineTestSuite) handleFileContents(file string) (lines []string, repor
 			return nil, nil, fmt.Errorf("file name must be the name of the checker that is tested. Checker %s does not exist", checkerName)
 		}
 
-		return lines, filterReports([]string{checkerName}, res.Reports), nil
+		return lines, FilterReports([]string{checkerName}, res.Reports), nil
 	}
 
 	return lines, res.Reports, nil
@@ -181,91 +181,4 @@ func (s *inlineTestSuite) createReportsByLine(reports []*linter.Report) map[int]
 	}
 
 	return reportsByLine
-}
-
-type commentParser struct {
-	comment string
-	line    int
-}
-
-// parseExpectation parses a string describing expected errors like
-//     want `error description 1` [and` error description 2` and `error 3` ...]
-func (c *commentParser) parseExpectation() (wants []string, err error) {
-	// It is necessary to remove \r, since in windows the lines are separated by \r\n.
-	c.comment = strings.TrimSuffix(c.comment, "\r")
-	c.comment = strings.TrimLeft(c.comment, " ")
-	c.comment = strings.TrimRight(c.comment, " ")
-
-	var scanErr string
-	var sc scanner.Scanner
-
-	sc.Init(strings.NewReader(c.comment))
-	sc.Mode = scanner.ScanIdents | scanner.ScanStrings | scanner.ScanRawStrings
-	sc.Error = func(s *scanner.Scanner, msg string) {
-		scanErr = msg + fmt.Sprintf(" in '// %s', line: %d", c.comment, c.line)
-	}
-
-	first := true
-
-scan:
-	for {
-		tok := sc.Scan()
-
-		switch tok {
-		case scanner.Ident: // 'want' or 'and'
-			keyword := sc.TokenText()
-			if keyword != `want` && keyword != `and` {
-				return nil, nil
-			}
-
-			err = c.checkKeyword(keyword, first)
-			if err != nil {
-				return nil, err
-			}
-
-			tok = sc.Scan()
-			if tok != scanner.RawString {
-				return nil, fmt.Errorf("expected value after '%s' in '// %s', line: %d", keyword, c.comment, c.line)
-			}
-
-			value := sc.TokenText()
-			if len(value) <= 2 {
-				return nil, fmt.Errorf("empty value after '%s' in '// %s', line: %d", keyword, c.comment, c.line)
-			}
-
-			value = value[1 : len(value)-1]
-
-			wants = append(wants, value)
-			first = false
-
-		case scanner.EOF:
-			if scanErr != "" {
-				return nil, fmt.Errorf("%s", scanErr)
-			}
-
-			break scan
-
-		default:
-			return nil, fmt.Errorf("unexpected token '%s' in '// %s', line: %d", scanner.TokenString(tok), c.comment, c.line)
-		}
-	}
-
-	if len(wants) == 0 {
-		return nil, fmt.Errorf("empty comment on line %d", c.line)
-	}
-
-	return wants, nil
-}
-
-func (c *commentParser) checkKeyword(keyword string, first bool) error {
-	wantKey := "and"
-	if first {
-		wantKey = "want"
-	}
-
-	if keyword != wantKey {
-		return fmt.Errorf("expected '%s' keyword, got '%s' in '// %s', line: %d", wantKey, keyword, c.comment, c.line)
-	}
-
-	return nil
 }
