@@ -118,7 +118,7 @@ func (l *LinterRunner) Init(ruleSets []*rules.Set, flags *ParsedFlags) error {
 	l.checkersFilter = l.initCheckMappings(ruleSets)
 
 	if err := l.initRules(ruleSets); err != nil {
-		return fmt.Errorf("Rules: %v", err)
+		return fmt.Errorf("rules: %v", err)
 	}
 	if err := l.initBaseline(); err != nil {
 		return fmt.Errorf("baseline: %v", err)
