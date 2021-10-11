@@ -64,8 +64,8 @@ type RulesTestSuite struct {
 	kphp bool
 }
 
-func NewRulesTestSuite(rules string, tests string, kphp bool) *RulesTestSuite {
-	return &RulesTestSuite{rules: rules, tests: tests, kphp: kphp}
+func NewRulesTestSuite(rulesPaths string, tests string, kphp bool) *RulesTestSuite {
+	return &RulesTestSuite{rules: rulesPaths, tests: tests, kphp: kphp}
 }
 
 func (s *RulesTestSuite) Run() error {
@@ -87,7 +87,6 @@ func (s *RulesTestSuite) Run() error {
 		if len(errs) > 0 {
 			log.Printf("Test '%s' failed\n", file)
 			for _, err := range errs {
-				// filename := filepath.Base(file)
 				log.Printf("   %v\n", err)
 			}
 
