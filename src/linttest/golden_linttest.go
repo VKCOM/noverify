@@ -16,6 +16,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/linter"
+	"github.com/VKCOM/noverify/src/utils"
 )
 
 type GoldenTestSuite struct {
@@ -112,7 +113,7 @@ func runGoldenTest(s *GoldenTestSuite) {
 	const misspellList = "Eng"
 
 	s.suite.t.(*testing.T).Run(s.Name, func(t *testing.T) {
-		phpFiles, err := FindPHPFiles(s.SrcDir)
+		phpFiles, err := utils.FindPHPFiles(s.SrcDir)
 		if err != nil {
 			t.Fatalf("list files: %v", err)
 		}

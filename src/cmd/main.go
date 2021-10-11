@@ -74,6 +74,12 @@ func registerMainApp() *App {
 					return 0, nil
 				},
 			},
+			{
+				Name:          "test-rules",
+				Description:   "The command to test the dynamic rules",
+				Action:        TestRules,
+				RegisterFlags: RegisterTestRulesFlags,
+			},
 		},
 	}
 }
