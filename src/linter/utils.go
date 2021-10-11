@@ -471,6 +471,20 @@ func classHasProp(st *meta.ClassParseState, className, propName string) bool {
 	return ok
 }
 
+func isFilePathExcluded(filename string, rule rules.Rule) bool {
+	if len(rule.PathExcludes) == 0 {
+		return false
+	}
+
+	for exclude := range rule.PathExcludes {
+		if strings.Contains(filename, exclude) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedSet {
 	if ruleSet.CountRules == 0 {
 		return nil
@@ -480,7 +494,7 @@ func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedS
 	for kind, ruleByKind := range &ruleSet.RulesByKind {
 		res := make([]rules.Rule, 0, len(ruleByKind))
 		for _, rule := range ruleByKind {
-			if !strings.Contains(filename, rule.Path) {
+			if !strings.Contains(filename, rule.Path) || isFilePathExcluded(filename, rule) {
 				continue
 			}
 			res = append(res, rule)

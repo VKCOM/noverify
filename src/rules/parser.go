@@ -235,6 +235,14 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 				return rule, p.errorf(st, "duplicate @path constraint")
 			}
 			rule.Path = part.Params[0]
+		case "path-exclude":
+			if len(part.Params) != 1 {
+				return rule, p.errorf(st, "@exclude expects exactly 1 param, got %d", len(part.Params))
+			}
+			if rule.PathExcludes == nil {
+				rule.PathExcludes = make(map[string]bool, 1)
+			}
+			rule.PathExcludes[part.Params[0]] = true
 		case "type":
 			if len(part.Params) != 2 {
 				return rule, p.errorf(st, "@type expects exactly 2 params, got %d", len(part.Params))

@@ -99,6 +99,10 @@ type Rule struct {
 	// A rule is only applied to a file that contains a Path as a substring in its name.
 	Path string
 
+	// PathExcludes is a filter-like rule switcher.
+	// A rule is not applied to a file that contains a PathExcludes as a substring in its name.
+	PathExcludes map[string]bool
+
 	// Filters is a list of OR-connected filter sets.
 	// Every filter set is a mapping of phpgrep variable to a filter.
 	Filters []map[string]Filter
