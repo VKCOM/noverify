@@ -7,7 +7,6 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -364,22 +363,7 @@ func ParseTestFile(t testing.TB, l *linter.Linter, filename, content string) lin
 // RunFilterMatch calls Match with the filtered results of RunLinter.
 func RunFilterMatch(test *Suite, names ...string) {
 	test.t.Helper()
-	test.Match(filterReports(names, test.RunLinter().Reports))
-}
-
-func FindPHPFiles(root string) ([]string, error) {
-	var files []string
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() || !strings.HasSuffix(path, ".php") {
-			return nil
-		}
-		files = append(files, path)
-		return nil
-	})
-	return files, err
+	test.Match(FilterReports(names, test.RunLinter().Reports))
 }
 
 // InitEmbeddedRules initializes embedded rules for testing.
@@ -420,7 +404,7 @@ func (s *Suite) IgnoreUndeclaredChecks() {
 	s.ignoreUndeclaredChecks = true
 }
 
-func filterReports(names []string, reports []*linter.Report) []*linter.Report {
+func FilterReports(names []string, reports []*linter.Report) []*linter.Report {
 	set := make(map[string]struct{})
 	for _, name := range names {
 		set[name] = struct{}{}

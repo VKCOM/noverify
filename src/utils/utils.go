@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"unicode"
@@ -103,6 +104,23 @@ func VarToString(v ir.Node) string {
 func IsCapitalized(s string) bool {
 	ch, _ := utf8.DecodeRuneInString(s)
 	return unicode.IsUpper(ch)
+}
+
+// FindPHPFiles traverses the file system starting with the
+// passed folder and finding all files with a .php extension.
+func FindPHPFiles(root string) ([]string, error) {
+	var files []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() || !strings.HasSuffix(path, ".php") {
+			return nil
+		}
+		files = append(files, path)
+		return nil
+	})
+	return files, err
 }
 
 func BinaryOpString(n ir.Node) string {

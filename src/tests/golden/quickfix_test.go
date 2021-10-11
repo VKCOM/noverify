@@ -12,6 +12,7 @@ import (
 
 	"github.com/VKCOM/noverify/src/linter"
 	"github.com/VKCOM/noverify/src/linttest"
+	"github.com/VKCOM/noverify/src/utils"
 )
 
 func TestQuickFix(t *testing.T) {
@@ -56,7 +57,7 @@ func (t *quickFixTest) runQuickFixTest() {
 		t.t.Fatal(err)
 	}
 
-	files, err := linttest.FindPHPFiles(t.folder)
+	files, err := utils.FindPHPFiles(t.folder)
 	if err != nil {
 		t.t.Fatalf("Error while searching for files in the %s folder: %s", t.folder, err)
 	}
