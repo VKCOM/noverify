@@ -24,13 +24,13 @@ func RegisterTestRulesFlags(ctx *AppContext) (*flag.FlagSet, *FlagsGroups) {
 	groups.AddGroup("Files")
 	groups.AddGroup("Other")
 
-	fs.StringVar(&flags.rules, "rules", "./", "Comma separated list of directories or files with rules")
-	fs.StringVar(&flags.tests, "tests", "./tests", "Directory or file with tests")
+	fs.StringVar(&flags.Rules, "rules", "./", "Comma separated list of directories or files with rules")
+	fs.StringVar(&flags.Tests, "tests", "./tests", "Directory or file with tests")
 
 	groups.Add("Files", "rules")
 	groups.Add("Files", "tests")
 
-	fs.BoolVar(&flags.kphp, "kphp", false, "KPHP mode")
+	fs.BoolVar(&flags.KPHP, "kphp", false, "KPHP mode")
 
 	groups.Add("Other", "kphp")
 
@@ -42,7 +42,7 @@ func TestRules(ctx *AppContext) (status int, err error) {
 	log.SetFlags(0)
 	flags := ctx.CustomFlags.(*RulesTestSuite)
 
-	suite := NewRulesTestSuite(flags.rules, flags.tests, flags.kphp)
+	suite := NewRulesTestSuite(flags.Rules, flags.Tests, flags.KPHP)
 	err = suite.Run()
 	if err != nil {
 		status = 2
@@ -58,26 +58,26 @@ func TestRules(ctx *AppContext) (status int, err error) {
 }
 
 type RulesTestSuite struct {
-	rules string
-	tests string
+	Rules string
+	Tests string
 
-	kphp bool
+	KPHP bool
 }
 
 func NewRulesTestSuite(rulesPaths string, tests string, kphp bool) *RulesTestSuite {
-	return &RulesTestSuite{rules: rulesPaths, tests: tests, kphp: kphp}
+	return &RulesTestSuite{Rules: rulesPaths, Tests: tests, KPHP: kphp}
 }
 
 func (s *RulesTestSuite) Run() error {
 	go linter.MemoryLimiterThread(0)
 
-	files, err := utils.FindPHPFiles(s.tests)
+	files, err := utils.FindPHPFiles(s.Tests)
 	if err != nil {
 		return fmt.Errorf("error find php files %v", err)
 	}
 
 	if len(files) == 0 {
-		return fmt.Errorf("tests files in '%s' not found", s.tests)
+		return fmt.Errorf("tests files in '%s' not found", s.Tests)
 	}
 
 	failed := false
@@ -210,9 +210,9 @@ func (s *RulesTestSuite) handleFileContents(file string) (lines []string, report
 	}
 
 	config := lint.Config()
-	config.KPHP = s.kphp
+	config.KPHP = s.KPHP
 
-	ruleSets, err := ParseExternalRules(s.rules)
+	ruleSets, err := ParseExternalRules(s.Rules)
 	if err != nil {
 		return nil, nil, fmt.Errorf("preload external rules: %v", err)
 	}
