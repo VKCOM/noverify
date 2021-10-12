@@ -256,12 +256,10 @@ func processReportsStat(ctx *AppContext, stat ReportsStat) (status int) {
 
 		if stat.critical > 0 {
 			log.Printf("Found %d critical and %d minor reports", stat.critical, stat.minor)
+		} else if stat.minor > 0 {
+			log.Printf("Found %d minor issues.", stat.minor)
 		} else {
-			if stat.minor > 0 {
-				log.Printf("Found %d minor issues.", stat.minor)
-			} else {
-				log.Printf("No issues found. Your code is perfect.")
-			}
+			log.Printf("No issues found. Your code is perfect.")
 		}
 
 		if stat.autofixable > 0 {
