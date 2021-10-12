@@ -381,3 +381,9 @@ func (reg *CheckersRegistry) Contains(name string) bool {
 	_, ok := reg.info[name]
 	return ok
 }
+
+// Autofixable checks if the passed checker is autofixable.
+func (reg *CheckersRegistry) Autofixable(name string) bool {
+	info, ok := reg.info[name]
+	return ok && info.Quickfix
+}
