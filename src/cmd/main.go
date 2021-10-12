@@ -255,7 +255,7 @@ func processReportsStat(ctx *AppContext, stat ReportsStat) (status int) {
 		}
 
 		if stat.critical > 0 {
-			log.Printf("Found %d critical and %d minor reports", stat.critical, stat.minor)
+			log.Printf("Found %d critical and %d minor issues.", stat.critical, stat.minor)
 		} else if stat.minor > 0 {
 			log.Printf("Found %d minor issues.", stat.minor)
 		} else {
