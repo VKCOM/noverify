@@ -29,7 +29,8 @@ import (
 
 func registerMainApp() *App {
 	return &App{
-		Name:        "noverify",
+		CLIName:     "noverify",
+		Name:        "NoVerify",
 		Description: "Pretty fast linter (static analysis tool) for PHP",
 		Commands: []*Command{
 			{
