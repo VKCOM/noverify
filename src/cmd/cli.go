@@ -71,6 +71,7 @@ func (ctx *AppContext) CountDefinedFlags() int {
 }
 
 type App struct {
+	CLIName     string
 	Name        string
 	Description string
 
@@ -159,14 +160,14 @@ func (a *App) addDefaultHelpCommand(command *Command) {
 			}
 
 			res += fmt.Sprintln("Usage:")
-			res += fmt.Sprintf("  $ %s %s%s%s - %s\n", a.Name, command.Name, options, args, command.Description)
+			res += fmt.Sprintf("  $ %s %s%s%s - %s\n", a.CLIName, command.Name, options, args, command.Description)
 
 			if len(command.Examples) > 0 {
 				res += fmt.Sprintln()
 				res += fmt.Sprintln("Examples:")
 
 				for _, example := range command.Examples {
-					res += fmt.Sprintf("  $ %s %s %s - %s\n", a.Name, command.Name, example.Line, example.Description)
+					res += fmt.Sprintf("  $ %s %s %s - %s\n", a.CLIName, command.Name, example.Line, example.Description)
 				}
 			}
 
@@ -203,7 +204,7 @@ func (a *App) showHelp() {
 	res += fmt.Sprintf("%s - %s\n", a.Name, a.Description)
 	res += fmt.Sprintln()
 	res += fmt.Sprintln("Usage:")
-	res += fmt.Sprintf("  $ %s [command]\n", a.Name)
+	res += fmt.Sprintf("  $ %s [command]\n", a.CLIName)
 	res += fmt.Sprintln()
 
 	res += fmt.Sprintln("Commands:")
@@ -219,7 +220,7 @@ func (a *App) showHelp() {
 	res += fmt.Sprintln("Help:")
 
 	res += fmt.Sprintln("  To get help for command, use the help subcommand:")
-	res += fmt.Sprintf("    $ %s check help\n", a.Name)
+	res += fmt.Sprintf("    $ %s check help\n", a.CLIName)
 
 	fmt.Println(res)
 }
