@@ -148,7 +148,7 @@ func Main(cfg *MainConfig) {
 // Note that if error is not nil, integer code will be discarded, so it can be 0.
 //
 // We don't want os.Exit to be inserted randomly to avoid defer cancellation.
-func mainNoExit(ctx *AppContext) (int, error) {
+func mainNoExit(ctx *AppContext) (status int, err error) {
 	if ctx.ParsedFlags.PprofHost != "" {
 		go func() {
 			err := http.ListenAndServe(ctx.ParsedFlags.PprofHost, nil)
@@ -191,7 +191,7 @@ func mainNoExit(ctx *AppContext) (int, error) {
 
 	runner := NewLinterRunner(lint, linter.NewCheckersFilter())
 
-	err := runner.Init(ruleSets, &ctx.ParsedFlags)
+	err = runner.Init(ruleSets, &ctx.ParsedFlags)
 	if err != nil {
 		return 1, fmt.Errorf("init: %v", err)
 	}
@@ -210,7 +210,7 @@ func mainNoExit(ctx *AppContext) (int, error) {
 	}
 
 	if ctx.ParsedFlags.GitRepo != "" {
-		return gitMain(runner, ctx.MainConfig)
+		return gitMain(runner, ctx)
 	}
 
 	filenames := ctx.ParsedArgs
@@ -226,30 +226,51 @@ func mainNoExit(ctx *AppContext) (int, error) {
 
 	log.Printf("Linting")
 	reports := runner.linter.AnalyzeFiles(workspace.ReadFilenames(filenames, runner.filenameFilter, lint.Config().PhpExtensions))
+
 	if ctx.ParsedFlags.OutputBaseline {
 		if err := createBaseline(runner, ctx.MainConfig, reports); err != nil {
 			return 1, fmt.Errorf("write baseline: %v", err)
 		}
 		return 0, nil
 	}
-	criticalReports, minorReports, containsAutofixableReports := analyzeReports(runner, ctx.MainConfig, reports)
 
-	if containsAutofixableReports && !runner.config.ApplyQuickFixes {
-		log.Println("Some issues are autofixable (try using the '--fix' flag)")
+	stat := processReports(runner, ctx.MainConfig, reports)
+	status = processReportsStat(ctx, stat)
+
+	return status, nil
+}
+
+func processReportsStat(ctx *AppContext, stat ReportsStat) (status int) {
+	if stat.critical > 0 {
+		status = 2
 	}
 
-	if criticalReports > 0 {
-		log.Printf("Found %d critical and %d minor reports", criticalReports, minorReports)
-		return 2, nil
-	}
-	if !ctx.MainConfig.DisableCriticalIssuesLog {
-		if minorReports == 0 {
-			log.Printf("No issues found. Your code is perfect.")
+	if !ctx.MainConfig.DisableAfterReportsLog {
+		if stat.autofixed > 0 {
+			if stat.autofixed == stat.all {
+				log.Printf("All issues have been fixed.\n")
+			} else {
+				log.Printf("Automatically fixed %d issues out of %d.\n", stat.autofixed, stat.all)
+			}
+		}
+
+		if stat.critical > 0 {
+			log.Printf("Found %d critical and %d minor reports", stat.critical, stat.minor)
 		} else {
-			log.Printf("Found %d minor issues.", minorReports)
+			if stat.minor > 0 {
+				log.Printf("Found %d minor issues.", stat.minor)
+			} else {
+				log.Printf("No issues found. Your code is perfect.")
+			}
+		}
+
+		if stat.autofixable > 0 {
+			log.Printf("%s can automatically fix %d issues.\n", ctx.App.Name, stat.autofixable)
+			log.Printf("Run %s again with --fix flag to fix them.\n", ctx.App.Name)
 		}
 	}
-	return 0, nil
+
+	return status
 }
 
 func createBaseline(l *LinterRunner, cfg *MainConfig, reports []*linter.Report) error {
@@ -319,32 +340,15 @@ func FormatReport(r *linter.Report) string {
 		r.Severity(), msg, r.Filename, r.Line, r.Context, cursor.String())
 }
 
-func haveAutofixableReports(config *linter.Config, reports []*linter.Report) bool {
-	if len(reports) == 0 {
-		return false
-	}
-
-	declaredChecks := config.Checkers.ListDeclared()
-	checksWithQuickfix := make(map[string]struct{})
-
-	for _, check := range declaredChecks {
-		if !check.Quickfix {
-			continue
-		}
-
-		checksWithQuickfix[check.Name] = struct{}{}
-	}
-
-	for _, r := range reports {
-		if _, ok := checksWithQuickfix[r.CheckName]; ok {
-			return true
-		}
-	}
-
-	return false
+type ReportsStat struct {
+	all         int
+	critical    int
+	minor       int
+	autofixed   int
+	autofixable int
 }
 
-func analyzeReports(l *LinterRunner, cfg *MainConfig, diff []*linter.Report) (criticalReports, minorReports int, containsAutofixableReports bool) {
+func processReports(runner *LinterRunner, cfg *MainConfig, diff []*linter.Report) (stat ReportsStat) {
 	filtered := make([]*linter.Report, 0, len(diff))
 
 	for _, r := range diff {
@@ -352,18 +356,27 @@ func analyzeReports(l *LinterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 			continue
 		}
 
-		filtered = append(filtered, r)
+		stat.all++
 
-		if l.checkersFilter.IsCriticalReport(r) {
-			criticalReports++
-		} else {
-			minorReports++
+		if runner.linter.Config().ApplyQuickFixes && runner.config.Checkers.Autofixable(r.CheckName) {
+			stat.autofixed++
+			continue
 		}
+
+		if runner.config.Checkers.Autofixable(r.CheckName) {
+			stat.autofixable++
+		}
+
+		if runner.checkersFilter.IsCriticalReport(r) {
+			stat.critical++
+		} else {
+			stat.minor++
+		}
+
+		filtered = append(filtered, r)
 	}
 
-	containsAutofixableReports = haveAutofixableReports(l.config, filtered)
-
-	if l.flags.OutputJSON {
+	if runner.flags.OutputJSON {
 		type reportList struct {
 			Reports []*linter.Report
 			Errors  []string
@@ -371,22 +384,30 @@ func analyzeReports(l *LinterRunner, cfg *MainConfig, diff []*linter.Report) (cr
 		list := &reportList{
 			Reports: filtered,
 		}
-		d := json.NewEncoder(l.outputFp)
+		d := json.NewEncoder(runner.outputFp)
 		if err := d.Encode(list); err != nil {
 			// Should never fail to marshal our own reports.
 			panic(fmt.Sprintf("report list marshaling failed: %v", err))
 		}
 	} else {
-		for _, r := range filtered {
-			if l.checkersFilter.IsCriticalReport(r) {
-				fmt.Fprintf(l.outputFp, "<critical> %s\n", FormatReport(r))
-			} else {
-				fmt.Fprintf(l.outputFp, "%s\n", FormatReport(r))
+		for _, report := range filtered {
+			format := ""
+
+			if runner.checkersFilter.IsCriticalReport(report) {
+				format += "<critical> "
 			}
+
+			if runner.config.Checkers.Autofixable(report.CheckName) {
+				format += "<autofixable> "
+			}
+
+			format += "%s\n"
+
+			fmt.Fprintf(runner.outputFp, format, FormatReport(report))
 		}
 	}
 
-	return criticalReports, minorReports, containsAutofixableReports
+	return stat
 }
 
 func InitStubs(l *linter.Linter) error {

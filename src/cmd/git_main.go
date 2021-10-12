@@ -156,7 +156,7 @@ func gitRepoComputeReportsFromLocalChanges(l *LinterRunner) (oldReports, reports
 	return oldReports, reports, changes, true
 }
 
-func gitMain(l *LinterRunner, cfg *MainConfig) (int, error) {
+func gitMain(runner *LinterRunner, ctx *AppContext) (status int, err error) {
 	var (
 		oldReports, reports []*linter.Report
 		diffArgs            []string
@@ -165,46 +165,30 @@ func gitMain(l *LinterRunner, cfg *MainConfig) (int, error) {
 		ok                  bool
 	)
 
-	// prepareGitArgs also populates global variables like fromCommit
-	logArgs, diffArgs, err := prepareGitArgs(l)
+	logArgs, diffArgs, err := prepareGitArgs(runner)
 	if err != nil {
 		return 0, err
 	}
 
-	oldReports, reports, changes, ok = gitRepoComputeReportsFromLocalChanges(l)
+	oldReports, reports, changes, ok = gitRepoComputeReportsFromLocalChanges(runner)
 	if !ok {
-		oldReports, reports, changes, changeLog, ok = gitRepoComputeReportsFromCommits(l, logArgs, diffArgs)
+		oldReports, reports, changes, changeLog, ok = gitRepoComputeReportsFromCommits(runner, logArgs, diffArgs)
 		if !ok {
 			return 0, nil
 		}
 	}
 
 	start := time.Now()
-	diff, err := linter.DiffReports(l.flags.GitRepo, diffArgs, changes, changeLog, oldReports, reports, 8)
+	diff, err := linter.DiffReports(runner.flags.GitRepo, diffArgs, changes, changeLog, oldReports, reports, 8)
 	if err != nil {
 		return 0, fmt.Errorf("Could not compute reports diff: %v", err)
 	}
 	log.Printf("Computed reports diff for %s", time.Since(start))
 
-	criticalReports, minorReports, containsAutofixableReports := analyzeReports(l, cfg, diff)
+	stat := processReports(runner, ctx.MainConfig, diff)
+	status = processReportsStat(ctx, stat)
 
-	if containsAutofixableReports && !l.config.ApplyQuickFixes {
-		log.Println("Some issues are autofixable (try using the '--fix' flag)")
-	}
-
-	if criticalReports > 0 {
-		log.Printf("Found %d critical and %d minor reports", criticalReports, minorReports)
-		return 2, nil
-	}
-
-	if !cfg.DisableCriticalIssuesLog {
-		if minorReports == 0 {
-			log.Printf("No issues found. Your code is perfect.")
-		} else {
-			log.Printf("Found %d minor issues.", minorReports)
-		}
-	}
-	return 0, nil
+	return status, nil
 }
 
 func analyzeGitAuthorsWhiteList(l *LinterRunner, changeLog []git.Commit) (shouldRun bool) {

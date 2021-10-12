@@ -19,7 +19,7 @@ func MergeBase(gitDir string, one, two string) (res string, err error) {
 		return "", errors.New("too short hash")
 	}
 
-	log.Printf("merge base between %s and %s is %s", one, two, out)
+	log.Printf("Merge base between %s and %s is %s", one, two, out)
 
 	return string(out), nil
 }

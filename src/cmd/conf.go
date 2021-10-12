@@ -41,6 +41,6 @@ type MainConfig struct {
 	// application is passed to modify a command, name or description.
 	ModifyApp func(app *App)
 
-	// If true, then the message "No critical issues found. Your code is perfect." is not displayed.
-	DisableCriticalIssuesLog bool
+	// If true, then the messages after reports is not displayed.
+	DisableAfterReportsLog bool
 }
