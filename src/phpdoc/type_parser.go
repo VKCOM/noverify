@@ -267,7 +267,9 @@ func (p *TypeParser) parseExpr(precedence byte) *TypeExpr {
 			}
 			p.pos++
 		}
-		p.pos++
+		if p.peek() == '\'' {
+			p.pos++
+		}
 		left = p.newExpr(kind, begin, uint16(p.pos))
 	default:
 		// Try to handle invalid expressions somehow and continue
