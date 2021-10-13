@@ -142,6 +142,9 @@ func (conv *TypeConverter) mapType(e phpdoc.TypeExpr) []types.Type {
 		// type can only be in one case, if it is an incorrect syntax of the optional type.
 		conv.warn("Nullable syntax is ?T, not T?")
 
+	case phpdoc.ExprLiteral:
+		return []types.Type{{Elem: "string"}}
+
 	case phpdoc.ExprTypedCallable:
 		closureName := `\Closure$(`
 		argsStart := 0

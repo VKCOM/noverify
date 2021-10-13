@@ -125,6 +125,10 @@ const (
 	// Args[0] - return type
 	// Args[1:] - argument types
 	ExprTypedCallable
+
+	// ExprLiteral is a single quoted string value.
+	// Examples: `'a'` `'abc'` `'!'`
+	ExprLiteral
 )
 
 const (
@@ -253,6 +257,18 @@ func (p *TypeParser) parseExpr(precedence byte) *TypeExpr {
 		left = p.newExpr(ExprSpecialName, begin, uint16(p.pos))
 	case ch == ' ':
 		left = p.newExpr(ExprInvalid, begin, uint16(p.pos))
+	case ch == '\'':
+		kind := ExprLiteral
+		for p.peek() != '\'' {
+			if p.peek() == 0 {
+				// If unclosed.
+				kind = ExprInvalid
+				break
+			}
+			p.pos++
+		}
+		p.pos++
+		left = p.newExpr(kind, begin, uint16(p.pos))
 	default:
 		// Try to handle invalid expressions somehow and continue
 		// the parsing of valid expressions.
