@@ -1037,6 +1037,13 @@ function main(): void {
   }
 }`,
 		},
+
+		{
+			Name:     "packaging",
+			Default:  false,
+			Quickfix: false,
+			Comment:  "Report call method outside @package.",
+		},
 	}
 
 	for _, info := range allChecks {

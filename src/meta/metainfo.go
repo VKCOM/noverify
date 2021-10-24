@@ -24,6 +24,11 @@ const (
 	PropFromAnnotation PropertyFlags = 1 << iota
 )
 
+type PackageInfo struct {
+	Name     string
+	Internal bool
+}
+
 type DeprecationInfo struct {
 	Deprecated bool
 	Removed    bool
@@ -123,6 +128,7 @@ type FuncInfo struct {
 	AccessLevel  AccessLevel
 	Flags        FuncFlags
 	ExitFlags    int // if function has exit/die/throw, then ExitFlags will be <> 0
+	Internal     bool
 
 	DeprecationInfo
 }
@@ -203,6 +209,8 @@ type ClassInfo struct {
 	Properties       PropertiesMap // both instance and static properties are inside. Static properties have "$" prefix
 	Constants        ConstantsMap
 	Mixins           []string
+
+	PackageInfo
 }
 
 func (info *ClassInfo) IsAbstract() bool  { return info.Flags&ClassAbstract != 0 }

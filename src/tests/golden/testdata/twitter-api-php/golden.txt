@@ -1,3 +1,6 @@
+WARNING invalidDocblock: @package name must be a start part of class namespace at testdata/twitter-api-php/TwitterAPIExchange.php:9
+ * @package  Twitter-API-PHP
+   ^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   callSimplify: Could simplify to $array['status'][0] at testdata/twitter-api-php/TwitterAPIExchange.php:117
         if (isset($array['status']) && substr($array['status'], 0, 1) === '@')
                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
