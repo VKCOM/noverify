@@ -44,7 +44,7 @@ function f1() {
 
   $b = $a ?? 100; // ok, $a maybe undefined
   $b = $c ?? 100; // ok, $c undefined
-  echo $bl
+  echo $bl;
 }
 
 `)

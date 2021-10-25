@@ -108,7 +108,7 @@ class Bar {
 `)
 
 	test.AddFile(`<?php
-namespace Bad
+namespace Bad;
 
 /**
  * @see HolyHandGrenade::hallelujah... BAD - HolyHandGrenade is in other namespace

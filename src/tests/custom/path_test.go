@@ -44,7 +44,7 @@ if ($cond1) {
 } elseif ($cond2) {
   echo $_elseif1;
 } else if ($cond3) {
-  echi $_elseif2;
+  echo $_elseif2;
 } else {
   echo $_else;
 }
@@ -52,7 +52,7 @@ if ($cond1) {
 	test.Expect = []string{
 		`$_if (cond=true) : *ir.Root/*ir.IfStmt/*ir.StmtList/*ir.EchoStmt/*ir.SimpleVar`,
 		`$_elseif1 (cond=true) : *ir.Root/*ir.IfStmt/*ir.StmtList/*ir.EchoStmt/*ir.SimpleVar`,
-		`$_elseif2 (cond=true) : *ir.Root/*ir.IfStmt/*ir.StmtList/*ir.ExpressionStmt/*ir.SimpleVar`,
+		`$_elseif2 (cond=true) : *ir.Root/*ir.IfStmt/*ir.StmtList/*ir.EchoStmt/*ir.SimpleVar`,
 		`$_else (cond=true) : *ir.Root/*ir.IfStmt/*ir.ElseStmt/*ir.StmtList/*ir.EchoStmt/*ir.SimpleVar`,
 	}
 	runPathTest(t, test)
