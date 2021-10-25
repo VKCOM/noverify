@@ -2031,7 +2031,7 @@ use FooPackage\Foo;
 
 class Main {
   public static function main(): void {
-	Foo::f(); // ok, call non-internal method outside FooPackage
+    Foo::f(); // ok, call non-internal method outside FooPackage
 
     Boo::b(); // error, call internal method inside other package
     Foo::fInternal(); // error, call internal method inside other package
@@ -2078,7 +2078,7 @@ namespace BooPackage;
  */
 class Main {
   public static function main(): void {
-	Foo::f(); // ok, call internal method inside same package
+    Foo::f(); // ok, call internal method inside same package
 
     Boo::b(); // ok, call internal method inside same package
     Foo::fInternal(); // ok, call internal method inside same package
