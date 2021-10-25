@@ -1042,7 +1042,23 @@ function main(): void {
 			Name:     "packaging",
 			Default:  false,
 			Quickfix: false,
-			Comment:  "Report call method outside @package.",
+			Comment:  "Report call @internal method outside @package.",
+			Before: `class Foo {
+  public function f() {
+    parent::b(); // method without packaging
+  }
+}`,
+			After: `namespace SomePackage;
+
+/**
+ * @package SomePackage
+ * @internal
+ */
+class Foo extends Boo {
+  public function f() {
+    parent::b(); // internal method with package
+  }
+}`,
 		},
 	}
 

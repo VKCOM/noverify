@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 98           | 82                        | 16                         | 12                 |
+| 99           | 82                        | 17                         | 12                 |
 
 ## Table of contents
  - Enabled by default
@@ -99,6 +99,7 @@
    - [`errorSilence` checker](#errorsilence-checker)
    - [`langDeprecated` checker](#langdeprecated-checker)
    - [`missingPhpdoc` checker](#missingphpdoc-checker)
+   - [`packaging` checker](#packaging-checker)
    - [`parentNotFound` checker](#parentnotfound-checker)
    - [`propNullDefault` checker (autofixable)](#propnulldefault-checker)
    - [`redundantCast` checker](#redundantcast-checker)
@@ -1980,6 +1981,38 @@ public function process($acts, $config) {
  */
 public function process($acts, $config) {
   // Does something very complicated.
+}
+```
+<p><br></p>
+
+
+### `packaging` checker
+
+#### Description
+
+Report call @internal method outside @package.
+
+#### Non-compliant code:
+```php
+class Foo {
+  public function f() {
+    parent::b(); // method without packaging
+  }
+}
+```
+
+#### Compliant code:
+```php
+namespace SomePackage;
+
+/**
+ * @package SomePackage
+ * @internal
+ */
+class Foo extends Boo {
+  public function f() {
+    parent::b(); // internal method with package
+  }
 }
 ```
 <p><br></p>

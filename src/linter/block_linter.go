@@ -1161,11 +1161,7 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 		return
 	}
 
-	b.checkMethodCallPackage(
-		call.className,
-		call.info,
-		e,
-	)
+	b.checkMethodCallPackage(call.className, call.info, e)
 
 	if !call.isMagic {
 		b.checkCallArgs(e.Method, e.Args, call.info, call.methodCallerType.String())
@@ -1215,11 +1211,7 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 		return
 	}
 
-	b.checkMethodCallPackage(
-		call.className,
-		call.methodInfo.Info,
-		e,
-	)
+	b.checkMethodCallPackage(call.className, call.methodInfo.Info, e)
 
 	b.checkClassSpecialNameCase(e, call.className)
 
@@ -1252,11 +1244,7 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 	}
 }
 
-func (b *blockLinter) checkMethodCallPackage(
-	methodClassName string,
-	methodInfo meta.FuncInfo,
-	e ir.Node,
-) {
+func (b *blockLinter) checkMethodCallPackage(methodClassName string, methodInfo meta.FuncInfo, e ir.Node) {
 	callClass, ok := b.classParseState().Info.GetClass(methodClassName)
 	if !ok {
 		return
@@ -1277,12 +1265,11 @@ func (b *blockLinter) checkMethodCallPackage(
 		return
 	}
 
-	b.report(e, LevelError, "packaging", fmt.Sprintf(
-		"call method %s::%s outside package %s",
+	b.report(e, LevelError, "packaging", "Call @internal method %s::%s outside package %s",
 		methodClassName,
 		methodInfo.Name,
 		callClass.PackageInfo.Name,
-	))
+	)
 }
 
 func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
