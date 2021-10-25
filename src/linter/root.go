@@ -825,10 +825,41 @@ func (d *rootWalker) parseClassPHPDoc(class ir.Node, doc phpdoc.Comment) classPH
 			parseClassPHPDocMethod(class, &d.ctx, &result, part.(*phpdoc.RawCommentPart))
 		case "mixin":
 			parseClassPHPDocMixin(class, d.ctx.st, &result, part.(*phpdoc.RawCommentPart))
+		case "package":
+			parseClassPHPDocPackage(class, d.ctx.st, &result, part.(*phpdoc.PackageCommentPart))
+		case "internal":
+			result.internal = true
 		}
 	}
 
 	return result
+}
+
+func parseClassPHPDocPackage(
+	classNode ir.Node,
+	cs *meta.ClassParseState,
+	result *classPHPDocParseResult,
+	part *phpdoc.PackageCommentPart,
+) {
+	if strings.HasPrefix(part.PackageName, "\\") {
+		result.errs.pushLint(
+			PHPDocLine(classNode, part.Line()),
+			"@package name must be a start part of class namespace without \\ prefix",
+		)
+
+		return
+	}
+
+	namespace := strings.TrimLeft(cs.Namespace, "\\")
+
+	if strings.HasPrefix(namespace, part.PackageName) {
+		result.packageName = part.PackageName
+	} else {
+		result.errs.pushLint(
+			PHPDocLine(classNode, part.Line()),
+			"@package name must be a start part of class namespace",
+		)
+	}
 }
 
 func (d *rootWalker) handleClassDoc(doc classPHPDocParseResult, cl *meta.ClassInfo) {
@@ -845,6 +876,11 @@ func (d *rootWalker) handleClassDoc(doc classPHPDocParseResult, cl *meta.ClassIn
 	}
 
 	cl.Mixins = doc.mixins
+
+	cl.PackageInfo = meta.PackageInfo{
+		Name:     doc.packageName,
+		Internal: doc.internal,
+	}
 }
 
 func (d *rootWalker) parsePHPDocVar(doc phpdoc.Comment) (typesMap types.Map) {
@@ -1099,6 +1135,7 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		Flags:           funcFlags,
 		ExitFlags:       exitFlags,
 		DeprecationInfo: doc.Deprecation,
+		Internal:        doc.Internal,
 	})
 
 	if nm == "getIterator" && d.metaInfo().IsIndexingComplete() && solver.Implements(d.metaInfo(), d.ctx.st.CurrentClass, `\IteratorAggregate`) {

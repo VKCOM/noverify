@@ -51,6 +51,15 @@ type TypeVarCommentPart struct {
 func (c *TypeVarCommentPart) Line() int    { return c.line }
 func (c *TypeVarCommentPart) Name() string { return c.name }
 
+type PackageCommentPart struct {
+	line        int
+	name        string
+	PackageName string
+}
+
+func (c *PackageCommentPart) Line() int    { return c.line }
+func (c *PackageCommentPart) Name() string { return c.name }
+
 // IsPHPDoc checks if the string is a doc comment
 func IsPHPDoc(doc string) bool {
 	// See #289.
@@ -147,6 +156,8 @@ func Parse(parser *TypeParser, doc string) Comment {
 			part = parseTypeVarComment(parser, line, name, text)
 		case "return":
 			part = parseTypeComment(parser, line, name, text)
+		case "package":
+			part = parsePackageComment(line, name, text)
 		default:
 			part = parseRawComment(line, name, text)
 		}
@@ -178,6 +189,14 @@ func parseTypeComment(parser *TypeParser, line int, name, text string) *TypeComm
 		name: name,
 		Type: typ,
 		Rest: rest,
+	}
+}
+
+func parsePackageComment(line int, name, text string) *PackageCommentPart {
+	return &PackageCommentPart{
+		line:        line,
+		name:        name,
+		PackageName: text,
 	}
 }
 

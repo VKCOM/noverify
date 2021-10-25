@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 98           | 82                        | 16                         | 12                 |
+| 99           | 82                        | 17                         | 12                 |
 
 ## Table of contents
  - Enabled by default
@@ -99,6 +99,7 @@
    - [`errorSilence` checker](#errorsilence-checker)
    - [`langDeprecated` checker](#langdeprecated-checker)
    - [`missingPhpdoc` checker](#missingphpdoc-checker)
+   - [`packaging` checker](#packaging-checker)
    - [`parentNotFound` checker](#parentnotfound-checker)
    - [`propNullDefault` checker (autofixable)](#propnulldefault-checker)
    - [`redundantCast` checker](#redundantcast-checker)
@@ -1980,6 +1981,108 @@ public function process($acts, $config) {
  */
 public function process($acts, $config) {
   // Does something very complicated.
+}
+```
+<p><br></p>
+
+
+### `packaging` checker
+
+#### Description
+
+Report call @internal method outside @package.
+
+#### Non-compliant code:
+```php
+// file Boo.php 
+
+namespace BooPackage; 
+
+/** 
+ * @package BooPackage 
+ * @internal 
+ */ 
+class Boo { 
+  public static function b() {} 
+} 
+
+// file Foo.php 
+
+namespace FooPackage;
+
+/** 
+ * @package FooPackage 
+ */ 
+class Foo { 
+  public static function f() {}
+
+  /**
+   * @internal
+   */
+  public static function fInternal() {}
+}
+
+// file Main.php
+
+namespace Main;
+
+use BooPackage\Boo;
+use FooPackage\Foo;
+
+class Main {
+  public static function main(): void {
+    Foo::f(); // ok, call non-internal method outside FooPackage
+
+    Boo::b(); // error, call internal method inside other package
+    Foo::fInternal(); // error, call internal method inside other package
+  }
+}
+```
+
+#### Compliant code:
+```php
+// file Boo.php 
+
+namespace BooPackage; 
+
+/** 
+ * @package BooPackage 
+ * @internal 
+ */ 
+class Boo { 
+  public static function b() {} 
+} 
+
+// file Foo.php 
+
+namespace BooPackage;
+
+/** 
+ * @package BooPackage 
+ */ 
+class Foo { 
+  public static function f() {}
+
+  /**
+   * @internal
+   */
+  public static function fInternal() {}
+}
+
+// file Main.php
+
+namespace BooPackage;
+
+/**
+ * @package BooPackage
+ */
+class Main {
+  public static function main(): void {
+    Foo::f(); // ok, call internal method inside same package
+
+    Boo::b(); // ok, call internal method inside same package
+    Foo::fInternal(); // ok, call internal method inside same package
+  }
 }
 ```
 <p><br></p>
