@@ -21,6 +21,7 @@ type ParseResult struct {
 	ParamTypes  ParamsMap
 	Deprecation meta.DeprecationInfo
 	Inherit     bool
+	Internal    bool
 
 	Shapes   types.ShapesMap
 	Closures types.ClosureMap
@@ -38,6 +39,10 @@ func Parse(doc phpdoc.Comment, actualParams []ir.Node, normalizer types.Normaliz
 	var curParam int
 
 	for _, rawPart := range doc.Parsed {
+
+		if rawPart.Name() == "internal" {
+			result.Internal = true
+		}
 
 		if rawPart.Name() == "deprecated" {
 			part := rawPart.(*phpdoc.RawCommentPart)

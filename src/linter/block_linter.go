@@ -1161,6 +1161,8 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 		return
 	}
 
+	b.checkMethodCallPackage(call.className, call.info, e)
+
 	if !call.isMagic {
 		b.checkCallArgs(e.Method, e.Args, call.info, call.methodCallerType.String())
 	}
@@ -1209,6 +1211,8 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 		return
 	}
 
+	b.checkMethodCallPackage(call.className, call.methodInfo.Info, e)
+
 	b.checkClassSpecialNameCase(e, call.className)
 
 	if !call.isMagic {
@@ -1238,6 +1242,34 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 	if call.isFound && !canAccess(b.classParseState(), call.methodInfo.ClassName, call.methodInfo.Info.AccessLevel) {
 		b.report(e.Call, LevelError, "accessLevel", "Cannot access %s method %s::%s()", call.methodInfo.Info.AccessLevel, call.methodInfo.ClassName, call.methodName)
 	}
+}
+
+func (b *blockLinter) checkMethodCallPackage(methodClassName string, methodInfo meta.FuncInfo, e ir.Node) {
+	callClass, ok := b.classParseState().Info.GetClass(methodClassName)
+	if !ok {
+		return
+	}
+	if callClass.PackageInfo.Name == "" {
+		return
+	}
+	if !callClass.PackageInfo.Internal && !methodInfo.Internal {
+		return
+	}
+
+	currentClass, ok := b.walker.r.ctx.st.Info.GetClass(b.classParseState().CurrentClass)
+	if !ok {
+		return
+	}
+
+	if currentClass.PackageInfo.Name == callClass.PackageInfo.Name {
+		return
+	}
+
+	b.report(e, LevelError, "packaging", "Call @internal method %s::%s outside package %s",
+		methodClassName,
+		methodInfo.Name,
+		callClass.PackageInfo.Name,
+	)
 }
 
 func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
