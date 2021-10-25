@@ -1043,20 +1043,90 @@ function main(): void {
 			Default:  false,
 			Quickfix: false,
 			Comment:  "Report call @internal method outside @package.",
-			Before: `class Foo {
-  public function f() {
-    parent::b(); // method without packaging
+			Before: `// file Boo.php 
+
+namespace BooPackage; 
+
+/** 
+ * @package BooPackage 
+ * @internal 
+ */ 
+class Boo { 
+  public static function b() {} 
+} 
+
+// file Foo.php 
+
+namespace FooPackage;
+
+/** 
+ * @package FooPackage 
+ */ 
+class Foo { 
+  public static function f() {}
+
+  /**
+   * @internal
+   */
+  public static function fInternal() {}
+}
+
+// file Main.php
+
+namespace Main;
+
+use BooPackage\Boo;
+use FooPackage\Foo;
+
+class Main {
+  public static function main(): void {
+	Foo::f(); // ok, call non-internal method outside FooPackage
+
+    Boo::b(); // error, call internal method inside other package
+    Foo::fInternal(); // error, call internal method inside other package
   }
 }`,
-			After: `namespace SomePackage;
+			After: `// file Boo.php 
+
+namespace BooPackage; 
+
+/** 
+ * @package BooPackage 
+ * @internal 
+ */ 
+class Boo { 
+  public static function b() {} 
+} 
+
+// file Foo.php 
+
+namespace BooPackage;
+
+/** 
+ * @package BooPackage 
+ */ 
+class Foo { 
+  public static function f() {}
+
+  /**
+   * @internal
+   */
+  public static function fInternal() {}
+}
+
+// file Main.php
+
+namespace BooPackage;
 
 /**
- * @package SomePackage
- * @internal
+ * @package BooPackage
  */
-class Foo extends Boo {
-  public function f() {
-    parent::b(); // internal method with package
+class Main {
+  public static function main(): void {
+	Foo::f(); // ok, call internal method inside same package
+
+    Boo::b(); // ok, call internal method inside same package
+    Foo::fInternal(); // ok, call internal method inside same package
   }
 }`,
 		},
