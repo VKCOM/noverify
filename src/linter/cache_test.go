@@ -100,7 +100,7 @@ function main() {
   $anon = new class(10) extends Point implements Arrayable {
     public function __construct(int $a) {}
     public function f() {}
-  }
+  };
 
   $anon->f();
 }
@@ -149,7 +149,7 @@ main();
 		//
 		// If cache encoding changes, there is a very high chance that
 		// encoded data lengh will change as well.
-		wantLen := 5538
+		wantLen := 5953
 		haveLen := buf.Len()
 		if haveLen != wantLen {
 			t.Errorf("cache len mismatch:\nhave: %d\nwant: %d", haveLen, wantLen)
@@ -158,7 +158,7 @@ main();
 		// 2. Check cache "strings" hash.
 		//
 		// It catches new fields in cached types, field renames and encoding of additional named attributes.
-		wantStrings := "30a5a4f20bcf29240c16f8468a6ccad73d40ddc8987b65c6834bfa860b19ef0e8e100123cfd395ec28eb765f18e766d3c8f60ce3838eebbca56f9496f1c572b8"
+		wantStrings := "df69cfe531807fe5e317e5f894ac1ad2a68020edf03a053a30b25c70488b741b6d992d37e7a76ac4b8a760756631ee9ae309ba57e29253ffae896c3492b90939"
 		haveStrings := collectCacheStrings(buf.String())
 		if haveStrings != wantStrings {
 			t.Errorf("cache strings mismatch:\nhave: %q\nwant: %q", haveStrings, wantStrings)

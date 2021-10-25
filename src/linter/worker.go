@@ -14,7 +14,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/VKCOM/noverify/src/utils"
 	"github.com/VKCOM/php-parser/pkg/ast"
 	"github.com/VKCOM/php-parser/pkg/conf"
 	phperrors "github.com/VKCOM/php-parser/pkg/errors"
@@ -28,6 +27,7 @@ import (
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/types"
+	"github.com/VKCOM/noverify/src/utils"
 	"github.com/VKCOM/noverify/src/workspace"
 )
 
@@ -133,7 +133,7 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult,
 		return ParseResult{}, fmt.Errorf("parse error: %v", err.Error())
 	}
 
-	if rootNode == nil {
+	if rootNode == nil || (len(parserErrors) > 0 && !w.containsOnlyDeprecationErrors(parserErrors)) {
 		return result, fmt.Errorf("file has incorrect syntax and cannot be parsed")
 	}
 
@@ -155,6 +155,16 @@ func (w *Worker) ParseContents(fileInfo workspace.FileInfo) (result ParseResult,
 		walker:   walker,
 	}
 	return result, nil
+}
+
+func (w *Worker) containsOnlyDeprecationErrors(parserErrors []*phperrors.Error) bool {
+	countDeprecationErrors := 0
+	for _, parserErr := range parserErrors {
+		if parserErr.Msg == "Array and string offset access syntax with curly braces is no longer supported" {
+			countDeprecationErrors++
+		}
+	}
+	return countDeprecationErrors == len(parserErrors)
 }
 
 func (w *Worker) parseWithCache(cacheFilename string, file workspace.FileInfo) error {
