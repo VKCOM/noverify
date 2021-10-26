@@ -49,7 +49,8 @@ import (
 //     51 - added anonymous classes
 //     52 - renamed all PhpDoc and Phpdoc with PHPDoc
 //     53 - added DeprecationInfo for functions and methods and support for some attributes
-const cacheVersion = 53
+//     54 - forced cache version invalidation due to the #1165
+const cacheVersion = 54
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")
