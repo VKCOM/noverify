@@ -126,15 +126,15 @@ func newBlockWalker(r *rootWalker, sc *meta.Scope) *blockWalker {
 }
 
 func (b *blockWalker) report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
-	if b.findDisableAnnotation(n, checkName) {
+	if b.findLinterSuppressAnnotation(n, checkName) {
 		return
 	}
 
 	b.r.Report(n, level, checkName, msg, args...)
 }
 
-func (b *blockWalker) findDisableAnnotation(n ir.Node, checkName string) bool {
-	contains := b.containsDisableLinter(n, checkName)
+func (b *blockWalker) findLinterSuppressAnnotation(n ir.Node, checkName string) bool {
+	contains := b.containLinterSuppress(n, checkName)
 	if contains {
 		return true
 	}
@@ -142,7 +142,7 @@ func (b *blockWalker) findDisableAnnotation(n ir.Node, checkName string) bool {
 	// We go up the tree in search of a comment that disables this checker.
 	for i := 0; b.path.NthParent(i) != nil; i++ {
 		parent := b.path.NthParent(i)
-		contains = b.containsDisableLinter(parent, checkName)
+		contains = b.containLinterSuppress(parent, checkName)
 		if contains {
 			return true
 		}
@@ -205,7 +205,7 @@ func (b *blockWalker) reportDeadCode(n ir.Node) {
 	b.report(n, LevelWarning, "deadCode", "Unreachable code")
 }
 
-func (b *blockWalker) containsDisableLinter(n ir.Node, needInspection string) bool {
+func (b *blockWalker) containLinterSuppress(n ir.Node, needInspection string) bool {
 	if n == nil {
 		return false
 	}
