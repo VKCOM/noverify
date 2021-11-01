@@ -287,7 +287,7 @@ func (b *blockLinter) checkTypeCaseExpr(n *ir.TypeCastExpr) {
 }
 
 func (b *blockLinter) report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
-	b.walker.r.Report(n, level, checkName, msg, args...)
+	b.walker.report(n, level, checkName, msg, args...)
 }
 
 func (b *blockLinter) checkNopStmt(n *ir.NopStmt) {
@@ -1325,11 +1325,11 @@ func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
 	}
 
 	if !fetch.isFound && !b.classParseState().IsTrait {
-		b.walker.r.Report(e.ConstantName, LevelError, "undefinedConstant", "Class constant %s::%s does not exist", fetch.className, fetch.constName)
+		b.report(e.ConstantName, LevelError, "undefinedConstant", "Class constant %s::%s does not exist", fetch.className, fetch.constName)
 	}
 
 	if fetch.isFound && !canAccess(b.classParseState(), fetch.implClassName, fetch.info.AccessLevel) {
-		b.walker.r.Report(e.ConstantName, LevelError, "accessLevel", "Cannot access %s constant %s::%s", fetch.info.AccessLevel, fetch.implClassName, fetch.constName)
+		b.report(e.ConstantName, LevelError, "accessLevel", "Cannot access %s constant %s::%s", fetch.info.AccessLevel, fetch.implClassName, fetch.constName)
 	}
 }
 
@@ -1350,7 +1350,7 @@ func (b *blockLinter) checkClassSpecialNameCase(n ir.Node, className string) {
 
 	for _, name := range names {
 		if strings.EqualFold(className, name) {
-			b.walker.r.Report(n, LevelNotice, "nameMismatch", "%s should be spelled as %s", strings.TrimPrefix(className, `\`), strings.TrimPrefix(name, `\`))
+			b.report(n, LevelNotice, "nameMismatch", "%s should be spelled as %s", strings.TrimPrefix(className, `\`), strings.TrimPrefix(name, `\`))
 		}
 	}
 }
