@@ -110,6 +110,8 @@ type blockWalker struct {
 
 	inArrowFunction    bool
 	parentBlockWalkers []*blockWalker // all parent block walkers if we handle nested arrow functions.
+
+	extraScopes []*meta.Scope // extra scopes to look variables at
 }
 
 func newBlockWalker(r *rootWalker, sc *meta.Scope) *blockWalker {
@@ -680,14 +682,57 @@ func (b *blockWalker) withSpecificContext(ctx *blockContext, action func()) {
 	b.ctx = oldCtx
 }
 
+// Runs a given function with extra scope.
+// Upon function return, previous extra scopes is restored.
+func (b *blockWalker) withExtraScope(sc *meta.Scope, action func()) {
+	newExtraScopes := []*meta.Scope{sc}
+
+	b.withExtraScopes(newExtraScopes, action)
+}
+
+// Runs a given function with extra scopes.
+// Upon function return, previous extra scopes is restored.
+func (b *blockWalker) withExtraScopes(scopes []*meta.Scope, action func()) {
+	oldExtraScopes := b.extraScopes
+	b.extraScopes = scopes
+	action()
+	b.extraScopes = oldExtraScopes
+}
+
+func (b *blockWalker) findVarInExtraScopes(v ir.Node) *meta.ScopeVar {
+	var scopeVar *meta.ScopeVar
+	var ok bool
+
+	for _, sc := range b.extraScopes {
+		scopeVar, ok = sc.GetVar(v)
+		if !ok {
+			continue
+		}
+
+		if scopeVar.Flags.IsAlwaysDefined() {
+			return scopeVar
+		}
+	}
+
+	return scopeVar
+}
+
 func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
 	var linksCount int
 	var finallyCtx *blockContext
 
 	contexts := make([]*blockContext, 0, len(s.Catches)+1)
 
-	// Assume that no code in try{} block has executed because exceptions can be thrown from anywhere.
-	// So we handle catches and finally blocks first.
+	tryCtx := b.withNewContext(func() {
+		for _, s := range s.Stmts {
+			b.addStatement(s)
+			s.Walk(b)
+		}
+	})
+	if tryCtx.exitFlags == 0 {
+		linksCount++
+	}
+
 	for i := range s.Catches {
 		c := s.Catches[i]
 		ctx := b.withNewContext(func() {
@@ -704,16 +749,6 @@ func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
 		}
 	}
 
-	if s.Finally != nil {
-		finallyCtx = b.withNewContext(func() {
-			cc := s.Finally.(*ir.FinallyStmt)
-			for _, s := range cc.Stmts {
-				b.addStatement(s)
-			}
-			s.Finally.Walk(b)
-		})
-	}
-
 	// whether or not all other catches and finallies exit ("return", "throw", etc)
 	othersExit := true
 	prematureExitFlags := 0
@@ -727,18 +762,6 @@ func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
 
 		b.ctx.containsExitFlags |= ctx.containsExitFlags
 	}
-
-	tryCtx := b.withNewContext(func() {
-		for _, s := range s.Stmts {
-			b.addStatement(s)
-			s.Walk(b)
-		}
-	})
-	if tryCtx.exitFlags == 0 {
-		linksCount++
-	}
-
-	b.checkUnreachableForFinallyReturn(s, tryCtx, finallyCtx, contexts)
 
 	contexts = append(contexts, tryCtx)
 
@@ -758,11 +781,37 @@ func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
 		})
 	}
 
+	tryCatchScope := meta.NewScope()
+
 	for nm, types := range varTypes {
 		var flags meta.VarFlags
 		flags.SetAlwaysDefined(defCounts[nm] == linksCount)
-		b.ctx.sc.AddVarName(nm, types, "all branches try catch", flags)
+		tryCatchScope.AddVarName(nm, types, "all branches try catch", flags)
 	}
+
+	if s.Finally != nil {
+		finallyCtx = b.withNewContext(func() {
+			b.withExtraScope(tryCatchScope, func() {
+				cc := s.Finally.(*ir.FinallyStmt)
+				for _, s := range cc.Stmts {
+					b.addStatement(s)
+				}
+				s.Finally.Walk(b)
+			})
+		})
+	}
+
+	b.checkUnreachableForFinallyReturn(
+		s,
+		tryCtx,
+		finallyCtx,
+		contexts[:len(contexts)-1], // catch contexts
+	)
+
+	// adding try catch variables to block scope
+	tryCatchScope.Iterate(func(nm string, typ types.Map, flags meta.VarFlags) {
+		b.ctx.sc.AddVarName(nm, typ, "all branches try catch", flags)
+	})
 
 	if finallyCtx != nil {
 		finallyCtx.sc.Iterate(func(nm string, typ types.Map, flags meta.VarFlags) {
@@ -1405,9 +1454,17 @@ func (b *blockWalker) handleVariable(v ir.Node) bool {
 
 	have := b.ctx.sc.HaveVar(v)
 
-	if !have && !b.inArrowFunction {
-		b.r.reportUndefinedVariable(v, b.ctx.sc.MaybeHaveVar(v), b.path)
-		b.ctx.sc.AddVar(v, types.NewMap("undefined"), "undefined", meta.VarAlwaysDefined)
+	if !have {
+		// looking for variable in extra scopes
+		extraVar := b.findVarInExtraScopes(v)
+		if extraVar != nil && extraVar.Flags.IsAlwaysDefined() {
+			have = true
+		}
+
+		if !have && !b.inArrowFunction {
+			b.r.reportUndefinedVariable(v, extraVar != nil || b.ctx.sc.MaybeHaveVar(v), b.path)
+			b.ctx.sc.AddVar(v, types.NewMap("undefined"), "undefined", meta.VarAlwaysDefined)
+		}
 	}
 
 	// In case the required variable was not found in the current scope,
