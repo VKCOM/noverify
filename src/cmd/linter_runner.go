@@ -83,14 +83,11 @@ func (l *LinterRunner) Init(ruleSets []*rules.Set, flags *ParsedFlags) error {
 		return fmt.Errorf("collect gitignore files: %v", err)
 	}
 
-	l.outputFp = os.Stderr
-	if flags.Output != "" {
-		outputFp, err := os.OpenFile(flags.Output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
-		if err != nil {
-			return fmt.Errorf("-output=%s: %v", flags.Output, err)
-		}
-		l.outputFp = outputFp
+	w, err := createWriter(flags.Output)
+	if err != nil {
+		return fmt.Errorf("--output=%s: %v", flags.Output, err)
 	}
+	l.outputFp = w
 
 	if !flags.IgnoreVendor {
 		flags.IndexOnlyFiles = l.addVendorFolderToFlag(flags.IndexOnlyFiles, false)
@@ -304,4 +301,20 @@ func LoadMisspellDicts(config *linter.Config, dicts []string) error {
 
 	config.TypoFixer.Compile()
 	return nil
+}
+
+func createWriter(output string) (io.Writer, error) {
+	if output == "" || output == "stderr" {
+		return os.Stderr, nil
+	}
+	if output == "stdout" {
+		return os.Stdout, nil
+	}
+
+	outputFp, err := os.OpenFile(output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		return nil, err
+	}
+
+	return outputFp, nil
 }
