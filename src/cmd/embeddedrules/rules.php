@@ -689,3 +689,13 @@ function usageExitOrDie() {
    */
   die($_);
 }
+
+/**
+ * @comment  Report using `eval' function.
+ */
+function useEvalCheck() {
+  /**
+   * @warning Don't use the 'eval' function
+   */
+  eval($_);
+}
