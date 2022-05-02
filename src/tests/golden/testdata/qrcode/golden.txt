@@ -85,6 +85,9 @@ MAYBE   callSimplify: Could simplify to $group[1] at testdata/qrcode/qrcode.php:
 WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/qrcode/qrcode.php:697
     switch ($mask) {
     ^
+WARNING usageExitOrDie: Don't use the 'exit' function at testdata/qrcode/qrcode.php:33
+  exit(0);
+  ^^^^^^^
 ERROR   classMembersOrder: Property $qr_capacity must go before methods in the class QRCode at testdata/qrcode/qrcode.php:890
   private $qr_capacity = [
   ^^

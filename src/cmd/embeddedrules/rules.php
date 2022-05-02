@@ -674,3 +674,18 @@ function concatenationPrecedence() {
         $_ . $_ >> $_;
     }
 }
+
+/**
+ * @comment  Report using `exit` or 'die' functions.
+ */
+function usageExitOrDie() {
+  /**
+   * @warning Don't use the 'exit' function
+   */
+  exit($_);
+
+  /**
+   * @warning Don't use the 'die' function
+   */
+  die($_);
+}
