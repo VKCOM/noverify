@@ -699,3 +699,13 @@ function useEvalCheck() {
    */
   eval($_);
 }
+
+/**
+ * @comment  Report using `sleep' function.
+ */
+function useSleepCheck() {
+  /**
+   * @warning Don't use the 'sleep' function
+   */
+  sleep($_);
+}
