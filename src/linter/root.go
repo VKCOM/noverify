@@ -1823,6 +1823,13 @@ func (d *rootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filter
 		if filter.Pure && !solver.SideEffectFree(d.scope(), d.ctx.st, nil, nn) {
 			return false
 		}
+		if filter.Regexp != nil {
+			if vr, ok := nn.(*ir.SimpleVar); ok {
+				if filter.Regexp.MatchString(vr.Name) {
+					return true
+				}
+			}
+		}
 	}
 
 	return true
