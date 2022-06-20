@@ -426,7 +426,7 @@ This rule will now don't apply to files with the `common/` folder in the path.
 
 The `@filter` restriction allows you to restrict the rule by name of matched variable.
 
-Thus, the rule will be applied only if there is a matched variable that not matches passed regexp.
+Thus, the rule will be applied only if there is a matched variable that matches passed regexp.
 
 For example:
 
