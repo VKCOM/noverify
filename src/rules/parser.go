@@ -297,7 +297,7 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 			}
 			name := part.Params[0]
 			if !strings.HasPrefix(name, "$") {
-				return rule, p.errorf(st, "@pure param must be a phpgrep variable")
+				return rule, p.errorf(st, "@filter param must be a phpgrep variable")
 			}
 			name = strings.TrimPrefix(name, "$")
 			found := p.checkForVariableInPattern(name, patternStmt, verifiedVars)
