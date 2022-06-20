@@ -291,6 +291,30 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 			filter := filterSet[name]
 			filter.Pure = true
 			filterSet[name] = filter
+		case "filter":
+			if len(part.Params) != 2 {
+				return rule, p.errorf(st, "@filter expects exactly 2 param, got %d", len(part.Params))
+			}
+			name := part.Params[0]
+			if !strings.HasPrefix(name, "$") {
+				return rule, p.errorf(st, "@pure param must be a phpgrep variable")
+			}
+			name = strings.TrimPrefix(name, "$")
+			found := p.checkForVariableInPattern(name, patternStmt, verifiedVars)
+			if !found {
+				return rule, p.errorf(st, "@filter contains a reference to a variable %s that is not present in the pattern", name)
+			}
+			if filterSet == nil {
+				filterSet = map[string]Filter{}
+			}
+			regexString := part.Params[1]
+			filter := filterSet[name]
+			regex, err := regexp.Compile(regexString)
+			if err != nil {
+				return rule, p.errorf(st, "@filter %s: can't compile regexp %s", regexString, err)
+			}
+			filter.Regexp = regex
+			filterSet[name] = filter
 
 		default:
 			return rule, p.errorf(st, "unknown attribute @%s on line %d", part.Name(), part.Line())
