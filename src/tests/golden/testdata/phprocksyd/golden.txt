@@ -7,31 +7,31 @@ WARNING useSleep: Don't use the 'sleep' function at testdata/phprocksyd/Phprocks
 MAYBE   deprecated: Call to deprecated function dl (since: 5.3) at testdata/phprocksyd/Phprocksyd.php:73
             if (!extension_loaded($ext) && !dl($ext . '.so')) {
                                             ^^
-WARNING usageExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:75
+WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:75
                 exit(1);
                 ^^^^^^^
-WARNING usageExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:82
+WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:82
             exit(1);
             ^^^^^^^
-WARNING usageExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:87
+WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:87
             exit(0);
             ^^^^^^^
-WARNING usageExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:93
+WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:93
             exit(1);
             ^^^^^^^
-WARNING usageExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:98
+WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:98
             exit(1);
             ^^^^^^^
-WARNING usageExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:118
+WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:118
             exit(1);
             ^^^^^^^
-WARNING usageExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:129
+WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:129
                 exit(1);
                 ^^^^^^^
 ERROR   constCase: Constant 'NULL' should be used in lower case as 'null' at testdata/phprocksyd/Phprocksyd.php:321
             $n = stream_select($read, $write, $except, NULL);
                                                        ^^^^
-WARNING usageExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:325
+WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:325
                 exit(1);
                 ^^^^^^^
 WARNING invalidDocblock: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:364
@@ -61,25 +61,25 @@ WARNING invalidDocblock: Malformed @param $stream_id tag (maybe type is missing?
 WARNING invalidDocblock: Malformed @param $req tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:444
      * @param $req
               ^^^^
-WARNING usageExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:481
+WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:481
                 exit(0);
                 ^^^^^^^
 ERROR   undefinedMethod: Call to undefined method {mixed}->run() at testdata/phprocksyd/Phprocksyd.php:479
                 $instance->run($req['params']);
                            ^^^
-WARNING usageExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:557
+WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:557
                         exit(1);
                         ^^^^^^^
-WARNING usageExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:590
+WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:590
             exit(0);
             ^^^^^^^
-WARNING usageExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:619
+WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:619
         exit(1);
         ^^^^^^^
-WARNING usageExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:685
+WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:685
         exit(0);
         ^^^^^^^
-WARNING usageExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Simple.php:38
+WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Simple.php:38
             exit(1);
             ^^^^^^^
 ERROR   constCase: Constant 'NULL' should be used in lower case as 'null' at testdata/phprocksyd/Simple.php:158

@@ -1,6 +1,6 @@
 <?php
 
-function usageExitOrDie() {
+function useExitOrDie() {
   exit; // want `Don't use the 'exit' function`
   exit(1); // want `Don't use the 'exit' function`
 
