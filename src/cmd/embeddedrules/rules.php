@@ -676,7 +676,7 @@ function concatenationPrecedence() {
 }
 
 /**
- * @comment  Report using `exit` or 'die' functions.
+ * @comment Report using `exit` or 'die' functions.
  */
 function usageExitOrDie() {
   /**
@@ -691,7 +691,7 @@ function usageExitOrDie() {
 }
 
 /**
- * @comment  Report using `eval' function.
+ * @comment Report using `eval' function.
  */
 function useEvalCheck() {
   /**
@@ -701,7 +701,7 @@ function useEvalCheck() {
 }
 
 /**
- * @comment  Report using `sleep' function.
+ * @comment Report using `sleep' function.
  */
 function useSleepCheck() {
   /**
