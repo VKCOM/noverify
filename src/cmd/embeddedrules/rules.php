@@ -676,9 +676,11 @@ function concatenationPrecedence() {
 }
 
 /**
- * @comment Report using `exit` or 'die' functions.
+ * @comment Report using `exit` or `die` functions.
+ * @before  exit(1);
+ * @after   // no exit
  */
-function usageExitOrDie() {
+function useExitOrDie() {
   /**
    * @warning Don't use the 'exit' function
    */
@@ -691,9 +693,11 @@ function usageExitOrDie() {
 }
 
 /**
- * @comment Report using `eval' function.
+ * @comment Report using `eval` function.
+ * @before  eval("2 + 2");
+ * @after   // no eval
  */
-function useEvalCheck() {
+function useEval() {
   /**
    * @warning Don't use the 'eval' function
    */
@@ -701,9 +705,11 @@ function useEvalCheck() {
 }
 
 /**
- * @comment Report using `sleep' function.
+ * @comment Report using `sleep` function.
+ * @before  sleep(10);
+ * @after   // no sleep
  */
-function useSleepCheck() {
+function useSleep() {
   /**
    * @warning Don't use the 'sleep' function
    */
