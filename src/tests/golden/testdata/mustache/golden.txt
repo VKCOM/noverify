@@ -22,7 +22,7 @@ MAYBE   ternarySimplify: Could rewrite as `$this->fileMode ?? (0666 & ~umask())`
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:143
                 @chmod($fileName, $mode);
                 ^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING useEvalCheck: Don't use the 'eval' function at testdata/mustache/src/Mustache/Cache/NoopCache.php:45
+WARNING useEval: Don't use the 'eval' function at testdata/mustache/src/Mustache/Cache/NoopCache.php:45
         eval('?>' . $value);
         ^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$node[Mustache_Tokenizer::FILTERS] ?? array()` at testdata/mustache/src/Mustache/Compiler.php:99

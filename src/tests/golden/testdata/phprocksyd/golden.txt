@@ -1,7 +1,7 @@
-WARNING useSleepCheck: Don't use the 'sleep' function at testdata/phprocksyd/Phprocksyd.php:8
+WARNING useSleep: Don't use the 'sleep' function at testdata/phprocksyd/Phprocksyd.php:8
         sleep(10);
         ^^^^^^^^^
-WARNING useSleepCheck: Don't use the 'sleep' function at testdata/phprocksyd/Phprocksyd.php:18
+WARNING useSleep: Don't use the 'sleep' function at testdata/phprocksyd/Phprocksyd.php:18
         sleep(100);
         ^^^^^^^^^^
 MAYBE   deprecated: Call to deprecated function dl (since: 5.3) at testdata/phprocksyd/Phprocksyd.php:73
