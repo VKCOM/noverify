@@ -542,7 +542,7 @@ function yodaStyle() {
 }
 ```
 
-> Note that label name must start with `any_` or `seq_`.
+> Note that label name must start with `any_` or `seq_` or be equal to `any` or `seq`.
 
 Where all rules must be wrapped in `{}`. Thus, now any expression from the list will give a warning.
 
