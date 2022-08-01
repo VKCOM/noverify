@@ -1555,8 +1555,6 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out := &ir.Dnumber{}
 		out.ParentNode = c.back()
 		c.push(out)
-		out.ParentNode = c.back()
-		c.push(out)
 		out.Position = n.Position
 		out.NumberTkn = n.NumberTkn
 		out.Value = string(n.Value)
