@@ -52,6 +52,9 @@ func (g *genClone) writeCloneCase(w *bytes.Buffer, pkg *packageData, typ *typeDa
 
 	for i := 0; i < typ.info.NumFields(); i++ {
 		field := typ.info.Field(i)
+		if field.Name() == "ParentNode" {
+			continue
+		}
 		switch typeString := field.Type().String(); typeString {
 		case "[]ir.Node":
 			fmt.Fprintf(w, "    clone.%[1]s = NodeSliceClone(x.%[1]s)\n", field.Name())

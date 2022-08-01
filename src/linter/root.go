@@ -142,7 +142,16 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 	// after all will be moved to checker
 	if d.metaInfo().IsIndexingComplete() {
 		if n, ok := n.(ir.DocOwner); ok {
-			d.checker.CheckCommentMisspellings(d.bestPlaceForReport(n), n.DocComment().Raw)
+			doc := n.DocComment()
+			d.checker.CheckCommentMisspellings(d.bestPlaceForReport(n), doc.Raw)
+
+			if class, ok := n.(*ir.ClassStmt); ok {
+				d.checker.CheckClassPHPDoc(class, doc)
+			}
+			if method, ok := n.(ir.ParamListOwner); ok {
+				errors := d.checker.CheckPHPDoc(method, doc, method.ParamList())
+				d.reportPHPDocErrors(errors)
+			}
 		}
 
 		if n, ok := n.(ir.NameOwner); ok {
@@ -159,7 +168,6 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		if n, ok := n.(ir.TypeHintOwner); ok {
 			typeHint := n.TypeHint()
 			if typeHint != nil {
-
 				d.checker.CheckTypeHintNode(typeHint)
 			}
 		}
@@ -189,9 +197,10 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		d.checker.CheckImplements(n, cl, n.Implements)
 		d.checker.CheckExtends(n, cl, n.Extends)
 
-		doc := d.parseClassPHPDoc(className, n.Doc)
-		d.reportPHPDocErrors(doc.errs)
-		d.handleClassDoc(doc, &cl)
+		if !d.metaInfo().IsIndexingComplete() {
+			doc := d.parseClassPHPDoc(className, n.Doc)
+			d.handleClassDoc(doc, &cl)
+		}
 
 		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
 
@@ -216,7 +225,6 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		d.checker.CheckExtends(n, cl, n.Extends)
 
 		doc := d.parseClassPHPDoc(n, n.Doc)
-		d.reportPHPDocErrors(doc.errs)
 		d.handleClassDoc(doc, &cl)
 
 		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
@@ -835,7 +843,6 @@ func (d *rootWalker) parseClassPHPDoc(class ir.Node, doc phpdoc.Comment) classPH
 	result.methods = meta.NewFunctionsMap()
 
 	for _, part := range doc.Parsed {
-		d.checker.checkPHPDocRef(class, part)
 		switch part.Name() {
 		case "property", "property-read", "property-write":
 			parseClassPHPDocProperty(class, &d.ctx, &result, part.(*phpdoc.TypeVarCommentPart))
@@ -1062,9 +1069,6 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	}
 
 	// Check stage.
-	errors := d.checker.CheckPHPDoc(meth, meth.Doc, meth.Params)
-	d.reportPHPDocErrors(errors)
-
 	returnTypeHint, ok := d.parseTypeHintNode(meth.ReturnType)
 	if !ok {
 		returnTypeHint = attributes.TypeAware(meth.AttrGroups, d.ctx.st)

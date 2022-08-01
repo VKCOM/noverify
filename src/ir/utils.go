@@ -1,6 +1,8 @@
 package ir
 
-import "github.com/VKCOM/php-parser/pkg/token"
+import (
+	"github.com/VKCOM/php-parser/pkg/token"
+)
 
 // traverseToken calls the passed function with the passed token and
 // recursively traverse all FreeFloating of the passed token.
@@ -26,4 +28,14 @@ func traverseToken(t *token.Token, cb func(*token.Token) bool) (continueTraverse
 	}
 
 	return true
+}
+
+func FindParent[T any](v any) *T {
+	for v != nil {
+		if el, ok := v.(*T); ok {
+			return el
+		}
+		v = v.(Node).Parent()
+	}
+	return nil
 }

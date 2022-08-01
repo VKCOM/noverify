@@ -41,6 +41,7 @@ func main() {
 		{"generate get position", doGenerateGetPosition},
 		{"generate iterate tokens", doGenerateIterateTokens},
 		{"generate get first token", doGenerateGetFirstToken},
+		{"generate parent", doGenerateParent},
 		{"generate interfaces", doGenerateInterfaces},
 	}
 
@@ -126,5 +127,10 @@ func doGenerateGetFirstToken(ctx *context) error {
 
 func doGenerateInterfaces(ctx *context) error {
 	g := &getInterfaces{ctx: ctx}
+	return g.Run()
+}
+
+func doGenerateParent(ctx *context) error {
+	g := &genParent{ctx: ctx}
 	return g.Run()
 }

@@ -66,9 +66,6 @@ func (r *rootChecker) CheckFunction(fun *ir.FunctionStmt) bool {
 	}
 
 	// Check stage.
-	errors := r.CheckPHPDoc(fun, fun.Doc, fun.Params)
-	r.reportPHPDocErrors(errors)
-
 	doc := phpdoctypes.Parse(fun.Doc, fun.Params, r.normalizer)
 	phpDocReturnType := doc.ReturnType
 	phpDocParamTypes := doc.ParamTypes
@@ -540,15 +537,11 @@ func (r *rootChecker) CheckTypeHintNode(n ir.Node) {
 	// We need to check this part without normalization, since
 	// otherwise parent will be replaced with the class name.
 	typeList := types.TypeHintTypes(n)
-	for _, typ := range typeList {
-		if typ.Elem == "parent" && r.state.CurrentClass != "" {
-			if r.state.CurrentParentClass == "" {
-				r.walker.Report(n, LevelError, "typeHint", "Cannot use 'parent' typehint when current class has no parent")
-			}
-		}
-	}
+	currentClass := ir.FindParent[ir.ClassStmt](n)
 
-	_, inTrait := r.currentClassNodeStack.Current().(*ir.TraitStmt)
+	r.checkParentTypehint(n, typeList, currentClass)
+
+	inTrait := ir.FindParent[ir.TraitStmt](n) != nil
 
 	typesMap := types.NewMapWithNormalization(r.normalizer, typeList)
 
@@ -572,6 +565,17 @@ func (r *rootChecker) CheckTypeHintNode(n ir.Node) {
 			r.CheckNameCase(n, className, class.Name)
 		}
 	})
+}
+
+func (r *rootChecker) checkParentTypehint(n ir.Node, typeList []types.Type, currentClass *ir.ClassStmt) {
+	for _, typ := range typeList {
+		if typ.Elem == "parent" && currentClass != nil {
+			haveParentClass := currentClass.Extends != nil
+			if !haveParentClass {
+				r.walker.Report(n, LevelError, "typeHint", "Cannot use 'parent' typehint when current class has no parent")
+			}
+		}
+	}
 }
 
 func (r *rootChecker) CheckFuncParams(funcName *ir.Identifier, params []ir.Node, funcParams parseFuncParamsResult, phpDocParamTypes phpdoctypes.ParamsMap) {
@@ -734,6 +738,34 @@ func (r *rootChecker) CheckPHPDocVar(n ir.Node, doc phpdoc.Comment, typ types.Ma
 			r.checkUndefinedClassesInPHPDoc(n, typ, part)
 		}
 	}
+}
+
+func (r *rootChecker) CheckClassPHPDoc(class ir.Node, doc phpdoc.Comment) {
+	var result = classPHPDocParseResult{}
+
+	if doc.Raw == "" {
+		return
+	}
+
+	result.properties = make(meta.PropertiesMap)
+	result.methods = meta.NewFunctionsMap()
+
+	for _, part := range doc.Parsed {
+		r.checkPHPDocRef(class, part)
+
+		switch part.Name() {
+		case "property", "property-read", "property-write":
+			parseClassPHPDocProperty(class, &r.walker.ctx, &result, part.(*phpdoc.TypeVarCommentPart))
+		case "method":
+			parseClassPHPDocMethod(class, &r.walker.ctx, &result, part.(*phpdoc.RawCommentPart))
+		case "mixin":
+			parseClassPHPDocMixin(class, r.walker.ctx.st, &result, part.(*phpdoc.RawCommentPart))
+		case "package":
+			parseClassPHPDocPackage(class, r.walker.ctx.st, &result, part.(*phpdoc.PackageCommentPart))
+		}
+	}
+
+	r.reportPHPDocErrors(result.errs)
 }
 
 func (r *rootChecker) CheckParentConstructorCall(n ir.Node, parentConstructorCalled bool) {

@@ -32,6 +32,9 @@ func (g *genIterate) Run() error {
 func (g *genIterate) writeIterate(w *bytes.Buffer, pkg *packageData, typ *typeData) {
 	for i := 0; i < typ.info.NumFields(); i++ {
 		field := typ.info.Field(i)
+		if field.Name() == "ParentNode" {
+			continue
+		}
 		switch typeString := field.Type().String(); typeString {
 		case "*github.com/VKCOM/php-parser/pkg/token.Token":
 			fmt.Fprintf(w, "    if !traverseToken(n.%s, cb) {\n", field.Name())
