@@ -17,7 +17,7 @@ func Name(attr *ir.Attribute, state *meta.ClassParseState) string {
 func NamedArgument(attr *ir.Attribute, name string) (ir.Node, bool) {
 	for i := range attr.Args {
 		arg := attr.Arg(i)
-		if arg.Name != nil && arg.Name.Value == name {
+		if arg.ArgName != nil && arg.ArgName.Value == name {
 			return arg.Expr, true
 		}
 	}

@@ -24,8 +24,8 @@ func (n *Argument) Walk(v Visitor) {
 	if !v.EnterNode(n) {
 		return
 	}
-	if n.Name != nil {
-		n.Name.Walk(v)
+	if n.ArgName != nil {
+		n.ArgName.Walk(v)
 	}
 	if n.Expr != nil {
 		n.Expr.Walk(v)
@@ -1483,8 +1483,8 @@ func (n *PropertyListStmt) Walk(v Visitor) {
 	for _, nn := range n.Modifiers {
 		nn.Walk(v)
 	}
-	if n.Type != nil {
-		n.Type.Walk(v)
+	if n.PropertyType != nil {
+		n.PropertyType.Walk(v)
 	}
 	for _, nn := range n.Properties {
 		nn.Walk(v)

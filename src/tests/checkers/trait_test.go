@@ -63,20 +63,20 @@ trait Test {
 }
 `)
 	test.Expect = []string{
-		`Cannot use trait A as a typehint for property type`,
-		`Cannot use trait A as a typehint for property type`,
-		`Cannot use trait A as a typehint for return type`,
-		`Cannot use trait A as a typehint for parameter type`,
-		`Cannot use trait A as a typehint for return type`,
-		`Cannot use trait A as a typehint for parameter type`,
-		`Cannot use trait B as a typehint for parameter type`,
-		`Cannot use trait A as a typehint for return type`,
-		`Cannot use trait A as a typehint for parameter type`,
-		`Cannot use trait A as a typehint for return type`,
-		`Cannot use trait A as a typehint for parameter type`,
-		`Cannot use trait B as a typehint for parameter type`,
-		`Cannot use trait B as a typehint for closure return type`,
-		`Cannot use trait A as a typehint for parameter type`,
+		`Cannot use trait A as a typehint`,
+		`Cannot use trait A as a typehint`,
+		`Cannot use trait A as a typehint`,
+		`Cannot use trait A as a typehint`,
+		`Cannot use trait A as a typehint`,
+		`Cannot use trait A as a typehint`,
+		`Cannot use trait B as a typehint`,
+		`Cannot use trait A as a typehint`,
+		`Cannot use trait A as a typehint`,
+		`Cannot use trait A as a typehint`,
+		`Cannot use trait A as a typehint`,
+		`Cannot use trait B as a typehint`,
+		`Cannot use trait B as a typehint`,
+		`Cannot use trait A as a typehint`,
 	}
 	linttest.RunFilterMatch(test, "badTraitUse")
 }

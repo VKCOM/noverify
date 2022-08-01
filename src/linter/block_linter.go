@@ -22,6 +22,13 @@ type blockLinter struct {
 }
 
 func (b *blockLinter) enterNode(n ir.Node) {
+	if n, ok := n.(ir.TypeHintOwner); ok {
+		typeHint := n.TypeHint()
+		if typeHint != nil {
+			b.walker.r.checker.CheckTypeHintNode(typeHint)
+		}
+	}
+
 	switch n := n.(type) {
 	case *ir.Assign:
 		b.checkAssign(n)

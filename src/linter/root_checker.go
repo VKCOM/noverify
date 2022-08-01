@@ -65,9 +65,6 @@ func (r *rootChecker) CheckFunction(fun *ir.FunctionStmt) bool {
 		r.walker.Report(fun.FunctionName, LevelNotice, "complexity", "Too big function: more than %d lines", maxFunctionLines)
 	}
 
-	r.CheckCommentMisspellings(fun.FunctionName, fun.Doc.Raw)
-	r.CheckIdentMisspellings(fun.FunctionName)
-
 	// Check stage.
 	errors := r.CheckPHPDoc(fun, fun.Doc, fun.Params)
 	r.reportPHPDocErrors(errors)
@@ -80,7 +77,6 @@ func (r *rootChecker) CheckFunction(fun *ir.FunctionStmt) bool {
 	if ok && !doc.Inherit {
 		r.CheckFuncReturnType(fun.FunctionName, fun.FunctionName.Value, returnTypeHint, phpDocReturnType)
 	}
-	r.CheckTypeHintNode(fun.ReturnType, "return type")
 
 	funcParams := r.walker.parseFuncParams(fun.Params, phpDocParamTypes, sc, nil)
 	r.CheckFuncParams(fun.FunctionName, fun.Params, funcParams, phpDocParamTypes)
@@ -94,8 +90,6 @@ func (r *rootChecker) CheckPropertyList(pl *ir.PropertyListStmt) bool {
 	accessImplicit := true
 
 	for _, m := range pl.Modifiers {
-		r.CheckModifierKeywordCase(m)
-
 		switch strings.ToLower(m.Value) {
 		case "public", "protected", "private":
 			accessImplicit = false
@@ -112,15 +106,12 @@ func (r *rootChecker) CheckPropertyList(pl *ir.PropertyListStmt) bool {
 
 	docblockType := r.walker.parsePHPDocVar(pl.Doc)
 
-	r.CheckCommentMisspellings(pl, pl.Doc.Raw)
 	r.CheckPHPDocVar(pl, pl.Doc, docblockType)
 
-	typeHintType, ok := r.walker.parseTypeHintNode(pl.Type)
+	typeHintType, ok := r.walker.parseTypeHintNode(pl.PropertyType)
 	if ok && !types.TypeHintHasMoreAccurateType(typeHintType, docblockType) {
 		r.walker.Report(pl, LevelNotice, "typeHint", "Specify the type for the property in PHPDoc, 'array' type hint too generic")
 	}
-
-	r.CheckTypeHintNode(pl.Type, "property type")
 
 	for _, p := range pl.Properties {
 		prop := p.(*ir.PropertyStmt)
@@ -541,7 +532,7 @@ func (r *rootChecker) compareKeywordWithTokenCase(n ir.Node, tok *token.Token, k
 	}
 }
 
-func (r *rootChecker) CheckTypeHintNode(n ir.Node, place string) {
+func (r *rootChecker) CheckTypeHintNode(n ir.Node) {
 	if !r.info.IsIndexingComplete() || n == nil {
 		return
 	}
@@ -567,7 +558,7 @@ func (r *rootChecker) CheckTypeHintNode(n ir.Node, place string) {
 
 			_, hasTrait := r.info.GetTrait(className)
 			if hasTrait && !inTrait {
-				r.walker.Report(n, LevelWarning, "badTraitUse", "Cannot use trait %s as a typehint for %s", strings.TrimPrefix(className, `\`), place)
+				r.walker.Report(n, LevelWarning, "badTraitUse", "Cannot use trait %s as a typehint", strings.TrimPrefix(className, `\`))
 			}
 
 			class, hasClass := r.info.GetClass(className)
@@ -604,16 +595,6 @@ func (r *rootChecker) checkFuncParam(p *ir.Parameter) {
 		}
 		return true
 	})
-
-	r.CheckTypeHintFunctionParam(p)
-}
-
-func (r *rootChecker) CheckTypeHintFunctionParam(p *ir.Parameter) {
-	if !r.info.IsIndexingComplete() {
-		return
-	}
-
-	r.CheckTypeHintNode(p.VariableType, "parameter type")
 }
 
 func (r *rootChecker) checkParamsTypeHint(funcName *ir.Identifier, funcParams parseFuncParamsResult, phpDocParamTypes phpdoctypes.ParamsMap) {
@@ -691,6 +672,12 @@ func (r *rootChecker) CheckAssignNullToNotNullableProperty(prop *ir.PropertyStmt
 			r.walker.Report(prop, LevelNotice, "propNullDefault", "Assigning null to a not nullable property")
 			r.walker.addQuickFix("propNullDefault", r.quickfix.NullForNotNullableProperty(prop))
 		}
+	}
+}
+
+func (r *rootChecker) CheckModifiersKeywordCase(modifiers []*ir.Identifier) {
+	for _, modifier := range modifiers {
+		r.CheckModifierKeywordCase(modifier)
 	}
 }
 

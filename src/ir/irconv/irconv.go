@@ -1166,7 +1166,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out := &ir.Argument{}
 		out.Position = n.Position
 		if n.Name != nil {
-			out.Name = c.convNode(n.Name).(*ir.Identifier)
+			out.ArgName = c.convNode(n.Name).(*ir.Identifier)
 		}
 		out.ColonTkn = n.ColonTkn
 		out.VariadicTkn = n.VariadicTkn
@@ -1980,7 +1980,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			out.AttrGroups = slice
 		}
 
-		out.Type = c.convNode(n.Type)
+		out.PropertyType = c.convNode(n.Type)
 		out.Properties = c.convNodeSlice(n.Props)
 
 		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))

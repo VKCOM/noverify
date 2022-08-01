@@ -80,6 +80,10 @@ class c1 {
   private static function secret() {}
 }
 `)
+	// TODO
+	test.Expect = []string{
+		`"Responsable" is a misspelling of "Responsible"`,
+	}
 	test.RunAndMatch()
 }
 
