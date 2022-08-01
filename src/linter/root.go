@@ -59,10 +59,6 @@ type rootWalker struct {
 	// internal state
 	meta fileMeta
 
-	// We need a stack here, since anonymous classes can be
-	// inside common classes and anonymous.
-	currentClassNodeStack irutil.NodePath
-
 	allowDisabledRegexp *regexp.Regexp // user-defined flag that files suitable for this regular expression should not be linted
 	linterDisabled      bool           // flag indicating whether linter is disabled. Flag is set to true only if the file
 	// name matches the pattern and @linter disable was encountered
@@ -189,58 +185,51 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		}
 
 	case *ir.AnonClassExpr:
-		d.currentClassNodeStack.Push(n)
+		class := d.allocateClass(n)
+		className := &ir.Identifier{Value: class.Name}
 
-		cl := d.getClass()
-		className := &ir.Identifier{Value: cl.Name}
-
-		d.checker.CheckImplements(n, cl, n.Implements)
-		d.checker.CheckExtends(n, cl, n.Extends)
+		if d.metaInfo().IsIndexingComplete() {
+			d.checker.CheckImplements(n, class, n.Implements)
+			d.checker.CheckExtends(n, class, n.Extends)
+		}
 
 		if !d.metaInfo().IsIndexingComplete() {
+			d.processImplements(n.Implements, class)
 			doc := d.parseClassPHPDoc(className, n.Doc)
-			d.handleClassDoc(doc, &cl)
+			d.handleClassDoc(doc, &class)
 		}
 
-		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
+		d.meta.Classes.Set(d.ctx.st.CurrentClass, class)
+
+	case *ir.ClassStmt:
+		class := d.allocateClass(n)
+		class.Flags = d.getClassModifiers(n)
+
+		if d.metaInfo().IsIndexingComplete() {
+			d.checker.CheckImplements(n, class, n.Implements)
+			d.checker.CheckExtends(n, class, n.Extends)
+		}
+
+		if !d.metaInfo().IsIndexingComplete() {
+			d.processImplements(n.Implements, class)
+			doc := d.parseClassPHPDoc(n, n.Doc)
+			d.handleClassDoc(doc, &class)
+		}
+
+		d.meta.Classes.Set(d.ctx.st.CurrentClass, class)
 
 	case *ir.InterfaceStmt:
-		d.currentClassNodeStack.Push(n)
 		d.checker.CheckKeywordCase(n, "interface")
-	case *ir.ClassStmt:
-		d.currentClassNodeStack.Push(n)
-
-		cl := d.getClass()
-		classFlags := d.getClassModifiers(n)
-
-		if classFlags != 0 {
-			// Since cl is not a pointer, and it's illegal to update
-			// individual fields through map, we update cl and
-			// then assign it back to the map.
-			cl.Flags = classFlags
-			d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
-		}
-
-		d.checker.CheckImplements(n, cl, n.Implements)
-		d.checker.CheckExtends(n, cl, n.Extends)
-
-		doc := d.parseClassPHPDoc(n, n.Doc)
-		d.handleClassDoc(doc, &cl)
-
-		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
-
 	case *ir.TraitStmt:
-		d.currentClassNodeStack.Push(n)
 		d.checker.CheckKeywordCase(n, "trait")
 	case *ir.TraitUseStmt:
 		d.checker.CheckKeywordCase(n, "use")
-		cl := d.getClass()
-		for _, tr := range n.Traits {
-			traitName, ok := solver.GetClassName(d.ctx.st, tr)
-			if ok {
-				cl.Traits[traitName] = struct{}{}
-				d.checker.CheckTraitImplemented(d.currentClassNodeStack.Current(), tr, d.getClass(), traitName)
-			}
+		inClass, ok := ir.FindParentInterface[ir.ClassLike](n)
+		if ok {
+			class := d.allocateClass(*inClass)
+			d.checker.CheckTraitUse(n, class, func() meta.ClassInfo {
+				return d.allocateClass(*inClass)
+			})
 		}
 	case *ir.Assign:
 		v, ok := n.Variable.(*ir.SimpleVar)
@@ -293,6 +282,19 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 	return res
 }
 
+func (d *rootWalker) processImplements(implements *ir.ClassImplementsStmt, class meta.ClassInfo) {
+	if implements == nil {
+		return
+	}
+
+	for _, tr := range implements.InterfaceNames {
+		interfaceName, ok := solver.GetClassName(d.ctx.st, tr)
+		if ok {
+			class.Interfaces[interfaceName] = struct{}{}
+		}
+	}
+}
+
 // LeaveNode is invoked after node process.
 func (d *rootWalker) LeaveNode(n ir.Node) {
 	for _, c := range d.custom {
@@ -301,9 +303,7 @@ func (d *rootWalker) LeaveNode(n ir.Node) {
 
 	switch n.(type) {
 	case *ir.ClassStmt, *ir.InterfaceStmt, *ir.TraitStmt, *ir.AnonClassExpr:
-		d.getClass() // populate classes map
-
-		d.currentClassNodeStack.Pop()
+		d.allocateClass(n) // populate classes map
 	}
 
 	state.LeaveNode(d.ctx.st, n)
@@ -924,7 +924,11 @@ func (d *rootWalker) parsePHPDocVar(doc phpdoc.Comment) (typesMap types.Map) {
 }
 
 func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
-	cl := d.getClass()
+	inClass, ok := ir.FindParentInterface[ir.ClassLike](pl)
+	if !ok {
+		return true
+	}
+	cl := d.allocateClass(*inClass)
 
 	isStatic := false
 	accessLevel := meta.Public
@@ -975,7 +979,11 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 }
 
 func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
-	cl := d.getClass()
+	inClass, ok := ir.FindParentInterface[ir.ClassLike](list)
+	if !ok {
+		return true
+	}
+	cl := d.allocateClass(*inClass)
 	accessLevel := meta.Public
 
 	for _, m := range list.Modifiers {
@@ -1010,7 +1018,11 @@ func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
 }
 
 func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
-	class := d.getClass()
+	inClass, ok := ir.FindParentInterface[ir.ClassLike](meth)
+	if !ok {
+		return true
+	}
+	class := d.allocateClass(*inClass)
 	doc := phpdoctypes.Parse(meth.Doc, meth.Params, d.ctx.typeNormalizer)
 
 	if meth.MethodName.Value == "__construct" {
@@ -1025,7 +1037,7 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	}
 
 	nm := meth.MethodName.Value
-	_, insideInterface := d.currentClassNodeStack.Current().(*ir.InterfaceStmt)
+	_, insideInterface := ir.FindParent[ir.InterfaceStmt](meth)
 
 	d.checker.CheckOldStyleConstructor(meth)
 
@@ -1354,7 +1366,7 @@ func (d *rootWalker) currentFunction() (meta.FuncInfo, bool) {
 	return fun, true
 }
 
-func (d *rootWalker) getClass() meta.ClassInfo {
+func (d *rootWalker) allocateClass(n ir.Node) meta.ClassInfo {
 	var m meta.ClassesMap
 
 	if d.ctx.st.IsTrait {
@@ -1377,7 +1389,7 @@ func (d *rootWalker) getClass() meta.ClassInfo {
 		}
 
 		cl = meta.ClassInfo{
-			Pos:              d.getElementPos(d.currentClassNodeStack.Current()),
+			Pos:              d.getElementPos(n),
 			Name:             d.ctx.st.CurrentClass,
 			Flags:            flags,
 			Parent:           d.ctx.st.CurrentParentClass,

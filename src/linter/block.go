@@ -2076,7 +2076,11 @@ func (b *blockWalker) handleAssign(a *ir.Assign) bool {
 			break
 		}
 
-		cls := b.r.getClass()
+		inClass, ok := ir.FindParentInterface[ir.ClassLike](v)
+		if !ok {
+			break
+		}
+		cls := b.r.allocateClass(*inClass)
 
 		p := cls.Properties[propertyName.Value]
 		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, a.Expr, b.ctx.customTypes))
@@ -2098,7 +2102,11 @@ func (b *blockWalker) handleAssign(a *ir.Assign) bool {
 			break
 		}
 
-		cls := b.r.getClass()
+		inClass, ok := ir.FindParentInterface[ir.ClassLike](v)
+		if !ok {
+			break
+		}
+		cls := b.r.allocateClass(*inClass)
 
 		p := cls.Properties["$"+sv.Name]
 		p.Typ = p.Typ.Append(solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, a.Expr, b.ctx.customTypes))

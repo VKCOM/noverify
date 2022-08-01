@@ -27,8 +27,6 @@ type rootChecker struct {
 	state  *meta.ClassParseState
 	parser *phpdoc.TypeParser
 
-	currentClassNodeStack *irutil.NodePath
-
 	// TypoFixer is a rule set for English typos correction.
 	// If nil, no misspell checking is performed.
 	// See github.com/client9/misspell for details.
@@ -39,15 +37,14 @@ type rootChecker struct {
 
 func newRootChecker(walker *rootWalker, quickfix *QuickFixGenerator) *rootChecker {
 	c := &rootChecker{
-		file:                  walker.file,
-		walker:                walker,
-		normalizer:            walker.ctx.typeNormalizer,
-		info:                  walker.metaInfo(),
-		state:                 walker.ctx.st,
-		scope:                 walker.scope(),
-		parser:                walker.ctx.phpdocTypeParser,
-		currentClassNodeStack: &walker.currentClassNodeStack,
-		quickfix:              quickfix,
+		file:       walker.file,
+		walker:     walker,
+		normalizer: walker.ctx.typeNormalizer,
+		info:       walker.metaInfo(),
+		state:      walker.ctx.st,
+		scope:      walker.scope(),
+		parser:     walker.ctx.phpdocTypeParser,
+		quickfix:   quickfix,
 	}
 	if walker.config != nil {
 		c.typoFixer = walker.config.TypoFixer
@@ -284,7 +281,7 @@ func (r *rootChecker) checkPHPDocSeeRef(n ir.Node, part phpdoc.CommentPart) {
 	for _, ref := range refs {
 		// Sometimes people write references like `foo()` `foo...` `foo@`.
 		ref = strings.TrimRight(ref, "().;@")
-		if !r.isValidPHPDocRef(ref) {
+		if !r.isValidPHPDocRef(n, ref) {
 			r.walker.ReportPHPDoc(
 				PHPDocLineField(n, part.Line(), 1),
 				LevelWarning, "invalidDocblockRef", "@see tag refers to unknown symbol %s", ref,
@@ -382,7 +379,9 @@ func (r *rootChecker) checkUndefinedClass(className string, part phpdoc.CommentP
 	)
 }
 
-func (r *rootChecker) isValidPHPDocRef(ref string) bool {
+func (r *rootChecker) isValidPHPDocRef(n ir.Node, ref string) bool {
+	currentClass, _ := ir.FindParentInterface[ir.ClassLike](n)
+
 	// Skip:
 	// - URLs
 	// - Things that can be a filename (e.g. "foo.php")
@@ -438,7 +437,7 @@ func (r *rootChecker) isValidPHPDocRef(ref string) bool {
 
 	isValidSymbol := func(ref string) bool {
 		if !strings.HasPrefix(ref, `\`) {
-			if r.currentClassNodeStack.Current() != nil {
+			if currentClass != nil {
 				className := r.state.CurrentClass
 				if _, ok := solver.FindMethod(r.info, className, ref); ok {
 					return true // OK: class method reference
@@ -537,11 +536,11 @@ func (r *rootChecker) CheckTypeHintNode(n ir.Node) {
 	// We need to check this part without normalization, since
 	// otherwise parent will be replaced with the class name.
 	typeList := types.TypeHintTypes(n)
-	currentClass := ir.FindParent[ir.ClassStmt](n)
+	currentClass, _ := ir.FindParent[ir.ClassStmt](n)
 
 	r.checkParentTypehint(n, typeList, currentClass)
 
-	inTrait := ir.FindParent[ir.TraitStmt](n) != nil
+	_, inTrait := ir.FindParent[ir.TraitStmt](n)
 
 	typesMap := types.NewMapWithNormalization(r.normalizer, typeList)
 
@@ -702,7 +701,7 @@ func (r *rootChecker) CheckOldStyleConstructor(meth *ir.ClassMethodStmt) {
 		return
 	}
 
-	_, inClass := r.currentClassNodeStack.Current().(*ir.ClassStmt)
+	_, inClass := ir.FindParent[ir.ClassStmt](meth)
 	if !inClass {
 		return
 	}
@@ -773,7 +772,7 @@ func (r *rootChecker) CheckParentConstructorCall(n ir.Node, parentConstructorCal
 		return
 	}
 
-	class, ok := r.currentClassNodeStack.Current().(*ir.ClassStmt)
+	class, ok := ir.FindParent[ir.ClassStmt](n)
 	if !ok || class.Extends == nil {
 		return
 	}
@@ -889,8 +888,18 @@ func (r *rootChecker) CheckImplements(class ir.Node, currentClass meta.ClassInfo
 	for _, tr := range implements.InterfaceNames {
 		interfaceName, ok := solver.GetClassName(r.state, tr)
 		if ok {
-			currentClass.Interfaces[interfaceName] = struct{}{}
 			r.CheckInterfaceImplemented(class, tr, currentClass, interfaceName)
+		}
+	}
+}
+
+func (r *rootChecker) CheckTraitUse(n *ir.TraitUseStmt, cl meta.ClassInfo, allocator func() meta.ClassInfo) {
+	currentClass, _ := ir.FindParent[ir.ClassStmt](n)
+	for _, tr := range n.Traits {
+		traitName, ok := solver.GetClassName(r.walker.ctx.st, tr)
+		if ok {
+			cl.Traits[traitName] = struct{}{}
+			r.CheckTraitImplemented(currentClass, tr, allocator(), traitName)
 		}
 	}
 }

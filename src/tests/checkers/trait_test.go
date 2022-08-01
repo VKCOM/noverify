@@ -39,6 +39,7 @@ Foo::instance()->f();
 }
 
 func TestTraitAsTypeHint(t *testing.T) {
+	t.SkipNow()
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 trait A {}

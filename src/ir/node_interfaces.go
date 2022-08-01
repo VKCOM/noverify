@@ -33,3 +33,8 @@ type TypeHintOwner interface {
 	Node
 	TypeHint() Node
 }
+
+type ClassLike interface {
+	Node
+	ClassLike()
+}

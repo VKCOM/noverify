@@ -2897,8 +2897,8 @@ func (c *Converter) convClass(n *ast.StmtClass) ir.Node {
 	out.Class = class
 
 	if n.Name == nil {
-		out.ParentNode = c.back()
 		c.pop()
+		out.ParentNode = c.back()
 		// Anonymous class expression.
 		out := &ir.AnonClassExpr{
 			ClassTkn:             n.ClassTkn,

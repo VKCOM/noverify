@@ -89,7 +89,7 @@ import (
 	}
 
 	return ctx.WriteGoFile(codegenFile{
-		filename: "interfaces_implements.go",
+		filename: "interfaces_implements_gen.go",
 		pkgPath:  "ir",
 		deps:     []string{},
 		contents: buf.Bytes(),

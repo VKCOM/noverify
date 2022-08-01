@@ -30,12 +30,22 @@ func traverseToken(t *token.Token, cb func(*token.Token) bool) (continueTraverse
 	return true
 }
 
-func FindParent[T any](v any) *T {
+func FindParent[T any](v any) (*T, bool) {
 	for v != nil {
 		if el, ok := v.(*T); ok {
-			return el
+			return el, true
 		}
 		v = v.(Node).Parent()
 	}
-	return nil
+	return nil, false
+}
+
+func FindParentInterface[T any](v any) (*T, bool) {
+	for v != nil {
+		if el, ok := v.(T); ok {
+			return &el, true
+		}
+		v = v.(Node).Parent()
+	}
+	return nil, false
 }
