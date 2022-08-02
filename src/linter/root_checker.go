@@ -115,12 +115,12 @@ func (r *rootChecker) CheckPropertyList(pl *ir.PropertyListStmt) bool {
 	r.CheckCommentMisspellings(pl, pl.Doc.Raw)
 	r.CheckPHPDocVar(pl, pl.Doc, docblockType)
 
-	typeHintType, ok := r.walker.parseTypeHintNode(pl.Type)
+	typeHintType, ok := r.walker.parseTypeHintNode(pl.PropertyType)
 	if ok && !types.TypeHintHasMoreAccurateType(typeHintType, docblockType) {
 		r.walker.Report(pl, LevelNotice, "typeHint", "Specify the type for the property in PHPDoc, 'array' type hint too generic")
 	}
 
-	r.CheckTypeHintNode(pl.Type, "property type")
+	r.CheckTypeHintNode(pl.PropertyType, "property type")
 
 	for _, p := range pl.Properties {
 		prop := p.(*ir.PropertyStmt)
