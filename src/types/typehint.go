@@ -6,6 +6,10 @@ import (
 )
 
 func NormalizedTypeHintTypes(normalizer Normalizer, typeNode ir.Node) Map {
+	if typeNode == nil {
+		return Map{}
+	}
+
 	typeList := TypeHintTypes(typeNode)
 	return NewMapWithNormalization(normalizer, typeList)
 }

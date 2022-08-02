@@ -67,7 +67,7 @@ func (r *rootChecker) CheckFunction(fun *ir.FunctionStmt) bool {
 	phpDocReturnType := doc.ReturnType
 	phpDocParamTypes := doc.ParamTypes
 
-	returnTypeHint, ok := r.walker.parseTypeHintNode(fun.ReturnType)
+	returnTypeHint, ok := ParseTypeHintNode(r.normalizer, fun.ReturnType)
 	if ok && !doc.Inherit {
 		r.CheckFuncReturnType(fun.FunctionName, fun.FunctionName.Value, returnTypeHint, phpDocReturnType)
 	}
@@ -102,7 +102,7 @@ func (r *rootChecker) CheckPropertyList(pl *ir.PropertyListStmt) bool {
 
 	r.CheckPHPDocVar(pl, pl.Doc, docblockType)
 
-	typeHintType, ok := r.walker.parseTypeHintNode(pl.PropertyType)
+	typeHintType, ok := ParseTypeHintNode(r.normalizer, pl.PropertyType)
 	if ok && !types.TypeHintHasMoreAccurateType(typeHintType, docblockType) {
 		r.walker.Report(pl, LevelNotice, "typeHint", "Specify the type for the property in PHPDoc, 'array' type hint too generic")
 	}
@@ -772,6 +772,10 @@ func (r *rootChecker) CheckParentConstructorCall(n ir.Node, parentConstructorCal
 		return
 	}
 
+	if parentConstructorCalled {
+		return
+	}
+
 	class, ok := ir.FindParent[ir.ClassStmt](n)
 	if !ok || class.Extends == nil {
 		return
@@ -781,9 +785,7 @@ func (r *rootChecker) CheckParentConstructorCall(n ir.Node, parentConstructorCal
 		return
 	}
 
-	if !parentConstructorCalled {
-		r.walker.Report(n, LevelWarning, "parentConstructor", "Missing parent::__construct() call")
-	}
+	r.walker.Report(n, LevelWarning, "parentConstructor", "Missing parent::__construct() call")
 }
 
 func (r *rootChecker) CheckMagicMethod(meth ir.Node, name string, modif methodModifiers, countArgs int) {

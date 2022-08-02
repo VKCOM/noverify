@@ -1210,7 +1210,7 @@ func (b *blockWalker) enterArrowFunction(fun *ir.ArrowFunctionExpr) bool {
 
 	// Check stage.
 	errors := b.r.checker.CheckPHPDoc(fun, fun.Doc, fun.Params)
-	b.r.reportPHPDocErrors(errors)
+	b.reportPHPDocErrors(errors)
 
 	return false
 }
@@ -1232,10 +1232,10 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 
 	// Check stage.
 	errors := b.r.checker.CheckPHPDoc(fun, fun.Doc, fun.Params)
-	b.r.reportPHPDocErrors(errors)
+	b.reportPHPDocErrors(errors)
 
 	var hintReturnType types.Map
-	if typ, ok := b.r.parseTypeHintNode(fun.ReturnType); ok {
+	if typ, ok := ParseTypeHintNode(b.r.ctx.typeNormalizer, fun.ReturnType); ok {
 		hintReturnType = typ
 	}
 
@@ -2286,4 +2286,13 @@ func (b *blockWalker) sideEffectFree(n ir.Node) bool {
 
 func (b *blockWalker) exprType(n ir.Node) types.Map {
 	return solver.ExprTypeCustom(b.ctx.sc, b.r.ctx.st, n, b.ctx.customTypes)
+}
+
+func (b *blockWalker) reportPHPDocErrors(errs PHPDocErrors) {
+	for _, err := range errs.types {
+		b.r.ReportPHPDoc(err.Location, LevelNotice, "invalidDocblockType", err.Message)
+	}
+	for _, err := range errs.lint {
+		b.r.ReportPHPDoc(err.Location, LevelWarning, "invalidDocblock", err.Message)
+	}
 }

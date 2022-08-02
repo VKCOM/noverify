@@ -13,6 +13,12 @@ import (
 	"github.com/VKCOM/noverify/src/types"
 )
 
+// ParseTypeHintNode parse type info, e.g. "string" in "someFunc() : string { ... }".
+func ParseTypeHintNode(typeNormalizer types.Normalizer, n ir.Node) (typ types.Map, ok bool) {
+	typesMap := types.NormalizedTypeHintTypes(typeNormalizer, n)
+	return typesMap, !typesMap.Empty()
+}
+
 func haveMagicMethod(info *meta.Info, class, methodName string) bool {
 	_, ok := solver.FindMethod(info, class, methodName)
 	return ok

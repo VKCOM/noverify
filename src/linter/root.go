@@ -171,18 +171,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 
 	switch n := n.(type) {
 	case *ir.DeclareStmt:
-		for _, c := range n.Consts {
-			c, ok := c.(*ir.ConstantStmt)
-			if !ok {
-				continue
-			}
-			if c.ConstantName.Value == "strict_types" {
-				v, ok := c.Expr.(*ir.Lnumber)
-				if ok && v.Value == "1" {
-					d.strictTypes = true
-				}
-			}
-		}
+		d.enterDeclare(n)
 
 	case *ir.AnonClassExpr:
 		class := d.allocateClass(n)
@@ -232,12 +221,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			})
 		}
 	case *ir.Assign:
-		v, ok := n.Variable.(*ir.SimpleVar)
-		if !ok {
-			break
-		}
-
-		d.scope().AddVar(v, solver.ExprTypeLocal(d.scope(), d.ctx.st, n.Expr), "global variable", meta.VarAlwaysDefined)
+		d.handleGlobalAssign(n)
 	case *ir.FunctionStmt:
 		if d.metaInfo().IsIndexingComplete() {
 			res = d.checker.CheckFunction(n)
@@ -280,6 +264,32 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		state.LeaveNode(d.ctx.st, n)
 	}
 	return res
+}
+
+func (d *rootWalker) handleGlobalAssign(n *ir.Assign) {
+	v, ok := n.Variable.(*ir.SimpleVar)
+	if !ok {
+		return
+	}
+
+	d.scope().AddVar(v, solver.ExprTypeLocal(d.scope(), d.ctx.st, n.Expr), "global variable", meta.VarAlwaysDefined)
+}
+
+func (d *rootWalker) enterDeclare(n *ir.DeclareStmt) {
+	for _, c := range n.Consts {
+		c, ok := c.(*ir.ConstantStmt)
+		if !ok {
+			continue
+		}
+		if c.ConstantName.Value != "strict_types" {
+			continue
+		}
+
+		v, ok := c.Expr.(*ir.Lnumber)
+		if ok && v.Value == "1" {
+			d.strictTypes = true
+		}
+	}
 }
 
 func (d *rootWalker) processImplements(implements *ir.ClassImplementsStmt, class meta.ClassInfo) {
@@ -532,7 +542,7 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, docblockParams phpdoctype
 
 		// Handle type hint.
 		if param.VariableType != nil {
-			hintType, ok := d.parseTypeHintNode(param.VariableType)
+			hintType, ok := ParseTypeHintNode(d.ctx.typeNormalizer, param.VariableType)
 			if ok {
 				paramType = paramType.Append(hintType)
 				paramHints[paramVar.Name] = hintType
@@ -592,7 +602,7 @@ func (d *rootWalker) callbackParamByIndex(param ir.Node, argType types.Map) meta
 	v := p.Variable
 
 	var typ types.Map
-	tp, ok := d.parseTypeHintNode(p.VariableType)
+	tp, ok := ParseTypeHintNode(d.ctx.typeNormalizer, p.VariableType)
 	if ok {
 		typ = tp
 	} else {
@@ -665,7 +675,7 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 		doc.Deprecation.Append(deprecation)
 	}
 
-	returnTypeHint, ok := d.parseTypeHintNode(fun.ReturnType)
+	returnTypeHint, ok := ParseTypeHintNode(d.ctx.typeNormalizer, fun.ReturnType)
 	if !ok {
 		returnTypeHint = attributes.TypeAware(fun.AttrGroups, d.ctx.st)
 	}
@@ -947,7 +957,7 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 	}
 
 	phpDocType := d.parsePHPDocVar(pl.Doc)
-	typeHintType, _ := d.parseTypeHintNode(pl.PropertyType)
+	typeHintType, _ := ParseTypeHintNode(d.ctx.typeNormalizer, pl.PropertyType)
 
 	for _, pNode := range pl.Properties {
 		prop := pNode.(*ir.PropertyStmt)
@@ -1017,6 +1027,21 @@ func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
 	return true
 }
 
+func (d *rootWalker) checkClassMethod(meth *ir.ClassMethodStmt) {
+	d.checker.CheckOldStyleConstructor(meth)
+
+	nm := meth.MethodName.Value
+	modif := d.parseMethodModifiers(meth)
+	d.checker.CheckMagicMethod(meth.MethodName, nm, modif, len(meth.Params))
+
+	// funcInfo := d.handleFuncStmts(funcParams.params, nil, stmts, sc)
+	// actualReturnTypes := funcInfo.returnTypes
+	// exitFlags := funcInfo.prematureExitFlags
+	// if nm == `__construct` {
+	// 	d.checker.CheckParentConstructorCall(meth.MethodName, funcInfo.callsParentConstructor)
+	// }
+}
+
 func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	inClass, ok := ir.FindParentInterface[ir.ClassLike](meth)
 	if !ok {
@@ -1081,7 +1106,7 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	}
 
 	// Check stage.
-	returnTypeHint, ok := d.parseTypeHintNode(meth.ReturnType)
+	returnTypeHint, ok := ParseTypeHintNode(d.ctx.typeNormalizer, meth.ReturnType)
 	if !ok {
 		returnTypeHint = attributes.TypeAware(meth.AttrGroups, d.ctx.st)
 	} else if !doc.Inherit {
@@ -1198,7 +1223,7 @@ func (d *rootWalker) handlePropertyPromotion(param *ir.Parameter, doc phpdoctype
 	if ok {
 		propType.Append(docType.Typ)
 	}
-	hintType, ok := d.parseTypeHintNode(param.VariableType)
+	hintType, ok := ParseTypeHintNode(d.ctx.typeNormalizer, param.VariableType)
 	if ok {
 		propType = propType.Append(hintType)
 	}
@@ -1301,17 +1326,6 @@ func (d *rootWalker) handleClosuresFromDoc(closures types.ClosureMap) {
 	}
 }
 
-// parseTypeHintNode parse type info, e.g. "string" in "someFunc() : string { ... }".
-func (d *rootWalker) parseTypeHintNode(n ir.Node) (typ types.Map, ok bool) {
-	if n == nil {
-		return types.Map{}, false
-	}
-
-	typesMap := types.NormalizedTypeHintTypes(d.ctx.typeNormalizer, n)
-
-	return typesMap, !typesMap.Empty()
-}
-
 func (d *rootWalker) reportPHPDocErrors(errs PHPDocErrors) {
 	for _, err := range errs.types {
 		d.ReportPHPDoc(err.Location, LevelNotice, "invalidDocblockType", err.Message)
@@ -1407,21 +1421,9 @@ func (d *rootWalker) allocateClass(n ir.Node) meta.ClassInfo {
 	return cl
 }
 
-func (d *rootWalker) parseStartPos(pos *position.Position) (startLn []byte, startChar int) {
-	if pos.StartLine >= 1 && d.file.NumLines() > pos.StartLine {
-		startLn = d.file.Line(pos.StartLine - 1)
-		p := d.file.LinePosition(pos.StartLine - 1)
-		if pos.StartPos > p {
-			startChar = pos.StartPos - p
-		}
-	}
-
-	return startLn, startChar
-}
-
 func (d *rootWalker) getElementPos(n ir.Node) meta.ElementPosition {
 	pos := ir.GetPosition(n)
-	_, startChar := d.parseStartPos(pos)
+	_, startChar := d.file.ParseStartPos(pos)
 
 	return meta.ElementPosition{
 		Filename:  d.ctx.st.CurrentFile,
@@ -1430,21 +1432,6 @@ func (d *rootWalker) getElementPos(n ir.Node) meta.ElementPosition {
 		EndLine:   int32(pos.EndLine),
 		Length:    int32(pos.EndPos - pos.StartPos),
 	}
-}
-
-// nodeText is used to get the string that represents the
-// passed node more efficiently than irutil.FmtNode.
-func (d *rootWalker) nodeText(n ir.Node) string {
-	pos := ir.GetPosition(n)
-	from, to := pos.StartPos, pos.EndPos
-	src := d.file.Contents()
-	// Taking a node from the source code preserves the original formatting
-	// and is more efficient than printing it.
-	if (from >= 0 && from < len(src)) && (to >= 0 && to < len(src)) {
-		return string(src[from:to])
-	}
-	// If we can't take node out of the source text, print it.
-	return irutil.FmtNode(n)
 }
 
 // Report part.
@@ -1746,7 +1733,7 @@ func (d *rootWalker) runRules(n ir.Node, sc *meta.Scope, rlist []rules.Rule) {
 func (d *rootWalker) renderRuleMessage(msg string, n ir.Node, m phpgrep.MatchData, truncate bool) string {
 	// "$$" stands for the entire matched node, like $0 in regexp.
 	if strings.Contains(msg, "$$") {
-		msg = strings.ReplaceAll(msg, "$$", d.nodeText(n))
+		msg = strings.ReplaceAll(msg, "$$", d.file.NodeText(n))
 	}
 
 	if len(m.Capture) == 0 {
@@ -1757,7 +1744,7 @@ func (d *rootWalker) renderRuleMessage(msg string, n ir.Node, m phpgrep.MatchDat
 		if !strings.Contains(msg, key) {
 			continue
 		}
-		nodeString := d.nodeText(c.Node)
+		nodeString := d.file.NodeText(c.Node)
 		// Don't interpolate strings that are too long
 		// or contain a newline.
 		var replacement string
