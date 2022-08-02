@@ -40,6 +40,10 @@ func (g *genGetFirstToken) Run() error {
 func (g *genGetFirstToken) writeGet(w *bytes.Buffer, pkg *packageData, typ *typeData) {
 	for i := 0; i < typ.info.NumFields(); i++ {
 		field := typ.info.Field(i)
+		if field.Name() == "ParentNode" {
+			continue
+		}
+
 		switch typeString := field.Type().String(); typeString {
 		case "*github.com/VKCOM/php-parser/pkg/token.Token":
 			fmt.Fprintf(w, "    if n.%s != nil {\n", field.Name())

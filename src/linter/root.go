@@ -918,7 +918,7 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 	}
 
 	phpDocType := d.parsePHPDocVar(pl.Doc)
-	typeHintType, _ := d.parseTypeHintNode(pl.Type)
+	typeHintType, _ := d.parseTypeHintNode(pl.PropertyType)
 
 	for _, pNode := range pl.Properties {
 		prop := pNode.(*ir.PropertyStmt)

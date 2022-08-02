@@ -20,6 +20,7 @@ func ConvertNode(n ast.Vertex) ir.Node {
 
 type Converter struct {
 	namespace string
+	nodeStack []ir.Node
 
 	phpdocTypeParser *phpdoc.TypeParser
 }
@@ -33,7 +34,23 @@ type Converter struct {
 func NewConverter(typeParser *phpdoc.TypeParser) *Converter {
 	return &Converter{
 		phpdocTypeParser: typeParser,
+		nodeStack:        make([]ir.Node, 50),
 	}
+}
+
+func (c *Converter) push(n ir.Node) {
+	c.nodeStack = append(c.nodeStack, n)
+}
+
+func (c *Converter) pop() {
+	c.nodeStack = c.nodeStack[:len(c.nodeStack)-1]
+}
+
+func (c *Converter) back() ir.Node {
+	if len(c.nodeStack) == 0 {
+		return nil
+	}
+	return c.nodeStack[len(c.nodeStack)-1]
 }
 
 func (c *Converter) ConvertRoot(n *ast.Root) *ir.Root {
@@ -67,6 +84,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.Assign)(nil)
 		}
 		out := &ir.Assign{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
@@ -96,6 +115,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			}
 		}
 
+		c.pop()
 		return out
 
 	case *ast.ExprAssignBitwiseAnd:
@@ -103,10 +123,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.AssignBitwiseAnd)(nil)
 		}
 		out := &ir.AssignBitwiseAnd{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprAssignBitwiseOr:
@@ -114,10 +137,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.AssignBitwiseOr)(nil)
 		}
 		out := &ir.AssignBitwiseOr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprAssignBitwiseXor:
@@ -125,10 +151,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.AssignBitwiseXor)(nil)
 		}
 		out := &ir.AssignBitwiseXor{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprAssignCoalesce:
@@ -136,10 +165,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.AssignCoalesce)(nil)
 		}
 		out := &ir.AssignCoalesce{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprAssignConcat:
@@ -147,10 +179,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.AssignConcat)(nil)
 		}
 		out := &ir.AssignConcat{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprAssignDiv:
@@ -158,10 +193,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.AssignDiv)(nil)
 		}
 		out := &ir.AssignDiv{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprAssignMinus:
@@ -169,10 +207,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.AssignMinus)(nil)
 		}
 		out := &ir.AssignMinus{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprAssignMod:
@@ -180,10 +221,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.AssignMod)(nil)
 		}
 		out := &ir.AssignMod{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprAssignMul:
@@ -191,10 +235,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.AssignMul)(nil)
 		}
 		out := &ir.AssignMul{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprAssignPlus:
@@ -202,10 +249,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.AssignPlus)(nil)
 		}
 		out := &ir.AssignPlus{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprAssignPow:
@@ -213,10 +263,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.AssignPow)(nil)
 		}
 		out := &ir.AssignPow{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprAssignReference:
@@ -224,10 +277,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.AssignReference)(nil)
 		}
 		out := &ir.AssignReference{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprAssignShiftLeft:
@@ -235,10 +291,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.AssignShiftLeft)(nil)
 		}
 		out := &ir.AssignShiftLeft{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprAssignShiftRight:
@@ -246,10 +305,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.AssignShiftRight)(nil)
 		}
 		out := &ir.AssignShiftRight{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var)
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryBitwiseAnd:
@@ -257,10 +319,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.BitwiseAndExpr)(nil)
 		}
 		out := &ir.BitwiseAndExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryBitwiseOr:
@@ -268,10 +333,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.BitwiseOrExpr)(nil)
 		}
 		out := &ir.BitwiseOrExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryBitwiseXor:
@@ -279,10 +347,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.BitwiseXorExpr)(nil)
 		}
 		out := &ir.BitwiseXorExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryBooleanAnd:
@@ -290,10 +361,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.BooleanAndExpr)(nil)
 		}
 		out := &ir.BooleanAndExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryBooleanOr:
@@ -301,10 +375,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.BooleanOrExpr)(nil)
 		}
 		out := &ir.BooleanOrExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryCoalesce:
@@ -312,10 +389,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.CoalesceExpr)(nil)
 		}
 		out := &ir.CoalesceExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryConcat:
@@ -323,10 +403,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ConcatExpr)(nil)
 		}
 		out := &ir.ConcatExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryDiv:
@@ -334,10 +417,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.DivExpr)(nil)
 		}
 		out := &ir.DivExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryEqual:
@@ -345,10 +431,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.EqualExpr)(nil)
 		}
 		out := &ir.EqualExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryGreater:
@@ -356,10 +445,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.GreaterExpr)(nil)
 		}
 		out := &ir.GreaterExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryGreaterOrEqual:
@@ -367,10 +459,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.GreaterOrEqualExpr)(nil)
 		}
 		out := &ir.GreaterOrEqualExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryIdentical:
@@ -378,10 +473,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.IdenticalExpr)(nil)
 		}
 		out := &ir.IdenticalExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryLogicalAnd:
@@ -389,10 +487,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.LogicalAndExpr)(nil)
 		}
 		out := &ir.LogicalAndExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryLogicalOr:
@@ -400,10 +501,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.LogicalOrExpr)(nil)
 		}
 		out := &ir.LogicalOrExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryLogicalXor:
@@ -411,10 +515,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.LogicalXorExpr)(nil)
 		}
 		out := &ir.LogicalXorExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryMinus:
@@ -422,10 +529,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.MinusExpr)(nil)
 		}
 		out := &ir.MinusExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryMod:
@@ -433,10 +543,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ModExpr)(nil)
 		}
 		out := &ir.ModExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryMul:
@@ -444,10 +557,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.MulExpr)(nil)
 		}
 		out := &ir.MulExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryNotEqual:
@@ -455,10 +571,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.NotEqualExpr)(nil)
 		}
 		out := &ir.NotEqualExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryNotIdentical:
@@ -466,10 +585,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.NotIdenticalExpr)(nil)
 		}
 		out := &ir.NotIdenticalExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryPlus:
@@ -477,10 +599,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.PlusExpr)(nil)
 		}
 		out := &ir.PlusExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryPow:
@@ -488,10 +613,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.PowExpr)(nil)
 		}
 		out := &ir.PowExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryShiftLeft:
@@ -499,10 +627,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ShiftLeftExpr)(nil)
 		}
 		out := &ir.ShiftLeftExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinaryShiftRight:
@@ -510,10 +641,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ShiftRightExpr)(nil)
 		}
 		out := &ir.ShiftRightExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinarySmaller:
@@ -521,10 +655,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.SmallerExpr)(nil)
 		}
 		out := &ir.SmallerExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinarySmallerOrEqual:
@@ -532,10 +669,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.SmallerOrEqualExpr)(nil)
 		}
 		out := &ir.SmallerOrEqualExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprBinarySpaceship:
@@ -543,10 +683,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.SpaceshipExpr)(nil)
 		}
 		out := &ir.SpaceshipExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpTkn = n.OpTkn
 		out.Left = c.convNode(n.Left)
 		out.Right = c.convNode(n.Right)
+		c.pop()
 		return out
 
 	case *ast.ExprCastArray:
@@ -568,9 +711,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.UnsetCastExpr)(nil)
 		}
 		out := &ir.UnsetCastExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.CastTkn = n.CastTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprArray:
@@ -578,6 +724,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ArrayExpr)(nil)
 		}
 		out := &ir.ArrayExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.ArrayTkn = n.ArrayTkn
 		out.OpenBracketTkn = n.OpenBracketTkn
@@ -593,6 +741,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		}
 
 		out.ShortSyntax = !hasValue(n.ArrayTkn)
+		c.pop()
 		return out
 
 	case *ast.ExprArrayDimFetch:
@@ -600,6 +749,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ArrayDimFetchExpr)(nil)
 		}
 		out := &ir.ArrayDimFetchExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpenBracketTkn = n.OpenBracketTkn
 		out.CloseBracketTkn = n.CloseBracketTkn
@@ -608,6 +759,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 
 		out.CurlyBrace = hasValue(out.OpenBracketTkn) && out.OpenBracketTkn.Value[0] == '{'
 
+		c.pop()
 		return out
 
 	case *ast.ExprArrayItem:
@@ -615,6 +767,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ArrayItemExpr)(nil)
 		}
 		out := &ir.ArrayItemExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EllipsisTkn = n.EllipsisTkn
 		out.DoubleArrowTkn = n.DoubleArrowTkn
@@ -633,6 +787,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		}
 
 		out.Unpack = hasValue(n.EllipsisTkn)
+		c.pop()
 		return out
 
 	case *ast.ExprArrowFunction:
@@ -640,6 +795,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ArrowFunctionExpr)(nil)
 		}
 		out := &ir.ArrowFunctionExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 
 		if n.AttrGroups != nil {
@@ -670,6 +827,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Expr = c.convNode(n.Expr)
 
 		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
+		c.pop()
 		return out
 
 	case *ast.ExprBitwiseNot:
@@ -677,9 +835,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.BitwiseNotExpr)(nil)
 		}
 		out := &ir.BitwiseNotExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.TildaTkn = n.TildaTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprBooleanNot:
@@ -687,9 +848,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.BooleanNotExpr)(nil)
 		}
 		out := &ir.BooleanNotExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.ExclamationTkn = n.ExclamationTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprClassConstFetch:
@@ -697,10 +861,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ClassConstFetchExpr)(nil)
 		}
 		out := &ir.ClassConstFetchExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.DoubleColonTkn = n.DoubleColonTkn
 		out.Class = c.convNode(n.Class)
 		out.ConstantName = c.convNode(n.Const).(*ir.Identifier)
+		c.pop()
 		return out
 
 	case *ast.ExprClone:
@@ -708,9 +875,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.CloneExpr)(nil)
 		}
 		out := &ir.CloneExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.CloneTkn = n.CloneTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprClosure:
@@ -718,6 +888,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ClosureExpr)(nil)
 		}
 		out := &ir.ClosureExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 
 		if n.AttrGroups != nil {
@@ -757,6 +929,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Static = hasValue(n.StaticTkn)
 
 		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
+		c.pop()
 		return out
 
 	case *ast.ExprClosureUse:
@@ -790,8 +963,11 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ConstFetchExpr)(nil)
 		}
 		out := &ir.ConstFetchExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.Constant = c.convNode(n.Const).(*ir.Name)
+		c.pop()
 		return out
 
 	case *ast.ExprEmpty:
@@ -799,11 +975,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.EmptyExpr)(nil)
 		}
 		out := &ir.EmptyExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EmptyTkn = n.EmptyTkn
 		out.OpenParenthesisTkn = n.OpenParenthesisTkn
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprErrorSuppress:
@@ -811,9 +990,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ErrorSuppressExpr)(nil)
 		}
 		out := &ir.ErrorSuppressExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.AtTkn = n.AtTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprEval:
@@ -821,11 +1003,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.EvalExpr)(nil)
 		}
 		out := &ir.EvalExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EvalTkn = n.EvalTkn
 		out.OpenParenthesisTkn = n.OpenParenthesisTkn
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprExit:
@@ -833,6 +1018,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ExitExpr)(nil)
 		}
 		out := &ir.ExitExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.ExitTkn = n.ExitTkn
 		out.OpenParenthesisTkn = n.OpenParenthesisTkn
@@ -840,6 +1027,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Expr = c.convNode(n.Expr)
 
 		out.Die = hasValue(n.ExitTkn) && bytes.EqualFold(n.ExitTkn.Value, []byte("die"))
+		c.pop()
 		return out
 
 	case *ast.ExprFunctionCall:
@@ -847,12 +1035,15 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.FunctionCallExpr)(nil)
 		}
 		out := &ir.FunctionCallExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpenParenthesisTkn = n.OpenParenthesisTkn
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
 		out.Function = c.convNode(n.Function)
 		out.Args = c.convNodeSlice(n.Args)
+		c.pop()
 		return out
 
 	case *ast.ExprInstanceOf:
@@ -860,10 +1051,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.InstanceOfExpr)(nil)
 		}
 		out := &ir.InstanceOfExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.InstanceOfTkn = n.InstanceOfTkn
 		out.Expr = c.convNode(n.Expr)
 		out.Class = c.convNode(n.Class)
+		c.pop()
 		return out
 
 	case *ast.ExprIsset:
@@ -871,12 +1065,15 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.IssetExpr)(nil)
 		}
 		out := &ir.IssetExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.IssetTkn = n.IssetTkn
 		out.OpenParenthesisTkn = n.OpenParenthesisTkn
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
 		out.Variables = c.convNodeSlice(n.Vars)
+		c.pop()
 		return out
 
 	case *ast.ExprList:
@@ -884,6 +1081,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ListExpr)(nil)
 		}
 		out := &ir.ListExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 
 		out.ListTkn = n.ListTkn
@@ -900,6 +1099,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		}
 
 		out.ShortSyntax = !hasValue(n.ListTkn)
+		c.pop()
 		return out
 
 	case *ast.ExprMethodCall:
@@ -907,6 +1107,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.MethodCallExpr)(nil)
 		}
 		out := &ir.MethodCallExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.ObjectOperatorTkn = n.ObjectOperatorTkn
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
@@ -915,6 +1117,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Variable = c.convNode(n.Var)
 		out.Method = c.convNode(n.Method)
 		out.Args = c.convNodeSlice(n.Args)
+		c.pop()
 		return out
 
 	case *ast.ExprNullsafeMethodCall:
@@ -922,6 +1125,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.NullsafeMethodCallExpr)(nil)
 		}
 		out := &ir.NullsafeMethodCallExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.ObjectOperatorTkn = n.ObjectOperatorTkn
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
@@ -930,6 +1135,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Variable = c.convNode(n.Var)
 		out.Method = c.convNode(n.Method)
 		out.Args = c.convNodeSlice(n.Args)
+		c.pop()
 		return out
 
 	case *ast.ExprNew:
@@ -937,6 +1143,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.NewExpr)(nil)
 		}
 		out := &ir.NewExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 
 		out.Position = n.Position
 		out.NewTkn = n.NewTkn
@@ -951,6 +1159,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			out.Args = []ir.Node{}
 		}
 
+		c.pop()
 		return out
 
 	case *ast.ExprBrackets:
@@ -958,10 +1167,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ParenExpr)(nil)
 		}
 		out := &ir.ParenExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpenParenthesisTkn = n.OpenParenthesisTkn
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprPostDec:
@@ -969,9 +1181,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.PostDecExpr)(nil)
 		}
 		out := &ir.PostDecExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.DecTkn = n.DecTkn
 		out.Variable = c.convNode(n.Var)
+		c.pop()
 		return out
 
 	case *ast.ExprPostInc:
@@ -979,9 +1194,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.PostIncExpr)(nil)
 		}
 		out := &ir.PostIncExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.IncTkn = n.IncTkn
 		out.Variable = c.convNode(n.Var)
+		c.pop()
 		return out
 
 	case *ast.ExprPreDec:
@@ -989,9 +1207,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.PreDecExpr)(nil)
 		}
 		out := &ir.PreDecExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.DecTkn = n.DecTkn
 		out.Variable = c.convNode(n.Var)
+		c.pop()
 		return out
 
 	case *ast.ExprPreInc:
@@ -999,9 +1220,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.PreIncExpr)(nil)
 		}
 		out := &ir.PreIncExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.IncTkn = n.IncTkn
 		out.Variable = c.convNode(n.Var)
+		c.pop()
 		return out
 
 	case *ast.ExprPrint:
@@ -1009,9 +1233,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.PrintExpr)(nil)
 		}
 		out := &ir.PrintExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.PrintTkn = n.PrintTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprPropertyFetch:
@@ -1019,12 +1246,15 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.PropertyFetchExpr)(nil)
 		}
 		out := &ir.PropertyFetchExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.ObjectOperatorTkn = n.ObjectOperatorTkn
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 		out.Variable = c.convNode(n.Var)
 		out.Property = c.convNode(n.Prop)
+		c.pop()
 		return out
 
 	case *ast.ExprNullsafePropertyFetch:
@@ -1032,12 +1262,15 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.NullsafePropertyFetchExpr)(nil)
 		}
 		out := &ir.NullsafePropertyFetchExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.ObjectOperatorTkn = n.ObjectOperatorTkn
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 		out.Variable = c.convNode(n.Var)
 		out.Property = c.convNode(n.Prop)
+		c.pop()
 		return out
 
 	case *ast.ExprRequire:
@@ -1054,10 +1287,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ShellExecExpr)(nil)
 		}
 		out := &ir.ShellExecExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpenBacktickTkn = n.OpenBacktickTkn
 		out.CloseBacktickTkn = n.CloseBacktickTkn
 		out.Parts = c.convNodeSlice(n.Parts)
+		c.pop()
 		return out
 
 	case *ast.ExprStaticCall:
@@ -1065,6 +1301,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.StaticCallExpr)(nil)
 		}
 		out := &ir.StaticCallExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.DoubleColonTkn = n.DoubleColonTkn
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
@@ -1076,6 +1314,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Class = c.convNode(n.Class)
 		out.Call = c.convNode(n.Call)
 		out.Args = c.convNodeSlice(n.Args)
+		c.pop()
 		return out
 
 	case *ast.ExprStaticPropertyFetch:
@@ -1083,10 +1322,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.StaticPropertyFetchExpr)(nil)
 		}
 		out := &ir.StaticPropertyFetchExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.DoubleColonTkn = n.DoubleColonTkn
 		out.Class = c.convNode(n.Class)
 		out.Property = c.convNode(n.Prop)
+		c.pop()
 		return out
 
 	case *ast.ExprTernary:
@@ -1094,12 +1336,15 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.TernaryExpr)(nil)
 		}
 		out := &ir.TernaryExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.QuestionTkn = n.QuestionTkn
 		out.ColonTkn = n.ColonTkn
 		out.Condition = c.convNode(n.Cond)
 		out.IfTrue = c.convNode(n.IfTrue)
 		out.IfFalse = c.convNode(n.IfFalse)
+		c.pop()
 		return out
 
 	case *ast.ExprUnaryMinus:
@@ -1107,9 +1352,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.UnaryMinusExpr)(nil)
 		}
 		out := &ir.UnaryMinusExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.MinusTkn = n.MinusTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprUnaryPlus:
@@ -1117,9 +1365,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.UnaryPlusExpr)(nil)
 		}
 		out := &ir.UnaryPlusExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.PlusTkn = n.PlusTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprYield:
@@ -1127,11 +1378,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.YieldExpr)(nil)
 		}
 		out := &ir.YieldExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.YieldTkn = n.YieldTkn
 		out.DoubleArrowTkn = n.DoubleArrowTkn
 		out.Key = c.convNode(n.Key)
 		out.Value = c.convNode(n.Val)
+		c.pop()
 		return out
 
 	case *ast.ExprYieldFrom:
@@ -1139,22 +1393,27 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.YieldFromExpr)(nil)
 		}
 		out := &ir.YieldFromExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.YieldFromTkn = n.YieldFromTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.NameFullyQualified:
 		return &ir.Name{
-			Position: n.Position,
-			Value:    fullyQualifiedToString(n),
+			ParentNode: c.back(),
+			Position:   n.Position,
+			Value:      fullyQualifiedToString(n),
 		}
 	case *ast.Name:
 		tok := namePartsToToken(n.Parts)
 		return &ir.Name{
-			Position: n.Position,
-			NameTkn:  tok,
-			Value:    string(tok.Value),
+			ParentNode: c.back(),
+			Position:   n.Position,
+			NameTkn:    tok,
+			Value:      string(tok.Value),
 		}
 	case *ast.NameRelative:
 		return c.convRelativeName(n)
@@ -1164,6 +1423,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.Argument)(nil)
 		}
 		out := &ir.Argument{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		if n.Name != nil {
 			out.Name = c.convNode(n.Name).(*ir.Identifier)
@@ -1174,6 +1435,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Expr = c.convNode(n.Expr)
 		out.Variadic = hasValue(n.VariadicTkn)
 		out.IsReference = hasValue(n.AmpersandTkn)
+		c.pop()
 		return out
 
 	case *ast.Identifier:
@@ -1181,9 +1443,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.Identifier)(nil)
 		}
 		out := &ir.Identifier{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.IdentifierTkn = n.IdentifierTkn
 		out.Value = string(n.Value)
+		c.pop()
 		return out
 
 	case *ast.Nullable:
@@ -1191,9 +1456,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.Nullable)(nil)
 		}
 		out := &ir.Nullable{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.QuestionTkn = n.QuestionTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.Parameter:
@@ -1201,6 +1469,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.Parameter)(nil)
 		}
 		out := &ir.Parameter{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 
 		if n.AttrGroups != nil {
@@ -1228,6 +1498,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 
 		out.ByRef = hasValue(n.AmpersandTkn)
 		out.Variadic = hasValue(n.VariadicTkn)
+		c.pop()
 		return out
 
 	case *ast.Root:
@@ -1235,6 +1506,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.Root)(nil)
 		}
 		out := &ir.Root{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EndTkn = n.EndTkn
 		{
@@ -1244,6 +1517,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			}
 			out.Stmts = slice
 		}
+		c.pop()
 		return out
 
 	case *ast.ExprVariable:
@@ -1265,11 +1539,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		nameNodeIr := c.convNode(nameNode).(*ir.Identifier)
 
 		out := &ir.SimpleVar{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.DollarTkn = n.DollarTkn
 		out.Name = string(bytes.TrimPrefix(nameNode.Value, []byte("$")))
 		out.IdentifierTkn = nameNodeIr.IdentifierTkn
 
+		c.pop()
 		return out
 
 	case *ast.ScalarDnumber:
@@ -1277,9 +1554,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.Dnumber)(nil)
 		}
 		out := &ir.Dnumber{}
+		out.ParentNode = c.back()
+		c.push(out)
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.NumberTkn = n.NumberTkn
 		out.Value = string(n.Value)
+		c.pop()
 		return out
 
 	case *ast.ScalarEncapsed:
@@ -1287,10 +1569,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.Encapsed)(nil)
 		}
 		out := &ir.Encapsed{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpenQuoteTkn = n.OpenQuoteTkn
 		out.CloseQuoteTkn = n.CloseQuoteTkn
 		out.Parts = c.convNodeSlice(n.Parts)
+		c.pop()
 		return out
 
 	case *ast.ScalarEncapsedStringBrackets:
@@ -1335,9 +1620,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.EncapsedStringPart)(nil)
 		}
 		out := &ir.EncapsedStringPart{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EncapsedStrTkn = n.EncapsedStrTkn
 		out.Value = string(n.Value)
+		c.pop()
 		return out
 
 	case *ast.ScalarHeredoc:
@@ -1345,11 +1633,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.Heredoc)(nil)
 		}
 		out := &ir.Heredoc{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpenHeredocTkn = n.OpenHeredocTkn
 		out.CloseHeredocTkn = n.CloseHeredocTkn
 		out.Label = string(n.OpenHeredocTkn.Value)
 		out.Parts = c.convNodeSlice(n.Parts)
+		c.pop()
 		return out
 
 	case *ast.ScalarLnumber:
@@ -1357,9 +1648,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.Lnumber)(nil)
 		}
 		out := &ir.Lnumber{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.NumberTkn = n.NumberTkn
 		out.Value = string(n.Value)
+		c.pop()
 		return out
 
 	case *ast.ScalarMagicConstant:
@@ -1367,9 +1661,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.MagicConstant)(nil)
 		}
 		out := &ir.MagicConstant{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.MagicConstTkn = n.MagicConstTkn
 		out.Value = string(n.Value)
+		c.pop()
 		return out
 
 	case *ast.ScalarString:
@@ -1380,10 +1677,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.BreakStmt)(nil)
 		}
 		out := &ir.BreakStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.BreakTkn = n.BreakTkn
 		out.SemiColonTkn = n.SemiColonTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.StmtCase:
@@ -1391,11 +1691,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.CaseStmt)(nil)
 		}
 		out := &ir.CaseStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.CaseTkn = n.CaseTkn
 		out.CaseSeparatorTkn = n.CaseSeparatorTkn
 		out.Cond = c.convNode(n.Cond)
 		out.Stmts = c.convNodeSlice(n.Stmts)
+		c.pop()
 		return out
 
 	case *ast.StmtCatch:
@@ -1403,6 +1706,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.CatchStmt)(nil)
 		}
 		out := &ir.CatchStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 
 		out.CatchTkn = n.CatchTkn
@@ -1417,6 +1722,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			out.Variable = c.convNode(n.Var).(*ir.SimpleVar)
 		}
 		out.Stmts = c.convNodeSlice(n.Stmts)
+		c.pop()
 		return out
 
 	case *ast.StmtClass:
@@ -1430,6 +1736,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ClassConstListStmt)(nil)
 		}
 		out := &ir.ClassConstListStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 
 		if n.AttrGroups != nil {
@@ -1455,6 +1763,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Consts = c.convNodeSlice(n.Consts)
 
 		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
+		c.pop()
 		return out
 
 	case *ast.StmtClassMethod:
@@ -1462,6 +1771,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ClassMethodStmt)(nil)
 		}
 		out := &ir.ClassMethodStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		if n.AttrGroups != nil {
 			slice := make([]*ir.AttributeGroup, len(n.AttrGroups))
@@ -1493,6 +1804,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.ReturnsRef = hasValue(n.AmpersandTkn)
 
 		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
+		c.pop()
 		return out
 
 	case *ast.StmtConstList:
@@ -1500,11 +1812,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ConstListStmt)(nil)
 		}
 		out := &ir.ConstListStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.ConstTkn = n.ConstTkn
 		out.SeparatorTkns = n.SeparatorTkns
 		out.SemiColonTkn = n.SemiColonTkn
 		out.Consts = c.convNodeSlice(n.Consts)
+		c.pop()
 		return out
 
 	case *ast.StmtConstant:
@@ -1512,10 +1827,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ConstantStmt)(nil)
 		}
 		out := &ir.ConstantStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.ConstantName = c.convNode(n.Name).(*ir.Identifier)
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.StmtContinue:
@@ -1523,10 +1841,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ContinueStmt)(nil)
 		}
 		out := &ir.ContinueStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.ContinueTkn = n.ContinueTkn
 		out.SemiColonTkn = n.SemiColonTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.StmtDeclare:
@@ -1534,6 +1855,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.DeclareStmt)(nil)
 		}
 		out := &ir.DeclareStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.DeclareTkn = n.DeclareTkn
 		out.OpenParenthesisTkn = n.OpenParenthesisTkn
@@ -1545,6 +1868,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Consts = c.convNodeSlice(n.Consts)
 		out.Stmt = c.convNode(n.Stmt)
 		out.Alt = hasValue(n.EndDeclareTkn)
+		c.pop()
 		return out
 
 	case *ast.StmtDefault:
@@ -1552,10 +1876,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.DefaultStmt)(nil)
 		}
 		out := &ir.DefaultStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.DefaultTkn = n.DefaultTkn
 		out.CaseSeparatorTkn = n.CaseSeparatorTkn
 		out.Stmts = c.convNodeSlice(n.Stmts)
+		c.pop()
 		return out
 
 	case *ast.StmtDo:
@@ -1563,6 +1890,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.DoStmt)(nil)
 		}
 		out := &ir.DoStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 
 		out.DoTkn = n.DoTkn
@@ -1573,6 +1902,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 
 		out.Stmt = c.convNode(n.Stmt)
 		out.Cond = c.convNode(n.Cond)
+		c.pop()
 		return out
 
 	case *ast.StmtEcho:
@@ -1580,11 +1910,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.EchoStmt)(nil)
 		}
 		out := &ir.EchoStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EchoTkn = n.EchoTkn
 		out.SeparatorTkns = n.SeparatorTkns
 		out.SemiColonTkn = n.SemiColonTkn
 		out.Exprs = c.convNodeSlice(n.Exprs)
+		c.pop()
 		return out
 
 	case *ast.StmtElse:
@@ -1592,6 +1925,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ElseStmt)(nil)
 		}
 		out := &ir.ElseStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.ElseTkn = n.ElseTkn
 		out.ColonTkn = n.ColonTkn
@@ -1611,6 +1946,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return ifStmt
 		}
 
+		c.pop()
 		return out
 
 	case *ast.StmtElseIf:
@@ -1618,6 +1954,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ElseIfStmt)(nil)
 		}
 		out := &ir.ElseIfStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.ElseIfTkn = n.ElseIfTkn
 		out.OpenParenthesisTkn = n.OpenParenthesisTkn
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
@@ -1631,6 +1969,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 
 		// directly converting ElseIf always means they are merged
 		out.Merged = true
+		c.pop()
 		return out
 
 	case *ast.StmtExpression:
@@ -1638,9 +1977,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ExpressionStmt)(nil)
 		}
 		out := &ir.ExpressionStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.SemiColonTkn = n.SemiColonTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.StmtFinally:
@@ -1648,11 +1990,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.FinallyStmt)(nil)
 		}
 		out := &ir.FinallyStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.FinallyTkn = n.FinallyTkn
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 		out.Stmts = c.convNodeSlice(n.Stmts)
+		c.pop()
 		return out
 
 	case *ast.StmtFor:
@@ -1660,6 +2005,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ForStmt)(nil)
 		}
 		out := &ir.ForStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 
 		out.ForTkn = n.ForTkn
@@ -1680,6 +2027,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Stmt = c.convNode(n.Stmt)
 
 		out.AltSyntax = hasValue(n.EndForTkn)
+		c.pop()
 		return out
 
 	case *ast.StmtForeach:
@@ -1687,6 +2035,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ForeachStmt)(nil)
 		}
 		out := &ir.ForeachStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 
 		out.ForeachTkn = n.ForeachTkn
@@ -1715,6 +2065,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Stmt = c.convNode(n.Stmt)
 
 		out.AltSyntax = hasValue(n.EndForeachTkn)
+		c.pop()
 		return out
 
 	case *ast.StmtFunction:
@@ -1722,6 +2073,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.FunctionStmt)(nil)
 		}
 		out := &ir.FunctionStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		if n.AttrGroups != nil {
 			slice := make([]*ir.AttributeGroup, len(n.AttrGroups))
@@ -1747,6 +2100,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.ReturnsRef = hasValue(n.AmpersandTkn)
 
 		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
+		c.pop()
 		return out
 
 	case *ast.StmtGlobal:
@@ -1754,11 +2108,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.GlobalStmt)(nil)
 		}
 		out := &ir.GlobalStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.GlobalTkn = n.GlobalTkn
 		out.SeparatorTkns = n.SeparatorTkns
 		out.SemiColonTkn = n.SemiColonTkn
 		out.Vars = c.convNodeSlice(n.Vars)
+		c.pop()
 		return out
 
 	case *ast.StmtGoto:
@@ -1766,10 +2123,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.GotoStmt)(nil)
 		}
 		out := &ir.GotoStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.GotoTkn = n.GotoTkn
 		out.SemiColonTkn = n.SemiColonTkn
 		out.Label = c.convNode(n.Label).(*ir.Identifier)
+		c.pop()
 		return out
 
 	case *ast.StmtGroupUseList:
@@ -1777,6 +2137,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.GroupUseStmt)(nil)
 		}
 		out := &ir.GroupUseStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 
 		out.UseTkn = n.UseTkn
@@ -1793,6 +2155,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		}
 		out.Prefix = c.convNode(n.Prefix).(*ir.Name)
 		out.UseList = c.convNodeSlice(n.Uses)
+		c.pop()
 		return out
 
 	case *ast.StmtHaltCompiler:
@@ -1800,11 +2163,14 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.HaltCompilerStmt)(nil)
 		}
 		out := &ir.HaltCompilerStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.HaltCompilerTkn = n.HaltCompilerTkn
 		out.OpenParenthesisTkn = n.OpenParenthesisTkn
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
 		out.SemiColonTkn = n.SemiColonTkn
+		c.pop()
 		return out
 
 	case *ast.StmtIf:
@@ -1812,6 +2178,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.IfStmt)(nil)
 		}
 		out := &ir.IfStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 
 		out.IfTkn = n.IfTkn
@@ -1856,6 +2224,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		}
 
 		out.AltSyntax = hasValue(n.ColonTkn)
+		c.pop()
 		return out
 
 	case *ast.StmtInlineHtml:
@@ -1863,9 +2232,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.InlineHTMLStmt)(nil)
 		}
 		out := &ir.InlineHTMLStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.InlineHTMLTkn = n.InlineHtmlTkn
 		out.Value = string(n.Value)
+		c.pop()
 		return out
 
 	case *ast.StmtInterface:
@@ -1873,6 +2245,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.InterfaceStmt)(nil)
 		}
 		out := &ir.InterfaceStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		if n.AttrGroups != nil {
 			slice := make([]*ir.AttributeGroup, len(n.AttrGroups))
@@ -1897,6 +2271,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Stmts = c.convNodeSlice(n.Stmts)
 
 		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
+		c.pop()
 		return out
 
 	case *ast.StmtLabel:
@@ -1904,9 +2279,12 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.LabelStmt)(nil)
 		}
 		out := &ir.LabelStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.ColonTkn = n.ColonTkn
 		out.LabelName = c.convNode(n.Name).(*ir.Identifier)
+		c.pop()
 		return out
 
 	case *ast.StmtNamespace:
@@ -1914,6 +2292,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.NamespaceStmt)(nil)
 		}
 		out := &ir.NamespaceStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 
 		out.NsTkn = n.NsTkn
@@ -1925,6 +2305,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			c.namespace = out.NamespaceName.Value
 		}
 		out.Stmts = c.convNodeSlice(n.Stmts)
+		c.pop()
 		return out
 
 	case *ast.StmtNop:
@@ -1940,8 +2321,11 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		}
 
 		out := &ir.NopStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.SemiColonTkn = n.SemiColonTkn
+		c.pop()
 		return out
 
 	case *ast.StmtProperty:
@@ -1949,10 +2333,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.PropertyStmt)(nil)
 		}
 		out := &ir.PropertyStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var).(*ir.SimpleVar)
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.StmtPropertyList:
@@ -1960,6 +2347,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.PropertyListStmt)(nil)
 		}
 		out := &ir.PropertyListStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.SeparatorTkns = n.SeparatorTkns
 		out.SemiColonTkn = n.SemiColonTkn
@@ -1980,10 +2369,11 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			out.AttrGroups = slice
 		}
 
-		out.Type = c.convNode(n.Type)
+		out.PropertyType = c.convNode(n.Type)
 		out.Properties = c.convNodeSlice(n.Props)
 
 		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
+		c.pop()
 		return out
 
 	case *ast.StmtReturn:
@@ -1991,10 +2381,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ReturnStmt)(nil)
 		}
 		out := &ir.ReturnStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.ReturnTkn = n.ReturnTkn
 		out.SemiColonTkn = n.SemiColonTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.StmtStatic:
@@ -2002,10 +2395,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.StaticStmt)(nil)
 		}
 		out := &ir.StaticStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.StaticTkn = n.StaticTkn
 		out.SeparatorTkns = n.SeparatorTkns
 		out.Vars = c.convNodeSlice(n.Vars)
+		c.pop()
 		return out
 
 	case *ast.StmtStaticVar:
@@ -2013,10 +2409,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.StaticVarStmt)(nil)
 		}
 		out := &ir.StaticVarStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.EqualTkn = n.EqualTkn
 		out.Variable = c.convNode(n.Var).(*ir.SimpleVar)
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.StmtStmtList:
@@ -2024,10 +2423,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.StmtList)(nil)
 		}
 		out := &ir.StmtList{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 		out.Stmts = c.convNodeSlice(n.Stmts)
+		c.pop()
 		return out
 
 	case *ast.StmtSwitch:
@@ -2035,6 +2437,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.SwitchStmt)(nil)
 		}
 		out := &ir.SwitchStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 
 		out.SwitchTkn = n.SwitchTkn
@@ -2050,6 +2454,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Cond = c.convNode(n.Cond)
 		out.Cases = c.convNodeSlice(n.Cases)
 		out.AltSyntax = hasValue(n.ColonTkn)
+		c.pop()
 		return out
 
 	case *ast.StmtThrow:
@@ -2057,10 +2462,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ThrowStmt)(nil)
 		}
 		out := &ir.ThrowStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.ThrowTkn = n.ThrowTkn
 		out.SemiColonTkn = n.SemiColonTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.ExprThrow:
@@ -2068,10 +2476,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.ThrowExpr)(nil)
 		}
 		out := &ir.ThrowExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.ThrowTkn = n.ThrowTkn
 		out.SemiColonTkn = n.SemiColonTkn
 		out.Expr = c.convNode(n.Expr)
+		c.pop()
 		return out
 
 	case *ast.StmtTrait:
@@ -2079,6 +2490,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.TraitStmt)(nil)
 		}
 		out := &ir.TraitStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		if n.AttrGroups != nil {
 			slice := make([]*ir.AttributeGroup, len(n.AttrGroups))
@@ -2095,6 +2508,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Stmts = c.convNodeSlice(n.Stmts)
 
 		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
+		c.pop()
 		return out
 
 	case *ast.StmtTraitUse:
@@ -2102,6 +2516,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.TraitUseStmt)(nil)
 		}
 		out := &ir.TraitUseStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 
 		out.UseTkn = n.UseTkn
@@ -2116,6 +2532,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			Position:    c.convertSliceNodeToPosition(n.Adaptations),
 			Adaptations: c.convNodeSlice(n.Adaptations),
 		}
+		c.pop()
 		return out
 
 	case *ast.StmtTraitUseAlias:
@@ -2123,6 +2540,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.TraitUseAliasStmt)(nil)
 		}
 		out := &ir.TraitUseAliasStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.DoubleColonTkn = n.DoubleColonTkn
 		out.AsTkn = n.AsTkn
@@ -2132,6 +2551,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		if n.Alias != nil {
 			out.Alias = c.convNode(n.Alias).(*ir.Identifier)
 		}
+		c.pop()
 		return out
 
 	case *ast.StmtTraitUsePrecedence:
@@ -2139,6 +2559,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.TraitUsePrecedenceStmt)(nil)
 		}
 		out := &ir.TraitUsePrecedenceStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.DoubleColonTkn = n.DoubleColonTkn
 		out.InsteadofTkn = n.InsteadofTkn
@@ -2146,6 +2568,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.SemiColonTkn = n.SemiColonTkn
 		out.Ref = c.convNode(n.Method)
 		out.Insteadof = c.convNodeSlice(n.Insteadof)
+		c.pop()
 		return out
 
 	case *ast.StmtTry:
@@ -2153,6 +2576,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.TryStmt)(nil)
 		}
 		out := &ir.TryStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.TryTkn = n.TryTkn
 		out.OpenCurlyBracketTkn = n.OpenCurlyBracketTkn
@@ -2160,6 +2585,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Stmts = c.convNodeSlice(n.Stmts)
 		out.Catches = c.convNodeSlice(n.Catches)
 		out.Finally = c.convNode(n.Finally)
+		c.pop()
 		return out
 
 	case *ast.StmtUnset:
@@ -2167,6 +2593,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.UnsetStmt)(nil)
 		}
 		out := &ir.UnsetStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.UnsetTkn = n.UnsetTkn
 		out.OpenParenthesisTkn = n.OpenParenthesisTkn
@@ -2174,6 +2602,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
 		out.SemiColonTkn = n.SemiColonTkn
 		out.Vars = c.convNodeSlice(n.Vars)
+		c.pop()
 		return out
 
 	case *ast.StmtUse:
@@ -2181,6 +2610,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.UseStmt)(nil)
 		}
 		out := &ir.UseStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.NsSeparatorTkn = n.NsSeparatorTkn
 		out.AsTkn = n.AsTkn
@@ -2191,6 +2622,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		if n.Alias != nil {
 			out.Alias = c.convNode(n.Alias).(*ir.Identifier)
 		}
+		c.pop()
 		return out
 
 	case *ast.StmtUseList:
@@ -2198,6 +2630,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.UseListStmt)(nil)
 		}
 		out := &ir.UseListStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 		out.UseTkn = n.UseTkn
 		out.SeparatorTkns = n.SeparatorTkns
@@ -2207,6 +2641,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			out.UseType = useType.(*ir.Identifier)
 		}
 		out.Uses = c.convNodeSlice(n.Uses)
+		c.pop()
 		return out
 
 	case *ast.StmtWhile:
@@ -2214,6 +2649,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.WhileStmt)(nil)
 		}
 		out := &ir.WhileStmt{}
+		out.ParentNode = c.back()
+		c.push(out)
 		out.Position = n.Position
 
 		out.WhileTkn = n.WhileTkn
@@ -2226,6 +2663,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Cond = c.convNode(n.Cond)
 		out.Stmt = c.convNode(n.Stmt)
 		out.AltSyntax = hasValue(n.EndWhileTkn)
+		c.pop()
 		return out
 
 	case *ast.ExprMatch:
@@ -2233,6 +2671,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.MatchExpr)(nil)
 		}
 		out := &ir.MatchExpr{}
+		out.ParentNode = c.back()
+		c.push(out)
 
 		out.Position = n.Position
 		out.MatchTkn = n.MatchTkn
@@ -2251,6 +2691,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseCurlyBracketTkn = n.CloseCurlyBracketTkn
 
+		c.pop()
 		return out
 
 	case *ast.MatchArm:
@@ -2258,6 +2699,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.MatchArm)(nil)
 		}
 		out := &ir.MatchArm{}
+		out.ParentNode = c.back()
+		c.push(out)
 
 		out.Position = n.Position
 		out.DefaultTkn = n.DefaultTkn
@@ -2273,6 +2716,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.DoubleArrowTkn = n.DoubleArrowTkn
 		out.ReturnExpr = c.convNode(n.ReturnExpr)
 		out.IsDefault = out.DefaultTkn != nil
+		c.pop()
 		return out
 
 	case *ast.Union:
@@ -2280,10 +2724,13 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.MatchArm)(nil)
 		}
 		out := &ir.Union{}
+		out.ParentNode = c.back()
+		c.push(out)
 
 		out.Position = n.Position
 		out.Types = c.convNodeSlice(n.Types)
 		out.SeparatorTkns = n.SeparatorTkns
+		c.pop()
 		return out
 
 	case *ast.Attribute:
@@ -2291,6 +2738,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.MatchArm)(nil)
 		}
 		out := &ir.Attribute{}
+		out.ParentNode = c.back()
+		c.push(out)
 
 		out.Position = n.Position
 		out.Name = c.convNode(n.Name)
@@ -2298,6 +2747,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		out.Args = c.convNodeSlice(n.Args)
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
+		c.pop()
 		return out
 
 	case *ast.AttributeGroup:
@@ -2305,6 +2755,8 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 			return (*ir.AttributeGroup)(nil)
 		}
 		out := &ir.AttributeGroup{}
+		out.ParentNode = c.back()
+		c.push(out)
 
 		out.Position = n.Position
 		out.OpenAttributeTkn = n.OpenAttributeTkn
@@ -2318,6 +2770,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 
 		out.SeparatorTkns = n.SeparatorTkns
 		out.CloseAttributeTkn = n.CloseAttributeTkn
+		c.pop()
 		return out
 
 	case *ast.StmtEnum, *ast.EnumCase:
@@ -2381,8 +2834,9 @@ func (c *Converter) convRelativeName(n *ast.NameRelative) *ir.Name {
 		value = `\` + c.namespace + `\` + value
 	}
 	return &ir.Name{
-		Position: n.Position,
-		Value:    value,
+		ParentNode: c.back(),
+		Position:   n.Position,
+		Value:      value,
 	}
 }
 
@@ -2405,6 +2859,16 @@ func (c *Converter) convCastExpr(n, e ast.Vertex, castTkn *token.Token, typ stri
 }
 
 func (c *Converter) convClass(n *ast.StmtClass) ir.Node {
+	out := &ir.ClassStmt{
+		ClassTkn:             n.ClassTkn,
+		OpenCurlyBracketTkn:  n.OpenCurlyBracketTkn,
+		CloseCurlyBracketTkn: n.CloseCurlyBracketTkn,
+		Position:             n.Position,
+	}
+
+	out.ParentNode = c.back()
+	c.push(out)
+
 	var extends *ir.ClassExtendsStmt
 	extendsNode := c.convNode(n.Extends)
 	if extendsNode != nil {
@@ -2431,7 +2895,11 @@ func (c *Converter) convClass(n *ast.StmtClass) ir.Node {
 		}
 	}
 
+	out.Class = class
+
 	if n.Name == nil {
+		out.ParentNode = c.back()
+		c.pop()
 		// Anonymous class expression.
 		out := &ir.AnonClassExpr{
 			ClassTkn:             n.ClassTkn,
@@ -2443,22 +2911,19 @@ func (c *Converter) convClass(n *ast.StmtClass) ir.Node {
 			Position:             n.Position,
 			Class:                class,
 		}
+		c.push(out)
+
 		if n.Args != nil {
 			out.Args = c.convNodeSlice(n.Args)
 		}
 
 		out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
+		c.pop()
 		return out
 	}
 
-	out := &ir.ClassStmt{
-		ClassTkn:             n.ClassTkn,
-		OpenCurlyBracketTkn:  n.OpenCurlyBracketTkn,
-		CloseCurlyBracketTkn: n.CloseCurlyBracketTkn,
-		Position:             n.Position,
-		Class:                class,
-		ClassName:            c.convNode(n.Name).(*ir.Identifier),
-	}
+	out.ClassName = c.convNode(n.Name).(*ir.Identifier)
+
 	if n.AttrGroups != nil {
 		slice := make([]*ir.AttributeGroup, len(n.AttrGroups))
 		for i := range n.AttrGroups {
@@ -2476,6 +2941,7 @@ func (c *Converter) convClass(n *ast.StmtClass) ir.Node {
 	}
 
 	out.Doc = c.getPHPDoc(ir.GetFirstToken(out))
+	c.pop()
 	return out
 }
 

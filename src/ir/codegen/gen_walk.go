@@ -42,6 +42,10 @@ func (g *genWalk) writeFieldsWalk(w *bytes.Buffer, typ *types.Struct) {
 }
 
 func (g *genWalk) writeFieldWalk(w *bytes.Buffer, field *types.Var) {
+	if field.Name() == "ParentNode" {
+		return
+	}
+
 	// Embedded structs are handles as a normal members of the struct.
 	if field.Embedded() {
 		g.writeFieldsWalk(w, field.Type().Underlying().(*types.Struct))

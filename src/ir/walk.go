@@ -1483,8 +1483,8 @@ func (n *PropertyListStmt) Walk(v Visitor) {
 	for _, nn := range n.Modifiers {
 		nn.Walk(v)
 	}
-	if n.Type != nil {
-		n.Type.Walk(v)
+	if n.PropertyType != nil {
+		n.PropertyType.Walk(v)
 	}
 	for _, nn := range n.Properties {
 		nn.Walk(v)

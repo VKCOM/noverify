@@ -43,6 +43,10 @@ func (g *genEqual) writeCompare(w *bytes.Buffer, pkg *packageData, typ *typeData
 	w.WriteString("    if !ok || x == nil || y == nil { return x == y }\n")
 	for i := 0; i < typ.info.NumFields(); i++ {
 		field := typ.info.Field(i)
+		if field.Name() == "ParentNode" {
+			continue
+		}
+
 		switch typeString := field.Type().String(); typeString {
 		case "string", "bool":
 			fmt.Fprintf(w, "    if x.%[1]s != y.%[1]s { return false }\n", field.Name())

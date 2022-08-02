@@ -472,17 +472,22 @@ func (p *parser) checkForVariableInPattern(name string, pattern ir.Node, verifie
 		return true
 	}
 
-	found := irutil.FindWithPredicate(&ir.SimpleVar{Name: name}, pattern, func(what ir.Node, cur ir.Node) bool {
+	foundNode := irutil.FindChild(pattern, func(node ir.Node) bool {
 		// We need to check if there is a variable with this name
 		// in case the pattern contains the ${"[varName]:var"} template.
-		if s, ok := cur.(*ir.Var); ok {
-			if s, ok := s.Expr.(*ir.String); ok {
-				return strings.Contains(s.Value, what.(*ir.SimpleVar).Name+":var")
+		switch n := node.(type) {
+		case *ir.Var:
+			if s, ok := n.Expr.(*ir.String); ok {
+				return strings.Contains(s.Value, name+":var")
 			}
+		case *ir.SimpleVar:
+			return n.Name == name
 		}
+
 		return false
 	})
 
+	found := foundNode != nil
 	if found {
 		verifiedVars[name] = struct{}{}
 	}

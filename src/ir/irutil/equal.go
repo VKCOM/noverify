@@ -1570,7 +1570,7 @@ func NodeEqual(x, y ir.Node) bool {
 				return false
 			}
 		}
-		if !NodeEqual(x.Type, y.Type) {
+		if !NodeEqual(x.PropertyType, y.PropertyType) {
 			return false
 		}
 		if !NodeSliceEqual(x.Properties, y.Properties) {

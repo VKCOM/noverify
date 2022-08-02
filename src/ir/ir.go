@@ -12,6 +12,7 @@ import (
 // Node is a type that is implemented by all IR types.
 // node_types.go contains all implementations.
 type Node interface {
+	Parent() Node
 	Walk(Visitor)
 	IterateTokens(func(*token.Token) bool)
 }

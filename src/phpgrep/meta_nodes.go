@@ -12,6 +12,7 @@ type metaNode struct {
 
 func (metaNode) Walk(v ir.Visitor)                           {}
 func (metaNode) IterateTokens(func(token *token.Token) bool) {}
+func (metaNode) Parent() ir.Node                             { return nil }
 
 type (
 	anyConst struct{ metaNode }

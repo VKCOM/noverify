@@ -1721,8 +1721,8 @@ func GetFirstToken(n Node) *token.Token {
 				return GetFirstToken(n.Modifiers[0])
 			}
 		}
-		if n.Type != nil {
-			return GetFirstToken(n.Type)
+		if n.PropertyType != nil {
+			return GetFirstToken(n.PropertyType)
 		}
 		if len(n.Properties) != 0 {
 			if n.Properties[0] != nil {
