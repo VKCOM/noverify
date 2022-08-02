@@ -34,6 +34,7 @@ type Converter struct {
 func NewConverter(typeParser *phpdoc.TypeParser) *Converter {
 	return &Converter{
 		phpdocTypeParser: typeParser,
+		nodeStack:        make([]ir.Node, 50),
 	}
 }
 
