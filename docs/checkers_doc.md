@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 99           | 82                        | 17                         | 12                 |
+| 102           | 85                        | 17                         | 12                 |
 
 ## Table of contents
  - Enabled by default
@@ -89,6 +89,9 @@
    - [`undefinedVariable` checker](#undefinedvariable-checker)
    - [`unimplemented` checker](#unimplemented-checker)
    - [`unused` checker](#unused-checker)
+   - [`useEval` checker](#useeval-checker)
+   - [`useExitOrDie` checker](#useexitordie-checker)
+   - [`useSleep` checker](#usesleep-checker)
    - [`varShadow` checker](#varshadow-checker)
  - Disabled by default
    - [`argsReverse` checker](#argsreverse-checker)
@@ -1755,6 +1758,60 @@ return [$err];
 ```php
 $result = calculateResult();
 return [$result, $err];
+```
+<p><br></p>
+
+
+### `useEval` checker
+
+#### Description
+
+Report using `eval` function.
+
+#### Non-compliant code:
+```php
+eval("2 + 2");
+```
+
+#### Compliant code:
+```php
+// no eval
+```
+<p><br></p>
+
+
+### `useExitOrDie` checker
+
+#### Description
+
+Report using `exit` or `die` functions.
+
+#### Non-compliant code:
+```php
+exit(1);
+```
+
+#### Compliant code:
+```php
+// no exit
+```
+<p><br></p>
+
+
+### `useSleep` checker
+
+#### Description
+
+Report using `sleep` function.
+
+#### Non-compliant code:
+```php
+sleep(10);
+```
+
+#### Compliant code:
+```php
+// no sleep
 ```
 <p><br></p>
 

@@ -800,6 +800,7 @@ func (c *Converter) convNode(n ast.Vertex) ir.Node {
 		}
 		out := &ir.EmptyExpr{}
 		out.Position = n.Position
+		out.EmptyTkn = n.EmptyTkn
 		out.OpenParenthesisTkn = n.OpenParenthesisTkn
 		out.CloseParenthesisTkn = n.CloseParenthesisTkn
 		out.Expr = c.convNode(n.Expr)

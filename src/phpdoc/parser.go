@@ -129,7 +129,7 @@ func Parse(parser *TypeParser, doc string) Comment {
 		ln = strings.TrimSpace(ln)
 
 		// works both {@inheritdoc} and @inheritdoc comments.
-		if strings.Contains(ln, "@inheritdoc") {
+		if strings.Contains(ln, "@inheritdoc") || strings.Contains(ln, "@inheritDoc") {
 			inherit = true
 			continue
 		}

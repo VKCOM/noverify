@@ -674,3 +674,44 @@ function concatenationPrecedence() {
         $_ . $_ >> $_;
     }
 }
+
+/**
+ * @comment Report using `exit` or `die` functions.
+ * @before  exit(1);
+ * @after   // no exit
+ */
+function useExitOrDie() {
+  /**
+   * @warning Don't use the 'exit' function
+   */
+  exit($_);
+
+  /**
+   * @warning Don't use the 'die' function
+   */
+  die($_);
+}
+
+/**
+ * @comment Report using `eval` function.
+ * @before  eval("2 + 2");
+ * @after   // no eval
+ */
+function useEval() {
+  /**
+   * @warning Don't use the 'eval' function
+   */
+  eval($_);
+}
+
+/**
+ * @comment Report using `sleep` function.
+ * @before  sleep(10);
+ * @after   // no sleep
+ */
+function useSleep() {
+  /**
+   * @warning Don't use the 'sleep' function
+   */
+  sleep($_);
+}

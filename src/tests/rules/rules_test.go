@@ -416,3 +416,29 @@ function bad(string $x) {
 	}
 	test.RunRulesTest()
 }
+
+func TestRulesFilter(t *testing.T) {
+	rfile := `<?php
+function id_check() {
+  /**
+   * @warning Don't use $id variable
+   * @filter $id ^id$
+   */
+  $id;
+}
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+$id = 100;
+echo $id;
+echo $id == 0;
+if ($id == 0) {}
+`)
+	test.Expect = []string{
+		`Don't use $id variable`,
+		`Don't use $id variable`,
+		`Don't use $id variable`,
+	}
+	test.RunRulesTest()
+}
