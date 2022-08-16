@@ -44,6 +44,15 @@ function g($b) {
 	test.RunAndMatch()
 }
 
+func TestLinterSuppressUndefinedClass(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+/** @linter-suppress undefinedClass */
+echo new Foo;
+`)
+	test.RunAndMatch()
+}
+
 func TestLinterSuppressNotAll(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

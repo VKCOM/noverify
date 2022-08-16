@@ -510,7 +510,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 		if ok {
 			b.report(e.Class, LevelError, "invalidNew", "Cannot instantiate trait %s", class.Name)
 		} else {
-			b.walker.r.checker.ReportUndefinedClass(e.Class, className)
+			b.report(e.Class, LevelError, "undefinedClass", "Class or interface named %s does not exist", className)
 		}
 	} else {
 		if class.IsInterface() {

@@ -126,24 +126,22 @@ func newBlockWalker(r *rootWalker, sc *meta.Scope) *blockWalker {
 }
 
 func (b *blockWalker) report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
-	if b.findLinterSuppressAnnotation(n, checkName) {
+	if b.isSuppressed(n, checkName) {
 		return
 	}
 
 	b.r.Report(n, level, checkName, msg, args...)
 }
 
-func (b *blockWalker) findLinterSuppressAnnotation(n ir.Node, checkName string) bool {
-	contains := b.containLinterSuppress(n, checkName)
-	if contains {
+func (b *blockWalker) isSuppressed(n ir.Node, checkName string) bool {
+	if containLinterSuppress(n, checkName) {
 		return true
 	}
 
 	// We go up the tree in search of a comment that disables this checker.
 	for i := 0; b.path.NthParent(i) != nil; i++ {
 		parent := b.path.NthParent(i)
-		contains = b.containLinterSuppress(parent, checkName)
-		if contains {
+		if containLinterSuppress(parent, checkName) {
 			return true
 		}
 	}
@@ -205,11 +203,12 @@ func (b *blockWalker) reportDeadCode(n ir.Node) {
 	b.report(n, LevelWarning, "deadCode", "Unreachable code")
 }
 
-func (b *blockWalker) containLinterSuppress(n ir.Node, needInspection string) bool {
+func containLinterSuppress(n ir.Node, needInspection string) bool {
 	if n == nil {
 		return false
 	}
 
+	phpdocTypeParser := phpdoc.NewTypeParser()
 	firstTkn := ir.GetFirstToken(n)
 	if firstTkn == nil {
 		return false
@@ -224,7 +223,7 @@ func (b *blockWalker) containLinterSuppress(n ir.Node, needInspection string) bo
 			continue
 		}
 
-		parsed := phpdoc.Parse(b.r.ctx.phpdocTypeParser, string(tkn.Value))
+		parsed := phpdoc.Parse(phpdocTypeParser, string(tkn.Value))
 		for _, p := range parsed.Parsed {
 			part, ok := p.(*phpdoc.RawCommentPart)
 			if !ok {
