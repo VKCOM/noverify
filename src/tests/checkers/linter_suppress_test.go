@@ -18,7 +18,7 @@ function f($a) {
 
 function g($b) {
   /**
-   * @linter-suppress deprecated
+   * @noverify-suppress deprecated
    */
   echo f(
     f(10)
@@ -26,7 +26,7 @@ function g($b) {
 }
 
 /**
- * @linter-suppress deprecated
+ * @noverify-suppress deprecated
  */
 echo f(10);
 `)
@@ -37,7 +37,7 @@ func TestLinterSuppressAll(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 function g($b) {
-  /** @linter-suppress all */
+  /** @noverify-suppress all */
   $a = $b && $b;
 }
 `)
@@ -47,7 +47,7 @@ function g($b) {
 func TestLinterSuppressUndefinedClass(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-/** @linter-suppress undefinedClass */
+/** @noverify-suppress undefinedClass */
 echo new Foo;
 `)
 	test.RunAndMatch()
@@ -57,7 +57,7 @@ func TestLinterSuppressNotAll(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 function g($b) {
-  /** @linter-suppress dupSubExpr */
+  /** @noverify-suppress dupSubExpr */
   $a = $b && $b;
 }
 `)
@@ -74,7 +74,7 @@ function f($b) {
   return $b;
 
   /**
-   * @linter-suppress deadCode
+   * @noverify-suppress deadCode
    */
   return 10;
 }
@@ -82,7 +82,7 @@ function f($b) {
 function f($b) {
   return $b;
 
-  /** @linter-suppress deadCode */
+  /** @noverify-suppress deadCode */
   return 10;
 }
 `)
@@ -95,7 +95,7 @@ func TestLinterSuppressWarningInGlobalScope(t *testing.T) {
 $a = 100;
 
 /**
- * @linter-suppress all
+ * @noverify-suppress all
  */
 echo $a && $a;
 `)
@@ -112,29 +112,29 @@ class Foo {
 }
 
 function g($b) {
-  /** @linter-suppress paramClobber */
+  /** @noverify-suppress paramClobber */
   $b = 100;
 
-  /** @linter-suppress dupSubExpr */
+  /** @noverify-suppress dupSubExpr */
   echo $b && $b;
 
-  /** @linter-suppress dupBranchBody */
+  /** @noverify-suppress dupBranchBody */
   if ($b) {
     echo 1;
   } else {
     echo 1;
   }
 
-  /** @linter-suppress accessLevel */
+  /** @noverify-suppress accessLevel */
   echo (new Foo)->a;
 
-  /** @linter-suppress undefinedMethod */
+  /** @noverify-suppress undefinedMethod */
   echo (new Foo)->undefined();
 
-  /** @linter-suppress mixedArrayKeys */
+  /** @noverify-suppress mixedArrayKeys */
   echo [10, 20, "some" => 30];
 
-  /** @linter-suppress all */
+  /** @noverify-suppress all */
   switch ($b) {
     case 1:
       echo 1;

@@ -219,7 +219,7 @@ func containLinterSuppress(n ir.Node, needInspection string) bool {
 			continue
 		}
 
-		if !bytes.Contains(tkn.Value, []byte("@linter-suppress")) {
+		if !bytes.Contains(tkn.Value, []byte("@noverify-suppress")) {
 			continue
 		}
 
@@ -230,7 +230,7 @@ func containLinterSuppress(n ir.Node, needInspection string) bool {
 				continue
 			}
 
-			if part.Name() == "linter-suppress" {
+			if part.Name() == "noverify-suppress" {
 				inspection := part.Params[0]
 
 				if inspection == "all" || inspection == needInspection {
