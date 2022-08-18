@@ -347,8 +347,8 @@ func formatContext(r *linter.Report, cursor strings.Builder) string {
 
 	context := fmt.Sprintf(`%[1]s |
 %[2]d |%[3]s
-%[1]s |%[4]s
-`, strings.Repeat(" ", width), r.Line, r.Context, cursor.String())
+%[1]s |%[4]s %[5]s
+`, strings.Repeat(" ", width), r.Line, r.Context, cursor.String(), r.Hint)
 	return context
 }
 

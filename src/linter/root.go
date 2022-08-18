@@ -1508,7 +1508,15 @@ func (d *rootWalker) ReportPHPDoc(phpDocLocation PHPDocLocation, level int, chec
 	d.ReportLocation(loc, level, checkName, msg, args...)
 }
 
+func (d *rootWalker) ReportWithHint(n ir.Node, level int, checkName, msg, hint string, args ...interface{}) {
+	d.report(n, level, checkName, msg, hint, args...)
+}
+
 func (d *rootWalker) Report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
+	d.report(n, level, checkName, msg, "", args...)
+}
+
+func (d *rootWalker) report(n ir.Node, level int, checkName, msg, hint string, args ...interface{}) {
 	var pos position.Position
 
 	if n == nil {
@@ -1555,10 +1563,14 @@ func (d *rootWalker) Report(n ir.Node, level int, checkName, msg string, args ..
 		}
 	}
 
-	d.ReportLocation(loc, level, checkName, msg, args...)
+	d.reportLocation(loc, level, checkName, msg, hint, args...)
 }
 
 func (d *rootWalker) ReportLocation(loc ir.Location, level int, checkName, msg string, args ...interface{}) {
+	d.reportLocation(loc, level, checkName, msg, "", args...)
+}
+
+func (d *rootWalker) reportLocation(loc ir.Location, level int, checkName, msg, hint string, args ...interface{}) {
 	if !d.metaInfo().IsIndexingComplete() {
 		return
 	}
@@ -1605,6 +1617,7 @@ func (d *rootWalker) ReportLocation(loc ir.Location, level int, checkName, msg s
 		Level:     level,
 		Filename:  strings.ReplaceAll(d.ctx.st.CurrentFile, "\\", "/"), // To make output stable between platforms, see #572
 		Message:   fmt.Sprintf(msg, args...),
+		Hint:      hint,
 		Hash:      hash,
 	})
 }

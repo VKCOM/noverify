@@ -1,290 +1,290 @@
 MAYBE   ternarySimplify: Could rewrite as `$baseDir ?: 0` at testdata/mustache/src/Mustache/Autoloader.php:56
    |
 56 |        $key = $baseDir ? $baseDir : 0;
-   |               ^^^^^^^^^^^^^^^^^^^^^^^
+   |               ^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   undefinedClass: Class or interface named \Psr\Log\LoggerInterface does not exist at testdata/mustache/src/Mustache/Cache/AbstractCache.php:26
    |
 26 |     * @return Mustache_Logger|Psr\Log\LoggerInterface
-   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   undefinedClass: Class or interface named \Psr\Log\LoggerInterface does not exist at testdata/mustache/src/Mustache/Cache/AbstractCache.php:36
    |
 36 |     * @param Mustache_Logger|Psr\Log\LoggerInterface $logger
-   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:110
     |
 110 |            @mkdir($dirName, 0777, true);
-    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:140
     |
 140 |        if (false !== @file_put_contents($tempFile, $value)) {
-    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:141
     |
 141 |            if (@rename($tempFile, $fileName)) {
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   ternarySimplify: Could rewrite as `$this->fileMode ?? (0666 & ~umask())` at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:142
     |
 142 |                $mode = isset($this->fileMode) ? $this->fileMode : (0666 & ~umask());
-    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:143
     |
 143 |                @chmod($fileName, $mode);
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 WARNING useEval: Don't use the 'eval' function at testdata/mustache/src/Mustache/Cache/NoopCache.php:45
    |
 45 |        eval('?>' . $value);
-   |        ^^^^^^^^^^^^^^^^^^^
+   |        ^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   ternarySimplify: Could rewrite as `$node[Mustache_Tokenizer::FILTERS] ?? array()` at testdata/mustache/src/Mustache/Compiler.php:99
    |
 99 |                        isset($node[Mustache_Tokenizer::FILTERS]) ? $node[Mustache_Tokenizer::FILTERS] : array(),
-   |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   ternarySimplify: Could rewrite as `$node[Mustache_Tokenizer::FILTERS] ?? array()` at testdata/mustache/src/Mustache/Compiler.php:112
     |
 112 |                        isset($node[Mustache_Tokenizer::FILTERS]) ? $node[Mustache_Tokenizer::FILTERS] : array(),
-    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   ternarySimplify: Could rewrite as `$node[Mustache_Tokenizer::INDENT] ?? ''` at testdata/mustache/src/Mustache/Compiler.php:120
     |
 120 |                        isset($node[Mustache_Tokenizer::INDENT]) ? $node[Mustache_Tokenizer::INDENT] : '',
-    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   ternarySimplify: Could rewrite as `$node[Mustache_Tokenizer::INDENT] ?? ''` at testdata/mustache/src/Mustache/Compiler.php:128
     |
 128 |                        isset($node[Mustache_Tokenizer::INDENT]) ? $node[Mustache_Tokenizer::INDENT] : '',
-    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   ternarySimplify: Could rewrite as `$node[Mustache_Tokenizer::FILTERS] ?? array()` at testdata/mustache/src/Mustache/Compiler.php:166
     |
 166 |                        isset($node[Mustache_Tokenizer::FILTERS]) ? $node[Mustache_Tokenizer::FILTERS] : array(),
-    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
-WARNING unused: Variable $keystr is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/mustache/src/Mustache/Compiler.php:289
+WARNING unused: Variable $keystr is unused at testdata/mustache/src/Mustache/Compiler.php:289
     |
 289 |        $keystr = var_export($key, true);
-    |        ^^^^^^^
+    |        ^^^^^^^ use `$_` to ignore (see --unused-var-regex flag)
 
 MAYBE   callSimplify: Could simplify to $id[0] at testdata/mustache/src/Mustache/Compiler.php:646
     |
 646 |            if (substr($id, 0, 1) === '.') {
-    |                ^^^^^^^^^^^^^^^^^
+    |                ^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Constant KLASS must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:184
     |
 184 |    const KLASS = '<?php
-    |    ^^^^^^^
+    |    ^^^^^^^ 
 
 ERROR   classMembersOrder: Constant KLASS_NO_LAMBDAS must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:202
     |
 202 |    const KLASS_NO_LAMBDAS = '<?php
-    |    ^^^^^^^
+    |    ^^^^^^^ 
 
 ERROR   classMembersOrder: Constant STRICT_CALLABLE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:215
     |
 215 |    const STRICT_CALLABLE = 'protected $strictCallables = true;';
-    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Constant BLOCK_VAR must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:237
     |
 237 |    const BLOCK_VAR = '
-    |    ^^
+    |    ^^ 
 
 ERROR   classMembersOrder: Constant BLOCK_VAR_ELSE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:244
     |
 244 |    const BLOCK_VAR_ELSE = '} else {%s';
-    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Constant BLOCK_ARG must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:271
     |
 271 |    const BLOCK_ARG = '%s => array($this, \'block%s\'),';
-    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Constant BLOCK_FUNCTION must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:295
     |
 295 |    const BLOCK_FUNCTION = '
-    |    ^^
+    |    ^^ 
 
 ERROR   classMembersOrder: Constant SECTION_CALL must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:323
     |
 323 |    const SECTION_CALL = '
-    |    ^^
+    |    ^^ 
 
 ERROR   classMembersOrder: Constant SECTION must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:329
     |
 329 |    const SECTION = '
-    |    ^^
+    |    ^^ 
 
 ERROR   classMembersOrder: Constant INVERTED_SECTION must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:398
     |
 398 |    const INVERTED_SECTION = '
-    |    ^^
+    |    ^^ 
 
 ERROR   classMembersOrder: Constant PARTIAL_INDENT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:425
     |
 425 |    const PARTIAL_INDENT = ', $indent . %s';
-    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Constant PARTIAL must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:426
     |
 426 |    const PARTIAL = '
-    |    ^^
+    |    ^^ 
 
 ERROR   classMembersOrder: Constant PARENT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:456
     |
 456 |    const PARENT = '
-    |    ^^
+    |    ^^ 
 
 ERROR   classMembersOrder: Constant PARENT_NO_CONTEXT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:465
     |
 465 |    const PARENT_NO_CONTEXT = '
-    |    ^^
+    |    ^^ 
 
 ERROR   classMembersOrder: Constant VARIABLE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:508
     |
 508 |    const VARIABLE = '
-    |    ^^
+    |    ^^ 
 
 ERROR   classMembersOrder: Constant FILTER must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:533
     |
 533 |    const FILTER = '
-    |    ^^
+    |    ^^ 
 
 ERROR   classMembersOrder: Constant LINE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:564
     |
 564 |    const LINE = '$buffer .= "\n";';
-    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Constant TEXT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:565
     |
 565 |    const TEXT = '$buffer .= %s%s;';
-    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Constant DEFAULT_ESCAPE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:607
     |
 607 |    const DEFAULT_ESCAPE = 'htmlspecialchars(%s, %s, %s)';
-    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Constant CUSTOM_ESCAPE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:608
     |
 608 |    const CUSTOM_ESCAPE  = 'call_user_func($this->mustache->getEscape(), %s)';
-    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Constant IS_CALLABLE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:658
     |
 658 |    const IS_CALLABLE        = '!is_string(%s) && is_callable(%s)';
-    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Constant STRICT_IS_CALLABLE must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:659
     |
 659 |    const STRICT_IS_CALLABLE = 'is_object(%s) && is_callable(%s)';
-    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Constant LINE_INDENT must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:675
     |
 675 |    const LINE_INDENT = '$indent . ';
-    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   callSimplify: Could simplify to $this->stack[] = $value at testdata/mustache/src/Mustache/Context.php:39
    |
 39 |        array_push($this->stack, $value);
-   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   callSimplify: Could simplify to $this->blockStack[] = $value at testdata/mustache/src/Mustache/Context.php:49
    |
 49 |        array_push($this->blockStack, $value);
-   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/mustache/src/Mustache/Context.php:213
     |
 213 |            switch (gettype($frame)) {
-    |            ^
+    |            ^ 
 
 MAYBE   ternarySimplify: Could rewrite as `$options['cache_file_mode'] ?? null` at testdata/mustache/src/Mustache/Engine.php:156
     |
 156 |                $mode  = isset($options['cache_file_mode']) ? $options['cache_file_mode'] : null;
-    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   misspellComment: "entitity" is a misspelling of "entity" at testdata/mustache/src/Mustache/Engine.php:254
     |
 254 |    public function getEntityFlags()
-    |                    ^^^^^^^^^^^^^^
+    |                    ^^^^^^^^^^^^^^ 
 
 ERROR   undefinedClass: Class or interface named \Psr\Log\LoggerInterface does not exist at testdata/mustache/src/Mustache/Engine.php:451
     |
 451 |     * @param Mustache_Logger|Psr\Log\LoggerInterface $logger
-    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   undefinedMethod: Call to undefined method {\Mustache_Cache}->getLogger() at testdata/mustache/src/Mustache/Engine.php:459
     |
 459 |        if ($this->getCache()->getLogger() === null) {
-    |                               ^^^^^^^^^
+    |                               ^^^^^^^^^ 
 
 ERROR   undefinedMethod: Call to undefined method {\Mustache_Cache}->setLogger() at testdata/mustache/src/Mustache/Engine.php:460
     |
 460 |            $this->getCache()->setLogger($logger);
-    |                               ^^^^^^^^^
+    |                               ^^^^^^^^^ 
 
 ERROR   undefinedClass: Class or interface named \Psr\Log\LoggerInterface does not exist at testdata/mustache/src/Mustache/Engine.php:469
     |
 469 |     * @return Mustache_Logger|Psr\Log\LoggerInterface
-    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   undefinedMethod: Call to undefined method {\Mustache_Cache}->getLogger() at testdata/mustache/src/Mustache/Engine.php:561
     |
 561 |        if (isset($this->logger) && $cache->getLogger() === null) {
-    |                                            ^^^^^^^^^
+    |                                            ^^^^^^^^^ 
 
 ERROR   undefinedMethod: Call to undefined method {\Mustache_Cache}->setLogger() at testdata/mustache/src/Mustache/Engine.php:562
     |
 562 |            $cache->setLogger($this->getLogger());
-    |                    ^^^^^^^^^
+    |                    ^^^^^^^^^ 
 
 MAYBE   ternarySimplify: Could rewrite as `$this->delimiters ?: '{{ }}'` at testdata/mustache/src/Mustache/Engine.php:628
     |
 628 |            'delimiters'      => $this->delimiters ? $this->delimiters : '{{ }}',
-    |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   missingPhpdoc: Missing PHPDoc for \Mustache_Exception_UnknownFilterException::getFilterName public method at testdata/mustache/src/Mustache/Exception/UnknownFilterException.php:34
    |
 34 |    public function getFilterName()
-   |                    ^^^^^^^^^^^^^
+   |                    ^^^^^^^^^^^^^ 
 
 MAYBE   missingPhpdoc: Missing PHPDoc for \Mustache_Exception_UnknownHelperException::getHelperName public method at testdata/mustache/src/Mustache/Exception/UnknownHelperException.php:34
    |
 34 |    public function getHelperName()
-   |                    ^^^^^^^^^^^^^
+   |                    ^^^^^^^^^^^^^ 
 
 MAYBE   missingPhpdoc: Missing PHPDoc for \Mustache_Exception_UnknownTemplateException::getTemplateName public method at testdata/mustache/src/Mustache/Exception/UnknownTemplateException.php:34
    |
 34 |    public function getTemplateName()
-   |                    ^^^^^^^^^^^^^^^
+   |                    ^^^^^^^^^^^^^^^ 
 
 WARNING regexpVet: '\w' intersects with '\d' in [\w\d\.] at testdata/mustache/src/Mustache/Loader/InlineLoader.php:115
     |
 115 |            foreach (preg_split("/^@@(?= [\w\d\.]+$)/m", $data, -1) as $chunk) {
-    |                                ^^^^^^^^^^^^^^^^^^^^^^^
+    |                                ^^^^^^^^^^^^^^^^^^^^^^^ 
 
 WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/mustache/src/Mustache/Parser.php:307
     |
 307 |        switch ($name) {
-    |        ^
+    |        ^ 
 
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/mustache/src/Mustache/Source/FilesystemSource.php:53
    |
 53 |                $this->stat = @stat($this->fileName);
-   |                              ^^^^^^^^^^^^^^^^^^^^^^
+   |                              ^^^^^^^^^^^^^^^^^^^^^^ 
 
-WARNING unused: Variable $v is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/mustache/src/Mustache/Template.php:122
+WARNING unused: Variable $v is unused at testdata/mustache/src/Mustache/Template.php:122
     |
 122 |                foreach ($value as $k => $v) {
-    |                                         ^^
+    |                                         ^^ use `$_` to ignore (see --unused-var-regex flag)
 

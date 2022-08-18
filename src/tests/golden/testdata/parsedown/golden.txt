@@ -1,380 +1,380 @@
 MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::text method explicitly at testdata/parsedown/parsedown.php:24
    |
 24 |    function text($text)
-   |             ^^^^
+   |             ^^^^ 
 
 MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::setBreaksEnabled method explicitly at testdata/parsedown/parsedown.php:59
    |
 59 |    function setBreaksEnabled($breaksEnabled)
-   |             ^^^^^^^^^^^^^^^^
+   |             ^^^^^^^^^^^^^^^^ 
 
 MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::setMarkupEscaped method explicitly at testdata/parsedown/parsedown.php:68
    |
 68 |    function setMarkupEscaped($markupEscaped)
-   |             ^^^^^^^^^^^^^^^^
+   |             ^^^^^^^^^^^^^^^^ 
 
 MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::setUrlsLinked method explicitly at testdata/parsedown/parsedown.php:77
    |
 77 |    function setUrlsLinked($urlsLinked)
-   |             ^^^^^^^^^^^^^
+   |             ^^^^^^^^^^^^^ 
 
 MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::setSafeMode method explicitly at testdata/parsedown/parsedown.php:86
    |
 86 |    function setSafeMode($safeMode)
-   |             ^^^^^^^^^^^
+   |             ^^^^^^^^^^^ 
 
 MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::setStrictMode method explicitly at testdata/parsedown/parsedown.php:95
    |
 95 |    function setStrictMode($strictMode)
-   |             ^^^^^^^^^^^^^
+   |             ^^^^^^^^^^^^^ 
 
 MAYBE   typeHint: Specify the type for the parameter $lines in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:162
     |
 162 |    protected function lines(array $lines)
-    |                       ^^^^^
+    |                       ^^^^^ 
 
 MAYBE   typeHint: Specify the type for the parameter $lines in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:167
     |
 167 |    protected function linesElements(array $lines)
-    |                       ^^^^^^^^^^^^^
+    |                       ^^^^^^^^^^^^^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Component in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:319
     |
 319 |    protected function extractElement(array $Component)
-    |                       ^^^^^^^^^^^^^^
+    |                       ^^^^^^^^^^^^^^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:428
     |
 428 |    protected function blockCommentContinue($Line, array $Block)
-    |                       ^^^^^^^^^^^^^^^^^^^^
+    |                       ^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:560
     |
 560 |                'handler' => array(
-    |                ^
+    |                ^ 
 
 MAYBE   typeHint: Specify the type for the parameter $CurrentBlock in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:574
     |
 574 |    protected function blockList($Line, array $CurrentBlock = null)
-    |                       ^^^^^^^^^
+    |                       ^^^^^^^^^ 
 
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:633
     |
 633 |                    'destination' => 'elements'
-    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:630
     |
 630 |                'handler' => array(
-    |                ^
+    |                ^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:643
     |
 643 |    protected function blockListContinue($Line, array $Block)
-    |                       ^^^^^^^^^^^^^^^^^
+    |                       ^^^^^^^^^^^^^^^^^ 
 
 MAYBE   ternarySimplify: Could rewrite as `$matches[1] ?? ''` at testdata/parsedown/parsedown.php:674
     |
 674 |            $text = isset($matches[1]) ? $matches[1] : '';
-    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:683
     |
 683 |                    'destination' => 'elements'
-    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:680
     |
 680 |                'handler' => array(
-    |                ^
+    |                ^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:729
     |
 729 |    protected function blockListComplete(array $Block)
-    |                       ^^^^^^^^^^^^^^^^^
+    |                       ^^^^^^^^^^^^^^^^^ 
 
 MAYBE   regexpSimplify: May re-write '/^>[ ]?+(.*+)/' as '/^> ?+(.*+)/' at testdata/parsedown/parsedown.php:750
     |
 750 |        if (preg_match('/^>[ ]?+(.*+)/', $Line['text'], $matches))
-    |                       ^^^^^^^^^^^^^^^^
+    |                       ^^^^^^^^^^^^^^^^ 
 
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:755
     |
 755 |                    'handler' => array(
-    |                    ^
+    |                    ^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:767
     |
 767 |    protected function blockQuoteContinue($Line, array $Block)
-    |                       ^^^^^^^^^^^^^^^^^^
+    |                       ^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   regexpSimplify: May re-write '/^>[ ]?+(.*+)/' as '/^> ?+(.*+)/' at testdata/parsedown/parsedown.php:774
     |
 774 |        if ($Line['text'][0] === '>' and preg_match('/^>[ ]?+(.*+)/', $Line['text'], $matches))
-    |                                                    ^^^^^^^^^^^^^^^^
+    |                                                    ^^^^^^^^^^^^^^^^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:811
     |
 811 |    protected function blockSetextHeader($Line, array $Block = null)
-    |                       ^^^^^^^^^^^^^^^^^
+    |                       ^^^^^^^^^^^^^^^^^ 
 
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/parsedown/parsedown.php:840
     |
 840 |            if (in_array($element, $this->textLevelElements))
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:857
     |
 857 |    protected function blockMarkupContinue($Line, array $Block)
-    |                       ^^^^^^^^^^^^^^^^^^^
+    |                       ^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   regexpSimplify: May re-write '/^\[(.+?)\]:[ ]*+<?(\S+?)>?(?:[ ]+["\'(](.+)["\')])?[ ]*+$/' as '/^\[(.+?)\]: *+<?(\S+?)>?(?: +["'(](.+)["')])? *+$/' at testdata/parsedown/parsedown.php:875
     |
 875 |            and preg_match('/^\[(.+?)\]:[ ]*+<?(\S+?)>?(?:[ ]+["\'(](.+)["\')])?[ ]*+$/', $Line['text'], $matches)
-    |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   ternarySimplify: Could rewrite as `$matches[3] ?? null` at testdata/parsedown/parsedown.php:881
     |
 881 |                'title' => isset($matches[3]) ? $matches[3] : null,
-    |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:897
     |
 897 |    protected function blockTable($Line, array $Block = null)
-    |                       ^^^^^^^^^^
+    |                       ^^^^^^^^^^ 
 
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:973
     |
 973 |                'handler' => array(
-    |                ^
+    |                ^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1020
      |
 1020 |    protected function blockTableContinue($Line, array $Block)
-     |                       ^^^^^^^^^^^^^^^^^^
+     |                       ^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:1046
      |
 1046 |                    'handler' => array(
-     |                    ^
+     |                    ^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1093
      |
 1093 |    protected function paragraphContinue($Line, array $Block)
-     |                       ^^^^^^^^^^^^^^^^^
+     |                       ^^^^^^^^^^^^^^^^^ 
 
 MAYBE   regexpSimplify: May re-write '/[ ]*+\n/' as '/ *+\n/' at testdata/parsedown/parsedown.php:1265
      |
 1265 |            $text = preg_replace('/[ ]*+\n/', ' ', $text);
-     |                                 ^^^^^^^^^^^
+     |                                 ^^^^^^^^^^^ 
 
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:1333
      |
 1333 |                'handler' => array(
-     |                ^
+     |                ^ 
 
 MAYBE   regexpSimplify: May re-write '/^[(]\s*+((?:[^ ()]++|[(][^ )]+[)])++)(?:[ ]+("[^"]*+"|\'[^\']*+\'))?\s*+[)]/' as '/^[(]\s*+((?:[^ ()]++|[(][^ )]+[)])++)(?: +("[^"]*+"|'[^']*+'))?\s*+[)]/' at testdata/parsedown/parsedown.php:1421
      |
 1421 |        if (preg_match('/^[(]\s*+((?:[^ ()]++|[(][^ )]+[)])++)(?:[ ]+("[^"]*+"|\'[^\']*+\'))?\s*+[)]/', $remainder, $matches))
-     |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   regexpSimplify: May re-write '/^<\/\w[\w-]*+[ ]*+>/s' as '/^<\/\w[\w-]*+ *+>/s' at testdata/parsedown/parsedown.php:1470
      |
 1470 |        if ($Excerpt['text'][1] === '/' and preg_match('/^<\/\w[\w-]*+[ ]*+>/s', $Excerpt['text'], $matches))
-     |                                                       ^^^^^^^^^^^^^^^^^^^^^^^^
+     |                                                       ^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   callSimplify: Could simplify to $Excerpt['text'][1] at testdata/parsedown/parsedown.php:1497
      |
 1497 |        if (substr($Excerpt['text'], 1, 1) !== ' ' and strpos($Excerpt['text'], ';') !== false
-     |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:1522
      |
 1522 |                    'handler' => array(
-     |                    ^
+     |                    ^ 
 
 MAYBE   regexpSimplify: May re-write '/\bhttps?+:[\/]{2}[^\s<]+\b\/*+/ui' as '~\bhttps?+:/{2}[^\s<]+\b/*+~ui' at testdata/parsedown/parsedown.php:1540
      |
 1540 |            and preg_match('/\bhttps?+:[\/]{2}[^\s<]+\b\/*+/ui', $Excerpt['context'], $matches, PREG_OFFSET_CAPTURE)
-     |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1591
      |
 1591 |    protected function handle(array $Element)
-     |                       ^^^^^^
+     |                       ^^^^^^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1627
      |
 1627 |    protected function handleElementRecursive(array $Element)
-     |                       ^^^^^^^^^^^^^^^^^^^^^^
+     |                       ^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Elements in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1632
      |
 1632 |    protected function handleElementsRecursive(array $Elements)
-     |                       ^^^^^^^^^^^^^^^^^^^^^^^
+     |                       ^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1637
      |
 1637 |    protected function elementApplyRecursive($closure, array $Element)
-     |                       ^^^^^^^^^^^^^^^^^^^^^
+     |                       ^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1653
      |
 1653 |    protected function elementApplyRecursiveDepthFirst($closure, array $Element)
-     |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Elements in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1669
      |
 1669 |    protected function elementsApplyRecursive($closure, array $Elements)
-     |                       ^^^^^^^^^^^^^^^^^^^^^^
+     |                       ^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Elements in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1679
      |
 1679 |    protected function elementsApplyRecursiveDepthFirst($closure, array $Elements)
-     |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1689
      |
 1689 |    protected function element(array $Element)
-     |                       ^^^^^^^
+     |                       ^^^^^^^ 
 
 WARNING maybeUndefined: Possibly undefined variable $text at testdata/parsedown/parsedown.php:1755
      |
 1755 |                    $markup .= self::escape($text, true);
-     |                                            ^^^^^
+     |                                            ^^^^^ 
 
 WARNING maybeUndefined: Possibly undefined variable $text at testdata/parsedown/parsedown.php:1759
      |
 1759 |                    $markup .= $text;
-     |                               ^^^^^
+     |                               ^^^^^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Elements in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1773
      |
 1773 |    protected function elements(array $Elements)
-     |                       ^^^^^^^^
+     |                       ^^^^^^^^ 
 
 MAYBE   ternarySimplify: Could rewrite as `$Element['autobreak'] ?? isset($Element['name'])` at testdata/parsedown/parsedown.php:1786
      |
 1786 |            $autoBreakNext = (isset($Element['autobreak'])
-     |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/parsedown/parsedown.php:1807
      |
 1807 |        if ( ! in_array('', $lines)
-     |               ^^^^^^^^^^^^^^^^^^^^
+     |               ^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::parse method explicitly at testdata/parsedown/parsedown.php:1854
      |
 1854 |    function parse($text)
-     |             ^^^^^
+     |             ^^^^^ 
 
 MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1861
      |
 1861 |    protected function sanitiseElement(array $Element)
-     |                       ^^^^^^^^^^^^^^^
+     |                       ^^^^^^^^^^^^^^^ 
 
-WARNING unused: Variable $val is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/parsedown/parsedown.php:1882
+WARNING unused: Variable $val is unused at testdata/parsedown/parsedown.php:1882
      |
 1882 |            foreach ($Element['attributes'] as $att => $val)
-     |                                                       ^^^^
+     |                                                       ^^^^ use `$_` to ignore (see --unused-var-regex flag)
 
 MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1900
      |
 1900 |    protected function filterUnsafeUrlInAttribute(array $Element, $attribute)
-     |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::instance method explicitly at testdata/parsedown/parsedown.php:1938
      |
 1938 |    static function instance($name = 'default')
-     |                    ^^^^^^^^
+     |                    ^^^^^^^^ 
 
 ERROR   classMembersOrder: Property $breaksEnabled must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:66
    |
 66 |    protected $breaksEnabled;
-   |    ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Property $markupEscaped must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:75
    |
 75 |    protected $markupEscaped;
-   |    ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Property $urlsLinked must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:84
    |
 84 |    protected $urlsLinked = true;
-   |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Property $safeMode must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:93
    |
 93 |    protected $safeMode;
-   |    ^^^^^^^^^^^^^^^^^^^^
+   |    ^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Property $strictMode must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:102
     |
 102 |    protected $strictMode;
-    |    ^^^^^^^^^^^^^^^^^^^^^^
+    |    ^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Property $safeLinksWhitelist must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:104
     |
 104 |    protected $safeLinksWhitelist = array(
-    |    ^^
+    |    ^^ 
 
 ERROR   classMembersOrder: Property $BlockTypes must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:126
     |
 126 |    protected $BlockTypes = array(
-    |    ^^
+    |    ^^ 
 
 ERROR   classMembersOrder: Property $unmarkedBlockTypes must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:154
     |
 154 |    protected $unmarkedBlockTypes = array(
-    |    ^^
+    |    ^^ 
 
 ERROR   classMembersOrder: Property $InlineTypes must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1109
      |
 1109 |    protected $InlineTypes = array(
-     |    ^^
+     |    ^^ 
 
 ERROR   classMembersOrder: Property $inlineMarkerList must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1124
      |
 1124 |    protected $inlineMarkerList = '!*_&[:<`~\\';
-     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Property $instances must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1952
      |
 1952 |    private static $instances = array();
-     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Property $DefinitionData must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1958
      |
 1958 |    protected $DefinitionData;
-     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Property $specialCharacters must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1963
      |
 1963 |    protected $specialCharacters = array(
-     |    ^^
+     |    ^^ 
 
 ERROR   classMembersOrder: Property $StrongRegex must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1967
      |
 1967 |    protected $StrongRegex = array(
-     |    ^^
+     |    ^^ 
 
 ERROR   classMembersOrder: Property $EmRegex must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1972
      |
 1972 |    protected $EmRegex = array(
-     |    ^^
+     |    ^^ 
 
 ERROR   classMembersOrder: Property $regexHtmlAttribute must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1977
      |
 1977 |    protected $regexHtmlAttribute = '[a-zA-Z_:][\w:.-]*+(?:\s*+=\s*+(?:[^"\'=<>`\s]+|"[^"]*+"|\'[^\']*+\'))?+';
-     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 ERROR   classMembersOrder: Property $voidElements must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1979
      |
 1979 |    protected $voidElements = array(
-     |    ^^
+     |    ^^ 
 
 ERROR   classMembersOrder: Property $textLevelElements must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:1983
      |
 1983 |    protected $textLevelElements = array(
-     |    ^^
+     |    ^^ 
 

@@ -1142,6 +1142,7 @@ type Report struct {
 	CheckName string `json:"check_name"`
 	Level     int    `json:"level"`
 	Context   string `json:"context"`
+	Hint      string `json:"hint"`
 	Message   string `json:"message"`
 	Filename  string `json:"filename"`
 	Line      int    `json:"line"`

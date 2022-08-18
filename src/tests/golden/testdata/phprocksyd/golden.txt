@@ -1,145 +1,145 @@
 WARNING useSleep: Don't use the 'sleep' function at testdata/phprocksyd/Phprocksyd.php:8
   |
 8 |        sleep(10);
-  |        ^^^^^^^^^
+  |        ^^^^^^^^^ 
 
 WARNING useSleep: Don't use the 'sleep' function at testdata/phprocksyd/Phprocksyd.php:18
    |
 18 |        sleep(100);
-   |        ^^^^^^^^^^
+   |        ^^^^^^^^^^ 
 
 MAYBE   deprecated: Call to deprecated function dl (since: 5.3) at testdata/phprocksyd/Phprocksyd.php:73
    |
 73 |            if (!extension_loaded($ext) && !dl($ext . '.so')) {
-   |                                            ^^
+   |                                            ^^ 
 
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:75
    |
 75 |                exit(1);
-   |                ^^^^^^^
+   |                ^^^^^^^ 
 
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:82
    |
 82 |            exit(1);
-   |            ^^^^^^^
+   |            ^^^^^^^ 
 
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:87
    |
 87 |            exit(0);
-   |            ^^^^^^^
+   |            ^^^^^^^ 
 
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:93
    |
 93 |            exit(1);
-   |            ^^^^^^^
+   |            ^^^^^^^ 
 
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:98
    |
 98 |            exit(1);
-   |            ^^^^^^^
+   |            ^^^^^^^ 
 
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:118
     |
 118 |            exit(1);
-    |            ^^^^^^^
+    |            ^^^^^^^ 
 
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:129
     |
 129 |                exit(1);
-    |                ^^^^^^^
+    |                ^^^^^^^ 
 
 ERROR   constCase: Constant 'NULL' should be used in lower case as 'null' at testdata/phprocksyd/Phprocksyd.php:321
     |
 321 |            $n = stream_select($read, $write, $except, NULL);
-    |                                                       ^^^^
+    |                                                       ^^^^ 
 
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:325
     |
 325 |                exit(1);
-    |                ^^^^^^^
+    |                ^^^^^^^ 
 
 WARNING invalidDocblock: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:364
     |
 364 |     * @param $stream_id
-    |              ^^^^^^^^^^
+    |              ^^^^^^^^^^ 
 
 WARNING invalidDocblock: Malformed @param $req tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:365
     |
 365 |     * @param $req
-    |              ^^^^
+    |              ^^^^ 
 
 WARNING invalidDocblock: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:389
     |
 389 |     * @param $stream_id
-    |              ^^^^^^^^^^
+    |              ^^^^^^^^^^ 
 
 WARNING invalidDocblock: Malformed @param $req tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:390
     |
 390 |     * @param $req
-    |              ^^^^
+    |              ^^^^ 
 
-WARNING unused: Variable $status is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/phprocksyd/Phprocksyd.php:394
+WARNING unused: Variable $status is unused at testdata/phprocksyd/Phprocksyd.php:394
     |
 394 |        $status = null;
-    |        ^^^^^^^
+    |        ^^^^^^^ use `$_` to ignore (see --unused-var-regex flag)
 
 WARNING invalidDocblock: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:421
     |
 421 |     * @param $stream_id
-    |              ^^^^^^^^^^
+    |              ^^^^^^^^^^ 
 
 WARNING invalidDocblock: Malformed @param $req tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:422
     |
 422 |     * @param $req
-    |              ^^^^
+    |              ^^^^ 
 
 WARNING invalidDocblock: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:443
     |
 443 |     * @param $stream_id
-    |              ^^^^^^^^^^
+    |              ^^^^^^^^^^ 
 
 WARNING invalidDocblock: Malformed @param $req tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:444
     |
 444 |     * @param $req
-    |              ^^^^
+    |              ^^^^ 
 
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:481
     |
 481 |                exit(0);
-    |                ^^^^^^^
+    |                ^^^^^^^ 
 
 ERROR   undefinedMethod: Call to undefined method {mixed}->run() at testdata/phprocksyd/Phprocksyd.php:479
     |
 479 |                $instance->run($req['params']);
-    |                           ^^^
+    |                           ^^^ 
 
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:557
     |
 557 |                        exit(1);
-    |                        ^^^^^^^
+    |                        ^^^^^^^ 
 
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:590
     |
 590 |            exit(0);
-    |            ^^^^^^^
+    |            ^^^^^^^ 
 
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:619
     |
 619 |        exit(1);
-    |        ^^^^^^^
+    |        ^^^^^^^ 
 
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:685
     |
 685 |        exit(0);
-    |        ^^^^^^^
+    |        ^^^^^^^ 
 
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Simple.php:38
    |
 38 |            exit(1);
-   |            ^^^^^^^
+   |            ^^^^^^^ 
 
 ERROR   constCase: Constant 'NULL' should be used in lower case as 'null' at testdata/phprocksyd/Simple.php:158
     |
 158 |            $n = stream_select($read, $write, $except, NULL);
-    |                                                       ^^^^
+    |                                                       ^^^^ 
 

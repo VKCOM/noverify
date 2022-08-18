@@ -1,55 +1,55 @@
 WARNING invalidDocblock: @package name must be a start part of class namespace at testdata/twitter-api-php/TwitterAPIExchange.php:9
   |
 9 | * @package  Twitter-API-PHP
-  |   ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   ^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   callSimplify: Could simplify to $array['status'][0] at testdata/twitter-api-php/TwitterAPIExchange.php:117
     |
 117 |        if (isset($array['status']) && substr($array['status'], 0, 1) === '@')
-    |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
-WARNING unused: Variable $key is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/twitter-api-php/TwitterAPIExchange.php:122
+WARNING unused: Variable $key is unused at testdata/twitter-api-php/TwitterAPIExchange.php:122
     |
 122 |        foreach ($array as $key => &$value)
-    |                           ^^^^
+    |                           ^^^^ use `$_` to ignore (see --unused-var-regex flag)
 
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/twitter-api-php/TwitterAPIExchange.php:207
     |
 207 |        if (!in_array(strtolower($requestMethod), array('post', 'get', 'put', 'delete')))
-    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/twitter-api-php/TwitterAPIExchange.php:223
     |
 223 |            'oauth_version' => '1.0'
-    |            ^^^^^^^^^^^^^^^^^^^^^^^^
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   invalidDocblockType: Use bool type instead of boolean at testdata/twitter-api-php/TwitterAPIExchange.php:267
     |
 267 |     * @param boolean $return      If true, returns data. This is left in for backward compatibility reasons
-    |              ^^^^^^^
+    |              ^^^^^^^ 
 
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/twitter-api-php/TwitterAPIExchange.php:286
     |
 286 |        if (in_array(strtolower($this->requestMethod), array('put', 'delete')))
-    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/twitter-api-php/TwitterAPIExchange.php:366
     |
 366 |                'oauth_signature_method', 'oauth_timestamp', 'oauth_token', 'oauth_version'))) {
-    |                                                                            ^^^^^^^^^^^^^^^
+    |                                                                            ^^^^^^^^^^^^^^^ 
 
 MAYBE   invalidDocblockType: Use int type instead of integer at testdata/twitter-api-php/TwitterAPIExchange.php:404
     |
 404 |     * @return integer
-    |               ^^^^^^^
+    |               ^^^^^^^ 
 
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/twitter-api-php/index.php:10
    |
 10 |    'consumer_secret' => ""
-   |    ^^^^^^^^^^^^^^^^^^^^^^^
+   |    ^^^^^^^^^^^^^^^^^^^^^^^ 
 
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/twitter-api-php/index.php:20
    |
 20 |    'skip_status' => '1'
-   |    ^^^^^^^^^^^^^^^^^^^^
+   |    ^^^^^^^^^^^^^^^^^^^^ 
 
