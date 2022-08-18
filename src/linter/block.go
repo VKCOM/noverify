@@ -133,7 +133,7 @@ func (b *blockWalker) report(n ir.Node, level int, checkName, msg string, args .
 	b.r.Report(n, level, checkName, msg, args...)
 }
 
-func (b *blockWalker) reportWithHing(n ir.Node, level int, checkName, msg, hint string, args ...interface{}) {
+func (b *blockWalker) reportWithHint(n ir.Node, level int, checkName, msg, hint string, args ...interface{}) {
 	if b.isSuppressed(n, checkName) {
 		return
 	}
@@ -1232,7 +1232,7 @@ func (b *blockWalker) handleForeach(s *ir.ForeachStmt) bool {
 		b.untrackVarName(key.Name)
 
 		hint := fmt.Sprintf("can simplify $%s => $%s to just $%s", key.Name, variable.Name, variable.Name)
-		b.reportWithHing(s.Key, LevelWarning, "unused", `Foreach key $%s is unused`, hint, key.Name)
+		b.reportWithHint(s.Key, LevelWarning, "unused", `Foreach key $%s is unused`, hint, key.Name)
 	}
 
 	return false
@@ -2265,7 +2265,7 @@ func (b *blockWalker) flushUnused() {
 			}
 
 			visitedMap[n] = struct{}{}
-			b.reportWithHing(n, LevelWarning, "unused", `Variable $%s is unused`, "use `$_` to ignore (see --unused-var-regex flag)", name)
+			b.reportWithHint(n, LevelWarning, "unused", `Variable $%s is unused`, "use `$_` to ignore (see --unused-var-regex flag)", name)
 		}
 	}
 }
