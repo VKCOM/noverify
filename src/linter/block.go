@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/VKCOM/noverify/src/phpdoctypes"
-	"github.com/VKCOM/noverify/src/utils"
 	"github.com/VKCOM/php-parser/pkg/position"
 	"github.com/VKCOM/php-parser/pkg/token"
+
+	"github.com/VKCOM/noverify/src/phpdoctypes"
+	"github.com/VKCOM/noverify/src/utils"
 
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
@@ -124,6 +125,30 @@ func newBlockWalker(r *rootWalker, sc *meta.Scope) *blockWalker {
 	return b
 }
 
+func (b *blockWalker) report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
+	if b.isSuppressed(n, checkName) {
+		return
+	}
+
+	b.r.Report(n, level, checkName, msg, args...)
+}
+
+func (b *blockWalker) isSuppressed(n ir.Node, checkName string) bool {
+	if containLinterSuppress(n, checkName) {
+		return true
+	}
+
+	// We go up the tree in search of a comment that disables this checker.
+	for i := 0; b.path.NthParent(i) != nil; i++ {
+		parent := b.path.NthParent(i)
+		if containLinterSuppress(parent, checkName) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (b *blockWalker) isIndexingComplete() bool {
 	return b.r.ctx.st.Info.IsIndexingComplete()
 }
@@ -175,7 +200,47 @@ func (b *blockWalker) reportDeadCode(n ir.Node) {
 	}
 
 	b.ctx.deadCodeReported = true
-	b.r.Report(n, LevelWarning, "deadCode", "Unreachable code")
+	b.report(n, LevelWarning, "deadCode", "Unreachable code")
+}
+
+func containLinterSuppress(n ir.Node, needInspection string) bool {
+	if n == nil {
+		return false
+	}
+
+	phpdocTypeParser := phpdoc.NewTypeParser()
+	firstTkn := ir.GetFirstToken(n)
+	if firstTkn == nil {
+		return false
+	}
+
+	for _, tkn := range firstTkn.FreeFloating {
+		if !phpdoc.IsPHPDocToken(tkn) {
+			continue
+		}
+
+		if !bytes.Contains(tkn.Value, []byte("@noverify-suppress")) {
+			continue
+		}
+
+		parsed := phpdoc.Parse(phpdocTypeParser, string(tkn.Value))
+		for _, p := range parsed.Parsed {
+			part, ok := p.(*phpdoc.RawCommentPart)
+			if !ok {
+				continue
+			}
+
+			if part.Name() == "noverify-suppress" {
+				inspection := part.Params[0]
+
+				if inspection == "all" || inspection == needInspection {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
 }
 
 func (b *blockWalker) containsDisableInspection(n ir.Node, needInspection string) bool {
@@ -456,11 +521,11 @@ func (b *blockWalker) checkDupGlobal(s *ir.GlobalStmt) {
 		// Check whether this var was already global'ed.
 		// We use nonLocalVars for function-wide analysis and vars for local analysis.
 		if _, ok := vars[nm]; ok {
-			b.r.Report(v, LevelWarning, "dupGlobal", "Global statement mentions $%s more than once", nm)
+			b.report(v, LevelWarning, "dupGlobal", "Global statement mentions $%s more than once", nm)
 		} else {
 			vars[nm] = struct{}{}
 			if b.nonLocalVars[nm] == varGlobal {
-				b.r.Report(v, LevelNotice, "dupGlobal", "$%s already global'ed above", nm)
+				b.report(v, LevelNotice, "dupGlobal", "$%s already global'ed above", nm)
 			}
 		}
 	}
@@ -818,7 +883,7 @@ func (b *blockWalker) checkUnreachableForFinallyReturn(tryStmt *ir.TryStmt, tryC
 	}
 
 	if catchContainsDie {
-		b.r.Report(tryStmt.Finally, LevelError, "deadCode", "Block finally is unreachable (because catch block %d contains a exit/die)", catchWithDieIndex)
+		b.report(tryStmt.Finally, LevelError, "deadCode", "Block finally is unreachable (because catch block %d contains a exit/die)", catchWithDieIndex)
 
 		// If there is an error when the finally block is unreachable,
 		// then errors due to return in finally are skipped.
@@ -833,7 +898,7 @@ func (b *blockWalker) checkUnreachableForFinallyReturn(tryStmt *ir.TryStmt, tryC
 		}
 
 		for _, point := range exitPoints {
-			b.r.Report(point.n, LevelError, "deadCode", "%s is unreachable (because finally block contains a return on line %d)", point.kind, finallyReturnPos.StartLine)
+			b.report(point.n, LevelError, "deadCode", "%s is unreachable (because finally block contains a return on line %d)", point.kind, finallyReturnPos.StartLine)
 		}
 	}
 }
@@ -1158,8 +1223,7 @@ func (b *blockWalker) handleForeach(s *ir.ForeachStmt) bool {
 
 		b.untrackVarName(key.Name)
 
-		hint := fmt.Sprintf("can simplify $%s => $%s to just $%s", key.Name, variable.Name, variable.Name)
-		b.r.ReportWithHint(s.Key, LevelWarning, "unused", `Foreach key $%s is unused`, hint, key.Name)
+		b.report(s.Key, LevelWarning, "unused", "Foreach key $%s is unused, can simplify $%s => $%s to just $%s", key.Name, key.Name, variable.Name, variable.Name)
 	}
 
 	return false
@@ -1259,7 +1323,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		}
 
 		if !b.ctx.sc.HaveVar(v) && !byRef {
-			b.r.Report(v, LevelWarning, "undefinedVariable", "Cannot find referenced variable $%s", v.Name)
+			b.report(v, LevelWarning, "undefinedVariable", "Cannot find referenced variable $%s", v.Name)
 		}
 
 		typ, ok := b.ctx.sc.GetVarNameType(v.Name)
@@ -1398,7 +1462,7 @@ func (b *blockWalker) handleVariable(v ir.Node) bool {
 			}
 		}
 		if b.r.config.IsDiscardVar(varName) && !isSuperGlobal(varName) {
-			b.r.Report(v, LevelError, "discardVar", "Used var $%s that is supposed to be unused (rename variable if it's intended or respecify --unused-var-regex flag)", varName)
+			b.report(v, LevelError, "discardVar", "Used var $%s that is supposed to be unused (rename variable if it's intended or respecify --unused-var-regex flag)", varName)
 		}
 
 		b.untrackVarName(varName)
@@ -1784,7 +1848,7 @@ func (b *blockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 				// allow the fallthrough if appropriate comment is present
 				nextCase := s.Cases[idx+1]
 				if !caseHasFallthroughComment(nextCase) {
-					b.r.Report(c, LevelWarning, "caseBreak", "Add break or '// fallthrough' to the end of the case")
+					b.report(c, LevelWarning, "caseBreak", "Add break or '// fallthrough' to the end of the case")
 				}
 			}
 
@@ -1915,7 +1979,7 @@ func (b *blockWalker) checkArrayDimFetch(s *ir.ArrayDimFetchExpr) {
 	})
 
 	if maybeHaveClasses && !haveArrayAccess {
-		b.r.Report(s.Variable, LevelNotice, "arrayAccess", "Array access to non-array type %s", typ)
+		b.report(s.Variable, LevelNotice, "arrayAccess", "Array access to non-array type %s", typ)
 	}
 }
 
@@ -2030,7 +2094,7 @@ func (b *blockWalker) paramClobberCheck(v *ir.SimpleVar) {
 		return
 	}
 	if _, ok := b.unusedParams[v.Name]; ok && !b.path.Conditional() {
-		b.r.Report(v, LevelWarning, "paramClobber", "Param $%s re-assigned before being used", v.Name)
+		b.report(v, LevelWarning, "paramClobber", "Param $%s re-assigned before being used", v.Name)
 	}
 }
 
@@ -2192,7 +2256,7 @@ func (b *blockWalker) flushUnused() {
 			}
 
 			visitedMap[n] = struct{}{}
-			b.r.ReportWithHint(n, LevelWarning, "unused", `Variable $%s is unused`, "use `$_` to ignore (see --unused-var-regex flag)", name)
+			b.report(n, LevelWarning, "unused", `Variable $%s is unused (use $_ to ignore this inspection or specify --unused-var-regex flag)`, name)
 		}
 	}
 }
