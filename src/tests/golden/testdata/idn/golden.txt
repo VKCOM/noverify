@@ -1,51 +1,85 @@
 MAYBE   missingPhpdoc: Missing PHPDoc for \Symfony\Polyfill\Intl\Idn\Idn::idn_to_ascii public method at testdata/idn/idn.php:64
-    public static function idn_to_ascii($domain, $options, $variant, &$idna_info = array())
-                           ^^^^^^^^^^^^
+   |
+64 |    public static function idn_to_ascii($domain, $options, $variant, &$idna_info = array())
+   |                           ^^^^^^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/idn/idn.php:64
-    public static function idn_to_ascii($domain, $options, $variant, &$idna_info = array())
-                                                                                   ^^^^^^^
+   |
+64 |    public static function idn_to_ascii($domain, $options, $variant, &$idna_info = array())
+   |                                                                                   ^^^^^^^
+
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/idn/idn.php:67
-            @trigger_error('idn_to_ascii(): INTL_IDNA_VARIANT_2003 is deprecated', E_USER_DEPRECATED);
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+67 |            @trigger_error('idn_to_ascii(): INTL_IDNA_VARIANT_2003 is deprecated', E_USER_DEPRECATED);
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/idn/idn.php:87
-        $idna_info = array(
-                     
+   |
+87 |        $idna_info = array(
+   |                     
+
 MAYBE   missingPhpdoc: Missing PHPDoc for \Symfony\Polyfill\Intl\Idn\Idn::idn_to_utf8 public method at testdata/idn/idn.php:96
-    public static function idn_to_utf8($domain, $options, $variant, &$idna_info = array())
-                           ^^^^^^^^^^^
+   |
+96 |    public static function idn_to_utf8($domain, $options, $variant, &$idna_info = array())
+   |                           ^^^^^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/idn/idn.php:96
-    public static function idn_to_utf8($domain, $options, $variant, &$idna_info = array())
-                                                                                  ^^^^^^^
+   |
+96 |    public static function idn_to_utf8($domain, $options, $variant, &$idna_info = array())
+   |                                                                                  ^^^^^^^
+
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/idn/idn.php:99
-            @trigger_error('idn_to_utf8(): INTL_IDNA_VARIANT_2003 is deprecated', E_USER_DEPRECATED);
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+99 |            @trigger_error('idn_to_utf8(): INTL_IDNA_VARIANT_2003 is deprecated', E_USER_DEPRECATED);
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/idn/idn.php:119
-        $idna_info = array(
-                     
+    |
+119 |        $idna_info = array(
+    |                     
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/idn/idn.php:195
-            'all' => array(),
-                     ^^^^^^^
+    |
+195 |            'all' => array(),
+    |                     ^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/idn/idn.php:196
-            'basic' => array(),
-                       ^^^^^^^
+    |
+196 |            'basic' => array(),
+    |                       ^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/idn/idn.php:197
-            'nonBasic' => array(),
-                          ^^^^^^^
+    |
+197 |            'nonBasic' => array(),
+    |                          ^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/idn/idn.php:194
-        $codePoints = array(
-                      
+    |
+194 |        $codePoints = array(
+    |                      
+
 MAYBE   redundantCast: Expression already has int type at testdata/idn/idn.php:233
-            $delta = (int) ($delta / 35);
-                           ^^^^^^^^^^^^^
+    |
+233 |            $delta = (int) ($delta / 35);
+    |                           ^^^^^^^^^^^^^
+
 MAYBE   assignOp: Could rewrite as `$k += 36` at testdata/idn/idn.php:234
-            $k = $k + 36;
-            ^^^^^^^^^^^^
+    |
+234 |            $k = $k + 36;
+    |            ^^^^^^^^^^^^
+
 MAYBE   redundantCast: Expression already has int type at testdata/idn/idn.php:237
-        return $k + (int) (36 * $delta / ($delta + 38));
-                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+237 |        return $k + (int) (36 * $delta / ($delta + 38));
+    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 MAYBE   assignOp: Could rewrite as `$n += (int) ($i / $outputLength)` at testdata/idn/idn.php:274
-            $n = $n + (int) ($i / $outputLength);
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+274 |            $n = $n + (int) ($i / $outputLength);
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 MAYBE   assignOp: Could rewrite as `$i %= $outputLength` at testdata/idn/idn.php:275
-            $i = $i % $outputLength;
-            ^^^^^^^^^^^^^^^^^^^^^^^
+    |
+275 |            $i = $i % $outputLength;
+    |            ^^^^^^^^^^^^^^^^^^^^^^^
+

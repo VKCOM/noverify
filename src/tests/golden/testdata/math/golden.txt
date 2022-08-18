@@ -1,51 +1,85 @@
 WARNING unused: Variable $a is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/math/src/BigDecimal.php:292
-        [$a, $b] = $this->scaleValues($this, $that);
-         ^^
+    |
+292 |        [$a, $b] = $this->scaleValues($this, $that);
+    |         ^^
+
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/math/src/BigInteger.php:435
-            new BigInteger($remainder)
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+435 |            new BigInteger($remainder)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 MAYBE   ternarySimplify: Could rewrite as `$matches['fractional'] ?? ''` at testdata/math/src/BigNumber.php:90
-            $fractional = isset($matches['fractional']) ? $matches['fractional'] : '';
-                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+90 |            $fractional = isset($matches['fractional']) ? $matches['fractional'] : '';
+   |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 MAYBE   implicitModifiers: Specify the access modifier for \Brick\Math\Internal\Calculator::powmod method explicitly at testdata/math/src/Internal/Calculator.php:260
-    abstract function powmod(string $base, string $exp, string $mod) : string;
-                      ^^^^^^
+    |
+260 |    abstract function powmod(string $base, string $exp, string $mod) : string;
+    |                      ^^^^^^
+
 MAYBE   assignOp: Could rewrite as `$number ^= $xor` at testdata/math/src/Internal/Calculator.php:622
-        $number = $number ^ $xor;
-        ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+622 |        $number = $number ^ $xor;
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^
+
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/math/src/Internal/Calculator/GmpCalculator.php:67
-            \gmp_strval($r)
-            ^^^^^^^^^^^^^^^
+   |
+67 |            \gmp_strval($r)
+   |            ^^^^^^^^^^^^^^^
+
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/math/src/Internal/Calculator/NativeCalculator.php:187
-                    (string) $r
-                    ^^^^^^^^^^^
+    |
+187 |                    (string) $r
+    |                    ^^^^^^^^^^^
+
 ERROR   classMembersOrder: Constant UNNECESSARY must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:33
-    public const UNNECESSARY = 0;
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+33 |    public const UNNECESSARY = 0;
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Constant UP must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:41
-    public const UP = 1;
-    ^^^^^^^^^^^^^^^^^^^^
+   |
+41 |    public const UP = 1;
+   |    ^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Constant DOWN must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:49
-    public const DOWN = 2;
-    ^^^^^^^^^^^^^^^^^^^^^^
+   |
+49 |    public const DOWN = 2;
+   |    ^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Constant CEILING must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:57
-    public const CEILING = 3;
-    ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+57 |    public const CEILING = 3;
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Constant FLOOR must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:65
-    public const FLOOR = 4;
-    ^^^^^^^^^^^^^^^^^^^^^^^
+   |
+65 |    public const FLOOR = 4;
+   |    ^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Constant HALF_UP must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:73
-    public const HALF_UP = 5;
-    ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+73 |    public const HALF_UP = 5;
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Constant HALF_DOWN must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:80
-    public const HALF_DOWN = 6;
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+80 |    public const HALF_DOWN = 6;
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Constant HALF_CEILING must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:87
-    public const HALF_CEILING = 7;
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+87 |    public const HALF_CEILING = 7;
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Constant HALF_FLOOR must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:94
-    public const HALF_FLOOR = 8;
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+94 |    public const HALF_FLOOR = 8;
+   |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Constant HALF_EVEN must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:106
-    public const HALF_EVEN = 9;
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+106 |    public const HALF_EVEN = 9;
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+

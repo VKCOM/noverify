@@ -1,6 +1,7 @@
 package linttest
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -19,6 +20,9 @@ import (
 	"github.com/VKCOM/noverify/src/utils"
 )
 
+// whenever dump expected output to passed golden file
+const dumpExpected = false
+
 type GoldenTestSuite struct {
 	suite *Suite
 
@@ -34,8 +38,12 @@ type GoldenTestSuite struct {
 	BaseDir        string
 	GoldenFileName string
 
+	// dump expected output to passed golden file
+	dump bool
+
 	// want is a golden file contents.
 	want       []byte
+	path       string
 	reportFile *linterOutput
 
 	// flag indicating that the structure is ready for use.
@@ -85,6 +93,8 @@ func PrepareGoldenTestSuite(s *GoldenTestSuite, t *testing.T, l *linter.Linter, 
 	s.prepared = true
 	s.GoldenFileName = goldenFileName
 	s.Deps = append(s.Deps, defaultStubs...)
+
+	s.dump = dumpExpected
 }
 
 func (s *GoldenTestSuite) AddDeps(deps []string) {
@@ -124,7 +134,7 @@ func runGoldenTest(s *GoldenTestSuite) {
 
 		reports := s.suite.RunFilterLinter(s.Disable)
 
-		s.checkGoldenOutput(s.want, reports)
+		s.checkGoldenOutput(s.want, reports, s.path, s.dump)
 	})
 }
 
@@ -134,6 +144,7 @@ func (s *GoldenTestSuite) loadGoldenFile() {
 	if err != nil {
 		s.suite.t.Fatalf("read golden file: %v", err)
 	}
+	s.path = path
 	s.want = want
 	if s.SrcDir == "" {
 		s.SrcDir = filepath.Join("testdata", s.Name)
@@ -157,8 +168,18 @@ func (s *GoldenTestSuite) loadReportsFile(filename string) {
 	s.reportFile = &output
 }
 
-func (s *GoldenTestSuite) checkGoldenOutput(want []byte, reports []*linter.Report) {
+func (s *GoldenTestSuite) checkGoldenOutput(want []byte, reports []*linter.Report, path string, dump bool) {
 	haveLines := s.formatReportLines(reports)
+	if dump {
+		var buf bytes.Buffer
+		for _, line := range haveLines {
+			buf.WriteString(line)
+			buf.WriteString("\n")
+		}
+		ioutil.WriteFile(path, bytes.TrimSuffix(buf.Bytes(), []byte("\n")), 0644)
+		return
+	}
+
 	wantString := string(want)
 	wantLines := strings.Split(strings.ReplaceAll(wantString, "\r", ""), "\n")
 
@@ -327,7 +348,7 @@ func (s *GoldenE2ETestSuite) RunOnlyTests() {
 					r.Filename = strings.TrimPrefix(r.Filename, "/")
 				}
 
-				test.checkGoldenOutput(test.want, test.reportFile.Reports)
+				test.checkGoldenOutput(test.want, test.reportFile.Reports, test.path, test.dump)
 			})
 		}
 	})

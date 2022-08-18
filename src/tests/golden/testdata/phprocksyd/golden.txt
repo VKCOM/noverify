@@ -1,87 +1,145 @@
 WARNING useSleep: Don't use the 'sleep' function at testdata/phprocksyd/Phprocksyd.php:8
-        sleep(10);
-        ^^^^^^^^^
+  |
+8 |        sleep(10);
+  |        ^^^^^^^^^
+
 WARNING useSleep: Don't use the 'sleep' function at testdata/phprocksyd/Phprocksyd.php:18
-        sleep(100);
-        ^^^^^^^^^^
+   |
+18 |        sleep(100);
+   |        ^^^^^^^^^^
+
 MAYBE   deprecated: Call to deprecated function dl (since: 5.3) at testdata/phprocksyd/Phprocksyd.php:73
-            if (!extension_loaded($ext) && !dl($ext . '.so')) {
-                                            ^^
+   |
+73 |            if (!extension_loaded($ext) && !dl($ext . '.so')) {
+   |                                            ^^
+
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:75
-                exit(1);
-                ^^^^^^^
+   |
+75 |                exit(1);
+   |                ^^^^^^^
+
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:82
-            exit(1);
-            ^^^^^^^
+   |
+82 |            exit(1);
+   |            ^^^^^^^
+
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:87
-            exit(0);
-            ^^^^^^^
+   |
+87 |            exit(0);
+   |            ^^^^^^^
+
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:93
-            exit(1);
-            ^^^^^^^
+   |
+93 |            exit(1);
+   |            ^^^^^^^
+
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:98
-            exit(1);
-            ^^^^^^^
+   |
+98 |            exit(1);
+   |            ^^^^^^^
+
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:118
-            exit(1);
-            ^^^^^^^
+    |
+118 |            exit(1);
+    |            ^^^^^^^
+
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:129
-                exit(1);
-                ^^^^^^^
+    |
+129 |                exit(1);
+    |                ^^^^^^^
+
 ERROR   constCase: Constant 'NULL' should be used in lower case as 'null' at testdata/phprocksyd/Phprocksyd.php:321
-            $n = stream_select($read, $write, $except, NULL);
-                                                       ^^^^
+    |
+321 |            $n = stream_select($read, $write, $except, NULL);
+    |                                                       ^^^^
+
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:325
-                exit(1);
-                ^^^^^^^
+    |
+325 |                exit(1);
+    |                ^^^^^^^
+
 WARNING invalidDocblock: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:364
-     * @param $stream_id
-              ^^^^^^^^^^
+    |
+364 |     * @param $stream_id
+    |              ^^^^^^^^^^
+
 WARNING invalidDocblock: Malformed @param $req tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:365
-     * @param $req
-              ^^^^
+    |
+365 |     * @param $req
+    |              ^^^^
+
 WARNING invalidDocblock: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:389
-     * @param $stream_id
-              ^^^^^^^^^^
+    |
+389 |     * @param $stream_id
+    |              ^^^^^^^^^^
+
 WARNING invalidDocblock: Malformed @param $req tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:390
-     * @param $req
-              ^^^^
+    |
+390 |     * @param $req
+    |              ^^^^
+
 WARNING unused: Variable $status is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/phprocksyd/Phprocksyd.php:394
-        $status = null;
-        ^^^^^^^
+    |
+394 |        $status = null;
+    |        ^^^^^^^
+
 WARNING invalidDocblock: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:421
-     * @param $stream_id
-              ^^^^^^^^^^
+    |
+421 |     * @param $stream_id
+    |              ^^^^^^^^^^
+
 WARNING invalidDocblock: Malformed @param $req tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:422
-     * @param $req
-              ^^^^
+    |
+422 |     * @param $req
+    |              ^^^^
+
 WARNING invalidDocblock: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:443
-     * @param $stream_id
-              ^^^^^^^^^^
+    |
+443 |     * @param $stream_id
+    |              ^^^^^^^^^^
+
 WARNING invalidDocblock: Malformed @param $req tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:444
-     * @param $req
-              ^^^^
+    |
+444 |     * @param $req
+    |              ^^^^
+
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:481
-                exit(0);
-                ^^^^^^^
+    |
+481 |                exit(0);
+    |                ^^^^^^^
+
 ERROR   undefinedMethod: Call to undefined method {mixed}->run() at testdata/phprocksyd/Phprocksyd.php:479
-                $instance->run($req['params']);
-                           ^^^
+    |
+479 |                $instance->run($req['params']);
+    |                           ^^^
+
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:557
-                        exit(1);
-                        ^^^^^^^
+    |
+557 |                        exit(1);
+    |                        ^^^^^^^
+
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:590
-            exit(0);
-            ^^^^^^^
+    |
+590 |            exit(0);
+    |            ^^^^^^^
+
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:619
-        exit(1);
-        ^^^^^^^
+    |
+619 |        exit(1);
+    |        ^^^^^^^
+
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:685
-        exit(0);
-        ^^^^^^^
+    |
+685 |        exit(0);
+    |        ^^^^^^^
+
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Simple.php:38
-            exit(1);
-            ^^^^^^^
+   |
+38 |            exit(1);
+   |            ^^^^^^^
+
 ERROR   constCase: Constant 'NULL' should be used in lower case as 'null' at testdata/phprocksyd/Simple.php:158
-            $n = stream_select($read, $write, $except, NULL);
-                                                       ^^^^
+    |
+158 |            $n = stream_select($read, $write, $except, NULL);
+    |                                                       ^^^^
+

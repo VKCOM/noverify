@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/pprof"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -336,8 +337,19 @@ func FormatReport(r *linter.Report) string {
 		cursor.WriteString(strings.Repeat("^", r.EndChar-r.StartChar))
 	}
 
-	return fmt.Sprintf("%-7s %s at %s:%d\n%s\n%s",
-		r.Severity(), msg, r.Filename, r.Line, r.Context, cursor.String())
+	return fmt.Sprintf("%-7s %s at %s:%d\n%s",
+		r.Severity(), msg, r.Filename, r.Line, formatContext(r, cursor))
+}
+
+func formatContext(r *linter.Report, cursor strings.Builder) string {
+	line := r.Line
+	width := len(strconv.Itoa(line))
+
+	context := fmt.Sprintf(`%[1]s |
+%[2]d |%[3]s
+%[1]s |%[4]s
+`, strings.Repeat(" ", width), r.Line, r.Context, cursor.String())
+	return context
 }
 
 type ReportsStat struct {
@@ -389,22 +401,24 @@ func processReports(runner *LinterRunner, cfg *MainConfig, diff []*linter.Report
 			// Should never fail to marshal our own reports.
 			panic(fmt.Sprintf("report list marshaling failed: %v", err))
 		}
-	} else {
-		for _, report := range filtered {
-			format := ""
 
-			if runner.checkersFilter.IsCriticalReport(report) {
-				format += "<critical> "
-			}
+		return stat
+	}
 
-			if runner.config.Checkers.Autofixable(report.CheckName) {
-				format += "<autofixable> "
-			}
+	for _, report := range filtered {
+		format := ""
 
-			format += "%s\n"
-
-			fmt.Fprintf(runner.outputFp, format, FormatReport(report))
+		if runner.checkersFilter.IsCriticalReport(report) {
+			format += "<critical> "
 		}
+
+		if runner.config.Checkers.Autofixable(report.CheckName) {
+			format += "<autofixable> "
+		}
+
+		format += "%s\n"
+
+		fmt.Fprintf(runner.outputFp, format, FormatReport(report))
 	}
 
 	return stat

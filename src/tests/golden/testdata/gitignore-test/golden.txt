@@ -1,3 +1,5 @@
 WARNING discardExpr: Expression evaluated but not used at testdata/gitignore-test/src/b/src-a-ignore.php:3
-"not ignored, since it's not under src/a";
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+3 |"not ignored, since it's not under src/a";
+  |^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+

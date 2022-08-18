@@ -1,21 +1,35 @@
 WARNING linterError: You are not allowed to disable linter at testdata/output-test/output_test.php:3
-/** @linter disable */
-            ^^^^^^^
+  |
+3 |/** @linter disable */
+  |            ^^^^^^^
+
 WARNING linterError: You are not allowed to disable linter at testdata/output-test/output_test.php:6
- * @linter disable
-           ^^^^^^^
+  |
+6 | * @linter disable
+  |           ^^^^^^^
+
 WARNING linterError: You are not allowed to disable linter at testdata/output-test/output_test.php:10
- * @linter disable
-           ^^^^^^^
+   |
+10 | * @linter disable
+   |           ^^^^^^^
+
 WARNING linterError: You are not allowed to disable linter at testdata/output-test/output_test.php:11
- * @linter disable
-           ^^^^^^^
+   |
+11 | * @linter disable
+   |           ^^^^^^^
+
 WARNING linterError: You are not allowed to disable linter at testdata/output-test/output_test.php:12
- * @linter disable
-           ^^^^^^^
+   |
+12 | * @linter disable
+   |           ^^^^^^^
+
 WARNING linterError: You are not allowed to disable linter at testdata/output-test/output_test.php:13
- * @linter disable
-           ^^^^^^^
+   |
+13 | * @linter disable
+   |           ^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/output-test/output_test.php:16
-$_ = array(); // warning in last line
-     ^^^^^^^
+   |
+16 |$_ = array(); // warning in last line
+   |     ^^^^^^^
+

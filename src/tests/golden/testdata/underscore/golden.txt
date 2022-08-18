@@ -1,222 +1,370 @@
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:60
-    if(is_null($collection)) return self::_wrap(array());
-                                                ^^^^^^^
+   |
+60 |    if(is_null($collection)) return self::_wrap(array());
+   |                                                ^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:63
-    if(count($collection) === 0) self::_wrap(array());
-                                             ^^^^^^^
+   |
+63 |    if(count($collection) === 0) self::_wrap(array());
+   |                                             ^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:65
-    $return = array();
-              ^^^^^^^
+   |
+65 |    $return = array();
+   |              ^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:113
-    $return = array();
-              ^^^^^^^
+    |
+113 |    $return = array();
+    |              ^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:193
-    $return = array();
-              ^^^^^^^
+    |
+193 |    $return = array();
+    |              ^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:207
-    $return = array();
-              ^^^^^^^
+    |
+207 |    $return = array();
+    |              ^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:248
-    if($n === 0) return self::_wrap(array());
-                                    ^^^^^^^
+    |
+248 |    if($n === 0) return self::_wrap(array());
+    |                                    ^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:284
-    if($n === 0) $result = array();
-                           ^^^^^^^
+    |
+284 |    if($n === 0) $result = array();
+    |                           ^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:314
-    $return = array();
-              ^^^^^^^
+    |
+314 |    $return = array();
+    |              ^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:360
-    $return = array();
-              ^^^^^^^
+    |
+360 |    $return = array();
+    |              ^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:363
-    $calculated = array();
-                  ^^^^^^^
+    |
+363 |    $calculated = array();
+    |                  ^^^^^^^
+
 WARNING unused: Variable $is_sorted is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/underscore/underscore.php:356
-    list($collection, $is_sorted, $iterator) = self::_wrapArgs(func_get_args(), 3);
-                      ^^^^^^^^^^
+    |
+356 |    list($collection, $is_sorted, $iterator) = self::_wrapArgs(func_get_args(), 3);
+    |                      ^^^^^^^^^^
+
 MAYBE   arrayAccess: Array access to non-array type \__|mixed at testdata/underscore/underscore.php:448
-        list($start, $stop, $step) = array(0, $args[0], 1);
-                                              ^^^^^
+    |
+448 |        list($start, $stop, $step) = array(0, $args[0], 1);
+    |                                              ^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:448
-        list($start, $stop, $step) = array(0, $args[0], 1);
-                                     ^^^^^^^^^^^^^^^^^^^^^
+    |
+448 |        list($start, $stop, $step) = array(0, $args[0], 1);
+    |                                     ^^^^^^^^^^^^^^^^^^^^^
+
 MAYBE   arrayAccess: Array access to non-array type \__|mixed at testdata/underscore/underscore.php:451
-        list($start, $stop, $step) = array($args[0], $args[1], 1);
-                                           ^^^^^
+    |
+451 |        list($start, $stop, $step) = array($args[0], $args[1], 1);
+    |                                           ^^^^^
+
 MAYBE   arrayAccess: Array access to non-array type \__|mixed at testdata/underscore/underscore.php:451
-        list($start, $stop, $step) = array($args[0], $args[1], 1);
-                                                     ^^^^^
+    |
+451 |        list($start, $stop, $step) = array($args[0], $args[1], 1);
+    |                                                     ^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:451
-        list($start, $stop, $step) = array($args[0], $args[1], 1);
-                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+451 |        list($start, $stop, $step) = array($args[0], $args[1], 1);
+    |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:452
-        if($stop < $start) return self::_wrap(array());
-                                              ^^^^^^^
+    |
+452 |        if($stop < $start) return self::_wrap(array());
+    |                                              ^^^^^^^
+
 MAYBE   arrayAccess: Array access to non-array type \__|mixed at testdata/underscore/underscore.php:455
-        list($start, $stop, $step) = array($args[0], $args[1], $args[2]);
-                                           ^^^^^
+    |
+455 |        list($start, $stop, $step) = array($args[0], $args[1], $args[2]);
+    |                                           ^^^^^
+
 MAYBE   arrayAccess: Array access to non-array type \__|mixed at testdata/underscore/underscore.php:455
-        list($start, $stop, $step) = array($args[0], $args[1], $args[2]);
-                                                     ^^^^^
+    |
+455 |        list($start, $stop, $step) = array($args[0], $args[1], $args[2]);
+    |                                                     ^^^^^
+
 MAYBE   arrayAccess: Array access to non-array type \__|mixed at testdata/underscore/underscore.php:455
-        list($start, $stop, $step) = array($args[0], $args[1], $args[2]);
-                                                               ^^^^^
+    |
+455 |        list($start, $stop, $step) = array($args[0], $args[1], $args[2]);
+    |                                                               ^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:455
-        list($start, $stop, $step) = array($args[0], $args[1], $args[2]);
-                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+455 |        list($start, $stop, $step) = array($args[0], $args[1], $args[2]);
+    |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:456
-        if($step > 0 && $step > $stop) return self::_wrap(array($start));
-                                                          ^^^^^^^^^^^^^
+    |
+456 |        if($step > 0 && $step > $stop) return self::_wrap(array($start));
+    |                                                          ^^^^^^^^^^^^^
+
 MAYBE   arrayAccess: Array access to non-array type \__|mixed at testdata/underscore/underscore.php:480
-      if(!is_array($return_arrays[$k])) $return_arrays[$k] = array();
-                   ^^^^^^^^^^^^^^
+    |
+480 |      if(!is_array($return_arrays[$k])) $return_arrays[$k] = array();
+    |                   ^^^^^^^^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:480
-      if(!is_array($return_arrays[$k])) $return_arrays[$k] = array();
-                                                             ^^^^^^^
+    |
+480 |      if(!is_array($return_arrays[$k])) $return_arrays[$k] = array();
+    |                                                             ^^^^^^^
+
 MAYBE   arrayAccess: Array access to non-array type \__|mixed at testdata/underscore/underscore.php:480
-      if(!is_array($return_arrays[$k])) $return_arrays[$k] = array();
-                                        ^^^^^^^^^^^^^^
+    |
+480 |      if(!is_array($return_arrays[$k])) $return_arrays[$k] = array();
+    |                                        ^^^^^^^^^^^^^^
+
 MAYBE   ternarySimplify: Could rewrite as `$array[$k] ?? null` at testdata/underscore/underscore.php:483
-        $return_arrays[$k][$a] = array_key_exists($k, $array) ? $array[$k] : null;
-                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+483 |        $return_arrays[$k][$a] = array_key_exists($k, $array) ? $array[$k] : null;
+    |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 MAYBE   arrayAccess: Array access to non-array type \__|empty_array[]|mixed at testdata/underscore/underscore.php:483
-        $return_arrays[$k][$a] = array_key_exists($k, $array) ? $array[$k] : null;
-        ^^^^^^^^^^^^^^
+    |
+483 |        $return_arrays[$k][$a] = array_key_exists($k, $array) ? $array[$k] : null;
+    |        ^^^^^^^^^^^^^^
+
 ERROR   varShadow: Variable $array shadow existing variable $array from current function params at testdata/underscore/underscore.php:482
-      foreach($arrays as $a=>$array) {
-                             ^^^^^^
+    |
+482 |      foreach($arrays as $a=>$array) {
+    |                             ^^^^^^
+
 WARNING unused: Variable $v is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/underscore/underscore.php:479
-    foreach($return_arrays as $k=>$v) {
-                                  ^^
+    |
+479 |    foreach($return_arrays as $k=>$v) {
+    |                                  ^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:497
-    $results = array();
-               ^^^^^^^
+    |
+497 |    $results = array();
+    |               ^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:514
-    $results = array();
-               ^^^^^^^
+    |
+514 |    $results = array();
+    |               ^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:529
-    $results = array();
-               ^^^^^^^
+    |
+529 |    $results = array();
+    |               ^^^^^^^
+
 WARNING unused: Variable $v is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/underscore/underscore.php:534
-    foreach($results as $k=>$v) {
-                            ^^
+    |
+534 |    foreach($results as $k=>$v) {
+    |                            ^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:545
-    $result = array();
-              ^^^^^^^
+    |
+545 |    $result = array();
+    |              ^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:549
-      if(!array_key_exists($key, $result)) $result[$key] = array();
-                                                           ^^^^^^^
+    |
+549 |      if(!array_key_exists($key, $result)) $result[$key] = array();
+    |                                                           ^^^^^^^
+
 WARNING unused: Variable $__ is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/underscore/underscore.php:561
-    $__ = new self;
-    ^^^
+    |
+561 |    $__ = new self;
+    |    ^^^
+
 WARNING unused: Variable $args is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/underscore/underscore.php:615
-    $args = self::_wrapArgs(func_get_args(), 1);
-    ^^^^^
+    |
+615 |    $args = self::_wrapArgs(func_get_args(), 1);
+    |    ^^^^^
+
 ERROR   undefinedProperty: Property {\__|mixed|null}->isEqual does not exist at testdata/underscore/underscore.php:723
-      if(is_object($a) && isset($a->isEqual)) return self::_wrap($a->isEqual($b));
-                                    ^^^^^^^
+    |
+723 |      if(is_object($a) && isset($a->isEqual)) return self::_wrap($a->isEqual($b));
+    |                                    ^^^^^^^
+
 ERROR   undefinedProperty: Property {mixed|null}->isEqual does not exist at testdata/underscore/underscore.php:724
-      if(is_object($b) && isset($b->isEqual)) return self::_wrap($b->isEqual($a));
-                                    ^^^^^^^
+    |
+724 |      if(is_object($b) && isset($b->isEqual)) return self::_wrap($b->isEqual($a));
+    |                                    ^^^^^^^
+
 ERROR   undefinedMethod: Call to undefined method {mixed|null}->isEqual() at testdata/underscore/underscore.php:724
-      if(is_object($b) && isset($b->isEqual)) return self::_wrap($b->isEqual($a));
-                                                                     ^^^^^^^
+    |
+724 |      if(is_object($b) && isset($b->isEqual)) return self::_wrap($b->isEqual($a));
+    |                                                                     ^^^^^^^
+
 MAYBE   arrayAccess: Array access to non-array type \__|mixed|null at testdata/underscore/underscore.php:725
-      if(is_array($a) && array_key_exists('isEqual', $a)) return self::_wrap($a['isEqual']($b));
-                                                                             ^^
+    |
+725 |      if(is_array($a) && array_key_exists('isEqual', $a)) return self::_wrap($a['isEqual']($b));
+    |                                                                             ^^
+
 ERROR   undefinedProperty: Property {mixed}->_uniqueId does not exist at testdata/underscore/underscore.php:822
-    $_instance->_uniqueId++;
-                ^^^^^^^^^
+    |
+822 |    $_instance->_uniqueId++;
+    |                ^^^^^^^^^
+
 ERROR   undefinedProperty: Property {mixed}->_uniqueId does not exist at testdata/underscore/underscore.php:824
-    return (is_null($prefix)) ? self::_wrap($_instance->_uniqueId) : self::_wrap($prefix . $_instance->_uniqueId);
-                                                        ^^^^^^^^^
+    |
+824 |    return (is_null($prefix)) ? self::_wrap($_instance->_uniqueId) : self::_wrap($prefix . $_instance->_uniqueId);
+    |                                                        ^^^^^^^^^
+
 ERROR   undefinedProperty: Property {mixed}->_uniqueId does not exist at testdata/underscore/underscore.php:824
-    return (is_null($prefix)) ? self::_wrap($_instance->_uniqueId) : self::_wrap($prefix . $_instance->_uniqueId);
-                                                                                                       ^^^^^^^^^
+    |
+824 |    return (is_null($prefix)) ? self::_wrap($_instance->_uniqueId) : self::_wrap($prefix . $_instance->_uniqueId);
+    |                                                                                                       ^^^^^^^^^
+
 ERROR   undefinedProperty: Property {mixed}->_mixins does not exist at testdata/underscore/underscore.php:843
-    $mixins =& self::getInstance()->_mixins;
-                                    ^^^^^^^
+    |
+843 |    $mixins =& self::getInstance()->_mixins;
+    |                                    ^^^^^^^
+
 ERROR   undefinedProperty: Property {mixed}->_mixins does not exist at testdata/underscore/underscore.php:853
-    $mixins =& self::getInstance()->_mixins;
-                                    ^^^^^^^
+    |
+853 |    $mixins =& self::getInstance()->_mixins;
+    |                                    ^^^^^^^
+
 ERROR   undefinedProperty: Property {mixed}->_mixins does not exist at testdata/underscore/underscore.php:859
-    $mixins =& self::getInstance()->_mixins;
-                                    ^^^^^^^
+    |
+859 |    $mixins =& self::getInstance()->_mixins;
+    |                                    ^^^^^^^
+
 ERROR   undefinedProperty: Property {mixed}->_template_settings does not exist at testdata/underscore/underscore.php:882
-    $_template_settings =& self::getInstance()->_template_settings;
-                                                ^^^^^^^^^^^^^^^^^^
+    |
+882 |    $_template_settings =& self::getInstance()->_template_settings;
+    |                                                ^^^^^^^^^^^^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:885
-      $_template_settings = array(
-                            
+    |
+885 |      $_template_settings = array(
+    |                            
+
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/underscore/underscore.php:888
-        'escape'      => self::TEMPLATE_DEFAULT_ESCAPE
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+888 |        'escape'      => self::TEMPLATE_DEFAULT_ESCAPE
+    |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   undefinedProperty: Property {mixed}->_template_settings does not exist at testdata/underscore/underscore.php:909
-      $ts = $class_name::getInstance()->_template_settings;
-                                        ^^^^^^^^^^^^^^^^^^
+    |
+909 |      $ts = $class_name::getInstance()->_template_settings;
+    |                                        ^^^^^^^^^^^^^^^^^^
+
 MAYBE   deprecated: Call to deprecated function create_function (since: 7.2, reason: Use anonymous functions instead, removed: 8.0) at testdata/underscore/underscore.php:940
-      $func = create_function('$context', $code);
-              ^^^^^^^^^^^^^^^
+    |
+940 |      $func = create_function('$context', $code);
+    |              ^^^^^^^^^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:970
-        return md5(join('_', array(
-                             
+    |
+970 |        return md5(join('_', array(
+    |                             
+
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/underscore/underscore.php:972
-          var_export($args, true)
-          ^^^^^^^^^^^^^^^^^^^^^^^
+    |
+972 |          var_export($args, true)
+    |          ^^^^^^^^^^^^^^^^^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:995
-      $key = md5(join('', array(
-                          
+    |
+995 |      $key = md5(join('', array(
+    |                          
+
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/underscore/underscore.php:997
-        $wait
-        ^^^^^
+    |
+997 |        $wait
+    |        ^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:1036
-      $args = array_merge(array($function), func_get_args());
-                          ^^^^^^^^^^^^^^^^
+     |
+1036 |      $args = array_merge(array($function), func_get_args());
+     |                          ^^^^^^^^^^^^^^^^
+
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:1102
-    $filled_args = array();
-                   ^^^^^^^
+     |
+1102 |    $filled_args = array();
+     |                   ^^^^^^^
+
 WARNING unused: Foreach key $k is unused, can simplify $k => $v to just $v at testdata/underscore/underscore.php:1107
-      foreach($caller_args as $k=>$v) {
-                              ^^
+     |
+1107 |      foreach($caller_args as $k=>$v) {
+     |                              ^^
+
 ERROR   classMembersOrder: Property $_uniqueId must go before methods in the class __ at testdata/underscore/underscore.php:817
-  public $_uniqueId = -1;
-  ^^^^^^^^^^^^^^^^^^^^^^^
+    |
+817 |  public $_uniqueId = -1;
+    |  ^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Property $_mixins must go before methods in the class __ at testdata/underscore/underscore.php:839
-  private $_mixins = array();
-  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+839 |  private $_mixins = array();
+    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Constant TEMPLATE_OPEN_TAG must go before methods in the class __ at testdata/underscore/underscore.php:868
-  const TEMPLATE_OPEN_TAG = '760e7dab2836853c63805033e514668301fa9c47';
-  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+868 |  const TEMPLATE_OPEN_TAG = '760e7dab2836853c63805033e514668301fa9c47';
+    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Constant TEMPLATE_CLOSE_TAG must go before methods in the class __ at testdata/underscore/underscore.php:869
-  const TEMPLATE_CLOSE_TAG= 'd228a8fa36bd7db108b01eddfb03a30899987a2b';
-  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+869 |  const TEMPLATE_CLOSE_TAG= 'd228a8fa36bd7db108b01eddfb03a30899987a2b';
+    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Constant TEMPLATE_DEFAULT_EVALUATE must go before methods in the class __ at testdata/underscore/underscore.php:871
-  const TEMPLATE_DEFAULT_EVALUATE   = '/<%([\s\S]+?)%>/';
-  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+871 |  const TEMPLATE_DEFAULT_EVALUATE   = '/<%([\s\S]+?)%>/';
+    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Constant TEMPLATE_DEFAULT_INTERPOLATE must go before methods in the class __ at testdata/underscore/underscore.php:872
-  const TEMPLATE_DEFAULT_INTERPOLATE= '/<%=([\s\S]+?)%>/';
-  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+872 |  const TEMPLATE_DEFAULT_INTERPOLATE= '/<%=([\s\S]+?)%>/';
+    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Constant TEMPLATE_DEFAULT_ESCAPE must go before methods in the class __ at testdata/underscore/underscore.php:873
-  const TEMPLATE_DEFAULT_ESCAPE     = '/<%-([\s\S]+?)%>/';
-  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+873 |  const TEMPLATE_DEFAULT_ESCAPE     = '/<%-([\s\S]+?)%>/';
+    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Property $_template_settings must go before methods in the class __ at testdata/underscore/underscore.php:874
-  public $_template_settings = array(
-  ^^
+    |
+874 |  public $_template_settings = array(
+    |  ^^
+
 ERROR   classMembersOrder: Property $_memoized must go before methods in the class __ at testdata/underscore/underscore.php:957
-  public $_memoized = array();
-  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+957 |  public $_memoized = array();
+    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Property $_throttled must go before methods in the class __ at testdata/underscore/underscore.php:986
-  public $_throttled = array();
-  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+986 |  public $_throttled = array();
+    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Property $_onced must go before methods in the class __ at testdata/underscore/underscore.php:1012
-  public $_onced = array();
-  ^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+1012 |  public $_onced = array();
+     |  ^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Property $_aftered must go before methods in the class __ at testdata/underscore/underscore.php:1057
-  public $_aftered = array();
-  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+1057 |  public $_aftered = array();
+     |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Property $_instance must go before methods in the class __ at testdata/underscore/underscore.php:1075
-  private static $_instance;
-  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+1075 |  private static $_instance;
+     |  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 ERROR   classMembersOrder: Property $_wrapped must go before methods in the class __ at testdata/underscore/underscore.php:1087
-  public $_wrapped; // Value passed from one chained method to the next
-  ^^^^^^^^^^^^^^^^^
+     |
+1087 |  public $_wrapped; // Value passed from one chained method to the next
+     |  ^^^^^^^^^^^^^^^^^
+
