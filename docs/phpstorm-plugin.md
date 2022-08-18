@@ -1,4 +1,4 @@
-# Using NoVerify for PhpStorm
+# Using NoVerify in PhpStorm
 
 > **Note**: works correctly from version **0.5.3** and above
 
