@@ -44,9 +44,11 @@ func namePartsToToken(parts []ast.Vertex) *token.Token {
 		switch v := v.(type) {
 		case *ast.NamePart:
 			ff = append(ff, v.StringTkn)
+			ff = append(ff, v.StringTkn.FreeFloating...)
 			valueParts = append(valueParts, v.Value)
 		case *ast.ScalarEncapsedStringPart:
 			ff = append(ff, v.EncapsedStrTkn)
+			ff = append(ff, v.EncapsedStrTkn.FreeFloating...)
 			valueParts = append(valueParts, v.Value)
 		}
 	}
