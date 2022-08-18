@@ -176,7 +176,11 @@ func (s *GoldenTestSuite) checkGoldenOutput(want []byte, reports []*linter.Repor
 			buf.WriteString(line)
 			buf.WriteString("\n")
 		}
-		ioutil.WriteFile(path, bytes.TrimSuffix(buf.Bytes(), []byte("\n")), 0644)
+		err := ioutil.WriteFile(path, bytes.TrimSuffix(buf.Bytes(), []byte("\n")), 0644)
+		if err != nil {
+			s.suite.t.Fatalf("write golden file: %v", err)
+			return
+		}
 		return
 	}
 
