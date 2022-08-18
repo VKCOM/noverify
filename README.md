@@ -42,6 +42,10 @@ NoVerify by default has the following checks:
 
 Try NoVerify now in [Playground](https://vkcom.github.io/noverify/playground/) (not supported Safari yet).
 
+## Plugins
+
+- [Using NoVerify in PhpStorm](docs/phpstorm-plugin.md)
+
 ## User Guide
 
 - [How to install NoVerify](docs/install.md)
