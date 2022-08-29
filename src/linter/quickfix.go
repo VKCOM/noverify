@@ -46,3 +46,19 @@ func (g *QuickFixGenerator) NullForNotNullableProperty(prop *ir.PropertyStmt) qu
 		Replacement: string(withoutAssign),
 	}
 }
+
+func (g *QuickFixGenerator) GetType(node ir.Node, replaced, nodeText string, isNegative bool) quickfix.TextEdit {
+	pos := ir.GetPosition(node)
+
+	if isNegative {
+		replaced = "!" + replaced
+	}
+
+	replaced = replaced + "(" + nodeText + ")"
+
+	return quickfix.TextEdit{
+		StartPos:    pos.StartPos,
+		EndPos:      pos.EndPos,
+		Replacement: replaced,
+	}
+}

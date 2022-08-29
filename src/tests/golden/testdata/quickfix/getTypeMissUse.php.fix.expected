@@ -1,0 +1,18 @@
+<?php
+
+function getTypeMissUse(mixed $var){
+    if (is_string($var)){
+    }
+
+    if (is_float($var)){
+    }
+
+    if (!is_array($var)){
+    }
+
+    if (!is_bool($var)){
+    }
+
+    if (is_object($var)){
+    }
+}

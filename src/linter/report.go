@@ -1130,6 +1130,15 @@ class Main {
   }
 }`,
 		},
+
+		{
+			Name:     "getTypeMissUse",
+			Default:  true,
+			Quickfix: true,
+			Comment:  `Report call gettype function.`,
+			Before:   `if (gettype($a) == "string") { ... }`,
+			After:    `if (is_string($a)) { ... }`,
+		},
 	}
 
 	for _, info := range allChecks {
