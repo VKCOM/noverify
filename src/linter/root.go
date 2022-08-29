@@ -119,6 +119,14 @@ func (d *rootWalker) File() *workspace.File {
 
 // Visitor part.
 
+func (d *rootWalker) bestPlaceForReport(n ir.Node) ir.Node {
+	if owner, ok := n.(ir.NameOwner); ok {
+		return owner.Name()
+	}
+
+	return n
+}
+
 // EnterNode is invoked at every node in hierarchy.
 func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 	res = true
@@ -130,6 +138,33 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 	n.IterateTokens(d.handleCommentToken)
 
 	state.EnterNode(d.ctx.st, n)
+
+	// after all will be moved to checker
+	if d.metaInfo().IsIndexingComplete() {
+		if n, ok := n.(ir.DocOwner); ok {
+			d.checker.CheckCommentMisspellings(d.bestPlaceForReport(n), n.DocComment().Raw)
+		}
+
+		if n, ok := n.(ir.NameOwner); ok {
+			name := n.Name()
+			if name != nil {
+				d.checker.CheckIdentMisspellings(name)
+			}
+		}
+
+		if n, ok := n.(ir.ModifierListOwner); ok {
+			d.checker.CheckModifiersKeywordCase(n.ModifierList())
+		}
+
+		if n, ok := n.(ir.TypeHintOwner); ok {
+			switch n.(type) {
+			case *ir.Parameter:
+				// TODO: block walker and root walker has same node, so we skip it here
+			default:
+				d.checker.CheckTypeHintNode(n.TypeHint())
+			}
+		}
+	}
 
 	switch n := n.(type) {
 	case *ir.DeclareStmt:
@@ -155,9 +190,6 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		d.checker.CheckImplements(n, cl, n.Implements)
 		d.checker.CheckExtends(n, cl, n.Extends)
 
-		d.checker.CheckCommentMisspellings(className, n.Doc.Raw)
-		d.checker.CheckIdentMisspellings(className)
-
 		doc := d.parseClassPHPDoc(className, n.Doc)
 		d.reportPHPDocErrors(doc.errs)
 		d.handleClassDoc(doc, &cl)
@@ -167,10 +199,6 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 	case *ir.InterfaceStmt:
 		d.currentClassNodeStack.Push(n)
 		d.checker.CheckKeywordCase(n, "interface")
-		d.checker.CheckCommentMisspellings(n.InterfaceName, n.Doc.Raw)
-		if !strings.HasSuffix(n.InterfaceName.Value, "able") {
-			d.checker.CheckIdentMisspellings(n.InterfaceName)
-		}
 	case *ir.ClassStmt:
 		d.currentClassNodeStack.Push(n)
 
@@ -185,15 +213,8 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
 		}
 
-		for _, m := range n.Modifiers {
-			d.checker.CheckModifierKeywordCase(m)
-		}
-
 		d.checker.CheckImplements(n, cl, n.Implements)
 		d.checker.CheckExtends(n, cl, n.Extends)
-
-		d.checker.CheckCommentMisspellings(n.ClassName, n.Doc.Raw)
-		d.checker.CheckIdentMisspellings(n.ClassName)
 
 		doc := d.parseClassPHPDoc(n, n.Doc)
 		d.reportPHPDocErrors(doc.errs)
@@ -204,8 +225,6 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 	case *ir.TraitStmt:
 		d.currentClassNodeStack.Push(n)
 		d.checker.CheckKeywordCase(n, "trait")
-		d.checker.CheckCommentMisspellings(n.TraitName, n.Doc.Raw)
-		d.checker.CheckIdentMisspellings(n.TraitName)
 	case *ir.TraitUseStmt:
 		d.checker.CheckKeywordCase(n, "use")
 		cl := d.getClass()
@@ -918,7 +937,7 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 	}
 
 	phpDocType := d.parsePHPDocVar(pl.Doc)
-	typeHintType, _ := d.parseTypeHintNode(pl.Type)
+	typeHintType, _ := d.parseTypeHintNode(pl.PropertyType)
 
 	for _, pNode := range pl.Properties {
 		prop := pNode.(*ir.PropertyStmt)
@@ -954,7 +973,6 @@ func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
 	accessLevel := meta.Public
 
 	for _, m := range list.Modifiers {
-		d.checker.CheckModifierKeywordCase(m)
 		switch strings.ToLower(m.Value) {
 		case "public":
 			accessLevel = meta.Public
@@ -969,7 +987,6 @@ func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
 		c := cNode.(*ir.ConstantStmt)
 
 		nm := c.ConstantName.Value
-		d.checker.CheckCommentMisspellings(c, list.Doc.Raw)
 		typ := solver.ExprTypeLocal(d.scope(), d.ctx.st, c.Expr)
 
 		value := constfold.Eval(d.ctx.st, c.Expr)
@@ -1034,8 +1051,6 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 			d.Report(meth.MethodName, LevelNotice, "missingPhpdoc", "Missing PHPDoc for %s public method", methodFQN)
 		}
 	}
-	d.checker.CheckCommentMisspellings(meth.MethodName, meth.Doc.Raw)
-	d.checker.CheckIdentMisspellings(meth.MethodName)
 
 	// Indexing stage.
 	moveShapesToContext(&d.ctx, doc.Shapes)
@@ -1058,7 +1073,8 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		d.checker.CheckFuncReturnType(meth.MethodName, meth.MethodName.Value, returnTypeHint, doc.ReturnType)
 	}
 
-	d.checker.CheckTypeHintNode(meth.ReturnType, "return type")
+	// todo: this should be check via EnterNode
+	// d.checker.CheckTypeHintNode(meth.ReturnType)
 
 	funcParams := d.parseFuncParams(meth.Params, doc.ParamTypes, sc, nil)
 
@@ -1154,7 +1170,6 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 func (d *rootWalker) handlePropertyPromotion(param *ir.Parameter, doc phpdoctypes.ParseResult, class meta.ClassInfo) {
 	var accessLevel meta.AccessLevel
 	for _, m := range param.Modifiers {
-		d.checker.CheckModifierKeywordCase(m)
 		switch strings.ToLower(m.Value) {
 		case "public":
 			accessLevel = meta.Public
@@ -1200,7 +1215,6 @@ func (d *rootWalker) parseMethodModifiers(meth *ir.ClassMethodStmt) (res methodM
 	res.accessImplicit = true
 
 	for _, m := range meth.Modifiers {
-		d.checker.CheckModifierKeywordCase(m)
 		switch strings.ToLower(m.Value) {
 		case "abstract":
 			res.abstract = true
@@ -1802,7 +1816,7 @@ func (d *rootWalker) checkTypeFilter(wantType *phpdoc.Type, sc *meta.Scope, nn i
 
 	// TODO: compare without converting a TypesMap into TypeExpr?
 	// Or maybe store TypeExpr inside a TypesMap instead of strings?
-	// Can we use `meta.Type` for this?
+	// Can we use `meta.TypeHint` for this?
 	typ := solver.ExprType(sc, d.ctx.st, nn)
 	haveType := typesMapToTypeExpr(d.ctx.phpdocTypeParser, typ)
 	return rules.TypeIsCompatible(wantType.Expr, haveType.Expr)

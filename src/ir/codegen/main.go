@@ -41,6 +41,7 @@ func main() {
 		{"generate get position", doGenerateGetPosition},
 		{"generate iterate tokens", doGenerateIterateTokens},
 		{"generate get first token", doGenerateGetFirstToken},
+		{"generate interfaces", doGenerateInterfaces},
 	}
 
 	for _, step := range steps {
@@ -120,5 +121,10 @@ func doGenerateIterateTokens(ctx *context) error {
 
 func doGenerateGetFirstToken(ctx *context) error {
 	g := &genGetFirstToken{ctx: ctx}
+	return g.Run()
+}
+
+func doGenerateInterfaces(ctx *context) error {
+	g := &getInterfaces{ctx: ctx}
 	return g.Run()
 }

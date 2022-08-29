@@ -22,6 +22,20 @@ type blockLinter struct {
 }
 
 func (b *blockLinter) enterNode(n ir.Node) {
+	if n, ok := n.(ir.TypeHintOwner); ok {
+		switch n.(type) {
+		case *ir.FunctionStmt, *ir.ClassMethodStmt, *ir.ClosureExpr:
+			// TODO: block walker and root walker has same node, so we skip it here
+		default:
+			b.walker.r.checker.CheckTypeHintNode(n.TypeHint())
+		}
+	}
+
+	if n, ok := n.(ir.Binary); ok {
+		n.Lhs()
+		n.Rhs()
+	}
+
 	switch n := n.(type) {
 	case *ir.Assign:
 		b.checkAssign(n)

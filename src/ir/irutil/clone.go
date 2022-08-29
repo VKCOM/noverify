@@ -18,8 +18,8 @@ func NodeClone(x ir.Node) ir.Node {
 		return &clone
 	case *ir.Argument:
 		clone := *x
-		if x.Name != nil {
-			clone.Name = NodeClone(x.Name).(*ir.Identifier)
+		if x.ArgName != nil {
+			clone.ArgName = NodeClone(x.ArgName).(*ir.Identifier)
 		}
 		if x.Expr != nil {
 			clone.Expr = NodeClone(x.Expr)
@@ -299,7 +299,7 @@ func NodeClone(x ir.Node) ir.Node {
 		clone := *x
 		clone.Types = NodeSliceClone(x.Types)
 		if x.Variable != nil {
-			clone.Variable = NodeClone(x.Variable).(*ir.SimpleVar)
+			clone.Variable = NodeClone(x.Variable)
 		}
 		clone.Stmts = NodeSliceClone(x.Stmts)
 		return &clone
@@ -999,8 +999,8 @@ func NodeClone(x ir.Node) ir.Node {
 			}
 			clone.Modifiers = sliceClone
 		}
-		if x.Type != nil {
-			clone.Type = NodeClone(x.Type)
+		if x.PropertyType != nil {
+			clone.PropertyType = NodeClone(x.PropertyType)
 		}
 		clone.Properties = NodeSliceClone(x.Properties)
 		return &clone

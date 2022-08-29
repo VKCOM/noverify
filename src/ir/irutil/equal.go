@@ -28,7 +28,7 @@ func NodeEqual(x, y ir.Node) bool {
 		if !ok || x == nil || y == nil {
 			return x == y
 		}
-		if !NodeEqual(x.Name, y.Name) {
+		if !NodeEqual(x.ArgName, y.ArgName) {
 			return false
 		}
 		if !NodeEqual(x.Expr, y.Expr) {
@@ -1570,7 +1570,7 @@ func NodeEqual(x, y ir.Node) bool {
 				return false
 			}
 		}
-		if !NodeEqual(x.Type, y.Type) {
+		if !NodeEqual(x.PropertyType, y.PropertyType) {
 			return false
 		}
 		if !NodeSliceEqual(x.Properties, y.Properties) {

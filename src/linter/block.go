@@ -1238,7 +1238,7 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 	if typ, ok := b.r.parseTypeHintNode(fun.ReturnType); ok {
 		hintReturnType = typ
 	}
-	b.r.checker.CheckTypeHintNode(fun.ReturnType, "closure return type")
+	b.r.checker.CheckTypeHintNode(fun.ReturnType)
 
 	var closureUses []ir.Node
 	if fun.ClosureUse != nil {
@@ -1983,7 +1983,7 @@ func (b *blockWalker) handleAssignList(list *ir.ListExpr, rhs ir.Node) {
 	// Hint: only const (literal) size hints work for this.
 	// Hint: check the compiler output to see whether elemTypes "escape" or not.
 	//
-	// We store types.Type instead of string to avoid the need to do strings.Join
+	// We store types.TypeHint instead of string to avoid the need to do strings.Join
 	// when we want to create a TypesMap.
 	var elemTypes []types.Type
 	var shapeType string

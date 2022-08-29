@@ -359,7 +359,7 @@ type SpaceshipExpr struct {
 	Right    Node
 }
 
-// TypeCastExpr is a `($Type)$Expr` expression.
+// TypeCastExpr is a `($TypeHint)$Expr` expression.
 type TypeCastExpr struct {
 	Position *position.Position
 	CastTkn  *token.Token
@@ -763,13 +763,13 @@ type Name struct {
 
 // Argument is a wrapper node for func/method arguments.
 // Possible syntax's:
-//   $Name: $Expr
+//   $ArgName: $Expr
 //   $Expr
 // If $Variadic is true, it's `...$Expr`.
 // If $IsReference is true, it's `&$Expr`.
 type Argument struct {
 	Position     *position.Position
-	Name         *Identifier
+	ArgName      *Identifier
 	ColonTkn     *token.Token
 	VariadicTkn  *token.Token
 	AmpersandTkn *token.Token
@@ -1106,7 +1106,7 @@ type ElseIfStmt struct {
 	Merged              bool
 }
 
-// ExpressionStmt is an expression $Expr that is evaluated for side-effects only.
+// ExpressionStmt is an expression $Expr that is evaluated for side effects only.
 // When expression is used in a place where statement is expected, it
 // becomes an ExpressionStmt.
 type ExpressionStmt struct {
@@ -1321,13 +1321,13 @@ type PropertyStmt struct {
 	Expr     Node
 }
 
-// PropertyListStmt is a `#[$AttrGroups] $Modifiers $Type $Properties` statement.
+// PropertyListStmt is a `#[$AttrGroups] $Modifiers $TypeHint $Properties` statement.
 // Every element in $Properties is a *PropertyStmt.
 type PropertyListStmt struct {
 	Position      *position.Position
 	AttrGroups    []*AttributeGroup
 	Modifiers     []*Identifier
-	Type          Node
+	PropertyType  Node
 	Properties    []Node
 	SeparatorTkns []*token.Token
 	SemiColonTkn  *token.Token
@@ -1509,14 +1509,14 @@ type WhileStmt struct {
 	AltSyntax           bool
 }
 
-// Union node is a `Type|Type1|...`
+// Union node is a `TypeHint|Type1|...`
 type Union struct {
 	Position      *position.Position
 	Types         []Node
 	SeparatorTkns []*token.Token
 }
 
-// Attribute node is a `$Name($Args)` inside `#[...]`
+// Attribute node is a `$FunctionName($Args)` inside `#[...]`
 type Attribute struct {
 	Position            *position.Position
 	Name                Node
