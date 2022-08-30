@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 102           | 85                        | 17                         | 12                 |
+| 103          | 86                        | 17                         | 13                 |
 
 ## Table of contents
  - Enabled by default
@@ -38,6 +38,7 @@
    - [`emptyStmt` checker](#emptystmt-checker)
    - [`emptyStringCheck` checker](#emptystringcheck-checker)
    - [`forLoop` checker](#forloop-checker)
+   - [`getTypeMissUse` checker (autofixable)](#gettypemissuse-checker)
    - [`implicitModifiers` checker](#implicitmodifiers-checker)
    - [`indexingSyntax` checker (autofixable)](#indexingsyntax-checker)
    - [`intNeedle` checker](#intneedle-checker)
@@ -750,6 +751,26 @@ for ($i = 0; $i < 100; $i--) { ... }
 #### Compliant code:
 ```php
 for ($i = 0; $i < 100; $i++) { ... }
+```
+<p><br></p>
+
+
+### `getTypeMissUse` checker
+
+> Auto fix available
+
+#### Description
+
+Report call gettype function.
+
+#### Non-compliant code:
+```php
+if (gettype($a) == "string") { ... }
+```
+
+#### Compliant code:
+```php
+if (is_string($a)) { ... }
 ```
 <p><br></p>
 
