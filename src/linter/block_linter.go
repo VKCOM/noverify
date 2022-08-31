@@ -1098,13 +1098,13 @@ func (b *blockLinter) checkGettype(node ir.Node) {
 		return
 	}
 
-	replaced, ok := phpcore.TypeToIsFunction[str.Value]
+	isFunctionName, ok := phpcore.TypeToIsFunction[str.Value]
 	if !ok {
 		return
 	}
 
-	b.report(left, LevelWarning, "getTypeMissUse", "use %s instead of gettype()", replaced)
-	b.walker.r.addQuickFix("getTypeMissUse", b.quickfix.GetType(node, replaced, nodeText, isNegative))
+	b.report(left, LevelWarning, "getTypeMisUse", "use %s instead of gettype()", isFunctionName)
+	b.walker.r.addQuickFix("getTypeMisUse", b.quickfix.GetType(node, isFunctionName, nodeText, isNegative))
 }
 
 func (b *blockLinter) checkRandomIntCall(e *ir.FunctionCallExpr) {

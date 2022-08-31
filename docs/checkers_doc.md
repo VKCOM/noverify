@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 103          | 86                        | 17                         | 13                 |
+| 103          | 85                        | 18                         | 13                 |
 
 ## Table of contents
  - Enabled by default
@@ -38,7 +38,6 @@
    - [`emptyStmt` checker](#emptystmt-checker)
    - [`emptyStringCheck` checker](#emptystringcheck-checker)
    - [`forLoop` checker](#forloop-checker)
-   - [`getTypeMissUse` checker (autofixable)](#gettypemissuse-checker)
    - [`implicitModifiers` checker](#implicitmodifiers-checker)
    - [`indexingSyntax` checker (autofixable)](#indexingsyntax-checker)
    - [`intNeedle` checker](#intneedle-checker)
@@ -101,6 +100,7 @@
    - [`complexity` checker](#complexity-checker)
    - [`deprecatedUntagged` checker](#deprecateduntagged-checker)
    - [`errorSilence` checker](#errorsilence-checker)
+   - [`getTypeMisUse` checker (autofixable)](#gettypemisuse-checker)
    - [`langDeprecated` checker](#langdeprecated-checker)
    - [`missingPhpdoc` checker](#missingphpdoc-checker)
    - [`packaging` checker](#packaging-checker)
@@ -751,26 +751,6 @@ for ($i = 0; $i < 100; $i--) { ... }
 #### Compliant code:
 ```php
 for ($i = 0; $i < 100; $i++) { ... }
-```
-<p><br></p>
-
-
-### `getTypeMissUse` checker
-
-> Auto fix available
-
-#### Description
-
-Report call gettype function.
-
-#### Non-compliant code:
-```php
-if (gettype($a) == "string") { ... }
-```
-
-#### Compliant code:
-```php
-if (is_string($a)) { ... }
 ```
 <p><br></p>
 
@@ -2010,6 +1990,26 @@ Report using `@`.
 #### Compliant code:
 ```php
 f();
+```
+<p><br></p>
+
+
+### `getTypeMisUse` checker
+
+> Auto fix available
+
+#### Description
+
+Report call gettype function.
+
+#### Non-compliant code:
+```php
+if (gettype($a) == "string") { ... }
+```
+
+#### Compliant code:
+```php
+if (is_string($a)) { ... }
 ```
 <p><br></p>
 

@@ -12,21 +12,27 @@ func TestGettypeFunction(t *testing.T) {
 		`stubs/phpstorm-stubs/standard/standard_5.php`,
 	}
 	test.AddFile(`<?php
-function getTypeMissUse(mixed $var){
-    if (gettype($var) === "string"){
-    }
+function getTypeMisUse(mixed $var) {
+  if (gettype($var) === "string") {
+  }
 
-    if (gettype($var) == "double"){
-    }
+  if (gettype($var) == "double") {
+  }
 
-    if (gettype($var) !== "array"){
-    }
+  if (gettype($var) !== "array") {
+  }
 
-    if (gettype($var) != "boolean"){
-    }
+  if (gettype($var) != "boolean") {
+  }
 
-	if (gettype($var) != "object"){
-    }
+  if (gettype($var) === "object" && true) {
+  }
+
+  if (gettype(getTypeMisUse($var)) === "integer") {
+  }
+
+  if (gettype(getTypeMisUse($var)) != "resource") {
+  }
 }
 `)
 	test.Expect = []string{
@@ -35,6 +41,8 @@ function getTypeMissUse(mixed $var){
 		`use is_array instead of gettype()`,
 		`use is_bool instead of gettype()`,
 		`use is_object instead of gettype()`,
+		`use is_int instead of gettype()`,
+		`use is_resource instead of gettype()`,
 	}
 
 	test.RunAndMatch()

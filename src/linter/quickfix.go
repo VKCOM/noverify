@@ -47,18 +47,18 @@ func (g *QuickFixGenerator) NullForNotNullableProperty(prop *ir.PropertyStmt) qu
 	}
 }
 
-func (g *QuickFixGenerator) GetType(node ir.Node, replaced, nodeText string, isNegative bool) quickfix.TextEdit {
+func (g *QuickFixGenerator) GetType(node ir.Node, isFunctionName, nodeText string, isNegative bool) quickfix.TextEdit {
 	pos := ir.GetPosition(node)
 
 	if isNegative {
-		replaced = "!" + replaced
+		isFunctionName = "!" + isFunctionName
 	}
 
-	replaced = replaced + "(" + nodeText + ")"
+	isFunctionName = isFunctionName + "(" + nodeText + ")"
 
 	return quickfix.TextEdit{
 		StartPos:    pos.StartPos,
 		EndPos:      pos.EndPos,
-		Replacement: replaced,
+		Replacement: isFunctionName,
 	}
 }

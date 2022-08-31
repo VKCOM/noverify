@@ -1132,8 +1132,8 @@ class Main {
 		},
 
 		{
-			Name:     "getTypeMissUse",
-			Default:  true,
+			Name:     "getTypeMisUse",
+			Default:  false,
 			Quickfix: true,
 			Comment:  `Report call gettype function.`,
 			Before:   `if (gettype($a) == "string") { ... }`,
