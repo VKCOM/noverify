@@ -1103,7 +1103,7 @@ func (b *blockLinter) checkGettype(node ir.Node) {
 		return
 	}
 
-	b.report(left, LevelWarning, "getTypeMisUse", "use %s instead of gettype()", isFunctionName)
+	b.report(node, LevelWarning, "getTypeMisUse", "use %s instead of '%s'", isFunctionName, b.walker.r.nodeText(node))
 	b.walker.r.addQuickFix("getTypeMisUse", b.quickfix.GetType(node, isFunctionName, nodeText, isNegative))
 }
 

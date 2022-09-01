@@ -36,13 +36,13 @@ function getTypeMisUse(mixed $var) {
 }
 `)
 	test.Expect = []string{
-		`use is_string instead of gettype()`,
-		`use is_float instead of gettype()`,
-		`use is_array instead of gettype()`,
-		`use is_bool instead of gettype()`,
-		`use is_object instead of gettype()`,
-		`use is_int instead of gettype()`,
-		`use is_resource instead of gettype()`,
+		`use is_string instead of 'gettype($var) === "string"'`,
+		`use is_float instead of 'gettype($var) == "double"'`,
+		`use is_array instead of 'gettype($var) !== "array"'`,
+		`use is_bool instead of 'gettype($var) != "boolean"'`,
+		`use is_object instead of 'gettype($var) === "object"'`,
+		`use is_int instead of 'gettype(getTypeMisUse($var)) === "integer"'`,
+		`use is_resource instead of 'gettype(getTypeMisUse($var)) != "resource"'`,
 	}
 
 	test.RunAndMatch()
