@@ -50,3 +50,13 @@ var funcAliases = map[string]*ir.Name{
 	`socket_get_status`:       {Value: `stream_get_meta_data`},
 	`socket_set_timeout`:      {Value: `stream_set_timeout`},
 }
+
+var TypeToIsFunction = map[string]string{
+	"boolean":  "is_bool",
+	"integer":  "is_int",
+	"double":   "is_float",
+	"string":   "is_string",
+	"array":    "is_array",
+	"object":   "is_object",
+	"resource": "is_resource",
+}

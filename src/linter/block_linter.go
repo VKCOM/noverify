@@ -8,6 +8,7 @@ import (
 	"github.com/VKCOM/noverify/src/constfold"
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/ir/irutil"
+	"github.com/VKCOM/noverify/src/ir/phpcore"
 	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/meta"
 	"github.com/VKCOM/noverify/src/quickfix"
@@ -114,15 +115,19 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.EqualExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
+		b.checkGettype(n)
 	case *ir.NotEqualExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
+		b.checkGettype(n)
 	case *ir.IdenticalExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
+		b.checkGettype(n)
 	case *ir.NotIdenticalExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgsNoFloat(n, n.Left, n.Right)
+		b.checkGettype(n)
 	case *ir.SmallerExpr:
 		b.checkBinaryVoidType(n.Left, n.Right)
 		b.checkBinaryDupArgs(n, n.Left, n.Right)
@@ -1037,6 +1042,69 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 	case `\random_int`:
 		b.checkRandomIntCall(e)
 	}
+}
+
+func (b *blockLinter) checkGettype(node ir.Node) {
+	var left ir.Node
+	var right ir.Node
+	var isNegative = false
+
+	switch node := node.(type) {
+	case *ir.EqualExpr:
+		left = node.Left
+		right = node.Right
+	case *ir.NotEqualExpr:
+		left = node.Left
+		right = node.Right
+		isNegative = true
+	case *ir.IdenticalExpr:
+		left = node.Left
+		right = node.Right
+	case *ir.NotIdenticalExpr:
+		left = node.Left
+		right = node.Right
+		isNegative = true
+	default:
+		return
+	}
+
+	call, ok := left.(*ir.FunctionCallExpr)
+	if !ok {
+		return
+	}
+
+	if len(call.Args) != 1 {
+		return
+	}
+
+	name, ok := call.Function.(*ir.Name)
+	if !ok {
+		return
+	}
+
+	if name.Value != "gettype" {
+		return
+	}
+
+	firstArg, ok := call.Args[0].(*ir.Argument)
+	if !ok {
+		return
+	}
+
+	nodeText := b.walker.r.nodeText(firstArg)
+
+	str, ok := right.(*ir.String)
+	if !ok {
+		return
+	}
+
+	isFunctionName, ok := phpcore.TypeToIsFunction[str.Value]
+	if !ok {
+		return
+	}
+
+	b.report(node, LevelWarning, "getTypeMisUse", "use %s instead of '%s'", isFunctionName, b.walker.r.nodeText(node))
+	b.walker.r.addQuickFix("getTypeMisUse", b.quickfix.GetType(node, isFunctionName, nodeText, isNegative))
 }
 
 func (b *blockLinter) checkRandomIntCall(e *ir.FunctionCallExpr) {

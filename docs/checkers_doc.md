@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 102           | 85                        | 17                         | 12                 |
+| 103          | 85                        | 18                         | 13                 |
 
 ## Table of contents
  - Enabled by default
@@ -100,6 +100,7 @@
    - [`complexity` checker](#complexity-checker)
    - [`deprecatedUntagged` checker](#deprecateduntagged-checker)
    - [`errorSilence` checker](#errorsilence-checker)
+   - [`getTypeMisUse` checker (autofixable)](#gettypemisuse-checker)
    - [`langDeprecated` checker](#langdeprecated-checker)
    - [`missingPhpdoc` checker](#missingphpdoc-checker)
    - [`packaging` checker](#packaging-checker)
@@ -1989,6 +1990,26 @@ Report using `@`.
 #### Compliant code:
 ```php
 f();
+```
+<p><br></p>
+
+
+### `getTypeMisUse` checker
+
+> Auto fix available
+
+#### Description
+
+Report call gettype function.
+
+#### Non-compliant code:
+```php
+if (gettype($a) == "string") { ... }
+```
+
+#### Compliant code:
+```php
+if (is_string($a)) { ... }
 ```
 <p><br></p>
 
