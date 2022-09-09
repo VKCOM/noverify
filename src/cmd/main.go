@@ -453,16 +453,30 @@ func LoadEmbeddedStubs(l *linter.Linter, filenames []string) error {
 }
 
 func loadEmbeddedStubs(l *linter.Linter) error {
-	var filenames []string
+	var stubsFilenames []string
 	// NOVERIFYDEBUG_LOAD_STUBS is used in golden tests to specify
 	// the test dependencies that need to be loaded.
 	if list := os.Getenv("NOVERIFYDEBUG_LOAD_STUBS"); list != "" {
-		filenames = strings.Split(list, ",")
+		stubsFilenames = strings.Split(list, ",")
 	} else {
-		filenames = stubs.AssetNames()
+		stubsFilenames = stubs.AssetNames()
 	}
-	if len(filenames) == 0 {
+
+	if len(stubsFilenames) == 0 {
 		return fmt.Errorf("empty file list")
 	}
+
+	extensions := l.Config().PhpExtensions
+	extensions = append(extensions, "php")
+
+	var filenames []string
+	for _, filename := range stubsFilenames {
+		for _, extension := range extensions {
+			if strings.HasSuffix(filename, extension) {
+				filenames = append(filenames, filename)
+			}
+		}
+	}
+
 	return LoadEmbeddedStubs(l, filenames)
 }
