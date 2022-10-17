@@ -16,6 +16,14 @@ func ResolveAlias(function ir.Node) ir.Node {
 	return function
 }
 
+func ResolveAliasName(n *ir.Name) *ir.Name {
+	alias, ok := funcAliases[n.Value]
+	if ok {
+		return alias
+	}
+	return n
+}
+
 var funcAliases = map[string]*ir.Name{
 	// See https://www.php.net/manual/ru/aliases.php
 

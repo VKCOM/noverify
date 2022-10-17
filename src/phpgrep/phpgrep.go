@@ -53,6 +53,8 @@ func (m *Matcher) Clone() *Matcher {
 // Returned match data should only be examined if the
 // second return value is true.
 func (m *Matcher) Match(n ir.Node) (MatchData, bool) {
+	// TODO: allow the used to pass already existing matcherState
+	// to increase the efficiency?
 	var state matcherState
 	return m.m.match(&state, n)
 }
