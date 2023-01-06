@@ -74,10 +74,10 @@ function foo() {
 	test.Expect = []string{
 		`Cannot find referenced variable $undefined_variable`,
 		`Possibly undefined variable $maybe_defined`,
-		`Variable $a is unused (use $_ to ignore this inspection or specify --unused-var-regex flag)`,
-		`Variable $a is unused (use $_ to ignore this inspection or specify --unused-var-regex flag)`,
-		`Variable $a is unused (use $_ to ignore this inspection or specify --unused-var-regex flag)`,
-		`Variable $a is unused (use $_ to ignore this inspection or specify --unused-var-regex flag)`,
+		`Variable $a is unused`,
+		`Variable $a is unused`,
+		`Variable $a is unused`,
+		`Variable $a is unused`,
 		`Cannot find referenced variable $a`,
 		`Cannot find referenced variable $x`,
 		`Cannot find referenced variable $y`,
@@ -110,8 +110,8 @@ function f() {
 }
 `)
 	test.Expect = []string{
-		`Variable $a2 is unused (use $_ to ignore this inspection or specify --unused-var-regex flag)`,
-		`Variable $a is unused (use $_ to ignore this inspection or specify --unused-var-regex flag)`,
+		`Variable $a2 is unused`,
+		`Variable $a is unused`,
 	}
 	test.RunAndMatch()
 }

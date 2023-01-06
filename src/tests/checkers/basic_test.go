@@ -191,8 +191,8 @@ function f() {
 }
 `)
 	test.Expect = []string{
-		`Foreach key $i is unused, can simplify $i => $v to just $v`,
-		`Foreach key $i is unused, can simplify $i => $v to just $v`,
+		`Foreach key $i is unused`,
+		`Foreach key $i is unused`,
 	}
 	test.RunAndMatch()
 }
