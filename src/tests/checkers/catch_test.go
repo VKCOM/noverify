@@ -236,3 +236,25 @@ catch (Exception) {}
 	test.Expect = []string{}
 	test.RunAndMatch()
 }
+
+func TestFinallyVariable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+try {
+    $a = 100;
+} finally {
+    echo $a;
+}
+
+try {
+	$b = 100;
+} catch (Exception $_) {
+} finally {
+	echo $b;
+}
+`)
+	test.Expect = []string{
+		`Possibly undefined variable $b`,
+	}
+	test.RunAndMatch()
+}
