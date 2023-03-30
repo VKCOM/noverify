@@ -527,8 +527,8 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 		xFunc := x.Function
 		yFunc := y.Function
 		if m.fuzzyMatching {
-			xFunc = phpcore.ResolveAlias(xFunc)
-			yFunc = phpcore.ResolveAlias(yFunc)
+			xFunc = m.resolveAlias(xFunc)
+			yFunc = m.resolveAlias(yFunc)
 		}
 		if !m.eqNodeWithCase(state, xFunc, yFunc) {
 			return false
@@ -755,6 +755,8 @@ func (m *matcher) eqNode(state *matcherState, x, y ir.Node) bool {
 			m.eqNode(state, x.DefaultValue, y.DefaultValue)
 	case *ir.ClosureExpr:
 		return m.eqClosure(state, x, y)
+	case *ir.ArrowFunctionExpr:
+		return m.eqArrowFunction(state, x, y)
 
 	case *ir.TernaryExpr:
 		return m.eqTernary(state, x, y)
@@ -827,6 +829,18 @@ func (m *matcher) eqTernary(state *matcherState, x *ir.TernaryExpr, y ir.Node) b
 	return false
 }
 
+func (m *matcher) eqArrowFunction(state *matcherState, x *ir.ArrowFunctionExpr, y ir.Node) bool {
+	if y, ok := y.(*ir.ArrowFunctionExpr); ok {
+		return x.ReturnsRef == y.ReturnsRef &&
+			x.Static == y.Static &&
+			m.eqNodeSlice(state, x.Params, y.Params) &&
+			m.eqNode(state, x.ReturnType, y.ReturnType) &&
+			m.eqNode(state, x.Expr, y.Expr)
+	}
+
+	return false
+}
+
 func (m *matcher) eqClosure(state *matcherState, x *ir.ClosureExpr, y ir.Node) bool {
 	if y, ok := y.(*ir.ClosureExpr); ok {
 		var xUses, yUses []ir.Node
@@ -836,7 +850,7 @@ func (m *matcher) eqClosure(state *matcherState, x *ir.ClosureExpr, y ir.Node) b
 		if y.ClosureUse != nil {
 			yUses = y.ClosureUse.Uses
 		}
-		return ok && x.ReturnsRef == y.ReturnsRef &&
+		return x.ReturnsRef == y.ReturnsRef &&
 			x.Static == y.Static &&
 			m.eqNodeSlice(state, x.Params, y.Params) &&
 			m.eqNode(state, x.ReturnType, y.ReturnType) &&
@@ -913,4 +927,26 @@ func (m *matcher) eqVar(state *matcherState, x *ir.Var, y ir.Node) bool {
 		return m.eqNode(state, x.Expr, y.Expr)
 	}
 	return false
+}
+
+func (m *matcher) resolveAlias(x ir.Node) ir.Node {
+	if name, ok := x.(*ir.Name); ok {
+		resolved := phpcore.ResolveAliasName(name)
+		// We can't just return "resolved" node since it lacks position info.
+		// In order for phpgrep to work properly, it needs to have that info.
+		// We create a new IR node instead that will hold the original position
+		// info and new value (the resolved function name).
+		//
+		// TODO: when matcherState is reused between match() calls, we could have
+		// a pool of re-used *ir.Name nodes to avoid redundant allocations.
+		if name != resolved {
+			newName := &ir.Name{
+				Position: name.Position,
+				NameTkn:  name.NameTkn,
+				Value:    resolved.Value,
+			}
+			return newName
+		}
+	}
+	return x
 }

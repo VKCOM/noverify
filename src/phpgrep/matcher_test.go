@@ -570,6 +570,10 @@ func TestMatch(t *testing.T) {
 		{`function() { ${"*"}; return 1; }`, `function() { f(); return 1; }`},
 		{`function() { ${"*"}; return 1; }`, `function() { f(); f(); return 1; }`},
 
+		{`fn($x) => $x`, `fn($x) => $x`},
+		{`fn($x): int => $x`, `fn($x): int => $x`},
+		{`fn(int $x) => $x + 1`, `fn(int $x) => $x + 1`},
+
 		{`${"func"}`, `function() {}`},
 		{`${"func"}`, `function($x) {}`},
 		{`${"func"}`, `function() { return 1; }`},
@@ -732,6 +736,13 @@ func TestMatchNegative(t *testing.T) {
 		{`function() { ${"*"}; return 1; }`, `function() {}`},
 		{`function() { ${"*"}; return 1; }`, `function($x) { return 1; }`},
 		{`function() { ${"*"}; return 1; }`, `static function() { f(); f(); return 1; }`},
+
+		{`fn($x) => $x`, `fn($x) => $x + 1`},
+		{`fn($x) => $x`, `fn($x) => $y`},
+		{`fn($x): int => $x`, `fn($x): string => $x`},
+		{`fn(int $x): int => $x + 1`, `fn(int $x) => $x + 1`},
+		{`fn(int $x) => $x + 1`, `fn(int $x): int => $x + 1`},
+		{`fn(int $x): int => $x + 1`, `fn(int $x): int => $x`},
 
 		{`!($x instanceof $y)`, `1`},
 		{`$x instanceof T1`, `$v instanceof T2`},
