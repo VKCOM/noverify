@@ -419,26 +419,72 @@ function bad(string $x) {
 
 func TestRulesFilter(t *testing.T) {
 	rfile := `<?php
+function basic_rules() {
+  /**
+   * @warning Don't use $var variable
+   * @filter $var ^book_id$
+   */
+  $var;
+}
 function id_check() {
   /**
-   * @warning Don't use $id variable
-   * @filter $id ^id$
+   * @warning Don't use the name $id for the variable
+   * @filter $id ^(user|owner)_id$
    */
-  $id;
+  any: {
+    $id ==  0;
+    $id === 0;
+  }
+}
+function type_type_rules() {
+  /**
+   * @warning Don't use $animal variable
+   * @type int $animal
+   * @filter $animal ^animal_(name|id)$
+   */
+  $animal == 0;
 }
 `
 	test := linttest.NewSuite(t)
 	test.RuleFile = rfile
 	test.AddFile(`<?php
-$id = 100;
-echo $id;
-echo $id == 0;
-if ($id == 0) {}
+function basic_test() {
+  $book_id = 100;
+  echo $book_id;
+  echo $book_id == 0;
+  if ($book_id == 0) {}
+}
+function test(int $user_id, int $id, int $owner_id, int $chat_id, int $id_owner) {
+  $_ = $user_id === 0;
+  $_ = $user_id == 0;
+
+  $_ = $id === 0;
+  $_ = $id == 0;
+
+  $_ = $owner_id === 0;
+  $_ = $owner_id == 0;
+
+  $_ = $chat_id === 0;
+  $_ = $chat_id == 0;
+
+  $_ = $id_owner === 0;
+  $_ = $id_owner == 0;
+}
+function type_type_check(string $animal_name, int $animal_id) {
+  $_ = $animal_name == 0;
+
+  $_ = $animal_id == 0;
+}
 `)
 	test.Expect = []string{
-		`Don't use $id variable`,
-		`Don't use $id variable`,
-		`Don't use $id variable`,
+		`Don't use $book_id variable`,
+		`Don't use $book_id variable`,
+		`Don't use $book_id variable`,
+		`Don't use the name $user_id for the variable`,
+		`Don't use the name $user_id for the variable`,
+		`Don't use the name $owner_id for the variable`,
+		`Don't use the name $owner_id for the variable`,
+		`Don't use $animal_id variable`,
 	}
 	test.RunRulesTest()
 }
