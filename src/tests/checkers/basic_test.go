@@ -970,6 +970,26 @@ function f3() {
 `)
 }
 
+func TestUnusedInMagicMethodCall(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Boo {
+	public function __call($name, $args) {}
+
+	/** @return int */
+	public function foo() {
+		$boo = new Boo();
+		$arg = 1;
+
+		$boo->some($arg); // OK, $arg is used
+	}
+}
+`)
+
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
 func TestUnusedInVarPropFetch(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
 class Foo {}
