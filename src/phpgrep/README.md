@@ -30,7 +30,7 @@ See also: ["phpgrep: syntax aware code search"](https://speakerdeck.com/quasilyt
 To install `phpgrep` binary under your `$(go env GOPATH)/bin`:
 
 ```bash
-go get -v github.com/quasilyte/phpgrep/cmd/phpgrep
+go install -v github.com/quasilyte/phpgrep/cmd/phpgrep@latest
 ```
 
 If `$GOPATH/bin` is under your system `$PATH`, `phpgrep` command should be available after that.<br>
