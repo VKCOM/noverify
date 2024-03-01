@@ -3,7 +3,6 @@ package linttest
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -130,7 +129,7 @@ func runGoldenTest(s *GoldenTestSuite) {
 
 func (s *GoldenTestSuite) loadGoldenFile() {
 	path := filepath.Join(s.BaseDir, s.Name, s.GoldenFileName)
-	want, err := ioutil.ReadFile(path)
+	want, err := os.ReadFile(path)
 	if err != nil {
 		s.suite.t.Fatalf("read golden file: %v", err)
 	}
@@ -146,7 +145,7 @@ type linterOutput struct {
 }
 
 func (s *GoldenTestSuite) loadReportsFile(filename string) {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		s.suite.t.Fatalf("read reports file: %v", err)
 	}
