@@ -3,7 +3,6 @@ package linttest
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -139,7 +138,7 @@ func (s *Suite) AddNamedFile(name, contents string) {
 // ReadAndAddFiles read and adds a files to a suite file list.
 func (s *Suite) ReadAndAddFiles(files []string) {
 	for _, f := range files {
-		code, err := ioutil.ReadFile(f)
+		code, err := os.ReadFile(f)
 		if err != nil {
 			s.t.Fatalf("read PHP file: %v", err)
 		}

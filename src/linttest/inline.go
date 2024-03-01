@@ -2,7 +2,7 @@ package linttest
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -136,7 +136,7 @@ func (s *inlineTestSuite) handleFileContents(file string) (lines []string, repor
 		return nil, nil, err
 	}
 
-	data, err := ioutil.ReadFile(file)
+	data, err := os.ReadFile(file)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error read file '%s': %v", file, err)
 	}
