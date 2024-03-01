@@ -29,8 +29,7 @@ func init() {
 		}
 		testSeed = v
 	}
-
-	rand.Seed(testSeed)
+	rand.New(rand.NewSource(testSeed))
 	log.Printf("TEST_SEED: %d", testSeed)
 }
 
