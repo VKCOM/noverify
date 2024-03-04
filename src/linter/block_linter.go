@@ -1538,22 +1538,24 @@ func (b *blockLinter) metaInfo() *meta.Info {
 
 func (b *blockLinter) checkDeclareStrictTypes(statement *ir.DeclareStmt) {
 	for _, i := range statement.Consts {
-		switch node := i.(type) {
-		case *ir.ConstantStmt:
-			if node.ConstantName.Value != "strict_types" {
-				return
-			}
-			value, ok := node.Expr.(*ir.Lnumber)
-			if !ok {
-				return
-			}
-
-			if value.Value == "1" {
-				return
-			}
-
-			b.report(statement, LevelError, "notStrictTypes", "strict_types value is not 1")
-			b.walker.r.addQuickFix("notStrictTypes", b.quickfix.StrictTypes(value))
+		node, ok := i.(*ir.ConstantStmt)
+		if !ok {
+			return
 		}
+
+		if node.ConstantName.Value != "strict_types" {
+			return
+		}
+		value, isNumber := node.Expr.(*ir.Lnumber)
+		if !isNumber {
+			return
+		}
+
+		if value.Value == "1" {
+			return
+		}
+
+		b.report(statement, LevelError, "notStrictTypes", "strict_types value is not 1")
+		b.walker.r.addQuickFix("notStrictTypes", b.quickfix.StrictTypes(value))
 	}
 }
