@@ -34,6 +34,14 @@ func (g *QuickFixGenerator) Array(arr *ir.ArrayExpr) quickfix.TextEdit {
 	}
 }
 
+func (g *QuickFixGenerator) StrictTypes(lnumber *ir.Lnumber) quickfix.TextEdit {
+	return quickfix.TextEdit{
+		StartPos:    lnumber.Position.StartPos,
+		EndPos:      lnumber.Position.EndPos,
+		Replacement: "1",
+	}
+}
+
 func (g *QuickFixGenerator) NullForNotNullableProperty(prop *ir.PropertyStmt) quickfix.TextEdit {
 	from := prop.Position.StartPos
 	to := prop.Variable.Position.EndPos

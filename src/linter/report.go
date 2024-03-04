@@ -26,6 +26,15 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 		},
 
 		{
+			Name:     "notStrictTypes",
+			Default:  true,
+			Quickfix: true,
+			Comment:  "Report strict_types value is not 1 in declare section.",
+			Before:   `declare(strict_types=0);`,
+			After:    `declare(strict_types=1);`,
+		},
+
+		{
 			Name:     "emptyStmt",
 			Default:  true,
 			Quickfix: false,
