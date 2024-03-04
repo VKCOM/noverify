@@ -6,3 +6,4 @@ src/cmd/stubs/phpstorm-stubs/
 y.output
 .idea
 vendor
+dev
