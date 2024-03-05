@@ -1,5 +1,6 @@
 <?php
 
+declare(strict_types=1);
 function foo(array $a) { return 0; }
 
 $_ = [isset($x) ? $x : $y]; // expressions in global scope
