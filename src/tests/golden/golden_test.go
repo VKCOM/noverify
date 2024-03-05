@@ -39,6 +39,8 @@ func TestGolden(t *testing.T) {
 			Name: "embeddedrules",
 			Disable: []string{
 				"deadCode",
+				"notStrictTypes",
+				"noDeclareSection",
 			},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
@@ -50,6 +52,8 @@ func TestGolden(t *testing.T) {
 			Disable: []string{
 				"arraySyntax",
 				"redundantCast",
+				"notStrictTypes",
+				"noDeclareSection",
 			},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
@@ -62,6 +66,10 @@ func TestGolden(t *testing.T) {
 
 		{
 			Name: "math",
+			Disable: []string{
+				"notStrictTypes",
+				"noDeclareSection",
+			},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/gmp/gmp.php`,
@@ -73,6 +81,10 @@ func TestGolden(t *testing.T) {
 
 		{
 			Name: "qrcode",
+			Disable: []string{
+				"notStrictTypes",
+				"noDeclareSection",
+			},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/gd/gd.php`,
@@ -81,6 +93,10 @@ func TestGolden(t *testing.T) {
 
 		{
 			Name: "ctype",
+			Disable: []string{
+				"notStrictTypes",
+				"noDeclareSection",
+			},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 			},
@@ -88,14 +104,22 @@ func TestGolden(t *testing.T) {
 
 		{
 			Name: "idn",
+			Disable: []string{
+				"notStrictTypes",
+				"noDeclareSection",
+			},
 			Deps: []string{
 				`stubs/phpstorm-stubs/mbstring/mbstring.php`,
 			},
 		},
 
 		{
-			Name:    "parsedown",
-			Disable: []string{"missingPhpdoc", "arraySyntax"},
+			Name: "parsedown",
+			Disable: []string{"missingPhpdoc",
+				"arraySyntax",
+				"notStrictTypes",
+				"noDeclareSection",
+			},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/mbstring/mbstring.php`,
@@ -103,16 +127,24 @@ func TestGolden(t *testing.T) {
 		},
 
 		{
-			Name:    "underscore",
-			Disable: []string{"missingPhpdoc"},
+			Name: "underscore",
+			Disable: []string{
+				"missingPhpdoc",
+				"notStrictTypes",
+				"noDeclareSection",
+			},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 			},
 		},
 
 		{
-			Name:    "phprocksyd",
-			Disable: []string{"missingPhpdoc"},
+			Name: "phprocksyd",
+			Disable: []string{
+				"missingPhpdoc",
+				"notStrictTypes",
+				"noDeclareSection",
+			},
 			Deps: []string{
 				`stubs/phpstorm-stubs/standard/basic.php`,
 				`stubs/phpstorm-stubs/pcntl/pcntl.php`,
@@ -122,8 +154,12 @@ func TestGolden(t *testing.T) {
 		},
 
 		{
-			Name:    "flysystem",
-			Disable: []string{"redundantCast"},
+			Name: "flysystem",
+			Disable: []string{
+				"redundantCast",
+				"notStrictTypes",
+				"noDeclareSection",
+			},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
@@ -139,8 +175,12 @@ func TestGolden(t *testing.T) {
 		},
 
 		{
-			Name:    "inflector",
-			Disable: []string{"missingPhpdoc"},
+			Name: "inflector",
+			Disable: []string{
+				"missingPhpdoc",
+				"notStrictTypes",
+				"noDeclareSection",
+			},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
@@ -149,8 +189,12 @@ func TestGolden(t *testing.T) {
 		},
 
 		{
-			Name:    "options-resolver",
-			Disable: []string{"missingPhpdoc"},
+			Name: "options-resolver",
+			Disable: []string{
+				"missingPhpdoc",
+				"notStrictTypes",
+				"noDeclareSection",
+			},
 			Deps: []string{
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
 				`stubs/phpstorm-stubs/Reflection/Reflection.php`,
@@ -162,8 +206,13 @@ func TestGolden(t *testing.T) {
 		},
 
 		{
-			Name:    "twitter-api-php",
-			Disable: []string{"missingPhpdoc", "arraySyntax"},
+			Name: "twitter-api-php",
+			Disable: []string{
+				"missingPhpdoc",
+				"arraySyntax",
+				"notStrictTypes",
+				"noDeclareSection",
+			},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/SPL/SPL.php`,
@@ -176,22 +225,38 @@ func TestGolden(t *testing.T) {
 
 		{
 			Name: "output-test",
+			Disable: []string{
+				"notStrictTypes",
+				"noDeclareSection",
+			},
 		},
 
 		{
-			Name:      "gitignore-test",
+			Name: "gitignore-test",
+			Disable: []string{
+				"notStrictTypes",
+				"noDeclareSection",
+			},
 			OnlyE2E:   true,
 			Gitignore: true,
 		},
 
 		{
-			Name:     "baseline-test",
+			Name: "baseline-test",
+			Disable: []string{
+				"notStrictTypes",
+				"noDeclareSection",
+			},
 			OnlyE2E:  true,
 			Baseline: true,
 		},
 
 		{
 			Name: "phpdoc",
+			Disable: []string{
+				"notStrictTypes",
+				"noDeclareSection",
+			},
 		},
 	}
 
