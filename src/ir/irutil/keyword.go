@@ -14,6 +14,8 @@ func Keywords(n ir.Node) []*token.Token {
 	switch n := n.(type) {
 	case *ir.FunctionStmt:
 		return []*token.Token{n.FunctionTkn}
+	case *ir.DeclareStmt:
+		return []*token.Token{n.DeclareTkn}
 	case *ir.DefaultStmt:
 		return []*token.Token{n.DefaultTkn}
 	case *ir.CaseStmt:
