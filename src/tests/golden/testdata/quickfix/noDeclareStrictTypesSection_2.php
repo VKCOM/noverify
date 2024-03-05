@@ -1,6 +1,5 @@
 <?php
-declare(strict_types=0);
-
+declare(ticks=1);
 function test():string {
     return "test";
 }

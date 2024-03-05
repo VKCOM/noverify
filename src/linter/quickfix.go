@@ -42,6 +42,14 @@ func (g *QuickFixGenerator) StrictTypes(lnumber *ir.Lnumber) quickfix.TextEdit {
 	}
 }
 
+func (g *QuickFixGenerator) CreateDeclareStrictTypes(root *ir.Root) quickfix.TextEdit {
+	return quickfix.TextEdit{
+		StartPos:    root.Position.StartPos,
+		EndPos:      root.Position.StartPos,
+		Replacement: "declare(strict_types=1);\n",
+	}
+}
+
 func (g *QuickFixGenerator) NullForNotNullableProperty(prop *ir.PropertyStmt) quickfix.TextEdit {
 	from := prop.Position.StartPos
 	to := prop.Variable.Position.EndPos
