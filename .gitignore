@@ -7,3 +7,4 @@ y.output
 .idea
 vendor
 dev
+src/tests/golden/testdata/quickfix/*.fix

@@ -69,10 +69,12 @@ type rootWalker struct {
 	// name matches the pattern and @linter disable was encountered
 
 	// strictTypes is true if file contains `declare(strict_types=1)`.
-	strictTypes bool
-	strictMixed bool
+	strictTypes    bool
+	strictMixed    bool
+	declareSection bool
 
-	reports []*Report
+	reports  []*Report
+	quickfix *QuickFixGenerator
 
 	config *Config
 
@@ -141,7 +143,12 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 			}
 			if c.ConstantName.Value == "strict_types" {
 				v, ok := c.Expr.(*ir.Lnumber)
-				if ok && v.Value == "1" {
+				if !ok {
+					continue
+				}
+
+				d.declareSection = true
+				if v.Value == "1" {
 					d.strictTypes = true
 				}
 			}
