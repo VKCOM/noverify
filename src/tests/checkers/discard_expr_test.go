@@ -28,7 +28,7 @@ $dom->loadHTML('<meta http-equiv="Content-Type" content="text/html; charset=UTF-
 
 func TestDiscardExprVariableCall(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function local1($xs) {
   // It does discard the result, but we're not tracking
   // variable function calls yet.
@@ -60,7 +60,7 @@ function local4($xs) {
 
 func TestDiscardExprAbstractCall(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 abstract class TheAbstractClass {
   /** @return bool */
   abstract public function doIt();
@@ -83,7 +83,7 @@ useAbstract($c);
 
 func TestDiscardExprInterfaceCall(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 interface TheInterface {
   /** @return bool */
   public function load($x);
@@ -166,7 +166,7 @@ pure_fn1(1, 2); // warn 4
 func TestDiscardExpr(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class C {}
 
 function count($xs) { return 0; }

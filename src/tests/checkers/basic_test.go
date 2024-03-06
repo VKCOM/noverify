@@ -15,7 +15,7 @@ import (
 func TestBadString(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 
 $_ = "\u{";
 $_ = "\u{zzzz}";
@@ -29,7 +29,7 @@ $_ = "\u{zzzz}";
 
 func TestStringNoQuotes(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 $arr = [];
 echo "$arr[key]\n";
 `)
@@ -40,7 +40,7 @@ func TestIntOverflow(t *testing.T) {
 
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 // Overflow cases.
 echo -9223372036854775808;
 echo 9223372036854775808;
@@ -67,7 +67,7 @@ echo -9.2233720368548E+18;
 
 func TestDupGlobalRoot(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 global $x;
 global $x;
 `)
@@ -75,7 +75,7 @@ global $x;
 
 func TestDupGlobalCond(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function both_conditional($cond1, $cond2) {
   if ($cond1) {
     global $x3;
@@ -93,7 +93,7 @@ function both_conditional($cond1, $cond2) {
 func TestDupGlobalSameStatement(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function f1($cond) {
   if ($cond) {
     // global is conditional, but contains local duplicates.
@@ -108,7 +108,7 @@ function f1($cond) {
 func TestDupGlobal(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function f1() {
   global $x1, $x1;
   return $x1;
@@ -138,7 +138,7 @@ function f3() {
 func TestRedundantGlobal(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 $foo = 0;
 
 function f1() {
@@ -166,7 +166,7 @@ function f2() {
 func TestForeachEmpty(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 $xs = [];
 foreach ($xs as $k => $v) {
   $_ = [$k, $v];
@@ -188,7 +188,7 @@ $_ = [$x]; // Bad
 func TestForeachSimplify(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function f() {
     $x = [];
 
@@ -211,7 +211,7 @@ function f() {
 func TestBareTry(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 try {
   echo 123;
 }
@@ -226,7 +226,7 @@ func TestLinterDisableUnmatchedFilename(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AllowDisable = regexp.MustCompile(`will match nothing`)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 /** @linter disable */
 $_ = array(1);
 `)
@@ -241,7 +241,7 @@ func TestLinterDisable(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AllowDisable = regexp.MustCompile(`.*`)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 /** @linter disable */
 $_ = array(1);
 `)
@@ -252,7 +252,7 @@ func TestLinterDisableTwice(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AllowDisable = regexp.MustCompile(`.*`)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 /** @linter disable */
 $_ = array(1);
 /** @linter disable */
@@ -266,7 +266,7 @@ $_ = array(1);
 func TestMultiplyLinterDisable(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 /** @linter disable */
 $_ = array(1);
 
@@ -299,7 +299,7 @@ func TestKeywordCaseElseif(t *testing.T) {
 	test := linttest.NewSuite(t)
 
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function f($cond) {
   if ($cond+0) {
   } Else  If ($cond+1) {
@@ -479,7 +479,7 @@ func TestCallStaticParent(t *testing.T) {
 func TestVoidResultUsedInAssignment(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 	/**
 	* @return void
 	*/
@@ -495,7 +495,7 @@ declare(strict_types=1);
 func TestVoidResultUsedInBinary(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 	/**
 	 * @return void
 	 */
@@ -557,7 +557,7 @@ declare(strict_types=1);
 func TestVoidForParamAndReturn(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 /**
 * @param void $x
 * @param int $y
@@ -599,7 +599,7 @@ func TestCallStatic(t *testing.T) {
 
 func TestForeachList(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 foreach ([[1, 2]] as list($x, $y)) {
   $_ = [$x => $y];
 }
@@ -613,7 +613,7 @@ foreach ([[1, 2, 3, 4]] as list($x, $y,,$z)) {
 func TestArgsCount(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function f() {
 $_ = mt_rand();        // OK
 $_ = mt_rand(1);       // Not OK
@@ -632,7 +632,7 @@ function mt_rand($x = 0, $y = 0) { return 1; }`)
 func TestArgsArraysSyntax(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function bad($a = array()) {}
 function good($a = []) {}
 `)
@@ -645,7 +645,7 @@ function good($a = []) {}
 func TestMethodComplexity(t *testing.T) {
 	funcCode := strings.Repeat("$_ = 0;\n", 9999)
 	test := linttest.NewSuite(t)
-	test.AddFile(`<?php declare(strict_types=1); class C { private function f() {` + funcCode + `} }`)
+	test.AddFile(`<?php declare(strict_types = 1); class C { private function f() {` + funcCode + `} }`)
 	test.Expect = []string{"Too big method: more than 150"}
 	test.RunAndMatch()
 }
@@ -653,14 +653,14 @@ func TestMethodComplexity(t *testing.T) {
 func TestFuncComplexity(t *testing.T) {
 	funcCode := strings.Repeat("$_ = 0;\n", 9999)
 	test := linttest.NewSuite(t)
-	test.AddFile(`<?php declare(strict_types=1); function f() {` + funcCode + `}`)
+	test.AddFile(`<?php declare(strict_types = 1); function f() {` + funcCode + `}`)
 	test.Expect = []string{"Too big function: more than 150"}
 	test.RunAndMatch()
 }
 
 func TestPrecedenceGood(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function foo() { return 10; }
 
 function rhs($x, $mask) {
@@ -744,19 +744,19 @@ class Foo {
 
 func TestAutogenSkip(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 // auto-generated file, DO NOT EDIT!
 $_ = array();`)
 
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 // auto-generated file
 // DO NOT EDIT!
 
 $_ = array();`)
 
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 /*
  * AUTO-GENERATED
  *
@@ -766,33 +766,33 @@ declare(strict_types=1);
 $_ = array();`)
 
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 // autogenerated (DO NOT EDIT)
 
 $_ = array();`)
 
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 /* autogenerated (DO NOT EDIT) */
 
 $_ = array();`)
 
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 // File generated by foobar.
 // Do not edit (re-run generator instead).
 
 $_ = array();`)
 
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 // Do not edit this file.
 // It's auto-generated.
 
 $_ = array();`)
 
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 // This file is auto-generated.
 //
 // This comment contains a few extra lines of text.
@@ -805,7 +805,7 @@ $_ = array();`)
 
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 $_ = "autogenerated; do not edit";
 
 $_ = array();`)
@@ -817,7 +817,7 @@ $_ = array();`)
 
 func TestAssignmentsInForLoop(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function increment($i) { return $i + 1; }
 
 for ($i = 0; $i <= 10; $i = increment($i)) {}
@@ -839,7 +839,7 @@ func TestCustomUnusedVarRegex(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.UseConfig(config)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Foo {
   public $_;
   private $_foo;
@@ -856,7 +856,7 @@ $_ = __FILE__;
 	test = linttest.NewSuite(t)
 	test.UseConfig(config)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 
 $_unused = 10;
 
@@ -874,7 +874,7 @@ function f() {
 	test = linttest.NewSuite(t)
 	test.UseConfig(config)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function var_dump($v) {}
 $_global = 120;
 function f() {
@@ -904,7 +904,7 @@ var_dump($_global);
 func TestDiscardVarUsage(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function var_dump($v) {}
 function f() {
   $_ = 1;
@@ -933,7 +933,7 @@ var_dump($_); // 6. Also forbidden in global scope
 
 func TestDiscardVarNotUsage(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function foo(): int { return 0; }
 
 function f() {
@@ -948,7 +948,7 @@ function f() {
 
 func TestOrDie1(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 global $ok;
 $ok or die("not ok");
 echo "quite reachable\n";
@@ -959,7 +959,7 @@ func TestOrDie2(t *testing.T) {
 	// Check that we still check "or" LHS and RHS properly.
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 $undef1 or die($undef2);
 `)
 	test.Expect = []string{
@@ -971,7 +971,7 @@ $undef1 or die($undef2);
 
 func TestOrExit(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 global $ok;
 $ok or exit("");
 echo "quite reachable\n";
@@ -980,7 +980,7 @@ echo "quite reachable\n";
 
 func TestUnusedInInstanceof(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Foo {}
 
 function f1($cond) {
@@ -1014,7 +1014,7 @@ function f3() {
 
 func TestUnusedInVarPropFetch(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Foo {}
 function foo(Foo $x) {
 	$y = "propname";
@@ -1025,7 +1025,7 @@ function foo(Foo $x) {
 
 func TestUnusedInVarPropAssign(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Foo {}
 function foo(Foo $x) {
 	$y = "propname";
@@ -1037,7 +1037,7 @@ function foo(Foo $x) {
 func TestStaticPropFetch(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Foo {}
 function foo() {
 	$x = "propname";
@@ -1053,7 +1053,7 @@ function foo() {
 
 func TestUnusedInStaticVarPropFetch(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Foo {}
 function foo() {
 	$x = "propname";
@@ -1064,7 +1064,7 @@ function foo() {
 
 func TestUnusedInStaticVarPropAssign(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Foo {}
 function foo() {
 	$x = "propname";
@@ -1173,7 +1173,7 @@ func TestSwitchContinue1(t *testing.T) {
 func TestSwitchContinue2(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 	global $x;
 	switch ($x) {
 	case 10:
@@ -1208,7 +1208,7 @@ declare(strict_types=1);
 func TestBuiltinConstant(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 	function f() {
 		$_ = NULL;
 		$_ = True;
@@ -1227,7 +1227,7 @@ declare(strict_types=1);
 
 func TestFunctionNotOnlyExits2(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 	function rand() {
 		return 4;
 	}
@@ -1254,7 +1254,7 @@ declare(strict_types=1);
 func TestArrayAccessForClass(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 	class three {}
 	class five {}
 	function test() {
@@ -1270,7 +1270,7 @@ declare(strict_types=1);
 // that does not implement ArrayAccess.
 func TestCorrectTypes(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 	class three {}
 	class five {}
 	function test() {
@@ -1282,7 +1282,7 @@ declare(strict_types=1);
 
 func TestAllowReturnAfterUnreachable(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function unreachable() {
 		exit;
 	}
@@ -1295,7 +1295,7 @@ func TestAllowReturnAfterUnreachable(t *testing.T) {
 
 func TestFunctionReferenceParams(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function doSometing(&$result) {
 		$result = 5;
 	}`)
@@ -1304,7 +1304,7 @@ func TestFunctionReferenceParams(t *testing.T) {
 func TestFunctionReferenceParamsInAnonymousFunction(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function doSometing() {
 		return function() use($a, &$result) {
 			echo $a;
@@ -1317,7 +1317,7 @@ func TestFunctionReferenceParamsInAnonymousFunction(t *testing.T) {
 
 func TestFunctionCallSplatArg(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function doSomething($a, $b, $c) {}
 $x = [1, 2, 3];
 doSomething(...$x);
@@ -1326,7 +1326,7 @@ doSomething(...$x);
 
 func TestForeachByRef(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 $xs = [1, 2];
 foreach ($xs as &$x) {
     if ($x) {
@@ -1341,7 +1341,7 @@ foreach ($xs as &$x) {
 
 func TestForeachByRefUnused(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 	class SomeClass {
 		public $a;
 	}
@@ -1365,7 +1365,7 @@ declare(strict_types=1);
 
 func TestAllowAssignmentInForLoop(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 	function test() {
 	  for ($day = 0; $day <= 100; $day = $day + 1) {
 		echo $day;
@@ -1377,7 +1377,7 @@ declare(strict_types=1);
 func TestDuplicateArrayKeyEscapes(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 $_ = ["\n" => 1, "\xa" => 2];
 `)
 	test.Expect = []string{`Duplicate array key "\n"`}
@@ -1386,7 +1386,7 @@ $_ = ["\n" => 1, "\xa" => 2];
 
 func TestDuplicateArrayKeyGood(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 $valid_quotes = [
   '"' => 1,
   "'" => 1,
@@ -1397,7 +1397,7 @@ $valid_quotes = [
 func TestDuplicateArrayKey(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function test() {
   return [
 	  'key1' => 'something',
@@ -1413,7 +1413,7 @@ function test() {
 func TestDuplicateArrayKeyWithBoolConstants(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 define('TRUE_CONST', true);
 define('FALSE_CONST', false);
 
@@ -1434,7 +1434,7 @@ $_ = [1 => 1, true => 2];
 func TestDuplicateArrayKeyWithConstants(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 const MAX_VALUE = 1;
 const MIN_VALUE = 0+1; // Const-folded to 1
 $a = [
@@ -1486,7 +1486,7 @@ $b = [
 func TestMixedArrayKeys(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 	function test() {
 	  return [
 		  'something',
@@ -1502,7 +1502,7 @@ declare(strict_types=1);
 func TestStringGlobalVarName(t *testing.T) {
 	// Should not panic.
 	linttest.SimpleNegativeTest(t, `<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function f() {
 		global ${"x"};
 		global ${"${x}_{$x}"};
@@ -1512,7 +1512,7 @@ func TestStringGlobalVarName(t *testing.T) {
 func TestArrayLiteral(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function traditional_array_literal() {
 		return array(1, 2);
 	}`)
@@ -1522,7 +1522,7 @@ func TestArrayLiteral(t *testing.T) {
 
 func TestNonEmptyVar(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function non_empty_var() {
 		if (!empty($x)) {
 			return $x;
@@ -1541,7 +1541,7 @@ func TestEmptyVar(t *testing.T) {
 
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function empty_var() {
 		if (empty($x1)) {
 			return $x1;
@@ -1564,7 +1564,7 @@ func TestEmptyVar(t *testing.T) {
 func TestIssetElseif1(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function f() {
   if (isset($x)) {
     echo $x;
@@ -1580,7 +1580,7 @@ function f() {
 
 func TestIssetElseif2(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 if (isset($x)) {
   echo $x;
 } else if (isset($y)) {
@@ -1591,7 +1591,7 @@ if (isset($x)) {
 func TestUnused(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function unused_test($arg1, $arg2) {
 		global $g;
 
@@ -1615,7 +1615,7 @@ func TestUnused(t *testing.T) {
 func TestAtVar(t *testing.T) {
 	// variables declared using @var should not be overridden
 	result := linttest.CheckFile(t, `<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function test() {
 		/** @var string $a */
 		$a = true;
@@ -1653,7 +1653,7 @@ func TestAtVar(t *testing.T) {
 func TestFunctionExit(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php 
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function doExit() {
 		exit;
 	}
@@ -1669,7 +1669,7 @@ func TestFunctionExit(t *testing.T) {
 func TestFunctionDie(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function doDie() {
 		die("123");
 		echo "Also unreachable";
@@ -1688,7 +1688,7 @@ func TestFunctionDie(t *testing.T) {
 
 func TestFunctionNotOnlyExits(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function rand() {
 		return 4;
 	}
@@ -1709,7 +1709,7 @@ func TestFunctionNotOnlyExits(t *testing.T) {
 
 func TestFunctionJustReturns(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function justReturn() {
 		return 1;
 	}
@@ -1722,7 +1722,7 @@ func TestFunctionJustReturns(t *testing.T) {
 
 func TestSwitchFallthrough(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function withFallthrough($a) {
 		switch ($a) {
 		case 1:
@@ -1746,7 +1746,7 @@ func TestSwitchFallthrough(t *testing.T) {
 
 func TestFunctionThrowsExceptionsAndReturns(t *testing.T) {
 	result := linttest.CheckFile(t, `<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	class Exception {}
 
 	function handle($b) {
@@ -1787,7 +1787,7 @@ func TestFunctionThrowsExceptionsAndReturns(t *testing.T) {
 func TestRedundantCast(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function bad($a) {
 		$int = 1;
 		$double = 1.0;
@@ -1828,7 +1828,7 @@ func TestRedundantCast(t *testing.T) {
 func TestSwitchBreak(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function bad($a) {
 		switch ($a) {
 		case 2:
@@ -1989,7 +1989,7 @@ class A extends B {
 func TestClassNotFound(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 $_ = new Foo();
 
 class Derived extends Base {}
@@ -2089,7 +2089,7 @@ func TestArrayUnion(t *testing.T) {
 
 func TestCompactImpliesUsage(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 // Declaration from phpstorm-stubs
 function compact ($varname, $_ = null) {}
 
@@ -2127,7 +2127,7 @@ function f() {
 
 func TestAssignByRef(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function a() {
 	  $a = 1;
 	  $b = &$a;
@@ -2141,7 +2141,7 @@ func TestAssignByRef(t *testing.T) {
 func TestUndefinedConst(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 echo UNDEFINED_CONST;
 `)
 	test.Expect = []string{`Undefined constant UNDEFINED_CONST`}
@@ -2151,7 +2151,7 @@ echo UNDEFINED_CONST;
 func TestTrailingCommaForArray(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function f() {
     $_ = [10, 20, 30]; // ok
 
@@ -2195,7 +2195,7 @@ function f() {
 func TestNestedTernary(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function f() {
     $_ = 1 ? 2 : 3 ? 4 : 5; // error
 	//   |_______|
@@ -2225,7 +2225,7 @@ function f() {
 func TestRealCastingAndIsRealCall(t *testing.T) {
 	test := linttest.NewPHP7Suite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function is_real($a): bool { return true; }
 
 function f() {
@@ -2245,7 +2245,7 @@ function f() {
 func TestArrayKeyExistCallWithObject(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function array_key_exists($a, $b): bool { return true; }
 
 class Foo {}
@@ -2283,7 +2283,7 @@ function f() {
 func TestRandomIntWrongArgsOrder(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function random_int($min, $max) { return 0; }
 
 const AA = 99;
@@ -2316,7 +2316,7 @@ function f() {
 
 func TestDefineWithTrailingSlash(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 \define('ONE', 1);
 define('TWO', 1);
 
@@ -2328,7 +2328,7 @@ echo TWO;
 func TestComplexInstanceOf(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Boo {
   /** @return int */
   public function b() { return 0; }
@@ -2349,7 +2349,7 @@ function f($a) {
 func TestVarsInTernary(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Boo {}
 
 function f($a) {
@@ -2377,7 +2377,7 @@ function f($a) {
 
 func TestIfCondAssign(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function f1($v) {
   if ($x = $v) {}
   echo $x;
@@ -2395,7 +2395,7 @@ function f2($v) {
 func TestElseIf1CondAssign(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function f1($v) {
   if ($v) {
   } elseif ($x = 10) {}
@@ -2422,7 +2422,7 @@ function f2($v) {
 func TestElseIf2CondAssign(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function f1($v) {
   if ($v) {
   } else if ($x = 10) {}
@@ -2447,7 +2447,7 @@ function f2($v) {
 func TestUndefinedVariableInCoalesceOrIsset(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function f() {
   if (1) {
     $a = 100;

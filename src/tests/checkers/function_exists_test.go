@@ -8,7 +8,7 @@ import (
 
 func TestFunctionExists1(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function function_exists($name) { return 1 == 2; }
 
 if (function_exists('\foo')) {
@@ -29,7 +29,7 @@ if (function_exists('a\b\baz')) {
 func TestFunctionExists2(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function function_exists($name) { return 1 == 2; }
 
 function f($cond) {
@@ -55,7 +55,7 @@ function f($cond) {
 func TestFunctionExists3(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function function_exists($name) { return 1 == 2; }
 
 if (function_exists('\foo')) {

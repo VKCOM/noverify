@@ -13,7 +13,7 @@ func TestMisspellPHPDocPositive(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.Config().TypoFixer = misspell.New()
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 /**
  * This function is a pure perfektion.
  */
@@ -54,7 +54,7 @@ func TestMisspellPHPDocNegative(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.Config().TypoFixer = misspell.New()
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 interface Responsable {}
 
 /**
@@ -90,7 +90,7 @@ func TestMisspellNamePositive(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.Config().TypoFixer = misspell.New()
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function unconditionnally_rollback() {}
 
 function f($notificaton) {
@@ -126,7 +126,7 @@ func TestMisspellNameNegative(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.Config().TypoFixer = misspell.New()
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function includ() {
 }
 

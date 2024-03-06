@@ -187,7 +187,7 @@ function f() {}
 func TestBadParamName(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class B1 {}
 class B2 {}
 
@@ -213,7 +213,7 @@ class Bear {
 func TestDeprecatedMethod(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Foo {
   /**
    * @deprecated use newMethod instead
@@ -241,7 +241,7 @@ function f() {
 func TestDeprecatedStaticMethod(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Foo {
   /**
    * @deprecated use newMethod instead
@@ -269,7 +269,7 @@ function f() {
 func TestDeprecatedFunction(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 /**
  * @deprecated use new_function instead
  */
@@ -301,7 +301,7 @@ func TestBadPHPDocTypes(t *testing.T) {
 
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 /**
  * @param $a
  * @param $b
@@ -324,7 +324,7 @@ function fav_func($a, $b) {
 func TestPHPDocPresence(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 	trait TheTrait {
 		public function traitPub() {}
 	}
@@ -354,7 +354,7 @@ declare(strict_types=1);
 func TestPHPDocSyntax(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	/**
 	 * @param $x int the x param
 	 * @param - $y the y param
@@ -381,7 +381,7 @@ func TestPHPDocSyntax(t *testing.T) {
 func TestPHPDocVar(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Foo {
   /** @var integer $x */
   public $x;
@@ -404,7 +404,7 @@ class Foo {
 func TestPHPDocProperty2(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 /**
  * @property integer $int
  * @property []t ts
@@ -432,7 +432,7 @@ class Foo {}
 func TestPHPDocType(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	/**
 	 * @param [][]string $x1
 	 * @param double $x2
@@ -462,7 +462,7 @@ func TestPHPDocType(t *testing.T) {
 func TestPHPDocIncorrectSyntaxOptionalTypesType(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	class Foo {}
 
 	/**
@@ -487,7 +487,7 @@ func TestPHPDocIncorrectSyntaxOptionalTypesType(t *testing.T) {
 func TestPHPDocInvalidBeginning(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Foo {
   /*
    * @var int
@@ -541,7 +541,7 @@ function f2($a) {
 func TestPHPDocTwiceNullableTypes(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Foo {}
 
 /**
