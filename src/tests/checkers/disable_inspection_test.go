@@ -8,6 +8,7 @@ import (
 
 func TestDisableDeadCode(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types=1);
 function f() {
 #ifndef KPHP
   return 1;

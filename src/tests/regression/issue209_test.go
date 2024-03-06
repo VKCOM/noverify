@@ -31,6 +31,7 @@ echo (new B)->sum(); // actual PHP prints 6
 func TestIssue209_2(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 trait Methods {
   /***/
   public function pubMethod() {}
