@@ -10,7 +10,7 @@ func TestIssue288(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.Config().StrictMixed = true
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 class Box {
   public $item1;
   public $item2;

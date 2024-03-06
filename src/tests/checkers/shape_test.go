@@ -12,7 +12,7 @@ func TestShapePropertyFetch(t *testing.T) {
 
 	test := linttest.NewSuite(t)
 	test.AddNamedFile("a/b/test.php", `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 /**
  * @param \shape(x:int,y:float) $s
  */
@@ -32,7 +32,7 @@ func TestShapeDimFetch(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.Config().StrictMixed = true
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Foo {
   public $x = 10;
   public $y = 1.5;
@@ -57,7 +57,7 @@ func TestShapeIntKey(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.Config().StrictMixed = true
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Box { public $value; }
 
 function f() {
@@ -81,7 +81,7 @@ func TestShapeSyntax(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.Config().StrictMixed = true
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Box { public $value; }
 
 class T {
@@ -139,7 +139,7 @@ echo $t->good6['y']->value;
 
 func TestShapeReturn(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class MyList {
   /** @var \MyList */
   public $next;
@@ -155,7 +155,7 @@ echo $s1['list']->next->next;
 
 func TestTuple(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Box { public $value; }
 
 class T {

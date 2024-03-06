@@ -18,13 +18,13 @@ func TestIndexingOrderClasses(t *testing.T) {
 
 	test := linttest.NewSuite(t)
 	test.AddNamedFile("/foo/A.php", `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class A {}
 
 $v = new A();
 `)
 	test.AddNamedFile("/bar/A.php", `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class A {
   public $field;
   public function __construct($x) { $this->field = $x; }
@@ -46,7 +46,7 @@ echo $v->field;
 func TestIndexingOrderTraits(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddNamedFile("/foo/A.php", `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 trait TA {}
 
 class A { use TA; }
@@ -54,7 +54,7 @@ class A { use TA; }
 $v = new A();
 `)
 	test.AddNamedFile("/bar/A.php", `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 trait TA {
   public $field;
   public function __construct($x) { $this->field = $x; }
@@ -80,13 +80,13 @@ echo $v->field;
 func TestIndexingOrderFuncs(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddNamedFile("/foo/A.php", `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function a() {}
 
 a();
 `)
 	test.AddNamedFile("/bar/A.php", `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function a($x) {}
 
 a(1);

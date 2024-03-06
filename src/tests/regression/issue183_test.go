@@ -9,7 +9,7 @@ import (
 func TestIssue183(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
     trait Mixin {
         public $x = 10;
     }

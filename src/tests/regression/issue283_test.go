@@ -9,7 +9,7 @@ import (
 func TestIssue283(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 trait YummyProps {
   public $price = 'fair';
   protected $taste = 'good';

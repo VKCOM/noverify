@@ -9,7 +9,7 @@ import (
 func TestRelativeName1(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 namespace A;
 
 class ClassA {}
@@ -19,7 +19,7 @@ $_ = new namespace\ClassA();
 `)
 
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 namespace A\B;
 
 class ClassB {}
@@ -28,7 +28,7 @@ $_ = new namespace\ClassB();
 `)
 
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 $_ = new namespace\A\B\ClassB();
 `)
 

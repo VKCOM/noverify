@@ -9,7 +9,7 @@ import (
 func TestClosureCapture(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class omg {
   public $some_property;
 }
@@ -30,7 +30,7 @@ function doSomething($a, omg $b) {
 func TestClosureDoc(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Foo {
   /**
    * @return int
@@ -56,7 +56,7 @@ function f(callable $s) {
 func TestClosureInvalidDoc(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 class Foo {}
 
 /**

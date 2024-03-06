@@ -8,7 +8,7 @@ import (
 
 func TestIssue252(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 class Foo {
   public $foo = 10;
 }
@@ -31,7 +31,7 @@ function alt_if($v) {
 
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function alt_for() {
   for ($i = 0; $i < 10; $i++):
     $x1 = 10;

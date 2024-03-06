@@ -9,7 +9,7 @@ import (
 func TestTraitSingleton(t *testing.T) {
 	// See #533.
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 trait Singleton {
   /**
    * @var ?self
