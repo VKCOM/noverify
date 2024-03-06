@@ -10,7 +10,7 @@ func TestArrayAccessForAny(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.Config().KPHP = true
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	/** @return any */
 	function get_any() {
 		return [];
@@ -24,7 +24,7 @@ func TestDifferentTypesAsUndefinedClass(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.Config().KPHP = true
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 /**
  * @param tuple(int, string) $a
  * @param shape(key: int, val: string) $b

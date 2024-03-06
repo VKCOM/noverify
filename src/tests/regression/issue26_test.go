@@ -10,7 +10,7 @@ func TestIssue26_1(t *testing.T) {
 	// Test that defined variable variable don't cause "undefined" warnings.
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function issetVarVar() {
 		$x = 'key';
 		if (isset($$x)) {
@@ -29,7 +29,7 @@ func TestIssue26_2(t *testing.T) {
 	// Test that if $x is defined, it doesn't make $$x defined.
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function issetVarVar() {
 		if (isset($x)) {
 			$_ = $x;  // $x is defined
@@ -45,7 +45,7 @@ func TestIssue26_3(t *testing.T) {
 	// other variables. Also warn for undefined variable in $$x.
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function issetVarVar() {
 		if (isset($$x)) {
 			$_ = $$y;
@@ -61,7 +61,7 @@ func TestIssue26_3(t *testing.T) {
 func TestIssue26_4(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	function issetVarVar() {
 		if (isset($$$$x)) {
 			$_ = $$$$x; // Can't track this level of indirection

@@ -11,7 +11,7 @@ func TestIssue128(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.Config().StrictMixed = true
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 class Value {
   public $x;
 }

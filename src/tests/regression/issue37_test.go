@@ -9,7 +9,7 @@ import (
 func TestIssue37(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 	class Foo {
 		public $a;
 		public $b;

@@ -9,7 +9,7 @@ import (
 func TestArrowFunction(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 class Boo {
   /** @return int */
   public function b() { }
@@ -95,7 +95,7 @@ func TestUnusedInArrowFunction(t *testing.T) {
 		`stubs/phpstorm-stubs/standard/standard_9.php`,
 	}
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 
 function f() {
   $a1 = [];
