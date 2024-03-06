@@ -8,6 +8,7 @@ import (
 
 func TestIssue3(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+	declare(strict_types=1);
 	class TestClass
 	{
 		/** get always returns "." */

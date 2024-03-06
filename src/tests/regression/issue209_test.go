@@ -8,6 +8,7 @@ import (
 
 func TestIssue209_1(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+	declare(strict_types=1);
 trait A {
   private function priv() { return 1; }
   protected function prot() { return 2; }

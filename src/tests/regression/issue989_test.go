@@ -8,6 +8,7 @@ import (
 
 func TestIssue989TraitUse(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+	declare(strict_types=1);
 trait Trait1 {}
 
 function f() {
