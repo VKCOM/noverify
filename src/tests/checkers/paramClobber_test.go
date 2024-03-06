@@ -8,6 +8,7 @@ import (
 
 func TestParamClobberLegacyVariadic(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types=1);
 function f($x, $y) {
   $args = func_get_args();
   $x = $args[0];
@@ -19,6 +20,7 @@ function f($x, $y) {
 
 func TestParamClobberReferenced(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types=1);
 /**
  * @param mixed[] $x
  */
@@ -31,6 +33,7 @@ function f(array $x) {
 
 func TestParamClobberConditional(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types=1);
 function f1($x, $y) {
   if ($y) {
     $x = 10;
@@ -52,6 +55,7 @@ function f2($x) {
 func TestParamClobberFunc(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 function f($x) {
   $x = 1343;
   return $x;
@@ -66,6 +70,7 @@ function f($x) {
 func TestParamClobberMethod(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 class C {
   /** f is an example method */
   public function f($x) {
@@ -83,6 +88,7 @@ class C {
 func TestParamClobberClosure(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 function f() {
   return function ($x) {
     $x = 1343;
