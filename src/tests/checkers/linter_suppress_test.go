@@ -9,6 +9,7 @@ import (
 func TestLinterSuppressDeprecationCall(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 /**
  * @deprecated some
  */
@@ -36,6 +37,7 @@ echo f(10);
 func TestLinterSuppressAll(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 function g($b) {
   /** @noverify-suppress all */
   $a = $b && $b;
@@ -47,6 +49,7 @@ function g($b) {
 func TestLinterSuppressUndefinedClass(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 /** @noverify-suppress undefinedClass */
 echo new Foo;
 `)
@@ -56,6 +59,7 @@ echo new Foo;
 func TestLinterSuppressNotAll(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 function g($b) {
   /** @noverify-suppress dupSubExpr */
   $a = $b && $b;
@@ -70,6 +74,7 @@ function g($b) {
 func TestLinterSuppressDeadCode(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 function f($b) {
   return $b;
 
@@ -92,6 +97,7 @@ function f($b) {
 func TestLinterSuppressWarningInGlobalScope(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 $a = 100;
 
 /**
@@ -105,6 +111,7 @@ echo $a && $a;
 func TestLinterSuppressWarnings(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 class Foo {
   private string $a = "hello";
   /** */

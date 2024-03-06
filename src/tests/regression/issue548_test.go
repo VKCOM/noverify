@@ -38,6 +38,7 @@ class C extends B {
 func TestIssue548_2(t *testing.T) {
 	// Like TestIssue548, but with different names and types order.
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types=1);
 class C {
   private $value;
   private function method() {}
@@ -66,6 +67,7 @@ class A extends B {
 
 func TestIssue548_Magic(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types=1);
 class A {
   public function __call($method, $args) {}
   public function __get($prop) {}
@@ -86,6 +88,7 @@ class B extends A {
 
 func TestIssue548_Trait1(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types=1);
 class A {
   private $value;
   private function method() {}
@@ -113,6 +116,7 @@ class B {
 
 func TestIssue548_Trait2(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types=1);
 class B {
   private $value;
   private function method() {}

@@ -203,6 +203,7 @@ function trailing_exit_while($xs) {
 func TestIssue78_2(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 global $cond;
 $xs = [1, 2];
 switch ($cond) {
@@ -383,6 +384,7 @@ function trailing_exit_while($xs) {
 
 func TestIssue78_3(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types=1);
 $xs = [1, 2];
 trailing_exit_if($xs);
 trailing_exit_foreach($xs);

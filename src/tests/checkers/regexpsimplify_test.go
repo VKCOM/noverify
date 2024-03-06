@@ -10,6 +10,7 @@ func TestRESimplifyNamedCaptureForms(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
 	test.AddFile(`<?php
+declare(strict_types=1);
 function f($s) {
   preg_match('~(?P<abc>[0-9])~', $s);
   preg_match('~(?<abc>[0-9])~', $s);
@@ -27,6 +28,7 @@ func TestRESimplifyMixed(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
 	test.AddFile(`<?php
+declare(strict_types=1);
 function f($s) {
   preg_match('/x(?:a|b|c){0,}/', $s);
   preg_match_all('/^write([-]?\d\d*)?$/i', $s);
@@ -47,6 +49,7 @@ func TestRESimplify(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
 	test.AddFile(`<?php
+declare(strict_types=1);
 // (?:x) -> x
 function ungroup($s) {
   preg_match('/(?:x)/', $s);
@@ -146,6 +149,7 @@ func TestRESimplifyChangeDelim(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
 	test.AddFile(`<?php
+declare(strict_types=1);
 function f($s) {
   preg_match('/^http:\/\//', $s);
   preg_match('/^http:\/\/~/', $s);
@@ -166,6 +170,7 @@ func TestRENegativeTests(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
 	test.AddFile(`<?php
+declare(strict_types=1);
 function f($s) {
   // Should not suggest unescaping the delimiter.
   preg_match('/\//', $s);

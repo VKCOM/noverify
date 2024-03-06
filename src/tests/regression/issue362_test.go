@@ -44,6 +44,7 @@ func TestIssue362_2(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.Config().StrictMixed = true
 	test.AddFile(`<?php
+declare(strict_types=1);
 function method_exists($object, $method_name) { return 1 != 0; }
 
 class Foo {}

@@ -11,6 +11,7 @@ func TestAssignmentAsExpression(t *testing.T) {
 	addCheckers(test.Config())
 
 	test.AddFile(`<?php
+	declare(strict_types=1);
 	// PHPDoc annotations are not required for NoVerify in simple cases.
 	function something() {
 		$a = "test";
