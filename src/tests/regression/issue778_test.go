@@ -8,6 +8,7 @@ import (
 
 func TestIssue778(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+	declare(strict_types=1);
 trait FooStatic {
     /** @return void */
     public static function f() {

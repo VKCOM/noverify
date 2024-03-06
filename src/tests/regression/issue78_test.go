@@ -9,6 +9,7 @@ import (
 func TestIssue78_1(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+	declare(strict_types=1);
 global $cond;
 $xs = [1, 2];
 switch ($cond) {

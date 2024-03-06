@@ -10,6 +10,7 @@ func TestIssue16(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.Config().StrictMixed = true
 	test.AddFile(`<?php
+	declare(strict_types=1);
 	interface DateTimeInterface {
 		public function format($fmt);
 	}
