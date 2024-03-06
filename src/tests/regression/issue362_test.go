@@ -8,6 +8,7 @@ import (
 
 func TestIssue362_1(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+	declare(strict_types=1);
 function method_exists($object, $method_name) { return 1 != 0; }
 
 class Foo {

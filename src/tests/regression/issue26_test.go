@@ -10,6 +10,7 @@ func TestIssue26_1(t *testing.T) {
 	// Test that defined variable variable don't cause "undefined" warnings.
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+	declare(strict_types=1);
 	function issetVarVar() {
 		$x = 'key';
 		if (isset($$x)) {
