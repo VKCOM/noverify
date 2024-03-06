@@ -9,6 +9,7 @@ import (
 func TestEmptyStmtBadComment(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 /** @var $foo int */;
 global $foo;
 `)
@@ -21,6 +22,7 @@ global $foo;
 func TestEmptyStmtBadStmtEnd(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 if ($argv) {
 };
 while ($argv) {
@@ -38,6 +40,7 @@ class Foo {};
 func TestEmptyStmtBadRequire1(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 require_once 'foo.php';;
 `)
 	test.Expect = []string{
@@ -49,6 +52,7 @@ require_once 'foo.php';;
 func TestEmptyStmtBadRequire2(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 require_once 'foo.php'; ; ;
 `)
 	test.Expect = []string{
@@ -61,6 +65,7 @@ require_once 'foo.php'; ; ;
 func TestEmptyStmtBadStmtSeparator(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 echo 1;
 ; echo 2;
 echo 3; ;
@@ -74,6 +79,7 @@ echo 3; ;
 
 func TestEmptyStmtScriptEnd1(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types=1);
 function f() {}
 ?>
 `)
@@ -81,6 +87,7 @@ function f() {}
 
 func TestEmptyStmtScriptEnd2(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types=1);
 echo 123;
 ?>
 `)

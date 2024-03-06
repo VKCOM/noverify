@@ -12,6 +12,7 @@ func TestGettypeFunction(t *testing.T) {
 		`stubs/phpstorm-stubs/standard/standard_5.php`,
 	}
 	test.AddFile(`<?php
+declare(strict_types=1);
 function getTypeMisUse(mixed $var) {
   if (gettype($var) === "string") {
   }

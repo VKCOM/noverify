@@ -9,6 +9,7 @@ import (
 func TestDeprecatedWithoutText(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 class WithoutText {
   /**
    * @deprecated
@@ -42,6 +43,7 @@ WithoutText::staticMethod();
 func TestDeprecatedWithText(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types=1);
 class WithText {
   /**
    * @deprecated use method2() instead
