@@ -9,7 +9,7 @@ import (
 func TestDupSubExpr1(t *testing.T) {
 	// Operations below are not checked by dupSubExpr.
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function f($x) {
   $_ = [
     $x + $x,
@@ -24,7 +24,7 @@ func TestDupSubExpr2(t *testing.T) {
 	// All expression below give warnings for mixed-typed values.
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function f($x) {
   $_ = [
     $x & $x, // 1
@@ -79,7 +79,7 @@ func TestDupSubExpr3(t *testing.T) {
 	// Duplicated expression is float-typed.
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function f() {
   $x = 1.5;
   $_ = [
@@ -125,7 +125,7 @@ function f() {
 func TestDupTernaryOperands(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function f($cond) {
   return $cond ? 1 : 1;
 }
@@ -146,7 +146,7 @@ function f2($cond) {
 func TestDupIfElseBody(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function f($cond) {
   if ($cond) {
     return 0;
@@ -202,7 +202,7 @@ function f2($cond) {
 func TestDupIfCond1(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 const C1 = 1;
 const C2 = 2;
 const C3 = 3;
@@ -256,7 +256,7 @@ function f($cond) {
 
 func TestDupIfCond2(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
-declare(strict_types=1);
+declare(strict_types = 1);
 function f($cond) {
   if ($cond+1) {
     if ($cond+1) {

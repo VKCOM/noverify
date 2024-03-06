@@ -30,8 +30,8 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 			Default:  true,
 			Quickfix: true,
 			Comment:  "Report strict_types value is not 1 in declare section.",
-			Before:   `declare(strict_types=0);`,
-			After:    `declare(strict_types=1);`,
+			Before:   `declare(strict_types = 0);`,
+			After:    `declare(strict_types = 1);`,
 		},
 
 		{
@@ -40,7 +40,7 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 			Quickfix: true,
 			Comment:  "Report declare(strict_types=1) has not been set.",
 			Before:   ` `,
-			After:    `declare(strict_types=1);`,
+			After:    `declare(strict_types = 1);`,
 		},
 
 		{

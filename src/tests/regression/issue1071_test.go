@@ -13,7 +13,7 @@ func TestIssue1071FunctionWithBackSlash(t *testing.T) {
 		"stubs/phpstorm-stubs/meta/.phpstorm.meta.php",
 	}
 	test.AddFile(`<?php
-	declare(strict_types=1);
+	declare(strict_types = 1);
 class Foo {
   /**
    * @return int

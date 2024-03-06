@@ -46,7 +46,7 @@ func (g *QuickFixGenerator) CreateDeclareStrictTypes(root *ir.Root) quickfix.Tex
 	return quickfix.TextEdit{
 		StartPos:    root.Position.StartPos,
 		EndPos:      root.Position.StartPos,
-		Replacement: "declare(strict_types=1);\n",
+		Replacement: "declare(strict_types = 1);\n",
 	}
 }
 

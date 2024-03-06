@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 $array = ['a' => 1, 'b' => 2, 'c' => 3];
 
 if (array_key_exists('z', $array)) { // 2
