@@ -8,6 +8,7 @@ import (
 
 func TestIssue375(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+	declare(strict_types=1);
 function ref_sink(&$ref) {}
 
 function f() {

@@ -8,6 +8,7 @@ import (
 
 func TestIssue11(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+	declare(strict_types=1);
 	class Generator {
 		/** send sends a message */
 		public function send();

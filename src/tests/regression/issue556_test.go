@@ -10,6 +10,7 @@ func TestIssue556(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{`stubs/phpstorm-stubs/Core/Core_c.php`}
 	test.AddFile(`<?php
+	declare(strict_types=1);
 /**
  * @param \ArrayAccess|array $v
  */
