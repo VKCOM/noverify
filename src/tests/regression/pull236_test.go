@@ -8,6 +8,7 @@ import (
 
 func TestPull236(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+	declare(strict_types = 1);
 $_ = new class {
   private function f() { return 10; }
 

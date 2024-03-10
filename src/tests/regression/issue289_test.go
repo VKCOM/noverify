@@ -8,6 +8,7 @@ import (
 
 func TestIssue289(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+	declare(strict_types = 1);
 class Foo { public $value = 11; }
 
 $xs = [0, new Foo()];

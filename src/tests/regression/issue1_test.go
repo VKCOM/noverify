@@ -8,6 +8,7 @@ import (
 
 func TestIssue1(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+	declare(strict_types = 1);
 	interface TestInterface
 	{
 		const TEST = '1';

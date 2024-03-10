@@ -3,8 +3,8 @@ package cmd
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -233,7 +233,7 @@ func (s *RulesTestSuite) handleFileContents(file string) (lines []string, report
 		return nil, nil, fmt.Errorf("runner init fail: %v", err)
 	}
 
-	data, err := ioutil.ReadFile(file)
+	data, err := os.ReadFile(file)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error read file '%s': %v", file, err)
 	}

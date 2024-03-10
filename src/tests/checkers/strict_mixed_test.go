@@ -10,6 +10,7 @@ func TestStrictMixedEnabled(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.Config().StrictMixed = true
 	test.AddFile(`<?php
+declare(strict_types = 1);
 class Foo {}
 
 function f($a) {
@@ -79,6 +80,7 @@ function f(stdClass|null $a) {
 func TestStrictMixedDisabled(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 class Foo {}
 
 function f($a) {

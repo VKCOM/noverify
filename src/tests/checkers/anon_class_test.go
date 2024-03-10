@@ -8,6 +8,7 @@ import (
 
 func TestSimpleAnonClass(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+		declare(strict_types = 1);
 function f() {
   $a = new class {
     /** */
@@ -21,6 +22,7 @@ function f() {
 
 func TestAnonClassAsInterface(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+	declare(strict_types = 1);
 interface IFace {}
 
 function f(IFace $if) {}
@@ -32,6 +34,7 @@ f(new class implements IFace {});
 func TestAnonClassFromDocumentation(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+	declare(strict_types = 1);
 class Outer {
   private $prop = 1;
   protected $prop2 = 2;
@@ -66,6 +69,7 @@ echo (new Outer)->func2()->func3();
 
 func TestAnonClassWithConstructor(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+	declare(strict_types = 1);
 function f() {
   $a = new class(100, "s") {
     /** */
@@ -84,6 +88,7 @@ function f() {
 
 func TestAnonClassWithExtends(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+	declare(strict_types = 1);
 class Boo {
   /** */
   public function b() {}
@@ -103,6 +108,7 @@ function f() {
 
 func TestAnonClassWithImplements(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+	declare(strict_types = 1);
 interface IBoo {
   /** */
   public function b() {}
@@ -121,6 +127,8 @@ function f() {
 
 func TestAnonClassWithSeveralImplements(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+	declare(strict_types = 1);
+
 interface IBoo {
   /** */
   public function b() {}

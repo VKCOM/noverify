@@ -8,6 +8,7 @@ import (
 
 func TestTriggerNonError(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types = 1);
 trigger_error('notice');
 trigger_error('also notice', E_USER_NOTICE);
 trigger_error('a warning', E_USER_WARNING);
@@ -17,6 +18,7 @@ trigger_error('a warning', E_USER_WARNING);
 func TestTriggerErrorFQN(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 \trigger_error('error', E_USER_ERROR);
 echo 'unreachable';
 `)
@@ -29,6 +31,7 @@ echo 'unreachable';
 func TestTriggerError(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 trigger_error('error', E_USER_ERROR);
 echo 'unreachable';
 `)
@@ -41,6 +44,7 @@ echo 'unreachable';
 func TestTriggerErrorTransitive(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 function f($msg) {
   trigger_error($msg, E_USER_ERROR);
 }
@@ -58,6 +62,7 @@ func TestUserError(t *testing.T) {
 	// user_error is a trigger_error alias.
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 user_error('error', E_USER_ERROR);
 echo 'unreachable';
 `)
