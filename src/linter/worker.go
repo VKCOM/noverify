@@ -316,7 +316,7 @@ func (w *Worker) analyzeFile(file *workspace.File, rootNode *ir.Root) (*rootWalk
 	walker.afterLeaveFile()
 
 	if !walker.declareSection {
-		walker.Report(rootNode, LevelWarning, "noDeclareSection", "You have no declare section with strict_types=1 argument")
+		walker.Report(rootNode, LevelWarning, "noDeclareSection", "Missed declare(strict_types=1) directive")
 		walker.addQuickFix("notStrictTypes", walker.quickfix.CreateDeclareStrictTypes(rootNode))
 	}
 
