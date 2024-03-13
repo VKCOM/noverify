@@ -410,6 +410,10 @@ func (m Map) LazyArrayElemType() Map {
 
 	mm := make(map[string]struct{}, m.Len())
 	for typ := range m.m {
+		if typ == "null" {
+			break
+		}
+
 		if typ == "empty_array" {
 			// If the type contains only empty_array,
 			// then we resolve its element as mixed.
@@ -420,7 +424,6 @@ func (m Map) LazyArrayElemType() Map {
 			// is a more precise type.
 			continue
 		}
-
 		mm[UnwrapArrayOf(typ)] = struct{}{}
 	}
 	return Map{m: mm, flags: m.flags}
