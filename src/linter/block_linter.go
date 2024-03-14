@@ -3,6 +3,7 @@ package linter
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/constfold"
@@ -757,8 +758,48 @@ func (b *blockLinter) checkIfStmt(s *ir.IfStmt) {
 			b.report(s, LevelWarning, "dupBranchBody", "Duplicated if/else actions")
 		}
 	}
+	b.checkDangerousBoolCond(s)
 
 	b.checkIfStmtDupCond(s)
+}
+
+func (b *blockLinter) checkDangerousBoolCond(s *ir.IfStmt) {
+
+	cond, ok := s.Cond.(*ir.BooleanOrExpr)
+	if !ok {
+		return
+	}
+
+	println(cond)
+	checkIfStatementConditionBool(cond.Left, cond.Right)
+}
+func checkIfStatementConditionBool(left ir.Node, right ir.Node) {
+	checkNode(left)
+
+	checkNode(right)
+}
+
+func checkNode(node ir.Node) {
+	switch n := node.(type) {
+	case *ir.SimpleVar:
+		fmt.Println("SimpleVar:", n)
+	case *ir.ConstFetchExpr:
+
+		if n.Constant.Value == "true" || n.Constant.Value == "false" {
+			fmt.Println("Bad")
+		}
+
+	case *ir.Lnumber:
+		if n.Value == "0" || n.Value == "1" {
+			fmt.Println("Bad")
+		}
+	case *ir.BooleanOrExpr:
+		checkNode(n.Left)
+		checkNode(n.Right)
+	default:
+		fmt.Println("Unknown type:", reflect.TypeOf(node))
+	}
+
 }
 
 func (b *blockLinter) checkIfStmtDupCond(s *ir.IfStmt) {
