@@ -3,7 +3,6 @@ package linter
 import (
 	"bytes"
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/constfold"
@@ -764,40 +763,57 @@ func (b *blockLinter) checkIfStmt(s *ir.IfStmt) {
 }
 
 func (b *blockLinter) checkDangerousBoolCond(s *ir.IfStmt) {
-
 	cond, ok := s.Cond.(*ir.BooleanOrExpr)
 	if !ok {
+		switch c := s.Cond.(type) {
+		case *ir.ConstFetchExpr:
+			if c.Constant.Value == "true" || c.Constant.Value == "false" {
+				b.report(s, LevelWarning, "DangerousCondition", "Potential dangerous bool value: you have constant bool value in condition")
+				fmt.Println("Bad")
+			}
+
+		case *ir.Lnumber:
+			if c.Value == "0" || c.Value == "1" {
+				b.report(s, LevelWarning, "DangerousCondition", "Potential dangerous value: you have constant int value that interpreted as bool")
+				fmt.Println("Bad")
+			}
+		case *ir.BooleanAndExpr:
+			checkIfStatementConditionBool(c.Left, c.Right, b)
+		}
 		return
 	}
 
-	println(cond)
-	checkIfStatementConditionBool(cond.Left, cond.Right)
+	checkIfStatementConditionBool(cond.Left, cond.Right, b)
 }
-func checkIfStatementConditionBool(left ir.Node, right ir.Node) {
-	checkNode(left)
-
-	checkNode(right)
+func checkIfStatementConditionBool(left ir.Node, right ir.Node, b *blockLinter) {
+	checkNode(left, b)
+	checkNode(right, b)
 }
 
-func checkNode(node ir.Node) {
+func checkNode(node ir.Node, b *blockLinter) {
 	switch n := node.(type) {
 	case *ir.SimpleVar:
 		fmt.Println("SimpleVar:", n)
 	case *ir.ConstFetchExpr:
-
 		if n.Constant.Value == "true" || n.Constant.Value == "false" {
+			b.report(node, LevelWarning, "DangerousCondition", "Potential dangerous bool value: you have constant bool value in condition")
 			fmt.Println("Bad")
 		}
 
 	case *ir.Lnumber:
 		if n.Value == "0" || n.Value == "1" {
+			b.report(node, LevelWarning, "DangerousCondition", "Potential dangerous value: you have constant int value that interpreted as bool")
 			fmt.Println("Bad")
 		}
 	case *ir.BooleanOrExpr:
-		checkNode(n.Left)
-		checkNode(n.Right)
-	default:
-		fmt.Println("Unknown type:", reflect.TypeOf(node))
+		checkNode(n.Left, b)
+		checkNode(n.Right, b)
+
+	case *ir.BooleanAndExpr:
+		checkNode(n.Left, b)
+		checkNode(n.Right, b)
+		/*default:
+		fmt.Println("Unknown type:", reflect.TypeOf(node))*/
 	}
 
 }
