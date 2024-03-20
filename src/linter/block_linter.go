@@ -765,21 +765,7 @@ func (b *blockLinter) checkIfStmt(s *ir.IfStmt) {
 func (b *blockLinter) checkDangerousBoolCond(s *ir.IfStmt) {
 	cond, ok := s.Cond.(*ir.BooleanOrExpr)
 	if !ok {
-		switch c := s.Cond.(type) {
-		case *ir.ConstFetchExpr:
-			if c.Constant.Value == "true" || c.Constant.Value == "false" {
-				b.report(s, LevelWarning, "DangerousCondition", "Potential dangerous bool value: you have constant bool value in condition")
-				fmt.Println("Bad")
-			}
-
-		case *ir.Lnumber:
-			if c.Value == "0" || c.Value == "1" {
-				b.report(s, LevelWarning, "DangerousCondition", "Potential dangerous value: you have constant int value that interpreted as bool")
-				fmt.Println("Bad")
-			}
-		case *ir.BooleanAndExpr:
-			checkIfStatementConditionBool(c.Left, c.Right, b)
-		}
+		checkNode(s.Cond, b)
 		return
 	}
 
@@ -792,30 +778,21 @@ func checkIfStatementConditionBool(left ir.Node, right ir.Node, b *blockLinter) 
 
 func checkNode(node ir.Node, b *blockLinter) {
 	switch n := node.(type) {
-	case *ir.SimpleVar:
-		fmt.Println("SimpleVar:", n)
 	case *ir.ConstFetchExpr:
-		if n.Constant.Value == "true" || n.Constant.Value == "false" {
+		if strings.ToLower(n.Constant.Value) == "true" || strings.ToLower(n.Constant.Value) == "false" {
 			b.report(node, LevelWarning, "DangerousCondition", "Potential dangerous bool value: you have constant bool value in condition")
-			fmt.Println("Bad")
 		}
-
 	case *ir.Lnumber:
 		if n.Value == "0" || n.Value == "1" {
 			b.report(node, LevelWarning, "DangerousCondition", "Potential dangerous value: you have constant int value that interpreted as bool")
-			fmt.Println("Bad")
 		}
 	case *ir.BooleanOrExpr:
 		checkNode(n.Left, b)
 		checkNode(n.Right, b)
-
 	case *ir.BooleanAndExpr:
 		checkNode(n.Left, b)
 		checkNode(n.Right, b)
-		/*default:
-		fmt.Println("Unknown type:", reflect.TypeOf(node))*/
 	}
-
 }
 
 func (b *blockLinter) checkIfStmtDupCond(s *ir.IfStmt) {
