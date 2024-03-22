@@ -80,3 +80,21 @@ if($a || false && 1 || true){
 	}
 	test.RunAndMatch()
 }
+
+func TestDangerousCondition5(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+
+while(true){
+}
+
+do{
+
+}while(1);
+`)
+	test.Expect = []string{
+		`Potential dangerous bool value: you have constant bool value in condition`,
+		`Potential dangerous value: you have constant int value that interpreted as bool`,
+	}
+	test.RunAndMatch()
+}
