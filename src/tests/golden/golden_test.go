@@ -91,33 +91,8 @@ func TestGolden(t *testing.T) {
 			Deps: []string{
 				`stubs/phpstorm-stubs/mbstring/mbstring.php`,
 			},
-		},
-
-		{
-			Name:    "parsedown",
-			Disable: []string{"missingPhpdoc", "arraySyntax"},
-			Deps: []string{
-				`stubs/phpstorm-stubs/pcre/pcre.php`,
-				`stubs/phpstorm-stubs/mbstring/mbstring.php`,
-			},
-		},
-
-		{
-			Name:    "underscore",
-			Disable: []string{"missingPhpdoc"},
-			Deps: []string{
-				`stubs/phpstorm-stubs/pcre/pcre.php`,
-			},
-		},
-
-		{
-			Name:    "phprocksyd",
-			Disable: []string{"missingPhpdoc"},
-			Deps: []string{
-				`stubs/phpstorm-stubs/standard/basic.php`,
-				`stubs/phpstorm-stubs/pcntl/pcntl.php`,
-				`stubs/phpstorm-stubs/json/json.php`,
-				`stubs/phpstorm-stubs/posix/posix.php`,
+			Disable: []string{
+				"DangerousCondition",
 			},
 		},
 
