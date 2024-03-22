@@ -43,6 +43,7 @@ function getTypeMisUse(mixed $var) {
 		`use is_object instead of 'gettype($var) === "object"'`,
 		`use is_int instead of 'gettype(getTypeMisUse($var)) === "integer"'`,
 		`use is_resource instead of 'gettype(getTypeMisUse($var)) != "resource"'`,
+		`Potential dangerous bool value: you have constant bool value in condition`,
 	}
 
 	test.RunAndMatch()
