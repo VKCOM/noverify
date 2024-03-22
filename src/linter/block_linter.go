@@ -782,11 +782,11 @@ func checkNode(node ir.Node, b *blockLinter) {
 	switch n := node.(type) {
 	case *ir.ConstFetchExpr:
 		if strings.EqualFold(n.Constant.Value, "true") || strings.EqualFold(n.Constant.Value, "false") {
-			b.report(node, LevelWarning, "DangerousCondition", "Potential dangerous bool value: you have constant bool value in condition")
+			b.report(node, LevelWarning, "dangerousCondition", "Potential dangerous bool value: you have constant bool value in condition")
 		}
 	case *ir.Lnumber:
 		if n.Value == "0" || n.Value == "1" {
-			b.report(node, LevelWarning, "DangerousCondition", "Potential dangerous value: you have constant int value that interpreted as bool")
+			b.report(node, LevelWarning, "dangerousCondition", "Potential dangerous value: you have constant int value that interpreted as bool")
 		}
 	case *ir.BooleanOrExpr:
 		checkNode(n.Left, b)
