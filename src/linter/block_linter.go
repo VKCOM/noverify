@@ -22,8 +22,24 @@ type blockLinter struct {
 	quickfix *QuickFixGenerator
 }
 
+func (b *blockLinter) checkStringInterpolationDeprecated(str *ir.Encapsed) {
+	for _, item := range str.Parts {
+		variable, ok := item.(*ir.SimpleVar)
+		if ok {
+			if variable.IdentifierTkn.Value[0] != 36 { // 36 is $
+				b.report(str, LevelWarning, "stringInterpolationDeprecated", "use {$variable} instead ${variable}}")
+				break
+			}
+		}
+	}
+}
+
 func (b *blockLinter) enterNode(n ir.Node) {
 	switch n := n.(type) {
+
+	case *ir.Encapsed:
+		b.checkStringInterpolationDeprecated(n)
+
 	case *ir.Assign:
 		b.checkAssign(n)
 
