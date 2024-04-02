@@ -2,7 +2,7 @@ package golden_test
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -69,7 +69,7 @@ func (t *quickFixTest) runQuickFixTest() {
 			expectedFileName := file + expectedExtension
 			fixedFileName := file + fixExtension
 
-			testFileContent, err := ioutil.ReadFile(testFileName)
+			testFileContent, err := os.ReadFile(testFileName)
 			if err != nil {
 				t.Errorf("Reading file %s failed: %s", testFileName, err)
 			}
@@ -82,7 +82,7 @@ func (t *quickFixTest) runQuickFixTest() {
 
 			var expectedFileContent []byte
 			if expectedFileFound {
-				expectedFileContent, err = ioutil.ReadAll(expectedFile)
+				expectedFileContent, err = io.ReadAll(expectedFile)
 				if err != nil {
 					t.Errorf("Reading file %s failed: %s", expectedFileName, err)
 				}
@@ -103,7 +103,7 @@ func (t *quickFixTest) runQuickFixTest() {
 			test.AddNamedFile(fixedFileName, string(testFileContent))
 			_ = test.RunLinter()
 
-			fixedFileContent, err := ioutil.ReadFile(fixedFileName)
+			fixedFileContent, err := os.ReadFile(fixedFileName)
 			if err != nil {
 				t.Errorf("Reading file %s failed: %s", fixedFileName, err)
 			}

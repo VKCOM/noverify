@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"sort"
 	"strings"
 
@@ -32,7 +32,7 @@ type ReportDiff struct {
 }
 
 func loadReportsFile(filename string) *linterOutput {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		log.Fatalf("read reports file: %v", err)
 	}
