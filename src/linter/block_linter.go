@@ -215,7 +215,7 @@ func (b *blockLinter) checkStringInterpolationDeprecation(str *ir.Encapsed) {
 	for _, item := range str.Parts {
 		variable, ok := item.(*ir.SimpleVar)
 		if ok {
-			if variable.IdentifierTkn.Value[0] != 36 { // 36 is $
+			if variable.IdentifierTkn.Value[0] != '$' {
 				b.report(str, LevelWarning, "stringInterpolationDeprecated", "use {$variable} instead ${variable}")
 				break
 			}
