@@ -767,18 +767,18 @@ func (b *blockLinter) checkIfStmt(s *ir.IfStmt) {
 func (b *blockLinter) checkDangerousBoolCond(s ir.Node) {
 	cond, ok := s.(*ir.BooleanOrExpr)
 	if !ok {
-		checkNode(s, b)
+		checkNodeDangerousBoolCond(s, b)
 		return
 	}
 
 	checkIfStatementConditionBool(cond.Left, cond.Right, b)
 }
 func checkIfStatementConditionBool(left ir.Node, right ir.Node, b *blockLinter) {
-	checkNode(left, b)
-	checkNode(right, b)
+	checkNodeDangerousBoolCond(left, b)
+	checkNodeDangerousBoolCond(right, b)
 }
 
-func checkNode(node ir.Node, b *blockLinter) {
+func checkNodeDangerousBoolCond(node ir.Node, b *blockLinter) {
 	switch n := node.(type) {
 	case *ir.ConstFetchExpr:
 		if strings.EqualFold(n.Constant.Value, "true") || strings.EqualFold(n.Constant.Value, "false") {
@@ -789,11 +789,11 @@ func checkNode(node ir.Node, b *blockLinter) {
 			b.report(node, LevelWarning, "dangerousCondition", "Potential dangerous value: you have constant int value that interpreted as bool")
 		}
 	case *ir.BooleanOrExpr:
-		checkNode(n.Left, b)
-		checkNode(n.Right, b)
+		checkNodeDangerousBoolCond(n.Left, b)
+		checkNodeDangerousBoolCond(n.Right, b)
 	case *ir.BooleanAndExpr:
-		checkNode(n.Left, b)
-		checkNode(n.Right, b)
+		checkNodeDangerousBoolCond(n.Left, b)
+		checkNodeDangerousBoolCond(n.Right, b)
 	}
 }
 
