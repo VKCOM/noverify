@@ -20,6 +20,31 @@ import (
 type blockLinter struct {
 	walker   *blockWalker
 	quickfix *QuickFixGenerator
+	useList  map[string]UsePair
+}
+
+type UsePair struct {
+	isUsed  bool
+	pointer *ir.UseStmt
+}
+
+func (b *blockLinter) fillUseList(uses []ir.Node) {
+	for _, use := range uses {
+		stm, ok := use.(*ir.UseStmt)
+		if !ok {
+			return
+		}
+
+		if b.useList == nil {
+			b.useList = make(map[string]UsePair)
+		}
+
+		b.useList[stm.Use.Value] = UsePair{false, stm}
+	}
+}
+
+func (b *blockLinter) checkUsingStatement(n ir.Node) {
+
 }
 
 func (b *blockLinter) enterNode(n ir.Node) {
@@ -32,6 +57,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 	case *ir.ClassStmt:
 		b.checkClass(n)
+
+	case *ir.UseListStmt:
+		b.fillUseList(n.Uses)
 
 	case *ir.FunctionCallExpr:
 		b.checkFunctionCall(n)

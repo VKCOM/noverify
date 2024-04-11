@@ -492,6 +492,9 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 
 	if b.isIndexingComplete() {
 		b.linter.enterNode(n)
+
+		list := b.linter.useList
+		println(list)
 	}
 	if b.isIndexingComplete() {
 		// Note: no need to check localRset for nil.
