@@ -1013,6 +1013,17 @@ function main(): void {
 		},
 
 		{
+			Name:     "unusedUseStatements",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report unused use statement",
+			Before: `use Random\RandomException;
+					 use Random\\DeadCode;`,
+			After:   "use Random\\RandomException;",
+			Extends: false,
+		},
+
+		{
 			Name:     "reverseAssign",
 			Default:  true,
 			Quickfix: false,

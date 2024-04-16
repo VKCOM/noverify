@@ -72,6 +72,8 @@ type rootWalker struct {
 	strictTypes bool
 	strictMixed bool
 
+	useList map[string]UsePair
+
 	reports []*Report
 
 	config *Config

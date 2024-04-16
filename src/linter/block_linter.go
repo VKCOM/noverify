@@ -38,13 +38,9 @@ func (b *blockLinter) fillUseList(uses []ir.Node) {
 		if b.useList == nil {
 			b.useList = make(map[string]UsePair)
 		}
-
-		b.useList[stm.Use.Value] = UsePair{false, stm}
+		key := "\\" + stm.Use.Value
+		b.useList[key] = UsePair{false, stm}
 	}
-}
-
-func (b *blockLinter) checkUsingStatement(n ir.Node) {
-
 }
 
 func (b *blockLinter) enterNode(n ir.Node) {
@@ -238,6 +234,23 @@ func (b *blockLinter) checkUnaryPlus(n *ir.UnaryPlusExpr) {
 func (b *blockLinter) checkClass(class *ir.ClassStmt) {
 	const classMethod = 0
 	const classOtherMember = 1
+
+	doc, found := irutil.FindPHPDoc(class, true)
+	if found {
+		for _, use := range b.useList {
+			useName := use.pointer.Use.Value
+			var index = strings.LastIndex(useName, "\\")
+			var alias = ""
+			if use.pointer.Alias != nil {
+				alias = use.pointer.Alias.Value
+			}
+
+			var phpDocFindUse = "@mixin " + useName[index+1:]
+			if strings.Contains(doc, phpDocFindUse) || (alias != "" && strings.Contains(doc, "@mixin "+alias)) {
+				b.useList["\\"+useName] = UsePair{true, b.useList["\\"+useName].pointer}
+			}
+		}
+	}
 
 	var members = make([]int, 0, len(class.Stmts))
 	for _, stmt := range class.Stmts {
@@ -528,6 +541,11 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 		className = autogen.GenerateAnonClassName(anon, b.walker.r.ctx.st.CurrentFile)
 		className = b.classParseState().Namespace + className
 		args = anon.Args
+
+		var isUseStm = b.useList[className]
+		if isUseStm.pointer != nil {
+			b.useList[className] = UsePair{true, b.useList[className].pointer}
+		}
 	} else {
 		className, ok = solver.GetClassName(b.classParseState(), e.Class)
 		if !ok {
@@ -535,6 +553,10 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 			return
 		}
 		args = e.Args
+	}
+
+	if b.useList[className].pointer != nil {
+		b.useList[className] = UsePair{true, b.useList[className].pointer}
 	}
 
 	class, ok := b.metaInfo().GetClass(className)
@@ -1032,6 +1054,16 @@ func (b *blockLinter) checkCallArgsCount(fun ir.Node, args []ir.Node, fn meta.Fu
 func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 	call := resolveFunctionCall(b.walker.ctx.sc, b.classParseState(), b.walker.ctx.customTypes, e)
 	fqName := call.funcName
+
+	/*	if pair, ok := b.useList[fqName]; ok && pair.pointer != nil {
+			pair.isUsed = true
+			b.useList[fqName] = pair
+		}
+	*/
+	if b.useList[fqName].pointer != nil {
+		//b.useList[fqName].isUsed = true
+		b.useList[fqName] = UsePair{true, b.useList[fqName].pointer}
+	}
 
 	if call.isClosure {
 		varName := strings.TrimPrefix(fqName, `\`)

@@ -509,6 +509,10 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 	if !res {
 		b.path.Pop()
 	}
+	// false is an output and does not occur very often, the last values will be false
+	if res == false {
+		b.r.useList = b.linter.useList
+	}
 	return res
 }
 
