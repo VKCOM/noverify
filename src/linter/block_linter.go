@@ -235,19 +235,21 @@ func (b *blockLinter) checkClass(class *ir.ClassStmt) {
 	const classMethod = 0
 	const classOtherMember = 1
 
-	doc, found := irutil.FindPHPDoc(class, true)
-	if found {
-		for _, use := range b.useList {
-			useName := use.pointer.Use.Value
-			var index = strings.LastIndex(useName, "\\")
-			var alias = ""
-			if use.pointer.Alias != nil {
-				alias = use.pointer.Alias.Value
-			}
+	if b.useList != nil {
+		doc, found := irutil.FindPHPDoc(class, true)
+		if found {
+			for _, use := range b.useList {
+				useName := use.pointer.Use.Value
+				var index = strings.LastIndex(useName, "\\")
+				var alias = ""
+				if use.pointer.Alias != nil {
+					alias = use.pointer.Alias.Value
+				}
 
-			var phpDocFindUse = "@mixin " + useName[index+1:]
-			if strings.Contains(doc, phpDocFindUse) || (alias != "" && strings.Contains(doc, "@mixin "+alias)) {
-				b.useList["\\"+useName] = UsePair{true, b.useList["\\"+useName].pointer}
+				var phpDocFindUse = "@mixin " + useName[index+1:]
+				if strings.Contains(doc, phpDocFindUse) || (alias != "" && strings.Contains(doc, "@mixin "+alias)) {
+					b.useList["\\"+useName] = UsePair{true, b.useList["\\"+useName].pointer}
+				}
 			}
 		}
 	}
