@@ -20,27 +20,6 @@ import (
 type blockLinter struct {
 	walker   *blockWalker
 	quickfix *QuickFixGenerator
-	useList  map[string]UsePair
-}
-
-type UsePair struct {
-	isUsed  bool
-	pointer *ir.UseStmt
-}
-
-func (b *blockLinter) fillUseList(uses []ir.Node) {
-	for _, use := range uses {
-		stm, ok := use.(*ir.UseStmt)
-		if !ok {
-			return
-		}
-
-		if b.useList == nil {
-			b.useList = make(map[string]UsePair)
-		}
-		key := "\\" + stm.Use.Value
-		b.useList[key] = UsePair{false, stm}
-	}
 }
 
 func (b *blockLinter) enterNode(n ir.Node) {
@@ -53,9 +32,6 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 	case *ir.ClassStmt:
 		b.checkClass(n)
-
-	case *ir.UseListStmt:
-		b.fillUseList(n.Uses)
 
 	case *ir.FunctionCallExpr:
 		b.checkFunctionCall(n)
@@ -235,10 +211,10 @@ func (b *blockLinter) checkClass(class *ir.ClassStmt) {
 	const classMethod = 0
 	const classOtherMember = 1
 
-	if b.useList != nil {
+	if b.walker.r.useList != nil {
 		doc, found := irutil.FindPHPDoc(class, true)
 		if found {
-			for _, use := range b.useList {
+			for _, use := range b.walker.r.useList {
 				useName := use.pointer.Use.Value
 				var index = strings.LastIndex(useName, "\\")
 				var alias = ""
@@ -248,7 +224,7 @@ func (b *blockLinter) checkClass(class *ir.ClassStmt) {
 
 				var phpDocFindUse = "@mixin " + useName[index+1:]
 				if strings.Contains(doc, phpDocFindUse) || (alias != "" && strings.Contains(doc, "@mixin "+alias)) {
-					b.useList["\\"+useName] = UsePair{true, b.useList["\\"+useName].pointer}
+					b.walker.r.useList["\\"+useName] = UsePair{true, b.walker.r.useList["\\"+useName].pointer}
 				}
 			}
 		}
@@ -544,9 +520,9 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 		className = b.classParseState().Namespace + className
 		args = anon.Args
 
-		var isUseStm = b.useList[className]
+		var isUseStm = b.walker.r.useList[className]
 		if isUseStm.pointer != nil {
-			b.useList[className] = UsePair{true, b.useList[className].pointer}
+			b.walker.r.useList[className] = UsePair{true, b.walker.r.useList[className].pointer}
 		}
 	} else {
 		className, ok = solver.GetClassName(b.classParseState(), e.Class)
@@ -557,8 +533,18 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 		args = e.Args
 	}
 
-	if b.useList[className].pointer != nil {
-		b.useList[className] = UsePair{true, b.useList[className].pointer}
+	if b.walker.r.useList[className].pointer != nil {
+		b.walker.r.useList[className] = UsePair{true, b.walker.r.useList[className].pointer}
+	} else {
+		parts := strings.Split(className, "\\")
+		lastPart := parts[len(parts)-1]
+		leftPart := strings.Join(parts[:len(parts)-1], "\\")
+
+		if b.walker.r.useList[lastPart].pointer != nil {
+			b.walker.r.useList[lastPart] = UsePair{true, b.walker.r.useList[lastPart].pointer}
+		} else if leftPart != "" && b.walker.r.useList[leftPart].pointer != nil {
+			b.walker.r.useList[leftPart] = UsePair{true, b.walker.r.useList[leftPart].pointer}
+		}
 	}
 
 	class, ok := b.metaInfo().GetClass(className)
@@ -1057,14 +1043,8 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 	call := resolveFunctionCall(b.walker.ctx.sc, b.classParseState(), b.walker.ctx.customTypes, e)
 	fqName := call.funcName
 
-	/*	if pair, ok := b.useList[fqName]; ok && pair.pointer != nil {
-			pair.isUsed = true
-			b.useList[fqName] = pair
-		}
-	*/
-	if b.useList[fqName].pointer != nil {
-		//b.useList[fqName].isUsed = true
-		b.useList[fqName] = UsePair{true, b.useList[fqName].pointer}
+	if b.walker.r.useList[fqName].pointer != nil {
+		b.walker.r.useList[fqName] = UsePair{true, b.walker.r.useList[fqName].pointer}
 	}
 
 	if call.isClosure {
@@ -1334,6 +1314,23 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 	if utils.NameNodeToString(e.Class) == "parent" && b.classParseState().CurrentParentClass == "" {
 		b.report(e, LevelError, "parentNotFound", "Cannot call method on parent as this class does not extend another")
 		return
+	}
+
+	class, ok := e.Class.(*ir.Name)
+	if ok {
+		className := class.Value
+
+		for _, use := range b.walker.r.useList {
+			useName := use.pointer.Use.Value
+			var alias = ""
+
+			if use.pointer.Alias != nil {
+				alias = use.pointer.Alias.Value
+			}
+			if strings.Contains(useName, className) || (alias != "" && strings.Contains(alias, className)) {
+				b.walker.r.useList["\\"+useName] = UsePair{true, b.walker.r.useList["\\"+useName].pointer}
+			}
+		}
 	}
 
 	call := resolveStaticMethodCall(b.walker.ctx.sc, b.classParseState(), e)

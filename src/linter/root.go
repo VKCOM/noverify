@@ -83,6 +83,26 @@ type rootWalker struct {
 	checker *rootChecker
 }
 
+type UsePair struct {
+	isUsed  bool
+	pointer *ir.UseStmt
+}
+
+func (d *rootWalker) fillUseList(uses []ir.Node) {
+	for _, use := range uses {
+		stm, ok := use.(*ir.UseStmt)
+		if !ok {
+			return
+		}
+
+		if d.useList == nil {
+			d.useList = make(map[string]UsePair)
+		}
+		key := "\\" + stm.Use.Value
+		d.useList[key] = UsePair{false, stm}
+	}
+}
+
 // InitCustom is needed to initialize walker state
 func (d *rootWalker) InitCustom() {
 	d.custom = nil
@@ -148,6 +168,9 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 				}
 			}
 		}
+
+	case *ir.UseListStmt:
+		d.fillUseList(n.Uses)
 
 	case *ir.AnonClassExpr:
 		d.currentClassNodeStack.Push(n)

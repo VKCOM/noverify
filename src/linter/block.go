@@ -492,9 +492,6 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 
 	if b.isIndexingComplete() {
 		b.linter.enterNode(n)
-
-		list := b.linter.useList
-		println(list)
 	}
 	if b.isIndexingComplete() {
 		// Note: no need to check localRset for nil.
@@ -509,10 +506,7 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 	if !res {
 		b.path.Pop()
 	}
-	// false is an output and does not occur very often, the last values will be false
-	if res == false {
-		b.r.useList = b.linter.useList
-	}
+
 	return res
 }
 
@@ -558,7 +552,71 @@ func (b *blockWalker) handleAndCheckGlobalStmt(s *ir.GlobalStmt) {
 	}
 }
 
+func (b *blockWalker) checkFunParamsAttribute(fun *ir.FunctionStmt) {
+	if cap(fun.Params) == 0 {
+		return
+	}
+
+	for _, item := range fun.Params {
+		param, _ := item.(*ir.Parameter)
+		if attrGroups := param.AttrGroups; attrGroups != nil {
+			for _, group := range attrGroups {
+				if group.Attrs == nil {
+					continue
+				}
+
+				for _, attribute := range group.Attrs {
+					name := attribute.Name.(*ir.Name)
+
+					for _, use := range b.r.useList {
+						useName := use.pointer.Use.Value
+						var alias = ""
+						if use.pointer.Alias != nil {
+							alias = use.pointer.Alias.Value
+						}
+
+						if strings.Contains(useName, name.Value) || (alias != "" && strings.Contains(alias, name.Value)) {
+							b.r.useList["\\"+useName] = UsePair{true, b.r.useList["\\"+useName].pointer}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+func (b *blockWalker) checkFunAttribute(fun *ir.FunctionStmt) {
+	if fun.AttrGroups == nil {
+		return
+	}
+
+	for _, group := range fun.AttrGroups {
+		if group.Attrs == nil {
+			continue
+		}
+
+		for _, attribute := range group.Attrs {
+			name := attribute.Name.(*ir.Name)
+
+			for _, use := range b.r.useList {
+				useName := use.pointer.Use.Value
+				var alias = ""
+				if use.pointer.Alias != nil {
+					alias = use.pointer.Alias.Value
+				}
+
+				if strings.Contains(useName, name.Value) || (alias != "" && strings.Contains(alias, name.Value)) {
+					b.r.useList["\\"+useName] = UsePair{true, b.r.useList["\\"+useName].pointer}
+				}
+			}
+		}
+	}
+}
+
 func (b *blockWalker) handleFunction(fun *ir.FunctionStmt) bool {
+	b.checkFunParamsAttribute(fun)
+	b.checkFunAttribute(fun)
+
 	if b.ignoreFunctionBodies {
 		return false
 	}
