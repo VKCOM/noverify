@@ -613,9 +613,49 @@ func (b *blockWalker) checkFunAttribute(fun *ir.FunctionStmt) {
 	}
 }
 
+func (b *blockWalker) checkFunctionParamUseSection(method *ir.FunctionStmt) {
+	returnType, ok := method.ReturnType.(*ir.Name)
+
+	if ok {
+		className := returnType.Value
+		for _, use := range b.linter.walker.r.useList {
+			var useName = use.pointer.Use.Value
+			var alias = ""
+			if use.pointer.Alias != nil {
+				alias = use.pointer.Alias.Value
+			}
+
+			if strings.Contains(useName, className) || (alias != "" && strings.Contains(alias, className)) {
+				b.linter.walker.r.useList["\\"+useName] = UsePair{true, b.linter.walker.r.useList["\\"+useName].pointer}
+			}
+		}
+	}
+
+	for _, param := range method.Params {
+		parameter, _ := param.(*ir.Parameter)
+		variableType, ok := parameter.VariableType.(*ir.Name)
+		if ok {
+			variableTypeName := variableType.Value
+			for _, use := range b.linter.walker.r.useList {
+				var useName = use.pointer.Use.Value
+				var alias = ""
+				if use.pointer.Alias != nil {
+					alias = use.pointer.Alias.Value
+				}
+
+				if strings.Contains(useName, variableTypeName) || (alias != "" && strings.Contains(alias, variableTypeName)) {
+					b.linter.walker.r.useList["\\"+useName] = UsePair{true, b.linter.walker.r.useList["\\"+useName].pointer}
+				}
+			}
+		}
+
+	}
+}
+
 func (b *blockWalker) handleFunction(fun *ir.FunctionStmt) bool {
 	b.checkFunParamsAttribute(fun)
 	b.checkFunAttribute(fun)
+	b.checkFunctionParamUseSection(fun)
 
 	if b.ignoreFunctionBodies {
 		return false

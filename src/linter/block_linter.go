@@ -33,6 +33,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.ClassStmt:
 		b.checkClass(n)
 
+	case *ir.InstanceOfExpr:
+		b.checkInstanceOfUseSection(n)
+
 	case *ir.FunctionCallExpr:
 		b.checkFunctionCall(n)
 
@@ -207,34 +210,174 @@ func (b *blockLinter) checkUnaryPlus(n *ir.UnaryPlusExpr) {
 	b.report(n, LevelWarning, "strangeCast", "Unary plus with non-constant expression, possible type cast, use an explicit cast to int or float instead of using the unary plus")
 }
 
-func (b *blockLinter) checkClass(class *ir.ClassStmt) {
-	const classMethod = 0
-	const classOtherMember = 1
+func (b *blockLinter) checkInstanceOfUseSection(expr *ir.InstanceOfExpr) {
+	classResolve, ok := expr.Class.(*ir.Name)
+	if !ok {
+		return
+	}
+	className := classResolve.Value
 
-	if b.walker.r.useList != nil {
-		doc, found := irutil.FindPHPDoc(class, true)
-		if found {
+	for _, use := range b.walker.r.useList {
+		var useName = use.pointer.Use.Value
+		var alias = ""
+		if use.pointer.Alias != nil {
+			alias = use.pointer.Alias.Value
+		}
+
+		if strings.Contains(useName, className) || (alias != "" && strings.Contains(alias, className)) {
+			b.walker.r.useList["\\"+useName] = UsePair{true, b.walker.r.useList["\\"+useName].pointer}
+		}
+	}
+}
+
+func (b *blockLinter) checkUseSectionPhpDocInClass(class *ir.ClassStmt) {
+	if b.walker.r.useList == nil {
+		return
+	}
+
+	doc, found := irutil.FindPHPDoc(class, true)
+	if !found {
+		return
+	}
+
+	for _, use := range b.walker.r.useList {
+		useName := use.pointer.Use.Value
+		var index = strings.LastIndex(useName, "\\")
+		var alias = ""
+		if use.pointer.Alias != nil {
+			alias = use.pointer.Alias.Value
+		}
+
+		var phpDocMixinFindUse = "@mixin " + useName[index+1:]
+		var phpDocSeeFindUse = "@see " + useName[index+1:]
+		if strings.Contains(doc, phpDocMixinFindUse) || (alias != "" && strings.Contains(doc, "@mixin "+alias)) || strings.Contains(doc, phpDocSeeFindUse) {
+			b.walker.r.useList["\\"+useName] = UsePair{true, b.walker.r.useList["\\"+useName].pointer}
+		}
+	}
+}
+
+func (b *blockLinter) checkClassUseSectionInExtends(extends *ir.ClassExtendsStmt) {
+	if extends == nil {
+		return
+	}
+
+	var className = extends.ClassName.Value
+	for _, use := range b.walker.r.useList {
+		var useName = use.pointer.Use.Value
+		var alias = ""
+		if use.pointer.Alias != nil {
+			alias = use.pointer.Alias.Value
+		}
+
+		if strings.Contains(useName, className) || (alias != "" && strings.Contains(alias, className)) {
+			b.walker.r.useList["\\"+useName] = UsePair{true, b.walker.r.useList["\\"+useName].pointer}
+		}
+	}
+}
+
+func (b *blockLinter) checkClassMethodUseSection(method *ir.ClassMethodStmt) {
+	returnType, ok := method.ReturnType.(*ir.Name)
+	if ok {
+		className := returnType.Value
+		for _, use := range b.walker.r.useList {
+			var useName = use.pointer.Use.Value
+			var alias = ""
+			if use.pointer.Alias != nil {
+				alias = use.pointer.Alias.Value
+			}
+
+			if strings.Contains(useName, className) || (alias != "" && strings.Contains(alias, className)) {
+				b.walker.r.useList["\\"+useName] = UsePair{true, b.walker.r.useList["\\"+useName].pointer}
+			}
+		}
+	}
+
+	for _, param := range method.Params {
+		parameter, _ := param.(*ir.Parameter)
+		variableType, ok := parameter.VariableType.(*ir.Name)
+		if ok {
+			variableTypeName := variableType.Value
 			for _, use := range b.walker.r.useList {
-				useName := use.pointer.Use.Value
-				var index = strings.LastIndex(useName, "\\")
+				var useName = use.pointer.Use.Value
 				var alias = ""
 				if use.pointer.Alias != nil {
 					alias = use.pointer.Alias.Value
 				}
 
-				var phpDocFindUse = "@mixin " + useName[index+1:]
-				if strings.Contains(doc, phpDocFindUse) || (alias != "" && strings.Contains(doc, "@mixin "+alias)) {
+				if strings.Contains(useName, variableTypeName) || (alias != "" && strings.Contains(alias, variableTypeName)) {
 					b.walker.r.useList["\\"+useName] = UsePair{true, b.walker.r.useList["\\"+useName].pointer}
 				}
 			}
 		}
+
 	}
+}
+
+func (b *blockLinter) checkClassInterfacesUseSection(implements *ir.ClassImplementsStmt) {
+	if implements == nil {
+		return
+	}
+
+	for _, interf := range implements.InterfaceNames {
+		interf, _ := interf.(*ir.Name)
+		interfName := interf.Value
+		for _, use := range b.walker.r.useList {
+			var useName = use.pointer.Use.Value
+			var alias = ""
+			if use.pointer.Alias != nil {
+				alias = use.pointer.Alias.Value
+			}
+
+			if strings.Contains(useName, interfName) || (alias != "" && strings.Contains(alias, interfName)) {
+				b.walker.r.useList["\\"+useName] = UsePair{true, b.walker.r.useList["\\"+useName].pointer}
+			}
+		}
+	}
+}
+
+func (b *blockLinter) checkClassTraitsUseSection(class ir.Class) {
+	if class.Stmts == nil {
+		return
+	}
+
+	for _, potentialTrait := range class.Stmts {
+		traits, ok := potentialTrait.(*ir.TraitUseStmt)
+		if ok {
+			for _, trait := range traits.Traits {
+				traitResolve, _ := trait.(*ir.Name)
+				traitName := traitResolve.Value
+
+				for _, use := range b.walker.r.useList {
+					var useName = use.pointer.Use.Value
+					var alias = ""
+					if use.pointer.Alias != nil {
+						alias = use.pointer.Alias.Value
+					}
+
+					if strings.Contains(useName, traitName) || (alias != "" && strings.Contains(alias, traitName)) {
+						b.walker.r.useList["\\"+useName] = UsePair{true, b.walker.r.useList["\\"+useName].pointer}
+					}
+				}
+			}
+		}
+	}
+}
+
+func (b *blockLinter) checkClass(class *ir.ClassStmt) {
+	const classMethod = 0
+	const classOtherMember = 1
+
+	b.checkUseSectionPhpDocInClass(class)
+	b.checkClassUseSectionInExtends(class.Extends)
+	b.checkClassInterfacesUseSection(class.Implements)
+	b.checkClassTraitsUseSection(class.Class)
 
 	var members = make([]int, 0, len(class.Stmts))
 	for _, stmt := range class.Stmts {
 		switch stmt.(type) {
 		case *ir.ClassMethodStmt:
 			members = append(members, classMethod)
+			b.checkClassMethodUseSection(stmt.(*ir.ClassMethodStmt))
 		default:
 			members = append(members, classOtherMember)
 		}
@@ -1436,6 +1579,26 @@ func (b *blockLinter) checkStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) {
 	}
 }
 
+func (b *blockLinter) checkClassConstFetchUseSection(e *ir.ClassConstFetchExpr) {
+	classResolve, ok := e.Class.(*ir.Name)
+	if !ok {
+		return
+	}
+
+	className := classResolve.Value
+	for _, use := range b.walker.r.useList {
+		var useName = use.pointer.Use.Value
+		var alias = ""
+		if use.pointer.Alias != nil {
+			alias = use.pointer.Alias.Value
+		}
+
+		if strings.Contains(useName, className) || (alias != "" && strings.Contains(alias, className)) {
+			b.walker.r.useList["\\"+useName] = UsePair{true, b.walker.r.useList["\\"+useName].pointer}
+		}
+	}
+}
+
 func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
 	fetch := resolveClassConstFetch(b.classParseState(), e)
 	if !fetch.canAnalyze {
@@ -1443,6 +1606,7 @@ func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
 	}
 
 	b.checkClassSpecialNameCase(e, fetch.className)
+	b.checkClassConstFetchUseSection(e)
 
 	if !utils.IsSpecialClassName(e.Class) {
 		usedClassName, ok := solver.GetClassName(b.classParseState(), e.Class)
