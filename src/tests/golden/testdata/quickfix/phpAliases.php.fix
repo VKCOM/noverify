@@ -1,0 +1,9 @@
+<?php
+declare(strict_types = "1")
+$_ = implode("", []);
+
+function test($d){
+OCICollection::max();
+}
+
+test(implode("", []));
