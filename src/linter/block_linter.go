@@ -11,7 +11,6 @@ import (
 	"github.com/VKCOM/noverify/src/ir/phpcore"
 	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/php"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/types"
@@ -1041,15 +1040,15 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 	call := resolveFunctionCall(b.walker.ctx.sc, b.classParseState(), b.walker.ctx.customTypes, e)
 	fqName := call.funcName
 
-	var phpAlias = php.Aliases[fqName]
-	if phpAlias != "" {
-		b.report(e, LevelWarning, "phpAliases", "Use %s instead of '%s'", phpAlias, strings.TrimPrefix(fqName, `\`))
-		b.walker.r.addQuickFix("phpAliases", b.quickfix.PhpAliasesReplace(e.Function.(*ir.Name), phpAlias))
+	var trimName = strings.TrimPrefix(fqName, `\`)
+	var phpMasterFunc = phpcore.FuncAliases[trimName]
+	if phpMasterFunc != nil {
+		b.report(e, LevelWarning, "phpAliases", "Use %s instead of '%s'", phpMasterFunc.Value, trimName)
+		b.walker.r.addQuickFix("phpAliases", b.quickfix.PhpAliasesReplace(e.Function.(*ir.Name), phpMasterFunc.Value))
 	}
 
 	if call.isClosure {
-		varName := strings.TrimPrefix(fqName, `\`)
-		b.walker.untrackVarName(varName)
+		b.walker.untrackVarName(trimName)
 	} else {
 		b.checkFunctionAvailability(e, &call)
 		b.walker.r.checker.CheckNameCase(e.Function, call.funcName, call.info.Name)
