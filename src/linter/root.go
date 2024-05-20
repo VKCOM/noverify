@@ -201,6 +201,10 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		d.reportPHPDocErrors(doc.errs)
 		d.handleClassDoc(doc, &cl)
 
+		if doc.deprecated == true {
+			d.Report(n, LevelNotice, "deprecated", "Has deprecated class %s", n.ClassName.Value)
+		}
+
 		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
 
 	case *ir.TraitStmt:
@@ -833,6 +837,8 @@ func (d *rootWalker) parseClassPHPDoc(class ir.Node, doc phpdoc.Comment) classPH
 			parseClassPHPDocPackage(class, d.ctx.st, &result, part.(*phpdoc.PackageCommentPart))
 		case "internal":
 			result.internal = true
+		case "deprecated":
+			result.deprecated = true
 		}
 	}
 

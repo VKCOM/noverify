@@ -251,6 +251,13 @@ func (b *blockLinter) checkClass(class *ir.ClassStmt) {
 		case *ir.ClassMethodStmt:
 			members = append(members, classMethod)
 			b.walker.CheckParamNullability(stmt.Params)
+		case *ir.PropertyListStmt:
+			for _, element := range stmt.Doc.Parsed {
+				if element.Name() == "deprecated" {
+					b.report(stmt, LevelNotice, "deprecated", "Has deprecated field in class %s", class.ClassName.Value)
+				}
+			}
+			members = append(members, classOtherMember)
 		default:
 			members = append(members, classOtherMember)
 		}
