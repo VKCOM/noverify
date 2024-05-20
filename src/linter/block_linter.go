@@ -216,6 +216,13 @@ func (b *blockLinter) checkClass(class *ir.ClassStmt) {
 		switch stmt.(type) {
 		case *ir.ClassMethodStmt:
 			members = append(members, classMethod)
+		case *ir.PropertyListStmt:
+			for _, element := range stmt.(*ir.PropertyListStmt).Doc.Parsed {
+				if element.Name() == "deprecated" {
+					b.report(stmt, LevelNotice, "deprecated", "Has deprecated field in class %s", class.ClassName.Value)
+				}
+			}
+			members = append(members, classOtherMember)
 		default:
 			members = append(members, classOtherMember)
 		}
