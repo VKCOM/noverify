@@ -71,3 +71,27 @@ WithText::staticMethod();
 	}
 	test.RunAndMatch()
 }
+
+func TestDeprecatedClassAndProperty(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+declare(strict_types = "1");
+
+/**
+ * @deprecated class 
+ */
+class OldClass
+{
+/**
+ * @deprecated property
+ */
+public $prp;
+}
+
+`)
+	test.Expect = []string{
+		"Has deprecated class OldClass",
+		"Has deprecated field in class OldClass",
+	}
+	test.RunAndMatch()
+}
