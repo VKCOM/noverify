@@ -201,7 +201,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		d.reportPHPDocErrors(doc.errs)
 		d.handleClassDoc(doc, &cl)
 
-		if doc.deprecated == true {
+		if doc.deprecated {
 			d.Report(n, LevelNotice, "deprecated", "Has deprecated class %s", n.ClassName.Value)
 		}
 
