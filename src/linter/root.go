@@ -818,27 +818,27 @@ func (d *rootWalker) parseClassPHPDoc(class ir.Node, doc phpdoc.Comment) classPH
 		return result
 	}
 
-	// TODO: allocate maps lazily.
-	// Class may not have any @property or @method annotations.
-	// In that case we can handle avoid map allocations.
-	result.properties = make(meta.PropertiesMap)
-	result.methods = meta.NewFunctionsMap()
-
 	for _, part := range doc.Parsed {
 		d.checker.checkPHPDocRef(class, part)
 		switch part.Name() {
 		case "property", "property-read", "property-write":
+			if result.properties == nil {
+				result.properties = make(meta.PropertiesMap)
+			}
 			parseClassPHPDocProperty(class, &d.ctx, &result, part.(*phpdoc.TypeVarCommentPart))
 		case "method":
+			if result.methods.H == nil {
+				result.methods = meta.NewFunctionsMap()
+			}
 			parseClassPHPDocMethod(class, &d.ctx, &result, part.(*phpdoc.RawCommentPart))
 		case "mixin":
 			parseClassPHPDocMixin(class, d.ctx.st, &result, part.(*phpdoc.RawCommentPart))
 		case "package":
 			parseClassPHPDocPackage(class, d.ctx.st, &result, part.(*phpdoc.PackageCommentPart))
-		case "internal":
-			result.internal = true
 		case "deprecated":
 			result.deprecated = true
+		case "internal":
+			result.internal = true
 		}
 	}
 
