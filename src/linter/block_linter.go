@@ -3,6 +3,7 @@ package linter
 import (
 	"bytes"
 	"fmt"
+	"github.com/VKCOM/noverify/src/phpdoc"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/constfold"
@@ -32,6 +33,8 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 	case *ir.ClassStmt:
 		b.checkClass(n)
+	case *ir.ClassMethodStmt:
+		println("")
 
 	case *ir.FunctionCallExpr:
 		b.checkFunctionCall(n)
@@ -207,15 +210,90 @@ func (b *blockLinter) checkUnaryPlus(n *ir.UnaryPlusExpr) {
 	b.report(n, LevelWarning, "strangeCast", "Unary plus with non-constant expression, possible type cast, use an explicit cast to int or float instead of using the unary plus")
 }
 
+func (b *blockLinter) checkMethodTypeHint(method *ir.ClassMethodStmt) {
+	for _, comment := range method.Doc.Parsed {
+		var typeContainer, ok = comment.(*phpdoc.TypeVarCommentPart)
+		if !ok {
+			continue
+		}
+
+		if typeContainer.Name() != "param" {
+			continue
+		}
+
+		var typeParam = typeContainer.Type.Source
+
+		for _, param := range method.Params {
+			var typedParam, ok = param.(*ir.Parameter)
+			if ok {
+				var variable = typedParam.Variable
+
+				// maybe we don`t need it and order the same as param
+				if variable.Name != typeContainer.Var[1:] {
+					continue
+				}
+
+				var paramType, ok = typedParam.VariableType.(*ir.Name)
+				if paramType != nil && ok {
+					//TODO: quickFix -> remove @param from typeHint
+					break
+				}
+
+				if !types.IsTrivial(typeContainer.Type.Source) && !types.IsClass(typeContainer.Type.Source) {
+					continue
+				}
+
+				//TODO: quickFix -> remove @param from typeHint
+
+				//quickFix -> add type to param
+				var varDollar = typeContainer.Var
+				var variableWithType = typeParam + " " + varDollar
+				b.walker.report(variable, LevelWarning, "implicitParamType", "Type for %s can be wrote explicitly from typeHint", varDollar)
+				b.walker.r.addQuickFix("implicitParamType", b.quickfix.FunctionParamTypeReplacementFromTypeHint(variable, variableWithType))
+			}
+		}
+	}
+}
+
 func (b *blockLinter) checkClass(class *ir.ClassStmt) {
 	const classMethod = 0
 	const classOtherMember = 1
 
 	var members = make([]int, 0, len(class.Stmts))
 	for _, stmt := range class.Stmts {
-		switch stmt.(type) {
+		switch value := stmt.(type) {
 		case *ir.ClassMethodStmt:
 			members = append(members, classMethod)
+			b.checkMethodTypeHint(value)
+		case *ir.PropertyListStmt:
+			for _, comment := range value.Doc.Parsed {
+				var typeContainer, ok = comment.(*phpdoc.TypeVarCommentPart)
+				if !ok {
+					continue
+				}
+
+				if typeContainer.Name() != "var" {
+					continue
+				}
+				//	var typeHintType = typeContainer.Type.Source
+
+				for _, NodeProperty := range value.Properties {
+					var typedProperty, ok = NodeProperty.(*ir.PropertyStmt)
+					if !ok {
+						continue
+					}
+
+					var variable = typedProperty.Variable
+
+					var propertyType, okCast = value.Type.(*ir.Name)
+					// if ok we have type and should equal it
+					if okCast {
+
+					}
+					println(propertyType, variable)
+				}
+			}
+			members = append(members, classOtherMember)
 		default:
 			members = append(members, classOtherMember)
 		}

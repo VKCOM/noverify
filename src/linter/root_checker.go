@@ -55,6 +55,56 @@ func newRootChecker(walker *rootWalker, quickfix *QuickFixGenerator) *rootChecke
 	return c
 }
 
+func (r *rootChecker) CheckFunctionTypeHint(fun *ir.FunctionStmt) {
+	for _, comment := range fun.Doc.Parsed {
+		var typeContainer, ok = comment.(*phpdoc.TypeVarCommentPart)
+		if !ok {
+			continue
+		}
+
+		if typeContainer.Name() != "param" {
+			continue
+		}
+
+		var typeParam = typeContainer.Type.Source
+
+		for _, param := range fun.Params {
+			var typedParam, ok = param.(*ir.Parameter)
+			if ok {
+				var variable = typedParam.Variable
+
+				// maybe we don`t need it and order the same as param
+				if variable.Name != typeContainer.Var[1:] {
+					continue
+				}
+
+				var paramType, ok = typedParam.VariableType.(*ir.Name)
+				if paramType != nil && ok {
+					//TODO: quickFix -> remove @param from typeHint
+					break
+				}
+
+				converted := phpdoctypes.ToRealType(r.normalizer.ClassFQNProvider(), r.normalizer.KPHP(), typeContainer.Type)
+				if cap(converted.Types) > 1 {
+					continue
+				}
+
+				if !types.IsTrivial(converted.Types[0].Elem) && !types.IsClass(converted.Types[0].Elem) {
+					continue
+				}
+
+				//TODO: quickFix -> remove @param from typeHint
+
+				//quickFix -> add type to param
+				var varDollar = typeContainer.Var
+				var variableWithType = typeParam + " " + varDollar
+				r.walker.Report(variable, LevelWarning, "implicitParamType", "Type for %s can be wrote explicitly from typeHint", varDollar)
+				r.walker.addQuickFix("implicitParamType", r.quickfix.FunctionParamTypeReplacementFromTypeHint(variable, variableWithType))
+			}
+		}
+	}
+}
+
 func (r *rootChecker) CheckFunction(fun *ir.FunctionStmt) bool {
 	r.CheckKeywordCase(fun, "function")
 
@@ -87,6 +137,7 @@ func (r *rootChecker) CheckFunction(fun *ir.FunctionStmt) bool {
 
 	r.walker.handleFuncStmts(funcParams.params, nil, fun.Stmts, sc)
 
+	r.CheckFunctionTypeHint(fun)
 	return false
 }
 
