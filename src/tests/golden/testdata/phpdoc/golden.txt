@@ -37,6 +37,9 @@ MAYBE   invalidDocblockType: Repeated nullable doesn't make sense at testdata/ph
 WARNING invalidDocblock: Multiline PHPDoc comment should start with /**, not /* at testdata/phpdoc/phpdoc.php:31
 /*
 ^^
+WARNING implicitParamType: Type for $a can be wrote explicitly from typeHint at testdata/phpdoc/phpdoc.php:34
+function g($a) {
+           ^^
 WARNING invalidDocblockRef: @see tag refers to unknown symbol FooUnExisting at testdata/phpdoc/phpdoc.php:54
  * @see  FooUnExisting
          ^^^^^^^^^^^^^
@@ -85,6 +88,30 @@ MAYBE   invalidDocblockType: Shape param #1: want key:type, found x at testdata/
 WARNING invalidDocblock: Multiline PHPDoc comment should start with /**, not /* at testdata/phpdoc/phpdoc.php:70
   /*
 ^^^^
+WARNING implicitParamType: Type for $a can be wrote explicitly from typeHint at testdata/phpdoc/phpdoc.php:57
+function f($a, $b, $c, $d, $e, $f, $g, $h, $a1, $b1, $c1, $d1, $e1, $f1, $g1, $h1) {
+           ^^
+WARNING implicitParamType: Type for $unexisting can be wrote explicitly from typeHint at testdata/phpdoc/phpdoc.php:57
+function f($a, $b, $c, $d, $e, $f, $g, $h, $a1, $b1, $c1, $d1, $e1, $f1, $g1, $h1) {
+           ^^
+WARNING implicitParamType: Type for  can be wrote explicitly from typeHint at testdata/phpdoc/phpdoc.php:57
+function f($a, $b, $c, $d, $e, $f, $g, $h, $a1, $b1, $c1, $d1, $e1, $f1, $g1, $h1) {
+           ^^
+WARNING implicitParamType: Type for $b can be wrote explicitly from typeHint at testdata/phpdoc/phpdoc.php:57
+function f($a, $b, $c, $d, $e, $f, $g, $h, $a1, $b1, $c1, $d1, $e1, $f1, $g1, $h1) {
+           ^^
+WARNING implicitParamType: Type for $e can be wrote explicitly from typeHint at testdata/phpdoc/phpdoc.php:57
+function f($a, $b, $c, $d, $e, $f, $g, $h, $a1, $b1, $c1, $d1, $e1, $f1, $g1, $h1) {
+           ^^
+WARNING implicitParamType: Type for $f can be wrote explicitly from typeHint at testdata/phpdoc/phpdoc.php:57
+function f($a, $b, $c, $d, $e, $f, $g, $h, $a1, $b1, $c1, $d1, $e1, $f1, $g1, $h1) {
+           ^^
+WARNING implicitParamType: Type for $h can be wrote explicitly from typeHint at testdata/phpdoc/phpdoc.php:57
+function f($a, $b, $c, $d, $e, $f, $g, $h, $a1, $b1, $c1, $d1, $e1, $f1, $g1, $h1) {
+           ^^
+WARNING implicitParamType: Type for $a can be wrote explicitly from typeHint at testdata/phpdoc/phpdoc.php:21
+  public $a = 100;
+         ^^
 WARNING invalidDocblock: Multiline PHPDoc comment should start with /**, not /* at testdata/phpdoc/phpdoc.php:31
 /*
 ^^

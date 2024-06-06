@@ -172,3 +172,6 @@ WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/
 WARNING unused: Variable $v is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/mustache/src/Mustache/Template.php:122
                 foreach ($value as $k => $v) {
                                          ^^
+WARNING implicitParamType: Type for $strictCallables can be wrote explicitly from typeHint at testdata/mustache/src/Mustache/Template.php:27
+    protected $strictCallables = false;
+              ^^^^^^^^^^^^^^^^

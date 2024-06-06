@@ -367,6 +367,10 @@ func TestPHPDocSyntax(t *testing.T) {
 		`Expected a type, found '-'; if you want to express 'any' type, use 'mixed'`,
 		`Malformed @param $a tag (maybe type is missing?)`,
 		`Malformed @param tag (maybe var is missing?)`,
+		`Type for $x can be wrote explicitly from typeHint`,
+		`Type for $y can be wrote explicitly from typeHint`,
+		`Type for $z can be wrote explicitly from typeHint`,
+		`Type for  can be wrote explicitly from typeHint`,
 	}
 	test.RunAndMatch()
 }
@@ -445,6 +449,7 @@ func TestPHPDocType(t *testing.T) {
 		`Use bool type instead of boolean`,
 		`Nullable syntax is ?T, not T?`,
 		`Array syntax is T[], not []T`,
+		`Type for $x1 can be wrote explicitly from typeHint`,
 	}
 	test.RunAndMatch()
 }
@@ -522,6 +527,10 @@ function f2($a) {
 		`Multiline PHPDoc comment should start with /**, not /*`,
 		`Multiline PHPDoc comment should start with /**, not /*`,
 		`Multiline PHPDoc comment should start with /**, not /*`,
+		`Type for $a can be wrote explicitly from typeHint`,
+		`Type for $a can be wrote explicitly from typeHint`,
+		`Type for $item can be wrote explicitly from typeHint`,
+		`Type for $item2 can be wrote explicitly from typeHint`,
 	}
 	test.RunAndMatch()
 }
