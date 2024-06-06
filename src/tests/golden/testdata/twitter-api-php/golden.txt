@@ -25,6 +25,33 @@ MAYBE   trailingComma: Last element in a multi-line array should have a trailing
 MAYBE   invalidDocblockType: Use int type instead of integer at testdata/twitter-api-php/TwitterAPIExchange.php:404
      * @return integer
                ^^^^^^^
+WARNING implicitParamType: Type for $oauth_access_token can be wrote explicitly from typeHint at testdata/twitter-api-php/TwitterAPIExchange.php:20
+    private $oauth_access_token;
+            ^^^^^^^^^^^^^^^^^^^
+WARNING implicitParamType: Type for $oauth_access_token_secret can be wrote explicitly from typeHint at testdata/twitter-api-php/TwitterAPIExchange.php:25
+    private $oauth_access_token_secret;
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING implicitParamType: Type for $consumer_key can be wrote explicitly from typeHint at testdata/twitter-api-php/TwitterAPIExchange.php:30
+    private $consumer_key;
+            ^^^^^^^^^^^^^
+WARNING implicitParamType: Type for $consumer_secret can be wrote explicitly from typeHint at testdata/twitter-api-php/TwitterAPIExchange.php:35
+    private $consumer_secret;
+            ^^^^^^^^^^^^^^^^
+WARNING implicitParamType: Type for $getfield can be wrote explicitly from typeHint at testdata/twitter-api-php/TwitterAPIExchange.php:45
+    private $getfield;
+            ^^^^^^^^^
+WARNING implicitParamType: Type for $oauth can be wrote explicitly from typeHint at testdata/twitter-api-php/TwitterAPIExchange.php:50
+    protected $oauth;
+              ^^^^^^
+WARNING implicitParamType: Type for $url can be wrote explicitly from typeHint at testdata/twitter-api-php/TwitterAPIExchange.php:55
+    public $url;
+           ^^^^
+WARNING implicitParamType: Type for $requestMethod can be wrote explicitly from typeHint at testdata/twitter-api-php/TwitterAPIExchange.php:60
+    public $requestMethod;
+           ^^^^^^^^^^^^^^
+WARNING implicitParamType: Type for $httpStatusCode can be wrote explicitly from typeHint at testdata/twitter-api-php/TwitterAPIExchange.php:67
+    protected $httpStatusCode;
+              ^^^^^^^^^^^^^^^
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/twitter-api-php/index.php:10
     'consumer_secret' => ""
     ^^^^^^^^^^^^^^^^^^^^^^^

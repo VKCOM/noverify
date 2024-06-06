@@ -96,6 +96,12 @@ function f4() {
   };
 }
 `)
+	test.Expect = []string{
+		`Type for $a can be wrote explicitly from typeHint`,
+		`Type for $a can be wrote explicitly from typeHint`,
+		`Type for $a can be wrote explicitly from typeHint`,
+		`Type for $a can be wrote explicitly from typeHint`,
+	}
 	test.RunAndMatch()
 }
 

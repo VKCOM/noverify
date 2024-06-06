@@ -134,7 +134,8 @@ echo $t->good6['y']->value;
 }
 
 func TestShapeReturn(t *testing.T) {
-	linttest.SimpleNegativeTest(t, `<?php
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
 class MyList {
   /** @var \MyList */
   public $next;
@@ -146,10 +147,15 @@ function new_shape1() { return []; }
 $s1 = new_shape1();
 echo $s1['list']->next->next;
 `)
+	test.Expect = []string{
+		`Type for $next can be wrote explicitly from typeHint`,
+	}
+	test.RunAndMatch()
 }
 
 func TestTuple(t *testing.T) {
-	linttest.SimpleNegativeTest(t, `<?php
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
 class Box { public $value; }
 
 class T {
@@ -167,4 +173,8 @@ $t = new T();
 echo $t->good2[0]->value;
 echo $t->good3[1][0]->value;
 `)
+	test.Expect = []string{
+		`Type for $good1 can be wrote explicitly from typeHint`,
+	}
+	test.RunAndMatch()
 }

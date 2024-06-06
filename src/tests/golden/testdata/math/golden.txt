@@ -1,9 +1,18 @@
 WARNING unused: Variable $a is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/math/src/BigDecimal.php:292
         [$a, $b] = $this->scaleValues($this, $that);
          ^^
+WARNING implicitParamType: Type for $value can be wrote explicitly from typeHint at testdata/math/src/BigDecimal.php:28
+    private $value;
+            ^^^^^^
+WARNING implicitParamType: Type for $scale can be wrote explicitly from typeHint at testdata/math/src/BigDecimal.php:37
+    private $scale;
+            ^^^^^^
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/math/src/BigInteger.php:435
             new BigInteger($remainder)
             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING implicitParamType: Type for $value can be wrote explicitly from typeHint at testdata/math/src/BigInteger.php:32
+    private $value;
+            ^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$matches['fractional'] ?? ''` at testdata/math/src/BigNumber.php:90
             $fractional = isset($matches['fractional']) ? $matches['fractional'] : '';
                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -19,6 +28,9 @@ MAYBE   trailingComma: Last element in a multi-line array should have a trailing
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/math/src/Internal/Calculator/NativeCalculator.php:187
                     (string) $r
                     ^^^^^^^^^^^
+WARNING implicitParamType: Type for $maxDigits can be wrote explicitly from typeHint at testdata/math/src/Internal/Calculator/NativeCalculator.php:28
+    private $maxDigits;
+            ^^^^^^^^^^
 ERROR   classMembersOrder: Constant UNNECESSARY must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:33
     public const UNNECESSARY = 0;
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

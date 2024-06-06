@@ -73,11 +73,6 @@ func (r *rootChecker) CheckFunctionTypeHint(fun *ir.FunctionStmt) {
 			if ok {
 				var variable = typedParam.Variable
 
-				// maybe we don`t need it and order the same as param
-				if variable.Name != typeContainer.Var[1:] {
-					continue
-				}
-
 				var paramType, ok = typedParam.VariableType.(*ir.Name)
 				if paramType != nil && ok {
 					// TODO: quickFix -> remove @param from typeHint
@@ -86,6 +81,10 @@ func (r *rootChecker) CheckFunctionTypeHint(fun *ir.FunctionStmt) {
 
 				converted := phpdoctypes.ToRealType(r.normalizer.ClassFQNProvider(), r.normalizer.KPHP(), typeContainer.Type)
 				if cap(converted.Types) > 1 {
+					continue
+				}
+
+				if converted.Types == nil {
 					continue
 				}
 
@@ -98,6 +97,7 @@ func (r *rootChecker) CheckFunctionTypeHint(fun *ir.FunctionStmt) {
 				var variableWithType = typeParam + " " + varDollar
 				r.walker.Report(variable, LevelWarning, "implicitParamType", "Type for %s can be wrote explicitly from typeHint", varDollar)
 				r.walker.addQuickFix("implicitParamType", r.quickfix.FunctionParamTypeReplacementFromTypeHint(variable, variableWithType))
+				break
 			}
 		}
 	}

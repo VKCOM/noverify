@@ -3,7 +3,6 @@ package linter
 import (
 	"bytes"
 	"fmt"
-	"github.com/VKCOM/noverify/src/phpdoc"
 	"strings"
 
 	"github.com/VKCOM/noverify/src/constfold"
@@ -12,6 +11,7 @@ import (
 	"github.com/VKCOM/noverify/src/ir/phpcore"
 	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/meta"
+	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/types"
@@ -227,11 +227,6 @@ func (b *blockLinter) checkMethodTypeHint(method *ir.ClassMethodStmt) {
 			var typedParam, ok = param.(*ir.Parameter)
 			if ok {
 				var variable = typedParam.Variable
-
-				// maybe we don`t need it and order the same as param
-				if variable.Name != typeContainer.Var[1:] {
-					continue
-				}
 
 				var paramType, ok = typedParam.VariableType.(*ir.Name)
 				if paramType != nil && ok {
