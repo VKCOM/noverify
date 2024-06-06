@@ -139,3 +139,66 @@ function f2() {
 	}
 	linttest.RunFilterMatch(test, "typeHint")
 }
+
+func TestTypeHintToFunParam(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+declare(strict_types = 1);
+/* @param $str string */
+function test($str){}
+`)
+	test.Expect = []string{
+		`Non-canonical order of variable and type`,
+		`Type for $str can be wrote explicitly from typeHint`,
+	}
+	test.RunAndMatch()
+}
+
+func TestTypeHintClassAndFunc(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+declare(strict_types = 1);
+
+class SimpleClass
+{
+
+/**
+ * This is what the variable does. The var line contains the type stored in this variable.
+ * @var string
+ */
+private string $foo;
+
+
+/**
+ * This is what the variable does. The var line contains the type stored in this variable.
+ * @var string
+ */
+private $foo2 ;
+
+/**
+ * @param $str string
+ * @param $str2 string
+ */
+function test($str, string $str){
+}
+}
+
+/**
+ * @param $str string
+ */
+function test2($str){
+}
+`)
+	test.Expect = []string{
+		`Specify the access modifier for \SimpleClass::test method explicitly`,
+		`Non-canonical order of variable and type `,
+		`@param for non-existing argument $str2`,
+		`Non-canonical order of variable and type`,
+		`Type for $foo2 can be wrote explicitly from typeHint`,
+		`Type for $str can be wrote explicitly from typeHint`,
+		`Type for $str2 can be wrote explicitly from typeHint`,
+		`Non-canonical order of variable and type`,
+		`Type for $str can be wrote explicitly from typeHint`,
+	}
+	test.RunAndMatch()
+}
