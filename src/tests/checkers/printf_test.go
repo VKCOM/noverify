@@ -37,6 +37,7 @@ function f($s, array $a) {
 		`'-flag expects a char, found end of string`,
 		`potential array to string conversion`,
 		`potential array to string conversion`,
+		`Type for $a can be wrote explicitly from typeHint`,
 	}
 	test.RunAndMatch()
 }
@@ -72,6 +73,7 @@ function f($s, array $a) {
 		`'-flag expects a char, found end of string`,
 		`potential array to string conversion`,
 		`potential array to string conversion`,
+		`Type for $a can be wrote explicitly from typeHint`,
 	}
 	test.RunAndMatch()
 }
