@@ -80,7 +80,7 @@ func (r *rootChecker) CheckFunctionTypeHint(fun *ir.FunctionStmt) {
 
 				var paramType, ok = typedParam.VariableType.(*ir.Name)
 				if paramType != nil && ok {
-					//TODO: quickFix -> remove @param from typeHint
+					// TODO: quickFix -> remove @param from typeHint
 					break
 				}
 
@@ -93,9 +93,7 @@ func (r *rootChecker) CheckFunctionTypeHint(fun *ir.FunctionStmt) {
 					continue
 				}
 
-				//TODO: quickFix -> remove @param from typeHint
-
-				//quickFix -> add type to param
+				// TODO: quickFix -> remove @param from typeHint
 				var varDollar = typeContainer.Var
 				var variableWithType = typeParam + " " + varDollar
 				r.walker.Report(variable, LevelWarning, "implicitParamType", "Type for %s can be wrote explicitly from typeHint", varDollar)
