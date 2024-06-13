@@ -105,9 +105,11 @@ sh noverify.sh
 The linter will now find a new error:
 
 ```
-<critical> WARNING unused: Variable $a is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at /Users/petrmakhnev/swiftmailer/test_file.php:4
-  $a = 100;
-  ^^
+<critical> WARNING unused: Variable $a is unused at /Users/petrmakhnev/swiftmailer/test_file.php:4
+    |
+106 |  $a = 100;
+    |  ^^ use `$_` to ignore (see --unused-var-regex flag)
+
 ```
 
 If we create a commit:
