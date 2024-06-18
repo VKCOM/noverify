@@ -488,3 +488,51 @@ function type_type_check(string $animal_name, int $animal_id) {
 	}
 	test.RunRulesTest()
 }
+
+func TestRulePathExclude(t *testing.T) {
+	rfile := `<?php
+/**
+ * @name varEval
+ * @warning don't eval from variable
+ * @path www/
+ * @path-exclude www/no
+ */
+eval(${"var"});
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	code := `<?php
+          $hello = 'echo 123;';
+          eval($hello);
+          eval('echo 456;');
+        `
+	test.AddNamedFile("www/no", code)
+
+	test.RunRulesTest()
+}
+
+func TestRulePathExclude2(t *testing.T) {
+	rfile := `<?php
+/**
+ * @name varEval
+ * @warning don't eval from variable
+ * @path www/
+ * @path-exclude www/no
+ */
+eval(${"var"});
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	code := `<?php
+          $hello = 'echo 123;';
+          eval($hello);
+          eval('echo 456;');
+        `
+	test.AddNamedFile("www/no", code)
+	test.AddNamedFile("www/yes", code)
+
+	test.Expect = []string{
+		`don't eval from variable`,
+	}
+	test.RunRulesTest()
+}
