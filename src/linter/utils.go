@@ -68,15 +68,15 @@ func mergeTypeMaps(left types.Map, right types.Map) types.Map {
 // The types are inferred as follows:
 // 1. If there is a @return annotation, then its value becomes the return type;
 //
-// 2. If there is a type hint, then it is added to the types from the @return.
-//    If the @return is empty, then the type matches the type hint itself;
+//  2. If there is a type hint, then it is added to the types from the @return.
+//     If the @return is empty, then the type matches the type hint itself;
 //
-// 3. If the resulting type is mixed[], then if the actual type is a specific
-//    array type, then we use it, otherwise we combine this type with the
-//    resulting mixed[] type.
+//  3. If the resulting type is mixed[], then if the actual type is a specific
+//     array type, then we use it, otherwise we combine this type with the
+//     resulting mixed[] type.
 //
-// 4. If there is no @return annotation and type hint, then the return type is equal to
-//    the union of the types that are returned from the function by return.
+//  4. If there is no @return annotation and type hint, then the return type is equal to
+//     the union of the types that are returned from the function by return.
 func functionReturnType(phpdocReturnType types.Map, hintReturnType types.Map, actualReturnTypes types.Map) types.Map {
 	var returnTypes types.Map
 	if !phpdocReturnType.Empty() || !hintReturnType.Empty() {
@@ -494,10 +494,12 @@ func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedS
 	for kind, ruleByKind := range &ruleSet.RulesByKind {
 		res := make([]rules.Rule, 0, len(ruleByKind))
 		for _, rule := range ruleByKind {
-			if !strings.Contains(filename, rule.Path) || isFilePathExcluded(filename, rule) {
-				continue
+			for _, path := range rule.Path {
+				if !strings.Contains(filename, path) || isFilePathExcluded(filename, rule) {
+					continue
+				}
+				res = append(res, rule)
 			}
-			res = append(res, rule)
 		}
 		clone.Set(ir.NodeKind(kind), res)
 	}

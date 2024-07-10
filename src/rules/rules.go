@@ -98,7 +98,7 @@ type Rule struct {
 
 	// Path is a filter-like rule switcher.
 	// A rule is only applied to a file that contains a Path as a substring in its name.
-	Path string
+	Path []string
 
 	// PathExcludes is a filter-like rule switcher.
 	// A rule is not applied to a file that contains a PathExcludes as a substring in its name.
