@@ -20,10 +20,8 @@ func formatRule(r *Rule) string {
 		buf.WriteString(" * @maybe " + r.Message + "\n")
 	}
 
-	if len(r.Path) > 0 {
-		for _, path := range r.Path {
-			buf.WriteString(" * @path " + path + "\n")
-		}
+	for _, path := range r.Paths {
+		buf.WriteString(" * @path " + path + "\n")
 	}
 
 	if r.PathExcludes != nil {

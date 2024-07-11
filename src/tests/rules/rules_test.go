@@ -105,6 +105,36 @@ eval(${"var"});
 	test.RunRulesTest()
 }
 
+func TestRuleMultiPathFilter(t *testing.T) {
+	rfile := `<?php
+/**
+ * @name varEval
+ * @warning don't eval from variable
+ * @path my/site/ads_
+ * @path my/site/admin_
+ */
+eval(${"var"});
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	code := `<?php
+          $hello = 'echo 123;';
+          eval($hello);
+          eval('echo 456;');
+        `
+	test.AddNamedFile("/home/john/my/site/foo.php", code)
+	test.AddNamedFile("/home/john/my/site/ads_foo.php", code)
+	test.AddNamedFile("/home/john/my/site/ads_bar.php", code)
+	test.AddNamedFile("/home/john/my/site/admin_table.php", code)
+
+	test.Expect = []string{
+		`don't eval from variable`,
+		`don't eval from variable`,
+		`don't eval from variable`,
+	}
+	test.RunRulesTest()
+}
+
 func TestAnyRules(t *testing.T) {
 	rfile := `<?php
 /**

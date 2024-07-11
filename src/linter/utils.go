@@ -494,10 +494,26 @@ func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedS
 	for kind, ruleByKind := range &ruleSet.RulesByKind {
 		res := make([]rules.Rule, 0, len(ruleByKind))
 		for _, rule := range ruleByKind {
-			for _, path := range rule.Path {
-				if !strings.Contains(filename, path) || isFilePathExcluded(filename, rule) {
-					continue
+			if isFilePathExcluded(filename, rule) {
+				continue
+			}
+
+			match := false
+
+			if rule.Paths == nil {
+				if strings.Contains(filename, "") {
+					match = true
 				}
+			} else {
+				for _, path := range rule.Paths {
+					if strings.Contains(filename, path) {
+						match = true
+						break
+					}
+				}
+			}
+
+			if match {
 				res = append(res, rule)
 			}
 		}

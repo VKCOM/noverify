@@ -141,7 +141,7 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 		rule.Level = proto.Level
 		rule.Message = proto.Message
 		rule.Location = proto.Location
-		rule.Path = proto.Path
+		rule.Paths = proto.Paths
 
 		rule.Filters = make([]map[string]Filter, len(proto.Filters))
 		for i, filterSet := range proto.Filters {
@@ -232,11 +232,11 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 				return rule, p.errorf(st, "@path expects exactly 1 param, got %d", len(part.Params))
 			}
 
-			if rule.Path == nil {
-				rule.Path = make([]string, 0)
+			if rule.Paths == nil {
+				rule.Paths = make([]string, 0)
 			}
 
-			rule.Path = append(rule.Path, part.Params...)
+			rule.Paths = append(rule.Paths, part.Params...)
 		case "path-exclude":
 			if len(part.Params) != 1 {
 				return rule, p.errorf(st, "@exclude expects exactly 1 param, got %d", len(part.Params))
