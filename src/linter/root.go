@@ -123,6 +123,7 @@ func (d *rootWalker) File() *workspace.File {
 // EnterNode is invoked at every node in hierarchy.
 func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 	res = true
+	//d.checker.currentClassNodeStack.Push(n)
 
 	for _, c := range d.custom {
 		c.BeforeEnterNode(n)
@@ -172,6 +173,9 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		if !strings.HasSuffix(n.InterfaceName.Value, "able") {
 			d.checker.CheckIdentMisspellings(n.InterfaceName)
 		}
+	case *ir.IfStmt:
+		d.currentClassNodeStack.Push(n)
+
 	case *ir.ClassStmt:
 		d.currentClassNodeStack.Push(n)
 
@@ -225,6 +229,8 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 
 		d.scope().AddVar(v, solver.ExprTypeLocal(d.scope(), d.ctx.st, n.Expr), "global variable", meta.VarAlwaysDefined)
 	case *ir.FunctionStmt:
+		d.currentClassNodeStack.Push(n)
+
 		if d.metaInfo().IsIndexingComplete() {
 			res = d.checker.CheckFunction(n)
 		} else {
@@ -1746,9 +1752,40 @@ func (d *rootWalker) renderRuleMessage(msg string, n ir.Node, m phpgrep.MatchDat
 	return msg
 }
 
+func (d *rootWalker) isSuppressed(n ir.Node, checkName string) bool {
+	if containLinterSuppress(n, checkName) {
+		return true
+	}
+
+	// We go up the tree in search of a comment that disables this checker.
+	for i := 0; d.checker.currentClassNodeStack.NthParent(i) != nil; i++ {
+		parent := d.checker.currentClassNodeStack.NthParent(i)
+		if containLinterSuppress(parent, checkName) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (d *rootWalker) runRule(n ir.Node, sc *meta.Scope, rule *rules.Rule) bool {
 	m, ok := rule.Matcher.Match(n)
+
 	if !ok {
+		return false
+	}
+
+	/*	switch n:= n.(type) {
+
+		case *ir.IfStmt:
+		n.
+		}
+	*/
+	if d.isSuppressed(n, rule.Name) {
+		println()
+	}
+
+	if containLinterSuppress(n, rule.Name) {
 		return false
 	}
 
