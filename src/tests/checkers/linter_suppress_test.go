@@ -146,3 +146,67 @@ function g($b) {
 `)
 	test.RunAndMatch()
 }
+
+func TestLinterSuppressInsideFunction(t *testing.T) {
+	rfile := `<?php
+/**
+ * @name emptyIf
+ * @warning suspicious empty body of the if statement
+ * @scope local
+ */
+if ($_);
+`
+
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+if (123); // No warning
+
+function f() {
+/**
+ * @noverify-suppress emptyIf
+ */
+  if (123); // Warning
+}
+`)
+	test.RunRulesTest()
+}
+
+func TestLinterSuppressBehindFunction(t *testing.T) {
+	rfile := `<?php
+/**
+ * @name emptyIf
+ * @warning suspicious empty body of the if statement
+ * @scope local
+ */
+if ($_);
+`
+
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+if (123); // No warning
+/**
+ * @noverify-suppress emptyIf
+ */
+function f() {
+  if (123); // Warning
+}
+`)
+	test.RunRulesTest()
+}
+
+func TestLinterSuppressMethod(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {
+/**
+ * @noverify-suppress emptyIf
+ */
+public function f() {
+  if (123); // Warning
+}
+}
+`)
+	test.RunAndMatch()
+}
