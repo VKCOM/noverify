@@ -147,7 +147,7 @@ function g($b) {
 	test.RunAndMatch()
 }
 
-func TestLinterSuppressInsideFunction(t *testing.T) {
+func TestLinterSuppressDNRInsideFunction(t *testing.T) {
 	rfile := `<?php
 /**
  * @name emptyIf
@@ -172,7 +172,7 @@ function f() {
 	test.RunRulesTest()
 }
 
-func TestLinterSuppressBehindFunction(t *testing.T) {
+func TestLinterSuppressDNRBehindFunction(t *testing.T) {
 	rfile := `<?php
 /**
  * @name emptyIf
@@ -196,8 +196,18 @@ function f() {
 	test.RunRulesTest()
 }
 
-func TestLinterSuppressMethod(t *testing.T) {
+func TestLinterSuppressDNRMethod(t *testing.T) {
+	rfile := `<?php
+/**
+ * @name emptyIf
+ * @warning suspicious empty body of the if statement
+ * @scope local
+ */
+if ($_);
+`
+
 	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
 	test.AddFile(`<?php
 class Foo {
 /**
