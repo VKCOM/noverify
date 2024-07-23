@@ -148,9 +148,10 @@ noverify check --unused-var-regex='^null$|^e$' --allow-checks='unused' ./lib
 Then only a single place will be found where the declared variable is not really used.
 
 ```
-<critical> WARNING unused: Variable $name is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at swiftmailer/lib/classes/Swift/Mailer.php:73
-            foreach ($message->getTo() as $address => $name) {
-                                                      ^^^^^
+<critical> WARNING unused: Variable $name is unused at swiftmailer/lib/classes/Swift/Mailer.php:73
+    |
+106 |     foreach ($message->getTo() as $address => $name) {}
+    |                                               ^^^^^ use `$_` to ignore (see --unused-var-regex flag)
 ```
 
 In order to fix it, it is enough to rename the variable to `$null`.
