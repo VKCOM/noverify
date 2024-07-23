@@ -489,7 +489,7 @@ function type_type_check(string $animal_name, int $animal_id) {
 	test.RunRulesTest()
 }
 
-func TestRulePathExclude(t *testing.T) {
+func TestRulePathExcludePositive(t *testing.T) {
 	rfile := `<?php
 /**
  * @name varEval
@@ -511,7 +511,7 @@ eval(${"var"});
 	test.RunRulesTest()
 }
 
-func TestRulePathExclude2(t *testing.T) {
+func TestRulePathExcludeNegative(t *testing.T) {
 	rfile := `<?php
 /**
  * @name varEval
