@@ -498,23 +498,16 @@ func cloneRulesForFile(filename string, ruleSet *rules.ScopedSet) *rules.ScopedS
 				continue
 			}
 
-			match := false
-
 			if rule.Paths == nil {
-				if strings.Contains(filename, "") {
-					match = true
-				}
-			} else {
-				for _, path := range rule.Paths {
-					if strings.Contains(filename, path) {
-						match = true
-						break
-					}
-				}
+				res = append(res, rule)
+				continue
 			}
 
-			if match {
-				res = append(res, rule)
+			for _, path := range rule.Paths {
+				if strings.Contains(filename, path) {
+					res = append(res, rule)
+					break
+				}
 			}
 		}
 		clone.Set(ir.NodeKind(kind), res)
