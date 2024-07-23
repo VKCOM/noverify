@@ -142,6 +142,8 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 		rule.Message = proto.Message
 		rule.Location = proto.Location
 		rule.Paths = proto.Paths
+		rule.PathExcludes = proto.PathExcludes
+
 
 		rule.Filters = make([]map[string]Filter, len(proto.Filters))
 		for i, filterSet := range proto.Filters {
