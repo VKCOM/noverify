@@ -410,7 +410,7 @@ func (m Map) LazyArrayElemType() Map {
 
 	mm := make(map[string]struct{}, m.Len())
 	for typ := range m.m {
-		//TODO: Remove this todo after creating rule for array unpacking (inspection iterable types)
+		// TODO: https://github.com/VKCOM/noverify/issues/1227
 		if typ == "null" {
 			break
 		}
