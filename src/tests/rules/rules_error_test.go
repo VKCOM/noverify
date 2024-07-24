@@ -133,19 +133,6 @@ $_ = foo();
 			expect: "<test>:7: @path expects exactly 1 param, got 2",
 		},
 		{
-			name: `DuplicatedPath`,
-			rule: `<?php
-/**
- * @name Some
- * @maybe Some
- * @path hell;
- * @path earth;
- */
-$_ = foo();
-`,
-			expect: "<test>:8: duplicate @path constraint",
-		},
-		{
 			name: `PathExpectsExactlyTwoParam`,
 			rule: `<?php
 /**
