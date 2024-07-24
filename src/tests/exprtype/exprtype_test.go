@@ -2203,6 +2203,7 @@ function f() {
 
 func TestArrayTypesWithUnpack_Primitives(t *testing.T) {
 	code := `<?php
+declare(strict_types = 1);
 function f() {
 // with int type
 $a = [1, 2, 3];
