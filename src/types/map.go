@@ -410,6 +410,7 @@ func (m Map) LazyArrayElemType() Map {
 
 	mm := make(map[string]struct{}, m.Len())
 	for typ := range m.m {
+		//TODO: Remove this todo after creating rule for array unpacking (inspection iterable types)
 		if typ == "null" {
 			break
 		}
@@ -424,6 +425,7 @@ func (m Map) LazyArrayElemType() Map {
 			// is a more precise type.
 			continue
 		}
+
 		mm[UnwrapArrayOf(typ)] = struct{}{}
 	}
 	return Map{m: mm, flags: m.flags}

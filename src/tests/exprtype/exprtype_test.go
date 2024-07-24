@@ -2201,6 +2201,71 @@ function f() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestArrayTypesWithUnpack_Primitives(t *testing.T) {
+	code := `<?php
+function f() {
+// with int type
+$a = [1, 2, 3];
+$b = [0, ...$a];
+exprtype($b, "int[]");
+
+// with float type
+$a1 = [1.1, 2.2, 3.3];
+$b1 = [0.0, ...$a1];
+exprtype($b1, "float[]");
+
+// with string type
+$a2 = ["a", "b", "c"];
+$b2 = ["d", ...$a2];
+exprtype($b2, "string[]");
+
+// with bool type
+$a3 = [true, false, true];
+$b3 = [false, ...$a3];
+exprtype($b3, "bool[]");
+
+// mixed types
+$a4 = [1, "a", 3.3, true];
+$b4 = ["start", ...$a4];
+exprtype($b4, "mixed[]");
+
+// with two unpack
+$a5 = [1, 2, 3];
+$b5 = [4, 5, 6];
+$c5 = [...$a5, ...$b5];
+exprtype($c5, "int[]");
+
+// with two unpack with different types
+$a6 = [1, 2, 3];
+$c6 = [...$a6, ...$a2];
+exprtype($c6, "mixed[]");
+
+// one unpack
+$a7 = [true, false, true];
+$b7 = [...$a7];
+exprtype($b7, "bool[]");
+
+// with two unpack and just type
+$a8 = [1.1, 2.2, 3.3];
+$b8 = [4.4, 5.5, 6.6];
+$c8 = [...$a8, 7.7, ...$b8];
+exprtype($c8, "float[]");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
+// @see issue1214
+func TestArrayTypesWithUnpackNullNegative(t *testing.T) {
+	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types = 1);
+
+function test() {
+ $special_items = null;
+ $_ = [...$special_items];
+}`)
+}
+
 func TestPropertyTypeHints(t *testing.T) {
 	code := `<?php
 class Too {}
