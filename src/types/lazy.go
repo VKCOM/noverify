@@ -291,8 +291,12 @@ func FormatSimpleType(s string) (res string) {
 	return s
 }
 
+func IsAfterWMaxed(typ string) (res bool) {
+	return typ == "" || typ[0] >= WMax
+}
+
 func FormatType(s string) (res string) {
-	if s == "" || s[0] >= WMax {
+	if IsAfterWMaxed(s) {
 		return FormatSimpleType(s)
 	}
 

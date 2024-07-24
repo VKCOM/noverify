@@ -20,14 +20,16 @@ func mixedType() map[string]struct{} {
 }
 
 // resolveType resolves function calls, method calls and global variables.
-//   curStaticClass is current class name (if inside the class, otherwise "")
+//
+//	curStaticClass is current class name (if inside the class, otherwise "")
 func resolveType(info *meta.Info, curStaticClass, typ string, visitedMap ResolverMap) (result map[string]struct{}) {
 	r := resolver{info: info, visited: visitedMap}
 	return r.resolveType(curStaticClass, typ)
 }
 
 // ResolveTypes resolves function calls, method calls and global variables.
-//   curStaticClass is current class name (if inside the class, otherwise "")
+//
+//	curStaticClass is current class name (if inside the class, otherwise "")
 func ResolveTypes(info *meta.Info, curStaticClass string, m types.Map, visitedMap ResolverMap) map[string]struct{} {
 	r := resolver{info: info, visited: visitedMap}
 	return r.resolveTypes(curStaticClass, m)
@@ -76,7 +78,7 @@ func (r *resolver) resolveTypeNoLateStaticBinding(class, typ string) map[string]
 		return result
 	}
 
-	if typ == "" || typ[0] >= types.WMax {
+	if types.IsAfterWMaxed(typ) {
 		return identityType(typ)
 	}
 
