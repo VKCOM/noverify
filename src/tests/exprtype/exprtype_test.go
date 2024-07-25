@@ -2201,6 +2201,45 @@ function f() {
 	runExprTypeTest(t, &exprTypeTestParams{code: code})
 }
 
+func TestArrayTypesWithUnpackPrimitives(t *testing.T) {
+	code := `<?php
+function f() {
+  // with int type
+  $a = 1;
+  $b = [...$a];
+  exprtype($b, "mixed");
+
+  // with float type
+  $a1 = 1.1;
+  $b1 = [...$a1];
+  exprtype($b1, "mixed");
+
+  // with string type
+  $a2 = "a";
+  $b2 = [...$a2];
+  exprtype($b2, "mixed");
+
+  // with bool type
+  $a3 = true;
+  $b3 = [...$a3];
+  exprtype($b3, "mixed");
+
+  // null
+  $a4 = null;
+  $b4 = [...$a4];
+  exprtype($b4, "mixed");
+
+  // class
+  class Foo {}
+
+  $a5 = new Foo();
+  $b5 = [...$a5];
+  exprtype($b5, "mixed");
+}
+`
+	runExprTypeTest(t, &exprTypeTestParams{code: code})
+}
+
 func TestPropertyTypeHints(t *testing.T) {
 	code := `<?php
 class Too {}
