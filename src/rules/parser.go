@@ -177,6 +177,16 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 			}
 			rule.Name = part.Params[0]
 
+		case "link":
+			if len(part.Params) != 1 {
+				return rule, p.errorf(st, "@link expects exactly 1 param, got %d", len(part.Params))
+			}
+			var link = part.Params[0]
+			if !isURL(link) {
+				return rule, p.errorf(st, "@link argument is not link")
+			}
+			rule.Link = link
+
 		case "location":
 			if len(part.Params) != 1 {
 				return rule, p.errorf(st, "@location expects exactly 1 params, got %d", len(part.Params))
@@ -318,7 +328,6 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 			}
 			filter.Regexp = regex
 			filterSet[name] = filter
-
 		default:
 			return rule, p.errorf(st, "unknown attribute @%s on line %d", part.Name(), part.Line())
 		}
@@ -337,6 +346,11 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 	}
 
 	return rule, nil
+}
+
+func isURL(str string) bool {
+	re := regexp.MustCompile(`^(https?|ftp)://[^\s/$.?#].\S*$`)
+	return re.MatchString(str)
 }
 
 func (p *parser) parseRules(stmts []ir.Node, proto *Rule) error {
