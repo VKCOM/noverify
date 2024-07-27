@@ -44,3 +44,6 @@ issues:
       linters:
         - gocritic
         - golint
+    - path: cmd/stubs/phpstorm_stubs.go
+      linters:
+        - gofmt
