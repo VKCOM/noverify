@@ -27,7 +27,6 @@ linters:
     - dupl
     - gocyclo
     - lll
-    - maligned
     - prealloc
     - gosec
   fast: false
