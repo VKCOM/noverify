@@ -23,6 +23,7 @@ linters:
     - unconvert
     - unused
     - exportloopref
+    - govet
   disable:
     - depguard
     - dupl
