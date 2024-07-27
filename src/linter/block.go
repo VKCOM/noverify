@@ -841,10 +841,10 @@ func (b *blockWalker) handleTry(s *ir.TryStmt) bool {
 		})
 	}
 
-	for nm, types := range varTypes {
+	for nm, typs := range varTypes {
 		var flags meta.VarFlags
 		flags.SetAlwaysDefined(defCounts[nm] == linksCount)
-		b.ctx.sc.AddVarName(nm, types, "all branches try catch", flags)
+		b.ctx.sc.AddVarName(nm, typs, "all branches try catch", flags)
 	}
 
 	if finallyCtx != nil {
@@ -1927,10 +1927,10 @@ func (b *blockWalker) handleSwitch(s *ir.SwitchStmt) bool {
 		})
 	}
 
-	for nm, types := range varTypes {
+	for nm, typs := range varTypes {
 		var flags meta.VarFlags
 		flags.SetAlwaysDefined(defCounts[nm] == linksCount)
-		b.ctx.sc.AddVarName(nm, types, "all cases", flags)
+		b.ctx.sc.AddVarName(nm, typs, "all cases", flags)
 	}
 
 	return false
