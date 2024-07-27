@@ -1,11 +1,5 @@
 run:
   timeout: 3m
-  skip-files:
-    - php/parser/scanner/scanner.go
-    - php/parser/scanner/lexer_tokens.go
-    - php/parser/scanner/lexer.go
-    - php/parser/printer/printer.go
-    - php/parser/printer/pretty_printer.go
 
 linters:
   enable:
@@ -44,3 +38,9 @@ issues:
     - path: cmd/stubs/phpstorm_stubs.go
       linters:
         - gofmt
+  exclude-dirs:
+    - php/parser/scanner/scanner.go
+    - php/parser/scanner/lexer_tokens.go
+    - php/parser/scanner/lexer.go
+    - php/parser/printer/printer.go
+    - php/parser/printer/pretty_printer.go
