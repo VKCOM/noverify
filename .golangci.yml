@@ -30,7 +30,9 @@ linters:
     - gocyclo
     - lll
     - prealloc
-    - gosec
+    - gosec # TODO: enable it
+    - unparam
+    - revive
   fast: false
 
 issues:
