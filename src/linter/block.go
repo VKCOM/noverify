@@ -378,6 +378,7 @@ func (b *blockWalker) EnterNode(n ir.Node) (res bool) {
 		for _, st := range s.Stmts {
 			b.addStatement(st)
 		}
+		b.handleDeclareSection(s)
 	case *ir.StmtList:
 		for _, st := range s.Stmts {
 			b.addStatement(st)
@@ -548,6 +549,23 @@ func (b *blockWalker) handleAndCheckGlobalStmt(s *ir.GlobalStmt) {
 		} else {
 			b.addNonLocalVar(v, varGlobal)
 		}
+	}
+}
+
+func (b *blockWalker) handleDeclareSection(root *ir.Root) {
+	isExist := false
+
+	for _, stmt := range root.Stmts {
+		_, ok := stmt.(*ir.DeclareStmt)
+		if ok {
+			isExist = true
+			break
+		}
+	}
+
+	if !isExist {
+		b.report(root, LevelWarning, "noDeclareSection", "Missed declare(strict_types = 1) directive")
+		b.r.addQuickFix("noDeclareSection", b.linter.quickfix.CreateDeclareStrictTypes(root))
 	}
 }
 

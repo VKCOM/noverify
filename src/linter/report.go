@@ -26,6 +26,15 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 		},
 
 		{
+			Name:     "noDeclareSection",
+			Default:  true,
+			Quickfix: true,
+			Comment:  "Report declare(strict_types=1) has not been set.",
+			Before:   ` `,
+			After:    `declare(strict_types = 1);`,
+		},
+
+		{
 			Name:     "emptyStmt",
 			Default:  true,
 			Quickfix: false,
