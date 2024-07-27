@@ -25,7 +25,6 @@ linters:
     - typecheck
     - unconvert
     - unused
-    - varcheck
     - exportloopref
   disable:
     - depguard
