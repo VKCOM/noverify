@@ -1,5 +1,5 @@
 run:
-  deadline: 3m
+  timeout: 3m
   skip-files:
     - php/parser/scanner/scanner.go
     - php/parser/scanner/lexer_tokens.go
