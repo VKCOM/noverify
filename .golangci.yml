@@ -9,7 +9,6 @@ run:
 
 linters:
   enable:
-    - deadcode
     - gas
     - gocritic
     - gofmt
