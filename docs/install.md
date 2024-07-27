@@ -79,7 +79,7 @@ Make sure you have [Go](https://golang.org/dl/) version 1.16 or higher installed
 Run the following command:
 
 ```shell
-$ go get github.com/VKCOM/noverify
+$ GO111MODULE=off go get github.com/VKCOM/noverify
 ```
 
 NoVerify will be installed to `$GOPATH/bin/noverify`, which usually expands to `$HOME/go/bin/noverify`.
