@@ -1,6 +1,6 @@
 module stat
 
-go 1.16
+go 1.21
 
 require (
 	github.com/VKCOM/noverify v0.4.0

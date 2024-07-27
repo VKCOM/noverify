@@ -16,41 +16,43 @@ import (
 // cacheVersions is a magic number that helps to distinguish incompatible caches.
 //
 // Version log:
-//     27 - added Static field to meta.FuncInfo
-//     28 - array type parsed as mixed[]
-//     29 - updated type inference for ClassConstFetch
-//     30 - resolve ClassConstFetch to a wrapped type string
-//     31 - fixed plus operator type inference for arrays
-//     32 - replaced Static:bool with Flags:uint8 in meta.FuncInfo
-//     33 - support parsing of array<k,v> and list<type>
-//     34 - support parsing of ?ClassName as "ClassName|null"
-//     35 - added Flags:uint8 to meta.ClassInfo
-//     36 - added FuncAbstract bit to FuncFlags
-//          added FuncFinal bit to FuncFlags
-//          added ClassFinal bit to ClassFlags
-//          FuncInfo now stores original function name
-//          ClassInfo now stores original class name
-//     37 - added ClassShape bit to ClassFlags
-//          changed meta.scopeVar bool fields representation
-//     38 - replaced TypesMap.immutable:bool with flags:uint8.
-//          added mapPrecise flag to mark precise type maps.
-//     39 - added new field Value in ConstantInfo
-//     40 - changed string const value storage (no quotes)
-//     41 - const-folding affected const definition values
-//     42 - bool-typed consts are now stored in meta info
-//     43 - define'd const values stored in cache
-//     44 - rename ConstantInfo => ConstInfo
-//     45 - added Mixins field to meta.ClassInfo
-//     46 - changed the way of inferring the return type of functions and methods
-//     47 - forced cache version invalidation due to the #921
-//     48 - renamed meta.TypesMap to types.Map; this affects gob encoding
-//     49 - for shape, names are now generated using the keys that make up this shape
-//     50 - added Flags field for meta.PropertyInfo
-//     51 - added anonymous classes
-//     52 - renamed all PhpDoc and Phpdoc with PHPDoc
-//     53 - added DeprecationInfo for functions and methods and support for some attributes
-//     54 - forced cache version invalidation due to the #1165
-const cacheVersion = 54
+//
+//	    27 - added Static field to meta.FuncInfo
+//	    28 - array type parsed as mixed[]
+//	    29 - updated type inference for ClassConstFetch
+//	    30 - resolve ClassConstFetch to a wrapped type string
+//	    31 - fixed plus operator type inference for arrays
+//	    32 - replaced Static:bool with Flags:uint8 in meta.FuncInfo
+//	    33 - support parsing of array<k,v> and list<type>
+//	    34 - support parsing of ?ClassName as "ClassName|null"
+//	    35 - added Flags:uint8 to meta.ClassInfo
+//	    36 - added FuncAbstract bit to FuncFlags
+//	         added FuncFinal bit to FuncFlags
+//	         added ClassFinal bit to ClassFlags
+//	         FuncInfo now stores original function name
+//	         ClassInfo now stores original class name
+//	    37 - added ClassShape bit to ClassFlags
+//	         changed meta.scopeVar bool fields representation
+//	    38 - replaced TypesMap.immutable:bool with flags:uint8.
+//	         added mapPrecise flag to mark precise type maps.
+//	    39 - added new field Value in ConstantInfo
+//	    40 - changed string const value storage (no quotes)
+//	    41 - const-folding affected const definition values
+//	    42 - bool-typed consts are now stored in meta info
+//	    43 - define'd const values stored in cache
+//	    44 - rename ConstantInfo => ConstInfo
+//	    45 - added Mixins field to meta.ClassInfo
+//	    46 - changed the way of inferring the return type of functions and methods
+//	    47 - forced cache version invalidation due to the #921
+//	    48 - renamed meta.TypesMap to types.Map; this affects gob encoding
+//	    49 - for shape, names are now generated using the keys that make up this shape
+//	    50 - added Flags field for meta.PropertyInfo
+//	    51 - added anonymous classes
+//	    52 - renamed all PhpDoc and Phpdoc with PHPDoc
+//	    53 - added DeprecationInfo for functions and methods and support for some attributes
+//	    54 - forced cache version invalidation due to the #1165
+//		55 - updated go version from 1.16 -> 1.21
+const cacheVersion = 55
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")

@@ -1,6 +1,6 @@
 module github.com/VKCOM/noverify
 
-go 1.16
+go 1.21
 
 require (
 	github.com/VKCOM/php-parser v0.8.0-rc.2.0.20210802093708-d85f5a481602
