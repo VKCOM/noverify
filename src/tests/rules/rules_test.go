@@ -338,7 +338,7 @@ func TestLinkTag(t *testing.T) {
  * @name emptyIf
  * @warning suspicious empty body of the if statement
  * @scope local
- * @link https://goodrule.com
+ * @link goodrule.com
  */
 if ($_);
 `
@@ -354,7 +354,7 @@ function f() {
 `)
 
 	test.Expect = []string{
-		` | More about this rule: https://goodrule.com`,
+		` | More about this rule: goodrule.com`,
 	}
 	test.RunRulesTest()
 }

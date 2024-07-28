@@ -349,7 +349,7 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 }
 
 func isURL(str string) bool {
-	re := regexp.MustCompile(`^(https?|ftp)://[^\s/$.?#].\S*$`)
+	re := regexp.MustCompile(`^((https?|ftp)://)?[^\s/$.?#].\S*$`)
 	return re.MatchString(str)
 }
 
