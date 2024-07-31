@@ -1,121 +1,46 @@
 run:
-  deadline: 3m
-  skip-files:
-    - php/parser/scanner/scanner.go
-    - php/parser/scanner/lexer_tokens.go
-    - php/parser/scanner/lexer.go
-    - php/parser/printer/printer.go
-    - php/parser/printer/pretty_printer.go
+  timeout: 3m
 
 linters:
   enable:
-    - deadcode
+    - errcheck
     - gas
     - gocritic
     - gofmt
     - goimports
-    - golint
     - gosimple
     - ineffassign
-    - megacheck
     - misspell
     - nakedret
     - staticcheck
-    - structcheck
     - typecheck
     - unconvert
     - unused
-    - varcheck
     - exportloopref
+    - govet
   disable:
     - depguard
     - dupl
     - gocyclo
-    - interfacer
     - lll
-    - maligned
     - prealloc
-    - gosec
+    - gosec # TODO: enable it
+    - unparam
+    - revive
   fast: false
-
-linters-settings:
-  gocritic:
-    enabled-checks:
-      - appendAssign
-      - appendCombine
-      - argOrder
-      - assignOp
-      - badCall
-      - badCond
-      - badRegexp
-      - boolExprSimplify
-      - captLocal
-      - caseOrder
-      - codegenComment
-      - commentFormatting
-      - commentedOutCode
-      - commentedOutImport
-      - defaultCaseOrder
-      - deferUnlambda
-      - deprecatedComment
-      - dupArg
-      - dupBranchBody
-      - dupCase
-      - dupImport
-      - dupSubExpr
-      - elseif
-      - emptyFallthrough
-      - emptyStringTest
-      - equalFold
-      - evalOrder
-      - exitAfterDefer
-      - filepathJoin
-      - flagDeref
-      - flagName
-      - ifElseChain
-      - importShadow
-      - indexAlloc
-      - initClause
-      - mapKey
-      - methodExprCall
-      - nestingReduce
-      - newDeref
-      - nilValReturn
-      - offBy1
-      - rangeExprCopy
-      - regexpMust
-      - regexpPattern
-      - regexpSimplify
-      - ruleguard
-      - singleCaseSwitch
-      - sloppyLen
-      - sloppyReassign
-      - sloppyTypeAssert
-      - sortSlice
-      - stringXbytes
-      - switchTrue
-      - truncateCmp
-      - typeAssertChain
-      - typeSwitchVar
-      - typeUnparen
-      - underef
-      - unlabelStmt
-      - unlambda
-      - unnamedResult
-      - unnecessaryBlock
-      - unslice
-      - valSwap
-      - weakCond
-      - whyNoLint
-      - wrapperFunc
-      - yodaStyleExpr
-    settings:
-      ruleguard:
-        rules: "rules.go"
 
 issues:
   exclude-rules:
     - path: php/parser
       linters:
         - gocritic
-        - golint
+        - revive
+    - path: cmd/stubs/phpstorm_stubs.go
+      linters:
+        - gofmt
+  exclude-dirs:
+    - php/parser/scanner/scanner.go
+    - php/parser/scanner/lexer_tokens.go
+    - php/parser/scanner/lexer.go
+    - php/parser/printer/printer.go
+    - php/parser/printer/pretty_printer.go
