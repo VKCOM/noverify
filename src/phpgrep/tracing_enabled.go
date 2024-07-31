@@ -1,3 +1,4 @@
+//go:build tracing
 // +build tracing
 
 package phpgrep

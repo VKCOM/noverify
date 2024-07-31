@@ -681,7 +681,7 @@ type ReferenceExpr struct {
 	Variable     Node
 }
 
-// ShellExecExpr is a ``-quoted string.
+// ShellExecExpr is a `$shell`-quoted string.
 type ShellExecExpr struct {
 	Position         *position.Position
 	OpenBacktickTkn  *token.Token
@@ -763,8 +763,10 @@ type Name struct {
 
 // Argument is a wrapper node for func/method arguments.
 // Possible syntax's:
-//   $Name: $Expr
-//   $Expr
+//
+//	$Name: $Expr
+//	$Expr
+//
 // If $Variadic is true, it's `...$Expr`.
 // If $IsReference is true, it's `&$Expr`.
 type Argument struct {
@@ -795,11 +797,13 @@ type Nullable struct {
 
 // Parameter is a function param declaration.
 // Possible syntax's:
-//   #[$AttrGroups] $Modifiers  $VariableType $Variable = $DefaultValue
-//   #[$AttrGroups]             $VariableType $Variable = $DefaultValue
-//                              $VariableType $Variable = $DefaultValue
-//                              $VariableType $Variable
-//                                            $Variable
+//
+//	#[$AttrGroups] $Modifiers  $VariableType $Variable = $DefaultValue
+//	#[$AttrGroups]             $VariableType $Variable = $DefaultValue
+//	                           $VariableType $Variable = $DefaultValue
+//	                           $VariableType $Variable
+//	                                         $Variable
+//
 // If $ByRef is true, it's `&$Variable`.
 // If $Variadic is true, it's `...$Variable`.
 type Parameter struct {

@@ -16,7 +16,7 @@ func NewCommentParser(comment string, line int) *CommentParser {
 }
 
 // ParseExpectation parses a string describing expected errors like
-//     want `error description 1` [and` error description 2` and `error 3` ...]
+// want `error description 1` [and` error description 2` and `error 3` ...]
 func (c *CommentParser) ParseExpectation() (wants []string, err error) {
 	// It is necessary to remove \r, since in windows the lines are separated by \r\n.
 	c.comment = strings.TrimSuffix(c.comment, "\r")

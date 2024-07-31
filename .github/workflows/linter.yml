@@ -1,0 +1,20 @@
+name: Linter
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.16
+
+      - name: Run Linter
+        run: make lint

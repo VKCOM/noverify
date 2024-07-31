@@ -27,7 +27,7 @@ playground:
 check: lint test
 
 lint:
-	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH_DIR)/bin v1.39.0
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH_DIR)/bin v1.59.1
 	@echo "running linters..."
 	@$(GOPATH_DIR)/bin/golangci-lint run ./src/...
 	@echo "no linter errors found"
