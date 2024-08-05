@@ -192,7 +192,7 @@ func (m Map) IsLazyArray() bool {
 	}
 
 	for typ := range m.m {
-		if len(typ) > 0 && typ[0] == WArrayOf {
+		if typ != "" && typ[0] == WArrayOf {
 			return true
 		}
 	}

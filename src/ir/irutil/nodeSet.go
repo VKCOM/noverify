@@ -14,6 +14,7 @@ import (
 // shows that we can use n=4 or n=5 as a sweet spot.
 //
 // PHP corpus results (if conditions + switch cases):
+//
 //	256131 only slice is used (slice=1 map=0)
 //	56628  only slice is used (slice=2 map=0)
 //	5844   only slice is used (slice=3 map=0)
@@ -35,6 +36,7 @@ import (
 // as a unique key for a map. This is the same thing staticcheck linter does.
 //
 // A comparison of slice-only (old) and hybrid solutions (new):
+//
 //	name            old time/op  new time/op  delta
 //	NodeSet/1-8     9.42ns ± 0%  9.47ns ± 1%     ~     (p=0.222 n=4+5)
 //	NodeSet/5-8      923ns ± 3%   908ns ± 1%     ~     (p=0.159 n=5+4)

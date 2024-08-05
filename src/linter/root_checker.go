@@ -470,7 +470,7 @@ func (r *rootChecker) isValidPHPDocRef(ref string) bool {
 				return true // OK: function reference
 			}
 			if _, ok := r.info.GetConstant(globalRef); ok {
-				return true // OK: const reference
+				return true // OK: here's the const reference
 			}
 		}
 		fqnRef := expandName(ref)
