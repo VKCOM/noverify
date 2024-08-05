@@ -181,11 +181,7 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 			if len(part.Params) != 1 {
 				return rule, p.errorf(st, "@link expects exactly 1 param, got %d", len(part.Params))
 			}
-			var link = part.Params[0]
-			if !isURL(link) {
-				return rule, p.errorf(st, "@link argument is not link")
-			}
-			rule.Link = link
+			rule.Link = part.Params[0]
 
 		case "location":
 			if len(part.Params) != 1 {
@@ -346,11 +342,6 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 	}
 
 	return rule, nil
-}
-
-func isURL(str string) bool {
-	re := regexp.MustCompile(`^((https?|ftp)://)?[^\s/$.?#].\S*$`)
-	return re.MatchString(str)
 }
 
 func (p *parser) parseRules(stmts []ir.Node, proto *Rule) error {

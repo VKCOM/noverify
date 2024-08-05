@@ -51,7 +51,6 @@ import (
 //	    52 - renamed all PhpDoc and Phpdoc with PHPDoc
 //	    53 - added DeprecationInfo for functions and methods and support for some attributes
 //	    54 - forced cache version invalidation due to the #1165
-//		55 - added @link tag -> new field in Rule
 const cacheVersion = 54
 
 var (
