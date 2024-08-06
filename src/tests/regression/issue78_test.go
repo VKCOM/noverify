@@ -194,6 +194,7 @@ function trailing_exit_while($xs) {
 		"Unreachable code",
 		"Unreachable code",
 		"Unreachable code",
+		"Potential dangerous value: you have constant int value that interpreted as bool",
 	}
 
 	test.RunAndMatch()
@@ -375,6 +376,7 @@ function trailing_exit_while($xs) {
 		"Unreachable code",
 		"Unreachable code",
 		"Unreachable code",
+		"Potential dangerous value: you have constant int value that interpreted as bool",
 	}
 
 	test.RunAndMatch()
@@ -505,7 +507,8 @@ function trailing_exit_for($xs) {
 }
 
 function trailing_exit_while($xs) {
-  while (1) {
+$b = 1;
+  while ($b) {
     if ($xs[0] < 1000) {
       return "ok";
     }
