@@ -26,6 +26,15 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 		},
 
 		{
+			Name:     "noDeclareSection",
+			Default:  true,
+			Quickfix: true,
+			Comment:  "Report declare(strict_types=1) has not been set.",
+			Before:   ` `,
+			After:    `declare(strict_types = 1);`,
+		},
+
+		{
 			Name:     "emptyStmt",
 			Default:  true,
 			Quickfix: false,
@@ -1185,8 +1194,8 @@ func DiffReports(gitRepo string, diffArgs []string, changesList []git.Change, ch
 		}
 	}
 
-	old := reportListToMap(oldList)
-	new := reportListToMap(newList)
+	oldReportMap := reportListToMap(oldList)
+	newReportMap := reportListToMap(newList)
 	changes := gitChangesToMap(changesList)
 
 	var mu sync.Mutex
@@ -1196,7 +1205,7 @@ func DiffReports(gitRepo string, diffArgs []string, changesList []git.Change, ch
 
 	limitCh := make(chan struct{}, maxConcurrency)
 
-	for filename, list := range new {
+	for filename, list := range newReportMap {
 		wg.Add(1)
 		go func(filename string, list []*Report) {
 			limitCh <- struct{}{}
@@ -1212,7 +1221,7 @@ func DiffReports(gitRepo string, diffArgs []string, changesList []git.Change, ch
 				oldName = filename // full diff mode
 			}
 
-			reports, err := diffReportsList(gitRepo, ignoreCommits, diffArgs, filename, c, old[oldName], list)
+			reports, err := diffReportsList(gitRepo, ignoreCommits, diffArgs, filename, c, oldReportMap[oldName], list)
 			if err != nil {
 				mu.Lock()
 				resErr = err
@@ -1266,8 +1275,8 @@ func diffReportsList(gitRepo string, ignoreCommits map[string]struct{}, diffArgs
 		}
 	}
 
-	old, oldMaxLine := reportListToPerLineMap(oldList)
-	new, newMaxLine := reportListToPerLineMap(newList)
+	oldReportMap, oldMaxLine := reportListToPerLineMap(oldList)
+	newReportMap, newMaxLine := reportListToPerLineMap(newList)
 
 	var maxLine = oldMaxLine
 	if newMaxLine > maxLine {
@@ -1284,17 +1293,17 @@ func diffReportsList(gitRepo string, ignoreCommits map[string]struct{}, diffArgs
 		// just deletion
 		if ok && ch.new.HaveRange && ch.new.Range == 0 {
 			oldLine = ch.old.To
-			newLine-- // cancel the increment of newLine, because code was deleted, no new lines added
+			newLine-- // cancel the increment of newLine, because code was deleted, no newReportMap lines added
 			continue
 		}
 
-		res = maybeAppendReports(res, new, old, newLine, oldLine, blame, ignoreCommits)
+		res = maybeAppendReports(res, newReportMap, oldReportMap, newLine, oldLine, blame, ignoreCommits)
 
 		if ok {
 			oldLine = 0 // all changes and additions must be checked
 			for j := newLine + 1; j <= ch.new.To; j++ {
 				newLine = j
-				res = maybeAppendReports(res, new, old, newLine, oldLine, blame, ignoreCommits)
+				res = maybeAppendReports(res, newReportMap, oldReportMap, newLine, oldLine, blame, ignoreCommits)
 			}
 			oldLine = ch.old.To
 		}
