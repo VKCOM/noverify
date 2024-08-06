@@ -148,7 +148,7 @@ main();
 		// 1. Check cache contents length.
 		//
 		// If cache encoding changes, there is a very high chance that
-		// encoded data lengh will change as well.
+		// encoded data length will change as well.
 		wantLen := 5953
 		haveLen := buf.Len()
 		if haveLen != wantLen {

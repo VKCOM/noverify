@@ -1780,6 +1780,11 @@ func (d *rootWalker) runRule(n ir.Node, sc *meta.Scope, rule *rules.Rule) bool {
 	}
 
 	message := d.renderRuleMessage(rule.Message, n, m, true)
+
+	if rule.Link != "" {
+		message += " | More about this rule: " + rule.Link
+	}
+
 	d.Report(location, rule.Level, rule.Name, "%s", message)
 
 	if d.config.ApplyQuickFixes && rule.Fix != "" {

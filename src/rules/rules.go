@@ -76,6 +76,9 @@ type Rule struct {
 	// Name tells whether this rule causes critical report.
 	Name string
 
+	// Link to the documentation about rule
+	Link string
+
 	// Matcher is an object that is used to check whether a given AST node
 	// should trigger a warning that is associated with rule.
 	Matcher *phpgrep.Matcher

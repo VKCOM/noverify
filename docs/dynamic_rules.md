@@ -386,6 +386,8 @@ The `@path` restriction allows you to restrict the rule by file path.
 
 Thus, the rule will be applied only if there is a substring from `@path` in the file path.
 
+Also, you can use several tags.
+
 For example:
 
 ```php
@@ -394,6 +396,7 @@ function ternarySimplify() {
    * @maybe Could rewrite as '$x ?: $y'
    * @pure $x
    * @path common/
+   * @path mythical/
    */
   $x ? $x : $y;
 }
@@ -580,20 +583,21 @@ There is a simple rule on how to decide whether you need fuzzy matching or not:
 
 Rule related attributes:
 
-| Syntax | Description |
-| ------------- | ------------- |
-| `@name name` | Set diagnostic name (only outside of the function group). |
-| `@error message...` | Set `severity = error` and report text to `message`. |
-| `@warning message...` | Set `severity = warning` and report text to `message`. |
-| `@maybe message...` | Set `severity = maybe` and report text to `message`. |
-| `@fix template...` | Provide a quickfix template for the rule. |
-| `@scope scope_kind` | Controls where rule can be applied. `scope_kind` is `all`, `root` or `local`. |
-| `@location $var` | Selects a sub-expr from a match by a matcher var that defines report cursor position. |
+| Syntax                 | Description |
+|------------------------| ------------- |
+| `@name name`           | Set diagnostic name (only outside of the function group). |
+| `@error message...`    | Set `severity = error` and report text to `message`. |
+| `@warning message...`  | Set `severity = warning` and report text to `message`. |
+| `@maybe message...`    | Set `severity = maybe` and report text to `message`. |
+| `@fix template...`     | Provide a quickfix template for the rule. |
+| `@scope scope_kind`    | Controls where rule can be applied. `scope_kind` is `all`, `root` or `local`. |
+| `@location $var`       | Selects a sub-expr from a match by a matcher var that defines report cursor position. |
 | `@type type_expr $var` | Adds "type equals to" filter, applied to `$var`. |
-| `@pure $var` | Adds "side effect free" filter, applied to `$var`. |
-| `@or` | Add a new filter set. "Closes" the previous filter set and "opens" a new one. |
-| `@strict-syntax` | Sets not to use the normalization of the same constructs. |
-| `@path $substr` | If specified, the rule will only work for files that contain `$substr` in the name. |
+| `@pure $var`           | Adds "side effect free" filter, applied to `$var`. |
+| `@or`                  | Add a new filter set. "Closes" the previous filter set and "opens" a new one. |
+| `@strict-syntax`       | Sets not to use the normalization of the same constructs. |
+| `@path $substr`        | If specified, the rule will only work for files that contain `$substr` in the name. |
+| `@link link`           | If specified, then if there is an error, additional text/link to possible documentation will be displayed. |
 
 Function related attributes:
 
