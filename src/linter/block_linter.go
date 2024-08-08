@@ -11,7 +11,6 @@ import (
 	"github.com/VKCOM/noverify/src/ir/phpcore"
 	"github.com/VKCOM/noverify/src/linter/autogen"
 	"github.com/VKCOM/noverify/src/meta"
-	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/solver"
 	"github.com/VKCOM/noverify/src/types"
@@ -33,8 +32,6 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 	case *ir.ClassStmt:
 		b.checkClass(n)
-	case *ir.ClassMethodStmt:
-		println("")
 
 	case *ir.FunctionCallExpr:
 		b.checkFunctionCall(n)
@@ -210,98 +207,15 @@ func (b *blockLinter) checkUnaryPlus(n *ir.UnaryPlusExpr) {
 	b.report(n, LevelWarning, "strangeCast", "Unary plus with non-constant expression, possible type cast, use an explicit cast to int or float instead of using the unary plus")
 }
 
-func (b *blockLinter) checkMethodTypeHint(method *ir.ClassMethodStmt) {
-	for _, comment := range method.Doc.Parsed {
-		var typeContainer, ok = comment.(*phpdoc.TypeVarCommentPart)
-		if !ok {
-			continue
-		}
-
-		if typeContainer.Name() != "param" {
-			continue
-		}
-
-		var typeParam = typeContainer.Type.Source
-
-		for _, param := range method.Params {
-			var typedParam, ok = param.(*ir.Parameter)
-			if ok {
-				var variable = typedParam.Variable
-
-				var paramType, ok = typedParam.VariableType.(*ir.Name)
-				if paramType != nil && ok {
-					// TODO: quickFix -> remove @param from typeHint
-					break
-				}
-
-				if !types.IsTrivial(typeContainer.Type.Source) && !types.IsClass(typeContainer.Type.Source) {
-					continue
-				}
-
-				// TODO: quickFix -> remove @param from typeHint
-				var varDollar = typeContainer.Var
-				var variableWithType = typeParam + " " + varDollar
-				b.walker.report(variable, LevelWarning, "implicitParamType", "Type for %s can be wrote explicitly from typeHint", varDollar)
-				b.walker.r.addQuickFix("implicitParamType", b.quickfix.FunctionParamTypeReplacementFromTypeHint(variable, variableWithType))
-			}
-		}
-	}
-}
-
-func (b *blockLinter) checkPropertyTypeHint(property *ir.PropertyListStmt) {
-	for _, comment := range property.Doc.Parsed {
-		var typeContainer, ok = comment.(*phpdoc.TypeVarCommentPart)
-		if !ok {
-			continue
-		}
-
-		if typeContainer.Name() != "var" {
-			continue
-		}
-
-		for _, NodeProperty := range property.Properties {
-			var typedProperty, ok = NodeProperty.(*ir.PropertyStmt)
-			if !ok {
-				continue
-			}
-
-			var variable = typedProperty.Variable
-			var typeHintType = typeContainer.Type.Source
-			var propertyType, okCast = property.Type.(*ir.Name)
-
-			if okCast {
-				if propertyType.Value == typeHintType {
-					// TODO: should delete doctype param
-					break
-				}
-			}
-
-			if !types.IsTrivial(typeHintType) && !types.IsClass(typeHintType) {
-				continue
-			}
-
-			// TODO: quickFix -> remove @param from typeHint
-			var varDollar = "$" + variable.Name
-			var variableWithType = typeHintType + " " + varDollar
-			b.walker.report(variable, LevelWarning, "implicitParamType", "Type for %s can be wrote explicitly from typeHint", varDollar)
-			b.walker.r.addQuickFix("implicitParamType", b.quickfix.FunctionParamTypeReplacementFromTypeHint(variable, variableWithType))
-		}
-	}
-}
-
 func (b *blockLinter) checkClass(class *ir.ClassStmt) {
 	const classMethod = 0
 	const classOtherMember = 1
 
 	var members = make([]int, 0, len(class.Stmts))
 	for _, stmt := range class.Stmts {
-		switch value := stmt.(type) {
+		switch stmt.(type) {
 		case *ir.ClassMethodStmt:
-			b.checkMethodTypeHint(value)
 			members = append(members, classMethod)
-		case *ir.PropertyListStmt:
-			b.checkPropertyTypeHint(value)
-			members = append(members, classOtherMember)
 		default:
 			members = append(members, classOtherMember)
 		}

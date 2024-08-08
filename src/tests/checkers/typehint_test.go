@@ -96,12 +96,6 @@ function f4() {
   };
 }
 `)
-	test.Expect = []string{
-		`Type for $a can be wrote explicitly from typeHint`,
-		`Type for $a can be wrote explicitly from typeHint`,
-		`Type for $a can be wrote explicitly from typeHint`,
-		`Type for $a can be wrote explicitly from typeHint`,
-	}
 	test.RunAndMatch()
 }
 
@@ -179,7 +173,7 @@ private $foo2 ;
  * @param $str string
  * @param $str2 string
  */
-function test($str, string $str){
+function test($str, string $str2){
 }
 }
 
@@ -192,11 +186,8 @@ function test2($str){
 	test.Expect = []string{
 		`Specify the access modifier for \SimpleClass::test method explicitly`,
 		`Non-canonical order of variable and type `,
-		`@param for non-existing argument $str2`,
 		`Non-canonical order of variable and type`,
-		`Type for $foo2 can be wrote explicitly from typeHint`,
 		`Type for $str can be wrote explicitly from typeHint`,
-		`Type for $str2 can be wrote explicitly from typeHint`,
 		`Non-canonical order of variable and type`,
 		`Type for $str can be wrote explicitly from typeHint`,
 	}
