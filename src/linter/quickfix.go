@@ -47,11 +47,11 @@ func (g *QuickFixGenerator) NullForNotNullableProperty(prop *ir.PropertyStmt) qu
 	}
 }
 
-func (g *QuickFixGenerator) NullableStringType(param *ir.Name) quickfix.TextEdit {
+func (g *QuickFixGenerator) NullableType(param *ir.Name) quickfix.TextEdit {
 	return quickfix.TextEdit{
 		StartPos:    param.Position.StartPos,
 		EndPos:      param.Position.EndPos,
-		Replacement: "?string",
+		Replacement: "?" + param.Value,
 	}
 }
 
