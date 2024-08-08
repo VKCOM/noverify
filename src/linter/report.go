@@ -26,7 +26,7 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 		},
 
 		{
-			Name:     "nullableString",
+			Name:     "nullableType",
 			Default:  true,
 			Quickfix: true,
 			Comment:  "Report not nullable string can be null.",
