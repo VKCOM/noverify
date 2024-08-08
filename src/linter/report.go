@@ -26,6 +26,15 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 		},
 
 		{
+			Name:     "nullableString",
+			Default:  true,
+			Quickfix: true,
+			Comment:  "Report not nullable string can be null.",
+			Before:   `function f(string $str = null);`,
+			After:    `function f(?string $str = null);`,
+		},
+
+		{
 			Name:     "emptyStmt",
 			Default:  true,
 			Quickfix: false,
