@@ -48,7 +48,7 @@ func (g *QuickFixGenerator) NullForNotNullableProperty(prop *ir.PropertyStmt) qu
 	}
 }
 
-func (g *QuickFixGenerator) FunctionParamTypeReplacementFromTypeHint(prop *ir.SimpleVar, variableWithType string) quickfix.TextEdit {
+func (g *QuickFixGenerator) FunctionParamTypeReplacementFromTypeHint(prop *ir.Parameter, variableWithType string) quickfix.TextEdit {
 	return quickfix.TextEdit{
 		StartPos:    prop.Position.StartPos,
 		EndPos:      prop.Position.EndPos,

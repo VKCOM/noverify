@@ -66,7 +66,6 @@ function f(callable $s, callable $s1, callable $s2) {}
 	)
 	test.Expect = []string{
 		"Lost return type for callable(...), if the function returns nothing, specify void explicitly",
-		"Type for $s can be wrote explicitly from typeHint",
 	}
 	test.RunAndMatch()
 }
