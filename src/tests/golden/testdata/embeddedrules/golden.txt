@@ -67,6 +67,9 @@ WARNING bitwiseOps: Used | bitwise operator over bool operands, perhaps || is in
 MAYBE   callSimplify: Could simplify to array_key_exists('abc', $array) at testdata/embeddedrules/callSimplify.php:7
     $_ = in_array('abc', array_keys($array)); // bad
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING implicitParamType: Type for $array can be wrote explicitly from typeHint at testdata/embeddedrules/callSimplify.php:6
+function in_array_over_array_keys(array $array) {
+                                        ^^^^^^
 MAYBE   callSimplify: Could simplify to $str[$index] at testdata/embeddedrules/callSimplify.php:14
     $_ = substr($str, $index, 1);
          ^^^^^^^^^^^^^^^^^^^^^^^
@@ -82,6 +85,12 @@ MAYBE   callSimplify: Could simplify to $array[] = $val at testdata/embeddedrule
 MAYBE   callSimplify: Could simplify to $array[] = 10 at testdata/embeddedrules/callSimplify.php:28
     array_push($array, 10);
     ^^^^^^^^^^^^^^^^^^^^^^
+WARNING implicitParamType: Type for $array can be wrote explicitly from typeHint at testdata/embeddedrules/callSimplify.php:26
+function some_array_push(array $array, int $val) {
+                               ^^^^^^
+WARNING implicitParamType: Type for $val can be wrote explicitly from typeHint at testdata/embeddedrules/callSimplify.php:26
+function some_array_push(array $array, int $val) {
+                               ^^^^^^
 WARNING indexingSyntax: a{i} indexing is deprecated since PHP 7.4, use a[i] instead at testdata/embeddedrules/indexingSyntax.php:14
     $_ = $a{0};
          ^^^^^
@@ -157,6 +166,15 @@ WARNING offBy1: Probably intended to use sizeof-1 as an index at testdata/embedd
 WARNING offBy1: Probably intended to use count-1 as an index at testdata/embeddedrules/offBy1.php:14
   if ($tabs[count($tabs)] == "") {
       ^^^^^^^^^^^^^^^^^^^
+WARNING implicitParamType: Type for $xs can be wrote explicitly from typeHint at testdata/embeddedrules/offBy1.php:7
+function test_countindex_bad(array $xs, array $tabs) {
+                                   ^^^
+WARNING implicitParamType: Type for $tabs can be wrote explicitly from typeHint at testdata/embeddedrules/offBy1.php:7
+function test_countindex_bad(array $xs, array $tabs) {
+                                   ^^^
+WARNING implicitParamType: Type for $xs can be wrote explicitly from typeHint at testdata/embeddedrules/offBy1.php:24
+function test_countindex_good(array $xs) {
+                                    ^^^
 WARNING precedence: == has higher precedence than & at testdata/embeddedrules/precedence.php:4
   $_ = 0 == $mask & $x;
        ^^^^^^^^^^^^^^^
@@ -310,3 +328,6 @@ MAYBE   ternarySimplify: Could rewrite as `$x_arr[10] ?? null` at testdata/embed
 MAYBE   ternarySimplify: Could rewrite as `(bool)($flags & SOME_MASK)` at testdata/embeddedrules/ternarySimplify.php:46
     sink(($flags & SOME_MASK) ? true : false);
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING implicitParamType: Type for $flags can be wrote explicitly from typeHint at testdata/embeddedrules/ternarySimplify.php:45
+function ternarySimplify_issue540($flags) {
+                                  ^^^^^^

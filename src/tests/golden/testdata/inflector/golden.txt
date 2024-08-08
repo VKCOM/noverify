@@ -22,3 +22,18 @@ WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/inflector/lib/Doctrine/Common/Inflector/Inflector.php:181
         @trigger_error(sprintf('The "%s" method is deprecated and will be dropped in Doctrine Inflector 3.0. Please update to the new Inflector API.', __METHOD__), E_USER_DEPRECATED);
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING implicitParamType: Type for $pattern can be wrote explicitly from typeHint at testdata/inflector/lib/Doctrine/Inflector/Rules/Pattern.php:12
+    private $pattern;
+            ^^^^^^^^
+WARNING implicitParamType: Type for $regex can be wrote explicitly from typeHint at testdata/inflector/lib/Doctrine/Inflector/Rules/Pattern.php:15
+    private $regex;
+            ^^^^^^
+WARNING implicitParamType: Type for $regex can be wrote explicitly from typeHint at testdata/inflector/lib/Doctrine/Inflector/Rules/Patterns.php:17
+    private $regex;
+            ^^^^^^
+WARNING implicitParamType: Type for $replacement can be wrote explicitly from typeHint at testdata/inflector/lib/Doctrine/Inflector/Rules/Transformation.php:16
+    private $replacement;
+            ^^^^^^^^^^^^
+WARNING implicitParamType: Type for $word can be wrote explicitly from typeHint at testdata/inflector/lib/Doctrine/Inflector/Rules/Word.php:10
+    private $word;
+            ^^^^^
