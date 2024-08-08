@@ -604,8 +604,20 @@ func (r *rootChecker) checkFuncParam(p *ir.Parameter) {
 		}
 		return true
 	})
-
 	r.CheckTypeHintFunctionParam(p)
+	r.CheckParamNullability(p)
+}
+
+func (r *rootChecker) CheckParamNullability(p *ir.Parameter) {
+	if param, ok := p.VariableType.(*ir.Name); ok {
+		if defValue, ok := p.DefaultValue.(*ir.ConstFetchExpr); ok {
+			if defValue.Constant.Value != "null" {
+				return
+			}
+			r.walker.Report(param, LevelWarning, "nullableType", "parameter with null default value should be explicitly nullable")
+			r.walker.addQuickFix("nullableType", r.quickfix.NullableType(param))
+		}
+	}
 }
 
 func (r *rootChecker) CheckTypeHintFunctionParam(p *ir.Parameter) {
