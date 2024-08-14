@@ -3,10 +3,10 @@ package linter
 import (
 	"bytes"
 	"fmt"
-
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/workspace"
+	"github.com/VKCOM/php-parser/pkg/position"
 )
 
 type QuickFixGenerator struct {
@@ -47,11 +47,31 @@ func (g *QuickFixGenerator) NullForNotNullableProperty(prop *ir.PropertyStmt) qu
 	}
 }
 
-func (g *QuickFixGenerator) NullableType(param *ir.Name) quickfix.TextEdit {
+func (g *QuickFixGenerator) NullableType(param ir.Node) quickfix.TextEdit {
+	var pos *position.Position
+	var value string
+
+	switch v := param.(type) {
+	case *ir.Name:
+		pos = &position.Position{
+			StartPos: v.Position.StartPos,
+			EndPos:   v.Position.EndPos,
+		}
+		value = v.Value
+	case *ir.Identifier:
+		pos = &position.Position{
+			StartPos: v.Position.StartPos,
+			EndPos:   v.Position.EndPos,
+		}
+		value = v.Value
+	default:
+		panic("unexpected type")
+	}
+
 	return quickfix.TextEdit{
-		StartPos:    param.Position.StartPos,
-		EndPos:      param.Position.EndPos,
-		Replacement: "?" + param.Value,
+		StartPos:    pos.StartPos,
+		EndPos:      pos.EndPos,
+		Replacement: "?" + value,
 	}
 }
 
