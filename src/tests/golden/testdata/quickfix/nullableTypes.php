@@ -1,6 +1,6 @@
 <?php
 
-function f(string $filed = null) {
+function notNullableString(string $filed = null) {
     return 1;
 }
 
