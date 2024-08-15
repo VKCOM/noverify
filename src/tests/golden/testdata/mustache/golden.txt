@@ -178,6 +178,9 @@ MAYBE   missingPhpdoc: Missing PHPDoc for \Mustache_Exception_UnknownTemplateExc
 WARNING regexpVet: '\w' intersects with '\d' in [\w\d\.] at testdata/mustache/src/Mustache/Loader/InlineLoader.php:115
             foreach (preg_split("/^@@(?= [\w\d\.]+$)/m", $data, -1) as $chunk) {
                                 ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING nullableType: parameter with null default value should be explicitly nullable at testdata/mustache/src/Mustache/Parser.php:73
+    private function buildTree(array &$tokens, array $parent = null)
+                                               ^^^^^
 WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/mustache/src/Mustache/Parser.php:307
         switch ($name) {
         ^
