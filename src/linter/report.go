@@ -29,7 +29,7 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 			Name:     "nullableType",
 			Default:  true,
 			Quickfix: true,
-			Comment:  "Report not nullable string can be null.",
+			Comment:  "Report not nullable param can be null.",
 			Before:   `function f(string $str = null);`,
 			After:    `function f(?string $str = null);`,
 		},

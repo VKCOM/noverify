@@ -97,3 +97,30 @@ class MyClass2 {
 	}
 	test.RunAndMatch()
 }
+
+func TestNullableMultipleArgs(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function multipleArgsExample(?string $a, ?int $b = null, ?bool $c = null) {
+	return 0;
+}
+`)
+
+	test.RunAndMatch()
+}
+
+func TestNotNullableMultipleArgs(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function multipleArgsExample(string $a, int $b = null, bool $c = null) {
+	return 0;
+}
+`)
+
+	test.Expect = []string{
+		"parameter with null default value should be explicitly nullable",
+		"parameter with null default value should be explicitly nullable",
+	}
+
+	test.RunAndMatch()
+}

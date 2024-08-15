@@ -65,8 +65,6 @@ func (g *QuickFixGenerator) NullableType(param ir.Node) quickfix.TextEdit {
 			EndPos:   v.Position.EndPos,
 		}
 		value = v.Value
-	default:
-		panic("unexpected type")
 	}
 
 	return quickfix.TextEdit{
