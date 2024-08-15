@@ -3,6 +3,7 @@ package linter
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/workspace"
