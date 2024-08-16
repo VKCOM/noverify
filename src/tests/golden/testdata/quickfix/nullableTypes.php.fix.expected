@@ -20,3 +20,7 @@ class MyClass2 {
 function nullableArray(?array $a = null) {
 	return 0;
 }
+
+function multipleArgsExample(string $a, ?int $b = null, ?bool $c = null) {
+	return 0;
+}
