@@ -24,3 +24,7 @@ function nullableArray(?array $a = null) {
 function multipleArgsExample(string $a, ?int $b = null, ?bool $c = null) {
 	return 0;
 }
+
+function nullableOrString(null|string $a = null) {
+    return 0;
+}

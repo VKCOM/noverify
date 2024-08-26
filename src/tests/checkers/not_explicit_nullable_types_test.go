@@ -124,3 +124,34 @@ function multipleArgsExample(string $a, int $b = null, bool $c = null) {
 
 	test.RunAndMatch()
 }
+
+func TestNullableOrString(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function nullableOrString(null|string $a = null) {
+    return 0;
+}
+`)
+
+	test.RunAndMatch()
+}
+
+func TestNullableOrClass(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class MyClass1 {
+}
+
+class MyClass2 {
+    public function myMethod(null|MyClass1 $a = null) {
+        return 0;
+    }
+}
+`)
+
+	test.Expect = []string{
+		"Missing PHPDoc for \\MyClass2::myMethod public method",
+	}
+
+	test.RunAndMatch()
+}
