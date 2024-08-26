@@ -619,6 +619,10 @@ func (r *rootChecker) CheckParamNullability(p *ir.Parameter) {
 		paramType = paramIdentifier
 	}
 
+	if paramName, ok := paramType.(*ir.Name); ok && isMixedLikeType(paramName.Value) {
+		return
+	}
+
 	defValue, defValueOk := p.DefaultValue.(*ir.ConstFetchExpr)
 	if !defValueOk {
 		return
@@ -628,8 +632,8 @@ func (r *rootChecker) CheckParamNullability(p *ir.Parameter) {
 		return
 	}
 
-	r.walker.Report(paramType, LevelWarning, "nullableType", "parameter with null default value should be explicitly nullable")
-	r.walker.addQuickFix("nullableType", r.quickfix.NullableType(paramType))
+	r.walker.Report(paramType, LevelWarning, "NotExplicitNullableParam", "parameter with null default value should be explicitly nullable")
+	r.walker.addQuickFix("NotExplicitNullableParam", r.quickfix.NotExplicitNullableParam(paramType))
 }
 
 func (r *rootChecker) CheckTypeHintFunctionParam(p *ir.Parameter) {

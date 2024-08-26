@@ -26,7 +26,7 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 		},
 
 		{
-			Name:     "nullableType",
+			Name:     "NotExplicitNullableParam",
 			Default:  true,
 			Quickfix: true,
 			Comment:  "Report not nullable param can be null.",
