@@ -28,3 +28,7 @@ function multipleArgsExample(string $a, ?int $b = null, ?bool $c = null) {
 function nullableOrString(null|string $a = null) {
     return 0;
 }
+
+function mixedParam(mixed $a = null) {
+    return 0;
+}

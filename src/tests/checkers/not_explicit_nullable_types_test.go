@@ -155,3 +155,14 @@ class MyClass2 {
 
 	test.RunAndMatch()
 }
+
+func TestMixedParam(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function mixedParam(mixed $a = null) {
+    return 0;
+}
+`)
+
+	test.RunAndMatch()
+}
