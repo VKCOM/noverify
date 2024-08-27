@@ -619,8 +619,11 @@ func (r *rootChecker) CheckParamNullability(p *ir.Parameter) {
 		paramType = paramIdentifier
 	}
 
-	if paramName, ok := paramType.(*ir.Name); ok && isMixedLikeType(paramName.Value) {
-		return
+	paramName, ok := paramType.(*ir.Name)
+	if ok {
+		if paramName.Value == "mixed" {
+			return
+		}
 	}
 
 	defValue, defValueOk := p.DefaultValue.(*ir.ConstFetchExpr)
