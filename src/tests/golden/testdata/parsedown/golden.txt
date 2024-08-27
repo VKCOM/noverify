@@ -31,7 +31,7 @@ MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' t
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:560
                 'handler' => array(
                 ^
-WARNING NotExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/parsedown/parsedown.php:574
+WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/parsedown/parsedown.php:574
     protected function blockList($Line, array $CurrentBlock = null)
                                         ^^^^^
 MAYBE   typeHint: Specify the type for the parameter $CurrentBlock in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:574
@@ -70,7 +70,7 @@ MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' t
 MAYBE   regexpSimplify: May re-write '/^>[ ]?+(.*+)/' as '/^> ?+(.*+)/' at testdata/parsedown/parsedown.php:774
         if ($Line['text'][0] === '>' and preg_match('/^>[ ]?+(.*+)/', $Line['text'], $matches))
                                                     ^^^^^^^^^^^^^^^^
-WARNING NotExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/parsedown/parsedown.php:811
+WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/parsedown/parsedown.php:811
     protected function blockSetextHeader($Line, array $Block = null)
                                                 ^^^^^
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:811
@@ -88,7 +88,7 @@ MAYBE   regexpSimplify: May re-write '/^\[(.+?)\]:[ ]*+<?(\S+?)>?(?:[ ]+["\'(](.
 MAYBE   ternarySimplify: Could rewrite as `$matches[3] ?? null` at testdata/parsedown/parsedown.php:881
                 'title' => isset($matches[3]) ? $matches[3] : null,
                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING NotExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/parsedown/parsedown.php:897
+WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/parsedown/parsedown.php:897
     protected function blockTable($Line, array $Block = null)
                                          ^^^^^
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:897

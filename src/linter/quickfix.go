@@ -48,7 +48,7 @@ func (g *QuickFixGenerator) NullForNotNullableProperty(prop *ir.PropertyStmt) qu
 	}
 }
 
-func (g *QuickFixGenerator) NotExplicitNullableParam(param ir.Node) quickfix.TextEdit {
+func (g *QuickFixGenerator) notExplicitNullableParam(param ir.Node) quickfix.TextEdit {
 	var pos *position.Position
 	var value string
 
