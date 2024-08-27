@@ -1,34 +1,19 @@
 <?php
 
-function notNullableString(?string $filed = null) {
-    return 1;
-}
+function notNullableString(?string $filed = null) {}
 
-function notNullableCallable(?callable $a = null) {
-    return 0;
-}
+function notNullableCallable(?callable $a = null) {}
 
-class MyClass1 {
-}
+class MyClass1 {}
 
 class MyClass2 {
-    public function myMethod(?MyClass1 $a = null) {
-        return 0;
-    }
+    public function myMethod(?MyClass1 $a = null) {}
 }
 
-function nullableArray(?array $a = null) {
-	return 0;
-}
+function nullableArray(?array $a = null) {}
 
-function multipleArgsExample(string $a, ?int $b = null, ?bool $c = null) {
-	return 0;
-}
+function multipleArgsExample(string $a, ?int $b = null, ?bool $c = null) {}
 
-function nullableOrString(null|string $a = null) {
-    return 0;
-}
+function nullableOrString(null|string $a = null) {}
 
-function mixedParam(mixed $a = null) {
-    return 0;
-}
+function mixedParam(mixed $a = null) {}
