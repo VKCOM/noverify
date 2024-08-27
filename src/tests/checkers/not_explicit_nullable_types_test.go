@@ -9,9 +9,7 @@ import (
 func TestNotNullableString(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-function nullableString(?string $a = null) {
-	return 0;
-}
+function nullableString(?string $a = null) {}
 `)
 
 	test.RunAndMatch()
@@ -20,12 +18,8 @@ function nullableString(?string $a = null) {
 func TestNotNullableArray(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-/**
-* @param string[] array
-*/
-function nullableArray(array $a = null) {
-	return 0;
-}
+/** @param string[] array */
+function nullableArray(array $a = null) {}
 `)
 
 	test.Expect = []string{
@@ -37,9 +31,7 @@ function nullableArray(array $a = null) {
 func TestNullableCallable(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-function nullableCallable(?callable $a = null) {
-    return 0;
-}
+function nullableCallable(?callable $a = null) {}
 `)
 
 	test.RunAndMatch()
@@ -48,9 +40,7 @@ function nullableCallable(?callable $a = null) {
 func TestNotNullableCallable(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-function NotNullableCallable(callable $a = null) {
-    return 0;
-}
+function NotNullableCallable(callable $a = null) {}
 `)
 
 	test.Expect = []string{
@@ -62,13 +52,10 @@ function NotNullableCallable(callable $a = null) {
 func TestNotNullableClasses(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-class MyClass1 {
-}
+class MyClass1 {}
 
 class MyClass2 {
-    public function myMethod(MyClass1 $a = null) {
-        return 0;
-    }
+    public function myMethod(MyClass1 $a = null) {}
 }
 `)
 
@@ -82,13 +69,10 @@ class MyClass2 {
 func TestNullableClasses(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-class MyClass1 {
-}
+class MyClass1 {}
 
 class MyClass2 {
-    public function myMethod(?MyClass1 $a = null) {
-        return 0;
-    }
+    public function myMethod(?MyClass1 $a = null) {}
 }
 `)
 
@@ -101,9 +85,7 @@ class MyClass2 {
 func TestNullableMultipleArgs(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-function multipleArgsExample(?string $a, ?int $b = null, ?bool $c = null) {
-	return 0;
-}
+function multipleArgsExample(?string $a, ?int $b = null, ?bool $c = null) {}
 `)
 
 	test.RunAndMatch()
@@ -112,9 +94,7 @@ function multipleArgsExample(?string $a, ?int $b = null, ?bool $c = null) {
 func TestNotNullableMultipleArgs(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-function multipleArgsExample(string $a, int $b = null, bool $c = null) {
-	return 0;
-}
+function multipleArgsExample(string $a, int $b = null, bool $c = null) {}
 `)
 
 	test.Expect = []string{
@@ -128,9 +108,7 @@ function multipleArgsExample(string $a, int $b = null, bool $c = null) {
 func TestNullableOrString(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-function nullableOrString(null|string $a = null) {
-    return 0;
-}
+function nullableOrString(null|string $a = null) {}
 `)
 
 	test.RunAndMatch()
@@ -139,13 +117,10 @@ function nullableOrString(null|string $a = null) {
 func TestNullableOrClass(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-class MyClass1 {
-}
+class MyClass1 {}
 
 class MyClass2 {
-    public function myMethod(null|MyClass1 $a = null) {
-        return 0;
-    }
+    public function myMethod(null|MyClass1 $a = null) {}
 }
 `)
 
@@ -159,9 +134,7 @@ class MyClass2 {
 func TestMixedParam(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-function mixedParam(mixed $a = null) {
-    return 0;
-}
+function mixedParam(mixed $a = null) {}
 `)
 
 	test.RunAndMatch()
