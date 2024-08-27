@@ -635,8 +635,8 @@ func (r *rootChecker) CheckParamNullability(p *ir.Parameter) {
 		return
 	}
 
-	r.walker.Report(paramType, LevelWarning, "NotExplicitNullableParam", "parameter with null default value should be explicitly nullable")
-	r.walker.addQuickFix("NotExplicitNullableParam", r.quickfix.NotExplicitNullableParam(paramType))
+	r.walker.Report(paramType, LevelWarning, "notExplicitNullableParam", "parameter with null default value should be explicitly nullable")
+	r.walker.addQuickFix("notExplicitNullableParam", r.quickfix.notExplicitNullableParam(paramType))
 }
 
 func (r *rootChecker) CheckTypeHintFunctionParam(p *ir.Parameter) {
