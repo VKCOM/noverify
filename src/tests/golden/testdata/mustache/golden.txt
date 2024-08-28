@@ -157,33 +157,33 @@ WARNING notExplicitNullableParam: parameter with null default value should be ex
 WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/mustache/src/Mustache/Exception/SyntaxException.php:24
     public function __construct($msg, array $token, Exception $previous = null)
                                                     ^^^^^^^^^
-WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/mustache/src/Mustache/Exception/UnknownFilterException.php:23
-    public function __construct($filterName, Exception $previous = null)
-                                             ^^^^^^^^^
 MAYBE   missingPhpdoc: Missing PHPDoc for \Mustache_Exception_UnknownFilterException::getFilterName public method at testdata/mustache/src/Mustache/Exception/UnknownFilterException.php:34
     public function getFilterName()
                     ^^^^^^^^^^^^^
-WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/mustache/src/Mustache/Exception/UnknownHelperException.php:23
-    public function __construct($helperName, Exception $previous = null)
+WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/mustache/src/Mustache/Exception/UnknownFilterException.php:23
+    public function __construct($filterName, Exception $previous = null)
                                              ^^^^^^^^^
 MAYBE   missingPhpdoc: Missing PHPDoc for \Mustache_Exception_UnknownHelperException::getHelperName public method at testdata/mustache/src/Mustache/Exception/UnknownHelperException.php:34
     public function getHelperName()
                     ^^^^^^^^^^^^^
-WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/mustache/src/Mustache/Exception/UnknownTemplateException.php:23
-    public function __construct($templateName, Exception $previous = null)
-                                               ^^^^^^^^^
+WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/mustache/src/Mustache/Exception/UnknownHelperException.php:23
+    public function __construct($helperName, Exception $previous = null)
+                                             ^^^^^^^^^
 MAYBE   missingPhpdoc: Missing PHPDoc for \Mustache_Exception_UnknownTemplateException::getTemplateName public method at testdata/mustache/src/Mustache/Exception/UnknownTemplateException.php:34
     public function getTemplateName()
                     ^^^^^^^^^^^^^^^
+WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/mustache/src/Mustache/Exception/UnknownTemplateException.php:23
+    public function __construct($templateName, Exception $previous = null)
+                                               ^^^^^^^^^
 WARNING regexpVet: '\w' intersects with '\d' in [\w\d\.] at testdata/mustache/src/Mustache/Loader/InlineLoader.php:115
             foreach (preg_split("/^@@(?= [\w\d\.]+$)/m", $data, -1) as $chunk) {
                                 ^^^^^^^^^^^^^^^^^^^^^^^
-WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/mustache/src/Mustache/Parser.php:73
-    private function buildTree(array &$tokens, array $parent = null)
-                                               ^^^^^
 WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/mustache/src/Mustache/Parser.php:307
         switch ($name) {
         ^
+WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/mustache/src/Mustache/Parser.php:73
+    private function buildTree(array &$tokens, array $parent = null)
+                                               ^^^^^
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/mustache/src/Mustache/Source/FilesystemSource.php:53
                 $this->stat = @stat($this->fileName);
                               ^^^^^^^^^^^^^^^^^^^^^^

@@ -213,9 +213,10 @@ func (b *blockLinter) checkClass(class *ir.ClassStmt) {
 
 	var members = make([]int, 0, len(class.Stmts))
 	for _, stmt := range class.Stmts {
-		switch stmt.(type) {
+		switch stmt := stmt.(type) {
 		case *ir.ClassMethodStmt:
 			members = append(members, classMethod)
+			b.walker.CheckParamNullability(stmt.Params)
 		default:
 			members = append(members, classOtherMember)
 		}
