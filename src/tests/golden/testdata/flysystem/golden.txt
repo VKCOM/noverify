@@ -91,24 +91,21 @@ MAYBE   typeHint: Specify the type for the parameter $config in PHPDoc, 'array' 
 WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/flysystem/src/Filesystem.php:362
     public function get($path, Handler $handler = null)
                                ^^^^^^^
-WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/flysystem/src/FilesystemInterface.php:274
-    public function get($path, Handler $handler = null);
-                               ^^^^^^^
-WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/flysystem/src/Handler.php:28
-    public function __construct(FilesystemInterface $filesystem = null, $path = null)
-                                ^^^^^^^^^^^^^^^^^^^
 WARNING unused: Variable $e is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/flysystem/src/Handler.php:129
         } catch (BadMethodCallException $e) {
                                         ^^
+WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/flysystem/src/Handler.php:28
+    public function __construct(FilesystemInterface $filesystem = null, $path = null)
+                                ^^^^^^^^^^^^^^^^^^^
 WARNING unused: Variable $e is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/flysystem/src/MountManager.php:275
         } catch (PluginNotFoundException $e) {
                                          ^^
-WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/flysystem/src/MountManager.php:642
-    public function get($path, Handler $handler = null)
-                               ^^^^^^^
 MAYBE   deprecatedUntagged: Call to deprecated method {\League\Flysystem\FilesystemInterface}->get() at testdata/flysystem/src/MountManager.php:646
         return $this->getFilesystem($prefix)->get($path);
                                               ^^^
+WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/flysystem/src/MountManager.php:642
+    public function get($path, Handler $handler = null)
+                               ^^^^^^^
 WARNING unused: Variable $e is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/flysystem/src/Plugin/ForcedCopy.php:33
         } catch (FileNotFoundException $e) {
                                        ^^
