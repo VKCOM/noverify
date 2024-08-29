@@ -39,6 +39,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.FunctionCallExpr:
 		b.checkFunctionCall(n)
 
+	case *ir.ArrowFunctionExpr:
+		b.walker.CheckParamNullability(n.Params)
+
 	case *ir.ClosureExpr:
 		b.walker.CheckParamNullability(n.Params)
 
@@ -1239,7 +1242,6 @@ func (b *blockLinter) checkStripTags(e *ir.FunctionCallExpr) {
 
 func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 	parseState := b.classParseState()
-
 	call := resolveMethodCall(b.walker.ctx.sc, parseState, b.walker.ctx.customTypes, e, b.walker.r.strictMixed)
 	if !call.canAnalyze {
 		return

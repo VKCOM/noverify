@@ -218,3 +218,86 @@ $closure = function(string $a = null) {};
 
 	test.RunAndMatch()
 }
+
+func TestArrowFunctionNullable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$closure_fn = fn(?string $a = null) => null;
+`)
+
+	test.RunAndMatch()
+}
+
+func TestArrowFunctionNotNullable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$closure_fn = fn(string $a = null) => null;
+`)
+
+	test.Expect = []string{
+		"parameter with null default value should be explicitly nullable",
+	}
+
+	test.RunAndMatch()
+}
+
+func TestArrowFunctionClassNullable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class MyClass {}
+
+$closure_fn = fn(?MyClass $a = null) => null;
+`)
+
+	test.RunAndMatch()
+}
+
+func TestArrowFunctionClassNotNullable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class MyClass {}
+
+$closure_fn = fn(MyClass $a = null) => null;
+`)
+
+	test.Expect = []string{
+		"parameter with null default value should be explicitly nullable",
+	}
+
+	test.RunAndMatch()
+}
+
+func TestArrowFunctionArrayNullable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$closure_fn = fn(?array $a = null) => null;
+`)
+
+	test.RunAndMatch()
+}
+
+func TestArrowFunctionArrayNotNullable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$closure_fn = fn(array $a = null) => null;
+`)
+
+	test.Expect = []string{
+		"parameter with null default value should be explicitly nullable",
+	}
+
+	test.RunAndMatch()
+}
+
+func TestArrowFunctionMultipleParams(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$closure_fn = fn(?string $a, int $b = null, ?bool $c = null) => null;
+`)
+
+	test.Expect = []string{
+		"parameter with null default value should be explicitly nullable",
+	}
+
+	test.RunAndMatch()
+}
