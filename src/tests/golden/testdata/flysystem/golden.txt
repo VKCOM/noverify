@@ -91,6 +91,9 @@ MAYBE   typeHint: Specify the type for the parameter $config in PHPDoc, 'array' 
 WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/flysystem/src/Filesystem.php:362
     public function get($path, Handler $handler = null)
                                ^^^^^^^
+WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/flysystem/src/FilesystemInterface.php:274
+    public function get($path, Handler $handler = null);
+                               ^^^^^^^
 WARNING unused: Variable $e is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/flysystem/src/Handler.php:129
         } catch (BadMethodCallException $e) {
                                         ^^

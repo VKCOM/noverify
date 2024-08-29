@@ -139,3 +139,82 @@ function mixedParam(mixed $a = null) {}
 
 	test.RunAndMatch()
 }
+
+func TestTraitMethodNullable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+trait MyTrait {
+    public function myMethod(?string $a = null) {}
+}
+`)
+
+	test.Expect = []string{
+		"Missing PHPDoc for \\MyTrait::myMethod public method",
+	}
+
+	test.RunAndMatch()
+}
+
+func TestTraitMethodNotNullable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+trait MyTrait {
+    public function myMethod(string $a = null) {}
+}
+`)
+
+	test.Expect = []string{
+		"parameter with null default value should be explicitly nullable",
+		"Missing PHPDoc for \\MyTrait::myMethod public method",
+	}
+
+	test.RunAndMatch()
+}
+
+func TestInterfaceMethodNullable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+interface MyInterface {
+    public function myMethod(?string $a = null);
+}
+`)
+
+	test.RunAndMatch()
+}
+
+func TestInterfaceMethodNotNullable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+interface MyInterface {
+    public function myMethod(string $a = null);
+}
+`)
+
+	test.Expect = []string{
+		"parameter with null default value should be explicitly nullable",
+	}
+
+	test.RunAndMatch()
+}
+
+func TestClosureNullable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$closure = function(?string $a = null) {};
+`)
+
+	test.RunAndMatch()
+}
+
+func TestClosureNotNullable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+$closure = function(string $a = null) {};
+`)
+
+	test.Expect = []string{
+		"parameter with null default value should be explicitly nullable",
+	}
+
+	test.RunAndMatch()
+}
