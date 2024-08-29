@@ -1070,6 +1070,7 @@ func (b *blockWalker) handleCallArgs(args []ir.Node, fn meta.FuncInfo) {
 				ArgTypes: funcArgTypes,
 			}
 
+			b.CheckParamNullability(a.Params)
 			b.enterClosure(a, isInstance, typ, closureSolver)
 		default:
 			a.Walk(b)
