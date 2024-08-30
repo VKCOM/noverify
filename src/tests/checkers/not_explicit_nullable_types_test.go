@@ -301,3 +301,34 @@ $closure_fn = fn(?string $a, int $b = null, ?bool $c = null) => null;
 
 	test.RunAndMatch()
 }
+
+func TestClassWithFunCallback(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class SomeClass {
+
+    public function willReturnCallback($callback): self
+    {
+        return $this;
+    }
+
+ private function funWithCallback(array $participation_statuses_data) {
+    $this
+      ->willReturnCallback(static function(int $user_id, array $exact_statuses = [], bool $need_hidden = true, Date $finished_at = null) use ($participation_statuses_data) {
+            return;
+      });
+  }
+}
+`)
+
+	test.Expect = []string{
+		"parameter with null default value should be explicitly nullable",
+		"Missing PHPDoc for \\SomeClass::willReturnCallback public method",
+		"Specify the type for the parameter $participation_statuses_data",
+		"Expression evaluated but not used",
+		"Variable $participation_statuses_data is unused",
+		"Class or interface named \\Date does not exist",
+	}
+
+	test.RunAndMatch()
+}
