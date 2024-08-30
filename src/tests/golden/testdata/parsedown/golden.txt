@@ -172,6 +172,15 @@ MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array'
 MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::instance method explicitly at testdata/parsedown/parsedown.php:1938
     static function instance($name = 'default')
                     ^^^^^^^^
+WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/parsedown/parsedown.php:574
+    protected function blockList($Line, array $CurrentBlock = null)
+                                        ^^^^^
+WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/parsedown/parsedown.php:811
+    protected function blockSetextHeader($Line, array $Block = null)
+                                                ^^^^^
+WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/parsedown/parsedown.php:897
+    protected function blockTable($Line, array $Block = null)
+                                         ^^^^^
 ERROR   classMembersOrder: Property $breaksEnabled must go before methods in the class Parsedown at testdata/parsedown/parsedown.php:66
     protected $breaksEnabled;
     ^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,0 +1,34 @@
+<?php
+
+function notNullableString(?string $filed = null) {}
+
+function notNullableCallable(?callable $a = null) {}
+
+class MyClass1 {}
+
+class MyClass2 {
+    public function myMethod(?MyClass1 $a = null) {}
+}
+
+function nullableArray(?array $a = null) {}
+
+function multipleArgsExample(string $a, ?int $b = null, ?bool $c = null) {}
+
+function nullableOrString(null|string $a = null) {}
+
+function mixedParam(mixed $a = null) {}
+
+class SomeClass {
+
+    public function willReturnCallback($callback): self
+    {
+        return $this;
+    }
+
+ private function funWithCallback(array $participation_statuses_data) {
+    $this
+      ->willReturnCallback(static function(int $user_id, array $exact_statuses = [], bool $need_hidden = true, ?Date $finished_at = null) use ($participation_statuses_data) {
+            return;
+      });
+  }
+}

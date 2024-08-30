@@ -604,7 +604,6 @@ func (r *rootChecker) checkFuncParam(p *ir.Parameter) {
 		}
 		return true
 	})
-
 	r.CheckTypeHintFunctionParam(p)
 }
 
