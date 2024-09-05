@@ -555,6 +555,8 @@ function f1() {}
 		`Void type can only be used as a standalone type for the return type`,
 		`Void type can only be used as a standalone type for the return type`,
 		`Void type can only be used as a standalone type for the return type`,
+		`Type for $x can be wrote explicitly from typeHint`,
+		`Type for $y can be wrote explicitly from typeHint`,
 	}
 	test.RunAndMatch()
 }

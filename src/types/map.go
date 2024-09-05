@@ -37,6 +37,14 @@ type Map struct {
 	m     map[string]struct{}
 }
 
+func (m Map) GetTypes() []string {
+	var types []string
+	for typ := range m.m {
+		types = append(types, typ)
+	}
+	return types
+}
+
 // IsPrecise reports whether the type set represented by the map is precise
 // enough to perform typecheck-like analysis.
 //
