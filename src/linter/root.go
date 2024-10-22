@@ -1565,6 +1565,25 @@ func (d *rootWalker) Report(n ir.Node, level int, checkName, msg string, args ..
 		}
 	}
 
+	var rootNode = d.config.PathRules
+
+	filePath := d.file.Name()
+
+	if d.config.ProjectPath != "" {
+		// Convert absolute path to relative to the project root
+
+		relativePath, err := filepath.Rel(d.config.ProjectPath, filePath)
+		if err != nil {
+			d.ReportLocation(loc, level, checkName, msg, args...)
+			return
+		}
+		filePath = relativePath
+	}
+
+	if !IsRuleEnabled(rootNode, filePath, checkName) {
+		return
+	}
+
 	d.ReportLocation(loc, level, checkName, msg, args...)
 }
 

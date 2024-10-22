@@ -1,8 +1,10 @@
 package linter
 
 import (
+	"path/filepath"
 	"regexp"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/VKCOM/php-parser/pkg/version"
@@ -38,7 +40,12 @@ type Config struct {
 	// Rules is a set of dynamically loaded linter diagnostics.
 	Rules *rules.Set
 
+	// PathRules is a set of specific rules for paths.
+	PathRules *RuleNode
+
 	// settings
+
+	ProjectPath string
 
 	StubsDir string
 	Debug    bool
@@ -68,6 +75,82 @@ type Config struct {
 	StrictMixed bool
 }
 
+type RuleNode struct {
+	Children map[string]*RuleNode // Child nodes (subdirectories and files)
+	Enable   map[string]bool      // Rules enabled at this level
+	Disable  map[string]bool      // Disabled rules at this level
+}
+
+func NewRuleNode() *RuleNode {
+	return &RuleNode{
+		Children: make(map[string]*RuleNode),
+		Enable:   make(map[string]bool),
+		Disable:  make(map[string]bool),
+	}
+}
+
+type PathRuleSet struct {
+	Enable  map[string]bool // Rules that are enabled for this path
+	Disable map[string]bool // Rules that are disabled for this path
+}
+
+func BuildRuleTree(pathRules map[string]*PathRuleSet) *RuleNode {
+	root := NewRuleNode()
+
+	for path, ruleSet := range pathRules {
+		normalizedPath := filepath.ToSlash(filepath.Clean(path))
+		parts := strings.Split(normalizedPath, "/")
+		currentNode := root
+
+		for _, part := range parts {
+			if part == "" {
+				continue
+			}
+			if _, exists := currentNode.Children[part]; !exists {
+				currentNode.Children[part] = NewRuleNode()
+			}
+			currentNode = currentNode.Children[part]
+		}
+
+		for rule := range ruleSet.Enable {
+			currentNode.Enable[rule] = true
+		}
+		for rule := range ruleSet.Disable {
+			currentNode.Disable[rule] = true
+		}
+	}
+
+	return root
+}
+
+func IsRuleEnabled(root *RuleNode, filePath string, checkRule string) bool {
+	normalizedPath := filepath.ToSlash(filepath.Clean(filePath))
+	parts := strings.Split(normalizedPath, "/")
+	currentNode := root
+
+	// Starting with global state. We have guarantee while parsing config that rule is `on` and exist
+	ruleState := true
+
+	for _, part := range parts {
+		if part == "" {
+			continue
+		}
+		if node, exists := currentNode.Children[part]; exists {
+			if node.Disable[checkRule] {
+				ruleState = false // Disable on this path
+			}
+			if node.Enable[checkRule] {
+				ruleState = true // Enable on this path
+			}
+			currentNode = node
+		} else {
+			break
+		}
+	}
+
+	return ruleState
+}
+
 func NewConfig(ver string) *Config {
 	reg := &CheckersRegistry{
 		info: map[string]CheckerInfo{},
@@ -79,6 +162,7 @@ func NewConfig(ver string) *Config {
 	return &Config{
 		SrcInput:       inputs.NewDefaultSourceInput(),
 		Rules:          rules.NewSet(),
+		PathRules:      NewRuleNode(),
 		MaxConcurrency: runtime.NumCPU(),
 		IsDiscardVar:   isUnderscore,
 		Checkers:       reg,
