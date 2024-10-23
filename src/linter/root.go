@@ -1509,6 +1509,34 @@ func (d *rootWalker) ReportPHPDoc(phpDocLocation PHPDocLocation, level int, chec
 	d.ReportLocation(loc, level, checkName, msg, args...)
 }
 
+func IsRuleEnabledForPath(root *RuleNode, filePath string, checkRule string) bool {
+	normalizedPath := filepath.ToSlash(filepath.Clean(filePath))
+	parts := strings.Split(normalizedPath, "/")
+	currentNode := root
+
+	// Starting with global state. We have guarantee while parsing config that rule is `on` and exist
+	ruleState := true
+
+	for _, part := range parts {
+		if part == "" {
+			continue
+		}
+		if node, exists := currentNode.Children[part]; exists {
+			if node.Disabled[checkRule] {
+				ruleState = false // Disable on this path
+			}
+			if node.Enabled[checkRule] {
+				ruleState = true // Enable on this path
+			}
+			currentNode = node
+		} else {
+			break
+		}
+	}
+
+	return ruleState
+}
+
 func (d *rootWalker) Report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
 	var pos position.Position
 
@@ -1554,6 +1582,25 @@ func (d *rootWalker) Report(n ir.Node, level int, checkName, msg string, args ..
 		if pos.EndPos >= p {
 			loc.EndChar = pos.EndPos - p
 		}
+	}
+
+	filePath := d.file.Name()
+
+	if d.config.ProjectPath != "" {
+		// Convert absolute path to relative to the project root
+
+		relativePath, err := filepath.Rel(d.config.ProjectPath, filePath)
+		if err != nil {
+			d.ReportLocation(loc, level, checkName, msg, args...)
+			return
+		}
+		filePath = relativePath
+	}
+
+	rootNode := d.config.PathRules
+
+	if !IsRuleEnabledForPath(rootNode, filePath, checkName) {
+		return
 	}
 
 	d.ReportLocation(loc, level, checkName, msg, args...)
