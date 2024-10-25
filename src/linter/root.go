@@ -1593,25 +1593,6 @@ func (d *rootWalker) Report(n ir.Node, level int, checkName, msg string, args ..
 		}
 	}
 
-	filePath := d.file.Name()
-
-	if d.config.ProjectPath != "" {
-		// Convert absolute path to relative to the project root
-
-		relativePath, err := filepath.Rel(d.config.ProjectPath, filePath)
-		if err != nil {
-			d.ReportLocation(loc, level, checkName, msg, args...)
-			return
-		}
-		filePath = relativePath
-	}
-
-	rootNode := d.config.PathRules
-
-	if !IsRuleEnabledForPath(rootNode, filePath, checkName) {
-		return
-	}
-
 	d.ReportLocation(loc, level, checkName, msg, args...)
 }
 
@@ -1651,6 +1632,35 @@ func (d *rootWalker) ReportLocation(loc ir.Location, level int, checkName, msg s
 				return
 			}
 		}
+	}
+
+	filePath := d.file.Name()
+
+	if d.config.ProjectPath != "" {
+		// Convert absolute path to relative to the project root
+
+		relativePath, err := filepath.Rel(d.config.ProjectPath, filePath)
+		if err != nil {
+			d.reports = append(d.reports, &Report{
+				CheckName: checkName,
+				Context:   string(contextLine),
+				StartChar: loc.StartChar,
+				EndChar:   loc.EndChar,
+				Line:      loc.StartLine + 1,
+				Level:     level,
+				Filename:  strings.ReplaceAll(d.ctx.st.CurrentFile, "\\", "/"), // To make output stable between platforms, see #572
+				Message:   fmt.Sprintf(msg, args...),
+				Hash:      hash,
+			})
+			return
+		}
+		filePath = relativePath
+	}
+
+	rootNode := d.config.PathRules
+
+	if !IsRuleEnabledForPath(rootNode, filePath, checkName) {
+		return
 	}
 
 	d.reports = append(d.reports, &Report{
