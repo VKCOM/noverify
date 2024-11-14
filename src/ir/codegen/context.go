@@ -6,8 +6,8 @@ import (
 	"go/format"
 	"go/token"
 	"go/types"
-	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -93,7 +93,7 @@ func (ctx *context) WriteGoFile(f codegenFile) error {
 		return fmt.Errorf("gofmt: %v", err)
 	}
 
-	if err := ioutil.WriteFile(fullFilename, prettySrc, 0666); err != nil {
+	if err := os.WriteFile(fullFilename, prettySrc, 0666); err != nil {
 		return fmt.Errorf("write file: %v", err)
 	}
 
