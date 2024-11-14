@@ -2,7 +2,6 @@ package workspace
 
 import (
 	"bytes"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -43,7 +42,7 @@ func ReadChangesFromWorkTree(dir string, changes []git.Change, phpExtensions []s
 
 			filename := filepath.Join(dir, c.NewName)
 
-			contents, err := ioutil.ReadFile(filename)
+			contents, err := os.ReadFile(filename)
 			if err != nil {
 				log.Fatalf("Could not read file %s: %s", filename, err.Error())
 			}
