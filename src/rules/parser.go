@@ -3,7 +3,6 @@ package rules
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"regexp"
 	"sort"
 	"strings"
@@ -61,7 +60,7 @@ func (p *parser) parse(filename string, r io.Reader) (*Set, error) {
 	//
 	// TODO: make phpgrep.compile accepting AST and stop
 	// slurping sources here + don't parse it twice.
-	sources, err := ioutil.ReadAll(r)
+	sources, err := io.ReadAll(r)
 	if err != nil {
 		return res, err
 	}

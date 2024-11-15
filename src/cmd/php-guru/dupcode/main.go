@@ -3,8 +3,8 @@ package dupcode
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"regexp"
 	"runtime"
 	"sync"
@@ -100,7 +100,7 @@ func Main(ctx *guru.Context) (int, error) {
 			irConverter := irconv.NewConverter(nil)
 			workerResult := make(funcSet)
 			for f := range filenamesCh {
-				data, err := ioutil.ReadFile(f.Name)
+				data, err := os.ReadFile(f.Name)
 				if err != nil {
 					log.Printf("read %s file: %v", f.Name, err)
 				}

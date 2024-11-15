@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 )
 
@@ -61,7 +60,7 @@ func (defaultSourceInput) NewReader(filename string) (ReadCloseSizer, error) {
 }
 
 func (defaultSourceInput) NewBytesReader(filename string, data []byte) (ReadCloseSizer, error) {
-	return NewReadCloseSizer(ioutil.NopCloser(bytes.NewReader(data)), len(data)), nil
+	return NewReadCloseSizer(io.NopCloser(bytes.NewReader(data)), len(data)), nil
 }
 
 type readCloserSizer struct {

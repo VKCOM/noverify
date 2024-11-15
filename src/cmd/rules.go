@@ -3,7 +3,6 @@ package cmd
 import (
 	"bytes"
 	"embed"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -70,7 +69,7 @@ func ParseExternalRules(externalRules string) ([]*rules.Set, error) {
 
 		if stat.IsDir() {
 			dir := filename
-			files, err := ioutil.ReadDir(dir)
+			files, err := os.ReadDir(dir)
 			if err != nil {
 				return nil, err
 			}
@@ -99,7 +98,7 @@ func ParseExternalRules(externalRules string) ([]*rules.Set, error) {
 func readAndParseRuleFile(filename string, ruleSets []*rules.Set) ([]*rules.Set, error) {
 	p := rules.NewParser()
 
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
