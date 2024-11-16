@@ -9,6 +9,7 @@ import (
 func TestParentConstructorCall(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 class Leaf {
   public function __construct() {}
 }
@@ -32,6 +33,7 @@ class WithAbstract {
 }
 `)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 class Good1 extends Foo {
   public function __construct() {
     parent::__construct();
@@ -52,6 +54,7 @@ class Good3 extends WithAbstract {
 }
 `)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 class Bad1 extends Foo {
   public function __construct() {
     echo 123;
@@ -76,6 +79,7 @@ class Bad2 extends WithTwoParams {
 
 func TestParentConstructorCallWithOtherStaticCall(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types = 1);
 class Foo {
 	public function __construct(int $a) {}
 }
@@ -104,6 +108,7 @@ class Goo extends Foo {
 func TestNewAbstract(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 abstract class AC {
   private static function foo() {
     return new self(); // Same as AC
@@ -127,6 +132,7 @@ $x = new AC();
 func TestNewInterface(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 interface IElement {}
 $x = new IElement;
 `)
@@ -139,6 +145,7 @@ $x = new IElement;
 func TestNewTrait(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 trait Element {}
 $x = new Element;
 `)
@@ -151,6 +158,7 @@ $x = new Element;
 func TestOldStyleConstructor(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 class T1 {
   /** simple constructor */
   public function T1() {}
@@ -217,6 +225,7 @@ namespace SameWithNamespace {
 func TestConstructorArgCount(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 use A\B;
 
 class OneArg {
@@ -233,6 +242,7 @@ function f() {
 }
 `)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 namespace A\B;
 
 class TwoArgs {
@@ -251,6 +261,7 @@ class TwoArgs {
 func TestPHPDocProperty(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 /**
  * @property int $int
  * @property string $string - optional description.
@@ -297,6 +308,7 @@ $_ = WithProps::$int;
 func TestPHPDocPropertyForClassWithModifiers(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 /**
  * @property int $int
  * @property string $string - optional description.
@@ -355,6 +367,7 @@ $_ = WithProps::$int1;
 func TestInheritDoc(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 interface TestInterface {
   /**
    * @return self
@@ -377,6 +390,7 @@ interface TestInterface {
 }
 `)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 class Foo implements TestInterface {
   /** @inheritdoc */
   public function getThis() { return $this; }
@@ -399,6 +413,7 @@ $foo->acceptThis($foo);
 
 func TestMagicGetChaining(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types = 1);
 class Magic {
   /** @return Magic */
   public function __get($key) {
@@ -419,6 +434,7 @@ $m->foo->bar->method();
 func TestNonPublicMagicMethods(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 class A {
   public static function __set($name, $value) {} // The magic method __set() cannot be static
   protected function __toString() {} // The magic method __call() must have public visibility
@@ -444,6 +460,7 @@ class A {
 
 func TestNonPublicMagicMethodsGood(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types = 1);
 class A {
   public function __call($name, $arguments) {} // Ok
   public function __toString() {} // Ok
@@ -491,6 +508,7 @@ class A {
 func TestWrongNumberOfArgumentsInMagicMethods(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 class Foo {
   public function __destruct($a) {} // 0
   public function __call($a) {} // 2
@@ -517,6 +535,7 @@ class Foo {
 
 func TestWrongNumberOfArgumentsInMagicMethodsGood(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types = 1);
 class Foo {
   public function __construct($a) {}
   public function __construct($a, $b) {}
@@ -543,6 +562,7 @@ class Foo {
 
 func TestIteratorForeach(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types = 1);
 interface Iterator extends Traversable {
   public function current();
   public function key();
@@ -578,6 +598,7 @@ function testForeach($xml_str) {
 
 func TestSimpleXMLElementForeach(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types = 1);
 interface Traversable {}
 
 interface ArrayAccess {
@@ -616,6 +637,7 @@ function testForeach($xml_str) {
 
 func TestSimpleXMLElement(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types = 1);
 class SimpleXMLElement {
   /** @return SimpleXMLElement */
   public function __get($name) {}
@@ -661,6 +683,7 @@ func TestLateStaticBindingForeach(t *testing.T) {
 	// as undefined. NoVerify manages to resolve it properly.
 
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types = 1);
 class A
 {
     /**
@@ -701,6 +724,7 @@ foreach ($b->create() as $item) {
 
 func TestDerivedLateStaticBinding(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types = 1);
 class Base {
   /** @return static[] */
   public function asArray() { return []; }
@@ -723,6 +747,7 @@ $_ = $xs[0]->onlyInDerived();
 func TestStaticResolutionInsideSameClass(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 	class NotA {
 		/** @return static */
 		public static function instance() {
@@ -766,6 +791,7 @@ func TestStaticResolutionInsideSameClass(t *testing.T) {
 
 func TestStaticResolutionInsideOtherStaticResolution(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+	declare(strict_types = 1);
 	class SomeMainClass extends ParentClass {
 		/**
 		* @var string
@@ -812,6 +838,7 @@ func TestStaticResolutionInsideOtherStaticResolution(t *testing.T) {
 func TestInheritanceLoop(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+	declare(strict_types = 1);
 	class A extends B { }
 	class B extends A { }
 
@@ -974,6 +1001,7 @@ func TestTraversable(t *testing.T) {
 func TestInstanceOfElseif2(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 function fn3($f3) {
   if ($f3 instanceof File) {
     return $f3->name();
@@ -1002,6 +1030,7 @@ function fn4($f4) {
 
 func TestInstanceOfElseif1(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types = 1);
 class File {
   /** @return string */
   public function filename() { return ""; }
@@ -1088,6 +1117,7 @@ func TestInstanceOf(t *testing.T) {
 func TestNullableTypes(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 class A {
 	/** @var ?B */
 	public $b;
@@ -1117,6 +1147,7 @@ function test3(?A $instance) {
 
 func TestAbstractClassMethodCall(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types = 1);
 interface FooInterface {
   public function foo();
 }
@@ -1428,6 +1459,7 @@ interface WithoutAnyModifier {
 func TestMixinAnnotation(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 namespace QQ\WW;
 
 /**
@@ -1454,6 +1486,7 @@ class SomeQQClass {
 `)
 
 	test.AddFile(`<?php
+declare(strict_types = 1);
 use QQ\WW\SomeQQClass;
 use QQ\WW\SomeQQClass1 as SomeQQClass2;
 
@@ -1536,6 +1569,7 @@ class Bar {
 func TestGroupUse(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 namespace Test;
 
 class TestClass {}
@@ -1546,6 +1580,7 @@ function testFunction2() {}
 `)
 
 	test.AddFile(`<?php
+declare(strict_types = 1);
 namespace Test\Something;
 
 class TestSomethingClass {}
@@ -1556,6 +1591,7 @@ function testSomethingFunction2() {}
 `)
 
 	test.AddFile(`<?php
+declare(strict_types = 1);
 namespace Foo;
 
 use Test\{
@@ -1593,6 +1629,7 @@ function f() {
 func TestTypeHintClassCaseFunctionParam(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 class Foo {}
 
 class Boo {
@@ -1663,6 +1700,7 @@ class Foo3 {
 
 func TestClassComponentsOrderGood(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types = 1);
 class Foo {
   const A = 10;
   public string $a = "";
@@ -1709,6 +1747,7 @@ class Foo5 {
 func TestCallStaticWithVariable(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 class Foo {
   /** */
   public static function some_method() {}

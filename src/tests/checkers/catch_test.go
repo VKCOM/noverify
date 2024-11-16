@@ -9,6 +9,7 @@ import (
 func TestCatchDup(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 class MyException1 extends Exception {}
 class MyException2 extends Exception {}
 
@@ -25,6 +26,7 @@ try {
 func TestCatchOrderThrowable(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 try {
 } catch (Throwable $e) {
 } catch (Exception $e) {
@@ -37,6 +39,7 @@ try {
 func TestCatchOrderExtends(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 class MyException extends Exception {}
 
 try {
@@ -53,6 +56,7 @@ try {
 func TestCatchOrderExtends2(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 class ExceptionBase extends Exception {}
 class ExceptionDerived extends ExceptionBase {}
 
@@ -69,6 +73,7 @@ try {
 
 func TestCatchOrderExtendsGood(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types = 1);
 class ExceptionBase extends Exception {}
 class ExceptionDerived extends ExceptionBase {}
 
@@ -82,6 +87,7 @@ try {
 func TestCatchOrderImplements(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 interface CustomException {}
 
 class ExceptionBase extends Exception implements CustomException {}
@@ -102,6 +108,7 @@ try {
 
 func TestCatchOrderImplementsGood(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types = 1);
 interface CustomException {}
 
 class ExceptionBase extends Exception implements CustomException {}
@@ -118,6 +125,7 @@ try {
 func TestTryCatchVariables(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 class ExceptionDerived extends Exception {}
 
 function f() {
@@ -171,6 +179,7 @@ function f() {
 func TestTryCatchVariablesWithExit(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 class ExceptionDerived extends Exception {}
 
 function f() {
@@ -230,6 +239,7 @@ function f() {
 func TestCatchWithoutVariable(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 try {}
 catch (Exception) {}
 `)

@@ -10,6 +10,7 @@ func TestStripTagsGood(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{"stubs/phpstorm-stubs/standard/standard_1.php"}
 	test.AddFile(`<?php
+declare(strict_types = 1);
 function f(string $s) {
   $_ = strip_tags($s, ['br', 'a']);
   $_ = strip_tags($s, ['BR']);
@@ -25,6 +26,7 @@ func TestStripTagsArray(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{"stubs/phpstorm-stubs/standard/standard_1.php"}
 	test.AddFile(`<?php
+declare(strict_types = 1);
 function f(string $s) {
   return strip_tags($s, ['<br>', 'a', 'A']);
 }
@@ -40,6 +42,7 @@ func TestStripTagsString1(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{"stubs/phpstorm-stubs/standard/standard_1.php"}
 	test.AddFile(`<?php
+declare(strict_types = 1);
 function f1(string $s) {
   return strip_tags($s, '<a href="#">');
 }
@@ -58,6 +61,7 @@ func TestStripTagsString2(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{"stubs/phpstorm-stubs/standard/standard_1.php"}
 	test.AddFile(`<?php
+declare(strict_types = 1);
 function f(string $s) {
   return strip_tags($s, '<a ><br/><br>');
 }

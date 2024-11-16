@@ -9,6 +9,7 @@ import (
 func TestLiteralAsType(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 /**
  * @param '!'|'?'|'$' $a
  */

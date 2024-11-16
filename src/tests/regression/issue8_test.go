@@ -8,6 +8,7 @@ import (
 
 func TestIssue8(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+	declare(strict_types = 1);
 	class Magic
 	{
 		public function __get($a);

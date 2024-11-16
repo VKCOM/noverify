@@ -57,6 +57,9 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.ExpressionStmt:
 		b.checkStmtExpression(n)
 
+	case *ir.DeclareStmt:
+		b.checkDeclareStrictTypes(n)
+
 	case *ir.ConstFetchExpr:
 		b.checkConstFetch(n)
 
@@ -547,7 +550,6 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 
 func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 	report := false
-
 	// All branches except default try to filter-out common
 	// cases to reduce the number of type solving performed.
 	if irutil.IsAssign(s.Expr) {
@@ -1532,4 +1534,33 @@ func (b *blockLinter) classParseState() *meta.ClassParseState {
 
 func (b *blockLinter) metaInfo() *meta.Info {
 	return b.walker.r.ctx.st.Info
+}
+
+func (b *blockLinter) checkDeclareStrictTypes(statement *ir.DeclareStmt) {
+	if b.walker.r.strictTypes {
+		return
+	}
+
+	for _, i := range statement.Consts {
+		node, ok := i.(*ir.ConstantStmt)
+		if !ok {
+			return
+		}
+
+		if node.ConstantName.Value != "strict_types" {
+			return
+		}
+
+		value, isNumber := node.Expr.(*ir.Lnumber)
+		if !isNumber {
+			return
+		}
+
+		if value.Value == "1" {
+			return
+		}
+
+		b.report(statement, LevelWarning, "notStrictTypes", "strict_types value is not 1")
+		b.walker.r.addQuickFix("notStrictTypes", b.quickfix.StrictTypes(value))
+	}
 }

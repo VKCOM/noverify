@@ -9,6 +9,7 @@ import (
 func TestTypeHintGood(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
+declare(strict_types = 1);
 abstract class FooAbstract {
     /**
      * @return string[]

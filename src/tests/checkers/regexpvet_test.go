@@ -13,6 +13,7 @@ func TestREVetParse(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
 	test.AddFile(`<?php
+declare(strict_types = 1);
 function parseErrors($s) {
   preg_match('', $s);
   preg_match('aba', $s);
@@ -194,6 +195,7 @@ func TestREVet_2(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
 	test.AddFile(`<?php
+declare(strict_types = 1);
 function f($s) {
   preg_match('/(?m)^([\s\t]*)([\*\-\+]|\d\.)\s+/', $s);
   preg_match('~^(www.|https://|http://)*[A-Za-z0-9._%+\-]+\.[com|org|edu|net]{3}$~', $s);
@@ -242,6 +244,7 @@ func TestREVet_4(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{`stubs/phpstorm-stubs/pcre/pcre.php`}
 	test.AddFile(`<?php
+declare(strict_types = 1);
 function goodFlags($s) {
 	preg_match('~(?:(?i)foo)(?i)bar~', $s);
 	preg_match('~(?m)(?i)(?-m)(?-i)(?m)(?i)~', $s);

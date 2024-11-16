@@ -8,6 +8,7 @@ import (
 
 func TestIssue989TraitUse(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+	declare(strict_types = 1);
 trait Trait1 {}
 
 function f() {
@@ -24,6 +25,7 @@ function f() {
 
 func TestIssue989ScalarEncapsedStringVar(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types = 1);
 function f() {
   $a = 100;
   return "Hello ${$a}";
@@ -33,6 +35,8 @@ function f() {
 
 func TestIssue989InterpretStrings(t *testing.T) {
 	linttest.SimpleNegativeTest(t, `<?php
+declare(strict_types = 1);
+declare(strict_types = 1);
 $unicode = "\u{0000000000aA19}";
 $unicode = "\u{00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000041}";
 `)

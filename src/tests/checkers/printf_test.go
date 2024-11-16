@@ -10,6 +10,7 @@ func TestSprintf(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{`stubs/phpstorm-stubs/standard/standard_2.php`}
 	test.AddFile(`<?php
+declare(strict_types = 1);
 /**
  * @param mixed[] $a
  */
@@ -45,6 +46,7 @@ func TestPrintf(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.LoadStubs = []string{`stubs/phpstorm-stubs/standard/standard_2.php`}
 	test.AddFile(`<?php
+declare(strict_types = 1);
 /**
  * @param mixed[] $a
  */
