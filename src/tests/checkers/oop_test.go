@@ -765,7 +765,9 @@ func TestStaticResolutionInsideSameClass(t *testing.T) {
 }
 
 func TestStaticResolutionInsideOtherStaticResolution(t *testing.T) {
-	linttest.SimpleNegativeTest(t, `<?php
+	test := linttest.NewSuite(t)
+
+	test.AddFile(`<?php
 	class SomeMainClass extends ParentClass {
 		/**
 		* @var string
@@ -807,6 +809,9 @@ func TestStaticResolutionInsideOtherStaticResolution(t *testing.T) {
 		$result .= $objectB->testProperty;
 		echo $result;
 	}`)
+
+	test.Expect = []string{"Type for $testProperty can be wrote explicitly from typeHint"}
+	test.RunAndMatch()
 }
 
 func TestInheritanceLoop(t *testing.T) {

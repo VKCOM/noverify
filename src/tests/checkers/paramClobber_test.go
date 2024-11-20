@@ -18,7 +18,8 @@ function f($x, $y) {
 }
 
 func TestParamClobberReferenced(t *testing.T) {
-	linttest.SimpleNegativeTest(t, `<?php
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
 /**
  * @param mixed[] $x
  */
@@ -27,6 +28,8 @@ function f(array $x) {
   return $x;
 }
 `)
+	test.Expect = []string{"Type for $x can be wrote explicitly from typeHint"}
+	test.RunAndMatch()
 }
 
 func TestParamClobberConditional(t *testing.T) {

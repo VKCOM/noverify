@@ -17,6 +17,16 @@ const (
 func addBuiltinCheckers(reg *CheckersRegistry) {
 	allChecks := []CheckerInfo{
 		{
+			Name:     "implicitParamType",
+			Default:  true,
+			Quickfix: true,
+			Comment:  `Report implicitly specifying the type of a parameter.`,
+			Before: `/* @param $str string */
+function test($str){}`,
+			After: `function test(string $str){}`,
+		},
+
+		{
 			Name:     "stripTags",
 			Default:  true,
 			Quickfix: false,

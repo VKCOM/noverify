@@ -583,9 +583,48 @@ func (r *rootChecker) CheckTypeHintNode(n ir.Node, place string) {
 	})
 }
 
+func (r *rootChecker) CheckFuncParamTypeHint(param *ir.Parameter, phpDocParamTypes phpdoctypes.ParamsMap) {
+	if param.AttrGroups != nil || param.Variadic || param.Variable.Name == "closure" || param.Variable.Name == "referent" || param.Variable.Name == "callback" || types.IsObject(param.Variable.Name) {
+		return // callback referent newThis value
+	}
+
+	var phpDocType types.Map
+
+	if phpDocParamType, ok := phpDocParamTypes[param.Variable.Name]; ok {
+		phpDocType = phpDocParamType.Typ
+
+		var allTypes = phpDocType.GetTypes()
+		if len(allTypes) > 1 || allTypes == nil {
+			return
+		}
+
+		switch paramType := param.VariableType.(type) {
+		case *ir.Name:
+			if paramType != nil {
+				// TODO: quickFix -> remove @param from typeHint
+				return
+			}
+		case *ir.Identifier:
+			return
+		}
+
+		for _, typ := range phpDocType.GetTypes() {
+			if !types.IsTrivial(typ) || types.IsClass(typ) || types.IsArray(typ) || types.IsShape(typ) || typ == "mixed" {
+				continue
+			}
+
+			var varDollar = "$" + param.Variable.Name
+			var variableWithType = typ + " " + varDollar
+			r.walker.Report(param, LevelWarning, "implicitParamType", "Type for %s can be wrote explicitly from typeHint", varDollar)
+			r.walker.addQuickFix("implicitParamType", r.quickfix.FunctionParamTypeReplacementFromTypeHint(param, variableWithType))
+		}
+	}
+}
+
 func (r *rootChecker) CheckFuncParams(funcName *ir.Identifier, params []ir.Node, funcParams parseFuncParamsResult, phpDocParamTypes phpdoctypes.ParamsMap) {
 	for _, param := range params {
 		r.checkFuncParam(param.(*ir.Parameter))
+		r.CheckFuncParamTypeHint(param.(*ir.Parameter), phpDocParamTypes)
 	}
 
 	r.checkParamsTypeHint(funcName, funcParams, phpDocParamTypes)

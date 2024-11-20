@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/VKCOM/noverify/src/ir"
+	"github.com/VKCOM/noverify/src/phpdoc"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/workspace"
 )
@@ -44,6 +45,22 @@ func (g *QuickFixGenerator) NullForNotNullableProperty(prop *ir.PropertyStmt) qu
 		StartPos:    prop.Position.StartPos,
 		EndPos:      prop.Position.EndPos,
 		Replacement: string(withoutAssign),
+	}
+}
+
+func (g *QuickFixGenerator) FunctionParamTypeReplacementFromTypeHint(prop *ir.Parameter, variableWithType string) quickfix.TextEdit {
+	return quickfix.TextEdit{
+		StartPos:    prop.Position.StartPos,
+		EndPos:      prop.Position.EndPos,
+		Replacement: variableWithType,
+	}
+}
+
+func (g *QuickFixGenerator) RemoveParamTypeHint(prop *phpdoc.TypeVarCommentPart) quickfix.TextEdit {
+	return quickfix.TextEdit{
+		StartPos:    int(prop.Type.Expr.Begin),
+		EndPos:      int(prop.Type.Expr.End),
+		Replacement: "",
 	}
 }
 
