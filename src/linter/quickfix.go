@@ -47,6 +47,14 @@ func (g *QuickFixGenerator) NullForNotNullableProperty(prop *ir.PropertyStmt) qu
 	}
 }
 
+func (g *QuickFixGenerator) CreateDeclareStrictTypes(root *ir.Root) quickfix.TextEdit {
+	return quickfix.TextEdit{
+		StartPos:    root.Position.StartPos,
+		EndPos:      root.Position.StartPos,
+		Replacement: "declare(strict_types = 1);\n",
+	}
+}
+
 func (g *QuickFixGenerator) GetType(node ir.Node, isFunctionName, nodeText string, isNegative bool) quickfix.TextEdit {
 	pos := ir.GetPosition(node)
 
