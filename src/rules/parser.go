@@ -176,6 +176,12 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 			}
 			rule.Name = part.Params[0]
 
+		case "link":
+			if len(part.Params) != 1 {
+				return rule, p.errorf(st, "@link expects exactly 1 param, got %d", len(part.Params))
+			}
+			rule.Link = part.Params[0]
+
 		case "location":
 			if len(part.Params) != 1 {
 				return rule, p.errorf(st, "@location expects exactly 1 params, got %d", len(part.Params))
@@ -317,7 +323,6 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 			}
 			filter.Regexp = regex
 			filterSet[name] = filter
-
 		default:
 			return rule, p.errorf(st, "unknown attribute @%s on line %d", part.Name(), part.Line())
 		}

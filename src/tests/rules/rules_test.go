@@ -332,6 +332,33 @@ function f() {
 	test.RunRulesTest()
 }
 
+func TestLinkTag(t *testing.T) {
+	rfile := `<?php
+/**
+ * @name emptyIf
+ * @warning suspicious empty body of the if statement
+ * @scope local
+ * @link goodrule.com
+ */
+if ($_);
+`
+
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+if (123); // No warning
+
+function f() {
+  if (123); // Warning
+}
+`)
+
+	test.Expect = []string{
+		` | More about this rule: goodrule.com`,
+	}
+	test.RunRulesTest()
+}
+
 func TestRootRules(t *testing.T) {
 	rfile := `<?php
 /**
