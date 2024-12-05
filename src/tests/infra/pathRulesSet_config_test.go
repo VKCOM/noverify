@@ -45,7 +45,7 @@ func TestDisablePath(t *testing.T) {
 	code := `<?php
 require_once 'foo.php';;
         `
-	test.AddNamedFile("dev/disable-emptyStmt/foo.php", code)
+	test.AddNamedFile("disable-emptyStmt/foo.php", code)
 
 	test.RunAndMatch()
 }
@@ -82,7 +82,7 @@ function f($cond) {
 }
 `
 
-	test.AddNamedFile("dev/mixed/foo.php", mergedCode)
+	test.AddNamedFile("mixed/foo.php", mergedCode)
 
 	test.Expect = []string{
 		"Semicolon (;) is not needed here, it can be safely removed at",
