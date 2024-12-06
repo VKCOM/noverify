@@ -29,7 +29,7 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 			Name:     "notExplicitNullableParam",
 			Default:  true,
 			Quickfix: true,
-			Comment:  "Report not nullable param can be null.",
+			Comment:  "Report not nullable param with explicit null default value.",
 			Before:   `function f(string $str = null);`,
 			After:    `function f(?string $str = null);`,
 		},
