@@ -551,8 +551,44 @@ func (b *blockWalker) handleAndCheckGlobalStmt(s *ir.GlobalStmt) {
 	}
 }
 
+func (b *blockWalker) CheckParamNullability(params []ir.Node) {
+	for _, param := range params {
+		if p, ok := param.(*ir.Parameter); ok {
+			var paramType ir.Node
+			paramType, paramOk := p.VariableType.(*ir.Name)
+			if !paramOk {
+				paramIdentifier, paramIdentifierOk := p.VariableType.(*ir.Identifier)
+				if !paramIdentifierOk {
+					continue
+				}
+				paramType = paramIdentifier
+			}
+
+			paramName, ok := paramType.(*ir.Name)
+			if ok {
+				if paramName.Value == "mixed" {
+					continue
+				}
+			}
+
+			defValue, defValueOk := p.DefaultValue.(*ir.ConstFetchExpr)
+			if !defValueOk {
+				continue
+			}
+
+			if defValue.Constant.Value != "null" {
+				continue
+			}
+
+			b.linter.report(paramType, LevelWarning, "notExplicitNullableParam", "parameter with null default value should be explicitly nullable")
+			b.r.addQuickFix("notExplicitNullableParam", b.linter.quickfix.notExplicitNullableParam(paramType))
+		}
+	}
+}
+
 func (b *blockWalker) handleFunction(fun *ir.FunctionStmt) bool {
 	if b.ignoreFunctionBodies {
+		b.CheckParamNullability(fun.Params)
 		return false
 	}
 
@@ -1034,6 +1070,7 @@ func (b *blockWalker) handleCallArgs(args []ir.Node, fn meta.FuncInfo) {
 				ArgTypes: funcArgTypes,
 			}
 
+			b.CheckParamNullability(a.Params)
 			b.enterClosure(a, isInstance, typ, closureSolver)
 		default:
 			a.Walk(b)

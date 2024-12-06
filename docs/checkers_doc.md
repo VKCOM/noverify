@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 103          | 85                        | 18                         | 13                 |
+| 104           | 86                        | 18                         | 14                 |
 
 ## Table of contents
  - Enabled by default
@@ -59,6 +59,7 @@
    - [`nestedTernary` checker](#nestedternary-checker)
    - [`newAbstract` checker](#newabstract-checker)
    - [`nonPublicInterfaceMember` checker](#nonpublicinterfacemember-checker)
+   - [`notExplicitNullableParam` checker (autofixable)](#notexplicitnullableparam-checker)
    - [`offBy1` checker (autofixable)](#offby1-checker)
    - [`oldStyleConstructor` checker](#oldstyleconstructor-checker)
    - [`paramClobber` checker](#paramclobber-checker)
@@ -1172,6 +1173,26 @@ interface Iface {
   public function c();
   public function d();
 }
+```
+<p><br></p>
+
+
+### `notExplicitNullableParam` checker
+
+> Auto fix available
+
+#### Description
+
+Report not nullable param can be null.
+
+#### Non-compliant code:
+```php
+function f(string $str = null);
+```
+
+#### Compliant code:
+```php
+function f(?string $str = null);
 ```
 <p><br></p>
 
