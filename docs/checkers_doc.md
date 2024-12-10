@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 104           | 86                        | 18                         | 14                 |
+| 105           | 87                        | 18                         | 14                 |
 
 ## Table of contents
  - Enabled by default
@@ -75,6 +75,7 @@
    - [`stdInterface` checker](#stdinterface-checker)
    - [`strangeCast` checker](#strangecast-checker)
    - [`strictCmp` checker](#strictcmp-checker)
+   - [`stringInterpolationDeprecated` checker](#stringinterpolationdeprecated-checker)
    - [`stripTags` checker](#striptags-checker)
    - [`switchEmpty` checker](#switchempty-checker)
    - [`switchSimplify` checker](#switchsimplify-checker)
@@ -1183,7 +1184,7 @@ interface Iface {
 
 #### Description
 
-Report not nullable param can be null.
+Report not nullable param with explicit null default value.
 
 #### Non-compliant code:
 ```php
@@ -1467,6 +1468,24 @@ in_array("what", $s)
 #### Compliant code:
 ```php
 in_array("what", $s, true)
+```
+<p><br></p>
+
+
+### `stringInterpolationDeprecated` checker
+
+#### Description
+
+Report deprecated string interpolation style
+
+#### Non-compliant code:
+```php
+${variable}
+```
+
+#### Compliant code:
+```php
+{$variable}
 ```
 <p><br></p>
 
