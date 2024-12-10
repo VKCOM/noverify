@@ -24,6 +24,10 @@ type blockLinter struct {
 
 func (b *blockLinter) enterNode(n ir.Node) {
 	switch n := n.(type) {
+
+	case *ir.Encapsed:
+		b.checkStringInterpolationDeprecation(n)
+
 	case *ir.Assign:
 		b.checkAssign(n)
 
@@ -204,6 +208,18 @@ func (b *blockLinter) enterNode(n ir.Node) {
 
 	case *ir.BadString:
 		b.report(n, LevelError, "syntax", "%s", n.Error)
+	}
+}
+
+func (b *blockLinter) checkStringInterpolationDeprecation(str *ir.Encapsed) {
+	for _, item := range str.Parts {
+		variable, ok := item.(*ir.SimpleVar)
+		if ok {
+			if variable.IdentifierTkn.Value[0] != '$' {
+				b.report(str, LevelWarning, "stringInterpolationDeprecated", "use {$variable} instead ${variable}")
+				break
+			}
+		}
 	}
 }
 

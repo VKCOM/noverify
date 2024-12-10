@@ -619,6 +619,15 @@ g();`,
 		},
 
 		{
+			Name:     "stringInterpolationDeprecated",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report deprecated string interpolation style`,
+			Before:   `${variable}`,
+			After:    `{$variable}`,
+		},
+
+		{
 			Name:     "misspellName",
 			Default:  true,
 			Quickfix: false,
