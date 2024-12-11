@@ -39,6 +39,7 @@ func TestGolden(t *testing.T) {
 			Name: "embeddedrules",
 			Disable: []string{
 				"deadCode",
+				"phpAliases",
 			},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
@@ -95,7 +96,7 @@ func TestGolden(t *testing.T) {
 
 		{
 			Name:    "parsedown",
-			Disable: []string{"missingPhpdoc", "arraySyntax"},
+			Disable: []string{"missingPhpdoc", "arraySyntax", "phpAliases"},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 				`stubs/phpstorm-stubs/mbstring/mbstring.php`,
@@ -104,7 +105,7 @@ func TestGolden(t *testing.T) {
 
 		{
 			Name:    "underscore",
-			Disable: []string{"missingPhpdoc"},
+			Disable: []string{"missingPhpdoc", "phpAliases"},
 			Deps: []string{
 				`stubs/phpstorm-stubs/pcre/pcre.php`,
 			},

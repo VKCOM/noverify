@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 105           | 87                        | 18                         | 14                 |
+| 106           | 88                        | 18                         | 15                 |
 
 ## Table of contents
  - Enabled by default
@@ -64,6 +64,7 @@
    - [`oldStyleConstructor` checker](#oldstyleconstructor-checker)
    - [`paramClobber` checker](#paramclobber-checker)
    - [`parentConstructor` checker](#parentconstructor-checker)
+   - [`phpAliases` checker (autofixable)](#phpaliases-checker)
    - [`precedence` checker](#precedence-checker)
    - [`printf` checker](#printf-checker)
    - [`redundantGlobal` checker](#redundantglobal-checker)
@@ -1290,6 +1291,26 @@ class Foo extends Bar {
     $this->y = $y;
   }
 }
+```
+<p><br></p>
+
+
+### `phpAliases` checker
+
+> Auto fix available
+
+#### Description
+
+Report php aliases functions.
+
+#### Non-compliant code:
+```php
+join("", []);
+```
+
+#### Compliant code:
+```php
+implode("", []);
 ```
 <p><br></p>
 

@@ -54,6 +54,15 @@ return -9223372036854775808;`,
 		},
 
 		{
+			Name:     "phpAliases",
+			Default:  true,
+			Quickfix: true,
+			Comment:  `Report php aliases functions.`,
+			Before:   `join("", []);`,
+			After:    `implode("", []);`,
+		},
+
+		{
 			Name:     "discardExpr",
 			Default:  true,
 			Quickfix: false,

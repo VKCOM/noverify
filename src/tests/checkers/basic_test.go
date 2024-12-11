@@ -2146,6 +2146,7 @@ function f() {
 	test.Expect = []string{
 		`Use float cast instead of real`,
 		`Use is_float function instead of is_real`,
+		`Use is_float instead of 'is_real`,
 	}
 	test.RunAndMatch()
 }

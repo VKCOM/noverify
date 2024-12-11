@@ -1040,9 +1040,15 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 	call := resolveFunctionCall(b.walker.ctx.sc, b.classParseState(), b.walker.ctx.customTypes, e)
 	fqName := call.funcName
 
+	var trimName = strings.TrimPrefix(fqName, `\`)
+	var phpMasterFunc = phpcore.FuncAliases[trimName]
+	if phpMasterFunc != nil {
+		b.report(e, LevelWarning, "phpAliases", "Use %s instead of '%s'", phpMasterFunc.Value, trimName)
+		b.walker.r.addQuickFix("phpAliases", b.quickfix.PhpAliasesReplace(e.Function.(*ir.Name), phpMasterFunc.Value))
+	}
+
 	if call.isClosure {
-		varName := strings.TrimPrefix(fqName, `\`)
-		b.walker.untrackVarName(varName)
+		b.walker.untrackVarName(trimName)
 	} else {
 		b.checkFunctionAvailability(e, &call)
 		b.walker.r.checker.CheckNameCase(e.Function, call.funcName, call.info.Name)
