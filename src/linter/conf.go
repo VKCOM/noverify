@@ -1,8 +1,10 @@
 package linter
 
 import (
+	"path/filepath"
 	"regexp"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/VKCOM/php-parser/pkg/version"
@@ -38,7 +40,12 @@ type Config struct {
 	// Rules is a set of dynamically loaded linter diagnostics.
 	Rules *rules.Set
 
+	// PathRules is a set of specific rules for paths.
+	PathRules *RuleNode
+
 	// settings
+
+	ProjectPath string
 
 	StubsDir string
 	Debug    bool
@@ -68,6 +75,54 @@ type Config struct {
 	StrictMixed bool
 }
 
+type RuleNode struct {
+	Children map[string]*RuleNode // Child nodes (subdirectories and files)
+	Enabled  map[string]bool      // Rules enabled at this level
+	Disabled map[string]bool      // Disabled rules at this level
+}
+
+func NewRuleNode() *RuleNode {
+	return &RuleNode{
+		Children: make(map[string]*RuleNode),
+		Enabled:  make(map[string]bool),
+		Disabled: make(map[string]bool),
+	}
+}
+
+type PathRuleSet struct {
+	Enabled  map[string]bool // Rules that are enabled for this path
+	Disabled map[string]bool // Rules that are disabled for this path
+}
+
+func BuildRuleTree(pathRules map[string]*PathRuleSet) *RuleNode {
+	root := NewRuleNode()
+
+	for path, ruleSet := range pathRules {
+		normalizedPath := filepath.ToSlash(filepath.Clean(path))
+		parts := strings.Split(normalizedPath, "/")
+		currentNode := root
+
+		for _, part := range parts {
+			if part == "" {
+				continue
+			}
+			if _, exists := currentNode.Children[part]; !exists {
+				currentNode.Children[part] = NewRuleNode()
+			}
+			currentNode = currentNode.Children[part]
+		}
+
+		for rule := range ruleSet.Enabled {
+			currentNode.Enabled[rule] = true
+		}
+		for rule := range ruleSet.Disabled {
+			currentNode.Disabled[rule] = true
+		}
+	}
+
+	return root
+}
+
 func NewConfig(ver string) *Config {
 	reg := &CheckersRegistry{
 		info: map[string]CheckerInfo{},
@@ -79,6 +134,7 @@ func NewConfig(ver string) *Config {
 	return &Config{
 		SrcInput:       inputs.NewDefaultSourceInput(),
 		Rules:          rules.NewSet(),
+		PathRules:      NewRuleNode(),
 		MaxConcurrency: runtime.NumCPU(),
 		IsDiscardVar:   isUnderscore,
 		Checkers:       reg,
