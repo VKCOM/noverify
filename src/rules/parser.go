@@ -156,16 +156,13 @@ func (p *parser) parseRuleGroups(st ir.Node) bool {
 			if pathGroups[tagName] == nil {
 				pathGroups = make(map[string][]string)
 			}
-			pathGroups[groupName] = make([]string, 1)
+			pathGroups[groupName] = make([]string, 0)
 		case "path":
-			pathGroups[groupName] = append(pathGroups[tagName], part.Params...)
+			pathGroups[groupName] = append(pathGroups[groupName], part.Params...)
 		}
 	}
 
-	if pathGroups[groupName] != nil {
-		return true
-	}
-	return false
+	return pathGroups[groupName] != nil
 }
 
 func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule, error) {
