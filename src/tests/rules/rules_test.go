@@ -135,6 +135,72 @@ eval(${"var"});
 	test.RunRulesTest()
 }
 
+func TestRulePathGroup(t *testing.T) {
+	rfile := `<?php
+
+/**
+ * @path-group-name test
+ * @path my/site/ads_
+ */
+_init_path_group_();
+
+/**
+ * @name varEval
+ * @warning don't eval from variable
+ * @path-group test
+ * @path my/site/admin_
+ */
+eval(${"var"});
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	code := `<?php
+          $hello = 'echo 123;';
+          eval($hello);
+          eval('echo 456;');
+        `
+	test.AddNamedFile("/home/john/my/site/foo.php", code)
+	test.AddNamedFile("/home/john/my/site/ads_foo.php", code)
+	test.AddNamedFile("/home/john/my/site/ads_bar.php", code)
+	test.AddNamedFile("/home/john/my/site/admin_table.php", code)
+
+	test.Expect = []string{
+		`don't eval from variable`,
+		`don't eval from variable`,
+		`don't eval from variable`,
+	}
+	test.RunRulesTest()
+}
+
+func TestRulePathGroupExclude(t *testing.T) {
+	rfile := `<?php
+/**
+ * @path-group-name test
+ * @path www/no
+ */
+_init_path_group_();
+
+
+/**
+ * @name varEval
+ * @warning don't eval from variable
+ * @path www/
+ * @path-group-exclude test
+ */
+eval(${"var"});
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	code := `<?php
+          $hello = 'echo 123;';
+          eval($hello);
+          eval('echo 456;');
+        `
+	test.AddNamedFile("www/no", code)
+
+	test.RunRulesTest()
+}
+
 func TestAnyRules(t *testing.T) {
 	rfile := `<?php
 /**
