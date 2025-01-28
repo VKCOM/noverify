@@ -142,7 +142,7 @@ func TestRulePathGroup(t *testing.T) {
  * @path-group-name test
  * @path my/site/ads_
  */
-_init_path_group_();
+_init_test_group_();
 
 /**
  * @name varEval
@@ -178,7 +178,7 @@ func TestRulePathGroupExclude(t *testing.T) {
  * @path-group-name test
  * @path www/no
  */
-_init_path_group_();
+_init_test_group_();
 
 
 /**
