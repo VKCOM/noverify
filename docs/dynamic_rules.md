@@ -425,6 +425,71 @@ function ternarySimplify() {
 
 This rule will now don't apply to files with the `common/` folder in the path.
 
+##### `@path-group-name`
+
+The `@path-group-name` allow you to group a lot of paths to the named group and give the name.
+
+```php
+/**
+ * @path-group-name test
+ * @path my/site/ads_
+ * @path your/site/bad
+ */
+_init_test_group_();
+```
+
+Very important note: you must write any function name after declaring `@path-group-name`. In this example this is `_init_test_group_()`
+
+
+#### `@path-group`
+
+After creating group with `@path-group-name` you can use it in your rules by `@path-group`.
+ 
+
+For example:
+
+```php
+/**
+ * @path-group-name test
+ * @path my/site/ads_
+ * @path your/site/bad
+ */
+_init_test_group_();
+
+/**
+ * @name varEval
+ * @warning don't eval from variable
+ * @path-group test
+ * @path my/site/admin_
+ */
+eval(${"var"});
+```
+
+You can combine @path-group with @path. No conflicts here.
+
+##### `@path-group-exclude`
+
+After creating group with `@path-group-name` you can use it in your rules by `@path-group-exclude`.
+
+``@path-group-exclude`` allow you to add all `@path` in group to exclude. It's the same as if they were written one by one.
+
+```php
+/**
+ * @path-group-name test
+ * @path www/no
+ */
+_init_test_group_();
+
+
+/**
+ * @name varEval
+ * @warning don't eval from variable
+ * @path www/
+ * @path-group-exclude test
+ */
+eval(${"var"});
+```
+
 ##### `@filter`
 
 The `@filter` restriction allows you to restrict the rule by name of matched variable.
