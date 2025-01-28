@@ -201,6 +201,37 @@ eval(${"var"});
 	test.RunRulesTest()
 }
 
+func TestRuleExcludeWithPathGroupExclude(t *testing.T) {
+	rfile := `<?php
+/**
+ * @path-group-name test
+ * @path www/no
+ */
+_init_test_group_();
+
+
+/**
+ * @name varEval
+ * @warning don't eval from variable
+ * @path www/
+ * @path-group-exclude test
+ * @path-exclude www/bad
+ */
+eval(${"var"});
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	code := `<?php
+          $hello = 'echo 123;';
+          eval($hello);
+          eval('echo 456;');
+        `
+	test.AddNamedFile("www/no", code)
+	test.AddNamedFile("www/bad", code)
+
+	test.RunRulesTest()
+}
+
 func TestAnyRules(t *testing.T) {
 	rfile := `<?php
 /**
