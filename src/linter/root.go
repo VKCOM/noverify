@@ -1520,27 +1520,85 @@ func (d *rootWalker) ReportPHPDoc(phpDocLocation PHPDocLocation, level int, chec
 
 func IsRuleEnabledForPath(root *RuleNode, filePath string, checkRule string) bool {
 	normalizedPath := filepath.ToSlash(filepath.Clean(filePath))
-	parts := strings.Split(normalizedPath, "/")
+	parts := strings.Split(normalizedPath, "/")[1:]
 	currentNode := root
 
 	// Starting with global state. We have guarantee while parsing config that rule is `on` and exist
 	ruleState := true
 
-	for _, part := range parts {
+	i := 0
+	for i < len(parts) {
+		part := parts[i]
 		if part == "" {
+			i++
 			continue
 		}
-		if node, exists := currentNode.Children[part]; exists {
-			if node.Disabled[checkRule] {
-				ruleState = false // Disable on this path
+
+		// 1) Try to find precision node (part)
+		nextNode, ok := currentNode.Children[part]
+		if ok {
+			// If found precision node: apply Enabled/Disabled
+			if nextNode.Disabled[checkRule] {
+				ruleState = false
 			}
-			if node.Enabled[checkRule] {
-				ruleState = true // Enable on this path
+			if nextNode.Enabled[checkRule] {
+				ruleState = true
 			}
-			currentNode = node
-		} else {
+			currentNode = nextNode
+			i++
+			continue
+		}
+
+		// 2) If there is no exact match, lets find node "*" (wildcard)
+		starNode, ok := currentNode.Children["*"]
+		if !ok {
+			// not precision matching & not "*"
 			break
 		}
+
+		// Apply Enabled/Disabled for "*"
+		if starNode.Disabled[checkRule] {
+			ruleState = false
+		}
+		if starNode.Enabled[checkRule] {
+			ruleState = true
+		}
+
+		// move to node "*"
+		currentNode = starNode
+
+		// Now the logic is to "swallow" several directories:
+		//
+		// Until we meet an exact match in `Children` in the next step
+		// (except "*"), we can continue to "eat" directories while remaining in `starNode`.
+		//
+		// Or if we have reached the end of the path, we exit the loop.
+
+		for {
+			i++
+			if i >= len(parts) {
+				// the path ended - all remaining directories were swallowed
+				return ruleState
+			}
+			testPart := parts[i]
+
+			// if starNode have Children[testPart] (except "*"),
+			// so we found the next "literal" node, we exit the inner loop,
+			// to go through the usual logic at the top level.
+			if testPart == "" {
+				continue
+			}
+
+			_, hasLiteral := currentNode.Children[testPart]
+			if hasLiteral {
+				// Let's exit - let the outer loop handle it
+				break
+			}
+
+			// There are directories left - we eat them, continuing the while loop
+		}
+		// Exit to outer loop: i points to potential literal part
+		// (or "*"), but the outer iteration will re-check it
 	}
 
 	return ruleState
