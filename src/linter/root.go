@@ -1580,16 +1580,16 @@ func IsRuleEnabledForPath(root *RuleNode, filePath string, checkRule string) boo
 				// the path ended - all remaining directories were swallowed
 				return ruleState
 			}
-			testPart := parts[i]
+			AfterStarPart := parts[i]
 
-			// if starNode have Children[testPart] (except "*"),
+			// if starNode have Children[AfterStarPart] (except "*"),
 			// so we found the next "literal" node, we exit the inner loop,
 			// to go through the usual logic at the top level.
-			if testPart == "" {
+			if AfterStarPart == "" {
 				continue
 			}
 
-			_, hasLiteral := currentNode.Children[testPart]
+			_, hasLiteral := currentNode.Children[AfterStarPart]
 			if hasLiteral {
 				// Let's exit - let the outer loop handle it
 				break
