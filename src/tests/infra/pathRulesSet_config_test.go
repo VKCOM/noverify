@@ -32,6 +32,20 @@ func pathRulesSetInit(t *testing.T) *linttest.Suite {
 				"undefinedFunction": true,
 			},
 		},
+		"star/*/tests": {
+			Enabled: map[string]bool{
+				"emptyStmt": true,
+			},
+			Disabled: map[string]bool{},
+		},
+		"mixed/*/tests": {
+			Enabled: map[string]bool{
+				"emptyStmt": true,
+			},
+			Disabled: map[string]bool{
+				"undefinedFunction": true,
+			},
+		},
 	})
 
 	var suite = linttest.NewSuite(t)
@@ -56,6 +70,50 @@ func TestEnablePath(t *testing.T) {
 require_once 'foo.php';;
         `
 	test.AddNamedFile("dev/enable-emptyStmt/foo.php", code)
+
+	test.Expect = []string{
+		`Semicolon (;) is not needed here, it can be safely removed at`,
+	}
+	test.RunAndMatch()
+}
+
+func TestStarPath(t *testing.T) {
+	test := pathRulesSetInit(t)
+	code := `<?php
+require_once 'foo.php';;
+        `
+	test.AddNamedFile("star/something/another/tests/foo.php", code)
+
+	test.Expect = []string{
+		`Semicolon (;) is not needed here, it can be safely removed at`,
+	}
+	test.RunAndMatch()
+}
+
+func TestMixedStarPath(t *testing.T) {
+	test := pathRulesSetInit(t)
+	code := `<?php
+require_once 'foo.php';;
+        `
+
+	test.AddNamedFile("mixed/something/another/tests/foo.php", code)
+
+	code = `<?php
+function function_exists($name) { return 1 == 2; }
+
+function f($cond) {
+  if (!function_exists('\foo')) {
+    \foo();
+  }
+  if ($cond && !function_exists('bar')) {
+    bar("a", "b");
+  }
+  if ($cond || !function_exists('a\b\baz')) {
+    a\b\baz(1);
+  }
+}
+`
+	test.AddNamedFile("mixed/something/another/tests/foo2.php", code)
 
 	test.Expect = []string{
 		`Semicolon (;) is not needed here, it can be safely removed at`,
