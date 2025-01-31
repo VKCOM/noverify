@@ -129,40 +129,41 @@ func (p *parser) tryParseLabeledStmt(stmts []ir.Node, proto *Rule) (bool, error)
 }
 
 func (p *parser) parseRuleGroups(st ir.Node) bool {
-
 	comment := p.commentText(st)
-
-	isGroup := false
-
 	parsedPhpDoc := phpdoc.Parse(p.typeParser, comment).Parsed
 
 	var groupName string
+	// a little optimisation: if @path-group-name is not first - this is not grouping
+	foundGroup := false
+
 	for _, part := range parsedPhpDoc {
-		part := part.(*phpdoc.RawCommentPart)
-
-		tagName := part.Name()
-
-		if tagName != "path-group-name" {
-			if !isGroup {
-				break
-			}
-		} else {
-			isGroup = true
-			groupName = part.ParamsText
+		rawPart, ok := part.(*phpdoc.RawCommentPart)
+		if !ok {
+			continue
 		}
 
-		switch tagName {
+		switch tagName := rawPart.Name(); tagName {
 		case "path-group-name":
-			if pathGroups[tagName] == nil {
+			groupName = rawPart.ParamsText
+			if pathGroups == nil {
 				pathGroups = make(map[string][]string)
 			}
-			pathGroups[groupName] = make([]string, 0)
+			pathGroups[groupName] = []string{}
+			foundGroup = true
+
 		case "path":
-			pathGroups[groupName] = append(pathGroups[groupName], part.Params...)
+			if !foundGroup {
+				return false // if @path-group-name not first - return
+			}
+			pathGroups[groupName] = append(pathGroups[groupName], rawPart.Params...)
+		default:
+			if !foundGroup {
+				return false
+			}
 		}
 	}
 
-	return pathGroups[groupName] != nil
+	return foundGroup && pathGroups[groupName] != nil
 }
 
 func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule, error) {

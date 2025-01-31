@@ -427,7 +427,7 @@ This rule will now don't apply to files with the `common/` folder in the path.
 
 ##### `@path-group-name`
 
-The `@path-group-name` allow you to group a lot of paths to the named group and give the name.
+The `@path-group-name` allow you to group a lot of paths to the named group and give the name. This tag must be first.
 
 ```php
 /**
