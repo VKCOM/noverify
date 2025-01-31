@@ -444,6 +444,8 @@ func (p *parser) parseRule(st ir.Node, proto *Rule) error {
 	}
 
 	// if we parsed new group - we can go next comments
+	// function declaring after @path-group does not matter, because we will ignore it
+	// This used only for separating comments and functions
 	if p.parseRuleGroups(st) {
 		return nil
 	}
