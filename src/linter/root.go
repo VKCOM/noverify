@@ -1520,7 +1520,7 @@ func (d *rootWalker) ReportPHPDoc(phpDocLocation PHPDocLocation, level int, chec
 
 func IsRuleEnabledForPath(root *RuleNode, filePath string, checkRule string) bool {
 	normalizedPath := filepath.ToSlash(filepath.Clean(filePath))
-	parts := strings.Split(normalizedPath, "/")[1:]
+	parts := strings.Split(normalizedPath, "/")
 	currentNode := root
 
 	// Starting with global state. We have guarantee while parsing config that rule is `on` and exist
