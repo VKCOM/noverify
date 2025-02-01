@@ -17,7 +17,7 @@ import (
 	"github.com/VKCOM/noverify/src/utils"
 )
 
-var magicComment = regexp.MustCompile(`\* @(?:warning|error|info|maybe) `)
+var magicComment = regexp.MustCompile(`\* @(?:warning|error|info|maybe|path-group-name) `)
 
 //go:generate stringer -type=parseMode
 type parseMode int
@@ -128,6 +128,44 @@ func (p *parser) tryParseLabeledStmt(stmts []ir.Node, proto *Rule) (bool, error)
 	return true, err
 }
 
+func (p *parser) parseRuleGroups(st ir.Node) bool {
+	comment := p.commentText(st)
+	parsedPhpDoc := phpdoc.Parse(p.typeParser, comment).Parsed
+
+	var groupName string
+	// a little optimisation: if @path-group-name is not first - this is not grouping
+	foundGroup := false
+
+	for _, part := range parsedPhpDoc {
+		rawPart, ok := part.(*phpdoc.RawCommentPart)
+		if !ok {
+			continue
+		}
+
+		switch tagName := rawPart.Name(); tagName {
+		case "path-group-name":
+			groupName = rawPart.ParamsText
+			if pathGroups == nil {
+				pathGroups = make(map[string][]string)
+			}
+			pathGroups[groupName] = []string{}
+			foundGroup = true
+
+		case "path":
+			if !foundGroup {
+				return false // if @path-group-name not first - return
+			}
+			pathGroups[groupName] = append(pathGroups[groupName], rawPart.Params...)
+		default:
+			if !foundGroup {
+				return false
+			}
+		}
+	}
+
+	return foundGroup && pathGroups[groupName] != nil
+}
+
 func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule, error) {
 	var rule Rule
 
@@ -166,6 +204,7 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 
 	for _, part := range phpdoc.Parse(p.typeParser, comment).Parsed {
 		part := part.(*phpdoc.RawCommentPart)
+
 		switch part.Name() {
 		case "name":
 			if len(part.Params) != 1 {
@@ -233,6 +272,13 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 		case "or":
 			rule.Filters = append(rule.Filters, filterSet)
 			filterSet = nil
+
+		case "path-group":
+			if rule.Paths == nil {
+				rule.Paths = make([]string, 0)
+			}
+			paths := pathGroups[part.ParamsText]
+			rule.Paths = append(rule.Paths, paths...)
 		case "path":
 			if len(part.Params) != 1 {
 				return rule, p.errorf(st, "@path expects exactly 1 param, got %d", len(part.Params))
@@ -243,6 +289,15 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 			}
 
 			rule.Paths = append(rule.Paths, part.Params...)
+		case "path-group-exclude":
+			paths := pathGroups[part.ParamsText]
+			if rule.PathExcludes == nil {
+				rule.PathExcludes = make(map[string]bool, 1)
+			}
+
+			for _, path := range paths {
+				rule.PathExcludes[path] = true
+			}
 		case "path-exclude":
 			if len(part.Params) != 1 {
 				return rule, p.errorf(st, "@exclude expects exactly 1 param, got %d", len(part.Params))
@@ -386,6 +441,13 @@ func (p *parser) parseRule(st ir.Node, proto *Rule) error {
 		if strings.Contains(p.namespace, `\`) {
 			return p.errorf(st, "multi-part namespace names are not supported")
 		}
+		return nil
+	}
+
+	// if we parsed new group - we can go next comments
+	// function declaring after @path-group does not matter, because we will ignore it
+	// This used only for separating comments and functions
+	if p.parseRuleGroups(st) {
 		return nil
 	}
 

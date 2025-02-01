@@ -11,6 +11,8 @@ import (
 
 type Parser struct{}
 
+var pathGroups map[string][]string
+
 func NewParser() *Parser {
 	return &Parser{}
 }

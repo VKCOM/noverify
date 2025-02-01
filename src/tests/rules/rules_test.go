@@ -135,6 +135,193 @@ eval(${"var"});
 	test.RunRulesTest()
 }
 
+func TestRulePathGroup(t *testing.T) {
+	rfile := `<?php
+
+/**
+ * @path-group-name test
+ * @path my/site/ads_
+ */
+_init_test_group_();
+
+/**
+ * @name varEval
+ * @warning don't eval from variable
+ * @path-group test
+ * @path my/site/admin_
+ */
+eval(${"var"});
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	code := `<?php
+          $hello = 'echo 123;';
+          eval($hello);
+          eval('echo 456;');
+        `
+	test.AddNamedFile("/home/john/my/site/foo.php", code)
+	test.AddNamedFile("/home/john/my/site/ads_foo.php", code)
+	test.AddNamedFile("/home/john/my/site/ads_bar.php", code)
+	test.AddNamedFile("/home/john/my/site/admin_table.php", code)
+
+	test.Expect = []string{
+		`don't eval from variable`,
+		`don't eval from variable`,
+		`don't eval from variable`,
+	}
+	test.RunRulesTest()
+}
+
+func TestRulePathGroupExclude(t *testing.T) {
+	rfile := `<?php
+/**
+ * @path-group-name test
+ * @path www/no
+ */
+_init_test_group_();
+
+
+/**
+ * @name varEval
+ * @warning don't eval from variable
+ * @path www/
+ * @path-group-exclude test
+ */
+eval(${"var"});
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	code := `<?php
+          $hello = 'echo 123;';
+          eval($hello);
+          eval('echo 456;');
+        `
+	test.AddNamedFile("www/no", code)
+
+	test.RunRulesTest()
+}
+
+func TestRuleExcludeWithPathGroupExclude(t *testing.T) {
+	rfile := `<?php
+/**
+ * @path-group-name test
+ * @path www/no
+ */
+_init_test_group_();
+
+
+/**
+ * @name varEval
+ * @warning don't eval from variable
+ * @path www/
+ * @path-group-exclude test
+ * @path-exclude www/bad
+ */
+eval(${"var"});
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	code := `<?php
+          $hello = 'echo 123;';
+          eval($hello);
+          eval('echo 456;');
+        `
+	test.AddNamedFile("www/no", code)
+	test.AddNamedFile("www/bad", code)
+
+	test.RunRulesTest()
+}
+
+func TestMultiplePathGroupsInitialization(t *testing.T) {
+	rfile := `<?php
+/**
+ * @path-group-name group1
+ * @path www/no
+ * @path www/yes
+ */
+_init_test_group1_();
+
+/**
+ * @path-group-name group2
+ * @path www/no
+ * @path www/yes
+ */
+_init_test_group2_();
+
+/**
+ * @name testRuleGroup1
+ * @warning don't eval from variable: Group1
+ * @path-group group1
+ */
+eval(${"var"});
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+
+	code := `<?php
+          $hello = 'echo 123;';
+          eval($hello);
+        `
+
+	test.AddNamedFile("www/no", code)
+	test.AddNamedFile("www/yes", code)
+
+	test.Expect = []string{
+		`don't eval from variable`,
+		`don't eval from variable`,
+	}
+
+	test.RunRulesTest()
+}
+
+func TestMultiplePathGroupExclude(t *testing.T) {
+	rfile := `<?php
+/**
+ * @path-group-name safe
+ * @path www/safe
+ */
+_init_test_safe_();
+
+/**
+ * @path-group-name dangerous
+ * @path www/dangerous
+ */
+_init_test_dangerous_();
+
+/**
+ * @name testRule
+ * @warning This rule applies only for dangerous
+ * @path www/
+ * @path-group dangerous
+ * @path-group-exclude safe
+ */
+eval(${"var"});
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+
+	codeSafe := `<?php
+          eval('echo safe;');
+        `
+	codeDangerous := `<?php
+          $hello = 'echo 123;';
+          eval($hello);
+        `
+	codeOther := `<?php
+          eval('echo other;');
+        `
+
+	test.AddNamedFile("www/safe/index.php", codeSafe)
+	test.AddNamedFile("www/dangerous/index.php", codeDangerous)
+	test.AddNamedFile("www/other/index.php", codeOther)
+
+	test.Expect = []string{
+		`This rule applies only for dangerous`,
+	}
+
+	test.RunRulesTest()
+}
+
 func TestAnyRules(t *testing.T) {
 	rfile := `<?php
 /**

@@ -30,6 +30,10 @@ func formatRule(r *Rule) string {
 		}
 	}
 
+	if r.Link != "" {
+		buf.WriteString(" * @link " + r.Link + "\n")
+	}
+
 	if r.Location != "" {
 		buf.WriteString(" * @location $" + r.Location + "\n")
 	}
