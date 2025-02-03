@@ -1040,6 +1040,16 @@ function main(): void {
 		},
 
 		{
+			Name:     "dangerousCondition",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report a dangerous condition",
+			Before:   "if(true){}",
+			After: `$a = getCond(); // get bool value from some func
+				if($a){}`,
+		},
+
+		{
 			Name:     "reverseAssign",
 			Default:  true,
 			Quickfix: false,
