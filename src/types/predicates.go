@@ -37,6 +37,16 @@ func IsAlias(s string) bool {
 	return has
 }
 
+func IsTypeNullable(typ Map) bool {
+	isNullable := false
+	typ.Iterate(func(t string) {
+		if t == "null" {
+			isNullable = true
+		}
+	})
+	return isNullable
+}
+
 func Alias(s string) (string, bool) {
 	alias, has := aliases[s]
 	return alias, has

@@ -1027,7 +1027,119 @@ func (b *blockWalker) handleIssetDimFetch(e *ir.ArrayDimFetchExpr) {
 	}
 }
 
+func (b *blockWalker) checkNullSafetyCallArgsF(args []ir.Node, fn meta.FuncInfo) {
+	for i, arg := range args {
+		switch a := arg.(*ir.Argument).Expr.(type) {
+		case *ir.SimpleVar:
+			b.checkSimpleVarNullSafety(arg, fn, i, a)
+
+		case *ir.ConstFetchExpr:
+			b.checkConstFetchNullSafety(arg, fn, i, a)
+
+		case *ir.ArrayDimFetchExpr:
+			b.checkArrayDimFetchNullSafety(arg, fn, i, a)
+
+		case *ir.ListExpr:
+			b.checkListExprNullSafety(arg, fn, i, a)
+
+		case *ir.PropertyFetchExpr:
+			b.checkPropertyFetchNullSafety(a)
+		}
+	}
+}
+
+func (b *blockWalker) checkSimpleVarNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, variable *ir.SimpleVar) {
+	varInfo, ok := b.ctx.sc.GetVar(variable)
+
+	if !ok {
+		return
+	}
+
+	paramAllowsNull := types.IsTypeNullable(fn.Params[paramIndex].Typ)
+	varIsNullable := types.IsTypeNullable(varInfo.Type)
+
+	if !paramAllowsNull && varIsNullable {
+		b.report(arg, LevelError, "notNullSafety", "not null safety call in function %s signature of param %s", fn.Name, fn.Params[paramIndex].Name)
+	}
+}
+
+func (b *blockWalker) checkConstFetchNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, constExpr *ir.ConstFetchExpr) {
+	constVal := constExpr.Constant.Value
+	isNull := constVal == "null"
+
+	paramAllowsNull := types.IsTypeNullable(fn.Params[paramIndex].Typ)
+	if isNull && !paramAllowsNull {
+		b.report(arg, LevelError, "notNullSafety", "null passed to non-nullable parameter %s in function %s", fn.Params[paramIndex].Name, fn.Name)
+	}
+}
+
+// TODO: we don't know type of each element without phpDoc, it will be mixed
+func (b *blockWalker) checkArrayDimFetchNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, arrayExpr *ir.ArrayDimFetchExpr) {
+	baseVar, ok := arrayExpr.Variable.(*ir.SimpleVar)
+	if !ok {
+		return
+	}
+
+	varInfo, found := b.ctx.sc.GetVar(baseVar)
+	if !found {
+		return
+	}
+
+	if types.IsTypeNullable(varInfo.Type) {
+		b.report(arg, LevelError, "notNullSafety", "potential null array access in parameter %s of function %s", fn.Params[paramIndex].Name, fn.Name)
+	}
+}
+
+// TODO: we don't know type of each element without phpDoc, it will be mixed
+func (b *blockWalker) checkListExprNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, listExpr *ir.ListExpr) {
+	for _, item := range listExpr.Items {
+		if item == nil {
+			continue
+		}
+
+		if item.Val != nil {
+			varInfo, ok := b.ctx.sc.GetVar(item.Val)
+			if ok && types.IsTypeNullable(varInfo.Type) {
+				b.report(arg, LevelError, "notNullSafety",
+					"potential null value in list assignment for parameter %s in function %s",
+					fn.Params[paramIndex].Name, fn.Name)
+			}
+
+			b.checkNullSafetyCallArgsF([]ir.Node{item.Val}, fn)
+		}
+	}
+}
+
+func (b *blockWalker) checkPropertyFetchNullSafety(expr *ir.PropertyFetchExpr) {
+	objVar, ok := expr.Variable.(*ir.SimpleVar)
+
+	if ok {
+		varInfo, _ := b.ctx.sc.GetVar(objVar)
+		classInfo, _ := b.r.ctx.st.Info.GetClass(varInfo.Type.String())
+
+		prp, okPrp := expr.Property.(*ir.Identifier)
+
+		if okPrp {
+			property := classInfo.Properties[prp.Value]
+
+			if types.IsTypeNullable(property.Typ) {
+				b.report(expr, LevelError, "notNullSafety",
+					"potential null dereference when accessing property '%s'", prp.Value)
+			}
+		}
+
+		println(classInfo.Name)
+	}
+
+	// TODO: check difficult chains like $a->b->c->d
+	/*	if nestedProp, ok := expr.Variable.(*ir.PropertyFetchExpr); ok {
+		b.checkPropertyFetchNullSafety(nestedProp)
+	}*/
+}
+
 func (b *blockWalker) handleCallArgs(args []ir.Node, fn meta.FuncInfo) {
+	b.checkNullSafetyCallArgsF(args, fn)
+
 	for i, arg := range args {
 		if i >= len(fn.Params) {
 			arg.Walk(b)
