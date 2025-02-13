@@ -47,6 +47,16 @@ func IsTypeNullable(typ Map) bool {
 	return isNullable
 }
 
+func IsTypeMixed(typ Map) bool {
+	isMixed := false
+	typ.Iterate(func(t string) {
+		if strings.Contains(t, "mixed") {
+			isMixed = true
+		}
+	})
+	return isMixed
+}
+
 func Alias(s string) (string, bool) {
 	alias, has := aliases[s]
 	return alias, has

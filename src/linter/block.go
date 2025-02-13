@@ -1028,19 +1028,27 @@ func (b *blockWalker) handleIssetDimFetch(e *ir.ArrayDimFetchExpr) {
 }
 
 func (b *blockWalker) checkNullSafetyCallArgsF(args []ir.Node, fn meta.FuncInfo) {
+	if fn.Params == nil || fn.Name == "" {
+		return
+	}
+	haveVariadic := enoughArgs(args, fn)
+
 	for i, arg := range args {
+		if arg == nil {
+			continue
+		}
 		switch a := arg.(*ir.Argument).Expr.(type) {
 		case *ir.SimpleVar:
-			b.checkSimpleVarNullSafety(arg, fn, i, a)
+		//	b.checkSimpleVarNullSafety(arg, fn, i, a, haveVariadic)
 
 		case *ir.ConstFetchExpr:
-			b.checkConstFetchNullSafety(arg, fn, i, a)
+			b.checkConstFetchNullSafety(arg, fn, i, a, haveVariadic)
 
 		case *ir.ArrayDimFetchExpr:
-			b.checkArrayDimFetchNullSafety(arg, fn, i, a)
+		//	b.checkArrayDimFetchNullSafety(arg, fn, i, a, haveVariadic)
 
 		case *ir.ListExpr:
-			b.checkListExprNullSafety(arg, fn, i, a)
+			b.checkListExprNullSafety(arg, fn, i, a, haveVariadic)
 
 		case *ir.PropertyFetchExpr:
 			b.checkPropertyFetchNullSafety(a)
@@ -1048,7 +1056,7 @@ func (b *blockWalker) checkNullSafetyCallArgsF(args []ir.Node, fn meta.FuncInfo)
 	}
 }
 
-func (b *blockWalker) checkSimpleVarNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, variable *ir.SimpleVar) {
+func (b *blockWalker) checkSimpleVarNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, variable *ir.SimpleVar, haveVariadic bool) {
 	varInfo, ok := b.ctx.sc.GetVar(variable)
 
 	if !ok {
@@ -1063,18 +1071,38 @@ func (b *blockWalker) checkSimpleVarNullSafety(arg ir.Node, fn meta.FuncInfo, pa
 	}
 }
 
-func (b *blockWalker) checkConstFetchNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, constExpr *ir.ConstFetchExpr) {
+func (b *blockWalker) checkConstFetchNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, constExpr *ir.ConstFetchExpr, haveVariadic bool) {
 	constVal := constExpr.Constant.Value
 	isNull := constVal == "null"
 
+	if haveVariadic {
+		// If the parameter is outside the declared parameters, we check the latter as a variable
+		if paramIndex >= len(fn.Params)-1 {
+			lastParam := fn.Params[len(fn.Params)-1] // last param (variadic ...args)
+			if types.IsTypeMixed(lastParam.Typ) {
+				return
+			}
+
+			paramAllowsNull := types.IsTypeNullable(lastParam.Typ)
+			if isNull && !paramAllowsNull {
+				b.report(arg, LevelError, "notNullSafety",
+					"null passed to non-nullable variadic parameter %s in function %s",
+					lastParam.Name, fn.Name)
+			}
+			return
+		}
+	}
+
 	paramAllowsNull := types.IsTypeNullable(fn.Params[paramIndex].Typ)
 	if isNull && !paramAllowsNull {
-		b.report(arg, LevelError, "notNullSafety", "null passed to non-nullable parameter %s in function %s", fn.Params[paramIndex].Name, fn.Name)
+		b.report(arg, LevelError, "notNullSafety",
+			"null passed to non-nullable parameter %s in function %s",
+			fn.Params[paramIndex].Name, fn.Name)
 	}
 }
 
 // TODO: we don't know type of each element without phpDoc, it will be mixed
-func (b *blockWalker) checkArrayDimFetchNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, arrayExpr *ir.ArrayDimFetchExpr) {
+func (b *blockWalker) checkArrayDimFetchNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, arrayExpr *ir.ArrayDimFetchExpr, haveVariadic bool) {
 	baseVar, ok := arrayExpr.Variable.(*ir.SimpleVar)
 	if !ok {
 		return
@@ -1091,7 +1119,7 @@ func (b *blockWalker) checkArrayDimFetchNullSafety(arg ir.Node, fn meta.FuncInfo
 }
 
 // TODO: we don't know type of each element without phpDoc, it will be mixed
-func (b *blockWalker) checkListExprNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, listExpr *ir.ListExpr) {
+func (b *blockWalker) checkListExprNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, listExpr *ir.ListExpr, haveVariadic bool) {
 	for _, item := range listExpr.Items {
 		if item == nil {
 			continue
