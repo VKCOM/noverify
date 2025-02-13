@@ -1138,51 +1138,68 @@ func (b *blockWalker) checkListExprNullSafety(arg ir.Node, fn meta.FuncInfo, par
 	}
 }
 
+func (b *blockWalker) getPropertyComputedType(expr *ir.PropertyFetchExpr) (meta.ClassInfo, types.Map) {
+	baseCall, ok := expr.Variable.(*ir.SimpleVar)
+	if !ok {
+		return meta.ClassInfo{}, types.Map{}
+	}
+
+	varInfo, ok := b.ctx.sc.GetVar(baseCall)
+	if !ok {
+		return meta.ClassInfo{}, types.Map{}
+	}
+
+	classInfo, ok := b.r.ctx.st.Info.GetClass(varInfo.Type.String())
+	if !ok {
+		return meta.ClassInfo{}, types.Map{}
+	}
+
+	property, ok := expr.Property.(*ir.Identifier)
+	if !ok {
+		return meta.ClassInfo{}, types.Map{}
+	}
+
+	propertyInfoFromClass := classInfo.Properties[property.Value]
+	return classInfo, propertyInfoFromClass.Typ
+}
+
 func (b *blockWalker) checkPropertyFetchNullSafety(expr *ir.PropertyFetchExpr, fn meta.FuncInfo, paramIndex int, haveVariadic bool) {
-	objVar, ok := expr.Variable.(*ir.SimpleVar)
+	// If the left part of the chain is also a property call, we check it recursively
+	if nested, ok := expr.Variable.(*ir.PropertyFetchExpr); ok {
+		b.checkPropertyFetchNullSafety(nested, fn, paramIndex, haveVariadic)
+	}
 
-	if ok {
-		varInfo, _ := b.ctx.sc.GetVar(objVar)
-		classInfo, _ := b.r.ctx.st.Info.GetClass(varInfo.Type.String())
+	classInfo, propType := b.getPropertyComputedType(expr)
+	if classInfo.Name == "" || propType.Empty() {
+		return
+	}
 
-		prp, okPrp := expr.Property.(*ir.Identifier)
+	prp, ok := expr.Property.(*ir.Identifier)
+	if !ok {
+		return
+	}
 
-		if okPrp {
-			property := classInfo.Properties[prp.Value]
+	isPrpNullable := types.IsTypeNullable(propType)
 
-			isPrpNullable := types.IsTypeNullable(property.Typ)
-			if haveVariadic {
-				// If the parameter is outside the declared parameters, we check the latter as a variable
-				if paramIndex >= len(fn.Params)-1 {
-					lastParam := fn.Params[len(fn.Params)-1] // last param (variadic ...args)
-					if types.IsTypeMixed(lastParam.Typ) {
-						return
-					}
-
-					paramAllowsNull := types.IsTypeNullable(lastParam.Typ)
-					if isPrpNullable && !paramAllowsNull {
-						b.report(expr, LevelError, "notNullSafety",
-							"potential null dereference when accessing property '%s'", prp.Value)
-					}
-					return
-
-				}
+	if haveVariadic {
+		if paramIndex >= len(fn.Params)-1 {
+			lastParam := fn.Params[len(fn.Params)-1]
+			if types.IsTypeMixed(lastParam.Typ) {
+				return
 			}
-
-			paramAllowsNull := types.IsTypeNullable(fn.Params[paramIndex].Typ)
-
+			paramAllowsNull := types.IsTypeNullable(lastParam.Typ)
 			if isPrpNullable && !paramAllowsNull {
 				b.report(expr, LevelError, "notNullSafety",
 					"potential null dereference when accessing property '%s'", prp.Value)
 			}
-
-			println(classInfo.Name)
+			return
 		}
+	}
 
-		// TODO: check difficult chains like $a->b->c->d
-		/*	if nestedProp, ok := expr.Variable.(*ir.PropertyFetchExpr); ok {
-			b.checkPropertyFetchNullSafety(nestedProp)
-		}*/
+	paramAllowsNull := types.IsTypeNullable(fn.Params[paramIndex].Typ)
+	if isPrpNullable && !paramAllowsNull {
+		b.report(expr, LevelError, "notNullSafety",
+			"potential null dereference when accessing property '%s'", prp.Value)
 	}
 }
 
