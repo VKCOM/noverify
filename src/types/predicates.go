@@ -40,7 +40,7 @@ func IsAlias(s string) bool {
 func IsTypeNullable(typ Map) bool {
 	isNullable := false
 	typ.Iterate(func(t string) {
-		if t == "null" {
+		if t == "null" || strings.Contains(t, "mixed") {
 			isNullable = true
 		}
 	})

@@ -1051,7 +1051,7 @@ func (b *blockWalker) checkNullSafetyCallArgsF(args []ir.Node, fn meta.FuncInfo)
 			b.checkListExprNullSafety(arg, fn, i, a, haveVariadic)
 
 		case *ir.PropertyFetchExpr:
-			b.checkPropertyFetchNullSafety(a)
+			b.checkPropertyFetchNullSafety(a, fn, i, haveVariadic)
 		}
 	}
 }
@@ -1138,7 +1138,7 @@ func (b *blockWalker) checkListExprNullSafety(arg ir.Node, fn meta.FuncInfo, par
 	}
 }
 
-func (b *blockWalker) checkPropertyFetchNullSafety(expr *ir.PropertyFetchExpr) {
+func (b *blockWalker) checkPropertyFetchNullSafety(expr *ir.PropertyFetchExpr, fn meta.FuncInfo, paramIndex int, haveVariadic bool) {
 	objVar, ok := expr.Variable.(*ir.SimpleVar)
 
 	if ok {
@@ -1150,19 +1150,40 @@ func (b *blockWalker) checkPropertyFetchNullSafety(expr *ir.PropertyFetchExpr) {
 		if okPrp {
 			property := classInfo.Properties[prp.Value]
 
-			if types.IsTypeNullable(property.Typ) {
+			isPrpNullable := types.IsTypeNullable(property.Typ)
+			if haveVariadic {
+				// If the parameter is outside the declared parameters, we check the latter as a variable
+				if paramIndex >= len(fn.Params)-1 {
+					lastParam := fn.Params[len(fn.Params)-1] // last param (variadic ...args)
+					if types.IsTypeMixed(lastParam.Typ) {
+						return
+					}
+
+					paramAllowsNull := types.IsTypeNullable(lastParam.Typ)
+					if isPrpNullable && !paramAllowsNull {
+						b.report(expr, LevelError, "notNullSafety",
+							"potential null dereference when accessing property '%s'", prp.Value)
+					}
+					return
+
+				}
+			}
+
+			paramAllowsNull := types.IsTypeNullable(fn.Params[paramIndex].Typ)
+
+			if isPrpNullable && !paramAllowsNull {
 				b.report(expr, LevelError, "notNullSafety",
 					"potential null dereference when accessing property '%s'", prp.Value)
 			}
+
+			println(classInfo.Name)
 		}
 
-		println(classInfo.Name)
+		// TODO: check difficult chains like $a->b->c->d
+		/*	if nestedProp, ok := expr.Variable.(*ir.PropertyFetchExpr); ok {
+			b.checkPropertyFetchNullSafety(nestedProp)
+		}*/
 	}
-
-	// TODO: check difficult chains like $a->b->c->d
-	/*	if nestedProp, ok := expr.Variable.(*ir.PropertyFetchExpr); ok {
-		b.checkPropertyFetchNullSafety(nestedProp)
-	}*/
 }
 
 func (b *blockWalker) handleCallArgs(args []ir.Node, fn meta.FuncInfo) {
