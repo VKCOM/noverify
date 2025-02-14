@@ -39,6 +39,9 @@ func IsAlias(s string) bool {
 
 func IsTypeNullable(typ Map) bool {
 	isNullable := false
+	if typ.m == nil {
+		return true // We consider that if the type is not inferred, then it is mixed
+	}
 	typ.Iterate(func(t string) {
 		if t == "null" || strings.Contains(t, "mixed") {
 			isNullable = true

@@ -129,6 +129,7 @@ type FuncInfo struct {
 	Flags        FuncFlags
 	ExitFlags    int // if function has exit/die/throw, then ExitFlags will be <> 0
 	Internal     bool
+	IsVariadic   bool
 
 	DeprecationInfo
 }
