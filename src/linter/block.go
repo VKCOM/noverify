@@ -1031,14 +1031,14 @@ func (b *blockWalker) checkNullSafetyCallArgsF(args []ir.Node, fn meta.FuncInfo)
 	if fn.Params == nil || fn.Name == "" {
 		return
 	}
-	haveVariadic := fn.IsVariadic //enoughArgs(args, fn)
+	haveVariadic := fn.IsVariadic
 
 	for i, arg := range args {
 		if arg == nil {
 			continue
 		}
 
-		//if something like this: function requestRestart($stream_id);   requestRestart($stream_id, $res);
+		// if something like this: function requestRestart($stream_id);   requestRestart($stream_id, $res);
 		if i > len(fn.Params)-1 {
 			return
 		}
@@ -1078,7 +1078,7 @@ func (b *blockWalker) checkSimpleVarNullSafety(arg ir.Node, fn meta.FuncInfo, pa
 		if varIsNullable && !paramAllowsNull {
 			b.report(arg, LevelWarning, "notNullSafety",
 				"not null safety call in function %s signature of variadic param %s",
-				fn.Name, lastParam.Name)
+				strings.TrimPrefix(fn.Name, "\\"), lastParam.Name)
 		}
 		return
 	}
@@ -1088,7 +1088,7 @@ func (b *blockWalker) checkSimpleVarNullSafety(arg ir.Node, fn meta.FuncInfo, pa
 	if varIsNullable && !paramAllowsNull {
 		b.report(arg, LevelWarning, "notNullSafety",
 			"not null safety call in function %s signature of param %s",
-			fn.Name, fn.Params[paramIndex].Name)
+			strings.TrimPrefix(fn.Name, "\\"), fn.Params[paramIndex].Name)
 	}
 }
 
@@ -1108,7 +1108,7 @@ func (b *blockWalker) checkConstFetchNullSafety(arg ir.Node, fn meta.FuncInfo, p
 			if isNull && !paramAllowsNull {
 				b.report(arg, LevelWarning, "notNullSafety",
 					"null passed to non-nullable variadic parameter %s in function %s",
-					lastParam.Name, fn.Name)
+					lastParam.Name, strings.TrimPrefix(fn.Name, "\\"))
 			}
 			return
 		}
@@ -1118,7 +1118,7 @@ func (b *blockWalker) checkConstFetchNullSafety(arg ir.Node, fn meta.FuncInfo, p
 	if isNull && !paramAllowsNull {
 		b.report(arg, LevelWarning, "notNullSafety",
 			"null passed to non-nullable parameter %s in function %s",
-			fn.Params[paramIndex].Name, fn.Name)
+			fn.Params[paramIndex].Name, strings.TrimPrefix(fn.Name, "\\"))
 	}
 }
 
@@ -1143,7 +1143,7 @@ func (b *blockWalker) checkArrayDimFetchNullSafety(arg ir.Node, fn meta.FuncInfo
 		if types.IsTypeNullable(varInfo.Type) && !paramAllowsNull {
 			b.report(arg, LevelWarning, "notNullSafety",
 				"potential null array access in variadic parameter %s of function %s",
-				lastParam.Name, fn.Name)
+				lastParam.Name, strings.TrimPrefix(fn.Name, "\\"))
 		}
 		return
 	}
@@ -1152,7 +1152,7 @@ func (b *blockWalker) checkArrayDimFetchNullSafety(arg ir.Node, fn meta.FuncInfo
 	if types.IsTypeNullable(varInfo.Type) && !paramAllowsNull {
 		b.report(arg, LevelWarning, "notNullSafety",
 			"potential null array access in parameter %s of function %s",
-			fn.Params[paramIndex].Name, fn.Name)
+			fn.Params[paramIndex].Name, strings.TrimPrefix(fn.Name, "\\"))
 	}
 }
 
@@ -1184,7 +1184,7 @@ func (b *blockWalker) checkListExprNullSafety(arg ir.Node, fn meta.FuncInfo, par
 					if !types.IsTypeNullable(effectiveParam.Typ) {
 						b.report(arg, LevelWarning, "notNullSafety",
 							"potential null value in list assignment for parameter %s in function %s",
-							effectiveParam.Name, fn.Name)
+							effectiveParam.Name, strings.TrimPrefix(fn.Name, "\\"))
 					}
 				}
 			}
