@@ -151,7 +151,7 @@ function testVariadic(A ...$a): void {
 testVariadic(new A(), null);
 `)
 	test.Expect = []string{
-		"null passed to non-nullable variadic parameter a in function testVariadic",
+		"null passed to non-nullable parameter a in function testVariadic",
 	}
 	test.RunAndMatch()
 }
