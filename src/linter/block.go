@@ -1122,7 +1122,6 @@ func (b *blockWalker) checkConstFetchNullSafety(arg ir.Node, fn meta.FuncInfo, p
 	}
 }
 
-// TODO: we don't know type of each element without phpDoc, it will be mixed
 func (b *blockWalker) checkArrayDimFetchNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, arrayExpr *ir.ArrayDimFetchExpr, haveVariadic bool) {
 	baseVar, ok := arrayExpr.Variable.(*ir.SimpleVar)
 	if !ok {
@@ -1156,14 +1155,12 @@ func (b *blockWalker) checkArrayDimFetchNullSafety(arg ir.Node, fn meta.FuncInfo
 	}
 }
 
-// TODO: we don't know type of each element without phpDoc, it will be mixed
 func (b *blockWalker) checkListExprNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, listExpr *ir.ListExpr, haveVariadic bool) {
 	for _, item := range listExpr.Items {
 		if item == nil {
 			continue
 		}
 
-		// Если в элементе списка есть ключ, проверяем его рекурсивно.
 		if item.Key != nil {
 			b.checkNullSafetyCallArgsF([]ir.Node{item.Key}, fn)
 		}
@@ -1177,7 +1174,6 @@ func (b *blockWalker) checkListExprNullSafety(arg ir.Node, fn meta.FuncInfo, par
 				effectiveParam = fn.Params[paramIndex]
 			}
 
-			// Если значение элемента является простой переменной, проверяем её тип.
 			if simpleVar, ok := item.Val.(*ir.SimpleVar); ok {
 				varInfo, found := b.ctx.sc.GetVar(simpleVar)
 				if found && types.IsTypeNullable(varInfo.Type) {
@@ -1189,7 +1185,6 @@ func (b *blockWalker) checkListExprNullSafety(arg ir.Node, fn meta.FuncInfo, par
 				}
 			}
 
-			// Рекурсивно проверяем само выражение значения элемента списка.
 			b.checkNullSafetyCallArgsF([]ir.Node{item.Val}, fn)
 		}
 	}
