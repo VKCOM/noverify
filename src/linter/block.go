@@ -1039,7 +1039,7 @@ func (b *blockWalker) checkNullSafetyCallArgsF(args []ir.Node, fn meta.FuncInfo)
 		}
 
 		// if something like this: function requestRestart($stream_id);   requestRestart($stream_id, $res);
-		if i > len(fn.Params)-1 {
+		if i > len(fn.Params)-1 && !haveVariadic {
 			return
 		}
 
