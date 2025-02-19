@@ -1953,8 +1953,13 @@ func (d *rootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filter
 			return false
 		}
 		if filter.Regexp != nil {
-			if vr, ok := nn.(*ir.SimpleVar); ok {
-				if !filter.Regexp.MatchString(vr.Name) {
+			switch v := nn.(type) {
+			case *ir.SimpleVar:
+				if !filter.Regexp.MatchString(v.Name) {
+					return false
+				}
+			case *ir.String:
+				if !filter.Regexp.MatchString(v.Value) {
 					return false
 				}
 			}

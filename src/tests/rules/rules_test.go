@@ -733,6 +733,75 @@ function type_type_check(string $animal_name, int $animal_id) {
 	test.RunRulesTest()
 }
 
+func TestFilterLiteralNoWarning(t *testing.T) {
+	rfile := `<?php
+function literalEndpointSafe() {
+  /**
+   * @warning Literal endpoint must use HTTPS
+   * @filter $endpoint ^http://
+   */
+  callApi($endpoint);
+}
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+function testLiteralSafe() {
+  callApi("https://secure.com");
+}
+`)
+
+	test.RunRulesTest()
+}
+
+func TestMultipleLiterals(t *testing.T) {
+	rfile := `<?php
+function checkEndpoint() {
+  /**
+   * @warning Endpoint must use HTTPS
+   * @filter $endpoint ^http://
+   */
+  callApi($endpoint);
+}
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+function testMultipleEndpoints() {
+  callApi("http://example.com");
+  callApi("https://secure.com");
+  callApi("http://another.com");
+}
+`)
+	test.Expect = []string{
+		"Endpoint must use HTTPS",
+		"Endpoint must use HTTPS",
+	}
+	test.RunRulesTest()
+}
+
+func TestFilterVariableNoWarning(t *testing.T) {
+	rfile := `<?php
+function variableEndpointSafe() {
+  /**
+   * @warning Variable endpoint must be renamed
+   * @filter $endpoint ^endpoint$
+   */
+  callApi($endpoint);
+}
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+function testVariableSafe() {
+  $safeEndpoint = "http://example.com";
+  callApi($safeEndpoint);
+}
+`)
+
+	test.RunRulesTest()
+}
+
 func TestRulePathExcludePositive(t *testing.T) {
 	rfile := `<?php
 /**
