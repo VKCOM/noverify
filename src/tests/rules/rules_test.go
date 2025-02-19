@@ -733,6 +733,133 @@ function type_type_check(string $animal_name, int $animal_id) {
 	test.RunRulesTest()
 }
 
+func TestFilterStringLiteral(t *testing.T) {
+	rfile := `<?php
+function insecureDownload() {
+  /**
+   * @warning Insecure download: use HTTPS
+   * @filter $url ^http://
+   */
+  downloadFile($url);
+}
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+downloadFile("http://insecure.com");
+downloadFile("https://secure.com");
+`)
+
+	test.Expect = []string{
+		"Insecure download: use HTTPS",
+	}
+	test.RunRulesTest()
+}
+
+func TestFilterLiteralAndVariable(t *testing.T) {
+	rfile := `<?php
+function literalEndpoint() {
+  /**
+   * @warning Literal endpoint must use HTTPS
+   * @filter $endpoint ^http://
+   */
+  callApi($endpoint);
+}
+function variableEndpoint() {
+  /**
+   * @warning Don't use $endpoint variable
+   * @filter $endpoint ^endpoint$
+   */
+  callApi($endpoint);
+}
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+function testLiteral() {
+  callApi("http://another.com");
+}
+function testVariable() {
+  $endpoint = "http://example.com";
+  callApi($endpoint);
+}
+`)
+	test.Expect = []string{
+		"Literal endpoint must use HTTPS",
+		"Don't use $endpoint variable",
+	}
+	test.RunRulesTest()
+}
+
+func TestFilterLiteralNoWarning(t *testing.T) {
+	rfile := `<?php
+function literalEndpointSafe() {
+  /**
+   * @warning Literal endpoint must use HTTPS
+   * @filter $endpoint ^http://
+   */
+  callApi($endpoint);
+}
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+function testLiteralSafe() {
+  callApi("https://secure.com");
+}
+`)
+
+	test.RunRulesTest()
+}
+
+func TestMultipleLiterals(t *testing.T) {
+	rfile := `<?php
+function checkEndpoint() {
+  /**
+   * @warning Endpoint must use HTTPS
+   * @filter $endpoint ^http://
+   */
+  callApi($endpoint);
+}
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+function testMultipleEndpoints() {
+  callApi("http://example.com");
+  callApi("https://secure.com");
+  callApi("http://another.com");
+}
+`)
+	test.Expect = []string{
+		"Endpoint must use HTTPS",
+		"Endpoint must use HTTPS",
+	}
+	test.RunRulesTest()
+}
+
+func TestFilterVariableNoWarning(t *testing.T) {
+	rfile := `<?php
+function variableEndpointSafe() {
+  /**
+   * @warning Variable endpoint must be renamed
+   * @filter $endpoint ^endpoint$
+   */
+  callApi($endpoint);
+}
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+function testVariableSafe() {
+  $safeEndpoint = "http://example.com";
+  callApi($safeEndpoint);
+}
+`)
+
+	test.RunRulesTest()
+}
+
 func TestRulePathExcludePositive(t *testing.T) {
 	rfile := `<?php
 /**
