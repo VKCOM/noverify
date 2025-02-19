@@ -733,64 +733,6 @@ function type_type_check(string $animal_name, int $animal_id) {
 	test.RunRulesTest()
 }
 
-func TestFilterStringLiteral(t *testing.T) {
-	rfile := `<?php
-function insecureDownload() {
-  /**
-   * @warning Insecure download: use HTTPS
-   * @filter $url ^http://
-   */
-  downloadFile($url);
-}
-`
-	test := linttest.NewSuite(t)
-	test.RuleFile = rfile
-	test.AddFile(`<?php
-downloadFile("http://insecure.com");
-downloadFile("https://secure.com");
-`)
-
-	test.Expect = []string{
-		"Insecure download: use HTTPS",
-	}
-	test.RunRulesTest()
-}
-
-func TestFilterLiteralAndVariable(t *testing.T) {
-	rfile := `<?php
-function literalEndpoint() {
-  /**
-   * @warning Literal endpoint must use HTTPS
-   * @filter $endpoint ^http://
-   */
-  callApi($endpoint);
-}
-function variableEndpoint() {
-  /**
-   * @warning Don't use $endpoint variable
-   * @filter $endpoint ^endpoint$
-   */
-  callApi($endpoint);
-}
-`
-	test := linttest.NewSuite(t)
-	test.RuleFile = rfile
-	test.AddFile(`<?php
-function testLiteral() {
-  callApi("http://another.com");
-}
-function testVariable() {
-  $endpoint = "http://example.com";
-  callApi($endpoint);
-}
-`)
-	test.Expect = []string{
-		"Literal endpoint must use HTTPS",
-		"Don't use $endpoint variable",
-	}
-	test.RunRulesTest()
-}
-
 func TestFilterLiteralNoWarning(t *testing.T) {
 	rfile := `<?php
 function literalEndpointSafe() {

@@ -510,44 +510,6 @@ function forbiddenIdUsage() {
 
 This rule will match usage if `$id` variable.
 
-Also, originally designed to apply to variables by matching their names, the functionality has been extended so that if a string literal is captured under the given name, the regular expression is applied to its literal value.
-
-When a string literal is captured, the regular expression is applied to the literal’s value. 
-
-For example:
-
-```php
-function insecureUrl() {
-  /**
-   * @warning Use secure URLs
-   * @filter $url ^http://
-   */
-  callApi("http://example.com");
-}
-```
-
-In this case, the rule will match because the captured string literal "http://example.com" matches the regular expression ^http://.
-
-Important: You can not mix regex with variable. If you want both of this - you should write 2 different rules like this:
-
-```php
-function literalEndpoint() {
-  /**
-   * @warning Literal endpoint must use HTTPS
-   * @filter $endpoint ^http://
-   */
-  callApi($endpoint);
-}
-
-function variableEndpoint() {
-  /**
-   * @warning Don't use $endpoint variable
-   * @filter $endpoint ^endpoint$
-   */
-  callApi($endpoint);
-}
-```
-
 #### Underline location (`@location`)
 
 For every warning that NoVerify finds, it underlines the location. However, for dynamic rules, the right place is not always underlined.
