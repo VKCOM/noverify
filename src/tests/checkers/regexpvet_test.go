@@ -26,6 +26,10 @@ function parseErrors($s) {
 		`parse error: 'a' is not a valid delimiter`,
 		`parse error: can't find '>' ending delimiter`,
 		`parse error: unterminated '['`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
 	}
 	test.RunAndMatch()
 }
@@ -204,6 +208,9 @@ function f($s) {
 		`'\s' intersects with '\t' in [\s\t]`,
 		`'e' is duplicated in [com|org|edu|net]`,
 		`'\w' intersects with '\d' in [\w\d]`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
 	}
 	test.RunAndMatch()
 }
@@ -273,5 +280,31 @@ function goodAnchors($s) {
 	preg_match('~(?i)(?:)(^| )\S+~', $s);
 }
 `)
+	test.Expect = []string{
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+		`not null safety call in function preg_match signature of param subject`,
+	}
 	test.RunAndMatch()
 }

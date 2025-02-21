@@ -50,6 +50,7 @@ echo 'unreachable';
 `)
 	test.Expect = []string{
 		`Unreachable code`,
+		`not null safety call in function trigger_error signature of param message`,
 	}
 	test.RunAndMatch()
 }
