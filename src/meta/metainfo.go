@@ -15,6 +15,7 @@ const (
 	FuncFinal
 	// FuncFromAnnotation is set if the function is described in the class annotation.
 	FuncFromAnnotation
+	FuncVariadic
 )
 
 type PropertyFlags uint8
@@ -129,7 +130,6 @@ type FuncInfo struct {
 	Flags        FuncFlags
 	ExitFlags    int // if function has exit/die/throw, then ExitFlags will be <> 0
 	Internal     bool
-	IsVariadic   bool
 
 	DeprecationInfo
 }

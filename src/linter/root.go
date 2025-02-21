@@ -537,6 +537,7 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, docblockParams phpdoctype
 		// Handle variadic.
 		if param.Variadic {
 			paramType = paramType.Map(types.WrapArrayOf)
+
 			isVariadic = true
 		}
 
@@ -668,6 +669,10 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	if solver.SideEffectFreeFunc(d.scope(), d.ctx.st, nil, fun.Stmts) {
 		funcFlags |= meta.FuncPure
 	}
+	if funcParams.isVariadic {
+		funcFlags |= meta.FuncVariadic
+	}
+
 	d.meta.Functions.Set(nm, meta.FuncInfo{
 		Params:          funcParams.params,
 		Name:            nm,
@@ -677,7 +682,6 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 		Flags:           funcFlags,
 		ExitFlags:       exitFlags,
 		DeprecationInfo: doc.Deprecation,
-		IsVariadic:      funcParams.isVariadic,
 	})
 
 	return false
@@ -1140,6 +1144,10 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	if !insideInterface && !modif.abstract && solver.SideEffectFreeFunc(d.scope(), d.ctx.st, nil, stmts) {
 		funcFlags |= meta.FuncPure
 	}
+	if funcParams.isVariadic {
+		funcFlags |= meta.FuncVariadic
+	}
+
 	class.Methods.Set(nm, meta.FuncInfo{
 		Params:          funcParams.params,
 		Name:            nm,
@@ -1151,7 +1159,6 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		ExitFlags:       exitFlags,
 		DeprecationInfo: doc.Deprecation,
 		Internal:        doc.Internal,
-		IsVariadic:      funcParams.isVariadic,
 	})
 
 	if nm == "getIterator" && d.metaInfo().IsIndexingComplete() && solver.Implements(d.metaInfo(), d.ctx.st.CurrentClass, `\IteratorAggregate`) {

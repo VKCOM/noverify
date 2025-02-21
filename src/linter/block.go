@@ -1042,7 +1042,7 @@ func (b *blockWalker) checkNullSafetyCallArgsF(args []ir.Node, fn meta.FuncInfo)
 	if fn.Params == nil || fn.Name == "" {
 		return
 	}
-	haveVariadic := fn.IsVariadic
+	haveVariadic := fn.Flags&meta.FuncVariadic != 0
 
 	for i, arg := range args {
 		if arg == nil {
@@ -1583,16 +1583,21 @@ func (b *blockWalker) enterClosure(fun *ir.ClosureExpr, haveThis bool, thisType 
 		b.r.meta.Functions = meta.NewFunctionsMap()
 	}
 
+	var funcFlags meta.FuncFlags
+
+	if params.isVariadic {
+		funcFlags |= meta.FuncVariadic
+	}
+
 	b.r.meta.Functions.Set(name, meta.FuncInfo{
 		Params:          params.params,
 		Name:            name,
 		Pos:             b.r.getElementPos(fun),
 		Typ:             returnTypes.Immutable(),
 		MinParamsCnt:    params.minParamsCount,
-		Flags:           0,
+		Flags:           funcFlags,
 		ExitFlags:       exitFlags,
 		DeprecationInfo: doc.Deprecation,
-		IsVariadic:      params.isVariadic,
 	})
 
 	return false
