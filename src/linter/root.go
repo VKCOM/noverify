@@ -486,6 +486,7 @@ type parseFuncParamsResult struct {
 	params         []meta.FuncParam
 	paramsTypeHint map[string]types.Map
 	minParamsCount int
+	isVariadic     bool
 }
 
 func (d *rootWalker) parseFuncParams(params []ir.Node, docblockParams phpdoctypes.ParamsMap, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (res parseFuncParamsResult) {
@@ -501,6 +502,7 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, docblockParams phpdoctype
 		return d.parseFuncArgsForCallback(params, sc, closureSolver)
 	}
 
+	isVariadic := false
 	for _, p := range params {
 		param := p.(*ir.Parameter)
 		paramVar := param.Variable
@@ -535,6 +537,7 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, docblockParams phpdoctype
 		// Handle variadic.
 		if param.Variadic {
 			paramType = paramType.Map(types.WrapArrayOf)
+			isVariadic = true
 		}
 
 		// Append @param type.
@@ -565,6 +568,7 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, docblockParams phpdoctype
 		params:         parsedParams,
 		paramsTypeHint: paramHints,
 		minParamsCount: minArgs,
+		isVariadic:     isVariadic,
 	}
 }
 
@@ -673,6 +677,7 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 		Flags:           funcFlags,
 		ExitFlags:       exitFlags,
 		DeprecationInfo: doc.Deprecation,
+		IsVariadic:      funcParams.isVariadic,
 	})
 
 	return false
@@ -1146,6 +1151,7 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		ExitFlags:       exitFlags,
 		DeprecationInfo: doc.Deprecation,
 		Internal:        doc.Internal,
+		IsVariadic:      funcParams.isVariadic,
 	})
 
 	if nm == "getIterator" && d.metaInfo().IsIndexingComplete() && solver.Implements(d.metaInfo(), d.ctx.st.CurrentClass, `\IteratorAggregate`) {
