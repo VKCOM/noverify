@@ -1887,6 +1887,13 @@ func (d *rootWalker) runRule(n ir.Node, sc *meta.Scope, rule *rules.Rule) bool {
 		}
 	}
 
+	/*	for _, filterSet := range rule.Filters {
+		if d.checkFilterSet(&m, sc, filterSet) {
+			matched = true
+			break
+		}
+	}*/
+
 	// If location is explicitly set, use named match set.
 	// Otherwise peek the root target node.
 	var location ir.Node
@@ -1962,6 +1969,8 @@ func (d *rootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filter
 				if !filter.Regexp.MatchString(v.Value) {
 					return false
 				}
+			case *ir.ConcatExpr:
+
 			}
 		}
 	}
