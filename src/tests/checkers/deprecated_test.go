@@ -83,14 +83,18 @@ declare(strict_types = "1");
 class OldClass
 {
 /**
- * @deprecated property
+ * @deprecated prp
  */
-public $prp;
+public $deprecated;
+
+public $notDeprecated;
 }
 
+$v = new OldClass();
+$v->prp;
 `)
 	test.Expect = []string{
-		"Has deprecated class OldClass",
+		"Try to create instance \\OldClass class that was marked as deprecated",
 		"Has deprecated field in class OldClass",
 	}
 	test.RunAndMatch()
