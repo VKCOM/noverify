@@ -733,6 +733,31 @@ function type_type_check(string $animal_name, int $animal_id) {
 	test.RunRulesTest()
 }
 
+func TestRuleFilterRequire(t *testing.T) {
+	rfile := `<?php  
+function legacyLibsUsage() {  
+  /**
+   * @warning      Don't use legacy libs
+   * @filter $file (mc\.lib\.php|rpc\.lib\.php|statlogs\.lib\.php|kot\.php|burunduk3\.php|debug\.lib\.php|curl\.lib\.php|confdata\.lib\.php)
+   */
+	any_legacy_libs_usage: {    
+		require $file;
+		require_once $file;
+		include $file;
+		include_once $file;
+	}
+}  
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php  
+require __DIR__ . '../../groups.lib.php';;  
+  
+echo "test";`)
+
+	test.RunRulesTest()
+}
+
 func TestFilterLiteralNoWarning(t *testing.T) {
 	rfile := `<?php
 function literalEndpointSafe() {
