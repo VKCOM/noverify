@@ -563,6 +563,15 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 		if class.IsInterface() {
 			b.report(e.Class, LevelError, "invalidNew", "Cannot instantiate interface %s", class.Name)
 		}
+
+		if class.IsDeprecated() {
+			if class.WithDeprecationNote() {
+				b.report(e, LevelNotice, "deprecated", "Try to create instance of the class %s (%s)", class.Name, class.DeprecationInfo)
+			} else {
+				b.report(e, LevelNotice, "deprecatedUntagged", "Try to create instance %s class that was marked as deprecated", class.Name)
+			}
+		}
+
 		b.walker.r.checker.CheckNameCase(e.Class, className, class.Name)
 	}
 
@@ -1298,7 +1307,7 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 		}
 	}
 
-	if call.info.Deprecated {
+	if call.info.IsDeprecated() {
 		deprecation := call.info.DeprecationInfo
 
 		if deprecation.WithDeprecationNote() {
