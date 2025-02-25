@@ -38,10 +38,12 @@ func findProperty(info *meta.Info, className, propName string) (res solver.FindP
 		// Construct a dummy property from the magic method.
 		p.ClassName = m.ClassName
 		p.TraitName = m.TraitName
+
 		p.Info = meta.PropertyInfo{
-			Pos:         m.Info.Pos,
-			Typ:         m.Info.Typ,
-			AccessLevel: m.Info.AccessLevel,
+			Pos:             m.Info.Pos,
+			Typ:             m.Info.Typ,
+			AccessLevel:     m.Info.AccessLevel,
+			DeprecationInfo: m.Info.DeprecationInfo,
 		}
 		return p, true, true
 	}
