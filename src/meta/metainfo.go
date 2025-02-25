@@ -192,6 +192,8 @@ type ConstInfo struct {
 	DeprecationInfo
 }
 
+func (info *ConstInfo) IsDeprecated() bool { return info.Deprecated }
+
 type ClassFlags uint8
 
 const (
