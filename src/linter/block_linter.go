@@ -251,13 +251,6 @@ func (b *blockLinter) checkClass(class *ir.ClassStmt) {
 		case *ir.ClassMethodStmt:
 			members = append(members, classMethod)
 			b.walker.CheckParamNullability(value.Params)
-		case *ir.PropertyListStmt:
-			for _, element := range value.Doc.Parsed {
-				if element.Name() == "deprecated" {
-					b.report(stmt, LevelNotice, "deprecated", "Has deprecated field in class %s", class.ClassName.Value)
-				}
-			}
-			members = append(members, classOtherMember)
 		default:
 			members = append(members, classOtherMember)
 		}
@@ -566,7 +559,7 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 
 		if class.IsDeprecated() {
 			if class.WithDeprecationNote() {
-				b.report(e, LevelNotice, "deprecated", "Try to create instance of the class %s (%s)", class.Name, class.DeprecationInfo)
+				b.report(e, LevelNotice, "deprecated", "Try to create instance of the class %s that was marked as deprecated (%s)", class.Name, class.DeprecationInfo)
 			} else {
 				b.report(e, LevelNotice, "deprecatedUntagged", "Try to create instance %s class that was marked as deprecated", class.Name)
 			}
@@ -1413,6 +1406,14 @@ func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
 
 	if fetch.isFound && !fetch.isMagic && !canAccess(b.classParseState(), fetch.className, fetch.info.AccessLevel) {
 		b.report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s->%s", fetch.info.AccessLevel, fetch.className, fetch.propertyNode.Value)
+	}
+
+	if fetch.info.IsDeprecated() {
+		if fetch.info.WithDeprecationNote() {
+			b.report(e, LevelNotice, "deprecated", "Try to call property %s that was marked as deprecated (%s) in the class %s", fetch.propertyNode.Value, fetch.info.DeprecationInfo, fetch.className)
+		} else {
+			b.report(e, LevelNotice, "deprecatedUntagged", "Try to call property %s that was marked as deprecated in the class %s", fetch.propertyNode.Value, fetch.className)
+		}
 	}
 }
 
