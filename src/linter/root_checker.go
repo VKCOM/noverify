@@ -110,7 +110,7 @@ func (r *rootChecker) CheckPropertyList(pl *ir.PropertyListStmt) bool {
 		r.walker.Report(pl, LevelNotice, "implicitModifiers", "Specify the access modifier for %s explicitly", target)
 	}
 
-	docblockType := r.walker.parsePHPDocVar(pl.Doc)
+	docblockType, _ := r.walker.parsePHPDocVar(pl.Doc)
 
 	r.CheckCommentMisspellings(pl, pl.Doc.Raw)
 	r.CheckPHPDocVar(pl, pl.Doc, docblockType)

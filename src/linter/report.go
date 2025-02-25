@@ -578,7 +578,7 @@ g();`,
 
 		{
 			Name:     "deprecatedUntagged",
-			Default:  false,
+			Default:  true,
 			Quickfix: false,
 			Comment:  "Report usages of deprecated symbols if the `@deprecated` tag has no description (see `deprecated` check).",
 			Before: `/**
