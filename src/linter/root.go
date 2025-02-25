@@ -986,6 +986,24 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 	return true
 }
 
+func (d *rootWalker) parseConstPHPDoc(constList *ir.ClassConstListStmt, doc phpdoc.Comment) (deprecationInfo meta.DeprecationInfo) {
+
+	if doc.Raw == "" {
+		return deprecationInfo
+	}
+
+	for _, part := range doc.Parsed {
+		switch part.Name() {
+		case "deprecated":
+			part := part.(*phpdoc.RawCommentPart)
+			deprecationInfo.Deprecated = true
+			deprecationInfo.Reason = part.ParamsText
+		}
+	}
+
+	return deprecationInfo
+}
+
 func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
 	cl := d.getClass()
 	accessLevel := meta.Public
@@ -1002,6 +1020,13 @@ func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
 		}
 	}
 
+	deprecationInfo := d.parseConstPHPDoc(list, list.Doc)
+
+	deprecation, ok := attributes.Deprecated(list.AttrGroups, d.ctx.st)
+	if ok {
+		deprecationInfo.Append(deprecation)
+	}
+
 	for _, cNode := range list.Consts {
 		c := cNode.(*ir.ConstantStmt)
 
@@ -1013,10 +1038,11 @@ func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
 
 		// TODO: handle duplicate constant
 		cl.Constants[nm] = meta.ConstInfo{
-			Pos:         d.getElementPos(c),
-			Typ:         typ.Immutable(),
-			AccessLevel: accessLevel,
-			Value:       value,
+			Pos:             d.getElementPos(c),
+			Typ:             typ.Immutable(),
+			AccessLevel:     accessLevel,
+			Value:           value,
+			DeprecationInfo: deprecationInfo,
 		}
 	}
 

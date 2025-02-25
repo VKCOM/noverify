@@ -1456,6 +1456,14 @@ func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
 	if fetch.isFound && !canAccess(b.classParseState(), fetch.implClassName, fetch.info.AccessLevel) {
 		b.report(e.ConstantName, LevelError, "accessLevel", "Cannot access %s constant %s::%s", fetch.info.AccessLevel, fetch.implClassName, fetch.constName)
 	}
+
+	if fetch.info.IsDeprecated() {
+		if fetch.info.WithDeprecationNote() {
+			b.report(e, LevelNotice, "deprecated", "Try to call constant %s that was marked as deprecated (%s) from the class %s", fetch.constName, fetch.info.DeprecationInfo, fetch.className)
+		} else {
+			b.report(e, LevelNotice, "deprecatedUntagged", "Try to call constant %s that was marked as deprecated from the class %s", fetch.constName, fetch.className)
+		}
+	}
 }
 
 func (b *blockLinter) checkClassSpecialNameCase(n ir.Node, className string) {
