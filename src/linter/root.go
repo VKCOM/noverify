@@ -993,8 +993,7 @@ func (d *rootWalker) parseConstPHPDoc(constList *ir.ClassConstListStmt, doc phpd
 	}
 
 	for _, part := range doc.Parsed {
-		switch part.Name() {
-		case "deprecated":
+		if part.Name() == "deprecated" {
 			part := part.(*phpdoc.RawCommentPart)
 			deprecationInfo.Deprecated = true
 			deprecationInfo.Reason = part.ParamsText
