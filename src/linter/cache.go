@@ -51,8 +51,9 @@ import (
 //		52 - renamed all PhpDoc and Phpdoc with PHPDoc
 //		53 - added DeprecationInfo for functions and methods and support for some attributes
 //		54 - forced cache version invalidation due to the #1165
-//	 55 - updated go version 1.16 -> 1.21
-const cacheVersion = 55
+//	    55 - updated go version 1.16 -> 1.21
+//	    56 - added DeprecationInfo for property and const
+const cacheVersion = 56
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")
