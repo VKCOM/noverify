@@ -52,8 +52,9 @@ import (
 //			53 - added DeprecationInfo for functions and methods and support for some attributes
 //			54 - forced cache version invalidation due to the #1165
 //		 	55 - updated go version 1.16 -> 1.21
-//	     56 - added isVariadic to meta.FuncInfo
-const cacheVersion = 56
+//	     	56 - added isVariadic to meta.FuncInfo
+//			57 - added DeprecationInfo for property and const
+const cacheVersion = 57
 
 var (
 	errWrongVersion = errors.New("Wrong cache version")
