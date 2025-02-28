@@ -492,7 +492,9 @@ eval(${"var"});
 
 ##### `@filter`
 
-The `@filter` restriction allows you to restrict the rule by name of matched variable.
+The `@filter` restriction allows you to restrict the rule by name of matched variable or literal, const or anything else! 
+
+More about which can be captured you can read in [phpgrep doc](https://github.com/quasilyte/phpgrep/blob/master/docs/user_manual.md#-filter)
 
 Thus, the rule will be applied only if there is a matched variable that matches passed regexp.
 
@@ -510,8 +512,6 @@ function forbiddenIdUsage() {
 
 This rule will match usage if `$id` variable.
 
-Also, originally designed to apply to variables by matching their names, the functionality has been extended so that if a string literal is captured under the given name, the regular expression is applied to its literal value.
-
 When a string literal is captured, the regular expression is applied to the literal’s value.
 
 For example:
@@ -528,6 +528,29 @@ function insecureUrl() {
 
 In this case, the rule will match because the captured string literal "http://example.com" matches the regular expression ^http://.
 
+Let see more complex example:
+
+```php
+function legacyLibsUsage() {
+  /**
+   * @warning      Don't use legacy libs
+   * @filter $file (legacy\.lib)
+   */
+  any_legacy_libs_usage: {
+    require ${'file:str'};
+    require_once ${'file:str'};
+    include ${'file:str'};
+    include_once ${'file:str'};
+
+    require __DIR__ . ${'file:str'};
+    require_once __DIR__ . ${'file:str'};
+    include __DIR__ . ${'file:str'};
+    include_once __DIR__ . ${'file:str'};
+  }
+}
+```
+
+This regular expression (legacy\.lib) will match any line that contains the substring legacy.lib in the substituted expression of the $file
 
 #### Underline location (`@location`)
 
