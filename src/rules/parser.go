@@ -363,7 +363,7 @@ func (p *parser) parseRuleInfo(st ir.Node, labelStmt ir.Node, proto *Rule) (Rule
 				return rule, p.errorf(st, "@filter param must be a phpgrep variable")
 			}
 			name = strings.TrimPrefix(name, "$")
-			found := p.checkForVariableInPattern(name, patternStmt, verifiedVars)
+			found := p.filterByPattern(name, patternStmt, verifiedVars)
 			if !found {
 				return rule, p.errorf(st, "@filter contains a reference to a variable %s that is not present in the pattern", name)
 			}
@@ -547,6 +547,33 @@ func (p *parser) checkForVariableInPattern(name string, pattern ir.Node, verifie
 		if s, ok := cur.(*ir.Var); ok {
 			if s, ok := s.Expr.(*ir.String); ok {
 				return strings.Contains(s.Value, what.(*ir.SimpleVar).Name+":var")
+			}
+		}
+		return false
+	})
+
+	if found {
+		verifiedVars[name] = struct{}{}
+	}
+
+	return found
+}
+
+func (p *parser) filterByPattern(name string, pattern ir.Node, verifiedVars map[string]struct{}) bool {
+	if _, ok := verifiedVars[name]; ok {
+		return true
+	}
+
+	found := irutil.FindWithPredicate(&ir.SimpleVar{Name: name}, pattern, func(what ir.Node, cur ir.Node) bool {
+		if s, ok := cur.(*ir.Var); ok {
+			if s, ok := s.Expr.(*ir.String); ok {
+				captured := what.(*ir.SimpleVar).Name
+				patternForFound := s.Value
+
+				if strings.Contains(patternForFound, ":") {
+					captured = captured + ":"
+				}
+				return strings.HasPrefix(patternForFound, captured)
 			}
 		}
 		return false
