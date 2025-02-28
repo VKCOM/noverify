@@ -573,9 +573,26 @@ func (p *parser) filterByPattern(name string, pattern ir.Node, verifiedVars map[
 				if strings.Contains(patternForFound, ":") {
 					captured = captured + ":"
 				}
+
 				return strings.HasPrefix(patternForFound, captured)
 			}
 		}
+
+		if s, ok := cur.(*ir.ExpressionStmt); ok {
+			if s, ok := s.Expr.(*ir.ImportExpr); ok {
+				captured := what.(*ir.SimpleVar).Name
+				if s, ok := s.Expr.(*ir.Var); ok {
+					patternForFound := s.Expr.(*ir.String).Value
+
+					if strings.Contains(patternForFound, ":") {
+						captured = captured + ":"
+					}
+					println(strings.HasPrefix(patternForFound, captured))
+					return strings.HasPrefix(patternForFound, captured)
+				}
+			}
+		}
+
 		return false
 	})
 
