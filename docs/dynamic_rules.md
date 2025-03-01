@@ -494,7 +494,7 @@ eval(${"var"});
 
 The `@filter` restriction allows you to restrict the rule by name of matched variable or literal, const or anything else! 
 
-More about which can be captured you can read in [phpgrep doc](https://github.com/quasilyte/phpgrep/blob/master/docs/user_manual.md#-filter)
+More about which can be captured you can read in [phpgrep doc](https://github.com/VKCOM/noverify/blob/master/src/phpgrep/pattern_language.md#matcher-expressions)
 
 Thus, the rule will be applied only if there is a matched variable that matches passed regexp.
 
