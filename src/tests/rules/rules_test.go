@@ -780,6 +780,74 @@ function testMultipleEndpoints() {
 	test.RunRulesTest()
 }
 
+func TestFilterLegacyLibsUsageMatches(t *testing.T) {
+	rfile := `<?php
+function legacyLibsUsage() {
+  /**
+   * @warning      Don't use legacy libs
+   * @filter $file (legacy\.lib)
+   */
+  any_legacy_libs_usage: {
+    require ${'file:str'};
+    require_once ${'file:str'};
+    include ${'file:str'};
+    include_once ${'file:str'};
+
+    require __DIR__ . ${'file:str'};
+    require_once __DIR__ . ${'file:str'};
+    include __DIR__ . ${'file:str'};
+    include_once __DIR__ . ${'file:str'};
+  }
+}
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+function testLegacyUsage() {
+  // Should match (because the have substring "legacy.lib")
+  require "legacy.lib.php";
+  include "legacy.lib.inc";
+  include_once __DIR__ . "legacy.lib";
+  
+  // should not match because has not substring
+  require_once "modern.lib.php";
+  
+  // should match
+  require __DIR__ . "other.lib";
+}
+`)
+	test.Expect = []string{
+		"Don't use legacy libs", // for require "legacy.lib.php"
+		"Don't use legacy libs", // for include "legacy.lib.inc"
+		"Don't use legacy libs", // for include_once __DIR__ . "legacy.lib"
+	}
+	test.RunRulesTest()
+}
+
+func TestFilterInsecureUrlExpr(t *testing.T) {
+	rfile := `<?php
+function insecureUrl() {
+  /**
+   * @warning Use secure URLs
+   * @filter $url ^http://
+   */
+  callApi(${ "url:expr" });
+}
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+function testInsecureUrl() {
+  callApi("http://example.com");  // match, because ^http://
+  callApi("https://secure.com");  // should not match
+}
+`)
+	test.Expect = []string{
+		"Use secure URLs",
+	}
+	test.RunRulesTest()
+}
+
 func TestFilterVariableNoWarning(t *testing.T) {
 	rfile := `<?php
 function variableEndpointSafe() {
