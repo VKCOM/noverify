@@ -848,6 +848,54 @@ function testInsecureUrl() {
 	test.RunRulesTest()
 }
 
+func TestFilterMultiCatching(t *testing.T) {
+	rfile := `<?php
+function catchingDiffTypes() {
+  /**
+   * @warning str '$name' warning
+   * @filter  $name _name^
+   */
+  callFunc(${'name:str'});
+
+  /**
+   * @warning var '$name' warning
+   * @filter  $name _name^
+   */
+  callFunc(${'name:var'});
+
+  /**
+   * @warning const '$name' warning
+   * @filter  $name _name^
+   */
+  callFunc(${'name:const'});
+
+  /**
+   * @warning call '$name' warning
+   * @filter  $name _name^
+   */
+  callFunc(${'name:call'});
+}
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+  callFunc("str_name"); // str '$str_name' warning
+
+  $var_name = "";
+  callFunc($var_name); // var '$var_name' warning
+
+  callFunc(funcNane()); // call 'funcNane()' warning
+
+  const const_name = "";
+  callFunc(const_name); // const 'const_name' warning
+`)
+	test.Expect = []string{
+		"call 'funcNane()' warning",
+		"const 'const_name' warning",
+	}
+	test.RunRulesTest()
+}
+
 func TestFilterVariableNoWarning(t *testing.T) {
 	rfile := `<?php
 function variableEndpointSafe() {
