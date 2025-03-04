@@ -26,6 +26,16 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 		},
 
 		{
+			Name:     "notNullSafety",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report not nullsafety call",
+			Before: `function f(A $klass);
+						f(null);`,
+			After: `reported not safety call`,
+		},
+
+		{
 			Name:     "notExplicitNullableParam",
 			Default:  true,
 			Quickfix: true,

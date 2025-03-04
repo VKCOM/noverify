@@ -1,3 +1,6 @@
+WARNING notNullSafety: not null safety call in function realpath signature of param path at testdata/mustache/src/Mustache/Autoloader.php:39
+        $realDir = realpath($baseDir);
+                            ^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$baseDir ?: 0` at testdata/mustache/src/Mustache/Autoloader.php:56
         $key = $baseDir ? $baseDir : 0;
                ^^^^^^^^^^^^^^^^^^^^^^^
@@ -25,24 +28,87 @@ WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/
 WARNING useEval: Don't use the 'eval' function at testdata/mustache/src/Mustache/Cache/NoopCache.php:45
         eval('?>' . $value);
         ^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter id of function section at testdata/mustache/src/Mustache/Compiler.php:98
+                        $node[Mustache_Tokenizer::NAME],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter start of function section at testdata/mustache/src/Mustache/Compiler.php:100
+                        $node[Mustache_Tokenizer::INDEX],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter end of function section at testdata/mustache/src/Mustache/Compiler.php:101
+                        $node[Mustache_Tokenizer::END],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter otag of function section at testdata/mustache/src/Mustache/Compiler.php:102
+                        $node[Mustache_Tokenizer::OTAG],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter ctag of function section at testdata/mustache/src/Mustache/Compiler.php:103
+                        $node[Mustache_Tokenizer::CTAG],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$node[Mustache_Tokenizer::FILTERS] ?? array()` at testdata/mustache/src/Mustache/Compiler.php:99
                         isset($node[Mustache_Tokenizer::FILTERS]) ? $node[Mustache_Tokenizer::FILTERS] : array(),
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter id of function invertedSection at testdata/mustache/src/Mustache/Compiler.php:111
+                        $node[Mustache_Tokenizer::NAME],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$node[Mustache_Tokenizer::FILTERS] ?? array()` at testdata/mustache/src/Mustache/Compiler.php:112
                         isset($node[Mustache_Tokenizer::FILTERS]) ? $node[Mustache_Tokenizer::FILTERS] : array(),
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter id of function partial at testdata/mustache/src/Mustache/Compiler.php:119
+                        $node[Mustache_Tokenizer::NAME],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$node[Mustache_Tokenizer::INDENT] ?? ''` at testdata/mustache/src/Mustache/Compiler.php:120
                         isset($node[Mustache_Tokenizer::INDENT]) ? $node[Mustache_Tokenizer::INDENT] : '',
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter id of function parent at testdata/mustache/src/Mustache/Compiler.php:127
+                        $node[Mustache_Tokenizer::NAME],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$node[Mustache_Tokenizer::INDENT] ?? ''` at testdata/mustache/src/Mustache/Compiler.php:128
                         isset($node[Mustache_Tokenizer::INDENT]) ? $node[Mustache_Tokenizer::INDENT] : '',
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter id of function blockArg at testdata/mustache/src/Mustache/Compiler.php:137
+                        $node[Mustache_Tokenizer::NAME],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter start of function blockArg at testdata/mustache/src/Mustache/Compiler.php:138
+                        $node[Mustache_Tokenizer::INDEX],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter end of function blockArg at testdata/mustache/src/Mustache/Compiler.php:139
+                        $node[Mustache_Tokenizer::END],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter otag of function blockArg at testdata/mustache/src/Mustache/Compiler.php:140
+                        $node[Mustache_Tokenizer::OTAG],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter ctag of function blockArg at testdata/mustache/src/Mustache/Compiler.php:141
+                        $node[Mustache_Tokenizer::CTAG],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter id of function blockVar at testdata/mustache/src/Mustache/Compiler.php:149
+                        $node[Mustache_Tokenizer::NAME],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter start of function blockVar at testdata/mustache/src/Mustache/Compiler.php:150
+                        $node[Mustache_Tokenizer::INDEX],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter end of function blockVar at testdata/mustache/src/Mustache/Compiler.php:151
+                        $node[Mustache_Tokenizer::END],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter otag of function blockVar at testdata/mustache/src/Mustache/Compiler.php:152
+                        $node[Mustache_Tokenizer::OTAG],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter ctag of function blockVar at testdata/mustache/src/Mustache/Compiler.php:153
+                        $node[Mustache_Tokenizer::CTAG],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter id of function variable at testdata/mustache/src/Mustache/Compiler.php:165
+                        $node[Mustache_Tokenizer::NAME],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$node[Mustache_Tokenizer::FILTERS] ?? array()` at testdata/mustache/src/Mustache/Compiler.php:166
                         isset($node[Mustache_Tokenizer::FILTERS]) ? $node[Mustache_Tokenizer::FILTERS] : array(),
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter text of function text at testdata/mustache/src/Mustache/Compiler.php:173
+                    $code .= $this->text($node[Mustache_Tokenizer::VALUE], $level);
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING unused: Variable $keystr is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/mustache/src/Mustache/Compiler.php:289
         $keystr = var_export($key, true);
         ^^^^^^^
+WARNING notNullSafety: not null safety call in function getFindMethod signature of param id at testdata/mustache/src/Mustache/Compiler.php:556
+        $method   = $this->getFindMethod($name);
+                                         ^^^^^
 MAYBE   callSimplify: Could simplify to $id[0] at testdata/mustache/src/Mustache/Compiler.php:646
             if (substr($id, 0, 1) === '.') {
                 ^^^^^^^^^^^^^^^^^
@@ -121,12 +187,33 @@ MAYBE   callSimplify: Could simplify to $this->stack[] = $value at testdata/must
 MAYBE   callSimplify: Could simplify to $this->blockStack[] = $value at testdata/mustache/src/Mustache/Context.php:49
         array_push($this->blockStack, $value);
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: not null safety call in function findVariableInStack signature of param id at testdata/mustache/src/Mustache/Context.php:131
+        $value  = $this->findVariableInStack($first, $this->stack);
+                                             ^^^^^^
+WARNING notNullSafety: not null safety call in function findVariableInStack signature of param id at testdata/mustache/src/Mustache/Context.php:138
+            $value = $this->findVariableInStack($chunk, array($value));
+                                                ^^^^^^
+WARNING notNullSafety: not null safety call in function findVariableInStack signature of param id at testdata/mustache/src/Mustache/Context.php:174
+            $value = $this->findVariableInStack($chunk, array($value));
+                                                ^^^^^^
+WARNING notNullSafety: not null safety call in function method_exists signature of param object_or_class at testdata/mustache/src/Mustache/Context.php:218
+                        if (method_exists($frame, $id)) {
+                                          ^^^^^^
 WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/mustache/src/Mustache/Context.php:213
             switch (gettype($frame)) {
             ^
 MAYBE   ternarySimplify: Could rewrite as `$options['cache_file_mode'] ?? null` at testdata/mustache/src/Mustache/Engine.php:156
                 $mode  = isset($options['cache_file_mode']) ? $options['cache_file_mode'] : null;
                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: not null safety call in function setCache signature of param cache at testdata/mustache/src/Mustache/Engine.php:160
+            $this->setCache($cache);
+                            ^^^^^^
+WARNING notNullSafety: potential null array access in parameter loader of function setLoader at testdata/mustache/src/Mustache/Engine.php:168
+            $this->setLoader($options['loader']);
+                             ^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter partialsLoader of function setPartialsLoader at testdata/mustache/src/Mustache/Engine.php:172
+            $this->setPartialsLoader($options['partials_loader']);
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   misspellComment: "entitity" is a misspelling of "entity" at testdata/mustache/src/Mustache/Engine.php:254
     public function getEntityFlags()
                     ^^^^^^^^^^^^^^
@@ -151,6 +238,12 @@ ERROR   undefinedMethod: Call to undefined method {\Mustache_Cache}->setLogger()
 MAYBE   ternarySimplify: Could rewrite as `$this->delimiters ?: '{{ }}'` at testdata/mustache/src/Mustache/Engine.php:628
             'delimiters'      => $this->delimiters ? $this->delimiters : '{{ }}',
                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null dereference when accessing property 'charset' at testdata/mustache/src/Mustache/Engine.php:813
+        return $compiler->compile($source, $tree, $name, isset($this->escape), $this->charset, $this->strictCallables, $this->entityFlags);
+                                                                               ^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null dereference when accessing property 'strictCallables' at testdata/mustache/src/Mustache/Engine.php:813
+        return $compiler->compile($source, $tree, $name, isset($this->escape), $this->charset, $this->strictCallables, $this->entityFlags);
+                                                                                               ^^^^^^^^^^^^^^^^^^^^^^
 WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/mustache/src/Mustache/Engine.php:727
     private function loadSource($source, Mustache_Cache $cache = null)
                                          ^^^^^^^^^^^^^^
@@ -175,9 +268,48 @@ MAYBE   missingPhpdoc: Missing PHPDoc for \Mustache_Exception_UnknownTemplateExc
 WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/mustache/src/Mustache/Exception/UnknownTemplateException.php:23
     public function __construct($templateName, Exception $previous = null)
                                                ^^^^^^^^^
+WARNING notNullSafety: not null safety call in function addLoader signature of param loader at testdata/mustache/src/Mustache/Loader/CascadingLoader.php:35
+            $this->addLoader($loader);
+                             ^^^^^^^
+WARNING notNullSafety: potential null array access in parameter string of function ltrim at testdata/mustache/src/Mustache/Loader/FilesystemLoader.php:64
+                $this->extension = '.' . ltrim($options['extension'], '.');
+                                               ^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: null passed to non-nullable parameter context in function file_get_contents at testdata/mustache/src/Mustache/Loader/InlineLoader.php:114
+            $data = file_get_contents($this->fileName, false, null, $this->offset);
+                                                              ^^^^
 WARNING regexpVet: '\w' intersects with '\d' in [\w\d\.] at testdata/mustache/src/Mustache/Loader/InlineLoader.php:115
             foreach (preg_split("/^@@(?= [\w\d\.]+$)/m", $data, -1) as $chunk) {
                                 ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null dereference when accessing property 'stream' at testdata/mustache/src/Mustache/Logger/StreamLogger.php:61
+            fclose($this->stream);
+                   ^^^^^^^^^^^^^
+WARNING notNullSafety: not null safety call in function array_key_exists signature of param key at testdata/mustache/src/Mustache/Logger/StreamLogger.php:102
+        if (!array_key_exists($level, self::$levels)) {
+                              ^^^^^^
+WARNING notNullSafety: not null safety call in function writeLog signature of param level at testdata/mustache/src/Mustache/Logger/StreamLogger.php:107
+            $this->writeLog($level, $message, $context);
+                            ^^^^^^
+WARNING notNullSafety: potential null dereference when accessing property 'url' at testdata/mustache/src/Mustache/Logger/StreamLogger.php:128
+            $this->stream = fopen($this->url, 'a');
+                                  ^^^^^^^^^^
+WARNING notNullSafety: potential null dereference when accessing property 'stream' at testdata/mustache/src/Mustache/Logger/StreamLogger.php:136
+        fwrite($this->stream, self::formatLine($level, $message, $context));
+               ^^^^^^^^^^^^^
+WARNING notNullSafety: not null safety call in function enablePragma signature of param name at testdata/mustache/src/Mustache/Parser.php:58
+            $this->enablePragma($pragma);
+                                ^^^^^^^
+WARNING notNullSafety: potential null array access in parameter name of function getNameAndFilters at testdata/mustache/src/Mustache/Parser.php:88
+                list($name, $filters) = $this->getNameAndFilters($token[Mustache_Tokenizer::NAME]);
+                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter name of function enablePragma at testdata/mustache/src/Mustache/Parser.php:167
+                    $this->enablePragma($token[Mustache_Tokenizer::NAME]);
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter string of function substr at testdata/mustache/src/Mustache/Parser.php:235
+                if (substr($next[Mustache_Tokenizer::VALUE], -1) !== "\n") {
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: potential null array access in parameter subject of function preg_match at testdata/mustache/src/Mustache/Parser.php:262
+            return preg_match('/^\s*$/', $token[Mustache_Tokenizer::VALUE]);
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/mustache/src/Mustache/Parser.php:307
         switch ($name) {
         ^
@@ -190,3 +322,15 @@ WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/
 WARNING unused: Variable $v is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/mustache/src/Mustache/Template.php:122
                 foreach ($value as $k => $v) {
                                          ^^
+WARNING notNullSafety: not null safety call in function call_user_func signature of param callback at testdata/mustache/src/Mustache/Template.php:174
+                ->loadLambda((string) call_user_func($value))
+                                                     ^^^^^^
+WARNING notNullSafety: not null safety call in function trim signature of param string at testdata/mustache/src/Mustache/Tokenizer.php:110
+        if ($delimiters = trim($delimiters)) {
+                               ^^^^^^^^^^^
+WARNING notNullSafety: not null safety call in function substr signature of param string at testdata/mustache/src/Mustache/Tokenizer.php:188
+                                if (substr($lastName, -1) === '}') {
+                                           ^^^^^^^^^
+WARNING notNullSafety: not null safety call in function substr signature of param string at testdata/mustache/src/Mustache/Tokenizer.php:189
+                                    $token[self::NAME] = trim(substr($lastName, 0, -1));
+                                                                     ^^^^^^^^^

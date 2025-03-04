@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 106           | 88                        | 18                         | 15                 |
+| 107           | 89                        | 18                         | 15                 |
 
 ## Table of contents
  - Enabled by default
@@ -60,6 +60,7 @@
    - [`newAbstract` checker](#newabstract-checker)
    - [`nonPublicInterfaceMember` checker](#nonpublicinterfacemember-checker)
    - [`notExplicitNullableParam` checker (autofixable)](#notexplicitnullableparam-checker)
+   - [`notNullSafety` checker](#notnullsafety-checker)
    - [`offBy1` checker (autofixable)](#offby1-checker)
    - [`oldStyleConstructor` checker](#oldstyleconstructor-checker)
    - [`paramClobber` checker](#paramclobber-checker)
@@ -1195,6 +1196,25 @@ function f(string $str = null);
 #### Compliant code:
 ```php
 function f(?string $str = null);
+```
+<p><br></p>
+
+
+### `notNullSafety` checker
+
+#### Description
+
+Report not nullsafety call
+
+#### Non-compliant code:
+```php
+function f(A $klass);
+						f(null);
+```
+
+#### Compliant code:
+```php
+reported not safety call
 ```
 <p><br></p>
 

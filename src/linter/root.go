@@ -486,6 +486,7 @@ type parseFuncParamsResult struct {
 	params         []meta.FuncParam
 	paramsTypeHint map[string]types.Map
 	minParamsCount int
+	isVariadic     bool
 }
 
 func (d *rootWalker) parseFuncParams(params []ir.Node, docblockParams phpdoctypes.ParamsMap, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (res parseFuncParamsResult) {
@@ -496,6 +497,7 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, docblockParams phpdoctype
 	minArgs := 0
 	parsedParams := make([]meta.FuncParam, 0, len(params))
 	paramHints := make(map[string]types.Map, len(params))
+	isVariadic := false
 
 	if closureSolver != nil && solver.IsClosureUseFunction(closureSolver.Name) {
 		return d.parseFuncArgsForCallback(params, sc, closureSolver)
@@ -535,6 +537,8 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, docblockParams phpdoctype
 		// Handle variadic.
 		if param.Variadic {
 			paramType = paramType.Map(types.WrapArrayOf)
+
+			isVariadic = true
 		}
 
 		// Append @param type.
@@ -565,6 +569,7 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, docblockParams phpdoctype
 		params:         parsedParams,
 		paramsTypeHint: paramHints,
 		minParamsCount: minArgs,
+		isVariadic:     isVariadic,
 	}
 }
 
@@ -664,6 +669,10 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	if solver.SideEffectFreeFunc(d.scope(), d.ctx.st, nil, fun.Stmts) {
 		funcFlags |= meta.FuncPure
 	}
+	if funcParams.isVariadic {
+		funcFlags |= meta.FuncVariadic
+	}
+
 	d.meta.Functions.Set(nm, meta.FuncInfo{
 		Params:          funcParams.params,
 		Name:            nm,
@@ -1135,6 +1144,10 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	if !insideInterface && !modif.abstract && solver.SideEffectFreeFunc(d.scope(), d.ctx.st, nil, stmts) {
 		funcFlags |= meta.FuncPure
 	}
+	if funcParams.isVariadic {
+		funcFlags |= meta.FuncVariadic
+	}
+
 	class.Methods.Set(nm, meta.FuncInfo{
 		Params:          funcParams.params,
 		Name:            nm,
