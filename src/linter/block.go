@@ -1050,7 +1050,7 @@ func (b *blockWalker) checkNullSafetyCallArgsF(args []ir.Node, fn meta.FuncInfo)
 		}
 
 		// If there are more arguments than declared and function is not variadic, ignore extra arguments.
-		if i > len(fn.Params)-1 && !haveVariadic {
+		if !haveVariadic && i > len(fn.Params)-1 {
 			return
 		}
 

@@ -43,7 +43,7 @@ func IsTypeNullable(typ Map) bool {
 		return true // We consider that if the type is not inferred, then it is mixed
 	}
 	typ.Iterate(func(t string) {
-		if t == "null" || strings.Contains(t, "mixed") {
+		if strings.Contains(t, "null") || strings.Contains(t, "mixed") {
 			isNullable = true
 		}
 	})

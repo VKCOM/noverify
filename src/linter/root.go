@@ -497,12 +497,12 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, docblockParams phpdoctype
 	minArgs := 0
 	parsedParams := make([]meta.FuncParam, 0, len(params))
 	paramHints := make(map[string]types.Map, len(params))
+	isVariadic := false
 
 	if closureSolver != nil && solver.IsClosureUseFunction(closureSolver.Name) {
 		return d.parseFuncArgsForCallback(params, sc, closureSolver)
 	}
 
-	isVariadic := false
 	for _, p := range params {
 		param := p.(*ir.Parameter)
 		paramVar := param.Variable
