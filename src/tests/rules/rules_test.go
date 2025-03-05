@@ -853,13 +853,13 @@ func TestFilterMultiCatching(t *testing.T) {
 function catchingDiffTypes() {
   /**
    * @warning str '$name' warning
-   * @filter  $name _name^
+   * @filter  $name ^str_name$
    */
   callFunc(${'name:str'});
 
   /**
    * @warning var '$name' warning
-   * @filter  $name _name^
+   * @filter  $name ^var_name$
    */
   callFunc(${'name:var'});
 
@@ -874,24 +874,81 @@ function catchingDiffTypes() {
    * @filter  $name _name^
    */
   callFunc(${'name:call'});
+
+  /**
+   * @warning int '$name' warning
+   * @filter  $name ^42$
+   */
+  callFunc(${'name:int'});
+
+  /**
+   * @warning float '$name' warning
+   * @filter  $name ^3\.14$
+   */
+  callFunc(${'name:float'});
+
+  /**
+   * @warning char '$name' warning
+   * @filter  $name ^a$
+   */
+  callFunc(${'name:char'});
+
+  /**
+   * @warning func '$name' warning
+   * @filter  $name _function
+   */
+  callFunc(${'name:func'});
+
+  /**
+   * @warning expr '$name' warning
+   * @filter  $name ^\$a\+1$
+   */
+  callFunc(${'name:expr'});
 }
 `
 	test := linttest.NewSuite(t)
 	test.RuleFile = rfile
 	test.AddFile(`<?php
-  callFunc("str_name"); // str '$str_name' warning
+  // For a string literal: captured without quotes inside the filter
+  callFunc("str_name"); // str '"str_name"' warning
 
+  // For variable: name without dollar sign
   $var_name = "";
   callFunc($var_name); // var '$var_name' warning
 
+  // For a function call: a textual representation of the identifier to be called
   callFunc(funcNane()); // call 'funcNane()' warning
 
+  // For constant: output as is
   const const_name = "";
   callFunc(const_name); // const 'const_name' warning
+
+  // For an integer literal
+  callFunc(42); // int '42' warning
+
+  // For a floating point number. Important: the escaping of the dot
+  callFunc(3.14); // float '3.14' warning
+
+  // For a character literal: a string of length 1
+  callFunc('a'); // char 'a' warning
+
+  // For an anonymous function: the text representation must contain the substring "function"
+  callFunc(function() {}); // func 'function() {}' warning
+
+  // For an arbitrary expression: after normalization, spaces are removed
+  $a = 10;
+  callFunc($a + 1); // expr '$a+1' warning
 `)
 	test.Expect = []string{
+		`str '"str_name"' warning`,
+		`var '$var_name' warning`,
 		"call 'funcNane()' warning",
 		"const 'const_name' warning",
+		"int '42' warning",
+		"float '3.14' warning",
+		"char 'a' warning",
+		`func 'function() {}' warning`,
+		"expr '$a+1' warning",
 	}
 	test.RunRulesTest()
 }
