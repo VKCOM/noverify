@@ -567,10 +567,8 @@ func (p *parser) filterByPattern(name string, pattern ir.Node, verifiedVars map[
 	found := irutil.FindWithPredicate(&ir.SimpleVar{Name: name}, pattern, func(what ir.Node, cur ir.Node) bool {
 		// we can capture anything: vars, const, int and etc: see more in phpgrep doc. Example:
 		/*
-		   \**
-		    * @filter  $file ^var
-		               ^^^^^^ <- captured
-		   \*
+		   @filter  $file ^var
+		             ^^^^^^ <- captured
 		   callApi(${'file:str'});
 		              ^^^^^^^^ <- patternForFound
 		*/

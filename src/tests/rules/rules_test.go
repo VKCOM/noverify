@@ -848,6 +848,40 @@ function testInsecureUrl() {
 	test.RunRulesTest()
 }
 
+func TestFilterStrVarCatching(t *testing.T) {
+	rfile := `<?php
+function catchingDiffTypes() {
+  /**
+   * @warning str '$name' warning
+   * @filter  $name ^str_name$
+   */
+  callFunc(${'name:str'});
+
+  /**
+   * @warning var '$name' warning
+   * @filter  $name ^var_name$
+   */
+  callFunc(${'name:var'});
+
+}
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+  // For a string literal: captured without quotes inside the filter
+  callFunc("str_name"); // str '"str_name"' warning
+
+  // For variable: name without dollar sign
+  $var_name = "";
+  callFunc($var_name); // var '$var_name' warning
+`)
+	test.Expect = []string{
+		`str '"str_name"' warning`,
+		`var '$var_name' warning`,
+	}
+	test.RunRulesTest()
+}
+
 func TestFilterMultiCatching(t *testing.T) {
 	rfile := `<?php
 function catchingDiffTypes() {
@@ -904,8 +938,8 @@ function catchingDiffTypes() {
    * @filter  $name ^\$a\+1$
    */
   callFunc(${'name:expr'});
-}
-`
+}`
+
 	test := linttest.NewSuite(t)
 	test.RuleFile = rfile
 	test.AddFile(`<?php
@@ -942,15 +976,16 @@ function catchingDiffTypes() {
 	test.Expect = []string{
 		`str '"str_name"' warning`,
 		`var '$var_name' warning`,
-		"call 'funcNane()' warning",
-		"const 'const_name' warning",
-		"int '42' warning",
-		"float '3.14' warning",
-		"char 'a' warning",
-		`func 'function() {}' warning`,
-		"expr '$a+1' warning",
+		`applying @filter for construction 'funcNane()' does not support. Current supported capturing types are str and var`,
+		`applying @filter for construction 'const_name' does not support. Current supported capturing types are str and var`,
+		`applying @filter for construction '42' does not support. Current supported capturing types are str and var`,
+		`applying @filter for construction '3.14' does not support. Current supported capturing types are str and var`,
+		`char ''a'' warning`,
+		`applying @filter for construction 'function() {}' does not support. Current supported capturing types are str and var`,
+		`applying @filter for construction '$a + 1' does not support. Current supported capturing types are str and var`,
 	}
 	test.RunRulesTest()
+
 }
 
 func TestFilterVariableNoWarning(t *testing.T) {
