@@ -780,6 +780,214 @@ function testMultipleEndpoints() {
 	test.RunRulesTest()
 }
 
+func TestFilterLegacyLibsUsageMatches(t *testing.T) {
+	rfile := `<?php
+function legacyLibsUsage() {
+  /**
+   * @warning      Don't use legacy libs
+   * @filter $file (legacy\.lib)
+   */
+  any_legacy_libs_usage: {
+    require ${'file:str'};
+    require_once ${'file:str'};
+    include ${'file:str'};
+    include_once ${'file:str'};
+
+    require __DIR__ . ${'file:str'};
+    require_once __DIR__ . ${'file:str'};
+    include __DIR__ . ${'file:str'};
+    include_once __DIR__ . ${'file:str'};
+  }
+}
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+function testLegacyUsage() {
+  // Should match (because the have substring "legacy.lib")
+  require "legacy.lib.php";
+  include "legacy.lib.inc";
+  include_once __DIR__ . "legacy.lib";
+  
+  // should not match because has not substring
+  require_once "modern.lib.php";
+  
+  // should match
+  require __DIR__ . "other.lib";
+}
+`)
+	test.Expect = []string{
+		"Don't use legacy libs", // for require "legacy.lib.php"
+		"Don't use legacy libs", // for include "legacy.lib.inc"
+		"Don't use legacy libs", // for include_once __DIR__ . "legacy.lib"
+	}
+	test.RunRulesTest()
+}
+
+func TestFilterInsecureUrlExpr(t *testing.T) {
+	rfile := `<?php
+function insecureUrl() {
+  /**
+   * @warning Use secure URLs
+   * @filter $url ^http://
+   */
+  callApi(${ "url:expr" });
+}
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+function testInsecureUrl() {
+  callApi("http://example.com");  // match, because ^http://
+  callApi("https://secure.com");  // should not match
+}
+`)
+	test.Expect = []string{
+		"Use secure URLs",
+	}
+	test.RunRulesTest()
+}
+
+func TestFilterStrVarCatching(t *testing.T) {
+	rfile := `<?php
+function catchingDiffTypes() {
+  /**
+   * @warning str '$name' warning
+   * @filter  $name ^str_name$
+   */
+  callFunc(${'name:str'});
+
+  /**
+   * @warning var '$name' warning
+   * @filter  $name ^var_name$
+   */
+  callFunc(${'name:var'});
+
+}
+`
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+  // For a string literal: captured without quotes inside the filter
+  callFunc("str_name"); // str '"str_name"' warning
+
+  // For variable: name without dollar sign
+  $var_name = "";
+  callFunc($var_name); // var '$var_name' warning
+`)
+	test.Expect = []string{
+		`str '"str_name"' warning`,
+		`var '$var_name' warning`,
+	}
+	test.RunRulesTest()
+}
+
+func TestFilterMultiCatching(t *testing.T) {
+	rfile := `<?php
+function catchingDiffTypes() {
+  /**
+   * @warning str '$name' warning
+   * @filter  $name ^str_name$
+   */
+  callFunc(${'name:str'});
+
+  /**
+   * @warning var '$name' warning
+   * @filter  $name ^var_name$
+   */
+  callFunc(${'name:var'});
+
+  /**
+   * @warning const '$name' warning
+   * @filter  $name _name^
+   */
+  callFunc(${'name:const'});
+
+  /**
+   * @warning call '$name' warning
+   * @filter  $name _name^
+   */
+  callFunc(${'name:call'});
+
+  /**
+   * @warning int '$name' warning
+   * @filter  $name ^42$
+   */
+  callFunc(${'name:int'});
+
+  /**
+   * @warning float '$name' warning
+   * @filter  $name ^3\.14$
+   */
+  callFunc(${'name:float'});
+
+  /**
+   * @warning char '$name' warning
+   * @filter  $name ^a$
+   */
+  callFunc(${'name:char'});
+
+  /**
+   * @warning func '$name' warning
+   * @filter  $name _function
+   */
+  callFunc(${'name:func'});
+
+  /**
+   * @warning expr '$name' warning
+   * @filter  $name ^\$a\+1$
+   */
+  callFunc(${'name:expr'});
+}`
+
+	test := linttest.NewSuite(t)
+	test.RuleFile = rfile
+	test.AddFile(`<?php
+  // For a string literal: captured without quotes inside the filter
+  callFunc("str_name"); // str '"str_name"' warning
+
+  // For variable: name without dollar sign
+  $var_name = "";
+  callFunc($var_name); // var '$var_name' warning
+
+  // For a function call: a textual representation of the identifier to be called
+  callFunc(funcNane()); // call 'funcNane()' warning
+
+  // For constant: output as is
+  const const_name = "";
+  callFunc(const_name); // const 'const_name' warning
+
+  // For an integer literal
+  callFunc(42); // int '42' warning
+
+  // For a floating point number. Important: the escaping of the dot
+  callFunc(3.14); // float '3.14' warning
+
+  // For a character literal: a string of length 1
+  callFunc('a'); // char 'a' warning
+
+  // For an anonymous function: the text representation must contain the substring "function"
+  callFunc(function() {}); // func 'function() {}' warning
+
+  // For an arbitrary expression: after normalization, spaces are removed
+  $a = 10;
+  callFunc($a + 1); // expr '$a+1' warning
+`)
+	test.Expect = []string{
+		`str '"str_name"' warning`,
+		`var '$var_name' warning`,
+		`applying @filter for construction 'funcNane()' does not support. Current supported capturing types are str and var`,
+		`applying @filter for construction 'const_name' does not support. Current supported capturing types are str and var`,
+		`applying @filter for construction '42' does not support. Current supported capturing types are str and var`,
+		`applying @filter for construction '3.14' does not support. Current supported capturing types are str and var`,
+		`char ''a'' warning`,
+		`applying @filter for construction 'function() {}' does not support. Current supported capturing types are str and var`,
+		`applying @filter for construction '$a + 1' does not support. Current supported capturing types are str and var`,
+	}
+	test.RunRulesTest()
+
+}
+
 func TestFilterVariableNoWarning(t *testing.T) {
 	rfile := `<?php
 function variableEndpointSafe() {

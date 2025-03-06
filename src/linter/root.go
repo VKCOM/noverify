@@ -1893,7 +1893,14 @@ func (d *rootWalker) runRule(n ir.Node, sc *meta.Scope, rule *rules.Rule) bool {
 		matched = true
 	} else {
 		for _, filterSet := range rule.Filters {
-			if d.checkFilterSet(&m, sc, filterSet) {
+
+			filterMatched, errorFilterSet := d.checkFilterSet(&m, sc, filterSet)
+			if errorFilterSet != nil {
+				d.Report(n, rule.Level, rule.Name, "%s", errorFilterSet)
+				return true
+			}
+
+			if filterMatched {
 				matched = true
 				break
 			}
@@ -1950,7 +1957,7 @@ func (d *rootWalker) checkTypeFilter(wantType *phpdoc.Type, sc *meta.Scope, nn i
 	return rules.TypeIsCompatible(wantType.Expr, haveType.Expr)
 }
 
-func (d *rootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filterSet map[string]rules.Filter) bool {
+func (d *rootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filterSet map[string]rules.Filter) (bool, error) {
 	// TODO: pass custom types here, so both @type and @pure predicates can use it.
 
 	for name, filter := range filterSet {
@@ -1960,24 +1967,27 @@ func (d *rootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filter
 		}
 
 		if !d.checkTypeFilter(filter.Type, sc, nn) {
-			return false
+			return false, nil
 		}
 		if filter.Pure && !solver.SideEffectFree(d.scope(), d.ctx.st, nil, nn) {
-			return false
+			return false, nil
 		}
 		if filter.Regexp != nil {
 			switch v := nn.(type) {
 			case *ir.SimpleVar:
 				if !filter.Regexp.MatchString(v.Name) {
-					return false
+					return false, nil
 				}
 			case *ir.String:
 				if !filter.Regexp.MatchString(v.Value) {
-					return false
+					return false, nil
 				}
+			default:
+				// logical paradox: we handled it, but does not support that's why here false
+				return false, fmt.Errorf("applying @filter for construction '%s' does not support. Current supported capturing types are str and var", d.nodeText(nn))
 			}
 		}
 	}
 
-	return true
+	return true, nil
 }
