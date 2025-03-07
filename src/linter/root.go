@@ -201,9 +201,12 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		d.reportPHPDocErrors(doc.errs)
 		d.handleClassDoc(doc, &cl)
 
-		if doc.deprecated {
-			d.Report(n, LevelNotice, "deprecated", "Has deprecated class %s", n.ClassName.Value)
+		// Handle attributes if any.
+		deprecation, ok := attributes.Deprecated(n.AttrGroups, d.ctx.st)
+		if ok {
+			doc.Deprecation.Append(deprecation)
 		}
+		cl.DeprecationInfo = doc.Deprecation
 
 		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
 
@@ -845,7 +848,9 @@ func (d *rootWalker) parseClassPHPDoc(class ir.Node, doc phpdoc.Comment) classPH
 		case "package":
 			parseClassPHPDocPackage(class, d.ctx.st, &result, part.(*phpdoc.PackageCommentPart))
 		case "deprecated":
-			result.deprecated = true
+			part := part.(*phpdoc.RawCommentPart)
+			result.Deprecation.Deprecated = true
+			result.Deprecation.Reason = part.ParamsText
 		case "internal":
 			result.internal = true
 		}
@@ -902,9 +907,9 @@ func (d *rootWalker) handleClassDoc(doc classPHPDocParseResult, cl *meta.ClassIn
 	}
 }
 
-func (d *rootWalker) parsePHPDocVar(doc phpdoc.Comment) (typesMap types.Map) {
-	for _, part := range doc.Parsed {
-		part, ok := part.(*phpdoc.TypeVarCommentPart)
+func (d *rootWalker) parsePHPDocVar(doc phpdoc.Comment) (typesMap types.Map, deprecationInfo meta.DeprecationInfo) {
+	for _, partDoc := range doc.Parsed {
+		part, ok := partDoc.(*phpdoc.TypeVarCommentPart)
 		if ok && part.Name() == "var" {
 			converted := phpdoctypes.ToRealType(d.ctx.typeNormalizer.ClassFQNProvider(), d.config.KPHP, part.Type)
 			moveShapesToContext(&d.ctx, converted.Shapes)
@@ -912,9 +917,16 @@ func (d *rootWalker) parsePHPDocVar(doc phpdoc.Comment) (typesMap types.Map) {
 
 			typesMap = types.NewMapWithNormalization(d.ctx.typeNormalizer, converted.Types)
 		}
+
+		rawPart, rawOk := partDoc.(*phpdoc.RawCommentPart)
+
+		if rawOk && rawPart.Name() == "deprecated" {
+			deprecationInfo.Deprecated = true
+			deprecationInfo.Reason = rawPart.ParamsText
+		}
 	}
 
-	return typesMap
+	return typesMap, deprecationInfo
 }
 
 func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
@@ -936,8 +948,13 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 		}
 	}
 
-	phpDocType := d.parsePHPDocVar(pl.Doc)
+	phpDocType, deprecationInfo := d.parsePHPDocVar(pl.Doc)
 	typeHintType, _ := d.parseTypeHintNode(pl.Type)
+
+	deprecation, ok := attributes.Deprecated(pl.AttrGroups, d.ctx.st)
+	if ok {
+		deprecationInfo.Append(deprecation)
+	}
 
 	for _, pNode := range pl.Properties {
 		prop := pNode.(*ir.PropertyStmt)
@@ -959,13 +976,31 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 
 		// TODO: handle duplicate property
 		cl.Properties[nm] = meta.PropertyInfo{
-			Pos:         d.getElementPos(prop),
-			Typ:         propTypes.Immutable(),
-			AccessLevel: accessLevel,
+			Pos:             d.getElementPos(prop),
+			Typ:             propTypes.Immutable(),
+			AccessLevel:     accessLevel,
+			DeprecationInfo: deprecationInfo,
 		}
 	}
 
 	return true
+}
+
+func (d *rootWalker) parseConstPHPDoc(constList *ir.ClassConstListStmt, doc phpdoc.Comment) (deprecationInfo meta.DeprecationInfo) {
+
+	if doc.Raw == "" {
+		return deprecationInfo
+	}
+
+	for _, part := range doc.Parsed {
+		if part.Name() == "deprecated" {
+			part := part.(*phpdoc.RawCommentPart)
+			deprecationInfo.Deprecated = true
+			deprecationInfo.Reason = part.ParamsText
+		}
+	}
+
+	return deprecationInfo
 }
 
 func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
@@ -984,6 +1019,13 @@ func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
 		}
 	}
 
+	deprecationInfo := d.parseConstPHPDoc(list, list.Doc)
+
+	deprecation, ok := attributes.Deprecated(list.AttrGroups, d.ctx.st)
+	if ok {
+		deprecationInfo.Append(deprecation)
+	}
+
 	for _, cNode := range list.Consts {
 		c := cNode.(*ir.ConstantStmt)
 
@@ -995,10 +1037,11 @@ func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
 
 		// TODO: handle duplicate constant
 		cl.Constants[nm] = meta.ConstInfo{
-			Pos:         d.getElementPos(c),
-			Typ:         typ.Immutable(),
-			AccessLevel: accessLevel,
-			Value:       value,
+			Pos:             d.getElementPos(c),
+			Typ:             typ.Immutable(),
+			AccessLevel:     accessLevel,
+			Value:           value,
+			DeprecationInfo: deprecationInfo,
 		}
 	}
 
