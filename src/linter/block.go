@@ -1329,9 +1329,7 @@ func (b *blockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
 	e.Variable.Walk(b)
 	e.Method.Walk(b)
 
-	if !call.isMagic {
-		b.handleCallArgs(e.Args, call.info)
-	}
+	b.handleCallArgs(e.Args, call.info)
 	b.ctx.exitFlags |= call.info.ExitFlags
 
 	return false
