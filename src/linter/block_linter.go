@@ -593,7 +593,10 @@ func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 	// All branches except default try to filter-out common
 	// cases to reduce the number of type solving performed.
 	if irutil.IsAssign(s.Expr) {
-		assign, _ := s.Expr.(*ir.Assign)
+		assign, okCast := s.Expr.(*ir.Assign)
+		if !okCast {
+			return
+		}
 		if v, ok := assign.Variable.(*ir.StaticPropertyFetchExpr); ok {
 			parseState := b.classParseState()
 			left, ok := parseState.Info.GetVarType(v.Class)
@@ -621,16 +624,22 @@ func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 					"potential null dereference when accessing static call throw $%s", v.Name)
 			}
 		}
+		report = b.isDiscardableExpr(s.Expr)
 	default:
-		typ := b.walker.exprType(s.Expr)
-		if !typ.Is("void") {
-			report = b.walker.sideEffectFree(s.Expr)
-		}
+		report = b.isDiscardableExpr(s.Expr)
 	}
 
 	if report {
 		b.report(s.Expr, LevelWarning, "discardExpr", "Expression evaluated but not used")
 	}
+}
+
+func (b *blockLinter) isDiscardableExpr(expr ir.Node) bool {
+	typ := b.walker.exprType(expr)
+	if !typ.Is("void") {
+		return b.walker.sideEffectFree(expr)
+	}
+	return false
 }
 
 func (b *blockLinter) checkConstFetch(e *ir.ConstFetchExpr) {
