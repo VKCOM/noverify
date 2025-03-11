@@ -598,11 +598,9 @@ func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 			parseState := b.classParseState()
 			left, ok := parseState.Info.GetVarType(v.Class)
 
-			if ok {
-				if left.Contains("null") {
-					b.report(s, LevelWarning, "notNullSafety",
-						"potential null dereference when accessing static property")
-				}
+			if ok && left.Contains("null") {
+				b.report(s, LevelWarning, "notNullSafety",
+					"potential null dereference when accessing static property")
 			}
 		}
 		return
@@ -618,11 +616,9 @@ func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 			parseState := b.classParseState()
 			left, ok := parseState.Info.GetVarType(v)
 
-			if ok {
-				if left.Contains("null") {
-					b.report(s, LevelWarning, "notNullSafety",
-						"potential null dereference when accessing static call throw $%s", v.Name)
-				}
+			if ok && left.Contains("null") {
+				b.report(s, LevelWarning, "notNullSafety",
+					"potential null dereference when accessing static call throw $%s", v.Name)
 			}
 		}
 	default:
@@ -1329,21 +1325,17 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 			if ok {
 				parseState.Info.GetFunction(funcCallerName)
 				funInfo, ok := parseState.Info.GetFunction(funcCallerName)
-				if ok {
-					if funInfo.Typ.Contains("null") {
-						b.report(e, LevelWarning, "notNullSafety",
-							"potential null dereference in %s when accessing method", funInfo.Name)
-					}
+				if ok && funInfo.Typ.Contains("null") {
+					b.report(e, LevelWarning, "notNullSafety",
+						"potential null dereference in %s when accessing method", funInfo.Name)
 				}
 			}
 		}
 	case *ir.SimpleVar:
 		callerVarType, ok := parseState.Info.GetVarType(caller)
-		if ok {
-			if callerVarType.Contains("null") {
-				b.report(e, LevelWarning, "notNullSafety",
-					"potential null dereference in $%s when accessing method", caller.Name)
-			}
+		if ok && callerVarType.Contains("null") {
+			b.report(e, LevelWarning, "notNullSafety",
+				"potential null dereference in $%s when accessing method", caller.Name)
 		}
 	}
 
