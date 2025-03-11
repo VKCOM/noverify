@@ -1220,6 +1220,7 @@ func (b *blockWalker) checkPropertyFetchNullSafety(expr *ir.PropertyFetchExpr, f
 			"potential null dereference when accessing property '%s'", prp.Value)
 	}
 }
+
 func (b *blockWalker) handleCallArgs(args []ir.Node, fn meta.FuncInfo) {
 	b.checkNullSafetyCallArgsF(args, fn)
 
