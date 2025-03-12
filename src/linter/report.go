@@ -38,7 +38,7 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 			Name:     "notNullSafetyFunctionArgumentArrayDimFetch",
 			Default:  true,
 			Quickfix: false,
-			Comment:  "Report not nullsafety call",
+			Comment:  "Report not nullsafety call array.",
 			Before: `class A {
     public string $value = 'Hello';
 }
