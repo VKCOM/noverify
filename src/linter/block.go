@@ -1056,21 +1056,21 @@ func (b *blockWalker) checkNullSafetyCallArgsF(args []ir.Node, fn meta.FuncInfo)
 
 		switch a := arg.(*ir.Argument).Expr.(type) {
 		case *ir.SimpleVar:
-			b.checkSimpleVarNullSafety(arg, fn, i, a, haveVariadic) // done
+			b.checkSimpleVarNullSafety(arg, fn, i, a, haveVariadic)
 		case *ir.ConstFetchExpr:
-			b.checkConstFetchNullSafety(arg, fn, i, a, haveVariadic) // done
+			b.checkConstFetchNullSafety(arg, fn, i, a, haveVariadic)
 		case *ir.ArrayDimFetchExpr:
-			b.checkArrayDimFetchNullSafety(arg, fn, i, a, haveVariadic) // done
+			b.checkArrayDimFetchNullSafety(arg, fn, i, a, haveVariadic)
 		case *ir.ListExpr:
-			b.checkListExprNullSafety(arg, fn, i, a, haveVariadic) // done
+			b.checkListExprNullSafety(arg, fn, i, a, haveVariadic)
 		case *ir.PropertyFetchExpr:
-			b.checkPropertyFetchNullSafety(a, fn, i, haveVariadic) // done
+			b.checkPropertyFetchNullSafety(a, fn, i, haveVariadic)
 		case *ir.StaticCallExpr:
-			b.checkStaticCallNullSafety(arg, fn, i, a, haveVariadic) // done
+			b.checkStaticCallNullSafety(arg, fn, i, a, haveVariadic)
 		case *ir.StaticPropertyFetchExpr:
-			b.checkStaticPropertyFetchNullSafety(a, fn, i, haveVariadic) //done
+			b.checkStaticPropertyFetchNullSafety(a, fn, i, haveVariadic)
 		case *ir.FunctionCallExpr:
-			b.checkFunctionCallNullSafety(arg, fn, i, a, haveVariadic) // done
+			b.checkFunctionCallNullSafety(arg, fn, i, a, haveVariadic)
 		}
 	}
 }

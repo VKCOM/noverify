@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 107           | 89                        | 18                         | 15                 |
+| 117           | 99                        | 18                         | 15                 |
 
 ## Table of contents
  - Enabled by default
@@ -60,7 +60,17 @@
    - [`newAbstract` checker](#newabstract-checker)
    - [`nonPublicInterfaceMember` checker](#nonpublicinterfacemember-checker)
    - [`notExplicitNullableParam` checker (autofixable)](#notexplicitnullableparam-checker)
-   - [`notNullSafety` checker](#notnullsafety-checker)
+   - [`notNullSafetyFunctionArgumentArrayDimFetch` checker](#notnullsafetyfunctionargumentarraydimfetch-checker)
+   - [`notNullSafetyFunctionArgumentConstFetch` checker](#notnullsafetyfunctionargumentconstfetch-checker)
+   - [`notNullSafetyFunctionArgumentFunctionCall` checker](#notnullsafetyfunctionargumentfunctioncall-checker)
+   - [`notNullSafetyFunctionArgumentList` checker](#notnullsafetyfunctionargumentlist-checker)
+   - [`notNullSafetyFunctionArgumentPropertyFetch` checker](#notnullsafetyfunctionargumentpropertyfetch-checker)
+   - [`notNullSafetyFunctionArgumentStaticFunctionCall` checker](#notnullsafetyfunctionargumentstaticfunctioncall-checker)
+   - [`notNullSafetyFunctionArgumentVariable` checker](#notnullsafetyfunctionargumentvariable-checker)
+   - [`notNullSafetyFunctionCall` checker](#notnullsafetyfunctioncall-checker)
+   - [`notNullSafetyPropertyFetch` checker](#notnullsafetypropertyfetch-checker)
+   - [`notNullSafetyStaticFunctionCall` checker](#notnullsafetystaticfunctioncall-checker)
+   - [`notNullSafetyVariable` checker](#notnullsafetyvariable-checker)
    - [`offBy1` checker (autofixable)](#offby1-checker)
    - [`oldStyleConstructor` checker](#oldstyleconstructor-checker)
    - [`paramClobber` checker](#paramclobber-checker)
@@ -1200,7 +1210,34 @@ function f(?string $str = null);
 <p><br></p>
 
 
-### `notNullSafety` checker
+### `notNullSafetyFunctionArgumentArrayDimFetch` checker
+
+#### Description
+
+Report not nullsafety call array.
+
+#### Non-compliant code:
+```php
+class A {
+    public string $value = 'Hello';
+}
+
+function test(A $a): void {
+    echo $a->value;
+}
+
+$arr = [new A(), null];
+test($arr[1]);
+```
+
+#### Compliant code:
+```php
+reported not safety call
+```
+<p><br></p>
+
+
+### `notNullSafetyFunctionArgumentConstFetch` checker
 
 #### Description
 
@@ -1214,7 +1251,224 @@ function f(A $klass);
 
 #### Compliant code:
 ```php
+reported that null passed to non-nullable parameter.
+```
+<p><br></p>
+
+
+### `notNullSafetyFunctionArgumentFunctionCall` checker
+
+#### Description
+
+Report not nullsafety function call.
+
+#### Non-compliant code:
+```php
+class A {
+    public static function hello(): ?string {
+        return "Hello!";
+    }
+}
+
+function test(A $s): void {
+    echo $s;
+}
+
+function testNullable(): ?A{
+	return new A();
+}
+
+test(testNullable());
+```
+
+#### Compliant code:
+```php
 reported not safety call
+```
+<p><br></p>
+
+
+### `notNullSafetyFunctionArgumentList` checker
+
+#### Description
+
+Report not nullsafety call for null list
+
+#### Non-compliant code:
+```php
+test(list($a) = [null]);
+```
+
+#### Compliant code:
+```php
+reported not safety call
+```
+<p><br></p>
+
+
+### `notNullSafetyFunctionArgumentPropertyFetch` checker
+
+#### Description
+
+Report not nullsafety fetching property in function argument.
+
+#### Non-compliant code:
+```php
+
+class User {
+    public $name = "lol";
+}
+
+$user = new User();
+$user = null;
+echo $user->name;
+```
+
+#### Compliant code:
+```php
+reported not safety call
+```
+<p><br></p>
+
+
+### `notNullSafetyFunctionArgumentStaticFunctionCall` checker
+
+#### Description
+
+Report not nullsafety call with static function call usage.
+
+#### Non-compliant code:
+```php
+class A {
+    public static function hello(): ?string {
+        return "Hello!";
+    }
+}
+
+function test(string $s): void {
+    echo $s;
+}
+
+test(A::hello());
+```
+
+#### Compliant code:
+```php
+reported not safety call
+```
+<p><br></p>
+
+
+### `notNullSafetyFunctionArgumentVariable` checker
+
+#### Description
+
+Report not nullsafety call
+
+#### Non-compliant code:
+```php
+function f(A $klass);
+						f(null);
+```
+
+#### Compliant code:
+```php
+reported not safety call with null in variable.
+```
+<p><br></p>
+
+
+### `notNullSafetyFunctionCall` checker
+
+#### Description
+
+Report not nullsafety function call.
+
+#### Non-compliant code:
+```php
+function getUserOrNull(): ?User { echo "test"; }
+
+$getUserOrNull()->test();
+```
+
+#### Compliant code:
+```php
+reported not safety function call
+```
+<p><br></p>
+
+
+### `notNullSafetyPropertyFetch` checker
+
+#### Description
+
+Report not nullsafety property fetch.
+
+#### Non-compliant code:
+```php
+
+class User {
+    public $name = "lol";
+}
+
+$user = new User();
+$user = null;
+echo $user->name;
+```
+
+#### Compliant code:
+```php
+reported not safety call
+```
+<p><br></p>
+
+
+### `notNullSafetyStaticFunctionCall` checker
+
+#### Description
+
+Report not nullsafety function call.
+
+#### Non-compliant code:
+```php
+class A {
+    public static function hello(): ?string {
+        return "Hello!";
+    }
+}
+
+function test(string $s): void {
+    echo $s;
+}
+
+test(A::hello());
+```
+
+#### Compliant code:
+```php
+reported not safety static function call
+```
+<p><br></p>
+
+
+### `notNullSafetyVariable` checker
+
+#### Description
+
+Report not nullsafety call
+
+#### Non-compliant code:
+```php
+$user = new User();
+
+$user = null;
+
+echo $user->name;
+```
+
+#### Compliant code:
+```php
+reported not safety call with null in variable.
 ```
 <p><br></p>
 
