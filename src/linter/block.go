@@ -1076,15 +1076,32 @@ func (b *blockWalker) checkNullSafetyCallArgsF(args []ir.Node, fn meta.FuncInfo)
 }
 
 func (b *blockWalker) checkFunctionCallNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, funcCall *ir.FunctionCallExpr, haveVariadic bool) {
-	funcName, ok := funcCall.Function.(*ir.Name)
+	var funcName string
 
-	if !ok {
+	var isClearF bool
+	var callType types.Map
+
+	switch f := funcCall.Function.(type) {
+	case *ir.Name:
+		funcName = f.Value
+		isClearF = true
+	case *ir.SimpleVar:
+		funcName = f.Name
+		varInfo, found := b.ctx.sc.GetVar(f)
+
+		if !found {
+			return
+		}
+		callType = varInfo.Type
+	default:
 		return
 	}
 
-	funcInfo, ok := b.linter.metaInfo().GetFunction("\\" + funcName.Value)
-	if !ok {
+	funcInfo, ok := b.linter.metaInfo().GetFunction("\\" + funcName)
+	if !ok && isClearF {
 		return
+	} else {
+		callType = funcInfo.Typ
 	}
 
 	param := nullSafetyRealParamForCheck(fn, paramIndex, haveVariadic)
@@ -1095,7 +1112,7 @@ func (b *blockWalker) checkFunctionCallNullSafety(arg ir.Node, fn meta.FuncInfo,
 		}
 	}
 	paramAllowsNull := types.IsTypeNullable(param.Typ)
-	varIsNullable := types.IsTypeNullable(funcInfo.Typ)
+	varIsNullable := types.IsTypeNullable(callType)
 	if varIsNullable && !paramAllowsNull {
 		b.report(arg, LevelWarning, "notNullSafety",
 			"not null safety call in function %s signature of param %s when calling function %s",
