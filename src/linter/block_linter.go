@@ -1466,18 +1466,26 @@ func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
 }
 
 func (b *blockLinter) checkStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) {
-	fetch := resolveStaticPropertyFetch(b.classParseState(), e)
+	globalMetaInfo := b.classParseState()
+	fetch := resolveStaticPropertyFetch(globalMetaInfo, e)
+
+	left, ok := globalMetaInfo.Info.GetVarType(e.Class)
+	if ok && left.Contains("null") {
+		b.report(e, LevelWarning, "notNullSafety",
+			"attempt to access property that can be null")
+	}
+
 	if !fetch.canAnalyze {
 		return
 	}
 
 	b.checkClassSpecialNameCase(e, fetch.className)
 
-	if !fetch.isFound && !b.classParseState().IsTrait {
+	if !fetch.isFound && !globalMetaInfo.IsTrait {
 		b.report(e.Property, LevelError, "undefinedProperty", "Property %s::$%s does not exist", fetch.className, fetch.propertyName)
 	}
 
-	if fetch.isFound && !canAccess(b.classParseState(), fetch.info.ClassName, fetch.info.Info.AccessLevel) {
+	if fetch.isFound && !canAccess(globalMetaInfo, fetch.info.ClassName, fetch.info.Info.AccessLevel) {
 		b.report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s::$%s", fetch.info.Info.AccessLevel, fetch.info.ClassName, fetch.propertyName)
 	}
 }
