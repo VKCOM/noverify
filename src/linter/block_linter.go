@@ -602,7 +602,7 @@ func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 			left, ok := parseState.Info.GetVarType(v.Class)
 
 			if ok && left.Contains("null") {
-				b.report(s, LevelWarning, "notNullSafety",
+				b.report(s, LevelWarning, "notNullSafetyPropertyFetch",
 					"potential null dereference when accessing static property")
 			}
 		}
@@ -620,7 +620,7 @@ func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 			left, ok := parseState.Info.GetVarType(v)
 
 			if ok && left.Contains("null") {
-				b.report(s, LevelWarning, "notNullSafety",
+				b.report(s, LevelWarning, "notNullSafetyStaticFunctionCall",
 					"potential null dereference when accessing static call throw $%s", v.Name)
 			}
 		}
@@ -1335,7 +1335,7 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 				parseState.Info.GetFunction(funcCallerName)
 				funInfo, ok := parseState.Info.GetFunction(funcCallerName)
 				if ok && funInfo.Typ.Contains("null") {
-					b.report(e, LevelWarning, "notNullSafety",
+					b.report(e, LevelWarning, "notNullSafetyFunctionCall",
 						"potential null dereference in %s when accessing method", funInfo.Name)
 				}
 			}
@@ -1343,7 +1343,7 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 	case *ir.SimpleVar:
 		callerVarType, ok := parseState.Info.GetVarType(caller)
 		if ok && callerVarType.Contains("null") {
-			b.report(e, LevelWarning, "notNullSafety",
+			b.report(e, LevelWarning, "notNullSafetyVariable",
 				"potential null dereference in $%s when accessing method", caller.Name)
 		}
 	}
@@ -1460,7 +1460,7 @@ func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
 
 	left, ok := globalMetaInfo.Info.GetVarType(e.Variable)
 	if ok && left.Contains("null") {
-		b.report(e, LevelWarning, "notNullSafety",
+		b.report(e, LevelWarning, "notNullSafetyPropertyFetch",
 			"attempt to access property that can be null")
 	}
 }
@@ -1471,7 +1471,7 @@ func (b *blockLinter) checkStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) {
 
 	left, ok := globalMetaInfo.Info.GetVarType(e.Class)
 	if ok && left.Contains("null") {
-		b.report(e, LevelWarning, "notNullSafety",
+		b.report(e, LevelWarning, "notNullSafetyPropertyFetch",
 			"attempt to access property that can be null")
 	}
 

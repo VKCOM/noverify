@@ -13,19 +13,19 @@ WARNING argsOrder: Potentially incorrect haystack and needle arguments order at 
 WARNING argsOrder: Potentially incorrect replacement and subject arguments order at testdata/embeddedrules/argsOrder.php:32
   $_ = preg_replace($pat, $subj, 'replacement');
        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING notNullSafety: not null safety call in function explode signature of param separator at testdata/embeddedrules/argsOrder.php:41
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function explode signature of param separator at testdata/embeddedrules/argsOrder.php:41
   $_ = explode($s, '/');
                ^^
 WARNING argsOrder: Potentially incorrect delimiter and string arguments order at testdata/embeddedrules/argsOrder.php:41
   $_ = explode($s, '/');
        ^^^^^^^^^^^^^^^^
-WARNING notNullSafety: not null safety call in function explode signature of param string at testdata/embeddedrules/argsOrder.php:45
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function explode signature of param string at testdata/embeddedrules/argsOrder.php:45
   $_ = explode('/', $s);
                     ^^
-WARNING notNullSafety: not null safety call in function explode signature of param separator at testdata/embeddedrules/argsOrder.php:46
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function explode signature of param separator at testdata/embeddedrules/argsOrder.php:46
   $_ = explode($delim, $s);
                ^^^^^^
-WARNING notNullSafety: not null safety call in function explode signature of param string at testdata/embeddedrules/argsOrder.php:46
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function explode signature of param string at testdata/embeddedrules/argsOrder.php:46
   $_ = explode($delim, $s);
                        ^^
 WARNING argsOrder: Potentially incorrect replace and string arguments order at testdata/embeddedrules/argsOrder.php:50
