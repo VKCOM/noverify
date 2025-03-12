@@ -388,3 +388,29 @@ test($maybeClass::hello());
 	}
 	test.RunAndMatch()
 }
+
+func TestFunctionCallNullSafetyThrowVariable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A {
+    public static function hello(): ?string {
+        return "Hello!";
+    }
+}
+
+function test(A $s): void {
+    echo $s;
+}
+
+function testNullable(): ?A{
+	return new A();
+}
+
+test(testNullable());
+`)
+	test.Expect = []string{
+		"Missing PHPDoc for \\A::hello public method",
+		"not null safety call in function test signature of param s when calling function \\testNullable",
+	}
+	test.RunAndMatch()
+}

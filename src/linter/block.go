@@ -1069,7 +1069,37 @@ func (b *blockWalker) checkNullSafetyCallArgsF(args []ir.Node, fn meta.FuncInfo)
 			b.checkStaticCallNullSafety(arg, fn, i, a, haveVariadic)
 		case *ir.StaticPropertyFetchExpr:
 			b.checkStaticPropertyFetchNullSafety(a, fn, i, haveVariadic)
+		case *ir.FunctionCallExpr:
+			b.checkFunctionCallNullSafety(arg, fn, i, a, haveVariadic)
 		}
+	}
+}
+
+func (b *blockWalker) checkFunctionCallNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, funcCall *ir.FunctionCallExpr, haveVariadic bool) {
+	funcName, ok := funcCall.Function.(*ir.Name)
+
+	if !ok {
+		return
+	}
+
+	funcInfo, ok := b.linter.metaInfo().GetFunction("\\" + funcName.Value)
+	if !ok {
+		return
+	}
+
+	param := nullSafetyRealParamForCheck(fn, paramIndex, haveVariadic)
+	if haveVariadic && paramIndex >= len(fn.Params)-1 {
+		// For variadic parameter check, if type is mixed then skip.
+		if types.IsTypeMixed(param.Typ) {
+			return
+		}
+	}
+	paramAllowsNull := types.IsTypeNullable(param.Typ)
+	varIsNullable := types.IsTypeNullable(funcInfo.Typ)
+	if varIsNullable && !paramAllowsNull {
+		b.report(arg, LevelWarning, "notNullSafety",
+			"not null safety call in function %s signature of param %s when calling function %s",
+			formatSlashesFuncName(fn), param.Name, funcInfo.Name)
 	}
 }
 
