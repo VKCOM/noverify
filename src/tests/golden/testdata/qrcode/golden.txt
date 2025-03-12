@@ -31,6 +31,9 @@ WARNING notNullSafety: not null safety call in function substr signature of para
 WARNING notNullSafety: not null safety call in function imagecolorallocate signature of param image at testdata/qrcode/qrcode.php:137
     return imagecolorallocate($image, $r, $g, $b);
                               ^^^^^^
+WARNING notNullSafety: not null safety call in function strtolower signature of param string when calling function \preg_replace at testdata/qrcode/qrcode.php:143
+    switch (strtolower(preg_replace('/[^A-Za-z0-9]/', '', $options['s']))) {
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING deadCode: Unreachable code at testdata/qrcode/qrcode.php:155
     return null;
            ^^^^
