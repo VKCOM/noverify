@@ -1065,7 +1065,55 @@ func (b *blockWalker) checkNullSafetyCallArgsF(args []ir.Node, fn meta.FuncInfo)
 			b.checkListExprNullSafety(arg, fn, i, a, haveVariadic)
 		case *ir.PropertyFetchExpr:
 			b.checkPropertyFetchNullSafety(a, fn, i, haveVariadic)
+		case *ir.StaticCallExpr:
+			b.checkStaticCallNullSafety(arg, fn, i, a, haveVariadic)
+		case *ir.StaticPropertyFetchExpr:
+			b.checkStaticPropertyFetchNullSafety(a, fn, i, haveVariadic)
 		}
+	}
+}
+
+func (b *blockWalker) checkStaticCallNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, staticCallF *ir.StaticCallExpr, haveVariadic bool) {
+	funcName, ok := staticCallF.Call.(*ir.Identifier)
+	if !ok {
+		return
+	}
+
+	var className string
+	switch classNameNode := staticCallF.Class.(type) {
+	case *ir.SimpleVar:
+		varInfo, found := b.ctx.sc.GetVar(classNameNode)
+		if !found {
+			return
+		}
+		className = varInfo.Type.String()
+	case *ir.Name:
+		className = "\\" + classNameNode.Value
+	}
+
+	classInfo, ok := b.r.ctx.st.Info.GetClass(className)
+	if !ok {
+		return
+	}
+
+	funcInfo, ok := classInfo.Methods.Get(funcName.Value)
+	if !ok {
+		return
+	}
+
+	param := nullSafetyRealParamForCheck(fn, paramIndex, haveVariadic)
+	if haveVariadic && paramIndex >= len(fn.Params)-1 {
+		// For variadic parameter check, if type is mixed then skip.
+		if types.IsTypeMixed(param.Typ) {
+			return
+		}
+	}
+	paramAllowsNull := types.IsTypeNullable(param.Typ)
+	varIsNullable := types.IsTypeNullable(funcInfo.Typ)
+	if varIsNullable && !paramAllowsNull {
+		b.report(arg, LevelWarning, "notNullSafety",
+			"not null safety call in function %s signature of param %s when calling static function %s",
+			formatSlashesFuncName(fn), param.Name, funcInfo.Name)
 	}
 }
 
@@ -1159,29 +1207,53 @@ func (b *blockWalker) checkListExprNullSafety(arg ir.Node, fn meta.FuncInfo, par
 	}
 }
 
-func (b *blockWalker) getPropertyComputedType(expr *ir.PropertyFetchExpr) (meta.ClassInfo, types.Map) {
-	baseCall, ok := expr.Variable.(*ir.SimpleVar)
+func (b *blockWalker) getPropertyComputedType(expr ir.Node) (meta.ClassInfo, types.Map) {
+	var baseNode ir.Node
+	var propertyNode ir.Node
+
+	switch e := expr.(type) {
+	case *ir.PropertyFetchExpr:
+		baseNode = e.Variable
+		propertyNode = e.Property
+	case *ir.StaticPropertyFetchExpr:
+		baseNode = e.Class
+		propertyNode = e.Property
+	default:
+		return meta.ClassInfo{}, types.Map{}
+	}
+
+	var classInfo meta.ClassInfo
+	var ok bool
+	var varType string
+
+	if baseCall, ok := baseNode.(*ir.SimpleVar); ok {
+		varInfo, found := b.ctx.sc.GetVar(baseCall)
+		if !found {
+			return meta.ClassInfo{}, types.Map{}
+		}
+		varType = varInfo.Type.String()
+	} else if nameNode, ok := baseNode.(*ir.Name); ok {
+		varType = "\\" + nameNode.Value
+	} else {
+		return meta.ClassInfo{}, types.Map{}
+	}
+
+	classInfo, ok = b.r.ctx.st.Info.GetClass(varType)
 	if !ok {
 		return meta.ClassInfo{}, types.Map{}
 	}
 
-	varInfo, ok := b.ctx.sc.GetVar(baseCall)
-	if !ok {
+	switch prop := propertyNode.(type) {
+	case *ir.Identifier:
+		propertyInfoFromClass := classInfo.Properties[prop.Value]
+		return classInfo, propertyInfoFromClass.Typ
+	case *ir.SimpleVar:
+		// static: $maybeClass::$value
+		propertyInfoFromClass := classInfo.Properties["$"+prop.Name]
+		return classInfo, propertyInfoFromClass.Typ
+	default:
 		return meta.ClassInfo{}, types.Map{}
 	}
-
-	classInfo, ok := b.r.ctx.st.Info.GetClass(varInfo.Type.String())
-	if !ok {
-		return meta.ClassInfo{}, types.Map{}
-	}
-
-	property, ok := expr.Property.(*ir.Identifier)
-	if !ok {
-		return meta.ClassInfo{}, types.Map{}
-	}
-
-	propertyInfoFromClass := classInfo.Properties[property.Value]
-	return classInfo, propertyInfoFromClass.Typ
 }
 
 func (b *blockWalker) checkPropertyFetchNullSafety(expr *ir.PropertyFetchExpr, fn meta.FuncInfo, paramIndex int, haveVariadic bool) {
@@ -1200,6 +1272,17 @@ func (b *blockWalker) checkPropertyFetchNullSafety(expr *ir.PropertyFetchExpr, f
 		return
 	}
 
+	b.checkingPropertyFetchNullSafetyCondition(expr, propType, prp.Value, fn, paramIndex, haveVariadic)
+}
+
+func (b *blockWalker) checkingPropertyFetchNullSafetyCondition(
+	expr ir.Node,
+	propType types.Map,
+	prpName string,
+	fn meta.FuncInfo,
+	paramIndex int,
+	haveVariadic bool,
+) {
 	isPrpNullable := types.IsTypeNullable(propType)
 	param := nullSafetyRealParamForCheck(fn, paramIndex, haveVariadic)
 	if haveVariadic && paramIndex >= len(fn.Params)-1 {
@@ -1209,7 +1292,7 @@ func (b *blockWalker) checkPropertyFetchNullSafety(expr *ir.PropertyFetchExpr, f
 		paramAllowsNull := types.IsTypeNullable(param.Typ)
 		if isPrpNullable && !paramAllowsNull {
 			b.report(expr, LevelWarning, "notNullSafety",
-				"potential null dereference when accessing property '%s'", prp.Value)
+				"potential null dereference when accessing property '%s'", prpName)
 		}
 		return
 	}
@@ -1217,8 +1300,27 @@ func (b *blockWalker) checkPropertyFetchNullSafety(expr *ir.PropertyFetchExpr, f
 	paramAllowsNull := types.IsTypeNullable(param.Typ)
 	if isPrpNullable && !paramAllowsNull {
 		b.report(expr, LevelWarning, "notNullSafety",
-			"potential null dereference when accessing property '%s'", prp.Value)
+			"potential null dereference when accessing property '%s'", prpName)
 	}
+}
+
+func (b *blockWalker) checkStaticPropertyFetchNullSafety(expr *ir.StaticPropertyFetchExpr, fn meta.FuncInfo, paramIndex int, haveVariadic bool) {
+	// Recursively check the left part of the chain if it is also a property fetch.
+	if nested, ok := expr.Class.(*ir.StaticPropertyFetchExpr); ok {
+		b.checkStaticPropertyFetchNullSafety(nested, fn, paramIndex, haveVariadic)
+	}
+
+	classInfo, propType := b.getPropertyComputedType(expr)
+	if classInfo.Name == "" || propType.Empty() {
+		return
+	}
+
+	prp, ok := expr.Property.(*ir.SimpleVar)
+	if !ok {
+		return
+	}
+
+	b.checkingPropertyFetchNullSafetyCondition(expr, propType, prp.Name, fn, paramIndex, haveVariadic)
 }
 
 func (b *blockWalker) handleCallArgs(args []ir.Node, fn meta.FuncInfo) {
