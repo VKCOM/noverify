@@ -1092,7 +1092,7 @@ func (b *blockWalker) checkFunctionCallNullSafety(arg ir.Node, fn meta.FuncInfo,
 		if !found {
 			return
 		}
-		callType = varInfo.Type
+		callType = varInfo.Type // nolint:ineffassign,staticcheck
 	default:
 		return
 	}
