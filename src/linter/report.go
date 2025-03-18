@@ -577,25 +577,6 @@ g();`,
 		},
 
 		{
-			Name:     "deprecatedUntagged",
-			Default:  true,
-			Quickfix: false,
-			Comment:  "Report usages of deprecated symbols if the `@deprecated` tag has no description (see `deprecated` check).",
-			Before: `/**
- * @deprecated
- */
-function f() {}
-
-f();`,
-			After: `/**
- * @deprecated
- */
-function f() {}
-
-g();`,
-		},
-
-		{
 			Name:     "callStatic",
 			Default:  true,
 			Quickfix: false,
