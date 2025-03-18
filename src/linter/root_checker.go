@@ -110,13 +110,13 @@ func (r *rootChecker) CheckPropertyList(pl *ir.PropertyListStmt) bool {
 		r.walker.Report(pl, LevelNotice, "implicitModifiers", "Specify the access modifier for %s explicitly", target)
 	}
 
-	docblockType, _ := r.walker.parsePHPDocVar(pl.Doc)
+	varPhpDocRes := r.walker.parseVarPHPDoc(pl.Doc)
 
 	r.CheckCommentMisspellings(pl, pl.Doc.Raw)
-	r.CheckPHPDocVar(pl, pl.Doc, docblockType)
+	r.CheckPHPDocVar(pl, pl.Doc, varPhpDocRes.typesMap)
 
 	typeHintType, ok := r.walker.parseTypeHintNode(pl.Type)
-	if ok && !types.TypeHintHasMoreAccurateType(typeHintType, docblockType) {
+	if ok && !types.TypeHintHasMoreAccurateType(typeHintType, varPhpDocRes.typesMap) {
 		r.walker.Report(pl, LevelNotice, "typeHint", "Specify the type for the property in PHPDoc, 'array' type hint too generic")
 	}
 
@@ -128,7 +128,7 @@ func (r *rootChecker) CheckPropertyList(pl *ir.PropertyListStmt) bool {
 		// We need to clone the types, because otherwise, if several
 		// properties are written in one definition, and null was
 		// assigned to the first, then all properties become nullable.
-		propTypes := docblockType.Clone().Append(typeHintType)
+		propTypes := varPhpDocRes.typesMap.Clone().Append(typeHintType)
 
 		r.CheckAssignNullToNotNullableProperty(prop, propTypes)
 	}

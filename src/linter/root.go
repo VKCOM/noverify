@@ -204,9 +204,9 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		// Handle attributes if any.
 		deprecation, ok := attributes.Deprecated(n.AttrGroups, d.ctx.st)
 		if ok {
-			doc.Deprecation.Append(deprecation)
+			doc.deprecation.Append(deprecation)
 		}
-		cl.DeprecationInfo = doc.Deprecation
+		cl.DeprecationInfo = doc.deprecation
 
 		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
 
@@ -849,8 +849,8 @@ func (d *rootWalker) parseClassPHPDoc(class ir.Node, doc phpdoc.Comment) classPH
 			parseClassPHPDocPackage(class, d.ctx.st, &result, part.(*phpdoc.PackageCommentPart))
 		case "deprecated":
 			part := part.(*phpdoc.RawCommentPart)
-			result.Deprecation.Deprecated = true
-			result.Deprecation.Reason = part.ParamsText
+			result.deprecation.Deprecated = true
+			result.deprecation.Reason = part.ParamsText
 		case "internal":
 			result.internal = true
 		}
@@ -907,26 +907,25 @@ func (d *rootWalker) handleClassDoc(doc classPHPDocParseResult, cl *meta.ClassIn
 	}
 }
 
-func (d *rootWalker) parsePHPDocVar(doc phpdoc.Comment) (typesMap types.Map, deprecationInfo meta.DeprecationInfo) {
+func (d *rootWalker) parseVarPHPDoc(doc phpdoc.Comment) variablePHPDocParseResult {
+	var result variablePHPDocParseResult
+
 	for _, partDoc := range doc.Parsed {
-		part, ok := partDoc.(*phpdoc.TypeVarCommentPart)
-		if ok && part.Name() == "var" {
+		if part, ok := partDoc.(*phpdoc.TypeVarCommentPart); ok && part.Name() == "var" {
 			converted := phpdoctypes.ToRealType(d.ctx.typeNormalizer.ClassFQNProvider(), d.config.KPHP, part.Type)
 			moveShapesToContext(&d.ctx, converted.Shapes)
 			d.handleClosuresFromDoc(converted.Closures)
 
-			typesMap = types.NewMapWithNormalization(d.ctx.typeNormalizer, converted.Types)
+			result.typesMap = types.NewMapWithNormalization(d.ctx.typeNormalizer, converted.Types)
 		}
 
-		rawPart, rawOk := partDoc.(*phpdoc.RawCommentPart)
-
-		if rawOk && rawPart.Name() == "deprecated" {
-			deprecationInfo.Deprecated = true
-			deprecationInfo.Reason = rawPart.ParamsText
+		if rawPart, ok := partDoc.(*phpdoc.RawCommentPart); ok && rawPart.Name() == "deprecated" {
+			result.deprecation.Deprecated = true
+			result.deprecation.Reason = rawPart.ParamsText
 		}
 	}
 
-	return typesMap, deprecationInfo
+	return result
 }
 
 func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
@@ -948,12 +947,12 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 		}
 	}
 
-	phpDocType, deprecationInfo := d.parsePHPDocVar(pl.Doc)
+	varPhpDocRes := d.parseVarPHPDoc(pl.Doc)
 	typeHintType, _ := d.parseTypeHintNode(pl.Type)
 
 	deprecation, ok := attributes.Deprecated(pl.AttrGroups, d.ctx.st)
 	if ok {
-		deprecationInfo.Append(deprecation)
+		varPhpDocRes.deprecation.Append(deprecation)
 	}
 
 	for _, pNode := range pl.Properties {
@@ -964,7 +963,7 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 		// We need to clone the types, because otherwise, if several
 		// properties are written in one definition, and null was
 		// assigned to the first, then all properties become nullable.
-		propTypes := phpDocType.Clone().Append(typeHintType)
+		propTypes := varPhpDocRes.typesMap.Clone().Append(typeHintType)
 
 		if prop.Expr != nil {
 			propTypes = propTypes.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, prop.Expr))
@@ -979,7 +978,7 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 			Pos:             d.getElementPos(prop),
 			Typ:             propTypes.Immutable(),
 			AccessLevel:     accessLevel,
-			DeprecationInfo: deprecationInfo,
+			DeprecationInfo: varPhpDocRes.deprecation,
 		}
 	}
 
