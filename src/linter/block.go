@@ -1039,6 +1039,10 @@ func formatSlashesFuncName(fn meta.FuncInfo) string {
 }
 
 func (b *blockWalker) checkNullSafetyCallArgsF(args []ir.Node, fn meta.FuncInfo) {
+	if b.r.config.KPHP && strings.Contains(fn.Name, "\\tuple") || strings.Contains(fn.Name, "\\shape") {
+		return
+	}
+
 	if fn.Params == nil || fn.Name == "" {
 		return
 	}
