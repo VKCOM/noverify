@@ -1013,7 +1013,7 @@ function main(): void {
 		},
 
 		{
-			Name:     "dangerousCondition",
+			Name:     "dangerousBoolCondition",
 			Default:  true,
 			Quickfix: false,
 			Comment:  "Report a dangerous condition",
