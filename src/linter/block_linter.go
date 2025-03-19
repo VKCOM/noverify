@@ -807,17 +807,7 @@ func (b *blockLinter) checkIfStmt(s *ir.IfStmt) {
 }
 
 func (b *blockLinter) checkDangerousBoolCond(s ir.Node) {
-	cond, ok := s.(*ir.BooleanOrExpr)
-	if !ok {
-		checkNodeDangerousBoolCond(s, b)
-		return
-	}
-
-	checkIfStatementConditionBool(cond.Left, cond.Right, b)
-}
-func checkIfStatementConditionBool(left ir.Node, right ir.Node, b *blockLinter) {
-	checkNodeDangerousBoolCond(left, b)
-	checkNodeDangerousBoolCond(right, b)
+	checkNodeDangerousBoolCond(s, b)
 }
 
 func checkNodeDangerousBoolCond(node ir.Node, b *blockLinter) {
