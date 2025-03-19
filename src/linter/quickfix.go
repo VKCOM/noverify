@@ -7,6 +7,7 @@ import (
 	"github.com/VKCOM/noverify/src/ir"
 	"github.com/VKCOM/noverify/src/quickfix"
 	"github.com/VKCOM/noverify/src/workspace"
+	"github.com/VKCOM/php-parser/pkg/position"
 )
 
 type QuickFixGenerator struct {
@@ -44,6 +45,40 @@ func (g *QuickFixGenerator) NullForNotNullableProperty(prop *ir.PropertyStmt) qu
 		StartPos:    prop.Position.StartPos,
 		EndPos:      prop.Position.EndPos,
 		Replacement: string(withoutAssign),
+	}
+}
+
+func (g *QuickFixGenerator) PhpAliasesReplace(prop *ir.Name, masterFunction string) quickfix.TextEdit {
+	return quickfix.TextEdit{
+		StartPos:    prop.Position.StartPos,
+		EndPos:      prop.Position.EndPos,
+		Replacement: masterFunction,
+	}
+}
+
+func (g *QuickFixGenerator) notExplicitNullableParam(param ir.Node) quickfix.TextEdit {
+	var pos *position.Position
+	var value string
+
+	switch v := param.(type) {
+	case *ir.Name:
+		pos = &position.Position{
+			StartPos: v.Position.StartPos,
+			EndPos:   v.Position.EndPos,
+		}
+		value = v.Value
+	case *ir.Identifier:
+		pos = &position.Position{
+			StartPos: v.Position.StartPos,
+			EndPos:   v.Position.EndPos,
+		}
+		value = v.Value
+	}
+
+	return quickfix.TextEdit{
+		StartPos:    pos.StartPos,
+		EndPos:      pos.EndPos,
+		Replacement: "?" + value,
 	}
 }
 

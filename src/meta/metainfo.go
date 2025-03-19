@@ -15,6 +15,7 @@ const (
 	FuncFinal
 	// FuncFromAnnotation is set if the function is described in the class annotation.
 	FuncFromAnnotation
+	FuncVariadic
 )
 
 type PropertyFlags uint8

@@ -172,6 +172,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		if !strings.HasSuffix(n.InterfaceName.Value, "able") {
 			d.checker.CheckIdentMisspellings(n.InterfaceName)
 		}
+
 	case *ir.ClassStmt:
 		d.currentClassNodeStack.Push(n)
 
@@ -200,6 +201,10 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		d.reportPHPDocErrors(doc.errs)
 		d.handleClassDoc(doc, &cl)
 
+		if doc.deprecated {
+			d.Report(n, LevelNotice, "deprecated", "Has deprecated class %s", n.ClassName.Value)
+		}
+
 		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
 
 	case *ir.TraitStmt:
@@ -225,6 +230,8 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 
 		d.scope().AddVar(v, solver.ExprTypeLocal(d.scope(), d.ctx.st, n.Expr), "global variable", meta.VarAlwaysDefined)
 	case *ir.FunctionStmt:
+		d.currentClassNodeStack.Push(n)
+
 		if d.metaInfo().IsIndexingComplete() {
 			res = d.checker.CheckFunction(n)
 		} else {
@@ -479,6 +486,7 @@ type parseFuncParamsResult struct {
 	params         []meta.FuncParam
 	paramsTypeHint map[string]types.Map
 	minParamsCount int
+	isVariadic     bool
 }
 
 func (d *rootWalker) parseFuncParams(params []ir.Node, docblockParams phpdoctypes.ParamsMap, sc *meta.Scope, closureSolver *solver.ClosureCallerInfo) (res parseFuncParamsResult) {
@@ -489,6 +497,7 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, docblockParams phpdoctype
 	minArgs := 0
 	parsedParams := make([]meta.FuncParam, 0, len(params))
 	paramHints := make(map[string]types.Map, len(params))
+	isVariadic := false
 
 	if closureSolver != nil && solver.IsClosureUseFunction(closureSolver.Name) {
 		return d.parseFuncArgsForCallback(params, sc, closureSolver)
@@ -528,6 +537,8 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, docblockParams phpdoctype
 		// Handle variadic.
 		if param.Variadic {
 			paramType = paramType.Map(types.WrapArrayOf)
+
+			isVariadic = true
 		}
 
 		// Append @param type.
@@ -558,6 +569,7 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, docblockParams phpdoctype
 		params:         parsedParams,
 		paramsTypeHint: paramHints,
 		minParamsCount: minArgs,
+		isVariadic:     isVariadic,
 	}
 }
 
@@ -657,6 +669,10 @@ func (d *rootWalker) enterFunction(fun *ir.FunctionStmt) bool {
 	if solver.SideEffectFreeFunc(d.scope(), d.ctx.st, nil, fun.Stmts) {
 		funcFlags |= meta.FuncPure
 	}
+	if funcParams.isVariadic {
+		funcFlags |= meta.FuncVariadic
+	}
+
 	d.meta.Functions.Set(nm, meta.FuncInfo{
 		Params:          funcParams.params,
 		Name:            nm,
@@ -811,23 +827,25 @@ func (d *rootWalker) parseClassPHPDoc(class ir.Node, doc phpdoc.Comment) classPH
 		return result
 	}
 
-	// TODO: allocate maps lazily.
-	// Class may not have any @property or @method annotations.
-	// In that case we can handle avoid map allocations.
-	result.properties = make(meta.PropertiesMap)
-	result.methods = meta.NewFunctionsMap()
-
 	for _, part := range doc.Parsed {
 		d.checker.checkPHPDocRef(class, part)
 		switch part.Name() {
 		case "property", "property-read", "property-write":
+			if result.properties == nil {
+				result.properties = make(meta.PropertiesMap)
+			}
 			parseClassPHPDocProperty(class, &d.ctx, &result, part.(*phpdoc.TypeVarCommentPart))
 		case "method":
+			if result.methods.H == nil {
+				result.methods = meta.NewFunctionsMap()
+			}
 			parseClassPHPDocMethod(class, &d.ctx, &result, part.(*phpdoc.RawCommentPart))
 		case "mixin":
 			parseClassPHPDocMixin(class, d.ctx.st, &result, part.(*phpdoc.RawCommentPart))
 		case "package":
 			parseClassPHPDocPackage(class, d.ctx.st, &result, part.(*phpdoc.PackageCommentPart))
+		case "deprecated":
+			result.deprecated = true
 		case "internal":
 			result.internal = true
 		}
@@ -1126,6 +1144,10 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 	if !insideInterface && !modif.abstract && solver.SideEffectFreeFunc(d.scope(), d.ctx.st, nil, stmts) {
 		funcFlags |= meta.FuncPure
 	}
+	if funcParams.isVariadic {
+		funcFlags |= meta.FuncVariadic
+	}
+
 	class.Methods.Set(nm, meta.FuncInfo{
 		Params:          funcParams.params,
 		Name:            nm,
@@ -1509,6 +1531,92 @@ func (d *rootWalker) ReportPHPDoc(phpDocLocation PHPDocLocation, level int, chec
 	d.ReportLocation(loc, level, checkName, msg, args...)
 }
 
+func IsRuleEnabledForPath(root *RuleNode, filePath string, checkRule string) bool {
+	normalizedPath := filepath.ToSlash(filepath.Clean(filePath))
+	parts := strings.Split(normalizedPath, "/")
+	currentNode := root
+
+	// Starting with global state. We have guarantee while parsing config that rule is `on` and exist
+	ruleState := true
+
+	i := 0
+	for i < len(parts) {
+		part := parts[i]
+		if part == "" {
+			i++
+			continue
+		}
+
+		// 1) Try to find precision node (part)
+		nextNode, ok := currentNode.Children[part]
+		if ok {
+			// If found precision node: apply Enabled/Disabled
+			if nextNode.Disabled[checkRule] {
+				ruleState = false
+			}
+			if nextNode.Enabled[checkRule] {
+				ruleState = true
+			}
+			currentNode = nextNode
+			i++
+			continue
+		}
+
+		// 2) If there is no exact match, lets find node "*" (wildcard)
+		starNode, ok := currentNode.Children["*"]
+		if !ok {
+			// not precision matching & not "*"
+			break
+		}
+
+		// Apply Enabled/Disabled for "*"
+		if starNode.Disabled[checkRule] {
+			ruleState = false
+		}
+		if starNode.Enabled[checkRule] {
+			ruleState = true
+		}
+
+		// move to node "*"
+		currentNode = starNode
+
+		// Now the logic is to "swallow" several directories:
+		//
+		// Until we meet an exact match in `Children` in the next step
+		// (except "*"), we can continue to "eat" directories while remaining in `starNode`.
+		//
+		// Or if we have reached the end of the path, we exit the loop.
+
+		for {
+			i++
+			if i >= len(parts) {
+				// the path ended - all remaining directories were swallowed
+				return ruleState
+			}
+			AfterStarPart := parts[i]
+
+			// if starNode have Children[AfterStarPart] (except "*"),
+			// so we found the next "literal" node, we exit the inner loop,
+			// to go through the usual logic at the top level.
+			if AfterStarPart == "" {
+				continue
+			}
+
+			_, hasLiteral := currentNode.Children[AfterStarPart]
+			if hasLiteral {
+				// Let's exit - let the outer loop handle it
+				break
+			}
+
+			// There are directories left - we eat them, continuing the while loop
+		}
+		// Exit to outer loop: i points to potential literal part
+		// (or "*"), but the outer iteration will re-check it
+	}
+
+	return ruleState
+}
+
 func (d *rootWalker) Report(n ir.Node, level int, checkName, msg string, args ...interface{}) {
 	var pos position.Position
 
@@ -1595,6 +1703,14 @@ func (d *rootWalker) ReportLocation(loc ir.Location, level int, checkName, msg s
 				return
 			}
 		}
+	}
+
+	filePath := d.file.Name()
+
+	rootNode := d.config.PathRules
+
+	if !IsRuleEnabledForPath(rootNode, filePath, checkName) {
+		return
 	}
 
 	d.reports = append(d.reports, &Report{
@@ -1746,9 +1862,29 @@ func (d *rootWalker) renderRuleMessage(msg string, n ir.Node, m phpgrep.MatchDat
 	return msg
 }
 
+func (d *rootWalker) isSuppressed(n ir.Node, checkName string) bool {
+	if containLinterSuppress(n, checkName) {
+		return true
+	}
+
+	// We go up the tree in search of a comment that disables this checker.
+	for i := 0; d.currentClassNodeStack.NthParent(i) != nil; i++ {
+		parent := d.currentClassNodeStack.NthParent(i)
+		if containLinterSuppress(parent, checkName) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (d *rootWalker) runRule(n ir.Node, sc *meta.Scope, rule *rules.Rule) bool {
 	m, ok := rule.Matcher.Match(n)
 	if !ok {
+		return false
+	}
+
+	if d.isSuppressed(n, rule.Name) {
 		return false
 	}
 
@@ -1757,7 +1893,14 @@ func (d *rootWalker) runRule(n ir.Node, sc *meta.Scope, rule *rules.Rule) bool {
 		matched = true
 	} else {
 		for _, filterSet := range rule.Filters {
-			if d.checkFilterSet(&m, sc, filterSet) {
+
+			filterMatched, errorFilterSet := d.checkFilterSet(&m, sc, filterSet)
+			if errorFilterSet != nil {
+				d.Report(n, rule.Level, rule.Name, "%s", errorFilterSet)
+				return true
+			}
+
+			if filterMatched {
 				matched = true
 				break
 			}
@@ -1780,6 +1923,11 @@ func (d *rootWalker) runRule(n ir.Node, sc *meta.Scope, rule *rules.Rule) bool {
 	}
 
 	message := d.renderRuleMessage(rule.Message, n, m, true)
+
+	if rule.Link != "" {
+		message += " | More about this rule: " + rule.Link
+	}
+
 	d.Report(location, rule.Level, rule.Name, "%s", message)
 
 	if d.config.ApplyQuickFixes && rule.Fix != "" {
@@ -1809,7 +1957,7 @@ func (d *rootWalker) checkTypeFilter(wantType *phpdoc.Type, sc *meta.Scope, nn i
 	return rules.TypeIsCompatible(wantType.Expr, haveType.Expr)
 }
 
-func (d *rootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filterSet map[string]rules.Filter) bool {
+func (d *rootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filterSet map[string]rules.Filter) (bool, error) {
 	// TODO: pass custom types here, so both @type and @pure predicates can use it.
 
 	for name, filter := range filterSet {
@@ -1819,19 +1967,27 @@ func (d *rootWalker) checkFilterSet(m *phpgrep.MatchData, sc *meta.Scope, filter
 		}
 
 		if !d.checkTypeFilter(filter.Type, sc, nn) {
-			return false
+			return false, nil
 		}
 		if filter.Pure && !solver.SideEffectFree(d.scope(), d.ctx.st, nil, nn) {
-			return false
+			return false, nil
 		}
 		if filter.Regexp != nil {
-			if vr, ok := nn.(*ir.SimpleVar); ok {
-				if !filter.Regexp.MatchString(vr.Name) {
-					return false
+			switch v := nn.(type) {
+			case *ir.SimpleVar:
+				if !filter.Regexp.MatchString(v.Name) {
+					return false, nil
 				}
+			case *ir.String:
+				if !filter.Regexp.MatchString(v.Value) {
+					return false, nil
+				}
+			default:
+				// logical paradox: we handled it, but does not support that's why here false
+				return false, fmt.Errorf("applying @filter for construction '%s' does not support. Current supported capturing types are str and var", d.nodeText(nn))
 			}
 		}
 	}
 
-	return true
+	return true, nil
 }

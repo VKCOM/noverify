@@ -88,6 +88,7 @@ type classPHPDocParseResult struct {
 	mixins      []string
 	packageName string
 	internal    bool
+	deprecated  bool
 }
 
 func parseClassPHPDocMethod(classNode ir.Node, ctx *rootContext, result *classPHPDocParseResult, part *phpdoc.RawCommentPart) {

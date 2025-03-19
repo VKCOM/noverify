@@ -386,6 +386,8 @@ The `@path` restriction allows you to restrict the rule by file path.
 
 Thus, the rule will be applied only if there is a substring from `@path` in the file path.
 
+Also, you can use several tags.
+
 For example:
 
 ```php
@@ -394,6 +396,7 @@ function ternarySimplify() {
    * @maybe Could rewrite as '$x ?: $y'
    * @pure $x
    * @path common/
+   * @path mythical/
    */
   $x ? $x : $y;
 }
@@ -422,9 +425,74 @@ function ternarySimplify() {
 
 This rule will now don't apply to files with the `common/` folder in the path.
 
+##### `@path-group-name`
+
+The `@path-group-name` allow you to group a lot of paths to the named group and give the name. This tag must be first.
+
+```php
+/**
+ * @path-group-name test
+ * @path my/site/ads_
+ * @path your/site/bad
+ */
+_init_test_group_();
+```
+
+Very important note: you must write any function name after declaring `@path-group-name`. In this example this is `_init_test_group_()`
+
+
+#### `@path-group`
+
+After creating group with `@path-group-name` you can use it in your rules by `@path-group`.
+ 
+
+For example:
+
+```php
+/**
+ * @path-group-name test
+ * @path my/site/ads_
+ * @path your/site/bad
+ */
+_init_test_group_();
+
+/**
+ * @name varEval
+ * @warning don't eval from variable
+ * @path-group test
+ * @path my/site/admin_
+ */
+eval(${"var"});
+```
+
+You can combine @path-group with @path. No conflicts here.
+
+##### `@path-group-exclude`
+
+After creating group with `@path-group-name` you can use it in your rules by `@path-group-exclude`.
+
+``@path-group-exclude`` allow you to add all `@path` in group to exclude. It's the same as if they were written one by one.
+
+```php
+/**
+ * @path-group-name test
+ * @path www/no
+ */
+_init_test_group_();
+
+
+/**
+ * @name varEval
+ * @warning don't eval from variable
+ * @path www/
+ * @path-group-exclude test
+ */
+eval(${"var"});
+```
+
 ##### `@filter`
 
-The `@filter` restriction allows you to restrict the rule by name of matched variable.
+The `@filter` restriction allows you to restrict the rule by name of matched variable or literal.
 
 Thus, the rule will be applied only if there is a matched variable that matches passed regexp.
 
@@ -441,6 +509,46 @@ function forbiddenIdUsage() {
 ```
 
 This rule will match usage if `$id` variable.
+
+When a string literal is captured, the regular expression is applied to the literal’s value.
+
+For example:
+
+```php
+function insecureUrl() {
+  /**
+   * @warning Use secure URLs
+   * @filter $url ^http://
+   */
+  callApi("http://example.com");
+}
+```
+
+In this case, the rule will match because the captured string literal "http://example.com" matches the regular expression ^http://.
+
+Let see more complex example:
+
+```php
+function legacyLibsUsage() {
+  /**
+   * @warning      Don't use legacy libs
+   * @filter $file (legacy\.lib)
+   */
+  any_legacy_libs_usage: {
+    require ${'file:str'};
+    require_once ${'file:str'};
+    include ${'file:str'};
+    include_once ${'file:str'};
+
+    require __DIR__ . ${'file:str'};
+    require_once __DIR__ . ${'file:str'};
+    include __DIR__ . ${'file:str'};
+    include_once __DIR__ . ${'file:str'};
+  }
+}
+```
+
+This regular expression (legacy\.lib) will match any line that contains the substring legacy.lib in the substituted expression of the $file
 
 #### Underline location (`@location`)
 
@@ -580,20 +688,21 @@ There is a simple rule on how to decide whether you need fuzzy matching or not:
 
 Rule related attributes:
 
-| Syntax | Description |
-| ------------- | ------------- |
-| `@name name` | Set diagnostic name (only outside of the function group). |
-| `@error message...` | Set `severity = error` and report text to `message`. |
-| `@warning message...` | Set `severity = warning` and report text to `message`. |
-| `@maybe message...` | Set `severity = maybe` and report text to `message`. |
-| `@fix template...` | Provide a quickfix template for the rule. |
-| `@scope scope_kind` | Controls where rule can be applied. `scope_kind` is `all`, `root` or `local`. |
-| `@location $var` | Selects a sub-expr from a match by a matcher var that defines report cursor position. |
+| Syntax                 | Description |
+|------------------------| ------------- |
+| `@name name`           | Set diagnostic name (only outside of the function group). |
+| `@error message...`    | Set `severity = error` and report text to `message`. |
+| `@warning message...`  | Set `severity = warning` and report text to `message`. |
+| `@maybe message...`    | Set `severity = maybe` and report text to `message`. |
+| `@fix template...`     | Provide a quickfix template for the rule. |
+| `@scope scope_kind`    | Controls where rule can be applied. `scope_kind` is `all`, `root` or `local`. |
+| `@location $var`       | Selects a sub-expr from a match by a matcher var that defines report cursor position. |
 | `@type type_expr $var` | Adds "type equals to" filter, applied to `$var`. |
-| `@pure $var` | Adds "side effect free" filter, applied to `$var`. |
-| `@or` | Add a new filter set. "Closes" the previous filter set and "opens" a new one. |
-| `@strict-syntax` | Sets not to use the normalization of the same constructs. |
-| `@path $substr` | If specified, the rule will only work for files that contain `$substr` in the name. |
+| `@pure $var`           | Adds "side effect free" filter, applied to `$var`. |
+| `@or`                  | Add a new filter set. "Closes" the previous filter set and "opens" a new one. |
+| `@strict-syntax`       | Sets not to use the normalization of the same constructs. |
+| `@path $substr`        | If specified, the rule will only work for files that contain `$substr` in the name. |
+| `@link link`           | If specified, then if there is an error, additional text/link to possible documentation will be displayed. |
 
 Function related attributes:
 

@@ -26,6 +26,25 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 		},
 
 		{
+			Name:     "notNullSafety",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report not nullsafety call",
+			Before: `function f(A $klass);
+						f(null);`,
+			After: `reported not safety call`,
+		},
+
+		{
+			Name:     "notExplicitNullableParam",
+			Default:  true,
+			Quickfix: true,
+			Comment:  "Report not nullable param with explicit null default value.",
+			Before:   `function f(string $str = null);`,
+			After:    `function f(?string $str = null);`,
+		},
+
+		{
 			Name:     "emptyStmt",
 			Default:  true,
 			Quickfix: false,
@@ -42,6 +61,15 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 			Before: `// Better to use a constant to avoid accidental overflow and float conversion.
 return -9223372036854775808;`,
 			After: `return PHP_INT_MIN;`,
+		},
+
+		{
+			Name:     "phpAliases",
+			Default:  true,
+			Quickfix: true,
+			Comment:  `Report php aliases functions.`,
+			Before:   `join("", []);`,
+			After:    `implode("", []);`,
 		},
 
 		{
@@ -607,6 +635,15 @@ g();`,
 			After: `class Foo {
   public function __construct($v) { $this->v = $v; }
 }`,
+		},
+
+		{
+			Name:     "stringInterpolationDeprecated",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report deprecated string interpolation style`,
+			Before:   `${variable}`,
+			After:    `{$variable}`,
 		},
 
 		{

@@ -1,18 +1,42 @@
 WARNING unused: Variable $a is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/math/src/BigDecimal.php:292
         [$a, $b] = $this->scaleValues($this, $that);
          ^^
+WARNING notNullSafety: not null safety call in function of signature of param value at testdata/math/src/BigDecimal.php:588
+        $that = BigNumber::of($that);
+                              ^^^^^
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/math/src/BigInteger.php:435
             new BigInteger($remainder)
             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: not null safety call in function of signature of param value at testdata/math/src/BigInteger.php:742
+        $that = BigNumber::of($that);
+                              ^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$matches['fractional'] ?? ''` at testdata/math/src/BigNumber.php:90
             $fractional = isset($matches['fractional']) ? $matches['fractional'] : '';
                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: not null safety call in function isLessThan signature of param that at testdata/math/src/BigNumber.php:173
+            if ($min === null || $value->isLessThan($min)) {
+                                                    ^^^^
+WARNING notNullSafety: not null safety call in function isGreaterThan signature of param that at testdata/math/src/BigNumber.php:205
+            if ($max === null || $value->isGreaterThan($max)) {
+                                                       ^^^^
+WARNING notNullSafety: not null safety call in function add signature of param a at testdata/math/src/BigNumber.php:241
+                $sum = self::add($sum, $value);
+                                 ^^^^
+WARNING notNullSafety: not null safety call in function minus signature of param that at testdata/math/src/BigRational.php:365
+        return $this->minus($that)->getSign();
+                            ^^^^^
 MAYBE   implicitModifiers: Specify the access modifier for \Brick\Math\Internal\Calculator::powmod method explicitly at testdata/math/src/Internal/Calculator.php:260
     abstract function powmod(string $base, string $exp, string $mod) : string;
                       ^^^^^^
 MAYBE   assignOp: Could rewrite as `$number ^= $xor` at testdata/math/src/Internal/Calculator.php:622
         $number = $number ^ $xor;
         ^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafety: not null safety call in function gmp_strval signature of param num at testdata/math/src/Internal/Calculator/GmpCalculator.php:66
+            \gmp_strval($q),
+                        ^^
+WARNING notNullSafety: not null safety call in function gmp_strval signature of param num at testdata/math/src/Internal/Calculator/GmpCalculator.php:67
+            \gmp_strval($r)
+                        ^^
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/math/src/Internal/Calculator/GmpCalculator.php:67
             \gmp_strval($r)
             ^^^^^^^^^^^^^^^

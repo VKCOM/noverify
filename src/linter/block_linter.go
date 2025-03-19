@@ -24,6 +24,10 @@ type blockLinter struct {
 
 func (b *blockLinter) enterNode(n ir.Node) {
 	switch n := n.(type) {
+
+	case *ir.Encapsed:
+		b.checkStringInterpolationDeprecation(n)
+
 	case *ir.Assign:
 		b.checkAssign(n)
 
@@ -33,8 +37,17 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	case *ir.ClassStmt:
 		b.checkClass(n)
 
+	case *ir.TraitStmt:
+		b.checkTrait(n)
+
 	case *ir.FunctionCallExpr:
 		b.checkFunctionCall(n)
+
+	case *ir.ArrowFunctionExpr:
+		b.walker.CheckParamNullability(n.Params)
+
+	case *ir.ClosureExpr:
+		b.walker.CheckParamNullability(n.Params)
 
 	case *ir.MethodCallExpr:
 		b.checkMethodCall(n)
@@ -200,6 +213,18 @@ func (b *blockLinter) enterNode(n ir.Node) {
 	}
 }
 
+func (b *blockLinter) checkStringInterpolationDeprecation(str *ir.Encapsed) {
+	for _, item := range str.Parts {
+		variable, ok := item.(*ir.SimpleVar)
+		if ok {
+			if variable.IdentifierTkn.Value[0] != '$' {
+				b.report(str, LevelWarning, "stringInterpolationDeprecated", "use {$variable} instead ${variable}")
+				break
+			}
+		}
+	}
+}
+
 func (b *blockLinter) checkUnaryPlus(n *ir.UnaryPlusExpr) {
 	val := constfold.Eval(b.classParseState(), n.Expr)
 	if val.IsValid() {
@@ -209,15 +234,32 @@ func (b *blockLinter) checkUnaryPlus(n *ir.UnaryPlusExpr) {
 	b.report(n, LevelWarning, "strangeCast", "Unary plus with non-constant expression, possible type cast, use an explicit cast to int or float instead of using the unary plus")
 }
 
+func (b *blockLinter) checkTrait(n *ir.TraitStmt) {
+	for _, stmt := range n.Stmts {
+		method, ok := stmt.(*ir.ClassMethodStmt)
+		if ok {
+			b.walker.CheckParamNullability(method.Params)
+		}
+	}
+}
+
 func (b *blockLinter) checkClass(class *ir.ClassStmt) {
 	const classMethod = 0
 	const classOtherMember = 1
 
 	var members = make([]int, 0, len(class.Stmts))
 	for _, stmt := range class.Stmts {
-		switch stmt.(type) {
+		switch value := stmt.(type) {
 		case *ir.ClassMethodStmt:
 			members = append(members, classMethod)
+			b.walker.CheckParamNullability(value.Params)
+		case *ir.PropertyListStmt:
+			for _, element := range value.Doc.Parsed {
+				if element.Name() == "deprecated" {
+					b.report(stmt, LevelNotice, "deprecated", "Has deprecated field in class %s", class.ClassName.Value)
+				}
+			}
+			members = append(members, classOtherMember)
 		default:
 			members = append(members, classOtherMember)
 		}
@@ -1041,9 +1083,15 @@ func (b *blockLinter) checkFunctionCall(e *ir.FunctionCallExpr) {
 	call := resolveFunctionCall(b.walker.ctx.sc, b.classParseState(), b.walker.ctx.customTypes, e)
 	fqName := call.funcName
 
+	var trimName = strings.TrimPrefix(fqName, `\`)
+	var phpMasterFunc = phpcore.FuncAliases[trimName]
+	if phpMasterFunc != nil {
+		b.report(e, LevelWarning, "phpAliases", "Use %s instead of '%s'", phpMasterFunc.Value, trimName)
+		b.walker.r.addQuickFix("phpAliases", b.quickfix.PhpAliasesReplace(e.Function.(*ir.Name), phpMasterFunc.Value))
+	}
+
 	if call.isClosure {
-		varName := strings.TrimPrefix(fqName, `\`)
-		b.walker.untrackVarName(varName)
+		b.walker.untrackVarName(trimName)
 	} else {
 		b.checkFunctionAvailability(e, &call)
 		b.walker.r.checker.CheckNameCase(e.Function, call.funcName, call.info.Name)
@@ -1259,7 +1307,6 @@ func (b *blockLinter) checkStripTags(e *ir.FunctionCallExpr) {
 
 func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 	parseState := b.classParseState()
-
 	call := resolveMethodCall(b.walker.ctx.sc, parseState, b.walker.ctx.customTypes, e, b.walker.r.strictMixed)
 	if !call.canAnalyze {
 		return
@@ -1469,6 +1516,7 @@ func (b *blockLinter) checkInterfaceStmt(iface *ir.InterfaceStmt) {
 					b.report(x, LevelWarning, "nonPublicInterfaceMember", "'%s' can't be %s", methodName, modifier.Value)
 				}
 			}
+			b.walker.CheckParamNullability(x.Params)
 		case *ir.ClassConstListStmt:
 			for _, modifier := range x.Modifiers {
 				if strings.EqualFold(modifier.Value, "private") || strings.EqualFold(modifier.Value, "protected") {

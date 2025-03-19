@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 104           | 86                        | 18                         | 13                 |
+| 107           | 89                        | 18                         | 15                 |
 
 ## Table of contents
  - Enabled by default
@@ -60,10 +60,13 @@
    - [`nestedTernary` checker](#nestedternary-checker)
    - [`newAbstract` checker](#newabstract-checker)
    - [`nonPublicInterfaceMember` checker](#nonpublicinterfacemember-checker)
+   - [`notExplicitNullableParam` checker (autofixable)](#notexplicitnullableparam-checker)
+   - [`notNullSafety` checker](#notnullsafety-checker)
    - [`offBy1` checker (autofixable)](#offby1-checker)
    - [`oldStyleConstructor` checker](#oldstyleconstructor-checker)
    - [`paramClobber` checker](#paramclobber-checker)
    - [`parentConstructor` checker](#parentconstructor-checker)
+   - [`phpAliases` checker (autofixable)](#phpaliases-checker)
    - [`precedence` checker](#precedence-checker)
    - [`printf` checker](#printf-checker)
    - [`redundantGlobal` checker](#redundantglobal-checker)
@@ -75,6 +78,7 @@
    - [`stdInterface` checker](#stdinterface-checker)
    - [`strangeCast` checker](#strangecast-checker)
    - [`strictCmp` checker](#strictcmp-checker)
+   - [`stringInterpolationDeprecated` checker](#stringinterpolationdeprecated-checker)
    - [`stripTags` checker](#striptags-checker)
    - [`switchEmpty` checker](#switchempty-checker)
    - [`switchSimplify` checker](#switchsimplify-checker)
@@ -1196,6 +1200,45 @@ interface Iface {
 <p><br></p>
 
 
+### `notExplicitNullableParam` checker
+
+> Auto fix available
+
+#### Description
+
+Report not nullable param with explicit null default value.
+
+#### Non-compliant code:
+```php
+function f(string $str = null);
+```
+
+#### Compliant code:
+```php
+function f(?string $str = null);
+```
+<p><br></p>
+
+
+### `notNullSafety` checker
+
+#### Description
+
+Report not nullsafety call
+
+#### Non-compliant code:
+```php
+function f(A $klass);
+						f(null);
+```
+
+#### Compliant code:
+```php
+reported not safety call
+```
+<p><br></p>
+
+
 ### `offBy1` checker
 
 > Auto fix available
@@ -1288,6 +1331,26 @@ class Foo extends Bar {
     $this->y = $y;
   }
 }
+```
+<p><br></p>
+
+
+### `phpAliases` checker
+
+> Auto fix available
+
+#### Description
+
+Report php aliases functions.
+
+#### Non-compliant code:
+```php
+join("", []);
+```
+
+#### Compliant code:
+```php
+implode("", []);
 ```
 <p><br></p>
 
@@ -1466,6 +1529,24 @@ in_array("what", $s)
 #### Compliant code:
 ```php
 in_array("what", $s, true)
+```
+<p><br></p>
+
+
+### `stringInterpolationDeprecated` checker
+
+#### Description
+
+Report deprecated string interpolation style
+
+#### Non-compliant code:
+```php
+${variable}
+```
+
+#### Compliant code:
+```php
+{$variable}
 ```
 <p><br></p>
 
