@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 103          | 85                        | 18                         | 13                 |
+| 104           | 86                        | 18                         | 13                 |
 
 ## Table of contents
  - Enabled by default
@@ -25,6 +25,7 @@
    - [`concatenationPrecedence` checker](#concatenationprecedence-checker)
    - [`constCase` checker (autofixable)](#constcase-checker)
    - [`countUse` checker (autofixable)](#countuse-checker)
+   - [`dangerousBoolCondition` checker](#dangerousboolcondition-checker)
    - [`deadCode` checker](#deadcode-checker)
    - [`deprecated` checker](#deprecated-checker)
    - [`discardExpr` checker](#discardexpr-checker)
@@ -480,6 +481,25 @@ if (count($arr) >= 0) { ... }
 #### Compliant code:
 ```php
 if (count($arr) != 0) { ... }
+```
+<p><br></p>
+
+
+### `dangerousBoolCondition` checker
+
+#### Description
+
+Report a dangerous condition
+
+#### Non-compliant code:
+```php
+if(true){}
+```
+
+#### Compliant code:
+```php
+$a = getCond(); // get bool value from some func
+				if($a){}
 ```
 <p><br></p>
 
