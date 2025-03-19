@@ -113,7 +113,7 @@ func TestGolden(t *testing.T) {
 
 		{
 			Name:    "phprocksyd",
-			Disable: []string{"missingPhpdoc", "notNullSafety", "dangerousCondition"},
+			Disable: []string{"missingPhpdoc", "notNullSafety", "dangerousBoolCondition"},
 			Deps: []string{
 				`stubs/phpstorm-stubs/standard/basic.php`,
 				`stubs/phpstorm-stubs/pcntl/pcntl.php`,
