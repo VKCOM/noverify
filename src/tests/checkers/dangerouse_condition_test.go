@@ -6,7 +6,7 @@ import (
 	"github.com/VKCOM/noverify/src/linttest"
 )
 
-func TestDangerousCondition1(t *testing.T) {
+func TestDangerousConditionExplicitBool(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 if(true){
@@ -23,7 +23,7 @@ if(1){
 	test.RunAndMatch()
 }
 
-func TestDangerousCondition2(t *testing.T) {
+func TestDangerousConditionExplicitBoolMultiOr(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 
@@ -46,7 +46,7 @@ if(1||$a||1||true||false||0){
 	test.RunAndMatch()
 }
 
-func TestDangerousCondition3(t *testing.T) {
+func TestDangerousConditionExplicitBoolMultiAnd(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 
@@ -64,7 +64,7 @@ if($a && false && true && 1 && 0){
 	test.RunAndMatch()
 }
 
-func TestDangerousCondition4(t *testing.T) {
+func TestDangerousConditionExplicitBoolMultiOrAnd(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 
@@ -81,7 +81,7 @@ if($a || false && 1 || true){
 	test.RunAndMatch()
 }
 
-func TestDangerousCondition5(t *testing.T) {
+func TestDangerousConditionCycles(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 
