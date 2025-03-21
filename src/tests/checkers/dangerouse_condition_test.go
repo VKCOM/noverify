@@ -23,6 +23,23 @@ if(1){
 	test.RunAndMatch()
 }
 
+func TestDangerousConditionElseIf(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+if(1){
+} elseif (true){
+
+}
+
+
+`)
+	test.Expect = []string{
+		`Potential dangerous bool value: you have constant bool value in condition`,
+		`Potential dangerous value: you have constant int value that interpreted as bool`,
+	}
+	test.RunAndMatch()
+}
+
 func TestDangerousConditionExplicitBoolMultiOr(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

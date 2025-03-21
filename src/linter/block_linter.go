@@ -840,6 +840,7 @@ func (b *blockLinter) checkIfStmtDupCond(s *ir.IfStmt) {
 		if !conditions.Add(elseif.Cond) {
 			b.report(elseif.Cond, LevelWarning, "dupCond", "duplicated condition in if-else chain")
 		}
+		b.checkDangerousBoolCond(elseif.Cond)
 	}
 }
 
