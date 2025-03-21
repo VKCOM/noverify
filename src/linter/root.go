@@ -910,18 +910,23 @@ func (d *rootWalker) handleClassDoc(doc classPHPDocParseResult, cl *meta.ClassIn
 func (d *rootWalker) parseVarPHPDoc(doc phpdoc.Comment) variablePHPDocParseResult {
 	var result variablePHPDocParseResult
 
-	for _, partDoc := range doc.Parsed {
-		if part, ok := partDoc.(*phpdoc.TypeVarCommentPart); ok && part.Name() == "var" {
+	if doc.Raw == "" {
+		return result
+	}
+
+	for _, part := range doc.Parsed {
+		switch part.Name() {
+		case "var":
+			part := part.(*phpdoc.TypeVarCommentPart)
 			converted := phpdoctypes.ToRealType(d.ctx.typeNormalizer.ClassFQNProvider(), d.config.KPHP, part.Type)
 			moveShapesToContext(&d.ctx, converted.Shapes)
 			d.handleClosuresFromDoc(converted.Closures)
 
 			result.typesMap = types.NewMapWithNormalization(d.ctx.typeNormalizer, converted.Types)
-		}
-
-		if rawPart, ok := partDoc.(*phpdoc.RawCommentPart); ok && rawPart.Name() == "deprecated" {
+		case "deprecated":
+			part := part.(*phpdoc.RawCommentPart)
 			result.deprecation.Deprecated = true
-			result.deprecation.Reason = rawPart.ParamsText
+			result.deprecation.Reason = part.ParamsText
 		}
 	}
 
@@ -985,8 +990,7 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 	return true
 }
 
-func (d *rootWalker) parseConstPHPDoc(constList *ir.ClassConstListStmt, doc phpdoc.Comment) (deprecationInfo meta.DeprecationInfo) {
-
+func (d *rootWalker) parseConstPHPDoc(doc phpdoc.Comment) (deprecationInfo meta.DeprecationInfo) {
 	if doc.Raw == "" {
 		return deprecationInfo
 	}
@@ -1018,7 +1022,7 @@ func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
 		}
 	}
 
-	deprecationInfo := d.parseConstPHPDoc(list, list.Doc)
+	deprecationInfo := d.parseConstPHPDoc(list.Doc)
 
 	deprecation, ok := attributes.Deprecated(list.AttrGroups, d.ctx.st)
 	if ok {
