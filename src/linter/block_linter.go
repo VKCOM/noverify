@@ -606,26 +606,6 @@ func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 					"potential null dereference when accessing static property")
 			}
 		}
-
-		/*		if _, ok := assign.Expr.(*ir.FunctionCallExpr); ok {
-				//currentVar, isGotVar := b.metaInfo().GetVar(assign.Variable)
-
-				if currentVariable, isFound := b.walker.ctx.sc.GetVar(assign.Variable); isFound {
-					newTyp := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, assign.Expr)
-					b.walker.ctx.sc.ReplaceVar(assign.Variable, newTyp, "recalculated via function return type", currentVariable.Flags)
-				} else {
-					currentVar, isGotVar := b.metaInfo().GetVar(assign.Variable)
-					if isGotVar {
-						newTyp := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, assign.Expr)
-						b.walker.ctx.sc.AddVar(assign.Variable, newTyp, "recalculated via function return type", currentVar.Flags)
-					}
-				}
-			}*/
-
-		/*		if callExpr, ok := assign.Expr.(*ir.MethodCallExpr); ok {
-				testVar, _ := b.walker.ctx.sc.GetVar(callExpr.Variable)
-				println(testVar)
-			}*/
 		return
 	}
 	switch expr := s.Expr.(type) {
