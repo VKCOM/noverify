@@ -606,6 +606,26 @@ func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 					"potential null dereference when accessing static property")
 			}
 		}
+
+		/*		if _, ok := assign.Expr.(*ir.FunctionCallExpr); ok {
+				//currentVar, isGotVar := b.metaInfo().GetVar(assign.Variable)
+
+				if currentVariable, isFound := b.walker.ctx.sc.GetVar(assign.Variable); isFound {
+					newTyp := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, assign.Expr)
+					b.walker.ctx.sc.ReplaceVar(assign.Variable, newTyp, "recalculated via function return type", currentVariable.Flags)
+				} else {
+					currentVar, isGotVar := b.metaInfo().GetVar(assign.Variable)
+					if isGotVar {
+						newTyp := solver.ExprType(b.walker.ctx.sc, b.walker.r.ctx.st, assign.Expr)
+						b.walker.ctx.sc.AddVar(assign.Variable, newTyp, "recalculated via function return type", currentVar.Flags)
+					}
+				}
+			}*/
+
+		/*		if callExpr, ok := assign.Expr.(*ir.MethodCallExpr); ok {
+				testVar, _ := b.walker.ctx.sc.GetVar(callExpr.Variable)
+				println(testVar)
+			}*/
 		return
 	}
 	switch expr := s.Expr.(type) {
@@ -1329,22 +1349,28 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 
 	switch caller := e.Variable.(type) {
 	case *ir.FunctionCallExpr:
-		if v, ok := caller.Function.(*ir.SimpleVar); ok {
-			funcCallerName, ok := solver.GetFuncName(parseState, &ir.Name{Value: v.Name})
-			if ok {
-				parseState.Info.GetFunction(funcCallerName)
-				funInfo, ok := parseState.Info.GetFunction(funcCallerName)
-				if ok && funInfo.Typ.Contains("null") {
-					b.report(e, LevelWarning, "notNullSafetyFunctionCall",
-						"potential null dereference in %s when accessing method", funInfo.Name)
-				}
+		var funcName string
+		var ok bool
+
+		switch fn := caller.Function.(type) {
+		case *ir.SimpleVar:
+			funcName, ok = solver.GetFuncName(parseState, &ir.Name{Value: fn.Name})
+
+		case *ir.Name:
+			funcName, ok = solver.GetFuncName(parseState, fn)
+		}
+		if ok {
+			funInfo, found := parseState.Info.GetFunction(funcName)
+			if found {
+				funcType := funInfo.Typ
+				b.checkSafetyMethodCall(e, funcType, funInfo.Name, "FunctionCall")
 			}
 		}
+
 	case *ir.SimpleVar:
-		callerVarType, ok := parseState.Info.GetVarType(caller)
-		if ok && callerVarType.Contains("null") {
-			b.report(e, LevelWarning, "notNullSafetyVariable",
-				"potential null dereference in $%s when accessing method", caller.Name)
+		varType, ok := b.walker.ctx.sc.GetVarType(caller)
+		if ok {
+			b.checkSafetyMethodCall(e, varType, caller.Name, "Variable")
 		}
 	}
 
@@ -1362,6 +1388,17 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 
 	if call.isFound && !call.isMagic && !canAccess(parseState, call.className, call.info.AccessLevel) {
 		b.report(e.Method, LevelError, "accessLevel", "Cannot access %s method %s->%s()", call.info.AccessLevel, call.className, call.methodName)
+	}
+}
+
+func (b *blockLinter) checkSafetyMethodCall(e *ir.MethodCallExpr, typ types.Map, name string, suffix string) {
+	if typ.Contains("null") {
+		b.report(e, LevelWarning, "notNullSafety"+suffix,
+			"potential null dereference in %s when accessing method", name)
+	}
+	if typ.Contains("false") {
+		b.report(e, LevelWarning, "notFalseSafety"+suffix,
+			"potential false in %s when accessing method", name)
 	}
 }
 
