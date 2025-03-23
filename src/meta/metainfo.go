@@ -178,16 +178,21 @@ type PropertyInfo struct {
 	Typ         types.Map
 	AccessLevel AccessLevel
 	Flags       PropertyFlags
+	DeprecationInfo
 }
 
 func (info *PropertyInfo) IsFromAnnotation() bool { return info.Flags&PropFromAnnotation != 0 }
+func (info *PropertyInfo) IsDeprecated() bool     { return info.Deprecated }
 
 type ConstInfo struct {
 	Pos         ElementPosition
 	Typ         types.Map
 	AccessLevel AccessLevel
 	Value       ConstValue
+	DeprecationInfo
 }
+
+func (info *ConstInfo) IsDeprecated() bool { return info.Deprecated }
 
 type ClassFlags uint8
 
@@ -212,12 +217,14 @@ type ClassInfo struct {
 	Mixins           []string
 
 	PackageInfo
+	DeprecationInfo
 }
 
-func (info *ClassInfo) IsAbstract() bool  { return info.Flags&ClassAbstract != 0 }
-func (info *ClassInfo) IsFinal() bool     { return info.Flags&ClassFinal != 0 }
-func (info *ClassInfo) IsShape() bool     { return info.Flags&ClassShape != 0 }
-func (info *ClassInfo) IsInterface() bool { return info.Flags&ClassInterface != 0 }
+func (info *ClassInfo) IsAbstract() bool   { return info.Flags&ClassAbstract != 0 }
+func (info *ClassInfo) IsFinal() bool      { return info.Flags&ClassFinal != 0 }
+func (info *ClassInfo) IsShape() bool      { return info.Flags&ClassShape != 0 }
+func (info *ClassInfo) IsInterface() bool  { return info.Flags&ClassInterface != 0 }
+func (info *ClassInfo) IsDeprecated() bool { return info.Deprecated }
 
 // TODO: rename it; it's not only class-related.
 type ClassParseState struct {

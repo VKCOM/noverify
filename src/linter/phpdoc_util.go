@@ -84,11 +84,16 @@ func (e *PHPDocErrors) pushLint(place PHPDocLocation, format string, args ...int
 type classPHPDocParseResult struct {
 	properties  meta.PropertiesMap
 	methods     meta.FunctionsMap
+	deprecation meta.DeprecationInfo
 	errs        PHPDocErrors
 	mixins      []string
 	packageName string
 	internal    bool
-	deprecated  bool
+}
+
+type variablePHPDocParseResult struct {
+	typesMap    types.Map
+	deprecation meta.DeprecationInfo
 }
 
 func parseClassPHPDocMethod(classNode ir.Node, ctx *rootContext, result *classPHPDocParseResult, part *phpdoc.RawCommentPart) {
