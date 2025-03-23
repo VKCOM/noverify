@@ -191,6 +191,14 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 			// TODO: actually this needs to be present inside if body only
 		}
 
+	case *ir.NotIdenticalExpr:
+		a.handleConditionSafety(n.Left, n.Right, false)
+		a.handleConditionSafety(n.Right, n.Left, false)
+
+	case *ir.IdenticalExpr:
+		a.handleConditionSafety(n.Left, n.Right, true)
+		a.handleConditionSafety(n.Right, n.Left, true)
+
 	case *ir.BooleanNotExpr:
 		a.inNot = true
 
@@ -217,6 +225,47 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 
 	w.Walk(a.b)
 	return res
+}
+
+func (a *andWalker) handleConditionSafety(left ir.Node, right ir.Node, identical bool) {
+	variable, ok := left.(*ir.SimpleVar)
+	if !ok {
+		return
+	}
+
+	constValue, ok := right.(*ir.ConstFetchExpr)
+	if !ok || (constValue.Constant.Value != "false" && constValue.Constant.Value != "null") {
+		return
+	}
+
+	// We need to traverse the variable here to check that
+	// it exists, since this variable will be added to the
+	// context later.
+	a.b.handleVariable(variable)
+
+	currentVar, isGotVar := a.trueContext.sc.GetVar(variable)
+	if !isGotVar {
+		return
+	}
+
+	var currentType types.Map
+	if a.inNot {
+		currentType = a.exprTypeInContext(a.trueContext, variable)
+	} else {
+		currentType = a.exprTypeInContext(a.falseContext, variable)
+	}
+
+	if constValue.Constant.Value == "false" || constValue.Constant.Value == "null" {
+		clearType := currentType.Erase(constValue.Constant.Value)
+		if identical {
+			a.trueContext.sc.ReplaceVar(variable, currentType.Erase(clearType.String()), "type narrowing", currentVar.Flags)
+			a.falseContext.sc.ReplaceVar(variable, clearType, "type narrowing", currentVar.Flags)
+		} else {
+			a.trueContext.sc.ReplaceVar(variable, clearType, "type narrowing", currentVar.Flags)
+			a.falseContext.sc.ReplaceVar(variable, currentType.Erase(clearType.String()), "type narrowing", currentVar.Flags)
+		}
+		return
+	}
 }
 
 func (a *andWalker) runRules(w ir.Node) {
