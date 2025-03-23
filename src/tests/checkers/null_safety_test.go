@@ -156,7 +156,6 @@ testVariadic(new A(), null);
 	test.RunAndMatch()
 }
 
-// TODO: After realisation Control Flow Graph (CFG) и Data Flow Graph (DFG) this test must fail
 func TestIfNullCheckSafe(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -177,11 +176,15 @@ $v = null;
 if ($v == null) {
     // Correctly assign a new instance when $v is null.
     $v = new A();
+	test($v);
+} else {
+test($v);
 }
-test($v); // Should be safe.
+test($v);
 `)
 
 	test.Expect = []string{
+		`not null safety call in function test signature of param`,
 		`not null safety call in function test signature of param`,
 	}
 	test.RunAndMatch()
