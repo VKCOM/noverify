@@ -28,12 +28,36 @@ WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phpro
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:129
                 exit(1);
                 ^^^^^^^
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function stream_socket_accept signature of param socket at testdata/phprocksyd/Phprocksyd.php:200
+        $client = stream_socket_accept($server, self::ACCEPT_TIMEOUT, $peername);
+                                       ^^^^^^^
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function pcntl_wait signature of param status at testdata/phprocksyd/Phprocksyd.php:231
+            $pid = pcntl_wait($status, WNOHANG);
+                              ^^^^^^^
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function pcntl_wexitstatus signature of param status at testdata/phprocksyd/Phprocksyd.php:241
+                    $Res->retcode = pcntl_wexitstatus($status);
+                                                      ^^^^^^^
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function rtrim signature of param string at testdata/phprocksyd/Phprocksyd.php:272
+            $req = rtrim($req);
+                         ^^^^
 ERROR   constCase: Constant 'NULL' should be used in lower case as 'null' at testdata/phprocksyd/Phprocksyd.php:321
             $n = stream_select($read, $write, $except, NULL);
                                                        ^^^^
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:325
                 exit(1);
                 ^^^^^^^
+WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter character of function ord at testdata/phprocksyd/Phprocksyd.php:360
+        return ord($buf[0]) << 24 | ord($buf[1]) << 16 | ord($buf[2]) << 8 | ord($buf[3]);
+                   ^^^^^^^
+WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter character of function ord at testdata/phprocksyd/Phprocksyd.php:360
+        return ord($buf[0]) << 24 | ord($buf[1]) << 16 | ord($buf[2]) << 8 | ord($buf[3]);
+                                        ^^^^^^^
+WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter character of function ord at testdata/phprocksyd/Phprocksyd.php:360
+        return ord($buf[0]) << 24 | ord($buf[1]) << 16 | ord($buf[2]) << 8 | ord($buf[3]);
+                                                             ^^^^^^^
+WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter character of function ord at testdata/phprocksyd/Phprocksyd.php:360
+        return ord($buf[0]) << 24 | ord($buf[1]) << 16 | ord($buf[2]) << 8 | ord($buf[3]);
+                                                                                 ^^^^^^^
 WARNING invalidDocblock: Malformed @param $stream_id tag (maybe type is missing?) at testdata/phprocksyd/Phprocksyd.php:364
      * @param $stream_id
               ^^^^^^^^^^
@@ -67,6 +91,9 @@ WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phpro
 ERROR   undefinedMethod: Call to undefined method {mixed}->run() at testdata/phprocksyd/Phprocksyd.php:479
                 $instance->run($req['params']);
                            ^^^
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function stream_get_meta_data signature of param stream at testdata/phprocksyd/Phprocksyd.php:522
+                $meta = stream_get_meta_data($v);
+                                             ^^
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:557
                         exit(1);
                         ^^^^^^^
@@ -82,6 +109,12 @@ WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phpro
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Simple.php:38
             exit(1);
             ^^^^^^^
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function stream_socket_accept signature of param socket at testdata/phprocksyd/Simple.php:65
+        $client = stream_socket_accept($server, 1, $peername);
+                                       ^^^^^^^
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function rtrim signature of param string at testdata/phprocksyd/Simple.php:116
+            $res = json_decode(rtrim($req), true);
+                                     ^^^^
 ERROR   constCase: Constant 'NULL' should be used in lower case as 'null' at testdata/phprocksyd/Simple.php:158
             $n = stream_select($read, $write, $except, NULL);
                                                        ^^^^

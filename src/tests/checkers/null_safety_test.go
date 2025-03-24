@@ -241,3 +241,176 @@ if ($v !== null) {
 	test.Expect = []string{}
 	test.RunAndMatch()
 }
+
+func TestStaticNullSafety(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A {
+    public static $value = 'test';
+    
+    public static function hello(): void {
+        echo "Hello!";
+    }
+}
+
+$maybeClass = rand(0, 1) ? 'A' : null;
+$maybeClass::hello();
+echo $maybeClass::$value;
+`)
+	test.Expect = []string{
+		"Missing PHPDoc for \\A::hello public method",
+		"Call to undefined function rand",
+		"potential null dereference when accessing static call throw $maybeClass",
+		"attempt to access property that can be null",
+	}
+	test.RunAndMatch()
+}
+
+func TestFetchPropertyNullSafety(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class User {
+    public $name = "lol";
+}
+
+$user = new User();
+$user = null;
+echo $user->name;
+`)
+	test.Expect = []string{
+		"attempt to access property that can be null",
+	}
+	test.RunAndMatch()
+}
+
+func TestStaticPropertyNullSafety(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A {
+    public static $value = null;
+    
+    public static function hello(): void {
+        echo "Hello!";
+    }
+}
+
+function test(string $a): void {
+echo "test";
+}
+$maybeClass  = new A();
+test($maybeClass::$value);
+
+`)
+	test.Expect = []string{
+		"Missing PHPDoc for \\A::hello public method",
+		`potential null dereference when accessing property 'value'`,
+	}
+	test.RunAndMatch()
+}
+
+func TestStaticPropertyFetchWithName(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A {
+    public static string $value = 'test';
+}
+
+function test(string $s): void {
+    echo $s;
+}
+
+test(A::$value);
+`)
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
+func TestStaticPropertyNullFetchWithName(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A {
+    public static string $value = null;
+}
+
+function test(string $s): void {
+    echo $s;
+}
+
+test(A::$value);
+`)
+	test.Expect = []string{
+		"potential null dereference when accessing property 'value'",
+	}
+	test.RunAndMatch()
+}
+
+func TestStaticCallNullSafety(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A {
+    public static function hello(): ?string {
+        return "Hello!";
+    }
+}
+
+function test(string $s): void {
+    echo $s;
+}
+
+test(A::hello());
+`)
+	test.Expect = []string{
+		"Missing PHPDoc for \\A::hello public method",
+		"not null safety call in function test signature of param s when calling static function hello",
+	}
+	test.RunAndMatch()
+}
+
+func TestStaticCallNullSafetyThrowVariable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A {
+    public static function hello(): ?string {
+        return "Hello!";
+    }
+}
+
+function test(string $s): void {
+    echo $s;
+}
+
+$maybeClass = new A();
+test($maybeClass::hello());
+`)
+	test.Expect = []string{
+		"Missing PHPDoc for \\A::hello public method",
+		"not null safety call in function test signature of param s when calling static function hello",
+	}
+	test.RunAndMatch()
+}
+
+func TestFunctionCallNullSafetyThrowVariable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A {
+    public static function hello(): ?string {
+        return "Hello!";
+    }
+}
+
+function test(A $s): void {
+    echo $s;
+}
+
+function testNullable(): ?A{
+	return new A();
+}
+
+test(testNullable());
+`)
+	test.Expect = []string{
+		"Missing PHPDoc for \\A::hello public method",
+		"not null safety call in function test signature of param s when calling function \\testNullable",
+	}
+	test.RunAndMatch()
+}
