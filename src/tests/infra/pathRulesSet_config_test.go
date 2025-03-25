@@ -341,3 +341,37 @@ func TestIsRuleEnabledWithConflictingRules(t *testing.T) {
 		})
 	}
 }
+
+func TestWildcardMiddleSegmentBug(t *testing.T) {
+	pathRules := map[string]*linter.PathRuleSet{
+		"*/tests/*": {
+			Enabled:  map[string]bool{},
+			Disabled: map[string]bool{"rule1": true},
+		},
+	}
+
+	ruleTree := linter.BuildRuleTree(pathRules)
+
+	tests := []struct {
+		name      string
+		filePath  string
+		checkRule string
+		want      bool
+	}{
+		{
+			name:      "Wildcard */tests/* should disable rule1 in tests/A/B/file.php",
+			filePath:  "tests/A/B/file.php",
+			checkRule: "rule1",
+			want:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := linter.IsRuleEnabledForPath(ruleTree, tt.filePath, tt.checkRule)
+			if got != tt.want {
+				t.Errorf("IsRuleEnabledForPath(%q, %q) = %v; want %v", tt.filePath, tt.checkRule, got, tt.want)
+			}
+		})
+	}
+}
