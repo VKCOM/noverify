@@ -188,8 +188,10 @@ func (b *blockLinter) enterNode(n ir.Node) {
 		b.walker.r.checker.CheckKeywordCase(n, "for")
 	case *ir.WhileStmt:
 		b.walker.r.checker.CheckKeywordCase(n, "while")
+		b.checkDangerousBoolCond(n.Cond)
 	case *ir.DoStmt:
 		b.walker.r.checker.CheckKeywordCase(n, "do")
+		b.checkDangerousBoolCond(n.Cond)
 
 	case *ir.ContinueStmt:
 		b.checkContinueStmt(n)
@@ -828,8 +830,32 @@ func (b *blockLinter) checkIfStmt(s *ir.IfStmt) {
 			b.report(s, LevelWarning, "dupBranchBody", "Duplicated if/else actions")
 		}
 	}
+	b.checkDangerousBoolCond(s.Cond)
 
 	b.checkIfStmtDupCond(s)
+}
+
+func (b *blockLinter) checkDangerousBoolCond(s ir.Node) {
+	checkNodeDangerousBoolCond(s, b)
+}
+
+func checkNodeDangerousBoolCond(node ir.Node, b *blockLinter) {
+	switch n := node.(type) {
+	case *ir.ConstFetchExpr:
+		if strings.EqualFold(n.Constant.Value, "true") || strings.EqualFold(n.Constant.Value, "false") {
+			b.report(node, LevelNotice, "dangerousBoolCondition", "Potential dangerous bool value: you have constant bool value in condition")
+		}
+	case *ir.Lnumber:
+		if n.Value == "0" || n.Value == "1" {
+			b.report(node, LevelNotice, "dangerousBoolCondition", "Potential dangerous value: you have constant int value that interpreted as bool")
+		}
+	case *ir.BooleanOrExpr:
+		checkNodeDangerousBoolCond(n.Left, b)
+		checkNodeDangerousBoolCond(n.Right, b)
+	case *ir.BooleanAndExpr:
+		checkNodeDangerousBoolCond(n.Left, b)
+		checkNodeDangerousBoolCond(n.Right, b)
+	}
 }
 
 func (b *blockLinter) checkIfStmtDupCond(s *ir.IfStmt) {
@@ -843,6 +869,7 @@ func (b *blockLinter) checkIfStmtDupCond(s *ir.IfStmt) {
 		if !conditions.Add(elseif.Cond) {
 			b.report(elseif.Cond, LevelWarning, "dupCond", "duplicated condition in if-else chain")
 		}
+		b.checkDangerousBoolCond(elseif.Cond)
 	}
 }
 
