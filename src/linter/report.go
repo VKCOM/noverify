@@ -26,6 +26,22 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 		},
 
 		{
+			Name:     "notSafetyCall",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report not safety call",
+			Before: `/**
+ * @return User|false
+ */
+function getUser():User|false {
+    return null;
+}
+$a = getUser()->do();
+`,
+			After: `reported not safety call`,
+		},
+
+		{
 			Name:     "notNullSafetyFunctionArgumentList",
 			Default:  true,
 			Quickfix: false,

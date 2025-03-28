@@ -72,6 +72,10 @@ function f(stdClass|null $a) {
 		"Call to undefined method {mixed|null}->f()",
 		"Call to undefined method {mixed|null}->f()",
 		"Call to undefined method {\\stdClass|null}->f()",
+		"potential null dereference in a when accessing method",
+		"potential null dereference in a when accessing method",
+		"potential null dereference in a when accessing method",
+		"potential null dereference in a when accessing method",
 	}
 	test.RunAndMatch()
 }
@@ -131,6 +135,10 @@ function f(stdClass|null $a) {
 	test.Expect = []string{
 		"Cannot find referenced variable $a",
 		"Call to undefined method {\\Foo}->f()",
+		"potential null dereference in a when accessing method",
+		"potential null dereference in a when accessing method",
+		"potential null dereference in a when accessing method",
+		"potential null dereference in a when accessing method",
 	}
 	test.RunAndMatch()
 }

@@ -40,6 +40,15 @@ func NameNodeEquals(n ir.Node, s string) bool {
 	}
 }
 
+func ContainsKey(param string, m map[string]struct{}) bool {
+	for k := range m {
+		if strings.Contains(param, k) {
+			return true
+		}
+	}
+	return false
+}
+
 // IsSpecialClassName checks if the passed node is a special class name.
 func IsSpecialClassName(n ir.Node) bool {
 	name := NameNodeToString(n)

@@ -156,7 +156,6 @@ testVariadic(new A(), null);
 	test.RunAndMatch()
 }
 
-// TODO: After realisation Control Flow Graph (CFG) и Data Flow Graph (DFG) this test must fail
 func TestIfNullCheckSafe(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -177,11 +176,15 @@ $v = null;
 if ($v == null) {
     // Correctly assign a new instance when $v is null.
     $v = new A();
+	test($v);
+} else {
+test($v);
 }
-test($v); // Should be safe.
+test($v);
 `)
 
 	test.Expect = []string{
+		`not null safety call in function test signature of param`,
 		`not null safety call in function test signature of param`,
 	}
 	test.RunAndMatch()
@@ -362,6 +365,28 @@ test(A::hello());
 	test.Expect = []string{
 		"Missing PHPDoc for \\A::hello public method",
 		"not null safety call in function test signature of param s when calling static function hello",
+	}
+	test.RunAndMatch()
+}
+
+func TestFuncCallNullSafety(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function nullFunc(){
+return null;
+
+function testValue(string $value): void {
+    echo $value;
+}
+
+testValue(nullFunc());
+
+
+}
+`)
+	test.Expect = []string{
+		"not null safety call in function testValue signature of param value when calling function \\nullFunc",
+		"Unreachable code",
 	}
 	test.RunAndMatch()
 }
