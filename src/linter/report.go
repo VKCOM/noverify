@@ -26,10 +26,10 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 		},
 
 		{
-			Name:     "notFalseSafetyFunctionCall",
+			Name:     "notSafetyCall",
 			Default:  true,
 			Quickfix: false,
-			Comment:  "Report not false-safety call",
+			Comment:  "Report not safety call",
 			Before: `/**
  * @return User|false
  */
@@ -38,24 +38,7 @@ function getUser():User|false {
 }
 $a = getUser()->do();
 `,
-			After: `reported not false-safety call`,
-		},
-
-		{
-			Name:     "notFalseSafetyVariable",
-			Default:  true,
-			Quickfix: false,
-			Comment:  "Report not false-safety call",
-			Before: `/**
- * @return User|false
- */
-function getUser():User|false {
-    return null;
-}
-$a = getUser();
-$b = $a->do();
-`,
-			After: `reported not false-safety call`,
+			After: `reported not safety call`,
 		},
 
 		{

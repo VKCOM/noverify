@@ -122,6 +122,14 @@ func NewMap(str string) Map {
 	return Map{m: m}
 }
 
+func (m Map) Keys() []string {
+	keys := make([]string, 0, len(m.m))
+	for k := range m.m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
 func NewPreciseMap(str string) Map {
 	m := NewMap(str)
 	m.flags |= mapPrecise
@@ -221,6 +229,35 @@ func (m Map) IsArray() bool {
 		}
 	}
 
+	return false
+}
+
+func (m Map) IsClass() bool {
+	if len(m.m) != 1 {
+		return false
+	}
+	for typ := range m.m {
+		potentialClassIndex := strings.Index(typ, "\\")
+		if potentialClassIndex != -1 {
+			return IsClass(typ[potentialClassIndex:])
+		}
+	}
+	return false
+}
+
+func (m Map) IsBoolean() bool {
+	if len(m.m) != 1 {
+		return false
+	}
+
+	// we can have type with flags like 0400bool
+	for typ := range m.m {
+		if UnwrapElemOf(typ) == "bool" || strings.HasSuffix(typ, "bool") ||
+			strings.HasSuffix(typ, "true") ||
+			strings.HasSuffix(typ, "false") {
+			return true
+		}
+	}
 	return false
 }
 

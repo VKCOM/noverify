@@ -2217,6 +2217,8 @@ function f() {
 		`possibly wrong order of arguments, min = 100, max = 99`,
 		`possibly wrong order of arguments, min = 1, max = 0`,
 		`possibly wrong order of arguments, min = 156, max = 119`,
+		`potential not safety access in parameter min of function random_int`,
+		`potential not safety access in parameter max of function random_int`,
 	}
 	test.RunAndMatch()
 }

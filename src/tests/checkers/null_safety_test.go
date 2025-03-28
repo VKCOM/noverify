@@ -369,6 +369,28 @@ test(A::hello());
 	test.RunAndMatch()
 }
 
+func TestFuncCallNullSafety(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function nullFunc(){
+return null;
+
+function testValue(string $value): void {
+    echo $value;
+}
+
+testValue(nullFunc());
+
+
+}
+`)
+	test.Expect = []string{
+		"not null safety call in function testValue signature of param value when calling function \\nullFunc",
+		"Unreachable code",
+	}
+	test.RunAndMatch()
+}
+
 func TestStaticCallNullSafetyThrowVariable(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

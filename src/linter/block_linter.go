@@ -601,10 +601,14 @@ func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 			parseState := b.classParseState()
 			left, ok := parseState.Info.GetVarType(v.Class)
 
-			if ok && left.Contains("null") {
-				b.report(s, LevelWarning, "notNullSafetyPropertyFetch",
-					"potential null dereference when accessing static property")
+			/*		if ok && left.Contains("null") {
+					b.report(s, LevelWarning, "notNullSafetyPropertyFetch",
+						"potential null dereference when accessing static property")
+				}*/
+			if ok {
+				b.checkSafetyCall(s, left, "", "PropertyFetch")
 			}
+
 		}
 		return
 	}
@@ -1343,14 +1347,14 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 			funInfo, found := parseState.Info.GetFunction(funcName)
 			if found {
 				funcType := funInfo.Typ
-				b.checkSafetyMethodCall(e, funcType, funInfo.Name, "FunctionCall")
+				b.checkSafetyCall(e, funcType, funInfo.Name, "FunctionCall")
 			}
 		}
 
 	case *ir.SimpleVar:
 		varType, ok := b.walker.ctx.sc.GetVarType(caller)
 		if ok {
-			b.checkSafetyMethodCall(e, varType, caller.Name, "Variable")
+			b.checkSafetyCall(e, varType, caller.Name, "Variable")
 		}
 	}
 
@@ -1371,15 +1375,37 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 	}
 }
 
-func (b *blockLinter) checkSafetyMethodCall(e *ir.MethodCallExpr, typ types.Map, name string, suffix string) {
+func (b *blockLinter) checkSafetyCall(e ir.Node, typ types.Map, name string, suffix string) {
 	if typ.Contains("null") {
-		b.report(e, LevelWarning, "notNullSafety"+suffix,
-			"potential null dereference in %s when accessing method", name)
+		reportFullName := "notNullSafety" + suffix
+		switch {
+		case reportFullName == "notNullSafetyPropertyFetch":
+			b.report(e, LevelWarning, "notNullSafety"+suffix,
+				"attempt to access property that can be null")
+		case reportFullName == "notNullSafetyVariable" || reportFullName == "notNullSafetyFunctionCall":
+			b.report(e, LevelWarning, reportFullName,
+				"potential null dereference in %s when accessing method", name)
+		}
+
 	}
-	if typ.Contains("false") {
+
+	isSafetyCall := true
+	typ.Iterate(func(typ string) {
+		if types.IsScalar(typ) {
+			isSafetyCall = false
+		}
+	})
+
+	if !isSafetyCall {
+		b.report(e, LevelWarning, "notSafetyCall",
+			"potential not safety call in %s when accessing method", name)
+	}
+
+	// TODO: delete after ^
+	/*	if typ.Contains("false") {
 		b.report(e, LevelWarning, "notFalseSafety"+suffix,
 			"potential false in %s when accessing method", name)
-	}
+	}*/
 }
 
 func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
@@ -1476,9 +1502,15 @@ func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
 	}
 
 	left, ok := globalMetaInfo.Info.GetVarType(e.Variable)
-	if ok && left.Contains("null") {
-		b.report(e, LevelWarning, "notNullSafetyPropertyFetch",
-			"attempt to access property that can be null")
+	if ok {
+		/*		if left.Contains("null") {
+				b.checkSafetyCall(e, left, "", "PropertyFetch")
+							b.report(e, LevelWarning, "notNullSafetyPropertyFetch",
+							"attempt to access property that can be null")
+			}*/
+		b.checkSafetyCall(e, left, "", "PropertyFetch")
+		//b.checkSafetyCall(e, left, "", "PropertyFetch")
+
 	}
 }
 
