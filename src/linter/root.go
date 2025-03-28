@@ -1588,7 +1588,6 @@ func IsRuleEnabledForPath(root *RuleNode, filePath string, checkRule string) boo
 		// Or if we have reached the end of the path, we exit the loop.
 
 		for {
-			i++
 			if i >= len(parts) {
 				// the path ended - all remaining directories were swallowed
 				return ruleState
@@ -1607,7 +1606,7 @@ func IsRuleEnabledForPath(root *RuleNode, filePath string, checkRule string) boo
 				// Let's exit - let the outer loop handle it
 				break
 			}
-
+			i++
 			// There are directories left - we eat them, continuing the while loop
 		}
 		// Exit to outer loop: i points to potential literal part
