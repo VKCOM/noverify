@@ -93,6 +93,7 @@ var scalar = map[string]bool{
 
 	"true":  true,
 	"false": true,
+	//"mixed": true,
 }
 
 var aliases = map[string]string{

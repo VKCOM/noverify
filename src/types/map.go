@@ -188,6 +188,36 @@ func (m Map) Equals(m2 Map) bool {
 	return true
 }
 
+// Union return new Map that contains all types from the current and other
+func (m Map) Union(other Map) Map {
+	result := make(map[string]struct{}, len(m.m)+len(other.m))
+	for k := range m.m {
+		result[k] = struct{}{}
+	}
+	for k := range other.m {
+		result[k] = struct{}{}
+	}
+
+	return Map{
+		flags: m.flags,
+		m:     result,
+	}
+}
+
+// Intersect return new Map that contains only intersect types
+func (m Map) Intersect(other Map) Map {
+	result := make(map[string]struct{})
+	for k := range m.m {
+		if _, ok := other.m[k]; ok {
+			result[k] = struct{}{}
+		}
+	}
+	return Map{
+		flags: m.flags,
+		m:     result,
+	}
+}
+
 // Len returns number of different types in map
 func (m Map) Len() int {
 	return len(m.m)

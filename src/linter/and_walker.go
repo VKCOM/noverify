@@ -72,6 +72,23 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 			}
 		}
 
+		switch {
+		case nm.Value == `is_int`:
+			a.handleTypeCheckCondition("int", n.Args)
+		case nm.Value == `is_float`:
+			a.handleTypeCheckCondition("float", n.Args)
+		case nm.Value == `is_string`:
+			a.handleTypeCheckCondition("string", n.Args)
+		case nm.Value == `is_object`:
+			a.handleTypeCheckCondition("object", n.Args)
+		case nm.Value == `is_array`:
+			a.handleTypeCheckCondition("array", n.Args)
+		case nm.Value == `is_null`:
+			a.handleTypeCheckCondition("null", n.Args)
+		case nm.Value == `is_resource`:
+			a.handleTypeCheckCondition("resource", n.Args)
+		}
+
 	case *ir.BooleanAndExpr:
 		a.path.Push(n)
 		n.Left.Walk(a)
@@ -227,6 +244,60 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 	return res
 }
 
+func (a *andWalker) handleTypeCheckCondition(expectedType string, args []ir.Node) {
+	for _, arg := range args {
+		argument, ok := arg.(*ir.Argument)
+		if !ok {
+			continue
+		}
+		variable, ok := argument.Expr.(*ir.SimpleVar)
+		if !ok {
+			continue
+		}
+
+		// We need to traverse the variable here to check that
+		// it exists, since this variable will be added to the
+		// context later.
+		a.b.handleVariable(variable)
+
+		currentType := a.exprType(variable)
+
+		if a.inNot {
+			currentType = a.exprTypeInContext(a.trueContext, variable)
+		} else {
+			currentType = a.exprTypeInContext(a.falseContext, variable)
+		}
+
+		var trueType, falseType types.Map
+
+		if expectedType == "bool" {
+			// we can have false/true/bool as type that's why we should check all situation
+			boolUnion := types.NewMap("bool").Union(types.NewMap("true")).Union(types.NewMap("false"))
+			intersection := currentType.Intersect(boolUnion)
+			if intersection.Empty() {
+				// If there is no explicit bool subtype, then the positive branch becomes simply "bool"
+				trueType = types.NewMap("bool")
+			} else {
+				// Otherwise, we leave exactly those literals that were in the current type
+				trueType = intersection
+			}
+			// Negative branch - remove all bool subtypes
+			falseType = currentType.Clone().Erase("bool").Erase("true").Erase("false")
+		} else {
+			// For other types, standard logic
+			trueType = types.NewMap(expectedType)
+			falseType = currentType.Clone().Erase(expectedType)
+		}
+
+		if a.inNot {
+			trueType, falseType = falseType, trueType
+		}
+
+		a.trueContext.sc.ReplaceVar(variable, trueType, "type narrowing for "+expectedType, meta.VarAlwaysDefined)
+		a.falseContext.sc.ReplaceVar(variable, falseType, "type narrowing for "+expectedType, meta.VarAlwaysDefined)
+	}
+}
+
 func (a *andWalker) handleConditionSafety(left ir.Node, right ir.Node, identical bool) {
 	variable, ok := left.(*ir.SimpleVar)
 	if !ok {
@@ -243,7 +314,7 @@ func (a *andWalker) handleConditionSafety(left ir.Node, right ir.Node, identical
 	// context later.
 	a.b.handleVariable(variable)
 
-	currentVar, isGotVar := a.trueContext.sc.GetVar(variable)
+	currentVar, isGotVar := a.b.ctx.sc.GetVar(variable)
 	if !isGotVar {
 		return
 	}

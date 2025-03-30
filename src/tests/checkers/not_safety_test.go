@@ -295,3 +295,29 @@ test($a->b);
 	}
 	test.RunAndMatch()
 }
+
+func TestIsCondition(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+ class User {
+    public string $name = "Kate";
+}
+
+function getUser(): User|int {
+    return 1;
+}
+
+$x = getUser();
+if (is_int($x)){
+$a = $x->name;
+} else{
+$b = $x->name;
+} 
+`)
+	test.Expect = []string{
+		"Call to undefined function is_int",
+		"Property {int}->name does not exist",
+		"potential not safety call in  when accessing method",
+	}
+	test.RunAndMatch()
+}
