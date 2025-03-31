@@ -266,13 +266,9 @@ func (m Map) IsClass() bool {
 	if len(m.m) != 1 {
 		return false
 	}
-	for typ := range m.m {
-		potentialClassIndex := strings.Index(typ, "\\")
-		if potentialClassIndex != -1 {
-			return IsClass(typ[potentialClassIndex:])
-		}
-	}
-	return false
+	typ := m.String()
+
+	return strings.HasPrefix(typ, `\`) && !IsShape(typ) && !IsArray(typ) && !IsClosure(typ) && !IsScalar(typ)
 }
 
 func (m Map) IsBoolean() bool {

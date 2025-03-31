@@ -345,3 +345,66 @@ $b = $x->name;
 	}
 	test.RunAndMatch()
 }
+
+func TestInheritDoc(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+   /**
+     * Normalize path.
+     *
+     * @param string $path
+     *
+     *
+     * @return string
+     */
+     function normalizePath($path)
+    {
+
+    }
+
+interface FilesystemInterface
+{
+        /**
+         * Check whether a file exists.
+         *
+         * @param string $path
+         *
+         * @return bool
+         */
+        public function has($path);
+    }
+
+class Filesystem implements FilesystemInterface
+{
+        /**
+         * @inheritdoc
+         */
+        public function has($path)
+        {
+            $path = normalizePath($path);
+
+            return strlen($path) === 0 ? false : (bool) $this->getAdapter()->has($path);
+        }
+
+        /**
+         * Assert a file is present.
+         *
+         * @param string $path path to file
+         *
+         * @throws FileNotFoundException
+         *
+         * @return void
+         */
+        public function assertPresent($path)
+        {
+            if ($this->config->get('disable_asserts', false) === false && ! $this->has($path)) {
+            }
+        }
+    }
+`)
+	test.Expect = []string{
+		"Call to undefined method {\\Filesystem}->getAdapter()",
+		"Property {\\Filesystem}->config does not exist",
+	}
+	test.RunAndMatch()
+}

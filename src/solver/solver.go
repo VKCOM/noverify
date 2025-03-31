@@ -490,6 +490,18 @@ func Implements(info *meta.Info, className, interfaceName string) bool {
 	return implements(info, className, interfaceName, visited)
 }
 
+func ImplementsAbstract(info *meta.Info, className, abstractName string) bool {
+	classInfo, got := info.GetClass(className)
+	if !got {
+		return false
+	}
+	if classInfo.Parent != "" && strings.Contains(abstractName, classInfo.Parent) {
+		return true
+	}
+
+	return false
+}
+
 func implements(info *meta.Info, className, interfaceName string, visited map[string]struct{}) bool {
 	if className == interfaceName {
 		return true

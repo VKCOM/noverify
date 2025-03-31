@@ -1222,20 +1222,20 @@ func (b *blockWalker) checkSimpleVarSafety(arg ir.Node, fn meta.FuncInfo, paramI
 }
 
 func (b *blockWalker) isTypeCompatible(varType types.Map, paramType types.Map) bool {
-	isVarBoolean := varType.IsBoolean()
-	isClass := varType.IsClass()
-	varClassName := varType.String()
-
 	if varType.Len() > paramType.Len() {
 		return false
 	}
+
+	isVarBoolean := varType.IsBoolean()
+	isClass := varType.IsClass()
+	varClassName := varType.String()
 
 	for _, param := range paramType.Keys() {
 		// boolean case
 		if isVarBoolean && (param == "bool" || param == "boolean") {
 			return true
 		}
-		paramType.IsArray()
+
 		if paramType.Contains(types.WrapArrayOf("mixed")) || paramType.Contains("mixed") {
 			return true
 		}
@@ -1251,17 +1251,23 @@ func (b *blockWalker) isTypeCompatible(varType types.Map, paramType types.Map) b
 				return true
 			}
 			if !types.IsScalar(param) {
-				if classInfo, ok := b.r.meta.Classes.Get(varClassName); ok {
-					if utils.ContainsKey(param, classInfo.Interfaces) {
-						return true
-					}
-					if classInfo.Parent != "" && strings.Contains(param, classInfo.Parent) {
-						return true
-					}
+				metaInfo := b.r.metaInfo()
+				if solver.Implements(metaInfo, varClassName, param) {
+					return true
+				} else if solver.ImplementsAbstract(metaInfo, varClassName, param) {
+					return true
 				}
 			}
 		}
 	}
+
+	forcedVartype := types.NewMapFromMap(solver.ResolveTypes(b.r.metaInfo(), "", varType, solver.ResolverMap{}))
+	forcedParamType := types.NewMapFromMap(solver.ResolveTypes(b.r.metaInfo(), "", paramType, solver.ResolverMap{}))
+
+	if !forcedParamType.Intersect(forcedVartype).Empty() {
+		return true
+	}
+
 	return false
 }
 
