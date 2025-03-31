@@ -107,9 +107,10 @@ func newSuite(t testing.TB, ver string) *Suite {
 	return &Suite{
 		t: t,
 		defaultStubs: map[string]struct{}{
-			`stubs/phpstorm-stubs/Core/Core.php`:   {},
-			`stubs/phpstorm-stubs/Core/Core_c.php`: {},
-			`stubs/phpstorm-stubs/Core/Core_d.php`: {},
+			`stubs/phpstorm-stubs/Core/Core.php`:           {},
+			`stubs/phpstorm-stubs/Core/Core_c.php`:         {},
+			`stubs/phpstorm-stubs/Core/Core_d.php`:         {},
+			`stubs/phpstorm-stubs/standard/standard_5.php`: {},
 		},
 		ignoreUndeclaredChecks: false,
 		config:                 conf,

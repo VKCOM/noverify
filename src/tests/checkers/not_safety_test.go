@@ -315,7 +315,6 @@ $b = $x->name;
 } 
 `)
 	test.Expect = []string{
-		"Call to undefined function is_int",
 		"Property {int}->name does not exist",
 		"potential not safety call in  when accessing method",
 	}
