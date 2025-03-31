@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 
@@ -163,10 +165,20 @@ func (s *GoldenTestSuite) checkGoldenOutput(want []byte, reports []*linter.Repor
 
 	if diff := cmp.Diff(wantLines, haveLines); diff != "" {
 		s.suite.t.Errorf("results mismatch (+ have) (- want): %s", diff)
-		// Use fmt.Printf() instead of t.Logf() to make the output
-		// more copy/paste friendly.
 		fmt.Printf("have:\n%s", strings.Join(haveLines, "\n"))
 		fmt.Printf("want:\n%s", want)
+
+		// Генерируем случайное имя файла
+		rand.Seed(time.Now().UnixNano())
+		fileName := fmt.Sprintf("golden_%d.txt", rand.Intn(1000000))
+		filePath := filepath.Join("/Users/r.kuchinskas/Desktop/reportOut", fileName)
+
+		// Записываем `want` в файл
+		if err := os.WriteFile(filePath, []byte(strings.Join(haveLines, "\n")), 0644); err != nil {
+			fmt.Printf("failed to write golden file: %v\n", err)
+		} else {
+			fmt.Printf("golden file saved: %s\n", filePath)
+		}
 	}
 }
 

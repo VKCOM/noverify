@@ -316,7 +316,32 @@ $b = $x->name;
 `)
 	test.Expect = []string{
 		"Property {int}->name does not exist",
-		"potential not safety call in  when accessing method",
+		"potential not safety call when accessing property",
+	}
+	test.RunAndMatch()
+}
+
+func TestIsObjectCondition(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+ class User {
+    public string $name = "Kate";
+}
+
+function getUser(): User|int {
+    return 1;
+}
+
+$x = getUser();
+if (is_object($x)){
+$a = $x->name;
+} else{
+$b = $x->name;
+}
+`)
+	test.Expect = []string{
+		"Property {int}->name does not exist",
+		"potential not safety call when accessing property",
 	}
 	test.RunAndMatch()
 }

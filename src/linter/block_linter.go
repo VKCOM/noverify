@@ -1421,6 +1421,11 @@ func (b *blockLinter) checkSafetyCall(e ir.Node, typ types.Map, name string, suf
 	})
 
 	if !isSafetyCall {
+		if name == "" {
+			b.report(e, LevelWarning, "notSafetyCall",
+				"potential not safety call when accessing property")
+			return
+		}
 		b.report(e, LevelWarning, "notSafetyCall",
 			"potential not safety call in %s when accessing method", name)
 	}

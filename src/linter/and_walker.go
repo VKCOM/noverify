@@ -283,6 +283,31 @@ func (a *andWalker) handleTypeCheckCondition(expectedType string, args []ir.Node
 			}
 			// Negative branch - remove all bool subtypes
 			falseType = currentType.Clone().Erase("bool").Erase("true").Erase("false")
+		} else if expectedType == "object" {
+			// For is_object: keys that is not primitives
+			keys := currentType.Keys()
+			var objectKeys []string
+			for _, k := range keys {
+				switch k {
+				case "int", "float", "string", "bool", "null", "true", "false", "mixed", "callable", "resource", "void", "iterable", "never":
+					// skip not object
+					continue
+				default:
+					objectKeys = append(objectKeys, k)
+				}
+			}
+			if len(objectKeys) == 0 {
+				trueType = types.NewMap("object")
+			} else {
+				trueType = types.NewEmptyMap(1)
+				for _, k := range objectKeys {
+					trueType = trueType.Union(types.NewMap(k))
+				}
+			}
+			falseType = currentType.Clone()
+			for _, k := range objectKeys {
+				falseType = falseType.Erase(k)
+			}
 		} else {
 			// For other types, standard logic
 			trueType = types.NewMap(expectedType)
