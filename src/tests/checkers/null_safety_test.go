@@ -262,7 +262,6 @@ echo $maybeClass::$value;
 `)
 	test.Expect = []string{
 		"Missing PHPDoc for \\A::hello public method",
-		"Call to undefined function rand",
 		"potential null dereference when accessing static call throw $maybeClass",
 		"attempt to access property that can be null",
 	}
