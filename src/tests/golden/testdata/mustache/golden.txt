@@ -1,9 +1,15 @@
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function realpath signature of param path at testdata/mustache/src/Mustache/Autoloader.php:39
         $realDir = realpath($baseDir);
                             ^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function is_dir signature of param filename at testdata/mustache/src/Mustache/Autoloader.php:40
+        if (is_dir($realDir)) {
+                   ^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$baseDir ?: 0` at testdata/mustache/src/Mustache/Autoloader.php:56
         $key = $baseDir ? $baseDir : 0;
                ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function strpos signature of param haystack at testdata/mustache/src/Mustache/Autoloader.php:79
+        if (strpos($class, 'Mustache') !== 0) {
+                   ^^^^^^
 ERROR   undefinedClass: Class or interface named \Psr\Log\LoggerInterface does not exist at testdata/mustache/src/Mustache/Cache/AbstractCache.php:26
      * @return Mustache_Logger|Psr\Log\LoggerInterface
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -16,15 +22,24 @@ WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:140
         if (false !== @file_put_contents($tempFile, $value)) {
                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function file_put_contents signature of param filename at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:140
+        if (false !== @file_put_contents($tempFile, $value)) {
+                                         ^^^^^^^^^
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:141
             if (@rename($tempFile, $fileName)) {
                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function rename signature of param from at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:141
+            if (@rename($tempFile, $fileName)) {
+                        ^^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$this->fileMode ?? (0666 & ~umask())` at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:142
                 $mode = isset($this->fileMode) ? $this->fileMode : (0666 & ~umask());
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:143
                 @chmod($fileName, $mode);
                 ^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function chmod signature of param permissions at testdata/mustache/src/Mustache/Cache/FilesystemCache.php:143
+                @chmod($fileName, $mode);
+                                  ^^^^^
 WARNING useEval: Don't use the 'eval' function at testdata/mustache/src/Mustache/Cache/NoopCache.php:45
         eval('?>' . $value);
         ^^^^^^^^^^^^^^^^^^^
@@ -106,6 +121,9 @@ WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access 
 WARNING unused: Variable $keystr is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/mustache/src/Mustache/Compiler.php:289
         $keystr = var_export($key, true);
         ^^^^^^^
+WARNING notSafetyCall: potential not safety call in function var_export signature of param value when calling function \substr at testdata/mustache/src/Mustache/Compiler.php:373
+        $source   = var_export(substr($this->source, $start, $end - $start), true);
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function getFindMethod signature of param id at testdata/mustache/src/Mustache/Compiler.php:556
         $method   = $this->getFindMethod($name);
                                          ^^^^^
@@ -187,12 +205,18 @@ MAYBE   callSimplify: Could simplify to $this->stack[] = $value at testdata/must
 MAYBE   callSimplify: Could simplify to $this->blockStack[] = $value at testdata/mustache/src/Mustache/Context.php:49
         array_push($this->blockStack, $value);
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function array_shift signature of param array at testdata/mustache/src/Mustache/Context.php:130
+        $first  = array_shift($chunks);
+                              ^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function findVariableInStack signature of param id at testdata/mustache/src/Mustache/Context.php:131
         $value  = $this->findVariableInStack($first, $this->stack);
                                              ^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function findVariableInStack signature of param id at testdata/mustache/src/Mustache/Context.php:138
             $value = $this->findVariableInStack($chunk, array($value));
                                                 ^^^^^^
+WARNING notSafetyCall: potential not safety call in function array_shift signature of param array at testdata/mustache/src/Mustache/Context.php:162
+        $first  = array_shift($chunks);
+                              ^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function findVariableInStack signature of param id at testdata/mustache/src/Mustache/Context.php:174
             $value = $this->findVariableInStack($chunk, array($value));
                                                 ^^^^^^
@@ -217,6 +241,9 @@ WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access 
 MAYBE   misspellComment: "entitity" is a misspelling of "entity" at testdata/mustache/src/Mustache/Engine.php:254
     public function getEntityFlags()
                     ^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function addHelper signature of param name at testdata/mustache/src/Mustache/Engine.php:373
+            $this->addHelper($name, $helper);
+                             ^^^^^
 ERROR   undefinedClass: Class or interface named \Psr\Log\LoggerInterface does not exist at testdata/mustache/src/Mustache/Engine.php:451
      * @param Mustache_Logger|Psr\Log\LoggerInterface $logger
               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -238,6 +265,15 @@ ERROR   undefinedMethod: Call to undefined method {\Mustache_Cache}->setLogger()
 MAYBE   ternarySimplify: Could rewrite as `$this->delimiters ?: '{{ }}'` at testdata/mustache/src/Mustache/Engine.php:628
             'delimiters'      => $this->delimiters ? $this->delimiters : '{{ }}',
                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function md5 signature of param string at testdata/mustache/src/Mustache/Engine.php:645
+        return $this->templateClassPrefix . md5($key);
+                                                ^^^^
+WARNING notSafetyCall: potential not safety call in function parse signature of param source at testdata/mustache/src/Mustache/Engine.php:808
+        $tree = $this->parse($source);
+                             ^^^^^^^
+WARNING notSafetyCall: potential not safety call in function compile signature of param source at testdata/mustache/src/Mustache/Engine.php:813
+        return $compiler->compile($source, $tree, $name, isset($this->escape), $this->charset, $this->strictCallables, $this->entityFlags);
+                                  ^^^^^^^
 WARNING notNullSafetyFunctionArgumentPropertyFetch: potential null dereference when accessing property 'charset' at testdata/mustache/src/Mustache/Engine.php:813
         return $compiler->compile($source, $tree, $name, isset($this->escape), $this->charset, $this->strictCallables, $this->entityFlags);
                                                                                ^^^^^^^^^^^^^^
@@ -268,18 +304,42 @@ MAYBE   missingPhpdoc: Missing PHPDoc for \Mustache_Exception_UnknownTemplateExc
 WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/mustache/src/Mustache/Exception/UnknownTemplateException.php:23
     public function __construct($templateName, Exception $previous = null)
                                                ^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function add signature of param name at testdata/mustache/src/Mustache/HelperCollection.php:39
+            $this->add($name, $helper);
+                       ^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function addLoader signature of param loader at testdata/mustache/src/Mustache/Loader/CascadingLoader.php:35
             $this->addLoader($loader);
                              ^^^^^^^
+WARNING notSafetyCall: potential not safety accessing property 'baseDir' at testdata/mustache/src/Mustache/Loader/FilesystemLoader.php:52
+        if (strpos($this->baseDir, '://') === false) {
+                   ^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety accessing property 'baseDir' at testdata/mustache/src/Mustache/Loader/FilesystemLoader.php:53
+            $this->baseDir = realpath($this->baseDir);
+                                      ^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety accessing property 'baseDir' at testdata/mustache/src/Mustache/Loader/FilesystemLoader.php:56
+        if ($this->shouldCheckPath() && !is_dir($this->baseDir)) {
+                                                ^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter string of function ltrim at testdata/mustache/src/Mustache/Loader/FilesystemLoader.php:64
                 $this->extension = '.' . ltrim($options['extension'], '.');
                                                ^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety accessing property 'baseDir' at testdata/mustache/src/Mustache/Loader/FilesystemLoader.php:133
+        return strpos($this->baseDir, '://') === false || strpos($this->baseDir, 'file://') === 0;
+                      ^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety accessing property 'baseDir' at testdata/mustache/src/Mustache/Loader/FilesystemLoader.php:133
+        return strpos($this->baseDir, '://') === false || strpos($this->baseDir, 'file://') === 0;
+                                                                 ^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentConstFetch: null passed to non-nullable parameter context in function file_get_contents at testdata/mustache/src/Mustache/Loader/InlineLoader.php:114
             $data = file_get_contents($this->fileName, false, null, $this->offset);
                                                               ^^^^
+WARNING notSafetyCall: potential not safety call in function preg_split signature of param subject at testdata/mustache/src/Mustache/Loader/InlineLoader.php:115
+            foreach (preg_split("/^@@(?= [\w\d\.]+$)/m", $data, -1) as $chunk) {
+                                                         ^^^^^
 WARNING regexpVet: '\w' intersects with '\d' in [\w\d\.] at testdata/mustache/src/Mustache/Loader/InlineLoader.php:115
             foreach (preg_split("/^@@(?= [\w\d\.]+$)/m", $data, -1) as $chunk) {
                                 ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function setLevel signature of param level at testdata/mustache/src/Mustache/Logger/StreamLogger.php:46
+        $this->setLevel($level);
+                        ^^^^^^
 WARNING notNullSafetyFunctionArgumentPropertyFetch: potential null dereference when accessing property 'stream' at testdata/mustache/src/Mustache/Logger/StreamLogger.php:61
             fclose($this->stream);
                    ^^^^^^^^^^^^^
@@ -295,6 +355,9 @@ WARNING notNullSafetyFunctionArgumentPropertyFetch: potential null dereference w
 WARNING notNullSafetyFunctionArgumentPropertyFetch: potential null dereference when accessing property 'stream' at testdata/mustache/src/Mustache/Logger/StreamLogger.php:136
         fwrite($this->stream, self::formatLine($level, $message, $context));
                ^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function strtoupper signature of param string at testdata/mustache/src/Mustache/Logger/StreamLogger.php:150
+        return strtoupper($level);
+                          ^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function enablePragma signature of param name at testdata/mustache/src/Mustache/Parser.php:58
             $this->enablePragma($pragma);
                                 ^^^^^^^
@@ -328,9 +391,30 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function trim signature of param string at testdata/mustache/src/Mustache/Tokenizer.php:110
         if ($delimiters = trim($delimiters)) {
                                ^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function changeDelimiters signature of param index at testdata/mustache/src/Mustache/Tokenizer.php:145
+                        $i = $this->changeDelimiters($text, $i);
+                                                            ^^
+WARNING notSafetyCall: potential not safety call in function addPragma signature of param index at testdata/mustache/src/Mustache/Tokenizer.php:148
+                        $i = $this->addPragma($text, $i);
+                                                     ^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function substr signature of param string at testdata/mustache/src/Mustache/Tokenizer.php:188
                                 if (substr($lastName, -1) === '}') {
                                            ^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function trim signature of param string when calling function \substr at testdata/mustache/src/Mustache/Tokenizer.php:189
+                                    $token[self::NAME] = trim(substr($lastName, 0, -1));
+                                                              ^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function substr signature of param string at testdata/mustache/src/Mustache/Tokenizer.php:189
                                     $token[self::NAME] = trim(substr($lastName, 0, -1));
                                                                      ^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function trim signature of param string when calling function \substr at testdata/mustache/src/Mustache/Tokenizer.php:283
+            $this->setDelimiters(trim(substr($text, $startIndex, $closeIndex - $startIndex)));
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function substr signature of param offset at testdata/mustache/src/Mustache/Tokenizer.php:283
+            $this->setDelimiters(trim(substr($text, $startIndex, $closeIndex - $startIndex)));
+                                                    ^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety accessing property 'ctag' at testdata/mustache/src/Mustache/Tokenizer.php:330
+        $end    = strpos($text, $this->ctag, $index);
+                                ^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function trim signature of param string when calling function \substr at testdata/mustache/src/Mustache/Tokenizer.php:331
+        $pragma = trim(substr($text, $index + 2, $end - $index - 2));
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

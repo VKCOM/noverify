@@ -31,6 +31,9 @@ MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass()
 MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (since: 8.0, reason: Use ReflectionParameter::getType() and the ReflectionType APIs should be used instead) at testdata/options-resolver/OptionsResolver.php:209
             if (isset($params[0]) && null !== ($class = $params[0]->getClass()) && self::class === $class->name && (!isset($params[1]) || (null !== ($class = $params[1]->getClass()) && Options::class === $class->name))) {
                                                                                                                                                                           ^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function setDefault signature of param option at testdata/options-resolver/OptionsResolver.php:251
+            $this->setDefault($option, $value);
+                              ^^^^^^^
 WARNING invalidDocblock: @param for non-existing argument $package at testdata/options-resolver/OptionsResolver.php:424
      * @param string          $package The name of the composer package that is triggering the deprecation
                               ^^^^^^^^
@@ -40,18 +43,60 @@ WARNING invalidDocblock: @param for non-existing argument $version at testdata/o
 WARNING invalidDocblock: @param for non-existing argument $message at testdata/options-resolver/OptionsResolver.php:426
      * @param string|\Closure $message The deprecation message to use
                               ^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function formatOptions signature of param options when calling function \array_keys at testdata/options-resolver/OptionsResolver.php:870
+            throw new UndefinedOptionsException(sprintf((\count($diff) > 1 ? 'The options "%s" do not exist.' : 'The option "%s" does not exist.').' Defined options are: "%s".', $this->formatOptions(array_keys($diff)), implode('", "', array_keys($clone->defined))));
+                                                                                                                                                                                                       ^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function formatOptions signature of param options when calling function \array_keys at testdata/options-resolver/OptionsResolver.php:886
+            throw new MissingOptionsException(sprintf(\count($diff) > 1 ? 'The required options "%s" are missing.' : 'The required option "%s" is missing.', $this->formatOptions(array_keys($diff))));
+                                                                                                                                                                                  ^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function offsetGet signature of param option at testdata/options-resolver/OptionsResolver.php:895
+            $clone->offsetGet($option);
+                              ^^^^^^^
 MAYBE   complexity: Too big method: more than 150 lines at testdata/options-resolver/OptionsResolver.php:917
     public function offsetGet($option, bool $triggerDeprecation = true)
                     ^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function formatOptions signature of param options when calling function \array_keys at testdata/options-resolver/OptionsResolver.php:947
+                throw new OptionDefinitionException(sprintf('The options "%s" have a cyclic dependency.', $this->formatOptions(array_keys($this->calling))));
+                                                                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function formatOptions signature of param options when calling function \array_keys at testdata/options-resolver/OptionsResolver.php:974
+                throw new OptionDefinitionException(sprintf('The options "%s" have a cyclic dependency.', $this->formatOptions(array_keys($this->calling))));
+                                                                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function verifyTypes signature of param type at testdata/options-resolver/OptionsResolver.php:1000
+                if ($valid = $this->verifyTypes($type, $value, $invalidTypes)) {
+                                                ^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function verifyTypes signature of param value at testdata/options-resolver/OptionsResolver.php:1000
                 if ($valid = $this->verifyTypes($type, $value, $invalidTypes)) {
                                                        ^^^^^^
+WARNING notSafetyCall: potential not safety call in function verifyTypes signature of param type at testdata/options-resolver/OptionsResolver.php:1000
+                if ($valid = $this->verifyTypes($type, $value, $invalidTypes)) {
+                                                ^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function verifyTypes signature of param value at testdata/options-resolver/OptionsResolver.php:1000
                 if ($valid = $this->verifyTypes($type, $value, $invalidTypes)) {
                                                        ^^^^^^
+WARNING notSafetyCall: potential not safety call in function formatOptions signature of param options when calling function \array_keys at testdata/options-resolver/OptionsResolver.php:1076
+                    throw new OptionDefinitionException(sprintf('The options "%s" have a cyclic dependency.', $this->formatOptions(array_keys($this->calling))));
+                                                                                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter package of function trigger_deprecation at testdata/options-resolver/OptionsResolver.php:1090
+                trigger_deprecation($deprecation['package'], $deprecation['version'], strtr($message, ['%name%' => $option]));
+                                    ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter version of function trigger_deprecation at testdata/options-resolver/OptionsResolver.php:1090
+                trigger_deprecation($deprecation['package'], $deprecation['version'], strtr($message, ['%name%' => $option]));
+                                                             ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function strtr signature of param str at testdata/options-resolver/OptionsResolver.php:1090
+                trigger_deprecation($deprecation['package'], $deprecation['version'], strtr($message, ['%name%' => $option]));
+                                                                                            ^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function formatOptions signature of param options when calling function \array_keys at testdata/options-resolver/OptionsResolver.php:1099
+                throw new OptionDefinitionException(sprintf('The options "%s" have a cyclic dependency.', $this->formatOptions(array_keys($this->calling))));
+                                                                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   typeHint: Specify the type for the parameter $invalidTypes in PHPDoc, 'array' type hint too generic at testdata/options-resolver/OptionsResolver.php:1123
     private function verifyTypes(string $type, $value, array &$invalidTypes, int $level = 0): bool
                      ^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function verifyTypes signature of param type at testdata/options-resolver/OptionsResolver.php:1130
+                if (!$this->verifyTypes($type, $val, $invalidTypes, $level + 1)) {
+                                        ^^^^^
+WARNING notSafetyCall: potential not safety call in function verifyTypes signature of param type at testdata/options-resolver/OptionsResolver.php:1130
+                if (!$this->verifyTypes($type, $val, $invalidTypes, $level + 1)) {
+                                        ^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function get_class signature of param object at testdata/options-resolver/OptionsResolver.php:1221
             return \get_class($value);
                               ^^^^^^

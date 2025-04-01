@@ -1,6 +1,12 @@
 MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::text method explicitly at testdata/parsedown/parsedown.php:24
     function text($text)
              ^^^^
+WARNING notSafetyCall: potential not safety call in function trim signature of param string at testdata/parsedown/parsedown.php:46
+        $text = trim($text, "\n");
+                     ^^^^^
+WARNING notSafetyCall: potential not safety call in function linesElements signature of param lines at testdata/parsedown/parsedown.php:52
+        return $this->linesElements($lines);
+                                    ^^^^^^
 MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::setBreaksEnabled method explicitly at testdata/parsedown/parsedown.php:59
     function setBreaksEnabled($breaksEnabled)
              ^^^^^^^^^^^^^^^^
@@ -28,9 +34,18 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function strstr signature of param haystack at testdata/parsedown/parsedown.php:186
             while (($beforeTab = strstr($line, "\t", true)) !== false)
                                         ^^^^^
+WARNING notSafetyCall: potential not safety call in function mb_strlen signature of param string at testdata/parsedown/parsedown.php:188
+                $shortage = 4 - mb_strlen($beforeTab, 'utf-8') % 4;
+                                          ^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function str_repeat signature of param times at testdata/parsedown/parsedown.php:191
+                    . str_repeat(' ', $shortage)
+                                      ^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function substr signature of param string at testdata/parsedown/parsedown.php:192
                     . substr($line, strlen($beforeTab) + 1)
                              ^^^^^
+WARNING notSafetyCall: potential not safety call in function strlen signature of param string at testdata/parsedown/parsedown.php:192
+                    . substr($line, strlen($beforeTab) + 1)
+                                           ^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function strspn signature of param string at testdata/parsedown/parsedown.php:196
             $indent = strspn($line, ' ');
                              ^^^^^
@@ -67,6 +82,9 @@ WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function strspn signature of param characters at testdata/parsedown/parsedown.php:452
         $openerLength = strspn($Line['text'], $marker);
                                               ^^^^^^^
+WARNING notSafetyCall: potential not safety call in function trim signature of param string when calling function \substr at testdata/parsedown/parsedown.php:459
+        $infostring = trim(substr($Line['text'], $openerLength), "\t ");
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter string of function substr at testdata/parsedown/parsedown.php:459
         $infostring = trim(substr($Line['text'], $openerLength), "\t ");
                                   ^^^^^^^^^^^^^
@@ -85,6 +103,9 @@ WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access 
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter characters of function strspn at testdata/parsedown/parsedown.php:516
         if (($len = strspn($Line['text'], $Block['char'])) >= $Block['openerLength']
                                           ^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function chop signature of param string when calling function \substr at testdata/parsedown/parsedown.php:517
+            and chop(substr($Line['text'], $len), ' ') === ''
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter string of function substr at testdata/parsedown/parsedown.php:517
             and chop(substr($Line['text'], $len), ' ') === ''
                             ^^^^^^^^^^^^^
@@ -103,6 +124,24 @@ MAYBE   typeHint: Specify the type for the parameter $CurrentBlock in PHPDoc, 'a
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter subject of function preg_match at testdata/parsedown/parsedown.php:578
         if (preg_match('/^('.$pattern.'([ ]++|$))(.*+)/', $Line['text'], $matches))
                                                           ^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter string of function strlen at testdata/parsedown/parsedown.php:580
+            $contentIndent = strlen($matches[2]);
+                                    ^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter string of function substr at testdata/parsedown/parsedown.php:585
+                $matches[1] = substr($matches[1], 0, -$contentIndent);
+                                     ^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter haystack of function strstr at testdata/parsedown/parsedown.php:593
+            $markerWithoutWhitespace = strstr($matches[1], ' ', true);
+                                              ^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function substr signature of param string at testdata/parsedown/parsedown.php:601
+                    'markerType' => ($name === 'ul' ? $markerWithoutWhitespace : substr($markerWithoutWhitespace, -1)),
+                                                                                        ^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function ltrim signature of param string when calling function \strstr at testdata/parsedown/parsedown.php:612
+                $listStart = ltrim(strstr($matches[1], $Block['data']['markerType'], true), '0') ?: '0';
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter haystack of function strstr at testdata/parsedown/parsedown.php:612
+                $listStart = ltrim(strstr($matches[1], $Block['data']['markerType'], true), '0') ?: '0';
+                                          ^^^^^^^^^^^
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:633
                     'destination' => 'elements'
                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -130,6 +169,9 @@ MAYBE   trailingComma: Last element in a multi-line array should have a trailing
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter string of function substr at testdata/parsedown/parsedown.php:712
             $text = substr($Line['body'], $requiredIndent);
                            ^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function substr signature of param offset at testdata/parsedown/parsedown.php:712
+            $text = substr($Line['body'], $requiredIndent);
+                                          ^^^^^^^^^^^^^^^
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:729
     protected function blockListComplete(array $Block)
                        ^^^^^^^^^^^^^^^^^
@@ -169,6 +211,9 @@ WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access 
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter subject of function preg_match at testdata/parsedown/parsedown.php:836
         if (preg_match('/^<[\/]?+(\w*)(?:[ ]*+'.$this->regexHtmlAttribute.')*+[ ]*+(\/)?>/', $Line['text'], $matches))
                                                                                              ^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter string of function strtolower at testdata/parsedown/parsedown.php:838
+            $element = strtolower($matches[1]);
+                                  ^^^^^^^^^^^
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/parsedown/parsedown.php:840
             if (in_array($element, $this->textLevelElements))
                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -184,6 +229,9 @@ WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access 
 MAYBE   regexpSimplify: May re-write '/^\[(.+?)\]:[ ]*+<?(\S+?)>?(?:[ ]+["\'(](.+)["\')])?[ ]*+$/' as '/^\[(.+?)\]: *+<?(\S+?)>?(?: +["'(](.+)["')])? *+$/' at testdata/parsedown/parsedown.php:875
             and preg_match('/^\[(.+?)\]:[ ]*+<?(\S+?)>?(?:[ ]+["\'(](.+)["\')])?[ ]*+$/', $Line['text'], $matches)
                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter string of function strtolower at testdata/parsedown/parsedown.php:877
+            $id = strtolower($matches[1]);
+                             ^^^^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$matches[3] ?? null` at testdata/parsedown/parsedown.php:881
                 'title' => isset($matches[3]) ? $matches[3] : null,
                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -226,6 +274,27 @@ MAYBE   trailingComma: Last element in a multi-line array should have a trailing
 MAYBE   typeHint: Specify the type for the parameter $Block in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1093
     protected function paragraphContinue($Line, array $Block)
                        ^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function strpbrk signature of param string at testdata/parsedown/parsedown.php:1149
+        while ($excerpt = strpbrk($text, $this->inlineMarkerList))
+                                  ^^^^^
+WARNING notSafetyCall: potential not safety call in function strlen signature of param string at testdata/parsedown/parsedown.php:1153
+            $markerPosition = strlen($text) - strlen($excerpt);
+                                     ^^^^^
+WARNING notSafetyCall: potential not safety call in function strlen signature of param string at testdata/parsedown/parsedown.php:1153
+            $markerPosition = strlen($text) - strlen($excerpt);
+                                                     ^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function substr signature of param string at testdata/parsedown/parsedown.php:1196
+                $unmarkedText = substr($text, 0, $Inline['position']);
+                                       ^^^^^
+WARNING notSafetyCall: potential not safety call in function substr signature of param string at testdata/parsedown/parsedown.php:1206
+                $text = substr($text, $Inline['position'] + $Inline['extent']);
+                               ^^^^^
+WARNING notSafetyCall: potential not safety call in function substr signature of param string at testdata/parsedown/parsedown.php:1213
+            $unmarkedText = substr($text, 0, $markerPosition + 1);
+                                   ^^^^^
+WARNING notSafetyCall: potential not safety call in function substr signature of param string at testdata/parsedown/parsedown.php:1218
+            $text = substr($text, $markerPosition + 1);
+                           ^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function strlen signature of param string at testdata/parsedown/parsedown.php:1242
             'extent' => strlen($text),
                                ^^^^^
@@ -235,18 +304,27 @@ WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access 
 MAYBE   regexpSimplify: May re-write '/[ ]*+\n/' as '/ *+\n/' at testdata/parsedown/parsedown.php:1265
             $text = preg_replace('/[ ]*+\n/', ' ', $text);
                                  ^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter string of function strlen at testdata/parsedown/parsedown.php:1268
+                'extent' => strlen($matches[0]),
+                                   ^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter haystack of function strpos at testdata/parsedown/parsedown.php:1284
         if (strpos($Excerpt['text'], '>') !== false
                    ^^^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter subject of function preg_match at testdata/parsedown/parsedown.php:1285
             and preg_match("/^<((mailto:)?$commonMarkEmail)>/i", $Excerpt['text'], $matches)
                                                                  ^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter string of function strlen at testdata/parsedown/parsedown.php:1295
+                'extent' => strlen($matches[0]),
+                                   ^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter subject of function preg_match at testdata/parsedown/parsedown.php:1316
         if ($Excerpt['text'][1] === $marker and preg_match($this->StrongRegex[$marker], $Excerpt['text'], $matches))
                                                                                         ^^^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter subject of function preg_match at testdata/parsedown/parsedown.php:1320
         elseif (preg_match($this->EmRegex[$marker], $Excerpt['text'], $matches))
                                                     ^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter string of function strlen at testdata/parsedown/parsedown.php:1330
+            'extent' => strlen($matches[0]),
+                               ^^^^^^^^^^^
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:1333
                 'handler' => array(
                 ^
@@ -256,6 +334,9 @@ WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function preg_match signature of param subject at testdata/parsedown/parsedown.php:1408
         if (preg_match('/\[((?:[^][]++|(?R))*+)\]/', $remainder, $matches))
                                                      ^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter string of function strlen at testdata/parsedown/parsedown.php:1412
+            $extent += strlen($matches[0]);
+                              ^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function substr signature of param string at testdata/parsedown/parsedown.php:1414
             $remainder = substr($remainder, $extent);
                                 ^^^^^^^^^^
@@ -265,12 +346,24 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 MAYBE   regexpSimplify: May re-write '/^[(]\s*+((?:[^ ()]++|[(][^ )]+[)])++)(?:[ ]+("[^"]*+"|\'[^\']*+\'))?\s*+[)]/' as '/^[(]\s*+((?:[^ ()]++|[(][^ )]+[)])++)(?: +("[^"]*+"|'[^']*+'))?\s*+[)]/' at testdata/parsedown/parsedown.php:1421
         if (preg_match('/^[(]\s*+((?:[^ ()]++|[(][^ )]+[)])++)(?:[ ]+("[^"]*+"|\'[^\']*+\'))?\s*+[)]/', $remainder, $matches))
                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter string of function substr at testdata/parsedown/parsedown.php:1427
+                $Element['attributes']['title'] = substr($matches[2], 1, - 1);
+                                                         ^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter string of function strlen at testdata/parsedown/parsedown.php:1430
+            $extent += strlen($matches[0]);
+                              ^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function preg_match signature of param subject at testdata/parsedown/parsedown.php:1434
             if (preg_match('/^\s*\[(.*?)\]/', $remainder, $matches))
                                               ^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter string of function strlen at testdata/parsedown/parsedown.php:1436
+                $definition = strlen($matches[1]) ? $matches[1] : $Element['handler']['argument'];
+                                     ^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function strtolower signature of param string at testdata/parsedown/parsedown.php:1437
                 $definition = strtolower($definition);
                                          ^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter string of function strlen at testdata/parsedown/parsedown.php:1439
+                $extent += strlen($matches[0]);
+                                  ^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter haystack of function strpos at testdata/parsedown/parsedown.php:1465
         if ($this->markupEscaped or $this->safeMode or strpos($Excerpt['text'], '>') === false)
                                                               ^^^^^^^^^^^^^^^^
@@ -280,12 +373,21 @@ WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access 
 MAYBE   regexpSimplify: May re-write '/^<\/\w[\w-]*+[ ]*+>/s' as '/^<\/\w[\w-]*+ *+>/s' at testdata/parsedown/parsedown.php:1470
         if ($Excerpt['text'][1] === '/' and preg_match('/^<\/\w[\w-]*+[ ]*+>/s', $Excerpt['text'], $matches))
                                                        ^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter string of function strlen at testdata/parsedown/parsedown.php:1474
+                'extent' => strlen($matches[0]),
+                                   ^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter subject of function preg_match at testdata/parsedown/parsedown.php:1478
         if ($Excerpt['text'][1] === '!' and preg_match('/^<!---?[^>-](?:-?+[^-])*-->/s', $Excerpt['text'], $matches))
                                                                                          ^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter string of function strlen at testdata/parsedown/parsedown.php:1482
+                'extent' => strlen($matches[0]),
+                                   ^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter subject of function preg_match at testdata/parsedown/parsedown.php:1486
         if ($Excerpt['text'][1] !== ' ' and preg_match('/^<\w[\w-]*+(?:[ ]*+'.$this->regexHtmlAttribute.')*+[ ]*+\/?>/s', $Excerpt['text'], $matches))
                                                                                                                           ^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter string of function strlen at testdata/parsedown/parsedown.php:1490
+                'extent' => strlen($matches[0]),
+                                   ^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter string of function substr at testdata/parsedown/parsedown.php:1497
         if (substr($Excerpt['text'], 1, 1) !== ' ' and strpos($Excerpt['text'], ';') !== false
                    ^^^^^^^^^^^^^^^^
@@ -298,9 +400,15 @@ WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access 
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter subject of function preg_match at testdata/parsedown/parsedown.php:1498
             and preg_match('/^&(#?+[0-9a-zA-Z]++);/', $Excerpt['text'], $matches)
                                                       ^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter string of function strlen at testdata/parsedown/parsedown.php:1502
+                'extent' => strlen($matches[0]),
+                                   ^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter subject of function preg_match at testdata/parsedown/parsedown.php:1516
         if ($Excerpt['text'][1] === '~' and preg_match('/^~~(?=\S)(.+?)(?<=\S)~~/', $Excerpt['text'], $matches))
                                                                                     ^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter string of function strlen at testdata/parsedown/parsedown.php:1519
+                'extent' => strlen($matches[0]),
+                                   ^^^^^^^^^^^
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/parsedown/parsedown.php:1522
                     'handler' => array(
                     ^
@@ -319,6 +427,9 @@ WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access 
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter subject of function preg_match at testdata/parsedown/parsedown.php:1562
         if (strpos($Excerpt['text'], '>') !== false and preg_match('/^<(\w++:\/{2}[^ >]++)>/i', $Excerpt['text'], $matches))
                                                                                                 ^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety array access in parameter string of function strlen at testdata/parsedown/parsedown.php:1567
+                'extent' => strlen($matches[0]),
+                                   ^^^^^^^^^^^
 MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1591
     protected function handle(array $Element)
                        ^^^^^^
@@ -373,6 +484,9 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function substr signature of param string at testdata/parsedown/parsedown.php:1832
             $before = substr($text, 0, $offset);
                              ^^^^^
+WARNING notSafetyCall: potential not safety call in function substr signature of param length at testdata/parsedown/parsedown.php:1832
+            $before = substr($text, 0, $offset);
+                                       ^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function substr signature of param string at testdata/parsedown/parsedown.php:1833
             $after = substr($text, $offset + strlen($matches[0][0]));
                             ^^^^^
@@ -382,6 +496,9 @@ MAYBE   implicitModifiers: Specify the access modifier for \Parsedown::parse met
 MAYBE   typeHint: Specify the type for the parameter $Element in PHPDoc, 'array' type hint too generic at testdata/parsedown/parsedown.php:1861
     protected function sanitiseElement(array $Element)
                        ^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function preg_match signature of param subject at testdata/parsedown/parsedown.php:1885
+                if ( ! preg_match($goodAttribute, $att))
+                                                  ^^^^
 WARNING unused: Variable $val is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/parsedown/parsedown.php:1882
             foreach ($Element['attributes'] as $att => $val)
                                                        ^^^^
@@ -397,6 +514,9 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function strlen signature of param string at testdata/parsedown/parsedown.php:1928
         if ($len > strlen($string))
                           ^^^^^^^
+WARNING notSafetyCall: potential not safety call in function strtolower signature of param string when calling function \substr at testdata/parsedown/parsedown.php:1934
+            return strtolower(substr($string, 0, $len)) === strtolower($needle);
+                              ^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function substr signature of param string at testdata/parsedown/parsedown.php:1934
             return strtolower(substr($string, 0, $len)) === strtolower($needle);
                                      ^^^^^^^
