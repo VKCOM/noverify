@@ -255,13 +255,12 @@ func (a *andWalker) handleTypeCheckCondition(expectedType string, args []ir.Node
 			continue
 		}
 
-		// We need to traverse the variable here to check that
-		// it exists, since this variable will be added to the
-		// context later.
+		// Traverse the variable to ensure it exists, since this variable
+		// will be added to the context later
 		a.b.handleVariable(variable)
 
-		currentType := a.exprType(variable)
-
+		// Get the current type of the variable from the appropriate context
+		currentType := a.exprType(variable) // nolint:staticcheck
 		if a.inNot {
 			currentType = a.exprTypeInContext(a.trueContext, variable)
 		} else {
@@ -270,27 +269,28 @@ func (a *andWalker) handleTypeCheckCondition(expectedType string, args []ir.Node
 
 		var trueType, falseType types.Map
 
-		if expectedType == "bool" {
-			// we can have false/true/bool as type that's why we should check all situation
+		switch expectedType {
+		case "bool":
+			// For bool: consider possible literal types "bool", "true" and "false"
 			boolUnion := types.NewMap("bool").Union(types.NewMap("true")).Union(types.NewMap("false"))
 			intersection := currentType.Intersect(boolUnion)
 			if intersection.Empty() {
 				// If there is no explicit bool subtype, then the positive branch becomes simply "bool"
 				trueType = types.NewMap("bool")
 			} else {
-				// Otherwise, we leave exactly those literals that were in the current type
+				// Otherwise, keep exactly those literals that were present in the current type
 				trueType = intersection
 			}
-			// Negative branch - remove all bool subtypes
+			// Negative branch: remove all bool subtypes
 			falseType = currentType.Clone().Erase("bool").Erase("true").Erase("false")
-		} else if expectedType == "object" {
-			// For is_object: keys that is not primitives
+		case "object":
+			// For is_object: keep only keys that are not considered primitive
 			keys := currentType.Keys()
 			var objectKeys []string
 			for _, k := range keys {
 				switch k {
 				case "int", "float", "string", "bool", "null", "true", "false", "mixed", "callable", "resource", "void", "iterable", "never":
-					// skip not object
+					// Skip primitive types
 					continue
 				default:
 					objectKeys = append(objectKeys, k)
@@ -308,8 +308,8 @@ func (a *andWalker) handleTypeCheckCondition(expectedType string, args []ir.Node
 			for _, k := range objectKeys {
 				falseType = falseType.Erase(k)
 			}
-		} else {
-			// For other types, standard logic
+		default:
+			// Standard logic for other types
 			trueType = types.NewMap(expectedType)
 			falseType = currentType.Clone().Erase(expectedType)
 		}

@@ -1,8 +1,9 @@
 package checkers
 
 import (
-	"github.com/VKCOM/noverify/src/linttest"
 	"testing"
+
+	"github.com/VKCOM/noverify/src/linttest"
 )
 
 func TestFunctionPassingFalse_SimpleVar(t *testing.T) {

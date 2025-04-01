@@ -3,7 +3,6 @@ package linttest
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/go-cmp/cmp"
 	"log"
 	"os"
 	"os/exec"
@@ -11,6 +10,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/VKCOM/noverify/src/cmd"
 	"github.com/VKCOM/noverify/src/linter"

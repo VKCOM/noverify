@@ -1271,11 +1271,8 @@ func (b *blockWalker) isTypeCompatible(varType types.Map, paramType types.Map) b
 		forcedVarType = types.NewMapFromMap(solver.ResolveTypes(b.r.metaInfo(), "", varType, solver.ResolverMap{}))
 	}
 	forcedParamType := types.NewMapFromMap(solver.ResolveTypes(b.r.metaInfo(), "", paramType, solver.ResolverMap{}))
-	if !forcedParamType.Intersect(forcedVarType).Empty() {
-		return true
-	}
 
-	return false
+	return !forcedParamType.Intersect(forcedVarType).Empty()
 }
 
 func (b *blockWalker) checkConstFetchSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, constExpr *ir.ConstFetchExpr, haveVariadic bool) {
