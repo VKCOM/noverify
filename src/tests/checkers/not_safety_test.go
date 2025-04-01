@@ -408,3 +408,24 @@ class Filesystem implements FilesystemInterface
 	}
 	test.RunAndMatch()
 }
+
+func TestForceInferring(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class User{
+    const IS_CALLABLE        = '!is_string(%s) && is_callable(%s)';
+    const STRICT_IS_CALLABLE = 'is_object(%s) && is_callable(%s)';
+
+    private function getCallable($variable = '$value')
+    {
+        $tpl = $this->strictCallables ? self::STRICT_IS_CALLABLE : self::IS_CALLABLE;
+
+        return sprintf($tpl, $variable, $variable);
+    }
+}
+`)
+	test.Expect = []string{
+		"Property {\\User}->strictCallables does not exist",
+	}
+	test.RunAndMatch()
+}

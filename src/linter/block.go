@@ -1126,7 +1126,7 @@ func (b *blockWalker) checkFunctionCallSafety(arg ir.Node, fn meta.FuncInfo, par
 
 	if !b.isTypeCompatible(callType, param.Typ) {
 		b.report(arg, LevelWarning, "notSafetyCall",
-			"not safety call in function %s signature of param %s when calling function %s",
+			"potential not safety call in function %s signature of param %s when calling function %s",
 			formatSlashesFuncName(fn), param.Name, funcInfo.Name)
 	}
 }
@@ -1182,7 +1182,7 @@ func (b *blockWalker) checkStaticCallSafety(arg ir.Node, fn meta.FuncInfo, param
 
 	if !b.isTypeCompatible(funcType, param.Typ) {
 		b.report(arg, LevelWarning, "notSafetyCall",
-			"not safety static call in function %s signature of param %s",
+			"potential not safety static call in function %s signature of param %s",
 			formatSlashesFuncName(fn), param.Name)
 	}
 }
@@ -1216,14 +1216,20 @@ func (b *blockWalker) checkSimpleVarSafety(arg ir.Node, fn meta.FuncInfo, paramI
 
 	if !b.isTypeCompatible(varType, paramType) {
 		b.report(arg, LevelWarning, "notSafetyCall",
-			"not safety call in function %s signature of param %s",
+			"potential not safety call in function %s signature of param %s",
 			formatSlashesFuncName(fn), param.Name)
 	}
 }
 
 func (b *blockWalker) isTypeCompatible(varType types.Map, paramType types.Map) bool {
+	var forcedVarType types.Map
+
 	if varType.Len() > paramType.Len() {
-		return false
+		forcedVarType = types.NewMapFromMap(solver.ResolveTypes(b.r.metaInfo(), "", varType, solver.ResolverMap{}))
+		if forcedVarType.Len() > paramType.Len() {
+			return false
+		}
+		varType = forcedVarType
 	}
 
 	isVarBoolean := varType.IsBoolean()
@@ -1261,10 +1267,11 @@ func (b *blockWalker) isTypeCompatible(varType types.Map, paramType types.Map) b
 		}
 	}
 
-	forcedVartype := types.NewMapFromMap(solver.ResolveTypes(b.r.metaInfo(), "", varType, solver.ResolverMap{}))
+	if forcedVarType.Empty() {
+		forcedVarType = types.NewMapFromMap(solver.ResolveTypes(b.r.metaInfo(), "", varType, solver.ResolverMap{}))
+	}
 	forcedParamType := types.NewMapFromMap(solver.ResolveTypes(b.r.metaInfo(), "", paramType, solver.ResolverMap{}))
-
-	if !forcedParamType.Intersect(forcedVartype).Empty() {
+	if !forcedParamType.Intersect(forcedVarType).Empty() {
 		return true
 	}
 
@@ -1334,7 +1341,7 @@ func (b *blockWalker) checkArrayDimFetchSafety(arg ir.Node, fn meta.FuncInfo, pa
 
 	if !b.isTypeCompatible(varType, param.Typ) {
 		b.report(arg, LevelWarning, "notSafetyCall",
-			"not safety array access in parameter %s of function %s",
+			"potential not safety array access in parameter %s of function %s",
 			param.Name, formatSlashesFuncName(fn))
 	}
 }
