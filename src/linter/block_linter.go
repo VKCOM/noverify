@@ -1403,7 +1403,7 @@ func (b *blockLinter) checkSafetyCall(e ir.Node, typ types.Map, name string, suf
 		switch {
 		case reportFullName == "notNullSafetyPropertyFetch":
 			b.report(e, LevelWarning, "notNullSafety"+suffix,
-				"attempt to access property that can be null")
+				"potential attempt to access property through null")
 			return
 		case reportFullName == "notNullSafetyVariable" || reportFullName == "notNullSafetyFunctionCall":
 			b.report(e, LevelWarning, reportFullName,

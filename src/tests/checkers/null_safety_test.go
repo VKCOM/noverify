@@ -280,7 +280,7 @@ $user = null;
 echo $user->name;
 `)
 	test.Expect = []string{
-		"attempt to access property that can be null",
+		"potential attempt to access property through null",
 	}
 	test.RunAndMatch()
 }
@@ -390,7 +390,7 @@ testValue(nullFunc());
 	test.RunAndMatch()
 }
 
-func TestStaticCallNullSafetyThrowVariable(t *testing.T) {
+func TestStaticCallNullSafetyThroughVariable(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 class A {
@@ -413,7 +413,7 @@ test($maybeClass::hello());
 	test.RunAndMatch()
 }
 
-func TestFunctionCallNullSafetyThrowVariable(t *testing.T) {
+func TestFunctionCallNullSafetyThroughVariable(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
 class A {
@@ -435,6 +435,58 @@ test(testNullable());
 	test.Expect = []string{
 		"Missing PHPDoc for \\A::hello public method",
 		"not null safety call in function test signature of param s when calling function \\testNullable",
+	}
+	test.RunAndMatch()
+}
+
+func TestVariableNotConditionNullSafety(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class User {
+    public string $name;
+
+}
+
+function getUser(): User|null {
+return null;
+}
+
+$user = getUser();
+
+if (!$user) {
+    echo "User found: " . $user->name;
+} else {
+    echo "User not found." . $user->name;
+}
+`)
+	test.Expect = []string{
+		"potential attempt to access property through null",
+	}
+	test.RunAndMatch()
+}
+
+func TestVariableInConditionNullSafety(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class User {
+    public string $name;
+
+}
+
+function getUser(): User|null {
+return null;
+}
+
+$user = getUser();
+
+if ($user) {
+    echo "User found: " . $user->name;
+} else {
+    echo "User not found." . $user->name;
+}
+`)
+	test.Expect = []string{
+		"potential attempt to access property through null",
 	}
 	test.RunAndMatch()
 }

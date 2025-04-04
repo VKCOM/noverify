@@ -45,6 +45,9 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 	case *ir.ParenExpr:
 		return true
 
+	case *ir.SimpleVar:
+		a.handleVariableCondition(n)
+
 	case *ir.FunctionCallExpr:
 		// If the absence of a function or method is being
 		// checked, then nothing needs to be done.
@@ -242,6 +245,63 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 
 	w.Walk(a.b)
 	return res
+}
+
+func (a *andWalker) handleVariableCondition(variable *ir.SimpleVar) {
+	if !a.b.ctx.sc.HaveVar(variable) {
+		return
+	}
+
+	currentType := a.exprType(variable) // nolint:staticcheck
+	if a.inNot {
+		currentType = a.exprTypeInContext(a.trueContext, variable)
+	} else {
+		currentType = a.exprTypeInContext(a.falseContext, variable)
+	}
+
+	var trueType, falseType types.Map
+
+	// First, handle "null": if currentType contains "null", then in the true branch we remove it,
+	// and in the false branch we narrow to "null"
+	if currentType.Contains("null") {
+		trueType = currentType.Clone().Erase("null")
+		falseType = types.NewMap("null")
+	} else {
+		trueType = currentType.Clone()
+		falseType = currentType.Clone()
+	}
+
+	// Next, handle booleans
+	// If currentType contains any boolean-related literal ("bool", "true", "false"),
+	// then we want to narrow them:
+	// - If there are non-boolean parts (e.g. "User") in the union, they are always truthy
+	//   In that case, true branch becomes nonBool ∪ {"true"} and false branch becomes {"false"}
+	// - If only the boolean part is present, then narrow to {"true"} and {"false"} respectively
+	if currentType.Contains("bool") || currentType.Contains("true") || currentType.Contains("false") {
+		nonBool := currentType.Clone().Erase("bool").Erase("true").Erase("false")
+		if nonBool.Len() > 0 {
+			if currentType.Contains("bool") || currentType.Contains("true") {
+				trueType = nonBool.Union(types.NewMap("true"))
+			} else {
+				trueType = nonBool
+			}
+			falseType = types.NewMap("false")
+		} else {
+			trueType = types.NewMap("true")
+			falseType = types.NewMap("false")
+		}
+	}
+
+	// Note: For other types (e.g. int, string, array), our type system doesn't include literal values,
+	// so we don't perform additional narrowing
+
+	// If we are in the "not" context (i.e. if(!$variable)), swap the branches
+	if a.inNot {
+		trueType, falseType = falseType, trueType
+	}
+
+	a.trueContext.sc.ReplaceVar(variable, trueType, "type narrowing for "+variable.Name, meta.VarAlwaysDefined)
+	a.falseContext.sc.ReplaceVar(variable, falseType, "type narrowing for "+variable.Name, meta.VarAlwaysDefined)
 }
 
 func (a *andWalker) handleTypeCheckCondition(expectedType string, args []ir.Node) {

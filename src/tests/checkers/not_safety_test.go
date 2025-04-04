@@ -430,3 +430,59 @@ class User{
 	}
 	test.RunAndMatch()
 }
+
+func TestVariableCondition(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class User {
+    public string $name;
+
+}
+
+function getUser(): User|bool {
+return null;
+}
+
+$user = getUser();
+
+if ($user) {
+    echo "User found: " . $user->name;
+} else {
+    echo "User not found." . $user->name;
+}
+`)
+	test.Expect = []string{
+		"potential not safety call when accessing property",
+		"Property {false}->name does not exist",
+		"potential not safety call when accessing property",
+	}
+	test.RunAndMatch()
+}
+
+func TestVariableNotCondition(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class User {
+    public string $name;
+
+}
+
+function getUser(): User|bool {
+return null;
+}
+
+$user = getUser();
+
+if (!$user) {
+    echo "User found: " . $user->name;
+} else {
+    echo "User not found." . $user->name;
+}
+`)
+	test.Expect = []string{
+		"potential not safety call when accessing property",
+		"Property {false}->name does not exist",
+		"potential not safety call when accessing property",
+	}
+	test.RunAndMatch()
+}
