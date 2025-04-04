@@ -25,9 +25,6 @@ WARNING notSafetyCall: potential not safety call in function first signature of 
 WARNING notSafetyCall: potential not safety call in function map signature of param collection at testdata/underscore/underscore.php:161
     if(!is_null($iterator)) $collection = $__->map($collection, $iterator);
                                                    ^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety access in parameter val of function _wrap at testdata/underscore/underscore.php:162
-    if(count($collection) === 0) return self::_wrap(false);
-                                                    ^^^^^
 WARNING notSafetyCall: potential not safety call in function is_int signature of param value when calling function \array_search at testdata/underscore/underscore.php:164
     return self::_wrap(is_int(array_search(true, $collection, false)));
                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -55,9 +52,6 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function call_user_func signature of param callback at testdata/underscore/underscore.php:224
       if(call_user_func($iterator, $val)) return $val;
                         ^^^^^^^^^
-WARNING notSafetyCall: potential not safety access in parameter val of function _wrap at testdata/underscore/underscore.php:226
-    return self::_wrap(false);
-                       ^^^^^
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:248
     if($n === 0) return self::_wrap(array());
                                     ^^^^^^^
@@ -232,18 +226,6 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function array_key_exists signature of param key at testdata/underscore/underscore.php:703
     return self::_wrap(array_key_exists($key, $collection));
                                         ^^^^
-WARNING notSafetyCall: potential not safety access in parameter val of function _wrap at testdata/underscore/underscore.php:713
-    if($a === $b) return self::_wrap(true);
-                                     ^^^^
-WARNING notSafetyCall: potential not safety access in parameter val of function _wrap at testdata/underscore/underscore.php:714
-    if(gettype($a) !== gettype($b)) return self::_wrap(false);
-                                                       ^^^^^
-WARNING notSafetyCall: potential not safety access in parameter val of function _wrap at testdata/underscore/underscore.php:715
-    if(is_callable($a) !== is_callable($b)) return self::_wrap(false);
-                                                               ^^^^^
-WARNING notSafetyCall: potential not safety access in parameter val of function _wrap at testdata/underscore/underscore.php:717
-    if($a == $b) return self::_wrap(true);
-                                    ^^^^
 ERROR   undefinedProperty: Property {array}->isEqual does not exist at testdata/underscore/underscore.php:723
       if(is_object($a) && isset($a->isEqual)) return self::_wrap($a->isEqual($b));
                                     ^^^^^^^
@@ -256,18 +238,12 @@ ERROR   undefinedProperty: Property {object}->isEqual does not exist at testdata
 ERROR   undefinedMethod: Call to undefined method {object}->isEqual() at testdata/underscore/underscore.php:724
       if(is_object($b) && isset($b->isEqual)) return self::_wrap($b->isEqual($a));
                                                                      ^^^^^^^
-WARNING notSafetyCall: potential not safety access in parameter val of function _wrap at testdata/underscore/underscore.php:728
-      if(count($a) !== count($b)) return self::_wrap(false);
-                                                     ^^^^^
 WARNING notSafetyCall: potential not safety call in function keys signature of param collection at testdata/underscore/underscore.php:731
       $keys_equal = $__->isEqual($__->keys($a), $__->keys($b));
                                            ^^
 WARNING notSafetyCall: potential not safety call in function values signature of param collection at testdata/underscore/underscore.php:732
       $values_equal = $__->isEqual($__->values($a), $__->values($b));
                                                ^^
-WARNING notSafetyCall: potential not safety access in parameter val of function _wrap at testdata/underscore/underscore.php:736
-    return self::_wrap(false);
-                       ^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function is_nan signature of param num at testdata/underscore/underscore.php:772
     return self::_wrap((is_int($item) || is_float($item)) && !is_nan($item) && !is_infinite($item));
                                                                      ^^^^^

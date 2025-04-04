@@ -1222,6 +1222,10 @@ func (b *blockWalker) checkSimpleVarSafety(arg ir.Node, fn meta.FuncInfo, paramI
 }
 
 func (b *blockWalker) isTypeCompatible(varType types.Map, paramType types.Map) bool {
+	if paramType.Empty() {
+		return true
+	}
+
 	var forcedVarType types.Map
 
 	if varType.Len() > paramType.Len() {
