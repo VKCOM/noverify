@@ -49,9 +49,6 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function pcntl_wexitstatus signature of param status at testdata/phprocksyd/Phprocksyd.php:241
                     $Res->retcode = pcntl_wexitstatus($status);
                                                       ^^^^^^^
-WARNING notSafetyCall: potential not safety call in function array_pop signature of param array at testdata/phprocksyd/Phprocksyd.php:269
-        $this->read_buf[$stream_id] = array_pop($requests);
-                                                ^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function rtrim signature of param string at testdata/phprocksyd/Phprocksyd.php:272
             $req = rtrim($req);
                          ^^^^
@@ -181,9 +178,6 @@ WARNING notSafetyCall: potential not safety call in function stream_set_blocking
 WARNING notSafetyCall: potential not safety call in function stream_set_timeout signature of param stream at testdata/phprocksyd/Simple.php:75
         stream_set_timeout($client, 1);
                            ^^^^^^^
-WARNING notSafetyCall: potential not safety call in function array_pop signature of param array at testdata/phprocksyd/Simple.php:113
-        $this->read_buf[$stream_id] = array_pop($requests);
-                                                ^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function rtrim signature of param string at testdata/phprocksyd/Simple.php:116
             $res = json_decode(rtrim($req), true);
                                      ^^^^

@@ -76,18 +76,9 @@ WARNING bitwiseOps: Used & bitwise operator over bool operands, perhaps && is in
 WARNING bitwiseOps: Used | bitwise operator over bool operands, perhaps || is intended? at testdata/embeddedrules/bitwiseOps.php:9
   $_ = (($x == 1) | ($x == 2)); // Bad 2
         ^^^^^^^^^^^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function in_array signature of param haystack when calling function \array_keys at testdata/embeddedrules/callSimplify.php:7
-    $_ = in_array('abc', array_keys($array)); // bad
-                         ^^^^^^^^^^^^^^^^^^
 MAYBE   callSimplify: Could simplify to array_key_exists('abc', $array) at testdata/embeddedrules/callSimplify.php:7
     $_ = in_array('abc', array_keys($array)); // bad
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function in_array signature of param haystack when calling function \array_keys at testdata/embeddedrules/callSimplify.php:9
-    $_ = in_array('abc', array_keys($array), true);  // don't touch, has 3rd arg
-                         ^^^^^^^^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function in_array signature of param haystack when calling function \array_keys at testdata/embeddedrules/callSimplify.php:10
-    $_ = in_array('abc', array_keys($array), false); // don't touch, has 3rd arg
-                         ^^^^^^^^^^^^^^^^^^
 MAYBE   callSimplify: Could simplify to $str[$index] at testdata/embeddedrules/callSimplify.php:14
     $_ = substr($str, $index, 1);
          ^^^^^^^^^^^^^^^^^^^^^^^

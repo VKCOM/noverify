@@ -22,39 +22,18 @@ WARNING notSafetyCall: potential not safety call in function str_pad signature o
 WARNING notSafetyCall: potential not safety call in function ltrim signature of param string at testdata/math/src/BigInteger.php:105
         $number = \ltrim($number, '0');
                          ^^^^^^^
-WARNING notSafetyCall: potential not safety array access in parameter char of function charNotInAlphabet at testdata/math/src/BigInteger.php:163
-            throw NumberFormatException::charNotInAlphabet($matches[0]);
-                                                           ^^^^^^^^^^^
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/math/src/BigInteger.php:435
             new BigInteger($remainder)
             ^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function quotient signature of param that at testdata/math/src/BigInteger.php:649
-            return $this->quotient($operand);
-                                   ^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function dividedBy signature of param that at testdata/math/src/BigInteger.php:652
-        return $this->dividedBy($operand, RoundingMode::UP);
-                                ^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function of signature of param value at testdata/math/src/BigInteger.php:742
         $that = BigNumber::of($that);
                               ^^^^^
-WARNING notSafetyCall: potential not safety call in function is_int signature of param value at testdata/math/src/BigNumber.php:64
-        if (\is_int($value)) {
-                    ^^^^^^
 WARNING notSafetyCall: potential not safety call in function preg_match signature of param subject at testdata/math/src/BigNumber.php:74
         if (\preg_match(self::PARSE_REGEXP, $value, $matches) !== 1) {
                                             ^^^^^^
-WARNING notSafetyCall: potential not safety array access in parameter number of function cleanUp at testdata/math/src/BigNumber.php:79
-            $numerator   = self::cleanUp($matches['integral']);
-                                         ^^^^^^^^^^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety array access in parameter string of function ltrim at testdata/math/src/BigNumber.php:80
-            $denominator = \ltrim($matches['denominator'], '0');
-                                  ^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$matches['fractional'] ?? ''` at testdata/math/src/BigNumber.php:90
             $fractional = isset($matches['fractional']) ? $matches['fractional'] : '';
                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety array access in parameter number of function cleanUp at testdata/math/src/BigNumber.php:107
-        $integral = self::cleanUp($matches['integral']);
-                                  ^^^^^^^^^^^^^^^^^^^^
 WARNING notSafetyCall: potential not safety call in function setlocale signature of param rest at testdata/math/src/BigNumber.php:131
         \setlocale(LC_NUMERIC, $currentLocale);
                                ^^^^^^^^^^^^^^
@@ -79,12 +58,6 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 WARNING notSafetyCall: potential not safety call in function ltrim signature of param string at testdata/math/src/BigNumber.php:307
         $number = \ltrim($number, '0');
                          ^^^^^^^
-WARNING notSafetyCall: potential not safety call in function quotient signature of param that at testdata/math/src/BigRational.php:354
-        $numerator = $this->numerator->quotient($gcd);
-                                                ^^^^
-WARNING notSafetyCall: potential not safety call in function quotient signature of param that at testdata/math/src/BigRational.php:355
-        $denominator = $this->denominator->quotient($gcd);
-                                                    ^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function minus signature of param that at testdata/math/src/BigRational.php:365
         return $this->minus($that)->getSign();
                             ^^^^^

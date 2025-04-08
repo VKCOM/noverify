@@ -486,3 +486,48 @@ if (!$user) {
 	}
 	test.RunAndMatch()
 }
+
+func TestSelfNewInstanceHandlerWithAbstract(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+
+// Abstract base class for task handlers.
+abstract class TaskHandler {
+    // Common handler functionality could be placed here.
+}
+
+// Final class representing a Task.
+final class Task {
+    private string $type;
+    private ?TaskHandler $handler;
+
+    // Private constructor to enforce factory usage.
+    private function __construct(string $type, ?TaskHandler $handler) {
+        $this->type    = $type;
+        $this->handler = $handler;
+    }
+
+    // Factory method for creating a task with a handler.
+    public static function newWithHandler(string $type, TaskHandler $handler): self {
+        return new self($type, $handler);
+    }
+}
+
+// Concrete task handler extending the abstract TaskHandler.
+class ConcreteTaskHandler extends TaskHandler {
+    // Factory method for creating an instance of ConcreteTaskHandler.
+    public static function create(): self {
+        return new self();
+    }
+}
+
+$handler = ConcreteTaskHandler::create();
+$task    = Task::newWithHandler("example_task", $handler);
+
+`)
+	test.Expect = []string{
+		"Missing PHPDoc for \\Task::newWithHandler public method",
+		"Missing PHPDoc for \\ConcreteTaskHandler::create public method",
+	}
+	test.RunAndMatch()
+}

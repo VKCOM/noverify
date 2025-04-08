@@ -1,6 +1,12 @@
 MAYBE   missingPhpdoc: Missing PHPDoc for \QRCode::output_image public method at testdata/qrcode/qrcode.php:45
   public function output_image() {
                   ^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function imagepng signature of param image at testdata/qrcode/qrcode.php:49
+    imagepng($image);
+             ^^^^^^
+WARNING notSafetyCall: potential not safety call in function imagedestroy signature of param image at testdata/qrcode/qrcode.php:50
+    imagedestroy($image);
+                 ^^^^^^
 MAYBE   missingPhpdoc: Missing PHPDoc for \QRCode::render_image public method at testdata/qrcode/qrcode.php:53
   public function render_image() {
                   ^^^^^^^^^^^^
@@ -19,6 +25,9 @@ MAYBE   ternarySimplify: Could rewrite as `$this->options['bc'] ?? 'FFFFFF'` at 
 WARNING notSafetyCall: potential not safety call in function imagefill signature of param image at testdata/qrcode/qrcode.php:61
     imagefill($image, 0, 0, $bgcolor);
               ^^^^^^
+WARNING notSafetyCall: potential not safety call in function imagefill signature of param color at testdata/qrcode/qrcode.php:61
+    imagefill($image, 0, 0, $bgcolor);
+                            ^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$this->options['fc'] ?? '000000'` at testdata/qrcode/qrcode.php:63
     $fgcolor = (isset($this->options['fc']) ? $this->options['fc'] : '000000');
                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -34,6 +43,9 @@ WARNING notSafetyCall: potential not safety call in function imagefilledrectangl
 WARNING notSafetyCall: potential not safety call in function imagefilledrectangle signature of param y1 at testdata/qrcode/qrcode.php:93
         imagefilledrectangle($image, $rx, $ry, $rx + $rw - 1, $ry + $rh - 1, $mc);
                                           ^^^
+WARNING notSafetyCall: potential not safety call in function imagefilledrectangle signature of param color at testdata/qrcode/qrcode.php:93
+        imagefilledrectangle($image, $rx, $ry, $rx + $rw - 1, $ry + $rh - 1, $mc);
+                                                                             ^^^
 WARNING notSafetyCall: potential not safety call in function hexdec signature of param hex_string when calling function \substr at testdata/qrcode/qrcode.php:134
     $r     = hexdec(substr($color, 0, 2));
                     ^^^^^^^^^^^^^^^^^^^^

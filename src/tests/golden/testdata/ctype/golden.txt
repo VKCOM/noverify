@@ -49,9 +49,6 @@ WARNING notSafetyCall: potential not safety call in function preg_match signatur
 WARNING notSafetyCall: potential not safety call in function preg_match signature of param subject at testdata/ctype/ctype.php:196
         return \is_string($text) && '' !== $text && !preg_match('/[^A-Fa-f0-9]/', $text);
                                                                                   ^^^^^
-WARNING notSafetyCall: potential not safety call in function is_int signature of param value at testdata/ctype/ctype.php:213
-        if (!\is_int($int)) {
-                     ^^^^
 WARNING notSafetyCall: potential not safety call in function chr signature of param codepoint at testdata/ctype/ctype.php:225
         return \chr($int);
                     ^^^^

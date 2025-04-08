@@ -40,9 +40,6 @@ MAYBE   callSimplify: Could simplify to $permissions[0] at testdata/flysystem/sr
 WARNING notSafetyCall: potential not safety call in function strtr signature of param str at testdata/flysystem/src/Adapter/AbstractFtpAdapter.php:569
         $permissions = strtr($permissions, $map);
                              ^^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function array_sum signature of param array when calling function \str_split at testdata/flysystem/src/Adapter/AbstractFtpAdapter.php:576
-            return array_sum(str_split($part));
-                             ^^^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function str_split signature of param string at testdata/flysystem/src/Adapter/AbstractFtpAdapter.php:576
             return array_sum(str_split($part));
                                        ^^^^^
@@ -73,9 +70,6 @@ WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/
 WARNING notNullSafetyFunctionArgumentPropertyFetch: potential null dereference when accessing property 'connection' at testdata/flysystem/src/Adapter/Ftp.php:156
             $response = ftp_raw($this->connection, "OPTS UTF8 ON");
                                 ^^^^^^^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety array access in parameter string of function substr at testdata/flysystem/src/Adapter/Ftp.php:157
-            if (substr($response[0], 0, 3) !== '200') {
-                       ^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentPropertyFetch: potential null dereference when accessing property 'connection' at testdata/flysystem/src/Adapter/Ftp.php:173
             ftp_set_option($this->connection, FTP_USEPASVADDRESS, ! $this->ignorePassiveAddress);
                            ^^^^^^^^^^^^^^^^^
@@ -244,12 +238,6 @@ WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function ftp_chdir signature of param directory at testdata/flysystem/src/Adapter/Ftpd.php:15
         if (@ftp_chdir($this->getConnection(), $path) === true) {
                                                ^^^^^
-WARNING notSafetyCall: potential not safety array access in parameter string of function substr at testdata/flysystem/src/Adapter/Ftpd.php:25
-        if (substr($object[1], 0, 5) === "ftpd:") {
-                   ^^^^^^^^^^
-WARNING notSafetyCall: potential not safety array access in parameter item of function normalizeObject at testdata/flysystem/src/Adapter/Ftpd.php:29
-        return $this->normalizeObject($object[1], '');
-                                      ^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function ftp_rawlist signature of param directory at testdata/flysystem/src/Adapter/Ftpd.php:37
         $listing = ftp_rawlist($this->getConnection(), $directory, $recursive);
                                                        ^^^^^^^^^^
@@ -358,9 +346,6 @@ WARNING notSafetyCall: potential not safety call in function getFilePath signatu
 WARNING notSafetyCall: potential not safety call in function normalizeFileInfo signature of param file at testdata/flysystem/src/Adapter/Local.php:287
             $result[] = $this->normalizeFileInfo($file);
                                                  ^^^^^
-WARNING notSafetyCall: potential not safety call in function array_filter signature of param array at testdata/flysystem/src/Adapter/Local.php:292
-        return array_filter($result);
-                            ^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function applyPathPrefix signature of param path at testdata/flysystem/src/Adapter/Local.php:300
         $location = $this->applyPathPrefix($path);
                                            ^^^^^
@@ -490,6 +475,9 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function invokePluginOnFilesystem signature of param prefix at testdata/flysystem/src/MountManager.php:166
         return $this->invokePluginOnFilesystem($method, $arguments, $prefix);
                                                                     ^^^^^^^
+WARNING notSafetyCall: potential not safety call in function writeStream signature of param resource at testdata/flysystem/src/MountManager.php:192
+        $result = $this->getFilesystem($prefixTo)->writeStream($to, $buffer, $config);
+                                                                    ^^^^^^^
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter visibility of function setVisibility at testdata/flysystem/src/MountManager.php:243
                 return $filesystem->setVisibility($pathTo, $config['visibility']);
                                                            ^^^^^^^^^^^^^^^^^^^^^
@@ -550,9 +538,6 @@ MAYBE   missingPhpdoc: Missing PHPDoc for \League\Flysystem\UnreadableFileExcept
 WARNING notSafetyCall: potential not safety array access in parameter path of function pathinfo at testdata/flysystem/src/Util.php:27
         $pathinfo += pathinfo($pathinfo['basename']);
                               ^^^^^^^^^^^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function detectByContent signature of param content at testdata/flysystem/src/Util.php:186
-        $mimeType = MimeType::detectByContent($content);
-                                              ^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function pathinfo signature of param path at testdata/flysystem/src/Util.php:214
             $listing[] = static::pathinfo($directory) + ['type' => 'dir'];
                                           ^^^^^^^^^^

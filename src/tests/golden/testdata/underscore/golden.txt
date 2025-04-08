@@ -25,18 +25,9 @@ WARNING notSafetyCall: potential not safety call in function first signature of 
 WARNING notSafetyCall: potential not safety call in function map signature of param collection at testdata/underscore/underscore.php:161
     if(!is_null($iterator)) $collection = $__->map($collection, $iterator);
                                                    ^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function is_int signature of param value when calling function \array_search at testdata/underscore/underscore.php:164
-    return self::_wrap(is_int(array_search(true, $collection, false)));
-                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function array_search signature of param haystack at testdata/underscore/underscore.php:164
-    return self::_wrap(is_int(array_search(true, $collection, false)));
-                                                 ^^^^^^^^^^^
 WARNING notSafetyCall: potential not safety call in function map signature of param collection at testdata/underscore/underscore.php:177
     if(!is_null($iterator)) $collection = $__->map($collection, $iterator);
                                                    ^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function is_bool signature of param value when calling function \array_search at testdata/underscore/underscore.php:181
-    return self::_wrap(is_bool(array_search(false, $collection, false)));
-                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:193
     $return = array();
               ^^^^^^^
@@ -85,9 +76,6 @@ MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at tes
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:363
     $calculated = array();
                   ^^^^^^^
-WARNING notSafetyCall: potential not safety call in function is_bool signature of param value when calling function \array_search at testdata/underscore/underscore.php:366
-      if(is_bool(array_search($val, $calculated, true))) {
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING unused: Variable $is_sorted is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/underscore/underscore.php:356
     list($collection, $is_sorted, $iterator) = self::_wrapArgs(func_get_args(), 3);
                       ^^^^^^^^^^
@@ -103,12 +91,6 @@ WARNING notSafetyCall: potential not safety call in function isArray signature o
 WARNING notSafetyCall: potential not safety call in function isArray signature of param item at testdata/underscore/underscore.php:385
       if(!$__->isArray($next)) $next = str_split((string) $next);
                        ^^^^^
-WARNING notSafetyCall: potential not safety call in function array_intersect signature of param arrays at testdata/underscore/underscore.php:387
-      $return = array_intersect($return, $next);
-                                         ^^^^^
-WARNING notSafetyCall: potential not safety call in function is_bool signature of param value at testdata/underscore/underscore.php:420
-    return self::_wrap((is_bool($key)) ? -1 : $key);
-                                ^^^^
 WARNING notSafetyCall: potential not safety call in function reject signature of param collection at testdata/underscore/underscore.php:441
     $args = $__->reject($args, function($val) {
                         ^^^^^
@@ -298,27 +280,24 @@ WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function preg_match_all signature of param subject at testdata/underscore/underscore.php:913
       preg_match_all($ts['escape'], $code, $vars, PREG_SET_ORDER);
                                     ^^^^^
-WARNING notSafetyCall: potential not safety array access in parameter string of function trim at testdata/underscore/underscore.php:916
-          $echo = $class_name::TEMPLATE_OPEN_TAG . ' echo htmlentities(' . trim($var[1]) . '); ' . $class_name::TEMPLATE_CLOSE_TAG;
-                                                                                ^^^^^^^
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter pattern of function preg_match_all at testdata/underscore/underscore.php:920
       preg_match_all($ts['interpolate'], $code, $vars, PREG_SET_ORDER);
                      ^^^^^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function preg_match_all signature of param subject at testdata/underscore/underscore.php:920
       preg_match_all($ts['interpolate'], $code, $vars, PREG_SET_ORDER);
                                          ^^^^^
-WARNING notSafetyCall: potential not safety array access in parameter string of function trim at testdata/underscore/underscore.php:923
-          $echo = $class_name::TEMPLATE_OPEN_TAG . ' echo ' . trim($var[1]) . '; ' . $class_name::TEMPLATE_CLOSE_TAG;
-                                                                   ^^^^^^^
+WARNING notSafetyCall: potential not safety call in function preg_match_all signature of param matches at testdata/underscore/underscore.php:920
+      preg_match_all($ts['interpolate'], $code, $vars, PREG_SET_ORDER);
+                                                ^^^^^
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter pattern of function preg_match_all at testdata/underscore/underscore.php:927
       preg_match_all($ts['evaluate'], $code, $vars, PREG_SET_ORDER);
                      ^^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function preg_match_all signature of param subject at testdata/underscore/underscore.php:927
       preg_match_all($ts['evaluate'], $code, $vars, PREG_SET_ORDER);
                                       ^^^^^
-WARNING notSafetyCall: potential not safety array access in parameter string of function trim at testdata/underscore/underscore.php:930
-          $echo = $class_name::TEMPLATE_OPEN_TAG . trim($var[1]) . $class_name::TEMPLATE_CLOSE_TAG;
-                                                        ^^^^^^^
+WARNING notSafetyCall: potential not safety call in function preg_match_all signature of param matches at testdata/underscore/underscore.php:927
+      preg_match_all($ts['evaluate'], $code, $vars, PREG_SET_ORDER);
+                                             ^^^^^
 MAYBE   deprecated: Call to deprecated function create_function (since: 7.2, reason: Use anonymous functions instead, removed: 8.0) at testdata/underscore/underscore.php:940
       $func = create_function('$context', $code);
               ^^^^^^^^^^^^^^^

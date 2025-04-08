@@ -22,6 +22,12 @@ MAYBE   trailingComma: Last element in a multi-line array should have a trailing
 WARNING notSafetyCall: potential not safety array access in parameter string of function urldecode at testdata/twitter-api-php/TwitterAPIExchange.php:239
                     $oauth[$split[0]] = urldecode($split[1]);
                                                   ^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function rawurlencode signature of param string at testdata/twitter-api-php/TwitterAPIExchange.php:253
+        $composite_key = rawurlencode($consumer_secret) . '&' . rawurlencode($oauth_access_token_secret);
+                                      ^^^^^^^^^^^^^^^^
+WARNING notSafetyCall: potential not safety call in function rawurlencode signature of param string at testdata/twitter-api-php/TwitterAPIExchange.php:253
+        $composite_key = rawurlencode($consumer_secret) . '&' . rawurlencode($oauth_access_token_secret);
+                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING notSafetyCall: potential not safety call in function base64_encode signature of param string when calling function \hash_hmac at testdata/twitter-api-php/TwitterAPIExchange.php:254
         $oauth_signature = base64_encode(hash_hmac('sha1', $base_info, $composite_key, true));
                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -34,9 +40,6 @@ WARNING strictCmp: 3rd argument of in_array must be true when comparing strings 
 WARNING notSafetyCall: potential not safety call in function curl_setopt_array signature of param handle at testdata/twitter-api-php/TwitterAPIExchange.php:312
         curl_setopt_array($feed, $options);
                           ^^^^^
-WARNING notSafetyCall: potential not safety call in function curl_setopt_array signature of param options at testdata/twitter-api-php/TwitterAPIExchange.php:312
-        curl_setopt_array($feed, $options);
-                                 ^^^^^^^^
 WARNING notSafetyCall: potential not safety call in function curl_exec signature of param handle at testdata/twitter-api-php/TwitterAPIExchange.php:313
         $json = curl_exec($feed);
                           ^^^^^
@@ -61,9 +64,6 @@ WARNING notSafetyCall: potential not safety call in function rawurlencode signat
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function rawurlencode signature of param string at testdata/twitter-api-php/TwitterAPIExchange.php:345
             $return[] = rawurlencode($key) . '=' . rawurlencode($value);
                                                                 ^^^^^^
-WARNING notSafetyCall: potential not safety call in function in_array signature of param needle at testdata/twitter-api-php/TwitterAPIExchange.php:365
-            if (in_array($key, array('oauth_consumer_key', 'oauth_nonce', 'oauth_signature',
-                         ^^^^
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/twitter-api-php/TwitterAPIExchange.php:366
                 'oauth_signature_method', 'oauth_timestamp', 'oauth_token', 'oauth_version'))) {
                                                                             ^^^^^^^^^^^^^^^

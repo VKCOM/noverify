@@ -28,6 +28,9 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/idn/idn.php:119
         $idna_info = array(
                      
+WARNING notSafetyCall: potential not safety call in function mb_chr signature of param codepoint at testdata/idn/idn.php:139
+            $output .= mb_chr($code, 'utf-8');
+                              ^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function mb_strlen signature of param string at testdata/idn/idn.php:152
         $length = mb_strlen($input, 'utf-8');
                             ^^^^^^

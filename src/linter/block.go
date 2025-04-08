@@ -1226,19 +1226,24 @@ func (b *blockWalker) isTypeCompatible(varType types.Map, paramType types.Map) b
 		return true
 	}
 
-	var forcedVarType types.Map
+	var forcedVarType = types.NewMapFromMap(solver.ResolveTypes(b.r.metaInfo(), "", varType, solver.ResolverMap{}))
 
-	if varType.Len() > paramType.Len() {
-		forcedVarType = types.NewMapFromMap(solver.ResolveTypes(b.r.metaInfo(), "", varType, solver.ResolverMap{}))
-		if forcedVarType.Len() > paramType.Len() {
-			return false
-		}
-		varType = forcedVarType
+	// Attempt to merge union types if one is a subclass/implementation of the other
+	if forcedVarType.Len() > 1 {
+		metaInfo := b.r.metaInfo()
+		forcedVarType = solver.MergeUnionTypes(metaInfo, forcedVarType)
 	}
 
-	isVarBoolean := varType.IsBoolean()
-	isClass := varType.IsClass()
-	varClassName := varType.String()
+	if forcedVarType.Len() > paramType.Len() {
+		if paramType.Contains(types.WrapArrayOf("mixed")) || paramType.Contains("mixed") {
+			return true
+		}
+		return false
+	}
+
+	isVarBoolean := forcedVarType.IsBoolean()
+	isClass := forcedVarType.IsClass()
+	varClassName := forcedVarType.String()
 
 	for _, param := range paramType.Keys() {
 		// boolean case
@@ -1251,7 +1256,7 @@ func (b *blockWalker) isTypeCompatible(varType types.Map, paramType types.Map) b
 		}
 
 		// exact match
-		if varType.Contains(param) {
+		if forcedVarType.Contains(param) {
 			return true
 		}
 
@@ -1271,11 +1276,18 @@ func (b *blockWalker) isTypeCompatible(varType types.Map, paramType types.Map) b
 		}
 	}
 
-	if forcedVarType.Empty() {
-		forcedVarType = types.NewMapFromMap(solver.ResolveTypes(b.r.metaInfo(), "", varType, solver.ResolverMap{}))
-	}
 	forcedParamType := types.NewMapFromMap(solver.ResolveTypes(b.r.metaInfo(), "", paramType, solver.ResolverMap{}))
 
+	// TODO: This is bullshit because we have no good type inferring for arrays: bool[1] will be bool[]! !not bool!
+	if strings.Contains(forcedParamType.String(), "[") {
+		idx := strings.Index(forcedParamType.String(), "[")
+		arrayType := forcedParamType.String()[:idx] //nolint:gocritic
+		return forcedParamType.Contains(arrayType)
+	} else if strings.Contains(varType.String(), "[") {
+		idx := strings.Index(varType.String(), "[")
+		arrayType := varType.String()[:idx] //nolint:gocritic
+		return forcedParamType.Contains(arrayType)
+	}
 	return !forcedParamType.Intersect(forcedVarType).Empty()
 }
 

@@ -502,6 +502,41 @@ func ImplementsAbstract(info *meta.Info, className, abstractName string) bool {
 	return false
 }
 
+// IsMoreSpecific returns true if type key1 is more specific than key2.
+// That is, key1 extends/implements key2 (or in abstract sense as well)
+func IsMoreSpecific(metaInfo *meta.Info, key1, key2 string) bool {
+	return Implements(metaInfo, key1, key2) ||
+		ImplementsAbstract(metaInfo, key1, key2)
+}
+
+// MergeUnionTypes iteratively merges union types in the Map using specific-ness
+func MergeUnionTypes(metaInfo *meta.Info, m types.Map) types.Map {
+	changed := true
+	// Iteratively try to merge the union until no more changes occur
+	for changed {
+		changed = false
+		// Always re-read keys after modifications
+		keys := m.Keys()
+	outer:
+		for i := 0; i < len(keys); i++ {
+			for j := i + 1; j < len(keys); j++ {
+				key1 := keys[i]
+				key2 := keys[j]
+				if IsMoreSpecific(metaInfo, key1, key2) {
+					m = m.Erase(key2)
+					changed = true
+					break outer
+				} else if IsMoreSpecific(metaInfo, key2, key1) {
+					m = m.Erase(key1)
+					changed = true
+					break outer
+				}
+			}
+		}
+	}
+	return m
+}
+
 func implements(info *meta.Info, className, interfaceName string, visited map[string]struct{}) bool {
 	if className == interfaceName {
 		return true

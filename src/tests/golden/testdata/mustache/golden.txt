@@ -121,9 +121,6 @@ WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access 
 WARNING unused: Variable $keystr is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/mustache/src/Mustache/Compiler.php:289
         $keystr = var_export($key, true);
         ^^^^^^^
-WARNING notSafetyCall: potential not safety call in function var_export signature of param value when calling function \substr at testdata/mustache/src/Mustache/Compiler.php:373
-        $source   = var_export(substr($this->source, $start, $end - $start), true);
-                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function getFindMethod signature of param id at testdata/mustache/src/Mustache/Compiler.php:556
         $method   = $this->getFindMethod($name);
                                          ^^^^^
@@ -205,18 +202,12 @@ MAYBE   callSimplify: Could simplify to $this->stack[] = $value at testdata/must
 MAYBE   callSimplify: Could simplify to $this->blockStack[] = $value at testdata/mustache/src/Mustache/Context.php:49
         array_push($this->blockStack, $value);
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function array_shift signature of param array at testdata/mustache/src/Mustache/Context.php:130
-        $first  = array_shift($chunks);
-                              ^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function findVariableInStack signature of param id at testdata/mustache/src/Mustache/Context.php:131
         $value  = $this->findVariableInStack($first, $this->stack);
                                              ^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function findVariableInStack signature of param id at testdata/mustache/src/Mustache/Context.php:138
             $value = $this->findVariableInStack($chunk, array($value));
                                                 ^^^^^^
-WARNING notSafetyCall: potential not safety call in function array_shift signature of param array at testdata/mustache/src/Mustache/Context.php:162
-        $first  = array_shift($chunks);
-                              ^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function findVariableInStack signature of param id at testdata/mustache/src/Mustache/Context.php:174
             $value = $this->findVariableInStack($chunk, array($value));
                                                 ^^^^^^
