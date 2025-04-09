@@ -1064,11 +1064,11 @@ func (b *blockWalker) checkNotSafetyCallArgsF(args []ir.Node, fn meta.FuncInfo) 
 		case *ir.ListExpr:
 			b.checkListExprSafety(arg, fn, i, a, haveVariadic)
 		case *ir.PropertyFetchExpr:
-			b.checkPropertyFetchNotSafety(a, fn, i, haveVariadic)
+			b.checkUnifiedPropertyFetchNotSafety(a, fn, i, haveVariadic)
 		case *ir.StaticCallExpr:
 			b.checkStaticCallSafety(arg, fn, i, a, haveVariadic)
 		case *ir.StaticPropertyFetchExpr:
-			b.checkStaticPropertyFetchNullSafety(a, fn, i, haveVariadic)
+			b.checkUnifiedPropertyFetchNotSafety(a, fn, i, haveVariadic)
 		case *ir.FunctionCallExpr:
 			b.checkFunctionCallSafety(arg, fn, i, a, haveVariadic)
 		}
@@ -1585,23 +1585,49 @@ func (b *blockWalker) checkUnifiedPropertyFetchNotSafety(expr ir.Node, fn meta.F
 		finalPropType = propInfo.info.Typ
 		finalPropName = ip.Value
 	case *ir.StaticPropertyFetchExpr:
-		propInfo := resolveStaticPropertyFetch(globalMetaInfo, node)
-		if !propInfo.isFound {
-			return
+		variable, isVar := node.Property.(*ir.SimpleVar)
+		class, isClass := node.Class.(*ir.SimpleVar)
+
+		if isVar && isClass {
+			if !isClass {
+				return
+			}
+			classTyp, ok := b.ctx.sc.GetVarType(class)
+			if !ok {
+				return
+			}
+			if classTyp.Contains("null") {
+				classTyp.Erase("null")
+			}
+
+			property, found := solver.FindProperty(b.r.ctx.st.Info, classTyp.String(), "$"+variable.Name)
+			if !found {
+				return
+			}
+
+			/*			varTyp, ok := b.ctx.sc.GetVarType(variable)
+						if !ok {
+							return
+						}
+						varTyp = solver.MergeUnionTypes(b.r.metaInfo(), varTyp)*/
+
+			finalPropType = property.Info.Typ
+			finalPropName = variable.Name
+		} else {
+			propInfo := resolveStaticPropertyFetch(globalMetaInfo, node)
+			if !propInfo.isFound {
+				return
+			}
+			finalPropType = propInfo.info.Info.Typ
+			finalPropName = propInfo.propertyName
 		}
-		sv, ok := node.Property.(*ir.SimpleVar)
-		if !ok {
-			return
-		}
-		finalPropType = propInfo.info.Info.Typ
-		finalPropName = sv.Name
 	default:
 		return
 	}
 
 	b.checkingPropertyFetchSafetyCondition(expr, finalPropType, finalPropName, fn, paramIndex, haveVariadic)
 
-	for i := 1; i < len(chain)-1; i++ {
+	for i := 1; i < len(chain); i++ {
 		switch node := chain[i].(type) {
 		case *ir.PropertyFetchExpr:
 			propInfo := resolvePropertyFetch(b.ctx.sc, globalMetaInfo, b.ctx.customTypes, node, b.r.strictMixed)
@@ -1614,26 +1640,42 @@ func (b *blockWalker) checkUnifiedPropertyFetchNotSafety(expr ir.Node, fn meta.F
 					"potential null dereference when accessing property '%s'", propInfo.propertyNode.Value)
 				return
 			}
-			if propType.Len() > 1 || !propType.IsClass() {
-				b.report(node, LevelWarning, "notSafetyCall",
-					"potential not safety accessing property '%s': intermediary node is not a class", propInfo.propertyNode.Value)
-				return
-			}
+
+			propType.Iterate(func(typ string) {
+				if types.IsTrivial(typ) {
+					b.report(node, LevelWarning, "notSafetyCall",
+						"potential not safety accessing property '%s': intermediary node is not a class", propInfo.propertyNode.Value)
+					return
+				}
+			})
+			/*			if propType.Len() > 1 || !propType.IsClass() {
+						b.report(node, LevelWarning, "notSafetyCall",
+							"potential not safety accessing property '%s': intermediary node is not a class", propInfo.propertyNode.Value)
+						return
+					}*/
 		case *ir.SimpleVar:
 			varType, ok := b.ctx.sc.GetVarType(node)
 			if !ok {
 				return
 			}
+			varType = solver.MergeUnionTypes(b.r.metaInfo(), varType)
 			if types.IsTypeNullable(varType) {
 				b.report(node, LevelWarning, "notSafetyCall",
 					"potential null dereference when accessing variable '%s'", node.Name)
 				return
 			}
-			if varType.Len() > 1 || !types.IsClass(varType.String()) {
-				b.report(node, LevelWarning, "notSafetyCall",
-					"potential not safety accessing variable '%s': intermediary node is not a class", node.Name)
-				return
-			}
+			varType.Iterate(func(typ string) {
+				if types.IsTrivial(typ) {
+					b.report(node, LevelWarning, "notSafetyCall",
+						"potential not safety accessing variable '%s': intermediary node is not a class", node.Name)
+					return
+				}
+			})
+			/*			if varType.Len() > 1 || !types.IsClass(varType.String()) {
+						b.report(node, LevelWarning, "notSafetyCall",
+							"potential not safety accessing variable '%s': intermediary node is not a class", node.Name)
+						return
+					}*/
 		}
 	}
 }

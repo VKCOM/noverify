@@ -60,15 +60,24 @@ func GetClassName(cs *meta.ClassParseState, classNode ir.Node) (className string
 		className = nm.Value
 		firstPart, restParts = nm.HeadTail()
 		partsCount = nm.NumParts()
-	case *ir.SimpleVar:
-		varTyp, ok := cs.Info.GetVarType(nm)
 
-		if !ok || varTyp.Len() > 1 {
-			return "", false
-		}
+		// TODO: here we have bug with data-race. uncomment it and run e2e phprocksyd
+		/*	case *ir.SimpleVar:
+			varTyp, ok := cs.Info.GetVarType(nm)
+			varTyp = MergeUnionTypes(cs.Info, varTyp)
+			if varTyp.Contains("null") {
+				varTyp.Erase("null")
+			}
+			if !varTyp.IsClass() {
+				return "", false
+			}
 
-		return varTyp.String(), true
+			if !ok || varTyp.Len() > 1 || varTyp.Empty() {
+				return "", false
+			}
 
+			return varTyp.String(), true
+		*/
 	default:
 		return "", false
 	}
