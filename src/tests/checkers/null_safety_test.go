@@ -490,3 +490,37 @@ if ($user) {
 	}
 	test.RunAndMatch()
 }
+
+func TestPropertyFetchMiddleChainNullSafety(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class ParentTask {
+    public int $id;
+
+    public function __construct(int $id) {
+        $this->id = $id;
+    }
+}
+
+class MyTask {
+    public ?ParentTask $parent_task;
+
+    public function __construct(ParentTask $parent_task) {
+        $this->parent_task = $parent_task;
+    }
+
+    public function execute(): void {
+        processTask($this->parent_task->id);
+    }
+}
+
+function processTask(int $taskId): void {
+    echo "Processing task with ID: " . $taskId . "\n";
+}
+`)
+	test.Expect = []string{
+		"potential null dereference when accessing property 'parent_task'",
+		`Missing PHPDoc for \MyTask::execute public method`,
+	}
+	test.RunAndMatch()
+}

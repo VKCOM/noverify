@@ -60,6 +60,15 @@ func GetClassName(cs *meta.ClassParseState, classNode ir.Node) (className string
 		className = nm.Value
 		firstPart, restParts = nm.HeadTail()
 		partsCount = nm.NumParts()
+	case *ir.SimpleVar:
+		varTyp, ok := cs.Info.GetVarType(nm)
+
+		if !ok || varTyp.Len() > 1 {
+			return "", false
+		}
+
+		return varTyp.String(), true
+
 	default:
 		return "", false
 	}

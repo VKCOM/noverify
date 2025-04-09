@@ -412,6 +412,12 @@ MAYBE   missingPhpdoc: Missing PHPDoc for \League\Flysystem\Adapter\Polyfill\Str
 MAYBE   deprecated: Has deprecated class Directory at testdata/flysystem/src/Directory.php:8
 class Directory extends Handler
 ^
+WARNING notNullSafetyFunctionArgumentPropertyFetch: potential null dereference when accessing property 'path' at testdata/flysystem/src/Directory.php:17
+        return $this->filesystem->deleteDir($this->path);
+                                            ^^^^^^^^^^^
+WARNING notNullSafetyFunctionArgumentPropertyFetch: potential null dereference when accessing property 'path' at testdata/flysystem/src/Directory.php:29
+        return $this->filesystem->listContents($this->path, $recursive);
+                                               ^^^^^^^^^^^
 MAYBE   deprecated: Has deprecated class File at testdata/flysystem/src/File.php:8
 class File extends Handler
 ^
