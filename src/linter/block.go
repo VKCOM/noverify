@@ -1400,91 +1400,6 @@ func (b *blockWalker) checkListExprSafety(arg ir.Node, fn meta.FuncInfo, paramIn
 	}
 }
 
-func (b *blockWalker) getPropertyComputedType(expr ir.Node) (meta.ClassInfo, types.Map) {
-	var baseNode ir.Node
-	var propertyNode ir.Node
-
-	switch e := expr.(type) {
-	case *ir.PropertyFetchExpr:
-		baseNode = e.Variable
-		propertyNode = e.Property
-	case *ir.StaticPropertyFetchExpr:
-		baseNode = e.Class
-		propertyNode = e.Property
-	default:
-		return meta.ClassInfo{}, types.Map{}
-	}
-
-	var classInfo meta.ClassInfo
-	var ok bool
-	var varType string
-
-	if baseCall, ok := baseNode.(*ir.SimpleVar); ok {
-		varInfo, found := b.ctx.sc.GetVar(baseCall)
-		if !found {
-			return meta.ClassInfo{}, types.Map{}
-		}
-		varType = varInfo.Type.String()
-	} else if nameNode, ok := baseNode.(*ir.Name); ok {
-		varType = "\\" + nameNode.Value
-	} else {
-		return meta.ClassInfo{}, types.Map{}
-	}
-
-	classInfo, ok = b.r.ctx.st.Info.GetClass(varType)
-	if !ok {
-		return meta.ClassInfo{}, types.Map{}
-	}
-
-	switch prop := propertyNode.(type) {
-	case *ir.Identifier:
-		propertyInfoFromClass := classInfo.Properties[prop.Value]
-		return classInfo, propertyInfoFromClass.Typ
-	case *ir.SimpleVar:
-		// static: $maybeClass::$value
-		propertyInfoFromClass := classInfo.Properties["$"+prop.Name]
-		return classInfo, propertyInfoFromClass.Typ
-	default:
-		return meta.ClassInfo{}, types.Map{}
-	}
-}
-
-func (b *blockWalker) checkPropertyIntermediaryNodeSafety(node *ir.PropertyFetchExpr, propType types.Map, propName string) {
-	if types.IsTypeNullable(propType) {
-		b.report(node, LevelWarning, "notNullSafetyFunctionArgumentPropertyFetch",
-			"potential null dereference when accessing property '%s'", propName)
-		return
-	}
-	if propType.Len() > 1 {
-		b.report(node, LevelWarning, "notSafetyCall",
-			"potential not safety accessing property '%s': intermediary node is not a class", propName)
-		return
-	}
-	if !propType.IsClass() {
-		b.report(node, LevelWarning, "notSafetyCall",
-			"potential not safety accessing property '%s': intermediary node is not a class", propName)
-		return
-	}
-}
-
-func (b *blockWalker) checkPropertyIntermediaryVariableSafety(node *ir.SimpleVar, varType types.Map, varName string) {
-	if types.IsTypeNullable(varType) {
-		b.report(node, LevelWarning, "notNullSafetyFunctionArgumentPropertyFetch",
-			"potential null dereference when accessing property '%s'", varName)
-		return
-	}
-	if varType.Len() > 1 {
-		b.report(node, LevelWarning, "notSafetyCall",
-			"potential not safety accessing property '%s': intermediary node is not a class", varName)
-		return
-	}
-	if !types.IsClass(varType.String()) {
-		b.report(node, LevelWarning, "notSafetyCall",
-			"potential not safety accessing property '%s': intermediary node is not a class", varName)
-		return
-	}
-}
-
 // checkingPropertyFetchSafetyCondition verifies the safety of the final property fetch
 // (the rightmost node in the chain) by checking null-safety and type compatibility
 func (b *blockWalker) checkingPropertyFetchSafetyCondition(
@@ -1561,7 +1476,6 @@ func (b *blockWalker) collectUnifiedPropertyFetchChain(expr ir.Node) []ir.Node {
 // checkUnifiedPropertyFetchNotSafety combines checks for instance and static property access
 // For the final (rightmost) node (the one being substituted), we check null and type safety
 // and all intermediate nodes (except the base one) must be classes
-// TODO: THIS IS MAIN!!!
 func (b *blockWalker) checkUnifiedPropertyFetchNotSafety(expr ir.Node, fn meta.FuncInfo, paramIndex int, haveVariadic bool) {
 	chain := b.collectUnifiedPropertyFetchChain(expr)
 	if len(chain) == 0 {
@@ -1605,12 +1519,6 @@ func (b *blockWalker) checkUnifiedPropertyFetchNotSafety(expr ir.Node, fn meta.F
 				return
 			}
 
-			/*			varTyp, ok := b.ctx.sc.GetVarType(variable)
-						if !ok {
-							return
-						}
-						varTyp = solver.MergeUnionTypes(b.r.metaInfo(), varTyp)*/
-
 			finalPropType = property.Info.Typ
 			finalPropName = variable.Name
 		} else {
@@ -1618,6 +1526,7 @@ func (b *blockWalker) checkUnifiedPropertyFetchNotSafety(expr ir.Node, fn meta.F
 			if !propInfo.isFound {
 				return
 			}
+
 			finalPropType = propInfo.info.Info.Typ
 			finalPropName = propInfo.propertyName
 		}
@@ -1648,11 +1557,6 @@ func (b *blockWalker) checkUnifiedPropertyFetchNotSafety(expr ir.Node, fn meta.F
 					return
 				}
 			})
-			/*			if propType.Len() > 1 || !propType.IsClass() {
-						b.report(node, LevelWarning, "notSafetyCall",
-							"potential not safety accessing property '%s': intermediary node is not a class", propInfo.propertyNode.Value)
-						return
-					}*/
 		case *ir.SimpleVar:
 			varType, ok := b.ctx.sc.GetVarType(node)
 			if !ok {
@@ -1671,163 +1575,8 @@ func (b *blockWalker) checkUnifiedPropertyFetchNotSafety(expr ir.Node, fn meta.F
 					return
 				}
 			})
-			/*			if varType.Len() > 1 || !types.IsClass(varType.String()) {
-						b.report(node, LevelWarning, "notSafetyCall",
-							"potential not safety accessing variable '%s': intermediary node is not a class", node.Name)
-						return
-					}*/
 		}
 	}
-}
-
-// TODO: only for test racing
-func (b *blockWalker) checkPropertyFetchNotSafety(expr *ir.PropertyFetchExpr, fn meta.FuncInfo, paramIndex int, haveVariadic bool) {
-	chain := b.collectUnifiedPropertyFetchChain(expr)
-	if len(chain) == 0 {
-		return
-	}
-
-	globalMetaInfo := b.linter.classParseState()
-
-	// --- Process final (rightmost) node (expected to be instance property fetch)
-	node, ok := chain[0].(*ir.PropertyFetchExpr)
-	if !ok {
-		return
-	}
-	propInfo := resolvePropertyFetch(b.ctx.sc, globalMetaInfo, b.ctx.customTypes, node, b.r.strictMixed)
-	if !propInfo.isFound {
-		return
-	}
-	ip, ok := node.Property.(*ir.Identifier)
-	if !ok {
-		return
-	}
-	finalPropType := propInfo.info.Typ
-	finalPropName := ip.Value
-
-	b.checkingPropertyFetchSafetyCondition(expr, finalPropType, finalPropName, fn, paramIndex, haveVariadic)
-
-	// --- Process intermediate nodes (excluding the base node)
-	for i := 1; i < len(chain)-1; i++ {
-		switch node := chain[i].(type) {
-		case *ir.PropertyFetchExpr:
-			propInfo := resolvePropertyFetch(b.ctx.sc, globalMetaInfo, b.ctx.customTypes, node, b.r.strictMixed)
-			if !propInfo.isFound {
-				return
-			}
-			propType := propInfo.info.Typ
-			if types.IsTypeNullable(propType) {
-				b.report(node, LevelWarning, "notSafetyCall",
-					"potential null dereference when accessing property '%s'", propInfo.propertyNode.Value)
-				return
-			}
-			if propType.Len() > 1 || !propType.IsClass() {
-				b.report(node, LevelWarning, "notSafetyCall",
-					"potential not safety accessing property '%s': intermediary node is not a class", propInfo.propertyNode.Value)
-				return
-			}
-		case *ir.SimpleVar:
-			varType, ok := b.ctx.sc.GetVarType(node)
-			if !ok {
-				return
-			}
-			if types.IsTypeNullable(varType) {
-				b.report(node, LevelWarning, "notSafetyCall",
-					"potential null dereference when accessing variable '%s'", node.Name)
-				return
-			}
-			if varType.Len() > 1 || !types.IsClass(varType.String()) {
-				b.report(node, LevelWarning, "notSafetyCall",
-					"potential not safety accessing variable '%s': intermediary node is not a class", node.Name)
-				return
-			}
-		}
-	}
-}
-
-// TODO: only for test racing
-func (b *blockWalker) checkStaticPropertyFetchNotSafety(expr *ir.StaticPropertyFetchExpr, fn meta.FuncInfo, paramIndex int, haveVariadic bool) {
-	chain := b.collectUnifiedPropertyFetchChain(expr)
-	if len(chain) == 0 {
-		return
-	}
-
-	globalMetaInfo := b.linter.classParseState()
-
-	// --- Process final (rightmost) node (expected to be static property fetch)
-	node, ok := chain[0].(*ir.StaticPropertyFetchExpr)
-	if !ok {
-		return
-	}
-	propInfo := resolveStaticPropertyFetch(globalMetaInfo, node)
-	if !propInfo.isFound {
-		return
-	}
-	sv, ok := node.Property.(*ir.SimpleVar)
-	if !ok {
-		return
-	}
-	finalPropType := propInfo.info.Info.Typ
-	finalPropName := sv.Name
-
-	b.checkingPropertyFetchSafetyCondition(expr, finalPropType, finalPropName, fn, paramIndex, haveVariadic)
-
-	// --- Process intermediate nodes (excluding the base node)
-	for i := 1; i < len(chain)-1; i++ {
-		switch node := chain[i].(type) {
-		case *ir.StaticPropertyFetchExpr:
-			propInfo := resolveStaticPropertyFetch(globalMetaInfo, node)
-			if !propInfo.isFound {
-				return
-			}
-			propType := propInfo.info.Info.Typ
-			if types.IsTypeNullable(propType) {
-				b.report(node, LevelWarning, "notSafetyCall",
-					"potential null dereference when accessing static property '%s'", propInfo.propertyName)
-				return
-			}
-			if propType.Len() > 1 || !propType.IsClass() {
-				b.report(node, LevelWarning, "notSafetyCall",
-					"potential not safety accessing static property '%s': intermediary node is not a class", propInfo.propertyName)
-				return
-			}
-		case *ir.SimpleVar:
-			varType, ok := b.ctx.sc.GetVarType(node)
-			if !ok {
-				return
-			}
-			if types.IsTypeNullable(varType) {
-				b.report(node, LevelWarning, "notSafetyCall",
-					"potential null dereference when accessing variable '%s'", node.Name)
-				return
-			}
-			if varType.Len() > 1 || !types.IsClass(varType.String()) {
-				b.report(node, LevelWarning, "notSafetyCall",
-					"potential not safety accessing variable '%s': intermediary node is not a class", node.Name)
-				return
-			}
-		}
-	}
-}
-
-// TODO: old variant
-func (b *blockWalker) checkStaticPropertyFetchNullSafety(expr *ir.StaticPropertyFetchExpr, fn meta.FuncInfo, paramIndex int, haveVariadic bool) {
-	// Recursively check the left part of the chain if it is also a property fetch.
-	if nested, ok := expr.Class.(*ir.StaticPropertyFetchExpr); ok {
-		b.checkStaticPropertyFetchNullSafety(nested, fn, paramIndex, haveVariadic)
-	}
-
-	classInfo, propType := b.getPropertyComputedType(expr)
-	if classInfo.Name == "" || propType.Empty() {
-		return
-	}
-
-	prp, ok := expr.Property.(*ir.SimpleVar)
-	if !ok {
-		return
-	}
-
-	b.checkingPropertyFetchSafetyCondition(expr, propType, prp.Name, fn, paramIndex, haveVariadic)
 }
 
 func (b *blockWalker) handleCallArgs(args []ir.Node, fn meta.FuncInfo) {
