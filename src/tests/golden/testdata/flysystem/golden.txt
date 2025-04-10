@@ -13,9 +13,6 @@ WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access 
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter string2 of function strnatcmp at testdata/flysystem/src/Adapter/AbstractFtpAdapter.php:379
             return strnatcmp($one['path'], $two['path']);
                                            ^^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function usort signature of param callback at testdata/flysystem/src/Adapter/AbstractFtpAdapter.php:382
-        usort($result, $compare);
-                       ^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function forFtpSystemType signature of param systemType at testdata/flysystem/src/Adapter/AbstractFtpAdapter.php:407
         throw NotSupportedException::forFtpSystemType($systemType);
                                                       ^^^^^^^^^^^
@@ -43,15 +40,9 @@ WARNING notSafetyCall: potential not safety call in function strtr signature of 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function str_split signature of param string at testdata/flysystem/src/Adapter/AbstractFtpAdapter.php:576
             return array_sum(str_split($part));
                                        ^^^^^
-WARNING notSafetyCall: potential not safety call in function array_map signature of param callback at testdata/flysystem/src/Adapter/AbstractFtpAdapter.php:580
-        return octdec(implode('', array_map($mapper, $parts)));
-                                            ^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function preg_match signature of param subject at testdata/flysystem/src/Adapter/AbstractFtpAdapter.php:593
             return $line !== '' && ! preg_match('#.* \.(\.)?$|^total#', $line);
                                                                         ^^^^^
-WARNING notSafetyCall: potential not safety call in function array_filter signature of param callback at testdata/flysystem/src/Adapter/AbstractFtpAdapter.php:596
-        return array_filter($list, $filter);
-                                   ^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function getMetadata signature of param path at testdata/flysystem/src/Adapter/AbstractFtpAdapter.php:604
         return $this->getMetadata($path);
                                   ^^^^^
@@ -517,9 +508,6 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function ucfirst signature of param string at testdata/flysystem/src/Plugin/GetWithMetadata.php:42
             if ( ! method_exists($this->filesystem, $method = 'get' . ucfirst($key))) {
                                                                               ^^^^
-WARNING notSafetyCall: potential not safety call in function array_filter signature of param callback at testdata/flysystem/src/Plugin/ListFiles.php:33
-        return array_values(array_filter($contents, $filter));
-                                                    ^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function call_user_func_array signature of param callback at testdata/flysystem/src/Plugin/PluggableTrait.php:72
         return call_user_func_array($callback, $arguments);
                                     ^^^^^^^^^

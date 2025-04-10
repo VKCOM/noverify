@@ -1244,6 +1244,7 @@ func (b *blockWalker) isTypeCompatible(varType types.Map, paramType types.Map) b
 	isVarBoolean := forcedVarType.IsBoolean()
 	isClass := forcedVarType.IsClass()
 	varClassName := forcedVarType.String()
+	isClosure := types.IsClosure(forcedVarType.String())
 
 	for _, param := range paramType.Keys() {
 		// boolean case
@@ -1278,6 +1279,9 @@ func (b *blockWalker) isTypeCompatible(varType types.Map, paramType types.Map) b
 
 	forcedParamType := types.NewMapFromMap(solver.ResolveTypes(b.r.metaInfo(), "", paramType, solver.ResolverMap{}))
 
+	if isClosure && forcedParamType.Contains("callable") {
+		return true
+	}
 	// TODO: This is bullshit because we have no good type inferring for arrays: bool[1] will be bool[]! !not bool!
 	if strings.Contains(forcedParamType.String(), "[") {
 		idx := strings.Index(forcedParamType.String(), "[")
