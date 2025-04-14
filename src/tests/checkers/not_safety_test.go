@@ -16,7 +16,7 @@ $var = false;
 test($var);
 `)
 	test.Expect = []string{
-		"not safety call in function test signature of param",
+		"potentially not safe call in function test signature of param",
 	}
 	test.RunAndMatch()
 }
@@ -30,7 +30,7 @@ function test(string $s): void {
 test(false);
 `)
 	test.Expect = []string{
-		"potential not safety access in parameter s of function test",
+		"potentially not safe access in parameter s of function test",
 	}
 	test.RunAndMatch()
 }
@@ -62,7 +62,7 @@ $arr = [false];
 test($arr[0]);
 `)
 	test.Expect = []string{
-		"not safety array access in parameter s of function test",
+		"potentially not safe array access in parameter s of function test",
 	}
 	test.RunAndMatch()
 }
@@ -91,7 +91,7 @@ list($a) = [false];
 test($a);
 `)
 	test.Expect = []string{
-		"not safety call in function test signature of param s",
+		"potentially not safe call in function test signature of param s",
 	}
 	test.RunAndMatch()
 }
@@ -108,7 +108,7 @@ function test(string $s): void {
 test(C::$value);
 `)
 	test.Expect = []string{
-		"potential not safety accessing property 'value'",
+		"potentially not safe accessing property 'value'",
 	}
 	test.RunAndMatch()
 }
@@ -125,7 +125,7 @@ function test(string $s): void {
 test(getValue());
 `)
 	test.Expect = []string{
-		"not safety call in function test signature of param s when calling function \\getValue",
+		"potentially not safe call in function test signature of param s when calling function \\getValue",
 	}
 	test.RunAndMatch()
 }
@@ -185,7 +185,7 @@ $с = $b->do();
 	test.Expect = []string{
 		"Missing PHPDoc for \\User::do public method",
 		"Call to undefined method",
-		"potential not safety call in b when accessing method",
+		"potentially not safe call in b when accessing method",
 	}
 	test.RunAndMatch()
 }
@@ -211,7 +211,7 @@ $a = getUser()->do();
 `)
 	test.Expect = []string{
 		"Missing PHPDoc for \\User::do public method",
-		"potential not safety call in \\getUser when accessing method",
+		"potentially not safe call in \\getUser when accessing method",
 	}
 	test.RunAndMatch()
 }
@@ -225,7 +225,7 @@ function testValue(string $value): void {
 testValue(false);
 `)
 	test.Expect = []string{
-		"potential not safety access in parameter value of function testValue",
+		"potentially not safe access in parameter value of function testValue",
 	}
 	test.RunAndMatch()
 }
@@ -247,7 +247,7 @@ test(A::hello());
 `)
 	test.Expect = []string{
 		"Missing PHPDoc for \\A::hello public method",
-		"not safety static call in function test signature of param s",
+		"potentially not safe static call in function test signature of param s",
 	}
 	test.RunAndMatch()
 }
@@ -268,7 +268,7 @@ testValue(falseFunc());
 }
 `)
 	test.Expect = []string{
-		"not safety call in function testValue signature of param value when calling function \\falseFunc",
+		"potentially not safe call in function testValue signature of param value when calling function \\falseFunc",
 		"Unreachable code",
 	}
 	test.RunAndMatch()
@@ -292,7 +292,7 @@ $a = new A();
 test($a->b);
 `)
 	test.Expect = []string{
-		"potential not safety accessing property 'b'",
+		"potentially not safe accessing property 'b'",
 	}
 	test.RunAndMatch()
 }
@@ -317,7 +317,7 @@ $b = $x->name;
 `)
 	test.Expect = []string{
 		"Property {int}->name does not exist",
-		"potential not safety call when accessing property",
+		"potentially not safe call when accessing property",
 	}
 	test.RunAndMatch()
 }
@@ -342,7 +342,7 @@ $b = $x->name;
 `)
 	test.Expect = []string{
 		"Property {int}->name does not exist",
-		"potential not safety call when accessing property",
+		"potentially not safe call when accessing property",
 	}
 	test.RunAndMatch()
 }
@@ -452,9 +452,9 @@ if ($user) {
 }
 `)
 	test.Expect = []string{
-		"potential not safety call when accessing property",
+		"potentially not safe call when accessing property",
 		"Property {false}->name does not exist",
-		"potential not safety call when accessing property",
+		"potentially not safe call when accessing property",
 	}
 	test.RunAndMatch()
 }
@@ -480,9 +480,9 @@ if (!$user) {
 }
 `)
 	test.Expect = []string{
-		"potential not safety call when accessing property",
+		"potentially not safe call when accessing property",
 		"Property {false}->name does not exist",
-		"potential not safety call when accessing property",
+		"potentially not safe call when accessing property",
 	}
 	test.RunAndMatch()
 }

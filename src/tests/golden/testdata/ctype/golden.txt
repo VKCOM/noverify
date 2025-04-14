@@ -1,34 +1,34 @@
-WARNING notSafetyCall: potential not safety call in function preg_match signature of param subject at testdata/ctype/ctype.php:36
+WARNING notSafeCall: potentially not safe call in function preg_match signature of param subject at testdata/ctype/ctype.php:36
         return \is_string($text) && '' !== $text && !preg_match('/[^A-Za-z0-9]/', $text);
                                                                                   ^^^^^
-WARNING notSafetyCall: potential not safety call in function preg_match signature of param subject at testdata/ctype/ctype.php:52
+WARNING notSafeCall: potentially not safe call in function preg_match signature of param subject at testdata/ctype/ctype.php:52
         return \is_string($text) && '' !== $text && !preg_match('/[^A-Za-z]/', $text);
                                                                                ^^^^^
-WARNING notSafetyCall: potential not safety call in function preg_match signature of param subject at testdata/ctype/ctype.php:68
+WARNING notSafeCall: potentially not safe call in function preg_match signature of param subject at testdata/ctype/ctype.php:68
         return \is_string($text) && '' !== $text && !preg_match('/[^\x00-\x1f\x7f]/', $text);
                                                                                       ^^^^^
-WARNING notSafetyCall: potential not safety call in function preg_match signature of param subject at testdata/ctype/ctype.php:84
+WARNING notSafeCall: potentially not safe call in function preg_match signature of param subject at testdata/ctype/ctype.php:84
         return \is_string($text) && '' !== $text && !preg_match('/[^0-9]/', $text);
                                                                             ^^^^^
 MAYBE   regexpSimplify: May re-write '/[^0-9]/' as '/\D/' at testdata/ctype/ctype.php:84
         return \is_string($text) && '' !== $text && !preg_match('/[^0-9]/', $text);
                                                                 ^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function preg_match signature of param subject at testdata/ctype/ctype.php:100
+WARNING notSafeCall: potentially not safe call in function preg_match signature of param subject at testdata/ctype/ctype.php:100
         return \is_string($text) && '' !== $text && !preg_match('/[^!-~]/', $text);
                                                                             ^^^^^
 WARNING regexpVet: suspicious char range '!-~' in [^!-~] at testdata/ctype/ctype.php:100
         return \is_string($text) && '' !== $text && !preg_match('/[^!-~]/', $text);
                                                                 ^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function preg_match signature of param subject at testdata/ctype/ctype.php:116
+WARNING notSafeCall: potentially not safe call in function preg_match signature of param subject at testdata/ctype/ctype.php:116
         return \is_string($text) && '' !== $text && !preg_match('/[^a-z]/', $text);
                                                                             ^^^^^
-WARNING notSafetyCall: potential not safety call in function preg_match signature of param subject at testdata/ctype/ctype.php:132
+WARNING notSafeCall: potentially not safe call in function preg_match signature of param subject at testdata/ctype/ctype.php:132
         return \is_string($text) && '' !== $text && !preg_match('/[^ -~]/', $text);
                                                                             ^^^^^
 WARNING regexpVet: suspicious char range ' -~' in [^ -~] at testdata/ctype/ctype.php:132
         return \is_string($text) && '' !== $text && !preg_match('/[^ -~]/', $text);
                                                                 ^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function preg_match signature of param subject at testdata/ctype/ctype.php:148
+WARNING notSafeCall: potentially not safe call in function preg_match signature of param subject at testdata/ctype/ctype.php:148
         return \is_string($text) && '' !== $text && !preg_match('/[^!-\/\:-@\[-`\{-~]/', $text);
                                                                                          ^^^^^
 MAYBE   regexpSimplify: May re-write '/[^!-\/\:-@\[-`\{-~]/' as '/[^!-\/:-@\[-`\{-~]/' at testdata/ctype/ctype.php:148
@@ -37,18 +37,18 @@ MAYBE   regexpSimplify: May re-write '/[^!-\/\:-@\[-`\{-~]/' as '/[^!-\/:-@\[-`\
 WARNING regexpVet: suspicious char range '!-\/' in [^!-\/\:-@\[-`\{-~] at testdata/ctype/ctype.php:148
         return \is_string($text) && '' !== $text && !preg_match('/[^!-\/\:-@\[-`\{-~]/', $text);
                                                                 ^^^^^^^^^^^^^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function preg_match signature of param subject at testdata/ctype/ctype.php:164
+WARNING notSafeCall: potentially not safe call in function preg_match signature of param subject at testdata/ctype/ctype.php:164
         return \is_string($text) && '' !== $text && !preg_match('/[^\s]/', $text);
                                                                            ^^^^^
 MAYBE   regexpSimplify: May re-write '/[^\s]/' as '/\S/' at testdata/ctype/ctype.php:164
         return \is_string($text) && '' !== $text && !preg_match('/[^\s]/', $text);
                                                                 ^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function preg_match signature of param subject at testdata/ctype/ctype.php:180
+WARNING notSafeCall: potentially not safe call in function preg_match signature of param subject at testdata/ctype/ctype.php:180
         return \is_string($text) && '' !== $text && !preg_match('/[^A-Z]/', $text);
                                                                             ^^^^^
-WARNING notSafetyCall: potential not safety call in function preg_match signature of param subject at testdata/ctype/ctype.php:196
+WARNING notSafeCall: potentially not safe call in function preg_match signature of param subject at testdata/ctype/ctype.php:196
         return \is_string($text) && '' !== $text && !preg_match('/[^A-Fa-f0-9]/', $text);
                                                                                   ^^^^^
-WARNING notSafetyCall: potential not safety call in function chr signature of param codepoint at testdata/ctype/ctype.php:225
+WARNING notSafeCall: potentially not safe call in function chr signature of param codepoint at testdata/ctype/ctype.php:225
         return \chr($int);
                     ^^^^

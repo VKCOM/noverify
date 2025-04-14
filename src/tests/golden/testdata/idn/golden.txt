@@ -28,7 +28,7 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/idn/idn.php:119
         $idna_info = array(
                      
-WARNING notSafetyCall: potential not safety call in function mb_chr signature of param codepoint at testdata/idn/idn.php:139
+WARNING notSafeCall: potentially not safe call in function mb_chr signature of param codepoint at testdata/idn/idn.php:139
             $output .= mb_chr($code, 'utf-8');
                               ^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function mb_strlen signature of param string at testdata/idn/idn.php:152
@@ -67,7 +67,7 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function substr signature of param string at testdata/idn/idn.php:249
             $output = substr($input, 0, $pos++);
                              ^^^^^^
-WARNING notSafetyCall: potential not safety call in function strlen signature of param string at testdata/idn/idn.php:254
+WARNING notSafeCall: potentially not safe call in function strlen signature of param string at testdata/idn/idn.php:254
         $outputLength = \strlen($output);
                                 ^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function strlen signature of param string at testdata/idn/idn.php:255
@@ -79,15 +79,15 @@ MAYBE   assignOp: Could rewrite as `$n += (int) ($i / $outputLength)` at testdat
 MAYBE   assignOp: Could rewrite as `$i %= $outputLength` at testdata/idn/idn.php:275
             $i = $i % $outputLength;
             ^^^^^^^^^^^^^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function mb_substr signature of param string at testdata/idn/idn.php:276
+WARNING notSafeCall: potentially not safe call in function mb_substr signature of param string at testdata/idn/idn.php:276
             $output = mb_substr($output, 0, $i, 'utf-8').mb_chr($n, 'utf-8').mb_substr($output, $i, $outputLength - 1, 'utf-8');
                                 ^^^^^^^
-WARNING notSafetyCall: potential not safety call in function mb_substr signature of param length at testdata/idn/idn.php:276
+WARNING notSafeCall: potentially not safe call in function mb_substr signature of param length at testdata/idn/idn.php:276
             $output = mb_substr($output, 0, $i, 'utf-8').mb_chr($n, 'utf-8').mb_substr($output, $i, $outputLength - 1, 'utf-8');
                                             ^^
-WARNING notSafetyCall: potential not safety call in function mb_substr signature of param string at testdata/idn/idn.php:276
+WARNING notSafeCall: potentially not safe call in function mb_substr signature of param string at testdata/idn/idn.php:276
             $output = mb_substr($output, 0, $i, 'utf-8').mb_chr($n, 'utf-8').mb_substr($output, $i, $outputLength - 1, 'utf-8');
                                                                                        ^^^^^^^
-WARNING notSafetyCall: potential not safety call in function mb_substr signature of param start at testdata/idn/idn.php:276
+WARNING notSafeCall: potentially not safe call in function mb_substr signature of param start at testdata/idn/idn.php:276
             $output = mb_substr($output, 0, $i, 'utf-8').mb_chr($n, 'utf-8').mb_substr($output, $i, $outputLength - 1, 'utf-8');
                                                                                                 ^^

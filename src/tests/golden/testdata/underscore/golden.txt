@@ -19,13 +19,13 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:113
     $return = array();
               ^^^^^^^
-WARNING notSafetyCall: potential not safety call in function first signature of param collection at testdata/underscore/underscore.php:139
+WARNING notSafeCall: potentially not safe call in function first signature of param collection at testdata/underscore/underscore.php:139
     list($collection, $function_name) = $__->first($args, 2);
                                                    ^^^^^
-WARNING notSafetyCall: potential not safety call in function map signature of param collection at testdata/underscore/underscore.php:161
+WARNING notSafeCall: potentially not safe call in function map signature of param collection at testdata/underscore/underscore.php:161
     if(!is_null($iterator)) $collection = $__->map($collection, $iterator);
                                                    ^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function map signature of param collection at testdata/underscore/underscore.php:177
+WARNING notSafeCall: potentially not safe call in function map signature of param collection at testdata/underscore/underscore.php:177
     if(!is_null($iterator)) $collection = $__->map($collection, $iterator);
                                                    ^^^^^^^^^^^
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:193
@@ -49,25 +49,25 @@ MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at tes
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function array_splice signature of param offset at testdata/underscore/underscore.php:262
     return self::_wrap(array_splice($collection, $index));
                                                  ^^^^^^
-WARNING notSafetyCall: potential not safety call in function first signature of param n at testdata/underscore/underscore.php:275
+WARNING notSafeCall: potentially not safe call in function first signature of param n at testdata/underscore/underscore.php:275
     return self::_wrap($__->first($collection, $first_index));
                                                ^^^^^^^^^^^^
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:284
     if($n === 0) $result = array();
                            ^^^^^^^
-WARNING notSafetyCall: potential not safety call in function rest signature of param collection at testdata/underscore/underscore.php:288
+WARNING notSafeCall: potentially not safe call in function rest signature of param collection at testdata/underscore/underscore.php:288
       $result = $__->rest($collection, -$n);
                           ^^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function select signature of param collection at testdata/underscore/underscore.php:302
+WARNING notSafeCall: potentially not safe call in function select signature of param collection at testdata/underscore/underscore.php:302
     return self::_wrap($__->select($collection, function($val) {
                                    ^^^^^^^^^^^
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:314
     $return = array();
               ^^^^^^^
-WARNING notSafetyCall: potential not safety call in function flatten signature of param collection at testdata/underscore/underscore.php:319
+WARNING notSafeCall: potentially not safe call in function flatten signature of param collection at testdata/underscore/underscore.php:319
           $return = array_merge($return, ($shallow) ? $item : $__->flatten($item));
                                                                            ^^^^^
-WARNING notSafetyCall: potential not safety call in function rest signature of param collection at testdata/underscore/underscore.php:339
+WARNING notSafeCall: potentially not safe call in function rest signature of param collection at testdata/underscore/underscore.php:339
     $removes = $__->rest($args);
                          ^^^^^
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:360
@@ -79,19 +79,19 @@ MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at tes
 WARNING unused: Variable $is_sorted is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/underscore/underscore.php:356
     list($collection, $is_sorted, $iterator) = self::_wrapArgs(func_get_args(), 3);
                       ^^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function first signature of param collection at testdata/underscore/underscore.php:383
+WARNING notSafeCall: potentially not safe call in function first signature of param collection at testdata/underscore/underscore.php:383
     $return = $__->first($arrays);
                          ^^^^^^^
-WARNING notSafetyCall: potential not safety call in function rest signature of param collection at testdata/underscore/underscore.php:384
+WARNING notSafeCall: potentially not safe call in function rest signature of param collection at testdata/underscore/underscore.php:384
     foreach($__->rest($arrays) as $next) {
                       ^^^^^^^
-WARNING notSafetyCall: potential not safety call in function isArray signature of param item at testdata/underscore/underscore.php:385
+WARNING notSafeCall: potentially not safe call in function isArray signature of param item at testdata/underscore/underscore.php:385
       if(!$__->isArray($next)) $next = str_split((string) $next);
                        ^^^^^
-WARNING notSafetyCall: potential not safety call in function isArray signature of param item at testdata/underscore/underscore.php:385
+WARNING notSafeCall: potentially not safe call in function isArray signature of param item at testdata/underscore/underscore.php:385
       if(!$__->isArray($next)) $next = str_split((string) $next);
                        ^^^^^
-WARNING notSafetyCall: potential not safety call in function reject signature of param collection at testdata/underscore/underscore.php:441
+WARNING notSafeCall: potentially not safe call in function reject signature of param collection at testdata/underscore/underscore.php:441
     $args = $__->reject($args, function($val) {
                         ^^^^^
 MAYBE   arrayAccess: Array access to non-array type \__|mixed at testdata/underscore/underscore.php:448
@@ -130,10 +130,10 @@ MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at tes
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function range signature of param step at testdata/underscore/underscore.php:458
     $results = range($start, $stop, $step);
                                     ^^^^^
-WARNING notSafetyCall: potential not safety call in function map signature of param collection at testdata/underscore/underscore.php:475
+WARNING notSafeCall: potentially not safe call in function map signature of param collection at testdata/underscore/underscore.php:475
     $num_return_arrays = $__->max($__->map($arrays, function($array) {
                                            ^^^^^^^
-WARNING notSafetyCall: potential not safety call in function range signature of param stop at testdata/underscore/underscore.php:478
+WARNING notSafeCall: potentially not safe call in function range signature of param stop at testdata/underscore/underscore.php:478
     $return_arrays = $__->range($num_return_arrays);
                                 ^^^^^^^^^^^^^^^^^^
 MAYBE   arrayAccess: Array access to non-array type \__|mixed at testdata/underscore/underscore.php:480
@@ -160,13 +160,13 @@ WARNING unused: Variable $v is unused (use $_ to ignore this inspection or speci
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:497
     $results = array();
                ^^^^^^^
-WARNING notSafetyCall: potential not safety call in function first signature of param collection when calling function \array_keys at testdata/underscore/underscore.php:503
+WARNING notSafeCall: potentially not safe call in function first signature of param collection when calling function \array_keys at testdata/underscore/underscore.php:503
     $first_key = $__->first(array_keys($results));
                             ^^^^^^^^^^^^^^^^^^^^
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:514
     $results = array();
                ^^^^^^^
-WARNING notSafetyCall: potential not safety call in function first signature of param collection when calling function \array_keys at testdata/underscore/underscore.php:520
+WARNING notSafeCall: potentially not safe call in function first signature of param collection when calling function \array_keys at testdata/underscore/underscore.php:520
     $first_key = $__->first(array_keys($results));
                             ^^^^^^^^^^^^^^^^^^^^
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:529
@@ -184,13 +184,13 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at testdata/underscore/underscore.php:549
       if(!array_key_exists($key, $result)) $result[$key] = array();
                                                            ^^^^^^^
-WARNING notSafetyCall: potential not safety call in function array_slice signature of param offset at testdata/underscore/underscore.php:567
+WARNING notSafeCall: potentially not safe call in function array_slice signature of param offset at testdata/underscore/underscore.php:567
       $midpoint_values = array_slice($collection, $midpoint, 1);
                                                   ^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function array_slice signature of param length at testdata/underscore/underscore.php:571
+WARNING notSafeCall: potentially not safe call in function array_slice signature of param length at testdata/underscore/underscore.php:571
       $collection = ($calculated_value < $midpoint_calculated_value) ? array_slice($collection, 0, $midpoint, true) : array_slice($collection, $midpoint, null, true);
                                                                                                    ^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function array_slice signature of param offset at testdata/underscore/underscore.php:571
+WARNING notSafeCall: potentially not safe call in function array_slice signature of param offset at testdata/underscore/underscore.php:571
       $collection = ($calculated_value < $midpoint_calculated_value) ? array_slice($collection, 0, $midpoint, true) : array_slice($collection, $midpoint, null, true);
                                                                                                                                                ^^^^^^^^^
 WARNING unused: Variable $__ is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/underscore/underscore.php:561
@@ -199,7 +199,7 @@ WARNING unused: Variable $__ is unused (use $_ to ignore this inspection or spec
 WARNING unused: Variable $args is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/underscore/underscore.php:615
     $args = self::_wrapArgs(func_get_args(), 1);
     ^^^^^
-WARNING notSafetyCall: potential not safety call in function rest signature of param collection at testdata/underscore/underscore.php:643
+WARNING notSafeCall: potentially not safe call in function rest signature of param collection at testdata/underscore/underscore.php:643
     $extensions = $__->rest($args);
                             ^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function get_class signature of param object at testdata/underscore/underscore.php:658
@@ -220,10 +220,10 @@ ERROR   undefinedProperty: Property {object}->isEqual does not exist at testdata
 ERROR   undefinedMethod: Call to undefined method {object}->isEqual() at testdata/underscore/underscore.php:724
       if(is_object($b) && isset($b->isEqual)) return self::_wrap($b->isEqual($a));
                                                                      ^^^^^^^
-WARNING notSafetyCall: potential not safety call in function keys signature of param collection at testdata/underscore/underscore.php:731
+WARNING notSafeCall: potentially not safe call in function keys signature of param collection at testdata/underscore/underscore.php:731
       $keys_equal = $__->isEqual($__->keys($a), $__->keys($b));
                                            ^^
-WARNING notSafetyCall: potential not safety call in function values signature of param collection at testdata/underscore/underscore.php:732
+WARNING notSafeCall: potentially not safe call in function values signature of param collection at testdata/underscore/underscore.php:732
       $values_equal = $__->isEqual($__->values($a), $__->values($b));
                                                ^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function is_nan signature of param num at testdata/underscore/underscore.php:772
@@ -253,13 +253,13 @@ ERROR   undefinedProperty: Property {mixed}->_mixins does not exist at testdata/
 ERROR   undefinedProperty: Property {mixed}->_mixins does not exist at testdata/underscore/underscore.php:853
     $mixins =& self::getInstance()->_mixins;
                                     ^^^^^^^
-WARNING notSafetyCall: potential not safety array access in parameter callback of function call_user_func_array at testdata/underscore/underscore.php:854
+WARNING notSafeCall: potentially not safe array access in parameter callback of function call_user_func_array at testdata/underscore/underscore.php:854
     return call_user_func_array($mixins[$name], $arguments);
                                 ^^^^^^^^^^^^^^
 ERROR   undefinedProperty: Property {mixed}->_mixins does not exist at testdata/underscore/underscore.php:859
     $mixins =& self::getInstance()->_mixins;
                                     ^^^^^^^
-WARNING notSafetyCall: potential not safety array access in parameter callback of function call_user_func_array at testdata/underscore/underscore.php:861
+WARNING notSafeCall: potentially not safe array access in parameter callback of function call_user_func_array at testdata/underscore/underscore.php:861
     return call_user_func_array($mixins[$name], $arguments);
                                 ^^^^^^^^^^^^^^
 ERROR   undefinedProperty: Property {mixed}->_template_settings does not exist at testdata/underscore/underscore.php:882
@@ -286,7 +286,7 @@ WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function preg_match_all signature of param subject at testdata/underscore/underscore.php:920
       preg_match_all($ts['interpolate'], $code, $vars, PREG_SET_ORDER);
                                          ^^^^^
-WARNING notSafetyCall: potential not safety call in function preg_match_all signature of param matches at testdata/underscore/underscore.php:920
+WARNING notSafeCall: potentially not safe call in function preg_match_all signature of param matches at testdata/underscore/underscore.php:920
       preg_match_all($ts['interpolate'], $code, $vars, PREG_SET_ORDER);
                                                 ^^^^^
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter pattern of function preg_match_all at testdata/underscore/underscore.php:927
@@ -295,7 +295,7 @@ WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function preg_match_all signature of param subject at testdata/underscore/underscore.php:927
       preg_match_all($ts['evaluate'], $code, $vars, PREG_SET_ORDER);
                                       ^^^^^
-WARNING notSafetyCall: potential not safety call in function preg_match_all signature of param matches at testdata/underscore/underscore.php:927
+WARNING notSafeCall: potentially not safe call in function preg_match_all signature of param matches at testdata/underscore/underscore.php:927
       preg_match_all($ts['evaluate'], $code, $vars, PREG_SET_ORDER);
                                              ^^^^^
 MAYBE   deprecated: Call to deprecated function create_function (since: 7.2, reason: Use anonymous functions instead, removed: 8.0) at testdata/underscore/underscore.php:940
@@ -334,10 +334,10 @@ MAYBE   arraySyntax: Use the short form '[]' instead of the old 'array()' at tes
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function call_user_func_array signature of param callback at testdata/underscore/underscore.php:1037
       return call_user_func_array($wrapper, $args);
                                   ^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function call_user_func_array signature of param callback at testdata/underscore/underscore.php:1049
+WARNING notSafeCall: potentially not safe call in function call_user_func_array signature of param callback at testdata/underscore/underscore.php:1049
         $args[0] = call_user_func_array($function, $args);
                                         ^^^^^^^^^
-WARNING notSafetyCall: potential not safety call in function md5 signature of param string when calling function \mt_rand at testdata/underscore/underscore.php:1062
+WARNING notSafeCall: potentially not safe call in function md5 signature of param string when calling function \mt_rand at testdata/underscore/underscore.php:1062
     $key = md5(mt_rand());
                ^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function call_user_func_array signature of param callback at testdata/underscore/underscore.php:1068

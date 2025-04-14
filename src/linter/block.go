@@ -1038,7 +1038,7 @@ func formatSlashesFuncName(fn meta.FuncInfo) string {
 	return strings.TrimPrefix(fn.Name, "\\")
 }
 
-func (b *blockWalker) checkNotSafetyCallArgsF(args []ir.Node, fn meta.FuncInfo) {
+func (b *blockWalker) checknotSafeCallArgsF(args []ir.Node, fn meta.FuncInfo) {
 	if fn.Params == nil || fn.Name == "" {
 		return
 	}
@@ -1125,8 +1125,8 @@ func (b *blockWalker) checkFunctionCallSafety(arg ir.Node, fn meta.FuncInfo, par
 	}
 
 	if !b.isTypeCompatible(callType, param.Typ) {
-		b.report(arg, LevelWarning, "notSafetyCall",
-			"potential not safety call in function %s signature of param %s when calling function %s",
+		b.report(arg, LevelWarning, "notSafeCall",
+			"potentially not safe call in function %s signature of param %s when calling function %s",
 			formatSlashesFuncName(fn), param.Name, funcInfo.Name)
 	}
 }
@@ -1181,8 +1181,8 @@ func (b *blockWalker) checkStaticCallSafety(arg ir.Node, fn meta.FuncInfo, param
 	}
 
 	if !b.isTypeCompatible(funcType, param.Typ) {
-		b.report(arg, LevelWarning, "notSafetyCall",
-			"potential not safety static call in function %s signature of param %s",
+		b.report(arg, LevelWarning, "notSafeCall",
+			"potentially not safe static call in function %s signature of param %s",
 			formatSlashesFuncName(fn), param.Name)
 	}
 }
@@ -1215,8 +1215,8 @@ func (b *blockWalker) checkSimpleVarSafety(arg ir.Node, fn meta.FuncInfo, paramI
 	}
 
 	if !b.isTypeCompatible(varType, paramType) {
-		b.report(arg, LevelWarning, "notSafetyCall",
-			"potential not safety call in function %s signature of param %s",
+		b.report(arg, LevelWarning, "notSafeCall",
+			"potentially not safe call in function %s signature of param %s",
 			formatSlashesFuncName(fn), param.Name)
 	}
 }
@@ -1318,8 +1318,8 @@ func (b *blockWalker) checkConstFetchSafety(arg ir.Node, fn meta.FuncInfo, param
 		if isBool {
 			typ := types.NewMap(constVal)
 			if !b.isTypeCompatible(typ, paramType) {
-				b.report(arg, LevelWarning, "notSafetyCall",
-					"potential not safety access in parameter %s of function %s",
+				b.report(arg, LevelWarning, "notSafeCall",
+					"potentially not safe access in parameter %s of function %s",
 					param.Name, formatSlashesFuncName(fn))
 			}
 		}
@@ -1357,8 +1357,8 @@ func (b *blockWalker) checkArrayDimFetchSafety(arg ir.Node, fn meta.FuncInfo, pa
 	}
 
 	if !b.isTypeCompatible(varType, param.Typ) {
-		b.report(arg, LevelWarning, "notSafetyCall",
-			"potential not safety array access in parameter %s of function %s",
+		b.report(arg, LevelWarning, "notSafeCall",
+			"potentially not safe array access in parameter %s of function %s",
 			param.Name, formatSlashesFuncName(fn))
 	}
 }
@@ -1370,7 +1370,7 @@ func (b *blockWalker) checkListExprSafety(arg ir.Node, fn meta.FuncInfo, paramIn
 		}
 
 		if item.Key != nil {
-			b.checkNotSafetyCallArgsF([]ir.Node{item.Key}, fn)
+			b.checknotSafeCallArgsF([]ir.Node{item.Key}, fn)
 		}
 
 		if item.Val != nil {
@@ -1393,13 +1393,13 @@ func (b *blockWalker) checkListExprSafety(arg ir.Node, fn meta.FuncInfo, paramIn
 					}
 
 					if !b.isTypeCompatible(varType, paramType) {
-						b.report(arg, LevelWarning, "notSafetyCall",
-							"potential not safety list assignment for param %s in function %s",
+						b.report(arg, LevelWarning, "notSafeCall",
+							"potentially not safe list assignment for param %s in function %s",
 							param.Name, formatSlashesFuncName(fn))
 					}
 				}
 			}
-			b.checkNotSafetyCallArgsF([]ir.Node{item.Val}, fn)
+			b.checknotSafeCallArgsF([]ir.Node{item.Val}, fn)
 		}
 	}
 }
@@ -1441,8 +1441,8 @@ func (b *blockWalker) checkingPropertyFetchSafetyCondition(
 	}
 
 	if !b.isTypeCompatible(propType, paramType) {
-		b.report(expr, LevelWarning, "notSafetyCall",
-			"potential not safety accessing property '%s'", prpName)
+		b.report(expr, LevelWarning, "notSafeCall",
+			"potentially not safe accessing property '%s'", prpName)
 	}
 }
 
@@ -1549,15 +1549,15 @@ func (b *blockWalker) checkUnifiedPropertyFetchNotSafety(expr ir.Node, fn meta.F
 			}
 			propType := propInfo.info.Typ
 			if types.IsTypeNullable(propType) {
-				b.report(node, LevelWarning, "notSafetyCall",
+				b.report(node, LevelWarning, "notSafeCall",
 					"potential null dereference when accessing property '%s'", propInfo.propertyNode.Value)
 				return
 			}
 
 			propType.Iterate(func(typ string) {
 				if types.IsTrivial(typ) {
-					b.report(node, LevelWarning, "notSafetyCall",
-						"potential not safety accessing property '%s': intermediary node is not a class", propInfo.propertyNode.Value)
+					b.report(node, LevelWarning, "notSafeCall",
+						"potentially not safe accessing property '%s': intermediary node is not a class", propInfo.propertyNode.Value)
 					return
 				}
 			})
@@ -1568,14 +1568,14 @@ func (b *blockWalker) checkUnifiedPropertyFetchNotSafety(expr ir.Node, fn meta.F
 			}
 			varType = solver.MergeUnionTypes(b.r.metaInfo(), varType)
 			if types.IsTypeNullable(varType) {
-				b.report(node, LevelWarning, "notSafetyCall",
+				b.report(node, LevelWarning, "notSafeCall",
 					"potential null dereference when accessing variable '%s'", node.Name)
 				return
 			}
 			varType.Iterate(func(typ string) {
 				if types.IsTrivial(typ) {
-					b.report(node, LevelWarning, "notSafetyCall",
-						"potential not safety accessing variable '%s': intermediary node is not a class", node.Name)
+					b.report(node, LevelWarning, "notSafeCall",
+						"potentially not safe accessing variable '%s': intermediary node is not a class", node.Name)
 					return
 				}
 			})
@@ -1584,7 +1584,7 @@ func (b *blockWalker) checkUnifiedPropertyFetchNotSafety(expr ir.Node, fn meta.F
 }
 
 func (b *blockWalker) handleCallArgs(args []ir.Node, fn meta.FuncInfo) {
-	b.checkNotSafetyCallArgsF(args, fn)
+	b.checknotSafeCallArgsF(args, fn)
 
 	for i, arg := range args {
 		if i >= len(fn.Params) {
