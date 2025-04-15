@@ -511,26 +511,19 @@ func IsMoreSpecific(metaInfo *meta.Info, key1, key2 string) bool {
 
 // MergeUnionTypes iteratively merges union types in the Map using specific-ness
 func MergeUnionTypes(metaInfo *meta.Info, m types.Map) types.Map {
-	changed := true
 	// Iteratively try to merge the union until no more changes occur
-	for changed {
-		changed = false
-		// Always re-read keys after modifications
-		keys := m.Keys()
-	outer:
-		for i := 0; i < len(keys); i++ {
-			for j := i + 1; j < len(keys); j++ {
-				key1 := keys[i]
-				key2 := keys[j]
-				if IsMoreSpecific(metaInfo, key1, key2) {
-					m = m.Erase(key2)
-					changed = true
-					break outer
-				} else if IsMoreSpecific(metaInfo, key2, key1) {
-					m = m.Erase(key1)
-					changed = true
-					break outer
-				}
+	// Always re-read keys after modifications
+	keys := m.Keys()
+	for i := 0; i < len(keys); i++ {
+		for j := i + 1; j < len(keys); j++ {
+			key1 := keys[i]
+			key2 := keys[j]
+			if IsMoreSpecific(metaInfo, key1, key2) {
+				m = m.Erase(key2)
+				return m
+			} else if IsMoreSpecific(metaInfo, key2, key1) {
+				m = m.Erase(key1)
+				return m
 			}
 		}
 	}

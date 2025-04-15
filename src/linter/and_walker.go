@@ -332,8 +332,8 @@ func (a *andWalker) handleTypeCheckCondition(expectedType string, args []ir.Node
 		switch expectedType {
 		case "bool":
 			// For bool: consider possible literal types "bool", "true" and "false"
-			boolUnion := types.NewMap("bool").Union(types.NewMap("true")).Union(types.NewMap("false"))
-			intersection := currentType.Intersect(boolUnion)
+			boolMerge := types.MergeMaps(types.NewMap("bool"), types.NewMap("true"), types.NewMap("false"))
+			intersection := currentType.Intersect(boolMerge)
 			if intersection.Empty() {
 				// If there is no explicit bool subtype, then the positive branch becomes simply "bool"
 				trueType = types.NewMap("bool")
