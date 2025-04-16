@@ -109,51 +109,99 @@ $_ = $b[0]{0};
 WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:21
 $_ = strpos($str, 10);
      ^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function strpos signature of param needle when calling function \getInt at testdata/embeddedrules/intNeedle.php:22
+$_ = strpos($str, getInt());
+                  ^^^^^^^^
 WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:22
 $_ = strpos($str, getInt());
      ^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function strpos signature of param needle when calling function \getIntOrString at testdata/embeddedrules/intNeedle.php:23
+$_ = strpos($str, getIntOrString(true)); // ok
+                  ^^^^^^^^^^^^^^^^^^^^
 WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:27
 $_ = strrpos($str, 10);
      ^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function strrpos signature of param needle when calling function \getInt at testdata/embeddedrules/intNeedle.php:28
+$_ = strrpos($str, getInt());
+                   ^^^^^^^^
 WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:28
 $_ = strrpos($str, getInt());
      ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function strrpos signature of param needle when calling function \getIntOrString at testdata/embeddedrules/intNeedle.php:29
+$_ = strrpos($str, getIntOrString(true)); // ok
+                   ^^^^^^^^^^^^^^^^^^^^
 WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:33
 $_ = stripos($str, 10);
      ^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function stripos signature of param needle when calling function \getInt at testdata/embeddedrules/intNeedle.php:34
+$_ = stripos($str, getInt());
+                   ^^^^^^^^
 WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:34
 $_ = stripos($str, getInt());
      ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function stripos signature of param needle when calling function \getIntOrString at testdata/embeddedrules/intNeedle.php:35
+$_ = stripos($str, getIntOrString(true)); // ok
+                   ^^^^^^^^^^^^^^^^^^^^
 WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:39
 $_ = strripos($str, 10);
      ^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function strripos signature of param needle when calling function \getInt at testdata/embeddedrules/intNeedle.php:40
+$_ = strripos($str, getInt());
+                    ^^^^^^^^
 WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:40
 $_ = strripos($str, getInt());
      ^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function strripos signature of param needle when calling function \getIntOrString at testdata/embeddedrules/intNeedle.php:41
+$_ = strripos($str, getIntOrString(true)); // ok
+                    ^^^^^^^^^^^^^^^^^^^^
 WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:45
 $_ = strstr($str, 10);
      ^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function strstr signature of param needle when calling function \getInt at testdata/embeddedrules/intNeedle.php:46
+$_ = strstr($str, getInt());
+                  ^^^^^^^^
 WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:46
 $_ = strstr($str, getInt());
      ^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function strstr signature of param needle when calling function \getIntOrString at testdata/embeddedrules/intNeedle.php:47
+$_ = strstr($str, getIntOrString(true)); // ok
+                  ^^^^^^^^^^^^^^^^^^^^
 WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:51
 $_ = strchr($str, 10);
      ^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function strchr signature of param needle when calling function \getInt at testdata/embeddedrules/intNeedle.php:52
+$_ = strchr($str, getInt());
+                  ^^^^^^^^
 WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:52
 $_ = strchr($str, getInt());
      ^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function strchr signature of param needle when calling function \getIntOrString at testdata/embeddedrules/intNeedle.php:53
+$_ = strchr($str, getIntOrString(true)); // ok
+                  ^^^^^^^^^^^^^^^^^^^^
 WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:57
 $_ = strrchr($str, 10);
      ^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function strrchr signature of param needle when calling function \getInt at testdata/embeddedrules/intNeedle.php:58
+$_ = strrchr($str, getInt());
+                   ^^^^^^^^
 WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:58
 $_ = strrchr($str, getInt());
      ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function strrchr signature of param needle when calling function \getIntOrString at testdata/embeddedrules/intNeedle.php:59
+$_ = strrchr($str, getIntOrString(true)); // ok
+                   ^^^^^^^^^^^^^^^^^^^^
 WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:63
 $_ = stristr($str, 10);
      ^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function stristr signature of param needle when calling function \getInt at testdata/embeddedrules/intNeedle.php:64
+$_ = stristr($str, getInt());
+                   ^^^^^^^^
 WARNING intNeedle: Since PHP 7.3, passing the int parameter needle to string search functions has been deprecated, cast it explicitly to string or wrap it in a chr() function call at testdata/embeddedrules/intNeedle.php:64
 $_ = stristr($str, getInt());
      ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function stristr signature of param needle when calling function \getIntOrString at testdata/embeddedrules/intNeedle.php:65
+$_ = stristr($str, getIntOrString(true)); // ok
+                   ^^^^^^^^^^^^^^^^^^^^
 WARNING langDeprecated: Since PHP 7.3, the definition of case insensitive constants has been deprecated at testdata/embeddedrules/langDeprecated.php:3
 define("Z_CONST", 1, true);
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

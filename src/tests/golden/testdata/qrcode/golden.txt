@@ -1,6 +1,12 @@
 MAYBE   missingPhpdoc: Missing PHPDoc for \QRCode::output_image public method at testdata/qrcode/qrcode.php:45
   public function output_image() {
                   ^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function imagepng signature of param image at testdata/qrcode/qrcode.php:49
+    imagepng($image);
+             ^^^^^^
+WARNING notSafeCall: potentially not safe call in function imagedestroy signature of param image at testdata/qrcode/qrcode.php:50
+    imagedestroy($image);
+                 ^^^^^^
 MAYBE   missingPhpdoc: Missing PHPDoc for \QRCode::render_image public method at testdata/qrcode/qrcode.php:53
   public function render_image() {
                   ^^^^^^^^^^^^
@@ -10,27 +16,66 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function imagecreatetruecolor signature of param height at testdata/qrcode/qrcode.php:56
     $image = imagecreatetruecolor($width, $height);
                                           ^^^^^^^
+WARNING notSafeCall: potentially not safe call in function imagesavealpha signature of param image at testdata/qrcode/qrcode.php:57
+    imagesavealpha($image, true);
+                   ^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$this->options['bc'] ?? 'FFFFFF'` at testdata/qrcode/qrcode.php:59
     $bgcolor = (isset($this->options['bc']) ? $this->options['bc'] : 'FFFFFF');
                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function imagefill signature of param image at testdata/qrcode/qrcode.php:61
+    imagefill($image, 0, 0, $bgcolor);
+              ^^^^^^
+WARNING notSafeCall: potentially not safe call in function imagefill signature of param color at testdata/qrcode/qrcode.php:61
+    imagefill($image, 0, 0, $bgcolor);
+                            ^^^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$this->options['fc'] ?? '000000'` at testdata/qrcode/qrcode.php:63
     $fgcolor = (isset($this->options['fc']) ? $this->options['fc'] : '000000');
                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function floor signature of param num at testdata/qrcode/qrcode.php:72
       $scale = (($scale > 1) ? floor($scale) : 1);
                                      ^^^^^^
+WARNING notSafeCall: potentially not safe call in function imagefilledrectangle signature of param image at testdata/qrcode/qrcode.php:93
+        imagefilledrectangle($image, $rx, $ry, $rx + $rw - 1, $ry + $rh - 1, $mc);
+                             ^^^^^^
+WARNING notSafeCall: potentially not safe call in function imagefilledrectangle signature of param x1 at testdata/qrcode/qrcode.php:93
+        imagefilledrectangle($image, $rx, $ry, $rx + $rw - 1, $ry + $rh - 1, $mc);
+                                     ^^^
+WARNING notSafeCall: potentially not safe call in function imagefilledrectangle signature of param y1 at testdata/qrcode/qrcode.php:93
+        imagefilledrectangle($image, $rx, $ry, $rx + $rw - 1, $ry + $rh - 1, $mc);
+                                          ^^^
+WARNING notSafeCall: potentially not safe call in function imagefilledrectangle signature of param color at testdata/qrcode/qrcode.php:93
+        imagefilledrectangle($image, $rx, $ry, $rx + $rw - 1, $ry + $rh - 1, $mc);
+                                                                             ^^^
+WARNING notSafeCall: potentially not safe call in function hexdec signature of param hex_string when calling function \substr at testdata/qrcode/qrcode.php:134
+    $r     = hexdec(substr($color, 0, 2));
+                    ^^^^^^^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function substr signature of param string at testdata/qrcode/qrcode.php:134
     $r     = hexdec(substr($color, 0, 2));
                            ^^^^^^
+WARNING notSafeCall: potentially not safe call in function hexdec signature of param hex_string when calling function \substr at testdata/qrcode/qrcode.php:135
+    $g     = hexdec(substr($color, 2, 2));
+                    ^^^^^^^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function substr signature of param string at testdata/qrcode/qrcode.php:135
     $g     = hexdec(substr($color, 2, 2));
                            ^^^^^^
+WARNING notSafeCall: potentially not safe call in function hexdec signature of param hex_string when calling function \substr at testdata/qrcode/qrcode.php:136
+    $b     = hexdec(substr($color, 4, 2));
+                    ^^^^^^^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function substr signature of param string at testdata/qrcode/qrcode.php:136
     $b     = hexdec(substr($color, 4, 2));
                            ^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function imagecolorallocate signature of param image at testdata/qrcode/qrcode.php:137
     return imagecolorallocate($image, $r, $g, $b);
                               ^^^^^^
+WARNING notSafeCall: potentially not safe call in function imagecolorallocate signature of param red at testdata/qrcode/qrcode.php:137
+    return imagecolorallocate($image, $r, $g, $b);
+                                      ^^
+WARNING notSafeCall: potentially not safe call in function imagecolorallocate signature of param green at testdata/qrcode/qrcode.php:137
+    return imagecolorallocate($image, $r, $g, $b);
+                                          ^^
+WARNING notSafeCall: potentially not safe call in function imagecolorallocate signature of param blue at testdata/qrcode/qrcode.php:137
+    return imagecolorallocate($image, $r, $g, $b);
+                                              ^^
 WARNING notNullSafetyFunctionArgumentFunctionCall: not null safety call in function strtolower signature of param string when calling function \preg_replace at testdata/qrcode/qrcode.php:143
     switch (strtolower(preg_replace('/[^A-Za-z0-9]/', '', $options['s']))) {
                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -79,6 +124,9 @@ WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condit
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function substr signature of param string at testdata/qrcode/qrcode.php:316
       $group = substr($data, $i, 3);
                       ^^^^^
+WARNING notSafeCall: potentially not safe call in function strlen signature of param string at testdata/qrcode/qrcode.php:317
+      switch (strlen($group)) {
+                     ^^^^^^
 WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testdata/qrcode/qrcode.php:318
         case 3:
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -103,12 +151,30 @@ WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condit
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function substr signature of param string at testdata/qrcode/qrcode.php:359
       $group = substr($data, $i, 2);
                       ^^^^^
+WARNING notSafeCall: potentially not safe call in function strlen signature of param string at testdata/qrcode/qrcode.php:360
+      if (strlen($group) > 1) {
+                 ^^^^^^
+WARNING notSafeCall: potentially not safe call in function strpos signature of param needle when calling function \substr at testdata/qrcode/qrcode.php:361
+        $c1     = strpos($alphabet, substr($group, 0, 1));
+                                    ^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function substr signature of param string at testdata/qrcode/qrcode.php:361
+        $c1     = strpos($alphabet, substr($group, 0, 1));
+                                           ^^^^^^
 MAYBE   callSimplify: Could simplify to $group[0] at testdata/qrcode/qrcode.php:361
         $c1     = strpos($alphabet, substr($group, 0, 1));
                                     ^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function strpos signature of param needle when calling function \substr at testdata/qrcode/qrcode.php:362
+        $c2     = strpos($alphabet, substr($group, 1, 1));
+                                    ^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function substr signature of param string at testdata/qrcode/qrcode.php:362
+        $c2     = strpos($alphabet, substr($group, 1, 1));
+                                           ^^^^^^
 MAYBE   callSimplify: Could simplify to $group[1] at testdata/qrcode/qrcode.php:362
         $c2     = strpos($alphabet, substr($group, 1, 1));
                                     ^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function strpos signature of param needle at testdata/qrcode/qrcode.php:376
+        $ch     = strpos($alphabet, $group);
+                                    ^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function strlen signature of param string at testdata/qrcode/qrcode.php:390
     $length = strlen($data);
                      ^^^^^
@@ -118,6 +184,9 @@ WARNING caseBreak: Add break or '// fallthrough' to the end of the case at testd
 WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/qrcode/qrcode.php:391
     switch ($version_group) {
     ^
+WARNING notSafeCall: potentially not safe call in function ord signature of param character when calling function \substr at testdata/qrcode/qrcode.php:413
+      $ch     = ord(substr($data, $i, 1));
+                    ^^^^^^^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function substr signature of param string at testdata/qrcode/qrcode.php:413
       $ch     = ord(substr($data, $i, 1));
                            ^^^^^
@@ -139,12 +208,27 @@ WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condit
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function substr signature of param string at testdata/qrcode/qrcode.php:447
       $group = substr($data, $i, 2);
                       ^^^^^
+WARNING notSafeCall: potentially not safe call in function ord signature of param character when calling function \substr at testdata/qrcode/qrcode.php:448
+      $c1    = ord(substr($group, 0, 1));
+                   ^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function substr signature of param string at testdata/qrcode/qrcode.php:448
+      $c1    = ord(substr($group, 0, 1));
+                          ^^^^^^
 MAYBE   callSimplify: Could simplify to $group[0] at testdata/qrcode/qrcode.php:448
       $c1    = ord(substr($group, 0, 1));
                    ^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function ord signature of param character when calling function \substr at testdata/qrcode/qrcode.php:449
+      $c2    = ord(substr($group, 1, 1));
+                   ^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function substr signature of param string at testdata/qrcode/qrcode.php:449
+      $c2    = ord(substr($group, 1, 1));
+                          ^^^^^^
 MAYBE   callSimplify: Could simplify to $group[1] at testdata/qrcode/qrcode.php:449
       $c2    = ord(substr($group, 1, 1));
                    ^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function array_slice signature of param offset at testdata/qrcode/qrcode.php:520
+      $blocks[] = array_slice($data, $offset, $length);
+                                     ^^^^^^^
 WARNING switchDefault: Add 'default' branch to avoid unexpected unhandled condition values at testdata/qrcode/qrcode.php:697
     switch ($mask) {
     ^

@@ -121,8 +121,12 @@ func wrap(typ byte, byteFields []uint8, args ...string) string {
 	return string(buf)
 }
 
-func unwrap1(s string) (one string) {
-	return s[stringLenBytes+1:] // do not care about length, there is only 1 param
+func unwrap1(s string) string {
+	if len(s) > stringLenBytes+1 {
+		return s[stringLenBytes+1:]
+	}
+
+	return ""
 }
 
 func unwrap2(s string) (one, two string) {

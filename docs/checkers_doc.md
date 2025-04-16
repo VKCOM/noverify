@@ -1252,7 +1252,7 @@ test($arr[1]);
 
 #### Compliant code:
 ```php
-reported not safety call
+reported not safe call call
 ```
 <p><br></p>
 
@@ -1303,7 +1303,7 @@ test(testNullable());
 
 #### Compliant code:
 ```php
-reported not safety call
+reported not safe call call
 ```
 <p><br></p>
 
@@ -1321,7 +1321,7 @@ test(list($a) = [null]);
 
 #### Compliant code:
 ```php
-reported not safety call
+reported not safe call call
 ```
 <p><br></p>
 
@@ -1346,7 +1346,7 @@ echo $user->name;
 
 #### Compliant code:
 ```php
-reported not safety call
+reported not safe call call
 ```
 <p><br></p>
 
@@ -1374,7 +1374,7 @@ test(A::hello());
 
 #### Compliant code:
 ```php
-reported not safety call
+reported not safe call call
 ```
 <p><br></p>
 
@@ -1393,7 +1393,7 @@ function f(A $klass);
 
 #### Compliant code:
 ```php
-reported not safety call with null in variable.
+reported not safe call call with null in variable.
 ```
 <p><br></p>
 
@@ -1413,7 +1413,7 @@ $getUserOrNull()->test();
 
 #### Compliant code:
 ```php
-reported not safety function call
+reported not safe call function call
 ```
 <p><br></p>
 
@@ -1438,7 +1438,7 @@ echo $user->name;
 
 #### Compliant code:
 ```php
-reported not safety call
+reported not safe call call
 ```
 <p><br></p>
 
@@ -1466,7 +1466,7 @@ test(A::hello());
 
 #### Compliant code:
 ```php
-reported not safety static function call
+reported not safe call static function call
 ```
 <p><br></p>
 
@@ -1488,7 +1488,7 @@ echo $user->name;
 
 #### Compliant code:
 ```php
-reported not safety call with null in variable.
+reported not safe call call with null in variable.
 ```
 <p><br></p>
 

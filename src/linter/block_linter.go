@@ -603,9 +603,8 @@ func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 			parseState := b.classParseState()
 			left, ok := parseState.Info.GetVarType(v.Class)
 
-			if ok && left.Contains("null") {
-				b.report(s, LevelWarning, "notNullSafetyPropertyFetch",
-					"potential null dereference when accessing static property")
+			if ok {
+				b.checkSafetyCall(s, left, "", "PropertyFetch")
 			}
 		}
 		return
@@ -1356,15 +1355,28 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 
 	switch caller := e.Variable.(type) {
 	case *ir.FunctionCallExpr:
+		var funcName string
+		var ok bool
+
 		switch fn := caller.Function.(type) {
-		case *ir.SimpleVar, *ir.Name:
-			checkNullSafetyWhenMethodCallChain(parseState, b, e, fn)
+		case *ir.SimpleVar:
+			funcName, ok = solver.GetFuncName(parseState, &ir.Name{Value: fn.Name})
+
+		case *ir.Name:
+			funcName, ok = solver.GetFuncName(parseState, fn)
 		}
+		if ok {
+			funInfo, found := parseState.Info.GetFunction(funcName)
+			if found {
+				funcType := funInfo.Typ
+				b.checkSafetyCall(e, funcType, funInfo.Name, "FunctionCall")
+			}
+		}
+
 	case *ir.SimpleVar:
-		callerVarType, ok := parseState.Info.GetVarType(caller)
-		if ok && callerVarType.Contains("null") {
-			b.report(e, LevelWarning, "notNullSafetyVariable",
-				"potential null dereference in $%s when accessing method", caller.Name)
+		varType, ok := b.walker.ctx.sc.GetVarType(caller)
+		if ok {
+			b.checkSafetyCall(e, varType, caller.Name, "Variable")
 		}
 	}
 
@@ -1385,16 +1397,37 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 	}
 }
 
-func checkNullSafetyWhenMethodCallChain(parseState *meta.ClassParseState, b *blockLinter, e ir.Node, funcExpr ir.Node) {
-	funcCallerName, ok := solver.GetFuncName(parseState, funcExpr)
-	if !ok {
-		return
+func (b *blockLinter) checkSafetyCall(e ir.Node, typ types.Map, name string, suffix string) {
+	if typ.Contains("null") {
+		reportFullName := "notNullSafety" + suffix
+		switch {
+		case reportFullName == "notNullSafetyPropertyFetch":
+			b.report(e, LevelWarning, "notNullSafety"+suffix,
+				"potential attempt to access property through null")
+			return
+		case reportFullName == "notNullSafetyVariable" || reportFullName == "notNullSafetyFunctionCall":
+			b.report(e, LevelWarning, reportFullName,
+				"potential null dereference in %s when accessing method", name)
+			return
+		}
 	}
 
-	funInfo, ok := parseState.Info.GetFunction(funcCallerName)
-	if ok && funInfo.Typ.Contains("null") {
-		b.report(e, LevelWarning, "notNullSafetyFunctionCall",
-			"potential null dereference in %s when accessing method", funInfo.Name)
+	isSafetyCall := true
+	typ.Iterate(func(typ string) {
+		// TODO: here we can problem with mixed: $xs = [0, new Foo()]; $foo = $xs[0]; <== mixed. Need fix for array elem
+		if types.IsScalar(typ) {
+			isSafetyCall = false
+		}
+	})
+
+	if !isSafetyCall {
+		if name == "" {
+			b.report(e, LevelWarning, "notSafeCall",
+				"potentially not safe call when accessing property")
+			return
+		}
+		b.report(e, LevelWarning, "notSafeCall",
+			"potentially not safe call in %s when accessing method", name)
 	}
 }
 
@@ -1491,10 +1524,9 @@ func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
 		b.report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s->%s", fetch.info.AccessLevel, fetch.className, fetch.propertyNode.Value)
 	}
 
-	left, ok := globalMetaInfo.Info.GetVarType(e.Variable)
-	if ok && left.Contains("null") {
-		b.report(e, LevelWarning, "notNullSafetyPropertyFetch",
-			"attempt to access property that can be null")
+	left, ok := b.walker.ctx.sc.GetVarType(e.Variable)
+	if ok {
+		b.checkSafetyCall(e, left, "", "PropertyFetch")
 	}
 }
 

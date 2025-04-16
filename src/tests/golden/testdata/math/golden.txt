@@ -1,33 +1,78 @@
 WARNING unused: Variable $a is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/math/src/BigDecimal.php:292
         [$a, $b] = $this->scaleValues($this, $that);
          ^^
+WARNING notSafeCall: potentially not safe call in function str_repeat signature of param times at testdata/math/src/BigDecimal.php:464
+            $value .= \str_repeat('0', $addDigits);
+                                       ^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function substr signature of param length at testdata/math/src/BigDecimal.php:472
+            $value = \substr($value, 0, $addDigits);
+                                        ^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function sqrt signature of param n at testdata/math/src/BigDecimal.php:475
+        $value = Calculator::get()->sqrt($value);
+                                         ^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function of signature of param value at testdata/math/src/BigDecimal.php:588
         $that = BigNumber::of($that);
                               ^^^^^
+WARNING notSafeCall: potentially not safe call in function str_pad signature of param string at testdata/math/src/BigDecimal.php:847
+        $value = \str_pad($value, $targetLength, '0', STR_PAD_LEFT);
+                          ^^^^^^
+WARNING notSafeCall: potentially not safe call in function str_pad signature of param length at testdata/math/src/BigDecimal.php:847
+        $value = \str_pad($value, $targetLength, '0', STR_PAD_LEFT);
+                                  ^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function ltrim signature of param string at testdata/math/src/BigInteger.php:105
+        $number = \ltrim($number, '0');
+                         ^^^^^^^
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/math/src/BigInteger.php:435
             new BigInteger($remainder)
             ^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function of signature of param value at testdata/math/src/BigInteger.php:742
         $that = BigNumber::of($that);
                               ^^^^^
+WARNING notSafeCall: potentially not safe call in function preg_match signature of param subject at testdata/math/src/BigNumber.php:74
+        if (\preg_match(self::PARSE_REGEXP, $value, $matches) !== 1) {
+                                            ^^^^^^
 MAYBE   ternarySimplify: Could rewrite as `$matches['fractional'] ?? ''` at testdata/math/src/BigNumber.php:90
             $fractional = isset($matches['fractional']) ? $matches['fractional'] : '';
                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function setlocale signature of param rest at testdata/math/src/BigNumber.php:131
+        \setlocale(LC_NUMERIC, $currentLocale);
+                               ^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function of signature of param value at testdata/math/src/BigNumber.php:171
+            $value = static::of($value);
+                                ^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function isLessThan signature of param that at testdata/math/src/BigNumber.php:173
             if ($min === null || $value->isLessThan($min)) {
                                                     ^^^^
+WARNING notSafeCall: potentially not safe call in function of signature of param value at testdata/math/src/BigNumber.php:203
+            $value = static::of($value);
+                                ^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function isGreaterThan signature of param that at testdata/math/src/BigNumber.php:205
             if ($max === null || $value->isGreaterThan($max)) {
                                                        ^^^^
+WARNING notSafeCall: potentially not safe call in function of signature of param value at testdata/math/src/BigNumber.php:236
+            $value = static::of($value);
+                                ^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function add signature of param a at testdata/math/src/BigNumber.php:241
                 $sum = self::add($sum, $value);
                                  ^^^^
+WARNING notSafeCall: potentially not safe call in function ltrim signature of param string at testdata/math/src/BigNumber.php:307
+        $number = \ltrim($number, '0');
+                         ^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function minus signature of param that at testdata/math/src/BigRational.php:365
         return $this->minus($that)->getSign();
                             ^^^^^
 MAYBE   implicitModifiers: Specify the access modifier for \Brick\Math\Internal\Calculator::powmod method explicitly at testdata/math/src/Internal/Calculator.php:260
     abstract function powmod(string $base, string $exp, string $mod) : string;
                       ^^^^^^
+WARNING notSafeCall: potentially not safe call in function toArbitraryBase signature of param number at testdata/math/src/Internal/Calculator.php:333
+        $number = $this->toArbitraryBase($number, self::ALPHABET, $base);
+                                         ^^^^^^^
+WARNING notSafeCall: potentially not safe call in function twosComplement signature of param number at testdata/math/src/Internal/Calculator.php:605
+            $value = $this->twosComplement($value);
+                                           ^^^^^^
+WARNING notSafeCall: potentially not safe call in function toDecimal signature of param bytes at testdata/math/src/Internal/Calculator.php:608
+        $result = $this->toDecimal($value);
+                                   ^^^^^^
 MAYBE   assignOp: Could rewrite as `$number ^= $xor` at testdata/math/src/Internal/Calculator.php:622
         $number = $number ^ $xor;
         ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -40,9 +85,27 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/math/src/Internal/Calculator/GmpCalculator.php:67
             \gmp_strval($r)
             ^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function neg signature of param n at testdata/math/src/Internal/Calculator/NativeCalculator.php:79
+            $result = $this->neg($result);
+                                 ^^^^^^^
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/math/src/Internal/Calculator/NativeCalculator.php:187
                     (string) $r
                     ^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function substr signature of param offset at testdata/math/src/Internal/Calculator/NativeCalculator.php:322
+            $blockA = \substr($a, $i, $blockLength);
+                                  ^^
+WARNING notSafeCall: potentially not safe call in function substr signature of param offset at testdata/math/src/Internal/Calculator/NativeCalculator.php:323
+            $blockB = \substr($b, $i, $blockLength);
+                                  ^^
+WARNING notSafeCall: potentially not safe call in function substr signature of param offset at testdata/math/src/Internal/Calculator/NativeCalculator.php:392
+            $blockA = \substr($a, $i, $blockLength);
+                                  ^^
+WARNING notSafeCall: potentially not safe call in function substr signature of param offset at testdata/math/src/Internal/Calculator/NativeCalculator.php:393
+            $blockB = \substr($b, $i, $blockLength);
+                                  ^^
+WARNING notSafeCall: potentially not safe call in function doCmp signature of param a at testdata/math/src/Internal/Calculator/NativeCalculator.php:532
+            $cmp = $this->doCmp($focus, $b);
+                                ^^^^^^
 ERROR   classMembersOrder: Constant UNNECESSARY must go before methods in the class RoundingMode at testdata/math/src/RoundingMode.php:33
     public const UNNECESSARY = 0;
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

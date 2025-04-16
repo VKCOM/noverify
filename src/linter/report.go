@@ -26,12 +26,28 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 		},
 
 		{
+			Name:     "notSafeCall",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report not safe call call",
+			Before: `/**
+ * @return User|false
+ */
+function getUser():User|false {
+    return null;
+}
+$a = getUser()->do();
+`,
+			After: `reported not safe call`,
+		},
+
+		{
 			Name:     "notNullSafetyFunctionArgumentList",
 			Default:  true,
 			Quickfix: false,
 			Comment:  "Report not nullsafety call for null list",
 			Before:   `test(list($a) = [null]);`,
-			After:    `reported not safety call`,
+			After:    `reported not safe call call`,
 		},
 
 		{
@@ -49,7 +65,7 @@ function test(A $a): void {
 
 $arr = [new A(), null];
 test($arr[1]);`,
-			After: `reported not safety call`,
+			After: `reported not safe call call`,
 		},
 
 		{
@@ -78,7 +94,7 @@ function test(string $s): void {
 }
 
 test(A::hello());`,
-			After: `reported not safety call`,
+			After: `reported not safe call call`,
 		},
 
 		{
@@ -88,7 +104,7 @@ test(A::hello());`,
 			Comment:  "Report not nullsafety call",
 			Before: `function f(A $klass);
 						f(null);`,
-			After: `reported not safety call with null in variable.`,
+			After: `reported not safe call call with null in variable.`,
 		},
 
 		{
@@ -111,7 +127,7 @@ function testNullable(): ?A{
 }
 
 test(testNullable());`,
-			After: `reported not safety call`,
+			After: `reported not safe call call`,
 		},
 
 		{
@@ -127,7 +143,7 @@ class User {
 $user = new User();
 $user = null;
 echo $user->name;`,
-			After: `reported not safety call`,
+			After: `reported not safe call call`,
 		},
 
 		{
@@ -143,7 +159,7 @@ class User {
 $user = new User();
 $user = null;
 echo $user->name;`,
-			After: `reported not safety call`,
+			After: `reported not safe call call`,
 		},
 
 		{
@@ -156,7 +172,7 @@ echo $user->name;`,
 $user = null;
 
 echo $user->name;`,
-			After: `reported not safety call with null in variable.`,
+			After: `reported not safe call call with null in variable.`,
 		},
 
 		{
@@ -167,7 +183,7 @@ echo $user->name;`,
 			Before: `function getUserOrNull(): ?User { echo "test"; }
 
 $getUserOrNull()->test();`,
-			After: `reported not safety function call`,
+			After: `reported not safe call function call`,
 		},
 
 		{
@@ -186,7 +202,7 @@ function test(string $s): void {
 }
 
 test(A::hello());`,
-			After: `reported not safety static function call`,
+			After: `reported not safe call static function call`,
 		},
 
 		{

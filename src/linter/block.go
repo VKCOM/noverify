@@ -1038,7 +1038,7 @@ func formatSlashesFuncName(fn meta.FuncInfo) string {
 	return strings.TrimPrefix(fn.Name, "\\")
 }
 
-func (b *blockWalker) checkNullSafetyCallArgsF(args []ir.Node, fn meta.FuncInfo) {
+func (b *blockWalker) checknotSafeCallArgsF(args []ir.Node, fn meta.FuncInfo) {
 	if fn.Params == nil || fn.Name == "" {
 		return
 	}
@@ -1056,26 +1056,26 @@ func (b *blockWalker) checkNullSafetyCallArgsF(args []ir.Node, fn meta.FuncInfo)
 
 		switch a := arg.(*ir.Argument).Expr.(type) {
 		case *ir.SimpleVar:
-			b.checkSimpleVarNullSafety(arg, fn, i, a, haveVariadic)
+			b.checkSimpleVarSafety(arg, fn, i, a, haveVariadic)
 		case *ir.ConstFetchExpr:
-			b.checkConstFetchNullSafety(arg, fn, i, a, haveVariadic)
+			b.checkConstFetchSafety(arg, fn, i, a, haveVariadic)
 		case *ir.ArrayDimFetchExpr:
-			b.checkArrayDimFetchNullSafety(arg, fn, i, a, haveVariadic)
+			b.checkArrayDimFetchSafety(arg, fn, i, a, haveVariadic)
 		case *ir.ListExpr:
-			b.checkListExprNullSafety(arg, fn, i, a, haveVariadic)
+			b.checkListExprSafety(arg, fn, i, a, haveVariadic)
 		case *ir.PropertyFetchExpr:
-			b.checkPropertyFetchNullSafety(a, fn, i, haveVariadic)
+			b.checkUnifiedPropertyFetchNotSafety(a, fn, i, haveVariadic)
 		case *ir.StaticCallExpr:
-			b.checkStaticCallNullSafety(arg, fn, i, a, haveVariadic)
+			b.checkStaticCallSafety(arg, fn, i, a, haveVariadic)
 		case *ir.StaticPropertyFetchExpr:
-			b.checkStaticPropertyFetchNullSafety(a, fn, i, haveVariadic)
+			b.checkUnifiedPropertyFetchNotSafety(a, fn, i, haveVariadic)
 		case *ir.FunctionCallExpr:
-			b.checkFunctionCallNullSafety(arg, fn, i, a, haveVariadic)
+			b.checkFunctionCallSafety(arg, fn, i, a, haveVariadic)
 		}
 	}
 }
 
-func (b *blockWalker) checkFunctionCallNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, funcCall *ir.FunctionCallExpr, haveVariadic bool) {
+func (b *blockWalker) checkFunctionCallSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, funcCall *ir.FunctionCallExpr, haveVariadic bool) {
 	var funcName string
 
 	var isClearF bool
@@ -1105,22 +1105,33 @@ func (b *blockWalker) checkFunctionCallNullSafety(arg ir.Node, fn meta.FuncInfo,
 	}
 
 	param := nullSafetyRealParamForCheck(fn, paramIndex, haveVariadic)
+	paramType := param.Typ
 	if haveVariadic && paramIndex >= len(fn.Params)-1 {
 		// For variadic parameter check, if type is mixed then skip.
-		if types.IsTypeMixed(param.Typ) {
+		if types.IsTypeMixed(paramType) {
 			return
 		}
 	}
-	paramAllowsNull := types.IsTypeNullable(param.Typ)
+	paramAllowsNull := types.IsTypeNullable(paramType)
 	varIsNullable := types.IsTypeNullable(callType)
 	if varIsNullable && !paramAllowsNull {
 		b.report(arg, LevelWarning, "notNullSafetyFunctionArgumentFunctionCall",
 			"not null safety call in function %s signature of param %s when calling function %s",
 			formatSlashesFuncName(fn), param.Name, funcInfo.Name)
 	}
+
+	if paramType.Empty() || varIsNullable {
+		return
+	}
+
+	if !b.isTypeCompatible(callType, param.Typ) {
+		b.report(arg, LevelWarning, "notSafeCall",
+			"potentially not safe call in function %s signature of param %s when calling function %s",
+			formatSlashesFuncName(fn), param.Name, funcInfo.Name)
+	}
 }
 
-func (b *blockWalker) checkStaticCallNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, staticCallF *ir.StaticCallExpr, haveVariadic bool) {
+func (b *blockWalker) checkStaticCallSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, staticCallF *ir.StaticCallExpr, haveVariadic bool) {
 	funcName, ok := staticCallF.Call.(*ir.Identifier)
 	if !ok {
 		return
@@ -1149,62 +1160,173 @@ func (b *blockWalker) checkStaticCallNullSafety(arg ir.Node, fn meta.FuncInfo, p
 	}
 
 	param := nullSafetyRealParamForCheck(fn, paramIndex, haveVariadic)
+	paramType := param.Typ
 	if haveVariadic && paramIndex >= len(fn.Params)-1 {
 		// For variadic parameter check, if type is mixed then skip.
-		if types.IsTypeMixed(param.Typ) {
+		if types.IsTypeMixed(paramType) {
 			return
 		}
 	}
-	paramAllowsNull := types.IsTypeNullable(param.Typ)
-	varIsNullable := types.IsTypeNullable(funcInfo.Typ)
+	funcType := funcInfo.Typ
+	paramAllowsNull := types.IsTypeNullable(paramType)
+	varIsNullable := types.IsTypeNullable(funcType)
 	if varIsNullable && !paramAllowsNull {
 		b.report(arg, LevelWarning, "notNullSafetyFunctionArgumentStaticFunctionCall",
 			"not null safety call in function %s signature of param %s when calling static function %s",
 			formatSlashesFuncName(fn), param.Name, funcInfo.Name)
 	}
+
+	if paramType.Empty() || varIsNullable {
+		return
+	}
+
+	if !b.isTypeCompatible(funcType, param.Typ) {
+		b.report(arg, LevelWarning, "notSafeCall",
+			"potentially not safe static call in function %s signature of param %s",
+			formatSlashesFuncName(fn), param.Name)
+	}
 }
 
-func (b *blockWalker) checkSimpleVarNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, variable *ir.SimpleVar, haveVariadic bool) {
+func (b *blockWalker) checkSimpleVarSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, variable *ir.SimpleVar, haveVariadic bool) {
 	varInfo, ok := b.ctx.sc.GetVar(variable)
 	if !ok {
 		return
 	}
 
 	param := nullSafetyRealParamForCheck(fn, paramIndex, haveVariadic)
+	paramType := param.Typ
 	if haveVariadic && paramIndex >= len(fn.Params)-1 {
 		// For variadic parameter check, if type is mixed then skip.
-		if types.IsTypeMixed(param.Typ) {
+		if types.IsTypeMixed(paramType) {
 			return
 		}
 	}
-	paramAllowsNull := types.IsTypeNullable(param.Typ)
-	varIsNullable := types.IsTypeNullable(varInfo.Type)
+	paramAllowsNull := types.IsTypeNullable(paramType)
+	varType := varInfo.Type
+	varIsNullable := types.IsTypeNullable(varType)
 	if varIsNullable && !paramAllowsNull {
 		b.report(arg, LevelWarning, "notNullSafetyFunctionArgumentVariable",
 			"not null safety call in function %s signature of param %s",
 			formatSlashesFuncName(fn), param.Name)
 	}
+
+	if paramType.Empty() || varIsNullable {
+		return
+	}
+
+	if !b.isTypeCompatible(varType, paramType) {
+		b.report(arg, LevelWarning, "notSafeCall",
+			"potentially not safe call in function %s signature of param %s",
+			formatSlashesFuncName(fn), param.Name)
+	}
 }
 
-func (b *blockWalker) checkConstFetchNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, constExpr *ir.ConstFetchExpr, haveVariadic bool) {
+func (b *blockWalker) isTypeCompatible(varType types.Map, paramType types.Map) bool {
+	if paramType.Empty() {
+		return true
+	}
+
+	var forcedVarType = types.NewMapFromMap(solver.ResolveTypes(b.r.metaInfo(), "", varType, solver.ResolverMap{}))
+
+	// Attempt to merge union types if one is a subclass/implementation of the other
+	if forcedVarType.Len() > 1 {
+		metaInfo := b.r.metaInfo()
+		forcedVarType = solver.MergeUnionTypes(metaInfo, forcedVarType)
+	}
+
+	if forcedVarType.Len() > paramType.Len() {
+		if paramType.Contains(types.WrapArrayOf("mixed")) || paramType.Contains("mixed") {
+			return true
+		}
+		return false
+	}
+
+	isVarBoolean := forcedVarType.IsBoolean()
+	isClass := forcedVarType.IsClass()
+	varClassName := forcedVarType.String()
+	isClosure := types.IsClosure(forcedVarType.String())
+
+	for _, param := range paramType.Keys() {
+		// boolean case
+		if isVarBoolean && (param == "bool" || param == "boolean") {
+			return true
+		}
+
+		if paramType.Contains(types.WrapArrayOf("mixed")) || paramType.Contains("mixed") {
+			return true
+		}
+
+		// exact match
+		if forcedVarType.Contains(param) {
+			return true
+		}
+
+		// class check
+		if isClass {
+			if param == "object" || strings.Contains(param, varClassName) {
+				return true
+			}
+			if !types.IsScalar(param) {
+				metaInfo := b.r.metaInfo()
+				if solver.Implements(metaInfo, varClassName, param) {
+					return true
+				} else if solver.ImplementsAbstract(metaInfo, varClassName, param) {
+					return true
+				}
+			}
+		}
+	}
+
+	forcedParamType := types.NewMapFromMap(solver.ResolveTypes(b.r.metaInfo(), "", paramType, solver.ResolverMap{}))
+
+	if isClosure && forcedParamType.Contains("callable") {
+		return true
+	}
+	// TODO: This is bullshit because we have no good type inferring for arrays: bool[1] will be bool[]! !not bool!
+	if strings.Contains(forcedParamType.String(), "[") {
+		idx := strings.Index(forcedParamType.String(), "[")
+		arrayType := forcedParamType.String()[:idx] //nolint:gocritic
+		return forcedParamType.Contains(arrayType)
+	} else if strings.Contains(varType.String(), "[") {
+		idx := strings.Index(varType.String(), "[")
+		arrayType := varType.String()[:idx] //nolint:gocritic
+		return forcedParamType.Contains(arrayType)
+	}
+	return !forcedParamType.Intersect(forcedVarType).Empty()
+}
+
+func (b *blockWalker) checkConstFetchSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, constExpr *ir.ConstFetchExpr, haveVariadic bool) {
 	constVal := constExpr.Constant.Value
 	isNull := constVal == "null"
 
 	param := nullSafetyRealParamForCheck(fn, paramIndex, haveVariadic)
+	paramType := param.Typ
 	if haveVariadic && paramIndex >= len(fn.Params)-1 {
-		if types.IsTypeMixed(param.Typ) {
+		if types.IsTypeMixed(paramType) {
 			return
 		}
 	}
-	paramAllowsNull := types.IsTypeNullable(param.Typ)
-	if isNull && !paramAllowsNull {
-		b.report(arg, LevelWarning, "notNullSafetyFunctionArgumentConstFetch",
-			"null passed to non-nullable parameter %s in function %s",
-			param.Name, formatSlashesFuncName(fn))
+	paramAllowsNull := types.IsTypeNullable(paramType)
+	if isNull {
+		if !paramAllowsNull {
+			b.report(arg, LevelWarning, "notNullSafetyFunctionArgumentConstFetch",
+				"null passed to non-nullable parameter %s in function %s",
+				param.Name, formatSlashesFuncName(fn))
+		}
+	} else {
+		isBool := constVal == "true" || constVal == "false"
+		if isBool {
+			typ := types.NewMap(constVal)
+			if !b.isTypeCompatible(typ, paramType) {
+				b.report(arg, LevelWarning, "notSafeCall",
+					"potentially not safe access in parameter %s of function %s",
+					param.Name, formatSlashesFuncName(fn))
+			}
+		}
 	}
 }
 
-func (b *blockWalker) checkArrayDimFetchNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, arrayExpr *ir.ArrayDimFetchExpr, haveVariadic bool) {
+func (b *blockWalker) checkArrayDimFetchSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, arrayExpr *ir.ArrayDimFetchExpr, haveVariadic bool) {
 	baseVar, ok := arrayExpr.Variable.(*ir.SimpleVar)
 	if !ok {
 		return
@@ -1222,107 +1344,69 @@ func (b *blockWalker) checkArrayDimFetchNullSafety(arg ir.Node, fn meta.FuncInfo
 		}
 	}
 	paramAllowsNull := types.IsTypeNullable(param.Typ)
-	if types.IsTypeNullable(varInfo.Type) && !paramAllowsNull {
+	varType := varInfo.Type
+	varIsNullable := types.IsTypeNullable(varType)
+	if varIsNullable && !paramAllowsNull {
 		b.report(arg, LevelWarning, "notNullSafetyFunctionArgumentArrayDimFetch",
 			"potential null array access in parameter %s of function %s",
 			param.Name, formatSlashesFuncName(fn))
 	}
+
+	if param.Typ.Empty() || varIsNullable {
+		return
+	}
+
+	if !b.isTypeCompatible(varType, param.Typ) {
+		b.report(arg, LevelWarning, "notSafeCall",
+			"potentially not safe array access in parameter %s of function %s",
+			param.Name, formatSlashesFuncName(fn))
+	}
 }
 
-func (b *blockWalker) checkListExprNullSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, listExpr *ir.ListExpr, haveVariadic bool) {
+func (b *blockWalker) checkListExprSafety(arg ir.Node, fn meta.FuncInfo, paramIndex int, listExpr *ir.ListExpr, haveVariadic bool) {
 	for _, item := range listExpr.Items {
 		if item == nil {
 			continue
 		}
 
 		if item.Key != nil {
-			b.checkNullSafetyCallArgsF([]ir.Node{item.Key}, fn)
+			b.checknotSafeCallArgsF([]ir.Node{item.Key}, fn)
 		}
 
 		if item.Val != nil {
 			param := nullSafetyRealParamForCheck(fn, paramIndex, haveVariadic)
+			paramType := param.Typ
 			if simpleVar, ok := item.Val.(*ir.SimpleVar); ok {
 				varInfo, found := b.ctx.sc.GetVar(simpleVar)
-				if found && types.IsTypeNullable(varInfo.Type) && !types.IsTypeNullable(param.Typ) {
-					b.report(arg, LevelWarning, "notNullSafetyFunctionArgumentList",
-						"potential null value in list assignment for param %s in function %s",
-						param.Name, formatSlashesFuncName(fn))
+				if found {
+					varType := varInfo.Type
+					varIsNullable := types.IsTypeNullable(varType)
+					if varIsNullable && !types.IsTypeNullable(paramType) {
+						{
+							b.report(arg, LevelWarning, "notNullSafetyFunctionArgumentList",
+								"potential null value in list assignment for param %s in function %s",
+								param.Name, formatSlashesFuncName(fn))
+						}
+					}
+					if paramType.Empty() || varIsNullable {
+						return
+					}
+
+					if !b.isTypeCompatible(varType, paramType) {
+						b.report(arg, LevelWarning, "notSafeCall",
+							"potentially not safe list assignment for param %s in function %s",
+							param.Name, formatSlashesFuncName(fn))
+					}
 				}
 			}
-			b.checkNullSafetyCallArgsF([]ir.Node{item.Val}, fn)
+			b.checknotSafeCallArgsF([]ir.Node{item.Val}, fn)
 		}
 	}
 }
 
-func (b *blockWalker) getPropertyComputedType(expr ir.Node) (meta.ClassInfo, types.Map) {
-	var baseNode ir.Node
-	var propertyNode ir.Node
-
-	switch e := expr.(type) {
-	case *ir.PropertyFetchExpr:
-		baseNode = e.Variable
-		propertyNode = e.Property
-	case *ir.StaticPropertyFetchExpr:
-		baseNode = e.Class
-		propertyNode = e.Property
-	default:
-		return meta.ClassInfo{}, types.Map{}
-	}
-
-	var classInfo meta.ClassInfo
-	var ok bool
-	var varType string
-
-	if baseCall, ok := baseNode.(*ir.SimpleVar); ok {
-		varInfo, found := b.ctx.sc.GetVar(baseCall)
-		if !found {
-			return meta.ClassInfo{}, types.Map{}
-		}
-		varType = varInfo.Type.String()
-	} else if nameNode, ok := baseNode.(*ir.Name); ok {
-		varType = "\\" + nameNode.Value
-	} else {
-		return meta.ClassInfo{}, types.Map{}
-	}
-
-	classInfo, ok = b.r.ctx.st.Info.GetClass(varType)
-	if !ok {
-		return meta.ClassInfo{}, types.Map{}
-	}
-
-	switch prop := propertyNode.(type) {
-	case *ir.Identifier:
-		propertyInfoFromClass := classInfo.Properties[prop.Value]
-		return classInfo, propertyInfoFromClass.Typ
-	case *ir.SimpleVar:
-		// static: $maybeClass::$value
-		propertyInfoFromClass := classInfo.Properties["$"+prop.Name]
-		return classInfo, propertyInfoFromClass.Typ
-	default:
-		return meta.ClassInfo{}, types.Map{}
-	}
-}
-
-func (b *blockWalker) checkPropertyFetchNullSafety(expr *ir.PropertyFetchExpr, fn meta.FuncInfo, paramIndex int, haveVariadic bool) {
-	// Recursively check the left part of the chain if it is also a property fetch.
-	if nested, ok := expr.Variable.(*ir.PropertyFetchExpr); ok {
-		b.checkPropertyFetchNullSafety(nested, fn, paramIndex, haveVariadic)
-	}
-
-	classInfo, propType := b.getPropertyComputedType(expr)
-	if classInfo.Name == "" || propType.Empty() {
-		return
-	}
-
-	prp, ok := expr.Property.(*ir.Identifier)
-	if !ok {
-		return
-	}
-
-	b.checkingPropertyFetchNullSafetyCondition(expr, propType, prp.Value, fn, paramIndex, haveVariadic)
-}
-
-func (b *blockWalker) checkingPropertyFetchNullSafetyCondition(
+// checkingPropertyFetchSafetyCondition verifies the safety of the final property fetch
+// (the rightmost node in the chain) by checking null-safety and type compatibility
+func (b *blockWalker) checkingPropertyFetchSafetyCondition(
 	expr ir.Node,
 	propType types.Map,
 	prpName string,
@@ -1332,11 +1416,13 @@ func (b *blockWalker) checkingPropertyFetchNullSafetyCondition(
 ) {
 	isPrpNullable := types.IsTypeNullable(propType)
 	param := nullSafetyRealParamForCheck(fn, paramIndex, haveVariadic)
+	paramType := param.Typ
+
 	if haveVariadic && paramIndex >= len(fn.Params)-1 {
-		if types.IsTypeMixed(param.Typ) {
+		if types.IsTypeMixed(paramType) {
 			return
 		}
-		paramAllowsNull := types.IsTypeNullable(param.Typ)
+		paramAllowsNull := types.IsTypeNullable(paramType)
 		if isPrpNullable && !paramAllowsNull {
 			b.report(expr, LevelWarning, "notNullSafetyFunctionArgumentPropertyFetch",
 				"potential null dereference when accessing property '%s'", prpName)
@@ -1344,34 +1430,161 @@ func (b *blockWalker) checkingPropertyFetchNullSafetyCondition(
 		return
 	}
 
-	paramAllowsNull := types.IsTypeNullable(param.Typ)
+	paramAllowsNull := types.IsTypeNullable(paramType)
 	if isPrpNullable && !paramAllowsNull {
 		b.report(expr, LevelWarning, "notNullSafetyFunctionArgumentPropertyFetch",
 			"potential null dereference when accessing property '%s'", prpName)
 	}
+
+	if paramType.Empty() || isPrpNullable {
+		return
+	}
+
+	if !b.isTypeCompatible(propType, paramType) {
+		b.report(expr, LevelWarning, "notSafeCall",
+			"potentially not safe accessing property '%s'", prpName)
+	}
 }
 
-func (b *blockWalker) checkStaticPropertyFetchNullSafety(expr *ir.StaticPropertyFetchExpr, fn meta.FuncInfo, paramIndex int, haveVariadic bool) {
-	// Recursively check the left part of the chain if it is also a property fetch.
-	if nested, ok := expr.Class.(*ir.StaticPropertyFetchExpr); ok {
-		b.checkStaticPropertyFetchNullSafety(nested, fn, paramIndex, haveVariadic)
+// collectUnifiedPropertyFetchChain collects the entire chain of property fetches (instance or static)
+// and returns a slice of nodes in the order: [rightmost property fetch, ..., base node (e.g. SimpleVar)]
+func (b *blockWalker) collectUnifiedPropertyFetchChain(expr ir.Node) []ir.Node {
+	var chain []ir.Node
+	switch e := expr.(type) {
+	case *ir.PropertyFetchExpr:
+		cur := e
+		for {
+			chain = append(chain, cur)
+			if nested, ok := cur.Variable.(*ir.PropertyFetchExpr); ok {
+				cur = nested
+			} else {
+				chain = append(chain, cur.Variable)
+				break
+			}
+		}
+	case *ir.StaticPropertyFetchExpr:
+		cur := e
+		for {
+			chain = append(chain, cur)
+			if nested, ok := cur.Class.(*ir.StaticPropertyFetchExpr); ok {
+				cur = nested
+			} else {
+				chain = append(chain, cur.Class)
+				break
+			}
+		}
 	}
+	return chain
+}
 
-	classInfo, propType := b.getPropertyComputedType(expr)
-	if classInfo.Name == "" || propType.Empty() {
+// checkUnifiedPropertyFetchNotSafety combines checks for instance and static property access
+// For the final (rightmost) node (the one being substituted), we check null and type safety
+// and all intermediate nodes (except the base one) must be classes
+func (b *blockWalker) checkUnifiedPropertyFetchNotSafety(expr ir.Node, fn meta.FuncInfo, paramIndex int, haveVariadic bool) {
+	chain := b.collectUnifiedPropertyFetchChain(expr)
+	if len(chain) == 0 {
 		return
 	}
 
-	prp, ok := expr.Property.(*ir.SimpleVar)
-	if !ok {
+	globalMetaInfo := b.linter.classParseState()
+
+	var finalPropType types.Map
+	var finalPropName string
+	switch node := chain[0].(type) {
+	case *ir.PropertyFetchExpr:
+		propInfo := resolvePropertyFetch(b.ctx.sc, globalMetaInfo, b.ctx.customTypes, node, b.r.strictMixed)
+		if !propInfo.isFound {
+			return
+		}
+		ip, ok := node.Property.(*ir.Identifier)
+		if !ok {
+			return
+		}
+		finalPropType = propInfo.info.Typ
+		finalPropName = ip.Value
+	case *ir.StaticPropertyFetchExpr:
+		variable, isVar := node.Property.(*ir.SimpleVar)
+		class, isClass := node.Class.(*ir.SimpleVar)
+
+		if isVar && isClass {
+			if !isClass {
+				return
+			}
+			classTyp, ok := b.ctx.sc.GetVarType(class)
+			if !ok {
+				return
+			}
+			if classTyp.Contains("null") {
+				classTyp.Erase("null")
+			}
+
+			property, found := solver.FindProperty(b.r.ctx.st.Info, classTyp.String(), "$"+variable.Name)
+			if !found {
+				return
+			}
+
+			finalPropType = property.Info.Typ
+			finalPropName = variable.Name
+		} else {
+			propInfo := resolveStaticPropertyFetch(globalMetaInfo, node)
+			if !propInfo.isFound {
+				return
+			}
+
+			finalPropType = propInfo.info.Info.Typ
+			finalPropName = propInfo.propertyName
+		}
+	default:
 		return
 	}
 
-	b.checkingPropertyFetchNullSafetyCondition(expr, propType, prp.Name, fn, paramIndex, haveVariadic)
+	b.checkingPropertyFetchSafetyCondition(expr, finalPropType, finalPropName, fn, paramIndex, haveVariadic)
+
+	for i := 1; i < len(chain); i++ {
+		switch node := chain[i].(type) {
+		case *ir.PropertyFetchExpr:
+			propInfo := resolvePropertyFetch(b.ctx.sc, globalMetaInfo, b.ctx.customTypes, node, b.r.strictMixed)
+			if !propInfo.isFound {
+				return
+			}
+			propType := propInfo.info.Typ
+			if types.IsTypeNullable(propType) {
+				b.report(node, LevelWarning, "notSafeCall",
+					"potential null dereference when accessing property '%s'", propInfo.propertyNode.Value)
+				return
+			}
+
+			propType.Iterate(func(typ string) {
+				if types.IsTrivial(typ) {
+					b.report(node, LevelWarning, "notSafeCall",
+						"potentially not safe accessing property '%s': intermediary node is not a class", propInfo.propertyNode.Value)
+					return
+				}
+			})
+		case *ir.SimpleVar:
+			varType, ok := b.ctx.sc.GetVarType(node)
+			if !ok {
+				return
+			}
+			varType = solver.MergeUnionTypes(b.r.metaInfo(), varType)
+			if types.IsTypeNullable(varType) {
+				b.report(node, LevelWarning, "notSafeCall",
+					"potential null dereference when accessing variable '%s'", node.Name)
+				return
+			}
+			varType.Iterate(func(typ string) {
+				if types.IsTrivial(typ) {
+					b.report(node, LevelWarning, "notSafeCall",
+						"potentially not safe accessing variable '%s': intermediary node is not a class", node.Name)
+					return
+				}
+			})
+		}
+	}
 }
 
 func (b *blockWalker) handleCallArgs(args []ir.Node, fn meta.FuncInfo) {
-	b.checkNullSafetyCallArgsF(args, fn)
+	b.checknotSafeCallArgsF(args, fn)
 
 	for i, arg := range args {
 		if i >= len(fn.Params) {
