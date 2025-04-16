@@ -152,3 +152,136 @@ function funcArrayError1(?array $c) {
 	}
 	test.RunAndMatch()
 }
+
+func TestByReferenceCorrect(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+/**
+ * Clear standalone line tokens.
+ *
+ * @param array $nodes  Parsed nodes
+ * @param array $tokens Tokens to be parsed
+ *
+ * @return array|null Resulting indent token, if any
+ */
+function clearStandaloneLines(array &$nodes, array &$tokens) {
+}
+
+`)
+	// No errors expected.
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
+func TestByReferenceMismatch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+/**
+ * Incorrect by-reference parameter:
+ * PHPDoc specifies int, but typehint is array.
+ *
+ * @param int $a
+ */
+function byRefError(array &$a) {
+}
+`)
+	test.Expect = []string{
+		`param $a miss matched with phpdoc type <<int>>`,
+	}
+	test.RunAndMatch()
+}
+
+func TestCallableCorrect(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+/**
+ * Function with callable parameter.
+ *
+ * @param callable(int, string): Boo|Foo $s
+ */
+function testCallable(callable $s) {
+  // Dummy call.
+  $s(1, "test");
+}
+
+testCallable(function($a, $b) {
+  return new stdClass();
+});
+`)
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
+func TestInterfaceCorrect(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+interface Responsable {}
+
+/**
+ * Uses Responsable interface value.
+ *
+ * @param \Responsable $r
+ */
+function reference_iface(Responsable $r) {
+}
+
+reference_iface(new class implements Responsable {});
+`)
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
+func TestUnionMismatch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+/**
+ * Function with error: phpdoc specifies nullable int (int|null),
+ * but typehint is non-nullable int.
+ *
+ * @param int|null $d
+ */
+function funcError2(int $d) {
+}
+
+funcError2(5);
+`)
+	test.Expect = []string{
+		`param $d miss matched with phpdoc type <<int|null>>`,
+	}
+	test.RunAndMatch()
+}
+
+func TestNullableCorrect(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+/**
+ * Function with correct nullable parameter.
+ *
+ * @param int|null $d
+ */
+function nullableCorrect(?int $d) {
+}
+
+nullableCorrect(null);
+`)
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
+func TestArrayCorrect(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+/**
+ * Function with array parameters.
+ *
+ * @param array $a
+ * @param int[] $b
+ */
+function funcArray(array $a, array $b) {
+}
+
+funcArray([], []);
+`)
+	test.Expect = []string{}
+	test.RunAndMatch()
+}

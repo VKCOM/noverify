@@ -552,24 +552,91 @@ func (b *blockWalker) handleAndCheckGlobalStmt(s *ir.GlobalStmt) {
 }
 
 func (b *blockWalker) checkPhpDocTypesWithTypeHints(param *ir.Parameter, phpDocParamTypes map[string]string) {
-	if phpDocParamTypes == nil || len(phpDocParamTypes) == 0 {
+	if phpDocParamTypes == nil {
 		return
 	}
 
-	phpDocType := phpDocParamTypes["$"+param.Variable.Name]
+	var variableName string
+
+	if param.ByRef {
+		variableName = "&$" + param.Variable.Name
+	} else {
+		variableName = "$" + param.Variable.Name
+	}
+	phpDocType := phpDocParamTypes[variableName]
+	// If not found (when phpdoc omits "&"), try without the "&" prefix
+	if phpDocType == "" {
+		phpDocType = phpDocParamTypes["$"+param.Variable.Name]
+	}
+
 	paramName := param.Variable.Name
 
-	// TODO: case with arrays
 	switch typ := param.VariableType.(type) {
-	case *ir.Name:
-		if phpDocType != typ.Value {
-			b.linter.report(param, LevelWarning, "funcParamTypeMissMatch", "param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
-		}
-	case *ir.Identifier:
-		if phpDocType != typ.Value {
-			b.linter.report(param, LevelWarning, "funcParamTypeMissMatch", "param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
+	case *ir.Name, *ir.Identifier:
+		var typeValue string
+		switch n := typ.(type) {
+		case *ir.Name:
+			typeValue = n.Value
+		case *ir.Identifier:
+			typeValue = n.Value
 		}
 
+		normalizedPhpDocType := strings.TrimPrefix(phpDocType, "\\")
+
+		// Special handling for callable remains unchanged
+		if typeValue == "callable" {
+			if !strings.HasPrefix(strings.TrimSpace(normalizedPhpDocType), "callable") {
+				b.linter.report(param, LevelWarning, "funcParamTypeMissMatch",
+					"param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
+			}
+			break
+		}
+
+		// Union types
+		if strings.Contains(normalizedPhpDocType, "|") {
+			parts := strings.Split(normalizedPhpDocType, "|")
+			isPhpDocNullable := false
+			for _, part := range parts {
+				if strings.TrimSpace(part) == "null" {
+					isPhpDocNullable = true
+					break
+				}
+			}
+
+			if isPhpDocNullable {
+				b.linter.report(param, LevelWarning, "funcParamTypeMissMatch",
+					"param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
+			} else {
+				matchFound := false
+				for _, part := range parts {
+					docPart := strings.TrimSpace(part)
+					if typeValue == "array" {
+						if docPart == "array" || strings.HasSuffix(docPart, "[]") {
+							matchFound = true
+							break
+						}
+					} else if docPart == typeValue {
+						matchFound = true
+						break
+					}
+				}
+				if !matchFound {
+					b.linter.report(param, LevelWarning, "funcParamTypeMissMatch",
+						"param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
+				}
+			}
+		} else {
+			// Non-union types
+			if typeValue == "array" {
+				if normalizedPhpDocType != "array" && !strings.HasSuffix(normalizedPhpDocType, "[]") {
+					b.linter.report(param, LevelWarning, "funcParamTypeMissMatch",
+						"param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
+				}
+			} else if normalizedPhpDocType != typeValue {
+				b.linter.report(param, LevelWarning, "funcParamTypeMissMatch",
+					"param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
+			}
+		}
 	case *ir.Nullable:
 		if !strings.Contains(phpDocType, "?") && !strings.Contains(phpDocType, "null") {
 			b.linter.report(param, LevelWarning, "funcParamTypeMissMatch", "param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
