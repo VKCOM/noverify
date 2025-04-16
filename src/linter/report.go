@@ -1356,6 +1356,31 @@ class Main {
 			Before:   `if (gettype($a) == "string") { ... }`,
 			After:    `if (is_string($a)) { ... }`,
 		},
+
+		{
+			Name:     "funcParamTypeMissMatch",
+			Default:  true,
+			Quickfix: false,
+			Comment:  `Report function typehint and phpdoc mismatch.`,
+			Before: `
+/**
+ *
+ * @param ?string $name
+ * @return string
+ */
+function wrongParam(string $name): string {
+    return "Hello, $name";
+}`,
+			After: `
+/**
+ *
+ * @param ?string $name
+ * @return string
+ */
+function wrongParam(?string $name): string {
+    return "Hello, $name";
+}`,
+		},
 	}
 
 	for _, info := range allChecks {

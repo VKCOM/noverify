@@ -551,17 +551,47 @@ func (b *blockWalker) handleAndCheckGlobalStmt(s *ir.GlobalStmt) {
 	}
 }
 
-func (b *blockWalker) CheckParamNullability(params []ir.Node) {
+func (b *blockWalker) checkPhpDocTypesWithTypeHints(param *ir.Parameter, phpDocParamTypes map[string]string) {
+	if phpDocParamTypes == nil || len(phpDocParamTypes) == 0 {
+		return
+	}
+
+	phpDocType := phpDocParamTypes["$"+param.Variable.Name]
+	paramName := param.Variable.Name
+
+	// TODO: case with arrays
+	switch typ := param.VariableType.(type) {
+	case *ir.Name:
+		if phpDocType != typ.Value {
+			b.linter.report(param, LevelWarning, "funcParamTypeMissMatch", "param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
+		}
+	case *ir.Identifier:
+		if phpDocType != typ.Value {
+			b.linter.report(param, LevelWarning, "funcParamTypeMissMatch", "param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
+		}
+
+	case *ir.Nullable:
+		if !strings.Contains(phpDocType, "?") && !strings.Contains(phpDocType, "null") {
+			b.linter.report(param, LevelWarning, "funcParamTypeMissMatch", "param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
+		}
+	default:
+		return
+	}
+}
+
+func (b *blockWalker) CheckParamNullability(params []ir.Node, phpDocParamTypes map[string]string) {
 	for _, param := range params {
 		if p, ok := param.(*ir.Parameter); ok {
 			var paramType ir.Node
-			paramType, paramOk := p.VariableType.(*ir.Name)
-			if !paramOk {
-				paramIdentifier, paramIdentifierOk := p.VariableType.(*ir.Identifier)
-				if !paramIdentifierOk {
-					continue
-				}
-				paramType = paramIdentifier
+
+			b.checkPhpDocTypesWithTypeHints(p, phpDocParamTypes)
+			switch typ := p.VariableType.(type) {
+			case *ir.Name, *ir.Identifier:
+				paramType = typ
+			case *ir.Nullable:
+				continue
+			default:
+				continue
 			}
 
 			paramName, ok := paramType.(*ir.Name)
@@ -586,9 +616,29 @@ func (b *blockWalker) CheckParamNullability(params []ir.Node) {
 	}
 }
 
+func (b *blockWalker) getParamsTypesFromPhpDoc(doc phpdoc.Comment) map[string]string {
+	if len(doc.Parsed) == 0 {
+		return nil
+	}
+	phpDocParamTypes := make(map[string]string)
+
+	for _, part := range doc.Parsed {
+		switch part.Name() {
+		case "param":
+			param, ok := part.(*phpdoc.TypeVarCommentPart)
+			if ok {
+				phpDocParamTypes[param.Var] = param.Type.Expr.Value
+			}
+		}
+	}
+	return phpDocParamTypes
+}
+
 func (b *blockWalker) handleFunction(fun *ir.FunctionStmt) bool {
 	if b.ignoreFunctionBodies {
-		b.CheckParamNullability(fun.Params)
+		phpDocParamTypes := b.getParamsTypesFromPhpDoc(fun.Doc)
+
+		b.CheckParamNullability(fun.Params, phpDocParamTypes)
 		return false
 	}
 
@@ -1628,7 +1678,8 @@ func (b *blockWalker) handleCallArgs(args []ir.Node, fn meta.FuncInfo) {
 				ArgTypes: funcArgTypes,
 			}
 
-			b.CheckParamNullability(a.Params)
+			phpDocParamTypes := b.getParamsTypesFromPhpDoc(a.Doc)
+			b.CheckParamNullability(a.Params, phpDocParamTypes)
 			b.enterClosure(a, isInstance, typ, closureSolver)
 		default:
 			a.Walk(b)

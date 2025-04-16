@@ -1,0 +1,154 @@
+package checkers_test
+
+import (
+	"testing"
+
+	"github.com/VKCOM/noverify/src/linttest"
+)
+
+func TestFunctionParamTypeMismatch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+// Functions testing parameter type mismatch between phpdoc and typehint
+
+/**
+ * Function with correct non-nullable parameter: both phpdoc and typehint are non-nullable.
+ *
+ * @param int $a
+ */
+function funcCorrect1(int $a) {
+}
+
+/**
+ * Function with correct nullable parameter: both phpdoc and typehint are nullable.
+ *
+ * @param int|null $b
+ */
+function funcCorrect2(?int $b) {
+}
+
+/**
+ * Function with error: phpdoc specifies non-nullable int, but typehint is nullable (?int).
+ *
+ * @param int $c
+ */
+function funcError1(?int $c) {
+}
+
+/**
+ * Function with error: phpdoc specifies nullable int (int|null), but typehint is non-nullable int.
+ *
+ * @param int|null $d
+ */
+function funcError2(int $d) {
+}
+`)
+	test.Expect = []string{
+		`param $c miss matched with phpdoc type <<int>>`,
+		`param $d miss matched with phpdoc type <<int|null>>`,
+	}
+	test.RunAndMatch()
+}
+
+func TestMethodParamTypeMismatch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+// Class methods testing parameter type mismatch between phpdoc and typehint
+
+class Sample {
+  /**
+   * Method with correct non-nullable parameter: both phpdoc and typehint match.
+   *
+   * @param string $name
+   */
+  public function methodCorrect(string $name) {
+  }
+
+  /**
+   * Method with error: phpdoc specifies nullable string (string|null), but typehint is non-nullable.
+   *
+   * @param string|null $title
+   */
+  public function methodError1(string $title) {
+  }
+
+  /**
+   * Method with error: phpdoc specifies non-nullable string, but typehint is nullable (?string).
+   *
+   * @param string $desc
+   */
+  public function methodError2(?string $desc) {
+  }
+}
+`)
+	test.Expect = []string{
+		`param $title miss matched with phpdoc type <<string|null>>`,
+		`param $desc miss matched with phpdoc type <<string>>`,
+	}
+	test.RunAndMatch()
+}
+
+func TestIgnoreReturnTypeMismatch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+// This test ensures that only parameter types are checked,
+// and any mismatches in return types are ignored.
+
+/**
+ * Function with a mismatch in return type between phpdoc and typehint.
+ * The parameter type is correct and should not trigger an error.
+ *
+ * @param int $a
+ * @return int|null
+ */
+function returnMismatch(int $a): int {
+    return $a > 0 ? $a : null;
+}
+
+// Call the function to trigger linting
+returnMismatch(5);
+`)
+	test.Expect = []string{
+		`Expression evaluated but not used`,
+	}
+	test.RunAndMatch()
+}
+
+func TestArrayParamTypeMismatch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+// Functions testing array parameter types
+
+/**
+ * Function with correct array parameter:
+ * phpdoc specifies "array" and typehint is array.
+ *
+ * @param array $a
+ */
+function funcArrayCorrect1(array $a) {
+}
+
+/**
+ * Function with correct array parameter:
+ * phpdoc specifies "int[]" and typehint is array.
+ *
+ * @param int[] $b
+ */
+function funcArrayCorrect2(array $b) {
+}
+
+/**
+ * Function with error: phpdoc specifies non-nullable "array",
+ * but typehint is nullable array (?array).
+ *
+ * @param array $c
+ */
+function funcArrayError1(?array $c) {
+}
+
+`)
+	test.Expect = []string{
+		`param $c miss matched with phpdoc type <<array>>`,
+	}
+	test.RunAndMatch()
+}
