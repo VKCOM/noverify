@@ -22,3 +22,9 @@ WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/
 WARNING errorSilence: Don't use @, silencing errors is bad practice at testdata/inflector/lib/Doctrine/Common/Inflector/Inflector.php:181
         @trigger_error(sprintf('The "%s" method is deprecated and will be dropped in Doctrine Inflector 3.0. Please update to the new Inflector API.', __METHOD__), E_USER_DEPRECATED);
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function mb_strtolower signature of param string at testdata/inflector/lib/Doctrine/Inflector/Inflector.php:242
+        return mb_strtolower($tableized);
+                             ^^^^^^^^^^
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function trim signature of param string at testdata/inflector/lib/Doctrine/Inflector/Inflector.php:480
+        return trim($urlized, '-');
+                    ^^^^^^^^

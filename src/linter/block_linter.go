@@ -188,8 +188,10 @@ func (b *blockLinter) enterNode(n ir.Node) {
 		b.walker.r.checker.CheckKeywordCase(n, "for")
 	case *ir.WhileStmt:
 		b.walker.r.checker.CheckKeywordCase(n, "while")
+		b.checkDangerousBoolCond(n.Cond)
 	case *ir.DoStmt:
 		b.walker.r.checker.CheckKeywordCase(n, "do")
+		b.checkDangerousBoolCond(n.Cond)
 
 	case *ir.ContinueStmt:
 		b.checkContinueStmt(n)
@@ -595,24 +597,52 @@ func (b *blockLinter) checkStmtExpression(s *ir.ExpressionStmt) {
 	// All branches except default try to filter-out common
 	// cases to reduce the number of type solving performed.
 	if irutil.IsAssign(s.Expr) {
+		assign, okCast := s.Expr.(*ir.Assign)
+		if !okCast {
+			return
+		}
+		if v, ok := assign.Variable.(*ir.StaticPropertyFetchExpr); ok {
+			parseState := b.classParseState()
+			left, ok := parseState.Info.GetVarType(v.Class)
+
+			if ok {
+				b.checkSafetyCall(s, left, "", "PropertyFetch")
+			}
+		}
 		return
 	}
-	switch s.Expr.(type) {
+	switch expr := s.Expr.(type) {
 	case *ir.ImportExpr, *ir.ExitExpr:
 		// Skip.
 	case *ir.ArrayExpr, *ir.NewExpr:
 		// Report these even if they are not pure.
 		report = true
-	default:
-		typ := b.walker.exprType(s.Expr)
-		if !typ.Is("void") {
-			report = b.walker.sideEffectFree(s.Expr)
+	case *ir.StaticCallExpr:
+		if v, ok := expr.Class.(*ir.SimpleVar); ok {
+			parseState := b.classParseState()
+			left, ok := parseState.Info.GetVarType(v)
+
+			if ok && left.Contains("null") {
+				b.report(s, LevelWarning, "notNullSafetyStaticFunctionCall",
+					"potential null dereference when accessing static call throw $%s", v.Name)
+			}
 		}
+		report = b.isDiscardableExpr(s.Expr)
+	default:
+		report = b.isDiscardableExpr(s.Expr)
 	}
 
 	if report {
 		b.report(s.Expr, LevelWarning, "discardExpr", "Expression evaluated but not used")
 	}
+}
+
+func (b *blockLinter) isDiscardableExpr(expr ir.Node) bool {
+	typ := b.walker.exprType(expr)
+	if !typ.Is("void") {
+		return b.walker.sideEffectFree(expr)
+	}
+	return false
 }
 
 func (b *blockLinter) checkConstFetch(e *ir.ConstFetchExpr) {
@@ -801,8 +831,32 @@ func (b *blockLinter) checkIfStmt(s *ir.IfStmt) {
 			b.report(s, LevelWarning, "dupBranchBody", "Duplicated if/else actions")
 		}
 	}
+	b.checkDangerousBoolCond(s.Cond)
 
 	b.checkIfStmtDupCond(s)
+}
+
+func (b *blockLinter) checkDangerousBoolCond(s ir.Node) {
+	checkNodeDangerousBoolCond(s, b)
+}
+
+func checkNodeDangerousBoolCond(node ir.Node, b *blockLinter) {
+	switch n := node.(type) {
+	case *ir.ConstFetchExpr:
+		if strings.EqualFold(n.Constant.Value, "true") || strings.EqualFold(n.Constant.Value, "false") {
+			b.report(node, LevelNotice, "dangerousBoolCondition", "Potential dangerous bool value: you have constant bool value in condition")
+		}
+	case *ir.Lnumber:
+		if n.Value == "0" || n.Value == "1" {
+			b.report(node, LevelNotice, "dangerousBoolCondition", "Potential dangerous value: you have constant int value that interpreted as bool")
+		}
+	case *ir.BooleanOrExpr:
+		checkNodeDangerousBoolCond(n.Left, b)
+		checkNodeDangerousBoolCond(n.Right, b)
+	case *ir.BooleanAndExpr:
+		checkNodeDangerousBoolCond(n.Left, b)
+		checkNodeDangerousBoolCond(n.Right, b)
+	}
 }
 
 func (b *blockLinter) checkIfStmtDupCond(s *ir.IfStmt) {
@@ -816,6 +870,7 @@ func (b *blockLinter) checkIfStmtDupCond(s *ir.IfStmt) {
 		if !conditions.Add(elseif.Cond) {
 			b.report(elseif.Cond, LevelWarning, "dupCond", "duplicated condition in if-else chain")
 		}
+		b.checkDangerousBoolCond(elseif.Cond)
 	}
 }
 
@@ -1300,7 +1355,34 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 		}
 	}
 
-	if call.info.IsDeprecated() {
+	switch caller := e.Variable.(type) {
+	case *ir.FunctionCallExpr:
+		var funcName string
+		var ok bool
+
+		switch fn := caller.Function.(type) {
+		case *ir.SimpleVar:
+			funcName, ok = solver.GetFuncName(parseState, &ir.Name{Value: fn.Name})
+
+		case *ir.Name:
+			funcName, ok = solver.GetFuncName(parseState, fn)
+		}
+		if ok {
+			funInfo, found := parseState.Info.GetFunction(funcName)
+			if found {
+				funcType := funInfo.Typ
+				b.checkSafetyCall(e, funcType, funInfo.Name, "FunctionCall")
+			}
+		}
+
+	case *ir.SimpleVar:
+		varType, ok := b.walker.ctx.sc.GetVarType(caller)
+		if ok {
+			b.checkSafetyCall(e, varType, caller.Name, "Variable")
+		}
+	}
+
+	if call.info.Deprecated {
 		deprecation := call.info.DeprecationInfo
 
 		if deprecation.WithDeprecationNote() {
@@ -1314,6 +1396,40 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 
 	if call.isFound && !call.isMagic && !canAccess(parseState, call.className, call.info.AccessLevel) {
 		b.report(e.Method, LevelError, "accessLevel", "Cannot access %s method %s->%s()", call.info.AccessLevel, call.className, call.methodName)
+	}
+}
+
+func (b *blockLinter) checkSafetyCall(e ir.Node, typ types.Map, name string, suffix string) {
+	if typ.Contains("null") {
+		reportFullName := "notNullSafety" + suffix
+		switch {
+		case reportFullName == "notNullSafetyPropertyFetch":
+			b.report(e, LevelWarning, "notNullSafety"+suffix,
+				"potential attempt to access property through null")
+			return
+		case reportFullName == "notNullSafetyVariable" || reportFullName == "notNullSafetyFunctionCall":
+			b.report(e, LevelWarning, reportFullName,
+				"potential null dereference in %s when accessing method", name)
+			return
+		}
+	}
+
+	isSafetyCall := true
+	typ.Iterate(func(typ string) {
+		// TODO: here we can problem with mixed: $xs = [0, new Foo()]; $foo = $xs[0]; <== mixed. Need fix for array elem
+		if types.IsScalar(typ) {
+			isSafetyCall = false
+		}
+	})
+
+	if !isSafetyCall {
+		if name == "" {
+			b.report(e, LevelWarning, "notSafeCall",
+				"potentially not safe call when accessing property")
+			return
+		}
+		b.report(e, LevelWarning, "notSafeCall",
+			"potentially not safe call in %s when accessing method", name)
 	}
 }
 
@@ -1390,7 +1506,9 @@ func (b *blockLinter) checkMethodCallPackage(methodClassName string, methodInfo 
 }
 
 func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
-	fetch := resolvePropertyFetch(b.walker.ctx.sc, b.classParseState(), b.walker.ctx.customTypes, e, b.walker.r.strictMixed)
+	globalMetaInfo := b.classParseState()
+
+	fetch := resolvePropertyFetch(b.walker.ctx.sc, globalMetaInfo, b.walker.ctx.customTypes, e, b.walker.r.strictMixed)
 	if !fetch.canAnalyze {
 		return
 	}
@@ -1398,13 +1516,13 @@ func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
 	needShowUndefinedProperty := !fetch.callerTypeIsMixed || b.walker.r.strictMixed
 
 	if !fetch.isFound && !fetch.isMagic &&
-		!b.classParseState().IsTrait &&
+		!globalMetaInfo.IsTrait &&
 		!b.walker.isThisInsideClosure(e.Variable) &&
 		needShowUndefinedProperty {
 		b.report(e.Property, LevelError, "undefinedProperty", "Property {%s}->%s does not exist", fetch.propertyFetchType, fetch.propertyNode.Value)
 	}
 
-	if fetch.isFound && !fetch.isMagic && !canAccess(b.classParseState(), fetch.className, fetch.info.AccessLevel) {
+	if fetch.isFound && !fetch.isMagic && !canAccess(globalMetaInfo, fetch.className, fetch.info.AccessLevel) {
 		b.report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s->%s", fetch.info.AccessLevel, fetch.className, fetch.propertyNode.Value)
 	}
 
@@ -1414,22 +1532,34 @@ func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
 		} else {
 			b.report(e, LevelNotice, "deprecated", "Try to call property %s that was marked as deprecated in the class %s", fetch.propertyNode.Value, fetch.className)
 		}
+
+	left, ok := b.walker.ctx.sc.GetVarType(e.Variable)
+	if ok {
+		b.checkSafetyCall(e, left, "", "PropertyFetch")
 	}
 }
 
 func (b *blockLinter) checkStaticPropertyFetch(e *ir.StaticPropertyFetchExpr) {
-	fetch := resolveStaticPropertyFetch(b.classParseState(), e)
+	globalMetaInfo := b.classParseState()
+	fetch := resolveStaticPropertyFetch(globalMetaInfo, e)
+
+	left, ok := globalMetaInfo.Info.GetVarType(e.Class)
+	if ok && left.Contains("null") {
+		b.report(e, LevelWarning, "notNullSafetyPropertyFetch",
+			"attempt to access property that can be null")
+	}
+
 	if !fetch.canAnalyze {
 		return
 	}
 
 	b.checkClassSpecialNameCase(e, fetch.className)
 
-	if !fetch.isFound && !b.classParseState().IsTrait {
+	if !fetch.isFound && !globalMetaInfo.IsTrait {
 		b.report(e.Property, LevelError, "undefinedProperty", "Property %s::$%s does not exist", fetch.className, fetch.propertyName)
 	}
 
-	if fetch.isFound && !canAccess(b.classParseState(), fetch.info.ClassName, fetch.info.Info.AccessLevel) {
+	if fetch.isFound && !canAccess(globalMetaInfo, fetch.info.ClassName, fetch.info.Info.AccessLevel) {
 		b.report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s::$%s", fetch.info.Info.AccessLevel, fetch.info.ClassName, fetch.propertyName)
 	}
 }

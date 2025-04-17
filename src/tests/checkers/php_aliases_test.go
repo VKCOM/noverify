@@ -13,7 +13,6 @@ declare(strict_types = "1")
 $_ = join("", []);
 `)
 	test.Expect = []string{
-		`Call to undefined function join`,
 		`Use implode instead of 'join'`,
 	}
 	test.RunAndMatch()
@@ -35,9 +34,7 @@ test(join("", []));
 		`Use OCICollection::max instead of 'ocicollmax'`,
 		`Call to undefined function ocicollmax`,
 		`Use implode instead of 'join'`,
-		`Call to undefined function join`,
 		`Use implode instead of 'join'`,
-		`Call to undefined function join`,
 	}
 	test.RunAndMatch()
 }

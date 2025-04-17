@@ -122,6 +122,14 @@ func NewMap(str string) Map {
 	return Map{m: m}
 }
 
+func (m Map) Keys() []string {
+	keys := make([]string, 0, len(m.m))
+	for k := range m.m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
 func NewPreciseMap(str string) Map {
 	m := NewMap(str)
 	m.flags |= mapPrecise
@@ -180,6 +188,36 @@ func (m Map) Equals(m2 Map) bool {
 	return true
 }
 
+// Union return new Map that contains all types from the current and other
+func (m Map) Union(other Map) Map {
+	result := make(map[string]struct{}, len(m.m)+len(other.m))
+	for k := range m.m {
+		result[k] = struct{}{}
+	}
+	for k := range other.m {
+		result[k] = struct{}{}
+	}
+
+	return Map{
+		flags: m.flags,
+		m:     result,
+	}
+}
+
+// Intersect return new Map that contains only intersect types
+func (m Map) Intersect(other Map) Map {
+	result := make(map[string]struct{})
+	for k := range m.m {
+		if _, ok := other.m[k]; ok {
+			result[k] = struct{}{}
+		}
+	}
+	return Map{
+		flags: m.flags,
+		m:     result,
+	}
+}
+
 // Len returns number of different types in map
 func (m Map) Len() int {
 	return len(m.m)
@@ -221,6 +259,31 @@ func (m Map) IsArray() bool {
 		}
 	}
 
+	return false
+}
+
+func (m Map) IsClass() bool {
+	if len(m.m) != 1 {
+		return false
+	}
+	typ := m.String()
+
+	return strings.HasPrefix(typ, `\`) && !IsShape(typ) && !IsArray(typ) && !IsClosure(typ) && !IsScalar(typ)
+}
+
+func (m Map) IsBoolean() bool {
+	if len(m.m) != 1 {
+		return false
+	}
+
+	// we can have type with flags like 0400bool
+	for typ := range m.m {
+		if UnwrapElemOf(typ) == "bool" || strings.HasSuffix(typ, "bool") ||
+			strings.HasSuffix(typ, "true") ||
+			strings.HasSuffix(typ, "false") {
+			return true
+		}
+	}
 	return false
 }
 

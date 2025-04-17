@@ -1,3 +1,12 @@
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function isDefined signature of param option at testdata/options-resolver/Debug/OptionsResolverIntrospector.php:31
+            if (!$this->isDefined($option)) {
+                                  ^^^^^^^
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function isDefined signature of param option at testdata/options-resolver/Debug/OptionsResolverIntrospector.php:31
+            if (!$this->isDefined($option)) {
+                                  ^^^^^^^
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function array_key_exists signature of param key at testdata/options-resolver/Debug/OptionsResolverIntrospector.php:35
+            if (!\array_key_exists($option, $this->{$property})) {
+                                   ^^^^^^^
 MAYBE   typeHint: Specify the return type for the function getNormalizers in PHPDoc, 'array' type hint too generic at testdata/options-resolver/Debug/OptionsResolverIntrospector.php:94
     public function getNormalizers(string $option): array
                     ^^^^^^^^^^^^^^
@@ -22,6 +31,9 @@ MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass()
 MAYBE   deprecated: Call to deprecated method {\ReflectionParameter}->getClass() (since: 8.0, reason: Use ReflectionParameter::getType() and the ReflectionType APIs should be used instead) at testdata/options-resolver/OptionsResolver.php:209
             if (isset($params[0]) && null !== ($class = $params[0]->getClass()) && self::class === $class->name && (!isset($params[1]) || (null !== ($class = $params[1]->getClass()) && Options::class === $class->name))) {
                                                                                                                                                                           ^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function setDefault signature of param option at testdata/options-resolver/OptionsResolver.php:251
+            $this->setDefault($option, $value);
+                              ^^^^^^^
 WARNING invalidDocblock: @param for non-existing argument $package at testdata/options-resolver/OptionsResolver.php:424
      * @param string          $package The name of the composer package that is triggering the deprecation
                               ^^^^^^^^
@@ -31,12 +43,51 @@ WARNING invalidDocblock: @param for non-existing argument $version at testdata/o
 WARNING invalidDocblock: @param for non-existing argument $message at testdata/options-resolver/OptionsResolver.php:426
      * @param string|\Closure $message The deprecation message to use
                               ^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function offsetGet signature of param option at testdata/options-resolver/OptionsResolver.php:895
+            $clone->offsetGet($option);
+                              ^^^^^^^
 MAYBE   complexity: Too big method: more than 150 lines at testdata/options-resolver/OptionsResolver.php:917
     public function offsetGet($option, bool $triggerDeprecation = true)
                     ^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function verifyTypes signature of param type at testdata/options-resolver/OptionsResolver.php:1000
+                if ($valid = $this->verifyTypes($type, $value, $invalidTypes)) {
+                                                ^^^^^
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function verifyTypes signature of param value at testdata/options-resolver/OptionsResolver.php:1000
+                if ($valid = $this->verifyTypes($type, $value, $invalidTypes)) {
+                                                       ^^^^^^
+WARNING notSafeCall: potentially not safe call in function verifyTypes signature of param type at testdata/options-resolver/OptionsResolver.php:1000
+                if ($valid = $this->verifyTypes($type, $value, $invalidTypes)) {
+                                                ^^^^^
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function verifyTypes signature of param value at testdata/options-resolver/OptionsResolver.php:1000
+                if ($valid = $this->verifyTypes($type, $value, $invalidTypes)) {
+                                                       ^^^^^^
+WARNING notSafeCall: potentially not safe array access in parameter package of function trigger_deprecation at testdata/options-resolver/OptionsResolver.php:1090
+                trigger_deprecation($deprecation['package'], $deprecation['version'], strtr($message, ['%name%' => $option]));
+                                    ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe array access in parameter version of function trigger_deprecation at testdata/options-resolver/OptionsResolver.php:1090
+                trigger_deprecation($deprecation['package'], $deprecation['version'], strtr($message, ['%name%' => $option]));
+                                                             ^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function strtr signature of param str at testdata/options-resolver/OptionsResolver.php:1090
+                trigger_deprecation($deprecation['package'], $deprecation['version'], strtr($message, ['%name%' => $option]));
+                                                                                            ^^^^^^^^
 MAYBE   typeHint: Specify the type for the parameter $invalidTypes in PHPDoc, 'array' type hint too generic at testdata/options-resolver/OptionsResolver.php:1123
     private function verifyTypes(string $type, $value, array &$invalidTypes, int $level = 0): bool
                      ^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function verifyTypes signature of param type at testdata/options-resolver/OptionsResolver.php:1130
+                if (!$this->verifyTypes($type, $val, $invalidTypes, $level + 1)) {
+                                        ^^^^^
+WARNING notSafeCall: potentially not safe call in function verifyTypes signature of param value at testdata/options-resolver/OptionsResolver.php:1130
+                if (!$this->verifyTypes($type, $val, $invalidTypes, $level + 1)) {
+                                               ^^^^
+WARNING notSafeCall: potentially not safe call in function verifyTypes signature of param type at testdata/options-resolver/OptionsResolver.php:1130
+                if (!$this->verifyTypes($type, $val, $invalidTypes, $level + 1)) {
+                                        ^^^^^
+WARNING notSafeCall: potentially not safe call in function verifyTypes signature of param value at testdata/options-resolver/OptionsResolver.php:1130
+                if (!$this->verifyTypes($type, $val, $invalidTypes, $level + 1)) {
+                                               ^^^^
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function get_class signature of param object at testdata/options-resolver/OptionsResolver.php:1221
+            return \get_class($value);
+                              ^^^^^^
 MAYBE   typeHint: Specify the type for the parameter $values in PHPDoc, 'array' type hint too generic at testdata/options-resolver/OptionsResolver.php:1259
     private function formatValues(array $values): string
                      ^^^^^^^^^^^^

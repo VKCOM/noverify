@@ -26,13 +26,183 @@ func addBuiltinCheckers(reg *CheckersRegistry) {
 		},
 
 		{
-			Name:     "notNullSafety",
+			Name:     "notSafeCall",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report not safe call call",
+			Before: `/**
+ * @return User|false
+ */
+function getUser():User|false {
+    return null;
+}
+$a = getUser()->do();
+`,
+			After: `reported not safe call`,
+		},
+
+		{
+			Name:     "notNullSafetyFunctionArgumentList",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report not nullsafety call for null list",
+			Before:   `test(list($a) = [null]);`,
+			After:    `reported not safe call call`,
+		},
+
+		{
+			Name:     "notNullSafetyFunctionArgumentArrayDimFetch",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report not nullsafety call array.",
+			Before: `class A {
+    public string $value = 'Hello';
+}
+
+function test(A $a): void {
+    echo $a->value;
+}
+
+$arr = [new A(), null];
+test($arr[1]);`,
+			After: `reported not safe call call`,
+		},
+
+		{
+			Name:     "notNullSafetyFunctionArgumentConstFetch",
 			Default:  true,
 			Quickfix: false,
 			Comment:  "Report not nullsafety call",
 			Before: `function f(A $klass);
 						f(null);`,
-			After: `reported not safety call`,
+			After: `reported that null passed to non-nullable parameter.`,
+		},
+
+		{
+			Name:     "notNullSafetyFunctionArgumentStaticFunctionCall",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report not nullsafety call with static function call usage.",
+			Before: `class A {
+    public static function hello(): ?string {
+        return "Hello!";
+    }
+}
+
+function test(string $s): void {
+    echo $s;
+}
+
+test(A::hello());`,
+			After: `reported not safe call call`,
+		},
+
+		{
+			Name:     "notNullSafetyFunctionArgumentVariable",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report not nullsafety call",
+			Before: `function f(A $klass);
+						f(null);`,
+			After: `reported not safe call call with null in variable.`,
+		},
+
+		{
+			Name:     "notNullSafetyFunctionArgumentFunctionCall",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report not nullsafety function call.",
+			Before: `class A {
+    public static function hello(): ?string {
+        return "Hello!";
+    }
+}
+
+function test(A $s): void {
+    echo $s;
+}
+
+function testNullable(): ?A{
+	return new A();
+}
+
+test(testNullable());`,
+			After: `reported not safe call call`,
+		},
+
+		{
+			Name:     "notNullSafetyFunctionArgumentPropertyFetch",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report not nullsafety fetching property in function argument.",
+			Before: `
+class User {
+    public $name = "lol";
+}
+
+$user = new User();
+$user = null;
+echo $user->name;`,
+			After: `reported not safe call call`,
+		},
+
+		{
+			Name:     "notNullSafetyPropertyFetch",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report not nullsafety property fetch.",
+			Before: `
+class User {
+    public $name = "lol";
+}
+
+$user = new User();
+$user = null;
+echo $user->name;`,
+			After: `reported not safe call call`,
+		},
+
+		{
+			Name:     "notNullSafetyVariable",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report not nullsafety call",
+			Before: `$user = new User();
+
+$user = null;
+
+echo $user->name;`,
+			After: `reported not safe call call with null in variable.`,
+		},
+
+		{
+			Name:     "notNullSafetyFunctionCall",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report not nullsafety function call.",
+			Before: `function getUserOrNull(): ?User { echo "test"; }
+
+$getUserOrNull()->test();`,
+			After: `reported not safe call function call`,
+		},
+
+		{
+			Name:     "notNullSafetyStaticFunctionCall",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report not nullsafety function call.",
+			Before: `class A {
+    public static function hello(): ?string {
+        return "Hello!";
+    }
+}
+
+function test(string $s): void {
+    echo $s;
+}
+
+test(A::hello());`,
+			After: `reported not safe call static function call`,
 		},
 
 		{
@@ -1028,6 +1198,16 @@ function main(): void {
 			Comment:  `Report a strange way of type cast.`,
 			Before:   `$x.""`,
 			After:    `(string)$x`,
+		},
+
+		{
+			Name:     "dangerousBoolCondition",
+			Default:  true,
+			Quickfix: false,
+			Comment:  "Report a dangerous condition",
+			Before:   "if(true){}",
+			After: `$a = getCond(); // get bool value from some func
+				if($a){}`,
 		},
 
 		{

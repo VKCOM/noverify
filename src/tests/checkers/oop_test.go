@@ -289,6 +289,7 @@ $_ = WithProps::$int;
 	test.Expect = []string{
 		`Class constant \WithProps::int does not exist`,
 		`Property \WithProps::$int does not exist`,
+		`potential attempt to access property through null`,
 	}
 
 	test.RunAndMatch()
@@ -347,6 +348,8 @@ $_ = WithProps::$int1;
 		`Class constant \WithProps::int1 does not exist`,
 		`Property \WithProps::$int does not exist`,
 		`Property \WithProps::$int1 does not exist`,
+		`potential attempt to access property through null`,
+		`potential attempt to access property through null`,
 	}
 
 	test.RunAndMatch()
@@ -1111,6 +1114,8 @@ function test3(?A $instance) {
 `)
 	test.Expect = []string{
 		`Property {\A|null}->c does not exist`,
+		`potential attempt to access property through null`,
+		`potential attempt to access property through null`,
 	}
 	test.RunAndMatch()
 }

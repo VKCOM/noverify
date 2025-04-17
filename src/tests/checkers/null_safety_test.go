@@ -156,7 +156,6 @@ testVariadic(new A(), null);
 	test.RunAndMatch()
 }
 
-// TODO: After realisation Control Flow Graph (CFG) и Data Flow Graph (DFG) this test must fail
 func TestIfNullCheckSafe(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
@@ -177,11 +176,15 @@ $v = null;
 if ($v == null) {
     // Correctly assign a new instance when $v is null.
     $v = new A();
+	test($v);
+} else {
+test($v);
 }
-test($v); // Should be safe.
+test($v);
 `)
 
 	test.Expect = []string{
+		`not null safety call in function test signature of param`,
 		`not null safety call in function test signature of param`,
 	}
 	test.RunAndMatch()
@@ -239,5 +242,285 @@ if ($v !== null) {
 `)
 
 	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
+func TestStaticNullSafety(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A {
+    public static $value = 'test';
+    
+    public static function hello(): void {
+        echo "Hello!";
+    }
+}
+
+$maybeClass = rand(0, 1) ? 'A' : null;
+$maybeClass::hello();
+echo $maybeClass::$value;
+`)
+	test.Expect = []string{
+		"Missing PHPDoc for \\A::hello public method",
+		"potential null dereference when accessing static call throw $maybeClass",
+		"attempt to access property that can be null",
+	}
+	test.RunAndMatch()
+}
+
+func TestFetchPropertyNullSafety(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class User {
+    public $name = "lol";
+}
+
+$user = new User();
+$user = null;
+echo $user->name;
+`)
+	test.Expect = []string{
+		"potential attempt to access property through null",
+	}
+	test.RunAndMatch()
+}
+
+func TestStaticPropertyNullSafety(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A {
+    public static $value = null;
+    
+    public static function hello(): void {
+        echo "Hello!";
+    }
+}
+
+function test(string $a): void {
+echo "test";
+}
+$maybeClass  = new A();
+test($maybeClass::$value);
+
+`)
+	test.Expect = []string{
+		"Missing PHPDoc for \\A::hello public method",
+		`potential null dereference when accessing property 'value'`,
+	}
+	test.RunAndMatch()
+}
+
+func TestStaticPropertyFetchWithName(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A {
+    public static string $value = 'test';
+}
+
+function test(string $s): void {
+    echo $s;
+}
+
+test(A::$value);
+`)
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
+func TestStaticPropertyNullFetchWithName(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A {
+    public static string $value = null;
+}
+
+function test(string $s): void {
+    echo $s;
+}
+
+test(A::$value);
+`)
+	test.Expect = []string{
+		"potential null dereference when accessing property 'value'",
+	}
+	test.RunAndMatch()
+}
+
+func TestStaticCallNullSafety(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A {
+    public static function hello(): ?string {
+        return "Hello!";
+    }
+}
+
+function test(string $s): void {
+    echo $s;
+}
+
+test(A::hello());
+`)
+	test.Expect = []string{
+		"Missing PHPDoc for \\A::hello public method",
+		"not null safety call in function test signature of param s when calling static function hello",
+	}
+	test.RunAndMatch()
+}
+
+func TestFuncCallNullSafety(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function nullFunc(){
+return null;
+
+function testValue(string $value): void {
+    echo $value;
+}
+
+testValue(nullFunc());
+
+
+}
+`)
+	test.Expect = []string{
+		"not null safety call in function testValue signature of param value when calling function \\nullFunc",
+		"Unreachable code",
+	}
+	test.RunAndMatch()
+}
+
+func TestStaticCallNullSafetyThroughVariable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A {
+    public static function hello(): ?string {
+        return "Hello!";
+    }
+}
+
+function test(string $s): void {
+    echo $s;
+}
+
+$maybeClass = new A();
+test($maybeClass::hello());
+`)
+	test.Expect = []string{
+		"Missing PHPDoc for \\A::hello public method",
+		"not null safety call in function test signature of param s when calling static function hello",
+	}
+	test.RunAndMatch()
+}
+
+func TestFunctionCallNullSafetyThroughVariable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class A {
+    public static function hello(): ?string {
+        return "Hello!";
+    }
+}
+
+function test(A $s): void {
+    echo $s;
+}
+
+function testNullable(): ?A{
+	return new A();
+}
+
+test(testNullable());
+`)
+	test.Expect = []string{
+		"Missing PHPDoc for \\A::hello public method",
+		"not null safety call in function test signature of param s when calling function \\testNullable",
+	}
+	test.RunAndMatch()
+}
+
+func TestVariableNotConditionNullSafety(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class User {
+    public string $name;
+
+}
+
+function getUser(): User|null {
+return null;
+}
+
+$user = getUser();
+
+if (!$user) {
+    echo "User found: " . $user->name;
+} else {
+    echo "User not found." . $user->name;
+}
+`)
+	test.Expect = []string{
+		"potential attempt to access property through null",
+	}
+	test.RunAndMatch()
+}
+
+func TestVariableInConditionNullSafety(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class User {
+    public string $name;
+
+}
+
+function getUser(): User|null {
+return null;
+}
+
+$user = getUser();
+
+if ($user) {
+    echo "User found: " . $user->name;
+} else {
+    echo "User not found." . $user->name;
+}
+`)
+	test.Expect = []string{
+		"potential attempt to access property through null",
+	}
+	test.RunAndMatch()
+}
+
+func TestPropertyFetchMiddleChainNullSafety(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class ParentTask {
+    public int $id;
+
+    public function __construct(int $id) {
+        $this->id = $id;
+    }
+}
+
+class MyTask {
+    public ?ParentTask $parent_task;
+
+    public function __construct(ParentTask $parent_task) {
+        $this->parent_task = $parent_task;
+    }
+
+    public function execute(): void {
+        processTask($this->parent_task->id);
+    }
+}
+
+function processTask(int $taskId): void {
+    echo "Processing task with ID: " . $taskId . "\n";
+}
+`)
+	test.Expect = []string{
+		"potential null dereference when accessing property 'parent_task'",
+		`Missing PHPDoc for \MyTask::execute public method`,
+	}
 	test.RunAndMatch()
 }

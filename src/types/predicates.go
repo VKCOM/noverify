@@ -32,6 +32,10 @@ func IsTrivial(s string) bool {
 	return trivial[s]
 }
 
+func IsScalar(s string) bool {
+	return scalar[s]
+}
+
 func IsAlias(s string) bool {
 	_, has := aliases[s]
 	return has
@@ -39,7 +43,7 @@ func IsAlias(s string) bool {
 
 func IsTypeNullable(typ Map) bool {
 	isNullable := false
-	if typ.m == nil {
+	if typ.m == nil || typ.Empty() {
 		return true // We consider that if the type is not inferred, then it is mixed
 	}
 	typ.Iterate(func(t string) {
@@ -77,6 +81,16 @@ var trivial = map[string]bool{
 	"never":    true,
 
 	"null":  true,
+	"true":  true,
+	"false": true,
+}
+
+var scalar = map[string]bool{
+	"bool":   true,
+	"float":  true,
+	"int":    true,
+	"string": true,
+
 	"true":  true,
 	"false": true,
 }

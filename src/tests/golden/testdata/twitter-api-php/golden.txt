@@ -1,27 +1,78 @@
 WARNING invalidDocblock: @package name must be a start part of class namespace at testdata/twitter-api-php/TwitterAPIExchange.php:9
  * @package  Twitter-API-PHP
    ^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter string of function substr at testdata/twitter-api-php/TwitterAPIExchange.php:117
+        if (isset($array['status']) && substr($array['status'], 0, 1) === '@')
+                                              ^^^^^^^^^^^^^^^^
 MAYBE   callSimplify: Could simplify to $array['status'][0] at testdata/twitter-api-php/TwitterAPIExchange.php:117
         if (isset($array['status']) && substr($array['status'], 0, 1) === '@')
                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING unused: Variable $key is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/twitter-api-php/TwitterAPIExchange.php:122
         foreach ($array as $key => &$value)
                            ^^^^
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function explode signature of param string at testdata/twitter-api-php/TwitterAPIExchange.php:164
+                list($key, $value) = explode('=', $field);
+                                                  ^^^^^^
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/twitter-api-php/TwitterAPIExchange.php:207
         if (!in_array(strtolower($requestMethod), array('post', 'get', 'put', 'delete')))
              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/twitter-api-php/TwitterAPIExchange.php:223
             'oauth_version' => '1.0'
             ^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe array access in parameter string of function urldecode at testdata/twitter-api-php/TwitterAPIExchange.php:239
+                    $oauth[$split[0]] = urldecode($split[1]);
+                                                  ^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function rawurlencode signature of param string at testdata/twitter-api-php/TwitterAPIExchange.php:253
+        $composite_key = rawurlencode($consumer_secret) . '&' . rawurlencode($oauth_access_token_secret);
+                                      ^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function rawurlencode signature of param string at testdata/twitter-api-php/TwitterAPIExchange.php:253
+        $composite_key = rawurlencode($consumer_secret) . '&' . rawurlencode($oauth_access_token_secret);
+                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function base64_encode signature of param string when calling function \hash_hmac at testdata/twitter-api-php/TwitterAPIExchange.php:254
+        $oauth_signature = base64_encode(hash_hmac('sha1', $base_info, $composite_key, true));
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 MAYBE   invalidDocblockType: Use bool type instead of boolean at testdata/twitter-api-php/TwitterAPIExchange.php:267
      * @param boolean $return      If true, returns data. This is left in for backward compatibility reasons
               ^^^^^^^
 WARNING strictCmp: 3rd argument of in_array must be true when comparing strings at testdata/twitter-api-php/TwitterAPIExchange.php:286
         if (in_array(strtolower($this->requestMethod), array('put', 'delete')))
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+WARNING notSafeCall: potentially not safe call in function curl_setopt_array signature of param handle at testdata/twitter-api-php/TwitterAPIExchange.php:312
+        curl_setopt_array($feed, $options);
+                          ^^^^^
+WARNING notSafeCall: potentially not safe call in function curl_exec signature of param handle at testdata/twitter-api-php/TwitterAPIExchange.php:313
+        $json = curl_exec($feed);
+                          ^^^^^
+WARNING notSafeCall: potentially not safe call in function curl_getinfo signature of param handle at testdata/twitter-api-php/TwitterAPIExchange.php:315
+        $this->httpStatusCode = curl_getinfo($feed, CURLINFO_HTTP_CODE);
+                                             ^^^^^
+WARNING notSafeCall: potentially not safe call in function curl_error signature of param handle at testdata/twitter-api-php/TwitterAPIExchange.php:317
+        if (($error = curl_error($feed)) !== '')
+                                 ^^^^^
+WARNING notSafeCall: potentially not safe call in function curl_error signature of param handle at testdata/twitter-api-php/TwitterAPIExchange.php:317
+        if (($error = curl_error($feed)) !== '')
+                                 ^^^^^
+WARNING notSafeCall: potentially not safe call in function curl_close signature of param handle at testdata/twitter-api-php/TwitterAPIExchange.php:319
+            curl_close($feed);
+                       ^^^^^
+WARNING notSafeCall: potentially not safe call in function curl_close signature of param handle at testdata/twitter-api-php/TwitterAPIExchange.php:324
+        curl_close($feed);
+                   ^^^^^
+WARNING notSafeCall: potentially not safe call in function rawurlencode signature of param string at testdata/twitter-api-php/TwitterAPIExchange.php:345
+            $return[] = rawurlencode($key) . '=' . rawurlencode($value);
+                                     ^^^^
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function rawurlencode signature of param string at testdata/twitter-api-php/TwitterAPIExchange.php:345
+            $return[] = rawurlencode($key) . '=' . rawurlencode($value);
+                                                                ^^^^^^
 MAYBE   trailingComma: Last element in a multi-line array should have a trailing comma at testdata/twitter-api-php/TwitterAPIExchange.php:366
                 'oauth_signature_method', 'oauth_timestamp', 'oauth_token', 'oauth_version'))) {
                                                                             ^^^^^^^^^^^^^^^
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function rawurlencode signature of param string at testdata/twitter-api-php/TwitterAPIExchange.php:367
+                $values[] = "$key=\"" . rawurlencode($value) . "\"";
+                                                     ^^^^^^
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function setGetfield signature of param string at testdata/twitter-api-php/TwitterAPIExchange.php:391
+            $this->setGetfield($data);
+                               ^^^^^
 MAYBE   invalidDocblockType: Use int type instead of integer at testdata/twitter-api-php/TwitterAPIExchange.php:404
      * @return integer
                ^^^^^^^

@@ -2147,6 +2147,7 @@ function f() {
 		`Use float cast instead of real`,
 		`Use is_float function instead of is_real`,
 		`Use is_float instead of 'is_real`,
+		`Call to deprecated function is_real (since: 7.4)`,
 	}
 	test.RunAndMatch()
 }
@@ -2184,6 +2185,7 @@ function f() {
 	test.Expect = []string{
 		`since PHP 7.4, using array_key_exists() with an object has been deprecated, use isset() or property_exists() instead`,
 		`since PHP 7.4, using array_key_exists() with an object has been deprecated, use isset() or property_exists() instead`,
+		`Potential dangerous value: you have constant int value that interpreted as bool`,
 	}
 	test.RunAndMatch()
 }
@@ -2365,6 +2367,7 @@ function f() {
 `)
 	test.Expect = []string{
 		`Cannot find referenced variable $e`,
+		`Potential dangerous value: you have constant int value that interpreted as bool`,
 	}
 	test.RunAndMatch()
 }
