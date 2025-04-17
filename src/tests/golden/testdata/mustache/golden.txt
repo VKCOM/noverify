@@ -127,6 +127,9 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 MAYBE   callSimplify: Could simplify to $id[0] at testdata/mustache/src/Mustache/Compiler.php:646
             if (substr($id, 0, 1) === '.') {
                 ^^^^^^^^^^^^^^^^^
+WARNING funcParamTypeMissMatch: param $tree miss matched with phpdoc type <<string>> at testdata/mustache/src/Mustache/Compiler.php:43
+    public function compile($source, array $tree, $name, $customEscape = false, $charset = 'UTF-8', $strictCallables = false, $entityFlags = ENT_COMPAT)
+                                     ^^^^^^^^^^^
 ERROR   classMembersOrder: Constant KLASS must go before methods in the class Mustache_Compiler at testdata/mustache/src/Mustache/Compiler.php:184
     const KLASS = '<?php
     ^^^^^^^

@@ -552,7 +552,7 @@ func (b *blockWalker) handleAndCheckGlobalStmt(s *ir.GlobalStmt) {
 }
 
 func (b *blockWalker) checkPhpDocTypesWithTypeHints(param *ir.Parameter, phpDocParamTypes map[string]string) {
-	if phpDocParamTypes == nil {
+	if len(phpDocParamTypes) == 0 {
 		return
 	}
 
@@ -573,18 +573,17 @@ func (b *blockWalker) checkPhpDocTypesWithTypeHints(param *ir.Parameter, phpDocP
 
 	switch typ := param.VariableType.(type) {
 	case *ir.Name, *ir.Identifier:
-		var typeValue string
+		var paramTypeValue string
 		switch n := typ.(type) {
 		case *ir.Name:
-			typeValue = n.Value
+			paramTypeValue = n.Value
 		case *ir.Identifier:
-			typeValue = n.Value
+			paramTypeValue = n.Value
 		}
 
 		normalizedPhpDocType := strings.TrimPrefix(phpDocType, "\\")
-
 		// Special handling for callable remains unchanged
-		if typeValue == "callable" {
+		if paramTypeValue == "callable" {
 			if !strings.HasPrefix(strings.TrimSpace(normalizedPhpDocType), "callable") {
 				b.linter.report(param, LevelWarning, "funcParamTypeMissMatch",
 					"param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
@@ -610,12 +609,12 @@ func (b *blockWalker) checkPhpDocTypesWithTypeHints(param *ir.Parameter, phpDocP
 				matchFound := false
 				for _, part := range parts {
 					docPart := strings.TrimSpace(part)
-					if typeValue == "array" {
+					if paramTypeValue == "array" {
 						if docPart == "array" || strings.HasSuffix(docPart, "[]") {
 							matchFound = true
 							break
 						}
-					} else if docPart == typeValue {
+					} else if docPart == paramTypeValue {
 						matchFound = true
 						break
 					}
@@ -627,12 +626,25 @@ func (b *blockWalker) checkPhpDocTypesWithTypeHints(param *ir.Parameter, phpDocP
 			}
 		} else {
 			// Non-union types
-			if typeValue == "array" {
+			if paramTypeValue == "array" {
 				if normalizedPhpDocType != "array" && !strings.HasSuffix(normalizedPhpDocType, "[]") {
 					b.linter.report(param, LevelWarning, "funcParamTypeMissMatch",
 						"param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
 				}
-			} else if normalizedPhpDocType != typeValue {
+			} else if normalizedPhpDocType != paramTypeValue {
+				if phpDocType == paramTypeValue {
+					break
+				}
+
+				if types.IsBoolean(normalizedPhpDocType) && types.IsBoolean(paramTypeValue) {
+					break
+				}
+
+				potentialAlias := b.linter.classParseState().Uses[paramTypeValue]
+				if potentialAlias == phpDocType {
+					break
+				}
+
 				b.linter.report(param, LevelWarning, "funcParamTypeMissMatch",
 					"param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
 			}
@@ -690,8 +702,7 @@ func (b *blockWalker) getParamsTypesFromPhpDoc(doc phpdoc.Comment) map[string]st
 	phpDocParamTypes := make(map[string]string)
 
 	for _, part := range doc.Parsed {
-		switch part.Name() {
-		case "param":
+		if part.Name() == "param" {
 			param, ok := part.(*phpdoc.TypeVarCommentPart)
 			if ok {
 				phpDocParamTypes[param.Var] = param.Type.Expr.Value

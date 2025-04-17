@@ -280,7 +280,7 @@ func (m Map) IsBoolean() bool {
 	for typ := range m.m {
 		if UnwrapElemOf(typ) == "bool" || strings.HasSuffix(typ, "bool") ||
 			strings.HasSuffix(typ, "true") ||
-			strings.HasSuffix(typ, "false") {
+			strings.HasSuffix(typ, "false") || strings.HasSuffix(typ, "boolean") {
 			return true
 		}
 	}

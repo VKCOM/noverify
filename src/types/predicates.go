@@ -12,6 +12,10 @@ func IsShape(s string) bool {
 	return strings.HasPrefix(s, `\shape$`)
 }
 
+func IsBoolean(s string) bool {
+	return strings.HasPrefix(s, "bool") || strings.HasPrefix(s, "boolean")
+}
+
 func IsClosure(s string) bool {
 	return strings.HasPrefix(s, `\Closure`)
 }

@@ -215,17 +215,17 @@ testCallable(function($a, $b) {
 func TestInterfaceCorrect(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-interface Responsable {}
+interface Responsible {}
 
 /**
- * Uses Responsable interface value.
+ * Uses Responsible interface value.
  *
- * @param \Responsable $r
+ * @param \Responsible $r
  */
-function reference_iface(Responsable $r) {
+function reference_iface(Responsible $r) {
 }
 
-reference_iface(new class implements Responsable {});
+reference_iface(new class implements Responsible {});
 `)
 	test.Expect = []string{}
 	test.RunAndMatch()
@@ -283,5 +283,45 @@ function funcArray(array $a, array $b) {
 funcArray([], []);
 `)
 	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
+func TestBoolSynonym(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+/**
+ * Function with boolean type synonym.
+ *
+ * @param boolean $flag
+ */
+function testBool(bool $flag) {
+}
+`)
+	test.Expect = []string{
+		`Use bool type instead of boolean`,
+	}
+	test.RunAndMatch()
+}
+
+func TestAliasNormalization(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+namespace Test;
+
+use A as B;
+
+/**
+ * Function with aliased type.
+ *
+ * @param \A $item
+ */
+function testAlias(B $item) {
+}
+
+`)
+	test.Expect = []string{
+		`Class or interface named \A does not exist`,
+		`Class or interface named \A does not exist`,
+	}
 	test.RunAndMatch()
 }
