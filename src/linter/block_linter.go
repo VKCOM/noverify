@@ -1532,6 +1532,7 @@ func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
 		} else {
 			b.report(e, LevelNotice, "deprecated", "Try to call property %s that was marked as deprecated in the class %s", fetch.propertyNode.Value, fetch.className)
 		}
+	}
 
 	left, ok := b.walker.ctx.sc.GetVarType(e.Variable)
 	if ok {
