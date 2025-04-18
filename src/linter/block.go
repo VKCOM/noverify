@@ -556,105 +556,146 @@ func (b *blockWalker) checkPhpDocTypesWithTypeHints(param *ir.Parameter, phpDocP
 		return
 	}
 
-	var variableName string
-
+	// Build the lookup key, with fallback if "&$" did not find
+	name := param.Variable.Name
+	key := "$" + name
 	if param.ByRef {
-		variableName = "&$" + param.Variable.Name
-	} else {
-		variableName = "$" + param.Variable.Name
+		if _, ok := phpDocParamTypes["&$"+name]; ok {
+			key = "&$" + name
+		}
 	}
-	phpDocType := phpDocParamTypes[variableName]
-	// If not found (when phpdoc omits "&"), try without the "&" prefix
-	if phpDocType == "" {
-		phpDocType = phpDocParamTypes["$"+param.Variable.Name]
+	rawDoc := strings.TrimSpace(phpDocParamTypes[key])
+	if rawDoc == "" && param.ByRef {
+		rawDoc = strings.TrimSpace(phpDocParamTypes["$"+name])
 	}
 
-	paramName := param.Variable.Name
+	if rawDoc == "" {
+		return
+	}
 
-	switch typ := param.VariableType.(type) {
-	case *ir.Name, *ir.Identifier:
-		var paramTypeValue string
-		switch n := typ.(type) {
-		case *ir.Name:
-			paramTypeValue = n.Value
-		case *ir.Identifier:
-			paramTypeValue = n.Value
-		}
+	b.checkDiffPhpDocWithTypeHints(param.VariableType, name, rawDoc, b.linter.classParseState().Uses)
+}
 
-		normalizedPhpDocType := strings.TrimPrefix(phpDocType, "\\")
-		// Special handling for callable remains unchanged
-		if paramTypeValue == "callable" {
-			if !strings.HasPrefix(strings.TrimSpace(normalizedPhpDocType), "callable") {
-				b.linter.report(param, LevelWarning, "funcParamTypeMissMatch",
-					"param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
-			}
-			break
-		}
+func (b *blockWalker) checkDiffPhpDocWithTypeHints(
+	node ir.Node,
+	paramName, rawPhpDocType string,
+	uses map[string]string,
+) {
+	// 1) Normalization
+	doc := strings.TrimSpace(rawPhpDocType)
+	doc = strings.TrimPrefix(doc, `\`)
+	doc = strings.TrimSpace(doc)
 
-		// Union types
-		if strings.Contains(normalizedPhpDocType, "|") {
-			parts := strings.Split(normalizedPhpDocType, "|")
-			isPhpDocNullable := false
-			for _, part := range parts {
-				if strings.TrimSpace(part) == "null" {
-					isPhpDocNullable = true
-					break
-				}
-			}
-
-			if isPhpDocNullable {
-				b.linter.report(param, LevelWarning, "funcParamTypeMissMatch",
-					"param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
-			} else {
-				matchFound := false
-				for _, part := range parts {
-					docPart := strings.TrimSpace(part)
-					if paramTypeValue == "array" {
-						if docPart == "array" || strings.HasSuffix(docPart, "[]") {
-							matchFound = true
-							break
-						}
-					} else if docPart == paramTypeValue {
-						matchFound = true
-						break
-					}
-				}
-				if !matchFound {
-					b.linter.report(param, LevelWarning, "funcParamTypeMissMatch",
-						"param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
-				}
-			}
-		} else {
-			// Non-union types
-			if paramTypeValue == "array" {
-				if normalizedPhpDocType != "array" && !strings.HasSuffix(normalizedPhpDocType, "[]") {
-					b.linter.report(param, LevelWarning, "funcParamTypeMissMatch",
-						"param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
-				}
-			} else if normalizedPhpDocType != paramTypeValue {
-				if phpDocType == paramTypeValue {
-					break
-				}
-
-				if types.IsBoolean(normalizedPhpDocType) && types.IsBoolean(paramTypeValue) {
-					break
-				}
-
-				potentialAlias := b.linter.classParseState().Uses[paramTypeValue]
-				if potentialAlias == phpDocType {
-					break
-				}
-
-				b.linter.report(param, LevelWarning, "funcParamTypeMissMatch",
-					"param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
+	// 2) Unpack Nullable from AST
+	var isNullable bool
+	if n, ok := node.(*ir.Nullable); ok {
+		isNullable = true
+		// remove ? and null for type checking
+		doc = strings.TrimPrefix(doc, "?")
+		parts := strings.Split(doc, "|")
+		clean := make([]string, 0, len(parts))
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if p != "" && p != "null" {
+				clean = append(clean, p)
 			}
 		}
-	case *ir.Nullable:
-		if !strings.Contains(phpDocType, "?") && !strings.Contains(phpDocType, "null") {
-			b.linter.report(param, LevelWarning, "funcParamTypeMissMatch", "param $%s miss matched with phpdoc type <<%s>>", paramName, phpDocType)
-		}
+		doc = strings.Join(clean, "|")
+		node = n.Expr
+	}
+
+	// 3) AST type
+	var typeValue string
+	switch t := node.(type) {
+	case *ir.Name:
+		typeValue = t.Value
+	case *ir.Identifier:
+		typeValue = t.Value
 	default:
 		return
+	}
+
+	// 4) Getting alias
+	alias := uses[typeValue]
+	typeValue = strings.TrimPrefix(typeValue, `\`)
+
+	if alias == "" {
+		alias = uses[typeValue]
+	}
+
+	alias = strings.TrimPrefix(alias, `\`)
+
+	// 5) Helper
+	report := func() {
+		b.linter.report(
+			node, LevelWarning, "funcParamTypeMissMatch",
+			"param $%s miss matched with phpdoc type <<%s>>",
+			paramName, rawPhpDocType,
+		)
+	}
+
+	// 6) if hint nullable, but PHPDoc has no '?' or 'null' - report
+	if isNullable && !strings.Contains(rawPhpDocType, "?") && !strings.Contains(rawPhpDocType, "null") {
+		report()
+		return
+	}
+
+	// 7) callable
+	if typeValue == "callable" {
+		if !strings.HasPrefix(doc, "callable") {
+			report()
+		}
+		return
+	}
+
+	// 8) Union
+	if strings.Contains(doc, "|") {
+		parts := strings.Split(doc, "|")
+		for i := range parts {
+			parts[i] = strings.TrimSpace(parts[i])
+		}
+		// if union include null, but hint not nullable - report
+		if !isNullable {
+			for _, p := range parts {
+				if p == "null" {
+					report()
+					return
+				}
+			}
+		}
+		// Any contains in union
+		for _, p := range parts {
+			// array[]
+			if typeValue == "array" && (p == "array" || strings.HasSuffix(p, "[]")) {
+				return
+			}
+			// boolean-boolean
+			if types.IsBoolean(p) && types.IsBoolean(typeValue) {
+				return
+			}
+			// 1-1 or alias
+			if p == typeValue || p == alias {
+				return
+			}
+		}
+		report()
+		return
+	}
+
+	// 9) Single/general: array / boolean / 1-1 / alias
+	switch {
+	case typeValue == "array":
+		if doc != "array" && !strings.HasSuffix(doc, "[]") {
+			report()
+		}
+	case types.IsBoolean(doc) && types.IsBoolean(typeValue):
+		// ok
+	case doc == typeValue:
+		// ok
+	case alias != "" && doc == alias:
+		// ok
+	default:
+		report()
 	}
 }
 
