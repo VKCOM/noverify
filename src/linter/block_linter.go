@@ -253,13 +253,6 @@ func (b *blockLinter) checkClass(class *ir.ClassStmt) {
 		case *ir.ClassMethodStmt:
 			members = append(members, classMethod)
 			b.walker.CheckParamNullability(value.Params)
-		case *ir.PropertyListStmt:
-			for _, element := range value.Doc.Parsed {
-				if element.Name() == "deprecated" {
-					b.report(stmt, LevelNotice, "deprecated", "Has deprecated field in class %s", class.ClassName.Value)
-				}
-			}
-			members = append(members, classOtherMember)
 		default:
 			members = append(members, classOtherMember)
 		}
@@ -565,6 +558,15 @@ func (b *blockLinter) checkNew(e *ir.NewExpr) {
 		if class.IsInterface() {
 			b.report(e.Class, LevelError, "invalidNew", "Cannot instantiate interface %s", class.Name)
 		}
+
+		if class.IsDeprecated() {
+			if class.WithDeprecationNote() {
+				b.report(e, LevelNotice, "deprecated", "Try to create instance of the class %s that was marked as deprecated (%s)", class.Name, class.DeprecationInfo)
+			} else {
+				b.report(e, LevelNotice, "deprecated", "Try to create instance %s class that was marked as deprecated", class.Name)
+			}
+		}
+
 		b.walker.r.checker.CheckNameCase(e.Class, className, class.Name)
 	}
 
@@ -1035,7 +1037,7 @@ func (b *blockLinter) checkDeprecatedFunctionCall(e *ir.FunctionCallExpr, call *
 		return
 	}
 
-	b.report(e.Function, LevelNotice, "deprecatedUntagged", "Call to deprecated function %s", utils.NameNodeToString(e.Function))
+	b.report(e.Function, LevelNotice, "deprecated", "Call to deprecated function %s", utils.NameNodeToString(e.Function))
 }
 
 func (b *blockLinter) checkFunctionAvailability(e *ir.FunctionCallExpr, call *funcCallInfo) {
@@ -1387,7 +1389,7 @@ func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 			b.report(e.Method, LevelNotice, "deprecated", "Call to deprecated method {%s}->%s() (%s)",
 				call.methodCallerType, call.methodName, deprecation)
 		} else {
-			b.report(e.Method, LevelNotice, "deprecatedUntagged", "Call to deprecated method {%s}->%s()",
+			b.report(e.Method, LevelNotice, "deprecated", "Call to deprecated method {%s}->%s()",
 				call.methodCallerType, call.methodName)
 		}
 	}
@@ -1465,7 +1467,7 @@ func (b *blockLinter) checkStaticCall(e *ir.StaticCallExpr) {
 			b.report(e.Call, LevelNotice, "deprecated", "Call to deprecated static method %s::%s() (%s)",
 				call.className, call.methodName, deprecation)
 		} else {
-			b.report(e.Call, LevelNotice, "deprecatedUntagged", "Call to deprecated static method %s::%s()",
+			b.report(e.Call, LevelNotice, "deprecated", "Call to deprecated static method %s::%s()",
 				call.className, call.methodName)
 		}
 	}
@@ -1524,6 +1526,14 @@ func (b *blockLinter) checkPropertyFetch(e *ir.PropertyFetchExpr) {
 		b.report(e.Property, LevelError, "accessLevel", "Cannot access %s property %s->%s", fetch.info.AccessLevel, fetch.className, fetch.propertyNode.Value)
 	}
 
+	if fetch.info.IsDeprecated() {
+		if fetch.info.WithDeprecationNote() {
+			b.report(e, LevelNotice, "deprecated", "Try to call property %s that was marked as deprecated (%s) in the class %s", fetch.propertyNode.Value, fetch.info.DeprecationInfo, fetch.className)
+		} else {
+			b.report(e, LevelNotice, "deprecated", "Try to call property %s that was marked as deprecated in the class %s", fetch.propertyNode.Value, fetch.className)
+		}
+	}
+
 	left, ok := b.walker.ctx.sc.GetVarType(e.Variable)
 	if ok {
 		b.checkSafetyCall(e, left, "", "PropertyFetch")
@@ -1576,6 +1586,14 @@ func (b *blockLinter) checkClassConstFetch(e *ir.ClassConstFetchExpr) {
 
 	if fetch.isFound && !canAccess(b.classParseState(), fetch.implClassName, fetch.info.AccessLevel) {
 		b.report(e.ConstantName, LevelError, "accessLevel", "Cannot access %s constant %s::%s", fetch.info.AccessLevel, fetch.implClassName, fetch.constName)
+	}
+
+	if fetch.info.IsDeprecated() {
+		if fetch.info.WithDeprecationNote() {
+			b.report(e, LevelNotice, "deprecated", "Try to call constant %s that was marked as deprecated (%s) from the class %s", fetch.constName, fetch.info.DeprecationInfo, fetch.className)
+		} else {
+			b.report(e, LevelNotice, "deprecated", "Try to call constant %s that was marked as deprecated from the class %s", fetch.constName, fetch.className)
+		}
 	}
 }
 

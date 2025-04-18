@@ -113,7 +113,6 @@
    - [`arrayAccess` checker](#arrayaccess-checker)
    - [`classMembersOrder` checker](#classmembersorder-checker)
    - [`complexity` checker](#complexity-checker)
-   - [`deprecatedUntagged` checker](#deprecateduntagged-checker)
    - [`errorSilence` checker](#errorsilence-checker)
    - [`getTypeMisUse` checker (autofixable)](#gettypemisuse-checker)
    - [`langDeprecated` checker](#langdeprecated-checker)
@@ -2299,34 +2298,6 @@ function checkRights() {
 function checkRights() {
   return true; // Or 42 if you need int-typed result.
 }
-```
-<p><br></p>
-
-
-### `deprecatedUntagged` checker
-
-#### Description
-
-Report usages of deprecated symbols if the `@deprecated` tag has no description (see `deprecated` check).
-
-#### Non-compliant code:
-```php
-/**
- * @deprecated
- */
-function f() {}
-
-f();
-```
-
-#### Compliant code:
-```php
-/**
- * @deprecated
- */
-function f() {}
-
-g();
 ```
 <p><br></p>
 
