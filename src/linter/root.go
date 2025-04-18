@@ -201,9 +201,12 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		d.reportPHPDocErrors(doc.errs)
 		d.handleClassDoc(doc, &cl)
 
-		if doc.deprecated {
-			d.Report(n, LevelNotice, "deprecated", "Has deprecated class %s", n.ClassName.Value)
+		// Handle attributes if any.
+		deprecation, ok := attributes.Deprecated(n.AttrGroups, d.ctx.st)
+		if ok {
+			doc.deprecation.Append(deprecation)
 		}
+		cl.DeprecationInfo = doc.deprecation
 
 		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
 
@@ -845,7 +848,9 @@ func (d *rootWalker) parseClassPHPDoc(class ir.Node, doc phpdoc.Comment) classPH
 		case "package":
 			parseClassPHPDocPackage(class, d.ctx.st, &result, part.(*phpdoc.PackageCommentPart))
 		case "deprecated":
-			result.deprecated = true
+			part := part.(*phpdoc.RawCommentPart)
+			result.deprecation.Deprecated = true
+			result.deprecation.Reason = part.ParamsText
 		case "internal":
 			result.internal = true
 		}
@@ -902,19 +907,30 @@ func (d *rootWalker) handleClassDoc(doc classPHPDocParseResult, cl *meta.ClassIn
 	}
 }
 
-func (d *rootWalker) parsePHPDocVar(doc phpdoc.Comment) (typesMap types.Map) {
+func (d *rootWalker) parseVarPHPDoc(doc phpdoc.Comment) variablePHPDocParseResult {
+	var result variablePHPDocParseResult
+
+	if doc.Raw == "" {
+		return result
+	}
+
 	for _, part := range doc.Parsed {
-		part, ok := part.(*phpdoc.TypeVarCommentPart)
-		if ok && part.Name() == "var" {
+		switch part.Name() {
+		case "var":
+			part := part.(*phpdoc.TypeVarCommentPart)
 			converted := phpdoctypes.ToRealType(d.ctx.typeNormalizer.ClassFQNProvider(), d.config.KPHP, part.Type)
 			moveShapesToContext(&d.ctx, converted.Shapes)
 			d.handleClosuresFromDoc(converted.Closures)
 
-			typesMap = types.NewMapWithNormalization(d.ctx.typeNormalizer, converted.Types)
+			result.typesMap = types.NewMapWithNormalization(d.ctx.typeNormalizer, converted.Types)
+		case "deprecated":
+			part := part.(*phpdoc.RawCommentPart)
+			result.deprecation.Deprecated = true
+			result.deprecation.Reason = part.ParamsText
 		}
 	}
 
-	return typesMap
+	return result
 }
 
 func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
@@ -936,8 +952,13 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 		}
 	}
 
-	phpDocType := d.parsePHPDocVar(pl.Doc)
+	varPhpDocRes := d.parseVarPHPDoc(pl.Doc)
 	typeHintType, _ := d.parseTypeHintNode(pl.Type)
+
+	deprecation, ok := attributes.Deprecated(pl.AttrGroups, d.ctx.st)
+	if ok {
+		varPhpDocRes.deprecation.Append(deprecation)
+	}
 
 	for _, pNode := range pl.Properties {
 		prop := pNode.(*ir.PropertyStmt)
@@ -947,7 +968,7 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 		// We need to clone the types, because otherwise, if several
 		// properties are written in one definition, and null was
 		// assigned to the first, then all properties become nullable.
-		propTypes := phpDocType.Clone().Append(typeHintType)
+		propTypes := varPhpDocRes.typesMap.Clone().Append(typeHintType)
 
 		if prop.Expr != nil {
 			propTypes = propTypes.Append(solver.ExprTypeLocal(d.scope(), d.ctx.st, prop.Expr))
@@ -959,13 +980,30 @@ func (d *rootWalker) enterPropertyList(pl *ir.PropertyListStmt) bool {
 
 		// TODO: handle duplicate property
 		cl.Properties[nm] = meta.PropertyInfo{
-			Pos:         d.getElementPos(prop),
-			Typ:         propTypes.Immutable(),
-			AccessLevel: accessLevel,
+			Pos:             d.getElementPos(prop),
+			Typ:             propTypes.Immutable(),
+			AccessLevel:     accessLevel,
+			DeprecationInfo: varPhpDocRes.deprecation,
 		}
 	}
 
 	return true
+}
+
+func (d *rootWalker) parseConstPHPDoc(doc phpdoc.Comment) (deprecationInfo meta.DeprecationInfo) {
+	if doc.Raw == "" {
+		return deprecationInfo
+	}
+
+	for _, part := range doc.Parsed {
+		if part.Name() == "deprecated" {
+			part := part.(*phpdoc.RawCommentPart)
+			deprecationInfo.Deprecated = true
+			deprecationInfo.Reason = part.ParamsText
+		}
+	}
+
+	return deprecationInfo
 }
 
 func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
@@ -984,6 +1022,13 @@ func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
 		}
 	}
 
+	deprecationInfo := d.parseConstPHPDoc(list.Doc)
+
+	deprecation, ok := attributes.Deprecated(list.AttrGroups, d.ctx.st)
+	if ok {
+		deprecationInfo.Append(deprecation)
+	}
+
 	for _, cNode := range list.Consts {
 		c := cNode.(*ir.ConstantStmt)
 
@@ -995,10 +1040,11 @@ func (d *rootWalker) enterClassConstList(list *ir.ClassConstListStmt) bool {
 
 		// TODO: handle duplicate constant
 		cl.Constants[nm] = meta.ConstInfo{
-			Pos:         d.getElementPos(c),
-			Typ:         typ.Immutable(),
-			AccessLevel: accessLevel,
-			Value:       value,
+			Pos:             d.getElementPos(c),
+			Typ:             typ.Immutable(),
+			AccessLevel:     accessLevel,
+			Value:           value,
+			DeprecationInfo: deprecationInfo,
 		}
 	}
 

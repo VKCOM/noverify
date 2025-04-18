@@ -400,18 +400,15 @@ MAYBE   missingPhpdoc: Missing PHPDoc for \League\Flysystem\Adapter\Polyfill\Str
 MAYBE   missingPhpdoc: Missing PHPDoc for \League\Flysystem\Adapter\Polyfill\StreamedWritingTrait::update public method at testdata/flysystem/src/Adapter/Polyfill/StreamedWritingTrait.php:59
     abstract public function update($pash, $contents, Config $config);
                              ^^^^^^
-MAYBE   deprecated: Has deprecated class Directory at testdata/flysystem/src/Directory.php:8
-class Directory extends Handler
-^
 WARNING notNullSafetyFunctionArgumentPropertyFetch: potential null dereference when accessing property 'path' at testdata/flysystem/src/Directory.php:17
         return $this->filesystem->deleteDir($this->path);
                                             ^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentPropertyFetch: potential null dereference when accessing property 'path' at testdata/flysystem/src/Directory.php:29
         return $this->filesystem->listContents($this->path, $recursive);
                                                ^^^^^^^^^^^
-MAYBE   deprecated: Has deprecated class File at testdata/flysystem/src/File.php:8
-class File extends Handler
-^
+MAYBE   deprecated: Try to create instance \League\Flysystem\File class that was marked as deprecated at testdata/flysystem/src/File.php:140
+            return new File($this->filesystem, $newpath);
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/flysystem/src/FileExistsException.php:21
     public function __construct($path, $code = 0, BaseException $previous = null)
                                                   ^^^^^^^^^^^^^
@@ -439,15 +436,18 @@ MAYBE   typeHint: Specify the type for the parameter $config in PHPDoc, 'array' 
 MAYBE   typeHint: Specify the type for the parameter $config in PHPDoc, 'array' type hint too generic at testdata/flysystem/src/Filesystem.php:257
     public function createDir($dirname, array $config = [])
                     ^^^^^^^^^
+MAYBE   deprecated: Try to create instance \League\Flysystem\File class that was marked as deprecated at testdata/flysystem/src/Filesystem.php:368
+            $handler = ($metadata && $metadata['type'] === 'file') ? new File($this, $path) : new Directory($this, $path);
+                                                                     ^^^^^^^^^^^^^^^^^^^^^^
+MAYBE   deprecated: Try to create instance \League\Flysystem\Directory class that was marked as deprecated at testdata/flysystem/src/Filesystem.php:368
+            $handler = ($metadata && $metadata['type'] === 'file') ? new File($this, $path) : new Directory($this, $path);
+                                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/flysystem/src/Filesystem.php:362
     public function get($path, Handler $handler = null)
                                ^^^^^^^
 WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/flysystem/src/FilesystemInterface.php:274
     public function get($path, Handler $handler = null);
                                ^^^^^^^
-MAYBE   deprecated: Has deprecated class Handler at testdata/flysystem/src/Handler.php:10
-abstract class Handler
-^
 WARNING notNullSafetyFunctionArgumentPropertyFetch: potential null dereference when accessing property 'path' at testdata/flysystem/src/Handler.php:61
         $metadata = $this->filesystem->getMetadata($this->path);
                                                    ^^^^^^^^^^^
@@ -484,7 +484,7 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 WARNING unused: Variable $e is unused (use $_ to ignore this inspection or specify --unused-var-regex flag) at testdata/flysystem/src/MountManager.php:275
         } catch (PluginNotFoundException $e) {
                                          ^^
-MAYBE   deprecatedUntagged: Call to deprecated method {\League\Flysystem\FilesystemInterface}->get() at testdata/flysystem/src/MountManager.php:646
+MAYBE   deprecated: Call to deprecated method {\League\Flysystem\FilesystemInterface}->get() at testdata/flysystem/src/MountManager.php:646
         return $this->getFilesystem($prefix)->get($path);
                                               ^^^
 WARNING notExplicitNullableParam: parameter with null default value should be explicitly nullable at testdata/flysystem/src/MountManager.php:642
