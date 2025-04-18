@@ -257,13 +257,6 @@ func (b *blockLinter) checkClass(class *ir.ClassStmt) {
 			members = append(members, classMethod)
 			phpDocParamTypes := b.walker.getParamsTypesFromPhpDoc(value.Doc)
 			b.walker.CheckParamNullability(value.Params, phpDocParamTypes)
-		case *ir.PropertyListStmt:
-			for _, element := range value.Doc.Parsed {
-				if element.Name() == "deprecated" {
-					b.report(stmt, LevelNotice, "deprecated", "Has deprecated field in class %s", class.ClassName.Value)
-				}
-			}
-			members = append(members, classOtherMember)
 		default:
 			members = append(members, classOtherMember)
 		}
