@@ -551,17 +551,167 @@ func (b *blockWalker) handleAndCheckGlobalStmt(s *ir.GlobalStmt) {
 	}
 }
 
-func (b *blockWalker) CheckParamNullability(params []ir.Node) {
+func (b *blockWalker) checkPhpDocTypesWithTypeHints(param *ir.Parameter, phpDocParamTypes map[string]string) {
+	if len(phpDocParamTypes) == 0 {
+		return
+	}
+
+	// Build the lookup key, with fallback if "&$" did not find
+	name := param.Variable.Name
+	key := "$" + name
+	if param.ByRef {
+		if _, ok := phpDocParamTypes["&$"+name]; ok {
+			key = "&$" + name
+		}
+	}
+	rawDoc := strings.TrimSpace(phpDocParamTypes[key])
+	if rawDoc == "" && param.ByRef {
+		rawDoc = strings.TrimSpace(phpDocParamTypes["$"+name])
+	}
+
+	if rawDoc == "" {
+		return
+	}
+
+	b.checkDiffPhpDocWithTypeHints(param.VariableType, name, rawDoc, b.linter.classParseState().Uses)
+}
+
+func (b *blockWalker) checkDiffPhpDocWithTypeHints(
+	node ir.Node,
+	paramName, rawPhpDocType string,
+	uses map[string]string,
+) {
+	// 1) Normalization
+	doc := strings.TrimSpace(rawPhpDocType)
+	doc = strings.TrimPrefix(doc, `\`)
+	doc = strings.TrimSpace(doc)
+
+	// 2) Unpack Nullable from AST
+	var isNullable bool
+	if n, ok := node.(*ir.Nullable); ok {
+		isNullable = true
+		// remove ? and null for type checking
+		doc = strings.TrimPrefix(doc, "?")
+		parts := strings.Split(doc, "|")
+		clean := make([]string, 0, len(parts))
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if p != "" && p != "null" {
+				clean = append(clean, p)
+			}
+		}
+		doc = strings.Join(clean, "|")
+		node = n.Expr
+	}
+
+	// 3) AST type
+	var typeValue string
+	switch t := node.(type) {
+	case *ir.Name:
+		typeValue = t.Value
+	case *ir.Identifier:
+		typeValue = t.Value
+	default:
+		return
+	}
+
+	// 4) Getting alias
+	alias := uses[typeValue]
+	typeValue = strings.TrimPrefix(typeValue, `\`)
+
+	if alias == "" {
+		alias = uses[typeValue]
+	}
+
+	alias = strings.TrimPrefix(alias, `\`)
+
+	// 5) Helper
+	report := func() {
+		b.linter.report(
+			node, LevelWarning, "funcParamTypeMissMatch",
+			"param $%s miss matched with phpdoc type <<%s>>",
+			paramName, rawPhpDocType,
+		)
+	}
+
+	// 6) if hint nullable, but PHPDoc has no '?' or 'null' - report
+	if isNullable && !strings.Contains(rawPhpDocType, "?") && !strings.Contains(rawPhpDocType, "null") {
+		report()
+		return
+	}
+
+	// 7) callable
+	if typeValue == "callable" {
+		if !strings.HasPrefix(doc, "callable") {
+			report()
+		}
+		return
+	}
+
+	// 8) Union
+	if strings.Contains(doc, "|") {
+		parts := strings.Split(doc, "|")
+		for i := range parts {
+			parts[i] = strings.TrimSpace(parts[i])
+		}
+		// if union include null, but hint not nullable - report
+		if !isNullable {
+			for _, p := range parts {
+				if p == "null" {
+					report()
+					return
+				}
+			}
+		}
+		// Any contains in union
+		for _, p := range parts {
+			// array[]
+			if typeValue == "array" && (p == "array" || strings.HasSuffix(p, "[]")) {
+				return
+			}
+			// boolean-boolean
+			if types.IsBoolean(p) && types.IsBoolean(typeValue) {
+				return
+			}
+			// 1-1 or alias
+			if p == typeValue || p == alias {
+				return
+			}
+		}
+		report()
+		return
+	}
+
+	// 9) Single/general: array / boolean / 1-1 / alias
+	switch {
+	case typeValue == "array":
+		if doc != "array" && !strings.HasSuffix(doc, "[]") {
+			report()
+		}
+	case types.IsBoolean(doc) && types.IsBoolean(typeValue):
+		// ok
+	case doc == typeValue:
+		// ok
+	case alias != "" && doc == alias:
+		// ok
+	default:
+		report()
+	}
+}
+
+func (b *blockWalker) CheckParamNullability(params []ir.Node, phpDocParamTypes map[string]string) {
 	for _, param := range params {
 		if p, ok := param.(*ir.Parameter); ok {
 			var paramType ir.Node
-			paramType, paramOk := p.VariableType.(*ir.Name)
-			if !paramOk {
-				paramIdentifier, paramIdentifierOk := p.VariableType.(*ir.Identifier)
-				if !paramIdentifierOk {
-					continue
-				}
-				paramType = paramIdentifier
+
+			b.checkPhpDocTypesWithTypeHints(p, phpDocParamTypes)
+			switch typ := p.VariableType.(type) {
+			case *ir.Name, *ir.Identifier:
+				paramType = typ
+			case *ir.Nullable:
+				continue
+			default:
+				continue
 			}
 
 			paramName, ok := paramType.(*ir.Name)
@@ -586,9 +736,28 @@ func (b *blockWalker) CheckParamNullability(params []ir.Node) {
 	}
 }
 
+func (b *blockWalker) getParamsTypesFromPhpDoc(doc phpdoc.Comment) map[string]string {
+	if len(doc.Parsed) == 0 {
+		return nil
+	}
+	phpDocParamTypes := make(map[string]string)
+
+	for _, part := range doc.Parsed {
+		if part.Name() == "param" {
+			param, ok := part.(*phpdoc.TypeVarCommentPart)
+			if ok {
+				phpDocParamTypes[param.Var] = param.Type.Expr.Value
+			}
+		}
+	}
+	return phpDocParamTypes
+}
+
 func (b *blockWalker) handleFunction(fun *ir.FunctionStmt) bool {
 	if b.ignoreFunctionBodies {
-		b.CheckParamNullability(fun.Params)
+		phpDocParamTypes := b.getParamsTypesFromPhpDoc(fun.Doc)
+
+		b.CheckParamNullability(fun.Params, phpDocParamTypes)
 		return false
 	}
 
@@ -1628,7 +1797,8 @@ func (b *blockWalker) handleCallArgs(args []ir.Node, fn meta.FuncInfo) {
 				ArgTypes: funcArgTypes,
 			}
 
-			b.CheckParamNullability(a.Params)
+			phpDocParamTypes := b.getParamsTypesFromPhpDoc(a.Doc)
+			b.CheckParamNullability(a.Params, phpDocParamTypes)
 			b.enterClosure(a, isInstance, typ, closureSolver)
 		default:
 			a.Walk(b)

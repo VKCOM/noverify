@@ -44,10 +44,12 @@ func (b *blockLinter) enterNode(n ir.Node) {
 		b.checkFunctionCall(n)
 
 	case *ir.ArrowFunctionExpr:
-		b.walker.CheckParamNullability(n.Params)
+		phpDocParamTypes := b.walker.getParamsTypesFromPhpDoc(n.Doc)
+		b.walker.CheckParamNullability(n.Params, phpDocParamTypes)
 
 	case *ir.ClosureExpr:
-		b.walker.CheckParamNullability(n.Params)
+		phpDocParamTypes := b.walker.getParamsTypesFromPhpDoc(n.Doc)
+		b.walker.CheckParamNullability(n.Params, phpDocParamTypes)
 
 	case *ir.MethodCallExpr:
 		b.checkMethodCall(n)
@@ -238,7 +240,8 @@ func (b *blockLinter) checkTrait(n *ir.TraitStmt) {
 	for _, stmt := range n.Stmts {
 		method, ok := stmt.(*ir.ClassMethodStmt)
 		if ok {
-			b.walker.CheckParamNullability(method.Params)
+			phpDocParamTypes := b.walker.getParamsTypesFromPhpDoc(method.Doc)
+			b.walker.CheckParamNullability(method.Params, phpDocParamTypes)
 		}
 	}
 }
@@ -252,7 +255,8 @@ func (b *blockLinter) checkClass(class *ir.ClassStmt) {
 		switch value := stmt.(type) {
 		case *ir.ClassMethodStmt:
 			members = append(members, classMethod)
-			b.walker.CheckParamNullability(value.Params)
+			phpDocParamTypes := b.walker.getParamsTypesFromPhpDoc(value.Doc)
+			b.walker.CheckParamNullability(value.Params, phpDocParamTypes)
 		default:
 			members = append(members, classOtherMember)
 		}
@@ -1629,7 +1633,8 @@ func (b *blockLinter) checkInterfaceStmt(iface *ir.InterfaceStmt) {
 					b.report(x, LevelWarning, "nonPublicInterfaceMember", "'%s' can't be %s", methodName, modifier.Value)
 				}
 			}
-			b.walker.CheckParamNullability(x.Params)
+			phpDocParamTypes := b.walker.getParamsTypesFromPhpDoc(x.Doc)
+			b.walker.CheckParamNullability(x.Params, phpDocParamTypes)
 		case *ir.ClassConstListStmt:
 			for _, modifier := range x.Modifiers {
 				if strings.EqualFold(modifier.Value, "private") || strings.EqualFold(modifier.Value, "protected") {

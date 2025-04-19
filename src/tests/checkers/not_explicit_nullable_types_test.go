@@ -18,7 +18,7 @@ function nullableString(?string $a = null) {}
 func TestNotNullableArray(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php
-/** @param string[] array */
+/** @param string[] $a */
 function nullableArray(array $a = null) {}
 `)
 
