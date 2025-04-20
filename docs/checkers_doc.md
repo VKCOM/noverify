@@ -4,7 +4,7 @@
 
 | Total checks | Checks enabled by default | Disabled checks by default | Autofixable checks |
 | ------------ | ------------------------- | -------------------------- | ------------------ |
-| 117           | 99                        | 18                         | 15                 |
+| 119           | 102                        | 17                         | 15                 |
 
 ## Table of contents
  - Enabled by default
@@ -39,6 +39,7 @@
    - [`emptyStmt` checker](#emptystmt-checker)
    - [`emptyStringCheck` checker](#emptystringcheck-checker)
    - [`forLoop` checker](#forloop-checker)
+   - [`funcParamTypeMissMatch` checker](#funcparamtypemissmatch-checker)
    - [`implicitModifiers` checker](#implicitmodifiers-checker)
    - [`indexingSyntax` checker (autofixable)](#indexingsyntax-checker)
    - [`intNeedle` checker](#intneedle-checker)
@@ -72,6 +73,7 @@
    - [`notNullSafetyPropertyFetch` checker](#notnullsafetypropertyfetch-checker)
    - [`notNullSafetyStaticFunctionCall` checker](#notnullsafetystaticfunctioncall-checker)
    - [`notNullSafetyVariable` checker](#notnullsafetyvariable-checker)
+   - [`notSafeCall` checker](#notsafecall-checker)
    - [`offBy1` checker (autofixable)](#offby1-checker)
    - [`oldStyleConstructor` checker](#oldstyleconstructor-checker)
    - [`paramClobber` checker](#paramclobber-checker)
@@ -788,6 +790,40 @@ for ($i = 0; $i < 100; $i++) { ... }
 <p><br></p>
 
 
+### `funcParamTypeMissMatch` checker
+
+#### Description
+
+Report function typehint and phpdoc mismatch.
+
+#### Non-compliant code:
+```php
+
+/**
+ *
+ * @param ?string $name
+ * @return string
+ */
+function wrongParam(string $name): string {
+    return "Hello, $name";
+}
+```
+
+#### Compliant code:
+```php
+
+/**
+ *
+ * @param ?string $name
+ * @return string
+ */
+function wrongParam(?string $name): string {
+    return "Hello, $name";
+}
+```
+<p><br></p>
+
+
 ### `implicitModifiers` checker
 
 #### Description
@@ -1488,6 +1524,31 @@ echo $user->name;
 #### Compliant code:
 ```php
 reported not safe call call with null in variable.
+```
+<p><br></p>
+
+
+### `notSafeCall` checker
+
+#### Description
+
+Report not safe call call
+
+#### Non-compliant code:
+```php
+/**
+ * @return User|false
+ */
+function getUser():User|false {
+    return null;
+}
+$a = getUser()->do();
+
+```
+
+#### Compliant code:
+```php
+reported not safe call
 ```
 <p><br></p>
 
