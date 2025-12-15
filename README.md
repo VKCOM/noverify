@@ -68,4 +68,4 @@ Feel free to contribute to this project. See [CONTRIBUTING.md](https://github.co
 
 ## The License
 
-NoVerify is distributed under the MIT License, on behalf of VK.com (V Kontakte LLC).
+NoVerify is distributed under the MIT License, on behalf of VK LLC.
