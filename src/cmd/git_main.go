@@ -74,8 +74,8 @@ func gitRepoComputeReportsFromCommits(l *LinterRunner, logArgs, diffArgs []strin
 		}
 
 		start = time.Now()
-		parseIndexOnlyFiles(l)
 		l.linter.AnalyzeFiles(workspace.ReadFilesFromGit(l.flags.GitRepo, l.flags.Mutable.GitCommitTo, nil, l.config.PhpExtensions))
+		parseIndexOnlyFiles(l)
 		log.Printf("Indexed new commit in %s", time.Since(start))
 
 		l.linter.MetaInfo().SetIndexingComplete(true)
