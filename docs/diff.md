@@ -234,6 +234,22 @@ This flag enables the analysis of new and uncommitted files.
 
 Thus, if you added or changed a file, but did not commit it, then with this flag the linter will analyze it.
 
+### `--git-include-uncommitted`
+
+This flag enables the analysis of uncommitted changes: files that are in the `changes` and `staged changes` state.
+
+By default, the linter analyzes only the changes between `<git-commit-from>` and `<git-commit-to>` commits, so files that were modified but not committed are not analyzed. With this flag, the diff is computed between `<git-commit-from>` and the working tree state, which includes both the branch commits and the uncommitted (staged and unstaged) changes.
+
+```bash
+noverify check\
+    --git=.git\
+    --git-commit-from=ORIGIN_MASTER\
+    --git-commit-to=$(git rev-parse --abbrev-ref HEAD)\
+    --git-include-uncommitted\
+```
+
+If `--git-work-tree` is not specified, the working tree location is detected automatically. If the repository has no working tree (for example, in CI), an error is reported.
+
 ### `--git-work-tree`
 
 This flag sets the working directory in which the `--git-include-untracked` flag will be taken into account.

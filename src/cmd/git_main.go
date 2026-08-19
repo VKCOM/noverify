@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -19,6 +20,14 @@ func gitParseUntracked(l *LinterRunner) []*linter.Report {
 	filenames, err := git.UntrackedFiles(l.flags.GitRepo)
 	if err != nil {
 		log.Fatalf("get untracked files: %v", err)
+	}
+
+	// git ls-files returns paths that are relative to the repository root;
+	// resolve them against the working tree to not depend on the current dir.
+	if l.flags.GitWorkTree != "" {
+		for i, name := range filenames {
+			filenames[i] = filepath.Join(l.flags.GitWorkTree, name)
+		}
 	}
 
 	return l.linter.AnalyzeFiles(workspace.ReadFilenames(filenames, nil, l.config.PhpExtensions))
@@ -127,6 +136,17 @@ func gitRepoComputeReportsFromLocalChanges(l *LinterRunner) (oldReports, reports
 		return nil, nil, nil, false
 	}
 
+	// Files are analyzed by their working tree paths (absolute), while git diff
+	// returns paths that are relative to the repository root. Resolve the new
+	// names so that DiffReports can match the reports to the changes.
+	// OldName is left relative on purpose: old file versions are read from git
+	// and their reports use the git-relative names.
+	for i := range changes {
+		if changes[i].Type != git.Deleted {
+			changes[i].NewName = filepath.Join(l.flags.GitWorkTree, changes[i].NewName)
+		}
+	}
+
 	log.Printf("You have changes in your work tree, showing diff between %s and work tree", l.flags.Mutable.GitCommitFrom)
 
 	start := time.Now()
@@ -170,8 +190,20 @@ func gitMain(runner *LinterRunner, ctx *AppContext) (status int, err error) {
 		return 0, err
 	}
 
+	if runner.flags.GitIncludeUncommitted && runner.flags.GitWorkTree == "" {
+		workTree, err := git.TopLevel(runner.flags.GitRepo)
+		if err != nil {
+			return 0, fmt.Errorf("Could not detect the working tree for --git-include-uncommitted: %v", err)
+		}
+		runner.flags.GitWorkTree = workTree
+	}
+
 	oldReports, reports, changes, ok = gitRepoComputeReportsFromLocalChanges(runner)
-	if !ok {
+	if ok {
+		// Blame is computed over a range of commits, which is not
+		// applicable to the working copy diff.
+		diffArgs = nil
+	} else {
 		oldReports, reports, changes, changeLog, ok = gitRepoComputeReportsFromCommits(runner, logArgs, diffArgs)
 		if !ok {
 			return 0, nil
