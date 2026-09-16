@@ -138,6 +138,50 @@ func (a *andWalker) EnterNode(w ir.Node) (res bool) {
 			}
 		}
 
+	case *ir.EmptyExpr:
+		// Per the official PHP docs, empty($var) is equivalent to
+		// `!isset($var) || $var == false`, where the falsy set is exactly:
+		// false, 0, 0.0, "" , "0", [] (empty array) and null.
+		//
+		// When empty($x) is known to be false, the type keys whose values
+		// are always falsy ("null", "false", "empty_array") can be erased
+		// soundly. int/float/string/bool keys must be kept since their
+		// falsy values (0, 0.0, ""/"0", false) are not expressible as type keys.
+		//
+		// This makes guard clauses like the one below type-safe:
+		//
+		//	if (empty($x)) {
+		//		return;
+		//	}
+		//	// $x type no longer includes null here
+		//
+		// The true branch (empty($x) is truthy) keeps the current type:
+		// the precise falsy set can't be expressed as a union of type keys.
+		//
+		// Note: only simple variables are handled; for property/array
+		// accesses empty() may consult __isset()/__get() overloading,
+		// which makes static reasoning unsound there.
+		v, ok := n.Expr.(*ir.SimpleVar)
+		if !ok {
+			break
+		}
+		if !a.b.ctx.sc.HaveVar(v) {
+			break
+		}
+
+		currentType := a.currentTypeForNarrowing(v)
+		nonEmptyType := currentType.Clone().Erase("null").Erase("false").Erase("empty_array")
+		if nonEmptyType.Len() == 0 || nonEmptyType.Len() == currentType.Len() {
+			break // nothing always-falsy to erase from the type
+		}
+
+		trueType, falseType := currentType.Clone(), nonEmptyType
+		if a.inNot {
+			trueType, falseType = falseType, trueType
+		}
+
+		a.applyNarrowing(v, trueType, falseType, "type narrowing for empty", true)
+
 	case *ir.InstanceOfExpr:
 		if className, ok := solver.GetClassName(a.b.r.ctx.st, n.Class); ok {
 			switch v := n.Expr.(type) {
