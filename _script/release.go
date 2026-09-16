@@ -67,6 +67,7 @@ func prepareArchive(args arguments, platform platformInfo) error {
 	buildCmd.Env = append([]string{}, os.Environ()...) // Copy env slice
 	buildCmd.Env = append(buildCmd.Env, "GOOS="+platform.goos)
 	buildCmd.Env = append(buildCmd.Env, "GOARCH="+platform.goarch)
+	buildCmd.Env = append(buildCmd.Env, "CGO_ENABLED=0")
 	out, err := buildCmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("run %s: %v: %s", buildCmd, err, out)

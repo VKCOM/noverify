@@ -16,16 +16,44 @@ import (
 // This file contains methods that were defined inside BlockWalker
 // but in fact they can be separated and used in other contexts.
 
-func findMethod(info *meta.Info, className, methodName string) (res solver.FindMethodResult, magic, ok bool) {
+func findMethod(info *meta.Info, localClasses meta.ClassesMap, className, methodName string) (res solver.FindMethodResult, magic, ok bool) {
 	m, ok := solver.FindMethod(info, className, methodName)
 	if ok {
+		return m, false, true
+	}
+	if m, ok := findMethodInLocalClasses(localClasses, className, methodName); ok {
 		return m, false, true
 	}
 	m, ok = solver.FindMethod(info, className, `__call`)
 	if ok {
 		return m, true, true
 	}
+	if m, ok := findMethodInLocalClasses(localClasses, className, `__call`); ok {
+		return m, true, true
+	}
 	return m, false, false
+}
+
+func findMethodInLocalClasses(localClasses meta.ClassesMap, className, methodName string) (solver.FindMethodResult, bool) {
+	if localClasses.H == nil {
+		return solver.FindMethodResult{}, false
+	}
+
+	cl, ok := localClasses.Get(className)
+	if !ok {
+		return solver.FindMethodResult{}, false
+	}
+
+	methodInfo, ok := cl.Methods.Get(methodName)
+	if !ok {
+		return solver.FindMethodResult{}, false
+	}
+
+	return solver.FindMethodResult{
+		Info:        methodInfo,
+		ClassName:   className,
+		Implemented: !methodInfo.IsAbstract(),
+	}, true
 }
 
 func findProperty(info *meta.Info, className, propName string) (res solver.FindPropertyResult, magic, ok bool) {

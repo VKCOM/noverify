@@ -648,6 +648,13 @@ func (b *blockWalker) checkDiffPhpDocWithTypeHints(
 		return
 	}
 
+	if typeValue == "array" {
+		if !b.isPHPDocArrayTypeCompatible(doc) {
+			report()
+		}
+		return
+	}
+
 	// 8) Union
 	if strings.Contains(doc, "|") {
 		parts := strings.Split(doc, "|")
@@ -684,10 +691,6 @@ func (b *blockWalker) checkDiffPhpDocWithTypeHints(
 
 	// 9) Single/general: array / boolean / 1-1 / alias
 	switch {
-	case typeValue == "array":
-		if doc != "array" && !strings.HasSuffix(doc, "[]") {
-			report()
-		}
 	case types.IsBoolean(doc) && types.IsBoolean(typeValue):
 		// ok
 	case doc == typeValue:
@@ -697,6 +700,32 @@ func (b *blockWalker) checkDiffPhpDocWithTypeHints(
 	default:
 		report()
 	}
+}
+
+func (b *blockWalker) isPHPDocArrayTypeCompatible(doc string) bool {
+	parsedType := b.r.ctx.phpdocTypeParser.Parse(doc)
+	if parsedType.IsEmpty() {
+		return false
+	}
+
+	converted := phpdoctypes.ToRealType(nil, b.r.config.KPHP, parsedType)
+	typMap := types.NewMapWithNormalization(types.NewNormalizer(nil, b.r.config.KPHP), converted.Types)
+	if typMap.Empty() {
+		return false
+	}
+
+	arrayTypes := 0
+	for _, typ := range typMap.Keys() {
+		if typ == "null" {
+			return false
+		}
+		if len(typ) == 0 || typ[0] != types.WArrayOf {
+			return false
+		}
+		arrayTypes++
+	}
+
+	return arrayTypes != 0
 }
 
 func (b *blockWalker) CheckParamNullability(params []ir.Node, phpDocParamTypes map[string]string) {
@@ -1857,7 +1886,7 @@ func (b *blockWalker) handleCompactCallArgs(args []ir.Node) {
 }
 
 func (b *blockWalker) handleMethodCall(e *ir.MethodCallExpr) bool {
-	call := resolveMethodCall(b.ctx.sc, b.r.ctx.st, b.ctx.customTypes, e, b.r.strictMixed)
+	call := resolveMethodCall(b.ctx.sc, b.r.ctx.st, b.r.meta.Classes, b.ctx.customTypes, e, b.r.strictMixed)
 
 	e.Variable.Walk(b)
 	e.Method.Walk(b)
@@ -1946,7 +1975,9 @@ func (b *blockWalker) handleForeach(s *ir.ForeachStmt) bool {
 	// foreach body can do 0 cycles so we need a separate context for that
 	if s.Stmt != nil {
 		ctx := b.withNewContext(func() {
+			inferredValueType := false
 			solver.ExprTypeLocalCustom(b.ctx.sc, b.r.ctx.st, s.Expr, b.ctx.customTypes).Iterate(func(typ string) {
+				inferredValueType = true
 				b.handleVariableNode(s.Variable, types.NewMap(types.WrapElemOf(typ)), "foreach_value")
 			})
 
@@ -1955,7 +1986,7 @@ func (b *blockWalker) handleForeach(s *ir.ForeachStmt) bool {
 				for _, item := range list.Items {
 					b.handleVariableNode(item.Val, types.Map{}, "foreach_value")
 				}
-			} else {
+			} else if !inferredValueType {
 				b.handleVariableNode(s.Variable, types.Map{}, "foreach_value")
 			}
 
@@ -2372,22 +2403,13 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 	var linksCount int
 	var contexts []*blockContext
 
-	onlyInstanceof := true
 	// Add all new variables from the condition to the current scope.
 	irutil.Inspect(s.Cond, func(n ir.Node) bool {
 		switch n := n.(type) {
-		case *ir.BooleanAndExpr:
-		case *ir.BooleanOrExpr:
-		case *ir.BooleanNotExpr:
-			return true
-		case *ir.InstanceOfExpr:
-			return false
-
 		case *ir.Assign:
 			b.handleAssign(n)
 			return false
 		default:
-			onlyInstanceof = false
 		}
 
 		return true
@@ -2427,14 +2449,15 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 			linksCount++
 		}
 
-		// Case:
-		// if (!$a instanceof Boo) {
-		//   return
-		// }
+		// When the if body always exits (return/continue/throw/etc.) and there is no
+		// else branch, the code after this if runs only when the condition is false.
+		// Propagate type narrowing from falseContext into the current scope.
 		//
-		// $a has Boo type
-		if trueContext.exitFlags != 0 && onlyInstanceof && len(s.ElseIf) == 0 && s.Else == nil {
-			b.ctx = falseContext
+		// Examples:
+		//   if ($v === null) { continue; }  // $v is non-null below
+		//   if (!$a instanceof A) { return; } // $a is A below
+		if trueContext.exitFlags != 0 && len(s.ElseIf) == 0 && s.Else == nil {
+			b.applyGuardedContext(falseContext)
 		}
 
 		b.replaceAllImplicitVars(trueContext, initialContext)
@@ -2512,6 +2535,20 @@ func (b *blockWalker) handleIf(s *ir.IfStmt) bool {
 	b.extractVariablesTo(b.ctx, contexts, linksCount)
 
 	return false
+}
+
+// applyGuardedContext copies implicitly narrowed variables from the
+// "condition is false" context into the current context.
+// Used after guard ifs (return/continue/throw in the then-branch)
+// so code below the if sees narrowed types.
+func (b *blockWalker) applyGuardedContext(guardedContext *blockContext) {
+	guardedContext.sc.Iterate(func(name string, typ types.Map, flags meta.VarFlags) {
+		if !flags.IsImplicit() {
+			return
+		}
+		flags &^= meta.VarImplicit
+		b.ctx.sc.ReplaceVarName(name, typ, "guard", flags|meta.VarAlwaysDefined)
+	})
 }
 
 // replaceAllImplicitVars replaces any implicit variables that were added by

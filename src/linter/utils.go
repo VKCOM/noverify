@@ -165,7 +165,7 @@ type methodCallInfo struct {
 	callerTypeIsMixed bool
 }
 
-func resolveMethodCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []solver.CustomType, e *ir.MethodCallExpr, strictMixed bool) methodCallInfo {
+func resolveMethodCall(sc *meta.Scope, st *meta.ClassParseState, localClasses meta.ClassesMap, customTypes []solver.CustomType, e *ir.MethodCallExpr, strictMixed bool) methodCallInfo {
 	if !st.Info.IsIndexingComplete() {
 		return methodCallInfo{canAnalyze: false}
 	}
@@ -196,7 +196,7 @@ func resolveMethodCall(sc *meta.Scope, st *meta.ClassParseState, customTypes []s
 	}
 
 	methodCallerType.Find(func(typ string) bool {
-		m, isMagic, ok := findMethod(st.Info, typ, methodName)
+		m, isMagic, ok := findMethod(st.Info, localClasses, typ, methodName)
 		if !ok {
 			return false
 		}

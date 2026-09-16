@@ -208,24 +208,15 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function array_key_exists signature of param key at testdata/underscore/underscore.php:703
     return self::_wrap(array_key_exists($key, $collection));
                                         ^^^^
-ERROR   undefinedProperty: Property {array}->isEqual does not exist at testdata/underscore/underscore.php:723
+ERROR   undefinedProperty: Property {\__|array}->isEqual does not exist at testdata/underscore/underscore.php:723
       if(is_object($a) && isset($a->isEqual)) return self::_wrap($a->isEqual($b));
                                     ^^^^^^^
-ERROR   undefinedMethod: Call to undefined method {array}->isEqual() at testdata/underscore/underscore.php:723
-      if(is_object($a) && isset($a->isEqual)) return self::_wrap($a->isEqual($b));
-                                                                     ^^^^^^^
 ERROR   undefinedProperty: Property {object}->isEqual does not exist at testdata/underscore/underscore.php:724
       if(is_object($b) && isset($b->isEqual)) return self::_wrap($b->isEqual($a));
                                     ^^^^^^^
 ERROR   undefinedMethod: Call to undefined method {object}->isEqual() at testdata/underscore/underscore.php:724
       if(is_object($b) && isset($b->isEqual)) return self::_wrap($b->isEqual($a));
                                                                      ^^^^^^^
-WARNING notSafeCall: potentially not safe call in function keys signature of param collection at testdata/underscore/underscore.php:731
-      $keys_equal = $__->isEqual($__->keys($a), $__->keys($b));
-                                           ^^
-WARNING notSafeCall: potentially not safe call in function values signature of param collection at testdata/underscore/underscore.php:732
-      $values_equal = $__->isEqual($__->values($a), $__->values($b));
-                                               ^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function is_nan signature of param num at testdata/underscore/underscore.php:772
     return self::_wrap((is_int($item) || is_float($item)) && !is_nan($item) && !is_infinite($item));
                                                                      ^^^^^

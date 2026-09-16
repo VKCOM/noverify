@@ -67,7 +67,7 @@ WARNING notSafeCall: potentially not safe array access in parameter package of f
 WARNING notSafeCall: potentially not safe array access in parameter version of function trigger_deprecation at testdata/options-resolver/OptionsResolver.php:1090
                 trigger_deprecation($deprecation['package'], $deprecation['version'], strtr($message, ['%name%' => $option]));
                                                              ^^^^^^^^^^^^^^^^^^^^^^^
-WARNING notSafeCall: potentially not safe call in function strtr signature of param str at testdata/options-resolver/OptionsResolver.php:1090
+WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function strtr signature of param str at testdata/options-resolver/OptionsResolver.php:1090
                 trigger_deprecation($deprecation['package'], $deprecation['version'], strtr($message, ['%name%' => $option]));
                                                                                             ^^^^^^^^
 MAYBE   typeHint: Specify the type for the parameter $invalidTypes in PHPDoc, 'array' type hint too generic at testdata/options-resolver/OptionsResolver.php:1123

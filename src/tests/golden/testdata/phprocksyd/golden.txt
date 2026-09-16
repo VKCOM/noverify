@@ -55,9 +55,6 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 WARNING notSafeCall: potentially not safe call in function fwrite signature of param data when calling function \substr at testdata/phprocksyd/Phprocksyd.php:295
         $wrote = fwrite($this->streams[$stream_id], substr($this->write_buf[$stream_id], 0, 65536));
                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING notSafeCall: potentially not safe call in function substr signature of param offset at testdata/phprocksyd/Phprocksyd.php:309
-            $this->write_buf[$stream_id] = substr($this->write_buf[$stream_id], $wrote);
-                                                                                ^^^^^^
 ERROR   constCase: Constant 'NULL' should be used in lower case as 'null' at testdata/phprocksyd/Phprocksyd.php:321
             $n = stream_select($read, $write, $except, NULL);
                                                        ^^^^
@@ -151,9 +148,6 @@ WARNING notSafeCall: potentially not safe call in function fclose signature of p
 WARNING useExitOrDie: Don't use the 'exit' function at testdata/phprocksyd/Phprocksyd.php:619
         exit(1);
         ^^^^^^^
-WARNING notSafeCall: potentially not safe call in function unserialize signature of param data at testdata/phprocksyd/Phprocksyd.php:638
-        $res = unserialize($contents);
-                           ^^^^^^^^^
 WARNING notSafeCall: potentially not safe call in function explode signature of param string at testdata/phprocksyd/Phprocksyd.php:667
             $parts = explode(' ', $contents);
                                   ^^^^^^^^^
@@ -184,9 +178,6 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 WARNING notSafeCall: potentially not safe call in function fwrite signature of param data when calling function \substr at testdata/phprocksyd/Simple.php:132
         $wrote = fwrite($this->streams[$stream_id], substr($this->write_buf[$stream_id], 0, 65536));
                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-WARNING notSafeCall: potentially not safe call in function substr signature of param offset at testdata/phprocksyd/Simple.php:146
-            $this->write_buf[$stream_id] = substr($this->write_buf[$stream_id], $wrote);
-                                                                                ^^^^^^
 ERROR   constCase: Constant 'NULL' should be used in lower case as 'null' at testdata/phprocksyd/Simple.php:158
             $n = stream_select($read, $write, $except, NULL);
                                                        ^^^^

@@ -173,19 +173,17 @@ function test(A $a): void {
 }
 
 $v = null;
-if ($v == null) {
+if ($v === null) {
     // Correctly assign a new instance when $v is null.
     $v = new A();
-	test($v);
+    test($v);
 } else {
-test($v);
+    test($v);
 }
-test($v);
 `)
 
 	test.Expect = []string{
-		`not null safety call in function test signature of param`,
-		`not null safety call in function test signature of param`,
+		"not null safety call in function test signature of param",
 	}
 	test.RunAndMatch()
 }
@@ -241,6 +239,133 @@ if ($v !== null) {
 }
 `)
 
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
+func TestChainedNullAndTypeCheck(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+declare(strict_types=1);
+
+class A {
+    public string $value = 'Safe';
+}
+
+function getA(): A|null {
+    return null;
+}
+
+function test(A $a): void {
+    echo $a->value;
+}
+
+$v = getA();
+if ($v !== null && $v instanceof A) {
+    test($v);
+}
+`)
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
+func TestChainedNullCheckWithLooseComparison(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+declare(strict_types=1);
+
+class A {
+    public string $value = 'Safe';
+}
+
+function test(A $a): void {
+    echo $a->value;
+}
+
+$v = null;
+if ($v != null) {
+    test($v);
+}
+`)
+	test.Expect = []string{
+		"not null safety call in function test signature of param",
+	}
+	test.RunAndMatch()
+}
+
+func TestNullCheckContinueGuard(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+declare(strict_types=1);
+
+class A {
+    public string $value = 'Safe';
+}
+
+function getA(): A|null {
+    return null;
+}
+
+function test(A $a): void {
+    echo $a->value;
+}
+
+foreach ([getA(), getA()] as $v) {
+    if ($v === null) {
+        continue;
+    }
+    test($v);
+}
+`)
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
+func TestNullCheckReturnGuard(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+declare(strict_types=1);
+
+class A {
+    public string $value = 'Safe';
+}
+
+function getA(): A|null {
+    return null;
+}
+
+function test(A $a): void {
+    echo $a->value;
+}
+
+function foo(): void {
+    $v = getA();
+    if ($v === null) {
+        return;
+    }
+    test($v);
+}
+`)
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
+func TestChainedIsStringAfterNullCheck(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+function test(string $s): void {
+    echo $s;
+}
+
+function getValue(): string|null {
+    return 'hello';
+}
+
+$v = getValue();
+if ($v !== null && is_string($v)) {
+    test($v);
+}
+`)
 	test.Expect = []string{}
 	test.RunAndMatch()
 }
@@ -521,6 +646,84 @@ function processTask(int $taskId): void {
 	test.Expect = []string{
 		"potential null dereference when accessing property 'parent_task'",
 		`Missing PHPDoc for \MyTask::execute public method`,
+	}
+	test.RunAndMatch()
+}
+
+func TestInstanceofOrConditionNullSafety(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class BaseEvent {
+    /** @return bool */
+    public function show(): bool {
+        return true;
+    }
+}
+
+class ReviewEvent extends BaseEvent {}
+
+/** @return BaseEvent|null */
+function createEvent() {
+    return rand(0, 1) ? new ReviewEvent() : null;
+}
+
+$event = createEvent();
+
+if (!$event instanceof ReviewEvent || !$event->show()) {
+    return;
+}
+
+if (!($event instanceof ReviewEvent) || !$event->show()) {
+    return;
+}
+`)
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
+func TestNullableMethodCallWithoutInstanceofGuard(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class BaseEvent {
+    /** @return bool */
+    public function show(): bool {
+        return true;
+    }
+}
+
+class ReviewEvent extends BaseEvent {}
+
+function handleEvent(?BaseEvent $event): void {
+    $event->show();
+}
+`)
+	test.Expect = []string{
+		"potential null dereference in event when accessing method",
+	}
+	test.RunAndMatch()
+}
+
+func TestInstanceofOrConditionDoesNotNarrowOtherVariable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class BaseEvent {
+    /** @return bool */
+    public function show(): bool {
+        return true;
+    }
+}
+
+class ReviewEvent extends BaseEvent {}
+
+function handleEvents(?BaseEvent $event, ?BaseEvent $other): void {
+    if (!$event instanceof ReviewEvent || !$other->show()) {
+        return;
+    }
+}
+`)
+	test.Expect = []string{
+		"potential null dereference in other when accessing method",
+		"potential null dereference in other when accessing method",
 	}
 	test.RunAndMatch()
 }

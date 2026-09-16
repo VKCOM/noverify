@@ -76,6 +76,7 @@ type ParsedFlags struct {
 	GitDisableCompensateMaster bool
 	GitFullDiff                bool
 	GitIncludeUntracked        bool
+	GitIncludeUncommitted      bool
 	GitRepo                    string
 
 	// These two flags are mutated in prepareGitArgs.
@@ -211,6 +212,8 @@ func RegisterCheckFlags(ctx *AppContext) (*flag.FlagSet, *FlagsGroups) {
 	fs.StringVar(&ctx.ParsedFlags.GitAuthorsWhitelist, "git-author-whitelist", "", "Comma-separated whitelist for commit authors for which changes the linter will analyze")
 	fs.StringVar(&ctx.ParsedFlags.GitWorkTree, "git-work-tree", "", "Working directory in which the --git-include-untracked flag will be taken into account")
 	fs.BoolVar(&ctx.ParsedFlags.GitIncludeUntracked, "git-include-untracked", true, "Include untracked (new, uncommitted files) into analysis")
+	fs.BoolVar(&ctx.ParsedFlags.GitIncludeUncommitted, "git-include-uncommitted", false,
+		"Also analyze uncommitted changes (staged and unstaged): the diff is computed between <git-commit-from> and the working tree instead of <git-commit-from>..<git-commit-to>. If --git-work-tree is not specified, the working tree is detected automatically")
 	fs.BoolVar(&ctx.ParsedFlags.GitSkipFetch, "git-skip-fetch", false, "Do not fetch ORIGIN_MASTER (use this option if you already fetch to ORIGIN_MASTER before that)")
 	fs.BoolVar(&ctx.ParsedFlags.GitDisableCompensateMaster, "git-disable-compensate-master", false, "Do not try to compensate for changes in ORIGIN_MASTER after branch point")
 	fs.BoolVar(&ctx.ParsedFlags.GitFullDiff, "git-full-diff", false, "Compute full diff, in which linter analyzes all files, not just changed ones")
@@ -222,6 +225,7 @@ func RegisterCheckFlags(ctx *AppContext) (*flag.FlagSet, *FlagsGroups) {
 	groups.Add("Diff mode", "git-author-whitelist")
 	groups.Add("Diff mode", "git-disable-compensate-master")
 	groups.Add("Diff mode", "git-include-untracked")
+	groups.Add("Diff mode", "git-include-uncommitted")
 	groups.Add("Diff mode", "git-work-tree")
 	groups.Add("Diff mode", "git-skip-fetch")
 	groups.Add("Diff mode", "git-push-arg")

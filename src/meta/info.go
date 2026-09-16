@@ -356,14 +356,25 @@ func (i *Info) DeleteMetaForFileNonLocked(filename string) {
 	delete(i.allFiles, filename)
 	delete(i.perFileClasses, filename)
 
-	for f := range oldClasses.H {
+	// Only delete a class from allClasses if it's the same definition
+	// that was stored. If a longer definition from another file (e.g. stubs)
+	// won, we must not delete it.
+	for f, oldClass := range oldClasses.H {
+		cls, ok := i.allClasses.H[f]
+		if !ok || oldClass.Pos.Length != cls.Pos.Length {
+			continue
+		}
 		delete(i.allClasses.H, f)
 	}
 
 	oldTraits := i.perFileTraits[filename]
 	delete(i.perFileTraits, filename)
 
-	for f := range oldTraits.H {
+	for f, oldTrait := range oldTraits.H {
+		trait, ok := i.allTraits.H[f]
+		if !ok || oldTrait.Pos.Length != trait.Pos.Length {
+			continue
+		}
 		delete(i.allTraits.H, f)
 	}
 

@@ -164,6 +164,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		d.handleClassDoc(doc, &cl)
 
 		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
+		d.preRegisterClassMethods(n.Stmts)
 
 	case *ir.InterfaceStmt:
 		d.currentClassNodeStack.Push(n)
@@ -172,6 +173,7 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		if !strings.HasSuffix(n.InterfaceName.Value, "able") {
 			d.checker.CheckIdentMisspellings(n.InterfaceName)
 		}
+		d.preRegisterClassMethods(n.Stmts)
 
 	case *ir.ClassStmt:
 		d.currentClassNodeStack.Push(n)
@@ -209,12 +211,14 @@ func (d *rootWalker) EnterNode(n ir.Node) (res bool) {
 		cl.DeprecationInfo = doc.deprecation
 
 		d.meta.Classes.Set(d.ctx.st.CurrentClass, cl)
+		d.preRegisterClassMethods(n.Stmts)
 
 	case *ir.TraitStmt:
 		d.currentClassNodeStack.Push(n)
 		d.checker.CheckKeywordCase(n, "trait")
 		d.checker.CheckCommentMisspellings(n.TraitName, n.Doc.Raw)
 		d.checker.CheckIdentMisspellings(n.TraitName)
+		d.preRegisterClassMethods(n.Stmts)
 	case *ir.TraitUseStmt:
 		d.checker.CheckKeywordCase(n, "use")
 		cl := d.getClass()
@@ -545,13 +549,21 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, docblockParams phpdoctype
 		}
 
 		// Append @param type.
+		scopeParamType := paramType
 		if !docType.Typ.Empty() {
-			paramType = paramType.Append(docType.Typ)
+			if paramType.IsLazyArrayOf("mixed") && docType.Typ.IsLazyArray() {
+				scopeParamType = docType.Typ
+				paramType = paramType.Append(docType.Typ)
+			} else {
+				paramType = paramType.Append(docType.Typ)
+				scopeParamType = paramType
+			}
 		}
 
 		paramTypeAware := attributes.TypeAware(param.AttrGroups, d.ctx.st)
 		if !paramTypeAware.Empty() {
 			paramType = paramType.Append(paramTypeAware)
+			scopeParamType = scopeParamType.Append(paramTypeAware)
 		}
 
 		// Count min args count.
@@ -559,7 +571,7 @@ func (d *rootWalker) parseFuncParams(params []ir.Node, docblockParams phpdoctype
 			minArgs++
 		}
 
-		sc.AddVarName(paramVar.Name, paramType, "param", meta.VarAlwaysDefined)
+		sc.AddVarName(paramVar.Name, scopeParamType, "param", meta.VarAlwaysDefined)
 
 		parsedParams = append(parsedParams, meta.FuncParam{
 			Name:  paramVar.Name,
@@ -1077,7 +1089,7 @@ func (d *rootWalker) enterClassMethod(meth *ir.ClassMethodStmt) bool {
 		d.Report(meth.MethodName, LevelNotice, "complexity", "Too big method: more than %d lines", maxFunctionLines)
 	}
 
-	modif := d.parseMethodModifiers(meth)
+	modif := d.parseMethodModifiers(meth, true)
 
 	if modif.accessImplicit {
 		methodFQN := class.Name + "::" + nm
@@ -1264,12 +1276,77 @@ type methodModifiers struct {
 	accessImplicit bool
 }
 
-func (d *rootWalker) parseMethodModifiers(meth *ir.ClassMethodStmt) (res methodModifiers) {
+// preRegisterClassMethods registers method signatures from the current class body
+// before their bodies are analyzed. This makes same-file forward references
+// (e.g. $this->otherMethod() defined below) resolvable during linting when
+// the global index is stale, as can happen in git diff mode.
+func (d *rootWalker) preRegisterClassMethods(stmts []ir.Node) {
+	if !d.metaInfo().IsIndexingComplete() {
+		return
+	}
+
+	class := d.getClass()
+	for _, stmt := range stmts {
+		meth, ok := stmt.(*ir.ClassMethodStmt)
+		if !ok {
+			continue
+		}
+
+		nm := meth.MethodName.Value
+		if _, exists := class.Methods.Get(nm); exists {
+			continue
+		}
+
+		modif := d.parseMethodModifiers(meth, false)
+		doc := phpdoctypes.Parse(meth.Doc, meth.Params, d.ctx.typeNormalizer)
+
+		sc := meta.NewScope()
+		if !modif.static {
+			sc.AddVarName("this", types.NewMap(d.ctx.st.CurrentClass).Immutable(), "instance method", meta.VarAlwaysDefined)
+		}
+
+		returnTypeHint, ok := d.parseTypeHintNode(meth.ReturnType)
+		if !ok {
+			returnTypeHint = attributes.TypeAware(meth.AttrGroups, d.ctx.st)
+		}
+
+		funcParams := d.parseFuncParams(meth.Params, doc.ParamTypes, sc, nil)
+		returnTypes := functionReturnType(doc.ReturnType, returnTypeHint, types.Map{})
+
+		var flags meta.FuncFlags
+		if modif.static {
+			flags |= meta.FuncStatic
+		}
+		if modif.abstract {
+			flags |= meta.FuncAbstract
+		}
+		if modif.final {
+			flags |= meta.FuncFinal
+		}
+		if funcParams.isVariadic {
+			flags |= meta.FuncVariadic
+		}
+
+		class.Methods.Set(nm, meta.FuncInfo{
+			Params:       funcParams.params,
+			Name:         nm,
+			Pos:          d.getElementPos(meth),
+			Typ:          returnTypes.Immutable(),
+			MinParamsCnt: funcParams.minParamsCount,
+			AccessLevel:  modif.accessLevel,
+			Flags:        flags,
+		})
+	}
+}
+
+func (d *rootWalker) parseMethodModifiers(meth *ir.ClassMethodStmt, reportIssues bool) (res methodModifiers) {
 	res.accessLevel = meta.Public
 	res.accessImplicit = true
 
 	for _, m := range meth.Modifiers {
-		d.checker.CheckModifierKeywordCase(m)
+		if reportIssues {
+			d.checker.CheckModifierKeywordCase(m)
+		}
 		switch strings.ToLower(m.Value) {
 		case "abstract":
 			res.abstract = true

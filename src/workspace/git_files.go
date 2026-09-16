@@ -40,7 +40,12 @@ func ReadChangesFromWorkTree(dir string, changes []git.Change, phpExtensions []s
 				continue
 			}
 
-			filename := filepath.Join(dir, c.NewName)
+			// Change names can either be relative to the working tree
+			// or already absolute (if the caller resolved them).
+			filename := c.NewName
+			if !filepath.IsAbs(filename) {
+				filename = filepath.Join(dir, filename)
+			}
 
 			contents, err := os.ReadFile(filename)
 			if err != nil {

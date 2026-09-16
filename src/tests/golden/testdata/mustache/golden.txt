@@ -301,9 +301,6 @@ WARNING notExplicitNullableParam: parameter with null default value should be ex
 WARNING notSafeCall: potentially not safe call in function add signature of param name at testdata/mustache/src/Mustache/HelperCollection.php:39
             $this->add($name, $helper);
                        ^^^^^
-WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function addLoader signature of param loader at testdata/mustache/src/Mustache/Loader/CascadingLoader.php:35
-            $this->addLoader($loader);
-                             ^^^^^^^
 WARNING notSafeCall: potentially not safe accessing property 'baseDir' at testdata/mustache/src/Mustache/Loader/FilesystemLoader.php:52
         if (strpos($this->baseDir, '://') === false) {
                    ^^^^^^^^^^^^^^
@@ -352,9 +349,6 @@ WARNING notNullSafetyFunctionArgumentPropertyFetch: potential null dereference w
 WARNING notSafeCall: potentially not safe call in function strtoupper signature of param string at testdata/mustache/src/Mustache/Logger/StreamLogger.php:150
         return strtoupper($level);
                           ^^^^^^
-WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function enablePragma signature of param name at testdata/mustache/src/Mustache/Parser.php:58
-            $this->enablePragma($pragma);
-                                ^^^^^^^
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter name of function getNameAndFilters at testdata/mustache/src/Mustache/Parser.php:88
                 list($name, $filters) = $this->getNameAndFilters($token[Mustache_Tokenizer::NAME]);
                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

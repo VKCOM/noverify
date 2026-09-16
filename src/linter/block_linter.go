@@ -1332,7 +1332,7 @@ func (b *blockLinter) checkStripTags(e *ir.FunctionCallExpr) {
 
 func (b *blockLinter) checkMethodCall(e *ir.MethodCallExpr) {
 	parseState := b.classParseState()
-	call := resolveMethodCall(b.walker.ctx.sc, parseState, b.walker.ctx.customTypes, e, b.walker.r.strictMixed)
+	call := resolveMethodCall(b.walker.ctx.sc, parseState, b.walker.r.meta.Classes, b.walker.ctx.customTypes, e, b.walker.r.strictMixed)
 	if !call.canAnalyze {
 		return
 	}

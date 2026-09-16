@@ -286,6 +286,137 @@ funcArray([], []);
 	test.RunAndMatch()
 }
 
+func TestArrayGenericPHPDocCorrect(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {}
+
+/**
+ * @param Foo[] $foos
+ * @return array
+ */
+function acceptFoos(array $foos): array {
+  return $foos;
+}
+
+/**
+ * @param Foo[][] $foosByKey
+ * @return array
+ */
+function acceptFoosByKey(array $foosByKey): array {
+  return $foosByKey;
+}
+
+/**
+ * @param array<int, Foo> $foos
+ * @return array
+ */
+function acceptIntMap(array $foos): array {
+  return $foos;
+}
+
+/**
+ * @param array<string, Foo[]> $foosByKey
+ * @return array
+ */
+function acceptStringMap(array $foosByKey): array {
+  return $foosByKey;
+}
+
+/**
+ * @param list<Foo> $foos
+ * @return array
+ */
+function acceptList(array $foos): array {
+  return $foos;
+}
+
+/**
+ * @param array<string, array> $rows
+ * @return array
+ */
+function mergeRows(array $rows): array {
+  return $rows;
+}
+
+/**
+ * @param array<string, array[]> $itemsByKey
+ * @return array
+ */
+function mergeItems(array $itemsByKey): array {
+  return $itemsByKey;
+}
+`)
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
+func TestArrayGenericPHPDocMismatch(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {}
+
+/**
+ * @param array<string, Foo> $param
+ * @return string
+ */
+function arrayDocForString(string $param): string {
+  return $param;
+}
+
+/**
+ * @param string $param
+ * @return array
+ */
+function stringDocForArray(array $param): array {
+  return $param;
+}
+
+/**
+ * @param array<string, Foo>|null $param
+ * @return array
+ */
+function nullableArrayDocForArray(array $param): array {
+  return $param;
+}
+`)
+	test.Expect = []string{
+		`param $param miss matched with phpdoc type <<array<string, Foo>>>`,
+		`param $param miss matched with phpdoc type <<string>>`,
+		`param $param miss matched with phpdoc type <<array<string, Foo>|null>>`,
+	}
+	test.RunAndMatch()
+}
+
+func TestNestedPHPDocArrayForeachNotNullable(t *testing.T) {
+	test := linttest.NewSuite(t)
+	test.AddFile(`<?php
+class Foo {}
+
+/**
+ * @param Foo[][] $itemsByKey
+ * @return array
+ */
+function processItems(array $itemsByKey): array {
+  $result = [];
+  foreach ($itemsByKey as $items) {
+    foreach ($items as $item) {
+      $result[] = buildRow($item);
+    }
+  }
+
+  return $result;
+}
+
+/** @return array */
+function buildRow(Foo $item): array {
+  return [];
+}
+`)
+	test.Expect = []string{}
+	test.RunAndMatch()
+}
+
 func TestBoolSynonym(t *testing.T) {
 	test := linttest.NewSuite(t)
 	test.AddFile(`<?php

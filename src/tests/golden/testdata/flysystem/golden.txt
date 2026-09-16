@@ -277,12 +277,6 @@ WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function 
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function stream_copy_to_stream signature of param from at testdata/flysystem/src/Adapter/Local.php:159
         if ( ! $stream || stream_copy_to_stream($resource, $stream) === false || ! fclose($stream)) {
                                                 ^^^^^^^^^
-WARNING notSafeCall: potentially not safe call in function stream_copy_to_stream signature of param to at testdata/flysystem/src/Adapter/Local.php:159
-        if ( ! $stream || stream_copy_to_stream($resource, $stream) === false || ! fclose($stream)) {
-                                                           ^^^^^^^
-WARNING notSafeCall: potentially not safe call in function fclose signature of param stream at testdata/flysystem/src/Adapter/Local.php:159
-        if ( ! $stream || stream_copy_to_stream($resource, $stream) === false || ! fclose($stream)) {
-                                                                                          ^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function applyPathPrefix signature of param path at testdata/flysystem/src/Adapter/Local.php:179
         $location = $this->applyPathPrefix($path);
                                            ^^^^^
@@ -463,17 +457,11 @@ WARNING notExplicitNullableParam: parameter with null default value should be ex
 WARNING notSafeCall: potentially not safe call in function mountFilesystem signature of param prefix at testdata/flysystem/src/MountManager.php:57
             $this->mountFilesystem($prefix, $filesystem);
                                    ^^^^^^^
-WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function mountFilesystem signature of param filesystem at testdata/flysystem/src/MountManager.php:57
-            $this->mountFilesystem($prefix, $filesystem);
-                                            ^^^^^^^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function getPrefixAndPath signature of param path at testdata/flysystem/src/MountManager.php:123
         list($prefix, $path) = $this->getPrefixAndPath($path);
                                                        ^^^^^
 WARNING notNullSafetyFunctionArgumentVariable: not null safety call in function invokePluginOnFilesystem signature of param prefix at testdata/flysystem/src/MountManager.php:166
         return $this->invokePluginOnFilesystem($method, $arguments, $prefix);
-                                                                    ^^^^^^^
-WARNING notSafeCall: potentially not safe call in function writeStream signature of param resource at testdata/flysystem/src/MountManager.php:192
-        $result = $this->getFilesystem($prefixTo)->writeStream($to, $buffer, $config);
                                                                     ^^^^^^^
 WARNING notNullSafetyFunctionArgumentArrayDimFetch: potential null array access in parameter visibility of function setVisibility at testdata/flysystem/src/MountManager.php:243
                 return $filesystem->setVisibility($pathTo, $config['visibility']);

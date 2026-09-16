@@ -21,6 +21,9 @@ class Downloader {
     "0.5.1",
     "0.5.2",
     "0.5.3",
+    "0.5.4",
+    "0.5.5",
+    "0.5.6",
   ];
 
   /**
@@ -53,7 +56,7 @@ class Downloader {
 
     if (strpos($name, "x86_64") !== false || strpos($name, "AMD64") !== false) {
       return "amd64";
-    } elseif (strpos($name, "arm64") !== false) {
+    } elseif (strpos($name, "arm64") !== false || strpos($name, "aarch64") !== false) {
       return "arm64";
     }
 
