@@ -282,6 +282,8 @@ func TestMatch(t *testing.T) {
 		{`global $x, $y`, `global $a, $b`},
 		{`break $x`, `break 20`},
 		{`continue $x`, `continue 20`},
+		{`goto my_lbl`, `goto my_lbl`},
+		{`my_lbl:`, `my_lbl:`},
 		{`unset($x)`, `unset($v)`},
 		{`print(1)`, `print(1)`},
 		{`echo 1, 2`, `echo 1, 2`},
@@ -610,6 +612,8 @@ func TestMatchNegative(t *testing.T) {
 		{`'1'`, `'x'`},
 		{`1.4`, `1.6`},
 		{`false`, `true`},
+		{`goto my_lbl`, `goto other_lbl`},
+		{`my_lbl:`, `other_lbl:`},
 
 		{`$x+1`, `10+2`},
 		{`$x+1`, `$x+$x`},
