@@ -104,12 +104,10 @@ func (p *parser) tryParseLabeledStmt(stmts []ir.Node, proto *Rule) (bool, error)
 	labelName := label.LabelName.Value
 	var mode parseMode
 	switch {
-	case labelName == "any" || strings.HasPrefix(labelName, "any_"):
-		mode = parseAny
 	case labelName == "seq" || strings.HasPrefix(labelName, "seq_"):
 		mode = parseSeq
 	default:
-		return false, nil
+		mode = parseAny
 	}
 
 	if mode == parseSeq {
